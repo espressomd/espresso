@@ -200,7 +200,7 @@ namespace Flux {
 inline auto get(GhostLayerField<float, uint_t{13u}> const *flux_field,
                 Cell const &cell) {
   const float &xyz0 = flux_field->get(cell, uint_t{0u});
-  std::vector<float> value;
+  std::array<float, 13u> value;
   value[0] = flux_field->getF(&xyz0, uint_t{0u});
   value[1] = flux_field->getF(&xyz0, uint_t{1u});
   value[2] = flux_field->getF(&xyz0, uint_t{2u});
@@ -218,7 +218,7 @@ inline auto get(GhostLayerField<float, uint_t{13u}> const *flux_field,
 }
 
 inline void initialize(GhostLayerField<float, uint_t{13u}> *flux_field,
-                       std::vector<float> const &values) {
+                       std::array<float, 13> const &values) {
   WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(flux_field, {
     float &xyz0 = flux_field->get(x, y, z, uint_t{0u});
     flux_field->getF(&xyz0, uint_t{0u}) = values[0u];

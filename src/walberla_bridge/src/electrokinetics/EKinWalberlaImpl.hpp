@@ -28,13 +28,19 @@
 #include <field/vtk/FlagFieldCellFilter.h>
 #include <field/vtk/VTKWriter.h>
 #include <stencil/D3Q27.h>
+#if defined(__CUDACC__)
+#include <gpu/AddGPUFieldToStorage.h>
+#include <gpu/HostFieldAllocator.h>
+#include <gpu/communication/MemcpyPackInfo.h>
+#include <gpu/communication/UniformGPUScheme.h>
+#endif
 
 #include "../BoundaryHandling.hpp"
 #include "../utils/boundary.hpp"
 #include "../utils/types_conversion.hpp"
 #include "ek_kernels.hpp"
 #if defined(__CUDACC__)
-#include "lb_kernels.cuh"
+#include "ek_kernels.cuh"
 #endif
 
 #include <walberla_bridge/Architecture.hpp>
@@ -120,6 +126,7 @@ protected:
     using DensityField = gpu::GPUField<FT>;
     using GPUField = gpu::GPUField<FloatType>;
   };
+  using GPUField = gpu::GPUField<FloatType>;
 #endif
 
   // "underlying" field types (`GPUField` has no f-size info at compile time)
@@ -210,11 +217,11 @@ protected:
    * will fall back to @c StdFieldAlloc, yet @c AllocateAligned is needed
    * for intrinsics to work.
    */
-  template <typename Field> auto add_to_storage(std::string const tag) {
+  template <typename Field> auto add_to_storage(std::string const tag, FloatType value) {
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
     if constexpr (Architecture == lbmpy::Arch::CPU) {
-      return field::addToStorage<Field>(blocks, tag, FloatType{0}, field::fzyx,
+      return field::addToStorage<Field>(blocks, tag, FloatType{value}, field::fzyx,
                                         n_ghost_layers);
     }
 #if defined(__CUDACC__)
@@ -224,7 +231,7 @@ protected:
       if constexpr (std::is_same_v<Field, _DensityField>) {
         for (auto block = blocks->begin(); block != blocks->end(); ++block) {
           auto field = block->template getData<GPUField>(field_id);
-          ek::accessor::Vector::initialize(field, FloatType);
+          ek::accessor::Scalar::initialize(field, FloatType{value});
         }
       } else if constexpr (std::is_same_v<Field, _FluxField>) {
         for (auto block = blocks->begin(); block != blocks->end(); ++block) {
@@ -271,11 +278,11 @@ public:
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
 
-    m_density_field_id = add_to_storage<_DensityField>("density field");
+    m_density_field_id = add_to_storage<_DensityField>("density field", density);
     m_density_field_flattened_id =
         field::addFlattenedShallowCopyToStorage<_DensityField>(
             blocks, m_density_field_id, "flattened density field");
-    m_flux_field_id = add_to_storage<_FluxField>("flux field");
+    m_flux_field_id = add_to_storage<_FluxField>("flux field", 0.0);
     m_flux_field_flattened_id =
         field::addFlattenedShallowCopyToStorage<_FluxField>(
             blocks, m_flux_field_id, "flattened flux field");
@@ -615,7 +622,6 @@ public:
 
     auto const density_field =
         bc->block->template getData<_DensityField>(m_density_field_id);
-
     return {double_c(ek::accessor::Scalar::get(density_field, bc->cell))};
   }
 
@@ -636,7 +642,7 @@ public:
               block.template getData<_DensityField>(m_density_field_id);
           auto const values = ek::accessor::Scalar::get(density_field, *bci);
           assert(values.size() == bci->numCells());
-          values_size += 3u * bci->numCells();
+          values_size += bci->numCells();
           auto kernel = [&values, &out, this](unsigned const block_index,
                                               unsigned const local_index,
                                               Utils::Vector3i const &node) {
@@ -656,7 +662,7 @@ public:
                          std::vector<double> const &density) override {
     auto const &lattice = get_lattice();
     if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
-      assert(velocity.size() == ci->numCells());
+      assert(density.size() == ci->numCells());
       for (auto &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
         if (auto const bci = get_block_interval(lattice, 
@@ -986,6 +992,8 @@ protected:
   class DensityVTKWriter : public VTKWriter<_DensityField, 1u, OutputType> {
   public:
     using VTKWriter<_DensityField, 1u, OutputType>::VTKWriter;
+    using Base::evaluate;
+
 
   protected:
     OutputType evaluate(cell_idx_t const x, cell_idx_t const y,

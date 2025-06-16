@@ -91,11 +91,12 @@ void set(gpu::GPUField<double> *vec_field, std::vector<double> const &values,
 
 namespace Flux {
 /** @brief Get value from a single cell. */
-Vector3<double> get(gpu::GPUField<double> const *flux_field, Cell const &cell);
+std::array<double, 13> get(gpu::GPUField<double> const *flux_field,
+                           Cell const &cell);
 
 /** @brief Initialize all cells with the same value. */
 void initialize(gpu::GPUField<double> *flux_field,
-                std::Vector<double> const &flux);
+                std::array<double, 13> const &flux);
 /** @brief Get values from a cell interval. */
 std::vector<double> get(gpu::GPUField<double> const *flux_field,
                         CellInterval const &ci);

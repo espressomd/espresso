@@ -62,8 +62,6 @@ protected:
   double m_tau;
   double m_density;
 
-  void make_instance(VariantMap const &params) override;
-
 public:
   EKSpecies() {
     add_parameters(
@@ -163,6 +161,18 @@ private:
   void load_checkpoint(std::filesystem::path const &path, int mode);
   void save_checkpoint(std::filesystem::path const &path, int mode);
 };
+
+class EKSpeciesCPU : public EKSpecies {
+protected:
+  void make_instance(VariantMap const &params) override;
+};
+
+#ifdef CUDA
+class EKSpeciesGPU : public EKSpecies {
+protected:
+  void make_instance(VariantMap const &params) override;
+};
+#endif // CUDA
 
 } // namespace ScriptInterface::walberla
 

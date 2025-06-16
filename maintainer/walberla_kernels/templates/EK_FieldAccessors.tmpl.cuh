@@ -107,13 +107,13 @@ namespace Vector {
 
 namespace Flux {
     /** @brief Get value from a single cell. */
-    Vector{{D}}< {{dtype}} >
+    std::array< {{dtype}}, {{FluxCount}} >
     get( gpu::GPUField< {{dtype}} > const * flux_field,
          Cell const & cell );
 
     /** @brief Initialize all cells with the same value. */
     void initialize( gpu::GPUField< {{dtype}} > * flux_field,
-                     std::Vector< {{dtype}} > const & flux);
+                     std::array< {{dtype}}, {{FluxCount}} > const & flux);
     /** @brief Get values from a cell interval. */
     std::vector< {{dtype}} >
     get( gpu::GPUField< {{dtype}} > const * flux_field,

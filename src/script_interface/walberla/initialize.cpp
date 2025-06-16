@@ -61,7 +61,10 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<LBVTKHandle>("walberla::LBVTKHandle");
 
   om->register_new<EKContainer>("walberla::EKContainer");
-  om->register_new<EKSpecies>("walberla::EKSpecies");
+  om->register_new<EKSpeciesCPU>("walberla::EKSpeciesCPU");
+#ifdef CUDA
+  om->register_new<EKSpeciesGPU>("walberla::EKSpeciesGPU");
+#endif // CUDA
   om->register_new<EKSpeciesNode>("walberla::EKSpeciesNode");
   om->register_new<EKSpeciesSlice>("walberla::EKSpeciesSlice");
 #ifdef WALBERLA_FFT

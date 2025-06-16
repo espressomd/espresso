@@ -111,7 +111,7 @@ namespace Scalar
     {
         auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
         scalar_field.set( blockIdx, threadIdx );
-        u_in += offset;
+        in += offset;
         if (scalar_field.isValidPosition()) {
             scalar_field.get(0u) = in[0u];
         }
@@ -123,7 +123,7 @@ namespace Scalar
     {
         scalar_field.set( blockIdx, threadIdx );
         if (scalar_field.isValidPosition()) {
-            vec.get(0u) = in[0u];
+            scalar_field.get(0u) = in[0u];
         }
     }
 
@@ -150,7 +150,7 @@ namespace Scalar
     }
 // LCOV_EXCL_STOP
 
-    Vector{{D}}< {{dtype}} > get(
+    {{dtype}} get(
         gpu::GPUField< {{dtype}} > const * scalar_field,
         Cell const & cell)
     {
@@ -161,7 +161,8 @@ namespace Scalar
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *scalar_field, ci ) );
         kernel.addParam( dev_data_ptr );
         kernel();
-        return dev_data[0];
+        {{dtype}} result = dev_data[0u];
+        return result;
     }
 
     void set(
@@ -233,7 +234,7 @@ namespace Scalar
         thrust::device_vector< {{dtype}} > dev_data(values.begin(), values.end());
         auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
         auto kernel = gpu::make_kernel( kernel_set );
-        kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *vec_field, ci ) );
+        kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *scalar_field, ci ) );
         kernel.addParam( const_cast<const {{dtype}} *>(dev_data_ptr) );
         kernel();
     }
@@ -416,9 +417,9 @@ namespace Flux
         {{dtype}} * j_out )
     {
         auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{FluxCount}}u);
-        vec.set( blockIdx, threadIdx );
+        flux_field.set( blockIdx, threadIdx );
         j_out += offset;
-        if (vec.isValidPosition()) {
+        if (flux_field.isValidPosition()) {
             {% for i in range(FluxCount) -%}
                 j_out[{{i}}u] = flux_field.get({{i}}u);
             {% endfor %}
@@ -438,7 +439,7 @@ namespace Flux
     }
 // LCOV_EXCL_STOP
 
-    Vector{{D}}< {{dtype}} > get(
+    std::array< {{dtype}}, {{FluxCount}} > get(
         gpu::GPUField< {{dtype}} > const * flux_field,
         Cell const & cell)
     {
@@ -449,14 +450,14 @@ namespace Flux
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *flux_field, ci ) );
         kernel.addParam( dev_data_ptr );
         kernel();
-        std::Vector< {{dtype}} > vec;
+        std::array< {{dtype}}, {{FluxCount}} > vec;
         thrust::copy(dev_data.begin(), dev_data.end(), vec.data());
         return vec;
     }
 
     void initialize(
         gpu::GPUField< {{dtype}} > * flux_field,
-        std::Vector< {{dtype}} > const & flux )
+        std::array< {{dtype}}, {{FluxCount}}> const & flux )
     {
         CellInterval ci = flux_field->xyzSizeWithGhostLayer();
         thrust::device_vector< {{dtype}} > dev_data(flux.data(), flux.data() + {{FluxCount}}u);
@@ -467,7 +468,7 @@ namespace Flux
         kernel();
    }
 
-    std::vector< {{dtype}} > get(
+    std::vector< {{dtype}}> get(
         gpu::GPUField< {{dtype}} > const * flux_field,
         CellInterval const & ci)
     {

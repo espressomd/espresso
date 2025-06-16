@@ -237,7 +237,7 @@ namespace Flux
          Cell const & cell )
     {
         const {{dtype}} & xyz0 = flux_field->get(cell, uint_t{ 0u });
-        std::vector< {{dtype}} > value;
+        std::array< {{dtype}}, {{FluxCount}}u > value;
         {% for i in range(FluxCount) -%}
             value[{{i}}] = flux_field->getF( &xyz0, uint_t{ {{i}}u });
         {% endfor -%}
@@ -246,7 +246,7 @@ namespace Flux
 
     inline void
     initialize( GhostLayerField< {{dtype}}, uint_t{ {{FluxCount}}u } > * flux_field,
-                std::vector< {{dtype}} > const & values)
+                std::array< {{dtype}}, {{FluxCount}} > const & values)
      {
          WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(flux_field, {
              {{dtype}} & xyz0 = flux_field->get(x, y, z, uint_t{ 0u });

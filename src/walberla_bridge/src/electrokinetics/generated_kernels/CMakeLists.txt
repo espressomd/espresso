@@ -46,6 +46,7 @@ foreach(precision double_precision single_precision)
               ContinuityKernel_${precision}_CUDA.cu
               AdvectiveFluxKernel_${precision}_CUDA.cu
               FrictionCouplingKernel_${precision}_CUDA.cu
+              EK_FieldAccessors_${precision}_CUDA.cu
               FixedFlux_${precision}_CUDA.cu
               Dirichlet_${precision}_CUDA.cu)
   endif()

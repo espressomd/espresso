@@ -17,7 +17,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
+
+#if defined(__NVCC__)
+#define RESTRICT __restrict__
+#if defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#pragma nv_diagnostic push
+#pragma nv_diag_suppress 554 // no implicit or explicit cast
+#else
+#pragma push
+#pragma diag_suppress 554 // no implicit or explicit cast
+#endif
+#endif
+
 #include "EKinWalberlaImpl.hpp"
+
+#if defined(__NVCC__)
+#if defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#pragma nv_diagnostic pop
+#else
+#pragma pop
+#endif
+#endif
+
+#include <walberla_bridge/Architecture.hpp>
+
+#include <gpu/DeviceSelectMPI.h>
 #include "reactions/EKReactionImplBulk.hpp"
 #include "reactions/EKReactionImplIndexed.hpp"
 
@@ -29,39 +54,39 @@
 #include <utils/Vector.hpp>
 
 #include <memory>
-
 namespace walberla {
-
 std::shared_ptr<EKinWalberlaBase>
-new_ek_walberla_cpu(std::shared_ptr<LatticeWalberla> const &lattice,
+new_ek_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
                     double diffusion, double kT, double valency,
                     Utils::Vector3d ext_efield, double density, bool advection,
                     bool friction_coupling, bool single_precision, bool thermalized,
                     unsigned int seed) {
   if (single_precision) {
-    return std::make_shared<EKinWalberlaImpl<13, float>>(
+    return std::make_shared<EKinWalberlaImpl<13, float, lbmpy::Arch::GPU>>(
         lattice, diffusion, kT, valency, ext_efield, density, advection,
         friction_coupling, thermalized, seed);
   }
 
-  return std::make_shared<EKinWalberlaImpl<13, double>>(
+  return std::make_shared<EKinWalberlaImpl<13, double, lbmpy::Arch::GPU>>(
       lattice, diffusion, kT, valency, ext_efield, density, advection,
       friction_coupling, thermalized, seed);
 }
 
-std::shared_ptr<EKReactionBase>
-new_ek_reaction_bulk(std::shared_ptr<LatticeWalberla> const &lattice,
-                     typename EKReactionBase::reactants_type const &reactants,
-                     double coefficient) {
-  return std::make_shared<EKReactionImplBulk>(lattice, reactants, coefficient);
-}
+// TODO
+// std::shared_ptr<EKReactionBase>
+// new_ek_reaction_bulk(std::shared_ptr<LatticeWalberla> const &lattice,
+//                      typename EKReactionBase::reactants_type const &reactants,
+//                      double coefficient) {
+//   return std::make_shared<EKReactionImplBulk>(lattice, reactants, coefficient);
+// }
 
-std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed(
-    std::shared_ptr<LatticeWalberla> const &lattice,
-    typename EKReactionBase::reactants_type const &reactants,
-    double coefficient) {
-  return std::make_shared<EKReactionImplIndexed>(lattice, reactants,
-                                                 coefficient);
-}
+// std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed(
+//     std::shared_ptr<LatticeWalberla> const &lattice,
+//     typename EKReactionBase::reactants_type const &reactants,
+//     double coefficient) {
+//   return std::make_shared<EKReactionImplIndexed>(lattice, reactants,
+//                                                  coefficient);
+// }
 
+void set_device_id_per_rank() { walberla::gpu::selectDeviceBasedOnMpiRank(); }
 } // namespace walberla

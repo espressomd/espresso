@@ -165,7 +165,7 @@ class EKSpecies(ScriptInterfaceHelper,
 
     """
 
-    _so_name = "walberla::EKSpecies"
+    _so_name = "walberla::EKSpeciesCPU"
     _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
@@ -249,6 +249,23 @@ class EKSpecies(ScriptInterfaceHelper,
             raster=array_variant(mask.flatten()),
             values=array_variant(value.flatten()))
 
+
+@script_interface_register
+class EKSpeciesGPU(EKSpecies):
+    """
+    Initialize the lattice-Boltzmann method for hydrodynamic flow using
+    waLBerla for the GPU. See :class:`HydrodynamicInteraction` for the
+    list of parameters.
+
+    """
+    _so_name = "walberla::EKSpeciesGPU"
+    _so_creation_policy = "GLOBAL"
+    _so_features = ("WALBERLA", "CUDA")
+
+    def default_params(self):
+        params = super().default_params()
+        params["single_precision"] = True
+        return params
 
 class FluxBoundary:
     """

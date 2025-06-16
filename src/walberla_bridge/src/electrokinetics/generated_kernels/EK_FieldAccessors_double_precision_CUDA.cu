@@ -110,7 +110,7 @@ __global__ void kernel_set(
     double const *RESTRICT in) {
   auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
   scalar_field.set(blockIdx, threadIdx);
-  u_in += offset;
+  in += offset;
   if (scalar_field.isValidPosition()) {
     scalar_field.get(0u) = in[0u];
   }
@@ -121,7 +121,7 @@ __global__ void kernel_broadcast(
     double const *RESTRICT in) {
   scalar_field.set(blockIdx, threadIdx);
   if (scalar_field.isValidPosition()) {
-    vec.get(0u) = in[0u];
+    scalar_field.get(0u) = in[0u];
   }
 }
 
@@ -146,7 +146,7 @@ __global__ void kernel_broadcast_add(
 }
 // LCOV_EXCL_STOP
 
-Vector3<double> get(
+double get(
     gpu::GPUField<double> const *scalar_field,
     Cell const &cell) {
   CellInterval ci(cell, cell);
@@ -156,7 +156,8 @@ Vector3<double> get(
   kernel.addFieldIndexingParam(gpu::FieldIndexing<double>::interval(*scalar_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
-  return dev_data[0];
+  double result = dev_data[0u];
+  return result;
 }
 
 void set(
@@ -222,7 +223,7 @@ void set(
   thrust::device_vector<double> dev_data(values.begin(), values.end());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_set);
-  kernel.addFieldIndexingParam(gpu::FieldIndexing<double>::interval(*vec_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<double>::interval(*scalar_field, ci));
   kernel.addParam(const_cast<const double *>(dev_data_ptr));
   kernel();
 }
@@ -390,9 +391,9 @@ __global__ void kernel_get(
     gpu::FieldAccessor<double> flux_field,
     double *j_out) {
   auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 13u);
-  vec.set(blockIdx, threadIdx);
+  flux_field.set(blockIdx, threadIdx);
   j_out += offset;
-  if (vec.isValidPosition()) {
+  if (flux_field.isValidPosition()) {
     j_out[0u] = flux_field.get(0u);
     j_out[1u] = flux_field.get(1u);
     j_out[2u] = flux_field.get(2u);
@@ -431,7 +432,7 @@ __global__ void kernel_broadcast(
 }
 // LCOV_EXCL_STOP
 
-Vector3<double> get(
+std::array<double, 13> get(
     gpu::GPUField<double> const *flux_field,
     Cell const &cell) {
   CellInterval ci(cell, cell);
@@ -441,14 +442,14 @@ Vector3<double> get(
   kernel.addFieldIndexingParam(gpu::FieldIndexing<double>::interval(*flux_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
-  std::Vector<double> vec;
+  std::array<double, 13> vec;
   thrust::copy(dev_data.begin(), dev_data.end(), vec.data());
   return vec;
 }
 
 void initialize(
     gpu::GPUField<double> *flux_field,
-    std::Vector<double> const &flux) {
+    std::array<double, 13> const &flux) {
   CellInterval ci = flux_field->xyzSizeWithGhostLayer();
   thrust::device_vector<double> dev_data(flux.data(), flux.data() + 13u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
