@@ -288,11 +288,12 @@ public:
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
 
     m_density_field_id =
-        add_to_storage<_DensityField>("density field", density);
+        add_to_storage<_DensityField>("density field", FloatType_c(density));
     // m_density_field_flattened_id =
     //     field::addFlattenedShallowCopyToStorage<_DensityField>(
     // blocks, m_density_field_id, "flattened density field");
-    m_flux_field_id = add_to_storage<_FluxField>("flux field", 0.0);
+    m_flux_field_id =
+        add_to_storage<_FluxField>("flux field", FloatType_c(0.0));
     // m_flux_field_flattened_id =
     //     field::addFlattenedShallowCopyToStorage<_FluxField>(
     //         blocks, m_flux_field_id, "flattened flux field");
