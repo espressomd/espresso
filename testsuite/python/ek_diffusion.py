@@ -120,14 +120,17 @@ class EKTest:
         np.testing.assert_allclose(
             calc_density, simulated_density, atol=1e-5, rtol=0.)
 
+
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKDiffusionCPU(EKTest, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpecies
+
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKDiffusion(EKTest, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+
 
 if __name__ == "__main__":
     ut.main()

@@ -26,8 +26,8 @@
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
 
-#include "LatticeWalberla.hpp"
 #include "../src/utils/types_conversion.hpp"
+#include "LatticeWalberla.hpp"
 
 #include <array>
 #include <cmath>
@@ -178,8 +178,7 @@ get_interval(::LatticeWalberla const &lattice,
 get_block_interval(::LatticeWalberla const &lattice,
                    Utils::Vector3i const &lower_corner,
                    Utils::Vector3i const &upper_corner,
-                   Utils::Vector3i const &block_offset,
-                   IBlock const &block) {
+                   Utils::Vector3i const &block_offset, IBlock const &block) {
   auto block_lower_corner = lattice.get_block_corner(block, true);
   if (not(upper_corner > block_lower_corner)) {
     return std::nullopt;
@@ -200,7 +199,7 @@ get_block_interval(::LatticeWalberla const &lattice,
   return {CellInterval(block_lower_cell, block_upper_cell)};
 }
 
-  /**
+/**
  * @brief Synchronize data between a sliced block and a container.
  *
  * Synchronize data between two data buffers representing sliced matrices
@@ -215,11 +214,9 @@ get_block_interval(::LatticeWalberla const &lattice,
  * @param kernel        Function to execute on the two data buffers
  */
 template <typename Kernel>
-void copy_block_buffer(CellInterval const &bci,
-                       CellInterval const &ci,
+void copy_block_buffer(CellInterval const &bci, CellInterval const &ci,
                        Utils::Vector3i const &block_offset,
-                       Utils::Vector3i const &lower_corner,
-                       Kernel &&kernel) {
+                       Utils::Vector3i const &lower_corner, Kernel &&kernel) {
   auto const local_grid = to_vector3i(ci.max() - ci.min() + Cell(1, 1, 1));
   auto const block_grid = to_vector3i(bci.max() - bci.min() + Cell(1, 1, 1));
   auto const lower_cell = bci.min();

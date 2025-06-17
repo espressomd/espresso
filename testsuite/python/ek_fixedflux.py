@@ -113,14 +113,17 @@ class EKTest:
             actual=np.sum(ekspecies[1:-1, 1:-1, 1:-1].density),
             desired=expected_end_density, decimal=decimal_precision)
 
+
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKFixedFluxCPU(EKTest, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpecies
+
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKFixedFluxGPU(EKTest, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+
 
 if __name__ == "__main__":
     ut.main()

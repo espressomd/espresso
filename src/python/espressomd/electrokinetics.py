@@ -267,6 +267,7 @@ class EKSpeciesGPU(EKSpecies):
         params["single_precision"] = True
         return params
 
+
 class FluxBoundary:
     """
     Hold flux information for the flux boundary

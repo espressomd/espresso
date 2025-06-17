@@ -20,18 +20,6 @@
 
 import os
 import re
-import sympy as sp
-import pystencils as ps
-import lbmpy_walberla
-from pystencils import TypedSymbol
-try:
-    from pystencils.typing import CastFunc
-except ImportError:
-    from pystencils.sympyextensions import CastFunc
-try:
-    from pystencils.typing import BasicType as PsScalarType
-except ImportError:
-    from pystencils.types import PsScalarType
 
 
 # File derived from lbmpy_walberla.walberla_lbm_generation in the
@@ -56,19 +44,9 @@ def generate_accessors(ctx, config, templates):
     # with backports from commit de6b00071233a9a1f45d7a6773988363e058f1a0
 
     from jinja2 import Environment, FileSystemLoader, StrictUndefined
-    from sympy.tensor import IndexedBase
-    from pystencils.backends.cbackend import CustomSympyPrinter
-    from pystencils.backends.cbackend import CBackend
-    from pystencils.backends.cuda_backend import CudaBackend
     from pystencils_walberla.jinja_filters import add_pystencils_filters_to_jinja_env
 
-    cpp_printer = CustomSympyPrinter()
-
     default_dtype = config.data_type.default_factory()
-    if config.target == ps.Target.GPU:
-        backend = CudaBackend()
-    else:
-        backend = CBackend()
 
     jinja_context = {
         "dtype": default_dtype,

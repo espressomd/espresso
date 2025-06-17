@@ -80,9 +80,10 @@ public:
   void add(std::shared_ptr<EKSpecies> const &ek_species) {
     assert(not contains(ek_species));
     sanity_checks(ek_species);
-    if(m_ekcontainer.size() > 0){
-      if(ek_species->is_gpu() != m_is_gpu){
-        throw std::runtime_error("All EK Species need to be on de same device.");
+    if (m_ekcontainer.size() > 0) {
+      if (ek_species->is_gpu() != m_is_gpu) {
+        throw std::runtime_error(
+            "All EK Species need to be on de same device.");
       }
     }
     m_is_gpu = ek_species->is_gpu();

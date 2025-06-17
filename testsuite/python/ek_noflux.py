@@ -105,10 +105,12 @@ class EKTest:
 class EKNoFluxCPU(EKTest, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpecies
 
+
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKNoFluxGPU(EKTest, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+
 
 if __name__ == "__main__":
     ut.main()

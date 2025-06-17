@@ -69,15 +69,19 @@ class EKinWalberlaImpl : public EKinWalberlaBase {
   using ContinuityKernel =
       typename detail::KernelTrait<FloatType, Architecture>::ContinuityKernel;
   using DiffusiveFluxKernelUnthermalized =
-      typename detail::KernelTrait<FloatType, Architecture>::DiffusiveFluxKernel;
-  using DiffusiveFluxKernelThermalized =
-      typename detail::KernelTrait<FloatType, Architecture>::DiffusiveFluxKernelThermalized;
+      typename detail::KernelTrait<FloatType,
+                                   Architecture>::DiffusiveFluxKernel;
+  using DiffusiveFluxKernelThermalized = typename detail::KernelTrait<
+      FloatType, Architecture>::DiffusiveFluxKernelThermalized;
   using AdvectiveFluxKernel =
-      typename detail::KernelTrait<FloatType, Architecture>::AdvectiveFluxKernel;
+      typename detail::KernelTrait<FloatType,
+                                   Architecture>::AdvectiveFluxKernel;
   using FrictionCouplingKernel =
-      typename detail::KernelTrait<FloatType, Architecture>::FrictionCouplingKernel;
+      typename detail::KernelTrait<FloatType,
+                                   Architecture>::FrictionCouplingKernel;
   using DiffusiveFluxKernelElectrostaticUnthermalized =
-      typename detail::KernelTrait<FloatType, Architecture>::DiffusiveFluxKernelElectrostatic;
+      typename detail::KernelTrait<
+          FloatType, Architecture>::DiffusiveFluxKernelElectrostatic;
   using DiffusiveFluxKernelElectrostaticThermalized =
       typename detail::KernelTrait<
           FloatType, Architecture>::DiffusiveFluxKernelElectrostaticThermalized;
@@ -88,8 +92,10 @@ class EKinWalberlaImpl : public EKinWalberlaBase {
       std::variant<DiffusiveFluxKernelElectrostaticUnthermalized,
                    DiffusiveFluxKernelElectrostaticThermalized>;
 
-  using Dirichlet = typename detail::KernelTrait<FloatType, Architecture>::Dirichlet;
-  using FixedFlux = typename detail::KernelTrait<FloatType, Architecture>::FixedFlux;
+  using Dirichlet =
+      typename detail::KernelTrait<FloatType, Architecture>::Dirichlet;
+  using FixedFlux =
+      typename detail::KernelTrait<FloatType, Architecture>::FixedFlux;
 
   using BoundaryModelDensity = BoundaryHandling<FloatType, FloatType, Dirichlet>;
   using BoundaryModelFlux = BoundaryHandling<FloatType, Vector3<FloatType>, FixedFlux>;
@@ -118,15 +124,16 @@ protected:
     static auto constexpr AT = lbmpy::Arch::GPU;
     template <class Field>
     using MemcpyPackInfo = gpu::communication::MemcpyPackInfo<Field>;
+
   public:
     template <typename Stencil>
     class UniformGPUScheme
         : public gpu::communication::UniformGPUScheme<Stencil> {
     public:
       explicit UniformGPUScheme(auto const &bf)
-            : gpu::communication::UniformGPUScheme<Stencil>(
-                  bf, /* sendDirectlyFromGPU */ false,
-                  /* useLocalCommunication */ false) {}
+          : gpu::communication::UniformGPUScheme<Stencil>(
+                bf, /* sendDirectlyFromGPU */ false,
+                /* useLocalCommunication */ false) {}
     };
     using FluxField = gpu::GPUField<FT>;
     using DensityField = gpu::GPUField<FT>;
@@ -144,7 +151,8 @@ protected:
 
 public:
   using FluxField = typename FieldTrait<FloatType, Architecture>::FluxField;
-  using DensityField = typename FieldTrait<FloatType, Architecture>::DensityField;
+  using DensityField =
+      typename FieldTrait<FloatType, Architecture>::DensityField;
 
   template <typename T> FloatType FloatType_c(T t) {
     return numeric_cast<FloatType>(t);
@@ -202,22 +210,7 @@ protected:
   // TODO: kernel for that
   // std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
 
-  // [[nodiscard]] std::optional<CellInterval>
-  // get_interval(Utils::Vector3i const &lower_corner,
-  //              Utils::Vector3i const &upper_corner) const {
-  //   auto const &lattice = get_lattice();
-  //   auto const &cell_min = lower_corner;
-  //   auto const cell_max = upper_corner - Utils::Vector3i::broadcast(1);
-  //   auto const lower_bc = get_block_and_cell(lattice, cell_min, true);
-  //   auto const upper_bc = get_block_and_cell(lattice, cell_max, true);
-  //   if (not lower_bc or not upper_bc) {
-  //     return std::nullopt;
-  //   }
-  //   assert(&(*(lower_bc->block)) == &(*(upper_bc->block)));
-  //   return {CellInterval(lower_bc->cell, upper_bc->cell)};
-  // }
-
- /**
+  /**
    * @brief Convenience function to add a field with a custom allocator.
    *
    * When vectorization is off, let waLBerla decide which memory allocator
@@ -228,12 +221,13 @@ protected:
    * will fall back to @c StdFieldAlloc, yet @c AllocateAligned is needed
    * for intrinsics to work.
    */
-  template <typename Field> auto add_to_storage(std::string const tag, FloatType value) {
+  template <typename Field>
+  auto add_to_storage(std::string const tag, FloatType value) {
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
     if constexpr (Architecture == lbmpy::Arch::CPU) {
-      return field::addToStorage<Field>(blocks, tag, FloatType{value}, field::fzyx,
-                                        n_ghost_layers);
+      return field::addToStorage<Field>(blocks, tag, FloatType{value},
+                                        field::fzyx, n_ghost_layers);
     }
 #if defined(__CUDACC__)
     else {
@@ -247,8 +241,8 @@ protected:
       } else if constexpr (std::is_same_v<Field, _FluxField>) {
         for (auto block = blocks->begin(); block != blocks->end(); ++block) {
           auto field = block->template getData<GPUField>(field_id);
-          ek::accessor::Flux::initialize(
-              field, std::array<FloatType, FluxCount>{});
+          ek::accessor::Flux::initialize(field,
+                                         std::array<FloatType, FluxCount>{});
         }
       }
       return field_id;
@@ -272,7 +266,7 @@ protected:
         CellInterval{to_cell(lc), to_cell(uc)});
   }
 
-  using FullCommunicator = 
+  using FullCommunicator =
       typename FieldTrait<FloatType, Architecture>::template RegularCommScheme<
           typename stencil::D3Q27>;
   std::shared_ptr<FullCommunicator> m_full_communication;
@@ -293,17 +287,18 @@ public:
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
 
-    m_density_field_id = add_to_storage<_DensityField>("density field", density);
+    m_density_field_id =
+        add_to_storage<_DensityField>("density field", density);
     // m_density_field_flattened_id =
     //     field::addFlattenedShallowCopyToStorage<_DensityField>(
-            // blocks, m_density_field_id, "flattened density field");
+    // blocks, m_density_field_id, "flattened density field");
     m_flux_field_id = add_to_storage<_FluxField>("flux field", 0.0);
     // m_flux_field_flattened_id =
     //     field::addFlattenedShallowCopyToStorage<_FluxField>(
     //         blocks, m_flux_field_id, "flattened flux field");
 
-    m_continuity = std::make_unique<ContinuityKernel>(
-        m_flux_field_id, m_density_field_id);
+    m_continuity =
+        std::make_unique<ContinuityKernel>(m_flux_field_id, m_density_field_id);
 
     if (thermalized) {
       set_diffusion_kernels(*m_lattice, seed);
@@ -418,9 +413,8 @@ public:
 
 private:
   void set_diffusion_kernels() {
-    auto kernel = DiffusiveFluxKernelUnthermalized(m_flux_field_id,
-                                                   m_density_field_id,
-                                                   FloatType_c(m_diffusion));
+    auto kernel = DiffusiveFluxKernelUnthermalized(
+        m_flux_field_id, m_density_field_id, FloatType_c(m_diffusion));
     m_diffusive_flux = std::make_unique<DiffusiveFluxKernel>(std::move(kernel));
 
     auto kernel_electrostatic = DiffusiveFluxKernelElectrostaticUnthermalized(
@@ -439,9 +433,8 @@ private:
     auto const grid_dim = lattice.get_grid_dimensions();
 
     auto kernel = DiffusiveFluxKernelThermalized(
-        m_flux_field_id, m_density_field_id,
-        FloatType_c(m_diffusion), grid_dim[0], grid_dim[1], grid_dim[2], seed,
-        0);
+        m_flux_field_id, m_density_field_id, FloatType_c(m_diffusion),
+        grid_dim[0], grid_dim[1], grid_dim[2], seed, 0);
 
     auto kernel_electrostatic = DiffusiveFluxKernelElectrostaticThermalized(
         m_flux_field_id, BlockDataID{}, m_density_field_id,
@@ -649,9 +642,8 @@ public:
       out = std::vector<double>(ci->numCells());
       for (auto &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
           auto const density_field =
               block.template getData<DensityField>(m_density_field_id);
           auto const values = ek::accessor::Scalar::get(density_field, *bci);
@@ -679,9 +671,8 @@ public:
       assert(density.size() == ci->numCells());
       for (auto &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
           auto const density_field =
               block.template getData<DensityField>(m_density_field_id);
           std::vector<FloatType> values(bci->numCells());
@@ -1011,7 +1002,6 @@ protected:
   public:
     using VTKWriter<DensityField, 1u, OutputType>::VTKWriter;
     using Base::evaluate;
-
 
   protected:
     OutputType evaluate(cell_idx_t const x, cell_idx_t const y,

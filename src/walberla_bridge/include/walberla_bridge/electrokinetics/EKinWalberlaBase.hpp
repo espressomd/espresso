@@ -153,7 +153,7 @@ public:
 
   [[nodiscard]] virtual std::size_t get_density_id() const noexcept = 0;
 
-    /** @brief Get whether the kernels run on GPUs. */
+  /** @brief Get whether the kernels run on GPUs. */
   [[nodiscard]] virtual bool is_gpu() const noexcept = 0;
 
   ~EKinWalberlaBase() override = default;

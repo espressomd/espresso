@@ -35,15 +35,15 @@ std::shared_ptr<EKinWalberlaBase>
 new_ek_walberla_cpu(std::shared_ptr<LatticeWalberla> const &lattice,
                     double diffusion, double kT, double valency,
                     Utils::Vector3d ext_efield, double density, bool advection,
-                    bool friction_coupling, bool single_precision, bool thermalized,
-                    unsigned int seed);
+                    bool friction_coupling, bool single_precision,
+                    bool thermalized, unsigned int seed);
 
 std::shared_ptr<EKinWalberlaBase>
 new_ek_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
                     double diffusion, double kT, double valency,
                     Utils::Vector3d ext_efield, double density, bool advection,
-                    bool friction_coupling, bool single_precision, bool thermalized,
-                    unsigned int seed);
+                    bool friction_coupling, bool single_precision,
+                    bool thermalized, unsigned int seed);
 
 std::shared_ptr<EKReactionBase>
 new_ek_reaction_bulk(std::shared_ptr<LatticeWalberla> const &lattice,

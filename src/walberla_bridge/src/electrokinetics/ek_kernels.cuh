@@ -48,10 +48,12 @@ using lbmpy::Arch;
 
 template <> struct KernelTrait<double, Arch::GPU> {
   using ContinuityKernel = pystencils::ContinuityKernel_double_precision_CUDA;
-  using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_double_precision_CUDA;
+  using DiffusiveFluxKernel =
+      pystencils::DiffusiveFluxKernel_double_precision_CUDA;
   using DiffusiveFluxKernelThermalized =
       pystencils::DiffusiveFluxKernelThermalized_double_precision_CUDA;
-  using AdvectiveFluxKernel = pystencils::AdvectiveFluxKernel_double_precision_CUDA;
+  using AdvectiveFluxKernel =
+      pystencils::AdvectiveFluxKernel_double_precision_CUDA;
   using FrictionCouplingKernel =
       pystencils::FrictionCouplingKernel_double_precision_CUDA;
   using DiffusiveFluxKernelElectrostatic =
@@ -64,10 +66,12 @@ template <> struct KernelTrait<double, Arch::GPU> {
 };
 template <> struct KernelTrait<float, Arch::GPU> {
   using ContinuityKernel = pystencils::ContinuityKernel_single_precision_CUDA;
-  using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_single_precision_CUDA;
+  using DiffusiveFluxKernel =
+      pystencils::DiffusiveFluxKernel_single_precision_CUDA;
   using DiffusiveFluxKernelThermalized =
       pystencils::DiffusiveFluxKernelThermalized_single_precision_CUDA;
-  using AdvectiveFluxKernel = pystencils::AdvectiveFluxKernel_single_precision_CUDA;
+  using AdvectiveFluxKernel =
+      pystencils::AdvectiveFluxKernel_single_precision_CUDA;
   using FrictionCouplingKernel =
       pystencils::FrictionCouplingKernel_single_precision_CUDA;
   using DiffusiveFluxKernelElectrostatic =

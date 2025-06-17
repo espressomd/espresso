@@ -100,14 +100,17 @@ class EKTest:
                         f"Density distribution accuracy not achieved, allowed "
                         f"deviation: 5.0e-03, measured: {max_diff}")
 
+
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKFluctuationsCPU(EKTest, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpecies
+
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKFluctuationsGPU(EKTest, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+
 
 if __name__ == "__main__":
     ut.main()

@@ -42,9 +42,9 @@
 
 #include <walberla_bridge/Architecture.hpp>
 
-#include <gpu/DeviceSelectMPI.h>
 #include "reactions/EKReactionImplBulk.hpp"
 #include "reactions/EKReactionImplIndexed.hpp"
+#include <gpu/DeviceSelectMPI.h>
 
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
@@ -59,8 +59,8 @@ std::shared_ptr<EKinWalberlaBase>
 new_ek_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
                     double diffusion, double kT, double valency,
                     Utils::Vector3d ext_efield, double density, bool advection,
-                    bool friction_coupling, bool single_precision, bool thermalized,
-                    unsigned int seed) {
+                    bool friction_coupling, bool single_precision,
+                    bool thermalized, unsigned int seed) {
   if (single_precision) {
     return std::make_shared<EKinWalberlaImpl<13, float, lbmpy::Arch::GPU>>(
         lattice, diffusion, kT, valency, ext_efield, density, advection,
@@ -75,9 +75,10 @@ new_ek_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
 // TODO
 // std::shared_ptr<EKReactionBase>
 // new_ek_reaction_bulk(std::shared_ptr<LatticeWalberla> const &lattice,
-//                      typename EKReactionBase::reactants_type const &reactants,
-//                      double coefficient) {
-//   return std::make_shared<EKReactionImplBulk>(lattice, reactants, coefficient);
+//                      typename EKReactionBase::reactants_type const
+//                      &reactants, double coefficient) {
+//   return std::make_shared<EKReactionImplBulk>(lattice, reactants,
+//   coefficient);
 // }
 
 // std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed(

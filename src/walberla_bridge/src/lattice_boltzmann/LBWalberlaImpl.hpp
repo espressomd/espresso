@@ -863,9 +863,8 @@ public:
       out = std::vector<double>(3u * ci->numCells());
       for (auto &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
           auto const field =
               block.template getData<VectorField>(m_velocity_field_id);
           auto values = lbm::accessor::Vector::get(field, *bci);
@@ -906,9 +905,8 @@ public:
       assert(velocity.size() == 3u * ci->numCells());
       for (auto &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
           auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
           auto force_field = block.template getData<VectorField>(
               m_last_applied_force_field_id);
@@ -1252,9 +1250,8 @@ public:
       out = std::vector<double>(3u * ci->numCells());
       for (auto const &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
           auto const field = block.template getData<VectorField>(
               m_last_applied_force_field_id);
           auto const values = lbm::accessor::Vector::get(field, *bci);
@@ -1286,9 +1283,8 @@ public:
       assert(force.size() == 3u * ci->numCells());
       for (auto &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
           auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
           auto force_field = block.template getData<VectorField>(
               m_last_applied_force_field_id);
@@ -1364,9 +1360,8 @@ public:
       out = std::vector<double>(stencil_size() * ci->numCells());
       for (auto const &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
           auto const pdf_field =
               block.template getData<PdfField>(m_pdf_field_id);
           auto const values = lbm::accessor::Population::get(pdf_field, *bci);
@@ -1396,9 +1391,8 @@ public:
       assert(population.size() == stencil_size() * ci->numCells());
       for (auto &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
           auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
           auto force_field = block.template getData<VectorField>(
               m_last_applied_force_field_id);
@@ -1463,9 +1457,8 @@ public:
       out = std::vector<double>(ci->numCells());
       for (auto const &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
           auto const pdf_field =
               block.template getData<PdfField>(m_pdf_field_id);
           auto const values =
@@ -1494,9 +1487,8 @@ public:
       assert(density.size() == ci->numCells());
       for (auto &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
           auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
           std::vector<FloatType> values(bci->numCells());
 
@@ -1548,9 +1540,8 @@ public:
       out = std::vector<std::optional<Utils::Vector3d>>(ci->numCells());
       for (auto const &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
 
           auto kernel = [&out, this](unsigned const, unsigned const local_index,
                                      Utils::Vector3i const &node) {
@@ -1580,9 +1571,8 @@ public:
       assert(velocity.size() == ci->numCells());
       for (auto &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
 
           auto kernel = [&lattice, &block, &velocity,
                          this](unsigned const, unsigned const local_index,
@@ -1644,9 +1634,8 @@ public:
       out = std::vector<bool>(ci->numCells());
       for (auto const &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
 
           auto kernel = [&out, this](unsigned const, unsigned const local_index,
                                      Utils::Vector3i const &node) {
@@ -1714,9 +1703,8 @@ public:
       out = std::vector<double>(9u * ci->numCells());
       for (auto const &block : *lattice.get_blocks()) {
         auto const block_offset = lattice.get_block_corner(block, true);
-        if (auto const bci = get_block_interval(lattice, 
-                                                lower_corner, upper_corner,
-                                                block_offset, block)) {
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
           auto const pdf_field =
               block.template getData<PdfField>(m_pdf_field_id);
           auto values =
