@@ -25,8 +25,7 @@ import numpy as np
 import scipy.optimize
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
-class EKDiffusion(ut.TestCase):
+class EKTest:
     BOX_L = 15.5
     AGRID = 0.5
     DENSITY = 1
@@ -61,7 +60,7 @@ class EKDiffusion(ut.TestCase):
         lattice = espressomd.electrokinetics.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = espressomd.electrokinetics.EKSpecies(
+        ekspecies = self.ek_species_class(
             lattice=lattice, density=0.0, valency=0.0, advection=False,
             diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
             single_precision=single_precision, tau=self.TAU)
@@ -121,6 +120,14 @@ class EKDiffusion(ut.TestCase):
         np.testing.assert_allclose(
             calc_density, simulated_density, atol=1e-5, rtol=0.)
 
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKDiffusionCPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKDiffusion(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
 
 if __name__ == "__main__":
     ut.main()

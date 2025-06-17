@@ -459,7 +459,8 @@ class EKTestWalberlaSinglePrecision(EKTest, ut.TestCase):
     atol = 1e-7
     rtol = 5e-5
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKTestWalberlaGPU(EKTest, ut.TestCase):
 
     """Test for the Walberla implementation of the EK in double-precision."""
@@ -473,7 +474,8 @@ class EKTestWalberlaGPU(EKTest, ut.TestCase):
     rtol = 1e-7
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKTestWalberlaSinglePrecisionGPU(EKTest, ut.TestCase):
 
     """Test for the Walberla implementation of the EK in single-precision."""
