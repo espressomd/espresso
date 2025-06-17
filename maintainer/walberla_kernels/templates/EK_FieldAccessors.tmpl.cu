@@ -119,11 +119,11 @@ namespace Scalar
 
     __global__ void kernel_broadcast(
         gpu::FieldAccessor< {{dtype}} > scalar_field,
-        {{dtype}} const * RESTRICT in )
+        {{dtype}} const in )
     {
         scalar_field.set( blockIdx, threadIdx );
         if (scalar_field.isValidPosition()) {
-            scalar_field.get(0u) = in[0u];
+            scalar_field.get(0u) = in;
         }
     }
 
@@ -141,11 +141,11 @@ namespace Scalar
 
     __global__ void kernel_broadcast_add(
         gpu::FieldAccessor< {{dtype}} > scalar_field,
-        {{dtype}} const * RESTRICT in )
+        {{dtype}} const in )
     {
         scalar_field.set( blockIdx, threadIdx );
         if (scalar_field.isValidPosition()) {
-            scalar_field.get(0u) += in[0u];
+            scalar_field.get(0u) += in;
         }
     }
 // LCOV_EXCL_STOP
@@ -167,11 +167,11 @@ namespace Scalar
 
     void set(
         gpu::GPUField< {{dtype}} > * scalar_field,
-        {{dtype}} const & value,
+        {{dtype}} const value,
         Cell const & cell )
     {
         CellInterval ci ( cell, cell );
-        auto kernel = gpu::make_kernel( kernel_set );
+        auto kernel = gpu::make_kernel( kernel_broadcast );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *scalar_field, ci ) );
         kernel.addParam( value );
         kernel();
@@ -179,7 +179,7 @@ namespace Scalar
 
     void add(
         gpu::GPUField< {{dtype}} > * scalar_field,
-        {{dtype}} const & value,
+        {{dtype}} const value,
         Cell const &cell )
     {
         CellInterval ci ( cell, cell );
@@ -191,7 +191,7 @@ namespace Scalar
 
     void initialize(
         gpu::GPUField< {{dtype}} > * scalar_field,
-        {{dtype}} const & value )
+        {{dtype}} const value )
     {
         CellInterval ci = scalar_field->xyzSizeWithGhostLayer();
         auto kernel = gpu::make_kernel( kernel_broadcast );
@@ -202,7 +202,7 @@ namespace Scalar
 
     void add_to_all(
         gpu::GPUField< {{dtype}} > * scalar_field,
-        Vector{{D}}< {{dtype}} > const & value )
+        Vector{{D}}< {{dtype}} > const value )
     {
         CellInterval ci = scalar_field->xyzSizeWithGhostLayer();
         auto kernel = gpu::make_kernel( kernel_broadcast_add );

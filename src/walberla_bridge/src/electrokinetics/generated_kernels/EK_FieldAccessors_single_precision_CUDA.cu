@@ -118,10 +118,10 @@ __global__ void kernel_set(
 
 __global__ void kernel_broadcast(
     gpu::FieldAccessor<float> scalar_field,
-    float const *RESTRICT in) {
+    float const in) {
   scalar_field.set(blockIdx, threadIdx);
   if (scalar_field.isValidPosition()) {
-    scalar_field.get(0u) = in[0u];
+    scalar_field.get(0u) = in;
   }
 }
 
@@ -138,10 +138,10 @@ __global__ void kernel_add(
 
 __global__ void kernel_broadcast_add(
     gpu::FieldAccessor<float> scalar_field,
-    float const *RESTRICT in) {
+    float const in) {
   scalar_field.set(blockIdx, threadIdx);
   if (scalar_field.isValidPosition()) {
-    scalar_field.get(0u) += in[0u];
+    scalar_field.get(0u) += in;
   }
 }
 // LCOV_EXCL_STOP
@@ -162,10 +162,10 @@ float get(
 
 void set(
     gpu::GPUField<float> *scalar_field,
-    float const &value,
+    float const value,
     Cell const &cell) {
   CellInterval ci(cell, cell);
-  auto kernel = gpu::make_kernel(kernel_set);
+  auto kernel = gpu::make_kernel(kernel_broadcast);
   kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*scalar_field, ci));
   kernel.addParam(value);
   kernel();
@@ -173,7 +173,7 @@ void set(
 
 void add(
     gpu::GPUField<float> *scalar_field,
-    float const &value,
+    float const value,
     Cell const &cell) {
   CellInterval ci(cell, cell);
   auto kernel = gpu::make_kernel(kernel_add);
@@ -184,7 +184,7 @@ void add(
 
 void initialize(
     gpu::GPUField<float> *scalar_field,
-    float const &value) {
+    float const value) {
   CellInterval ci = scalar_field->xyzSizeWithGhostLayer();
   auto kernel = gpu::make_kernel(kernel_broadcast);
   kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*scalar_field, ci));
@@ -194,7 +194,7 @@ void initialize(
 
 void add_to_all(
     gpu::GPUField<float> *scalar_field,
-    Vector3<float> const &value) {
+    Vector3<float> const value) {
   CellInterval ci = scalar_field->xyzSizeWithGhostLayer();
   auto kernel = gpu::make_kernel(kernel_broadcast_add);
   kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*scalar_field, ci));

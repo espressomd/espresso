@@ -459,6 +459,33 @@ class EKTestWalberlaSinglePrecision(EKTest, ut.TestCase):
     atol = 1e-7
     rtol = 5e-5
 
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKTestWalberlaGPU(EKTest, ut.TestCase):
+
+    """Test for the Walberla implementation of the EK in double-precision."""
+
+    lb_fluid_class = espressomd.lb.LBFluidWalberlaGPU
+    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+    ek_params = {"single_precision": False}
+    lb_params = {"single_precision": False}
+    atol = 1e-10
+    rtol = 1e-7
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKTestWalberlaSinglePrecisionGPU(EKTest, ut.TestCase):
+
+    """Test for the Walberla implementation of the EK in single-precision."""
+
+    lb_fluid_class = espressomd.lb.LBFluidWalberlaGPU
+    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+    ek_params = {"single_precision": True}
+    lb_params = {"single_precision": True}
+    atol = 1e-7
+    rtol = 5e-5
+
 
 if __name__ == "__main__":
     ut.main()

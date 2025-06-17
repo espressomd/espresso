@@ -118,10 +118,10 @@ __global__ void kernel_set(
 
 __global__ void kernel_broadcast(
     gpu::FieldAccessor<double> scalar_field,
-    double const *RESTRICT in) {
+    double const in) {
   scalar_field.set(blockIdx, threadIdx);
   if (scalar_field.isValidPosition()) {
-    scalar_field.get(0u) = in[0u];
+    scalar_field.get(0u) = in;
   }
 }
 
@@ -138,10 +138,10 @@ __global__ void kernel_add(
 
 __global__ void kernel_broadcast_add(
     gpu::FieldAccessor<double> scalar_field,
-    double const *RESTRICT in) {
+    double const in) {
   scalar_field.set(blockIdx, threadIdx);
   if (scalar_field.isValidPosition()) {
-    scalar_field.get(0u) += in[0u];
+    scalar_field.get(0u) += in;
   }
 }
 // LCOV_EXCL_STOP
@@ -162,10 +162,10 @@ double get(
 
 void set(
     gpu::GPUField<double> *scalar_field,
-    double const &value,
+    double const value,
     Cell const &cell) {
   CellInterval ci(cell, cell);
-  auto kernel = gpu::make_kernel(kernel_set);
+  auto kernel = gpu::make_kernel(kernel_broadcast);
   kernel.addFieldIndexingParam(gpu::FieldIndexing<double>::interval(*scalar_field, ci));
   kernel.addParam(value);
   kernel();
@@ -173,7 +173,7 @@ void set(
 
 void add(
     gpu::GPUField<double> *scalar_field,
-    double const &value,
+    double const value,
     Cell const &cell) {
   CellInterval ci(cell, cell);
   auto kernel = gpu::make_kernel(kernel_add);
@@ -184,7 +184,7 @@ void add(
 
 void initialize(
     gpu::GPUField<double> *scalar_field,
-    double const &value) {
+    double const value) {
   CellInterval ci = scalar_field->xyzSizeWithGhostLayer();
   auto kernel = gpu::make_kernel(kernel_broadcast);
   kernel.addFieldIndexingParam(gpu::FieldIndexing<double>::interval(*scalar_field, ci));
@@ -194,7 +194,7 @@ void initialize(
 
 void add_to_all(
     gpu::GPUField<double> *scalar_field,
-    Vector3<double> const &value) {
+    Vector3<double> const value) {
   CellInterval ci = scalar_field->xyzSizeWithGhostLayer();
   auto kernel = gpu::make_kernel(kernel_broadcast_add);
   kernel.addFieldIndexingParam(gpu::FieldIndexing<double>::interval(*scalar_field, ci));

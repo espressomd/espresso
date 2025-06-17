@@ -43,6 +43,8 @@
 
 namespace EK {
 
+bool EKWalberla::is_gpu() const { return ek_container->is_gpu(); }
+
 double EKWalberla::get_tau() const { return ek_container->get_tau(); }
 
 bool EKWalberla::is_ready_for_propagation() const noexcept {
