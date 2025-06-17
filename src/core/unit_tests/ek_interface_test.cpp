@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
     auto constexpr single_precision = true;
     auto constexpr stoich = 1.;
     auto constexpr order = 2.;
-    auto ek_species = walberla::new_ek_walberla(
+    auto ek_species = walberla::new_ek_walberla_cpu(
         espresso::ek_lattice, params.diffusion, params.kT, params.valency,
         params.ext_efield, params.density, false, false, single_precision,
         false, 0u);
