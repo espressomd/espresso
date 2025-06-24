@@ -19,6 +19,7 @@
 
 import subprocess
 import numpy as np
+import zndraw.type_defs
 import zndraw.zndraw
 import zndraw.utils
 import zndraw.draw
@@ -31,6 +32,8 @@ import urllib.parse
 import typing as t
 import scipy.spatial.transform
 
+from zndraw import Extension
+from espressomd.plugins import ase
 
 # Standard colors
 color_dict = {"black": "#303030",
@@ -508,6 +511,7 @@ class Visualizer():
             call_retries=1,
             connect_retries=3,
         )
+
         while True:
             try:
                 self.r = znsocket.Client(
@@ -517,8 +521,9 @@ class Visualizer():
                 time.sleep(0.5)
 
         url = f"{self.url}:{self.SERVER_PORT}"
-        self.zndraw = zndraw.zndraw.ZnDrawLocal(
-            r=self.r, url=url, token=self.token, timeout=config)
+
+        self.zndraw = zndraw.zndraw.ZnDraw(
+            url=url, token=self.token, timeout=config)
         parsed_url = urllib.parse.urlparse(
             f"{self.zndraw.url}/token/{self.zndraw.token}")
         self.address = parsed_url._replace(scheme="http").geturl()
@@ -535,12 +540,18 @@ class Visualizer():
         """
         Update the visualizer with the current state of the system
         """
+        all_types = self.system.part.all().type
         self.system.visualizer_params = self.params
-
-        data = znjson.dumps(
-            self.system, cls=znjson.ZnEncoder.from_converters(
-                [EspressoConverter])
-        )
+        Asedata = ase.ASEInterface(
+            {x: "X" for x in set(all_types)})
+        Asedata.register_system(self.system)
+        data = Asedata.get()
+        if self.params["colors"] is not None:
+            data.arrays['colors'] = [self.params["colors"].get(
+                z, "white") for z in all_types]
+        if self.params["radii"] is not None:
+            data.arrays['radii'] = [self.params["radii"].get(
+                z, 0.5) for z in all_types]
 
         # Catch when the server is initializing an empty frame
         # len(self.zndraw) is a expensive socket call, so we try to avoid it
@@ -567,6 +578,10 @@ class Visualizer():
                     setattr(self.zndraw.config.arrows, key, value)
 
         self.frame_count += 1
+
+
+    def register_setting(self,cls,**kwargs):
+        self.zndraw.register_modifier(cls,**kwargs)
 
     def draw_constraints(self, shapes: list):
         """
