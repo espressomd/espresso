@@ -32,7 +32,6 @@ import urllib.parse
 import typing as t
 import scipy.spatial.transform
 
-from zndraw import Extension
 from espressomd.plugins import ase
 
 # Standard colors
