@@ -580,8 +580,8 @@ class Visualizer():
         self.frame_count += 1
 
 
-    def register_setting(self,cls,**kwargs):
-        self.zndraw.register_modifier(cls,**kwargs)
+    def register_setting(self, cls, **kwargs):
+        self.zndraw.register_modifier(cls, **kwargs)
 
     def draw_constraints(self, shapes: list):
         """
