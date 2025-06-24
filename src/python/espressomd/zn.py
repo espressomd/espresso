@@ -510,7 +510,6 @@ class Visualizer():
             call_retries=1,
             connect_retries=3,
         )
-
         while True:
             try:
                 self.r = znsocket.Client(
@@ -520,9 +519,8 @@ class Visualizer():
                 time.sleep(0.5)
 
         url = f"{self.url}:{self.SERVER_PORT}"
-
-        self.zndraw = zndraw.zndraw.ZnDraw(
-            url=url, token=self.token, timeout=config)
+        self.zndraw = zndraw.zndraw.ZnDrawLocal(
+            r=self.r, url=url, token=self.token, timeout=config)
         parsed_url = urllib.parse.urlparse(
             f"{self.zndraw.url}/token/{self.zndraw.token}")
         self.address = parsed_url._replace(scheme="http").geturl()
@@ -570,7 +568,7 @@ class Visualizer():
 
             self.zndraw.camera = {'position': [
                 x, y, z_dist], 'target': [x, y, z]}
-            self.zndraw.config.scene.frame_update = False
+            #self.zndraw.config.scene.frame_update = False
 
             if self.params["vector_field"] is not None:
                 for key, value in self.arrow_config.items():
@@ -578,8 +576,9 @@ class Visualizer():
 
         self.frame_count += 1
 
-    def register_setting(self, cls, **kwargs):
-        self.zndraw.register_modifier(cls, **kwargs)
+
+    def register_setting(self,cls,**kwargs):
+        self.zndraw.register_modifier(cls,**kwargs)
 
     def draw_constraints(self, shapes: list):
         """
