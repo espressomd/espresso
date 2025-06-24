@@ -18,25 +18,24 @@
 #
 
 add_subdirectory(include/config)
-add_subdirectory(src)
 
 configure_file(${CMAKE_SOURCE_DIR}/cmake/espresso_cmake_config.cmakein
                ${CMAKE_CURRENT_BINARY_DIR}/include/config/cmake_config.hpp)
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/include/config/config-features.hpp
-         ${CMAKE_CURRENT_BINARY_DIR}/src/config-features.cpp
+         ${CMAKE_CURRENT_BINARY_DIR}/include/config/config-features.impl.hpp
   COMMAND
     ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/gen_featureconfig.py
     ${CMAKE_CURRENT_SOURCE_DIR}/features.def
     ${CMAKE_CURRENT_BINARY_DIR}/include/config/config-features.hpp
-    ${CMAKE_CURRENT_BINARY_DIR}/src/config-features.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/include/config/config-features.impl.hpp
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/features.def
           ${CMAKE_CURRENT_SOURCE_DIR}/gen_featureconfig.py)
 add_custom_target(
   generate_config_features
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/include/config/config-features.hpp
-          ${CMAKE_CURRENT_BINARY_DIR}/src/config-features.cpp)
+          ${CMAKE_CURRENT_BINARY_DIR}/include/config/config-features.impl.hpp)
 
 add_custom_target(
   check_myconfig
@@ -53,7 +52,7 @@ execute_process(
           ${CMAKE_CURRENT_SOURCE_DIR}/features.def
   OUTPUT_FILE ${CMAKE_BINARY_DIR}/myconfig-sample.hpp)
 
-add_library(espresso_config SHARED src/config-features.cpp)
+add_library(espresso_config INTERFACE)
 add_library(espresso::config ALIAS espresso_config)
 set_target_properties(espresso_config PROPERTIES CXX_CLANG_TIDY
                                                  "${ESPRESSO_CXX_CLANG_TIDY}")
@@ -62,21 +61,24 @@ add_dependencies(espresso_config myconfig check_myconfig
 install(TARGETS espresso_config
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 target_include_directories(
-  espresso_config PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
-                         ${CMAKE_CURRENT_BINARY_DIR}/include)
+  espresso_config INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include
+                            ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 find_package(Git)
-# Parse repository info from git if available Run this at build time to avoid
+# Parse repository info from git if available. Run this at build time to avoid
 # rebuilds
 add_custom_target(
-  version
+  espresso_version
   COMMAND
     ${CMAKE_COMMAND} -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
     -DPROJECT_VERSION=${PROJECT_VERSION} -DGIT_EXECUTABLE=${GIT_EXECUTABLE}
+    -DPROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+    -DPROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+    -DPROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P
     ${PROJECT_SOURCE_DIR}/cmake/espresso_version.cmake)
 set_property(
   DIRECTORY APPEND
   PROPERTY ADDITIONAL_MAKE_CLEAN_FILES include/config/version.hpp
            include/config/version.hpp.tmp)
-add_dependencies(espresso_config version)
+add_dependencies(espresso_config espresso_version)

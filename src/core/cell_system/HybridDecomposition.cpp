@@ -96,8 +96,9 @@ void HybridDecomposition::resort(bool global,
   ParticleList displaced_parts;
 
   /* Check for n_square type particles in regular decomposition */
-  for (auto &c : m_regular_decomposition.local_cells()) {
-    for (auto it = c->particles().begin(); it != c->particles().end();) {
+  for (auto &cell_rd : m_regular_decomposition.local_cells()) {
+    for (auto it = cell_rd->particles().begin();
+         it != cell_rd->particles().end();) {
       /* Particle is in the right decomposition, i.e. has no n_square type */
       if (not is_n_square_type(it->type())) {
         std::advance(it, 1);
@@ -106,8 +107,8 @@ void HybridDecomposition::resort(bool global,
 
       /* else remove from current cell ... */
       auto p = std::move(*it);
-      it = c->particles().erase(it);
-      diff.emplace_back(ModifiedList{c->particles()});
+      it = cell_rd->particles().erase(it);
+      diff.emplace_back(ModifiedList{cell_rd->particles()});
       diff.emplace_back(RemovedParticle{p.id()});
 
       /* ... and insert into a n_square cell */
@@ -117,8 +118,9 @@ void HybridDecomposition::resort(bool global,
     }
 
     /* Now check for regular decomposition type particles in n_square */
-    for (auto &c : m_n_square.local_cells()) {
-      for (auto it = c->particles().begin(); it != c->particles().end();) {
+    for (auto &cell_ns : m_n_square.local_cells()) {
+      for (auto it = cell_ns->particles().begin();
+           it != cell_ns->particles().end();) {
         /* Particle is of n_square type */
         if (is_n_square_type(it->type())) {
           std::advance(it, 1);
@@ -127,8 +129,8 @@ void HybridDecomposition::resort(bool global,
 
         /* else remove from current cell ... */
         auto p = std::move(*it);
-        it = c->particles().erase(it);
-        diff.emplace_back(ModifiedList{c->particles()});
+        it = cell_ns->particles().erase(it);
+        diff.emplace_back(ModifiedList{cell_ns->particles()});
         diff.emplace_back(RemovedParticle{p.id()});
 
         /* ... and insert in regular decomposition */

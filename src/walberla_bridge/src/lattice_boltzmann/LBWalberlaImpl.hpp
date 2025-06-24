@@ -437,15 +437,7 @@ protected:
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
     if constexpr (Architecture == lbmpy::Arch::CPU) {
 #ifdef ESPRESSO_BUILD_WITH_AVX_KERNELS
-#if defined(__AVX512F__)
-      constexpr uint_t alignment = 64u;
-#elif defined(__AVX__)
-      constexpr uint_t alignment = 32u;
-#elif defined(__SSE__)
-      constexpr uint_t alignment = 16u;
-#else
-#error "Unsupported arch, check walberla src/field/allocation/FieldAllocator.h"
-#endif
+      constexpr auto alignment = field::SIMDAlignment();
       using value_type = typename Field::value_type;
       using Allocator = field::AllocateAligned<value_type, alignment>;
       auto const allocator = std::make_shared<Allocator>();
@@ -560,7 +552,7 @@ public:
     m_boundary_communicator =
         std::make_shared<BoundaryFullCommunicator>(blocks);
     m_boundary_communicator->addPackInfo(
-        std::make_shared<field::communication::PackInfo<FlagField>>(
+        std::make_shared<field::communication::BoundaryFlagPackInfo<FlagField>>(
             m_flag_field_id));
     auto boundary_packinfo = std::make_shared<
         field::communication::BoundaryPackInfo<FlagField, BoundaryModel>>(

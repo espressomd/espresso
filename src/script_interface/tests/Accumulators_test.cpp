@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE Accumulators test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -88,6 +87,21 @@ auto make_global_context(std::shared_ptr<Communication::MpiCallbacks> &cb) {
   return std::make_shared<ScriptInterface::GlobalContext>(
       cb, std::make_shared<ScriptInterface::LocalContext>(factory, cb->comm()));
 }
+
+struct GlobalConfig {
+  std::shared_ptr<boost::mpi::environment> m_mpi_env;
+  GlobalConfig() {
+    m_mpi_env = std::make_shared<boost::mpi::environment>(
+        boost::unit_test::framework::master_test_suite().argc,
+        boost::unit_test::framework::master_test_suite().argv,
+        boost::mpi::threading::multiple);
+    mpi_env = m_mpi_env;
+  }
+  ~GlobalConfig() { m_mpi_env.reset(); }
+};
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_AUTO_TEST_SUITE(suite)
 
 BOOST_AUTO_TEST_CASE(time_series) {
   boost::mpi::communicator world;
@@ -313,9 +327,4 @@ BOOST_AUTO_TEST_CASE(mean_variance) {
   }
 }
 
-int main(int argc, char **argv) {
-  auto const mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
-  ::mpi_env = mpi_env;
-
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}
+BOOST_AUTO_TEST_SUITE_END()

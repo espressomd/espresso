@@ -158,6 +158,7 @@ void System::System::calculate_forces() {
   auto const elc_kernel = coulomb.pair_force_elc_kernel();
   auto const coulomb_kernel = coulomb.pair_force_kernel();
   auto const dipoles_kernel = dipoles.pair_force_kernel();
+  auto const coulomb_u_kernel = coulomb.pair_energy_kernel();
 
 #ifdef ELECTROSTATICS
   auto const coulomb_cutoff = coulomb.cutoff();
@@ -185,8 +186,10 @@ void System::System::calculate_forces() {
       },
       [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
        dipoles_kernel_ptr = get_ptr(dipoles_kernel),
-       elc_kernel_ptr = get_ptr(elc_kernel), &nonbonded_ias = *nonbonded_ias,
-       &thermostat = *thermostat, &bonded_ias = *bonded_ias,
+       elc_kernel_ptr = get_ptr(elc_kernel),
+       coulomb_u_kernel_ptr = get_ptr(coulomb_u_kernel),
+       &nonbonded_ias = *nonbonded_ias, &thermostat = *thermostat,
+       &bonded_ias = *bonded_ias,
 #ifdef COLLISION_DETECTION
        &collision_detection = *collision_detection,
 #endif
@@ -196,7 +199,7 @@ void System::System::calculate_forces() {
         add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
                                   ia_params, thermostat, box_geo, bonded_ias,
                                   coulomb_kernel_ptr, dipoles_kernel_ptr,
-                                  elc_kernel_ptr);
+                                  elc_kernel_ptr, coulomb_u_kernel_ptr);
 #ifdef COLLISION_DETECTION
         if (not collision_detection.is_off()) {
           collision_detection.detect_collision(p1, p2, d.dist2);
@@ -269,5 +272,8 @@ void calc_long_range_forces(const ParticleRange &particles) {
 void npt_add_virial_force_contribution(const Utils::Vector3d &force,
                                        const Utils::Vector3d &d) {
   ::System::get_system().npt_add_virial_contribution(force, d);
+}
+void npt_add_virial_diagonalSum_contribution(double diagonal_sum) {
+  ::System::get_system().npt_add_virial_contribution(diagonal_sum);
 }
 #endif

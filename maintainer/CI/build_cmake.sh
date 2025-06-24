@@ -75,20 +75,30 @@ set_default_value() {
 }
 
 # the number of available processors depends on the CI runner
-ci_procs=2
+set_default_value with_cuda false
+default_build_procs=2
+default_check_procs=2
 if [ "${GITLAB_CI}" = "true" ]; then
     if [[ "${OSTYPE}" == "linux-gnu"* ]]; then
         # Linux runner
-        ci_procs=4
+        default_build_procs=4
+        default_check_procs=4
+        if [ "${with_cuda}" = "true" ]; then
+            default_build_procs=6
+            default_check_procs=4 # buffer for oversubscribed OpenMP threads
+        fi
     elif [[ "${OSTYPE}" == "darwin"* ]]; then
         # macOS runner
-        ci_procs=4
+        default_build_procs=4
+        default_check_procs=4
     fi
 elif [ "${GITHUB_ACTIONS}" = "true" ]; then
     # GitHub Actions provide 4 cores
-    ci_procs=4
+    default_build_procs=4
+    default_check_procs=4
 else
-    ci_procs=$(nproc)
+    default_build_procs=$(nproc)
+    default_check_procs=$(nproc)
 fi
 
 # handle environment variables
@@ -103,8 +113,8 @@ set_default_value with_caliper false
 set_default_value with_fpe false
 set_default_value with_shared_memory_parallelism false
 set_default_value myconfig "default"
-set_default_value build_procs ${ci_procs}
-set_default_value check_procs ${build_procs}
+set_default_value build_procs ${default_build_procs}
+set_default_value check_procs ${default_check_procs}
 set_default_value check_odd_only false
 set_default_value check_gpu_only false
 set_default_value check_skip_long false
@@ -114,7 +124,6 @@ set_default_value make_check_tutorials false
 set_default_value make_check_samples false
 set_default_value make_check_benchmarks false
 set_default_value with_fast_math false
-set_default_value with_cuda false
 set_default_value with_cuda_compiler "nvcc"
 set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
@@ -249,16 +258,16 @@ else
 fi
 
 if [ -z "${cmake_param_protected}" ]; then
-  cmake "${srcdir}" ${cmake_params} || exit 1
+  cmake -G Ninja "${srcdir}" ${cmake_params} || exit 1
 else
-  cmake "${srcdir}" ${cmake_params} "${cmake_param_protected}" || exit 1
+  cmake -G Ninja "${srcdir}" ${cmake_params} "${cmake_param_protected}" || exit 1
 fi
 end "CONFIGURE"
 
 # BUILD
 start "BUILD"
 
-make -k -j${build_procs} || make -k -j1 || exit ${?}
+time ninja -k 8 -j${build_procs} ${ninja_params} || exit ${?}
 
 end "BUILD"
 
@@ -284,23 +293,23 @@ if [ "${run_checks}" = true ]; then
 
     # unit tests
     if [ "${make_check_unit_tests}" = true ]; then
-        make -j${build_procs} check_unit_tests ${make_params} || exit 1
+        ninja -j${build_procs} check_unit_tests ${ninja_params} || exit 1
     fi
 
     # integration tests
     if [ "${make_check_python}" = true ]; then
         if [ -z "${run_tests}" ]; then
             if [ "${check_odd_only}" = true ]; then
-                make -j${build_procs} check_python_parallel_odd ${make_params} || exit 1
+                ninja -j${build_procs} check_python_parallel_odd ${ninja_params} || exit 1
             elif [ "${check_gpu_only}" = true ]; then
-                make -j${build_procs} check_python_gpu ${make_params} || exit 1
+                ninja -j${build_procs} check_python_gpu ${ninja_params} || exit 1
             elif [ "${check_skip_long}" = true ]; then
-                make -j${build_procs} check_python_skip_long ${make_params} || exit 1
+                ninja -j${build_procs} check_python_skip_long ${ninja_params} || exit 1
             else
-                make -j${build_procs} check_python ${make_params} || exit 1
+                ninja -j${build_procs} check_python ${ninja_params} || exit 1
             fi
         else
-            make python_tests ${make_params}
+            ninja -j1 python_tests ${ninja_params}
             for t in ${run_tests}; do
                 ctest --timeout 60 --output-on-failure -R "${t}" || exit 1
             done
@@ -309,24 +318,24 @@ if [ "${run_checks}" = true ]; then
 
     # tutorial tests
     if [ "${make_check_tutorials}" = true ]; then
-        make -j${build_procs} check_tutorials ${make_params} || exit 1
+        ninja -j${build_procs} check_tutorials ${ninja_params} || exit 1
     fi
 
     # sample tests
     if [ "${make_check_samples}" = true ]; then
-        make -j${build_procs} check_samples ${make_params} || exit 1
+        ninja -j${build_procs} check_samples ${ninja_params} || exit 1
     fi
 
     # benchmark tests
     if [ "${make_check_benchmarks}" = true ]; then
-        make -j${build_procs} check_benchmarks ${make_params} || exit 1
+        ninja -j${build_procs} check_benchmarks ${ninja_params} || exit 1
     fi
 
     # maintainer scripts tests
-    make check_scripts || exit 1
+    ninja -j1 check_scripts || exit 1
 
     # installation tests
-    make check_cmake_install ${make_params} || exit 1
+    ninja -j1 check_cmake_install ${ninja_params} || exit 1
 
     end "TEST"
 else

@@ -909,10 +909,10 @@ namespace MomentumDensity
         force.set( blockIdx, threadIdx );
         out += offset;
         if (pdf.isValidPosition()) {
-            {% for i in range(Q) -%}
+            {% for i in range(1, Q) -%}
                 {{dtype}} const f_{{i}} = pdf.get({{i}}u);
             {% endfor -%}
-            {{momentum_density_getter | substitute_force_getter_cu | indent(8) }}
+            {{momentum_density_getter | substitute_force_getter_cu | remove_rho_intermediate | indent(8) }}
             {% for i in range(D) -%}
                 out[{{i}}u] = md_{{i}};
             {% endfor %}
@@ -955,7 +955,7 @@ namespace PressureTensor
         pdf.set( blockIdx, threadIdx );
         p_out += offset;
         if (pdf.isValidPosition()) {
-            {% for i in range(Q) -%}
+            {% for i in range(1, Q) -%}
                 {{dtype}} const f_{{i}} = pdf.get({{i}}u);
             {% endfor -%}
             {{second_momentum_getter | indent(12) }}

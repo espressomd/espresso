@@ -131,12 +131,4 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env);
 void deinit();
 } // namespace Communication
 
-struct MpiContainerUnitTest {
-  std::shared_ptr<boost::mpi::environment> m_mpi_env;
-  MpiContainerUnitTest(int argc, char **argv) {
-    m_mpi_env = mpi_init(argc, argv);
-    Communication::init(m_mpi_env);
-  }
-  ~MpiContainerUnitTest() { Communication::deinit(); }
-};
 #endif

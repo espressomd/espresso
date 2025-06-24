@@ -256,7 +256,9 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
   auto const dipole_prefac = prefactor / Utils::int_pow<3>(dp3m.params.mesh[0]);
 #ifdef NPT
   auto const npt_flag =
-      force_flag and (system.propagation->integ_switch == INTEG_METHOD_NPT_ISO);
+      force_flag and
+      ((system.propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND) or
+       (system.propagation->integ_switch == INTEG_METHOD_NPT_ISO_MTK));
 #else
   auto constexpr npt_flag = false;
 #endif

@@ -448,9 +448,9 @@ void ghost_communicator(GhostCommunicator const &gcr,
 
   auto const &comm = gcr.mpi_comm;
 
-  for (auto it = gcr.communications.begin(); it != gcr.communications.end();
-       ++it) {
-    const GhostCommunication &ghost_comm = *it;
+  for (auto cit = gcr.communications.cbegin(); cit != gcr.communications.cend();
+       ++cit) {
+    auto const &ghost_comm = *cit;
     int const comm_type = ghost_comm.type & GHOST_JOBMASK;
 
     if (comm_type == GHOST_LOCL) {
@@ -474,11 +474,11 @@ void ghost_communicator(GhostCommunicator const &gcr,
              calc_transmit_size(ghost_comm, box_geo, data_parts));
     } else if (prefetch) {
       /* we do not send this time, let's look for a prefetch */
-      auto prefetch_ghost_comm = std::find_if(
-          std::next(it), gcr.communications.end(),
-          [this_node = comm.rank()](GhostCommunication const &ghost_comm) {
-            return is_prefetchable(ghost_comm, this_node);
-          });
+      auto prefetch_ghost_comm =
+          std::find_if(std::next(cit), gcr.communications.cend(),
+                       [this_node = comm.rank()](auto const &other_ghost_comm) {
+                         return is_prefetchable(other_ghost_comm, this_node);
+                       });
 
       if (prefetch_ghost_comm != gcr.communications.end())
         prepare_send_buffer(send_buffer, *prefetch_ghost_comm, box_geo,
@@ -548,9 +548,9 @@ void ghost_communicator(GhostCommunicator const &gcr,
        * prefetch send. */
       /* find previous action where we recv and which has PSTSTORE set */
       auto poststore_ghost_comm = std::find_if(
-          std::make_reverse_iterator(it), gcr.communications.rend(),
-          [this_node = comm.rank()](GhostCommunication const &ghost_comm) {
-            return is_poststorable(ghost_comm, this_node);
+          std::make_reverse_iterator(cit), gcr.communications.crend(),
+          [this_node = comm.rank()](auto const &other_ghost_comm) {
+            return is_poststorable(other_ghost_comm, this_node);
           });
 
       if (poststore_ghost_comm != gcr.communications.rend()) {

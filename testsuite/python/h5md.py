@@ -157,7 +157,7 @@ class H5mdTests(ut.TestCase):
         temp_file = self.temp_path / 'exceptions.h5'
         # write a non-compliant file
         temp_file.write_bytes(b'')
-        with self.assertRaisesRegex(RuntimeError, 'not a valid HDF5 file'):
+        with self.assertRaisesRegex(RuntimeError, "Not an HDF5 file"):
             h5md.H5md(file_path=str(temp_file), unit_system=h5_units)
         # cannot append to a closed file with a leftover backup file
         main_file = self.temp_path / 'main.h5'
@@ -188,6 +188,14 @@ class H5mdTests(ut.TestCase):
         for key in self.h5_obj.get_params():
             with self.assertRaisesRegex(RuntimeError, f"Parameter '{key}' is read-only"):
                 setattr(self.h5_obj, key, None)
+        # check invalid parameters
+        temp_file = self.temp_path / 'invalid_params.h5'
+        with self.assertRaisesRegex(RuntimeError, "Provided argument of type 'double' for parameter 'chunk_size' is not convertible to 'int'"):
+            h5md.H5md(file_path=str(temp_file), chunk_size=1.0)
+        with self.assertRaisesRegex(ValueError, "Parameter 'chunk_size' must be > 0"):
+            h5md.H5md(file_path=str(temp_file), chunk_size=-1)
+        with self.assertRaisesRegex(TypeError, "Parameter 'file_path' should be a string"):
+            h5md.H5md(file_path=None)
 
     def test_empty(self):
         temp_file = self.temp_path / 'empty.h5'
@@ -229,10 +237,11 @@ class H5mdTests(ut.TestCase):
         self.assertIn('name', self.py_file['h5md/creator'].attrs)
         self.assertIn('version', self.py_file['h5md/creator'].attrs)
         self.assertEqual(
-            self.py_file['h5md/creator'].attrs['name'][:], b'ESPResSo')
+            bytes(self.py_file['h5md/creator'].attrs['name'][:-1]).decode('utf-8'), 'ESPResSo')
+        version = bytes(
+            self.py_file['h5md/creator'].attrs['version'][:-1]).decode('utf-8')
         self.assertTrue(
-            self.py_file['h5md/creator'].attrs['version'][:]
-            .startswith(espressomd.version.friendly().encode('utf-8')))
+            version.startswith(espressomd.version.friendly()))
         self.assertIn('author', self.py_file['h5md'])
         self.assertIn('name', self.py_file['h5md/author'].attrs)
 
@@ -294,7 +303,7 @@ class H5mdTests(ut.TestCase):
         # case #1: running a pypresso script
         with open(sys.argv[0], 'r') as f:
             ref = f.read()
-        data = self.py_file['parameters/files'].attrs['script'].decode('utf-8')
+        data = self.py_file['parameters/files'].attrs['script']
         self.assertEqual(data, ref)
         # case #2: running an interactive Python session
         temp_file = self.temp_path / 'no_script.h5'
@@ -305,22 +314,22 @@ class H5mdTests(ut.TestCase):
         h5.flush()
         h5.close()
         with h5py.File(temp_file, 'r') as cur:
-            self.assertIsNone(cur.get('parameters/files'))
+            self.assertIsNone(cur.get('/parameters/files'))
 
     def test_units(self):
         def get_unit(path):
             return self.py_file[path].attrs['unit']
-        self.assertEqual(get_unit('particles/atoms/id/time'), b'ps')
+        self.assertEqual(get_unit('particles/atoms/id/time'), 'ps')
         self.assertEqual(
-            get_unit('particles/atoms/lees_edwards/offset/value'), b'm')
-        self.assertEqual(get_unit('particles/atoms/box/edges/value'), b'm')
-        self.assertEqual(get_unit('particles/atoms/position/value'), b'm')
+            get_unit('particles/atoms/lees_edwards/offset/value'), 'm')
+        self.assertEqual(get_unit('particles/atoms/box/edges/value'), 'm')
+        self.assertEqual(get_unit('particles/atoms/position/value'), 'm')
         if espressomd.has_features(['ELECTROSTATICS']):
-            self.assertEqual(get_unit('particles/atoms/charge/value'), b'e')
+            self.assertEqual(get_unit('particles/atoms/charge/value'), 'e')
         if espressomd.has_features(['MASS']):
-            self.assertEqual(get_unit('particles/atoms/mass/value'), b'u')
-        self.assertEqual(get_unit('particles/atoms/force/value'), b'm u ps-2')
-        self.assertEqual(get_unit('particles/atoms/velocity/value'), b'm ps-1')
+            self.assertEqual(get_unit('particles/atoms/mass/value'), 'u')
+        self.assertEqual(get_unit('particles/atoms/force/value'), 'm u ps-2')
+        self.assertEqual(get_unit('particles/atoms/velocity/value'), 'm ps-1')
 
     def test_getters(self):
         self.assertEqual(self.h5_params['file_path'], str(self.temp_file))

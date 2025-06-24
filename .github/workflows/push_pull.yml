@@ -22,7 +22,9 @@ jobs:
       - name: Get runner specifications
         run: system_profiler SPHardwareDataType
       - run: |
-         brew install boost boost-mpi fftw ccache
+         brew install boost boost-mpi fftw
+         brew list ccache || brew install ccache
+         brew list ninja || brew install ninja
          # https://mac.r-project.org/openmp/
          curl -O https://mac.r-project.org/openmp/openmp-17.0.6-darwin20-Release.tar.gz
          sudo tar fvxz openmp-17.0.6-darwin20-Release.tar.gz -C /
@@ -42,7 +44,7 @@ jobs:
   debian:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/espressomd/docker/debian:77a3823c5c4c2338c39eb0e0f054b5802f0f2a5e-base-layer
+      image: ghcr.io/espressomd/docker/debian:3353f0aa183c420e26fc3a35bde39bd56ca79af8-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
@@ -64,8 +66,8 @@ jobs:
         env:
           build_procs: 4
           check_procs: 4
-          CC: 'gcc-12'
-          CXX: 'g++-12'
+          CC: 'gcc-14'
+          CXX: 'g++-14'
           myconfig: 'maxset'
           with_ccache: 'true'
           with_cuda: 'false'
@@ -83,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.repository == 'espressomd/espresso' }}
     container:
-      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:77a3823c5c4c2338c39eb0e0f054b5802f0f2a5e-base-layer
+      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:3353f0aa183c420e26fc3a35bde39bd56ca79af8-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}

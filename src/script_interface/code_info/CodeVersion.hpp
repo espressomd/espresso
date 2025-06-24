@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_CODE_INFO_CODE_VERSION_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_CODE_INFO_CODE_VERSION_HPP
+#pragma once
 
 #include "script_interface/ScriptInterface.hpp"
 
@@ -35,5 +34,3 @@ public:
 
 } // namespace CodeInfo
 } // namespace ScriptInterface
-
-#endif

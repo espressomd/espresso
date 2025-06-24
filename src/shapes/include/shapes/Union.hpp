@@ -57,14 +57,15 @@ public:
                       Utils::Vector3d &vec) const override {
     auto dist_compare = [&pos](std::pair<double, Utils::Vector3d> const &res,
                                std::shared_ptr<Shapes::Shape> const &shape) {
-      double d;
-      Utils::Vector3d vec;
-      shape->calculate_dist(pos, d, vec);
-      if (d < 0.0)
+      auto const &old_dist = res.first;
+      double new_dist;
+      Utils::Vector3d new_vec;
+      shape->calculate_dist(pos, new_dist, new_vec);
+      if (new_dist < 0.0)
         throw std::domain_error(
             "Distance to Union not well-defined for given position!");
-      if (d < res.first) {
-        return std::make_pair(d, vec);
+      if (new_dist < old_dist) {
+        return std::make_pair(new_dist, new_vec);
       }
       return res;
     };

@@ -25,6 +25,7 @@
 
 #include "cuda/init.hpp"
 #include "errorhandling.hpp"
+#include "fft/init.hpp"
 
 #ifdef WALBERLA
 #include <walberla_bridge/walberla_init.hpp>
@@ -90,12 +91,17 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
   cuda_on_program_start();
 #endif
 
+#ifdef FFTW
+  fft_on_program_start();
+#endif
+
 #ifdef SHARED_MEMORY_PARALLELISM
   Kokkos::initialize();
 #endif
 }
 
 void deinit() {
+  ErrorHandling::deinit_error_handling();
   Communication::m_callbacks.reset();
 
 #ifdef SHARED_MEMORY_PARALLELISM

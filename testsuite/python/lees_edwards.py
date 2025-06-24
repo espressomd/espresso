@@ -356,18 +356,104 @@ class LeesEdwards(ut.TestCase):
                 pos=system.box_l - epsilon, v=np.random.random(3), fix=[True] * 3)
             r_euclid = -2 * np.array([epsilon] * 3)
 
+            p3 = system.part.add(
+                pos=[epsilon] * 3, v=np.random.random(3), fix=[True] * 3)
+            p4 = system.part.add(
+                pos=0.5 * system.box_l + 2 * epsilon, v=np.random.random(3), fix=[True] * 3)
+            p5 = system.part.add(
+                pos=0.5 * system.box_l, v=np.random.random(3), fix=[True] * 3)
+
             # check distance
             np.testing.assert_allclose(
                 np.copy(system.distance_vec(p1, p2)),
-                r_euclid + system.lees_edwards.pos_offset * shear_axis)
+                r_euclid - system.lees_edwards.pos_offset * shear_axis, atol=1E-10)
             np.testing.assert_allclose(
                 np.copy(system.distance_vec(p1, p2)),
                 -np.copy(system.distance_vec(p2, p1)))
 
-            # Check velocity difference
+            # Check velocity difference for bond across the domain boundary
             np.testing.assert_allclose(
-                np.copy(system.velocity_difference(p1, p2)),
-                np.copy(p2.v - p1.v) - system.lees_edwards.shear_velocity * shear_axis)
+                np.copy(system.velocity_difference(p3, p4)),
+                np.copy(p4.v - p3.v) - system.lees_edwards.shear_velocity * shear_axis)
+            # Check velocity difference for bond within the domain boundary
+            np.testing.assert_allclose(
+                np.copy(system.velocity_difference(p3, p5)),
+                np.copy(p5.v - p3.v))
+
+    def test_push_and_distance_consistency(self):
+        """
+        The Lees-Edwards-aware distance between a pair of particles should
+        stay constant even after one of them has crossed a
+        LE boundary with a constant position offset.
+        """
+
+        system = self.system
+        atol = 1E-10
+        for shear_direction, shear_plane_normal in self.direction_permutations:
+            system.lees_edwards.set_boundary_conditions(
+                shear_direction=shear_direction,
+                shear_plane_normal=shear_plane_normal, protocol=const_offset_protocol)
+
+            shear_normal_axis = axis(shear_plane_normal)
+            for direction in [1, -1]:  # up, down
+                p1 = system.part.add(
+                    pos=system.box_l / 2, v=direction * shear_normal_axis)
+                p2 = system.part.add(
+                    pos=p1.pos + shear_normal_axis, v=p1.v)
+                # Integrate until the first particle crosses the boundary
+                while p1.lees_edwards_offset == 0 and p2.lees_edwards_offset == 0:
+                    np.testing.assert_allclose(
+                        np.copy(system.distance_vec(p1, p2)), shear_normal_axis, atol=atol)
+                    system.integrator.run(1)
+                # make sure only one particle has crossed
+                assert p1.lees_edwards_offset != p2.lees_edwards_offset
+                # make sure the distance stays constant until both particles
+                # have crossed
+                while p1.lees_edwards_offset != p2.lees_edwards_offset:
+                    np.testing.assert_allclose(
+                        np.copy(system.distance_vec(p1, p2)), shear_normal_axis, atol=atol)
+                    system.integrator.run(1)
+                # chekc the distance is still correct after both have crossed
+                np.testing.assert_allclose(
+                    np.copy(system.distance_vec(p1, p2)), shear_normal_axis, atol=atol)
+
+    def test_push_and_vel_difference_consistency(self):
+        """
+        The Lees-Edwards-aware velocity difference between a pair of particles
+        should stay constant even after one of them has crossed a
+        LE boundary with a linear shear.
+        """
+
+        system = self.system
+        atol = 1E-10
+        for shear_direction, shear_plane_normal in self.direction_permutations:
+            system.lees_edwards.set_boundary_conditions(
+                shear_direction=shear_direction,
+                shear_plane_normal=shear_plane_normal, protocol=const_offset_protocol)
+
+            shear_normal_axis = axis(shear_plane_normal)
+            for direction in [1, -1]:  # up, down
+                dv = np.random.random(3) * 0.1
+                p1 = system.part.add(
+                    pos=system.box_l / 2, v=direction * shear_normal_axis)
+                p2 = system.part.add(
+                    pos=p1.pos + shear_normal_axis, v=p1.v + dv)
+                # Integrate until the first particle crosses the boundary
+                while p1.lees_edwards_offset == 0 and p2.lees_edwards_offset == 0:
+                    np.testing.assert_allclose(
+                        np.copy(system.velocity_difference(p1, p2)), dv, atol=atol)
+                    system.integrator.run(1)
+                # make sure only one particle has crossed
+                assert p1.lees_edwards_offset != p2.lees_edwards_offset
+                # make sure the distance stays constant until both particles
+                # have crossed
+                while p1.lees_edwards_offset != p2.lees_edwards_offset:
+                    np.testing.assert_allclose(
+                        np.copy(system.velocity_difference(p1, p2)), dv, atol=atol)
+                    system.integrator.run(1)
+                # chekc the distance is still correct after both have crossed
+                np.testing.assert_allclose(
+                    np.copy(system.velocity_difference(p1, p2)), dv, atol=atol)
 
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "SOFT_SPHERE"])
     def test_interactions(self):
@@ -446,8 +532,8 @@ class LeesEdwards(ut.TestCase):
 
         # Construct pair of VS across normal boundary
         system.lees_edwards.protocol = None
-        p1 = system.part.add(pos=(2.5, 0.0, 2.5), rotation=[
-                             False] * 3, id=0, v=np.array((-1, 2, 3)))
+        p1 = system.part.add(pos=(2.5, 0.0, 2.5), rotation=[False] * 3,
+                             id=0, v=np.array((-1, 2, 3)))
         p2 = system.part.add(pos=(2.5, 1.0, 2.5))
         p2.vs_auto_relate_to(p1)
         p3 = system.part.add(pos=(2.5, 4.0, 2.5))
@@ -457,7 +543,7 @@ class LeesEdwards(ut.TestCase):
             shear_direction="x", shear_plane_normal="y", protocol=lin_protocol)
         # Test position and velocity of VS with Le shift
         old_p3_pos = np.copy(p3.pos)
-        expected_p3_pos = old_p3_pos - \
+        expected_p3_pos = old_p3_pos + \
             np.array((get_lin_pos_offset(system.time, **params_lin), 0, 0))
         system.integrator.run(0, recalc_forces=True)
         np.testing.assert_allclose(np.copy(p3.pos_folded), expected_p3_pos)
@@ -598,12 +684,12 @@ class LeesEdwards(ut.TestCase):
 
     @utx.skipIfMissingFeatures(
         ["EXTERNAL_FORCES", "VIRTUAL_SITES_RELATIVE", "COLLISION_DETECTION"])
-    def test_le_colldet(self):
+    def test_le_collision_detection(self):
         system = self.system
         system.min_global_cut = 1.2
         system.time = 0
         protocol = espressomd.lees_edwards.LinearShear(
-            shear_velocity=-1.0, initial_pos_offset=0.0)
+            shear_velocity=1.0, initial_pos_offset=0.0)
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
@@ -621,7 +707,7 @@ class LeesEdwards(ut.TestCase):
             distance=1., bond_centers=harm)
 
         # After two integration steps we should not have a bond,
-        # as the collision detection uses the distant calculation
+        # as the collision detection uses the distance calculation
         # of the short range loop
         system.integrator.run(2)
         bond_list = col_part1.bonds + col_part2.bonds
@@ -639,7 +725,7 @@ class LeesEdwards(ut.TestCase):
 
         system.time = 0
         system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
-            shear_velocity=-1.0, initial_pos_offset=0.0)
+            shear_velocity=1.0, initial_pos_offset=0.0)
 
         system.collision_detection.protocol = espressomd.collision_detection.BindAtPointOfCollision(
             distance=1., bond_centers=virt, bond_vs=harm, part_type_vs=31,
@@ -699,15 +785,13 @@ class LeesEdwards(ut.TestCase):
             k=1.0, r_0=0.0, r_cut=np.sqrt(2.))
         system.bonded_inter.add(harm)
 
-        p1 = system.part.add(pos=(2.5, 4.5, 2.5))
-        p2 = system.part.add(pos=(2.5, 0.5, 2.5))
+        p1 = system.part.add(pos=(2.5, 4.5, 2.5), fix=[True] * 3)
+        p2 = system.part.add(pos=(2.5, 0.5, 2.5), fix=[True] * 3)
         p1.add_bond((harm, p2))
 
         system.bond_breakage[harm] = espressomd.bond_breakage.BreakageSpec(
             breakage_length=np.sqrt(2.), action_type="delete_bond")
-
         system.integrator.run(3)
-
         # Bond list should be empty
         bond_list = []
         for p in system.part:
@@ -737,7 +821,7 @@ class LeesEdwards(ut.TestCase):
             breakage_length=np.sqrt(2.) / 2.,
             action_type="revert_bind_at_point_of_collision")
 
-        system.integrator.run(3)
+        system.integrator.run(1)
 
         # Check that all bonds have been removed from the system
         # So the bond list should be empty

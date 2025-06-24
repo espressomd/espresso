@@ -9,7 +9,7 @@ repos:
         language: system
         always_run: false
         files: '.*\.(cpp|hpp|h|cu|cuh)'
-        exclude: '^libs/|^src/walberla_bridge/src/.*/generated_kernels/.*\.(cpp|cu)|^maintainer/walberla_kernels/templates/.*\.tmpl\.(cpp|hpp|h|cu|cuh)'
+        exclude: '^libs/|^src/config/include/config/version.hpp.in|^src/walberla_bridge/src/.*/generated_kernels/.*\.(cpp|cu)|^maintainer/walberla_kernels/templates/.*\.tmpl\.(cpp|hpp|h|cu|cuh)'
         args: ["-i", "-style=file"]
 
     -   id: autopep8
@@ -27,7 +27,7 @@ repos:
         language: system
         always_run: false
         files: 'CMakeLists.txt'
-        exclude: '^libs/h5xx/|^libs/Random123-1\.09/'
+        exclude: '^libs/Random123-1\.09/'
         args: ["-i"]
 
     -   id: ex-flags

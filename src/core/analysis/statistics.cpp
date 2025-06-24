@@ -32,6 +32,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "npt.hpp"
+#include "particle_reduction.hpp"
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
@@ -146,12 +147,12 @@ Utils::Vector3d calc_linear_momentum(System::System const &system,
                                      bool include_lbfluid) {
   Utils::Vector3d momentum{};
   if (include_particles) {
-    auto const particles = system.cell_structure->local_particles();
-    momentum =
-        std::accumulate(particles.begin(), particles.end(), Utils::Vector3d{},
-                        [](Utils::Vector3d const &m, Particle const &p) {
-                          return m + p.mass() * p.v();
-                        });
+    momentum = reduce_over_local_particles<Utils::Vector3d>(
+        *(system.cell_structure),
+        [](Particle const &p, Utils::Vector3d &res) {
+          res += p.mass() * p.v();
+        },
+        [](Utils::Vector3d &a, Utils::Vector3d const &b) { a = a + b; });
   }
   if (include_lbfluid and system.lb.is_solver_set()) {
     momentum += system.lb.get_momentum() * system.lb.get_lattice_speed();

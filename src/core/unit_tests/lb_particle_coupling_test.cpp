@@ -19,7 +19,6 @@
 
 #define BOOST_TEST_MODULE LB particle coupling test
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_NO_MAIN
 #include <boost/test/data/monomorphic.hpp>
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/unit_test.hpp>
@@ -34,6 +33,7 @@ namespace utf = boost::unit_test;
 #include "particle_management.hpp"
 
 #include "BoxGeometry.hpp"
+#include "EspressoCoreGlobalConfig.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -121,6 +121,24 @@ static void set_lb_kT(double kT) {
 }
 } // namespace espresso
 
+struct GlobalConfig : public EspressoCoreGlobalConfig {
+  GlobalConfig() {
+    espresso::system = System::System::create();
+    espresso::system->set_box_l(params.box_dimensions);
+    espresso::system->set_time_step(params.time_step);
+    espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+    espresso::system->cell_structure->set_verlet_skin(params.skin);
+    espresso::system->thermostat->lb = std::make_shared<LBThermostat>();
+    ::System::set_system(espresso::system);
+
+    assert(boost::mpi::communicator().size() <= 2);
+  }
+  ~GlobalConfig() {
+    espresso::system.reset();
+    ::System::reset_system();
+  }
+};
+
 namespace LB {
 static auto get_force_to_be_applied(Utils::Vector3d const &pos) {
   auto const agrid = espresso::lb_params->get_agrid();
@@ -151,26 +169,27 @@ struct CleanupActorLB : public ParticleFactory {
   ~CleanupActorLB() { espresso::remove_lb_actor(); }
 };
 
-BOOST_FIXTURE_TEST_SUITE(suite, CleanupActorLB)
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_AUTO_TEST_SUITE(suite)
 
-BOOST_AUTO_TEST_CASE(lb_reactivate) {
+BOOST_FIXTURE_TEST_CASE(lb_reactivate, CleanupActorLB) {
   espresso::system->thermostat->lb_coupling_deactivate();
   espresso::system->thermostat->lb_coupling_activate();
   BOOST_CHECK(espresso::system->thermostat->lb->couple_to_md);
 }
 
-BOOST_AUTO_TEST_CASE(lb_deactivate) {
+BOOST_FIXTURE_TEST_CASE(lb_deactivate, CleanupActorLB) {
   espresso::system->thermostat->lb_coupling_activate();
   espresso::system->thermostat->lb_coupling_deactivate();
   BOOST_CHECK(not espresso::system->thermostat->lb->couple_to_md);
 }
 
-BOOST_AUTO_TEST_CASE(rng_initial_state) {
+BOOST_FIXTURE_TEST_CASE(rng_initial_state, CleanupActorLB) {
   BOOST_CHECK(espresso::system->thermostat->lb->is_seed_required());
   BOOST_CHECK(espresso::system->thermostat->lb->rng_counter() == 0ul);
 }
 
-BOOST_AUTO_TEST_CASE(rng) {
+BOOST_FIXTURE_TEST_CASE(rng, CleanupActorLB) {
   auto &lb = espresso::system->lb;
   auto &thermostat = *espresso::system->thermostat->lb;
   auto const &box_geo = *espresso::system->box_geo;
@@ -214,7 +233,7 @@ BOOST_AUTO_TEST_CASE(rng) {
   BOOST_CHECK((step3_norandom == Utils::Vector3d{0., 0., 0.}));
 }
 
-BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
+BOOST_DATA_TEST_CASE_F(CleanupActorLB, drag_force, bdata::make(kTs), kT) {
   espresso::set_lb_kT(kT);
   auto &lb = espresso::system->lb;
   auto &thermostat = *espresso::system->thermostat->lb;
@@ -238,7 +257,7 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
 }
 
 #ifdef ENGINE
-BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
+BOOST_DATA_TEST_CASE_F(CleanupActorLB, swimmer_force, bdata::make(kTs), kT) {
   espresso::set_lb_kT(kT);
   auto &lb = espresso::system->lb;
   auto &thermostat = *espresso::system->thermostat->lb;
@@ -297,7 +316,8 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 }
 #endif // ENGINE
 
-BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
+BOOST_DATA_TEST_CASE_F(CleanupActorLB, particle_coupling, bdata::make(kTs),
+                       kT) {
   auto &lb = espresso::system->lb;
   auto &thermostat = *espresso::system->thermostat->lb;
   espresso::set_lb_kT(kT);
@@ -371,14 +391,16 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
 #endif
 
   LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
-  auto const p_opt = copy_particle_to_head_node(comm, system, pid);
   auto expected = Utils::Vector3d{};
-  if (rank == 0) {
-    auto const &p = *p_opt;
-    expected += coupling.get_noise_term(p);
+  {
+    auto const p_opt = copy_particle_to_head_node(comm, system, pid);
+    if (rank == 0) {
+      auto const &p = *p_opt;
+      expected += coupling.get_noise_term(p);
 #ifdef LB_ELECTROHYDRODYNAMICS
-    expected += gamma * p.mu_E();
+      expected += gamma * p.mu_E();
 #endif
+    }
   }
   boost::mpi::broadcast(comm, expected, 0);
   auto const p_pos = first_lb_node + Utils::Vector3d::broadcast(0.5);
@@ -498,7 +520,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   }
 }
 
-BOOST_AUTO_TEST_CASE(runtime_exceptions) {
+BOOST_FIXTURE_TEST_CASE(runtime_exceptions, CleanupActorLB) {
   boost::mpi::communicator world;
   auto &lb = espresso::system->lb;
   // LB prevents changing most of the system state
@@ -523,8 +545,6 @@ BOOST_AUTO_TEST_CASE(runtime_exceptions) {
     }
   }
 }
-
-BOOST_AUTO_TEST_SUITE_END()
 
 bool test_lb_domain_mismatch_local() {
   boost::mpi::communicator world;
@@ -629,22 +649,5 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
   }
 }
 
-int main(int argc, char **argv) {
-  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
-  espresso::system = System::System::create();
-  espresso::system->set_box_l(params.box_dimensions);
-  espresso::system->set_time_step(params.time_step);
-  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
-  espresso::system->cell_structure->set_verlet_skin(params.skin);
-  espresso::system->thermostat->lb = std::make_shared<LBThermostat>();
-  ::System::set_system(espresso::system);
-
-  boost::mpi::communicator world;
-  assert(world.size() <= 2);
-
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}
-
-#else // WALBERLA
-int main(int argc, char **argv) {}
-#endif
+BOOST_AUTO_TEST_SUITE_END()
+#endif // WALBERLA

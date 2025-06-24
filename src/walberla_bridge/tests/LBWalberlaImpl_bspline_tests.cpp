@@ -128,8 +128,8 @@ BOOST_DATA_TEST_CASE(velocity_interpolation_bspline, bdata::make(all_lbs()),
         Vector3d const pos{x, y, z};
         if (lb->get_lattice().pos_in_local_domain(pos)) {
           auto const factor = std::accumulate(
-              pos.begin(), pos.end(), 1., [](double a, double x) {
-                return a * std::max(0., 1. - std::fabs(std::fmod(x, 3.) - 1.5));
+              pos.begin(), pos.end(), 1., [](double a, double p) {
+                return a * std::max(0., 1. - std::fabs(std::fmod(p, 3.) - 1.5));
               });
           auto const ref = factor * vel;
           auto const res = lb->get_velocity_at_pos(pos, true);

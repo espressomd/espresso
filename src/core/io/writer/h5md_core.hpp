@@ -38,10 +38,10 @@
 #include <unordered_map>
 #include <utility>
 
-namespace h5xx {
-class file;
-class dataset;
-} // namespace h5xx
+namespace HighFive {
+class File;
+class DataSet;
+} // namespace HighFive
 
 namespace Writer {
 namespace H5md {
@@ -111,11 +111,12 @@ public:
    * @param force_unit The unit for force.
    * @param velocity_unit The unit for velocity.
    * @param charge_unit The unit for charge.
+   * @param chunk_size The chunk size for DataSet in hdf5 file
    */
   File(std::string file_path, std::string script_path,
        std::vector<std::string> const &output_fields, std::string mass_unit,
        std::string length_unit, std::string time_unit, std::string force_unit,
-       std::string velocity_unit, std::string charge_unit);
+       std::string velocity_unit, std::string charge_unit, int chunk_size);
   ~File();
 
   /**
@@ -181,6 +182,11 @@ public:
    * @return The unit as a string.
    */
   auto const &charge_unit() const { return m_charge_unit; }
+
+  /**
+   * @brief Retrieve the set chunk size.
+   */
+  auto const &chunk_size() const { return m_chunk_size; }
 
   /**
    * @brief Build the list of valid output fields.
@@ -255,12 +261,14 @@ private:
   std::string m_force_unit;
   std::string m_velocity_unit;
   std::string m_charge_unit;
+  int m_chunk_size;
   boost::mpi::communicator m_comm;
   unsigned int m_fields;
   std::string m_backup_filename;
   boost::filesystem::path m_absolute_script_path;
-  std::unique_ptr<h5xx::file> m_h5md_file;
-  std::unique_ptr<std::unordered_map<std::string, h5xx::dataset>> m_datasets;
+  std::unique_ptr<HighFive::File> m_h5md_file;
+  std::unique_ptr<std::unordered_map<std::string, HighFive::DataSet>>
+      m_datasets;
   Specification m_h5md_specification;
 };
 

@@ -76,6 +76,7 @@ are required to be able to compile and use |es|:
     FFTW
         For some algorithms like |p3m|, |es| needs the FFTW library
         version 3 or later [5]_ for Fourier transforms, including header files.
+        |es| leverages heFFTe :cite:`ayala20a`.
 
     CUDA
         For some algorithms like |p3m|,
@@ -99,6 +100,11 @@ are required to be able to compile and use |es|:
         ``OMPI_MCA_hwloc_base_binding_policy`` to a value other than "numa",
         such as "l3cache" to bind to a NUMA shared memory block, or to
         "none" to disable binding (can cause performance loss).
+
+    OpenMP
+        A compiler that implements the OpenMP standard version 5.0 is required
+        to run simulations with shared-memory parallelization.
+        |es| leverages Kokkos :cite:`trott22a` and Cabana :cite:`slattery22a`.
 
     Python
         |es|'s main user interface relies on Python 3.

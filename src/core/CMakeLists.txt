@@ -90,7 +90,11 @@ install(TARGETS espresso_core
 target_link_libraries(
   espresso_core
   PRIVATE
-    espresso::config espresso::utils::mpi espresso::shapes espresso::cpp_flags
+    espresso::config
+    espresso::utils::mpi
+    espresso::shapes
+    espresso::cpp_flags
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Cabana::Core>
   PUBLIC espresso::utils MPI::MPI_CXX Random123 espresso::particle_observables

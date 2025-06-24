@@ -18,7 +18,7 @@
 #
 
 function(ESPRESSO_UNIT_TEST)
-  cmake_parse_arguments(TEST "" "SRC;NAME;NUM_PROC" "DEPENDS" ${ARGN})
+  cmake_parse_arguments(TEST "" "SRC;NAME;NUM_PROC;NUM_THREADS" "DEPENDS" ${ARGN})
   if(NOT DEFINED TEST_NAME)
     cmake_path(GET TEST_SRC STEM TEST_NAME)
     set(TEST_NAME ${TEST_NAME} PARENT_SCOPE)
@@ -36,14 +36,10 @@ function(ESPRESSO_UNIT_TEST)
     target_link_libraries(${TEST_NAME} PRIVATE ${TEST_DEPENDS})
   endif()
   target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
-  if(ESPRESSO_BUILD_WITH_COVERAGE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(
-      ${TEST_NAME} PRIVATE -fno-default-inline -fno-elide-constructors)
-  endif()
   if(${TEST_SRC} MATCHES ".*\.cu$")
     target_link_libraries(${TEST_NAME} PRIVATE espresso::config CUDA::cuda_driver CUDA::cudart)
   else()
-    target_link_libraries(${TEST_NAME} PRIVATE espresso::config espresso::cpp_flags)
+    target_link_libraries(${TEST_NAME} PRIVATE espresso::config espresso::cpp_flags espresso::tests::cpp_flags)
   endif()
 
   # If NUM_PROC is given, set up MPI parallel test case
@@ -59,6 +55,9 @@ function(ESPRESSO_UNIT_TEST)
   else()
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
   endif()
+  if(NOT DEFINED TEST_NUM_THREADS)
+    set(TEST_NUM_THREADS 2)
+  endif()
 
   if(ESPRESSO_WARNINGS_ARE_ERRORS)
     set(SANITIZERS_HALT_ON_ERROR "halt_on_error=1")
@@ -71,7 +70,7 @@ function(ESPRESSO_UNIT_TEST)
   if(NOT TEST_NUM_PROC AND ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA AND "${TEST_DEPENDS}" MATCHES "(^|;)([Bb]oost::mpi|MPI::MPI_CXX)($|;)")
     list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
   endif()
-  list(APPEND TEST_ENV_VARIABLES "OMP_PROC_BIND=false" "OMP_NUM_THREADS=2")
+  list(APPEND TEST_ENV_VARIABLES "OMP_PROC_BIND=false" "OMP_NUM_THREADS=${TEST_NUM_THREADS}")
   set_tests_properties(
     ${TEST_NAME} PROPERTIES ENVIRONMENT "${TEST_ENV_VARIABLES}")
 

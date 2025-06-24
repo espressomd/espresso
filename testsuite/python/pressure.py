@@ -281,19 +281,23 @@ class PressureLJ(ut.TestCase):
             sim_pressure["total"],
             delta=tol)
 
-    @utx.skipIfMissingFeatures(["NPT", "MASS"])
-    def test_npt(self):
+    def run_npt(self, barostat):
         # system parameters
         system.box_l = 3 * [10.0]
         skin = 0.4
         time_step = 0.01
         system.time_step = time_step
+        if barostat == "Andersen":
+            piston = 1.0
+        else:
+            piston = 6.0
 
         # thermostat and cell system
         system.cell_system.skin = skin
         system.periodicity = [True, True, True]
         system.thermostat.set_npt(kT=1., gamma0=0.01, gammav=0.01, seed=42)
-        system.integrator.set_isotropic_npt(ext_pressure=1., piston=1.)
+        system.integrator.set_isotropic_npt(
+            ext_pressure=1., piston=piston, barostat=barostat)
 
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0, cutoff=2.0, shift="auto")
@@ -319,16 +323,24 @@ class PressureLJ(ut.TestCase):
             system.box_l = 3 * [10.0]
             p0 = system.part.add(pos=[9.6, 9.7, 9.6], mass=1.1, type=0)
             p1 = system.part.add(pos=[0.4, 0.4, 0.2], mass=1.2, type=0)
-            system.integrator.set_isotropic_npt(ext_pressure=1., piston=1.,
-                                                direction=direction)
+            system.integrator.set_isotropic_npt(ext_pressure=1., piston=piston,
+                                                direction=direction,
+                                                barostat=barostat)
             system.integrator.run(steps=1)
             p_inst_ref, p_virial_ref = calc_reference_values(p1, p0, direction)
             p_inst = system.analysis.get_instantaneous_pressure()
             p_virial = system.analysis.get_instantaneous_pressure_virial()
-            tol = 1e-8
-            self.assertAlmostEqual(p_virial, p_virial_ref, delta=tol)
-            self.assertAlmostEqual(p_inst, p_inst_ref, delta=tol)
+            np.testing.assert_allclose(p_virial, p_virial_ref, atol=1e-16)
+            np.testing.assert_allclose(p_inst, p_inst_ref, rtol=1e-3)
             system.part.clear()
+
+    @utx.skipIfMissingFeatures(["NPT", "MASS"])
+    def test_npt_Andersen(self):
+        self.run_npt("Andersen")
+
+    @utx.skipIfMissingFeatures(["NPT", "MASS"])
+    def test_npt_MTK(self):
+        self.run_npt("MTK")
 
 
 @utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])

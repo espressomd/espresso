@@ -184,6 +184,7 @@ inline ParticleForce calc_opposing_force(ParticleForce const &pf,
  *  @param[in] coulomb_kernel  Coulomb force kernel.
  *  @param[in] dipoles_kernel  Dipolar force kernel.
  *  @param[in] elc_kernel      ELC force correction kernel.
+ *  @param[in] coulomb_u_kernel Coulomb energy kernel.
  */
 inline void add_non_bonded_pair_force(
     Particle &p1, Particle &p2, Utils::Vector3d const &d, double dist,
@@ -192,7 +193,8 @@ inline void add_non_bonded_pair_force(
     [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
     Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel,
     Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel,
-    Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel) {
+    Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel,
+    Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_u_kernel) {
 
   ParticleForce pf{};
 
@@ -215,6 +217,15 @@ inline void add_non_bonded_pair_force(
 #endif
   }
 
+  /*********************************************************************/
+  /* everything before this contributes to the virial pressure in NpT, */
+  /* but nothing afterwards, since the contribution to pressure from   */
+  /* electrostatic is calculated by energy                             */
+  /*********************************************************************/
+#ifdef NPT
+  npt_add_virial_force_contribution(pf.f, d);
+#endif
+
   /***********************************************/
   /* short-range electrostatics                  */
   /***********************************************/
@@ -224,20 +235,16 @@ inline void add_non_bonded_pair_force(
   auto const q1q2 = p1.q() * p2.q();
   if (q1q2 != 0. and coulomb_kernel != nullptr) {
     pf.f += (*coulomb_kernel)(q1q2, d, dist);
+#ifdef NPT
+    npt_add_virial_diagonalSum_contribution(
+        (*coulomb_u_kernel)(p1, p2, q1q2, d, dist));
+#endif
 #ifdef P3M
     if (elc_kernel)
       (*elc_kernel)(p1, p2, q1q2);
 #endif // P3M
   }
 #endif // ELECTROSTATICS
-
-  /*********************************************************************/
-  /* everything before this contributes to the virial pressure in NpT, */
-  /* but nothing afterwards                                            */
-  /*********************************************************************/
-#ifdef NPT
-  npt_add_virial_force_contribution(pf.f, d);
-#endif
 
   /***********************************************/
   /* thermostat                                  */

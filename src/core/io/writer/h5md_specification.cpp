@@ -25,7 +25,7 @@
 #include "h5md_dataset.hpp"
 #include "h5md_specification.hpp"
 
-#include <h5xx/h5xx.hpp>
+#include <highfive/highfive.hpp>
 
 #include <hdf5.h>
 
@@ -45,67 +45,67 @@ Specification::Specification(unsigned int fields) {
   };
 
   if (fields & H5MD_OUT_BOX_L) {
-    add_time_series(
-        {"particles/atoms/box/edges", "value", 2, H5T_NATIVE_DOUBLE, 3, false});
+    add_time_series({"/particles/atoms/box/edges", "value", 2,
+                     H5T_NATIVE_DOUBLE, 3, false});
   }
   if (fields & H5MD_OUT_LE_OFF) {
-    add_time_series({"particles/atoms/lees_edwards/offset", "value", 2,
+    add_time_series({"/particles/atoms/lees_edwards/offset", "value", 2,
                      H5T_NATIVE_DOUBLE, 1, false});
   }
   if (fields & H5MD_OUT_LE_DIR) {
-    add_time_series({"particles/atoms/lees_edwards/direction", "value", 2,
+    add_time_series({"/particles/atoms/lees_edwards/direction", "value", 2,
                      H5T_NATIVE_INT, 1, false});
   }
   if (fields & H5MD_OUT_LE_NORMAL) {
-    add_time_series({"particles/atoms/lees_edwards/normal", "value", 2,
+    add_time_series({"/particles/atoms/lees_edwards/normal", "value", 2,
                      H5T_NATIVE_INT, 1, false});
   }
   if (fields & H5MD_OUT_MASS) {
     add_time_series(
-        {"particles/atoms/mass", "value", 2, H5T_NATIVE_DOUBLE, 1, false});
+        {"/particles/atoms/mass", "value", 2, H5T_NATIVE_DOUBLE, 1, false});
   }
   if (fields & H5MD_OUT_CHARGE) {
     add_time_series(
-        {"particles/atoms/charge", "value", 2, H5T_NATIVE_DOUBLE, 1, false});
+        {"/particles/atoms/charge", "value", 2, H5T_NATIVE_DOUBLE, 1, false});
   }
-  add_time_series({"particles/atoms/id", "value", 2, H5T_NATIVE_INT, 1, false},
+  add_time_series({"/particles/atoms/id", "value", 2, H5T_NATIVE_INT, 1, false},
                   false);
   if (fields & H5MD_OUT_TYPE) {
     add_time_series(
-        {"particles/atoms/species", "value", 2, H5T_NATIVE_INT, 1, false});
+        {"/particles/atoms/species", "value", 2, H5T_NATIVE_INT, 1, false});
   }
   if (fields & H5MD_OUT_POS) {
     add_time_series(
-        {"particles/atoms/position", "value", 3, H5T_NATIVE_DOUBLE, 3, false});
+        {"/particles/atoms/position", "value", 3, H5T_NATIVE_DOUBLE, 3, false});
   }
   if (fields & H5MD_OUT_VEL) {
     add_time_series(
-        {"particles/atoms/velocity", "value", 3, H5T_NATIVE_DOUBLE, 3, false});
+        {"/particles/atoms/velocity", "value", 3, H5T_NATIVE_DOUBLE, 3, false});
   }
   if (fields & H5MD_OUT_FORCE) {
     add_time_series(
-        {"particles/atoms/force", "value", 3, H5T_NATIVE_DOUBLE, 3, false});
+        {"/particles/atoms/force", "value", 3, H5T_NATIVE_DOUBLE, 3, false});
   }
   if (fields & H5MD_OUT_IMG) {
     add_time_series(
-        {"particles/atoms/image", "value", 3, H5T_NATIVE_INT, 3, false});
+        {"/particles/atoms/image", "value", 3, H5T_NATIVE_INT, 3, false});
   }
   if (fields & H5MD_OUT_BONDS) {
     add_time_series(
-        {"connectivity/atoms", "value", 3, H5T_NATIVE_INT, 2, false});
+        {"/connectivity/atoms", "value", 3, H5T_NATIVE_INT, 2, false});
   }
 }
 
 bool Specification::is_compliant(std::string const &filename) const {
-  h5xx::file h5md_file(filename, h5xx::file::in);
+  HighFive::File h5md_file(filename, HighFive::File::ReadOnly);
 
   auto const all_groups_exist =
       std::ranges::all_of(m_datasets, [&h5md_file](auto const &d) {
-        return h5xx::exists_group(h5md_file, d.group);
+        return h5md_file.exist(d.group);
       });
   auto const all_datasets_exist =
       std::ranges::all_of(m_datasets, [&h5md_file](auto const &d) {
-        return h5xx::exists_dataset(h5md_file, d.path());
+        return h5md_file.exist(d.path());
       });
   return all_groups_exist and all_datasets_exist;
 }

@@ -1057,7 +1057,6 @@ __global__ void kernel_get(
   force.set(blockIdx, threadIdx);
   out += offset;
   if (pdf.isValidPosition()) {
-    double const f_0 = pdf.get(0u);
     double const f_1 = pdf.get(1u);
     double const f_2 = pdf.get(2u);
     double const f_3 = pdf.get(3u);
@@ -1082,7 +1081,6 @@ __global__ void kernel_get(
     const double momdensity_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
     const double vel2Term = f_12 + f_13 + f_5;
     const double momdensity_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
-    const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
     const double md_0 = force.get(0) * 0.50000000000000000 + momdensity_0;
     const double md_1 = force.get(1) * 0.50000000000000000 + momdensity_1;
     const double md_2 = force.get(2) * 0.50000000000000000 + momdensity_2;
@@ -1125,7 +1123,6 @@ __global__ void kernel_get(
   pdf.set(blockIdx, threadIdx);
   p_out += offset;
   if (pdf.isValidPosition()) {
-    double const f_0 = pdf.get(0u);
     double const f_1 = pdf.get(1u);
     double const f_2 = pdf.get(2u);
     double const f_3 = pdf.get(3u);

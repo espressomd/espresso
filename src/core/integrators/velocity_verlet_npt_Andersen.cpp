@@ -28,39 +28,14 @@
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "npt.hpp"
-#include "system/System.hpp"
-#include "thermostat.hpp"
 #include "thermostats/npt_inline.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/math/sqr.hpp>
 
 #include <boost/mpi/collectives.hpp>
 
 #include <cmath>
 #include <functional>
-
-/**
- * @brief Propagate the particle's velocity.
- * @f$ v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) @f$
- */
-static void velocity_verlet_npt_propagate_vel_final(
-    NptIsoParameters const &nptiso, InstantaneousPressure &npt_inst_pressure,
-    ParticleRangeNPT const &particles, double time_step) {
-
-  npt_inst_pressure.p_vel = {};
-  for (auto &p : particles) {
-    for (unsigned int j = 0; j < 3; j++) {
-      if (!p.is_fixed_along(j)) {
-        if (nptiso.geometry & NptIsoParameters::nptgeom_dir[j]) {
-          npt_inst_pressure.p_vel[j] += Utils::sqr(p.v()[j]) * p.mass();
-        }
-        p.v()[j] += p.force()[j] * time_step / 2.0 / p.mass();
-      }
-    }
-  }
-}
 
 /**
  * @brief Scale and communicate instantaneous NpT pressure and
@@ -74,7 +49,7 @@ velocity_verlet_npt_finalize_p_inst(NptIsoParameters &nptiso,
                                     double time_step) {
   /* finalize derivation of p_inst */
   npt_inst_pressure.p_inst = {0., 0.};
-  for (unsigned int i = 0; i < 3; i++) {
+  for (auto i = 0u; i < 3u; ++i) {
     if (nptiso.geometry & NptIsoParameters::nptgeom_dir[i]) {
       npt_inst_pressure.p_inst[0] +=
           npt_inst_pressure.p_vir[i] + npt_inst_pressure.p_vel[i];
@@ -83,21 +58,28 @@ velocity_verlet_npt_finalize_p_inst(NptIsoParameters &nptiso,
   }
 
   Utils::Vector2d p_sum = {0., 0.};
-  boost::mpi::reduce(comm_cart, npt_inst_pressure.p_inst, p_sum,
+  boost::mpi::reduce(::comm_cart, npt_inst_pressure.p_inst, p_sum,
                      std::plus<Utils::Vector2d>(), 0);
 
   /* propagate p_epsilon */
-  if (this_node == 0) {
+  if (::this_node == 0) {
     npt_inst_pressure.p_inst = p_sum / (nptiso.dimension * nptiso.volume);
     nptiso.p_epsilon +=
         (npt_inst_pressure.p_inst[0] - nptiso.p_ext) * 0.5 * time_step;
   }
 }
 
-static void
-velocity_verlet_npt_propagate_pos(ParticleRangeNPT const &particles,
-                                  IsotropicNptThermostat const &npt_iso,
-                                  double time_step, System::System &system) {
+/**
+ * @brief propagete positions and the volume and add thermal fluctuation.
+ * A and V are the position and volume propagators for half-time step.
+ * O is the propagator corresponding to Ornstein-Uhlenbeck process
+ * representing the stochastic thermostat.
+ * The time evolution follows the sequence A-V-O-V-A in this function,
+ * with propagators applied right to left.
+ */
+static void velocity_verlet_npt_propagate_AVOVA_And(
+    ParticleRangeNPT const &particles, IsotropicNptThermostat const &npt_iso,
+    double time_step, System::System &system) {
 
   auto &box_geo = *system.box_geo;
   auto &cell_structure = *system.cell_structure;
@@ -117,7 +99,7 @@ velocity_verlet_npt_propagate_pos(ParticleRangeNPT const &particles,
    * @f$ V(t+0.5*dt) = V(t) + 0.5*p_{\epsilon}*dt @f$
    * and prepare pos and vel-rescaling
    */
-  if (this_node == 0) {
+  if (::this_node == 0) {
     nptiso.volume += nptiso.inv_piston * nptiso.p_epsilon * 0.5 * time_step;
     // L(t)**2 / L(t+0.5*dt)**2, where the numerator follows time in position,
     // and the denominator follows time in velocity
@@ -139,14 +121,14 @@ velocity_verlet_npt_propagate_pos(ParticleRangeNPT const &particles,
     // L(t) / L(t+0.5*dt)
     scal[0] = 1. / scal[1];
   }
-  boost::mpi::broadcast(comm_cart, scal, 0);
+  boost::mpi::broadcast(::comm_cart, scal, 0);
 
   /* 1st propagate positions with dt/2 and rescaling pos;
    * @f$ pos[t+0.5*dt] = (L(t+0.5*dt) / L(t)) *
    *    (pos[t] + (L(t)**2 / L(t+0.5*dt)**2) * vel[t+0.5*dt] * 0.5 * dt) @f$
    */
   for (auto &p : particles) {
-    for (unsigned int j = 0; j < 3; j++) {
+    for (auto j = 0u; j < 3u; ++j) {
       if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & NptIsoParameters::nptgeom_dir[j]) {
           p.pos()[j] =
@@ -167,7 +149,7 @@ velocity_verlet_npt_propagate_pos(ParticleRangeNPT const &particles,
    * @f$ V(t+dt) = V(t+0.5*dt) + 0.5*p_{\epsilon}*dt @f$,
    * and prepare pos- and vel-rescaling
    */
-  if (this_node == 0) {
+  if (::this_node == 0) {
     nptiso.p_epsilon =
         propagate_thermV_nptiso(npt_iso, nptiso.p_epsilon, nptiso.piston);
     nptiso.volume += nptiso.inv_piston * nptiso.p_epsilon * 0.5 * time_step;
@@ -177,7 +159,7 @@ velocity_verlet_npt_propagate_pos(ParticleRangeNPT const &particles,
     scal[1] = L_dt / L_halfdt;
     scal[0] = 1. / scal[1];
   }
-  boost::mpi::broadcast(comm_cart, scal, 0);
+  boost::mpi::broadcast(::comm_cart, scal, 0);
 
   /* stochastic reserviors for velocities;
    *  @f$ p(t+0.5*dt) = p(t+0.5*dt) \exp(- \gamma_0 dt / m)
@@ -189,7 +171,7 @@ velocity_verlet_npt_propagate_pos(ParticleRangeNPT const &particles,
   for (auto &p : particles) {
     auto const v_therm =
         propagate_therm0_nptiso(npt_iso, p.v(), p.mass(), p.id());
-    for (unsigned int j = 0; j < 3; j++) {
+    for (auto j = 0u; j < 3u; ++j) {
       if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & NptIsoParameters::nptgeom_dir[j]) {
           p.v()[j] = v_therm[j];
@@ -210,10 +192,9 @@ velocity_verlet_npt_propagate_pos(ParticleRangeNPT const &particles,
    * necessary adjustments to the cell geometry */
   Utils::Vector3d new_box;
 
-  if (this_node == 0) {
+  if (::this_node == 0) {
     new_box = box_geo.length();
-
-    for (unsigned int i = 0; i < 3; i++) {
+    for (auto i = 0u; i < 3u; ++i) {
       if (nptiso.cubic_box ||
           nptiso.geometry & NptIsoParameters::nptgeom_dir[i]) {
         new_box[i] = L_dt;
@@ -221,44 +202,28 @@ velocity_verlet_npt_propagate_pos(ParticleRangeNPT const &particles,
     }
   }
 
-  boost::mpi::broadcast(comm_cart, new_box, 0);
+  boost::mpi::broadcast(::comm_cart, new_box, 0);
 
   box_geo.set_length(new_box);
   // fast box length update
   system.on_boxl_change(true);
 }
 
-/**
- * @brief Propagate the particle's velocity.
- * @f$ v(t+0.5*dt) = v(t) + 0.5*dt * a(t) @f$
- */
-static void velocity_verlet_npt_propagate_vel(ParticleRangeNPT const &particles,
-                                              double time_step) {
-  auto &nptiso = *System::get_system().nptiso;
-  auto &npt_inst_pressure = *System::get_system().npt_inst_pressure;
-  npt_inst_pressure.p_vel = {};
-
-  for (auto &p : particles) {
-    for (unsigned int j = 0; j < 3; j++) {
-      if (!p.is_fixed_along(j)) {
-        p.v()[j] += p.force()[j] * time_step / 2.0 / p.mass();
-        if (nptiso.geometry & NptIsoParameters::nptgeom_dir[j]) {
-          npt_inst_pressure.p_vel[j] += Utils::sqr(p.v()[j]) * p.mass();
-        }
-      }
-    }
-  }
+void velocity_verlet_npt_Andersen_step_1(ParticleRangeNPT const &particles,
+                                         IsotropicNptThermostat const &npt_iso,
+                                         double time_step,
+                                         System::System &system) {
+  auto &nptiso = *system.nptiso;
+  auto &npt_inst_pressure = *system.npt_inst_pressure;
+  velocity_verlet_npt_propagate_vel(nptiso, npt_inst_pressure, particles,
+                                    time_step);
+  velocity_verlet_npt_propagate_AVOVA_And(particles, npt_iso, time_step,
+                                          system);
 }
 
-void velocity_verlet_npt_step_1(ParticleRangeNPT const &particles,
-                                IsotropicNptThermostat const &npt_iso,
-                                double time_step, System::System &system) {
-  velocity_verlet_npt_propagate_vel(particles, time_step);
-  velocity_verlet_npt_propagate_pos(particles, npt_iso, time_step, system);
-}
-
-void velocity_verlet_npt_step_2(ParticleRangeNPT const &particles,
-                                double time_step, System::System &system) {
+void velocity_verlet_npt_Andersen_step_2(ParticleRangeNPT const &particles,
+                                         double time_step,
+                                         System::System &system) {
   auto &nptiso = *system.nptiso;
   auto &npt_inst_pressure = *system.npt_inst_pressure;
   velocity_verlet_npt_propagate_vel_final(nptiso, npt_inst_pressure, particles,

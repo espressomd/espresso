@@ -576,7 +576,7 @@ planned bugfix release for the version of |es| they're using.
 
 If you're actively developing code for |es|, you might also be interested in
 the summaries of the `ESPResSo meetings
-<https://github.com/espressomd/espresso/wiki/Offline-Espresso-meeting>`_,
+<https://github.com/espressomd/espresso/wiki/ESPResSo-meeting>`_,
 where the core team discusses plans for future releases and feature freezes.
 
 .. _Intended interface compatibility between ESPResSo versions:
@@ -598,11 +598,17 @@ guidelines:
   simulation is terminated. Example: 4.0.2 :math:`\to` 4.1.0.
 
 * ``major``: No guarantees are made for a transition between major versions.
-  Example: 4.1.2 :math:`\to` 5.0.
+  Example: 4.2.2 :math:`\to` 5.0.
 
 * No guarantees are made with regards to the development branch on GitHub.
 
 * No guarantees are made with respect to the C++ bindings in the simulation core.
+
+These guidelines are meant to satisfy Semantic Versioning 2.0.0 [1]_ and :pep:`440`.
+Commits between releases are considered *development* and do not have a meaningful
+version number; even though package repositories outside of the Python ecosystem
+sometimes customize version numbers with extra metadata to label development commits,
+such as in ``1.1.5-dev`` or ``1.1.5.git8b603b12``, |es| doesn't offer a mechanism for it.
 
 .. _How to cite ESPResSo:
 
@@ -616,7 +622,9 @@ for |es| 2.0 to 3.3. To find the version number, use the following command:
 
 .. code-block:: bash
 
-    ./pypresso -c "import espressomd.version;print(espressomd.version.friendly())"
+    ./pypresso -c "import espressomd;print(espressomd.__version__)"
+
+See also :mod:`espressomd.version` for access to more fine-grained metadata.
 
 A number of algorithms in |es| are fairly advanced and unique to |es|.
 The authors of these contributions kindly ask you to cite the relevant
@@ -624,7 +632,7 @@ publications, using the BibTeX entries indicated in this user guide.
 
 A complete citation would look like this:
 
-    Simulations were carried out with ESPResSo 4.2[24] using the ICC\*
+    Simulations were carried out with ESPResSo 4.2.2[24] using the ICC\*
     algorithm[25].
 
     | ____________
@@ -638,19 +646,26 @@ A complete citation would look like this:
       dielectric boundaries. *J. Chem. Phys.* **132**, 154112 (2010).
       doi:\ `10.1063/1.3376011 <https://doi.org/10.1063/1.3376011>`_.
 
-You may also provide the patch level, when relevant. If you developed code
-for |es| and made it available in a publicly accessible repository, you
-should consider providing the corresponding URL, for example in a footnote:
+If you developed code for |es| and made it available in a publicly accessible repository,
+consider providing a permanent URL, such as a commit revision or a git tag:
 
-    The method was implemented for ESPResSo 4.2.2[24] and the source code is
+    The method was implemented for ESPResSo 4.2.2[24] and its source code is
     available online\ :superscript:`note 1`.
 
     | ____________
 
-    | :superscript:`note 1` https://github.com/username/espresso/tree/implemented-algorithm
+    | :superscript:`note 1` https://github.com/username/espresso/releases/tag/implemented-algorithm
 
     | [24] F. Weik, R. Weeber, K. Szuttor *et al.* ESPResSo 4.0 -- an
       extensible software package for simulating soft matter systems.
       *Eur. Phys. J. Spec. Top.* **227**, 1789--1816 (2019).
       doi:\ `10.1140/epjst/e2019-800186-9 <https://doi.org/10.1140/epjst/e2019-800186-9>`_.
 
+The URL of a branch can be ambiguous, since extra commits can be pushed in the future,
+for example to fix a bug, thus creating confusion as to which commit was actually
+used to produce the paper data.
+
+____
+
+.. [1]
+   https://semver.org

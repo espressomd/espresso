@@ -115,27 +115,37 @@ def equations_to_code(equations, variable_prefix="",
 
 def substitute_force_getter_pattern(code, pattern, subst):
     re_pat = re.compile(pattern)
-    assert re_pat.search(code) is not None, f"pattern '{pattern} not found in '''\n{code}\n'''"  # nopep8
+    assert re_pat.search(code) is not None, \
+        f"pattern '{pattern}' not found in '''\n{code}\n'''"
     return re_pat.sub(subst, code)
 
 
 def substitute_force_getter_cpp(code):
     field_getter = "force->"
-    assert field_getter in code is not None, f"pattern '{field_getter} not found in '''\n{code}\n'''"  # nopep8
+    assert field_getter in code, \
+        f"pattern '{field_getter}' not found in '''\n{code}\n'''"
     return code.replace(field_getter, "force_field->")
 
 
 def substitute_force_getter_cu(code):
     field_getter = "force->get(x,y,z,"
-    assert field_getter in code is not None, \
+    assert field_getter in code, \
         f"pattern '{field_getter} not found in '''\n{code}\n'''"
     return code.replace(field_getter, "force.get(")
+
+
+def remove_intermediate_variable(code, name):
+    re_pat = re.compile(f"const (float|double) {name} = .*?;\n")
+    assert re_pat.search(code) is not None, \
+        f"pattern '{re_pat}' not found in '''\n{code}\n'''"
+    return re_pat.sub("", code)
 
 
 def add_espresso_filters_to_jinja_env(jinja_env):
     jinja_env.filters["substitute_force_getter_cpp"] = substitute_force_getter_cpp
     jinja_env.filters["substitute_force_getter_cu"] = substitute_force_getter_cu
     jinja_env.filters["substitute_force_getter_pattern"] = substitute_force_getter_pattern
+    jinja_env.filters["remove_intermediate_variable"] = remove_intermediate_variable
 
 
 def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):

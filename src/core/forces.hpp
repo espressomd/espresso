@@ -44,4 +44,5 @@ void calc_long_range_forces(ParticleRange const &particles);
 /** Update the NpT virial */
 void npt_add_virial_force_contribution(Utils::Vector3d const &force,
                                        Utils::Vector3d const &d);
+void npt_add_virial_diagonalSum_contribution(double diagonal_sum);
 #endif

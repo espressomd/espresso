@@ -17,9 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE EspressoSystemStandAlone test
-#define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 namespace utf = boost::unit_test;
@@ -27,6 +25,7 @@ namespace utf = boost::unit_test;
 #include "ParticleFactory.hpp"
 #include "particle_management.hpp"
 
+#include "EspressoCoreGlobalConfig.hpp"
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "PropagationMode.hpp"
@@ -89,6 +88,21 @@ namespace espresso {
 // ESPResSo system instance
 static std::shared_ptr<System::System> system;
 } // namespace espresso
+
+struct GlobalConfig : public EspressoCoreGlobalConfig {
+  GlobalConfig() {
+    espresso::system = System::System::create();
+    espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+    ::System::set_system(espresso::system);
+  }
+  ~GlobalConfig() {
+    espresso::system.reset();
+    ::System::reset_system();
+  }
+};
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_AUTO_TEST_SUITE(suite)
 
 static void remove_translational_motion(System::System &system) {
   Galilei{}.kill_particle_motion(system, false);
@@ -626,11 +640,4 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
   }
 }
 
-int main(int argc, char **argv) {
-  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
-  espresso::system = System::System::create();
-  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
-  ::System::set_system(espresso::system);
-
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}
+BOOST_AUTO_TEST_SUITE_END()

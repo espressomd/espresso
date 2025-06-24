@@ -267,6 +267,9 @@ public:
       } catch (...) { // NOLINT(bugprone-empty-catch)
       }
     }
+    /* MPI_Finalize is unsafe if there are pending non-blocking operations */
+    m_comm.barrier();
+    m_mpi_env.reset();
   }
 
 private:

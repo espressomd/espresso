@@ -83,8 +83,8 @@ void HollowConicalFrustum::calculate_dist(const Utils::Vector3d &pos,
       Utils::Vector3d{{m_r2, endpoint_angle, -m_length / 2.}});
   auto const line_director = (r2_endpoint - r1_endpoint).normalized();
 
-  auto project_on_line = [](auto const vec, auto const line_start,
-                            auto const line_director) {
+  auto project_on_line = [](auto const &vec, auto const &line_start,
+                            auto const &line_director) {
     return line_start + line_director * ((vec - line_start) * line_director);
   };
 
