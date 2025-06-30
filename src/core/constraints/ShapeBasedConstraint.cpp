@@ -115,9 +115,10 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 
 #ifdef DPD
       if (system.thermostat->thermo_switch & THERMO_DPD) {
-        dpd_force = dpd_pair_force(p, part_rep, *system.thermostat->dpd,
-                                   *system.box_geo, ia_params, dist_vec, dist,
-                                   dist * dist);
+        dpd_force = dpd_pair_force(p.pos(), p.v(), p.id(), part_rep.pos(),
+                                   part_rep.v(), part_rep.id(),
+                                   *system.thermostat->dpd, *system.box_geo,
+                                   ia_params, dist_vec, dist, dist * dist);
         // Additional use of DPD here requires counter increase
         system.thermostat->dpd->rng_increment();
       }
@@ -133,9 +134,10 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 
 #ifdef DPD
         if (system.thermostat->thermo_switch & THERMO_DPD) {
-          dpd_force = dpd_pair_force(p, part_rep, *system.thermostat->dpd,
-                                     *system.box_geo, ia_params, dist_vec, dist,
-                                     dist * dist);
+          dpd_force = dpd_pair_force(p.pos(), p.v(), p.id(), part_rep.pos(),
+                                     part_rep.v(), part_rep.id(),
+                                     *system.thermostat->dpd, *system.box_geo,
+                                     ia_params, dist_vec, dist, dist * dist);
           // Additional use of DPD here requires counter increase
           system.thermostat->dpd->rng_increment();
         }
