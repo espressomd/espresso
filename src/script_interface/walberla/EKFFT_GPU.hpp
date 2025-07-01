@@ -33,9 +33,9 @@
 #include <walberla_bridge/electrokinetics/ek_poisson_fft_gpu_init.hpp>
 #include <walberla_bridge/utils/ResourceManager.hpp>
 
-#include <script_interface/walberla/EKFFT.hpp>
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
+#include <script_interface/walberla/EKFFT.hpp>
 
 #include <utils/math/int_pow.hpp>
 

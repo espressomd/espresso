@@ -194,6 +194,7 @@ class EKTestWalberlaSinglePrecision(EKEOF, ut.TestCase):
     ek_solver_class = espressomd.electrokinetics.EKFFT
     ek_params = {"single_precision": True}
 
+
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT, CUDA"])
 class EKTestWalberlaGPU(EKEOF, ut.TestCase):
 
@@ -214,6 +215,7 @@ class EKTestWalberlaSinglePrecisionGPU(EKEOF, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
     ek_solver_class = espressomd.electrokinetics.EKFFTGPU
     ek_params = {"single_precision": True}
+
 
 if __name__ == "__main__":
     ut.main()

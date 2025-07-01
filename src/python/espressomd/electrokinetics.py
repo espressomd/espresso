@@ -56,6 +56,7 @@ class EKFFT(ScriptInterfaceHelper):
         _check_lattice_blocks(self.__class__.__name__, kwargs)
         super().__init__(*args, **kwargs)
 
+
 @script_interface_register
 class EKFFTGPU(ScriptInterfaceHelper):
     """

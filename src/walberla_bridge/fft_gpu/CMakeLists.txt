@@ -20,24 +20,26 @@
 add_library(espresso_fft_gpu OBJECT)
 add_library(espresso::fft_gpu ALIAS espresso_fft_gpu)
 target_link_libraries(
-    espresso_fft_gpu
-    PRIVATE
-      espresso_cuda_flags
-      Boost::mpi
-      MPI::MPI_CXX
-      Heffte::Heffte
-      $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
-      CUDA::cuda_driver
-      CUDA::cudart
-      walberla::core
-      walberla::domain_decomposition
-      walberla::blockforest
-      walberla::communication
-      walberla::field
-      walberla::gpu
-      espresso::walberla_codegen_cuda
-      #espresso::walberla_cuda
-      espresso_utils)
+  espresso_fft_gpu
+  PRIVATE
+    espresso_cuda_flags
+    Boost::mpi
+    MPI::MPI_CXX
+    Heffte::Heffte
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
+    CUDA::cuda_driver
+    CUDA::cudart
+    walberla::core
+    walberla::domain_decomposition
+    walberla::blockforest
+    walberla::communication
+    walberla::field
+    walberla::gpu
+    espresso::walberla_codegen_cuda
+    # espresso::walberla_cuda
+    espresso_utils)
 set_target_properties(espresso_fft_gpu PROPERTIES POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(espresso_walberla_cuda PRIVATE espresso_fft_gpu espresso_cuda_flags Heffte::Heffte)
+target_link_libraries(
+  espresso_walberla_cuda PRIVATE espresso_fft_gpu espresso_cuda_flags
+                                 Heffte::Heffte)
 target_sources(espresso_fft_gpu PRIVATE FFT_CUDA.cu)

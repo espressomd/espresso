@@ -28,6 +28,6 @@ namespace walberla {
 
 std::shared_ptr<walberla::PoissonSolver>
 new_ek_poisson_fft_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
-                   double permittivity, bool single_precision);
+                       double permittivity, bool single_precision);
 
 } // namespace walberla
