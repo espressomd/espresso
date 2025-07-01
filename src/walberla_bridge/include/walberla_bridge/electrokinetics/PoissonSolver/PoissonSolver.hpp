@@ -44,11 +44,11 @@ public:
 
   [[nodiscard]] virtual std::size_t get_potential_field_id() const noexcept = 0;
 
-  void set_permittivity(double permittivity) noexcept {
+  virtual void set_permittivity(double permittivity) noexcept {
     m_permittivity = permittivity;
   }
 
-  [[nodiscard]] double get_permittivity() const noexcept {
+  [[nodiscard]] virtual double get_permittivity() const noexcept {
     return m_permittivity;
   }
 

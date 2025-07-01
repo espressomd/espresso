@@ -24,6 +24,7 @@
 #ifdef WALBERLA
 
 #include "EKFFT.hpp"
+#include "EKFFT_GPU.hpp"
 #include "EKNone.hpp"
 #include "EKReactions.hpp"
 #include "EKSpecies.hpp"
@@ -53,6 +54,9 @@ class EKContainer : public ObjectList<EKSpecies> {
   std::variant<
 #ifdef WALBERLA_FFT
       std::shared_ptr<EKFFT>,
+#ifdef CUDA
+      std::shared_ptr<EKFFTGPU>,
+#endif
 #endif
       std::shared_ptr<EKNone>>
       m_poisson_solver;
@@ -99,6 +103,11 @@ class EKContainer : public ObjectList<EKSpecies> {
       solver = std::move(ptr);
     }
 #ifdef WALBERLA_FFT
+#ifdef CUDA
+    else if (auto ptr = std::dynamic_pointer_cast<EKFFTGPU>(so_ptr)) {
+      solver = std::move(ptr);
+    }
+#endif
     else if (auto ptr = std::dynamic_pointer_cast<EKFFT>(so_ptr)) {
       solver = std::move(ptr);
     }

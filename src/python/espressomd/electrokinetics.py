@@ -56,6 +56,29 @@ class EKFFT(ScriptInterfaceHelper):
         _check_lattice_blocks(self.__class__.__name__, kwargs)
         super().__init__(*args, **kwargs)
 
+@script_interface_register
+class EKFFTGPU(ScriptInterfaceHelper):
+    """
+    A FFT-based Poisson solver on the GPU.
+    Intrinsically assumes periodic boundary conditions.
+
+    Parameters
+    ----------
+    lattice : :obj:`espressomd.lb.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+        Lattice object.
+    permittivity : :obj:`float`
+        permittivity of the fluid :math:`\\epsilon_0 \\epsilon_{\\mathrm{r}}`.
+    single_precision : :obj:`bool`, optional
+        Use single-precision floating-point arithmetic.
+    """
+    _so_name = "walberla::EKFFTGPU"
+    _so_features = ("WALBERLA_FFT", "CUDA")
+    _so_creation_policy = "GLOBAL"
+
+    def __init__(self, *args, **kwargs):
+        _check_lattice_blocks(self.__class__.__name__, kwargs)
+        super().__init__(*args, **kwargs)
+
 
 @script_interface_register
 class EKNone(ScriptInterfaceHelper):

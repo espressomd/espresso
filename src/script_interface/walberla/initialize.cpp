@@ -29,6 +29,7 @@
 
 #include "EKContainer.hpp"
 #include "EKFFT.hpp"
+#include "EKFFT_GPU.hpp"
 #include "EKNone.hpp"
 
 #include "EKSpecies.hpp"
@@ -69,6 +70,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<EKSpeciesSlice>("walberla::EKSpeciesSlice");
 #ifdef WALBERLA_FFT
   om->register_new<EKFFT>("walberla::EKFFT");
+#ifdef CUDA
+  om->register_new<EKFFTGPU>("walberla::EKFFTGPU");
+#endif // CUDA
 #endif // WALBERLA_FFT
   om->register_new<EKNone>("walberla::EKNone");
   om->register_new<EKVTKHandle>("walberla::EKVTKHandle");

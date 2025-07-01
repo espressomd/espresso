@@ -30,9 +30,10 @@
 #include "core/MpiCallbacks.hpp"
 #include "core/communication.hpp"
 
-#include <walberla_bridge/electrokinetics/ek_poisson_fft_init.hpp>
+#include <walberla_bridge/electrokinetics/ek_poisson_fft_gpu_init.hpp>
 #include <walberla_bridge/utils/ResourceManager.hpp>
 
+#include <script_interface/walberla/EKFFT.hpp>
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
 
@@ -42,13 +43,7 @@
 
 namespace ScriptInterface::walberla {
 
-class EKFFT : public EKPoissonSolver {
-protected:
-  std::unique_ptr<ResourceManager> m_resources_lock;
-  std::shared_ptr<::walberla::PoissonSolver> m_instance;
-  std::shared_ptr<LatticeWalberla> m_lattice;
-  double m_conv_permittivity;
-  bool m_single_precision;
+class EKFFTGPU : public EKFFT {
 
 public:
   void do_construct(VariantMap const &args) override {
@@ -61,39 +56,12 @@ public:
     auto const permittivity =
         get_value<double>(args, "permittivity") * m_conv_permittivity;
 
-    m_instance = ::walberla::new_ek_poisson_fft(
+    m_instance = ::walberla::new_ek_poisson_fft_gpu(
         m_lattice->lattice(), permittivity, m_single_precision);
     m_resources_lock = std::make_unique<ResourceManager>();
     // MPI communicator is needed to destroy the FFT plans
     m_resources_lock->acquire_lock(
         Communication::mpiCallbacksHandle()->share_mpi_env());
-  }
-
-  EKFFT() {
-    add_parameters({
-        {"permittivity",
-         [this](Variant const &v) {
-           m_instance->set_permittivity(get_value<double>(v) *
-                                        m_conv_permittivity);
-         },
-         [this]() {
-           return m_instance->get_permittivity() / m_conv_permittivity;
-         }},
-        {"single_precision", AutoParameter::read_only,
-         [this]() { return m_single_precision; }},
-        {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
-    });
-  }
-
-  ~EKFFT() override {
-    m_lattice.reset();
-    m_instance.reset();
-    m_resources_lock.reset();
-  }
-
-  [[nodiscard]] std::shared_ptr<::walberla::PoissonSolver>
-  get_instance() const noexcept override {
-    return m_instance;
   }
 };
 
