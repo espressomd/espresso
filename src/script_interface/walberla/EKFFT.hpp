@@ -82,6 +82,8 @@ public:
         {"single_precision", AutoParameter::read_only,
          [this]() { return m_single_precision; }},
         {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
+        {"shape", AutoParameter::read_only,
+         [this]() { return m_instance->get_lattice().get_grid_dimensions(); }},
     });
   }
 

@@ -59,10 +59,9 @@ class EKFFT(ScriptInterfaceHelper):
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
             if any(isinstance(item, slice) for item in key):
-                raise NotImplementedError(
-                    "EKPoissonSolverSlice not implemented yet")
-                # return EKPoissonSolverSlice(
-                #     parent_sip=self, slice_range=key, node_grid=self.shape)
+                return EKPoissonSolverSlice(
+                    # , node_grid=self.shape)
+                    parent_sip=self, slice_range=key)
             else:
                 return EKPoissonSolverNode(parent_sip=self, index=np.array(key))
 
@@ -97,10 +96,9 @@ class EKFFTGPU(ScriptInterfaceHelper):
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
             if any(isinstance(item, slice) for item in key):
-                raise NotImplementedError(
-                    "EKPoissonSolverSlice not implemented yet")
-                # return EKPoissonSolverSlice(
-                #     parent_sip=self, slice_range=key, node_grid=self.shape)
+                return EKPoissonSolverSlice(
+                    # , node_grid=self.shape)
+                    parent_sip=self, slice_range=key)
             else:
                 return EKPoissonSolverNode(parent_sip=self, index=np.array(key))
 
@@ -173,6 +171,74 @@ class EKPoissonSolverNode(ScriptInterfaceHelper):
     @property
     def potential(self):
         return self.call_method("get_potential")
+
+
+@script_interface_register
+class EKPoissonSolverSlice(ScriptInterfaceHelper):
+    _so_name = "walberla::EKPoissonSolverSlice"
+    _so_creation_policy = "GLOBAL"
+
+    def required_keys(self):
+        return {"parent_sip", "slice_range"}
+
+    def validate_params(self, params):
+        utils.check_required_keys(self.required_keys(), params.keys())
+
+    def __init__(self, *args, **kwargs):
+        if "sip" in kwargs:
+            super().__init__(**kwargs)
+        else:
+            self.validate_params(kwargs)
+            slice_range = kwargs.pop("slice_range")
+            grid_size = kwargs["parent_sip"].shape
+            extra_kwargs = espressomd.detail.walberla.get_slice_bounding_box(
+                slice_range, grid_size)
+            node = EKPoissonSolverNode(index=np.array([0, 0, 0]), **kwargs)
+            super().__init__(*args, node_sip=node, **kwargs, **extra_kwargs)
+            utils.handle_errors("EKPoissonSolverSlice instantiation failed")
+
+    def __iter__(self):
+        lower, upper = self.call_method("get_slice_ranges")
+        indices = [list(range(lower[i], upper[i])) for i in range(3)]
+        lb_sip = self.call_method("get_ek_sip")
+        for index in itertools.product(*indices):
+            yield EKPoissonSolverNode(parent_sip=lb_sip, index=np.array(index))
+
+    def __reduce__(self):
+        raise NotImplementedError(
+            "Cannot serialize EK poisson solver slice objects")
+
+    def _getter(self, attr):
+        value_grid, shape = self.call_method(f"get_{attr}")
+        return utils.array_locked(np.reshape(value_grid, shape))
+
+    def _setter(self, attr, values):
+        dimensions = self.call_method("get_slice_size")
+        if 0 in dimensions:
+            raise AttributeError(
+                f"Cannot set properties of an empty '{self.__class__.__name__}' object")
+
+        values = np.copy(values)
+        value_shape = tuple(self.call_method("get_value_shape", name=attr))
+        target_shape = (*dimensions, *value_shape)
+
+        # broadcast if only one element was provided
+        if values.shape == value_shape or values.shape == () and value_shape == (1,):
+            values = np.full(target_shape, values)
+
+        def shape_squeeze(shape):
+            return tuple(x for x in shape if x != 1)
+
+        if shape_squeeze(values.shape) != shape_squeeze(target_shape):
+            target_shape = tuple([int(x) for x in target_shape])
+            raise ValueError(
+                f"Input-dimensions of '{attr}' array {values.shape} does not match slice dimensions {target_shape}")
+
+        self.call_method(f"set_{attr}", values=values.flatten())
+
+    @property
+    def potential(self):
+        return self._getter("potential",)
 
 
 @script_interface_register

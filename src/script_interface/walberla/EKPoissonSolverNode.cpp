@@ -41,12 +41,6 @@
 
 namespace ScriptInterface::walberla {
 
-static bool is_boundary_all_reduce(boost::mpi::communicator const &comm,
-                                   std::optional<bool> const &is_boundary) {
-  return boost::mpi::all_reduce(comm, is_boundary ? *is_boundary : false,
-                                std::logical_or<>());
-}
-
 Variant EKPoissonSolverNode::do_call_method(std::string const &name,
                                             VariantMap const &params) {
   if (name == "override_index") {

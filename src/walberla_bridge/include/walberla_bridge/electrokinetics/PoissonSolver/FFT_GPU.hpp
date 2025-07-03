@@ -98,6 +98,37 @@ public:
         walberla::ek::accessor::Scalar::get(potential_field, bc->cell))};
   }
 
+  [[nodiscard]] std::vector<double>
+  get_slice_potential(Utils::Vector3i const &lower_corner,
+                      Utils::Vector3i const &upper_corner) const override {
+    std::vector<double> out;
+    uint_t values_size = 0;
+    auto const &lattice = get_lattice();
+    if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
+      out = std::vector<double>(ci->numCells());
+      for (auto &block : *lattice.get_blocks()) {
+        auto const block_offset = lattice.get_block_corner(block, true);
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
+          auto const potential_field = block.template getData<PotentialField>(
+              domain_decomposition::BlockDataID(get_potential_field_id()));
+          auto const values = ek::accessor::Scalar::get(potential_field, *bci);
+          assert(values.size() == bci->numCells());
+          values_size += bci->numCells();
+          auto kernel = [&values, &out, this](unsigned const block_index,
+                                              unsigned const local_index,
+                                              Utils::Vector3i const &node) {
+            out[local_index] = double_c(values[block_index]);
+          };
+
+          copy_block_buffer(*bci, *ci, block_offset, lower_corner, kernel);
+        }
+      }
+      assert(values_size == ci->numCells());
+    }
+    return out;
+  }
+
 private:
   void ghost_communication() { fft_cuda->ghost_communication(); }
 };

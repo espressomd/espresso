@@ -62,6 +62,13 @@ public:
                      bool consider_ghosts = false) {
     return std::nullopt;
   }
+
+  [[nodiscard]] virtual std::vector<double>
+  get_slice_potential(Utils::Vector3i const &lower_corner,
+                      Utils::Vector3i const &upper_corner) const {
+    std::vector<double> out;
+    return out;
+  }
 };
 
 } // namespace walberla
