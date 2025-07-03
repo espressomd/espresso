@@ -21,6 +21,10 @@
 
 #include "PoissonSolver.hpp"
 
+#include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_double_precision_CUDA.cuh"
+#include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_single_precision_CUDA.cuh"
+#include "../../BlockAndCell.hpp"
+
 #include <FFT_CUDA.cuh>
 #include <blockforest/communication/UniformBufferedScheme.h>
 #include <domain_decomposition/BlockDataID.h>
@@ -45,6 +49,7 @@ private:
   }
 
   std::shared_ptr<FFT_CUDA<FloatType>> fft_cuda;
+  using PotentialField = gpu::GPUField<FloatType>;
 
 public:
   FFT_GPU() = default;
@@ -77,6 +82,20 @@ public:
 
   [[nodiscard]] auto const &get_lattice() const noexcept {
     return fft_cuda->get_lattice();
+  }
+
+  [[nodiscard]] virtual std::optional<double>
+  get_node_potential(Utils::Vector3i const &node,
+                     bool consider_ghosts = false) override {
+    auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
+
+    if (!bc || (get_potential_field_id() == 0))
+      return std::nullopt;
+
+    auto const potential_field = bc->block->template getData<PotentialField>(
+        domain_decomposition::BlockDataID(get_potential_field_id()));
+    return {double_c(
+        walberla::ek::accessor::Scalar::get(potential_field, bc->cell))};
   }
 
 private:

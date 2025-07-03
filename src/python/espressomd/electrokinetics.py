@@ -56,6 +56,20 @@ class EKFFT(ScriptInterfaceHelper):
         _check_lattice_blocks(self.__class__.__name__, kwargs)
         super().__init__(*args, **kwargs)
 
+    def __getitem__(self, key):
+        if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
+            if any(isinstance(item, slice) for item in key):
+                raise NotImplementedError(
+                    "EKPoissonSolverSlice not implemented yet")
+                # return EKPoissonSolverSlice(
+                #     parent_sip=self, slice_range=key, node_grid=self.shape)
+            else:
+                return EKPoissonSolverNode(parent_sip=self, index=np.array(key))
+
+        raise TypeError(
+            f"{key} is not a valid index. Should be a point on the "
+            "nodegrid e.g. ek[0,0,0], or a slice, e.g. ek[:,0,0]")
+
 
 @script_interface_register
 class EKFFTGPU(ScriptInterfaceHelper):
@@ -80,6 +94,20 @@ class EKFFTGPU(ScriptInterfaceHelper):
         _check_lattice_blocks(self.__class__.__name__, kwargs)
         super().__init__(*args, **kwargs)
 
+    def __getitem__(self, key):
+        if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
+            if any(isinstance(item, slice) for item in key):
+                raise NotImplementedError(
+                    "EKPoissonSolverSlice not implemented yet")
+                # return EKPoissonSolverSlice(
+                #     parent_sip=self, slice_range=key, node_grid=self.shape)
+            else:
+                return EKPoissonSolverNode(parent_sip=self, index=np.array(key))
+
+        raise TypeError(
+            f"{key} is not a valid index. Should be a point on the "
+            "nodegrid e.g. ek[0,0,0], or a slice, e.g. ek[:,0,0]")
+
 
 @script_interface_register
 class EKNone(ScriptInterfaceHelper):
@@ -101,6 +129,50 @@ class EKNone(ScriptInterfaceHelper):
     def __init__(self, *args, **kwargs):
         _check_lattice_blocks(self.__class__.__name__, kwargs)
         super().__init__(*args, **kwargs)
+
+
+@script_interface_register
+class EKPoissonSolverNode(ScriptInterfaceHelper):
+    _so_name = "walberla::EKPoissonSolverNode"
+    _so_creation_policy = "GLOBAL"
+
+    def required_keys(self):
+        return {"parent_sip", "index"}
+
+    def validate_params(self, params):
+        utils.check_required_keys(self.required_keys(), params.keys())
+        utils.check_type_or_throw_except(
+            params["index"], 3, int, "The index of an EK poisson solver node consists of three integers.")
+
+    def __init__(self, *args, **kwargs):
+        if "sip" not in kwargs:
+            self.validate_params(kwargs)
+            super().__init__(*args, **kwargs)
+            utils.handle_errors("EKPoissonSolverNode instantiation failed")
+        else:
+            super().__init__(**kwargs)
+
+    def __reduce__(self):
+        raise NotImplementedError(
+            "Cannot serialize EK poisson solver node objects")
+
+    def __eq__(self, obj):
+        return isinstance(obj, EKPoissonSolverNode) and self.index == obj.index
+
+    def __hash__(self):
+        return hash(self.index)
+
+    @property
+    def index(self):
+        return tuple(self._index)
+
+    @index.setter
+    def index(self, value):
+        raise RuntimeError("Parameter 'index' is read-only.")
+
+    @property
+    def potential(self):
+        return self.call_method("get_potential")
 
 
 @script_interface_register

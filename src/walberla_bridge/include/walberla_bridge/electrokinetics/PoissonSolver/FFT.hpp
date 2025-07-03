@@ -21,6 +21,10 @@
 
 #include "PoissonSolver.hpp"
 
+#include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_double_precision_CPU.h"
+#include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_single_precision_CPU.h"
+#include "../../BlockAndCell.hpp"
+
 #include <blockforest/communication/UniformBufferedScheme.h>
 #include <domain_decomposition/BlockDataID.h>
 #include <fft/Fft.h>
@@ -131,6 +135,20 @@ public:
   void solve() override {
     (*m_ft)();
     ghost_communication();
+  }
+
+  [[nodiscard]] virtual std::optional<double>
+  get_node_potential(Utils::Vector3i const &node,
+                     bool consider_ghosts = false) override {
+    auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
+
+    if (!bc || (get_potential_field_id() == 0))
+      return std::nullopt;
+
+    auto const potential_field =
+        bc->block->template getData<PotentialField>(m_potential_field_id);
+    return {double_c(
+        walberla::ek::accessor::Scalar::get(potential_field, bc->cell))};
   }
 
 private:

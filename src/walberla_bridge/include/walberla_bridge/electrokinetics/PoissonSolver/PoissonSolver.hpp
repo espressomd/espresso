@@ -23,6 +23,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace walberla {
@@ -55,6 +56,12 @@ public:
   [[nodiscard]] auto const &get_lattice() const noexcept { return *m_lattice; }
 
   virtual void solve() = 0;
+
+  [[nodiscard]] virtual std::optional<double>
+  get_node_potential(Utils::Vector3i const &node,
+                     bool consider_ghosts = false) {
+    return std::nullopt;
+  }
 };
 
 } // namespace walberla

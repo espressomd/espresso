@@ -31,6 +31,7 @@
 #include "EKFFT.hpp"
 #include "EKFFT_GPU.hpp"
 #include "EKNone.hpp"
+#include "EKPoissonSolverNode.hpp"
 
 #include "EKSpecies.hpp"
 #include "EKSpeciesNode.hpp"
@@ -75,6 +76,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #endif // CUDA
 #endif // WALBERLA_FFT
   om->register_new<EKNone>("walberla::EKNone");
+  om->register_new<EKPoissonSolverNode>("walberla::EKPoissonSolverNode");
   om->register_new<EKVTKHandle>("walberla::EKVTKHandle");
 
   om->register_new<EKReactant>("walberla::EKReactant");

@@ -87,6 +87,8 @@ public:
   [[nodiscard]] auto const &get_lattice() const noexcept { return *m_lattice; }
 
 private:
+  void add_fields(PotentialField *field_out,
+                  gpu::GPUField<FloatType> *field_add, FloatType factor);
   void ghost_communication() {} //(*m_full_communication)(); }
 };
 

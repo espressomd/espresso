@@ -60,9 +60,15 @@ multiply_by_greens_function(gpu::FieldAccessor<cufftDoubleComplex> potential,
         cufftDoubleComplex(potential.get(0u).x * greens_function.get(0u),
                            potential.get(0u).y * greens_function.get(0u));
   }
-  // unsigned int index = fde_getThreadIndex();
-  // potential[index].x *= greensfunction[index];
-  // potential[index].y *= greensfunction[index];
+}
+
+__global__ void add_fields_with_factor(gpu::FieldAccessor<double> field_out,
+                                       gpu::FieldAccessor<double> field_add,
+                                       const double factor) {
+  field_out.set(blockIdx, threadIdx);
+  if (field_out.isValidPosition()) {
+    field_out.get(0u) += field_add.get(0u) * factor;
+  }
 }
 
 template <typename T, std::size_t N>
@@ -77,20 +83,6 @@ FFT_CUDA<FloatType>::FFT_CUDA(std::shared_ptr<LatticeWalberla> lattice,
                               double permittivity)
     : m_lattice(std::move(lattice)), m_permittivity(permittivity) {
   m_blocks = get_lattice().get_blocks();
-
-  // Vector3<uint_t> dim(m_blocks->getNumberOfXCells(),
-  //                     m_blocks->getNumberOfYCells(),
-  //                     m_blocks->getNumberOfZCells());
-  // auto const greens = [dim](uint_t x, uint_t y, uint_t z) -> real_t {
-  //   if (x == 0u && y == 0u && z == 0u)
-  //     return 0.;
-  //   return -0.5 /
-  //           (std::cos(2. * std::numbers::pi * real_c(x) / real_c(dim[0])) +
-  //           std::cos(2. * std::numbers::pi * real_c(y) / real_c(dim[1])) +
-  //           std::cos(2. * std::numbers::pi * real_c(z) / real_c(dim[2])) -
-  //           3.) /
-  //           real_c(dim[0] * dim[1] * dim[2]);
-  // };
 
   m_potential_field_id = gpu::addGPUFieldToStorage<PotentialField>(
       get_lattice().get_blocks(), "potential field", 1, field::fzyx,
@@ -145,15 +137,30 @@ template <typename FloatType> void FFT_CUDA<FloatType>::reset_charge_field() {
 }
 
 template <typename FloatType>
+void FFT_CUDA<FloatType>::add_fields(PotentialField *field_out,
+                                     gpu::GPUField<FloatType> *field_add,
+                                     FloatType factor) {
+  auto kernel = gpu::make_kernel(add_fields_with_factor);
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<FloatType>::xyz(*field_out));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<FloatType>::xyz(*field_add));
+  kernel.addParam(factor);
+  kernel();
+}
+
+template <typename FloatType>
 void FFT_CUDA<FloatType>::add_charge_to_field(std::size_t id, double valency,
                                               bool is_double_precision) {
   auto const factor = FloatType_c(valency) / FloatType_c(get_permittivity());
   // the FFT-solver re-uses the potential field for the charge
   const auto charge_id = walberla::BlockDataID(get_potential_field_id());
-  // const auto density_id = walberla::BlockDataID(id);
+  const auto density_id = walberla::BlockDataID(id);
   for (auto &block : *get_lattice().get_blocks()) {
     auto field = block.template getData<PotentialField>(charge_id);
-    ek::accessor::Scalar::initialize(field, FloatType_c(0.0));
+    // TODO do we enforce, that the FloatType of the Charge and the
+    // species density is the same?
+    auto density_field =
+        block.template getData<gpu::GPUField<FloatType>>(density_id);
+    add_fields(field, density_field, FloatType_c(factor));
   }
 }
 
@@ -176,17 +183,9 @@ template <typename FloatType> void FFT_CUDA<FloatType>::solve() {
     auto kernel = gpu::make_kernel(multiply_by_greens_function);
     kernel.addFieldIndexingParam(gpu::FieldIndexing<ComplexType>::xyz(*furier));
     kernel.addFieldIndexingParam(gpu::FieldIndexing<FloatType>::xyz(*green));
-    // kernel.addParam(dev_data_ptr);
-    kernel();
-    // dim3 dim_grid = calculate_dim_grid(
-    //   static_cast<unsigned>(parameters.dim_z * parameters.dim_y *
-    //                         (parameters.dim_x / 2 + 1)),
-    //   4, threads_per_block);
 
     m_fft->forward(_data_potential, _data_furier); //, m_buffer->data());
     kernel();
-    // KERNELCALL(multiply_by_greens_function, dim_grid, threads_per_block,
-    // _data_potential);
     m_fft->backward(_data_furier, _data_potential); //, m_buffer->data());
 
     ghost_communication();
