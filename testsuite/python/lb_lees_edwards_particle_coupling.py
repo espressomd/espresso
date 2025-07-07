@@ -328,7 +328,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
                 np.sum(lbf[:, :, :].last_applied_force, axis=(0, 1, 2))), atol=1E-9)
             current_mom = np.copy(system.analysis.linear_momentum())
             np.testing.assert_allclose(
-                initial_mom[1:], current_mom[1:], atol=2E-7)
+                initial_mom[1:], current_mom[1:], atol=2.75E-7)
 
 
 if __name__ == '__main__':

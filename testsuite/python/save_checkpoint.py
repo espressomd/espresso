@@ -401,7 +401,7 @@ if lbf_class:
     grid_3D = np.fromfunction(
         lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
         lbf.shape, dtype=float)
-    lbf[:, :, :].population = np.einsum(
+    lbf[:, :, :]._population = np.einsum(
         'abc,d->abcd', grid_3D, np.arange(1, 20))
     lbf[:, :, :].last_applied_force = np.einsum(
         'abc,d->abcd', grid_3D, np.arange(1, 4))

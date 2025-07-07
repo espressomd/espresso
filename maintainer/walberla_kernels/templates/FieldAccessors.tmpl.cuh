@@ -128,17 +128,21 @@ namespace Interpolation {
 namespace Density {
     {{dtype}}
     get( gpu::GPUField< {{dtype}} > const * pdf_field,
+         {{dtype}} const density,
          Cell const & cell );
     void
     set( gpu::GPUField< {{dtype}} > * pdf_field,
          {{dtype}} const rho,
+         {{dtype}} const density,
          Cell const & cell );
     std::vector< {{dtype}} >
     get( gpu::GPUField< {{dtype}} > const * pdf_field,
+         {{dtype}} const density,
          CellInterval const & ci );
     void
     set( gpu::GPUField< {{dtype}} > * pdf_field,
          std::vector< {{dtype}} > const & values,
+         {{dtype}} const density,
          CellInterval const & ci );
 } // namespace Density
 
@@ -171,12 +175,14 @@ namespace Force {
          gpu::GPUField< {{dtype}} > * velocity_field,
          gpu::GPUField< {{dtype}} > * force_field,
          Vector{{D}}< {{dtype}} > const & u,
+         {{dtype}} const density,
          Cell const & cell );
     void
     set( gpu::GPUField< {{dtype}} > const * pdf_field,
          gpu::GPUField< {{dtype}} > * velocity_field,
          gpu::GPUField< {{dtype}} > * force_field,
          std::vector< {{dtype}} > const & values,
+         {{dtype}} const density,
          CellInterval const & ci );
 } // namespace Force
 
@@ -203,18 +209,22 @@ namespace DensityAndMomentumDensity {
 namespace MomentumDensity {
     Vector{{D}}< {{dtype}} >
     reduce( gpu::GPUField< {{dtype}} > const * pdf_field,
-            gpu::GPUField< {{dtype}} > const * force_field );
+            gpu::GPUField< {{dtype}} > const * force_field,
+            {{dtype}} const density );
 } // namespace MomentumDensity
 
 namespace PressureTensor {
     Matrix{{D}}< {{dtype}} >
     get( gpu::GPUField< {{dtype}} > const * pdf_field,
+         {{dtype}} const density,
          Cell const & cell );
     std::vector< {{dtype}} >
     get( gpu::GPUField< {{dtype}} > const * pdf_field,
+        {{dtype}} const density,
          CellInterval const & ci );
     Matrix{{D}}< {{dtype}} >
-    reduce( gpu::GPUField< {{dtype}} > const * pdf_field );
+    reduce( gpu::GPUField< {{dtype}} > const * pdf_field,
+            {{dtype}} const density );
 } // namespace PressureTensor
 
 } // namespace accessor

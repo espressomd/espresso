@@ -17,9 +17,9 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1,
-// lbmpy_walberla/pystencils_walberla from waLBerla commit
-// f36fa0a68bae59f0b516f6587ea8fa7c24a41141
+// kernel generated with pystencils v1.3.7, lbmpy v1.3.7+4.gc7d65a7, sympy
+// v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit
+// 0aab9c0af2335b1f6fec75deae06e514ccb233ab
 
 #pragma once
 #include "core/DataTypes.h"
@@ -116,10 +116,11 @@ public:
 
   DynamicUBBDoublePrecisionCUDA(
       const shared_ptr<StructuredBlockForest> &blocks, BlockDataID pdfsID_,
-      std::function<Vector3<float64>(const Cell &,
-                                     const shared_ptr<StructuredBlockForest> &,
-                                     IBlock &)> &velocityCallback)
-      : elementInitialiser(velocityCallback), pdfsID(pdfsID_) {
+      std::function<Vector3<float64>(
+          const Cell &, const shared_ptr<StructuredBlockForest> &, IBlock &)>
+          &velocityCallbackDynamicUBBDoublePrecisionCUDA)
+      : elementInitialiser(velocityCallbackDynamicUBBDoublePrecisionCUDA),
+        pdfsID(pdfsID_) {
     auto createIdxVector = [](IBlock *const, StructuredBlockStorage *const) {
       return new IndexVectors();
     };

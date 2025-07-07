@@ -38,40 +38,36 @@
 #include <gpu/GPUField.h>
 #include <gpu/Kernel.h>
 
+#include <thrust/copy.h>
+#include <thrust/functional.h>
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
+#include <thrust/transform.h>
 
 #include <array>
 #include <vector>
 
 #if defined(__NVCC__)
 #define RESTRICT __restrict__
-#pragma nv_diagnostic push
-#pragma nv_diag_suppress 177 // unused variable
 #elif defined(__clang__)
 #if defined(__CUDA__)
 #if defined(__CUDA_ARCH__)
 // clang compiling CUDA code in device mode
 #define RESTRICT __restrict__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
 #else
 // clang compiling CUDA code in host mode
 #define RESTRICT __restrict__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
 #endif
 #endif
 #elif defined(__GNUC__) or defined(__GNUG__)
 #define RESTRICT __restrict__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
 #elif defined(_MSC_VER)
 #define RESTRICT __restrict
 #else
 #define RESTRICT
 #endif
 
+// LCOV_EXCL_START
 /** @brief Get linear index of flattened data with original layout @c fzyx. */
 static __forceinline__ __device__ uint getLinearIndex( uint3 blockIdx, uint3 threadIdx, uint3 gridDim, uint3 blockDim, uint fOffset ) {
   auto const x = threadIdx.x;
@@ -86,6 +82,18 @@ static __forceinline__ __device__ uint getLinearIndex( uint3 blockIdx, uint3 thr
          y * fSize * zSize         +
          x * fSize * zSize * ySize ;
 }
+
+/** @brief Rescale values in a device vector by some constant. */
+struct algo_rescale: thrust::unary_function< {{dtype}} , {{dtype}} > {
+  argument_type m_scale_factor;
+  algo_rescale(argument_type scale_factor) : m_scale_factor(scale_factor) { }
+
+  __thrust_exec_check_disable__ __host__ __device__
+  constexpr result_type operator()(argument_type const &x) const {
+    return x * m_scale_factor;
+  }
+};
+// LCOV_EXCL_STOP
 
 namespace walberla {
 namespace {{namespace}} {
@@ -599,6 +607,10 @@ namespace Equilibrium
         rho -= {{dtype}}(1.0);
         {%endif %}
 
+        {%if zero_centered %}
+        {{dtype}} delta_rho = rho - {{dtype}} {1};
+        {%endif %}
+
         {% for eqTerm in equilibrium -%}
             pdf.get({{loop.index0 }}u) = {{eqTerm}};
         {% endfor -%}
@@ -611,7 +623,8 @@ namespace Density
 // LCOV_EXCL_START
     __global__ void kernel_get(
         gpu::FieldAccessor< {{dtype}} > pdf,
-        {{dtype}} * RESTRICT rho_out )
+        {{dtype}} * RESTRICT rho_out,
+        {{dtype}} const density )
     {
         auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
         pdf.set( blockIdx, threadIdx );
@@ -620,14 +633,15 @@ namespace Density
             {% for i in range(Q) -%}
                 {{dtype}} const f_{{i}} = pdf.get({{i}}u);
             {% endfor -%}
-            {{density_getters | indent(12)}}
+            {{density_getters_adjust | indent(12)}}
             rho_out[0u] = rho;
         }
     }
 
     __global__ void kernel_set(
         gpu::FieldAccessor< {{dtype}} > pdf,
-        {{dtype}} const * RESTRICT rho_in )
+        {{dtype}} const * RESTRICT rho_in,
+        {{dtype}} const density )
     {
         auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
         pdf.set( blockIdx, threadIdx );
@@ -642,13 +656,14 @@ namespace Density
             {{dtype}} const rho_inv = {{dtype}} {1} / rho;
             {{dtype}} const u_old[{{D}}] = { {% for i in range(D) %}momdensity_{{i}} * rho_inv{% if not loop.last %}, {% endif %}{% endfor %} };
 
-            Equilibrium::kernel_set_device(pdf, u_old, rho_in[0u] {%if not compressible %} + {{dtype}} {1} {%endif%});
+            Equilibrium::kernel_set_device(pdf, u_old, rho_in[0u] / density {%if not compressible %} + {{dtype}} {1} {%endif%});
         }
     }
 // LCOV_EXCL_STOP
 
     {{dtype}} get(
         gpu::GPUField< {{dtype}} > const * pdf_field,
+        {{dtype}} const density,
         Cell const & cell )
     {
         CellInterval ci ( cell, cell );
@@ -657,6 +672,7 @@ namespace Density
         auto kernel = gpu::make_kernel( kernel_get );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *pdf_field, ci ) );
         kernel.addParam( dev_data_ptr );
+        kernel.addParam( density );
         kernel();
         {{dtype}} rho = dev_data[0u];
         return rho;
@@ -664,6 +680,7 @@ namespace Density
 
     std::vector< {{dtype}} > get(
         gpu::GPUField< {{dtype}} > const * pdf_field,
+        {{dtype}} const density,
         CellInterval const & ci )
     {
         thrust::device_vector< {{dtype}} > dev_data(ci.numCells());
@@ -671,6 +688,7 @@ namespace Density
         auto kernel = gpu::make_kernel( kernel_get );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *pdf_field, ci ) );
         kernel.addParam( dev_data_ptr );
+        kernel.addParam( density );
         kernel();
         std::vector< {{dtype}} > out(dev_data.size());
         thrust::copy(dev_data.begin(), dev_data.end(), out.begin());
@@ -679,7 +697,8 @@ namespace Density
 
     void set(
         gpu::GPUField< {{dtype}} > * pdf_field,
-        const {{dtype}} rho,
+        {{dtype}} const rho,
+        {{dtype}} const density,
         Cell const & cell )
     {
         CellInterval ci ( cell, cell );
@@ -688,12 +707,14 @@ namespace Density
         auto kernel = gpu::make_kernel( kernel_set );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *pdf_field, ci ) );
         kernel.addParam( const_cast<const {{dtype}} *>(dev_data_ptr) );
+        kernel.addParam( density );
         kernel();
     }
 
     void set(
         gpu::GPUField< {{dtype}} > * pdf_field,
         std::vector< {{dtype}} > const & values,
+        {{dtype}} const density,
         CellInterval const & ci )
     {
         thrust::device_vector< {{dtype}} > dev_data(values.begin(), values.end());
@@ -701,6 +722,7 @@ namespace Density
         auto kernel = gpu::make_kernel( kernel_set );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *pdf_field, ci ) );
         kernel.addParam( const_cast<const {{dtype}} *>(dev_data_ptr) );
+        kernel.addParam( density );
         kernel();
     }
 } // namespace Density
@@ -834,7 +856,8 @@ namespace Force {
         gpu::FieldAccessor< {{dtype}} > pdf,
         gpu::FieldAccessor< {{dtype}} > velocity,
         gpu::FieldAccessor< {{dtype}} > force,
-        {{dtype}} const * RESTRICT f_in )
+        {{dtype}} const * RESTRICT f_in,
+        {{dtype}} const density )
     {
         auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
         pdf.set( blockIdx, threadIdx );
@@ -846,11 +869,12 @@ namespace Force {
                 {{dtype}} const f_{{i}} = pdf.get({{i}}u);
             {% endfor -%}
 
-            {{momentum_density_getter | substitute_force_getter_pattern("force->get\(x, ?y, ?z, ?([0-9])u?\)", "f_in[\g<1>u]") | indent(8) }}
+            {{momentum_density_getter_force_setter | substitute_force_getter_pattern("force->get\(x, ?y, ?z, ?([0-9])u?\)", "f_in[\g<1>u]") | indent(8) }}
             auto const rho_inv = {{dtype}} {1} / rho;
+            auto const density_inv = {{dtype}} {1} / density;
 
             {% for i in range(D) -%}
-                force.get({{i}}u) = f_in[{{i}}u];
+                force.get({{i}}u) = f_in[{{i}}u] * density_inv;
             {% endfor %}
 
             {% for i in range(D) -%}
@@ -865,6 +889,7 @@ namespace Force {
          gpu::GPUField< {{dtype}} > * velocity_field,
          gpu::GPUField< {{dtype}} > * force_field,
          Vector{{D}}< {{dtype}} > const & u,
+         {{dtype}} const density,
          Cell const & cell )
     {
         CellInterval ci ( cell, cell );
@@ -875,6 +900,7 @@ namespace Force {
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *velocity_field, ci ) );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *force_field, ci ) );
         kernel.addParam( const_cast<const {{dtype}} *>(dev_data_ptr) );
+        kernel.addParam( density );
         kernel();
     }
 
@@ -883,6 +909,7 @@ namespace Force {
          gpu::GPUField< {{dtype}} > * velocity_field,
          gpu::GPUField< {{dtype}} > * force_field,
          std::vector< {{dtype}} > const & values,
+         {{dtype}} const density,
          CellInterval const & ci )
     {
         thrust::device_vector< {{dtype}} > dev_data(values.begin(), values.end());
@@ -892,6 +919,7 @@ namespace Force {
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *velocity_field, ci ) );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *force_field, ci ) );
         kernel.addParam( const_cast<const {{dtype}} *>(dev_data_ptr) );
+        kernel.addParam( density );
         kernel();
     }
 } // namespace Force
@@ -902,7 +930,8 @@ namespace MomentumDensity
     __global__ void kernel_get(
         gpu::FieldAccessor< {{dtype}} > pdf,
         gpu::FieldAccessor< {{dtype}} > force,
-        {{dtype}} * RESTRICT out )
+        {{dtype}} * RESTRICT out,
+        {{dtype}} const density )
     {
         auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
         pdf.set( blockIdx, threadIdx );
@@ -912,9 +941,11 @@ namespace MomentumDensity
             {% for i in range(1, Q) -%}
                 {{dtype}} const f_{{i}} = pdf.get({{i}}u);
             {% endfor -%}
-            {{momentum_density_getter | substitute_force_getter_cu | remove_rho_intermediate | indent(8) }}
+            {{momentum_density_getter | substitute_force_getter_cu |
+              remove_intermediate_variable("rho") |
+              remove_intermediate_variable("delta_rho") | indent(8) }}
             {% for i in range(D) -%}
-                out[{{i}}u] = md_{{i}};
+                out[{{i}}u] = md_{{i}} * density;
             {% endfor %}
         }
     }
@@ -922,7 +953,8 @@ namespace MomentumDensity
 
     Vector{{D}}< {{dtype}} > reduce(
         gpu::GPUField< {{dtype}} > const * pdf_field,
-        gpu::GPUField< {{dtype}} > const * force_field )
+        gpu::GPUField< {{dtype}} > const * force_field,
+        {{dtype}} const density )
     {
         auto const ci = pdf_field->xyzSize();
         thrust::device_vector< {{dtype}} > dev_data({{D}}u * ci.numCells());
@@ -931,6 +963,7 @@ namespace MomentumDensity
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *pdf_field, ci) );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *force_field, ci ) );
         kernel.addParam( dev_data_ptr );
+        kernel.addParam( density );
         kernel();
         std::vector< {{dtype}} > out(dev_data.size());
         thrust::copy(dev_data.begin(), dev_data.end(), out.data());
@@ -956,7 +989,11 @@ namespace PressureTensor
         p_out += offset;
         if (pdf.isValidPosition()) {
             {% for i in range(1, Q) -%}
-                {{dtype}} const f_{{i}} = pdf.get({{i}}u);
+                {{dtype}} const f_{{i}} = pdf.getNeighbor(
+                {%- for j in range(D) -%}
+                    {{inv_neighbor_dir[i][j]}},
+                {%- endfor -%}
+                {{i}}u);
             {% endfor -%}
             {{second_momentum_getter | indent(12) }}
             {% for i in range(D**2) -%}
@@ -968,6 +1005,7 @@ namespace PressureTensor
 
     Matrix{{D}}< {{dtype}} > get(
         gpu::GPUField< {{dtype}} > const * pdf_field,
+        {{dtype}} const density,
         Cell const & cell )
     {
         CellInterval ci ( cell, cell );
@@ -979,11 +1017,12 @@ namespace PressureTensor
         kernel();
         Matrix{{D}}< {{dtype}} > out;
         thrust::copy(dev_data.begin(), dev_data.end(), out.data());
-        return out;
+        return out * density;
     }
 
     std::vector< {{dtype}} > get(
         gpu::GPUField< {{dtype}} > const * pdf_field,
+        {{dtype}} const density,
         CellInterval const & ci )
     {
         thrust::device_vector< {{dtype}} > dev_data({{D**2}}u * ci.numCells());
@@ -993,12 +1032,15 @@ namespace PressureTensor
         kernel.addParam( dev_data_ptr );
         kernel();
         std::vector< {{dtype}} > out(dev_data.size());
+        thrust::transform(dev_data.begin(), dev_data.end(), dev_data.begin(),
+                          algo_rescale(static_cast< {{dtype}} >(density)));
         thrust::copy(dev_data.begin(), dev_data.end(), out.data());
         return out;
     }
 
     Matrix{{D}}< {{dtype}} > reduce(
-        gpu::GPUField< {{dtype}} > const * pdf_field)
+        gpu::GPUField< {{dtype}} > const * pdf_field,
+        {{dtype}} const density)
     {
         auto const ci = pdf_field->xyzSize();
         thrust::device_vector< {{dtype}} > dev_data({{D**2}}u * ci.numCells());
@@ -1017,7 +1059,7 @@ namespace PressureTensor
                 {% endfor %}
             {% endfor %}
         }
-        return pressureTensor;
+        return pressureTensor * density;
     }
 } // namespace PressureTensor
 

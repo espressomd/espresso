@@ -32,7 +32,7 @@ class EKinWalberlaBase : public LatticeModel {
 public:
   /** @brief Integrate EKin for one time step */
   virtual void integrate(std::size_t potential_id, std::size_t velocity_id,
-                         std::size_t force_id) = 0;
+                         std::size_t force_id, double lb_density) = 0;
 
   /** @brief perform ghost communication of densities */
   virtual void ghost_communication() = 0;

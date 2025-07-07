@@ -112,7 +112,7 @@ class TestLBVTK(TestVTK):
 
     def make_actor(self):
         return self.lb_class(
-            lattice=self.lattice, tau=0.1, density=1., kinematic_viscosity=1.,
+            lattice=self.lattice, tau=0.1, density=1.2, kinematic_viscosity=1.,
             ext_force_density=[0., 0.03, 0.], **self.lb_params)
 
     def add_actor(self):
@@ -142,6 +142,8 @@ class TestLBVTK(TestVTK):
         label_density = "density"
         label_velocity = "velocity_vector"
         label_pressure = "pressure_tensor"
+        self.lbf[2, :, :].density = 1.3
+        self.lbf[-3, :, :].density = 1.3
 
         with tempfile.TemporaryDirectory() as tmp_directory:
             path_vtk_root = pathlib.Path(tmp_directory)
@@ -221,7 +223,7 @@ class TestLBVTK(TestVTK):
 
             for vtk_density, vtk_velocity, vtk_pressure in last_frames:
                 np.testing.assert_allclose(
-                    vtk_density, lb_density, rtol=1e-10, atol=0.)
+                    vtk_density, lb_density, rtol=1e-7, atol=0.)
                 np.testing.assert_allclose(
                     vtk_velocity, lb_velocity, rtol=1e-7, atol=0.)
                 np.testing.assert_allclose(

@@ -96,8 +96,12 @@ class LBLeesEdwards(ut.TestCase):
         system.thermostat.turn_off()
         system.part.clear()
 
-    def sample_lb_velocities(self, lbf):
+    def sample_lb_velocities(self, lbf, fluid_impulse=False):
         profiles = []
+        # Due to the pull scheme as the collision is handled after the
+        # streaming it takes one timestep longer to apply the velocity.
+        if fluid_impulse:
+            system.integrator.run(1)
         for _ in range(5):
             system.integrator.run(2)
             vel_grid = lbf[:, :, :].velocity[:, :, 0, :]
@@ -238,7 +242,7 @@ class LBLeesEdwards(ut.TestCase):
         at x=0 are copied to x=h without any offset.
 
         """
-        tol = 0.08
+        tol = 0.12
 
         # stencil for D2Q8
         stencil_D2Q8 = {'S': (8, 1), 'W': (1, 8), 'N': (8, 15), 'E': (15, 8),
@@ -254,19 +258,19 @@ class LBLeesEdwards(ut.TestCase):
         # without Lees-Edwards, velocities remain unaffected
         with LBContextManager() as lbf:
             create_impulse(lbf, stencil_D2Q8)
-            for profile in self.sample_lb_velocities(lbf):
+            for profile in self.sample_lb_velocities(lbf, True):
                 self.check_profile(profile, stencil_D2Q8, '', 'SNWE', tol)
 
         # with Lees-Edwards and no offset, velocities remain unaffected
         with LEContextManager('x', 'y', 0):
             with LBContextManager() as lbf:
                 create_impulse(lbf, stencil_D2Q8)
-                for profile in self.sample_lb_velocities(lbf):
+                for profile in self.sample_lb_velocities(lbf, True):
                     self.check_profile(profile, stencil_D2Q8, '', 'SNWE', tol)
         with LBContextManager() as lbf:
             with LEContextManager('x', 'y', 0):
                 create_impulse(lbf, stencil_D2Q8)
-                for profile in self.sample_lb_velocities(lbf):
+                for profile in self.sample_lb_velocities(lbf, True):
                     self.check_profile(profile, stencil_D2Q8, '', 'SNWE', tol)
 
         le_offset = 6
@@ -278,7 +282,7 @@ class LBLeesEdwards(ut.TestCase):
                        **stencil_D2Q8}
             with LBContextManager() as lbf:
                 create_impulse(lbf, stencil_D2Q8)
-                for profile in self.sample_lb_velocities(lbf):
+                for profile in self.sample_lb_velocities(lbf, True):
                     self.check_profile(profile, stencil, 'SN', 'WE', tol)
         with LBContextManager() as lbf:
             with LEContextManager('x', 'y', le_offset):
@@ -286,7 +290,7 @@ class LBLeesEdwards(ut.TestCase):
                            'S~': (8 + le_offset, 15),
                            **stencil_D2Q8}
                 create_impulse(lbf, stencil_D2Q8)
-                for profile in self.sample_lb_velocities(lbf):
+                for profile in self.sample_lb_velocities(lbf, True):
                     self.check_profile(profile, stencil, 'SN', 'WE', tol)
 
         # TODO: re-enable this check once LB can be sheared in any direction

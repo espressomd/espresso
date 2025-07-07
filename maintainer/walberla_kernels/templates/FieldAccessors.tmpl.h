@@ -41,16 +41,6 @@
 #include <tuple>
 #include <vector>
 
-#ifdef WALBERLA_CXX_COMPILER_IS_GNU
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#endif
-
-#ifdef WALBERLA_CXX_COMPILER_IS_CLANG
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
-#endif
-
 namespace walberla {
 namespace {{namespace}} {
 namespace accessor {
@@ -307,6 +297,10 @@ namespace Equilibrium
         rho -= {{dtype}} {1};
         {%endif %}
 
+        {%if zero_centered %}
+        {{dtype}} delta_rho = rho - {{dtype}} {1};
+        {%endif %}
+
         {{dtype}} & xyz0 = pdf_field->get(cell, uint_t{ 0u });
         {% for eqTerm in equilibrium -%}
             pdf_field->getF( &xyz0, uint_t{ {{ loop.index0 }}u }) = {{eqTerm}};
@@ -318,19 +312,21 @@ namespace Density
 {
     inline {{dtype}}
     get( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > const * pdf_field,
+         {{dtype}} const density,
          Cell const & cell )
     {
         const {{dtype}} & xyz0 = pdf_field->get(cell, uint_t{ 0u });
         {% for i in range(Q) -%}
             const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
         {% endfor -%}
-        {{density_getters | indent(8)}}
+        {{density_getters_adjust | indent(8)}}
         return rho;
     }
 
     inline void
     set( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > * pdf_field,
          {{dtype}} const rho_in,
+         {{dtype}} const density,
          Cell const & cell )
     {
         const {{dtype}} & xyz0 = pdf_field->get(cell, uint_t{ 0u });
@@ -347,11 +343,12 @@ namespace Density
             velocity[{{i}}u] = momdensity_{{i}} * conversion;
         {% endfor %}
 
-        Equilibrium::set(pdf_field, velocity, rho_in {%if not compressible %} + {{dtype}} {1} {%endif%}, cell);
+        Equilibrium::set(pdf_field, velocity, rho_in / density {%if not compressible %} + {{dtype}} {1} {%endif%}, cell);
     }
 
     inline std::vector< {{dtype}} >
     get( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > const * pdf_field,
+        {{dtype}} const density,
          CellInterval const & ci )
     {
         std::vector< {{dtype}} > out;
@@ -363,7 +360,7 @@ namespace Density
                     {% for i in range(Q) -%}
                         const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
                     {% endfor -%}
-                    {{density_getters | indent(12)}}
+                    {{density_getters_adjust | indent(12)}}
                     out.emplace_back(rho);
                 }
             }
@@ -374,10 +371,12 @@ namespace Density
     inline void
     set( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > * pdf_field,
          std::vector< {{dtype}} > const & values,
+         {{dtype}} const density,
          CellInterval const & ci )
     {
         assert(uint_c(values.size()) == ci.numCells());
         auto values_it = values.begin();
+        auto const density_inv = {{dtype}} {1} / density;
         for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
             for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
                 for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
@@ -395,7 +394,7 @@ namespace Density
                         velocity[{{i}}u] = momdensity_{{i}} * conversion;
                     {% endfor %}
 
-                    Equilibrium::set(pdf_field, velocity, *values_it {%if not compressible %} + {{dtype}} {1} {%endif%}, Cell{x, y, z});
+                    Equilibrium::set(pdf_field, velocity, *values_it * density_inv {%if not compressible %} + {{dtype}} {1} {%endif%}, Cell{x, y, z});
                     ++values_it;
                 }
             }
@@ -512,6 +511,7 @@ namespace Force
          GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > * velocity_field,
          GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > * force_field,
          Vector{{D}}< {{dtype}} > const & force,
+         {{dtype}} const density,
          Cell const & cell )
     {
         {{dtype}} const & pdf_xyz0 = pdf_field->get(cell, uint_t{ 0u });
@@ -521,11 +521,11 @@ namespace Force
             const {{dtype}} f_{{i}} = pdf_field->getF( &pdf_xyz0, uint_t{ {{i}}u });
         {% endfor -%}
 
-        {{momentum_density_getter | substitute_force_getter_pattern("force->get\(x, ?y, ?z, ?([0-9])u?\)", "force[\g<1>u]") | indent(8) }}
+        {{momentum_density_getter_force_setter | substitute_force_getter_pattern("force->get\(x, ?y, ?z, ?([0-9])u?\)", "force[\g<1>u]") | indent(8) }}
         auto const rho_inv = {{dtype}} {1} / rho;
 
         {% for i in range(D) -%}
-            force_field->getF( &laf_xyz0, uint_t{ {{i}}u }) = force[{{i}}u];
+            force_field->getF( &laf_xyz0, uint_t{ {{i}}u }) = force[{{i}}u] / density;
         {% endfor %}
 
         {% for i in range(D) -%}
@@ -538,10 +538,12 @@ namespace Force
          GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > * velocity_field,
          GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > * force_field,
          std::vector< {{dtype}} > const & values,
+         {{dtype}} const density,
          CellInterval const & ci )
     {
         assert(uint_c(values.size()) == ci.numCells() * uint_t({{D}}u));
         auto force = values.data();
+        auto const density_inv = {{dtype}} {1} / density;
         for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
             for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
                 for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
@@ -552,11 +554,11 @@ namespace Force
                         const {{dtype}} f_{{i}} = pdf_field->getF( &pdf_xyz0, uint_t{ {{i}}u });
                     {% endfor -%}
 
-                    {{momentum_density_getter | substitute_force_getter_pattern("force->get\(x, ?y, ?z, ?([0-9])u?\)", "force[\g<1>u]") | indent(12) }}
+                    {{momentum_density_getter_force_setter | substitute_force_getter_pattern("force->get\(x, ?y, ?z, ?([0-9])u?\)", "force[\g<1>u]") | indent(12) }}
                     auto const rho_inv = {{dtype}} {1} / rho;
 
                     {% for i in range(D) -%}
-                        force_field->getF( &laf_xyz0, uint_t{ {{i}}u }) = force[{{i}}u];
+                        force_field->getF( &laf_xyz0, uint_t{ {{i}}u }) = force[{{i}}u] * density_inv;
                     {% endfor %}
 
                     {% for i in range(D) -%}
@@ -574,21 +576,24 @@ namespace MomentumDensity
 {
     inline auto
     reduce( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > const * pdf_field,
-            GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > const * force_field )
+            GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > const * force_field,
+            {{dtype}} const density)
     {
         Vector{{D}}< {{dtype}} > momentumDensity({{dtype}} {0});
-        for(uint_t z = 0; z < pdf_field->zSize(); ++z) {
-            for(uint_t y = 0; y < pdf_field->ySize(); ++y) {
-                for(uint_t x = 0; x < pdf_field->xSize(); ++x) {
+        for(auto z = 0; z < pdf_field->zSize(); ++z) {
+            for(auto y = 0; y < pdf_field->ySize(); ++y) {
+                for(auto x = 0; x < pdf_field->xSize(); ++x) {
                     const {{dtype}} & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
-                    {% for i in range(1, Q) -%}
+                    {% for i in range(1 if zero_centered else 0, Q) -%}
                         const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
                     {% endfor -%}
 
-                    {{momentum_density_getter | substitute_force_getter_cpp | remove_intermediate_variable("rho") | indent(8) }}
+                    {{momentum_density_getter | substitute_force_getter_cpp |
+                      remove_intermediate_variable("rho") |
+                      remove_intermediate_variable("delta_rho") | indent(8) }}
 
                     {% for i in range(D) -%}
-                        momentumDensity[{{i}}u] += md_{{i}};
+                        momentumDensity[{{i}}u] += md_{{i}} * density;
                     {% endfor %}
                 }
             }
@@ -601,11 +606,16 @@ namespace PressureTensor
 {
     inline auto
     get( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > const * pdf_field,
-         Cell const & cell )
+         {{dtype}} const density, Cell const & cell )
    {
-        const {{dtype}} & xyz0 = pdf_field->get(cell, uint_t{ 0u });
+        const int x = cell[0];
+        const int y = cell[1];
+        const int z = cell[2];
         {% for i in range(1, Q) -%}
-            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
+            const {{dtype}} f_{{i}} = pdf_field->get({{inv_neighbor_dir[i][0]}} + x,
+                                                     {{inv_neighbor_dir[i][1]}} + y,
+                                                     {{inv_neighbor_dir[i][2]}} + z,
+                                                     uint_t{ {{i}}u });
         {% endfor -%}
 
         {{second_momentum_getter | indent(8) }}
@@ -616,28 +626,30 @@ namespace PressureTensor
                 pressureTensor[{{i*D+j}}u] = p_{{i*D+j}};
             {% endfor %}
         {% endfor %}
-        return pressureTensor;
+        return pressureTensor * density;
    }
 
     inline auto
     get( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > const * pdf_field,
-         CellInterval const & ci )
+         {{dtype}} const density, CellInterval const & ci )
     {
         std::vector< {{dtype}} > out;
         out.reserve(ci.numCells() * uint_t({{D**2}}u));
         for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
             for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
                 for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
-                    const {{dtype}} & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
                     {% for i in range(1, Q) -%}
-                        const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
+                        const {{dtype}} f_{{i}} = pdf_field->get({{inv_neighbor_dir[i][0]}} + x,
+                                                                 {{inv_neighbor_dir[i][1]}} + y,
+                                                                 {{inv_neighbor_dir[i][2]}} + z,
+                                                                 uint_t{ {{i}}u });
                     {% endfor -%}
 
                     {{second_momentum_getter | indent(12) }}
 
                     {% for i in range(D) -%}
                         {% for j in range(D) -%}
-                            out.emplace_back(p_{{i*D+j}});
+                            out.emplace_back(p_{{i*D+j}} * density);
                         {% endfor %}
                     {% endfor %}
                 }
@@ -647,15 +659,18 @@ namespace PressureTensor
     }
 
     inline auto
-    reduce( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > const * pdf_field)
+    reduce( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > const * pdf_field,
+            {{dtype}} const density )
     {
         Matrix{{D}}< {{dtype}} > pressureTensor({{dtype}} {0});
-        for(uint_t z = 0; z < pdf_field->zSize(); ++z) {
-            for(uint_t y = 0; y < pdf_field->ySize(); ++y) {
-                for(uint_t x = 0; x < pdf_field->xSize(); ++x) {
-                    const {{dtype}} & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
+        for(auto z = 0; z < pdf_field->zSize(); ++z) {
+            for(auto y = 0; y < pdf_field->ySize(); ++y) {
+                for(auto x = 0; x < pdf_field->xSize(); ++x) {
                     {% for i in range(1, Q) -%}
-                        const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
+                        const {{dtype}} f_{{i}} = pdf_field->get({{inv_neighbor_dir[i][0]}} + x,
+                                                                 {{inv_neighbor_dir[i][1]}} + y,
+                                                                 {{inv_neighbor_dir[i][2]}} + z,
+                                                                 uint_t{ {{i}}u });
                     {% endfor -%}
 
                     {{second_momentum_getter | indent(8) }}
@@ -668,18 +683,10 @@ namespace PressureTensor
                 }
             }
         }
-        return pressureTensor;
+        return pressureTensor * density;
     }
 } // namespace PressureTensor
 
 } // namespace accessor
 } // namespace {{namespace}}
 } // namespace walberla
-
-#ifdef WALBERLA_CXX_COMPILER_IS_GNU
-#pragma GCC diagnostic pop
-#endif
-
-#ifdef WALBERLA_CXX_COMPILER_IS_CLANG
-#pragma clang diagnostic pop
-#endif

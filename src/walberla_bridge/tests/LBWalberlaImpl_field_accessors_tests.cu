@@ -193,21 +193,20 @@ template <typename FT, lbmpy::Arch Architecture> struct Fixture {
         return Vector3<FT>(std::data(values));
       }
     };
-    auto const make_ref_matrix = [](std::initializer_list<FT> values) {
-      if constexpr (is_interval) {
-        assert(values.size() % 9ul == 0ul);
-        return std::vector<FT>(values);
-      } else {
-        assert(values.size() == 9ul);
-        return Matrix3<FT>(std::data(values));
-      }
-    };
     auto const to_number = [](auto const &value) {
       if constexpr (std::is_same_v<decltype(value), FT const &>) {
         return value;
       } else {
         assert(value.size() == 1ul);
         return value[0u];
+      }
+    };
+    auto const mult_by = [](auto &value, FT const &multiplier) {
+      if constexpr (is_interval) {
+        std::ranges::transform(value, value.begin(),
+                               [multiplier](auto v) { return v * multiplier; });
+      } else {
+        value *= multiplier;
       }
     };
 
@@ -235,32 +234,18 @@ template <typename FT, lbmpy::Arch Architecture> struct Fixture {
     };
 
     {
-      auto diag = FT{0};
-      auto const zero = FT{0};
       auto const old_pop = lbm::accessor::Population::get(pdf_field, it);
-      auto const old_pre = lbm::accessor::PressureTensor::get(pdf_field, it);
       auto const old_laf = lbm::accessor::Vector::get(force_field, it);
-      auto const old_rho = lbm::accessor::Density::get(pdf_field, it);
+      auto const old_rho =
+          to_number(lbm::accessor::Density::get(pdf_field, density, it));
       auto ref_pop = old_pop;
       std::ranges::transform(old_pop, ref_pop.begin(),
                              [](auto const &f) { return FT{2} * f; });
       lbm::accessor::Population::set(pdf_field, ref_pop, it);
       auto const new_pop = lbm::accessor::Population::get(pdf_field, it);
-      auto const new_pre = lbm::accessor::PressureTensor::get(pdf_field, it);
-      auto const new_rho = lbm::accessor::Density::get(pdf_field, it);
+      auto const new_rho = to_number(
+          lbm::accessor::Density::get(pdf_field, FT{2} * density, it));
       BOOST_CHECK(almost_equal(new_pop, ref_pop, exact));
-      // clang-format off
-      diag = density * (FT{1} / FT{3});
-      auto const old_pre_ref = make_ref_matrix({diag, zero, zero,
-                                                zero, diag, zero,
-                                                zero, zero, diag});
-      BOOST_CHECK(almost_equal(old_pre, old_pre_ref, epsilon));
-      diag = density * (FT{2} / FT{3});
-      auto const new_pre_ref = make_ref_matrix({diag, zero, zero,
-                                                zero, diag, zero,
-                                                zero, zero, diag});
-      BOOST_CHECK(almost_equal(new_pre, new_pre_ref, epsilon));
-      // clang-format on
       auto const old_laf_ref = make_ref_vector({FT{0}, FT{0}, FT{0}});
       auto const new_laf_ref = make_ref_vector({FT{2}, FT{3}, FT{4}});
       lbm::accessor::Vector::set(force_field, new_laf_ref, it);
@@ -277,8 +262,8 @@ template <typename FT, lbmpy::Arch Architecture> struct Fixture {
       lbm::accessor::Vector::set(force_field, old_laf_ref, it);
       cur_laf = lbm::accessor::Vector::get(force_field, it);
       BOOST_CHECK(almost_equal(cur_laf, old_laf_ref, exact));
-      lbm::accessor::Density::set(pdf_field, {FT{7} * density}, it);
-      auto const cur_rho = lbm::accessor::Density::get(pdf_field, it);
+      lbm::accessor::Density::set(pdf_field, {FT{7} * density}, density, it);
+      auto const cur_rho = lbm::accessor::Density::get(pdf_field, density, it);
       BOOST_CHECK(
           almost_equal(to_number(old_rho), density * FT{1}, FT{20} * epsilon));
       BOOST_CHECK(
@@ -297,8 +282,8 @@ template <typename FT, lbmpy::Arch Architecture> struct Fixture {
       auto const new_pop = lbm::accessor::Population::get(pdf_field, it);
       auto const new_vel = lbm::accessor::Vector::get(velocity_field, it);
       BOOST_CHECK(almost_equal(new_vel, ref_vel, epsilon));
-      auto const new_mom =
-          lbm::accessor::MomentumDensity::reduce(pdf_field, force_field);
+      auto const new_mom = lbm::accessor::MomentumDensity::reduce(
+          pdf_field, force_field, density);
       auto const ref_mom = Vector3<FT>(
           ref_vel[0u] * density, ref_vel[1u] * density, ref_vel[2u] * density);
       BOOST_CHECK(almost_equal(new_mom, ref_mom, FT{20} * epsilon));
@@ -326,10 +311,13 @@ template <typename FT, lbmpy::Arch Architecture> struct Fixture {
       lbm::accessor::Population::set(pdf_field, velocity_field, force_field,
                                      old_pop, it);
       lbm::accessor::Force::set(pdf_field, velocity_field, force_field, ref_laf,
-                                it);
+                                density, it);
       cur_pop = lbm::accessor::Population::get(pdf_field, it);
       cur_vel = lbm::accessor::Vector::get(velocity_field, it);
       cur_laf = lbm::accessor::Vector::get(force_field, it);
+      // Due to the rescaled LB with density=1 the force_field is rescaled when
+      // setting it. The Vector::get getter cannot retrieve the unscaled value.
+      mult_by(cur_laf, density);
       BOOST_CHECK(almost_equal(cur_pop, old_pop, exact));
       BOOST_CHECK(almost_equal(cur_vel, new_vel, epsilon));
       BOOST_CHECK(almost_equal(cur_laf, ref_laf, epsilon));
@@ -343,6 +331,7 @@ template <typename FT, lbmpy::Arch Architecture> struct Fixture {
       cur_pop = lbm::accessor::Population::get(pdf_field, it);
       cur_vel = lbm::accessor::Vector::get(velocity_field, it);
       cur_laf = lbm::accessor::Vector::get(force_field, it);
+      mult_by(cur_laf, density);
       BOOST_CHECK(almost_equal(cur_pop, old_pop, epsilon));
       BOOST_CHECK(almost_equal(cur_vel, new_vel, epsilon));
       BOOST_CHECK(almost_equal(cur_laf, ref_laf, epsilon));

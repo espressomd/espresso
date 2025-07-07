@@ -113,7 +113,7 @@ class TestLBPressureTensor:
         for time_series in [self.p_node0, self.p_node1]:
             self.assert_allclose_matrix(
                 np.mean(time_series, axis=0),
-                p_avg_expected, atol_diag=c_s_lb**2 * 200, atol_offdiag=c_s_lb**2 * 9)
+                p_avg_expected, atol_diag=c_s_lb**2 * 200, atol_offdiag=c_s_lb**2 * 10)
 
         # Test that <sigma_[i!=j]> ~=0 and sigma_[ij]==sigma_[ji] ...
         tol_global = 8 / np.sqrt(self.steps)

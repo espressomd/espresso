@@ -104,7 +104,7 @@ class LBCouetteFlowCommon:
             steps = (2**i - 2**(i - 1))
             system.integrator.run(steps)
             pos = np.linspace(0.5, 63.5, 64)
-            u_ref = analytical(pos, system.time - 1., lbf.kinematic_viscosity,
+            u_ref = analytical(pos, system.time - 1. + 1., lbf.kinematic_viscosity,
                                shear_velocity, h, k_max)
             u_lbf = np.copy(u_getter(lbf).reshape([-1]))
             np.testing.assert_allclose(u_lbf, u_ref, atol=1e-4, rtol=0.)
