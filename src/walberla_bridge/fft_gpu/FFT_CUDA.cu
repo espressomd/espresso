@@ -23,22 +23,23 @@ __device__ unsigned int getThreadIndex() {
 __global__ void
 create_greens_function(gpu::FieldAccessor<double> greens_function, int x, int y,
                        int z) {
-  unsigned int index = getThreadIndex();
+  greens_function.set(blockIdx, threadIdx);
+  unsigned int index =
+      greens_function.getLinearIndex(blockIdx, threadIdx, gridDim, blockDim);
   unsigned int tmp;
   unsigned int coord[3];
 
-  coord[0] = index % (x / 2 + 1);
-  tmp = index / (y / 2 + 1);
+  coord[0] = index % x;
+  tmp = index / x;
   coord[1] = tmp % y;
   coord[2] = tmp / y;
-
-  if (index < z * y * (x / 2 + 1)) {
+  if (index < z * y * x) {
     if (index == 0) {
       // setting 0th Fourier mode to 0 enforces charge neutrality
       greens_function.get(0u) = 0.0f;
     } else {
       constexpr cufftReal two_pi = 2.0f * 3.141592654f; // TODO PI
-      greens_function.get(0u) = -2.0f * two_pi * 0.5f /
+      greens_function.get(0u) = -0.5f /
                                 (cos(two_pi * static_cast<cufftReal>(coord[0]) /
                                      static_cast<cufftReal>(x)) +
                                  cos(two_pi * static_cast<cufftReal>(coord[1]) /
@@ -55,7 +56,10 @@ __global__ void
 multiply_by_greens_function(gpu::FieldAccessor<cufftDoubleComplex> potential,
                             gpu::FieldAccessor<double> greens_function) {
   potential.set(blockIdx, threadIdx);
-  if (potential.isValidPosition()) {
+  greens_function.set(blockIdx, threadIdx);
+  if (potential.isValidPosition() && greens_function.isValidPosition()) {
+    unsigned int index =
+        greens_function.getLinearIndex(blockIdx, threadIdx, gridDim, blockDim);
     potential.get(0u) =
         cufftDoubleComplex(potential.get(0u).x * greens_function.get(0u),
                            potential.get(0u).y * greens_function.get(0u));
@@ -66,7 +70,8 @@ __global__ void add_fields_with_factor(gpu::FieldAccessor<double> field_out,
                                        gpu::FieldAccessor<double> field_add,
                                        const double factor) {
   field_out.set(blockIdx, threadIdx);
-  if (field_out.isValidPosition()) {
+  field_add.set(blockIdx, threadIdx);
+  if (field_out.isValidPosition() && field_add.isValidPosition()) {
     field_out.get(0u) += field_add.get(0u) * factor;
   }
 }
@@ -85,28 +90,27 @@ FFT_CUDA<FloatType>::FFT_CUDA(std::shared_ptr<LatticeWalberla> lattice,
   m_blocks = get_lattice().get_blocks();
 
   m_potential_field_id = gpu::addGPUFieldToStorage<PotentialField>(
-      get_lattice().get_blocks(), "potential field", 1, field::fzyx,
-      get_lattice().get_ghost_layers());
+      get_lattice().get_blocks(), "potential field", 1, field::fzyx, 0, false);
   m_greens_function_field_id = gpu::addGPUFieldToStorage<GreenFunctionField>(
-      get_lattice().get_blocks(), "greens function", 1, field::fzyx,
-      get_lattice().get_ghost_layers());
+      get_lattice().get_blocks(), "greens function", 1, field::fzyx, 0, false);
   m_potential_furier_id = gpu::addGPUFieldToStorage<PotentialFurier>(
-      get_lattice().get_blocks(), "furier field", 1, field::fzyx,
-      get_lattice().get_ghost_layers());
+      get_lattice().get_blocks(), "furier field", 1, field::fzyx, 0, false);
   reset_charge_field();
 
   auto dim = get_lattice().get_grid_dimensions();
+  auto offset_vec = Utils::Vector3i({1, 1, 1});
+  auto order = Utils::Vector3i({0, 1, 2});
   m_box_in = std::make_shared<heffte::box3d<>>(
-      to_array(Utils::Vector3i({0, 0, 0})), to_array(dim));
+      to_array(Utils::Vector3i({0, 0, 0})), to_array(dim - offset_vec),
+      to_array(order));
   m_box_out = std::make_shared<heffte::box3d<>>(
-      to_array(Utils::Vector3i({0, 0, 0})), to_array(dim));
+      to_array(Utils::Vector3i({0, 0, 0})), to_array(dim - offset_vec),
+      to_array(order));
   m_fft = std::make_shared<heffte::fft3d<heffte::backend::cufft>>(
       *m_box_in, *m_box_out, MPI_COMM_WORLD);
   m_buffer = std::make_shared<
       heffte::fft3d<heffte::backend::cufft>::buffer_container<ComplexType>>(
       m_fft->size_workspace());
-  // m_fft_out =
-  // std::make_shared<heffte::gpu::vector<std::complex<FloatType>>>(m_fft->size_outbox());
 
   auto block = get_lattice().get_blocks()->getBlock(0, 0, 0);
   auto green_field =
@@ -118,12 +122,6 @@ FFT_CUDA<FloatType>::FFT_CUDA(std::shared_ptr<LatticeWalberla> lattice,
   kernel.addParam<int>(dim[1]);
   kernel.addParam<int>(dim[2]);
   kernel();
-
-  // m_full_communication =
-  //     std::make_shared<FullCommunicator>(get_lattice().get_blocks());
-  // m_full_communication->addPackInfo(
-  //     std::make_shared<field::communication::PackInfo<PotentialField>>(
-  //         m_potential_field_id));
 }
 
 template <typename FloatType> void FFT_CUDA<FloatType>::reset_charge_field() {
@@ -172,21 +170,18 @@ template <typename FloatType> void FFT_CUDA<FloatType>::solve() {
         block.template getData<GreenFunctionField>(m_greens_function_field_id);
     auto furier =
         block.template getData<PotentialFurier>(m_potential_furier_id);
-    FloatType *_data_potential = potential->dataAt(-1, -1, -1, 0);
-    ComplexType *_data_furier = furier->dataAt(-1, -1, -1, 0);
-    const int64_t _stride_0 = int64_t(potential->xStride());
-    const int64_t _stride_1 = int64_t(potential->yStride());
-    const int64_t _stride_2 = int64_t(potential->zStride());
-    const int64_t _stride_3 = int64_t(1 * int64_t(potential->fStride()));
-    // thrust::device_vector<double> dev_data(1u);
-    // auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
-    auto kernel = gpu::make_kernel(multiply_by_greens_function);
-    kernel.addFieldIndexingParam(gpu::FieldIndexing<ComplexType>::xyz(*furier));
-    kernel.addFieldIndexingParam(gpu::FieldIndexing<FloatType>::xyz(*green));
+    FloatType *_data_potential = potential->dataAt(0, 0, 0, 0);
+    ComplexType *_data_furier = furier->dataAt(0, 0, 0, 0);
 
-    m_fft->forward(_data_potential, _data_furier); //, m_buffer->data());
+    auto kernel = gpu::make_kernel(multiply_by_greens_function);
+    kernel.addFieldIndexingParam(
+        gpu::FieldIndexing<ComplexType>::allInner(*furier));
+    kernel.addFieldIndexingParam(
+        gpu::FieldIndexing<FloatType>::allInner(*green));
+
+    m_fft->forward(_data_potential, _data_furier, m_buffer->data());
     kernel();
-    m_fft->backward(_data_furier, _data_potential); //, m_buffer->data());
+    m_fft->backward(_data_furier, _data_potential, m_buffer->data());
 
     ghost_communication();
   }
