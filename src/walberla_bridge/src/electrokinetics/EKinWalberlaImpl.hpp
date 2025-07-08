@@ -137,7 +137,6 @@ protected:
     };
     using FluxField = gpu::GPUField<FT>;
     using DensityField = gpu::GPUField<FT>;
-    using GPUField = gpu::GPUField<FloatType>;
     template <class Field> using PackInfo = MemcpyPackInfo<Field>;
     template <class Stencil>
     using RegularCommScheme = UniformGPUScheme<Stencil>;

@@ -56,7 +56,7 @@ public:
     auto const ek_sip =
         get_value<std::shared_ptr<EKPoissonSolver>>(params, "parent_sip");
     m_ek_poisson_solver = ek_sip->get_instance();
-    assert(m_ek_posson_solver);
+    assert(m_ek_poisson_solver);
     m_grid_size = m_ek_poisson_solver->get_lattice().get_grid_dimensions();
     m_index = get_mapped_index(get_value<Utils::Vector3i>(params, "index"),
                                m_grid_size);
