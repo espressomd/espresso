@@ -40,6 +40,9 @@ jobs:
           build_procs: 3
           check_procs: 3
           with_ccache: 'true'
+          with_walberla: 'true'
+          with_walberla_fft: 'false'
+          with_walberla_avx: 'false'
 
   debian:
     runs-on: ubuntu-latest

@@ -19,6 +19,7 @@
 
 import subprocess
 import numpy as np
+import zndraw.type_defs
 import zndraw.zndraw
 import zndraw.utils
 import zndraw.draw
@@ -31,6 +32,7 @@ import urllib.parse
 import typing as t
 import scipy.spatial.transform
 
+from espressomd.plugins import ase
 
 # Standard colors
 color_dict = {"black": "#303030",
@@ -535,12 +537,18 @@ class Visualizer():
         """
         Update the visualizer with the current state of the system
         """
+        all_types = self.system.part.all().type
         self.system.visualizer_params = self.params
-
-        data = znjson.dumps(
-            self.system, cls=znjson.ZnEncoder.from_converters(
-                [EspressoConverter])
-        )
+        Asedata = ase.ASEInterface(
+            {x: "X" for x in set(all_types)})
+        Asedata.register_system(self.system)
+        data = Asedata.get()
+        if self.params["colors"] is not None:
+            data.arrays['colors'] = [self.params["colors"].get(
+                z, "white") for z in all_types]
+        if self.params["radii"] is not None:
+            data.arrays['radii'] = [self.params["radii"].get(
+                z, 0.5) for z in all_types]
 
         # Catch when the server is initializing an empty frame
         # len(self.zndraw) is a expensive socket call, so we try to avoid it

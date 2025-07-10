@@ -197,7 +197,7 @@ class ArrayPropertyTest(ArrayCommon):
 
         self.assert_operator_usage_raises(lbf[0, 0, 0].velocity)
         self.assert_operator_usage_raises(lbf[0, 0, 0].pressure_tensor)
-        self.assert_operator_usage_raises(lbf[0, 0, 0].population)
+        self.assert_operator_usage_raises(lbf[0, 0, 0]._population)
 
     @utx.skipIfMissingFeatures(["THERMOSTAT_PER_PARTICLE",
                                 "PARTICLE_ANISOTROPY"])

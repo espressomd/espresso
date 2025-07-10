@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit f36fa0a68bae59f0b516f6587ea8fa7c24a41141
+// kernel generated with pystencils v1.3.7, lbmpy v1.3.7+4.gc7d65a7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
 
 #include "DynamicUBBDoublePrecisionCUDA.h"
 #include "core/DataTypes.h"
@@ -118,13 +118,14 @@ static FUNC_PREFIX __launch_bounds__(256) void dynamicubbdoubleprecisioncuda_bou
     double *RESTRICT _data_pdfs_10_20_33 = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 3 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_10_20_36 = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 6 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_10_20_39 = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 9 * _stride_pdfs_3;
-    const double rho = vel0Term + vel1Term + vel2Term + _data_pdfs_10_20_30[_stride_pdfs_0 * x] + _data_pdfs_10_20_316[_stride_pdfs_0 * x] + _data_pdfs_10_20_317[_stride_pdfs_0 * x] + _data_pdfs_10_20_32[_stride_pdfs_0 * x] + _data_pdfs_10_20_33[_stride_pdfs_0 * x] + _data_pdfs_10_20_36[_stride_pdfs_0 * x] + _data_pdfs_10_20_39[_stride_pdfs_0 * x];
-    double *RESTRICT _data_pdfs582130af3d909897 = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_1 * f_in_inv_offsets_y[dir] + _stride_pdfs_2 * z + _stride_pdfs_2 * f_in_inv_offsets_z[dir] + _stride_pdfs_3 * f_in_inv_dir_idx[dir];
+    const double delta_rho = vel0Term + vel1Term + vel2Term + _data_pdfs_10_20_30[_stride_pdfs_0 * x] + _data_pdfs_10_20_316[_stride_pdfs_0 * x] + _data_pdfs_10_20_317[_stride_pdfs_0 * x] + _data_pdfs_10_20_32[_stride_pdfs_0 * x] + _data_pdfs_10_20_33[_stride_pdfs_0 * x] + _data_pdfs_10_20_36[_stride_pdfs_0 * x] + _data_pdfs_10_20_39[_stride_pdfs_0 * x];
+    const double rho = delta_rho + 1.0;
+    double *RESTRICT _data_pdfs378791626b76a0fd = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_1 * f_in_inv_offsets_y[dir] + _stride_pdfs_2 * z + _stride_pdfs_2 * f_in_inv_offsets_z[dir] + _stride_pdfs_3 * f_in_inv_dir_idx[dir];
     uint8_t *RESTRICT _data_indexVector_116 = _data_indexVector + 16;
     uint8_t *RESTRICT _data_indexVector_124 = _data_indexVector + 24;
     uint8_t *RESTRICT _data_indexVector_132 = _data_indexVector + 32;
-    double *RESTRICT _data_pdfs_10_20fc4162366eb9c5b1 = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_2 * z + _stride_pdfs_3 * dir;
-    _data_pdfs582130af3d909897[_stride_pdfs_0 * x + _stride_pdfs_0 * f_in_inv_offsets_x[dir]] = -rho * (6.0 * ((double)(neighbour_offset_x[dir])) * *((double *)(&_data_indexVector_116[40 * blockDim.x * blockIdx.x + 40 * threadIdx.x])) + 6.0 * ((double)(neighbour_offset_y[dir])) * *((double *)(&_data_indexVector_124[40 * blockDim.x * blockIdx.x + 40 * threadIdx.x])) + 6.0 * ((double)(neighbour_offset_z[dir])) * *((double *)(&_data_indexVector_132[40 * blockDim.x * blockIdx.x + 40 * threadIdx.x]))) * weights[dir] + _data_pdfs_10_20fc4162366eb9c5b1[_stride_pdfs_0 * x];
+    double *RESTRICT _data_pdfs_10_200c764bcbcb769286 = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_2 * z + _stride_pdfs_3 * dir;
+    _data_pdfs378791626b76a0fd[_stride_pdfs_0 * x + _stride_pdfs_0 * f_in_inv_offsets_x[dir]] = -rho * (6.0 * ((double)(neighbour_offset_x[dir])) * *((double *)(&_data_indexVector_116[40 * blockDim.x * blockIdx.x + 40 * threadIdx.x])) + 6.0 * ((double)(neighbour_offset_y[dir])) * *((double *)(&_data_indexVector_124[40 * blockDim.x * blockIdx.x + 40 * threadIdx.x])) + 6.0 * ((double)(neighbour_offset_z[dir])) * *((double *)(&_data_indexVector_132[40 * blockDim.x * blockIdx.x + 40 * threadIdx.x]))) * weights[dir] + _data_pdfs_10_200c764bcbcb769286[_stride_pdfs_0 * x];
   }
 }
 } // namespace internal_dynamicubbdoubleprecisioncuda_boundary_DynamicUBBDoublePrecisionCUDA

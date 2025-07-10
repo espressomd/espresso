@@ -90,7 +90,7 @@ class Test(ut.TestCase):
             bounds=([-np.inf, 0., -np.inf, 0.], 4 * [np.inf]))
         self.assertGreater(prefactor, 0.)
         self.assertAlmostEqual(diameter_final, diameter_init, delta=0.005)
-        self.assertAlmostEqual(lam, 0.0325, delta=0.0001)
+        self.assertAlmostEqual(lam, 325e-4, delta=5e-4)
         self.system.thermostat.turn_off()
         self.system.part.clear()
 

@@ -150,7 +150,8 @@ public:
     return m_conv_flux;
   }
 
-  ::LatticeModel::units_map get_latice_to_md_units_conversion() const override {
+  ::LatticeModel::units_map
+  get_lattice_to_md_units_conversion() const override {
     return {
         {"density", 1. / m_conv_density},
         {"flux", 1. / m_conv_flux},

@@ -398,7 +398,7 @@ private:
     }
   }
 
-  void kernel_advection(const std::size_t &velocity_id) {
+  void kernel_advection(std::size_t const velocity_id) {
     auto kernel =
         AdvectiveFluxKernel(m_flux_field_flattened_id, m_density_field_id,
                             BlockDataID(velocity_id));
@@ -407,16 +407,18 @@ private:
     }
   }
 
-  void kernel_friction_coupling(const std::size_t &force_id) {
-    auto kernel = FrictionCouplingKernel(
-        BlockDataID(force_id), m_flux_field_flattened_id,
-        FloatType_c(get_diffusion()), FloatType_c(get_kT()));
+  void kernel_friction_coupling(std::size_t const force_id,
+                                double const lb_density) {
+    auto kernel =
+        FrictionCouplingKernel(BlockDataID(force_id), m_flux_field_flattened_id,
+                               FloatType_c(get_diffusion()),
+                               FloatType_c(get_kT()), FloatType(lb_density));
     for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
   }
 
-  void kernel_diffusion_electrostatic(const std::size_t &potential_id) {
+  void kernel_diffusion_electrostatic(std::size_t const potential_id) {
     auto const phiID = BlockDataID(potential_id);
     std::visit([phiID](auto &kernel) { kernel.setPhiID(phiID); },
                *m_diffusive_flux_electrostatic);
@@ -458,7 +460,7 @@ protected:
 
 public:
   void integrate(std::size_t potential_id, std::size_t velocity_id,
-                 std::size_t force_id) override {
+                 std::size_t force_id, double lb_density) override {
 
     updated_boundary_fields();
 
@@ -486,7 +488,7 @@ public:
                                  std::to_string(force_id) +
                                  ". Hint: LB may be inactive.");
       }
-      kernel_friction_coupling(force_id);
+      kernel_friction_coupling(force_id, lb_density);
     }
 
     if (get_advection()) {

@@ -368,11 +368,11 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
         self.call_method("set_density", value=value)
 
     @property
-    def population(self):
+    def _population(self):
         return utils.array_locked(self.call_method("get_population"))
 
-    @population.setter
-    def population(self, value):
+    @_population.setter
+    def _population(self, value):
         self.call_method("set_population", value=value)
 
     @property
@@ -538,11 +538,11 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
         self._setter("density", value)
 
     @property
-    def population(self):
+    def _population(self):
         return self._getter("population")
 
-    @population.setter
-    def population(self, value):
+    @_population.setter
+    def _population(self, value):
         self._setter("population", value)
 
     @property

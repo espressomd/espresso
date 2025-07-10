@@ -127,7 +127,8 @@ public:
   [[nodiscard]] auto get_lb_fluid() const { return m_instance; }
   [[nodiscard]] auto get_lb_params() const { return m_lb_params; }
 
-  ::LatticeModel::units_map get_latice_to_md_units_conversion() const override {
+  ::LatticeModel::units_map
+  get_lattice_to_md_units_conversion() const override {
     return {
         {"density", 1. / m_conv_dens},
         {"velocity", 1. / m_conv_speed},

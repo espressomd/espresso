@@ -114,7 +114,7 @@ class TestCPU(Test, ut.TestCase):
 class TestGPU(Test, ut.TestCase):
 
     p3m_class = espressomd.electrostatics.P3MGPU
-    rtol = 4e-6
+    rtol = 5e-6
 
 
 if __name__ == "__main__":

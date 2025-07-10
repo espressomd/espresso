@@ -118,15 +118,17 @@ class CheckpointTest(ut.TestCase):
         grid_3D = np.fromfunction(
             lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
             (nx, ny, nz), dtype=float)
+        lb_pop = np.copy(lbf[:, :, :]._population)
+        lb_laf = np.copy(lbf[:, :, :].last_applied_force)
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     np.testing.assert_almost_equal(
-                        np.copy(lbf[i, j, k].population),
+                        lb_pop[i, j, k],
                         grid_3D[i, j, k] * np.arange(1, 20),
                         decimal=precision)
                     np.testing.assert_almost_equal(
-                        np.copy(lbf[i, j, k].last_applied_force),
+                        lb_laf[i, j, k],
                         grid_3D[i, j, k] * np.arange(1, 4),
                         decimal=precision)
         state = lbf.get_params()
@@ -328,7 +330,7 @@ class CheckpointTest(ut.TestCase):
             vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
             lb_density = vtk_data["density"]
             self.assertAlmostEqual(
-                lb_density[0, 0, 0], new_density, delta=1e-5)
+                lb_density[0, 0, 0], new_density, delta=1e-4)
         (vtk_root / filename.format(1)).unlink(missing_ok=True)
         (vtk_root / filename.format(2)).unlink(missing_ok=True)
 

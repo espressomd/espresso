@@ -42,7 +42,7 @@ protected:
   std::vector<std::shared_ptr<VTKHandle>> m_vtk_writers;
 
   virtual ::LatticeModel::units_map
-  get_latice_to_md_units_conversion() const = 0;
+  get_lattice_to_md_units_conversion() const = 0;
   virtual void make_instance(VariantMap const &params) = 0;
 
   auto find_vtk(std::shared_ptr<VTKHandle> const &vtk) const {
@@ -64,7 +64,8 @@ public:
           throw std::runtime_error(
               "VTK object is already attached to this lattice");
         }
-        vtk->attach_to_lattice(m_instance, get_latice_to_md_units_conversion());
+        vtk->attach_to_lattice(m_instance,
+                               get_lattice_to_md_units_conversion());
         m_vtk_writers.emplace_back(vtk);
       });
       return {};
