@@ -20,9 +20,12 @@ __device__ unsigned int getThreadIndex() {
          threadIdx.x;
 }
 
+template <typename FloatType>
 __global__ void
-create_greens_function(gpu::FieldAccessor<double> greens_function, int x, int y,
-                       int z) {
+create_greens_function(gpu::FieldAccessor<FloatType> greens_function, int x,
+                       int y, int z) {
+  using RealType = std::conditional<std::is_same<FloatType, float>::value,
+                                    cufftReal, cufftDoubleReal>::type;
   greens_function.set(blockIdx, threadIdx);
   unsigned int index =
       greens_function.getLinearIndex(blockIdx, threadIdx, gridDim, blockDim);
@@ -38,41 +41,54 @@ create_greens_function(gpu::FieldAccessor<double> greens_function, int x, int y,
       // setting 0th Fourier mode to 0 enforces charge neutrality
       greens_function.get(0u) = 0.0f;
     } else {
-      constexpr cufftReal two_pi = 2.0f * 3.141592654f; // TODO PI
+      constexpr RealType two_pi = 2.0f * 3.141592654f; // TODO PI
       greens_function.get(0u) = -0.5f /
-                                (cos(two_pi * static_cast<cufftReal>(coord[0]) /
-                                     static_cast<cufftReal>(x)) +
-                                 cos(two_pi * static_cast<cufftReal>(coord[1]) /
-                                     static_cast<cufftReal>(y)) +
-                                 cos(two_pi * static_cast<cufftReal>(coord[2]) /
-                                     static_cast<cufftReal>(z)) -
+                                (cos(two_pi * static_cast<RealType>(coord[0]) /
+                                     static_cast<RealType>(x)) +
+                                 cos(two_pi * static_cast<RealType>(coord[1]) /
+                                     static_cast<RealType>(y)) +
+                                 cos(two_pi * static_cast<RealType>(coord[2]) /
+                                     static_cast<RealType>(z)) -
                                  3.0f) /
-                                static_cast<cufftReal>(x * y * z);
+                                static_cast<RealType>(x * y * z);
     }
   }
 }
 
+template <typename FloatType, typename ComplexType>
 __global__ void
-multiply_by_greens_function(gpu::FieldAccessor<cufftDoubleComplex> potential,
-                            gpu::FieldAccessor<double> greens_function) {
+multiply_by_greens_function(gpu::FieldAccessor<ComplexType> potential,
+                            gpu::FieldAccessor<FloatType> greens_function) {
   potential.set(blockIdx, threadIdx);
   greens_function.set(blockIdx, threadIdx);
   if (potential.isValidPosition() && greens_function.isValidPosition()) {
     unsigned int index =
         greens_function.getLinearIndex(blockIdx, threadIdx, gridDim, blockDim);
     potential.get(0u) =
-        cufftDoubleComplex(potential.get(0u).x * greens_function.get(0u),
-                           potential.get(0u).y * greens_function.get(0u));
+        ComplexType(potential.get(0u).x * greens_function.get(0u),
+                    potential.get(0u).y * greens_function.get(0u));
   }
 }
 
-__global__ void add_fields_with_factor(gpu::FieldAccessor<double> field_out,
-                                       gpu::FieldAccessor<double> field_add,
-                                       const double factor) {
+template <typename FloatType>
+__global__ void add_fields_with_factor(gpu::FieldAccessor<FloatType> field_out,
+                                       gpu::FieldAccessor<FloatType> field_add,
+                                       const FloatType factor) {
   field_out.set(blockIdx, threadIdx);
   field_add.set(blockIdx, threadIdx);
   if (field_out.isValidPosition() && field_add.isValidPosition()) {
     field_out.get(0u) += field_add.get(0u) * factor;
+  }
+}
+
+template <typename FloatType>
+__global__ void move_field(gpu::FieldAccessor<FloatType> dest_field,
+                           gpu::FieldAccessor<FloatType> src_field) {
+  dest_field.set(blockIdx, threadIdx);
+  src_field.set(blockIdx, threadIdx);
+  if (dest_field.isValidPosition() && src_field.isValidPosition()) {
+    dest_field.get(0u) = src_field.get(0u);
+    src_field.get(0u) = 0.0;
   }
 }
 
@@ -81,7 +97,7 @@ auto to_array(Utils::Vector<T, N> const &vec) {
   std::array<T, N> res{};
   std::copy(vec.begin(), vec.end(), res.begin());
   return res;
-};
+}
 
 template <typename FloatType>
 FFT_CUDA<FloatType>::FFT_CUDA(std::shared_ptr<LatticeWalberla> lattice,
@@ -91,6 +107,9 @@ FFT_CUDA<FloatType>::FFT_CUDA(std::shared_ptr<LatticeWalberla> lattice,
 
   m_potential_field_id = gpu::addGPUFieldToStorage<PotentialField>(
       get_lattice().get_blocks(), "potential field", 1, field::fzyx, 0, false);
+  m_potential_field_with_ghosts_id = gpu::addGPUFieldToStorage<PotentialField>(
+      get_lattice().get_blocks(), "potential field with ghosts", 1, field::fzyx,
+      get_lattice().get_ghost_layers());
   m_greens_function_field_id = gpu::addGPUFieldToStorage<GreenFunctionField>(
       get_lattice().get_blocks(), "greens function", 1, field::fzyx, 0, false);
   m_potential_furier_id = gpu::addGPUFieldToStorage<PotentialFurier>(
@@ -115,18 +134,24 @@ FFT_CUDA<FloatType>::FFT_CUDA(std::shared_ptr<LatticeWalberla> lattice,
   auto block = get_lattice().get_blocks()->getBlock(0, 0, 0);
   auto green_field =
       block->template getData<GreenFunctionField>(m_greens_function_field_id);
-  auto kernel = gpu::make_kernel(create_greens_function);
+  auto kernel = gpu::make_kernel(create_greens_function<FloatType>);
   kernel.addFieldIndexingParam(
       gpu::FieldIndexing<FloatType>::xyz(*green_field));
-  kernel.addParam<int>(dim[0]);
-  kernel.addParam<int>(dim[1]);
-  kernel.addParam<int>(dim[2]);
+  kernel.addParam(dim[0]);
+  kernel.addParam(dim[1]);
+  kernel.addParam(dim[2]);
   kernel();
+
+  m_full_communication =
+      std::make_shared<FullCommunicator>(get_lattice().get_blocks());
+  m_full_communication->addPackInfo(
+      std::make_shared<gpu::communication::MemcpyPackInfo<PotentialField>>(
+          m_potential_field_with_ghosts_id));
 }
 
 template <typename FloatType> void FFT_CUDA<FloatType>::reset_charge_field() {
   // the FFT-solver re-uses the potential field for the charge
-  auto const potential_id = walberla::BlockDataID(get_potential_field_id());
+  auto const potential_id = walberla::BlockDataID(m_potential_field_id);
 
   for (auto &block : *get_lattice().get_blocks()) {
     auto field = block.template getData<PotentialField>(potential_id);
@@ -138,7 +163,7 @@ template <typename FloatType>
 void FFT_CUDA<FloatType>::add_fields(PotentialField *field_out,
                                      gpu::GPUField<FloatType> *field_add,
                                      FloatType factor) {
-  auto kernel = gpu::make_kernel(add_fields_with_factor);
+  auto kernel = gpu::make_kernel(add_fields_with_factor<FloatType>);
   kernel.addFieldIndexingParam(gpu::FieldIndexing<FloatType>::xyz(*field_out));
   kernel.addFieldIndexingParam(gpu::FieldIndexing<FloatType>::xyz(*field_add));
   kernel.addParam(factor);
@@ -149,11 +174,9 @@ template <typename FloatType>
 void FFT_CUDA<FloatType>::add_charge_to_field(std::size_t id, double valency,
                                               bool is_double_precision) {
   auto const factor = FloatType_c(valency) / FloatType_c(get_permittivity());
-  // the FFT-solver re-uses the potential field for the charge
-  const auto charge_id = walberla::BlockDataID(get_potential_field_id());
   const auto density_id = walberla::BlockDataID(id);
   for (auto &block : *get_lattice().get_blocks()) {
-    auto field = block.template getData<PotentialField>(charge_id);
+    auto field = block.template getData<PotentialField>(m_potential_field_id);
     // TODO do we enforce, that the FloatType of the Charge and the
     // species density is the same?
     auto density_field =
@@ -166,6 +189,8 @@ template <typename FloatType> void FFT_CUDA<FloatType>::solve() {
   for (auto &block : *get_lattice().get_blocks()) {
     auto potential =
         block.template getData<PotentialField>(m_potential_field_id);
+    auto potential_ghosts = block.template getData<PotentialField>(
+        m_potential_field_with_ghosts_id);
     auto green =
         block.template getData<GreenFunctionField>(m_greens_function_field_id);
     auto furier =
@@ -173,7 +198,8 @@ template <typename FloatType> void FFT_CUDA<FloatType>::solve() {
     FloatType *_data_potential = potential->dataAt(0, 0, 0, 0);
     ComplexType *_data_furier = furier->dataAt(0, 0, 0, 0);
 
-    auto kernel = gpu::make_kernel(multiply_by_greens_function);
+    auto kernel =
+        gpu::make_kernel(multiply_by_greens_function<FloatType, ComplexType>);
     kernel.addFieldIndexingParam(
         gpu::FieldIndexing<ComplexType>::allInner(*furier));
     kernel.addFieldIndexingParam(
@@ -182,6 +208,13 @@ template <typename FloatType> void FFT_CUDA<FloatType>::solve() {
     m_fft->forward(_data_potential, _data_furier, m_buffer->data());
     kernel();
     m_fft->backward(_data_furier, _data_potential, m_buffer->data());
+
+    auto move_kernel = gpu::make_kernel(move_field<FloatType>);
+    move_kernel.addFieldIndexingParam(
+        gpu::FieldIndexing<FloatType>::xyz(*potential_ghosts));
+    move_kernel.addFieldIndexingParam(
+        gpu::FieldIndexing<FloatType>::xyz(*potential));
+    move_kernel();
 
     ghost_communication();
   }

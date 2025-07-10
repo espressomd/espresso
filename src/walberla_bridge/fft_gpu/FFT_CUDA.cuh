@@ -1,17 +1,12 @@
 #pragma once
 
-// #include <blockforest/communication/UniformBufferedScheme.h>
+#include <blockforest/communication/UniformBufferedScheme.h>
 #include <domain_decomposition/BlockDataID.h>
-// #include <fft/Fft.h>
-// #include <field/AddToStorage.h>
-// #include <field/GhostLayerField.h>
-// #include <field/communication/PackInfo.h>
 #include <gpu/AddGPUFieldToStorage.h>
 #include <gpu/GPUField.h>
+#include <gpu/communication/MemcpyPackInfo.h>
 #include <gpu/communication/UniformGPUScheme.h>
-// #include <gpu/Kernel.h>
-// #include <gpu/FieldAccessor.h>
-// #include <gpu/FieldIndexing.h>
+
 #include <heffte.h>
 #include <heffte_backends.h>
 #include <stencil/D3Q27.h>
@@ -38,6 +33,7 @@ private:
   double m_permittivity;
 
   domain_decomposition::BlockDataID m_potential_field_id;
+  domain_decomposition::BlockDataID m_potential_field_with_ghosts_id;
   domain_decomposition::BlockDataID m_greens_function_field_id;
   domain_decomposition::BlockDataID m_potential_furier_id;
 
@@ -53,15 +49,13 @@ private:
   std::shared_ptr<
       heffte::fft3d<heffte::backend::cufft>::buffer_container<ComplexType>>
       m_buffer;
-  // std::shared_ptr<heffte::gpu::vector<std::complex<FloatType>>> m_fft_out;
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
 
-  // using FullCommunicator = gpu::communication::UniformGPUScheme<
-  //     typename stencil::D3Q27>;
-  // std::shared_ptr<FullCommunicator> m_full_communication;
+  using FullCommunicator =
+      gpu::communication::UniformGPUScheme<typename stencil::D3Q27>;
+  std::shared_ptr<FullCommunicator> m_full_communication;
 
 public:
-  // FFT_CUDA() = default;
   FFT_CUDA(std::shared_ptr<LatticeWalberla> lattice, double permittivity);
   ~FFT_CUDA() = default;
 
@@ -71,7 +65,7 @@ public:
                            bool is_double_precision);
 
   [[nodiscard]] std::size_t get_potential_field_id() const noexcept {
-    return static_cast<std::size_t>(m_potential_field_id);
+    return static_cast<std::size_t>(m_potential_field_with_ghosts_id);
   }
 
   void solve();
@@ -89,7 +83,7 @@ public:
 private:
   void add_fields(PotentialField *field_out,
                   gpu::GPUField<FloatType> *field_add, FloatType factor);
-  void ghost_communication() {} //(*m_full_communication)(); }
+  void ghost_communication() { (*m_full_communication)(); }
 };
 
 } // namespace walberla
