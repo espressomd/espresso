@@ -19,7 +19,7 @@
 
 // kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1,
 // lbmpy_walberla/pystencils_walberla from waLBerla commit
-// f36fa0a68bae59f0b516f6587ea8fa7c24a41141
+// 59c9b8b185782eba184e0fdfb2144793343213f0
 
 #pragma once
 #include "core/DataTypes.h"
