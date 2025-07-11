@@ -25,7 +25,6 @@
 #include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_single_precision_CUDA.cuh"
 #include "../../BlockAndCell.hpp"
 
-#include <FFT_CUDA.cuh>
 #include <blockforest/communication/UniformBufferedScheme.h>
 #include <domain_decomposition/BlockDataID.h>
 #include <fft/Fft.h>
@@ -41,6 +40,7 @@
 #include <utility>
 
 namespace walberla {
+template <typename FloatType> class FFT_CUDA;
 
 template <typename FloatType> class FFT_GPU : public PoissonSolver {
 private:

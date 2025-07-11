@@ -2,9 +2,11 @@
 
 #include <gpu/FieldAccessor.h>
 #include <gpu/FieldIndexing.h>
-// #include <gpu/GPUField.h>
+
 #include <gpu/Kernel.h>
 
+#include <heffte.h>
+#include <heffte_backends.h>
 #include <heffte_geometry.h>
 
 #include <utils/Vector.hpp>
@@ -14,11 +16,14 @@
 
 namespace walberla {
 
-__device__ unsigned int getThreadIndex() {
-
-  return blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x +
-         threadIdx.x;
-}
+template <typename FloatType> struct FFT_CUDA<FloatType>::heffte_container {
+  std::shared_ptr<heffte::box3d<>> m_box_in;
+  std::shared_ptr<heffte::box3d<>> m_box_out;
+  std::shared_ptr<heffte::fft3d<heffte::backend::cufft>> m_fft;
+  std::shared_ptr<
+      heffte::fft3d<heffte::backend::cufft>::buffer_container<ComplexType>>
+      m_buffer;
+};
 
 template <typename FloatType>
 __global__ void
@@ -41,7 +46,7 @@ create_greens_function(gpu::FieldAccessor<FloatType> greens_function, int x,
       // setting 0th Fourier mode to 0 enforces charge neutrality
       greens_function.get(0u) = 0.0f;
     } else {
-      constexpr RealType two_pi = 2.0f * 3.141592654f; // TODO PI
+      constexpr RealType two_pi = 2.0f * M_PI;
       greens_function.get(0u) = -0.5f /
                                 (cos(two_pi * static_cast<RealType>(coord[0]) /
                                      static_cast<RealType>(x)) +
@@ -62,8 +67,6 @@ multiply_by_greens_function(gpu::FieldAccessor<ComplexType> potential,
   potential.set(blockIdx, threadIdx);
   greens_function.set(blockIdx, threadIdx);
   if (potential.isValidPosition() && greens_function.isValidPosition()) {
-    unsigned int index =
-        greens_function.getLinearIndex(blockIdx, threadIdx, gridDim, blockDim);
     potential.get(0u) =
         ComplexType(potential.get(0u).x * greens_function.get(0u),
                     potential.get(0u).y * greens_function.get(0u));
@@ -116,20 +119,21 @@ FFT_CUDA<FloatType>::FFT_CUDA(std::shared_ptr<LatticeWalberla> lattice,
       get_lattice().get_blocks(), "furier field", 1, field::fzyx, 0, false);
   reset_charge_field();
 
+  heffte = std::make_shared<heffte_container>();
   auto dim = get_lattice().get_grid_dimensions();
   auto offset_vec = Utils::Vector3i({1, 1, 1});
   auto order = Utils::Vector3i({0, 1, 2});
-  m_box_in = std::make_shared<heffte::box3d<>>(
+  heffte->m_box_in = std::make_shared<heffte::box3d<>>(
       to_array(Utils::Vector3i({0, 0, 0})), to_array(dim - offset_vec),
       to_array(order));
-  m_box_out = std::make_shared<heffte::box3d<>>(
+  heffte->m_box_out = std::make_shared<heffte::box3d<>>(
       to_array(Utils::Vector3i({0, 0, 0})), to_array(dim - offset_vec),
       to_array(order));
-  m_fft = std::make_shared<heffte::fft3d<heffte::backend::cufft>>(
-      *m_box_in, *m_box_out, MPI_COMM_WORLD);
-  m_buffer = std::make_shared<
+  heffte->m_fft = std::make_shared<heffte::fft3d<heffte::backend::cufft>>(
+      *(heffte->m_box_in), *(heffte->m_box_out), MPI_COMM_WORLD);
+  heffte->m_buffer = std::make_shared<
       heffte::fft3d<heffte::backend::cufft>::buffer_container<ComplexType>>(
-      m_fft->size_workspace());
+      heffte->m_fft->size_workspace());
 
   auto block = get_lattice().get_blocks()->getBlock(0, 0, 0);
   auto green_field =
@@ -205,9 +209,11 @@ template <typename FloatType> void FFT_CUDA<FloatType>::solve() {
     kernel.addFieldIndexingParam(
         gpu::FieldIndexing<FloatType>::allInner(*green));
 
-    m_fft->forward(_data_potential, _data_furier, m_buffer->data());
+    heffte->m_fft->forward(_data_potential, _data_furier,
+                           heffte->m_buffer->data());
     kernel();
-    m_fft->backward(_data_furier, _data_potential, m_buffer->data());
+    heffte->m_fft->backward(_data_furier, _data_potential,
+                            heffte->m_buffer->data());
 
     auto move_kernel = gpu::make_kernel(move_field<FloatType>);
     move_kernel.addFieldIndexingParam(

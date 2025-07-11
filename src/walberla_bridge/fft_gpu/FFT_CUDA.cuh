@@ -1,22 +1,19 @@
 #pragma once
 
-#include <blockforest/communication/UniformBufferedScheme.h>
-#include <domain_decomposition/BlockDataID.h>
 #include <gpu/AddGPUFieldToStorage.h>
 #include <gpu/GPUField.h>
 #include <gpu/communication/MemcpyPackInfo.h>
 #include <gpu/communication/UniformGPUScheme.h>
 
-#include <heffte.h>
-#include <heffte_backends.h>
 #include <stencil/D3Q27.h>
 #include <walberla_bridge/LatticeWalberla.hpp>
-// TODO dirty
+
 #include "../src/electrokinetics/generated_kernels/EK_FieldAccessors_double_precision_CUDA.cuh"
 #include "../src/electrokinetics/generated_kernels/EK_FieldAccessors_single_precision_CUDA.cuh"
 
 #include <cmath>
 #include <cstddef>
+#include <cufft.h>
 #include <memory>
 #include <numbers>
 #include <utility>
@@ -25,6 +22,7 @@ namespace walberla {
 
 template <typename FloatType> class FFT_CUDA {
 private:
+  struct heffte_container;
   template <typename T> FloatType FloatType_c(T t) {
     return numeric_cast<FloatType>(t);
   }
@@ -32,10 +30,10 @@ private:
   std::shared_ptr<LatticeWalberla> m_lattice;
   double m_permittivity;
 
-  domain_decomposition::BlockDataID m_potential_field_id;
-  domain_decomposition::BlockDataID m_potential_field_with_ghosts_id;
-  domain_decomposition::BlockDataID m_greens_function_field_id;
-  domain_decomposition::BlockDataID m_potential_furier_id;
+  walberla::BlockDataID m_potential_field_id;
+  walberla::BlockDataID m_potential_field_with_ghosts_id;
+  walberla::BlockDataID m_greens_function_field_id;
+  walberla::BlockDataID m_potential_furier_id;
 
   using ComplexType = std::conditional<std::is_same<FloatType, float>::value,
                                        cufftComplex, cufftDoubleComplex>::type;
@@ -43,13 +41,8 @@ private:
   using GreenFunctionField = gpu::GPUField<FloatType>;
   using PotentialFurier = gpu::GPUField<ComplexType>;
 
-  std::shared_ptr<heffte::box3d<>> m_box_in;
-  std::shared_ptr<heffte::box3d<>> m_box_out;
-  std::shared_ptr<heffte::fft3d<heffte::backend::cufft>> m_fft;
-  std::shared_ptr<
-      heffte::fft3d<heffte::backend::cufft>::buffer_container<ComplexType>>
-      m_buffer;
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
+  std::shared_ptr<heffte_container> heffte;
 
   using FullCommunicator =
       gpu::communication::UniformGPUScheme<typename stencil::D3Q27>;
