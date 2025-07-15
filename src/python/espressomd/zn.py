@@ -568,7 +568,6 @@ class Visualizer():
 
             self.zndraw.camera = {'position': [
                 x, y, z_dist], 'target': [x, y, z]}
-            #self.zndraw.config.scene.frame_update = False
 
             if self.params["vector_field"] is not None:
                 for key, value in self.arrow_config.items():
@@ -577,8 +576,8 @@ class Visualizer():
         self.frame_count += 1
 
 
-    def register_setting(self,cls,**kwargs):
-        self.zndraw.register_modifier(cls,**kwargs)
+    def register_setting(self, cls, **kwargs):
+        self.zndraw.register_modifier(cls, **kwargs)
 
     def draw_constraints(self, shapes: list):
         """
