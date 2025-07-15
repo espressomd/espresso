@@ -56,10 +56,12 @@ class SigintTest(ut.TestCase):
     def test_signal_handling(self):
         signals = [signal.Signals.SIGINT, signal.Signals.SIGTERM]
         processes = []
+        env = os.environ.copy()
+        env["OMP_NUM_THREADS"] = env.get("OMP_NUM_THREADS", "1")
         # open asynchronous processes with non-blocking read access on stderr
         for _ in range(len(signals)):
             process = subprocess.Popen([sys.executable, self.script],
-                                       stderr=subprocess.PIPE)
+                                       stderr=subprocess.PIPE, env=env)
             os.set_blocking(process.stderr.fileno(), False)
             processes.append(process)
 

@@ -138,7 +138,8 @@ class ScriptInterface(ut.TestCase):
 
     def test_variant_exceptions(self):
         """Check variant conversion"""
-        constraint = espressomd.constraints.ShapeBasedConstraint()
+        wall = espressomd.shapes.Wall(normal=[-1, 0, 0])
+        constraint = espressomd.constraints.ShapeBasedConstraint(shape=wall)
         # check conversion of unsupported types
         err_msg = "No conversion from type 'module' to 'Variant'"
         with self.assertRaisesRegex(TypeError, err_msg):
@@ -160,6 +161,8 @@ class ScriptInterface(ut.TestCase):
             constraint.shape = None
         with self.assertRaisesRegex(RuntimeError, error_msg.format("std::(__1::)?shared_ptr<ScriptInterface::ObjectHandle>")):
             constraint.shape = constraint
+        # check the original object was preserved
+        self.assertEqual(constraint.shape, wall)
 
     def test_compare(self):
         """Check that script interface objects are equality comparable"""

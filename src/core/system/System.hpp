@@ -239,8 +239,6 @@ public:
   int integrate_with_signal_handler(int n_steps, int reuse_forces,
                                     bool update_accumulators);
 
-  /** @brief Calculate initial particle forces from active thermostats. */
-  void thermostat_force_init();
   /** @brief Calculate particle-lattice interactions. */
   void lb_couple_particles();
 

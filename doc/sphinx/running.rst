@@ -280,6 +280,32 @@ extra arguments are passed to the ``mpiexec`` program.
 On cluster computers, it might be necessary to load the MPI library with
 ``module load openmpi`` or similar.
 
+On modern NUMA architectures, |es| can leverage shared-memory parallelism
+(SMP) using the `OpenMP <https://www.openmp.org>`__ programming model.
+This is enabled via the CMake option ``-D SHARED_MEMORY_PARALLELISM=ON``.
+To run a simulation with 4 OpenMP threads, use the following syntax:
+
+.. code-block:: bash
+
+    OMP_NUM_THREADS=4 OMP_PROC_BIND=true ./pypresso simulation.py
+
+Not all features benefit from SMP. For example, the P3M tuning algorithm
+might choose to use only 1 thread for small enough mesh sizes.
+
+To run a simulation with :math:`n` MPI ranks and :math:`p` OpenMP threads
+per MPI rank, one has to specify a PE value of :math:`p` to avoid overlaps
+between threads. This can be achieved with the following syntax:
+
+.. code-block:: bash
+
+    OMP_NUM_THREADS=4 OMP_PROC_BIND=close OMP_PLACES=cores mpiexec \
+        -n 2 --map-by socket:PE=4 --bind-to core ./pypresso simulation.py
+
+This simulation will reserve 8 cores, but the simulation box will only be
+partitioned into 2 MPI domains. The affinity policy needs to be adjusted
+according to the hardware and simulation type.
+See next section for more details.
+
 .. _Performance gain:
 
 Performance gain
@@ -321,6 +347,19 @@ split the data structures over multiple machines. This becomes necessary
 when running simulations with millions of particles, as the memory
 available on a single compute node would otherwise saturate.
 
+With OpenMP algorithms, the affinity policy must be chosen according
+to the hardware and algorithms.
+Setting ``OMP_PROC_BIND=close`` packs cores as closely as possible,
+and ``OMP_PLACES=ll_caches`` resp. ``OMP_PLACES=numa_domain`` will
+bind threads to cores that share the same L3 cache resp. NUMA domain,
+ensuring that threads can access each other's data with minimal latency.
+Setting ``OMP_PROC_BIND=spread`` spreads out the cores, which can be
+beneficial in bandwidth-limited problems, for example when each GPU
+belongs to a different NUMA domain or core complex.
+When in doubt, use ``lstopo`` to show the CPU topology
+and ``numactl -H`` to show which GPUs belong to which NUMA domain;
+on Ubuntu these tools are provided by packages ``hwloc`` and ``numactl``.
+
 .. _Communication model:
 
 Communication model
@@ -329,9 +368,14 @@ Communication model
 |es| was originally designed for the "flat" model of communication:
 each MPI rank binds to a logical CPU core. This communication model
 doesn't fully leverage shared memory on recent CPUs, such as `NUMA
-architectures <https://en.wikipedia.org/wiki/Non-uniform_memory_access>`__,
-and |es| currently doesn't support the hybrid
-MPI+\ `OpenMP <https://www.openmp.org>`__ programming model.
+architectures <https://en.wikipedia.org/wiki/Non-uniform_memory_access>`__.
+
+The hybrid MPI+\ `OpenMP <https://www.openmp.org>`__ programming model
+is supported by a few |es| features. For small simulations, users will
+typically prefer running |es| with :math:`p` OpenMP threads and 1 MPI rank.
+For larger jobs that reserve more cores than a NUMA domain can provide,
+it is usually best to request one MPI rank per NUMA domain and as many
+OpenMP threads as cores in the NUMA domain.
 
 The MPI+CUDA programming model is supported, although only one GPU can be
 used for the entire simulation. As a result, a blocking *gather* operation
@@ -340,6 +384,7 @@ blocking *scatter* operation is carried out to transfer the result of the
 GPU calculation from the main rank back to all ranks. This latency limits
 GPU-acceleration to simulations running on fewer than 8 MPI ranks.
 For more details, see section :ref:`GPU acceleration`.
+Lattice-Boltzmann is the only algorithm that can use multiple GPUs.
 
 .. _The MPI callbacks framework:
 

@@ -29,6 +29,7 @@
 #include <boost/mpi/communicator.hpp>
 #include <boost/range/combine.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <numbers>
@@ -71,8 +72,8 @@ RDF::evaluate(boost::mpi::communicator const &comm,
                                                         auto const &pos2) {
     auto const dist = box_geo.get_mi_vector(pos1, pos2).norm();
     if (dist > min_r && dist < max_r) {
-      auto const ind =
-          static_cast<int>(std::floor((dist - min_r) * inv_bin_width));
+      auto ind = static_cast<long>(std::floor((dist - min_r) * inv_bin_width));
+      ind = std::clamp(ind, 0l, static_cast<long>(n_r_bins) - 1l);
       res[ind]++;
     }
     cnt++;

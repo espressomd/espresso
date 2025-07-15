@@ -21,11 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef LENNARD_JONES
-
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_NO_MAIN
-#define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/data/monomorphic.hpp>
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/unit_test.hpp>
@@ -35,6 +31,7 @@ namespace bdata = boost::unit_test::data;
 #include "ParticleFactory.hpp"
 #include "particle_management.hpp"
 
+#include "EspressoCoreGlobalConfig.hpp"
 #include "Particle.hpp"
 #include "PropagationMode.hpp"
 #include "cell_system/CellStructureType.hpp"
@@ -63,6 +60,36 @@ namespace espresso {
 // ESPResSo system instance
 static std::shared_ptr<System::System> system;
 } // namespace espresso
+
+struct GlobalConfig : public EspressoCoreGlobalConfig {
+  GlobalConfig() {
+    espresso::system = System::System::create();
+    espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+    ::System::set_system(espresso::system);
+  }
+  ~GlobalConfig() {
+    espresso::system.reset();
+    ::System::reset_system();
+  }
+};
+
+// Decorator to skip tests when the number of MPI ranks isn't 4
+boost::test_tools::assertion_result has_4_mpi_ranks(utf::test_unit_id) {
+  boost::mpi::communicator world;
+  return world.size() == 4;
+}
+
+// Decorator to skip tests if Lennard-Jones isn't compiled in
+boost::test_tools::assertion_result has_lj(utf::test_unit_id) {
+#ifdef LENNARD_JONES
+  return true;
+#else
+  return false;
+#endif
+}
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_AUTO_TEST_SUITE(suite)
 
 namespace Testing {
 /**
@@ -116,7 +143,7 @@ struct : public IntegratorHelper {
     auto &npt_iso = espresso::system->thermostat->npt_iso;
     espresso::system->nptiso = std::make_shared<NptIsoParameters>(
         1., 1e16, Utils::Vector<bool, 3>{true, true, true}, true);
-    espresso::system->propagation->set_integ_switch(INTEG_METHOD_NPT_ISO);
+    espresso::system->propagation->set_integ_switch(INTEG_METHOD_NPT_ISO_AND);
     espresso::system->thermostat->thermo_switch = THERMO_NPT_ISO;
     espresso::system->thermostat->kT = 1.;
     npt_iso = std::make_shared<IsotropicNptThermostat>();
@@ -153,9 +180,12 @@ auto const propagators =
 #endif // EXTERNAL_FORCES
     };
 
+BOOST_TEST_DECORATOR(*utf::precondition(has_4_mpi_ranks) *
+                     utf::precondition(has_lj))
 BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
                        bdata::make(node_grids) * bdata::make(propagators),
                        node_grid, integration_helper) {
+#ifdef LENNARD_JONES
   auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   auto const comm = boost::mpi::communicator();
   auto const rank = comm.rank();
@@ -271,21 +301,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
       }
     }
   }
+#endif // LENNARD_JONES
 }
 
-int main(int argc, char **argv) {
-  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
-  espresso::system = System::System::create();
-  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
-  ::System::set_system(espresso::system);
-  // the test case only works for 4 MPI ranks
-  boost::mpi::communicator world;
-  int error_code = 0;
-  if (world.size() == 4) {
-    error_code = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-  }
-  return error_code;
-}
-#else // ifdef LENNARD_JONES
-int main(int argc, char **argv) {}
-#endif
+BOOST_AUTO_TEST_SUITE_END()

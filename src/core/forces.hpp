@@ -34,6 +34,10 @@
 /** Assign external forces/torques to real particles and zero to ghosts. */
 void init_forces(const CellStructure &cell_structure);
 
+/** Combined force initialization and Langevin noise application. */
+void init_forces_and_thermostat(const CellStructure &cell_structure,
+                                class System::System &system);
+
 /** Set forces of all ghosts to zero */
 void init_forces_ghosts(const CellStructure &cell_structure);
 
@@ -44,4 +48,5 @@ void calc_long_range_forces(ParticleRange const &particles);
 /** Update the NpT virial */
 void npt_add_virial_force_contribution(Utils::Vector3d const &force,
                                        Utils::Vector3d const &d);
+void npt_add_virial_diagonalSum_contribution(double diagonal_sum);
 #endif

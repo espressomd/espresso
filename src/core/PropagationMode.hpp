@@ -42,11 +42,12 @@ enum PropagationMode : int {
 
 /** @brief Integrator identifier. */
 enum IntegratorSwitch : int {
-  INTEG_METHOD_NPT_ISO = 0,
-  INTEG_METHOD_NVT = 1,
-  INTEG_METHOD_STEEPEST_DESCENT = 2,
-  INTEG_METHOD_BD = 3,
-  INTEG_METHOD_SD = 4,
+  INTEG_METHOD_NVT = 0,
+  INTEG_METHOD_NPT_ISO_AND = 1 << 0,
+  INTEG_METHOD_NPT_ISO_MTK = 1 << 1,
+  INTEG_METHOD_STEEPEST_DESCENT = 1 << 2,
+  INTEG_METHOD_BD = 1 << 3,
+  INTEG_METHOD_SD = 1 << 4,
 };
 
 /** @brief Thermostat flags. */

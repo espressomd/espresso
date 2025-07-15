@@ -448,7 +448,8 @@ void System::on_integration_start() {
   ek.sanity_checks();
 
 #ifdef NPT
-  if (propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
+  if (propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND ||
+      propagation->integ_switch == INTEG_METHOD_NPT_ISO_MTK) {
     npt_ensemble_init(propagation->recalc_forces);
   }
 #endif

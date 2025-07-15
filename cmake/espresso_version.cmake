@@ -17,7 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+set(GIT_IS_INSIDE_WORK_TREE FALSE)
+
 if(GIT_EXECUTABLE)
+  execute_process(
+    COMMAND ${GIT_EXECUTABLE} rev-parse --is-inside-work-tree
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} OUTPUT_VARIABLE
+    GIT_IS_INSIDE_WORK_TREE
+    ERROR_VARIABLE GIT_IS_INSIDE_WORK_TREE_STDERR)
+endif()
+
+if(GIT_IS_INSIDE_WORK_TREE)
   # Get the name of the working branch
   execute_process(
     COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
@@ -41,8 +51,7 @@ if(GIT_EXECUTABLE)
   else()
     set(GIT_STATE "DIRTY")
   endif()
-
-endif(GIT_EXECUTABLE)
+endif()
 
 configure_file(${PROJECT_SOURCE_DIR}/src/config/include/config/version.hpp.in
         ${CMAKE_BINARY_DIR}/include/config/version.hpp.tmp)

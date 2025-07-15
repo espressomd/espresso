@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -21,23 +21,14 @@
 
 #include "config/version.hpp"
 
-#include <boost/algorithm/string.hpp>
-
 #include <string>
 #include <vector>
 
 namespace ScriptInterface {
 namespace CodeInfo {
 
-static auto get_version_tuple_as_string() {
-  std::vector<std::string> version;
-  boost::split(version, std::string{ESPRESSO_VERSION}, boost::is_any_of("-"));
-  return version[0];
-}
-
 Variant CodeVersion::do_call_method(std::string const &name,
                                     VariantMap const &parameters) {
-  // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
   if (name == "version_major") {
     return ESPRESSO_VERSION_MAJOR;
   }
@@ -45,16 +36,11 @@ Variant CodeVersion::do_call_method(std::string const &name,
     return ESPRESSO_VERSION_MINOR;
   }
   if (name == "version_friendly") {
-    return get_version_tuple_as_string();
+    return std::string(ESPRESSO_VERSION);
   }
   if (name == "version") {
-    std::vector<std::string> version;
-    boost::split(version, get_version_tuple_as_string(), boost::is_any_of("."));
-    std::vector<int> version_tuple;
-    for (auto const &x : version) {
-      version_tuple.emplace_back(std::stoi(x));
-    }
-    return version_tuple;
+    return std::vector<int>{ESPRESSO_VERSION_MAJOR, ESPRESSO_VERSION_MINOR,
+                            ESPRESSO_VERSION_PATCH};
   }
   if (name == "git_branch") {
     return std::string{GIT_BRANCH};

@@ -33,9 +33,13 @@ macro(ESPRESSO_IMPORTLIB_BASED_FIXTURE)
   cmake_path(GET TEST_SRC STEM TEST_NAME)
   add_test(NAME ${TEST_NAME} COMMAND ${CMAKE_BINARY_DIR}/pypresso
                                      ${PYPRESSO_OPTIONS} ${TEST_SRC})
+  # cmake-format: off
   set_tests_properties(
     ${TEST_NAME} PROPERTIES FIXTURES_SETUP "FIXTURE_${TEST_TYPE}"
-                            SKIP_RETURN_CODE 5)
+                            SKIP_RETURN_CODE 5
+                            ENVIRONMENT "OMP_PROC_BIND=false"
+                            ENVIRONMENT "OMP_NUM_THREADS=1")
+  # cmake-format: on
 endmacro(ESPRESSO_IMPORTLIB_BASED_FIXTURE)
 
 # setup tests for testsuites that dynamically load simulation scripts
@@ -55,9 +59,13 @@ macro(ESPRESSO_IMPORTLIB_BASED_TEST)
   add_test(NAME ${TEST_NAME}
            COMMAND ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
                    ${TEST_FILE_CONFIGURED})
+  # cmake-format: off
   set_tests_properties(
     ${TEST_NAME} PROPERTIES FIXTURES_REQUIRED "FIXTURE_${TEST_TYPE}"
-                            SKIP_RETURN_CODE 5 LABELS "${TEST_LABELS}")
+                            SKIP_RETURN_CODE 5 LABELS "${TEST_LABELS}"
+                            ENVIRONMENT "OMP_PROC_BIND=false"
+                            ENVIRONMENT "OMP_NUM_THREADS=1")
+  # cmake-format: on
   if("gpu" IN_LIST TEST_LABELS AND ESPRESSO_BUILD_WITH_CUDA)
     set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)
   endif()

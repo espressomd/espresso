@@ -36,7 +36,7 @@ class _Version(ScriptInterfaceHelper):
 
 
 def version():
-    """Get the version of ESPResSo."""
+    """Get the full version of ESPResSo as a tuple of integers."""
     return tuple(_Version().version())
 
 
@@ -51,23 +51,23 @@ def minor():
 
 
 def friendly():
-    """Dot version of the version."""
+    """Full version in ``X.Y.Z`` format."""
     return _Version().version_friendly()
 
 
 def git_branch():
-    """Git branch of the build if known, otherwise empty."""
+    """Git branch of the build if known, otherwise empty string."""
     return _Version().git_branch()
 
 
 def git_commit():
-    """Git commit of the build if known, otherwise empty."""
+    """Git commit of the build if known, otherwise empty string."""
     return _Version().git_commit()
 
 
 def git_state():
     """
-    Git state of the build if known, otherwise empty. State is "CLEAN" if the
-    repository was not changed from :meth:`git_commit()`, "DIRTY" otherwise.
+    Git state of the build if known, otherwise empty string. State is "CLEAN" if
+    the repository was not changed from :func:`git_commit()`, "DIRTY" otherwise.
     """
     return _Version().git_state()

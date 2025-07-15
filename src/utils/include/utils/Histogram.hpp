@@ -105,13 +105,10 @@ public:
       throw std::invalid_argument("Wrong dimensions for the value");
     }
     if (check_limits(pos)) {
-      boost::array<array_index, M + 1> index;
-      for (std::size_t i = 0; i < M; ++i) {
-        index[i] = calc_bin_index(pos[i], m_limits[i].first, m_bin_sizes[i]);
-      }
-      for (array_index i = 0; i < static_cast<array_index>(N); ++i) {
-        index.back() = i;
-        m_array(index) += value[static_cast<std::size_t>(i)];
+      auto index = calc_bin_index(pos);
+      for (std::size_t i = 0; i < N; ++i) {
+        index.back() = static_cast<array_index>(i);
+        m_array(index) += value[i];
         m_count(index)++;
       }
     }
@@ -121,20 +118,29 @@ public:
   virtual void normalize() {
     auto const bin_volume = std::accumulate(
         m_bin_sizes.begin(), m_bin_sizes.end(), U{1}, std::multiplies<U>());
-    std::transform(
-        m_array.data(), m_array.data() + m_array.num_elements(), m_array.data(),
+    std::ranges::transform(
+        std::span(m_array.data(), m_array.num_elements()), m_array.data(),
         [bin_volume](T v) { return static_cast<T>(v / bin_volume); });
   }
 
 private:
   /**
    * \brief Calculate the bin index.
-   * \param value  Position on that dimension.
-   * \param offset Bin offset on that dimension.
-   * \param size   Bin size on that dimension.
+   * \param pos  Position.
    */
-  array_index calc_bin_index(double value, double offset, double size) const {
-    return static_cast<array_index>(std::floor((value - offset) / size));
+  auto calc_bin_index(std::span<const U> const &pos) const {
+    boost::array<array_index, M + 1> index;
+    for (std::size_t i = 0; i < M; ++i) {
+      auto const offset = m_limits[i].first;
+      auto const size = m_bin_sizes[i];
+      auto const n_bins = static_cast<long>(m_n_bins[i]);
+      auto const bin = static_cast<long>(std::floor((pos[i] - offset) / size));
+      // handle edge cases when the position is exactly between two bins:
+      // due to precision loss in the offset subtraction, the bin index might
+      // be off by one, so we fold it here back inside the valid range
+      index[i] = static_cast<array_index>(std::clamp(bin, 0l, n_bins - 1l));
+    }
+    return index;
   }
 
   /**
@@ -153,19 +159,19 @@ private:
    * \brief Check if the position lies within the histogram limits.
    * \param pos     Position to check.
    */
-  bool check_limits(std::span<const U> pos) const {
+  bool check_limits(std::span<const U> const &pos) const {
     assert(pos.size() == M);
-    bool within_range = true;
-    for (std::size_t i = 0; i < M; ++i) {
-      if (pos[i] < m_limits[i].first or pos[i] >= m_limits[i].second)
-        within_range = false;
-    }
-    return within_range;
+    auto it_limits = m_limits.begin();
+    return std::ranges::all_of(pos, [&it_limits](U const value) {
+      auto const [lower, upper] = *it_limits;
+      ++it_limits;
+      return value >= lower and value < upper;
+    });
   }
 
   std::array<std::size_t, M + 1> m_array_dim() const {
     std::array<std::size_t, M + 1> dimensions;
-    std::copy(m_n_bins.begin(), m_n_bins.end(), dimensions.begin());
+    std::ranges::copy(m_n_bins, dimensions.begin());
     dimensions.back() = N;
     return dimensions;
   }
@@ -193,14 +199,15 @@ protected:
  */
 template <typename T, std::size_t N, std::size_t M = 3, typename U = double>
 class CylindricalHistogram : public Histogram<T, N, M, U> {
-  using Histogram<T, N, M, U>::m_n_bins;
-  using Histogram<T, N, M, U>::m_limits;
-  using Histogram<T, N, M, U>::m_bin_sizes;
-  using Histogram<T, N, M, U>::m_array;
-  using typename Histogram<T, N, M, U>::array_index;
+  using Base = Histogram<T, N, M, U>;
+  using Base::m_array;
+  using Base::m_bin_sizes;
+  using Base::m_limits;
+  using Base::m_n_bins;
+  using typename Base::array_index;
 
 public:
-  using Histogram<T, N, M, U>::Histogram;
+  using Base::Histogram;
 
   void normalize() override {
     auto const min_r = m_limits[0].first;
@@ -214,8 +221,8 @@ public:
       auto const bin_volume = (r_right * r_right - r_left * r_left) *
                               z_bin_size * phi_bin_size / U(2);
       auto *begin = m_array[i].origin();
-      std::transform(
-          begin, begin + m_array[i].num_elements(), begin,
+      std::ranges::transform(
+          std::span(begin, m_array[i].num_elements()), begin,
           [bin_volume](T v) { return static_cast<T>(v / bin_volume); });
     }
   }

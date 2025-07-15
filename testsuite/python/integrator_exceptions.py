@@ -157,6 +157,9 @@ class Test(ut.TestCase):
     @utx.skipIfMissingFeatures("NPT")
     def test_npt_integrator(self):
         self.system.cell_system.skin = 0.4
+        with self.assertRaisesRegex(Exception, "Parameter 'barostat' must be 'Andersen' or 'MTK'."):
+            self.system.integrator.set_isotropic_npt(
+                ext_pressure=1.0, piston=1.0, barostat='XXX')
         self.system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=42)
         self.system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
         with self.assertRaisesRegex(Exception, self.msg + 'The NpT integrator requires the NpT thermostat'):

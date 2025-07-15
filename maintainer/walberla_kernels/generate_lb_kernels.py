@@ -28,7 +28,7 @@ import pystencils as ps
 
 import lbmpy
 
-kernel_codes = "packinfo boundary collide stream init accessors".split()
+kernel_codes = "packinfo boundary stream_collide init vel_update accessors".split()
 parser = argparse.ArgumentParser(description="Generate the waLBerla kernels.")
 parser.add_argument("--single-precision", action="store_true", required=False,
                     help="Use single-precision")
@@ -47,6 +47,7 @@ for module, requirement in [(ps, "==1.3.7"), (lbmpy, "==1.3.7")]:
 import pystencils_walberla
 import pystencils_espresso
 import lbmpy.creationfunctions
+import lbmpy.macroscopic_value_kernels
 import lbmpy.forcemodels
 import lbmpy.stencils
 import lbmpy.enums
@@ -64,7 +65,7 @@ if args.gpu:
     target = ps.Target.GPU
 else:
     target = ps.Target.CPU
-if args.kernels == "all":
+if args.kernels == "all" or args.kernels == ["all"]:
     args.kernels = kernel_codes
 
 # vectorization parameters
@@ -79,13 +80,22 @@ else:
         "assume_inner_stride_one": True,
         "assume_aligned": True,
         "assume_sufficient_line_padding": False}
-    parameters["CPU"] = ({"target": target}, "")
+    parameters["CPU"] = ({"target": target,
+                          "cpu_openmp": True}, "")
+    parameters["CPU_linear"] = ({"target": target}, "")
     parameters["AVX"] = ({"target": target,
-                         "cpu_vectorize_info": cpu_vectorize_info}, "AVX")
+                          "cpu_openmp": True,
+                          "cpu_vectorize_info": cpu_vectorize_info}, "AVX")
 
 # global parameters
 stencil = lbmpy.stencils.LBStencil(lbmpy.enums.Stencil.D3Q19)
 kT = sp.symbols("kT")
+lbm_config_kwargs = dict(
+    weighted=True,
+    compressible=True,
+    delta_equilibrium=True,
+    zero_centered=True,
+)
 
 
 def paramlist(parameters, keys):
@@ -102,86 +112,119 @@ def get_ext_source(target_suffix):
     return {"CUDA": "cu"}.get(target_suffix, "cpp")
 
 
+def patch_openmp_kernels(content):
+    # surrounds omp pragmas with ifdefs
+    content = re.sub("^( *#pragma omp .*)$",
+                     r"#ifdef _OPENMP\n\1\n#endif", content, flags=re.MULTILINE)
+    return content
+
+
 def generate_init_kernels(ctx, method):
     precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
     for params, target_suffix in paramlist(parameters, (default_key,)):
+        stem = f"InitialPDFsSetter{precision_prefix}{target_suffix}"
         pystencils_walberla.generate_sweep(
             ctx,
-            f"InitialPDFsSetter{precision_prefix}{target_suffix}",
+            stem,
             pystencils_espresso.generate_setters(method, data_type),
             **params)
+        ctx.patch_file(stem, get_ext_source(target_suffix),
+                       patch_openmp_kernels)
 
 
-def generate_stream_kernels(ctx, method):
+def generate_stream_collide_lees_edwards_kernels(
+        ctx, method, data_type, fields):
     precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
-    for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
-        pystencils_espresso.generate_stream_sweep(
-            ctx,
-            method,
-            data_type,
-            f"StreamSweep{precision_prefix}{target_suffix}",
-            params)
-
-
-def generate_collide_lees_edwards_kernels(ctx, data_type, fields):
-    precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
-    lbm_opt = lbmpy.LBMOptimisation(symbolic_field=fields["pdfs"])
+    lbm_opt = lbmpy.LBMOptimisation(symbolic_field=fields["pdfs"],
+                                    symbolic_temporary_field=fields["pdfs_tmp"])
     shear_dir_normal = 1  # y-axis
     le_config = lbmpy.LBMConfig(stencil=stencil,
                                 method=lbmpy.Method.TRT,
                                 relaxation_rate=sp.Symbol("omega_shear"),
-                                compressible=True,
-                                zero_centered=False,
+                                streaming_pattern="pull",
                                 force_model=lbmpy.ForceModel.GUO,
                                 force=fields["force"].center_vector,
-                                kernel_type="collide_only")
+                                kernel_type="stream_pull_collide",
+                                **lbm_config_kwargs)
     le_update_rule_unthermalized = lbmpy.create_lb_update_rule(
         lbm_config=le_config,
         lbm_optimisation=lbm_opt)
     le_collision_rule_unthermalized = lees_edwards.add_lees_edwards_to_collision(
         config, le_update_rule_unthermalized, fields["pdfs"], stencil,
-        shear_dir_normal)
-
+        shear_dir_normal, True)
+    optimization = {"cse_global": True,
+                    "double_precision": ctx.double_accuracy}
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
-        pystencils_espresso.generate_collision_sweep(
+        stem = f"StreamCollideSweep{precision_prefix}LeesEdwards{target_suffix}"  # nopep8
+        pystencils_espresso.generate_stream_collision_sweep(
             ctx,
+            method,
             le_config,
             data_type,
             le_collision_rule_unthermalized,
-            f"CollideSweep{precision_prefix}LeesEdwards{target_suffix}",
+            stem,
+            optimization,
             params
         )
+        ctx.patch_file(stem, get_ext_source(target_suffix),
+                       patch_openmp_kernels)
 
 
-def generate_collide_kernels(ctx, method, data_type):
+def generate_stream_collide_kernels(ctx, method, data_type):
     precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
     precision_rng = pystencils_espresso.precision_rng[ctx.double_accuracy]
     block_offsets = tuple(
         ps.TypedSymbol(f"block_offset_{i}", np.uint32)
         for i in range(3))
+    optimization = {"cse_global": True,
+                    "double_precision": ctx.double_accuracy}
+    lbm_config = lbmpy.LBMConfig(stencil=stencil,
+                                 method=lbmpy.Method.TRT,
+                                 streaming_pattern="pull",
+                                 relaxation_rate=sp.Symbol("omega_shear"),
+                                 **lbm_config_kwargs)
     lb_collision_rule_thermalized = lbmpy.creationfunctions.create_lb_collision_rule(
         method,
-        zero_centered=False,
+        lbm_config=lbm_config,
         fluctuating={
             "temperature": kT,
             "block_offsets": block_offsets,
             "rng_node": precision_rng
         },
-        optimization={"cse_global": True,
-                      "double_precision": ctx.double_accuracy}
+        optimization=optimization
     )
 
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
-        stem = f"CollideSweep{precision_prefix}Thermalized{target_suffix}"
-        pystencils_espresso.generate_collision_sweep(
+        stem = f"StreamCollideSweep{precision_prefix}Thermalized{target_suffix}"  # nopep8
+        pystencils_espresso.generate_stream_collision_sweep(
             ctx,
             method,
+            lbm_config,
             data_type,
             lb_collision_rule_thermalized,
             stem,
+            optimization,
             params,
             block_offset=block_offsets,
         )
+        ctx.patch_file(stem, get_ext_source(target_suffix),
+                       patch_openmp_kernels)
+
+
+def generate_vel_update_kernels(ctx, method, fields):
+    precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
+    assignments = lbmpy.macroscopic_value_kernels.macroscopic_values_getter(
+        method, None, fields["velocity"], fields["pdfs"],
+        use_pre_collision_pdfs=True)
+    for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
+        stem = f"UpdateVelFromPDF{precision_prefix}{target_suffix}"
+        pystencils_walberla.generate_sweep(
+            ctx,
+            stem,
+            assignments,
+            **params)
+        ctx.patch_file(stem, get_ext_source(target_suffix),
+                       patch_openmp_kernels)
 
 
 def generate_accessors_kernels(ctx, method):
@@ -237,7 +280,7 @@ def generate_packinfo_kernels(ctx, data_type, fields):
             content = content.replace(token, f'#include "core/DataTypes.h"\n#include "core/cell/CellInterval.h"\n#include "domain_decomposition/IBlock.h"\n#include "stencil/Directions.h"\n\n{token}')  # nopep8
         return content
 
-    for params, target_suffix in paramlist(parameters, ["CPU", "GPU"]):
+    for params, target_suffix in paramlist(parameters, ["CPU_linear", "GPU"]):
         pystencils_walberla.generate_pack_info_from_kernel(
             ctx, f"PackInfoPdf{precision_prefix}{target_suffix}", assignments,
             kind="pull", **params)
@@ -285,10 +328,14 @@ def generate_boundary_kernels(ctx, method, data_type):
                        patch_boundary_header, target_suffix)
         ctx.patch_file(class_name, get_ext_source(target_suffix),
                        patch_boundary_kernel, target_suffix)
+        ctx.patch_file(class_name, get_ext_source(target_suffix),
+                       patch_openmp_kernels)
 
 
 with code_generation_context.CodeGeneration() as ctx:
     ctx.double_accuracy = not args.single_precision
+    if target == ps.Target.CPU:
+        ctx.openmp = True
     if target == ps.Target.GPU:
         ctx.gpu = True
         ctx.cuda = True
@@ -302,19 +349,19 @@ with code_generation_context.CodeGeneration() as ctx:
     # LB Method definition
     method = lbmpy.creationfunctions.create_mrt_orthogonal(
         stencil=stencil,
-        compressible=True,
-        weighted=True,
         relaxation_rates=relaxation_rates.rr_getter,
-        force_model=lbmpy.forcemodels.Schiller(fields["force"].center_vector)
+        force_model=lbmpy.forcemodels.Schiller(fields["force"].center_vector),
+        **lbm_config_kwargs
     )
 
-    if "stream" in args.kernels:
-        generate_stream_kernels(ctx, method)
     if "init" in args.kernels:
         generate_init_kernels(ctx, method)
-    if "collide" in args.kernels:
-        generate_collide_kernels(ctx, method, data_type)
-        generate_collide_lees_edwards_kernels(ctx, data_type, fields)
+    if "stream_collide" in args.kernels:
+        generate_stream_collide_kernels(ctx, method, data_type)
+        generate_stream_collide_lees_edwards_kernels(
+            ctx, method, data_type, fields)
+    if "vel_update" in args.kernels:
+        generate_vel_update_kernels(ctx, method, fields)
     if "accessors" in args.kernels:
         generate_accessors_kernels(ctx, method)
     if "packinfo" in args.kernels:

@@ -122,6 +122,9 @@ your hardware supports it, run the following command:
 
     lscpu | grep avx2
 
+For small simulation boxes, best performance is obtained by making the box
+length along the x-axis an integer multiple of the vector size, times agrid.
+
 .. _Checkpointing LB:
 
 Checkpointing
@@ -230,11 +233,9 @@ the selected LB grid node and allows one to access all of its properties::
     lb[x, y, z].pressure_tensor      # fluid pressure tensor (symmetric 3x3 matrix)
     lb[x, y, z].pressure_tensor_neq  # fluid pressure tensor non-equilibrium part (symmetric 3x3 matrix)
     lb[x, y, z].is_boundary          # flag indicating whether the node is fluid or boundary (boolean)
-    lb[x, y, z].population           # LB populations (19-vector, check order from the stencil definition)
 
-All of these properties can be read and used in further calculations.
-Only the property ``population`` can be modified. The indices ``x, y, z``
-are integers and enumerate the LB nodes in the three Cartesian directions,
+All of these properties are read-only.
+The indices ``x, y, z`` are integers and enumerate the LB nodes in the three Cartesian directions,
 starting at 0. To modify ``is_boundary``, refer to :ref:`Setting up LB boundary conditions`.
 
 Example::
@@ -418,10 +419,10 @@ As a rule of thumb, the VRAM in GiB per rank-local LB domain will be:
 
 with :math:`n_x`, :math:`n_y`, :math:`n_z` the LB domain size in agrid units, including the ghost layer.
 
-Regarding communication between GPUs, for optimal performance the MPI topology
+Regarding communication between GPUs, for optimal performance the MPI Cartesian topology
 should divide the z-direction first, the y-direction second, and the x-direction
-last, i.e. ascending order of the prime factors. Please note the default MPI
-Cartesian grid in |es| is sorted in descending order of the prime factors,
+last, i.e. ascending order of the integer factors. Please note the default MPI
+Cartesian grid in |es| is sorted in descending order of the integer factors,
 and leads to poor performance. For illustration, a Cartesian grid with
 shape ``[1, 1, 8]`` yields 94% weak scaling efficiency,
 shape ``[8, 1, 1]`` yields 90%,
@@ -550,6 +551,9 @@ Edit the :file:`CMakeLists.txt` file in the destination folder to include the
 new kernels in the build system.
 Then, adapt :file:`src/walberla_bridge/src/lattice_boltzmann/LBWalberlaImpl.hpp`
 to use the new LB kernels.
+
+The current LB implementation uses the two-relaxation-time (TRT) LB method
+with pull scheme and zero-centered :cite:`hennig23a` storage format.
 
 
 .. [1]

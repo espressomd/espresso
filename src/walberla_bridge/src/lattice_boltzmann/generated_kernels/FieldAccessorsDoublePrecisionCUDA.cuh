@@ -18,9 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1,
-// lbmpy_walberla/pystencils_walberla from waLBerla commit
-// f36fa0a68bae59f0b516f6587ea8fa7c24a41141
+// kernel generated with pystencils v1.3.7, lbmpy v1.3.7+4.gc7d65a7, sympy
+// v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit
+// 0aab9c0af2335b1f6fec75deae06e514ccb233ab
 
 /**
  * @file
@@ -105,12 +105,14 @@ void set(gpu::GPUField<double> const *vec_field, std::vector<double> const &pos,
 } // namespace Interpolation
 
 namespace Density {
-double get(gpu::GPUField<double> const *pdf_field, Cell const &cell);
-void set(gpu::GPUField<double> *pdf_field, double const rho, Cell const &cell);
+double get(gpu::GPUField<double> const *pdf_field, double const density,
+           Cell const &cell);
+void set(gpu::GPUField<double> *pdf_field, double const rho,
+         double const density, Cell const &cell);
 std::vector<double> get(gpu::GPUField<double> const *pdf_field,
-                        CellInterval const &ci);
+                        double const density, CellInterval const &ci);
 void set(gpu::GPUField<double> *pdf_field, std::vector<double> const &values,
-         CellInterval const &ci);
+         double const density, CellInterval const &ci);
 } // namespace Density
 
 namespace Velocity {
@@ -133,11 +135,11 @@ namespace Force {
 void set(gpu::GPUField<double> const *pdf_field,
          gpu::GPUField<double> *velocity_field,
          gpu::GPUField<double> *force_field, Vector3<double> const &u,
-         Cell const &cell);
+         double const density, Cell const &cell);
 void set(gpu::GPUField<double> const *pdf_field,
          gpu::GPUField<double> *velocity_field,
          gpu::GPUField<double> *force_field, std::vector<double> const &values,
-         CellInterval const &ci);
+         double const density, CellInterval const &ci);
 } // namespace Force
 
 namespace DensityAndVelocity {
@@ -156,14 +158,17 @@ get(gpu::GPUField<double> const *pdf_field,
 
 namespace MomentumDensity {
 Vector3<double> reduce(gpu::GPUField<double> const *pdf_field,
-                       gpu::GPUField<double> const *force_field);
+                       gpu::GPUField<double> const *force_field,
+                       double const density);
 } // namespace MomentumDensity
 
 namespace PressureTensor {
-Matrix3<double> get(gpu::GPUField<double> const *pdf_field, Cell const &cell);
+Matrix3<double> get(gpu::GPUField<double> const *pdf_field,
+                    double const density, Cell const &cell);
 std::vector<double> get(gpu::GPUField<double> const *pdf_field,
-                        CellInterval const &ci);
-Matrix3<double> reduce(gpu::GPUField<double> const *pdf_field);
+                        double const density, CellInterval const &ci);
+Matrix3<double> reduce(gpu::GPUField<double> const *pdf_field,
+                       double const density);
 } // namespace PressureTensor
 
 } // namespace accessor

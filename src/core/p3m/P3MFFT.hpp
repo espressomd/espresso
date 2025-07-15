@@ -24,9 +24,11 @@
 #include <boost/mpi/communicator.hpp>
 
 #include <heffte.h>
+#include <heffte_backends.h>
 
 #include <algorithm>
 #include <array>
+#include <initializer_list>
 #include <memory>
 
 template <typename T, std::size_t N>
@@ -45,6 +47,7 @@ private:
   Utils::Vector3i m_global_mesh;
   std::shared_ptr<Box> in_box;
   std::shared_ptr<Box> out_box;
+  std::vector<std::complex<FloatType>> m_buffer;
   heffte::fft3d<backend_tag> fft3d;
 
 public:
@@ -69,8 +72,16 @@ public:
     auto const global_box = heffte::box3d<>(
         {0, 0, 0}, to_array(m_global_mesh - Utils::Vector3i::broadcast(1)),
         to_array(m_memory_layout));
+    auto const n_procs = Utils::product(node_grid);
+    auto best_grid = node_grid;
+    for (auto i : {0u, 1u, 2u}) {
+      if (m_global_mesh[i] % (2 * n_procs) == 0) {
+        best_grid = {n_procs, 1, 1};
+        break;
+      }
+    }
     auto all_boxes = heffte::split_world(
-        global_box, {node_grid[2], node_grid[1], node_grid[0]});
+        global_box, {best_grid[0], best_grid[1], best_grid[2]});
     out_box = std::make_shared<Box>(all_boxes[comm.rank()]);
     init_fft();
   }
@@ -95,8 +106,9 @@ public:
     // 1-D pencils for sufficiently large problem, it is expected that the
     // pencil decomposition is better but for smaller problems, the slabs may
     // perform better (depending on hardware and backend)
-    options.use_pencils = false;
+    options.use_pencils = true;
     fft3d = heffte::fft3d<backend_tag>(*in_box, *out_box, comm, options);
+    m_buffer.resize(fft3d.size_workspace());
   }
 
   Utils::Vector3i ks_local_ld_index() const {
@@ -108,14 +120,11 @@ public:
   Utils::Vector3i ks_local_size() const {
     return ks_local_ur_index() - ks_local_ld_index();
   }
-  template <typename T> auto forward(T &in) { return fft3d.forward(in); }
   template <typename In, typename Out> void forward(In in, Out out) {
-    fft3d.forward(in, out);
+    fft3d.forward(in, out, m_buffer.data());
   }
-  template <typename T> auto backward(T &in) { return fft3d.backward(in); }
-  template <typename T1, typename T2>
-  auto backward_batch(int n, T1 in, T2 out) {
-    return fft3d.backward(n, in, out);
+  template <typename T1, typename T2> auto backward(T1 &in, T2 &out) {
+    return fft3d.backward(in, out, m_buffer.data());
   }
   auto const &get_memory_layout() const { return m_memory_layout; }
 };

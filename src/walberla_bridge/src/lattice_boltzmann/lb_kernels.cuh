@@ -33,13 +33,13 @@
 #include "generated_kernels/PackInfoPdfSinglePrecisionCUDA.h"
 #include "generated_kernels/PackInfoVecDoublePrecisionCUDA.h"
 #include "generated_kernels/PackInfoVecSinglePrecisionCUDA.h"
-#include "generated_kernels/StreamSweepDoublePrecisionCUDA.h"
-#include "generated_kernels/StreamSweepSinglePrecisionCUDA.h"
+#include "generated_kernels/UpdateVelFromPDFDoublePrecisionCUDA.h"
+#include "generated_kernels/UpdateVelFromPDFSinglePrecisionCUDA.h"
 
-#include "generated_kernels/CollideSweepDoublePrecisionLeesEdwardsCUDA.h"
-#include "generated_kernels/CollideSweepDoublePrecisionThermalizedCUDA.h"
-#include "generated_kernels/CollideSweepSinglePrecisionLeesEdwardsCUDA.h"
-#include "generated_kernels/CollideSweepSinglePrecisionThermalizedCUDA.h"
+#include "generated_kernels/StreamCollideSweepDoublePrecisionLeesEdwardsCUDA.h"
+#include "generated_kernels/StreamCollideSweepDoublePrecisionThermalizedCUDA.h"
+#include "generated_kernels/StreamCollideSweepSinglePrecisionLeesEdwardsCUDA.h"
+#include "generated_kernels/StreamCollideSweepSinglePrecisionThermalizedCUDA.h"
 
 namespace walberla {
 namespace detail {
@@ -47,23 +47,23 @@ namespace detail {
 using lbmpy::Arch;
 
 template <> struct KernelTrait<double, Arch::GPU> {
-  using CollisionModelThermalized =
-      pystencils::CollideSweepDoublePrecisionThermalizedCUDA;
-  using CollisionModelLeesEdwards =
-      pystencils::CollideSweepDoublePrecisionLeesEdwardsCUDA;
-  using StreamSweep = pystencils::StreamSweepDoublePrecisionCUDA;
+  using StreamCollisionModelThermalized =
+      pystencils::StreamCollideSweepDoublePrecisionThermalizedCUDA;
+  using StreamCollisionModelLeesEdwards =
+      pystencils::StreamCollideSweepDoublePrecisionLeesEdwardsCUDA;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterDoublePrecisionCUDA;
+  using UpdateVelFromPDF = pystencils::UpdateVelFromPDFDoublePrecisionCUDA;
   using PackInfoPdf = pystencils::PackInfoPdfDoublePrecisionCUDA;
   using PackInfoVec = pystencils::PackInfoVecDoublePrecisionCUDA;
 };
 
 template <> struct KernelTrait<float, Arch::GPU> {
-  using CollisionModelThermalized =
-      pystencils::CollideSweepSinglePrecisionThermalizedCUDA;
-  using CollisionModelLeesEdwards =
-      pystencils::CollideSweepSinglePrecisionLeesEdwardsCUDA;
-  using StreamSweep = pystencils::StreamSweepSinglePrecisionCUDA;
+  using StreamCollisionModelThermalized =
+      pystencils::StreamCollideSweepSinglePrecisionThermalizedCUDA;
+  using StreamCollisionModelLeesEdwards =
+      pystencils::StreamCollideSweepSinglePrecisionLeesEdwardsCUDA;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterSinglePrecisionCUDA;
+  using UpdateVelFromPDF = pystencils::UpdateVelFromPDFSinglePrecisionCUDA;
   using PackInfoPdf = pystencils::PackInfoPdfSinglePrecisionCUDA;
   using PackInfoVec = pystencils::PackInfoVecSinglePrecisionCUDA;
 };

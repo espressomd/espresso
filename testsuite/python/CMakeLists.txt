@@ -436,6 +436,7 @@ add_custom_target(
 
 add_custom_target(
   check_python_parallel_odd
+  JOB_POOL console
   COMMAND
     ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -L parallel_odd
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}
@@ -443,6 +444,7 @@ add_custom_target(
 add_dependencies(check_python_parallel_odd pypresso python_test_data)
 add_custom_target(
   check_python_gpu
+  JOB_POOL console
   COMMAND
     ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -L gpu
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}
@@ -451,6 +453,7 @@ add_dependencies(check_python_gpu pypresso python_test_data)
 
 add_custom_target(
   check_python_skip_long
+  JOB_POOL console
   COMMAND
     ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -LE long
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}
@@ -459,6 +462,7 @@ add_dependencies(check_python_skip_long pypresso python_test_data)
 
 add_custom_target(
   check_python
+  JOB_POOL console
   COMMAND
     ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}

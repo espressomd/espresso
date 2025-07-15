@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(bspline_derivatives, T, test_bspline_orders) {
   constexpr std::array<double, 5> x_values{{-0.49999, 0.25, 0., 0.25, 0.49999}};
 
   // approximate a derivative using the two-point central difference formula
-  auto bspline_d_approx = [](int i, double x, int order) {
+  auto const bspline_d_approx = [](int i, double x) {
     using Utils::bspline;
     constexpr auto h = 1e-6;
     return (bspline(i, x + h / 2, order) - bspline(i, x - h / 2, order)) / h;
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(bspline_derivatives, T, test_bspline_orders) {
   for (int i = 0; i < order; ++i) {
     for (auto const x : x_values) {
       auto const d_val = Utils::bspline_d<order>(i, x);
-      auto const d_ref = bspline_d_approx(i, x, order);
+      auto const d_ref = bspline_d_approx(i, x);
       BOOST_CHECK_SMALL(d_val - d_ref, tol);
     }
   }

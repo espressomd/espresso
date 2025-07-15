@@ -72,26 +72,21 @@ private:
       return get_value(global);
     }
 
-    void set_node_boundary_value(Utils::Vector3i const &node, T const &val) {
-      auto const global = Cell(node[0], node[1], node[2]);
+    void set_node_boundary_value(Cell const &global, T const &val) {
       (*m_value_boundary)[global] = val;
     }
 
-    void unset_node_boundary_value(Utils::Vector3i const &node) {
-      auto const global = Cell(node[0], node[1], node[2]);
-      assert(m_value_boundary->count(global));
+    void unset_node_boundary_value(Cell const &global) {
+      assert(m_value_boundary->contains(global));
       m_value_boundary->erase(global);
     }
 
-    [[nodiscard]] auto &
-    get_node_boundary_value(Utils::Vector3i const &node) const {
-      auto const global = Cell(node[0], node[1], node[2]);
+    [[nodiscard]] auto &get_node_boundary_value(Cell const &global) const {
       return get_value(global);
     }
 
-    bool node_is_boundary(Utils::Vector3i const &node) const {
-      auto const global = Cell(node[0], node[1], node[2]);
-      return m_value_boundary->count(global) != 0;
+    bool node_is_boundary(Cell const &global) const {
+      return m_value_boundary->contains(global);
     }
 
   private:
@@ -99,10 +94,10 @@ private:
     static constexpr T default_value{};
 
     [[nodiscard]] T const &get_value(Cell const &cell) const {
-      if (m_value_boundary->count(cell) == 0) {
-        return default_value;
+      if (m_value_boundary->contains(cell)) {
+        return m_value_boundary->at(cell);
       }
-      return m_value_boundary->at(cell);
+      return default_value;
     }
   };
 
@@ -122,8 +117,8 @@ public:
       : m_blocks(std::move(blocks)), m_flag_field_id(flag_field_id),
         m_callback(DynamicValueCallback()), m_pending_changes(false) {
     // reinitialize the flag field
-    for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
-      flag_reset_kernel(block->template getData<FlagField>(m_flag_field_id));
+    for (auto &block : *m_blocks) {
+      flag_reset_kernel(block.template getData<FlagField>(m_flag_field_id));
     }
     // instantiate the boundary sweep
     std::function callback = m_callback;
@@ -133,31 +128,32 @@ public:
 
   void operator()(IBlock *block) { (*m_boundary)(block); }
 
-  [[nodiscard]] bool node_is_boundary(Utils::Vector3i const &node) const {
-    return m_callback.node_is_boundary(node);
+  [[nodiscard]] bool
+  node_is_boundary(signed_integral_vector auto const &node) const {
+    return m_callback.node_is_boundary(to_cell(node));
   }
 
   [[nodiscard]] auto &
-  get_node_value_at_boundary(Utils::Vector3i const &node) const {
-    return m_callback.get_node_boundary_value(node);
+  get_node_value_at_boundary(signed_integral_vector auto const &node) const {
+    return m_callback.get_node_boundary_value(to_cell(node));
   }
 
-  void set_node_value_at_boundary(Utils::Vector3i const &node, T const &v,
-                                  BlockAndCell const &bc) {
+  void set_node_value_at_boundary(signed_integral_vector auto const &node,
+                                  T const &v, BlockAndCell const &bc) {
     auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
-    m_callback.set_node_boundary_value(node, v);
+    m_callback.set_node_boundary_value(to_cell(node), v);
     flag_field->addFlag(bc.cell, boundary_flag);
     m_pending_changes = true;
   }
 
-  void unpack_node(Utils::Vector3i const &node, T const &v) {
-    m_callback.set_node_boundary_value(node, v);
+  void unpack_node(signed_integral_vector auto const &node, T const &v) {
+    m_callback.set_node_boundary_value(to_cell(node), v);
   }
 
-  void remove_node_from_boundary(Utils::Vector3i const &node,
+  void remove_node_from_boundary(signed_integral_vector auto const &node,
                                  BlockAndCell const &bc) {
     auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
-    m_callback.unset_node_boundary_value(node);
+    m_callback.unset_node_boundary_value(to_cell(node));
     flag_field->removeFlag(bc.cell, boundary_flag);
     m_pending_changes = true;
   }

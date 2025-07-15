@@ -87,6 +87,7 @@ namespace ErrorHandling {
  * @param callbacks Callbacks system the error handler should be on.
  */
 void init_error_handling(std::weak_ptr<Communication::MpiCallbacks> callbacks);
+void deinit_error_handling();
 
 RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
                                          const std::string &file, int line,

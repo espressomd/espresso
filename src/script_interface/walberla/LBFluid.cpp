@@ -199,7 +199,7 @@ void LBFluid::do_construct(VariantMap const &params) {
     m_instance->set_external_force(lb_ext_f);
     m_instance->ghost_communication();
     for (auto &vtk : m_vtk_writers) {
-      vtk->attach_to_lattice(m_instance, get_latice_to_md_units_conversion());
+      vtk->attach_to_lattice(m_instance, get_lattice_to_md_units_conversion());
     }
   });
 }
