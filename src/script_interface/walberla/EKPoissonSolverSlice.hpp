@@ -64,7 +64,7 @@ public:
         get_value<Utils::Vector3i>(params, "slice_lower_corner");
     m_slice_upper_corner =
         get_value<Utils::Vector3i>(params, "slice_upper_corner");
-    m_shape_val["potential"] = {1};
+    m_shape_val["potential"] = std::vector<int>{1};
   }
 
   Variant do_call_method(std::string const &name,
