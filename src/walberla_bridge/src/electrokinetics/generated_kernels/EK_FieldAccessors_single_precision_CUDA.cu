@@ -430,6 +430,144 @@ __global__ void kernel_broadcast(
     flux_field.get(12u) = j_in[12u];
   }
 }
+
+__global__ void kernel_get_vector(
+    gpu::FieldAccessor<float> flux_field,
+    float *j_out) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 13u);
+  flux_field.set(blockIdx, threadIdx);
+  j_out += offset;
+  if (flux_field.isValidPosition()) {
+    j_out[0u] = float(0.0);
+    j_out[1u] = float(0.0);
+    j_out[2u] = float(0.0);
+
+    int cx = 0;
+    int cy = 0;
+    int cz = 0;
+    float add_flux;
+
+    cx = 0;
+    cy = 1;
+    cz = 0;
+    add_flux = -flux_field.getNeighbor(cx, cy, cz, 1u);
+    j_out[1u] += add_flux;
+    add_flux = flux_field.get(1u);
+    j_out[1u] -= add_flux;
+    add_flux = flux_field.get(0u);
+    j_out[0u] -= add_flux;
+    cx = 1;
+    cy = 0;
+    cz = 0;
+    add_flux = -flux_field.getNeighbor(cx, cy, cz, 0u);
+    j_out[0u] += add_flux;
+    cx = 0;
+    cy = 0;
+    cz = 1;
+    add_flux = -flux_field.getNeighbor(cx, cy, cz, 2u);
+    j_out[2u] += add_flux;
+    add_flux = flux_field.get(2u);
+    j_out[2u] -= add_flux;
+    add_flux = flux_field.get(4u);
+    j_out[0u] -= add_flux;
+    j_out[1u] += add_flux;
+    cx = 1;
+    cy = 1;
+    cz = 0;
+    add_flux = -flux_field.getNeighbor(cx, cy, cz, 3u);
+    j_out[0u] += add_flux;
+    j_out[1u] += add_flux;
+    add_flux = flux_field.get(3u);
+    j_out[0u] -= add_flux;
+    j_out[1u] -= add_flux;
+    cx = 1;
+    cy = -1;
+    cz = 0;
+    add_flux = -flux_field.getNeighbor(cx, cy, cz, 4u);
+    j_out[0u] += add_flux;
+    j_out[1u] -= add_flux;
+    cx = 0;
+    cy = 1;
+    cz = 1;
+    add_flux = -flux_field.getNeighbor(cx, cy, cz, 7u);
+    j_out[1u] += add_flux;
+    j_out[2u] += add_flux;
+    add_flux = flux_field.get(8u);
+    j_out[1u] -= add_flux;
+    j_out[2u] += add_flux;
+    add_flux = flux_field.get(6u);
+    j_out[0u] -= add_flux;
+    j_out[2u] += add_flux;
+    cx = 1;
+    cy = 0;
+    cz = 1;
+    add_flux = -flux_field.getNeighbor(cx, cy, cz, 5u);
+    j_out[0u] += add_flux;
+    j_out[2u] += add_flux;
+    cx = 0;
+    cy = 1;
+    cz = -1;
+    add_flux = -flux_field.getNeighbor(cx, cy, cz, 8u);
+    j_out[1u] += add_flux;
+    j_out[2u] -= add_flux;
+    add_flux = flux_field.get(7u);
+    j_out[1u] -= add_flux;
+    j_out[2u] -= add_flux;
+    add_flux = flux_field.get(5u);
+    j_out[0u] -= add_flux;
+    j_out[2u] -= add_flux;
+    cx = 1;
+    cy = 0;
+    cz = -1;
+    add_flux = -flux_field.getNeighbor(cx, cy, cz, 6u);
+    j_out[0u] += add_flux;
+    j_out[2u] -= add_flux;
+    cx = 1;
+    cy = 1;
+    cz = 1;
+    add_flux = -flux_field.getNeighbor(cx, cy, cz, 9u);
+    j_out[0u] += add_flux;
+    j_out[1u] += add_flux;
+    j_out[2u] += add_flux;
+    add_flux = flux_field.get(12u);
+    j_out[0u] -= add_flux;
+    j_out[1u] += add_flux;
+    j_out[2u] += add_flux;
+    cx = 1;
+    cy = -1;
+    cz = 1;
+    add_flux = -flux_field.getNeighbor(cx, cy, cz, 11u);
+    j_out[0u] += add_flux;
+    j_out[1u] -= add_flux;
+    j_out[2u] += add_flux;
+    add_flux = flux_field.get(10u);
+    j_out[0u] -= add_flux;
+    j_out[1u] -= add_flux;
+    j_out[2u] += add_flux;
+    cx = 1;
+    cy = 1;
+    cz = -1;
+    add_flux = -flux_field.getNeighbor(cx, cy, cz, 10u);
+    j_out[0u] += add_flux;
+    j_out[1u] += add_flux;
+    j_out[2u] -= add_flux;
+    add_flux = flux_field.get(11u);
+    j_out[0u] -= add_flux;
+    j_out[1u] += add_flux;
+    j_out[2u] -= add_flux;
+    cx = 1;
+    cy = -1;
+    cz = -1;
+    add_flux = -flux_field.getNeighbor(cx, cy, cz, 12u);
+    j_out[0u] += add_flux;
+    j_out[1u] -= add_flux;
+    j_out[2u] -= add_flux;
+    add_flux = flux_field.get(9u);
+    j_out[0u] -= add_flux;
+    j_out[1u] -= add_flux;
+    j_out[2u] -= add_flux;
+  }
+}
 // LCOV_EXCL_STOP
 
 std::array<float, 13> get(
@@ -471,6 +609,21 @@ std::vector<float> get(
   std::vector<float> out(ci.numCells() * 13u);
   thrust::copy(dev_data.begin(), dev_data.end(), out.data());
   return out;
+}
+
+Vector3<float> get_vector(
+    gpu::GPUField<float> const *flux_field,
+    Cell const &cell) {
+  CellInterval ci(cell, cell);
+  thrust::device_vector<float> dev_data(3u);
+  auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
+  auto kernel = gpu::make_kernel(kernel_get_vector);
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*flux_field, ci));
+  kernel.addParam(dev_data_ptr);
+  kernel();
+  Vector3<float> vec;
+  thrust::copy(dev_data.begin(), dev_data.end(), vec.data());
+  return vec;
 }
 } // namespace Flux
 

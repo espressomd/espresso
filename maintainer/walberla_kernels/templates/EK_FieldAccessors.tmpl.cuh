@@ -119,6 +119,11 @@ namespace Flux {
     get( gpu::GPUField< {{dtype}} > const * flux_field,
          CellInterval const & ci);
 
+    /** @brief Get flux vector from a single cell. */
+    Vector{{D}}< {{dtype}} >
+    get_vector( gpu::GPUField< {{dtype}} > const * flux_field,
+         Cell const & cell );
+
 } // namespace Flux
 
 } // namespace accessor

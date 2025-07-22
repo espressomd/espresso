@@ -21,8 +21,8 @@
 
 #include "PoissonSolver.hpp"
 
-#include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_double_precision_CPU.h"
-#include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_single_precision_CPU.h"
+#include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_double_precision.h"
+#include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_single_precision.h"
 #include "../../BlockAndCell.hpp"
 
 #include <blockforest/communication/UniformBufferedScheme.h>

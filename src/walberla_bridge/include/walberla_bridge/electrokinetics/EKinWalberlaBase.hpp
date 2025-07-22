@@ -59,6 +59,11 @@ public:
   get_slice_density(Utils::Vector3i const &lower_corner,
                     Utils::Vector3i const &upper_corner) const = 0;
 
+  /** @brief Get node flux vector. */
+  [[nodiscard]] virtual std::optional<Utils::Vector3d>
+  get_node_flux_vector(Utils::Vector3i const &node,
+                       bool consider_ghosts = false) const = 0;
+
   /** @brief Set node flux boundary conditions. */
   virtual bool set_node_flux_boundary(Utils::Vector3i const &node,
                                       Utils::Vector3d const &flux) = 0;

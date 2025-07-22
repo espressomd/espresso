@@ -690,6 +690,19 @@ public:
     }
   }
 
+  [[nodiscard]] std::optional<Utils::Vector3d>
+  get_node_flux_vector(Utils::Vector3i const &node,
+                       bool consider_ghosts = false) const override {
+    auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
+
+    if (!bc)
+      return std::nullopt;
+
+    auto const flux_field =
+        bc->block->template getData<FluxField>(m_flux_field_id);
+    return to_vector3d(ek::accessor::Flux::get_vector(flux_field, bc->cell));
+  }
+
   void clear_flux_boundaries() override {
     reset_flux_boundary_handling(get_lattice().get_blocks());
   }

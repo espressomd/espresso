@@ -437,6 +437,68 @@ namespace Flux
             {% endfor %}
         }
     }
+
+    __global__ void kernel_get_vector(
+        gpu::FieldAccessor< {{dtype}} > flux_field,
+        {{dtype}} * j_out )
+    {
+        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{FluxCount}}u);
+        flux_field.set( blockIdx, threadIdx );
+        j_out += offset;
+        if (flux_field.isValidPosition()) {
+            {% for i in range(D) -%}
+                j_out[{{i}}u] = {{dtype}}(0.0);
+            {% endfor %}
+            int cx = 0;
+            int cy = 0;
+            int cz = 0;
+            {{dtype}} add_flux;
+
+            {% for i in range(1,2*FluxCount+1) -%}
+                {% if Stencils[i] in StaggeredStencils -%}
+                    add_flux = flux_field.get({{StaggeredStencils[Stencils[i]]}}u);
+                {% else -%}
+                    {% if "E" in Stencils[i] -%}
+                        cx = 1;
+                    {% elif "W" in Stencils[i] -%}
+                        cx = -1;
+                    {% else -%}
+                        cx = 0;
+                    {% endif -%}
+                    {% if "N" in Stencils[i] -%}
+                        cy = 1;
+                    {% elif "S" in Stencils[i] -%}
+                        cy = -1;
+                    {% else -%}
+                        cy = 0;
+                    {% endif -%}
+                    {% if "T" in Stencils[i] -%}
+                        cz = 1;
+                    {% elif "B" in Stencils[i] -%}
+                        cz = -1;
+                    {% else -%}
+                        cz = 0;
+                    {% endif -%}
+                    add_flux = -flux_field.getNeighbor(cx, cy, cz, {{InverseStencils[Stencils[i]]}}u);
+                {% endif -%}
+                {% if "E" in Stencils[i] -%}
+                    j_out[0u] += add_flux;
+                {% elif "W" in Stencils[i] -%}
+                    j_out[0u] -= add_flux;
+                {% endif -%}
+                {% if "N" in Stencils[i] -%}
+                    j_out[1u] += add_flux;
+                {% elif "S" in Stencils[i] -%}
+                    j_out[1u] -= add_flux;
+                {% endif -%}
+                {% if "T" in Stencils[i] -%}
+                    j_out[2u] += add_flux;
+                {% elif "B" in Stencils[i] -%}
+                    j_out[2u] -= add_flux;
+                {% endif -%}
+            {% endfor %}
+        }
+    }
 // LCOV_EXCL_STOP
 
     std::array< {{dtype}}, {{FluxCount}} > get(
@@ -481,6 +543,22 @@ namespace Flux
         std::vector< {{dtype}} > out(ci.numCells() * {{FluxCount}}u);
         thrust::copy(dev_data.begin(), dev_data.end(), out.data());
         return out;
+    }
+
+    Vector{{D}}< {{dtype}} > get_vector(
+        gpu::GPUField< {{dtype}} > const * flux_field,
+        Cell const & cell)
+    {
+        CellInterval ci ( cell, cell );
+        thrust::device_vector< {{dtype}} > dev_data({{D}}u);
+        auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
+        auto kernel = gpu::make_kernel( kernel_get_vector );
+        kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *flux_field, ci ) );
+        kernel.addParam( dev_data_ptr );
+        kernel();
+        Vector{{D}}< {{dtype}} > vec;
+        thrust::copy(dev_data.begin(), dev_data.end(), vec.data());
+        return vec;
     }
 } // namespace Flux
 

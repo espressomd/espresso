@@ -503,6 +503,10 @@ class EKSpeciesNode(ScriptInterfaceHelper):
         self.call_method("set_density", value=value)
 
     @property
+    def flux(self):
+        return self.call_method("get_flux_vector")
+
+    @property
     def is_boundary(self):
         return self.call_method("get_is_boundary")
 
