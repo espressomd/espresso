@@ -372,6 +372,127 @@ inline auto get_vector(GhostLayerField<float, uint_t{13u}> const *flux_field,
 
   return result;
 }
+
+inline auto get_vector(GhostLayerField<float, uint_t{13u}> const *flux_field,
+                       CellInterval const &ci) {
+  std::vector<float> out;
+  out.reserve(ci.numCells() * uint_t(3u));
+  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+        Vector3<float> result = Vector3<float>(0, 0, 0);
+        const float &xyz0 = flux_field->get(x, y, z, uint_t{0u});
+        std::array<float, 27u> local_value;
+        // get fluxes in all directions
+        local_value[0] = float(0.0);
+        local_value[1] = -flux_field->getNeighbor(
+            x, y, z, uint_t{1u}, stencil::Direction(uint_t{1u}));
+        local_value[2] = flux_field->getF(&xyz0, uint_t{1u});
+        local_value[3] = flux_field->getF(&xyz0, uint_t{0u});
+        local_value[4] = -flux_field->getNeighbor(
+            x, y, z, uint_t{0u}, stencil::Direction(uint_t{4u}));
+        local_value[5] = -flux_field->getNeighbor(
+            x, y, z, uint_t{2u}, stencil::Direction(uint_t{5u}));
+        local_value[6] = flux_field->getF(&xyz0, uint_t{2u});
+        local_value[7] = flux_field->getF(&xyz0, uint_t{4u});
+        local_value[8] = -flux_field->getNeighbor(
+            x, y, z, uint_t{3u}, stencil::Direction(uint_t{8u}));
+        local_value[9] = flux_field->getF(&xyz0, uint_t{3u});
+        local_value[10] = -flux_field->getNeighbor(
+            x, y, z, uint_t{4u}, stencil::Direction(uint_t{10u}));
+        local_value[11] = -flux_field->getNeighbor(
+            x, y, z, uint_t{7u}, stencil::Direction(uint_t{11u}));
+        local_value[12] = flux_field->getF(&xyz0, uint_t{8u});
+        local_value[13] = flux_field->getF(&xyz0, uint_t{6u});
+        local_value[14] = -flux_field->getNeighbor(
+            x, y, z, uint_t{5u}, stencil::Direction(uint_t{14u}));
+        local_value[15] = -flux_field->getNeighbor(
+            x, y, z, uint_t{8u}, stencil::Direction(uint_t{15u}));
+        local_value[16] = flux_field->getF(&xyz0, uint_t{7u});
+        local_value[17] = flux_field->getF(&xyz0, uint_t{5u});
+        local_value[18] = -flux_field->getNeighbor(
+            x, y, z, uint_t{6u}, stencil::Direction(uint_t{18u}));
+        local_value[19] = -flux_field->getNeighbor(
+            x, y, z, uint_t{9u}, stencil::Direction(uint_t{19u}));
+        local_value[20] = flux_field->getF(&xyz0, uint_t{12u});
+        local_value[21] = -flux_field->getNeighbor(
+            x, y, z, uint_t{11u}, stencil::Direction(uint_t{21u}));
+        local_value[22] = flux_field->getF(&xyz0, uint_t{10u});
+        local_value[23] = -flux_field->getNeighbor(
+            x, y, z, uint_t{10u}, stencil::Direction(uint_t{23u}));
+        local_value[24] = flux_field->getF(&xyz0, uint_t{11u});
+        local_value[25] = -flux_field->getNeighbor(
+            x, y, z, uint_t{12u}, stencil::Direction(uint_t{25u}));
+        local_value[26] = flux_field->getF(&xyz0, uint_t{9u});
+
+        // North-South entries
+        result[0] -= local_value[3];
+        result[0] += local_value[4];
+        result[0] -= local_value[7];
+        result[0] += local_value[8];
+        result[0] -= local_value[9];
+        result[0] += local_value[10];
+        result[0] -= local_value[13];
+        result[0] += local_value[14];
+        result[0] -= local_value[17];
+        result[0] += local_value[18];
+        result[0] += local_value[19];
+        result[0] -= local_value[20];
+        result[0] += local_value[21];
+        result[0] -= local_value[22];
+        result[0] += local_value[23];
+        result[0] -= local_value[24];
+        result[0] += local_value[25];
+        result[0] -= local_value[26];
+
+        // East-West entries
+        result[1] += local_value[1];
+        result[1] -= local_value[2];
+        result[1] += local_value[7];
+        result[1] += local_value[8];
+        result[1] -= local_value[9];
+        result[1] -= local_value[10];
+        result[1] += local_value[11];
+        result[1] -= local_value[12];
+        result[1] += local_value[15];
+        result[1] -= local_value[16];
+        result[1] += local_value[19];
+        result[1] += local_value[20];
+        result[1] -= local_value[21];
+        result[1] -= local_value[22];
+        result[1] += local_value[23];
+        result[1] += local_value[24];
+        result[1] -= local_value[25];
+        result[1] -= local_value[26];
+
+        // Top-Bottom entries
+        result[2] += local_value[5];
+        result[2] -= local_value[6];
+        result[2] += local_value[11];
+        result[2] += local_value[12];
+        result[2] += local_value[13];
+        result[2] += local_value[14];
+        result[2] -= local_value[15];
+        result[2] -= local_value[16];
+        result[2] -= local_value[17];
+        result[2] -= local_value[18];
+        result[2] += local_value[19];
+        result[2] += local_value[20];
+        result[2] += local_value[21];
+        result[2] += local_value[22];
+        result[2] -= local_value[23];
+        result[2] -= local_value[24];
+        result[2] -= local_value[25];
+        result[2] -= local_value[26];
+
+        out.emplace_back(result[0u]);
+        out.emplace_back(result[1u]);
+        out.emplace_back(result[2u]);
+      }
+    }
+  }
+  return out;
+}
 } // namespace Flux
 
 } // namespace accessor

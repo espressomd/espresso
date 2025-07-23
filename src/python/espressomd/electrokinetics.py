@@ -661,6 +661,10 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
         self._setter("density", value)
 
     @property
+    def flux(self):
+        return self._getter("flux",)
+
+    @property
     def is_boundary(self):
         return self._getter("is_boundary")
 

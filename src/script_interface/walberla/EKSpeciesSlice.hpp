@@ -130,6 +130,7 @@ public:
     m_slice_upper_corner =
         get_value<Utils::Vector3i>(params, "slice_upper_corner");
     m_shape_val["density"] = {1};
+    m_shape_val["flux"] = {3};
     m_shape_val["flux_at_boundary"] = {1};
     m_shape_val["density_at_boundary"] = {1};
     m_shape_val["is_boundary"] = {1};

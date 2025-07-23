@@ -703,6 +703,49 @@ public:
     return to_vector3d(ek::accessor::Flux::get_vector(flux_field, bc->cell));
   }
 
+  std::vector<double>
+  get_slice_flux_vector(Utils::Vector3i const &lower_corner,
+                        Utils::Vector3i const &upper_corner) const override {
+    std::vector<double> out;
+    uint_t values_size = 0;
+    auto const &lattice = get_lattice();
+    if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
+      out = std::vector<double>(3u * ci->numCells());
+      for (auto &block : *lattice.get_blocks()) {
+        auto const block_offset = lattice.get_block_corner(block, true);
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
+          auto const flux_field =
+              block.template getData<FluxField>(m_flux_field_id);
+          auto const values = ek::accessor::Flux::get_vector(flux_field, *bci);
+          assert(values.size() == 3u * bci->numCells());
+          values_size += 3u * bci->numCells();
+
+          auto kernel = [&values, &out, this](unsigned const block_index,
+                                              unsigned const local_index,
+                                              Utils::Vector3i const &node) {
+            if (m_boundary_flux->node_is_boundary(node)) {
+              auto const &vec =
+                  m_boundary_flux->get_node_value_at_boundary(node);
+              for (uint_t f = 0u; f < 3u; ++f) {
+                out[3u * local_index + f] = double_c(vec[f]);
+              }
+            } else {
+              for (uint_t f = 0u; f < 3u; ++f) {
+                out[3u * local_index + f] =
+                    double_c(values[3u * block_index + f]);
+              }
+            }
+          };
+
+          copy_block_buffer(*bci, *ci, block_offset, lower_corner, kernel);
+        }
+      }
+      assert(values_size == 3u * ci->numCells());
+    }
+    return out;
+  }
+
   void clear_flux_boundaries() override {
     reset_flux_boundary_handling(get_lattice().get_blocks());
   }

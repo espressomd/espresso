@@ -322,6 +322,64 @@ namespace Flux
 
         return result;
     }
+
+    inline auto
+    get_vector( GhostLayerField< {{dtype}}, uint_t{ {{FluxCount}}u } > const * flux_field,
+         CellInterval const & ci )
+    {
+        std::vector< {{dtype}} > out;
+        out.reserve(ci.numCells() * uint_t({{D}}u));
+        for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+            for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+                for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+                    Vector{{D}}< {{dtype}} > result = Vector{{D}}< {{dtype}} >(0,0,0);
+                    const {{dtype}} & xyz0 = flux_field->get(x, y, z, uint_t{ 0u });
+                    std::array< {{dtype}}, {{2*FluxCount+1}}u > local_value;
+                    // get fluxes in all directions
+                    {% for i in range(FluxCount*2+1) -%}
+                        {% if i == 0 -%}
+                            local_value[{{i}}] = {{dtype}}(0.0);
+                        {% elif Stencils[i] in StaggeredStencils -%}
+                            local_value[{{i}}] = flux_field->getF( &xyz0, uint_t{ {{StaggeredStencils[Stencils[i]]}}u });
+                        {% else -%}
+                            local_value[{{i}}] = -flux_field->getNeighbor(x, y, z, uint_t{ {{InverseStencils[Stencils[i]]}}u }, stencil::Direction(uint_t{ {{i}}u }));
+                        {% endif -%}
+                    {% endfor %}
+
+                    // North-South entries
+                    {% for i in range(FluxCount*2+1) -%}
+                        {% if "E" in Stencils[i] -%}
+                            result[0] += local_value[{{i}}];
+                        {% elif "W" in Stencils[i] -%}
+                            result[0] -= local_value[{{i}}];
+                        {% endif -%}
+                    {% endfor %}
+
+                    // East-West entries
+                    {% for i in range(FluxCount*2+1) -%}
+                        {% if "N" in Stencils[i] -%}
+                            result[1] += local_value[{{i}}];
+                        {% elif "S" in Stencils[i] -%}
+                            result[1] -= local_value[{{i}}];
+                        {% endif -%}
+                    {% endfor %}
+
+                    // Top-Bottom entries
+                    {% for i in range(FluxCount*2+1) -%}
+                        {% if "T" in Stencils[i] -%}
+                            result[2] += local_value[{{i}}];
+                        {% elif "B" in Stencils[i] -%}
+                            result[2] -= local_value[{{i}}];
+                        {% endif -%}
+                    {% endfor %}
+                    {% for i in range(D) -%}
+                        out.emplace_back(result[{{i}}u]);
+                    {% endfor -%}
+                }
+            }
+        }
+        return out;
+    }
 } // namespace Flux
 
 } // namespace accessor

@@ -625,6 +625,20 @@ Vector3<float> get_vector(
   thrust::copy(dev_data.begin(), dev_data.end(), vec.data());
   return vec;
 }
+
+std::vector<float> get_vector(
+    gpu::GPUField<float> const *flux_field,
+    CellInterval const &ci) {
+  thrust::device_vector<float> dev_data(ci.numCells() * 3u);
+  auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
+  auto kernel = gpu::make_kernel(kernel_get_vector);
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*flux_field, ci));
+  kernel.addParam(dev_data_ptr);
+  kernel();
+  std::vector<float> out(ci.numCells() * 3u);
+  thrust::copy(dev_data.begin(), dev_data.end(), out.data());
+  return out;
+}
 } // namespace Flux
 
 } // namespace accessor

@@ -105,6 +105,10 @@ std::vector<float> get(gpu::GPUField<float> const *flux_field,
 Vector3<float> get_vector(gpu::GPUField<float> const *flux_field,
                           Cell const &cell);
 
+/** @brief Get flux vector from a cell interval. */
+std::vector<float> get_vector(gpu::GPUField<float> const *flux_field,
+                              CellInterval const &ci);
+
 } // namespace Flux
 
 } // namespace accessor

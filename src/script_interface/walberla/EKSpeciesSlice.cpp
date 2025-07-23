@@ -74,6 +74,9 @@ Variant EKSpeciesSlice::do_call_method(std::string const &name,
   if (name == "set_density") {
     return call(&LatticeModel::set_slice_density, {1}, m_conv_dens);
   }
+  if (name == "get_flux") {
+    return call(&LatticeModel::get_slice_flux_vector, {3}, 1. / m_conv_flux);
+  }
   if (name == "get_is_boundary") {
     return call(&LatticeModel::get_slice_is_boundary, {1});
   }

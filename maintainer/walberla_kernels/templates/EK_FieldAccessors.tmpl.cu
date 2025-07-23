@@ -560,6 +560,21 @@ namespace Flux
         thrust::copy(dev_data.begin(), dev_data.end(), vec.data());
         return vec;
     }
+
+    std::vector< {{dtype}}> get_vector(
+        gpu::GPUField< {{dtype}} > const * flux_field,
+        CellInterval const & ci)
+    {
+        thrust::device_vector< {{dtype}} > dev_data(ci.numCells() * {{D}}u);
+        auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
+        auto kernel = gpu::make_kernel( kernel_get_vector );
+        kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *flux_field, ci ) );
+        kernel.addParam( dev_data_ptr );
+        kernel();
+        std::vector< {{dtype}} > out(ci.numCells() * {{D}}u);
+        thrust::copy(dev_data.begin(), dev_data.end(), out.data());
+        return out;
+    }
 } // namespace Flux
 
 } // namespace accessor
