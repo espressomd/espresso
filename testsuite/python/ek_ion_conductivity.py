@@ -18,7 +18,6 @@
 #
 
 import numpy as np
-import scipy.optimize
 import unittest as ut
 import unittest_decorators as utx
 
@@ -80,7 +79,7 @@ class EKEOF:
         self.system.ekcontainer.add(ekspecies_pos)
         self.system.ekcontainer.add(ekspecies_neg)
 
-        for i in range(self.NUM_SAMPLES):
+        for _ in range(self.NUM_SAMPLES):
             external_electric_field = electric_field_max * np.random.random(3)
             ekspecies_pos.ext_efield = external_electric_field
             ekspecies_neg.ext_efield = external_electric_field
