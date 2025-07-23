@@ -385,45 +385,58 @@ inline auto get_vector(GhostLayerField<double, uint_t{13u}> const *flux_field,
         std::array<double, 27u> local_value;
         // get fluxes in all directions
         local_value[0] = double(0.0);
-        local_value[1] = -flux_field->getNeighbor(
-            x, y, z, uint_t{1u}, stencil::Direction(uint_t{1u}));
-        local_value[2] = flux_field->getF(&xyz0, uint_t{1u});
-        local_value[3] = flux_field->getF(&xyz0, uint_t{0u});
-        local_value[4] = -flux_field->getNeighbor(
-            x, y, z, uint_t{0u}, stencil::Direction(uint_t{4u}));
-        local_value[5] = -flux_field->getNeighbor(
-            x, y, z, uint_t{2u}, stencil::Direction(uint_t{5u}));
-        local_value[6] = flux_field->getF(&xyz0, uint_t{2u});
-        local_value[7] = flux_field->getF(&xyz0, uint_t{4u});
-        local_value[8] = -flux_field->getNeighbor(
-            x, y, z, uint_t{3u}, stencil::Direction(uint_t{8u}));
-        local_value[9] = flux_field->getF(&xyz0, uint_t{3u});
-        local_value[10] = -flux_field->getNeighbor(
-            x, y, z, uint_t{4u}, stencil::Direction(uint_t{10u}));
-        local_value[11] = -flux_field->getNeighbor(
-            x, y, z, uint_t{7u}, stencil::Direction(uint_t{11u}));
-        local_value[12] = flux_field->getF(&xyz0, uint_t{8u});
-        local_value[13] = flux_field->getF(&xyz0, uint_t{6u});
-        local_value[14] = -flux_field->getNeighbor(
-            x, y, z, uint_t{5u}, stencil::Direction(uint_t{14u}));
-        local_value[15] = -flux_field->getNeighbor(
-            x, y, z, uint_t{8u}, stencil::Direction(uint_t{15u}));
-        local_value[16] = flux_field->getF(&xyz0, uint_t{7u});
-        local_value[17] = flux_field->getF(&xyz0, uint_t{5u});
-        local_value[18] = -flux_field->getNeighbor(
-            x, y, z, uint_t{6u}, stencil::Direction(uint_t{18u}));
-        local_value[19] = -flux_field->getNeighbor(
-            x, y, z, uint_t{9u}, stencil::Direction(uint_t{19u}));
-        local_value[20] = flux_field->getF(&xyz0, uint_t{12u});
-        local_value[21] = -flux_field->getNeighbor(
-            x, y, z, uint_t{11u}, stencil::Direction(uint_t{21u}));
-        local_value[22] = flux_field->getF(&xyz0, uint_t{10u});
-        local_value[23] = -flux_field->getNeighbor(
-            x, y, z, uint_t{10u}, stencil::Direction(uint_t{23u}));
-        local_value[24] = flux_field->getF(&xyz0, uint_t{11u});
-        local_value[25] = -flux_field->getNeighbor(
-            x, y, z, uint_t{12u}, stencil::Direction(uint_t{25u}));
-        local_value[26] = flux_field->getF(&xyz0, uint_t{9u});
+        local_value[1] = double(-0.5) * flux_field->getNeighbor(
+                                            x, y, z, uint_t{1u},
+                                            stencil::Direction(uint_t{1u}));
+        local_value[2] = double(0.5) * flux_field->getF(&xyz0, uint_t{1u});
+        local_value[3] = double(0.5) * flux_field->getF(&xyz0, uint_t{0u});
+        local_value[4] = double(-0.5) * flux_field->getNeighbor(
+                                            x, y, z, uint_t{0u},
+                                            stencil::Direction(uint_t{4u}));
+        local_value[5] = double(-0.5) * flux_field->getNeighbor(
+                                            x, y, z, uint_t{2u},
+                                            stencil::Direction(uint_t{5u}));
+        local_value[6] = double(0.5) * flux_field->getF(&xyz0, uint_t{2u});
+        local_value[7] = double(0.5) * flux_field->getF(&xyz0, uint_t{4u});
+        local_value[8] = double(-0.5) * flux_field->getNeighbor(
+                                            x, y, z, uint_t{3u},
+                                            stencil::Direction(uint_t{8u}));
+        local_value[9] = double(0.5) * flux_field->getF(&xyz0, uint_t{3u});
+        local_value[10] = double(-0.5) * flux_field->getNeighbor(
+                                             x, y, z, uint_t{4u},
+                                             stencil::Direction(uint_t{10u}));
+        local_value[11] = double(-0.5) * flux_field->getNeighbor(
+                                             x, y, z, uint_t{7u},
+                                             stencil::Direction(uint_t{11u}));
+        local_value[12] = double(0.5) * flux_field->getF(&xyz0, uint_t{8u});
+        local_value[13] = double(0.5) * flux_field->getF(&xyz0, uint_t{6u});
+        local_value[14] = double(-0.5) * flux_field->getNeighbor(
+                                             x, y, z, uint_t{5u},
+                                             stencil::Direction(uint_t{14u}));
+        local_value[15] = double(-0.5) * flux_field->getNeighbor(
+                                             x, y, z, uint_t{8u},
+                                             stencil::Direction(uint_t{15u}));
+        local_value[16] = double(0.5) * flux_field->getF(&xyz0, uint_t{7u});
+        local_value[17] = double(0.5) * flux_field->getF(&xyz0, uint_t{5u});
+        local_value[18] = double(-0.5) * flux_field->getNeighbor(
+                                             x, y, z, uint_t{6u},
+                                             stencil::Direction(uint_t{18u}));
+        local_value[19] = double(-0.5) * flux_field->getNeighbor(
+                                             x, y, z, uint_t{9u},
+                                             stencil::Direction(uint_t{19u}));
+        local_value[20] = double(0.5) * flux_field->getF(&xyz0, uint_t{12u});
+        local_value[21] = double(-0.5) * flux_field->getNeighbor(
+                                             x, y, z, uint_t{11u},
+                                             stencil::Direction(uint_t{21u}));
+        local_value[22] = double(0.5) * flux_field->getF(&xyz0, uint_t{10u});
+        local_value[23] = double(-0.5) * flux_field->getNeighbor(
+                                             x, y, z, uint_t{10u},
+                                             stencil::Direction(uint_t{23u}));
+        local_value[24] = double(0.5) * flux_field->getF(&xyz0, uint_t{11u});
+        local_value[25] = double(-0.5) * flux_field->getNeighbor(
+                                             x, y, z, uint_t{12u},
+                                             stencil::Direction(uint_t{25u}));
+        local_value[26] = double(0.5) * flux_field->getF(&xyz0, uint_t{9u});
 
         // North-South entries
         result[0] -= local_value[3];

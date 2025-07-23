@@ -442,7 +442,7 @@ namespace Flux
         gpu::FieldAccessor< {{dtype}} > flux_field,
         {{dtype}} * j_out )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{FluxCount}}u);
+        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
         flux_field.set( blockIdx, threadIdx );
         j_out += offset;
         if (flux_field.isValidPosition()) {
@@ -456,7 +456,7 @@ namespace Flux
 
             {% for i in range(1,2*FluxCount+1) -%}
                 {% if Stencils[i] in StaggeredStencils -%}
-                    add_flux = flux_field.get({{StaggeredStencils[Stencils[i]]}}u);
+                    add_flux = {{dtype}}(0.5) * flux_field.get({{StaggeredStencils[Stencils[i]]}}u);
                 {% else -%}
                     {% if "E" in Stencils[i] -%}
                         cx = 1;
@@ -479,7 +479,7 @@ namespace Flux
                     {% else -%}
                         cz = 0;
                     {% endif -%}
-                    add_flux = -flux_field.getNeighbor(cx, cy, cz, {{InverseStencils[Stencils[i]]}}u);
+                    add_flux = {{dtype}}(-0.5) * flux_field.getNeighbor(cx, cy, cz, {{InverseStencils[Stencils[i]]}}u);
                 {% endif -%}
                 {% if "E" in Stencils[i] -%}
                     j_out[0u] += add_flux;
