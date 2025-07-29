@@ -21,14 +21,23 @@ jobs:
           save: ${{ github.ref == 'refs/heads/python' }}
       - name: Get runner specifications
         run: system_profiler SPHardwareDataType
-      - run: |
-         brew install boost boost-mpi fftw
-         brew list ccache || brew install ccache
-         brew list ninja || brew install ninja
-         # https://mac.r-project.org/openmp/
-         curl -O https://mac.r-project.org/openmp/openmp-17.0.6-darwin20-Release.tar.gz
-         sudo tar fvxz openmp-17.0.6-darwin20-Release.tar.gz -C /
+      - name: Install dependencies
+        run: |
+         echo '' > Brewfile
+         for dep in boost boost-mpi fftw ccache ninja; do echo "brew \"${dep}\"" >> Brewfile; done
+         brew bundle check >/dev/null 2>&1 || brew bundle --verbose --no-upgrade
+         # set up Xcode compiler
+         echo "::group::List available Xcode compilers"
+         ls /Applications | grep Xcode
+         echo "::endgroup::"
+         sudo xcode-select -switch /Applications/Xcode_16.4.app
+         echo "::group::Install OpenMP (https://mac.r-project.org/openmp/)"
+         curl -s -o ${{ runner.temp }}/openmp.tar.gz https://mac.r-project.org/openmp/openmp-19.1.0-darwin20-Release.tar.gz
+         sudo tar fvxz ${{ runner.temp }}/openmp.tar.gz -C /
+         rm ${{ runner.temp }}/openmp.tar.gz
          codesign -d -vv /usr/local/lib/libomp.dylib
+         echo "::endgroup::"
+         # Python dependencies
          python3 -m venv venv
          . venv/bin/activate
          pip3 install -c requirements.txt cython numpy scipy packaging
@@ -47,7 +56,7 @@ jobs:
   debian:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/espressomd/docker/debian:3353f0aa183c420e26fc3a35bde39bd56ca79af8-base-layer
+      image: ghcr.io/espressomd/docker/debian:17ae5d9f6217a5653be3ec409178f0ee15cb519f-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
@@ -88,7 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.repository == 'espressomd/espresso' }}
     container:
-      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:3353f0aa183c420e26fc3a35bde39bd56ca79af8-base-layer
+      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:17ae5d9f6217a5653be3ec409178f0ee15cb519f-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -22,41 +22,27 @@
 #include <boost/serialization/split_free.hpp>
 #include <boost/serialization/utility.hpp>
 
-#include <unordered_map>
+#include <filesystem>
+#include <string>
 
 namespace boost::serialization {
 
-template <typename Archive, typename K, typename V>
-void load(Archive &ar, std::unordered_map<K, V> &map, unsigned const int) {
-  using value_type = std::unordered_map<K, V>::value_type;
-  using size_type = std::unordered_map<K, V>::size_type;
-
-  size_type count;
-  ar >> count;
-  map.reserve(count);
-
-  value_type pair{};
-  for (size_type i = 0; i < count; i++) {
-    ar >> pair;
-    map.emplace_hint(map.end(), pair);
-  }
+template <typename Archive>
+void load(Archive &ar, std::filesystem::path &path, unsigned int const) {
+  std::string source;
+  ar >> source;
+  path = std::filesystem::path(source, std::filesystem::path::generic_format);
 }
 
-template <typename Archive, typename K, typename V>
-void save(Archive &ar, std::unordered_map<K, V> const &map,
-          unsigned const int) {
-  auto const count = map.size();
-  ar << count;
-
-  for (auto const &pair : map) {
-    ar << pair;
-  }
+template <typename Archive>
+void save(Archive &ar, std::filesystem::path const &path, unsigned int const) {
+  ar << path.generic_string();
 }
 
-template <typename Archive, typename K, typename V>
-void serialize(Archive &ar, std::unordered_map<K, V> &map,
+template <typename Archive>
+void serialize(Archive &ar, std::filesystem::path &path,
                unsigned int const version) {
-  split_free(ar, map, version);
+  split_free(ar, path, version);
 }
 
 } // namespace boost::serialization

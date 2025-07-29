@@ -28,6 +28,7 @@
 #include <Kokkos_Core.hpp>
 #endif
 
+#include <concepts>
 #include <functional>
 #include <utility>
 
@@ -63,7 +64,7 @@ public:
   KokkosReducer(KokkosReducer const &other)
       : reduction_op(other.reduction_op), kernel(other.kernel) {};
 
-  KOKKOS_INLINE_FUNCTION void operator()(int const i,
+  KOKKOS_INLINE_FUNCTION void operator()(std::integral auto const i,
                                          value_type &update) const {
     kernel(i, update);
   }
@@ -108,8 +109,8 @@ ResultType reduce_over_local_particles(
   auto const &cells = cs.decomposition().local_cells();
   if (cells.size() > 1) { // parallel loop over cells
     auto reducer = Reduction::make_kokkos_reducer<ResultType>(
-        [&cells, add_partial](int i, ResultType &res) {
-          for (auto const &p : cells[i]->particles()) {
+        [&cells, add_partial](std::size_t const c_index, ResultType &res) {
+          for (auto const &p : cells[c_index]->particles()) {
             add_partial(p, res);
           }
         },
@@ -121,8 +122,8 @@ ResultType reduce_over_local_particles(
   // single cell case
   auto const &particles = cells.front()->particles();
   auto reducer = Reduction::make_kokkos_reducer<ResultType>(
-      [&particles, add_partial](int i, ResultType &res) {
-        add_partial(std::as_const(*(particles.begin() + i)), res);
+      [&particles, add_partial](std::size_t const p_index, ResultType &res) {
+        add_partial(std::as_const(*(particles.begin() + p_index)), res);
       },
       reduce_op);
   Kokkos::parallel_reduce( // loop over particles

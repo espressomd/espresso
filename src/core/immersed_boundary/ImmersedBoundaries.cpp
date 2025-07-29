@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <ranges>
 #include <span>
 #include <utility>
 #include <vector>
@@ -52,9 +53,10 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
   // Check since this function is called at the start of every integrate loop
   // Also check if volume has been set due to reading of a checkpoint
   if (not BoundariesFound) {
-    BoundariesFound = std::ranges::any_of(bonded_ias, [](auto const &kv) {
-      return (boost::get<IBMVolCons>(&(*kv.second)) != nullptr);
-    });
+    BoundariesFound = std::ranges::any_of(
+        std::views::elements<1>(bonded_ias), [](auto const &handle) {
+          return boost::get<IBMVolCons>(handle.get()) != nullptr;
+        });
   }
 
   if (!VolumeInitDone && BoundariesFound) {
@@ -63,8 +65,8 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
 
     // Loop through all bonded interactions and check if we need to set the
     // reference volume
-    for (auto &kv : bonded_ias) {
-      if (auto *v = boost::get<IBMVolCons>(kv.second.get())) {
+    for (auto &handle : std::views::elements<1>(bonded_ias)) {
+      if (auto *v = boost::get<IBMVolCons>(handle.get())) {
         // This check is important because InitVolumeConservation may be called
         // accidentally during the integration. Then we must not reset the
         // reference

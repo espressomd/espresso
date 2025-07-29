@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_GET_VALUE_HPP
-#define SCRIPT_INTERFACE_GET_VALUE_HPP
+#pragma once
 
 #include "Exception.hpp"
 #include "ObjectHandle.hpp"
@@ -31,6 +30,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
+#include <ranges>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -114,8 +114,8 @@ auto simplify_symbol(std::unordered_map<K, Variant> const *map) {
   auto value_type_name = std::string("ScriptInterface::Variant");
   if (map) {
     std::set<std::string> types = {};
-    for (auto const &kv : *map) {
-      types.insert(simplify_symbol_variant(kv.second));
+    for (auto const &variant : std::views::elements<1>(*map)) {
+      types.insert(simplify_symbol_variant(variant));
     }
     value_type_name += "{" + boost::algorithm::join(types, ", ") + "}";
   }
@@ -182,15 +182,10 @@ using allow_conversion =
                                       std::is_arithmetic_v<From>)>;
 
 template <class To> struct conversion_visitor : boost::static_visitor<To> {
-  template <class From>
-  std::enable_if_t<allow_conversion<To, From>::value, To>
-  operator()(const From &value) const {
-    return To(value);
-  }
-
-  template <class From>
-  std::enable_if_t<!allow_conversion<To, From>::value, To>
-  operator()(const From &) const {
+  template <class From> To operator()(const From &value) const {
+    if constexpr (allow_conversion<To, From>::value) {
+      return To(value);
+    }
     throw boost::bad_get{};
   }
 };
@@ -201,7 +196,7 @@ template <class To> struct conversion_visitor : boost::static_visitor<To> {
  * Helper struct is needed because partial specialization of functions
  * is not allowed.
  */
-template <typename T, typename = void> struct get_value_helper {
+template <typename T> struct get_value_helper {
   T operator()(Variant const &v) const {
     return boost::apply_visitor(detail::conversion_visitor<T>(), v);
   }
@@ -209,34 +204,30 @@ template <typename T, typename = void> struct get_value_helper {
 
 template <class T, std::size_t N>
 struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
-  Utils::Vector<T, N> operator()(Utils::Vector<T, N> const &v) const {
-    return v;
-  }
-
-  /* We try to unpack variant vectors and check if they
-   * are convertible element by element. */
-  auto operator()(std::vector<Variant> const &vv) const {
-    if (N != vv.size()) {
-      throw boost::bad_get{};
-    }
-
-    Utils::Vector<T, N> ret{};
-    std::ranges::transform(vv, ret.begin(), get_value_helper<T>{});
-
-    return ret;
+  /* Catch all case -> wrong type. */
+  template <typename U> Utils::Vector<T, N> operator()(U const &) const {
+    throw boost::bad_get{};
   }
 
   template <typename U>
-  std::enable_if_t<allow_conversion<T, U>::value, Utils::Vector<T, N>>
-  operator()(std::vector<U, std::allocator<U>> const &v) const {
-    if (N != v.size()) {
-      throw boost::bad_get{};
-    }
+    requires allow_conversion<T, U>::value
+  Utils::Vector<T, N> operator()(Utils::Vector<U, N> const &v) const {
     return Utils::Vector<T, N>(v);
   }
 
-  template <typename U> Utils::Vector<T, N> operator()(U const &) const {
-    throw boost::bad_get{};
+  template <typename U>
+    requires(std::is_same_v<U, Variant> or allow_conversion<T, U>::value)
+  Utils::Vector<T, N> operator()(std::vector<U> const &vector) const {
+    if (vector.size() != N) {
+      throw boost::bad_get{};
+    }
+    if constexpr (std::is_same_v<U, Variant>) {
+      Utils::Vector<T, N> ret{};
+      std::ranges::transform(vector, ret.begin(), get_value_helper<T>{});
+      return ret;
+    } else {
+      return Utils::Vector<T, N>(vector);
+    }
   }
 };
 
@@ -249,7 +240,7 @@ struct get_value_helper<Utils::Vector<T, N>> {
 };
 
 template <typename T>
-struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
+struct VisitorVector : boost::static_visitor<std::vector<T>> {
   /* Catch all case -> wrong type. */
   template <typename U> std::vector<T> operator()(U const &) const {
     throw boost::bad_get{};
@@ -258,9 +249,9 @@ struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
   /* Standard case, correct type */
   std::vector<T> operator()(std::vector<T> const &v) const { return v; }
 
-  template <typename V = T,
-            std::enable_if_t<!std::is_same_v<V, Variant>, bool> = true>
-  std::vector<T> operator()(std::vector<Variant> const &vv) const {
+  std::vector<T> operator()(std::vector<Variant> const &vv) const
+    requires(not std::is_same_v<T, Variant>)
+  {
     std::vector<T> ret(vv.size());
 
     std::ranges::transform(vv, ret.begin(), get_value_helper<T>{});
@@ -270,47 +261,53 @@ struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
 };
 
 /* std::vector cases */
-template <typename T> struct get_value_helper<std::vector<T>, void> {
+template <typename T> struct get_value_helper<std::vector<T>> {
   std::vector<T> operator()(Variant const &v) const {
-    return boost::apply_visitor(GetVectorOrEmpty<T>(), v);
+    return boost::apply_visitor(VisitorVector<T>(), v);
   }
 };
 
 template <typename K, typename T>
-struct GetMapOrEmpty : boost::static_visitor<std::unordered_map<K, T>> {
+struct VisitorMap : boost::static_visitor<std::unordered_map<K, T>> {
   /* Catch all case -> wrong type. */
   template <typename U> std::unordered_map<K, T> operator()(U const &) const {
     throw boost::bad_get{};
   }
 
   /* Standard case, correct type */
-  std::unordered_map<K, T> operator()(std::unordered_map<K, T> const &v) const {
-    return v;
-  }
+  auto operator()(std::unordered_map<K, T> const &map) const { return map; }
 
-  template <typename V = T,
-            std::enable_if_t<!std::is_same_v<V, Variant>, bool> = true>
-  std::unordered_map<K, T>
-  operator()(std::unordered_map<K, Variant> const &v) const {
+  auto operator()(std::unordered_map<K, Variant> const &map) const
+    requires(not std::is_same_v<T, Variant>)
+  {
     std::unordered_map<K, T> ret;
-    for (auto it = v.begin(); it != v.end(); ++it) {
-      ret.insert({it->first, get_value_helper<T>{}(it->second)});
+    for (auto const &[key, variant] : map) {
+      ret.emplace(key, get_value_helper<T>{}(variant));
     }
     return ret;
   }
 };
 
 /* std::unordered_map cases */
-template <typename T>
-struct get_value_helper<std::unordered_map<int, T>, void> {
+template <typename T> struct get_value_helper<std::unordered_map<int, T>> {
   std::unordered_map<int, T> operator()(Variant const &v) const {
-    return boost::apply_visitor(GetMapOrEmpty<int, T>(), v);
+    return boost::apply_visitor(VisitorMap<int, T>(), v);
   }
 };
 template <typename T>
-struct get_value_helper<std::unordered_map<std::string, T>, void> {
+struct get_value_helper<std::unordered_map<std::string, T>> {
   std::unordered_map<std::string, T> operator()(Variant const &v) const {
-    return boost::apply_visitor(GetMapOrEmpty<std::string, T>(), v);
+    return boost::apply_visitor(VisitorMap<std::string, T>(), v);
+  }
+};
+
+/* std::filesystem::path case */
+template <> struct get_value_helper<std::filesystem::path> {
+  auto operator()(Variant const &v) const {
+    if (auto const *source = boost::get<std::string>(&v)) {
+      return std::filesystem::path(*source);
+    }
+    return boost::get<std::filesystem::path>(v);
   }
 };
 
@@ -322,18 +319,15 @@ class bad_get_nullptr : public boost::bad_get {};
  * also checked.
  */
 template <typename T>
-struct get_value_helper<
-    std::shared_ptr<T>,
-    typename std::enable_if_t<std::is_base_of_v<ObjectHandle, T>, void>> {
+  requires(std::is_base_of_v<ObjectHandle, T>)
+struct get_value_helper<std::shared_ptr<T>> {
   std::shared_ptr<T> operator()(Variant const &v) const {
     auto so_ptr = boost::get<ObjectRef>(v);
     if (!so_ptr) {
       throw bad_get_nullptr{};
     }
 
-    auto t_ptr = std::dynamic_pointer_cast<T>(so_ptr);
-
-    if (t_ptr) {
+    if (auto t_ptr = std::dynamic_pointer_cast<T>(so_ptr)) {
       return t_ptr;
     }
 
@@ -408,7 +402,7 @@ template <typename T> T get_value(Variant const &v) {
  */
 template <typename T>
 T get_value(VariantMap const &vals, std::string const &name) {
-  if (vals.count(name) == 0ul) {
+  if (not vals.contains(name)) {
     throw Exception("Parameter '" + name + "' is missing.");
   }
   return detail::get_value<T>(vals.at(name), name);
@@ -421,7 +415,7 @@ T get_value(VariantMap const &vals, std::string const &name) {
 template <typename T>
 T get_value_or(VariantMap const &vals, std::string const &name,
                T const &default_) {
-  if (vals.count(name)) {
+  if (vals.contains(name)) {
     return get_value<T>(vals.at(name));
   }
   return default_;
@@ -443,5 +437,3 @@ void set_from_args(T &dst, VariantMap const &vals, const char *name) {
   dst = get_value<T>(vals, name);
 }
 } // namespace ScriptInterface
-
-#endif

@@ -34,7 +34,6 @@
 #include <utils/Vector.hpp>
 
 #include <boost/array.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/mpi/collectives.hpp>
 #include <boost/multi_array.hpp>
 
@@ -45,10 +44,12 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <iterator>
 #include <memory>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -64,16 +65,44 @@ using Vector1s = Utils::Vector<std::size_t, 1>;
 using Vector2s = Utils::Vector<std::size_t, 2>;
 using Vector3s = Utils::Vector<std::size_t, 3>;
 
-static void backup_file(const std::string &from, const std::string &to) {
+static std::unordered_map<std::string, H5MDOutputFields> const fields_map = {
+    {"all", H5MD_OUT_ALL},
+    {"particle.type", H5MD_OUT_TYPE},
+    {"particle.position", H5MD_OUT_POS},
+    {"particle.image", H5MD_OUT_IMG},
+    {"particle.velocity", H5MD_OUT_VEL},
+    {"particle.force", H5MD_OUT_FORCE},
+    {"particle.bonds", H5MD_OUT_BONDS},
+    {"particle.charge", H5MD_OUT_CHARGE},
+    {"particle.mass", H5MD_OUT_MASS},
+    {"box.length", H5MD_OUT_BOX_L},
+    {"lees_edwards.offset", H5MD_OUT_LE_OFF},
+    {"lees_edwards.direction", H5MD_OUT_LE_DIR},
+    {"lees_edwards.normal", H5MD_OUT_LE_NORMAL},
+};
+
+static auto fields_list_to_bitfield(std::vector<std::string> const &fields) {
+  unsigned int bitfield = H5MD_OUT_NONE;
+  for (auto const &field_name : fields) {
+    if (not fields_map.contains(field_name)) {
+      throw std::invalid_argument("Unknown field '" + field_name + "'");
+    }
+    bitfield |= fields_map.at(field_name);
+  }
+  return bitfield;
+}
+
+static void backup_file(std::filesystem::path const &from,
+                        std::filesystem::path const &to) {
   /*
    * If the file itself *and* a backup file exists, something must
    * have gone wrong.
    */
-  boost::filesystem::path pfrom(from), pto(to);
-  auto constexpr option_fail_if_exists = boost::filesystem::copy_options::none;
+  std::filesystem::path pfrom(from), pto(to);
+  auto constexpr option_fail_if_exists = std::filesystem::copy_options::none;
   try {
-    boost::filesystem::copy_file(pfrom, pto, option_fail_if_exists);
-  } catch (const boost::filesystem::filesystem_error &) {
+    std::filesystem::copy_file(from, to, option_fail_if_exists);
+  } catch (std::filesystem::filesystem_error const &) {
     throw left_backupfile();
   }
 }
@@ -109,9 +138,9 @@ static void write_dataset(value_type const &data, HighFive::DataSet &dataset,
 }
 
 static void write_script(HighFive::File &h5md_file,
-                         boost::filesystem::path const &script_path) {
+                         std::filesystem::path const &script_path) {
   if (!script_path.empty()) {
-    std::ifstream scriptfile(script_path.string());
+    std::ifstream scriptfile(script_path);
     std::string buffer(std::istreambuf_iterator<char>(scriptfile),
                        std::istreambuf_iterator<char>{});
     h5md_file.createGroup("/parameters");
@@ -121,21 +150,14 @@ static void write_script(HighFive::File &h5md_file,
 }
 
 /* Initialize the file-related variables after parameters have been set. */
-void File::init_file(std::string const &file_path) {
-  m_backup_filename = file_path + ".bak";
-  if (m_script_path.empty()) {
-    m_absolute_script_path = boost::filesystem::path();
-  } else {
-    boost::filesystem::path script_path(m_script_path);
-    m_absolute_script_path = boost::filesystem::canonical(script_path);
-  }
-  auto const file_exists = boost::filesystem::exists(file_path);
-  auto const backup_file_exists = boost::filesystem::exists(m_backup_filename);
+void File::init_file() {
+  auto const file_exists = std::filesystem::exists(m_file_path);
+  auto const backup_file_exists = std::filesystem::exists(m_backup_path);
   /* Perform a barrier synchronization. Otherwise one process might already
    * create the file while another still checks for its existence. */
   m_comm.barrier();
   if (file_exists) {
-    if (m_h5md_specification.is_compliant(file_path)) {
+    if (m_h5md_specification.is_compliant(m_file_path)) {
       /*
        * If the file exists and has a valid H5MD structure, let's create a
        * backup of it. This has the advantage, that the new file can
@@ -143,15 +165,15 @@ void File::init_file(std::string const &file_path) {
        * still have a valid trajectory backed up, from which we can restart.
        */
       if (m_comm.rank() == 0)
-        backup_file(file_path, m_backup_filename);
-      load_file(file_path);
+        backup_file(m_file_path, m_backup_path);
+      load_file();
     } else {
       throw incompatible_h5mdfile();
     }
   } else {
     if (backup_file_exists)
       throw left_backupfile();
-    create_file(file_path);
+    create_file();
   }
 }
 
@@ -240,12 +262,12 @@ void File::create_datasets() {
   }
 }
 
-void File::load_file(const std::string &file_path) {
+void File::load_file() {
   HighFive::FileAccessProps fapl;
   fapl.add(HighFive::MPIOFileAccess{m_comm, MPI_INFO_NULL});
   fapl.add(HighFive::MPIOCollectiveMetadata{});
   m_h5md_file = std::make_unique<HighFive::File>(
-      file_path, HighFive::File::ReadWrite, fapl);
+      m_file_path.string(), HighFive::File::ReadWrite, fapl);
   load_datasets();
 }
 
@@ -322,12 +344,12 @@ void File::create_hard_links() {
   }
 }
 
-void File::create_file(const std::string &file_path) {
+void File::create_file() {
   HighFive::FileAccessProps fapl;
   fapl.add(HighFive::MPIOFileAccess{m_comm, MPI_INFO_NULL});
   fapl.add(HighFive::MPIOCollectiveMetadata{});
-  m_h5md_file =
-      std::make_unique<HighFive::File>(file_path, HighFive::File::Create, fapl);
+  m_h5md_file = std::make_unique<HighFive::File>(m_file_path.string(),
+                                                 HighFive::File::Create, fapl);
   write_script(*m_h5md_file, m_absolute_script_path);
   create_groups();
   create_datasets();
@@ -337,8 +359,9 @@ void File::create_file(const std::string &file_path) {
 }
 
 void File::close() {
-  if (m_comm.rank() == 0)
-    boost::filesystem::remove(m_backup_filename);
+  if (m_comm.rank() == 0) {
+    std::filesystem::remove(m_backup_path);
+  }
 }
 
 namespace detail {
@@ -652,16 +675,24 @@ void File::write_connectivity(const ParticleRange &particles) {
 
 void File::flush() { m_h5md_file->flush(); }
 
-std::string File::file_path() const { return m_h5md_file->getName(); }
+std::vector<std::string> File::valid_fields() const {
+  auto const view = std::views::elements<0>(fields_map);
+  return {view.begin(), view.end()};
+}
 
-File::File(std::string file_path, std::string script_path,
+File::File(std::filesystem::path file_path, std::filesystem::path script_path,
            std::vector<std::string> const &output_fields, std::string mass_unit,
            std::string length_unit, std::string time_unit,
            std::string force_unit, std::string velocity_unit,
            std::string charge_unit, int chunk_size)
-    : m_script_path(std::move(script_path)), m_mass_unit(std::move(mass_unit)),
-      m_length_unit(std::move(length_unit)), m_time_unit(std::move(time_unit)),
-      m_force_unit(std::move(force_unit)),
+    : m_file_path(std::move(file_path)), m_backup_path(m_file_path),
+      m_script_path(std::move(script_path)),
+      m_absolute_script_path(
+          m_script_path.empty()
+              ? std::filesystem::path()
+              : std::filesystem::weakly_canonical(m_script_path)),
+      m_mass_unit(std::move(mass_unit)), m_length_unit(std::move(length_unit)),
+      m_time_unit(std::move(time_unit)), m_force_unit(std::move(force_unit)),
       m_velocity_unit(std::move(velocity_unit)),
       m_charge_unit(std::move(charge_unit)),
       m_chunk_size(static_cast<std::size_t>(std::max(0, chunk_size))),
@@ -672,7 +703,8 @@ File::File(std::string file_path, std::string script_path,
   if (chunk_size <= 0) {
     throw std::domain_error("Parameter 'chunk_size' must be > 0");
   }
-  init_file(file_path);
+  m_backup_path += ".bak";
+  init_file();
 }
 
 File::~File() = default;

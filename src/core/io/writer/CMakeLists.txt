@@ -20,16 +20,13 @@
 if(ESPRESSO_BUILD_WITH_HDF5)
   add_library(espresso_hdf5 SHARED h5md_core.cpp h5md_specification.cpp)
   add_library(espresso::hdf5 ALIAS espresso_hdf5)
-  if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-    set_target_properties(espresso_hdf5 PROPERTIES CXX_CLANG_TIDY
-                                                   "${H5XX_CXX_CLANG_TIDY}")
-  endif()
+  espresso_set_common_target_properties(espresso_hdf5)
+  set_target_properties(espresso_hdf5 PROPERTIES CXX_CLANG_TIDY "")
   target_include_directories(espresso_hdf5 PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
   target_link_libraries(
     espresso_hdf5
     PRIVATE HighFive hdf5 espresso::cpp_flags MPI::MPI_CXX Boost::mpi
-            Boost::filesystem espresso::utils espresso::config
-            espresso::instrumentation)
+            espresso::utils espresso::config espresso::instrumentation)
   target_link_libraries(espresso_core PUBLIC espresso_hdf5)
   install(TARGETS espresso_hdf5
           LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)

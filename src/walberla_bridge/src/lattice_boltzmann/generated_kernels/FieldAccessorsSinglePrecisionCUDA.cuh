@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 The ESPResSo project
+ * Copyright (C) 2023-2025 The ESPResSo project
  * Copyright (C) 2020 The waLBerla project
  *
  * This file is part of ESPResSo.
@@ -38,6 +38,8 @@
 #include <core/math/Vector3.h>
 
 #include <gpu/GPUField.h>
+
+#include <thrust/device_vector.h>
 
 #include <array>
 #include <tuple>
@@ -92,14 +94,19 @@ std::vector<float> get(gpu::GPUField<float> const *vec_field,
 /** @brief Set values on a cell interval. */
 void set(gpu::GPUField<float> *vec_field, std::vector<float> const &values,
          CellInterval const &ci);
-
+void set_from_list(gpu::GPUField<float> const *field,
+                   thrust::device_vector<int> const &indices,
+                   thrust::device_vector<float> const &values, uint gl);
 } // namespace Vector
 
 namespace Interpolation {
-std::vector<float> get(gpu::GPUField<float> const *vec_field,
-                       std::vector<float> const &pos, uint gl);
-void set(gpu::GPUField<float> const *vec_field, std::vector<float> const &pos,
-         std::vector<float> const &forces, uint gl);
+std::vector<float> get_rho(gpu::GPUField<float> const *field,
+                           std::vector<float> const &pos, float const density,
+                           uint gl);
+std::vector<float> get_vel(gpu::GPUField<float> const *field,
+                           std::vector<float> const &pos, uint gl);
+void add_force(gpu::GPUField<float> const *field, std::vector<float> const &pos,
+               std::vector<float> const &forces, uint gl);
 } // namespace Interpolation
 
 namespace Density {

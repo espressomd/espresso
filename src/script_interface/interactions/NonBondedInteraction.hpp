@@ -37,6 +37,7 @@
 #include <cstddef>
 #include <iterator>
 #include <memory>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -56,7 +57,7 @@ public:
 protected:
   using BaseClass = AutoParameters<InteractionPotentialInterface<CoreIA>>;
   using BaseClass::context;
-  using BaseClass::get_valid_parameters;
+  using BaseClass::valid_parameters;
 
   /** @brief Managed object. */
   std::shared_ptr<CoreInteraction> m_handle;
@@ -81,18 +82,22 @@ protected:
                          [this, ptr]() { return m_handle.get()->*ptr; }};
   }
 
+  std::set<std::string> get_valid_parameters() const {
+    auto const vec = valid_parameters();
+    return {vec.begin(), vec.end()};
+  }
+
 private:
   void check_valid_parameters(VariantMap const &params) const {
-    auto const keys = get_valid_parameters();
-    for (auto const &key : keys) {
-      if (params.count(std::string(key)) == 0) {
+    auto const valid_keys = get_valid_parameters();
+    for (auto const &key : valid_keys) {
+      if (not params.contains(key)) {
         throw std::runtime_error("Parameter '" + key + "' is missing");
       }
     }
-    for (auto const &kv : params) {
-      if (std::ranges::find(keys, kv.first) == keys.end()) {
-        throw std::runtime_error("Parameter '" + kv.first +
-                                 "' is not recognized");
+    for (auto const &key : std::views::elements<0>(params)) {
+      if (not valid_keys.contains(key)) {
+        throw std::runtime_error("Parameter '" + key + "' is not recognized");
       }
     }
   }

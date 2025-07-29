@@ -82,19 +82,21 @@ def check_type_or_throw_except(x, n, t, msg):
                 f"{msg} -- Item {i} was of type {type(x[i]).__name__}")
 
 
-def to_char_pointer(s):
+def to_bytes(s):
     """
     Returns a Cython bytes object which contains the information of the provided
     Python string. Cython bytes objects implicitly cast to raw char pointers.
 
     Parameters
     ----------
-    s : :obj:`str`
+    s : :obj:`str` or :obj:`bytes`
 
     """
-    if isinstance(s, unicode):
-        s = ( < unicode > s).encode('utf8')
-    return s
+    if isinstance(s, str):
+        return bytes(s.encode("utf8"))
+    if isinstance(s, bytes):
+        return bytes(s)
+    raise ValueError(f'Unknown string type {type(s)}')
 
 
 def to_str(s):
@@ -106,12 +108,11 @@ def to_str(s):
     s : char*
 
     """
-    if isinstance(s, unicode):
-        return < unicode > s
-    elif isinstance(s, bytes):
-        return ( < bytes > s).decode('ascii')
-    else:
-        raise ValueError(f'Unknown string type {type(s)}')
+    if isinstance(s, str):
+        return str(s)
+    if isinstance(s, bytes):
+        return str(s.decode("utf8"))
+    raise ValueError(f'Unknown string type {type(s)}')
 
 
 class array_locked(np.ndarray):

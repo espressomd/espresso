@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef COMMUNICATION_MPI_CALLBACKS
-#define COMMUNICATION_MPI_CALLBACKS
+#pragma once
 
 /**
  * @file
@@ -192,9 +191,9 @@ public:
    */
   template <class... Args> class CallbackHandle {
   public:
-    template <typename F, class = std::enable_if_t<std::is_same_v<
-                              typename detail::functor_types<F>::argument_types,
-                              std::tuple<Args...>>>>
+    template <typename F>
+      requires(std::is_same_v<typename detail::functor_types<F>::argument_types,
+                              std::tuple<Args...>>)
     CallbackHandle(std::shared_ptr<MpiCallbacks> cb, F &&f)
         : m_id(cb->add(std::forward<F>(f))), m_cb(std::move(cb)) {}
 
@@ -219,9 +218,9 @@ public:
     auto operator()(ArgRef &&...args) const
         /* Enable if a hypothetical function with signature void(Args..)
          * could be called with the provided arguments. */
-        -> std::enable_if_t<
-            std::is_void_v<decltype(std::declval<void (*)(Args...)>()(
-                std::forward<ArgRef>(args)...))>> {
+      requires(std::is_void_v<decltype(std::declval<void (*)(Args...)>()(
+                   std::forward<ArgRef>(args)...))>)
+    {
       if (m_cb)
         m_cb->call(m_id, std::forward<ArgRef>(args)...);
     }
@@ -254,8 +253,8 @@ public:
     /* Add a dummy at id 0 for loop abort. */
     m_callback_map.add(nullptr);
 
-    for (auto &kv : static_callbacks()) {
-      m_func_ptr_to_id[kv.first] = m_callback_map.add(kv.second.get());
+    for (auto &[fp, handle] : static_callbacks()) {
+      m_func_ptr_to_id[fp] = m_callback_map.add(handle.get());
     }
   }
 
@@ -376,9 +375,10 @@ public:
    * @param args Arguments for the callback.
    */
   template <class... Args, class... ArgRef>
-  auto call(void (*fp)(Args...), ArgRef &&...args) const ->
+  auto call(void (*fp)(Args...), ArgRef &&...args) const
       /* enable only if fp can be called with the provided arguments */
-      std::enable_if_t<std::is_void_v<decltype(fp(args...))>> {
+    requires(std::is_void_v<decltype(fp(args...))>)
+  {
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
 
     call(id, std::forward<ArgRef>(args)...);
@@ -395,9 +395,10 @@ public:
    * @param args Arguments for the callback.
    */
   template <class... Args, class... ArgRef>
-  auto call_all(void (*fp)(Args...), ArgRef &&...args) const ->
+  auto call_all(void (*fp)(Args...), ArgRef &&...args) const
       /* enable only if fp can be called with the provided arguments */
-      std::enable_if_t<std::is_void_v<decltype(fp(args...))>> {
+    requires(std::is_void_v<decltype(fp(args...))>)
+  {
     call(fp, args...);
     fp(args...);
   }
@@ -508,5 +509,3 @@ public:
   namespace Communication {                                                    \
   static ::Communication::RegisterCallback register_##cb(&(cb));               \
   }
-
-#endif

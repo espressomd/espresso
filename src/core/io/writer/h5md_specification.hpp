@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <string>
+#include <filesystem>
 #include <vector>
 
 namespace Writer {
@@ -40,7 +40,7 @@ struct Specification {
 
   auto const &get_datasets() const { return m_datasets; }
 
-  bool is_compliant(std::string const &filename) const;
+  bool is_compliant(std::filesystem::path const &file) const;
 
 private:
   std::vector<Dataset> m_datasets;

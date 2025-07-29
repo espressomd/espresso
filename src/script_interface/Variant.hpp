@@ -22,6 +22,7 @@
 #include "None.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/serialization/filesystem.hpp>
 #include <utils/serialization/unordered_map.hpp>
 
 #include <boost/serialization/serialization.hpp>
@@ -31,6 +32,7 @@
 #include <boost/variant.hpp>
 
 #include <cstddef>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -62,7 +64,7 @@ using Variant = boost::make_recursive_variant<
     None, bool, int, std::size_t, double, std::string, ObjectRef,
     Utils::Vector3b, Utils::Vector3i, Utils::Vector2d, Utils::Vector3d,
     Utils::Vector4d, std::vector<int>, std::vector<double>,
-    std::vector<boost::recursive_variant_>,
+    std::vector<boost::recursive_variant_>, std::filesystem::path,
     std::unordered_map<int, boost::recursive_variant_>,
     std::unordered_map<std::string, boost::recursive_variant_>>::type;
 
@@ -79,8 +81,8 @@ template <typename T> Variant make_variant(const T &x) { return Variant(x); }
 template <typename K, typename V>
 auto make_unordered_map_of_variants(std::unordered_map<K, V> const &v) {
   std::unordered_map<K, Variant> ret;
-  for (auto const &it : v) {
-    ret.insert({it.first, Variant(it.second)});
+  for (auto const &[key, value] : v) {
+    ret.emplace(key, value);
   }
   return ret;
 }

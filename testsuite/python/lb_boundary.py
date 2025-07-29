@@ -27,6 +27,7 @@ import numpy as np
 
 class LBBoundariesBase:
     system = espressomd.System(box_l=[10.0, 5.0, 5.0])
+    system.time_step = 0.01
     system.cell_system.skin = 0.1
 
     wall_shape1 = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
@@ -37,8 +38,11 @@ class LBBoundariesBase:
             kinematic_viscosity=1.0, density=1.0, agrid=0.5, tau=1.0,
             **self.lb_params)
         self.system.lb = self.lbf
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=3, gamma=1.)
 
     def tearDown(self):
+        self.system.part.clear()
+        self.system.thermostat.turn_off()
         self.system.lb = None
 
     def check_boundary_flags(self, slip_velocity1, slip_velocity2):
@@ -97,6 +101,45 @@ class LBBoundariesBase:
                 shape=self.wall_shape1, velocity=[0., 0., 0., 0.],
                 boundary_type=espressomd.lb.VelocityBounceBack)
         self.lbf.add_boundary_from_shape(self.wall_shape1, [0., 0., 0.])
+
+    def test_velocity_interpolation(self):
+        xdata = np.linspace(-1, 2, 151)
+        slip_velocity = 2e-2 * np.array([1., 2., 3.])
+
+        def get_analytic(axis):
+            return np.maximum(0, 1 - np.abs(xdata - 0.5)) * slip_velocity[axis]
+
+        # set up a wall boundary and particles along its normal
+        wall = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=self.lbf.agrid)
+        self.lbf.add_boundary_from_shape(wall, slip_velocity)
+        positions = [[f * self.lbf.agrid, 1., 0.] for f in xdata]
+        particles = self.system.part.add(pos=positions)
+        if espressomd.has_features("VIRTUAL_SITES_INERTIALESS_TRACERS"):
+            tracers = self.system.part.add(pos=positions, propagation=len(
+                positions) * [espressomd.propagation.Propagation.TRANS_LB_TRACER])
+
+        # calculate interpolated velocities
+        self.system.integrator.run(1)
+        lb_vel = []
+        part_f = []
+        tracer_v = []
+        for p in particles:
+            lb_vel.append(self.lbf.get_interpolated_velocity(pos=p.pos))
+            part_f.append(p.f)
+        if espressomd.has_features("VIRTUAL_SITES_INERTIALESS_TRACERS"):
+            for p in tracers:
+                tracer_v.append(p.v)
+        lb_vel = np.copy(lb_vel)
+        part_f = np.copy(part_f)
+        tracer_v = np.copy(tracer_v)
+
+        rtol = 1e-4 if self.lb_params["single_precision"] else 1e-10
+        for i in range(3):
+            ref = get_analytic(i)
+            np.testing.assert_allclose(lb_vel[:, i], ref, rtol=rtol)
+            np.testing.assert_allclose(part_f[:, i], ref, rtol=rtol)
+            if espressomd.has_features("VIRTUAL_SITES_INERTIALESS_TRACERS"):
+                np.testing.assert_allclose(tracer_v[:, i], ref, rtol=rtol)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])

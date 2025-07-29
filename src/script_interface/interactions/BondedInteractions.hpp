@@ -30,6 +30,7 @@
 
 #include <cassert>
 #include <memory>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -47,8 +48,8 @@ class BondedInteractions : public BondedInteractionsBase_t {
   using Base = BondedInteractionsBase_t;
 
 public:
-  using key_type = typename Base::key_type;
-  using mapped_type = typename Base::mapped_type;
+  using Base::key_type;
+  using Base::mapped_type;
 
 private:
   std::shared_ptr<::BondedInteractionsMap> m_handle;
@@ -96,9 +97,8 @@ public:
     }
 
     if (name == "get_bond_ids") {
-      std::vector<int> bond_ids;
-      for (auto const &kv : *m_handle)
-        bond_ids.push_back(kv.first);
+      auto const view = std::views::elements<0>(*m_handle);
+      std::vector<int> bond_ids(view.begin(), view.end());
       return bond_ids;
     }
 
@@ -110,7 +110,7 @@ public:
     if (name == "get_bond") {
       auto const bond_id = get_key(params.at("bond_id"));
       // core and script interface must agree
-      assert(elements().count(bond_id) == m_handle->count(bond_id));
+      assert(elements().contains(bond_id) == m_handle->contains(bond_id));
       if (not context()->is_head_node())
         return {};
       // bond must exist

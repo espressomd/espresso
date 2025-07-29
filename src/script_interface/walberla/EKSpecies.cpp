@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -72,13 +73,13 @@ Variant EKSpecies::do_call_method(std::string const &method,
     return {};
   }
   if (method == "save_checkpoint") {
-    auto const path = get_value<std::string>(parameters, "path");
+    auto const path = get_value<std::filesystem::path>(parameters, "path");
     auto const mode = get_value<int>(parameters, "mode");
     save_checkpoint(path, mode);
     return {};
   }
   if (method == "load_checkpoint") {
-    auto const path = get_value<std::string>(parameters, "path");
+    auto const path = get_value<std::filesystem::path>(parameters, "path");
     auto const mode = get_value<int>(parameters, "mode");
     load_checkpoint(path, mode);
     return {};
@@ -146,7 +147,7 @@ void EKSpecies::do_construct(VariantMap const &params) {
   });
 }
 
-void EKSpecies::load_checkpoint(std::string const &filename, int mode) {
+void EKSpecies::load_checkpoint(std::filesystem::path const &path, int mode) {
   auto &ek_obj = *m_instance;
 
   auto const read_metadata = [&ek_obj](CheckpointFile &cpfile) {
@@ -194,11 +195,11 @@ void EKSpecies::load_checkpoint(std::string const &filename, int mode) {
 
   auto const on_success = [&ek_obj]() { ek_obj.ghost_communication(); };
 
-  load_checkpoint_common(*context(), "EK", filename, mode, read_metadata,
-                         read_data, on_success);
+  load_checkpoint_common(*context(), "EK", path, mode, read_metadata, read_data,
+                         on_success);
 }
 
-void EKSpecies::save_checkpoint(std::string const &filename, int mode) {
+void EKSpecies::save_checkpoint(std::filesystem::path const &path, int mode) {
   auto &ek_obj = *m_instance;
 
   auto const write_metadata = [&ek_obj,
@@ -298,7 +299,7 @@ void EKSpecies::save_checkpoint(std::string const &filename, int mode) {
     }
   };
 
-  save_checkpoint_common(*context(), "EK", filename, mode, write_metadata,
+  save_checkpoint_common(*context(), "EK", path, mode, write_metadata,
                          write_data, on_failure);
 }
 

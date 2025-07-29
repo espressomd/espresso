@@ -102,11 +102,11 @@ void BindAtPointOfCollision::handle_collisions(
   int current_vs_pid = global_max_seen_particle + 1;
 
   // Iterate over global collision queue
-  for (auto &c : global_collision_queue) {
+  for (auto const &[pid1, pid2] : global_collision_queue) {
 
     // Get particle pointers
-    Particle *p1 = cell_structure.get_local_particle(c.first);
-    Particle *p2 = cell_structure.get_local_particle(c.second);
+    Particle *p1 = cell_structure.get_local_particle(pid1);
+    Particle *p2 = cell_structure.get_local_particle(pid2);
 
     // Only nodes take part in particle creation and binding
     // that see both particles
@@ -139,8 +139,8 @@ void BindAtPointOfCollision::handle_collisions(
                                         p->id());
         // Particle storage locations may have changed due to
         // added particle
-        p1 = cell_structure.get_local_particle(c.first);
-        p2 = cell_structure.get_local_particle(c.second);
+        p1 = cell_structure.get_local_particle(pid1);
+        p2 = cell_structure.get_local_particle(pid2);
       }
     };
 
@@ -164,7 +164,7 @@ void BindAtPointOfCollision::handle_collisions(
     }
     if (n_partners == 2) {
       // Create 1st bond between the virtual particles
-      const int bondG[] = {c.first, c.second};
+      const int bondG[] = {pid1, pid2};
       // Only add bond if vs was created on this node
       if (auto p = cell_structure.get_local_particle(current_vs_pid - 1))
         p->bonds().insert({bond_vs, bondG});

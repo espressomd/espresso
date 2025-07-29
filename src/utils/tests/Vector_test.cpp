@@ -19,8 +19,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for the Utils::Vector class. */
-
 #define BOOST_TEST_MODULE Vector test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -37,6 +35,7 @@
 #include <iterator>
 #include <limits>
 #include <numeric>
+#include <ranges>
 #include <span>
 #include <stdexcept>
 #include <type_traits>
@@ -116,6 +115,12 @@ BOOST_AUTO_TEST_CASE(test_norm2) {
   BOOST_CHECK(norm2<2>());
   BOOST_CHECK(norm2<3>());
   BOOST_CHECK(norm2<4>());
+  // constexpr context
+  {
+    constexpr Vector<int, n_test_numbers> v(TEST_NUMBERS);
+    constexpr auto result = v.norm2();
+    BOOST_CHECK(result == std::inner_product(v.begin(), v.end(), v.begin(), 0));
+  }
 }
 
 BOOST_AUTO_TEST_CASE(normalize) {
@@ -294,7 +299,21 @@ BOOST_AUTO_TEST_CASE(conversion) {
       Vector3f{static_cast<float>(orig[0]), static_cast<float>(orig[1]),
                static_cast<float>(orig[2])};
 
-  // check range-based conversion
+#if __cpp_lib_containers_ranges
+  // check range-based ctor with STL container
+  {
+    auto const result = Vector3f(std::from_range, expected.as_vector());
+    BOOST_TEST(result == expected);
+  }
+
+  // check range-based ctor with vector container
+  {
+    auto const result = Vector3f(std::from_range, expected);
+    BOOST_TEST(result == expected);
+  }
+#endif
+
+  // check cast operator
   {
     auto const result = static_cast<Vector3f>(orig);
     BOOST_TEST(result == expected);

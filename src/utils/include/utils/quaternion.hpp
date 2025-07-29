@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SRC_UTILS_INCLUDE_UTILS_QUATERNION_HPP
-#define SRC_UTILS_INCLUDE_UTILS_QUATERNION_HPP
+
+#pragma once
 
 /**
  * @file
@@ -137,8 +137,8 @@ public:
  * @param a Multiplier.
  * @return Multiplied quaternion.
  */
-template <typename T, typename U,
-          std::enable_if_t<std::is_arithmetic_v<U>, bool> = true>
+template <typename T, typename U>
+  requires(std::is_arithmetic_v<U>)
 Quaternion<T> operator*(const U &b, const Quaternion<T> &a) {
   return boost::qvm::operator*(a, b);
 }
@@ -235,5 +235,3 @@ UTILS_ARRAY_BOOST_MPI_T(Utils::Quaternion, 0)
 UTILS_ARRAY_BOOST_BIT_S(Utils::Quaternion, 0)
 UTILS_ARRAY_BOOST_CLASS(Utils::Quaternion, 0, object_serializable)
 UTILS_ARRAY_BOOST_TRACK(Utils::Quaternion, 0, track_never)
-
-#endif // SRC_UTILS_INCLUDE_UTILS_QUATERNION_HPP

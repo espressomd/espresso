@@ -90,18 +90,20 @@ namespace walberla {
 template <typename FloatType, lbmpy::Arch Architecture>
 class LBWalberlaImpl : public LBWalberlaBase {
 protected:
-  using StreamCollisionModelLeesEdwards = typename detail::KernelTrait<
-      FloatType, Architecture>::StreamCollisionModelLeesEdwards;
-  using StreamCollisionModelThermalized = typename detail::KernelTrait<
-      FloatType, Architecture>::StreamCollisionModelThermalized;
+  using StreamCollisionModelLeesEdwards =
+      detail::KernelTrait<FloatType,
+                          Architecture>::StreamCollisionModelLeesEdwards;
+  using StreamCollisionModelThermalized =
+      detail::KernelTrait<FloatType,
+                          Architecture>::StreamCollisionModelThermalized;
   using UpdateVelFromPDF =
-      typename detail::KernelTrait<FloatType, Architecture>::UpdateVelFromPDF;
+      detail::KernelTrait<FloatType, Architecture>::UpdateVelFromPDF;
   using InitialPDFsSetter =
-      typename detail::KernelTrait<FloatType, Architecture>::InitialPDFsSetter;
+      detail::KernelTrait<FloatType, Architecture>::InitialPDFsSetter;
+  using DynamicUBB =
+      detail::BoundaryHandlingTrait<FloatType, Architecture>::DynamicUBB;
   using BoundaryModel =
-      BoundaryHandling<Vector3<FloatType>,
-                       typename detail::BoundaryHandlingTrait<
-                           FloatType, Architecture>::DynamicUBB>;
+      BoundaryHandling<FloatType, Vector3<FloatType>, DynamicUBB>;
   using CollisionModel = std::variant<StreamCollisionModelThermalized,
                                       StreamCollisionModelLeesEdwards>;
 
@@ -119,10 +121,8 @@ protected:
     using VectorField = field::GhostLayerField<FT, uint_t{3u}>;
     template <class Field>
     using PackInfo = field::communication::PackInfo<Field>;
-    using PackInfoStreamingPdf =
-        typename detail::KernelTrait<FT, AT>::PackInfoPdf;
-    using PackInfoStreamingVec =
-        typename detail::KernelTrait<FT, AT>::PackInfoVec;
+    using PackInfoStreamingPdf = detail::KernelTrait<FT, AT>::PackInfoPdf;
+    using PackInfoStreamingVec = detail::KernelTrait<FT, AT>::PackInfoVec;
     template <class Stencil>
     using RegularCommScheme =
         blockforest::communication::UniformBufferedScheme<Stencil>;
@@ -151,10 +151,8 @@ protected:
     using PdfField = gpu::GPUField<FT>;
     using VectorField = gpu::GPUField<FT>;
     template <class Field> using PackInfo = MemcpyPackInfo<Field>;
-    using PackInfoStreamingPdf =
-        typename detail::KernelTrait<FT, AT>::PackInfoPdf;
-    using PackInfoStreamingVec =
-        typename detail::KernelTrait<FT, AT>::PackInfoVec;
+    using PackInfoStreamingPdf = detail::KernelTrait<FT, AT>::PackInfoPdf;
+    using PackInfoStreamingVec = detail::KernelTrait<FT, AT>::PackInfoVec;
     template <class Stencil>
     using RegularCommScheme = UniformGPUScheme<Stencil>;
     template <class Stencil>
@@ -164,19 +162,17 @@ protected:
 #endif
 
   // "underlying" field types (`GPUField` has no f-size info at compile time)
-  using _PdfField = typename FieldTrait<FloatType>::PdfField;
-  using _VectorField = typename FieldTrait<FloatType>::VectorField;
+  using _PdfField = FieldTrait<FloatType>::PdfField;
+  using _VectorField = FieldTrait<FloatType>::VectorField;
 
 public:
-  using PdfField = typename FieldTrait<FloatType, Architecture>::PdfField;
-  using VectorField = typename FieldTrait<FloatType, Architecture>::VectorField;
-  using FlagField = typename BoundaryModel::FlagField;
+  using PdfField = FieldTrait<FloatType, Architecture>::PdfField;
+  using VectorField = FieldTrait<FloatType, Architecture>::VectorField;
+  using FlagField = BoundaryModel::FlagField;
 #if defined(__CUDACC__)
   using GPUField = gpu::GPUField<FloatType>;
-  using PdfFieldCpu =
-      typename FieldTrait<FloatType, lbmpy::Arch::CPU>::PdfField;
-  using VectorFieldCpu =
-      typename FieldTrait<FloatType, lbmpy::Arch::CPU>::VectorField;
+  using PdfFieldCpu = FieldTrait<FloatType, lbmpy::Arch::CPU>::PdfField;
+  using VectorFieldCpu = FieldTrait<FloatType, lbmpy::Arch::CPU>::VectorField;
 #endif
 
   struct GhostComm {
@@ -248,8 +244,10 @@ private:
   }
 
   void reset_boundary_handling(std::shared_ptr<BlockStorage> const &blocks) {
-    m_boundary = std::make_shared<BoundaryModel>(blocks, m_pdf_field_id,
-                                                 m_flag_field_id);
+    auto const [lc, uc] = m_lattice->get_local_grid_range(true);
+    m_boundary =
+        std::make_shared<BoundaryModel>(blocks, m_pdf_field_id, m_flag_field_id,
+                                        CellInterval{to_cell(lc), to_cell(uc)});
   }
 
   FloatType pressure_tensor_correction_factor() const {
@@ -295,6 +293,8 @@ protected:
   FloatType m_density;
   FloatType m_kT;
   unsigned int m_seed;
+  double m_zc_to_md; // zero-centered conversion factor to MD units
+  double m_zc_to_lb; // zero-centered conversion factor to LB units
 
   // Block data access handles
   BlockDataID m_pdf_field_id;
@@ -323,21 +323,20 @@ protected:
    * of the ghost layer when setting cell velocities or populations.
    */
   using RegularFullCommunicator =
-      typename FieldTrait<FloatType, Architecture>::template RegularCommScheme<
-          typename stencil::D3Q27>;
+      FieldTrait<FloatType,
+                 Architecture>::template RegularCommScheme<stencil::D3Q27>;
   using BoundaryFullCommunicator =
-      typename FieldTrait<FloatType, Architecture>::template BoundaryCommScheme<
-          typename stencil::D3Q27>;
+      FieldTrait<FloatType,
+                 Architecture>::template BoundaryCommScheme<stencil::D3Q27>;
   /**
    * @brief Regular communicator.
    * We use the same directions as the stencil during integration.
    */
   using PDFStreamingCommunicator =
-      typename FieldTrait<FloatType,
-                          Architecture>::template RegularCommScheme<Stencil>;
+      FieldTrait<FloatType, Architecture>::template RegularCommScheme<Stencil>;
   template <class Field>
   using PackInfo =
-      typename FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
+      FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
 
   // communicators
   std::shared_ptr<BoundaryFullCommunicator> m_boundary_communicator;
@@ -436,7 +435,7 @@ protected:
     if constexpr (Architecture == lbmpy::Arch::CPU) {
 #ifdef ESPRESSO_BUILD_WITH_AVX_KERNELS
       constexpr auto alignment = field::SIMDAlignment();
-      using value_type = typename Field::value_type;
+      using value_type = Field::value_type;
       using Allocator = field::AllocateAligned<value_type, alignment>;
       auto const allocator = std::make_shared<Allocator>();
       auto const empty_set = Set<SUID>::emptySet();
@@ -480,8 +479,8 @@ protected:
           std::make_shared<PackInfoVec>(m_last_applied_force_field_id));
     };
     using FieldTrait = FieldTrait<FloatType, Architecture>;
-    using PackInfoPdf = typename FieldTrait::PackInfoStreamingPdf;
-    using PackInfoVec = typename FieldTrait::PackInfoStreamingVec;
+    using PackInfoPdf = FieldTrait::PackInfoStreamingPdf;
+    using PackInfoVec = FieldTrait::PackInfoStreamingVec;
     if (m_has_boundaries or (m_collision_model and has_lees_edwards_bc())) {
       setup.template operator()<PackInfo<PdfField>, PackInfoVec>();
     } else {
@@ -493,7 +492,8 @@ public:
   LBWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice, double viscosity,
                  double density)
       : m_viscosity(FloatType_c(viscosity)), m_density(FloatType_c(density)),
-        m_kT(FloatType{0}), m_seed(0u), m_lattice(std::move(lattice)) {
+        m_kT(FloatType{0}), m_seed(0u), m_zc_to_md(density),
+        m_zc_to_lb(1. / density), m_lattice(std::move(lattice)) {
 
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
@@ -738,8 +738,8 @@ public:
     m_seed = seed;
     auto obj = StreamCollisionModelThermalized(
         m_last_applied_force_field_id, m_pdf_field_id,
-        zero_centered_conversion_value_divide(m_kT), omega, omega, omega_odd,
-        omega, seed, uint32_t{0u});
+        zero_centered_to_lb(m_kT), omega, omega, omega_odd, omega, seed,
+        uint32_t{0u});
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     m_run_stream_collide_sweep = StreamCollideSweepVisitor(blocks);
     setup_streaming_communicator();
@@ -822,30 +822,35 @@ public:
   }
 
   template <typename T>
-  T zero_centered_conversion_vector_multiply(T const &vector) const {
-    T result = vector;
-    std::transform(vector.begin(), vector.end(), result.begin(),
-                   [this](auto value) { return value * m_density; });
-    return result;
+  void zero_centered_transform_impl(T &data, auto const factor) const {
+    if constexpr (std::is_arithmetic_v<T>) {
+      static_assert(std::is_floating_point_v<T>);
+      data *= static_cast<T>(factor);
+    } else {
+      auto const coef = static_cast<typename T::value_type>(factor);
+      std::transform(std::begin(data), std::end(data), std::begin(data),
+                     [coef](auto value) { return value * coef; });
+    }
   }
 
-  template <typename T>
-  T zero_centered_conversion_value_multiply(T const &values) const {
-    return values * m_density;
+  void zero_centered_to_lb_in_place(auto &data) const {
+    zero_centered_transform_impl(data, m_zc_to_lb);
   }
 
-  template <typename T>
-  T zero_centered_conversion_vector_divide(T const &vector) const {
-    T result = vector;
-    std::transform(
-        vector.begin(), vector.end(), result.begin(),
-        [this](auto value) { return value * (FloatType_c(1.0) / m_density); });
-    return result;
+  void zero_centered_to_md_in_place(auto &data) const {
+    zero_centered_transform_impl(data, m_zc_to_md);
   }
 
-  template <typename T>
-  T zero_centered_conversion_value_divide(T const &values) const {
-    return values * (FloatType_c(1.0) / m_density);
+  auto zero_centered_to_lb(auto const &data) const {
+    auto transformed_data = data;
+    zero_centered_to_lb_in_place(transformed_data);
+    return transformed_data;
+  }
+
+  auto zero_centered_to_md(auto const &data) const {
+    auto transformed_data = data;
+    zero_centered_to_md_in_place(transformed_data);
+    return transformed_data;
   }
 
   // Velocity
@@ -1015,6 +1020,15 @@ public:
     return Architecture == lbmpy::Arch::GPU;
   }
 
+  std::function<bool(Utils::Vector3d const &)>
+  make_lattice_position_checker(bool consider_points_in_halo) const override {
+    auto const &lat = *m_lattice;
+    if (consider_points_in_halo) {
+      return [&](Utils::Vector3d const &p) { return lat.pos_in_local_halo(p); };
+    }
+    return [&](Utils::Vector3d const &p) { return lat.pos_in_local_domain(p); };
+  }
+
   void add_forces_at_pos(std::vector<Utils::Vector3d> const &pos,
                          std::vector<Utils::Vector3d> const &forces) override {
     assert(pos.size() == forces.size());
@@ -1049,11 +1063,11 @@ public:
           host_force.emplace_back(static_cast<FloatType>(vec[i]));
         }
       }
-      host_force = zero_centered_conversion_vector_divide(host_force);
+      zero_centered_to_lb_in_place(host_force);
       auto const gl = lattice.get_ghost_layers();
       auto field = block.template uncheckedFastGetData<VectorField>(
           m_force_to_be_applied_id);
-      lbm::accessor::Interpolation::set(field, host_pos, host_force, gl);
+      lbm::accessor::Interpolation::add_force(field, host_pos, host_force, gl);
     }
 #endif
   }
@@ -1066,19 +1080,19 @@ public:
       if (not get_block_extended(lattice, pos, 1u)) {
         return;
       }
-      auto const zc_conv = FloatType{1} / m_density; // zero-centered fields
       interpolate_bspline_at_pos(
-          pos, [&, zc_conv](std::array<int, 3> const node, double weight) {
+          pos, [&, conv = m_zc_to_lb, field_id = m_force_to_be_applied_id](
+                   std::array<int, 3> const node, double weight) {
             auto block = get_block_extended(lattice, node, 0u);
             if (!block)
               block = get_block_extended(lattice, node, 1u);
             if (block) {
               auto cell = to_cell(node);
               blocks.transformGlobalToBlockLocalCell(cell, *block);
-              weight *= zc_conv;
+              weight *= conv;
               auto const weighted_force = to_vector3<FloatType>(weight * force);
-              auto field = block->template uncheckedFastGetData<VectorField>(
-                  m_force_to_be_applied_id);
+              auto field =
+                  block->template uncheckedFastGetData<VectorField>(field_id);
               lbm::accessor::Vector::add(field, weighted_force, cell);
             }
           });
@@ -1091,7 +1105,8 @@ public:
     assert(lattice.get_ghost_layers() == 1u);
     return [&](Utils::Vector3d const &pos) {
       Utils::Vector3d acc{0., 0., 0.};
-      interpolate_bspline_at_pos(pos, [&](std::array<int, 3> const node,
+      interpolate_bspline_at_pos(pos, [&, field_id = m_velocity_field_id](
+                                          std::array<int, 3> const node,
                                           double weight) {
         // Nodes with zero weight might not be accessible, because they can be
         // outside ghost layers
@@ -1105,11 +1120,38 @@ public:
           } else {
             auto cell = to_cell(node);
             blocks.transformGlobalToBlockLocalCell(cell, *block);
-            auto field = block->template uncheckedFastGetData<VectorField>(
-                m_velocity_field_id);
+            auto field =
+                block->template uncheckedFastGetData<VectorField>(field_id);
             vel = lbm::accessor::Vector::get(field, cell);
           }
           acc += to_vector3d(vel) * weight;
+        }
+      });
+      return acc;
+    };
+  }
+
+  auto make_density_interpolation_kernel() const {
+    auto const &lattice = *m_lattice;
+    auto const &blocks = *lattice.get_blocks();
+    assert(lattice.get_ghost_layers() == 1u);
+    return [&](Utils::Vector3d const &pos) {
+      double acc = 0.;
+      interpolate_bspline_at_pos(pos, [&, density = m_density,
+                                       field_id = m_pdf_field_id](
+                                          std::array<int, 3> const node,
+                                          double weight) {
+        // Nodes with zero weight might not be accessible, because they can be
+        // outside ghost layers
+        if (weight != 0.) {
+          auto block = get_block_extended(lattice, node, 1u);
+          if (!block)
+            throw interpolation_illegal_access("density", pos, node, weight);
+          auto cell = to_cell(node);
+          blocks.transformGlobalToBlockLocalCell(cell, *block);
+          auto field = block->template uncheckedFastGetData<PdfField>(field_id);
+          auto const rho = lbm::accessor::Density::get(field, density, cell);
+          acc += rho * weight;
         }
       });
       return acc;
@@ -1144,7 +1186,14 @@ public:
       auto const gl = lattice.get_ghost_layers();
       auto field =
           block.template uncheckedFastGetData<VectorField>(m_velocity_field_id);
-      auto const res = lbm::accessor::Interpolation::get(field, host_pos, gl);
+      // the velocity field has indeterminate values inside boundary regions;
+      // we overwrite them with boundary slip velocities before interpolation
+      auto const [dev_idx, dev_vel] = m_boundary->get_flattened_map_device();
+      if (not dev_idx->empty()) {
+        lbm::accessor::Vector::set_from_list(field, *dev_idx, *dev_vel, gl);
+      }
+      auto const res =
+          lbm::accessor::Interpolation::get_vel(field, host_pos, gl);
       for (auto it = res.begin(); it != res.end(); it += 3) {
         vel.emplace_back(Utils::Vector3d{static_cast<double>(*(it + 0)),
                                          static_cast<double>(*(it + 1)),
@@ -1153,6 +1202,48 @@ public:
     }
 #endif
     return vel;
+  }
+
+  std::vector<double>
+  get_densities_at_pos(std::vector<Utils::Vector3d> const &pos) override {
+    if (pos.empty()) {
+      return {};
+    }
+    std::vector<double> rho{};
+    rho.reserve(pos.size());
+    if constexpr (Architecture == lbmpy::Arch::CPU) {
+      auto const kernel = make_density_interpolation_kernel();
+      std::ranges::transform(pos, std::back_inserter(rho), kernel);
+    }
+#if defined(__CUDACC__)
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      auto const &lattice = get_lattice();
+      auto const &block = *(lattice.get_blocks()->begin());
+      auto const origin = block.getAABB().min();
+      std::vector<FloatType> host_pos;
+      host_pos.reserve(3ul * pos.size());
+      assert(lattice.get_blocks()->getNumberOfBlocks() == 1u);
+      for (auto const &vec : pos) {
+#pragma unroll
+        for (std::size_t i : {0ul, 1ul, 2ul}) {
+          host_pos.emplace_back(static_cast<FloatType>(vec[i] - origin[i]));
+        }
+      }
+      auto const gl = lattice.get_ghost_layers();
+      auto field =
+          block.template uncheckedFastGetData<PdfField>(m_pdf_field_id);
+      auto res =
+          lbm::accessor::Interpolation::get_rho(field, host_pos, m_density, gl);
+      if constexpr (std::is_same_v<FloatType, double>) {
+        std::swap(rho, res);
+      } else {
+        for (auto const &v : res) {
+          rho.emplace_back(static_cast<double>(v));
+        }
+      }
+    }
+#endif
+    return rho;
   }
 
   std::optional<Utils::Vector3d>
@@ -1176,20 +1267,8 @@ public:
       return std::nullopt;
     if (consider_points_in_halo and !m_lattice->pos_in_local_halo(pos))
       return std::nullopt;
-    double dens = 0.;
-    interpolate_bspline_at_pos(
-        pos, [this, &dens, &pos](std::array<int, 3> const node, double weight) {
-          // Nodes with zero weight might not be accessible, because they can be
-          // outside ghost layers
-          if (weight != 0.) {
-            auto const res = get_node_density(Utils::Vector3i(node), true);
-            if (!res) {
-              throw interpolation_illegal_access("density", pos, node, weight);
-            }
-            dens += *res * weight;
-          }
-        });
-    return {std::move(dens)};
+    auto const kernel = make_density_interpolation_kernel();
+    return {kernel(pos)};
   }
 
   bool add_force_at_pos(Utils::Vector3d const &pos,
@@ -1210,8 +1289,7 @@ public:
     auto field =
         bc->block->template getData<VectorField>(m_force_to_be_applied_id);
     auto const vec = lbm::accessor::Vector::get(field, bc->cell);
-
-    return zero_centered_conversion_value_multiply(to_vector3d(vec));
+    return zero_centered_to_md(to_vector3d(vec));
   }
 
   std::optional<Utils::Vector3d>
@@ -1225,7 +1303,7 @@ public:
     auto const field =
         bc->block->template getData<VectorField>(m_last_applied_force_field_id);
     auto const vec = lbm::accessor::Vector::get(field, bc->cell);
-    return zero_centered_conversion_value_multiply(to_vector3d(vec));
+    return zero_centered_to_md(to_vector3d(vec));
   }
 
   bool set_node_last_applied_force(Utils::Vector3i const &node,
@@ -1276,7 +1354,8 @@ public:
         }
       }
     }
-    return zero_centered_conversion_vector_multiply(out);
+    zero_centered_to_md_in_place(out);
+    return out;
   }
 
   void set_slice_last_applied_force(Utils::Vector3i const &lower_corner,
@@ -1762,13 +1841,11 @@ public:
 
   // Global external force
   void set_external_force(Utils::Vector3d const &ext_force) override {
-    m_reset_force->set_ext_force(
-        zero_centered_conversion_value_divide(ext_force));
+    m_reset_force->set_ext_force(zero_centered_to_lb(ext_force));
   }
 
   [[nodiscard]] Utils::Vector3d get_external_force() const noexcept override {
-    return zero_centered_conversion_value_multiply(
-        m_reset_force->get_ext_force());
+    return zero_centered_to_md(m_reset_force->get_ext_force());
   }
 
   [[nodiscard]] double get_kT() const noexcept override {
@@ -1915,8 +1992,8 @@ public:
         };
 #endif
     if (flag_observables & static_cast<int>(OutputVTK::density)) {
-      auto const unit_conversion = zero_centered_conversion_value_multiply(
-          FloatType_c(units.at("density")));
+      auto const unit_conversion =
+          FloatType_c(zero_centered_to_md(units.at("density")));
 #if defined(__CUDACC__)
       if constexpr (Architecture == lbmpy::Arch::GPU) {
         auto const &blocks = m_lattice->get_blocks();
@@ -1945,8 +2022,8 @@ public:
           m_velocity_field_id, "velocity_vector", unit_conversion));
     }
     if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
-      auto const unit_conversion = zero_centered_conversion_value_multiply(
-          FloatType_c(units.at("pressure")));
+      auto const unit_conversion =
+          FloatType_c(zero_centered_to_md(units.at("pressure")));
 #if defined(__CUDACC__)
       if constexpr (Architecture == lbmpy::Arch::GPU) {
         auto const &blocks = m_lattice->get_blocks();

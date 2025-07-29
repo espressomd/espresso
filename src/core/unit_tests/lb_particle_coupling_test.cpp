@@ -629,6 +629,7 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
     BOOST_CHECK_THROW(lb.veto_time_step(0.), NoLBActive);
     BOOST_CHECK_THROW(lb.veto_kT(0.), NoLBActive);
     BOOST_CHECK_THROW(lb.lebc_sanity_checks(0u, 1u), NoLBActive);
+    BOOST_CHECK_THROW(lb.make_lattice_position_checker(true), NoLBActive);
     BOOST_CHECK_THROW(lb.propagate(), NoLBActive);
     BOOST_CHECK_THROW(lb.update_collision_model(), NoLBActive);
     BOOST_CHECK_THROW(lb.ghost_communication(), NoLBActive);
@@ -644,6 +645,7 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
     BOOST_CHECK_THROW(lb_impl->get_velocity_at_pos(vec, true), NoLBActive);
     BOOST_CHECK_THROW(lb_impl->add_force_at_pos(vec, vec), NoLBActive);
     BOOST_CHECK_THROW(lb_impl->add_forces_at_pos({}, {}), NoLBActive);
+    BOOST_CHECK_THROW(lb_impl->get_densities_at_pos({}), NoLBActive);
     BOOST_CHECK_THROW(lb_impl->get_velocities_at_pos({}), NoLBActive);
     lb.reset();
   }

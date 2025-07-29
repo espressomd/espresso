@@ -19,6 +19,7 @@
 
 add_library(espresso_instrumentation INTERFACE)
 add_library(espresso::instrumentation ALIAS espresso_instrumentation)
+espresso_set_common_target_properties(espresso_instrumentation)
 target_include_directories(
   espresso_instrumentation
   INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -39,6 +40,7 @@ endif()
 if(ESPRESSO_BUILD_WITH_FPE)
   add_library(espresso_fpe SHARED src/fe_trap.cpp)
   add_library(espresso::fpe ALIAS espresso_fpe)
+  espresso_set_common_target_properties(espresso_fpe)
   target_link_libraries(espresso_fpe PRIVATE espresso::config
                                              espresso::cpp_flags)
   target_include_directories(

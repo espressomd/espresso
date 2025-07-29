@@ -31,11 +31,17 @@
 
 #include <utils/Vector.hpp>
 
+#if defined(__CUDACC__)
+#include <thrust/device_vector.h>
+#endif
+
 #include <cassert>
 #include <functional>
 #include <memory>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace walberla {
 
@@ -49,7 +55,8 @@ namespace walberla {
  * Requires a custom communicator:
  * @ref walberla::field::communication::BoundaryPackInfo.
  */
-template <typename T, typename BoundaryClass> class BoundaryHandling {
+template <typename FloatType, typename ValueType, typename BoundaryClass>
+class BoundaryHandling {
 private:
   /** Flag for domain cells, i.e. all cells. */
   FlagUID const Domain_flag{"domain"};
@@ -60,10 +67,11 @@ private:
   class DynamicValueCallback {
   public:
     DynamicValueCallback() {
-      m_value_boundary = std::make_shared<std::unordered_map<Cell, T>>();
+      m_value_boundary =
+          std::make_shared<typename decltype(m_value_boundary)::element_type>();
     }
 
-    [[nodiscard]] T operator()(
+    [[nodiscard]] ValueType operator()(
         Cell const &local,
         std::shared_ptr<blockforest::StructuredBlockForest> const &blocks,
         IBlock &block) const {
@@ -72,7 +80,7 @@ private:
       return get_value(global);
     }
 
-    void set_node_boundary_value(Cell const &global, T const &val) {
+    void set_node_boundary_value(Cell const &global, ValueType const &val) {
       (*m_value_boundary)[global] = val;
     }
 
@@ -89,11 +97,49 @@ private:
       return m_value_boundary->contains(global);
     }
 
-  private:
-    std::shared_ptr<std::unordered_map<Cell, T>> m_value_boundary;
-    static constexpr T default_value{};
+#if defined(__CUDACC__)
+    /**
+     * @brief Build a flattened version of the unordered map container.
+     * The coordinate list (COO) format is used, similar to how sparse
+     * matrices are compressed, although here zero is a valid value.
+     * Indices are relative to the origin of the local halo.
+     */
+    void rebuild_flat_map_device(CellInterval const &local_domain) {
+      std::vector<int> indices;
+      std::vector<FloatType> values;
+      auto const &local_origin = local_domain.min();
+      for (auto const &[cell, value] : *m_value_boundary) {
+        if (local_domain.contains(cell)) {
+          for (auto i : {0, 1, 2}) {
+            indices.emplace_back(cell[i] - local_origin[i]);
+          }
+          if constexpr (std::is_arithmetic_v<ValueType>) {
+            values.emplace_back(static_cast<FloatType>(value));
+          } else {
+            for (auto i : {0, 1, 2}) {
+              values.emplace_back(static_cast<FloatType>(value[i]));
+            }
+          }
+        }
+      }
+      m_flat_indices = decltype(m_flat_indices)(indices.begin(), indices.end());
+      m_flat_values = decltype(m_flat_values)(values.begin(), values.end());
+    }
 
-    [[nodiscard]] T const &get_value(Cell const &cell) const {
+    auto get_flattened_map_device() const {
+      return std::make_pair(&m_flat_indices, &m_flat_values);
+    }
+#endif
+
+  private:
+#if defined(__CUDACC__)
+    thrust::device_vector<int> m_flat_indices;
+    thrust::device_vector<FloatType> m_flat_values;
+#endif
+    std::shared_ptr<std::unordered_map<Cell, ValueType>> m_value_boundary;
+    static constexpr ValueType default_value{};
+
+    [[nodiscard]] auto const &get_value(Cell const &cell) const {
       if (m_value_boundary->contains(cell)) {
         return m_value_boundary->at(cell);
       }
@@ -109,13 +155,15 @@ private:
   }
 
 public:
-  using value_type = T;
+  using value_type = ValueType;
   using FlagField = field::FlagField<uint8_t>;
 
   BoundaryHandling(std::shared_ptr<StructuredBlockForest> blocks,
-                   BlockDataID value_field_id, BlockDataID flag_field_id)
+                   BlockDataID value_field_id, BlockDataID flag_field_id,
+                   CellInterval const &local_domain)
       : m_blocks(std::move(blocks)), m_flag_field_id(flag_field_id),
-        m_callback(DynamicValueCallback()), m_pending_changes(false) {
+        m_callback(DynamicValueCallback()), m_local_domain(local_domain),
+        m_pending_changes(false) {
     // reinitialize the flag field
     for (auto &block : *m_blocks) {
       flag_reset_kernel(block.template getData<FlagField>(m_flag_field_id));
@@ -139,14 +187,15 @@ public:
   }
 
   void set_node_value_at_boundary(signed_integral_vector auto const &node,
-                                  T const &v, BlockAndCell const &bc) {
+                                  ValueType const &v, BlockAndCell const &bc) {
     auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
     m_callback.set_node_boundary_value(to_cell(node), v);
     flag_field->addFlag(bc.cell, boundary_flag);
     m_pending_changes = true;
   }
 
-  void unpack_node(signed_integral_vector auto const &node, T const &v) {
+  void unpack_node(signed_integral_vector auto const &node,
+                   ValueType const &v) {
     m_callback.set_node_boundary_value(to_cell(node), v);
   }
 
@@ -163,6 +212,9 @@ public:
     if (m_pending_changes) {
       m_boundary->template fillFromFlagField<FlagField>(
           m_blocks, m_flag_field_id, Boundary_flag, Domain_flag);
+#if defined(__CUDACC__)
+      m_callback.rebuild_flat_map_device(m_local_domain);
+#endif
       m_pending_changes = false;
     }
   }
@@ -173,11 +225,18 @@ public:
             static_cast<int>(field->zSize())};
   }
 
+#if defined(__CUDACC__)
+  auto get_flattened_map_device() const {
+    return m_callback.get_flattened_map_device();
+  }
+#endif
+
 private:
   std::shared_ptr<StructuredBlockForest> m_blocks;
   BlockDataID m_flag_field_id;
   DynamicValueCallback m_callback;
   std::shared_ptr<BoundaryClass> m_boundary;
+  CellInterval m_local_domain;
   bool m_pending_changes;
 
   /** Register flags and reset all cells. */

@@ -25,7 +25,6 @@
 #include <vtk/VTKOutput.h>
 
 #include <memory>
-#include <sstream>
 #include <string>
 
 std::shared_ptr<VTKHandle> LatticeModel::create_vtk(
@@ -36,9 +35,7 @@ std::shared_ptr<VTKHandle> LatticeModel::create_vtk(
   using walberla::uint_c;
 
   // VTKOutput object must be unique
-  std::stringstream unique_identifier;
-  unique_identifier << base_folder << "/" << identifier;
-  std::string const vtk_uid = unique_identifier.str();
+  auto const vtk_uid = base_folder + "/" + identifier;
   if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end() or
       m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
     throw vtk_runtime_error(vtk_uid, "already exists");

@@ -181,8 +181,8 @@ struct LongRangeField {
     actor->dipole_field_at_part(m_particles);
   }
 
-  template <typename T,
-            std::enable_if_t<!traits::has_dipole_fields<T>::value> * = nullptr>
+  template <typename T>
+    requires(not traits::has_dipole_fields<T>::value)
   void operator()(std::shared_ptr<T> const &) const {
     runtimeErrorMsg() << "Dipoles field calculation not implemented by "
                       << "dipolar method " << Utils::demangle<T>();

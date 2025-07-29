@@ -478,10 +478,10 @@ ParticleHandle::ParticleHandle() {
            ParticleParametersSwimming swim{};
            swim.swimming = true;
            auto const dict = get_value<VariantMap>(value);
-           if (dict.count("f_swim") != 0) {
+           if (dict.contains("f_swim")) {
              swim.f_swim = get_value<double>(dict.at("f_swim"));
            }
-           if (dict.count("is_engine_force_on_fluid") != 0) {
+           if (dict.contains("is_engine_force_on_fluid")) {
              auto const is_engine_force_on_fluid =
                  get_value<bool>(dict.at("is_engine_force_on_fluid"));
              swim.is_engine_force_on_fluid = is_engine_force_on_fluid;
@@ -550,7 +550,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
                                        VariantMap const &params) {
   if (name == "set_param_parallel") {
     auto const param_name = get_value<std::string>(params, "name");
-    if (params.count("value") == 0) {
+    if (not params.contains("value")) {
       throw Exception("Parameter '" + param_name + "' is missing.");
     }
     auto const &value = params.at("value");

@@ -35,6 +35,7 @@
 
 #include <utils/math/int_pow.hpp>
 
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -159,8 +160,8 @@ public:
   }
 
 private:
-  void load_checkpoint(std::string const &filename, int mode);
-  void save_checkpoint(std::string const &filename, int mode);
+  void load_checkpoint(std::filesystem::path const &path, int mode);
+  void save_checkpoint(std::filesystem::path const &path, int mode);
 };
 
 } // namespace ScriptInterface::walberla

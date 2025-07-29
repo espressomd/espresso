@@ -106,6 +106,7 @@ foreach(cython_file ${cython_SRC})
                                           espresso::script_interface)
   target_link_libraries(${target} PRIVATE espresso::cpp_flags)
   target_link_libraries(${target} PRIVATE espresso::pyx_flags)
+  set_target_properties(${target} PROPERTIES CXX_EXTENSIONS OFF)
   target_include_directories(
     ${target} SYSTEM PRIVATE ${Python_INCLUDE_DIRS}
                              ${Python_NumPy_INCLUDE_DIRS})

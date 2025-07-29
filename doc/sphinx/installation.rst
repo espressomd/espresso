@@ -344,6 +344,8 @@ Installing requirements on macOS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The first step is to install a C++ compiler, such as Xcode [10]_.
+Xcode is missing OpenMP, which is needed to enable shared-memory parallelization,
+but the "R for macOS Developers" project provides binaries [11]_.
 
 To install libraries, a package manager will be needed.
 While our instructions below are specific to Homebrew,
@@ -1045,3 +1047,6 @@ ____
 
 .. [10]
    https://developer.apple.com/xcode/
+
+.. [11]
+   https://mac.r-project.org/openmp/

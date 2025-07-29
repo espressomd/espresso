@@ -30,9 +30,9 @@ template <class EKReaction> class EKReactions {
   using container_type = std::vector<std::shared_ptr<EKReaction>>;
 
 public:
-  using value_type = typename container_type::value_type;
-  using iterator = typename container_type::iterator;
-  using const_iterator = typename container_type::const_iterator;
+  using value_type = container_type::value_type;
+  using iterator = container_type::iterator;
+  using const_iterator = container_type::const_iterator;
 
 private:
   container_type m_ekreactions;

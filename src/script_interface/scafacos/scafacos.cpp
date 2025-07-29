@@ -54,18 +54,11 @@ struct ConvertToStringVector
     : public boost::static_visitor<std::vector<std::string>> {
   auto operator()(std::string const &value) const { return result_type{value}; }
 
-  template <typename T, typename = std::enable_if_t<!std::is_arithmetic_v<T>>>
-  result_type operator()(T const &) const {
+  template <typename T> result_type operator()(T const &value) const {
+    if constexpr (std::is_arithmetic_v<T>) {
+      return operator()(to_str(value));
+    }
     throw std::runtime_error("Cannot convert " + Utils::demangle<T>());
-  }
-
-  template <typename T, typename = std::enable_if_t<std::is_same_v<T, int>>>
-  auto operator()(T const &value) const {
-    return operator()(to_str(value));
-  }
-
-  auto operator()(double const &value) const {
-    return operator()(to_str(value));
   }
 
   auto operator()(result_type const &values) const { return values; }
@@ -78,7 +71,8 @@ struct ConvertToStringVector
     return values_str;
   }
 
-  template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
+  template <typename T>
+    requires(std::is_arithmetic_v<T>)
   auto operator()(std::vector<T> const &values) const {
     result_type values_str;
     for (auto const &v : values) {
@@ -88,11 +82,13 @@ struct ConvertToStringVector
   }
 
 private:
-  std::string to_str(int const value) const { return std::to_string(value); }
-
-  std::string to_str(double const value) const {
+  template <typename T>
+    requires std::is_arithmetic_v<T>
+  std::string to_str(T const &value) const {
     std::ostringstream serializer;
-    serializer << std::scientific << std::setprecision(17);
+    if constexpr (std::is_floating_point_v<T>) {
+      serializer << std::scientific << std::setprecision(17);
+    }
     serializer << value;
     return serializer.str();
   }
@@ -126,9 +122,9 @@ std::string serialize_parameters(Variant const &pack) {
   }
   auto const visitor = ConvertToStringVector();
   std::string method_params = "";
-  for (auto const &kv : parameters) {
-    method_params += "," + kv.first;
-    for (auto const &value : boost::apply_visitor(visitor, kv.second)) {
+  for (auto const &[name, values] : parameters) {
+    method_params += "," + name;
+    for (auto const &value : boost::apply_visitor(visitor, values)) {
       method_params += "," + value;
     }
   }

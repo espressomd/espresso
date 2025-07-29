@@ -240,6 +240,8 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(params);
   auto const n_ghost_layers = lb->get_lattice().get_ghost_layers();
   auto const [my_left, my_right] = lb->get_lattice().get_local_domain();
+  auto const pos_checker_halo = lb->make_lattice_position_checker(true);
+  auto const pos_checker_domain = lb->make_lattice_position_checker(false);
 
   for (auto const &n : all_nodes_incl_ghosts(lb->get_lattice())) {
     auto const pos = n + Vector3d::broadcast(.5);
@@ -251,6 +253,9 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
 
       BOOST_CHECK(lb->get_lattice().pos_in_local_domain(pos));
       BOOST_CHECK(lb->get_lattice().pos_in_local_halo(pos));
+
+      BOOST_CHECK(pos_checker_halo(pos));
+      BOOST_CHECK(pos_checker_domain(pos));
       is_local = 1;
     } else {
       // in local halo?
@@ -261,6 +266,9 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
 
         BOOST_CHECK(!lb->get_lattice().pos_in_local_domain(pos));
         BOOST_CHECK(lb->get_lattice().pos_in_local_halo(pos));
+
+        BOOST_CHECK(pos_checker_halo(pos));
+        BOOST_CHECK(!pos_checker_domain(pos));
       } else {
         // neither in domain nor in halo
         BOOST_CHECK(!lb->get_lattice().node_in_local_domain(n));
@@ -268,6 +276,9 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
 
         BOOST_CHECK(!lb->get_lattice().pos_in_local_domain(pos));
         BOOST_CHECK(!lb->get_lattice().pos_in_local_halo(pos));
+
+        BOOST_CHECK(!pos_checker_halo(pos));
+        BOOST_CHECK(!pos_checker_domain(pos));
       }
     }
 

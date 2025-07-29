@@ -72,6 +72,10 @@
 #include <utils/math/sqr.hpp>
 #include <utils/serialization/array.hpp>
 
+#ifdef SHARED_MEMORY_PARALLELISM
+#include <Kokkos_Core.hpp>
+#endif
+
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
@@ -365,10 +369,16 @@ template <int cao> struct AssignCharge {
 
   template <typename combined_ranges>
   void operator()(auto &p3m, combined_ranges const &p_q_pos_range) {
+#ifdef SHARED_MEMORY_PARALLELISM
+    // multi-threading -> cache sizes must be equal to the number of particles
+    auto const include_neutral_particles = Kokkos::num_threads() > 1;
+#else
+    auto constexpr include_neutral_particles = false;
+#endif
     for (auto zipped : p_q_pos_range) {
       auto const p_q = boost::get<0>(zipped);
       auto const &p_pos = boost::get<1>(zipped);
-      if (p_q != 0.0) {
+      if (include_neutral_particles or p_q != 0.0) {
         this->operator()(p3m, p_q, p_pos, p3m.inter_weights);
       }
     }
@@ -407,14 +417,9 @@ template <int cao> struct AssignForces {
 
     assert(cao == p3m.inter_weights.cao());
 
-    /* charged particle counter */
-    auto p_index = std::size_t{0ul};
-
-    for (auto zipped : p_q_force_range) {
-      auto p_q = boost::get<0>(zipped);
-      auto &p_force = boost::get<1>(zipped);
-      if (p_q != 0.0) {
-        auto const pref = p_q * force_prefac;
+    auto const kernel = [&p3m](double pref, auto &p_force,
+                               std::size_t p_index) {
+      if (pref != 0.) {
         auto const weights = p3m.inter_weights.template load<cao>(p_index);
 
         Utils::Vector3d force{};
@@ -426,6 +431,40 @@ template <int cao> struct AssignForces {
                         });
 
         p_force -= pref * force;
+      }
+    };
+
+#ifdef SHARED_MEMORY_PARALLELISM
+    if (Kokkos::num_threads() > 1) {
+      std::vector<double> q_vals;
+      std::vector<Utils::Vector3d *> f_ptrs;
+      q_vals.reserve(p3m.inter_weights.size());
+      f_ptrs.reserve(p3m.inter_weights.size());
+      for (auto zipped : p_q_force_range) {
+        q_vals.emplace_back(boost::get<0>(zipped));
+        f_ptrs.emplace_back(&boost::get<1>(zipped));
+      }
+      Kokkos::RangePolicy<> policy(std::size_t{0u}, q_vals.size());
+      auto const *q_vals_data = q_vals.data();
+      auto const *f_ptrs_data = f_ptrs.data();
+      Kokkos::parallel_for(
+          "AssignForces", policy, KOKKOS_LAMBDA(std::size_t p_index) {
+            auto p_q = q_vals_data[p_index];
+            auto &p_force = *f_ptrs_data[p_index];
+            kernel(p_q * force_prefac, p_force, p_index);
+          });
+      return;
+    }
+#endif
+
+    /* charged particle counter */
+    std::size_t p_index{0ul};
+
+    for (auto zipped : p_q_force_range) {
+      auto p_q = boost::get<0>(zipped);
+      if (p_q != 0.) {
+        auto &p_force = boost::get<1>(zipped);
+        kernel(p_q * force_prefac, p_force, p_index);
         ++p_index;
       }
     }

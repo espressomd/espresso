@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SCRIPT_INTERFACE_OBJECTMANAGER_HPP
-#define ESPRESSO_SCRIPT_INTERFACE_OBJECTMANAGER_HPP
+
+#pragma once
 
 /** @file
  *
@@ -44,6 +44,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 
@@ -166,7 +167,7 @@ public:
   std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) override;
 
-  boost::string_ref name(const ObjectHandle *o) const override;
+  std::string_view name(const ObjectHandle *o) const override;
 
   bool is_head_node() const override { return m_is_head_node; }
   void parallel_try_catch(std::function<void()> const &cb) const override {
@@ -175,5 +176,3 @@ public:
   boost::mpi::communicator const &get_comm() const override { return m_comm; }
 };
 } // namespace ScriptInterface
-
-#endif

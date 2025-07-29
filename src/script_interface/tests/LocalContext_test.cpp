@@ -30,8 +30,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
-#include <span>
 #include <string>
+#include <string_view>
+#include <vector>
 
 namespace si = ScriptInterface;
 
@@ -47,10 +48,10 @@ struct Dummy : si::ObjectHandle {
     params[name] = val;
   }
 
-  std::span<const boost::string_ref> valid_parameters() const override {
-    static const boost::string_ref parameter_names[] = {"id", "object_param"};
+  std::vector<std::string_view> valid_parameters() const override {
+    static std::string_view names[] = {"id", "object_param"};
 
-    return {parameter_names, std::min(params.size(), std::size_t{2u})};
+    return {names, names + std::min(params.size(), std::size_t{2u})};
   }
 };
 

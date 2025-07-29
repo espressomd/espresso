@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu:3353f0aa183c420e26fc3a35bde39bd56ca79af8
+image: ghcr.io/espressomd/docker/ubuntu:17ae5d9f6217a5653be3ec409178f0ee15cb519f
 
 stages:
   - prepare
@@ -16,7 +16,7 @@ stages:
 
 .notification_job_template: &notification_job_definition
   <<: *global_job_definition
-  image: ghcr.io/espressomd/docker/fedora:3353f0aa183c420e26fc3a35bde39bd56ca79af8
+  image: ghcr.io/espressomd/docker/fedora:17ae5d9f6217a5653be3ec409178f0ee15cb519f
   variables:
     GET_SOURCES_ATTEMPTS: 3
   before_script:
@@ -108,7 +108,7 @@ maxset:
      with_stokesian_dynamics: 'true'
      with_caliper: 'true'
      check_skip_long: 'true'
-     cmake_params: '-D CMAKE_CXX_STANDARD=23 -D ESPRESSO_TEST_NP=8'
+     cmake_params: '-D CMAKE_CXX_STANDARD=23 -D CMAKE_CXX_EXTENSIONS=OFF -D ESPRESSO_TEST_NP=8'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -140,7 +140,7 @@ no_rotation:
 fedora:42:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/fedora:3353f0aa183c420e26fc3a35bde39bd56ca79af8
+  image: ghcr.io/espressomd/docker/fedora:17ae5d9f6217a5653be3ec409178f0ee15cb519f
   variables:
      with_cuda: 'false'
      with_gsl: 'false'

@@ -42,8 +42,8 @@ class BreakageSpecs : public BreakageSpecsBase_t {
   using Base = BreakageSpecsBase_t;
 
 public:
-  using key_type = typename Base::key_type;
-  using mapped_type = typename Base::mapped_type;
+  using Base::key_type;
+  using Base::mapped_type;
 
 private:
   std::shared_ptr<::BondBreakage::BondBreakage> m_bond_breakage;

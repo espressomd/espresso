@@ -27,8 +27,7 @@
 
 namespace Utils {
 template <typename Key, typename Value> class Cache {
-  using map_type =
-      std::unordered_map<Key, typename std::add_const<Value>::type>;
+  using map_type = std::unordered_map<Key, typename std::add_const_t<Value>>;
 
 public:
   using key_type = Key;

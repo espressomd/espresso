@@ -36,6 +36,7 @@
 #include <iterator>
 #include <ostream>
 #include <stdexcept>
+#include <tuple>
 #include <utility>
 
 namespace Utils {
@@ -215,14 +216,12 @@ private:
 };
 
 template <std::size_t I, class T, std::size_t N>
-typename std::tuple_element<I, Array<T, N>>::type &
-get(Array<T, N> &a) noexcept {
+T &get(Array<T, N> &a) noexcept {
   return a[I];
 }
 
 template <std::size_t I, class T, std::size_t N>
-const typename std::tuple_element<I, Array<T, N>>::type &
-get(Array<T, N> const &a) noexcept {
+T const &get(Array<T, N> const &a) noexcept {
   return a[I];
 }
 
@@ -231,7 +230,7 @@ get(Array<T, N> const &a) noexcept {
 template <std::size_t I, class T, std::size_t N>
 struct std::tuple_element<I, Utils::Array<T, N>> {
   static_assert(I < N, "Utils::Array index must be in range");
-  using type = typename std::enable_if_t<(I < N), T>;
+  using type = T;
 };
 
 template <class T, std::size_t N>

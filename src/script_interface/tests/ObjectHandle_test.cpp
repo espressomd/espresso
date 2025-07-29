@@ -34,6 +34,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -196,9 +197,7 @@ struct LogContext : public Context {
     return it;
   }
 
-  boost::string_ref name(ObjectHandle const *) const override {
-    return "Dummy";
-  }
+  std::string_view name(ObjectHandle const *) const override { return "Dummy"; }
 
   bool is_head_node() const override { return true; }
   void parallel_try_catch(std::function<void()> const &) const override {}

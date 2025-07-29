@@ -496,7 +496,7 @@ void remove_particle(int p_id) {
       --::max_seen_pid;
       // if there is a gap (i.e. there is no particle with id max_seen_pid - 1,
       // then the cached value is invalidated and has to be recomputed (slow)
-      if (particle_node.count(::max_seen_pid) == 0 or
+      if (not particle_node.contains(::max_seen_pid) or
           particle_node[::max_seen_pid] == -1) {
         ::max_seen_pid = calculate_max_seen_id();
       }

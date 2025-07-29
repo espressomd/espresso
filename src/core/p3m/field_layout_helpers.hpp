@@ -67,8 +67,7 @@ auto pad_with_zeros_discard_imag(std::span<T> cropped_array,
   // Calculate dimensions and strides
   Utils::Vector3i padded_dim = cropped_dim + pad_left + pad_right;
   // Output vector to hold the padded field (initialized with zeros)
-  std::vector<typename T::value_type> padded_array(
-      padded_dim[0] * padded_dim[1] * padded_dim[2]);
+  std::vector<typename T::value_type> padded_array(Utils::product(padded_dim));
 
   // Fill in the original cropped field into the padded array by chunks
   for_each_3d_lin<memory_order>(

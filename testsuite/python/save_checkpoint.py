@@ -65,7 +65,6 @@ n_nodes = system.cell_system.get_state()["n_nodes"]
 config.cleanup_old_checkpoint()
 checkpoint = espressomd.checkpointing.Checkpoint(
     **config.get_checkpoint_params())
-path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
 
 # Lees-Edwards boundary conditions
 if 'INT.NPT' not in modes and 'LB.GPU' not in modes and (
@@ -406,11 +405,11 @@ if lbf_class:
     lbf[:, :, :].last_applied_force = np.einsum(
         'abc,d->abcd', grid_3D, np.arange(1, 4))
     # save LB checkpoint file
-    lbf_cpt_path = path_cpt_root / "lb.cpt"
+    lbf_cpt_path = checkpoint.root / "lb.cpt"
     lbf.save_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
     # save EK checkpoint file
     ek_species[:, :, :].density = grid_3D
-    ek_cpt_path = path_cpt_root / "ek.cpt"
+    ek_cpt_path = checkpoint.root / "ek.cpt"
     ek_species.save_checkpoint(str(ek_cpt_path), lbf_cpt_mode)
     # setup VTK folder
     vtk_suffix = config.test_name
@@ -488,7 +487,7 @@ if espressomd.has_features("H5MD"):
     h5_units = espressomd.io.writer.h5md.UnitSystem(
         time="ps", mass="u", length="m", charge="e")
     h5 = espressomd.io.writer.h5md.H5md(
-        file_path=str(path_cpt_root / "test.h5"),
+        file_path=checkpoint.root / "test.h5",
         unit_system=h5_units)
     h5.write()
     h5.flush()
@@ -506,10 +505,10 @@ class TestCheckpoint(ut.TestCase):
         '''
         Check for the presence of the checkpoint files.
         '''
-        self.assertTrue(path_cpt_root.is_dir(),
+        self.assertTrue(checkpoint.root.is_dir(),
                         "checkpoint directory not created")
 
-        checkpoint_filepath = path_cpt_root / "0.checkpoint"
+        checkpoint_filepath = checkpoint.root / "0.checkpoint"
         self.assertTrue(checkpoint_filepath.is_file(),
                         "checkpoint file not created")
 
@@ -537,22 +536,22 @@ class TestCheckpoint(ut.TestCase):
         lbf_cpt_root = lbf_cpt_path.parent
         with self.assertRaisesRegex(RuntimeError, "could not open file"):
             invalid_path = lbf_cpt_root / "unknown_dir" / "lb.cpt"
-            lbf.save_checkpoint(str(invalid_path), lbf_cpt_mode)
+            lbf.save_checkpoint(invalid_path, lbf_cpt_mode)
         with self.assertRaisesRegex(RuntimeError, "unit test error"):
-            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -1)
+            lbf.save_checkpoint(lbf_cpt_root / "lb_err.cpt", -1)
         with self.assertRaisesRegex(RuntimeError, "could not write to"):
-            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -2)
+            lbf.save_checkpoint(lbf_cpt_root / "lb_err.cpt", -2)
         with self.assertRaisesRegex(ValueError, "Unknown mode -3"):
-            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -3)
+            lbf.save_checkpoint(lbf_cpt_root / "lb_err.cpt", -3)
         with self.assertRaisesRegex(ValueError, "Unknown mode 2"):
-            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), 2)
+            lbf.save_checkpoint(lbf_cpt_root / "lb_err.cpt", 2)
 
         # deactivate LB actor
         system.lb = None
 
         # read the valid LB checkpoint file
         lbf_cpt_data = lbf_cpt_path.read_bytes()
-        cpt_path = str(path_cpt_root / "lb") + "{}.cpt"
+        cpt_path = str(checkpoint.root / "lb") + "{}.cpt"
         # write checkpoint file with missing data
         with open(cpt_path.format("-missing-data"), "wb") as f:
             f.write(lbf_cpt_data[:len(lbf_cpt_data) // 2])
@@ -582,19 +581,19 @@ class TestCheckpoint(ut.TestCase):
         ek_cpt_root = ek_cpt_path.parent
         with self.assertRaisesRegex(RuntimeError, "could not open file"):
             invalid_path = ek_cpt_root / "unknown_dir" / "ek.cpt"
-            ek_species.save_checkpoint(str(invalid_path), lbf_cpt_mode)
+            ek_species.save_checkpoint(invalid_path, lbf_cpt_mode)
         with self.assertRaisesRegex(RuntimeError, "unit test error"):
-            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -1)
+            ek_species.save_checkpoint(ek_cpt_root / "ek_err.cpt", -1)
         with self.assertRaisesRegex(RuntimeError, "could not write to"):
-            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -2)
+            ek_species.save_checkpoint(ek_cpt_root / "ek_err.cpt", -2)
         with self.assertRaisesRegex(ValueError, "Unknown mode -3"):
-            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -3)
+            ek_species.save_checkpoint(ek_cpt_root / "ek_err.cpt", -3)
         with self.assertRaisesRegex(ValueError, "Unknown mode 2"):
-            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), 2)
+            ek_species.save_checkpoint(ek_cpt_root / "ek_err.cpt", 2)
 
         # read the valid EK checkpoint file
         ek_cpt_data = ek_cpt_path.read_bytes()
-        cpt_path = str(path_cpt_root / "ek") + "{}.cpt"
+        cpt_path = str(checkpoint.root / "ek") + "{}.cpt"
         # write checkpoint file with missing data
         with open(cpt_path.format("-missing-data"), "wb") as f:
             f.write(ek_cpt_data[:len(ek_cpt_data) // 2])

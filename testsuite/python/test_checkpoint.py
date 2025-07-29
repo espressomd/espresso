@@ -66,7 +66,6 @@ class CheckpointTest(ut.TestCase):
         **config.get_checkpoint_params())
     checkpoint.load(0)
     checkpoint.save(1)
-    path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
     n_nodes = system.cell_system.get_state()["n_nodes"]
 
     @classmethod
@@ -84,8 +83,7 @@ class CheckpointTest(ut.TestCase):
     def test_lb_fluid(self):
         lbf = system.lb
         cpt_mode = 0 if 'LB.ASCII' in modes else 1
-        cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
-        cpt_path = str(cpt_root / "lb") + "{}.cpt"
+        cpt_path = str(self.checkpoint.root / "lb") + "{}.cpt"
 
         # LB boundaries are loaded at the same time as LB populations
         np.testing.assert_equal(np.copy(lbf[:, :, :].velocity), 0.)
@@ -187,8 +185,7 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK mode.")
     def test_ek_species(self):
         cpt_mode = 0 if 'LB.ASCII' in modes else 1
-        cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
-        cpt_path = str(cpt_root / "ek") + "{}.cpt"
+        cpt_path = str(self.checkpoint.root / "ek") + "{}.cpt"
 
         self.assertEqual(len(system.ekcontainer), 1)
         ek_species = system.ekcontainer[0]
@@ -816,12 +813,12 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingModules("h5py")
     def test_h5md(self):
         # check attributes
-        file_path = self.path_cpt_root / "test.h5"
+        file_path = self.checkpoint.root / "test.h5"
         script_path = pathlib.Path(
             __file__).resolve().parent / "save_checkpoint.py"
         self.assertEqual(h5.fields, ['all'])
-        self.assertEqual(h5.script_path, str(script_path))
-        self.assertEqual(h5.file_path, str(file_path))
+        self.assertEqual(h5.script_path, script_path)
+        self.assertEqual(h5.file_path, file_path)
 
         # write new frame
         h5.write()

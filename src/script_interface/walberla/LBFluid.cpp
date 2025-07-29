@@ -47,6 +47,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -95,13 +96,13 @@ Variant LBFluid::do_call_method(std::string const &name,
     return get_average_pressure_tensor();
   }
   if (name == "load_checkpoint") {
-    auto const path = get_value<std::string>(params, "path");
+    auto const path = get_value<std::filesystem::path>(params, "path");
     auto const mode = get_value<int>(params, "mode");
     load_checkpoint(path, mode);
     return {};
   }
   if (name == "save_checkpoint") {
-    auto const path = get_value<std::string>(params, "path");
+    auto const path = get_value<std::filesystem::path>(params, "path");
     auto const mode = get_value<int>(params, "mode");
     save_checkpoint(path, mode);
     return {};
@@ -222,7 +223,7 @@ Variant LBFluid::get_interpolated_velocity(Utils::Vector3d const &pos) const {
          m_conv_speed;
 }
 
-void LBFluid::load_checkpoint(std::string const &filename, int mode) {
+void LBFluid::load_checkpoint(std::filesystem::path const &path, int mode) {
   auto &lb_obj = *m_instance;
 
   auto const read_metadata = [&lb_obj](CheckpointFile &cpfile) {
@@ -277,11 +278,11 @@ void LBFluid::load_checkpoint(std::string const &filename, int mode) {
     lb_obj.reallocate_ubb_field();
   };
 
-  load_checkpoint_common(*context(), "LB", filename, mode, read_metadata,
-                         read_data, on_success);
+  load_checkpoint_common(*context(), "LB", path, mode, read_metadata, read_data,
+                         on_success);
 }
 
-void LBFluid::save_checkpoint(std::string const &filename, int mode) {
+void LBFluid::save_checkpoint(std::filesystem::path const &path, int mode) {
   auto &lb_obj = *m_instance;
 
   auto const write_metadata = [&lb_obj,
@@ -374,7 +375,7 @@ void LBFluid::save_checkpoint(std::string const &filename, int mode) {
     }
   };
 
-  save_checkpoint_common(*context(), "LB", filename, mode, write_metadata,
+  save_checkpoint_common(*context(), "LB", path, mode, write_metadata,
                          write_data, on_failure);
 }
 
