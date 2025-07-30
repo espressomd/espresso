@@ -21,6 +21,7 @@
 
 #include "generated_kernels/ReactionKernelIndexed_all.h"
 
+#include <walberla_bridge/Architecture.hpp>
 #include <walberla_bridge/BlockAndCell.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/reactions/EKReactant.hpp>
@@ -43,7 +44,7 @@
 #include <vector>
 
 namespace walberla {
-
+template <lbmpy::Arch Architecture = lbmpy::Arch::CPU>
 class EKReactionImplIndexed : public EKReactionBaseIndexed {
 private:
   BlockDataID m_flagfield_id;
@@ -57,10 +58,25 @@ public:
   FlagUID const Boundary_flag{"boundary"};
 
   using FlagField = field::FlagField<uint8_t>;
+#if defined(__CUDACC__)
+  using IndexVectors =
+      std::conditional<Architecture == lbmpy::Arch::CPU,
+                       detail::ReactionKernelIndexedSelector::KernelTrait<>::
+                           ReactionKernelIndexed::IndexVectors,
+                       detail::ReactionKernelIndexedSelector::KernelTraitGPU<>::
+                           ReactionKernelIndexedGPU::IndexVectors>::type;
+  using IndexInfo =
+      std::conditional<Architecture == lbmpy::Arch::CPU,
+                       detail::ReactionKernelIndexedSelector::KernelTrait<>::
+                           ReactionKernelIndexed::IndexInfo,
+                       detail::ReactionKernelIndexedSelector::KernelTraitGPU<>::
+                           ReactionKernelIndexedGPU::IndexInfo>::type;
+#else
   using IndexVectors = detail::ReactionKernelIndexedSelector::KernelTrait<>::
       ReactionKernelIndexed::IndexVectors;
   using IndexInfo = detail::ReactionKernelIndexedSelector::KernelTrait<>::
       ReactionKernelIndexed::IndexInfo;
+#endif
 
 private:
   auto get_flag_field_and_flag(IBlock *block, BlockDataID const &flagfield_id) {
@@ -109,8 +125,16 @@ public:
 
   void perform_reaction() override {
     boundary_update();
-    auto kernel = detail::ReactionKernelIndexedSelector::get_kernel(
-        get_reactants(), get_coefficient(), m_indexvector_id);
+    std::function<void(IBlock *)> kernel;
+    if (Architecture == lbmpy::Arch::CPU) {
+      kernel = detail::ReactionKernelIndexedSelector::get_kernel(
+          get_reactants(), get_coefficient(), m_indexvector_id);
+    } else {
+#if defined(__CUDACC__)
+      kernel = detail::ReactionKernelIndexedSelector::get_kernel_gpu(
+          get_reactants(), get_coefficient(), m_indexvector_id);
+#endif
+    }
     for (auto &block : *get_lattice()->get_blocks()) {
       kernel(&block);
     }

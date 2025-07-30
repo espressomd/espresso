@@ -24,8 +24,7 @@ import espressomd.electrokinetics
 import numpy as np
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
-class EKReaction(ut.TestCase):
+class EKTest:
     BOX_L = 11.
     AGRID = 1.1
     INITIAL_DENSITY = 1.0
@@ -80,7 +79,7 @@ class EKReaction(ut.TestCase):
         educt_species = []
         reactants = []
         for coeff in stoech_coeffs:
-            species = espressomd.electrokinetics.EKSpecies(
+            species = self.ek_species_class(
                 lattice=lattice, density=coeff * self.INITIAL_DENSITY,
                 diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
                 advection=False, friction_coupling=False,
@@ -93,7 +92,7 @@ class EKReaction(ut.TestCase):
                     order=coeff))
             educt_species.append(species)
 
-        ek_species_product = espressomd.electrokinetics.EKSpecies(
+        ek_species_product = self.ek_species_class(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             valency=0.0, advection=False, friction_coupling=False,
             single_precision=single_precision, tau=self.TAU)
@@ -150,6 +149,17 @@ class EKReaction(ut.TestCase):
 
         self.system.ekcontainer.reactions.remove(reaction)
         self.assertEqual(len(self.system.ekcontainer.reactions), 0)
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKReactionCPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKReactionGPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
 
 
 if __name__ == "__main__":

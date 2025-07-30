@@ -72,22 +72,21 @@ new_ek_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
       friction_coupling, thermalized, seed);
 }
 
-// TODO
-// std::shared_ptr<EKReactionBase>
-// new_ek_reaction_bulk(std::shared_ptr<LatticeWalberla> const &lattice,
-//                      typename EKReactionBase::reactants_type const
-//                      &reactants, double coefficient) {
-//   return std::make_shared<EKReactionImplBulk>(lattice, reactants,
-//   coefficient);
-// }
+std::shared_ptr<EKReactionBase> new_ek_reaction_bulk_gpu(
+    std::shared_ptr<LatticeWalberla> const &lattice,
+    typename EKReactionBase::reactants_type const &reactants,
+    double coefficient) {
+  return std::make_shared<EKReactionImplBulk<lbmpy::Arch::GPU>>(
+      lattice, reactants, coefficient);
+}
 
-// std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed(
-//     std::shared_ptr<LatticeWalberla> const &lattice,
-//     typename EKReactionBase::reactants_type const &reactants,
-//     double coefficient) {
-//   return std::make_shared<EKReactionImplIndexed>(lattice, reactants,
-//                                                  coefficient);
-// }
+std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed_gpu(
+    std::shared_ptr<LatticeWalberla> const &lattice,
+    typename EKReactionBase::reactants_type const &reactants,
+    double coefficient) {
+  return std::make_shared<EKReactionImplIndexed<lbmpy::Arch::GPU>>(
+      lattice, reactants, coefficient);
+}
 
 void set_device_id_per_rank() { walberla::gpu::selectDeviceBasedOnMpiRank(); }
 } // namespace walberla

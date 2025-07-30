@@ -128,7 +128,7 @@ class EKDiffusionCPU(EKTest, ut.TestCase):
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
-class EKDiffusion(EKTest, ut.TestCase):
+class EKDiffusionGPU(EKTest, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
 
 

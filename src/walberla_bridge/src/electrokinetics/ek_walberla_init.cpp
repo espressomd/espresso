@@ -49,19 +49,20 @@ new_ek_walberla_cpu(std::shared_ptr<LatticeWalberla> const &lattice,
       friction_coupling, thermalized, seed);
 }
 
-std::shared_ptr<EKReactionBase>
-new_ek_reaction_bulk(std::shared_ptr<LatticeWalberla> const &lattice,
-                     typename EKReactionBase::reactants_type const &reactants,
-                     double coefficient) {
-  return std::make_shared<EKReactionImplBulk>(lattice, reactants, coefficient);
-}
-
-std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed(
+std::shared_ptr<EKReactionBase> new_ek_reaction_bulk_cpu(
     std::shared_ptr<LatticeWalberla> const &lattice,
     typename EKReactionBase::reactants_type const &reactants,
     double coefficient) {
-  return std::make_shared<EKReactionImplIndexed>(lattice, reactants,
-                                                 coefficient);
+  return std::make_shared<EKReactionImplBulk<>>(lattice, reactants,
+                                                coefficient);
+}
+
+std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed_cpu(
+    std::shared_ptr<LatticeWalberla> const &lattice,
+    typename EKReactionBase::reactants_type const &reactants,
+    double coefficient) {
+  return std::make_shared<EKReactionImplIndexed<>>(lattice, reactants,
+                                                   coefficient);
 }
 
 } // namespace walberla

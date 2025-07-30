@@ -121,7 +121,7 @@ static FUNC_PREFIX __launch_bounds__(256) void reactionkernelindexed_4_single_pr
 #endif
 
 void ReactionKernelIndexed_4_single_precision_CUDA::run_impl(IBlock *block, IndexVectors::Type type, gpuStream_t stream) {
-  auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
+  auto *indexVectors = block->uncheckedFastGetData<IndexVectors>(indexVectorID);
   int32_t indexVectorSize = int32_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
     return;
@@ -130,20 +130,20 @@ void ReactionKernelIndexed_4_single_precision_CUDA::run_impl(IBlock *block, Inde
 
   uint8_t *_data_indexVector = reinterpret_cast<uint8_t *>(pointer);
 
-  auto rho_2 = block->getData<gpu::GPUField<float>>(rho_2ID);
   auto rho_0 = block->getData<gpu::GPUField<float>>(rho_0ID);
   auto rho_1 = block->getData<gpu::GPUField<float>>(rho_1ID);
+  auto rho_2 = block->getData<gpu::GPUField<float>>(rho_2ID);
   auto rho_3 = block->getData<gpu::GPUField<float>>(rho_3ID);
 
-  auto &order_1 = order_1_;
-  auto &order_3 = order_3_;
-  auto &order_0 = order_0_;
-  auto &rate_coefficient = rate_coefficient_;
   auto &stoech_1 = stoech_1_;
-  auto &order_2 = order_2_;
-  auto &stoech_2 = stoech_2_;
-  auto &stoech_0 = stoech_0_;
+  auto &order_1 = order_1_;
   auto &stoech_3 = stoech_3_;
+  auto &stoech_2 = stoech_2_;
+  auto &order_2 = order_2_;
+  auto &stoech_0 = stoech_0_;
+  auto &order_0 = order_0_;
+  auto &order_3 = order_3_;
+  auto &rate_coefficient = rate_coefficient_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   float *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()))

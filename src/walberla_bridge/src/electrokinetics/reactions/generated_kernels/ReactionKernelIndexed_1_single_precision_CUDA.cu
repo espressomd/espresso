@@ -112,7 +112,7 @@ static FUNC_PREFIX __launch_bounds__(256) void reactionkernelindexed_1_single_pr
 #endif
 
 void ReactionKernelIndexed_1_single_precision_CUDA::run_impl(IBlock *block, IndexVectors::Type type, gpuStream_t stream) {
-  auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
+  auto *indexVectors = block->uncheckedFastGetData<IndexVectors>(indexVectorID);
   int32_t indexVectorSize = int32_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
     return;
@@ -123,9 +123,9 @@ void ReactionKernelIndexed_1_single_precision_CUDA::run_impl(IBlock *block, Inde
 
   auto rho_0 = block->getData<gpu::GPUField<float>>(rho_0ID);
 
-  auto &rate_coefficient = rate_coefficient_;
-  auto &stoech_0 = stoech_0_;
   auto &order_0 = order_0_;
+  auto &stoech_0 = stoech_0_;
+  auto &rate_coefficient = rate_coefficient_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   float *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   const int64_t _stride_rho_0_0 = int64_t(rho_0->xStride());

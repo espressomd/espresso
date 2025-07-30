@@ -59,7 +59,12 @@ precision_rng = pystencils_espresso.precision_rng_modulo[double_precision]
 
 
 def patch_reaction_indexed_kernel(content: str, target_suffix) -> str:
-    if target_suffix in ["CUDA"]:
+    # replace getData with uncheckedFastGetData
+    access_slow = "block->getData<IndexVectors>(indexVectorID);"
+    access_fast = "block->uncheckedFastGetData<IndexVectors>(indexVectorID);"
+    assert access_slow in content
+    content = content.replace(access_slow, access_fast)
+    if target_suffix in ["_CUDA"]:
         # replace preprocessor macros and pragmas
         push, pop = custom_additional_extensions.generate_device_preprocessor(
             "reactions", defines=("RESTRICT",))
@@ -69,11 +74,6 @@ def patch_reaction_indexed_kernel(content: str, target_suffix) -> str:
         assert push in content
         assert pop in content
     else:
-        # replace getData with uncheckedFastGetData
-        access_slow = "block->getData<IndexVectors>(indexVectorID);"
-        access_fast = "block->uncheckedFastGetData<IndexVectors>(indexVectorID);"
-        assert access_slow in content
-        content = content.replace(access_slow, access_fast)
         # remove dummy assignment
         token = "const int32_t dummy = *((int32_t *  )(& _data_indexVector[12*ctr_0]));"
         assert token in content
