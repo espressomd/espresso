@@ -85,6 +85,18 @@ def patch_reaction_indexed_kernel(content: str, target_suffix) -> str:
     return content
 
 
+def patch_dirichlet_boundary_kernel(content: str, target_suffix) -> str:
+    if target_suffix in ["_CUDA"]:
+        # remove unused assignment
+        token = "const int32_t dir = *((int32_t *  )(& _data_indexVector_112[24*blockDim.x*blockIdx.x + 24*threadIdx.x]));"
+        content = content.replace(token, "")
+        token = "uint8_t * RESTRICT _data_indexVector_112 = _data_indexVector + 12;"
+        content = content.replace(token, "")
+        token = "const int32_t dir = *((int32_t *  )(& _data_indexVector_112[20*blockDim.x*blockIdx.x + 20*threadIdx.x]));"
+        content = content.replace(token, "")
+    return content
+
+
 def patch_diffusive_flux_elec_kernel(content):
     token = "BlockDataID phiID;\n"
     assert token in content
@@ -318,6 +330,8 @@ with code_generation_context.CodeGeneration() as ctx:
                        patch_boundary_header, processor_suffix)
         ctx.patch_file(class_name, get_ext_source(processor_suffix),
                        patch_boundary_kernel, processor_suffix)
+        ctx.patch_file(class_name, get_ext_source(processor_suffix),
+                       patch_dirichlet_boundary_kernel, processor_suffix)
 
     if "reactions" in args.kernels:
         # ek reactions

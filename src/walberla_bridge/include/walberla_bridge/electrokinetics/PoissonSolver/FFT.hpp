@@ -137,7 +137,7 @@ public:
     ghost_communication();
   }
 
-  [[nodiscard]] virtual std::optional<double>
+  [[nodiscard]] std::optional<double>
   get_node_potential(Utils::Vector3i const &node,
                      bool consider_ghosts = false) override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
@@ -168,9 +168,9 @@ public:
           auto const values = ek::accessor::Scalar::get(potential_field, *bci);
           assert(values.size() == bci->numCells());
           values_size += bci->numCells();
-          auto kernel = [&values, &out, this](unsigned const block_index,
-                                              unsigned const local_index,
-                                              Utils::Vector3i const &node) {
+          auto kernel = [&values, &out](unsigned const block_index,
+                                        unsigned const local_index,
+                                        Utils::Vector3i const &node) {
             out[local_index] = double_c(values[block_index]);
           };
 

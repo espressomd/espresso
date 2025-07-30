@@ -177,10 +177,8 @@ private:
 protected:
   // Block data access handles
   BlockDataID m_density_field_id;
-  BlockDataID m_density_field_flattened_id;
 
   BlockDataID m_flux_field_id;
-  BlockDataID m_flux_field_flattened_id;
 
   BlockDataID m_flag_field_density_id;
   BlockDataID m_flag_field_flux_id;
@@ -288,14 +286,8 @@ public:
 
     m_density_field_id =
         add_to_storage<_DensityField>("density field", FloatType_c(density));
-    // m_density_field_flattened_id =
-    //     field::addFlattenedShallowCopyToStorage<_DensityField>(
-    // blocks, m_density_field_id, "flattened density field");
     m_flux_field_id =
         add_to_storage<_FluxField>("flux field", FloatType_c(0.0));
-    // m_flux_field_flattened_id =
-    //     field::addFlattenedShallowCopyToStorage<_FluxField>(
-    //         blocks, m_flux_field_id, "flattened flux field");
 
     m_continuity =
         std::make_unique<ContinuityKernel>(m_flux_field_id, m_density_field_id);
@@ -649,9 +641,9 @@ public:
           auto const values = ek::accessor::Scalar::get(density_field, *bci);
           assert(values.size() == bci->numCells());
           values_size += bci->numCells();
-          auto kernel = [&values, &out, this](unsigned const block_index,
-                                              unsigned const local_index,
-                                              Utils::Vector3i const &node) {
+          auto kernel = [&values, &out](unsigned const block_index,
+                                        unsigned const local_index,
+                                        Utils::Vector3i const &node) {
             out[local_index] = double_c(values[block_index]);
           };
 
