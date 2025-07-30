@@ -80,7 +80,6 @@ static FUNC_PREFIX __launch_bounds__(256) void reactionkernelindexed_1_single_pr
     const int32_t cz[] = {0};
     const int32_t invdir[] = {0};
 
-    const int32_t dummy = *((int32_t *)(&_data_indexVector_10[12 * blockDim.x * blockIdx.x + 12 * threadIdx.x]));
     float *RESTRICT _data_rho_0_10_20 = _data_rho_0 + _stride_rho_0_1 * y + _stride_rho_0_2 * z;
     const float local_rho_0 = _data_rho_0_10_20[_stride_rho_0_0 * x];
     const float rate_factor = rate_coefficient * powf(local_rho_0, order_0);
@@ -123,8 +122,8 @@ void ReactionKernelIndexed_1_single_precision_CUDA::run_impl(IBlock *block, Inde
 
   auto rho_0 = block->getData<gpu::GPUField<float>>(rho_0ID);
 
-  auto &order_0 = order_0_;
   auto &stoech_0 = stoech_0_;
+  auto &order_0 = order_0_;
   auto &rate_coefficient = rate_coefficient_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   float *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);

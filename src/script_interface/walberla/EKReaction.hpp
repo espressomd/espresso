@@ -124,7 +124,9 @@ public:
   void do_construct(VariantMap const &args) override {
     m_conv_coefficient = calculate_bulk_conversion_factor(args);
     if (get_is_gpu(args)) {
+#ifdef CUDA
       m_ekreaction = make_instance(args, ::walberla::new_ek_reaction_bulk_gpu);
+#endif
     } else {
       m_ekreaction = make_instance(args, ::walberla::new_ek_reaction_bulk_cpu);
     }
@@ -153,8 +155,10 @@ public:
     auto const agrid = get_agrid(args);
     m_conv_coefficient = calculate_bulk_conversion_factor(args) / agrid;
     if (get_is_gpu(args)) {
+#ifdef CUDA
       m_ekreaction_impl =
           make_instance(args, ::walberla::new_ek_reaction_indexed_gpu);
+#endif
     } else {
       m_ekreaction_impl =
           make_instance(args, ::walberla::new_ek_reaction_indexed_cpu);

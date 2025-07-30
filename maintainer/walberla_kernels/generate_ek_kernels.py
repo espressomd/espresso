@@ -73,6 +73,10 @@ def patch_reaction_indexed_kernel(content: str, target_suffix) -> str:
         content = re.sub(r"#ifdef __CUDACC__[\s\S]+?#endif(?=\n\n|\n//)", pop, content, 1)  # nopep8
         assert push in content
         assert pop in content
+        # remove dummy assignment
+        token = "const int32_t dummy = *((int32_t *  )(& _data_indexVector_10[12*blockDim.x*blockIdx.x + 12*threadIdx.x]));"
+        assert token in content
+        content = content.replace(token, "")
     else:
         # remove dummy assignment
         token = "const int32_t dummy = *((int32_t *  )(& _data_indexVector[12*ctr_0]));"
