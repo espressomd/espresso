@@ -415,9 +415,7 @@ class EKSpecies(ScriptInterfaceHelper,
 @script_interface_register
 class EKSpeciesGPU(EKSpecies):
     """
-    Initialize the lattice-Boltzmann method for hydrodynamic flow using
-    waLBerla for the GPU. See :class:`HydrodynamicInteraction` for the
-    list of parameters.
+    GPU implementation of the `EKSpecies`
 
     """
     _so_name = "walberla::EKSpeciesGPU"
