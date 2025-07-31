@@ -134,6 +134,7 @@ class EKTestWalberlaSinglePrecision(EKEOF, ut.TestCase):
     rtol = 5e-6
 
 
+@utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 class EKTestWalberlaGPU(EKEOF, ut.TestCase):
 
@@ -146,6 +147,7 @@ class EKTestWalberlaGPU(EKEOF, ut.TestCase):
     rtol = 5e-12
 
 
+@utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 class EKTestWalberlaSinglePrecisionGPU(EKEOF, ut.TestCase):
 

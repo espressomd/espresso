@@ -155,7 +155,7 @@ class EKBoundariesBase:
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKBoundariesWalberla(EKBoundariesBase, ut.TestCase):
 
-    """Test for the Walberla implementation of the LB in double-precision."""
+    """Test for the Walberla implementation of the EK in double-precision."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
@@ -165,10 +165,32 @@ class EKBoundariesWalberla(EKBoundariesBase, ut.TestCase):
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKBoundariesWalberlaSinglePrecision(EKBoundariesBase, ut.TestCase):
 
-    """Test for the Walberla implementation of the LB in single-precision."""
+    """Test for the Walberla implementation of the EK in single-precision."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKBoundariesWalberlaGPU(EKBoundariesBase, ut.TestCase):
+
+    """Test for the Walberla implementation of the EK in double-precision on the GPU."""
+
+    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+    ek_params = {"single_precision": False}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKBoundariesWalberlaSinglePrecisionGPU(EKBoundariesBase, ut.TestCase):
+
+    """Test for the Walberla implementation of the EK in single-precision on the GPU."""
+
+    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
     ek_params = {"single_precision": True}
 
 
