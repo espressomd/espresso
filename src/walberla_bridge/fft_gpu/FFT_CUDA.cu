@@ -105,7 +105,10 @@ auto to_array(Utils::Vector<T, N> const &vec) {
 template <typename FloatType>
 FFT_CUDA<FloatType>::FFT_CUDA(std::shared_ptr<LatticeWalberla> lattice,
                               double permittivity)
-    : m_lattice(std::move(lattice)), m_permittivity(permittivity) {
+    : m_lattice(std::move(lattice)), m_permittivity(permittivity),
+      kernel_greens(gpu::make_kernel(
+          multiply_by_greens_function<FloatType, ComplexType>)),
+      kernel_move_fields(gpu::make_kernel(move_field<FloatType>)) {
   m_blocks = get_lattice().get_blocks();
 
   m_potential_field_id = gpu::addGPUFieldToStorage<PotentialField>(
@@ -145,6 +148,30 @@ FFT_CUDA<FloatType>::FFT_CUDA(std::shared_ptr<LatticeWalberla> lattice,
   kernel.addParam(dim[1]);
   kernel.addParam(dim[2]);
   kernel();
+
+  for (auto &block : *get_lattice().get_blocks()) {
+    auto potential =
+        block.template getData<PotentialField>(m_potential_field_id);
+    auto potential_ghosts = block.template getData<PotentialField>(
+        m_potential_field_with_ghosts_id);
+    auto green =
+        block.template getData<GreenFunctionField>(m_greens_function_field_id);
+    auto furier =
+        block.template getData<PotentialFurier>(m_potential_furier_id);
+
+    kernel_greens =
+        gpu::make_kernel(multiply_by_greens_function<FloatType, ComplexType>);
+    kernel_greens.addFieldIndexingParam(
+        gpu::FieldIndexing<ComplexType>::allInner(*furier));
+    kernel_greens.addFieldIndexingParam(
+        gpu::FieldIndexing<FloatType>::allInner(*green));
+
+    kernel_move_fields = gpu::make_kernel(move_field<FloatType>);
+    kernel_move_fields.addFieldIndexingParam(
+        gpu::FieldIndexing<FloatType>::xyz(*potential_ghosts));
+    kernel_move_fields.addFieldIndexingParam(
+        gpu::FieldIndexing<FloatType>::xyz(*potential));
+  }
 
   m_full_communication =
       std::make_shared<FullCommunicator>(get_lattice().get_blocks());
@@ -201,27 +228,12 @@ template <typename FloatType> void FFT_CUDA<FloatType>::solve() {
         block.template getData<PotentialFurier>(m_potential_furier_id);
     FloatType *_data_potential = potential->dataAt(0, 0, 0, 0);
     ComplexType *_data_furier = furier->dataAt(0, 0, 0, 0);
-
-    auto kernel =
-        gpu::make_kernel(multiply_by_greens_function<FloatType, ComplexType>);
-    kernel.addFieldIndexingParam(
-        gpu::FieldIndexing<ComplexType>::allInner(*furier));
-    kernel.addFieldIndexingParam(
-        gpu::FieldIndexing<FloatType>::allInner(*green));
-
     heffte->m_fft->forward(_data_potential, _data_furier,
                            heffte->m_buffer->data());
-    kernel();
+    kernel_greens();
     heffte->m_fft->backward(_data_furier, _data_potential,
                             heffte->m_buffer->data());
-
-    auto move_kernel = gpu::make_kernel(move_field<FloatType>);
-    move_kernel.addFieldIndexingParam(
-        gpu::FieldIndexing<FloatType>::xyz(*potential_ghosts));
-    move_kernel.addFieldIndexingParam(
-        gpu::FieldIndexing<FloatType>::xyz(*potential));
-    move_kernel();
-
+    kernel_move_fields();
     ghost_communication();
   }
 }

@@ -1,7 +1,9 @@
 #pragma once
 
 #include <gpu/AddGPUFieldToStorage.h>
+#include <gpu/FieldAccessor.h>
 #include <gpu/GPUField.h>
+#include <gpu/Kernel.h>
 #include <gpu/communication/MemcpyPackInfo.h>
 #include <gpu/communication/UniformGPUScheme.h>
 
@@ -27,6 +29,12 @@ private:
     return numeric_cast<FloatType>(t);
   }
 
+  using ComplexType = std::conditional<std::is_same<FloatType, float>::value,
+                                       cufftComplex, cufftDoubleComplex>::type;
+  using PotentialField = gpu::GPUField<FloatType>;
+  using GreenFunctionField = gpu::GPUField<FloatType>;
+  using PotentialFurier = gpu::GPUField<ComplexType>;
+
   std::shared_ptr<LatticeWalberla> m_lattice;
   double m_permittivity;
 
@@ -34,12 +42,12 @@ private:
   walberla::BlockDataID m_potential_field_with_ghosts_id;
   walberla::BlockDataID m_greens_function_field_id;
   walberla::BlockDataID m_potential_furier_id;
-
-  using ComplexType = std::conditional<std::is_same<FloatType, float>::value,
-                                       cufftComplex, cufftDoubleComplex>::type;
-  using PotentialField = gpu::GPUField<FloatType>;
-  using GreenFunctionField = gpu::GPUField<FloatType>;
-  using PotentialFurier = gpu::GPUField<ComplexType>;
+  walberla::gpu::Kernel<void (*)(walberla::gpu::FieldAccessor<ComplexType>,
+                                 walberla::gpu::FieldAccessor<FloatType>)>
+      kernel_greens;
+  walberla::gpu::Kernel<void (*)(walberla::gpu::FieldAccessor<FloatType>,
+                                 walberla::gpu::FieldAccessor<FloatType>)>
+      kernel_move_fields;
 
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
   std::shared_ptr<heffte_container> heffte;
