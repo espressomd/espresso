@@ -97,8 +97,10 @@ class EKinWalberlaImpl : public EKinWalberlaBase {
   using FixedFlux =
       typename detail::KernelTrait<FloatType, Architecture>::FixedFlux;
 
-  using BoundaryModelDensity = BoundaryHandling<FloatType, FloatType, Dirichlet>;
-  using BoundaryModelFlux = BoundaryHandling<FloatType, Vector3<FloatType>, FixedFlux>;
+  using BoundaryModelDensity =
+      BoundaryHandling<FloatType, FloatType, Dirichlet>;
+  using BoundaryModelFlux =
+      BoundaryHandling<FloatType, Vector3<FloatType>, FixedFlux>;
 
 public:
   /** @brief Stencil for collision and streaming operations. */
@@ -485,9 +487,8 @@ private:
   }
 
   void kernel_advection(std::size_t const velocity_id) {
-    auto kernel =
-        AdvectiveFluxKernel(m_flux_field_id, m_density_field_id,
-                            BlockDataID(velocity_id));
+    auto kernel = AdvectiveFluxKernel(m_flux_field_id, m_density_field_id,
+                                      BlockDataID(velocity_id));
     for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
@@ -495,10 +496,9 @@ private:
 
   void kernel_friction_coupling(std::size_t const force_id,
                                 double const lb_density) {
-    auto kernel =
-        FrictionCouplingKernel(BlockDataID(force_id), m_flux_field_id,
-                               FloatType_c(get_diffusion()),
-                               FloatType_c(get_kT()), FloatType(lb_density));
+    auto kernel = FrictionCouplingKernel(
+        BlockDataID(force_id), m_flux_field_id, FloatType_c(get_diffusion()),
+        FloatType_c(get_kT()), FloatType(lb_density));
     for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
