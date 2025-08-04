@@ -60,7 +60,7 @@ tutorial_test(FILE test_widom_insertion.py)
 tutorial_test(FILE test_grand_canonical_monte_carlo.py)
 
 add_custom_target(
-  check_tutorials
+  check_tutorials JOB_POOL console
   COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
           ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 

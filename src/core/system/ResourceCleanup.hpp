@@ -113,9 +113,8 @@ public:
     };
     using Deallocator = decltype(deallocator);
     static_assert(std::is_member_function_pointer_v<Deallocator>);
-    using Container =
-        typename detail::template get_class_from_member_function_pointer<
-            Deallocator>::type;
+    using Container = detail::template get_class_from_member_function_pointer<
+        Deallocator>::type;
     static_assert(std::is_invocable_v<Deallocator, Container>,
                   "deallocator must have signature void(S::*)()");
     static_assert(

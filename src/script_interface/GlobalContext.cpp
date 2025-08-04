@@ -115,7 +115,7 @@ GlobalContext::make_shared(std::string const &name,
           }};
 }
 
-boost::string_ref GlobalContext::name(const ObjectHandle *o) const {
+std::string_view GlobalContext::name(const ObjectHandle *o) const {
   assert(o);
 
   return m_node_local_context->factory().type_name(*o);

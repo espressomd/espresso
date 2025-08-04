@@ -32,9 +32,12 @@
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "lees_edwards/lees_edwards.hpp"
+#include "particle_reduction.hpp"
 #include "system/System.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/contains.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/variant.hpp>
@@ -45,6 +48,7 @@
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -113,9 +117,8 @@ void CellStructure::remove_particle(int id) {
     }
   };
 
-  for (auto c : decomposition().local_cells()) {
-    auto &parts = c->particles();
-
+  for (auto cell : decomposition().local_cells()) {
+    auto &parts = cell->particles();
     for (auto it = parts.begin(); it != parts.end();) {
       if (it->id() == id) {
         it = parts.erase(it);
@@ -132,7 +135,6 @@ void CellStructure::remove_particle(int id) {
 Particle *CellStructure::add_local_particle(Particle &&p) {
   auto const sort_cell = particle_to_cell(p);
   if (sort_cell) {
-
     return std::addressof(
         append_indexed_particle(sort_cell->particles(), std::move(p)));
   }
@@ -155,15 +157,15 @@ Particle *CellStructure::add_particle(Particle &&p) {
 }
 
 int CellStructure::get_max_local_particle_id() const {
-  auto it = std::find_if(m_particle_index.rbegin(), m_particle_index.rend(),
-                         [](const Particle *p) { return p != nullptr; });
+  auto it = std::ranges::find_if(std::ranges::views::reverse(m_particle_index),
+                                 [](auto const *p) { return p != nullptr; });
 
   return (it != m_particle_index.rend()) ? (*it)->id() : -1;
 }
 
 void CellStructure::remove_all_particles() {
-  for (auto c : decomposition().local_cells()) {
-    c->particles().clear();
+  for (auto cell : decomposition().local_cells()) {
+    cell->particles().clear();
   }
 
   m_particle_index.clear();
@@ -349,3 +351,21 @@ void CellStructure::parallel_for_each_particle_impl(
   }
 }
 #endif // SHARED_MEMORY_PARALLELISM
+
+bool CellStructure::check_resort_required(
+    Utils::Vector3d const &additional_offset) const {
+  auto const lim = Utils::sqr(m_verlet_skin / 2.) - additional_offset.norm2();
+
+  Reduction::AddPartialResultKernel<bool> add_partial = [lim](Particle const &p,
+                                                              bool &result) {
+    if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim) {
+      result = true;
+    }
+  };
+
+  Reduction::ReductionOp<bool> reduce_op = [](bool &acc, bool const &val) {
+    acc |= val;
+  };
+
+  return reduce_over_local_particles(*this, add_partial, reduce_op);
+}

@@ -114,7 +114,6 @@ class RegularDecomposition(ut.TestCase):
         if system.cell_system.node_grid[1] != 1:
             ng = system.cell_system.node_grid
             system.cell_system.node_grid = [ng[0], 1, ng[2] * ng[1]]
-        system.periodic = [True] * 3
         # Check that it's initially disabled
         self.assertEqual(system.cell_system.get_params()[
                          "fully_connected_boundary"], None)

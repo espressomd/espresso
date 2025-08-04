@@ -38,14 +38,13 @@ using Cell = Testing::Cell<Particle>;
 
 std::vector<std::unique_ptr<Cell>> make_cells(std::size_t n) {
   std::vector<std::unique_ptr<Cell>> cells(n);
-  std::generate(cells.begin(), cells.end(),
-                []() { return std::make_unique<Cell>(); });
+  std::ranges::generate(cells, []() { return std::make_unique<Cell>(); });
   return cells;
 }
 
 BOOST_AUTO_TEST_CASE(completeness) {
   using cells_t = std::vector<std::unique_ptr<Cell>>;
-  using iterator = ParticleIterator<typename cells_t::iterator>;
+  using iterator = ParticleIterator<cells_t::iterator>;
 
   auto const n_part = 123456;
   auto cells = make_cells(1000);
@@ -71,7 +70,7 @@ BOOST_AUTO_TEST_CASE(completeness) {
 
 BOOST_AUTO_TEST_CASE(skip_empty) {
   using cells_t = std::vector<std::unique_ptr<Cell>>;
-  using iterator = ParticleIterator<typename cells_t::iterator>;
+  using iterator = ParticleIterator<cells_t::iterator>;
   auto cells = make_cells(3);
 
   cells[0]->part.emplace_back(0);
@@ -86,7 +85,7 @@ BOOST_AUTO_TEST_CASE(skip_empty) {
 
 BOOST_AUTO_TEST_CASE(order) {
   using cells_t = std::vector<std::unique_ptr<Cell>>;
-  using iterator = ParticleIterator<typename cells_t::iterator>;
+  using iterator = ParticleIterator<cells_t::iterator>;
   auto const n_cells = 10;
 
   auto cells = make_cells(n_cells);
@@ -111,7 +110,7 @@ BOOST_AUTO_TEST_CASE(order) {
 
 BOOST_AUTO_TEST_CASE(distance_overload) {
   using cells_t = std::vector<std::unique_ptr<Cell>>;
-  using iterator = ParticleIterator<typename cells_t::iterator>;
+  using iterator = ParticleIterator<cells_t::iterator>;
   auto const n_cells = 10;
 
   auto cells = make_cells(n_cells);
@@ -131,7 +130,7 @@ BOOST_AUTO_TEST_CASE(distance_overload) {
 
 BOOST_AUTO_TEST_CASE(empty_range_) {
   using cells_t = std::vector<std::unique_ptr<Cell>>;
-  using iterator = ParticleIterator<typename cells_t::iterator>;
+  using iterator = ParticleIterator<cells_t::iterator>;
 
   auto cells = make_cells(0);
 

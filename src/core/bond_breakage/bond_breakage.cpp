@@ -192,7 +192,7 @@ void BondBreakage::process_queue_impl(System::System &system) {
   ActionSet actions = {};
   for (auto const &e : global_queue) {
     // Retrieve relevant breakage spec
-    assert(breakage_specs.count(e.bond_type) != 0);
+    assert(breakage_specs.contains(e.bond_type));
     auto const &spec = breakage_specs.at(e.bond_type);
     actions.merge(actions_for_breakage(cell_structure, e, *spec));
   }

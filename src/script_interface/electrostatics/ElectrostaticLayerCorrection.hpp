@@ -100,7 +100,7 @@ public:
         return;
       }
       throw std::invalid_argument("Parameter 'actor' of type " +
-                                  so_ptr->name().to_string() +
+                                  std::string{so_ptr->name()} +
                                   " isn't supported by ELC");
     });
     context()->parallel_try_catch([&]() {

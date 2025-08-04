@@ -30,9 +30,8 @@ namespace ScriptInterface {
  * specialization of @ref AutoParameters.
  */
 template <template <typename...> class Container, typename ManagedType,
-          class BaseType,
-          class =
-              std::enable_if_t<std::is_base_of_v<ObjectHandle, ManagedType>>>
+          class BaseType>
+  requires std::is_base_of_v<ObjectHandle, ManagedType>
 using ObjectContainer = std::conditional_t<
     std::is_same_v<BaseType, ObjectHandle>,
     AutoParameters<Container<ManagedType, BaseType>, BaseType>, BaseType>;

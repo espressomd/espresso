@@ -158,7 +158,8 @@ void Propagation::update_default_propagation(int thermo_switch) {
     break;
   }
 #ifdef NPT
-  case INTEG_METHOD_NPT_ISO:
+  case INTEG_METHOD_NPT_ISO_AND:
+  case INTEG_METHOD_NPT_ISO_MTK:
     default_propagation = PropagationMode::TRANS_LANGEVIN_NPT;
     break;
 #endif
@@ -316,26 +317,6 @@ static void resort_particles_if_needed(System::System &system) {
   }
 }
 
-void System::System::thermostat_force_init() {
-  auto const &propagation = *this->propagation;
-  if ((not thermostat->langevin) or ((propagation.used_propagations &
-                                      (PropagationMode::TRANS_LANGEVIN |
-                                       PropagationMode::ROT_LANGEVIN)) == 0)) {
-    return;
-  }
-  auto const &langevin = *thermostat->langevin;
-  auto const kT = thermostat->kT;
-  cell_structure->for_each_local_particle([&](Particle &p) {
-    if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
-      p.force() += friction_thermo_langevin(langevin, p, time_step, kT);
-#ifdef ROTATION
-    if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
-      p.torque() += convert_vector_body_to_space(
-          p, friction_thermo_langevin_rotation(langevin, p, time_step, kT));
-#endif
-  });
-}
-
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */
@@ -381,8 +362,15 @@ static bool integrator_step_1(CellStructure &cell_structure,
   if ((propagation.used_propagations & PropagationMode::TRANS_LANGEVIN_NPT) and
       (propagation.default_propagation & PropagationMode::TRANS_LANGEVIN_NPT)) {
     auto pred = PropagationPredicateNPT(propagation.default_propagation);
-    velocity_verlet_npt_step_1(cell_structure.local_particles().filter(pred),
-                               *thermostat.npt_iso, time_step, system);
+    if (propagation.integ_switch == INTEG_METHOD_NPT_ISO_AND) {
+      velocity_verlet_npt_Andersen_step_1(
+          cell_structure.local_particles().filter(pred), *thermostat.npt_iso,
+          time_step, system);
+    } else if (propagation.integ_switch == INTEG_METHOD_NPT_ISO_MTK) {
+      velocity_verlet_npt_MTK_step_1(
+          cell_structure.local_particles().filter(pred), *thermostat.npt_iso,
+          time_step, system);
+    }
   }
 #endif
 
@@ -432,8 +420,13 @@ static void integrator_step_2(CellStructure &cell_structure,
   if ((propagation.used_propagations & PropagationMode::TRANS_LANGEVIN_NPT) and
       (propagation.default_propagation & PropagationMode::TRANS_LANGEVIN_NPT)) {
     auto pred = PropagationPredicateNPT(propagation.default_propagation);
-    velocity_verlet_npt_step_2(cell_structure.local_particles().filter(pred),
-                               time_step, system);
+    if (propagation.integ_switch == INTEG_METHOD_NPT_ISO_AND) {
+      velocity_verlet_npt_Andersen_step_2(
+          cell_structure.local_particles().filter(pred), time_step, system);
+    } else if (propagation.integ_switch == INTEG_METHOD_NPT_ISO_MTK) {
+      velocity_verlet_npt_MTK_step_2(
+          cell_structure.local_particles().filter(pred), time_step, system);
+    }
   }
 #endif
 }
@@ -550,7 +543,8 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     }
 
 #ifdef NPT
-    if (propagation.integ_switch != INTEG_METHOD_NPT_ISO)
+    if ((propagation.integ_switch != INTEG_METHOD_NPT_ISO_AND) &&
+        (propagation.integ_switch != INTEG_METHOD_NPT_ISO_MTK))
 #endif
     {
       resort_particles_if_needed(*this);
@@ -569,7 +563,8 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #ifdef VIRTUAL_SITES_RELATIVE
     if (has_vs_rel()) {
 #ifdef NPT
-      if (propagation.integ_switch == INTEG_METHOD_NPT_ISO) {
+      if ((propagation.integ_switch == INTEG_METHOD_NPT_ISO_AND) or
+          (propagation.integ_switch == INTEG_METHOD_NPT_ISO_MTK)) {
         cell_structure->update_ghosts_and_resort_particle(
             Cells::DATA_PART_PROPERTIES);
       }
@@ -705,7 +700,8 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   cell_structure->update_verlet_stats(n_steps, n_verlet_updates);
 
 #ifdef NPT
-  if (propagation.integ_switch == INTEG_METHOD_NPT_ISO) {
+  if ((propagation.integ_switch == INTEG_METHOD_NPT_ISO_AND) or
+      (propagation.integ_switch == INTEG_METHOD_NPT_ISO_MTK)) {
     synchronize_npt_state();
   }
 #endif

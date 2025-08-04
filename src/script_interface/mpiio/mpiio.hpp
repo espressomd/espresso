@@ -31,6 +31,7 @@
 #include "core/io/mpiio/mpiio.hpp"
 #include "core/system/System.hpp"
 
+#include <filesystem>
 #include <memory>
 #include <string>
 
@@ -50,7 +51,7 @@ public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &parameters) override {
 
-    auto prefix = get_value<std::string>(parameters.at("prefix"));
+    auto prefix = get_value<std::filesystem::path>(parameters.at("prefix"));
     auto pos = get_value<bool>(parameters.at("pos"));
     auto vel = get_value<bool>(parameters.at("vel"));
     auto typ = get_value<bool>(parameters.at("typ"));
@@ -66,14 +67,14 @@ public:
       auto &system = system_si->get_system();
       auto &cell_structure = *system.cell_structure;
       auto &bonded_ias = *system.bonded_ias;
-      Mpiio::mpi_mpiio_common_write(prefix, fields, bonded_ias,
+      Mpiio::mpi_mpiio_common_write(prefix.string(), fields, bonded_ias,
                                     cell_structure.local_particles(),
                                     *m_buffers);
     } else if (name == "read") {
       auto const system_si = m_system.lock();
       auto &system = system_si->get_system();
       auto &cell_structure = *system.cell_structure;
-      Mpiio::mpi_mpiio_common_read(prefix, fields, cell_structure);
+      Mpiio::mpi_mpiio_common_read(prefix.string(), fields, cell_structure);
     }
 
     return {};

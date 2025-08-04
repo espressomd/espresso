@@ -19,38 +19,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef UTILS_MATH_INT_POW_HPP
-#define UTILS_MATH_INT_POW_HPP
+#pragma once
 
 #include "utils/device_qualifier.hpp"
 
-#include <type_traits>
-
 namespace Utils {
-namespace detail {
-template <class T, unsigned n, class = void> struct int_pow_impl {
-  DEVICE_QUALIFIER constexpr T operator()(T x) const {
-    return x * int_pow_impl<T, (n - 1) / 2>{}(x * x);
-  }
-};
-
-/* Specialization for n even */
-template <class T, unsigned n>
-struct int_pow_impl<T, n, std::enable_if_t<n % 2 == 0>> {
-  DEVICE_QUALIFIER constexpr T operator()(T x) const {
-    return int_pow_impl<T, n / 2>{}(x * x);
-  }
-};
-
-template <class T> struct int_pow_impl<T, 1> {
-  DEVICE_QUALIFIER constexpr T operator()(T x) const { return x; }
-};
-
-template <class T> struct int_pow_impl<T, 0> {
-  DEVICE_QUALIFIER constexpr T operator()(T) const { return T{1}; }
-};
-} // namespace detail
-
 /**
  * \brief Calculate integer powers.
  * This functions calculates x^n, where
@@ -59,8 +32,15 @@ template <class T> struct int_pow_impl<T, 0> {
  * squaring to construct an efficient function.
  */
 template <unsigned n, typename T> DEVICE_QUALIFIER constexpr T int_pow(T x) {
-  return detail::int_pow_impl<T, n>{}(x);
+  if constexpr (n == 0) {
+    return T{1};
+  }
+  if constexpr (n == 1) {
+    return x;
+  }
+  if constexpr (n % 2 == 0) {
+    return int_pow<n / 2, T>(x * x);
+  }
+  return x * int_pow<(n - 1) / 2, T>(x * x);
 }
 } // namespace Utils
-
-#endif

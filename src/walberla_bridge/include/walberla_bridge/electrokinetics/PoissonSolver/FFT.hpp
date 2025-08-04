@@ -50,8 +50,8 @@ private:
   std::shared_ptr<fft::FourierTransform<PotentialField>> m_ft;
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
 
-  using FullCommunicator = blockforest::communication::UniformBufferedScheme<
-      typename stencil::D3Q27>;
+  using FullCommunicator =
+      blockforest::communication::UniformBufferedScheme<stencil::D3Q27>;
   std::shared_ptr<FullCommunicator> m_full_communication;
 
 public:

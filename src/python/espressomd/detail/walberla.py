@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
+import pathlib
 import itertools
 import numpy as np
 
@@ -91,9 +91,10 @@ class LatticeWalberla(ScriptInterfaceHelper):
 class LatticeModel:
 
     def save_checkpoint(self, path, binary):
-        tmp_path = path + ".__tmp__"
+        path = pathlib.Path(path)
+        tmp_path = path.with_suffix(path.suffix + ".tmp")
         self.call_method("save_checkpoint", path=tmp_path, mode=int(binary))
-        os.rename(tmp_path, path)
+        tmp_path.rename(path)
 
     def load_checkpoint(self, path, binary):
         return self.call_method("load_checkpoint", path=path, mode=int(binary))

@@ -179,6 +179,25 @@ struct LongRangeEnergy {
 #endif
 };
 
+#ifdef DIPOLE_FIELD_TRACKING
+struct LongRangeField {
+  ParticleRange const &m_particles;
+  explicit LongRangeField(ParticleRange const &particles)
+      : m_particles(particles) {}
+
+  void operator()(std::shared_ptr<DipolarDirectSum> const &actor) const {
+    actor->dipole_field_at_part(m_particles);
+  }
+
+  template <typename T>
+    requires(not traits::has_dipole_fields<T>::value)
+  void operator()(std::shared_ptr<T> const &) const {
+    runtimeErrorMsg() << "Dipoles field calculation not implemented by "
+                      << "dipolar method " << Utils::demangle<T>();
+  }
+};
+#endif
+
 void Solver::calc_pressure_long_range() const {
   if (impl->solver) {
     runtimeWarningMsg() << "pressure calculated, but pressure not implemented.";

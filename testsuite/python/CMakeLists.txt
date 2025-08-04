@@ -266,7 +266,7 @@ python_test(FILE constant_pH_stats.py MAX_NUM_PROC 4 LABELS long)
 python_test(FILE canonical_ensemble.py MAX_NUM_PROC 2)
 python_test(FILE writevtf.py MAX_NUM_PROC 4)
 # python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 4 GPU_SLOTS 1 LABELS long)
-python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 GPU_SLOTS 3 LABELS long)
+python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS long)
 python_test(FILE ek_fluctuations.py MAX_NUM_PROC 2)
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE integrator_langevin_stats.py MAX_NUM_PROC 1 LABELS long)
@@ -350,6 +350,7 @@ python_test(FILE oif_volume_conservation.py MAX_NUM_PROC 2)
 python_test(FILE simple_pore.py MAX_NUM_PROC 1)
 python_test(FILE field_test.py MAX_NUM_PROC 1)
 python_test(FILE lb_boundary.py MAX_NUM_PROC 2 GPU_SLOTS 1)
+python_test(FILE lb_boundary.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
 python_test(FILE lb_streaming.py MAX_NUM_PROC 4 GPU_SLOTS 0)
 python_test(FILE lb_streaming.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
 python_test(FILE lb_shear.py MAX_NUM_PROC 2 GPU_SLOTS 1)
@@ -436,6 +437,7 @@ add_custom_target(
 
 add_custom_target(
   check_python_parallel_odd
+  JOB_POOL console
   COMMAND
     ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -L parallel_odd
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}
@@ -443,6 +445,7 @@ add_custom_target(
 add_dependencies(check_python_parallel_odd pypresso python_test_data)
 add_custom_target(
   check_python_gpu
+  JOB_POOL console
   COMMAND
     ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -L gpu
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}
@@ -451,6 +454,7 @@ add_dependencies(check_python_gpu pypresso python_test_data)
 
 add_custom_target(
   check_python_skip_long
+  JOB_POOL console
   COMMAND
     ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -LE long
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}
@@ -459,6 +463,7 @@ add_dependencies(check_python_skip_long pypresso python_test_data)
 
 add_custom_target(
   check_python
+  JOB_POOL console
   COMMAND
     ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}

@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_PARTICLE_ITERATOR_HPP
-#define ESPRESSO_SRC_CORE_PARTICLE_ITERATOR_HPP
+
+#pragma once
 
 #include <boost/iterator/iterator_facade.hpp>
 
@@ -32,8 +32,8 @@ using particle_iterator_t =
     decltype((*std::declval<CellIterator>())->particles().begin());
 /* Detect the particle type for a given cell iterator type. */
 template <class CellIterator>
-using particle_t = typename std::iterator_traits<
-    particle_iterator_t<CellIterator>>::value_type;
+using particle_t =
+    std::iterator_traits<particle_iterator_t<CellIterator>>::value_type;
 } // namespace detail
 
 template <typename BidirectionalIterator>
@@ -62,8 +62,8 @@ public:
       : m_cell(end), m_end(end), m_part() {}
 
 private:
-  friend typename base_type::difference_type
-  distance(ParticleIterator const &begin, ParticleIterator const &end) {
+  friend base_type::difference_type distance(ParticleIterator const &begin,
+                                             ParticleIterator const &end) {
     if (begin == end)
       return 0;
 
@@ -107,5 +107,3 @@ private:
 
   auto &dereference() const { return *m_part; }
 };
-
-#endif

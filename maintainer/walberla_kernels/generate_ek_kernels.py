@@ -78,6 +78,7 @@ flux_count: int = 3 ** dim // 2
 diffusion = ps.TypedSymbol("D", data_type_np)
 kT = ps.TypedSymbol("kT", data_type_np)
 valency = ps.TypedSymbol("z", data_type_np)
+lb_density = ps.TypedSymbol("rho_lb", data_type_np)
 ext_efield = [ps.TypedSymbol(f"f_ext_{i}", data_type_np) for i in range(dim)]
 
 density_field, potential_field, velocity_field, force_field = ps.fields(
@@ -93,6 +94,7 @@ ek = ekin.EK(
     flux_field=flux_field,
     diffusion=diffusion,
     kT=kT,
+    lb_density=lb_density,
     velocity_field=velocity_field,
     force_field=force_field,
     potential_field=None,

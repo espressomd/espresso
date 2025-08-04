@@ -43,7 +43,7 @@ benchmark_test(FILE test_ferrofluid.py)
 benchmark_test(FILE test_mc_acid_base_reservoir.py)
 
 add_custom_target(
-  check_benchmarks
+  check_benchmarks JOB_POOL console
   COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
           ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 

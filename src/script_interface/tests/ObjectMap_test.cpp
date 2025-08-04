@@ -86,9 +86,9 @@ BOOST_AUTO_TEST_CASE(erasing_elements) {
   ObjectMapImpl map;
   auto const key = map.insert(e);
   map.erase(key);
-  BOOST_CHECK(map.elements().count(key) == 0);
+  BOOST_CHECK(not map.elements().contains(key));
   // And is removed from the core
-  BOOST_CHECK(map.mock_core.count(key) == 0);
+  BOOST_CHECK(not map.mock_core.contains(key));
 }
 
 BOOST_AUTO_TEST_CASE(clearing_elements) {

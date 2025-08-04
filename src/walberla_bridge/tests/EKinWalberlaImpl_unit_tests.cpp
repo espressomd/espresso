@@ -544,11 +544,12 @@ BOOST_AUTO_TEST_CASE(ek_exceptions) {
   auto ek = std::make_shared<walberla::EKinWalberlaImpl<>>(
       params.lattice, params.diffusion, 0., params.valency, params.ext_efield,
       params.density, params.advection, params.friction_coupling, false, 0u);
-  BOOST_CHECK_THROW(ek->integrate(std::size_t{}, std::size_t{}, std::size_t{}),
-                    std::runtime_error);
+  BOOST_CHECK_THROW(
+      ek->integrate(std::size_t{}, std::size_t{}, std::size_t{}, 0.),
+      std::runtime_error);
   // no diffusion leads to early exit
   ek->set_diffusion(0.);
-  ek->integrate(std::size_t{}, std::size_t{}, std::size_t{});
+  ek->integrate(std::size_t{}, std::size_t{}, std::size_t{}, 0.);
 }
 
 int main(int argc, char **argv) {

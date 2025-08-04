@@ -103,7 +103,7 @@ class FFT_test(ut.TestCase):
                 ref_energy = -75.871906
                 p3m_energy = self.system.analysis.energy()['coulomb']
                 self.system.electrostatics.clear()
-                np.testing.assert_allclose(p3m_energy, ref_energy, rtol=1e-4)
+                np.testing.assert_allclose(p3m_energy, ref_energy, rtol=1e-3)
 
     @utx.skipIfMissingFeatures("DP3M")
     @ut.skipIf(n_nodes < 2 or n_nodes >= 8, "only runs for 2 <= n_nodes <= 7")

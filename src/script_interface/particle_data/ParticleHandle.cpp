@@ -77,6 +77,36 @@ static void particle_checks(int p_id, Utils::Vector3d const &pos) {
 #endif // __FAST_MATH__
 }
 
+#ifdef ROTATION
+static auto const contradicting_arguments_quat = std::vector<
+    std::array<std::string, 3>>{{
+    {{"dip", "dipm",
+      "Setting 'dip' is sufficient as it defines the scalar dipole moment."}},
+    {{"quat", "director",
+      "Setting 'quat' is sufficient as it defines the director."}},
+    {{"dip", "quat",
+      "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."}},
+    {{"dip", "director",
+      "Setting 'dip' would overwrite 'director'. Set 'director' and "
+      "'dipm' instead."}},
+}};
+
+static void sanity_checks_rotation(VariantMap const &params) {
+  // if we are not constructing a particle from a checkpoint file,
+  // check the quaternion is not accidentally set twice by the user
+  if (not params.contains("__cpt_sentinel")) {
+    auto formatter =
+        boost::format("Contradicting particle attributes: '%s' and '%s'. %s");
+    for (auto const &[prop1, prop2, reason] : contradicting_arguments_quat) {
+      if (params.contains(prop1) and params.contains(prop2)) {
+        auto const err_msg = boost::str(formatter % prop1 % prop2 % reason);
+        throw std::invalid_argument(err_msg);
+      }
+    }
+  }
+}
+#endif // ROTATION
+
 static uint8_t bitfield_from_flag(Utils::Vector3i const &flag) {
   auto bitfield = static_cast<uint8_t>(0u);
   if (flag[0])
@@ -478,10 +508,10 @@ ParticleHandle::ParticleHandle() {
            ParticleParametersSwimming swim{};
            swim.swimming = true;
            auto const dict = get_value<VariantMap>(value);
-           if (dict.count("f_swim") != 0) {
+           if (dict.contains("f_swim")) {
              swim.f_swim = get_value<double>(dict.at("f_swim"));
            }
-           if (dict.count("is_engine_force_on_fluid") != 0) {
+           if (dict.contains("is_engine_force_on_fluid")) {
              auto const is_engine_force_on_fluid =
                  get_value<bool>(dict.at("is_engine_force_on_fluid"));
              swim.is_engine_force_on_fluid = is_engine_force_on_fluid;
@@ -550,13 +580,43 @@ Variant ParticleHandle::do_call_method(std::string const &name,
                                        VariantMap const &params) {
   if (name == "set_param_parallel") {
     auto const param_name = get_value<std::string>(params, "name");
-    if (params.count("value") == 0) {
+    if (not params.contains("value")) {
       throw Exception("Parameter '" + param_name + "' is missing.");
     }
     auto const &value = params.at("value");
     context()->parallel_try_catch(
         [&]() { do_set_parameter(param_name, value); });
     return {};
+  }
+  if (name == "update_params") {
+    // Set new properties
+    context()->parallel_try_catch([&]() {
+#ifdef ROTATION
+      sanity_checks_rotation(params);
+#endif
+      for (auto const &name : get_parameter_insertion_order()) {
+        if (params.contains(name) and name != "bonds") {
+          do_set_parameter(name, params.at(name));
+        }
+      }
+    });
+
+    // Set bonds
+    if (params.contains("bonds_ids")) {
+      // Remove old bonds
+      set_particle_property([&](Particle &p) { p.bonds().clear(); });
+      // Add new bonds
+      auto const bonds_ids = get_value<std::vector<int>>(params, "bonds_ids");
+      auto const bonds_partner_ids =
+          get_value<std::vector<std::vector<int>>>(params, "bonds_parts");
+      for (std::size_t i = 0; i < bonds_ids.size(); i += 1) {
+        std::vector<int> particle_ids = {m_pid};
+        std::ranges::copy(bonds_partner_ids[i],
+                          std::back_inserter(particle_ids));
+        ::add_bond(*get_system(), bonds_ids[i], particle_ids);
+        get_system()->on_particle_change();
+      }
+    }
   }
   if (name == "get_bond_by_id") {
     if (not context()->is_head_node()) {
@@ -740,21 +800,6 @@ Variant ParticleHandle::do_call_method(std::string const &name,
   return {};
 }
 
-#ifdef ROTATION
-static auto const contradicting_arguments_quat = std::vector<
-    std::array<std::string, 3>>{{
-    {{"dip", "dipm",
-      "Setting 'dip' is sufficient as it defines the scalar dipole moment."}},
-    {{"quat", "director",
-      "Setting 'quat' is sufficient as it defines the director."}},
-    {{"dip", "quat",
-      "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."}},
-    {{"dip", "director",
-      "Setting 'dip' would overwrite 'director'. Set 'director' and "
-      "'dipm' instead."}},
-}};
-#endif // ROTATION
-
 void ParticleHandle::do_construct(VariantMap const &params) {
   auto const n_extra_args = params.size() - params.count("id") -
                             params.count("__cell_structure") -
@@ -799,20 +844,7 @@ void ParticleHandle::do_construct(VariantMap const &params) {
   });
 
 #ifdef ROTATION
-  context()->parallel_try_catch([&]() {
-    // if we are not constructing a particle from a checkpoint file,
-    // check the quaternion is not accidentally set twice by the user
-    if (not params.contains("__cpt_sentinel")) {
-      auto formatter =
-          boost::format("Contradicting particle attributes: '%s' and '%s'. %s");
-      for (auto const &[prop1, prop2, reason] : contradicting_arguments_quat) {
-        if (params.contains(prop1) and params.contains(prop2)) {
-          auto const err_msg = boost::str(formatter % prop1 % prop2 % reason);
-          throw std::invalid_argument(err_msg);
-        }
-      }
-    }
-  });
+  context()->parallel_try_catch([&]() { sanity_checks_rotation(params); });
 #endif // ROTATION
 
   // create a default-constructed particle

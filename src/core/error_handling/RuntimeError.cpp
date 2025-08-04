@@ -29,17 +29,11 @@ std::string RuntimeError::format() const {
   std::string label;
 
   switch (m_level) {
-  case ErrorLevel::DEBUG:
-    label = "DEBUG";
-    break;
   case ErrorLevel::WARNING:
     label = "WARNING";
     break;
   case ErrorLevel::ERROR:
     label = "ERROR";
-    break;
-  case ErrorLevel::INFO:
-    label = "INFO";
     break;
   }
 

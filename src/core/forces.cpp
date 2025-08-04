@@ -48,6 +48,7 @@
 #include "short_range_loop.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
+#include "thermostats/langevin_inline.hpp"
 #include "virtual_sites/relative.hpp"
 
 #include <utils/Vector.hpp>
@@ -87,14 +88,44 @@ static ParticleForce external_force(Particle const &p) {
   return f;
 }
 
-void init_forces(const CellStructure &cell_structure) {
+/** Combined force initialization and Langevin noise application */
+void init_forces_and_thermostat(const CellStructure &cell_structure,
+                                System::System &system) {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
 
-  cell_structure.for_each_local_particle(
-      [](Particle &p) { p.force_and_torque() = external_force(p); });
+  auto const &propagation = *system.propagation;
+  auto const &thermostat = *system.thermostat;
+  auto const kT = thermostat.kT;
+  auto const time_step = system.get_time_step();
 
+  // Check if Langevin thermostat is active
+  bool const langevin_active =
+      thermostat.langevin &&
+      (propagation.used_propagations &
+       (PropagationMode::TRANS_LANGEVIN | PropagationMode::ROT_LANGEVIN));
+
+  // Single pass over all local particles
+  cell_structure.for_each_local_particle([&](Particle &p) {
+    // Initialize force with external forces (original init_forces logic)
+    p.force_and_torque() = external_force(p);
+
+    // Apply Langevin noise if thermostat is active (original
+    // thermostat_force_init logic)
+    if (langevin_active) {
+      auto const &langevin = *thermostat.langevin;
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
+        p.force() += friction_thermo_langevin(langevin, p, time_step, kT);
+#ifdef ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
+        p.torque() += convert_vector_body_to_space(
+            p, friction_thermo_langevin_rotation(langevin, p, time_step, kT));
+#endif
+    }
+  });
+
+  // Initialize ghost forces (unchanged)
   init_forces_ghosts(cell_structure);
 }
 #ifdef DIPOLE_FIELD_TRACKING
@@ -160,19 +191,20 @@ void System::System::calculate_forces() {
     npt_inst_pressure->p_vir = Utils::Vector3d{};
   }
 #endif
-  init_forces(*cell_structure);
 #ifdef DIPOLE_FIELD_TRACKING
   // reset dipole field
   invalidate_dip_fld(*cell_structure);
 #endif
 
-  thermostat_force_init();
+  // Use combined function instead of two separate calls
+  init_forces_and_thermostat(*cell_structure, *this);
 
   calc_long_range_forces(particles);
 
   auto const elc_kernel = coulomb.pair_force_elc_kernel();
   auto const coulomb_kernel = coulomb.pair_force_kernel();
   auto const dipoles_kernel = dipoles.pair_force_kernel();
+  auto const coulomb_u_kernel = coulomb.pair_energy_kernel();
 
 #ifdef ELECTROSTATICS
   auto const coulomb_cutoff = coulomb.cutoff();
@@ -200,8 +232,10 @@ void System::System::calculate_forces() {
       },
       [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
        dipoles_kernel_ptr = get_ptr(dipoles_kernel),
-       elc_kernel_ptr = get_ptr(elc_kernel), &nonbonded_ias = *nonbonded_ias,
-       &thermostat = *thermostat, &bonded_ias = *bonded_ias,
+       elc_kernel_ptr = get_ptr(elc_kernel),
+       coulomb_u_kernel_ptr = get_ptr(coulomb_u_kernel),
+       &nonbonded_ias = *nonbonded_ias, &thermostat = *thermostat,
+       &bonded_ias = *bonded_ias,
 #ifdef COLLISION_DETECTION
        &collision_detection = *collision_detection,
 #endif
@@ -211,7 +245,7 @@ void System::System::calculate_forces() {
         add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
                                   ia_params, thermostat, box_geo, bonded_ias,
                                   coulomb_kernel_ptr, dipoles_kernel_ptr,
-                                  elc_kernel_ptr);
+                                  elc_kernel_ptr, coulomb_u_kernel_ptr);
 #ifdef COLLISION_DETECTION
         if (not collision_detection.is_off()) {
           collision_detection.detect_collision(p1, p2, d.dist2);
@@ -287,5 +321,8 @@ void calc_long_range_forces(const ParticleRange &particles) {
 void npt_add_virial_force_contribution(const Utils::Vector3d &force,
                                        const Utils::Vector3d &d) {
   ::System::get_system().npt_add_virial_contribution(force, d);
+}
+void npt_add_virial_diagonalSum_contribution(double diagonal_sum) {
+  ::System::get_system().npt_add_virial_contribution(diagonal_sum);
 }
 #endif

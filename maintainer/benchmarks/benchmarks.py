@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import os
 import sys
 import time
 import pathlib
@@ -108,7 +109,7 @@ def get_average_time(timings):
     return (avg, ci)
 
 
-def write_report(filepath, n_proc, timings, n_steps, label=''):
+def write_report(filepath, n_ranks, timings, n_steps, label=''):
     '''
     Append timing data to a CSV file. If it doesn't exist, it is created
     with a header.
@@ -117,7 +118,7 @@ def write_report(filepath, n_proc, timings, n_steps, label=''):
     ----------
     filepath: :obj:`str`
         Path to the CSV file.
-    n_proc: :obj:`int`
+    n_ranks: :obj:`int`
         Number of MPI ranks.
     timings: :obj:`ndarray` of :obj:`float`
         Timings.
@@ -127,11 +128,12 @@ def write_report(filepath, n_proc, timings, n_steps, label=''):
         Label to distinguish e.g. MD from MC or LB steps.
 
     '''
+    n_threads = int(os.environ.get("OMP_NUM_THREADS", 1))
     script = pathlib.Path(sys.argv[0]).name
     cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
     avg, ci = get_average_time(timings)
-    header = '"script","arguments","cores","mean","ci","nsteps","duration","label"\n'
-    report = f'"{script}","{cmd}",{n_proc},{avg:.3e},{ci:.3e},{n_steps},{np.sum(timings):.1f},"{label}"\n'  # nopep8
+    header = '"script","arguments","ranks","threads","mean","ci","nsteps","duration","label"\n'
+    report = f'"{script}","{cmd}",{n_ranks},{n_threads},{avg:.3e},{ci:.3e},{n_steps},{np.sum(timings):.1f},"{label}"\n'  # nopep8
     if pathlib.Path(filepath).is_file():
         header = ''
     with open(filepath, "a") as f:

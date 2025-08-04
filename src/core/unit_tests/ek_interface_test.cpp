@@ -19,9 +19,9 @@
 
 #define BOOST_TEST_MODULE EK interface test
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_NO_MAIN
 #include <boost/test/unit_test.hpp>
 
+#include "EspressoCoreGlobalConfig.hpp"
 #include "ParticleFactory.hpp"
 
 #include "cell_system/CellStructureType.hpp"
@@ -101,6 +101,23 @@ static void add_ek_actor() {
 static void remove_ek_actor() { espresso::system->ek.reset(); }
 } // namespace espresso
 
+struct GlobalConfig : public EspressoCoreGlobalConfig {
+  GlobalConfig() {
+    espresso::system = System::System::create();
+    espresso::system->set_box_l(params.box_dimensions);
+    espresso::system->set_time_step(params.time_step);
+    espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+    espresso::system->cell_structure->set_verlet_skin(params.skin);
+    ::System::set_system(espresso::system);
+
+    assert(boost::mpi::communicator().size() <= 2);
+  }
+  ~GlobalConfig() {
+    espresso::system.reset();
+    ::System::reset_system();
+  }
+};
+
 #ifdef WALBERLA
 namespace walberla {
 class EKReactionImpl : public EKReactionBase {
@@ -127,6 +144,7 @@ struct CleanupActorEK : public ParticleFactory {
   ~CleanupActorEK() { espresso::remove_ek_actor(); }
 };
 
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
 BOOST_FIXTURE_TEST_SUITE(suite, CleanupActorEK)
 
 static auto get_n_runtime_errors() { return check_runtime_errors_local(); }
@@ -235,18 +253,3 @@ BOOST_AUTO_TEST_CASE(ek_interface_none) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-
-int main(int argc, char **argv) {
-  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
-  espresso::system = System::System::create();
-  espresso::system->set_box_l(params.box_dimensions);
-  espresso::system->set_time_step(params.time_step);
-  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
-  espresso::system->cell_structure->set_verlet_skin(params.skin);
-  ::System::set_system(espresso::system);
-
-  boost::mpi::communicator world;
-  assert(world.size() <= 2);
-
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}

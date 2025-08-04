@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <ranges>
 
 /** Visitor to get the bond cutoff from the bond parameter variant */
 class BondCutoff : public boost::static_visitor<double> {
@@ -63,12 +64,12 @@ void BondedInteractionsMap::on_ia_change() {
 #ifdef BOND_CONSTRAINT
   n_rigid_bonds = 0;
 #endif
-  for (auto &kv : *this) {
-    if (boost::get<ThermalizedBond>(&(*kv.second)) != nullptr) {
+  for (auto const &bond : std::views::elements<1>(*this)) {
+    if (boost::get<ThermalizedBond>(&(*bond)) != nullptr) {
       ++n_thermalized_bonds;
     }
 #ifdef BOND_CONSTRAINT
-    if (boost::get<RigidBond>(&(*kv.second)) != nullptr) {
+    if (boost::get<RigidBond>(&(*bond)) != nullptr) {
       ++n_rigid_bonds;
     }
 #endif

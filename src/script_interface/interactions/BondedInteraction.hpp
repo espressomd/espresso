@@ -43,6 +43,7 @@
 #include <iterator>
 #include <limits>
 #include <memory>
+#include <ranges>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -67,26 +68,22 @@ protected:
   using AutoParameters<BondedInteraction>::context;
   using AutoParameters<BondedInteraction>::valid_parameters;
 
-  virtual std::set<std::string> get_valid_parameters() const {
+  std::set<std::string> get_valid_parameters() const {
     auto const vec = valid_parameters();
-    auto valid_keys = std::set<std::string>();
-    std::ranges::transform(vec, std::inserter(valid_keys, valid_keys.begin()),
-                           [](auto const &key) { return std::string{key}; });
-    return valid_keys;
+    return {vec.begin(), vec.end()};
   }
 
 private:
   void check_valid_parameters(VariantMap const &params) const {
     auto const valid_keys = get_valid_parameters();
     for (auto const &key : valid_keys) {
-      if (not params.contains(std::string(key))) {
+      if (not params.contains(key)) {
         throw std::runtime_error("Parameter '" + key + "' is missing");
       }
     }
-    for (auto const &kv : params) {
-      if (not valid_keys.contains(kv.first)) {
-        throw std::runtime_error("Parameter '" + kv.first +
-                                 "' is not recognized");
+    for (auto const &key : std::views::elements<0>(params)) {
+      if (not valid_keys.contains(key)) {
+        throw std::runtime_error("Parameter '" + key + "' is not recognized");
       }
     }
   }

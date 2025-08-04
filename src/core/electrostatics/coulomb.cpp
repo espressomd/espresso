@@ -52,7 +52,6 @@
 #include <optional>
 #include <sstream>
 #include <stdexcept>
-#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -122,8 +121,8 @@ struct LongRangePressure {
     return Utils::Vector9d{};
   }
 
-  template <typename T,
-            std::enable_if_t<!traits::has_pressure<T>::value> * = nullptr>
+  template <typename T>
+    requires(not traits::has_pressure<T>::value)
   auto operator()(std::shared_ptr<T> const &) const {
     runtimeWarningMsg() << "Pressure calculation not implemented by "
                         << "electrostatics method " << Utils::demangle<T>();

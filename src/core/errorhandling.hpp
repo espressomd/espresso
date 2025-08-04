@@ -23,8 +23,7 @@
  *  a broken bond or illegal parameter combinations.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ERROR_HANDLING_HPP
-#define ESPRESSO_SRC_CORE_ERROR_HANDLING_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -87,6 +86,7 @@ namespace ErrorHandling {
  * @param callbacks Callbacks system the error handler should be on.
  */
 void init_error_handling(std::weak_ptr<Communication::MpiCallbacks> callbacks);
+void deinit_error_handling();
 
 RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
                                          const std::string &file, int line,
@@ -108,5 +108,3 @@ std::vector<RuntimeError> mpi_gather_runtime_errors();
 std::vector<RuntimeError> mpi_gather_runtime_errors_all(bool is_head_node);
 
 } // namespace ErrorHandling
-
-#endif

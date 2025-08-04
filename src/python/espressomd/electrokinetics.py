@@ -129,7 +129,7 @@ class EKSpecies(ScriptInterfaceHelper,
 
         Parameters
         ----------
-        path : :obj:`str`
+        path : :obj:`str` or :obj:`pathlib.Path`
             Destination file path.
         binary : :obj:`bool`
             Whether to write in binary or ASCII mode.
@@ -139,7 +139,7 @@ class EKSpecies(ScriptInterfaceHelper,
 
         Parameters
         ----------
-        path : :obj:`str`
+        path : :obj:`str` or :obj:`pathlib.Path`
             File path to read from.
         binary : :obj:`bool`
             Whether to read in binary or ASCII mode.
@@ -564,8 +564,8 @@ class VTKOutput(VTKOutputBase):
     """
     Create a VTK writer.
 
-    Files are written to ``<base_folder>/<identifier>/<prefix>_*.vtu``.
-    Summary is written to ``<base_folder>/<identifier>.pvd``.
+    Files are written to :file:`<base_folder>/<identifier>/<prefix>_*.vtu`.
+    Summary is written to :file:`<base_folder>/<identifier>.pvd`.
 
     Manual VTK callbacks can be called at any time to take a snapshot
     of the current state of the EK species.
@@ -586,7 +586,7 @@ class VTKOutput(VTKOutputBase):
         manual VTK callback that must be triggered manually. Otherwise,
         it is an automatic callback that is added to the time loop and
         writes every ``delta_N`` EK steps.
-    base_folder : :obj:`str` (optional), default is 'vtk_out'
+    base_folder : :obj:`str` or :obj:`pathlib.Path` (optional), default is :file:`vtk_out`
         Path to the output VTK folder.
     prefix : :obj:`str` (optional), default is 'simulation_step'
         Prefix for VTK files.

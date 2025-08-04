@@ -33,6 +33,7 @@
 #include <utils/Vector.hpp>
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -68,6 +69,10 @@ public:
   /** @brief Whether kernels use double-precision floating point numbers. */
   [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
 
+  /** @brief Make a functor to check if a position is in the local domain. */
+  virtual std::function<bool(Utils::Vector3d const &)>
+  make_lattice_position_checker(bool consider_points_in_halo) const = 0;
+
   /** @brief Get interpolated velocities at a position. */
   virtual std::optional<Utils::Vector3d>
   get_velocity_at_pos(Utils::Vector3d const &position,
@@ -81,6 +86,10 @@ public:
   virtual std::optional<double>
   get_density_at_pos(Utils::Vector3d const &position,
                      bool consider_points_in_halo = false) const = 0;
+
+  /** @brief Get interpolated densities at positions. */
+  virtual std::vector<double>
+  get_densities_at_pos(std::vector<Utils::Vector3d> const &pos) = 0;
 
   /**
    * @brief Interpolate a force to the stored forces to be applied on nodes

@@ -21,6 +21,10 @@
 
 #include "utils.hpp"
 
+#include <functional>
+#include <optional>
+#include <vector>
+
 namespace System {
 class System;
 }
@@ -37,6 +41,10 @@ struct LBNone {
   double get_kT() const { throw NoLBActive{}; }
   Utils::VectorXd<9> get_pressure_tensor() const { throw NoLBActive{}; }
   bool is_gpu() const { throw NoLBActive{}; }
+  std::function<bool(Utils::Vector3d const &)>
+  make_lattice_position_checker(bool) const {
+    throw NoLBActive{};
+  }
   std::optional<Utils::Vector3d> get_velocity_at_pos(Utils::Vector3d const &,
                                                      bool) const {
     throw NoLBActive{};
@@ -51,6 +59,10 @@ struct LBNone {
   }
   void add_forces_at_pos(std::vector<Utils::Vector3d> const &,
                          std::vector<Utils::Vector3d> const &) const {
+    throw NoLBActive{};
+  }
+  std::vector<double>
+  get_densities_at_pos(std::vector<Utils::Vector3d> const &) const {
     throw NoLBActive{};
   }
   std::vector<Utils::Vector3d>

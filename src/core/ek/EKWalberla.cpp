@@ -52,6 +52,7 @@ bool EKWalberla::is_ready_for_propagation() const noexcept {
 struct FieldsConnector {
   std::size_t velocity_field_id{};
   std::size_t force_field_id{};
+  double lb_density;
   void operator()(LB::Solver::Implementation const &impl) {
     using lb_value_type = std::shared_ptr<LB::LBWalberla>;
     if (impl.solver.has_value()) {
@@ -59,6 +60,7 @@ struct FieldsConnector {
         auto const &instance = **ptr;
         velocity_field_id = instance.lb_fluid->get_velocity_field_id();
         force_field_id = instance.lb_fluid->get_force_field_id();
+        lb_density = instance.lb_fluid->get_density();
       }
     }
   }
@@ -89,7 +91,7 @@ void EKWalberla::propagate() {
     try {
       ek_species->integrate(ek_container->get_potential_field_id(),
                             connector.velocity_field_id,
-                            connector.force_field_id);
+                            connector.force_field_id, connector.lb_density);
     } catch (std::runtime_error const &e) {
       runtimeErrorMsg() << e.what();
     }

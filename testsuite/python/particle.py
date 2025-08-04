@@ -44,6 +44,10 @@ class ParticleProperties(ut.TestCase):
     system.bonded_inter.add(f1)
     f2 = espressomd.interactions.FeneBond(k=1, d_r_max=2)
     system.bonded_inter.add(f2)
+    f3 = espressomd.interactions.AngleHarmonic(phi0=0, bend=1)
+    system.bonded_inter.add(f3)
+    f4 = espressomd.interactions.Dihedral(mult=1, bend=1, phase=0)
+    system.bonded_inter.add(f4)
 
     def setUp(self):
         self.partcl = self.system.part.add(id=self.pid, pos=(0, 0, 0))
@@ -258,10 +262,13 @@ class ParticleProperties(ut.TestCase):
                 {'dip': [1., 1., 1.], 'quat': [1., 1., 1., 1.]},
                 {'dip': [1., 1., 1.], 'director': [1., 1., 1.]},
             ]
-        # check all methods that can instantiate particles
+        # check all methods that can instantiate or update particles
+        p = self.system.part.add(pos=[0., 0., 0.])
         for kwargs in invalid_combinations:
-            with self.assertRaises(ValueError):
+            with self.assertRaisesRegex(ValueError, "Contradicting particle attributes"):
                 self.system.part.add(pos=[0., 0., 0.], **kwargs)
+            with self.assertRaisesRegex(ValueError, "Contradicting particle attributes"):
+                p.update(kwargs)
 
     @utx.skipIfMissingFeatures(["ROTATION"])
     def test_invalid_quat(self):
@@ -293,7 +300,7 @@ class ParticleProperties(ut.TestCase):
         self.assertEqual(len(res.id), len(charges))
         for p in res:
             np.testing.assert_allclose(
-                (0.2, 0.3, 0.4), np.copy(p.pos), atol=1E-12)
+                np.copy(p.pos), (0.2, 0.3, 0.4), atol=1E-12)
 
         # Two criteria
         res = self.system.part.select(pos=(0.2, 0.3, 0.4), q=0)
@@ -408,8 +415,7 @@ class ParticleProperties(ut.TestCase):
             pos=system.box_l * np.random.random((100, 3)))
 
         # Copy individual properties of particle 0
-        print(
-            "If this test hangs, there is an mpi deadlock in a particle property setter.")
+        print("If this test hangs, there is an mpi deadlock in a particle property setter.")
         for attr in espressomd.particle_data.particle_attributes:
             # Uncomment to identify guilty property
             # print(attr)
@@ -436,11 +442,12 @@ class ParticleProperties(ut.TestCase):
         self.assertEqual(len(p2.bonds), 0)
 
     def test_bonds(self):
-        """Tests bond addition and removal."""
+        """Tests bond addition, removal and update."""
 
         p1 = self.system.part.by_id(self.pid)
         p2 = self.system.part.add(pos=p1.pos)
         p3 = self.system.part.add(pos=p1.pos)
+        p4 = self.system.part.add(pos=p1.pos)
         inactive_bond = espressomd.interactions.FeneBond(k=1, d_r_max=2)
         p2.add_bond([self.f1, p1])
         with self.assertRaisesRegex(RuntimeError, "already exists on particle"):
@@ -476,6 +483,36 @@ class ParticleProperties(ut.TestCase):
         self.system.bonded_inter.add(active_dihedral_bond)
         with self.assertRaisesRegex(Exception, r"Cannot add duplicate bond partners \(17, 17, 19\) to particle 18"):
             p2.add_bond((active_dihedral_bond, p1, p1, p3))
+
+        # Test bond update
+        with self.assertRaisesRegex(Exception, "1st element of Bond has to be of type BondedInteraction or int"):
+            p2.update({"bonds": ("self.f1", p1)})
+        with self.assertRaisesRegex(ValueError, "Bond partners have to be of type integer or ParticleHandle"):
+            p2.update({"bonds": (self.f1, "1")})
+        with self.assertRaisesRegex(ValueError, r"Bond FeneBond\(.+?\) needs 1 partner"):
+            p2.update({"bonds": (self.f1, p1, p2)})
+        with self.assertRaisesRegex(Exception, "The bonded interaction has not yet been added to the list of active bonds in ESPResSo"):
+            p2.update({"bonds": (inactive_bond, p1)})
+        with self.assertRaisesRegex(Exception, "The bonded interaction has not yet been added to the list of active bonds in ESPResSo"):
+            p2.update({"bonds": (inactive_bond, p1)})
+        p2.update({"bonds": []})
+        with self.assertRaisesRegex(RuntimeError, "doesn't exist on particle"):
+            p2.delete_bond([self.f1, p1])
+        with self.assertRaisesRegex(ValueError, "Bond partners have to be of type integer or ParticleHandle"):
+            p2.delete_bond((self.f1, "p1"))
+
+        with self.assertRaisesRegex(Exception, r"Bond partners \(17, 18\) include the particle 18 itself"):
+            p2.update({"bonds": (self.f3, p1, p2)})
+        with self.assertRaisesRegex(Exception, r"Cannot add duplicate bond partners \(17, 17\) to particle 18"):
+            p2.update({"bonds": (self.f3, p1, p1)})
+        with self.assertRaisesRegex(Exception, r"Bond partners \(17, 18\) include the particle 18 itself"):
+            p2.update({"bonds": (self.f3, p1, p2)})
+        with self.assertRaisesRegex(ValueError, r"Bond AngleHarmonic\(.+?\) needs 2 partners"):
+            p2.update({"bonds": (self.f3, p1)})
+        p2.update({"bonds": (self.f4, p1, p3, p4)})
+        with self.assertRaisesRegex(RuntimeError, "doesn't exist on particle"):
+            p2.delete_bond([self.f1, p1])
+        p2.delete_bond((self.f4, p1, p3, p4))
 
     def test_zz_remove_all(self):
         for p in self.system.part.all():
@@ -588,25 +625,52 @@ class ParticleProperties(ut.TestCase):
 
     def test_update(self):
         self.system.part.clear()
-        p = self.system.part.add(pos=0.5 * self.system.box_l)
+        p1 = self.system.part.add(pos=0.5 * self.system.box_l)
+        p2 = self.system.part.add(pos=p1.pos)
+        p3 = self.system.part.add(pos=p1.pos)
+        p4 = self.system.part.add(pos=p1.pos)
         # cannot change id (to avoid corrupting caches in the core)
         with self.assertRaisesRegex(RuntimeError, "Cannot change particle id"):
-            p.update({'id': 1})
+            p1.update({"id": 1})
         with self.assertRaisesRegex(RuntimeError, "Cannot change particle id"):
-            self.system.part.all().update({'id': 1})
+            self.system.part.all().update({"id": 1})
+        # cannot change read-only properties
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'pos_folded' is read-only"):
+            p1.update({"pos_folded": [1., 0., 0.]})
         # check value change
         new_pos = [1., 2., 3.]
-        p.update({'pos': new_pos})
-        np.testing.assert_almost_equal(p.pos, new_pos)
+        new_vel = [0.1, 0.2, 0.3]
+        p1.update({"pos": new_pos, "v": new_vel})
+        np.testing.assert_almost_equal(np.copy(p1.pos), new_pos)
+        np.testing.assert_almost_equal(np.copy(p1.v), new_vel)
         # updating self should not change anything
-        pdict = p.to_dict()
-        del pdict['id']
-        p.update(pdict)
-        new_pdict = p.to_dict()
-        del new_pdict['id']
+        pdict = p1.to_dict()
+        del pdict["id"]
+        p1.update(pdict)
+        new_pdict = p1.to_dict()
+        del new_pdict["id"]
         self.assertEqual(str(new_pdict), str(pdict))
         with self.assertRaisesRegex(RuntimeError, "Parameter 'test' is missing"):
-            p.call_method("set_param_parallel", name="test")
+            p1.call_method("set_param_parallel", name="test")
+
+        # Check bonds were assigned correctly
+        new_bonds = ((self.f1, p2.id), (self.f2, p3.id),
+                     (self.f4, p2.id, p3.id, p4.id))
+        p1.update({"bonds": new_bonds})
+
+        def normalize_bond(bond):
+            return (type(bond[0]), bond[0].params, bond[1:])
+
+        # Compare bond type, bond parameters and partner ids
+        new_bonds = tuple(map(normalize_bond, new_bonds))
+        pdict["bonds"] = tuple(map(normalize_bond, p1.to_dict()["bonds"]))
+        self.assertEqual(new_bonds, pdict["bonds"])
+
+        new_bonds = (self.f4, p2.id, p3.id, p4.id)
+        p1.update({"bonds": new_bonds})
+        new_bonds = (normalize_bond(new_bonds),)
+        pdict["bonds"] = tuple(map(normalize_bond, p1.to_dict()["bonds"]))
+        self.assertEqual(new_bonds, pdict["bonds"])
 
 
 if __name__ == "__main__":

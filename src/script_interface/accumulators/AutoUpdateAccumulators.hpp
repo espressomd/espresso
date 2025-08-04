@@ -40,7 +40,7 @@ using AutoUpdateAccumulators_t = ObjectList<
 
 class AutoUpdateAccumulators : public AutoUpdateAccumulators_t {
   using Base = AutoUpdateAccumulators_t;
-  using value_type = typename Base::value_type;
+  using Base::value_type;
 
   std::shared_ptr<::Accumulators::AutoUpdateAccumulators> m_handle;
   std::unique_ptr<VariantMap> m_params;

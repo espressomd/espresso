@@ -171,30 +171,30 @@ BOOST_AUTO_TEST_CASE(lees_edwards_mi_vector) {
   le.pos_offset = 1.;
   box.set_lees_edwards_bc(le);
   {
-    auto const a = Vector3d{1.1, 12.2, -13.4};
-    auto const b = Vector3d{-0.9, 8.8, 21.1};
+    auto const a = Vector3d{1.1, 12.2, 13.4};
+    auto const b = Vector3d{-0.9, 8.8, -21.1};
 
     auto const result = box.get_mi_vector(a, b);
 
     for (auto i = 0u; i < 3u; i++) {
       auto expected = get_mi_coord(a[i], b[i], box_l[i], box.periodic(i));
       if (i == le.shear_direction) {
-        expected -= le.pos_offset = 1.;
+        expected += le.pos_offset;
       }
       BOOST_CHECK_SMALL(std::abs(expected - result[i]), 5. * epsilon<double>);
     }
   }
   // LE pos offset and distance > box in shear plane normal direction
   {
-    auto const a = Vector3d{1.1, 12.2, -13.};
-    auto const b = Vector3d{-11., 8.8, -13.};
+    auto const a = Vector3d{-1.1, 12.2, -13.};
+    auto const b = Vector3d{11., 8.8, -13.};
     auto const le_jumps = std::round((a[0] - b[0]) / box.length()[0]);
 
     auto const result = box.get_mi_vector(a, b);
 
     auto const expected = Vector3d{{
         std::fmod(a[0] - b[0], box.length()[0]), a[1] - b[1],
-        a[2] - b[2] + le_jumps * le.pos_offset -
+        a[2] - b[2] - le_jumps * le.pos_offset -
             box.length()[2] // Manually apply minimum image convention
     }};
     for (int i : {0, 1, 2}) {

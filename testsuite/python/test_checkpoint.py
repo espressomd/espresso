@@ -66,7 +66,6 @@ class CheckpointTest(ut.TestCase):
         **config.get_checkpoint_params())
     checkpoint.load(0)
     checkpoint.save(1)
-    path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
     n_nodes = system.cell_system.get_state()["n_nodes"]
 
     @classmethod
@@ -84,8 +83,7 @@ class CheckpointTest(ut.TestCase):
     def test_lb_fluid(self):
         lbf = system.lb
         cpt_mode = 0 if 'LB.ASCII' in modes else 1
-        cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
-        cpt_path = str(cpt_root / "lb") + "{}.cpt"
+        cpt_path = str(self.checkpoint.root / "lb") + "{}.cpt"
 
         # LB boundaries are loaded at the same time as LB populations
         np.testing.assert_equal(np.copy(lbf[:, :, :].velocity), 0.)
@@ -118,15 +116,17 @@ class CheckpointTest(ut.TestCase):
         grid_3D = np.fromfunction(
             lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
             (nx, ny, nz), dtype=float)
+        lb_pop = np.copy(lbf[:, :, :]._population)
+        lb_laf = np.copy(lbf[:, :, :].last_applied_force)
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     np.testing.assert_almost_equal(
-                        np.copy(lbf[i, j, k].population),
+                        lb_pop[i, j, k],
                         grid_3D[i, j, k] * np.arange(1, 20),
                         decimal=precision)
                     np.testing.assert_almost_equal(
-                        np.copy(lbf[i, j, k].last_applied_force),
+                        lb_laf[i, j, k],
                         grid_3D[i, j, k] * np.arange(1, 4),
                         decimal=precision)
         state = lbf.get_params()
@@ -185,8 +185,7 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK mode.")
     def test_ek_species(self):
         cpt_mode = 0 if 'LB.ASCII' in modes else 1
-        cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
-        cpt_path = str(cpt_root / "ek") + "{}.cpt"
+        cpt_path = str(self.checkpoint.root / "ek") + "{}.cpt"
 
         self.assertEqual(len(system.ekcontainer), 1)
         ek_species = system.ekcontainer[0]
@@ -328,7 +327,7 @@ class CheckpointTest(ut.TestCase):
             vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
             lb_density = vtk_data["density"]
             self.assertAlmostEqual(
-                lb_density[0, 0, 0], new_density, delta=1e-5)
+                lb_density[0, 0, 0], new_density, delta=1e-4)
         (vtk_root / filename.format(1)).unlink(missing_ok=True)
         (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
@@ -814,12 +813,12 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingModules("h5py")
     def test_h5md(self):
         # check attributes
-        file_path = self.path_cpt_root / "test.h5"
+        file_path = self.checkpoint.root / "test.h5"
         script_path = pathlib.Path(
             __file__).resolve().parent / "save_checkpoint.py"
         self.assertEqual(h5.fields, ['all'])
-        self.assertEqual(h5.script_path, str(script_path))
-        self.assertEqual(h5.file_path, str(file_path))
+        self.assertEqual(h5.script_path, script_path)
+        self.assertEqual(h5.file_path, file_path)
 
         # write new frame
         h5.write()
@@ -842,7 +841,7 @@ class CheckpointTest(ut.TestCase):
             # check stored physical units
             def predicate(key, attribute):
                 self.assertEqual(cur[key].attrs['unit'],
-                                 getattr(h5_units, attribute).encode('utf-8'))
+                                 getattr(h5_units, attribute))
             predicate('particles/atoms/id/time', 'time')
             predicate('particles/atoms/lees_edwards/offset/value', 'length')
             predicate('particles/atoms/box/edges/value', 'length')

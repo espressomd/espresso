@@ -326,7 +326,7 @@ void ReactionAlgorithm::hide_particle(int p_id, int p_type) const {
 void ReactionAlgorithm::check_exclusion_range(int p_id, int p_type) {
 
   /* Check the exclusion radius of the inserted particle */
-  if (exclusion_radius_per_type.count(p_type) != 0) {
+  if (exclusion_radius_per_type.contains(p_type)) {
     if (exclusion_radius_per_type[p_type] == 0.) {
       return;
     }
@@ -363,8 +363,8 @@ void ReactionAlgorithm::check_exclusion_range(int p_id, int p_type) {
       if (auto const p2_ptr = cell_structure.get_local_particle(p2_id)) {
         auto const &p2 = *p2_ptr;
         double excluded_distance;
-        if (exclusion_radius_per_type.count(p_type) == 0 ||
-            exclusion_radius_per_type.count(p2.type()) == 0) {
+        if (not exclusion_radius_per_type.contains(p_type) or
+            not exclusion_radius_per_type.contains(p2.type())) {
           excluded_distance = exclusion_range;
         } else if (exclusion_radius_per_type[p2.type()] == 0.) {
           continue;
@@ -490,9 +490,8 @@ Utils::Vector3d ReactionAlgorithm::get_random_position_in_box() {
 int ReactionAlgorithm::create_particle(int p_type) {
   int p_id;
   if (!m_empty_p_ids_smaller_than_max_seen_particle.empty()) {
-    auto p_id_iter = std::min_element(
-        std::begin(m_empty_p_ids_smaller_than_max_seen_particle),
-        std::end(m_empty_p_ids_smaller_than_max_seen_particle));
+    auto p_id_iter =
+        std::ranges::min_element(m_empty_p_ids_smaller_than_max_seen_particle);
     p_id = *p_id_iter;
     m_empty_p_ids_smaller_than_max_seen_particle.erase(p_id_iter);
   } else {
@@ -618,7 +617,7 @@ void ReactionAlgorithm::setup_bookkeeping_of_empty_pids() {
   m_empty_p_ids_smaller_than_max_seen_particle.clear();
 
   auto particle_ids = get_particle_ids_parallel();
-  std::sort(particle_ids.begin(), particle_ids.end());
+  std::ranges::sort(particle_ids);
   auto pid1 = -1;
   for (auto pid2 : particle_ids) {
     for (int pid = pid1 + 1; pid < pid2; ++pid) {

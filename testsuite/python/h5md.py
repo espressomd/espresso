@@ -86,7 +86,7 @@ class H5mdTests(ut.TestCase):
         h5_units = espressomd.io.writer.h5md.UnitSystem(
             time='ps', mass='u', length='m', charge='e')
         h5 = espressomd.io.writer.h5md.H5md(
-            file_path=str(cls.temp_file), unit_system=h5_units)
+            file_path=cls.temp_file, unit_system=h5_units)
         h5.write()
         h5.write()
         h5.flush()
@@ -115,6 +115,10 @@ class H5mdTests(ut.TestCase):
         cls.temp_dir.cleanup()
 
     def test_opening(self):
+        # as pathlib object
+        h5 = espressomd.io.writer.h5md.H5md(file_path=self.temp_file)
+        h5.close()
+        # as string object
         h5 = espressomd.io.writer.h5md.H5md(file_path=str(self.temp_file))
         h5.close()
 
@@ -124,12 +128,12 @@ class H5mdTests(ut.TestCase):
         import time
         # write one frame to the file
         temp_file = self.temp_path / 'appending.h5'
-        h5 = espressomd.io.writer.h5md.H5md(file_path=str(temp_file))
+        h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file)
         h5.write()
         h5.flush()
         h5.close()
         # append one frame to the file
-        h5 = espressomd.io.writer.h5md.H5md(file_path=str(temp_file))
+        h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file)
         h5.write()
         h5.flush()
         h5.close()
@@ -157,42 +161,48 @@ class H5mdTests(ut.TestCase):
         temp_file = self.temp_path / 'exceptions.h5'
         # write a non-compliant file
         temp_file.write_bytes(b'')
-        with self.assertRaisesRegex(RuntimeError, 'not a valid HDF5 file'):
-            h5md.H5md(file_path=str(temp_file), unit_system=h5_units)
+        with self.assertRaisesRegex(RuntimeError, "Not an HDF5 file"):
+            h5md.H5md(file_path=temp_file, unit_system=h5_units)
         # cannot append to a closed file with a leftover backup file
         main_file = self.temp_path / 'main.h5'
-        h5 = h5md.H5md(file_path=str(main_file))
+        h5 = h5md.H5md(file_path=main_file)
         h5.write()
         h5.flush()
         h5.close()
         main_file.with_suffix(temp_file.suffix + '.bak').write_bytes(b'')
         with self.assertRaisesRegex(RuntimeError, 'A backup of the .h5 file exists'):
-            h5md.H5md(file_path=str(main_file))
+            h5md.H5md(file_path=main_file)
         # cannot create a new file when a leftover backup file exists
         main_file.unlink()
         with self.assertRaisesRegex(RuntimeError, 'A backup of the .h5 file exists'):
-            h5md.H5md(file_path=str(main_file))
+            h5md.H5md(file_path=main_file)
         # open a file with different specifications
         temp_file = self.temp_path / 'wrong_spec.h5'
-        h5 = espressomd.io.writer.h5md.H5md(
-            file_path=str(temp_file), fields=[])
+        h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file, fields=[])
         h5.write()
         h5.flush()
         h5.close()
         with self.assertRaisesRegex(RuntimeError, "The given .h5 file does not match the specifications in 'fields'"):
-            h5md.H5md(file_path=str(temp_file), fields='all')
+            h5md.H5md(file_path=temp_file, fields='all')
         # open a file with invalid specifications
         with self.assertRaisesRegex(ValueError, "Unknown field 'lb'"):
-            h5md.H5md(file_path=str(temp_file), fields='lb')
+            h5md.H5md(file_path=temp_file, fields='lb')
         # check read-only parameters
         for key in self.h5_obj.get_params():
             with self.assertRaisesRegex(RuntimeError, f"Parameter '{key}' is read-only"):
                 setattr(self.h5_obj, key, None)
+        # check invalid parameters
+        temp_file = self.temp_path / 'invalid_params.h5'
+        with self.assertRaisesRegex(RuntimeError, "Provided argument of type 'double' for parameter 'chunk_size' is not convertible to 'int'"):
+            h5md.H5md(file_path=temp_file, chunk_size=1.0)
+        with self.assertRaisesRegex(ValueError, "Parameter 'chunk_size' must be > 0"):
+            h5md.H5md(file_path=temp_file, chunk_size=-1)
+        with self.assertRaisesRegex(TypeError, "Parameter 'file_path' should be a string or a path"):
+            h5md.H5md(file_path=None)
 
     def test_empty(self):
         temp_file = self.temp_path / 'empty.h5'
-        h5 = espressomd.io.writer.h5md.H5md(
-            file_path=str(temp_file), fields=[])
+        h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file, fields=[])
         h5.write()
         h5.flush()
         h5.close()
@@ -229,10 +239,11 @@ class H5mdTests(ut.TestCase):
         self.assertIn('name', self.py_file['h5md/creator'].attrs)
         self.assertIn('version', self.py_file['h5md/creator'].attrs)
         self.assertEqual(
-            self.py_file['h5md/creator'].attrs['name'][:], b'ESPResSo')
+            bytes(self.py_file['h5md/creator'].attrs['name'][:-1]).decode('utf-8'), 'ESPResSo')
+        version = bytes(
+            self.py_file['h5md/creator'].attrs['version'][:-1]).decode('utf-8')
         self.assertTrue(
-            self.py_file['h5md/creator'].attrs['version'][:]
-            .startswith(espressomd.version.friendly().encode('utf-8')))
+            version.startswith(espressomd.version.friendly()))
         self.assertIn('author', self.py_file['h5md'])
         self.assertIn('name', self.py_file['h5md/author'].attrs)
 
@@ -294,36 +305,36 @@ class H5mdTests(ut.TestCase):
         # case #1: running a pypresso script
         with open(sys.argv[0], 'r') as f:
             ref = f.read()
-        data = self.py_file['parameters/files'].attrs['script'].decode('utf-8')
+        data = self.py_file['parameters/files'].attrs['script']
         self.assertEqual(data, ref)
         # case #2: running an interactive Python session
         temp_file = self.temp_path / 'no_script.h5'
         sys.argv[0] = ''
-        h5 = espressomd.io.writer.h5md.H5md(file_path=str(temp_file))
+        h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file)
         sys.argv[0] = __file__
         h5.write()
         h5.flush()
         h5.close()
         with h5py.File(temp_file, 'r') as cur:
-            self.assertIsNone(cur.get('parameters/files'))
+            self.assertIsNone(cur.get('/parameters/files'))
 
     def test_units(self):
         def get_unit(path):
             return self.py_file[path].attrs['unit']
-        self.assertEqual(get_unit('particles/atoms/id/time'), b'ps')
+        self.assertEqual(get_unit('particles/atoms/id/time'), 'ps')
         self.assertEqual(
-            get_unit('particles/atoms/lees_edwards/offset/value'), b'm')
-        self.assertEqual(get_unit('particles/atoms/box/edges/value'), b'm')
-        self.assertEqual(get_unit('particles/atoms/position/value'), b'm')
+            get_unit('particles/atoms/lees_edwards/offset/value'), 'm')
+        self.assertEqual(get_unit('particles/atoms/box/edges/value'), 'm')
+        self.assertEqual(get_unit('particles/atoms/position/value'), 'm')
         if espressomd.has_features(['ELECTROSTATICS']):
-            self.assertEqual(get_unit('particles/atoms/charge/value'), b'e')
+            self.assertEqual(get_unit('particles/atoms/charge/value'), 'e')
         if espressomd.has_features(['MASS']):
-            self.assertEqual(get_unit('particles/atoms/mass/value'), b'u')
-        self.assertEqual(get_unit('particles/atoms/force/value'), b'm u ps-2')
-        self.assertEqual(get_unit('particles/atoms/velocity/value'), b'm ps-1')
+            self.assertEqual(get_unit('particles/atoms/mass/value'), 'u')
+        self.assertEqual(get_unit('particles/atoms/force/value'), 'm u ps-2')
+        self.assertEqual(get_unit('particles/atoms/velocity/value'), 'm ps-1')
 
     def test_getters(self):
-        self.assertEqual(self.h5_params['file_path'], str(self.temp_file))
+        self.assertEqual(self.h5_params['file_path'], self.temp_file)
         self.assertEqual(pathlib.Path(self.h5_params['script_path']).resolve(),
                          pathlib.Path(__file__).resolve())
         self.assertEqual(self.h5_params['fields'], ['all'])

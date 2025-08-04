@@ -59,7 +59,7 @@ public:
            auto parameters_string = actor()->get_parameters();
            auto const method_name = actor()->get_method();
            auto const delegate = actor()->get_near_field_delegation();
-           if (delegate and m_tuned_methods.count(method_name)) {
+           if (delegate and m_tuned_methods.contains(method_name)) {
              auto const tuned_r_cut = actor()->get_r_cut();
              auto const field_name = method_name + "_r_cut";
              std::ostringstream serializer;

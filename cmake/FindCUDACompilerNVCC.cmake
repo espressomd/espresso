@@ -25,8 +25,6 @@
 set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
-add_library(espresso_cuda_flags INTERFACE)
-add_library(espresso::cuda_flags ALIAS espresso_cuda_flags)
 target_compile_options(
   espresso_cuda_flags
   INTERFACE

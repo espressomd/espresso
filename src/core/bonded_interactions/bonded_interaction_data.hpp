@@ -101,11 +101,11 @@ class BondedInteractionsMap : public System::Leaf<BondedInteractionsMap> {
       std::unordered_map<int, std::shared_ptr<Bonded_IA_Parameters>>;
 
 public:
-  using key_type = typename container_type::key_type;
-  using mapped_type = typename container_type::mapped_type;
-  using value_type = typename container_type::value_type;
-  using iterator = typename container_type::iterator;
-  using const_iterator = typename container_type::const_iterator;
+  using key_type = container_type::key_type;
+  using mapped_type = container_type::mapped_type;
+  using value_type = container_type::value_type;
+  using iterator = container_type::iterator;
+  using const_iterator = container_type::const_iterator;
 
   BondedInteractionsMap() = default;
   virtual ~BondedInteractionsMap() = default;
@@ -142,7 +142,6 @@ public:
   virtual void activate_bond(mapped_type const &ptr);
   virtual void deactivate_bond(mapped_type const &ptr);
   mapped_type at(key_type const &key) const { return m_params.at(key); }
-  auto count(key_type const &key) const { return m_params.count(key); }
   bool contains(key_type const &key) const { return m_params.contains(key); }
   bool empty() const { return m_params.empty(); }
   auto size() const { return m_params.size(); }
@@ -160,10 +159,10 @@ public:
     return n_rigid_bonds;
   }
 #endif
-  std::optional<key_type> find_bond_id(mapped_type const &bond) const {
-    for (auto const &kv : m_params) {
-      if (kv.second == bond) {
-        return kv.first;
+  std::optional<key_type> find_bond_id(mapped_type const &target_bond) const {
+    for (auto const &[bond_id, bond] : m_params) {
+      if (bond == target_bond) {
+        return bond_id;
       }
     }
     return std::nullopt;

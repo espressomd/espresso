@@ -48,7 +48,7 @@ namespace ScriptInterface::walberla {
 
 class EKContainer : public ObjectList<EKSpecies> {
   using Base = ObjectList<EKSpecies>;
-  using value_type = typename Base::value_type;
+  using Base::value_type;
 
   std::variant<
 #ifdef WALBERLA_FFT
@@ -139,7 +139,7 @@ public:
       }
     });
     m_poisson_solver = extract_solver(
-        (params.count("solver") == 1) ? params.at("solver") : Variant{none});
+        params.contains("solver") ? params.at("solver") : Variant{none});
     m_ek_container = std::make_shared<::EK::EKWalberla::ek_container_type>(
         tau, std::visit(GetPoissonSolverCoreInstance{}, m_poisson_solver));
     m_ek_reactions = get_value<decltype(m_ek_reactions)>(params, "reactions");

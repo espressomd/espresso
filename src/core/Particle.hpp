@@ -574,7 +574,7 @@ public:
   Utils::compact_vector<int> &exclusions() { return el; }
   Utils::compact_vector<int> const &exclusions() const { return el; }
   bool has_exclusion(int pid) const {
-    return std::find(el.begin(), el.end(), pid) != el.end();
+    return std::ranges::find(el, pid) != el.end();
   }
 #endif
 

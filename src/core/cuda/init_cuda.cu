@@ -55,35 +55,24 @@ bool cuda_check_gpu_compute_capability(int dev) {
            deviceProp.minor < computeCapabilityMinMinor));
 }
 
-/**
- * @brief Safely copy the device name and pad the string with null characters.
- */
-static void cuda_copy_gpu_name(char *const name, cudaDeviceProp const &prop) {
-  char buffer[256] = {'\0'};
-  std::strncpy(buffer, prop.name, 256);
-  name[255] = '\0';
-  std::strncpy(name, buffer, 256);
-}
-
-void cuda_get_gpu_name(int dev, char *const name) {
+std::string cuda_get_gpu_name(int dev) {
   cudaDeviceProp deviceProp;
   CUDA_CHECK(cudaGetDeviceProperties(&deviceProp, dev))
-  cuda_copy_gpu_name(name, deviceProp);
+  return {deviceProp.name};
 }
 
 EspressoGpuDevice cuda_get_device_props(const int dev) {
   cudaDeviceProp deviceProp;
   CUDA_CHECK(cudaGetDeviceProperties(&deviceProp, dev))
-  EspressoGpuDevice device{dev,
-                           "",
-                           "",
-                           -1,
-                           deviceProp.major,
-                           deviceProp.minor,
-                           deviceProp.totalGlobalMem,
-                           deviceProp.multiProcessorCount};
-  cuda_copy_gpu_name(device.name, deviceProp);
-  return device;
+  auto const [node, hostname] = detail::get_node_info();
+  return {dev,
+          deviceProp.name,
+          hostname,
+          node,
+          deviceProp.major,
+          deviceProp.minor,
+          deviceProp.totalGlobalMem,
+          deviceProp.multiProcessorCount};
 }
 
 void cuda_set_device(int dev) {

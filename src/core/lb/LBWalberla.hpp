@@ -25,10 +25,12 @@
 
 #include <utils/Vector.hpp>
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 class LBWalberlaBase;
 namespace System {
@@ -65,10 +67,14 @@ struct LBWalberla {
   std::optional<double> get_density_at_pos(Utils::Vector3d const &pos,
                                            bool consider_points_in_halo) const;
   Utils::Vector3d get_momentum() const;
+  std::function<bool(Utils::Vector3d const &)>
+  make_lattice_position_checker(bool consider_points_in_halo) const;
   bool add_force_at_pos(Utils::Vector3d const &pos,
                         Utils::Vector3d const &force);
   void add_forces_at_pos(std::vector<Utils::Vector3d> const &pos,
                          std::vector<Utils::Vector3d> const &forces);
+  std::vector<double>
+  get_densities_at_pos(std::vector<Utils::Vector3d> const &pos);
   std::vector<Utils::Vector3d>
   get_velocities_at_pos(std::vector<Utils::Vector3d> const &pos);
   void propagate();

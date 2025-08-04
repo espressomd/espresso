@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_CYLINDRICALLBVELOCITYPROFILE_HPP
-#define OBSERVABLES_CYLINDRICALLBVELOCITYPROFILE_HPP
+
+#pragma once
 
 #include "CylindricalLBProfileObservable.hpp"
 
@@ -37,5 +37,3 @@ public:
 };
 
 } // Namespace Observables
-
-#endif

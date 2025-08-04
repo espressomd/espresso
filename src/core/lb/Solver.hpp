@@ -27,8 +27,10 @@
 
 #include <cassert>
 #include <cmath>
+#include <functional>
 #include <memory>
 #include <optional>
+#include <vector>
 
 namespace LB {
 
@@ -136,11 +138,15 @@ struct Solver : public System::Leaf<Solver> {
 
   Utils::Vector3d get_momentum() const;
 
+  /** @brief Make a functor to check if a position is in the local domain. */
+  std::function<bool(Utils::Vector3d const &)>
+  make_lattice_position_checker(bool consider_points_in_halo) const;
+
   /**
    * @brief Calculate the interpolated fluid velocity in LB units.
    * Use this function in MPI-parallel code. The LB ghost layer is ignored.
-   * @param pos Position in MD units at which the velocity is to be calculated.
-   * @retval interpolated fluid velocity.
+   * @param pos Position in MD units at which the velocity is calculated.
+   * @retval interpolated fluid velocity in LB units.
    */
   std::optional<Utils::Vector3d>
   get_interpolated_velocity(Utils::Vector3d const &pos) const;
@@ -148,22 +154,39 @@ struct Solver : public System::Leaf<Solver> {
   /**
    * @brief Calculate the interpolated fluid density in LB units.
    * Use this function in MPI-parallel code. The LB ghost layer is ignored.
-   * @param pos Position in MD units at which the density is to be calculated.
-   * @retval interpolated fluid density.
+   * @param pos Position in MD units at which the density is calculated.
+   * @retval interpolated fluid density in LB units.
    */
   std::optional<double>
   get_interpolated_density(Utils::Vector3d const &pos) const;
 
   /**
+   * @brief Calculate the interpolated fluid densities in LB units.
+   * The LB ghost layer is used.
+   * Achieved by linear interpolation (eq. 11 in @cite ahlrichs99a).
+   * @param pos Positions in MD units at which the velocities are calculated.
+   * @retval interpolated fluid densities in LB units.
+   */
+  std::vector<double>
+  get_interpolated_densities(std::vector<Utils::Vector3d> const &pos) const;
+
+  /**
    * @brief Calculate the interpolated fluid velocity in MD units.
    * Special method used only for particle coupling. Uses the LB ghost layer.
    * Achieved by linear interpolation (eq. 11 in @cite ahlrichs99a).
-   * @param pos Position in MD units at which the velocity is to be calculated.
-   * @retval interpolated fluid velocity.
+   * @param pos Position in MD units at which the velocity is calculated.
+   * @retval interpolated fluid velocity in MD units.
    */
   Utils::Vector3d
   get_coupling_interpolated_velocity(Utils::Vector3d const &pos) const;
 
+  /**
+   * @brief Calculate the interpolated fluid velocities in MD units.
+   * Special method used only for particle coupling. Uses the LB ghost layer.
+   * Achieved by linear interpolation (eq. 11 in @cite ahlrichs99a).
+   * @param pos Positions in MD units at which the velocities are calculated.
+   * @retval interpolated fluid velocities in MD units.
+   */
   std::vector<Utils::Vector3d> get_coupling_interpolated_velocities(
       std::vector<Utils::Vector3d> const &pos) const;
 

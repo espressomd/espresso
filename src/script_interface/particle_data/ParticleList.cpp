@@ -40,6 +40,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -83,8 +84,8 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
     auto const add_partner = [&partners](int pid1, int pid2, int n_bonds) {
       if (pid2 == pid1)
         return;
-      for (auto const &partner : partners[pid1])
-        if (partner.first == pid2)
+      for (auto const &partner_pid : std::views::elements<0>(partners[pid1]))
+        if (partner_pid == pid2)
           return;
       partners[pid1].emplace_back(pid2, n_bonds);
     };
@@ -96,11 +97,7 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
 
     // determine transient connectivity
     for (int iteration = 1; iteration < n_bonds_max; iteration++) {
-      std::vector<int> pids;
-      for (auto const &kv : partners) {
-        pids.emplace_back(kv.first);
-      }
-      for (auto const pid1 : pids) {
+      for (auto const pid1 : std::views::elements<0>(partners)) {
         // loop over partners (counter-based loops due to iterator invalidation)
         // NOLINTNEXTLINE(modernize-loop-convert)
         for (std::size_t i = 0u; i < partners[pid1].size(); ++i) {
@@ -123,11 +120,8 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   }
 
   boost::mpi::broadcast(comm, partners, 0);
-  for (auto const &kv : partners) {
-    auto const pid1 = kv.first;
-    auto const &partner_list = kv.second;
-    for (auto const &partner : partner_list) {
-      auto const pid2 = partner.first;
+  for (auto const &[pid1, partner_list] : partners) {
+    for (auto const &pid2 : std::views::elements<0>(partner_list)) {
       if (auto p1 = cell_structure.get_local_particle(pid1)) {
         add_exclusion(*p1, pid2);
       }
@@ -190,7 +184,7 @@ Variant ParticleList::do_call_method(std::string const &name,
     auto so = std::dynamic_pointer_cast<ParticleHandle>(
         context()->make_shared("Particles::ParticleHandle", local_params));
 #ifdef EXCLUSIONS
-    if (params.count("exclusions")) {
+    if (params.contains("exclusions")) {
       so->call_method("set_exclusions", {{"p_ids", params.at("exclusions")}});
     }
 #endif // EXCLUSIONS
