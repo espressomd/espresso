@@ -220,10 +220,6 @@ template <typename FloatType> void FFT_CUDA<FloatType>::solve() {
   for (auto &block : *get_lattice().get_blocks()) {
     auto potential =
         block.template getData<PotentialField>(m_potential_field_id);
-    auto potential_ghosts = block.template getData<PotentialField>(
-        m_potential_field_with_ghosts_id);
-    auto green =
-        block.template getData<GreenFunctionField>(m_greens_function_field_id);
     auto furier =
         block.template getData<PotentialFurier>(m_potential_furier_id);
     FloatType *_data_potential = potential->dataAt(0, 0, 0, 0);
