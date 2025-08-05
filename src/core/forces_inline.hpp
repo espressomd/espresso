@@ -29,6 +29,10 @@
 
 #include "forces.hpp"
 
+#if defined(ELECTROSTATICS) or defined(DIPOLES) or defined(DPD) or defined(NPT)
+#define LONG_RANGE_KERNELS
+#endif
+
 #include "BoxGeometry.hpp"
 #include "actor/visitors.hpp"
 #include "bond_breakage/bond_breakage.hpp"
@@ -174,7 +178,7 @@ inline ParticleForce calc_opposing_force(ParticleForce const &pf,
 /**
  * For the interaction which need NO particle information
  */
-inline void add_non_bonded_pair_withot_p(
+inline void add_non_bonded_pair_without_p(
     ParticleForce &pf, Utils::Vector3d const &d, double dist, double q1q2,
     IA_parameters const &ia_params, [[maybe_unused]] bool do_nonbonded,
     Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel) {
@@ -214,7 +218,7 @@ inline void add_non_bonded_pair_withot_p(
  */
 inline void add_non_bonded_pair_force_with_p(
     Particle &p1, Particle &p2, ParticleForce &pf,
-#ifdef NPT
+#if defined(NPT) and defined(SHARED_MEMORY_PARALLELISM)
     Utils::Vector3d &virial,
 #endif
     Utils::Vector3d const &d, double dist, double dist2, double q1q2,
@@ -312,13 +316,6 @@ inline void add_non_bonded_pair_force_with_p(
   // return std::pair{pf, virial};
 }
 
-#if defined(NPT) and defined(SHARED_MEMORY_PARALLELISM)
-using ReturnType = std::pair<ParticleForce, Utils::Vector3d>;
-#elif defined(SHARED_MEMORY_PARALLELISM)
-using ReturnType = ParticleForce;
-#else
-using ReturnType = void;
-#endif
 /** Calculate non-bonded forces between a pair of particles and update their
  *  forces and torques.
  *  @param[in,out] p1      particle 1.
@@ -336,7 +333,7 @@ using ReturnType = void;
  *  @param[in] elc_kernel      ELC force correction kernel.
  *  @param[in] coulomb_u_kernel Coulomb energy kernel.
  */
-inline ReturnType add_non_bonded_pair_force(
+inline auto add_non_bonded_pair_force(
     Particle &p1, Particle &p2, Utils::Vector3d const &d, double dist,
     double dist2, double q1q2, IA_parameters const &ia_params,
     Thermostat::Thermostat const &thermostat, BoxGeometry const &box_geo,
@@ -352,16 +349,15 @@ inline ReturnType add_non_bonded_pair_force(
 #endif
 
 #ifdef EXCLUSIONS
-  bool do_nonbonded_flag = do_nonbonded(p1, p2);
+  auto const do_nonbonded_flag = do_nonbonded(p1, p2);
 #else
-  bool do_nonbonded_flag = true;
+  auto constexpr do_nonbonded_flag = true;
 #endif
 
-  add_non_bonded_pair_withot_p(pf, d, dist, q1q2, ia_params, do_nonbonded_flag,
-                               coulomb_kernel);
+  add_non_bonded_pair_without_p(pf, d, dist, q1q2, ia_params, do_nonbonded_flag,
+                                coulomb_kernel);
 
-#if defined(NPT) or defined(THOLE) or defined(ELECTROSTATICS) or               \
-    defined(P3M) or defined(DPD) or defined(DIPOLES)
+#if defined(LONG_RANGE_KERNELS)
   add_non_bonded_pair_force_with_p(
       p1, p2, pf,
 #if defined(NPT) and defined(SHARED_MEMORY_PARALLELISM)

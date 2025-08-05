@@ -27,11 +27,8 @@
 
 #include "aosoa_pack.hpp"
 #include "forces_inline.hpp"
-#include <Cabana_Core.hpp>
 
-#if defined(ELECTROSTATICS) or defined(DIPOLES) or defined(DPD) or defined(NPT)
-#define LONG_RANGE_KERNELS
-#endif
+#include <Cabana_Core.hpp>
 
 struct ForcesKernel {
   [[maybe_unused]] const BondedInteractionsMap &bonded_ias;
@@ -128,8 +125,8 @@ struct ForcesKernel {
     auto constexpr do_nonbonded_flag = true;
 #endif
 
-    add_non_bonded_pair_withot_p(pf, d, dist, q1q2, ia_params,
-                                 do_nonbonded_flag, coulomb_kernel);
+    add_non_bonded_pair_without_p(pf, d, dist, q1q2, ia_params,
+                                  do_nonbonded_flag, coulomb_kernel);
 
 #if defined(LONG_RANGE_KERNELS)
     add_non_bonded_pair_force_with_p(p1, p2, pf,

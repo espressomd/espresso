@@ -234,8 +234,7 @@ void System::System::calculate_forces() {
   update_cabana_state(*cell_structure, particles,
                       cell_structure->ghost_particles(), verlet_criterion,
                       get_interaction_range());
-#if defined(EXCLUSIONS) or defined(THOLE) or defined(ELECTROSTATICS) or        \
-    defined(P3M) or defined(DPD) or defined(DIPOLES) or defined(NPT)
+#if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
   auto unique_particles = cell_structure->get_unique_particles();
 #endif
   auto local_force = cell_structure->get_local_force();
@@ -249,14 +248,12 @@ void System::System::calculate_forces() {
 
   ForcesKernel first_neighbor_kernel(
       *bonded_ias, *nonbonded_ias, get_ptr(coulomb_kernel),
-#if defined(THOLE) or defined(ELECTROSTATICS) or defined(P3M) or               \
-    defined(DPD) or defined(DIPOLES) or defined(NPT)
+#if defined(LONG_RANGE_KERNELS)
       get_ptr(dipoles_kernel), get_ptr(elc_kernel), get_ptr(coulomb_u_kernel),
       *thermostat,
 #endif
       *box_geo,
-#if defined(EXCLUSIONS) or defined(THOLE) or defined(ELECTROSTATICS) or        \
-    defined(P3M) or defined(DPD) or defined(DIPOLES) or defined(NPT)
+#if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
       unique_particles,
 #endif
       local_force,
@@ -275,7 +272,7 @@ void System::System::calculate_forces() {
                      *cell_structure, get_interaction_range(),
                      bonded_ias->maximal_cutoff(), particles,
                      cell_structure->ghost_particles(), verlet_criterion);
-#else
+#else // SHARED_MEMORY_PARALLELISM
 
   auto pair_kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
                       dipoles_kernel_ptr = get_ptr(dipoles_kernel),
@@ -307,7 +304,7 @@ void System::System::calculate_forces() {
                                      dipole_cutoff,
                                      collision_detection_cutoff});
 
-#endif
+#endif // SHARED_MEMORY_PARALLELISM
   constraints->add_forces(particles, get_sim_time());
   oif_global->calculate_forces();
 
