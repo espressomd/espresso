@@ -344,7 +344,7 @@ public:
   }
 
   std::size_t count_local_particles() const {
-	  std::size_t count = 0;
+    std::size_t count = 0;
     for (auto const &cell : m_decomposition->local_cells()) {
       count += cell->particles().size();
     }
