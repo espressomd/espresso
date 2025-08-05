@@ -32,6 +32,7 @@
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "lees_edwards/lees_edwards.hpp"
+#include "particle_enumeration.hpp"
 #include "particle_reduction.hpp"
 #include "system/System.hpp"
 
@@ -63,15 +64,11 @@
 #include <Cabana_NeighborList.hpp>
 #include <Kokkos_Core.hpp>
 #endif
+#ifdef CALIPER
+#include "caliper/cali.h"
+#endif
 
 #ifdef SHARED_MEMORY_PARALLELISM
-
-// using memory_space = Kokkos::HostSpace;
-// using execution_space = Kokkos::DefaultExecutionSpace;
-
-// using ListAlgorithm = Cabana::HalfNeighborTag;
-// using ListType = Cabana::CustomVerletList<memory_space, ListAlgorithm,
-//                                           Cabana::VerletLayout2D>;
 
 CellStructure::~CellStructure() {
   if (m_cabana_data) {
@@ -163,9 +160,55 @@ void CellStructure::reset_local_properties() {
 #ifdef ROTATION
   Kokkos::deep_copy(get_local_torque(), 0);
 #endif
+  /*
+  Kokkos::parallel_for(get_local_force().extent(0), [&](int i) {
+    for (int j = 0; j < get_local_force().extent(1); j++) {
+      for (int k : {0, 1, 2}) {
+        get_local_force()(i, j, k) = 0.;
+#ifdef ROTATION
+        get_local_torque()(i, j, k) = 0.;
+#endif
+      }
+    }
+  });*/
 #ifdef NPT
   Kokkos::deep_copy(get_local_virial(), 0);
 #endif
+}
+
+void CellStructure::set_index_map() {
+#ifdef CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
+  m_unique_particles.clear();
+  m_unique_particles.resize(count_local_particles());
+  std::unordered_set<int> registered_index{};
+  using execution_space = Kokkos::DefaultExecutionSpace;
+  int n_threads = execution_space().concurrency();
+  std::vector<int> max_ids(n_threads);
+  enumerate_local_particles(*this, [&](int index, Particle &p) {
+    m_unique_particles[index] = &p;
+    const int thread_num = omp_get_thread_num();
+    max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
+  });
+  int max_id = *(std::max_element(max_ids.begin(), max_ids.end()));
+  for (auto &p : ghost_particles()) {
+    const Particle *local_particle = get_local_particle(p.id());
+    if (not local_particle) {
+      continue;
+    }
+    if (not local_particle->is_ghost()) {
+      continue;
+    }
+    if (registered_index.contains(p.id())) {
+      continue;
+    }
+    registered_index.insert(p.id());
+    m_unique_particles.emplace_back(&p);
+    max_id = std::max(p.id(), max_id);
+  }
+  registered_index.clear();
+  m_cached_max_local_particle_id = max_id;
 }
 #endif
 

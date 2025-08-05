@@ -30,7 +30,6 @@
 #ifdef SHARED_MEMORY_PARALLELISM
 
 #include "aosoa_pack.hpp"
-// #include "cabana_data.hpp"
 #include "custom_verlet_list.hpp"
 #include "forces_cabana.hpp"
 #include <Cabana_Core.hpp>
@@ -48,9 +47,6 @@ inline void write_particle(Particle const &p, int const &id,
   }
 }
 
-using ListAlgorithm = Cabana::HalfNeighborTag;
-using ListType = Cabana::CustomVerletList<memory_space, ListAlgorithm,
-                                          Cabana::VerletLayout2D>;
 template <class VerletCriterion>
 __attribute__((always_inline)) inline void construct_verlet_list(
     CellStructure &cell_structure, VerletCriterion const &verlet_criterion,
@@ -132,7 +128,7 @@ __attribute__((always_inline)) inline void update_cabana_state(
   // Number of threads
   int num_threads = execution_space().concurrency();
 
-  int number_of_unique_particles = 0;
+  //int number_of_unique_particles = 0;
 
   bool const rebuild = cell_structure.get_rebuild_cabana_verlet_list() or
                        (not cell_structure.use_verlet_list);
@@ -140,18 +136,20 @@ __attribute__((always_inline)) inline void update_cabana_state(
 
   if (rebuild) {
     // If we have to rebuild, we need to count the particles
-    cell_structure.set_index_map(particles, ghost_particles,
-                                 number_of_unique_particles);
+    // cell_structure.set_index_map(); // parallelized index_map
+    cell_structure.set_index_map(particles, ghost_particles);
+    
     // Create essential variable for MD
-    cell_structure.rebuild_local_properties(number_of_unique_particles,
-                                            num_threads, pair_cutoff);
+    cell_structure.rebuild_local_properties(
+        cell_structure.get_unique_particles().size(), num_threads, pair_cutoff);
   } else {
     // If we do not rebuild we can use the saved map
-    number_of_unique_particles = cell_structure.get_unique_particles().size();
+    // number_of_unique_particles = cell_structure.get_unique_particles().size();
     cell_structure.reset_local_properties();
   }
   auto const unique_particles = cell_structure.get_unique_particles();
   auto aosoa = cell_structure.get_aosoa_data();
+  // int max_id = cell_structure.get_cached_max_local_particle_id();
   int max_id = cell_structure.get_max_id();
 
 #ifdef CALIPER
@@ -171,7 +169,7 @@ __attribute__((always_inline)) inline void update_cabana_state(
 
     using policy_type = Kokkos::RangePolicy<execution_space>;
     Kokkos::parallel_for(
-        "AoSoA write", policy_type(0, number_of_unique_particles),
+        "AoSoA write", policy_type(0, unique_particles.size()),
         [&unique_particles, &aosoa, &id_to_index](const int p_id) {
           write_particle(*unique_particles.at(p_id), p_id, aosoa);
           id_to_index(unique_particles.at(p_id)->id()) = p_id;
@@ -204,17 +202,12 @@ template <class BondKernel, class PairKernel,
           class VerletCriterion = detail::True>
 void cabana_short_range(
     BondKernel const &bond_kernel, PairKernel const &forces_kernel,
-#ifdef COLLISION_DETECTION
-    std::shared_ptr<CollisionDetection::CollisionDetection> collision_detection,
-#endif
     CellStructure &cell_structure, double pair_cutoff, double bond_cutoff,
     ParticleRange const &particles, ParticleRange const &ghost_particles,
     VerletCriterion const &verlet_criterion = {}) {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
-
-  int num_threads = execution_space().concurrency();
 
 #ifdef CALIPER
   CALI_MARK_BEGIN("Espresso - Bond Kernel");
@@ -233,18 +226,9 @@ void cabana_short_range(
 #ifdef CALIPER
     CALI_MARK_BEGIN("Cabana - calc Force");
 #endif
-    auto unique_particles = cell_structure.get_unique_particles();
-    auto local_force = cell_structure.get_local_force();
-#ifdef ROTATION
-    auto local_torque = cell_structure.get_local_torque();
-#endif
-#ifdef NPT
-    auto local_virial = cell_structure.get_local_virial();
-#endif
     auto cabana_verlet_list = cell_structure.get_cabana_verlet_list();
-
     // cabana_verlet_list.get_variance_max_counts();
-    Kokkos::RangePolicy<execution_space> policy(0, unique_particles.size());
+    Kokkos::RangePolicy<execution_space> policy(0, cell_structure.get_unique_particles().size());
     Cabana::neighbor_parallel_for(policy, forces_kernel, cabana_verlet_list,
                                   Cabana::FirstNeighborsTag(),
                                   // Cabana::TeamOpTag());
@@ -252,79 +236,6 @@ void cabana_short_range(
     Kokkos::fence();
 #ifdef CALIPER
     CALI_MARK_END("Cabana - calc Force");
-#endif
-
-#ifdef CALIPER
-    CALI_MARK_BEGIN("Cabana - reduction Forces");
-#endif
-    // Force and Torque reduction
-    // Kokkos::RangePolicy<execution_space> policy(0, unique_particles.size());
-    Kokkos::parallel_for("reduction", policy,
-                         [&local_force,
-#ifdef ROTATION
-                          &local_torque,
-#endif
-                          &unique_particles, num_threads](const int i) {
-                           double fx = 0.;
-                           double fy = 0.;
-                           double fz = 0.;
-#ifdef ROTATION
-                           double tx = 0.;
-                           double ty = 0.;
-                           double tz = 0.;
-#endif
-                           for (int tid = 0; tid < num_threads; ++tid) {
-                             fx += local_force(i, tid, 0);
-                             fy += local_force(i, tid, 1);
-                             fz += local_force(i, tid, 2);
-#ifdef ROTATION
-                             tx += local_torque(i, tid, 0);
-                             ty += local_torque(i, tid, 1);
-                             tz += local_torque(i, tid, 2);
-#endif
-                           }
-                           // auto &p = unique_particles.at(i);
-                           // p->force() += Utils::Vector3d{fx, fy, fz};
-                           unique_particles.at(i)->force() +=
-                               Utils::Vector3d{fx, fy, fz};
-#ifdef ROTATION
-                           // p->torque() += Utils::Vector3d{tx, ty, tz};
-                           unique_particles.at(i)->torque() +=
-                               Utils::Vector3d{tx, ty, tz};
-#endif
-                         });
-    Kokkos::fence();
-
-#ifdef NPT
-    double vx = 0.;
-    double vy = 0.;
-    double vz = 0.;
-    for (int tid = 0; tid < num_threads; ++tid) {
-      vx += local_virial(tid, 0);
-      vy += local_virial(tid, 1);
-      vz += local_virial(tid, 2);
-    }
-    Utils::Vector3d virial_vec{vx, vy, vz};
-    npt_add_virial_force_contribution(virial_vec);
-#endif
-#ifdef CALIPER
-    CALI_MARK_END("Cabana - reduction Forces");
-#endif
-
-#ifdef CALIPER
-    CALI_MARK_BEGIN("Cabana - Collision Detection");
-#endif
-#ifdef COLLISION_DETECTION
-    auto collision_kernel = [&](Particle const &p1, Particle const &p2,
-                                Distance const &d) {
-      if (not collision_detection->is_off()) {
-        collision_detection->detect_collision(p1, p2, d.dist2);
-      }
-    };
-    cell_structure.non_bonded_loop(collision_kernel, verlet_criterion);
-#endif
-#ifdef CALIPER
-    CALI_MARK_END("Cabana - Collision Detection");
 #endif
   }
 }

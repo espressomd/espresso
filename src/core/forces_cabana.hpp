@@ -44,12 +44,12 @@ struct ForcesKernel {
 #if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
   std::vector<Particle *> &unique_particles;
 #endif
-  Kokkos::View<double **[3], Kokkos::LayoutRight> local_force;
+  ForceType local_force;
 #ifdef ROTATION
-  Kokkos::View<double **[3], Kokkos::LayoutRight> local_torque;
+  ForceType local_torque;
 #endif
 #ifdef NPT
-  Kokkos::View<double *[3], Kokkos::LayoutRight> local_virial;
+  VirialType local_virial;
 #endif
   const AoSoA_pack &aosoa;
 
@@ -67,12 +67,12 @@ struct ForcesKernel {
 #if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
       std::vector<Particle *> &unique_particles_,
 #endif
-      Kokkos::View<double **[3], Kokkos::LayoutRight> local_force_,
+      ForceType local_force_,
 #ifdef ROTATION
-      Kokkos::View<double **[3], Kokkos::LayoutRight> local_torque_,
+      ForceType local_torque_,
 #endif
 #ifdef NPT
-      Kokkos::View<double *[3], Kokkos::LayoutRight> local_virial_,
+      VirialType local_virial_,
 #endif
       const AoSoA_pack &aosoa_)
       : bonded_ias(bonded_ias_), nonbonded_ias(nonbonded_ias_),

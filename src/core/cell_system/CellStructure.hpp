@@ -82,6 +82,17 @@ class CabanaData;
 struct AoSoA_pack;
 // To construct AoSoA, vector_length is defined HERE.
 const int vector_length = 1;
+
+using ForceType = Kokkos::View<double **[3], Kokkos::LayoutRight>;
+using VirialType = Kokkos::View<double *[3], Kokkos::LayoutRight>;
+using data_types = Cabana::MemberTypes<double[4], double, int, int>;
+using memory_space = Kokkos::HostSpace;
+using AoSoAType = Cabana::AoSoA<data_types, memory_space, vector_length,
+				Kokkos::MemoryTraits<0>>;
+using ListAlgorithm = Cabana::HalfNeighborTag;
+using ListType =
+    Cabana::CustomVerletList<Kokkos::HostSpace, ListAlgorithm,
+			     Cabana::VerletLayout2D, Cabana::TeamVectorOpTag>;
 #endif
 
 template <typename Callable>
@@ -189,29 +200,21 @@ private:
   bool m_verlet_skin_set = false;
   double m_verlet_reuse = 0.;
 #ifdef SHARED_MEMORY_PARALLELISM
-  using ForceType = Kokkos::View<double **[3], Kokkos::LayoutRight>;
+  int m_cached_max_local_particle_id;
+
   std::unique_ptr<ForceType> m_local_force;
 #ifdef ROTATION
   std::unique_ptr<ForceType> m_local_torque;
 #endif
 #ifdef NPT
-  using VirialType = Kokkos::View<double *[3], Kokkos::LayoutRight>;
   std::unique_ptr<VirialType> m_local_virial;
 #endif
-  using data_types = Cabana::MemberTypes<double[3], double, int, int>;
-  using memory_space = Kokkos::HostSpace;
-  using AoSoAType = Cabana::AoSoA<data_types, memory_space, vector_length,
-                                  Kokkos::MemoryTraits<0>>;
   std::unique_ptr<AoSoAType> m_particle_storage;
   /** particle properties for Cabana defined in aosoa_pack.hpp */
   std::unique_ptr<AoSoA_pack> m_aosoa;
   /** The local id-to-index for aosoa data */
   std::vector<Particle *> m_unique_particles;
 
-  using ListAlgorithm = Cabana::HalfNeighborTag;
-  using ListType =
-      Cabana::CustomVerletList<Kokkos::HostSpace, ListAlgorithm,
-                               Cabana::VerletLayout2D, Cabana::TeamVectorOpTag>;
   std::unique_ptr<ListType> m_cabana_verlet_list;
 #endif
 
@@ -340,6 +343,14 @@ public:
     return Cells::particles(decomposition().ghost_cells());
   }
 
+  int count_local_particles() const {
+    int count = 0;
+    for (auto const &cell : m_decomposition->local_cells()) {
+      count += cell->particles().size();
+    }
+    return count;
+  }
+
   /** @brief whether to use parallel version of @ref for_each_local_particle */
   bool use_parallel_for_each_local_particle() const {
 #ifdef SHARED_MEMORY_PARALLELISM
@@ -442,6 +453,11 @@ public:
    * this node, or -1 if there are no particles on this node.
    */
   int get_max_local_particle_id() const;
+#ifdef SHARED_MEMORY_PARALLELISM
+  int get_cached_max_local_particle_id() const {
+    return m_cached_max_local_particle_id;
+  };
+#endif
 
   /**
    * @brief Remove all particles from the cell system.
@@ -751,7 +767,7 @@ public:
   void set_max_prefactor(int value) { max_prefactor = value; }
 
   void set_max_counts(int value) { max_counts = value; }
-  int get_max_counts() { return max_counts; }
+  int get_max_counts() const { return max_counts; }
 
   int get_max_id() { return m_max_id; }
 
@@ -770,8 +786,9 @@ public:
   ListType &get_cabana_verlet_list() { return *m_cabana_verlet_list; };
   std::vector<Particle *> &get_unique_particles() { return m_unique_particles; }
 
+  void set_index_map();
   inline void set_index_map(ParticleRange const &particles,
-                            ParticleRange const &ghost_particles, int &index) {
+                            ParticleRange const &ghost_particles) {
     m_unique_particles.clear();
     m_max_id = 0;
     std::unordered_set<int> registered_index{};
@@ -779,7 +796,6 @@ public:
       if (p.id() > m_max_id)
         m_max_id = p.id();
       m_unique_particles.emplace_back(&p);
-      index++;
     }
 
     for (auto &p : ghost_particles) {
@@ -796,7 +812,6 @@ public:
         m_max_id = p.id();
       registered_index.insert(p.id());
       m_unique_particles.emplace_back(&p);
-      index++;
     }
     registered_index.clear();
   }

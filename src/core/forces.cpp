@@ -234,9 +234,7 @@ void System::System::calculate_forces() {
   update_cabana_state(*cell_structure, particles,
                       cell_structure->ghost_particles(), verlet_criterion,
                       get_interaction_range());
-#if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
   auto unique_particles = cell_structure->get_unique_particles();
-#endif
   auto local_force = cell_structure->get_local_force();
 #ifdef ROTATION
   auto local_torque = cell_structure->get_local_torque();
@@ -266,12 +264,83 @@ void System::System::calculate_forces() {
       aosoa);
 
   cabana_short_range(bond_kernel, first_neighbor_kernel,
-#ifdef COLLISION_DETECTION
-                     collision_detection,
-#endif
                      *cell_structure, get_interaction_range(),
                      bonded_ias->maximal_cutoff(), particles,
                      cell_structure->ghost_particles(), verlet_criterion);
+#ifdef CALIPER
+  CALI_MARK_BEGIN("Cabana - reduction Forces");
+#endif
+  // Force and Torque reduction
+  int num_threads = execution_space().concurrency();
+  Kokkos::RangePolicy<execution_space> policy(0, unique_particles.size());
+  Kokkos::parallel_for("reduction", policy,
+		       [&local_force,
+#ifdef ROTATION
+			&local_torque,
+#endif
+			&unique_particles, num_threads](const int i) {
+			 double fx = 0.;
+			 double fy = 0.;
+			 double fz = 0.;
+#ifdef ROTATION
+			 double tx = 0.;
+			 double ty = 0.;
+			 double tz = 0.;
+#endif
+			 for (int tid = 0; tid < num_threads; ++tid) {
+			   fx += local_force(i, tid, 0);
+			   fy += local_force(i, tid, 1);
+			   fz += local_force(i, tid, 2);
+#ifdef ROTATION
+			   tx += local_torque(i, tid, 0);
+			   ty += local_torque(i, tid, 1);
+			   tz += local_torque(i, tid, 2);
+#endif
+			 }
+			 // auto &p = unique_particles.at(i);
+			 // p->force() += Utils::Vector3d{fx, fy, fz};
+			 unique_particles.at(i)->force() +=
+			     Utils::Vector3d{fx, fy, fz};
+#ifdef ROTATION
+			 // p->torque() += Utils::Vector3d{tx, ty, tz};
+			 unique_particles.at(i)->torque() +=
+			     Utils::Vector3d{tx, ty, tz};
+#endif
+		       });
+  Kokkos::fence();
+
+#ifdef NPT
+  double vx = 0.;
+  double vy = 0.;
+  double vz = 0.;
+  for (int tid = 0; tid < num_threads; ++tid) {
+    vx += local_virial(tid, 0);
+    vy += local_virial(tid, 1);
+    vz += local_virial(tid, 2);
+  }
+  Utils::Vector3d virial_vec{vx, vy, vz};
+  npt_add_virial_force_contribution(virial_vec);
+#endif
+#ifdef CALIPER
+  CALI_MARK_END("Cabana - reduction Forces");
+#endif
+
+#ifdef CALIPER
+  CALI_MARK_BEGIN("Cabana - Collision Detection");
+#endif
+#ifdef COLLISION_DETECTION
+  auto collision_kernel = [&collision_detection = *collision_detection]
+			  (Particle const &p1, Particle const &p2, Distance const &d) {
+    if (not collision_detection.is_off()) {
+      collision_detection.detect_collision(p1, p2, d.dist2);
+    }
+  };
+  cell_structure->non_bonded_loop(collision_kernel, verlet_criterion);
+#endif
+#ifdef CALIPER
+  CALI_MARK_END("Cabana - Collision Detection");
+#endif
+
 #else // SHARED_MEMORY_PARALLELISM
 
   auto pair_kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
