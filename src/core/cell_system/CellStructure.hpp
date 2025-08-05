@@ -88,11 +88,11 @@ using VirialType = Kokkos::View<double *[3], Kokkos::LayoutRight>;
 using data_types = Cabana::MemberTypes<double[4], double, int, int>;
 using memory_space = Kokkos::HostSpace;
 using AoSoAType = Cabana::AoSoA<data_types, memory_space, vector_length,
-				Kokkos::MemoryTraits<0>>;
+                                Kokkos::MemoryTraits<0>>;
 using ListAlgorithm = Cabana::HalfNeighborTag;
 using ListType =
     Cabana::CustomVerletList<Kokkos::HostSpace, ListAlgorithm,
-			     Cabana::VerletLayout2D, Cabana::TeamVectorOpTag>;
+                             Cabana::VerletLayout2D, Cabana::TeamVectorOpTag>;
 #endif
 
 template <typename Callable>

@@ -128,7 +128,7 @@ __attribute__((always_inline)) inline void update_cabana_state(
   // Number of threads
   int num_threads = execution_space().concurrency();
 
-  //int number_of_unique_particles = 0;
+  // int number_of_unique_particles = 0;
 
   bool const rebuild = cell_structure.get_rebuild_cabana_verlet_list() or
                        (not cell_structure.use_verlet_list);
@@ -138,13 +138,14 @@ __attribute__((always_inline)) inline void update_cabana_state(
     // If we have to rebuild, we need to count the particles
     // cell_structure.set_index_map(); // parallelized index_map
     cell_structure.set_index_map(particles, ghost_particles);
-    
+
     // Create essential variable for MD
     cell_structure.rebuild_local_properties(
         cell_structure.get_unique_particles().size(), num_threads, pair_cutoff);
   } else {
     // If we do not rebuild we can use the saved map
-    // number_of_unique_particles = cell_structure.get_unique_particles().size();
+    // number_of_unique_particles =
+    // cell_structure.get_unique_particles().size();
     cell_structure.reset_local_properties();
   }
   auto const unique_particles = cell_structure.get_unique_particles();
@@ -200,11 +201,12 @@ __attribute__((always_inline)) inline void update_cabana_state(
 
 template <class BondKernel, class PairKernel,
           class VerletCriterion = detail::True>
-void cabana_short_range(
-    BondKernel const &bond_kernel, PairKernel const &forces_kernel,
-    CellStructure &cell_structure, double pair_cutoff, double bond_cutoff,
-    ParticleRange const &particles, ParticleRange const &ghost_particles,
-    VerletCriterion const &verlet_criterion = {}) {
+void cabana_short_range(BondKernel const &bond_kernel,
+                        PairKernel const &forces_kernel,
+                        CellStructure &cell_structure, double pair_cutoff,
+                        double bond_cutoff, ParticleRange const &particles,
+                        ParticleRange const &ghost_particles,
+                        VerletCriterion const &verlet_criterion = {}) {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
@@ -228,7 +230,8 @@ void cabana_short_range(
 #endif
     auto cabana_verlet_list = cell_structure.get_cabana_verlet_list();
     // cabana_verlet_list.get_variance_max_counts();
-    Kokkos::RangePolicy<execution_space> policy(0, cell_structure.get_unique_particles().size());
+    Kokkos::RangePolicy<execution_space> policy(
+        0, cell_structure.get_unique_particles().size());
     Cabana::neighbor_parallel_for(policy, forces_kernel, cabana_verlet_list,
                                   Cabana::FirstNeighborsTag(),
                                   // Cabana::TeamOpTag());
