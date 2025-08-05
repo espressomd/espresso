@@ -44,12 +44,12 @@ struct ForcesKernel {
 #if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
   std::vector<Particle *> &unique_particles;
 #endif
-  ForceType local_force;
+  ForceType &local_force;
 #ifdef ROTATION
-  ForceType local_torque;
+  ForceType &local_torque;
 #endif
 #ifdef NPT
-  VirialType local_virial;
+  VirialType &local_virial;
 #endif
   const AoSoA_pack &aosoa;
 
@@ -67,12 +67,12 @@ struct ForcesKernel {
 #if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
       std::vector<Particle *> &unique_particles_,
 #endif
-      ForceType local_force_,
+      ForceType &local_force_,
 #ifdef ROTATION
-      ForceType local_torque_,
+      ForceType &local_torque_,
 #endif
 #ifdef NPT
-      VirialType local_virial_,
+      VirialType &local_virial_,
 #endif
       const AoSoA_pack &aosoa_)
       : bonded_ias(bonded_ias_), nonbonded_ias(nonbonded_ias_),

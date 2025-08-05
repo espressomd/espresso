@@ -128,30 +128,26 @@ __attribute__((always_inline)) inline void update_cabana_state(
   // Number of threads
   int num_threads = execution_space().concurrency();
 
-  // int number_of_unique_particles = 0;
-
   bool const rebuild = cell_structure.get_rebuild_cabana_verlet_list() or
                        (not cell_structure.use_verlet_list);
   // std::cout << "rebuild:" << rebuild << std::endl;
 
   if (rebuild) {
     // If we have to rebuild, we need to count the particles
-    // cell_structure.set_index_map(); // parallelized index_map
-    cell_structure.set_index_map(particles, ghost_particles);
+    cell_structure.set_index_map(); // parallelized index_map
+    // cell_structure.set_index_map(particles, ghost_particles);
 
     // Create essential variable for MD
     cell_structure.rebuild_local_properties(
         cell_structure.get_unique_particles().size(), num_threads, pair_cutoff);
   } else {
     // If we do not rebuild we can use the saved map
-    // number_of_unique_particles =
-    // cell_structure.get_unique_particles().size();
     cell_structure.reset_local_properties();
   }
   auto const unique_particles = cell_structure.get_unique_particles();
   auto aosoa = cell_structure.get_aosoa_data();
-  // int max_id = cell_structure.get_cached_max_local_particle_id();
-  int max_id = cell_structure.get_max_id();
+  int max_id = cell_structure.get_cached_max_local_particle_id();
+  // int max_id = cell_structure.get_max_id();
 
 #ifdef CALIPER
   CALI_MARK_END("Cabana - Index map");

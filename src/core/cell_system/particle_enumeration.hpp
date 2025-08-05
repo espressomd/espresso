@@ -46,7 +46,7 @@ void enumerate_local_particles(CellStructure const &cs, Kernel &&kernel);
 // Include the implementation
 #include "CellStructure.hpp"
 
-template <typename Kernel>
+template <typename Kernel> inline
 void enumerate_local_particles(CellStructure const &cs, Kernel &&kernel) {
 #ifdef SHARED_MEMORY_PARALLELISM
   if (cs.use_parallel_for_each_local_particle()) {

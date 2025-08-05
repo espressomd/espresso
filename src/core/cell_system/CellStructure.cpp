@@ -177,17 +177,18 @@ void CellStructure::reset_local_properties() {
 }
 
 void CellStructure::set_index_map() {
-#ifdef CALIPER
-  CALI_CXX_MARK_FUNCTION;
-#endif
-  m_unique_particles.clear();
-  m_unique_particles.resize(count_local_particles());
+//#ifdef CALIPER
+//  CALI_CXX_MARK_FUNCTION;
+//#endif
+  auto &unique_particles = m_unique_particles;
+  unique_particles.clear();
+  unique_particles.resize(count_local_particles());
   std::unordered_set<int> registered_index{};
   using execution_space = Kokkos::DefaultExecutionSpace;
   int n_threads = execution_space().concurrency();
   std::vector<int> max_ids(n_threads);
-  enumerate_local_particles(*this, [&](int index, Particle &p) {
-    m_unique_particles[index] = &p;
+  enumerate_local_particles(*this, [&unique_particles, &max_ids](int index, Particle &p) {
+    unique_particles[index] = &p;
     const int thread_num = omp_get_thread_num();
     max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
   });
@@ -204,7 +205,7 @@ void CellStructure::set_index_map() {
       continue;
     }
     registered_index.insert(p.id());
-    m_unique_particles.emplace_back(&p);
+    unique_particles.emplace_back(&p);
     max_id = std::max(p.id(), max_id);
   }
   registered_index.clear();

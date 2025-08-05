@@ -85,7 +85,7 @@ const int vector_length = 1;
 
 using ForceType = Kokkos::View<double **[3], Kokkos::LayoutRight>;
 using VirialType = Kokkos::View<double *[3], Kokkos::LayoutRight>;
-using data_types = Cabana::MemberTypes<double[4], double, int, int>;
+using data_types = Cabana::MemberTypes<double[3], double, int, int>;
 using memory_space = Kokkos::HostSpace;
 using AoSoAType = Cabana::AoSoA<data_types, memory_space, vector_length,
                                 Kokkos::MemoryTraits<0>>;
@@ -343,8 +343,8 @@ public:
     return Cells::particles(decomposition().ghost_cells());
   }
 
-  int count_local_particles() const {
-    int count = 0;
+  std::size_t count_local_particles() const {
+	  std::size_t count = 0;
     for (auto const &cell : m_decomposition->local_cells()) {
       count += cell->particles().size();
     }
