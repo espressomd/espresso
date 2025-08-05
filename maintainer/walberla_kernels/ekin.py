@@ -51,8 +51,9 @@ def discretize(term, neighbor):
 
 
 class EK:
-    def __init__(self, dim, density_field, flux_field, diffusion, kT=None, velocity_field=None,
-                 force_field=None, potential_field=None, valency=None, ext_efield=None):
+    def __init__(self, dim, density_field, flux_field, diffusion, kT=None, lb_density=None,
+                 velocity_field=None, force_field=None, potential_field=None, valency=None,
+                 ext_efield=None):
         assert not ps.FieldType.is_staggered(density_field)
 
         if velocity_field is not None:
@@ -76,6 +77,7 @@ class EK:
         self.potential_field = potential_field
         self.valency = valency
         self.ext_efield = ext_efield
+        self.lb_density = lb_density
 
         full_stencil = ["C"] + self.flux_field.staggered_stencil + list(
             map(inverse_direction_string, self.flux_field.staggered_stencil))
@@ -174,7 +176,7 @@ class EK:
             [ps.stencil.inverse_direction_string(
                 d) for d in self.flux_field.staggered_stencil]
 
-        return ps.AssignmentCollection([ps.Assignment(self.force_field.center_vector, self.kT / (2 * self.diffusion) * sum([self.flux_field.staggered_access(val) * sp.Matrix(
+        return ps.AssignmentCollection([ps.Assignment(self.force_field.center_vector, self.kT / (2 * self.diffusion * self.lb_density) * sum([self.flux_field.staggered_access(val) * sp.Matrix(
             ps.stencil.direction_string_to_offset(val)) for val in stencil[1:]], self.flux_field.staggered_access(stencil[0]) * sp.Matrix(ps.stencil.direction_string_to_offset(stencil[0]))))])
 
 

@@ -34,7 +34,7 @@
 template <typename T, std::size_t N>
 auto to_array(Utils::Vector<T, N> const &vec) {
   std::array<T, N> res{};
-  std::copy(vec.begin(), vec.end(), res.begin());
+  std::ranges::copy(vec, res.begin());
   return res;
 };
 

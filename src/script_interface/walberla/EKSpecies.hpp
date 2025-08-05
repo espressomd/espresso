@@ -35,6 +35,7 @@
 
 #include <utils/math/int_pow.hpp>
 
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -150,7 +151,8 @@ public:
     return m_conv_flux;
   }
 
-  ::LatticeModel::units_map get_latice_to_md_units_conversion() const override {
+  ::LatticeModel::units_map
+  get_lattice_to_md_units_conversion() const override {
     return {
         {"density", 1. / m_conv_density},
         {"flux", 1. / m_conv_flux},
@@ -158,8 +160,8 @@ public:
   }
 
 private:
-  void load_checkpoint(std::string const &filename, int mode);
-  void save_checkpoint(std::string const &filename, int mode);
+  void load_checkpoint(std::filesystem::path const &path, int mode);
+  void save_checkpoint(std::filesystem::path const &path, int mode);
 };
 
 } // namespace ScriptInterface::walberla

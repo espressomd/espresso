@@ -37,8 +37,12 @@
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 
+#include <functional>
 #include <optional>
+#include <stdexcept>
+#include <utility>
 #include <variant>
+#include <vector>
 
 namespace LB {
 
@@ -67,6 +71,11 @@ void LBWalberla::lebc_sanity_checks(unsigned int shear_direction,
   lb_fluid->check_lebc(shear_direction, shear_plane_normal);
 }
 
+std::function<bool(Utils::Vector3d const &)>
+LBWalberla::make_lattice_position_checker(bool consider_points_in_halo) const {
+  return lb_fluid->make_lattice_position_checker(consider_points_in_halo);
+}
+
 std::optional<Utils::Vector3d>
 LBWalberla::get_velocity_at_pos(Utils::Vector3d const &pos,
                                 bool consider_points_in_halo) const {
@@ -91,6 +100,11 @@ bool LBWalberla::add_force_at_pos(Utils::Vector3d const &pos,
 void LBWalberla::add_forces_at_pos(std::vector<Utils::Vector3d> const &pos,
                                    std::vector<Utils::Vector3d> const &forces) {
   lb_fluid->add_forces_at_pos(pos, forces);
+}
+
+std::vector<double>
+LBWalberla::get_densities_at_pos(std::vector<Utils::Vector3d> const &pos) {
+  return lb_fluid->get_densities_at_pos(pos);
 }
 
 std::vector<Utils::Vector3d>

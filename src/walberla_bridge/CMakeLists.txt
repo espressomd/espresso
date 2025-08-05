@@ -70,24 +70,21 @@ endif()
 
 function(espresso_configure_walberla_target_clangtidy)
   set(TARGET_NAME ${ARGV0})
-  if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-    set(TARGET_LANG "CXX")
-    if(TARGET_NAME MATCHES "_cuda")
-      set(TARGET_LANG "CUDA")
-    endif()
+  foreach(LANG CXX CUDA)
     set(TARGET_SUFFIX "")
     if(TARGET_NAME MATCHES "_codegen")
       set(TARGET_SUFFIX "_CODEGEN")
     endif()
     set_target_properties(
       ${TARGET_NAME}
-      PROPERTIES ${TARGET_LANG}_CLANG_TIDY
-                 "${WALBERLA_${TARGET_LANG}_CLANG_TIDY${TARGET_SUFFIX}}")
-  endif()
+      PROPERTIES ${LANG}_CLANG_TIDY
+                 "${WALBERLA_${LANG}_CLANG_TIDY${TARGET_SUFFIX}}")
+  endforeach()
 endfunction()
 
 function(espresso_configure_walberla_target)
   set(TARGET_NAME ${ARGV0})
+  espresso_set_common_target_properties(${TARGET_NAME})
   espresso_configure_walberla_target_clangtidy(${TARGET_NAME})
   target_link_libraries(${TARGET_NAME} PRIVATE ${WALBERLA_LIBS})
   target_include_directories(

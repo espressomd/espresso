@@ -31,24 +31,17 @@ namespace Observables {
 
 std::vector<double>
 LBVelocityProfile::operator()(boost::mpi::communicator const &comm) const {
-  using vel_type = Utils::Vector3d;
-
-  decltype(sampling_positions) local_positions{};
-  std::vector<vel_type> local_velocities{};
-
-  auto &lb = System::get_system().lb;
-  auto const vel_conv = lb.get_lattice_speed();
+  auto &system = System::get_system();
+  auto &lb = system.lb;
   lb.ghost_communication_vel();
 
-  for (auto const &pos : sampling_positions) {
-    if (auto const vel = lb.get_interpolated_velocity(pos)) {
-      local_positions.emplace_back(pos);
-      local_velocities.emplace_back((*vel) * vel_conv);
-    }
+  if (lb_sanity_checks.mismatch(*system.box_geo, lb)) {
+    calculate_sampling_positions(*system.box_geo, lb);
   }
+  auto velocities = lb.get_coupling_interpolated_velocities(sampling_positions);
 
   auto const [global_positions, global_velocities] =
-      detail::gather(comm, local_positions, local_velocities);
+      detail::gather(comm, sampling_positions, velocities);
 
   if (comm.rank() != 0) {
     return {};

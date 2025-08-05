@@ -246,11 +246,9 @@ BOOST_AUTO_TEST_CASE(gpu_interface, *fixture) {
   // -----------------------
 
   BOOST_REQUIRE_GE(cuda_get_n_gpus(), 1);
-  char gpu_name_buffer[260] = {'\0'};
-  cuda_get_gpu_name(0, gpu_name_buffer);
-  for (int i = 255; i < 260; ++i) {
-    BOOST_REQUIRE_EQUAL(gpu_name_buffer[i], '\0');
-  }
+  auto constexpr max_dev_name = sizeof(cudaDeviceProp::name) / sizeof(char);
+  auto const gpu_name = cuda_get_gpu_name(0);
+  BOOST_REQUIRE_LE(gpu_name.size(), max_dev_name);
 }
 
 #ifdef P3M

@@ -64,7 +64,7 @@ class H5md(ScriptInterfaceHelper):
 
     Parameters
     ----------
-    file_path : :obj:`str`
+    file_path : :obj:`str` or :obj:`pathlib.Path`
         Path to the trajectory file, or an existing file to append data to
         (it must have the same specifications).
     unit_system : :obj:`UnitSystem`, optional
@@ -130,8 +130,9 @@ class H5md(ScriptInterfaceHelper):
         script_path = ""
         if sys.argv and sys.argv[0]:
             script_path = str(pathlib.Path(sys.argv[0]).resolve())
-        if not isinstance(params["file_path"], str):
-            raise TypeError("Parameter 'file_path' should be a string")
+        if not isinstance(params["file_path"], (str, pathlib.Path)):
+            raise TypeError(
+                "Parameter 'file_path' should be a string or a path")
         params["file_path"] = str(pathlib.Path(params["file_path"]).resolve())
         super().__init__(
             script_path=script_path,

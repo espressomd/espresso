@@ -57,20 +57,12 @@ IBMTribend::calc_forces(BoxGeometry const &box_geo, Particle const &p1,
   auto const sc = std::min(1.0, n1 * n2);
 
   // Get theta as angle between normals
-  auto theta = acos(sc);
-
   auto const direc = vector_product(n1, n2);
   auto const desc = (dx1 * direc);
-
-  if (desc < 0)
-    theta *= -1;
+  auto const theta = std::acos(sc) * std::copysign(1., desc);
 
   auto const DTh = theta - theta0;
-
-  auto Pre = kb * DTh;
-  // Correct version with linearized sin
-  if (theta < 0)
-    Pre *= -1;
+  auto const Pre = kb * DTh * std::copysign(1., theta);
 
   auto const v1 = (n2 - sc * n1).normalize();
   auto const v2 = (n1 - sc * n2).normalize();
@@ -125,11 +117,10 @@ void IBMTribend::initialize(BoxGeometry const &box_geo,
     // calculate theta0 by taking the acos of the scalar n1*n2
     auto const sc = std::min(1., n1 * n2);
 
-    theta0 = acos(sc);
+    theta0 = std::acos(sc);
 
     auto const desc = dx1 * vector_product(n1, n2);
-    if (desc < 0.)
-      theta0 = 2. * std::numbers::pi - theta0;
+    theta0 = (desc < 0.) ? 2. * std::numbers::pi - theta0 : theta0;
   }
   is_initialized = true;
 }

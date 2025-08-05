@@ -37,6 +37,7 @@
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -127,7 +128,8 @@ public:
   [[nodiscard]] auto get_lb_fluid() const { return m_instance; }
   [[nodiscard]] auto get_lb_params() const { return m_lb_params; }
 
-  ::LatticeModel::units_map get_latice_to_md_units_conversion() const override {
+  ::LatticeModel::units_map
+  get_lattice_to_md_units_conversion() const override {
     return {
         {"density", 1. / m_conv_dens},
         {"velocity", 1. / m_conv_speed},
@@ -136,8 +138,8 @@ public:
   }
 
 private:
-  void load_checkpoint(std::string const &filename, int mode);
-  void save_checkpoint(std::string const &filename, int mode);
+  void load_checkpoint(std::filesystem::path const &path, int mode);
+  void save_checkpoint(std::filesystem::path const &path, int mode);
   std::vector<Variant> get_average_pressure_tensor() const;
   Variant get_interpolated_velocity(Utils::Vector3d const &pos) const;
 };

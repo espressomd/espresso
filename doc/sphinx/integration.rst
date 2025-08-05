@@ -237,9 +237,9 @@ Notes:
 MTK scheme
 """""""""""""""
 
-MTK scheme is a corected version of Hoover scheme where the equation of motions are rewritten using the rescaled particle positions and velocities :cite:`martyna1994constant`.
+MTK scheme is a corected version of Hoover scheme where the equation of motions are rewritten using the rescaled particle positions and velocities :cite:`martyna94a`.
 Therefore, there is no need to scale them during integration.
-The discretisation consists of the following steps (see :cite:`de2025correct` for operator decomposition and :cite:`leimkuhler13a` for implementation of stochastic process):
+The discretisation consists of the following steps (see :cite:`demichele25a` for operator decomposition and :cite:`leimkuhler13a` for implementation of stochastic process):
 
 #. Calculate the particle velocities with volume change at the half step
 

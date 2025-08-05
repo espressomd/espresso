@@ -111,7 +111,7 @@ class LBCouetteTest:
             min_phi=0.,
             max_phi=2 * np.pi,
             min_z=0.,
-            max_z=+system.box_l[2],
+            max_z=system.box_l[2],
             axis=[0.0, 0.0, 1.0],
             sampling_density=1
         )
@@ -148,7 +148,7 @@ class LBCouetteTest:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBCircularCouetteWalberlaDoublePRecisionCPU(LBCouetteTest, ut.TestCase):
+class LBCircularCouetteWalberlaDoublePrecisionCPU(LBCouetteTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": False}
 

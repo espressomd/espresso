@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <filesystem>
 #include <functional>
 #include <string>
 #include <unordered_map>
@@ -56,7 +57,7 @@ using PackedVariant = boost::make_recursive_variant<
     None, bool, int, std::size_t, double, std::string, ObjectId,
     Utils::Vector3b, Utils::Vector3i, Utils::Vector2d, Utils::Vector3d,
     Utils::Vector4d, std::vector<int>, std::vector<double>,
-    std::vector<boost::recursive_variant_>,
+    std::vector<boost::recursive_variant_>, std::filesystem::path,
     std::unordered_map<int, boost::recursive_variant_>,
     std::unordered_map<std::string, boost::recursive_variant_>>::type;
 
@@ -93,8 +94,8 @@ public:
   auto operator()(const std::unordered_map<K, Variant> &map) const {
     std::unordered_map<K, PackedVariant> ret{};
 
-    for (auto const &it : map) {
-      ret.insert({it.first, boost::apply_visitor(*this, it.second)});
+    for (auto const &[key, variant] : map) {
+      ret.emplace(key, boost::apply_visitor(*this, variant));
     }
 
     return ret;
@@ -142,8 +143,8 @@ struct UnpackVisitor : boost::static_visitor<Variant> {
   auto operator()(const std::unordered_map<K, PackedVariant> &map) const {
     std::unordered_map<K, Variant> ret{};
 
-    for (auto const &it : map) {
-      ret.insert({it.first, boost::apply_visitor(*this, it.second)});
+    for (auto const &[key, packed_variant] : map) {
+      ret.emplace(key, boost::apply_visitor(*this, packed_variant));
     }
 
     return ret;

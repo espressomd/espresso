@@ -123,47 +123,33 @@ BOOST_AUTO_TEST_CASE(quat_type) {
       std::numeric_limits<double>::epsilon());
 }
 
+template <typename T> using Quat = Utils::Quaternion<T>;
+
 BOOST_AUTO_TEST_CASE(type_deduction) {
-  using Utils::Quaternion;
-  using Utils::Vector;
+  using Utils::Vector3d;
+  using Utils::Vector3i;
   static_assert(
-      std::is_same<typename boost::qvm::deduce_scalar<Quaternion<double>,
-                                                      Quaternion<double>>::type,
-                   double>::value,
-      "");
+      std::is_same_v<boost::qvm::deduce_scalar<Quat<float>, Quat<float>>::type,
+                     float>);
   static_assert(
-      std::is_same<typename boost::qvm::deduce_scalar<Quaternion<double>,
-                                                      Quaternion<int>>::type,
-                   double>::value,
-      "");
+      std::is_same_v<boost::qvm::deduce_scalar<Quat<double>, Quat<int>>::type,
+                     double>);
   static_assert(
-      std::is_same<typename boost::qvm::deduce_scalar<Quaternion<double>,
-                                                      Vector<double, 3>>::type,
-                   double>::value,
-      "");
+      std::is_same_v<boost::qvm::deduce_scalar<Quat<double>, Vector3d>::type,
+                     double>);
   static_assert(
-      std::is_same<typename boost::qvm::deduce_vec2<Quaternion<double>,
-                                                    Vector<double, 3>, 3>::type,
-                   Vector<double, 3>>::value,
-      "");
+      std::is_same_v<boost::qvm::deduce_vec2<Quat<double>, Vector3d, 3>::type,
+                     Vector3d>);
   static_assert(
-      std::is_same<typename boost::qvm::deduce_vec2<Quaternion<double>,
-                                                    Vector<int, 3>, 3>::type,
-                   Vector<double, 3>>::value,
-      "");
+      std::is_same_v<boost::qvm::deduce_vec2<Quat<double>, Vector3i, 3>::type,
+                     Vector3d>);
+  static_assert(std::is_same_v<boost::qvm::deduce_quat<Quat<double>>::type,
+                               Quat<double>>);
   static_assert(
-      std::is_same<typename boost::qvm::deduce_quat<Quaternion<double>>::type,
-                   Quaternion<double>>::value,
-      "");
+      std::is_same_v<boost::qvm::deduce_quat2<Quat<double>, Quat<double>>::type,
+                     Quat<double>>);
   static_assert(
-      std::is_same<typename boost::qvm::deduce_quat2<Quaternion<double>,
-                                                     Quaternion<double>>::type,
-                   Quaternion<double>>::value,
-      "");
-  static_assert(
-      std::is_same<typename boost::qvm::deduce_quat2<Quaternion<double>,
-                                                     Quaternion<int>>::type,
-                   Quaternion<double>>::value,
-      "");
+      std::is_same_v<boost::qvm::deduce_quat2<Quat<double>, Quat<int>>::type,
+                     Quat<double>>);
   BOOST_TEST_PASSPOINT();
 }

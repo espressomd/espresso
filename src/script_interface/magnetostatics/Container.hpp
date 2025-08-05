@@ -49,8 +49,8 @@ class Container : public AutoParameters<Container, System::Leaf> {
   void on_bind_system(::System::System &) override {
     auto const &params = *m_params;
     for (auto const &key : get_parameter_insertion_order()) {
-      if (params.count(key)) {
-        do_set_parameter(key.c_str(), params.at(key));
+      if (params.contains(key)) {
+        do_set_parameter(key, params.at(key));
       }
     }
     m_params.reset();

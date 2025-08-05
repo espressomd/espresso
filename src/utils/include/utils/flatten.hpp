@@ -16,35 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_UTILS_FLATTEN_HPP
-#define ESPRESSO_UTILS_FLATTEN_HPP
+
+#pragma once
 
 #include <iterator>
 #include <type_traits>
 
 namespace Utils {
 namespace detail {
-template <class Container, class OutputIterator, class = void>
-struct flatten_impl {
-  static OutputIterator apply(Container const &c, OutputIterator out) {
-    using ValueType = typename Container::value_type;
+template <class ContainerOrValue, class OutputIterator>
+OutputIterator flatten_impl(ContainerOrValue const &c, OutputIterator out) {
+  if constexpr (std::is_assignable_v<decltype(*out), ContainerOrValue>) {
+    *out = c;
+    return ++out;
+  } else {
+    using ValueType = typename ContainerOrValue::value_type;
     for (auto const &e : c) {
-      out = flatten_impl<ValueType, OutputIterator>::apply(e, out);
+      out = flatten_impl<ValueType, OutputIterator>(e, out);
     }
-
     return out;
   }
-};
-
-template <class T, class OutputIterator>
-struct flatten_impl<T, OutputIterator,
-                    std::enable_if_t<std::is_assignable_v<
-                        decltype(*std::declval<OutputIterator>()), T>>> {
-  static OutputIterator apply(T const &v, OutputIterator out) {
-    *out = v;
-    return ++out;
-  }
-};
+}
 } // namespace detail
 
 /**
@@ -62,8 +54,6 @@ struct flatten_impl<T, OutputIterator,
  */
 template <class Range, class OutputIterator>
 void flatten(Range const &v, OutputIterator out) {
-  detail::flatten_impl<Range, OutputIterator>::apply(v, out);
+  detail::flatten_impl<Range, OutputIterator>(v, out);
 }
 } // namespace Utils
-
-#endif // ESPRESSO_FLATTEN_HPP

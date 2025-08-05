@@ -97,8 +97,8 @@ public:
 
   void do_construct(VariantMap const &params) override {
     m_params = std::make_unique<VariantMap>(params);
-    for (auto const &kv : *m_params) {
-      do_set_parameter(kv.first, kv.second);
+    for (auto const &[name, value] : *m_params) {
+      do_set_parameter(name, value);
     }
   }
 
@@ -108,8 +108,8 @@ public:
     assert(system);
     m_system = system;
     shape_based_constraint()->bind_system(system);
-    for (auto const &kv : *m_params) {
-      do_set_parameter(kv.first, kv.second);
+    for (auto const &[name, value] : *m_params) {
+      do_set_parameter(name, value);
     }
     m_params.reset();
   }

@@ -26,33 +26,19 @@ message(STATUS "CMake version: ${CMAKE_VERSION}")
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # project info
-project(ESPResSo)
-set(PROJECT_VERSION "4.3-dev")
+project(
+  ESPResSo
+  VERSION "5.0.0"
+  LANGUAGES C CXX
+  HOMEPAGE_URL "https://espressomd.org"
+  DESCRIPTION
+    "Extensible Simulation Package for Research on Soft Matter Systems")
 
-# C++ standard
-enable_language(CXX)
-set(CMAKE_CXX_STANDARD 20 CACHE STRING "C++ standard to be used")
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-# require minimal compiler versions
-macro(espresso_minimal_compiler_version)
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "${ARGV0}" AND CMAKE_CXX_COMPILER_VERSION
-                                                   VERSION_LESS "${ARGV1}")
-    message(FATAL_ERROR "Unsupported compiler ${CMAKE_CXX_COMPILER_ID} \
-                 ${CMAKE_CXX_COMPILER_VERSION} (required version >= ${ARGV1})")
-  endif()
-endmacro()
-
-espresso_minimal_compiler_version("GNU" 12.2.0)
-espresso_minimal_compiler_version("Clang" 18.1.0)
-espresso_minimal_compiler_version("AppleClang" 16.0.0)
-espresso_minimal_compiler_version("IntelLLVM" 2023.1)
-
-set(UNSUPPORTED_COMPILERS "Intel;MSVC")
-if(CMAKE_CXX_COMPILER_ID IN_LIST UNSUPPORTED_COMPILERS)
-  message(FATAL_ERROR "Unsupported compiler ${CMAKE_CXX_COMPILER_ID}")
-endif()
+# programming language standards
+set(ESPRESSO_MINIMAL_C_STANDARD 11)
+set(ESPRESSO_MINIMAL_CXX_STANDARD 20)
+set(ESPRESSO_MINIMAL_CUDA_STANDARD 20)
+set(ESPRESSO_MINIMAL_CUDA_VERSION 12.0)
 
 include(FeatureSummary)
 include(GNUInstallDirs)
@@ -191,6 +177,17 @@ foreach(func_name __PRETTY_FUNCTION__ __FUNCSIG__ __FUNCTION__)
 endforeach()
 
 #
+# Compiler flags: must be added to all ESPResSo targets
+#
+
+add_library(espresso_cpp_flags INTERFACE)
+add_library(espresso::cpp_flags ALIAS espresso_cpp_flags)
+
+set_target_properties(
+  espresso_cpp_flags PROPERTIES INTERFACE_COMPILE_FEATURES
+                                cxx_std_${ESPRESSO_MINIMAL_CXX_STANDARD})
+
+#
 # AVX2 support
 #
 
@@ -200,17 +197,58 @@ add_library(espresso_avx_flags INTERFACE)
 add_library(espresso::avx_flags ALIAS espresso_avx_flags)
 
 #
-# Interface libraries
+# C/C++ compiler
 #
 
+block(SCOPE_FOR VARIABLES)
+set(C_COMPILER_IS_OFFICIALLY_TESTED FALSE)
+set(CXX_COMPILER_IS_OFFICIALLY_TESTED FALSE)
+macro(espresso_minimal_compiler_version)
+  foreach(LANG C CXX)
+    if(CMAKE_${LANG}_COMPILER_ID STREQUAL "${ARGV0}")
+      if(CMAKE_${LANG}_COMPILER_VERSION VERSION_GREATER_EQUAL "${ARGV1}")
+        set(${LANG}_COMPILER_IS_OFFICIALLY_TESTED TRUE)
+      else()
+        message(
+          FATAL_ERROR
+            "Unsupported compiler ${CMAKE_${LANG}_COMPILER_ID} \
+                       ${CMAKE_${LANG}_COMPILER_VERSION} (required version >= ${ARGV1})"
+        )
+      endif()
+    endif()
+  endforeach()
+endmacro()
+
+espresso_minimal_compiler_version("GNU" 12.2.0)
+espresso_minimal_compiler_version("Clang" 18.1.0)
+espresso_minimal_compiler_version("AppleClang" 17.0.0)
+espresso_minimal_compiler_version("IntelLLVM" 2023.1)
+
+set(UNSUPPORTED_COMPILERS "Intel;MSVC")
+foreach(LANG C CXX)
+  if(CMAKE_${LANG}_COMPILER_ID IN_LIST UNSUPPORTED_COMPILERS)
+    message(FATAL_ERROR "Unsupported compiler ${CMAKE_${LANG}_COMPILER_ID}")
+  endif()
+  if(NOT ${LANG}_COMPILER_IS_OFFICIALLY_TESTED)
+    message(
+      AUTHOR_WARNING
+        "The ${CMAKE_${LANG}_COMPILER_ID} compiler isn't actively tested by ${PROJECT_NAME}; \
+         ${LANG} compiler flags defined by ${PROJECT_NAME}'s CMakeLists.txt might require tweaks"
+    )
+  endif()
+endforeach()
+endblock()
+
+#
 # CUDA compiler
+#
+
 if(ESPRESSO_BUILD_WITH_CUDA)
   include(CheckLanguage)
   enable_language(CUDA)
   check_language(CUDA)
-  set(CMAKE_CUDA_STANDARD 20)
-  set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-  set(ESPRESSO_MINIMAL_CUDA_VERSION 12.0)
+  add_library(espresso_cuda_flags INTERFACE)
+  add_library(espresso::cuda_flags ALIAS espresso_cuda_flags)
   find_package(CUDAToolkit ${ESPRESSO_MINIMAL_CUDA_VERSION} REQUIRED)
   if(NOT DEFINED ESPRESSO_CMAKE_CUDA_ARCHITECTURES)
     if("$ENV{CUDAARCHS}" STREQUAL "")
@@ -218,7 +256,7 @@ if(ESPRESSO_BUILD_WITH_CUDA)
       # 2. sm_75: RTX-2000 series (Turing)
       # 3. sm_86: RTX-3000 series (Ampere)
       # 4. sm_89: RTX-4000 series (Ada)
-      set(ESPRESSO_CUDA_ARCHITECTURES "61;75")
+      set(ESPRESSO_CUDA_ARCHITECTURES "75;86;89")
     else()
       set(ESPRESSO_CUDA_ARCHITECTURES "$ENV{CUDAARCHS}")
     endif()
@@ -238,6 +276,9 @@ if(ESPRESSO_BUILD_WITH_CUDA)
   else()
     message(FATAL_ERROR "Unknown CUDA compiler '${CMAKE_CUDA_COMPILER_ID}'")
   endif()
+  set_target_properties(
+    espresso_cuda_flags PROPERTIES INTERFACE_COMPILE_FEATURES
+                                   cuda_std_${ESPRESSO_MINIMAL_CUDA_STANDARD})
 endif()
 
 # Python interpreter and Cython interface library
@@ -275,13 +316,6 @@ if(ESPRESSO_BUILD_WITH_PYTHON)
   # override: package C++, CUDA and Cython shared objects together
   set(ESPRESSO_INSTALL_LIBDIR "${ESPRESSO_INSTALL_PYTHON}/espressomd")
 endif()
-
-#
-# Compiler flags: must be added to all ESPResSo targets
-#
-
-add_library(espresso_cpp_flags INTERFACE)
-add_library(espresso::cpp_flags ALIAS espresso_cpp_flags)
 
 #
 # Compiler diagnostics
@@ -502,8 +536,8 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     target_link_libraries(Heffte::Heffte INTERFACE Heffte)
     install(TARGETS Heffte LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
     if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-      set(P3M_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
-      set(P3M_CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
+      set(ESPRESSO_P3M_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
+      set(ESPRESSO_P3M_CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
       unset(SKIP_CLANG_TIDY_CHECKS)
       unset(SKIP_CLANG_TIDY_CHECKS_CXX)
       unset(SKIP_CLANG_TIDY_CHECKS_CUDA)
@@ -518,10 +552,10 @@ if(ESPRESSO_BUILD_WITH_FFTW)
       list(APPEND SKIP_CLANG_TIDY_CHECKS
            "-readability-avoid-const-params-in-decls")
       espresso_override_clang_tidy_checks(
-        P3M_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
+        ESPRESSO_P3M_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
         "${SKIP_CLANG_TIDY_CHECKS_CXX}")
       espresso_override_clang_tidy_checks(
-        P3M_CUDA_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
+        ESPRESSO_P3M_CUDA_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
         "${SKIP_CLANG_TIDY_CHECKS_CUDA}")
     endif()
   endif()
@@ -575,8 +609,7 @@ if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
     FetchContent_Declare(
       cabana
       GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
-      #GIT_TAG        ebfaa51 # 0.7.0 with patches
-      GIT_TAG        e76c1a15e1d68ce203d686bb68b0dfe41b2e1ad1 # latest
+      GIT_TAG        e76c1a1 # 0.7.0 with patches
       PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cabana.patch
     )
     # cmake-format: on
@@ -586,10 +619,8 @@ if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
 
   if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
     # silence Kokkos and Cabana diagnostics
-    set(KOKKOS_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
-    set(KOKKOS_CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
-    set(CABANA_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
-    set(CABANA_CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
+    set(ESPRESSO_CABANA_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
+    set(ESPRESSO_CABANA_CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
     unset(SKIP_CLANG_TIDY_CHECKS)
     unset(SKIP_CLANG_TIDY_CHECKS_CXX)
     unset(SKIP_CLANG_TIDY_CHECKS_CUDA)
@@ -616,23 +647,17 @@ if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
     list(APPEND SKIP_CLANG_TIDY_CHECKS
          "-clang-analyzer-security.insecureAPI.strcpy")
     espresso_override_clang_tidy_checks(
-      KOKKOS_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
+      ESPRESSO_CABANA_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
       "${SKIP_CLANG_TIDY_CHECKS_CXX}")
     espresso_override_clang_tidy_checks(
-      KOKKOS_CUDA_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-      "${SKIP_CLANG_TIDY_CHECKS_CUDA}")
-    espresso_override_clang_tidy_checks(
-      CABANA_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-      "${SKIP_CLANG_TIDY_CHECKS_CXX}")
-    espresso_override_clang_tidy_checks(
-      CABANA_CUDA_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
+      ESPRESSO_CABANA_CUDA_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
       "${SKIP_CLANG_TIDY_CHECKS_CUDA}")
     if(ESPRESSO_BUILD_WITH_FFTW)
       espresso_override_clang_tidy_checks(
-        P3M_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
+        ESPRESSO_P3M_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
         "${SKIP_CLANG_TIDY_CHECKS_CXX}")
       espresso_override_clang_tidy_checks(
-        P3M_CUDA_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
+        ESPRESSO_P3M_CUDA_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
         "${SKIP_CLANG_TIDY_CHECKS_CUDA}")
     endif()
   endif()
@@ -782,24 +807,13 @@ if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
 endif()
 
-list(APPEND BOOST_COMPONENTS mpi serialization filesystem system)
+list(APPEND ESPRESSO_BOOST_COMPONENTS mpi serialization)
 
 if(ESPRESSO_BUILD_TESTS)
-  list(APPEND BOOST_COMPONENTS unit_test_framework)
+  list(APPEND ESPRESSO_BOOST_COMPONENTS unit_test_framework)
 endif()
 
-find_package(Boost 1.81.0 REQUIRED ${BOOST_COMPONENTS})
-
-# Patches for older Boost releases compiled with C++17 or above; while
-# originally meant for MSVC, the Clang compiler is also affected.
-# https://boost-users.boost.narkive.com/h2eXAUzU
-# https://devblogs.microsoft.com/cppblog/c17-feature-removals-and-deprecations/
-# https://github.com/PixarAnimationStudios/OpenUSD/issues/2634
-target_compile_options(
-  espresso_cpp_flags
-  INTERFACE
-    $<$<VERSION_LESS:${Boost_VERSION},1.83.0>:-D_HAS_AUTO_PTR_ETC=0>
-    $<$<VERSION_LESS:${Boost_VERSION},1.81.0>:-DBOOST_NO_CXX98_FUNCTION_BASE>)
+find_package(Boost 1.83.0 REQUIRED ${ESPRESSO_BOOST_COMPONENTS})
 
 # enable boost::variant with more than 20 types
 target_compile_options(
@@ -862,7 +876,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        59c9b8b1 # v7.1 with patches
+    GIT_TAG        c69cb11d # v7.1 with patches
   )
   # cmake-format: on
   string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
@@ -933,7 +947,7 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
   FetchContent_Declare(
     caliper
     GIT_REPOSITORY https://github.com/LLNL/Caliper.git
-    GIT_TAG        142a2fe # v2.12.1 with patches
+    GIT_TAG        v2.13.0
   )
   # cmake-format: on
   set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
@@ -950,16 +964,27 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
   set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR}")
   set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
-  target_compile_options(caliper-common
-                         PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-restrict>)
-  target_compile_options(
-    caliper-runtime
-    PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
-            $<$<CXX_COMPILER_ID:GNU>:-Wno-volatile>
-            -Wno-deprecated-enum-enum-conversion
-            $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-deprecated-volatile>)
-  set_target_properties(caliper-runtime PROPERTIES CXX_CLANG_TIDY "")
 endif()
+
+#
+# Set source file properties
+#
+
+function(espresso_set_common_target_properties)
+  set(TARGET_NAME "${ARGV0}")
+  get_target_property(TARGET_TYPE ${TARGET_NAME} TYPE)
+  if(NOT TARGET_TYPE STREQUAL "INTERFACE_LIBRARY")
+    # set non-transitive properties; transitive properties should be propagated
+    # to dependent targets via INTERFACE targets, such as espresso::cpp_flags
+    set_target_properties(${TARGET_NAME} PROPERTIES C_EXTENSIONS OFF)
+    set_target_properties(${TARGET_NAME} PROPERTIES CXX_EXTENSIONS OFF)
+    set_target_properties(${TARGET_NAME} PROPERTIES CUDA_EXTENSIONS OFF)
+    set_target_properties(
+      ${TARGET_NAME} PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
+    set_target_properties(
+      ${TARGET_NAME} PROPERTIES CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
+  endif()
+endfunction()
 
 #
 # Subdirectories

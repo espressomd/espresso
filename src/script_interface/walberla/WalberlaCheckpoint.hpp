@@ -29,6 +29,7 @@
 
 #include <boost/mpi/collectives/broadcast.hpp>
 
+#include <filesystem>
 #include <fstream>
 #include <ios>
 #include <memory>
@@ -69,13 +70,13 @@ private:
 public:
   std::fstream stream;
 
-  CheckpointFile(std::string const &filename, std::ios_base::openmode mode,
-                 bool binary) {
+  CheckpointFile(std::filesystem::path const &path,
+                 std::ios_base::openmode mode, bool binary) {
     m_binary = binary;
     auto flags = mode;
     if (m_binary)
       flags |= std::ios_base::binary;
-    stream.open(filename, flags);
+    stream.open(path, flags);
   }
 
   ~CheckpointFile() = default;
@@ -141,7 +142,7 @@ public:
 
 template <typename F1, typename F2, typename F3>
 void load_checkpoint_common(Context const &context, std::string const classname,
-                            std::string const &filename, int mode,
+                            std::filesystem::path const &path, int mode,
                             F1 const read_metadata, F2 const read_data,
                             F3 const on_success) {
   auto const err_msg =
@@ -151,10 +152,11 @@ void load_checkpoint_common(Context const &context, std::string const classname,
   auto const is_head_node = context.is_head_node();
 
   // open file and set exceptions
-  CheckpointFile cpfile(filename, std::ios_base::in, binary);
+  CheckpointFile cpfile(path, std::ios_base::in, binary);
   if (!cpfile.stream) {
     if (is_head_node) {
-      throw std::runtime_error(err_msg + "could not open file " + filename);
+      throw std::runtime_error(err_msg + "could not open file " +
+                               path.string());
     }
     return;
   }
@@ -198,7 +200,7 @@ void load_checkpoint_common(Context const &context, std::string const classname,
 
 template <typename F1, typename F2, typename F3>
 void save_checkpoint_common(Context const &context, std::string const classname,
-                            std::string const &filename, int mode,
+                            std::filesystem::path const &path, int mode,
                             F1 const write_metadata, F2 const write_data,
                             F3 const on_failure) {
   auto const err_msg =
@@ -211,12 +213,12 @@ void save_checkpoint_common(Context const &context, std::string const classname,
   auto failure = false;
   std::shared_ptr<CheckpointFile> cpfile;
   if (is_head_node) {
-    cpfile =
-        std::make_shared<CheckpointFile>(filename, std::ios_base::out, binary);
+    cpfile = std::make_shared<CheckpointFile>(path, std::ios_base::out, binary);
     failure = !cpfile->stream;
     boost::mpi::broadcast(comm, failure, 0);
     if (failure) {
-      throw std::runtime_error(err_msg + "could not open file " + filename);
+      throw std::runtime_error(err_msg + "could not open file " +
+                               path.string());
     }
     cpfile->stream.exceptions(std::ios_base::failbit | std::ios_base::badbit);
     if (!binary) {
@@ -238,7 +240,8 @@ void save_checkpoint_common(Context const &context, std::string const classname,
     if (is_head_node) {
       cpfile->stream.close();
       if (dynamic_cast<std::ios_base::failure const *>(&error)) {
-        throw std::runtime_error(err_msg + "could not write to " + filename);
+        throw std::runtime_error(err_msg + "could not write to " +
+                                 path.string());
       }
       throw;
     }

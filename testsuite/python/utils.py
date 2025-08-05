@@ -80,6 +80,31 @@ class Test(ut.TestCase):
         self.assertEqual(utils.nesting_level([1, ]), 1)
         self.assertEqual(utils.nesting_level([[1]]), 2)
 
+    def test_string_conversion_to_str(self):
+        def check_to_str(obj, ref):
+            res = utils.to_str(obj)
+            self.assertEqual(res, ref)
+            self.assertIsInstance(res, str)
+            self.assertNotIsInstance(res, (bytes, np.bytes_, np.str_))
+        check_to_str(b"abc", "abc")
+        check_to_str("abc", "abc")
+        check_to_str("Åüb", "Åüb")
+        check_to_str(np.str_("abc"), "abc")
+        check_to_str(np.str_("Åüb"), "Åüb")
+        check_to_str(np.bytes_(b"abc"), "abc")
+
+    def test_string_conversion_to_bytes(self):
+        def check_to_bytes(obj, ref):
+            res = utils.to_bytes(obj)
+            self.assertEqual(res, ref)
+            self.assertIsInstance(res, bytes)
+            self.assertNotIsInstance(res, (str, np.str_, np.bytes_))
+        check_to_bytes(b"abc", b"abc")
+        check_to_bytes("abc", b"abc")
+        check_to_bytes("Åüb", b"\xc3\x85\xc3\xbcb")
+        check_to_bytes(b"\xc3\x85\xc3\xbcb", b"\xc3\x85\xc3\xbcb")
+        check_to_bytes(np.bytes_(b"abc"), b"abc")
+
 
 if __name__ == "__main__":
     ut.main()

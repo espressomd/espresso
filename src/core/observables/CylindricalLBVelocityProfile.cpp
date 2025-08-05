@@ -31,31 +31,28 @@ namespace Observables {
 
 std::vector<double> CylindricalLBVelocityProfile::operator()(
     boost::mpi::communicator const &comm) const {
-  using vel_type = Utils::Vector3d;
-
-  decltype(sampling_positions) local_positions{};
-  std::vector<vel_type> local_velocities{};
-
-  auto &lb = System::get_system().lb;
-  auto const vel_conv = lb.get_lattice_speed();
+  auto &system = System::get_system();
+  auto &lb = system.lb;
   lb.ghost_communication_vel();
 
-  for (auto const &pos : sampling_positions) {
-    if (auto const vel = lb.get_interpolated_velocity(pos)) {
-      auto const pos_shifted = pos - transform_params->center();
-      auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
-          pos_shifted, transform_params->axis(),
-          transform_params->orientation());
-      auto const vel_cyl = Utils::transform_vector_cartesian_to_cylinder(
-          (*vel) * vel_conv, transform_params->axis(), pos_shifted);
+  if (lb_sanity_checks.mismatch(*system.box_geo, lb)) {
+    calculate_sampling_positions(*system.box_geo, lb);
+  }
 
-      local_positions.emplace_back(pos_cyl);
-      local_velocities.emplace_back(vel_cyl);
-    }
+  auto velocities = lb.get_coupling_interpolated_velocities(sampling_positions);
+  auto pos_shifted_it = sampling_positions_cart.begin();
+  std::vector<Utils::Vector3d> local_velocities{};
+  local_velocities.reserve(velocities.size());
+
+  for (auto const &vel : velocities) {
+    auto const vel_cyl = Utils::transform_vector_cartesian_to_cylinder(
+        vel, transform_params->axis(), *pos_shifted_it);
+    local_velocities.emplace_back(vel_cyl);
+    ++pos_shifted_it;
   }
 
   auto const [global_positions, global_velocities] =
-      detail::gather(comm, local_positions, local_velocities);
+      detail::gather(comm, sampling_positions_cyl, local_velocities);
 
   if (comm.rank() != 0) {
     return {};

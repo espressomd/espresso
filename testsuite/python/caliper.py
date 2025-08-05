@@ -30,14 +30,14 @@ integrate
   Initial Force Calculation
     calculate_forces
       copy_particles_to_GPU
-      init_forces
+      init_forces_and_thermost
       calc_long_range_forces
       short_range_loop
       copy_forces_from_GPU
   Integration loop
     calculate_forces
       copy_particles_to_GPU
-      init_forces
+      init_forces_and_thermost
       calc_long_range_forces
       short_range_loop
       copy_forces_from_GPU

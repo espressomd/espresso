@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_CYLINDRICALPIDPROFILEOBSERVABLE_HPP
-#define OBSERVABLES_CYLINDRICALPIDPROFILEOBSERVABLE_HPP
+
+#pragma once
 
 #include "CylindricalProfileObservable.hpp"
 #include "PidObservable.hpp"
@@ -44,4 +44,3 @@ public:
 };
 
 } // Namespace Observables
-#endif

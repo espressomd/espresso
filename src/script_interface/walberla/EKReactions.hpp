@@ -39,7 +39,7 @@ namespace ScriptInterface::walberla {
 
 class EKReactions : public ObjectList<EKReaction> {
   using Base = ObjectList<EKReaction>;
-  using value_type = typename Base::value_type;
+  using Base::value_type;
 
   std::shared_ptr<::EK::EKWalberla::ek_reactions_type> m_ek_reactions;
 

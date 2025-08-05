@@ -83,8 +83,8 @@ std::size_t get_size(VariantVectorXd const &vec) {
 }
 
 double get_value(VariantVectorXd const &vec, std::size_t i) {
-  return boost::apply_visitor(
-      std::bind(visitor_get(), std::placeholders::_1, i), vec);
+  return boost::apply_visitor(visitor_get(), vec,
+                              boost::variant<std::size_t>(i));
 }
 
 template <typename T> auto square_matrix(std::size_t N) {

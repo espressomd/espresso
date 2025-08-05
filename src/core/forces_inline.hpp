@@ -214,7 +214,7 @@ inline void add_non_bonded_pair_withot_p(
  */
 inline void add_non_bonded_pair_force_with_p(
     Particle &p1, Particle &p2, ParticleForce &pf,
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef NPT
     Utils::Vector3d &virial,
 #endif
     Utils::Vector3d const &d, double dist, double dist2, double q1q2,
@@ -292,8 +292,9 @@ inline void add_non_bonded_pair_force_with_p(
   /* The inter dpd force should not be part of the virial */
 #ifdef DPD
   if (thermostat.thermo_switch & THERMO_DPD) {
-    auto const force = dpd_pair_force(p1, p2, *thermostat.dpd, box_geo,
-                                      ia_params, d, dist, dist2);
+    auto const force =
+        dpd_pair_force(p1.pos(), p1.v(), p1.id(), p2.pos(), p2.v(), p2.id(),
+                       *thermostat.dpd, box_geo, ia_params, d, dist, dist2);
     pf += force;
   }
 #endif

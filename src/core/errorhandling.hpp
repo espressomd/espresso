@@ -23,8 +23,7 @@
  *  a broken bond or illegal parameter combinations.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ERROR_HANDLING_HPP
-#define ESPRESSO_SRC_CORE_ERROR_HANDLING_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -109,5 +108,3 @@ std::vector<RuntimeError> mpi_gather_runtime_errors();
 std::vector<RuntimeError> mpi_gather_runtime_errors_all(bool is_head_node);
 
 } // namespace ErrorHandling
-
-#endif

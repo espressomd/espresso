@@ -112,7 +112,7 @@ class TestLBVTK(TestVTK):
 
     def make_actor(self):
         return self.lb_class(
-            lattice=self.lattice, tau=0.1, density=1., kinematic_viscosity=1.,
+            lattice=self.lattice, tau=0.1, density=1.2, kinematic_viscosity=1.,
             ext_force_density=[0., 0.03, 0.], **self.lb_params)
 
     def add_actor(self):
@@ -142,28 +142,30 @@ class TestLBVTK(TestVTK):
         label_density = "density"
         label_velocity = "velocity_vector"
         label_pressure = "pressure_tensor"
+        self.lbf[2, :, :].density = 1.3
+        self.lbf[-3, :, :].density = 1.3
 
         with tempfile.TemporaryDirectory() as tmp_directory:
-            path_vtk_root = pathlib.Path(tmp_directory)
-            label_vtk_end = f"test_vtk_{self.vtk_id}_end"
+            root = pathlib.Path(tmp_directory)
+            label_vtk_last_frame = f"test_vtk_{self.vtk_id}_last_frame"
             label_vtk_continuous = f"test_vtk_{self.vtk_id}_continuous"
-            path_vtk_end = path_vtk_root / label_vtk_end / "simulation_step_0.vtu"
+            path_vtk_last_frame = root / label_vtk_last_frame / "simulation_step_0.vtu"
             path_vtk_continuous = [
-                path_vtk_root / label_vtk_continuous / f"simulation_step_{i}.vtu" for i in range(n_steps)]
-            filepaths = [path_vtk_end] + path_vtk_continuous
+                root / label_vtk_continuous / f"simulation_step_{i}.vtu" for i in range(n_steps)]
+            filepaths = [path_vtk_last_frame] + path_vtk_continuous
 
             # write VTK files
             vtk_obs = list(self.valid_obs)
             vtk_obj = self.vtk_class(
                 identifier=label_vtk_continuous, delta_N=1, observables=vtk_obs,
-                base_folder=str(path_vtk_root))
+                base_folder=root)
             actor.add_vtk_writer(vtk=vtk_obj)
             vtk_obj.disable()
             vtk_obj.enable()
             self.system.integrator.run(n_steps)
             vtk_obj = self.vtk_class(
-                identifier=label_vtk_end, delta_N=0, observables=vtk_obs,
-                base_folder=str(path_vtk_root))
+                identifier=label_vtk_last_frame, delta_N=0, observables=vtk_obs,
+                base_folder=root)
             actor.add_vtk_writer(vtk=vtk_obj)
             vtk_obj.write()
             self.assertEqual(sorted(vtk_obj.observables), sorted(vtk_obs))
@@ -174,7 +176,7 @@ class TestLBVTK(TestVTK):
                 self.assertTrue(
                     filepath.exists(),
                     f"VTK file \"{filepath}\" not written to disk")
-            for filepath in [path_vtk_end.parent.with_suffix(".pvd"),
+            for filepath in [path_vtk_last_frame.parent.with_suffix(".pvd"),
                              path_vtk_continuous[0].parent.with_suffix(".pvd")]:
                 self.assertTrue(
                     filepath.exists(),
@@ -201,7 +203,7 @@ class TestLBVTK(TestVTK):
 
             # read VTK output of final time step
             last_frames = []
-            for filepath in (path_vtk_end, path_vtk_continuous[-1]):
+            for filepath in (path_vtk_last_frame, path_vtk_continuous[-1]):
                 grids = vtk_reader.parse(filepath)
                 last_frames.append((
                     grids[label_density],
@@ -221,11 +223,27 @@ class TestLBVTK(TestVTK):
 
             for vtk_density, vtk_velocity, vtk_pressure in last_frames:
                 np.testing.assert_allclose(
-                    vtk_density, lb_density, rtol=1e-10, atol=0.)
+                    vtk_density, lb_density, rtol=1e-7, atol=0.)
                 np.testing.assert_allclose(
                     vtk_velocity, lb_velocity, rtol=1e-7, atol=0.)
                 np.testing.assert_allclose(
                     vtk_pressure, lb_pressure, rtol=1e-6, atol=0.)
+
+    @utx.skipIfMissingModules("espressomd.io.vtk")
+    def test_utf8_support(self):
+        """Check UTF-8 support in filepaths and VTK identifiers."""
+        with tempfile.TemporaryDirectory() as tmp_directory:
+            root = pathlib.Path(tmp_directory) / "gemäß"
+            label = "çåš"
+            vtk_obs = list(self.valid_obs)
+            vtk_obj = self.vtk_class(
+                identifier=label, delta_N=0, observables=vtk_obs, base_folder=root)
+            self.lbf.add_vtk_writer(vtk=vtk_obj)
+            self.assertEqual(vtk_obj.identifier, label)
+            self.assertEqual(vtk_obj.base_folder, root)
+            vtk_obj.write()
+            path = root / label / "simulation_step_0.vtu"
+            self.assertTrue(path.exists(), f"File \"{path}\" not found")
 
 
 class TestEKVTK(TestVTK):
@@ -270,26 +288,26 @@ class TestEKVTK(TestVTK):
         label_density = "density"
 
         with tempfile.TemporaryDirectory() as tmp_directory:
-            path_vtk_root = pathlib.Path(tmp_directory)
-            label_vtk_end = f"test_vtk_{self.vtk_id}_end"
+            root = pathlib.Path(tmp_directory)
+            label_vtk_last_frame = f"test_vtk_{self.vtk_id}_end"
             label_vtk_continuous = f"test_vtk_{self.vtk_id}_continuous"
-            path_vtk_end = path_vtk_root / label_vtk_end / "simulation_step_0.vtu"
+            path_vtk_last_frame = root / label_vtk_last_frame / "simulation_step_0.vtu"
             path_vtk_continuous = [
-                path_vtk_root / label_vtk_continuous / f"simulation_step_{i}.vtu" for i in range(n_steps)]
-            filepaths = [path_vtk_end] + path_vtk_continuous
+                root / label_vtk_continuous / f"simulation_step_{i}.vtu" for i in range(n_steps)]
+            filepaths = [path_vtk_last_frame] + path_vtk_continuous
 
             # write VTK files
             vtk_obs = list(self.valid_obs)
             vtk_obj = self.vtk_class(
                 identifier=label_vtk_continuous, delta_N=1, observables=vtk_obs,
-                base_folder=str(path_vtk_root))
+                base_folder=root)
             actor.add_vtk_writer(vtk=vtk_obj)
             vtk_obj.disable()
             vtk_obj.enable()
             self.system.integrator.run(n_steps)
             vtk_obj = self.vtk_class(
-                identifier=label_vtk_end, delta_N=0, observables=vtk_obs,
-                base_folder=str(path_vtk_root))
+                identifier=label_vtk_last_frame, delta_N=0, observables=vtk_obs,
+                base_folder=root)
             actor.add_vtk_writer(vtk=vtk_obj)
             vtk_obj.write()
             self.assertEqual(sorted(vtk_obj.observables), sorted(vtk_obs))
@@ -300,7 +318,7 @@ class TestEKVTK(TestVTK):
                 self.assertTrue(
                     filepath.exists(),
                     f"VTK file \"{filepath}\" not written to disk")
-            for filepath in [path_vtk_end.parent.with_suffix(".pvd"),
+            for filepath in [path_vtk_last_frame.parent.with_suffix(".pvd"),
                              path_vtk_continuous[0].parent.with_suffix(".pvd")]:
                 self.assertTrue(
                     filepath.exists(),
@@ -308,7 +326,7 @@ class TestEKVTK(TestVTK):
 
             # read VTK output of final time step
             last_frames = []
-            for filepath in (path_vtk_end, path_vtk_continuous[-1]):
+            for filepath in (path_vtk_last_frame, path_vtk_continuous[-1]):
                 grids = vtk_reader.parse(filepath)
                 last_frames.append(grids[label_density])
 

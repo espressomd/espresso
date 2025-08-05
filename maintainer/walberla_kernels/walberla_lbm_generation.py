@@ -181,7 +181,11 @@ def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):
     cqc = lb_method.conserved_quantity_computation
     vel_symbols = cqc.velocity_symbols
     rho_sym = sp.Symbol("rho")
+    delta_rho_sym = sp.Symbol("delta_rho")
     pdfs_sym = sp.symbols(f"f_:{lb_method.stencil.Q}")
+    inv_neighbor_dir_offset = [
+        [f"{-c}" for i, c in enumerate(dir)] for dir in lb_method.stencil]
+
     vel_arr_symbols = [
         IndexedBase(TypedSymbol("u", dtype=default_dtype), shape=(1,))[i]
         for i in range(len(vel_symbols))]
@@ -195,7 +199,10 @@ def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):
         [e.rhs for e in equilibrium.main_assignments])
     equilibrium = ps.AssignmentCollection([ps.Assignment(lhs, rhs)
                                            for lhs, rhs in zip(lhs_list, equilibrium_matrix)])
-    equilibrium = __type_equilibrium_assignments(
+    equilibrium_setter = __type_equilibrium_assignments(
+        equilibrium, config, equilibrium_subs_dict)
+    equilibrium_subs_dict[delta_rho_sym] = rho_sym
+    equilibrium_getter = __type_equilibrium_assignments(
         equilibrium, config, equilibrium_subs_dict)
 
     velocity_getters = make_velocity_getters(cqc, rho_sym, vel_arr_symbols)
@@ -203,6 +210,15 @@ def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):
         velocity_getters, variables_without_prefix=["rho", "u"], **kwargs)
     momentum_density_getter = cqc.output_equations_from_pdfs(
         pdfs_sym, {"density": rho_sym, "momentum_density": momentum_density_symbols})
+    force_field = lb_method.force_model.symbolic_force_vector
+    substitution_dict = {}
+    for field_symbol in force_field:
+        for assignment in momentum_density_getter:
+            if field_symbol in assignment.rhs.atoms():
+                substitution_dict[assignment.rhs] = assignment.rhs.xreplace(
+                    {field_symbol: field_symbol / sp.Symbol("density")})
+    momentum_density_getter_force_setter = momentum_density_getter.new_with_substitutions(
+        substitution_dict)
     unshifted_momentum_density_getter = cqc.output_equations_from_pdfs(
         pdfs_sym, {"density": rho_sym, "momentum_density": momentum_density_symbols})
     for i, eq in reversed(
@@ -211,23 +227,38 @@ def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):
             del unshifted_momentum_density_getter.main_assignments[i]
     second_momentum_getter = cqc.output_equations_from_pdfs(
         pdfs_sym, {"moment2": second_momentum_symbols})
+    density_getter_assignments = cqc.output_equations_from_pdfs(
+        pdfs_sym, {"density": rho_sym})
+    for assignment in density_getter_assignments:
+        if assignment.lhs == sp.Symbol("rho"):
+            new_rho = ps.Assignment(
+                assignment.lhs, assignment.rhs * sp.Symbol("density"))
+            break
+    density_getter_assignments = density_getter_assignments.new_with_substitutions(
+        {assignment.rhs: new_rho.rhs})
 
     jinja_context = {
         "stencil_name": stencil_name,
         "D": lb_method.stencil.D,
         "Q": lb_method.stencil.Q,
+        "inv_neighbor_dir": inv_neighbor_dir_offset,
         "compressible": cqc.compressible,
         "zero_centered": cqc.zero_centered_pdfs,
         "dtype": default_dtype,
 
-        "equilibrium_from_direction": stencil_switch_statement(lb_method.stencil, equilibrium),
-        "equilibrium": [cpp_printer.doprint(e.rhs) for e in equilibrium],
+        "equilibrium_from_direction": stencil_switch_statement(lb_method.stencil, equilibrium_getter),
+        "equilibrium": [cpp_printer.doprint(e.rhs) for e in equilibrium_setter],
 
         "density_getters": equations_to_code(
             cqc.output_equations_from_pdfs(pdfs_sym, {"density": rho_sym}),
             variables_without_prefix=[e.name for e in pdfs_sym], **kwargs),
+        "density_getters_adjust": equations_to_code(
+            density_getter_assignments,
+            variables_without_prefix=[e.name for e in pdfs_sym], **kwargs),
         "momentum_density_getter": equations_to_code(
             momentum_density_getter, variables_without_prefix=pdfs_sym, **kwargs),
+        "momentum_density_getter_force_setter": equations_to_code(
+            momentum_density_getter_force_setter, variables_without_prefix=pdfs_sym, **kwargs),
         "second_momentum_getter": equations_to_code(
             second_momentum_getter, variables_without_prefix=pdfs_sym, **kwargs),
         "density_velocity_setter_macroscopic_values": density_velocity_setter_macroscopic_values,

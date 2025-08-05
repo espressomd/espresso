@@ -317,26 +317,6 @@ static void resort_particles_if_needed(System::System &system) {
   }
 }
 
-void System::System::thermostat_force_init() {
-  auto const &propagation = *this->propagation;
-  if ((not thermostat->langevin) or ((propagation.used_propagations &
-                                      (PropagationMode::TRANS_LANGEVIN |
-                                       PropagationMode::ROT_LANGEVIN)) == 0)) {
-    return;
-  }
-  auto const &langevin = *thermostat->langevin;
-  auto const kT = thermostat->kT;
-  cell_structure->for_each_local_particle([&](Particle &p) {
-    if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
-      p.force() += friction_thermo_langevin(langevin, p, time_step, kT);
-#ifdef ROTATION
-    if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
-      p.torque() += convert_vector_body_to_space(
-          p, friction_thermo_langevin_rotation(langevin, p, time_step, kT));
-#endif
-  });
-}
-
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */

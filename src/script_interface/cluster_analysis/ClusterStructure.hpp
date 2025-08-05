@@ -32,6 +32,7 @@
 #include "script_interface/system/System.hpp"
 
 #include <memory>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -79,14 +80,11 @@ public:
       return c;
     }
     if (method == "cluster_ids") {
-      std::vector<int> cluster_ids;
-      for (const auto &it : m_cluster_structure.clusters) {
-        cluster_ids.push_back(it.first);
-      }
-      return cluster_ids;
+      auto const view = std::views::elements<0>(m_cluster_structure.clusters);
+      return std::vector<int>{view.begin(), view.end()};
     }
     if (method == "n_clusters") {
-      return int(m_cluster_structure.clusters.size());
+      return m_cluster_structure.clusters.size();
     }
     if (method == "cid_for_particle") {
       return m_cluster_structure.cluster_id.at(

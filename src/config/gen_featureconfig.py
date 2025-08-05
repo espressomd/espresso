@@ -28,10 +28,10 @@ sys.path.append(os.path.join(moduledir, '..'))
 import featuredefs
 
 if len(sys.argv) != 4:
-    print(f"Usage: {sys.argv[0]} DEFFILE HPPFILE CPPFILE", file=sys.stderr)
+    print(f"Usage: {sys.argv[0]} DEFFILE HPPFILE IMPLHPPFILE", file=sys.stderr)
     exit(2)
 
-path_def, path_hpp, path_cpp = sys.argv[1:5]
+path_def, path_hpp, path_impl_hpp = sys.argv[1:5]
 
 print(f"Reading definitions from {path_def}")
 defs = featuredefs.defs(path_def)
@@ -47,8 +47,7 @@ print(f"Writing {path_hpp}")
 hfile = open(path_hpp, 'w')
 hfile.write(disclaimer)
 hfile.write("""
-#ifndef ESPRESSO_SRC_CONFIG_CONFIG_FEATURES_HPP
-#define ESPRESSO_SRC_CONFIG_CONFIG_FEATURES_HPP
+#pragma once
 """)
 
 hfile.write("""
@@ -115,20 +114,26 @@ for feature, expr, cppexpr in sorted(defs.derivations):
     hfile.write(derivation_template.substitute(
         feature=feature, cppexpr=cppexpr, expr=expr))
 
-hfile.write("""
-
-extern char const *const FEATURES[];
-extern char const *const FEATURES_ALL[];
-extern unsigned int const NUM_FEATURES;
-extern unsigned int const NUM_FEATURES_ALL;
-
-#endif
+# generate compiler errors when incompatible features are selected
+hfile.write("""\
+/***********************/
+/* Handle requirements */
+/***********************/
 """)
+requirement_string = """
+// {feature} requires {expr}
+#if defined({feature}) && !({cppexpr})
+#error Feature {feature} requires {expr}
+#endif
+"""
+for feature, expr, cppexpr in sorted(defs.requirements):
+    hfile.write(requirement_string.format(
+        feature=feature, cppexpr=cppexpr, expr=expr))
 
 hfile.close()
 
-print(f"Writing {path_cpp}")
-cfile = open(path_cpp, "w")
+print(f"Writing {path_impl_hpp}")
+cfile = open(path_impl_hpp, "w")
 
 cfile.write(disclaimer)
 cfile.write(f"""
@@ -140,23 +145,12 @@ cfile.write(f"""
 /***********************/
 """)
 
-requirement_string = """
-// {feature} requires {expr}
-#if defined({feature}) && !({cppexpr})
-#error Feature {feature} requires {expr}
-#endif
-"""
-for feature, expr, cppexpr in sorted(defs.requirements):
-    cfile.write(
-        requirement_string.format(
-            feature=feature, cppexpr=cppexpr, expr=expr))
-
 cfile.write("""
 /****************/
 /* Feature list */
 /****************/
 
-char const *const FEATURES[] = {
+static constexpr char const *const FEATURES[] = {
 """)
 
 feature_string = """
@@ -170,7 +164,7 @@ for feature in sorted(defs.externals.union(defs.features, defs.derived)):
 
 cfile.write("""
 };
-unsigned int const NUM_FEATURES = sizeof(FEATURES) / sizeof(char*);
+static constexpr auto const NUM_FEATURES = sizeof(FEATURES) / sizeof(char*);
 """)
 
 cfile.write("""
@@ -178,7 +172,7 @@ cfile.write("""
 /* Feature full list */
 /*********************/
 
-char const *const FEATURES_ALL[] = {\
+static constexpr char const *const FEATURES_ALL[] = {\
 """)
 
 feature_string = """
@@ -189,7 +183,7 @@ for feature in sorted(defs.allfeatures):
 
 cfile.write("""
 };
-unsigned int const NUM_FEATURES_ALL = sizeof(FEATURES_ALL) / sizeof(char*);
+static constexpr auto const NUM_FEATURES_ALL = sizeof(FEATURES_ALL) / sizeof(char*);
 """)
 
 cfile.close()

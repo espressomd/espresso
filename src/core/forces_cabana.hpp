@@ -29,20 +29,22 @@
 #include "forces_inline.hpp"
 #include <Cabana_Core.hpp>
 
+#if defined(ELECTROSTATICS) or defined(DIPOLES) or defined(DPD) or defined(NPT)
+#define LONG_RANGE_KERNELS
+#endif
+
 struct ForcesKernel {
   [[maybe_unused]] const BondedInteractionsMap &bonded_ias;
   const InteractionsNonBonded &nonbonded_ias;
   Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel;
-#if defined(THOLE) or defined(ELECTROSTATICS) or defined(P3M) or               \
-    defined(DPD) or defined(DIPOLES) or defined(NPT)
+#if defined(LONG_RANGE_KERNELS)
   Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel;
   Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel;
   Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_u_kernel;
   const Thermostat::Thermostat &thermostat;
 #endif
   const BoxGeometry &box_geo;
-#if defined(EXCLUSIONS) or defined(THOLE) or defined(ELECTROSTATICS) or        \
-    defined(P3M) or defined(DPD) or defined(DIPOLES) or defined(NPT)
+#if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
   std::vector<Particle *> &unique_particles;
 #endif
   Kokkos::View<double **[3], Kokkos::LayoutRight> local_force;
@@ -58,16 +60,14 @@ struct ForcesKernel {
       [[maybe_unused]] const BondedInteractionsMap &bonded_ias_,
       const InteractionsNonBonded &nonbonded_ias_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel_,
-#if defined(THOLE) or defined(ELECTROSTATICS) or defined(P3M) or               \
-    defined(DPD) or defined(DIPOLES) or defined(NPT)
+#if defined(LONG_RANGE_KERNELS)
       Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel_,
       Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel_,
       Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_u_kernel_,
       const Thermostat::Thermostat &thermostat_,
 #endif
       const BoxGeometry &box_geo_,
-#if defined(EXCLUSIONS) or defined(THOLE) or defined(ELECTROSTATICS) or        \
-    defined(P3M) or defined(DPD) or defined(DIPOLES) or defined(NPT)
+#if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
       std::vector<Particle *> &unique_particles_,
 #endif
       Kokkos::View<double **[3], Kokkos::LayoutRight> local_force_,
@@ -80,14 +80,12 @@ struct ForcesKernel {
       const AoSoA_pack &aosoa_)
       : bonded_ias(bonded_ias_), nonbonded_ias(nonbonded_ias_),
         coulomb_kernel(coulomb_kernel_),
-#if defined(THOLE) or defined(ELECTROSTATICS) or defined(P3M) or               \
-    defined(DPD) or defined(DIPOLES) or defined(NPT)
+#if defined(LONG_RANGE_KERNELS)
         dipoles_kernel(dipoles_kernel_), elc_kernel(elc_kernel_),
         coulomb_u_kernel(coulomb_u_kernel_), thermostat(thermostat_),
 #endif
         box_geo(box_geo_),
-#if defined(EXCLUSIONS) or defined(THOLE) or defined(ELECTROSTATICS) or        \
-    defined(P3M) or defined(DPD) or defined(DIPOLES) or defined(NPT)
+#if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
         unique_particles(unique_particles_),
 #endif
         local_force(local_force_),
@@ -119,36 +117,31 @@ struct ForcesKernel {
 
     auto const q1q2 = aosoa.charge(i) * aosoa.charge(j);
 
-#ifdef EXCLUSIONS
-    auto p1 = unique_particles.at(i);
-    auto p2 = unique_particles.at(j);
+#if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
+    auto &p1 = *unique_particles.at(i);
+    auto &p2 = *unique_particles.at(j);
+#endif
 
-    bool do_nonbonded_flag = do_nonbonded(*p1, *p2);
+#ifdef EXCLUSIONS
+    auto const do_nonbonded_flag = do_nonbonded(p1, p2);
 #else
-    bool do_nonbonded_flag = true;
+    auto constexpr do_nonbonded_flag = true;
 #endif
 
     add_non_bonded_pair_withot_p(pf, d, dist, q1q2, ia_params,
                                  do_nonbonded_flag, coulomb_kernel);
 
-#if defined(THOLE) or defined(ELECTROSTATICS) or defined(P3M) or               \
-    defined(DPD) or defined(DIPOLES) or defined(NPT)
-    auto const dist2 = dist * dist;
-
-#ifndef EXCLUSIONS
-    auto p1 = unique_particles.at(i);
-    auto p2 = unique_particles.at(j);
-#endif // NOT EXCLUSIONS
-    add_non_bonded_pair_force_with_p(
-        const_cast<Particle &>(*p1), const_cast<Particle &>(*p2), pf,
+#if defined(LONG_RANGE_KERNELS)
+    add_non_bonded_pair_force_with_p(p1, p2, pf,
 #ifdef NPT
-        virial,
+                                     virial,
 #endif // NPT
-        d, dist, dist2, q1q2, ia_params, do_nonbonded_flag, thermostat, box_geo,
-        bonded_ias, coulomb_kernel, dipoles_kernel, elc_kernel,
-        coulomb_u_kernel);
-#endif // ETC
-       //
+                                     d, dist, dist * dist, q1q2, ia_params,
+                                     do_nonbonded_flag, thermostat, box_geo,
+                                     bonded_ias, coulomb_kernel, dipoles_kernel,
+                                     elc_kernel, coulomb_u_kernel);
+#endif // LONG_RANGE_KERNELS
+
     local_force(i, thread_id, 0) += pf.f[0];
     local_force(i, thread_id, 1) += pf.f[1];
     local_force(i, thread_id, 2) += pf.f[2];

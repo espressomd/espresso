@@ -100,18 +100,22 @@ Utils::Vector3d dpd_pair_force(DPDParameters const &params,
 }
 
 Utils::Vector3d
-dpd_pair_force(Particle const &p1, Particle const &p2, DPDThermostat const &dpd,
-               BoxGeometry const &box_geo, IA_parameters const &ia_params,
-               Utils::Vector3d const &d, double dist, double dist2) {
+dpd_pair_force(Utils::Vector3d const &p1_position,
+               Utils::Vector3d const &p1_velocity, int const &p1_id,
+               Utils::Vector3d const &p2_position,
+               Utils::Vector3d const &p2_velocity, int const &p2_id,
+               DPDThermostat const &dpd, BoxGeometry const &box_geo,
+               IA_parameters const &ia_params, Utils::Vector3d const &d,
+               double dist, double dist2) {
   if (ia_params.dpd.radial.cutoff <= 0.0 && ia_params.dpd.trans.cutoff <= 0.0) {
     return {};
   }
 
-  auto const v21 =
-      box_geo.velocity_difference(p1.pos(), p2.pos(), p1.v(), p2.v());
+  auto const v21 = box_geo.velocity_difference(p1_position, p2_position,
+                                               p1_velocity, p2_velocity);
   auto const noise_vec =
       (ia_params.dpd.radial.pref > 0.0 || ia_params.dpd.trans.pref > 0.0)
-          ? dpd_noise(dpd, p1.id(), p2.id())
+          ? dpd_noise(dpd, p1_id, p2_id)
           : Utils::Vector3d{};
 
   auto const f_r = dpd_pair_force(ia_params.dpd.radial, v21, dist, noise_vec);

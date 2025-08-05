@@ -80,7 +80,7 @@ public:
     auto const n_icc = get_value<int>(params, "n_icc");
     // by default, sigmas are zeros
     std::vector<double> sigmas{};
-    if (params.count("sigmas")) {
+    if (params.contains("sigmas")) {
       sigmas = get_value<std::vector<double>>(params, "sigmas");
     } else if (n_icc >= 1) {
       sigmas.resize(n_icc);

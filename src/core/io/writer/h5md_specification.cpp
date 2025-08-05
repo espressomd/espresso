@@ -30,6 +30,7 @@
 #include <hdf5.h>
 
 #include <algorithm>
+#include <filesystem>
 #include <string>
 #include <utility>
 
@@ -96,8 +97,8 @@ Specification::Specification(unsigned int fields) {
   }
 }
 
-bool Specification::is_compliant(std::string const &filename) const {
-  HighFive::File h5md_file(filename, HighFive::File::ReadOnly);
+bool Specification::is_compliant(std::filesystem::path const &file) const {
+  HighFive::File h5md_file(file.string(), HighFive::File::ReadOnly);
 
   auto const all_groups_exist =
       std::ranges::all_of(m_datasets, [&h5md_file](auto const &d) {
