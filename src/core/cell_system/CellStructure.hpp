@@ -457,7 +457,7 @@ public:
 #ifdef SHARED_MEMORY_PARALLELISM
   int get_cached_max_local_particle_id() const {
     return m_cached_max_local_particle_id;
-  };
+  }
 #endif
 
   /**
@@ -748,8 +748,8 @@ public:
 #ifdef NPT
   VirialType &get_local_virial() { return *m_local_virial; }
 #endif
-  AoSoA_pack &get_aosoa_data() { return *m_aosoa; };
-  ListType &get_cabana_verlet_list() { return *m_cabana_verlet_list; };
+  AoSoA_pack &get_aosoa_data() { return *m_aosoa; }
+  ListType &get_cabana_verlet_list() { return *m_cabana_verlet_list; }
   std::vector<Particle *> &get_unique_particles() { return m_unique_particles; }
 
   void set_index_map();
