@@ -177,21 +177,11 @@ void cabana_short_range(BondKernel const &bond_kernel,
                         double bond_cutoff, ParticleRange const &particles,
                         ParticleRange const &ghost_particles,
                         VerletCriterion const &verlet_criterion = {}) {
-#ifdef CALIPER
-  CALI_CXX_MARK_FUNCTION;
-#endif
-
-#ifdef CALIPER
-  CALI_MARK_BEGIN("Espresso - Bond Kernel");
-#endif
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
   if (bond_cutoff >= 0.) {
     cell_structure.bond_loop(bond_kernel);
   }
-#ifdef CALIPER
-  CALI_MARK_END("Espresso - Bond Kernel");
-#endif
 
   // Cabana short range loop
   if (pair_cutoff > 0.) {

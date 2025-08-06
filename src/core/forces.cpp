@@ -222,6 +222,9 @@ void System::System::calculate_forces() {
   };
 
 #ifdef SHARED_MEMORY_PARALLELISM
+#ifdef CALIPER
+  CALI_MARK_BEGIN("parallel short range");
+#endif
   auto const &verlet_criterion =
       VerletCriterion<>{*this,
                         cell_structure->get_verlet_skin(),
@@ -326,6 +329,10 @@ void System::System::calculate_forces() {
     }
   };
   cell_structure->non_bonded_loop(collision_kernel, verlet_criterion);
+#endif
+
+#ifdef CALIPER
+  CALI_MARK_END("parallel short range");
 #endif
 
 #else // SHARED_MEMORY_PARALLELISM

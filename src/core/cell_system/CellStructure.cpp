@@ -103,6 +103,9 @@ static auto estimate_max_counts(int max_prefactor, double pair_cutoff,
   if (std::isinf(pair_cutoff)) {
     return number_of_unique_particles;
   }
+  if (pair_cutoff < 0.) {
+    pair_cutoff = 0.;
+  }
   auto const volume = Utils::int_pow<3>(pair_cutoff);
   auto max_counts = static_cast<std::size_t>(
       std::ceil(static_cast<double>(max_prefactor) * volume));
