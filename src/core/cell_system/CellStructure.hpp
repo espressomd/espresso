@@ -79,6 +79,7 @@ template <class DataType, class MemorySpace, int, class MemoryTraits>
 class AoSoA;
 } // namespace Cabana
 struct AoSoA_pack;
+struct KokkosHandle;
 // To construct AoSoA, vector_length is defined HERE.
 const int vector_length = 1;
 
@@ -721,6 +722,7 @@ private:
   int max_prefactor = 8;
   int max_counts = -1;
   int m_max_id = 0;
+  std::shared_ptr<KokkosHandle> m_kokkos_handle;
 
   inline int estimate_max_counts(const double pair_cutoff,
                                  const int number_of_unique_particles) {
@@ -742,8 +744,6 @@ private:
   }
 
 public:
-  void reset_cabana_data();
-
   virtual ~CellStructure();
 
   bool get_rebuild_verlet_list() const { return m_rebuild_verlet_list; }
@@ -761,8 +761,8 @@ public:
 
   int get_max_id() { return m_max_id; }
 
-  void rebuild_local_properties(std::size_t num_part, std::size_t num_threads,
-                                double pair_cutoff);
+  void set_kokkos_handle(std::shared_ptr<KokkosHandle> handle);
+  void rebuild_local_properties(std::size_t num_threads, double pair_cutoff);
   void reset_local_properties();
 
   ForceType &get_local_force() { return *m_local_force; }

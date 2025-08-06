@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "config/config.hpp"
+
 #ifdef CALIPER
 #include <caliper/cali.h>
 #endif
@@ -29,6 +31,12 @@
 #include "forces_inline.hpp"
 
 #include <Cabana_Core.hpp>
+
+#if defined(__GNUG__) or defined(__clang__)
+#define ESPRESSO_ATTR_ALWAYS_INLINE [[gnu::always_inline]]
+#else
+#define ESPRESSO_ATTR_ALWAYS_INLINE
+#endif
 
 struct ForcesKernel {
   [[maybe_unused]] const BondedInteractionsMap &bonded_ias;
@@ -95,7 +103,7 @@ struct ForcesKernel {
         aosoa(aosoa_) {
   }
 
-  __attribute__((always_inline)) KOKKOS_INLINE_FUNCTION void
+  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
   operator()(int i, int j) const {
 
     auto thread_id = omp_get_thread_num();

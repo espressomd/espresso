@@ -66,6 +66,9 @@ System::System(Private) {
   box_geo = std::make_shared<BoxGeometry>();
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
+#ifdef SHARED_MEMORY_PARALLELISM
+  cell_structure->set_kokkos_handle(::kokkos_handle);
+#endif
   propagation = std::make_shared<Propagation>();
   bonded_ias = std::make_shared<BondedInteractionsMap>();
   thermostat = std::make_shared<Thermostat::Thermostat>();
@@ -92,12 +95,6 @@ System::System(Private) {
   sim_time = 0.;
   force_cap = 0.;
   min_global_cut = INACTIVE_CUTOFF;
-}
-
-System::~System() {
-#ifdef SHARED_MEMORY_PARALLELISM
-  cell_structure->reset_cabana_data();
-#endif
 }
 
 void System::initialize() {

@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_COMMUNICATION_HPP
-#define CORE_COMMUNICATION_HPP
+
+#pragma once
+
 /** \file
  *  This file contains the asynchronous MPI communication.
  *
@@ -58,6 +59,10 @@
 extern int this_node;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
+#ifdef SHARED_MEMORY_PARALLELISM
+struct KokkosHandle;
+extern std::shared_ptr<KokkosHandle> kokkos_handle;
+#endif
 
 struct Communicator {
   boost::mpi::communicator &comm;
@@ -117,4 +122,3 @@ struct MpiContainerUnitTest {
   }
   ~MpiContainerUnitTest() { Communication::deinit(); }
 };
-#endif

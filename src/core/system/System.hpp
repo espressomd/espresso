@@ -86,8 +86,6 @@ public:
 
   static std::shared_ptr<System> create();
 
-  virtual ~System();
-
 #ifdef CUDA
   GpuParticleData gpu;
 #endif

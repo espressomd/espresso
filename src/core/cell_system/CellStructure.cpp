@@ -94,35 +94,14 @@ CellStructure::~CellStructure() {
   }
 }
 
-void CellStructure::reset_cabana_data() {
-  m_rebuild_verlet_list = true;
-  if (m_local_force) {
-    m_local_force.reset();
-  }
-#ifdef ROTATION
-  if (m_local_torque) {
-    m_local_torque.reset();
-  }
-#endif
-#ifdef NPT
-  if (m_local_virial) {
-    m_local_virial.reset();
-  }
-#endif
-  if (m_aosoa) {
-    m_aosoa.reset();
-  }
-  if (m_particle_storage) {
-    m_particle_storage.reset();
-  }
-  if (m_cabana_verlet_list) {
-    m_cabana_verlet_list.reset();
-  }
+void CellStructure::set_kokkos_handle(std::shared_ptr<KokkosHandle> handle) {
+  m_kokkos_handle = std::move(handle);
 }
 
-void CellStructure::rebuild_local_properties(const std::size_t num_part,
-                                             const std::size_t num_threads,
-                                             const double pair_cutoff) {
+void CellStructure::rebuild_local_properties(std::size_t const num_threads,
+                                             double const pair_cutoff) {
+  assert(m_kokkos_handle);
+  auto const num_part = get_unique_particles().size();
   m_local_force =
       std::make_unique<ForceType>("local_force", num_part, num_threads);
 #ifdef ROTATION
@@ -133,7 +112,7 @@ void CellStructure::rebuild_local_properties(const std::size_t num_part,
   m_local_virial = std::make_unique<VirialType>("local_virial", num_threads);
 #endif
   m_particle_storage = std::make_unique<AoSoAType>("particles", num_part);
-  (*m_particle_storage).resize(num_part);
+  m_particle_storage->resize(num_part);
   // particle properties are defined in aosoa_pack.hpp
   m_aosoa = std::make_unique<AoSoA_pack>(*m_particle_storage);
 
@@ -167,7 +146,7 @@ void CellStructure::set_index_map() {
       });
   int max_id = *(std::max_element(max_ids.begin(), max_ids.end()));
   for (auto &p : ghost_particles()) {
-    const Particle *local_particle = get_local_particle(p.id());
+    auto const *local_particle = get_local_particle(p.id());
     if (not local_particle) {
       continue;
     }

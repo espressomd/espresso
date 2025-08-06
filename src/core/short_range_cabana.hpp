@@ -48,7 +48,7 @@ inline void write_particle(Particle const &p, int const &id,
 }
 
 template <class VerletCriterion>
-__attribute__((always_inline)) inline void construct_verlet_list(
+ESPRESSO_ATTR_ALWAYS_INLINE inline void construct_verlet_list(
     CellStructure &cell_structure, VerletCriterion const &verlet_criterion,
     Kokkos::View<int *> const &id_to_index, const int max_id) {
   auto const &cells =
@@ -115,7 +115,7 @@ __attribute__((always_inline)) inline void construct_verlet_list(
 }
 
 template <class VerletCriterion>
-__attribute__((always_inline)) inline void update_cabana_state(
+ESPRESSO_ATTR_ALWAYS_INLINE inline void update_cabana_state(
     CellStructure &cell_structure, ParticleRange const &particles,
     ParticleRange const &ghost_particles,
     VerletCriterion const &verlet_criterion, double const pair_cutoff) {
@@ -133,8 +133,7 @@ __attribute__((always_inline)) inline void update_cabana_state(
     cell_structure.set_index_map(); // parallelized index_map
 
     // Create essential variable for MD
-    cell_structure.rebuild_local_properties(
-        cell_structure.get_unique_particles().size(), num_threads, pair_cutoff);
+    cell_structure.rebuild_local_properties(num_threads, pair_cutoff);
   } else {
     // If we do not rebuild we can use the saved map
     cell_structure.reset_local_properties();
