@@ -78,7 +78,6 @@ template <typename... Types> struct MemberTypes;
 template <class DataType, class MemorySpace, int, class MemoryTraits>
 class AoSoA;
 } // namespace Cabana
-class CabanaData;
 struct AoSoA_pack;
 // To construct AoSoA, vector_length is defined HERE.
 const int vector_length = 1;
@@ -719,16 +718,12 @@ private:
 
 #ifdef SHARED_MEMORY_PARALLELISM
 private:
-  std::unique_ptr<CabanaData> m_cabana_data;
-  // bool steepest_descent_flag = true;
   int max_prefactor = 8;
   int max_counts = -1;
   int m_max_id = 0;
 
   inline int estimate_max_counts(const double pair_cutoff,
                                  const int number_of_unique_particles) {
-    // std::cout << "estimate_max_counts:" << pair_cutoff << " "
-    //	      << max_prefactor << std::endl;
     int max_counts;
     if (not std::isinf(pair_cutoff)) {
       max_counts = static_cast<int>(
@@ -747,8 +742,6 @@ private:
   }
 
 public:
-  void set_cabana_data(std::unique_ptr<CabanaData> data);
-  CabanaData &get_cabana_data();
   void reset_cabana_data();
 
   virtual ~CellStructure();
@@ -760,9 +753,6 @@ public:
   void mark_rebuild_cabana_verlet_list_as_UpToDate() {
     m_rebuild_cabana_verlet_list = false;
   }
-
-  // void set_steepest_descent_flag(bool flag) { steepest_descent_flag = flag; }
-  // bool get_steepest_descent_flag() { return steepest_descent_flag; }
 
   void set_max_prefactor(int value) { max_prefactor = value; }
 

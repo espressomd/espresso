@@ -59,7 +59,7 @@ public:
 
   // Method to add a neighbor
   KOKKOS_INLINE_FUNCTION
-  void addNeighborAtomic(int pid, int nid) {
+  void addNeighborAtomicLB(int pid, int nid) {
     std::size_t count = counts(pid);
     std::size_t count_n = counts(nid);
 
@@ -80,7 +80,7 @@ public:
 
   // Thread safe but non atomic method to add a neighbor
   KOKKOS_INLINE_FUNCTION
-  void addNeighborNonAtomic(int pid, int nid) {
+  void addNeighbor(int pid, int nid) {
     std::size_t count = counts(pid);
 
 #ifndef NDEBUG
@@ -95,7 +95,7 @@ public:
 
   // Non atomic and load balancing method to add a neighbor
   KOKKOS_INLINE_FUNCTION
-  void addNeighborLoadBalancing(int pid, int nid) {
+  void addNeighborLB(int pid, int nid) {
     std::size_t count = counts(pid);
     std::size_t count_n = counts(nid);
 

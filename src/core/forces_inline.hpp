@@ -183,8 +183,6 @@ inline void add_non_bonded_pair_without_p(
     IA_parameters const &ia_params, [[maybe_unused]] bool do_nonbonded,
     Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel) {
 
-  // ParticleForce pf{};
-
   /***********************************************/
   /* non-bonded pair potentials                  */
   /***********************************************/
@@ -205,12 +203,10 @@ inline void add_non_bonded_pair_without_p(
 
 #ifdef ELECTROSTATICS
   // real-space electrostatic charge-charge interaction
-  // auto const q1q2 = p1.q() * p2.q();
   if (q1q2 != 0. and coulomb_kernel != nullptr) {
     pf.f += (*coulomb_kernel)(q1q2, d, dist);
   }
 #endif // ELECTROSTATICS
-  // return pf;
 }
 
 /**
@@ -229,9 +225,6 @@ inline void add_non_bonded_pair_force_with_p(
     Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel,
     Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel,
     Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_u_kernel) {
-
-  // ParticleForce pf{};
-  // Utils::Vector3d virial{};
 
   /***********************************************/
   /* non-bonded pair potentials                  */
@@ -271,7 +264,6 @@ inline void add_non_bonded_pair_force_with_p(
 
 #ifdef ELECTROSTATICS
   // real-space electrostatic charge-charge interaction
-  // auto const q1q2 = p1.q() * p2.q();
   if (q1q2 != 0. and coulomb_kernel != nullptr) {
     // pf.f += (*coulomb_kernel)(q1q2, d, dist);
 #ifdef NPT
@@ -313,7 +305,6 @@ inline void add_non_bonded_pair_force_with_p(
     pf += (*dipoles_kernel)(p1, p2, d, dist, dist2);
   }
 #endif
-  // return std::pair{pf, virial};
 }
 
 /** Calculate non-bonded forces between a pair of particles and update their
