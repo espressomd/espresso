@@ -21,7 +21,9 @@
 #ifdef SHARED_MEMORY_PARALLELISM
 
 #include <Cabana_VerletList.hpp>
+
 #include <algorithm>
+#include <cstddef>
 
 namespace Cabana {
 // ONLY FOR 2D LAYOUT, OTHERWISE NEIGHBOR LIST INTERFACE IMPLEMENTATION WILL
@@ -37,8 +39,8 @@ public:
   CustomVerletList() : Base() {}
 
   // Custom constructor
-  CustomVerletList(const std::size_t begin, const std::size_t end,
-                   const std::size_t max_neigh) {
+  CustomVerletList(std::size_t const begin, std::size_t const end,
+                   std::size_t const max_neigh) {
     initializeData(end - begin, max_neigh);
   }
   virtual ~CustomVerletList() {};
@@ -49,8 +51,8 @@ public:
 
   // Method to initialize _data without filling neighbors
   KOKKOS_INLINE_FUNCTION
-  void initializeData(const std::size_t num_particles,
-                      const std::size_t max_neigh) {
+  void initializeData(std::size_t const num_particles,
+                      std::size_t const max_neigh) {
     counts = Kokkos::View<int *, MemorySpace>("num_neighbors", num_particles);
     neighbors = Kokkos::View<int **, Kokkos::LayoutRight, MemorySpace>(
         Kokkos::ViewAllocateWithoutInitializing("neighbors"), num_particles,
@@ -181,7 +183,7 @@ public:
 
   //! Get the total number of neighbors across all particles.
   KOKKOS_INLINE_FUNCTION
-  static std::size_t totalNeighbor(const list_type &list) {
+  static std::size_t totalNeighbor(list_type const &list) {
     std::size_t total_n = 0;
     std::size_t num_p = list.counts.size();
     for (std::size_t i = 0; i < num_p; ++i)
@@ -191,28 +193,28 @@ public:
 
   //! Get the maximum number of neighbors per particle.
   KOKKOS_INLINE_FUNCTION
-  static std::size_t maxNeighbor(const list_type &list) {
+  static std::size_t maxNeighbor(list_type const &list) {
     // Stored during neighbor search.
     return list.max_n;
   }
 
   //! Get the number of neighbors for a given particle index.
   KOKKOS_INLINE_FUNCTION
-  static std::size_t numNeighbor(const list_type &list,
-                                 const std::size_t particle_index) {
+  static std::size_t numNeighbor(list_type const &list,
+                                 std::size_t const particle_index) {
     return list.counts(particle_index);
   }
 
   //! Get the id for a neighbor for a given particle index and the index of
   //! the neighbor relative to the particle.
   KOKKOS_INLINE_FUNCTION
-  static std::size_t getNeighbor(const list_type &list,
-                                 const std::size_t particle_index,
-                                 const std::size_t count) {
+  static std::size_t getNeighbor(list_type const &list,
+                                 std::size_t const particle_index,
+                                 std::size_t const count) {
     return list.neighbors(particle_index, count);
   }
 };
 
 } // namespace Cabana
 
-#endif
+#endif // SHARED_MEMORY_PARALLELISM

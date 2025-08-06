@@ -79,10 +79,3 @@ def skipIfUnmetModuleVersionRequirement(module, version_requirement):
         return unittest.skip(
             "Skipping test: version requirement not met for module {}".format(module))
     return no_skip
-
-
-def skipIfExistingFeatures(*args):
-    """Unittest skipIf decorator for existing Espresso features."""
-    if espressomd.has_features(*args):
-        return unittest.skip("Skipping test: existing feature")
-    return no_skip

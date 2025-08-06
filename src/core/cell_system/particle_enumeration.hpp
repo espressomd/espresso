@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 The ESPResSo project
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -20,17 +20,16 @@
 #pragma once
 
 #include "Cell.hpp"
+#include "CellStructure.hpp"
 #include "config/config.hpp"
-
-#include <span>
-#include <vector>
 
 #ifdef SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
 #endif
 
-// Forward declaration
-struct CellStructure;
+#include <cstddef>
+#include <span>
+#include <vector>
 
 /**
  * @brief Run a kernel on all local particles with enumeration.
@@ -43,9 +42,6 @@ struct CellStructure;
 template <typename Kernel>
 void enumerate_local_particles(CellStructure const &cs, Kernel &&kernel);
 
-// Include the implementation
-#include "CellStructure.hpp"
-
 template <typename Kernel>
 inline void enumerate_local_particles(CellStructure const &cs,
                                       Kernel &&kernel) {
@@ -57,7 +53,7 @@ inline void enumerate_local_particles(CellStructure const &cs,
     std::vector<int> cell_offsets(local_cells.size() + 1, 0);
 
     // Calculate cumulative sum of particles per cell
-    for (size_t i = 0; i < local_cells.size(); ++i) {
+    for (std::size_t i = 0; i < local_cells.size(); ++i) {
       cell_offsets[i + 1] =
           cell_offsets[i] + local_cells[i]->particles().size();
     }
@@ -69,7 +65,7 @@ inline void enumerate_local_particles(CellStructure const &cs,
           auto &cell_particles = local_cells[cell_idx]->particles();
 
           // Loop over particles in this cell
-          for (size_t part_idx = 0; part_idx < cell_particles.size();
+          for (std::size_t part_idx = 0; part_idx < cell_particles.size();
                ++part_idx) {
             int global_index = base_offset + part_idx;
             kernel(global_index, *(cell_particles.begin() + part_idx));
@@ -77,9 +73,9 @@ inline void enumerate_local_particles(CellStructure const &cs,
         });
     return;
   }
-#endif
+#endif // SHARED_MEMORY_PARALLELISM
   // Sequential fallback
-  int index = 0;
+  std::size_t index = 0;
   for (auto &p : cs.local_particles()) {
     kernel(index++, p);
   }

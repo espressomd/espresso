@@ -240,9 +240,9 @@ public:
    *         periodic images, i.e. <tt>a - b</tt>.
    */
   template <typename T>
-  Utils::Vector<T, 3> get_mi_vector(const T &a0, const T &a1, const T &a2,
-                                    const T &b0, const T &b1,
-                                    const T &b2) const {
+  Utils::Vector<T, 3> get_mi_vector(T const &a0, T const &a1, T const &a2,
+                                    T const &b0, T const &b1,
+                                    T const &b2) const {
     if (type() == BoxType::LEES_EDWARDS) {
       auto const shear_plane_normal = lees_edwards_bc().shear_plane_normal;
       auto a_tmp = Utils::Vector<T, 3>{a0, a1, a2};

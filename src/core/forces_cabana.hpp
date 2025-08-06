@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2025 The ESPResSo project
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -21,16 +21,14 @@
 
 #include "config/config.hpp"
 
-#ifdef CALIPER
-#include <caliper/cali.h>
-#endif
-
 #ifdef SHARED_MEMORY_PARALLELISM
 
 #include "aosoa_pack.hpp"
 #include "forces_inline.hpp"
 
 #include <Cabana_Core.hpp>
+
+#include <vector>
 
 #if defined(__GNUG__) or defined(__clang__)
 #define ESPRESSO_ATTR_ALWAYS_INLINE [[gnu::always_inline]]
@@ -172,4 +170,5 @@ struct ForcesKernel {
 #endif
   }
 };
-#endif
+
+#endif // SHARED_MEMORY_PARALLELISM

@@ -265,9 +265,6 @@ void System::System::calculate_forces() {
                      get_interaction_range(), bonded_ias->maximal_cutoff(),
                      particles, cell_structure->ghost_particles(),
                      verlet_criterion);
-#ifdef CALIPER
-  CALI_MARK_BEGIN("Cabana - reduction Forces");
-#endif
   // Force and Torque reduction
   int num_threads = execution_space().concurrency();
   Kokkos::RangePolicy<execution_space> policy(0, unique_particles.size());
@@ -319,13 +316,7 @@ void System::System::calculate_forces() {
   Utils::Vector3d virial_vec{vx, vy, vz};
   npt_add_virial_force_contribution(virial_vec);
 #endif
-#ifdef CALIPER
-  CALI_MARK_END("Cabana - reduction Forces");
-#endif
 
-#ifdef CALIPER
-  CALI_MARK_BEGIN("Cabana - Collision Detection");
-#endif
 #ifdef COLLISION_DETECTION
   auto collision_kernel = [&collision_detection = *collision_detection](
                               Particle const &p1, Particle const &p2,
@@ -335,9 +326,6 @@ void System::System::calculate_forces() {
     }
   };
   cell_structure->non_bonded_loop(collision_kernel, verlet_criterion);
-#endif
-#ifdef CALIPER
-  CALI_MARK_END("Cabana - Collision Detection");
 #endif
 
 #else // SHARED_MEMORY_PARALLELISM

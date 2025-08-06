@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2025 The ESPResSo project
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -38,4 +38,5 @@ struct AoSoA_pack {
       : position(Cabana::slice<0>(aosoa)), charge(Cabana::slice<1>(aosoa)),
         id(Cabana::slice<2>(aosoa)), type(Cabana::slice<3>(aosoa)) {}
 };
+
 #endif

@@ -38,6 +38,7 @@
 
 #include <utils/Vector.hpp>
 #include <utils/contains.hpp>
+#include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -63,13 +64,9 @@
 #include <Cabana_NeighborList.hpp>
 #include <Kokkos_Core.hpp>
 #endif
-#ifdef CALIPER
-#include "caliper/cali.h"
-#endif
-
-#ifdef SHARED_MEMORY_PARALLELISM
 
 CellStructure::~CellStructure() {
+#ifdef SHARED_MEMORY_PARALLELISM
   if (m_local_force) {
     m_local_force.reset();
   }
@@ -92,10 +89,32 @@ CellStructure::~CellStructure() {
   if (m_cabana_verlet_list) {
     m_cabana_verlet_list.reset();
   }
+#endif
 }
+
+#ifdef SHARED_MEMORY_PARALLELISM
 
 void CellStructure::set_kokkos_handle(std::shared_ptr<KokkosHandle> handle) {
   m_kokkos_handle = std::move(handle);
+}
+
+static auto estimate_max_counts(int max_prefactor, double pair_cutoff,
+                                std::size_t number_of_unique_particles) {
+  if (std::isinf(pair_cutoff)) {
+    return number_of_unique_particles;
+  }
+  auto const volume = Utils::int_pow<3>(pair_cutoff);
+  auto max_counts = static_cast<std::size_t>(
+      std::ceil(static_cast<double>(max_prefactor) * volume));
+#ifdef COLLISION_DETECTION
+  std::size_t constexpr threshold_num = 64;
+#else
+  std::size_t constexpr threshold_num = 16;
+#endif
+  if (max_counts < threshold_num) {
+    max_counts = std::min(threshold_num, number_of_unique_particles);
+  }
+  return max_counts;
 }
 
 void CellStructure::rebuild_local_properties(std::size_t const num_threads,
@@ -116,8 +135,8 @@ void CellStructure::rebuild_local_properties(std::size_t const num_threads,
   // particle properties are defined in aosoa_pack.hpp
   m_aosoa = std::make_unique<AoSoA_pack>(*m_particle_storage);
 
-  int max_counts = estimate_max_counts(pair_cutoff, num_part);
-  m_cabana_verlet_list = std::make_unique<ListType>(0, num_part, max_counts);
+  auto max_counts = estimate_max_counts(max_prefactor, pair_cutoff, num_part);
+  m_cabana_verlet_list = std::make_unique<ListType>(0ul, num_part, max_counts);
 }
 
 void CellStructure::reset_local_properties() {
@@ -139,7 +158,7 @@ void CellStructure::set_index_map() {
   int n_threads = execution_space().concurrency();
   std::vector<int> max_ids(n_threads);
   enumerate_local_particles(
-      *this, [&unique_particles, &max_ids](int index, Particle &p) {
+      *this, [&unique_particles, &max_ids](std::size_t index, Particle &p) {
         unique_particles[index] = &p;
         const int thread_num = omp_get_thread_num();
         max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
@@ -163,7 +182,8 @@ void CellStructure::set_index_map() {
   registered_index.clear();
   m_cached_max_local_particle_id = max_id;
 }
-#endif
+
+#endif // SHARED_MEMORY_PARALLELISM
 
 CellStructure::CellStructure(BoxGeometry const &box)
     : m_decomposition{std::make_unique<AtomDecomposition>(box)} {}
@@ -393,9 +413,6 @@ void CellStructure::set_verlet_skin(double value) {
   m_verlet_skin = value;
   m_verlet_skin_set = true;
   m_rebuild_cabana_verlet_list = true;
-#ifdef SHARED_MEMORY_PARALLELISM
-  max_counts = -1;
-#endif
   get_system().on_verlet_skin_change();
 }
 

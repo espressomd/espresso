@@ -55,14 +55,18 @@
 #include <tuple>
 #include <utility>
 
+#ifdef SHARED_MEMORY_PARALLELISM
 struct KokkosHandle {
   KokkosHandle() { Kokkos::initialize(); }
   ~KokkosHandle() { Kokkos::finalize(); }
 };
+#endif
 
 boost::mpi::communicator comm_cart;
-std::shared_ptr<KokkosHandle> kokkos_handle;
 Communicator communicator{};
+#ifdef SHARED_MEMORY_PARALLELISM
+std::shared_ptr<KokkosHandle> kokkos_handle{};
+#endif
 
 namespace Communication {
 static std::shared_ptr<MpiCallbacks> m_callbacks;

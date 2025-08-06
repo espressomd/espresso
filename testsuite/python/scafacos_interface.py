@@ -350,10 +350,8 @@ class ScafacosInterface(ut.TestCase):
         new_torques = np.copy(system.part.all().torque_lab)
         self.assertAlmostEqual(new_E_coulomb, ref_E_coulomb, delta=0)
         self.assertAlmostEqual(new_E_dipoles, ref_E_dipoles, delta=0)
-        np.testing.assert_allclose(
-            new_forces, ref_forces, atol=1e-10, rtol=1e-10)
-        np.testing.assert_allclose(
-            new_torques, ref_torques, atol=1e-10, rtol=1e-10)
+        np.testing.assert_allclose(new_forces, ref_forces, atol=0, rtol=0.)
+        np.testing.assert_allclose(new_torques, ref_torques, atol=0, rtol=0.)
 
         self.system.electrostatics.clear()
         self.system.magnetostatics.clear()

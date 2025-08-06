@@ -49,7 +49,6 @@ calc_energies
 @utx.skipIfMissingFeatures(["CALIPER"])
 class Test(ut.TestCase):
 
-    @utx.skipIfExistingFeatures(["SHARED_MEMORY_PARALLELISM"])
     @utx.skipIfMissingFeatures(["P3M", "WCA"])
     def test_runtime_report(self):
         has_cuda = espressomd.has_features(["CUDA"])

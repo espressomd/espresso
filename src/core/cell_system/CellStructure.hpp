@@ -216,10 +216,11 @@ private:
   std::vector<Particle *> m_unique_particles;
 
   std::unique_ptr<ListType> m_cabana_verlet_list;
-#endif
+#endif // SHARED_MEMORY_PARALLELISM
 
 public:
   CellStructure(BoxGeometry const &box);
+  virtual ~CellStructure();
 
   bool use_verlet_list = true;
 
@@ -720,32 +721,10 @@ private:
 #ifdef SHARED_MEMORY_PARALLELISM
 private:
   int max_prefactor = 8;
-  int max_counts = -1;
   int m_max_id = 0;
   std::shared_ptr<KokkosHandle> m_kokkos_handle;
 
-  inline int estimate_max_counts(const double pair_cutoff,
-                                 const int number_of_unique_particles) {
-    int max_counts;
-    if (not std::isinf(pair_cutoff)) {
-      max_counts = static_cast<int>(
-          std::ceil(max_prefactor * pair_cutoff * pair_cutoff * pair_cutoff));
-      int threshold_num = 16; // 8;
-#ifdef COLLISION_DETECTION
-      threshold_num = 64;
-#endif
-      if (max_counts < threshold_num) {
-        max_counts = std::min(threshold_num, number_of_unique_particles);
-      }
-    } else {
-      max_counts = number_of_unique_particles;
-    }
-    return max_counts;
-  }
-
 public:
-  virtual ~CellStructure();
-
   bool get_rebuild_verlet_list() const { return m_rebuild_verlet_list; }
   bool get_rebuild_cabana_verlet_list() const {
     return m_rebuild_cabana_verlet_list;
@@ -755,9 +734,6 @@ public:
   }
 
   void set_max_prefactor(int value) { max_prefactor = value; }
-
-  void set_max_counts(int value) { max_counts = value; }
-  int get_max_counts() const { return max_counts; }
 
   int get_max_id() { return m_max_id; }
 

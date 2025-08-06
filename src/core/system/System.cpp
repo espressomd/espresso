@@ -432,6 +432,9 @@ bool System::long_range_interactions_sanity_checks() const {
 }
 
 double System::get_interaction_range() const {
+  if (maximal_cutoff() > 1000000.) {
+    auto const max_cut = maximal_cutoff();
+  }
   auto const max_cut = maximal_cutoff();
   auto const verlet_skin = cell_structure->get_verlet_skin();
   /* Consider skin only if there are actually interactions */
