@@ -27,13 +27,13 @@
 #include <vector>
 
 BOOST_AUTO_TEST_CASE(object_id_) {
-  using ScriptInterface::object_id;
+  using ScriptInterface::ObjectId;
 
   auto const p1 = reinterpret_cast<ScriptInterface::ObjectHandle *>(1);
   auto const p2 = reinterpret_cast<ScriptInterface::ObjectHandle *>(2);
 
   /* Check that different objects have different ids */
-  BOOST_CHECK_NE(object_id(p1), object_id(p2));
+  BOOST_CHECK(ObjectId(p1) != ObjectId(p2));
 }
 
 BOOST_AUTO_TEST_CASE(PackVisitor_) {
@@ -49,19 +49,18 @@ BOOST_AUTO_TEST_CASE(PackVisitor_) {
 
   auto const visitor = ScriptInterface::PackVisitor();
 
-  auto const result = boost::apply_visitor(visitor, v);
+  auto const result = std::visit(visitor, v);
 
   const PackedVariant expected =
       std::vector<PackedVariant>{{5, std::vector<PackedVariant>{
                                          6,
-                                         object_id(ObjectRef{}.get()),
+                                         ObjectId(ObjectRef{}.get()),
                                      }}};
 
   BOOST_CHECK(result == expected);
 
   /* Check that the object hast been captured. */
-  BOOST_CHECK(visitor.objects().at(object_id(ObjectRef{}.get())) ==
-              ObjectRef{});
+  BOOST_CHECK(visitor.objects().at(ObjectId(ObjectRef{}.get())) == ObjectRef{});
 }
 
 BOOST_AUTO_TEST_CASE(pack_) {
@@ -73,7 +72,7 @@ BOOST_AUTO_TEST_CASE(pack_) {
                                                  ObjectRef{},
                                              }}};
 
-  auto const expected = boost::apply_visitor(ScriptInterface::PackVisitor(), v);
+  auto const expected = std::visit(ScriptInterface::PackVisitor(), v);
   auto const result = ScriptInterface::pack(v);
 
   BOOST_CHECK(expected == result);
@@ -88,14 +87,14 @@ BOOST_AUTO_TEST_CASE(UnpackVisitor_) {
   const PackedVariant v =
       std::vector<PackedVariant>{{5, std::vector<PackedVariant>{
                                          6,
-                                         object_id(ObjectRef{}.get()),
+                                         ObjectId(ObjectRef{}.get()),
                                      }}};
 
   std::unordered_map<ObjectId, ObjectRef> const &objects{
-      {object_id(ObjectRef{}.get()), ObjectRef{}}};
+      {ObjectId(ObjectRef{}.get()), ObjectRef{}}};
   auto const visitor = ScriptInterface::UnpackVisitor(objects);
 
-  auto const result = boost::apply_visitor(visitor, v);
+  auto const result = std::visit(visitor, v);
 
   const Variant expected = std::vector<Variant>{{5, std::vector<Variant>{
                                                         6,
@@ -113,14 +112,13 @@ BOOST_AUTO_TEST_CASE(unpack_) {
   const PackedVariant v =
       std::vector<PackedVariant>{{5, std::vector<PackedVariant>{
                                          6,
-                                         object_id(ObjectRef{}.get()),
+                                         ObjectId(ObjectRef{}.get()),
                                      }}};
 
   std::unordered_map<ObjectId, ObjectRef> const &objects{
-      {object_id(ObjectRef{}.get()), ObjectRef{}}};
+      {ObjectId(ObjectRef{}.get()), ObjectRef{}}};
 
-  auto const expected =
-      boost::apply_visitor(ScriptInterface::UnpackVisitor(objects), v);
+  auto const expected = std::visit(ScriptInterface::UnpackVisitor(objects), v);
   auto const result = ScriptInterface::unpack(v, objects);
 
   BOOST_CHECK(expected == result);

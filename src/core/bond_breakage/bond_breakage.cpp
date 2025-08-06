@@ -30,18 +30,18 @@
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
-#include <boost/variant.hpp>
 
 #include <cassert>
 #include <memory>
 #include <unordered_set>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace BondBreakage {
 
 // Variant holding any of the actions
-using Action = boost::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
+using Action = std::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
 
 // Set of actions
 using ActionSet = std::unordered_set<Action>;
@@ -160,7 +160,7 @@ static void remove_pair_bonds_to(Particle &p, int other_pid) {
 }
 
 // Handler for the different delete events
-class execute : public boost::static_visitor<> {
+class execute {
   CellStructure &cell_structure;
 
 public:
@@ -199,7 +199,7 @@ void BondBreakage::process_queue_impl(System::System &system) {
 
   // Execute actions
   for (auto const &a : actions) {
-    boost::apply_visitor(execute(cell_structure), a);
+    std::visit(execute(cell_structure), a);
     system.on_particle_change();
   }
 }

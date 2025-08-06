@@ -36,6 +36,7 @@
 #include <ranges>
 #include <span>
 #include <utility>
+#include <variant>
 #include <vector>
 
 /** Calculate volumes, volume force and add it to each virtual particle. */
@@ -55,7 +56,7 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
   if (not BoundariesFound) {
     BoundariesFound = std::ranges::any_of(
         std::views::elements<1>(bonded_ias), [](auto const &handle) {
-          return boost::get<IBMVolCons>(handle.get()) != nullptr;
+          return std::holds_alternative<IBMVolCons>(*handle);
         });
   }
 
@@ -66,7 +67,7 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
     // Loop through all bonded interactions and check if we need to set the
     // reference volume
     for (auto &handle : std::views::elements<1>(bonded_ias)) {
-      if (auto *v = boost::get<IBMVolCons>(handle.get())) {
+      if (auto *v = std::get_if<IBMVolCons>(handle.get())) {
         // This check is important because InitVolumeConservation may be called
         // accidentally during the integration. Then we must not reset the
         // reference
@@ -85,11 +86,11 @@ static IBMVolCons const *
 vol_cons_parameters(BondedInteractionsMap const &bonded_ias,
                     Particle const &p1) {
   auto const it = boost::find_if(p1.bonds(), [&](auto const &bond) -> bool {
-    return boost::get<IBMVolCons>(bonded_ias.at(bond.bond_id()).get());
+    return std::holds_alternative<IBMVolCons>(*bonded_ias.at(bond.bond_id()));
   });
 
   return (it != p1.bonds().end())
-             ? boost::get<IBMVolCons>(bonded_ias.at(it->bond_id()).get())
+             ? std::get_if<IBMVolCons>(bonded_ias.at(it->bond_id()).get())
              : nullptr;
 }
 
@@ -113,7 +114,7 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
     auto const vol_cons_params = vol_cons_parameters(bonded_ias, p1);
 
     if (vol_cons_params &&
-        boost::get<IBMTriel>(bonded_ias.at(bond_id).get()) != nullptr) {
+        std::holds_alternative<IBMTriel>(*bonded_ias.at(bond_id).get())) {
       // Our particle is the leading particle of a triel
       // Get second and third particle of the triangle
       Particle &p2 = *partners[0];
@@ -165,7 +166,7 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
 
   cs.bond_loop([this, &box_geo, &bonded_ias](Particle &p1, int bond_id,
                                              std::span<Particle *> partners) {
-    if (boost::get<IBMTriel>(bonded_ias.at(bond_id).get()) != nullptr) {
+    if (std::holds_alternative<IBMTriel>(*bonded_ias.at(bond_id).get())) {
       // Check if particle has an IBM Triel bonded interaction and an
       // IBM VolCons bonded interaction. Basically this loops over all
       // triangles, not all particles. First round to check for volume

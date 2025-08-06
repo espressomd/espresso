@@ -21,8 +21,6 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <boost/variant.hpp>
-
 #include "script_interface/GlobalContext.hpp"
 
 #include "script_interface/accumulators/ContactTimes.hpp"
@@ -45,6 +43,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 static std::weak_ptr<boost::mpi::environment> mpi_env;

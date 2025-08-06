@@ -41,7 +41,6 @@
 #include <utils/math/sqr.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/variant.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -54,6 +53,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #ifdef SHARED_MEMORY_PARALLELISM
@@ -337,7 +337,7 @@ void CellStructure::resort_particles(bool global_flag) {
   m_decomposition->resort(global_flag, diff);
 
   for (auto d : diff) {
-    boost::apply_visitor(UpdateParticleIndexVisitor{this}, d);
+    std::visit(UpdateParticleIndexVisitor{this}, d);
   }
 
   auto const &lebc = get_system().box_geo->lees_edwards_bc();

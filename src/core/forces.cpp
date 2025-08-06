@@ -54,8 +54,6 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/variant.hpp>
-
 #ifdef CALIPER
 #include <caliper/cali.h>
 #endif

@@ -34,7 +34,6 @@
 #include "script_interface/get_value.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/variant.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -49,6 +48,7 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace ScriptInterface {
@@ -122,7 +122,7 @@ template <class CoreIA> class BondedInteractionImpl : public BondedInteraction {
 public:
   using CoreBondedInteraction = CoreIA;
   CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
+    return std::get<CoreBondedInteraction>(*bonded_ia());
   }
 };
 

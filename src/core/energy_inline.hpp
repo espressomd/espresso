@@ -57,11 +57,10 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/variant.hpp>
-
 #include <optional>
 #include <span>
 #include <string>
+#include <variant>
 
 /** Calculate non-bonded energies between a pair of particles.
  *  @param p1         particle 1.
@@ -219,34 +218,34 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
 
   if (n_partners == 1) {
     auto const dx = box_geo.get_mi_vector(p1.pos(), p2->pos());
-    if (auto const *iap = boost::get<FeneBond>(&iaparams)) {
+    if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
       return iap->energy(dx);
     }
-    if (auto const *iap = boost::get<HarmonicBond>(&iaparams)) {
+    if (auto const *iap = std::get_if<HarmonicBond>(&iaparams)) {
       return iap->energy(dx);
     }
-    if (auto const *iap = boost::get<QuarticBond>(&iaparams)) {
+    if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
       return iap->energy(dx);
     }
 #ifdef ELECTROSTATICS
-    if (auto const *iap = boost::get<BondedCoulomb>(&iaparams)) {
+    if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
       return iap->energy(p1.q() * p2->q(), dx);
     }
-    if (auto const *iap = boost::get<BondedCoulombSR>(&iaparams)) {
+    if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
       return iap->energy(p1, *p2, dx, *kernel);
     }
 #endif
 #ifdef BOND_CONSTRAINT
-    if (boost::get<RigidBond>(&iaparams)) {
+    if (std::get_if<RigidBond>(&iaparams)) {
       return {0.};
     }
 #endif
 #ifdef TABULATED
-    if (auto const *iap = boost::get<TabulatedDistanceBond>(&iaparams)) {
+    if (auto const *iap = std::get_if<TabulatedDistanceBond>(&iaparams)) {
       return iap->energy(dx);
     }
 #endif
-    if (boost::get<VirtualBond>(&iaparams)) {
+    if (std::get_if<VirtualBond>(&iaparams)) {
       return {0.};
     }
     throw BondUnknownTypeError();
@@ -254,21 +253,21 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
   if (n_partners == 2) {
     auto const vec1 = box_geo.get_mi_vector(p2->pos(), p1.pos());
     auto const vec2 = box_geo.get_mi_vector(p3->pos(), p1.pos());
-    if (auto const *iap = boost::get<AngleHarmonicBond>(&iaparams)) {
+    if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
       return iap->energy(vec1, vec2);
     }
-    if (auto const *iap = boost::get<AngleCosineBond>(&iaparams)) {
+    if (auto const *iap = std::get_if<AngleCosineBond>(&iaparams)) {
       return iap->energy(vec1, vec2);
     }
-    if (auto const *iap = boost::get<AngleCossquareBond>(&iaparams)) {
+    if (auto const *iap = std::get_if<AngleCossquareBond>(&iaparams)) {
       return iap->energy(vec1, vec2);
     }
-    if (auto const *iap = boost::get<TabulatedAngleBond>(&iaparams)) {
+    if (auto const *iap = std::get_if<TabulatedAngleBond>(&iaparams)) {
       return iap->energy(vec1, vec2);
     }
-    if (boost::get<IBMTriel>(&iaparams)) {
+    if (std::get_if<IBMTriel>(&iaparams)) {
       runtimeWarningMsg() << "Unsupported bond type " +
-                                 std::to_string(iaparams.which()) +
+                                 std::to_string(iaparams.index()) +
                                  " in energy calculation.";
       return 0.;
     }
@@ -279,15 +278,15 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     auto const v12 = box_geo.get_mi_vector(p1.pos(), p2->pos());
     auto const v23 = box_geo.get_mi_vector(p3->pos(), p1.pos());
     auto const v34 = box_geo.get_mi_vector(p4->pos(), p3->pos());
-    if (auto const *iap = boost::get<DihedralBond>(&iaparams)) {
+    if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
       return iap->energy(v12, v23, v34);
     }
-    if (auto const *iap = boost::get<TabulatedDihedralBond>(&iaparams)) {
+    if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
       return iap->energy(v12, v23, v34);
     }
-    if (boost::get<IBMTribend>(&iaparams)) {
+    if (std::get_if<IBMTribend>(&iaparams)) {
       runtimeWarningMsg() << "Unsupported bond type " +
-                                 std::to_string(iaparams.which()) +
+                                 std::to_string(iaparams.index()) +
                                  " in energy calculation.";
       return 0.;
     }

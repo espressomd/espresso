@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(get_value_from_map) {
   using ScriptInterface::Variant;
   using ScriptInterface::VariantMap;
 
-  VariantMap map{{"a", 13}, {"e", 3.1}, {"f", "s"}};
+  VariantMap map{{"a", 13}, {"e", 3.1}, {"f", std::string("s")}};
 
   BOOST_CHECK(3.1 == get_value<double>(map, "e"));
   BOOST_CHECK(13 == get_value_or(map, "a", -1));

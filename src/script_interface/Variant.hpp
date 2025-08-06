@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -24,12 +24,12 @@
 #include <utils/Vector.hpp>
 #include <utils/serialization/filesystem.hpp>
 #include <utils/serialization/unordered_map.hpp>
+#include <utils/serialization/variant.hpp>
 
+#include <boost/serialization/access.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
-#include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
-#include <boost/variant.hpp>
 
 #include <cstddef>
 #include <filesystem>
@@ -37,6 +37,7 @@
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 namespace Utils {
@@ -44,8 +45,78 @@ using Vector3b = Utils::Vector<bool, 3>;
 }
 
 namespace ScriptInterface {
+namespace impl {
+
+template <class... Ts> struct recursive_variant;
+
+/**
+ * @brief Helper class to inject STL containers in a recursive variant typelist.
+ * CRTP helper class that defines a base class for @ref recursive_variant,
+ * such that the `using BaseClass = detail::recursive_variant_base<Ts...>`
+ * syntax can be used in the derived class instead of writing the entire
+ * typelist again. These STL containers are used to introduce recursion.
+ */
+template <class... Ts>
+using recursive_variant_add_containers =
+    std::variant<Ts..., std::vector<recursive_variant<Ts...>>,
+                 std::unordered_map<int, recursive_variant<Ts...>>,
+                 std::unordered_map<std::string, recursive_variant<Ts...>>>;
+
+/**
+ * @brief Recursive variant implementation.
+ *
+ * This boilerplate code is required to emulate the following Boost feature:
+ * @code{.cpp}
+ *   using Variant = boost::make_recursive_variant<
+ *     int, double, std::string, std::vector<boost::recursive_variant_>,
+ *     std::unordered_map<std::string, boost::recursive_variant_>>::type;
+ * @endcode
+ * C++ doesn't natively supports the kind of reflections needed to implement
+ * this behavior. Our implementation splits the definition in two classes:
+ * a forward-declared @ref recursive_variant template class whose type
+ * parameters are "basic" types (i.e. non-recursive types), and a helper
+ * class @c recursive_variant_add_containers that injects carefully chosen
+ * STL containers into the type list. Since STL containers store a pointer
+ * to a buffer holding variant instances, the variant size doesn't need to be
+ * known at the time the variant is defined, and the variant is recursive.
+ */
+template <class... Ts>
+struct recursive_variant : recursive_variant_add_containers<Ts...> {
+  using BaseClass = recursive_variant_add_containers<Ts...>;
+  using BaseClass::BaseClass;
+
+private:
+  friend class boost::serialization::access;
+
+  template <typename Archive>
+  void serialize(Archive &ar, unsigned const /*version*/) {
+    BaseClass &self = *this;
+    ar & self;
+  }
+};
+
+} // namespace impl
+
+/**
+ * @brief Helper typedef to generate consistent variant types.
+ *
+ * This is a custom recursive variant type designed specifically for the script
+ * interface. It features all basic types required to interface with the core.
+ * Recursive types are added by @ref impl::recursive_variant_add_containers.
+ * The template parameter @c ObjectType is used to ensure instantiations like
+ * @ref Variant and @ref PackedVariant hold the same types in the same order.
+ *
+ * @tparam ObjectType Type of the script interface object handle or reference.
+ */
+template <typename ObjectType>
+using make_recursive_variant = impl::recursive_variant<
+    None, bool, int, std::size_t, double, std::string, std::filesystem::path,
+    ObjectType, Utils::Vector3b, Utils::Vector3i, Utils::Vector2d,
+    Utils::Vector3d, Utils::Vector4d, std::vector<int>, std::vector<double>>;
+
 class ObjectHandle;
 using ObjectRef = std::shared_ptr<ObjectHandle>;
+
 /**
  * @brief None-"literal".
  */
@@ -53,20 +124,8 @@ constexpr const None none{};
 
 /**
  * @brief Possible types for parameters.
- *
- * The visitors and packing functions need to be adapted accordingly when
- * extending this variant with new types. For the exact details, see commit
- * <a href="https://github.com/espressomd/espresso/commit/b48ab62">b48ab62</a>.
- * The number of types is limited by macro @c BOOST_MPL_LIMIT_LIST_SIZE
- * (defaults to 20).
  */
-using Variant = boost::make_recursive_variant<
-    None, bool, int, std::size_t, double, std::string, ObjectRef,
-    Utils::Vector3b, Utils::Vector3i, Utils::Vector2d, Utils::Vector3d,
-    Utils::Vector4d, std::vector<int>, std::vector<double>,
-    std::vector<boost::recursive_variant_>, std::filesystem::path,
-    std::unordered_map<int, boost::recursive_variant_>,
-    std::unordered_map<std::string, boost::recursive_variant_>>::type;
+using Variant = make_recursive_variant<ObjectRef>;
 
 using VariantMap = std::unordered_map<std::string, Variant>;
 
@@ -74,34 +133,18 @@ using VariantMap = std::unordered_map<std::string, Variant>;
  * @brief Make a Variant from argument.
  *
  * This is a convenience function, so that rather involved constructors from
- * boost::variant are not needed in the script interfaces.
+ * @ref Variant are not needed in the script interface.
  */
 template <typename T> Variant make_variant(const T &x) { return Variant(x); }
 
 template <typename K, typename V>
 auto make_unordered_map_of_variants(std::unordered_map<K, V> const &v) {
-  std::unordered_map<K, Variant> ret;
-  for (auto const &[key, value] : v) {
-    ret.emplace(key, value);
-  }
-  return ret;
+  return std::unordered_map<K, Variant>{v.begin(), v.end()};
 }
 
 template <typename T> auto make_vector_of_variants(std::vector<T> const &v) {
-  std::vector<Variant> ret;
-  for (auto const &item : v) {
-    ret.emplace_back(item);
-  }
-  return ret;
+  return std::vector<Variant>{v.begin(), v.end()};
 }
-
-namespace detail {
-template <class T> struct is_type_visitor : boost::static_visitor<bool> {
-  template <class U> constexpr bool operator()(const U &) const {
-    return std::is_same_v<T, U>;
-  }
-};
-} // namespace detail
 
 /**
  * @brief Check is a Variant holds a specific type.
@@ -110,9 +153,9 @@ template <class T> struct is_type_visitor : boost::static_visitor<bool> {
  * @param v Variant to check in
  * @return true, if v holds a T.
  */
-template <class T> bool is_type(Variant const &v) {
-  return boost::apply_visitor(detail::is_type_visitor<T>(), v);
+template <class T> constexpr bool is_type(Variant const &v) {
+  return std::holds_alternative<T>(v);
 }
 
-inline bool is_none(Variant const &v) { return is_type<None>(v); }
+constexpr bool is_none(Variant const &v) { return is_type<None>(v); }
 } // namespace ScriptInterface

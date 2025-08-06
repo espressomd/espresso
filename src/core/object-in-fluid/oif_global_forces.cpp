@@ -37,6 +37,7 @@
 #include <cmath>
 #include <functional>
 #include <span>
+#include <variant>
 
 /** Calculate the mesh volume and area. */
 static auto calc_oif_mesh(int molType, BoxGeometry const &box_geo,
@@ -51,7 +52,7 @@ static auto calc_oif_mesh(int molType, BoxGeometry const &box_geo,
     if (p1.mol_id() != molType)
       return false;
 
-    if (boost::get<OifGlobalForcesBond>(bonded_ias.at(bond_id).get())) {
+    if (std::holds_alternative<OifGlobalForcesBond>(*bonded_ias.at(bond_id))) {
       auto const p11 = box_geo.unfolded_position(p1.pos(), p1.image_box());
       auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->pos(), p11);
       auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->pos(), p11);
@@ -82,7 +83,7 @@ static void add_oif_global_forces(double area, double volume, int molType,
       return false;
 
     auto const *bond_ptr = bonded_ias.at(bond_id).get();
-    if (auto const *bond = boost::get<OifGlobalForcesBond>(bond_ptr)) {
+    if (auto const *bond = std::get_if<OifGlobalForcesBond>(bond_ptr)) {
       auto const p11 = box_geo.unfolded_position(p1.pos(), p1.image_box());
       auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->pos(), p11);
       auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->pos(), p11);

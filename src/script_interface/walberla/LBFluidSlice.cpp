@@ -28,6 +28,7 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <variant>
 #include <vector>
 
 namespace ScriptInterface::walberla {
@@ -115,8 +116,8 @@ Variant LBFluidSlice::do_call_method(std::string const &name,
       auto const density = m_lb_fluid->get_density();
       auto const diagonal_term = density * c_sound_sq / m_conv_press;
       // modify existing variant in-place
-      auto &vec = *(boost::get<std::vector<double>>(
-          &(boost::get<std::vector<Variant>>(&variant)->at(0))));
+      auto &vec = *(std::get_if<std::vector<double>>(
+          &(std::get_if<std::vector<Variant>>(&variant)->at(0))));
       for (auto it = vec.begin(); it < vec.end(); it += 9) {
         *(it + 0) -= diagonal_term;
         *(it + 4) -= diagonal_term;

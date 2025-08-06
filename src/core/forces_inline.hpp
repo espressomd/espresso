@@ -74,11 +74,10 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/variant.hpp>
-
 #include <optional>
 #include <span>
 #include <tuple>
+#include <variant>
 
 inline ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
                                                Utils::Vector3d const &d,
@@ -383,34 +382,34 @@ inline std::optional<Utils::Vector3d> calc_bond_pair_force(
     Bonded_IA_Parameters const &iaparams, Particle const &p1,
     Particle const &p2, Utils::Vector3d const &dx,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
-  if (auto const *iap = boost::get<FeneBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
     return iap->force(dx);
   }
-  if (auto const *iap = boost::get<HarmonicBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<HarmonicBond>(&iaparams)) {
     return iap->force(dx);
   }
-  if (auto const *iap = boost::get<QuarticBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
     return iap->force(dx);
   }
 #ifdef ELECTROSTATICS
-  if (auto const *iap = boost::get<BondedCoulomb>(&iaparams)) {
+  if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
     return iap->force(p1.q() * p2.q(), dx);
   }
-  if (auto const *iap = boost::get<BondedCoulombSR>(&iaparams)) {
+  if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
     return iap->force(dx, *kernel);
   }
 #endif
 #ifdef BOND_CONSTRAINT
-  if (boost::get<RigidBond>(&iaparams)) {
+  if (std::get_if<RigidBond>(&iaparams)) {
     return Utils::Vector3d{};
   }
 #endif
 #ifdef TABULATED
-  if (auto const *iap = boost::get<TabulatedDistanceBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<TabulatedDistanceBond>(&iaparams)) {
     return iap->force(dx);
   }
 #endif
-  if (boost::get<VirtualBond>(&iaparams)) {
+  if (std::get_if<VirtualBond>(&iaparams)) {
     return Utils::Vector3d{};
   }
   throw BondUnknownTypeError();
@@ -422,7 +421,7 @@ inline bool add_bonded_two_body_force(
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
 
-  if (auto const *iap = boost::get<ThermalizedBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
     auto result = iap->forces(p1, p2, dx);
     if (result) {
       auto const &forces = result.value();
@@ -454,21 +453,21 @@ calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
                              Particle const &p2, Particle const &p3) {
   auto const vec1 = box_geo.get_mi_vector(p2.pos(), p1.pos());
   auto const vec2 = box_geo.get_mi_vector(p3.pos(), p1.pos());
-  if (auto const *iap = boost::get<AngleHarmonicBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
     return iap->forces(vec1, vec2);
   }
-  if (auto const *iap = boost::get<AngleCosineBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<AngleCosineBond>(&iaparams)) {
     return iap->forces(vec1, vec2);
   }
-  if (auto const *iap = boost::get<AngleCossquareBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<AngleCossquareBond>(&iaparams)) {
     return iap->forces(vec1, vec2);
   }
 #ifdef TABULATED
-  if (auto const *iap = boost::get<TabulatedAngleBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<TabulatedAngleBond>(&iaparams)) {
     return iap->forces(vec1, vec2);
   }
 #endif
-  if (auto const *iap = boost::get<IBMTriel>(&iaparams)) {
+  if (auto const *iap = std::get_if<IBMTriel>(&iaparams)) {
     return iap->calc_forces(vec1, vec2);
   }
   throw BondUnknownTypeError();
@@ -478,7 +477,7 @@ inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
                                         BoxGeometry const &box_geo,
                                         Particle &p1, Particle &p2,
                                         Particle &p3) {
-  if (boost::get<OifGlobalForcesBond>(&iaparams)) {
+  if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
     return false;
   }
   auto const result =
@@ -501,21 +500,21 @@ calc_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
                             BoxGeometry const &box_geo, Particle const &p1,
                             Particle const &p2, Particle const &p3,
                             Particle const &p4) {
-  if (auto const *iap = boost::get<OifLocalForcesBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<OifLocalForcesBond>(&iaparams)) {
     return iap->calc_forces(box_geo, p1, p2, p3, p4);
   }
-  if (auto const *iap = boost::get<IBMTribend>(&iaparams)) {
+  if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
     return iap->calc_forces(box_geo, p1, p2, p3, p4);
   }
   // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
   auto const v12 = box_geo.get_mi_vector(p1.pos(), p2.pos());
   auto const v23 = box_geo.get_mi_vector(p3.pos(), p1.pos());
   auto const v34 = box_geo.get_mi_vector(p4.pos(), p3.pos());
-  if (auto const *iap = boost::get<DihedralBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
     return iap->forces(v12, v23, v34);
   }
 #ifdef TABULATED
-  if (auto const *iap = boost::get<TabulatedDihedralBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
     return iap->forces(v12, v23, v34);
   }
 #endif

@@ -32,10 +32,9 @@
 
 #include "script_interface/get_value.hpp"
 
-#include "boost/variant.hpp"
-
 #include <memory>
 #include <string>
+#include <variant>
 
 namespace ScriptInterface {
 namespace Dipoles {
@@ -43,7 +42,7 @@ namespace Dipoles {
 class DipolarLayerCorrection
     : public Actor<DipolarLayerCorrection, ::DipolarLayerCorrection> {
   using DipolarDSR = DipolarDirectSum;
-  using BaseSolver = boost::variant<
+  using BaseSolver = std::variant<
 #ifdef DP3M
       std::shared_ptr<DipolarP3M<Arch::CPU>>,
 #endif
@@ -51,9 +50,8 @@ class DipolarLayerCorrection
   BaseSolver m_solver;
 
   void on_bind_system(::System::System &system) override {
-    boost::apply_visitor(
-        [this](auto &solver) { solver->bind_system(m_system.lock()); },
-        m_solver);
+    std::visit([this](auto &solver) { solver->bind_system(m_system.lock()); },
+               m_solver);
   }
 
 public:
@@ -67,8 +65,8 @@ public:
          [this]() { return actor()->dlc.far_cut; }},
         {"actor", AutoParameter::read_only,
          [this]() {
-           return boost::apply_visitor(
-               [](auto &solver) { return Variant{solver}; }, m_solver);
+           return std::visit([](auto &solver) { return Variant{solver}; },
+                             m_solver);
          }},
     });
   }

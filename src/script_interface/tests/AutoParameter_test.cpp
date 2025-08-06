@@ -22,15 +22,17 @@
 
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
+#include <variant>
+
 BOOST_AUTO_TEST_CASE(direct_binding) {
   using namespace ScriptInterface;
   int i{19};
 
   auto p = AutoParameter("i", i);
 
-  BOOST_CHECK(boost::get<int>(p.get()) == 19);
+  BOOST_CHECK(std::get<int>(p.get()) == 19);
   p.set(42);
-  BOOST_CHECK(boost::get<int>(p.get()) == 42);
+  BOOST_CHECK(std::get<int>(p.get()) == 42);
   BOOST_CHECK(i == 42);
 }
 
@@ -41,7 +43,7 @@ BOOST_AUTO_TEST_CASE(read_only) {
   auto p = AutoParameter("i", i);
   ;
   /* Getting should work as usual */
-  BOOST_CHECK(boost::get<int>(p.get()) == i);
+  BOOST_CHECK(std::get<int>(p.get()) == i);
 
   /* Setting should throw */
   BOOST_CHECK_EXCEPTION(p.set(2), AutoParameter::WriteError,
@@ -52,14 +54,14 @@ BOOST_AUTO_TEST_CASE(user_provided) {
   using namespace ScriptInterface;
   int i{12};
 
-  auto setter = [&i](Variant const &j) { i = boost::get<int>(j); };
+  auto setter = [&i](Variant const &j) { i = std::get<int>(j); };
   auto getter = [&i]() { return i; };
 
   auto p = AutoParameter("i", setter, getter);
 
-  BOOST_CHECK(boost::get<int>(p.get()) == 12);
+  BOOST_CHECK(std::get<int>(p.get()) == 12);
   p.set(42);
-  BOOST_CHECK(boost::get<int>(p.get()) == 42);
+  BOOST_CHECK(std::get<int>(p.get()) == 42);
   BOOST_CHECK(i == 42);
 }
 
@@ -71,7 +73,7 @@ BOOST_AUTO_TEST_CASE(user_provided_read_only) {
 
   auto p = AutoParameter("i", AutoParameter::ReadOnly{}, getter);
 
-  BOOST_CHECK(boost::get<int>(p.get()) == 12);
+  BOOST_CHECK(std::get<int>(p.get()) == 12);
   BOOST_CHECK_THROW(p.set(42), AutoParameter::WriteError);
 }
 
@@ -93,7 +95,7 @@ BOOST_AUTO_TEST_CASE(pointer_to_method) {
 
     auto p = AutoParameter("name", c_ptr, &C::setter, &C::value_getter);
     p.set(5);
-    BOOST_CHECK(5 == boost::get<int>(p.get()));
+    BOOST_CHECK(5 == std::get<int>(p.get()));
   }
 
   {
@@ -101,7 +103,7 @@ BOOST_AUTO_TEST_CASE(pointer_to_method) {
 
     auto p = AutoParameter("name", c_ptr, &C::setter, &C::value_getter);
     p.set(5);
-    BOOST_CHECK(5 == boost::get<int>(p.get()));
+    BOOST_CHECK(5 == std::get<int>(p.get()));
   }
 
   {
@@ -109,7 +111,7 @@ BOOST_AUTO_TEST_CASE(pointer_to_method) {
 
     auto p = AutoParameter("name", c_ptr, &C::setter, &C::ref_getter);
     p.set(5);
-    BOOST_CHECK(5 == boost::get<int>(p.get()));
+    BOOST_CHECK(5 == std::get<int>(p.get()));
   }
 
   {
@@ -117,7 +119,7 @@ BOOST_AUTO_TEST_CASE(pointer_to_method) {
 
     auto p_setgetter = AutoParameter("name", c_ptr, &C::setter_getter);
     p_setgetter.set(5);
-    BOOST_CHECK(5 == boost::get<int>(p_setgetter.get()));
+    BOOST_CHECK(5 == std::get<int>(p_setgetter.get()));
   }
 
   {
@@ -125,7 +127,7 @@ BOOST_AUTO_TEST_CASE(pointer_to_method) {
 
     auto p = AutoParameter("name", c_ptr, &C::value_getter);
     BOOST_CHECK_THROW(p.set(5), AutoParameter::WriteError);
-    BOOST_CHECK(5 == boost::get<int>(p.get()));
+    BOOST_CHECK(5 == std::get<int>(p.get()));
   }
 
   {
@@ -133,6 +135,6 @@ BOOST_AUTO_TEST_CASE(pointer_to_method) {
 
     auto p = AutoParameter("name", c_ptr, &C::ref_getter);
     BOOST_CHECK_THROW(p.set(5), AutoParameter::WriteError);
-    BOOST_CHECK(5 == boost::get<int>(p.get()));
+    BOOST_CHECK(5 == std::get<int>(p.get()));
   }
 }

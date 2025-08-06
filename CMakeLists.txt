@@ -815,11 +815,6 @@ endif()
 
 find_package(Boost 1.83.0 REQUIRED ${ESPRESSO_BOOST_COMPONENTS})
 
-# enable boost::variant with more than 20 types
-target_compile_options(
-  espresso_cpp_flags INTERFACE -DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
-                               -DBOOST_MPL_LIMIT_LIST_SIZE=30)
-
 #
 # Paths
 #
