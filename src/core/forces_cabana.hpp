@@ -128,14 +128,14 @@ struct ForcesKernel {
 #else
 #if defined(LONG_RANGE_KERNELS)
     auto constexpr do_nonbonded_flag = true;
-#endif //LONG_RANGE_KERNELS
+#endif // LONG_RANGE_KERNELS
 #endif
 
     if (dist < ia_params.max_cut) {
 #ifdef EXCLUSIONS
       if (do_nonbonded_flag) {
 #endif
-	pf += calc_central_radial_force(ia_params, d, dist);
+        pf += calc_central_radial_force(ia_params, d, dist);
 #ifdef EXCLUSIONS
       }
 #endif

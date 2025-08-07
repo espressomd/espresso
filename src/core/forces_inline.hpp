@@ -341,7 +341,7 @@ inline auto add_non_bonded_pair_force(
 #else
 #if defined(LONG_RANGE_KERNELS)
   auto constexpr do_nonbonded_flag = true;
-#endif //LONG_RANGE_KERNELS
+#endif // LONG_RANGE_KERNELS
 #endif
 
   if (dist < ia_params.max_cut) {

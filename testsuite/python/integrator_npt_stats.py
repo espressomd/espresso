@@ -131,7 +131,6 @@ class IntegratorNPT:
         dt = 0.01
         system.time_step = dt
 
-        direction = [True] * 3
         p_ext = 1.0
         system.box_l = 3 * [ref_box_l]
         system.part.add(pos=data[:, 0:3], type=len(data) * [2])
@@ -151,19 +150,18 @@ class IntegratorNPT:
             system.integrator.set_isotropic_npt(
                 ext_pressure=p_ext, piston=4.0, barostat=self.barostat)
 
-        steps = int(0.1/dt)
+        steps = int(0.1 / dt)
 
-        for n in range(100):
+        for _ in range(100):
             system.integrator.run(steps)
             p_sim = system.analysis.pressure()['total']
             p_kin = system.analysis.pressure()['kinetic']
-            #virial of electrostatic force from system.analysis
+            # virial of electrostatic force from system.analysis
             p_vir = p_sim - p_kin
-            #virial of electrostatic force from instantaneous_pressure
+            # virial of electrostatic force from instantaneous_pressure
             p_inst_vir = system.analysis.get_instantaneous_pressure_virial()
 
             np.testing.assert_allclose(p_vir, p_inst_vir, atol=1e-2)
-
 
     def test_negative_volume(self):
         """Test for NpT with bad parameters."""
