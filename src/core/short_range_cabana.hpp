@@ -46,34 +46,37 @@ inline void write_particle(Particle const &p, int const &id,
   }
 }
 
-template <class VerletCriterion>
 ESPRESSO_ATTR_ALWAYS_INLINE inline void construct_verlet_list(
-    CellStructure &cell_structure, VerletCriterion const &verlet_criterion,
+    CellStructure &cell_structure, auto const &verlet_criterion,
     Kokkos::View<int *> const &id_to_index, const int max_id) {
   auto const &cells =
       std::as_const(cell_structure).decomposition().local_cells();
   auto const distance_function = detail::MinimalImageDistance{
       std::as_const(cell_structure).decomposition().box()};
-  auto verlet_list = cell_structure.get_cabana_verlet_list();
+  auto &verlet_list = cell_structure.get_cabana_verlet_list();
+
+  // implementation detail: max_id refers to the max local particle id,
+  // but ghost particles from other ranks may have larger particle ids;
+  // in addition, -1 is used as a sentinel value for particle ids
 
   auto intra_kernel = [&cells, &distance_function, &verlet_criterion,
                        &id_to_index, &verlet_list, max_id](const int i) {
     auto &local_particles = cells[i]->particles();
     for (auto it = local_particles.begin(); it != local_particles.end(); ++it) {
       auto const &p1 = *it;
-      if (p1.id() > max_id)
-        continue;
-      int ii = id_to_index(p1.id());
-      if (ii < 0)
-        continue;
-      /* Pairs in this cell */
-      for (auto jt = std::next(it); jt != local_particles.end(); ++jt) {
-        if ((*jt).id() > max_id)
-          continue;
-        if (verlet_criterion(p1, *jt, distance_function(p1, *jt))) {
-          int jj = id_to_index((*jt).id());
-          if (jj >= 0) {
-            verlet_list.addNeighborLB(ii, jj);
+      if (p1.id() <= max_id) {
+        auto const ii = id_to_index(p1.id());
+        if (ii >= 0) {
+          // pairs in this cell
+          for (auto jt = std::next(it); jt != local_particles.end(); ++jt) {
+            if ((*jt).id() <= max_id) {
+              if (verlet_criterion(p1, *jt, distance_function(p1, *jt))) {
+                auto const jj = id_to_index((*jt).id());
+                if (jj >= 0) {
+                  verlet_list.addNeighborLB(ii, jj);
+                }
+              }
+            }
           }
         }
       }
@@ -85,20 +88,20 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void construct_verlet_list(
     auto &local_particles = cells[i]->particles();
     for (auto it = local_particles.begin(); it != local_particles.end(); ++it) {
       auto const &p1 = *it;
-      if (p1.id() > max_id)
-        continue;
-      int ii = id_to_index(p1.id());
-      if (ii < 0)
-        continue;
-      /* Pairs with neighbors */
-      for (auto &neighbor : cells[i]->neighbors().red()) {
-        for (auto const &p2 : neighbor->particles()) {
-          if (p2.id() > max_id)
-            continue;
-          if (verlet_criterion(p1, p2, distance_function(p1, p2))) {
-            int jj = id_to_index(p2.id());
-            if (jj >= 0) {
-              verlet_list.addNeighbor(ii, jj);
+      if (p1.id() <= max_id) {
+        auto const ii = id_to_index(p1.id());
+        if (ii >= 0) {
+          // pairs with neighboring cells
+          for (auto &neighbor : cells[i]->neighbors().red()) {
+            for (auto const &p2 : neighbor->particles()) {
+              if (p2.id() <= max_id) {
+                if (verlet_criterion(p1, p2, distance_function(p1, p2))) {
+                  auto const jj = id_to_index(p2.id());
+                  if (jj >= 0) {
+                    verlet_list.addNeighbor(ii, jj);
+                  }
+                }
+              }
             }
           }
         }
@@ -113,22 +116,18 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void construct_verlet_list(
   Kokkos::fence();
 }
 
-template <class VerletCriterion>
-ESPRESSO_ATTR_ALWAYS_INLINE inline void update_cabana_state(
-    CellStructure &cell_structure, ParticleRange const &particles,
-    ParticleRange const &ghost_particles,
-    VerletCriterion const &verlet_criterion, double const pair_cutoff) {
-  // Number of threads
-  int num_threads = execution_space().concurrency();
+ESPRESSO_ATTR_ALWAYS_INLINE inline void
+update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
+                    double const pair_cutoff) {
 
-  bool const rebuild = cell_structure.get_rebuild_cabana_verlet_list() or
+  int num_threads = execution_space().concurrency();
+  auto const rebuild = cell_structure.get_rebuild_cabana_verlet_list() or
                        (not cell_structure.use_verlet_list);
 
   if (rebuild) {
     // If we have to rebuild, we need to count the particles
     cell_structure.set_index_map(); // parallelized index_map
-
-    // Create essential variable for MD
+    // Create essential variables for MD
     cell_structure.rebuild_local_properties(num_threads, pair_cutoff);
   } else {
     // If we do not rebuild we can use the saved map
@@ -136,9 +135,9 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void update_cabana_state(
   }
   auto const unique_particles = cell_structure.get_unique_particles();
   auto aosoa = cell_structure.get_aosoa_data();
-  int max_id = cell_structure.get_cached_max_local_particle_id();
+  auto max_id = cell_structure.get_cached_max_local_particle_id();
 
-  // Fill the essential variable for MD
+  // Fill the essential variables for MD
   {
     // ===================================================
     // Fill particle storage
@@ -160,7 +159,6 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void update_cabana_state(
     // Get Verlet Pairs and Fill Verlet list
     // ===================================================
 
-    // Rebuild verlet list if needed
     if (rebuild) {
       construct_verlet_list(cell_structure, verlet_criterion, id_to_index,
                             max_id);
@@ -169,14 +167,9 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void update_cabana_state(
   }
 }
 
-template <class BondKernel, class PairKernel,
-          class VerletCriterion = detail::True>
-void cabana_short_range(BondKernel const &bond_kernel,
-                        PairKernel const &forces_kernel,
+void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
                         CellStructure &cell_structure, double pair_cutoff,
-                        double bond_cutoff, ParticleRange const &particles,
-                        ParticleRange const &ghost_particles,
-                        VerletCriterion const &verlet_criterion = {}) {
+                        double bond_cutoff) {
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
   if (bond_cutoff >= 0.) {
@@ -185,13 +178,11 @@ void cabana_short_range(BondKernel const &bond_kernel,
 
   // Cabana short range loop
   if (pair_cutoff > 0.) {
-    auto cabana_verlet_list = cell_structure.get_cabana_verlet_list();
-    // cabana_verlet_list.get_variance_max_counts();
+    auto &cabana_verlet_list = cell_structure.get_cabana_verlet_list();
     Kokkos::RangePolicy<execution_space> policy(
         0, cell_structure.get_unique_particles().size());
     Cabana::neighbor_parallel_for(policy, forces_kernel, cabana_verlet_list,
                                   Cabana::FirstNeighborsTag(),
-                                  // Cabana::TeamOpTag());
                                   Cabana::SerialOpTag());
     Kokkos::fence();
   }

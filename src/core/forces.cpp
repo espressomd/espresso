@@ -221,27 +221,26 @@ void System::System::calculate_forces() {
                             box_geo, coulomb_kernel_ptr);
   };
 
+  VerletCriterion<> const verlet_criterion{*this,
+                                           cell_structure->get_verlet_skin(),
+                                           get_interaction_range(),
+                                           coulomb_cutoff,
+                                           dipole_cutoff,
+                                           collision_detection_cutoff};
+
 #ifdef SHARED_MEMORY_PARALLELISM
 #ifdef CALIPER
   CALI_MARK_BEGIN("parallel short range");
 #endif
-  auto const &verlet_criterion =
-      VerletCriterion<>{*this,
-                        cell_structure->get_verlet_skin(),
-                        get_interaction_range(),
-                        coulomb_cutoff,
-                        dipole_cutoff,
-                        collision_detection_cutoff};
-  update_cabana_state(*cell_structure, particles,
-                      cell_structure->ghost_particles(), verlet_criterion,
+  update_cabana_state(*cell_structure, verlet_criterion,
                       get_interaction_range());
-  auto unique_particles = cell_structure->get_unique_particles();
-  auto local_force = cell_structure->get_local_force();
+  auto &unique_particles = cell_structure->get_unique_particles();
+  auto &local_force = cell_structure->get_local_force();
 #ifdef ROTATION
-  auto local_torque = cell_structure->get_local_torque();
+  auto &local_torque = cell_structure->get_local_torque();
 #endif
 #ifdef NPT
-  auto local_virial = cell_structure->get_local_virial();
+  auto &local_virial = cell_structure->get_local_virial();
 #endif
   auto const &aosoa = cell_structure->get_aosoa_data();
 
@@ -265,9 +264,7 @@ void System::System::calculate_forces() {
       aosoa);
 
   cabana_short_range(bond_kernel, first_neighbor_kernel, *cell_structure,
-                     get_interaction_range(), bonded_ias->maximal_cutoff(),
-                     particles, cell_structure->ghost_particles(),
-                     verlet_criterion);
+                     get_interaction_range(), bonded_ias->maximal_cutoff());
   // Force and Torque reduction
   int num_threads = execution_space().concurrency();
   Kokkos::RangePolicy<execution_space> policy(0, unique_particles.size());
@@ -277,47 +274,35 @@ void System::System::calculate_forces() {
                         &local_torque,
 #endif
                         &unique_particles, num_threads](const int i) {
-                         double fx = 0.;
-                         double fy = 0.;
-                         double fz = 0.;
+                         Utils::Vector3d force{};
 #ifdef ROTATION
-                         double tx = 0.;
-                         double ty = 0.;
-                         double tz = 0.;
+                         Utils::Vector3d torque{};
 #endif
                          for (int tid = 0; tid < num_threads; ++tid) {
-                           fx += local_force(i, tid, 0);
-                           fy += local_force(i, tid, 1);
-                           fz += local_force(i, tid, 2);
+                           force[0] += local_force(i, tid, 0);
+                           force[1] += local_force(i, tid, 1);
+                           force[2] += local_force(i, tid, 2);
 #ifdef ROTATION
-                           tx += local_torque(i, tid, 0);
-                           ty += local_torque(i, tid, 1);
-                           tz += local_torque(i, tid, 2);
+                           torque[0] += local_torque(i, tid, 0);
+                           torque[1] += local_torque(i, tid, 1);
+                           torque[2] += local_torque(i, tid, 2);
 #endif
                          }
-                         // auto &p = unique_particles.at(i);
-                         // p->force() += Utils::Vector3d{fx, fy, fz};
-                         unique_particles.at(i)->force() +=
-                             Utils::Vector3d{fx, fy, fz};
+                         unique_particles.at(i)->force() += force;
 #ifdef ROTATION
-                         // p->torque() += Utils::Vector3d{tx, ty, tz};
-                         unique_particles.at(i)->torque() +=
-                             Utils::Vector3d{tx, ty, tz};
+                         unique_particles.at(i)->torque() += torque;
 #endif
                        });
   Kokkos::fence();
 
 #ifdef NPT
-  double vx = 0.;
-  double vy = 0.;
-  double vz = 0.;
+  Utils::Vector3d virial{};
   for (int tid = 0; tid < num_threads; ++tid) {
-    vx += local_virial(tid, 0);
-    vy += local_virial(tid, 1);
-    vz += local_virial(tid, 2);
+    virial[0] += local_virial(tid, 0);
+    virial[1] += local_virial(tid, 1);
+    virial[2] += local_virial(tid, 2);
   }
-  Utils::Vector3d virial_vec{vx, vy, vz};
-  npt_add_virial_force_contribution(virial_vec);
+  npt_add_virial_force_contribution(virial);
 #endif
 
 #ifdef COLLISION_DETECTION
@@ -361,11 +346,7 @@ void System::System::calculate_forces() {
   };
 
   short_range_loop(bond_kernel, pair_kernel, *cell_structure, maximal_cutoff(),
-                   bonded_ias->maximal_cutoff(),
-                   VerletCriterion<>{*this, cell_structure->get_verlet_skin(),
-                                     get_interaction_range(), coulomb_cutoff,
-                                     dipole_cutoff,
-                                     collision_detection_cutoff});
+                   bonded_ias->maximal_cutoff(), verlet_criterion);
 
 #endif // SHARED_MEMORY_PARALLELISM
   constraints->add_forces(particles, get_sim_time());

@@ -196,7 +196,7 @@ inline void add_non_bonded_pair_without_p(
   }
 
   /***********************************************/
-  /* short range cloumb potentials               */
+  /* short-range electrostatics                  */
   /***********************************************/
 
 #ifdef ELECTROSTATICS
@@ -208,7 +208,7 @@ inline void add_non_bonded_pair_without_p(
 }
 
 /**
- * For the interaction which need particle information
+ * @brief For interactions which need particle information.
  */
 inline void add_non_bonded_pair_force_with_p(
     Particle &p1, Particle &p2, ParticleForce &pf,

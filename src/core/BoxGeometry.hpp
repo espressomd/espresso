@@ -234,8 +234,8 @@ public:
    * @param a1     y element of the terminal point.
    * @param a2     z element of the terminal point.
    * @param b0     x element of the initial point.
-   * @param b1     x element of the initial point.
-   * @param b2     x element of the initial point.
+   * @param b1     y element of the initial point.
+   * @param b2     z element of the initial point.
    * @return Vector from @p b to @p a that minimizes the distance across
    *         periodic images, i.e. <tt>a - b</tt>.
    */
