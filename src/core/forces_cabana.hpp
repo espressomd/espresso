@@ -118,8 +118,6 @@ struct ForcesKernel {
         aosoa.position(j, 0), aosoa.position(j, 1), aosoa.position(j, 2));
     auto const dist = d.norm();
 
-    auto const q1q2 = aosoa.charge(i) * aosoa.charge(j);
-
 #if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
     auto &p1 = *unique_particles.at(i);
     auto &p2 = *unique_particles.at(j);
@@ -128,13 +126,23 @@ struct ForcesKernel {
 #ifdef EXCLUSIONS
     auto const do_nonbonded_flag = do_nonbonded(p1, p2);
 #else
+#if defined(LONG_RANGE_KERNELS)
     auto constexpr do_nonbonded_flag = true;
+#endif //LONG_RANGE_KERNELS
 #endif
 
-    add_non_bonded_pair_without_p(pf, d, dist, q1q2, ia_params,
-                                  do_nonbonded_flag, coulomb_kernel);
+    if (dist < ia_params.max_cut) {
+#ifdef EXCLUSIONS
+      if (do_nonbonded_flag) {
+#endif
+	pf += calc_central_radial_force(ia_params, d, dist);
+#ifdef EXCLUSIONS
+      }
+#endif
+    }
 
 #if defined(LONG_RANGE_KERNELS)
+    auto const q1q2 = aosoa.charge(i) * aosoa.charge(j);
     add_non_bonded_pair_force_with_p(p1, p2, pf,
 #ifdef NPT
                                      virial,

@@ -262,6 +262,7 @@ inline void add_non_bonded_pair_force_with_p(
 #ifdef ELECTROSTATICS
   // real-space electrostatic charge-charge interaction
   if (q1q2 != 0. and coulomb_kernel != nullptr) {
+    pf.f += (*coulomb_kernel)(q1q2, d, dist);
 #ifdef NPT
 #ifdef SHARED_MEMORY_PARALLELISM
     virial[0] += (*coulomb_u_kernel)(p1, p2, q1q2, d, dist);
@@ -338,11 +339,20 @@ inline auto add_non_bonded_pair_force(
 #ifdef EXCLUSIONS
   auto const do_nonbonded_flag = do_nonbonded(p1, p2);
 #else
+#if defined(LONG_RANGE_KERNELS)
   auto constexpr do_nonbonded_flag = true;
+#endif //LONG_RANGE_KERNELS
 #endif
 
-  add_non_bonded_pair_without_p(pf, d, dist, q1q2, ia_params, do_nonbonded_flag,
-                                coulomb_kernel);
+  if (dist < ia_params.max_cut) {
+#ifdef EXCLUSIONS
+    if (do_nonbonded_flag) {
+#endif
+      pf += calc_central_radial_force(ia_params, d, dist);
+#ifdef EXCLUSIONS
+    }
+#endif
+  }
 
 #if defined(LONG_RANGE_KERNELS)
   add_non_bonded_pair_force_with_p(
