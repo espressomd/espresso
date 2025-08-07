@@ -1060,6 +1060,23 @@ protected:
     }
   };
 
+  template <typename OutputType = float,
+            class Base = VTKWriter<FluxField, 3u, OutputType>>
+  class FluxVTKWriter : public VTKWriter<FluxField, 3u, OutputType> {
+  public:
+    using VTKWriter<FluxField, 3u, OutputType>::VTKWriter;
+    using Base::evaluate;
+
+  protected:
+    OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
+                        cell_idx_t const z, cell_idx_t const f) override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
+      auto const flux =
+          ek::accessor::Flux::get_vector(this->m_field, {x, y, z});
+      return numeric_cast<OutputType>(this->m_conversion * flux[uint_c(f)]);
+    }
+  };
+
 public:
   void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
                                   LatticeModel::units_map const &units,
@@ -1068,6 +1085,11 @@ public:
       auto const unit_conversion = FloatType_c(units.at("density"));
       vtk_obj.addCellDataWriter(make_shared<DensityVTKWriter<float>>(
           m_density_field_id, "density", unit_conversion));
+    }
+    if (flag_observables & static_cast<int>(EKOutputVTK::flux)) {
+      auto const unit_conversion = FloatType_c(units.at("flux"));
+      vtk_obj.addCellDataWriter(make_shared<FluxVTKWriter<float>>(
+          m_flux_field_id, "flux", unit_conversion));
     }
   }
 

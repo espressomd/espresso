@@ -63,6 +63,7 @@ enum class OutputVTK : int {
 /** @brief EK statistics to write to VTK files */
 enum class EKOutputVTK : int {
   density = 1 << 0,
+  flux = 1 << 1,
 };
 
 class vtk_runtime_error : public std::runtime_error {
