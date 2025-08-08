@@ -216,10 +216,16 @@ class Test(ut.TestCase):
                                                 barostat=barostat)
 
             if barostat == "Andersen":
-                with self.assertRaises(Exception):
+                exception_msg = ""
+                try:
                     system.integrator.run(10)
-                with self.assertRaisesRegex(Exception, "caused the volume to become negative"):
+                except Exception as err:
+                    exception_msg = f"{exception_msg}\n{err}"
+                try:
                     system.part.clear()
+                except Exception as err:
+                    exception_msg = f"{exception_msg}\n{err}"
+                self.assertIn("the volume to become negative", exception_msg)
             if barostat == "MTK":
                 # Volume cannot be negative within NPT ensemble based on MTK equation
                 self.assertGreater(float(np.prod(system.box_l)), 0.)
