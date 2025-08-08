@@ -21,6 +21,7 @@ import espressomd.interactions
 import espressomd.lees_edwards
 import espressomd.shapes
 import espressomd.propagation
+import os
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
@@ -179,6 +180,12 @@ class Test(ut.TestCase):
         self.system.lees_edwards.protocol = None
         self.system.integrator.run(0)
 
+    @ut.skipIf(espressomd.conde_info.call_method("has_fast_math"),
+               "cannot run with fast-math optimizations")
+    @ut.skipIf(os.environ.get("UBSAN_OPTIONS"),
+               "cannot run with UBSAN instrumentation")
+    @ut.skipIf(espressomd.has_features("FPE"),
+               "cannot run with FPE instrumentation")
     @utx.skipIfMissingFeatures(["NPT", "WCA"])
     def test_npt_integrator_negative_volume(self):
         """Test for NpT with bad parameters."""

@@ -62,6 +62,13 @@ Variant CodeInfo::do_call_method(std::string const &name,
     return make_vector_of_variants(std::vector<std::string>(0));
 #endif // SCAFACOS
   }
+  if (name == "has_fast_math") {
+#if defined(__FAST_MATH__)
+    return true;
+#else
+    return false;
+#endif
+  }
   return {};
 }
 
