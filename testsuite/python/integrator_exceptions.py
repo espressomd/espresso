@@ -180,7 +180,7 @@ class Test(ut.TestCase):
         self.system.lees_edwards.protocol = None
         self.system.integrator.run(0)
 
-    @ut.skipIf(espressomd.conde_info.call_method("has_fast_math"),
+    @ut.skipIf(espressomd.code_info._CodeInfo().call_method("has_fast_math"),
                "cannot run with fast-math optimizations")
     @ut.skipIf(os.environ.get("UBSAN_OPTIONS"),
                "cannot run with UBSAN instrumentation")
