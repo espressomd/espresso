@@ -34,11 +34,13 @@ class Test(ut.TestCase):
     msg = r'while calling method integrate\(\): ERROR: '
 
     def setUp(self):
+        self.system.box_l = [1., 1., 1.]
         self.system.part.add(pos=(0, 0, 0))
         self.system.integrator.set_vv()
         self.system.periodicity = 3 * [True]
 
     def tearDown(self):
+        self.system.box_l = [1., 1., 1.]
         self.system.thermostat.turn_off()
         self.system.part.clear()
         self.system.constraints.clear()
