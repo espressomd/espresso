@@ -51,6 +51,7 @@ class Test(ut.TestCase):
     def setUp(self):
         self.system.box_l = [10., 10., 10.]
         self.system.periodicity = [True, True, True]
+        self.system.cell_system.skin = 0.1
 
     def tearDown(self):
         if espressomd.has_features(["ELECTROSTATICS"]):
@@ -65,7 +66,7 @@ class Test(ut.TestCase):
         self.system.part.add(pos=[[0., 0., 0.], [0.5, 0.5, 0.5]], q=[-1., 1.])
 
     def add_magnetic_particles(self):
-        self.system.part.add(pos=[[0.01, 0.01, 0.01], [0.5, 0.5, 0.5]],
+        self.system.part.add(pos=[[0., 0., 0.], [0.5, 0.5, 0.5]],
                              dip=[(1., 0., 0.), (-1., 0., 0.)],
                              rotation=2 * [(True, True, True)])
 
@@ -621,6 +622,38 @@ class Test(ut.TestCase):
             espressomd.magnetostatics.DipolarP3M,
             espressomd.magnetostatics.DLC,
             self.get_valid_params("DP3M", accuracy=0.1))
+
+    def check_extended_precision_edge_case(self, class_p3m, precisions):
+        # the following parameters lead to precision loss on extended precision
+        # architectures (80-bit floating-point arithmetic); particle positions
+        # in mesh units are lying outside the mesh domain by a tiny amount, but
+        # that shouldn't affect charge assignment (see PR #5135 for details)
+        length = 5.81825
+        system = self.system
+        system.box_l = 3 * [length]
+        system.time_step = 0.01
+        system.cell_system.skin = 0.  # skin=0 is mandatory to trigger the bug
+        system.part.add(pos=[[0., 0., 0.], [1., 1., 1.]], q=[-1., 1.])
+        for precision in precisions:
+            system.electrostatics.solver = class_p3m(
+                prefactor=2., accuracy=1e-2, mesh=3 * [10], cao=7, r_cut=1.5,
+                alpha=29.4842, tune=False, single_precision=precision)
+            system.integrator.run(0, recalc_forces=True)
+            f0 = np.copy(system.part.by_id(0).f)
+            f1 = np.copy(system.part.by_id(1).f)
+            np.testing.assert_allclose(f0, +0.34, rtol=0., atol=0.1)
+            np.testing.assert_allclose(f1, -0.34, rtol=0., atol=0.1)
+
+    @utx.skipIfMissingFeatures("P3M")
+    def test_09_no_errors_p3m_cpu_extended_precision_edge_case(self):
+        self.check_extended_precision_edge_case(
+            espressomd.electrostatics.P3M, precisions=[True, False])
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures("P3M")
+    def test_09_no_errors_p3m_gpu_extended_precision_edge_case(self):
+        self.check_extended_precision_edge_case(
+            espressomd.electrostatics.P3MGPU, precisions=[True])
 
 
 if __name__ == "__main__":
