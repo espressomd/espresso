@@ -40,7 +40,6 @@ class Test(ut.TestCase):
         self.system.periodicity = 3 * [True]
 
     def tearDown(self):
-        self.system.box_l = [1., 1., 1.]
         self.system.thermostat.turn_off()
         self.system.part.clear()
         self.system.constraints.clear()
@@ -231,6 +230,9 @@ class Test(ut.TestCase):
             if barostat == "MTK":
                 # Volume cannot be negative within NPT ensemble based on MTK equation
                 self.assertGreater(float(np.prod(system.box_l)), 0.)
+
+        system.part.clear()
+        system.box_l = [1., 1., 1.]
 
     @utx.skipIfMissingFeatures("STOKESIAN_DYNAMICS")
     def test_stokesian_integrator(self):
