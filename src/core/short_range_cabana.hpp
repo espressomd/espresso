@@ -33,31 +33,33 @@
 #include <Cabana_NeighborList.hpp>
 
 #include <iterator>
+#include <span>
 #include <utility>
 
-inline void write_particle(Particle const &p, int const &id,
-                           AoSoA_pack &aosoa) {
-  aosoa.id(id) = p.id();
-  aosoa.charge(id) = p.q();
-  aosoa.type(id) = p.type();
+ESPRESSO_ATTR_ALWAYS_INLINE inline void
+commit_particle(Particle const &p, int const index,
+                CellStructure::AoSoA_pack &aosoa) {
+  aosoa.id(index) = p.id();
+#ifdef ELECTROSTATICS
+  aosoa.charge(index) = p.q();
+#endif
+  aosoa.type(index) = p.type();
   auto const &pos = p.pos();
-  for (int d = 0; d < 3; ++d) {
-    aosoa.position(id, d) = pos[d];
-  }
+  aosoa.position(index, 0) = pos[0];
+  aosoa.position(index, 1) = pos[1];
+  aosoa.position(index, 2) = pos[2];
 }
 
 ESPRESSO_ATTR_ALWAYS_INLINE inline void construct_verlet_list(
-    CellStructure &cell_structure, auto const &verlet_criterion,
-    Kokkos::View<int *> const &id_to_index, const int max_id) {
-  auto const &cells =
-      std::as_const(cell_structure).decomposition().local_cells();
-  auto const distance_function = detail::MinimalImageDistance{
-      std::as_const(cell_structure).decomposition().box()};
-  auto &verlet_list = cell_structure.get_cabana_verlet_list();
+    std::span<Cell *const> cells, BoxGeometry const &box_geo,
+    CellStructure::ListType &verlet_list, auto const &verlet_criterion,
+    Kokkos::View<int *> const &id_to_index, int const max_id) {
+
+  auto const distance_function = detail::MinimalImageDistance{box_geo};
 
   // implementation detail: max_id refers to the max local particle id,
   // but ghost particles from other ranks may have larger particle ids;
-  // in addition, -1 is used as a sentinel value for particle ids
+  // -1 is used as a sentinel value for particle ids from other threads
 
   auto intra_kernel = [&cells, &distance_function, &verlet_criterion,
                        &id_to_index, &verlet_list, max_id](const int i) {
@@ -119,57 +121,48 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void construct_verlet_list(
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
 update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
                     double const pair_cutoff) {
+  using execution_space = Kokkos::DefaultExecutionSpace;
+  auto const num_threads = execution_space().concurrency();
+  auto const rebuild =
+      cell_structure.prepare_verlet_list_cabana(num_threads, pair_cutoff);
+  auto const &unique_particles = cell_structure.get_unique_particles();
+  auto const max_id = cell_structure.get_cached_max_local_particle_id();
+  auto &aosoa = cell_structure.get_aosoa();
 
-  int num_threads = execution_space().concurrency();
-  auto const rebuild = cell_structure.get_rebuild_cabana_verlet_list() or
-                       (not cell_structure.use_verlet_list);
+  // ===================================================
+  // Fill particle storage
+  // ===================================================
+  Kokkos::View<int *> id_to_index(
+      Kokkos::ViewAllocateWithoutInitializing("id_to_index"), max_id + 1);
+  Kokkos::deep_copy(id_to_index, -1);
 
+  using policy_type = Kokkos::RangePolicy<execution_space>;
+  Kokkos::parallel_for(
+      "AoSoA write", policy_type(0, unique_particles.size()),
+      [&unique_particles, &aosoa, &id_to_index](int const index) {
+        auto const &p = *unique_particles.at(index);
+        commit_particle(p, index, aosoa);
+        id_to_index(p.id()) = index;
+      });
+  Kokkos::fence();
+
+  // ===================================================
+  // Get Verlet pairs and fill Verlet list
+  // ===================================================
   if (rebuild) {
-    // If we have to rebuild, we need to count the particles
-    cell_structure.set_index_map(); // parallelized index_map
-    // Create essential variables for MD
-    cell_structure.rebuild_local_properties(num_threads, pair_cutoff);
-  } else {
-    // If we do not rebuild we can use the saved map
-    cell_structure.reset_local_properties();
-  }
-  auto const unique_particles = cell_structure.get_unique_particles();
-  auto aosoa = cell_structure.get_aosoa_data();
-  auto max_id = cell_structure.get_cached_max_local_particle_id();
-
-  // Fill the essential variables for MD
-  {
-    // ===================================================
-    // Fill particle storage
-    // ===================================================
-    Kokkos::View<int *> id_to_index(
-        Kokkos::ViewAllocateWithoutInitializing("id_to_index"), max_id + 1);
-    Kokkos::deep_copy(id_to_index, -1);
-
-    using policy_type = Kokkos::RangePolicy<execution_space>;
-    Kokkos::parallel_for(
-        "AoSoA write", policy_type(0, unique_particles.size()),
-        [&unique_particles, &aosoa, &id_to_index](const int p_id) {
-          write_particle(*unique_particles.at(p_id), p_id, aosoa);
-          id_to_index(unique_particles.at(p_id)->id()) = p_id;
+    cell_structure.rebuild_verlet_list_cabana(
+        [&](std::span<Cell *const> cells, BoxGeometry const &box,
+            CellStructure::ListType &verlet_list) {
+          construct_verlet_list(std::move(cells), box, verlet_list,
+                                verlet_criterion, id_to_index, max_id);
         });
-    Kokkos::fence();
-
-    // ===================================================
-    // Get Verlet Pairs and Fill Verlet list
-    // ===================================================
-
-    if (rebuild) {
-      construct_verlet_list(cell_structure, verlet_criterion, id_to_index,
-                            max_id);
-      cell_structure.mark_rebuild_cabana_verlet_list_as_UpToDate();
-    }
   }
 }
 
 void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
                         CellStructure &cell_structure, double pair_cutoff,
                         double bond_cutoff) {
+  using execution_space = Kokkos::DefaultExecutionSpace;
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
   if (bond_cutoff >= 0.) {
@@ -178,10 +171,10 @@ void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
 
   // Cabana short range loop
   if (pair_cutoff > 0.) {
-    auto &cabana_verlet_list = cell_structure.get_cabana_verlet_list();
+    auto const &verlet_list = cell_structure.get_verlet_list_cabana();
     Kokkos::RangePolicy<execution_space> policy(
         0, cell_structure.get_unique_particles().size());
-    Cabana::neighbor_parallel_for(policy, forces_kernel, cabana_verlet_list,
+    Cabana::neighbor_parallel_for(policy, forces_kernel, verlet_list,
                                   Cabana::FirstNeighborsTag(),
                                   Cabana::SerialOpTag());
     Kokkos::fence();

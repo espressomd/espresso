@@ -60,8 +60,10 @@ extern int this_node;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
 #ifdef SHARED_MEMORY_PARALLELISM
+namespace Communication {
 struct KokkosHandle;
-extern std::shared_ptr<KokkosHandle> kokkos_handle;
+} // namespace Communication
+extern std::shared_ptr<Communication::KokkosHandle> kokkos_handle;
 #endif
 
 struct Communicator {
@@ -113,12 +115,3 @@ namespace Communication {
 void init(std::shared_ptr<boost::mpi::environment> mpi_env);
 void deinit();
 } // namespace Communication
-
-struct MpiContainerUnitTest {
-  std::shared_ptr<boost::mpi::environment> m_mpi_env;
-  MpiContainerUnitTest(int argc, char **argv) {
-    m_mpi_env = mpi_init(argc, argv);
-    Communication::init(m_mpi_env);
-  }
-  ~MpiContainerUnitTest() { Communication::deinit(); }
-};

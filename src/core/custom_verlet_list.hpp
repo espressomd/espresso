@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 #ifdef SHARED_MEMORY_PARALLELISM
@@ -23,29 +24,22 @@
 #include <Cabana_VerletList.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 
-namespace Cabana {
 // ONLY FOR 2D LAYOUT, OTHERWISE NEIGHBOR LIST INTERFACE IMPLEMENTATION WILL
 // CAUSE PROBLEMS (NOT IMPLEMENTED)
 template <class MemorySpace, class AlgorithmTag, class LayoutTag,
-          class BuildTag = TeamVectorOpTag>
-class CustomVerletList
-    : public VerletList<MemorySpace, AlgorithmTag, LayoutTag, BuildTag> {
+          class BuildTag = Cabana::TeamVectorOpTag>
+class CustomVerletList : public Cabana::VerletList<MemorySpace, AlgorithmTag,
+                                                   LayoutTag, BuildTag> {
 public:
-  using Base = VerletList<MemorySpace, AlgorithmTag, LayoutTag, BuildTag>;
-
-  // Default constructor
-  CustomVerletList() : Base() {}
-
-  // Custom constructor
+  CustomVerletList() = default;
   CustomVerletList(std::size_t const begin, std::size_t const end,
                    std::size_t const max_neigh) {
     initializeData(end - begin, max_neigh);
   }
-  virtual ~CustomVerletList() {};
 
-public:
   Kokkos::View<int *, MemorySpace> counts;
   Kokkos::View<int **, Kokkos::LayoutRight, MemorySpace> neighbors;
 
@@ -62,35 +56,23 @@ public:
   // Method to add a neighbor
   KOKKOS_INLINE_FUNCTION
   void addNeighborAtomicLB(int pid, int nid) {
-    std::size_t count = counts(pid);
-    std::size_t count_n = counts(nid);
+    auto count = counts(pid);
+    auto count_n = counts(nid);
 
     if (count > count_n) {
-      int tmp = pid;
-      pid = nid;
-      nid = tmp;
+      std::swap(pid, nid);
     }
     count = Kokkos::atomic_fetch_add(&counts(pid), 1);
-#ifndef NDEBUG
-    if (count >= neighbors.extent(1)) {
-      throw std::runtime_error(
-          "Number of count is larger than VerletList size.");
-    }
-#endif
+    assert(count < neighbors.extent(1));
     neighbors(pid, count) = nid;
   }
 
   // Thread safe but non atomic method to add a neighbor
   KOKKOS_INLINE_FUNCTION
   void addNeighbor(int pid, int nid) {
-    std::size_t count = counts(pid);
+    auto const count = counts(pid);
 
-#ifndef NDEBUG
-    if (count >= neighbors.extent(1)) {
-      throw std::runtime_error(
-          "Number of count is larger than VerletList size.");
-    }
-#endif
+    assert(count < neighbors.extent(1));
     neighbors(pid, count) = nid;
     counts(pid) += 1;
   }
@@ -98,21 +80,14 @@ public:
   // Non atomic and load balancing method to add a neighbor
   KOKKOS_INLINE_FUNCTION
   void addNeighborLB(int pid, int nid) {
-    std::size_t count = counts(pid);
-    std::size_t count_n = counts(nid);
+    auto count = counts(pid);
+    auto count_n = counts(nid);
 
     if (count > count_n) {
-      int tmp = pid;
-      pid = nid;
-      nid = tmp;
+      std::swap(pid, nid);
       count = counts(pid);
     }
-#ifndef NDEBUG
-    if (count >= neighbors.extent(1)) {
-      throw std::runtime_error(
-          "Number of count is larger than VerletList size.");
-    }
-#endif
+    assert(count < neighbors.extent(1));
     neighbors(pid, count) = nid;
     counts(pid) += 1;
   }
@@ -121,11 +96,11 @@ public:
   KOKKOS_INLINE_FUNCTION
   void sortNeighbors() {
     Kokkos::parallel_for(
-        "custom_velet_list::sort_neighbors",
+        "custom_verlet_list::sort_neighbors",
         Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, counts.size()),
         [&](const int i) {
           const int count = counts(i);
-          int *ptr = &neighbors(i, 0);
+          auto *ptr = &neighbors(i, 0);
           std::sort(ptr, ptr + count);
         });
     Kokkos::fence();
@@ -133,33 +108,33 @@ public:
 
   // Find max counts
   KOKKOS_INLINE_FUNCTION
-  std::size_t get_variance_max_counts() {
-    std::size_t max_counts = 0;
-    std::size_t ave_counts = 0;
-    std::size_t ave_sq_counts = 0;
+  auto get_variance_max_counts(auto &ostream) {
+    auto max_counts = 0l;
+    auto ave_counts = 0l;
+    auto ave_sq_counts = 0l;
     for (int pid = 0; pid < counts.extent(0); ++pid) {
-      std::size_t count = counts(pid);
+      auto const count = static_cast<long>(counts(pid));
       if (max_counts < count)
         max_counts = count;
       ave_counts += count;
       ave_sq_counts += count * count;
     }
     if (counts.extent(0) != 0) {
-      ave_counts /= counts.extent(0);
-      ave_sq_counts /= counts.extent(0);
+      ave_counts /= static_cast<long>(counts.extent(0));
+      ave_sq_counts /= static_cast<long>(counts.extent(0));
       ave_sq_counts -= ave_counts * ave_counts;
-      std::cout << "max:" << max_counts << " ave:" << ave_counts
-                << " var:" << ave_sq_counts << std::endl;
     }
-    return max_counts;
+    ostream << "max:" << max_counts << " ave:" << ave_counts
+            << " var:" << ave_sq_counts << std::endl;
+    return static_cast<int>(max_counts);
   }
 
   KOKKOS_INLINE_FUNCTION
-  std::size_t get_max_counts() {
-    int max;
-    Kokkos::Max<int> max_reduce(max);
+  auto get_max_counts() {
+    int max_counts;
+    Kokkos::Max<int> max_reduce(max_counts);
     Kokkos::parallel_reduce(
-        "custom_velet_list::reduce_max",
+        "custom_verlet_list::reduce_max",
         Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, counts.size()),
         [&](const int i, int &value) {
           if (counts(i) > value)
@@ -167,25 +142,25 @@ public:
         },
         max_reduce);
     Kokkos::fence();
-    return static_cast<std::size_t>(max);
+    return max_counts;
   }
 };
 
 template <class MemorySpace, class AlgorithmTag, class BuildTag>
-class NeighborList<
-    CustomVerletList<MemorySpace, AlgorithmTag, VerletLayout2D, BuildTag>> {
+class Cabana::NeighborList<CustomVerletList<MemorySpace, AlgorithmTag,
+                                            Cabana::VerletLayout2D, BuildTag>> {
 public:
   //! Kokkos memory space.
   using memory_space = MemorySpace;
   //! Neighbor list type.
-  using list_type =
-      CustomVerletList<MemorySpace, AlgorithmTag, VerletLayout2D, BuildTag>;
+  using list_type = CustomVerletList<MemorySpace, AlgorithmTag,
+                                     Cabana::VerletLayout2D, BuildTag>;
 
   //! Get the total number of neighbors across all particles.
   KOKKOS_INLINE_FUNCTION
   static std::size_t totalNeighbor(list_type const &list) {
+    std::size_t const num_p = list.counts.size();
     std::size_t total_n = 0;
-    std::size_t num_p = list.counts.size();
     for (std::size_t i = 0; i < num_p; ++i)
       total_n += list.counts(i);
     return total_n;
@@ -214,7 +189,5 @@ public:
     return list.neighbors(particle_index, count);
   }
 };
-
-} // namespace Cabana
 
 #endif // SHARED_MEMORY_PARALLELISM

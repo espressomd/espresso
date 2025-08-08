@@ -38,7 +38,7 @@
 
 class BoxGeometry;
 class LocalBox;
-struct CellStructure;
+class CellStructure;
 class Propagation;
 class InteractionsNonBonded;
 class BondedInteractionsMap;

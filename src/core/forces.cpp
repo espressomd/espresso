@@ -232,17 +232,18 @@ void System::System::calculate_forces() {
 #ifdef CALIPER
   CALI_MARK_BEGIN("parallel short range");
 #endif
+  using execution_space = Kokkos::DefaultExecutionSpace;
   update_cabana_state(*cell_structure, verlet_criterion,
                       get_interaction_range());
-  auto &unique_particles = cell_structure->get_unique_particles();
-  auto &local_force = cell_structure->get_local_force();
+  auto const &unique_particles = cell_structure->get_unique_particles();
+  auto const &local_force = cell_structure->get_local_force();
 #ifdef ROTATION
-  auto &local_torque = cell_structure->get_local_torque();
+  auto const &local_torque = cell_structure->get_local_torque();
 #endif
 #ifdef NPT
-  auto &local_virial = cell_structure->get_local_virial();
+  auto const &local_virial = cell_structure->get_local_virial();
 #endif
-  auto const &aosoa = cell_structure->get_aosoa_data();
+  auto const &aosoa = cell_structure->get_aosoa();
 
   ForcesKernel first_neighbor_kernel(
       *bonded_ias, *nonbonded_ias, get_ptr(coulomb_kernel),

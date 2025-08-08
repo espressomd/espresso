@@ -22,21 +22,20 @@
 #ifdef SHARED_MEMORY_PARALLELISM
 
 #include "cell_system/CellStructure.hpp"
+
 #include <Cabana_Core.hpp>
 
-using execution_space = Kokkos::DefaultExecutionSpace;
-
-struct AoSoA_pack {
-  AoSoAType::member_slice_type<0> position;
-  AoSoAType::member_slice_type<1> charge;
-  AoSoAType::member_slice_type<2> id;
-  AoSoAType::member_slice_type<3> type;
+struct CellStructure::AoSoA_pack {
+  CellStructure::AoSoAType::member_slice_type<0> position;
+  CellStructure::AoSoAType::member_slice_type<1> charge;
+  CellStructure::AoSoAType::member_slice_type<2> id;
+  CellStructure::AoSoAType::member_slice_type<3> type;
 
   AoSoA_pack() = default;
 
-  AoSoA_pack(AoSoAType &aosoa)
+  AoSoA_pack(CellStructure::AoSoAType &aosoa)
       : position(Cabana::slice<0>(aosoa)), charge(Cabana::slice<1>(aosoa)),
         id(Cabana::slice<2>(aosoa)), type(Cabana::slice<3>(aosoa)) {}
 };
 
-#endif
+#endif // SHARED_MEMORY_PARALLELISM

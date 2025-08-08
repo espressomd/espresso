@@ -179,6 +179,44 @@ class Test(ut.TestCase):
         self.system.lees_edwards.protocol = None
         self.system.integrator.run(0)
 
+    @utx.skipIfMissingFeatures(["NPT", "WCA"])
+    def test_npt_integrator_negative_volume(self):
+        """Test for NpT with bad parameters."""
+
+        import tests_common
+        data = np.genfromtxt(tests_common.data_path("npt_lj_system.data"))
+        ref_box_l = np.max(data[:, 0:3])
+
+        system = self.system
+        system.part.clear()
+        system.cell_system.skin = 0.
+
+        for barostat in ["Andersen", "MTK"]:
+            system.box_l = 3 * [ref_box_l]
+            system.time_step = 0.01
+            if barostat == "Andersen":
+                piston = 0.0001
+            else:
+                piston = 4.0
+            direction = [True] * 3
+            ext_pressure = 100.0  # Too large external pressure
+            system.part.add(pos=data[:, 0:3], v=data[:, 3:6])
+            system.integrator.set_vv()
+            system.thermostat.set_npt(kT=1.0, gamma0=0.1, gammav=0.001, seed=42)
+            system.integrator.set_isotropic_npt(ext_pressure=ext_pressure,
+                                                piston=piston,
+                                                direction=direction,
+                                                barostat=barostat)
+
+            if barostat == "Andersen":
+                with self.assertRaises(Exception):
+                    system.integrator.run(10)
+                with self.assertRaisesRegex(Exception, "caused the volume to become negative"):
+                    system.part.clear()
+            if barostat == "MTK":
+                # Volume cannot be negative within NPT ensemble based on MTK equation
+                self.assertGreater(float(np.prod(system.box_l)), 0.)
+
     @utx.skipIfMissingFeatures("STOKESIAN_DYNAMICS")
     def test_stokesian_integrator(self):
         self.system.cell_system.skin = 0.4

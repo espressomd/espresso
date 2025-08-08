@@ -37,50 +37,50 @@
 #endif
 
 struct ForcesKernel {
-  [[maybe_unused]] const BondedInteractionsMap &bonded_ias;
-  const InteractionsNonBonded &nonbonded_ias;
-  Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel;
+  BondedInteractionsMap const &bonded_ias;
+  InteractionsNonBonded const &nonbonded_ias;
+  Coulomb::ShortRangeForceKernel::kernel_type const *const coulomb_kernel;
 #if defined(LONG_RANGE_KERNELS)
-  Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel;
+  Dipoles::ShortRangeForceKernel::kernel_type const *const dipoles_kernel;
   Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel;
-  Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_u_kernel;
-  const Thermostat::Thermostat &thermostat;
+  Coulomb::ShortRangeEnergyKernel::kernel_type const *const coulomb_u_kernel;
+  Thermostat::Thermostat const &thermostat;
 #endif
-  const BoxGeometry &box_geo;
+  BoxGeometry const &box_geo;
 #if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
-  std::vector<Particle *> &unique_particles;
+  std::vector<Particle *> const &unique_particles;
 #endif
-  ForceType &local_force;
+  CellStructure::ForceType const &local_force;
 #ifdef ROTATION
-  ForceType &local_torque;
+  CellStructure::ForceType const &local_torque;
 #endif
 #ifdef NPT
-  VirialType &local_virial;
+  CellStructure::VirialType const &local_virial;
 #endif
-  const AoSoA_pack &aosoa;
+  CellStructure::AoSoA_pack const &aosoa;
 
   ForcesKernel(
-      [[maybe_unused]] const BondedInteractionsMap &bonded_ias_,
-      const InteractionsNonBonded &nonbonded_ias_,
+      BondedInteractionsMap const &bonded_ias_,
+      InteractionsNonBonded const &nonbonded_ias_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel_,
 #if defined(LONG_RANGE_KERNELS)
       Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel_,
       Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel_,
       Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_u_kernel_,
-      const Thermostat::Thermostat &thermostat_,
+      Thermostat::Thermostat const &thermostat_,
 #endif
-      const BoxGeometry &box_geo_,
+      BoxGeometry const &box_geo_,
 #if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
-      std::vector<Particle *> &unique_particles_,
+      std::vector<Particle *> const &unique_particles_,
 #endif
-      ForceType &local_force_,
+      CellStructure::ForceType const &local_force_,
 #ifdef ROTATION
-      ForceType &local_torque_,
+      CellStructure::ForceType const &local_torque_,
 #endif
 #ifdef NPT
-      VirialType &local_virial_,
+      CellStructure::VirialType const &local_virial_,
 #endif
-      const AoSoA_pack &aosoa_)
+      CellStructure::AoSoA_pack const &aosoa_)
       : bonded_ias(bonded_ias_), nonbonded_ias(nonbonded_ias_),
         coulomb_kernel(coulomb_kernel_),
 #if defined(LONG_RANGE_KERNELS)
@@ -104,16 +104,16 @@ struct ForcesKernel {
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
   operator()(int i, int j) const {
 
-    auto thread_id = omp_get_thread_num();
+    auto const thread_id = omp_get_thread_num();
 
-    IA_parameters const &ia_params =
+    auto const &ia_params =
         nonbonded_ias.get_ia_param(aosoa.type(i), aosoa.type(j));
 
     ParticleForce pf{};
 #ifdef NPT
     Utils::Vector3d virial{};
 #endif
-    Utils::Vector3d const d = box_geo.get_mi_vector(
+    auto const d = box_geo.get_mi_vector(
         aosoa.position(i, 0), aosoa.position(i, 1), aosoa.position(i, 2),
         aosoa.position(j, 0), aosoa.position(j, 1), aosoa.position(j, 2));
     auto const dist = d.norm();
@@ -142,7 +142,11 @@ struct ForcesKernel {
     }
 
 #if defined(LONG_RANGE_KERNELS)
+#ifdef ELECTROSTATICS
     auto const q1q2 = aosoa.charge(i) * aosoa.charge(j);
+#else
+    auto constexpr q1q2 = 0.;
+#endif
     add_non_bonded_pair_force_with_p(p1, p2, pf,
 #ifdef NPT
                                      virial,
@@ -162,7 +166,7 @@ struct ForcesKernel {
     local_torque(i, thread_id, 2) += pf.torque[2];
 #endif
 
-    auto opf = calc_opposing_force(pf, d);
+    auto const opf = calc_opposing_force(pf, d);
     local_force(j, thread_id, 0) += opf.f[0];
     local_force(j, thread_id, 1) += opf.f[1];
     local_force(j, thread_id, 2) += opf.f[2];

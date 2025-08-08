@@ -32,8 +32,6 @@
 #endif
 
 #ifdef SHARED_MEMORY_PARALLELISM
-#include "cell_system/CellStructure.hpp"
-#include "system/System.hpp"
 #include <Cabana_Core.hpp>
 #include <Kokkos_Core.hpp>
 #include <omp.h>
@@ -56,16 +54,18 @@
 #include <utility>
 
 #ifdef SHARED_MEMORY_PARALLELISM
+namespace Communication {
 struct KokkosHandle {
   KokkosHandle() { Kokkos::initialize(); }
   ~KokkosHandle() { Kokkos::finalize(); }
 };
+} // namespace Communication
 #endif
 
 boost::mpi::communicator comm_cart;
 Communicator communicator{};
 #ifdef SHARED_MEMORY_PARALLELISM
-std::shared_ptr<KokkosHandle> kokkos_handle{};
+std::shared_ptr<Communication::KokkosHandle> kokkos_handle{};
 #endif
 
 namespace Communication {

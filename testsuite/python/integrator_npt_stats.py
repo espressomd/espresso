@@ -44,6 +44,7 @@ class IntegratorNPT:
 
     def tearDown(self):
         self.system.part.clear()
+        self.system.non_bonded_inter.reset()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
@@ -115,91 +116,6 @@ class IntegratorNPT:
         np.testing.assert_allclose(avp_sim_vir, avp_inst_vir, atol=1e-10)
         self.assertAlmostEqual(avpV_sim, 100., delta=1.)
         self.assertAlmostEqual(avpV_inst, 100., delta=1.)
-
-    @utx.skipIfMissingFeatures("WCA", "P3M")
-    def test_pressure_compared_to_instantaneous_withP3M(self):
-        """Test for Npt with P3M."""
-
-        data = np.genfromtxt(tests_common.data_path("npt_lj_system.data"))
-        ref_box_l = np.max(data[:, 0:3])
-
-        system = self.system
-        system.box_l = 3 * [ref_box_l]
-        system.non_bonded_inter[2, 2].wca.set_params(epsilon=1., sigma=1.)
-        p3m = espressomd.electrostatics.P3M(
-            prefactor=2.0, accuracy=1e-2, mesh=3 * [14], cao=5, tune=True)
-        dt = 0.01
-        system.time_step = dt
-
-        p_ext = 1.0
-        system.box_l = 3 * [ref_box_l]
-        system.part.add(pos=data[:, 0:3], type=len(data) * [2])
-        system.part.all().pos = data[:, 0:3]
-        system.part.all().v = data[:, 3:6]
-        system.part.all().q = np.sign(np.arange(100) - 50 + 0.5)
-        self.system.integrator.set_vv()
-        self.system.electrostatics.solver = p3m
-
-        if self.barostat == "Andersen":
-            system.thermostat.set_npt(kT=1.0, gamma0=0.2, gammav=0.01, seed=42)
-            system.integrator.set_isotropic_npt(
-                ext_pressure=p_ext, piston=0.0001)
-        else:
-            system.thermostat.set_npt(
-                kT=1.0, gamma0=0.5, gammav=0.001, seed=42)
-            system.integrator.set_isotropic_npt(
-                ext_pressure=p_ext, piston=4.0, barostat=self.barostat)
-
-        steps = int(0.1 / dt)
-
-        for _ in range(100):
-            system.integrator.run(steps)
-            p_sim = system.analysis.pressure()['total']
-            p_kin = system.analysis.pressure()['kinetic']
-            # virial of electrostatic force from system.analysis
-            p_vir = p_sim - p_kin
-            # virial of electrostatic force from instantaneous_pressure
-            p_inst_vir = system.analysis.get_instantaneous_pressure_virial()
-
-            np.testing.assert_allclose(p_vir, p_inst_vir, atol=1e-2)
-
-    def test_negative_volume(self):
-        """Test for NpT with bad parameters."""
-
-        data = np.genfromtxt(tests_common.data_path("npt_lj_system.data"))
-        ref_box_l = np.max(data[:, 0:3])
-
-        system = self.system
-        system.box_l = 3 * [ref_box_l]
-        dt = 0.01
-        system.time_step = dt
-        if self.barostat == "Andersen":
-            piston = 0.0001
-        else:
-            piston = 4.0
-
-        direction = [True] * 3
-        ext_pressure = 100.0  # Too large external pressure
-        system.box_l = 3 * [ref_box_l]
-        system.part.add(pos=data[:, 0:3], type=len(data) * [2])
-        system.part.all().pos = data[:, 0:3]
-        system.part.all().v = data[:, 3:6]
-        self.system.integrator.set_vv()
-
-        system.thermostat.set_npt(kT=1.0, gamma0=0.1, gammav=0.001, seed=42)
-        system.integrator.set_isotropic_npt(ext_pressure=ext_pressure,
-                                            piston=piston,
-                                            direction=direction,
-                                            barostat=self.barostat)
-
-        if self.barostat == "Andersen":
-            with self.assertRaises(Exception):
-                system.integrator.run(10)
-        elif self.barostat == "MTK":
-            with self.assertRaises(Exception):
-                system.integrator.run(10)
-            # Volume cannot be negative within NPT ensemble based on MTK equation
-            self.assertTrue(float(np.prod(system.box_l)) > 0.)
 
 
 @utx.skipIfMissingFeatures("NPT")

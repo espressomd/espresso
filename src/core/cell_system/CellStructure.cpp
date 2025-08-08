@@ -86,15 +86,18 @@ CellStructure::~CellStructure() {
   if (m_particle_storage) {
     m_particle_storage.reset();
   }
-  if (m_cabana_verlet_list) {
-    m_cabana_verlet_list.reset();
+  if (m_verlet_list_cabana) {
+    m_verlet_list_cabana.reset();
   }
+  // Kokkos handle can be freed after all Cabana containers have been freed
+  m_kokkos_handle.reset();
 #endif
 }
 
 #ifdef SHARED_MEMORY_PARALLELISM
 
-void CellStructure::set_kokkos_handle(std::shared_ptr<KokkosHandle> handle) {
+void CellStructure::set_kokkos_handle(
+    std::shared_ptr<Communication::KokkosHandle> handle) {
   m_kokkos_handle = std::move(handle);
 }
 
@@ -138,8 +141,8 @@ void CellStructure::rebuild_local_properties(std::size_t const num_threads,
   // particle properties are defined in aosoa_pack.hpp
   m_aosoa = std::make_unique<AoSoA_pack>(*m_particle_storage);
 
-  auto max_counts = estimate_max_counts(max_prefactor, pair_cutoff, num_part);
-  m_cabana_verlet_list = std::make_unique<ListType>(0ul, num_part, max_counts);
+  auto max_counts = estimate_max_counts(m_max_prefactor, pair_cutoff, num_part);
+  m_verlet_list_cabana = std::make_unique<ListType>(0ul, num_part, max_counts);
 }
 
 void CellStructure::reset_local_properties() {
@@ -365,7 +368,7 @@ void CellStructure::resort_particles(bool global_flag) {
 
   auto const &lebc = get_system().box_geo->lees_edwards_bc();
   m_rebuild_verlet_list = true;
-  m_rebuild_cabana_verlet_list = true;
+  m_rebuild_verlet_list_cabana = true;
   m_le_pos_offset_at_last_resort = lebc.pos_offset;
 
 #ifdef ADDITIONAL_CHECKS
@@ -415,7 +418,7 @@ void CellStructure::set_verlet_skin(double value) {
   assert(value >= 0.);
   m_verlet_skin = value;
   m_verlet_skin_set = true;
-  m_rebuild_cabana_verlet_list = true;
+  m_rebuild_verlet_list_cabana = true;
   get_system().on_verlet_skin_change();
 }
 
