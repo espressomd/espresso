@@ -195,14 +195,14 @@ class Test(ut.TestCase):
             system.box_l = 3 * [ref_box_l]
             system.time_step = 0.01
             if barostat == "Andersen":
-                piston = 0.0001
+                piston = 1e-4
             else:
                 piston = 4.0
             direction = [True] * 3
             ext_pressure = 100.0  # Too large external pressure
             system.part.add(pos=data[:, 0:3], v=data[:, 3:6])
             system.integrator.set_vv()
-            system.thermostat.set_npt(kT=1.0, gamma0=0.1, gammav=0.001, seed=42)
+            system.thermostat.set_npt(kT=1.0, gamma0=0.1, gammav=1e-3, seed=42)
             system.integrator.set_isotropic_npt(ext_pressure=ext_pressure,
                                                 piston=piston,
                                                 direction=direction,
