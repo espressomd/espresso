@@ -66,6 +66,10 @@ enum class EKOutputVTK : int {
   flux = 1 << 1,
 };
 
+enum class EKPoissonOutputVTK : int {
+  potential = 1 << 0,
+};
+
 class vtk_runtime_error : public std::runtime_error {
 public:
   explicit vtk_runtime_error(std::string const &vtk_uid,

@@ -31,6 +31,7 @@
 #include <field/AddToStorage.h>
 #include <field/GhostLayerField.h>
 #include <field/communication/PackInfo.h>
+#include <field/vtk/VTKWriter.h>
 #include <stencil/D3Q27.h>
 
 #include <cmath>
@@ -135,6 +136,7 @@ public:
   void solve() override {
     (*m_ft)();
     ghost_communication();
+    integrate_vtk_writers();
   }
 
   [[nodiscard]] std::optional<double>
@@ -180,6 +182,64 @@ public:
       assert(values_size == ci->numCells());
     }
     return out;
+  }
+
+protected:
+  template <typename Field_T, uint_t F_SIZE_ARG, typename OutputType>
+  class VTKWriter : public vtk::BlockCellDataWriter<OutputType, F_SIZE_ARG> {
+  public:
+    VTKWriter(ConstBlockDataID const &block_id, std::string const &id,
+              FloatType unit_conversion)
+        : vtk::BlockCellDataWriter<OutputType, F_SIZE_ARG>(id),
+          m_block_id(block_id), m_field(nullptr),
+          m_conversion(unit_conversion) {}
+
+  protected:
+    void configure() override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->block_);
+      m_field = this->block_->template getData<Field_T>(m_block_id);
+    }
+
+    ConstBlockDataID const m_block_id;
+    Field_T const *m_field;
+    FloatType const m_conversion;
+  };
+
+  template <typename OutputType = float,
+            class Base = VTKWriter<PotentialField, 1u, OutputType>>
+  class PotentialVTKWriter : public VTKWriter<PotentialField, 1u, OutputType> {
+  public:
+    using VTKWriter<PotentialField, 1u, OutputType>::VTKWriter;
+    using Base::evaluate;
+
+  protected:
+    OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
+                        cell_idx_t const z, cell_idx_t const) override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
+      auto const potential =
+          walberla::ek::accessor::Scalar::get(this->m_field, {x, y, z});
+      return numeric_cast<OutputType>(this->m_conversion * potential);
+    }
+  };
+
+  void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
+                                  LatticeModel::units_map const &units,
+                                  int flag_observables) override {
+    if (flag_observables & static_cast<int>(EKPoissonOutputVTK::potential)) {
+      auto const unit_conversion = FloatType_c(units.at("potential"));
+      vtk_obj.addCellDataWriter(make_shared<PotentialVTKWriter<float>>(
+          m_potential_field_id, "potential", unit_conversion));
+    }
+  }
+
+  void integrate_vtk_writers() override {
+    for (auto const &it : m_vtk_auto) {
+      auto &vtk_handle = it.second;
+      if (vtk_handle->enabled) {
+        vtk::writeFiles(vtk_handle->ptr)();
+        vtk_handle->execution_count++;
+      }
+    }
   }
 
 private:

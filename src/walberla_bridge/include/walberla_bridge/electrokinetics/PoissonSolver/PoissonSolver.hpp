@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
 
 #include <cstddef>
@@ -28,7 +29,7 @@
 
 namespace walberla {
 
-class PoissonSolver {
+class PoissonSolver : public LatticeModel {
 private:
   std::shared_ptr<LatticeWalberla> m_lattice;
   double m_permittivity;
@@ -53,7 +54,9 @@ public:
     return m_permittivity;
   }
 
-  [[nodiscard]] auto const &get_lattice() const noexcept { return *m_lattice; }
+  [[nodiscard]] LatticeWalberla const &get_lattice() const noexcept {
+    return *m_lattice;
+  }
 
   virtual void solve() = 0;
 
@@ -69,6 +72,15 @@ public:
     std::vector<double> out;
     return out;
   }
+
+  void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
+                                  LatticeModel::units_map const &units,
+                                  int flag_observables) override {}
+
+protected:
+  void integrate_vtk_writers() override {}
+
+  void register_vtk_field_filters(walberla::vtk::VTKOutput &vtk_obj) override {}
 };
 
 } // namespace walberla

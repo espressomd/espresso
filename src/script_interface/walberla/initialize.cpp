@@ -80,6 +80,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<EKPoissonSolverNode>("walberla::EKPoissonSolverNode");
   om->register_new<EKPoissonSolverSlice>("walberla::EKPoissonSolverSlice");
   om->register_new<EKVTKHandle>("walberla::EKVTKHandle");
+  om->register_new<EKPoissonVTKHandle>("walberla::EKPoissonVTKHandle");
 
   om->register_new<EKReactant>("walberla::EKReactant");
   om->register_new<EKBulkReaction>("walberla::EKBulkReaction");
