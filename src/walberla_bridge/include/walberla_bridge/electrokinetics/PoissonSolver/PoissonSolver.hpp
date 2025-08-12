@@ -54,7 +54,7 @@ public:
     return m_permittivity;
   }
 
-  [[nodiscard]] LatticeWalberla const &get_lattice() const noexcept {
+  [[nodiscard]] LatticeWalberla const &get_lattice() const noexcept override {
     return *m_lattice;
   }
 
