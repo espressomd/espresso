@@ -440,7 +440,7 @@ class LBWalberlaVTKSinglePrecisionGPU(TestLBVTK, ut.TestCase):
     vtk_id = "lb_single_precision_gpu"
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKWalberlaVTKDoublePrecisionCPU(TestEKVTK, ut.TestCase):
     vtk_class = espressomd.electrokinetics.VTKOutput
     vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
@@ -451,7 +451,7 @@ class EKWalberlaVTKDoublePrecisionCPU(TestEKVTK, ut.TestCase):
     vtk_id = "ek_double_precision_cpu"
 
 
-@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 @ut.skipIf(TestEKVTK.system.cell_system.get_state()["n_nodes"] != 1,
            "GPU EK runs for 1 MPI rank")
 class EKWalberlaVTKDoublePrecisionGPU(TestEKVTK, ut.TestCase):
@@ -464,7 +464,7 @@ class EKWalberlaVTKDoublePrecisionGPU(TestEKVTK, ut.TestCase):
     vtk_id = "ek_double_precision_gpu"
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKWalberlaVTKSinglePrecisionCPU(TestEKVTK, ut.TestCase):
     vtk_class = espressomd.electrokinetics.VTKOutput
     vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
@@ -475,7 +475,7 @@ class EKWalberlaVTKSinglePrecisionCPU(TestEKVTK, ut.TestCase):
     vtk_id = "ek_single_precision_cpu"
 
 
-@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 @ut.skipIf(TestEKVTK.system.cell_system.get_state()["n_nodes"] != 1,
            "GPU EK runs for 1 MPI rank")
 class EKWalberlaVTKSinglePrecisionGPU(TestEKVTK, ut.TestCase):

@@ -22,9 +22,9 @@
 #include "config/config.hpp"
 
 #ifdef WALBERLA
+#include "EKPoissonSolver.hpp"
 #ifdef WALBERLA_FFT
 
-#include "EKPoissonSolver.hpp"
 #include "LatticeWalberla.hpp"
 
 #include "core/MpiCallbacks.hpp"
@@ -111,5 +111,9 @@ public:
 
 } // namespace ScriptInterface::walberla
 
+#else  // WALBERLA_FFT
+namespace ScriptInterface::walberla {
+std::unordered_map<std::string, int> const EKPoissonVTKHandle::obs_map = {};
+} // namespace ScriptInterface::walberla
 #endif // WALBERLA_FFT
 #endif // WALBERLA
