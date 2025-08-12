@@ -84,7 +84,7 @@ public:
     return fft_cuda->get_permittivity();
   }
 
-  [[nodiscard]] LatticeWalberla const &get_lattice() const noexcept {
+  [[nodiscard]] LatticeWalberla const &get_lattice() const noexcept override {
     return fft_cuda->get_lattice();
   }
 

@@ -53,7 +53,7 @@ protected:
   bool m_single_precision;
 
 public:
-  void make_instance(VariantMap const &args) {
+  void make_instance(VariantMap const &args) override {
     // unit conversions
     auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
     m_conv_permittivity = Utils::int_pow<2>(agrid);

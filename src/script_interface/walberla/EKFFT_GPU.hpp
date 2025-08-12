@@ -46,7 +46,7 @@ namespace ScriptInterface::walberla {
 class EKFFTGPU : public EKFFT {
 
 public:
-  void make_instance(VariantMap const &args) {
+  void make_instance(VariantMap const &args) override {
     // unit conversions
     auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
     m_conv_permittivity = Utils::int_pow<2>(agrid);
@@ -55,22 +55,6 @@ public:
 
     m_instance = ::walberla::new_ek_poisson_fft_gpu(
         m_lattice->lattice(), permittivity, m_single_precision);
-  }
-
-  void do_construct(VariantMap const &args) override {
-    m_single_precision = get_value_or<bool>(args, "single_precision", false);
-    m_lattice = get_value<decltype(m_lattice)>(args, "lattice");
-    m_vtk_writers =
-        get_value_or<decltype(m_vtk_writers)>(args, "vtk_writers", {});
-
-    make_instance(args);
-    m_resources_lock = std::make_unique<ResourceManager>();
-    // MPI communicator is needed to destroy the FFT plans
-    m_resources_lock->acquire_lock(
-        Communication::mpiCallbacksHandle()->share_mpi_env());
-    for (auto &vtk : m_vtk_writers) {
-      vtk->attach_to_lattice(m_instance, get_lattice_to_md_units_conversion());
-    }
   }
 };
 
