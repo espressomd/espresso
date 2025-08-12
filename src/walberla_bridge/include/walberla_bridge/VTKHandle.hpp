@@ -66,6 +66,7 @@ enum class EKOutputVTK : int {
   flux = 1 << 1,
 };
 
+/** @brief EK Poisson solver statistics to write to VTK files */
 enum class EKPoissonOutputVTK : int {
   potential = 1 << 0,
 };
