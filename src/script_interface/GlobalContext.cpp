@@ -70,7 +70,7 @@ void GlobalContext::set_parameter(ObjectId id, std::string const &name,
 void GlobalContext::notify_set_parameter(const ObjectHandle *o,
                                          std::string const &name,
                                          Variant const &value) {
-  cb_set_parameter(object_id(o), name, pack(value));
+  cb_set_parameter(ObjectId(o), name, pack(value));
 }
 
 void GlobalContext::call_method(ObjectId id, std::string const &name,
@@ -85,7 +85,7 @@ void GlobalContext::call_method(ObjectId id, std::string const &name,
 void GlobalContext::notify_call_method(const ObjectHandle *o,
                                        std::string const &name,
                                        VariantMap const &arguments) {
-  cb_call_method(object_id(o), name, pack(arguments));
+  cb_call_method(ObjectId(o), name, pack(arguments));
 }
 
 std::shared_ptr<ObjectHandle>
@@ -95,7 +95,7 @@ GlobalContext::make_shared(std::string const &name,
   auto sp = m_node_local_context->factory().make(name);
   set_context(sp.get());
 
-  auto const id = object_id(sp.get());
+  auto const id = ObjectId(sp.get());
   remote_make_handle(id, name, parameters);
 
   sp->construct(parameters);
@@ -108,7 +108,7 @@ GlobalContext::make_shared(std::string const &name,
              * required
              * to have synchronous destructors, which is needed by some client
              * code. */
-            global_context->cb_delete_handle(object_id(o));
+            global_context->cb_delete_handle(ObjectId(o));
 
             /* Locally destroy the object. */
             deleter(o);

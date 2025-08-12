@@ -27,31 +27,22 @@
 #include "thermalized_bond.hpp"
 #include "thermostat.hpp"
 
-#include <boost/variant.hpp>
-
 #include <algorithm>
 #include <numeric>
 #include <ranges>
-
-/** Visitor to get the bond cutoff from the bond parameter variant */
-class BondCutoff : public boost::static_visitor<double> {
-public:
-  template <typename T> double operator()(T const &bond) const {
-    return bond.cutoff();
-  }
-};
+#include <variant>
 
 double BondedInteractionsMap::maximal_cutoff() const {
   auto const max_cut_bonded = std::accumulate(
       begin(), end(), BONDED_INACTIVE_CUTOFF, [](auto max_cut, auto const &kv) {
-        return std::max(max_cut,
-                        boost::apply_visitor(BondCutoff(), *kv.second));
+        auto constexpr visitor = [](auto const &bond) { return bond.cutoff(); };
+        return std::max(max_cut, std::visit(visitor, *kv.second));
       });
 
   /* Check if there are dihedrals */
   auto const any_dihedrals = std::ranges::any_of(*this, [](auto const &kv) {
-    return (boost::get<DihedralBond>(&(*kv.second)) ||
-            boost::get<TabulatedDihedralBond>(&(*kv.second)));
+    return (std::holds_alternative<DihedralBond>(*kv.second) or
+            std::holds_alternative<TabulatedDihedralBond>(*kv.second));
   });
 
   /* dihedrals: the central particle is indirectly connected to the fourth
@@ -65,11 +56,11 @@ void BondedInteractionsMap::on_ia_change() {
   n_rigid_bonds = 0;
 #endif
   for (auto const &bond : std::views::elements<1>(*this)) {
-    if (boost::get<ThermalizedBond>(&(*bond)) != nullptr) {
+    if (std::holds_alternative<ThermalizedBond>(*bond)) {
       ++n_thermalized_bonds;
     }
 #ifdef BOND_CONSTRAINT
-    if (boost::get<RigidBond>(&(*bond)) != nullptr) {
+    if (std::holds_alternative<RigidBond>(*bond)) {
       ++n_rigid_bonds;
     }
 #endif
@@ -82,30 +73,30 @@ void BondedInteractionsMap::on_ia_change() {
 
 void BondedInteractionsMap::activate_bond(mapped_type const &ptr) {
   auto &system = get_system();
-  if (auto bond = boost::get<ThermalizedBond>(ptr.get())) {
+  if (auto bond = std::get_if<ThermalizedBond>(ptr.get())) {
     bond->set_thermostat_view(system.thermostat);
   }
-  if (auto bond = boost::get<IBMVolCons>(ptr.get())) {
+  if (auto bond = std::get_if<IBMVolCons>(ptr.get())) {
     system.immersed_boundaries->register_softID(*bond);
   }
-  if (auto bond = boost::get<IBMTriel>(ptr.get())) {
+  if (auto bond = std::get_if<IBMTriel>(ptr.get())) {
     bond->initialize(*system.box_geo, *system.cell_structure);
   }
-  if (auto bond = boost::get<IBMTribend>(ptr.get())) {
+  if (auto bond = std::get_if<IBMTribend>(ptr.get())) {
     bond->initialize(*system.box_geo, *system.cell_structure);
   }
 }
 
 void BondedInteractionsMap::deactivate_bond(mapped_type const &ptr) {
-  if (auto bond = boost::get<ThermalizedBond>(ptr.get())) {
+  if (auto bond = std::get_if<ThermalizedBond>(ptr.get())) {
     bond->unset_thermostat_view();
     n_thermalized_bonds = -1;
   }
-  if (auto bond = boost::get<IBMVolCons>(ptr.get())) {
+  if (auto bond = std::get_if<IBMVolCons>(ptr.get())) {
     bond->unset_volumes_view();
   }
 #ifdef BOND_CONSTRAINT
-  if (boost::get<RigidBond>(ptr.get()) != nullptr) {
+  if (std::get_if<RigidBond>(ptr.get())) {
     n_rigid_bonds = -1;
   }
 #endif

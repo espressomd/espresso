@@ -28,6 +28,7 @@
 #include <utils/quaternion.hpp>
 #include <utils/serialization/optional.hpp>
 #include <utils/serialization/unordered_map.hpp>
+#include <utils/serialization/variant.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -365,6 +366,32 @@ BOOST_AUTO_TEST_CASE(std_optional_test) {
     boost::mpi::packed_iarchive ia{comm, buffer};
     ia >> value_recv;
     BOOST_REQUIRE(not value_recv.has_value());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(std_variant_test) {
+  boost::mpi::communicator comm;
+  {
+    boost::mpi::packed_archive buffer;
+    std::variant<int, double> const value_send{-10};
+    std::variant<int, double> value_recv{1.};
+    boost::mpi::packed_oarchive oa{comm, buffer};
+    oa << value_send;
+    boost::mpi::packed_iarchive ia{comm, buffer};
+    ia >> value_recv;
+    BOOST_REQUIRE(std::holds_alternative<int>(value_recv));
+    BOOST_CHECK_EQUAL(std::get<int>(value_recv), std::get<int>(value_send));
+  }
+  {
+    boost::mpi::packed_archive buffer;
+    std::variant<int, double> const value_send{-2.};
+    std::variant<int> value_recv{1};
+    boost::mpi::packed_oarchive oa{comm, buffer};
+    oa << value_send;
+    boost::mpi::packed_iarchive ia{comm, buffer};
+    BOOST_CHECK_THROW((ia >> value_recv), std::domain_error);
+    BOOST_REQUIRE(std::holds_alternative<int>(value_recv));
+    BOOST_CHECK_EQUAL(std::get<int>(value_recv), 1);
   }
 }
 

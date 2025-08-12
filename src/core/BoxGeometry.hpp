@@ -225,6 +225,40 @@ public:
             get_mi_coord(a[2], b[2], 2)};
   }
 
+  /**
+   * @brief Get the minimum-image vector between two coordinates.
+   *
+   * @tparam T Floating point type.
+   *
+   * @param a0     x element of the terminal point.
+   * @param a1     y element of the terminal point.
+   * @param a2     z element of the terminal point.
+   * @param b0     x element of the initial point.
+   * @param b1     y element of the initial point.
+   * @param b2     z element of the initial point.
+   * @return Vector from @p b to @p a that minimizes the distance across
+   *         periodic images, i.e. <tt>a - b</tt>.
+   */
+  template <typename T>
+  Utils::Vector<T, 3> get_mi_vector(T const &a0, T const &a1, T const &a2,
+                                    T const &b0, T const &b1,
+                                    T const &b2) const {
+    if (type() == BoxType::LEES_EDWARDS) {
+      auto const shear_plane_normal = lees_edwards_bc().shear_plane_normal;
+      auto a_tmp = Utils::Vector<T, 3>{a0, a1, a2};
+      auto b_tmp = Utils::Vector<T, 3>{b0, b1, b2};
+      a_tmp[shear_plane_normal] = Algorithm::periodic_fold(
+          a_tmp[shear_plane_normal], m_length[shear_plane_normal]);
+      b_tmp[shear_plane_normal] = Algorithm::periodic_fold(
+          b_tmp[shear_plane_normal], m_length[shear_plane_normal]);
+      return lees_edwards_bc().distance(a_tmp - b_tmp, m_length, m_length_half,
+                                        m_length_inv, m_periodic);
+    }
+    assert(type() == BoxType::CUBOID);
+    return {get_mi_coord(a0, b0, 0), get_mi_coord(a1, b1, 1),
+            get_mi_coord(a2, b2, 2)};
+  }
+
   BoxType type() const { return m_type; }
   void set_type(BoxType type) { m_type = type; }
 

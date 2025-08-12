@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_COMMUNICATION_HPP
-#define CORE_COMMUNICATION_HPP
+
+#pragma once
+
 /** \file
  *  This file contains the asynchronous MPI communication.
  *
@@ -28,9 +29,9 @@
  *  The asynchronous MPI communication is used during the script
  *  evaluation. Except for the head node that interprets the interface
  *  script, all other nodes wait in @ref mpi_loop() for the head node to
- *  issue an action using @ref mpi_call(). @ref mpi_loop() immediately
+ *  issue an action using @c MpiCallbacks::call(). @ref mpi_loop() immediately
  *  executes an @c MPI_Bcast and therefore waits for the head node to
- *  broadcast a command, which is done by @ref mpi_call(). The request
+ *  broadcast a command, which is done by @c MpiCallbacks::call(). The request
  *  consists of a callback function with an arbitrary number of arguments.
  *
  *  To add new actions (e.g. to implement new interface functionality), do the
@@ -58,6 +59,12 @@
 extern int this_node;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
+#ifdef SHARED_MEMORY_PARALLELISM
+namespace Communication {
+struct KokkosHandle;
+} // namespace Communication
+extern std::shared_ptr<Communication::KokkosHandle> kokkos_handle;
+#endif
 
 struct Communicator {
   boost::mpi::communicator &comm;
@@ -96,28 +103,6 @@ std::shared_ptr<MpiCallbacks> mpiCallbacksHandle();
 std::shared_ptr<boost::mpi::environment> mpi_init(int argc = 0,
                                                   char **argv = nullptr);
 
-/** @brief Call a local function.
- *  @tparam Args   Local function argument types
- *  @tparam ArgRef Local function argument types
- *  @param fp      Local function
- *  @param args    Local function arguments
- */
-template <class... Args, class... ArgRef>
-void mpi_call(void (*fp)(Args...), ArgRef &&...args) {
-  Communication::mpiCallbacks().call(fp, std::forward<ArgRef>(args)...);
-}
-
-/** @brief Call a local function.
- *  @tparam Args   Local function argument types
- *  @tparam ArgRef Local function argument types
- *  @param fp      Local function
- *  @param args    Local function arguments
- */
-template <class... Args, class... ArgRef>
-void mpi_call_all(void (*fp)(Args...), ArgRef &&...args) {
-  Communication::mpiCallbacks().call_all(fp, std::forward<ArgRef>(args)...);
-}
-
 /** Process requests from head node. Worker nodes main loop. */
 void mpi_loop();
 
@@ -130,5 +115,3 @@ namespace Communication {
 void init(std::shared_ptr<boost::mpi::environment> mpi_env);
 void deinit();
 } // namespace Communication
-
-#endif

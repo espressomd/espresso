@@ -86,11 +86,11 @@ static __forceinline__ __device__ uint getLinearIndex(uint3 blockIdx, uint3 thre
 }
 
 /** @brief Rescale values in a device vector by some constant. */
-struct algo_rescale : thrust::unary_function<double, double> {
-  argument_type m_scale_factor;
-  algo_rescale(argument_type scale_factor) : m_scale_factor(scale_factor) {}
+struct algo_rescale {
+  double m_scale_factor;
+  algo_rescale(double scale_factor) : m_scale_factor(scale_factor) {}
 
-  __thrust_exec_check_disable__ __host__ __device__ constexpr result_type operator()(argument_type const &x) const {
+  __host__ __device__ constexpr double operator()(double const &x) const {
     return x * m_scale_factor;
   }
 };

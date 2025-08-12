@@ -68,7 +68,6 @@ namespace utf = boost::unit_test;
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/variant.hpp>
 
 #include <cassert>
 #include <cmath>
@@ -82,6 +81,7 @@ namespace utf = boost::unit_test;
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace espresso {
@@ -440,9 +440,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       system.bonded_ias->insert(fene_bond_id, bond_ia);
     }
     auto const &harm_bond =
-        *boost::get<HarmonicBond>(system.bonded_ias->at(harm_bond_id).get());
+        std::get<HarmonicBond>(*system.bonded_ias->at(harm_bond_id));
     auto const &fene_bond =
-        *boost::get<FeneBond>(system.bonded_ias->at(fene_bond_id).get());
+        std::get<FeneBond>(*system.bonded_ias->at(fene_bond_id));
     insert_particle_bond(pid2, harm_bond_id, {pid1});
     insert_particle_bond(pid2, fene_bond_id, {pid3});
 

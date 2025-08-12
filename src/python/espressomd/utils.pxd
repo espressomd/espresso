@@ -31,21 +31,18 @@ cdef extern from "<filesystem>" namespace "std::filesystem" nogil:
         string generic_string() except +
 
 cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":
-    cdef cppclass ErrorLevel:
-        pass
+    cdef enum class ErrorLevel:
+        WARNING
+        ERROR
 
-cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling::RuntimeError::ErrorLevel":
-    cdef ErrorLevel WARNING
-    cdef ErrorLevel ERROR
-
-cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling":
-    cdef cppclass RuntimeError:
+cdef extern from "error_handling/RuntimeError.hpp":
+    cdef cppclass CoreRuntimeError "ErrorHandling::RuntimeError":
         string format()
         void print()
         ErrorLevel level()
 
 cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
-    cdef vector[RuntimeError] mpi_gather_runtime_errors()
+    cdef vector[CoreRuntimeError] mpi_gather_runtime_errors()
 
 cdef extern from "utils/Vector.hpp" namespace "Utils":
     cppclass Vector2d:

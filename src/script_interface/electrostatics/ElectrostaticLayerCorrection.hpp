@@ -31,10 +31,9 @@
 
 #include "script_interface/get_value.hpp"
 
-#include "boost/variant.hpp"
-
 #include <memory>
 #include <string>
+#include <variant>
 
 namespace ScriptInterface {
 namespace Coulomb {
@@ -43,7 +42,7 @@ class ElectrostaticLayerCorrection
     : public Actor<ElectrostaticLayerCorrection,
                    ::ElectrostaticLayerCorrection> {
 
-  using BaseSolver = boost::variant<
+  using BaseSolver = std::variant<
 #ifdef CUDA
       std::shared_ptr<CoulombP3M<Arch::GPU>>,
 #endif // CUDA
@@ -51,9 +50,8 @@ class ElectrostaticLayerCorrection
   BaseSolver m_solver;
 
   void on_bind_system(::System::System &system) override {
-    boost::apply_visitor(
-        [this](auto &solver) { solver->bind_system(m_system.lock()); },
-        m_solver);
+    std::visit([this](auto &solver) { solver->bind_system(m_system.lock()); },
+               m_solver);
   }
 
 public:
@@ -77,8 +75,8 @@ public:
          [this]() { return actor()->elc.pot_diff; }},
         {"actor", AutoParameter::read_only,
          [this]() {
-           return boost::apply_visitor(
-               [](auto &solver) { return Variant{solver}; }, m_solver);
+           return std::visit([](auto &solver) { return Variant{solver}; },
+                             m_solver);
          }},
     });
   }

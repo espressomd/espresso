@@ -24,7 +24,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include <utils/Vector.hpp>
-#include <utils/get.hpp>
 
 #include <boost/range/numeric.hpp>
 
@@ -366,7 +365,7 @@ BOOST_AUTO_TEST_CASE(tuple_protocol) {
   static_assert(std::is_same_v<std::tuple_element_t<1, A>, int>);
   static_assert(A{}.size() == std::tuple_size<A>::value);
 
-  BOOST_CHECK_EQUAL(Utils::get<1>(A{{1, 2, 3, 4}}), 2);
+  BOOST_CHECK_EQUAL(get<1>(A{{1, 2, 3, 4}}), 2);
 }
 
 BOOST_AUTO_TEST_CASE(vector_product_test) {

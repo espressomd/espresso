@@ -219,7 +219,7 @@ REGISTER_CALLBACK(mpi_get_particles_local)
  * @returns The particle list.
  */
 static std::vector<Particle> mpi_get_particles(std::span<const int> ids) {
-  mpi_call(mpi_get_particles_local);
+  Communication::mpiCallbacks().call(mpi_get_particles_local);
   /* Return value */
   std::vector<Particle> parts(ids.size());
 
@@ -336,7 +336,7 @@ static void mpi_who_has_head() {
  * @brief Rebuild the particle index.
  */
 static void build_particle_node() {
-  mpi_call(mpi_who_has_local);
+  Communication::mpiCallbacks().call(mpi_who_has_local);
   mpi_who_has_head();
 }
 

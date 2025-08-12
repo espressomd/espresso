@@ -26,7 +26,6 @@
  */
 
 #include "device_qualifier.hpp"
-#include "get.hpp"
 #include "serialization/array.hpp"
 
 #include <boost/serialization/access.hpp>

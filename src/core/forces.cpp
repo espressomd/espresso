@@ -54,10 +54,13 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/variant.hpp>
-
 #ifdef CALIPER
 #include <caliper/cali.h>
+#endif
+
+#ifdef SHARED_MEMORY_PARALLELISM
+#include "short_range_cabana.hpp"
+#include <Cabana_Core.hpp>
 #endif
 
 #include <cassert>
@@ -126,17 +129,6 @@ void init_forces_and_thermostat(const CellStructure &cell_structure,
   });
 
   // Initialize ghost forces (unchanged)
-  init_forces_ghosts(cell_structure);
-}
-
-void init_forces(const CellStructure &cell_structure) {
-#ifdef CALIPER
-  CALI_CXX_MARK_FUNCTION;
-#endif
-
-  cell_structure.for_each_local_particle(
-      [](Particle &p) { p.force_and_torque() = external_force(p); });
-
   init_forces_ghosts(cell_structure);
 }
 
@@ -219,40 +211,145 @@ void System::System::calculate_forces() {
   auto const collision_detection_cutoff = INACTIVE_CUTOFF;
 #endif
 
-  short_range_loop(
-      [coulomb_kernel_ptr = get_ptr(coulomb_kernel), &bonded_ias = *bonded_ias,
-       &bond_breakage = *bond_breakage, &box_geo = *box_geo](
-          Particle &p1, int bond_id, std::span<Particle *> partners) {
-        return add_bonded_force(p1, bond_id, partners, bonded_ias,
-                                bond_breakage, box_geo, coulomb_kernel_ptr);
-      },
-      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
-       dipoles_kernel_ptr = get_ptr(dipoles_kernel),
-       elc_kernel_ptr = get_ptr(elc_kernel),
-       coulomb_u_kernel_ptr = get_ptr(coulomb_u_kernel),
-       &nonbonded_ias = *nonbonded_ias, &thermostat = *thermostat,
-       &bonded_ias = *bonded_ias,
-#ifdef COLLISION_DETECTION
-       &collision_detection = *collision_detection,
-#endif
-       &box_geo = *box_geo](Particle &p1, Particle &p2, Distance const &d) {
-        auto const &ia_params =
-            nonbonded_ias.get_ia_param(p1.type(), p2.type());
-        add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
-                                  ia_params, thermostat, box_geo, bonded_ias,
-                                  coulomb_kernel_ptr, dipoles_kernel_ptr,
-                                  elc_kernel_ptr, coulomb_u_kernel_ptr);
-#ifdef COLLISION_DETECTION
-        if (not collision_detection.is_off()) {
-          collision_detection.detect_collision(p1, p2, d.dist2);
-        }
-#endif
-      },
-      *cell_structure, maximal_cutoff(), bonded_ias->maximal_cutoff(),
-      VerletCriterion<>{*this, cell_structure->get_verlet_skin(),
-                        get_interaction_range(), coulomb_cutoff, dipole_cutoff,
-                        collision_detection_cutoff});
+  // interaction kernel is defined
+  auto bond_kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+                      &bonded_ias = *bonded_ias,
+                      &bond_breakage = *bond_breakage,
+                      &box_geo = *box_geo](Particle &p1, int bond_id,
+                                           std::span<Particle *> partners) {
+    return add_bonded_force(p1, bond_id, partners, bonded_ias, bond_breakage,
+                            box_geo, coulomb_kernel_ptr);
+  };
 
+  VerletCriterion<> const verlet_criterion{*this,
+                                           cell_structure->get_verlet_skin(),
+                                           get_interaction_range(),
+                                           coulomb_cutoff,
+                                           dipole_cutoff,
+                                           collision_detection_cutoff};
+
+#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef CALIPER
+  CALI_MARK_BEGIN("parallel short range");
+#endif
+  using execution_space = Kokkos::DefaultExecutionSpace;
+  update_cabana_state(*cell_structure, verlet_criterion,
+                      get_interaction_range());
+  auto const &unique_particles = cell_structure->get_unique_particles();
+  auto const &local_force = cell_structure->get_local_force();
+#ifdef ROTATION
+  auto const &local_torque = cell_structure->get_local_torque();
+#endif
+#ifdef NPT
+  auto const &local_virial = cell_structure->get_local_virial();
+#endif
+  auto const &aosoa = cell_structure->get_aosoa();
+
+  ForcesKernel first_neighbor_kernel(
+      *bonded_ias, *nonbonded_ias, get_ptr(coulomb_kernel),
+#if defined(LONG_RANGE_KERNELS)
+      get_ptr(dipoles_kernel), get_ptr(elc_kernel), get_ptr(coulomb_u_kernel),
+      *thermostat,
+#endif
+      *box_geo,
+#if defined(LONG_RANGE_KERNELS) or defined(EXCLUSIONS)
+      unique_particles,
+#endif
+      local_force,
+#ifdef ROTATION
+      local_torque,
+#endif
+#ifdef NPT
+      local_virial,
+#endif
+      aosoa);
+
+  cabana_short_range(bond_kernel, first_neighbor_kernel, *cell_structure,
+                     get_interaction_range(), bonded_ias->maximal_cutoff());
+  // Force and Torque reduction
+  int num_threads = execution_space().concurrency();
+  Kokkos::RangePolicy<execution_space> policy(0, unique_particles.size());
+  Kokkos::parallel_for("reduction", policy,
+                       [&local_force,
+#ifdef ROTATION
+                        &local_torque,
+#endif
+                        &unique_particles, num_threads](const int i) {
+                         Utils::Vector3d force{};
+#ifdef ROTATION
+                         Utils::Vector3d torque{};
+#endif
+                         for (int tid = 0; tid < num_threads; ++tid) {
+                           force[0] += local_force(i, tid, 0);
+                           force[1] += local_force(i, tid, 1);
+                           force[2] += local_force(i, tid, 2);
+#ifdef ROTATION
+                           torque[0] += local_torque(i, tid, 0);
+                           torque[1] += local_torque(i, tid, 1);
+                           torque[2] += local_torque(i, tid, 2);
+#endif
+                         }
+                         unique_particles.at(i)->force() += force;
+#ifdef ROTATION
+                         unique_particles.at(i)->torque() += torque;
+#endif
+                       });
+  Kokkos::fence();
+
+#ifdef NPT
+  Utils::Vector3d virial{};
+  for (int tid = 0; tid < num_threads; ++tid) {
+    virial[0] += local_virial(tid, 0);
+    virial[1] += local_virial(tid, 1);
+    virial[2] += local_virial(tid, 2);
+  }
+  npt_add_virial_force_contribution(virial);
+#endif
+
+#ifdef COLLISION_DETECTION
+  auto collision_kernel = [&collision_detection = *collision_detection](
+                              Particle const &p1, Particle const &p2,
+                              Distance const &d) {
+    if (not collision_detection.is_off()) {
+      collision_detection.detect_collision(p1, p2, d.dist2);
+    }
+  };
+  cell_structure->non_bonded_loop(collision_kernel, verlet_criterion);
+#endif
+
+#ifdef CALIPER
+  CALI_MARK_END("parallel short range");
+#endif
+
+#else // SHARED_MEMORY_PARALLELISM
+
+  auto pair_kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+                      dipoles_kernel_ptr = get_ptr(dipoles_kernel),
+                      elc_kernel_ptr = get_ptr(elc_kernel),
+                      coulomb_u_kernel_ptr = get_ptr(coulomb_u_kernel),
+                      &nonbonded_ias = *nonbonded_ias,
+                      &thermostat = *thermostat, &bonded_ias = *bonded_ias,
+#ifdef COLLISION_DETECTION
+                      &collision_detection = *collision_detection,
+#endif
+                      &box_geo = *box_geo](Particle &p1, Particle &p2,
+                                           Distance const &d) {
+    auto const &ia_params = nonbonded_ias.get_ia_param(p1.type(), p2.type());
+    add_non_bonded_pair_force(
+        p1, p2, d.vec21, sqrt(d.dist2), d.dist2, p1.q() * p2.q(), ia_params,
+        thermostat, box_geo, bonded_ias, coulomb_kernel_ptr, dipoles_kernel_ptr,
+        elc_kernel_ptr, coulomb_u_kernel_ptr);
+#ifdef COLLISION_DETECTION
+    if (not collision_detection.is_off()) {
+      collision_detection.detect_collision(p1, p2, d.dist2);
+    }
+#endif
+  };
+
+  short_range_loop(bond_kernel, pair_kernel, *cell_structure, maximal_cutoff(),
+                   bonded_ias->maximal_cutoff(), verlet_criterion);
+
+#endif // SHARED_MEMORY_PARALLELISM
   constraints->add_forces(particles, get_sim_time());
   oif_global->calculate_forces();
 
@@ -311,6 +408,9 @@ void calc_long_range_forces(const ParticleRange &particles) {
 }
 
 #ifdef NPT
+void npt_add_virial_force_contribution(const Utils::Vector3d &virial) {
+  ::System::get_system().npt_add_virial_contribution(virial);
+}
 void npt_add_virial_force_contribution(const Utils::Vector3d &force,
                                        const Utils::Vector3d &d) {
   ::System::get_system().npt_add_virial_contribution(force, d);

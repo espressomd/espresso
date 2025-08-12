@@ -30,7 +30,6 @@
 #include <boost/qvm/vec_traits.hpp>
 
 #include "utils/Array.hpp"
-#include "utils/get.hpp"
 
 #include <algorithm>
 #include <cassert>

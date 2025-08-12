@@ -38,7 +38,7 @@
 
 class BoxGeometry;
 class LocalBox;
-struct CellStructure;
+class CellStructure;
 class Propagation;
 class InteractionsNonBonded;
 class BondedInteractionsMap;
@@ -165,6 +165,7 @@ public:
   void npt_add_virial_contribution(double energy);
   void npt_add_virial_contribution(Utils::Vector3d const &force,
                                    Utils::Vector3d const &d);
+  void npt_add_virial_contribution(Utils::Vector3d const &virial);
 #endif // NPT
 
   /** @brief Calculate all forces. */

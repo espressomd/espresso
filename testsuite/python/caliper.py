@@ -25,21 +25,23 @@ import pathlib
 import sys
 import os
 
-EXPECTED_LABELS = """
+EXPECTED_LABELS = f"""
 integrate
   Initial Force Calculation
     calculate_forces
       copy_particles_to_GPU
       init_forces_and_thermost
       calc_long_range_forces
-      short_range_loop
+      {'parallel short range' if espressomd.has_features(
+    ["SHARED_MEMORY_PARALLELISM"]) else 'short_range_loop'}
       copy_forces_from_GPU
   Integration loop
     calculate_forces
       copy_particles_to_GPU
       init_forces_and_thermost
       calc_long_range_forces
-      short_range_loop
+      {'parallel short range' if espressomd.has_features(
+        ["SHARED_MEMORY_PARALLELISM"]) else 'short_range_loop'}
       copy_forces_from_GPU
 calc_energies
   short_range_loop

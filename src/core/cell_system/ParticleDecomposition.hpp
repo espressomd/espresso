@@ -26,10 +26,9 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/variant.hpp>
-
 #include <optional>
 #include <span>
+#include <variant>
 #include <vector>
 
 struct RemovedParticle {
@@ -43,7 +42,7 @@ struct ModifiedList {
 /**
  * @brief Change of Particle Address.
  */
-using ParticleChange = boost::variant<RemovedParticle, ModifiedList>;
+using ParticleChange = std::variant<RemovedParticle, ModifiedList>;
 
 /**
  * @brief A distributed particle decomposition.

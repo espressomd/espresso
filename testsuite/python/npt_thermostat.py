@@ -34,11 +34,16 @@ class NPTThermostat:
 
     def setUp(self):
         np.random.seed(42)
+        self.system.box_l = [2., 2., 2.]
+        self.system.time_step = 0.01
 
     def tearDown(self):
+        self.system.non_bonded_inter.reset()
         self.system.part.clear()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
+        if espressomd.has_features("ELECTROSTATICS"):
+            self.system.electrostatics.clear()
 
     def test_01__rng(self):
         """Test for RNG consistency."""
@@ -199,6 +204,47 @@ class NPTThermostat:
         with self.assertRaises(Exception):
             system.integrator.set_isotropic_npt(ext_pressure=1., piston=1.,
                                                 direction=[0, 0, 0], barostat=self.barostat)
+
+    @utx.skipIfMissingFeatures(["WCA", "P3M"])
+    def test_pressure_with_p3m(self):
+        """Test for NpT with P3M."""
+
+        data = np.genfromtxt(tests_common.data_path("npt_lj_system.data"))
+        ref_box_l = np.max(data[:, 0:3])
+        p_ext = 1.0
+
+        system = self.system
+        system.box_l = 3 * [ref_box_l]
+        system.time_step = 0.01
+        system.non_bonded_inter[2, 2].wca.set_params(epsilon=1., sigma=1.)
+        system.part.add(pos=data[:, 0:3], v=data[:, 3:6], type=len(data) * [2],
+                        q=np.sign(np.arange(100) - 50 + 0.5))
+        system.integrator.set_vv()
+        system.electrostatics.solver = espressomd.electrostatics.P3M(
+            prefactor=2.0, accuracy=1e-2, mesh=3 * [18], cao=5, tune=True)
+
+        if self.barostat == "Andersen":
+            system.thermostat.set_npt(kT=1.0, gamma0=0.2, gammav=0.01, seed=42)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=p_ext, piston=0.0001)
+        else:
+            system.thermostat.set_npt(
+                kT=1.0, gamma0=0.5, gammav=0.001, seed=42)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=p_ext, piston=4.0, barostat=self.barostat)
+
+        steps = int(0.1 / system.time_step)
+
+        for _ in range(100):
+            system.integrator.run(steps)
+            p_sim = system.analysis.pressure()['total']
+            p_kin = system.analysis.pressure()['kinetic']
+            # virial of electrostatic force from system.analysis
+            p_vir = p_sim - p_kin
+            # virial of electrostatic force from instantaneous_pressure
+            p_inst_vir = system.analysis.get_instantaneous_pressure_virial()
+
+            np.testing.assert_allclose(p_vir, p_inst_vir, rtol=1e-2, atol=1e-7)
 
 
 @utx.skipIfMissingFeatures("NPT")

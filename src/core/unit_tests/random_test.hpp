@@ -21,15 +21,12 @@
 
 #include <boost/test/unit_test.hpp>
 
-/* Helper functions to compute random numbers covariance in a single pass */
-
 #include <utils/Vector.hpp>
 #include <utils/quaternion.hpp>
 
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
 #include <boost/accumulators/statistics/variates/covariate.hpp>
-#include <boost/variant.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -40,51 +37,51 @@
 #include <iterator>
 #include <numeric>
 #include <tuple>
+#include <variant>
 #include <vector>
 
 namespace Utils {
 using VariantVectorXd =
-    boost::variant<double, Vector2d, Vector3d, Vector4d, Quaternion<double>>;
+    std::variant<double, Vector2d, Vector3d, Vector4d, Quaternion<double>>;
 } // namespace Utils
 
 using Utils::VariantVectorXd;
 
 namespace {
 
-using Utils::Vector;
-
-class visitor_size : public boost::static_visitor<std::size_t> {
-public:
+struct visitor_get_size {
   template <std::size_t N>
-  std::size_t operator()(Vector<double, N> const &v) const {
+  std::size_t operator()(Utils::Vector<double, N> const &v) const {
     return v.size();
   }
   std::size_t operator()(Utils::Quaternion<double> const &) const { return 4u; }
   std::size_t operator()(double) const { return 1u; }
 };
 
-class visitor_get : public boost::static_visitor<double> {
-public:
+struct visitor_get_at {
+  std::size_t m_i;
+
   template <std::size_t N>
-  double operator()(Vector<double, N> const &v, std::size_t i) const {
-    return v[i];
+  double operator()(Utils::Vector<double, N> const &v) const {
+    assert(m_i < N);
+    return v[m_i];
   }
-  double operator()(Utils::Quaternion<double> const &q, std::size_t i) const {
-    return q[i];
+  double operator()(Utils::Quaternion<double> const &q) const {
+    assert(m_i < 4u);
+    return q[m_i];
   }
-  double operator()(double v, std::size_t i) const {
-    assert(i == 0u);
+  double operator()(double v) const {
+    assert(m_i == 0u);
     return v;
   }
 };
 
 std::size_t get_size(VariantVectorXd const &vec) {
-  return boost::apply_visitor(visitor_size(), vec);
+  return std::visit(visitor_get_size(), vec);
 }
 
 double get_value(VariantVectorXd const &vec, std::size_t i) {
-  return boost::apply_visitor(visitor_get(), vec,
-                              boost::variant<std::size_t>(i));
+  return std::visit(visitor_get_at(i), vec);
 }
 
 template <typename T> auto square_matrix(std::size_t N) {

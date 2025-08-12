@@ -41,6 +41,7 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <variant>
 #include <vector>
 
 namespace ScriptInterface {
@@ -206,7 +207,7 @@ public:
 private:
   void make_new_instance(VariantMap const &params) override {
     auto new_params = params;
-    auto const *shift_string = boost::get<std::string>(&params.at("shift"));
+    auto const *shift_string = std::get_if<std::string>(&params.at("shift"));
     if (shift_string != nullptr) {
       if (*shift_string != "auto") {
         throw std::invalid_argument(
@@ -254,7 +255,7 @@ public:
 private:
   void make_new_instance(VariantMap const &params) override {
     auto new_params = params;
-    auto const *shift_string = boost::get<std::string>(&params.at("shift"));
+    auto const *shift_string = std::get_if<std::string>(&params.at("shift"));
     if (shift_string != nullptr) {
       if (*shift_string != "auto") {
         throw std::invalid_argument(

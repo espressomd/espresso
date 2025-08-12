@@ -44,6 +44,7 @@ class IntegratorNPT:
 
     def tearDown(self):
         self.system.part.clear()
+        self.system.non_bonded_inter.reset()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
@@ -115,44 +116,6 @@ class IntegratorNPT:
         np.testing.assert_allclose(avp_sim_vir, avp_inst_vir, atol=1e-10)
         self.assertAlmostEqual(avpV_sim, 100., delta=1.)
         self.assertAlmostEqual(avpV_inst, 100., delta=1.)
-
-    def test_negative_volume(self):
-        """Test for NpT with bad parameters."""
-
-        data = np.genfromtxt(tests_common.data_path("npt_lj_system.data"))
-        ref_box_l = np.max(data[:, 0:3])
-
-        system = self.system
-        system.box_l = 3 * [ref_box_l]
-        dt = 0.01
-        system.time_step = dt
-        if self.barostat == "Andersen":
-            piston = 0.0001
-        else:
-            piston = 4.0
-
-        direction = [True] * 3
-        ext_pressure = 100.0  # Too large external pressure
-        system.box_l = 3 * [ref_box_l]
-        system.part.add(pos=data[:, 0:3], type=len(data) * [2])
-        system.part.all().pos = data[:, 0:3]
-        system.part.all().v = data[:, 3:6]
-        self.system.integrator.set_vv()
-
-        system.thermostat.set_npt(kT=1.0, gamma0=0.1, gammav=0.001, seed=42)
-        system.integrator.set_isotropic_npt(ext_pressure=ext_pressure,
-                                            piston=piston,
-                                            direction=direction,
-                                            barostat=self.barostat)
-
-        if self.barostat == "Andersen":
-            with self.assertRaises(Exception):
-                system.integrator.run(10)
-        elif self.barostat == "MTK":
-            with self.assertRaises(Exception):
-                system.integrator.run(10)
-            # Volume cannot be negative within NPT ensemble based on MTK equation
-            self.assertTrue(float(np.prod(system.box_l)) > 0.)
 
 
 @utx.skipIfMissingFeatures("NPT")

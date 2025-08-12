@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2025 The ESPResSo project
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,16 +19,23 @@
 
 #pragma once
 
-#include <cstddef>
-#include <utility>
+#ifdef SHARED_MEMORY_PARALLELISM
 
-namespace Utils {
-template <std::size_t I, typename T>
-std::tuple_element_t<I, T> const &get(T const &v) noexcept {
-  return std::get<I>(v);
-}
-template <std::size_t I, typename T>
-std::tuple_element_t<I, T> &get(T &v) noexcept {
-  return std::get<I>(v);
-}
-} // namespace Utils
+#include "cell_system/CellStructure.hpp"
+
+#include <Cabana_Core.hpp>
+
+struct CellStructure::AoSoA_pack {
+  CellStructure::AoSoAType::member_slice_type<0> position;
+  CellStructure::AoSoAType::member_slice_type<1> charge;
+  CellStructure::AoSoAType::member_slice_type<2> id;
+  CellStructure::AoSoAType::member_slice_type<3> type;
+
+  AoSoA_pack() = default;
+
+  AoSoA_pack(CellStructure::AoSoAType &aosoa)
+      : position(Cabana::slice<0>(aosoa)), charge(Cabana::slice<1>(aosoa)),
+        id(Cabana::slice<2>(aosoa)), type(Cabana::slice<3>(aosoa)) {}
+};
+
+#endif // SHARED_MEMORY_PARALLELISM

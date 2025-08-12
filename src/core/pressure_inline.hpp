@@ -37,13 +37,12 @@
 #include <utils/Vector.hpp>
 #include <utils/math/tensor_product.hpp>
 
-#include <boost/variant.hpp>
-
 #include <cstdio>
 #include <optional>
 #include <span>
 #include <string>
 #include <tuple>
+#include <variant>
 
 /** Calculate non-bonded energies between a pair of particles.
  *  @param p1        pointer to particle 1.
@@ -119,12 +118,12 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
                                        Particle const &p1, Particle const &p2,
                                        Particle const &p3,
                                        BoxGeometry const &box_geo) {
-  if ((boost::get<AngleHarmonicBond>(&iaparams) != nullptr) ||
-      (boost::get<AngleCosineBond>(&iaparams) != nullptr) ||
+  if (std::holds_alternative<AngleHarmonicBond>(iaparams) or
+      std::holds_alternative<AngleCosineBond>(iaparams) or
 #ifdef TABULATED
-      (boost::get<TabulatedAngleBond>(&iaparams) != nullptr) ||
+      std::holds_alternative<TabulatedAngleBond>(iaparams) or
 #endif
-      (boost::get<AngleCossquareBond>(&iaparams) != nullptr)) {
+      std::holds_alternative<AngleCossquareBond>(iaparams)) {
     auto const dx21 = -box_geo.get_mi_vector(p1.pos(), p2.pos());
     auto const dx31 = box_geo.get_mi_vector(p3.pos(), p1.pos());
 
@@ -139,7 +138,7 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
     }
   } else {
     runtimeWarningMsg() << "Unsupported bond type " +
-                               std::to_string(iaparams.which()) +
+                               std::to_string(iaparams.index()) +
                                " in pressure calculation.";
     return Utils::Matrix<double, 3, 3>{};
   }
@@ -160,7 +159,7 @@ inline std::optional<Utils::Matrix<double, 3, 3>> calc_bonded_pressure_tensor(
                                                   *partners[1], box_geo);
   default:
     runtimeWarningMsg() << "Unsupported bond type " +
-                               std::to_string(iaparams.which()) +
+                               std::to_string(iaparams.index()) +
                                " in pressure calculation.";
     return Utils::Matrix<double, 3, 3>{};
   }

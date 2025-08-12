@@ -41,7 +41,6 @@ espresso_unit_test(SRC linear_interpolation_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC interpolation_gradient_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC interpolation_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC bspline_test.cpp DEPENDS espresso::utils)
-espresso_unit_test(SRC matrix_vector_product_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC index_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC Array_test.cpp DEPENDS Boost::serialization
                    espresso::utils)

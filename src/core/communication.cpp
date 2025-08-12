@@ -53,8 +53,20 @@
 #include <tuple>
 #include <utility>
 
+#ifdef SHARED_MEMORY_PARALLELISM
+namespace Communication {
+struct KokkosHandle {
+  KokkosHandle() { Kokkos::initialize(); }
+  ~KokkosHandle() { Kokkos::finalize(); }
+};
+} // namespace Communication
+#endif
+
 boost::mpi::communicator comm_cart;
 Communicator communicator{};
+#ifdef SHARED_MEMORY_PARALLELISM
+std::shared_ptr<Communication::KokkosHandle> kokkos_handle{};
+#endif
 
 namespace Communication {
 static std::shared_ptr<MpiCallbacks> m_callbacks;
@@ -106,7 +118,7 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
 #endif
 
 #ifdef SHARED_MEMORY_PARALLELISM
-  Kokkos::initialize();
+  kokkos_handle = std::make_shared<KokkosHandle>();
 #endif
 }
 
@@ -115,7 +127,7 @@ void deinit() {
   Communication::m_callbacks.reset();
 
 #ifdef SHARED_MEMORY_PARALLELISM
-  Kokkos::finalize();
+  kokkos_handle.reset();
 #endif
 }
 } // namespace Communication

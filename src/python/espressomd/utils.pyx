@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import numpy as np
+from .utils cimport mpi_gather_runtime_errors, ErrorLevel
 
 
 def is_valid_type(value, t):
@@ -208,8 +209,7 @@ def handle_errors(msg):
 
     # raise an exception with the first error
     for err in errors:
-        # Cast because cython does not support typed enums completely
-        if < int > err.level() == < int > ERROR:
+        if err.level() == ErrorLevel.ERROR:
             raise Exception(f"{msg}: {to_str(err.format())}")
 
 
