@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 The ESPResSo project
+ * Copyright (C) 2023-2025 The ESPResSo project
  * Copyright (C) 2020 The waLBerla project
  *
  * This file is part of ESPResSo.
@@ -18,9 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1,
-// lbmpy_walberla/pystencils_walberla from waLBerla commit
-// 59c9b8b185782eba184e0fdfb2144793343213f0
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
+// v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
+// waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 /**
  * @file

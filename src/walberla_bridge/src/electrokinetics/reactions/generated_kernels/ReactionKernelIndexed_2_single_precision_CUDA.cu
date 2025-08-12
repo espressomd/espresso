@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 59c9b8b185782eba184e0fdfb2144793343213f0
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #include "ReactionKernelIndexed_2_single_precision_CUDA.h"
 #include "core/DataTypes.h"
@@ -126,11 +126,11 @@ void ReactionKernelIndexed_2_single_precision_CUDA::run_impl(IBlock *block, Inde
   auto rho_0 = block->getData<gpu::GPUField<float>>(rho_0ID);
   auto rho_1 = block->getData<gpu::GPUField<float>>(rho_1ID);
 
-  auto &stoech_0 = stoech_0_;
   auto &stoech_1 = stoech_1_;
-  auto &order_0 = order_0_;
-  auto &order_1 = order_1_;
   auto &rate_coefficient = rate_coefficient_;
+  auto &order_0 = order_0_;
+  auto &stoech_0 = stoech_0_;
+  auto &order_1 = order_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   float *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()))

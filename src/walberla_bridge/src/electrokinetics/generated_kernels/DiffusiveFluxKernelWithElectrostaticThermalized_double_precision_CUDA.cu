@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #include <cmath>
 
@@ -371,7 +371,7 @@ static FUNC_PREFIX __launch_bounds__(256) void diffusivefluxkernelwithelectrosta
       double random_7_1;
       philox_double2(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_7_0, random_7_1);
 
-      _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 9 * _stride_j_3] = D * (f_ext_0 * z * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 2.0 + f_ext_1 * z * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 2.0 + f_ext_2 * z * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 2.0 + kT * (-_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 4.0 - z * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * (_data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] - _data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 - _stride_phi_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] + _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2] - _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 - _stride_phi_1 + _stride_phi_2 * ctr_2]) - z * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * (_data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] + _data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 - _stride_phi_1 + _stride_phi_2 * ctr_2] - _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] - _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 - _stride_phi_1 + _stride_phi_2 * ctr_2]) + z * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * (_data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 - _stride_phi_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] - _data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 - _stride_phi_1 + _stride_phi_2 * ctr_2] + _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] - _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2])) * -0.02351606505734748 * ((1.0) / (kT)) + pow(D * (0.5 * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5 * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5) * (random_11_1 - 0.5) * 1.5025119784898082;
+      _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 9 * _stride_j_3] = D * (-f_ext_0 * z * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - f_ext_0 * z * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] - f_ext_1 * z * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - f_ext_1 * z * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] - f_ext_2 * z * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - f_ext_2 * z * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] + kT * -2.0 * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] + kT * 2.0 * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + z * _data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2] * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + z * _data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2] * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] - z * _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 - _stride_phi_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - z * _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 - _stride_phi_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.04703213011469496 * ((1.0) / (kT)) + pow(D * (0.5 * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5 * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5) * (random_11_1 - 0.5) * 1.5025119784898082;
     }
     if (ctr_1 > 0 && ctr_2 < _size_j_2 - 1) {
 
@@ -435,7 +435,7 @@ static FUNC_PREFIX __launch_bounds__(256) void diffusivefluxkernelwithelectrosta
       double random_7_1;
       philox_double2(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_7_0, random_7_1);
 
-      _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 11 * _stride_j_3] = D * (-f_ext_0 * z * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - f_ext_0 * z * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] + f_ext_1 * z * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + f_ext_1 * z * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] - f_ext_2 * z * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - f_ext_2 * z * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] + kT * -2.0 * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] + kT * 2.0 * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + z * _data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2] * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + z * _data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2] * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] - z * _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 + _stride_phi_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - z * _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 + _stride_phi_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.04703213011469496 * ((1.0) / (kT)) + pow(D * (0.5 * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5 * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5) * (random_12_1 - 0.5) * 1.5025119784898082;
+      _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 11 * _stride_j_3] = D * (f_ext_0 * z * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 2.0 + f_ext_1 * z * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * -2.0 + f_ext_2 * z * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 2.0 + kT * (-_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 4.0 - z * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * (-_data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 + _stride_phi_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] + _data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] - _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 + _stride_phi_1 + _stride_phi_2 * ctr_2] + _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2]) + z * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * (_data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 + _stride_phi_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] - _data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 + _stride_phi_1 + _stride_phi_2 * ctr_2] + _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] - _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2]) - z * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * (_data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 + _stride_phi_1 + _stride_phi_2 * ctr_2] + _data_phi[_stride_phi_0 * ctr_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2 - _stride_phi_2] - _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 + _stride_phi_1 + _stride_phi_2 * ctr_2] - _data_phi[_stride_phi_0 * ctr_0 - _stride_phi_0 + _stride_phi_1 * ctr_1 + _stride_phi_2 * ctr_2 - _stride_phi_2])) * -0.02351606505734748 * ((1.0) / (kT)) + pow(D * (0.5 * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5 * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5) * (random_12_1 - 0.5) * 1.5025119784898082;
     }
     if (ctr_1 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
 
@@ -478,23 +478,23 @@ void DiffusiveFluxKernelWithElectrostaticThermalized_double_precision_CUDA::run(
     WALBERLA_ABORT("This Sweep contains a configure function that needs to be called manually")
 
   auto j = block->getData<gpu::GPUField<double>>(jID);
-  auto rho = block->getData<gpu::GPUField<double>>(rhoID);
   auto phi = block->getData<gpu::GPUField<double>>(phiID);
+  auto rho = block->getData<gpu::GPUField<double>>(rhoID);
 
-  auto &block_offset_1 = this->block_offset_1_;
-  auto &z = this->z_;
-  auto &D = this->D_;
   auto &field_size_1 = this->field_size_1_;
-  auto &f_ext_0 = this->f_ext_0_;
   auto &kT = this->kT_;
-  auto &seed = this->seed_;
-  auto &block_offset_2 = this->block_offset_2_;
+  auto &f_ext_0 = this->f_ext_0_;
+  auto &D = this->D_;
   auto &f_ext_1 = this->f_ext_1_;
-  auto &field_size_0 = this->field_size_0_;
-  auto &time_step = this->time_step_;
-  auto &block_offset_0 = this->block_offset_0_;
-  auto &f_ext_2 = this->f_ext_2_;
+  auto &z = this->z_;
   auto &field_size_2 = this->field_size_2_;
+  auto &block_offset_1 = this->block_offset_1_;
+  auto &block_offset_2 = this->block_offset_2_;
+  auto &field_size_0 = this->field_size_0_;
+  auto &seed = this->seed_;
+  auto &time_step = this->time_step_;
+  auto &f_ext_2 = this->f_ext_2_;
+  auto &block_offset_0 = this->block_offset_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()))
   double *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(j->layout(), field::fzyx)
@@ -539,23 +539,23 @@ void DiffusiveFluxKernelWithElectrostaticThermalized_double_precision_CUDA::runO
     return;
 
   auto j = block->getData<gpu::GPUField<double>>(jID);
-  auto rho = block->getData<gpu::GPUField<double>>(rhoID);
   auto phi = block->getData<gpu::GPUField<double>>(phiID);
+  auto rho = block->getData<gpu::GPUField<double>>(rhoID);
 
-  auto &block_offset_1 = this->block_offset_1_;
-  auto &z = this->z_;
-  auto &D = this->D_;
   auto &field_size_1 = this->field_size_1_;
-  auto &f_ext_0 = this->f_ext_0_;
   auto &kT = this->kT_;
-  auto &seed = this->seed_;
-  auto &block_offset_2 = this->block_offset_2_;
+  auto &f_ext_0 = this->f_ext_0_;
+  auto &D = this->D_;
   auto &f_ext_1 = this->f_ext_1_;
-  auto &field_size_0 = this->field_size_0_;
-  auto &time_step = this->time_step_;
-  auto &block_offset_0 = this->block_offset_0_;
-  auto &f_ext_2 = this->f_ext_2_;
+  auto &z = this->z_;
   auto &field_size_2 = this->field_size_2_;
+  auto &block_offset_1 = this->block_offset_1_;
+  auto &block_offset_2 = this->block_offset_2_;
+  auto &field_size_0 = this->field_size_0_;
+  auto &seed = this->seed_;
+  auto &time_step = this->time_step_;
+  auto &f_ext_2 = this->f_ext_2_;
+  auto &block_offset_0 = this->block_offset_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(j->nrOfGhostLayers()))

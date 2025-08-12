@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #include <cmath>
 
@@ -96,16 +96,16 @@ static FUNC_PREFIX __launch_bounds__(256) void diffusivefluxkernelwithelectrosta
 
 void DiffusiveFluxKernelWithElectrostatic_single_precision_CUDA::run(IBlock *block, gpuStream_t stream) {
 
-  auto rho = block->getData<gpu::GPUField<float>>(rhoID);
   auto phi = block->getData<gpu::GPUField<float>>(phiID);
+  auto rho = block->getData<gpu::GPUField<float>>(rhoID);
   auto j = block->getData<gpu::GPUField<float>>(jID);
 
-  auto &D = this->D_;
   auto &f_ext_0 = this->f_ext_0_;
   auto &f_ext_1 = this->f_ext_1_;
-  auto &z = this->z_;
-  auto &f_ext_2 = this->f_ext_2_;
+  auto &D = this->D_;
   auto &kT = this->kT_;
+  auto &f_ext_2 = this->f_ext_2_;
+  auto &z = this->z_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()))
   float *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(j->layout(), field::fzyx)
@@ -147,16 +147,16 @@ void DiffusiveFluxKernelWithElectrostatic_single_precision_CUDA::runOnCellInterv
   if (ci.empty())
     return;
 
-  auto rho = block->getData<gpu::GPUField<float>>(rhoID);
   auto phi = block->getData<gpu::GPUField<float>>(phiID);
+  auto rho = block->getData<gpu::GPUField<float>>(rhoID);
   auto j = block->getData<gpu::GPUField<float>>(jID);
 
-  auto &D = this->D_;
   auto &f_ext_0 = this->f_ext_0_;
   auto &f_ext_1 = this->f_ext_1_;
-  auto &z = this->z_;
-  auto &f_ext_2 = this->f_ext_2_;
+  auto &D = this->D_;
   auto &kT = this->kT_;
+  auto &f_ext_2 = this->f_ext_2_;
+  auto &z = this->z_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(j->nrOfGhostLayers()))

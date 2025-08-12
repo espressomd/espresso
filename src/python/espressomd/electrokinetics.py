@@ -86,7 +86,8 @@ class EKFFT(ScriptInterfaceHelper):
                     # , node_grid=self.shape)
                     parent_sip=self, slice_range=key)
             else:
-                return EKPoissonSolverNode(parent_sip=self, index=np.array(key))
+                return EKPoissonSolverNode(
+                    parent_sip=self, index=np.array(key))
 
         raise TypeError(
             f"{key} is not a valid index. Should be a point on the "
@@ -146,7 +147,8 @@ class EKFFTGPU(ScriptInterfaceHelper):
                     # , node_grid=self.shape)
                     parent_sip=self, slice_range=key)
             else:
-                return EKPoissonSolverNode(parent_sip=self, index=np.array(key))
+                return EKPoissonSolverNode(
+                    parent_sip=self, index=np.array(key))
 
         raise TypeError(
             f"{key} is not a valid index. Should be a point on the "

@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 59c9b8b185782eba184e0fdfb2144793343213f0
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #include "ReactionKernelIndexed_4_double_precision_CUDA.h"
 #include "core/DataTypes.h"
@@ -129,20 +129,20 @@ void ReactionKernelIndexed_4_double_precision_CUDA::run_impl(IBlock *block, Inde
 
   uint8_t *_data_indexVector = reinterpret_cast<uint8_t *>(pointer);
 
-  auto rho_0 = block->getData<gpu::GPUField<double>>(rho_0ID);
-  auto rho_1 = block->getData<gpu::GPUField<double>>(rho_1ID);
   auto rho_3 = block->getData<gpu::GPUField<double>>(rho_3ID);
+  auto rho_0 = block->getData<gpu::GPUField<double>>(rho_0ID);
   auto rho_2 = block->getData<gpu::GPUField<double>>(rho_2ID);
+  auto rho_1 = block->getData<gpu::GPUField<double>>(rho_1ID);
 
+  auto &stoech_0 = stoech_0_;
+  auto &order_3 = order_3_;
   auto &stoech_1 = stoech_1_;
   auto &stoech_3 = stoech_3_;
-  auto &order_3 = order_3_;
-  auto &stoech_0 = stoech_0_;
-  auto &order_2 = order_2_;
   auto &stoech_2 = stoech_2_;
-  auto &order_0 = order_0_;
-  auto &rate_coefficient = rate_coefficient_;
   auto &order_1 = order_1_;
+  auto &order_2 = order_2_;
+  auto &rate_coefficient = rate_coefficient_;
+  auto &order_0 = order_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   double *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()))

@@ -29,13 +29,6 @@ foreach(precision double_precision single_precision)
             FrictionCouplingKernel_${precision}.cpp
             FixedFlux_${precision}.cpp
             Dirichlet_${precision}.cpp)
-  # disable UBSAN on large files due to excessive compile times
-  set_source_files_properties(
-    AdvectiveFluxKernel_${precision}.cpp
-    DiffusiveFluxKernelWithElectrostatic_${precision}.cpp
-    DiffusiveFluxKernelWithElectrostaticThermalized_${precision}.cpp
-    TARGET_DIRECTORY espresso_walberla_codegen
-    PROPERTIES COMPILE_FLAGS -fno-sanitize=undefined)
   if(WALBERLA_BUILD_WITH_CUDA)
     target_sources(
       espresso_walberla_codegen_cuda

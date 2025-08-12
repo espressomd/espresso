@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 59c9b8b185782eba184e0fdfb2144793343213f0
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #include <cmath>
 
@@ -66,20 +66,20 @@ static FUNC_PREFIX __launch_bounds__(256) void reactionkernelbulk_4_double_preci
 
 void ReactionKernelBulk_4_double_precision_CUDA::run(IBlock *block, gpuStream_t stream) {
 
-  auto rho_1 = block->getData<gpu::GPUField<double>>(rho_1ID);
-  auto rho_0 = block->getData<gpu::GPUField<double>>(rho_0ID);
   auto rho_3 = block->getData<gpu::GPUField<double>>(rho_3ID);
+  auto rho_0 = block->getData<gpu::GPUField<double>>(rho_0ID);
   auto rho_2 = block->getData<gpu::GPUField<double>>(rho_2ID);
+  auto rho_1 = block->getData<gpu::GPUField<double>>(rho_1ID);
 
-  auto &stoech_2 = this->stoech_2_;
-  auto &order_2 = this->order_2_;
-  auto &stoech_3 = this->stoech_3_;
-  auto &order_1 = this->order_1_;
   auto &stoech_0 = this->stoech_0_;
   auto &order_3 = this->order_3_;
+  auto &stoech_1 = this->stoech_1_;
+  auto &stoech_3 = this->stoech_3_;
+  auto &stoech_2 = this->stoech_2_;
+  auto &order_1 = this->order_1_;
+  auto &order_2 = this->order_2_;
   auto &rate_coefficient = this->rate_coefficient_;
   auto &order_0 = this->order_0_;
-  auto &stoech_1 = this->stoech_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   double *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()))
@@ -121,20 +121,20 @@ void ReactionKernelBulk_4_double_precision_CUDA::runOnCellInterval(const shared_
   if (ci.empty())
     return;
 
-  auto rho_1 = block->getData<gpu::GPUField<double>>(rho_1ID);
-  auto rho_0 = block->getData<gpu::GPUField<double>>(rho_0ID);
   auto rho_3 = block->getData<gpu::GPUField<double>>(rho_3ID);
+  auto rho_0 = block->getData<gpu::GPUField<double>>(rho_0ID);
   auto rho_2 = block->getData<gpu::GPUField<double>>(rho_2ID);
+  auto rho_1 = block->getData<gpu::GPUField<double>>(rho_1ID);
 
-  auto &stoech_2 = this->stoech_2_;
-  auto &order_2 = this->order_2_;
-  auto &stoech_3 = this->stoech_3_;
-  auto &order_1 = this->order_1_;
   auto &stoech_0 = this->stoech_0_;
   auto &order_3 = this->order_3_;
+  auto &stoech_1 = this->stoech_1_;
+  auto &stoech_3 = this->stoech_3_;
+  auto &stoech_2 = this->stoech_2_;
+  auto &order_1 = this->order_1_;
+  auto &order_2 = this->order_2_;
   auto &rate_coefficient = this->rate_coefficient_;
   auto &order_0 = this->order_0_;
-  auto &stoech_1 = this->stoech_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(rho_0->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(rho_0->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(rho_0->nrOfGhostLayers()))

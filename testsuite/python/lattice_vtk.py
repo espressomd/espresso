@@ -371,7 +371,8 @@ class TestEKVTK(TestVTK):
                 last_frames.append(grids[label_density])
 
             last_frames_poisson = []
-            for filepath in (path_vtk_poisson_last_frame, path_vtk_poisson_continuous[-1],):
+            for filepath in (path_vtk_poisson_last_frame,
+                             path_vtk_poisson_continuous[-1],):
                 grids = vtk_reader.parse(filepath)
                 last_frames_poisson.append(grids[label_potential])
 

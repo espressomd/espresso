@@ -181,13 +181,19 @@ block_offsets = tuple(
 
 if args.gpu:
     params = {
-        "target": target}
+        "target": target
+    }
+    cpu_vectorize_info = {}  # dummy handle
     processor_suffix = "_CUDA"
     file_suffix = "cu"
 else:
     params = {
         "target": target,
-        "cpu_vectorize_info": {"assume_inner_stride_one": False}, }
+        "cpu_vectorize_info": {
+            "assume_inner_stride_one": False,
+        },
+    }
+    cpu_vectorize_info = params["cpu_vectorize_info"]  # handle to mutable dict
     processor_suffix = ""
     file_suffix = "cpp"
 
@@ -204,15 +210,16 @@ with code_generation_context.CodeGeneration() as ctx:
 
     if "diffusion" in args.kernels:
         for midfix, fluctuation in (("", False), ("Thermalized", True)):
+            cpu_vectorize_info["cpu_prepend_opt_remove_conditionals"] = False
             pystencils_walberla.generate_sweep(
                 ctx,
-                f"DiffusiveFluxKernel{midfix}_{
-                    precision_suffix}{processor_suffix}",
+                f"DiffusiveFluxKernel{midfix}_{precision_suffix}{processor_suffix}",  # nopep8
                 ek.flux(include_vof=False, include_fluctuations=fluctuation,
                         rng_node=precision_rng),
                 staggered=True,
                 block_offset=block_offsets if fluctuation else None,
                 **params)
+            cpu_vectorize_info["cpu_prepend_opt_remove_conditionals"] = False
             class_name = f"DiffusiveFluxKernelWithElectrostatic{midfix}_{precision_suffix}{processor_suffix}"  # nopep8
             pystencils_walberla.generate_sweep(
                 ctx, class_name,
@@ -234,17 +241,9 @@ with code_generation_context.CodeGeneration() as ctx:
                 content = content.replace(token, f"{token}\n{push}")
             return content
 
-        # the substitution for field reads is necessary, because otherwise there are
-        # "ResolvedFieldAccess" nodes that fail in the code generation
-        # For the GPU it is the other way around, because if the reads are separated
-        # the redundant field accesses can reach outside of the alocated memory.
         flux_advection = ps.AssignmentCollection(ek.flux_advection())
-        if target == ps.Target.CPU:
-            flux_advection = ps.simp.add_subexpressions_for_field_reads(
-                flux_advection)
-
-        class_name = f"AdvectiveFluxKernel_{
-            precision_suffix}{processor_suffix}"
+        cpu_vectorize_info["cpu_prepend_opt_remove_conditionals"] = False
+        class_name = f"AdvectiveFluxKernel_{precision_suffix}{processor_suffix}"  # nopep8
         pystencils_walberla.generate_sweep(
             ctx,
             class_name,

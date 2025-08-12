@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #include <cmath>
 
@@ -480,15 +480,15 @@ void DiffusiveFluxKernelThermalized_double_precision_CUDA::run(IBlock *block, gp
   auto j = block->getData<gpu::GPUField<double>>(jID);
   auto rho = block->getData<gpu::GPUField<double>>(rhoID);
 
-  auto &block_offset_1 = this->block_offset_1_;
-  auto &D = this->D_;
   auto &field_size_1 = this->field_size_1_;
-  auto &seed = this->seed_;
+  auto &D = this->D_;
+  auto &field_size_2 = this->field_size_2_;
+  auto &block_offset_1 = this->block_offset_1_;
   auto &block_offset_2 = this->block_offset_2_;
   auto &field_size_0 = this->field_size_0_;
+  auto &seed = this->seed_;
   auto &time_step = this->time_step_;
   auto &block_offset_0 = this->block_offset_0_;
-  auto &field_size_2 = this->field_size_2_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()))
   double *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(j->layout(), field::fzyx)
@@ -530,15 +530,15 @@ void DiffusiveFluxKernelThermalized_double_precision_CUDA::runOnCellInterval(con
   auto j = block->getData<gpu::GPUField<double>>(jID);
   auto rho = block->getData<gpu::GPUField<double>>(rhoID);
 
-  auto &block_offset_1 = this->block_offset_1_;
-  auto &D = this->D_;
   auto &field_size_1 = this->field_size_1_;
-  auto &seed = this->seed_;
+  auto &D = this->D_;
+  auto &field_size_2 = this->field_size_2_;
+  auto &block_offset_1 = this->block_offset_1_;
   auto &block_offset_2 = this->block_offset_2_;
   auto &field_size_0 = this->field_size_0_;
+  auto &seed = this->seed_;
   auto &time_step = this->time_step_;
   auto &block_offset_0 = this->block_offset_0_;
-  auto &field_size_2 = this->field_size_2_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(j->nrOfGhostLayers()))
