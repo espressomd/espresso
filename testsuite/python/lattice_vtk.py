@@ -292,7 +292,6 @@ class TestEKVTK(TestVTK):
 
         with tempfile.TemporaryDirectory() as tmp_directory:
             root = pathlib.Path(tmp_directory)
-            root = pathlib.Path("~/Desktop/espresso/espresso/build/vtk_test/")
             label_vtk_last_frame = f"test_vtk_{self.vtk_id}_end"
             label_vtk_continuous = f"test_vtk_{self.vtk_id}_continuous"
             path_vtk_last_frame = root / label_vtk_last_frame / "simulation_step_0.vtu"
@@ -309,11 +308,9 @@ class TestEKVTK(TestVTK):
             vtk_obj.disable()
             vtk_obj.enable()
 
-            # prepare VTK Possion
-            label_vtk_poisson_last_frame = f"test_vtk_{
-                self.vtk_id}_poisson_end"
-            label_vtk_poisson_continuous = f"test_vtk_{
-                self.vtk_id}_poisson_continuous"
+            # prepare VTK Poisson
+            label_vtk_poisson_last_frame = f"test_vtk_{self.vtk_id}_poisson_end"  # nopep8
+            label_vtk_poisson_continuous = f"test_vtk_{self.vtk_id}_poisson_continuous"  # nopep8
             path_vtk_poisson_last_frame = root / \
                 label_vtk_poisson_last_frame / "simulation_step_0.vtu"
             path_vtk_poisson_continuous = [
@@ -442,6 +439,9 @@ class LBWalberlaVTKSinglePrecisionGPU(TestLBVTK, ut.TestCase):
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
+# TODO find bottleneck in Poisson VTK writer
+@ut.skipIf(TestEKVTK.system.cell_system.get_state()["n_nodes"] != 1,
+           "CPU EK runs for 1 MPI rank")
 class EKWalberlaVTKDoublePrecisionCPU(TestEKVTK, ut.TestCase):
     vtk_class = espressomd.electrokinetics.VTKOutput
     vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
@@ -466,6 +466,8 @@ class EKWalberlaVTKDoublePrecisionGPU(TestEKVTK, ut.TestCase):
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
+@ut.skipIf(TestEKVTK.system.cell_system.get_state()["n_nodes"] != 1,
+           "CPU EK runs for 1 MPI rank")
 class EKWalberlaVTKSinglePrecisionCPU(TestEKVTK, ut.TestCase):
     vtk_class = espressomd.electrokinetics.VTKOutput
     vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput

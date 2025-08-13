@@ -154,11 +154,6 @@ if(WALBERLA_BUILD_WITH_CUDA)
 endif()
 
 add_subdirectory(src)
-if(WALBERLA_BUILD_WITH_CUDA)
-  target_include_directories(espresso_walberla_cuda
-                             PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/fft_gpu)
-  add_subdirectory(fft_gpu)
-endif()
 if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(tests)
 endif()

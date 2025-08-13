@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 The ESPResSo project
+# Copyright (C) 2022-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -46,7 +46,7 @@ class EKEOF:
     def test_conductivity(self):
         """
         Testing the ion conductivity of a ionic solution by measuring
-        the flux. 
+        the flux.
         """
 
         eps0 = 0.015
@@ -95,7 +95,7 @@ class EKEOF:
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKTestWalberla(EKEOF, ut.TestCase):
 
-    """Test for the Walberla implementation of the EK in double-precision."""
+    """Test for the waLBerla implementation of the EK in double-precision."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
@@ -106,7 +106,7 @@ class EKTestWalberla(EKEOF, ut.TestCase):
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKTestWalberlaSinglePrecision(EKEOF, ut.TestCase):
 
-    """Test for the Walberla implementation of the EK in single-precision."""
+    """Test for the waLBerla implementation of the EK in single-precision."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
@@ -118,7 +118,7 @@ class EKTestWalberlaSinglePrecision(EKEOF, ut.TestCase):
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 class EKTestWalberlaGPU(EKEOF, ut.TestCase):
 
-    """Test for the Walberla implementation of the EK in double-precision GPU."""
+    """Test for the waLBerla implementation of the EK in double-precision GPU."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
@@ -130,7 +130,7 @@ class EKTestWalberlaGPU(EKEOF, ut.TestCase):
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 class EKTestWalberlaSinglePrecisionGPU(EKEOF, ut.TestCase):
 
-    """Test for the Walberla implementation of the EK in single-precision GPU."""
+    """Test for the waLBerla implementation of the EK in single-precision GPU."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU

@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <FFT_CUDA.cuh>
+#include "FFT_CUDA.cuh"
 
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/PoissonSolver/FFT_GPU.hpp>

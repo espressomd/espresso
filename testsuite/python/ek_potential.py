@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 The ESPResSo project
+# Copyright (C) 2022-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -97,7 +97,7 @@ class EKEOF:
             pot_min = eksolver[0, 0, 0].potential  # fixing the offset
 
             # We divide by BOX_L, because over the PBC the surfaces are
-            # one unit apart which defines the volatage  
+            # one unit apart, which defines the voltage
             ref_voltage = self.AGRID * valency * \
                 (self.BOX_L[0] - self.AGRID) / eps0 / epsR / self.BOX_L[0]
             slope = -ref_voltage / (width - 1)
@@ -113,7 +113,7 @@ class EKEOF:
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKTestWalberla(EKEOF, ut.TestCase):
 
-    """Test for the Walberla implementation of the EK in double-precision."""
+    """Test for the waLBerla implementation of the EK in double-precision."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
@@ -125,7 +125,7 @@ class EKTestWalberla(EKEOF, ut.TestCase):
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKTestWalberlaSinglePrecision(EKEOF, ut.TestCase):
 
-    """Test for the Walberla implementation of the EK in single-precision."""
+    """Test for the waLBerla implementation of the EK in single-precision."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
@@ -138,7 +138,7 @@ class EKTestWalberlaSinglePrecision(EKEOF, ut.TestCase):
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 class EKTestWalberlaGPU(EKEOF, ut.TestCase):
 
-    """Test for the Walberla implementation of the EK in double-precision."""
+    """Test for the waLBerla implementation of the EK in double-precision."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
@@ -151,7 +151,7 @@ class EKTestWalberlaGPU(EKEOF, ut.TestCase):
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 class EKTestWalberlaSinglePrecisionGPU(EKEOF, ut.TestCase):
 
-    """Test for the Walberla implementation of the EK in single-precision."""
+    """Test for the waLBerla implementation of the EK in single-precision."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU

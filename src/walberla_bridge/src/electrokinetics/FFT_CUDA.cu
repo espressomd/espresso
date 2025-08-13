@@ -118,8 +118,8 @@ FFT_CUDA<FloatType>::FFT_CUDA(std::shared_ptr<LatticeWalberla> lattice,
       get_lattice().get_ghost_layers());
   m_greens_function_field_id = gpu::addGPUFieldToStorage<GreenFunctionField>(
       get_lattice().get_blocks(), "greens function", 1, field::fzyx, 0, false);
-  m_potential_furier_id = gpu::addGPUFieldToStorage<PotentialFurier>(
-      get_lattice().get_blocks(), "furier field", 1, field::fzyx, 0, false);
+  m_potential_fourier_id = gpu::addGPUFieldToStorage<PotentialFourier>(
+      get_lattice().get_blocks(), "fourier field", 1, field::fzyx, 0, false);
   reset_charge_field();
 
   heffte = std::make_shared<heffte_container>();
@@ -156,13 +156,13 @@ FFT_CUDA<FloatType>::FFT_CUDA(std::shared_ptr<LatticeWalberla> lattice,
         m_potential_field_with_ghosts_id);
     auto green =
         block.template getData<GreenFunctionField>(m_greens_function_field_id);
-    auto furier =
-        block.template getData<PotentialFurier>(m_potential_furier_id);
+    auto fourier =
+        block.template getData<PotentialFourier>(m_potential_fourier_id);
 
     kernel_greens =
         gpu::make_kernel(multiply_by_greens_function<FloatType, ComplexType>);
     kernel_greens.addFieldIndexingParam(
-        gpu::FieldIndexing<ComplexType>::allInner(*furier));
+        gpu::FieldIndexing<ComplexType>::allInner(*fourier));
     kernel_greens.addFieldIndexingParam(
         gpu::FieldIndexing<FloatType>::allInner(*green));
 
@@ -220,14 +220,14 @@ template <typename FloatType> void FFT_CUDA<FloatType>::solve() {
   for (auto &block : *get_lattice().get_blocks()) {
     auto potential =
         block.template getData<PotentialField>(m_potential_field_id);
-    auto furier =
-        block.template getData<PotentialFurier>(m_potential_furier_id);
+    auto fourier =
+        block.template getData<PotentialFourier>(m_potential_fourier_id);
     FloatType *_data_potential = potential->dataAt(0, 0, 0, 0);
-    ComplexType *_data_furier = furier->dataAt(0, 0, 0, 0);
-    heffte->m_fft->forward(_data_potential, _data_furier,
+    ComplexType *_data_fourier = fourier->dataAt(0, 0, 0, 0);
+    heffte->m_fft->forward(_data_potential, _data_fourier,
                            heffte->m_buffer->data());
     kernel_greens();
-    heffte->m_fft->backward(_data_furier, _data_potential,
+    heffte->m_fft->backward(_data_fourier, _data_potential,
                             heffte->m_buffer->data());
     kernel_move_fields();
     ghost_communication();

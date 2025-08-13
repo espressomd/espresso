@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 The ESPResSo project
+# Copyright (C) 2022-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -203,6 +203,7 @@ with code_generation_context.CodeGeneration() as ctx:
     if target == ps.Target.GPU:
         ctx.gpu = True
         ctx.cuda = True
+
     # codegen configuration
     config = pystencils_espresso.generate_config(ctx, params)
 
@@ -337,16 +338,14 @@ with code_generation_context.CodeGeneration() as ctx:
         dirichlet_stencil = lbmpy.stencils.LBStencil(stencil=((0, 0, 0),))
         for i in range(1, max_num_reactants + 1):
             assignments = list(reaction_obj.generate_reaction(num_reactants=i))
-            class_name: str = f"ReactionKernelBulk_{i}_{
-                precision_suffix}{processor_suffix}"
+            class_name = f"ReactionKernelBulk_{i}_{precision_suffix}{processor_suffix}"  # nopep8
             pystencils_walberla.generate_sweep(
                 generation_context=ctx,
                 class_name=class_name,
                 target=target,
                 assignments=assignments)
 
-            class_name: str = f"ReactionKernelIndexed_{
-                i}_{precision_suffix}{processor_suffix}"
+            class_name = f"ReactionKernelIndexed_{i}_{precision_suffix}{processor_suffix}"  # nopep8
             custom_additional_extensions.generate_boundary(
                 generation_context=ctx,
                 stencil=dirichlet_stencil,
@@ -374,8 +373,7 @@ with code_generation_context.CodeGeneration() as ctx:
     if "accessors" in args.kernels:
         # field accessors
         precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
-        kernel_name = f"EK_FieldAccessors_{
-            precision_suffix}{processor_suffix}"
+        kernel_name = f"EK_FieldAccessors_{precision_suffix}{processor_suffix}"
         if target == ps.Target.GPU:
             templates = {
                 f"{kernel_name}.cuh": "templates/EK_FieldAccessors.tmpl.cuh",

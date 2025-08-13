@@ -397,6 +397,8 @@ python_test(FILE utils.py MAX_NUM_PROC 1)
 python_test(FILE npt_thermostat.py MAX_NUM_PROC 4)
 python_test(FILE box_geometry.py MAX_NUM_PROC 1)
 python_test(FILE lattice.py MAX_NUM_PROC 4)
+# TODO walberla: remove next line after fixing performance bottleneck
+python_test(FILE lattice_vtk.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
 python_test(FILE lattice_vtk.py MAX_NUM_PROC 4 GPU_SLOTS 1)
 if(${ESPRESSO_TEST_NP} GREATER_EQUAL 6)
   python_test(FILE lattice_vtk.py MAX_NUM_PROC 6 SUFFIX 6_cores GPU_SLOTS 1)

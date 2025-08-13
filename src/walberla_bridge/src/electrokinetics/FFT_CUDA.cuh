@@ -33,7 +33,7 @@ private:
                                        cufftComplex, cufftDoubleComplex>::type;
   using PotentialField = gpu::GPUField<FloatType>;
   using GreenFunctionField = gpu::GPUField<FloatType>;
-  using PotentialFurier = gpu::GPUField<ComplexType>;
+  using PotentialFourier = gpu::GPUField<ComplexType>;
 
   std::shared_ptr<LatticeWalberla> m_lattice;
   double m_permittivity;
@@ -41,7 +41,7 @@ private:
   walberla::BlockDataID m_potential_field_id;
   walberla::BlockDataID m_potential_field_with_ghosts_id;
   walberla::BlockDataID m_greens_function_field_id;
-  walberla::BlockDataID m_potential_furier_id;
+  walberla::BlockDataID m_potential_fourier_id;
   walberla::gpu::Kernel<void (*)(walberla::gpu::FieldAccessor<ComplexType>,
                                  walberla::gpu::FieldAccessor<FloatType>)>
       kernel_greens;
