@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -44,6 +44,7 @@
 
 #include "reactions/EKReactionImplBulk.hpp"
 #include "reactions/EKReactionImplIndexed.hpp"
+
 #include <gpu/DeviceSelectMPI.h>
 
 #include <walberla_bridge/LatticeWalberla.hpp>
@@ -54,6 +55,7 @@
 #include <utils/Vector.hpp>
 
 #include <memory>
+
 namespace walberla {
 std::shared_ptr<EKinWalberlaBase>
 new_ek_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef WALBERLA
 #ifdef WALBERLA_FFT
@@ -38,8 +38,6 @@
 #include <script_interface/walberla/EKFFT.hpp>
 
 #include <utils/math/int_pow.hpp>
-
-#include <memory>
 
 namespace ScriptInterface::walberla {
 

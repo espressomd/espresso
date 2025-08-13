@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2025 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #pragma once
 
 #include <gpu/AddGPUFieldToStorage.h>
@@ -8,17 +27,17 @@
 #include <gpu/communication/UniformGPUScheme.h>
 
 #include <stencil/D3Q27.h>
+
 #include <walberla_bridge/LatticeWalberla.hpp>
 
 #include "../src/electrokinetics/generated_kernels/EK_FieldAccessors_double_precision_CUDA.cuh"
 #include "../src/electrokinetics/generated_kernels/EK_FieldAccessors_single_precision_CUDA.cuh"
 
-#include <cmath>
-#include <cstddef>
 #include <cufft.h>
+
+#include <cstddef>
 #include <memory>
-#include <numbers>
-#include <utility>
+#include <type_traits>
 
 namespace walberla {
 
@@ -29,8 +48,8 @@ private:
     return numeric_cast<FloatType>(t);
   }
 
-  using ComplexType = std::conditional<std::is_same<FloatType, float>::value,
-                                       cufftComplex, cufftDoubleComplex>::type;
+  using ComplexType = std::conditional_t<std::is_same_v<FloatType, float>,
+                                         cufftComplex, cufftDoubleComplex>;
   using PotentialField = gpu::GPUField<FloatType>;
   using GreenFunctionField = gpu::GPUField<FloatType>;
   using PotentialFourier = gpu::GPUField<ComplexType>;

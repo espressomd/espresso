@@ -18,8 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file
+/*
  * Lattice field accessors.
  * Adapted from the waLBerla source file
  * https://i10git.cs.fau.de/walberla/walberla/-/blob/a16141524c58ab88386e2a0f8fdd7c63c5edd704/python/lbmpy_walberla/templates/LatticeModel.tmpl.h
@@ -45,26 +44,18 @@
 
 #if defined(__NVCC__)
 #define RESTRICT __restrict__
-#pragma nv_diagnostic push
-#pragma nv_diag_suppress 177 // unused variable
 #elif defined(__clang__)
 #if defined(__CUDA__)
 #if defined(__CUDA_ARCH__)
 // clang compiling CUDA code in device mode
 #define RESTRICT __restrict__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
 #else
 // clang compiling CUDA code in host mode
 #define RESTRICT __restrict__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
 #endif
 #endif
 #elif defined(__GNUC__) or defined(__GNUG__)
 #define RESTRICT __restrict__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
 #elif defined(_MSC_VER)
 #define RESTRICT __restrict
 #else

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 The ESPResSo project
+ * Copyright (C) 2021-2025 The ESPResSo project
  * Copyright (C) 2020 The waLBerla project
  *
  * This file is part of ESPResSo.
@@ -38,16 +38,6 @@
 #include <iterator>
 #include <tuple>
 #include <vector>
-
-#ifdef WALBERLA_CXX_COMPILER_IS_GNU
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#endif
-
-#ifdef WALBERLA_CXX_COMPILER_IS_CLANG
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
-#endif
 
 namespace walberla {
 namespace {{namespace}} {
@@ -385,11 +375,3 @@ namespace Flux
 } // namespace accessor
 } // namespace {{namespace}}
 } // namespace walberla
-
-#ifdef WALBERLA_CXX_COMPILER_IS_GNU
-#pragma GCC diagnostic pop
-#endif
-
-#ifdef WALBERLA_CXX_COMPILER_IS_CLANG
-#pragma clang diagnostic pop
-#endif

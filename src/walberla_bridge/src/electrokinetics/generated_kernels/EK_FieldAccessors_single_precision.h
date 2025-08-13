@@ -43,16 +43,6 @@
 #include <tuple>
 #include <vector>
 
-#ifdef WALBERLA_CXX_COMPILER_IS_GNU
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#endif
-
-#ifdef WALBERLA_CXX_COMPILER_IS_CLANG
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
-#endif
-
 namespace walberla {
 namespace ek {
 namespace accessor {
@@ -511,11 +501,3 @@ inline auto get_vector(GhostLayerField<float, uint_t{13u}> const *flux_field,
 } // namespace accessor
 } // namespace ek
 } // namespace walberla
-
-#ifdef WALBERLA_CXX_COMPILER_IS_GNU
-#pragma GCC diagnostic pop
-#endif
-
-#ifdef WALBERLA_CXX_COMPILER_IS_CLANG
-#pragma clang diagnostic pop
-#endif

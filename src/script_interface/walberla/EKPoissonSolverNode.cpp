@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef WALBERLA
 
@@ -30,13 +30,6 @@
 #include <utils/Vector.hpp>
 #include <utils/mpi/reduce_optional.hpp>
 
-#include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/serialization/vector.hpp>
-
-#include <cassert>
-#include <memory>
-#include <optional>
-#include <stdexcept>
 #include <string>
 
 namespace ScriptInterface::walberla {

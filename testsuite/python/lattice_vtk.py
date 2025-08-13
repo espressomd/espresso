@@ -452,6 +452,7 @@ class EKWalberlaVTKDoublePrecisionCPU(TestEKVTK, ut.TestCase):
     vtk_id = "ek_double_precision_cpu"
 
 
+@utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 @ut.skipIf(TestEKVTK.system.cell_system.get_state()["n_nodes"] != 1,
            "GPU EK runs for 1 MPI rank")
