@@ -277,9 +277,9 @@ namespace Flux
             {% if i == 0 -%}
                 local_value[{{i}}] = {{dtype}}(0.0);
             {% elif Stencils[i] in StaggeredStencils -%}
-                local_value[{{i}}] = flux_field->getF( &xyz0, uint_t{ {{StaggeredStencils[Stencils[i]]}}u });
+                local_value[{{i}}] = {{dtype}}(0.5) * flux_field->getF( &xyz0, uint_t{ {{StaggeredStencils[Stencils[i]]}}u });
             {% else -%}
-                local_value[{{i}}] = -flux_field->getNeighbor(cell.x(), cell.y(), cell.z(), uint_t{ {{InverseStencils[Stencils[i]]}}u }, stencil::Direction(uint_t{ {{i}}u }));
+                local_value[{{i}}] = {{dtype}}(-0.5) * flux_field->getNeighbor(cell.x(), cell.y(), cell.z(), uint_t{ {{InverseStencils[Stencils[i]]}}u }, stencil::Direction(uint_t{ {{i}}u }));
             {% endif -%}
         {% endfor %}
 

@@ -288,6 +288,7 @@ class TestEKVTK(TestVTK):
         shape = (shape[0] - 4, *shape[1:])
         vtk_reader = espressomd.io.vtk.VTKReader()
         label_density = "density"
+        label_flux = "flux"
         label_potential = "potential"
 
         with tempfile.TemporaryDirectory() as tmp_directory:
@@ -363,9 +364,11 @@ class TestEKVTK(TestVTK):
 
             # read VTK output of final time step
             last_frames = []
+            last_frames_flux = []
             for filepath in (path_vtk_last_frame, path_vtk_continuous[-1],):
                 grids = vtk_reader.parse(filepath)
                 last_frames.append(grids[label_density])
+                last_frames_flux.append(grids[label_flux])
 
             last_frames_poisson = []
             for filepath in (path_vtk_poisson_last_frame,
@@ -377,6 +380,8 @@ class TestEKVTK(TestVTK):
             for i in range(len(last_frames[0])):
                 np.testing.assert_allclose(last_frames[0][i],
                                            last_frames[1][i], atol=1e-10)
+                np.testing.assert_allclose(last_frames_flux[0][i],
+                                           last_frames_flux[1][i], atol=1e-10)
 
             for i in range(len(last_frames_poisson[0])):
                 np.testing.assert_allclose(last_frames_poisson[0][i],
@@ -388,6 +393,11 @@ class TestEKVTK(TestVTK):
             for vtk_density in last_frames:
                 np.testing.assert_allclose(
                     vtk_density, ek_density, rtol=5e-7)
+            
+            ek_flux = np.copy(actor[2:-2, :, :].flux)
+            for vtk_flux in last_frames_flux:
+                np.testing.assert_allclose(
+                    vtk_flux, ek_flux, rtol=5e-7)
 
             ek_potential = np.copy(self.solver[:, :, :].potential)
 

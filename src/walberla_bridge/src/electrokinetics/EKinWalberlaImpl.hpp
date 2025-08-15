@@ -155,6 +155,11 @@ public:
   using DensityField =
       typename FieldTrait<FloatType, Architecture>::DensityField;
 
+#if defined(__CUDACC__)
+  using DensityFieldCpu = FieldTrait<FloatType, lbmpy::Arch::CPU>::DensityField;
+  using FluxFieldCpu = FieldTrait<FloatType, lbmpy::Arch::CPU>::FluxField;
+#endif
+
   template <typename T> FloatType FloatType_c(T t) {
     return numeric_cast<FloatType>(t);
   }
@@ -184,6 +189,11 @@ protected:
 
   BlockDataID m_flag_field_density_id;
   BlockDataID m_flag_field_flux_id;
+
+#if defined(__CUDACC__)
+  std::optional<BlockDataID> m_density_cpu_field_id;
+  std::optional<BlockDataID> m_flux_cpu_field_id;
+#endif
 
   /** Flag for domain cells, i.e. all cells. */
   FlagUID const Domain_flag{"domain"};
@@ -293,6 +303,11 @@ public:
 
     m_continuity =
         std::make_unique<ContinuityKernel>(m_flux_field_id, m_density_field_id);
+
+#if defined(__CUDACC__)
+    m_host_field_allocator =
+        std::make_shared<gpu::HostFieldAllocator<FloatType>>();
+#endif
 
     if (thermalized) {
       set_diffusion_kernels(*m_lattice, seed);
@@ -1044,11 +1059,12 @@ protected:
     FloatType const m_conversion;
   };
 
-  template <typename OutputType = float,
-            class Base = VTKWriter<DensityField, 1u, OutputType>>
-  class DensityVTKWriter : public VTKWriter<DensityField, 1u, OutputType> {
+#if defined(__CUDACC__)
+template <typename OutputType = float>
+  class DensityVTKWriter : public VTKWriter<DensityFieldCpu, 1u, OutputType> {
   public:
-    using VTKWriter<DensityField, 1u, OutputType>::VTKWriter;
+    using Base = VTKWriter<DensityFieldCpu, 1u, OutputType>;
+    using Base::Base;
     using Base::evaluate;
 
   protected:
@@ -1059,14 +1075,32 @@ protected:
       return numeric_cast<OutputType>(this->m_conversion * density);
     }
   };
-
-  template <typename OutputType = float,
-            class Base = VTKWriter<FluxField, 3u, OutputType>>
-  class FluxVTKWriter : public VTKWriter<FluxField, 3u, OutputType> {
+#else
+template <typename OutputType = float>
+  class DensityVTKWriter : public VTKWriter<DensityField, 1u, OutputType> {
   public:
-    using VTKWriter<FluxField, 3u, OutputType>::VTKWriter;
+    using Base = VTKWriter<DensityField, 1u, OutputType>;
+    using Base::Base;
     using Base::evaluate;
 
+  protected:
+    OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
+                        cell_idx_t const z, cell_idx_t const) override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
+      auto const density = ek::accessor::Scalar::get(this->m_field, {x, y, z});
+      return numeric_cast<OutputType>(this->m_conversion * density);
+    }
+  };
+#endif
+
+#if defined(__CUDACC__)
+template <typename OutputType = float>
+  class FluxVTKWriter : public VTKWriter<FluxFieldCpu, 3u, OutputType> {
+  public:
+    using Base = VTKWriter<FluxFieldCpu, 3u, OutputType>;
+    using Base::Base;
+    using Base::evaluate;
+    
   protected:
     OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
                         cell_idx_t const z, cell_idx_t const f) override {
@@ -1076,20 +1110,76 @@ protected:
       return numeric_cast<OutputType>(this->m_conversion * flux[uint_c(f)]);
     }
   };
+#else
+template <typename OutputType = float>
+  class FluxVTKWriter : public VTKWriter<FluxField, 3u, OutputType> {
+  public:
+    using Base = VTKWriter<FluxField, 3u, OutputType>;
+    using Base::Base;
+    using Base::evaluate;
+    
+  protected:
+    OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
+                        cell_idx_t const z, cell_idx_t const f) override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
+      auto const flux =
+          ek::accessor::Flux::get_vector(this->m_field, {x, y, z});
+      return numeric_cast<OutputType>(this->m_conversion * flux[uint_c(f)]);
+    }
+  };
+#endif
 
 public:
   void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
                                   LatticeModel::units_map const &units,
                                   int flag_observables) override {
+#if defined(__CUDACC__)
+    auto const allocate_cpu_field_if_empty =
+        [&]<typename Field>(auto const &blocks, std::string name,
+                            std::optional<BlockDataID> &cpu_field) {
+          if (not cpu_field) {
+            cpu_field = field::addToStorage<Field>(
+                blocks, name, FloatType{0}, field::fzyx,
+                m_lattice->get_ghost_layers(), m_host_field_allocator);
+          }
+        };
+#endif
     if (flag_observables & static_cast<int>(EKOutputVTK::density)) {
       auto const unit_conversion = FloatType_c(units.at("density"));
+#if defined(__CUDACC__)
+      if constexpr (Architecture == lbmpy::Arch::GPU) {
+        auto const &blocks = m_lattice->get_blocks();
+        allocate_cpu_field_if_empty.template operator()<DensityFieldCpu>(
+            blocks, "density_cpu", m_density_cpu_field_id);
+        vtk_obj.addBeforeFunction(gpu::fieldCpyFunctor<DensityFieldCpu, DensityField>(
+            blocks, *m_density_cpu_field_id, m_density_field_id));
+        vtk_obj.addCellDataWriter(make_shared<DensityVTKWriter<float>>(
+          *m_density_cpu_field_id, "density", unit_conversion));
+      }else{
+#endif
       vtk_obj.addCellDataWriter(make_shared<DensityVTKWriter<float>>(
           m_density_field_id, "density", unit_conversion));
+#if defined(__CUDACC__)
+      }
+#endif
     }
     if (flag_observables & static_cast<int>(EKOutputVTK::flux)) {
       auto const unit_conversion = FloatType_c(units.at("flux"));
-      vtk_obj.addCellDataWriter(make_shared<FluxVTKWriter<float>>(
-          m_flux_field_id, "flux", unit_conversion));
+#if defined(__CUDACC__)
+      if constexpr (Architecture == lbmpy::Arch::GPU) {
+        auto const &blocks = m_lattice->get_blocks();
+        allocate_cpu_field_if_empty.template operator()<FluxFieldCpu>(
+            blocks, "flux_cpu", m_flux_cpu_field_id);
+        vtk_obj.addBeforeFunction(gpu::fieldCpyFunctor<FluxFieldCpu, FluxField>(
+            blocks, *m_flux_cpu_field_id, m_flux_field_id));
+        vtk_obj.addCellDataWriter(make_shared<FluxVTKWriter<float>>(
+          *m_flux_cpu_field_id, "flux", unit_conversion));
+      }else{
+#endif
+      vtk_obj.addCellDataWriter(make_shared<FluxVTKWriter<float>>(m_flux_field_id, "flux", unit_conversion));
+#if defined(__CUDACC__)
+      }
+#endif
     }
   }
 
