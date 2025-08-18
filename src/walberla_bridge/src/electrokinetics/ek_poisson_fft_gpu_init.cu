@@ -17,6 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if defined(__NVCC__)
+#define RESTRICT __restrict__
+#if defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#pragma nv_diagnostic push
+#pragma nv_diag_suppress 554 // no implicit or explicit cast
+#else
+#pragma push
+#pragma diag_suppress 554 // no implicit or explicit cast
+#endif
+#endif
+
 #include "FFT_CUDA.cuh"
 
 #include <walberla_bridge/LatticeWalberla.hpp>

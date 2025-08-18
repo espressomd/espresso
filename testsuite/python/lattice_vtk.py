@@ -393,7 +393,7 @@ class TestEKVTK(TestVTK):
             for vtk_density in last_frames:
                 np.testing.assert_allclose(
                     vtk_density, ek_density, rtol=5e-7)
-            
+
             ek_flux = np.copy(actor[2:-2, :, :].flux)
             for vtk_flux in last_frames_flux:
                 np.testing.assert_allclose(

@@ -205,11 +205,11 @@ protected:
     FloatType const m_conversion;
   };
 
-  template <typename OutputType = float,
-            class Base = VTKWriter<PotentialField, 1u, OutputType>>
+  template <typename OutputType = float>
   class PotentialVTKWriter : public VTKWriter<PotentialField, 1u, OutputType> {
   public:
-    using VTKWriter<PotentialField, 1u, OutputType>::VTKWriter;
+    using Base = VTKWriter<PotentialField, 1u, OutputType>;
+    using Base::Base;
     using Base::evaluate;
 
   protected:

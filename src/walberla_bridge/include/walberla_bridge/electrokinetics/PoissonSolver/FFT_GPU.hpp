@@ -21,7 +21,9 @@
 
 #include "PoissonSolver.hpp"
 
+#include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_double_precision.h"
 #include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_double_precision_CUDA.cuh"
+#include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_single_precision.h"
 #include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_single_precision_CUDA.cuh"
 #include "../../BlockAndCell.hpp"
 
@@ -32,6 +34,7 @@
 #include <field/GhostLayerField.h>
 #include <field/communication/PackInfo.h>
 #include <field/vtk/VTKWriter.h>
+#include <gpu/HostFieldAllocator.h>
 #include <stencil/D3Q27.h>
 
 #include <cmath>
@@ -51,12 +54,18 @@ private:
 
   std::shared_ptr<FFT_CUDA<FloatType>> fft_cuda;
   using PotentialField = gpu::GPUField<FloatType>;
+  using PotentialFieldCpu = GhostLayerField<FloatType, 1>;
+
+  std::optional<BlockDataID> m_potential_cpu_field_id;
+  std::shared_ptr<gpu::HostFieldAllocator<FloatType>> m_host_field_allocator;
 
 public:
   FFT_GPU() = default;
   FFT_GPU(std::shared_ptr<LatticeWalberla> lattice, double permittivity)
       : PoissonSolver(lattice, permittivity) {
     fft_cuda = std::make_shared<FFT_CUDA<FloatType>>(lattice, permittivity);
+    m_host_field_allocator =
+        std::make_shared<gpu::HostFieldAllocator<FloatType>>();
   }
   ~FFT_GPU() override = default;
 
@@ -154,11 +163,12 @@ protected:
     FloatType const m_conversion;
   };
 
-  template <typename OutputType = float,
-            class Base = VTKWriter<PotentialField, 1u, OutputType>>
-  class PotentialVTKWriter : public VTKWriter<PotentialField, 1u, OutputType> {
+  template <typename OutputType = float>
+  class PotentialVTKWriter
+      : public VTKWriter<PotentialFieldCpu, 1u, OutputType> {
   public:
-    using VTKWriter<PotentialField, 1u, OutputType>::VTKWriter;
+    using Base = VTKWriter<PotentialFieldCpu, 1u, OutputType>;
+    using Base::Base;
     using Base::evaluate;
 
   protected:
@@ -174,11 +184,26 @@ protected:
   void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
                                   LatticeModel::units_map const &units,
                                   int flag_observables) override {
+    auto const allocate_cpu_field_if_empty =
+        [&]<typename Field>(auto const &blocks, std::string name,
+                            std::optional<BlockDataID> &cpu_field) {
+          if (not cpu_field) {
+            cpu_field = field::addToStorage<Field>(
+                blocks, name, FloatType{0}, field::fzyx,
+                get_lattice().get_ghost_layers(), m_host_field_allocator);
+          }
+        };
     if (flag_observables & static_cast<int>(EKPoissonOutputVTK::potential)) {
       auto const unit_conversion = FloatType_c(units.at("potential"));
+      auto const &blocks = get_lattice().get_blocks();
+      allocate_cpu_field_if_empty.template operator()<PotentialFieldCpu>(
+          blocks, "potential_cpu", m_potential_cpu_field_id);
+      vtk_obj.addBeforeFunction(
+          gpu::fieldCpyFunctor<PotentialFieldCpu, PotentialField>(
+              blocks, *m_potential_cpu_field_id,
+              domain_decomposition::BlockDataID(get_potential_field_id())));
       vtk_obj.addCellDataWriter(make_shared<PotentialVTKWriter<float>>(
-          domain_decomposition::BlockDataID(get_potential_field_id()),
-          "potential", unit_conversion));
+          *m_potential_cpu_field_id, "potential", unit_conversion));
     }
   }
 
