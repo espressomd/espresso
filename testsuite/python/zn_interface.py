@@ -4,11 +4,11 @@ import espressomd.zn
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
-system = espressomd.System(box_l=[1]*3)
+system = espressomd.System(box_l=[1] * 3)
 vis = espressomd.zn.Visualizer(system)
 url = vis.address
 
-#Default Methods
+# Default Methods
 method_list = [['ConnectedParticles', 'NoneSelection', 'All', 'Invert', 'Range', 'Random', 'IdenticalSpecies', 'Neighbour'],
                ['Delete', 'Rotate', 'Translate', 'Duplicate', 'ChangeType', 'AddLineParticles',
                    'Wrap', 'Center', 'Replicate', 'Connect', 'NewCanvas', 'RemoveAtoms'],
