@@ -69,12 +69,12 @@ BOOST_AUTO_TEST_CASE(insert_bond_types) {
   BOOST_TEST(bond_map.contains(first_key));
   BOOST_TEST(bond_map.contains(second_key));
 
-  BOOST_REQUIRE_EQUAL(bond_map.count(first_key), 1);
-  BOOST_REQUIRE_EQUAL(mock_core.count(first_key), 1);
-  BOOST_REQUIRE_EQUAL(bond_map.count(second_key), 1);
-  BOOST_REQUIRE_EQUAL(mock_core.count(second_key), 1);
-  BOOST_REQUIRE_EQUAL(bond_map.count(bond_map.get_next_key()), 0);
-  BOOST_REQUIRE_EQUAL(mock_core.count(bond_map.get_next_key()), 0);
+  BOOST_REQUIRE(bond_map.contains(first_key));
+  BOOST_REQUIRE(mock_core.contains(first_key));
+  BOOST_REQUIRE(bond_map.contains(second_key));
+  BOOST_REQUIRE(mock_core.contains(second_key));
+  BOOST_REQUIRE(not bond_map.contains(bond_map.get_next_key()));
+  BOOST_REQUIRE(not mock_core.contains(bond_map.get_next_key()));
 
   // delete an element
   bond_map.erase(first_key);

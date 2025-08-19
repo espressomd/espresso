@@ -25,6 +25,6 @@ scripts_test(FILE test_notebook_links.py)
 scripts_test(FILE test_check_myconfig.py)
 
 add_custom_target(
-  check_scripts
+  check_scripts JOB_POOL console
   COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
           -j${ESPRESSO_TEST_NP} ${ESPRESSO_CTEST_ARGS} --output-on-failure)

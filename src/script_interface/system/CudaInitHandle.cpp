@@ -58,15 +58,12 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
     std::unordered_map<int, std::string> devices{};
 #ifdef CUDA
     if (context()->is_head_node()) {
-      // only GPUs on the head node can be used
+      // only GPUs on the head node can be displayed
       auto n_gpus = 0;
       invoke_skip_cuda_exceptions([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
       for (int i = 0; i < n_gpus; ++i) {
-        invoke_skip_cuda_exceptions([&devices, i]() {
-          char gpu_name_buffer[256] = {'\0'};
-          cuda_get_gpu_name(i, gpu_name_buffer);
-          devices[i] = std::string{gpu_name_buffer};
-        });
+        invoke_skip_cuda_exceptions(
+            [&devices, i]() { devices[i] = cuda_get_gpu_name(i); });
       }
     }
 #endif // CUDA
@@ -77,12 +74,12 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
 #ifdef CUDA
     std::vector<EspressoGpuDevice> devices = cuda_gather_gpus();
     for (auto const &dev : devices) {
-      auto const hostname = std::string{dev.proc_name};
-      if (dict.count(hostname) == 0) {
+      auto const hostname = dev.proc_name;
+      if (not dict.contains(hostname)) {
         dict[hostname] = {};
       }
       std::unordered_map<std::string, Variant> dev_properties = {
-          {"name", std::string{dev.name}},
+          {"name", dev.name},
           {"compute_capability",
            Variant{std::vector<int>{
                {dev.compute_capability_major, dev.compute_capability_minor}}}},
@@ -97,10 +94,8 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
   if (name == "get_n_gpus") {
     auto n_gpus = 0;
 #ifdef CUDA
-    if (context()->is_head_node()) {
-      // only GPUs on the head node can be used
-      invoke_skip_cuda_exceptions([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
-    }
+    auto const devices = cuda_gather_gpus();
+    n_gpus = static_cast<int>(devices.size());
 #endif // CUDA
     return n_gpus;
   }

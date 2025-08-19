@@ -17,23 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE System test
-#define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "config/config.hpp"
 
-#ifdef CUDA
-
+#include "EspressoCoreGlobalConfig.hpp"
 #include "ParticleFactory.hpp"
 
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "cells.hpp"
-#include "communication.hpp"
 #include "particle_node.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
@@ -47,18 +43,28 @@
 #include <cassert>
 #include <memory>
 
+struct GlobalConfig : public EspressoCoreGlobalConfig {
+  ~GlobalConfig() { ::System::reset_system(); }
+};
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_AUTO_TEST_SUITE(suite)
+
 /* Decorator to run a unit test depending on GPU availability. */
 boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
   bool has_compatible_gpu = false;
+#ifdef CUDA
   invoke_skip_cuda_exceptions([&]() {
     cuda_check_device();
     has_compatible_gpu = true;
   });
+#endif // CUDA
   return has_compatible_gpu;
 }
 
 BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
                         *boost::unit_test::precondition(has_gpu)) {
+#ifdef CUDA
   auto const rank = boost::mpi::communicator().rank();
 
   auto system = ::System::System::create();
@@ -147,14 +153,7 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
 
   clear_particles();
   System::reset_system();
+#endif // CUDA
 }
 
-int main(int argc, char **argv) {
-  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
-
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}
-
-#else // CUDA
-int main(int argc, char **argv) {}
-#endif
+BOOST_AUTO_TEST_SUITE_END()

@@ -54,6 +54,8 @@ void init_error_handling(std::weak_ptr<Communication::MpiCallbacks> callbacks) {
       std::make_unique<RuntimeErrorCollector>(m_callbacks.lock()->comm());
 }
 
+void deinit_error_handling() { runtimeErrorCollector.reset(); }
+
 RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
                                          const std::string &file,
                                          const int line,

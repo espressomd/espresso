@@ -90,22 +90,22 @@ namespace walberla {
 template <typename FloatType, lbmpy::Arch Architecture>
 class LBWalberlaImpl : public LBWalberlaBase {
 protected:
-  using CollisionModelLeesEdwards =
-      typename detail::KernelTrait<FloatType,
-                                   Architecture>::CollisionModelLeesEdwards;
-  using CollisionModelThermalized =
-      typename detail::KernelTrait<FloatType,
-                                   Architecture>::CollisionModelThermalized;
-  using StreamSweep =
-      typename detail::KernelTrait<FloatType, Architecture>::StreamSweep;
+  using StreamCollisionModelLeesEdwards =
+      detail::KernelTrait<FloatType,
+                          Architecture>::StreamCollisionModelLeesEdwards;
+  using StreamCollisionModelThermalized =
+      detail::KernelTrait<FloatType,
+                          Architecture>::StreamCollisionModelThermalized;
+  using UpdateVelFromPDF =
+      detail::KernelTrait<FloatType, Architecture>::UpdateVelFromPDF;
   using InitialPDFsSetter =
-      typename detail::KernelTrait<FloatType, Architecture>::InitialPDFsSetter;
+      detail::KernelTrait<FloatType, Architecture>::InitialPDFsSetter;
+  using DynamicUBB =
+      detail::BoundaryHandlingTrait<FloatType, Architecture>::DynamicUBB;
   using BoundaryModel =
-      BoundaryHandling<Vector3<FloatType>,
-                       typename detail::BoundaryHandlingTrait<
-                           FloatType, Architecture>::DynamicUBB>;
-  using CollisionModel =
-      std::variant<CollisionModelThermalized, CollisionModelLeesEdwards>;
+      BoundaryHandling<FloatType, Vector3<FloatType>, DynamicUBB>;
+  using CollisionModel = std::variant<StreamCollisionModelThermalized,
+                                      StreamCollisionModelLeesEdwards>;
 
 public:
   /** @brief Stencil for collision and streaming operations. */
@@ -121,10 +121,8 @@ protected:
     using VectorField = field::GhostLayerField<FT, uint_t{3u}>;
     template <class Field>
     using PackInfo = field::communication::PackInfo<Field>;
-    using PackInfoStreamingPdf =
-        typename detail::KernelTrait<FT, AT>::PackInfoPdf;
-    using PackInfoStreamingVec =
-        typename detail::KernelTrait<FT, AT>::PackInfoVec;
+    using PackInfoStreamingPdf = detail::KernelTrait<FT, AT>::PackInfoPdf;
+    using PackInfoStreamingVec = detail::KernelTrait<FT, AT>::PackInfoVec;
     template <class Stencil>
     using RegularCommScheme =
         blockforest::communication::UniformBufferedScheme<Stencil>;
@@ -153,10 +151,8 @@ protected:
     using PdfField = gpu::GPUField<FT>;
     using VectorField = gpu::GPUField<FT>;
     template <class Field> using PackInfo = MemcpyPackInfo<Field>;
-    using PackInfoStreamingPdf =
-        typename detail::KernelTrait<FT, AT>::PackInfoPdf;
-    using PackInfoStreamingVec =
-        typename detail::KernelTrait<FT, AT>::PackInfoVec;
+    using PackInfoStreamingPdf = detail::KernelTrait<FT, AT>::PackInfoPdf;
+    using PackInfoStreamingVec = detail::KernelTrait<FT, AT>::PackInfoVec;
     template <class Stencil>
     using RegularCommScheme = UniformGPUScheme<Stencil>;
     template <class Stencil>
@@ -166,19 +162,17 @@ protected:
 #endif
 
   // "underlying" field types (`GPUField` has no f-size info at compile time)
-  using _PdfField = typename FieldTrait<FloatType>::PdfField;
-  using _VectorField = typename FieldTrait<FloatType>::VectorField;
+  using _PdfField = FieldTrait<FloatType>::PdfField;
+  using _VectorField = FieldTrait<FloatType>::VectorField;
 
 public:
-  using PdfField = typename FieldTrait<FloatType, Architecture>::PdfField;
-  using VectorField = typename FieldTrait<FloatType, Architecture>::VectorField;
-  using FlagField = typename BoundaryModel::FlagField;
+  using PdfField = FieldTrait<FloatType, Architecture>::PdfField;
+  using VectorField = FieldTrait<FloatType, Architecture>::VectorField;
+  using FlagField = BoundaryModel::FlagField;
 #if defined(__CUDACC__)
   using GPUField = gpu::GPUField<FloatType>;
-  using PdfFieldCpu =
-      typename FieldTrait<FloatType, lbmpy::Arch::CPU>::PdfField;
-  using VectorFieldCpu =
-      typename FieldTrait<FloatType, lbmpy::Arch::CPU>::VectorField;
+  using PdfFieldCpu = FieldTrait<FloatType, lbmpy::Arch::CPU>::PdfField;
+  using VectorFieldCpu = FieldTrait<FloatType, lbmpy::Arch::CPU>::VectorField;
 #endif
 
   struct GhostComm {
@@ -206,27 +200,27 @@ public:
   }
 
 private:
-  class CollideSweepVisitor {
+  class StreamCollideSweepVisitor {
   public:
     using StructuredBlockStorage = LatticeWalberla::Lattice_T;
 
-    void operator()(CollisionModelThermalized &cm, IBlock *b) {
+    void operator()(StreamCollisionModelThermalized &cm, IBlock *b) {
       cm.configure(m_storage, b);
       cm(b);
     }
 
-    void operator()(CollisionModelLeesEdwards &cm, IBlock *b) {
+    void operator()(StreamCollisionModelLeesEdwards &cm, IBlock *b) {
       cm.setV_s(static_cast<decltype(cm.getV_s())>(
           m_lees_edwards_callbacks->get_shear_velocity()));
       cm(b);
     }
 
-    CollideSweepVisitor() = default;
-    CollideSweepVisitor(std::shared_ptr<StructuredBlockStorage> storage) {
+    StreamCollideSweepVisitor() = default;
+    StreamCollideSweepVisitor(std::shared_ptr<StructuredBlockStorage> storage) {
       m_storage = std::move(storage);
     }
-    CollideSweepVisitor(std::shared_ptr<StructuredBlockStorage> storage,
-                        std::shared_ptr<LeesEdwardsPack> callbacks) {
+    StreamCollideSweepVisitor(std::shared_ptr<StructuredBlockStorage> storage,
+                              std::shared_ptr<LeesEdwardsPack> callbacks) {
       m_storage = std::move(storage);
       m_lees_edwards_callbacks = std::move(callbacks);
     }
@@ -235,7 +229,7 @@ private:
     std::shared_ptr<StructuredBlockStorage> m_storage{};
     std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks{};
   };
-  CollideSweepVisitor m_run_collide_sweep{};
+  StreamCollideSweepVisitor m_run_stream_collide_sweep{};
 
   FloatType shear_mode_relaxation_rate() const {
     return FloatType{2} / (FloatType{6} * m_viscosity + FloatType{1});
@@ -250,8 +244,10 @@ private:
   }
 
   void reset_boundary_handling(std::shared_ptr<BlockStorage> const &blocks) {
-    m_boundary = std::make_shared<BoundaryModel>(blocks, m_pdf_field_id,
-                                                 m_flag_field_id);
+    auto const [lc, uc] = m_lattice->get_local_grid_range(true);
+    m_boundary =
+        std::make_shared<BoundaryModel>(blocks, m_pdf_field_id, m_flag_field_id,
+                                        CellInterval{to_cell(lc), to_cell(uc)});
   }
 
   FloatType pressure_tensor_correction_factor() const {
@@ -297,6 +293,8 @@ protected:
   FloatType m_density;
   FloatType m_kT;
   unsigned int m_seed;
+  double m_zc_to_md; // zero-centered conversion factor to MD units
+  double m_zc_to_lb; // zero-centered conversion factor to LB units
 
   // Block data access handles
   BlockDataID m_pdf_field_id;
@@ -325,21 +323,20 @@ protected:
    * of the ghost layer when setting cell velocities or populations.
    */
   using RegularFullCommunicator =
-      typename FieldTrait<FloatType, Architecture>::template RegularCommScheme<
-          typename stencil::D3Q27>;
+      FieldTrait<FloatType,
+                 Architecture>::template RegularCommScheme<stencil::D3Q27>;
   using BoundaryFullCommunicator =
-      typename FieldTrait<FloatType, Architecture>::template BoundaryCommScheme<
-          typename stencil::D3Q27>;
+      FieldTrait<FloatType,
+                 Architecture>::template BoundaryCommScheme<stencil::D3Q27>;
   /**
    * @brief Regular communicator.
    * We use the same directions as the stencil during integration.
    */
   using PDFStreamingCommunicator =
-      typename FieldTrait<FloatType,
-                          Architecture>::template RegularCommScheme<Stencil>;
+      FieldTrait<FloatType, Architecture>::template RegularCommScheme<Stencil>;
   template <class Field>
   using PackInfo =
-      typename FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
+      FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
 
   // communicators
   std::shared_ptr<BoundaryFullCommunicator> m_boundary_communicator;
@@ -353,9 +350,6 @@ protected:
   // ResetForce sweep + external force handling
   std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
 
-  // Stream sweep
-  std::shared_ptr<StreamSweep> m_stream;
-
   // Lees Edwards boundary interpolation
   std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
   std::shared_ptr<InterpolateAndShiftAtBoundary<_PdfField, FloatType>>
@@ -367,6 +361,9 @@ protected:
 
   // Collision sweep
   std::shared_ptr<CollisionModel> m_collision_model;
+
+  // Velocity update sweep
+  std::shared_ptr<UpdateVelFromPDF> m_update_velocities_from_pdf;
 
   // boundaries
   std::shared_ptr<BoundaryModel> m_boundary;
@@ -437,16 +434,8 @@ protected:
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
     if constexpr (Architecture == lbmpy::Arch::CPU) {
 #ifdef ESPRESSO_BUILD_WITH_AVX_KERNELS
-#if defined(__AVX512F__)
-      constexpr uint_t alignment = 64u;
-#elif defined(__AVX__)
-      constexpr uint_t alignment = 32u;
-#elif defined(__SSE__)
-      constexpr uint_t alignment = 16u;
-#else
-#error "Unsupported arch, check walberla src/field/allocation/FieldAllocator.h"
-#endif
-      using value_type = typename Field::value_type;
+      constexpr auto alignment = field::SIMDAlignment();
+      using value_type = Field::value_type;
       using Allocator = field::AllocateAligned<value_type, alignment>;
       auto const allocator = std::make_shared<Allocator>();
       auto const empty_set = Set<SUID>::emptySet();
@@ -490,8 +479,8 @@ protected:
           std::make_shared<PackInfoVec>(m_last_applied_force_field_id));
     };
     using FieldTrait = FieldTrait<FloatType, Architecture>;
-    using PackInfoPdf = typename FieldTrait::PackInfoStreamingPdf;
-    using PackInfoVec = typename FieldTrait::PackInfoStreamingVec;
+    using PackInfoPdf = FieldTrait::PackInfoStreamingPdf;
+    using PackInfoVec = FieldTrait::PackInfoStreamingVec;
     if (m_has_boundaries or (m_collision_model and has_lees_edwards_bc())) {
       setup.template operator()<PackInfo<PdfField>, PackInfoVec>();
     } else {
@@ -503,7 +492,8 @@ public:
   LBWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice, double viscosity,
                  double density)
       : m_viscosity(FloatType_c(viscosity)), m_density(FloatType_c(density)),
-        m_kT(FloatType{0}), m_seed(0u), m_lattice(std::move(lattice)) {
+        m_kT(FloatType{0}), m_seed(0u), m_zc_to_md(density),
+        m_zc_to_lb(1. / density), m_lattice(std::move(lattice)) {
 
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
@@ -522,10 +512,9 @@ public:
         std::make_shared<gpu::HostFieldAllocator<FloatType>>();
 #endif
 
-    // Initialize and register pdf field
-    auto pdf_setter =
-        InitialPDFsSetter(m_force_to_be_applied_id, m_pdf_field_id,
-                          m_velocity_field_id, m_density);
+    // Initialize and register pdf field with zero centered density
+    auto pdf_setter = InitialPDFsSetter(
+        m_force_to_be_applied_id, m_pdf_field_id, m_velocity_field_id, 1.0);
     for (auto &block : *blocks) {
       pdf_setter(&block);
     }
@@ -560,7 +549,7 @@ public:
     m_boundary_communicator =
         std::make_shared<BoundaryFullCommunicator>(blocks);
     m_boundary_communicator->addPackInfo(
-        std::make_shared<field::communication::PackInfo<FlagField>>(
+        std::make_shared<field::communication::BoundaryFlagPackInfo<FlagField>>(
             m_flag_field_id));
     auto boundary_packinfo = std::make_shared<
         field::communication::BoundaryPackInfo<FlagField, BoundaryModel>>(
@@ -575,33 +564,25 @@ public:
     m_reset_force = std::make_shared<ResetForce<PdfField, VectorField>>(
         m_last_applied_force_field_id, m_force_to_be_applied_id);
 
-    // Prepare LB sweeps
-    // Note: For now, combined collide-stream sweeps cannot be used,
-    // because the collide-push variant is not supported by lbmpy.
-    // The following functors are individual in-place collide and stream steps
-    m_stream = std::make_shared<StreamSweep>(
+    // Instantiate velocity update sweep
+    m_update_velocities_from_pdf = std::make_shared<UpdateVelFromPDF>(
         m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
   }
 
 private:
-  void integrate_stream(std::shared_ptr<BlockStorage> const &blocks) {
-    for (auto &block : *blocks)
-      (*m_stream)(&block);
-  }
-
-  void integrate_collide(std::shared_ptr<BlockStorage> const &blocks) {
+  void integrate_stream_collide(std::shared_ptr<BlockStorage> const &blocks) {
     auto &cm_variant = *m_collision_model;
     for (auto &block : *blocks) {
       auto const block_variant = std::variant<IBlock *>(&block);
-      std::visit(m_run_collide_sweep, cm_variant, block_variant);
+      std::visit(m_run_stream_collide_sweep, cm_variant, block_variant);
     }
-    if (auto *cm = std::get_if<CollisionModelThermalized>(&cm_variant)) {
+    if (auto *cm = std::get_if<StreamCollisionModelThermalized>(&cm_variant)) {
       cm->setTime_step(cm->getTime_step() + 1u);
     }
   }
 
   auto has_lees_edwards_bc() const {
-    return std::holds_alternative<CollisionModelLeesEdwards>(
+    return std::holds_alternative<StreamCollisionModelLeesEdwards>(
         *m_collision_model);
   }
 
@@ -633,45 +614,37 @@ private:
       (*m_boundary)(&block);
   }
 
-  void integrate_push_scheme() {
-    auto const &blocks = get_lattice().get_blocks();
-    // Reset force fields
-    integrate_reset_force(blocks);
-    // LB collide
-    integrate_collide(blocks);
-    m_pdf_streaming_communicator->communicate();
-    // Handle boundaries
-    if (m_has_boundaries) {
-      integrate_boundaries(blocks);
-    }
-    // LB stream
-    integrate_stream(blocks);
-    // Mark pending ghost layer updates
-    m_pending_ghost_comm.set(GhostComm::PDF);
-    m_pending_ghost_comm.set(GhostComm::VEL);
-    m_pending_ghost_comm.set(GhostComm::LAF);
-    // Refresh ghost layers
-    ghost_communication_push_scheme();
+  void integrate_update_velocities_from_pdf(
+      std::shared_ptr<BlockStorage> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_update_velocities_from_pdf)(&*b);
   }
 
   void integrate_pull_scheme() {
     auto const &blocks = get_lattice().get_blocks();
+    // Reset force fields
+    integrate_reset_force(blocks);
+    // LB stream collide
+    integrate_stream_collide(blocks);
+    // Mark pending ghost layer updates
+    // As pdf and laf are communicated direcly afterwards they are not set.
+    m_pending_ghost_comm.set(GhostComm::VEL);
+    m_pending_ghost_comm.set(GhostComm::LAF);
+    m_pdf_streaming_communicator->communicate();
+    if (has_lees_edwards_bc()) {
+      apply_lees_edwards_pdf_interpolation(blocks);
+      apply_lees_edwards_last_applied_force_interpolation(blocks);
+    }
     // Handle boundaries
     if (m_has_boundaries) {
       integrate_boundaries(blocks);
     }
-    // LB stream
-    integrate_stream(blocks);
-    // LB collide
-    integrate_collide(blocks);
-    // Reset force fields
-    integrate_reset_force(blocks);
-    // Mark pending ghost layer updates
-    m_pending_ghost_comm.set(GhostComm::PDF);
-    m_pending_ghost_comm.set(GhostComm::VEL);
-    m_pending_ghost_comm.set(GhostComm::LAF);
-    // Refresh ghost layers
-    ghost_communication_full();
+    // Update velocities from pdfs
+    integrate_update_velocities_from_pdf(blocks);
+
+    if (has_lees_edwards_bc()) {
+      apply_lees_edwards_vel_interpolation_and_shift(blocks);
+    }
   }
 
 protected:
@@ -687,19 +660,16 @@ protected:
 
 public:
   void integrate() override {
-    if (has_lees_edwards_bc()) {
-      integrate_pull_scheme();
-    } else {
-      integrate_push_scheme();
-    }
-    // Handle VTK writers
+    integrate_pull_scheme();
     integrate_vtk_writers();
   }
 
   void ghost_communication() override {
     if (m_pending_ghost_comm.any()) {
       ghost_communication_boundary();
-      ghost_communication_full();
+      ghost_communication_pdf();
+      ghost_communication_laf();
+      ghost_communication_vel();
     }
   }
 
@@ -746,27 +716,18 @@ public:
   void ghost_communication_full() {
     m_full_communicator->communicate();
     if (has_lees_edwards_bc()) {
-      auto const &blocks = get_lattice().get_blocks();
-      apply_lees_edwards_pdf_interpolation(blocks);
-      apply_lees_edwards_vel_interpolation_and_shift(blocks);
-      apply_lees_edwards_last_applied_force_interpolation(blocks);
+      apply_lees_edwards_interpolation();
     }
     m_pending_ghost_comm.reset(GhostComm::PDF);
     m_pending_ghost_comm.reset(GhostComm::VEL);
     m_pending_ghost_comm.reset(GhostComm::LAF);
   }
 
-  void ghost_communication_push_scheme() {
-    if (has_lees_edwards_bc()) {
-      m_full_communicator->communicate();
-      auto const &blocks = get_lattice().get_blocks();
-      apply_lees_edwards_pdf_interpolation(blocks);
-      apply_lees_edwards_vel_interpolation_and_shift(blocks);
-      apply_lees_edwards_last_applied_force_interpolation(blocks);
-      m_pending_ghost_comm.reset(GhostComm::PDF);
-      m_pending_ghost_comm.reset(GhostComm::VEL);
-      m_pending_ghost_comm.reset(GhostComm::LAF);
-    }
+  void apply_lees_edwards_interpolation() {
+    auto const &blocks = get_lattice().get_blocks();
+    apply_lees_edwards_pdf_interpolation(blocks);
+    apply_lees_edwards_vel_interpolation_and_shift(blocks);
+    apply_lees_edwards_last_applied_force_interpolation(blocks);
   }
 
   void set_collision_model(double kT, unsigned int seed) override {
@@ -775,11 +736,12 @@ public:
     auto const blocks = get_lattice().get_blocks();
     m_kT = FloatType_c(kT);
     m_seed = seed;
-    auto obj = CollisionModelThermalized(m_last_applied_force_field_id,
-                                         m_pdf_field_id, m_kT, omega, omega,
-                                         omega_odd, omega, seed, uint32_t{0u});
+    auto obj = StreamCollisionModelThermalized(
+        m_last_applied_force_field_id, m_pdf_field_id,
+        zero_centered_to_lb(m_kT), omega, omega, omega_odd, omega, seed,
+        uint32_t{0u});
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
-    m_run_collide_sweep = CollideSweepVisitor(blocks);
+    m_run_stream_collide_sweep = StreamCollideSweepVisitor(blocks);
     setup_streaming_communicator();
   }
 
@@ -811,11 +773,12 @@ public:
     }
     auto const agrid =
         FloatType_c(lattice.get_grid_dimensions()[shear_plane_normal]);
-    auto obj = CollisionModelLeesEdwards(
+    auto obj = StreamCollisionModelLeesEdwards(
         m_last_applied_force_field_id, m_pdf_field_id, agrid, omega, shear_vel);
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
-    m_run_collide_sweep = CollideSweepVisitor(blocks, m_lees_edwards_callbacks);
+    m_run_stream_collide_sweep =
+        StreamCollideSweepVisitor(blocks, m_lees_edwards_callbacks);
     m_lees_edwards_pdf_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<_PdfField, FloatType>>(
             blocks, m_pdf_field_id, m_pdf_tmp_field_id, n_ghost_layers,
@@ -858,6 +821,38 @@ public:
     return numeric_cast<double>(m_density);
   }
 
+  template <typename T>
+  void zero_centered_transform_impl(T &data, auto const factor) const {
+    if constexpr (std::is_arithmetic_v<T>) {
+      static_assert(std::is_floating_point_v<T>);
+      data *= static_cast<T>(factor);
+    } else {
+      auto const coef = static_cast<typename T::value_type>(factor);
+      std::transform(std::begin(data), std::end(data), std::begin(data),
+                     [coef](auto value) { return value * coef; });
+    }
+  }
+
+  void zero_centered_to_lb_in_place(auto &data) const {
+    zero_centered_transform_impl(data, m_zc_to_lb);
+  }
+
+  void zero_centered_to_md_in_place(auto &data) const {
+    zero_centered_transform_impl(data, m_zc_to_md);
+  }
+
+  auto zero_centered_to_lb(auto const &data) const {
+    auto transformed_data = data;
+    zero_centered_to_lb_in_place(transformed_data);
+    return transformed_data;
+  }
+
+  auto zero_centered_to_md(auto const &data) const {
+    auto transformed_data = data;
+    zero_centered_to_md_in_place(transformed_data);
+    return transformed_data;
+  }
+
   // Velocity
   std::optional<Utils::Vector3d>
   get_node_velocity(Utils::Vector3i const &node,
@@ -894,7 +889,7 @@ public:
         bc->block->template getData<VectorField>(m_velocity_field_id);
     auto force_field =
         bc->block->template getData<VectorField>(m_last_applied_force_field_id);
-    auto const vel = to_vector3<FloatType>(v);
+    auto vel = to_vector3<FloatType>(v);
     lbm::accessor::Velocity::set(pdf_field, vel_field, force_field, vel,
                                  bc->cell);
 
@@ -957,7 +952,7 @@ public:
                                                 block_offset, block)) {
           auto const field =
               block.template getData<VectorField>(m_velocity_field_id);
-          auto const values = lbm::accessor::Vector::get(field, *bci);
+          auto values = lbm::accessor::Vector::get(field, *bci);
           assert(values.size() == 3u * bci->numCells());
           values_size += 3u * bci->numCells();
 
@@ -967,7 +962,7 @@ public:
             if (m_boundary->node_is_boundary(node)) {
               auto const &vec = m_boundary->get_node_value_at_boundary(node);
               for (uint_t f = 0u; f < 3u; ++f) {
-                out[3u * local_index + f] = double_c(vec[f]);
+                out[3u * local_index + f] = vec[f];
               }
             } else {
               for (uint_t f = 0u; f < 3u; ++f) {
@@ -1025,6 +1020,15 @@ public:
     return Architecture == lbmpy::Arch::GPU;
   }
 
+  std::function<bool(Utils::Vector3d const &)>
+  make_lattice_position_checker(bool consider_points_in_halo) const override {
+    auto const &lat = *m_lattice;
+    if (consider_points_in_halo) {
+      return [&](Utils::Vector3d const &p) { return lat.pos_in_local_halo(p); };
+    }
+    return [&](Utils::Vector3d const &p) { return lat.pos_in_local_domain(p); };
+  }
+
   void add_forces_at_pos(std::vector<Utils::Vector3d> const &pos,
                          std::vector<Utils::Vector3d> const &forces) override {
     assert(pos.size() == forces.size());
@@ -1032,8 +1036,9 @@ public:
       return;
     }
     if constexpr (Architecture == lbmpy::Arch::CPU) {
+      auto const kernel = make_force_interpolation_kernel();
       for (std::size_t i = 0ul; i < pos.size(); ++i) {
-        add_force_at_pos(pos[i], forces[i]);
+        kernel(pos[i], forces[i]);
       }
     }
 #if defined(__CUDACC__)
@@ -1058,12 +1063,99 @@ public:
           host_force.emplace_back(static_cast<FloatType>(vec[i]));
         }
       }
+      zero_centered_to_lb_in_place(host_force);
       auto const gl = lattice.get_ghost_layers();
       auto field = block.template uncheckedFastGetData<VectorField>(
           m_force_to_be_applied_id);
-      lbm::accessor::Interpolation::set(field, host_pos, host_force, gl);
+      lbm::accessor::Interpolation::add_force(field, host_pos, host_force, gl);
     }
 #endif
+  }
+
+  auto make_force_interpolation_kernel() const {
+    auto const &lattice = *m_lattice;
+    auto const &blocks = *lattice.get_blocks();
+    assert(lattice.get_ghost_layers() == 1u);
+    return [&](Utils::Vector3d const &pos, Utils::Vector3d const &force) {
+      if (not get_block_extended(lattice, pos, 1u)) {
+        return;
+      }
+      interpolate_bspline_at_pos(
+          pos, [&, conv = m_zc_to_lb, field_id = m_force_to_be_applied_id](
+                   std::array<int, 3> const node, double weight) {
+            auto block = get_block_extended(lattice, node, 0u);
+            if (!block)
+              block = get_block_extended(lattice, node, 1u);
+            if (block) {
+              auto cell = to_cell(node);
+              blocks.transformGlobalToBlockLocalCell(cell, *block);
+              weight *= conv;
+              auto const weighted_force = to_vector3<FloatType>(weight * force);
+              auto field =
+                  block->template uncheckedFastGetData<VectorField>(field_id);
+              lbm::accessor::Vector::add(field, weighted_force, cell);
+            }
+          });
+    };
+  }
+
+  auto make_velocity_interpolation_kernel() const {
+    auto const &lattice = *m_lattice;
+    auto const &blocks = *lattice.get_blocks();
+    assert(lattice.get_ghost_layers() == 1u);
+    return [&](Utils::Vector3d const &pos) {
+      Utils::Vector3d acc{0., 0., 0.};
+      interpolate_bspline_at_pos(pos, [&, field_id = m_velocity_field_id](
+                                          std::array<int, 3> const node,
+                                          double weight) {
+        // Nodes with zero weight might not be accessible, because they can be
+        // outside ghost layers
+        if (weight != 0.) {
+          auto block = get_block_extended(lattice, node, 1u);
+          if (!block)
+            throw interpolation_illegal_access("velocity", pos, node, weight);
+          Vector3<FloatType> vel;
+          if (m_has_boundaries and m_boundary->node_is_boundary(node)) {
+            vel = m_boundary->get_node_value_at_boundary(node);
+          } else {
+            auto cell = to_cell(node);
+            blocks.transformGlobalToBlockLocalCell(cell, *block);
+            auto field =
+                block->template uncheckedFastGetData<VectorField>(field_id);
+            vel = lbm::accessor::Vector::get(field, cell);
+          }
+          acc += to_vector3d(vel) * weight;
+        }
+      });
+      return acc;
+    };
+  }
+
+  auto make_density_interpolation_kernel() const {
+    auto const &lattice = *m_lattice;
+    auto const &blocks = *lattice.get_blocks();
+    assert(lattice.get_ghost_layers() == 1u);
+    return [&](Utils::Vector3d const &pos) {
+      double acc = 0.;
+      interpolate_bspline_at_pos(pos, [&, density = m_density,
+                                       field_id = m_pdf_field_id](
+                                          std::array<int, 3> const node,
+                                          double weight) {
+        // Nodes with zero weight might not be accessible, because they can be
+        // outside ghost layers
+        if (weight != 0.) {
+          auto block = get_block_extended(lattice, node, 1u);
+          if (!block)
+            throw interpolation_illegal_access("density", pos, node, weight);
+          auto cell = to_cell(node);
+          blocks.transformGlobalToBlockLocalCell(cell, *block);
+          auto field = block->template uncheckedFastGetData<PdfField>(field_id);
+          auto const rho = lbm::accessor::Density::get(field, density, cell);
+          acc += rho * weight;
+        }
+      });
+      return acc;
+    };
   }
 
   std::vector<Utils::Vector3d>
@@ -1072,13 +1164,10 @@ public:
       return {};
     }
     std::vector<Utils::Vector3d> vel{};
+    vel.reserve(pos.size());
     if constexpr (Architecture == lbmpy::Arch::CPU) {
-      vel.reserve(pos.size());
-      for (auto const &vec : pos) {
-        auto res = get_velocity_at_pos(vec, true);
-        assert(res.has_value());
-        vel.emplace_back(*res);
-      }
+      auto const kernel = make_velocity_interpolation_kernel();
+      std::ranges::transform(pos, std::back_inserter(vel), kernel);
     }
 #if defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
@@ -1097,8 +1186,14 @@ public:
       auto const gl = lattice.get_ghost_layers();
       auto field =
           block.template uncheckedFastGetData<VectorField>(m_velocity_field_id);
-      auto const res = lbm::accessor::Interpolation::get(field, host_pos, gl);
-      vel.reserve(res.size() / 3ul);
+      // the velocity field has indeterminate values inside boundary regions;
+      // we overwrite them with boundary slip velocities before interpolation
+      auto const [dev_idx, dev_vel] = m_boundary->get_flattened_map_device();
+      if (not dev_idx->empty()) {
+        lbm::accessor::Vector::set_from_list(field, *dev_idx, *dev_vel, gl);
+      }
+      auto const res =
+          lbm::accessor::Interpolation::get_vel(field, host_pos, gl);
       for (auto it = res.begin(); it != res.end(); it += 3) {
         vel.emplace_back(Utils::Vector3d{static_cast<double>(*(it + 0)),
                                          static_cast<double>(*(it + 1)),
@@ -1107,6 +1202,48 @@ public:
     }
 #endif
     return vel;
+  }
+
+  std::vector<double>
+  get_densities_at_pos(std::vector<Utils::Vector3d> const &pos) override {
+    if (pos.empty()) {
+      return {};
+    }
+    std::vector<double> rho{};
+    rho.reserve(pos.size());
+    if constexpr (Architecture == lbmpy::Arch::CPU) {
+      auto const kernel = make_density_interpolation_kernel();
+      std::ranges::transform(pos, std::back_inserter(rho), kernel);
+    }
+#if defined(__CUDACC__)
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      auto const &lattice = get_lattice();
+      auto const &block = *(lattice.get_blocks()->begin());
+      auto const origin = block.getAABB().min();
+      std::vector<FloatType> host_pos;
+      host_pos.reserve(3ul * pos.size());
+      assert(lattice.get_blocks()->getNumberOfBlocks() == 1u);
+      for (auto const &vec : pos) {
+#pragma unroll
+        for (std::size_t i : {0ul, 1ul, 2ul}) {
+          host_pos.emplace_back(static_cast<FloatType>(vec[i] - origin[i]));
+        }
+      }
+      auto const gl = lattice.get_ghost_layers();
+      auto field =
+          block.template uncheckedFastGetData<PdfField>(m_pdf_field_id);
+      auto res =
+          lbm::accessor::Interpolation::get_rho(field, host_pos, m_density, gl);
+      if constexpr (std::is_same_v<FloatType, double>) {
+        std::swap(rho, res);
+      } else {
+        for (auto const &v : res) {
+          rho.emplace_back(static_cast<double>(v));
+        }
+      }
+    }
+#endif
+    return rho;
   }
 
   std::optional<Utils::Vector3d>
@@ -1118,20 +1255,8 @@ public:
       return std::nullopt;
     if (consider_points_in_halo and !m_lattice->pos_in_local_halo(pos))
       return std::nullopt;
-    Utils::Vector3d v{0., 0., 0.};
-    interpolate_bspline_at_pos(
-        pos, [this, &v, &pos](std::array<int, 3> const node, double weight) {
-          // Nodes with zero weight might not be accessible, because they can be
-          // outside ghost layers
-          if (weight != 0.) {
-            auto const res = get_node_velocity(Utils::Vector3i(node), true);
-            if (!res) {
-              throw interpolation_illegal_access("velocity", pos, node, weight);
-            }
-            v += *res * weight;
-          }
-        });
-    return {std::move(v)};
+    auto const kernel = make_velocity_interpolation_kernel();
+    return {kernel(pos)};
   }
 
   std::optional<double>
@@ -1142,43 +1267,16 @@ public:
       return std::nullopt;
     if (consider_points_in_halo and !m_lattice->pos_in_local_halo(pos))
       return std::nullopt;
-    double dens = 0.;
-    interpolate_bspline_at_pos(
-        pos, [this, &dens, &pos](std::array<int, 3> const node, double weight) {
-          // Nodes with zero weight might not be accessible, because they can be
-          // outside ghost layers
-          if (weight != 0.) {
-            auto const res = get_node_density(Utils::Vector3i(node), true);
-            if (!res) {
-              throw interpolation_illegal_access("density", pos, node, weight);
-            }
-            dens += *res * weight;
-          }
-        });
-    return {std::move(dens)};
+    auto const kernel = make_density_interpolation_kernel();
+    return {kernel(pos)};
   }
 
-  // Local force
   bool add_force_at_pos(Utils::Vector3d const &pos,
                         Utils::Vector3d const &force) override {
     if (!m_lattice->pos_in_local_halo(pos))
       return false;
-    auto const force_at_node = [this, &force](std::array<int, 3> const node,
-                                              double weight) {
-      auto bc = get_block_and_cell(get_lattice(), Utils::Vector3i(node), false);
-      if (!bc) {
-        bc = get_block_and_cell(get_lattice(), Utils::Vector3i(node), true);
-      }
-
-      if (bc) {
-        auto const weighted_force = to_vector3<FloatType>(weight * force);
-        auto force_field =
-            bc->block->template uncheckedFastGetData<VectorField>(
-                m_force_to_be_applied_id);
-        lbm::accessor::Vector::add(force_field, weighted_force, bc->cell);
-      }
-    };
-    interpolate_bspline_at_pos(pos, force_at_node);
+    auto const kernel = make_force_interpolation_kernel();
+    kernel(pos, force);
     return true;
   }
 
@@ -1191,7 +1289,7 @@ public:
     auto field =
         bc->block->template getData<VectorField>(m_force_to_be_applied_id);
     auto const vec = lbm::accessor::Vector::get(field, bc->cell);
-    return to_vector3d(vec);
+    return zero_centered_to_md(to_vector3d(vec));
   }
 
   std::optional<Utils::Vector3d>
@@ -1205,7 +1303,7 @@ public:
     auto const field =
         bc->block->template getData<VectorField>(m_last_applied_force_field_id);
     auto const vec = lbm::accessor::Vector::get(field, bc->cell);
-    return to_vector3d(vec);
+    return zero_centered_to_md(to_vector3d(vec));
   }
 
   bool set_node_last_applied_force(Utils::Vector3i const &node,
@@ -1222,7 +1320,8 @@ public:
     auto vel_field =
         bc->block->template getData<VectorField>(m_velocity_field_id);
     auto const vec = to_vector3<FloatType>(force);
-    lbm::accessor::Force::set(pdf_field, vel_field, force_field, vec, bc->cell);
+    lbm::accessor::Force::set(pdf_field, vel_field, force_field, vec, m_density,
+                              bc->cell);
 
     return true;
   }
@@ -1255,6 +1354,7 @@ public:
         }
       }
     }
+    zero_centered_to_md_in_place(out);
     return out;
   }
 
@@ -1288,7 +1388,7 @@ public:
 
           copy_block_buffer(*bci, *ci, block_offset, lower_corner, kernel);
           lbm::accessor::Force::set(pdf_field, vel_field, force_field, values,
-                                    *bci);
+                                    m_density, *bci);
         }
       }
     }
@@ -1415,7 +1515,8 @@ public:
 
     auto pdf_field =
         bc->block->template uncheckedFastGetData<PdfField>(m_pdf_field_id);
-    auto const density = lbm::accessor::Density::get(pdf_field, bc->cell);
+    auto const density =
+        lbm::accessor::Density::get(pdf_field, m_density, bc->cell);
     return {double_c(density)};
   }
 
@@ -1426,7 +1527,8 @@ public:
       return false;
 
     auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
-    lbm::accessor::Density::set(pdf_field, FloatType_c(density), bc->cell);
+    lbm::accessor::Density::set(pdf_field, FloatType_c(density), m_density,
+                                bc->cell);
 
     return true;
   }
@@ -1444,7 +1546,8 @@ public:
                                                 block_offset, block)) {
           auto const pdf_field =
               block.template getData<PdfField>(m_pdf_field_id);
-          auto const values = lbm::accessor::Density::get(pdf_field, *bci);
+          auto const values =
+              lbm::accessor::Density::get(pdf_field, m_density, *bci);
           assert(values.size() == bci->numCells());
 
           auto kernel = [&values, &out](unsigned const block_index,
@@ -1481,7 +1584,7 @@ public:
           };
 
           copy_block_buffer(*bci, *ci, block_offset, lower_corner, kernel);
-          lbm::accessor::Density::set(pdf_field, values, *bci);
+          lbm::accessor::Density::set(pdf_field, values, m_density, *bci);
         }
       }
     }
@@ -1656,7 +1759,7 @@ public:
     on_boundary_add();
     m_pending_ghost_comm.set(GhostComm::UBB);
     auto const grid_size = get_lattice().get_grid_dimensions();
-    auto const data = fill_3D_vector_array(data_flat, grid_size);
+    auto data = fill_3D_vector_array(data_flat, grid_size);
     set_boundary_from_grid(*m_boundary, get_lattice(), raster_flat, data);
     ghost_communication();
     reallocate_ubb_field();
@@ -1670,9 +1773,9 @@ public:
       return std::nullopt;
 
     auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
-    auto tensor = lbm::accessor::PressureTensor::get(pdf_field, bc->cell);
+    auto tensor =
+        lbm::accessor::PressureTensor::get(pdf_field, m_density, bc->cell);
     pressure_tensor_correction(tensor);
-
     return to_vector9d(tensor);
   }
 
@@ -1689,7 +1792,8 @@ public:
                                                 block_offset, block)) {
           auto const pdf_field =
               block.template getData<PdfField>(m_pdf_field_id);
-          auto values = lbm::accessor::PressureTensor::get(pdf_field, *bci);
+          auto values =
+              lbm::accessor::PressureTensor::get(pdf_field, m_density, *bci);
           assert(values.size() == 9u * bci->numCells());
 
           auto kernel = [&values, &out, this](unsigned const block_index,
@@ -1714,7 +1818,7 @@ public:
     Matrix3<FloatType> tensor(FloatType{0});
     for (auto const &block : *get_lattice().get_blocks()) {
       auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
-      tensor += lbm::accessor::PressureTensor::reduce(pdf_field);
+      tensor += lbm::accessor::PressureTensor::reduce(pdf_field, m_density);
     }
     auto const grid_size = get_lattice().get_grid_dimensions();
     auto const number_of_nodes = Utils::product(grid_size);
@@ -1729,18 +1833,19 @@ public:
       auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
       auto force_field =
           block.template getData<VectorField>(m_last_applied_force_field_id);
-      mom += lbm::accessor::MomentumDensity::reduce(pdf_field, force_field);
+      mom += lbm::accessor::MomentumDensity::reduce(pdf_field, force_field,
+                                                    m_density);
     }
     return to_vector3d(mom);
   }
 
   // Global external force
   void set_external_force(Utils::Vector3d const &ext_force) override {
-    m_reset_force->set_ext_force(ext_force);
+    m_reset_force->set_ext_force(zero_centered_to_lb(ext_force));
   }
 
   [[nodiscard]] Utils::Vector3d get_external_force() const noexcept override {
-    return m_reset_force->get_ext_force();
+    return zero_centered_to_md(m_reset_force->get_ext_force());
   }
 
   [[nodiscard]] double get_kT() const noexcept override {
@@ -1752,7 +1857,8 @@ public:
   }
 
   [[nodiscard]] std::optional<uint64_t> get_rng_state() const override {
-    auto const cm = std::get_if<CollisionModelThermalized>(&*m_collision_model);
+    auto const cm =
+        std::get_if<StreamCollisionModelThermalized>(&*m_collision_model);
     if (!cm or m_kT == 0.) {
       return std::nullopt;
     }
@@ -1760,7 +1866,8 @@ public:
   }
 
   void set_rng_state(uint64_t counter) override {
-    auto const cm = std::get_if<CollisionModelThermalized>(&*m_collision_model);
+    auto const cm =
+        std::get_if<StreamCollisionModelThermalized>(&*m_collision_model);
     if (!cm or m_kT == 0.) {
       throw std::runtime_error("This LB instance is unthermalized");
     }
@@ -1820,7 +1927,7 @@ protected:
                         cell_idx_t const z, cell_idx_t const) override {
       WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
       auto const density =
-          lbm::accessor::Density::get(this->m_field, {x, y, z});
+          lbm::accessor::Density::get(this->m_field, 1., {x, y, z});
       return numeric_cast<OutputType>(this->m_conversion * density);
     }
   };
@@ -1860,7 +1967,7 @@ protected:
                         cell_idx_t const z, cell_idx_t const f) override {
       WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
       auto const pressure =
-          lbm::accessor::PressureTensor::get(this->m_field, {x, y, z});
+          lbm::accessor::PressureTensor::get(this->m_field, 1., {x, y, z});
       auto const revert_factor =
           (f == 0 or f == 4 or f == 8) ? FloatType{1} : m_off_diag_factor;
       return numeric_cast<OutputType>(this->m_conversion * revert_factor *
@@ -1885,7 +1992,8 @@ public:
         };
 #endif
     if (flag_observables & static_cast<int>(OutputVTK::density)) {
-      auto const unit_conversion = FloatType_c(units.at("density"));
+      auto const unit_conversion =
+          FloatType_c(zero_centered_to_md(units.at("density")));
 #if defined(__CUDACC__)
       if constexpr (Architecture == lbmpy::Arch::GPU) {
         auto const &blocks = m_lattice->get_blocks();
@@ -1914,7 +2022,8 @@ public:
           m_velocity_field_id, "velocity_vector", unit_conversion));
     }
     if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
-      auto const unit_conversion = FloatType_c(units.at("pressure"));
+      auto const unit_conversion =
+          FloatType_c(zero_centered_to_md(units.at("pressure")));
 #if defined(__CUDACC__)
       if constexpr (Architecture == lbmpy::Arch::GPU) {
         auto const &blocks = m_lattice->get_blocks();

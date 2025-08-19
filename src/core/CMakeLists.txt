@@ -48,13 +48,10 @@ add_library(
   PartCfg.cpp
   TabulatedPotential.cpp)
 add_library(espresso::core ALIAS espresso_core)
-if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-  set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY
-                                                 "${ESPRESSO_CXX_CLANG_TIDY}")
-  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-    set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY
-                                                   "${CABANA_CXX_CLANG_TIDY}")
-  endif()
+espresso_set_common_target_properties(espresso_core)
+if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+  set_target_properties(
+    espresso_core PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CABANA_CXX_CLANG_TIDY}")
 endif()
 
 if(ESPRESSO_BUILD_WITH_CUDA)
@@ -73,8 +70,7 @@ if(ESPRESSO_BUILD_WITH_CUDA)
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
             ${CMAKE_CURRENT_SOURCE_DIR}/electrostatics
             ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
-  set_target_properties(espresso_cuda PROPERTIES CUDA_CLANG_TIDY
-                                                 "${ESPRESSO_CUDA_CLANG_TIDY}")
+  espresso_set_common_target_properties(espresso_cuda)
   if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
     set_target_properties(espresso_cuda PROPERTIES CUDA_CLANG_TIDY
                                                    "${CABANA_CUDA_CLANG_TIDY}")
@@ -90,7 +86,11 @@ install(TARGETS espresso_core
 target_link_libraries(
   espresso_core
   PRIVATE
-    espresso::config espresso::utils::mpi espresso::shapes espresso::cpp_flags
+    espresso::config
+    espresso::utils::mpi
+    espresso::shapes
+    espresso::cpp_flags
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Cabana::Core>
   PUBLIC espresso::utils MPI::MPI_CXX Random123 espresso::particle_observables

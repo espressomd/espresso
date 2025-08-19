@@ -30,8 +30,6 @@
 
 #include <utils/demangle.hpp>
 
-#include <boost/variant.hpp>
-
 #include <algorithm>
 #include <functional>
 #include <iomanip>
@@ -41,6 +39,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace ScriptInterface {
@@ -50,56 +49,48 @@ std::vector<std::string> available_methods() {
   return ScafacosContextBase::available_methods();
 }
 
-struct ConvertToStringVector
-    : public boost::static_visitor<std::vector<std::string>> {
+struct ConvertToStringVector {
+  using result_type = std::vector<std::string>;
+
   auto operator()(std::string const &value) const { return result_type{value}; }
 
-  template <typename T, typename = std::enable_if_t<!std::is_arithmetic_v<T>>>
-  result_type operator()(T const &) const {
+  template <typename T> result_type operator()(T const &value) const {
+    if constexpr (std::is_arithmetic_v<T>) {
+      return operator()(to_str(value));
+    }
     throw std::runtime_error("Cannot convert " + Utils::demangle<T>());
-  }
-
-  template <typename T, typename = std::enable_if_t<std::is_same_v<T, int>>>
-  auto operator()(T const &value) const {
-    return operator()(to_str(value));
-  }
-
-  auto operator()(double const &value) const {
-    return operator()(to_str(value));
   }
 
   auto operator()(result_type const &values) const { return values; }
 
-  auto operator()(std::vector<Variant> const &values) const {
+  template <typename T> auto operator()(std::vector<T> const &values) const {
     result_type values_str;
     for (auto const &v : values) {
-      values_str.emplace_back(boost::apply_visitor(*this, v).front());
-    }
-    return values_str;
-  }
-
-  template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
-  auto operator()(std::vector<T> const &values) const {
-    result_type values_str;
-    for (auto const &v : values) {
-      values_str.emplace_back(to_str(v));
+      if constexpr (std::is_same_v<T, Variant>) {
+        values_str.emplace_back(std::visit(*this, v).front());
+      } else {
+        values_str.emplace_back(to_str(v));
+      }
     }
     return values_str;
   }
 
 private:
-  std::string to_str(int const value) const { return std::to_string(value); }
-
-  std::string to_str(double const value) const {
+  template <typename T>
+    requires std::is_arithmetic_v<T>
+  std::string to_str(T const &value) const {
     std::ostringstream serializer;
-    serializer << std::scientific << std::setprecision(17);
+    if constexpr (std::is_floating_point_v<T>) {
+      serializer << std::scientific << std::setprecision(17);
+    }
     serializer << value;
     return serializer.str();
   }
 };
 
-struct GetParameterList
-    : public boost::static_visitor<std::unordered_map<std::string, Variant>> {
+struct GetParameterList {
+  using result_type = std::unordered_map<std::string, Variant>;
+
   auto operator()(result_type const &obj) const { return obj; }
 
   template <typename T>
@@ -119,16 +110,16 @@ private:
 };
 
 std::string serialize_parameters(Variant const &pack) {
-  auto const parameters = boost::apply_visitor(GetParameterList(), pack);
+  auto const parameters = std::visit(GetParameterList(), pack);
   if (parameters.empty()) {
     throw std::invalid_argument(
         "ScaFaCoS methods require at least 1 parameter");
   }
   auto const visitor = ConvertToStringVector();
   std::string method_params = "";
-  for (auto const &kv : parameters) {
-    method_params += "," + kv.first;
-    for (auto const &value : boost::apply_visitor(visitor, kv.second)) {
+  for (auto const &[name, values] : parameters) {
+    method_params += "," + name;
+    for (auto const &value : std::visit(visitor, values)) {
       method_params += "," + value;
     }
   }

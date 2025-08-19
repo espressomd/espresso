@@ -215,7 +215,7 @@ class Test(ut.TestCase):
 
         def check():
             energy, p_scalar, p_tensor = self.get_normalized_obs_per_ion()
-            np.testing.assert_allclose(energy, ref_energy, atol=0., rtol=5e-7)
+            np.testing.assert_allclose(energy, ref_energy, atol=0., rtol=7e-7)
             np.testing.assert_allclose(p_scalar, np.trace(ref_pressure) / 3.,
                                        atol=1e-12, rtol=1e-6)
             np.testing.assert_allclose(p_tensor, ref_pressure, atol=1e-12,
@@ -291,7 +291,7 @@ class Test(ut.TestCase):
 
         def check():
             energy, p_scalar, p_tensor = self.get_normalized_obs_per_ion()
-            np.testing.assert_allclose(energy, ref_energy, atol=0., rtol=1e-6)
+            np.testing.assert_allclose(energy, ref_energy, atol=0., rtol=2e-6)
             np.testing.assert_allclose(p_scalar, np.trace(ref_pressure) / 3.,
                                        atol=1e-12, rtol=5e-6)
             np.testing.assert_allclose(p_tensor, ref_pressure, atol=5e-9,

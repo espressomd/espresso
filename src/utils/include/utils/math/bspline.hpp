@@ -22,17 +22,30 @@
 #include "sqr.hpp"
 #include "utils/device_qualifier.hpp"
 
+#if defined(__CUDACC__)
+#include <cfloat>
+#else
+#include <limits>
+#endif
 #include <stdexcept>
-#include <type_traits>
 
 namespace Utils {
 /** @brief Formula of the B-spline. */
 template <int order, typename T>
-DEVICE_QUALIFIER auto bspline(int i, T x)
-    -> std::enable_if_t<(order > 0) && (order <= 7), T> {
+DEVICE_QUALIFIER auto bspline(int i, T x) -> T
+  requires((order > 0) and (order <= 7))
+{
+#if defined(__CUDACC__)
+  // LCOV_EXCL_START
+  [[maybe_unused]] auto constexpr tolerance = T(6) * (T)(FLT_EPSILON);
+  // LCOV_EXCL_STOP
+#else
+  [[maybe_unused]] auto constexpr tolerance =
+      T(6) * std::numeric_limits<T>::epsilon();
+#endif
   DEVICE_ASSERT(i < order);
-  DEVICE_ASSERT(x >= T(-0.5));
-  DEVICE_ASSERT(x <= T(0.5));
+  DEVICE_ASSERT(x >= T(-0.5) or (T(-0.5) - x) < tolerance);
+  DEVICE_ASSERT(x <= T(0.5) or (x - T(0.5)) < tolerance);
 
   switch (order) {
   case 1:
@@ -206,11 +219,20 @@ template <class T> auto bspline(int i, T x, int k) {
 
 /** @brief Derivative of the B-spline. */
 template <int order, typename T = double>
-DEVICE_QUALIFIER auto bspline_d(int i, T x)
-    -> std::enable_if_t<(order > 0) && (order <= 7), T> {
+DEVICE_QUALIFIER auto bspline_d(int i, T x) -> T
+  requires((order > 0) and (order <= 7))
+{
+#if defined(__CUDACC__)
+  // LCOV_EXCL_START
+  [[maybe_unused]] auto constexpr tolerance = T(6) * (T)(FLT_EPSILON);
+  // LCOV_EXCL_STOP
+#else
+  [[maybe_unused]] auto constexpr tolerance =
+      T(6) * std::numeric_limits<T>::epsilon();
+#endif
   DEVICE_ASSERT(i < order);
-  DEVICE_ASSERT(x >= T(-0.5));
-  DEVICE_ASSERT(x <= T(0.5));
+  DEVICE_ASSERT(x >= T(-0.5) or (T(-0.5) - x) < tolerance);
+  DEVICE_ASSERT(x <= T(0.5) or (x - T(0.5)) < tolerance);
 
   switch (order - 1) {
   case 0:

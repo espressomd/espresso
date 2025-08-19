@@ -33,7 +33,9 @@
 #include "system/System.hpp"
 #include "thermostat.hpp"
 
-#include <boost/variant.hpp>
+#include <variant>
+
+#include <ranges>
 
 void Thermostat::Thermostat::recalc_prefactors(double time_step) {
   if (thermalized_bond) {
@@ -100,8 +102,8 @@ void Thermostat::Thermostat::lb_coupling_deactivate() {
 
 void ThermalizedBondThermostat::recalc_prefactors(
     double time_step, BondedInteractionsMap &bonded_ias) {
-  for (auto &kv : bonded_ias) {
-    if (auto *bond = boost::get<ThermalizedBond>(&(*kv.second))) {
+  for (auto &handle : std::views::elements<1>(bonded_ias)) {
+    if (auto *bond = std::get_if<ThermalizedBond>(handle.get())) {
       bond->recalc_prefactors(time_step);
     }
   }

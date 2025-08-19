@@ -22,10 +22,11 @@ if(ESPRESSO_BUILD_WITH_FFTW)
   add_library(espresso::p3m ALIAS espresso_p3m)
   target_include_directories(espresso_p3m
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
-  if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-    set_target_properties(espresso_p3m PROPERTIES CXX_CLANG_TIDY
-                                                  "${HEFFTE_CXX_CLANG_TIDY}")
-  endif()
+  espresso_set_common_target_properties(espresso_p3m)
+  set_target_properties(espresso_p3m PROPERTIES CXX_CLANG_TIDY
+                                                "${P3M_CXX_CLANG_TIDY}")
+  set_target_properties(espresso_p3m PROPERTIES CXX_CLANG_TIDY
+                                                "${P3M_CUDA_CLANG_TIDY}")
   add_library(espresso_p3m_cpp_flags INTERFACE)
   add_library(espresso::p3m::cpp_flags ALIAS espresso_p3m_cpp_flags)
   target_compile_options(
@@ -37,8 +38,16 @@ if(ESPRESSO_BUILD_WITH_FFTW)
   target_link_libraries(
     espresso_p3m
     PRIVATE
-      espresso::cpp_flags espresso::p3m::cpp_flags espresso::instrumentation
-      espresso::utils espresso::config Boost::mpi MPI::MPI_CXX Heffte::Heffte
+      espresso::cpp_flags
+      espresso::p3m::cpp_flags
+      espresso::instrumentation
+      espresso::utils
+      espresso::config
+      Random123
+      Boost::mpi
+      MPI::MPI_CXX
+      Heffte::Heffte
+      $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
       $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>
       $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Cabana::Core>)
   set_target_properties(espresso_p3m PROPERTIES POSITION_INDEPENDENT_CODE ON)

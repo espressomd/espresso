@@ -24,6 +24,8 @@
  *  For more information on how to add new interactions, see @ref bondedIA_new.
  */
 
+#include <config/config.hpp>
+
 #include "angle_common.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
@@ -47,20 +49,14 @@
 #include "TabulatedPotential.hpp"
 #include "system/Leaf.hpp"
 
-#include <boost/variant.hpp>
-
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <optional>
 #include <stdexcept>
 #include <unordered_map>
+#include <variant>
 #include <vector>
-
-/* Special cutoff value for a disabled bond.
- * Bonds that have this cutoff are not visited during bond evaluation.
- */
-static constexpr double BONDED_INACTIVE_CUTOFF = -1.;
 
 /** Interaction type for unused bonded interaction slots */
 struct NoneBond {
@@ -74,24 +70,16 @@ struct VirtualBond {
   double cutoff() const { return BONDED_INACTIVE_CUTOFF; }
 };
 
-/** Visitor to get the number of bound partners from the bond parameter
- *  variant.
- */
-class BondNumPartners : public boost::static_visitor<int> {
-public:
-  template <typename T> int operator()(T const &) const { return T::num; }
-};
-
 /** Variant in which to store the parameters of an individual bonded
  *  interaction
  */
 using Bonded_IA_Parameters =
-    boost::variant<NoneBond, FeneBond, HarmonicBond, QuarticBond, BondedCoulomb,
-                   BondedCoulombSR, AngleHarmonicBond, AngleCosineBond,
-                   AngleCossquareBond, DihedralBond, TabulatedDistanceBond,
-                   TabulatedAngleBond, TabulatedDihedralBond, ThermalizedBond,
-                   RigidBond, IBMTriel, IBMVolCons, IBMTribend,
-                   OifGlobalForcesBond, OifLocalForcesBond, VirtualBond>;
+    std::variant<NoneBond, FeneBond, HarmonicBond, QuarticBond, BondedCoulomb,
+                 BondedCoulombSR, AngleHarmonicBond, AngleCosineBond,
+                 AngleCossquareBond, DihedralBond, TabulatedDistanceBond,
+                 TabulatedAngleBond, TabulatedDihedralBond, ThermalizedBond,
+                 RigidBond, IBMTriel, IBMVolCons, IBMTribend,
+                 OifGlobalForcesBond, OifLocalForcesBond, VirtualBond>;
 
 /**
  * @brief container for bonded interactions.
@@ -101,11 +89,11 @@ class BondedInteractionsMap : public System::Leaf<BondedInteractionsMap> {
       std::unordered_map<int, std::shared_ptr<Bonded_IA_Parameters>>;
 
 public:
-  using key_type = typename container_type::key_type;
-  using mapped_type = typename container_type::mapped_type;
-  using value_type = typename container_type::value_type;
-  using iterator = typename container_type::iterator;
-  using const_iterator = typename container_type::const_iterator;
+  using key_type = container_type::key_type;
+  using mapped_type = container_type::mapped_type;
+  using value_type = container_type::value_type;
+  using iterator = container_type::iterator;
+  using const_iterator = container_type::const_iterator;
 
   BondedInteractionsMap() = default;
   virtual ~BondedInteractionsMap() = default;
@@ -142,13 +130,12 @@ public:
   virtual void activate_bond(mapped_type const &ptr);
   virtual void deactivate_bond(mapped_type const &ptr);
   mapped_type at(key_type const &key) const { return m_params.at(key); }
-  auto count(key_type const &key) const { return m_params.count(key); }
   bool contains(key_type const &key) const { return m_params.contains(key); }
   bool empty() const { return m_params.empty(); }
   auto size() const { return m_params.size(); }
   auto get_next_key() const { return next_key; }
   auto get_zero_based_type(int bond_id) const {
-    return contains(bond_id) ? at(bond_id)->which() : 0;
+    return contains(bond_id) ? static_cast<int>(at(bond_id)->index()) : 0;
   }
   auto get_n_thermalized_bonds() const {
     assert(n_thermalized_bonds >= 0);
@@ -160,10 +147,10 @@ public:
     return n_rigid_bonds;
   }
 #endif
-  std::optional<key_type> find_bond_id(mapped_type const &bond) const {
-    for (auto const &kv : m_params) {
-      if (kv.second == bond) {
-        return kv.first;
+  std::optional<key_type> find_bond_id(mapped_type const &target_bond) const {
+    for (auto const &[bond_id, bond] : m_params) {
+      if (bond == target_bond) {
+        return bond_id;
       }
     }
     return std::nullopt;
@@ -199,7 +186,7 @@ public:
         bonds.begin(), bonds.end(),
         [this, partner_id = p_partner.id()](BondView const &bond) {
           auto const &bond_ptr = at(bond.bond_id());
-          return (boost::get<BondType>(bond_ptr.get()) != nullptr) and
+          return std::holds_alternative<BondType>(*bond_ptr.get()) and
                  (bond.partner_ids()[0] == partner_id);
         });
   }
@@ -235,5 +222,5 @@ private:
 
 /** @brief Get the number of bonded partners for the specified bond. */
 inline int number_of_partners(Bonded_IA_Parameters const &iaparams) {
-  return boost::apply_visitor(BondNumPartners(), iaparams);
+  return std::visit([]<typename T>(T const &) { return T::num; }, iaparams);
 }

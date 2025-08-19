@@ -49,9 +49,30 @@ struct is_real_vector<Utils::Vector<T, 3>> : std::true_type {};
 template <typename T>
 concept real_vector = detail::is_real_vector<T>::value;
 
+namespace detail {
+template <typename T> struct is_signed_integral_vector : std::false_type {};
+
+template <std::signed_integral T>
+struct is_signed_integral_vector<std::array<T, 3>> : std::true_type {};
+
+template <std::signed_integral T>
+struct is_signed_integral_vector<walberla::Vector3<T>> : std::true_type {};
+
+template <std::signed_integral T>
+struct is_signed_integral_vector<Utils::Vector<T, 3>> : std::true_type {};
+
+template <> struct is_signed_integral_vector<walberla::Cell> : std::true_type {
+  static_assert(std::integral<walberla::cell_idx_t> and
+                std::is_signed_v<walberla::cell_idx_t>);
+};
+} // namespace detail
+
+template <typename T>
+concept signed_integral_vector = detail::is_signed_integral_vector<T>::value;
+
 namespace walberla {
 
-inline Cell to_cell(Utils::Vector3i const &xyz) {
+inline Cell to_cell(signed_integral_vector auto const &xyz) {
   return {xyz[0], xyz[1], xyz[2]};
 }
 
@@ -60,9 +81,7 @@ struct BlockAndCell {
   Cell cell;
 };
 
-template <typename T>
-IBlock *get_block_extended(LatticeWalberla const &lattice,
-                           Utils::Vector<T, 3> const &pos,
+IBlock *get_block_extended(LatticeWalberla const &lattice, auto const &pos,
                            unsigned int n_ghost_layers) {
   auto const &cached_blocks = lattice.get_cached_blocks();
   for (auto &block : cached_blocks) {
@@ -78,7 +97,8 @@ IBlock *get_block_extended(LatticeWalberla const &lattice,
 
 inline std::optional<BlockAndCell>
 get_block_and_cell(::LatticeWalberla const &lattice,
-                   Utils::Vector3i const &node, bool consider_ghost_layers) {
+                   signed_integral_vector auto const &node,
+                   bool consider_ghost_layers) {
   auto const &blocks = lattice.get_blocks();
   auto n_ghost_layers = 0u;
   if (consider_ghost_layers) {
@@ -98,7 +118,7 @@ get_block_and_cell(::LatticeWalberla const &lattice,
 }
 
 inline IBlock *get_block(::LatticeWalberla const &lattice,
-                         Utils::Vector3d const &pos,
+                         real_vector auto const &pos,
                          bool consider_ghost_layers) {
   // Get block
   auto const blocks = lattice.get_blocks();

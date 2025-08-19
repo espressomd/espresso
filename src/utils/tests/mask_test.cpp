@@ -21,7 +21,6 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <utils/get.hpp>
 #include <utils/mask.hpp>
 
 #include <cstdint>
@@ -40,7 +39,7 @@ BOOST_AUTO_TEST_CASE(mask_) {
 
   static_assert(std::is_same_v<input_type, result_type>);
 
-  BOOST_CHECK_EQUAL(Utils::get<0>(result), Utils::get<0>(a));
-  BOOST_CHECK_EQUAL(Utils::get<1>(result), 0);
-  BOOST_CHECK_EQUAL(Utils::get<2>(result), Utils::get<2>(a));
+  BOOST_CHECK_EQUAL(get<0>(result), get<0>(a));
+  BOOST_CHECK_EQUAL(get<1>(result), 0);
+  BOOST_CHECK_EQUAL(get<2>(result), get<2>(a));
 }

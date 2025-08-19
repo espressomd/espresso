@@ -35,7 +35,6 @@
 #include <memory>
 #include <optional>
 #include <tuple>
-#include <type_traits>
 #include <variant>
 
 namespace Coulomb {
@@ -91,19 +90,14 @@ struct ShortRangePressureKernel {
   using result_type = std::optional<kernel_type>;
 
 #ifdef ELECTROSTATICS
-  template <typename T,
-            std::enable_if_t<traits::has_pressure<T>::value> * = nullptr>
+  template <typename T>
   result_type operator()(std::shared_ptr<T> const &ptr) const {
-    auto const &actor = *ptr;
-    return kernel_type{
-        [&actor](double q1q2, Utils::Vector3d const &d, double dist) {
-          return Utils::tensor_product(actor.pair_force(q1q2, d, dist), d);
-        }};
-  }
-
-  template <typename T,
-            std::enable_if_t<!traits::has_pressure<T>::value> * = nullptr>
-  result_type operator()(std::shared_ptr<T> const &) const {
+    if constexpr (traits::has_pressure<T>::value) {
+      return kernel_type{
+          [&actor = *ptr](double q1q2, Utils::Vector3d const &d, double dist) {
+            return Utils::tensor_product(actor.pair_force(q1q2, d, dist), d);
+          }};
+    }
     return {};
   }
 #endif // ELECTROSTATICS

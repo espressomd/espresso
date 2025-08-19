@@ -115,11 +115,11 @@ StokesianDynamicsParameters::StokesianDynamicsParameters(
                             std::to_string(viscosity));
   }
   /* Check that radii are positive */
-  for (auto const &kv : radii) {
-    if (kv.second < 0.) {
+  for (auto const &[p_type, radius] : radii) {
+    if (radius < 0.) {
       throw std::domain_error(
-          "Particle radius for type " + std::to_string(kv.first) +
-          " has an invalid value: " + std::to_string(kv.second));
+          "Particle radius for type " + std::to_string(p_type) +
+          " has an invalid value: " + std::to_string(radius));
     }
   }
 }

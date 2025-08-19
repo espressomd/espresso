@@ -134,15 +134,13 @@ public:
   /** Calculate real-space contribution of p3m dipolar pair forces and torques.
    *  If NPT is compiled in, update the NpT virial.
    */
-  inline ParticleForce pair_force(Particle const &p1, Particle const &p2,
-                                  Utils::Vector3d const &d, double dist2,
-                                  double dist) const {
-    if ((p1.dipm() == 0.) || (p2.dipm() == 0.) || dist >= dp3m_params.r_cut ||
-        dist <= 0.)
+  inline ParticleForce pair_force(double d1d2, Utils::Vector3d const &dip1,
+                                  Utils::Vector3d const &dip2,
+                                  Utils::Vector3d const &d, double dist,
+                                  double dist2) const {
+    if (d1d2 == 0. or dist >= dp3m_params.r_cut or dist <= 0.)
       return {};
 
-    auto const dip1 = p1.calc_dip();
-    auto const dip2 = p2.calc_dip();
     auto const alpsq = dp3m_params.alpha * dp3m_params.alpha;
     auto const adist = dp3m_params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
@@ -181,9 +179,9 @@ public:
     auto const torque = prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
-    auto const fac = prefactor * p1.dipm() * p2.dipm() * exp_adist2;
+    auto const fac = prefactor * d1d2 * exp_adist2;
 #else
-    auto const fac = prefactor * p1.dipm() * p2.dipm();
+    auto const fac = prefactor * d1d2;
 #endif
     auto const energy = fac * (mimj * B_r - mir * mjr * C_r);
     npt_add_virial_contribution(energy);
@@ -193,9 +191,9 @@ public:
 
   /** Calculate real-space contribution of dipolar pair energy. */
   inline double pair_energy(Particle const &p1, Particle const &p2,
-                            Utils::Vector3d const &d, double dist2,
-                            double dist) const {
-    if ((p1.dipm() == 0.) || (p2.dipm() == 0.) || dist >= dp3m_params.r_cut ||
+                            Utils::Vector3d const &d, double dist,
+                            double dist2) const {
+    if (p1.dipm() == 0. or p2.dipm() == 0. or dist >= dp3m_params.r_cut or
         dist <= 0.)
       return {};
 

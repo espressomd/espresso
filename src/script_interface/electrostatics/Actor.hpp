@@ -73,7 +73,7 @@ protected:
   void set_charge_neutrality_tolerance(VariantMap const &params) {
     auto const key_chk = std::string("check_neutrality");
     auto const key_tol = std::string("charge_neutrality_tolerance");
-    if (params.count(key_tol)) {
+    if (params.contains(key_tol)) {
       do_set_parameter(key_tol, params.at(key_tol));
     }
     do_set_parameter(key_chk, params.at(key_chk));

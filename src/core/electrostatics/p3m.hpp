@@ -145,7 +145,7 @@ public:
   /** Calculate real-space contribution of p3m Coulomb pair forces. */
   Utils::Vector3d pair_force(double q1q2, Utils::Vector3d const &d,
                              double dist) const {
-    if ((q1q2 == 0.) || dist >= p3m_params.r_cut || dist <= 0.) {
+    if (q1q2 == 0. or dist >= p3m_params.r_cut or dist <= 0.) {
       return {};
     }
     auto const alpha = p3m_params.alpha;
@@ -166,7 +166,7 @@ public:
   /** Calculate real-space contribution of Coulomb pair energy. */
   // Eq. (3.6) @cite deserno00b
   double pair_energy(double q1q2, double dist) const {
-    if ((q1q2 == 0.) || dist >= p3m_params.r_cut || dist <= 0.) {
+    if (q1q2 == 0. or dist >= p3m_params.r_cut or dist <= 0.) {
       return {};
     }
     auto const adist = p3m_params.alpha * dist;

@@ -188,7 +188,7 @@ def execute_notebook(nb, src, cell_separator, notebook_filepath):
     import importlib_wrapper as iw
     notebook_dirname = os.path.dirname(notebook_filepath)
     # disable OpenGL GUI
-    src_no_gui = iw.mock_es_visualization(src)
+    src_no_gui = iw.mock_es_visualization(src, force_mock=True)
     # update notebook with new code
     set_code_cells(nb, src_no_gui.split(cell_separator))
     # execute notebook

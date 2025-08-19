@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "actor/optional.hpp"
 #include "actor/traits.hpp"
@@ -64,11 +64,12 @@ struct Solver {
   Solver();
 #else  // DIPOLES
   Solver() = default;
+  constexpr double cutoff() const { return INACTIVE_CUTOFF; }
 #endif // DIPOLES
 
-  using ShortRangeForceKernel =
-      std::function<ParticleForce(Particle const &, Particle const &,
-                                  Utils::Vector3d const &, double, double)>;
+  using ShortRangeForceKernel = std::function<ParticleForce(
+      double, Utils::Vector3d const &, Utils::Vector3d const &,
+      Utils::Vector3d const &, double, double)>;
   using ShortRangeEnergyKernel =
       std::function<double(Particle const &, Particle const &,
                            Utils::Vector3d const &, double, double)>;

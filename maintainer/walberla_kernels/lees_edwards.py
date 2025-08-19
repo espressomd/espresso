@@ -38,7 +38,8 @@ def type_all_numbers(expr, dtype):
     return expr.subs(substitutions)
 
 
-def velocity_offset_eqs(config, method, pdfs, shear_dir_normal, stencil):
+def velocity_offset_eqs(config, method, pdfs,
+                        shear_dir_normal, stencil, combined_kernel=True):
     """Calculates the difference between quilibrium pdf distributions
     with (rho, u) and (rho, u+v) and applies them to out-flowing
     populations in the boundary layer. Returns an AssignmentCollection
@@ -59,16 +60,22 @@ def velocity_offset_eqs(config, method, pdfs, shear_dir_normal, stencil):
 
     grid_size = TypedSymbol("grid_size", dtype=default_dtype)
 
+    # When the kernels are combined, the integration loop also reaches
+    # one grid cell further to pull the populations. This changes the
+    # position where to apply the LE boundary by one cell.
+    boundary_offset = [0, grid_size - 1]
+    if combined_kernel:
+        boundary_offset = [1, grid_size - 0]
     # +,-1 for upper/lower boundary layers, 0 otherwise.
     # Based on symbolic counters defined above. Only becomes
     # non-zero if the corresponding points_up/down flags
     # are engaged (which is only done for out-flowing populations)
     layer_prefactor = sp.Piecewise(
         (-1,
-         sp.And(type_all_numbers(counters[1] <= 0, default_dtype),
+         sp.And(type_all_numbers(counters[1] <= boundary_offset[0], default_dtype),
                 points_down)),
         (+1,
-         sp.And(type_all_numbers(counters[1] >= grid_size - 1, default_dtype),
+         sp.And(type_all_numbers(counters[1] >= boundary_offset[1], default_dtype),
                 points_up)),
         (0, True)
     )
@@ -115,14 +122,15 @@ def velocity_offset_eqs(config, method, pdfs, shear_dir_normal, stencil):
 
 
 def add_lees_edwards_to_collision(
-        config, collision, pdfs, stencil, shear_dir_normal):
+        config, collision, pdfs, stencil, shear_dir_normal, combined_kernel):
     # Get population shift for outflowing populations at the boundaries
     offset = velocity_offset_eqs(
         config,
         collision.method,
         pdfs,
         shear_dir_normal,
-        stencil)
+        stencil,
+        combined_kernel)
 
     ma = []
     for i, a in enumerate(collision.main_assignments):

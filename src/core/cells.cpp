@@ -67,17 +67,17 @@ static auto get_pairs_filtered(System::System const &system,
   auto const pair_kernel = [cutoff2, &filter, &ret](Particle const &p1,
                                                     Particle const &p2,
                                                     Distance const &d) {
-    if (d.dist2 < cutoff2 and filter(p1) and filter(p2))
-      ret.emplace_back(p1.id(), p2.id());
+    if (d.dist2 < cutoff2 and filter(p1) and filter(p2)) {
+      auto pid1 = p1.id();
+      auto pid2 = p2.id();
+      if (pid1 > pid2) {
+        std::swap(pid1, pid2);
+      }
+      ret.emplace_back(pid1, pid2);
+    }
   };
 
   system.cell_structure->non_bonded_loop(pair_kernel);
-
-  /* Sort pairs */
-  for (auto &pair : ret) {
-    if (pair.first > pair.second)
-      std::swap(pair.first, pair.second);
-  }
 
   return ret;
 }

@@ -25,8 +25,9 @@
  *  Various procedures concerning interactions between particles.
  */
 
+#include <config/config.hpp>
+
 #include "TabulatedPotential.hpp"
-#include "config/config.hpp"
 #include "system/Leaf.hpp"
 
 #include <utils/index.hpp>
@@ -37,11 +38,6 @@
 #include <cmath>
 #include <memory>
 #include <vector>
-
-/** Cutoff for deactivated interactions. Must be negative, so that even
- *  particles on top of each other don't interact by chance.
- */
-constexpr double INACTIVE_CUTOFF = -1.;
 
 /** Lennard-Jones with shift */
 struct LJ_Parameters {

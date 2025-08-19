@@ -98,10 +98,12 @@ LatticeWalberla::get_local_domain() const {
 }
 
 [[nodiscard]] std::pair<Utils::Vector3i, Utils::Vector3i>
-LatticeWalberla::get_local_grid_range() const {
+LatticeWalberla::get_local_grid_range(bool with_halo) const {
   auto const [lower_corner, upper_corner] = get_local_domain();
-  return {walberla::convert_cell_corner_to_coord(lower_corner),
-          walberla::convert_cell_corner_to_coord(upper_corner)};
+  auto const gl = with_halo ? static_cast<int>(m_n_ghost_layers) : 0;
+  auto const padding = Utils::Vector3i::broadcast(gl);
+  return {walberla::convert_cell_corner_to_coord(lower_corner) - padding,
+          walberla::convert_cell_corner_to_coord(upper_corner) + padding};
 }
 
 [[nodiscard]] Utils::Vector3i

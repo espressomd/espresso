@@ -195,6 +195,14 @@ except ImportError:
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
+        statement = "import espressomd.zn"
+        expected = f"""\
+import unittest.mock
+import espressomd
+espressomd.zn = unittest.mock.MagicMock()
+"""
+        self.assertEqual(iw.mock_es_visualization(statement, True), expected)
+
         # test exceptions
         self.assertRaises(ValueError, iw.mock_es_visualization,
                           "from espressomd.visualization import *")

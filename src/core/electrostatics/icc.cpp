@@ -43,10 +43,16 @@
 #include "electrostatics/p3m.hpp"
 #include "errorhandling.hpp"
 #include "integrators/Propagation.hpp"
+#include "short_range_cabana.hpp"
 #include "system/System.hpp"
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
+
+#ifdef SHARED_MEMORY_PARALLELISM
+#include <Kokkos_Core.hpp>
+#include <omp.h>
+#endif
 
 #include <algorithm>
 #include <cmath>
@@ -70,12 +76,12 @@ static void force_calc_icc(
     Coulomb::ShortRangeForceKernel::result_type const &coulomb_kernel,
     Coulomb::ShortRangeForceCorrectionsKernel::result_type const &elc_kernel) {
   // reset forces
-  for (auto &p : particles) {
-    p.force() = {};
-  }
-  for (auto &p : ghost_particles) {
-    p.force() = {};
-  }
+  auto const reset_kernel = [](Particle &p) { p.force_and_torque() = {}; };
+  cell_structure.for_each_local_particle(reset_kernel);
+  cell_structure.for_each_ghost_particle(reset_kernel);
+#ifdef SHARED_MEMORY_PARALLELISM
+  cell_structure.reset_local_force();
+#endif
 
   // calc ICC forces
   cell_structure.non_bonded_loop(
@@ -96,10 +102,7 @@ static void force_calc_icc(
       });
 }
 
-void ICCStar::iteration(CellStructure &cell_structure,
-                        ParticleRange const &particles,
-                        ParticleRange const &ghost_particles) {
-
+void ICCStar::iteration() {
   try {
     sanity_check();
   } catch (std::runtime_error const &err) {
@@ -108,13 +111,22 @@ void ICCStar::iteration(CellStructure &cell_structure,
   }
 
   auto &system = get_system();
+  auto &cell_structure = *system.cell_structure;
   auto const &coulomb = system.coulomb;
+  auto const particles = cell_structure.local_particles();
+  auto const ghost_particles = cell_structure.ghost_particles();
   auto const prefactor = std::visit(
       [](auto const &ptr) { return ptr->prefactor; }, *coulomb.impl->solver);
   auto const pref = 1. / (prefactor * 2. * std::numbers::pi);
   auto const kernel = coulomb.pair_force_kernel();
   auto const elc_kernel = coulomb.pair_force_elc_kernel();
   icc_cfg.citeration = 0;
+
+#ifdef SHARED_MEMORY_PARALLELISM
+  using execution_space = Kokkos::DefaultExecutionSpace;
+  auto const &unique_particles = cell_structure.get_unique_particles();
+  auto const &local_force = cell_structure.get_local_force();
+#endif // SHARED_MEMORY_PARALLELISM
 
   auto global_max_rel_diff = 0.;
 
@@ -126,6 +138,22 @@ void ICCStar::iteration(CellStructure &cell_structure,
                    elc_kernel);
     system.coulomb.calc_long_range_force(particles);
     cell_structure.ghosts_reduce_forces();
+#ifdef SHARED_MEMORY_PARALLELISM
+    // force reduction
+    int num_threads = execution_space().concurrency();
+    kokkos_parallel_range_for<Kokkos::RangePolicy<execution_space>>(
+        "reduction", std::size_t{0}, unique_particles.size(),
+        [&local_force, &unique_particles, num_threads](std::size_t const i) {
+          Utils::Vector3d force{};
+          for (int tid = 0; tid < num_threads; ++tid) {
+            force[0] += local_force(i, tid, 0);
+            force[1] += local_force(i, tid, 1);
+            force[2] += local_force(i, tid, 2);
+          }
+          unique_particles.at(i)->force() += force;
+        });
+    Kokkos::fence();
+#endif // SHARED_MEMORY_PARALLELISM
 
     auto max_rel_diff = 0.;
 
@@ -193,6 +221,10 @@ void ICCStar::iteration(CellStructure &cell_structure,
 
     /* Update charges on ghosts. */
     cell_structure.ghosts_update(Cells::DATA_PART_PROPERTIES);
+#ifdef SHARED_MEMORY_PARALLELISM
+    // refresh local properties
+    update_aosoa_charges(cell_structure);
+#endif
 
     icc_cfg.citeration++;
 
@@ -274,8 +306,8 @@ struct SanityChecksICC {
 void ICCStar::sanity_check() const {
   sanity_checks_active_solver();
 #ifdef NPT
-  if (get_system().propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
-    throw std::runtime_error("ICC does not work in the NPT ensemble");
+  if (get_system().has_npt_enabled()) {
+    throw std::runtime_error("ICC does not work in the NpT ensemble");
   }
 #endif
 }
@@ -289,12 +321,17 @@ void ICCStar::sanity_checks_active_solver() const {
   }
 }
 
+bool System::System::has_icc_enabled() const {
+  return coulomb.impl->extension and
+         std::holds_alternative<std::shared_ptr<ICCStar>>(
+             *coulomb.impl->extension);
+}
+
 void System::System::update_icc_particles() {
   if (coulomb.impl->extension) {
     if (auto icc = std::get_if<std::shared_ptr<ICCStar>>(
             get_ptr(coulomb.impl->extension))) {
-      (**icc).iteration(*cell_structure, cell_structure->local_particles(),
-                        cell_structure->ghost_particles());
+      (**icc).iteration();
     }
   }
 }

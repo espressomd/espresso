@@ -44,16 +44,6 @@ RuntimeErrorCollector::~RuntimeErrorCollector() {
   }
 }
 
-void RuntimeErrorCollector::message(const RuntimeError &message) {
-  std::lock_guard<std::mutex> lock(mutex);
-  m_errors.emplace_back(message);
-}
-
-void RuntimeErrorCollector::message(RuntimeError message) {
-  std::lock_guard<std::mutex> lock(mutex);
-  m_errors.emplace_back(std::move(message));
-}
-
 void RuntimeErrorCollector::message(RuntimeError::ErrorLevel level,
                                     const std::string &msg,
                                     const char *function, const char *file,
@@ -71,33 +61,11 @@ void RuntimeErrorCollector::warning(const std::string &msg,
                         std::string(function), std::string(file), line);
 }
 
-void RuntimeErrorCollector::warning(const char *msg, const char *function,
-                                    const char *file, const int line) {
-  warning(std::string(msg), function, file, line);
-}
-
-void RuntimeErrorCollector::warning(const std::ostringstream &mstr,
-                                    const char *function, const char *file,
-                                    const int line) {
-  warning(mstr.str(), function, file, line);
-}
-
 void RuntimeErrorCollector::error(const std::string &msg, const char *function,
                                   const char *file, const int line) {
   std::lock_guard<std::mutex> lock(mutex);
   m_errors.emplace_back(RuntimeError::ErrorLevel::ERROR, m_comm.rank(), msg,
                         std::string(function), std::string(file), line);
-}
-
-void RuntimeErrorCollector::error(const char *msg, const char *function,
-                                  const char *file, const int line) {
-  error(std::string(msg), function, file, line);
-}
-
-void RuntimeErrorCollector::error(const std::ostringstream &mstr,
-                                  const char *function, const char *file,
-                                  const int line) {
-  error(mstr.str(), function, file, line);
 }
 
 int RuntimeErrorCollector::count() const {

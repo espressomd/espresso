@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SRC_PARTICLE_OBSERVABLES_ALGORITHMS_HPP
-#define SRC_PARTICLE_OBSERVABLES_ALGORITHMS_HPP
+
+#pragma once
 
 /**
  * @file
@@ -42,7 +42,7 @@ struct One {
 template <class ValueOp, class WeightOp> struct WeightedSum {
   template <class ParticleRange>
   auto operator()(ParticleRange const &particles) const {
-    using particle_type = typename ParticleRange::value_type;
+    using particle_type = ParticleRange::value_type;
     using value_op_type = decltype(ValueOp{}(std::declval<particle_type>()));
     using weight_op_type = decltype(WeightOp{}(std::declval<particle_type>()));
     auto func = [](auto const &sum, auto const &p) {
@@ -110,7 +110,7 @@ template <class ValueOp> struct Average {
 template <class ValueOp> struct Map {
   template <class ParticleRange>
   auto operator()(ParticleRange const &particles) const {
-    using particle_type = typename ParticleRange::value_type;
+    using particle_type = ParticleRange::value_type;
     using value_op_type = decltype(ValueOp{}(std::declval<particle_type>()));
     std::vector<value_op_type> res;
     std::ranges::transform(particles, std::back_inserter(res), ValueOp{});
@@ -118,4 +118,3 @@ template <class ValueOp> struct Map {
   }
 };
 } // namespace ParticleObservables
-#endif // SRC_PARTICLE_OBSERVABLES_ALGORITHMS_HPP

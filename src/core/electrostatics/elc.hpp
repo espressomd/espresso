@@ -115,13 +115,41 @@ struct elc_data {
   /** The space that is finally left. */
   double space_box;
 
-  /// pairwise contributions from the lowest and top layers
-  template <typename Kernel>
-  void dielectric_layers_contribution(CoulombP3M const &,
-                                      BoxGeometry const &box_geo,
+#ifdef SHARED_MEMORY_PARALLELISM
+  static auto copy_aosoa_vector_elc(std::size_t i, auto &slice) {
+    return Utils::Vector3d{slice(i, 0), slice(i, 1), slice(i, 2)};
+  }
+
+  /// pairwise contributions from lower and upper layers
+  void dielectric_layers_contribution(BoxGeometry const &box_geo,
+                                      std::size_t p1, std::size_t p2,
+                                      auto &aosoa, double q1q2,
+                                      auto &&kernel) const {
+    if (aosoa.position(p1, 2) < space_layer) {
+      auto const q_eff = delta_mid_bot * q1q2;
+      auto pos2 = copy_aosoa_vector_elc(p2, aosoa.position);
+      auto pos1 = copy_aosoa_vector_elc(p1, aosoa.position);
+      pos1[2] *= -1.;
+      auto const d = box_geo.get_mi_vector(pos2, pos1);
+      kernel(q_eff, d);
+    }
+    if (aosoa.position(p1, 2) > (box_h - space_layer)) {
+      auto const q_eff = delta_mid_top * q1q2;
+      auto const z = 2. * box_h - aosoa.position(p1, 2);
+      auto pos2 = copy_aosoa_vector_elc(p2, aosoa.position);
+      auto pos1 = copy_aosoa_vector_elc(p1, aosoa.position);
+      pos1[2] = 2. * box_h - pos1[2];
+      auto const d = box_geo.get_mi_vector(pos2, pos1);
+      kernel(q_eff, d);
+    }
+  }
+#endif // SHARED_MEMORY_PARALLELISM
+
+  /// pairwise contributions from lower and upper layers
+  void dielectric_layers_contribution(BoxGeometry const &box_geo,
                                       Utils::Vector3d const &pos1,
                                       Utils::Vector3d const &pos2, double q1q2,
-                                      Kernel &&kernel) const {
+                                      auto &&kernel) const {
     if (pos1[2] < space_layer) {
       auto const q_eff = delta_mid_bot * q1q2;
       auto const d = box_geo.get_mi_vector(pos2, {pos1[0], pos1[1], -pos1[2]});
@@ -142,7 +170,7 @@ struct elc_data {
     auto energy = 0.;
     for (auto const &p : particles) {
       dielectric_layers_contribution(
-          p3m, box_geo, p.pos(), p.pos(), Utils::sqr(p.q()),
+          box_geo, p.pos(), p.pos(), Utils::sqr(p.q()),
           [&](double q1q2, Utils::Vector3d const &d) {
             energy += p3m.pair_energy(q1q2, d.norm());
           });
@@ -156,7 +184,7 @@ struct elc_data {
                                      ParticleRange const &particles) const {
     for (auto &p : particles) {
       dielectric_layers_contribution(
-          p3m, box_geo, p.pos(), p.pos(), Utils::sqr(p.q()),
+          box_geo, p.pos(), p.pos(), Utils::sqr(p.q()),
           [&](double q1q2, Utils::Vector3d const &d) {
             p.force() += p3m.pair_force(q1q2, d, d.norm());
           });
@@ -249,6 +277,34 @@ struct ElectrostaticLayerCorrection
     return {};
   }
 
+#ifdef SHARED_MEMORY_PARALLELISM
+  /** @brief Calculate short-range pair energy correction. */
+  double pair_energy_correction(std::size_t p1, std::size_t p2, auto &aosoa,
+                                double q1q2) const {
+    double energy = 0.;
+    if (elc.dielectric_contrast_on) {
+      energy = std::visit(
+          [this, &aosoa, p1, p2, q1q2](auto &p3m_ptr) {
+            auto const &p3m = *p3m_ptr;
+            auto energy = 0.;
+            elc.dielectric_layers_contribution(
+                *m_box_geo, p1, p2, aosoa, q1q2,
+                [&](double q_eff, Utils::Vector3d const &d) {
+                  energy += p3m.pair_energy(q_eff, d.norm());
+                });
+            elc.dielectric_layers_contribution(
+                *m_box_geo, p2, p1, aosoa, q1q2,
+                [&](double q_eff, Utils::Vector3d const &d) {
+                  energy += p3m.pair_energy(q_eff, d.norm());
+                });
+            return energy / 2.;
+          },
+          base_solver);
+    }
+    return energy;
+  }
+#endif // SHARED_MEMORY_PARALLELISM
+
   /** @brief Calculate short-range pair energy correction. */
   double pair_energy_correction(Particle const &p1, Particle const &p2,
                                 double q1q2) const {
@@ -261,12 +317,12 @@ struct ElectrostaticLayerCorrection
             auto const &p3m = *p3m_ptr;
             auto energy = 0.;
             elc.dielectric_layers_contribution(
-                p3m, *m_box_geo, pos1, pos2, q1q2,
+                *m_box_geo, pos1, pos2, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   energy += p3m.pair_energy(q_eff, d.norm());
                 });
             elc.dielectric_layers_contribution(
-                p3m, *m_box_geo, pos2, pos1, q1q2,
+                *m_box_geo, pos2, pos1, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   energy += p3m.pair_energy(q_eff, d.norm());
                 });
@@ -287,12 +343,12 @@ struct ElectrostaticLayerCorrection
             auto const &pos2 = p2.pos();
             auto const &p3m = *p3m_ptr;
             elc.dielectric_layers_contribution(
-                p3m, *m_box_geo, pos1, pos2, q1q2,
+                *m_box_geo, pos1, pos2, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   p1.force() += p3m.pair_force(q_eff, d, d.norm());
                 });
             elc.dielectric_layers_contribution(
-                p3m, *m_box_geo, pos2, pos1, q1q2,
+                *m_box_geo, pos2, pos1, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   p2.force() += p3m.pair_force(q_eff, d, d.norm());
                 });
@@ -333,7 +389,7 @@ private:
   /// the energy calculation
   double calc_energy(ParticleRange const &particles) const;
 
-  template <class Visitor> void visit_base_solver(Visitor &&visitor) const {
+  void visit_base_solver(auto &&visitor) const {
     std::visit(visitor, base_solver);
   }
 };

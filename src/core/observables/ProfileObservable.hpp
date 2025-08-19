@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_PROFILEOBSERVABLE_HPP
-#define OBSERVABLES_PROFILEOBSERVABLE_HPP
+
+#pragma once
 
 #include "Observable.hpp"
 
@@ -88,4 +88,3 @@ public:
 };
 
 } // Namespace Observables
-#endif

@@ -25,8 +25,7 @@ import espressomd.integrate
 import espressomd.propagation
 
 
-@utx.skipIfMissingFeatures(["NPT"])
-class IntegratorNPT(ut.TestCase):
+class PropagationNPT:
 
     """This tests the NpT integrator interface."""
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -96,7 +95,8 @@ class IntegratorNPT(ut.TestCase):
         system = self.system
         system.time_step = 0.00001
         system.thermostat.set_npt(kT=0., gamma0=gamma0, gammav=1e-6, seed=42)
-        system.integrator.set_isotropic_npt(ext_pressure=0.01, piston=1e6)
+        system.integrator.set_isotropic_npt(
+            ext_pressure=0.01, piston=1e16, barostat=self.barostat)
         positions = []
         modes_trans = [
             Propagation.NONE,
@@ -135,7 +135,8 @@ class IntegratorNPT(ut.TestCase):
                                Propagation.ROT_VS_RELATIVE)
 
         system.thermostat.set_npt(kT=0., gamma0=GAMMA0, gammav=1e-6, seed=42)
-        system.integrator.set_isotropic_npt(ext_pressure=0.01, piston=1e6)
+        system.integrator.set_isotropic_npt(
+            ext_pressure=0.01, piston=1e6, barostat=self.barostat)
 
         system.integrator.run(1)
 
@@ -156,7 +157,12 @@ class IntegratorNPT(ut.TestCase):
         # the system is still in a valid state after a failure
         system = self.system
         np.random.seed(42)
-        npt_params = {'ext_pressure': 0.01, 'piston': 0.001}
+        if self.barostat == "Andersen":
+            npt_params = {'ext_pressure': 0.01,
+                          'piston': 0.001, 'barostart': 'Andersen'}
+        elif self.barostat == "MTK":
+            npt_params = {'ext_pressure': 0.01,
+                          'piston': 4.0, 'barostart': 'MTK'}
         system.box_l = [8] * 3
         system.part.add(pos=np.random.uniform(0, system.box_l[0], (11, 3)))
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -176,9 +182,11 @@ class IntegratorNPT(ut.TestCase):
         # resetting the NpT integrator with incorrect values doesn't leave the
         # system in an undefined state (the old parameters aren't overwritten)
         with self.assertRaises(RuntimeError):
-            system.integrator.set_isotropic_npt(ext_pressure=-1, piston=100)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=-1, piston=100, barostat=self.barostat)
         with self.assertRaises(RuntimeError):
-            system.integrator.set_isotropic_npt(ext_pressure=100, piston=-1)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=100, piston=-1, barostat=self.barostat)
         # the core state is unchanged
         system.integrator.run(500)
         # tolerance error based on compressibility
@@ -210,7 +218,8 @@ class IntegratorNPT(ut.TestCase):
         positions_start = np.array([[0., 0., 0.], [1., 0., 0.]])
         system.part.add(pos=positions_start)
         with self.assertRaises(RuntimeError):
-            system.integrator.set_isotropic_npt(ext_pressure=-1., piston=100.)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=-1., piston=100., barostat=self.barostat)
         # the interface state is unchanged
         self.assertIsInstance(system.integrator.get_params()['integrator'],
                               espressomd.integrate.VelocityVerlet)
@@ -222,7 +231,12 @@ class IntegratorNPT(ut.TestCase):
 
     def run_with_p3m(self, container, p3m, method):
         system = self.system
-        npt_kwargs = {"ext_pressure": 0.001, "piston": 0.001}
+        if self.barostat == "Andersen":
+            npt_kwargs = {'ext_pressure': 0.001,
+                          'piston': 0.001, 'barostart': 'Andersen'}
+        elif self.barostat == "MTK":
+            npt_kwargs = {'ext_pressure': 0.001,
+                          'piston': 4.0, 'barostart': 'MTK'}
         npt_kwargs_rectangular = {
             "cubic_box": False, "direction": (False, True, True), **npt_kwargs}
         np.random.seed(42)
@@ -286,6 +300,16 @@ class IntegratorNPT(ut.TestCase):
             prefactor=1.0, accuracy=1e-2, mesh=3 * [8], cao=3, r_cut=0.36,
             alpha=5.35, tune=False)
         self.run_with_p3m(self.system.electrostatics, p3m, "electrostatics")
+
+
+@utx.skipIfMissingFeatures("NPT")
+class PropagationNPT_Andersen(PropagationNPT, ut.TestCase):
+    barostat = "Andersen"
+
+
+@utx.skipIfMissingFeatures("NPT")
+class PropagationNPT_MTK(PropagationNPT, ut.TestCase):
+    barostat = "MTK"
 
 
 if __name__ == "__main__":

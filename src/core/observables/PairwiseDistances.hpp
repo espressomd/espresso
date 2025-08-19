@@ -59,9 +59,9 @@ public:
     auto &cell_structure = *system.cell_structure;
 
     std::vector<double> pairwise_distances;
-    for (const auto &p : m_pairs) {
-      auto const *p1 = cell_structure.get_local_particle(p.first);
-      auto const *p2 = cell_structure.get_local_particle(p.second);
+    for (auto const &[pid1, pid2] : m_pairs) {
+      auto const *p1 = cell_structure.get_local_particle(pid1);
+      auto const *p2 = cell_structure.get_local_particle(pid2);
       auto const dist = box_geo.get_mi_vector(p1->pos(), p2->pos()).norm();
       pairwise_distances.emplace_back(dist);
     }

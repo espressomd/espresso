@@ -20,9 +20,7 @@
 
 /* Unit tests for the MpiCallbacks class. */
 
-#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE MpiCallbacks test
-#define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -33,11 +31,27 @@
 
 #include <algorithm>
 #include <functional>
+#include <memory>
 #include <stdexcept>
 #include <string>
 
 static std::weak_ptr<boost::mpi::environment> mpi_env;
 static bool called = false;
+
+struct GlobalConfig {
+  std::shared_ptr<boost::mpi::environment> m_mpi_env;
+  GlobalConfig() {
+    m_mpi_env = std::make_shared<boost::mpi::environment>(
+        boost::unit_test::framework::master_test_suite().argc,
+        boost::unit_test::framework::master_test_suite().argv,
+        boost::mpi::threading::multiple);
+    mpi_env = m_mpi_env;
+  }
+  ~GlobalConfig() { m_mpi_env.reset(); }
+};
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_AUTO_TEST_SUITE(suite)
 
 BOOST_AUTO_TEST_CASE(invoke_test) {
   using Communication::detail::invoke;
@@ -240,9 +254,4 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
   }
 }
 
-int main(int argc, char **argv) {
-  auto const mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
-  ::mpi_env = mpi_env;
-
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}
+BOOST_AUTO_TEST_SUITE_END()

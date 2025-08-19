@@ -17,9 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE ReactionEnsemble test
-#define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -33,8 +31,8 @@
 
 #include "core/Particle.hpp"
 #include "core/cell_system/CellStructureType.hpp"
-#include "core/communication.hpp"
 #include "core/particle_node.hpp"
+#include "core/unit_tests/EspressoCoreGlobalConfig.hpp"
 #include "core/unit_tests/ParticleFactory.hpp"
 
 #include <boost/mpi.hpp>
@@ -72,6 +70,21 @@ public:
   }
 };
 } // namespace ScriptInterface::Testing
+
+struct GlobalConfig : public EspressoCoreGlobalConfig {
+  GlobalConfig() {
+    espresso::system = System::System::create();
+    espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+    ::System::set_system(espresso::system);
+  }
+  ~GlobalConfig() {
+    espresso::system.reset();
+    ::System::reset_system();
+  }
+};
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_AUTO_TEST_SUITE(suite)
 
 // Check the Monte Carlo algorithm where moves depend on the system
 // configuration and energy.
@@ -262,10 +275,4 @@ BOOST_FIXTURE_TEST_CASE(ReactionEnsemble_test, ParticleFactory) {
   }
 }
 
-int main(int argc, char **argv) {
-  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
-  espresso::system = System::System::create();
-  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
-  ::System::set_system(espresso::system);
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}
+BOOST_AUTO_TEST_SUITE_END()

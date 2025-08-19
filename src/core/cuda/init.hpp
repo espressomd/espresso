@@ -25,7 +25,11 @@
 
 #include "utils.hpp"
 
+#include <boost/serialization/access.hpp>
+
 #include <cstddef>
+#include <string>
+#include <utility>
 #include <vector>
 
 /** Struct to hold information relevant to ESPResSo
@@ -36,9 +40,9 @@ struct EspressoGpuDevice {
   /** Local CUDA device id */
   int id;
   /** Local CUDA device name */
-  char name[256];
+  std::string name;
   /** Node identification */
-  char proc_name[64];
+  std::string proc_name;
   /** MPI process identification */
   int node;
   /** Compute capability (major) */
@@ -49,13 +53,21 @@ struct EspressoGpuDevice {
   std::size_t total_memory;
   /** Number of cores */
   int n_cores;
+
+private:
+  friend boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar, unsigned int const /* version */) {
+    ar & id & name & proc_name & node & compute_capability_major &
+        compute_capability_minor & total_memory & n_cores;
+  }
 };
 
 /** Initializes the CUDA stream.
  */
 void cuda_init();
 
-/** Get the number of CUDA devices.
+/** Get the number of CUDA devices on the local host.
  *
  *  @return the number of GPUs.
  */
@@ -73,9 +85,8 @@ bool cuda_check_gpu_compute_capability(int dev);
 /** Get the name of a CUDA device.
  *
  *  @param[in]  dev the CUDA device number to ask the name for
- *  @param[out] name a buffer to write the name to, at least 256 characters
  */
-void cuda_get_gpu_name(int dev, char *name);
+std::string cuda_get_gpu_name(int dev);
 
 /** Choose a device for future CUDA computations.
  *
@@ -113,5 +124,9 @@ EspressoGpuDevice cuda_get_device_props(int dev);
 
 /** @brief Called on program start. */
 void cuda_on_program_start();
+
+namespace detail {
+std::pair<int, std::string> get_node_info();
+} // namespace detail
 
 #endif // CUDA

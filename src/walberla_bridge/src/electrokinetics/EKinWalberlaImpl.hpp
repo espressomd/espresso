@@ -55,21 +55,19 @@ namespace walberla {
 /** @brief Class that runs and controls the EK on waLBerla. */
 template <std::size_t FluxCount = 13, typename FloatType = double>
 class EKinWalberlaImpl : public EKinWalberlaBase {
-  using ContinuityKernel =
-      typename detail::KernelTrait<FloatType>::ContinuityKernel;
+  using ContinuityKernel = detail::KernelTrait<FloatType>::ContinuityKernel;
   using DiffusiveFluxKernelUnthermalized =
-      typename detail::KernelTrait<FloatType>::DiffusiveFluxKernel;
+      detail::KernelTrait<FloatType>::DiffusiveFluxKernel;
   using DiffusiveFluxKernelThermalized =
-      typename detail::KernelTrait<FloatType>::DiffusiveFluxKernelThermalized;
+      detail::KernelTrait<FloatType>::DiffusiveFluxKernelThermalized;
   using AdvectiveFluxKernel =
-      typename detail::KernelTrait<FloatType>::AdvectiveFluxKernel;
+      detail::KernelTrait<FloatType>::AdvectiveFluxKernel;
   using FrictionCouplingKernel =
-      typename detail::KernelTrait<FloatType>::FrictionCouplingKernel;
+      detail::KernelTrait<FloatType>::FrictionCouplingKernel;
   using DiffusiveFluxKernelElectrostaticUnthermalized =
-      typename detail::KernelTrait<FloatType>::DiffusiveFluxKernelElectrostatic;
-  using DiffusiveFluxKernelElectrostaticThermalized =
-      typename detail::KernelTrait<
-          FloatType>::DiffusiveFluxKernelElectrostaticThermalized;
+      detail::KernelTrait<FloatType>::DiffusiveFluxKernelElectrostatic;
+  using DiffusiveFluxKernelElectrostaticThermalized = detail::KernelTrait<
+      FloatType>::DiffusiveFluxKernelElectrostaticThermalized;
 
   using DiffusiveFluxKernel = std::variant<DiffusiveFluxKernelUnthermalized,
                                            DiffusiveFluxKernelThermalized>;
@@ -77,8 +75,8 @@ class EKinWalberlaImpl : public EKinWalberlaBase {
       std::variant<DiffusiveFluxKernelElectrostaticUnthermalized,
                    DiffusiveFluxKernelElectrostaticThermalized>;
 
-  using Dirichlet = typename detail::KernelTrait<FloatType>::Dirichlet;
-  using FixedFlux = typename detail::KernelTrait<FloatType>::FixedFlux;
+  using Dirichlet = detail::KernelTrait<FloatType>::Dirichlet;
+  using FixedFlux = detail::KernelTrait<FloatType>::FixedFlux;
 
 protected:
   // Type definitions
@@ -86,8 +84,10 @@ protected:
   using FlagField = walberla::FlagField<walberla::uint8_t>;
   using DensityField = GhostLayerField<FloatType, 1>;
 
-  using BoundaryModelDensity = BoundaryHandling<FloatType, Dirichlet>;
-  using BoundaryModelFlux = BoundaryHandling<Vector3<FloatType>, FixedFlux>;
+  using BoundaryModelDensity =
+      BoundaryHandling<FloatType, FloatType, Dirichlet>;
+  using BoundaryModelFlux =
+      BoundaryHandling<FloatType, Vector3<FloatType>, FixedFlux>;
 
   using BlockStorage = LatticeWalberla::Lattice_T;
 
@@ -101,7 +101,7 @@ public:
   }
 
   [[nodiscard]] bool is_double_precision() const noexcept override {
-    return std::is_same<FloatType, double>::value;
+    return std::is_same_v<FloatType, double>;
   }
 
 private:
@@ -161,18 +161,22 @@ protected:
 
   void
   reset_density_boundary_handling(std::shared_ptr<BlockStorage> const &blocks) {
+    auto const [lc, uc] = m_lattice->get_local_grid_range(true);
     m_boundary_density = std::make_unique<BoundaryModelDensity>(
-        blocks, m_density_field_id, m_flag_field_density_id);
+        blocks, m_density_field_id, m_flag_field_density_id,
+        CellInterval{to_cell(lc), to_cell(uc)});
   }
 
   void
   reset_flux_boundary_handling(std::shared_ptr<BlockStorage> const &blocks) {
+    auto const [lc, uc] = m_lattice->get_local_grid_range(true);
     m_boundary_flux = std::make_unique<BoundaryModelFlux>(
-        blocks, m_flux_field_id, m_flag_field_flux_id);
+        blocks, m_flux_field_id, m_flag_field_flux_id,
+        CellInterval{to_cell(lc), to_cell(uc)});
   }
 
-  using FullCommunicator = blockforest::communication::UniformBufferedScheme<
-      typename stencil::D3Q27>;
+  using FullCommunicator =
+      blockforest::communication::UniformBufferedScheme<stencil::D3Q27>;
   std::shared_ptr<FullCommunicator> m_full_communication;
 
 public:
@@ -398,7 +402,7 @@ private:
     }
   }
 
-  void kernel_advection(const std::size_t &velocity_id) {
+  void kernel_advection(std::size_t const velocity_id) {
     auto kernel =
         AdvectiveFluxKernel(m_flux_field_flattened_id, m_density_field_id,
                             BlockDataID(velocity_id));
@@ -407,16 +411,18 @@ private:
     }
   }
 
-  void kernel_friction_coupling(const std::size_t &force_id) {
-    auto kernel = FrictionCouplingKernel(
-        BlockDataID(force_id), m_flux_field_flattened_id,
-        FloatType_c(get_diffusion()), FloatType_c(get_kT()));
+  void kernel_friction_coupling(std::size_t const force_id,
+                                double const lb_density) {
+    auto kernel =
+        FrictionCouplingKernel(BlockDataID(force_id), m_flux_field_flattened_id,
+                               FloatType_c(get_diffusion()),
+                               FloatType_c(get_kT()), FloatType(lb_density));
     for (auto &block : *m_lattice->get_blocks()) {
       kernel.run(&block);
     }
   }
 
-  void kernel_diffusion_electrostatic(const std::size_t &potential_id) {
+  void kernel_diffusion_electrostatic(std::size_t const potential_id) {
     auto const phiID = BlockDataID(potential_id);
     std::visit([phiID](auto &kernel) { kernel.setPhiID(phiID); },
                *m_diffusive_flux_electrostatic);
@@ -458,7 +464,7 @@ protected:
 
 public:
   void integrate(std::size_t potential_id, std::size_t velocity_id,
-                 std::size_t force_id) override {
+                 std::size_t force_id, double lb_density) override {
 
     updated_boundary_fields();
 
@@ -486,7 +492,7 @@ public:
                                  std::to_string(force_id) +
                                  ". Hint: LB may be inactive.");
       }
-      kernel_friction_coupling(force_id);
+      kernel_friction_coupling(force_id, lb_density);
     }
 
     if (get_advection()) {

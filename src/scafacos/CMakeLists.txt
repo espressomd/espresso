@@ -20,8 +20,7 @@
 add_library(espresso_scafacos SHARED src/Scafacos.cpp src/Coulomb.cpp
                                      src/Dipoles.cpp)
 add_library(espresso::scafacos ALIAS espresso_scafacos)
-set_target_properties(espresso_scafacos PROPERTIES CXX_CLANG_TIDY
-                                                   "${ESPRESSO_CXX_CLANG_TIDY}")
+espresso_set_common_target_properties(espresso_scafacos)
 target_link_libraries(espresso_scafacos PUBLIC MPI::MPI_CXX
                       PRIVATE ${SCAFACOS_LDFLAGS} espresso::cpp_flags)
 

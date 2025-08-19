@@ -24,14 +24,22 @@ include(espresso_unit_test)
 espresso_unit_test(SRC RuntimeError_test.cpp DEPENDS Boost::serialization)
 espresso_unit_test(SRC RuntimeErrorCollector_test.cpp DEPENDS espresso::core
                    Boost::mpi MPI::MPI_CXX NUM_PROC 2)
-espresso_unit_test(
-  NAME EspressoSystemStandAlone_parallel_test SRC
-  EspressoSystemStandAlone_test.cpp DEPENDS espresso::core Boost::mpi
-  MPI::MPI_CXX NUM_PROC 4)
-espresso_unit_test(
-  NAME EspressoSystemStandAlone_serial_test SRC
-  EspressoSystemStandAlone_test.cpp DEPENDS espresso::core Boost::mpi
-  MPI::MPI_CXX NUM_PROC 1)
+foreach(TEST_NUM_PROC 1 3 4)
+  foreach(TEST_NUM_THREADS 1 2)
+    if(${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM} OR ${TEST_NUM_THREADS}
+                                                           EQUAL 1)
+      if(${ESPRESSO_TEST_NP} GREATER_EQUAL ${TEST_NUM_PROC})
+        set(TEST_NAME
+            EspressoSystemStandAlone_test_${TEST_NUM_PROC}_mpi_ranks_${TEST_NUM_THREADS}_omp_threads
+        )
+        espresso_unit_test(
+          NAME ${TEST_NAME} SRC EspressoSystemStandAlone_test.cpp DEPENDS
+          espresso::core Boost::mpi MPI::MPI_CXX NUM_PROC ${TEST_NUM_PROC}
+          NUM_THREADS ${TEST_NUM_THREADS})
+      endif()
+    endif()
+  endforeach()
+endforeach()
 espresso_unit_test(SRC EspressoSystem_test.cpp DEPENDS espresso::core
                    Boost::mpi NUM_PROC 2)
 espresso_unit_test(SRC ResourceCleanup_test.cpp DEPENDS espresso::core
@@ -50,8 +58,16 @@ espresso_unit_test(SRC field_coupling_couplings_test.cpp DEPENDS
 espresso_unit_test(SRC field_coupling_fields_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC field_coupling_force_field_test.cpp DEPENDS
                    espresso::utils)
-espresso_unit_test(SRC field_layout_helpers_test.cpp DEPENDS espresso::utils
-                   espresso::core)
+espresso_unit_test(
+  SRC field_layout_helpers_test.cpp DEPENDS espresso::utils espresso::core
+  $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>)
+set_target_properties(field_layout_helpers_test
+                      PROPERTIES CXX_CLANG_TIDY "${CABANA_CXX_CLANG_TIDY}")
+espresso_unit_test(
+  SRC particle_reduction_test.cpp DEPENDS espresso::utils espresso::core
+  $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>)
+set_target_properties(particle_reduction_test
+                      PROPERTIES CXX_CLANG_TIDY "${CABANA_CXX_CLANG_TIDY}")
 espresso_unit_test(SRC periodic_fold_test.cpp)
 espresso_unit_test(SRC grid_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC lees_edwards_test.cpp DEPENDS espresso::core)
@@ -70,11 +86,11 @@ if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
   espresso_unit_test(SRC specfunc_test.cpp DEPENDS espresso::utils
                      espresso::core)
 endif()
-espresso_unit_test(SRC lb_particle_coupling_test.cpp DEPENDS espresso::core
-                   Boost::mpi MPI::MPI_CXX NUM_PROC 2)
-espresso_unit_test(SRC ek_interface_test.cpp DEPENDS espresso::core Boost::mpi
-                   MPI::MPI_CXX NUM_PROC 2)
 if(ESPRESSO_BUILD_WITH_WALBERLA)
+  espresso_unit_test(SRC lb_particle_coupling_test.cpp DEPENDS espresso::core
+                     Boost::mpi MPI::MPI_CXX NUM_PROC 2)
+  espresso_unit_test(SRC ek_interface_test.cpp DEPENDS espresso::core
+                     Boost::mpi MPI::MPI_CXX NUM_PROC 2)
   target_link_libraries(
     lb_particle_coupling_test PRIVATE espresso::walberla
                                       espresso::walberla::cpp_flags)
@@ -83,8 +99,14 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
 endif()
 
 if(ESPRESSO_BUILD_WITH_FFTW)
-  espresso_unit_test(SRC p3m_test.cpp DEPENDS espresso::utils espresso::core)
-  espresso_unit_test(SRC fft_test.cpp DEPENDS espresso::utils espresso::core)
+  espresso_unit_test(
+    SRC p3m_test.cpp DEPENDS espresso::utils espresso::core
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>)
+  espresso_unit_test(
+    SRC fft_test.cpp DEPENDS espresso::utils espresso::core
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>)
+  set_target_properties(fft_test PROPERTIES CXX_CLANG_TIDY
+                                            "${CABANA_CXX_CLANG_TIDY}")
   espresso_unit_test(SRC math_test.cpp DEPENDS espresso::utils espresso::core)
 endif()
 

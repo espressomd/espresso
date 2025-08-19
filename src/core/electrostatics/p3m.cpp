@@ -54,13 +54,17 @@
 #include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
 #include "actor/visitors.hpp"
+#include "aosoa_pack.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
+#include "cell_system/particle_enumeration.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "integrators/Propagation.hpp"
 #include "npt.hpp"
 #include "p3m/send_mesh.hpp"
+#include "particle_reduction.hpp"
+#include "short_range_cabana.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
 #include "tuning.hpp"
@@ -77,6 +81,11 @@
 #include <boost/mpi/communicator.hpp>
 #include <boost/range/combine.hpp>
 #include <boost/range/numeric.hpp>
+
+#ifdef SHARED_MEMORY_PARALLELISM
+#include <Kokkos_Core.hpp>
+#include <omp.h>
+#endif
 
 #include <algorithm>
 #include <array>
@@ -114,19 +123,6 @@ FloatType complex_norm2(std::complex<FloatType> const &z) {
   return Utils::sqr(z.real()) + Utils::sqr(z.imag());
 }
 
-template <Utils::MemoryOrder order_in, Utils::MemoryOrder order_out, typename T>
-auto transpose(std::span<T> const &flat_array, Utils::Vector3i const &shape) {
-  auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
-  Utils::Vector3i indices{};
-  std::vector<T> flat_array_t(flat_array.size());
-  for_each_3d(mesh_start, shape, indices, [&]() {
-    auto const index_in = Utils::get_linear_index(indices, shape, order_in);
-    auto const index_out = Utils::get_linear_index(indices, shape, order_out);
-    flat_array_t[index_out] = flat_array[index_in];
-  });
-  return flat_array_t;
-}
-
 static bool is_node_grid_compatible_with_mesh(Utils::Vector3i const &node_grid,
                                               Utils::Vector3i const &mesh) {
   return mesh[0u] % node_grid[0u] == 0 and mesh[1u] % node_grid[1u] == 0 and
@@ -142,21 +138,31 @@ static auto get_size_from_shape(Utils::Vector3i const &shape) {
 
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::count_charged_particles() {
-  auto local_n = std::size_t{0u};
-  auto local_q2 = 0.0;
-  auto local_q = 0.0;
-
-  for (auto const &p : get_system().cell_structure->local_particles()) {
+  struct Res {
+    std::size_t local_n = std::size_t{0u};
+    double local_q = 0.0;
+    double local_q2 = 0.0;
+  };
+  Reduction::AddPartialResultKernel<Res> kernel = [](Res &acc, auto const &p) {
     if (p.q() != 0.0) {
-      local_n++;
-      local_q2 += Utils::sqr(p.q());
-      local_q += p.q();
+      acc.local_n++;
+      acc.local_q2 += Utils::sqr(p.q());
+      acc.local_q += p.q();
     }
-  }
+  };
 
-  boost::mpi::all_reduce(comm_cart, local_n, p3m.sum_qpart, std::plus<>());
-  boost::mpi::all_reduce(comm_cart, local_q2, p3m.sum_q2, std::plus<>());
-  boost::mpi::all_reduce(comm_cart, local_q, p3m.square_sum_q, std::plus<>());
+  Reduction::ReductionOp<Res> reduce = [](Res &a, Res const &b) {
+    a.local_n += b.local_n;
+    a.local_q += b.local_q;
+    a.local_q2 += b.local_q2;
+  };
+  auto res = reduce_over_local_particles(*(get_system().cell_structure), kernel,
+                                         reduce);
+
+  boost::mpi::all_reduce(comm_cart, res.local_n, p3m.sum_qpart, std::plus<>());
+  boost::mpi::all_reduce(comm_cart, res.local_q2, p3m.sum_q2, std::plus<>());
+  boost::mpi::all_reduce(comm_cart, res.local_q, p3m.square_sum_q,
+                         std::plus<>());
   p3m.square_sum_q = Utils::sqr(p3m.square_sum_q);
 }
 
@@ -337,10 +343,11 @@ void CoulombP3MImpl<FloatType, Architecture>::init_cpu_kernels() {
 
 namespace {
 template <int cao> struct AssignCharge {
-  void operator()(auto &p3m, double q, InterpolationWeights<cao> const &w) {
+  void operator()(auto &p3m, double q,
+                  InterpolationWeights<cao> const &weights) {
     using value_type =
         typename std::remove_reference_t<decltype(p3m)>::value_type;
-    p3m_interpolate(p3m.local_mesh, w, [q, &p3m](int ind, double w) {
+    p3m_interpolate(p3m.local_mesh, weights, [q, &p3m](int ind, double w) {
       p3m.rs_charge_density[ind] += value_type(w * q);
     });
   }
@@ -349,30 +356,54 @@ template <int cao> struct AssignCharge {
                   p3m_interpolation_cache &inter_weights) {
     auto constexpr memory_order =
         std::remove_reference<decltype(p3m)>::type::memory_order;
-    auto const w = p3m_calculate_interpolation_weights<cao, memory_order>(
+    auto const weights = p3m_calculate_interpolation_weights<cao, memory_order>(
         real_pos, p3m.params.ai, p3m.local_mesh);
-    inter_weights.store(w);
-    this->operator()(p3m, q, w);
+    inter_weights.store(weights);
+    this->operator()(p3m, q, weights);
   }
 
   void operator()(auto &p3m, double q, Utils::Vector3d const &real_pos) {
     auto constexpr memory_order =
         std::remove_reference<decltype(p3m)>::type::memory_order;
-    auto const w = p3m_calculate_interpolation_weights<cao, memory_order>(
+    auto const weights = p3m_calculate_interpolation_weights<cao, memory_order>(
         real_pos, p3m.params.ai, p3m.local_mesh);
-    this->operator()(p3m, q, w);
+    this->operator()(p3m, q, weights);
   }
 
-  template <typename combined_ranges>
-  void operator()(auto &p3m, combined_ranges const &p_q_pos_range) {
+#ifdef SHARED_MEMORY_PARALLELISM
+  void operator()(auto &p3m, auto &cell_structure) {
+    auto const &aosoa = cell_structure.get_aosoa();
+    auto const n_part = cell_structure.count_local_particles();
+    p3m.inter_weights.zfill(n_part); // allocate buffer for parallel write
+    kokkos_parallel_range_for(
+        "InterpolationWeights", std::size_t{0u}, n_part, [&](auto p_index) {
+          Utils::Vector3d const p_pos{aosoa.position(p_index, 0),
+                                      aosoa.position(p_index, 1),
+                                      aosoa.position(p_index, 2)};
+          auto constexpr memory_order =
+              std::remove_reference<decltype(p3m)>::type::memory_order;
+          auto const weights =
+              p3m_calculate_interpolation_weights<cao, memory_order>(
+                  p_pos, p3m.params.ai, p3m.local_mesh);
+          p3m.inter_weights.store_at(p_index, weights);
+        });
+    // serial part of charge assignment
+    for (std::size_t p_index{0}; p_index < n_part; ++p_index) {
+      auto const weights = p3m.inter_weights.template load<cao>(p_index);
+      this->operator()(p3m, aosoa.charge(p_index), weights);
+    }
+  }
+#else  // SHARED_MEMORY_PARALLELISM
+  void operator()(auto &p3m, auto const &p_q_pos_range) {
     for (auto zipped : p_q_pos_range) {
       auto const p_q = boost::get<0>(zipped);
-      auto const &p_pos = boost::get<1>(zipped);
       if (p_q != 0.0) {
+        auto const &p_pos = boost::get<1>(zipped);
         this->operator()(p3m, p_q, p_pos, p3m.inter_weights);
       }
     }
   }
+#endif // SHARED_MEMORY_PARALLELISM
 };
 } // namespace
 
@@ -381,11 +412,16 @@ void CoulombP3MImpl<FloatType, Architecture>::charge_assign(
     ParticleRange const &particles) {
   prepare_fft_mesh(true);
 
+#ifdef SHARED_MEMORY_PARALLELISM
+  Utils::integral_parameter<int, AssignCharge, 1, 7>(
+      p3m.params.cao, p3m, *get_system().cell_structure);
+#else  // SHARED_MEMORY_PARALLELISM
   auto p_q_range = ParticlePropertyRange::charge_range(particles);
   auto p_pos_range = ParticlePropertyRange::pos_range(particles);
 
   Utils::integral_parameter<int, AssignCharge, 1, 7>(
       p3m.params.cao, p3m, boost::combine(p_q_range, p_pos_range));
+#endif // SHARED_MEMORY_PARALLELISM
 }
 
 template <typename FloatType, Arch Architecture>
@@ -400,40 +436,80 @@ void CoulombP3MImpl<FloatType, Architecture>::assign_charge(
   }
 }
 
+namespace {
 template <int cao> struct AssignForces {
-  template <typename combined_ranges>
-  void operator()(auto &p3m, double force_prefac,
-                  combined_ranges const &p_q_force_range) const {
+  void operator()(auto &p3m, auto force_prefac,
+#ifdef SHARED_MEMORY_PARALLELISM
+                  CellStructure &cell_structure
+#else
+                  auto const &p_q_force_range
+#endif
+  ) const {
 
     assert(cao == p3m.inter_weights.cao());
 
+    auto const kernel = [&p3m](auto pref, auto &p_force, std::size_t p_index) {
+      auto const weights = p3m.inter_weights.template load<cao>(p_index);
+
+      Utils::Vector3d force{};
+      p3m_interpolate(p3m.local_mesh, weights,
+                      [&force, &p3m](int ind, double w) {
+                        force[0u] += w * double(p3m.rs_E_fields[0u][ind]);
+                        force[1u] += w * double(p3m.rs_E_fields[1u][ind]);
+                        force[2u] += w * double(p3m.rs_E_fields[2u][ind]);
+                      });
+
+#ifdef SHARED_MEMORY_PARALLELISM
+      auto const thread_id = omp_get_thread_num();
+      p_force(p_index, thread_id, 0) -= pref * force[0];
+      p_force(p_index, thread_id, 1) -= pref * force[1];
+      p_force(p_index, thread_id, 2) -= pref * force[2];
+#else
+      p_force -= pref * force;
+#endif
+    };
+
+#ifdef SHARED_MEMORY_PARALLELISM
+    auto const n_part = p3m.inter_weights.size();
+    auto const &aosoa = cell_structure.get_aosoa();
+    auto &local_force = cell_structure.get_local_force();
+    kokkos_parallel_range_for(
+        "AssignForces", std::size_t{0u}, n_part, [&](std::size_t p_index) {
+          if (auto const pref = aosoa.charge(p_index) * force_prefac) {
+            kernel(pref, local_force, p_index);
+          }
+        });
+#else  // SHARED_MEMORY_PARALLELISM
     /* charged particle counter */
-    auto p_index = std::size_t{0ul};
+    std::size_t p_index{0ul};
 
     for (auto zipped : p_q_force_range) {
       auto p_q = boost::get<0>(zipped);
-      auto &p_force = boost::get<1>(zipped);
-      if (p_q != 0.0) {
-        auto const pref = p_q * force_prefac;
-        auto const w = p3m.inter_weights.template load<cao>(p_index);
-
-        Utils::Vector3d force{};
-        p3m_interpolate(p3m.local_mesh, w, [&force, &p3m](int ind, double w) {
-          force[0u] += w * double(p3m.rs_E_fields[0u][ind]);
-          force[1u] += w * double(p3m.rs_E_fields[1u][ind]);
-          force[2u] += w * double(p3m.rs_E_fields[2u][ind]);
-        });
-
-        p_force -= pref * force;
+      if (p_q != 0.) {
+        auto &p_force = boost::get<1>(zipped);
+        kernel(p_q * force_prefac, p_force, p_index);
         ++p_index;
       }
     }
+#endif // SHARED_MEMORY_PARALLELISM
   }
 };
+} // namespace
 
-template <typename combined_ranges>
+#ifdef SHARED_MEMORY_PARALLELISM
 static auto calc_dipole_moment(boost::mpi::communicator const &comm,
-                               combined_ranges const &p_q_unfolded_pos_range) {
+                               auto const &cs, auto const &box_geo) {
+  auto const local_dip = reduce_over_local_particles<Utils::Vector3d>(
+      cs,
+      [&box_geo](Utils::Vector3d &acc, Particle const &p) {
+        acc += p.q() * box_geo.unfolded_position(p.pos(), p.image_box());
+      },
+      [](Utils::Vector3d &a, Utils::Vector3d const &b) { a = a + b; });
+  return boost::mpi::all_reduce(comm, local_dip, std::plus<>());
+}
+#else  // SHARED_MEMORY_PARALLELISM
+static auto calc_dipole_moment(boost::mpi::communicator const &comm,
+                               auto const &p_q_unfolded_pos_range) {
   auto const local_dip =
       boost::accumulate(p_q_unfolded_pos_range, Utils::Vector3d{},
                         [](Utils::Vector3d const &dip, auto const &q_pos) {
@@ -443,6 +519,7 @@ static auto calc_dipole_moment(boost::mpi::communicator const &comm,
                         });
   return boost::mpi::all_reduce(comm, local_dip, std::plus<>());
 }
+#endif // SHARED_MEMORY_PARALLELISM
 
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::kernel_ks_charge_density() {
@@ -451,10 +528,11 @@ void CoulombP3MImpl<FloatType, Architecture>::kernel_ks_charge_density() {
                             p3m.local_mesh.dim);
 
   // get real space charge density without ghost layers
-  auto charge_density_no_halos = extract_block(
-      p3m.rs_charge_density, p3m.local_mesh.dim, p3m.local_mesh.n_halo_ld,
-      p3m.local_mesh.dim - p3m.local_mesh.n_halo_ur,
-      Utils::MemoryOrder::ROW_MAJOR, Utils::MemoryOrder::COLUMN_MAJOR);
+  auto charge_density_no_halos =
+      extract_block<Utils::MemoryOrder::ROW_MAJOR,
+                    Utils::MemoryOrder::COLUMN_MAJOR>(
+          p3m.rs_charge_density, p3m.local_mesh.dim, p3m.local_mesh.n_halo_ld,
+          p3m.local_mesh.dim - p3m.local_mesh.n_halo_ur);
 
   // Set up the FFT using the Heffte library.
   // This is in global mesh coordinates without any ghost layers
@@ -466,14 +544,13 @@ void CoulombP3MImpl<FloatType, Architecture>::kernel_ks_charge_density() {
 
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::kernel_rs_electric_field() {
-  auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
-  auto const &mesh_stop = p3m.fft->ks_local_size();
+  auto const mesh_start = p3m.fft->ks_local_ld_index();
+  auto const mesh_stop = mesh_start + p3m.fft->ks_local_size();
   auto const &box_geo = *get_system().box_geo;
-  auto indices = Utils::Vector3i{};
 
   // hold electric field in k-space
   std::array<std::span<std::complex<FloatType>>, 3> ks_E_fields;
-  auto const fft_mesh_length = get_size_from_shape(mesh_stop);
+  auto const fft_mesh_length = get_size_from_shape(mesh_stop - mesh_start);
   for (auto d : {0u, 1u, 2u}) {
     auto const offset = d * fft_mesh_length;
     auto const begin = p3m.ks_E_fields_storage.begin() + offset;
@@ -485,38 +562,43 @@ void CoulombP3MImpl<FloatType, Architecture>::kernel_rs_electric_field() {
       Utils::Vector3<FloatType>((2. * std::numbers::pi) * box_geo.length_inv());
 
   // compute electric field, Eq. (3.49) @cite deserno00b
-  for_each_3d(mesh_start, mesh_stop, indices, [&]() {
-    auto const global_index = indices + p3m.fft->ks_local_ld_index();
-    auto const local_index = Utils::get_linear_index(
-        indices, mesh_stop, Utils::MemoryOrder::COLUMN_MAJOR);
-    auto const phi_hat = multiply_complex_by_real(
-        p3m.ks_charge_density[local_index], p3m.g_force[local_index]);
+  for_each_3d_lin<Utils::MemoryOrder::COLUMN_MAJOR>(
+      mesh_start, mesh_stop,
+      [&](const Utils::Vector3i &indices, int local_index) {
+#ifdef ADDITIONAL_CHECKS
+        assert(local_index ==
+               Utils::get_linear_index<Utils::MemoryOrder::COLUMN_MAJOR>(
+                   indices - mesh_start, p3m.fft->ks_local_size()));
+#endif
+        auto const phi_hat = multiply_complex_by_real(
+            p3m.ks_charge_density[local_index], p3m.g_force[local_index]);
 
-    for (auto d : {0u, 1u, 2u}) {
-      // wave vector of the current mesh point
-      auto const k = FloatType(p3m.d_op[d][global_index[d]]) * wavevector[d];
-      // electric field in k-space
-      ks_E_fields[d][local_index] = multiply_complex_by_imaginary(phi_hat, k);
-    }
-  });
+        for (auto d : {0u, 1u, 2u}) {
+          // wave vector of the current mesh point
+          auto const k = FloatType(p3m.d_op[d][indices[d]]) * wavevector[d];
+          // electric field in k-space
+          ks_E_fields[d][local_index] =
+              multiply_complex_by_imaginary(phi_hat, k);
+        }
+      });
 
   // back-transform the k-space electric field to real space
-  auto const rs_mesh_size_no_halo =
-      get_size_from_shape(p3m.local_mesh.dim_no_halo);
-  p3m.fft->backward_batch(3, p3m.ks_E_fields_storage.data(),
-                          p3m.rs_E_fields_no_halo.data());
-
-  // add zeros around the E-field in real space to make room for ghost layers
   auto const size = p3m.local_mesh.ur_no_halo - p3m.local_mesh.ld_no_halo;
+  auto const rs_mesh_size_no_halo = Utils::product(size);
   for (auto d : {0u, 1u, 2u}) {
+    auto k_space = ks_E_fields[d].data();
+    auto real_space = p3m.rs_E_fields_no_halo.data() + d * rs_mesh_size_no_halo;
+    p3m.fft->backward(k_space, real_space);
+
+    // add zeros around the E-field in real space to make room for ghost layers
     auto const offset = d * rs_mesh_size_no_halo;
     auto const begin = p3m.rs_E_fields_no_halo.begin() + offset;
     auto f = std::span<std::complex<FloatType>>(begin, rs_mesh_size_no_halo);
-    auto f_t = transpose<Utils::MemoryOrder::COLUMN_MAJOR,
-                         Utils::MemoryOrder::ROW_MAJOR>(f, size);
-    p3m.rs_E_fields[d] = pad_with_zeros_discard_imag(
-        std::span<std::complex<FloatType>>(f_t), p3m.local_mesh.dim_no_halo,
-        p3m.local_mesh.n_halo_ld, p3m.local_mesh.n_halo_ur);
+    p3m.rs_E_fields[d] =
+        pad_with_zeros_discard_imag<Utils::MemoryOrder::COLUMN_MAJOR,
+                                    Utils::MemoryOrder::ROW_MAJOR>(
+            std::span<std::complex<FloatType>>(f), p3m.local_mesh.dim_no_halo,
+            p3m.local_mesh.n_halo_ld, p3m.local_mesh.n_halo_ur);
   }
 
   // ghost communicate the boundary layers of the E-field in real space
@@ -591,8 +673,7 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
 #ifdef NPT
-  auto const npt_flag =
-      force_flag and (system.propagation->integ_switch == INTEG_METHOD_NPT_ISO);
+  auto const npt_flag = force_flag and system.has_npt_enabled();
 #else
   auto constexpr npt_flag = false;
 #endif
@@ -607,18 +688,28 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
 
   kernel_ks_charge_density();
 
-  // Calculate the dipole term
+#ifdef SHARED_MEMORY_PARALLELISM
+  auto &cell_structure = *system.cell_structure;
+  auto const &local_force = cell_structure.get_local_force();
+  auto const &aosoa = cell_structure.get_aosoa();
+#else
   auto p_q_range = ParticlePropertyRange::charge_range(particles);
   auto p_force_range = ParticlePropertyRange::force_range(particles);
   auto p_unfolded_pos_range =
       ParticlePropertyRange::unfolded_pos_range(particles, box_geo);
+#endif // SHARED_MEMORY_PARALLELISM
 
   // The dipole moment is only needed if we don't have metallic boundaries
-  auto const box_dipole =
-      (p3m.params.epsilon != P3M_EPSILON_METALLIC)
-          ? std::make_optional(calc_dipole_moment(
-                comm_cart, boost::combine(p_q_range, p_unfolded_pos_range)))
-          : std::nullopt;
+  auto const box_dipole = (p3m.params.epsilon != P3M_EPSILON_METALLIC)
+                              ? std::make_optional(calc_dipole_moment(
+#ifdef SHARED_MEMORY_PARALLELISM
+                                    comm_cart, cell_structure, box_geo))
+#else
+                                    comm_cart,
+                                    boost::combine(p_q_range,
+                                                   p_unfolded_pos_range)))
+#endif
+                              : std::nullopt;
   auto const volume = box_geo.volume();
   auto const pref =
       4. * std::numbers::pi / volume / (2. * p3m.params.epsilon + 1.);
@@ -630,19 +721,36 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
 
     // assign particle forces
     auto const force_prefac = prefactor / volume;
+#ifdef SHARED_MEMORY_PARALLELISM
+    auto &particle_data = cell_structure;
+#else
+    auto const particle_data = boost::combine(p_q_range, p_force_range);
+#endif
     Utils::integral_parameter<int, AssignForces, 1, 7>(
-        p3m.params.cao, p3m, force_prefac,
-        boost::combine(p_q_range, p_force_range));
+        p3m.params.cao, p3m, force_prefac, particle_data);
 
     // add dipole forces
     // Eq. (3.19) @cite deserno00b
     if (box_dipole) {
       auto const dm = prefactor * pref * box_dipole.value();
+#ifdef SHARED_MEMORY_PARALLELISM
+      auto const n_part = cell_structure.count_local_particles();
+      kokkos_parallel_range_for(
+          "AssignForcesBoxDipole", std::size_t{0u}, n_part,
+          [&aosoa, &local_force, dm](auto p_index) {
+            auto const thread_id = omp_get_thread_num();
+            auto const q = aosoa.charge(p_index);
+            local_force(p_index, thread_id, 0) -= q * dm[0];
+            local_force(p_index, thread_id, 1) -= q * dm[1];
+            local_force(p_index, thread_id, 2) -= q * dm[2];
+          });
+#else  // SHARED_MEMORY_PARALLELISM
       for (auto zipped : boost::combine(p_q_range, p_force_range)) {
         auto p_q = boost::get<0>(zipped);
         auto &p_force = boost::get<1>(zipped);
         p_force -= p_q * dm;
       }
+#endif // SHARED_MEMORY_PARALLELISM
     }
   }
 
@@ -1018,7 +1126,7 @@ void CoulombP3MImpl<FloatType, Architecture>::add_long_range_forces_gpu(
     ParticleRange const &particles) {
   if constexpr (Architecture == Arch::GPU) {
 #ifdef NPT
-    if (get_system().propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
+    if (get_system().has_npt_enabled()) {
       get_system().npt_add_virial_contribution(long_range_energy(particles));
     }
 #else

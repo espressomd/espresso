@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef UTILS_ENUMERATED_CONTAINER_HPP
-#define UTILS_ENUMERATED_CONTAINER_HPP
+#pragma once
 
 /** @file
  *  Keep an enumerated list of T objects, managed by the class.
@@ -40,10 +39,9 @@ namespace Utils {
  */
 template <class T, typename index_type = int> class NumeratedContainer {
 public:
-  typedef typename std::unordered_map<index_type, T>::iterator iterator;
-  typedef
-      typename std::unordered_map<index_type, T>::const_iterator const_iterator;
-  typedef typename std::unordered_map<index_type, T>::value_type value_type;
+  using iterator = std::unordered_map<index_type, T>::iterator;
+  using const_iterator = std::unordered_map<index_type, T>::const_iterator;
+  using value_type = std::unordered_map<index_type, T>::value_type;
 
   NumeratedContainer() {
     m_free_indices.insert(0);
@@ -198,5 +196,3 @@ private:
   }
 };
 } // namespace Utils
-
-#endif

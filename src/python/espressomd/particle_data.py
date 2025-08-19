@@ -605,6 +605,14 @@ class ParticleHandle(ScriptInterfaceHelper):
                 else:
                     self.propagation |= Propagation.ROT_LANGEVIN
 
+    def _bond_sanity_checks(self, bond):
+        if self.id in bond[1:]:
+            raise Exception(
+                f"Bond partners {bond[1:]} include the particle {self.id} itself")
+        if len(set(bond[1:])) is not len(bond[1:]):
+            raise Exception(
+                f"Cannot add duplicate bond partners {bond[1:]} to particle {self.id}")
+
     def add_verified_bond(self, bond):
         """
         Add a bond, the validity of which has already been verified.
@@ -615,12 +623,7 @@ class ParticleHandle(ScriptInterfaceHelper):
         bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         """
-        if self.id in bond[1:]:
-            raise Exception(
-                f"Bond partners {bond[1:]} include the particle {self.id} itself")
-        if len(set(bond[1:])) is not len(bond[1:]):
-            raise Exception(
-                f"Cannot add duplicate bond partners {bond[1:]} to particle {self.id}")
+        self._bond_sanity_checks(bond)
         self.call_method("add_bond",
                          bond_id=bond[0]._bond_id,
                          part_id=bond[1:])
@@ -797,7 +800,7 @@ class ParticleHandle(ScriptInterfaceHelper):
         Parameters
         ----------
         new_properties : :obj:`dict`
-            Map particle property names to values. All properties except
+            New particle properties. All properties except
             for the particle id can be changed.
 
         Examples
@@ -813,11 +816,30 @@ class ParticleHandle(ScriptInterfaceHelper):
         [4. 5. 6.] 0.0 False
 
         """
+        overrides = dict()
         if "id" in new_properties:
             raise RuntimeError("Cannot change particle id.")
 
-        for k, v in new_properties.items():
-            setattr(self, k, v)
+        if "propagation" in new_properties.keys():
+            overrides["propagation"] = int(new_properties["propagation"])
+        if "bonds" in new_properties:
+            bonds_ids, bonds_parts = [], []
+            bonds = new_properties["bonds"]
+            nlvl = nesting_level(bonds)
+            if nlvl not in (1, 2):
+                raise ValueError(
+                    "Bonds have to specified as lists of tuples/lists or a single list")
+            if nlvl == 1 and len(bonds) > 0:
+                bonds = [bonds]
+            for bond in bonds:
+                _bond = self.normalize_and_check_bond_or_throw_exception(bond)
+                self._bond_sanity_checks(_bond)
+                bonds_ids.append(_bond[0]._bond_id)
+                bonds_parts.append(_bond[1:])
+            overrides["bonds_ids"] = bonds_ids
+            overrides["bonds_parts"] = bonds_parts
+        return self.call_method(
+            "update_params", **(new_properties | overrides))
 
     def convert_vector_body_to_space(self, vec):
         """

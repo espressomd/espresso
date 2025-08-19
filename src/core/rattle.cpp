@@ -38,6 +38,7 @@
 #include <cmath>
 #include <functional>
 #include <span>
+#include <variant>
 
 static void check_convergence(int cnt, char const *const name) {
   static constexpr char const *const msg = " failed to converge after ";
@@ -125,7 +126,7 @@ static bool compute_correction_vector(CellStructure &cs,
                    Particle &p1, int bond_id, std::span<Particle *> partners) {
     auto const &iaparams = *bonded_ias.at(bond_id);
 
-    if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
+    if (auto const *bond = std::get_if<RigidBond>(&iaparams)) {
       auto const corrected = kernel(*bond, box_geo, p1, *partners[0]);
       if (corrected)
         correction = true;

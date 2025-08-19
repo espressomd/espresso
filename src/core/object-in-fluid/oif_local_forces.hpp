@@ -174,12 +174,10 @@ OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
                                   // consistent with Krueger and Fedosov
     auto const fac = kb * aa;
 
-    auto const Nc = Utils::get_n_triangle(
-        fp1, fp2,
-        fp3); // returns (fp2 - fp1)x(fp3 - fp1), thus Nc = (A - C)x(B - C)
-    auto const Nd = Utils::get_n_triangle(
-        fp4, fp3,
-        fp2); // returns (fp3 - fp4)x(fp2 - fp4), thus Nd = (B - D)x(A - D)
+    // calculates (fp2 - fp1)x(fp3 - fp1), thus Nc = (A - C)x(B - C)
+    auto const Nc = Utils::get_n_triangle(fp1, fp2, fp3);
+    // calculates (fp3 - fp4)x(fp2 - fp4), thus Nd = (B - D)x(A - D)
+    auto const Nd = Utils::get_n_triangle(fp4, fp3, fp2);
 
     auto const BminA = fp3 - fp2;
 
@@ -205,35 +203,31 @@ OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
    * @cite jancigova16a.
    */
   if (kal > TINY_OIF_ELASTICITY_COEFFICIENT) {
-
-    auto handle_triangle = [](double kal, double A0, Utils::Vector3d const &fp1,
-                              Utils::Vector3d const &fp2,
-                              Utils::Vector3d const &fp3,
-                              Utils::Vector3d &force1, Utils::Vector3d &force2,
-                              Utils::Vector3d &force3) {
-      auto const h = (1. / 3.) * (fp1 + fp2 + fp3);
-      auto const A = Utils::area_triangle(fp1, fp2, fp3);
+    auto handle_triangle = [kal = this->kal](
+                               double A0, Utils::Vector3d const &c1,
+                               Utils::Vector3d const &c2,
+                               Utils::Vector3d const &c3, Utils::Vector3d &f1,
+                               Utils::Vector3d &f2, Utils::Vector3d &f3) {
+      // calculate triangle barycenter and surface
+      auto const h = (1. / 3.) * (c1 + c2 + c3);
+      auto const A = Utils::area_triangle(c1, c2, c3);
       auto const t = sqrt(A / A0) - 1.0;
 
-      auto const m1 = h - fp1;
-      auto const m2 = h - fp2;
-      auto const m3 = h - fp3;
-
-      auto const m1_length2 = m1.norm2();
-      auto const m2_length2 = m2.norm2();
-      auto const m3_length2 = m3.norm2();
+      auto const m1 = h - c1;
+      auto const m2 = h - c2;
+      auto const m3 = h - c3;
 
       auto const fac =
-          kal * A0 * (2 * t + t * t) / (m1_length2 + m2_length2 + m3_length2);
+          kal * A0 * (2 * t + t * t) / (m1.norm2() + m2.norm2() + m3.norm2());
 
-      // local area force for p1
-      force1 += (fac / 3.0) * m1;
-      force2 += (fac / 3.0) * m2;
-      force3 += (fac / 3.0) * m3;
+      // local area force for triangle
+      f1 += (fac / 3.0) * m1;
+      f2 += (fac / 3.0) * m2;
+      f3 += (fac / 3.0) * m3;
     };
 
-    handle_triangle(kal, A01, fp1, fp2, fp3, force1, force2, force3);
-    handle_triangle(kal, A02, fp2, fp3, fp4, force2, force3, force4);
+    handle_triangle(A01, fp1, fp2, fp3, force1, force2, force3);
+    handle_triangle(A02, fp2, fp3, fp4, force2, force3, force4);
   }
   return std::make_tuple(force2, force1, force3, force4);
 }

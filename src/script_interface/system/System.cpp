@@ -71,6 +71,7 @@
 #include <functional>
 #include <initializer_list>
 #include <memory>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -270,11 +271,11 @@ void System::do_construct(VariantMap const &params) {
         "periodicity",     "time",
         "time_step",       "force_cap",
         "max_oif_objects", "_regular_constructor"};
-    for (auto const &kv : params) {
-      if (not setable_properties.contains(kv.first)) {
-        context()->parallel_try_catch([&kv]() {
+    for (auto const &name : std::views::elements<0>(params)) {
+      if (not setable_properties.contains(name)) {
+        context()->parallel_try_catch([&name]() {
           throw std::domain_error(
-              "Property '" + kv.first +
+              "Property '" + name +
               "' cannot be set via argument to System class");
         });
       }
@@ -531,8 +532,8 @@ void System::set_internal_state(std::string const &state) {
   for (auto const &packed_object : object_states) {
     auto state = Utils::unpack<ObjectState>(packed_object);
     VariantMap params = {};
-    for (auto const &kv : state.params) {
-      params[kv.first] = unpack(kv.second, {});
+    for (auto const &[name, packed_value] : state.params) {
+      params[name] = unpack(packed_value, {});
     }
     auto const p_id = get_value<int>(params.at("id"));
     bonds[p_id] = params.extract("bonds").mapped();

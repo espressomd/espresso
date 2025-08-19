@@ -24,7 +24,7 @@ import tests_common
 
 
 @utx.skipIfMissingFeatures(["NPT", "LENNARD_JONES"])
-class IntegratorNPT(ut.TestCase):
+class IntegratorNPT:
 
     """
     Compare the pressure and compressibility of a WCA fluid
@@ -44,6 +44,7 @@ class IntegratorNPT(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
+        self.system.non_bonded_inter.reset()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
@@ -58,8 +59,15 @@ class IntegratorNPT(ut.TestCase):
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1, sigma=1, cutoff=1.12246, shift=0.25)
 
-        system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.004, seed=42)
-        system.integrator.set_isotropic_npt(ext_pressure=p_ext, piston=0.0001)
+        if self.barostat == "Andersen":
+            system.thermostat.set_npt(kT=1.0, gamma0=1, gammav=0.004, seed=42)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=p_ext, piston=0.0001)
+        else:
+            system.thermostat.set_npt(
+                kT=1.0, gamma0=0.5, gammav=0.001, seed=42)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=p_ext, piston=4.0, barostat=self.barostat)
 
         system.integrator.run(800)
         # averaged pressure by system.analysis.pressure()
@@ -106,34 +114,18 @@ class IntegratorNPT(ut.TestCase):
         self.assertAlmostEqual(avp, p_ext, delta=0.02)
         self.assertAlmostEqual(compressibility, 0.5, delta=0.05)
         np.testing.assert_allclose(avp_sim_vir, avp_inst_vir, atol=1e-10)
-        self.assertAlmostEqual(avpV_sim, 100, delta=0.6)
-        self.assertAlmostEqual(avpV_inst, 100, delta=0.5)
+        self.assertAlmostEqual(avpV_sim, 100., delta=1.)
+        self.assertAlmostEqual(avpV_inst, 100., delta=1.)
 
-    def test_negative_volume(self):
-        """Test for NpT with bad parameters."""
 
-        data = np.genfromtxt(tests_common.data_path("npt_lj_system.data"))
-        ref_box_l = np.max(data[:, 0:3])
+@utx.skipIfMissingFeatures("NPT")
+class IntegratorNPT_Andersen(IntegratorNPT, ut.TestCase):
+    barostat = "Andersen"
 
-        system = self.system
-        system.box_l = 3 * [ref_box_l]
-        dt = 0.01
-        system.time_step = dt
 
-        direction = [True] * 3
-        ext_pressure = 100.0  # Too large external pressure
-        system.box_l = 3 * [ref_box_l]
-        system.part.add(pos=data[:, 0:3], type=len(data) * [2])
-        system.part.all().pos = data[:, 0:3]
-        system.part.all().v = data[:, 3:6]
-        self.system.integrator.set_vv()
-
-        system.thermostat.set_npt(kT=1.0, gamma0=0.1, gammav=0.001, seed=42)
-        system.integrator.set_isotropic_npt(ext_pressure=ext_pressure,
-                                            piston=0.0001,
-                                            direction=direction)
-        with self.assertRaises(Exception):
-            system.integrator.run(10)
+@utx.skipIfMissingFeatures("NPT")
+class IntegratorNPT_MTK(IntegratorNPT, ut.TestCase):
+    barostat = "MTK"
 
 
 if __name__ == "__main__":

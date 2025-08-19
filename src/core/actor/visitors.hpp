@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ACTOR_VISITORS_HPP
-#define ESPRESSO_SRC_CORE_ACTOR_VISITORS_HPP
+#pragma once
 
 #include "actor/traits.hpp"
 
@@ -31,29 +30,13 @@
 
 /** @brief Get an actor of a specific type, recursively. */
 template <typename Actor> struct GetActorByType {
-private:
-  template <typename T>
-  static constexpr bool is_exact_match_v = std::is_same_v<T, Actor>;
-  template <typename T>
-  static constexpr bool is_layer_correction_v =
-      traits::is_layer_correction<T>::value;
-
-public:
-  template <typename T, std::enable_if_t<is_exact_match_v<T>> * = nullptr>
-  auto operator()(std::shared_ptr<T> const &obj) const {
-    return obj;
-  }
-
-  template <typename T, std::enable_if_t<not is_exact_match_v<T> and
-                                         is_layer_correction_v<T>> * = nullptr>
-  auto operator()(std::shared_ptr<T> const &obj) const {
-    return std::visit(*this, obj->base_solver);
-  }
-
-  template <typename T,
-            std::enable_if_t<not is_exact_match_v<T> and
-                             not is_layer_correction_v<T>> * = nullptr>
-  auto operator()(std::shared_ptr<T> const &) const {
+  template <typename T> auto operator()(std::shared_ptr<T> const &obj) const {
+    if constexpr (std::is_same_v<T, Actor>) {
+      return obj;
+    }
+    if constexpr (traits::is_layer_correction<T>::value) {
+      return std::visit(*this, obj->base_solver);
+    }
     return std::shared_ptr<Actor>{nullptr};
   }
 };
@@ -72,29 +55,13 @@ get_actor_by_type(std::optional<Variant> const &optional) {
 
 /** @brief Check if an actor of a specific type is active, recursively. */
 template <typename Actor> struct HasActorOfType {
-private:
-  template <typename T>
-  static constexpr bool is_exact_match_v = std::is_same_v<T, Actor>;
-  template <typename T>
-  static constexpr bool is_layer_correction_v =
-      traits::is_layer_correction<T>::value;
-
-public:
-  template <typename T, std::enable_if_t<is_exact_match_v<T>> * = nullptr>
-  auto operator()(std::shared_ptr<T> const &) const {
-    return true;
-  }
-
-  template <typename T, std::enable_if_t<not is_exact_match_v<T> and
-                                         is_layer_correction_v<T>> * = nullptr>
-  auto operator()(std::shared_ptr<T> const &obj) const {
-    return std::visit(*this, obj->base_solver);
-  }
-
-  template <typename T,
-            std::enable_if_t<not is_exact_match_v<T> and
-                             not is_layer_correction_v<T>> * = nullptr>
-  auto operator()(std::shared_ptr<T> const &) const {
+  template <typename T> auto operator()(std::shared_ptr<T> const &obj) const {
+    if constexpr (std::is_same_v<T, Actor>) {
+      return true;
+    }
+    if constexpr (traits::is_layer_correction<T>::value) {
+      return std::visit(*this, obj->base_solver);
+    }
     return false;
   }
 };
@@ -109,5 +76,3 @@ template <typename Actor, typename Variant>
 auto has_actor_of_type(std::optional<Variant> const &optional) {
   return (optional) ? has_actor_of_type<Actor>(*optional) : false;
 }
-
-#endif

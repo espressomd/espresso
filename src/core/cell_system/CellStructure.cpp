@@ -29,15 +29,28 @@
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
+#include "aosoa_pack.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
+#include "custom_verlet_list.hpp"
 #include "lees_edwards/lees_edwards.hpp"
+#include "particle_enumeration.hpp"
+#include "particle_reduction.hpp"
 #include "system/System.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/contains.hpp>
+#include <utils/math/int_pow.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/variant.hpp>
+
+#ifdef SHARED_MEMORY_PARALLELISM
+#include <Cabana_Core.hpp>
+#include <Cabana_NeighborList.hpp>
+#include <Kokkos_Core.hpp>
+#include <omp.h>
+#endif
 
 #include <algorithm>
 #include <cassert>
@@ -45,11 +58,136 @@
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
+
+CellStructure::~CellStructure() {
+#ifdef SHARED_MEMORY_PARALLELISM
+  clear_local_properties();
+  // Kokkos handle can only be freed after all Cabana containers have been freed
+  m_kokkos_handle.reset();
+#endif
+}
+
+#ifdef SHARED_MEMORY_PARALLELISM
+void CellStructure::clear_local_properties() {
+  m_local_force.reset();
+#ifdef ROTATION
+  m_local_torque.reset();
+#endif
+#ifdef NPT
+  m_local_virial.reset();
+#endif
+  m_aosoa.reset();
+  m_particle_storage.reset();
+  m_verlet_list_cabana.reset();
+  m_rebuild_verlet_list_cabana = true;
+}
+
+void CellStructure::set_kokkos_handle(
+    std::shared_ptr<Communication::KokkosHandle> handle) {
+  m_kokkos_handle = std::move(handle);
+}
+
+static auto estimate_max_counts(int max_prefactor, double pair_cutoff,
+                                std::size_t number_of_unique_particles) {
+  if (std::isinf(pair_cutoff)) {
+    return number_of_unique_particles;
+  }
+  if (pair_cutoff < 0.) {
+    pair_cutoff = 0.;
+  }
+  auto const volume = Utils::int_pow<3>(pair_cutoff);
+  auto max_counts = static_cast<std::size_t>(
+      std::ceil(static_cast<double>(max_prefactor) * volume));
+#ifdef COLLISION_DETECTION
+  std::size_t constexpr threshold_num = 64;
+#else
+  std::size_t constexpr threshold_num = 16;
+#endif
+  if (max_counts < threshold_num) {
+    max_counts = std::min(threshold_num, number_of_unique_particles);
+  }
+  return max_counts;
+}
+
+void CellStructure::rebuild_local_properties(double const pair_cutoff) {
+  assert(m_kokkos_handle);
+  using execution_space = Kokkos::DefaultExecutionSpace;
+  auto const num_threads = execution_space().concurrency();
+  auto const num_part = get_unique_particles().size();
+  m_local_force =
+      std::make_unique<ForceType>("local_force", num_part, num_threads);
+#ifdef ROTATION
+  m_local_torque =
+      std::make_unique<ForceType>("local_torque", num_part, num_threads);
+#endif
+#ifdef NPT
+  m_local_virial = std::make_unique<VirialType>("local_virial", num_threads);
+#endif
+  m_particle_storage = std::make_unique<AoSoAType>("particles", num_part);
+  m_particle_storage->resize(num_part);
+  // particle properties are defined in aosoa_pack.hpp
+  m_aosoa = std::make_unique<AoSoA_pack>(*m_particle_storage);
+
+  auto max_counts = estimate_max_counts(m_max_prefactor, pair_cutoff, num_part);
+  m_verlet_list_cabana = std::make_unique<ListType>(0ul, num_part, max_counts);
+}
+
+void CellStructure::reset_local_force() {
+  Kokkos::deep_copy(get_local_force(), 0.);
+}
+
+void CellStructure::reset_local_properties() {
+  Kokkos::deep_copy(get_local_force(), 0.);
+#ifdef ROTATION
+  Kokkos::deep_copy(get_local_torque(), 0.);
+#endif
+#ifdef NPT
+  Kokkos::deep_copy(get_local_virial(), 0.);
+#endif
+}
+
+void CellStructure::set_index_map() {
+  auto &unique_particles = m_unique_particles;
+  unique_particles.clear();
+  unique_particles.resize(count_local_particles());
+  std::unordered_set<int> registered_index{};
+  using execution_space = Kokkos::DefaultExecutionSpace;
+  int n_threads = execution_space().concurrency();
+  std::vector<int> max_ids(n_threads);
+  enumerate_local_particles(
+      *this, [&unique_particles, &max_ids](std::size_t index, Particle &p) {
+        unique_particles[index] = &p;
+        const int thread_num = omp_get_thread_num();
+        max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
+      });
+  int max_id = *(std::max_element(max_ids.begin(), max_ids.end()));
+  for (auto &p : ghost_particles()) {
+    auto const *local_particle = get_local_particle(p.id());
+    if (not local_particle) {
+      continue;
+    }
+    if (not local_particle->is_ghost()) {
+      continue;
+    }
+    if (registered_index.contains(p.id())) {
+      continue;
+    }
+    registered_index.insert(p.id());
+    unique_particles.emplace_back(&p);
+    max_id = std::max(p.id(), max_id);
+  }
+  registered_index.clear();
+  m_cached_max_local_particle_id = max_id;
+}
+
+#endif // SHARED_MEMORY_PARALLELISM
 
 CellStructure::CellStructure(BoxGeometry const &box)
     : m_decomposition{std::make_unique<AtomDecomposition>(box)} {}
@@ -109,9 +247,8 @@ void CellStructure::remove_particle(int id) {
     }
   };
 
-  for (auto c : decomposition().local_cells()) {
-    auto &parts = c->particles();
-
+  for (auto cell : decomposition().local_cells()) {
+    auto &parts = cell->particles();
     for (auto it = parts.begin(); it != parts.end();) {
       if (it->id() == id) {
         it = parts.erase(it);
@@ -128,7 +265,6 @@ void CellStructure::remove_particle(int id) {
 Particle *CellStructure::add_local_particle(Particle &&p) {
   auto const sort_cell = particle_to_cell(p);
   if (sort_cell) {
-
     return std::addressof(
         append_indexed_particle(sort_cell->particles(), std::move(p)));
   }
@@ -151,15 +287,15 @@ Particle *CellStructure::add_particle(Particle &&p) {
 }
 
 int CellStructure::get_max_local_particle_id() const {
-  auto it = std::find_if(m_particle_index.rbegin(), m_particle_index.rend(),
-                         [](const Particle *p) { return p != nullptr; });
+  auto it = std::ranges::find_if(std::ranges::views::reverse(m_particle_index),
+                                 [](auto const *p) { return p != nullptr; });
 
   return (it != m_particle_index.rend()) ? (*it)->id() : -1;
 }
 
 void CellStructure::remove_all_particles() {
-  for (auto c : decomposition().local_cells()) {
-    c->particles().clear();
+  for (auto cell : decomposition().local_cells()) {
+    cell->particles().clear();
   }
 
   m_particle_index.clear();
@@ -225,11 +361,12 @@ void CellStructure::resort_particles(bool global_flag) {
   m_decomposition->resort(global_flag, diff);
 
   for (auto d : diff) {
-    boost::apply_visitor(UpdateParticleIndexVisitor{this}, d);
+    std::visit(UpdateParticleIndexVisitor{this}, d);
   }
 
   auto const &lebc = get_system().box_geo->lees_edwards_bc();
   m_rebuild_verlet_list = true;
+  m_rebuild_verlet_list_cabana = true;
   m_le_pos_offset_at_last_resort = lebc.pos_offset;
 
 #ifdef ADDITIONAL_CHECKS
@@ -279,6 +416,7 @@ void CellStructure::set_verlet_skin(double value) {
   assert(value >= 0.);
   m_verlet_skin = value;
   m_verlet_skin_set = true;
+  m_rebuild_verlet_list_cabana = true;
   get_system().on_verlet_skin_change();
 }
 
@@ -326,4 +464,40 @@ void CellStructure::update_ghosts_and_resort_particle(unsigned data_parts) {
     /* Communication step: ghost information */
     ghosts_update(data_parts & ~resort_only_parts);
   }
+}
+
+#ifdef SHARED_MEMORY_PARALLELISM
+void CellStructure::parallel_for_each_particle_impl(
+    std::span<Cell *const> cells, ParticleUnaryOp &f) const {
+  if (cells.size() > 1) {
+    Kokkos::parallel_for( // loop over cells
+        "for_each_local_particle", cells.size(), [&](auto cell_idx) {
+          for (auto &p : cells[cell_idx]->particles())
+            f(p);
+        });
+  } else if (cells.size() == 1) {
+    auto &particles = cells.front()->particles();
+    Kokkos::parallel_for( // loop over particles
+        "for_each_local_particle", particles.size(),
+        [&](auto part_idx) { f(*(particles.begin() + part_idx)); });
+  }
+}
+#endif // SHARED_MEMORY_PARALLELISM
+
+bool CellStructure::check_resort_required(
+    Utils::Vector3d const &additional_offset) const {
+  auto const lim = Utils::sqr(m_verlet_skin / 2.) - additional_offset.norm2();
+
+  Reduction::AddPartialResultKernel<bool> add_partial =
+      [lim](bool &result, Particle const &p) {
+        if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim) {
+          result = true;
+        }
+      };
+
+  Reduction::ReductionOp<bool> reduce_op = [](bool &acc, bool const &val) {
+    acc |= val;
+  };
+
+  return reduce_over_local_particles(*this, add_partial, reduce_op);
 }

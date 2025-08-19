@@ -41,6 +41,7 @@ def configure_and_import(filepath,
                          script_suffix="",
                          move_to_script_dir=True,
                          mock_visualizer=True,
+                         force_visualizer_mock=True,
                          **parameters):
     """
     Copy a Python script to a new location and alter some lines of code:
@@ -69,6 +70,8 @@ def configure_and_import(filepath,
         if ``True``, substitute the visualizer with a ``Mock`` class in case
         of ``ImportError`` (use ``False`` if an ``ImportError`` is relevant
         to your test)
+    force_visualizer_mock : :obj:`bool`
+        if ``True``, always substitute the visualizer with a ``Mock`` class
     move_to_script_dir : :obj:`bool`
         if ``True``, move to the script's directory (useful when the script
         needs to load files hardcoded as relative paths, or when files are
@@ -101,7 +104,7 @@ def configure_and_import(filepath,
     code = disable_matplotlib_gui(code)
     # disable OpenGL GUI in case of ImportError using MagicMock()
     if mock_visualizer:
-        code = mock_es_visualization(code)
+        code = mock_es_visualization(code, force_visualizer_mock)
     # save changes to a new file
     output_filepath = filepath.parent / \
         f"{filepath.stem}_{script_suffix}_processed.py"
@@ -433,7 +436,7 @@ class GetEspressomdVisualizerImports(ast.NodeVisitor):
                         node.lineno, node.module, child.name, child.asname)
 
 
-def mock_es_visualization(code):
+def mock_es_visualization(code, force_mock=False):
     """
     Replace ``import espressomd.visualization`` by a ``MagicMock``
     when the visualization module is unavailable, by catching the
@@ -451,6 +454,12 @@ except ImportError:
     import unittest.mock
     import espressomd
     {1} = unittest.mock.MagicMock()
+""".lstrip()
+    if force_mock:
+        r_es_vis_mock = r"""
+import unittest.mock
+import espressomd
+{1} = unittest.mock.MagicMock()
 """.lstrip()
 
     visitor = GetEspressomdVisualizerImports()

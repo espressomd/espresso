@@ -19,9 +19,9 @@
 import collections
 import inspect
 import pickle
-import os
 import re
 import signal
+import pathlib
 from . import utils
 from . import script_interface
 
@@ -34,7 +34,7 @@ class Checkpoint:
     ----------
     checkpoint_id : :obj:`str`
         A string identifying a specific checkpoint.
-    checkpoint_path : :obj:`str`, optional
+    checkpoint_path : :obj:`str` or :obj:`pathlib.Path`, optional
         Path for reading and writing the checkpoint.
         If not given, the current working directory is used.
 
@@ -42,11 +42,11 @@ class Checkpoint:
 
     def __init__(self, checkpoint_id=None, checkpoint_path="."):
         # check if checkpoint_id is valid (only allow a-z A-Z 0-9 _ -)
-        if not isinstance(checkpoint_id, str) or bool(
-                re.compile(r"[^a-zA-Z0-9_\-]").search(checkpoint_id)):
+        if not isinstance(checkpoint_id, str) or re.search(
+                r"[^a-zA-Z0-9_\-]", checkpoint_id) is not None:
             raise ValueError("Invalid checkpoint id.")
 
-        if not isinstance(checkpoint_path, str):
+        if not isinstance(checkpoint_path, (str, pathlib.Path)):
             raise ValueError("Invalid checkpoint path.")
 
         self.checkpoint_objects = []
@@ -54,26 +54,24 @@ class Checkpoint:
         frm = inspect.stack()[1]
         self.calling_module = inspect.getmodule(frm[0])
 
-        checkpoint_path = os.path.join(checkpoint_path, checkpoint_id)
-        self.checkpoint_dir = os.path.realpath(checkpoint_path)
-
-        if not os.path.isdir(self.checkpoint_dir):
-            os.makedirs(self.checkpoint_dir)
+        checkpoint_path = pathlib.Path(checkpoint_path) / checkpoint_id
+        self.root = checkpoint_path.resolve()
+        self.root.mkdir(exist_ok=True)
+        self.path_signals = self.root / "signals"
 
         # update checkpoint counter
         self.counter = 0
-        while os.path.isfile(os.path.join(
-                self.checkpoint_dir, f"{self.counter}.checkpoint")):
+        while (self.root / f"{self.counter}.checkpoint").is_file():
             self.counter += 1
 
         # init signals
         for signum in self.read_signals():
             self.register_signal(signum)
 
-    def __getattr_submodule(self, obj, name, default):
+    def _getattr_submodule(self, obj, name, default):
         """
         Generalization of ``getattr()``.
-        ``__getattr_submodule(object, "name1.sub1.sub2", None)`` will return
+        ``_getattr_submodule(object, "name1.sub1.sub2", None)`` will return
         attribute ``sub2`` if available otherwise ``None``.
 
         """
@@ -84,10 +82,10 @@ class Checkpoint:
 
         return getattr(obj, names[-1], default)
 
-    def __setattr_submodule(self, obj, name, value):
+    def _setattr_submodule(self, obj, name, value):
         """
         Generalization of ``setattr()``.
-        ``__setattr_submodule(object, "name1.sub1.sub2", value)`` will set
+        ``_setattr_submodule(object, "name1.sub1.sub2", value)`` will set
         attribute ``sub2`` to ``value``. Will raise exception if parent
         modules do not exist.
 
@@ -138,7 +136,7 @@ class Checkpoint:
                 raise KeyError(
                     f"The given object '{varname}' is already registered for checkpointing.")
 
-            obj = self.__getattr_submodule(self.calling_module, varname, None)
+            obj = self._getattr_submodule(self.calling_module, varname, None)
             if isinstance(
                     obj, script_interface.ScriptInterfaceHelper) and not obj._so_checkpointable:
                 raise TypeError(
@@ -205,18 +203,17 @@ class Checkpoint:
         # get attributes of registered objects
         checkpoint_data = collections.OrderedDict()
         for obj_name in self.checkpoint_objects:
-            checkpoint_data[obj_name] = self.__getattr_submodule(
+            checkpoint_data[obj_name] = self._getattr_submodule(
                 self.calling_module, obj_name, None)
 
         if checkpoint_index is None:
             checkpoint_index = self.counter
-        filename = os.path.join(
-            self.checkpoint_dir, f"{checkpoint_index}.checkpoint")
 
-        tmpname = filename + ".__tmp__"
-        with open(tmpname, "wb") as checkpoint_file:
-            pickle.dump(checkpoint_data, checkpoint_file, -1)
-        os.rename(tmpname, filename)
+        checkpoint_file = self.root / f"{checkpoint_index}.checkpoint"
+        checkpoint_file_tmp = checkpoint_file.with_suffix(".checkpoint.tmp")
+        with checkpoint_file_tmp.open("wb") as f:
+            pickle.dump(checkpoint_data, f, -1)
+        checkpoint_file_tmp.rename(checkpoint_file)
 
     def load(self, checkpoint_index=None):
         """
@@ -232,17 +229,16 @@ class Checkpoint:
         if checkpoint_index is None:
             checkpoint_index = self.get_last_checkpoint_index()
 
-        filename = os.path.join(
-            self.checkpoint_dir, f"{checkpoint_index}.checkpoint")
-        with open(filename, "rb") as f:
+        checkpoint_file = self.root / f"{checkpoint_index}.checkpoint"
+        with checkpoint_file.open("rb") as f:
             checkpoint_data = pickle.load(f)
 
         for key in checkpoint_data:
-            self.__setattr_submodule(
+            self._setattr_submodule(
                 self.calling_module, key, checkpoint_data[key])
             self.checkpoint_objects.append(key)
 
-    def __signal_handler(self, signum, frame):  # pylint: disable=unused-argument
+    def _signal_handler(self, signum, frame):  # pylint: disable=unused-argument
         """
         Will be called when a registered signal was sent.
 
@@ -256,20 +252,14 @@ class Checkpoint:
         integers.
 
         """
-        if not os.path.isfile(os.path.join(self.checkpoint_dir, "signals")):
-            return []
+        if self.path_signals.is_file():
+            return [int(i) for i in self.path_signals.read_text().split()]
+        return []
 
-        with open(os.path.join(self.checkpoint_dir, "signals"), "r") as signal_file:
-            signals = signal_file.readline().strip().split()
-            signals = [int(i)
-                       for i in signals]  # will raise exception if signal file contains invalid entries
-        return signals
-
-    def __write_signal(self, signum=None):
+    def _write_signal(self, signum=None):
         """Writes the given signal integer signum to the signal file.
 
         """
-        signum = int(signum)
         if not utils.is_valid_type(signum, int):
             raise ValueError("Signal must be an integer number.")
 
@@ -277,9 +267,7 @@ class Checkpoint:
 
         if signum not in signals:
             signals.append(signum)
-            signals = " ".join(str(i) for i in signals)
-            with open(os.path.join(self.checkpoint_dir, "signals"), "w") as signal_file:
-                signal_file.write(signals)
+            self.path_signals.write_text(" ".join(str(i) for i in signals))
 
     def register_signal(self, signum=None):
         """Register a signal that will trigger the signal handler.
@@ -297,6 +285,6 @@ class Checkpoint:
             raise KeyError(
                 f"The signal {signum} is already registered for checkpointing.")
 
-        signal.signal(signum, self.__signal_handler)
+        signal.signal(int(signum), self._signal_handler)
         self.checkpoint_signals.append(signum)
-        self.__write_signal(signum)
+        self._write_signal(signum)

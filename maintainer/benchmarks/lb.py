@@ -50,6 +50,9 @@ parser.add_argument("--multi-gpu", action=argparse.BooleanOptionalAction,
 parser.add_argument("--output", metavar="FILEPATH", action="store",
                     type=str, required=False, default="benchmarks.csv",
                     help="Output file (default: benchmarks.csv)")
+parser.add_argument("--node_grid", action="store", nargs=3,
+                    type=int, default=None, required=False,
+                    help="MPI topology")
 parser.add_argument("--blocks_per_mpi_rank", action="store", nargs=3,
                     type=int, default=[1, 1, 1], required=False,
                     help="blocks per mpi rank")
@@ -105,6 +108,9 @@ else:
     measurement_steps = 40
     lb_grid = 3 * [lb_grid]
     box_l = 3 * [box_l]
+
+if args.node_grid is not None:
+    system.cell_system.node_grid = args.node_grid
 
 if args.weak_scaling:
     box_l *= system.cell_system.node_grid

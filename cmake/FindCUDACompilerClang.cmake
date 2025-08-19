@@ -30,9 +30,6 @@ if(NOT CMAKE_CXX_COMPILER_ID STREQUAL CMAKE_CUDA_COMPILER_ID)
   )
 endif()
 
-add_library(espresso_cuda_flags INTERFACE)
-add_library(espresso::cuda_flags ALIAS espresso_cuda_flags)
-
 function(espresso_detect_clang_cuda_path)
   separate_arguments(ESPRESSO_CMAKE_CUDA_FLAGS_LIST NATIVE_COMMAND "${CMAKE_CUDA_FLAGS}")
   execute_process(COMMAND ${CMAKE_CUDA_COMPILER} ${ESPRESSO_CMAKE_CUDA_FLAGS_LIST} ${ARGV} --verbose

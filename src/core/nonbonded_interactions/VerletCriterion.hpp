@@ -21,8 +21,9 @@
 
 #pragma once
 
+#include <config/config.hpp>
+
 #include "Particle.hpp"
-#include "config/config.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "system/System.hpp"
 

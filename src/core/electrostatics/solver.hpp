@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "actor/optional.hpp"
 #include "actor/traits.hpp"
@@ -63,6 +63,7 @@ struct Solver {
   Solver();
 #else  // ELECTROSTATICS
   Solver() = default;
+  constexpr double cutoff() const { return INACTIVE_CUTOFF; }
 #endif // ELECTROSTATICS
 
   using ShortRangeForceKernel =

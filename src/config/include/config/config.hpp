@@ -93,4 +93,16 @@
 #define MAX_OBJECTS_IN_FLUID 10000
 #endif
 
+/**
+ * @brief Special cutoff value for an inactive interaction.
+ * Non-bonded potentials that have this cutoff are never evaluated.
+ */
+inline constexpr double INACTIVE_CUTOFF = -1.;
+
+/**
+ * @brief Special cutoff value for an inactive bond.
+ * Bonds that have this cutoff are never evaluated.
+ */
+inline constexpr double BONDED_INACTIVE_CUTOFF = -1.;
+
 #endif

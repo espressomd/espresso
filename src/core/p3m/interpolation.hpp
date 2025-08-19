@@ -73,20 +73,54 @@ public:
   auto cao() const { return m_cao; }
 
   /**
+   * @brief Fill cache with zero-initialized data.
+   * Meant for the parallel weight interpolation calculation.
+   * @param size Number of elements.
+   */
+  void zfill(std::size_t size) {
+    assert(ca_frac.empty());
+    assert(ca_fmp.empty());
+    ca_fmp.resize(size);
+    ca_frac.resize(size * static_cast<std::size_t>(m_cao * 3));
+  }
+
+  /**
    * @brief Push back weights for one point.
    *
    * @tparam cao Interpolation order has to match the order
    *         set at last call to @ref p3m_interpolation_cache::reset.
-   * @param w Interpolation weights to store.
+   * @param weights Interpolation weights to store.
    */
-  template <int cao> void store(const InterpolationWeights<cao> &w) {
+  template <int cao> void store(const InterpolationWeights<cao> &weights) {
     assert(cao == m_cao);
 
-    ca_fmp.push_back(w.ind);
+    ca_fmp.emplace_back(weights.ind);
     auto it = std::back_inserter(ca_frac);
-    std::ranges::copy(w.w_x, it);
-    std::ranges::copy(w.w_y, it);
-    std::ranges::copy(w.w_z, it);
+    std::ranges::copy(weights.w_x, it);
+    std::ranges::copy(weights.w_y, it);
+    std::ranges::copy(weights.w_z, it);
+  }
+
+  /**
+   * @brief Insert weights for one point.
+   *
+   * @tparam cao Interpolation order has to match the order
+   *         set at last call to @ref p3m_interpolation_cache::reset.
+   * @param weights Interpolation weights to store.
+   */
+  template <int cao>
+  void store_at(std::size_t p_index, const InterpolationWeights<cao> &weights) {
+    assert(cao == m_cao);
+    assert(p_index < size());
+
+    ca_fmp[p_index] = weights.ind;
+    auto it = ca_frac.begin();
+    std::advance(it, p_index * static_cast<std::size_t>(m_cao * 3));
+    std::ranges::copy(weights.w_x, it);
+    std::advance(it, m_cao);
+    std::ranges::copy(weights.w_y, it);
+    std::advance(it, m_cao);
+    std::ranges::copy(weights.w_z, it);
   }
 
   /**
@@ -97,18 +131,18 @@ public:
    *
    * @tparam cao Interpolation order has to match the order
    *         set at last call to @ref p3m_interpolation_cache::reset.
-   * @param i Index of the entry to load.
-   * @return i-it interpolation weights.
+   * @param p_index Index of the entry to load.
+   * @return Interpolation weights.
    */
-  template <int cao> InterpolationWeights<cao> load(std::size_t i) const {
+  template <int cao> InterpolationWeights<cao> load(std::size_t p_index) const {
     assert(cao == m_cao);
-    assert(i < size());
+    assert(p_index < size());
 
     InterpolationWeights<cao> ret;
-    ret.ind = ca_fmp[i];
+    ret.ind = ca_fmp[p_index];
 
     auto const view = std::span(std::as_const(ca_frac));
-    auto const offset = 3ul * i * static_cast<std::size_t>(cao);
+    auto const offset = 3ul * p_index * static_cast<std::size_t>(cao);
 
     std::ranges::copy(view.subspan(offset + 0ul * cao, cao), ret.w_x.begin());
     std::ranges::copy(view.subspan(offset + 1ul * cao, cao), ret.w_y.begin());
@@ -162,7 +196,7 @@ p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
   InterpolationWeights<cao> ret;
 
   /* 3d-array index of nearest mesh point */
-  ret.ind = Utils::get_linear_index(nmp, local_mesh.dim, memory_order);
+  ret.ind = Utils::get_linear_index<memory_order>(nmp, local_mesh.dim);
 
   assert((nmp + Utils::Vector3i::broadcast(cao)) <= local_mesh.dim);
   for (int i = 0; i < cao; i++) {

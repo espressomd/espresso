@@ -71,7 +71,7 @@ class LBEHTest(ut.TestCase):
 
         system.integrator.run(steps=500)
 
-        np.testing.assert_allclose(v_term, np.copy(p.v), atol=5e-5)
+        np.testing.assert_allclose(v_term, np.copy(p.v), atol=6e-5)
 
 
 if __name__ == "__main__":

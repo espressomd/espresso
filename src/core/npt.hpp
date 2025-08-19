@@ -31,6 +31,7 @@
 #include <utils/Vector.hpp>
 
 #include <array>
+#include <cstddef>
 #include <vector>
 
 namespace System {
@@ -52,10 +53,16 @@ struct NptIsoParameters {
   double volume = 0.;
   /** list of particle mass */
   std::vector<double> mass_list;
+  /** number of particles */
+  std::size_t particle_number = 0ul;
   /** desired pressure to which the algorithm strives to */
   double p_ext = 0.;
   /** conjugate momentum of volume */
   double p_epsilon = 0.;
+  /** the coefficient of propagater of position for MTK equation*/
+  double half_dt_inv_piston = 0.;
+  /** the coefficient of propagater of momentum for MTK equation*/
+  double half_dt_inv_piston_and_Nf = 0.;
   /** geometry information for the NpT integrator. Holds the vector
    *  \< dir, dir, dir \> where a positive value for dir indicates that
    *  box movement is allowed in that direction. To check whether a

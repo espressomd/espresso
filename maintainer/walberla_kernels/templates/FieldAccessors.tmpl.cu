@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 The ESPResSo project
+ * Copyright (C) 2023-2025 The ESPResSo project
  * Copyright (C) 2020 The waLBerla project
  *
  * This file is part of ESPResSo.
@@ -38,40 +38,36 @@
 #include <gpu/GPUField.h>
 #include <gpu/Kernel.h>
 
+#include <thrust/copy.h>
+#include <thrust/functional.h>
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
+#include <thrust/transform.h>
 
 #include <array>
 #include <vector>
 
 #if defined(__NVCC__)
 #define RESTRICT __restrict__
-#pragma nv_diagnostic push
-#pragma nv_diag_suppress 177 // unused variable
 #elif defined(__clang__)
 #if defined(__CUDA__)
 #if defined(__CUDA_ARCH__)
 // clang compiling CUDA code in device mode
 #define RESTRICT __restrict__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
 #else
 // clang compiling CUDA code in host mode
 #define RESTRICT __restrict__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
 #endif
 #endif
 #elif defined(__GNUC__) or defined(__GNUG__)
 #define RESTRICT __restrict__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
 #elif defined(_MSC_VER)
 #define RESTRICT __restrict
 #else
 #define RESTRICT
 #endif
 
+// LCOV_EXCL_START
 /** @brief Get linear index of flattened data with original layout @c fzyx. */
 static __forceinline__ __device__ uint getLinearIndex( uint3 blockIdx, uint3 threadIdx, uint3 gridDim, uint3 blockDim, uint fOffset ) {
   auto const x = threadIdx.x;
@@ -85,6 +81,28 @@ static __forceinline__ __device__ uint getLinearIndex( uint3 blockIdx, uint3 thr
          z * fSize                 +
          y * fSize * zSize         +
          x * fSize * zSize * ySize ;
+}
+
+/** @brief Rescale values in a device vector by some constant. */
+struct algo_rescale {
+  {{dtype}} m_scale_factor;
+  algo_rescale({{dtype}} scale_factor) : m_scale_factor(scale_factor) { }
+
+  __host__ __device__ constexpr {{dtype}} operator()({{dtype}} const &x) const {
+    return x * m_scale_factor;
+  }
+};
+// LCOV_EXCL_STOP
+
+static dim3 calculate_dim_grid(uint const threads_x,
+                               uint const blocks_per_grid_y,
+                               uint const threads_per_block) {
+  assert(threads_x >= 1u);
+  assert(blocks_per_grid_y >= 1u);
+  assert(threads_per_block >= 1u);
+  auto const threads_y = threads_per_block * blocks_per_grid_y;
+  auto const blocks_per_grid_x = (threads_x + threads_y - 1) / threads_y;
+  return make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 }
 
 namespace walberla {
@@ -333,6 +351,29 @@ namespace Vector
             {% endfor %}
         }
     }
+
+    __global__ void kernel_set_from_list(
+        gpu::FieldAccessor< {{dtype}} > vec,
+        int const *RESTRICT const indices,
+        {{dtype}} const *RESTRICT const values,
+        uint length)
+    {
+
+      uint index = blockIdx.y * gridDim.x * blockDim.x +
+                   blockDim.x * blockIdx.x + threadIdx.x;
+
+      vec.set({0u, 0u, 0u}, {0u, 0u, 0u});
+      if (vec.isValidPosition() and index < length) {
+        auto const array_index = index * uint({{D}}u);
+        auto const cx = indices[array_index + 0u];
+        auto const cy = indices[array_index + 1u];
+        auto const cz = indices[array_index + 2u];
+        #pragma unroll
+        for (uint cf = 0u; cf < {{D}}u; ++cf) {
+          vec.getNeighbor(cx, cy, cz, cf) = values[array_index + cf];
+        }
+      }
+    }
 // LCOV_EXCL_STOP
 
     Vector{{D}}< {{dtype}} > get(
@@ -432,6 +473,23 @@ namespace Vector
         kernel.addParam( const_cast<const {{dtype}} *>(dev_data_ptr) );
         kernel();
     }
+
+    void set_from_list(
+        gpu::GPUField< {{dtype}} > const *field,
+        thrust::device_vector< int > const &indices,
+        thrust::device_vector< {{dtype}} > const &values,
+        uint gl)
+    {
+      auto const dev_idx_ptr = thrust::raw_pointer_cast(indices.data());
+      auto const dev_val_ptr = thrust::raw_pointer_cast(values.data());
+
+      auto const threads_per_block = uint(64u);
+      auto const length = static_cast<uint>(indices.size() / 3ul);
+      auto const dim_grid = calculate_dim_grid(length, 4u, threads_per_block);
+      kernel_set_from_list<<<dim_grid, threads_per_block, 0u, nullptr>>>(
+          gpu::FieldIndexing< {{dtype}} >::withGhostLayerXYZ(*field, gl).gpuAccess(),
+          dev_idx_ptr, dev_val_ptr, length);
+    }
 } // namespace Vector
 
 namespace Interpolation
@@ -455,10 +513,11 @@ namespace Interpolation
       }
     }
 
-    __global__ void kernel_get(
-        gpu::FieldAccessor< {{dtype}} > vec,
+    __global__ void kernel_get_rho(
+        gpu::FieldAccessor< {{dtype}} > pdf,
         {{dtype}} const *RESTRICT const pos,
-        {{dtype}} *RESTRICT const vel,
+        {{dtype}} *RESTRICT const rho_out,
+        {{dtype}} const density,
         uint n_pos,
         uint gl)
     {
@@ -466,8 +525,8 @@ namespace Interpolation
       uint pos_index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
 
-      vec.set({0u, 0u, 0u}, {0u, 0u, 0u});
-      if (vec.isValidPosition() and pos_index < n_pos) {
+      pdf.set({0u, 0u, 0u}, {0u, 0u, 0u});
+      if (pdf.isValidPosition() and pos_index < n_pos) {
         auto const array_offset = pos_index * uint({{D}}u);
         int corner[{{D}}];
         {{dtype}} weights[{{D}}][2];
@@ -484,17 +543,58 @@ namespace Interpolation
             for (int k = 0; k < 2; k++) {
               auto const cz = corner[2] + k;
               auto const weight = wxy * weights[2][k];
-              {% for cf in range(D) -%}
-                vel[array_offset + {{cf}}u] += weight * vec.getNeighbor(cx, cy, cz, {{cf}}u);
-              {% endfor %}
+              {% for i in range(Q) -%}
+                  {{dtype}} const f_{{i}} = pdf.getNeighbor(cx, cy, cz, {{i}}u);
+              {% endfor -%}
+              {{density_getters_adjust | indent(12)}}
+              rho_out[pos_index] += weight * rho;
             }
           }
         }
       }
     }
 
-    __global__ void kernel_set(
-        gpu::FieldAccessor< {{dtype}} > vec,
+    __global__ void kernel_get_vel(
+        gpu::FieldAccessor< {{dtype}} > vel,
+        {{dtype}} const *RESTRICT const pos,
+        {{dtype}} *RESTRICT const vel_out,
+        uint n_pos,
+        uint gl)
+    {
+
+      uint pos_index = blockIdx.y * gridDim.x * blockDim.x +
+                       blockDim.x * blockIdx.x + threadIdx.x;
+
+      vel.set({0u, 0u, 0u}, {0u, 0u, 0u});
+      if (vel.isValidPosition() and pos_index < n_pos) {
+        auto const array_offset = pos_index * uint({{D}}u);
+        int corner[{{D}}];
+        {{dtype}} weights[{{D}}][2];
+        calculate_weights(pos + array_offset, corner, &weights[0][0], gl);
+        #pragma unroll
+        for (int i = 0; i < 2; i++) {
+          auto const cx = corner[0] + i;
+          auto const wx = weights[0][i];
+          #pragma unroll
+          for (int j = 0; j < 2; j++) {
+            auto const cy = corner[1] + j;
+            auto const wxy = wx * weights[1][j];
+            #pragma unroll
+            for (int k = 0; k < 2; k++) {
+              auto const cz = corner[2] + k;
+              auto const weight = wxy * weights[2][k];
+              #pragma unroll
+              for (uint cf = 0u; cf < {{D}}u; ++cf) {
+                vel_out[array_offset + cf] += weight * vel.getNeighbor(cx, cy, cz, cf);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    __global__ void kernel_add_force(
+        gpu::FieldAccessor< {{dtype}} > force,
         {{dtype}} const *RESTRICT const pos,
         {{dtype}} const *RESTRICT const forces,
         uint n_pos,
@@ -504,8 +604,8 @@ namespace Interpolation
       uint pos_index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
 
-      vec.set({0u, 0u, 0u}, {0u, 0u, 0u});
-      if (vec.isValidPosition() and pos_index < n_pos) {
+      force.set({0u, 0u, 0u}, {0u, 0u, 0u});
+      if (force.isValidPosition() and pos_index < n_pos) {
         auto const array_offset = pos_index * uint({{D}}u);
         int corner[{{D}}];
         {{dtype}} weights[{{D}}][2];
@@ -522,10 +622,11 @@ namespace Interpolation
             for (int k = 0; k < 2; k++) {
               auto const cz = corner[2] + k;
               auto const weight = wxy * weights[2][k];
-              {% for cf in range(D) -%}
-                atomicAdd(&vec.getNeighbor(cx, cy, cz, {{cf}}u),
-                          weight * forces[array_offset + {{cf}}u]);
-              {% endfor %}
+              #pragma unroll
+              for (uint cf = 0u; cf < {{D}}u; ++cf) {
+                atomicAdd(&force.getNeighbor(cx, cy, cz, cf),
+                          weight * forces[array_offset + cf]);
+              }
             }
           }
         }
@@ -533,20 +634,33 @@ namespace Interpolation
     }
 // LCOV_EXCL_STOP
 
-    static dim3 calculate_dim_grid(uint const threads_x,
-                                   uint const blocks_per_grid_y,
-                                   uint const threads_per_block) {
-      assert(threads_x >= 1u);
-      assert(blocks_per_grid_y >= 1u);
-      assert(threads_per_block >= 1u);
-      auto const threads_y = threads_per_block * blocks_per_grid_y;
-      auto const blocks_per_grid_x = (threads_x + threads_y - 1) / threads_y;
-      return make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+    std::vector< {{dtype}} >
+    get_rho(
+        gpu::GPUField< {{dtype}} > const *field,
+        std::vector< {{dtype}} > const &pos,
+        {{dtype}} const density,
+        uint gl )
+    {
+      thrust::device_vector< {{dtype}} > dev_pos(pos.begin(), pos.end());
+      thrust::device_vector< {{dtype}} > dev_rho(pos.size() / 3ul);
+      auto const dev_pos_ptr = thrust::raw_pointer_cast(dev_pos.data());
+      auto const dev_rho_ptr = thrust::raw_pointer_cast(dev_rho.data());
+
+      auto const threads_per_block = uint(64u);
+      auto const n_pos = static_cast<uint>(pos.size() / {{D}}ul);
+      auto const dim_grid = calculate_dim_grid(n_pos, 4u, threads_per_block);
+      kernel_get_rho<<<dim_grid, threads_per_block, 0u, nullptr>>>(
+          gpu::FieldIndexing< {{dtype}} >::withGhostLayerXYZ(*field, gl).gpuAccess(),
+          dev_pos_ptr, dev_rho_ptr, density, n_pos, gl);
+
+      std::vector< {{dtype}} > out(dev_rho.size());
+      thrust::copy(dev_rho.begin(), dev_rho.end(), out.data());
+      return out;
     }
 
     std::vector< {{dtype}} >
-    get(
-        gpu::GPUField< {{dtype}} > const *vec_field,
+    get_vel(
+        gpu::GPUField< {{dtype}} > const *field,
         std::vector< {{dtype}} > const &pos,
         uint gl )
     {
@@ -558,17 +672,17 @@ namespace Interpolation
       auto const threads_per_block = uint(64u);
       auto const n_pos = static_cast<uint>(pos.size() / {{D}}ul);
       auto const dim_grid = calculate_dim_grid(n_pos, 4u, threads_per_block);
-      kernel_get<<<dim_grid, threads_per_block, 0u, nullptr>>>(
-          gpu::FieldIndexing< {{dtype}} >::withGhostLayerXYZ(*vec_field, gl).gpuAccess(),
+      kernel_get_vel<<<dim_grid, threads_per_block, 0u, nullptr>>>(
+          gpu::FieldIndexing< {{dtype}} >::withGhostLayerXYZ(*field, gl).gpuAccess(),
           dev_pos_ptr, dev_vel_ptr, n_pos, gl);
 
-      std::vector< {{dtype}} > out(pos.size());
+      std::vector< {{dtype}} > out(dev_vel.size());
       thrust::copy(dev_vel.begin(), dev_vel.end(), out.data());
       return out;
     }
 
-    void set(
-        gpu::GPUField< {{dtype}} > const *vec_field,
+    void add_force(
+        gpu::GPUField< {{dtype}} > const *field,
         std::vector< {{dtype}} > const &pos,
         std::vector< {{dtype}} > const &forces,
         uint gl )
@@ -581,8 +695,8 @@ namespace Interpolation
       auto const threads_per_block = uint(64u);
       auto const n_pos = static_cast<uint>(pos.size() / {{D}}ul);
       auto const dim_grid = calculate_dim_grid(n_pos, 4u, threads_per_block);
-      kernel_set<<<dim_grid, threads_per_block, 0u, nullptr>>>(
-          gpu::FieldIndexing< {{dtype}} >::withGhostLayerXYZ(*vec_field, gl).gpuAccess(),
+      kernel_add_force<<<dim_grid, threads_per_block, 0u, nullptr>>>(
+          gpu::FieldIndexing< {{dtype}} >::withGhostLayerXYZ(*field, gl).gpuAccess(),
           dev_pos_ptr, dev_for_ptr, n_pos, gl);
     }
 } // namespace Interpolation
@@ -599,6 +713,10 @@ namespace Equilibrium
         rho -= {{dtype}}(1.0);
         {%endif %}
 
+        {%if zero_centered %}
+        {{dtype}} delta_rho = rho - {{dtype}} {1};
+        {%endif %}
+
         {% for eqTerm in equilibrium -%}
             pdf.get({{loop.index0 }}u) = {{eqTerm}};
         {% endfor -%}
@@ -611,7 +729,8 @@ namespace Density
 // LCOV_EXCL_START
     __global__ void kernel_get(
         gpu::FieldAccessor< {{dtype}} > pdf,
-        {{dtype}} * RESTRICT rho_out )
+        {{dtype}} * RESTRICT rho_out,
+        {{dtype}} const density )
     {
         auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
         pdf.set( blockIdx, threadIdx );
@@ -620,14 +739,15 @@ namespace Density
             {% for i in range(Q) -%}
                 {{dtype}} const f_{{i}} = pdf.get({{i}}u);
             {% endfor -%}
-            {{density_getters | indent(12)}}
+            {{density_getters_adjust | indent(12)}}
             rho_out[0u] = rho;
         }
     }
 
     __global__ void kernel_set(
         gpu::FieldAccessor< {{dtype}} > pdf,
-        {{dtype}} const * RESTRICT rho_in )
+        {{dtype}} const * RESTRICT rho_in,
+        {{dtype}} const density )
     {
         auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
         pdf.set( blockIdx, threadIdx );
@@ -642,13 +762,14 @@ namespace Density
             {{dtype}} const rho_inv = {{dtype}} {1} / rho;
             {{dtype}} const u_old[{{D}}] = { {% for i in range(D) %}momdensity_{{i}} * rho_inv{% if not loop.last %}, {% endif %}{% endfor %} };
 
-            Equilibrium::kernel_set_device(pdf, u_old, rho_in[0u] {%if not compressible %} + {{dtype}} {1} {%endif%});
+            Equilibrium::kernel_set_device(pdf, u_old, rho_in[0u] / density {%if not compressible %} + {{dtype}} {1} {%endif%});
         }
     }
 // LCOV_EXCL_STOP
 
     {{dtype}} get(
         gpu::GPUField< {{dtype}} > const * pdf_field,
+        {{dtype}} const density,
         Cell const & cell )
     {
         CellInterval ci ( cell, cell );
@@ -657,6 +778,7 @@ namespace Density
         auto kernel = gpu::make_kernel( kernel_get );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *pdf_field, ci ) );
         kernel.addParam( dev_data_ptr );
+        kernel.addParam( density );
         kernel();
         {{dtype}} rho = dev_data[0u];
         return rho;
@@ -664,6 +786,7 @@ namespace Density
 
     std::vector< {{dtype}} > get(
         gpu::GPUField< {{dtype}} > const * pdf_field,
+        {{dtype}} const density,
         CellInterval const & ci )
     {
         thrust::device_vector< {{dtype}} > dev_data(ci.numCells());
@@ -671,6 +794,7 @@ namespace Density
         auto kernel = gpu::make_kernel( kernel_get );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *pdf_field, ci ) );
         kernel.addParam( dev_data_ptr );
+        kernel.addParam( density );
         kernel();
         std::vector< {{dtype}} > out(dev_data.size());
         thrust::copy(dev_data.begin(), dev_data.end(), out.begin());
@@ -679,7 +803,8 @@ namespace Density
 
     void set(
         gpu::GPUField< {{dtype}} > * pdf_field,
-        const {{dtype}} rho,
+        {{dtype}} const rho,
+        {{dtype}} const density,
         Cell const & cell )
     {
         CellInterval ci ( cell, cell );
@@ -688,12 +813,14 @@ namespace Density
         auto kernel = gpu::make_kernel( kernel_set );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *pdf_field, ci ) );
         kernel.addParam( const_cast<const {{dtype}} *>(dev_data_ptr) );
+        kernel.addParam( density );
         kernel();
     }
 
     void set(
         gpu::GPUField< {{dtype}} > * pdf_field,
         std::vector< {{dtype}} > const & values,
+        {{dtype}} const density,
         CellInterval const & ci )
     {
         thrust::device_vector< {{dtype}} > dev_data(values.begin(), values.end());
@@ -701,6 +828,7 @@ namespace Density
         auto kernel = gpu::make_kernel( kernel_set );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *pdf_field, ci ) );
         kernel.addParam( const_cast<const {{dtype}} *>(dev_data_ptr) );
+        kernel.addParam( density );
         kernel();
     }
 } // namespace Density
@@ -834,7 +962,8 @@ namespace Force {
         gpu::FieldAccessor< {{dtype}} > pdf,
         gpu::FieldAccessor< {{dtype}} > velocity,
         gpu::FieldAccessor< {{dtype}} > force,
-        {{dtype}} const * RESTRICT f_in )
+        {{dtype}} const * RESTRICT f_in,
+        {{dtype}} const density )
     {
         auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
         pdf.set( blockIdx, threadIdx );
@@ -846,11 +975,12 @@ namespace Force {
                 {{dtype}} const f_{{i}} = pdf.get({{i}}u);
             {% endfor -%}
 
-            {{momentum_density_getter | substitute_force_getter_pattern("force->get\(x, ?y, ?z, ?([0-9])u?\)", "f_in[\g<1>u]") | indent(8) }}
+            {{momentum_density_getter_force_setter | substitute_force_getter_pattern("force->get\(x, ?y, ?z, ?([0-9])u?\)", "f_in[\g<1>u]") | indent(8) }}
             auto const rho_inv = {{dtype}} {1} / rho;
+            auto const density_inv = {{dtype}} {1} / density;
 
             {% for i in range(D) -%}
-                force.get({{i}}u) = f_in[{{i}}u];
+                force.get({{i}}u) = f_in[{{i}}u] * density_inv;
             {% endfor %}
 
             {% for i in range(D) -%}
@@ -865,6 +995,7 @@ namespace Force {
          gpu::GPUField< {{dtype}} > * velocity_field,
          gpu::GPUField< {{dtype}} > * force_field,
          Vector{{D}}< {{dtype}} > const & u,
+         {{dtype}} const density,
          Cell const & cell )
     {
         CellInterval ci ( cell, cell );
@@ -875,6 +1006,7 @@ namespace Force {
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *velocity_field, ci ) );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *force_field, ci ) );
         kernel.addParam( const_cast<const {{dtype}} *>(dev_data_ptr) );
+        kernel.addParam( density );
         kernel();
     }
 
@@ -883,6 +1015,7 @@ namespace Force {
          gpu::GPUField< {{dtype}} > * velocity_field,
          gpu::GPUField< {{dtype}} > * force_field,
          std::vector< {{dtype}} > const & values,
+         {{dtype}} const density,
          CellInterval const & ci )
     {
         thrust::device_vector< {{dtype}} > dev_data(values.begin(), values.end());
@@ -892,6 +1025,7 @@ namespace Force {
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *velocity_field, ci ) );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *force_field, ci ) );
         kernel.addParam( const_cast<const {{dtype}} *>(dev_data_ptr) );
+        kernel.addParam( density );
         kernel();
     }
 } // namespace Force
@@ -902,19 +1036,22 @@ namespace MomentumDensity
     __global__ void kernel_get(
         gpu::FieldAccessor< {{dtype}} > pdf,
         gpu::FieldAccessor< {{dtype}} > force,
-        {{dtype}} * RESTRICT out )
+        {{dtype}} * RESTRICT out,
+        {{dtype}} const density )
     {
         auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
         pdf.set( blockIdx, threadIdx );
         force.set( blockIdx, threadIdx );
         out += offset;
         if (pdf.isValidPosition()) {
-            {% for i in range(Q) -%}
+            {% for i in range(1, Q) -%}
                 {{dtype}} const f_{{i}} = pdf.get({{i}}u);
             {% endfor -%}
-            {{momentum_density_getter | substitute_force_getter_cu | indent(8) }}
+            {{momentum_density_getter | substitute_force_getter_cu |
+              remove_intermediate_variable("rho") |
+              remove_intermediate_variable("delta_rho") | indent(8) }}
             {% for i in range(D) -%}
-                out[{{i}}u] = md_{{i}};
+                out[{{i}}u] = md_{{i}} * density;
             {% endfor %}
         }
     }
@@ -922,7 +1059,8 @@ namespace MomentumDensity
 
     Vector{{D}}< {{dtype}} > reduce(
         gpu::GPUField< {{dtype}} > const * pdf_field,
-        gpu::GPUField< {{dtype}} > const * force_field )
+        gpu::GPUField< {{dtype}} > const * force_field,
+        {{dtype}} const density )
     {
         auto const ci = pdf_field->xyzSize();
         thrust::device_vector< {{dtype}} > dev_data({{D}}u * ci.numCells());
@@ -931,6 +1069,7 @@ namespace MomentumDensity
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *pdf_field, ci) );
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *force_field, ci ) );
         kernel.addParam( dev_data_ptr );
+        kernel.addParam( density );
         kernel();
         std::vector< {{dtype}} > out(dev_data.size());
         thrust::copy(dev_data.begin(), dev_data.end(), out.data());
@@ -955,8 +1094,12 @@ namespace PressureTensor
         pdf.set( blockIdx, threadIdx );
         p_out += offset;
         if (pdf.isValidPosition()) {
-            {% for i in range(Q) -%}
-                {{dtype}} const f_{{i}} = pdf.get({{i}}u);
+            {% for i in range(1, Q) -%}
+                {{dtype}} const f_{{i}} = pdf.getNeighbor(
+                {%- for j in range(D) -%}
+                    {{inv_neighbor_dir[i][j]}},
+                {%- endfor -%}
+                {{i}}u);
             {% endfor -%}
             {{second_momentum_getter | indent(12) }}
             {% for i in range(D**2) -%}
@@ -968,6 +1111,7 @@ namespace PressureTensor
 
     Matrix{{D}}< {{dtype}} > get(
         gpu::GPUField< {{dtype}} > const * pdf_field,
+        {{dtype}} const density,
         Cell const & cell )
     {
         CellInterval ci ( cell, cell );
@@ -979,11 +1123,12 @@ namespace PressureTensor
         kernel();
         Matrix{{D}}< {{dtype}} > out;
         thrust::copy(dev_data.begin(), dev_data.end(), out.data());
-        return out;
+        return out * density;
     }
 
     std::vector< {{dtype}} > get(
         gpu::GPUField< {{dtype}} > const * pdf_field,
+        {{dtype}} const density,
         CellInterval const & ci )
     {
         thrust::device_vector< {{dtype}} > dev_data({{D**2}}u * ci.numCells());
@@ -993,12 +1138,15 @@ namespace PressureTensor
         kernel.addParam( dev_data_ptr );
         kernel();
         std::vector< {{dtype}} > out(dev_data.size());
+        thrust::transform(dev_data.begin(), dev_data.end(), dev_data.begin(),
+                          algo_rescale(static_cast< {{dtype}} >(density)));
         thrust::copy(dev_data.begin(), dev_data.end(), out.data());
         return out;
     }
 
     Matrix{{D}}< {{dtype}} > reduce(
-        gpu::GPUField< {{dtype}} > const * pdf_field)
+        gpu::GPUField< {{dtype}} > const * pdf_field,
+        {{dtype}} const density)
     {
         auto const ci = pdf_field->xyzSize();
         thrust::device_vector< {{dtype}} > dev_data({{D**2}}u * ci.numCells());
@@ -1017,7 +1165,7 @@ namespace PressureTensor
                 {% endfor %}
             {% endfor %}
         }
-        return pressureTensor;
+        return pressureTensor * density;
     }
 } // namespace PressureTensor
 

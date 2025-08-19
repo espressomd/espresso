@@ -52,10 +52,11 @@ struct ShortRangeForceKernel {
 #ifdef DP3M
   result_type operator()(std::shared_ptr<DipolarP3M> const &ptr) const {
     auto const &actor = *ptr;
-    return kernel_type{[&actor](Particle const &p1, Particle const &p2,
+    return kernel_type{[&actor](double d1d2, Utils::Vector3d const &dip1,
+                                Utils::Vector3d const &dip2,
                                 Utils::Vector3d const &d, double dist,
                                 double dist2) {
-      return actor.pair_force(p1, p2, d, dist2, dist);
+      return actor.pair_force(d1d2, dip1, dip2, d, dist, dist2);
     }};
   }
 #endif // DP3M
@@ -84,7 +85,7 @@ struct ShortRangeEnergyKernel {
     return kernel_type{[&actor](Particle const &p1, Particle const &p2,
                                 Utils::Vector3d const &d, double dist,
                                 double dist2) {
-      return actor.pair_energy(p1, p2, d, dist2, dist);
+      return actor.pair_energy(p1, p2, d, dist, dist2);
     }};
   }
 #endif // DP3M

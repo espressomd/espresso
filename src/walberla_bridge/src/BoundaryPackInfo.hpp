@@ -35,6 +35,19 @@ namespace walberla {
 namespace field {
 namespace communication {
 
+template <typename GhostLayerField_T>
+class BoundaryFlagPackInfo : public PackInfo<GhostLayerField_T> {
+
+public:
+  using PackInfo<GhostLayerField_T>::PackInfo;
+  using PackInfo<GhostLayerField_T>::numberOfGhostLayersToCommunicate;
+
+  ~BoundaryFlagPackInfo() override = default;
+
+  bool constantDataExchange() const override { return false; }
+  bool threadsafeReceiving() const override { return false; }
+};
+
 template <typename GhostLayerField_T, typename Boundary_T>
 class BoundaryPackInfo : public PackInfo<GhostLayerField_T> {
 protected:
@@ -57,14 +70,19 @@ public:
   }
 
   bool constantDataExchange() const override { return false; }
-  bool threadsafeReceiving() const override { return true; }
+  bool threadsafeReceiving() const override { return false; }
 
   void communicateLocal(IBlock const *sender, IBlock *receiver,
                         stencil::Direction dir) override {
-    mpi::SendBuffer sBuffer;
-    packDataImpl(sender, dir, sBuffer);
-    mpi::RecvBuffer rBuffer(sBuffer);
-    unpackData(receiver, stencil::inverseDir[dir], rBuffer);
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+    {
+      mpi::SendBuffer sBuffer;
+      packDataImpl(sender, dir, sBuffer);
+      mpi::RecvBuffer rBuffer(sBuffer);
+      unpackData(receiver, stencil::inverseDir[dir], rBuffer);
+    }
   }
 
   void unpackData(IBlock *receiver, stencil::Direction dir,
@@ -77,8 +95,8 @@ public:
 
     auto const boundary_flag = flag_field->getFlag(Boundary_flag);
     auto const gl = numberOfGhostLayersToCommunicate(flag_field);
-    auto const begin = [gl, dir](auto const *flag_field) {
-      return flag_field->beginGhostLayerOnly(gl, dir);
+    auto const begin = [gl, dir](auto const *field) {
+      return field->beginGhostLayerOnly(gl, dir);
     };
 
 #ifndef NDEBUG
@@ -118,8 +136,8 @@ protected:
 
     auto const boundary_flag = flag_field->getFlag(Boundary_flag);
     auto const gl = numberOfGhostLayersToCommunicate(flag_field);
-    auto const begin = [gl, dir](auto const *flag_field) {
-      return flag_field->beginSliceBeforeGhostLayer(dir, cell_idx_c(gl));
+    auto const begin = [gl, dir](auto const *field) {
+      return field->beginSliceBeforeGhostLayer(dir, cell_idx_c(gl));
     };
 
 #ifndef NDEBUG
