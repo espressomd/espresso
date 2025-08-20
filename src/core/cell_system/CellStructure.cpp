@@ -121,22 +121,31 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
   using execution_space = Kokkos::DefaultExecutionSpace;
   auto const num_threads = execution_space().concurrency();
   auto const num_part = get_unique_particles().size();
-  m_local_force =
-      std::make_unique<ForceType>("local_force", num_part, num_threads);
+  auto max_counts = estimate_max_counts(m_max_prefactor, pair_cutoff, num_part);
+  if (m_local_force != nullptr) { //variables for local properties are reallocated.
+    Kokkos::realloc(get_local_force(), num_part, num_threads);
 #ifdef ROTATION
-  m_local_torque =
-      std::make_unique<ForceType>("local_torque", num_part, num_threads);
+    Kokkos::realloc(get_local_torque(), num_part, num_threads);
 #endif
+    m_particle_storage->resize(num_part);
+    m_verlet_list_cabana->reallocData(num_part, max_counts);
+  } else { //variables for local properties are generated.
+    m_local_force =
+	std::make_unique<ForceType>("local_force", num_part, num_threads);
+#ifdef ROTATION
+    m_local_torque =
+	std::make_unique<ForceType>("local_torque", num_part, num_threads);
+#endif
+    m_particle_storage = std::make_unique<AoSoAType>("particles", num_part);
+    m_particle_storage->resize(num_part);
+
+    m_verlet_list_cabana = std::make_unique<ListType>(0ul, num_part, max_counts);
+  }
 #ifdef NPT
   m_local_virial = std::make_unique<VirialType>("local_virial", num_threads);
 #endif
-  m_particle_storage = std::make_unique<AoSoAType>("particles", num_part);
-  m_particle_storage->resize(num_part);
   // particle properties are defined in aosoa_pack.hpp
   m_aosoa = std::make_unique<AoSoA_pack>(*m_particle_storage);
-
-  auto max_counts = estimate_max_counts(m_max_prefactor, pair_cutoff, num_part);
-  m_verlet_list_cabana = std::make_unique<ListType>(0ul, num_part, max_counts);
 }
 
 void CellStructure::reset_local_force() {

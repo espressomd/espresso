@@ -132,7 +132,8 @@ struct ShortRangeEnergyKernel {
       if (energy_kernel) {
         energy = (*energy_kernel)(p1, p2, q1q2, d, dist);
       }
-      return energy + actor.pair_energy_correction(p1, p2, q1q2);
+      std::cout << "CHECK " << energy << std::endl;
+      return energy + actor.pair_energy_correction(p1.pos(), p2.pos(), q1q2);
     }};
   }
 #endif // P3M

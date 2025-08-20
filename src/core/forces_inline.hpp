@@ -260,6 +260,7 @@ inline void add_non_bonded_pair_force_with_p(
 #endif // not SHARED_MEMORY_PARALLELISM
 #ifdef NPT
     if (virial) {
+      //(*virial)[0] += (*coulomb_u_kernel)(p1.pos(), p2.pos(), q1q2, d, dist);
       (*virial)[0] += (*coulomb_u_kernel)(p1, p2, q1q2, d, dist);
     }
 #endif // NPT
