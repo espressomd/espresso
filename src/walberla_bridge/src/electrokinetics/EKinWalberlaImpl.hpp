@@ -600,6 +600,7 @@ public:
                                  ". Hint: LB may be inactive.");
       }
       kernel_advection(velocity_id);
+      kernel_boundary_flux();
     }
     kernel_continuity();
 
