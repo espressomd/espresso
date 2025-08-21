@@ -75,9 +75,14 @@
 #include <tuple>
 #include <variant>
 
-inline ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
-                                               Utils::Vector3d const &d,
-                                               double const dist) {
+#ifdef SHARED_MEMORY_PARALLELISM
+ESPRESSO_ATTR_ALWAYS_INLINE inline
+#else
+inline
+#endif
+ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
+                                        Utils::Vector3d const &d,
+                                        double const dist) {
 
   ParticleForce pf{};
   auto force_factor = 0.;
@@ -170,40 +175,6 @@ inline ParticleForce calc_opposing_force(ParticleForce const &pf,
 }
 
 /**
- * For the interaction which need NO particle information
- */
-inline void add_non_bonded_pair_without_p(
-    ParticleForce &pf, Utils::Vector3d const &d, double dist, double q1q2,
-    IA_parameters const &ia_params, [[maybe_unused]] bool do_nonbonded,
-    Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel) {
-
-  /***********************************************/
-  /* non-bonded pair potentials                  */
-  /***********************************************/
-
-  if (dist < ia_params.max_cut) {
-#ifdef EXCLUSIONS
-    if (do_nonbonded) {
-#endif
-      pf += calc_central_radial_force(ia_params, d, dist);
-#ifdef EXCLUSIONS
-    }
-#endif
-  }
-
-  /***********************************************/
-  /* short-range electrostatics                  */
-  /***********************************************/
-
-#ifdef ELECTROSTATICS
-  // real-space electrostatic charge-charge interaction
-  if (q1q2 != 0. and coulomb_kernel != nullptr) {
-    pf.f += (*coulomb_kernel)(q1q2, d, dist);
-  }
-#endif // ELECTROSTATICS
-}
-
-/**
  * @brief For interactions which need particle information.
  */
 inline void add_non_bonded_pair_force_with_p(
@@ -260,8 +231,8 @@ inline void add_non_bonded_pair_force_with_p(
 #endif // not SHARED_MEMORY_PARALLELISM
 #ifdef NPT
     if (virial) {
-      //(*virial)[0] += (*coulomb_u_kernel)(p1.pos(), p2.pos(), q1q2, d, dist);
-      (*virial)[0] += (*coulomb_u_kernel)(p1, p2, q1q2, d, dist);
+      (*virial)[0] += (*coulomb_u_kernel)(p1.pos(), p2.pos(), q1q2, d, dist);
+      //(*virial)[0] += (*coulomb_u_kernel)(p1, p2, q1q2, d, dist);
     }
 #endif // NPT
     if (elc_kernel) {

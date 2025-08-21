@@ -101,53 +101,81 @@ struct ForcesKernel {
         nonbonded_ias.get_ia_param(aosoa.type(i), aosoa.type(j));
 
     ParticleForce pf{};
-    ParticleForce p1f_asym{};
-    ParticleForce p2f_asym{};
+    Utils::Vector3d const &pos1 = {aosoa.position(i, 0), aosoa.position(i, 1), aosoa.position(i, 2)};
+    Utils::Vector3d const &pos2 = {aosoa.position(j, 0), aosoa.position(j, 1), aosoa.position(j, 2)};
 
 #ifdef NPT
     Utils::Vector3d virial{};
     auto *const virial_handle = global_virial ? &virial : nullptr;
-#else
-    Utils::Vector3d *const virial_handle = nullptr;
 #endif
-    auto const d = box_geo.get_mi_vector(
-        aosoa.position(i, 0), aosoa.position(i, 1), aosoa.position(i, 2),
-        aosoa.position(j, 0), aosoa.position(j, 1), aosoa.position(j, 2));
+    auto const d = box_geo.get_mi_vector(pos1, pos2);
+        //aosoa.position(i, 0), aosoa.position(i, 1), aosoa.position(i, 2),
+        //aosoa.position(j, 0), aosoa.position(j, 1), aosoa.position(j, 2));
     auto const dist = d.norm();
 
-    auto &p1 = *unique_particles.at(i);
-    auto &p2 = *unique_particles.at(j);
+    auto const &p1 = *unique_particles.at(i);
+    auto const &p2 = *unique_particles.at(j);
 
-#ifdef EXCLUSIONS
-    auto const do_nonbonded_flag = do_nonbonded(p1, p2);
-#else
-    auto constexpr do_nonbonded_flag = true;
-#endif
+    /***********************************************/
+    /* non-bonded pair potentials                  */
+    /***********************************************/
 
     if (dist < ia_params.max_cut) {
 #ifdef EXCLUSIONS
-      if (do_nonbonded_flag) {
+      if (do_nonbonded(p1, p2)) {
 #endif
         pf += calc_central_radial_force(ia_params, d, dist);
+#ifdef THOLE
+	pf.f += thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias,
+				 coulomb_kernel);
+#endif
+	pf += calc_non_central_force(p1, p2, ia_params, d, dist);
 #ifdef EXCLUSIONS
       }
 #endif
     }
 
-#ifdef ELECTROSTATICS
-    auto const q1q2 = aosoa.charge(i) * aosoa.charge(j);
-#else
-    auto constexpr q1q2 = 0.;
+    /*********************************************************************/
+    /* everything before this contributes to the virial pressure in NpT, */
+    /* but nothing afterwards, since the contribution to pressure from   */
+    /* electrostatic is calculated by energy                             */
+    /*********************************************************************/
+#ifdef NPT
+    if (virial_handle) {
+      *virial_handle += hadamard_product(pf.f, d);
+    }
+#endif // NPT
+
+    /***********************************************/
+    /* thermostat                                  */
+    /***********************************************/
+
+    /* The inter dpd force should not be part of the virial */
+#ifdef DPD
+    if (thermostat.thermo_switch & THERMO_DPD) {
+      auto const dist2 = dist * dist;
+      auto const force =
+	  dpd_pair_force(p1.pos(), p1.v(), p1.id(), p2.pos(), p2.v(), p2.id(),
+			 *thermostat.dpd, box_geo, ia_params, d, dist, dist2);
+      pf += force;
+    }
 #endif
-    add_non_bonded_pair_force_with_p(
-        p1, p2, pf, p1f_asym, p2f_asym, d, dist, dist * dist, q1q2, ia_params,
-        do_nonbonded_flag, thermostat, box_geo, bonded_ias, virial_handle,
-        coulomb_kernel, dipoles_kernel, elc_kernel, coulomb_u_kernel);
 
 #ifdef ELECTROSTATICS
+    auto const q1q2 = aosoa.charge(i) * aosoa.charge(j);
+    ParticleForce p1f_asym{};
+    ParticleForce p2f_asym{};
     // real-space electrostatic charge-charge interaction
     if (q1q2 != 0. and coulomb_kernel != nullptr) {
       pf.f += (*coulomb_kernel)(q1q2, d, dist);
+      if (elc_kernel) {
+	(*elc_kernel)(pos1, pos2, p1f_asym, p2f_asym, q1q2);
+      }
+#ifdef NPT
+      if (virial_handle) {
+	(*virial_handle)[0] += (*coulomb_u_kernel)(pos1, pos2, q1q2, d, dist);
+      }
+#endif // NPT
     }
 #endif // ELECTROSTATICS
 #ifdef DIPOLES

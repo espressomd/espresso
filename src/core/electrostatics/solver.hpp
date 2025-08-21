@@ -74,7 +74,7 @@ struct Solver {
   using ShortRangePressureKernel = std::function<Utils::Matrix<double, 3, 3>(
       double, Utils::Vector3d const &, double)>;
   using ShortRangeEnergyKernel =
-      std::function<double(Particle const &, Particle const &, double,
+      std::function<double(Utils::Vector3d const &, Utils::Vector3d const &, double,
                            Utils::Vector3d const &, double)>;
 
   inline std::optional<ShortRangeForceKernel> pair_force_kernel() const;
