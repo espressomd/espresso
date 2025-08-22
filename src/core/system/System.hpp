@@ -65,6 +65,9 @@ class AutoUpdateAccumulators;
 namespace Constraints {
 class Constraints;
 }
+namespace LB {
+struct ParticleCouplingState;
+}
 struct NptIsoParameters;
 struct InstantaneousPressure;
 
@@ -248,6 +251,12 @@ public:
 
   /** @brief Calculate particle-lattice interactions. */
   void lb_couple_particles();
+
+  /** @brief Prepare particle-lattice coupling (phase 1). */
+  LB::ParticleCouplingState lb_prepare_particle_coupling();
+
+  /** @brief Apply particle-lattice forces (phase 2). */
+  void lb_apply_particle_forces(LB::ParticleCouplingState &state);
 
   /** \name Hook procedures
    *  These procedures are called if several significant changes to

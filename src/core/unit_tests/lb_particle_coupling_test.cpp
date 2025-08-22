@@ -275,7 +275,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, swimmer_force, bdata::make(kTs), kT) {
   {
     if (in_local_halo(local_box, p.pos(), params.agrid)) {
       LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
-      coupling.kernel({&p});
+      auto state = coupling.prepare_coupling({&p});
+      coupling.apply_forces(state);
       auto const interpolated = LB::get_force_to_be_applied(p.pos());
       auto const expected =
           params.force_md_to_lb(Utils::Vector3d{0., 0., p.swimming().f_swim});
@@ -339,7 +340,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, particle_coupling, bdata::make(kTs),
   // coupling
   {
     if (in_local_halo(local_box, p.pos(), params.agrid)) {
-      coupling.kernel({&p});
+      auto state = coupling.prepare_coupling({&p});
+      coupling.apply_forces(state);
       BOOST_CHECK_SMALL((p.force() - expected).norm(), eps);
 
       auto const interpolated = -LB::get_force_to_be_applied(p.pos());

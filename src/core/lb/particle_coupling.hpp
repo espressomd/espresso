@@ -66,6 +66,34 @@ Utils::Vector3d lb_drag_force(LB::Solver const &lb, double lb_gamma,
 
 namespace LB {
 
+// State structure to hold particle coupling data between phases
+struct ParticleCouplingState {
+  enum coupling_modes { none, particle_force, swimmer_force_on_fluid };
+
+  // Structure to hold all data related to a coupled particle
+  struct CoupledParticleData {
+    Particle *particle;
+    size_t
+        force_positions_start; // Start index in global force positions vector
+    size_t force_positions_count; // Number of force positions for this particle
+    std::optional<size_t> velocity_coupling_index;
+    coupling_modes mode;
+  };
+
+  std::vector<CoupledParticleData> coupled_particle_data;
+  std::vector<Utils::Vector3d> positions_velocity_coupling;
+  std::vector<Utils::Vector3d>
+      all_force_positions; // Direct storage for all force positions
+  std::vector<Utils::Vector3d> interpolated_velocities;
+
+  void clear() {
+    coupled_particle_data.clear();
+    positions_velocity_coupling.clear();
+    all_force_positions.clear();
+    interpolated_velocities.clear();
+  }
+};
+
 class ParticleCoupling {
   LBThermostat const &m_thermostat;
   LB::Solver &m_lb;
@@ -91,7 +119,11 @@ public:
   }
 
   Utils::Vector3d get_noise_term(Particle const &p) const;
-  void kernel(std::vector<Particle *> const &particles);
+
+  // Split kernel into two phases
+  ParticleCouplingState
+  prepare_coupling(std::vector<Particle *> const &particles);
+  void apply_forces(ParticleCouplingState &state);
 };
 
 /**

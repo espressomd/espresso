@@ -51,8 +51,10 @@
 #include "short_range_loop.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
+
 #include "thermostats/langevin_inline.hpp"
 #include "virtual_sites/relative.hpp"
+#include <optional>
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
@@ -183,6 +185,9 @@ void System::System::calculate_forces() {
   }
 #endif
   // Use combined function instead of two separate calls
+
+  // Prepare LB coupling state (initiates velocity interpolation)
+  std::optional<LB::ParticleCouplingState> lb_coupling_state;
 
   auto const elc_kernel = coulomb.pair_force_elc_kernel();
   auto const coulomb_kernel = coulomb.pair_force_kernel();
@@ -347,11 +352,6 @@ void System::System::calculate_forces() {
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries->volume_conservation(*cell_structure);
 
-  if (thermostat->lb and (propagation->used_propagations &
-                          PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE)) {
-    lb_couple_particles();
-  }
-
 #ifdef CUDA
 #ifdef CALIPER
   CALI_MARK_BEGIN("copy_forces_from_GPU");
@@ -361,6 +361,13 @@ void System::System::calculate_forces() {
   CALI_MARK_END("copy_forces_from_GPU");
 #endif
 #endif // CUDA
+
+  // Apply LB forces after GPU copy (hides interpolation latency)
+  if (thermostat->lb and (propagation->used_propagations &
+                          PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE)) {
+    lb_coupling_state = lb_prepare_particle_coupling();
+    lb_apply_particle_forces(*lb_coupling_state);
+  }
 
 #ifdef VIRTUAL_SITES_RELATIVE
   if (propagation->used_propagations &

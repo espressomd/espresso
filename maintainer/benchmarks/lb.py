@@ -62,7 +62,7 @@ parser.add_argument("--weak_scaling", action="store_true", required=False,
 args = parser.parse_args()
 
 # process and check arguments
-n_iterations = 30
+n_iterations = 200
 assert args.volume_fraction > 0, "--volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "--volume_fraction exceeds the physical limit of sphere packing (~0.74)"

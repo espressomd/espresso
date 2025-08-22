@@ -44,7 +44,7 @@ args = parser.parse_args()
 
 # process and check arguments
 measurement_steps = int(np.round(5e6 / args.particles_per_core, -2))
-n_iterations = 30
+n_iterations = 2000 
 assert args.volume_fraction > 0, "volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
@@ -119,10 +119,10 @@ system.integrator.set_vv()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # tuning and equilibration
-min_skin = 0.2
+min_skin = 0.1
 max_skin = 1.0
 print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
-    min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100)))
+    min_skin=min_skin, max_skin=max_skin, tol=0.005, int_steps=300)))
 print("Equilibration")
 system.integrator.run(min(5 * measurement_steps, 60000))
 print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
