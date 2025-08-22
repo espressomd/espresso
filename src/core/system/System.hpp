@@ -178,6 +178,10 @@ public:
   void calculate_long_range_fields();
 #endif
 
+#ifdef COLLISION_DETECTION
+  bool has_collision_detection_enabled() const;
+#endif
+
   /**
    * @brief Compute the short-range energy of a particle.
    *

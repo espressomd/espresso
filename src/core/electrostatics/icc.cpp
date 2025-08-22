@@ -148,13 +148,12 @@ void ICCStar::iteration() {
     kokkos_parallel_range_for<Kokkos::RangePolicy<execution_space>>(
         "reduction", std::size_t{0}, unique_particles.size(),
         [&local_force, &unique_particles, num_threads](std::size_t const i) {
-          Utils::Vector3d force{};
+          auto &force = unique_particles.at(i)->force();
           for (int tid = 0; tid < num_threads; ++tid) {
             force[0] += local_force(i, tid, 0);
             force[1] += local_force(i, tid, 1);
             force[2] += local_force(i, tid, 2);
           }
-          unique_particles.at(i)->force() += force;
         });
     Kokkos::fence();
 #endif // SHARED_MEMORY_PARALLELISM

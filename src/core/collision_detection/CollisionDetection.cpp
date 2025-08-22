@@ -23,6 +23,7 @@
 
 #include "CollisionDetection.hpp"
 
+#include "cell_system/CellStructure.hpp"
 #include "system/System.hpp"
 
 #include <memory>
@@ -50,6 +51,9 @@ void CollisionDetection::initialize() {
                *m_protocol);
   }
   system.on_short_range_ia_change();
+#ifdef SHARED_MEMORY_PARALLELISM
+  system.cell_structure->clear_local_properties();
+#endif
 }
 
 void CollisionDetection::set_protocol(
@@ -62,6 +66,9 @@ void CollisionDetection::unset_protocol() {
   m_protocol = nullptr;
   auto &system = get_system();
   system.on_short_range_ia_change();
+#ifdef SHARED_MEMORY_PARALLELISM
+  system.cell_structure->clear_local_properties();
+#endif
 }
 
 } // namespace CollisionDetection

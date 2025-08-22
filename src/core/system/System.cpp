@@ -568,4 +568,10 @@ Utils::Vector3d *System::System::get_npt_virial() const {
   return nullptr;
 }
 
+#ifdef COLLISION_DETECTION
+bool System::System::has_collision_detection_enabled() const {
+  return not collision_detection->is_off();
+}
+#endif
+
 } // namespace System

@@ -20,6 +20,8 @@ import os
 import io
 import sys
 import ast
+import time
+import warnings
 import tokenize
 import unittest
 import unittest.mock
@@ -117,6 +119,7 @@ def configure_and_import(filepath,
         os.chdir(dirname)
     sys.path.insert(0, str(dirname))
     module_name = output_filepath.stem
+    wait_on_file(output_filepath)
     try:
         module = importlib.import_module(module_name)
     except espressomd.code_features.FeaturesError as err:
@@ -490,3 +493,23 @@ def skip_future_imports_dependency(filepath):
         skip_future_imports = module_name
     return unittest.skip(
         f"failed to import {skip_future_imports}, skipping test!")
+
+
+def wait_on_file(path, timeout=2.):
+    """
+    Wait for a file to become available on the file system. File systems
+    may experience latency during when the load is high, in which case
+    Python may be able to write to a file handle, close the handle,
+    and then be unable to open that file for a few milliseconds.
+    """
+    wait_time = 0.01
+    start_time = time.time()
+    runtime = 0.
+    while runtime < timeout:
+        time.sleep(wait_time)
+        wait_time *= 2
+        runtime = time.time() - start_time
+        if path.exists():
+            return
+    warnings.warn(f"file {path} still doesn't exist after {runtime:.1f}s",
+                  ResourceWarning)

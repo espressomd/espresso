@@ -205,7 +205,6 @@ private:
   double m_verlet_reuse = 0.;
 #ifdef SHARED_MEMORY_PARALLELISM
   int m_cached_max_local_particle_id = 0;
-  int m_max_prefactor = 8;
   int m_max_id = 0;
   std::unique_ptr<ForceType> m_local_force;
 #ifdef ROTATION
@@ -725,7 +724,6 @@ private:
 
 #ifdef SHARED_MEMORY_PARALLELISM
 public:
-  void set_max_prefactor(int value) { m_max_prefactor = value; }
   auto get_max_id() const { return m_max_id; }
 
   void set_kokkos_handle(std::shared_ptr<Communication::KokkosHandle> handle);

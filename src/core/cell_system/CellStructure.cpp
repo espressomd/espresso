@@ -33,6 +33,7 @@
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "custom_verlet_list.hpp"
+#include "integrators/Propagation.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "particle_enumeration.hpp"
 #include "particle_reduction.hpp"
@@ -94,7 +95,7 @@ void CellStructure::set_kokkos_handle(
   m_kokkos_handle = std::move(handle);
 }
 
-static auto estimate_max_counts(int max_prefactor, double pair_cutoff,
+static auto estimate_max_counts(double pair_cutoff,
                                 std::size_t number_of_unique_particles) {
   if (std::isinf(pair_cutoff)) {
     return number_of_unique_particles;
@@ -103,13 +104,8 @@ static auto estimate_max_counts(int max_prefactor, double pair_cutoff,
     pair_cutoff = 0.;
   }
   auto const volume = Utils::int_pow<3>(pair_cutoff);
-  auto max_counts = static_cast<std::size_t>(
-      std::ceil(static_cast<double>(max_prefactor) * volume));
-#ifdef COLLISION_DETECTION
-  std::size_t constexpr threshold_num = 64;
-#else
+  auto max_counts = static_cast<std::size_t>(std::ceil(8. * volume));
   std::size_t constexpr threshold_num = 16;
-#endif
   if (max_counts < threshold_num) {
     max_counts = std::min(threshold_num, number_of_unique_particles);
   }
@@ -121,7 +117,17 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
   using execution_space = Kokkos::DefaultExecutionSpace;
   auto const num_threads = execution_space().concurrency();
   auto const num_part = get_unique_particles().size();
-  auto max_counts = estimate_max_counts(m_max_prefactor, pair_cutoff, num_part);
+  auto const &system = get_system();
+  auto max_counts = estimate_max_counts(pair_cutoff, num_part);
+  // TODO: use other types of Verlet list data structures
+  if (system.propagation->integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
+    max_counts = num_part;
+  }
+#ifdef COLLISION_DETECTION
+  if (system.has_collision_detection_enabled()) {
+    max_counts = num_part * 2ul;
+  }
+#endif
   if (m_local_force !=
       nullptr) { // variables for local properties are reallocated.
     Kokkos::realloc(get_local_force(), num_part, num_threads);

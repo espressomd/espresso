@@ -290,6 +290,9 @@ espressomd.zn = unittest.mock.MagicMock()
             path_in = pathlib.Path(temp_dir) / "sample.py"
             path_out = pathlib.Path(temp_dir) / "sample_test_processed.py"
             path_features = pathlib.Path(temp_dir) / "sample_impossible.py"
+            path_missing = pathlib.Path(temp_dir) / "missing.txt"
+            with self.assertWarns(ResourceWarning):
+                iw.wait_on_file(path_missing, timeout=0.02)
 
             # test importing a simple sample
             sys.argv.append("42")
@@ -301,6 +304,7 @@ value = 42
 argv = list(sys.argv)
 import espressomd.visualization
 """)
+            iw.wait_on_file(path_in)
             sample, _ = iw.configure_and_import(
                 path_in, move_to_script_dir=False, cmd_arguments=["TestCase"],
                 gpu=False, script_suffix="test", value=43)
@@ -320,6 +324,7 @@ import espressomd.visualization
 import espressomd
 espressomd.assert_features({list(inactive_features)})
 """)
+                iw.wait_on_file(path_features)
                 module, _ = iw.configure_and_import(path_features)
                 self.assertIsInstance(module, ut.mock.MagicMock)
 
