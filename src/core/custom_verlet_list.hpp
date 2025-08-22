@@ -60,9 +60,8 @@ public:
   void reallocData(std::size_t const num_particles,
                    std::size_t const max_neigh) {
     Kokkos::realloc(counts, num_particles);
-    Kokkos::realloc(
-        Kokkos::WithoutInitializing, neighbors, num_particles,
-        max_neigh);
+    Kokkos::realloc(Kokkos::WithoutInitializing, neighbors, num_particles,
+                    max_neigh);
   }
 
   // Method to add a neighbor

@@ -307,7 +307,7 @@ struct ElectrostaticLayerCorrection
 
   /** @brief Calculate short-range pair energy correction. */
   double pair_energy_correction(Utils::Vector3d const &pos1,
-		  		Utils::Vector3d const &pos2,
+                                Utils::Vector3d const &pos2,
                                 double q1q2) const {
     double energy = 0.;
     if (elc.dielectric_contrast_on) {

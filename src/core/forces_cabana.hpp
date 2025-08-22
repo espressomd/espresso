@@ -101,8 +101,10 @@ struct ForcesKernel {
         nonbonded_ias.get_ia_param(aosoa.type(i), aosoa.type(j));
 
     ParticleForce pf{};
-    Utils::Vector3d const pos1 = {aosoa.position(i, 0), aosoa.position(i, 1), aosoa.position(i, 2)};
-    Utils::Vector3d const pos2 = {aosoa.position(j, 0), aosoa.position(j, 1), aosoa.position(j, 2)};
+    Utils::Vector3d const pos1 = {aosoa.position(i, 0), aosoa.position(i, 1),
+                                  aosoa.position(i, 2)};
+    Utils::Vector3d const pos2 = {aosoa.position(j, 0), aosoa.position(j, 1),
+                                  aosoa.position(j, 2)};
 
 #ifdef NPT
     Utils::Vector3d virial{};
@@ -126,13 +128,11 @@ struct ForcesKernel {
 #endif
         pf += calc_central_radial_force(ia_params, d, dist);
 #ifdef THOLE
-	pf.f += thole_pair_force(p1, p2,
-				 ia_params, d, dist, bonded_ias,
-				 coulomb_kernel);
+        pf.f += thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias,
+                                 coulomb_kernel);
 #endif
 #ifdef GAY_BERNE
-	pf += calc_non_central_force(p1, p2,
-				     ia_params, d, dist);
+        pf += calc_non_central_force(p1, p2, ia_params, d, dist);
 #endif
 #ifdef EXCLUSIONS
       }
@@ -159,9 +159,8 @@ struct ForcesKernel {
     if (thermostat.thermo_switch & THERMO_DPD) {
       auto const dist2 = dist * dist;
       auto const force =
-	  dpd_pair_force(pos1, p1.v(), aosoa.id(i),
-			 pos2, p2.v(), aosoa.id(j),
-			 *thermostat.dpd, box_geo, ia_params, d, dist, dist2);
+          dpd_pair_force(pos1, p1.v(), aosoa.id(i), pos2, p2.v(), aosoa.id(j),
+                         *thermostat.dpd, box_geo, ia_params, d, dist, dist2);
       pf += force;
     }
 #endif
@@ -174,11 +173,11 @@ struct ForcesKernel {
     if (q1q2 != 0. and coulomb_kernel != nullptr) {
       pf.f += (*coulomb_kernel)(q1q2, d, dist);
       if (elc_kernel) {
-	(*elc_kernel)(pos1, pos2, p1f_asym, p2f_asym, q1q2);
+        (*elc_kernel)(pos1, pos2, p1f_asym, p2f_asym, q1q2);
       }
 #ifdef NPT
       if (virial_handle) {
-	(*virial_handle)[0] += (*coulomb_u_kernel)(pos1, pos2, q1q2, d, dist);
+        (*virial_handle)[0] += (*coulomb_u_kernel)(pos1, pos2, q1q2, d, dist);
       }
 #endif // NPT
     }

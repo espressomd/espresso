@@ -115,32 +115,33 @@ struct ShortRangeEnergyKernel {
   template <typename T>
   result_type operator()(std::shared_ptr<T> const &ptr) const {
     auto const &actor = *ptr;
-    return kernel_type{[&actor](Utils::Vector3d const &, Utils::Vector3d const &, double q1q2,
-                                Utils::Vector3d const &, double dist) {
-      return actor.pair_energy(q1q2, dist);
-    }};
+    return kernel_type{
+        [&actor](Utils::Vector3d const &, Utils::Vector3d const &, double q1q2,
+                 Utils::Vector3d const &,
+                 double dist) { return actor.pair_energy(q1q2, dist); }};
   }
 #ifdef P3M
   result_type
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &ptr) const {
     auto const &actor = *ptr;
     auto const energy_kernel = std::visit(*this, actor.base_solver);
-    return kernel_type{[&actor, energy_kernel](
-                           Utils::Vector3d const &pos1, Utils::Vector3d const &pos2, double q1q2,
-                           Utils::Vector3d const &d, double dist) {
-      auto energy = 0.;
-      if (energy_kernel) {
-        energy = (*energy_kernel)(pos1, pos2, q1q2, d, dist);
-      }
-      return energy + actor.pair_energy_correction(pos1, pos2, q1q2);
-    }};
+    return kernel_type{
+        [&actor, energy_kernel](Utils::Vector3d const &pos1,
+                                Utils::Vector3d const &pos2, double q1q2,
+                                Utils::Vector3d const &d, double dist) {
+          auto energy = 0.;
+          if (energy_kernel) {
+            energy = (*energy_kernel)(pos1, pos2, q1q2, d, dist);
+          }
+          return energy + actor.pair_energy_correction(pos1, pos2, q1q2);
+        }};
   }
 #endif // P3M
   result_type operator()(std::shared_ptr<CoulombMMM1D> const &actor) const {
-    return kernel_type{[&actor](Utils::Vector3d const &, Utils::Vector3d const &, double q1q2,
-                                Utils::Vector3d const &d, double dist) {
-      return actor->pair_energy(q1q2, d, dist);
-    }};
+    return kernel_type{
+        [&actor](Utils::Vector3d const &, Utils::Vector3d const &, double q1q2,
+                 Utils::Vector3d const &d,
+                 double dist) { return actor->pair_energy(q1q2, d, dist); }};
   }
 #endif // ELECTROSTATICS
 };

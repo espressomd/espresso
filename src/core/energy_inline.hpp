@@ -196,7 +196,8 @@ inline void add_non_bonded_pair_energy(
 #ifdef ELECTROSTATICS
   if (!obs_energy.coulomb.empty() and coulomb_kernel != nullptr) {
     auto const q1q2 = p1.q() * p2.q();
-    obs_energy.coulomb[0] += (*coulomb_kernel)(p1.pos(), p2.pos(), q1q2, d, dist);
+    obs_energy.coulomb[0] +=
+        (*coulomb_kernel)(p1.pos(), p2.pos(), q1q2, d, dist);
   }
 #endif
 

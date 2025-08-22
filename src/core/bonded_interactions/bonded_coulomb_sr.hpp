@@ -54,9 +54,9 @@ struct BondedCoulombSR {
                                       double)> const &kernel) const;
   std::optional<double>
   energy(Particle const &p1, Particle const &p2, Utils::Vector3d const &dx,
-         std::function<double(Utils::Vector3d const &, Utils::Vector3d const &, double,
-                              Utils::Vector3d const &, double)> const &kernel)
-      const;
+         std::function<double(Utils::Vector3d const &, Utils::Vector3d const &,
+                              double, Utils::Vector3d const &, double)> const
+             &kernel) const;
 };
 
 /** Compute the short-range bonded Coulomb pair force.
@@ -82,9 +82,9 @@ inline std::optional<Utils::Vector3d> BondedCoulombSR::force(
  */
 inline std::optional<double> BondedCoulombSR::energy(
     Particle const &p1, Particle const &p2, Utils::Vector3d const &dx,
-    std::function<double(Utils::Vector3d const &, Utils::Vector3d const &, double,
-                         Utils::Vector3d const &, double)> const &kernel)
-    const {
+    std::function<double(Utils::Vector3d const &, Utils::Vector3d const &,
+                         double, Utils::Vector3d const &, double)> const
+        &kernel) const {
 #ifdef ELECTROSTATICS
   return kernel(p1.pos(), p2.pos(), q1q2, dx, dx.norm());
 #else
