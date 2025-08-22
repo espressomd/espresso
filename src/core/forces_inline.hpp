@@ -75,14 +75,10 @@
 #include <tuple>
 #include <variant>
 
-#ifdef SHARED_MEMORY_PARALLELISM
-ESPRESSO_ATTR_ALWAYS_INLINE inline
-#else
-inline
-#endif
-ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
-                                        Utils::Vector3d const &d,
-                                        double const dist) {
+ESPRESSO_ATTR_ALWAYS_INLINE
+inline ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
+                                               Utils::Vector3d const &d,
+                                               double const dist) {
 
   ParticleForce pf{};
   auto force_factor = 0.;

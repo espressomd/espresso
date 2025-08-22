@@ -101,20 +101,20 @@ struct ForcesKernel {
         nonbonded_ias.get_ia_param(aosoa.type(i), aosoa.type(j));
 
     ParticleForce pf{};
-    Utils::Vector3d const &pos1 = {aosoa.position(i, 0), aosoa.position(i, 1), aosoa.position(i, 2)};
-    Utils::Vector3d const &pos2 = {aosoa.position(j, 0), aosoa.position(j, 1), aosoa.position(j, 2)};
+    Utils::Vector3d const pos1 = {aosoa.position(i, 0), aosoa.position(i, 1), aosoa.position(i, 2)};
+    Utils::Vector3d const pos2 = {aosoa.position(j, 0), aosoa.position(j, 1), aosoa.position(j, 2)};
 
 #ifdef NPT
     Utils::Vector3d virial{};
     auto *const virial_handle = global_virial ? &virial : nullptr;
 #endif
     auto const d = box_geo.get_mi_vector(pos1, pos2);
-        //aosoa.position(i, 0), aosoa.position(i, 1), aosoa.position(i, 2),
-        //aosoa.position(j, 0), aosoa.position(j, 1), aosoa.position(j, 2));
     auto const dist = d.norm();
 
+#if defined(EXCLUSIONS) or defined(DPD) or defined(DIPOLES)
     auto const &p1 = *unique_particles.at(i);
     auto const &p2 = *unique_particles.at(j);
+#endif
 
     /***********************************************/
     /* non-bonded pair potentials                  */
@@ -126,10 +126,14 @@ struct ForcesKernel {
 #endif
         pf += calc_central_radial_force(ia_params, d, dist);
 #ifdef THOLE
-	pf.f += thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias,
+	pf.f += thole_pair_force(p1, p2,
+				 ia_params, d, dist, bonded_ias,
 				 coulomb_kernel);
 #endif
-	pf += calc_non_central_force(p1, p2, ia_params, d, dist);
+#ifdef GAY_BERNE
+	pf += calc_non_central_force(p1, p2,
+				     ia_params, d, dist);
+#endif
 #ifdef EXCLUSIONS
       }
 #endif
@@ -155,7 +159,8 @@ struct ForcesKernel {
     if (thermostat.thermo_switch & THERMO_DPD) {
       auto const dist2 = dist * dist;
       auto const force =
-	  dpd_pair_force(p1.pos(), p1.v(), p1.id(), p2.pos(), p2.v(), p2.id(),
+	  dpd_pair_force(pos1, p1.v(), aosoa.id(i),
+			 pos2, p2.v(), aosoa.id(j),
 			 *thermostat.dpd, box_geo, ia_params, d, dist, dist2);
       pf += force;
     }
