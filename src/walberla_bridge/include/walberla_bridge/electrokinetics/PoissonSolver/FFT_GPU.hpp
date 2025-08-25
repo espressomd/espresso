@@ -27,15 +27,11 @@
 #include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_single_precision_CUDA.cuh"
 #include "../../BlockAndCell.hpp"
 
-#include <blockforest/communication/UniformBufferedScheme.h>
 #include <domain_decomposition/BlockDataID.h>
-#include <fft/Fft.h>
 #include <field/AddToStorage.h>
 #include <field/GhostLayerField.h>
-#include <field/communication/PackInfo.h>
 #include <field/vtk/VTKWriter.h>
 #include <gpu/HostFieldAllocator.h>
-#include <stencil/D3Q27.h>
 
 #include <cmath>
 #include <cstddef>

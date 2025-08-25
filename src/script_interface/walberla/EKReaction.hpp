@@ -63,8 +63,8 @@ protected:
   }
 
   auto get_is_gpu(VariantMap const &args) const {
-    auto reactants = get_value<std::vector<Variant>>(args, "reactants");
-    auto reactant =
+    auto const reactants = get_value<std::vector<Variant>>(args, "reactants");
+    auto const reactant =
         get_value<std::shared_ptr<EKReactant>>(reactants[0])->get_instance();
     return reactant->is_gpu();
   }
