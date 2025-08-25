@@ -20,6 +20,8 @@
 
 import os
 import re
+import lbmpy
+import pystencils as ps
 
 
 # File derived from lbmpy_walberla.walberla_lbm_generation in the
@@ -48,23 +50,17 @@ def generate_accessors(ctx, config, templates):
 
     default_dtype = config.data_type.default_factory()
 
-    # TODO Find a better way to create these stencils lists/dirs
-    # Directions according to walberla directions.h
-    stencils = ["C", "N", "S", "W", "E", "T", "B",
-                "NW", "NE", "SW", "SE", "TN", "TS",
-                "TW", "TE", "BN", "BS", "BW", "BE",
-                "TNE", "TNW", "TSE", "TSW", "BNE", "BNW", "BSE", "BSW"]
-    # Staggered directions according to pystencils field.py
-    staggeredStencils = {"W": 0, "S": 1, "B": 2,
-                         "SW": 3, "NW": 4, "BW": 5,
-                         "TW": 6, "BS": 7, "TS": 8,
-                         "BSW": 9, "TSW": 10, "BNW": 11, "TNW": 12}
-    # Inverse directions to the staggered access
-    invStencils = {"C": -1, "N": 1, "S": 1, "W": 0, "E": 0, "T": 2, "B": 2,
-                   "NW": 4, "NE": 3, "SW": 3, "SE": 4, "TN": 7, "TS": 8,
-                   "TW": 6, "TE": 5, "BN": 8, "BS": 7, "BW": 5, "BE": 6,
-                   "TNE": 9, "TNW": 12, "TSE": 11, "TSW": 10, "BNE": 10,
-                   "BNW": 11, "BSE": 12, "BSW": 9}
+    stencils = list(map(ps.stencil.offset_to_direction_string, lbmpy.stencils.LBStencil("D3Q27")))
+    staggered_stencils_helper = ps.field.Field.create_generic("tmp",
+        spatial_dimensions=3, index_shape=(13,),
+        field_type=ps.field.FieldType.STAGGERED_FLUX).staggered_stencil
+    staggered_stencils = dict(zip(staggered_stencils_helper, range(len(staggered_stencils_helper))))
+    inverse_stencils_helper = list(map(ps.stencil.offset_to_direction_string,
+                                   lbmpy.stencils.LBStencil("D3Q27").inverse_stencil_entries))
+    inverse_staggered_stencils = {}
+    for i, dir in enumerate(stencils):
+        if dir in staggered_stencils:
+            inverse_staggered_stencils[inverse_stencils_helper[i]] = staggered_stencils[dir]
 
     jinja_context = {
         "dtype": default_dtype,
@@ -72,8 +68,8 @@ def generate_accessors(ctx, config, templates):
         "D": 3,
         "FluxCount": 13,
         "Stencils": stencils,
-        "InverseStencils": invStencils,
-        "StaggeredStencils": staggeredStencils,
+        "InverseStencils": inverse_staggered_stencils,
+        "StaggeredStencils": staggered_stencils,
     }
 
     env = Environment(loader=FileSystemLoader(os.path.dirname(__file__)),
