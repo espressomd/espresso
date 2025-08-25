@@ -46,8 +46,8 @@ Variant EKPoissonSolverSlice::do_call_method(std::string const &name,
   if (name == "get_slice_ranges") {
     return {std::vector<Variant>{m_slice_lower_corner, m_slice_upper_corner}};
   }
-  if (name == "get_ek_sip") {
-    return {m_ek_sip};
+  if (name == "get_ek_solver_sip") {
+    return {m_ek_solver_sip};
   }
   if (name == "get_value_shape") {
     auto const name = get_value<std::string>(params, "name");

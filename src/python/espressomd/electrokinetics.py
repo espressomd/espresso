@@ -248,7 +248,7 @@ class EKPoissonSolverSlice(ScriptInterfaceHelper):
     def __iter__(self):
         lower, upper = self.call_method("get_slice_ranges")
         indices = [list(range(lower[i], upper[i])) for i in range(3)]
-        lb_sip = self.call_method("get_ek_sip")
+        lb_sip = self.call_method("get_ek_solver_sip")
         for index in itertools.product(*indices):
             yield EKPoissonSolverNode(parent_sip=lb_sip, index=np.array(index))
 

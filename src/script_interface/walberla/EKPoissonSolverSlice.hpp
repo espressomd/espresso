@@ -46,16 +46,16 @@ namespace ScriptInterface::walberla {
 class EKPoissonSolverSlice : public LatticeSlice<EKFieldSerializer> {
   using LatticeModel = ::walberla::PoissonSolver;
   std::shared_ptr<LatticeModel> m_ek_poisson_solver;
-  std::shared_ptr<EKPoissonSolver> m_ek_sip;
+  std::shared_ptr<EKPoissonSolver> m_ek_solver_sip;
   double m_conv_dens;
   double m_conv_flux;
   std::unordered_map<std::string, std::vector<int>> m_shape_val;
 
 public:
   void do_construct(VariantMap const &params) override {
-    auto const ek_sip =
+    auto const ek_solver_sip =
         get_value<std::shared_ptr<EKPoissonSolver>>(params, "parent_sip");
-    m_ek_poisson_solver = ek_sip->get_instance();
+    m_ek_poisson_solver = ek_solver_sip->get_instance();
     assert(m_ek_poisson_solver);
     m_shape = get_value<std::vector<int>>(params, "shape");
     m_slice_lower_corner =
