@@ -50,17 +50,20 @@ def generate_accessors(ctx, config, templates):
 
     default_dtype = config.data_type.default_factory()
 
-    stencils = list(map(ps.stencil.offset_to_direction_string, lbmpy.stencils.LBStencil("D3Q27")))
+    stencils = list(map(ps.stencil.offset_to_direction_string,
+                    lbmpy.stencils.LBStencil("D3Q27")))
     staggered_stencils_helper = ps.field.Field.create_generic("tmp",
-        spatial_dimensions=3, index_shape=(13,),
-        field_type=ps.field.FieldType.STAGGERED_FLUX).staggered_stencil
-    staggered_stencils = dict(zip(staggered_stencils_helper, range(len(staggered_stencils_helper))))
+                                                              spatial_dimensions=3, index_shape=(13,),
+                                                              field_type=ps.field.FieldType.STAGGERED_FLUX).staggered_stencil
+    staggered_stencils = dict(
+        zip(staggered_stencils_helper, range(len(staggered_stencils_helper))))
     inverse_stencils_helper = list(map(ps.stencil.offset_to_direction_string,
                                    lbmpy.stencils.LBStencil("D3Q27").inverse_stencil_entries))
     inverse_staggered_stencils = {}
     for i, dir in enumerate(stencils):
         if dir in staggered_stencils:
-            inverse_staggered_stencils[inverse_stencils_helper[i]] = staggered_stencils[dir]
+            inverse_staggered_stencils[inverse_stencils_helper[i]
+                                       ] = staggered_stencils[dir]
 
     jinja_context = {
         "dtype": default_dtype,
