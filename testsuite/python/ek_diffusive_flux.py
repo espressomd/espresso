@@ -27,15 +27,13 @@ import espressomd.electrokinetics
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKIonConductivity:
-    BOX_L = [9., 9., 9.]
-    AGRID = 1.5
+class EKDiffusiveFlux:
+    BOX_L = [5., 5., 5.]
+    AGRID = 1.0
     DIFFUSION_COEFFICIENT = 0.25
-    TIMESTEPS = 10
-    TAU = 1.6
-    NUM_SAMPLES = 10
+    TIMESTEPS = 1
+    TAU = 1.0
 
-    np.random.seed(37)
     system = espressomd.System(box_l=BOX_L)
     system.time_step = TAU
     system.cell_system.skin = 0.4
@@ -43,98 +41,89 @@ class EKIonConductivity:
     def tearDown(self):
         self.system.ekcontainer = None
 
-    def test_conductivity(self):
+    def test_diffusive_flux(self):
         """
         Testing the ion conductivity of a ionic solution by measuring
         the flux.
         """
 
-        eps0 = 0.015
-        epsR = 18.5
-        kT = 2.
-        valency = 1.1
-        external_electric_field = np.asarray([0.0, 0.0, 0.0])
-        electric_field_max = 0.01
-
-        density = 0.0006
+        density = 1.0
+        kT = 1.0
 
         lattice = self.ek_lattice_class(n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies_pos = self.ek_species_class(
-            lattice=lattice, density=density, kT=kT, valency=valency,
+        ekspecies = self.ek_species_class(
+            lattice=lattice, density=0.0, kT=kT, valency=0.,
             diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
-            advection=False, ext_efield=external_electric_field,
-            tau=self.TAU, **self.ek_params)
-        ekspecies_neg = self.ek_species_class(
-            lattice=lattice, density=density, kT=kT, valency=-valency,
-            diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
-            advection=False, ext_efield=external_electric_field,
-            tau=self.TAU, **self.ek_params)
+            advection=False, tau=self.TAU, **self.ek_params)
 
-        eksolver = self.ek_solver_class(
-            lattice=lattice, permittivity=eps0 * epsR, **self.ek_params)
+        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)
-        self.system.ekcontainer.add(ekspecies_pos)
-        self.system.ekcontainer.add(ekspecies_neg)
+        self.system.ekcontainer.add(ekspecies)
 
-        for _ in range(self.NUM_SAMPLES):
-            external_electric_field = electric_field_max * np.random.random(3)
-            ekspecies_pos.ext_efield = external_electric_field
-            ekspecies_neg.ext_efield = external_electric_field
-            self.system.integrator.run(self.TIMESTEPS)
+        center = np.array([2] * 3)
+        ekspecies[center].density = density
 
-            conductivity = np.mean(
-                ekspecies_pos[:, :, :].flux - ekspecies_neg[:, :, :].flux, (0, 1, 2))
-            conductivity /= external_electric_field
-            ref_value = 2 * valency * density * self.DIFFUSION_COEFFICIENT / kT
-            np.testing.assert_allclose(conductivity, ref_value, rtol=5e-4)
+        self.system.integrator.run(1)
+
+        offset = np.array([-1, 0, 1])
+        normalization_factor = 1.0 + 2. * np.sqrt(2) + 4.0 / 3.0 * np.sqrt(3)
+        for x in offset:
+            for y in offset:
+                for z in offset:
+                    dir = np.array([x, y, z]) 
+                    local_flux = np.array(ekspecies[dir + center].flux)
+                    dist = np.linalg.norm(dir)
+                    if (dist > 0):
+                        ref_flux = dir / normalization_factor * self.DIFFUSION_COEFFICIENT / dist / 2.0
+                        np.testing.assert_allclose(
+                            local_flux, ref_flux, rtol=1.0E-5)
+                    else:
+                        np.testing.assert_allclose(
+                            local_flux, np.zeros(3), atol=1.0E-8)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKTestWalberla(EKIonConductivity, ut.TestCase):
+class EKTestWalberla(EKDiffusiveFlux, ut.TestCase):
 
     """Test for the waLBerla implementation of the EK in double-precision."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
     ek_params = {"single_precision": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKTestWalberlaSinglePrecision(EKIonConductivity, ut.TestCase):
+class EKTestWalberlaSinglePrecision(EKDiffusiveFlux, ut.TestCase):
 
     """Test for the waLBerla implementation of the EK in single-precision."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
     ek_params = {"single_precision": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
-class EKTestWalberlaGPU(EKIonConductivity, ut.TestCase):
+class EKTestWalberlaGPU(EKDiffusiveFlux, ut.TestCase):
 
     """Test for the waLBerla implementation of the EK in double-precision GPU."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
-    ek_solver_class = espressomd.electrokinetics.EKFFTGPU
     ek_params = {"single_precision": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
-class EKTestWalberlaSinglePrecisionGPU(EKIonConductivity, ut.TestCase):
+class EKTestWalberlaSinglePrecisionGPU(EKDiffusiveFlux, ut.TestCase):
 
     """Test for the waLBerla implementation of the EK in single-precision GPU."""
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
-    ek_solver_class = espressomd.electrokinetics.EKFFTGPU
     ek_params = {"single_precision": True}
 
 
