@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_NB_IA_GB_HPP
-#define CORE_NB_IA_GB_HPP
+
+#pragma once
 
 /** \file
  *  Routines to calculate the Gay-Berne potential between particle pairs.
@@ -33,7 +33,7 @@
 
 #include "config/config.hpp"
 
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
 
 #include "Particle.hpp"
 #include "nonbonded_interaction_data.hpp"
@@ -176,5 +176,4 @@ inline double gb_pair_energy(Utils::Quaternion<double> const &qi,
   return E(r_eff(dist)) - E(r_eff(ia_params.gay_berne.cut));
 }
 
-#endif // GAY_BERNE
-#endif
+#endif // ESPRESSO_GAY_BERNE

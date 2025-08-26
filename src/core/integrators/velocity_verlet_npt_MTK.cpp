@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 #include "velocity_verlet_npt.hpp"
 
 #include "BoxGeometry.hpp"
@@ -135,7 +135,7 @@ static void velocity_verlet_npt_propagate_AVOVA_MTK(
   velocity_verlet_npt_propagate_pos_MTK(nptiso, particles, time_step);
   velocity_verlet_npt_propagate_pos(particles, time_step);
 
-  /* stochastic reserviors for conjugate momentum for particles
+  /* stochastic reservoirs for conjugate momentum for particles
    *  @f$ p(t+0.5*dt) = p(t+0.5*dt) \exp(- \gamma_0 dt / m)
    *                      + \sqrt{k_B T (1 - \exp(-2 \gamma_0 dt)}N(0,1) @f$
    */
@@ -153,7 +153,7 @@ static void velocity_verlet_npt_propagate_AVOVA_MTK(
 
   /* 1st propagatation Volume with dt/2
    * @f$ V(t+0.5*dt) = \exp(0.5 * dt * 3 * p_{\epsilon} / W) * V(t) @f$,
-   * stochastic reserviors for conjugate momentum for V
+   * stochastic reservoirs for conjugate momentum for V
    * @f$ p_{\epsilon} = p_{epsilon}(t) \exp(- \gamma_V dt / W)
    *                    + \sqrt{k_B T (1 - \exp(-2 \gamma_V dt / W)}N(0,1) @f$,
    * 2nd propagatation Volume with dt/2
@@ -244,4 +244,4 @@ void velocity_verlet_npt_MTK_step_2(ParticleRangeNPT const &particles,
                                         time_step);
 }
 
-#endif // NPT
+#endif // ESPRESSO_NPT

@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_EXCLUSIONS_HPP
-#define ESPRESSO_EXCLUSIONS_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
@@ -27,7 +27,7 @@
 
 #include <algorithm>
 
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
 
 /** Determine if the non-bonded interactions between @p p1 and @p p2 should be
  *  calculated.
@@ -49,5 +49,4 @@ void delete_exclusion(Particle &p, int p_id);
 /** Insert an exclusion if not already set */
 void add_exclusion(Particle &p, int p_id);
 
-#endif // EXCLUSIONS
-#endif // ESPRESSO_EXCLUSIONS_HPP
+#endif // ESPRESSO_EXCLUSIONS

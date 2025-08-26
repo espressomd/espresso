@@ -18,9 +18,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-# This module parses the feature definition file features.def
-
+"""
+This module parses the feature definition file :file:`features.def`.
+"""
 import fileinput
 import re
 
@@ -34,15 +34,14 @@ class SyntaxError(Exception):
         self.instead = instead
 
     def __str__(self):
-        return '%s: %2d: %s in the following line:\n%s' % \
-            (self.filename, self.lineno, self.message, self.instead)
+        return f"self.filename: {self.lineno:>2}: {self.message} in the following line:\n{self.instead}"  # nopep8
 
 
 def toCPPExpr(expr):
-    expr = expr.replace('and', ' && ')
-    expr = expr.replace('or', ' || ')
-    expr = expr.replace('not', ' !')
-    expr = re.sub('([A-Z0-9_]+)', 'defined(\\1)', expr)
+    expr = expr.replace("and", "&&")
+    expr = expr.replace("or", "||")
+    expr = expr.replace('not', "!")
+    expr = re.sub("([A-Z0-9_]+)", r"defined(ESPRESSO_\g<1>)", expr)
     return expr
 
 

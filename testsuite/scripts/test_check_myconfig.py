@@ -38,6 +38,13 @@ class Test(ut.TestCase):
         with open("@CMAKE_SOURCE_DIR@/cmake/espresso_cmake_config.cmakein") as fp:
             default_cmakedefine = fp.read()
 
+        def extract_from_group(ctx, kernel, *args, **kwargs):
+            try:
+                kernel(*args, **kwargs)
+            except* ctx.expected as err:
+                self.assertEqual(len(err.exceptions), 1)
+                raise err.exceptions[0]
+
         def run(myconfig="", cmake_config="", cmakedefine=default_cmakedefine):
             path_myconfig.write_text(myconfig)
             path_cmake_config.write_text(cmake_config)
@@ -55,20 +62,29 @@ class Test(ut.TestCase):
         run(cmakedefine=default_cmakedefine + "/*\n#cmake" + "define ERROR\n*/")
 
         # check all errors
-        with self.assertRaisesRegex(RuntimeError, "unknown feature 'ROTATIONN', did you mean 'ROTATION'"):
-            run(myconfig="#define ROTATIONN")
-        with self.assertRaisesRegex(RuntimeError, "unknown feature 'UNKNOWN_FEATURE'"):
-            run(myconfig="#define UNKNOWN_FEATURE")
-        with self.assertRaisesRegex(RuntimeError, "external feature 'FFTW' cannot be defined in myconfig"):
-            run(myconfig="#define FFTW")
-        with self.assertRaisesRegex(RuntimeError, "cmake_config.hpp` returned non-zero exit code 1, output:"):
-            run(cmake_config="#define")
-        with self.assertRaisesRegex(RuntimeError, "myconfig.hpp` returned non-zero exit code 1, output:"):
-            run(myconfig="#define")
+        with self.assertRaisesRegex(RuntimeError, "unknown feature 'ROTATIONN', did you mean 'ROTATION'") as ctx:
+            extract_from_group(ctx, run, myconfig="#define ROTATIONN")
+        with self.assertRaisesRegex(RuntimeError, "unknown feature 'UNKNOWN_FEATURE'") as ctx:
+            extract_from_group(ctx, run, myconfig="#define UNKNOWN_FEATURE")
+        with self.assertRaisesRegex(RuntimeError, "external feature 'FFTW' cannot be defined in myconfig") as ctx:
+            extract_from_group(ctx, run, myconfig="#define FFTW")
+        with self.assertRaisesRegex(RuntimeError, "cmake_config.hpp` returned non-zero exit status 1") as ctx:
+            extract_from_group(ctx, run, cmake_config="#define")
+        with self.assertRaisesRegex(RuntimeError, "myconfig.hpp` returned non-zero exit status 1") as ctx:
+            extract_from_group(ctx, run, myconfig="#define")
         with self.assertRaisesRegex(RuntimeError, "external feature 'UNKNOWN' is missing from '.*features.def'"):
-            run(cmakedefine="#cmake" + "define ESPRESSO_BUILD_WITH_UNKNOWN")
+            try:
+                run(cmakedefine="#cmake" + "define ESPRESSO_BUILD_WITH_UNKNOWN")  # nopep8
+            except* RuntimeError as err:
+                self.assertGreaterEqual(len(err.exceptions), 1)
+                raise err.exceptions[-1]
         with self.assertRaisesRegex(RuntimeError, "cmakedefine 'FFTW' is missing from '.*cmake_config.cmakein'"):
-            run(cmakedefine="")
+            try:
+                run(cmakedefine="")
+            except* RuntimeError as err:
+                self.assertGreaterEqual(len(err.exceptions), 1)
+                combine_message = "\n".join(x.args[0] for x in err.exceptions)
+                raise RuntimeError(combine_message)
 
         tmp_directory.cleanup()
 

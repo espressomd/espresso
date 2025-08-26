@@ -19,7 +19,7 @@
 
 #include <config/config.hpp>
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
 
 #include "BindCenters.hpp"
 #include "CollisionPair.hpp"
@@ -63,4 +63,4 @@ void BindCenters::handle_collisions(
 
 } // namespace CollisionDetection
 
-#endif // COLLISION_DETECTION
+#endif // ESPRESSO_COLLISION_DETECTION

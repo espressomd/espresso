@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 #include "cell_system/CellStructure.hpp"
 
@@ -36,11 +36,25 @@
 #include <span>
 #include <utility>
 
+template <class KokkosRangePolicy = Kokkos::RangePolicy<>>
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
-commit_particle(Particle const &p, int const index,
+kokkos_parallel_range_for(auto const &name, auto start, auto end,
+                          auto const &kernel) {
+  if (Kokkos::num_threads() > 1) {
+    KokkosRangePolicy policy(start, end);
+    Kokkos::parallel_for(name, policy, kernel);
+  } else {
+    for (auto p_index = start; p_index < end; ++p_index) {
+      kernel(p_index);
+    }
+  }
+}
+
+ESPRESSO_ATTR_ALWAYS_INLINE inline void
+commit_particle(Particle const &p, auto const index,
                 CellStructure::AoSoA_pack &aosoa) {
   aosoa.id(index) = p.id();
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   aosoa.charge(index) = p.q();
 #endif
   aosoa.type(index) = p.type();
@@ -122,10 +136,10 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void
 update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
                     double const pair_cutoff) {
   using execution_space = Kokkos::DefaultExecutionSpace;
-  auto const num_threads = execution_space().concurrency();
-  auto const rebuild =
-      cell_structure.prepare_verlet_list_cabana(num_threads, pair_cutoff);
+  using policy_type = Kokkos::RangePolicy<execution_space>;
+  auto const rebuild = cell_structure.prepare_verlet_list_cabana(pair_cutoff);
   auto const &unique_particles = cell_structure.get_unique_particles();
+  auto const n_part = unique_particles.size();
   auto const max_id = cell_structure.get_cached_max_local_particle_id();
   auto &aosoa = cell_structure.get_aosoa();
 
@@ -136,9 +150,8 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
       Kokkos::ViewAllocateWithoutInitializing("id_to_index"), max_id + 1);
   Kokkos::deep_copy(id_to_index, -1);
 
-  using policy_type = Kokkos::RangePolicy<execution_space>;
-  Kokkos::parallel_for(
-      "AoSoA write", policy_type(0, unique_particles.size()),
+  kokkos_parallel_range_for<policy_type>(
+      "AoSoA write", std::size_t{0}, n_part,
       [&unique_particles, &aosoa, &id_to_index](int const index) {
         auto const &p = *unique_particles.at(index);
         commit_particle(p, index, aosoa);
@@ -159,6 +172,23 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
   }
 }
 
+#ifdef ESPRESSO_ELECTROSTATICS
+ESPRESSO_ATTR_ALWAYS_INLINE inline void
+update_aosoa_charges(CellStructure &cell_structure) {
+  using execution_space = Kokkos::DefaultExecutionSpace;
+  using policy_type = Kokkos::RangePolicy<execution_space>;
+  auto const &unique_particles = cell_structure.get_unique_particles();
+  auto const n_part = unique_particles.size();
+  auto &aosoa = cell_structure.get_aosoa();
+
+  kokkos_parallel_range_for<policy_type>(
+      "AoSoA update charges", std::size_t{0}, n_part,
+      [&unique_particles, &aosoa](std::size_t const index) {
+        aosoa.charge(index) = unique_particles.at(index)->q();
+      });
+}
+#endif
+
 void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
                         CellStructure &cell_structure, double pair_cutoff,
                         double bond_cutoff) {
@@ -173,7 +203,7 @@ void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
   if (pair_cutoff > 0.) {
     auto const &verlet_list = cell_structure.get_verlet_list_cabana();
     Kokkos::RangePolicy<execution_space> policy(
-        0, cell_structure.get_unique_particles().size());
+        std::size_t{0}, cell_structure.get_unique_particles().size());
     Cabana::neighbor_parallel_for(policy, forces_kernel, verlet_list,
                                   Cabana::FirstNeighborsTag(),
                                   Cabana::SerialOpTag());
@@ -181,4 +211,4 @@ void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
   }
 }
 
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

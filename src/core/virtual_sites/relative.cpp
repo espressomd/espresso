@@ -18,7 +18,7 @@
  */
 
 #include "config/config.hpp"
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
@@ -204,4 +204,4 @@ vs_relative_pressure_tensor(CellStructure const &cell_structure) {
 
   return pressure_tensor;
 }
-#endif // VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE

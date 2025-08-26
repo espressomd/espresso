@@ -21,6 +21,6 @@
 
 #include "config/config.hpp"
 
-#ifdef FFTW
+#ifdef ESPRESSO_FFTW
 void fft_on_program_start();
 #endif

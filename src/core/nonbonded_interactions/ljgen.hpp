@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_NB_IA_LJGEN_HPP
-#define CORE_NB_IA_LJGEN_HPP
+
+#pragma once
 
 /** \file
  *  Routines to calculate the generalized Lennard-Jones potential between
@@ -38,7 +38,7 @@
 
 #include "config/config.hpp"
 
-#ifdef LENNARD_JONES_GENERIC
+#ifdef ESPRESSO_LENNARD_JONES_GENERIC
 
 #include "nonbonded_interaction_data.hpp"
 
@@ -53,7 +53,7 @@ inline double ljgen_pair_force_factor(IA_parameters const &ia_params,
   if (dist < ia_params.ljgen.max_cutoff()) {
     auto r_off = dist - ia_params.ljgen.offset;
 
-#ifdef LJGEN_SOFTCORE
+#ifdef ESPRESSO_LJGEN_SOFTCORE
     r_off *= r_off;
     r_off += Utils::sqr(ia_params.ljgen.sig) * (1.0 - ia_params.ljgen.lambda) *
              ia_params.ljgen.softrad;
@@ -63,7 +63,7 @@ inline double ljgen_pair_force_factor(IA_parameters const &ia_params,
 #endif
     auto const frac = ia_params.ljgen.sig / r_off;
     auto const fac = ia_params.ljgen.eps
-#ifdef LJGEN_SOFTCORE
+#ifdef ESPRESSO_LJGEN_SOFTCORE
                      * ia_params.ljgen.lambda *
                      (dist - ia_params.ljgen.offset) / r_off
 #endif
@@ -81,7 +81,7 @@ inline double ljgen_pair_force_factor(IA_parameters const &ia_params,
 inline double ljgen_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < ia_params.ljgen.max_cutoff()) {
     auto r_off = dist - ia_params.ljgen.offset;
-#ifdef LJGEN_SOFTCORE
+#ifdef ESPRESSO_LJGEN_SOFTCORE
     r_off *= r_off;
     r_off += pow(ia_params.ljgen.sig, 2) * (1.0 - ia_params.ljgen.lambda) *
              ia_params.ljgen.softrad;
@@ -91,7 +91,7 @@ inline double ljgen_pair_energy(IA_parameters const &ia_params, double dist) {
 #endif
     auto const frac = ia_params.ljgen.sig / r_off;
     auto const fac = ia_params.ljgen.eps
-#ifdef LJGEN_SOFTCORE
+#ifdef ESPRESSO_LJGEN_SOFTCORE
                      * ia_params.ljgen.lambda
 #endif
                      * (ia_params.ljgen.b1 * pow(frac, ia_params.ljgen.a1) -
@@ -102,5 +102,4 @@ inline double ljgen_pair_energy(IA_parameters const &ia_params, double dist) {
   return 0.0;
 }
 
-#endif // LENNARD_JONES_GENERIC
-#endif
+#endif // ESPRESSO_LENNARD_JONES_GENERIC

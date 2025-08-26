@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
 #include "sd_interface.hpp"
 
 #include "stokesian_dynamics/sd_cpu.hpp"
@@ -184,4 +184,4 @@ void propagate_vel_pos_sd(ParticleRangeStokesian const &particles,
   sd_update_locally(particles);
 }
 
-#endif // STOKESIAN_DYNAMICS
+#endif // ESPRESSO_STOKESIAN_DYNAMICS

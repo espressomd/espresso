@@ -89,7 +89,7 @@ struct TabulatedAngleBond : public TabulatedBond {
                      std::vector<double> const &force)
       : TabulatedBond(min, max, energy, force) {
     this->pot->minval = 0.;
-    this->pot->maxval = std::numbers::pi + ROUND_ERROR_PREC;
+    this->pot->maxval = std::numbers::pi + round_error_prec;
   }
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
@@ -108,7 +108,7 @@ struct TabulatedDihedralBond : public TabulatedBond {
                         std::vector<double> const &force)
       : TabulatedBond(min, max, energy, force) {
     this->pot->minval = 0.;
-    this->pot->maxval = 2. * std::numbers::pi + ROUND_ERROR_PREC;
+    this->pot->maxval = 2. * std::numbers::pi + round_error_prec;
   }
 
   std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,

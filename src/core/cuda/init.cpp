@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 
 #include "init.hpp"
 #include "utils.hpp"
@@ -94,4 +94,4 @@ void cuda_on_program_start() {
   }
 }
 
-#endif // CUDA
+#endif // ESPRESSO_CUDA

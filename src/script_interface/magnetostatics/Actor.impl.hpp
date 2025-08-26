@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "Actor.hpp"
 
@@ -55,4 +55,4 @@ Variant Actor<SIClass, CoreClass>::do_call_method(std::string const &name,
 } // namespace Dipoles
 } // namespace ScriptInterface
 
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES

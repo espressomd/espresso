@@ -40,7 +40,7 @@
 #include <stdexcept>
 #include <vector>
 
-#if defined(P3M) or defined(DP3M)
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 BOOST_AUTO_TEST_CASE(fft_find_comm_groups_mismatch) {
   using fft::find_comm_groups;
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(fft_plan_without_mpi) {
   delete plan;
 }
 
-#endif // defined(P3M) or defined(DP3M)
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 BOOST_AUTO_TEST_CASE(for_each_3d_test) {
   auto const m_start = Utils::Vector3i{{0, -1, 3}};

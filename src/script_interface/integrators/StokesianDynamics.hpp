@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
 
 #include "Integrator.hpp"
 
@@ -53,4 +53,4 @@ public:
 } // namespace Integrators
 } // namespace ScriptInterface
 
-#endif // STOKESIAN_DYNAMICS
+#endif // ESPRESSO_STOKESIAN_DYNAMICS

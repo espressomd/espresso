@@ -47,7 +47,8 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
   }
 
   auto &obs_energy = *obs_energy_ptr;
-#if defined(CUDA) and (defined(ELECTROSTATICS) or defined(DIPOLES))
+#if defined(ESPRESSO_CUDA) and                                                 \
+    (defined(ESPRESSO_ELECTROSTATICS) or defined(ESPRESSO_DIPOLES))
   gpu.clear_energy_on_device();
   gpu.update();
 #endif
@@ -86,19 +87,20 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
       },
       *cell_structure, maximal_cutoff(), bonded_ias->maximal_cutoff());
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   obs_energy.coulomb[1] = coulomb.calc_energy_long_range(local_parts);
 #endif
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
   obs_energy.dipolar[1] = dipoles.calc_energy_long_range(local_parts);
 #endif
 
   constraints->add_energy(local_parts, get_sim_time(), obs_energy);
 
-#if defined(CUDA) and (defined(ELECTROSTATICS) or defined(DIPOLES))
+#if defined(ESPRESSO_CUDA) and                                                 \
+    (defined(ESPRESSO_ELECTROSTATICS) or defined(ESPRESSO_DIPOLES))
   auto const energy_host = gpu.copy_energy_to_host();
   if (!obs_energy.coulomb.empty())
     obs_energy.coulomb[1] += static_cast<double>(energy_host.coulomb);
@@ -122,7 +124,7 @@ double System::particle_short_range_energy_contribution(int pid) {
     auto kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel), &ret,
                    this](Particle const &p, Particle const &p1,
                          Utils::Vector3d const &vec) {
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
       if (not do_nonbonded(p, p1))
         return;
 #endif
@@ -158,7 +160,7 @@ std::optional<double> System::particle_bond_energy(int pid, int bond_id,
   }
 }
 
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
 void System::calculate_long_range_fields() {
   dipoles.calc_long_range_field(cell_structure->local_particles());
 }

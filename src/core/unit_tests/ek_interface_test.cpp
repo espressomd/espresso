@@ -33,7 +33,7 @@
 #include "errorhandling.hpp"
 #include "system/System.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/EKContainer.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
@@ -71,7 +71,7 @@ namespace espresso {
 // ESPResSo system instance
 static std::shared_ptr<System::System> system;
 // ESPResSo actors
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 static std::shared_ptr<EK::EKWalberla::ek_container_type> ek_container;
 static std::shared_ptr<EK::EKWalberla::ek_reactions_type> ek_reactions;
 static std::shared_ptr<EK::EKWalberla> ek_instance;
@@ -79,7 +79,7 @@ static std::shared_ptr<LatticeWalberla> ek_lattice;
 #endif
 
 static auto make_ek_actor() {
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
   auto constexpr n_ghost_layers = 1u;
   auto constexpr single_precision = true;
   ek_lattice = std::make_shared<LatticeWalberla>(
@@ -93,7 +93,7 @@ static auto make_ek_actor() {
 }
 
 static void add_ek_actor() {
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
   espresso::system->ek.set<::EK::EKWalberla>(ek_instance);
 #endif
 }
@@ -118,7 +118,7 @@ struct GlobalConfig : public EspressoCoreGlobalConfig {
   }
 };
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 namespace walberla {
 class EKReactionImpl : public EKReactionBase {
 public:
@@ -131,7 +131,7 @@ public:
   ~EKReactionImpl() override = default;
 };
 } // namespace walberla
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA
 
 /** Fixture to manage the lifetime of the EK actor. */
 struct CleanupActorEK : public ParticleFactory {
@@ -149,7 +149,7 @@ BOOST_FIXTURE_TEST_SUITE(suite, CleanupActorEK)
 
 static auto get_n_runtime_errors() { return check_runtime_errors_local(); }
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
   auto &ek = espresso::system->ek;
 
@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
     }
   }
 }
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA
 
 BOOST_AUTO_TEST_CASE(ek_interface_none) {
   auto &ek = espresso::system->ek;

@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef SCAFACOS_DIPOLES
+#ifdef ESPRESSO_SCAFACOS_DIPOLES
 
 #include "Actor.hpp"
 
@@ -90,4 +90,4 @@ public:
 } // namespace Dipoles
 } // namespace ScriptInterface
 
-#endif // SCAFACOS_DIPOLES
+#endif // ESPRESSO_SCAFACOS_DIPOLES

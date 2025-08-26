@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "EKFFT.hpp"
 #include "EKFFT_GPU.hpp"
@@ -52,9 +52,9 @@ class EKContainer : public ObjectList<EKSpecies> {
   using Base::value_type;
 
   std::variant<
-#ifdef WALBERLA_FFT
+#ifdef ESPRESSO_WALBERLA_FFT
       std::shared_ptr<EKFFT>,
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
       std::shared_ptr<EKFFTGPU>,
 #endif
 #endif
@@ -102,8 +102,8 @@ class EKContainer : public ObjectList<EKSpecies> {
     if (auto ptr = std::dynamic_pointer_cast<EKNone>(so_ptr)) {
       solver = std::move(ptr);
     }
-#ifdef WALBERLA_FFT
-#ifdef CUDA
+#ifdef ESPRESSO_WALBERLA_FFT
+#ifdef ESPRESSO_CUDA
     else if (auto ptr = std::dynamic_pointer_cast<EKFFTGPU>(so_ptr)) {
       solver = std::move(ptr);
     }
@@ -182,4 +182,4 @@ protected:
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

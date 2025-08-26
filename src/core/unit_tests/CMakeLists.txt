@@ -24,14 +24,22 @@ include(espresso_unit_test)
 espresso_unit_test(SRC RuntimeError_test.cpp DEPENDS Boost::serialization)
 espresso_unit_test(SRC RuntimeErrorCollector_test.cpp DEPENDS espresso::core
                    Boost::mpi MPI::MPI_CXX NUM_PROC 2)
-espresso_unit_test(
-  NAME EspressoSystemStandAlone_parallel_test SRC
-  EspressoSystemStandAlone_test.cpp DEPENDS espresso::core Boost::mpi
-  MPI::MPI_CXX NUM_PROC 4)
-espresso_unit_test(
-  NAME EspressoSystemStandAlone_serial_test SRC
-  EspressoSystemStandAlone_test.cpp DEPENDS espresso::core Boost::mpi
-  MPI::MPI_CXX NUM_PROC 1)
+foreach(TEST_NUM_PROC 1 3 4)
+  foreach(TEST_NUM_THREADS 1 2)
+    if(${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM} OR ${TEST_NUM_THREADS}
+                                                           EQUAL 1)
+      if(${ESPRESSO_TEST_NP} GREATER_EQUAL ${TEST_NUM_PROC})
+        set(TEST_NAME
+            EspressoSystemStandAlone_test_${TEST_NUM_PROC}_mpi_ranks_${TEST_NUM_THREADS}_omp_threads
+        )
+        espresso_unit_test(
+          NAME ${TEST_NAME} SRC EspressoSystemStandAlone_test.cpp DEPENDS
+          espresso::core Boost::mpi MPI::MPI_CXX NUM_PROC ${TEST_NUM_PROC}
+          NUM_THREADS ${TEST_NUM_THREADS})
+      endif()
+    endif()
+  endforeach()
+endforeach()
 espresso_unit_test(SRC EspressoSystem_test.cpp DEPENDS espresso::core
                    Boost::mpi NUM_PROC 2)
 espresso_unit_test(SRC ResourceCleanup_test.cpp DEPENDS espresso::core

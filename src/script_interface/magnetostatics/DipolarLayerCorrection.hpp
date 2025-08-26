@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "Actor.hpp"
 
@@ -43,7 +43,7 @@ class DipolarLayerCorrection
     : public Actor<DipolarLayerCorrection, ::DipolarLayerCorrection> {
   using DipolarDSR = DipolarDirectSum;
   using BaseSolver = std::variant<
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
       std::shared_ptr<DipolarP3M<Arch::CPU>>,
 #endif
       std::shared_ptr<DipolarDSR>>;
@@ -75,13 +75,13 @@ public:
     ::DipolarLayerCorrection::BaseSolver solver;
     auto so_ptr = get_value<ObjectRef>(params, "actor");
     context()->parallel_try_catch([&]() {
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
       if (auto so = std::dynamic_pointer_cast<DipolarP3M<Arch::CPU>>(so_ptr)) {
         solver = so->actor();
         m_solver = so;
         return;
       }
-#endif // DP3M
+#endif // ESPRESSO_DP3M
       if (auto so = std::dynamic_pointer_cast<DipolarDSR>(so_ptr)) {
         solver = so->actor();
         m_solver = so;
@@ -104,4 +104,4 @@ public:
 } // namespace Dipoles
 } // namespace ScriptInterface
 
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES

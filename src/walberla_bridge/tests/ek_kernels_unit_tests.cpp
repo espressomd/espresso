@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include <boost/test/unit_test.hpp>
 

@@ -26,7 +26,7 @@
 
 #include "config/config.hpp"
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 
 #include <utils/Vector.hpp>
 
@@ -99,4 +99,4 @@ struct InstantaneousPressure {
   Utils::Vector3d p_vel = {0., 0., 0.};
 };
 
-#endif // NPT
+#endif // ESPRESSO_NPT

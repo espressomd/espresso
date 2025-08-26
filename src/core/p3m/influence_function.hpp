@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M)
+#if defined(ESPRESSO_P3M)
 
 #include "p3m/common.hpp"
 #include "p3m/for_each_3d.hpp"
@@ -185,4 +185,4 @@ std::vector<FloatType> grid_influence_function(
   return g;
 }
 
-#endif // defined(P3M)
+#endif // defined(ESPRESSO_P3M)

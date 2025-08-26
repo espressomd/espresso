@@ -23,7 +23,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "actor/traits.hpp"
 
@@ -77,7 +77,7 @@ struct dlc_data {
  */
 struct DipolarLayerCorrection : public Dipoles::Actor<DipolarLayerCorrection> {
   using BaseSolver = std::variant<
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
       std::shared_ptr<DipolarP3M>,
 #endif
       std::shared_ptr<DipolarDirectSum>>;
@@ -165,4 +165,4 @@ private:
   }
 };
 
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES

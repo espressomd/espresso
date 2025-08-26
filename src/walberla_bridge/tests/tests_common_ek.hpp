@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "tests_common.hpp"
 
@@ -93,4 +93,4 @@ inline EkGeneratorVector all_eks() {
 // Disable printing of type which does not support it
 BOOST_TEST_DONT_PRINT_LOG_VALUE(EkGeneratorVector::value_type)
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

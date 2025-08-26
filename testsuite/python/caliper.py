@@ -25,23 +25,25 @@ import pathlib
 import sys
 import os
 
+HAS_CABANA = espressomd.has_features(["SHARED_MEMORY_PARALLELISM"])
+
 EXPECTED_LABELS = f"""
 integrate
   Initial Force Calculation
     calculate_forces
       copy_particles_to_GPU
-      init_forces_and_thermost
+      {'convert particles AoS to SoA' if HAS_CABANA else ''}
+      init_forces_and_thermostat
       calc_long_range_forces
-      {'parallel short range' if espressomd.has_features(
-    ["SHARED_MEMORY_PARALLELISM"]) else 'short_range_loop'}
+      {'parallel short range' if HAS_CABANA else 'short_range_loop'}
       copy_forces_from_GPU
   Integration loop
     calculate_forces
       copy_particles_to_GPU
-      init_forces_and_thermost
+      {'convert particles AoS to SoA' if HAS_CABANA else ''}
+      init_forces_and_thermostat
       calc_long_range_forces
-      {'parallel short range' if espressomd.has_features(
-        ["SHARED_MEMORY_PARALLELISM"]) else 'short_range_loop'}
+      {'parallel short range' if HAS_CABANA else 'short_range_loop'}
       copy_forces_from_GPU
 calc_energies
   short_range_loop
@@ -70,9 +72,9 @@ class Test(ut.TestCase):
         header = "Path\tMin time/rank\tMax time/rank\tAvg time/rank\tTime %"
         self.assertEqual(lines[0].split(), header.split(),
                          msg=f"Caliper summary should start with '{header}'")
-        labels = [line[:30].strip() for line in lines[1:]]
-        labels_ref = [x.strip() for x in EXPECTED_LABELS.strip().split("\n")
-                      if "GPU" not in x.upper() or has_cuda]
+        labels = [line[:36].rstrip() for line in lines[1:]]
+        labels_ref = [x.rstrip() for x in EXPECTED_LABELS.strip().split("\n")
+                      if x.rstrip() and ("GPU" not in x.upper() or has_cuda)]
         self.assertEqual(labels[:len(labels_ref)], labels_ref,
                          msg=f"Caliper returned this summary:\n{stderr}")
 

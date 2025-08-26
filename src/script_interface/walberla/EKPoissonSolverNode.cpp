@@ -19,7 +19,7 @@
 
 #include <config/config.hpp>
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "EKPoissonSolverNode.hpp"
 
@@ -56,4 +56,4 @@ Variant EKPoissonSolverNode::do_call_method(std::string const &name,
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

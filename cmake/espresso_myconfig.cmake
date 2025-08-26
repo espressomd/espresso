@@ -37,9 +37,9 @@ if(NOT ESPRESSO_MYCONFIG_FILE)
 endif()
 
 configure_file(${ESPRESSO_MYCONFIG_FILE}
-               ${CMAKE_BINARY_DIR}/src/config/include/config/myconfig-final.hpp COPYONLY)
+               ${CMAKE_BINARY_DIR}/src/config/include/config/myconfig-final.hpp.in COPYONLY)
 add_custom_target(myconfig
-                  DEPENDS ${CMAKE_BINARY_DIR}/src/config/include/config/myconfig-final.hpp)
+                  DEPENDS ${CMAKE_BINARY_DIR}/src/config/include/config/myconfig-final.hpp.in)
 message(STATUS "Config file: ${ESPRESSO_MYCONFIG_FILE}")
 # Clear variable, otherwise cmake must be run by hand to detect myconfig.
 # Also prevents find_file from skipping when variable is already set.

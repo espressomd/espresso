@@ -23,7 +23,7 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) or defined(DP3M)
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 #include "common.hpp"
 #include "data_struct.hpp"
@@ -60,4 +60,4 @@ public:
   std::array<FloatType *, 3u> get_vector_mesh() override;
 };
 
-#endif // defined(P3M) or defined(DP3M)
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

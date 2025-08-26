@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 #include "velocity_verlet_npt.hpp"
 
 #include "BoxGeometry.hpp"
@@ -161,7 +161,7 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
   }
   boost::mpi::broadcast(::comm_cart, scal, 0);
 
-  /* stochastic reserviors for velocities;
+  /* stochastic reservoirs for velocities;
    *  @f$ p(t+0.5*dt) = p(t+0.5*dt) \exp(- \gamma_0 dt / m)
    *                      + \sqrt{k_B T (1 - \exp(-2 \gamma_0 dt)}N(0,1) @f$
    * and 2nd propagate positions with dt/2 while rescaling positions velocities
@@ -231,4 +231,4 @@ void velocity_verlet_npt_Andersen_step_2(ParticleRangeNPT const &particles,
   velocity_verlet_npt_finalize_p_inst(nptiso, npt_inst_pressure, time_step);
 }
 
-#endif // NPT
+#endif // ESPRESSO_NPT

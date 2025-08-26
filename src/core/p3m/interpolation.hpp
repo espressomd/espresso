@@ -73,6 +73,18 @@ public:
   auto cao() const { return m_cao; }
 
   /**
+   * @brief Fill cache with zero-initialized data.
+   * Meant for the parallel weight interpolation calculation.
+   * @param size Number of elements.
+   */
+  void zfill(std::size_t size) {
+    assert(ca_frac.empty());
+    assert(ca_fmp.empty());
+    ca_fmp.resize(size);
+    ca_frac.resize(size * static_cast<std::size_t>(m_cao * 3));
+  }
+
+  /**
    * @brief Push back weights for one point.
    *
    * @tparam cao Interpolation order has to match the order
@@ -90,6 +102,28 @@ public:
   }
 
   /**
+   * @brief Insert weights for one point.
+   *
+   * @tparam cao Interpolation order has to match the order
+   *         set at last call to @ref p3m_interpolation_cache::reset.
+   * @param weights Interpolation weights to store.
+   */
+  template <int cao>
+  void store_at(std::size_t p_index, const InterpolationWeights<cao> &weights) {
+    assert(cao == m_cao);
+    assert(p_index < size());
+
+    ca_fmp[p_index] = weights.ind;
+    auto it = ca_frac.begin();
+    std::advance(it, p_index * static_cast<std::size_t>(m_cao * 3));
+    std::ranges::copy(weights.w_x, it);
+    std::advance(it, m_cao);
+    std::ranges::copy(weights.w_y, it);
+    std::advance(it, m_cao);
+    std::ranges::copy(weights.w_z, it);
+  }
+
+  /**
    * @brief Load entry from the cache.
    *
    * This loads an entry at an index from the cache,
@@ -98,7 +132,7 @@ public:
    * @tparam cao Interpolation order has to match the order
    *         set at last call to @ref p3m_interpolation_cache::reset.
    * @param p_index Index of the entry to load.
-   * @return i-it interpolation weights.
+   * @return Interpolation weights.
    */
   template <int cao> InterpolationWeights<cao> load(std::size_t p_index) const {
     assert(cao == m_cao);

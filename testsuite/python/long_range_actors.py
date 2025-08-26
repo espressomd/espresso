@@ -105,7 +105,7 @@ class Test(ut.TestCase):
         self.system.electrostatics.extension = icc
 
         def run_with_npt(barostat):
-            with self.assertRaisesRegex(Exception, "ERROR: ICC does not work in the NPT ensemble"):
+            with self.assertRaisesRegex(Exception, "ERROR: ICC does not work in the NpT ensemble"):
                 self.system.thermostat.set_npt(
                     kT=1., gamma0=2., gammav=0., seed=42)
                 self.system.integrator.set_isotropic_npt(

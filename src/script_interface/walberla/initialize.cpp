@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "LatticeWalberla.hpp"
 
@@ -46,8 +46,8 @@
 
 #include <utils/Factory.hpp>
 
-#ifdef WALBERLA_STATIC_ASSERT
-#error "waLberla headers should not be visible to the ESPResSo script interface"
+#ifdef ESPRESSO_WALBERLA_STATIC_ASSERT
+#error "waLBerla headers should not be visible to the ESPResSo script interface"
 #endif
 
 namespace ScriptInterface::walberla {
@@ -56,25 +56,25 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<LatticeWalberla>("walberla::LatticeWalberla");
 
   om->register_new<LBFluidCPU>("walberla::LBFluidCPU");
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
   om->register_new<LBFluidGPU>("walberla::LBFluidGPU");
-#endif // CUDA
+#endif // ESPRESSO_CUDA
   om->register_new<LBFluidNode>("walberla::LBFluidNode");
   om->register_new<LBFluidSlice>("walberla::LBFluidSlice");
   om->register_new<LBVTKHandle>("walberla::LBVTKHandle");
 
   om->register_new<EKContainer>("walberla::EKContainer");
   om->register_new<EKSpeciesCPU>("walberla::EKSpeciesCPU");
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
   om->register_new<EKSpeciesGPU>("walberla::EKSpeciesGPU");
-#endif // CUDA
+#endif // ESPRESSO_CUDA
   om->register_new<EKSpeciesNode>("walberla::EKSpeciesNode");
   om->register_new<EKSpeciesSlice>("walberla::EKSpeciesSlice");
-#ifdef WALBERLA_FFT
+#ifdef ESPRESSO_WALBERLA_FFT
   om->register_new<EKFFT>("walberla::EKFFT");
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
   om->register_new<EKFFTGPU>("walberla::EKFFTGPU");
-#endif // CUDA
+#endif // ESPRESSO_CUDA
 #endif // WALBERLA_FFT
   om->register_new<EKNone>("walberla::EKNone");
   om->register_new<EKPoissonSolverNode>("walberla::EKPoissonSolverNode");
@@ -90,4 +90,4 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

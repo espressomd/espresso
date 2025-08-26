@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
 
 #include "Actor.hpp"
 
@@ -184,4 +184,4 @@ private:
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // P3M
+#endif // ESPRESSO_P3M

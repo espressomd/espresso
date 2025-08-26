@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 
 #include "BoxGeometry.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -37,4 +37,4 @@ void vs_relative_back_transfer_forces_and_torques(
 Utils::Matrix<double, 3, 3>
 vs_relative_pressure_tensor(CellStructure const &cell_structure);
 
-#endif // VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE

@@ -130,7 +130,7 @@ enum : unsigned {
   GHOSTTRANS_MOMENTUM = 8u,
   /// transfer \ref ParticleForce
   GHOSTTRANS_FORCE = 16u,
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   /// transfer \ref ParticleRattle
   GHOSTTRANS_RATTLE = 32u,
 #endif

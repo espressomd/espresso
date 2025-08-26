@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef SCAFACOS
+#ifdef ESPRESSO_SCAFACOS
 
 #include "Actor.hpp"
 
@@ -124,4 +124,4 @@ public:
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // SCAFACOS
+#endif // ESPRESSO_SCAFACOS

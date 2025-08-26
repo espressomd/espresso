@@ -19,61 +19,54 @@
 
 #pragma once
 
+#include <config/config.hpp>
+
 #include "Cell.hpp"
 #include "CellStructure.hpp"
-#include "config/config.hpp"
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
 #endif
 
 #include <cstddef>
-#include <span>
+#include <numeric>
 #include <vector>
 
 /**
  * @brief Run a kernel on all local particles with enumeration.
  * The kernel is called with (index, particle) and is assumed to be thread-safe.
  *
- * @tparam Kernel Callable with signature void(int, Particle&)
- * @param cs The CellStructure containing the particles
+ * @tparam Kernel Callable with signature <tt>void(std::size_t, Particle&)</tt>
+ * @param cs The cell structure containing the particles
  * @param kernel The kernel to apply to each particle with its index
  */
 template <typename Kernel>
-void enumerate_local_particles(CellStructure const &cs, Kernel &&kernel);
-
-template <typename Kernel>
 inline void enumerate_local_particles(CellStructure const &cs,
                                       Kernel &&kernel) {
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   if (cs.use_parallel_for_each_local_particle()) {
     auto const local_cells = cs.decomposition().local_cells();
 
-    // Step 1: Calculate cell offsets
-    std::vector<int> cell_offsets(local_cells.size() + 1, 0);
+    std::vector<std::size_t> cell_offsets(local_cells.size(), std::size_t{0});
+    std::exclusive_scan(local_cells.begin(), local_cells.end(),
+                        cell_offsets.begin(), std::size_t{0},
+                        [](auto acc, auto const &cell) {
+                          return acc + cell->particles().size();
+                        });
 
-    // Calculate cumulative sum of particles per cell
-    for (std::size_t i = 0; i < local_cells.size(); ++i) {
-      cell_offsets[i + 1] =
-          cell_offsets[i] + local_cells[i]->particles().size();
-    }
-
-    // Step 2: Parallel loop over cells
     Kokkos::parallel_for(
         "enumerate_local_particles", local_cells.size(), [&](auto cell_idx) {
           auto const base_offset = cell_offsets[cell_idx];
           auto &cell_particles = local_cells[cell_idx]->particles();
-
-          // Loop over particles in this cell
-          for (std::size_t part_idx = 0; part_idx < cell_particles.size();
-               ++part_idx) {
-            int global_index = base_offset + part_idx;
-            kernel(global_index, *(cell_particles.begin() + part_idx));
+          auto const n_part = cell_particles.size();
+          for (std::size_t p_index{0}; p_index < n_part; ++p_index) {
+            auto global_index = base_offset + p_index;
+            kernel(global_index, *(cell_particles.begin() + p_index));
           }
         });
     return;
   }
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
   // Sequential fallback
   std::size_t index = 0;
   for (auto &p : cs.local_particles()) {

@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SMOOTHSTEP_H
-#define SMOOTHSTEP_H
+
+#pragma once
 
 /** \file
  *  Routines to calculate the smooth step potential between particle pairs.
@@ -29,7 +29,7 @@
 
 #include "config/config.hpp"
 
-#ifdef SMOOTH_STEP
+#ifdef ESPRESSO_SMOOTH_STEP
 
 #include "nonbonded_interaction_data.hpp"
 
@@ -68,5 +68,4 @@ inline double SmSt_pair_energy(IA_parameters const &ia_params, double dist) {
   return fracP + ia_params.smooth_step.eps / (1.0 + er);
 }
 
-#endif /* ifdef SMOOTH_STEP */
-#endif
+#endif // ESPRESSO_SMOOTH_STEP

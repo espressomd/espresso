@@ -23,7 +23,7 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) or defined(DP3M)
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 #include "common.hpp"
 
@@ -180,4 +180,4 @@ public:
   virtual void update_mesh_views(P3MFFTMesh<FloatType> &out) = 0;
 };
 
-#endif // defined(P3M) or defined(DP3M)
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

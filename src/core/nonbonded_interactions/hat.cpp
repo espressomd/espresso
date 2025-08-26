@@ -24,7 +24,7 @@
  */
 #include "hat.hpp"
 
-#ifdef HAT
+#ifdef ESPRESSO_HAT
 #include "nonbonded_interaction_data.hpp"
 
 #include <stdexcept>
@@ -39,4 +39,4 @@ Hat_Parameters::Hat_Parameters(double F_max, double cutoff)
   }
 }
 
-#endif // HAT
+#endif // ESPRESSO_HAT

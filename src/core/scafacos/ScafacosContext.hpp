@@ -29,7 +29,7 @@
 
 #include "config/config.hpp"
 
-#if defined(SCAFACOS) or defined(SCAFACOS_DIPOLES)
+#if defined(ESPRESSO_SCAFACOS) or defined(ESPRESSO_SCAFACOS_DIPOLES)
 
 #include "scafacos/ScafacosContextBase.hpp"
 
@@ -64,4 +64,4 @@ struct ScafacosContext : virtual public ScafacosContextBase,
   }
 };
 
-#endif // SCAFACOS or SCAFACOS_DIPOLES
+#endif // ESPRESSO_SCAFACOS or ESPRESSO_SCAFACOS_DIPOLES

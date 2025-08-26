@@ -24,7 +24,7 @@
  */
 #include "lj.hpp"
 
-#ifdef LENNARD_JONES
+#ifdef ESPRESSO_LENNARD_JONES
 #include "nonbonded_interaction_data.hpp"
 
 #include <algorithm>
@@ -45,4 +45,4 @@ LJ_Parameters::LJ_Parameters(double epsilon, double sigma, double cutoff,
   }
 }
 
-#endif /* ifdef LENNARD_JONES */
+#endif /* ifdef ESPRESSO_LENNARD_JONES */

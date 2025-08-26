@@ -18,7 +18,7 @@
  */
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "EKSpecies.hpp"
 #include "EKWalberlaNodeState.hpp"
@@ -108,7 +108,7 @@ void EKSpeciesCPU::make_instance(VariantMap const &params) {
   m_instance->ghost_communication();
 }
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 void EKSpeciesGPU::make_instance(VariantMap const &params) {
   auto const diffusion = get_value<double>(params, "diffusion");
   auto const ext_efield = get_value<Utils::Vector3d>(params, "ext_efield");
@@ -128,7 +128,7 @@ void EKSpeciesGPU::make_instance(VariantMap const &params) {
       static_cast<uint>(get_value_or<int>(params, "seed", 0)));
   m_instance->ghost_communication();
 }
-#endif // CUDA
+#endif // ESPRESSO_CUDA
 
 void EKSpecies::do_construct(VariantMap const &params) {
   m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice");
@@ -328,4 +328,4 @@ void EKSpecies::save_checkpoint(std::filesystem::path const &path, int mode) {
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

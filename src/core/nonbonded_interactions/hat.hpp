@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef hat_H
-#define hat_H
+
+#pragma once
 
 /** \file
  *  Routines to calculate the hat potential between particle pairs.
@@ -29,7 +29,7 @@
 
 #include "config/config.hpp"
 
-#ifdef HAT
+#ifdef ESPRESSO_HAT
 
 #include "nonbonded_interaction_data.hpp"
 
@@ -51,5 +51,4 @@ inline double hat_pair_energy(IA_parameters const &ia_params, double dist) {
   return 0.0;
 }
 
-#endif // HAT
-#endif
+#endif // ESPRESSO_HAT

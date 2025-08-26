@@ -27,7 +27,7 @@ namespace utf = boost::unit_test;
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "ParticleFactory.hpp"
 #include "particle_management.hpp"
@@ -241,7 +241,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, drag_force, bdata::make(kTs), kT) {
   p.v() = {-2.5, 1.5, 2.};
   p.pos() = espresso::lb_fluid->get_lattice().get_local_domain().first;
   thermostat.gamma = 0.2;
-#ifdef LB_ELECTROHYDRODYNAMICS
+#ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
   p.mu_E() = Utils::Vector3d{-1., 1., 1.};
 #endif
 
@@ -249,14 +249,14 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, drag_force, bdata::make(kTs), kT) {
   {
     auto const observed = lb_drag_force(lb, 0.2, p, p.pos());
     Utils::Vector3d expected{0.5, -0.3, -0.4};
-#ifdef LB_ELECTROHYDRODYNAMICS
+#ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
     expected += thermostat.gamma * p.mu_E();
 #endif
     BOOST_CHECK_SMALL((observed - expected).norm(), eps);
   }
 }
 
-#ifdef ENGINE
+#ifdef ESPRESSO_ENGINE
 BOOST_DATA_TEST_CASE_F(CleanupActorLB, swimmer_force, bdata::make(kTs), kT) {
   espresso::set_lb_kT(kT);
   auto &lb = espresso::system->lb;
@@ -314,7 +314,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, swimmer_force, bdata::make(kTs), kT) {
     }
   }
 }
-#endif // ENGINE
+#endif // ESPRESSO_ENGINE
 
 BOOST_DATA_TEST_CASE_F(CleanupActorLB, particle_coupling, bdata::make(kTs),
                        kT) {
@@ -330,7 +330,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, particle_coupling, bdata::make(kTs),
   Particle p{};
   LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
   auto expected = coupling.get_noise_term(p);
-#ifdef LB_ELECTROHYDRODYNAMICS
+#ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
   p.mu_E() = Utils::Vector3d{-2., 1.5, 1.};
   expected += thermostat.gamma * p.mu_E();
 #endif
@@ -382,11 +382,11 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   BOOST_REQUIRE_EQUAL(
       ErrorHandling::mpi_gather_runtime_errors_all(rank == 0).size(), 0);
 
-#ifdef ENGINE
+#ifdef ESPRESSO_ENGINE
   set_particle_property(pid, &Particle::swimming,
                         ParticleParametersSwimming{2., true, false});
 #endif
-#ifdef LB_ELECTROHYDRODYNAMICS
+#ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
   set_particle_property(pid, &Particle::mu_E, Utils::Vector3d{-2., 1.5, 1.});
 #endif
 
@@ -397,7 +397,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
     if (rank == 0) {
       auto const &p = *p_opt;
       expected += coupling.get_noise_term(p);
-#ifdef LB_ELECTROHYDRODYNAMICS
+#ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
       expected += gamma * p.mu_E();
 #endif
     }
@@ -416,8 +416,9 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       if (rank == 0) {
         auto const particles = cell_structure.local_particles();
         auto const ghost_particles = cell_structure.ghost_particles();
+        auto const gh_size = (comm.size() > 1 and with_ghosts) ? 1ul : 0ul;
         BOOST_REQUIRE_GE(particles.size(), 1);
-        BOOST_REQUIRE_GE(ghost_particles.size(), static_cast<int>(with_ghosts));
+        BOOST_REQUIRE_GE(ghost_particles.size(), gh_size);
       }
     }
 
@@ -652,4 +653,4 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2025 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -21,14 +21,6 @@
 #ifndef ESPRESSO_CONFIG_HPP
 #define ESPRESSO_CONFIG_HPP
 
-/** \file
- *
- *  This file contains the defaults for ESPResSo. To modify them, add
- *  an appropriate line in myconfig.hpp. To find a list of features that
- *  can be compiled into ESPResSo, refer to myconfig-sample.hpp or to
- *  the documentation of the features.
- */
-
 /* Prevent C++ bindings in MPI (there is a DataType called LB in there) */
 #ifndef OMPI_SKIP_MPICXX
 #define OMPI_SKIP_MPICXX
@@ -39,58 +31,22 @@
 
 #include "config/config-features.hpp"
 
-/** P3M: Default for offset of first mesh point from the origin (left
- *  down corner of the simulation box).
+/**
+ * @brief Precision below which a double-precision float is assumed to be zero.
+ * Used in comparisons to determine if two floating-point numbers are equal.
  */
-#ifndef P3M_MESHOFF
-#define P3M_MESHOFF 0.5
-#endif
+inline constexpr auto round_error_prec = 1e-14;
 
-/** P3M: Number of Brillouin zones taken into account
- *  in the calculation of the optimal influence function (aliasing sums).
+/**
+ * @brief Special cutoff value for an inactive interaction.
+ * Non-bonded potentials that have this cutoff are never evaluated.
  */
-#ifndef P3M_BRILLOUIN
-#define P3M_BRILLOUIN 0
-#endif
+inline constexpr double inactive_cutoff = -1.;
 
-/** Whether to use the approximation of Abramowitz/Stegun @cite abramowitz65a
- *  @ref Utils::AS_erfc_part() for \f$\exp(d^2) \mathrm{erfc}(d)\f$,
- *  or the C function <tt>std::erfc()</tt> in P3M and Ewald summation.
+/**
+ * @brief Special cutoff value for an inactive bond.
+ * Bonds that have this cutoff are never evaluated.
  */
-#ifndef USE_ERFC_APPROXIMATION
-#define USE_ERFC_APPROXIMATION 1
-#endif
+inline constexpr double bonded_inactive_cutoff = -1.;
 
-/** Precision for capture of round off errors. */
-#ifndef ROUND_ERROR_PREC
-#define ROUND_ERROR_PREC 1.0e-14
-#endif
-
-/** Tiny angle cutoff for sinus calculations. */
-#ifndef TINY_SIN_VALUE
-#define TINY_SIN_VALUE 1e-10
-#endif
-/** Tiny angle cutoff for cosine calculations. */
-#ifndef TINY_COS_VALUE
-#define TINY_COS_VALUE 0.9999999999
-#endif
-/** Tiny length cutoff. */
-#ifndef TINY_LENGTH_VALUE
-#define TINY_LENGTH_VALUE 0.0001
-#endif
-/** Tiny oif elasticity cutoff. */
-#ifndef TINY_OIF_ELASTICITY_COEFFICIENT
-#define TINY_OIF_ELASTICITY_COEFFICIENT 1e-10
-#endif
-
-/** Maximal number of iterations in the RATTLE algorithm before it bails out. */
-#ifndef SHAKE_MAX_ITERATIONS
-#define SHAKE_MAX_ITERATIONS 1000
-#endif
-
-/** Maximal number of objects in the object-in-fluid framework. */
-#ifndef MAX_OBJECTS_IN_FLUID
-#define MAX_OBJECTS_IN_FLUID 10000
-#endif
-
-#endif
+#endif // ESPRESSO_CONFIG_HPP

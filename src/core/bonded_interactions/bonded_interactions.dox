@@ -64,7 +64,7 @@
  *    In all other cases, the return value should be 0, namely angle bonds,
  *    dihedral bonds as well as other bonds that don't have an interaction
  *    range. The @ref VirtualBond is the exception to this rule; its range
- *    is @ref BONDED_INACTIVE_CUTOFF to ensure that it is always skipped by
+ *    is @ref bonded_inactive_cutoff to ensure that it is always skipped by
  *    the short-range loop.
  *  * @code{.cpp}
  *    std::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;

@@ -20,7 +20,7 @@
 #define BOOST_TEST_DYN_LINK
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #define BOOST_TEST_NO_MAIN
 
@@ -579,6 +579,6 @@ int main(int argc, char **argv) {
   return res;
 }
 
-#else // WALBERLA
+#else // ESPRESSO_WALBERLA
 int main(int argc, char **argv) {}
 #endif

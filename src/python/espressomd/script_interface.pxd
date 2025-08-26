@@ -50,9 +50,11 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         vector[string_view] valid_parameters() except +
         Variant get_parameter(const string & name) except +
         void set_parameter(const string & name, const Variant & value) except +
+        cbool has_parameter(const string & name)
         Variant call_method(const string & name, const VariantMap & parameters) except +
         Variant call_method_nogil "call_method"(const string & name, const VariantMap & parameters) except + nogil
         string_view name()
+
 
 cdef extern from "script_interface/ContextManager.hpp" namespace "ScriptInterface::ContextManager":
     cdef cppclass CreationPolicy:

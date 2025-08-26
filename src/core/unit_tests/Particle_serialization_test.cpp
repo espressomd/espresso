@@ -226,7 +226,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
   {
     typename Checker::buffer_type buffer_ref = {
         "BondList",
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
         "Utils::compact_vector<int>",
 #endif
     };

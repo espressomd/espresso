@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "system/Leaf.hpp"
 
@@ -50,4 +50,4 @@ public:
 
 } // namespace Dipoles
 
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES

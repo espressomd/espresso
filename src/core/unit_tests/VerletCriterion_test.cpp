@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(VerletCriterion_test) {
   auto const &system = System::get_system();
   VerletCriterion<GetMaxCutoff> criterion(system, skin, max_cut);
   VerletCriterion<GetMaxCutoff> criterion_inactive(system, skin,
-                                                   INACTIVE_CUTOFF);
+                                                   inactive_cutoff);
   VerletCriterion<GetZeroCutoff> criterion_long_range(
       system, skin, max_cut, coulomb_cut, dipolar_cut, collision_cut);
 
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(VerletCriterion_test) {
     BOOST_CHECK(!criterion_inactive(p1, p2, above));
   }
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   {
     auto constexpr cutoff = skin + coulomb_cut;
     auto const below = Distance{Utils::Vector3d{cutoff - 0.1, 0.0, 0.0}};
@@ -80,9 +80,9 @@ BOOST_AUTO_TEST_CASE(VerletCriterion_test) {
     p1.q() = 0.;
     p2.q() = 0.;
   }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   {
     auto constexpr cutoff = skin + dipolar_cut;
     auto const below = Distance{Utils::Vector3d{cutoff - 0.1, 0.0, 0.0}};
@@ -98,9 +98,9 @@ BOOST_AUTO_TEST_CASE(VerletCriterion_test) {
     p1.dipm() = 0.;
     p2.dipm() = 0.;
   }
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
   {
     auto constexpr cutoff = skin + collision_cut;
     auto const below = Distance{Utils::Vector3d{cutoff - 0.1, 0.0, 0.0}};
@@ -108,5 +108,5 @@ BOOST_AUTO_TEST_CASE(VerletCriterion_test) {
     BOOST_CHECK(criterion_long_range(p1, p2, below));
     BOOST_CHECK(!criterion_long_range(p1, p2, above));
   }
-#endif // COLLISION_DETECTION
+#endif // ESPRESSO_COLLISION_DETECTION
 }

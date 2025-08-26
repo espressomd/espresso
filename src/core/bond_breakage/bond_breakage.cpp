@@ -80,7 +80,7 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
     }
     return {DeleteBond{e.particle_id, *(e.bond_partners[0]), e.bond_type}};
   }
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   // revert bind at point of collision for pair bonds
   if (spec.action_type == ActionType::REVERT_BIND_AT_POINT_OF_COLLISION and
       not is_angle_bond(e.bond_partners)) {
@@ -130,7 +130,7 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
               DeleteAllBonds{p2->id(), p1->id()}};
     }
   }
-#endif // VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
   return {};
 }
 

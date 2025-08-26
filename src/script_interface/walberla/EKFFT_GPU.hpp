@@ -21,8 +21,8 @@
 
 #include <config/config.hpp>
 
-#ifdef WALBERLA
-#ifdef WALBERLA_FFT
+#ifdef ESPRESSO_WALBERLA
+#ifdef ESPRESSO_WALBERLA_FFT
 
 #include "EKPoissonSolver.hpp"
 #include "LatticeWalberla.hpp"
@@ -58,5 +58,5 @@ public:
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA_FFT
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA_FFT
+#endif // ESPRESSO_WALBERLA

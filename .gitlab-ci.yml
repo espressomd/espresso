@@ -556,6 +556,38 @@ maxset_3_cores:
     - avx2
     - reuse-artifacts-same-arch
 
+maxset_1_cores:
+  <<: *global_job_definition
+  stage: additional_checks
+  needs:
+    - job: cuda12-maxset
+      artifacts: false
+  variables:
+     CC: 'gcc-12'
+     CXX: 'g++-12'
+     GCOV: 'gcov-12'
+     myconfig: 'maxset'
+     with_cuda: 'true'
+     with_coverage: 'false'
+     with_coverage_python: 'false'
+     srcdir: '${CI_PROJECT_DIR}'
+     with_caliper: 'true'
+     with_scafacos: 'true'
+     with_walberla: 'true'
+     with_walberla_avx: 'true'
+     with_stokesian_dynamics: 'true'
+     with_shared_memory_parallelism: 'true'
+     cmake_params: '-D ESPRESSO_TEST_NP=1'
+  script:
+    - bash maintainer/CI/build_cmake.sh
+  timeout: 90m
+  tags:
+    - espresso
+    - cuda
+    - numa
+    - avx2
+    - reuse-artifacts-same-arch
+
 status_success:
   <<: *notification_job_definition
   stage: result

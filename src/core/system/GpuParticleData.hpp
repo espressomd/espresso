@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 
 #include "ParticleRange.hpp"
 #include "cuda/CudaHostAllocator.hpp"
@@ -68,10 +68,10 @@ public:
   /** @brief Subset of @ref Particle which is copied to the GPU. */
   struct GpuParticle {
     Utils::Vector3f p;
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
     Utils::Vector3f dip;
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     float q;
 #endif
     int identity;
@@ -122,15 +122,15 @@ public:
   GpuEnergy *get_energy_device() const;
   float *get_particle_positions_device() const;
   float *get_particle_forces_device() const;
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   float *get_particle_torques_device() const;
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   float *get_particle_dipoles_device() const;
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   float *get_particle_charges_device() const;
 #endif
 };
 
-#endif // CUDA
+#endif // ESPRESSO_CUDA

@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "Actor.hpp"
 
@@ -103,4 +103,4 @@ Variant Actor<SIClass, CoreClass>::do_call_method(std::string const &name,
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

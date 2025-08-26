@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
 
 #include "exclusions.hpp"
 
@@ -44,4 +44,4 @@ void delete_exclusion(Particle &p, int p_id) {
   el.erase(std::ranges::remove(el, p_id).begin(), el.end());
 }
 
-#endif // EXCLUSIONS
+#endif // ESPRESSO_EXCLUSIONS

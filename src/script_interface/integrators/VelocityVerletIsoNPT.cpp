@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 
 #include "VelocityVerletIsoNPT.hpp"
 
@@ -82,4 +82,4 @@ void VelocityVerletIsoNPT::activate() {
 } // namespace Integrators
 } // namespace ScriptInterface
 
-#endif // NPT
+#endif // ESPRESSO_NPT

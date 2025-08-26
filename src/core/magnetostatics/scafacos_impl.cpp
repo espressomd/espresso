@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef SCAFACOS_DIPOLES
+#ifdef ESPRESSO_SCAFACOS_DIPOLES
 
 #include "magnetostatics/scafacos.hpp"
 #include "magnetostatics/scafacos_impl.hpp"
@@ -103,4 +103,4 @@ void DipolarScafacosImpl::update_particle_forces() const {
   assert(it_potentials == potentials.end());
 }
 
-#endif // SCAFACOS_DIPOLES
+#endif // ESPRESSO_SCAFACOS_DIPOLES

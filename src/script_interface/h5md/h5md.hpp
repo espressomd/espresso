@@ -23,7 +23,7 @@
 
 #include "config/config.hpp"
 
-#ifdef H5MD
+#ifdef ESPRESSO_H5MD
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
@@ -61,4 +61,4 @@ private:
 } // namespace Writer
 } // namespace ScriptInterface
 
-#endif // H5MD
+#endif // ESPRESSO_H5MD

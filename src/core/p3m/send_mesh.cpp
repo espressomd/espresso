@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) or defined(DP3M)
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 #include "fft/fft.hpp"
 #include "p3m/common.hpp"
@@ -243,4 +243,4 @@ void p3m_send_mesh<FloatType>::spread_grid(boost::mpi::communicator const &comm,
 template class p3m_send_mesh<float>;
 template class p3m_send_mesh<double>;
 
-#endif // defined(P3M) or defined(DP3M)
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

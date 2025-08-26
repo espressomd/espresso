@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "script_interface/Context.hpp"
 #include "script_interface/Variant.hpp"
@@ -83,4 +83,4 @@ protected:
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

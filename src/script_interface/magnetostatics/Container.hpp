@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "core/system/System.hpp"
 
@@ -93,4 +93,4 @@ protected:
 
 } // namespace ScriptInterface::Dipoles
 
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES

@@ -129,41 +129,41 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
                      Utils::Vector3d const *ghost_shift) {
   if (data_parts & GHOSTTRANS_PROPRTS) {
     ar & p.id() & p.mol_id() & p.type() & p.propagation();
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     ar & p.rotation();
-#ifdef ROTATIONAL_INERTIA
+#ifdef ESPRESSO_ROTATIONAL_INERTIA
     ar & p.rinertia();
 #endif
 #endif
-#ifdef MASS
+#ifdef ESPRESSO_MASS
     ar & p.mass();
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     ar & p.q();
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
     ar & p.dipm();
 #endif
-#ifdef LB_ELECTROHYDRODYNAMICS
+#ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
     ar & p.mu_E();
 #endif
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
     ar & p.vs_relative();
 #endif
-#ifdef THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
     ar & p.gamma();
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     ar & p.gamma_rot();
 #endif
 #endif
-#ifdef EXTERNAL_FORCES
+#ifdef ESPRESSO_EXTERNAL_FORCES
     ar & p.fixed();
     ar & p.ext_force();
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     ar & p.ext_torque();
 #endif
 #endif
-#ifdef ENGINE
+#ifdef ESPRESSO_ENGINE
     ar & p.swimming();
 #endif
   }
@@ -179,16 +179,16 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
       ar & p.pos();
       ar & p.image_box();
     }
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     ar & p.quat();
 #endif
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
     ar & p.pos_last_time_step();
 #endif
   }
   if (data_parts & GHOSTTRANS_MOMENTUM) {
     ar & p.v();
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     ar & p.omega();
 #endif
   }
@@ -201,7 +201,7 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
     } else {
       ar & p.force();
     }
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     if (policy == ReductionPolicy::UPDATE and
         direction == SerializationDirection::LOAD) {
       Utils::Vector3d torque;
@@ -212,7 +212,7 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
     }
 #endif
   }
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   if (data_parts & GHOSTTRANS_RATTLE) {
     if (policy == ReductionPolicy::UPDATE and
         direction == SerializationDirection::LOAD) {
@@ -345,7 +345,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
   recv_buffer.bonds().clear();
 }
 
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
 static void
 add_rattle_correction_from_recv_buffer(CommBuf &recv_buffer,
                                        const GhostCommunication &ghost_comm) {
@@ -536,7 +536,7 @@ void ghost_communicator(GhostCommunicator const &gcr,
          * where the addition is integrated into the communication. */
         if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
           add_forces_from_recv_buffer(recv_buffer, ghost_comm);
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
         else if (data_parts == GHOSTTRANS_RATTLE && comm_type != GHOST_RDCE)
           add_rattle_correction_from_recv_buffer(recv_buffer, ghost_comm);
 #endif
@@ -559,7 +559,7 @@ void ghost_communicator(GhostCommunicator const &gcr,
         /* as above */
         if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
           add_forces_from_recv_buffer(recv_buffer, *poststore_ghost_comm);
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
         else if (data_parts == GHOSTTRANS_RATTLE && comm_type != GHOST_RDCE)
           add_rattle_correction_from_recv_buffer(recv_buffer,
                                                  *poststore_ghost_comm);

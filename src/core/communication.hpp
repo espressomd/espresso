@@ -59,7 +59,7 @@
 extern int this_node;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 namespace Communication {
 struct KokkosHandle;
 } // namespace Communication

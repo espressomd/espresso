@@ -23,7 +23,7 @@
 
 #include <utils/index.hpp>
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
 #endif
 
@@ -79,7 +79,7 @@ void for_each_3d(detail::IndexVectorConcept auto &&start,
   }
 }
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 /** @brief Mapping between ESPResSo and Kokkos tags for memory order */
 template <Utils::MemoryOrder Order>
 using LayoutIterate = std::conditional_t<
@@ -95,7 +95,7 @@ using LayoutIterate = std::conditional_t<
 template <Utils::MemoryOrder memory_order, class Kernel>
 void for_each_3d_lin(detail::IndexVectorConcept auto &&start,
                      detail::IndexVectorConcept auto &&stop, Kernel &&kernel) {
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   if (Kokkos::num_threads() > 1) {
     int nx = stop[0] - start[0];
     int ny = stop[1] - start[1];

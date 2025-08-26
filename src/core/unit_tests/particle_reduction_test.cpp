@@ -46,7 +46,7 @@ struct GlobalConfig : public EspressoCoreGlobalConfig {
     auto *const p = system->cell_structure->get_local_particle(0);
     assert(p);
     p->v() = Utils::Vector3d{3., 0., 0.};
-#ifdef MASS
+#ifdef ESPRESSO_MASS
     p->mass() = 2.;
 #endif
   }
@@ -55,7 +55,7 @@ struct GlobalConfig : public EspressoCoreGlobalConfig {
 
 // Decorator to skip tests if shared-memory parallelism isn't compiled in
 boost::test_tools::assertion_result has_shm(boost::unit_test::test_unit_id) {
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   return true;
 #else
   return false;
@@ -69,7 +69,7 @@ auto const reduce_op = []<typename T>(T &a, T const &b) { a = a + b; };
 
 BOOST_TEST_DECORATOR(*boost::unit_test::precondition(has_shm))
 BOOST_AUTO_TEST_CASE(test_make_kokkos_reduction) {
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   auto &system = System::get_system();
   auto const &cell_structure = *system.cell_structure;
   auto const &cells = cell_structure.decomposition().local_cells();
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(test_make_kokkos_reduction) {
     // so make sure that both results are equal.
     BOOST_CHECK_EQUAL(res, ref);
   }
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 }
 
 BOOST_AUTO_TEST_CASE(test_reduce_over_local_particles) {
@@ -99,8 +99,8 @@ BOOST_AUTO_TEST_CASE(test_reduce_over_local_particles) {
   auto const *const p = cell_structure.get_local_particle(0);
   assert(p);
 
-  auto const kernel = [](Particle const &p, Utils::Vector3d &res) {
-    res += p.mass() * p.v();
+  auto const kernel = [](Utils::Vector3d &acc, Particle const &p) {
+    acc += p.mass() * p.v();
   };
   auto const ref = p->mass() * p->v();
   auto const res = reduce_over_local_particles<Utils::Vector3d>(

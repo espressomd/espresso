@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) or defined(DP3M)
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 #include "FFTBackendLegacy.hpp"
 
@@ -60,4 +60,4 @@ void FFTBackendLegacy<FloatType>::backward_fft(FloatType *rs_mesh) {
 template class FFTBackendLegacy<float>;
 template class FFTBackendLegacy<double>;
 
-#endif // defined(P3M) or defined(DP3M)
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

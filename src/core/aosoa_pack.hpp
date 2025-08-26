@@ -19,7 +19,9 @@
 
 #pragma once
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#include <config/config.hpp>
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 #include "cell_system/CellStructure.hpp"
 
@@ -38,4 +40,4 @@ struct CellStructure::AoSoA_pack {
         id(Cabana::slice<2>(aosoa)), type(Cabana::slice<3>(aosoa)) {}
 };
 
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

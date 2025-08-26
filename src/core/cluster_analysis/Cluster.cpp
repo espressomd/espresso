@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef GSL
+#ifdef ESPRESSO_GSL
 #include "gsl/gsl_fit.h"
 #endif
 
@@ -136,7 +136,7 @@ std::vector<std::size_t> sort_indices(const std::vector<T> &v) {
 }
 
 std::pair<double, double> Cluster::fractal_dimension(double dr) {
-#ifdef GSL
+#ifdef ESPRESSO_GSL
   sanity_checks();
   auto const box_geo_handle = get_box_geo();
   auto const &box_geo = *box_geo_handle;

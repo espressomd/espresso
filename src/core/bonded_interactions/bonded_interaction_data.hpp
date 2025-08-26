@@ -24,6 +24,8 @@
  *  For more information on how to add new interactions, see @ref bondedIA_new.
  */
 
+#include <config/config.hpp>
+
 #include "angle_common.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
@@ -56,21 +58,16 @@
 #include <variant>
 #include <vector>
 
-/* Special cutoff value for a disabled bond.
- * Bonds that have this cutoff are not visited during bond evaluation.
- */
-static constexpr double BONDED_INACTIVE_CUTOFF = -1.;
-
 /** Interaction type for unused bonded interaction slots */
 struct NoneBond {
   static constexpr int num = 0;
-  double cutoff() const { return BONDED_INACTIVE_CUTOFF; }
+  double cutoff() const { return bonded_inactive_cutoff; }
 };
 
 /** Interaction type for virtual bonds */
 struct VirtualBond {
   static constexpr int num = 1;
-  double cutoff() const { return BONDED_INACTIVE_CUTOFF; }
+  double cutoff() const { return bonded_inactive_cutoff; }
 };
 
 /** Variant in which to store the parameters of an individual bonded
@@ -144,7 +141,7 @@ public:
     assert(n_thermalized_bonds >= 0);
     return n_thermalized_bonds;
   }
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   auto get_n_rigid_bonds() const {
     assert(n_rigid_bonds >= 0);
     return n_rigid_bonds;
@@ -218,7 +215,7 @@ private:
   container_type m_params = {};
   key_type next_key = static_cast<key_type>(0);
   int n_thermalized_bonds = 0;
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   int n_rigid_bonds = 0;
 #endif
 };

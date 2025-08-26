@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "EKReactant.hpp"
 #include "LatticeIndices.hpp"
@@ -124,7 +124,7 @@ public:
   void do_construct(VariantMap const &args) override {
     m_conv_coefficient = calculate_bulk_conversion_factor(args);
     if (get_is_gpu(args)) {
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
       m_ekreaction = make_instance(args, ::walberla::new_ek_reaction_bulk_gpu);
 #endif
     } else {
@@ -192,4 +192,4 @@ private:
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

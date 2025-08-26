@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
@@ -57,4 +57,4 @@ inline void vs_relate_to(Particle &p_vs, Particle const &p_relate_to,
       PropagationMode::TRANS_VS_RELATIVE | PropagationMode::ROT_VS_RELATIVE;
 }
 
-#endif // VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE

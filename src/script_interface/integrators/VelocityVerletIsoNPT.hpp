@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 
 #include "Integrator.hpp"
 
@@ -53,4 +53,4 @@ public:
 } // namespace Integrators
 } // namespace ScriptInterface
 
-#endif // NPT
+#endif // ESPRESSO_NPT

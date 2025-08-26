@@ -21,9 +21,9 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 #include "EKPoissonSolver.hpp"
-#ifdef WALBERLA_FFT
+#ifdef ESPRESSO_WALBERLA_FFT
 
 #include "LatticeWalberla.hpp"
 
@@ -111,9 +111,9 @@ public:
 
 } // namespace ScriptInterface::walberla
 
-#else  // WALBERLA_FFT
+#else  // ESPRESSO_WALBERLA_FFT
 namespace ScriptInterface::walberla {
 std::unordered_map<std::string, int> const EKPoissonVTKHandle::obs_map = {};
 } // namespace ScriptInterface::walberla
-#endif // WALBERLA_FFT
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA_FFT
+#endif // ESPRESSO_WALBERLA

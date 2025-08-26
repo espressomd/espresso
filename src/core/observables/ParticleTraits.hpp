@@ -41,7 +41,7 @@ template <> struct traits<Particle> {
   auto velocity(Particle const &p) const { return p.v(); }
   auto force(Particle const &p) const { return p.force(); }
   auto mass(Particle const &p) const {
-#ifdef VIRTUAL_SITES
+#ifdef ESPRESSO_VIRTUAL_SITES
     // we exclude virtual particles since their mass does not have a meaning
     if (p.is_virtual())
       return decltype(p.mass()){};
@@ -50,42 +50,42 @@ template <> struct traits<Particle> {
   }
   auto charge(Particle const &p) const { return p.q(); }
   auto dipole_moment(Particle const &p) const {
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
     return p.calc_dip();
 #else
     return Utils::Vector3d{};
 #endif
   }
   auto dipole_field(Particle const &p) const {
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
     return p.dip_fld();
 #else
     return Utils::Vector3d{};
 #endif
   }
   auto velocity_body(Particle const &p) const {
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     return convert_vector_space_to_body(p, p.v());
 #else
     return Utils::Vector3d{};
 #endif
   }
   auto angular_velocity(Particle const &p) const {
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     return convert_vector_body_to_space(p, p.omega());
 #else
     return Utils::Vector3d{};
 #endif
   }
   auto angular_velocity_body(Particle const &p) const {
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     return p.omega();
 #else
     return Utils::Vector3d{};
 #endif
   }
   auto director(Particle const &p) const {
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     return p.calc_director();
 #else
     return Utils::Vector3d{{0., 0., 1.}};

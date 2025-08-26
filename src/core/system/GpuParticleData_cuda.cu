@@ -101,15 +101,15 @@ public:
   thrust::device_vector<GpuParticle> particle_data_device;
   pinned_vector<float> particle_forces_host;
   thrust::device_vector<float> particle_forces_device;
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   pinned_vector<float> particle_torques_host;
   thrust::device_vector<float> particle_torques_device;
 #endif
   float *particle_pos_device = nullptr;
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   float *particle_dip_device = nullptr;
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   float *particle_q_device = nullptr;
 #endif
 
@@ -129,7 +129,7 @@ public:
                    particle_forces_host.begin());
     }
   }
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   void copy_particle_torques_to_host() {
     if (not particle_torques_device.empty()) {
       thrust::copy(particle_torques_device.begin(),
@@ -141,7 +141,7 @@ public:
   std::span<float> get_particle_forces_host_span() {
     return {particle_forces_host.data(), particle_forces_host.size()};
   }
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   std::span<float> get_particle_torques_host_span() {
     return {particle_torques_host.data(), particle_torques_host.size()};
   }
@@ -164,19 +164,19 @@ float *GpuParticleData::get_particle_forces_device() const {
   return raw_data_pointer(m_data->particle_forces_device);
 }
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
 float *GpuParticleData::get_particle_torques_device() const {
   return raw_data_pointer(m_data->particle_torques_device);
 }
 #endif
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 float *GpuParticleData::get_particle_dipoles_device() const {
   return m_data->particle_dip_device;
 }
 #endif
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 float *GpuParticleData::get_particle_charges_device() const {
   return m_data->particle_q_device;
 }
@@ -222,7 +222,7 @@ void GpuParticleData::Storage::copy_particles_to_device() {
   resize_or_replace(particle_data_device, n_part);
   particle_forces_host.resize(3ul * n_part);
   resize_or_replace(particle_forces_device, 3ul * n_part);
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   particle_torques_host.resize(3ul * n_part);
   resize_or_replace(particle_torques_device, 3ul * n_part);
 #endif
@@ -230,7 +230,7 @@ void GpuParticleData::Storage::copy_particles_to_device() {
   // zero out device memory for forces and torques
   cudaMemsetAsync(raw_data_pointer(particle_forces_device), 0x0,
                   byte_size(particle_forces_device), stream[0]);
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   cudaMemsetAsync(raw_data_pointer(particle_torques_device), 0x0,
                   byte_size(particle_torques_device), stream[0]);
 #endif
@@ -261,13 +261,13 @@ void GpuParticleData::copy_forces_to_host(ParticleRange const &particles,
     // copy results from device memory to host memory
     if (this_node == 0) {
       m_data->copy_particle_forces_to_host();
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
       m_data->copy_particle_torques_to_host();
 #endif
     }
 
     auto forces_buffer = m_data->get_particle_forces_host_span();
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     auto torques_buffer = m_data->get_particle_torques_host_span();
 #else
     auto torques_buffer = std::span<float>();
@@ -310,7 +310,7 @@ __global__ void split_kernel_r(GpuParticleData::GpuParticle *particles,
   r[idx + 2u] = p.p[2u];
 }
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 // Position and charge
 __global__ void split_kernel_rq(GpuParticleData::GpuParticle *particles,
                                 float *r, float *q, std::size_t n) {
@@ -337,7 +337,7 @@ __global__ void split_kernel_q(GpuParticleData::GpuParticle *particles,
 }
 #endif
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 // Dipole moment
 __global__ void split_kernel_dip(GpuParticleData::GpuParticle *particles,
                                  float *dip, std::size_t n) {
@@ -364,7 +364,7 @@ void GpuParticleData::Storage::split_particle_struct() {
   dim3 const threadsPerBlock{512u, 1u, 1u};
   dim3 const numBlocks{static_cast<unsigned>(n_part / threadsPerBlock.x + 1ul)};
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   if (m_need[prop::q] and m_need[prop::pos]) {
     split_kernel_rq<<<numBlocks, threadsPerBlock, 0, nullptr>>>(
         raw_data_pointer(particle_data_device), particle_pos_device,
@@ -378,7 +378,7 @@ void GpuParticleData::Storage::split_particle_struct() {
     split_kernel_r<<<numBlocks, threadsPerBlock, 0, nullptr>>>(
         raw_data_pointer(particle_data_device), particle_pos_device, n_part);
   }
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   if (m_need[prop::dip]) {
     split_kernel_dip<<<numBlocks, threadsPerBlock, 0, nullptr>>>(
         raw_data_pointer(particle_data_device), particle_dip_device, n_part);
@@ -397,7 +397,7 @@ void GpuParticleData::Storage::realloc_device_memory() {
     cuda_safe_mem(
         cudaMalloc(&particle_pos_device, 3ul * new_size * sizeof(float)));
   }
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   if (m_need[prop::dip] and (resize_needed or particle_dip_device == nullptr)) {
     if (particle_dip_device != nullptr) {
       cuda_safe_mem(cudaFree(particle_dip_device));
@@ -406,7 +406,7 @@ void GpuParticleData::Storage::realloc_device_memory() {
         cudaMalloc(&particle_dip_device, 3ul * new_size * sizeof(float)));
   }
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   if (m_need[prop::q] and (resize_needed or particle_q_device == nullptr)) {
     if (particle_q_device != nullptr) {
       cuda_safe_mem(cudaFree(particle_q_device));
@@ -426,14 +426,14 @@ void GpuParticleData::Storage::free_device_memory() {
   };
   free_device_vector(particle_data_device);
   free_device_vector(particle_forces_device);
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   free_device_vector(particle_torques_device);
 #endif
   free_device_pointer(particle_pos_device);
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   free_device_pointer(particle_dip_device);
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   free_device_pointer(particle_q_device);
 #endif
   free_device_pointer(energy_device);

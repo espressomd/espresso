@@ -19,7 +19,9 @@
 
 #pragma once
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#include <config/config.hpp>
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 #include <Cabana_VerletList.hpp>
 
@@ -51,6 +53,15 @@ public:
     neighbors = Kokkos::View<int **, Kokkos::LayoutRight, MemorySpace>(
         Kokkos::ViewAllocateWithoutInitializing("neighbors"), num_particles,
         max_neigh);
+  }
+
+  // Method to realloc _data
+  KOKKOS_INLINE_FUNCTION
+  void reallocData(std::size_t const num_particles,
+                   std::size_t const max_neigh) {
+    Kokkos::realloc(counts, num_particles);
+    Kokkos::realloc(Kokkos::WithoutInitializing, neighbors, num_particles,
+                    max_neigh);
   }
 
   // Method to add a neighbor
@@ -95,14 +106,14 @@ public:
   // Sorting a neighbor
   KOKKOS_INLINE_FUNCTION
   void sortNeighbors() {
-    Kokkos::parallel_for(
-        "custom_verlet_list::sort_neighbors",
-        Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, counts.size()),
-        [&](const int i) {
-          const int count = counts(i);
-          auto *ptr = &neighbors(i, 0);
-          std::sort(ptr, ptr + count);
-        });
+    Kokkos::parallel_for("custom_verlet_list::sort_neighbors",
+                         Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(
+                             std::size_t{0}, counts.size()),
+                         [&](std::size_t const i) {
+                           auto const count = counts(i);
+                           auto *ptr = &neighbors(i, 0);
+                           std::sort(ptr, ptr + count);
+                         });
     Kokkos::fence();
   }
 
@@ -135,8 +146,9 @@ public:
     Kokkos::Max<int> max_reduce(max_counts);
     Kokkos::parallel_reduce(
         "custom_verlet_list::reduce_max",
-        Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, counts.size()),
-        [&](const int i, int &value) {
+        Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0},
+                                                           counts.size()),
+        [&](std::size_t const i, int &value) {
           if (counts(i) > value)
             value = counts(i);
         },
@@ -190,4 +202,4 @@ public:
   }
 };
 
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

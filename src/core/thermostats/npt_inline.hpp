@@ -24,7 +24,7 @@
 
 #include "config/config.hpp"
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 
 #include "random.hpp"
 #include "thermostat.hpp"
@@ -77,5 +77,5 @@ inline double propagate_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
   return npt_iso.pref_rescale_V * p_epsilon;
 }
 
-#endif // NPT
+#endif // ESPRESSO_NPT
 #endif

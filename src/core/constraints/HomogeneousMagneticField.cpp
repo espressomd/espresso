@@ -28,7 +28,7 @@ namespace Constraints {
 
 ParticleForce HomogeneousMagneticField::force(const Particle &p,
                                               const Utils::Vector3d &, double) {
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   return {{}, vector_product(p.calc_dip(), m_field)};
 #else
   return {};
@@ -38,7 +38,7 @@ ParticleForce HomogeneousMagneticField::force(const Particle &p,
 void HomogeneousMagneticField::add_energy(const Particle &p,
                                           const Utils::Vector3d &, double,
                                           Observable_stat &obs_energy) const {
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   obs_energy.dipolar[0] += -1.0 * m_field * p.calc_dip();
 #endif
 }

@@ -23,7 +23,7 @@
 
 #include "config/config.hpp"
 
-#ifdef SCAFACOS_DIPOLES
+#ifdef ESPRESSO_SCAFACOS_DIPOLES
 
 #include "magnetostatics/scafacos.hpp"
 
@@ -68,4 +68,4 @@ private:
   std::vector<double> fields, potentials;
 };
 
-#endif // SCAFACOS_DIPOLES
+#endif // ESPRESSO_SCAFACOS_DIPOLES

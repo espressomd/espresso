@@ -43,6 +43,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
       espresso::instrumentation
       espresso::utils
       espresso::config
+      Random123
       Boost::mpi
       MPI::MPI_CXX
       Heffte::Heffte

@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "LatticeModel.hpp"
 #include "LatticeWalberla.hpp"
@@ -149,13 +149,13 @@ protected:
   void make_instance(VariantMap const &params) override;
 };
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 class LBFluidGPU : public LBFluid {
 protected:
   void make_instance(VariantMap const &params) override;
 };
-#endif // CUDA
+#endif // ESPRESSO_CUDA
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

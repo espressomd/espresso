@@ -32,6 +32,12 @@
 #include <stdexcept>
 #include <utility>
 
+#if defined(__GNUG__) or defined(__clang__)
+#define ESPRESSO_ATTR_ALWAYS_INLINE [[gnu::always_inline]]
+#else
+#define ESPRESSO_ATTR_ALWAYS_INLINE
+#endif
+
 namespace detail {
 /**
  * @brief Get the minimum-image distance between two coordinates.
@@ -207,8 +213,9 @@ public:
    *         periodic images, i.e. <tt>a - b</tt>.
    */
   template <typename T>
-  Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
-                                    const Utils::Vector<T, 3> &b) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline Utils::Vector<T, 3>
+  get_mi_vector(const Utils::Vector<T, 3> &a,
+                const Utils::Vector<T, 3> &b) const {
     if (type() == BoxType::LEES_EDWARDS) {
       auto const shear_plane_normal = lees_edwards_bc().shear_plane_normal;
       auto a_tmp = a;
@@ -240,9 +247,9 @@ public:
    *         periodic images, i.e. <tt>a - b</tt>.
    */
   template <typename T>
-  Utils::Vector<T, 3> get_mi_vector(T const &a0, T const &a1, T const &a2,
-                                    T const &b0, T const &b1,
-                                    T const &b2) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline Utils::Vector<T, 3>
+  get_mi_vector(T const &a0, T const &a1, T const &a2, T const &b0, T const &b1,
+                T const &b2) const {
     if (type() == BoxType::LEES_EDWARDS) {
       auto const shear_plane_normal = lees_edwards_bc().shear_plane_normal;
       auto a_tmp = Utils::Vector<T, 3>{a0, a1, a2};

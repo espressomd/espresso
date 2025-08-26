@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLAR_DIRECT_SUM
+#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
 
 #include "magnetostatics/dipolar_direct_sum_gpu_cuda.cuh"
 
@@ -89,7 +89,7 @@ __device__ void dipole_ia_force(float pf, float const *r1, float const *r2,
   f1[1] = (pf * (ab * dr[1] + cc * dip1[1] + dd * dip2[1]));
   f1[2] = (pf * (ab * dr[2] + cc * dip1[2] + dd * dip2[2]));
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   // Torques
   float a[3];
   vector_product(dip1, dip2, a);

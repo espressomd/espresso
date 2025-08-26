@@ -122,6 +122,9 @@ cdef class PScriptInterface:
         cdef ObjectHandle * handle = self.sip.get()
         return [utils.to_str(p.data()) for p in handle.valid_parameters()]
 
+    def _has_parameter(self, name):
+        return self.sip.get().has_parameter(utils.to_bytes(name))
+
     def get_sip(self):
         """
         Get pointer to the core object.
@@ -157,11 +160,10 @@ cdef class PScriptInterface:
         """
         cdef ObjectHandle * handle = self.sip.get()
         cdef VariantMap parameters
-        cdef Variant value
+        cdef Variant result
 
-        for name in kwargs:
-            parameters[utils.to_bytes(name)] = python_object_to_variant(
-                kwargs[name])
+        for name, value in kwargs.items():
+            parameters[utils.to_bytes(name)] = python_object_to_variant(value)
 
         # the internal buffer of a cython bytestring object can be accessed as
         # a raw char pointer, but then the bytestring object must be kept alive
@@ -170,14 +172,14 @@ cdef class PScriptInterface:
 
         if with_nogil:
             with nogil:
-                value = handle.call_method_nogil(method_name_char, parameters)
+                result = handle.call_method_nogil(method_name_char, parameters)
         else:
-            value = handle.call_method(method_name_char, parameters)
-        res = variant_to_python_object(value)
+            result = handle.call_method(method_name_char, parameters)
+        result_py = variant_to_python_object(result)
         if handle_errors_message is None:
             handle_errors_message = f"while calling method {method}()"
         utils.handle_errors(handle_errors_message)
-        return res
+        return result_py
 
     def name(self):
         """Return name of the core class."""
@@ -462,7 +464,7 @@ class ScriptInterfaceHelper(PScriptInterface):
         return list(self.__dict__.keys()) + self._valid_parameters()
 
     def __getattr__(self, attr):
-        if attr in self._valid_parameters():
+        if self._has_parameter(attr):
             return self.get_parameter(attr)
 
         if attr in self.__dict__:
@@ -472,13 +474,13 @@ class ScriptInterfaceHelper(PScriptInterface):
             f"Object '{self.__class__.__name__}' has no attribute '{attr}'")
 
     def __setattr__(self, attr, value):
-        if attr in self._valid_parameters():
+        if self._has_parameter(attr):
             self.set_params(**{attr: value})
         else:
             super().__setattr__(attr, value)
 
     def __delattr__(self, attr):
-        if attr in self._valid_parameters():
+        if self._has_parameter(attr):
             raise RuntimeError(f"Parameter '{attr}' is read-only")
         else:
             super().__delattr__(attr)

@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) or defined(DP3M)
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 #include "FFTBuffersLegacy.hpp"
 
@@ -89,4 +89,4 @@ std::array<FloatType *, 3u> FFTBuffersLegacy<FloatType>::get_vector_mesh() {
 template class FFTBuffersLegacy<float>;
 template class FFTBuffersLegacy<double>;
 
-#endif // defined(P3M) or defined(DP3M)
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

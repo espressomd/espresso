@@ -21,11 +21,11 @@
 
 #include <config/config.hpp>
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
 
 #include <utility>
 
 namespace CollisionDetection {
 using CollisionPair = std::pair<int, int>;
 } // namespace CollisionDetection
-#endif // COLLISION_DETECTION
+#endif // ESPRESSO_COLLISION_DETECTION

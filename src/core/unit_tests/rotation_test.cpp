@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
 
 #include <boost/test/unit_test.hpp>
 
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(convert_operator_body_to_space_test) {
   }
 }
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 BOOST_AUTO_TEST_CASE(convert_dip_to_quat_test) {
   auto const quat_to_vector4d = [](Utils::Quaternion<double> const &quat) {
     return Utils::Vector4d{quat.data(), quat.data() + 4};
@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE(convert_dip_to_quat_test) {
     BOOST_CHECK_CLOSE(pair.second, dipm, tol);
   }
 }
-#endif // DIPOLES
-#else  // ROTATION
+#endif // ESPRESSO_DIPOLES
+#else  // ESPRESSO_ROTATION
 int main(int argc, char **argv) {}
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION

@@ -61,7 +61,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<Gravity>("Constraints::Gravity");
   om->register_new<FlowField>("Constraints::FlowField");
   om->register_new<HomogeneousFlowField>("Constraints::HomogeneousFlowField");
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   om->register_new<ElectricPotential>("Constraints::ElectricPotential");
   om->register_new<LinearElectricPotential>(
       "Constraints::LinearElectricPotential");

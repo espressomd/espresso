@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#if defined(SCAFACOS) or defined(SCAFACOS_DIPOLES)
+#if defined(ESPRESSO_SCAFACOS) or defined(ESPRESSO_SCAFACOS_DIPOLES)
 
 #include "scafacos/ScafacosContext.hpp"
 
@@ -52,4 +52,4 @@ get_system_params() {
 }
 } // namespace detail
 
-#endif // SCAFACOS or SCAFACOS_DIPOLES
+#endif // ESPRESSO_SCAFACOS or ESPRESSO_SCAFACOS_DIPOLES

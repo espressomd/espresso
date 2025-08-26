@@ -21,7 +21,7 @@
 
 #include <config/config.hpp>
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
 
 #include "ActiveProtocol.hpp"
 #include "CollisionPair.hpp"
@@ -56,7 +56,7 @@ public:
 
   auto cutoff() const {
     if (m_protocol == nullptr) {
-      return INACTIVE_CUTOFF;
+      return inactive_cutoff;
     }
     return std::visit([](auto const &protocol) { return protocol.cutoff(); },
                       *m_protocol);
@@ -90,4 +90,4 @@ public:
 
 } // namespace CollisionDetection
 
-#endif // COLLISION_DETECTION
+#endif // ESPRESSO_COLLISION_DETECTION

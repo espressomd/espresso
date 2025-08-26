@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
 
 #include "Actor.hpp"
 
@@ -43,9 +43,9 @@ class ElectrostaticLayerCorrection
                    ::ElectrostaticLayerCorrection> {
 
   using BaseSolver = std::variant<
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
       std::shared_ptr<CoulombP3M<Arch::GPU>>,
-#endif // CUDA
+#endif // ESPRESSO_CUDA
       std::shared_ptr<CoulombP3M<Arch::CPU>>>;
   BaseSolver m_solver;
 
@@ -85,13 +85,13 @@ public:
     ::ElectrostaticLayerCorrection::BaseSolver solver;
     auto so_ptr = get_value<ObjectRef>(params, "actor");
     context()->parallel_try_catch([&]() {
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
       if (auto so = std::dynamic_pointer_cast<CoulombP3M<Arch::GPU>>(so_ptr)) {
         solver = so->actor();
         m_solver = so;
         return;
       }
-#endif // CUDA
+#endif // ESPRESSO_CUDA
       if (auto so = std::dynamic_pointer_cast<CoulombP3M<Arch::CPU>>(so_ptr)) {
         solver = so->actor();
         m_solver = so;
@@ -120,4 +120,4 @@ public:
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // P3M
+#endif // ESPRESSO_P3M
