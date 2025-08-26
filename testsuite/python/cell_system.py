@@ -83,6 +83,9 @@ class CellSystem(ut.TestCase):
             system.cell_system.node_grid = [1, 2, self.n_nodes]
         np.testing.assert_array_equal(np.copy(system.cell_system.node_grid),
                                       np.copy(node_grid))
+        with self.assertRaisesRegex(ValueError, "Parameter 'without_ghost_force_reduction' is not allowed for hybrid decomposition"):
+            system.cell_system.set_hybrid_decomposition(
+                n_square_types={1}, cutoff_regular=0, without_ghost_force_reduction=True)
 
     def test_node_grid_regular(self):
         self.system.cell_system.set_regular_decomposition()
@@ -90,7 +93,7 @@ class CellSystem(ut.TestCase):
 
     def test_node_grid_hybrid(self):
         self.system.cell_system.set_hybrid_decomposition(
-            n_square_types={1}, cutoff_regular=0)
+            n_square_types={1}, cutoff_regular=0, without_ghost_force_reduction=False)
         self.check_node_grid()
 
 

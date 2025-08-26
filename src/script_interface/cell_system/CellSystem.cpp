@@ -162,6 +162,15 @@ CellSystem::CellSystem() {
        [this]() { return get_system().bonded_ias->maximal_cutoff(); }},
       {"interaction_range", AutoParameter::read_only,
        [this]() { return get_system().get_interaction_range(); }},
+      {"without_ghost_force_reduction", AutoParameter::read_only,
+       [this]() {
+         if (get_cell_structure().decomposition_type() !=
+             CellStructureType::REGULAR) {
+           return Variant{none};
+         }
+         auto const rd = get_regular_decomposition();
+         return Variant{rd.get_without_ghost_force_reduction()};
+       }},
   });
 }
 
@@ -292,6 +301,14 @@ void CellSystem::initialize(CellStructureType const &cs_type,
   auto &system = get_system();
   m_cell_structure->use_verlet_list = verlet;
   if (cs_type == CellStructureType::HYBRID) {
+    auto without_ghost_force_reduction =
+        get_value_or<bool>(params, "without_ghost_force_reduction", false);
+    context()->parallel_try_catch([without_ghost_force_reduction]() {
+      if (without_ghost_force_reduction) {
+        throw std::invalid_argument("Parameter 'without_ghost_force_reduction' "
+                                    "is not allowed for hybrid decomposition");
+      }
+    });
     auto const cutoff_regular = get_value<double>(params, "cutoff_regular");
     auto const ns_types =
         get_value_or<std::vector<int>>(params, "n_square_types", {});
@@ -308,10 +325,14 @@ void CellSystem::initialize(CellStructureType const &cs_type,
                      coord(std::get<std::string>(variant.at("direction")))}};
       });
     }
-    context()->parallel_try_catch([this, &fcb_pair]() {
-      m_cell_structure->set_regular_decomposition(
-          get_system().get_interaction_range(), fcb_pair);
-    });
+    auto const without_ghost_force_reduction =
+        get_value_or<bool>(params, "without_ghost_force_reduction", false);
+    context()->parallel_try_catch(
+        [this, &fcb_pair, without_ghost_force_reduction]() {
+          m_cell_structure->set_regular_decomposition(
+              get_system().get_interaction_range(), fcb_pair,
+              without_ghost_force_reduction);
+        });
   } else {
     system.set_cell_structure_topology(cs_type);
   }

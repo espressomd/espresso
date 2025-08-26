@@ -677,10 +677,11 @@ public:
    *
    * @param range Interaction range.
    * @param fully_connected_boundary neighbor cell directions for Lees-Edwards.
+   * @param without_ghost_force_reduction remove the ghost force reduction.
    */
   void set_regular_decomposition(
-      double range,
-      std::optional<std::pair<int, int>> fully_connected_boundary);
+      double range, std::optional<std::pair<int, int>> fully_connected_boundary,
+      bool without_ghost_force_reduction);
 
   /**
    * @brief Set the particle decomposition to @ref HybridDecomposition.

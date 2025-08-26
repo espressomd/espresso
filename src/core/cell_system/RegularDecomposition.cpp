@@ -520,10 +520,18 @@ void RegularDecomposition::init_cell_interactions() {
 
           auto cell = &cells.at(
               get_linear_index(local_index(neighbor), ghost_cell_grid));
+
           if (ind2 > ind1) {
             red_neighbors.push_back(cell);
           } else {
-            black_neighbors.push_back(cell);
+            if (m_without_ghost_force_reduction and
+                (neighbor[2] == start[2] - 1 or neighbor[2] == end[2] or
+                 neighbor[1] == start[1] - 1 or neighbor[1] == end[1] or
+                 neighbor[0] == start[0] - 1 or neighbor[0] == end[0])) {
+              red_neighbors.push_back(cell);
+            } else {
+              black_neighbors.push_back(cell);
+            }
           }
         }
 
@@ -570,6 +578,7 @@ void assign_prefetches(GhostCommunicator &comm) {
 } // namespace
 
 GhostCommunicator RegularDecomposition::prepare_comm() {
+
   int dir, lr, i, cnt, n_comm_cells[3];
   Utils::Vector3i lc{}, hc{}, done{};
 
@@ -670,10 +679,11 @@ GhostCommunicator RegularDecomposition::prepare_comm() {
 RegularDecomposition::RegularDecomposition(
     boost::mpi::communicator comm, double range, BoxGeometry const &box_geo,
     LocalBox const &local_geo,
-    std::optional<std::pair<int, int>> fully_connected)
+    std::optional<std::pair<int, int>> fully_connected,
+    bool without_ghost_force_reduction)
     : m_comm(std::move(comm)), m_box(box_geo), m_local_box(local_geo),
-      m_fully_connected_boundary(std::move(fully_connected)) {
-
+      m_fully_connected_boundary(std::move(fully_connected)),
+      m_without_ghost_force_reduction(without_ghost_force_reduction) {
   /* set up new regular decomposition cell structure */
   create_cell_grid(range);
 
@@ -685,11 +695,13 @@ RegularDecomposition::RegularDecomposition(
 
   /* create communicators */
   m_exchange_ghosts_comm = prepare_comm();
-  m_collect_ghost_force_comm = prepare_comm();
-
-  /* collect forces has to be done in reverted order! */
-  revert_comm_order(m_collect_ghost_force_comm);
-
   assign_prefetches(m_exchange_ghosts_comm);
-  assign_prefetches(m_collect_ghost_force_comm);
+  if (m_without_ghost_force_reduction) {
+    m_collect_ghost_force_comm = GhostCommunicator{};
+  } else {
+    m_collect_ghost_force_comm = prepare_comm();
+    /* collect forces has to be done in reverted order! */
+    revert_comm_order(m_collect_ghost_force_comm);
+    assign_prefetches(m_collect_ghost_force_comm);
+  }
 }
