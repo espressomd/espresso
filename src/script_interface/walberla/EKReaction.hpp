@@ -155,7 +155,7 @@ public:
     auto const agrid = get_agrid(args);
     m_conv_coefficient = calculate_bulk_conversion_factor(args) / agrid;
     if (get_is_gpu(args)) {
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
       m_ekreaction_impl =
           make_instance(args, ::walberla::new_ek_reaction_indexed_gpu);
 #endif

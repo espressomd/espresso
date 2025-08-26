@@ -293,6 +293,16 @@ class EKTest:
         ek_reaction.add_node_to_index([1, 1, 1])
         self.assertTrue(ek_reaction[1, 1, 1])
 
+    def test_ek_fluctuations(self):
+        # smoke test, see `ek_fluctuations.py` for a statistical test
+        ek_solver = self.system.ekcontainer.solver
+        ek_species = self.make_default_ek_species(thermalized=True, seed=42)
+        self.assertTrue(ek_species.thermalized)
+        self.assertEqual(ek_species.seed, 42)
+        self.system.ekcontainer.add(ek_species)
+        self.system.ekcontainer.solver = ek_solver
+        self.system.integrator.run(10)
+
     def test_grid_index(self):
         ek_species = self.make_default_ek_species()
         ek_reactant = espressomd.electrokinetics.EKReactant(

@@ -73,11 +73,12 @@ class EKDiffusiveFlux:
         for x in offset:
             for y in offset:
                 for z in offset:
-                    dir = np.array([x, y, z]) 
-                    local_flux = np.array(ekspecies[dir + center].flux)
-                    dist = np.linalg.norm(dir)
+                    direction = np.array([x, y, z])
+                    local_flux = np.array(ekspecies[direction + center].flux)
+                    dist = np.linalg.norm(direction)
                     if (dist > 0):
-                        ref_flux = dir / normalization_factor * self.DIFFUSION_COEFFICIENT / dist / 2.0
+                        ref_flux = direction / normalization_factor * \
+                            self.DIFFUSION_COEFFICIENT / dist / 2.0
                         np.testing.assert_allclose(
                             local_flux, ref_flux, rtol=1.0E-5)
                     else:
