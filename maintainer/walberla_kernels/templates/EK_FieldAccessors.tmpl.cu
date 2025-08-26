@@ -449,44 +449,16 @@ namespace Flux
                 {% if Stencils[i] in StaggeredStencils -%}
                     add_flux = {{dtype}}(0.5) * flux_field.get({{StaggeredStencils[Stencils[i]]}}u);
                 {% else -%}
-                    {% if "E" in Stencils[i] -%}
-                        cx = 1;
-                    {% elif "W" in Stencils[i] -%}
-                        cx = -1;
-                    {% else -%}
-                        cx = 0;
-                    {% endif -%}
-                    {% if "N" in Stencils[i] -%}
-                        cy = 1;
-                    {% elif "S" in Stencils[i] -%}
-                        cy = -1;
-                    {% else -%}
-                        cy = 0;
-                    {% endif -%}
-                    {% if "T" in Stencils[i] -%}
-                        cz = 1;
-                    {% elif "B" in Stencils[i] -%}
-                        cz = -1;
-                    {% else -%}
-                        cz = 0;
-                    {% endif -%}
+                    cx = {{Stencils[i][0]}};
+                    cy = {{Stencils[i][1]}};
+                    cz = {{Stencils[i][2]}};
                     add_flux = {{dtype}}(-0.5) * flux_field.getNeighbor(cx, cy, cz, {{InverseStencils[Stencils[i]]}}u);
                 {% endif -%}
-                {% if "E" in Stencils[i] -%}
-                    j_out[0u] += add_flux;
-                {% elif "W" in Stencils[i] -%}
-                    j_out[0u] -= add_flux;
-                {% endif -%}
-                {% if "N" in Stencils[i] -%}
-                    j_out[1u] += add_flux;
-                {% elif "S" in Stencils[i] -%}
-                    j_out[1u] -= add_flux;
-                {% endif -%}
-                {% if "T" in Stencils[i] -%}
-                    j_out[2u] += add_flux;
-                {% elif "B" in Stencils[i] -%}
-                    j_out[2u] -= add_flux;
-                {% endif -%}
+                {% for j in range(3) -%}
+                    {% if Stencils[i][j] != 0-%}
+                        j_out[{{j}}u] += add_flux * {{Stencils[i][j]}};
+                    {% endif -%}
+                {% endfor -%}
             {% endfor %}
         }
     }

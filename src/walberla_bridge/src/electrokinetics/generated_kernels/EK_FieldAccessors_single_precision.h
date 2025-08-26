@@ -304,65 +304,85 @@ inline auto get_vector(GhostLayerField<float, uint_t{13u}> const *flux_field,
                                       stencil::Direction(uint_t{25u}));
   local_value[26] = float(0.5) * flux_field->getF(&xyz0, uint_t{9u});
 
-  // North-South entries
-  result[0] -= local_value[3];
-  result[0] += local_value[4];
-  result[0] -= local_value[7];
-  result[0] += local_value[8];
-  result[0] -= local_value[9];
-  result[0] += local_value[10];
-  result[0] -= local_value[13];
-  result[0] += local_value[14];
-  result[0] -= local_value[17];
-  result[0] += local_value[18];
-  result[0] += local_value[19];
-  result[0] -= local_value[20];
-  result[0] += local_value[21];
-  result[0] -= local_value[22];
-  result[0] += local_value[23];
-  result[0] -= local_value[24];
-  result[0] += local_value[25];
-  result[0] -= local_value[26];
+  result[1] += local_value[1] * 1;
 
-  // East-West entries
-  result[1] += local_value[1];
-  result[1] -= local_value[2];
-  result[1] += local_value[7];
-  result[1] += local_value[8];
-  result[1] -= local_value[9];
-  result[1] -= local_value[10];
-  result[1] += local_value[11];
-  result[1] -= local_value[12];
-  result[1] += local_value[15];
-  result[1] -= local_value[16];
-  result[1] += local_value[19];
-  result[1] += local_value[20];
-  result[1] -= local_value[21];
-  result[1] -= local_value[22];
-  result[1] += local_value[23];
-  result[1] += local_value[24];
-  result[1] -= local_value[25];
-  result[1] -= local_value[26];
+  result[1] += local_value[2] * -1;
 
-  // Top-Bottom entries
-  result[2] += local_value[5];
-  result[2] -= local_value[6];
-  result[2] += local_value[11];
-  result[2] += local_value[12];
-  result[2] += local_value[13];
-  result[2] += local_value[14];
-  result[2] -= local_value[15];
-  result[2] -= local_value[16];
-  result[2] -= local_value[17];
-  result[2] -= local_value[18];
-  result[2] += local_value[19];
-  result[2] += local_value[20];
-  result[2] += local_value[21];
-  result[2] += local_value[22];
-  result[2] -= local_value[23];
-  result[2] -= local_value[24];
-  result[2] -= local_value[25];
-  result[2] -= local_value[26];
+  result[0] += local_value[3] * -1;
+
+  result[0] += local_value[4] * 1;
+
+  result[2] += local_value[5] * 1;
+
+  result[2] += local_value[6] * -1;
+
+  result[0] += local_value[7] * -1;
+  result[1] += local_value[7] * 1;
+
+  result[0] += local_value[8] * 1;
+  result[1] += local_value[8] * 1;
+
+  result[0] += local_value[9] * -1;
+  result[1] += local_value[9] * -1;
+
+  result[0] += local_value[10] * 1;
+  result[1] += local_value[10] * -1;
+
+  result[1] += local_value[11] * 1;
+  result[2] += local_value[11] * 1;
+
+  result[1] += local_value[12] * -1;
+  result[2] += local_value[12] * 1;
+
+  result[0] += local_value[13] * -1;
+  result[2] += local_value[13] * 1;
+
+  result[0] += local_value[14] * 1;
+  result[2] += local_value[14] * 1;
+
+  result[1] += local_value[15] * 1;
+  result[2] += local_value[15] * -1;
+
+  result[1] += local_value[16] * -1;
+  result[2] += local_value[16] * -1;
+
+  result[0] += local_value[17] * -1;
+  result[2] += local_value[17] * -1;
+
+  result[0] += local_value[18] * 1;
+  result[2] += local_value[18] * -1;
+
+  result[0] += local_value[19] * 1;
+  result[1] += local_value[19] * 1;
+  result[2] += local_value[19] * 1;
+
+  result[0] += local_value[20] * -1;
+  result[1] += local_value[20] * 1;
+  result[2] += local_value[20] * 1;
+
+  result[0] += local_value[21] * 1;
+  result[1] += local_value[21] * -1;
+  result[2] += local_value[21] * 1;
+
+  result[0] += local_value[22] * -1;
+  result[1] += local_value[22] * -1;
+  result[2] += local_value[22] * 1;
+
+  result[0] += local_value[23] * 1;
+  result[1] += local_value[23] * 1;
+  result[2] += local_value[23] * -1;
+
+  result[0] += local_value[24] * -1;
+  result[1] += local_value[24] * 1;
+  result[2] += local_value[24] * -1;
+
+  result[0] += local_value[25] * 1;
+  result[1] += local_value[25] * -1;
+  result[2] += local_value[25] * -1;
+
+  result[0] += local_value[26] * -1;
+  result[1] += local_value[26] * -1;
+  result[2] += local_value[26] * -1;
 
   return result;
 }
@@ -432,65 +452,85 @@ inline auto get_vector(GhostLayerField<float, uint_t{13u}> const *flux_field,
                                             stencil::Direction(uint_t{25u}));
         local_value[26] = float(0.5) * flux_field->getF(&xyz0, uint_t{9u});
 
-        // North-South entries
-        result[0] -= local_value[3];
-        result[0] += local_value[4];
-        result[0] -= local_value[7];
-        result[0] += local_value[8];
-        result[0] -= local_value[9];
-        result[0] += local_value[10];
-        result[0] -= local_value[13];
-        result[0] += local_value[14];
-        result[0] -= local_value[17];
-        result[0] += local_value[18];
-        result[0] += local_value[19];
-        result[0] -= local_value[20];
-        result[0] += local_value[21];
-        result[0] -= local_value[22];
-        result[0] += local_value[23];
-        result[0] -= local_value[24];
-        result[0] += local_value[25];
-        result[0] -= local_value[26];
+        result[1] += local_value[1] * 1;
 
-        // East-West entries
-        result[1] += local_value[1];
-        result[1] -= local_value[2];
-        result[1] += local_value[7];
-        result[1] += local_value[8];
-        result[1] -= local_value[9];
-        result[1] -= local_value[10];
-        result[1] += local_value[11];
-        result[1] -= local_value[12];
-        result[1] += local_value[15];
-        result[1] -= local_value[16];
-        result[1] += local_value[19];
-        result[1] += local_value[20];
-        result[1] -= local_value[21];
-        result[1] -= local_value[22];
-        result[1] += local_value[23];
-        result[1] += local_value[24];
-        result[1] -= local_value[25];
-        result[1] -= local_value[26];
+        result[1] += local_value[2] * -1;
 
-        // Top-Bottom entries
-        result[2] += local_value[5];
-        result[2] -= local_value[6];
-        result[2] += local_value[11];
-        result[2] += local_value[12];
-        result[2] += local_value[13];
-        result[2] += local_value[14];
-        result[2] -= local_value[15];
-        result[2] -= local_value[16];
-        result[2] -= local_value[17];
-        result[2] -= local_value[18];
-        result[2] += local_value[19];
-        result[2] += local_value[20];
-        result[2] += local_value[21];
-        result[2] += local_value[22];
-        result[2] -= local_value[23];
-        result[2] -= local_value[24];
-        result[2] -= local_value[25];
-        result[2] -= local_value[26];
+        result[0] += local_value[3] * -1;
+
+        result[0] += local_value[4] * 1;
+
+        result[2] += local_value[5] * 1;
+
+        result[2] += local_value[6] * -1;
+
+        result[0] += local_value[7] * -1;
+        result[1] += local_value[7] * 1;
+
+        result[0] += local_value[8] * 1;
+        result[1] += local_value[8] * 1;
+
+        result[0] += local_value[9] * -1;
+        result[1] += local_value[9] * -1;
+
+        result[0] += local_value[10] * 1;
+        result[1] += local_value[10] * -1;
+
+        result[1] += local_value[11] * 1;
+        result[2] += local_value[11] * 1;
+
+        result[1] += local_value[12] * -1;
+        result[2] += local_value[12] * 1;
+
+        result[0] += local_value[13] * -1;
+        result[2] += local_value[13] * 1;
+
+        result[0] += local_value[14] * 1;
+        result[2] += local_value[14] * 1;
+
+        result[1] += local_value[15] * 1;
+        result[2] += local_value[15] * -1;
+
+        result[1] += local_value[16] * -1;
+        result[2] += local_value[16] * -1;
+
+        result[0] += local_value[17] * -1;
+        result[2] += local_value[17] * -1;
+
+        result[0] += local_value[18] * 1;
+        result[2] += local_value[18] * -1;
+
+        result[0] += local_value[19] * 1;
+        result[1] += local_value[19] * 1;
+        result[2] += local_value[19] * 1;
+
+        result[0] += local_value[20] * -1;
+        result[1] += local_value[20] * 1;
+        result[2] += local_value[20] * 1;
+
+        result[0] += local_value[21] * 1;
+        result[1] += local_value[21] * -1;
+        result[2] += local_value[21] * 1;
+
+        result[0] += local_value[22] * -1;
+        result[1] += local_value[22] * -1;
+        result[2] += local_value[22] * 1;
+
+        result[0] += local_value[23] * 1;
+        result[1] += local_value[23] * 1;
+        result[2] += local_value[23] * -1;
+
+        result[0] += local_value[24] * -1;
+        result[1] += local_value[24] * 1;
+        result[2] += local_value[24] * -1;
+
+        result[0] += local_value[25] * 1;
+        result[1] += local_value[25] * -1;
+        result[2] += local_value[25] * -1;
+
+        result[0] += local_value[26] * -1;
+        result[1] += local_value[26] * -1;
+        result[2] += local_value[26] * -1;
 
         out.emplace_back(result[0u]);
         out.emplace_back(result[1u]);

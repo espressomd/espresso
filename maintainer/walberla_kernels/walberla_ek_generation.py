@@ -50,15 +50,19 @@ def generate_accessors(ctx, config, templates):
 
     default_dtype = config.data_type.default_factory()
 
-    stencils = list(map(ps.stencil.offset_to_direction_string,
-                    lbmpy.stencils.LBStencil("D3Q27")))
+    stencils = list(lbmpy.stencils.LBStencil("D3Q27").stencil_entries)
+    stencils_helper = list(map(ps.stencil.offset_to_direction_string,
+                           lbmpy.stencils.LBStencil("D3Q27")))
+    stencils_helper = dict(zip(stencils_helper, stencils))
+
     staggered_stencils_helper = ps.field.Field.create_generic("tmp",
                                                               spatial_dimensions=3, index_shape=(13,),
                                                               field_type=ps.field.FieldType.STAGGERED_FLUX).staggered_stencil
-    staggered_stencils = dict(
-        zip(staggered_stencils_helper, range(len(staggered_stencils_helper))))
-    inverse_stencils_helper = list(map(ps.stencil.offset_to_direction_string,
-                                   lbmpy.stencils.LBStencil("D3Q27").inverse_stencil_entries))
+    staggered_stencils = dict([(stencils_helper[dir], i)
+                              for i, dir in enumerate(staggered_stencils_helper)])
+
+    inverse_stencils_helper = list(
+        lbmpy.stencils.LBStencil("D3Q27").inverse_stencil_entries)
     inverse_staggered_stencils = {}
     for i, dir in enumerate(stencils):
         if dir in staggered_stencils:

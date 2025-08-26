@@ -283,33 +283,13 @@ namespace Flux
             {% endif -%}
         {% endfor %}
 
-        // North-South entries
         {% for i in range(FluxCount*2+1) -%}
-            {% if "E" in Stencils[i] -%}
-                result[0] += local_value[{{i}}];
-            {% elif "W" in Stencils[i] -%}
-                result[0] -= local_value[{{i}}];
-            {% endif -%}
+            {% for j in range(3) -%}
+                {% if Stencils[i][j] != 0-%}
+                    result[{{j}}] += local_value[{{i}}] * {{Stencils[i][j]}};
+                {% endif -%}
+            {% endfor %}  
         {% endfor %}
-
-        // East-West entries
-        {% for i in range(FluxCount*2+1) -%}
-            {% if "N" in Stencils[i] -%}
-                result[1] += local_value[{{i}}];
-            {% elif "S" in Stencils[i] -%}
-                result[1] -= local_value[{{i}}];
-            {% endif -%}
-        {% endfor %}
-
-        // Top-Bottom entries
-        {% for i in range(FluxCount*2+1) -%}
-            {% if "T" in Stencils[i] -%}
-                result[2] += local_value[{{i}}];
-            {% elif "B" in Stencils[i] -%}
-                result[2] -= local_value[{{i}}];
-            {% endif -%}
-        {% endfor %}
-
         return result;
     }
 
@@ -336,31 +316,12 @@ namespace Flux
                         {% endif -%}
                     {% endfor %}
 
-                    // North-South entries
                     {% for i in range(FluxCount*2+1) -%}
-                        {% if "E" in Stencils[i] -%}
-                            result[0] += local_value[{{i}}];
-                        {% elif "W" in Stencils[i] -%}
-                            result[0] -= local_value[{{i}}];
-                        {% endif -%}
-                    {% endfor %}
-
-                    // East-West entries
-                    {% for i in range(FluxCount*2+1) -%}
-                        {% if "N" in Stencils[i] -%}
-                            result[1] += local_value[{{i}}];
-                        {% elif "S" in Stencils[i] -%}
-                            result[1] -= local_value[{{i}}];
-                        {% endif -%}
-                    {% endfor %}
-
-                    // Top-Bottom entries
-                    {% for i in range(FluxCount*2+1) -%}
-                        {% if "T" in Stencils[i] -%}
-                            result[2] += local_value[{{i}}];
-                        {% elif "B" in Stencils[i] -%}
-                            result[2] -= local_value[{{i}}];
-                        {% endif -%}
+                        {% for j in range(3) -%}
+                            {% if Stencils[i][j] != 0-%}
+                                result[{{j}}] += local_value[{{i}}] * {{Stencils[i][j]}};
+                            {% endif -%}
+                        {% endfor %}  
                     {% endfor %}
                     {% for i in range(D) -%}
                         out.emplace_back(result[{{i}}u]);
