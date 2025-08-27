@@ -21,10 +21,10 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
-#ifdef WALBERLA_FFT
-
+#ifdef ESPRESSO_WALBERLA
 #include "EKPoissonSolver.hpp"
+#ifdef ESPRESSO_WALBERLA_FFT
+
 #include "LatticeWalberla.hpp"
 
 #include "core/MpiCallbacks.hpp"
@@ -41,19 +41,19 @@
 #include <memory>
 
 namespace ScriptInterface::walberla {
+std::unordered_map<std::string, int> const EKPoissonVTKHandle::obs_map = {
+    {"potential", static_cast<int>(EKPoissonOutputVTK::potential)},
+};
 
 class EKFFT : public EKPoissonSolver {
+protected:
   std::unique_ptr<ResourceManager> m_resources_lock;
-  std::shared_ptr<::walberla::PoissonSolver> m_instance;
   std::shared_ptr<LatticeWalberla> m_lattice;
   double m_conv_permittivity;
   bool m_single_precision;
 
 public:
-  void do_construct(VariantMap const &args) override {
-    m_single_precision = get_value_or<bool>(args, "single_precision", false);
-    m_lattice = get_value<decltype(m_lattice)>(args, "lattice");
-
+  void make_instance(VariantMap const &args) override {
     // unit conversions
     auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
     m_conv_permittivity = Utils::int_pow<2>(agrid);
@@ -62,10 +62,21 @@ public:
 
     m_instance = ::walberla::new_ek_poisson_fft(
         m_lattice->lattice(), permittivity, m_single_precision);
-    m_resources_lock = std::make_unique<ResourceManager>();
+  }
+
+  void do_construct(VariantMap const &args) override {
+    m_single_precision = get_value_or<bool>(args, "single_precision", false);
+    m_lattice = get_value<decltype(m_lattice)>(args, "lattice");
+    m_vtk_writers =
+        get_value_or<decltype(m_vtk_writers)>(args, "vtk_writers", {});
+
+    make_instance(args), m_resources_lock = std::make_unique<ResourceManager>();
     // MPI communicator is needed to destroy the FFT plans
     m_resources_lock->acquire_lock(
         Communication::mpiCallbacksHandle()->share_mpi_env());
+    for (auto &vtk : m_vtk_writers) {
+      vtk->attach_to_lattice(m_instance, get_lattice_to_md_units_conversion());
+    }
   }
 
   EKFFT() {
@@ -81,6 +92,8 @@ public:
         {"single_precision", AutoParameter::read_only,
          [this]() { return m_single_precision; }},
         {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
+        {"shape", AutoParameter::read_only,
+         [this]() { return m_instance->get_lattice().get_grid_dimensions(); }},
     });
   }
 
@@ -98,5 +111,9 @@ public:
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA_FFT
-#endif // WALBERLA
+#else  // ESPRESSO_WALBERLA_FFT
+namespace ScriptInterface::walberla {
+std::unordered_map<std::string, int> const EKPoissonVTKHandle::obs_map = {};
+} // namespace ScriptInterface::walberla
+#endif // ESPRESSO_WALBERLA_FFT
+#endif // ESPRESSO_WALBERLA

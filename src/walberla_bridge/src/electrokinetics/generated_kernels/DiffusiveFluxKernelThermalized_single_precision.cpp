@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit f36fa0a68bae59f0b516f6587ea8fa7c24a41141
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #include <cmath>
 
@@ -49,2850 +49,372 @@ namespace pystencils {
 
 namespace internal_13067439141d91943f586adb1c937d5b {
 static FUNC_PREFIX void diffusivefluxkernelthermalized_single_precision_diffusivefluxkernelthermalized_single_precision(float D, float *RESTRICT const _data_j, float *RESTRICT const _data_rho, int64_t const _size_j_0, int64_t const _size_j_1, int64_t const _size_j_2, int64_t const _stride_j_0, int64_t const _stride_j_1, int64_t const _stride_j_2, int64_t const _stride_j_3, int64_t const _stride_rho_0, int64_t const _stride_rho_1, int64_t const _stride_rho_2, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, uint32_t field_size_0, uint32_t field_size_1, uint32_t field_size_2, uint32_t seed, uint32_t time_step) {
-  {
-    {
-      {
-        if (0 < _size_j_1 - 1 && 0 < _size_j_2 - 1) {
+  for (int64_t ctr_2 = 0; ctr_2 < _size_j_2; ctr_2 += 1) {
+    for (int64_t ctr_1 = 0; ctr_1 < _size_j_1; ctr_1 += 1) {
+      for (int64_t ctr_0 = 1; ctr_0 < _size_j_0; ctr_0 += 1) {
+        if (ctr_1 > 0 && ctr_2 > 0 && ctr_1 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
 
           float random_3_0;
           float random_3_1;
           float random_3_2;
           float random_3_3;
-          philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
 
           float random_2_0;
           float random_2_1;
           float random_2_2;
           float random_2_3;
-          philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
 
           float random_1_0;
           float random_1_1;
           float random_1_2;
           float random_1_3;
-          philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
 
           float random_0_0;
           float random_0_1;
           float random_0_2;
           float random_0_3;
-          philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
 
-          _data_j[_stride_j_0 + 12 * _stride_j_3] = D * (_data_rho[_stride_rho_0] - _data_rho[_stride_rho_1 + _stride_rho_2]) * 0.09406426022938992f + (random_3_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0] + 0.5f * _data_rho[_stride_rho_1 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
+          _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]) * 0.16292407789368385f + (random_0_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.977416969040271f;
         }
-        for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-          if (0 < _size_j_1 - 1 && 0 < _size_j_2 - 1) {
-
-            float random_3_0;
-            float random_3_1;
-            float random_3_2;
-            float random_3_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-            float random_2_0;
-            float random_2_1;
-            float random_2_2;
-            float random_2_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-            float random_1_0;
-            float random_1_1;
-            float random_1_2;
-            float random_1_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-            float random_0_0;
-            float random_0_1;
-            float random_0_2;
-            float random_0_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-            _data_j[_stride_j_0 * ctr_0 + 12 * _stride_j_3] = D * (-_data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 + _stride_rho_2] + _data_rho[_stride_rho_0 * ctr_0]) * 0.09406426022938992f + (random_3_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 + _stride_rho_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0]), 0.5f) * 1.5025119784898082f;
-          }
-        }
-        if (0 < _size_j_1 - 1 && 0 < _size_j_2 - 1) {
+        if (ctr_1 > 0 && ctr_2 > 0 && ctr_0 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
 
           float random_3_0;
           float random_3_1;
           float random_3_2;
           float random_3_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
 
           float random_2_0;
           float random_2_1;
           float random_2_2;
           float random_2_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
 
           float random_1_0;
           float random_1_1;
           float random_1_2;
           float random_1_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
 
           float random_0_0;
           float random_0_1;
           float random_0_2;
           float random_0_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
 
-          _data_j[_stride_j_0 * (_size_j_0 - 1) + 12 * _stride_j_3] = D * (-_data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 + _stride_rho_2] + _data_rho[_stride_rho_0 * (_size_j_0 - 1)]) * 0.09406426022938992f + (random_3_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 + _stride_rho_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1)]), 0.5f) * 1.5025119784898082f;
+          _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.16292407789368385f + (random_0_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.977416969040271f;
         }
-      }
-      for (int64_t ctr_1 = 1; ctr_1 < _size_j_1 - 1; ctr_1 += 1) {
-        {
-          {
-            if (ctr_1 > 0 && 0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + 6 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1] - _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_2]) * 0.11520472029718914f + (random_1_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_1 > 0 && 0 < _size_j_2 - 1 && 1 < _size_j_0 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + 8 * _stride_j_3] = D * (-_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2] + _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1]) * 0.11520472029718914f + (random_2_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2] + 0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_1 > 0 && 0 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + 10 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1] - _data_rho[_stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2]) * 0.09406426022938992f + (random_2_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-            if (0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + 12 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1] - _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2]) * 0.09406426022938992f + (random_3_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-          }
-          for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-            if (ctr_1 > 0 && 0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + 6 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2]) * 0.11520472029718914f + (random_1_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_1 > 0 && 0 < _size_j_2 - 1 && ctr_0 < _size_j_0 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + 8 * _stride_j_3] = D * (-_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2] + _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1]) * 0.11520472029718914f + (random_2_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_1 > 0 && 0 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + 10 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2]) * 0.09406426022938992f + (random_2_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-            if (0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + 12 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2]) * 0.09406426022938992f + (random_3_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-          }
-          {
-            if (ctr_1 > 0 && 0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + 6 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2]) * 0.11520472029718914f + (random_1_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_1 > 0 && 0 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + 10 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2]) * 0.09406426022938992f + (random_2_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-            if (0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + 12 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2]) * 0.09406426022938992f + (random_3_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-          }
-        }
-      }
-      {
-        {
-          if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1 && 1 < _size_j_0 - 1) {
-
-            float random_3_0;
-            float random_3_1;
-            float random_3_2;
-            float random_3_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-            float random_2_0;
-            float random_2_1;
-            float random_2_2;
-            float random_2_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-            float random_1_0;
-            float random_1_1;
-            float random_1_2;
-            float random_1_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-            float random_0_0;
-            float random_0_1;
-            float random_0_2;
-            float random_0_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-            _data_j[_stride_j_0 + _stride_j_1 * (_size_j_1 - 1) + 8 * _stride_j_3] = D * (-_data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2] + _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1)]) * 0.11520472029718914f + (random_2_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2] + 0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1)]), 0.5f) * 1.6628028407278295f;
-          }
-          if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1) {
-
-            float random_3_0;
-            float random_3_1;
-            float random_3_2;
-            float random_3_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-            float random_2_0;
-            float random_2_1;
-            float random_2_2;
-            float random_2_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-            float random_1_0;
-            float random_1_1;
-            float random_1_2;
-            float random_1_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-            float random_0_0;
-            float random_0_1;
-            float random_0_2;
-            float random_0_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-            _data_j[_stride_j_0 + _stride_j_1 * (_size_j_1 - 1) + 10 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1)] - _data_rho[_stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2]) * 0.09406426022938992f + (random_2_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1)] + 0.5f * _data_rho[_stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-          }
-        }
-        for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-          if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1 && ctr_0 < _size_j_0 - 1) {
-
-            float random_3_0;
-            float random_3_1;
-            float random_3_2;
-            float random_3_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-            float random_2_0;
-            float random_2_1;
-            float random_2_2;
-            float random_2_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-            float random_1_0;
-            float random_1_1;
-            float random_1_2;
-            float random_1_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-            float random_0_0;
-            float random_0_1;
-            float random_0_2;
-            float random_0_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-            _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * (_size_j_1 - 1) + 8 * _stride_j_3] = D * (-_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2] + _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1)]) * 0.11520472029718914f + (random_2_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1)]), 0.5f) * 1.6628028407278295f;
-          }
-          if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1) {
-
-            float random_3_0;
-            float random_3_1;
-            float random_3_2;
-            float random_3_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-            float random_2_0;
-            float random_2_1;
-            float random_2_2;
-            float random_2_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-            float random_1_0;
-            float random_1_1;
-            float random_1_2;
-            float random_1_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-            float random_0_0;
-            float random_0_1;
-            float random_0_2;
-            float random_0_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-            _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * (_size_j_1 - 1) + 10 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1)] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2]) * 0.09406426022938992f + (random_2_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1)] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-          }
-        }
-        if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1) {
+        if (ctr_1 > 0 && ctr_2 > 0 && ctr_0 < _size_j_0 - 1 && ctr_1 < _size_j_1 - 1) {
 
           float random_3_0;
           float random_3_1;
           float random_3_2;
           float random_3_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
 
           float random_2_0;
           float random_2_1;
           float random_2_2;
           float random_2_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
 
           float random_1_0;
           float random_1_1;
           float random_1_2;
           float random_1_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
 
           float random_0_0;
           float random_0_1;
           float random_0_2;
           float random_0_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, block_offset_2 % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
 
-          _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * (_size_j_1 - 1) + 10 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * (_size_j_1 - 1)] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2]) * 0.09406426022938992f + (random_2_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * (_size_j_1 - 1)] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
+          _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 2 * _stride_j_3] = D * (-_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] + _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]) * 0.16292407789368385f + (random_0_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.977416969040271f;
         }
-      }
-    }
-    for (int64_t ctr_2 = 1; ctr_2 < _size_j_2 - 1; ctr_2 += 1) {
-      {
-        {
-          {
-            if (ctr_2 > 0 && 0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_2 * ctr_2 + 4 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_1_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_2 > 0 && 0 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_2 * ctr_2 + 11 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-            if (0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_2 * ctr_2 + 12 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_3_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-          }
-          for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-            if (ctr_2 > 0 && 0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_2 * ctr_2 + 4 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_1_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_2 > 0 && 0 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_2 * ctr_2 + 11 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-            if (0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_2 * ctr_2 + 12 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_3_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-          }
-          {
-            if (ctr_2 > 0 && 0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_2 * ctr_2 + 4 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_1_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_2 > 0 && 0 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_2 * ctr_2 + 11 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-            if (0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_2 * ctr_2 + 12 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_3_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-          }
-        }
-        for (int64_t ctr_1 = 1; ctr_1 < _size_j_1 - 1; ctr_1 += 1) {
-          {
-            {
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]) * 0.16292407789368385f + (random_0_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.977416969040271f;
-              }
-              if (ctr_1 > 0 && ctr_2 > 0 && 1 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.16292407789368385f + (random_0_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.977416969040271f;
-              }
-              if (ctr_1 > 0 && ctr_2 > 0 && 1 < _size_j_0 - 1 && ctr_1 < _size_j_1 - 1) {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 2 * _stride_j_3] = D * (-_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] + _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]) * 0.16292407789368385f + (random_0_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] + 0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.977416969040271f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 3 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_0_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 4 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_1_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 5 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.11520472029718914f + (random_1_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 6 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.11520472029718914f + (random_1_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-              }
-              if (ctr_1 > 0 && ctr_2 > 0 && 1 < _size_j_0 - 1) {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 7 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.11520472029718914f + (random_1_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-              }
-              if (ctr_1 > 0 && 1 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 8 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.11520472029718914f + (random_2_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 9 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 10 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_2_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 11 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 12 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_3_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-              }
-            }
-            for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]) * 0.16292407789368385f + (random_0_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.977416969040271f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.16292407789368385f + (random_0_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.977416969040271f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 2 * _stride_j_3] = D * (-_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] + _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]) * 0.16292407789368385f + (random_0_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.977416969040271f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 3 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_0_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 4 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_1_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 5 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.11520472029718914f + (random_1_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 6 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.11520472029718914f + (random_1_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 7 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.11520472029718914f + (random_1_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 8 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.11520472029718914f + (random_2_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 9 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 10 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_2_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 11 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 12 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_3_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-              }
-            }
-            {
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]) * 0.16292407789368385f + (random_0_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.977416969040271f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 3 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_0_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 4 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_1_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 5 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.11520472029718914f + (random_1_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 6 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.11520472029718914f + (random_1_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 9 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 10 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_2_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 11 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-              }
-              {
-
-                float random_3_0;
-                float random_3_1;
-                float random_3_2;
-                float random_3_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-                float random_2_0;
-                float random_2_1;
-                float random_2_2;
-                float random_2_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-                float random_1_0;
-                float random_1_1;
-                float random_1_2;
-                float random_1_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-                float random_0_0;
-                float random_0_1;
-                float random_0_2;
-                float random_0_3;
-                philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-                _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 12 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_3_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-              }
-            }
-          }
-        }
-        {
-          {
-            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && 1 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.16292407789368385f + (random_0_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.977416969040271f;
-            }
-            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + 3 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_0_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && 1 < _size_j_0 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + 7 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.11520472029718914f + (random_1_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (_size_j_1 - 1 > 0 && 1 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + 8 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.11520472029718914f + (random_2_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_2 > 0 && _size_j_1 - 1 > 0) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + 9 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-            if (_size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + 10 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_2_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-          }
-          for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_0 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.16292407789368385f + (random_0_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.977416969040271f;
-            }
-            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + 3 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_0_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_0 < _size_j_0 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + 7 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.11520472029718914f + (random_1_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (_size_j_1 - 1 > 0 && ctr_0 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + 8 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.11520472029718914f + (random_2_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_2 > 0 && _size_j_1 - 1 > 0) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + 9 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-            if (_size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + 10 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_2_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-          }
-          {
-            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + 3 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_0_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_2 > 0 && _size_j_1 - 1 > 0) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + 9 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-            if (_size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * ctr_2 + 10 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_2_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-          }
-        }
-      }
-    }
-    {
-      {
-        if (_size_j_2 - 1 > 0 && 0 < _size_j_1 - 1) {
+        if (ctr_1 > 0 && ctr_2 > 0 && ctr_2 < _size_j_2 - 1) {
 
           float random_3_0;
           float random_3_1;
           float random_3_2;
           float random_3_3;
-          philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
 
           float random_2_0;
           float random_2_1;
           float random_2_2;
           float random_2_3;
-          philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
 
           float random_1_0;
           float random_1_1;
           float random_1_2;
           float random_1_3;
-          philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
 
           float random_0_0;
           float random_0_1;
           float random_0_2;
           float random_0_3;
-          philox_float4(time_step, (block_offset_0 + 1) % field_size_0, block_offset_1 % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
 
-          _data_j[_stride_j_0 + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.09406426022938992f + (random_2_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
+          _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 3 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_0_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
         }
-        for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-          if (_size_j_2 - 1 > 0 && 0 < _size_j_1 - 1) {
-
-            float random_3_0;
-            float random_3_1;
-            float random_3_2;
-            float random_3_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-            float random_2_0;
-            float random_2_1;
-            float random_2_2;
-            float random_2_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-            float random_1_0;
-            float random_1_1;
-            float random_1_2;
-            float random_1_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-            float random_0_0;
-            float random_0_1;
-            float random_0_2;
-            float random_0_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, block_offset_1 % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-            _data_j[_stride_j_0 * ctr_0 + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.09406426022938992f + (random_2_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-          }
-        }
-        if (_size_j_2 - 1 > 0 && 0 < _size_j_1 - 1) {
+        if (ctr_2 > 0 && ctr_1 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
 
           float random_3_0;
           float random_3_1;
           float random_3_2;
           float random_3_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
 
           float random_2_0;
           float random_2_1;
           float random_2_2;
           float random_2_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
 
           float random_1_0;
           float random_1_1;
           float random_1_2;
           float random_1_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
 
           float random_0_0;
           float random_0_1;
           float random_0_2;
           float random_0_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, block_offset_1 % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
 
-          _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.09406426022938992f + (random_2_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
+          _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 4 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2]) * 0.11520472029718914f + (random_1_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2]), 0.5f) * 1.6628028407278295f;
         }
-      }
-      for (int64_t ctr_1 = 1; ctr_1 < _size_j_1 - 1; ctr_1 += 1) {
-        {
-          {
-            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && 1 < _size_j_0 - 1 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * (_size_j_2 - 1) + 2 * _stride_j_3] = D * (-_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2] + _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)]) * 0.16292407789368385f + (random_0_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2] + 0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)]), 0.5f) * 1.977416969040271f;
-            }
-            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * (_size_j_2 - 1) + 5 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.11520472029718914f + (random_1_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && 1 < _size_j_0 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.11520472029718914f + (random_1_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_1 > 0 && _size_j_2 - 1 > 0) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.09406426022938992f + (random_2_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-            if (_size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 + _stride_j_1 * ctr_1 + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.09406426022938992f + (random_2_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-          }
-          for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_0 < _size_j_0 - 1 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * (_size_j_2 - 1) + 2 * _stride_j_3] = D * (-_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2] + _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)]) * 0.16292407789368385f + (random_0_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)]), 0.5f) * 1.977416969040271f;
-            }
-            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * (_size_j_2 - 1) + 5 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.11520472029718914f + (random_1_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_0 < _size_j_0 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.11520472029718914f + (random_1_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_1 > 0 && _size_j_2 - 1 > 0) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.09406426022938992f + (random_2_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-            if (_size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.09406426022938992f + (random_2_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-          }
-          {
-            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + _stride_j_2 * (_size_j_2 - 1) + 5 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.11520472029718914f + (random_1_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-            }
-            if (ctr_1 > 0 && _size_j_2 - 1 > 0) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.09406426022938992f + (random_2_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-            if (_size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
-
-              float random_3_0;
-              float random_3_1;
-              float random_3_2;
-              float random_3_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-              float random_2_0;
-              float random_2_1;
-              float random_2_2;
-              float random_2_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-              float random_1_0;
-              float random_1_1;
-              float random_1_2;
-              float random_1_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-              float random_0_0;
-              float random_0_1;
-              float random_0_2;
-              float random_0_3;
-              philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-              _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * ctr_1 + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.09406426022938992f + (random_2_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * ctr_1 + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-            }
-          }
-        }
-      }
-      {
-        {
-          if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0 && 1 < _size_j_0 - 1) {
-
-            float random_3_0;
-            float random_3_1;
-            float random_3_2;
-            float random_3_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-            float random_2_0;
-            float random_2_1;
-            float random_2_2;
-            float random_2_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-            float random_1_0;
-            float random_1_1;
-            float random_1_2;
-            float random_1_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-            float random_0_0;
-            float random_0_1;
-            float random_0_2;
-            float random_0_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-            _data_j[_stride_j_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.11520472029718914f + (random_1_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-          }
-          if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0) {
-
-            float random_3_0;
-            float random_3_1;
-            float random_3_2;
-            float random_3_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-            float random_2_0;
-            float random_2_1;
-            float random_2_2;
-            float random_2_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-            float random_1_0;
-            float random_1_1;
-            float random_1_2;
-            float random_1_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-            float random_0_0;
-            float random_0_1;
-            float random_0_2;
-            float random_0_3;
-            philox_float4(time_step, (block_offset_0 + 1) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-            _data_j[_stride_j_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3] = D * (_data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.09406426022938992f + (random_2_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-          }
-        }
-        for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-          if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0 && ctr_0 < _size_j_0 - 1) {
-
-            float random_3_0;
-            float random_3_1;
-            float random_3_2;
-            float random_3_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-            float random_2_0;
-            float random_2_1;
-            float random_2_2;
-            float random_2_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-            float random_1_0;
-            float random_1_1;
-            float random_1_2;
-            float random_1_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-            float random_0_0;
-            float random_0_1;
-            float random_0_2;
-            float random_0_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-            _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.11520472029718914f + (random_1_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
-          }
-          if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0) {
-
-            float random_3_0;
-            float random_3_1;
-            float random_3_2;
-            float random_3_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
-
-            float random_2_0;
-            float random_2_1;
-            float random_2_2;
-            float random_2_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
-
-            float random_1_0;
-            float random_1_1;
-            float random_1_2;
-            float random_1_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
-
-            float random_0_0;
-            float random_0_1;
-            float random_0_2;
-            float random_0_3;
-            philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
-
-            _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.09406426022938992f + (random_2_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
-          }
-        }
-        if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0) {
+        if (ctr_1 > 0 && ctr_2 > 0 && ctr_1 < _size_j_1 - 1) {
 
           float random_3_0;
           float random_3_1;
           float random_3_2;
           float random_3_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
 
           float random_2_0;
           float random_2_1;
           float random_2_2;
           float random_2_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
 
           float random_1_0;
           float random_1_1;
           float random_1_2;
           float random_1_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
 
           float random_0_0;
           float random_0_1;
           float random_0_2;
           float random_0_3;
-          philox_float4(time_step, (((_size_j_0 + block_offset_0 - 1) % field_size_0) + field_size_0) % field_size_0, (((_size_j_1 + block_offset_1 - 1) % field_size_1) + field_size_1) % field_size_1, (((_size_j_2 + block_offset_2 - 1) % field_size_2) + field_size_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
 
-          _data_j[_stride_j_0 * (_size_j_0 - 1) + _stride_j_1 * (_size_j_1 - 1) + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * (_size_j_2 - 1)] - _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]) * 0.09406426022938992f + (random_2_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) + _stride_rho_1 * (_size_j_1 - 1) + _stride_rho_2 * (_size_j_2 - 1)] + 0.5f * _data_rho[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0 + _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
+          _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 5 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.11520472029718914f + (random_1_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
+        }
+        if (ctr_1 > 0 && ctr_1 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
+
+          float random_3_0;
+          float random_3_1;
+          float random_3_2;
+          float random_3_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
+
+          float random_2_0;
+          float random_2_1;
+          float random_2_2;
+          float random_2_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
+
+          float random_1_0;
+          float random_1_1;
+          float random_1_2;
+          float random_1_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
+
+          float random_0_0;
+          float random_0_1;
+          float random_0_2;
+          float random_0_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
+
+          _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 6 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.11520472029718914f + (random_1_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.6628028407278295f;
+        }
+        if (ctr_1 > 0 && ctr_2 > 0 && ctr_0 < _size_j_0 - 1) {
+
+          float random_3_0;
+          float random_3_1;
+          float random_3_2;
+          float random_3_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
+
+          float random_2_0;
+          float random_2_1;
+          float random_2_2;
+          float random_2_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
+
+          float random_1_0;
+          float random_1_1;
+          float random_1_2;
+          float random_1_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
+
+          float random_0_0;
+          float random_0_1;
+          float random_0_2;
+          float random_0_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
+
+          _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 7 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.11520472029718914f + (random_1_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.6628028407278295f;
+        }
+        if (ctr_1 > 0 && ctr_0 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
+
+          float random_3_0;
+          float random_3_1;
+          float random_3_2;
+          float random_3_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
+
+          float random_2_0;
+          float random_2_1;
+          float random_2_2;
+          float random_2_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
+
+          float random_1_0;
+          float random_1_1;
+          float random_1_2;
+          float random_1_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
+
+          float random_0_0;
+          float random_0_1;
+          float random_0_2;
+          float random_0_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
+
+          _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 8 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.11520472029718914f + (random_2_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.6628028407278295f;
+        }
+        if (ctr_1 > 0 && ctr_2 > 0) {
+
+          float random_3_0;
+          float random_3_1;
+          float random_3_2;
+          float random_3_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
+
+          float random_2_0;
+          float random_2_1;
+          float random_2_2;
+          float random_2_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
+
+          float random_1_0;
+          float random_1_1;
+          float random_1_2;
+          float random_1_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
+
+          float random_0_0;
+          float random_0_1;
+          float random_0_2;
+          float random_0_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
+
+          _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 9 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_1 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
+        }
+        if (ctr_1 > 0 && ctr_2 < _size_j_2 - 1) {
+
+          float random_3_0;
+          float random_3_1;
+          float random_3_2;
+          float random_3_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
+
+          float random_2_0;
+          float random_2_1;
+          float random_2_2;
+          float random_2_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
+
+          float random_1_0;
+          float random_1_1;
+          float random_1_2;
+          float random_1_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
+
+          float random_0_0;
+          float random_0_1;
+          float random_0_2;
+          float random_0_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
+
+          _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 10 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_2_2 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 - _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
+        }
+        if (ctr_2 > 0 && ctr_1 < _size_j_1 - 1) {
+
+          float random_3_0;
+          float random_3_1;
+          float random_3_2;
+          float random_3_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
+
+          float random_2_0;
+          float random_2_1;
+          float random_2_2;
+          float random_2_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
+
+          float random_1_0;
+          float random_1_1;
+          float random_1_2;
+          float random_1_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
+
+          float random_0_0;
+          float random_0_1;
+          float random_0_2;
+          float random_0_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
+
+          _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 11 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]) * 0.09406426022938992f + (random_2_3 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 - _stride_rho_2]), 0.5f) * 1.5025119784898082f;
+        }
+        if (ctr_1 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
+
+          float random_3_0;
+          float random_3_1;
+          float random_3_2;
+          float random_3_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 3, seed, random_3_0, random_3_1, random_3_2, random_3_3);
+
+          float random_2_0;
+          float random_2_1;
+          float random_2_2;
+          float random_2_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 2, seed, random_2_0, random_2_1, random_2_2, random_2_3);
+
+          float random_1_0;
+          float random_1_1;
+          float random_1_2;
+          float random_1_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 1, seed, random_1_0, random_1_1, random_1_2, random_1_3);
+
+          float random_0_0;
+          float random_0_1;
+          float random_0_2;
+          float random_0_3;
+          philox_float4(time_step, (block_offset_0 + ctr_0) % field_size_0, (block_offset_1 + ctr_1) % field_size_1, (block_offset_2 + ctr_2) % field_size_2, 0, seed, random_0_0, random_0_1, random_0_2, random_0_3);
+
+          _data_j[_stride_j_0 * ctr_0 + _stride_j_1 * ctr_1 + _stride_j_2 * ctr_2 + 12 * _stride_j_3] = D * (_data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] - _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]) * 0.09406426022938992f + (random_3_0 - 0.5f) * powf(D * (0.5f * _data_rho[_stride_rho_0 * ctr_0 + _stride_rho_1 * ctr_1 + _stride_rho_2 * ctr_2] + 0.5f * _data_rho[_stride_rho_0 * ctr_0 - _stride_rho_0 + _stride_rho_1 * ctr_1 + _stride_rho_1 + _stride_rho_2 * ctr_2 + _stride_rho_2]), 0.5f) * 1.5025119784898082f;
         }
       }
     }
@@ -2904,18 +426,18 @@ void DiffusiveFluxKernelThermalized_single_precision::run(IBlock *block) {
   if (!this->configured_)
     WALBERLA_ABORT("This Sweep contains a configure function that needs to be called manually")
 
-  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
+  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
 
-  auto &field_size_0 = this->field_size_0_;
-  auto &block_offset_1 = this->block_offset_1_;
-  auto &seed = this->seed_;
-  auto &block_offset_0 = this->block_offset_0_;
-  auto &time_step = this->time_step_;
-  auto &field_size_2 = this->field_size_2_;
   auto &field_size_1 = this->field_size_1_;
-  auto &D = this->D_;
+  auto &seed = this->seed_;
+  auto &field_size_0 = this->field_size_0_;
+  auto &field_size_2 = this->field_size_2_;
   auto &block_offset_2 = this->block_offset_2_;
+  auto &block_offset_1 = this->block_offset_1_;
+  auto &D = this->D_;
+  auto &time_step = this->time_step_;
+  auto &block_offset_0 = this->block_offset_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()))
   float *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(rho->nrOfGhostLayers()))
@@ -2948,18 +470,18 @@ void DiffusiveFluxKernelThermalized_single_precision::runOnCellInterval(const sh
   if (ci.empty())
     return;
 
-  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
+  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
 
-  auto &field_size_0 = this->field_size_0_;
-  auto &block_offset_1 = this->block_offset_1_;
-  auto &seed = this->seed_;
-  auto &block_offset_0 = this->block_offset_0_;
-  auto &time_step = this->time_step_;
-  auto &field_size_2 = this->field_size_2_;
   auto &field_size_1 = this->field_size_1_;
-  auto &D = this->D_;
+  auto &seed = this->seed_;
+  auto &field_size_0 = this->field_size_0_;
+  auto &field_size_2 = this->field_size_2_;
   auto &block_offset_2 = this->block_offset_2_;
+  auto &block_offset_1 = this->block_offset_1_;
+  auto &D = this->D_;
+  auto &time_step = this->time_step_;
+  auto &block_offset_0 = this->block_offset_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(j->nrOfGhostLayers()))

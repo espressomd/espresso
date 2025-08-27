@@ -43,7 +43,7 @@
 struct LJ_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double shift = 0.0;
   double offset = 0.0;
   double min = 0.0;
@@ -65,7 +65,7 @@ struct LJ_Parameters {
 struct WCA_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   WCA_Parameters() = default;
   WCA_Parameters(double epsilon, double sigma);
   double max_cutoff() const { return cut; }
@@ -75,7 +75,7 @@ struct WCA_Parameters {
 struct LJGen_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double shift = 0.0;
   double offset = 0.0;
   double lambda = 1.0;
@@ -87,7 +87,7 @@ struct LJGen_Parameters {
   LJGen_Parameters() = default;
   LJGen_Parameters(double epsilon, double sigma, double cutoff, double shift,
                    double offset,
-#ifdef LJGEN_SOFTCORE
+#ifdef ESPRESSO_LJGEN_SOFTCORE
                    double lam, double delta,
 #endif
                    double e1, double e2, double b1, double b2);
@@ -105,7 +105,7 @@ struct LJGen_Parameters {
 struct SmoothStep_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double d = 0.0;
   int n = 0;
   double k0 = 0.0;
@@ -118,7 +118,7 @@ struct SmoothStep_Parameters {
 /** Hertzian potential */
 struct Hertzian_Parameters {
   double eps = 0.0;
-  double sig = INACTIVE_CUTOFF;
+  double sig = inactive_cutoff;
   Hertzian_Parameters() = default;
   Hertzian_Parameters(double eps, double sig);
   double max_cutoff() const { return sig; }
@@ -128,7 +128,7 @@ struct Hertzian_Parameters {
 struct Gaussian_Parameters {
   double eps = 0.0;
   double sig = 1.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   Gaussian_Parameters() = default;
   Gaussian_Parameters(double eps, double sig, double cutoff);
   double max_cutoff() const { return cut; }
@@ -141,7 +141,7 @@ struct BMHTF_Parameters {
   double C = 0.0;
   double D = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double computed_shift = 0.0;
   BMHTF_Parameters() = default;
   BMHTF_Parameters(double A, double B, double C, double D, double sig,
@@ -152,10 +152,10 @@ struct BMHTF_Parameters {
 /** Morse potential */
 struct Morse_Parameters {
   double eps = 0.;
-  double alpha = INACTIVE_CUTOFF;
-  double rmin = INACTIVE_CUTOFF;
-  double cut = INACTIVE_CUTOFF;
-  double rest = INACTIVE_CUTOFF;
+  double alpha = inactive_cutoff;
+  double rmin = inactive_cutoff;
+  double cut = inactive_cutoff;
+  double rest = inactive_cutoff;
   Morse_Parameters() = default;
   Morse_Parameters(double eps, double alpha, double rmin, double cutoff);
   double max_cutoff() const { return cut; }
@@ -167,7 +167,7 @@ struct Buckingham_Parameters {
   double B = 0.0;
   double C = 0.0;
   double D = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double discont = 0.0;
   double shift = 0.0;
   double F1 = 0.0;
@@ -182,7 +182,7 @@ struct Buckingham_Parameters {
 struct SoftSphere_Parameters {
   double a = 0.0;
   double n = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double offset = 0.0;
   SoftSphere_Parameters() = default;
   SoftSphere_Parameters(double a, double n, double cutoff, double offset);
@@ -192,7 +192,7 @@ struct SoftSphere_Parameters {
 /** hat potential */
 struct Hat_Parameters {
   double Fmax = 0.0;
-  double r = INACTIVE_CUTOFF;
+  double r = inactive_cutoff;
   Hat_Parameters() = default;
   Hat_Parameters(double F_max, double cutoff);
   double max_cutoff() const { return r; }
@@ -202,7 +202,7 @@ struct Hat_Parameters {
 struct LJcos_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double offset = 0.0;
   double alfa = 0.0;
   double beta = 0.0;
@@ -216,7 +216,7 @@ struct LJcos_Parameters {
 struct LJcos2_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double offset = 0.0;
   double w = 0.0;
   double rchange = 0.0;
@@ -229,7 +229,7 @@ struct LJcos2_Parameters {
 struct GayBerne_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double k1 = 0.0;
   double k2 = 0.0;
   double mu = 0.0;
@@ -255,7 +255,7 @@ struct Thole_Parameters {
 struct DPDParameters {
   double gamma = 0.;
   double k = 1.;
-  double cutoff = INACTIVE_CUTOFF;
+  double cutoff = inactive_cutoff;
   int wf = 0;
   double pref = 0.0;
 };
@@ -278,73 +278,73 @@ struct IA_parameters {
    *  contributions from the short-ranged interactions, plus any
    *  cutoffs from global interactions like electrostatics.
    */
-  double max_cut = INACTIVE_CUTOFF;
+  double max_cut = inactive_cutoff;
 
-#ifdef LENNARD_JONES
+#ifdef ESPRESSO_LENNARD_JONES
   LJ_Parameters lj;
 #endif
 
-#ifdef WCA
+#ifdef ESPRESSO_WCA
   WCA_Parameters wca;
 #endif
 
-#ifdef LENNARD_JONES_GENERIC
+#ifdef ESPRESSO_LENNARD_JONES_GENERIC
   LJGen_Parameters ljgen;
 #endif
 
-#ifdef SMOOTH_STEP
+#ifdef ESPRESSO_SMOOTH_STEP
   SmoothStep_Parameters smooth_step;
 #endif
 
-#ifdef HERTZIAN
+#ifdef ESPRESSO_HERTZIAN
   Hertzian_Parameters hertzian;
 #endif
 
-#ifdef GAUSSIAN
+#ifdef ESPRESSO_GAUSSIAN
   Gaussian_Parameters gaussian;
 #endif
 
-#ifdef BMHTF_NACL
+#ifdef ESPRESSO_BMHTF_NACL
   BMHTF_Parameters bmhtf;
 #endif
 
-#ifdef MORSE
+#ifdef ESPRESSO_MORSE
   Morse_Parameters morse;
 #endif
 
-#ifdef BUCKINGHAM
+#ifdef ESPRESSO_BUCKINGHAM
   Buckingham_Parameters buckingham;
 #endif
 
-#ifdef SOFT_SPHERE
+#ifdef ESPRESSO_SOFT_SPHERE
   SoftSphere_Parameters soft_sphere;
 #endif
 
-#ifdef HAT
+#ifdef ESPRESSO_HAT
   Hat_Parameters hat;
 #endif
 
-#ifdef LJCOS
+#ifdef ESPRESSO_LJCOS
   LJcos_Parameters ljcos;
 #endif
 
-#ifdef LJCOS2
+#ifdef ESPRESSO_LJCOS2
   LJcos2_Parameters ljcos2;
 #endif
 
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
   GayBerne_Parameters gay_berne;
 #endif
 
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
   TabulatedPotential tab;
 #endif
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
   DPD_Parameters dpd;
 #endif
 
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
   Thole_Parameters thole;
 #endif
 };

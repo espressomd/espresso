@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
 
 #include "rotation.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
@@ -44,4 +44,4 @@ inline void stokesian_dynamics_step_1(ParticleRangeStokesian const &particles,
   }
 }
 
-#endif // STOKESIAN_DYNAMICS
+#endif // ESPRESSO_STOKESIAN_DYNAMICS

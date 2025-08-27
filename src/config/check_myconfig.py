@@ -74,36 +74,36 @@ def check_myconfig(compiler, feature_file, cmakedefine_file,
         external_defs = ['-D' + s for s in external_features]
         my_features = Defines(compiler, flags=external_defs).defines(myconfig)
     except subprocess.CalledProcessError as ex:
-        message = ex.output.decode("utf-8").split("\n")[0].strip()
-        raise RuntimeError(
-            f"Command `{' '.join(ex.cmd)}` returned non-zero exit code "
-            f"{ex.returncode}, output: {message}.")
+        exception = RuntimeError(
+            f"Command `{subprocess.list2cmdline(ex.cmd)}` returned non-zero "
+            f"exit status {ex.returncode}.")
+        diagnostic = ex.output.decode("utf-8").split("\n")[0].strip()
+        exception.add_note(f"compiler output: {diagnostic}")
+        raise exception
 
     defs = featuredefs.defs(feature_file)
     cmakedefs = featuredefs.cmakedefs(cmakedefine_file)
-    error_queue = []
+    exceptions = []
 
     for e in defs.externals - cmakedefs.externals:
-        error_queue.append(
-            f"- cmakedefine '{e}' is missing from '{cmakedefine_file}'")
+        exceptions.append(RuntimeError(
+            f"- cmakedefine '{e}' is missing from '{cmakedefine_file}'"))
     for e in cmakedefs.externals - defs.externals:
-        error_queue.append(
-            f"- external feature '{e}' is missing from '{feature_file}'")
+        exceptions.append(RuntimeError(
+            f"- external feature '{e}' is missing from '{feature_file}'"))
 
     for e in (my_features & defs.externals):
         my_features.remove(e)
-        error_queue.append(
-            f"- external feature '{e}' cannot be defined in myconfig")
+        exceptions.append(RuntimeError(
+            f"- external feature '{e}' cannot be defined in myconfig"))
 
     for u in (my_features - defs.features):
         if u.startswith('__'):
             continue
-        error_queue.append(handle_unknown(u, defs.features))
+        exceptions.append(RuntimeError(handle_unknown(u, defs.features)))
 
-    if error_queue:
-        error_report = "\n".join(error_queue)
-        raise RuntimeError(
-            f"There were errors in '{myconfig}':\n{error_report}")
+    if exceptions:
+        raise ExceptionGroup(f"There were errors in '{myconfig}'", exceptions)
 
 
 if __name__ == "__main__":

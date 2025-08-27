@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLAR_DIRECT_SUM
+#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
 
 #include "Actor.hpp"
 
@@ -51,4 +51,4 @@ public:
 } // namespace Dipoles
 } // namespace ScriptInterface
 
-#endif // DIPOLAR_DIRECT_SUM
+#endif // ESPRESSO_DIPOLAR_DIRECT_SUM

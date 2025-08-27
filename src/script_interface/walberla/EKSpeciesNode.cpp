@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "EKSpeciesNode.hpp"
 
@@ -70,6 +70,11 @@ Variant EKSpeciesNode::do_call_method(std::string const &name,
     return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
            m_conv_dens;
   }
+  if (name == "get_flux_vector") {
+    auto const result = m_ek_species->get_node_flux_vector(m_index);
+    return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
+           m_conv_flux;
+  }
   if (name == "get_is_boundary") {
     auto const result = m_ek_species->get_node_is_boundary(m_index);
     return Utils::Mpi::reduce_optional(context()->get_comm(), result);
@@ -118,4 +123,4 @@ Variant EKSpeciesNode::do_call_method(std::string const &name,
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

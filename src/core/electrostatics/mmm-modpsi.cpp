@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "mmm1d.hpp"
 #include "specfunc.hpp"
@@ -43,7 +43,7 @@ static void preparePolygammaEven(int n, double binom,
     for (int order = 1;; order += 1) {
       auto const x_order = static_cast<double>(2 * order);
       auto const coeff = -2 * hzeta(x_order + 1, 2);
-      if (fabs(maxx * coeff) * (4.0 / 3.0) < ROUND_ERROR_PREC)
+      if (fabs(maxx * coeff) * (4.0 / 3.0) < round_error_prec)
         break;
       series.push_back(coeff);
 
@@ -58,7 +58,7 @@ static void preparePolygammaEven(int n, double binom,
       // only even exponents of x
       auto const x_order = static_cast<double>(2 * order);
       auto const coeff = pref * hzeta(1 + deriv + x_order, 2);
-      if ((fabs(maxx * coeff) * (4.0 / 3.0) < ROUND_ERROR_PREC) &&
+      if ((fabs(maxx * coeff) * (4.0 / 3.0) < round_error_prec) &&
           (x_order > deriv))
         break;
       series.push_back(-binom * coeff);
@@ -81,7 +81,7 @@ static void preparePolygammaOdd(int n, double binom,
     // only odd exponents of x
     auto const x_order = static_cast<double>(2 * order + 1);
     auto const coeff = pref * hzeta(1 + deriv + x_order, 2);
-    if ((fabs(maxx * coeff) * (4.0 / 3.0) < ROUND_ERROR_PREC) &&
+    if ((fabs(maxx * coeff) * (4.0 / 3.0) < round_error_prec) &&
         (x_order > deriv))
       break;
 
@@ -109,4 +109,4 @@ void CoulombMMM1D::create_mod_psi_up_to(int new_n) {
   }
 }
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

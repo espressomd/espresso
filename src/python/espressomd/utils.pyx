@@ -85,7 +85,7 @@ def check_type_or_throw_except(x, n, t, msg):
 
 def to_bytes(s):
     """
-    Returns a Cython bytes object which contains the information of the provided
+    Return a Cython bytes object which contains the information of the provided
     Python string. Cython bytes objects implicitly cast to raw char pointers.
 
     Parameters
@@ -94,26 +94,30 @@ def to_bytes(s):
 
     """
     if isinstance(s, str):
-        return bytes(s.encode("utf8"))
-    if isinstance(s, bytes):
+        return s.encode()
+    if isinstance(s, np.bytes_):
         return bytes(s)
-    raise ValueError(f'Unknown string type {type(s)}')
+    if isinstance(s, bytes):
+        return s
+    raise ValueError(f"Unknown string type {type(s)}")
 
 
 def to_str(s):
     """
-    Returns a python string.
+    Return a python string.
 
     Parameters
     ----------
     s : char*
 
     """
-    if isinstance(s, str):
-        return str(s)
     if isinstance(s, bytes):
-        return str(s.decode("utf8"))
-    raise ValueError(f'Unknown string type {type(s)}')
+        return s.decode()
+    if isinstance(s, np.str_):
+        return str(s)
+    if isinstance(s, str):
+        return s
+    raise ValueError(f"Unknown string type {type(s)}")
 
 
 class array_locked(np.ndarray):

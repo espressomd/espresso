@@ -26,7 +26,7 @@
 #include <script_interface/Context.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
 #include <script_interface/system/Leaf.hpp>
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 #include <script_interface/walberla/LBFluid.hpp>
 #endif
 
@@ -156,7 +156,7 @@ protected:
           if (is_none(v)) {
             return;
           }
-#ifdef PARTICLE_ANISOTROPY
+#ifdef ESPRESSO_PARTICLE_ANISOTROPY
           static_assert(std::is_same_v<T, Utils::Vector3d>);
           T gamma{};
           if (is_type<int>(v) or is_type<double>(v)) {
@@ -166,7 +166,7 @@ protected:
           }
 #else
           auto const gamma = get_value<T>(v);
-#endif // PARTICLE_ANISOTROPY
+#endif // ESPRESSO_PARTICLE_ANISOTROPY
           context()->parallel_try_catch(
               [&]() { sanity_checks_positive(gamma, name); });
           m_handle.get()->*member = gamma;
@@ -323,7 +323,7 @@ public:
   Langevin() {
     add_parameters({
         make_autogamma(&CoreThermostat::gamma, "gamma"),
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
         make_autogamma(&CoreThermostat::gamma_rotation, "gamma_rotation"),
 #endif
     });
@@ -335,12 +335,12 @@ protected:
   VariantMap extend_parameters(VariantMap const &parameters) const override {
     auto params =
         Interface<::LangevinThermostat>::extend_parameters(parameters);
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     // If gamma_rotation is not set explicitly, use the translational one.
     if (not params.contains("gamma_rotation") and params.contains("gamma")) {
       params["gamma_rotation"] = params.at("gamma");
     }
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION
     return params;
   }
 };
@@ -360,7 +360,7 @@ public:
   Brownian() {
     add_parameters({
         make_autogamma(&CoreThermostat::gamma, "gamma"),
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
         make_autogamma(&CoreThermostat::gamma_rotation, "gamma_rotation"),
 #endif
     });
@@ -372,17 +372,17 @@ protected:
   VariantMap extend_parameters(VariantMap const &parameters) const override {
     auto params =
         Interface<::BrownianThermostat>::extend_parameters(parameters);
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     // If gamma_rotation is not set explicitly, use the translational one.
     if (not params.contains("gamma_rotation") and params.contains("gamma")) {
       params["gamma_rotation"] = params.at("gamma");
     }
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION
     return params;
   }
 };
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 class IsotropicNpt : public Interface<::IsotropicNptThermostat> {
   std::shared_ptr<CoreThermostat> &
   get_member_handle(::Thermostat::Thermostat &thermostat) override {
@@ -405,9 +405,9 @@ public:
 
   ::ThermostatFlags get_thermo_flag() const final { return THERMO_NPT_ISO; }
 };
-#endif // NPT
+#endif // ESPRESSO_NPT
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 class LBThermostat : public Interface<::LBThermostat> {
   std::shared_ptr<CoreThermostat> &
   get_member_handle(::Thermostat::Thermostat &thermostat) override {
@@ -457,9 +457,9 @@ protected:
     return names;
   }
 };
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
 class DPDThermostat : public Interface<::DPDThermostat> {
   std::shared_ptr<CoreThermostat> &
   get_member_handle(::Thermostat::Thermostat &thermostat) override {
@@ -475,7 +475,7 @@ public:
 };
 #endif
 
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
 class Stokesian : public Interface<::StokesianThermostat> {
   std::shared_ptr<CoreThermostat> &
   get_member_handle(::Thermostat::Thermostat &thermostat) override {
@@ -508,16 +508,16 @@ public:
 class Thermostat : public AutoParameters<Thermostat, System::Leaf> {
   std::shared_ptr<Langevin> langevin;
   std::shared_ptr<Brownian> brownian;
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   std::shared_ptr<IsotropicNpt> npt_iso;
 #endif
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
   std::shared_ptr<LBThermostat> lb;
 #endif
-#ifdef DPD
+#ifdef ESPRESSO_DPD
   std::shared_ptr<DPDThermostat> dpd;
 #endif
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
   std::shared_ptr<Stokesian> stokesian;
 #endif
   std::shared_ptr<ThermalizedBond> thermalized_bond;
@@ -527,16 +527,16 @@ class Thermostat : public AutoParameters<Thermostat, System::Leaf> {
   template <typename Fun> void apply(Fun fun) {
     fun(*langevin);
     fun(*brownian);
-#ifdef NPT
+#ifdef ESPRESSO_NPT
     fun(*npt_iso);
 #endif
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
     fun(*lb);
 #endif
-#ifdef DPD
+#ifdef ESPRESSO_DPD
     fun(*dpd);
 #endif
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
     fun(*stokesian);
 #endif
     fun(*thermalized_bond);
@@ -640,16 +640,16 @@ public:
          }},
         make_autoparameter(&Thermostat::langevin, "langevin"),
         make_autoparameter(&Thermostat::brownian, "brownian"),
-#ifdef NPT
+#ifdef ESPRESSO_NPT
         make_autoparameter(&Thermostat::npt_iso, "npt_iso"),
 #endif
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
         make_autoparameter(&Thermostat::lb, "lb"),
 #endif
-#ifdef DPD
+#ifdef ESPRESSO_DPD
         make_autoparameter(&Thermostat::dpd, "dpd"),
 #endif
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
         make_autoparameter(&Thermostat::stokesian, "stokesian"),
 #endif
         make_autoparameter(&Thermostat::thermalized_bond, "thermalized_bond"),
@@ -672,30 +672,30 @@ public:
       setup_thermostat(brownian, params);
       return {};
     }
-#ifdef NPT
+#ifdef ESPRESSO_NPT
     if (name == "set_npt") {
       setup_thermostat(npt_iso, params);
       return {};
     }
-#endif // NPT
-#ifdef WALBERLA
+#endif // ESPRESSO_NPT
+#ifdef ESPRESSO_WALBERLA
     if (name == "set_lb") {
       setup_thermostat(lb, params);
       return {};
     }
-#endif // WALBERLA
-#ifdef DPD
+#endif // ESPRESSO_WALBERLA
+#ifdef ESPRESSO_DPD
     if (name == "set_dpd") {
       setup_thermostat(dpd, params);
       return {};
     }
-#endif // DPD
-#ifdef STOKESIAN_DYNAMICS
+#endif // ESPRESSO_DPD
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
     if (name == "set_stokesian") {
       setup_thermostat(stokesian, params);
       return {};
     }
-#endif // STOKESIAN_DYNAMICS
+#endif // ESPRESSO_STOKESIAN_DYNAMICS
     if (name == "set_thermalized_bond") {
       setup_thermostat(thermalized_bond, params);
       return {};
@@ -763,16 +763,16 @@ private:
     };
     make_thermostat("langevin", "Thermostat::Langevin");
     make_thermostat("brownian", "Thermostat::Brownian");
-#ifdef NPT
+#ifdef ESPRESSO_NPT
     make_thermostat("npt_iso", "Thermostat::IsotropicNpt");
 #endif
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
     make_thermostat("lb", "Thermostat::LB");
 #endif
-#ifdef DPD
+#ifdef ESPRESSO_DPD
     make_thermostat("dpd", "Thermostat::DPD");
 #endif
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
     make_thermostat("stokesian", "Thermostat::Stokesian");
 #endif
     make_thermostat("thermalized_bond", "Thermostat::ThermalizedBond");

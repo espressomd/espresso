@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLAR_DIRECT_SUM
+#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
 
 #include "magnetostatics/actor.hpp"
 
@@ -40,4 +40,4 @@ struct DipolarDirectSumGpu : public Dipoles::Actor<DipolarDirectSumGpu> {
   void long_range_energy() const;
 };
 
-#endif // DIPOLAR_DIRECT_SUM
+#endif // ESPRESSO_DIPOLAR_DIRECT_SUM

@@ -21,7 +21,7 @@
 
 #include "electrostatics/solver.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "electrostatics/coulomb.hpp"
 
@@ -107,11 +107,11 @@ struct LongRangePressure {
   explicit LongRangePressure(ParticleRange const &particles)
       : m_particles{particles} {}
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
   auto operator()(std::shared_ptr<CoulombP3M> const &actor) const {
     return actor->long_range_pressure(m_particles);
   }
-#endif // P3M
+#endif // ESPRESSO_P3M
 
   auto operator()(std::shared_ptr<DebyeHueckel> const &) const {
     return Utils::Vector9d{};
@@ -142,7 +142,7 @@ Solver::calc_pressure_long_range(ParticleRange const &particles) const {
 }
 
 struct ShortRangeCutoff {
-#ifdef P3M
+#ifdef ESPRESSO_P3M
   auto operator()(std::shared_ptr<CoulombP3M> const &actor) const {
     return actor->p3m_params.r_cut;
   }
@@ -151,15 +151,15 @@ struct ShortRangeCutoff {
     return std::max(actor->elc.space_layer,
                     std::visit(*this, actor->base_solver));
   }
-#endif // P3M
+#endif // ESPRESSO_P3M
   auto operator()(std::shared_ptr<CoulombMMM1D> const &) const {
     return std::numeric_limits<double>::infinity();
   }
-#ifdef SCAFACOS
+#ifdef ESPRESSO_SCAFACOS
   auto operator()(std::shared_ptr<CoulombScafacos> const &actor) const {
     return actor->get_r_cut();
   }
-#endif // SCAFACOS
+#endif // ESPRESSO_SCAFACOS
   auto operator()(std::shared_ptr<ReactionField> const &actor) const {
     return actor->r_cut;
   }
@@ -172,13 +172,13 @@ double Solver::cutoff() const {
   if (impl->solver) {
     return std::visit(ShortRangeCutoff(), *impl->solver);
   }
-  return INACTIVE_CUTOFF;
+  return inactive_cutoff;
 }
 
 struct EventOnObservableCalc {
   template <typename T> void operator()(std::shared_ptr<T> const &) const {}
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
   void operator()(std::shared_ptr<CoulombP3M> const &actor) const {
     actor->count_charged_particles();
   }
@@ -186,7 +186,7 @@ struct EventOnObservableCalc {
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
     std::visit(*this, actor->base_solver);
   }
-#endif // P3M
+#endif // ESPRESSO_P3M
 };
 
 void Solver::on_observable_calc() {
@@ -202,7 +202,7 @@ struct LongRangeForce {
   explicit LongRangeForce(ParticleRange const &particles)
       : m_particles(particles) {}
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
   void operator()(std::shared_ptr<CoulombP3M> const &actor) const {
     actor->add_long_range_forces(m_particles);
   }
@@ -210,8 +210,8 @@ struct LongRangeForce {
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
     actor->add_long_range_forces(m_particles);
   }
-#endif // P3M
-#ifdef SCAFACOS
+#endif // ESPRESSO_P3M
+#ifdef ESPRESSO_SCAFACOS
   void operator()(std::shared_ptr<CoulombScafacos> const &actor) const {
     actor->add_long_range_forces();
   }
@@ -229,7 +229,7 @@ struct LongRangeEnergy {
   explicit LongRangeEnergy(ParticleRange const &particles)
       : m_particles(particles) {}
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
   auto operator()(std::shared_ptr<CoulombP3M> const &actor) const {
     return actor->long_range_energy(m_particles);
   }
@@ -237,8 +237,8 @@ struct LongRangeEnergy {
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
     return actor->long_range_energy(m_particles);
   }
-#endif // P3M
-#ifdef SCAFACOS
+#endif // ESPRESSO_P3M
+#ifdef ESPRESSO_SCAFACOS
   auto operator()(std::shared_ptr<CoulombScafacos> const &actor) const {
     return actor->long_range_energy();
   }
@@ -324,4 +324,4 @@ void check_charge_neutrality(System::System const &system,
 }
 
 } // namespace Coulomb
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

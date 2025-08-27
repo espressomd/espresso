@@ -113,7 +113,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
   auto const comm = boost::mpi::communicator();
   auto const rank = comm.rank();
   auto const n_nodes = comm.size();
-#if defined(FPE)
+#if defined(ESPRESSO_FPE)
   auto const trap = fe_trap::make_unique_scoped();
 #endif
 
@@ -242,7 +242,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
   }
 
   // check electrostatics
-#ifdef P3M
+#ifdef ESPRESSO_P3M
   {
     // add charges
     set_particle_property(pid1, &Particle::q, +0.5);
@@ -291,9 +291,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
           BOOST_CHECK_CLOSE(pf->f[0u], -energy_ref / r, 0.02);
           BOOST_CHECK_LE(std::abs(pf->f[1u]), 1e-12);
           BOOST_CHECK_LE(std::abs(pf->f[2u]), 1e-12);
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
           BOOST_CHECK_EQUAL(pf->torque.norm(), 0.);
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION
         }
       }
     }
@@ -309,10 +309,10 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       BOOST_CHECK_EQUAL(energy_p3m, 0.);
     }
   }
-#endif // P3M
+#endif // ESPRESSO_P3M
 
   // check magnetostatics
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
   {
     // add charges
     set_particle_property(pid1, &Particle::dipm, +0.5);
@@ -378,10 +378,10 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       BOOST_CHECK_EQUAL(energy_p3m, 0.);
     }
   }
-#endif // DP3M
+#endif // ESPRESSO_DP3M
 
   // check non-bonded energies
-#ifdef LENNARD_JONES
+#ifdef ESPRESSO_LENNARD_JONES
   {
     // distance between particles
     auto const dist = 0.2;
@@ -417,7 +417,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       }
     }
   }
-#endif // LENNARD_JONES
+#endif // ESPRESSO_LENNARD_JONES
 
   // check bonded energies
   {
@@ -585,7 +585,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     BOOST_CHECK_THROW(throw BondUnknownTypeError(), std::exception);
     BOOST_CHECK_THROW(throw BondInvalidSizeError(2), std::exception);
     BOOST_CHECK_EQUAL(BondInvalidSizeError(2).size, 2);
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
     BOOST_CHECK_THROW(CollisionDetection::get_part(*system.cell_structure, 777),
                       std::runtime_error);
 #endif
@@ -631,7 +631,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     BOOST_CHECK_THROW(force_kernel(1u), BondUnknownTypeError);
     BOOST_CHECK_THROW(force_kernel(2u), BondUnknownTypeError);
     BOOST_CHECK_THROW(force_kernel(3u), BondUnknownTypeError);
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     BOOST_CHECK_THROW(
         invoke_skip_cuda_exceptions([]() { throw std::runtime_error(""); }),
         std::runtime_error);

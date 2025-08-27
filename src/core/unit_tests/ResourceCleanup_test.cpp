@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(checks) {
   auto system = ::System::System::create();
   System::set_system(system);
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
   BOOST_REQUIRE_EQUAL(system->cleanup_queue.size(), 1);
   BOOST_REQUIRE_EQUAL(system->cleanup_queue.empty(), false);
 #else
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(checks) {
   BOOST_REQUIRE_EQUAL(system->cleanup_queue.empty(), true);
 #endif
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
   if (system->gpu.has_compatible_device()) {
     // allocate device memory to populate the cleanup queue
     system->gpu.enable_property(GpuParticleData::prop::pos);

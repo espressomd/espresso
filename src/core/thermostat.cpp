@@ -47,12 +47,12 @@ void Thermostat::Thermostat::recalc_prefactors(double time_step) {
   if (brownian) {
     brownian->recalc_prefactors(kT);
   }
-#ifdef DPD
+#ifdef ESPRESSO_DPD
   if (dpd) {
     dpd_init(kT, time_step);
   }
 #endif
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   if (npt_iso) {
     npt_iso->recalc_prefactors(kT, get_system().nptiso->piston,
                                get_system().nptiso->mass_list, time_step);
@@ -67,17 +67,17 @@ void Thermostat::Thermostat::philox_counter_increment() {
   if (thermo_switch & THERMO_BROWNIAN) {
     brownian->rng_increment();
   }
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   if (thermo_switch & THERMO_NPT_ISO) {
     npt_iso->rng_increment();
   }
 #endif
-#ifdef DPD
+#ifdef ESPRESSO_DPD
   if (thermo_switch & THERMO_DPD) {
     dpd->rng_increment();
   }
 #endif
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
   if (thermo_switch & THERMO_SD) {
     stokesian->rng_increment();
   }

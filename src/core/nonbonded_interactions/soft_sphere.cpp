@@ -25,7 +25,7 @@
 
 #include "soft_sphere.hpp"
 
-#ifdef SOFT_SPHERE
+#ifdef ESPRESSO_SOFT_SPHERE
 #include "nonbonded_interaction_data.hpp"
 
 #include <stdexcept>
@@ -44,4 +44,4 @@ SoftSphere_Parameters::SoftSphere_Parameters(double a, double n, double cutoff,
   }
 }
 
-#endif // SOFT_SPHERE
+#endif // ESPRESSO_SOFT_SPHERE

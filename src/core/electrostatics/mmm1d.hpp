@@ -37,7 +37,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "electrostatics/actor.hpp"
 
@@ -130,4 +130,4 @@ private:
   void sanity_checks_cell_structure() const;
 };
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

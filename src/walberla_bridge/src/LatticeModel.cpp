@@ -45,7 +45,7 @@ std::shared_ptr<VTKHandle> LatticeModel::create_vtk(
   auto const &blocks = get_lattice().get_blocks();
   auto const write_freq = (delta_N) ? static_cast<unsigned int>(delta_N) : 1u;
   auto vtk_obj = walberla::vtk::createVTKOutput_BlockData(
-      blocks, identifier, uint_c(write_freq), uint_c(0), false, base_folder,
+      blocks, identifier, uint_c(write_freq), uint_c(0), true, base_folder,
       prefix, true, true, true, true, uint_c(initial_count));
 
   // add filters

@@ -19,7 +19,7 @@
 
 #include <config/config.hpp>
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
 
 #include "CollisionDetection.hpp"
 
@@ -51,7 +51,7 @@ void CollisionDetection::initialize() {
                *m_protocol);
   }
   system.on_short_range_ia_change();
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   system.cell_structure->clear_local_properties();
 #endif
 }
@@ -66,11 +66,11 @@ void CollisionDetection::unset_protocol() {
   m_protocol = nullptr;
   auto &system = get_system();
   system.on_short_range_ia_change();
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   system.cell_structure->clear_local_properties();
 #endif
 }
 
 } // namespace CollisionDetection
 
-#endif // COLLISION_DETECTION
+#endif // ESPRESSO_COLLISION_DETECTION

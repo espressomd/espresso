@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "electrostatics/mmm1d.hpp"
 
@@ -48,7 +48,7 @@
 /* if you define this feature, the Bessel functions are calculated up
  * to machine precision, otherwise 10^-14, which should be
  * definitely enough for daily life. */
-#ifndef MMM1D_MACHINE_PREC
+#ifndef ESPRESSO_MMM1D_MACHINE_PREC
 #define K0 LPK0
 #define K1 LPK1
 #endif
@@ -250,7 +250,7 @@ Utils::Vector3d CoulombMMM1D::pair_force(double q1q2, Utils::Vector3d const &d,
         break;
 
       auto const fq = c_2pi * bp;
-#ifdef MMM1D_MACHINE_PREC
+#ifdef ESPRESSO_MMM1D_MACHINE_PREC
       auto const k0 = K0(fq * rxy_d);
       auto const k1 = K1(fq * rxy_d);
 #else
@@ -382,4 +382,4 @@ void CoulombMMM1D::tune() {
   system.on_coulomb_change();
 }
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

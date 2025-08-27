@@ -23,7 +23,7 @@
 
 #include "config/config.hpp"
 
-#ifdef SCAFACOS
+#ifdef ESPRESSO_SCAFACOS
 
 #include "electrostatics/actor.hpp"
 
@@ -91,4 +91,4 @@ private:
 std::shared_ptr<CoulombScafacos>
 make_coulomb_scafacos(std::string const &method, std::string const &parameters);
 
-#endif // SCAFACOS
+#endif // ESPRESSO_SCAFACOS

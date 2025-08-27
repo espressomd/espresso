@@ -37,7 +37,7 @@
 namespace Coulomb {
 
 struct Solver {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   struct Implementation;
   /// @brief Pointer-to-implementation.
   std::unique_ptr<Implementation> impl;
@@ -61,10 +61,10 @@ struct Solver {
   void calc_long_range_force(ParticleRange const &particles) const;
   double calc_energy_long_range(ParticleRange const &particles) const;
   Solver();
-#else  // ELECTROSTATICS
+#else  // ESPRESSO_ELECTROSTATICS
   Solver() = default;
-  constexpr double cutoff() const { return INACTIVE_CUTOFF; }
-#endif // ELECTROSTATICS
+  constexpr double cutoff() const { return inactive_cutoff; }
+#endif // ESPRESSO_ELECTROSTATICS
 
   using ShortRangeForceKernel =
       std::function<Utils::Vector3d(double, Utils::Vector3d const &, double)>;
@@ -84,7 +84,7 @@ struct Solver {
   pair_force_elc_kernel() const;
 };
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 Solver const &get_coulomb();
 #endif
 

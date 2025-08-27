@@ -29,7 +29,7 @@
 #include <omp.h>
 #endif
 
-#ifdef FFTW
+#ifdef ESPRESSO_FFTW
 void fft_on_program_start() {
 #ifdef _OPENMP
   int omp_num_threads = 1;
@@ -43,4 +43,4 @@ void fft_on_program_start() {
   fftw_plan_with_nthreads(omp_num_threads);
 #endif // _OPENMP
 }
-#endif // FFTW
+#endif // ESPRESSO_FFTW

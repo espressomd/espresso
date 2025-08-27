@@ -21,12 +21,17 @@
 
 #include "PoissonSolver.hpp"
 
+#include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_double_precision.h"
+#include "../../../../src/electrokinetics/generated_kernels/EK_FieldAccessors_single_precision.h"
+#include "../../BlockAndCell.hpp"
+
 #include <blockforest/communication/UniformBufferedScheme.h>
 #include <domain_decomposition/BlockDataID.h>
 #include <fft/Fft.h>
 #include <field/AddToStorage.h>
 #include <field/GhostLayerField.h>
 #include <field/communication/PackInfo.h>
+#include <field/vtk/VTKWriter.h>
 #include <stencil/D3Q27.h>
 
 #include <cmath>
@@ -131,6 +136,110 @@ public:
   void solve() override {
     (*m_ft)();
     ghost_communication();
+    integrate_vtk_writers();
+  }
+
+  [[nodiscard]] std::optional<double>
+  get_node_potential(Utils::Vector3i const &node,
+                     bool consider_ghosts = false) override {
+    auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
+
+    if (!bc || (get_potential_field_id() == 0))
+      return std::nullopt;
+
+    auto const potential_field =
+        bc->block->template getData<PotentialField>(m_potential_field_id);
+    return {double_c(
+        walberla::ek::accessor::Scalar::get(potential_field, bc->cell))};
+  }
+
+  [[nodiscard]] std::vector<double>
+  get_slice_potential(Utils::Vector3i const &lower_corner,
+                      Utils::Vector3i const &upper_corner) const override {
+    std::vector<double> out;
+    uint_t values_size = 0;
+    auto const &lattice = get_lattice();
+    if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
+      out = std::vector<double>(ci->numCells());
+      for (auto &block : *lattice.get_blocks()) {
+        auto const block_offset = lattice.get_block_corner(block, true);
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
+          auto const potential_field =
+              block.template getData<PotentialField>(m_potential_field_id);
+          auto const values = ek::accessor::Scalar::get(potential_field, *bci);
+          assert(values.size() == bci->numCells());
+          values_size += bci->numCells();
+          auto kernel = [&values, &out](unsigned const block_index,
+                                        unsigned const local_index,
+                                        Utils::Vector3i const &node) {
+            out[local_index] = double_c(values[block_index]);
+          };
+
+          copy_block_buffer(*bci, *ci, block_offset, lower_corner, kernel);
+        }
+      }
+      assert(values_size == ci->numCells());
+    }
+    return out;
+  }
+
+protected:
+  template <typename Field_T, uint_t F_SIZE_ARG, typename OutputType>
+  class VTKWriter : public vtk::BlockCellDataWriter<OutputType, F_SIZE_ARG> {
+  public:
+    VTKWriter(ConstBlockDataID const &block_id, std::string const &id,
+              FloatType unit_conversion)
+        : vtk::BlockCellDataWriter<OutputType, F_SIZE_ARG>(id),
+          m_block_id(block_id), m_field(nullptr),
+          m_conversion(unit_conversion) {}
+
+  protected:
+    void configure() override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->block_);
+      m_field = this->block_->template getData<Field_T>(m_block_id);
+    }
+
+    ConstBlockDataID const m_block_id;
+    Field_T const *m_field;
+    FloatType const m_conversion;
+  };
+
+  template <typename OutputType = float>
+  class PotentialVTKWriter : public VTKWriter<PotentialField, 1u, OutputType> {
+  public:
+    using Base = VTKWriter<PotentialField, 1u, OutputType>;
+    using Base::Base;
+    using Base::evaluate;
+
+  protected:
+    OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
+                        cell_idx_t const z, cell_idx_t const) override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
+      auto const potential =
+          walberla::ek::accessor::Scalar::get(this->m_field, {x, y, z});
+      return numeric_cast<OutputType>(this->m_conversion * potential);
+    }
+  };
+
+  void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
+                                  LatticeModel::units_map const &units,
+                                  int flag_observables) override {
+    if (flag_observables & static_cast<int>(EKPoissonOutputVTK::potential)) {
+      auto const unit_conversion = FloatType_c(units.at("potential"));
+      vtk_obj.addCellDataWriter(make_shared<PotentialVTKWriter<float>>(
+          m_potential_field_id, "potential", unit_conversion));
+    }
+  }
+
+  void integrate_vtk_writers() override {
+    for (auto const &it : m_vtk_auto) {
+      auto &vtk_handle = it.second;
+      if (vtk_handle->enabled) {
+        vtk::writeFiles(vtk_handle->ptr)();
+        vtk_handle->execution_count++;
+      }
+    }
   }
 
 private:

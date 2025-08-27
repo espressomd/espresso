@@ -47,14 +47,112 @@ class EKFFT(ScriptInterfaceHelper):
         permittivity of the fluid :math:`\\epsilon_0 \\epsilon_{\\mathrm{r}}`.
     single_precision : :obj:`bool`, optional
         Use single-precision floating-point arithmetic.
+    add_vtk_writer()
+        Attach a VTK writer.
+
+        Parameters
+        ----------
+        vtk : :class:`espressomd.electrokinetics.VTKOutput`
+            VTK writer.
+
+    remove_vtk_writer()
+        Detach a VTK writer.
+
+        Parameters
+        ----------
+        vtk : :class:`espressomd.electrokinetics.VTKOutput`
+            VTK writer.
+
+    clear_vtk_writers()
+        Detach all VTK writers.
     """
     _so_name = "walberla::EKFFT"
     _so_features = ("WALBERLA_FFT",)
     _so_creation_policy = "GLOBAL"
+    _so_bind_methods = (
+        "add_vtk_writer",
+        "remove_vtk_writer",
+        "clear_vtk_writers",
+    )
 
     def __init__(self, *args, **kwargs):
         _check_lattice_blocks(self.__class__.__name__, kwargs)
         super().__init__(*args, **kwargs)
+
+    def __getitem__(self, key):
+        if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
+            if any(isinstance(item, slice) for item in key):
+                return EKPoissonSolverSlice(
+                    # , node_grid=self.shape)
+                    parent_sip=self, slice_range=key)
+            else:
+                return EKPoissonSolverNode(
+                    parent_sip=self, index=np.array(key))
+
+        raise TypeError(
+            f"{key} is not a valid index. Should be a point on the "
+            "nodegrid e.g. ek[0,0,0], or a slice, e.g. ek[:,0,0]")
+
+
+@script_interface_register
+class EKFFTGPU(ScriptInterfaceHelper):
+    """
+    A FFT-based Poisson solver on the GPU.
+    Intrinsically assumes periodic boundary conditions.
+
+    Parameters
+    ----------
+    lattice : :obj:`espressomd.lb.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+        Lattice object.
+    permittivity : :obj:`float`
+        permittivity of the fluid :math:`\\epsilon_0 \\epsilon_{\\mathrm{r}}`.
+    single_precision : :obj:`bool`, optional
+        Use single-precision floating-point arithmetic.
+    add_vtk_writer()
+        Attach a VTK writer.
+
+        Parameters
+        ----------
+        vtk : :class:`espressomd.electrokinetics.VTKOutput`
+            VTK writer.
+
+    remove_vtk_writer()
+        Detach a VTK writer.
+
+        Parameters
+        ----------
+        vtk : :class:`espressomd.electrokinetics.VTKOutput`
+            VTK writer.
+
+    clear_vtk_writers()
+        Detach all VTK writers.
+    """
+    _so_name = "walberla::EKFFTGPU"
+    _so_features = ("WALBERLA_FFT", "CUDA")
+    _so_creation_policy = "GLOBAL"
+    _so_bind_methods = (
+        "add_vtk_writer",
+        "remove_vtk_writer",
+        "clear_vtk_writers",
+    )
+
+    def __init__(self, *args, **kwargs):
+        _check_lattice_blocks(self.__class__.__name__, kwargs)
+        super().__init__(*args, **kwargs)
+
+    def __getitem__(self, key):
+        if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
+            if any(isinstance(item, slice) for item in key):
+                return EKPoissonSolverSlice(
+                    # , node_grid=self.shape)
+                    parent_sip=self, slice_range=key)
+            else:
+                return EKPoissonSolverNode(
+                    parent_sip=self, index=np.array(key))
+
+        raise TypeError(
+            f"{key} is not a valid index. Should be a point on the "
+            "nodegrid e.g. ek[0,0,0], or a slice, e.g. ek[:,0,0]")
 
 
 @script_interface_register
@@ -77,6 +175,170 @@ class EKNone(ScriptInterfaceHelper):
     def __init__(self, *args, **kwargs):
         _check_lattice_blocks(self.__class__.__name__, kwargs)
         super().__init__(*args, **kwargs)
+
+
+@script_interface_register
+class EKPoissonSolverNode(ScriptInterfaceHelper):
+    _so_name = "walberla::EKPoissonSolverNode"
+    _so_creation_policy = "GLOBAL"
+
+    def required_keys(self):
+        return {"parent_sip", "index"}
+
+    def validate_params(self, params):
+        utils.check_required_keys(self.required_keys(), params.keys())
+        utils.check_type_or_throw_except(
+            params["index"], 3, int, "The index of an EK poisson solver node consists of three integers.")
+
+    def __init__(self, *args, **kwargs):
+        if "sip" not in kwargs:
+            self.validate_params(kwargs)
+            super().__init__(*args, **kwargs)
+            utils.handle_errors("EKPoissonSolverNode instantiation failed")
+        else:
+            super().__init__(**kwargs)
+
+    def __reduce__(self):
+        raise NotImplementedError(
+            "Cannot serialize EK poisson solver node objects")
+
+    def __eq__(self, obj):
+        return isinstance(obj, EKPoissonSolverNode) and self.index == obj.index
+
+    def __hash__(self):
+        return hash(self.index)
+
+    @property
+    def index(self):
+        return tuple(self._index)
+
+    @index.setter
+    def index(self, value):
+        raise RuntimeError("Parameter 'index' is read-only.")
+
+    @property
+    def potential(self):
+        return self.call_method("get_potential")
+
+
+@script_interface_register
+class EKPoissonSolverSlice(ScriptInterfaceHelper):
+    _so_name = "walberla::EKPoissonSolverSlice"
+    _so_creation_policy = "GLOBAL"
+
+    def required_keys(self):
+        return {"parent_sip", "slice_range"}
+
+    def validate_params(self, params):
+        utils.check_required_keys(self.required_keys(), params.keys())
+
+    def __init__(self, *args, **kwargs):
+        if "sip" in kwargs:
+            super().__init__(**kwargs)
+        else:
+            self.validate_params(kwargs)
+            slice_range = kwargs.pop("slice_range")
+            grid_size = kwargs["parent_sip"].shape
+            extra_kwargs = espressomd.detail.walberla.get_slice_bounding_box(
+                slice_range, grid_size)
+            node = EKPoissonSolverNode(index=np.array([0, 0, 0]), **kwargs)
+            super().__init__(*args, node_sip=node, **kwargs, **extra_kwargs)
+            utils.handle_errors("EKPoissonSolverSlice instantiation failed")
+
+    def __iter__(self):
+        lower, upper = self.call_method("get_slice_ranges")
+        indices = [list(range(lower[i], upper[i])) for i in range(3)]
+        lb_sip = self.call_method("get_ek_solver_sip")
+        for index in itertools.product(*indices):
+            yield EKPoissonSolverNode(parent_sip=lb_sip, index=np.array(index))
+
+    def __reduce__(self):
+        raise NotImplementedError(
+            "Cannot serialize EK poisson solver slice objects")
+
+    def _getter(self, attr):
+        value_grid, shape = self.call_method(f"get_{attr}")
+        return utils.array_locked(np.reshape(value_grid, shape))
+
+    def _setter(self, attr, values):
+        dimensions = self.call_method("get_slice_size")
+        if 0 in dimensions:
+            raise AttributeError(
+                f"Cannot set properties of an empty '{self.__class__.__name__}' object")
+
+        values = np.copy(values)
+        value_shape = tuple(self.call_method("get_value_shape", name=attr))
+        target_shape = (*dimensions, *value_shape)
+
+        # broadcast if only one element was provided
+        if values.shape == value_shape or values.shape == () and value_shape == (1,):
+            values = np.full(target_shape, values)
+
+        def shape_squeeze(shape):
+            return tuple(x for x in shape if x != 1)
+
+        if shape_squeeze(values.shape) != shape_squeeze(target_shape):
+            target_shape = tuple([int(x) for x in target_shape])
+            raise ValueError(
+                f"Input-dimensions of '{attr}' array {values.shape} does not match slice dimensions {target_shape}")
+
+        self.call_method(f"set_{attr}", values=values.flatten())
+
+    @property
+    def potential(self):
+        return self._getter("potential",)
+
+
+@script_interface_register
+class VTKPoissonOutput(VTKOutputBase):
+    """
+    Create a VTK writer.
+
+    Files are written to :file:`<base_folder>/<identifier>/<prefix>_*.vtu`.
+    Summary is written to :file:`<base_folder>/<identifier>.pvd`.
+
+    Manual VTK callbacks can be called at any time to take a snapshot
+    of the current state of the EK species.
+
+    Automatic VTK callbacks can be disabled at any time and re-enabled later.
+    Please note that the internal VTK counter is no longer incremented when
+    an automatic callback is disabled, which means the number of EK steps
+    between two frames will not always be an integer multiple of ``delta_N``.
+
+    Parameters
+    ----------
+    identifier : :obj:`str`
+        Name of the VTK writer.
+    observables : :obj:`list`, {'potential',}
+        List of observables to write to the VTK files.
+    delta_N : :obj:`int`
+        Write frequency. If this value is 0 (default), the object is a
+        manual VTK callback that must be triggered manually. Otherwise,
+        it is an automatic callback that is added to the time loop and
+        writes every ``delta_N`` EK steps.
+    base_folder : :obj:`str` or :obj:`pathlib.Path` (optional), default is :file:`vtk_out`
+        Path to the output VTK folder.
+    prefix : :obj:`str` (optional), default is 'simulation_step'
+        Prefix for VTK files.
+
+    """
+    _so_name = "walberla::EKPoissonVTKHandle"
+    _so_creation_policy = "GLOBAL"
+    _so_bind_methods = ("enable", "disable", "write")
+    _so_features = ("WALBERLA",)
+
+    def required_keys(self):
+        return self.valid_keys() - self.default_params().keys()
+
+    def __repr__(self):
+        class_id = f"{self.__class__.__module__}.{self.__class__.__name__}"
+        if self.delta_N:
+            write_when = f"every {self.delta_N} EK steps"
+            if not self.enabled:
+                write_when += " (disabled)"
+        else:
+            write_when = "on demand"
+        return f"<{class_id}: write to '{self.vtk_uid}' {write_when}>"
 
 
 @script_interface_register
@@ -165,7 +427,7 @@ class EKSpecies(ScriptInterfaceHelper,
 
     """
 
-    _so_name = "walberla::EKSpecies"
+    _so_name = "walberla::EKSpeciesCPU"
     _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
@@ -250,6 +512,22 @@ class EKSpecies(ScriptInterfaceHelper,
             values=array_variant(value.flatten()))
 
 
+@script_interface_register
+class EKSpeciesGPU(EKSpecies):
+    """
+    GPU implementation of the `EKSpecies`
+
+    """
+    _so_name = "walberla::EKSpeciesGPU"
+    _so_creation_policy = "GLOBAL"
+    _so_features = ("WALBERLA", "CUDA")
+
+    def default_params(self):
+        params = super().default_params()
+        params["single_precision"] = True
+        return params
+
+
 class FluxBoundary:
     """
     Hold flux information for the flux boundary
@@ -321,6 +599,10 @@ class EKSpeciesNode(ScriptInterfaceHelper):
     @density.setter
     def density(self, value):
         self.call_method("set_density", value=value)
+
+    @property
+    def flux(self):
+        return self.call_method("get_flux_vector")
 
     @property
     def is_boundary(self):
@@ -477,6 +759,10 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
         self._setter("density", value)
 
     @property
+    def flux(self):
+        return self._getter("flux",)
+
+    @property
     def is_boundary(self):
         return self._getter("is_boundary")
 
@@ -579,7 +865,7 @@ class VTKOutput(VTKOutputBase):
     ----------
     identifier : :obj:`str`
         Name of the VTK writer.
-    observables : :obj:`list`, {'density',}
+    observables : :obj:`list`, {'density', 'flux',}
         List of observables to write to the VTK files.
     delta_N : :obj:`int`
         Write frequency. If this value is 0 (default), the object is a

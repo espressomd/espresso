@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
@@ -42,6 +42,8 @@
 #include <variant>
 
 namespace EK {
+
+bool EKWalberla::is_gpu() const { return ek_container->is_gpu(); }
 
 double EKWalberla::get_tau() const { return ek_container->get_tau(); }
 
@@ -139,4 +141,4 @@ void EKWalberla::sanity_checks(System::System const &system) const {
 
 } // namespace EK
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

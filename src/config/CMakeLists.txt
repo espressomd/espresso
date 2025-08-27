@@ -25,17 +25,22 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/espresso_cmake_config.cmakein
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/include/config/config-features.hpp
          ${CMAKE_CURRENT_BINARY_DIR}/include/config/config-features.impl.hpp
+         ${CMAKE_CURRENT_BINARY_DIR}/include/config/myconfig-final.hpp
   COMMAND
     ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/gen_featureconfig.py
     ${CMAKE_CURRENT_SOURCE_DIR}/features.def
     ${CMAKE_CURRENT_BINARY_DIR}/include/config/config-features.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/include/config/config-features.impl.hpp
+    ${CMAKE_CURRENT_BINARY_DIR}/include/config/myconfig-final.hpp.in
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/features.def
+          ${CMAKE_CURRENT_BINARY_DIR}/include/config/myconfig-final.hpp.in
+          ${CMAKE_CURRENT_SOURCE_DIR}/featuredefs.py
           ${CMAKE_CURRENT_SOURCE_DIR}/gen_featureconfig.py)
 add_custom_target(
   generate_config_features
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/include/config/config-features.hpp
-          ${CMAKE_CURRENT_BINARY_DIR}/include/config/config-features.impl.hpp)
+          ${CMAKE_CURRENT_BINARY_DIR}/include/config/config-features.impl.hpp
+          ${CMAKE_CURRENT_BINARY_DIR}/include/config/myconfig-final.hpp)
 
 add_custom_target(
   check_myconfig
@@ -45,7 +50,8 @@ add_custom_target(
     ${CMAKE_SOURCE_DIR}/cmake/espresso_cmake_config.cmakein
     ${CMAKE_CURRENT_BINARY_DIR}/include/config/myconfig-final.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/include/config/cmake_config.hpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/features.def myconfig)
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/features.def myconfig
+          ${CMAKE_CURRENT_SOURCE_DIR}/featuredefs.py)
 
 execute_process(
   COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/gen_sampleconfig.py

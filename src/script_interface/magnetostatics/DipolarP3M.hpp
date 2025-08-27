@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
 
 #include "Actor.hpp"
 
@@ -179,4 +179,4 @@ private:
 } // namespace Dipoles
 } // namespace ScriptInterface
 
-#endif // DP3M
+#endif // ESPRESSO_DP3M

@@ -21,7 +21,7 @@
 
 #include <config/config.hpp>
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
 
 #include "CollisionPair.hpp"
 
@@ -56,7 +56,7 @@ inline auto &get_part(CellStructure &cell_structure, int id) {
   return *p;
 }
 
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 inline void place_vs_and_relate_to_particle(
     CellStructure &cell_structure, BoxGeometry const &box_geo,
     int const part_type_vs, double const min_global_cut,
@@ -69,7 +69,7 @@ inline void place_vs_and_relate_to_particle(
                min_global_cut);
   p_vs->type() = part_type_vs;
 }
-#endif // VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 
 inline auto gather_collision_queue(std::vector<CollisionPair> const &local) {
   auto global = local;
@@ -99,4 +99,4 @@ inline void add_bind_centers(std::vector<CollisionPair> &collision_queue,
 
 } // namespace CollisionDetection
 
-#endif // COLLISION_DETECTION
+#endif // ESPRESSO_COLLISION_DETECTION

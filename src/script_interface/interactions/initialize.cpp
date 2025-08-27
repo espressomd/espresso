@@ -56,57 +56,57 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
       "Interactions::NonBondedInteractions");
   om->register_new<NonBondedInteractionHandle>(
       "Interactions::NonBondedInteractionHandle");
-#ifdef LENNARD_JONES
+#ifdef ESPRESSO_LENNARD_JONES
   om->register_new<InteractionLJ>("Interactions::InteractionLJ");
 #endif
-#ifdef LENNARD_JONES_GENERIC
+#ifdef ESPRESSO_LENNARD_JONES_GENERIC
   om->register_new<InteractionLJGen>("Interactions::InteractionLJGen");
 #endif
-#ifdef LJCOS
+#ifdef ESPRESSO_LJCOS
   om->register_new<InteractionLJcos>("Interactions::InteractionLJcos");
 #endif
-#ifdef LJCOS2
+#ifdef ESPRESSO_LJCOS2
   om->register_new<InteractionLJcos2>("Interactions::InteractionLJcos2");
 #endif
-#ifdef WCA
+#ifdef ESPRESSO_WCA
   om->register_new<InteractionWCA>("Interactions::InteractionWCA");
 #endif
-#ifdef HERTZIAN
+#ifdef ESPRESSO_HERTZIAN
   om->register_new<InteractionHertzian>("Interactions::InteractionHertzian");
 #endif
-#ifdef GAUSSIAN
+#ifdef ESPRESSO_GAUSSIAN
   om->register_new<InteractionGaussian>("Interactions::InteractionGaussian");
 #endif
-#ifdef BMHTF_NACL
+#ifdef ESPRESSO_BMHTF_NACL
   om->register_new<InteractionBMHTF>("Interactions::InteractionBMHTF");
 #endif
-#ifdef MORSE
+#ifdef ESPRESSO_MORSE
   om->register_new<InteractionMorse>("Interactions::InteractionMorse");
 #endif
-#ifdef BUCKINGHAM
+#ifdef ESPRESSO_BUCKINGHAM
   om->register_new<InteractionBuckingham>(
       "Interactions::InteractionBuckingham");
 #endif
-#ifdef SOFT_SPHERE
+#ifdef ESPRESSO_SOFT_SPHERE
   om->register_new<InteractionSoftSphere>(
       "Interactions::InteractionSoftSphere");
 #endif
-#ifdef HAT
+#ifdef ESPRESSO_HAT
   om->register_new<InteractionHat>("Interactions::InteractionHat");
 #endif
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
   om->register_new<InteractionGayBerne>("Interactions::InteractionGayBerne");
 #endif
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
   om->register_new<InteractionTabulated>("Interactions::InteractionTabulated");
 #endif
-#ifdef DPD
+#ifdef ESPRESSO_DPD
   om->register_new<InteractionDPD>("Interactions::InteractionDPD");
 #endif
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
   om->register_new<InteractionThole>("Interactions::InteractionThole");
 #endif
-#ifdef SMOOTH_STEP
+#ifdef ESPRESSO_SMOOTH_STEP
   om->register_new<InteractionSmoothStep>(
       "Interactions::InteractionSmoothStep");
 #endif

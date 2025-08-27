@@ -86,7 +86,7 @@ public:
 
   static std::shared_ptr<System> create();
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
   GpuParticleData gpu;
 #endif
   ResourceCleanup cleanup_queue;
@@ -131,7 +131,7 @@ public:
 
   /** @brief Rebuild cell lists. Use e.g. after a skin change. */
   void rebuild_cell_structure();
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   void rebuild_aosoa();
 #endif
 
@@ -154,7 +154,7 @@ public:
   /** @brief Calculate the pressure from a virial expansion. */
   std::shared_ptr<Observable_stat> calculate_pressure();
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   /** @brief get the instantaneous pressure with (q(t+dt), p(t+dt/2))*/
   double get_instantaneous_pressure();
 
@@ -167,18 +167,18 @@ public:
   void npt_ensemble_init(bool recalc_forces);
   void npt_add_virial_contribution(double energy);
   bool has_npt_enabled() const;
-#endif // NPT
+#endif // ESPRESSO_NPT
   Utils::Vector3d *get_npt_virial() const;
 
   /** @brief Calculate all forces. */
   void calculate_forces();
 
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   /** @brief Calculate dipole fields. */
   void calculate_long_range_fields();
 #endif
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
   bool has_collision_detection_enabled() const;
 #endif
 
@@ -325,7 +325,7 @@ public:
   std::shared_ptr<Galilei> galilei;
   std::shared_ptr<OifGlobal> oif_global;
   std::shared_ptr<ImmersedBoundaries> immersed_boundaries;
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
   std::shared_ptr<CollisionDetection::CollisionDetection> collision_detection;
 #endif
   std::shared_ptr<BondBreakage::BondBreakage> bond_breakage;
@@ -333,7 +333,7 @@ public:
   std::shared_ptr<Accumulators::AutoUpdateAccumulators>
       auto_update_accumulators;
   std::shared_ptr<Constraints::Constraints> constraints;
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   std::shared_ptr<NptIsoParameters> nptiso;
   std::shared_ptr<InstantaneousPressure> npt_inst_pressure;
 #endif
@@ -356,10 +356,10 @@ protected:
   double min_global_cut;
 
   void update_local_geo();
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   void update_icc_particles();
   bool has_icc_enabled() const;
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
 
 private:
   /**

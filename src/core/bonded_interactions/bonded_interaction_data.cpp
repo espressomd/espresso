@@ -34,7 +34,7 @@
 
 double BondedInteractionsMap::maximal_cutoff() const {
   auto const max_cut_bonded = std::accumulate(
-      begin(), end(), BONDED_INACTIVE_CUTOFF, [](auto max_cut, auto const &kv) {
+      begin(), end(), bonded_inactive_cutoff, [](auto max_cut, auto const &kv) {
         auto constexpr visitor = [](auto const &bond) { return bond.cutoff(); };
         return std::max(max_cut, std::visit(visitor, *kv.second));
       });
@@ -52,14 +52,14 @@ double BondedInteractionsMap::maximal_cutoff() const {
 
 void BondedInteractionsMap::on_ia_change() {
   n_thermalized_bonds = 0;
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   n_rigid_bonds = 0;
 #endif
   for (auto const &bond : std::views::elements<1>(*this)) {
     if (std::holds_alternative<ThermalizedBond>(*bond)) {
       ++n_thermalized_bonds;
     }
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
     if (std::holds_alternative<RigidBond>(*bond)) {
       ++n_rigid_bonds;
     }
@@ -95,7 +95,7 @@ void BondedInteractionsMap::deactivate_bond(mapped_type const &ptr) {
   if (auto bond = std::get_if<IBMVolCons>(ptr.get())) {
     bond->unset_volumes_view();
   }
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   if (std::get_if<RigidBond>(ptr.get())) {
     n_rigid_bonds = -1;
   }

@@ -23,7 +23,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "magnetostatics/actor.hpp"
 
@@ -49,9 +49,9 @@ struct DipolarDirectSum : public Dipoles::Actor<DipolarDirectSum> {
 
   double long_range_energy(ParticleRange const &particles) const;
   void add_long_range_forces(ParticleRange const &particles) const;
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   void dipole_field_at_part(ParticleRange const &particles) const;
 #endif
 };
 
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES

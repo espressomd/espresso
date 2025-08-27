@@ -50,7 +50,7 @@
 namespace ScriptInterface {
 namespace Particles {
 
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
 /**
  * @brief Use the bond topology to automatically add exclusions between
  * particles that are up to @c n_bonds_max bonds apart in a chain.
@@ -132,17 +132,17 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   }
   system.on_particle_change();
 }
-#endif // EXCLUSIONS
+#endif // ESPRESSO_EXCLUSIONS
 
 Variant ParticleList::do_call_method(std::string const &name,
                                      VariantMap const &params) {
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
   if (name == "auto_exclusions") {
     auto const distance = get_value<int>(params, "distance");
     auto_exclusions(context()->get_comm(), distance);
     return {};
   }
-#endif // EXCLUSIONS
+#endif // ESPRESSO_EXCLUSIONS
   if (name == "get_highest_particle_id") {
     return get_maximal_particle_id();
   }
@@ -183,11 +183,11 @@ Variant ParticleList::do_call_method(std::string const &name,
     local_params["__bonded_ias"] = m_bonded_ias.lock();
     auto so = std::dynamic_pointer_cast<ParticleHandle>(
         context()->make_shared("Particles::ParticleHandle", local_params));
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
     if (params.contains("exclusions")) {
       so->call_method("set_exclusions", {{"p_ids", params.at("exclusions")}});
     }
-#endif // EXCLUSIONS
+#endif // ESPRESSO_EXCLUSIONS
     return so;
   }
   return {};

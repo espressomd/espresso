@@ -18,7 +18,7 @@
  */
 #include "config/config.hpp"
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+#ifdef ESPRESSO_VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
@@ -95,4 +95,4 @@ void lb_tracers_propagate(CellStructure &cell_structure, LB::Solver const &lb,
     }
   }
 }
-#endif // VIRTUAL_SITES_INERTIALESS_TRACERS
+#endif // ESPRESSO_VIRTUAL_SITES_INERTIALESS_TRACERS

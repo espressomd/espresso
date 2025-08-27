@@ -21,7 +21,7 @@
 
 #include <config/config.hpp>
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 #include <Cabana_VerletList.hpp>
 
@@ -202,4 +202,4 @@ public:
   }
 };
 
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

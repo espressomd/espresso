@@ -68,9 +68,9 @@ class ParticleHandle : public AutoParameters<ParticleHandle> {
                              Variant const &value) const;
 
   template <class F> void set_particle_property(F const &fun) const;
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
   void particle_exclusion_sanity_checks(int pid1, int pid2) const;
-#endif // EXCLUSIONS
+#endif // ESPRESSO_EXCLUSIONS
 
 public:
   ParticleHandle();

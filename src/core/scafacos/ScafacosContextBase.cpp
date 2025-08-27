@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#if defined(SCAFACOS) or defined(SCAFACOS_DIPOLAR)
+#if defined(ESPRESSO_SCAFACOS) or defined(ESPRESSO_SCAFACOS_DIPOLES)
 
 #include "scafacos/ScafacosContextBase.hpp"
 
@@ -48,4 +48,4 @@ void ScafacosContextBase::sanity_check_method(std::string const &method_name) {
   }
 }
 
-#endif // SCAFACOS or SCAFACOS_DIPOLAR
+#endif // ESPRESSO_SCAFACOS or ESPRESSO_SCAFACOS_DIPOLES

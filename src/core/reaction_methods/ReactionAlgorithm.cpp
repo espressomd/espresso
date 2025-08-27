@@ -92,7 +92,7 @@ void ReactionAlgorithm::restore_old_system_state() {
       on_particle_type_change(p_id, type_tracking::any_type, p_type);
       if (auto p = get_local_particle(p_id)) {
         p->type() = p_type;
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
         p->q() = charges_of_types.at(p_type);
 #endif
       }
@@ -165,7 +165,7 @@ void ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction,
     // particles of reactant_types(i) to product_types(i)
     auto const old_type = reaction.reactant_types[i];
     auto const new_type = reaction.product_types[i];
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     if (charges_of_types.at(new_type) != charges_of_types.at(old_type)) {
       only_local_changes = false;
     }
@@ -175,7 +175,7 @@ void ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction,
       on_particle_type_change(p_id, old_type, new_type);
       if (auto p = get_local_particle(p_id)) {
         p->type() = new_type;
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
         p->q() = charges_of_types.at(new_type);
 #endif
       }
@@ -314,7 +314,7 @@ void ReactionAlgorithm::hide_particle(int p_id, int p_type) const {
   on_particle_type_change(p_id, p_type, non_interacting_type);
   if (auto p = get_local_particle(p_id)) {
     p->type() = non_interacting_type;
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     p->q() = 0.;
 #endif
   }
@@ -506,7 +506,7 @@ int ReactionAlgorithm::create_particle(int p_type) {
   if (auto p = get_local_particle(p_id)) {
     p->v() = std::sqrt(kT / p->mass()) * vel;
     p->type() = p_type;
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     p->q() = charges_of_types.at(p_type);
 #endif
   }

@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 
 #include "utils.hpp"
 
@@ -129,4 +129,4 @@ namespace detail {
 std::pair<int, std::string> get_node_info();
 } // namespace detail
 
-#endif // CUDA
+#endif // ESPRESSO_CUDA

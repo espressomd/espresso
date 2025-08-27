@@ -23,7 +23,7 @@
 
 #include "config/config.hpp"
 
-#ifdef SCAFACOS_DIPOLES
+#ifdef ESPRESSO_SCAFACOS_DIPOLES
 
 #include "magnetostatics/actor.hpp"
 
@@ -50,4 +50,4 @@ struct DipolarScafacos : virtual public ScafacosContextBase,
 std::shared_ptr<DipolarScafacos>
 make_dipolar_scafacos(std::string const &method, std::string const &parameters);
 
-#endif // SCAFACOS_DIPOLES
+#endif // ESPRESSO_SCAFACOS_DIPOLES

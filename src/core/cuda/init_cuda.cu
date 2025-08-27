@@ -31,7 +31,7 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 
 /** \name minimally required compute capability. */
 /**@{*/
@@ -112,4 +112,4 @@ void cuda_check_device() {
   }
 }
 
-#endif /* defined(CUDA) */
+#endif /* defined(ESPRESSO_CUDA) */

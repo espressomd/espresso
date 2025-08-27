@@ -293,6 +293,16 @@ class EKTest:
         ek_reaction.add_node_to_index([1, 1, 1])
         self.assertTrue(ek_reaction[1, 1, 1])
 
+    def test_ek_fluctuations(self):
+        # smoke test, see `ek_fluctuations.py` for a statistical test
+        ek_solver = self.system.ekcontainer.solver
+        ek_species = self.make_default_ek_species(thermalized=True, seed=42)
+        self.assertTrue(ek_species.thermalized)
+        self.assertEqual(ek_species.seed, 42)
+        self.system.ekcontainer.add(ek_species)
+        self.system.ekcontainer.solver = ek_solver
+        self.system.integrator.run(10)
+
     def test_grid_index(self):
         ek_species = self.make_default_ek_species()
         ek_reactant = espressomd.electrokinetics.EKReactant(
@@ -454,6 +464,36 @@ class EKTestWalberlaSinglePrecision(EKTest, ut.TestCase):
     lb_fluid_class = espressomd.lb.LBFluidWalberla
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": True}
+    lb_params = {"single_precision": True}
+    atol = 1e-7
+    rtol = 5e-5
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKTestWalberlaGPU(EKTest, ut.TestCase):
+
+    """Test for the Walberla implementation of the EK in double-precision."""
+
+    lb_fluid_class = espressomd.lb.LBFluidWalberlaGPU
+    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+    ek_params = {"single_precision": False}
+    lb_params = {"single_precision": False}
+    atol = 1e-10
+    rtol = 1e-7
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKTestWalberlaSinglePrecisionGPU(EKTest, ut.TestCase):
+
+    """Test for the Walberla implementation of the EK in single-precision."""
+
+    lb_fluid_class = espressomd.lb.LBFluidWalberlaGPU
+    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
     ek_params = {"single_precision": True}
     lb_params = {"single_precision": True}
     atol = 1e-7

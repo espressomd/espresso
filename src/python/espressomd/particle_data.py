@@ -23,7 +23,7 @@ import itertools
 import functools
 from .interactions import BondedInteraction
 from .utils import nesting_level, array_locked, is_valid_type
-from .utils import check_type_or_throw_except
+from .utils import check_type_or_throw_except, to_bytes
 from .code_features import assert_features, has_features
 from .script_interface import script_interface_register, ScriptInterfaceHelper
 from .propagation import Propagation
@@ -1337,20 +1337,22 @@ class ParticleList(ScriptInterfaceHelper):
 
 def set_slice_one_for_all(p_slice, attribute, value):
     is_trivially_serializable = attribute in ParticleSlice._particle_attributes_trivially_serializable
+    attribute_bytes = to_bytes(attribute)
     for p_id in p_slice.id_selection:
         p = p_slice._get_particle(p_id)
         if is_trivially_serializable:
-            p.set_parameter(attribute, value)
+            p.set_parameter(attribute_bytes, value)
         else:
             setattr(p, attribute, value)
 
 
 def set_slice_one_for_each(p_slice, attribute, values):
     is_trivially_serializable = attribute in ParticleSlice._particle_attributes_trivially_serializable
+    attribute_bytes = to_bytes(attribute)
     for p_id, value in zip(p_slice.id_selection, values):
         p = p_slice._get_particle(p_id)
         if is_trivially_serializable:
-            p.set_parameter(attribute, value)
+            p.set_parameter(attribute_bytes, value)
         else:
             setattr(p, attribute, value)
 

@@ -24,7 +24,7 @@
  */
 #include "gay_berne.hpp"
 
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
 #include "nonbonded_interaction_data.hpp"
 
 #include <cmath>
@@ -36,4 +36,4 @@ GayBerne_Parameters::GayBerne_Parameters(double eps, double sig, double cut,
       chi1{((k1 * k1) - 1.) / ((k1 * k1) + 1.)},
       chi2{(std::pow(k2, 1. / mu) - 1.) / (std::pow(k2, 1. / mu) + 1.)} {}
 
-#endif // GAY_BERNE
+#endif // ESPRESSO_GAY_BERNE

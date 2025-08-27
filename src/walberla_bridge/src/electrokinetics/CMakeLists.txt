@@ -25,3 +25,18 @@ target_sources(espresso_walberla PRIVATE ek_poisson_none_init.cpp)
 if(ESPRESSO_BUILD_WITH_WALBERLA_FFT)
   target_sources(espresso_walberla PRIVATE ek_poisson_fft_init.cpp)
 endif()
+if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+  if(ESPRESSO_BUILD_WITH_WALBERLA_FFT)
+    add_library(espresso_fft_gpu OBJECT)
+    add_library(espresso::fft_gpu ALIAS espresso_fft_gpu)
+    target_sources(espresso_fft_gpu PRIVATE FFT_CUDA.cu)
+    target_link_libraries(
+      espresso_fft_gpu PRIVATE espresso_cuda_flags Heffte::Heffte walberla::gpu
+                               espresso::walberla_codegen_cuda espresso_utils)
+    set_target_properties(espresso_fft_gpu PROPERTIES POSITION_INDEPENDENT_CODE
+                                                      ON)
+    target_link_libraries(espresso_walberla_cuda PRIVATE espresso_fft_gpu)
+    target_sources(espresso_walberla_cuda PRIVATE ek_poisson_fft_gpu_init.cu)
+  endif()
+  target_sources(espresso_walberla_cuda PRIVATE ek_walberla_init.cu)
+endif()

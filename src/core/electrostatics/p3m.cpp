@@ -26,16 +26,16 @@
 
 #include "config/config.hpp"
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
 
 #include "electrostatics/p3m.hpp"
 
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/elc.hpp"
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 #include "electrostatics/p3m_gpu_cuda.cuh"
 #include "electrostatics/p3m_gpu_error.hpp"
-#endif // CUDA
+#endif // ESPRESSO_CUDA
 
 #include "electrostatics/p3m.impl.hpp"
 
@@ -82,7 +82,7 @@
 #include <boost/range/combine.hpp>
 #include <boost/range/numeric.hpp>
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
 #include <omp.h>
 #endif
@@ -282,7 +282,7 @@ static double p3m_k_space_error(double pref, Utils::Vector3i const &mesh,
           auto const d = alias1 - Utils::sqr(alias2 / cs) / n2;
           /* at high precision, d can become negative due to extinction;
              also, don't take values that have no significant digits left*/
-          if (d > 0. and std::fabs(d / alias1) > ROUND_ERROR_PREC) {
+          if (d > 0. and std::fabs(d / alias1) > round_error_prec) {
             he_q += d;
           }
         }
@@ -298,7 +298,7 @@ static double p3m_k_space_error(double pref, Utils::Vector3i const &mesh,
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::init_cpu_kernels() {
   assert(p3m.params.mesh >= Utils::Vector3i::broadcast(1));
-  assert(p3m.params.cao >= 1 and p3m.params.cao <= 7);
+  assert(p3m.params.cao >= p3m_min_cao and p3m.params.cao <= p3m_max_cao);
   assert(p3m.params.alpha > 0.);
 
   auto const &system = get_system();
@@ -370,7 +370,7 @@ template <int cao> struct AssignCharge {
     this->operator()(p3m, q, weights);
   }
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   void operator()(auto &p3m, auto &cell_structure) {
     auto const &aosoa = cell_structure.get_aosoa();
     auto const n_part = cell_structure.count_local_particles();
@@ -393,7 +393,7 @@ template <int cao> struct AssignCharge {
       this->operator()(p3m, aosoa.charge(p_index), weights);
     }
   }
-#else  // SHARED_MEMORY_PARALLELISM
+#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
   void operator()(auto &p3m, auto const &p_q_pos_range) {
     for (auto zipped : p_q_pos_range) {
       auto const p_q = boost::get<0>(zipped);
@@ -403,7 +403,7 @@ template <int cao> struct AssignCharge {
       }
     }
   }
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 };
 } // namespace
 
@@ -412,26 +412,26 @@ void CoulombP3MImpl<FloatType, Architecture>::charge_assign(
     ParticleRange const &particles) {
   prepare_fft_mesh(true);
 
-#ifdef SHARED_MEMORY_PARALLELISM
-  Utils::integral_parameter<int, AssignCharge, 1, 7>(
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  Utils::integral_parameter<int, AssignCharge, p3m_min_cao, p3m_max_cao>(
       p3m.params.cao, p3m, *get_system().cell_structure);
-#else  // SHARED_MEMORY_PARALLELISM
+#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
   auto p_q_range = ParticlePropertyRange::charge_range(particles);
   auto p_pos_range = ParticlePropertyRange::pos_range(particles);
 
-  Utils::integral_parameter<int, AssignCharge, 1, 7>(
+  Utils::integral_parameter<int, AssignCharge, p3m_min_cao, p3m_max_cao>(
       p3m.params.cao, p3m, boost::combine(p_q_range, p_pos_range));
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 }
 
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::assign_charge(
     double q, Utils::Vector3d const &real_pos, bool skip_cache) {
   if (skip_cache) {
-    Utils::integral_parameter<int, AssignCharge, 1, 7>(p3m.params.cao, p3m, q,
-                                                       real_pos);
+    Utils::integral_parameter<int, AssignCharge, p3m_min_cao, p3m_max_cao>(
+        p3m.params.cao, p3m, q, real_pos);
   } else {
-    Utils::integral_parameter<int, AssignCharge, 1, 7>(
+    Utils::integral_parameter<int, AssignCharge, p3m_min_cao, p3m_max_cao>(
         p3m.params.cao, p3m, q, real_pos, p3m.inter_weights);
   }
 }
@@ -439,7 +439,7 @@ void CoulombP3MImpl<FloatType, Architecture>::assign_charge(
 namespace {
 template <int cao> struct AssignForces {
   void operator()(auto &p3m, auto force_prefac,
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
                   CellStructure &cell_structure
 #else
                   auto const &p_q_force_range
@@ -459,7 +459,7 @@ template <int cao> struct AssignForces {
                         force[2u] += w * double(p3m.rs_E_fields[2u][ind]);
                       });
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
       auto const thread_id = omp_get_thread_num();
       p_force(p_index, thread_id, 0) -= pref * force[0];
       p_force(p_index, thread_id, 1) -= pref * force[1];
@@ -469,7 +469,7 @@ template <int cao> struct AssignForces {
 #endif
     };
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     auto const n_part = p3m.inter_weights.size();
     auto const &aosoa = cell_structure.get_aosoa();
     auto &local_force = cell_structure.get_local_force();
@@ -479,7 +479,7 @@ template <int cao> struct AssignForces {
             kernel(pref, local_force, p_index);
           }
         });
-#else  // SHARED_MEMORY_PARALLELISM
+#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
     /* charged particle counter */
     std::size_t p_index{0ul};
 
@@ -491,12 +491,12 @@ template <int cao> struct AssignForces {
         ++p_index;
       }
     }
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
   }
 };
 } // namespace
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 static auto calc_dipole_moment(boost::mpi::communicator const &comm,
                                auto const &cs, auto const &box_geo) {
   auto const local_dip = reduce_over_local_particles<Utils::Vector3d>(
@@ -507,7 +507,7 @@ static auto calc_dipole_moment(boost::mpi::communicator const &comm,
       [](Utils::Vector3d &a, Utils::Vector3d const &b) { a = a + b; });
   return boost::mpi::all_reduce(comm, local_dip, std::plus<>());
 }
-#else  // SHARED_MEMORY_PARALLELISM
+#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
 static auto calc_dipole_moment(boost::mpi::communicator const &comm,
                                auto const &p_q_unfolded_pos_range) {
   auto const local_dip =
@@ -519,7 +519,7 @@ static auto calc_dipole_moment(boost::mpi::communicator const &comm,
                         });
   return boost::mpi::all_reduce(comm, local_dip, std::plus<>());
 }
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::kernel_ks_charge_density() {
@@ -565,7 +565,7 @@ void CoulombP3MImpl<FloatType, Architecture>::kernel_rs_electric_field() {
   for_each_3d_lin<Utils::MemoryOrder::COLUMN_MAJOR>(
       mesh_start, mesh_stop,
       [&](const Utils::Vector3i &indices, int local_index) {
-#ifdef ADDITIONAL_CHECKS
+#ifdef ESPRESSO_ADDITIONAL_CHECKS
         assert(local_index ==
                Utils::get_linear_index<Utils::MemoryOrder::COLUMN_MAJOR>(
                    indices - mesh_start, p3m.fft->ks_local_size()));
@@ -672,7 +672,7 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
 
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   auto const npt_flag = force_flag and system.has_npt_enabled();
 #else
   auto constexpr npt_flag = false;
@@ -688,7 +688,7 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
 
   kernel_ks_charge_density();
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   auto &cell_structure = *system.cell_structure;
   auto const &local_force = cell_structure.get_local_force();
   auto const &aosoa = cell_structure.get_aosoa();
@@ -697,12 +697,12 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
   auto p_force_range = ParticlePropertyRange::force_range(particles);
   auto p_unfolded_pos_range =
       ParticlePropertyRange::unfolded_pos_range(particles, box_geo);
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
   // The dipole moment is only needed if we don't have metallic boundaries
   auto const box_dipole = (p3m.params.epsilon != P3M_EPSILON_METALLIC)
                               ? std::make_optional(calc_dipole_moment(
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
                                     comm_cart, cell_structure, box_geo))
 #else
                                     comm_cart,
@@ -721,19 +721,19 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
 
     // assign particle forces
     auto const force_prefac = prefactor / volume;
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     auto &particle_data = cell_structure;
 #else
     auto const particle_data = boost::combine(p_q_range, p_force_range);
 #endif
-    Utils::integral_parameter<int, AssignForces, 1, 7>(
+    Utils::integral_parameter<int, AssignForces, p3m_min_cao, p3m_max_cao>(
         p3m.params.cao, p3m, force_prefac, particle_data);
 
     // add dipole forces
     // Eq. (3.19) @cite deserno00b
     if (box_dipole) {
       auto const dm = prefactor * pref * box_dipole.value();
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
       auto const n_part = cell_structure.count_local_particles();
       kokkos_parallel_range_for(
           "AssignForcesBoxDipole", std::size_t{0u}, n_part,
@@ -744,13 +744,13 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
             local_force(p_index, thread_id, 1) -= q * dm[1];
             local_force(p_index, thread_id, 2) -= q * dm[2];
           });
-#else  // SHARED_MEMORY_PARALLELISM
+#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
       for (auto zipped : boost::combine(p_q_range, p_force_range)) {
         auto p_q = boost::get<0>(zipped);
         auto &p_force = boost::get<1>(zipped);
         p_force -= p_q * dm;
       }
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
     }
   }
 
@@ -787,7 +787,7 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
       }
     }
     energy *= prefactor;
-#ifdef NPT
+#ifdef ESPRESSO_NPT
     if (npt_flag) {
       get_system().npt_add_virial_contribution(energy);
     }
@@ -822,7 +822,7 @@ public:
 
   void setup_logger(bool verbose) override {
     auto const &box_geo = *m_system.box_geo;
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     auto const on_gpu = Architecture == Arch::GPU;
 #else
     auto const on_gpu = false;
@@ -846,7 +846,7 @@ public:
 
   std::optional<std::string> fft_decomposition_veto(
       Utils::Vector3i const &mesh_size_r_space) const override {
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     if constexpr (Architecture == Arch::GPU) {
       return std::nullopt;
     }
@@ -903,7 +903,7 @@ public:
     /* calculate real-space and k-space error for this alpha_L */
     rs_err = p3m_real_space_error(m_prefactor, r_cut_iL, p3m.sum_qpart,
                                   p3m.sum_q2, alpha_L, box_geo.length());
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     if constexpr (Architecture == Arch::GPU) {
       if (this_node == 0) {
         ks_err =
@@ -1120,12 +1120,12 @@ void CoulombP3MImpl<FloatType, Architecture>::scaleby_box_l() {
   p3m.halo_comm.resize(::comm_cart, p3m.local_mesh);
 }
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::add_long_range_forces_gpu(
     ParticleRange const &particles) {
   if constexpr (Architecture == Arch::GPU) {
-#ifdef NPT
+#ifdef ESPRESSO_NPT
     if (get_system().has_npt_enabled()) {
       get_system().npt_add_virial_contribution(long_range_energy(particles));
     }
@@ -1167,11 +1167,11 @@ void CoulombP3MImpl<FloatType, Architecture>::request_gpu() const {
     gpu_particle_data.enable_property(GpuParticleData::prop::pos);
   }
 }
-#endif // CUDA
+#endif // ESPRESSO_CUDA
 
 template struct CoulombP3MImpl<float, Arch::CPU>;
 template struct CoulombP3MImpl<float, Arch::GPU>;
 template struct CoulombP3MImpl<double, Arch::CPU>;
 template struct CoulombP3MImpl<double, Arch::GPU>;
 
-#endif // P3M
+#endif // ESPRESSO_P3M

@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include <utils/Vector.hpp>
 
@@ -71,8 +71,9 @@ struct EKWalberla {
   }
   void on_timestep_change() const {}
   void on_temperature_change() const {}
+  bool is_gpu() const;
 };
 
 } // namespace EK
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

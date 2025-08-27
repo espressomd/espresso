@@ -32,18 +32,35 @@
 namespace walberla {
 
 std::shared_ptr<EKinWalberlaBase>
-new_ek_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
-                double diffusion, double kT, double valency,
-                Utils::Vector3d ext_efield, double density, bool advection,
-                bool friction_coupling, bool single_precision, bool thermalized,
-                unsigned int seed);
+new_ek_walberla_cpu(std::shared_ptr<LatticeWalberla> const &lattice,
+                    double diffusion, double kT, double valency,
+                    Utils::Vector3d ext_efield, double density, bool advection,
+                    bool friction_coupling, bool single_precision,
+                    bool thermalized, unsigned int seed);
 
-std::shared_ptr<EKReactionBase>
-new_ek_reaction_bulk(std::shared_ptr<LatticeWalberla> const &lattice,
-                     typename EKReactionBase::reactants_type const &reactants,
-                     double coefficient);
+std::shared_ptr<EKinWalberlaBase>
+new_ek_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
+                    double diffusion, double kT, double valency,
+                    Utils::Vector3d ext_efield, double density, bool advection,
+                    bool friction_coupling, bool single_precision,
+                    bool thermalized, unsigned int seed);
 
-std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed(
+std::shared_ptr<EKReactionBase> new_ek_reaction_bulk_cpu(
+    std::shared_ptr<LatticeWalberla> const &lattice,
+    typename EKReactionBase::reactants_type const &reactants,
+    double coefficient);
+
+std::shared_ptr<EKReactionBase> new_ek_reaction_bulk_gpu(
+    std::shared_ptr<LatticeWalberla> const &lattice,
+    typename EKReactionBase::reactants_type const &reactants,
+    double coefficient);
+
+std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed_cpu(
+    std::shared_ptr<LatticeWalberla> const &lattice,
+    typename EKReactionBase::reactants_type const &reactants,
+    double coefficient);
+
+std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed_gpu(
     std::shared_ptr<LatticeWalberla> const &lattice,
     typename EKReactionBase::reactants_type const &reactants,
     double coefficient);

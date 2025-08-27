@@ -28,7 +28,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "icc.hpp"
 
@@ -49,7 +49,7 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
 #include <omp.h>
 #endif
@@ -79,7 +79,7 @@ static void force_calc_icc(
   auto const reset_kernel = [](Particle &p) { p.force_and_torque() = {}; };
   cell_structure.for_each_local_particle(reset_kernel);
   cell_structure.for_each_ghost_particle(reset_kernel);
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   cell_structure.reset_local_force();
 #endif
 
@@ -93,7 +93,7 @@ static void force_calc_icc(
           auto force = (*coulomb_kernel_ptr)(q1q2, d.vec21, std::sqrt(d.dist2));
           p1.force() += force;
           p2.force() -= force;
-#ifdef P3M
+#ifdef ESPRESSO_P3M
           if (elc_kernel_ptr) {
             ParticleForce p1f_asym{};
             ParticleForce p2f_asym{};
@@ -101,7 +101,7 @@ static void force_calc_icc(
             p1.force() += p1f_asym.f;
             p2.force() += p2f_asym.f;
           }
-#endif // P3M
+#endif // ESPRESSO_P3M
         }
       });
 }
@@ -126,11 +126,11 @@ void ICCStar::iteration() {
   auto const elc_kernel = coulomb.pair_force_elc_kernel();
   icc_cfg.citeration = 0;
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   using execution_space = Kokkos::DefaultExecutionSpace;
   auto const &unique_particles = cell_structure.get_unique_particles();
   auto const &local_force = cell_structure.get_local_force();
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
   auto global_max_rel_diff = 0.;
 
@@ -142,7 +142,7 @@ void ICCStar::iteration() {
                    elc_kernel);
     system.coulomb.calc_long_range_force(particles);
     cell_structure.ghosts_reduce_forces();
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     // force reduction
     int num_threads = execution_space().concurrency();
     kokkos_parallel_range_for<Kokkos::RangePolicy<execution_space>>(
@@ -156,7 +156,7 @@ void ICCStar::iteration() {
           }
         });
     Kokkos::fence();
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
     auto max_rel_diff = 0.;
 
@@ -224,7 +224,7 @@ void ICCStar::iteration() {
 
     /* Update charges on ghosts. */
     cell_structure.ghosts_update(Cells::DATA_PART_PROPERTIES);
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     // refresh local properties
     update_aosoa_charges(cell_structure);
 #endif
@@ -282,14 +282,14 @@ void ICCStar::on_activation() const {
 
 struct SanityChecksICC {
   template <typename T> void operator()(std::shared_ptr<T> const &) const {}
-#ifdef P3M
-#ifdef CUDA
+#ifdef ESPRESSO_P3M
+#ifdef ESPRESSO_CUDA
   void operator()(std::shared_ptr<CoulombP3M> const &p) const {
     if (p->is_gpu()) {
       throw std::runtime_error("ICC does not work with P3MGPU");
     }
   }
-#endif // CUDA
+#endif // ESPRESSO_CUDA
   void
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
     if (actor->elc.dielectric_contrast_on) {
@@ -297,7 +297,7 @@ struct SanityChecksICC {
     }
     std::visit(*this, actor->base_solver);
   }
-#endif // P3M
+#endif // ESPRESSO_P3M
   [[noreturn]] void operator()(std::shared_ptr<DebyeHueckel> const &) const {
     throw std::runtime_error("ICC does not work with DebyeHueckel.");
   }
@@ -308,7 +308,7 @@ struct SanityChecksICC {
 
 void ICCStar::sanity_check() const {
   sanity_checks_active_solver();
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   if (get_system().has_npt_enabled()) {
     throw std::runtime_error("ICC does not work in the NpT ensemble");
   }
@@ -339,4 +339,4 @@ void System::System::update_icc_particles() {
   }
 }
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

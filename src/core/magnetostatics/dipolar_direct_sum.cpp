@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "magnetostatics/dipolar_direct_sum.hpp"
 
@@ -413,7 +413,7 @@ DipolarDirectSum::long_range_energy(ParticleRange const &particles) const {
  * a naive N-square sum. The difference is summation range,
  * and the kernel calculates the dipole field rather than the energy.
  */
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
 void DipolarDirectSum::dipole_field_at_part(
     ParticleRange const &particles) const {
   auto const &box_geo = *get_system().box_geo;
@@ -451,4 +451,4 @@ DipolarDirectSum::DipolarDirectSum(double prefactor, int n_replicas) {
   }
 }
 
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES

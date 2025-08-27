@@ -24,7 +24,7 @@
 #include "core/cuda/init.hpp"
 #include "core/cuda/utils.hpp"
 
-#if defined(CUDA) && defined(WALBERLA)
+#if defined(ESPRESSO_CUDA) && defined(ESPRESSO_WALBERLA)
 #include "walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp"
 #endif
 
@@ -38,7 +38,7 @@ namespace System {
 
 CudaInitHandle::CudaInitHandle() {
   add_parameters({
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
       {"device",
        [this](Variant const &v) {
          if (context()->is_head_node()) {
@@ -48,7 +48,7 @@ CudaInitHandle::CudaInitHandle() {
        [this]() {
          return (context()->is_head_node()) ? cuda_get_device() : 0;
        }},
-#endif // CUDA
+#endif // ESPRESSO_CUDA
   });
 }
 
@@ -56,7 +56,7 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
                                        VariantMap const &parameters) {
   if (name == "list_devices") {
     std::unordered_map<int, std::string> devices{};
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     if (context()->is_head_node()) {
       // only GPUs on the head node can be displayed
       auto n_gpus = 0;
@@ -66,12 +66,12 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
             [&devices, i]() { devices[i] = cuda_get_gpu_name(i); });
       }
     }
-#endif // CUDA
+#endif // ESPRESSO_CUDA
     return make_unordered_map_of_variants(devices);
   }
   if (name == "list_devices_properties") {
     std::unordered_map<std::string, std::unordered_map<int, Variant>> dict{};
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     std::vector<EspressoGpuDevice> devices = cuda_gather_gpus();
     for (auto const &dev : devices) {
       auto const hostname = dev.proc_name;
@@ -88,18 +88,18 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
       };
       dict[hostname][dev.id] = std::move(dev_properties);
     }
-#endif // CUDA
+#endif // ESPRESSO_CUDA
     return make_unordered_map_of_variants(dict);
   }
   if (name == "get_n_gpus") {
     auto n_gpus = 0;
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     auto const devices = cuda_gather_gpus();
     n_gpus = static_cast<int>(devices.size());
-#endif // CUDA
+#endif // ESPRESSO_CUDA
     return n_gpus;
   }
-#if defined(CUDA) && defined(WALBERLA)
+#if defined(ESPRESSO_CUDA) && defined(ESPRESSO_WALBERLA)
   if (name == "set_device_id_per_rank") {
     if (cuda_get_n_gpus()) {
       set_device_id_per_rank();

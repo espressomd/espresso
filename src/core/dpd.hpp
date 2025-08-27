@@ -29,7 +29,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
@@ -61,4 +61,4 @@ Utils::Vector9d dpd_stress(boost::mpi::communicator const &comm);
  */
 Utils::Vector9d dpd_pressure_local();
 
-#endif // DPD
+#endif // ESPRESSO_DPD

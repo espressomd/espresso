@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "EKPoissonSolver.hpp"
 
@@ -41,6 +41,8 @@ class EKNone : public EKPoissonSolver {
   bool m_single_precision;
 
 public:
+  void make_instance(VariantMap const &args) override {}
+
   void do_construct(VariantMap const &args) override {
     m_single_precision = get_value_or<bool>(args, "single_precision", false);
     m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
@@ -63,4 +65,4 @@ public:
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

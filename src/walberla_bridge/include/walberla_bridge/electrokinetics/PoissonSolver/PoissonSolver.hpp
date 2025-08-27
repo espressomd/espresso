@@ -19,15 +19,17 @@
 
 #pragma once
 
+#include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace walberla {
 
-class PoissonSolver {
+class PoissonSolver : public LatticeModel {
 private:
   std::shared_ptr<LatticeWalberla> m_lattice;
   double m_permittivity;
@@ -35,7 +37,7 @@ private:
 public:
   PoissonSolver(std::shared_ptr<LatticeWalberla> lattice, double permittivity)
       : m_lattice(std::move(lattice)), m_permittivity(permittivity) {}
-  virtual ~PoissonSolver() = default;
+  ~PoissonSolver() override = default;
 
   virtual void reset_charge_field() = 0;
 
@@ -44,17 +46,41 @@ public:
 
   [[nodiscard]] virtual std::size_t get_potential_field_id() const noexcept = 0;
 
-  void set_permittivity(double permittivity) noexcept {
+  virtual void set_permittivity(double permittivity) noexcept {
     m_permittivity = permittivity;
   }
 
-  [[nodiscard]] double get_permittivity() const noexcept {
+  [[nodiscard]] virtual double get_permittivity() const noexcept {
     return m_permittivity;
   }
 
-  [[nodiscard]] auto const &get_lattice() const noexcept { return *m_lattice; }
+  [[nodiscard]] LatticeWalberla const &get_lattice() const noexcept override {
+    return *m_lattice;
+  }
 
   virtual void solve() = 0;
+
+  [[nodiscard]] virtual std::optional<double>
+  get_node_potential(Utils::Vector3i const &node,
+                     bool consider_ghosts = false) {
+    return std::nullopt;
+  }
+
+  [[nodiscard]] virtual std::vector<double>
+  get_slice_potential(Utils::Vector3i const &lower_corner,
+                      Utils::Vector3i const &upper_corner) const {
+    std::vector<double> out;
+    return out;
+  }
+
+  void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
+                                  LatticeModel::units_map const &units,
+                                  int flag_observables) override {}
+
+protected:
+  void integrate_vtk_writers() override {}
+
+  void register_vtk_field_filters(walberla::vtk::VTKOutput &vtk_obj) override {}
 };
 
 } // namespace walberla

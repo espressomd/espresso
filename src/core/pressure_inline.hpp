@@ -62,12 +62,12 @@ inline void add_non_bonded_pair_virials(
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel_forces,
     Coulomb::ShortRangePressureKernel::kernel_type const *kernel_pressure,
     Observable_stat &obs_pressure) {
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
   {
     auto const force = calc_central_radial_force(ia_params, d, dist).f +
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
                        thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias,
                                         kernel_forces) +
 #endif
@@ -77,7 +77,7 @@ inline void add_non_bonded_pair_virials(
                                              p2.mol_id(), flatten(stress));
   }
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   if (!obs_pressure.coulomb.empty() and kernel_pressure != nullptr) {
     /* real space Coulomb */
     auto const p_coulomb = (*kernel_pressure)(p1.q() * p2.q(), d, dist);
@@ -88,15 +88,15 @@ inline void add_non_bonded_pair_virials(
       }
     }
   }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   /* real space magnetic dipole-dipole */
   if (Dipoles::get_dipoles().impl->solver) {
     fprintf(stderr, "calculating pressure for magnetostatics which doesn't "
                     "have it implemented\n");
   }
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES
 }
 
 inline std::optional<Utils::Matrix<double, 3, 3>>
@@ -120,7 +120,7 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
                                        BoxGeometry const &box_geo) {
   if (std::holds_alternative<AngleHarmonicBond>(iaparams) or
       std::holds_alternative<AngleCosineBond>(iaparams) or
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
       std::holds_alternative<TabulatedAngleBond>(iaparams) or
 #endif
       std::holds_alternative<AngleCossquareBond>(iaparams)) {

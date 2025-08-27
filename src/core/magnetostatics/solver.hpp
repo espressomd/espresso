@@ -37,7 +37,7 @@
 namespace Dipoles {
 
 struct Solver {
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   struct Implementation;
   /// @brief Pointer-to-implementation.
   std::unique_ptr<Implementation> impl;
@@ -58,14 +58,14 @@ struct Solver {
   void calc_pressure_long_range() const;
   void calc_long_range_force(ParticleRange const &particles) const;
   double calc_energy_long_range(ParticleRange const &particles) const;
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   void calc_long_range_field(ParticleRange const &particles) const;
 #endif
   Solver();
-#else  // DIPOLES
+#else  // ESPRESSO_DIPOLES
   Solver() = default;
-  constexpr double cutoff() const { return INACTIVE_CUTOFF; }
-#endif // DIPOLES
+  constexpr double cutoff() const { return inactive_cutoff; }
+#endif // ESPRESSO_DIPOLES
 
   using ShortRangeForceKernel = std::function<ParticleForce(
       double, Utils::Vector3d const &, Utils::Vector3d const &,
@@ -78,7 +78,7 @@ struct Solver {
   inline std::optional<ShortRangeEnergyKernel> pair_energy_kernel() const;
 };
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 Solver const &get_dipoles();
 #endif
 

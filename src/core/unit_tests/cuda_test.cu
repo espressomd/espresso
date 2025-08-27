@@ -83,7 +83,7 @@ void clear() {
 
 } // namespace Testing::non_sticky_cuda_error
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
 dim3 p3m_make_grid(unsigned int n_blocks);
 #endif
 
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE(gpu_interface, *fixture) {
   BOOST_REQUIRE_LE(gpu_name.size(), max_dev_name);
 }
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
 
 BOOST_AUTO_TEST_CASE(p3m_reshape_grid_test, *fixture) {
   auto constexpr optimal_size = 65536u;

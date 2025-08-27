@@ -21,23 +21,46 @@
 
 #include <config/config.hpp>
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 #include "cell_system/CellStructure.hpp"
 
-#include <Cabana_Core.hpp>
+#include <Kokkos_Core.hpp>
 
 struct CellStructure::AoSoA_pack {
-  CellStructure::AoSoAType::member_slice_type<0> position;
-  CellStructure::AoSoAType::member_slice_type<1> charge;
-  CellStructure::AoSoAType::member_slice_type<2> id;
-  CellStructure::AoSoAType::member_slice_type<3> type;
+  using PositionViewType =
+      Kokkos::View<double *[3], Kokkos::LayoutRight, Kokkos::HostSpace>;
+  using ChargeViewType = Kokkos::View<double *, Kokkos::HostSpace>;
+  using IdViewType = Kokkos::View<int *, Kokkos::HostSpace>;
+  using TypeViewType = Kokkos::View<int *, Kokkos::HostSpace>;
+  using IdToIndexViewType = Kokkos::View<int *, Kokkos::HostSpace>;
+
+  PositionViewType position;
+  ChargeViewType charge;
+  IdViewType id;
+  TypeViewType type;
+  IdToIndexViewType id_to_index;
 
   AoSoA_pack() = default;
 
-  AoSoA_pack(CellStructure::AoSoAType &aosoa)
-      : position(Cabana::slice<0>(aosoa)), charge(Cabana::slice<1>(aosoa)),
-        id(Cabana::slice<2>(aosoa)), type(Cabana::slice<3>(aosoa)) {}
+  AoSoA_pack(std::size_t num_particles) { resize(num_particles); }
+
+  void resize(std::size_t num_particles, int max_id = -1) {
+    if (position.extent(0) == 0) {
+      // First allocation
+      position = PositionViewType("position", num_particles);
+      charge = ChargeViewType("charge", num_particles);
+      id = IdViewType("id", num_particles);
+      type = TypeViewType("type", num_particles);
+      id_to_index = IdToIndexViewType("id_to_index", num_particles);
+    } else {
+      // Reallocation
+      Kokkos::realloc(position, num_particles);
+      Kokkos::realloc(charge, num_particles);
+      Kokkos::realloc(id, num_particles);
+      Kokkos::realloc(type, num_particles);
+    }
+  }
 };
 
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

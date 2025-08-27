@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 #include "aosoa_pack.hpp"
 #include "forces_inline.hpp"
@@ -51,10 +51,10 @@ struct ForcesKernel {
   BoxGeometry const &box_geo;
   std::vector<Particle *> const &unique_particles;
   CellStructure::ForceType const &local_force;
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   CellStructure::ForceType const &local_torque;
 #endif
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   Utils::Vector3d *const global_virial;
   CellStructure::VirialType const &local_virial;
 #endif
@@ -70,10 +70,10 @@ struct ForcesKernel {
       Thermostat::Thermostat const &thermostat_, BoxGeometry const &box_geo_,
       std::vector<Particle *> const &unique_particles_,
       CellStructure::ForceType const &local_force_,
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
       CellStructure::ForceType const &local_torque_,
 #endif
-#ifdef NPT
+#ifdef ESPRESSO_NPT
       Utils::Vector3d *const global_virial_,
       CellStructure::VirialType const &local_virial_,
 #endif
@@ -83,10 +83,10 @@ struct ForcesKernel {
         elc_kernel(elc_kernel_), coulomb_u_kernel(coulomb_u_kernel_),
         thermostat(thermostat_), box_geo(box_geo_),
         unique_particles(unique_particles_), local_force(local_force_),
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
         local_torque(local_torque_),
 #endif
-#ifdef NPT
+#ifdef ESPRESSO_NPT
         global_virial(global_virial_), local_virial(local_virial_),
 #endif
         aosoa(aosoa_) {
@@ -106,14 +106,15 @@ struct ForcesKernel {
     Utils::Vector3d const pos2 = {aosoa.position(j, 0), aosoa.position(j, 1),
                                   aosoa.position(j, 2)};
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
     Utils::Vector3d virial{};
     auto *const virial_handle = global_virial ? &virial : nullptr;
 #endif
     auto const d = box_geo.get_mi_vector(pos1, pos2);
     auto const dist = d.norm();
 
-#if defined(EXCLUSIONS) or defined(DPD) or defined(DIPOLES)
+#if defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_DPD) or                   \
+    defined(ESPRESSO_DIPOLES)
     auto const &p1 = *unique_particles.at(i);
     auto const &p2 = *unique_particles.at(j);
 #endif
@@ -123,18 +124,18 @@ struct ForcesKernel {
     /***********************************************/
 
     if (dist < ia_params.max_cut) {
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
       if (do_nonbonded(p1, p2)) {
 #endif
         pf += calc_central_radial_force(ia_params, d, dist);
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
         pf.f += thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias,
                                  coulomb_kernel);
 #endif
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
         pf += calc_non_central_force(p1, p2, ia_params, d, dist);
 #endif
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
       }
 #endif
     }
@@ -144,18 +145,18 @@ struct ForcesKernel {
     /* but nothing afterwards, since the contribution to pressure from   */
     /* electrostatic is calculated by energy                             */
     /*********************************************************************/
-#ifdef NPT
+#ifdef ESPRESSO_NPT
     if (virial_handle) {
       *virial_handle += hadamard_product(pf.f, d);
     }
-#endif // NPT
+#endif // ESPRESSO_NPT
 
     /***********************************************/
     /* thermostat                                  */
     /***********************************************/
 
     /* The inter dpd force should not be part of the virial */
-#ifdef DPD
+#ifdef ESPRESSO_DPD
     if (thermostat.thermo_switch & THERMO_DPD) {
       auto const dist2 = dist * dist;
       auto const force =
@@ -163,9 +164,9 @@ struct ForcesKernel {
                          *thermostat.dpd, box_geo, ia_params, d, dist, dist2);
       pf += force;
     }
-#endif
+#endif // ESPRESSO_DPD
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     auto const q1q2 = aosoa.charge(i) * aosoa.charge(j);
     ParticleForce p1f_asym{};
     ParticleForce p2f_asym{};
@@ -175,14 +176,14 @@ struct ForcesKernel {
       if (elc_kernel) {
         (*elc_kernel)(pos1, pos2, p1f_asym, p2f_asym, q1q2);
       }
-#ifdef NPT
+#ifdef ESPRESSO_NPT
       if (virial_handle) {
         (*virial_handle)[0] += (*coulomb_u_kernel)(pos1, pos2, q1q2, d, dist);
       }
-#endif // NPT
+#endif // ESPRESSO_NPT
     }
-#endif // ELECTROSTATICS
-#ifdef DIPOLES
+#endif // ESPRESSO_ELECTROSTATICS
+#ifdef ESPRESSO_DIPOLES
     // real-space magnetic dipole-dipole interaction
     if (dipoles_kernel) {
       auto const d1d2 = p1.dipm() * p2.dipm();
@@ -191,18 +192,18 @@ struct ForcesKernel {
                                 dist * dist);
       }
     }
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES
 
     auto opf = calc_opposing_force(pf, d);
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     pf += p1f_asym;
     opf += p2f_asym;
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
 
     local_force(i, thread_id, 0) += pf.f[0];
     local_force(i, thread_id, 1) += pf.f[1];
     local_force(i, thread_id, 2) += pf.f[2];
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     local_torque(i, thread_id, 0) += pf.torque[0];
     local_torque(i, thread_id, 1) += pf.torque[1];
     local_torque(i, thread_id, 2) += pf.torque[2];
@@ -211,12 +212,12 @@ struct ForcesKernel {
     local_force(j, thread_id, 0) += opf.f[0];
     local_force(j, thread_id, 1) += opf.f[1];
     local_force(j, thread_id, 2) += opf.f[2];
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     local_torque(j, thread_id, 0) += opf.torque[0];
     local_torque(j, thread_id, 1) += opf.torque[1];
     local_torque(j, thread_id, 2) += opf.torque[2];
 #endif
-#ifdef NPT
+#ifdef ESPRESSO_NPT
     if (virial_handle) {
       local_virial(thread_id, 0) += virial[0];
       local_virial(thread_id, 1) += virial[1];
@@ -226,4 +227,4 @@ struct ForcesKernel {
   }
 };
 
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

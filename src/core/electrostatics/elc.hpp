@@ -32,7 +32,7 @@
 
 #include "config/config.hpp"
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
 
 #include "actor/traits.hpp"
 
@@ -115,7 +115,7 @@ struct elc_data {
   /** The space that is finally left. */
   double space_box;
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   static auto copy_aosoa_vector_elc(std::size_t i, auto &slice) {
     return Utils::Vector3d{slice(i, 0), slice(i, 1), slice(i, 2)};
   }
@@ -143,7 +143,7 @@ struct elc_data {
       kernel(q_eff, d);
     }
   }
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
   /// pairwise contributions from lower and upper layers
   void dielectric_layers_contribution(BoxGeometry const &box_geo,
@@ -277,7 +277,7 @@ struct ElectrostaticLayerCorrection
     return {};
   }
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   /** @brief Calculate short-range pair energy correction. */
   double pair_energy_correction(std::size_t p1, std::size_t p2, auto &aosoa,
                                 double q1q2) const {
@@ -303,7 +303,7 @@ struct ElectrostaticLayerCorrection
     }
     return energy;
   }
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
   /** @brief Calculate short-range pair energy correction. */
   double pair_energy_correction(Utils::Vector3d const &pos1,
@@ -393,4 +393,4 @@ private:
   }
 };
 
-#endif // P3M
+#endif // ESPRESSO_P3M

@@ -28,7 +28,7 @@
 
 #include "config/config.hpp"
 
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "electrostatics/coulomb.hpp"
@@ -82,4 +82,4 @@ thole_pair_energy(Particle const &p1, Particle const &p2,
   }
   return 0.0;
 }
-#endif // THOLE
+#endif // ESPRESSO_THOLE

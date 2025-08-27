@@ -31,6 +31,24 @@
 #include <stdexcept>
 #include <string>
 
+/**
+ * @brief P3M: Number of Brillouin zones taken into account
+ * in the calculation of the optimal influence function (aliasing sums).
+ */
+#define P3M_BRILLOUIN 0
+
+/**
+ * @brief Whether to use the Abramowitz/Stegun approximation @cite abramowitz65a
+ * @ref Utils::AS_erfc_part() for \f$\exp(d^2) \mathrm{erfc}(d)\f$,
+ * or the C function <tt>std::erfc()</tt> in P3M.
+ */
+#define USE_ERFC_APPROXIMATION 1
+
+/** @brief Minimal charge assignment order. */
+inline constexpr int p3m_min_cao = 1;
+/** @brief Maximal charge assignment order. */
+inline constexpr int p3m_max_cao = 7;
+
 namespace math {
 
 /** @brief Return the absolute value of x. */
@@ -91,7 +109,7 @@ template <typename T> DEVICE_QUALIFIER auto sinc(T x) {
  */
 template <int cao>
 DEVICE_QUALIFIER auto analytic_cotangent_sum(int n, double mesh_i) {
-  static_assert(cao >= 1 and cao <= 7);
+  static_assert(cao >= p3m_min_cao and cao <= p3m_max_cao);
 #if not defined(__CUDACC__)
   using std::cos;
 #endif
@@ -143,7 +161,7 @@ inline auto get_analytic_cotangent_sum_kernel(int cao) {
     ptr = &analytic_cotangent_sum<7>;
   }
   if (ptr == nullptr) {
-    throw std::logic_error("Invalid value cao=" + std::to_string(cao));
+    throw std::domain_error("Invalid value cao=" + std::to_string(cao));
   }
   return ptr;
 }

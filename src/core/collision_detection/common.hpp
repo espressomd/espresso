@@ -21,7 +21,7 @@
 
 #include <config/config.hpp>
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
 
 #include "BondList.hpp"
 #include "Particle.hpp"
@@ -47,4 +47,4 @@ inline auto detect_collision_common(Particle const &p1, Particle const &p2,
 }
 
 } // namespace CollisionDetection
-#endif // COLLISION_DETECTION
+#endif // ESPRESSO_COLLISION_DETECTION

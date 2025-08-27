@@ -57,7 +57,7 @@ PREDEFINED = \\
 """)
 
 for feature in sorted(defs.allfeatures):
-    configfile.write(f"  {feature} \\\n")
+    configfile.write(f"  ESPRESSO_{feature} \\\n")
 configfile.write("  DOXYGEN\n")
 
 configfile.close()

@@ -80,83 +80,83 @@ inline double calc_non_bonded_pair_energy(
 
   double ret = 0;
 
-#ifdef LENNARD_JONES
+#ifdef ESPRESSO_LENNARD_JONES
   /* Lennard-Jones */
   ret += lj_pair_energy(ia_params, dist);
 #endif
 
-#ifdef WCA
+#ifdef ESPRESSO_WCA
   /* WCA */
   ret += wca_pair_energy(ia_params, dist);
 #endif
 
-#ifdef LENNARD_JONES_GENERIC
+#ifdef ESPRESSO_LENNARD_JONES_GENERIC
   /* Generic Lennard-Jones */
   ret += ljgen_pair_energy(ia_params, dist);
 #endif
 
-#ifdef SMOOTH_STEP
+#ifdef ESPRESSO_SMOOTH_STEP
   /* smooth step */
   ret += SmSt_pair_energy(ia_params, dist);
 #endif
 
-#ifdef HERTZIAN
+#ifdef ESPRESSO_HERTZIAN
   /* Hertzian potential */
   ret += hertzian_pair_energy(ia_params, dist);
 #endif
 
-#ifdef GAUSSIAN
+#ifdef ESPRESSO_GAUSSIAN
   /* Gaussian potential */
   ret += gaussian_pair_energy(ia_params, dist);
 #endif
 
-#ifdef BMHTF_NACL
+#ifdef ESPRESSO_BMHTF_NACL
   /* BMHTF NaCl */
   ret += BMHTF_pair_energy(ia_params, dist);
 #endif
 
-#ifdef MORSE
+#ifdef ESPRESSO_MORSE
   /* Morse */
   ret += morse_pair_energy(ia_params, dist);
 #endif
 
-#ifdef BUCKINGHAM
+#ifdef ESPRESSO_BUCKINGHAM
   /* Buckingham */
   ret += buck_pair_energy(ia_params, dist);
 #endif
 
-#ifdef SOFT_SPHERE
+#ifdef ESPRESSO_SOFT_SPHERE
   /* soft-sphere */
   ret += soft_pair_energy(ia_params, dist);
 #endif
 
-#ifdef HAT
+#ifdef ESPRESSO_HAT
   /* hat */
   ret += hat_pair_energy(ia_params, dist);
 #endif
 
-#ifdef LJCOS2
+#ifdef ESPRESSO_LJCOS2
   /* Lennard-Jones */
   ret += ljcos2_pair_energy(ia_params, dist);
 #endif
 
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
   /* Thole damping */
   ret +=
       thole_pair_energy(p1, p2, ia_params, d, dist, bonded_ias, coulomb_kernel);
 #endif
 
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
   /* tabulated */
   ret += tabulated_pair_energy(ia_params, dist);
 #endif
 
-#ifdef LJCOS
+#ifdef ESPRESSO_LJCOS
   /* Lennard-Jones cosine */
   ret += ljcos_pair_energy(ia_params, dist);
 #endif
 
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
   /* Gay-Berne */
   ret += gb_pair_energy(p1.quat(), p2.quat(), ia_params, d, dist);
 #endif
@@ -185,7 +185,7 @@ inline void add_non_bonded_pair_energy(
     Dipoles::ShortRangeEnergyKernel::kernel_type const *dipoles_kernel,
     Observable_stat &obs_energy) {
 
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
     obs_energy.add_non_bonded_contribution(
@@ -193,7 +193,7 @@ inline void add_non_bonded_pair_energy(
         calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, bonded_ias,
                                     coulomb_kernel));
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   if (!obs_energy.coulomb.empty() and coulomb_kernel != nullptr) {
     auto const q1q2 = p1.q() * p2.q();
     obs_energy.coulomb[0] +=
@@ -201,7 +201,7 @@ inline void add_non_bonded_pair_energy(
   }
 #endif
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   if (!obs_energy.dipolar.empty() and dipoles_kernel != nullptr)
     obs_energy.dipolar[0] += (*dipoles_kernel)(p1, p2, d, dist, dist2);
 #endif
@@ -228,7 +228,7 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
       return iap->energy(dx);
     }
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
       return iap->energy(p1.q() * p2->q(), dx);
     }
@@ -236,12 +236,12 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
       return iap->energy(p1, *p2, dx, *kernel);
     }
 #endif
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
     if (std::get_if<RigidBond>(&iaparams)) {
       return {0.};
     }
 #endif
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
     if (auto const *iap = std::get_if<TabulatedDistanceBond>(&iaparams)) {
       return iap->energy(dx);
     }
@@ -311,7 +311,7 @@ inline double translational_kinetic_energy(Particle const &p) {
  *  @param p   particle for which to calculate energies
  */
 inline double rotational_kinetic_energy(Particle const &p) {
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   return (p.can_rotate() and not p.is_virtual())
              ? 0.5 * (hadamard_product(p.omega(), p.omega()) * p.rinertia())
              : 0.0;

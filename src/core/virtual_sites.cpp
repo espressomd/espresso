@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 
 #include "virtual_sites.hpp"
 
@@ -115,4 +115,4 @@ calculate_vs_relate_to_params(Particle const &p_vs, Particle const &p_relate_to,
   return std::make_tuple(quat, dist);
 }
 
-#endif // VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE

@@ -26,7 +26,7 @@
 
 #include "config/config.hpp"
 
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
 
 #include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
@@ -77,4 +77,4 @@ void propagate_vel_pos_sd(ParticleRangeStokesian const &particles,
                           StokesianThermostat const &stokesian,
                           double time_step, double kT);
 
-#endif // STOKESIAN_DYNAMICS
+#endif // ESPRESSO_STOKESIAN_DYNAMICS

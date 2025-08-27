@@ -75,7 +75,7 @@ protected:
   /** @brief Which parameter indicates whether the potential is inactive. */
   virtual std::string inactive_parameter() const { return "cutoff"; }
   /** @brief Which magic value indicates the potential is inactive. */
-  virtual double inactive_cutoff() const { return INACTIVE_CUTOFF; }
+  virtual double get_inactive_cutoff() const { return inactive_cutoff; }
 
   template <typename T>
   auto make_autoparameter(T CoreInteraction::*ptr, char const *name) {
@@ -129,7 +129,7 @@ public:
       m_handle = std::make_shared<CoreInteraction>();
     } else {
       if (std::abs(get_value<double>(params, inactive_parameter()) -
-                   inactive_cutoff()) < 1e-9) {
+                   get_inactive_cutoff()) < 1e-9) {
         m_handle = std::make_shared<CoreInteraction>();
       } else {
         context()->parallel_try_catch([this, &params]() {
@@ -149,7 +149,7 @@ public:
   void update_core(bool notify = true);
 };
 
-#ifdef WCA
+#ifdef ESPRESSO_WCA
 class InteractionWCA : public InteractionPotentialInterface<::WCA_Parameters> {
 protected:
   CoreInteraction IA_parameters::*get_ptr_offset() const override {
@@ -166,7 +166,7 @@ public:
 
 private:
   std::string inactive_parameter() const override { return "sigma"; }
-  double inactive_cutoff() const override { return 0.; }
+  double get_inactive_cutoff() const override { return 0.; }
 
   void make_new_instance(VariantMap const &params) override {
     m_handle = make_shared_from_args<CoreInteraction, double, double>(
@@ -183,9 +183,9 @@ public:
         name, params);
   }
 };
-#endif // WCA
+#endif // ESPRESSO_WCA
 
-#ifdef LENNARD_JONES
+#ifdef ESPRESSO_LENNARD_JONES
 class InteractionLJ : public InteractionPotentialInterface<::LJ_Parameters> {
 protected:
   CoreInteraction IA_parameters::*get_ptr_offset() const override {
@@ -223,9 +223,9 @@ private:
     }
   }
 };
-#endif // LENNARD_JONES
+#endif // ESPRESSO_LENNARD_JONES
 
-#ifdef LENNARD_JONES_GENERIC
+#ifdef ESPRESSO_LENNARD_JONES_GENERIC
 class InteractionLJGen
     : public InteractionPotentialInterface<::LJGen_Parameters> {
 protected:
@@ -241,7 +241,7 @@ public:
         make_autoparameter(&CoreInteraction::cut, "cutoff"),
         make_autoparameter(&CoreInteraction::shift, "shift"),
         make_autoparameter(&CoreInteraction::offset, "offset"),
-#ifdef LJGEN_SOFTCORE
+#ifdef ESPRESSO_LJGEN_SOFTCORE
         make_autoparameter(&CoreInteraction::lambda, "lam"),
         make_autoparameter(&CoreInteraction::softrad, "delta"),
 #endif
@@ -265,12 +265,12 @@ private:
     }
     m_handle = make_shared_from_args<CoreInteraction, double, double, double,
                                      double, double,
-#ifdef LJGEN_SOFTCORE
+#ifdef ESPRESSO_LJGEN_SOFTCORE
                                      double, double,
 #endif
                                      double, double, double, double>(
         new_params, "epsilon", "sigma", "cutoff", "shift", "offset",
-#ifdef LJGEN_SOFTCORE
+#ifdef ESPRESSO_LJGEN_SOFTCORE
         "lam", "delta",
 #endif
         "e1", "e2", "b1", "b2");
@@ -279,9 +279,9 @@ private:
     }
   }
 };
-#endif // LENNARD_JONES_GENERIC
+#endif // ESPRESSO_LENNARD_JONES_GENERIC
 
-#ifdef LJCOS
+#ifdef ESPRESSO_LJCOS
 class InteractionLJcos
     : public InteractionPotentialInterface<::LJcos_Parameters> {
 protected:
@@ -306,9 +306,9 @@ private:
             params, "epsilon", "sigma", "cutoff", "offset");
   }
 };
-#endif // LJCOS
+#endif // ESPRESSO_LJCOS
 
-#ifdef LJCOS2
+#ifdef ESPRESSO_LJCOS2
 class InteractionLJcos2
     : public InteractionPotentialInterface<::LJcos2_Parameters> {
 protected:
@@ -328,7 +328,7 @@ public:
 
 private:
   std::string inactive_parameter() const override { return "sigma"; }
-  double inactive_cutoff() const override { return 0.; }
+  double get_inactive_cutoff() const override { return 0.; }
 
   void make_new_instance(VariantMap const &params) override {
     m_handle =
@@ -346,9 +346,9 @@ public:
         name, params);
   }
 };
-#endif // LJCOS2
+#endif // ESPRESSO_LJCOS2
 
-#ifdef HERTZIAN
+#ifdef ESPRESSO_HERTZIAN
 class InteractionHertzian
     : public InteractionPotentialInterface<::Hertzian_Parameters> {
 protected:
@@ -372,9 +372,9 @@ private:
         params, "eps", "sig");
   }
 };
-#endif // HERTZIAN
+#endif // ESPRESSO_HERTZIAN
 
-#ifdef GAUSSIAN
+#ifdef ESPRESSO_GAUSSIAN
 class InteractionGaussian
     : public InteractionPotentialInterface<::Gaussian_Parameters> {
 protected:
@@ -397,9 +397,9 @@ private:
         params, "eps", "sig", "cutoff");
   }
 };
-#endif // GAUSSIAN
+#endif // ESPRESSO_GAUSSIAN
 
-#ifdef BMHTF_NACL
+#ifdef ESPRESSO_BMHTF_NACL
 class InteractionBMHTF
     : public InteractionPotentialInterface<::BMHTF_Parameters> {
 protected:
@@ -426,9 +426,9 @@ private:
         params, "a", "b", "c", "d", "sig", "cutoff");
   }
 };
-#endif // BMHTF_NACL
+#endif // ESPRESSO_BMHTF_NACL
 
-#ifdef MORSE
+#ifdef ESPRESSO_MORSE
 class InteractionMorse
     : public InteractionPotentialInterface<::Morse_Parameters> {
 protected:
@@ -453,9 +453,9 @@ private:
             params, "eps", "alpha", "rmin", "cutoff");
   }
 };
-#endif // MORSE
+#endif // ESPRESSO_MORSE
 
-#ifdef BUCKINGHAM
+#ifdef ESPRESSO_BUCKINGHAM
 class InteractionBuckingham
     : public InteractionPotentialInterface<::Buckingham_Parameters> {
 protected:
@@ -483,9 +483,9 @@ private:
         params, "a", "b", "c", "d", "cutoff", "discont", "shift");
   }
 };
-#endif // BUCKINGHAM
+#endif // ESPRESSO_BUCKINGHAM
 
-#ifdef SOFT_SPHERE
+#ifdef ESPRESSO_SOFT_SPHERE
 class InteractionSoftSphere
     : public InteractionPotentialInterface<::SoftSphere_Parameters> {
 protected:
@@ -510,9 +510,9 @@ private:
             params, "a", "n", "cutoff", "offset");
   }
 };
-#endif // SOFT_SPHERE
+#endif // ESPRESSO_SOFT_SPHERE
 
-#ifdef HAT
+#ifdef ESPRESSO_HAT
 class InteractionHat : public InteractionPotentialInterface<::Hat_Parameters> {
 protected:
   CoreInteraction IA_parameters::*get_ptr_offset() const override {
@@ -533,9 +533,9 @@ private:
         params, "F_max", "cutoff");
   }
 };
-#endif // HAT
+#endif // ESPRESSO_HAT
 
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
 class InteractionGayBerne
     : public InteractionPotentialInterface<::GayBerne_Parameters> {
 protected:
@@ -565,9 +565,9 @@ private:
         params, "eps", "sig", "cut", "k1", "k2", "mu", "nu");
   }
 };
-#endif // GAY_BERNE
+#endif // ESPRESSO_GAY_BERNE
 
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
 class InteractionTabulated
     : public InteractionPotentialInterface<::TabulatedPotential> {
 protected:
@@ -604,9 +604,9 @@ public:
         name, params);
   }
 };
-#endif // TABULATED
+#endif // ESPRESSO_TABULATED
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
 class InteractionDPD : public InteractionPotentialInterface<::DPD_Parameters> {
 protected:
   CoreInteraction IA_parameters::*get_ptr_offset() const override {
@@ -652,9 +652,9 @@ private:
     }
   }
 };
-#endif // DPD
+#endif // ESPRESSO_DPD
 
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
 class InteractionThole
     : public InteractionPotentialInterface<::Thole_Parameters> {
 protected:
@@ -672,16 +672,16 @@ public:
 
 private:
   std::string inactive_parameter() const override { return "scaling_coeff"; }
-  double inactive_cutoff() const override { return 0.; }
+  double get_inactive_cutoff() const override { return 0.; }
 
   void make_new_instance(VariantMap const &params) override {
     m_handle = make_shared_from_args<CoreInteraction, double, double>(
         params, "scaling_coeff", "q1q2");
   }
 };
-#endif // THOLE
+#endif // ESPRESSO_THOLE
 
-#ifdef SMOOTH_STEP
+#ifdef ESPRESSO_SMOOTH_STEP
 class InteractionSmoothStep
     : public InteractionPotentialInterface<::SmoothStep_Parameters> {
 protected:
@@ -708,62 +708,62 @@ private:
         params, "eps", "sig", "cutoff", "d", "n", "k0");
   }
 };
-#endif // SMOOTH_STEP
+#endif // ESPRESSO_SMOOTH_STEP
 
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
   std::shared_ptr<::IA_parameters> m_handle;
   std::shared_ptr<NonBondedInteractionHandle *> m_self;
   std::weak_ptr<std::function<void()>> m_notify_cutoff_change;
-#ifdef WCA
+#ifdef ESPRESSO_WCA
   std::shared_ptr<InteractionWCA> m_wca;
 #endif
-#ifdef LENNARD_JONES
+#ifdef ESPRESSO_LENNARD_JONES
   std::shared_ptr<InteractionLJ> m_lj;
 #endif
-#ifdef LENNARD_JONES_GENERIC
+#ifdef ESPRESSO_LENNARD_JONES_GENERIC
   std::shared_ptr<InteractionLJGen> m_ljgen;
 #endif
-#ifdef LJCOS
+#ifdef ESPRESSO_LJCOS
   std::shared_ptr<InteractionLJcos> m_ljcos;
 #endif
-#ifdef LJCOS2
+#ifdef ESPRESSO_LJCOS2
   std::shared_ptr<InteractionLJcos2> m_ljcos2;
 #endif
-#ifdef HERTZIAN
+#ifdef ESPRESSO_HERTZIAN
   std::shared_ptr<InteractionHertzian> m_hertzian;
 #endif
-#ifdef GAUSSIAN
+#ifdef ESPRESSO_GAUSSIAN
   std::shared_ptr<InteractionGaussian> m_gaussian;
 #endif
-#ifdef BMHTF_NACL
+#ifdef ESPRESSO_BMHTF_NACL
   std::shared_ptr<InteractionBMHTF> m_bmhtf;
 #endif
-#ifdef MORSE
+#ifdef ESPRESSO_MORSE
   std::shared_ptr<InteractionMorse> m_morse;
 #endif
-#ifdef BUCKINGHAM
+#ifdef ESPRESSO_BUCKINGHAM
   std::shared_ptr<InteractionBuckingham> m_buckingham;
 #endif
-#ifdef SOFT_SPHERE
+#ifdef ESPRESSO_SOFT_SPHERE
   std::shared_ptr<InteractionSoftSphere> m_soft_sphere;
 #endif
-#ifdef HAT
+#ifdef ESPRESSO_HAT
   std::shared_ptr<InteractionHat> m_hat;
 #endif
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
   std::shared_ptr<InteractionGayBerne> m_gay_berne;
 #endif
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
   std::shared_ptr<InteractionTabulated> m_tabulated;
 #endif
-#ifdef DPD
+#ifdef ESPRESSO_DPD
   std::shared_ptr<InteractionDPD> m_dpd;
 #endif
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
   std::shared_ptr<InteractionThole> m_thole;
 #endif
-#ifdef SMOOTH_STEP
+#ifdef ESPRESSO_SMOOTH_STEP
   std::shared_ptr<InteractionSmoothStep> m_smooth_step;
 #endif
 
@@ -834,55 +834,55 @@ public:
 
 private:
   void apply(auto const &&fun) {
-#ifdef WCA
+#ifdef ESPRESSO_WCA
     fun(m_wca, "wca", "Interactions::InteractionWCA");
 #endif
-#ifdef LENNARD_JONES
+#ifdef ESPRESSO_LENNARD_JONES
     fun(m_lj, "lennard_jones", "Interactions::InteractionLJ");
 #endif
-#ifdef LENNARD_JONES_GENERIC
+#ifdef ESPRESSO_LENNARD_JONES_GENERIC
     fun(m_ljgen, "generic_lennard_jones", "Interactions::InteractionLJGen");
 #endif
-#ifdef LJCOS
+#ifdef ESPRESSO_LJCOS
     fun(m_ljcos, "lennard_jones_cos", "Interactions::InteractionLJcos");
 #endif
-#ifdef LJCOS2
+#ifdef ESPRESSO_LJCOS2
     fun(m_ljcos2, "lennard_jones_cos2", "Interactions::InteractionLJcos2");
 #endif
-#ifdef HERTZIAN
+#ifdef ESPRESSO_HERTZIAN
     fun(m_hertzian, "hertzian", "Interactions::InteractionHertzian");
 #endif
-#ifdef GAUSSIAN
+#ifdef ESPRESSO_GAUSSIAN
     fun(m_gaussian, "gaussian", "Interactions::InteractionGaussian");
 #endif
-#ifdef BMHTF_NACL
+#ifdef ESPRESSO_BMHTF_NACL
     fun(m_bmhtf, "bmhtf", "Interactions::InteractionBMHTF");
 #endif
-#ifdef MORSE
+#ifdef ESPRESSO_MORSE
     fun(m_morse, "morse", "Interactions::InteractionMorse");
 #endif
-#ifdef BUCKINGHAM
+#ifdef ESPRESSO_BUCKINGHAM
     fun(m_buckingham, "buckingham", "Interactions::InteractionBuckingham");
 #endif
-#ifdef SOFT_SPHERE
+#ifdef ESPRESSO_SOFT_SPHERE
     fun(m_soft_sphere, "soft_sphere", "Interactions::InteractionSoftSphere");
 #endif
-#ifdef HAT
+#ifdef ESPRESSO_HAT
     fun(m_hat, "hat", "Interactions::InteractionHat");
 #endif
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
     fun(m_gay_berne, "gay_berne", "Interactions::InteractionGayBerne");
 #endif
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
     fun(m_tabulated, "tabulated", "Interactions::InteractionTabulated");
 #endif
-#ifdef DPD
+#ifdef ESPRESSO_DPD
     fun(m_dpd, "dpd", "Interactions::InteractionDPD");
 #endif
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
     fun(m_thole, "thole", "Interactions::InteractionThole");
 #endif
-#ifdef SMOOTH_STEP
+#ifdef ESPRESSO_SMOOTH_STEP
     fun(m_smooth_step, "smooth_step", "Interactions::InteractionSmoothStep");
 #endif
   }

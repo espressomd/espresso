@@ -21,7 +21,7 @@
 
 #include "magnetostatics/solver.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "magnetostatics/dipoles.hpp"
 
@@ -88,19 +88,19 @@ void Solver::on_cell_structure_change() {
 }
 
 double Solver::cutoff() const {
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
   if (impl->solver) {
     if (auto dp3m = get_actor_by_type<DipolarP3M>(impl->solver)) {
       return dp3m->dp3m_params.r_cut;
     }
   }
 #endif
-  return INACTIVE_CUTOFF;
+  return inactive_cutoff;
 }
 
 void Solver::on_observable_calc() {
   if (reinit_on_observable_calc) {
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
     if (impl->solver) {
       if (auto dp3m = get_actor_by_type<DipolarP3M>(impl->solver)) {
         dp3m->count_magnetic_particles();
@@ -116,11 +116,11 @@ struct LongRangeForce {
   explicit LongRangeForce(ParticleRange const &particles)
       : m_particles(particles) {}
 
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
   void operator()(std::shared_ptr<DipolarP3M> const &actor) const {
     actor->add_long_range_forces(m_particles);
   }
-#endif // DP3M
+#endif // ESPRESSO_DP3M
   void operator()(std::shared_ptr<DipolarLayerCorrection> const &actor) const {
     actor->add_force_corrections(m_particles);
     std::visit(*this, actor->base_solver);
@@ -128,12 +128,12 @@ struct LongRangeForce {
   void operator()(std::shared_ptr<DipolarDirectSum> const &actor) const {
     actor->add_long_range_forces(m_particles);
   }
-#ifdef DIPOLAR_DIRECT_SUM
+#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
   void operator()(std::shared_ptr<DipolarDirectSumGpu> const &actor) const {
     actor->add_long_range_forces();
   }
 #endif
-#ifdef SCAFACOS_DIPOLES
+#ifdef ESPRESSO_SCAFACOS_DIPOLES
   void operator()(std::shared_ptr<DipolarScafacos> const &actor) const {
     actor->add_long_range_forces();
   }
@@ -145,11 +145,11 @@ struct LongRangeEnergy {
   explicit LongRangeEnergy(ParticleRange const &particles)
       : m_particles(particles) {}
 
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
   double operator()(std::shared_ptr<DipolarP3M> const &actor) const {
     return actor->long_range_energy(m_particles);
   }
-#endif // DP3M
+#endif // ESPRESSO_DP3M
   double
   operator()(std::shared_ptr<DipolarLayerCorrection> const &actor) const {
     auto energy = std::visit(*this, actor->base_solver);
@@ -158,20 +158,20 @@ struct LongRangeEnergy {
   double operator()(std::shared_ptr<DipolarDirectSum> const &actor) const {
     return actor->long_range_energy(m_particles);
   }
-#ifdef DIPOLAR_DIRECT_SUM
+#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
   double operator()(std::shared_ptr<DipolarDirectSumGpu> const &actor) const {
     actor->long_range_energy();
     return 0.;
   }
 #endif
-#ifdef SCAFACOS_DIPOLES
+#ifdef ESPRESSO_SCAFACOS_DIPOLES
   double operator()(std::shared_ptr<DipolarScafacos> const &actor) const {
     return actor->long_range_energy();
   }
 #endif
 };
 
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
 struct LongRangeField {
   ParticleRange const &m_particles;
   explicit LongRangeField(ParticleRange const &particles)
@@ -209,7 +209,7 @@ double Solver::calc_energy_long_range(ParticleRange const &particles) const {
   return 0.;
 }
 
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
 void Solver::calc_long_range_field(ParticleRange const &particles) const {
   if (impl->solver) {
     std::visit(LongRangeField(particles), *impl->solver);
@@ -218,4 +218,4 @@ void Solver::calc_long_range_field(ParticleRange const &particles) const {
 #endif
 
 } // namespace Dipoles
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES

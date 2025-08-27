@@ -23,7 +23,7 @@
 
 #include "config/config.hpp"
 
-#ifdef SCAFACOS
+#ifdef ESPRESSO_SCAFACOS
 
 #include "electrostatics/scafacos.hpp"
 
@@ -93,4 +93,4 @@ private:
   }
 };
 
-#endif // SCAFACOS
+#endif // ESPRESSO_SCAFACOS

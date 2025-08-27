@@ -44,7 +44,7 @@ struct ShortRangeForceKernel {
   using kernel_type = Solver::ShortRangeForceKernel;
   using result_type = std::optional<kernel_type>;
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   template <typename T>
   result_type operator()(std::shared_ptr<T> const &ptr) const {
     auto const &actor = *ptr;
@@ -54,13 +54,13 @@ struct ShortRangeForceKernel {
         }};
   }
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
   auto
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &ptr) const {
     return std::visit(*this, ptr->base_solver);
   }
-#endif // P3M
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_P3M
+#endif // ESPRESSO_ELECTROSTATICS
 };
 
 struct ShortRangeForceCorrectionsKernel {
@@ -73,7 +73,7 @@ struct ShortRangeForceCorrectionsKernel {
     return {};
   }
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
   result_type
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &ptr) const {
     auto const &actor = *ptr;
@@ -84,7 +84,7 @@ struct ShortRangeForceCorrectionsKernel {
       actor.add_pair_force_corrections(pos1, pos2, p1f_asym, p2f_asym, q1q2);
     }};
   }
-#endif // P3M
+#endif // ESPRESSO_P3M
 };
 
 struct ShortRangePressureKernel {
@@ -92,7 +92,7 @@ struct ShortRangePressureKernel {
   using kernel_type = Solver::ShortRangePressureKernel;
   using result_type = std::optional<kernel_type>;
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   template <typename T>
   result_type operator()(std::shared_ptr<T> const &ptr) const {
     if constexpr (traits::has_pressure<T>::value) {
@@ -103,7 +103,7 @@ struct ShortRangePressureKernel {
     }
     return {};
   }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
 };
 
 struct ShortRangeEnergyKernel {
@@ -111,7 +111,7 @@ struct ShortRangeEnergyKernel {
   using kernel_type = Solver::ShortRangeEnergyKernel;
   using result_type = std::optional<kernel_type>;
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   template <typename T>
   result_type operator()(std::shared_ptr<T> const &ptr) const {
     auto const &actor = *ptr;
@@ -120,7 +120,7 @@ struct ShortRangeEnergyKernel {
                  Utils::Vector3d const &,
                  double dist) { return actor.pair_energy(q1q2, dist); }};
   }
-#ifdef P3M
+#ifdef ESPRESSO_P3M
   result_type
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &ptr) const {
     auto const &actor = *ptr;
@@ -136,57 +136,57 @@ struct ShortRangeEnergyKernel {
           return energy + actor.pair_energy_correction(pos1, pos2, q1q2);
         }};
   }
-#endif // P3M
+#endif // ESPRESSO_P3M
   result_type operator()(std::shared_ptr<CoulombMMM1D> const &actor) const {
     return kernel_type{
         [&actor](Utils::Vector3d const &, Utils::Vector3d const &, double q1q2,
                  Utils::Vector3d const &d,
                  double dist) { return actor->pair_energy(q1q2, d, dist); }};
   }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
 };
 
 inline std::optional<Solver::ShortRangeForceKernel>
 Solver::pair_force_kernel() const {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   if (auto &solver = impl->solver; solver.has_value()) {
     auto const visitor = Coulomb::ShortRangeForceKernel();
     return std::visit(visitor, *solver);
   }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
   return std::nullopt;
 }
 
 inline std::optional<Solver::ShortRangeForceCorrectionsKernel>
 Solver::pair_force_elc_kernel() const {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   if (auto &solver = impl->solver; solver.has_value()) {
     auto const visitor = Coulomb::ShortRangeForceCorrectionsKernel();
     return std::visit(visitor, *solver);
   }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
   return std::nullopt;
 }
 
 inline std::optional<Solver::ShortRangePressureKernel>
 Solver::pair_pressure_kernel() const {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   if (auto &solver = impl->solver; solver.has_value()) {
     auto const visitor = Coulomb::ShortRangePressureKernel();
     return std::visit(visitor, *solver);
   }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
   return std::nullopt;
 }
 
 inline std::optional<Solver::ShortRangeEnergyKernel>
 Solver::pair_energy_kernel() const {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   if (auto &solver = impl->solver; solver.has_value()) {
     auto const visitor = Coulomb::ShortRangeEnergyKernel();
     return std::visit(visitor, *solver);
   }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
   return std::nullopt;
 }
 

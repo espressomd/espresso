@@ -24,7 +24,7 @@
  */
 #include "gaussian.hpp"
 
-#ifdef GAUSSIAN
+#ifdef ESPRESSO_GAUSSIAN
 #include "nonbonded_interaction_data.hpp"
 
 #include <stdexcept>
@@ -41,4 +41,4 @@ Gaussian_Parameters::Gaussian_Parameters(double eps, double sig, double cutoff)
     throw std::domain_error("Gaussian parameter 'cutoff' has to be >= 0");
   }
 }
-#endif // GAUSSIAN
+#endif // ESPRESSO_GAUSSIAN

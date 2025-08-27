@@ -29,7 +29,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "electrostatics/actor.hpp"
 
@@ -118,4 +118,4 @@ struct ReactionField : public Coulomb::Actor<ReactionField> {
   }
 };
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

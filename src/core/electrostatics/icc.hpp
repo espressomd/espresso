@@ -47,7 +47,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "ParticleRange.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -104,4 +104,4 @@ struct ICCStar : public System::Leaf<ICCStar> {
   void sanity_check() const;
 };
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

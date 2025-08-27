@@ -28,7 +28,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "electrostatics/actor.hpp"
 
@@ -106,4 +106,4 @@ struct DebyeHueckel : public Coulomb::Actor<DebyeHueckel> {
   }
 };
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

@@ -23,5 +23,11 @@ foreach(n_species RANGE 1 5)
       espresso_walberla_codegen
       PRIVATE ReactionKernelBulk_${n_species}_${precision}.cpp
               ReactionKernelIndexed_${n_species}_${precision}.cpp)
+    if(WALBERLA_BUILD_WITH_CUDA)
+      target_sources(
+        espresso_walberla_codegen_cuda
+        PRIVATE ReactionKernelBulk_${n_species}_${precision}_CUDA.cu
+                ReactionKernelIndexed_${n_species}_${precision}_CUDA.cu)
+    endif()
   endforeach()
 endforeach()

@@ -54,10 +54,11 @@ class Defines:
     def defines(self, filename, include_build_in=False):
         all_defs = set(self._get_defs(filename))
 
-        if include_build_in:
-            return all_defs
-        else:
-            return all_defs - self._buildin
+        if not include_build_in:
+            all_defs -= self._buildin
+
+        return {x.split("_", 1)[1] if x.startswith(
+            "ESPRESSO_") else x for x in all_defs}
 
 
 if __name__ == "__main__":

@@ -67,7 +67,7 @@ inline std::optional<Utils::Vector3d> BondedCoulombSR::force(
     Utils::Vector3d const &dx,
     std::function<Utils::Vector3d(double, Utils::Vector3d const &,
                                   double)> const &kernel) const {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   return kernel(q1q2, dx, dx.norm());
 #else
   return Utils::Vector3d{};
@@ -85,7 +85,7 @@ inline std::optional<double> BondedCoulombSR::energy(
     std::function<double(Utils::Vector3d const &, Utils::Vector3d const &,
                          double, Utils::Vector3d const &, double)> const
         &kernel) const {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   return kernel(p1.pos(), p2.pos(), q1q2, dx, dx.norm());
 #else
   return 0.;

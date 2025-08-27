@@ -14,6 +14,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from libcpp cimport bool as cbool
+from libcpp.unordered_map cimport unordered_map
+from libcpp.utility cimport pair
+from libcpp.vector cimport vector
+from libcpp.memory cimport shared_ptr, make_shared
 import numpy as np
 import pathlib
 from . import utils
@@ -21,11 +26,6 @@ from .utils cimport Vector3b, Vector3i, Vector2d, Vector3d, Vector4d
 from .utils cimport path
 cimport cpython.object
 
-from libcpp.memory cimport shared_ptr, make_shared
-from libcpp.vector cimport vector
-from libcpp.utility cimport pair
-from libcpp.unordered_map cimport unordered_map
-from libcpp cimport bool as cbool
 
 cdef shared_ptr[ContextManager] _om
 
@@ -253,39 +253,41 @@ cdef Variant python_object_to_variant(value) except *:
     if isinstance(value, PScriptInterface):
         oref = value.get_sip()
         return make_variant(oref.sip)
-    elif isinstance(value, dict):
+    if isinstance(value, dict):
         if all(map(lambda x: isinstance(x, (int, np.integer)), value.keys())):
             for key, value in value.items():
                 map_int2var[int(key)] = python_object_to_variant(value)
             return make_variant[unordered_map[int, Variant]](map_int2var)
-        elif all(map(lambda x: isinstance(x, (str, np.str_)), value.keys())):
+        if all(map(lambda x: isinstance(x, (str, bytes)), value.keys())):
             for key, value in value.items():
-                map_str2var[utils.to_bytes(
-                    key)] = python_object_to_variant(value)
+                key_bytes = utils.to_bytes(key)
+                map_str2var[key_bytes] = python_object_to_variant(value)
             return make_variant[unordered_map[string, Variant]](map_str2var)
         for k, v in value.items():
-            if not isinstance(k, (str, int, np.integer, np.str_)):
+            if not isinstance(k, (str, bytes, int, np.integer)):
                 raise TypeError(
                     f"No conversion from type "
                     f"'dict_item([({type(k).__name__}, {type(v).__name__})])'"
                     f" to 'Variant[std::unordered_map<int, Variant>]' or"
                     f" to 'Variant[std::unordered_map<std::string, Variant>]'")
-    elif isinstance(value, (str, bytes)):
+        assert False, "dev note: a type is missing in the for loop above"
+    if isinstance(value, (str, bytes)):
         return make_variant[string](utils.to_bytes(value))
-    elif isinstance(value, pathlib.Path):
+    if isinstance(value, pathlib.Path):
         fs_path.assign(utils.to_bytes(str(value)))
         return make_variant[path](fs_path)
-    elif isinstance(value, array_variant) and np.issubdtype(value.dtype, np.signedinteger):
-        view_int = np.ascontiguousarray(value, dtype=np.int32)
-        data_int = &view_int[0]
-        vec_int.assign(data_int, data_int + len(view_int))
-        return make_variant[vector[int]](vec_int)
-    elif isinstance(value, array_variant) and np.issubdtype(value.dtype, np.floating):
-        view_double = np.ascontiguousarray(value, dtype=np.float64)
-        data_double = &view_double[0]
-        vec_double.assign(data_double, data_double + len(view_double))
-        return make_variant[vector[double]](vec_double)
-    elif hasattr(value, '__iter__'):
+    if isinstance(value, array_variant):
+        if np.issubdtype(value.dtype, np.signedinteger):
+            view_int = np.ascontiguousarray(value, dtype=np.int32)
+            data_int = &view_int[0]
+            vec_int.assign(data_int, data_int + len(view_int))
+            return make_variant[vector[int]](vec_int)
+        if np.issubdtype(value.dtype, np.floating):
+            view_double = np.ascontiguousarray(value, dtype=np.float64)
+            data_double = &view_double[0]
+            vec_double.assign(data_double, data_double + len(view_double))
+            return make_variant[vector[double]](vec_double)
+    if hasattr(value, "__iter__"):
         if len(value) == 0:
             return make_variant[vector[Variant]](vec_variant)
         if isinstance(value, np.ndarray) and value.ndim == 1:
@@ -293,7 +295,7 @@ cdef Variant python_object_to_variant(value) except *:
                 for e in value:
                     vec_double.push_back(e)
                 return make_variant[vector[double]](vec_double)
-            elif np.issubdtype(value.dtype, np.signedinteger):
+            if np.issubdtype(value.dtype, np.signedinteger):
                 for e in value:
                     vec_int.push_back(e)
                 return make_variant[vector[int]](vec_int)
@@ -309,15 +311,14 @@ cdef Variant python_object_to_variant(value) except *:
         for e in value:
             vec_variant.push_back(python_object_to_variant(e))
         return make_variant[vector[Variant]](vec_variant)
-    elif isinstance(value, (type(True), np.bool_)):
+    if isinstance(value, (type(True), np.bool_)):
         return make_variant[cbool](value)
-    elif np.issubdtype(np.dtype(type(value)), np.signedinteger):
+    if np.issubdtype(np.dtype(type(value)), np.signedinteger):
         return make_variant[int](value)
-    elif np.issubdtype(np.dtype(type(value)), np.floating):
+    if np.issubdtype(np.dtype(type(value)), np.floating):
         return make_variant[double](value)
-    else:
-        raise TypeError(
-            f"No conversion from type '{type(value).__name__}' to 'Variant'")
+    raise TypeError(
+        f"No conversion from type '{type(value).__name__}' to 'Variant'")
 
 cdef variant_to_python_object(const Variant & value):
     """Convert C++ Variant objects to Python objects."""
@@ -561,10 +562,12 @@ class ScriptObjectMap(ScriptInterfaceHelper):
         return self.call_method("keys")
 
     def __iter__(self):
-        for k in self.keys(): yield k
+        for k in self.keys():
+            yield k
 
     def items(self):
-        for k in self.keys(): yield k, self[k]
+        for k in self.keys():
+            yield k, self[k]
 
 
 # Map from script object names to their corresponding python classes

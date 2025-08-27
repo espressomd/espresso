@@ -77,7 +77,7 @@ static void particle_checks(int p_id, Utils::Vector3d const &pos) {
 #endif // __FAST_MATH__
 }
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
 static auto const contradicting_arguments_quat = std::vector<
     std::array<std::string, 3>>{{
     {{"dip", "dipm",
@@ -105,7 +105,7 @@ static void sanity_checks_rotation(VariantMap const &params) {
     }
   }
 }
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION
 
 static uint8_t bitfield_from_flag(Utils::Vector3i const &flag) {
   auto bitfield = static_cast<uint8_t>(0u);
@@ -136,19 +136,19 @@ static auto get_quaternion_safe(std::string const &name, Variant const &value) {
   return Utils::Quaternion<double>{{q[0], q[1], q[2], q[3]}};
 }
 
-#ifdef THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
 static auto get_gamma_safe(Variant const &value) {
-#ifdef PARTICLE_ANISOTROPY
+#ifdef ESPRESSO_PARTICLE_ANISOTROPY
   try {
     return Utils::Vector3d::broadcast(get_value<double>(value));
   } catch (...) {
     return get_value<Utils::Vector3d>(value);
   }
-#else  // PARTICLE_ANISOTROPY
+#else  // ESPRESSO_PARTICLE_ANISOTROPY
   return get_value<double>(value);
-#endif // PARTICLE_ANISOTROPY
+#endif // ESPRESSO_PARTICLE_ANISOTROPY
 }
-#endif // THERMOSTAT_PER_PARTICLE
+#endif // ESPRESSO_THERMOSTAT_PER_PARTICLE
 
 static auto get_real_particle(boost::mpi::communicator const &comm, int p_id,
                               ::CellStructure &cell_structure) {
@@ -254,36 +254,36 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() { return get_particle_data(m_pid).force(); }},
       {"mass",
-#ifdef MASS
+#ifdef ESPRESSO_MASS
        [this](Variant const &value) {
          if (get_value<double>(value) <= 0.) {
            throw std::domain_error(error_msg("mass", "must be a float > 0"));
          }
          set_particle_property(&Particle::mass, value);
        },
-#else  // MASS
+#else  // ESPRESSO_MASS
        [](Variant const &value) {
          auto const default_mass = Particle().mass();
          if (std::abs(get_value<double>(value) - default_mass) > 1e-10) {
            throw std::runtime_error("Feature MASS not compiled in");
          }
        },
-#endif // MASS
+#endif // ESPRESSO_MASS
        [this]() { return get_particle_data(m_pid).mass(); }},
       {"q",
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
        [this](Variant const &value) {
          set_particle_property(&Particle::q, value);
        },
-#else  // ELECTROSTATICS
+#else  // ESPRESSO_ELECTROSTATICS
        [](Variant const &value) {
          if (get_value<double>(value) != 0.) {
            throw std::runtime_error("Feature ELECTROSTATICS not compiled in");
          }
        },
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
        [this]() { return get_particle_data(m_pid).q(); }},
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
       {"dip",
        [this](Variant const &value) {
          set_particle_property([&value](Particle &p) {
@@ -297,15 +297,15 @@ ParticleHandle::ParticleHandle() {
          set_particle_property(&Particle::dipm, value);
        },
        [this]() { return get_particle_data(m_pid).dipm(); }},
-#endif // DIPOLES
-#ifdef DIPOLE_FIELD_TRACKING
+#endif // ESPRESSO_DIPOLES
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
       {"dip_fld",
        [this](Variant const &value) {
          set_particle_property(&Particle::dip_fld, value);
        },
        [this]() { return get_particle_data(m_pid).dip_fld(); }},
 #endif
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
       {"director",
        [this](Variant const &value) {
          set_particle_property([&value](Particle &p) {
@@ -364,22 +364,22 @@ ParticleHandle::ParticleHandle() {
          auto &p = get_particle_data(m_pid);
          return convert_vector_body_to_space(p, p.torque());
        }},
-#endif // ROTATION
-#ifdef ROTATIONAL_INERTIA
+#endif // ESPRESSO_ROTATION
+#ifdef ESPRESSO_ROTATIONAL_INERTIA
       {"rinertia",
        [this](Variant const &value) {
          set_particle_property(&Particle::rinertia, value);
        },
        [this]() { return get_particle_data(m_pid).rinertia(); }},
-#endif // ROTATIONAL_INERTIA
-#ifdef LB_ELECTROHYDRODYNAMICS
+#endif // ESPRESSO_ROTATIONAL_INERTIA
+#ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
       {"mu_E",
        [this](Variant const &value) {
          set_particle_property(&Particle::mu_E, value);
        },
        [this]() { return get_particle_data(m_pid).mu_E(); }},
-#endif // LB_ELECTROHYDRODYNAMICS
-#ifdef EXTERNAL_FORCES
+#endif // ESPRESSO_LB_ELECTROHYDRODYNAMICS
+#ifdef ESPRESSO_EXTERNAL_FORCES
       {"fix",
        [this](Variant const &value) {
          set_particle_property([&value](Particle &p) {
@@ -399,30 +399,30 @@ ParticleHandle::ParticleHandle() {
          set_particle_property(&Particle::ext_force, value);
        },
        [this]() { return get_particle_data(m_pid).ext_force(); }},
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
       {"ext_torque",
        [this](Variant const &value) {
          set_particle_property(&Particle::ext_torque, value);
        },
        [this]() { return get_particle_data(m_pid).ext_torque(); }},
-#endif // ROTATION
-#endif // EXTERNAL_FORCES
-#ifdef THERMOSTAT_PER_PARTICLE
+#endif // ESPRESSO_ROTATION
+#endif // ESPRESSO_EXTERNAL_FORCES
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
       {"gamma",
        [this](Variant const &value) {
          set_particle_property(&Particle::gamma,
                                Variant{get_gamma_safe(value)});
        },
        [this]() { return get_particle_data(m_pid).gamma(); }},
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
       {"gamma_rot",
        [this](Variant const &value) {
          set_particle_property(&Particle::gamma_rot,
                                Variant{get_gamma_safe(value)});
        },
        [this]() { return get_particle_data(m_pid).gamma_rot(); }},
-#endif // ROTATION
-#endif // THERMOSTAT_PER_PARTICLE
+#endif // ESPRESSO_ROTATION
+#endif // ESPRESSO_THERMOSTAT_PER_PARTICLE
       {"pos_folded", AutoParameter::read_only,
        [this]() {
          auto const &box_geo = *get_system()->box_geo;
@@ -455,7 +455,7 @@ ParticleHandle::ParticleHandle() {
          set_particle_property(&Particle::mol_id, Variant{mol_id});
        },
        [this]() { return get_particle_data(m_pid).mol_id(); }},
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
       {"vs_quat",
        [this](Variant const &value) {
          auto const quat = get_quaternion_safe("vs_quat", value);
@@ -489,7 +489,7 @@ ParticleHandle::ParticleHandle() {
          return std::vector<Variant>{{vs_rel.to_particle_id, vs_rel.distance,
                                       quat2vector(vs_rel.rel_orientation)}};
        }},
-#endif // VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
       {"propagation",
        [this](Variant const &value) {
          auto const propagation = get_value<int>(value);
@@ -501,7 +501,7 @@ ParticleHandle::ParticleHandle() {
          set_particle_property(&Particle::propagation, value);
        },
        [this]() { return get_particle_data(m_pid).propagation(); }},
-#ifdef ENGINE
+#ifdef ESPRESSO_ENGINE
       {"swimming",
        [this](Variant const &value) {
          set_particle_property([&value](Particle &p) {
@@ -526,11 +526,11 @@ ParticleHandle::ParticleHandle() {
              {"is_engine_force_on_fluid", swim.is_engine_force_on_fluid},
          };
        }},
-#endif // ENGINE
+#endif // ESPRESSO_ENGINE
   });
 }
 
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
 /**
  * @brief Locally add an exclusion to a particle.
  * @param pid1 the identity of the first exclusion partner
@@ -574,7 +574,7 @@ void ParticleHandle::particle_exclusion_sanity_checks(int pid1,
   std::ignore = get_real_particle(context()->get_comm(), pid1, cell_structure);
   std::ignore = get_real_particle(context()->get_comm(), pid2, cell_structure);
 }
-#endif // EXCLUSIONS
+#endif // ESPRESSO_EXCLUSIONS
 
 Variant ParticleHandle::do_call_method(std::string const &name,
                                        VariantMap const &params) {
@@ -591,7 +591,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
   if (name == "update_params") {
     // Set new properties
     context()->parallel_try_catch([&]() {
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
       sanity_checks_rotation(params);
 #endif
       for (auto const &name : get_parameter_insertion_order()) {
@@ -678,7 +678,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
       return {};
     }
     return get_particle_data(m_pid).is_virtual();
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   } else if (name == "vs_auto_relate_to") {
     if (not context()->is_head_node()) {
       return {};
@@ -713,8 +713,8 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     set_parameter("propagation",
                   Variant{static_cast<int>(PropagationMode::TRANS_VS_RELATIVE |
                                            PropagationMode::ROT_VS_RELATIVE)});
-#endif // VIRTUAL_SITES_RELATIVE
-#ifdef EXCLUSIONS
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_EXCLUSIONS
   } else if (name == "has_exclusion") {
     auto const other_pid = get_value<int>(params, "pid");
     auto cell_structure_si = get_cell_structure();
@@ -772,8 +772,8 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     }
     auto const excl_list = get_particle_data(m_pid).exclusions();
     return Variant{std::vector<int>{excl_list.begin(), excl_list.end()}};
-#endif // EXCLUSIONS
-#ifdef ROTATION
+#endif // ESPRESSO_EXCLUSIONS
+#ifdef ESPRESSO_ROTATION
   }
   if (name == "rotate_particle") {
     set_particle_property([&params](Particle &p) {
@@ -795,7 +795,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
           auto const vec = get_value<Utils::Vector3d>(params, "vec");
           return convert_vector_space_to_body(p, vec).as_vector();
         });
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION
   }
   return {};
 }
@@ -843,9 +843,9 @@ void ParticleHandle::do_construct(VariantMap const &params) {
     }
   });
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   context()->parallel_try_catch([&]() { sanity_checks_rotation(params); });
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION
 
   // create a default-constructed particle
   make_new_particle(m_pid, pos);

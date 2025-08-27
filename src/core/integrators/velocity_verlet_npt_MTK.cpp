@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 #include "velocity_verlet_npt.hpp"
 
 #include "BoxGeometry.hpp"
@@ -244,4 +244,4 @@ void velocity_verlet_npt_MTK_step_2(ParticleRangeNPT const &particles,
                                         time_step);
 }
 
-#endif // NPT
+#endif // ESPRESSO_NPT

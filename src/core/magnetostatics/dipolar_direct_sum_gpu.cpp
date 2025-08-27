@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLAR_DIRECT_SUM
+#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
 
 #include "magnetostatics/dipolar_direct_sum_gpu.hpp"
 #include "magnetostatics/dipolar_direct_sum_gpu_cuda.cuh"

@@ -27,7 +27,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
 
 #include "magnetostatics/dp3m.hpp"
 #include "magnetostatics/dp3m.impl.hpp"
@@ -63,7 +63,7 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
 #include <omp.h>
 #endif
@@ -135,7 +135,7 @@ DipolarP3MImpl<FloatType, Architecture>::calc_average_self_energy_k_space()
 template <typename FloatType, Arch Architecture>
 void DipolarP3MImpl<FloatType, Architecture>::init_cpu_kernels() {
   assert(dp3m.params.mesh >= Utils::Vector3i::broadcast(1));
-  assert(dp3m.params.cao >= 1 and dp3m.params.cao <= 7);
+  assert(dp3m.params.cao >= p3m_min_cao and dp3m.params.cao <= p3m_max_cao);
   assert(dp3m.params.alpha > 0.);
 
   auto const &system = get_system();
@@ -163,7 +163,7 @@ void DipolarP3MImpl<FloatType, Architecture>::init_cpu_kernels() {
 
 namespace {
 template <int cao> struct AssignDipole {
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   void operator()(auto &dp3m, auto &cell_structure) {
     using value_type =
         typename std::remove_reference_t<decltype(dp3m)>::value_type;
@@ -194,7 +194,7 @@ template <int cao> struct AssignDipole {
           });
     }
   }
-#else  // SHARED_MEMORY_PARALLELISM
+#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
   void operator()(auto &dp3m, Utils::Vector3d const &real_pos,
                   Utils::Vector3d const &dip) const {
     using value_type =
@@ -211,7 +211,7 @@ template <int cao> struct AssignDipole {
 
     dp3m.inter_weights.template store<cao>(weights);
   }
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 };
 } // namespace
 
@@ -225,23 +225,23 @@ void DipolarP3MImpl<FloatType, Architecture>::dipole_assign(
     std::ranges::fill_n(rs_mesh_field.data(), dp3m.local_mesh.size, 0.);
   }
 
-#ifdef SHARED_MEMORY_PARALLELISM
-  Utils::integral_parameter<int, AssignDipole, 1, 7>(
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  Utils::integral_parameter<int, AssignDipole, p3m_min_cao, p3m_max_cao>(
       dp3m.params.cao, dp3m, *get_system().cell_structure);
-#else  // SHARED_MEMORY_PARALLELISM
+#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
   for (auto const &p : particles) {
     if (p.dipm() != 0.) {
-      Utils::integral_parameter<int, AssignDipole, 1, 7>(dp3m.params.cao, dp3m,
-                                                         p.pos(), p.calc_dip());
+      Utils::integral_parameter<int, AssignDipole, p3m_min_cao, p3m_max_cao>(
+          dp3m.params.cao, dp3m, p.pos(), p.calc_dip());
     }
   }
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 }
 
 namespace {
 template <int cao> struct AssignTorques {
   void operator()(auto &dp3m, double prefac, int d_rs,
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
                   CellStructure &cell_structure
 #else
                   ParticleRange const &particles
@@ -260,7 +260,7 @@ template <int cao> struct AssignTorques {
                       });
 
       auto const torque = vector_product(pref, E);
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
       auto const thread_id = omp_get_thread_num();
       p_torque(p_index, thread_id, 0) -= torque[0];
       p_torque(p_index, thread_id, 1) -= torque[1];
@@ -270,7 +270,7 @@ template <int cao> struct AssignTorques {
 #endif
     };
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     auto const n_part = dp3m.inter_weights.size();
     auto const &unique_particles = cell_structure.get_unique_particles();
     auto &local_torque = cell_structure.get_local_torque();
@@ -281,7 +281,7 @@ template <int cao> struct AssignTorques {
             kernel(p.calc_dip() * prefac, local_torque, p_index);
           }
         });
-#else  // SHARED_MEMORY_PARALLELISM
+#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
     /* magnetic particle index */
     auto p_index = std::size_t{0ul};
 
@@ -291,13 +291,13 @@ template <int cao> struct AssignTorques {
         ++p_index;
       }
     }
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
   }
 };
 
 template <int cao> struct AssignForces {
   void operator()(auto &dp3m, double prefac, int d_rs,
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
                   CellStructure &cell_structure
 #else
                   ParticleRange const &particles
@@ -317,7 +317,7 @@ template <int cao> struct AssignForces {
         E[2u] += w * double(dp3m.mesh.rs_fields[2u][ind]);
       });
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
       auto const thread_id = omp_get_thread_num();
       p_force(p_index, thread_id, d_rs) += pref * E;
 #else
@@ -325,7 +325,7 @@ template <int cao> struct AssignForces {
 #endif
     };
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     auto const n_part = dp3m.inter_weights.size();
     auto const &unique_particles = cell_structure.get_unique_particles();
     auto &local_force = cell_structure.get_local_force();
@@ -336,7 +336,7 @@ template <int cao> struct AssignForces {
             kernel(p.calc_dip() * prefac, local_force, p_index);
           }
         });
-#else  // SHARED_MEMORY_PARALLELISM
+#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
     /* magnetic particle index */
     auto p_index = std::size_t{0ul};
 
@@ -346,7 +346,7 @@ template <int cao> struct AssignForces {
         ++p_index;
       }
     }
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
   }
 };
 } // namespace
@@ -359,7 +359,7 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const dipole_prefac = prefactor / Utils::int_pow<3>(dp3m.params.mesh[0]);
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   auto const npt_flag = force_flag and system.has_npt_enabled();
 #else
   auto constexpr npt_flag = false;
@@ -478,12 +478,12 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
         dp3m.fft_buffers->perform_scalar_halo_spread();
         /* Assign force component from mesh to particle */
         auto const d_rs = (d + dp3m.mesh.ks_pnum) % 3;
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
         auto &particle_data = *system.cell_structure;
 #else
         auto &particle_data = particles;
 #endif
-        Utils::integral_parameter<int, AssignTorques, 1, 7>(
+        Utils::integral_parameter<int, AssignTorques, p3m_min_cao, p3m_max_cao>(
             dp3m.params.cao, dp3m, dipole_prefac * wavenumber, d_rs,
             particle_data);
       }
@@ -540,12 +540,12 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
         dp3m.fft_buffers->perform_vector_halo_spread();
         /* Assign force component from mesh to particle */
         auto const d_rs = (d + dp3m.mesh.ks_pnum) % 3;
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
         auto &particle_data = *system.cell_structure;
 #else
         auto &particle_data = particles;
 #endif
-        Utils::integral_parameter<int, AssignForces, 1, 7>(
+        Utils::integral_parameter<int, AssignForces, p3m_min_cao, p3m_max_cao>(
             dp3m.params.cao, dp3m, dipole_prefac * Utils::sqr(wavenumber), d_rs,
             particle_data);
       }
@@ -559,7 +559,7 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
       energy += surface_term;
     }
   }
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   if (npt_flag) {
     get_system().npt_add_virial_contribution(energy);
   }
@@ -868,7 +868,7 @@ static double dp3m_k_space_error(double box_size, int mesh, int cao,
                            Utils::int_pow<3>(static_cast<double>(n2));
           /* at high precision, d can become negative due to extinction;
              also, don't take values that have no significant digits left*/
-          if (d > 0. and std::fabs(d / alias1) > ROUND_ERROR_PREC)
+          if (d > 0. and std::fabs(d / alias1) > round_error_prec)
             he_q += d;
         }
       },
@@ -1033,15 +1033,15 @@ void DipolarP3MImpl<FloatType, Architecture>::calc_energy_correction() {
       -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * std::numbers::pi / 3.);
 }
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 template <typename FloatType, Arch Architecture>
 void DipolarP3MImpl<FloatType, Architecture>::npt_add_virial_contribution(
     double energy) const {
   get_system().npt_add_virial_contribution(energy);
 }
-#endif // NPT
+#endif // ESPRESSO_NPT
 
 template struct DipolarP3MImpl<float, Arch::CPU>;
 template struct DipolarP3MImpl<double, Arch::CPU>;
 
-#endif // DP3M
+#endif // ESPRESSO_DP3M

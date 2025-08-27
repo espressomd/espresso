@@ -36,12 +36,13 @@
 
 #include "config/config.hpp"
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
 
 #include "electrostatics/actor.hpp"
 
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
+#include "p3m/math.hpp"
 
 #include "ParticleRange.hpp"
 
@@ -200,4 +201,4 @@ protected:
   virtual void scaleby_box_l() = 0;
 };
 
-#endif // P3M
+#endif // ESPRESSO_P3M

@@ -58,7 +58,7 @@
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
 #include "dpd.hpp"
 #endif
 
@@ -85,59 +85,59 @@ inline ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
   ParticleForce pf{};
   auto force_factor = 0.;
 /* Lennard-Jones */
-#ifdef LENNARD_JONES
+#ifdef ESPRESSO_LENNARD_JONES
   force_factor += lj_pair_force_factor(ia_params, dist);
 #endif
 /* WCA */
-#ifdef WCA
+#ifdef ESPRESSO_WCA
   force_factor += wca_pair_force_factor(ia_params, dist);
 #endif
 /* Lennard-Jones generic */
-#ifdef LENNARD_JONES_GENERIC
+#ifdef ESPRESSO_LENNARD_JONES_GENERIC
   force_factor += ljgen_pair_force_factor(ia_params, dist);
 #endif
 /* smooth step */
-#ifdef SMOOTH_STEP
+#ifdef ESPRESSO_SMOOTH_STEP
   force_factor += SmSt_pair_force_factor(ia_params, dist);
 #endif
 /* Hertzian force */
-#ifdef HERTZIAN
+#ifdef ESPRESSO_HERTZIAN
   force_factor += hertzian_pair_force_factor(ia_params, dist);
 #endif
 /* Gaussian force */
-#ifdef GAUSSIAN
+#ifdef ESPRESSO_GAUSSIAN
   force_factor += gaussian_pair_force_factor(ia_params, dist);
 #endif
 /* BMHTF NaCl */
-#ifdef BMHTF_NACL
+#ifdef ESPRESSO_BMHTF_NACL
   force_factor += BMHTF_pair_force_factor(ia_params, dist);
 #endif
 /* Buckingham*/
-#ifdef BUCKINGHAM
+#ifdef ESPRESSO_BUCKINGHAM
   force_factor += buck_pair_force_factor(ia_params, dist);
 #endif
 /* Morse*/
-#ifdef MORSE
+#ifdef ESPRESSO_MORSE
   force_factor += morse_pair_force_factor(ia_params, dist);
 #endif
 /*soft-sphere potential*/
-#ifdef SOFT_SPHERE
+#ifdef ESPRESSO_SOFT_SPHERE
   force_factor += soft_pair_force_factor(ia_params, dist);
 #endif
 /*hat potential*/
-#ifdef HAT
+#ifdef ESPRESSO_HAT
   force_factor += hat_pair_force_factor(ia_params, dist);
 #endif
 /* Lennard-Jones cosine */
-#ifdef LJCOS
+#ifdef ESPRESSO_LJCOS
   force_factor += ljcos_pair_force_factor(ia_params, dist);
 #endif
 /* Lennard-Jones cosine */
-#ifdef LJCOS2
+#ifdef ESPRESSO_LJCOS2
   force_factor += ljcos2_pair_force_factor(ia_params, dist);
 #endif
 /* tabulated */
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
   force_factor += tabulated_pair_force_factor(ia_params, dist);
 #endif
   pf.f += force_factor * d;
@@ -152,7 +152,7 @@ inline ParticleForce calc_non_central_force(Particle const &p1,
 
   ParticleForce pf{};
 /* Gay-Berne */
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
   pf += gb_pair_force(p1.quat(), p2.quat(), ia_params, d, dist);
 #endif
   return pf;
@@ -161,7 +161,7 @@ inline ParticleForce calc_non_central_force(Particle const &p1,
 inline ParticleForce calc_opposing_force(ParticleForce const &pf,
                                          Utils::Vector3d const &d) {
   ParticleForce out{-pf.f};
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   // if torque is a null vector, the opposing torque is a null vector too
   // (this check guards from returning a small yet non-null opposing
   // torque due to numerical imprecision)
@@ -193,15 +193,15 @@ inline void add_non_bonded_pair_force_with_p(
   /***********************************************/
 
   if (dist < ia_params.max_cut) {
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
     if (do_nonbonded_flag) {
 #endif
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
       pf.f += thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias,
                                coulomb_kernel);
 #endif
       pf += calc_non_central_force(p1, p2, ia_params, d, dist);
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
     }
 #endif
   }
@@ -211,37 +211,37 @@ inline void add_non_bonded_pair_force_with_p(
   /* but nothing afterwards, since the contribution to pressure from   */
   /* electrostatic is calculated by energy                             */
   /*********************************************************************/
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   if (virial) {
     *virial += hadamard_product(pf.f, d);
   }
-#endif // NPT
+#endif // ESPRESSO_NPT
 
   /***********************************************/
   /* short-range electrostatics                  */
   /***********************************************/
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   // real-space electrostatic charge-charge interaction
   if (q1q2 != 0. and coulomb_kernel != nullptr) {
     pf.f += (*coulomb_kernel)(q1q2, d, dist);
-#ifdef NPT
+#ifdef ESPRESSO_NPT
     if (virial) {
       (*virial)[0] += (*coulomb_u_kernel)(p1.pos(), p2.pos(), q1q2, d, dist);
     }
-#endif // NPT
+#endif // ESPRESSO_NPT
     if (elc_kernel) {
       (*elc_kernel)(p1.pos(), p2.pos(), p1f_asym, p2f_asym, q1q2);
     }
   }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
 
   /***********************************************/
   /* thermostat                                  */
   /***********************************************/
 
   /* The inter dpd force should not be part of the virial */
-#ifdef DPD
+#ifdef ESPRESSO_DPD
   if (thermostat.thermo_switch & THERMO_DPD) {
     auto const force =
         dpd_pair_force(p1.pos(), p1.v(), p1.id(), p2.pos(), p2.v(), p2.id(),
@@ -254,7 +254,7 @@ inline void add_non_bonded_pair_force_with_p(
   /* short-range magnetostatics                  */
   /***********************************************/
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   // real-space magnetic dipole-dipole
   if (dipoles_kernel) {
     auto const d1d2 = p1.dipm() * p2.dipm();
@@ -299,18 +299,18 @@ inline void add_non_bonded_pair_force(
   ParticleForce p1f_asym{};
   ParticleForce p2f_asym{};
 
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
   auto const do_nonbonded_flag = do_nonbonded(p1, p2);
 #else
   auto constexpr do_nonbonded_flag = true;
 #endif
 
   if (dist < ia_params.max_cut) {
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
     if (do_nonbonded_flag) {
 #endif
       pf += calc_central_radial_force(ia_params, d, dist);
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
     }
 #endif
   }
@@ -349,7 +349,7 @@ inline std::optional<Utils::Vector3d> calc_bond_pair_force(
   if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
     return iap->force(dx);
   }
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
     return iap->force(p1.q() * p2.q(), dx);
   }
@@ -357,12 +357,12 @@ inline std::optional<Utils::Vector3d> calc_bond_pair_force(
     return iap->force(dx, *kernel);
   }
 #endif
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   if (std::get_if<RigidBond>(&iaparams)) {
     return Utils::Vector3d{};
   }
 #endif
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
   if (auto const *iap = std::get_if<TabulatedDistanceBond>(&iaparams)) {
     return iap->force(dx);
   }
@@ -395,7 +395,7 @@ inline bool add_bonded_two_body_force(
       p1.force() += result.value();
       p2.force() -= result.value();
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
       if (virial) {
         *virial += hadamard_product(result.value(), dx);
       }
@@ -422,7 +422,7 @@ calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
   if (auto const *iap = std::get_if<AngleCossquareBond>(&iaparams)) {
     return iap->forces(vec1, vec2);
   }
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
   if (auto const *iap = std::get_if<TabulatedAngleBond>(&iaparams)) {
     return iap->forces(vec1, vec2);
   }
@@ -473,7 +473,7 @@ calc_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
   if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
     return iap->forces(v12, v23, v34);
   }
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
   if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
     return iap->forces(v12, v23, v34);
   }

@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 
 #include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
@@ -123,4 +123,4 @@ inline void velocity_verlet_npt_propagate_vel(
   }
 }
 
-#endif // NPT
+#endif // ESPRESSO_NPT

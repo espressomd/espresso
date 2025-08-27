@@ -134,6 +134,10 @@ mark_as_advanced(ESPRESSO_INSIDE_DOCKER)
 set(ESPRESSO_TEST_TIMEOUT "300"
     CACHE STRING "Timeout in seconds for each testsuite test")
 
+if(ESPRESSO_BUILD_WITH_WALBERLA_FFT)
+  set(ESPRESSO_BUILD_WITH_FFTW ON CACHE BOOL "")
+endif()
+
 if(ESPRESSO_BUILD_WITH_CCACHE)
   find_program(CCACHE_PROGRAM ccache REQUIRED)
   if(CCACHE_PROGRAM)
