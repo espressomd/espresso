@@ -84,6 +84,7 @@ void CellStructure::clear_local_properties() {
 #ifdef NPT
   m_local_virial.reset();
 #endif
+  m_id_to_index.reset();
   m_aosoa.reset();
   m_particle_storage.reset();
   m_verlet_list_cabana.reset();
@@ -134,6 +135,8 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
 #ifdef ROTATION
     Kokkos::realloc(get_local_torque(), num_part, num_threads);
 #endif
+    Kokkos::realloc(get_id_to_index(), get_cached_max_local_particle_id() + 1);
+    Kokkos::deep_copy(get_id_to_index(), -1);
     m_particle_storage->resize(num_part);
     m_verlet_list_cabana->reallocData(num_part, max_counts);
   } else { // variables for local properties are generated.
@@ -143,6 +146,11 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
     m_local_torque =
         std::make_unique<ForceType>("local_torque", num_part, num_threads);
 #endif
+    m_id_to_index = std::make_unique<Kokkos::View<int *>>(
+	Kokkos::ViewAllocateWithoutInitializing("id_to_index"),
+	get_cached_max_local_particle_id() + 1);
+    Kokkos::deep_copy(get_id_to_index(), -1);
+
     m_particle_storage = std::make_unique<AoSoAType>("particles", num_part);
     m_particle_storage->resize(num_part);
 

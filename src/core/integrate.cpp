@@ -476,10 +476,18 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     calculate_forces();
 
     if (propagation.integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+#ifdef SHARED_MEMORY_PARALLELISM
+      cell_structure->set_steepest_descent_running(false);
+#endif
 #ifdef ROTATION
       convert_initial_torques(cell_structure->local_particles());
 #endif
     }
+#ifdef SHARED_MEMORY_PARALLELISM
+    else {
+      cell_structure->set_steepest_descent_running(true);
+    }
+#endif
 
 #ifdef CALIPER
     CALI_MARK_END("Initial Force Calculation");
@@ -503,9 +511,17 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   auto lb_active = false;
   auto ek_active = false;
   if (propagation.integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+#ifdef SHARED_MEMORY_PARALLELISM
+    cell_structure->set_steepest_descent_running(false);
+#endif
     lb_active = lb.is_solver_set();
     ek_active = ek.is_ready_for_propagation();
   }
+#ifdef SHARED_MEMORY_PARALLELISM
+  else {
+    cell_structure->set_steepest_descent_running(true);
+  }
+#endif
   auto const calc_md_steps_per_tau = [this](double tau) {
     return static_cast<int>(std::round(tau / time_step));
   };
