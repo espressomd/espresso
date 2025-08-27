@@ -114,6 +114,7 @@ struct ForcesKernel {
     auto const dist = d.norm();
 
 #if defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_DPD) or                   \
+    defined(ESPRESSO_THOLE) or defined(GAY_BERNE) or                           \
     defined(ESPRESSO_DIPOLES)
     auto const &p1 = *unique_particles.at(i);
     auto const &p2 = *unique_particles.at(j);
