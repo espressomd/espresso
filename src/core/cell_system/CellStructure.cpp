@@ -147,8 +147,8 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
         std::make_unique<ForceType>("local_torque", num_part, num_threads);
 #endif
     m_id_to_index = std::make_unique<Kokkos::View<int *>>(
-	Kokkos::ViewAllocateWithoutInitializing("id_to_index"),
-	get_cached_max_local_particle_id() + 1);
+        Kokkos::ViewAllocateWithoutInitializing("id_to_index"),
+        get_cached_max_local_particle_id() + 1);
     Kokkos::deep_copy(get_id_to_index(), -1);
 
     m_particle_storage = std::make_unique<AoSoAType>("particles", num_part);
