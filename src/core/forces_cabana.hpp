@@ -105,6 +105,12 @@ struct ForcesKernel {
                                   aosoa.position(i, 2)};
     Utils::Vector3d const pos2 = {aosoa.position(j, 0), aosoa.position(j, 1),
                                   aosoa.position(j, 2)};
+#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
+    Utils::Vector3d const dir1 = {aosoa.director(i, 0), aosoa.director(i, 1),
+                                  aosoa.director(i, 2)};
+    Utils::Vector3d const dir2 = {aosoa.director(j, 0), aosoa.director(j, 1),
+                                  aosoa.director(j, 2)};
+#endif
 
 #ifdef ESPRESSO_NPT
     Utils::Vector3d virial{};
@@ -113,8 +119,7 @@ struct ForcesKernel {
     auto const d = box_geo.get_mi_vector(pos1, pos2);
     auto const dist = d.norm();
 
-#if defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_DPD) or                   \
-    defined(ESPRESSO_DIPOLES)
+#if defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_THOLE)
     auto const &p1 = *unique_particles.at(i);
     auto const &p2 = *unique_particles.at(j);
 #endif
@@ -133,7 +138,7 @@ struct ForcesKernel {
                                  coulomb_kernel);
 #endif
 #ifdef ESPRESSO_GAY_BERNE
-        pf += calc_non_central_force(p1, p2, ia_params, d, dist);
+        pf += gb_pair_force(dir1, dir2, ia_params, d, dist);
 #endif
 #ifdef ESPRESSO_EXCLUSIONS
       }
@@ -159,8 +164,12 @@ struct ForcesKernel {
 #ifdef ESPRESSO_DPD
     if (thermostat.thermo_switch & THERMO_DPD) {
       auto const dist2 = dist * dist;
+      Utils::Vector3d const vel1 = {aosoa.velocity(i, 0), aosoa.velocity(i, 1),
+				    aosoa.velocity(i, 2)};
+      Utils::Vector3d const vel2 = {aosoa.velocity(j, 0), aosoa.velocity(j, 1),
+				    aosoa.velocity(j, 2)};
       auto const force =
-          dpd_pair_force(pos1, p1.v(), aosoa.id(i), pos2, p2.v(), aosoa.id(j),
+          dpd_pair_force(pos1, vel1, aosoa.id(i), pos2, vel2, aosoa.id(j),
                          *thermostat.dpd, box_geo, ia_params, d, dist, dist2);
       pf += force;
     }
@@ -186,9 +195,9 @@ struct ForcesKernel {
 #ifdef ESPRESSO_DIPOLES
     // real-space magnetic dipole-dipole interaction
     if (dipoles_kernel) {
-      auto const d1d2 = p1.dipm() * p2.dipm();
+      auto const d1d2 = aosoa.dipm(i) * aosoa.dipm(j);
       if (d1d2 != 0.) {
-        pf += (*dipoles_kernel)(d1d2, p1.calc_dip(), p2.calc_dip(), d, dist,
+        pf += (*dipoles_kernel)(d1d2, aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2, d, dist,
                                 dist * dist);
       }
     }

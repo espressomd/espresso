@@ -50,6 +50,14 @@ inline ParticleForce gb_pair_force(Utils::Quaternion<double> const &qi,
                                    Utils::Quaternion<double> const &qj,
                                    IA_parameters const &ia_params,
                                    Utils::Vector3d const &d, double dist) {
+  auto const ui = Utils::convert_quaternion_to_director(qi);
+  auto const uj = Utils::convert_quaternion_to_director(qj);
+  return gb_pair_force(ui, uj, ia_params, d, dist);
+}
+inline ParticleForce gb_pair_force(Utils::Vector3d const &ui,
+                                   Utils::Vector3d const &uj,
+                                   IA_parameters const &ia_params,
+                                   Utils::Vector3d const &d, double dist) {
   using Utils::int_pow;
   using Utils::sqr;
 
@@ -57,8 +65,6 @@ inline ParticleForce gb_pair_force(Utils::Quaternion<double> const &qi,
     return {};
   }
 
-  auto const ui = Utils::convert_quaternion_to_director(qi);
-  auto const uj = Utils::convert_quaternion_to_director(qj);
   auto const e0 = ia_params.gay_berne.eps;
   auto const s0 = ia_params.gay_berne.sig;
   auto const chi1 = ia_params.gay_berne.chi1;
