@@ -209,7 +209,8 @@ update_aosoa_charges(CellStructure &cell_structure) {
 
 void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
                         CellStructure &cell_structure, double pair_cutoff,
-                        double bond_cutoff, auto const &verlet_criterion) {
+                        double bond_cutoff, auto const &verlet_criterion,
+			auto const integ_switch) {
   using execution_space = Kokkos::DefaultExecutionSpace;
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
@@ -219,7 +220,7 @@ void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
 
   // Cabana short range loop
   if (pair_cutoff > 0.) {
-    if (not cell_structure.is_in_steepest_descent()) {
+    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       auto const &verlet_list = cell_structure.get_verlet_list_cabana();
       Kokkos::RangePolicy<execution_space> policy(
           std::size_t{0}, cell_structure.get_unique_particles().size());

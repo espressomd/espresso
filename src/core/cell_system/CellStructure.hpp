@@ -201,7 +201,6 @@ private:
   double m_verlet_skin = 0.;
   double m_verlet_reuse = 0.;
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-  bool in_steepest_descent = false;
   int m_cached_max_local_particle_id = 0;
   int m_max_id = 0;
   std::unique_ptr<Kokkos::View<int *>> m_id_to_index;
@@ -729,10 +728,6 @@ public:
   void reset_local_properties();
   void reset_local_force();
 
-  auto is_in_steepest_descent() { return in_steepest_descent; }
-  void set_steepest_descent_running(bool running) {
-    in_steepest_descent = running;
-  }
   auto &get_id_to_index() { return *m_id_to_index; }
   auto &get_local_force() { return *m_local_force; }
 #ifdef ESPRESSO_ROTATION

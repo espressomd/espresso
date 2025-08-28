@@ -254,7 +254,7 @@ void System::System::calculate_forces() {
 
   cabana_short_range(bond_kernel, first_neighbor_kernel, *cell_structure,
                      get_interaction_range(), bonded_ias->maximal_cutoff(),
-                     verlet_criterion);
+                     verlet_criterion, propagation->integ_switch);
   // Force and Torque reduction
   int num_threads = execution_space().concurrency();
   Kokkos::RangePolicy<execution_space> policy(std::size_t{0},
