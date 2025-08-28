@@ -210,7 +210,7 @@ update_aosoa_charges(CellStructure &cell_structure) {
 void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
                         CellStructure &cell_structure, double pair_cutoff,
                         double bond_cutoff, auto const &verlet_criterion,
-			auto const integ_switch) {
+                        auto const integ_switch) {
   using execution_space = Kokkos::DefaultExecutionSpace;
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
