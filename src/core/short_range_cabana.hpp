@@ -220,7 +220,8 @@ void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
 
   // Cabana short range loop
   if (pair_cutoff > 0.) {
-    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT and cell_structure.use_verlet_list) {
+    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT and
+        cell_structure.use_verlet_list) {
       auto const &verlet_list = cell_structure.get_verlet_list_cabana();
       Kokkos::RangePolicy<execution_space> policy(
           std::size_t{0}, cell_structure.get_unique_particles().size());
