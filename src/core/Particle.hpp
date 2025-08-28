@@ -167,6 +167,28 @@ struct ParticleProperties {
   } vs_relative;
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 
+// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+  /** 
+   */
+  struct VirtualSitesCenterOfMassParameters {
+    /**  @brief Store molecule id to which virtual site belongs */
+    int to_molecule_id = {-1};
+
+    /**  @brief Store information about the center of mass  of the molecule*/
+    struct ComInfo {
+    double total_mass = 0.0;
+    Utils::Vector3d weighted_position = {0., 0., 0.};
+    };
+    /**  @brief Ptr to access com info */
+    std::shared_ptr<ComInfo> m_com_for_mol_id;
+
+    template <class Archive> void serialize(Archive &ar, long int) {
+      ar & to_molecule_id;
+      ar & m_com_for_mol_id;
+    }
+  } vs_com;
+// #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
 /** Friction coefficient for translation */
 #ifndef ESPRESSO_PARTICLE_ANISOTROPY
@@ -228,6 +250,9 @@ struct ParticleProperties {
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
     ar & vs_relative;
 #endif
+// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+    ar & vs_com;
+// #endif
 
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
     ar & gamma;
@@ -518,7 +543,8 @@ public:
   auto is_virtual() const {
     return (p.propagation & (PropagationMode::TRANS_VS_RELATIVE |
                              PropagationMode::ROT_VS_RELATIVE |
-                             PropagationMode::TRANS_LB_TRACER)) != 0;
+                             PropagationMode::TRANS_LB_TRACER |
+                             PropagationMode::TRANS_VS_CENTER_OF_MASS)) != 0;
   }
 #else
   constexpr auto is_virtual() const { return false; }
@@ -527,6 +553,10 @@ public:
   auto const &vs_relative() const { return p.vs_relative; }
   auto &vs_relative() { return p.vs_relative; }
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
+// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+  auto const &vs_com() const { return p.vs_com; }
+  auto &vs_com() { return p.vs_com; }
+// #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   auto const &gamma() const { return p.gamma; }
   auto &gamma() { return p.gamma; }
@@ -609,6 +639,10 @@ BOOST_CLASS_IMPLEMENTATION(ParticleRattle, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(decltype(ParticleProperties::vs_relative),
                            object_serializable)
 #endif
+// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+BOOST_CLASS_IMPLEMENTATION(decltype(ParticleProperties::vs_com),
+                           object_serializable)
+// #endif
 
 #ifdef ESPRESSO_ENGINE
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleParametersSwimming)
@@ -624,3 +658,6 @@ BOOST_IS_BITWISE_SERIALIZABLE(ParticleRattle)
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 BOOST_IS_BITWISE_SERIALIZABLE(decltype(ParticleProperties::vs_relative))
 #endif
+// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+BOOST_IS_BITWISE_SERIALIZABLE(decltype(ParticleProperties::vs_com))
+// #endif
