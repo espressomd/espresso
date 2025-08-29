@@ -42,7 +42,7 @@
 
 namespace walberla {
 
-template <typename FloatType> class FFT : public PoissonSolver {
+template <typename FloatType> class PoissonSolverFFT : public PoissonSolver {
 private:
   template <typename T> FloatType FloatType_c(T t) {
     return numeric_cast<FloatType>(t);
@@ -60,7 +60,8 @@ private:
   std::shared_ptr<FullCommunicator> m_full_communication;
 
 public:
-  FFT(std::shared_ptr<LatticeWalberla> lattice, double permittivity)
+  PoissonSolverFFT(std::shared_ptr<LatticeWalberla> lattice,
+                   double permittivity)
       : PoissonSolver(std::move(lattice), permittivity) {
     m_blocks = get_lattice().get_blocks();
 
@@ -91,7 +92,7 @@ public:
         std::make_shared<field::communication::PackInfo<PotentialField>>(
             m_potential_field_id));
   }
-  ~FFT() override = default;
+  ~PoissonSolverFFT() override = default;
 
   void reset_charge_field() override {
     // the FFT-solver re-uses the potential field for the charge

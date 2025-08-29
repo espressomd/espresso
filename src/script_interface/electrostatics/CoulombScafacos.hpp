@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_SCAFACOS
 
@@ -100,7 +100,7 @@ public:
     });
     set_charge_neutrality_tolerance(params);
     // MPI communicator is needed to destroy the FFT plans
-    m_mpi_env_lock = ::Communication::mpiCallbacksHandle()->share_mpi_env();
+    m_mpi_env_lock = ::Communication::mpiCallbacks().share_mpi_env();
   }
 
   Variant do_call_method(std::string const &name,

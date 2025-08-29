@@ -37,6 +37,7 @@ macro(ESPRESSO_IMPORTLIB_BASED_FIXTURE)
   set_tests_properties(
     ${TEST_NAME} PROPERTIES FIXTURES_SETUP "FIXTURE_${TEST_TYPE}"
                             SKIP_RETURN_CODE 5
+                            PROCESSORS 1
                             ENVIRONMENT "OMP_PROC_BIND=false"
                             ENVIRONMENT "OMP_NUM_THREADS=1")
   # cmake-format: on
@@ -62,7 +63,9 @@ macro(ESPRESSO_IMPORTLIB_BASED_TEST)
   # cmake-format: off
   set_tests_properties(
     ${TEST_NAME} PROPERTIES FIXTURES_REQUIRED "FIXTURE_${TEST_TYPE}"
-                            SKIP_RETURN_CODE 5 LABELS "${TEST_LABELS}"
+                            LABELS "${TEST_LABELS}"
+                            SKIP_RETURN_CODE 5
+                            PROCESSORS 1
                             ENVIRONMENT "OMP_PROC_BIND=false"
                             ENVIRONMENT "OMP_NUM_THREADS=1")
   # cmake-format: on

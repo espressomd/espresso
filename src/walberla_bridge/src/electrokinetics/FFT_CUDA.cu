@@ -44,6 +44,7 @@ template <typename FloatType> struct FFT_CUDA<FloatType>::heffte_container {
       m_buffer;
 };
 
+// LCOV_EXCL_START
 template <typename FloatType>
 __global__ void
 create_greens_function(gpu::FieldAccessor<FloatType> greens_function, int x,
@@ -113,6 +114,7 @@ __global__ void move_field(gpu::FieldAccessor<FloatType> dest_field,
     src_field.get(0u) = 0.0;
   }
 }
+// LCOV_EXCL_STOP
 
 template <typename T, std::size_t N>
 auto to_array(Utils::Vector<T, N> const &vec) {

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "error_handling/RuntimeError.hpp"
 #include "error_handling/RuntimeErrorStream.hpp"
@@ -34,15 +34,11 @@
 #include <string>
 #include <vector>
 
-/* Forward declaration of MpiCallbacks,
+/* Forward declaration of boost::mpi::communicator,
  * so we don't have to include the header.
  * It depends on mpi and cannot be in cuda
  * code.
  */
-namespace Communication {
-class MpiCallbacks;
-}
-
 namespace boost {
 namespace mpi {
 class communicator;
@@ -82,10 +78,8 @@ void flush_runtime_errors_local();
 namespace ErrorHandling {
 /**
  * @brief Initialize the error collection system.
- *
- * @param callbacks Callbacks system the error handler should be on.
  */
-void init_error_handling(std::weak_ptr<Communication::MpiCallbacks> callbacks);
+void init_error_handling(boost::mpi::communicator const &comm);
 void deinit_error_handling();
 
 RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,

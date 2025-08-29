@@ -45,8 +45,6 @@
 #include "reactions/EKReactionImplBulk.hpp"
 #include "reactions/EKReactionImplIndexed.hpp"
 
-#include <gpu/DeviceSelectMPI.h>
-
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 #include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>
@@ -57,6 +55,7 @@
 #include <memory>
 
 namespace walberla {
+
 std::shared_ptr<EKinWalberlaBase>
 new_ek_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
                     double diffusion, double kT, double valency,
@@ -90,5 +89,4 @@ std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed_gpu(
       lattice, reactants, coefficient);
 }
 
-void set_device_id_per_rank() { walberla::gpu::selectDeviceBasedOnMpiRank(); }
 } // namespace walberla

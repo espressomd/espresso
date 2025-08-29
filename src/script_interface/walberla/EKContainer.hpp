@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_WALBERLA
 
@@ -32,6 +32,7 @@
 #include <walberla_bridge/electrokinetics/EKContainer.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 
+#include "core/communication.hpp"
 #include "core/ek/EKWalberla.hpp"
 #include "core/ek/Solver.hpp"
 #include "core/system/System.hpp"
@@ -106,12 +107,13 @@ class EKContainer : public ObjectList<EKSpecies> {
 #ifdef ESPRESSO_CUDA
     else if (auto ptr = std::dynamic_pointer_cast<EKFFTGPU>(so_ptr)) {
       solver = std::move(ptr);
+      assert(::comm_cart.size() == 1 && "EKFFTGPU only supports 1 MPI rank");
     }
-#endif
+#endif // ESPRESSO_CUDA
     else if (auto ptr = std::dynamic_pointer_cast<EKFFT>(so_ptr)) {
       solver = std::move(ptr);
     }
-#endif
+#endif // ESPRESSO_WALBERLA_FFT
     assert(solver.has_value());
     return *solver;
   }

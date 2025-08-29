@@ -18,7 +18,7 @@
  */
 
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/electrokinetics/PoissonSolver/None.hpp>
+#include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolverNone.hpp>
 #include <walberla_bridge/electrokinetics/ek_poisson_none_init.hpp>
 
 #include <memory>
@@ -29,9 +29,9 @@ std::shared_ptr<walberla::PoissonSolver>
 new_ek_poisson_none(std::shared_ptr<LatticeWalberla> const &lattice,
                     bool single_precision) {
   if (single_precision) {
-    return std::make_shared<walberla::None<float>>(lattice);
+    return std::make_shared<walberla::PoissonSolverNone<float>>(lattice);
   }
-  return std::make_shared<walberla::None<double>>(lattice);
+  return std::make_shared<walberla::PoissonSolverNone<double>>(lattice);
 }
 
 } // namespace walberla

@@ -67,7 +67,8 @@ class EKTest:
 
     def make_default_ek_species(self, **kwargs):
         return self.ek_species_class(
-            lattice=self.lattice, **self.ek_params, **self.ek_species_params, **kwargs)
+            lattice=self.lattice,
+            **(self.ek_params | self.ek_species_params | kwargs))
 
     def test_ek_species(self):
         # inactive species
@@ -175,7 +176,7 @@ class EKTest:
 
     @utx.skipIfMissingFeatures(["WALBERLA_FFT"])
     def test_ek_fft_solver(self):
-        ek_solver = espressomd.electrokinetics.EKFFT(
+        ek_solver = self.ek_solver_class(
             lattice=self.lattice, permittivity=0.01,
             single_precision=self.ek_params["single_precision"])
         self.assertEqual(ek_solver.lattice, self.lattice)
@@ -188,7 +189,25 @@ class EKTest:
 
         self.system.ekcontainer.solver = ek_solver
         self.assertIsInstance(self.system.ekcontainer.solver,
-                              espressomd.electrokinetics.EKFFT)
+                              self.ek_solver_class)
+
+        ek_node = ek_solver[2, 2, 2]
+        np.testing.assert_array_equal(np.copy(ek_node._index), [2, 2, 2])
+        ek_node.call_method("override_index", index=[0, 1, 2])
+        np.testing.assert_array_equal(np.copy(ek_node._index), [0, 1, 2])
+
+        ek_slice = ek_solver[0:2, -4:-1, 1:2]
+        np.testing.assert_array_equal(
+            np.copy(ek_slice.call_method("get_slice_size")), [2, 3, 1])
+        np.testing.assert_array_equal(
+            np.copy(ek_slice.call_method("get_slice_ranges")),
+            [[0, 8, 1], [2, 11, 2]])
+        np.testing.assert_array_equal(
+            np.copy(ek_slice.call_method("get_value_shape", name="potential")),
+            [1])
+        self.assertEqual(ek_slice.call_method("get_ek_solver_sip"), ek_solver)
+        with self.assertRaisesRegex(ValueError, "Unknown Poisson solver property 'unknown'"):
+            ek_slice.call_method("get_value_shape", name="unknown")
 
     def test_ek_none_solver(self):
         ek_solver = espressomd.electrokinetics.EKNone(
@@ -243,6 +262,14 @@ class EKTest:
         with self.assertRaisesRegex(NotImplementedError, "Using more than one block per MPI rank is not supported for EKNone"):
             espressomd.electrokinetics.EKNone(lattice=incompatible_lattice)
 
+        if espressomd.has_features("WALBERLA_FFT"):
+            ek_solver = self.ek_solver_class(
+                lattice=self.lattice, permittivity=0.01, **self.ek_params)
+            with self.assertRaisesRegex(NotImplementedError, "Cannot serialize EK Poisson solver node objects"):
+                ek_solver[0, 0, 0].__reduce__()
+            with self.assertRaisesRegex(NotImplementedError, "Cannot serialize EK Poisson solver slice objects"):
+                ek_solver[0:1, 0:1, 0:1].__reduce__()
+
     def test_parameter_change_exceptions(self):
         ek_solver = self.system.ekcontainer.solver
         ek_species = self.make_default_ek_species()
@@ -294,14 +321,52 @@ class EKTest:
         self.assertTrue(ek_reaction[1, 1, 1])
 
     def test_ek_fluctuations(self):
-        # smoke test, see `ek_fluctuations.py` for a statistical test
-        ek_solver = self.system.ekcontainer.solver
-        ek_species = self.make_default_ek_species(thermalized=True, seed=42)
+        """
+        smoke test, see `ek_fluctuations.py` for a statistical test
+        """
+        lattice = espressomd.electrokinetics.LatticeWalberla(
+            n_ghost_layers=1, agrid=1.)
+        ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
+        ek_species = self.ek_species_class(
+            lattice=lattice, density=20., valency=0., advection=False,
+            diffusion=0.01, friction_coupling=False, thermalized=True, seed=42,
+            tau=self.params["tau"], **self.ek_params)
         self.assertTrue(ek_species.thermalized)
         self.assertEqual(ek_species.seed, 42)
-        self.system.ekcontainer.add(ek_species)
         self.system.ekcontainer.solver = ek_solver
-        self.system.integrator.run(10)
+        self.system.ekcontainer.add(ek_species)
+        self.system.integrator.run(20)
+
+    @utx.skipIfMissingFeatures(["WALBERLA_FFT"])
+    def test_ek_friction_advection(self):
+        """
+        smoke test, see `ek_eof.py` for a statistical test
+        """
+        lattice = espressomd.electrokinetics.LatticeWalberla(
+            n_ghost_layers=1, agrid=1.)
+        lb_fluid = self.lb_fluid_class(
+            lattice=lattice, density=1., kinematic_viscosity=1. / 6.,
+            tau=self.params["tau"], **self.ek_params)
+        ek_species = self.ek_species_class(
+            lattice=lattice, density=1., kT=2., valency=1.1, diffusion=0.25,
+            friction_coupling=True, advection=True, ext_efield=[0., 0.001, 0.],
+            tau=self.params["tau"], **self.ek_params)
+        ek_wallcharge = self.ek_species_class(
+            lattice=lattice, density=0., kT=2., valency=-1.1, diffusion=0.,
+            friction_coupling=False, advection=False, ext_efield=[0., 0., 0.],
+            tau=self.params["tau"], **self.ek_params)
+        ek_solver = self.ek_solver_class(
+            lattice=lattice, permittivity=0.3, **self.ek_params)
+        self.assertTrue(ek_species.friction_coupling)
+        self.assertTrue(ek_species.advection)
+        self.assertFalse(ek_wallcharge.friction_coupling)
+        self.assertFalse(ek_wallcharge.advection)
+        self.assertAlmostEqual(ek_solver.permittivity, 0.3, delta=self.atol)
+        self.system.ekcontainer.solver = ek_solver
+        self.system.ekcontainer.add(ek_species)
+        self.system.ekcontainer.add(ek_wallcharge)
+        self.system.lb = lb_fluid
+        self.system.integrator.run(20)
 
     def test_grid_index(self):
         ek_species = self.make_default_ek_species()
@@ -450,6 +515,7 @@ class EKTestWalberla(EKTest, ut.TestCase):
     lb_fluid_class = espressomd.lb.LBFluidWalberla
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_solver_class = espressomd.electrokinetics.EKFFT
     ek_params = {"single_precision": False}
     lb_params = {"single_precision": False}
     atol = 1e-10
@@ -464,6 +530,7 @@ class EKTestWalberlaSinglePrecision(EKTest, ut.TestCase):
     lb_fluid_class = espressomd.lb.LBFluidWalberla
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_solver_class = espressomd.electrokinetics.EKFFT
     ek_params = {"single_precision": True}
     lb_params = {"single_precision": True}
     atol = 1e-7
@@ -472,6 +539,10 @@ class EKTestWalberlaSinglePrecision(EKTest, ut.TestCase):
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+# TODO: fix bug revealed by heFFTe boundary check
+# (_deps/heffte-src/include/heffte_geometry.h:279)
+@ut.skipIf(EKTest.system.cell_system.get_state()["n_nodes"] != 1,
+           "GPU EK runs for 1 MPI rank")
 class EKTestWalberlaGPU(EKTest, ut.TestCase):
 
     """Test for the Walberla implementation of the EK in double-precision."""
@@ -479,6 +550,7 @@ class EKTestWalberlaGPU(EKTest, ut.TestCase):
     lb_fluid_class = espressomd.lb.LBFluidWalberlaGPU
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+    ek_solver_class = espressomd.electrokinetics.EKFFTGPU
     ek_params = {"single_precision": False}
     lb_params = {"single_precision": False}
     atol = 1e-10
@@ -487,6 +559,10 @@ class EKTestWalberlaGPU(EKTest, ut.TestCase):
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+# TODO: fix bug revealed by heFFTe boundary check
+# (_deps/heffte-src/include/heffte_geometry.h:279)
+@ut.skipIf(EKTest.system.cell_system.get_state()["n_nodes"] != 1,
+           "GPU EK runs for 1 MPI rank")
 class EKTestWalberlaSinglePrecisionGPU(EKTest, ut.TestCase):
 
     """Test for the Walberla implementation of the EK in single-precision."""
@@ -494,6 +570,7 @@ class EKTestWalberlaSinglePrecisionGPU(EKTest, ut.TestCase):
     lb_fluid_class = espressomd.lb.LBFluidWalberlaGPU
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+    ek_solver_class = espressomd.electrokinetics.EKFFTGPU
     ek_params = {"single_precision": True}
     lb_params = {"single_precision": True}
     atol = 1e-7

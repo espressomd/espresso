@@ -123,6 +123,26 @@ class TestICC(ut.TestCase):
 
         self.assertAlmostEqual(1, induced_dipole / testcharge_dipole, places=4)
 
+        with self.subTest(msg="smoke test, see `icc_electrodes.py` for a statistical test"):
+            # remove periodic images in the direction of the dipole
+            self.system.electrostatics.clear()
+            p3m.check_neutrality = False
+            icc = espressomd.electrostatic_extensions.ICC(
+                **(icc.get_params() | {"convergence": 1e-4}))
+            elc = espressomd.electrostatics.ELC(
+                actor=p3m, gap_size=BOX_SPACE, maxPWerror=1e-5,
+                check_neutrality=False)
+            self.system.electrostatics.solver = elc
+            self.system.electrostatics.extension = icc
+            self.system.integrator.run(0)
+
+            new_charge_lower = sum(part_slice_lower.q)
+            new_charge_upper = sum(part_slice_upper.q)
+            self.assertAlmostEqual(
+                1., new_charge_lower / charge_lower, delta=1e-3)
+            self.assertAlmostEqual(
+                1., new_charge_upper / charge_upper, delta=1e-3)
+
 
 if __name__ == "__main__":
     ut.main()

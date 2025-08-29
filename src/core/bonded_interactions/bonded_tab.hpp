@@ -168,11 +168,7 @@ TabulatedAngleBond::forces(Utils::Vector3d const &vec1,
 
   auto forceFactor = [this](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
-#ifdef TABANGLEMINUS
-    auto const phi = acos(-cos_phi);
-#else
     auto const phi = acos(cos_phi);
-#endif
     auto const tab_pot = pot;
     auto const gradient = tab_pot->force(phi);
     return -gradient / sin_phi;
@@ -191,12 +187,7 @@ TabulatedAngleBond::forces(Utils::Vector3d const &vec1,
 inline double TabulatedAngleBond::energy(Utils::Vector3d const &vec1,
                                          Utils::Vector3d const &vec2) const {
   auto const cos_phi = calc_cosine(vec1, vec2, true);
-  /* calculate phi */
-#ifdef TABANGLEMINUS
-  auto const phi = acos(-cos_phi);
-#else
   auto const phi = acos(cos_phi);
-#endif
   return pot->energy(phi);
 }
 

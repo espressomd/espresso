@@ -62,16 +62,11 @@ public:
 
   [[nodiscard]] virtual std::optional<double>
   get_node_potential(Utils::Vector3i const &node,
-                     bool consider_ghosts = false) {
-    return std::nullopt;
-  }
+                     bool consider_ghosts = false) = 0;
 
   [[nodiscard]] virtual std::vector<double>
   get_slice_potential(Utils::Vector3i const &lower_corner,
-                      Utils::Vector3i const &upper_corner) const {
-    std::vector<double> out;
-    return out;
-  }
+                      Utils::Vector3i const &upper_corner) const = 0;
 
   void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
                                   LatticeModel::units_map const &units,

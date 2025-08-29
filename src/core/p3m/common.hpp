@@ -34,7 +34,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include <utils/Vector.hpp>
 

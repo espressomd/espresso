@@ -125,8 +125,7 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
     max_counts = num_part * 2ul;
   }
 #endif
-  if (m_local_force !=
-      nullptr) { // variables for local properties are reallocated.
+  if (m_local_force) { // local properties are reallocated
     Kokkos::realloc(get_local_force(), num_part, num_threads);
 #ifdef ESPRESSO_ROTATION
     Kokkos::realloc(get_local_torque(), num_part, num_threads);
@@ -136,7 +135,7 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
     // Resize particle views using AoSoA_pack's resize method
     m_aosoa->resize(num_part, m_cached_max_local_particle_id);
     m_verlet_list_cabana->reallocData(num_part, max_counts);
-  } else { // variables for local properties are generated.
+  } else { // local properties are initialized
     m_local_force =
         std::make_unique<ForceType>("local_force", num_part, num_threads);
 #ifdef ESPRESSO_ROTATION

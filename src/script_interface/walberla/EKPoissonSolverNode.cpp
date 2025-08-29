@@ -38,7 +38,7 @@ Variant EKPoissonSolverNode::do_call_method(std::string const &name,
                                             VariantMap const &params) {
   if (name == "override_index") {
     // this hidden feature is used to iterate an EK slice without
-    // rebuilding a EKSpeciesNode for each node in the slice
+    // rebuilding an EKPoissonSolverNode for each node in the slice
     auto const index = get_value<Utils::Vector3i>(params, "index");
     if (not is_index_valid(index, m_grid_size)) {
       return 1;

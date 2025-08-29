@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(parallel_exceptions) {
   boost::mpi::communicator world;
   auto callbacks =
       std::make_shared<Communication::MpiCallbacks>(world, ::mpi_env.lock());
-  ErrorHandling::init_error_handling(callbacks);
+  ErrorHandling::init_error_handling(world);
   auto handler = ScriptInterface::ParallelExceptionHandler{world};
 
   {

@@ -81,12 +81,8 @@ default_check_procs=2
 if [ "${GITLAB_CI}" = "true" ]; then
     if [[ "${OSTYPE}" == "linux-gnu"* ]]; then
         # Linux runner
-        default_build_procs=4
-        default_check_procs=4
-        if [ "${with_cuda}" = "true" ]; then
-            default_build_procs=6
-            default_check_procs=4 # buffer for oversubscribed OpenMP threads
-        fi
+        default_build_procs=8
+        default_check_procs=8
     elif [[ "${OSTYPE}" == "darwin"* ]]; then
         # macOS runner
         default_build_procs=4

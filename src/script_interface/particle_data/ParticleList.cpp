@@ -102,17 +102,16 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
         // NOLINTNEXTLINE(modernize-loop-convert)
         for (std::size_t i = 0u; i < partners[pid1].size(); ++i) {
           auto const [pid2, dist21] = partners[pid1][i];
-          if (dist21 > n_bonds_max)
-            continue;
+          assert(dist21 <= n_bonds_max);
           // loop over all partners of the partner
           // NOLINTNEXTLINE(modernize-loop-convert)
           for (std::size_t j = 0u; j < partners[pid2].size(); ++j) {
             auto const [pid3, dist32] = partners[pid2][j];
             auto const dist31 = dist32 + dist21;
-            if (dist31 > n_bonds_max)
-              continue;
-            add_partner(pid1, pid3, dist31);
-            add_partner(pid3, pid1, dist31);
+            if (dist31 <= n_bonds_max) {
+              add_partner(pid1, pid3, dist31);
+              add_partner(pid3, pid1, dist31);
+            }
           }
         }
       }

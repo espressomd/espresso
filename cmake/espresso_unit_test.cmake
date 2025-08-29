@@ -17,12 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-function(ESPRESSO_UNIT_TEST)
-  cmake_parse_arguments(TEST "" "SRC;NAME;NUM_PROC;NUM_THREADS" "DEPENDS" ${ARGN})
+# generate a test name based on the file name
+function(espresso_unit_test_make_name)
+  cmake_parse_arguments(TEST "" "SRC;NAME" "" ${ARGN})
   if(NOT DEFINED TEST_NAME)
     cmake_path(GET TEST_SRC STEM TEST_NAME)
     set(TEST_NAME ${TEST_NAME} PARENT_SCOPE)
   endif()
+endfunction()
+
+# create the executable of a unit test
+function(espresso_unit_test_executable)
+  cmake_parse_arguments(TEST "" "SRC;NAME;NUM_PROC;NUM_THREADS" "DEPENDS" ${ARGN})
+  espresso_unit_test_make_name(SRC ${TEST_SRC} NAME ${TEST_NAME})
   if(${TEST_SRC} MATCHES ".*\.cu$")
     espresso_add_gpu_executable(${TEST_NAME} ${TEST_SRC})
   else()
@@ -41,7 +48,15 @@ function(ESPRESSO_UNIT_TEST)
   else()
     target_link_libraries(${TEST_NAME} PRIVATE espresso::config espresso::cpp_flags espresso::tests::cpp_flags)
   endif()
+endfunction()
 
+# register the executable of a unit test in the CTest suite
+function(espresso_unit_test_register)
+  cmake_parse_arguments(TEST "" "SRC;NAME;NUM_PROC;NUM_THREADS;TARGET" "DEPENDS" ${ARGN})
+  espresso_unit_test_make_name(SRC ${TEST_SRC} NAME ${TEST_NAME})
+  if(NOT DEFINED TEST_TARGET)
+    set(TEST_TARGET ${TEST_NAME})
+  endif()
   # If NUM_PROC is given, set up MPI parallel test case
   if(TEST_NUM_PROC)
     if(${TEST_NUM_PROC} GREATER ${ESPRESSO_TEST_NP})
@@ -50,10 +65,10 @@ function(ESPRESSO_UNIT_TEST)
     espresso_set_mpiexec_tmpdir(${TEST_NAME})
     add_test(NAME ${TEST_NAME} COMMAND ${MPIEXEC} ${ESPRESSO_MPIEXEC_PREFLAGS}
              ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS}
-             ${ESPRESSO_MPIEXEC_TMPDIR} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}
+             ${ESPRESSO_MPIEXEC_TMPDIR} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_TARGET}
              ${MPIEXEC_POSTFLAGS})
   else()
-    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+    add_test(NAME ${TEST_NAME} COMMAND ${TEST_TARGET})
   endif()
   if(NOT DEFINED TEST_NUM_THREADS)
     set(TEST_NUM_THREADS 2)
@@ -71,8 +86,21 @@ function(ESPRESSO_UNIT_TEST)
     list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
   endif()
   list(APPEND TEST_ENV_VARIABLES "OMP_PROC_BIND=false" "OMP_NUM_THREADS=${TEST_NUM_THREADS}")
+  set(TEST_NUM_CORES 1)
+  if(DEFINED TEST_NUM_PROC)
+    set(TEST_NUM_CORES ${TEST_NUM_PROC})
+  endif()
+  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+    math(EXPR TEST_NUM_CORES "${TEST_NUM_CORES} * ${TEST_NUM_THREADS}")
+  endif()
   set_tests_properties(
-    ${TEST_NAME} PROPERTIES ENVIRONMENT "${TEST_ENV_VARIABLES}")
+    ${TEST_NAME} PROPERTIES ENVIRONMENT "${TEST_ENV_VARIABLES}" PROCESSORS ${TEST_NUM_CORES})
 
-  add_dependencies(check_unit_tests ${TEST_NAME})
+  add_dependencies(check_unit_tests ${TEST_TARGET})
+endfunction()
+
+# create the executable of a unit test and register it in the CTest suite
+function(espresso_unit_test)
+  espresso_unit_test_executable(${ARGV})
+  espresso_unit_test_register(${ARGV})
 endfunction()

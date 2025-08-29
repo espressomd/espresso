@@ -251,6 +251,10 @@ class BondedInteractions(ut.TestCase):
                 ind1=0, ind2=1, ind3=2, k1=1.1, k2=1.2, maxDist=1.6, elasticLaw='Unknown')
         with self.assertRaisesRegex(ValueError, "IBMVolCons parameter 'softID' has to be >= 0"):
             espressomd.interactions.IBM_VolCons(softID=-1, kappaV=0.)
+        with self.assertRaisesRegex(Exception, "Immersed Boundary: Particle not found"):
+            self.system.bonded_inter.add(espressomd.interactions.IBM_Triel(
+                ind1=0, ind2=1, ind3=10000, k1=1.1, k2=1.2, maxDist=1.6, elasticLaw='NeoHookean'))
+        self.assertEqual(len(self.system.bonded_inter), 1)
 
         # sanity checks when removing bonds
         self.system.bonded_inter.clear()

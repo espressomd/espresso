@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_WALBERLA
 
@@ -32,6 +32,7 @@
 #include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp>
 
 #include <memory>
+#include <unordered_map>
 
 namespace ScriptInterface::walberla {
 

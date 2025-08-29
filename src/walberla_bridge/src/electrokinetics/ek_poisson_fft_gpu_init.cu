@@ -31,7 +31,7 @@
 #include "FFT_CUDA.cuh"
 
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/electrokinetics/PoissonSolver/FFT_GPU.hpp>
+#include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolverCuFFT.hpp>
 #include <walberla_bridge/electrokinetics/ek_poisson_fft_gpu_init.hpp>
 
 #include <memory>
@@ -39,12 +39,14 @@
 namespace walberla {
 
 std::shared_ptr<walberla::PoissonSolver>
-new_ek_poisson_fft_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
-                       double permittivity, bool single_precision) {
+new_ek_poisson_fft_cuda(std::shared_ptr<LatticeWalberla> const &lattice,
+                        double permittivity, bool single_precision) {
   if (single_precision) {
-    return std::make_shared<walberla::FFT_GPU<float>>(lattice, permittivity);
+    return std::make_shared<walberla::PoissonSolverCuFFT<float>>(lattice,
+                                                                 permittivity);
   }
-  return std::make_shared<walberla::FFT_GPU<double>>(lattice, permittivity);
+  return std::make_shared<walberla::PoissonSolverCuFFT<double>>(lattice,
+                                                                permittivity);
 }
 
 } // namespace walberla
