@@ -75,7 +75,9 @@
 #include <tuple>
 #include <variant>
 
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 ESPRESSO_ATTR_ALWAYS_INLINE
+#endif
 inline ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
                                                Utils::Vector3d const &d,
                                                double const dist) {
