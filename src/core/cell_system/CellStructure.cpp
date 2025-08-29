@@ -121,6 +121,7 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
   auto max_counts = estimate_max_counts(pair_cutoff, num_part);
 #ifdef ESPRESSO_COLLISION_DETECTION
   if (system.has_collision_detection_enabled()) {
+    // TODO: use other types of Verlet list data structures
     max_counts = num_part * 2ul;
   }
 #endif
