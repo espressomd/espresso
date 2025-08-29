@@ -75,7 +75,7 @@
 #include <tuple>
 #include <variant>
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 ESPRESSO_ATTR_ALWAYS_INLINE
 #endif
 inline ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
