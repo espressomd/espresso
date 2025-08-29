@@ -17,7 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
 import sys
+import time
 import subprocess
 
 import defines
@@ -71,7 +73,14 @@ def check_myconfig(compiler, feature_file, cmakedefine_file,
     try:
         Defines = defines.Defines
         external_features = Defines(compiler).defines(cmake_config)
-        external_defs = ['-D' + s for s in external_features]
+        external_defs = ['-DESPRESSO_' + s for s in external_features]
+        # gracefully handle file system latency by waiting on file creation
+        wait_time = 0.01
+        for _ in range(8):
+            time.sleep(wait_time)
+            wait_time *= 2.
+            if os.path.exists(myconfig):
+                break
         my_features = Defines(compiler, flags=external_defs).defines(myconfig)
     except subprocess.CalledProcessError as ex:
         exception = RuntimeError(

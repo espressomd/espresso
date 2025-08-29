@@ -20,6 +20,7 @@
 import tempfile
 import subprocess
 import sys
+import re
 
 
 class Defines:
@@ -57,8 +58,7 @@ class Defines:
         if not include_build_in:
             all_defs -= self._buildin
 
-        return {x.split("_", 1)[1] if x.startswith(
-            "ESPRESSO_") else x for x in all_defs}
+        return {re.sub("^ESPRESSO_(?:BUILD_WITH_)?", "", x) for x in all_defs}
 
 
 if __name__ == "__main__":
