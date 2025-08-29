@@ -165,9 +165,9 @@ struct ForcesKernel {
     if (thermostat.thermo_switch & THERMO_DPD) {
       auto const dist2 = dist * dist;
       Utils::Vector3d const vel1 = {aosoa.velocity(i, 0), aosoa.velocity(i, 1),
-				    aosoa.velocity(i, 2)};
+                                    aosoa.velocity(i, 2)};
       Utils::Vector3d const vel2 = {aosoa.velocity(j, 0), aosoa.velocity(j, 1),
-				    aosoa.velocity(j, 2)};
+                                    aosoa.velocity(j, 2)};
       auto const force =
           dpd_pair_force(pos1, vel1, aosoa.id(i), pos2, vel2, aosoa.id(j),
                          *thermostat.dpd, box_geo, ia_params, d, dist, dist2);
@@ -197,8 +197,8 @@ struct ForcesKernel {
     if (dipoles_kernel) {
       auto const d1d2 = aosoa.dipm(i) * aosoa.dipm(j);
       if (d1d2 != 0.) {
-        pf += (*dipoles_kernel)(d1d2, aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2, d, dist,
-                                dist * dist);
+        pf += (*dipoles_kernel)(d1d2, aosoa.dipm(i) * dir1,
+                                aosoa.dipm(j) * dir2, d, dist, dist * dist);
       }
     }
 #endif // ESPRESSO_DIPOLES

@@ -64,7 +64,7 @@ struct CellStructure::AoSoA_pack {
       type = TypeViewType("type", num_particles);
 #ifdef ESPRESSO_DPD
       velocity = PositionViewType("velocity", num_particles);
-#endif 
+#endif
 #if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
       director = DirectorViewType("director", num_particles);
 #endif
@@ -81,7 +81,7 @@ struct CellStructure::AoSoA_pack {
       Kokkos::realloc(type, num_particles);
 #ifdef ESPRESSO_DPD
       Kokkos::realloc(velocity, num_particles);
-#endif 
+#endif
 #if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
       Kokkos::realloc(director, num_particles);
 #endif
