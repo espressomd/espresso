@@ -119,10 +119,6 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
   auto const num_part = get_unique_particles().size();
   auto const &system = get_system();
   auto max_counts = estimate_max_counts(pair_cutoff, num_part);
-  // TODO: use other types of Verlet list data structures
-  if (system.propagation->integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
-    max_counts = num_part;
-  }
 #ifdef ESPRESSO_COLLISION_DETECTION
   if (system.has_collision_detection_enabled()) {
     max_counts = num_part * 2ul;

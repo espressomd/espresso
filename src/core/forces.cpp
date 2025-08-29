@@ -212,7 +212,7 @@ void System::System::calculate_forces() {
   CALI_MARK_BEGIN("convert particles AoS to SoA");
 #endif
   update_cabana_state(*cell_structure, verlet_criterion,
-                      get_interaction_range());
+                      get_interaction_range(), propagation->integ_switch);
 #ifdef ESPRESSO_CALIPER
   CALI_MARK_END("convert particles AoS to SoA");
 #endif

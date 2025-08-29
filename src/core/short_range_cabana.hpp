@@ -135,7 +135,7 @@ link_cell_kokkos(std::span<Cell *const> cells, BoxGeometry const &box_geo,
 
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
 update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
-                    double const pair_cutoff) {
+                    double const pair_cutoff, auto const integ_switch) {
   using execution_space = Kokkos::DefaultExecutionSpace;
   using policy_type = Kokkos::RangePolicy<execution_space>;
   auto const rebuild = cell_structure.prepare_verlet_list_cabana(pair_cutoff);
@@ -159,23 +159,25 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
         });
     Kokkos::fence();
 
-    // ===================================================
-    // Get Verlet pairs and fill Verlet list
-    // ===================================================
-    cell_structure.rebuild_verlet_list_cabana(
-        [&](std::span<Cell *const> cells, BoxGeometry const &box,
-            CellStructure::ListType &verlet_list) {
-          link_cell_kokkos(
-              std::move(cells), box, verlet_criterion, id_to_index, max_id,
-              [&](const int i, const int j) {
-                // intra cell loop
-                verlet_list.addNeighborLB(i, j);
-              },
-              [&](const int i, const int j) {
-                // inter cell loop
-                verlet_list.addNeighbor(i, j);
-              });
-        });
+    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+      // ===================================================
+      // Get Verlet pairs and fill Verlet list
+      // ===================================================
+      cell_structure.rebuild_verlet_list_cabana(
+	  [&](std::span<Cell *const> cells, BoxGeometry const &box,
+	      CellStructure::ListType &verlet_list) {
+	    link_cell_kokkos(
+		std::move(cells), box, verlet_criterion, id_to_index, max_id,
+		[&](const int i, const int j) {
+		  // intra cell loop
+		  verlet_list.addNeighborLB(i, j);
+		},
+		[&](const int i, const int j) {
+		  // inter cell loop
+		  verlet_list.addNeighbor(i, j);
+		});
+	  });
+    }
   } else {
     // ===================================================
     // Fill particle storage
