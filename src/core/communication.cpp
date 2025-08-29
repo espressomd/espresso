@@ -103,7 +103,7 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
   Communication::m_callbacks =
       std::make_shared<Communication::MpiCallbacks>(comm_cart, mpi_env);
 
-  ErrorHandling::init_error_handling(Communication::m_callbacks);
+  ErrorHandling::init_error_handling(comm_cart);
 
 #ifdef ESPRESSO_WALBERLA
   walberla::mpi_init();
@@ -123,12 +123,13 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
 }
 
 void deinit() {
-  ErrorHandling::deinit_error_handling();
-  Communication::m_callbacks.reset();
-
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  Kokkos::fence();
   kokkos_handle.reset();
 #endif
+
+  ErrorHandling::deinit_error_handling();
+  Communication::m_callbacks.reset();
 }
 } // namespace Communication
 

@@ -22,6 +22,7 @@ include(espresso_unit_test)
 function(ESPRESSO_ADD_TEST)
   cmake_parse_arguments(TEST "" "SRC;NAME;NUM_PROC;NUM_THREADS" "DEPENDS"
                         ${ARGN})
+  espresso_unit_test_make_name(SRC ${TEST_SRC} NAME ${TEST_NAME})
   espresso_unit_test(
     SRC
     ${TEST_SRC}

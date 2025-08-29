@@ -212,7 +212,7 @@ void System::System::calculate_forces() {
   CALI_MARK_BEGIN("convert particles AoS to SoA");
 #endif
   update_cabana_state(*cell_structure, verlet_criterion,
-                      get_interaction_range());
+                      get_interaction_range(), propagation->integ_switch);
 #ifdef ESPRESSO_CALIPER
   CALI_MARK_END("convert particles AoS to SoA");
 #endif
@@ -253,7 +253,8 @@ void System::System::calculate_forces() {
       aosoa);
 
   cabana_short_range(bond_kernel, first_neighbor_kernel, *cell_structure,
-                     get_interaction_range(), bonded_ias->maximal_cutoff());
+                     get_interaction_range(), bonded_ias->maximal_cutoff(),
+                     verlet_criterion, propagation->integ_switch);
   // Force and Torque reduction
   int num_threads = execution_space().concurrency();
   Kokkos::RangePolicy<execution_space> policy(std::size_t{0},

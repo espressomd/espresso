@@ -106,6 +106,7 @@ public:
    *
    * @tparam cao Interpolation order has to match the order
    *         set at last call to @ref p3m_interpolation_cache::reset.
+   * @param p_index Particle index.
    * @param weights Interpolation weights to store.
    */
   template <int cao>

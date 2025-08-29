@@ -84,6 +84,7 @@ void CellStructure::clear_local_properties() {
 #ifdef ESPRESSO_NPT
   m_local_virial.reset();
 #endif
+  m_id_to_index.reset();
   m_aosoa.reset();
   m_verlet_list_cabana.reset();
   m_rebuild_verlet_list_cabana = true;
@@ -116,33 +117,35 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
   using execution_space = Kokkos::DefaultExecutionSpace;
   auto const num_threads = execution_space().concurrency();
   auto const num_part = get_unique_particles().size();
-  auto const &system = get_system();
   auto max_counts = estimate_max_counts(pair_cutoff, num_part);
-  // TODO: use other types of Verlet list data structures
-  if (system.propagation->integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
-    max_counts = num_part;
-  }
 #ifdef ESPRESSO_COLLISION_DETECTION
+  auto const &system = get_system();
   if (system.has_collision_detection_enabled()) {
+    // TODO: use other types of Verlet list data structures
     max_counts = num_part * 2ul;
   }
 #endif
-  if (m_local_force !=
-      nullptr) { // variables for local properties are reallocated.
+  if (m_local_force) { // local properties are reallocated
     Kokkos::realloc(get_local_force(), num_part, num_threads);
 #ifdef ESPRESSO_ROTATION
     Kokkos::realloc(get_local_torque(), num_part, num_threads);
 #endif
+    Kokkos::realloc(get_id_to_index(), get_cached_max_local_particle_id() + 1);
+    Kokkos::deep_copy(get_id_to_index(), -1);
     // Resize particle views using AoSoA_pack's resize method
     m_aosoa->resize(num_part, m_cached_max_local_particle_id);
     m_verlet_list_cabana->reallocData(num_part, max_counts);
-  } else { // variables for local properties are generated.
+  } else { // local properties are initialized
     m_local_force =
         std::make_unique<ForceType>("local_force", num_part, num_threads);
 #ifdef ESPRESSO_ROTATION
     m_local_torque =
         std::make_unique<ForceType>("local_torque", num_part, num_threads);
 #endif
+    m_id_to_index = std::make_unique<Kokkos::View<int *>>(
+        Kokkos::ViewAllocateWithoutInitializing("id_to_index"),
+        get_cached_max_local_particle_id() + 1);
+    Kokkos::deep_copy(get_id_to_index(), -1);
     // Create AoSoA_pack and initialize with resize
     m_aosoa = std::make_unique<AoSoA_pack>();
     m_aosoa->resize(num_part, m_cached_max_local_particle_id);

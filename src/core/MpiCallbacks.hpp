@@ -50,8 +50,6 @@
 
 namespace Communication {
 
-class MpiCallbacks;
-
 namespace detail {
 /**
  * @brief Check if a type can be used as a callback argument.

@@ -85,6 +85,8 @@
  *  The ghost communicators are created by the cell systems.
  */
 
+#include <config/config.hpp>
+
 #include "BoxGeometry.hpp"
 #include "ParticleList.hpp"
 

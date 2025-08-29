@@ -203,6 +203,7 @@ private:
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   int m_cached_max_local_particle_id = 0;
   int m_max_id = 0;
+  std::unique_ptr<Kokkos::View<int *>> m_id_to_index;
   std::unique_ptr<ForceType> m_local_force;
 #ifdef ESPRESSO_ROTATION
   std::unique_ptr<ForceType> m_local_torque;
@@ -727,6 +728,7 @@ public:
   void reset_local_properties();
   void reset_local_force();
 
+  auto &get_id_to_index() { return *m_id_to_index; }
   auto &get_local_force() { return *m_local_force; }
 #ifdef ESPRESSO_ROTATION
   auto &get_local_torque() { return *m_local_torque; }
@@ -770,6 +772,10 @@ public:
   }
 
   void set_index_map();
+
+  inline void cell_list_loop(auto &&kernel) {
+    kernel(m_decomposition->local_cells(), m_decomposition->box());
+  }
 #endif
 
 private:

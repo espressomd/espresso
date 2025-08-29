@@ -18,7 +18,8 @@
  */
 #define BOOST_TEST_MODULE EK walberla node setters and getters test
 #define BOOST_TEST_DYN_LINK
-#include "config/config.hpp"
+
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_WALBERLA
 
@@ -32,6 +33,7 @@
 
 #include <walberla_bridge/VTKHandle.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
+#include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolverNone.hpp>
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
@@ -550,6 +552,19 @@ BOOST_AUTO_TEST_CASE(ek_exceptions) {
   // no diffusion leads to early exit
   ek->set_diffusion(0.);
   ek->integrate(std::size_t{}, std::size_t{}, std::size_t{}, 0.);
+}
+
+BOOST_AUTO_TEST_CASE(ek_poisson_solver_none) {
+  auto ek_solver = walberla::PoissonSolverNone<double>(params.lattice);
+  // no-op
+  ek_solver.add_charge_to_field(std::size_t{}, 0., false);
+  ek_solver.reset_charge_field();
+  ek_solver.solve();
+  // exceptions
+  BOOST_CHECK_THROW(ek_solver.get_node_potential({0, 0, 0}, true),
+                    std::runtime_error);
+  BOOST_CHECK_THROW(ek_solver.get_slice_potential({0, 0, 0}, {1, 1, 1}),
+                    std::runtime_error);
 }
 
 int main(int argc, char **argv) {

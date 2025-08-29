@@ -21,7 +21,7 @@
  * CUDA kernels to convert the particles AoS to a SoA on the device.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "GpuParticleData.hpp"
 #include "ResourceCleanup.hpp"

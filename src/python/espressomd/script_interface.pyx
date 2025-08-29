@@ -102,7 +102,7 @@ cdef class PScriptInterface:
                     policy_,
                     utils.to_bytes(name),
                     out_params))
-            utils.handle_errors(f"Exception during instantiation of '{name}'")
+            utils.handle_errors(f"Raised during instantiation of '{name}'")
 
     def __richcmp__(a, b, op):
         cls = PScriptInterface
@@ -177,7 +177,7 @@ cdef class PScriptInterface:
             result = handle.call_method(method_name_char, parameters)
         result_py = variant_to_python_object(result)
         if handle_errors_message is None:
-            handle_errors_message = f"while calling method {method}()"
+            handle_errors_message = f"Raised while calling method {method}()"
         utils.handle_errors(handle_errors_message)
         return result_py
 

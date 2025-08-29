@@ -270,10 +270,9 @@ private:
 
   class interpolation_illegal_access : public std::runtime_error {
   public:
-    explicit interpolation_illegal_access(std::string const &field,
-                                          Utils::Vector3d const &pos,
-                                          std::array<int, 3> const &node,
-                                          double weight)
+    interpolation_illegal_access(std::string const &field,
+                                 Utils::Vector3d const &pos,
+                                 std::array<int, 3> const &node, double weight)
         : std::runtime_error("Access to LB " + field + " field failed") {
       std::cerr << "pos [" << pos << "], node [" << Utils::Vector3i(node)
                 << "], weight " << weight << "\n";
@@ -282,8 +281,7 @@ private:
 
   class vtk_runtime_error : public std::runtime_error {
   public:
-    explicit vtk_runtime_error(std::string const &vtk_uid,
-                               std::string const &reason)
+    vtk_runtime_error(std::string const &vtk_uid, std::string const &reason)
         : std::runtime_error("VTKOutput object '" + vtk_uid + "' " + reason) {}
   };
 
@@ -728,11 +726,12 @@ public:
       throw std::domain_error("LB LEbc doesn't support domain decomposition "
                               "along the shear and normal directions.");
     }
-    auto const agrid =
-        FloatType_c(lattice.get_grid_dimensions()[shear_plane_normal]);
-    auto obj = StreamCollisionModelLeesEdwards(
-        m_last_applied_force_field_id, m_pdf_field_id, agrid, omega, shear_vel);
-    m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
+    auto const grid_dimensions = lattice.get_grid_dimensions();
+    auto const grid_size = FloatType_c(grid_dimensions[shear_plane_normal]);
+    m_collision_model =
+        std::make_shared<CollisionModel>(StreamCollisionModelLeesEdwards(
+            m_last_applied_force_field_id, m_pdf_field_id, grid_size, omega,
+            shear_vel));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
     m_run_stream_collide_sweep =
         StreamCollideSweepVisitor(blocks, m_lees_edwards_callbacks);

@@ -415,7 +415,7 @@ void System::rebuild_aosoa() {
                                            collision_detection_cutoff};
 
   update_cabana_state(*cell_structure, verlet_criterion,
-                      get_interaction_range());
+                      get_interaction_range(), propagation->integ_switch);
 }
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 

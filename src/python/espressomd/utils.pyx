@@ -196,14 +196,15 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
         raise ValueError(array_locked.ERR_MSG)
 
 
-def handle_errors(msg):
+def handle_errors(note):
     """
-    Gathers runtime errors.
+    Gather runtime exceptions that did not interrupt the program execution.
+    Runtime warnings are output directly to stderr.
 
     Parameters
     ----------
-    msg: :obj:`str`
-         Error message that is to be raised.
+    note: :obj:`str`
+        Contextual information, such as which method was called last.
 
     """
     errors = mpi_gather_runtime_errors()
@@ -214,7 +215,7 @@ def handle_errors(msg):
     # raise an exception with the first error
     for err in errors:
         if err.level() == ErrorLevel.ERROR:
-            raise Exception(f"{msg}: {to_str(err.format())}")
+            raise Exception(f"{note}: {to_str(err.format())}")
 
 
 def nesting_level(obj):

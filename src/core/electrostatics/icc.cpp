@@ -95,11 +95,8 @@ static void force_calc_icc(
           p2.force() -= force;
 #ifdef ESPRESSO_P3M
           if (elc_kernel_ptr) {
-            ParticleForce p1f_asym{};
-            ParticleForce p2f_asym{};
-            (*elc_kernel_ptr)(p1.pos(), p2.pos(), p1f_asym, p2f_asym, q1q2);
-            p1.force() += p1f_asym.f;
-            p2.force() += p2f_asym.f;
+            (*elc_kernel_ptr)(p1.pos(), p2.pos(), p1.force_and_torque(),
+                              p2.force_and_torque(), q1q2);
           }
 #endif // ESPRESSO_P3M
         }

@@ -24,6 +24,11 @@ include(espresso_unit_test)
 espresso_unit_test(SRC RuntimeError_test.cpp DEPENDS Boost::serialization)
 espresso_unit_test(SRC RuntimeErrorCollector_test.cpp DEPENDS espresso::core
                    Boost::mpi MPI::MPI_CXX NUM_PROC 2)
+# create a test matrix for the stand-alone unit test
+espresso_unit_test_executable(
+  NAME EspressoSystemStandAlone_test_matrix SRC
+  EspressoSystemStandAlone_test.cpp DEPENDS espresso::core Boost::mpi
+  MPI::MPI_CXX)
 foreach(TEST_NUM_PROC 1 3 4)
   foreach(TEST_NUM_THREADS 1 2)
     if(${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM} OR ${TEST_NUM_THREADS}
@@ -32,8 +37,8 @@ foreach(TEST_NUM_PROC 1 3 4)
         set(TEST_NAME
             EspressoSystemStandAlone_test_${TEST_NUM_PROC}_mpi_ranks_${TEST_NUM_THREADS}_omp_threads
         )
-        espresso_unit_test(
-          NAME ${TEST_NAME} SRC EspressoSystemStandAlone_test.cpp DEPENDS
+        espresso_unit_test_register(
+          NAME ${TEST_NAME} TARGET EspressoSystemStandAlone_test_matrix DEPENDS
           espresso::core Boost::mpi MPI::MPI_CXX NUM_PROC ${TEST_NUM_PROC}
           NUM_THREADS ${TEST_NUM_THREADS})
       endif()

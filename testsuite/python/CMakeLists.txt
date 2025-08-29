@@ -54,8 +54,9 @@
 
 #]=======================================================================]
 function(python_test)
-  cmake_parse_arguments(TEST "NO_MPI" "FILE;MAX_NUM_PROC;GPU_SLOTS;SUFFIX"
-                        "DEPENDS;DEPENDENCIES;LABELS;ARGUMENTS" ${ARGN})
+  cmake_parse_arguments(
+    TEST "NO_MPI" "FILE;MAX_NUM_PROC;NUM_THREADS;GPU_SLOTS;SUFFIX"
+    "DEPENDS;DEPENDENCIES;LABELS;ARGUMENTS" ${ARGN})
   cmake_path(GET TEST_FILE STEM TEST_NAME)
   set(TEST_FILE_CONFIGURED "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}.py")
   if(TEST_SUFFIX)
@@ -79,6 +80,9 @@ function(python_test)
   endif()
   if(NOT DEFINED TEST_GPU_SLOTS)
     set(TEST_GPU_SLOTS 0)
+  endif()
+  if(NOT DEFINED TEST_NUM_THREADS)
+    set(TEST_NUM_THREADS 2)
   endif()
 
   if(${TEST_MAX_NUM_PROC} GREATER ${ESPRESSO_TEST_NP})
@@ -118,11 +122,16 @@ function(python_test)
     list(APPEND TEST_LABELS "parallel_odd")
   endif()
 
+  set(TEST_NUM_CORES ${TEST_NUM_PROC})
+  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+    math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
+  endif()
+
   # cmake-format: off
   set_tests_properties(
-    ${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC} SKIP_RETURN_CODE 5
+    ${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_CORES} SKIP_RETURN_CODE 5
                             ENVIRONMENT "OMP_PROC_BIND=false"
-                            ENVIRONMENT "OMP_NUM_THREADS=2"
+                            ENVIRONMENT "OMP_NUM_THREADS=${TEST_NUM_THREADS}"
                             DEPENDS "${TEST_DEPENDS}" LABELS "${TEST_LABELS}")
   # cmake-format: on
 
@@ -284,6 +293,7 @@ python_test(FILE virtual_sites_tracers.py MAX_NUM_PROC 2 DEPENDENCIES
 # python_test(FILE virtual_sites_tracers_gpu.py MAX_NUM_PROC 2 GPU_SLOTS 1
 # DEPENDENCIES virtual_sites_tracers_common.py)
 python_test(FILE regular_decomposition.py MAX_NUM_PROC 4)
+python_test(FILE regular_decomposition.py MAX_NUM_PROC 1 SUFFIX 1_core)
 python_test(FILE hybrid_decomposition.py MAX_NUM_PROC 1 SUFFIX 1_core)
 python_test(FILE hybrid_decomposition.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)
@@ -355,8 +365,9 @@ python_test(FILE lb_boundary.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
 python_test(FILE lb_streaming.py MAX_NUM_PROC 4 GPU_SLOTS 0)
 python_test(FILE lb_streaming.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
 python_test(FILE lb_shear.py MAX_NUM_PROC 2 GPU_SLOTS 1)
-python_test(FILE lb_thermostat.py MAX_NUM_PROC 2 GPU_SLOTS 0)
-python_test(FILE lb_thermostat.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
+python_test(FILE lb_thermostat.py MAX_NUM_PROC 2 GPU_SLOTS 0 LABELS long)
+python_test(FILE lb_thermostat.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS long SUFFIX
+            1_core)
 # python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2 GPU_SLOTS 1) # TODO
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 2 GPU_SLOTS 1 LABELS
             long)
@@ -398,14 +409,18 @@ python_test(FILE npt_thermostat.py MAX_NUM_PROC 4)
 python_test(FILE box_geometry.py MAX_NUM_PROC 1)
 python_test(FILE lattice.py MAX_NUM_PROC 4)
 python_test(FILE lattice_vtk.py MAX_NUM_PROC 4 GPU_SLOTS 1)
+# TODO: remove next line once EKFFTGPU supports more than 1 MPI rank
+python_test(FILE lattice_vtk.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
 if(${ESPRESSO_TEST_NP} GREATER_EQUAL 6)
   python_test(FILE lattice_vtk.py MAX_NUM_PROC 6 SUFFIX 6_cores GPU_SLOTS 1)
 endif()
 python_test(FILE ek_interface.py MAX_NUM_PROC 2 GPU_SLOTS 1)
+# TODO: remove next line once EKFFTGPU supports more than 1 MPI rank
+python_test(FILE ek_interface.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
 python_test(FILE ek_diffusion.py MAX_NUM_PROC 1 GPU_SLOTS 1)
 python_test(FILE ek_diffusive_flux.py MAX_NUM_PROC 1 GPU_SLOTS 1)
 python_test(FILE ek_noflux.py MAX_NUM_PROC 1 GPU_SLOTS 1)
-python_test(FILE ek_eof.py MAX_NUM_PROC 1 GPU_SLOTS 1)
+python_test(FILE ek_eof.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS long)
 python_test(FILE ek_bulk_reactions.py MAX_NUM_PROC 1 GPU_SLOTS 1)
 python_test(FILE ek_indexed_reactions.py MAX_NUM_PROC 1 GPU_SLOTS 1)
 python_test(FILE ek_fixeddensity.py MAX_NUM_PROC 1 GPU_SLOTS 1)

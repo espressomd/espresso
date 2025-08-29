@@ -53,9 +53,9 @@ class EKPoissonSolverSlice : public LatticeSlice<EKFieldSerializer> {
 
 public:
   void do_construct(VariantMap const &params) override {
-    auto const ek_solver_sip =
+    m_ek_solver_sip =
         get_value<std::shared_ptr<EKPoissonSolver>>(params, "parent_sip");
-    m_ek_poisson_solver = ek_solver_sip->get_instance();
+    m_ek_poisson_solver = m_ek_solver_sip->get_instance();
     assert(m_ek_poisson_solver);
     m_shape = get_value<std::vector<int>>(params, "shape");
     m_slice_lower_corner =

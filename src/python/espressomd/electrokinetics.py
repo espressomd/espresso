@@ -83,7 +83,6 @@ class EKFFT(ScriptInterfaceHelper):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
             if any(isinstance(item, slice) for item in key):
                 return EKPoissonSolverSlice(
-                    # , node_grid=self.shape)
                     parent_sip=self, slice_range=key)
             else:
                 return EKPoissonSolverNode(
@@ -144,7 +143,6 @@ class EKFFTGPU(ScriptInterfaceHelper):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
             if any(isinstance(item, slice) for item in key):
                 return EKPoissonSolverSlice(
-                    # , node_grid=self.shape)
                     parent_sip=self, slice_range=key)
             else:
                 return EKPoissonSolverNode(
@@ -194,13 +192,12 @@ class EKPoissonSolverNode(ScriptInterfaceHelper):
         if "sip" not in kwargs:
             self.validate_params(kwargs)
             super().__init__(*args, **kwargs)
-            utils.handle_errors("EKPoissonSolverNode instantiation failed")
         else:
             super().__init__(**kwargs)
 
     def __reduce__(self):
         raise NotImplementedError(
-            "Cannot serialize EK poisson solver node objects")
+            "Cannot serialize EK Poisson solver node objects")
 
     def __eq__(self, obj):
         return isinstance(obj, EKPoissonSolverNode) and self.index == obj.index
@@ -243,18 +240,17 @@ class EKPoissonSolverSlice(ScriptInterfaceHelper):
                 slice_range, grid_size)
             node = EKPoissonSolverNode(index=np.array([0, 0, 0]), **kwargs)
             super().__init__(*args, node_sip=node, **kwargs, **extra_kwargs)
-            utils.handle_errors("EKPoissonSolverSlice instantiation failed")
 
     def __iter__(self):
         lower, upper = self.call_method("get_slice_ranges")
         indices = [list(range(lower[i], upper[i])) for i in range(3)]
-        lb_sip = self.call_method("get_ek_solver_sip")
+        ek_sip = self.call_method("get_ek_solver_sip")
         for index in itertools.product(*indices):
-            yield EKPoissonSolverNode(parent_sip=lb_sip, index=np.array(index))
+            yield EKPoissonSolverNode(parent_sip=ek_sip, index=np.array(index))
 
     def __reduce__(self):
         raise NotImplementedError(
-            "Cannot serialize EK poisson solver slice objects")
+            "Cannot serialize EK Poisson solver slice objects")
 
     def _getter(self, attr):
         value_grid, shape = self.call_method(f"get_{attr}")
@@ -571,7 +567,6 @@ class EKSpeciesNode(ScriptInterfaceHelper):
         if "sip" not in kwargs:
             self.validate_params(kwargs)
             super().__init__(*args, **kwargs)
-            utils.handle_errors("EKSpeciesNode instantiation failed")
         else:
             super().__init__(**kwargs)
 
@@ -704,14 +699,13 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
                 slice_range, grid_size)
             node = EKSpeciesNode(index=np.array([0, 0, 0]), **kwargs)
             super().__init__(*args, node_sip=node, **kwargs, **extra_kwargs)
-            utils.handle_errors("EKSpeciesSlice instantiation failed")
 
     def __iter__(self):
         lower, upper = self.call_method("get_slice_ranges")
         indices = [list(range(lower[i], upper[i])) for i in range(3)]
-        lb_sip = self.call_method("get_ek_sip")
+        ek_sip = self.call_method("get_ek_sip")
         for index in itertools.product(*indices):
-            yield EKSpeciesNode(parent_sip=lb_sip, index=np.array(index))
+            yield EKSpeciesNode(parent_sip=ek_sip, index=np.array(index))
 
     def __reduce__(self):
         raise NotImplementedError("Cannot serialize EK species slice objects")

@@ -32,26 +32,38 @@
 
 namespace walberla {
 
-template <typename FloatType> class None : public PoissonSolver {
+template <typename FloatType> class PoissonSolverNone : public PoissonSolver {
 private:
   BlockDataID m_potential_field_id;
 
   using PotentialField = GhostLayerField<FloatType, 1>;
 
 public:
-  explicit None(std::shared_ptr<LatticeWalberla> lattice)
+  explicit PoissonSolverNone(std::shared_ptr<LatticeWalberla> lattice)
       : PoissonSolver(std::move(lattice), 0.0) {
     m_potential_field_id = field::addToStorage<PotentialField>(
         get_lattice().get_blocks(), "potential field", 0.0, field::fzyx,
         get_lattice().get_ghost_layers());
   }
-  ~None() override = default;
+  ~PoissonSolverNone() override = default;
 
   void reset_charge_field() override {}
   void add_charge_to_field(std::size_t, double, bool) override {}
 
   [[nodiscard]] std::size_t get_potential_field_id() const noexcept override {
     return m_potential_field_id;
+  }
+
+  std::optional<double>
+  get_node_potential(Utils::Vector3i const &,
+                     bool consider_ghosts = false) override {
+    throw std::runtime_error("PoissonSolverNone has no potential field");
+  }
+
+  std::vector<double>
+  get_slice_potential(Utils::Vector3i const &,
+                      Utils::Vector3i const &) const override {
+    throw std::runtime_error("PoissonSolverNone has no potential field");
   }
 
   void solve() override {}

@@ -23,6 +23,7 @@
  */
 
 #include "errorhandling.hpp"
+#include "communication.hpp"
 
 #include "MpiCallbacks.hpp"
 #include "error_handling/RuntimeErrorCollector.hpp"
@@ -44,14 +45,9 @@ namespace ErrorHandling {
  */
 static std::unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 
-/** The callback loop we are on. */
-static std::weak_ptr<Communication::MpiCallbacks> m_callbacks;
+void init_error_handling(boost::mpi::communicator const &comm) {
 
-void init_error_handling(std::weak_ptr<Communication::MpiCallbacks> callbacks) {
-  m_callbacks = std::move(callbacks);
-
-  runtimeErrorCollector =
-      std::make_unique<RuntimeErrorCollector>(m_callbacks.lock()->comm());
+  runtimeErrorCollector = std::make_unique<RuntimeErrorCollector>(comm);
 }
 
 void deinit_error_handling() { runtimeErrorCollector.reset(); }
@@ -70,7 +66,7 @@ static void mpi_gather_runtime_errors_local() {
 REGISTER_CALLBACK(mpi_gather_runtime_errors_local)
 
 std::vector<RuntimeError> mpi_gather_runtime_errors() {
-  m_callbacks.lock()->call(mpi_gather_runtime_errors_local);
+  ::Communication::mpiCallbacks().call(mpi_gather_runtime_errors_local);
   return runtimeErrorCollector->gather();
 }
 
@@ -84,7 +80,7 @@ std::vector<RuntimeError> mpi_gather_runtime_errors_all(bool is_head_node) {
 } // namespace ErrorHandling
 
 void errexit() {
-  ErrorHandling::m_callbacks.lock()->comm().abort(1);
+  ErrorHandling::runtimeErrorCollector->comm().abort(1);
 
   std::abort();
 }

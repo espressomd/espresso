@@ -40,10 +40,11 @@ CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
   using pos_type = decltype(traits.position(std::declval<Particle>()));
   using flux_type = Utils::Vector3d;
 
+  auto const buffer_size = local_particles.size();
   std::vector<pos_type> local_folded_positions{};
   std::vector<flux_type> local_flux_densities{};
-  local_folded_positions.reserve(local_particles.size());
-  local_flux_densities.reserve(local_particles.size());
+  local_folded_positions.reserve(buffer_size);
+  local_flux_densities.reserve(buffer_size);
 
   auto &system = System::get_system();
   auto const &box_geo = *system.box_geo;
@@ -53,7 +54,8 @@ CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
 
   std::vector<Utils::Vector3d> unfolded_pos{};
   std::vector<Utils::Vector3d> folded_pos{};
-  folded_pos.reserve(local_particles.size());
+  unfolded_pos.reserve(buffer_size);
+  folded_pos.reserve(buffer_size);
   for (auto const &p : local_particles) {
     unfolded_pos.emplace_back(traits.position(p));
     folded_pos.emplace_back(box_geo.folded_position(traits.position(p)));

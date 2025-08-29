@@ -79,10 +79,11 @@ commit_particle(Particle const &p, auto const index,
 #endif
 }
 
-ESPRESSO_ATTR_ALWAYS_INLINE inline void construct_verlet_list(
-    std::span<Cell *const> cells, BoxGeometry const &box_geo,
-    CellStructure::ListType &verlet_list, auto const &verlet_criterion,
-    Kokkos::View<int *> const &id_to_index, int const max_id) {
+ESPRESSO_ATTR_ALWAYS_INLINE inline void
+link_cell_kokkos(std::span<Cell *const> cells, BoxGeometry const &box_geo,
+                 auto const &verlet_criterion,
+                 Kokkos::View<int *> const &id_to_index, int const max_id,
+                 auto const &intra_operator, auto const &inter_operator) {
 
   auto const distance_function = detail::MinimalImageDistance{box_geo};
 
@@ -91,7 +92,7 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void construct_verlet_list(
   // -1 is used as a sentinel value for particle ids from other threads
 
   auto intra_kernel = [&cells, &distance_function, &verlet_criterion,
-                       &id_to_index, &verlet_list, max_id](const int i) {
+                       &id_to_index, &intra_operator, max_id](const int i) {
     auto &local_particles = cells[i]->particles();
     for (auto it = local_particles.begin(); it != local_particles.end(); ++it) {
       auto const &p1 = *it;
@@ -104,7 +105,7 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void construct_verlet_list(
               if (verlet_criterion(p1, *jt, distance_function(p1, *jt))) {
                 auto const jj = id_to_index((*jt).id());
                 if (jj >= 0) {
-                  verlet_list.addNeighborLB(ii, jj);
+                  intra_operator(ii, jj);
                 }
               }
             }
@@ -115,7 +116,7 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void construct_verlet_list(
   };
 
   auto inter_kernel = [&cells, &distance_function, &verlet_criterion,
-                       &id_to_index, &verlet_list, max_id](const int i) {
+                       &id_to_index, &inter_operator, max_id](const int i) {
     auto &local_particles = cells[i]->particles();
     for (auto it = local_particles.begin(); it != local_particles.end(); ++it) {
       auto const &p1 = *it;
@@ -129,7 +130,7 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void construct_verlet_list(
                 if (verlet_criterion(p1, p2, distance_function(p1, p2))) {
                   auto const jj = id_to_index(p2.id());
                   if (jj >= 0) {
-                    verlet_list.addNeighbor(ii, jj);
+                    inter_operator(ii, jj);
                   }
                 }
               }
@@ -149,7 +150,7 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void construct_verlet_list(
 
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
 update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
-                    double const pair_cutoff) {
+                    double const pair_cutoff, auto const integ_switch) {
   using execution_space = Kokkos::DefaultExecutionSpace;
   using policy_type = Kokkos::RangePolicy<execution_space>;
   auto const rebuild = cell_structure.prepare_verlet_list_cabana(pair_cutoff);
@@ -158,30 +159,51 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
   auto const max_id = cell_structure.get_cached_max_local_particle_id();
   auto &aosoa = cell_structure.get_aosoa();
 
-  // ===================================================
-  // Fill particle storage
-  // ===================================================
-  Kokkos::realloc(aosoa.id_to_index, max_id + 1);
-  auto &id_to_index = aosoa.id_to_index;
-  kokkos_parallel_range_for<policy_type>(
-      "Views write", std::size_t{0}, n_part,
-      [&unique_particles, &aosoa, &id_to_index](int const index) {
-        auto const &p = *unique_particles.at(index);
-        commit_particle(p, index, aosoa);
-        id_to_index(p.id()) = index;
-      });
-  Kokkos::fence();
-
-  // ===================================================
-  // Get Verlet pairs and fill Verlet list
-  // ===================================================
   if (rebuild) {
-    cell_structure.rebuild_verlet_list_cabana(
-        [&](std::span<Cell *const> cells, BoxGeometry const &box,
-            CellStructure::ListType &verlet_list) {
-          construct_verlet_list(std::move(cells), box, verlet_list,
-                                verlet_criterion, id_to_index, max_id);
+    auto &id_to_index = cell_structure.get_id_to_index();
+
+    // ===================================================
+    // Fill particle storage
+    // ===================================================
+    kokkos_parallel_range_for<policy_type>(
+        "AoSoA write", std::size_t{0}, n_part,
+        [&unique_particles, &aosoa, &id_to_index](int const index) {
+          auto const &p = *unique_particles.at(index);
+          commit_particle(p, index, aosoa);
+          id_to_index(p.id()) = index;
         });
+    Kokkos::fence();
+
+    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+      // ===================================================
+      // Get Verlet pairs and fill Verlet list
+      // ===================================================
+      cell_structure.rebuild_verlet_list_cabana(
+          [&](std::span<Cell *const> cells, BoxGeometry const &box,
+              CellStructure::ListType &verlet_list) {
+            link_cell_kokkos(
+                std::move(cells), box, verlet_criterion, id_to_index, max_id,
+                [&](const int i, const int j) {
+                  // intra cell loop
+                  verlet_list.addNeighborLB(i, j);
+                },
+                [&](const int i, const int j) {
+                  // inter cell loop
+                  verlet_list.addNeighbor(i, j);
+                });
+          });
+    }
+  } else {
+    // ===================================================
+    // Fill particle storage
+    // ===================================================
+    kokkos_parallel_range_for<policy_type>(
+        "AoSoA write", std::size_t{0}, n_part,
+        [&unique_particles, &aosoa](int const index) {
+          auto const &p = *unique_particles.at(index);
+          commit_particle(p, index, aosoa);
+        });
+    Kokkos::fence();
   }
 }
 
@@ -204,7 +226,8 @@ update_aosoa_charges(CellStructure &cell_structure) {
 
 void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
                         CellStructure &cell_structure, double pair_cutoff,
-                        double bond_cutoff) {
+                        double bond_cutoff, auto const &verlet_criterion,
+                        auto const integ_switch) {
   using execution_space = Kokkos::DefaultExecutionSpace;
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
@@ -214,12 +237,31 @@ void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
 
   // Cabana short range loop
   if (pair_cutoff > 0.) {
-    auto const &verlet_list = cell_structure.get_verlet_list_cabana();
-    Kokkos::RangePolicy<execution_space> policy(
-        std::size_t{0}, cell_structure.get_unique_particles().size());
-    Cabana::neighbor_parallel_for(policy, forces_kernel, verlet_list,
-                                  Cabana::FirstNeighborsTag(),
-                                  Cabana::SerialOpTag());
+    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT and
+        cell_structure.use_verlet_list) {
+      auto const &verlet_list = cell_structure.get_verlet_list_cabana();
+      Kokkos::RangePolicy<execution_space> policy(
+          std::size_t{0}, cell_structure.get_unique_particles().size());
+      Cabana::neighbor_parallel_for(policy, forces_kernel, verlet_list,
+                                    Cabana::FirstNeighborsTag(),
+                                    Cabana::SerialOpTag());
+    } else {
+      cell_structure.cell_list_loop(
+          [&](std::span<Cell *const> cells, BoxGeometry const &box) {
+            link_cell_kokkos(
+                std::move(cells), box, verlet_criterion,
+                cell_structure.get_id_to_index(),
+                cell_structure.get_cached_max_local_particle_id(),
+                [&](const int i, const int j) {
+                  // intra cell loop
+                  forces_kernel(i, j);
+                },
+                [&](const int i, const int j) {
+                  // inter cell loop
+                  forces_kernel(i, j);
+                });
+          });
+    }
     Kokkos::fence();
   }
 }

@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_SCAFACOS_DIPOLES
 
@@ -75,7 +75,7 @@ public:
       actor()->set_prefactor(prefactor);
     });
     // MPI communicator is needed to destroy the FFT plans
-    m_mpi_env_lock = ::Communication::mpiCallbacksHandle()->share_mpi_env();
+    m_mpi_env_lock = ::Communication::mpiCallbacks().share_mpi_env();
   }
 
   Variant do_call_method(std::string const &name,

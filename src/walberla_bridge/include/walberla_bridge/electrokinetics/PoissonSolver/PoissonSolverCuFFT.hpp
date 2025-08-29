@@ -42,7 +42,7 @@
 namespace walberla {
 template <typename FloatType> class FFT_CUDA;
 
-template <typename FloatType> class FFT_GPU : public PoissonSolver {
+template <typename FloatType> class PoissonSolverCuFFT : public PoissonSolver {
 private:
   template <typename T> FloatType FloatType_c(T t) {
     return numeric_cast<FloatType>(t);
@@ -56,14 +56,15 @@ private:
   std::shared_ptr<gpu::HostFieldAllocator<FloatType>> m_host_field_allocator;
 
 public:
-  FFT_GPU() = default;
-  FFT_GPU(std::shared_ptr<LatticeWalberla> lattice, double permittivity)
+  PoissonSolverCuFFT() = default;
+  PoissonSolverCuFFT(std::shared_ptr<LatticeWalberla> lattice,
+                     double permittivity)
       : PoissonSolver(lattice, permittivity) {
     fft_cuda = std::make_shared<FFT_CUDA<FloatType>>(lattice, permittivity);
     m_host_field_allocator =
         std::make_shared<gpu::HostFieldAllocator<FloatType>>();
   }
-  ~FFT_GPU() override = default;
+  ~PoissonSolverCuFFT() override = default;
 
   void reset_charge_field() override { fft_cuda->reset_charge_field(); }
 

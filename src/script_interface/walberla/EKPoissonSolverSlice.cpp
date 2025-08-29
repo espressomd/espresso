@@ -51,10 +51,10 @@ Variant EKPoissonSolverSlice::do_call_method(std::string const &name,
   }
   if (name == "get_value_shape") {
     auto const name = get_value<std::string>(params, "name");
-    if (m_shape_val.count(name) == 0) {
+    if (not m_shape_val.contains(name)) {
       context()->parallel_try_catch([&]() {
-        throw std::runtime_error("Unknown Poisson Solver property '" + name +
-                                 "'");
+        throw std::invalid_argument("Unknown Poisson solver property '" + name +
+                                    "'");
       });
     }
     return m_shape_val.at(name);
