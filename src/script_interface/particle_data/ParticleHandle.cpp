@@ -39,6 +39,7 @@
 #include "core/rotation.hpp"
 #include "core/system/System.hpp"
 #include "core/virtual_sites.hpp"
+#include "core/virtual_sites/com.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/reduce_optional.hpp>
@@ -501,7 +502,6 @@ ParticleHandle::ParticleHandle() {
              throw 0;
            }
            vs_com.to_molecule_id = get_value<int>(array[0]);
-           vs_com.m_com_for_mol_id = std::make_shared<ParticleProperties::VirtualSitesCenterOfMassParameters::ComInfo>();
          } catch (...) {
            throw std::invalid_argument(error_msg(
                "vs_com", "must take the form [id]"));

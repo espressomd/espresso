@@ -48,6 +48,8 @@ class Propagation(enum.IntFlag):
     """Euler algorithm that integrates Brownian's equations of motion."""
     TRANS_STOKESIAN = 2**8
     """Euler algorithm that integrates Stoke's equations of motion."""
+    TRANS_VS_CENTER_OF_MASS = 2**9
+    """Algorithm for virtual sites center of mass motion."""
     ROT_EULER = 2**10
     """Velocity-Verlet algorithm that integrates Euler's equations of rotation."""
     ROT_LANGEVIN = 2**11

@@ -53,6 +53,7 @@
 #include "thermostat.hpp"
 #include "thermostats/langevin_inline.hpp"
 #include "virtual_sites/relative.hpp"
+#include "virtual_sites/com.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
@@ -368,6 +369,12 @@ void System::System::calculate_forces() {
     vs_relative_back_transfer_forces_and_torques(*cell_structure);
   }
 #endif
+// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+  if (propagation->used_propagations &
+      (PropagationMode::TRANS_VS_CENTER_OF_MASS)) {
+    vs_com_back_transfer_forces_and_torques(*cell_structure);
+  }
+// #endif
 
   // Communication step: ghost forces
   cell_structure->ghosts_reduce_forces();

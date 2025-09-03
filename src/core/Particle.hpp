@@ -174,17 +174,8 @@ struct ParticleProperties {
     /**  @brief Store molecule id to which virtual site belongs */
     int to_molecule_id = {-1};
 
-    /**  @brief Store information about the center of mass  of the molecule*/
-    struct ComInfo {
-    double total_mass = 0.0;
-    Utils::Vector3d weighted_position = {0., 0., 0.};
-    };
-    /**  @brief Ptr to access com info */
-    std::shared_ptr<ComInfo> m_com_for_mol_id;
-
     template <class Archive> void serialize(Archive &ar, long int) {
       ar & to_molecule_id;
-      ar & m_com_for_mol_id;
     }
   } vs_com;
 // #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
