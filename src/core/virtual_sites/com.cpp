@@ -100,7 +100,6 @@ void vs_com_update_particles(CellStructure &cell_structure,
   }
 }
 
-
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
 void vs_com_back_transfer_forces_and_torques(
@@ -119,7 +118,7 @@ void vs_com_back_transfer_forces_and_torques(
 
     // Iterate over all the particles in the local cells
     cell_structure.for_each_local_particle([&](Particle &p) {
-    if (!is_vs_com(p)) return; // Check if particle is a virtual site center of mass
+        if (is_vs_com(p)) return; // Check if particle is a virtual site center of mass
 
     auto const vs_id = vitual_site_id_for_mol_id.at(p.mol_id());
     auto vs_ptr = cell_structure.get_local_particle(vs_id);

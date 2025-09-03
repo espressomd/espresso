@@ -740,7 +740,6 @@ Variant ParticleHandle::do_call_method(std::string const &name,
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 // #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 } else if (name == "vs_com_auto_relate_to") {
-  std::cout << "Setting up COM virtual site, C++ level" << std::endl;
   if (not context()->is_head_node()) {
       return {};
     }
