@@ -617,6 +617,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
         get_system()->on_particle_change();
       }
     }
+#ifdef ESPRESSO_EXCLUSIONS
     // set exclusions
     if (params.contains("exclusions")) {
       std::vector<int> exclusion_list;
@@ -644,6 +645,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
         }
       });
     }
+#endif // ESPRESSO_EXCLUSIONS
   }
   if (name == "get_bond_by_id") {
     if (not context()->is_head_node()) {
