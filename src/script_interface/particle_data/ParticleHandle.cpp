@@ -617,6 +617,33 @@ Variant ParticleHandle::do_call_method(std::string const &name,
         get_system()->on_particle_change();
       }
     }
+    // set exclusions
+    if (params.contains("exclusions")) {
+      std::vector<int> exclusion_list;
+      try {
+        auto const pid = get_value<int>(params, "exclusions");
+        exclusion_list.push_back(pid);
+      } catch (...) {
+        exclusion_list = get_value<std::vector<int>>(params, "exclusions");
+      }
+      context()->parallel_try_catch([&]() {
+        for (auto const pid : exclusion_list) {
+          particle_exclusion_sanity_checks(m_pid, pid);
+        }
+      });
+      set_particle_property([this, &exclusion_list](Particle &p) {
+        auto cell_structure_si = get_cell_structure();
+        auto &cell_structure = cell_structure_si->get_cell_structure();
+        for (auto const pid : p.exclusions()) {
+          local_remove_exclusion(m_pid, pid, cell_structure);
+        }
+        for (auto const pid : exclusion_list) {
+          if (!p.has_exclusion(pid)) {
+            local_add_exclusion(m_pid, pid, cell_structure);
+          }
+        }
+      });
+    }
   }
   if (name == "get_bond_by_id") {
     if (not context()->is_head_node()) {
