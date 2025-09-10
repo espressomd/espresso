@@ -59,7 +59,6 @@ target_compile_options(
     $<$<NOT:$<CXX_COMPILER_ID:IntelLLVM>>:-Wno-deprecated-declarations>
     $<$<CXX_COMPILER_ID:IntelLLVM>:-diag-disable=1224>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-cpp>
-    $<$<CXX_COMPILER_ID:GNU>:-Wno-strict-aliasing>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-volatile>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-shadow=compatible-local>
