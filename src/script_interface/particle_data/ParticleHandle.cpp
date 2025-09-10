@@ -621,10 +621,9 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     // set exclusions
     if (params.contains("exclusions")) {
       std::vector<int> exclusion_list;
-      try {
-        auto const pid = get_value<int>(params, "exclusions");
-        exclusion_list.push_back(pid);
-      } catch (...) {
+      if (is_type<int>(params.at("exclusions"))) {
+        exclusion_list.emplace_back(get_value<int>(params, "exclusions"));
+      } else {
         exclusion_list = get_value<std::vector<int>>(params, "exclusions");
       }
       context()->parallel_try_catch([&]() {
