@@ -216,8 +216,8 @@ Variant ParticleSlice::do_call_method(std::string const &name,
           set_particles_charges(m_id_selection, charges, context()->get_comm(),
                                 *get_cell_structure(), get_system());
 
-#endif // ESPRESSO_ELECTROSTATICS
         }
+#endif // ESPRESSO_ELECTROSTATICS
 #ifdef ESPRESSO_EXCLUSIONS
         else if (param_name == "exclusions") {
           auto const excluded_pids =
