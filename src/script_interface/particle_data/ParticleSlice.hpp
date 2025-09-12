@@ -80,7 +80,7 @@ struct SetParticleParametersVisitor {
                          {"__bonded_ias", bonded_ias}})
           ->do_set_parameter(param_name, values[i]);
     } // Particle id loop
-  };
+  }
   void operator()(
       std::vector<int> const pids, std::basic_string<char> const param_name,
       auto values, Context *context,

@@ -546,8 +546,11 @@ Variant ParticleHandle::do_call_method(std::string const &name,
         exclusion_list = get_value<std::vector<int>>(params, "exclusions");
       }
       context()->parallel_try_catch([&]() {
+        auto cell_structure_si = get_cell_structure();
+        auto &cell_structure = cell_structure_si->get_cell_structure();
         for (auto const pid : exclusion_list) {
-          particle_exclusion_sanity_checks(m_pid, pid);
+          particle_exclusion_sanity_checks(m_pid, pid, cell_structure,
+                                           context());
         }
       });
       set_particle_property([this, &exclusion_list](Particle &p) {
