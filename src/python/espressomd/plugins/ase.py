@@ -45,10 +45,10 @@ class ASEInterface:
     def __getstate__(self):
         return {"type_mapping": self.type_mapping}
 
-    def get(self) -> ase.Atoms:
+    def get(self, folded=False) -> ase.Atoms:
         """Export the ESPResSo system particle data to an ASE atoms object."""
         particles = self._system.part.all()
-        positions = np.copy(particles.pos)
+        positions = np.copy(particles.pos_folded if folded else particles.pos)
         types = np.copy(particles.type)
         forces = np.copy(particles.f)
         unknown_types = set(types) - set(self.type_mapping)
