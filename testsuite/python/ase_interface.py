@@ -34,9 +34,7 @@ class ASEInterfaceTest(ut.TestCase):
         self.system.part.add(pos=[0., 0., 0.], f=[1., -1., 0.], type=0)
         self.system.part.add(pos=[0., 0., 1.], f=[0., 12., 0.], type=1)
         self.system.part.add(pos=[11., 13., 12.], f=[0., 0., -8.], type=1)
-        self.system.ase = espressomd.plugins.ase.ASEInterface(
-            type_mapping={0: "H", 1: "O"},
-        )
+        self.system.ase = espressomd.plugins.ase.ASEInterface()
 
     def tearDown(self):
         self.system.part.clear()

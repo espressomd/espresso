@@ -320,8 +320,7 @@ class Visualizer():
         particles = self.system.part.all()
         all_types = particles.type
         self.system.visualizer_params = self.params
-        Asedata = ase.ASEInterface(
-            {x: "X" for x in set(all_types)})
+        Asedata = ase.ASEInterface()
         Asedata.register_system(self.system)
         data = Asedata.get(folded=self.params["folded"])
         if self.params["colors"] is not None:

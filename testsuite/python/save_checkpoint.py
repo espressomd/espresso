@@ -20,10 +20,8 @@
 import unittest as ut
 import unittest_generator as utg
 import numpy as np
-import contextlib
 import pathlib
 import tempfile
-import sys
 
 import espressomd
 import espressomd.checkpointing
@@ -43,8 +41,6 @@ import espressomd.constraints
 import espressomd.bond_breakage
 import espressomd.reaction_methods
 
-with contextlib.suppress(ImportError):
-    import espressomd.plugins.ase
 
 config = utg.TestGenerator()
 modes = config.get_modes()
@@ -73,8 +69,6 @@ if 'INT.NPT' not in modes and 'LB.GPU' not in modes and (
         initial_pos_offset=0.1, time_0=0.2, shear_velocity=1.2)
     system.lees_edwards.set_boundary_conditions(
         shear_direction="z", shear_plane_normal="y", protocol=protocol)
-
-has_ase = "ASE" in modes
 
 lbf_class = None
 lb_lattice = None
@@ -170,11 +164,6 @@ if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
         system.electrostatics.solver = p3m
         p3m.charge_neutrality_tolerance = 5e-12
 
-if has_ase and "ase" in sys.modules:
-    system.ase = espressomd.plugins.ase.ASEInterface(
-        type_mapping={0: "H", 1: "O", 10: "Cl"},
-    )
-
 # accumulators
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
 obs_dist = espressomd.observables.PairwiseDistances(
@@ -259,7 +248,7 @@ if 'LB' not in modes:
             approximation_method='ft', viscosity=0.5, radii={0: 1.5},
             pair_mobility=False, self_mobility=True)
 
-if espressomd.has_features(['VIRTUAL_SITES_RELATIVE']) and not has_ase:
+if espressomd.has_features(['VIRTUAL_SITES_RELATIVE']):
     p2.vs_auto_relate_to(p1, couple_to_lb=lbf_class is not None)
 
 # non-bonded interactions
@@ -477,7 +466,6 @@ if espressomd.has_features('THERMOSTAT_PER_PARTICLE'):
 if espressomd.has_features(["ENGINE"]):
     p3.swimming = {"f_swim": 0.03}
 if espressomd.has_features(["ENGINE", "VIRTUAL_SITES_RELATIVE"]) and lbf_class:
-    assert not has_ase
     p4.swimming = {"v_swim": 0.02, "is_engine_force_on_fluid": True}
 if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and lbf_class:
     p8.mu_E = [-0.1, 0.2, -0.3]
