@@ -35,8 +35,10 @@
 #include "communication.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
+#include "nonbonded_interactions/VerletCriterion.hpp"
 #include "npt.hpp"
 #include "particle_node.hpp"
+#include "short_range_cabana.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites/relative.hpp"
 
@@ -66,6 +68,9 @@ System::System(Private) {
   box_geo = std::make_shared<BoxGeometry>();
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  cell_structure->set_kokkos_handle(::kokkos_handle);
+#endif
   propagation = std::make_shared<Propagation>();
   bonded_ias = std::make_shared<BondedInteractionsMap>();
   thermostat = std::make_shared<Thermostat::Thermostat>();
@@ -74,7 +79,7 @@ System::System(Private) {
   galilei = std::make_shared<Galilei>();
   oif_global = std::make_shared<OifGlobal>();
   immersed_boundaries = std::make_shared<ImmersedBoundaries>();
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
   collision_detection =
       std::make_shared<CollisionDetection::CollisionDetection>();
 #endif
@@ -83,7 +88,7 @@ System::System(Private) {
   auto_update_accumulators =
       std::make_shared<Accumulators::AutoUpdateAccumulators>();
   constraints = std::make_shared<Constraints::Constraints>();
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   nptiso = std::make_shared<NptIsoParameters>();
   npt_inst_pressure = std::make_shared<InstantaneousPressure>();
 #endif
@@ -91,7 +96,7 @@ System::System(Private) {
   time_step = -1.;
   sim_time = 0.;
   force_cap = 0.;
-  min_global_cut = INACTIVE_CUTOFF;
+  min_global_cut = inactive_cutoff;
 }
 
 void System::initialize() {
@@ -104,12 +109,12 @@ void System::initialize() {
   nonbonded_ias->bind_system(handle);
   oif_global->bind_system(handle);
   immersed_boundaries->bind_system(handle);
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
   collision_detection->bind_system(handle);
 #endif
   auto_update_accumulators->bind_system(handle);
   constraints->bind_system(handle);
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
   gpu.bind_system(handle);
   gpu.initialize();
 #endif
@@ -195,10 +200,10 @@ void System::on_boxl_change(bool skip_method_adaption) {
   if (not skip_method_adaption) {
     lb.on_boxl_change();
     ek.on_boxl_change();
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     coulomb.on_boxl_change();
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
     dipoles.on_boxl_change();
 #endif
   }
@@ -223,25 +228,25 @@ void System::on_node_grid_change() {
   update_local_geo();
   lb.on_node_grid_change();
   ek.on_node_grid_change();
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   coulomb.on_node_grid_change();
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   dipoles.on_node_grid_change();
 #endif
   rebuild_cell_structure();
 }
 
 void System::on_periodicity_change() {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   coulomb.on_periodicity_change();
 #endif
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   dipoles.on_periodicity_change();
 #endif
 
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
   if (propagation->integ_switch == INTEG_METHOD_SD) {
     if (box_geo->periodic(0u) or box_geo->periodic(1u) or box_geo->periodic(2u))
       runtimeErrorMsg() << "Stokesian Dynamics requires periodicity "
@@ -255,10 +260,10 @@ void System::on_cell_structure_change() {
   clear_particle_node();
   lb.on_cell_structure_change();
   ek.on_cell_structure_change();
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   coulomb.on_cell_structure_change();
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   dipoles.on_cell_structure_change();
 #endif
 }
@@ -267,10 +272,10 @@ void System::on_thermostat_param_change() { reinit_thermo = true; }
 
 void System::on_verlet_skin_change() {
   rebuild_cell_structure();
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   coulomb.on_coulomb_change();
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   dipoles.on_dipoles_change();
 #endif
   on_short_range_ia_change();
@@ -300,14 +305,14 @@ void System::on_non_bonded_ia_change() {
 }
 
 void System::on_coulomb_change() {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   coulomb.on_coulomb_change();
 #endif
   on_short_range_ia_change();
 }
 
 void System::on_dipoles_change() {
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   dipoles.on_dipoles_change();
 #endif
   on_short_range_ia_change();
@@ -330,34 +335,42 @@ void System::on_particle_change() {
   } else {
     cell_structure->set_resort_particles(Cells::RESORT_LOCAL);
   }
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   coulomb.on_particle_change();
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   dipoles.on_particle_change();
 #endif
   propagation->recalc_forces = true;
 
   /* the particle information is no longer valid */
   invalidate_fetch_cache();
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  cell_structure->clear_local_properties();
+#endif
 }
 
 void System::on_particle_charge_change() {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   coulomb.on_particle_change();
 #endif
 }
 
 void System::update_dependent_particles() {
-#ifdef VIRTUAL_SITES
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   vs_relative_update_particles(*cell_structure, *box_geo);
 #endif
   cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 #endif
 
-#ifdef ELECTROSTATICS
-  update_icc_particles();
+#ifdef ESPRESSO_ELECTROSTATICS
+  if (has_icc_enabled()) {
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    rebuild_aosoa();
+#endif
+    update_icc_particles();
+  }
 #endif
 
   // Here we initialize volume conservation
@@ -372,16 +385,39 @@ void System::on_observable_calc() {
   cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
   update_dependent_particles();
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   coulomb.on_observable_calc();
 #endif
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   dipoles.on_observable_calc();
 #endif
 
   clear_particle_node();
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  rebuild_aosoa();
+#endif
 }
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+void System::rebuild_aosoa() {
+#ifdef ESPRESSO_COLLISION_DETECTION
+  auto const collision_detection_cutoff = collision_detection->cutoff();
+#else
+  auto const collision_detection_cutoff = inactive_cutoff;
+#endif
+
+  VerletCriterion<> const verlet_criterion{*this,
+                                           cell_structure->get_verlet_skin(),
+                                           get_interaction_range(),
+                                           coulomb.cutoff(),
+                                           dipoles.cutoff(),
+                                           collision_detection_cutoff};
+
+  update_cabana_state(*cell_structure, verlet_criterion,
+                      get_interaction_range(), propagation->integ_switch);
+}
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 void System::on_lees_edwards_change() { lb.on_lees_edwards_change(); }
 
@@ -392,14 +428,10 @@ void System::update_local_geo() {
 }
 
 double System::maximal_cutoff() const {
-  auto max_cut = INACTIVE_CUTOFF;
+  auto max_cut = inactive_cutoff;
   max_cut = std::max(max_cut, get_min_global_cut());
-#ifdef ELECTROSTATICS
   max_cut = std::max(max_cut, coulomb.cutoff());
-#endif
-#ifdef DIPOLES
   max_cut = std::max(max_cut, dipoles.cutoff());
-#endif
   if (::communicator.size > 1) {
     // If there is just one node, the bonded cutoff can be omitted
     // because bond partners are always on the local node.
@@ -407,7 +439,7 @@ double System::maximal_cutoff() const {
   }
   max_cut = std::max(max_cut, nonbonded_ias->maximal_cutoff());
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
   max_cut = std::max(max_cut, collision_detection->cutoff());
 #endif
   return max_cut;
@@ -415,10 +447,10 @@ double System::maximal_cutoff() const {
 
 bool System::long_range_interactions_sanity_checks() const {
   try {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     coulomb.sanity_checks();
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
     dipoles.sanity_checks();
 #endif
   } catch (std::runtime_error const &err) {
@@ -432,7 +464,7 @@ double System::get_interaction_range() const {
   auto const max_cut = maximal_cutoff();
   auto const verlet_skin = cell_structure->get_verlet_skin();
   /* Consider skin only if there are actually interactions */
-  return (max_cut > 0.) ? max_cut + verlet_skin : INACTIVE_CUTOFF;
+  return (max_cut > 0.) ? max_cut + verlet_skin : inactive_cutoff;
 }
 
 void System::set_box_l(Utils::Vector3d const &box_l) {
@@ -447,7 +479,7 @@ void System::on_integration_start() {
   lb.sanity_checks();
   ek.sanity_checks();
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   if (propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND ||
       propagation->integ_switch == INTEG_METHOD_NPT_ISO_MTK) {
     npt_ensemble_init(propagation->recalc_forces);
@@ -462,12 +494,15 @@ void System::on_integration_start() {
   }
 
   invalidate_fetch_cache();
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  cell_structure->clear_local_properties();
+#endif
 
-#ifdef ADDITIONAL_CHECKS
+#ifdef ESPRESSO_ADDITIONAL_CHECKS
   if (!Utils::Mpi::all_compare(::comm_cart, cell_structure->use_verlet_list)) {
     runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
   }
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   {
     auto const &actor = coulomb.impl->solver;
     if (not Utils::Mpi::all_compare(::comm_cart, static_cast<bool>(actor)) or
@@ -475,7 +510,7 @@ void System::on_integration_start() {
       runtimeErrorMsg() << "Nodes disagree about Coulomb long-range method";
   }
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   {
     auto const &actor = dipoles.impl->solver;
     if (not Utils::Mpi::all_compare(::comm_cart, static_cast<bool>(actor)) or
@@ -483,7 +518,7 @@ void System::on_integration_start() {
       runtimeErrorMsg() << "Nodes disagree about dipolar long-range method";
   }
 #endif
-#endif /* ADDITIONAL_CHECKS */
+#endif /* ESPRESSO_ADDITIONAL_CHECKS */
 
   on_observable_calc();
 }
@@ -508,7 +543,7 @@ unsigned System::get_global_ghost_flags() const {
     data_parts |= Cells::DATA_PART_BONDS;
   }
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
   if (not collision_detection->is_off()) {
     data_parts |= Cells::DATA_PART_BONDS;
   }
@@ -516,5 +551,27 @@ unsigned System::get_global_ghost_flags() const {
 
   return data_parts;
 }
+
+#ifdef ESPRESSO_NPT
+bool System::System::has_npt_enabled() const {
+  return (propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND) or
+         (propagation->integ_switch == INTEG_METHOD_NPT_ISO_MTK);
+}
+#endif
+
+Utils::Vector3d *System::System::get_npt_virial() const {
+#ifdef ESPRESSO_NPT
+  if (has_npt_enabled()) {
+    return &npt_inst_pressure->p_vir;
+  }
+#endif
+  return nullptr;
+}
+
+#ifdef ESPRESSO_COLLISION_DETECTION
+bool System::System::has_collision_detection_enabled() const {
+  return not collision_detection->is_off();
+}
+#endif
 
 } // namespace System

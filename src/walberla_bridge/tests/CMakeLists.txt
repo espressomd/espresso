@@ -22,6 +22,7 @@ include(espresso_unit_test)
 function(ESPRESSO_ADD_TEST)
   cmake_parse_arguments(TEST "" "SRC;NAME;NUM_PROC;NUM_THREADS" "DEPENDS"
                         ${ARGN})
+  espresso_unit_test_make_name(SRC ${TEST_SRC} NAME ${TEST_NAME})
   espresso_unit_test(
     SRC
     ${TEST_SRC}
@@ -70,6 +71,7 @@ espresso_add_test(SRC LBWalberlaImpl_flow_tests.cpp DEPENDS Boost::mpi)
 espresso_add_test(SRC LBWalberlaImpl_lees_edwards_tests.cpp DEPENDS Boost::mpi)
 espresso_add_test(SRC EKinWalberlaImpl_unit_tests.cpp DEPENDS Boost::mpi
                   NUM_PROC 2)
+espresso_add_test(SRC PoissonSolver_test.cpp DEPENDS Boost::mpi NUM_PROC 2)
 
 if(NOT (ESPRESSO_BUILD_WITH_ASAN OR ESPRESSO_BUILD_WITH_UBSAN))
   espresso_add_test(SRC LBWalberlaImpl_statistical_tests.cpp DEPENDS Boost::mpi)

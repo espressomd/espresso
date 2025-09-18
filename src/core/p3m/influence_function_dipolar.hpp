@@ -23,7 +23,7 @@
 
 #include "config/config.hpp"
 
-#if defined(DP3M)
+#if defined(ESPRESSO_DP3M)
 
 #include "p3m/common.hpp"
 #include "p3m/for_each_3d.hpp"
@@ -241,4 +241,4 @@ inline double grid_influence_function_self_energy(
   return energy;
 }
 
-#endif // defined(DP3M)
+#endif // defined(ESPRESSO_DP3M)

@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_SCRIPT_INTERFACE_HPP
-#define SCRIPT_INTERFACE_SCRIPT_INTERFACE_HPP
+#pragma once
 
 #include <type_traits>
 
@@ -29,5 +28,3 @@
 #include "Variant.hpp"
 #include "auto_parameters/AutoParameters.hpp"
 #include "initialize.hpp"
-
-#endif

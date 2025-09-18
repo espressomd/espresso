@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "Actor.hpp"
 
@@ -61,4 +61,4 @@ public:
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

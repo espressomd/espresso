@@ -44,7 +44,7 @@
 namespace Constraints {
 /** Check if a non-bonded interaction is defined */
 static bool is_active(IA_parameters const &data) {
-  return data.max_cut != INACTIVE_CUTOFF;
+  return data.max_cut != inactive_cutoff;
 }
 
 void ShapeBasedConstraint::set_type(int type) {
@@ -99,7 +99,7 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
     auto &system = *m_system.lock();
     auto const coulomb_kernel = system.coulomb.pair_force_kernel();
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
     Utils::Vector3d dpd_force{};
 #endif
     Utils::Vector3d outer_normal_vec{};
@@ -107,13 +107,13 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
     if (dist > 0) {
       outer_normal_vec = -dist_vec / dist;
       pf = calc_central_radial_force(ia_params, dist_vec, dist) +
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
            thole_pair_force(p, part_rep, ia_params, dist_vec, dist,
                             *system.bonded_ias, get_ptr(coulomb_kernel)) +
 #endif
            calc_non_central_force(p, part_rep, ia_params, dist_vec, dist);
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
       if (system.thermostat->thermo_switch & THERMO_DPD) {
         dpd_force = dpd_pair_force(p.pos(), p.v(), p.id(), part_rep.pos(),
                                    part_rep.v(), part_rep.id(),
@@ -126,13 +126,13 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
     } else if (m_penetrable && (dist <= 0)) {
       if ((!m_only_positive) && (dist < 0)) {
         pf = calc_central_radial_force(ia_params, dist_vec, -dist) +
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
              thole_pair_force(p, part_rep, ia_params, dist_vec, -dist,
                               *system.bonded_ias, get_ptr(coulomb_kernel)) +
 #endif
              calc_non_central_force(p, part_rep, ia_params, dist_vec, -dist);
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
         if (system.thermostat->thermo_switch & THERMO_DPD) {
           dpd_force = dpd_pair_force(p.pos(), p.v(), p.id(), part_rep.pos(),
                                      part_rep.v(), part_rep.id(),
@@ -148,10 +148,10 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
                         << " dist " << dist;
     }
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     part_rep.torque() += calc_opposing_force(pf, dist_vec).torque;
 #endif
-#ifdef DPD
+#ifdef ESPRESSO_DPD
     pf.f += dpd_force;
 #endif
     m_local_force -= pf.f;

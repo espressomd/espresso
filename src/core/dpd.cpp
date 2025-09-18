@@ -23,7 +23,7 @@
  */
 #include "config/config.hpp"
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
 
 #include "dpd.hpp"
 
@@ -191,4 +191,4 @@ Utils::Vector9d dpd_stress(boost::mpi::communicator const &comm) {
   return Utils::flatten(global_stress) / box_geo.volume();
 }
 
-#endif // DPD
+#endif // ESPRESSO_DPD

@@ -21,10 +21,12 @@
 
 #include "packed_variant.hpp"
 
-#include <boost/serialization/utility.hpp>
-#include <boost/serialization/variant.hpp>
-#include <boost/serialization/vector.hpp>
 #include <utils/serialization/unordered_map.hpp>
+#include <utils/serialization/variant.hpp>
+
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/utility.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <string>
 #include <utility>

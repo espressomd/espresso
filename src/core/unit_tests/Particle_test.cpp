@@ -42,7 +42,7 @@
 
 void check_particle_force(ParticleForce const &out, ParticleForce const &ref) {
   BOOST_TEST(out.f == ref.f, boost::test_tools::per_element());
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   BOOST_TEST(out.torque == ref.torque, boost::test_tools::per_element());
 #endif
 }
@@ -78,10 +78,10 @@ BOOST_AUTO_TEST_CASE(serialization) {
   p.id() = 15;
   p.bonds().insert({bond_id, bond_partners});
   p.force() = {1., -2., 3.};
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   p.torque() = {-4., 5., -6.};
 #endif
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
   std::vector<int> el = {5, 6, 7, 8};
   p.exclusions() = Utils::compact_vector<int>{el.begin(), el.end()};
 #endif
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(serialization) {
   BOOST_CHECK(q.id() == p.id());
   BOOST_CHECK((*q.bonds().begin() == BondView{bond_id, bond_partners}));
   BOOST_TEST(q.force() == pf.f, boost::test_tools::per_element());
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   BOOST_TEST(q.torque() == pf.torque, boost::test_tools::per_element());
 #endif
   check_particle_force(q.force_and_torque(), pf);
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(force_serialization) {
   std::vector<char> buf(expected_size);
 
   auto pf = ParticleForce{{1, 2, 3}};
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   pf.torque = {4, 5, 6};
 #endif
 
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(force_serialization) {
 BOOST_AUTO_TEST_CASE(force_constructors) {
 
   auto pf = ParticleForce{{1, 2, 3}};
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   pf.torque = {4, 5, 6};
 #endif
 
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(force_constructors) {
   }
 }
 
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
 
 void check_particle_rattle(ParticleRattle const &out,
                            ParticleRattle const &ref) {
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(rattle_constructors) {
     check_particle_rattle(out, pr);
   }
 }
-#endif // BOND_CONSTRAINT
+#endif // ESPRESSO_BOND_CONSTRAINT
 
 BOOST_AUTO_TEST_CASE(particle_bitfields) {
   auto p = Particle();
@@ -261,29 +261,29 @@ BOOST_AUTO_TEST_CASE(particle_bitfields) {
   BOOST_CHECK(not p.can_rotate_around(1));
 
   // check setting of one axis
-#ifdef EXTERNAL_FORCES
+#ifdef ESPRESSO_EXTERNAL_FORCES
   p.set_fixed_along(1, true);
   BOOST_CHECK(p.is_fixed_along(1));
   BOOST_CHECK(p.has_fixed_coordinates());
 #endif
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   p.set_can_rotate_around(1, true);
   BOOST_CHECK(p.can_rotate_around(1));
   BOOST_CHECK(p.can_rotate());
 #endif
 
   // check that unsetting is properly registered
-#ifdef EXTERNAL_FORCES
+#ifdef ESPRESSO_EXTERNAL_FORCES
   p.set_fixed_along(1, false);
   BOOST_CHECK(not p.has_fixed_coordinates());
 #endif
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   p.set_can_rotate_around(1, false);
   BOOST_CHECK(not p.can_rotate());
 #endif
 
   // check setting of all flags at once
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   p.set_can_rotate_all_axes();
   BOOST_CHECK(p.can_rotate_around(0));
   BOOST_CHECK(p.can_rotate_around(1));

@@ -19,8 +19,8 @@
 
 #include <config/config.hpp>
 
-#ifdef COLLISION_DETECTION
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_COLLISION_DETECTION
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 
 #include "CollisionPair.hpp"
 #include "GlueToSurface.hpp"
@@ -194,7 +194,7 @@ void GlueToSurface::handle_collisions(
     get_part(cell_structure, p->id()).bonds().insert({bond_vs, bondG});
   } // Loop over all collisions in the queue
 
-#ifdef ADDITIONAL_CHECKS
+#ifdef ESPRESSO_ADDITIONAL_CHECKS
   assert(Utils::Mpi::all_compare(::comm_cart, current_vs_pid) &&
          "Nodes disagree about current_vs_pid");
 #endif
@@ -210,5 +210,5 @@ void GlueToSurface::handle_collisions(
 
 } // namespace CollisionDetection
 
-#endif // VIRTUAL_SITES_RELATIVE
-#endif // COLLISION_DETECTION
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_COLLISION_DETECTION

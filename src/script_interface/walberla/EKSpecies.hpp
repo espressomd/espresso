@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "LatticeModel.hpp"
 #include "LatticeWalberla.hpp"
@@ -61,8 +61,6 @@ protected:
   double m_conv_flux;
   double m_tau;
   double m_density;
-
-  void make_instance(VariantMap const &params) override;
 
 public:
   EKSpecies() {
@@ -164,6 +162,18 @@ private:
   void save_checkpoint(std::filesystem::path const &path, int mode);
 };
 
+class EKSpeciesCPU : public EKSpecies {
+protected:
+  void make_instance(VariantMap const &params) override;
+};
+
+#ifdef ESPRESSO_CUDA
+class EKSpeciesGPU : public EKSpecies {
+protected:
+  void make_instance(VariantMap const &params) override;
+};
+#endif // ESPRESSO_CUDA
+
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

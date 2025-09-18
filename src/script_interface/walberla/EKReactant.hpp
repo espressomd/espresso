@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "EKSpecies.hpp"
 
@@ -62,4 +62,4 @@ private:
 };
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

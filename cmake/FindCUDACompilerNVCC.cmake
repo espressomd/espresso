@@ -39,18 +39,21 @@ target_compile_options(
   $<$<BOOL:${ESPRESSO_BUILD_WITH_CCACHE}>:$<$<CONFIG:Coverage>:--coverage -fprofile-abs-path>>
 )
 
-function(espresso_add_gpu_library)
-  add_library(${ARGV})
+function(espresso_configure_gpu_target)
   set(TARGET_NAME ${ARGV0})
   set_target_properties(${TARGET_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
   target_link_libraries(${TARGET_NAME} PRIVATE espresso::cuda_flags $<$<CONFIG:Coverage>:gcov>)
+  espresso_add_cuda_rpaths(${TARGET_NAME})
+endfunction()
+
+function(espresso_add_gpu_library)
+  add_library(${ARGV})
+  espresso_configure_gpu_target(${ARGV0})
 endfunction()
 
 function(espresso_add_gpu_executable)
   add_executable(${ARGV})
-  set(TARGET_NAME ${ARGV0})
-  set_target_properties(${TARGET_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-  target_link_libraries(${TARGET_NAME} PRIVATE espresso::cuda_flags $<$<CONFIG:Coverage>:gcov>)
+  espresso_configure_gpu_target(${ARGV0})
 endfunction()
 
 include(FindPackageHandleStandardArgs)

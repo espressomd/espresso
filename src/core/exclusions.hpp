@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_EXCLUSIONS_HPP
-#define ESPRESSO_EXCLUSIONS_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
@@ -27,16 +27,20 @@
 
 #include <algorithm>
 
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
 
 /** Determine if the non-bonded interactions between @p p1 and @p p2 should be
  *  calculated.
  */
 inline bool do_nonbonded(Particle const &p1, Particle const &p2) {
-  /* check for particle 2 in particle 1's exclusion list. The exclusion list is
-   * symmetric, so this is sufficient. */
-  return std::ranges::none_of(
+  /* check for particle 2 in particle 1's exclusion list. The exclusion list
+   * should be symmetric, so this is sufficient. */
+  /* However. in present implementation, the exclusion list is not symmetric.*/
+  bool p1_p2 = std::ranges::none_of(
       p1.exclusions(), [p2_id = p2.id()](int id) { return id == p2_id; });
+  bool p2_p1 = std::ranges::none_of(
+      p2.exclusions(), [p1_id = p1.id()](int id) { return id == p1_id; });
+  return (p1_p2 or p2_p1);
 }
 
 /** Remove exclusion from particle if possible */
@@ -45,5 +49,4 @@ void delete_exclusion(Particle &p, int p_id);
 /** Insert an exclusion if not already set */
 void add_exclusion(Particle &p, int p_id);
 
-#endif // EXCLUSIONS
-#endif // ESPRESSO_EXCLUSIONS_HPP
+#endif // ESPRESSO_EXCLUSIONS

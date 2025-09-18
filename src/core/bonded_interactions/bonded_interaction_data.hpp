@@ -24,6 +24,8 @@
  *  For more information on how to add new interactions, see @ref bondedIA_new.
  */
 
+#include <config/config.hpp>
+
 #include "angle_common.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
@@ -47,51 +49,37 @@
 #include "TabulatedPotential.hpp"
 #include "system/Leaf.hpp"
 
-#include <boost/variant.hpp>
-
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <optional>
 #include <stdexcept>
 #include <unordered_map>
+#include <variant>
 #include <vector>
-
-/* Special cutoff value for a disabled bond.
- * Bonds that have this cutoff are not visited during bond evaluation.
- */
-static constexpr double BONDED_INACTIVE_CUTOFF = -1.;
 
 /** Interaction type for unused bonded interaction slots */
 struct NoneBond {
   static constexpr int num = 0;
-  double cutoff() const { return BONDED_INACTIVE_CUTOFF; }
+  double cutoff() const { return bonded_inactive_cutoff; }
 };
 
 /** Interaction type for virtual bonds */
 struct VirtualBond {
   static constexpr int num = 1;
-  double cutoff() const { return BONDED_INACTIVE_CUTOFF; }
-};
-
-/** Visitor to get the number of bound partners from the bond parameter
- *  variant.
- */
-class BondNumPartners : public boost::static_visitor<int> {
-public:
-  template <typename T> int operator()(T const &) const { return T::num; }
+  double cutoff() const { return bonded_inactive_cutoff; }
 };
 
 /** Variant in which to store the parameters of an individual bonded
  *  interaction
  */
 using Bonded_IA_Parameters =
-    boost::variant<NoneBond, FeneBond, HarmonicBond, QuarticBond, BondedCoulomb,
-                   BondedCoulombSR, AngleHarmonicBond, AngleCosineBond,
-                   AngleCossquareBond, DihedralBond, TabulatedDistanceBond,
-                   TabulatedAngleBond, TabulatedDihedralBond, ThermalizedBond,
-                   RigidBond, IBMTriel, IBMVolCons, IBMTribend,
-                   OifGlobalForcesBond, OifLocalForcesBond, VirtualBond>;
+    std::variant<NoneBond, FeneBond, HarmonicBond, QuarticBond, BondedCoulomb,
+                 BondedCoulombSR, AngleHarmonicBond, AngleCosineBond,
+                 AngleCossquareBond, DihedralBond, TabulatedDistanceBond,
+                 TabulatedAngleBond, TabulatedDihedralBond, ThermalizedBond,
+                 RigidBond, IBMTriel, IBMVolCons, IBMTribend,
+                 OifGlobalForcesBond, OifLocalForcesBond, VirtualBond>;
 
 /**
  * @brief container for bonded interactions.
@@ -147,13 +135,13 @@ public:
   auto size() const { return m_params.size(); }
   auto get_next_key() const { return next_key; }
   auto get_zero_based_type(int bond_id) const {
-    return contains(bond_id) ? at(bond_id)->which() : 0;
+    return contains(bond_id) ? static_cast<int>(at(bond_id)->index()) : 0;
   }
   auto get_n_thermalized_bonds() const {
     assert(n_thermalized_bonds >= 0);
     return n_thermalized_bonds;
   }
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   auto get_n_rigid_bonds() const {
     assert(n_rigid_bonds >= 0);
     return n_rigid_bonds;
@@ -198,7 +186,7 @@ public:
         bonds.begin(), bonds.end(),
         [this, partner_id = p_partner.id()](BondView const &bond) {
           auto const &bond_ptr = at(bond.bond_id());
-          return (boost::get<BondType>(bond_ptr.get()) != nullptr) and
+          return std::holds_alternative<BondType>(*bond_ptr.get()) and
                  (bond.partner_ids()[0] == partner_id);
         });
   }
@@ -227,12 +215,12 @@ private:
   container_type m_params = {};
   key_type next_key = static_cast<key_type>(0);
   int n_thermalized_bonds = 0;
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   int n_rigid_bonds = 0;
 #endif
 };
 
 /** @brief Get the number of bonded partners for the specified bond. */
 inline int number_of_partners(Bonded_IA_Parameters const &iaparams) {
-  return boost::apply_visitor(BondNumPartners(), iaparams);
+  return std::visit([]<typename T>(T const &) { return T::num; }, iaparams);
 }

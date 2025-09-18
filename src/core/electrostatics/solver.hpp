@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "actor/optional.hpp"
 #include "actor/traits.hpp"
@@ -37,7 +37,7 @@
 namespace Coulomb {
 
 struct Solver {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   struct Implementation;
   /// @brief Pointer-to-implementation.
   std::unique_ptr<Implementation> impl;
@@ -61,19 +61,21 @@ struct Solver {
   void calc_long_range_force(ParticleRange const &particles) const;
   double calc_energy_long_range(ParticleRange const &particles) const;
   Solver();
-#else  // ELECTROSTATICS
+#else  // ESPRESSO_ELECTROSTATICS
   Solver() = default;
-#endif // ELECTROSTATICS
+  constexpr double cutoff() const { return inactive_cutoff; }
+#endif // ESPRESSO_ELECTROSTATICS
 
   using ShortRangeForceKernel =
       std::function<Utils::Vector3d(double, Utils::Vector3d const &, double)>;
   using ShortRangeForceCorrectionsKernel =
-      std::function<void(Particle &, Particle &, double)>;
+      std::function<void(Utils::Vector3d const &, Utils::Vector3d const &,
+                         ParticleForce &, ParticleForce &, double)>;
   using ShortRangePressureKernel = std::function<Utils::Matrix<double, 3, 3>(
       double, Utils::Vector3d const &, double)>;
   using ShortRangeEnergyKernel =
-      std::function<double(Particle const &, Particle const &, double,
-                           Utils::Vector3d const &, double)>;
+      std::function<double(Utils::Vector3d const &, Utils::Vector3d const &,
+                           double, Utils::Vector3d const &, double)>;
 
   inline std::optional<ShortRangeForceKernel> pair_force_kernel() const;
   inline std::optional<ShortRangePressureKernel> pair_pressure_kernel() const;
@@ -82,7 +84,7 @@ struct Solver {
   pair_force_elc_kernel() const;
 };
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 Solver const &get_coulomb();
 #endif
 

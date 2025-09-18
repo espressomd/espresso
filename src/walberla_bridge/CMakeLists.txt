@@ -17,10 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-set(WALBERLA_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
-set(WALBERLA_CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
-set(WALBERLA_CXX_CLANG_TIDY_CODEGEN "${ESPRESSO_CXX_CLANG_TIDY}")
-set(WALBERLA_CUDA_CLANG_TIDY_CODEGEN "${ESPRESSO_CUDA_CLANG_TIDY}")
+if(ESPRESSO_BUILD_WITH_FFTW)
+  set(WALBERLA_CXX_CLANG_TIDY "${ESPRESSO_HEFFTE_CXX_CLANG_TIDY}")
+  set(WALBERLA_CUDA_CLANG_TIDY "${ESPRESSO_HEFFTE_CUDA_CLANG_TIDY}")
+  set(WALBERLA_CXX_CLANG_TIDY_CODEGEN "${ESPRESSO_HEFFTE_CXX_CLANG_TIDY}")
+  set(WALBERLA_CUDA_CLANG_TIDY_CODEGEN "${ESPRESSO_HEFFTE_CUDA_CLANG_TIDY}")
+else()
+  set(WALBERLA_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
+  set(WALBERLA_CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
+  set(WALBERLA_CXX_CLANG_TIDY_CODEGEN "${ESPRESSO_CXX_CLANG_TIDY}")
+  set(WALBERLA_CUDA_CLANG_TIDY_CODEGEN "${ESPRESSO_CUDA_CLANG_TIDY}")
+endif()
 set(SKIP_CLANG_TIDY_CHECKS "")
 set(SKIP_CLANG_TIDY_CHECKS_CXX "")
 set(SKIP_CLANG_TIDY_CHECKS_CUDA "")
@@ -133,7 +140,8 @@ espresso_configure_walberla_target(espresso_walberla_codegen)
 
 target_link_libraries(
   espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils
-  PRIVATE espresso::walberla::cpp_flags espresso::walberla_codegen)
+  PRIVATE espresso::walberla::cpp_flags espresso::walberla_codegen
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>)
 target_link_libraries(
   espresso_walberla_codegen PRIVATE espresso::walberla::cpp_flags
                                     espresso::walberla_codegen::cpp_flags)
@@ -148,9 +156,9 @@ if(WALBERLA_BUILD_WITH_CUDA)
   espresso_configure_walberla_target(espresso_walberla_codegen_cuda)
   target_link_libraries(
     espresso_walberla_cuda PUBLIC espresso::utils
-    PRIVATE CUDA::cuda_driver CUDA::cudart espresso::walberla_codegen_cuda)
-  target_link_libraries(espresso_walberla_codegen_cuda PRIVATE CUDA::cuda_driver
-                                                               CUDA::cudart)
+    PRIVATE CUDA::cuda_driver CUDA::cudart espresso::walberla_codegen_cuda
+            $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>)
+  target_link_libraries(espresso_walberla_codegen_cuda PRIVATE CUDA::cudart)
 endif()
 
 add_subdirectory(src)

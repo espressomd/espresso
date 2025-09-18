@@ -18,7 +18,7 @@
  */
 #include "npt.hpp"
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 
 #include "BoxGeometry.hpp"
 #include "PropagationMode.hpp"
@@ -48,13 +48,13 @@ void System::System::synchronize_npt_state() {
 
 void NptIsoParameters::coulomb_dipole_sanity_checks(
     System::System const &system) const {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   if (dimension < 3 and not cubic_box and system.coulomb.impl->solver) {
     throw std::runtime_error("If electrostatics is being used you must "
                              "use the cubic box NpT.");
   }
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   if (dimension < 3 and not cubic_box and system.dipoles.impl->solver) {
     throw std::runtime_error("If magnetostatics is being used you must "
                              "use the cubic box NpT.");
@@ -135,17 +135,8 @@ void System::System::npt_ensemble_init(bool recalc_forces) {
 }
 
 void System::System::npt_add_virial_contribution(double energy) {
-  if ((propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND) or
-      (propagation->integ_switch == INTEG_METHOD_NPT_ISO_MTK)) {
+  if (has_npt_enabled()) {
     npt_inst_pressure->p_vir[0] += energy;
   }
 }
-
-void System::System::npt_add_virial_contribution(Utils::Vector3d const &force,
-                                                 Utils::Vector3d const &d) {
-  if ((propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND) or
-      (propagation->integ_switch == INTEG_METHOD_NPT_ISO_MTK)) {
-    npt_inst_pressure->p_vir += hadamard_product(force, d);
-  }
-}
-#endif // NPT
+#endif // ESPRESSO_NPT

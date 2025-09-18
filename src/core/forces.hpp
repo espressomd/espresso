@@ -27,23 +27,17 @@
  *  Implementation in forces.cpp.
  */
 
-#include "ParticleRange.hpp"
+#include <config/config.hpp>
 
-#include <utils/Vector.hpp>
+#include "ParticleRange.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "system/System.hpp"
 
 /** Combined force initialization and Langevin noise application. */
-void init_forces_and_thermostat(const CellStructure &cell_structure,
-                                class System::System &system);
+void init_forces_and_thermostat(System::System const &system);
 
 /** Set forces of all ghosts to zero */
 void init_forces_ghosts(const CellStructure &cell_structure);
 
 /** Calculate long range forces (P3M, ...). */
 void calc_long_range_forces(ParticleRange const &particles);
-
-#ifdef NPT
-/** Update the NpT virial */
-void npt_add_virial_force_contribution(Utils::Vector3d const &force,
-                                       Utils::Vector3d const &d);
-void npt_add_virial_diagonalSum_contribution(double diagonal_sum);
-#endif

@@ -20,6 +20,8 @@ import os
 import io
 import sys
 import ast
+import time
+import warnings
 import tokenize
 import unittest
 import unittest.mock
@@ -41,6 +43,7 @@ def configure_and_import(filepath,
                          script_suffix="",
                          move_to_script_dir=True,
                          mock_visualizer=True,
+                         force_visualizer_mock=True,
                          **parameters):
     """
     Copy a Python script to a new location and alter some lines of code:
@@ -69,6 +72,8 @@ def configure_and_import(filepath,
         if ``True``, substitute the visualizer with a ``Mock`` class in case
         of ``ImportError`` (use ``False`` if an ``ImportError`` is relevant
         to your test)
+    force_visualizer_mock : :obj:`bool`
+        if ``True``, always substitute the visualizer with a ``Mock`` class
     move_to_script_dir : :obj:`bool`
         if ``True``, move to the script's directory (useful when the script
         needs to load files hardcoded as relative paths, or when files are
@@ -101,7 +106,7 @@ def configure_and_import(filepath,
     code = disable_matplotlib_gui(code)
     # disable OpenGL GUI in case of ImportError using MagicMock()
     if mock_visualizer:
-        code = mock_es_visualization(code)
+        code = mock_es_visualization(code, force_visualizer_mock)
     # save changes to a new file
     output_filepath = filepath.parent / \
         f"{filepath.stem}_{script_suffix}_processed.py"
@@ -114,6 +119,7 @@ def configure_and_import(filepath,
         os.chdir(dirname)
     sys.path.insert(0, str(dirname))
     module_name = output_filepath.stem
+    wait_on_file(output_filepath)
     try:
         module = importlib.import_module(module_name)
     except espressomd.code_features.FeaturesError as err:
@@ -433,7 +439,7 @@ class GetEspressomdVisualizerImports(ast.NodeVisitor):
                         node.lineno, node.module, child.name, child.asname)
 
 
-def mock_es_visualization(code):
+def mock_es_visualization(code, force_mock=False):
     """
     Replace ``import espressomd.visualization`` by a ``MagicMock``
     when the visualization module is unavailable, by catching the
@@ -451,6 +457,12 @@ except ImportError:
     import unittest.mock
     import espressomd
     {1} = unittest.mock.MagicMock()
+""".lstrip()
+    if force_mock:
+        r_es_vis_mock = r"""
+import unittest.mock
+import espressomd
+{1} = unittest.mock.MagicMock()
 """.lstrip()
 
     visitor = GetEspressomdVisualizerImports()
@@ -481,3 +493,23 @@ def skip_future_imports_dependency(filepath):
         skip_future_imports = module_name
     return unittest.skip(
         f"failed to import {skip_future_imports}, skipping test!")
+
+
+def wait_on_file(path, timeout=2.):
+    """
+    Wait for a file to become available on the file system. File systems
+    may experience latency during when the load is high, in which case
+    Python may be able to write to a file handle, close the handle,
+    and then be unable to open that file for a few milliseconds.
+    """
+    wait_time = 0.01
+    start_time = time.time()
+    runtime = 0.
+    while runtime < timeout:
+        time.sleep(wait_time)
+        wait_time *= 2
+        runtime = time.time() - start_time
+        if path.exists():
+            return
+    warnings.warn(f"file {path} still doesn't exist after {runtime:.1f}s",
+                  ResourceWarning)

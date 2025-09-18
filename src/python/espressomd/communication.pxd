@@ -17,19 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from libcpp.memory cimport shared_ptr
-from boost cimport environment
+from libcpp.memory cimport unique_ptr
 
 cdef extern from "MpiCallbacks.hpp" namespace "Communication":
     cppclass MpiCallbacks:
         pass
 
 cdef extern from "communication.hpp":
-    shared_ptr[environment] mpi_init()
+    cppclass CommunicationEnvironment:
+        CommunicationEnvironment()
+        shared_ptr[MpiCallbacks] mpiCallbacksHandle()
+    unique_ptr[CommunicationEnvironment] communication_environment
     void mpi_loop()
     int this_node
-
-cdef extern from "communication.hpp" namespace "Communication":
-    MpiCallbacks & mpiCallbacks()
-    shared_ptr[MpiCallbacks] mpiCallbacksHandle()
-    void init(shared_ptr[environment])
-    void deinit()

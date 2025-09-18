@@ -23,7 +23,7 @@
 
 #include "config/config.hpp"
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
 
 #include "electrostatics/p3m.hpp"
 
@@ -72,7 +72,7 @@ struct CoulombP3MState : public P3MStateCommon<FloatType> {
   std::shared_ptr<P3MFFT<FloatType>> fft;
 };
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 struct P3MGpuParams;
 #endif
 
@@ -122,7 +122,7 @@ public:
     if constexpr (Architecture == Arch::CPU) {
       init_cpu_kernels();
     }
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     if constexpr (Architecture == Arch::GPU) {
       init_gpu_kernels();
     }
@@ -149,14 +149,14 @@ public:
   }
 
   void on_activation() override {
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     if constexpr (Architecture == Arch::GPU) {
       request_gpu();
     }
 #endif
     sanity_checks();
     tune();
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     if constexpr (Architecture == Arch::GPU) {
       if (is_tuned()) {
         init_cpu_kernels();
@@ -173,7 +173,7 @@ public:
     if constexpr (Architecture == Arch::CPU) {
       long_range_kernel(true, false, particles);
     }
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     if constexpr (Architecture == Arch::GPU) {
       add_long_range_forces_gpu(particles);
     }
@@ -201,7 +201,7 @@ protected:
   void calc_influence_function_energy() override;
   void scaleby_box_l() override;
   void init_cpu_kernels();
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
   void init_gpu_kernels();
   void add_long_range_forces_gpu(ParticleRange const &particles);
   std::shared_ptr<P3MGpuParams> m_gpu_data = nullptr;
@@ -222,4 +222,4 @@ std::shared_ptr<CoulombP3M> new_coulomb_p3m(P3MParameters &&p3m_params,
   return obj;
 }
 
-#endif // P3M
+#endif // ESPRESSO_P3M

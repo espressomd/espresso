@@ -21,7 +21,7 @@
 
 #include <config/config.hpp>
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
 
 #include "CollisionPair.hpp"
 
@@ -37,7 +37,7 @@ class Off {
 public:
   Off() = default;
 
-  auto cutoff() const { return INACTIVE_CUTOFF; }
+  auto cutoff() const { return inactive_cutoff; }
 
   void initialize(System::System &) {}
 
@@ -50,4 +50,4 @@ public:
 };
 
 } // namespace CollisionDetection
-#endif // COLLISION_DETECTION
+#endif // ESPRESSO_COLLISION_DETECTION

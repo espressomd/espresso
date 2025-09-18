@@ -100,6 +100,6 @@ BOOST_AUTO_TEST_CASE(analytic_cotangent_sum_test) {
 
   // check assertion
   for (auto const invalid_cao : {-1, 0, 8}) {
-    BOOST_CHECK_THROW(kernel(1, 0., invalid_cao), std::logic_error);
+    BOOST_CHECK_THROW(kernel(1, 0., invalid_cao), std::domain_error);
   }
 }

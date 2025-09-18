@@ -19,7 +19,16 @@
 
 #pragma once
 
+#include "ObjectId.hpp"
 #include "Variant.hpp"
+
+#include <utils/serialization/pack.hpp>
+#include <utils/serialization/unordered_map.hpp>
+#include <utils/serialization/variant.hpp>
+
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <algorithm>
 #include <cstddef>
@@ -28,49 +37,29 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace ScriptInterface {
-using ObjectId = std::size_t;
-
-/**
- * @brief Id for object.
- *
- * This assigns every ObjectHandle a unique id.
- */
-inline ObjectId object_id(const ObjectHandle *p) {
-  // NOLINTNEXTLINE(bugprone-sizeof-expression)
-  static_assert(sizeof(const ObjectHandle *) <= sizeof(ObjectId));
-  // Use the pointer value as the unique identifier.
-  // This function is only called on the head node.
-  return reinterpret_cast<ObjectId>(p);
-}
-
 /**
  * @brief Packed version of @ref Variant.
  *
  * When packing variants by @ref PackVisitor, objects of type
  * @ref ObjectRef are packed as @ref ObjectId. Other than that,
- * all other types allowed in @ref Variant must appear here.
+ * all other types allowed in @ref Variant also appear here.
  */
-using PackedVariant = boost::make_recursive_variant<
-    None, bool, int, std::size_t, double, std::string, ObjectId,
-    Utils::Vector3b, Utils::Vector3i, Utils::Vector2d, Utils::Vector3d,
-    Utils::Vector4d, std::vector<int>, std::vector<double>,
-    std::vector<boost::recursive_variant_>, std::filesystem::path,
-    std::unordered_map<int, boost::recursive_variant_>,
-    std::unordered_map<std::string, boost::recursive_variant_>>::type;
+using PackedVariant = make_recursive_variant<ObjectId>;
 
 using PackedMap = std::vector<std::pair<std::string, PackedVariant>>;
 
 /**
- * @brief Visitor that converts a Variant to a PackedVariant.
+ * @brief Visitor that converts a Variant to a @ref PackedVariant.
  *
- * While packing, keeps track of all the ObjectRef values that
+ * While packing, keeps track of all the @ref ObjectRef values that
  * were encountered and stores them. This also keeps the
  * referees alive if there are no other owners.
  */
-struct PackVisitor : boost::static_visitor<PackedVariant> {
+struct PackVisitor {
 private:
   mutable std::unordered_map<ObjectId, ObjectRef> m_objects;
 
@@ -79,11 +68,11 @@ public:
   auto const &objects() const { return m_objects; }
 
   /* For the vector, we recurse into each element. */
-  auto operator()(const std::vector<Variant> &vec) const {
+  PackedVariant operator()(const std::vector<Variant> &vec) const {
     std::vector<PackedVariant> ret(vec.size());
 
     std::ranges::transform(vec, ret.begin(), [this](const Variant &v) {
-      return boost::apply_visitor(*this, v);
+      return std::visit(*this, v);
     });
 
     return ret;
@@ -91,11 +80,11 @@ public:
 
   /* For the map, we recurse into each element. */
   template <typename K>
-  auto operator()(const std::unordered_map<K, Variant> &map) const {
+  PackedVariant operator()(const std::unordered_map<K, Variant> &map) const {
     std::unordered_map<K, PackedVariant> ret{};
 
     for (auto const &[key, variant] : map) {
-      ret.emplace(key, boost::apply_visitor(*this, variant));
+      ret.emplace(key, std::visit(*this, variant));
     }
 
     return ret;
@@ -104,7 +93,7 @@ public:
   /* For object references we store the object reference, and
    * replace it by just an id. */
   PackedVariant operator()(const ObjectRef &so_ptr) const {
-    auto const oid = object_id(so_ptr.get());
+    auto const oid = ObjectId(so_ptr.get());
     m_objects[oid] = so_ptr;
 
     return oid;
@@ -117,22 +106,22 @@ public:
 };
 
 /**
- * @brief Visitor that converts a PackedVariant to a Variant.
+ * @brief Visitor that converts a @ref PackedVariant to a @ref Variant.
  *
  * ObjectId are replaced according to the provided object map.
  */
-struct UnpackVisitor : boost::static_visitor<Variant> {
+struct UnpackVisitor {
   std::unordered_map<ObjectId, ObjectRef> const &objects;
 
   explicit UnpackVisitor(std::unordered_map<ObjectId, ObjectRef> const &objects)
       : objects(objects) {}
 
   /* For the vector, we recurse into each element. */
-  auto operator()(const std::vector<PackedVariant> &vec) const {
+  Variant operator()(const std::vector<PackedVariant> &vec) const {
     std::vector<Variant> ret(vec.size());
 
     std::ranges::transform(vec, ret.begin(), [this](const PackedVariant &v) {
-      return boost::apply_visitor(*this, v);
+      return std::visit(*this, v);
     });
 
     return ret;
@@ -140,11 +129,11 @@ struct UnpackVisitor : boost::static_visitor<Variant> {
 
   /* For the map, we recurse into each element. */
   template <typename K>
-  auto operator()(const std::unordered_map<K, PackedVariant> &map) const {
+  Variant operator()(const std::unordered_map<K, PackedVariant> &map) const {
     std::unordered_map<K, Variant> ret{};
 
     for (auto const &[key, packed_variant] : map) {
-      ret.emplace(key, boost::apply_visitor(*this, packed_variant));
+      ret.emplace(key, std::visit(*this, packed_variant));
     }
 
     return ret;
@@ -160,33 +149,33 @@ struct UnpackVisitor : boost::static_visitor<Variant> {
 };
 
 /**
- * @brief Transform a Variant to a PackedVariant
+ * @brief Transform a Variant to a @ref PackedVariant
  *
  * Applies @ref PackVisitor to a @ref Variant.
  *
- * @param v Input Variant
+ * @param v Input @ref Variant
  * @return Packed variant.
  */
 inline PackedVariant pack(const Variant &v) {
-  return boost::apply_visitor(PackVisitor(), v);
+  return std::visit(PackVisitor(), v);
 }
 
 /**
- * @brief Unpack a PackedVariant.
+ * @brief Unpack a @ref PackedVariant.
  *
  * Applies @ref UnpackVisitor to a @ref Variant.
  *
- * @param v Packed Variant.
+ * @param v Packed @ref Variant.
  * @param objects Map of ids to reference.
  * @return Transformed variant.
  */
 inline Variant unpack(const PackedVariant &v,
                       std::unordered_map<ObjectId, ObjectRef> const &objects) {
-  return boost::apply_visitor(UnpackVisitor(objects), v);
+  return std::visit(UnpackVisitor(objects), v);
 }
 
 /**
- * @brief Pack a VariantMap.
+ * @brief Pack a @ref VariantMap.
  *
  * Applies @ref pack to every value in the
  * input map.
@@ -202,7 +191,7 @@ inline PackedMap pack(const VariantMap &v) {
 }
 
 /**
- * @brief Unpack a PackedMap.
+ * @brief Unpack a @ref PackedMap.
  *
  * Applies @ref unpack to every value in the
  * input map.

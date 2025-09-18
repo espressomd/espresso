@@ -24,7 +24,7 @@
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
 #endif
 
@@ -37,13 +37,13 @@ namespace Reduction {
 /** @brief Kernel that adds the result from a single particle to a reduction */
 template <typename ResultType>
 using AddPartialResultKernel =
-    std::function<void(Particle const &, ResultType &)>;
+    std::function<void(ResultType &, Particle const &)>;
 
 /** @brief Join two partial reduciton results */
 template <typename ResultType>
 using ReductionOp = std::function<void(ResultType &, ResultType const &)>;
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 /** @brief Implements a custom reduction in the form required by  Kokkos */
 template <typename ResultType, typename Kernel> class KokkosReducer {
@@ -84,7 +84,7 @@ make_kokkos_reducer(Kernel k, ReductionOp<ResultType> reduce_op) {
   return KokkosReducer<ResultType, Kernel>(k, reduce_op);
 }
 
-#endif // SHARED_MEMORY_PARALLELISM
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 } // namespace Reduction
 
@@ -105,13 +105,13 @@ ResultType reduce_over_local_particles(
 
   ResultType result{};
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   auto const &cells = cs.decomposition().local_cells();
   if (cells.size() > 1) { // parallel loop over cells
     auto reducer = Reduction::make_kokkos_reducer<ResultType>(
         [&cells, add_partial](std::size_t const c_index, ResultType &res) {
           for (auto const &p : cells[c_index]->particles()) {
-            add_partial(p, res);
+            add_partial(res, p);
           }
         },
         reduce_op);
@@ -123,15 +123,15 @@ ResultType reduce_over_local_particles(
   auto const &particles = cells.front()->particles();
   auto reducer = Reduction::make_kokkos_reducer<ResultType>(
       [&particles, add_partial](std::size_t const p_index, ResultType &res) {
-        add_partial(std::as_const(*(particles.begin() + p_index)), res);
+        add_partial(res, std::as_const(*(particles.begin() + p_index)));
       },
       reduce_op);
   Kokkos::parallel_reduce( // loop over particles
       "reduce_on_local_particle", particles.size(), reducer, result);
   return result;
-#else // SHARED_MEMORY_PARALLELISM
+#else // ESPRESSO_SHARED_MEMORY_PARALLELISM
   for (auto const &p : cs.local_particles()) {
-    add_partial(p, result);
+    add_partial(result, p);
   }
   return result;
 #endif

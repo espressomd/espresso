@@ -18,9 +18,10 @@
  */
 #define BOOST_TEST_MODULE EK walberla node setters and getters test
 #define BOOST_TEST_DYN_LINK
-#include "config/config.hpp"
 
-#ifdef WALBERLA
+#include <config/config.hpp>
+
+#ifdef ESPRESSO_WALBERLA
 
 #define BOOST_TEST_NO_MAIN
 
@@ -30,6 +31,7 @@
 
 #include "tests_common_ek.hpp"
 
+#include "../src/electrokinetics/PoissonSolverNone.hpp"
 #include <walberla_bridge/VTKHandle.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
@@ -74,7 +76,7 @@ BOOST_DATA_TEST_CASE(dimensions, bdata::make(all_eks()), ek_generator) {
 }
 
 BOOST_AUTO_TEST_CASE(stencil_size) {
-  auto constexpr stencil_size = std::size_t{9u};
+  auto constexpr stencil_size = std::size_t{13u};
   auto ek = std::make_shared<walberla::EKinWalberlaImpl<stencil_size, float>>(
       params.lattice, params.diffusion, 0., params.valency, params.ext_efield,
       params.density, params.advection, params.friction_coupling, false, 0u);
@@ -552,6 +554,19 @@ BOOST_AUTO_TEST_CASE(ek_exceptions) {
   ek->integrate(std::size_t{}, std::size_t{}, std::size_t{}, 0.);
 }
 
+BOOST_AUTO_TEST_CASE(ek_poisson_solver_none) {
+  auto ek_solver = walberla::PoissonSolverNone<double>(params.lattice);
+  // no-op
+  ek_solver.add_charge_to_field(std::size_t{}, 0., false);
+  ek_solver.reset_charge_field();
+  ek_solver.solve();
+  // exceptions
+  BOOST_CHECK_THROW(ek_solver.get_node_potential({0, 0, 0}, true),
+                    std::runtime_error);
+  BOOST_CHECK_THROW(ek_solver.get_slice_potential({0, 0, 0}, {1, 1, 1}),
+                    std::runtime_error);
+}
+
 int main(int argc, char **argv) {
   int n_nodes;
   Vector3i mpi_shape{};
@@ -579,6 +594,6 @@ int main(int argc, char **argv) {
   return res;
 }
 
-#else // WALBERLA
+#else // ESPRESSO_WALBERLA
 int main(int argc, char **argv) {}
 #endif

@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 
 namespace si = ScriptInterface;
@@ -93,13 +94,13 @@ BOOST_AUTO_TEST_CASE(LocalContext_serialization) {
   {
     auto d1 = si::ObjectHandle::deserialize(serialized, *ctx);
     BOOST_REQUIRE(d1);
-    BOOST_CHECK_EQUAL(boost::get<int>(d1->get_parameter("id")), 1);
-    auto d2 = boost::get<si::ObjectRef>(d1->get_parameter("object_param"));
+    BOOST_CHECK_EQUAL(std::get<int>(d1->get_parameter("id")), 1);
+    auto d2 = std::get<si::ObjectRef>(d1->get_parameter("object_param"));
     BOOST_REQUIRE(d2);
-    BOOST_CHECK_EQUAL(boost::get<int>(d2->get_parameter("id")), 2);
-    auto d3 = boost::get<si::ObjectRef>(d2->get_parameter("object_param"));
+    BOOST_CHECK_EQUAL(std::get<int>(d2->get_parameter("id")), 2);
+    auto d3 = std::get<si::ObjectRef>(d2->get_parameter("object_param"));
     BOOST_REQUIRE(d3);
-    BOOST_CHECK_EQUAL(boost::get<int>(d3->get_parameter("id")), 3);
+    BOOST_CHECK_EQUAL(std::get<int>(d3->get_parameter("id")), 3);
   }
 }
 

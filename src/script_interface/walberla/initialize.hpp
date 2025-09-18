@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 namespace ScriptInterface::walberla {
 void initialize(Utils::Factory<ObjectHandle> *om);
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

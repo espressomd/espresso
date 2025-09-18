@@ -91,7 +91,7 @@ target_compile_options(
   $<$<CONFIG:RelWithAssert>:-O3 -g>
 )
 
-function(espresso_setup_gpu_app)
+function(espresso_configure_gpu_target)
   cmake_parse_arguments(TARGET "" "NAME" "SOURCES" ${ARGN})
   set_source_files_properties(${TARGET_SOURCES} PROPERTIES LANGUAGE "CUDA")
   set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE "CXX")
@@ -104,7 +104,7 @@ function(espresso_add_gpu_library)
   list(GET ARGV 0 TARGET_NAME)
   set(TARGET_SOURCES ${ARG_UNPARSED_ARGUMENTS})
   list(POP_FRONT TARGET_SOURCES)
-  espresso_setup_gpu_app(NAME ${TARGET_NAME} SOURCES ${TARGET_SOURCES})
+  espresso_configure_gpu_target(NAME ${TARGET_NAME} SOURCES ${TARGET_SOURCES})
 endfunction()
 
 function(espresso_add_gpu_executable)
@@ -112,7 +112,7 @@ function(espresso_add_gpu_executable)
   list(GET ARGV 0 TARGET_NAME)
   set(TARGET_SOURCES ${ARGV})
   list(POP_FRONT TARGET_SOURCES)
-  espresso_setup_gpu_app(NAME ${TARGET_NAME} SOURCES ${TARGET_SOURCES})
+  espresso_configure_gpu_target(NAME ${TARGET_NAME} SOURCES ${TARGET_SOURCES})
 endfunction()
 
 include(FindPackageHandleStandardArgs)

@@ -52,8 +52,39 @@
 #include <set>
 #include <span>
 #include <stdexcept>
+#include <unordered_set>
 #include <utility>
 #include <vector>
+
+#ifdef ESPRESSO_CALIPER
+#include <caliper/cali.h>
+#endif
+
+// forward declarations
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+namespace Kokkos {
+template <class DataType, class... Properties> class View;
+class HostSpace;
+struct LayoutRight;
+template <unsigned T> struct MemoryTraits;
+} // namespace Kokkos
+namespace Cabana {
+class HalfNeighborTag;
+struct VerletLayout2D;
+class TeamVectorOpTag;
+template <typename... Types> struct MemberTypes;
+template <class DataType, class MemorySpace, int, class MemoryTraits>
+class AoSoA;
+} // namespace Cabana
+struct KokkosHandle;
+template <class MemorySpace, class ListAlgorithm, class Layout, class BuildTag>
+class CustomVerletList;
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
+
+template <typename Callable>
+concept ParticleCallback = requires(Callable c, Particle &p) {
+  { c(p) } -> std::same_as<void>;
+};
 
 using ParticleUnaryOp = std::function<void(Particle &)>;
 
@@ -73,7 +104,7 @@ enum DataPart : unsigned {
   DATA_PART_POSITION = 2u,   /**< Particle::r */
   DATA_PART_MOMENTUM = 8u,   /**< Particle::m */
   DATA_PART_FORCE = 16u,     /**< Particle::f */
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   DATA_PART_RATTLE = 32u, /**< Particle::rattle */
 #endif
   DATA_PART_BONDS = 64u /**< Particle::bonds */
@@ -135,7 +166,20 @@ struct EuclidianDistance {
  *  system which are not common between different cell systems have to
  *  be stored in separate structures.
  */
-struct CellStructure : public System::Leaf<CellStructure> {
+class CellStructure : public System::Leaf<CellStructure> {
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+public:
+  static constexpr auto vector_length = 1;
+  struct AoSoA_pack;
+  using ForceType = Kokkos::View<double **[3], Kokkos::LayoutRight>;
+  using VirialType = Kokkos::View<double *[3], Kokkos::LayoutRight>;
+  using memory_space = Kokkos::HostSpace;
+  using ListAlgorithm = Cabana::HalfNeighborTag;
+  using ListType =
+      CustomVerletList<Kokkos::HostSpace, ListAlgorithm, Cabana::VerletLayout2D,
+                       Cabana::TeamVectorOpTag>;
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
+
 private:
   /** The local id-to-particle index */
   std::vector<Particle *> m_particle_index;
@@ -146,16 +190,36 @@ private:
   /** One of @ref Cells::Resort, announces the level of resort needed.
    */
   unsigned m_resort_particles = Cells::RESORT_NONE;
+  bool m_verlet_skin_set = false;
   bool m_rebuild_verlet_list = true;
+  bool m_rebuild_verlet_list_cabana = true;
   std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
   double m_le_pos_offset_at_last_resort = 0.;
   /** @brief Verlet list skin. */
   double m_verlet_skin = 0.;
-  bool m_verlet_skin_set = false;
   double m_verlet_reuse = 0.;
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  int m_cached_max_local_particle_id = 0;
+  int m_max_id = 0;
+  std::unique_ptr<Kokkos::View<int *>> m_id_to_index;
+  std::unique_ptr<ForceType> m_local_force;
+#ifdef ESPRESSO_ROTATION
+  std::unique_ptr<ForceType> m_local_torque;
+#endif
+#ifdef ESPRESSO_NPT
+  std::unique_ptr<VirialType> m_local_virial;
+#endif
+  std::unique_ptr<ListType> m_verlet_list_cabana;
+  /** particle properties using individual Kokkos Views */
+  std::unique_ptr<AoSoA_pack> m_aosoa;
+  /** The local id-to-index for aosoa data */
+  std::vector<Particle *> m_unique_particles;
+  std::shared_ptr<KokkosHandle> m_kokkos_handle;
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 public:
   CellStructure(BoxGeometry const &box);
+  virtual ~CellStructure();
 
   bool use_verlet_list = true;
 
@@ -278,9 +342,18 @@ public:
   ParticleRange ghost_particles() const {
     return Cells::particles(decomposition().ghost_cells());
   }
+
+  std::size_t count_local_particles() const {
+    std::size_t count = 0;
+    for (auto const &cell : m_decomposition->local_cells()) {
+      count += cell->particles().size();
+    }
+    return count;
+  }
+
   /** @brief whether to use parallel version of @ref for_each_local_particle */
   bool use_parallel_for_each_local_particle() const {
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     return true;
 #else
     return false;
@@ -292,7 +365,7 @@ public:
    * The kernel is assumed to be thread-safe.
    */
   void for_each_local_particle(ParticleUnaryOp &&f) const {
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     if (use_parallel_for_each_local_particle()) {
       parallel_for_each_particle_impl(decomposition().local_cells(), f);
       return;
@@ -327,7 +400,7 @@ private:
     return decomposition().particle_to_cell(p);
   }
 
-#ifdef SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   void parallel_for_each_particle_impl(std::span<Cell *const> cells,
                                        ParticleUnaryOp &f) const;
 #endif
@@ -380,6 +453,11 @@ public:
    * this node, or -1 if there are no particles on this node.
    */
   int get_max_local_particle_id() const;
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  int get_cached_max_local_particle_id() const {
+    return m_cached_max_local_particle_id;
+  }
+#endif
 
   /**
    * @brief Remove all particles from the cell system.
@@ -471,7 +549,7 @@ public:
    */
   void ghosts_reduce_forces();
 
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   /**
    * @brief Add rattle corrections from ghost particles to real particles.
    */
@@ -639,6 +717,66 @@ private:
     }
   }
 
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+public:
+  auto get_max_id() const { return m_max_id; }
+
+  void set_kokkos_handle(std::shared_ptr<KokkosHandle> handle);
+  void rebuild_local_properties(double pair_cutoff);
+  void reset_local_properties();
+  void reset_local_force();
+
+  auto &get_id_to_index() { return *m_id_to_index; }
+  auto &get_local_force() { return *m_local_force; }
+#ifdef ESPRESSO_ROTATION
+  auto &get_local_torque() { return *m_local_torque; }
+#endif
+#ifdef ESPRESSO_NPT
+  auto &get_local_virial() { return *m_local_virial; }
+#endif
+  auto &get_aosoa() { return *m_aosoa; }
+  auto const &get_unique_particles() const { return m_unique_particles; }
+  auto const &get_verlet_list_cabana() const { return *m_verlet_list_cabana; }
+  void clear_local_properties();
+
+  [[nodiscard]] auto is_verlet_list_cabana_rebuild_needed() const {
+    return m_rebuild_verlet_list_cabana or (not use_verlet_list);
+  }
+
+  /**
+   * @brief Reset local properties of the Verlet list.
+   * @param cutoff    Pair interaction cutoff.
+   * @return True if a rebuild is needed.
+   */
+  [[nodiscard]] auto prepare_verlet_list_cabana(double cutoff) {
+    auto const rebuild = is_verlet_list_cabana_rebuild_needed();
+    if (rebuild) {
+      // If we have to rebuild, we need to count the particles
+      set_index_map(); // parallelized index_map
+      // Create essential variables for MD
+      rebuild_local_properties(cutoff);
+    } else {
+      // If we do not rebuild we can use the saved map
+      reset_local_properties();
+    }
+    return rebuild;
+  }
+
+  void rebuild_verlet_list_cabana(auto &&kernel) {
+    assert(is_verlet_list_cabana_rebuild_needed());
+    kernel(m_decomposition->local_cells(), m_decomposition->box(),
+           *m_verlet_list_cabana);
+    m_rebuild_verlet_list_cabana = false;
+  }
+
+  void set_index_map();
+
+  inline void cell_list_loop(auto &&kernel) {
+    kernel(m_decomposition->local_cells(), m_decomposition->box());
+  }
+#endif
+
+private:
   /** Non-bonded pair loop with verlet lists.
    *
    * @param pair_kernel Kernel to apply
@@ -661,6 +799,7 @@ private:
       });
 
       m_rebuild_verlet_list = false;
+      m_rebuild_verlet_list_cabana = true;
     } else {
       auto const maybe_box = decomposition().minimum_image_distance();
       /* In this case the pair kernel is just run over the verlet list. */

@@ -71,7 +71,7 @@ IntegratorHandle::IntegratorHandle() {
          case INTEG_METHOD_STEEPEST_DESCENT:
            return Variant{
                std::dynamic_pointer_cast<SteepestDescent>(m_instance)};
-#ifdef NPT
+#ifdef ESPRESSO_NPT
          case INTEG_METHOD_NPT_ISO_AND:
          case INTEG_METHOD_NPT_ISO_MTK:
            return Variant{
@@ -80,11 +80,11 @@ IntegratorHandle::IntegratorHandle() {
          case INTEG_METHOD_BD:
            return Variant{
                std::dynamic_pointer_cast<BrownianDynamics>(m_instance)};
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
          case INTEG_METHOD_SD:
            return Variant{
                std::dynamic_pointer_cast<StokesianDynamics>(m_instance)};
-#endif // STOKESIAN_DYNAMICS
+#endif // ESPRESSO_STOKESIAN_DYNAMICS
          default: {
            auto ptr = std::dynamic_pointer_cast<VelocityVerlet>(m_instance);
            assert(ptr.get());

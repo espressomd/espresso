@@ -21,7 +21,7 @@
 
 #include <config/config.hpp>
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
 
 #include "Protocol.hpp"
 
@@ -70,4 +70,4 @@ protected:
 
 } // namespace ScriptInterface::CollisionDetection
 
-#endif // COLLISION_DETECTION
+#endif // ESPRESSO_COLLISION_DETECTION

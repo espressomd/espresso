@@ -19,6 +19,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
+#include <config/config.hpp>
+
+#if defined(ESPRESSO_SCAFACOS) or defined(ESPRESSO_SCAFACOS_DIPOLES)
+
 /**
  * @file
  * @ref ScafacosContextBase provides the public interface
@@ -26,12 +32,6 @@
  * ScaFaCoS implementation details from the ESPResSo core. It is
  * implemented by @ref ScafacosContext.
  */
-
-#pragma once
-
-#include "config/config.hpp"
-
-#if defined(SCAFACOS) or defined(SCAFACOS_DIPOLAR)
 
 #include <utils/Vector.hpp>
 
@@ -65,4 +65,4 @@ struct ScafacosContextBase {
   static void sanity_check_method(std::string const &method_name);
 };
 
-#endif // SCAFACOS or SCAFACOS_DIPOLAR
+#endif // ESPRESSO_SCAFACOS or ESPRESSO_SCAFACOS_DIPOLES

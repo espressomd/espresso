@@ -30,18 +30,18 @@
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
-#include <boost/variant.hpp>
 
 #include <cassert>
 #include <memory>
 #include <unordered_set>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace BondBreakage {
 
 // Variant holding any of the actions
-using Action = boost::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
+using Action = std::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
 
 // Set of actions
 using ActionSet = std::unordered_set<Action>;
@@ -80,7 +80,7 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
     }
     return {DeleteBond{e.particle_id, *(e.bond_partners[0]), e.bond_type}};
   }
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   // revert bind at point of collision for pair bonds
   if (spec.action_type == ActionType::REVERT_BIND_AT_POINT_OF_COLLISION and
       not is_angle_bond(e.bond_partners)) {
@@ -130,7 +130,7 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
               DeleteAllBonds{p2->id(), p1->id()}};
     }
   }
-#endif // VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
   return {};
 }
 
@@ -160,7 +160,7 @@ static void remove_pair_bonds_to(Particle &p, int other_pid) {
 }
 
 // Handler for the different delete events
-class execute : public boost::static_visitor<> {
+class execute {
   CellStructure &cell_structure;
 
 public:
@@ -199,7 +199,7 @@ void BondBreakage::process_queue_impl(System::System &system) {
 
   // Execute actions
   for (auto const &a : actions) {
-    boost::apply_visitor(execute(cell_structure), a);
+    std::visit(execute(cell_structure), a);
     system.on_particle_change();
   }
 }

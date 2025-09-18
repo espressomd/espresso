@@ -237,7 +237,7 @@ class Test(ut.TestCase):
         self.system.thermostat.set_npt(kT=1., gamma0=2., gammav=0.004, seed=42)
         self.system.integrator.set_isotropic_npt(
             ext_pressure=2., piston=0.001, barostat=barostat)
-        with self.assertRaisesRegex(RuntimeError, "ICC does not work in the NPT ensemble"):
+        with self.assertRaisesRegex(RuntimeError, "ICC does not work in the NpT ensemble"):
             self.system.electrostatics.extension = icc
         self.assertIsNone(self.system.electrostatics.extension)
         self.system.integrator.run(0)

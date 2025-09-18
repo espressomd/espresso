@@ -87,11 +87,15 @@ class Test(ut.TestCase):
             self.assertIsInstance(res, str)
             self.assertNotIsInstance(res, (bytes, np.bytes_, np.str_))
         check_to_str(b"abc", "abc")
+        check_to_str(b"\xc3\x85\xc3\xbcb", "Åüb")
         check_to_str("abc", "abc")
         check_to_str("Åüb", "Åüb")
+        check_to_str(str("abc"), "abc")
+        check_to_str(str("Åüb"), "Åüb")
         check_to_str(np.str_("abc"), "abc")
         check_to_str(np.str_("Åüb"), "Åüb")
         check_to_str(np.bytes_(b"abc"), "abc")
+        check_to_str(np.bytes_(b"\xc3\x85\xc3\xbcb"), "Åüb")
 
     def test_string_conversion_to_bytes(self):
         def check_to_bytes(obj, ref):
@@ -104,6 +108,7 @@ class Test(ut.TestCase):
         check_to_bytes("Åüb", b"\xc3\x85\xc3\xbcb")
         check_to_bytes(b"\xc3\x85\xc3\xbcb", b"\xc3\x85\xc3\xbcb")
         check_to_bytes(np.bytes_(b"abc"), b"abc")
+        check_to_bytes(np.bytes_(b"\xc3\x85\xc3\xbcb"), b"\xc3\x85\xc3\xbcb")
 
 
 if __name__ == "__main__":

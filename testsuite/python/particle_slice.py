@@ -20,6 +20,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.propagation
 import numpy as np
 
 
@@ -105,6 +106,22 @@ class ParticleSliceTest(ut.TestCase):
         qs = self.p0p1.q
         self.assertEqual(qs[0], -1)
         self.assertEqual(qs[1], 1)
+
+    def test_propagation(self):
+        Propagation = espressomd.propagation.Propagation
+        self.p0.propagation = Propagation.TRANS_LANGEVIN
+        self.p1.propagation = Propagation.NONE
+        props = self.p0p1.propagation
+        self.assertIsInstance(props[0], Propagation)
+        self.assertIsInstance(props[1], Propagation)
+        self.assertEqual(props[0], Propagation.TRANS_LANGEVIN)
+        self.assertEqual(props[1], Propagation.NONE)
+        self.p0p1.propagation = [Propagation.NONE, Propagation.TRANS_NEWTON]
+        props = self.p0p1.propagation
+        self.assertIsInstance(props[0], Propagation)
+        self.assertIsInstance(props[1], Propagation)
+        self.assertEqual(props[0], Propagation.NONE)
+        self.assertEqual(props[1], Propagation.TRANS_NEWTON)
 
     def test_bonds(self):
 

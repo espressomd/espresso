@@ -25,23 +25,27 @@ import pathlib
 import sys
 import os
 
-EXPECTED_LABELS = """
+HAS_CABANA = espressomd.has_features(["SHARED_MEMORY_PARALLELISM"])
+
+EXPECTED_LABELS = f"""
 integrate
   Initial Force Calculation
     calculate_forces
       copy_particles_to_GPU
       invalidate_dip_fld
+      {'convert particles AoS to SoA' if HAS_CABANA else ''}
       init_forces_and_thermost
       calc_long_range_forces
-      short_range_loop
+      {'parallel short range' if HAS_CABANA else 'short_range_loop'}
       copy_forces_from_GPU
   Integration loop
     calculate_forces
       copy_particles_to_GPU
       invalidate_dip_fld
-      init_forces_and_thermost
+      {'convert particles AoS to SoA' if HAS_CABANA else ''}
+      init_forces_and_thermostat
       calc_long_range_forces
-      short_range_loop
+      {'parallel short range' if HAS_CABANA else 'short_range_loop'}
       copy_forces_from_GPU
 calc_energies
   short_range_loop
@@ -72,6 +76,7 @@ class Test(ut.TestCase):
         header = "Path\tMin time/rank\tMax time/rank\tAvg time/rank\tTime %"
         self.assertEqual(lines[0].split(), header.split(),
                          msg=f"Caliper summary should start with '{header}'")
+
         labels = [line[:30].strip() for line in lines[1:]]
         # build expected labels, skipping GPU-only and dip_fld if not enabled
         labels_ref = []
@@ -84,6 +89,7 @@ class Test(ut.TestCase):
             if label == "invalidate_dip_fld" and not has_dipfld:
                 continue
             labels_ref.append(label)
+
         self.assertEqual(labels[:len(labels_ref)], labels_ref,
                          msg=f"Caliper returned this summary:\n{stderr}")
 

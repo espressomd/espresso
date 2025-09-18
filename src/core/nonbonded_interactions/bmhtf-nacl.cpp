@@ -24,7 +24,7 @@
  */
 #include "bmhtf-nacl.hpp"
 
-#ifdef BMHTF_NACL
+#ifdef ESPRESSO_BMHTF_NACL
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <utils/math/int_pow.hpp>
@@ -50,4 +50,4 @@ BMHTF_Parameters::BMHTF_Parameters(double a, double b, double c, double d,
                    A * std::exp(B * (sig - cut));
 }
 
-#endif // BMHTF_NACL
+#endif // ESPRESSO_BMHTF_NACL

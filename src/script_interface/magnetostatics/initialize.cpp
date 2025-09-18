@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "Actor.impl.hpp"
 
@@ -36,7 +36,7 @@
 
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES
 
 #include <utils/Factory.hpp>
 
@@ -44,20 +44,20 @@ namespace ScriptInterface {
 namespace Dipoles {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   om->register_new<DipolarDirectSum>("Dipoles::DipolarDirectSumCpu");
-#ifdef DIPOLAR_DIRECT_SUM
+#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
   om->register_new<DipolarDirectSumGpu>("Dipoles::DipolarDirectSumGpu");
 #endif
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
   om->register_new<DipolarP3M<Arch::CPU>>("Dipoles::DipolarP3M");
 #endif
-#ifdef SCAFACOS_DIPOLES
+#ifdef ESPRESSO_SCAFACOS_DIPOLES
   om->register_new<DipolarScafacos>("Dipoles::DipolarScafacos");
 #endif
   om->register_new<DipolarLayerCorrection>("Dipoles::DipolarLayerCorrection");
   om->register_new<Container>("Dipoles::Container");
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES
 }
 
 } // namespace Dipoles

@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 
 #include "ParticleRange.hpp"
 #include "cuda/CudaHostAllocator.hpp"
@@ -69,10 +69,10 @@ public:
   /** @brief Subset of @ref Particle which is copied to the GPU. */
   struct GpuParticle {
     Utils::Vector3f p;
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
     Utils::Vector3f dip;
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     float q;
 #endif
     int identity;
@@ -102,7 +102,7 @@ private:
   void particles_scatter_forces(ParticleRange const &particles,
                                 std::span<float> host_forces,
                                 std::span<float> host_torques) const;
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   void particles_scatter_dip_fld(ParticleRange const &particles,
                                  std::span<float> host_dip_fld) const;
 #endif
@@ -120,7 +120,7 @@ public:
   void enable_property(std::size_t property);
   void clear_energy_on_device();
   void copy_forces_to_host(ParticleRange const &particles, int this_node);
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   void copy_dip_fld_to_host(ParticleRange const &particles, int this_node);
 #endif
   std::size_t n_particles() const;
@@ -130,18 +130,20 @@ public:
   GpuEnergy *get_energy_device() const;
   float *get_particle_positions_device() const;
   float *get_particle_forces_device() const;
-#ifdef DIPOLE_FIELD_TRACKING
+
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   float *get_particle_dip_fld_device() const;
 #endif
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
+
   float *get_particle_torques_device() const;
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   float *get_particle_dipoles_device() const;
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   float *get_particle_charges_device() const;
 #endif
 };
 
-#endif // CUDA
+#endif // ESPRESSO_CUDA

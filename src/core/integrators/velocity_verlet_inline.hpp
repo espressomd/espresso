@@ -56,7 +56,7 @@ inline void velocity_verlet_propagator_2(Particle &p, double time_step) {
   }
 }
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
 inline void velocity_verlet_rotator_1(Particle &p, double time_step) {
   if (p.can_rotate())
     propagate_omega_quat_particle(p, time_step);
@@ -66,4 +66,4 @@ inline void velocity_verlet_rotator_2(Particle &p, double time_step) {
   if (p.can_rotate())
     convert_torque_propagate_omega(p, time_step);
 }
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION

@@ -18,7 +18,7 @@
  */
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "LBWalberla.hpp"
 
@@ -180,4 +180,4 @@ void LBWalberla::update_collision_model(LBWalberlaBase &lb,
 
 } // namespace LB
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

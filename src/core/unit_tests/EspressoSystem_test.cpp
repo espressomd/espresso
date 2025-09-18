@@ -53,18 +53,20 @@ BOOST_AUTO_TEST_SUITE(suite)
 /* Decorator to run a unit test depending on GPU availability. */
 boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
   bool has_compatible_gpu = false;
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
   invoke_skip_cuda_exceptions([&]() {
     cuda_check_device();
     has_compatible_gpu = true;
   });
-#endif // CUDA
+#endif // ESPRESSO_CUDA
   return has_compatible_gpu;
 }
 
 BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
                         *boost::unit_test::precondition(has_gpu)) {
-#ifdef CUDA
+  // smoke test: querying GPU awarenesss should not fail
+  ::communication_environment->is_mpi_gpu_aware();
+#ifdef ESPRESSO_CUDA
   auto const rank = boost::mpi::communicator().rank();
 
   auto system = ::System::System::create();
@@ -75,14 +77,14 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
   // check uninitialized device pointers
   BOOST_CHECK_EQUAL(gpu.get_energy_device(), nullptr);
   BOOST_CHECK_EQUAL(gpu.get_particle_positions_device(), nullptr);
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   BOOST_CHECK_EQUAL(gpu.get_particle_dipoles_device(), nullptr);
 #endif
   BOOST_CHECK_EQUAL(gpu.get_particle_forces_device(), nullptr);
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   BOOST_CHECK_EQUAL(gpu.get_particle_torques_device(), nullptr);
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   BOOST_CHECK_EQUAL(gpu.get_particle_charges_device(), nullptr);
 #endif
   BOOST_CHECK_EQUAL(gpu.n_particles(), 0);
@@ -114,7 +116,7 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
   }
 
   // check torque split
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   gpu.enable_property(GpuParticleData::prop::torque);
   gpu.update();
   if (rank == 0) {
@@ -125,7 +127,7 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
 #endif
 
   // check charge split
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   gpu.enable_property(GpuParticleData::prop::q);
   gpu.update();
   if (rank == 0) {
@@ -136,7 +138,7 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
 #endif
 
   // check dipole split
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   gpu.enable_property(GpuParticleData::prop::dip);
   gpu.update();
   if (rank == 0) {
@@ -153,7 +155,7 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
 
   clear_particles();
   System::reset_system();
-#endif // CUDA
+#endif // ESPRESSO_CUDA
 }
 
 BOOST_AUTO_TEST_SUITE_END()

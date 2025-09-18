@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(bspline_derivatives, T, test_bspline_orders) {
   auto const bspline_d_approx = [](int i, double x) {
     using Utils::bspline;
     constexpr auto h = 1e-6;
-    return (bspline(i, x + h / 2, order) - bspline(i, x - h / 2, order)) / h;
+    return (bspline<order>(i, x + h / 2) - bspline<order>(i, x - h / 2)) / h;
   };
 
   for (int i = 0; i < order; ++i) {

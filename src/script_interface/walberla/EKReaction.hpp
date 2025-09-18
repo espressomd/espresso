@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "EKReactant.hpp"
 #include "LatticeIndices.hpp"
@@ -60,6 +60,13 @@ protected:
   auto get_agrid(VariantMap const &args) const {
     auto lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
     return get_value<double>(lattice->get_parameter("agrid"));
+  }
+
+  auto get_is_gpu(VariantMap const &args) const {
+    auto const reactants = get_value<std::vector<Variant>>(args, "reactants");
+    auto const reactant =
+        get_value<std::shared_ptr<EKReactant>>(reactants[0])->get_instance();
+    return reactant->is_gpu();
   }
 
   auto calculate_bulk_conversion_factor(VariantMap const &args) const {
@@ -116,7 +123,13 @@ public:
 
   void do_construct(VariantMap const &args) override {
     m_conv_coefficient = calculate_bulk_conversion_factor(args);
-    m_ekreaction = make_instance(args, ::walberla::new_ek_reaction_bulk);
+    if (get_is_gpu(args)) {
+#ifdef ESPRESSO_CUDA
+      m_ekreaction = make_instance(args, ::walberla::new_ek_reaction_bulk_gpu);
+#endif
+    } else {
+      m_ekreaction = make_instance(args, ::walberla::new_ek_reaction_bulk_cpu);
+    }
   }
 };
 
@@ -141,8 +154,15 @@ public:
   void do_construct(VariantMap const &args) override {
     auto const agrid = get_agrid(args);
     m_conv_coefficient = calculate_bulk_conversion_factor(args) / agrid;
-    m_ekreaction_impl =
-        make_instance(args, ::walberla::new_ek_reaction_indexed);
+    if (get_is_gpu(args)) {
+#ifdef ESPRESSO_CUDA
+      m_ekreaction_impl =
+          make_instance(args, ::walberla::new_ek_reaction_indexed_gpu);
+#endif
+    } else {
+      m_ekreaction_impl =
+          make_instance(args, ::walberla::new_ek_reaction_indexed_cpu);
+    }
     m_ekreaction = m_ekreaction_impl;
   }
 
@@ -172,4 +192,4 @@ private:
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

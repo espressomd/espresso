@@ -21,6 +21,7 @@ import espressomd.interactions
 import espressomd.lees_edwards
 import espressomd.shapes
 import espressomd.propagation
+import os
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
@@ -33,6 +34,7 @@ class Test(ut.TestCase):
     msg = r'while calling method integrate\(\): ERROR: '
 
     def setUp(self):
+        self.system.box_l = [1., 1., 1.]
         self.system.part.add(pos=(0, 0, 0))
         self.system.integrator.set_vv()
         self.system.periodicity = 3 * [True]
@@ -178,6 +180,59 @@ class Test(ut.TestCase):
             self.system.integrator.run(0)
         self.system.lees_edwards.protocol = None
         self.system.integrator.run(0)
+
+    @ut.skipIf(espressomd.code_info._CodeInfo().call_method("has_fast_math"),
+               "cannot run with fast-math optimizations")
+    @ut.skipIf(os.environ.get("UBSAN_OPTIONS"),
+               "cannot run with UBSAN instrumentation")
+    @ut.skipIf(espressomd.has_features("FPE"),
+               "cannot run with FPE instrumentation")
+    @utx.skipIfMissingFeatures(["NPT", "WCA"])
+    def test_npt_integrator_negative_volume(self):
+        """Test for NpT with bad parameters."""
+
+        import tests_common
+        data = np.genfromtxt(tests_common.data_path("npt_lj_system.data"))
+        ref_box_l = np.max(data[:, 0:3])
+
+        system = self.system
+        system.part.clear()
+        system.cell_system.skin = 0.
+
+        for barostat in ["Andersen", "MTK"]:
+            system.box_l = 3 * [ref_box_l]
+            system.time_step = 0.01
+            if barostat == "Andersen":
+                piston = 1e-4
+            else:
+                piston = 4.0
+            direction = [True] * 3
+            ext_pressure = 100.0  # Too large external pressure
+            system.part.add(pos=data[:, 0:3], v=data[:, 3:6])
+            system.integrator.set_vv()
+            system.thermostat.set_npt(kT=1.0, gamma0=0.1, gammav=1e-3, seed=42)
+            system.integrator.set_isotropic_npt(ext_pressure=ext_pressure,
+                                                piston=piston,
+                                                direction=direction,
+                                                barostat=barostat)
+
+            if barostat == "Andersen":
+                exception_msg = ""
+                try:
+                    system.integrator.run(10)
+                except Exception as err:
+                    exception_msg = f"{exception_msg}\n{err}"
+                try:
+                    system.part.clear()
+                except Exception as err:
+                    exception_msg = f"{exception_msg}\n{err}"
+                self.assertIn("the volume to become negative", exception_msg)
+            if barostat == "MTK":
+                # Volume cannot be negative within NPT ensemble based on MTK equation
+                self.assertGreater(float(np.prod(system.box_l)), 0.)
+
+        system.part.clear()
+        system.box_l = [1., 1., 1.]
 
     @utx.skipIfMissingFeatures("STOKESIAN_DYNAMICS")
     def test_stokesian_integrator(self):

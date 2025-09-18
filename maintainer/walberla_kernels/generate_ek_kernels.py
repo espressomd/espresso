@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 The ESPResSo project
+# Copyright (C) 2022-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import re
 import pystencils as ps
 import pystencils_walberla
 import sympy as sp
@@ -30,11 +31,17 @@ import code_generation_context
 
 import ekin
 import custom_additional_extensions
+import walberla_ek_generation
 
 
+kernel_codes = "diffusion advection continuity friction_coupling boundary reactions accessors".split()
 parser = argparse.ArgumentParser(description="Generate the waLBerla kernels.")
 parser.add_argument("--single-precision", action="store_true", required=False,
                     help="Use single-precision")
+parser.add_argument("--gpu", action="store_true")
+parser.add_argument("--kernels", nargs="+", type=str, default="all",
+                    choices=["all"] + kernel_codes,
+                    help="Which kernels to generate")
 args = parser.parse_args()
 
 # Make sure we have the correct versions of the required dependencies
@@ -51,16 +58,42 @@ precision_suffix = pystencils_espresso.precision_suffix[double_precision]
 precision_rng = pystencils_espresso.precision_rng_modulo[double_precision]
 
 
-def patch_reaction_indexed_kernel(content: str) -> str:
+def patch_reaction_indexed_kernel(content: str, target_suffix) -> str:
     # replace getData with uncheckedFastGetData
     access_slow = "block->getData<IndexVectors>(indexVectorID);"
     access_fast = "block->uncheckedFastGetData<IndexVectors>(indexVectorID);"
     assert access_slow in content
     content = content.replace(access_slow, access_fast)
-    # remove dummy assignment
-    token = "const int32_t dummy = *((int32_t *  )(& _data_indexVector[12*ctr_0]));"
-    assert token in content
-    content = content.replace(token, "")
+    if target_suffix in ["_CUDA"]:
+        # replace preprocessor macros and pragmas
+        push, pop = custom_additional_extensions.generate_device_preprocessor(
+            "reactions", defines=("RESTRICT",))
+        content = re.sub(r"#ifdef __GNUC__[\s\S]+?#endif(?=\n\n|\n//)", "", content)  # nopep8
+        content = re.sub(r"#ifdef __CUDACC__[\s\S]+?#endif(?=\n\n|\n//)", push, content, 1)  # nopep8
+        content = re.sub(r"#ifdef __CUDACC__[\s\S]+?#endif(?=\n\n|\n//)", pop, content, 1)  # nopep8
+        assert push in content
+        assert pop in content
+        # remove dummy assignment
+        token = "const int32_t dummy = *((int32_t *  )(& _data_indexVector_10[12*blockDim.x*blockIdx.x + 12*threadIdx.x]));"
+        assert token in content
+        content = content.replace(token, "")
+    else:
+        # remove dummy assignment
+        token = "const int32_t dummy = *((int32_t *  )(& _data_indexVector[12*ctr_0]));"
+        assert token in content
+        content = content.replace(token, "")
+    return content
+
+
+def patch_dirichlet_boundary_kernel(content: str, target_suffix) -> str:
+    if target_suffix in ["_CUDA"]:
+        # remove unused assignment
+        token = "const int32_t dir = *((int32_t *  )(& _data_indexVector_112[24*blockDim.x*blockIdx.x + 24*threadIdx.x]));"
+        content = content.replace(token, "")
+        token = "uint8_t * RESTRICT _data_indexVector_112 = _data_indexVector + 12;"
+        content = content.replace(token, "")
+        token = "const int32_t dir = *((int32_t *  )(& _data_indexVector_112[20*blockDim.x*blockIdx.x + 20*threadIdx.x]));"
+        content = content.replace(token, "")
     return content
 
 
@@ -71,8 +104,20 @@ def patch_diffusive_flux_elec_kernel(content):
     return content
 
 
+def get_ext_header(target_suffix):
+    return {"_CUDA": "h"}.get(target_suffix, "h")
+
+
+def get_ext_source(target_suffix):
+    return {"_CUDA": "cu"}.get(target_suffix, "cpp")
+
+
 dim: int = 3
 target: ps.enums.Target = ps.enums.Target.CPU
+if args.gpu:
+    target = ps.enums.Target.GPU
+if args.kernels == "all":
+    args.kernels = kernel_codes
 flux_count: int = 3 ** dim // 2
 
 diffusion = ps.TypedSymbol("D", data_type_np)
@@ -134,120 +179,210 @@ block_offsets = tuple(
     ps.TypedSymbol(f"block_offset_{i}", np.uint32)
     for i in range(3))
 
-params = {
-    "target": target,
-    "cpu_vectorize_info": {"assume_inner_stride_one": False}, }
+if args.gpu:
+    params = {
+        "target": target
+    }
+    cpu_vectorize_info = {}  # dummy handle
+    processor_suffix = "_CUDA"
+    file_suffix = "cu"
+else:
+    params = {
+        "target": target,
+        "cpu_vectorize_info": {
+            "assume_inner_stride_one": False,
+        },
+    }
+    cpu_vectorize_info = params["cpu_vectorize_info"]  # handle to mutable dict
+    processor_suffix = ""
+    file_suffix = "cpp"
 
 
 with code_generation_context.CodeGeneration() as ctx:
     ctx.double_accuracy = double_precision
+    if target == ps.Target.GPU:
+        ctx.gpu = True
+        ctx.cuda = True
 
     # codegen configuration
     config = pystencils_espresso.generate_config(ctx, params)
 
-    for midfix, fluctuation in (("", False), ("Thermalized", True)):
-        pystencils_walberla.generate_sweep(
-            ctx,
-            f"DiffusiveFluxKernel{midfix}_{precision_suffix}",
-            ek.flux(include_vof=False, include_fluctuations=fluctuation,
-                    rng_node=precision_rng),
-            staggered=True,
-            block_offset=block_offsets if fluctuation else None,
-            **params)
-        class_name = f"DiffusiveFluxKernelWithElectrostatic{midfix}_{precision_suffix}"  # nopep8
-        pystencils_walberla.generate_sweep(
-            ctx, class_name,
-            ek_electrostatic.flux(include_vof=False, include_fluctuations=fluctuation,
-                                  rng_node=precision_rng),
-            staggered=True,
-            block_offset=block_offsets if fluctuation else None,
-            **params)
-        ctx.patch_file(class_name, "h", patch_diffusive_flux_elec_kernel)
+    data_type = "float64" if ctx.double_accuracy else "float32"
 
-    # the substitution for field reads is necessary, because otherwise there are
-    # "ResolvedFieldAccess" nodes that fail in the code generation
-    flux_advection = ps.AssignmentCollection(ek.flux_advection())
-    flux_advection = ps.simp.add_subexpressions_for_field_reads(flux_advection)
+    if "diffusion" in args.kernels:
+        for midfix, fluctuation in (("", False), ("Thermalized", True)):
+            cpu_vectorize_info["cpu_prepend_opt_remove_conditionals"] = False
+            pystencils_walberla.generate_sweep(
+                ctx,
+                f"DiffusiveFluxKernel{midfix}_{precision_suffix}{processor_suffix}",  # nopep8
+                ek.flux(include_vof=False, include_fluctuations=fluctuation,
+                        rng_node=precision_rng),
+                staggered=True,
+                block_offset=block_offsets if fluctuation else None,
+                **params)
+            cpu_vectorize_info["cpu_prepend_opt_remove_conditionals"] = False
+            class_name = f"DiffusiveFluxKernelWithElectrostatic{midfix}_{precision_suffix}{processor_suffix}"  # nopep8
+            pystencils_walberla.generate_sweep(
+                ctx, class_name,
+                ek_electrostatic.flux(include_vof=False, include_fluctuations=fluctuation,
+                                      rng_node=precision_rng),
+                staggered=True,
+                block_offset=block_offsets if fluctuation else None,
+                **params)
+            ctx.patch_file(class_name, "h", patch_diffusive_flux_elec_kernel)
 
-    pystencils_walberla.generate_sweep(
-        ctx,
-        f"AdvectiveFluxKernel_{precision_suffix}",
-        flux_advection,
-        staggered=True,
-        **params)
-    pystencils_walberla.generate_sweep(
-        ctx,
-        f"ContinuityKernel_{precision_suffix}",
-        ek.continuity(),
-        **params)
+    if "advection" in args.kernels:
+        def patch_advection_kernel(content, target_suffix):
+            if target_suffix in ["_CUDA"]:
+                # replace preprocessor macros and pragmas
+                token = "#define FUNC_PREFIX __global__"
+                assert token in content
+                push, _ = custom_additional_extensions.generate_device_preprocessor(
+                    "advection", defines=("RESTRICT",))
+                content = content.replace(token, f"{token}\n{push}")
+            return content
 
-    pystencils_walberla.generate_sweep(
-        ctx,
-        f"FrictionCouplingKernel_{precision_suffix}",
-        ek.friction_coupling(),
-        **params)
-
-    # generate dynamic fixed flux
-    stencil = lbmpy.LBStencil(stencil="D3Q27")
-    dynamic_flux = custom_additional_extensions.Flux(
-        stencil, lambda *args: None, dim=3, data_type=data_type_np)
-    dynamic_flux_additional_data = custom_additional_extensions.FluxAdditionalDataHandler(
-        stencil=stencil, boundary_object=dynamic_flux)
-
-    pystencils_walberla.boundary.generate_staggered_flux_boundary(
-        generation_context=ctx,
-        class_name=f"FixedFlux_{precision_suffix}",
-        boundary_object=dynamic_flux,
-        dim=dim,
-        neighbor_stencil=stencil,
-        index_shape=flux_field.index_shape,
-        target=target,
-        additional_data_handler=dynamic_flux_additional_data)
-
-    # generate dynamic fixed density
-    dirichlet_stencil = lbmpy.stencils.LBStencil(stencil=((0, 0, 0),))
-    dirichlet = custom_additional_extensions.Dirichlet_Custom(
-        lambda *args: None, data_type=data_type_np)
-    dirichlet_additional_data = custom_additional_extensions.DirichletAdditionalDataHandler(
-        dirichlet_stencil, dirichlet)
-
-    pystencils_walberla.boundary.generate_boundary(
-        generation_context=ctx,
-        class_name=f"Dirichlet_{precision_suffix}",
-        boundary_object=dirichlet,
-        additional_data_handler=dirichlet_additional_data,
-        field_name="field",
-        neighbor_stencil=stencil,
-        index_shape=density_field.index_shape,
-        target=target)
-
-    # ek reactions
-    for i in range(1, max_num_reactants + 1):
-        assignments = list(reaction_obj.generate_reaction(num_reactants=i))
-        class_name: str = f"ReactionKernelBulk_{i}_{precision_suffix}"
+        flux_advection = ps.AssignmentCollection(ek.flux_advection())
+        cpu_vectorize_info["cpu_prepend_opt_remove_conditionals"] = False
+        class_name = f"AdvectiveFluxKernel_{precision_suffix}{processor_suffix}"  # nopep8
         pystencils_walberla.generate_sweep(
             ctx,
             class_name,
-            assignments)
+            flux_advection,
+            staggered=True,
+            **params)
+        ctx.patch_file(class_name, get_ext_source(processor_suffix),
+                       patch_advection_kernel, processor_suffix)
 
-        class_name: str = f"ReactionKernelIndexed_{i}_{precision_suffix}"
-        custom_additional_extensions.generate_boundary(
+    if "continuity" in args.kernels:
+        pystencils_walberla.generate_sweep(
+            ctx,
+            f"ContinuityKernel_{precision_suffix}{processor_suffix}",
+            ek.continuity(),
+            **params)
+    if "friction_coupling" in args.kernels:
+        pystencils_walberla.generate_sweep(
+            ctx,
+            f"FrictionCouplingKernel_{precision_suffix}{processor_suffix}",
+            ek.friction_coupling(),
+            **params)
+
+    if "boundary" in args.kernels:
+        # pylint: disable=unused-argument
+        def patch_boundary_header(content, processor_suffix):
+            # replace real_t by actual floating-point type
+            return content.replace("real_t", data_type)
+
+        def patch_boundary_kernel(content, processor_suffix):
+            if processor_suffix in ["_CUDA"]:
+                # replace preprocessor macros and pragmas
+                push, pop = custom_additional_extensions.generate_device_preprocessor(
+                    "ubb_boundary", defines=("RESTRICT",))
+                content = re.sub(r"#ifdef __GNUC__[\s\S]+?#endif(?=\n\n|\n//)", "", content)  # nopep8
+                content = re.sub(r"#ifdef __CUDACC__[\s\S]+?#endif(?=\n\n|\n//)", push, content, 1)  # nopep8
+                content = re.sub(r"#ifdef __CUDACC__[\s\S]+?#endif(?=\n\n|\n//)", pop, content, 1)  # nopep8
+                assert push in content
+                assert pop in content
+            return content
+
+        # generate dynamic fixed flux
+        stencil = lbmpy.LBStencil(stencil="D3Q27")
+        dynamic_flux = custom_additional_extensions.Flux(
+            stencil, lambda *args: None, dim=3, data_type=data_type_np)
+        dynamic_flux_additional_data = custom_additional_extensions.FluxAdditionalDataHandler(
+            stencil=stencil, boundary_object=dynamic_flux)
+        class_name = f"FixedFlux_{precision_suffix}{processor_suffix}"
+
+        pystencils_walberla.boundary.generate_staggered_flux_boundary(
             generation_context=ctx,
-            stencil=dirichlet_stencil,
             class_name=class_name,
+            boundary_object=dynamic_flux,
             dim=dim,
+            neighbor_stencil=stencil,
+            index_shape=flux_field.index_shape,
             target=target,
-            assignment=assignments)
-        ctx.patch_file(class_name, "cpp", patch_reaction_indexed_kernel)
+            additional_data_handler=dynamic_flux_additional_data)
 
-    # ek reactions helper functions
-    custom_additional_extensions.generate_kernel_selector(
-        generation_context=ctx,
-        class_name="ReactionKernelBulk",
-        max_num_reactants=max_num_reactants,
-        precision_suffix=pystencils_espresso.precision_suffix)
-    custom_additional_extensions.generate_kernel_selector(
-        generation_context=ctx,
-        class_name="ReactionKernelIndexed",
-        max_num_reactants=max_num_reactants,
-        precision_suffix=pystencils_espresso.precision_suffix)
+        ctx.patch_file(class_name, get_ext_header(processor_suffix),
+                       patch_boundary_header, processor_suffix)
+        ctx.patch_file(class_name, get_ext_source(processor_suffix),
+                       patch_boundary_kernel, processor_suffix)
+
+        # generate dynamic fixed density
+        dirichlet_stencil = lbmpy.stencils.LBStencil(stencil=((0, 0, 0),))
+        dirichlet = custom_additional_extensions.Dirichlet_Custom(
+            lambda *args: None, data_type=data_type_np)
+        dirichlet_additional_data = custom_additional_extensions.DirichletAdditionalDataHandler(
+            dirichlet_stencil, dirichlet)
+        class_name = f"Dirichlet_{precision_suffix}{processor_suffix}"
+
+        pystencils_walberla.boundary.generate_boundary(
+            generation_context=ctx,
+            class_name=class_name,
+            boundary_object=dirichlet,
+            additional_data_handler=dirichlet_additional_data,
+            field_name="field",
+            neighbor_stencil=stencil,
+            index_shape=density_field.index_shape,
+            target=target)
+
+        ctx.patch_file(class_name, get_ext_header(processor_suffix),
+                       patch_boundary_header, processor_suffix)
+        ctx.patch_file(class_name, get_ext_source(processor_suffix),
+                       patch_boundary_kernel, processor_suffix)
+        ctx.patch_file(class_name, get_ext_source(processor_suffix),
+                       patch_dirichlet_boundary_kernel, processor_suffix)
+
+    if "reactions" in args.kernels:
+        # ek reactions
+        dirichlet_stencil = lbmpy.stencils.LBStencil(stencil=((0, 0, 0),))
+        for i in range(1, max_num_reactants + 1):
+            assignments = list(reaction_obj.generate_reaction(num_reactants=i))
+            class_name = f"ReactionKernelBulk_{i}_{precision_suffix}{processor_suffix}"  # nopep8
+            pystencils_walberla.generate_sweep(
+                generation_context=ctx,
+                class_name=class_name,
+                target=target,
+                assignments=assignments)
+
+            class_name = f"ReactionKernelIndexed_{i}_{precision_suffix}{processor_suffix}"  # nopep8
+            custom_additional_extensions.generate_boundary(
+                generation_context=ctx,
+                stencil=dirichlet_stencil,
+                class_name=class_name,
+                dim=dim,
+                target=target,
+                assignment=assignments)
+            ctx.patch_file(class_name, file_suffix,
+                           patch_reaction_indexed_kernel, processor_suffix)
+
+        # ek reactions helper functions
+        custom_additional_extensions.generate_kernel_selector(
+            generation_context=ctx,
+            class_name="ReactionKernelBulk",
+            max_num_reactants=max_num_reactants,
+            precision_suffix=pystencils_espresso.precision_suffix,
+            processor_suffix=processor_suffix)
+        custom_additional_extensions.generate_kernel_selector(
+            generation_context=ctx,
+            class_name="ReactionKernelIndexed",
+            max_num_reactants=max_num_reactants,
+            precision_suffix=pystencils_espresso.precision_suffix,
+            processor_suffix=processor_suffix)
+
+    if "accessors" in args.kernels:
+        # field accessors
+        precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
+        kernel_name = f"EK_FieldAccessors_{precision_suffix}{processor_suffix}"
+        if target == ps.Target.GPU:
+            templates = {
+                f"{kernel_name}.cuh": "templates/EK_FieldAccessors.tmpl.cuh",
+                f"{kernel_name}.cu": "templates/EK_FieldAccessors.tmpl.cu",
+            }
+        else:
+            templates = {
+                f"{kernel_name}.h": "templates/EK_FieldAccessors.tmpl.h",
+            }
+        walberla_ek_generation.generate_accessors(
+            ctx, config, templates
+        )

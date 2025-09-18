@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE "P3M utility functions"
+#define BOOST_TEST_MODULE "ESPRESSO_P3M utility functions"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 

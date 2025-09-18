@@ -33,7 +33,7 @@
 
 #include "rotation.hpp"
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
 
 #include <utils/Vector.hpp>
 #include <utils/mask.hpp>
@@ -193,4 +193,4 @@ void convert_initial_torques(const ParticleRange &particles) {
   }
 }
 
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION

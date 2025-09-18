@@ -24,7 +24,7 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) || defined(DP3M)
+#if defined(ESPRESSO_P3M) || defined(ESPRESSO_DP3M)
 
 #include <utils/Vector.hpp>
 
@@ -131,6 +131,6 @@ private:
   }
 };
 
-#endif // P3M or DP3M
+#endif // ESPRESSO_P3M or ESPRESSO_DP3M
 
 #endif

@@ -21,8 +21,9 @@
 
 #pragma once
 
+#include <config/config.hpp>
+
 #include "Particle.hpp"
-#include "config/config.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "system/System.hpp"
 
@@ -49,8 +50,8 @@ template <typename CutoffGetter = GetNonbondedCutoff> class VerletCriterion {
   const double m_eff_dipolar_cut2 = 0.;
   const double m_collision_cut2 = 0.;
   double eff_cutoff_sqr(double x) const {
-    if (x == INACTIVE_CUTOFF)
-      return INACTIVE_CUTOFF;
+    if (x == inactive_cutoff)
+      return inactive_cutoff;
     return Utils::sqr(x + m_skin);
   }
   CutoffGetter get_nonbonded_cutoff;
@@ -72,19 +73,19 @@ public:
     if (dist2 > m_eff_max_cut2)
       return false;
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     // Within real space cutoff of electrostatics and both are charged
     if (dist2 <= m_eff_coulomb_cut2 and p1.q() != 0. and p2.q() != 0.)
       return true;
 #endif
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
     // Within dipolar cutoff and both carry magnetic moments
     if (dist2 <= m_eff_dipolar_cut2 and p1.dipm() != 0. and p2.dipm() != 0.)
       return true;
 #endif
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
     // Collision detection
     if (dist2 <= m_collision_cut2)
       return true;
@@ -92,7 +93,7 @@ public:
 
     // Within short-range distance (including dpd and the like)
     auto const ia_cut = get_nonbonded_cutoff(p1.type(), p2.type());
-    return (ia_cut != INACTIVE_CUTOFF) &&
+    return (ia_cut != inactive_cutoff) &&
            (dist2 <= Utils::sqr(ia_cut + m_skin));
   }
 };

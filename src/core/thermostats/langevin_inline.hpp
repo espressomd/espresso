@@ -42,14 +42,14 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
                          double time_step, double kT) {
   using namespace Thermostat;
   // Determine prefactors for the friction and the noise term
-#ifdef THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   auto const gamma = handle_particle_gamma(p.gamma(), langevin.gamma);
   auto const pref_friction = -gamma;
   auto const pref_noise = LangevinThermostat::sigma(kT, time_step, gamma);
 #else
   auto const pref_friction = langevin.pref_friction;
   auto const pref_noise = langevin.pref_noise;
-#endif // THERMOSTAT_PER_PARTICLE
+#endif // ESPRESSO_THERMOSTAT_PER_PARTICLE
 
   auto const friction_op = handle_particle_anisotropy(p, pref_friction);
   auto const noise_op = handle_particle_anisotropy(p, pref_noise);
@@ -58,7 +58,7 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
                         langevin.rng_counter(), langevin.rng_seed(), p.id());
 }
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
 /** Langevin thermostat for particle angular velocities.
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              Particle
@@ -71,7 +71,7 @@ friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
                                   double kT) {
   using namespace Thermostat;
 
-#ifdef THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   auto const gamma =
       handle_particle_gamma(p.gamma_rot(), langevin.gamma_rotation);
   auto const pref_friction = gamma;
@@ -79,11 +79,11 @@ friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
 #else
   auto const pref_friction = langevin.gamma_rotation;
   auto const pref_noise = langevin.pref_noise_rotation;
-#endif // THERMOSTAT_PER_PARTICLE
+#endif // ESPRESSO_THERMOSTAT_PER_PARTICLE
 
   auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN_ROT>(
       langevin.rng_counter(), langevin.rng_seed(), p.id());
   return -hadamard_product(pref_friction, p.omega()) +
          hadamard_product(pref_noise, noise);
 }
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION

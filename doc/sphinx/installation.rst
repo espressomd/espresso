@@ -81,7 +81,7 @@ are required to be able to compile and use |es|:
     CUDA
         For some algorithms like |p3m|,
         |es| provides GPU-accelerated implementations for NVIDIA GPUs.
-        We strongly recommend CUDA 12.0 or later [6]_.
+        We require CUDA 12.0 or later [6]_.
 
     MPI
         An MPI library that implements the MPI standard version 1.2 is required
@@ -192,6 +192,12 @@ operating system and CUDA version you are using.
 You can control the list of CUDA architectures to generate device code for.
 For example, ``CUDAARCHS="75;86" cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
 will generate device code for both sm_75 and sm_86 architectures.
+The CMake option ``ESPRESSO_CMAKE_CUDA_ARCHITECTURES`` achieves the same effect.
+Both take a semicolon-separated list of integers. There are online resources
+to help determine which architecture match specific hardware [12]_.
+The CMake option ``CMAKE_CUDA_ARCHITECTURES`` cannot be used to set CUDA
+architectures, because it has a default value that is too old for the
+minimally required CUDA version.
 
 On Ubuntu 24.04, the default GCC compiler may be too recent for nvcc.
 You can either use GCC 12:
@@ -816,7 +822,6 @@ The following options control features from external libraries:
 * ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
 * ``ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM``: Build with shared-memory parallelism support (OpenMP, Cabana, Kokkos, etc.)
 * ``ESPRESSO_BUILD_WITH_WALBERLA``: Build with waLBerla support.
-* ``ESPRESSO_BUILD_WITH_WALBERLA_FFT``: Build waLBerla with FFT and PFFT support, used in FFT-based electrokinetics.
 * ``ESPRESSO_BUILD_WITH_WALBERLA_AVX``: Build waLBerla with AVX kernels instead of regular kernels.
 * ``ESPRESSO_BUILD_WITH_PYTHON``: Build with the Python interface.
 
@@ -1050,3 +1055,6 @@ ____
 
 .. [11]
    https://mac.r-project.org/openmp/
+
+.. [12]
+   https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/

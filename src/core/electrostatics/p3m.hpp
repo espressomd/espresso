@@ -36,12 +36,13 @@
 
 #include "config/config.hpp"
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
 
 #include "electrostatics/actor.hpp"
 
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
+#include "p3m/math.hpp"
 
 #include "ParticleRange.hpp"
 
@@ -145,7 +146,7 @@ public:
   /** Calculate real-space contribution of p3m Coulomb pair forces. */
   Utils::Vector3d pair_force(double q1q2, Utils::Vector3d const &d,
                              double dist) const {
-    if ((q1q2 == 0.) || dist >= p3m_params.r_cut || dist <= 0.) {
+    if (q1q2 == 0. or dist >= p3m_params.r_cut or dist <= 0.) {
       return {};
     }
     auto const alpha = p3m_params.alpha;
@@ -166,7 +167,7 @@ public:
   /** Calculate real-space contribution of Coulomb pair energy. */
   // Eq. (3.6) @cite deserno00b
   double pair_energy(double q1q2, double dist) const {
-    if ((q1q2 == 0.) || dist >= p3m_params.r_cut || dist <= 0.) {
+    if (q1q2 == 0. or dist >= p3m_params.r_cut or dist <= 0.) {
       return {};
     }
     auto const adist = p3m_params.alpha * dist;
@@ -200,4 +201,4 @@ protected:
   virtual void scaleby_box_l() = 0;
 };
 
-#endif // P3M
+#endif // ESPRESSO_P3M

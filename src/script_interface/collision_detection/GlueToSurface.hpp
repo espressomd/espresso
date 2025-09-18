@@ -21,8 +21,8 @@
 
 #include <config/config.hpp>
 
-#ifdef COLLISION_DETECTION
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_COLLISION_DETECTION
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 
 #include "Protocol.hpp"
 
@@ -105,5 +105,5 @@ protected:
 
 } // namespace ScriptInterface::CollisionDetection
 
-#endif // COLLISION_DETECTION
-#endif // VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_COLLISION_DETECTION
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE

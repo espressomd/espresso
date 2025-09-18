@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "system/Leaf.hpp"
 
@@ -67,4 +67,4 @@ public:
 
 } // namespace Coulomb
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

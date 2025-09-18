@@ -23,10 +23,10 @@ if(ESPRESSO_BUILD_WITH_FFTW)
   target_include_directories(espresso_p3m
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
   espresso_set_common_target_properties(espresso_p3m)
-  set_target_properties(espresso_p3m PROPERTIES CXX_CLANG_TIDY
-                                                "${P3M_CXX_CLANG_TIDY}")
-  set_target_properties(espresso_p3m PROPERTIES CXX_CLANG_TIDY
-                                                "${P3M_CUDA_CLANG_TIDY}")
+  set_target_properties(
+    espresso_p3m PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_P3M_CXX_CLANG_TIDY}")
+  set_target_properties(
+    espresso_p3m PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_P3M_CUDA_CLANG_TIDY}")
   add_library(espresso_p3m_cpp_flags INTERFACE)
   add_library(espresso::p3m::cpp_flags ALIAS espresso_p3m_cpp_flags)
   target_compile_options(
@@ -43,6 +43,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
       espresso::instrumentation
       espresso::utils
       espresso::config
+      Random123
       Boost::mpi
       MPI::MPI_CXX
       Heffte::Heffte

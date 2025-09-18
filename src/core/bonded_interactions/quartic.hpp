@@ -67,7 +67,7 @@ QuarticBond::force(Utils::Vector3d const &dx) const {
   auto const dr = dist - r;
   auto fac = (k0 * dr + k1 * Utils::int_pow<3>(dr));
 
-  if (dist > ROUND_ERROR_PREC) { /* Regular case */
+  if (dist > round_error_prec) { /* Regular case */
     fac /= dist;
   } else {
     if (r > 0.) {

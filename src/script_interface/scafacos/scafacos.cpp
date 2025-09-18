@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#if defined(SCAFACOS) or defined(SCAFACOS_DIPOLES)
+#if defined(ESPRESSO_SCAFACOS) or defined(ESPRESSO_SCAFACOS_DIPOLES)
 
 #include "script_interface/Variant.hpp"
 #include "script_interface/get_value.hpp"
@@ -30,8 +30,6 @@
 
 #include <utils/demangle.hpp>
 
-#include <boost/variant.hpp>
-
 #include <algorithm>
 #include <functional>
 #include <iomanip>
@@ -41,6 +39,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace ScriptInterface {
@@ -50,8 +49,9 @@ std::vector<std::string> available_methods() {
   return ScafacosContextBase::available_methods();
 }
 
-struct ConvertToStringVector
-    : public boost::static_visitor<std::vector<std::string>> {
+struct ConvertToStringVector {
+  using result_type = std::vector<std::string>;
+
   auto operator()(std::string const &value) const { return result_type{value}; }
 
   template <typename T> result_type operator()(T const &value) const {
@@ -63,20 +63,14 @@ struct ConvertToStringVector
 
   auto operator()(result_type const &values) const { return values; }
 
-  auto operator()(std::vector<Variant> const &values) const {
+  template <typename T> auto operator()(std::vector<T> const &values) const {
     result_type values_str;
     for (auto const &v : values) {
-      values_str.emplace_back(boost::apply_visitor(*this, v).front());
-    }
-    return values_str;
-  }
-
-  template <typename T>
-    requires(std::is_arithmetic_v<T>)
-  auto operator()(std::vector<T> const &values) const {
-    result_type values_str;
-    for (auto const &v : values) {
-      values_str.emplace_back(to_str(v));
+      if constexpr (std::is_same_v<T, Variant>) {
+        values_str.emplace_back(std::visit(*this, v).front());
+      } else {
+        values_str.emplace_back(to_str(v));
+      }
     }
     return values_str;
   }
@@ -94,8 +88,9 @@ private:
   }
 };
 
-struct GetParameterList
-    : public boost::static_visitor<std::unordered_map<std::string, Variant>> {
+struct GetParameterList {
+  using result_type = std::unordered_map<std::string, Variant>;
+
   auto operator()(result_type const &obj) const { return obj; }
 
   template <typename T>
@@ -115,7 +110,7 @@ private:
 };
 
 std::string serialize_parameters(Variant const &pack) {
-  auto const parameters = boost::apply_visitor(GetParameterList(), pack);
+  auto const parameters = std::visit(GetParameterList(), pack);
   if (parameters.empty()) {
     throw std::invalid_argument(
         "ScaFaCoS methods require at least 1 parameter");
@@ -124,7 +119,7 @@ std::string serialize_parameters(Variant const &pack) {
   std::string method_params = "";
   for (auto const &[name, values] : parameters) {
     method_params += "," + name;
-    for (auto const &value : boost::apply_visitor(visitor, values)) {
+    for (auto const &value : std::visit(visitor, values)) {
       method_params += "," + value;
     }
   }
@@ -189,4 +184,4 @@ deserialize_parameters(std::string const &parameters) {
 } // namespace Scafacos
 } // namespace ScriptInterface
 
-#endif // SCAFACOS or SCAFACOS_DIPOLES
+#endif // ESPRESSO_SCAFACOS or ESPRESSO_SCAFACOS_DIPOLES

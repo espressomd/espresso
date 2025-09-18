@@ -30,7 +30,6 @@
 #include <utils/serialization/pack.hpp>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/variant.hpp>
 
 #include <memory>
 #include <string>
@@ -38,6 +37,7 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 
 using namespace ScriptInterface;
@@ -66,7 +66,7 @@ struct CallMethod {
   }
 };
 
-using Info = boost::variant<Construct, SetParameter, CallMethod>;
+using Info = std::variant<Construct, SetParameter, CallMethod>;
 } // namespace MockCall
 
 /**
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(do_construct_) {
   VariantMap test_params;
 
   log_handle.construct(test_params);
-  BOOST_CHECK(boost::get<MockCall::Construct>(log_handle.call_log[0]) ==
+  BOOST_CHECK(std::get<MockCall::Construct>(log_handle.call_log[0]) ==
               MockCall::Construct{&test_params});
 }
 
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(do_set_parameter_) {
   Variant value;
 
   log_handle.set_parameter(name, value);
-  BOOST_CHECK((boost::get<MockCall::SetParameter>(log_handle.call_log[0]) ==
+  BOOST_CHECK((std::get<MockCall::SetParameter>(log_handle.call_log[0]) ==
                MockCall::SetParameter{&name, &value}));
 }
 
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(do_call_method_) {
   VariantMap params;
 
   log_handle.call_method(name, params);
-  BOOST_CHECK((boost::get<MockCall::CallMethod>(log_handle.call_log[0]) ==
+  BOOST_CHECK((std::get<MockCall::CallMethod>(log_handle.call_log[0]) ==
                MockCall::CallMethod{&name, &params}));
 }
 
@@ -226,7 +226,7 @@ BOOST_AUTO_TEST_CASE(notify_set_parameter_) {
   auto const log_entry = log_ctx->call_log.at(0);
   BOOST_CHECK_EQUAL(log_entry.first, o.get());
 
-  BOOST_CHECK((boost::get<MockCall::SetParameter>(log_entry.second) ==
+  BOOST_CHECK((std::get<MockCall::SetParameter>(log_entry.second) ==
                MockCall::SetParameter{&name, &value}));
 }
 
@@ -246,7 +246,7 @@ BOOST_AUTO_TEST_CASE(notify_call_method_) {
 
   auto const log_entry = log_ctx->call_log.at(0);
   BOOST_CHECK_EQUAL(log_entry.first, o.get());
-  BOOST_CHECK((boost::get<MockCall::CallMethod>(log_entry.second) ==
+  BOOST_CHECK((std::get<MockCall::CallMethod>(log_entry.second) ==
                MockCall::CallMethod{&name, &params}));
 }
 

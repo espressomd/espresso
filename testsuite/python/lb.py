@@ -837,6 +837,22 @@ class LBTest:
                     **self.lb_params,
                     blocks_per_mpi_rank=[2, 2, 2])
 
+    @utx.skipIfMissingFeatures(["PARTICLE_ANISOTROPY",
+                               "THERMOSTAT_PER_PARTICLE"])
+    def test_exceptions(self):
+        lbf = self.lb_class(**self.params, **self.lb_params)
+        self.system.lb = lbf
+        self.system.thermostat.set_lb(
+            LB_fluid=lbf, seed=5, gamma=2.)
+        with self.assertRaisesRegex(RuntimeError, r"set_lb\(\) got an unexpected keyword argument 'act_on_virtual'"):
+            self.system.thermostat.set_lb(
+                LB_fluid=lbf, act_on_virtual=False)
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'gamma' is missing"):
+            self.system.thermostat.set_lb(LB_fluid=lbf)
+        self.system.part.add(pos=[0., 0., 0.], gamma=[1., 2., 3.], id=2)
+        with self.assertRaisesRegex(Exception, r"ERROR: anisotropic particle \(id 2\) coupled to LB"):
+            self.system.integrator.run(1)
+
 
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaDoublePrecisionCPU(LBTest, ut.TestCase):

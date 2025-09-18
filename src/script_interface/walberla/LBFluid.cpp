@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "LBFluid.hpp"
 #include "LBWalberlaNodeState.hpp"
@@ -54,6 +54,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace ScriptInterface::walberla {
@@ -135,7 +136,7 @@ void LBFluidCPU::make_instance(VariantMap const &params) {
   m_instance = new_lb_walberla_cpu(lb_lattice, lb_visc, lb_dens, precision);
 }
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 void LBFluidGPU::make_instance(VariantMap const &params) {
   auto const visc = get_value<double>(params, "kinematic_viscosity");
   auto const dens = get_value<double>(params, "density");
@@ -151,7 +152,7 @@ void LBFluidGPU::make_instance(VariantMap const &params) {
   auto const lb_dens = m_conv_dens * dens;
   m_instance = new_lb_walberla_gpu(lb_lattice, lb_visc, lb_dens, precision);
 }
-#endif // CUDA
+#endif // ESPRESSO_CUDA
 
 void LBFluid::do_construct(VariantMap const &params) {
   m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice");
@@ -381,4 +382,4 @@ void LBFluid::save_checkpoint(std::filesystem::path const &path, int mode) {
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

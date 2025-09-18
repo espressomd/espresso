@@ -64,7 +64,7 @@
  *    In all other cases, the return value should be 0, namely angle bonds,
  *    dihedral bonds as well as other bonds that don't have an interaction
  *    range. The @ref VirtualBond is the exception to this rule; its range
- *    is @ref BONDED_INACTIVE_CUTOFF to ensure that it is always skipped by
+ *    is @ref bonded_inactive_cutoff to ensure that it is always skipped by
  *    the short-range loop.
  *  * @code{.cpp}
  *    std::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
@@ -110,15 +110,6 @@
  *    - Include the header file containing the new bond type.
  *    - Add the new bond type to @ref Bonded_IA_Parameters at the end of the
  *      types list.
- *    - If by doing this, the length of the list in Bonded_IA_Parameters passes
- *      over a multiple of 10, you may have to update ESPResSo's top level
- *      CMakeLists.txt:
- *      @code
- *      # enable boost::variant with more than 20 types
- *      target_compile_options(
- *        espresso_cpp_flags INTERFACE -DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
- *                                     -DBOOST_MPL_LIMIT_LIST_SIZE=40)
- *      @endcode
  *  * In forces_inline.hpp:
  *    - A call to the new bond's force calculation needs to be placed in either
  *      of the functions @ref calc_bond_pair_force(), @ref
@@ -128,7 +119,7 @@
  *      example
  *      @code{.cpp}
  *      // ...
- *      else if (auto const *iap = boost::get<QuarticBond>(&iaparams)) {
+ *      else if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
  *        return iap->force(dx);
  *      }
  *      // ...
@@ -141,7 +132,7 @@
  *      example
  *      @code{.cpp}
  *      // ...
- *      else if (auto const *iap = boost::get<QuarticBond>(&iaparams)) {
+ *      else if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
  *        return iap->energy(dx);
  *      }
  *      // ...

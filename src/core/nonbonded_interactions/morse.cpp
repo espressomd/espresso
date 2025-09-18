@@ -24,7 +24,7 @@
  */
 #include "morse.hpp"
 
-#ifdef MORSE
+#ifdef ESPRESSO_MORSE
 #include "nonbonded_interaction_data.hpp"
 
 #include <cmath>
@@ -44,4 +44,4 @@ Morse_Parameters::Morse_Parameters(double eps, double alpha, double rmin,
   rest = eps * (add1 - add2);
 }
 
-#endif // MORSE
+#endif // ESPRESSO_MORSE

@@ -20,7 +20,7 @@
 #pragma once
 
 #if !defined(__CUDACC__)
-#error Do not include CUDA headers in normal C++-code!!!
+#error "Do not include CUDA headers in normal C++-code!!!"
 #endif
 
 #include "utils.hpp"

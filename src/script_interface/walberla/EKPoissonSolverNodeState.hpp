@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,15 +19,25 @@
 
 #pragma once
 
-#include <walberla_bridge/LatticeWalberla.hpp>
+#include <config/config.hpp>
+
+#ifdef ESPRESSO_WALBERLA
+
+#include <script_interface/ScriptInterface.hpp>
+#include <script_interface/auto_parameters/AutoParameters.hpp>
+
 #include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp>
 
 #include <memory>
 
-namespace walberla {
+namespace ScriptInterface::walberla {
 
-std::shared_ptr<walberla::PoissonSolver>
-new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,
-                   double permittivity, bool single_precision);
+class EKPoissonSolver : public AutoParameters<EKPoissonSolver> {
+public:
+  virtual std::shared_ptr<::walberla::PoissonSolver>
+  get_instance() const noexcept = 0;
+};
 
-} // namespace walberla
+} // namespace ScriptInterface::walberla
+
+#endif // ESPRESSO_WALBERLA

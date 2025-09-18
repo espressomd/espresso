@@ -44,6 +44,8 @@ class GPUAvailability(ut.TestCase):
             self.assertEqual(devices_prop, {})
             with self.assertRaisesRegex(AttributeError, "Object 'CudaInitHandle' has no attribute 'device'"):
                 cuda_init_handle.device
+        self.assertIn(
+            cuda_init_handle.call_method("is_mpi_gpu_aware"), [True, False])
 
     @utx.skipIfMissingFeatures("CUDA")
     def test_exceptions(self):

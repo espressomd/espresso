@@ -25,8 +25,7 @@ import espressomd
 import espressomd.electrokinetics
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
-class EKFixedDensity(ut.TestCase):
+class EK_Test:
     AGRID = 1.1
     BOX_L = np.array([32., 3., 3.]) * AGRID
     DENSITY = 1
@@ -59,7 +58,7 @@ class EKFixedDensity(ut.TestCase):
         lattice = espressomd.electrokinetics.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = espressomd.electrokinetics.EKSpecies(
+        ekspecies = self.ek_species_class(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             valency=0.0, advection=False, friction_coupling=False,
             single_precision=single_precision, tau=self.TAU)
@@ -103,6 +102,17 @@ class EKFixedDensity(ut.TestCase):
             measured_values,
             analytic_values,
             decimal_precision)
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKFixedDensityCPU(EK_Test, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKFixedDensityGPU(EK_Test, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
 
 
 if __name__ == "__main__":

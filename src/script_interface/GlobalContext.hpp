@@ -30,6 +30,7 @@
 #include "Context.hpp"
 #include "LocalContext.hpp"
 #include "ObjectHandle.hpp"
+#include "ObjectId.hpp"
 #include "ParallelExceptionHandler.hpp"
 #include "packed_variant.hpp"
 
@@ -64,7 +65,7 @@ namespace ScriptInterface {
  * the remote copies are also destroyed.
  */
 class GlobalContext : public Context {
-  using ObjectId = std::size_t;
+  using ObjectId = ScriptInterface::ObjectId;
 
   /* Instances on this node that are managed by the
    * head node. */

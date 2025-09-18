@@ -24,7 +24,7 @@
  */
 #include "hertzian.hpp"
 
-#ifdef HERTZIAN
+#ifdef ESPRESSO_HERTZIAN
 #include "nonbonded_interaction_data.hpp"
 
 #include <stdexcept>
@@ -39,4 +39,4 @@ Hertzian_Parameters::Hertzian_Parameters(double eps, double sig)
   }
 }
 
-#endif // HERTZIAN
+#endif // ESPRESSO_HERTZIAN

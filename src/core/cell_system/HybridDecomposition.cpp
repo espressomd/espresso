@@ -154,10 +154,7 @@ void HybridDecomposition::resort(bool global,
   m_regular_decomposition.resort(global, diff);
   m_n_square.resort(global, diff);
 
-  /* basically do CellStructure::ghost_count() */
   ghost_communicator(exchange_ghosts_comm(), m_box, GHOSTTRANS_PARTNUM);
-
-  /* basically do CellStructure::ghost_update(unsigned data_parts) */
   ghost_communicator(exchange_ghosts_comm(), m_box,
                      map_data_parts(m_get_global_ghost_flags()));
 }

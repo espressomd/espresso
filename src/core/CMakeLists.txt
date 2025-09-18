@@ -75,6 +75,7 @@ if(ESPRESSO_BUILD_WITH_CUDA)
     set_target_properties(espresso_cuda PROPERTIES CUDA_CLANG_TIDY
                                                    "${CABANA_CUDA_CLANG_TIDY}")
   endif()
+  espresso_add_cuda_rpaths(espresso_core)
   target_link_libraries(espresso_core PUBLIC espresso::cuda)
   install(TARGETS espresso_cuda
           LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)

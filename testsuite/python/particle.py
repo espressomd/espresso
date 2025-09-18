@@ -95,7 +95,7 @@ class ParticleProperties(ut.TestCase):
             for value in values:
                 setattr(self.partcl, propName, value)
                 self.assertEqual(getattr(self.partcl, propName),
-                                 value, propName + ": value set and value gotten back differ.")
+                                 value, f"{propName}: value set and value gotten back differ.")
 
         return func
 
@@ -120,6 +120,8 @@ class ParticleProperties(ut.TestCase):
         # Python 3.11+ skips empty bitfields during enum iteration
         flags_si["NONE"] = Propagation.NONE
         self.assertEqual(flags_si, flags_core)
+        self.assertIsInstance(self.partcl.propagation, Propagation)
+        self.assertIsInstance(getattr(self.partcl, "propagation"), Propagation)
 
     test_bonds_property = generateTestForScalarProperty(
         "bonds", ((f1, 1), (f2, 2)))
@@ -243,6 +245,9 @@ class ParticleProperties(ut.TestCase):
             p1.add_exclusion(pid1)
         with self.assertRaisesRegex(RuntimeError, f"Particle with id {pid2} not found"):
             p1.add_exclusion(pid2)
+        for i in [-1, -3]:
+            with self.assertRaisesRegex(ValueError, f"Invalid particle id: {i}"):
+                p1.add_exclusion(i)
 
         self.system.part.add(id=pid2, pos=(0, 0, 0))
         with self.assertRaisesRegex(RuntimeError, f"Particle with id {pid2} is not in exclusion list of particle with id {pid1}"):
@@ -250,6 +255,29 @@ class ParticleProperties(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, f"Particle with id {pid2} is already in exclusion list of particle with id {pid1}"):
             p1.add_exclusion(pid2)
             p1.add_exclusion(pid2)
+
+    @utx.skipIfMissingFeatures(["EXCLUSIONS"])
+    def test_update_exclusions(self):
+        pid1 = self.pid
+        pid2 = self.pid + 1
+
+        p1 = self.partcl
+        with self.assertRaisesRegex(RuntimeError, rf"Particles cannot exclude themselves \(id {self.pid}\)"):
+            p1.update({"exclusions": pid1})
+        with self.assertRaisesRegex(RuntimeError, f"Particle with id {pid2} not found"):
+            p1.update({"exclusions": pid2})
+        for i in [-1, -3]:
+            with self.assertRaisesRegex(ValueError, f"Invalid particle id: {i}"):
+                p1.update({"exclusions": i})
+
+        self.system.part.add(id=pid2, pos=(0, 0, 0))
+        with self.assertRaisesRegex(RuntimeError, rf"Particles cannot exclude themselves \(id {self.pid}\)"):
+            p1.update({"exclusions": [pid1, pid2]})
+
+        p1.update({"exclusions": [pid2]})
+        self.assertEqual(p1.exclusions, [pid2])
+        p1.update({"exclusions": []})
+        self.assertTrue(p1.exclusions.size == 0)
 
     @utx.skipIfMissingFeatures(["ROTATION"])
     def test_contradicting_properties_quat(self):

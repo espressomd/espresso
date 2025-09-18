@@ -120,7 +120,7 @@ public:
         (propagation & PropagationMode::TRANS_LB_TRACER) == 0) {
       return false;
     }
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
     if ((propagation & PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE) == 0 and
         propagation & (PropagationMode::TRANS_VS_RELATIVE |
                        PropagationMode::ROT_VS_RELATIVE)) {

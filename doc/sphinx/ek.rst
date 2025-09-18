@@ -20,9 +20,9 @@ description of the interface.
 
 .. note::
 
-    Requires external features ``WALBERLA`` and optionally ``WALBERLA_FFT``
+    Requires external features ``WALBERLA`` and optionally ``FFTW``
     (for the FFT-based Poisson solver), enabled with the CMake options
-    ``-D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON``.
+    ``-D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_FFTW=ON``.
 
 .. _Electrokinetic equations:
 

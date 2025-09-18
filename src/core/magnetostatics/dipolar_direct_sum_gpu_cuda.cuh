@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLAR_DIRECT_SUM
+#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
 
 // simple 3-int struct for image shifts
 struct Int3 {
@@ -42,4 +42,4 @@ void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n, float *pos,
                                            float box_l[3], int periodic[3],
                                            int n_replicas);
 
-#endif // DIPOLAR_DIRECT_SUM
+#endif // ESPRESSO_DIPOLAR_DIRECT_SUM

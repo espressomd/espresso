@@ -22,6 +22,11 @@
 #include "sqr.hpp"
 #include "utils/device_qualifier.hpp"
 
+#if defined(__CUDACC__)
+#include <cfloat>
+#else
+#include <limits>
+#endif
 #include <stdexcept>
 
 namespace Utils {
@@ -30,9 +35,17 @@ template <int order, typename T>
 DEVICE_QUALIFIER auto bspline(int i, T x) -> T
   requires((order > 0) and (order <= 7))
 {
+#if defined(__CUDACC__)
+  // LCOV_EXCL_START
+  [[maybe_unused]] auto constexpr tolerance = T(6) * (T)(FLT_EPSILON);
+  // LCOV_EXCL_STOP
+#else
+  [[maybe_unused]] auto constexpr tolerance =
+      T(6) * std::numeric_limits<T>::epsilon();
+#endif
   DEVICE_ASSERT(i < order);
-  DEVICE_ASSERT(x >= T(-0.5));
-  DEVICE_ASSERT(x <= T(0.5));
+  DEVICE_ASSERT(x >= T(-0.5) or (T(-0.5) - x) < tolerance);
+  DEVICE_ASSERT(x <= T(0.5) or (x - T(0.5)) < tolerance);
 
   switch (order) {
   case 1:
@@ -176,42 +189,22 @@ DEVICE_QUALIFIER auto bspline(int i, T x) -> T
   return T{};
 }
 
-/**
- * @brief Calculate B-splines.
- * @param i knot number, using 0-based indexing
- * @param x position in the range (-0.5, 0.5)
- * @param k order of the B-spline, using 1-based indexing, i.e. a
- * B-spline of order @p k is a polynomial of degree <tt>k-1</tt>
- */
-template <class T> auto bspline(int i, T x, int k) {
-  switch (k) {
-  case 1:
-    return bspline<1>(i, x);
-  case 2:
-    return bspline<2>(i, x);
-  case 3:
-    return bspline<3>(i, x);
-  case 4:
-    return bspline<4>(i, x);
-  case 5:
-    return bspline<5>(i, x);
-  case 6:
-    return bspline<6>(i, x);
-  case 7:
-    return bspline<7>(i, x);
-  }
-
-  return T(0.);
-}
-
 /** @brief Derivative of the B-spline. */
 template <int order, typename T = double>
 DEVICE_QUALIFIER auto bspline_d(int i, T x) -> T
   requires((order > 0) and (order <= 7))
 {
+#if defined(__CUDACC__)
+  // LCOV_EXCL_START
+  [[maybe_unused]] auto constexpr tolerance = T(6) * (T)(FLT_EPSILON);
+  // LCOV_EXCL_STOP
+#else
+  [[maybe_unused]] auto constexpr tolerance =
+      T(6) * std::numeric_limits<T>::epsilon();
+#endif
   DEVICE_ASSERT(i < order);
-  DEVICE_ASSERT(x >= T(-0.5));
-  DEVICE_ASSERT(x <= T(0.5));
+  DEVICE_ASSERT(x >= T(-0.5) or (T(-0.5) - x) < tolerance);
+  DEVICE_ASSERT(x <= T(0.5) or (x - T(0.5)) < tolerance);
 
   switch (order - 1) {
   case 0:

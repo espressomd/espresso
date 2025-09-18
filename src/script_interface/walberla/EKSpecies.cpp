@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "EKSpecies.hpp"
 #include "EKWalberlaNodeState.hpp"
@@ -45,6 +45,7 @@ namespace ScriptInterface::walberla {
 
 std::unordered_map<std::string, int> const EKVTKHandle::obs_map = {
     {"density", static_cast<int>(EKOutputVTK::density)},
+    {"flux", static_cast<int>(EKOutputVTK::flux)},
 };
 
 Variant EKSpecies::do_call_method(std::string const &method,
@@ -87,7 +88,7 @@ Variant EKSpecies::do_call_method(std::string const &method,
   return Base::do_call_method(method, parameters);
 }
 
-void EKSpecies::make_instance(VariantMap const &params) {
+void EKSpeciesCPU::make_instance(VariantMap const &params) {
   auto const diffusion = get_value<double>(params, "diffusion");
   auto const ext_efield = get_value<Utils::Vector3d>(params, "ext_efield");
   auto const density = get_value<double>(params, "density");
@@ -96,7 +97,7 @@ void EKSpecies::make_instance(VariantMap const &params) {
   auto const ek_ext_efield = ext_efield * m_conv_ext_efield;
   auto const ek_density = density * m_conv_density;
   auto const ek_kT = kT * m_conv_energy;
-  m_instance = ::walberla::new_ek_walberla(
+  m_instance = ::walberla::new_ek_walberla_cpu(
       m_lattice->lattice(), ek_diffusion, ek_kT,
       get_value<double>(params, "valency"), ek_ext_efield, ek_density,
       get_value<bool>(params, "advection"),
@@ -106,6 +107,28 @@ void EKSpecies::make_instance(VariantMap const &params) {
       static_cast<uint>(get_value_or<int>(params, "seed", 0)));
   m_instance->ghost_communication();
 }
+
+#ifdef ESPRESSO_CUDA
+void EKSpeciesGPU::make_instance(VariantMap const &params) {
+  auto const diffusion = get_value<double>(params, "diffusion");
+  auto const ext_efield = get_value<Utils::Vector3d>(params, "ext_efield");
+  auto const density = get_value<double>(params, "density");
+  auto const kT = get_value<double>(params, "kT");
+  auto const ek_diffusion = diffusion * m_conv_diffusion;
+  auto const ek_ext_efield = ext_efield * m_conv_ext_efield;
+  auto const ek_density = density * m_conv_density;
+  auto const ek_kT = kT * m_conv_energy;
+  m_instance = ::walberla::new_ek_walberla_gpu(
+      m_lattice->lattice(), ek_diffusion, ek_kT,
+      get_value<double>(params, "valency"), ek_ext_efield, ek_density,
+      get_value<bool>(params, "advection"),
+      get_value<bool>(params, "friction_coupling"),
+      get_value<bool>(params, "single_precision"),
+      get_value_or<bool>(params, "thermalized", false),
+      static_cast<uint>(get_value_or<int>(params, "seed", 0)));
+  m_instance->ghost_communication();
+}
+#endif // ESPRESSO_CUDA
 
 void EKSpecies::do_construct(VariantMap const &params) {
   m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice");
@@ -305,4 +328,4 @@ void EKSpecies::save_checkpoint(std::filesystem::path const &path, int mode) {
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

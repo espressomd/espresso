@@ -50,7 +50,7 @@
 namespace ScriptInterface {
 namespace Particles {
 
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
 /**
  * @brief Use the bond topology to automatically add exclusions between
  * particles that are up to @c n_bonds_max bonds apart in a chain.
@@ -102,17 +102,16 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
         // NOLINTNEXTLINE(modernize-loop-convert)
         for (std::size_t i = 0u; i < partners[pid1].size(); ++i) {
           auto const [pid2, dist21] = partners[pid1][i];
-          if (dist21 > n_bonds_max)
-            continue;
+          assert(dist21 <= n_bonds_max);
           // loop over all partners of the partner
           // NOLINTNEXTLINE(modernize-loop-convert)
           for (std::size_t j = 0u; j < partners[pid2].size(); ++j) {
             auto const [pid3, dist32] = partners[pid2][j];
             auto const dist31 = dist32 + dist21;
-            if (dist31 > n_bonds_max)
-              continue;
-            add_partner(pid1, pid3, dist31);
-            add_partner(pid3, pid1, dist31);
+            if (dist31 <= n_bonds_max) {
+              add_partner(pid1, pid3, dist31);
+              add_partner(pid3, pid1, dist31);
+            }
           }
         }
       }
@@ -132,17 +131,17 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   }
   system.on_particle_change();
 }
-#endif // EXCLUSIONS
+#endif // ESPRESSO_EXCLUSIONS
 
 Variant ParticleList::do_call_method(std::string const &name,
                                      VariantMap const &params) {
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
   if (name == "auto_exclusions") {
     auto const distance = get_value<int>(params, "distance");
     auto_exclusions(context()->get_comm(), distance);
     return {};
   }
-#endif // EXCLUSIONS
+#endif // ESPRESSO_EXCLUSIONS
   if (name == "get_highest_particle_id") {
     return get_maximal_particle_id();
   }
@@ -183,11 +182,11 @@ Variant ParticleList::do_call_method(std::string const &name,
     local_params["__bonded_ias"] = m_bonded_ias.lock();
     auto so = std::dynamic_pointer_cast<ParticleHandle>(
         context()->make_shared("Particles::ParticleHandle", local_params));
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
     if (params.contains("exclusions")) {
       so->call_method("set_exclusions", {{"p_ids", params.at("exclusions")}});
     }
-#endif // EXCLUSIONS
+#endif // ESPRESSO_EXCLUSIONS
     return so;
   }
   return {};

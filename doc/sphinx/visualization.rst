@@ -301,7 +301,7 @@ distance of particle and mouse cursor).
 ZnDraw visualizer
 -----------------
 
-|es| supports the ZnDraw visualizer :cite:`elijosius24a` in Jupyter Notebooks.
+|es| supports the ZnDraw visualizer :cite:`elijosius25a` in Jupyter Notebooks.
 With ZnDraw [1]_, you can visualize your simulation live in a notebook or
 web browser.
 

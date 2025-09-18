@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <walberla_bridge/Architecture.hpp>
+
 #include "generated_kernels/AdvectiveFluxKernel_double_precision.h"
 #include "generated_kernels/AdvectiveFluxKernel_single_precision.h"
 #include "generated_kernels/ContinuityKernel_double_precision.h"
@@ -31,6 +33,8 @@
 #include "generated_kernels/DiffusiveFluxKernelWithElectrostatic_single_precision.h"
 #include "generated_kernels/DiffusiveFluxKernel_double_precision.h"
 #include "generated_kernels/DiffusiveFluxKernel_single_precision.h"
+#include "generated_kernels/EK_FieldAccessors_double_precision.h"
+#include "generated_kernels/EK_FieldAccessors_single_precision.h"
 #include "generated_kernels/FrictionCouplingKernel_double_precision.h"
 #include "generated_kernels/FrictionCouplingKernel_single_precision.h"
 
@@ -41,7 +45,10 @@
 
 namespace walberla {
 namespace detail {
-template <typename FloatType = double> struct KernelTrait {
+
+using lbmpy::Arch;
+
+template <typename FT = double, Arch AT = Arch::CPU> struct KernelTrait {
   using ContinuityKernel = pystencils::ContinuityKernel_double_precision;
   using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_double_precision;
   using DiffusiveFluxKernelThermalized =
@@ -57,7 +64,7 @@ template <typename FloatType = double> struct KernelTrait {
   using Dirichlet = pystencils::Dirichlet_double_precision;
   using FixedFlux = pystencils::FixedFlux_double_precision;
 };
-template <> struct KernelTrait<float> {
+template <> struct KernelTrait<float, Arch::CPU> {
   using ContinuityKernel = pystencils::ContinuityKernel_single_precision;
   using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_single_precision;
   using DiffusiveFluxKernelThermalized =

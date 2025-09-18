@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
 
 #include "Actor.hpp"
 
@@ -31,10 +31,9 @@
 
 #include "script_interface/get_value.hpp"
 
-#include "boost/variant.hpp"
-
 #include <memory>
 #include <string>
+#include <variant>
 
 namespace ScriptInterface {
 namespace Coulomb {
@@ -43,17 +42,16 @@ class ElectrostaticLayerCorrection
     : public Actor<ElectrostaticLayerCorrection,
                    ::ElectrostaticLayerCorrection> {
 
-  using BaseSolver = boost::variant<
-#ifdef CUDA
+  using BaseSolver = std::variant<
+#ifdef ESPRESSO_CUDA
       std::shared_ptr<CoulombP3M<Arch::GPU>>,
-#endif // CUDA
+#endif // ESPRESSO_CUDA
       std::shared_ptr<CoulombP3M<Arch::CPU>>>;
   BaseSolver m_solver;
 
   void on_bind_system(::System::System &system) override {
-    boost::apply_visitor(
-        [this](auto &solver) { solver->bind_system(m_system.lock()); },
-        m_solver);
+    std::visit([this](auto &solver) { solver->bind_system(m_system.lock()); },
+               m_solver);
   }
 
 public:
@@ -77,8 +75,8 @@ public:
          [this]() { return actor()->elc.pot_diff; }},
         {"actor", AutoParameter::read_only,
          [this]() {
-           return boost::apply_visitor(
-               [](auto &solver) { return Variant{solver}; }, m_solver);
+           return std::visit([](auto &solver) { return Variant{solver}; },
+                             m_solver);
          }},
     });
   }
@@ -87,13 +85,13 @@ public:
     ::ElectrostaticLayerCorrection::BaseSolver solver;
     auto so_ptr = get_value<ObjectRef>(params, "actor");
     context()->parallel_try_catch([&]() {
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
       if (auto so = std::dynamic_pointer_cast<CoulombP3M<Arch::GPU>>(so_ptr)) {
         solver = so->actor();
         m_solver = so;
         return;
       }
-#endif // CUDA
+#endif // ESPRESSO_CUDA
       if (auto so = std::dynamic_pointer_cast<CoulombP3M<Arch::CPU>>(so_ptr)) {
         solver = so->actor();
         m_solver = so;
@@ -122,4 +120,4 @@ public:
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // P3M
+#endif // ESPRESSO_P3M

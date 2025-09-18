@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef H5MD
+#ifdef ESPRESSO_H5MD
 
 #include "h5md.hpp"
 
@@ -66,7 +66,7 @@ void H5md::do_construct(VariantMap const &params) {
           "length_unit", "time_unit", "force_unit", "velocity_unit",
           "charge_unit", "chunk_size");
   // MPI communicator is needed to close parallel file handles
-  m_mpi_env_lock = ::Communication::mpiCallbacksHandle()->share_mpi_env();
+  m_mpi_env_lock = ::communication_environment->get_mpi_env();
 }
 
 H5md::~H5md() {
@@ -97,4 +97,4 @@ Variant H5md::do_call_method(const std::string &name,
 } // namespace Writer
 } // namespace ScriptInterface
 
-#endif // H5MD
+#endif // ESPRESSO_H5MD

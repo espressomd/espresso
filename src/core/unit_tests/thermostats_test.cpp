@@ -48,7 +48,7 @@ Particle particle_factory() {
   Particle p{};
   p.id() = 0;
   p.force() = {1.0, 2.0, 3.0};
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   p.torque() = 4.0 * p.force();
 #endif
   return p;
@@ -56,12 +56,12 @@ Particle particle_factory() {
 
 template <typename T, typename... Args> T thermostat_factory(Args... args) {
   T thermostat = T{};
-#ifdef PARTICLE_ANISOTROPY
+#ifdef ESPRESSO_PARTICLE_ANISOTROPY
   thermostat.gamma = {3.0, 5.0, 7.0};
 #else
   thermostat.gamma = 2.0;
 #endif
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   thermostat.gamma_rotation = 3.0 * thermostat.gamma;
 #endif
   thermostat.rng_initialize(0);
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
     BOOST_CHECK_CLOSE(out[2], ref[2], tol);
   }
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   auto const dispersion_rotation =
       hadamard_division(particle_factory().torque(), brownian.gamma_rotation);
 
@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
     BOOST_CHECK_CLOSE(out[1], ref[1], tol);
     BOOST_CHECK_CLOSE(out[2], ref[2], tol);
   }
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION
 }
 
 BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
     BOOST_CHECK_CLOSE(out[2], ref[2], tol);
   }
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   /* check rotation */
   {
     auto p = particle_factory();
@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
     BOOST_CHECK_CLOSE(out[1], ref[1], tol);
     BOOST_CHECK_CLOSE(out[2], ref[2], tol);
   }
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION
 }
 
 BOOST_AUTO_TEST_CASE(test_noise_statistics) {
@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_randomness) {
   constexpr std::size_t const sample_size = 10'000;
   auto thermostat = thermostat_factory<BrownianThermostat>(kT);
   auto p = particle_factory();
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   p.set_can_rotate_all_axes();
   constexpr std::size_t N = 4;
 #else
@@ -270,7 +270,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_randomness) {
         return {{
             bd_random_walk(thermostat, p, time_step, kT),
             bd_random_walk_vel(thermostat, p),
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
             bd_random_walk_rot(thermostat, p, time_step, kT),
             bd_random_walk_vel_rot(thermostat, p),
 #endif
@@ -290,7 +290,7 @@ BOOST_AUTO_TEST_CASE(test_langevin_randomness) {
   constexpr std::size_t const sample_size = 10'000;
   auto thermostat = thermostat_factory<LangevinThermostat>(kT, time_step);
   auto p = particle_factory();
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   constexpr std::size_t N = 2;
 #else
   constexpr std::size_t N = 1;
@@ -301,7 +301,7 @@ BOOST_AUTO_TEST_CASE(test_langevin_randomness) {
         thermostat.rng_increment();
         return {{
             friction_thermo_langevin(thermostat, p, time_step, kT),
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
             friction_thermo_langevin_rotation(thermostat, p, time_step, kT),
 #endif
         }};
@@ -314,7 +314,7 @@ BOOST_AUTO_TEST_CASE(test_langevin_randomness) {
   }
 }
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
   constexpr double time_step = 1.0;
   constexpr double kT = 2.0;
@@ -341,7 +341,7 @@ BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
     }
   }
 }
-#endif // NPT
+#endif // ESPRESSO_NPT
 
 BOOST_AUTO_TEST_CASE(test_predicate) {
   std::vector<std::vector<double>> const correlation = {{1., 0.}, {0., 1.}};

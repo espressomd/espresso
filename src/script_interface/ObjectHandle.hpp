@@ -21,6 +21,7 @@
 
 #include "Variant.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -101,6 +102,11 @@ public:
    * @return Expected parameters.
    */
   virtual std::vector<std::string_view> valid_parameters() const { return {}; }
+
+  virtual bool has_parameter(std::string const &needle) const {
+    auto const names = valid_parameters();
+    return std::ranges::find(names, std::string_view{needle}) != names.end();
+  }
 
   /**
    * @brief Get single parameter.

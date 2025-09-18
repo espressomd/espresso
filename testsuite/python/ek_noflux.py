@@ -26,8 +26,7 @@ import espressomd.shapes
 import espressomd.electrokinetics
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
-class EKNoFlux(ut.TestCase):
+class EKTest:
     BOX_L = 15.
     AGRID = 1.0
     DENSITY = 1
@@ -58,7 +57,7 @@ class EKNoFlux(ut.TestCase):
         lattice = espressomd.electrokinetics.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = espressomd.electrokinetics.EKSpecies(
+        ekspecies = self.ek_species_class(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             valency=0.0, advection=False, friction_coupling=False,
             single_precision=single_precision, tau=1.0)
@@ -100,6 +99,17 @@ class EKNoFlux(ut.TestCase):
             np.sum(domain_density), self.DENSITY, decimal_precision)
         np.testing.assert_array_less(
             0., domain_density, "EK density array contains negative densities!")
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKNoFluxCPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKNoFluxGPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
 
 
 if __name__ == "__main__":

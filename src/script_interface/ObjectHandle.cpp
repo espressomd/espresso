@@ -29,6 +29,7 @@
 #include <instrumentation/fe_trap.hpp>
 
 #include <utils/serialization/pack.hpp>
+#include <utils/serialization/variant.hpp>
 
 #include <algorithm>
 #include <iterator>
@@ -37,6 +38,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 
 namespace ScriptInterface {
 void ObjectHandle::set_parameter(const std::string &name,
@@ -44,7 +46,7 @@ void ObjectHandle::set_parameter(const std::string &name,
   if (m_context)
     m_context->notify_set_parameter(this, name, value);
 
-#ifdef FPE
+#ifdef ESPRESSO_FPE
   auto const trap = fe_trap::make_shared_scoped();
 #endif
   this->do_set_parameter(name, value);
@@ -55,7 +57,7 @@ Variant ObjectHandle::call_method(const std::string &name,
   if (m_context)
     m_context->notify_call_method(this, name, params);
 
-#ifdef FPE
+#ifdef ESPRESSO_FPE
   auto const trap = fe_trap::make_shared_scoped();
 #endif
   return this->do_call_method(name, params);
@@ -67,18 +69,18 @@ std::string ObjectHandle::serialize() const {
   auto const params = serialize_parameters();
   state.params.reserve(params.size());
 
-  PackVisitor visit;
+  PackVisitor visitor;
 
   /* Pack parameters and keep track of ObjectRef parameters */
   std::ranges::transform(params, std::back_inserter(state.params),
-                         [&visit](auto const &kv) -> PackedMap::value_type {
+                         [&visitor](auto const &kv) -> PackedMap::value_type {
                            auto const &[name, value] = kv;
-                           return {name, boost::apply_visitor(visit, value)};
+                           return {name, std::visit(visitor, value)};
                          });
 
   /* Packed Object parameters */
-  state.objects.reserve(visit.objects().size());
-  std::ranges::transform(visit.objects(), std::back_inserter(state.objects),
+  state.objects.reserve(visitor.objects().size());
+  std::ranges::transform(visitor.objects(), std::back_inserter(state.objects),
                          [](auto const &kv) {
                            auto const &[name, obj] = kv;
                            return std::make_pair(name, obj->serialize());
@@ -103,7 +105,7 @@ ObjectRef ObjectHandle::deserialize(const std::string &packed_state,
 
   VariantMap params;
   for (auto const &[name, variant] : state.params) {
-    params[name] = boost::apply_visitor(UnpackVisitor(objects), variant);
+    params[name] = std::visit(UnpackVisitor(objects), variant);
   }
 
   auto o = ctx.make_shared(state.name, params);

@@ -19,7 +19,7 @@
 
 #include <config/config.hpp>
 
-#ifdef FPE
+#ifdef ESPRESSO_FPE
 
 #include <instrumentation/fe_trap.hpp>
 
@@ -136,4 +136,4 @@ fe_trap::make_shared_scoped(std::optional<int> excepts) {
   return fe_trap::scoped_instance(watched);
 }
 
-#endif // FPE
+#endif // ESPRESSO_FPE

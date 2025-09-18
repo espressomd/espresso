@@ -50,25 +50,25 @@ bool is_valid_propagation_combination(int propagation) {
     return force_code_coverage(true);
   case TRANS_LANGEVIN:
     return force_code_coverage(true);
-#ifdef NPT
+#ifdef ESPRESSO_NPT
   case TRANS_LANGEVIN_NPT:
     return force_code_coverage(true);
 #endif
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   case ROT_EULER:
     return force_code_coverage(true);
   case ROT_BROWNIAN:
     return force_code_coverage(true);
   case ROT_LANGEVIN:
     return force_code_coverage(true);
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION
   case TRANS_LB_MOMENTUM_EXCHANGE:
     return force_code_coverage(true);
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+#ifdef ESPRESSO_VIRTUAL_SITES_INERTIALESS_TRACERS
   case TRANS_LB_TRACER:
     return force_code_coverage(true);
 #endif
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   // same mode for translation and rotation
   case TRANS_NEWTON | ROT_EULER:
     return force_code_coverage(true);
@@ -76,7 +76,7 @@ bool is_valid_propagation_combination(int propagation) {
     return force_code_coverage(true);
   case TRANS_BROWNIAN | ROT_BROWNIAN:
     return force_code_coverage(true);
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
   case TRANS_STOKESIAN | ROT_STOKESIAN:
     return force_code_coverage(true);
 #endif
@@ -85,7 +85,7 @@ bool is_valid_propagation_combination(int propagation) {
     return force_code_coverage(true);
   case TRANS_LB_MOMENTUM_EXCHANGE | ROT_LANGEVIN:
     return force_code_coverage(true);
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   case TRANS_VS_RELATIVE | ROT_VS_RELATIVE:
     return force_code_coverage(true);
   case TRANS_VS_RELATIVE | ROT_VS_RELATIVE | TRANS_LB_MOMENTUM_EXCHANGE:
@@ -95,8 +95,8 @@ bool is_valid_propagation_combination(int propagation) {
   case TRANS_VS_RELATIVE | ROT_VS_RELATIVE | TRANS_LB_MOMENTUM_EXCHANGE |
       ROT_LANGEVIN:
     return force_code_coverage(true);
-#endif // VIRTUAL_SITES_RELATIVE
-#endif // ROTATION
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_ROTATION
   }
   return force_code_coverage(false);
 }

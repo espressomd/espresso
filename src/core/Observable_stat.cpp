@@ -41,12 +41,12 @@ Observable_stat::Observable_stat(std::size_t chunk_size, std::size_t n_bonded,
   // number of chunks for different interaction types
   constexpr std::size_t n_coulomb = 2;
   constexpr std::size_t n_dipolar = 2;
-#ifdef VIRTUAL_SITES
+#ifdef ESPRESSO_VIRTUAL_SITES
   constexpr std::size_t n_vs = 1;
 #else
   constexpr std::size_t n_vs = 0;
 #endif
-#ifdef DPD
+#ifdef ESPRESSO_DPD
   constexpr std::size_t n_dpd = 1;
 #else
   constexpr std::size_t n_dpd = 0;

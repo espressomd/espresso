@@ -50,8 +50,6 @@
 
 namespace Communication {
 
-class MpiCallbacks;
-
 namespace detail {
 /**
  * @brief Check if a type can be used as a callback argument.
@@ -440,10 +438,6 @@ public:
    * @brief The boost mpi communicator used by this instance
    */
   boost::mpi::communicator const &comm() const { return m_comm; }
-
-  std::shared_ptr<boost::mpi::environment> share_mpi_env() const {
-    return m_mpi_env;
-  }
 
 private:
   /**

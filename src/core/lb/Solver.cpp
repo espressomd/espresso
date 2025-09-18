@@ -30,7 +30,7 @@
 #include "system/System.hpp"
 #include "thermostat.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 #endif
 
@@ -320,7 +320,7 @@ template <> void Solver::set<LBNone>(std::shared_ptr<LBNone> lb_instance) {
   impl->solver = lb_instance;
 }
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 template <>
 void Solver::set<LBWalberla>(std::shared_ptr<LBWalberlaBase> lb_fluid,
                              std::shared_ptr<LBWalberlaParams> lb_params) {
@@ -336,6 +336,6 @@ void Solver::set<LBWalberla>(std::shared_ptr<LBWalberlaBase> lb_fluid,
   auto const tau = lb_instance->get_tau();
   m_conv = Conversions{1. / agrid, agrid / tau, tau * tau / agrid};
 }
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA
 
 } // namespace LB

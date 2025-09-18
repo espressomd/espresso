@@ -125,14 +125,14 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   REGISTER_PID_OBS(ParticleVelocities);
   REGISTER_PID_OBS(ParticleForces);
   REGISTER_PID_OBS(ParticleBodyVelocities);
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   REGISTER_PID_OBS(ParticleAngularVelocities);
   REGISTER_PID_OBS(ParticleBodyAngularVelocities);
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   REGISTER_PID_OBS(DipoleMoment);
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   REGISTER_PID_OBS(MagneticDipoleMoment);
 #endif
   REGISTER_PID_OBS(ComPosition);
@@ -150,7 +150,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   REGISTER_CYLPID_PROFILE_OBS(CylindricalFluxDensityProfile);
   REGISTER_PAIRWISE_DISTANCES(PairwiseDistances);
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
   REGISTER(DPDStress)
 #endif
   REGISTER(LBFluidPressureTensor);

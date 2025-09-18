@@ -116,6 +116,10 @@ protected:
   }
   ~AutoParameters() override = default;
 
+  bool has_parameter(std::string const &name) const override {
+    return m_parameters.contains(name);
+  }
+
   void add_parameters(std::vector<AutoParameter> &&params) {
     for (auto const &p : params) {
       if (m_parameters.contains(p.name)) {
