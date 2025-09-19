@@ -167,7 +167,7 @@ struct ParticleProperties {
   } vs_relative;
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 
-// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
   /** 
    */
   struct VirtualSitesCenterOfMassParameters {
@@ -178,7 +178,7 @@ struct ParticleProperties {
       ar & to_molecule_id;
     }
   } vs_com;
-// #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
 /** Friction coefficient for translation */
@@ -241,9 +241,9 @@ struct ParticleProperties {
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
     ar & vs_relative;
 #endif
-// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
     ar & vs_com;
-// #endif
+#endif
 
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
     ar & gamma;
@@ -544,10 +544,10 @@ public:
   auto const &vs_relative() const { return p.vs_relative; }
   auto &vs_relative() { return p.vs_relative; }
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
-// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
   auto const &vs_com() const { return p.vs_com; }
   auto &vs_com() { return p.vs_com; }
-// #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   auto const &gamma() const { return p.gamma; }
   auto &gamma() { return p.gamma; }
@@ -630,10 +630,10 @@ BOOST_CLASS_IMPLEMENTATION(ParticleRattle, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(decltype(ParticleProperties::vs_relative),
                            object_serializable)
 #endif
-// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 BOOST_CLASS_IMPLEMENTATION(decltype(ParticleProperties::vs_com),
                            object_serializable)
-// #endif
+#endif
 
 #ifdef ESPRESSO_ENGINE
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleParametersSwimming)
@@ -649,6 +649,6 @@ BOOST_IS_BITWISE_SERIALIZABLE(ParticleRattle)
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 BOOST_IS_BITWISE_SERIALIZABLE(decltype(ParticleProperties::vs_relative))
 #endif
-// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 BOOST_IS_BITWISE_SERIALIZABLE(decltype(ParticleProperties::vs_com))
-// #endif
+#endif

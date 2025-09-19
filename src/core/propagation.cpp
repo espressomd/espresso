@@ -54,10 +54,10 @@ bool is_valid_propagation_combination(int propagation) {
   case TRANS_LANGEVIN_NPT:
     return force_code_coverage(true);
 #endif
-// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
   case TRANS_VS_CENTER_OF_MASS:
     return force_code_coverage(true);
-// #endif
+#endif
 #ifdef ESPRESSO_ROTATION
   case ROT_EULER:
     return force_code_coverage(true);

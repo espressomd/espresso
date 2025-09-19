@@ -492,12 +492,12 @@ ParticleHandle::ParticleHandle() {
                                       quat2vector(vs_rel.rel_orientation)}};
        }},
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
-// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
       {"vs_com",
        [this](Variant const &value) {
          ParticleProperties::VirtualSitesCenterOfMassParameters vs_com{};
          try {
-           auto const array = get_value<std::vector<Variant>>(value);
+           auto const array = get_value<std::vector<int>>(value);
            if (array.size() != 1) {
              throw 0;
            }
@@ -513,7 +513,7 @@ ParticleHandle::ParticleHandle() {
          auto const vs_com = get_particle_data(m_pid).vs_com();
          return std::vector<Variant>{{vs_com.to_molecule_id}};
        }},
-// #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
       {"propagation",
        [this](Variant const &value) {
          auto const propagation = get_value<int>(value);
@@ -738,7 +738,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
                   Variant{static_cast<int>(PropagationMode::TRANS_VS_RELATIVE |
                                            PropagationMode::ROT_VS_RELATIVE)});
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
-// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 } else if (name == "vs_com_auto_relate_to") {
   if (not context()->is_head_node()) {
       return {};
@@ -755,7 +755,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
                                  {other_molid}}});
   set_parameter("propagation",
                   Variant{static_cast<int>(PropagationMode::TRANS_VS_CENTER_OF_MASS)});
-// #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 #ifdef ESPRESSO_EXCLUSIONS
   } else if (name == "has_exclusion") {
     auto const other_pid = get_value<int>(params, "pid");

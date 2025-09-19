@@ -370,10 +370,10 @@ void System::System::calculate_forces() {
   }
 #endif
 // #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
-  if (propagation->used_propagations &
-      (PropagationMode::TRANS_VS_CENTER_OF_MASS)) {
-    vs_com_back_transfer_forces_and_torques(*cell_structure);
-  }
+//   if (propagation->used_propagations &
+//       (PropagationMode::TRANS_VS_CENTER_OF_MASS)) {
+//     vs_com_back_transfer_forces_and_torques(*cell_structure);
+//   }
 // #endif
 
   // Communication step: ghost forces

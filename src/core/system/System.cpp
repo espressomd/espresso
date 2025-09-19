@@ -362,9 +362,9 @@ void System::update_dependent_particles() {
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   vs_relative_update_particles(*cell_structure, *box_geo);
 #endif
-// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
   vs_com_update_particles(*cell_structure, *box_geo);
-// #endif
+#endif
   cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 #endif
 

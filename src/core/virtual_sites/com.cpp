@@ -19,7 +19,7 @@
  */
 
 #include "config/config.hpp"
-// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
@@ -127,4 +127,4 @@ void vs_com_back_transfer_forces_and_torques(
   });
 }
 
-// #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
