@@ -13,24 +13,22 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file StreamCollideSweepDoublePrecisionThermalizedCUDA.h
+//! \\file StreamCollideSweepThermalizedSinglePrecision.h
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7+4.gc7d65a7, sympy
-// v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit
-// 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
+// v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
+// waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #pragma once
 #include "core/DataTypes.h"
 #include "core/logging/Logging.h"
 
-#include "gpu/GPUField.h"
-#include "gpu/GPUWrapper.h"
-
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
 #include "domain_decomposition/StructuredBlockStorage.h"
+#include "field/GhostLayerField.h"
 #include "field/SwapableCompare.h"
 
 #include <functional>
@@ -54,11 +52,11 @@
 namespace walberla {
 namespace pystencils {
 
-class StreamCollideSweepDoublePrecisionThermalizedCUDA {
+class StreamCollideSweepThermalizedSinglePrecision {
 public:
-  StreamCollideSweepDoublePrecisionThermalizedCUDA(
-      BlockDataID forceID_, BlockDataID pdfsID_, double kT, double omega_bulk,
-      double omega_even, double omega_odd, double omega_shear, uint32_t seed,
+  StreamCollideSweepThermalizedSinglePrecision(
+      BlockDataID forceID_, BlockDataID pdfsID_, float kT, float omega_bulk,
+      float omega_even, float omega_odd, float omega_shear, uint32_t seed,
       uint32_t time_step)
       : forceID(forceID_), pdfsID(pdfsID_), kT_(kT), omega_bulk_(omega_bulk),
         omega_even_(omega_even), omega_odd_(omega_odd),
@@ -66,53 +64,44 @@ public:
         block_offset_0_(uint32_t(0)), block_offset_1_(uint32_t(0)),
         block_offset_2_(uint32_t(0)), configured_(false) {}
 
-  ~StreamCollideSweepDoublePrecisionThermalizedCUDA() {
+  ~StreamCollideSweepThermalizedSinglePrecision() {
     for (auto p : cache_pdfs_) {
       delete p.second;
     }
   }
 
-  void run(IBlock *block, gpuStream_t stream = nullptr);
+  void run(IBlock *block);
 
   void runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
                          const CellInterval &globalCellInterval,
-                         cell_idx_t ghostLayers, IBlock *block,
-                         gpuStream_t stream = nullptr);
+                         cell_idx_t ghostLayers, IBlock *block);
 
-  void operator()(IBlock *block, gpuStream_t stream = nullptr) {
-    run(block, stream);
-  }
+  void operator()(IBlock *block) { run(block); }
 
-  static std::function<void(IBlock *)>
-  getSweep(const shared_ptr<StreamCollideSweepDoublePrecisionThermalizedCUDA>
-               &kernel) {
+  static std::function<void(IBlock *)> getSweep(
+      const shared_ptr<StreamCollideSweepThermalizedSinglePrecision> &kernel) {
     return [kernel](IBlock *b) { kernel->run(b); };
   }
 
-  static std::function<void(IBlock *, gpuStream_t)> getSweepOnCellInterval(
-      const shared_ptr<StreamCollideSweepDoublePrecisionThermalizedCUDA>
-          &kernel,
+  static std::function<void(IBlock *)> getSweepOnCellInterval(
+      const shared_ptr<StreamCollideSweepThermalizedSinglePrecision> &kernel,
       const shared_ptr<StructuredBlockStorage> &blocks,
       const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
-    return [kernel, blocks, globalCellInterval,
-            ghostLayers](IBlock *b, gpuStream_t stream = nullptr) {
-      kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b,
-                                stream);
+    return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
+      kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
     };
   }
 
-  std::function<void(IBlock *)> getSweep(gpuStream_t stream = nullptr) {
-    return [this, stream](IBlock *b) { this->run(b, stream); };
+  std::function<void(IBlock *)> getSweep() {
+    return [this](IBlock *b) { this->run(b); };
   }
 
   std::function<void(IBlock *)>
   getSweepOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks,
                          const CellInterval &globalCellInterval,
-                         cell_idx_t ghostLayers = 1,
-                         gpuStream_t stream = nullptr) {
-    return [this, blocks, globalCellInterval, ghostLayers, stream](IBlock *b) {
-      this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b,
-                              stream);
+                         cell_idx_t ghostLayers = 1) {
+    return [this, blocks, globalCellInterval, ghostLayers](IBlock *b) {
+      this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
     };
   }
 
@@ -128,11 +117,11 @@ public:
   inline uint32_t getBlock_offset_0() const { return block_offset_0_; }
   inline uint32_t getBlock_offset_1() const { return block_offset_1_; }
   inline uint32_t getBlock_offset_2() const { return block_offset_2_; }
-  inline double getKt() const { return kT_; }
-  inline double getOmega_bulk() const { return omega_bulk_; }
-  inline double getOmega_even() const { return omega_even_; }
-  inline double getOmega_odd() const { return omega_odd_; }
-  inline double getOmega_shear() const { return omega_shear_; }
+  inline float getKt() const { return kT_; }
+  inline float getOmega_bulk() const { return omega_bulk_; }
+  inline float getOmega_even() const { return omega_even_; }
+  inline float getOmega_odd() const { return omega_odd_; }
+  inline float getOmega_shear() const { return omega_shear_; }
   inline uint32_t getSeed() const { return seed_; }
   inline uint32_t getTime_step() const { return time_step_; }
   inline void setBlock_offset_0(const uint32_t value) {
@@ -144,11 +133,11 @@ public:
   inline void setBlock_offset_2(const uint32_t value) {
     block_offset_2_ = value;
   }
-  inline void setKt(const double value) { kT_ = value; }
-  inline void setOmega_bulk(const double value) { omega_bulk_ = value; }
-  inline void setOmega_even(const double value) { omega_even_ = value; }
-  inline void setOmega_odd(const double value) { omega_odd_ = value; }
-  inline void setOmega_shear(const double value) { omega_shear_ = value; }
+  inline void setKt(const float value) { kT_ = value; }
+  inline void setOmega_bulk(const float value) { omega_bulk_ = value; }
+  inline void setOmega_even(const float value) { omega_even_ = value; }
+  inline void setOmega_odd(const float value) { omega_odd_ = value; }
+  inline void setOmega_shear(const float value) { omega_shear_ = value; }
   inline void setSeed(const uint32_t value) { seed_ = value; }
   inline void setTime_step(const uint32_t value) { time_step_ = value; }
 
@@ -158,14 +147,14 @@ private:
   uint32_t block_offset_0_;
   uint32_t block_offset_1_;
   uint32_t block_offset_2_;
-  double kT_;
-  double omega_bulk_;
-  double omega_even_;
-  double omega_odd_;
-  double omega_shear_;
+  float kT_;
+  float omega_bulk_;
+  float omega_even_;
+  float omega_odd_;
+  float omega_shear_;
   uint32_t seed_;
   uint32_t time_step_;
-  std::unordered_map<IBlock *, gpu::GPUField<double> *> cache_pdfs_;
+  std::unordered_map<IBlock *, field::GhostLayerField<float, 19> *> cache_pdfs_;
 
   bool configured_;
 };

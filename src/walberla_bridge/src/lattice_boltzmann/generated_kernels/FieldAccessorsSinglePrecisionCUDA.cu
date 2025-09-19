@@ -889,7 +889,8 @@ float get(
   kernel.addParam(dev_data_ptr);
   kernel.addParam(density);
   kernel();
-  float rho = dev_data[0u];
+  float rho{};
+  thrust::copy(dev_data.begin(), dev_data.end(), &rho);
   return rho;
 }
 

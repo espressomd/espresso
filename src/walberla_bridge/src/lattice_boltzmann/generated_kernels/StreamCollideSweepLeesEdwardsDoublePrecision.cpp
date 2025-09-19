@@ -13,15 +13,15 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file StreamCollideSweepDoublePrecisionLeesEdwards.cpp
+//! \\file StreamCollideSweepLeesEdwardsDoublePrecision.cpp
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7+4.gc7d65a7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #include <cmath>
 
-#include "StreamCollideSweepDoublePrecisionLeesEdwards.h"
+#include "StreamCollideSweepLeesEdwardsDoublePrecision.h"
 #include "core/DataTypes.h"
 #include "core/Macros.h"
 
@@ -45,8 +45,8 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_654880d20ef2a4dee16898b514dd6bf5 {
-static FUNC_PREFIX void streamcollidesweepdoubleprecisionleesedwards_streamcollidesweepdoubleprecisionleesedwards(double *RESTRICT const _data_force, double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_0, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_0, int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2, int64_t const _stride_pdfs_tmp_3, double grid_size, double omega_shear, double v_s) {
+namespace internal_1215ae06312aaf63d726636be94fdda3 {
+static FUNC_PREFIX void streamcollidesweepleesedwardsdoubleprecision_streamcollidesweepleesedwardsdoubleprecision(double *RESTRICT const _data_force, double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_0, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_0, int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2, int64_t const _stride_pdfs_tmp_3, double grid_size, double omega_shear, double v_s) {
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
@@ -118,9 +118,9 @@ static FUNC_PREFIX void streamcollidesweepdoubleprecisionleesedwards_streamcolli
     }
   }
 }
-} // namespace internal_654880d20ef2a4dee16898b514dd6bf5
+} // namespace internal_1215ae06312aaf63d726636be94fdda3
 
-void StreamCollideSweepDoublePrecisionLeesEdwards::run(IBlock *block) {
+void StreamCollideSweepLeesEdwardsDoublePrecision::run(IBlock *block) {
 
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
@@ -167,11 +167,11 @@ void StreamCollideSweepDoublePrecisionLeesEdwards::run(IBlock *block) {
   const int64_t _stride_pdfs_tmp_1 = int64_t(pdfs_tmp->yStride());
   const int64_t _stride_pdfs_tmp_2 = int64_t(pdfs_tmp->zStride());
   const int64_t _stride_pdfs_tmp_3 = int64_t(1 * int64_t(pdfs_tmp->fStride()));
-  internal_654880d20ef2a4dee16898b514dd6bf5::streamcollidesweepdoubleprecisionleesedwards_streamcollidesweepdoubleprecisionleesedwards(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, grid_size, omega_shear, v_s);
+  internal_1215ae06312aaf63d726636be94fdda3::streamcollidesweepleesedwardsdoubleprecision_streamcollidesweepleesedwardsdoubleprecision(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, grid_size, omega_shear, v_s);
   pdfs->swapDataPointers(pdfs_tmp);
 }
 
-void StreamCollideSweepDoublePrecisionLeesEdwards::runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks, const CellInterval &globalCellInterval, cell_idx_t ghostLayers, IBlock *block) {
+void StreamCollideSweepLeesEdwardsDoublePrecision::runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks, const CellInterval &globalCellInterval, cell_idx_t ghostLayers, IBlock *block) {
 
   CellInterval ci = globalCellInterval;
   CellInterval blockBB = blocks->getBlockCellBB(*block);
@@ -232,7 +232,7 @@ void StreamCollideSweepDoublePrecisionLeesEdwards::runOnCellInterval(const share
   const int64_t _stride_pdfs_tmp_1 = int64_t(pdfs_tmp->yStride());
   const int64_t _stride_pdfs_tmp_2 = int64_t(pdfs_tmp->zStride());
   const int64_t _stride_pdfs_tmp_3 = int64_t(1 * int64_t(pdfs_tmp->fStride()));
-  internal_654880d20ef2a4dee16898b514dd6bf5::streamcollidesweepdoubleprecisionleesedwards_streamcollidesweepdoubleprecisionleesedwards(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, grid_size, omega_shear, v_s);
+  internal_1215ae06312aaf63d726636be94fdda3::streamcollidesweepleesedwardsdoubleprecision_streamcollidesweepleesedwardsdoubleprecision(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, grid_size, omega_shear, v_s);
   pdfs->swapDataPointers(pdfs_tmp);
 }
 

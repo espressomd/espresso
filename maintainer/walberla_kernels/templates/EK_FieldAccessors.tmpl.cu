@@ -152,7 +152,8 @@ namespace Scalar
         kernel.addFieldIndexingParam( gpu::FieldIndexing< {{dtype}} >::interval( *scalar_field, ci ) );
         kernel.addParam( dev_data_ptr );
         kernel();
-        {{dtype}} result = dev_data[0u];
+        {{dtype}} result{};
+        thrust::copy(dev_data.begin(), dev_data.end(), &result);
         return result;
     }
 

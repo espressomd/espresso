@@ -18,11 +18,6 @@
  */
 #define BOOST_TEST_MODULE "Poisson Solver FFT test"
 #define BOOST_TEST_DYN_LINK
-
-#include <config/config.hpp>
-
-#ifdef ESPRESSO_WALBERLA
-
 #define BOOST_TEST_NO_MAIN
 
 #include <boost/test/data/monomorphic.hpp>
@@ -40,6 +35,10 @@
 #include <waLBerlaDefinitions.h>
 
 #include <boost/mpl/list.hpp>
+
+#if __has_include(<heffte.h>)
+#define HAS_HEFFTE
+#endif
 
 #if defined(WALBERLA_BUILD_WITH_CUDA)
 #include <cuda_runtime_api.h>
@@ -176,7 +175,9 @@ BOOST_AUTO_TEST_CASE(ek_poisson_solver_none) {
 using test_types = boost::mpl::list<float, double>;
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(ek_poisson_solver_fft, FT, test_types) {
+#if defined(HAS_HEFFTE)
   Fixture<FT, lbmpy::Arch::CPU>().runTest();
+#endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -186,7 +187,7 @@ BOOST_AUTO_TEST_SUITE(suite_cuda, *boost::unit_test::precondition(has_gpu))
 using test_types = boost::mpl::list<float, double>;
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(ek_poisson_solver_fft_cuda, FT, test_types) {
-#if defined(WALBERLA_BUILD_WITH_CUDA)
+#if defined(HAS_HEFFTE) and defined(WALBERLA_BUILD_WITH_CUDA)
   Fixture<FT, lbmpy::Arch::GPU>().runTest();
 #endif
 }
@@ -220,7 +221,3 @@ int main(int argc, char **argv) {
   MPI_Finalize();
   return res;
 }
-
-#else // ESPRESSO_WALBERLA
-int main(int argc, char **argv) {}
-#endif

@@ -36,10 +36,10 @@
 #include "generated_kernels/UpdateVelFromPDFDoublePrecisionCUDA.h"
 #include "generated_kernels/UpdateVelFromPDFSinglePrecisionCUDA.h"
 
-#include "generated_kernels/StreamCollideSweepDoublePrecisionLeesEdwardsCUDA.h"
-#include "generated_kernels/StreamCollideSweepDoublePrecisionThermalizedCUDA.h"
-#include "generated_kernels/StreamCollideSweepSinglePrecisionLeesEdwardsCUDA.h"
-#include "generated_kernels/StreamCollideSweepSinglePrecisionThermalizedCUDA.h"
+#include "generated_kernels/StreamCollideSweepLeesEdwardsDoublePrecisionCUDA.h"
+#include "generated_kernels/StreamCollideSweepLeesEdwardsSinglePrecisionCUDA.h"
+#include "generated_kernels/StreamCollideSweepThermalizedDoublePrecisionCUDA.h"
+#include "generated_kernels/StreamCollideSweepThermalizedSinglePrecisionCUDA.h"
 
 namespace walberla {
 namespace detail {
@@ -48,9 +48,9 @@ using lbmpy::Arch;
 
 template <> struct KernelTrait<double, Arch::GPU> {
   using StreamCollisionModelThermalized =
-      pystencils::StreamCollideSweepDoublePrecisionThermalizedCUDA;
+      pystencils::StreamCollideSweepThermalizedDoublePrecisionCUDA;
   using StreamCollisionModelLeesEdwards =
-      pystencils::StreamCollideSweepDoublePrecisionLeesEdwardsCUDA;
+      pystencils::StreamCollideSweepLeesEdwardsDoublePrecisionCUDA;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterDoublePrecisionCUDA;
   using UpdateVelFromPDF = pystencils::UpdateVelFromPDFDoublePrecisionCUDA;
   using PackInfoPdf = pystencils::PackInfoPdfDoublePrecisionCUDA;
@@ -59,9 +59,9 @@ template <> struct KernelTrait<double, Arch::GPU> {
 
 template <> struct KernelTrait<float, Arch::GPU> {
   using StreamCollisionModelThermalized =
-      pystencils::StreamCollideSweepSinglePrecisionThermalizedCUDA;
+      pystencils::StreamCollideSweepThermalizedSinglePrecisionCUDA;
   using StreamCollisionModelLeesEdwards =
-      pystencils::StreamCollideSweepSinglePrecisionLeesEdwardsCUDA;
+      pystencils::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterSinglePrecisionCUDA;
   using UpdateVelFromPDF = pystencils::UpdateVelFromPDFSinglePrecisionCUDA;
   using PackInfoPdf = pystencils::PackInfoPdfSinglePrecisionCUDA;

@@ -56,6 +56,7 @@ data_type_cpp = "double" if double_precision else "float"
 data_type_np = "float64" if double_precision else "float32"
 precision_suffix = pystencils_espresso.precision_suffix[double_precision]
 precision_rng = pystencils_espresso.precision_rng_modulo[double_precision]
+np2cpp_t = pystencils_espresso.numpy_types_to_cpp_types
 
 
 def patch_reaction_indexed_kernel(content: str, target_suffix) -> str:
@@ -116,7 +117,7 @@ dim: int = 3
 target: ps.enums.Target = ps.enums.Target.CPU
 if args.gpu:
     target = ps.enums.Target.GPU
-if args.kernels == "all":
+if args.kernels == "all" or args.kernels == ["all"]:
     args.kernels = kernel_codes
 flux_count: int = 3 ** dim // 2
 
@@ -271,7 +272,8 @@ with code_generation_context.CodeGeneration() as ctx:
         # pylint: disable=unused-argument
         def patch_boundary_header(content, processor_suffix):
             # replace real_t by actual floating-point type
-            return content.replace("real_t", data_type)
+            return content.replace("real_t", f"{np2cpp_t[data_type]}") \
+                          .replace("real_c", f"{np2cpp_t[data_type]}_c")
 
         def patch_boundary_kernel(content, processor_suffix):
             if processor_suffix in ["_CUDA"]:

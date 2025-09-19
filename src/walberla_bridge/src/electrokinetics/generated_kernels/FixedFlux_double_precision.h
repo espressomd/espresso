@@ -81,7 +81,9 @@ public:
     }
 
     CpuIndexVector &indexVector(Type t) { return cpuVectors_[t]; }
-    IndexInfo *pointerCpu(Type t) { return cpuVectors_[t].data(); }
+    IndexInfo *pointerCpu(Type t) {
+      return cpuVectors_[t].empty() ? nullptr : cpuVectors_[t].data();
+    }
 
     void syncGPU() {}
 
@@ -176,11 +178,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -197,11 +199,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -218,11 +220,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -239,11 +241,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -260,11 +262,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -281,11 +283,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -302,11 +304,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -323,11 +325,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -344,11 +346,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -365,11 +367,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -386,11 +388,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -407,11 +409,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -428,11 +430,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -449,11 +451,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -470,11 +472,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -491,11 +493,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -512,11 +514,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -533,11 +535,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -554,11 +556,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -575,11 +577,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -596,11 +598,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -617,11 +619,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -638,11 +640,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -659,11 +661,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -680,11 +682,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -701,11 +703,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 
@@ -722,11 +724,11 @@ public:
         element.flux_0 = InitialisatonAdditionalData[0];
         element.flux_1 = InitialisatonAdditionalData[1];
         element.flux_2 = InitialisatonAdditionalData[2];
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 

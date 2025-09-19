@@ -18,11 +18,6 @@
  */
 #define BOOST_TEST_MODULE EK walberla node setters and getters test
 #define BOOST_TEST_DYN_LINK
-
-#include <config/config.hpp>
-
-#ifdef ESPRESSO_WALBERLA
-
 #define BOOST_TEST_NO_MAIN
 
 #include <boost/test/data/monomorphic.hpp>
@@ -593,7 +588,3 @@ int main(int argc, char **argv) {
   MPI_Finalize();
   return res;
 }
-
-#else // ESPRESSO_WALBERLA
-int main(int argc, char **argv) {}
-#endif

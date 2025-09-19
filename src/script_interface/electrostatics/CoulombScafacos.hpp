@@ -25,7 +25,6 @@
 
 #include "Actor.hpp"
 
-#include "core/MpiCallbacks.hpp"
 #include "core/communication.hpp"
 #include "core/electrostatics/scafacos.hpp"
 #include "core/scafacos/ScafacosContextBase.hpp"
