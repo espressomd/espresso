@@ -22,7 +22,7 @@ include(espresso_unit_test)
 function(ESPRESSO_ADD_TEST)
   cmake_parse_arguments(TEST "" "SRC;NAME;NUM_PROC;NUM_THREADS" "DEPENDS"
                         ${ARGN})
-  espresso_unit_test_make_name(SRC ${TEST_SRC} NAME ${TEST_NAME})
+  espresso_unit_test_make_name(${ARGV})
   espresso_unit_test(
     SRC
     ${TEST_SRC}
@@ -73,7 +73,6 @@ espresso_add_test(SRC LBWalberlaImpl_field_accessors_tests.cpp DEPENDS
 if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
   set_source_files_properties(LBWalberlaImpl_field_accessors_tests.cpp
                               PROPERTIES LANGUAGE CUDA)
-  espresso_add_test(
-    SRC LBWalberlaImpl_field_accessors_tests.cpp NAME
-    LBWalberlaImpl_field_accessors_tests_cuda DEPENDS Boost::mpi CUDA::cudart)
+  espresso_add_test(SRC LBWalberlaImpl_field_accessors_tests.cpp SUFFIX cuda
+                    DEPENDS Boost::mpi CUDA::cudart)
 endif()

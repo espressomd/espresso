@@ -20,6 +20,9 @@
 include(espresso_resource_files)
 
 add_custom_target(espressomd)
+if(TARGET espresso_packaging_dependencies)
+  add_dependencies(espresso_packaging_dependencies espressomd)
+endif()
 
 file(GLOB cython_SRC *.pyx)
 file(GLOB cython_HEADER *.pxd)

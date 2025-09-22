@@ -333,6 +333,7 @@ if(ESPRESSO_BUILD_WITH_PYTHON)
   endif()
   # override: package C++, CUDA and Cython shared objects together
   set(ESPRESSO_INSTALL_LIBDIR "${ESPRESSO_INSTALL_PYTHON}/espressomd")
+  add_custom_target(espresso_packaging_dependencies)
 endif()
 
 #
@@ -791,13 +792,14 @@ else()
   )
 endif()
 
-# OpenMPI checks the number of processes against the number of CPUs
+# MPIEXEC_PREFLAGS overrides
 set(ESPRESSO_MPIEXEC_PREFLAGS "")
 # Open MPI 4.x has a bug on NUMA archs that prevents running in singleton mode
 set(ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA OFF)
 set(ESPRESSO_CPU_MODEL_NAME_OMPI_SINGLETON_NUMA_PATTERN "AMD (EPYC|Ryzen)")
 
 if("${ESPRESSO_MPIEXEC_VENDOR}" STREQUAL "OpenMPI")
+  # OpenMPI checks the number of processes against the number of physical cores
   list(APPEND ESPRESSO_MPIEXEC_PREFLAGS "--oversubscribe")
   if(ESPRESSO_INSIDE_DOCKER)
     list(APPEND ESPRESSO_MPIEXEC_PREFLAGS "--bind-to" "none")
