@@ -19,41 +19,289 @@
 
 /* Unit tests for the ScriptInterface::ParticleSlice class. */
 
+#include "script_interface/Context.hpp"
+#include "script_interface/cell_system/CellSystem.hpp"
+#include "script_interface/get_value.hpp"
+#include "script_interface/particle_data/ParticleHandle.hpp"
+#include "utils/Vector.hpp"
+#include <boost/mpi/graph_communicator.hpp>
+#include <boost/smart_ptr/scoped_array.hpp>
+#include <cassert>
+#include <memory>
 #define BOOST_TEST_MODULE ParticleSlice test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/tools/old/interface.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include "script_interface/Exception.hpp"
+#include "script_interface/LocalContext.hpp"
+#include "unit_tests/EspressoCoreGlobalConfig.hpp"
+#include "unit_tests/ParticleFactory.hpp"
 #include <script_interface/Variant.hpp>
 #include <script_interface/particle_data/ParticleSlice.hpp>
 #include <string>
 #include <vector>
-using namespace ScriptInterface;
 
-bool validate_exception_msg(const Exception &ex) {
+static int coord(std::string const &s) {
+  if (s == "x")
+    return 0;
+  if (s == "y")
+    return 1;
+  if (s == "z")
+    return 2;
+  throw std::invalid_argument("Invalid Cartesian coordinate: '" + s + "'");
+}
+
+namespace espresso {
+// ESPResSo system instance
+static std::shared_ptr<System::System> system;
+} // namespace espresso
+
+struct GlobalConfig : public EspressoCoreGlobalConfig {
+  GlobalConfig() {
+    espresso::system = System::System::create();
+    espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+    ::System::set_system(espresso::system);
+  }
+  ~GlobalConfig() {
+    espresso::system.reset();
+    ::System::reset_system();
+  }
+};
+
+// Create custom CellSystem class that can be initialized more easily for
+// testing
+class TestCellSystem : public ScriptInterface::CellSystem::CellSystem {
+public:
+  ScriptInterface::Variant
+  do_call_method(std::string const &name,
+                 ScriptInterface::VariantMap const &params) override {
+    if (name == "initialize") {
+      initialize(params);
+    };
+    return {};
+  }
+  // std::shared_ptr<::CellStructure> m_cell_structure;
+private:
+  void initialize(ScriptInterface::VariantMap const &params) {
+    auto const verlet = get_value_or<bool>(params, "use_verlet_lists", true);
+    m_cell_structure->use_verlet_list = verlet;
+    std::optional<std::pair<int, int>> fcb_pair = std::nullopt;
+    if (params.contains("fully_connected_boundary") and
+        not is_none(params.at("fully_connected_boundary"))) {
+      auto const variant = get_value<ScriptInterface::VariantMap>(
+          params, "fully_connected_boundary");
+      context()->parallel_try_catch([&fcb_pair, &variant]() {
+        fcb_pair = {{coord(std::get<std::string>(variant.at("boundary"))),
+                     coord(std::get<std::string>(variant.at("direction")))}};
+      });
+    }
+    context()->parallel_try_catch([this, &fcb_pair]() {
+      m_cell_structure->set_regular_decomposition(
+          get_system().get_interaction_range(), fcb_pair);
+    });
+  }
+};
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+
+bool validate_exception_msg(const ScriptInterface::Exception &ex) {
   std::string err_msg{ex.what()};
   return err_msg == "Values must be of type vector.";
 }
 
-BOOST_AUTO_TEST_CASE(
-    non_vector_type_raises_error_in_SetParticleParametersVisitor) {
-  Particles::ParticleSlice p_slice{};
-  Variant non_vector_variant{1};
-  VariantMap params{{"name", std::string("v")},
-                    {std::string("values"), non_vector_variant}};
-  std::string param_name{"v"};
-  Context *context{nullptr};
-  std::vector<int> particle_ids{0};
-  std::shared_ptr<CellSystem::CellSystem> cell_structure{nullptr};
-  std::shared_ptr<Interactions::BondedInteractions> bonded_ias{nullptr};
+BOOST_FIXTURE_TEST_CASE(set_slice_positions, ParticleFactory) {
+  // New positions for slice
+  ScriptInterface::Variant new_pos1 = Utils::Vector3d{1., 0., 0.};
+  ScriptInterface::Variant new_pos2 = Utils::Vector3d{0., 1., 0.};
+  std::vector<ScriptInterface::Variant> new_positions = {new_pos1, new_pos2};
 
-  BOOST_CHECK_EXCEPTION(std::visit(
-                            [&](auto &&vals) {
-                              Particles::SetParticleParametersVisitor{}(
-                                  particle_ids, param_name, vals, context,
-                                  cell_structure, bonded_ias);
-                            },
-                            params.at("values")),
-                        Exception, validate_exception_msg);
+  Utils::Factory<ScriptInterface::ObjectHandle> f;
+  f.register_new<ScriptInterface::Particles::ParticleSlice>("ParticleSlice");
+  f.register_new<ScriptInterface::Particles::ParticleHandle>("ParticleHandle");
+  f.register_new<TestCellSystem>("CellSystem");
+
+  boost::mpi::communicator comm;
+  std::shared_ptr<ScriptInterface::LocalContext> ctx =
+      std::make_shared<ScriptInterface::LocalContext>(f, comm);
+
+  // Create TestCellSystem object
+  auto &&sp_cell_system{ctx->make_shared("CellSystem", {})};
+  std::shared_ptr<TestCellSystem> cell_system =
+      std::dynamic_pointer_cast<TestCellSystem>(sp_cell_system);
+
+  // Parameters for ScriptInterface objects
+  ScriptInterface::VariantMap p1_init_params{
+      {std::string("id"), 0},
+      {std::string("__cell_structure"), cell_system},
+  };
+  ScriptInterface::VariantMap p2_init_params{
+      {std::string("id"), 1},
+      {std::string("__cell_structure"), cell_system},
+  };
+  ScriptInterface::VariantMap p_slice_init_params{
+      {std::string("id_selection"), std::vector<int>{0, 1}},
+      {std::string("__cell_structure"), cell_system}};
+
+  // Create particle core objects
+  create_particle(Utils::Vector3d{0., 0., 0.}, 0, 0);
+  create_particle(Utils::Vector3d{0., 0., 0.}, 1, 0);
+
+  // Create 2 ParticleHandle, and 1 ParticleSlice object
+  auto &&sp_p1_handle{ctx->make_shared("ParticleHandle", {p1_init_params})};
+  auto &&sp_p2_handle{ctx->make_shared("ParticleHandle", {p2_init_params})};
+  // Particle handle 1
+  std::shared_ptr<ScriptInterface::Particles::ParticleHandle> p1_handle =
+      std::dynamic_pointer_cast<ScriptInterface::Particles::ParticleHandle>(
+          sp_p1_handle);
+  // Particle handle 2
+  std::shared_ptr<ScriptInterface::Particles::ParticleHandle> p2_handle =
+      std::dynamic_pointer_cast<ScriptInterface::Particles::ParticleHandle>(
+          sp_p2_handle);
+  // Attach to system
+  p1_handle->attach(espresso::system);
+  p2_handle->attach(espresso::system);
+
+  // Particle slice
+  auto &&sp_p_slice{ctx->make_shared("ParticleSlice", {p_slice_init_params})};
+  std::shared_ptr<ScriptInterface::Particles::ParticleSlice> p_slice =
+      std::dynamic_pointer_cast<ScriptInterface::Particles::ParticleSlice>(
+          sp_p_slice);
+
+  // Check if old positions are actually zero
+  auto pos1_before_update = ScriptInterface::get_value<Utils::Vector3d>(
+      p1_handle->get_parameter("pos"));
+  auto pos2_before_update = ScriptInterface::get_value<Utils::Vector3d>(
+      p2_handle->get_parameter("pos"));
+  Utils::Vector3d zero_vector{};
+  BOOST_ASSERT(pos1_before_update == zero_vector);
+  BOOST_ASSERT(pos2_before_update == zero_vector);
+
+  // Set positions of slice
+  ScriptInterface::VariantMap params{{std::string("name"), std::string("pos")},
+                                     {std::string("values"), new_positions}};
+  p_slice->call_method("set_param_parallel", params);
+
+  // Check if postions are set as expected
+  auto pos1_after_update = ScriptInterface::get_value<Utils::Vector3d>(
+      p1_handle->get_parameter("pos"));
+  auto pos2_after_update = ScriptInterface::get_value<Utils::Vector3d>(
+      p2_handle->get_parameter("pos"));
+  BOOST_ASSERT(pos1_after_update ==
+               ScriptInterface::get_value<Utils::Vector3d>(new_pos1));
+  BOOST_ASSERT(pos2_after_update ==
+               ScriptInterface::get_value<Utils::Vector3d>(new_pos2));
+}
+
+BOOST_FIXTURE_TEST_CASE(set_particle_types, ParticleFactory) {
+  // New positions for slice
+  ScriptInterface::Variant new_type1 = 1;
+  ScriptInterface::Variant new_type2 = 2;
+  std::vector<ScriptInterface::Variant> new_types = {new_type1, new_type2};
+
+  Utils::Factory<ScriptInterface::ObjectHandle> f;
+  f.register_new<ScriptInterface::Particles::ParticleSlice>("ParticleSlice");
+  f.register_new<ScriptInterface::Particles::ParticleHandle>("ParticleHandle");
+  f.register_new<TestCellSystem>("CellSystem");
+
+  boost::mpi::communicator comm;
+  std::shared_ptr<ScriptInterface::LocalContext> ctx =
+      std::make_shared<ScriptInterface::LocalContext>(f, comm);
+
+  // Create TestCellSystem object
+  auto &&sp_cell_system{ctx->make_shared("CellSystem", {})};
+  std::shared_ptr<TestCellSystem> cell_system =
+      std::dynamic_pointer_cast<TestCellSystem>(sp_cell_system);
+  cell_system->bind_system(espresso::system);
+  cell_system->do_call_method("initialize", {});
+
+  // Parameters for ScriptInterface objects
+  ScriptInterface::VariantMap p1_init_params{
+      {std::string("id"), 0},
+      {std::string("__cell_structure"), cell_system},
+  };
+  ScriptInterface::VariantMap p2_init_params{
+      {std::string("id"), 1},
+      {std::string("__cell_structure"), cell_system},
+  };
+  ScriptInterface::VariantMap p_slice_init_params{
+      {std::string("id_selection"), std::vector<int>{0, 1}},
+      {std::string("__cell_structure"), cell_system}};
+
+  // Create particle core objects
+  create_particle(Utils::Vector3d{0., 0., 0.}, 0, 0);
+  create_particle(Utils::Vector3d{0., 0., 0.}, 1, 0);
+
+  // Create 2 ParticleHandle, and 1 ParticleSlice object
+  auto &&sp_p1_handle{ctx->make_shared("ParticleHandle", {p1_init_params})};
+  auto &&sp_p2_handle{ctx->make_shared("ParticleHandle", {p2_init_params})};
+  // Particle handle 1
+  std::shared_ptr<ScriptInterface::Particles::ParticleHandle> p1_handle =
+      std::dynamic_pointer_cast<ScriptInterface::Particles::ParticleHandle>(
+          sp_p1_handle);
+  // Particle handle 2
+  std::shared_ptr<ScriptInterface::Particles::ParticleHandle> p2_handle =
+      std::dynamic_pointer_cast<ScriptInterface::Particles::ParticleHandle>(
+          sp_p2_handle);
+
+  // Particle slice
+  auto &&sp_p_slice{ctx->make_shared("ParticleSlice", {p_slice_init_params})};
+  std::shared_ptr<ScriptInterface::Particles::ParticleSlice> p_slice =
+      std::dynamic_pointer_cast<ScriptInterface::Particles::ParticleSlice>(
+          sp_p_slice);
+
+  // Check if old types are actually zero
+  auto type1_before_update =
+      ScriptInterface::get_value<int>(p1_handle->get_parameter("type"));
+  auto type2_before_update =
+      ScriptInterface::get_value<int>(p2_handle->get_parameter("type"));
+  BOOST_ASSERT(type1_before_update == 0);
+  BOOST_ASSERT(type2_before_update == 0);
+
+  // Set types of slice
+  ScriptInterface::VariantMap params{{std::string("name"), std::string("type")},
+                                     {std::string("values"), new_types}};
+  p_slice->call_method("set_param_parallel", params);
+
+  // Check if types are set as expected
+  auto type1_after_update =
+      ScriptInterface::get_value<int>(p1_handle->get_parameter("type"));
+  auto type2_after_update =
+      ScriptInterface::get_value<int>(p2_handle->get_parameter("type"));
+  BOOST_ASSERT(type1_after_update ==
+               ScriptInterface::get_value<int>(new_type1));
+  BOOST_ASSERT(type2_after_update ==
+               ScriptInterface::get_value<int>(new_type2));
+}
+
+BOOST_FIXTURE_TEST_CASE(non_vector_type_raises_error_in_set_param_parallel2,
+                        ParticleFactory) {
+  ScriptInterface::Variant non_vector_variant{1};
+
+  Utils::Factory<ScriptInterface::ObjectHandle> f;
+  f.register_new<ScriptInterface::Particles::ParticleSlice>("ParticleSlice");
+
+  boost::mpi::communicator comm;
+  std::shared_ptr<ScriptInterface::LocalContext> ctx =
+      std::make_shared<ScriptInterface::LocalContext>(f, comm);
+
+  ScriptInterface::VariantMap p_slice_init_params{
+      {std::string("id_selection"), std::vector<int>{0, 1}},
+  };
+
+  // Create particle core objects
+  create_particle(Utils::Vector3d{0., 0., 0.}, 0, 0);
+  create_particle(Utils::Vector3d{1., 0., 0.}, 1, 0);
+
+  // Create particle slice
+  auto &&sp_p_slice{ctx->make_shared("ParticleSlice", {p_slice_init_params})};
+  std::shared_ptr<ScriptInterface::Particles::ParticleSlice> p_slice =
+      std::dynamic_pointer_cast<ScriptInterface::Particles::ParticleSlice>(
+          sp_p_slice);
+
+  ScriptInterface::VariantMap params{
+      {"name", std::string("v")}, {std::string("values"), non_vector_variant}};
+
+  BOOST_CHECK_EXCEPTION(p_slice->call_method("set_param_parallel", params),
+                        ScriptInterface::Exception, validate_exception_msg);
 }
