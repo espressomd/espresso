@@ -179,12 +179,12 @@ endforeach()
 # Compiler flags: must be added to all ESPResSo targets
 #
 
-add_library(espresso_cpp_flags INTERFACE)
-add_library(espresso::cpp_flags ALIAS espresso_cpp_flags)
+add_library(espresso_compiler_flags INTERFACE)
+add_library(espresso::compiler_flags ALIAS espresso_compiler_flags)
 
 set_target_properties(
-  espresso_cpp_flags PROPERTIES INTERFACE_COMPILE_FEATURES
-                                cxx_std_${ESPRESSO_MINIMAL_CXX_STANDARD})
+  espresso_compiler_flags PROPERTIES INTERFACE_COMPILE_FEATURES
+                                     cxx_std_${ESPRESSO_MINIMAL_CXX_STANDARD})
 
 #
 # AVX2 support
@@ -223,9 +223,9 @@ espresso_minimal_compiler_version("Clang" 18.1.0)
 espresso_minimal_compiler_version("AppleClang" 17.0.0)
 espresso_minimal_compiler_version("IntelLLVM" 2023.1)
 
-set(UNSUPPORTED_COMPILERS "Intel;MSVC")
+set(ESPRESSO_UNSUPPORTED_COMPILERS "Intel;MSVC")
 foreach(LANG C CXX)
-  if(CMAKE_${LANG}_COMPILER_ID IN_LIST UNSUPPORTED_COMPILERS)
+  if(CMAKE_${LANG}_COMPILER_ID IN_LIST ESPRESSO_UNSUPPORTED_COMPILERS)
     message(FATAL_ERROR "Unsupported compiler ${CMAKE_${LANG}_COMPILER_ID}")
   endif()
   if(NOT ${LANG}_COMPILER_IS_OFFICIALLY_TESTED)
@@ -242,6 +242,8 @@ endblock()
 # CUDA compiler
 #
 
+set(ESPRESSO_XCOMPILER "")
+set(ESPRESSO_PTXAS "")
 if(ESPRESSO_BUILD_WITH_CUDA)
   include(CheckLanguage)
   enable_language(CUDA)
@@ -280,6 +282,8 @@ if(ESPRESSO_BUILD_WITH_CUDA)
   endmacro()
   if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     find_package(CUDACompilerNVCC ${ESPRESSO_MINIMAL_CUDA_VERSION} REQUIRED)
+    set(ESPRESSO_XCOMPILER "$<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Xcompiler=>")
+    set(ESPRESSO_PTXAS "$<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Xptxas=>")
   elseif(CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
     if(ESPRESSO_BUILD_WITH_COVERAGE)
       message(
@@ -329,88 +333,105 @@ if(ESPRESSO_BUILD_WITH_PYTHON)
   endif()
   # override: package C++, CUDA and Cython shared objects together
   set(ESPRESSO_INSTALL_LIBDIR "${ESPRESSO_INSTALL_PYTHON}/espressomd")
+  add_custom_target(espresso_packaging_dependencies)
 endif()
 
 #
 # Compiler diagnostics
 #
 
+# cmake-format: off
 target_compile_options(
-  espresso_cpp_flags
+  espresso_compiler_flags
   INTERFACE
-    -Wall
-    -Wextra
-    -pedantic
+    $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wall>
+    $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wextra>
+    $<$<COMPILE_LANGUAGE:CXX>:-pedantic>
+    $<$<COMPILE_LANGUAGE:CUDA>:-Wno-sign-compare>
+    $<$<COMPILE_LANGUAGE:CUDA>:-Wno-unused-parameter>
     # add extra warnings
-    $<$<CXX_COMPILER_ID:Clang>:-Wextern-initializer>
-    $<$<CXX_COMPILER_ID:Clang>:-Wrange-loop-analysis>
-    -Wfloat-conversion
-    $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wimplicit-float-conversion>
-    $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wunused-exception-parameter>
-    $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wmissing-variable-declarations>
-    $<$<CXX_COMPILER_ID:Clang>:-Wnon-c-typedef-for-linkage>
-    -Wdelete-non-virtual-dtor
-    -Wcast-qual
-    -Wcast-align
-    -Wunused-macros
-    -Wpointer-arith
-    -Winit-self
-    $<$<CXX_COMPILER_ID:GNU,Clang>:-Wformat-signedness>
-    $<$<CXX_COMPILER_ID:GNU>:-Wformat=2>
-    $<$<CXX_COMPILER_ID:GNU>:-Wduplicated-branches>
-    $<$<CXX_COMPILER_ID:GNU>:-Wshadow=compatible-local>
-    $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wshadow-field-in-constructor-modified>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wextern-initializer>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wrange-loop-analysis>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wfloat-conversion>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wimplicit-float-conversion>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wunused-exception-parameter>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wmissing-variable-declarations>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wnon-c-typedef-for-linkage>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wdelete-non-virtual-dtor>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wcast-qual>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wcast-align>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wunused-macros>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wpointer-arith>
+    $<$<COMPILE_LANGUAGE:CXX>:-Winit-self>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wformat-signedness>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wformat=2>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wduplicated-branches>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wshadow=compatible-local>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wshadow-field-in-constructor-modified>
     # disable warnings from -Wall and -Wextra
-    -Wno-sign-compare
-    -Wno-unused-function
-    -Wno-unused-parameter
-    -Wno-array-bounds
-    $<$<CXX_COMPILER_ID:GNU>:-Wno-restrict>
-    $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered>
-    $<$<CXX_COMPILER_ID:GNU>:-Wno-cast-function-type>
-    $<$<CXX_COMPILER_ID:IntelLLVM>:-diag-disable=592>
-    $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-gnu-zero-variadic-macro-arguments>
-    $<$<NOT:$<CXX_COMPILER_ID:IntelLLVM>>:-Wno-implicit-fallthrough>
-    $<$<NOT:$<CXX_COMPILER_ID:IntelLLVM,GNU>>:-Wno-unused-private-field>
-    $<$<AND:$<CXX_COMPILER_ID:GNU>,$<STREQUAL:${CMAKE_SYSTEM_PROCESSOR},arm>>:-Wno-psabi>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:-Wno-format-nonliteral>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:-Wno-float-conversion>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:$<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-implicit-int-float-conversion>>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:$<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-implicit-float-conversion>>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>:-Wno-cast-qual>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wno-sign-compare>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-function>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-parameter>
+    $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-array-bounds>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-restrict>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-clobbered>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-cast-function-type>
+    $<$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>:-diag-disable=592>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang>:-Wno-gnu-zero-variadic-macro-arguments>
+    $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CXX_COMPILER_ID:IntelLLVM,GNU>>>:-Wno-unused-private-field>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU>,$<STREQUAL:${CMAKE_SYSTEM_PROCESSOR},arm>>:-Wno-psabi>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-format-nonliteral>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-float-conversion>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-int-float-conversion>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-float-conversion>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-cast-qual>
     # warnings are errors
-    $<$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>:-Werror>)
-
-if(ESPRESSO_BUILD_WITH_CUDA)
-  target_compile_options(
-    espresso_cuda_flags
-    INTERFACE
-      -Wall
-      -Wextra
-      -Wno-sign-compare
-      -Wno-unused-parameter
-      $<$<NOT:$<CXX_COMPILER_ID:IntelLLVM>>:-Wno-implicit-fallthrough>
-      # disable warnings from -Wall and -Wextra
-      -Wno-array-bounds
-      # warnings are errors
-      $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<CUDA_COMPILER_ID:NVIDIA>>:--Werror=all-warnings>
-      $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<CUDA_COMPILER_ID:Clang>>:-Werror>
-  )
-endif()
+    $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<COMPILE_LANGUAGE:CXX>>:-Werror>
+    $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>>:--Werror=all-warnings>
+    $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>>:-Werror>
+    # configurations for NVCC
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Debug>>:-g -G>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Release>>:-Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:MinSizeRel>>:-Xptxas=-O2 -Xcompiler=-Os -DNDEBUG>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:RelWithDebInfo>>:-Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Coverage>>:-Xptxas=-O3 -Xcompiler=-Og,-g>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:RelWithAssert>>:-Xptxas=-O3 -Xcompiler=-O3,-g>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<BOOL:${CMAKE_OSX_SYSROOT}>>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>
+    # configurations for LLVM
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Debug>>:-g>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Release>>:-O3 -DNDEBUG>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:MinSizeRel>>:-O2 -DNDEBUG>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:RelWithDebInfo>>:-O2 -g -DNDEBUG>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Coverage>>:-Og -g>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:RelWithAssert>>:-O3 -g>
+)
+# cmake-format: on
 
 #
 # Code coverage
 #
 
 if(ESPRESSO_BUILD_WITH_COVERAGE)
-  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|IntelLLVM")
+    # cmake-format: off
     target_compile_options(
-      espresso_cpp_flags INTERFACE -g -fprofile-instr-generate
-                                   -fcoverage-mapping)
+      espresso_compiler_flags
+      INTERFACE
+        $<$<COMPILE_LANGUAGE:CXX,CUDA>:-fprofile-instr-generate -fcoverage-mapping>
+    )
+    # cmake-format: on
   else()
-    target_compile_options(espresso_cpp_flags INTERFACE -g --coverage
-                                                        -fprofile-abs-path)
-    target_link_libraries(espresso_cpp_flags INTERFACE gcov)
+    # cmake-format: off
+    target_compile_options(
+      espresso_compiler_flags
+      INTERFACE
+        $<$<COMPILE_LANGUAGE:CXX>:--coverage -fprofile-abs-path>
+        $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=--coverage,-fprofile-abs-path>
+        # workaround for https://github.com/espressomd/espresso/issues/4943
+        $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<BOOL:${ESPRESSO_BUILD_WITH_CCACHE}>>:--coverage -fprofile-abs-path>
+    )
+    # cmake-format: on
+    target_link_libraries(espresso_compiler_flags INTERFACE gcov)
   endif()
 endif()
 
@@ -421,7 +442,8 @@ endif()
 # prevent 80-bit arithmetic on old Intel processors
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4
    AND CMAKE_SYSTEM_PROCESSOR MATCHES "[xX]86")
-  target_compile_options(espresso_cpp_flags INTERFACE -ffloat-store)
+  target_compile_options(espresso_compiler_flags
+                         INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-ffloat-store>)
 endif()
 
 #
@@ -434,29 +456,41 @@ if(ESPRESSO_BUILD_WITH_ASAN AND ESPRESSO_BUILD_WITH_MSAN)
       "Address sanitizer and memory sanitizer cannot be enabled simultaneously")
 endif()
 if(ESPRESSO_BUILD_WITH_ASAN)
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
-  target_compile_options(espresso_cpp_flags INTERFACE -fsanitize=address
-                                                      -fno-omit-frame-pointer)
-  target_link_libraries(espresso_cpp_flags INTERFACE -fsanitize=address)
-  if(ESPRESSO_BUILD_WITH_CUDA)
-    target_link_libraries(espresso_cuda_flags INTERFACE -fsanitize=address)
-  endif()
+  target_compile_options(
+    espresso_compiler_flags
+    INTERFACE
+      $<$<COMPILE_LANGUAGE:CXX,CUDA>:${ESPRESSO_XCOMPILER}-fsanitize=address>
+      $<$<COMPILE_LANGUAGE:CXX,CUDA>:${ESPRESSO_XCOMPILER}-g>
+      $<$<COMPILE_LANGUAGE:CXX,CUDA>:$<$<NOT:$<CONFIG:Debug>>:${ESPRESSO_XCOMPILER}-O1>>
+      $<$<COMPILE_LANGUAGE:CXX>:-fno-omit-frame-pointer>)
+  target_link_libraries(
+    espresso_compiler_flags
+    INTERFACE -fsanitize=address -g
+              $<$<NOT:$<CONFIG:Debug>>:${ESPRESSO_XCOMPILER}-O1>)
 endif()
 if(ESPRESSO_BUILD_WITH_MSAN)
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
-  target_compile_options(espresso_cpp_flags INTERFACE -fsanitize=memory
-                                                      -fno-omit-frame-pointer)
-  target_link_libraries(espresso_cpp_flags INTERFACE -fsanitize=memory)
-  if(ESPRESSO_BUILD_WITH_CUDA)
-    target_link_libraries(espresso_cuda_flags INTERFACE -fsanitize=memory)
-  endif()
+  target_compile_options(
+    espresso_compiler_flags
+    INTERFACE
+      $<$<COMPILE_LANGUAGE:CXX,CUDA>:${ESPRESSO_XCOMPILER}-fsanitize=memory>
+      $<$<COMPILE_LANGUAGE:CXX,CUDA>:${ESPRESSO_XCOMPILER}-g>
+      $<$<COMPILE_LANGUAGE:CXX,CUDA>:$<$<NOT:$<CONFIG:Debug>>:${ESPRESSO_XCOMPILER}-O1>>
+      $<$<COMPILE_LANGUAGE:CXX>:-fno-omit-frame-pointer>)
+  target_link_libraries(
+    espresso_compiler_flags INTERFACE -fsanitize=memory -g
+                                      $<$<NOT:$<CONFIG:Debug>>:-O1>)
 endif()
 if(ESPRESSO_BUILD_WITH_UBSAN)
-  target_compile_options(espresso_cpp_flags INTERFACE -fsanitize=undefined)
-  target_link_libraries(espresso_cpp_flags INTERFACE -fsanitize=undefined)
-  if(ESPRESSO_BUILD_WITH_CUDA)
-    target_link_libraries(espresso_cuda_flags INTERFACE -fsanitize=undefined)
-  endif()
+  target_compile_options(
+    espresso_compiler_flags
+    INTERFACE
+      $<$<COMPILE_LANGUAGE:CXX,CUDA>:-fsanitize=undefined>
+      $<$<COMPILE_LANGUAGE:CXX,CUDA>:${ESPRESSO_XCOMPILER}-g>
+      $<$<COMPILE_LANGUAGE:CXX,CUDA>:$<$<NOT:$<CONFIG:Debug>>:${ESPRESSO_XCOMPILER}-O1>>
+  )
+  target_link_libraries(
+    espresso_compiler_flags INTERFACE -fsanitize=undefined -g
+                                      $<$<NOT:$<CONFIG:Debug>>:-O1>)
 endif()
 
 #
@@ -701,7 +735,7 @@ if(ESPRESSO_BUILD_WITH_HDF5)
   FetchContent_Declare(
     HighFive
     GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
-    GIT_TAG        0103467 # v3.0.0-beta with patches
+    GIT_TAG        v.3.1.1
   )
   # cmake-format: on
   FetchContent_MakeAvailable(HighFive)
@@ -758,13 +792,14 @@ else()
   )
 endif()
 
-# OpenMPI checks the number of processes against the number of CPUs
+# MPIEXEC_PREFLAGS overrides
 set(ESPRESSO_MPIEXEC_PREFLAGS "")
 # Open MPI 4.x has a bug on NUMA archs that prevents running in singleton mode
 set(ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA OFF)
 set(ESPRESSO_CPU_MODEL_NAME_OMPI_SINGLETON_NUMA_PATTERN "AMD (EPYC|Ryzen)")
 
 if("${ESPRESSO_MPIEXEC_VENDOR}" STREQUAL "OpenMPI")
+  # OpenMPI checks the number of processes against the number of physical cores
   list(APPEND ESPRESSO_MPIEXEC_PREFLAGS "--oversubscribe")
   if(ESPRESSO_INSIDE_DOCKER)
     list(APPEND ESPRESSO_MPIEXEC_PREFLAGS "--bind-to" "none")
@@ -856,12 +891,14 @@ if(ESPRESSO_BUILD_TESTS)
             "Extra arguments to give to ctest calls (separated by semicolons)")
   set(ESPRESSO_TEST_NP "4" CACHE STRING
                                  "Maximal number of MPI ranks to use per test")
-  add_library(espresso_tests_cpp_flags INTERFACE)
-  add_library(espresso::tests::cpp_flags ALIAS espresso_tests_cpp_flags)
-  target_compile_options(espresso_tests_cpp_flags INTERFACE -Wno-unused-macros)
+  add_library(espresso_tests_compiler_flags INTERFACE)
+  add_library(espresso::tests::compiler_flags ALIAS
+              espresso_tests_compiler_flags)
+  target_compile_options(espresso_tests_compiler_flags
+                         INTERFACE -Wno-unused-macros)
   if(ESPRESSO_BUILD_WITH_COVERAGE)
     target_compile_options(
-      espresso_tests_cpp_flags
+      espresso_tests_compiler_flags
       INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fno-default-inline>
                 $<$<CXX_COMPILER_ID:GNU>:-fno-elide-constructors>)
   endif()
@@ -884,17 +921,19 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        c69cb11d # v7.1 with patches
+    GIT_TAG        e12db996 # v7.2 with patches
   )
   # cmake-format: on
   string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
                        "${walberla_SOURCE_DIR}")
   set(WALBERLA_BUILD_TESTS off CACHE BOOL "")
-  set(WALBERLA_BUILD_BENCHMARKS off CACHE BOOL "")
   set(WALBERLA_BUILD_TOOLS off CACHE BOOL "")
+  set(WALBERLA_BUILD_BENCHMARKS off CACHE BOOL "")
   set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
   set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
+  set(WALBERLA_BUILD_EXAMPLES off CACHE BOOL "")
   set(WALBERLA_BUILD_DOC off CACHE BOOL "")
+  set(WALBERLA_BUILD_WITH_PYTHON off CACHE BOOL "")
   set(WALBERLA_LOGLEVEL "WARNING" CACHE STRING "")
   if(ESPRESSO_BUILD_WITH_CUDA)
     set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
@@ -938,8 +977,9 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
     function(espresso_avx_flags_callback COMPILER_AVX2_FLAG)
       target_compile_options(
-        espresso_avx_flags INTERFACE "${COMPILER_AVX2_FLAG}"
-                                     "-DESPRESSO_BUILD_WITH_AVX_KERNELS")
+        espresso_avx_flags
+        INTERFACE $<$<COMPILE_LANGUAGE:CXX>:${COMPILER_AVX2_FLAG}>
+                  -DESPRESSO_BUILD_WITH_AVX_KERNELS)
     endfunction()
     espresso_enable_avx2_support(espresso_avx_flags_callback)
   endif()
@@ -977,7 +1017,7 @@ function(espresso_set_common_target_properties)
   get_target_property(TARGET_TYPE ${TARGET_NAME} TYPE)
   if(NOT TARGET_TYPE STREQUAL "INTERFACE_LIBRARY")
     # set non-transitive properties; transitive properties should be propagated
-    # to dependent targets via INTERFACE targets, such as espresso::cpp_flags
+    # to dependent targets via INTERFACE targets, e.g. espresso::compiler_flags
     set_target_properties(${TARGET_NAME} PROPERTIES C_EXTENSIONS OFF)
     set_target_properties(${TARGET_NAME} PROPERTIES CXX_EXTENSIONS OFF)
     set_target_properties(${TARGET_NAME} PROPERTIES CUDA_EXTENSIONS OFF)
@@ -985,6 +1025,14 @@ function(espresso_set_common_target_properties)
       ${TARGET_NAME} PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
     set_target_properties(
       ${TARGET_NAME} PROPERTIES CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
+    if(ESPRESSO_BUILD_WITH_CUDA)
+      if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
+        set_target_properties(${TARGET_NAME}
+                              PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+      elseif(CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
+        set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE "CXX")
+      endif()
+    endif()
   endif()
 endfunction()
 

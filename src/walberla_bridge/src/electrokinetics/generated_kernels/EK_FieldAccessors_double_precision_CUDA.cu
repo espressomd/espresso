@@ -147,7 +147,8 @@ double get(
   kernel.addFieldIndexingParam(gpu::FieldIndexing<double>::interval(*scalar_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
-  double result = dev_data[0u];
+  double result{};
+  thrust::copy(dev_data.begin(), dev_data.end(), &result);
   return result;
 }
 

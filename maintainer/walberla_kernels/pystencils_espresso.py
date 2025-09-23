@@ -155,6 +155,7 @@ class PhiloxFourFloatsModulo(ps.rng.PhiloxFourFloats):
         self.headers = headers
 
 
+numpy_types_to_cpp_types = {"float64": "double", "float32": "float"}
 precision_prefix = {
     True: 'DoublePrecision',
     False: 'SinglePrecision'}

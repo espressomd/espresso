@@ -46,18 +46,18 @@ function format_kernels {
 
 # LB kernels
 cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/lattice_boltzmann/generated_kernels/
-generate_lb_kernels
-generate_lb_kernels --single-precision
-generate_lb_kernels --gpu
-generate_lb_kernels --gpu --single-precision
+generate_lb_kernels --kernels all
+generate_lb_kernels --kernels all --single-precision
+generate_lb_kernels --kernels all --gpu
+generate_lb_kernels --kernels all --gpu --single-precision
 format_kernels
 
 # EK kernels
 cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/generated_kernels/
-generate_ek_kernels
-generate_ek_kernels --single-precision
-generate_ek_kernels --gpu
-generate_ek_kernels --gpu --single-precision
+generate_ek_kernels --kernels all
+generate_ek_kernels --kernels all --single-precision
+generate_ek_kernels --kernels all --gpu
+generate_ek_kernels --kernels all --gpu --single-precision
 format_kernels
 mv ReactionKernel*.{cpp,h,cu} $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/reactions/generated_kernels/
 ```
