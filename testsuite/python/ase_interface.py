@@ -33,9 +33,8 @@ class ASEInterfaceTest(ut.TestCase):
     def setUp(self):
         self.system.part.add(pos=[0., 0., 0.], f=[1., -1., 0.], type=0)
         self.system.part.add(pos=[0., 0., 1.], f=[0., 12., 0.], type=1)
-        self.system.ase = espressomd.plugins.ase.ASEInterface(
-            type_mapping={0: "H", 1: "O"},
-        )
+        self.system.part.add(pos=[11., 13., 12.], f=[0., 0., -8.], type=1)
+        self.system.ase = espressomd.plugins.ase.ASEInterface()
 
     def tearDown(self):
         self.system.part.clear()
@@ -43,15 +42,18 @@ class ASEInterfaceTest(ut.TestCase):
     def test_ase_get(self):
         """Test the ``ASEInterface.get()`` method."""
         # Create a simple ASE atoms object
-        atoms = self.system.ase.get()
-        self.assertIsInstance(atoms, ase.Atoms)
-        self.assertEqual(set(atoms.get_chemical_symbols()), {"H", "O"})
-        np.testing.assert_equal(atoms.pbc, np.copy(self.system.periodicity))
-        np.testing.assert_allclose(atoms.cell, np.diag(self.system.box_l))
-        np.testing.assert_allclose(atoms.get_positions(),
-                                   [[0., 0., 0.], [0., 0., 1.]])
-        np.testing.assert_allclose(atoms.get_forces(),
-                                   [[1., -1., 0.], [0., 12., 0.]])
+        for folded in [True, False]:
+            atoms = self.system.ase.get(folded=folded)
+            self.assertIsInstance(atoms, ase.Atoms)
+            self.assertEqual(set(atoms.get_chemical_symbols()), {"H", "O"})
+            np.testing.assert_equal(
+                atoms.pbc, np.copy(self.system.periodicity))
+            np.testing.assert_allclose(atoms.cell, np.diag(self.system.box_l))
+            positions_ref = self.system.part.all(
+            ).pos_folded if folded else self.system.part.all().pos
+            np.testing.assert_allclose(atoms.get_positions(), positions_ref)
+            np.testing.assert_allclose(atoms.get_forces(),
+                                       [[1., -1., 0.], [0., 12., 0.], [0., 0., -8.]])
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_exceptions(self):
