@@ -1,0 +1,6 @@
+[core]
+    remote = origin
+['remote "origin"']
+    url = s3://fabian.zills-public/dvc/2025-espresso-water
+    endpointurl = https://minio.icp.uni-stuttgart.de
+    allow_anonymous_login = true

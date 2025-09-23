@@ -1,0 +1,63 @@
+callbacks:
+- name: csv
+data:
+  batch_size: 1
+  dataset:
+    processing: cached
+  valid_batch_size: 40
+data_parallel: true
+loss:
+- atoms_exponent: 1
+  loss_type: nll
+  name: energy
+  weight: 1.0
+- atoms_exponent: 1
+  loss_type: nll
+  name: forces
+  weight: 2.0
+metrics:
+- name: energy
+  reductions:
+  - mae
+- name: forces
+  reductions:
+  - mae
+model:
+  b_init: zeros
+  basis:
+    n_basis: 16
+    name: bessel
+    r_max: 5.5
+  calc_stress: false
+  descriptor_dtype: fp32
+  ensemble:
+    kind: shallow
+    n_members: 16
+  n_radial: 6
+  name: gmnn
+  nn:
+  - 128
+  - 128
+  readout_dtype: fp32
+  scale_shift_dtype: fp64
+  use_ntk: false
+  w_init: lecun
+n_epochs: 10000
+optimizer:
+  emb_lr: 0.0001
+  gradient_clipping: 10.0
+  kwargs:
+    b1: 0.85
+    b2: 0.99
+    weight_decay: 0.0002
+  name: adamw
+  nn_lr: 0.0001
+  rep_prefactor_lr: 0.0001
+  rep_scale_lr: 0.0001
+  scale_lr: 0.0001
+  schedule:
+    decay_factor: 0.96
+    name: cyclic_cosine
+    period: 50
+  shift_lr: 0.0001
+patience: 500
