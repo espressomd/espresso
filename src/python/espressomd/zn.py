@@ -228,7 +228,7 @@ class Visualizer():
     SERVER_PORT = None
 
     def __init__(self,
-                 system: espressomd.system.System = None,
+                 system: espressomd.system.System,
                  port: int = 1234,
                  token: str = None,
                  folded: bool = True,
