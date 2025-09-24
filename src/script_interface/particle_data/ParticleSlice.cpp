@@ -182,13 +182,13 @@ Variant ParticleSlice::do_call_method(std::string const &name,
     if (not params.contains("values")) {
       if (param_name == "bonds") {
         if (not params.contains("all_bonds_ids")) {
-          throw Exception("Parameter 'all_bonds_ids' is missing.");
+          throw Exception("Parameter 'all_bonds_ids' is missing");
         }
         if (not params.contains("all_bonds_partner_ids")) {
-          throw Exception("Parameter 'all_bonds_partner_ids' is missing.");
+          throw Exception("Parameter 'all_bonds_partner_ids' is missing");
         }
       } else {
-        throw Exception("Parameter '" + param_name + "' is missing.");
+        throw Exception("Parameter 'values' is missing");
       }
     }
     // Handle parameters with special setters
