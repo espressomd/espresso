@@ -226,6 +226,12 @@ BOOST_FIXTURE_TEST_CASE(particle_modifier, ParticleFactory) {
     auto so = std::dynamic_pointer_cast<ParticleModifier>(sp);
     auto const pid = get_value<int>(so->get_parameter("id"));
     BOOST_CHECK_EQUAL(pid, -1);
+    BOOST_CHECK_EXCEPTION(
+        (so->do_call_method("remove_particle", {})), std::logic_error,
+        [](auto const &err) {
+          return std::string{err.what()} ==
+                 "ParticleModifier has no method 'remove_particle'";
+        });
   }
 
   {

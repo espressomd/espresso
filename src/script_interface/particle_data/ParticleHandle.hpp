@@ -50,7 +50,7 @@ static auto error_msg(std::string const &name, std::string const &reason) {
   return msg.str();
 }
 
-static auto get_real_particle(boost::mpi::communicator const &comm, int p_id,
+inline auto get_real_particle(boost::mpi::communicator const &comm, int p_id,
                               ::CellStructure &cell_structure) {
   if (p_id < 0) {
     throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
@@ -189,6 +189,14 @@ public:
   void set_pid(int pid) {
     assert(pid >= 0);
     m_pid = pid;
+  }
+
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
+    if (name == "remove_particle") {
+      throw std::logic_error("ParticleModifier has no method '" + name + "'");
+    }
+    return ParticleHandle::do_call_method(name, params);
   }
 };
 
