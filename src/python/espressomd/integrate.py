@@ -56,6 +56,15 @@ class IntegratorHandle(ScriptInterfaceHelper):
         """
         self.integrator = VelocityVerlet()
 
+    def set_symplectic_euler(self):
+        """
+        Set the integration method to symplectic Euler, which is suitable for
+        simulations where exact energy conservation is important
+        (:class:`SymplecticEuler`).
+
+        """
+        self.integrator = SymplecticEuler()
+
     def set_nvt(self):
         """
         Set the integration method to velocity Verlet, which is suitable for
@@ -168,6 +177,17 @@ class SteepestDescent(Integrator):
         self.handle_sigint(integrated)
 
         return integrated
+
+
+@script_interface_register
+class SymplecticEuler(Integrator):
+    """
+    Symplectic Euler integrator, suitable for simulations where exact energy
+    conservation is important.
+
+    """
+    _so_name = "Integrators::SymplecticEuler"
+    _so_creation_policy = "GLOBAL"
 
 
 @script_interface_register

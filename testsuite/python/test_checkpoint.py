@@ -467,7 +467,8 @@ class CheckpointTest(ut.TestCase):
             self.assertEqual(
                 p3.swimming,
                 {"f_swim": 0.03, "is_engine_force_on_fluid": False})
-            if espressomd.has_features('VIRTUAL_SITES_RELATIVE') and has_lb_mode:
+            if espressomd.has_features(
+                    'VIRTUAL_SITES_RELATIVE') and has_lb_mode:
                 self.assertEqual(
                     p4.swimming,
                     {"f_swim": 0., "is_engine_force_on_fluid": True})
