@@ -13,13 +13,13 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file StreamCollideSweepDoublePrecisionThermalizedAVX.h
+//! \\file StreamCollideSweepThermalizedDoublePrecision.h
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7+4.gc7d65a7, sympy
-// v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit
-// 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
+// v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
+// waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #pragma once
 #include "core/DataTypes.h"
@@ -52,9 +52,9 @@
 namespace walberla {
 namespace pystencils {
 
-class StreamCollideSweepDoublePrecisionThermalizedAVX {
+class StreamCollideSweepThermalizedDoublePrecision {
 public:
-  StreamCollideSweepDoublePrecisionThermalizedAVX(
+  StreamCollideSweepThermalizedDoublePrecision(
       BlockDataID forceID_, BlockDataID pdfsID_, double kT, double omega_bulk,
       double omega_even, double omega_odd, double omega_shear, uint32_t seed,
       uint32_t time_step)
@@ -64,7 +64,7 @@ public:
         block_offset_0_(uint32_t(0)), block_offset_1_(uint32_t(0)),
         block_offset_2_(uint32_t(0)), configured_(false) {}
 
-  ~StreamCollideSweepDoublePrecisionThermalizedAVX() {
+  ~StreamCollideSweepThermalizedDoublePrecision() {
     for (auto p : cache_pdfs_) {
       delete p.second;
     }
@@ -78,14 +78,13 @@ public:
 
   void operator()(IBlock *block) { run(block); }
 
-  static std::function<void(IBlock *)>
-  getSweep(const shared_ptr<StreamCollideSweepDoublePrecisionThermalizedAVX>
-               &kernel) {
+  static std::function<void(IBlock *)> getSweep(
+      const shared_ptr<StreamCollideSweepThermalizedDoublePrecision> &kernel) {
     return [kernel](IBlock *b) { kernel->run(b); };
   }
 
   static std::function<void(IBlock *)> getSweepOnCellInterval(
-      const shared_ptr<StreamCollideSweepDoublePrecisionThermalizedAVX> &kernel,
+      const shared_ptr<StreamCollideSweepThermalizedDoublePrecision> &kernel,
       const shared_ptr<StructuredBlockStorage> &blocks,
       const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
     return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {

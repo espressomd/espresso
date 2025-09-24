@@ -16,12 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#define BOOST_TEST_MODULE Walberla point force test
+#define BOOST_TEST_MODULE "waLBerla Lees-Edwards test"
 #define BOOST_TEST_DYN_LINK
-#include "config/config.hpp"
-
-#ifdef ESPRESSO_WALBERLA
-
 #define BOOST_TEST_NO_MAIN
 
 #include <boost/test/data/monomorphic.hpp>
@@ -191,7 +187,3 @@ int main(int argc, char **argv) {
   MPI_Finalize();
   return res;
 }
-
-#else // ESPRESSO_WALBERLA
-int main(int argc, char **argv) {}
-#endif

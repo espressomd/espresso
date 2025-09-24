@@ -226,7 +226,6 @@ The following particle properties are related to rotation:
 * :attr:`~espressomd.particle_data.ParticleHandle.director`
 * :attr:`~espressomd.particle_data.ParticleHandle.ext_torque`
 * :attr:`~espressomd.particle_data.ParticleHandle.gamma_rot`
-* :attr:`~espressomd.particle_data.ParticleHandle.gamma_rot`
 * :attr:`~espressomd.particle_data.ParticleHandle.omega_body`
 * :attr:`~espressomd.particle_data.ParticleHandle.omega_lab`
 * :attr:`~espressomd.particle_data.ParticleHandle.quat`

@@ -21,6 +21,7 @@
 
 if(ESPRESSO_BUILD_TESTS)
   # Target for the unit tests
+  add_custom_target(unit_tests_executables)
   add_custom_target(
     check_unit_tests
     COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
@@ -28,6 +29,10 @@ if(ESPRESSO_BUILD_TESTS)
 
   # Run unit tests on check
   add_dependencies(check check_unit_tests)
+  add_dependencies(check_unit_tests unit_tests_executables)
+  if(TARGET espresso_packaging_dependencies)
+    add_dependencies(espresso_packaging_dependencies unit_tests_executables)
+  endif()
 endif()
 
 add_subdirectory(utils)

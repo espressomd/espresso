@@ -13,15 +13,15 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file StreamCollideSweepSinglePrecisionThermalizedAVX.cpp
+//! \\file StreamCollideSweepThermalizedSinglePrecisionAVX.cpp
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7+4.gc7d65a7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #include <cmath>
 
-#include "StreamCollideSweepSinglePrecisionThermalizedAVX.h"
+#include "StreamCollideSweepThermalizedSinglePrecisionAVX.h"
 #include "core/DataTypes.h"
 #include "core/Macros.h"
 
@@ -49,8 +49,8 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-namespace internal_0ae93c82e35401d8a507fa8135e45553 {
-static FUNC_PREFIX void streamcollidesweepsingleprecisionthermalizedavx_streamcollidesweepsingleprecisionthermalizedavx(float *RESTRICT const _data_force, float *RESTRICT const _data_pdfs, float *RESTRICT _data_pdfs_tmp, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2, int64_t const _stride_pdfs_tmp_3, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, float kT, float omega_bulk, float omega_even, float omega_odd, float omega_shear, uint32_t seed, uint32_t time_step) {
+namespace internal_482af0085ade5d86c474548ac4b32084 {
+static FUNC_PREFIX void streamcollidesweepthermalizedsingleprecisionavx_streamcollidesweepthermalizedsingleprecisionavx(float *RESTRICT const _data_force, float *RESTRICT const _data_pdfs, float *RESTRICT _data_pdfs_tmp, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2, int64_t const _stride_pdfs_tmp_3, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, float kT, float omega_bulk, float omega_even, float omega_odd, float omega_shear, uint32_t seed, uint32_t time_step) {
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
@@ -736,9 +736,9 @@ static FUNC_PREFIX void streamcollidesweepsingleprecisionthermalizedavx_streamco
     }
   }
 }
-} // namespace internal_0ae93c82e35401d8a507fa8135e45553
+} // namespace internal_482af0085ade5d86c474548ac4b32084
 
-void StreamCollideSweepSinglePrecisionThermalizedAVX::run(IBlock *block) {
+void StreamCollideSweepThermalizedSinglePrecisionAVX::run(IBlock *block) {
   if (!this->configured_)
     WALBERLA_ABORT("This Sweep contains a configure function that needs to be called manually")
 
@@ -797,11 +797,11 @@ void StreamCollideSweepSinglePrecisionThermalizedAVX::run(IBlock *block) {
   const int64_t _stride_pdfs_tmp_1 = int64_t(pdfs_tmp->yStride());
   const int64_t _stride_pdfs_tmp_2 = int64_t(pdfs_tmp->zStride());
   const int64_t _stride_pdfs_tmp_3 = int64_t(1 * int64_t(pdfs_tmp->fStride()));
-  internal_0ae93c82e35401d8a507fa8135e45553::streamcollidesweepsingleprecisionthermalizedavx_streamcollidesweepsingleprecisionthermalizedavx(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
+  internal_482af0085ade5d86c474548ac4b32084::streamcollidesweepthermalizedsingleprecisionavx_streamcollidesweepthermalizedsingleprecisionavx(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
   pdfs->swapDataPointers(pdfs_tmp);
 }
 
-void StreamCollideSweepSinglePrecisionThermalizedAVX::runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks, const CellInterval &globalCellInterval, cell_idx_t ghostLayers, IBlock *block) {
+void StreamCollideSweepThermalizedSinglePrecisionAVX::runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks, const CellInterval &globalCellInterval, cell_idx_t ghostLayers, IBlock *block) {
   if (!this->configured_)
     WALBERLA_ABORT("This Sweep contains a configure function that needs to be called manually")
 
@@ -874,7 +874,7 @@ void StreamCollideSweepSinglePrecisionThermalizedAVX::runOnCellInterval(const sh
   const int64_t _stride_pdfs_tmp_1 = int64_t(pdfs_tmp->yStride());
   const int64_t _stride_pdfs_tmp_2 = int64_t(pdfs_tmp->zStride());
   const int64_t _stride_pdfs_tmp_3 = int64_t(1 * int64_t(pdfs_tmp->fStride()));
-  internal_0ae93c82e35401d8a507fa8135e45553::streamcollidesweepsingleprecisionthermalizedavx_streamcollidesweepsingleprecisionthermalizedavx(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
+  internal_482af0085ade5d86c474548ac4b32084::streamcollidesweepthermalizedsingleprecisionavx_streamcollidesweepthermalizedsingleprecisionavx(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
   pdfs->swapDataPointers(pdfs_tmp);
 }
 

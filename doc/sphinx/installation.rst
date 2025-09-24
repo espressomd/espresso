@@ -641,24 +641,33 @@ They are added by CMake if the corresponding dependency was found on the
 system. Some of these external features are optional and must be activated
 using a CMake flag (see :ref:`Options and Variables`).
 
-- ``CUDA`` Enables GPU-specific features.
+- ``CUDA``: enable offloading to Nvidia GPUs for features that support it
+  (see :ref:`CUDA acceleration`)
 
-- ``FFTW`` Enables features relying on the fast Fourier transforms, e.g. P3M.
+- ``FFTW``: enables features relying on the fast Fourier transforms,
+  such as the P3M method (see :ref:`Coulomb P3M` and :ref:`Dipolar P3M`)
 
-- ``H5MD`` Write data to H5MD-formatted hdf5 files (see :ref:`Writing H5MD-files`)
+- ``H5MD``: enable parallel input/output to hdf5 files with H5MD specification
+  (see :ref:`Writing hdf5 files`)
 
-- ``SCAFACOS`` Enables features relying on the ScaFaCoS library (see
+- ``WALBERLA``: enable continuum-based solvers: lattice-Boltzmann method,
+  diffusion-advection-reaction equations solver, and Poisson equation solver
+  if ``FFTW`` is enabled (see :ref:`Lattice-Boltzmann` and :ref:`Electrokinetics`)
+
+- ``SCAFACOS``: enables features from the ScaFaCoS library (see
   :ref:`ScaFaCoS electrostatics`, :ref:`ScaFaCoS magnetostatics`).
 
-- ``GSL`` Enables features relying on the GNU Scientific Library, e.g.
+- ``GSL``: enables features relying on the GNU Scientific Library, e.g.
   :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension`.
 
-- ``STOKESIAN_DYNAMICS`` Enables the Stokesian Dynamics feature
+- ``STOKESIAN_DYNAMICS``: enable the Stokesian Dynamics propagator
   (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.
 
-- ``SHARED_MEMORY_PARALLELISM`` Enables shared-memory parallelism.
+- ``SHARED_MEMORY_PARALLELISM``: enable shared-memory parallelism
+  (OpenMP, Kokkos, Cabana)
 
-
+- ``CALIPER``, ``VALGRIND``, ``FPE``: enable various instrumentation tools
+  (see :ref:`Instrumentation`)
 
 .. _Configuring:
 
@@ -926,32 +935,11 @@ The repository URLs can be found in the ``GIT_REPOSITORY`` field of the
 corresponding ``FetchContent_Declare()`` commands. The ``GIT_TAG`` field
 provides the commit. Clone these repositories locally and edit the |es|
 build system such that ``GIT_REPOSITORY`` points to the absolute path of
-the clone. You can automate this task by adapting the following commands:
+the clone. You can automate this text substitution by adapting the following command:
 
-* ``ESPRESSO_BUILD_WITH_WALBERLA``
+.. code-block:: bash
 
-  .. code-block:: bash
-
-    sed -ri 's|GIT_REPOSITORY +.+/walberla.git|GIT_REPOSITORY /work/username/walberla|' CMakeLists.txt
-
-* ``ESPRESSO_BUILD_WITH_HDF5``
-
-  .. code-block:: bash
-
-    sed -ri 's|GIT_REPOSITORY +.+h5xx.git|GIT_REPOSITORY /work/username/h5xx|' CMakeLists.txt
-
-* ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS``
-
-  .. code-block:: bash
-
-    sed -ri 's|GIT_REPOSITORY +.+stokesian-dynamics.git|GIT_REPOSITORY /work/username/stokesian_dynamics|' CMakeLists.txt
-
-* ``ESPRESSO_BUILD_WITH_CALIPER``
-
-  .. code-block:: bash
-
-    sed -ri 's|GIT_REPOSITORY +.+/Caliper.git|GIT_REPOSITORY /work/username/caliper|' CMakeLists.txt
-
+   sed -ri 's|GIT_REPOSITORY +.+/([^/]+).git|GIT_REPOSITORY /work/username/\1|' CMakeLists.txt
 
 Compiling, testing and installing
 ---------------------------------
