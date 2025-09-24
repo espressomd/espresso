@@ -23,7 +23,7 @@ import itertools
 import functools
 from .interactions import BondedInteraction
 from .utils import nesting_level, array_locked, is_valid_type
-from .utils import check_type_or_throw_except, to_bytes
+from .utils import check_type_or_throw_except
 from .code_features import assert_features, has_features
 from .script_interface import script_interface_register, ScriptInterfaceHelper
 from .propagation import Propagation
@@ -1336,25 +1336,30 @@ class ParticleList(ScriptInterfaceHelper):
 
 
 def set_slice_one_for_all(p_slice, attribute, value):
-    is_trivially_serializable = attribute in ParticleSlice._particle_attributes_trivially_serializable
-    attribute_bytes = to_bytes(attribute)
-    for p_id in p_slice.id_selection:
-        p = p_slice._get_particle(p_id)
-        if is_trivially_serializable:
-            p.set_parameter(attribute_bytes, value)
-        else:
-            setattr(p, attribute, value)
+    set_slice_one_for_each(p_slice, attribute, [value] * len(p_slice))
 
 
 def set_slice_one_for_each(p_slice, attribute, values):
-    is_trivially_serializable = attribute in ParticleSlice._particle_attributes_trivially_serializable
-    attribute_bytes = to_bytes(attribute)
-    for p_id, value in zip(p_slice.id_selection, values):
-        p = p_slice._get_particle(p_id)
-        if is_trivially_serializable:
-            p.set_parameter(attribute_bytes, value)
-        else:
-            setattr(p, attribute, value)
+    if attribute == "bonds":
+        all_bonds_ids = []
+        all_bonds_partner_ids = []
+        for i, bonds in enumerate(values):
+            p = p_slice._get_particle(p_slice.id_selection[i])
+            bonds_ids = []
+            bonds_partner_ids = []
+            for bond in bonds:
+                _bond = p.normalize_and_check_bond_or_throw_exception(bond)
+                p._bond_sanity_checks(_bond)
+                bonds_ids.append(_bond[0]._bond_id)
+                bonds_partner_ids.append(_bond[1:])
+            all_bonds_ids.append(bonds_ids)
+            all_bonds_partner_ids.append(bonds_partner_ids)
+        p_slice.call_method("set_param_parallel", name=attribute,
+                            all_bonds_ids=all_bonds_ids,
+                            all_bonds_partner_ids=all_bonds_partner_ids)
+    else:
+        p_slice.call_method("set_param_parallel",
+                            name=attribute, values=values)
 
 
 def _add_particle_slice_properties():
@@ -1382,7 +1387,11 @@ def _add_particle_slice_properties():
         # Special attributes
         if attribute == "bonds":
             nlvl = nesting_level(values)
-            if nlvl == 1 or nlvl == 2:
+            if nlvl == 1:
+                if len(values) > 0:
+                    values = [values]
+                set_slice_one_for_all(particle_slice, attribute, values)
+            elif nlvl == 2:
                 set_slice_one_for_all(particle_slice, attribute, values)
             elif nlvl == 3 and len(values) == N:
                 set_slice_one_for_each(particle_slice, attribute, values)

@@ -125,7 +125,6 @@ public:
    */
   void set_parameter(const std::string &name, const Variant &value);
 
-private:
   /**
    * @brief Local implementation of @ref set_parameter.
    */
