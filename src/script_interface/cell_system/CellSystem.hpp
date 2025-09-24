@@ -55,11 +55,9 @@ class CellSystem : public AutoParameters<CellSystem, System::Leaf> {
       {"hybrid_decomposition", CellStructureType::HYBRID},
   };
 
-protected:
   std::shared_ptr<::CellStructure> m_cell_structure;
-
-private:
   std::unique_ptr<VariantMap> m_params;
+
   void on_bind_system(::System::System &system) override {
     m_cell_structure = system.cell_structure;
     m_cell_structure->bind_system(m_system.lock());

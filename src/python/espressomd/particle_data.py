@@ -1355,7 +1355,8 @@ def set_slice_one_for_each(p_slice, attribute, values):
             all_bonds_ids.append(bonds_ids)
             all_bonds_partner_ids.append(bonds_partner_ids)
         p_slice.call_method("set_param_parallel", name=attribute,
-                            all_bonds_ids=all_bonds_ids, all_bonds_partner_ids=all_bonds_partner_ids)
+                            all_bonds_ids=all_bonds_ids,
+                            all_bonds_partner_ids=all_bonds_partner_ids)
     else:
         p_slice.call_method("set_param_parallel",
                             name=attribute, values=values)

@@ -31,6 +31,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<ParticleHandle>("Particles::ParticleHandle");
   om->register_new<ParticleList>("Particles::ParticleList");
   om->register_new<ParticleSlice>("Particles::ParticleSlice");
+  om->register_new<ParticleModifier>("Particles::ParticleModifier");
   om->register_new<Polymer>("Particles::Polymer");
 }
 

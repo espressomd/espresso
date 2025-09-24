@@ -24,6 +24,7 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/cell_system/CellSystem.hpp"
+#include "script_interface/get_value.hpp"
 #include "script_interface/interactions/BondedInteractions.hpp"
 
 #include "core/system/System.hpp"
@@ -35,58 +36,28 @@
 namespace ScriptInterface {
 namespace Particles {
 
-void set_particles_bonds(
-    std::vector<int> pids, std::vector<std::vector<int>> all_bonds_ids,
-    std::vector<std::vector<std::vector<int>>> all_bonds_partner_ids,
-    ::CellStructure &cell_structure, Context *context,
-    std::shared_ptr<::System::System> system);
-
-#ifdef ESPRESSO_EXCLUSIONS
-void set_particles_exclusions(std::vector<int> pids,
-                              std::vector<std::vector<int>> exclusion_lists,
-                              ::CellStructure &cell_structure, Context *context,
-                              std::shared_ptr<::System::System> system);
-#endif // ESPRESSO_EXCLUSIONS
-
-void set_particles_positions(std::vector<int> pids,
-                             std::vector<Utils::Vector3d> positions);
-
-void set_particles_types(std::vector<int> pids, std::vector<int> types,
-                         boost::mpi::communicator &comm,
-                         CellStructure &cell_structure,
-                         std::shared_ptr<::System::System> system);
-
-#ifdef ESPRESSO_ELECTROSTATICS
-void set_particles_charges(
-    std::vector<int> pids,
-    std::variant<std::vector<int>, std::vector<double>> const &charges,
-    boost::mpi::communicator const &comm, CellStructure &cell_structure,
-    std::shared_ptr<::System::System> system);
-#endif // ESPRESSO_ELECTROSTATICS
-
 struct SetParticleParametersVisitor {
+  void operator()(std::vector<int> const &, std::string const &,
+                  auto const &values, Context *,
+                  std::shared_ptr<CellSystem::CellSystem>,
+                  std::shared_ptr<Interactions::BondedInteractions>) const {
+    throw Exception("Values must be of type vector, got " +
+                    detail::demangle::simplify_symbol(&values));
+  }
   template <typename T>
   void operator()(
-      std::vector<int> const pids, std::basic_string<char> const param_name,
-      std::vector<T> values, Context *context,
+      std::vector<int> const &pids, std::string const &param_name,
+      std::vector<T> const &values, Context *context,
       std::shared_ptr<CellSystem::CellSystem> cell_structure,
       std::shared_ptr<Interactions::BondedInteractions> bonded_ias) const {
+    auto so = std::dynamic_pointer_cast<ParticleModifier>(context->make_shared(
+        "Particles::ParticleModifier", {{"id", -1},
+                                        {"__cell_structure", cell_structure},
+                                        {"__bonded_ias", bonded_ias}}));
     for (std::size_t i = 0; i < pids.size(); ++i) {
-      auto const pid = pids[i];
-      context
-          ->make_shared("Particles::ParticleHandle",
-                        {{"id", pid},
-                         {"__cell_structure", cell_structure},
-                         {"__bonded_ias", bonded_ias}})
-          ->do_set_parameter(param_name, values[i]);
-    } // Particle id loop
-  }
-  void operator()(
-      std::vector<int> const pids, std::basic_string<char> const param_name,
-      auto values, Context *context,
-      std::shared_ptr<CellSystem::CellSystem> cell_structure,
-      std::shared_ptr<Interactions::BondedInteractions> bonded_ias) const {
-    throw Exception("Values must be of type vector.");
+      so->set_pid(pids[i]);
+      so->do_set_parameter(param_name, values[i]);
+    }
   }
 };
 

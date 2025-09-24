@@ -26,11 +26,14 @@
 #include "core/Particle.hpp"
 #include "core/exclusions.hpp"
 #include "core/system/System.hpp"
+
 #include <boost/mpi/collectives/all_reduce.hpp>
 
 #include <cassert>
+#include <cstddef>
 #include <functional>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 namespace ScriptInterface {
@@ -38,6 +41,8 @@ namespace CellSystem {
 class CellSystem;
 }
 namespace Particles {
+
+class ParticleModifier;
 
 static auto error_msg(std::string const &name, std::string const &reason) {
   std::stringstream msg;
@@ -110,13 +115,13 @@ inline void local_remove_exclusion(int pid1, int pid2,
 
 inline void particle_exclusion_sanity_checks(int pid1, int pid2,
                                              ::CellStructure &cell_structure,
-                                             Context *context) {
+                                             auto const &comm) {
   if (pid1 == pid2) {
     throw std::runtime_error("Particles cannot exclude themselves (id " +
                              std::to_string(pid1) + ")");
   }
-  std::ignore = get_real_particle(context->get_comm(), pid1, cell_structure);
-  std::ignore = get_real_particle(context->get_comm(), pid2, cell_structure);
+  std::ignore = get_real_particle(comm, pid1, cell_structure);
+  std::ignore = get_real_particle(comm, pid2, cell_structure);
 }
 #endif // ESPRESSO_EXCLUSIONS
 
@@ -152,8 +157,11 @@ class ParticleHandle : public AutoParameters<ParticleHandle> {
 
   template <class F> void set_particle_property(F const &fun) const;
 
+  std::size_t setup_hidden_args(VariantMap const &params);
+
 public:
   ParticleHandle();
+  friend class ParticleModifier;
 
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override;
@@ -163,6 +171,24 @@ public:
   void attach(std::weak_ptr<::System::System> system) {
     assert(m_system.expired());
     m_system = system;
+  }
+};
+
+/** @brief Thin wrapper to read and write particle attributes in batches. */
+class ParticleModifier : public ParticleHandle {
+public:
+  void do_construct(VariantMap const &params) override {
+    auto const n_extra_args = setup_hidden_args(params);
+    if (n_extra_args) {
+      throw std::logic_error(
+          "ParticleModifier is not meant to create new particles");
+    }
+    m_pid = params.contains("id") ? get_value<int>(params, "id") : -1;
+  }
+
+  void set_pid(int pid) {
+    assert(pid >= 0);
+    m_pid = pid;
   }
 };
 

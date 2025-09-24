@@ -20,17 +20,20 @@
 #include "ParticleSlice.hpp"
 #include "ParticleHandle.hpp"
 
-#include "core/system/System.hpp"
-
 #include "core/bonds.hpp"
 #include "core/particle_node.hpp"
+#include "core/system/System.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
 #include "script_interface/Context.hpp"
 #include "script_interface/Exception.hpp"
 #include "script_interface/Variant.hpp"
 #include "script_interface/get_value.hpp"
-#include "utils/Vector.hpp"
 
+#include <utils/Vector.hpp>
+
+#include <algorithm>
+#include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -39,48 +42,48 @@
 namespace ScriptInterface {
 namespace Particles {
 
-void set_particles_bonds(
-    std::vector<int> const pids,
-    std::vector<std::vector<int>> const all_bonds_ids,
-    std::vector<std::vector<std::vector<int>>> const all_bonds_partner_ids,
-    ::CellStructure &cell_structure, Context *context,
-    std::shared_ptr<::System::System> system) {
-  for (std::size_t i = 0; i < pids.size(); i += 1) {
+static void set_particles_bonds(
+    std::vector<int> const &pids,
+    std::vector<std::vector<int>> const &all_bonds_ids,
+    std::vector<std::vector<std::vector<int>>> const &all_bonds_partner_ids,
+    boost::mpi::communicator const &comm, ::CellStructure &cell_structure,
+    ::System::System &system) {
+  for (std::size_t i = 0; i < pids.size(); ++i) {
     auto const pid = pids[i];
     auto const bonds_ids = all_bonds_ids[i];
     auto const bonds_partner_ids = all_bonds_partner_ids[i];
-
     // Remove old bonds
-    auto p_ptr = get_real_particle(context->get_comm(), pid, cell_structure);
+    auto p_ptr = get_real_particle(comm, pid, cell_structure);
     if (p_ptr != nullptr) {
       p_ptr->bonds().clear();
     }
     // Add new bonds
-    for (std::size_t j = 0; j < bonds_ids.size(); j += 1) {
+    for (std::size_t j = 0; j < bonds_ids.size(); ++j) {
       std::vector<int> particle_ids = {pid};
       std::ranges::copy(bonds_partner_ids[j], std::back_inserter(particle_ids));
-      ::add_bond(*system, bonds_ids[j], particle_ids);
-      system->on_particle_change();
+      ::add_bond(system, bonds_ids[j], particle_ids);
+      system.on_particle_change();
     }
   }
 }
 
 #ifdef ESPRESSO_EXCLUSIONS
-void set_particles_exclusions(
-    std::vector<int> const pids,
-    std::vector<std::vector<int>> const exclusion_lists,
-    ::CellStructure &cell_structure, Context *context,
-    std::shared_ptr<::System::System> system) {
-  for (std::size_t i = 0; i < pids.size(); i += 1) {
+static void
+set_particles_exclusions(std::vector<int> const &pids,
+                         std::vector<std::vector<int>> const &exclusion_lists,
+                         boost::mpi::communicator const &comm, Context *context,
+                         ::CellStructure &cell_structure,
+                         ::System::System &system) {
+  for (std::size_t i = 0; i < pids.size(); ++i) {
     auto const pid = pids[i];
     auto const exclusion_list = exclusion_lists[i];
     context->parallel_try_catch([&]() {
       for (auto const excluded_pid : exclusion_list) {
         particle_exclusion_sanity_checks(pid, excluded_pid, cell_structure,
-                                         context);
+                                         comm);
       }
     });
-    auto p_ptr = get_real_particle(context->get_comm(), pid, cell_structure);
+    auto p_ptr = get_real_particle(comm, pid, cell_structure);
     if (p_ptr != nullptr) {
       auto const &p = *p_ptr;
       // Remove all excluded ids of this particle
@@ -94,27 +97,28 @@ void set_particles_exclusions(
         }
       }
     }
-  } // Particle id loop
-  system->on_particle_change();
+  }
+  system.on_particle_change();
 }
 #endif // ESPRESSO_EXCLUSIONS
 
-void set_particles_positions(std::vector<int> const pids,
-                             std::vector<Utils::Vector3d> const positions) {
-  for (std::size_t i = 0; i < pids.size(); i += 1) {
+static void
+set_particles_positions(std::vector<int> const &pids,
+                        std::vector<Utils::Vector3d> const &positions) {
+  for (std::size_t i = 0; i < pids.size(); ++i) {
     auto const pid = pids[i];
     auto const pos = positions[i];
     particle_checks(pid, pos);
     set_particle_pos(pid, pos);
-  } // Particle id loop
+  }
 }
 
-void set_particles_types(std::vector<int> const pids,
-                         std::vector<int> const types,
-                         boost::mpi::communicator const &comm,
-                         CellStructure &cell_structure,
-                         std::shared_ptr<::System::System> system) {
-  for (std::size_t i = 0; i < pids.size(); i += 1) {
+static void set_particles_types(std::vector<int> const &pids,
+                                std::vector<int> const &types,
+                                boost::mpi::communicator const &comm,
+                                CellStructure &cell_structure,
+                                ::System::System &system) {
+  for (std::size_t i = 0; i < pids.size(); ++i) {
     auto const pid = pids[i];
     auto p_ptr = get_real_particle(comm, pid, cell_structure);
     if (p_ptr != nullptr) {
@@ -123,31 +127,27 @@ void set_particles_types(std::vector<int> const pids,
       if (new_type < 0) {
         throw std::domain_error(error_msg("type", "must be an integer >= 0"));
       }
-      system->nonbonded_ias->make_particle_type_exist(new_type);
+      system.nonbonded_ias->make_particle_type_exist(new_type);
       on_particle_type_change(pid, old_type, new_type);
       p_ptr->type() = new_type;
     }
-  } // Particle id loop
+  }
 }
 
 #ifdef ESPRESSO_ELECTROSTATICS
-void set_particles_charges(
-    std::vector<int> const pids,
-    std::variant<std::vector<int>, std::vector<double>> const &charges,
-    boost::mpi::communicator const &comm, CellStructure &cell_structure,
-    std::shared_ptr<::System::System> system) {
-  std::visit(
-      [&](auto const &concrete_charges) {
-        for (std::size_t i = 0; i < pids.size(); i += 1) {
-          auto const pid = pids[i];
-          auto p_ptr = get_real_particle(comm, pid, cell_structure);
-          if (p_ptr != nullptr) {
-            p_ptr->q() = concrete_charges[i];
-          }
-        } // Particle id loop
-        system->on_particle_charge_change();
-      },
-      charges);
+static void set_particles_charges(std::vector<int> const &pids,
+                                  std::vector<double> const &charges,
+                                  boost::mpi::communicator const &comm,
+                                  CellStructure &cell_structure,
+                                  ::System::System &system) {
+  for (std::size_t i = 0; i < pids.size(); ++i) {
+    auto const pid = pids[i];
+    auto p_ptr = get_real_particle(comm, pid, cell_structure);
+    if (p_ptr != nullptr) {
+      p_ptr->q() = charges[i];
+    }
+  }
+  system.on_particle_charge_change();
 }
 #endif // ESPRESSO_ELECTROSTATICS
 
@@ -198,23 +198,22 @@ Variant ParticleSlice::do_call_method(std::string const &name,
           set_particles_positions(
               m_id_selection,
               get_value<std::vector<Utils::Vector3d>>(params, "values"));
-        }
-
-        else if (param_name == "type") {
+        } else if (param_name == "type") {
           set_particles_types(
               m_id_selection, get_value<std::vector<int>>(params, "values"),
-              context()->get_comm(), *get_cell_structure(), get_system());
+              context()->get_comm(), *get_cell_structure(), *get_system());
         }
 #ifdef ESPRESSO_ELECTROSTATICS
         else if (param_name == "q") {
-          std::variant<std::vector<int>, std::vector<double>> charges;
-          if (std::holds_alternative<std::vector<int>>(params.at("values"))) {
-            charges = get_value<std::vector<int>>(params, "values");
+          std::vector<double> charges;
+          if (is_type<std::vector<int>>(params.at("values"))) {
+            auto tmp = get_value<std::vector<int>>(params, "values");
+            charges = std::vector<double>(tmp.begin(), tmp.end());
           } else {
             charges = get_value<std::vector<double>>(params, "values");
           }
           set_particles_charges(m_id_selection, charges, context()->get_comm(),
-                                *get_cell_structure(), get_system());
+                                *get_cell_structure(), *get_system());
 
         }
 #endif // ESPRESSO_ELECTROSTATICS
@@ -225,7 +224,8 @@ Variant ParticleSlice::do_call_method(std::string const &name,
           set_particles_exclusions(
               m_id_selection,
               get_value<std::vector<std::vector<int>>>(params, "values"),
-              *get_cell_structure(), context(), get_system());
+              context()->get_comm(), context(), *get_cell_structure(),
+              *get_system());
         }
 #endif // ESPRESSO_EXCLUSIONS
         else if (param_name == "bonds") {
@@ -234,7 +234,7 @@ Variant ParticleSlice::do_call_method(std::string const &name,
               get_value<std::vector<std::vector<int>>>(params, "all_bonds_ids"),
               get_value<std::vector<std::vector<std::vector<int>>>>(
                   params, "all_bonds_partner_ids"),
-              *get_cell_structure(), context(), get_system());
+              context()->get_comm(), *get_cell_structure(), *get_system());
         }
       });
     }
