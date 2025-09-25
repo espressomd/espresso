@@ -105,6 +105,8 @@ class TestVTK:
         with self.assertRaisesRegex(RuntimeError, "This VTK object isn't attached to a lattice"):
             label_unattached.write()
 
+    @utx.skipIfMissingModules("espressomd.io.vtk")
+    def test_exceptions_invalid_files(self):
         with tempfile.TemporaryDirectory() as tmp_directory:
             root = pathlib.Path(tmp_directory)
             invalid_vtk_file = root / "invalid_file.vtu"
