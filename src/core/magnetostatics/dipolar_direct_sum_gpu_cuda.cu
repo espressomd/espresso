@@ -59,13 +59,25 @@ __device__ inline void get_mi_vector_dds(float res[3], float const a[3],
 __device__ void dipole_ia_force(float pf, float const dr[3], float const *dip1,
                                 float const *dip2, float *f1, float *torque1,
                                 float *torque2
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
                                 ,
                                 float *dip_fld1, float *dip_fld2
 #endif
 ) {
   // Powers of distance
   auto const r_sq = scalar_product(dr, dr);
+  if (r_sq == 0.0f) {
+    f1[0] = f1[1] = f1[2] = 0.0f;
+#ifdef ROTATION
+    torque1[0] = torque1[1] = torque1[2] = 0.0f;
+    torque2[0] = torque2[1] = torque2[2] = 0.0f;
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    dip_fld1[0] = dip_fld1[1] = dip_fld1[2] = 0.0f;
+    dip_fld2[0] = dip_fld2[1] = dip_fld2[2] = 0.0f;
+#endif
+    return;
+  }
   auto const r_sq_inv = 1.0f / r_sq;
   auto const r_inv = rsqrtf(r_sq);
   auto const r3_inv = 1.0f / r_sq * r_inv;
@@ -78,7 +90,7 @@ __device__ void dipole_ia_force(float pf, float const dr[3], float const *dip1,
   auto const pe3 = scalar_product(dip2, dr);
   auto const pe4 = 3.0f * r5_inv;
 
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   auto const rep1 = pe3 * pe4;
   auto const rep2 = pe2 * pe4;
   dip_fld1[0] = pf * (rep1 * dr[0] - dip2[0] * r3_inv);
@@ -148,7 +160,7 @@ __device__ float dipole_ia_energy(float pf, float const *r1, float const *r2,
 
 __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
                                               const float *pos, const float *dip
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
                                               ,
                                               float *dip_fld
 #endif
@@ -169,12 +181,12 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
   // Per‐thread accumulators
   float fsum[3] = {0.0f, 0.0f, 0.0f};
   float tsum[3] = {0.0f, 0.0f, 0.0f};
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   float dfsum[3] = {0.0f, 0.0f, 0.0f};
 #endif
 
   float fi[3], ti1[3], ti2[3];
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   float dfi[3], dfj[3];
 #endif
 
@@ -187,7 +199,7 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
                         periodic);
       // Compute force/torque
       dipole_ia_force(pf, d0, mi, dip + 3 * j, fi, ti1, ti2
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
                       ,
                       dfi, dfj
 #endif
@@ -197,7 +209,7 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
       for (int k = 0; k < 3; ++k) {
         atomicAdd(f + 3 * j + k, -fi[k]);
         atomicAdd(torque + 3 * j + k, ti2[k]);
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
         atomicAdd(dip_fld + 3 * j + k, dfj[k]);
 #endif
       }
@@ -205,7 +217,7 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
       for (int k = 0; k < 3; ++k) {
         fsum[k] += fi[k];
         tsum[k] += ti1[k];
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
         dfsum[k] += dfi[k];
 #endif
       }
@@ -214,7 +226,7 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
     for (int k = 0; k < 3; ++k) {
       atomicAdd(f + 3 * i + k, fsum[k]);
       atomicAdd(torque + 3 * i + k, tsum[k]);
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
       atomicAdd(dip_fld + 3 * i + k, dfsum[k]);
 #endif
     }
@@ -235,7 +247,7 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
                        static_cast<float>(dy) * box_l[1],
                        static_cast<float>(dz) * box_l[2]};
         dipole_ia_force(pf, dr, mi, mi, fi, ti1, ti2
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
                         ,
                         dfi, dfj
 #endif
@@ -243,7 +255,7 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
         for (int k = 0; k < 3; ++k) {
           fsum[k] += fi[k];
           tsum[k] += ti1[k];
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
           dfsum[k] += dfi[k];
 #endif
         }
@@ -263,7 +275,7 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
                          (yi - yj) + static_cast<float>(dy) * box_l[1],
                          (zi - zj) + static_cast<float>(dz) * box_l[2]};
           dipole_ia_force(pf, dr, mi, mj, fi, ti1, ti2
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
                           ,
                           dfi, dfj
 #endif
@@ -273,12 +285,12 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
           for (int k = 0; k < 3; ++k) {
             atomicAdd(f + 3 * j + k, -fi[k]);
             atomicAdd(torque + 3 * j + k, ti2[k]);
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
             atomicAdd(dip_fld + 3 * j + k, dfj[k]);
 #endif
             fsum[k] += fi[k];
             tsum[k] += ti1[k];
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
             dfsum[k] += dfi[k];
 #endif
           }
@@ -292,7 +304,7 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
   for (int k = 0; k < 3; ++k) {
     atomicAdd(f + 3 * i + k, fsum[k]);
     atomicAdd(torque + 3 * i + k, tsum[k]);
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
     atomicAdd(dip_fld + 3 * i + k, dfsum[k]);
 #endif
   }
@@ -359,7 +371,7 @@ inline void copy_box_data(float **box_l_gpu, int **periodic_gpu,
 void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n, float *pos,
                                            float *dip
 
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
                                            ,
                                            float *dip_fld
 #endif
@@ -388,7 +400,7 @@ void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n, float *pos,
   copy_box_data(&box_l_gpu, &periodic_gpu, box_l, periodic);
 
   KERNELCALL(DipolarDirectSum_kernel_force, grid, block, k, n, pos, dip
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
              ,
              dip_fld
 #endif

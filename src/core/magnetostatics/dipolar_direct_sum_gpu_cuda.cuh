@@ -33,7 +33,7 @@ void DipolarDirectSum_kernel_wrapper_energy(float k, unsigned int n, float *pos,
                                             int periodic[3], float *E);
 void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n, float *pos,
                                            float *dip
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
                                            ,
                                            float *dip_fld
 #endif

@@ -77,7 +77,6 @@ template <> struct has_dipole_fields<DipolarDirectSumGpu> : std::true_type {};
 #endif
 #endif // ESPRESSO_DIPOLE_FIELD_TRACKING
 
-
 } // namespace traits
 } // namespace Dipoles
 

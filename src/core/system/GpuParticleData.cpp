@@ -143,7 +143,7 @@ static void add_forces_and_torques(ParticleRange const &particles,
     i++;
   }
 }
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
 static void add_dip_fld(ParticleRange const &particles,
                         std::span<const float> dip_fld) {
   std::size_t i = 0ul;
@@ -194,7 +194,7 @@ void GpuParticleData::particles_scatter_forces(
   }
 }
 
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
 void GpuParticleData::particles_scatter_dip_fld(
     ParticleRange const &particles, std::span<float> host_dip_fld) const {
 
