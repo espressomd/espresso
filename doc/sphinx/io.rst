@@ -531,4 +531,11 @@ functionality is provided by the wrapper :class:`~espressomd.io.vtk.VTKReader`:
     vtk_density = vtk_grids["density"]
     print(vtk_density.shape)
 
-For a self-contained example, please refer to :ref:`LB VTK output`.
+For self-contained examples, please refer to :ref:`LB VTK output` and
+:ref:`EK VTK output`.
+
+Some lattice-based methods support structured uniform grids. In this case,
+the file extension is ``.vti`` and each piece has absolute coordinates,
+making the reconstruction of the 3D grid trivial. The aforementioned
+VTK reader natively supports both structured and unstructured grid formats,
+and selects the correct reader backend based on the XML metadata.

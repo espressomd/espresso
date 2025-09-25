@@ -291,6 +291,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(vtk_auto.vtk_uid, key_auto)
         self.assertEqual(vtk_auto.delta_N, 1)
         self.assertFalse(vtk_auto.enabled)
+        self.assertFalse(vtk_auto.force_pvtu)
         self.assertEqual(set(vtk_auto.observables),
                          {"density", "velocity_vector"})
         self.assertIn(
@@ -300,6 +301,7 @@ class CheckpointTest(ut.TestCase):
         self.assertIsInstance(vtk_manual, espressomd.lb.VTKOutput)
         self.assertEqual(vtk_manual.vtk_uid, key_manual)
         self.assertEqual(vtk_manual.delta_N, 0)
+        self.assertTrue(vtk_manual.force_pvtu)
         self.assertEqual(set(vtk_manual.observables), {"density"})
         self.assertIn(f"write to '{key_manual}' on demand>", repr(vtk_manual))
         # check file numbering when resuming VTK write operations
