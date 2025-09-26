@@ -32,8 +32,8 @@ integrate
   Initial Force Calculation
     calculate_forces
       copy_particles_to_GPU
-      {'convert particles AoS to SoA' if HAS_CABANA else ''}
       invalidate_dip_fld
+      {'convert particles AoS to SoA' if HAS_CABANA else ''}
       init_forces_and_thermostat
       calc_long_range_forces
       {'parallel short range' if HAS_CABANA else 'short_range_loop'}
@@ -41,8 +41,8 @@ integrate
   Integration loop
     calculate_forces
       copy_particles_to_GPU
-      {'convert particles AoS to SoA' if HAS_CABANA else ''}
       invalidate_dip_fld
+      {'convert particles AoS to SoA' if HAS_CABANA else ''}
       init_forces_and_thermostat
       calc_long_range_forces
       {'parallel short range' if HAS_CABANA else 'short_range_loop'}
