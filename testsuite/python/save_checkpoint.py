@@ -409,12 +409,12 @@ if lbf_class:
     config.recursive_unlink(vtk_root / lb_vtk_auto_id)
     config.recursive_unlink(vtk_root / lb_vtk_manual_id)
     lb_vtk_auto = espressomd.lb.VTKOutput(
-        identifier=lb_vtk_auto_id, delta_N=1,
+        identifier=lb_vtk_auto_id, delta_N=1, force_pvtu=False,
         observables=('density', 'velocity_vector'), base_folder=str(vtk_root))
     lbf.add_vtk_writer(vtk=lb_vtk_auto)
     lb_vtk_auto.disable()
     lb_vtk_manual = espressomd.lb.VTKOutput(
-        identifier=lb_vtk_manual_id, delta_N=0,
+        identifier=lb_vtk_manual_id, delta_N=0, force_pvtu=True,
         observables=('density',), base_folder=str(vtk_root))
     lbf.add_vtk_writer(vtk=lb_vtk_manual)
     lb_vtk_manual.write()

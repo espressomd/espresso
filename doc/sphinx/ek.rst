@@ -345,6 +345,11 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
         ek_density = np.copy(ek_species[:, :, :].density)
         np.testing.assert_allclose(vtk_density, ek_density, rtol=1e-10, atol=0.)
 
+The Poisson grid can be written to a file in either unstructured (``.vtu``) or
+structured (``.vti``) grid format. The latter doesn't require topology reconstruction.
+Both file formats can be read by :class:`~espressomd.io.vtk.VTKReader`.
+To enforce unstructured grid format, pass parameter ``force_pvtu=True``.
+
 .. _Setting up EK boundary conditions:
 
 Setting up boundary conditions

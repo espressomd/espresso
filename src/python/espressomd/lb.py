@@ -665,6 +665,10 @@ class VTKOutput(VTKOutputBase):
         Path to the output VTK folder.
     prefix : :obj:`str` (optional), default is 'simulation_step'
         Prefix for VTK files.
+    force_pvtu : :obj:`bool` (optional), default is ``True``
+        Force parallel unstructured grid format (file extension: ``.vtu``).
+        If ``False``, uses parallel structured grid format if possible
+        (file extension: ``.vti``).
 
     """
     _so_name = "walberla::LBVTKHandle"

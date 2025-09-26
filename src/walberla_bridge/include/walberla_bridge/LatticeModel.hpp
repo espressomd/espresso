@@ -66,11 +66,13 @@ public:
    *  @param identifier       Name of the VTK dataset
    *  @param base_folder      Path to the VTK folder
    *  @param prefix           Prefix of the VTK files
+   *  @param force_pvtu       Force parallel unstructured grid format
    */
   std::shared_ptr<VTKHandle>
   create_vtk(int delta_N, int initial_count, int flag_observables,
              units_map const &units_conversion, std::string const &identifier,
-             std::string const &base_folder, std::string const &prefix);
+             std::string const &base_folder, std::string const &prefix,
+             bool force_pvtu);
 
   /** @brief Write a VTK observable to disk.
    *
