@@ -25,18 +25,14 @@ import pystencils as ps
 import pystencils_walberla
 import sympy as sp
 import pystencils_walberla.utility
-import lbmpy
 from lbmpy.boundaries.boundaryhandling import create_lattice_boltzmann_boundary_kernel
 from lbmpy_walberla.additional_data_handler import default_additional_data_handler
 from pystencils import Field, FieldType, Target
 from lbmpy.advanced_streaming import Timestep
-from pystencils.astnodes import KernelFunction
 from pystencils.boundaries.boundaryhandling import create_boundary_kernel
 from pystencils.boundaries.createindexlist import numpy_data_type_for_boundary_object
 from pystencils.typing import TypedSymbol, create_type
-from pystencils_walberla.utility import config_from_context, struct_from_numpy_dtype
-from pystencils_walberla.kernel_selection import (
-    KernelFamily, AbstractKernelSelectionNode, KernelCallNode, HighLevelInterfaceSpec)
+
 
 class Dirichlet_Custom(ps.boundaries.Dirichlet):
     inner_or_boundary = False
@@ -230,14 +226,17 @@ def generate_lb_boundary(
 ):
     if boundary_object.additional_data and additional_data_handler is None:
         target = create_kernel_params.get('target', Target.CPU)
-        additional_data_handler = default_additional_data_handler(boundary_object, lb_method, field_name, target=target)
+        additional_data_handler = default_additional_data_handler(
+            boundary_object, lb_method, field_name, target=target)
 
+    # pylint: disable=unused-argument
     def boundary_creation_function(field, index_field, stencil, boundary_functor, target=Target.CPU, **kwargs):
         return create_lattice_boltzmann_boundary_kernel(field, index_field, lb_method, boundary_functor,
                                                         streaming_pattern=streaming_pattern,
                                                         prev_timestep=prev_timestep,
                                                         target=target,
                                                         **kwargs)
+    # pylint: disable=unused-argument
 
     generate_boundary(generation_context,
                       lb_method.stencil,
@@ -275,7 +274,7 @@ def generate_boundary(
 ):
     struct_name = "IndexInfo"
     dim = stencil.D
-    index_shape=[len(stencil)]
+    index_shape = [len(stencil)]
 
     config = pystencils_walberla.utility.config_from_context(
         generation_context,
@@ -292,9 +291,10 @@ def generate_boundary(
 
     coordinate_names = ("x", "y", "z")[:dim]
 
-    if(boundary_object):
+    if (boundary_object):
         boundary_object.name = class_name
-        index_struct_dtype = numpy_data_type_for_boundary_object(boundary_object, dim)
+        index_struct_dtype = numpy_data_type_for_boundary_object(
+            boundary_object, dim)
     else:
         index_struct_dtype = np.dtype(
             [(name, np.int32) for name in coordinate_names], align=True
@@ -312,7 +312,7 @@ def generate_boundary(
         strides=(1, 1),
     )
 
-    if(assignment):
+    if (assignment):
         kernel_config = ps.CreateKernelConfig(
             index_fields=[index_field], target=target, **create_kernel_params
         )
@@ -323,27 +323,30 @@ def generate_boundary(
             ps.TypedSymbol("dummy", np.int32), index_field[0]("x"))]
         elements += assignment
 
-        kernel = ps.kernelcreation.create_kernel(elements, config=kernel_config)
+        kernel = ps.kernelcreation.create_kernel(
+            elements, config=kernel_config)
     else:
         if field_data_type is None:
             field_data_type = config.data_type[field_name].numpy_dtype
 
         field = Field.create_generic(field_name, dim, dtype=field_data_type, index_dimensions=len(index_shape),
                                      layout=layout, index_shape=index_shape, field_type=FieldType.GENERIC)
-    
+
         if not kernel_creation_function:
             kernel_creation_function = create_boundary_kernel
 
-        bc_force = hasattr(boundary_object, "calculate_force_on_boundary") and boundary_object.calculate_force_on_boundary
+        bc_force = hasattr(
+            boundary_object, "calculate_force_on_boundary") and boundary_object.calculate_force_on_boundary
         if bc_force:
-            force_vector_type = np.dtype([(f"F_{i}", np.float64) for i in range(dim)], align=True)
+            force_vector_type = np.dtype(
+                [(f"F_{i}", np.float64) for i in range(dim)], align=True)
             force_vector = Field('forceVector', FieldType.INDEXED, force_vector_type, layout=[0],
-                                shape=(TypedSymbol("forceVectorSize", create_type("int32")), 1), strides=(1, 1))
+                                 shape=(TypedSymbol("forceVectorSize", create_type("int32")), 1), strides=(1, 1))
             kernel = kernel_creation_function(field, index_field, stencil, boundary_object,
-                                            target=target, force_vector=force_vector, **create_kernel_params)
+                                              target=target, force_vector=force_vector, **create_kernel_params)
         else:
             kernel = kernel_creation_function(field, index_field, stencil, boundary_object,
-                                            target=target, **create_kernel_params)
+                                              target=target, **create_kernel_params)
 
     if isinstance(kernel, ps.astnodes.KernelFunction):
         kernel.function_name = f"boundary_{class_name}"

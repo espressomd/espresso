@@ -52,7 +52,6 @@ import lbmpy.forcemodels
 import lbmpy.stencils
 import lbmpy.enums
 
-import lbmpy_walberla
 import lbmpy_espresso
 
 import lees_edwards
