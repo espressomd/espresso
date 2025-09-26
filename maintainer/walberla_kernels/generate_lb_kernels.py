@@ -318,33 +318,19 @@ def generate_boundary_kernels(ctx, method, data_type):
             assert pop in content
         return content
 
-    def patch_boundary_force_accessor(content):
-        # remove boundary boundary interaction flags
-        content = content.replace("! isFlagSet(it, domainFlag)",
-                                  "! isFlagSet(it, domainFlag) || isFlagSet(it, boundaryFlag)")
-        content = content.replace(
-            "! isFlagSet(it, domainFlag) || isFlagSet(it, boundaryFlag)", "! isFlagSet(it, domainFlag)", 1)
-        # use range-based for loop
-        content = content.replace(
-            "for(std::vector<ForceStruct>::iterator it = cpuVector_.begin(); it != cpuVector_.end(); ++it)",
-            "for(auto & it : cpuVector_)")
-        content = content.replace("] += it->F_", "] += it.F_")
-        return content
-
     for _, target_suffix in paramlist(parameters, ("CPU", "GPU")):
         class_name = f"DynamicUBB{precision_prefix}{target_suffix}"
-        lbmpy_walberla.generate_boundary(
+        custom_additional_extensions.generate_lb_boundary(
             ctx, class_name, ubb_dynamic, method,
             additional_data_handler=ubb_data_handler,
-            streaming_pattern="pull", target=target)
+            streaming_pattern="pull", target=target,
+            template_file="templates/Boundary_lb.tmpl.h")
         ctx.patch_file(class_name, get_ext_header(target_suffix),
                        patch_boundary_header, target_suffix)
         ctx.patch_file(class_name, get_ext_source(target_suffix),
                        patch_boundary_kernel, target_suffix)
         ctx.patch_file(class_name, get_ext_source(target_suffix),
                        patch_openmp_kernels)
-        ctx.patch_file(class_name, get_ext_header(target_suffix),
-                       patch_boundary_force_accessor)
 
 
 with code_generation_context.CodeGeneration() as ctx:

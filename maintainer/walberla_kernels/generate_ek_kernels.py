@@ -352,7 +352,8 @@ with code_generation_context.CodeGeneration() as ctx:
                 class_name=class_name,
                 dim=dim,
                 target=target,
-                assignment=assignments)
+                assignment=assignments,
+                template_file="templates/Boundary_ek_reactions.tmpl.h")
             ctx.patch_file(class_name, file_suffix,
                            patch_reaction_indexed_kernel, processor_suffix)
 

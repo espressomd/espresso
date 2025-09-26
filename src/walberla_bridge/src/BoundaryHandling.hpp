@@ -235,8 +235,8 @@ public:
     return m_boundary->getForce(block);
   }
 
-  constexpr std::vector<std::vector<int>> get_neighbor_offset() {
-    return m_boundary->getNeighborOffset();
+  constexpr std::array<std::array<int, 19u>, 3u> get_neighbor_offset() {
+    return m_boundary->neighborOffset;
   }
   BlockDataID get_force_vector_id() const { return m_boundary->forceVectorID; }
   auto &get_force_vector(const IBlock *block) {

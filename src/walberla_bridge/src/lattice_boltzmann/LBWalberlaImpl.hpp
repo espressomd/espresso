@@ -1741,7 +1741,7 @@ public:
                                                   int dir) const {
     Utils::Vector3i neighbor({0, 0, 0});
     auto const grid_size = get_lattice().get_grid_dimensions();
-    std::vector<std::vector<int>> neighbor_offset =
+    auto const neighbor_offset =
         m_boundary->get_neighbor_offset();
     for (int i = 0; i < neighbor.size(); i++) {
       neighbor[i] =
