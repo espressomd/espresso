@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 The ESPResSo project
+# Copyright (C) 2022-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,17 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-foreach(n_species RANGE 1 5)
-  foreach(precision double_precision single_precision)
-    target_sources(
-      espresso_walberla_codegen
-      PRIVATE ReactionKernelBulk_${n_species}_${precision}.cpp
-              ReactionKernelIndexed_${n_species}_${precision}.cpp)
-    if(WALBERLA_BUILD_WITH_CUDA)
-      target_sources(
-        espresso_walberla_codegen_cuda
-        PRIVATE ReactionKernelBulk_${n_species}_${precision}_CUDA.cu
-                ReactionKernelIndexed_${n_species}_${precision}_CUDA.cu)
-    endif()
+function(configure_codegen_kernel kernel)
+  set(backends ".cpp")
+  if(WALBERLA_BUILD_WITH_CUDA)
+    list(APPEND backends "_CUDA.cu")
+  endif()
+  foreach(precision single double)
+    foreach(backend ${backends})
+      foreach(num RANGE 1 5)
+        set(source_file ${kernel}_${num}_${precision}_precision${backend})
+        target_sources(espresso_walberla_codegen PRIVATE ${source_file})
+        espresso_set_walberla_codegen_kernel_source_properties(${source_file})
+      endforeach()
+    endforeach()
   endforeach()
-endforeach()
+endfunction()
+
+configure_codegen_kernel(ReactionKernelBulk)
+configure_codegen_kernel(ReactionKernelIndexed)

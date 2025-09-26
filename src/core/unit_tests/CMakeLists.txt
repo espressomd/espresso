@@ -98,9 +98,10 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
                      Boost::mpi MPI::MPI_CXX NUM_PROC 2)
   target_link_libraries(
     lb_particle_coupling_test PRIVATE espresso::walberla
-                                      espresso::walberla::cpp_flags)
-  target_link_libraries(ek_interface_test PRIVATE espresso::walberla
-                                                  espresso::walberla::cpp_flags)
+                                      espresso::walberla::compiler_flags)
+  target_link_libraries(
+    ek_interface_test PRIVATE espresso::walberla
+                              espresso::walberla::compiler_flags)
 endif()
 
 if(ESPRESSO_BUILD_WITH_FFTW)
@@ -117,5 +118,5 @@ endif()
 
 if(ESPRESSO_BUILD_WITH_CUDA)
   espresso_unit_test(SRC cuda_test.cu DEPENDS espresso::utils espresso::core
-                     espresso::cuda)
+                     CUDA::cudart)
 endif()

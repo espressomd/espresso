@@ -27,7 +27,6 @@
 #include "EKPoissonSolver.hpp"
 #include "LatticeWalberla.hpp"
 
-#include "core/MpiCallbacks.hpp"
 #include "core/communication.hpp"
 
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>

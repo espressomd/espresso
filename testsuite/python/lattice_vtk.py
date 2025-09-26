@@ -105,6 +105,18 @@ class TestVTK:
         with self.assertRaisesRegex(RuntimeError, "This VTK object isn't attached to a lattice"):
             label_unattached.write()
 
+    @utx.skipIfMissingModules("espressomd.io.vtk")
+    def test_exceptions_invalid_files(self):
+        with tempfile.TemporaryDirectory() as tmp_directory:
+            root = pathlib.Path(tmp_directory)
+            invalid_vtk_file = root / "invalid_file.vtu"
+            invalid_vtk_file.write_text(1000 * "\n    ")
+            with self.assertRaisesRegex(RuntimeError, "is not a compliant XML file"):
+                espressomd.io.vtk.VTKReader().parse(invalid_vtk_file)
+            invalid_vtk_file.write_text('<VTKFile type="UnknownGrid"/>')
+            with self.assertRaisesRegex(NotImplementedError, "Unknown VTK file format 'UnknownGrid'"):
+                espressomd.io.vtk.VTKReader().parse(invalid_vtk_file)
+
 
 class TestLBVTK(TestVTK):
 
@@ -308,12 +320,13 @@ class TestEKVTK(TestVTK):
             actor.add_vtk_writer(vtk=vtk_obj)
             vtk_obj.disable()
             vtk_obj.enable()
+            self.assertFalse(vtk_obj.force_pvtu)
 
             # prepare VTK Poisson
             label_vtk_poisson_last_frame = f"test_vtk_{self.vtk_id}_poisson_end"  # nopep8
             label_vtk_poisson_continuous = f"test_vtk_{self.vtk_id}_poisson_continuous"  # nopep8
             path_vtk_poisson_last_frame = root / \
-                label_vtk_poisson_last_frame / "simulation_step_0.vtu"
+                label_vtk_poisson_last_frame / "simulation_step_0.vti"
             path_vtk_poisson_continuous = [
                 root / label_vtk_poisson_continuous / f"simulation_step_{i}.vtu" for i in range(n_steps)]
             filepaths_poisson = [
@@ -321,8 +334,9 @@ class TestEKVTK(TestVTK):
 
             vtk_obs_poisson = list(self.valid_obs_poisson)
             vtk_obj_poisson = self.vtk_poisson_class(
-                identifier=label_vtk_poisson_continuous, delta_N=1,
-                observables=vtk_obs_poisson, base_folder=root)
+                identifier=label_vtk_poisson_continuous, force_pvtu=True,
+                observables=vtk_obs_poisson, base_folder=root, delta_N=1)
+            self.assertTrue(vtk_obj_poisson.force_pvtu)
             self.solver.add_vtk_writer(vtk=vtk_obj_poisson)
             vtk_obj_poisson.disable()
             vtk_obj_poisson.enable()
@@ -339,8 +353,9 @@ class TestEKVTK(TestVTK):
             self.assertEqual(vtk_obj.valid_observables(), set(self.valid_obs))
 
             vtk_obj_poisson = self.vtk_poisson_class(
-                identifier=label_vtk_poisson_last_frame, delta_N=0, observables=vtk_obs_poisson,
-                base_folder=root)
+                identifier=label_vtk_poisson_last_frame, force_pvtu=False,
+                observables=vtk_obs_poisson, base_folder=root, delta_N=0)
+            self.assertFalse(vtk_obj_poisson.force_pvtu)
             self.solver.add_vtk_writer(vtk=vtk_obj_poisson)
             vtk_obj_poisson.write()
             self.assertEqual(sorted(vtk_obj_poisson.observables),
@@ -357,7 +372,7 @@ class TestEKVTK(TestVTK):
                              path_vtk_continuous[0].parent.with_suffix(".pvd"),
                              path_vtk_poisson_last_frame.parent.with_suffix(
                                  ".pvd"),
-                             path_vtk_poisson_continuous[0].parent.with_suffix(".pvd"),]:
+                             path_vtk_poisson_continuous[0].parent.with_suffix(".pvd")]:
                 self.assertTrue(
                     filepath.exists(),
                     f"VTK summary file \"{filepath}\" not written to disk")

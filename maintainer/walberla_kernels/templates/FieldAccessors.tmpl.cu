@@ -780,7 +780,8 @@ namespace Density
         kernel.addParam( dev_data_ptr );
         kernel.addParam( density );
         kernel();
-        {{dtype}} rho = dev_data[0u];
+        {{dtype}} rho{};
+        thrust::copy(dev_data.begin(), dev_data.end(), &rho);
         return rho;
     }
 

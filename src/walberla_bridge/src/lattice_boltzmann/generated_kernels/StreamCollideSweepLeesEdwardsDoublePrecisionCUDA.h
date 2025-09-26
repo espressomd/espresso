@@ -13,13 +13,13 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file StreamCollideSweepSinglePrecisionLeesEdwardsCUDA.h
+//! \\file StreamCollideSweepLeesEdwardsDoublePrecisionCUDA.h
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7+4.gc7d65a7, sympy
-// v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit
-// 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
+// v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
+// waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #pragma once
 #include "core/DataTypes.h"
@@ -54,16 +54,17 @@
 namespace walberla {
 namespace pystencils {
 
-class StreamCollideSweepSinglePrecisionLeesEdwardsCUDA {
+class StreamCollideSweepLeesEdwardsDoublePrecisionCUDA {
 public:
-  StreamCollideSweepSinglePrecisionLeesEdwardsCUDA(BlockDataID forceID_,
+  StreamCollideSweepLeesEdwardsDoublePrecisionCUDA(BlockDataID forceID_,
                                                    BlockDataID pdfsID_,
-                                                   float grid_size,
-                                                   float omega_shear, float v_s)
+                                                   double grid_size,
+                                                   double omega_shear,
+                                                   double v_s)
       : forceID(forceID_), pdfsID(pdfsID_), grid_size_(grid_size),
         omega_shear_(omega_shear), v_s_(v_s) {}
 
-  ~StreamCollideSweepSinglePrecisionLeesEdwardsCUDA() {
+  ~StreamCollideSweepLeesEdwardsDoublePrecisionCUDA() {
     for (auto p : cache_pdfs_) {
       delete p.second;
     }
@@ -81,13 +82,13 @@ public:
   }
 
   static std::function<void(IBlock *)>
-  getSweep(const shared_ptr<StreamCollideSweepSinglePrecisionLeesEdwardsCUDA>
+  getSweep(const shared_ptr<StreamCollideSweepLeesEdwardsDoublePrecisionCUDA>
                &kernel) {
     return [kernel](IBlock *b) { kernel->run(b); };
   }
 
   static std::function<void(IBlock *, gpuStream_t)> getSweepOnCellInterval(
-      const shared_ptr<StreamCollideSweepSinglePrecisionLeesEdwardsCUDA>
+      const shared_ptr<StreamCollideSweepLeesEdwardsDoublePrecisionCUDA>
           &kernel,
       const shared_ptr<StructuredBlockStorage> &blocks,
       const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
@@ -116,20 +117,20 @@ public:
   void configure(const shared_ptr<StructuredBlockStorage> & /*blocks*/,
                  IBlock * /*block*/) {}
 
-  inline float getGrid_size() const { return grid_size_; }
-  inline float getOmega_shear() const { return omega_shear_; }
-  inline float getV_s() const { return v_s_; }
-  inline void setGrid_size(const float value) { grid_size_ = value; }
-  inline void setOmega_shear(const float value) { omega_shear_ = value; }
-  inline void setV_s(const float value) { v_s_ = value; }
+  inline double getGrid_size() const { return grid_size_; }
+  inline double getOmega_shear() const { return omega_shear_; }
+  inline double getV_s() const { return v_s_; }
+  inline void setGrid_size(const double value) { grid_size_ = value; }
+  inline void setOmega_shear(const double value) { omega_shear_ = value; }
+  inline void setV_s(const double value) { v_s_ = value; }
 
 private:
   BlockDataID forceID;
   BlockDataID pdfsID;
-  float grid_size_;
-  float omega_shear_;
-  float v_s_;
-  std::unordered_map<IBlock *, gpu::GPUField<float> *> cache_pdfs_;
+  double grid_size_;
+  double omega_shear_;
+  double v_s_;
+  std::unordered_map<IBlock *, gpu::GPUField<double> *> cache_pdfs_;
 };
 
 } // namespace pystencils

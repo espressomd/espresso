@@ -109,10 +109,6 @@ case "$1" in
         shift
         exec cuda-gdb --args "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
-    --cuda-memcheck)
-        shift
-        exec cuda-memcheck "@ESPRESSO_PYTHON_FRONTEND@" "$@"
-        ;;
     --cuda-sanitizer)
         shift
         exec compute-sanitizer --leak-check full "@ESPRESSO_PYTHON_FRONTEND@" "$@"
@@ -141,11 +137,6 @@ case "$1" in
         options="${1#*=}"
         shift
         exec cuda-gdb ${options} --args "@ESPRESSO_PYTHON_FRONTEND@" "$@"
-        ;;
-    --cuda-memcheck=*)
-        options="${1#*=}"
-        shift
-        exec cuda-memcheck ${options} "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
     --cuda-sanitizer=*)
         options="${1#*=}"

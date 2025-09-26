@@ -31,10 +31,13 @@
 #include <boost/test/unit_test.hpp>
 
 #include "../src/lattice_boltzmann/LBWalberlaImpl.hpp"
-#include "../src/lattice_boltzmann/generated_kernels/FieldAccessorsDoublePrecision.h"
+#if defined(__CUDACC__)
 #include "../src/lattice_boltzmann/generated_kernels/FieldAccessorsDoublePrecisionCUDA.cuh"
-#include "../src/lattice_boltzmann/generated_kernels/FieldAccessorsSinglePrecision.h"
 #include "../src/lattice_boltzmann/generated_kernels/FieldAccessorsSinglePrecisionCUDA.cuh"
+#else
+#include "../src/lattice_boltzmann/generated_kernels/FieldAccessorsDoublePrecision.h"
+#include "../src/lattice_boltzmann/generated_kernels/FieldAccessorsSinglePrecision.h"
+#endif
 
 #include <walberla_bridge/Architecture.hpp>
 #include <walberla_bridge/BlockAndCell.hpp>
@@ -47,7 +50,9 @@
 
 #include <mpi.h>
 
+#if defined(__CUDACC__)
 #include <cuda.h>
+#endif
 
 #include <algorithm>
 #include <array>
@@ -66,6 +71,7 @@
 
 static Utils::Vector3i mpi_shape;
 
+#if defined(__CUDACC__)
 boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
   bool has_compatible_device = false;
   int n_devices = 0;
@@ -79,6 +85,7 @@ boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
   }
   return has_compatible_device;
 }
+#endif
 
 template <std::ranges::contiguous_range R>
   requires std::ranges::sized_range<R>
@@ -343,7 +350,11 @@ template <typename FT, lbmpy::Arch Architecture> struct Fixture {
   }
 };
 
+#if defined(__CUDACC__)
 BOOST_AUTO_TEST_SUITE(suite, *boost::unit_test::precondition(has_gpu))
+#else
+BOOST_AUTO_TEST_SUITE(suite)
+#endif
 
 BOOST_AUTO_TEST_CASE(test_custom_predicate) {
   std::vector<int> const val = {0, 1, 2, 3, 4, 5, 99, 2};
@@ -362,8 +373,11 @@ BOOST_AUTO_TEST_CASE(test_custom_predicate) {
 using test_types = boost::mpl::list<float, double>;
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(macroscopic_accessors, FT, test_types) {
-  Fixture<FT, lbmpy::Arch::CPU>().runTest();
+#if defined(__CUDACC__)
   Fixture<FT, lbmpy::Arch::GPU>().runTest();
+#else
+  Fixture<FT, lbmpy::Arch::CPU>().runTest();
+#endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()

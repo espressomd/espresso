@@ -147,7 +147,8 @@ float get(
   kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*scalar_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
-  float result = dev_data[0u];
+  float result{};
+  thrust::copy(dev_data.begin(), dev_data.end(), &result);
   return result;
 }
 

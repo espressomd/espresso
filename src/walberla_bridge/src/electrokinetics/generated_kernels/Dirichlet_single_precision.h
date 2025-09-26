@@ -78,7 +78,9 @@ public:
     }
 
     CpuIndexVector &indexVector(Type t) { return cpuVectors_[t]; }
-    IndexInfo *pointerCpu(Type t) { return cpuVectors_[t].data(); }
+    IndexInfo *pointerCpu(Type t) {
+      return cpuVectors_[t].empty() ? nullptr : cpuVectors_[t].data();
+    }
 
     void syncGPU() {}
 
@@ -107,11 +109,11 @@ public:
 
   void outer(IBlock *block);
 
-  Vector3<double> getForce(IBlock * /*block*/) {
+  Vector3<float> getForce(IBlock * /*block*/) {
 
     WALBERLA_ABORT(
         "Boundary condition was not generated including force calculation.")
-    return Vector3<double>(double_c(0.0));
+    return Vector3<float>(float_c(0.0));
   }
 
   std::function<void(IBlock *)> getSweep() {
@@ -175,11 +177,11 @@ public:
         float InitialisatonAdditionalData =
             elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
         element.value = InitialisatonAdditionalData;
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 

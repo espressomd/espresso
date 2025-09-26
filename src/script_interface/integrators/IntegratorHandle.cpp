@@ -24,6 +24,7 @@
 #include "BrownianDynamics.hpp"
 #include "SteepestDescent.hpp"
 #include "StokesianDynamics.hpp"
+#include "SymplecticEuler.hpp"
 #include "VelocityVerlet.hpp"
 #include "VelocityVerletIsoNPT.hpp"
 
@@ -85,6 +86,9 @@ IntegratorHandle::IntegratorHandle() {
            return Variant{
                std::dynamic_pointer_cast<StokesianDynamics>(m_instance)};
 #endif // ESPRESSO_STOKESIAN_DYNAMICS
+         case INTEG_METHOD_SYMPLECTIC_EULER:
+           return Variant{
+               std::dynamic_pointer_cast<SymplecticEuler>(m_instance)};
          default: {
            auto ptr = std::dynamic_pointer_cast<VelocityVerlet>(m_instance);
            assert(ptr.get());

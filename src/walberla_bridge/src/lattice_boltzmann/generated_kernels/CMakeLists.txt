@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 The ESPResSo project
+# Copyright (C) 2021-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,32 +17,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-foreach(precision DoublePrecision SinglePrecision)
-  target_sources(
-    espresso_walberla_codegen
-    PRIVATE PackInfoPdf${precision}.cpp PackInfoVec${precision}.cpp
-            InitialPDFsSetter${precision}.cpp DynamicUBB${precision}.cpp
-            UpdateVelFromPDF${precision}.cpp)
-  if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
-    target_sources(
-      espresso_walberla_codegen
-      PRIVATE StreamCollideSweep${precision}LeesEdwardsAVX.cpp
-              StreamCollideSweep${precision}ThermalizedAVX.cpp)
-  else()
-    target_sources(
-      espresso_walberla_codegen
-      PRIVATE StreamCollideSweep${precision}LeesEdwards.cpp
-              StreamCollideSweep${precision}Thermalized.cpp)
-  endif()
-  if(WALBERLA_BUILD_WITH_CUDA)
-    target_sources(
-      espresso_walberla_codegen_cuda
-      PRIVATE StreamCollideSweep${precision}LeesEdwardsCUDA.cu
-              StreamCollideSweep${precision}ThermalizedCUDA.cu
-              FieldAccessors${precision}CUDA.cu
-              InitialPDFsSetter${precision}CUDA.cu
-              DynamicUBB${precision}CUDA.cu PackInfoPdf${precision}CUDA.cu
-              UpdateVelFromPDF${precision}CUDA.cu
-              PackInfoVec${precision}CUDA.cu)
-  endif()
-endforeach()
+set(backends ".cpp")
+if(WALBERLA_BUILD_WITH_CUDA)
+  list(APPEND backends "CUDA.cu")
+endif()
+
+function(configure_codegen_kernel kernel)
+  foreach(precision Single Double)
+    foreach(backend ${backends})
+      set(source_file ${kernel}${precision}Precision${backend})
+      target_sources(espresso_walberla_codegen PRIVATE ${source_file})
+      espresso_set_walberla_codegen_kernel_source_properties(${source_file})
+    endforeach()
+  endforeach()
+endfunction()
+
+configure_codegen_kernel(PackInfoPdf)
+configure_codegen_kernel(PackInfoVec)
+configure_codegen_kernel(InitialPDFsSetter)
+configure_codegen_kernel(DynamicUBB)
+configure_codegen_kernel(UpdateVelFromPDF)
+if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
+  list(REMOVE_ITEM backends ".cpp")
+  list(APPEND backends "AVX.cpp")
+endif()
+configure_codegen_kernel(StreamCollideSweepLeesEdwards)
+configure_codegen_kernel(StreamCollideSweepThermalized)
+
+if(WALBERLA_BUILD_WITH_CUDA)
+  foreach(precision Single Double)
+    target_sources(espresso_walberla_codegen
+                   PRIVATE FieldAccessors${precision}PrecisionCUDA.cu)
+  endforeach()
+endif()

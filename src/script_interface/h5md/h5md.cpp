@@ -25,7 +25,6 @@
 
 #include "h5md.hpp"
 
-#include "core/MpiCallbacks.hpp"
 #include "core/cell_system/CellStructure.hpp"
 #include "core/communication.hpp"
 #include "core/io/writer/h5md_core.hpp"

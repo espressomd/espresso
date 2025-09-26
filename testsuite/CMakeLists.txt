@@ -47,6 +47,9 @@ endmacro(ESPRESSO_IMPORTLIB_BASED_FIXTURE)
 macro(ESPRESSO_IMPORTLIB_BASED_TEST)
   cmake_parse_arguments(TEST "" "FILE;SUFFIX;TYPE" "DEPENDENCIES;LABELS"
                         ${ARGN})
+  if(DEFINED TEST_UNPARSED_ARGUMENTS)
+    message(FATAL_ERROR "Cannot parse arguments ${TEST_UNPARSED_ARGUMENTS}")
+  endif()
   cmake_path(GET TEST_FILE STEM TEST_NAME)
   if(TEST_SUFFIX)
     set(TEST_NAME "${TEST_NAME}_with_${TEST_SUFFIX}")
@@ -60,6 +63,7 @@ macro(ESPRESSO_IMPORTLIB_BASED_TEST)
   add_test(NAME ${TEST_NAME}
            COMMAND ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
                    ${TEST_FILE_CONFIGURED})
+  list(APPEND TEST_LABELS "${TYPE}_test")
   # cmake-format: off
   set_tests_properties(
     ${TEST_NAME} PROPERTIES FIXTURES_REQUIRED "FIXTURE_${TEST_TYPE}"

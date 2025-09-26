@@ -24,6 +24,7 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/cell_system/CellSystem.hpp"
+#include "script_interface/get_value.hpp"
 #include "script_interface/interactions/BondedInteractions.hpp"
 
 #include "core/system/System.hpp"
@@ -35,12 +36,61 @@
 namespace ScriptInterface {
 namespace Particles {
 
+struct SetParticleParametersVisitor {
+  void operator()(std::vector<int> const &, std::string const &,
+                  auto const &values, Context *,
+                  std::shared_ptr<CellSystem::CellSystem>,
+                  std::shared_ptr<Interactions::BondedInteractions>) const {
+    throw Exception("Values must be of type vector, got " +
+                    detail::demangle::simplify_symbol(&values));
+  }
+  template <typename T>
+  void operator()(
+      std::vector<int> const &pids, std::string const &param_name,
+      std::vector<T> const &values, Context *context,
+      std::shared_ptr<CellSystem::CellSystem> cell_structure,
+      std::shared_ptr<Interactions::BondedInteractions> bonded_ias) const {
+    auto so = std::dynamic_pointer_cast<ParticleModifier>(context->make_shared(
+        "Particles::ParticleModifier", {{"id", -1},
+                                        {"__cell_structure", cell_structure},
+                                        {"__bonded_ias", bonded_ias}}));
+    for (std::size_t i = 0; i < pids.size(); ++i) {
+      so->set_pid(pids[i]);
+      so->do_set_parameter(param_name, values[i]);
+    }
+  }
+};
+
 class ParticleSlice : public AutoParameters<ParticleSlice> {
   std::vector<int> m_id_selection;
   int m_chunk_size;
   std::weak_ptr<CellSystem::CellSystem> m_cell_structure;
   std::weak_ptr<Interactions::BondedInteractions> m_bonded_ias;
   std::weak_ptr<::System::System> m_system;
+  /** @brief Data structure to store names of parameters with special setters.
+   */
+  std::set<std::string> m_special_parameters{
+      "pos",        "type", "bonds",
+#ifdef ESPRESSO_ELECTROSTATICS
+      "q",
+#endif // ESPRESSO_ELECTROSTATICS
+#ifdef ESPRESSO_EXCLUSIONS
+      "exclusions",
+#endif // ESPRESSO_EXCLUSIONS
+  };
+
+  auto get_cell_structure() const {
+    auto cell_structure_ptr = m_cell_structure.lock();
+    assert(cell_structure_ptr != nullptr);
+    auto &cell_structure = cell_structure_ptr->get_cell_structure();
+    return &cell_structure;
+  }
+
+  auto get_system() const {
+    auto ptr = m_system.lock();
+    assert(ptr != nullptr);
+    return ptr;
+  }
 
 public:
   ParticleSlice() {

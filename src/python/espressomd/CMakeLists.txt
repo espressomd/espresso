@@ -20,6 +20,9 @@
 include(espresso_resource_files)
 
 add_custom_target(espressomd)
+if(TARGET espresso_packaging_dependencies)
+  add_dependencies(espresso_packaging_dependencies espressomd)
+endif()
 
 file(GLOB cython_SRC *.pyx)
 file(GLOB cython_HEADER *.pxd)
@@ -103,7 +106,7 @@ foreach(cython_file ${cython_SRC})
   set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
   target_link_libraries(${target} PRIVATE espresso::config espresso::core
                                           espresso::script_interface)
-  target_link_libraries(${target} PRIVATE espresso::cpp_flags)
+  target_link_libraries(${target} PRIVATE espresso::compiler_flags)
   target_link_libraries(${target} PRIVATE espresso::pyx_flags)
   set_target_properties(${target} PROPERTIES CXX_EXTENSIONS OFF)
   target_include_directories(
