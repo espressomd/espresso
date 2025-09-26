@@ -32,17 +32,17 @@ integrate
   Initial Force Calculation
     calculate_forces
       copy_particles_to_GPU
-      invalidate_dip_fld
       {'convert particles AoS to SoA' if HAS_CABANA else ''}
-      init_forces_and_thermost
+      invalidate_dip_fld
+      init_forces_and_thermostat
       calc_long_range_forces
       {'parallel short range' if HAS_CABANA else 'short_range_loop'}
       copy_forces_from_GPU
   Integration loop
     calculate_forces
       copy_particles_to_GPU
-      invalidate_dip_fld
       {'convert particles AoS to SoA' if HAS_CABANA else ''}
+      invalidate_dip_fld
       init_forces_and_thermostat
       calc_long_range_forces
       {'parallel short range' if HAS_CABANA else 'short_range_loop'}
@@ -77,18 +77,18 @@ class Test(ut.TestCase):
         self.assertEqual(lines[0].split(), header.split(),
                          msg=f"Caliper summary should start with '{header}'")
 
-        labels = [line[:30].strip() for line in lines[1:]]
-        # build expected labels, skipping GPU-only and dip_fld if not enabled
+        labels = [line[:36].rstrip() for line in lines[1:]]
+
         labels_ref = []
-        for line in EXPECTED_LABELS.strip().split("\n"):
-            label = line.strip()
-            # skip GPU-only entries if CUDA not present
-            if "GPU" in label.upper() and not has_cuda:
+        for x in EXPECTED_LABELS.strip().split("\n"):
+            x = x.rstrip()
+            if not x:
                 continue
-            # skip our dip_fld entry if the feature wasn't compiled in
-            if label == "invalidate_dip_fld" and not has_dipfld:
+            if "GPU" in x.upper() and not has_cuda:
                 continue
-            labels_ref.append(label)
+            if x.strip() == "invalidate_dip_fld" and not has_dipfld:
+                continue
+            labels_ref.append(x)
 
         self.assertEqual(labels[:len(labels_ref)], labels_ref,
                          msg=f"Caliper returned this summary:\n{stderr}")
