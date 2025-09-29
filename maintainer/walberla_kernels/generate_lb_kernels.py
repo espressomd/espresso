@@ -52,8 +52,6 @@ import lbmpy.forcemodels
 import lbmpy.stencils
 import lbmpy.enums
 
-import lbmpy_espresso
-
 import lees_edwards
 import relaxation_rates
 import walberla_lbm_generation
@@ -297,8 +295,6 @@ def generate_boundary_kernels(ctx, method, data_type):
     precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
     ubb_dynamic = lbmpy.boundaries.UBB(
         lambda *args: None, dim=3, data_type=data_type, calculate_force_on_boundary=True)
-    ubb_data_handler = lbmpy_espresso.BounceBackSlipVelocityUBB(
-        method.stencil, ubb_dynamic)
 
     # pylint: disable=unused-argument
     def patch_boundary_header(content, target_suffix):
@@ -321,7 +317,6 @@ def generate_boundary_kernels(ctx, method, data_type):
         class_name = f"DynamicUBB{precision_prefix}{target_suffix}"
         custom_additional_extensions.generate_lb_boundary(
             ctx, class_name, ubb_dynamic, method,
-            additional_data_handler=ubb_data_handler,
             streaming_pattern="pull", target=target,
             template_file="templates/Boundary_lb.tmpl.h")
         ctx.patch_file(class_name, get_ext_header(target_suffix),

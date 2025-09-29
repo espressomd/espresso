@@ -334,7 +334,10 @@ public:
            if ( isFlagSet( it.neighbor({{offset}} {%if dim == 3%}, 0 {%endif %}), boundaryFlag ) )
            {
               auto element = {{StructName}}(it.x(), it.y(), {%if dim == 3%} it.z(), {%endif %} {{dirIdx}} );
-              {{additional_data_handler.data_initialisation(dirIdx)|indent(16)}}
+              {{"auto const InitialisationAdditionalData = elementInitialiser(Cell(it.x() + %(x)s, it.y() + %(y)s, it.z() + %(z)s), blocks, *block);" | format(x=dirVec[0], y=dirVec[1], z=dirVec[2]) | replace("+ -", "-")}}
+              element.vel_0 = InitialisationAdditionalData[0];
+              element.vel_1 = InitialisationAdditionalData[1];
+              element.vel_2 = InitialisationAdditionalData[2];
               indexVectorAll.push_back( element );
               if( inner.contains( it.x(), it.y(), it.z() ) )
                  indexVectorInner.push_back( element );
@@ -346,13 +349,20 @@ public:
         {%else%}
         for( auto it = flagField->beginWithGhostLayerXYZ( cell_idx_c( flagField->nrOfGhostLayers() - 1 ) ); it != flagField->end(); ++it )
         {
-            if( ! isFlagSet(it, domainFlag) || isFlagSet(it, boundaryFlag) )
+            {%- if dirIdx == 0 -%}
+           if( ! isFlagSet(it, domainFlag) )
+            {%-else-%}
+           if( ! isFlagSet(it, domainFlag) || isFlagSet(it, boundaryFlag) )
+            {%-endif-%}
                 continue;
             {%- for dirIdx, dirVec, offset in additional_data_handler.stencil_info %}
             if ( isFlagSet( it.neighbor({{offset}} {%if dim == 3%}, 0 {%endif %}), boundaryFlag ) )
             {
                 auto element = {{StructName}}(it.x(), it.y(), {%if dim == 3%} it.z(), {%endif %} {{dirIdx}} );
-                {{additional_data_handler.data_initialisation(dirIdx)|indent(16)}}
+                {{"auto const InitialisationAdditionalData = elementInitialiser(Cell(it.x() + %(x)s, it.y() + %(y)s, it.z() + %(z)s), blocks, *block);" | format(x=dirVec[0], y=dirVec[1], z=dirVec[2]) | replace("+ -", "-")}}
+                element.vel_0 = InitialisationAdditionalData[0];
+                element.vel_1 = InitialisationAdditionalData[1];
+                element.vel_2 = InitialisationAdditionalData[2];
                 indexVectorAll.push_back( element );
                 if( inner.contains( it.x(), it.y(), it.z() ) )
                     indexVectorInner.push_back( element );
