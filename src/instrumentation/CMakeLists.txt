@@ -37,6 +37,13 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
                                        "${caliper_BINARY_DIR}/include")
 endif()
 
+if(ESPRESSO_BUILD_WITH_LIKWID)
+  target_link_libraries(espresso_instrumentation INTERFACE ${likwid_BINARY_DIR}/lib/liblikwid.so.5.4)
+  target_include_directories(
+    espresso_instrumentation INTERFACE "${likwid_SOURCE_DIR}/include"
+                                       "${likwid_BINARY_DIR}/include")
+endif()
+
 if(ESPRESSO_BUILD_WITH_FPE)
   add_library(espresso_fpe SHARED src/fe_trap.cpp)
   add_library(espresso::fpe ALIAS espresso_fpe)

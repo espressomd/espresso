@@ -99,6 +99,7 @@ option(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM
 option(ESPRESSO_BUILD_BENCHMARKS "Enable benchmarks" OFF)
 option(ESPRESSO_BUILD_WITH_VALGRIND "Build with Valgrind instrumentation" OFF)
 option(ESPRESSO_BUILD_WITH_CALIPER "Build with Caliper instrumentation" OFF)
+option(ESPRESSO_BUILD_WITH_LIKWID "Build with Likwid instrumentation" OFF)
 option(ESPRESSO_BUILD_WITH_CPPCHECK "Run Cppcheck during compilation" OFF)
 option(ESPRESSO_BUILD_WITH_FPE
        "Build with floating-point exceptions instrumentation" OFF)
@@ -1024,6 +1025,34 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
     caliper-common
     PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-free-nonheap-object
             -Wno-deprecated-enum-enum-conversion -Wno-volatile>)
+endif()
+
+if(ESPRESSO_BUILD_WITH_LIKWID)
+  # cmake-format: off
+  FetchContent_Declare(
+    likwid
+    GIT_REPOSITORY https://github.com/RRZE-HPC/likwid.git
+    GIT_TAG        v5.4
+  )
+  # cmake-format: on
+  # set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
+  # set(CALIPER_WITH_MPI on CACHE BOOL "")
+  # set(CALIPER_WITH_NVTX off CACHE BOOL "")
+  # set(CALIPER_WITH_CUPTI off CACHE BOOL "")
+  # set(CALIPER_INSTALL_CONFIG off CACHE BOOL "")
+  # set(CALIPER_INSTALL_HEADERS off CACHE BOOL "")
+  set(BUILD_SHARED_LIBS ON)
+  set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_INSTALL_LIBDIR}")
+  set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
+  FetchContent_MakeAvailable(likwid)
+  # FetchContent_Populate(likwid
+  #                       SOURCE_DIR "/tikhome/itischler/Desktop/espresso/likwid"
+  #                       BINARY_DIR "/tikhome/itischler/Desktop/espresso/likwid/local/bin")
+  FetchContent_GetProperties(likwid)
+  message(STATUS "TEST: ${likwid_SOURCE_DIR} ${likwid_BINARY_DIR}")
+  set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+  set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR}")
+  set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
 endif()
 
 #
