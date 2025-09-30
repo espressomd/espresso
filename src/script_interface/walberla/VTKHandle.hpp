@@ -156,8 +156,7 @@ private:
   }
 
 protected:
-  Variant do_call_method(std::string const &name,
-                         VariantMap const &params) override {
+  Variant do_call_method(std::string const &name, VariantMap const &) override {
     if (name == "enable") {
       ObjectHandle::context()->parallel_try_catch([&]() {
         if (m_delta_N == 0) {

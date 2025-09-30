@@ -552,7 +552,7 @@ BOOST_AUTO_TEST_CASE(ek_exceptions) {
 BOOST_AUTO_TEST_CASE(ek_poisson_solver_none) {
   auto ek_solver = walberla::PoissonSolverNone<double>(params.lattice);
   // no-op
-  ek_solver.add_charge_to_field(std::size_t{}, 0., false);
+  ek_solver.add_charge_to_field(std::size_t{}, 0.);
   ek_solver.reset_charge_field();
   ek_solver.solve();
   // exceptions

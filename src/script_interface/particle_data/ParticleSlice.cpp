@@ -70,7 +70,7 @@ static void set_particles_bonds(
 static void
 set_particles_exclusions(std::vector<int> const &pids,
                          std::vector<std::vector<int>> const &exclusion_lists,
-                         boost::mpi::communicator const &comm, Context *context,
+                         boost::mpi::communicator const &comm,
                          ::CellStructure &cell_structure,
                          ::System::System &system) {
   for (std::size_t i = 0; i < pids.size(); ++i) {
@@ -219,8 +219,7 @@ Variant ParticleSlice::do_call_method(std::string const &name,
           set_particles_exclusions(
               m_id_selection,
               get_value<std::vector<std::vector<int>>>(params, "values"),
-              context()->get_comm(), context(), *get_cell_structure(),
-              *get_system());
+              context()->get_comm(), *get_cell_structure(), *get_system());
         }
 #endif // ESPRESSO_EXCLUSIONS
         else if (param_name == "bonds") {

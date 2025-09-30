@@ -134,22 +134,21 @@ auto noise_uniform(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
  * @param key2 key for random number generation
  *
  * @return Vector of Gaussian random numbers.
- *
  */
 template <RNGSalt salt, std::size_t N = 3>
   requires((N >= 1) and (N <= 4))
 auto noise_gaussian(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
 
   auto const integers = philox_4_uint64s<salt>(counter, seed, key1, key2);
-  static const double epsilon = std::numeric_limits<double>::min();
 
   constexpr std::size_t M = (N <= 2) ? 2 : 4;
   Utils::VectorXd<M> u{};
-  std::ranges::transform(integers | std::ranges::views::take(M), u.begin(),
-                         [](std::size_t value) {
-                           auto u = Utils::uniform(value);
-                           return (u < epsilon) ? epsilon : u;
-                         });
+  std::ranges::transform(
+      integers | std::ranges::views::take(M), u.begin(), [](std::size_t value) {
+        auto constexpr epsilon = std::numeric_limits<double>::min();
+        auto res = Utils::uniform(value);
+        return (res < epsilon) ? epsilon : res;
+      });
 
   // Box-Muller transform code adapted from
   // https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform

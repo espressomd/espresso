@@ -65,9 +65,9 @@ Variant LBFluidSlice::do_call_method(std::string const &name,
     if constexpr (std::is_invocable_v<decltype(method_ptr), LatticeModel *,
                                       Utils::Vector3i const &,
                                       Utils::Vector3i const &>) {
-      return gather_3d(params, data_dims, obj, method_ptr, units);
+      return gather_3d(data_dims, obj, method_ptr, units);
     } else {
-      scatter_3d(params, data_dims, obj, method_ptr, units);
+      scatter_3d(params.at("values"), data_dims, obj, method_ptr, units);
       return {};
     }
   };

@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_PAIRWISEDISTANCES_HPP
-#define OBSERVABLES_PAIRWISEDISTANCES_HPP
+
+#pragma once
 
 #include "BoxGeometry.hpp"
 #include "PidPairwiseDistancesObservable.hpp"
@@ -46,9 +46,8 @@ public:
 
   /** @brief Evaluate the current contact times */
   std::vector<double>
-  evaluate(boost::mpi::communicator const &comm,
-           ParticleReferenceRange const &local_particles,
-           const ParticleObservables::traits<Particle> &traits) const override {
+  evaluate(boost::mpi::communicator const &comm, ParticleReferenceRange const &,
+           ParticleObservables::traits<Particle> const &) const override {
 
     if (comm.rank() != 0) {
       return {};
@@ -88,5 +87,3 @@ private:
 };
 
 } // namespace Observables
-
-#endif

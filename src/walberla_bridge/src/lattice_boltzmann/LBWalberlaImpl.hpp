@@ -915,7 +915,7 @@ public:
 
           auto kernel = [&values, &velocity](unsigned const block_index,
                                              unsigned const local_index,
-                                             Utils::Vector3i const &node) {
+                                             Utils::Vector3i const &) {
             for (uint_t f = 0u; f < 3u; ++f) {
               values[3u * block_index + f] =
                   numeric_cast<FloatType>(velocity[3u * local_index + f]);
@@ -1258,7 +1258,7 @@ public:
 
           auto kernel = [&values, &out](unsigned const block_index,
                                         unsigned const local_index,
-                                        Utils::Vector3i const &node) {
+                                        Utils::Vector3i const &) {
             for (uint_t f = 0u; f < 3u; ++f) {
               out[3u * local_index + f] = values[3u * block_index + f];
             }
@@ -1293,7 +1293,7 @@ public:
 
           auto kernel = [&values, &force](unsigned const block_index,
                                           unsigned const local_index,
-                                          Utils::Vector3i const &node) {
+                                          Utils::Vector3i const &) {
             for (uint_t f = 0u; f < 3u; ++f) {
               values[3u * block_index + f] =
                   numeric_cast<FloatType>(force[3u * local_index + f]);
@@ -1368,7 +1368,7 @@ public:
 
           auto kernel = [&values, &out, this](unsigned const block_index,
                                               unsigned const local_index,
-                                              Utils::Vector3i const &node) {
+                                              Utils::Vector3i const &) {
             for (uint_t f = 0u; f < stencil_size(); ++f) {
               out[stencil_size() * local_index + f] =
                   values[stencil_size() * block_index + f];
@@ -1399,10 +1399,9 @@ public:
               block.template getData<VectorField>(m_velocity_field_id);
           std::vector<FloatType> values(stencil_size() * bci->numCells());
 
-          auto kernel = [&values, &population,
-                         this](unsigned const block_index,
-                               unsigned const local_index,
-                               Utils::Vector3i const &node) {
+          auto kernel = [&values, &population, this](unsigned const block_index,
+                                                     unsigned const local_index,
+                                                     Utils::Vector3i const &) {
             for (uint_t f = 0u; f < stencil_size(); ++f) {
               values[stencil_size() * block_index + f] =
                   numeric_cast<FloatType>(
@@ -1493,7 +1492,7 @@ public:
 
           auto kernel = [&values, &density](unsigned const block_index,
                                             unsigned const local_index,
-                                            Utils::Vector3i const &node) {
+                                            Utils::Vector3i const &) {
             values[block_index] = numeric_cast<FloatType>(density[local_index]);
           };
 
@@ -1712,7 +1711,7 @@ public:
 
           auto kernel = [&values, &out, this](unsigned const block_index,
                                               unsigned const local_index,
-                                              Utils::Vector3i const &node) {
+                                              Utils::Vector3i const &) {
             pressure_tensor_correction(
                 std::span<FloatType, 9ul>(&values[9u * block_index], 9ul));
             for (uint_t f = 0u; f < 9u; ++f) {

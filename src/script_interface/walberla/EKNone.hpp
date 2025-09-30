@@ -41,7 +41,7 @@ class EKNone : public EKPoissonSolver {
   bool m_single_precision;
 
 public:
-  void make_instance(VariantMap const &args) override {}
+  void make_instance(VariantMap const &) override {}
 
   void do_construct(VariantMap const &args) override {
     m_single_precision = get_value_or<bool>(args, "single_precision", false);

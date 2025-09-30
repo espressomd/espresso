@@ -152,6 +152,10 @@ CommunicationEnvironment::~CommunicationEnvironment() {
   kokkos_handle.reset();
 #endif
 
+#ifdef ESPRESSO_WALBERLA
+  walberla::mpi_deinit();
+#endif
+
   ErrorHandling::deinit_error_handling();
   m_callbacks.reset();
 }

@@ -46,16 +46,6 @@
 
 using namespace ScriptInterface;
 
-static int coord(std::string const &s) {
-  if (s == "x")
-    return 0;
-  if (s == "y")
-    return 1;
-  if (s == "z")
-    return 2;
-  throw std::invalid_argument("Invalid Cartesian coordinate: '" + s + "'");
-}
-
 namespace espresso {
 // ESPResSo system instance
 static std::shared_ptr<::System::System> system;

@@ -47,7 +47,7 @@ public:
   ~PoissonSolverNone() override = default;
 
   void reset_charge_field() override {}
-  void add_charge_to_field(std::size_t, double, bool) override {}
+  void add_charge_to_field(std::size_t, double) override {}
 
   [[nodiscard]] std::size_t get_potential_field_id() const noexcept override {
     return m_potential_field_id;

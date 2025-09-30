@@ -45,7 +45,7 @@ struct CellStructure::AoSoA_pack {
 
   AoSoA_pack(std::size_t num_particles) { resize(num_particles); }
 
-  void resize(std::size_t num_particles, int max_id = -1) {
+  void resize(std::size_t num_particles) {
     if (position.extent(0) == 0) {
       // First allocation
       position = PositionViewType("position", num_particles);

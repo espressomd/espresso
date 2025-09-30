@@ -43,7 +43,7 @@
 #include <vector>
 
 /** This value indicates metallic boundary conditions. */
-auto constexpr P3M_EPSILON_METALLIC = 0.0;
+inline auto constexpr P3M_EPSILON_METALLIC = 0.0;
 
 #if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 

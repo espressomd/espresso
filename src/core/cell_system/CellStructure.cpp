@@ -132,7 +132,7 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
     Kokkos::realloc(get_id_to_index(), get_cached_max_local_particle_id() + 1);
     Kokkos::deep_copy(get_id_to_index(), -1);
     // Resize particle views using AoSoA_pack's resize method
-    m_aosoa->resize(num_part, m_cached_max_local_particle_id);
+    m_aosoa->resize(num_part);
     m_verlet_list_cabana->reallocData(num_part, max_counts);
   } else { // local properties are initialized
     m_local_force =
@@ -147,7 +147,7 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
     Kokkos::deep_copy(get_id_to_index(), -1);
     // Create AoSoA_pack and initialize with resize
     m_aosoa = std::make_unique<AoSoA_pack>();
-    m_aosoa->resize(num_part, m_cached_max_local_particle_id);
+    m_aosoa->resize(num_part);
 
     m_verlet_list_cabana =
         std::make_unique<ListType>(0ul, num_part, max_counts);

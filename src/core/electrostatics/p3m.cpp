@@ -409,7 +409,7 @@ template <int cao> struct AssignCharge {
 
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::charge_assign(
-    ParticleRange const &particles) {
+    [[maybe_unused]] ParticleRange const &particles) {
   prepare_fft_mesh(true);
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
