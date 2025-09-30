@@ -346,8 +346,6 @@ target_compile_options(
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wall>
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wextra>
     $<$<COMPILE_LANGUAGE:CXX>:-pedantic>
-    $<$<COMPILE_LANGUAGE:CUDA>:-Wno-sign-compare>
-    $<$<COMPILE_LANGUAGE:CUDA>:-Wno-unused-parameter>
     # add extra warnings
     $<$<COMPILE_LANGUAGE:CXX>:-Wfloat-conversion>
     $<$<COMPILE_LANGUAGE:CXX>:-Wdelete-non-virtual-dtor>
@@ -359,7 +357,6 @@ target_compile_options(
     $<$<COMPILE_LANGUAGE:CXX>:-Winit-self>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wextern-initializer>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wrange-loop-analysis>
-    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wglobal-constructors>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wnon-c-typedef-for-linkage>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wshadow-uncaptured-local>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wimplicit-float-conversion>
@@ -371,7 +368,6 @@ target_compile_options(
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wdiv-by-zero>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wextra-semi>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wexceptions>
-    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wextra-semi>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wdeprecated-declarations>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wdeprecated-enum-enum-conversion>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wdeprecated-enum-float-conversion>
@@ -382,19 +378,20 @@ target_compile_options(
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wshadow=compatible-local>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wshadow-field-in-constructor-modified>
     # disable warnings from -Wall and -Wextra, as well as warnings triggered by third-party libraries
-    $<$<COMPILE_LANGUAGE:CXX>:-Wno-sign-compare>
+    $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-sign-compare>
+    $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-unused-parameter>
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-array-bounds>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-restrict>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-cast-function-type>
     $<$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>:-diag-disable=592>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-global-constructors>
     $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU>,$<STREQUAL:${CMAKE_SYSTEM_PROCESSOR},arm>>:-Wno-psabi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-format-nonliteral>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-float-conversion>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-int-float-conversion>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-float-conversion>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM,GNU>>:-Wno-ctad-maybe-unsupported>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang>>:-Wno-global-constructors>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>,$<COMPILE_LANG_AND_ID:CXX,Clang>>:-Wno-global-constructors>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-cast-qual>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-old-style-cast>
@@ -933,8 +930,8 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   # cmake-format: off
   FetchContent_Declare(
     walberla
-    GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        c37f94fe # v7.2 with patches
+    GIT_REPOSITORY https://i10git.cs.fau.de/jngrad/walberla.git
+    GIT_TAG        c0bf3583b02 # v7.2 with patches
   )
   # cmake-format: on
   string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR

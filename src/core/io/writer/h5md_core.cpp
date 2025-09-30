@@ -66,10 +66,6 @@ using Vector1s = Utils::Vector<std::size_t, 1>;
 using Vector2s = Utils::Vector<std::size_t, 2>;
 using Vector3s = Utils::Vector<std::size_t, 3>;
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#endif
 static std::unordered_map<std::string, H5MDOutputFields> const fields_map = {
     {"all", H5MD_OUT_ALL},
     {"particle.type", H5MD_OUT_TYPE},
@@ -85,9 +81,6 @@ static std::unordered_map<std::string, H5MDOutputFields> const fields_map = {
     {"lees_edwards.direction", H5MD_OUT_LE_DIR},
     {"lees_edwards.normal", H5MD_OUT_LE_NORMAL},
 };
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
 
 static auto fields_list_to_bitfield(std::vector<std::string> const &fields) {
   unsigned int bitfield = H5MD_OUT_NONE;
@@ -488,6 +481,7 @@ auto make_serializer(RetVal (Particle::*getter)() const) {
   auto kernel = [getter](Particle const &p) -> RetVal { return (p.*getter)(); };
   return ParticleDataSerializer<decltype(kernel)>{std::move(kernel)};
 }
+
 } // namespace detail
 
 template <std::size_t dim, typename Serializer>

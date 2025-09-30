@@ -101,7 +101,7 @@ template <typename ResultType>
 ResultType reduce_over_local_particles(
     CellStructure const &cs,
     Reduction::AddPartialResultKernel<ResultType> add_partial,
-    Reduction::ReductionOp<ResultType> reduce_op) {
+    [[maybe_unused]] Reduction::ReductionOp<ResultType> reduce_op) {
 
   ResultType result{};
 

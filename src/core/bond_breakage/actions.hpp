@@ -83,7 +83,7 @@ template <> struct hash<BondBreakage::DeleteAngleBond> {
   std::size_t
   operator()(BondBreakage::DeleteAngleBond const &t) const noexcept {
     return t.hash_value();
-  };
+  }
 };
 template <> struct hash<BondBreakage::DeleteAllBonds> {
   std::size_t operator()(BondBreakage::DeleteAllBonds const &t) const noexcept {
