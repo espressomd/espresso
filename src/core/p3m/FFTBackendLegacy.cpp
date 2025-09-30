@@ -35,7 +35,7 @@ template <typename FloatType>
 FFTBackendLegacy<FloatType>::FFTBackendLegacy(P3MLocalMesh const &local_mesh)
     : FFTBackend<FloatType>(local_mesh),
       fft{std::make_unique<fft::fft_data_struct<FloatType>>(
-          ::Communication::mpiCallbacks().share_mpi_env())} {}
+          ::communication_environment->get_mpi_env())} {}
 
 template <typename FloatType>
 FFTBackendLegacy<FloatType>::~FFTBackendLegacy() = default;

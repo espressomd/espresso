@@ -20,22 +20,21 @@ import sys
 import atexit
 from . cimport script_interface
 from . cimport communication
-from libcpp.memory cimport shared_ptr
-from boost cimport environment
+from .communication cimport CommunicationEnvironment
+from .communication cimport communication_environment
+from libcpp.memory cimport make_unique
 
 # Main code
-cdef shared_ptr[environment] mpi_env = communication.mpi_init()
-communication.init(mpi_env)
+communication_environment = make_unique[CommunicationEnvironment]()
 
 # Initialize script interface
 # Has to be _after_ mpi_init
-script_interface.init(communication.mpiCallbacksHandle())
+script_interface.init(communication_environment.get().mpiCallbacksHandle())
 
 
 def session_shutdown():
-    mpi_env.reset()
-    communication.deinit()
     script_interface.deinit()
+    communication_environment.reset()
 
 
 atexit.register(session_shutdown)

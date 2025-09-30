@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 The ESPResSo project
+# Copyright (C) 2023-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,24 +21,51 @@ import numpy as np
 import vtk
 import vtk.util.numpy_support
 
+IMAGE_DATA_TYPE = "ImageData"
+UNSTRUCTURED_GRID_TYPE = "UnstructuredGrid"
+
 
 class VTKReader:
     """
     Reader for VTK multi-piece uniform grids written in XML format.
     """
     error_tolerance = 1e-5  # VTK data is written with 1e-7 precision
+    type_map = {
+        IMAGE_DATA_TYPE: vtk.vtkXMLImageDataReader(),
+        UNSTRUCTURED_GRID_TYPE: vtk.vtkXMLUnstructuredGridReader(),
+    }
 
     @classmethod
-    def get_array_names(cls, reader):
+    def get_file_format(cls, filepath):
+        with open(str(filepath), "rb") as f:
+            line = f.readline().lstrip()
+            while not line.startswith(b"<VTKFile"):
+                line = f.readline()
+                if not line:
+                    break
+                line = line.lstrip()
+            if line.startswith(b"<VTKFile"):
+                for token in line.split():
+                    if token.startswith(b"type="):
+                        return token.split(b'"')[1].decode()
+            raise RuntimeError(f"File {filepath} is not a compliant XML file")
+
+    @staticmethod
+    def get_array_names(reader, type_name):
         array_names = set()
-        n_ghost_layers = reader.GetUpdateGhostLevel()
-        n_pieces = reader.GetNumberOfPieces()
-        for piece_index in range(n_pieces):
-            reader.UpdatePiece(piece_index, n_pieces, n_ghost_layers)
-            piece = reader.GetOutput()
-            cell = piece.GetCellData()
-            for i in range(cell.GetNumberOfArrays()):
-                array_names.add(cell.GetArrayName(i))
+        if type_name == UNSTRUCTURED_GRID_TYPE:
+            n_ghost_layers = reader.GetUpdateGhostLevel()
+            n_pieces = reader.GetNumberOfPieces()
+            for piece_index in range(n_pieces):
+                reader.UpdatePiece(piece_index, n_pieces, n_ghost_layers)
+                piece = reader.GetOutput()
+                cell = piece.GetCellData()
+                for i in range(cell.GetNumberOfArrays()):
+                    array_names.add(cell.GetArrayName(i))
+        elif type_name == IMAGE_DATA_TYPE:
+            n_cells = reader.GetNumberOfCellArrays()
+            for i in range(n_cells):
+                array_names.add(reader.GetCellArrayName(i))
         return array_names
 
     @classmethod
@@ -123,13 +150,23 @@ class VTKReader:
         return data
 
     def parse(self, filepath):
-        reader = vtk.vtkXMLUnstructuredGridReader()
+        type_name = self.get_file_format(filepath)
+        if type_name not in self.type_map.keys():
+            raise NotImplementedError(
+                f"Unknown VTK file format '{type_name}' (supported "
+                f"file formats: {', '.join(self.type_map.keys())})")
+        reader = self.type_map[type_name]
         reader.SetFileName(str(filepath))
         reader.Update()
 
         arrays = {}
-        array_names = self.get_array_names(reader)
+        array_names = self.get_array_names(reader, type_name)
         for array_name in sorted(array_names):
-            arrays[array_name] = self.reconstruct_array(reader, array_name)
-
+            if type_name == UNSTRUCTURED_GRID_TYPE:
+                arrays[array_name] = self.reconstruct_array(reader, array_name)
+            elif type_name == IMAGE_DATA_TYPE:
+                array = reader.GetOutput().GetCellData().GetArray(array_name)
+                shape = reader.GetOutput().GetDimensions() - np.copy([1, 1, 1])
+                arrays[array_name] = vtk.util.numpy_support.vtk_to_numpy(
+                    array).reshape(shape, order='F')
         return arrays

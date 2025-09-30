@@ -48,6 +48,7 @@ enum IntegratorSwitch : int {
   INTEG_METHOD_STEEPEST_DESCENT = 1 << 2,
   INTEG_METHOD_BD = 1 << 3,
   INTEG_METHOD_SD = 1 << 4,
+  INTEG_METHOD_SYMPLECTIC_EULER = 1 << 5,
 };
 
 /** @brief Thermostat flags. */

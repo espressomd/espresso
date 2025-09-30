@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 The ESPResSo project
+# Copyright (C) 2022-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,31 +17,33 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-foreach(precision double_precision single_precision)
-  target_sources(
-    espresso_walberla_codegen
-    PRIVATE DiffusiveFluxKernel_${precision}.cpp
-            DiffusiveFluxKernelThermalized_${precision}.cpp
-            DiffusiveFluxKernelWithElectrostatic_${precision}.cpp
-            DiffusiveFluxKernelWithElectrostaticThermalized_${precision}.cpp
-            ContinuityKernel_${precision}.cpp
-            AdvectiveFluxKernel_${precision}.cpp
-            FrictionCouplingKernel_${precision}.cpp
-            FixedFlux_${precision}.cpp
-            Dirichlet_${precision}.cpp)
+function(configure_codegen_kernel kernel)
+  set(backends ".cpp")
   if(WALBERLA_BUILD_WITH_CUDA)
-    target_sources(
-      espresso_walberla_codegen_cuda
-      PRIVATE
-        DiffusiveFluxKernel_${precision}_CUDA.cu
-        DiffusiveFluxKernelThermalized_${precision}_CUDA.cu
-        DiffusiveFluxKernelWithElectrostatic_${precision}_CUDA.cu
-        DiffusiveFluxKernelWithElectrostaticThermalized_${precision}_CUDA.cu
-        ContinuityKernel_${precision}_CUDA.cu
-        AdvectiveFluxKernel_${precision}_CUDA.cu
-        FrictionCouplingKernel_${precision}_CUDA.cu
-        EK_FieldAccessors_${precision}_CUDA.cu
-        FixedFlux_${precision}_CUDA.cu
-        Dirichlet_${precision}_CUDA.cu)
+    list(APPEND backends "_CUDA.cu")
   endif()
-endforeach()
+  foreach(precision single double)
+    foreach(backend ${backends})
+      set(source_file ${kernel}_${precision}_precision${backend})
+      target_sources(espresso_walberla_codegen PRIVATE ${source_file})
+      espresso_set_walberla_codegen_kernel_source_properties(${source_file})
+    endforeach()
+  endforeach()
+endfunction()
+
+configure_codegen_kernel(DiffusiveFluxKernel)
+configure_codegen_kernel(DiffusiveFluxKernelThermalized)
+configure_codegen_kernel(DiffusiveFluxKernelWithElectrostatic)
+configure_codegen_kernel(DiffusiveFluxKernelWithElectrostaticThermalized)
+configure_codegen_kernel(ContinuityKernel)
+configure_codegen_kernel(AdvectiveFluxKernel)
+configure_codegen_kernel(FrictionCouplingKernel)
+configure_codegen_kernel(FixedFlux)
+configure_codegen_kernel(Dirichlet)
+
+if(WALBERLA_BUILD_WITH_CUDA)
+  foreach(precision single double)
+    target_sources(espresso_walberla_codegen
+                   PRIVATE EK_FieldAccessors_${precision}_precision_CUDA.cu)
+  endforeach()
+endif()

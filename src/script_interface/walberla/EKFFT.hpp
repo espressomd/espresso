@@ -21,16 +21,16 @@
 
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_WALBERLA
-#include "EKPoissonSolver.hpp"
 #ifdef ESPRESSO_WALBERLA_FFT
+
+#include "EKPoissonSolver.hpp"
 
 #include "LatticeWalberla.hpp"
 
 #include "core/MpiCallbacks.hpp"
 #include "core/communication.hpp"
 
-#include <walberla_bridge/electrokinetics/ek_poisson_fft_init.hpp>
+#include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 #include <walberla_bridge/utils/ResourceManager.hpp>
 
 #include <script_interface/ScriptInterface.hpp>
@@ -59,6 +59,7 @@ public:
 
     m_instance = ::walberla::new_ek_poisson_fft(
         m_lattice->lattice(), permittivity, m_single_precision);
+    m_instance->setup_fft(false);
   }
 
   void do_construct(VariantMap const &args) override {
@@ -69,8 +70,7 @@ public:
 
     make_instance(args), m_resources_lock = std::make_unique<ResourceManager>();
     // MPI communicator is needed to destroy the FFT plans
-    m_resources_lock->acquire_lock(
-        Communication::mpiCallbacks().share_mpi_env());
+    m_resources_lock->acquire_lock(::communication_environment->get_mpi_env());
     for (auto &vtk : m_vtk_writers) {
       vtk->attach_to_lattice(m_instance, get_lattice_to_md_units_conversion());
     }
@@ -109,4 +109,3 @@ public:
 } // namespace ScriptInterface::walberla
 
 #endif // ESPRESSO_WALBERLA_FFT
-#endif // ESPRESSO_WALBERLA

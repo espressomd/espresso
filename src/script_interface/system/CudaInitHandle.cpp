@@ -19,8 +19,9 @@
 
 #include "CudaInitHandle.hpp"
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
+#include "core/communication.hpp"
 #include "core/cuda/init.hpp"
 #include "core/cuda/utils.hpp"
 
@@ -98,6 +99,9 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
     n_gpus = static_cast<int>(devices.size());
 #endif // ESPRESSO_CUDA
     return n_gpus;
+  }
+  if (name == "is_mpi_gpu_aware") {
+    return ::communication_environment->is_mpi_gpu_aware();
   }
 #if defined(ESPRESSO_CUDA) && defined(ESPRESSO_WALBERLA)
   if (name == "set_device_id_per_rank") {

@@ -47,6 +47,7 @@ class VTKHandleBase : public AutoParameters<VTKHandleBase<Field>> {
 private:
   int m_delta_N;
   int m_obs_flag;
+  bool m_force_pvtu;
   std::string m_identifier;
   std::filesystem::path m_base_folder;
   std::string m_prefix;
@@ -116,6 +117,7 @@ public:
         {"identifier", read_only, [this]() { return m_identifier; }},
         {"base_folder", read_only, [this]() { return m_base_folder; }},
         {"prefix", read_only, [this]() { return m_prefix; }},
+        {"force_pvtu", read_only, [this]() { return m_force_pvtu; }},
         {"observables", read_only,
          [this]() { return serialize_obs_flag(m_obs_flag); }},
         {"execution_count", read_only,
@@ -131,6 +133,7 @@ private:
     m_identifier = get_value<std::string>(params, "identifier");
     m_base_folder = get_value<std::filesystem::path>(params, "base_folder");
     m_prefix = get_value<std::string>(params, "prefix");
+    m_force_pvtu = get_value_or<bool>(params, "force_pvtu", false);
     auto const is_enabled = get_value<bool>(params, "enabled");
     auto const execution_count = get_value<int>(params, "execution_count");
     ObjectHandle::context()->parallel_try_catch([&]() {
@@ -211,7 +214,7 @@ public:
     auto instance = get_field_instance();
     m_vtk_handle =
         instance->create_vtk(m_delta_N, execution_count, m_obs_flag, m_units,
-                             m_identifier, base_folder, m_prefix);
+                             m_identifier, base_folder, m_prefix, m_force_pvtu);
     if (m_delta_N and not is_enabled) {
       instance->switch_vtk(get_vtk_uid(), false);
     }

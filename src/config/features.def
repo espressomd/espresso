@@ -55,6 +55,7 @@ ROTATIONAL_INERTIA              implies ROTATION
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
 MMM1D_MACHINE_PREC              requires ELECTROSTATICS
+WALBERLA_FFT                    equals WALBERLA and FFTW
 
 /* Magnetostatics */
 DIPOLES                         implies ROTATION
@@ -103,7 +104,7 @@ SCAFACOS                        requires ELECTROSTATICS
 ADDITIONAL_CHECKS
 
 # External switches
-# Switches that are set by configure or gcc, not to be set manually
+# Switches that are set by the build system, not to be set manually
 # All these switches must also be present in cmake/espresso_cmake_config.cmakein
 CUDA external
 FFTW external
@@ -112,7 +113,6 @@ SCAFACOS external
 GSL external
 STOKESIAN_DYNAMICS external
 WALBERLA external
-WALBERLA_FFT external
 VALGRIND external
 CALIPER external
 FPE external

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2022 The ESPResSo project
+# Copyright (C) 2009-2025 The ESPResSo project
 # Copyright (C) 2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -79,41 +79,6 @@ if(NOT CMAKE_CUDA_FLAGS MATCHES "-Wno-unknown-cuda-version")
   endif()
 endif()
 message(STATUS "Found CUDA toolkit installation: ${ESPRESSO_CLANG_DETECTED_CUDA_DIR} (recognized by ${CMAKE_CUDA_COMPILER_ID} as CUDA ${ESPRESSO_CLANG_DETECTED_CUDA_VERSION})")
-
-target_compile_options(
-  espresso_cuda_flags
-  INTERFACE
-  $<$<CONFIG:Debug>:-g>
-  $<$<CONFIG:Release>:-O3 -DNDEBUG>
-  $<$<CONFIG:MinSizeRel>:-O2 -DNDEBUG>
-  $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
-  $<$<CONFIG:Coverage>:-O3 -g -fprofile-instr-generate -fcoverage-mapping>
-  $<$<CONFIG:RelWithAssert>:-O3 -g>
-)
-
-function(espresso_setup_gpu_app)
-  cmake_parse_arguments(TARGET "" "NAME" "SOURCES" ${ARGN})
-  set_source_files_properties(${TARGET_SOURCES} PROPERTIES LANGUAGE "CUDA")
-  set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE "CXX")
-  target_link_libraries(${TARGET_NAME} PRIVATE espresso::cuda_flags)
-endfunction()
-
-function(espresso_add_gpu_library)
-  add_library(${ARGV})
-  cmake_parse_arguments(ARG "STATIC;SHARED;MODULE;EXCLUDE_FROM_ALL" "" "" ${ARGN})
-  list(GET ARGV 0 TARGET_NAME)
-  set(TARGET_SOURCES ${ARG_UNPARSED_ARGUMENTS})
-  list(POP_FRONT TARGET_SOURCES)
-  espresso_setup_gpu_app(NAME ${TARGET_NAME} SOURCES ${TARGET_SOURCES})
-endfunction()
-
-function(espresso_add_gpu_executable)
-  add_executable(${ARGV})
-  list(GET ARGV 0 TARGET_NAME)
-  set(TARGET_SOURCES ${ARGV})
-  list(POP_FRONT TARGET_SOURCES)
-  espresso_setup_gpu_app(NAME ${TARGET_NAME} SOURCES ${TARGET_SOURCES})
-endfunction()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(

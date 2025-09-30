@@ -67,12 +67,46 @@ class EKContainer : public ObjectList<EKSpecies> {
   std::shared_ptr<::EK::EKWalberla::ek_container_type> m_ek_container;
   bool m_is_active;
 
+  auto get_precision(decltype(m_poisson_solver) const &solver) const {
+    std::optional<bool> result = std::nullopt;
+    std::visit(
+        [&](auto const &ptr) {
+          using SolverType = std::remove_cvref_t<decltype(ptr)>::element_type;
+          if (ptr and not std::is_same_v<SolverType, EKNone>) {
+            result = get_value<bool>(ptr->get_parameter("single_precision"));
+          }
+        },
+        solver);
+    return result;
+  }
+
+  auto get_precision(value_type const &species) const {
+    return get_value<bool>(species->get_parameter("single_precision"));
+  }
+
+  auto get_precision(std::vector<value_type> const &species) const {
+    std::optional<bool> result = std::nullopt;
+    for (auto const &species : elements()) {
+      result = get_precision(species);
+    }
+    return result;
+  }
+
   bool has_in_core(value_type const &obj_ptr) const override {
     return m_ek_container->contains(obj_ptr->get_ekinstance());
   }
   void add_in_core(value_type const &obj_ptr) override {
-    context()->parallel_try_catch(
-        [this, &obj_ptr]() { m_ek_container->add(obj_ptr->get_ekinstance()); });
+    context()->parallel_try_catch([this, &obj_ptr]() {
+      auto const prec_new_species = get_precision(obj_ptr);
+      auto const prec_old_species = get_precision(elements());
+      auto const prec_solver = get_precision(m_poisson_solver);
+      if ((prec_solver and *prec_solver != prec_new_species) or
+          (prec_old_species and *prec_old_species != prec_new_species)) {
+        throw std::runtime_error(
+            "Cannot mix single and double precision kernels");
+      }
+      m_ek_container->add(obj_ptr->get_ekinstance());
+    });
   }
   void remove_in_core(value_type const &obj_ptr) final {
     m_ek_container->remove(obj_ptr->get_ekinstance());
@@ -107,7 +141,6 @@ class EKContainer : public ObjectList<EKSpecies> {
 #ifdef ESPRESSO_CUDA
     else if (auto ptr = std::dynamic_pointer_cast<EKFFTGPU>(so_ptr)) {
       solver = std::move(ptr);
-      assert(::comm_cart.size() == 1 && "EKFFTGPU only supports 1 MPI rank");
     }
 #endif // ESPRESSO_CUDA
     else if (auto ptr = std::dynamic_pointer_cast<EKFFT>(so_ptr)) {
@@ -119,10 +152,18 @@ class EKContainer : public ObjectList<EKSpecies> {
   }
 
   void set_solver(Variant const &v) {
-    m_poisson_solver = extract_solver(v);
-    auto handle = std::visit(GetPoissonSolverCoreInstance{}, m_poisson_solver);
-    context()->parallel_try_catch(
-        [this, &handle]() { m_ek_container->set_poisson_solver(handle); });
+    auto new_solver = extract_solver(v);
+    auto handle = std::visit(GetPoissonSolverCoreInstance{}, new_solver);
+    context()->parallel_try_catch([&]() {
+      auto const prec_solver = get_precision(new_solver);
+      auto const prec_species = get_precision(elements());
+      if (prec_solver and prec_species and *prec_solver != *prec_species) {
+        throw std::runtime_error(
+            "Cannot mix single and double precision kernels");
+      }
+      m_ek_container->set_poisson_solver(handle);
+    });
+    m_poisson_solver = new_solver;
   }
 
 public:

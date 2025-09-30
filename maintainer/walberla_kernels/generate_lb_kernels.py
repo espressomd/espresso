@@ -96,6 +96,7 @@ lbm_config_kwargs = dict(
     delta_equilibrium=True,
     zero_centered=True,
 )
+np2cpp_t = pystencils_espresso.numpy_types_to_cpp_types
 
 
 def paramlist(parameters, keys):
@@ -155,7 +156,7 @@ def generate_stream_collide_lees_edwards_kernels(
     optimization = {"cse_global": True,
                     "double_precision": ctx.double_accuracy}
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
-        stem = f"StreamCollideSweep{precision_prefix}LeesEdwards{target_suffix}"  # nopep8
+        stem = f"StreamCollideSweepLeesEdwards{precision_prefix}{target_suffix}"  # nopep8
         pystencils_espresso.generate_stream_collision_sweep(
             ctx,
             method,
@@ -195,7 +196,7 @@ def generate_stream_collide_kernels(ctx, method, data_type):
     )
 
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
-        stem = f"StreamCollideSweep{precision_prefix}Thermalized{target_suffix}"  # nopep8
+        stem = f"StreamCollideSweepThermalized{precision_prefix}{target_suffix}"  # nopep8
         pystencils_espresso.generate_stream_collision_sweep(
             ctx,
             method,
@@ -304,7 +305,8 @@ def generate_boundary_kernels(ctx, method, data_type):
     # pylint: disable=unused-argument
     def patch_boundary_header(content, target_suffix):
         # replace real_t by actual floating-point type
-        return content.replace("real_t", data_type)
+        return content.replace("real_t", f"{np2cpp_t[data_type]}") \
+                      .replace("real_c", f"{np2cpp_t[data_type]}_c")
 
     def patch_boundary_kernel(content, target_suffix):
         if target_suffix in ["CUDA"]:

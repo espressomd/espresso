@@ -128,7 +128,6 @@ set_default_value with_fftw true
 set_default_value with_gsl true
 set_default_value with_scafacos false
 set_default_value with_walberla false
-set_default_value with_walberla_fft true
 set_default_value with_walberla_avx false
 set_default_value with_stokesian_dynamics false
 set_default_value test_timeout 500
@@ -165,9 +164,6 @@ cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=${with_s
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA=${with_walberla}"
 
 if [ "${with_walberla}" = true ]; then
-  if [ "${with_walberla_fft}" = true ]; then
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON"
-  fi
   if [ "${with_walberla_avx}" = true ]; then
     cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA_AVX=ON"
   fi

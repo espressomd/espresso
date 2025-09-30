@@ -22,6 +22,7 @@
 #include "EKinWalberlaBase.hpp"
 
 #include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/electrokinetics/PoissonSolver.hpp>
 #include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>
 #include <walberla_bridge/electrokinetics/reactions/EKReactionBaseIndexed.hpp>
 
@@ -64,5 +65,17 @@ std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed_gpu(
     std::shared_ptr<LatticeWalberla> const &lattice,
     typename EKReactionBase::reactants_type const &reactants,
     double coefficient);
+
+std::shared_ptr<walberla::PoissonSolver>
+new_ek_poisson_none(std::shared_ptr<LatticeWalberla> const &lattice,
+                    bool single_precision);
+
+std::shared_ptr<walberla::PoissonSolver>
+new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,
+                   double permittivity, bool single_precision);
+
+std::shared_ptr<walberla::PoissonSolver>
+new_ek_poisson_fft_cuda(std::shared_ptr<LatticeWalberla> const &lattice,
+                        double permittivity, bool single_precision);
 
 } // namespace walberla

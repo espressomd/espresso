@@ -190,6 +190,7 @@ class EKTest:
         self.system.ekcontainer.solver = ek_solver
         self.assertIsInstance(self.system.ekcontainer.solver,
                               self.ek_solver_class)
+        self.assertEqual(self.system.ekcontainer.solver, ek_solver)
 
         ek_node = ek_solver[2, 2, 2]
         np.testing.assert_array_equal(np.copy(ek_node._index), [2, 2, 2])
@@ -220,6 +221,7 @@ class EKTest:
         self.system.ekcontainer.solver = ek_solver
         self.assertIsInstance(self.system.ekcontainer.solver,
                               espressomd.electrokinetics.EKNone)
+        self.assertEqual(self.system.ekcontainer.solver, ek_solver)
 
     def test_ek_species_exceptions(self):
         ek_species = self.make_default_ek_species()
@@ -245,17 +247,20 @@ class EKTest:
         incompatible_lattice = self.ek_lattice_class(
             n_ghost_layers=2, agrid=self.params["agrid"])
         incompatible_ek_solver = espressomd.electrokinetics.EKNone(
-            lattice=incompatible_lattice)
+            lattice=incompatible_lattice, **self.ek_params)
         incompatible_ek_species = self.ek_species_class(
             lattice=incompatible_lattice, **self.ek_params,
             **self.ek_species_params)
         with self.assertRaisesRegex(RuntimeError, "EKSpecies lattice incompatible with existing Poisson solver lattice"):
             self.system.ekcontainer.add(incompatible_ek_species)
+        self.assertEqual(len(self.system.ekcontainer), 1)
+        self.system.ekcontainer.clear()
         with self.assertRaisesRegex(RuntimeError, "Poisson solver lattice incompatible with existing EKSpecies lattice"):
-            self.system.ekcontainer.clear()
             self.system.ekcontainer.solver = incompatible_ek_solver
             self.system.ekcontainer.add(incompatible_ek_species)
             self.system.ekcontainer.solver = ek_solver
+        self.assertEqual(
+            self.system.ekcontainer.solver, incompatible_ek_solver)
         incompatible_lattice = self.ek_lattice_class(
             n_ghost_layers=1, agrid=self.params["agrid"],
             blocks_per_mpi_rank=[2, 1, 1])
@@ -269,6 +274,52 @@ class EKTest:
                 ek_solver[0, 0, 0].__reduce__()
             with self.assertRaisesRegex(NotImplementedError, "Cannot serialize EK Poisson solver slice objects"):
                 ek_solver[0:1, 0:1, 0:1].__reduce__()
+
+            solver_sp = self.ek_solver_class(
+                lattice=self.lattice, permittivity=0.1, single_precision=True)
+            solver_dp = self.ek_solver_class(
+                lattice=self.lattice, permittivity=0.1, single_precision=False)
+            species_sp = self.make_default_ek_species(single_precision=True)
+            species_dp = self.make_default_ek_species(single_precision=False)
+            self.system.ekcontainer.clear()
+            # EKNone has no effect and its floating-point precision is ignored
+            solver_none_sp = espressomd.electrokinetics.EKNone(
+                lattice=self.lattice, single_precision=True)
+            solver_none_dp = espressomd.electrokinetics.EKNone(
+                lattice=self.lattice, single_precision=True)
+            self.system.ekcontainer.solver = solver_none_sp
+            self.system.ekcontainer.add(species_dp)  # mismatch allowed
+            self.system.ekcontainer.clear()
+            self.system.ekcontainer.solver = solver_none_dp
+            self.system.ekcontainer.add(species_sp)  # mismatch allowed
+            self.system.ekcontainer.clear()
+            # FFT solvers check floating-point precision of species
+            self.system.ekcontainer.solver = solver_sp
+            with self.assertRaisesRegex(RuntimeError, "Cannot mix single and double precision kernels"):
+                self.system.ekcontainer.add(species_dp)
+            self.assertEqual(len(self.system.ekcontainer), 0)
+            self.system.ekcontainer.solver = solver_dp
+            with self.assertRaisesRegex(RuntimeError, "Cannot mix single and double precision kernels"):
+                self.system.ekcontainer.add(species_sp)
+            self.assertEqual(len(self.system.ekcontainer), 0)
+            # EKSpecies check floating-point precision of new species/solvers
+            self.system.ekcontainer.solver = solver_none_sp
+            self.system.ekcontainer.add(species_dp)
+            with self.assertRaisesRegex(RuntimeError, "Cannot mix single and double precision kernels"):
+                self.system.ekcontainer.add(species_sp)
+            self.assertEqual(len(self.system.ekcontainer), 1)
+            with self.assertRaisesRegex(RuntimeError, "Cannot mix single and double precision kernels"):
+                self.system.ekcontainer.solver = solver_sp
+            self.assertEqual(self.system.ekcontainer.solver, solver_none_sp)
+            self.system.ekcontainer.clear()
+            self.system.ekcontainer.add(species_sp)
+            with self.assertRaisesRegex(RuntimeError, "Cannot mix single and double precision kernels"):
+                self.system.ekcontainer.add(species_dp)
+            self.assertEqual(len(self.system.ekcontainer), 1)
+            with self.assertRaisesRegex(RuntimeError, "Cannot mix single and double precision kernels"):
+                self.system.ekcontainer.solver = solver_dp
+            self.assertEqual(self.system.ekcontainer.solver, solver_none_sp)
+            self.system.ekcontainer.clear()
 
     def test_parameter_change_exceptions(self):
         ek_solver = self.system.ekcontainer.solver
@@ -539,10 +590,6 @@ class EKTestWalberlaSinglePrecision(EKTest, ut.TestCase):
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
-# TODO: fix bug revealed by heFFTe boundary check
-# (_deps/heffte-src/include/heffte_geometry.h:279)
-@ut.skipIf(EKTest.system.cell_system.get_state()["n_nodes"] != 1,
-           "GPU EK runs for 1 MPI rank")
 class EKTestWalberlaGPU(EKTest, ut.TestCase):
 
     """Test for the Walberla implementation of the EK in double-precision."""
@@ -559,10 +606,6 @@ class EKTestWalberlaGPU(EKTest, ut.TestCase):
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
-# TODO: fix bug revealed by heFFTe boundary check
-# (_deps/heffte-src/include/heffte_geometry.h:279)
-@ut.skipIf(EKTest.system.cell_system.get_state()["n_nodes"] != 1,
-           "GPU EK runs for 1 MPI rank")
 class EKTestWalberlaSinglePrecisionGPU(EKTest, ut.TestCase):
 
     """Test for the Walberla implementation of the EK in single-precision."""

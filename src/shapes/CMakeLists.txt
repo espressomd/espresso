@@ -26,7 +26,7 @@ add_library(espresso::shapes ALIAS espresso_shapes)
 espresso_set_common_target_properties(espresso_shapes)
 
 target_link_libraries(espresso_shapes PUBLIC espresso::utils
-                      PRIVATE Boost::boost espresso::cpp_flags)
+                      PRIVATE Boost::boost espresso::compiler_flags)
 target_include_directories(
   espresso_shapes PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                          $<INSTALL_INTERFACE:include>)

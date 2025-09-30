@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 The ESPResSo project
+# Copyright (C) 2018-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -23,23 +23,21 @@ if(ESPRESSO_BUILD_WITH_FFTW)
   target_include_directories(espresso_p3m
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
   espresso_set_common_target_properties(espresso_p3m)
-  set_target_properties(espresso_p3m PROPERTIES CXX_CLANG_TIDY
-                                                "${P3M_CXX_CLANG_TIDY}")
-  set_target_properties(espresso_p3m PROPERTIES CXX_CLANG_TIDY
-                                                "${P3M_CUDA_CLANG_TIDY}")
-  add_library(espresso_p3m_cpp_flags INTERFACE)
-  add_library(espresso::p3m::cpp_flags ALIAS espresso_p3m_cpp_flags)
+  set_target_properties(
+    espresso_p3m PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_P3M_CXX_CLANG_TIDY}")
+  add_library(espresso_p3m_compiler_flags INTERFACE)
+  add_library(espresso::p3m::compiler_flags ALIAS espresso_p3m_compiler_flags)
   target_compile_options(
-    espresso_p3m_cpp_flags
+    espresso_p3m_compiler_flags
     INTERFACE
-      -Wno-float-conversion
-      $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-implicit-float-conversion>
+      $<$<COMPILE_LANGUAGE:CXX>:-Wno-float-conversion>
+      $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-implicit-float-conversion>
   )
   target_link_libraries(
     espresso_p3m
     PRIVATE
-      espresso::cpp_flags
-      espresso::p3m::cpp_flags
+      espresso::compiler_flags
+      espresso::p3m::compiler_flags
       espresso::instrumentation
       espresso::utils
       espresso::config

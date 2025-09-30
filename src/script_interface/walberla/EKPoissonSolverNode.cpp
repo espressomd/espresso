@@ -25,7 +25,7 @@
 
 #include "LatticeIndices.hpp"
 
-#include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp>
+#include <walberla_bridge/electrokinetics/PoissonSolver.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/reduce_optional.hpp>

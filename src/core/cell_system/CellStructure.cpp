@@ -90,8 +90,7 @@ void CellStructure::clear_local_properties() {
   m_rebuild_verlet_list_cabana = true;
 }
 
-void CellStructure::set_kokkos_handle(
-    std::shared_ptr<Communication::KokkosHandle> handle) {
+void CellStructure::set_kokkos_handle(std::shared_ptr<KokkosHandle> handle) {
   m_kokkos_handle = std::move(handle);
 }
 

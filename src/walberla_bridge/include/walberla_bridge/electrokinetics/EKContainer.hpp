@@ -20,7 +20,7 @@
 #pragma once
 
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp>
+#include <walberla_bridge/electrokinetics/PoissonSolver.hpp>
 
 #include <algorithm>
 #include <cassert>

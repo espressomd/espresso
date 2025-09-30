@@ -17,9 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "PoissonSolverNone.hpp"
+
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolverNone.hpp>
-#include <walberla_bridge/electrokinetics/ek_poisson_none_init.hpp>
+#include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 
 #include <memory>
 

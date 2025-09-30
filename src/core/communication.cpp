@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "communication.hpp"
 
@@ -45,63 +45,87 @@
 #include <boost/mpi/environment.hpp>
 
 #include <mpi.h>
+#if defined(OPEN_MPI)
+#include <mpi-ext.h>
+#endif
 
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <optional>
+#include <string>
 #include <tuple>
 #include <utility>
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-namespace Communication {
 struct KokkosHandle {
   KokkosHandle() { Kokkos::initialize(); }
   ~KokkosHandle() { Kokkos::finalize(); }
 };
-} // namespace Communication
 #endif
 
 boost::mpi::communicator comm_cart;
 Communicator communicator{};
+std::unique_ptr<CommunicationEnvironment> communication_environment{};
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-std::shared_ptr<Communication::KokkosHandle> kokkos_handle{};
+std::shared_ptr<KokkosHandle> kokkos_handle{};
 #endif
-
-namespace Communication {
-static std::shared_ptr<MpiCallbacks> m_callbacks;
-
-/* We use a singleton callback class for now. */
-MpiCallbacks &mpiCallbacks() {
-  assert(m_callbacks && "Mpi not initialized!");
-
-  return *m_callbacks;
-}
-
-std::shared_ptr<MpiCallbacks> mpiCallbacksHandle() {
-  assert(m_callbacks && "Mpi not initialized!");
-
-  return m_callbacks;
-}
-} // namespace Communication
-
-using Communication::mpiCallbacks;
-
 int this_node = -1;
 
-namespace Communication {
-void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
+static std::optional<std::string> get_env_variable(char const *const name) {
+  char const *const value = std::getenv(name);
+  std::optional<std::string> result{std::nullopt};
+  if (value) {
+    result = std::string(value);
+  }
+  return result;
+}
+
+static auto make_default_mpi_env() {
+  int argc = 0;
+  char **argv = nullptr;
+  return std::make_shared<boost::mpi::environment>(argc, argv);
+}
+
+CommunicationEnvironment::CommunicationEnvironment()
+    : CommunicationEnvironment(make_default_mpi_env()) {}
+
+CommunicationEnvironment::CommunicationEnvironment(
+    std::shared_ptr<boost::mpi::environment> mpi_env)
+    : m_mpi_env{std::move(mpi_env)} {
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-  const char *const env_omp_num_threads = std::getenv("OMP_NUM_THREADS");
-  if (not env_omp_num_threads or std::strlen(env_omp_num_threads) == 0ul) {
+  auto const num_threads_env = get_env_variable("OMP_NUM_THREADS");
+  if (not num_threads_env or num_threads_env->empty()) {
     omp_set_num_threads(1);
   }
 #endif
 
+  m_is_mpi_gpu_aware = false;
+
+#if defined(OPEN_MPI)
+#if defined(OMPI_HAVE_MPI_EXT_ROCM) && OMPI_HAVE_MPI_EXT_ROCM
+  m_is_mpi_gpu_aware |= static_cast<bool>(MPIX_Query_rocm_support());
+#endif
+#if defined(OMPI_HAVE_MPI_EXT_CUDA) && OMPI_HAVE_MPI_EXT_CUDA
+  m_is_mpi_gpu_aware |= static_cast<bool>(MPIX_Query_cuda_support());
+#endif
+#endif // defined(OPEN_MPI)
+
+#if defined(MPICH)
+  auto const mpich_gpu_env = get_env_variable("MPIR_CVAR_ENABLE_GPU");
+  m_is_mpi_gpu_aware |= (mpich_gpu_env and *mpich_gpu_env == "1");
+#endif // defined(MPICH)
+
+#if defined(_CRAYC)
+  auto const cray_mpich_gpu_env = get_env_variable("MPICH_GPU_SUPPORT_ENABLED");
+  m_is_mpi_gpu_aware |= (cray_mpich_gpu_env and *cray_mpich_gpu_env == "1");
+#endif // defined(_CRAYC)
+
   communicator.full_initialization();
 
-  Communication::m_callbacks =
-      std::make_shared<Communication::MpiCallbacks>(comm_cart, mpi_env);
+  m_callbacks =
+      std::make_shared<Communication::MpiCallbacks>(comm_cart, m_mpi_env);
 
   ErrorHandling::init_error_handling(comm_cart);
 
@@ -122,16 +146,15 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
 #endif
 }
 
-void deinit() {
+CommunicationEnvironment::~CommunicationEnvironment() {
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   Kokkos::fence();
   kokkos_handle.reset();
 #endif
 
   ErrorHandling::deinit_error_handling();
-  Communication::m_callbacks.reset();
+  m_callbacks.reset();
 }
-} // namespace Communication
 
 Communicator::Communicator()
     : comm{::comm_cart}, node_grid{}, this_node{::this_node}, size{-1} {}
@@ -161,11 +184,7 @@ Utils::Vector3i Communicator::calc_node_index() const {
   return Utils::Mpi::cart_coords<3>(comm, this_node);
 }
 
-std::shared_ptr<boost::mpi::environment> mpi_init(int argc, char **argv) {
-  return std::make_shared<boost::mpi::environment>(argc, argv);
-}
-
 void mpi_loop() {
   if (this_node != 0)
-    mpiCallbacks().loop();
+    Communication::mpiCallbacks().loop();
 }

@@ -76,9 +76,7 @@ template <typename... Types> struct MemberTypes;
 template <class DataType, class MemorySpace, int, class MemoryTraits>
 class AoSoA;
 } // namespace Cabana
-namespace Communication {
 struct KokkosHandle;
-} // namespace Communication
 template <class MemorySpace, class ListAlgorithm, class Layout, class BuildTag>
 class CustomVerletList;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
@@ -216,7 +214,7 @@ private:
   std::unique_ptr<AoSoA_pack> m_aosoa;
   /** The local id-to-index for aosoa data */
   std::vector<Particle *> m_unique_particles;
-  std::shared_ptr<Communication::KokkosHandle> m_kokkos_handle;
+  std::shared_ptr<KokkosHandle> m_kokkos_handle;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 public:
@@ -723,7 +721,7 @@ private:
 public:
   auto get_max_id() const { return m_max_id; }
 
-  void set_kokkos_handle(std::shared_ptr<Communication::KokkosHandle> handle);
+  void set_kokkos_handle(std::shared_ptr<KokkosHandle> handle);
   void rebuild_local_properties(double pair_cutoff);
   void reset_local_properties();
   void reset_local_force();

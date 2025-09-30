@@ -17,10 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-set(WALBERLA_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
-set(WALBERLA_CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
-set(WALBERLA_CXX_CLANG_TIDY_CODEGEN "${ESPRESSO_CXX_CLANG_TIDY}")
-set(WALBERLA_CUDA_CLANG_TIDY_CODEGEN "${ESPRESSO_CUDA_CLANG_TIDY}")
+if(ESPRESSO_BUILD_WITH_FFTW)
+  set(WALBERLA_CXX_CLANG_TIDY "${ESPRESSO_HEFFTE_CXX_CLANG_TIDY}")
+  set(WALBERLA_CUDA_CLANG_TIDY "${ESPRESSO_HEFFTE_CUDA_CLANG_TIDY}")
+  set(WALBERLA_CXX_CLANG_TIDY_CODEGEN "${ESPRESSO_HEFFTE_CXX_CLANG_TIDY}")
+  set(WALBERLA_CUDA_CLANG_TIDY_CODEGEN "${ESPRESSO_HEFFTE_CUDA_CLANG_TIDY}")
+else()
+  set(WALBERLA_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
+  set(WALBERLA_CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
+  set(WALBERLA_CXX_CLANG_TIDY_CODEGEN "${ESPRESSO_CXX_CLANG_TIDY}")
+  set(WALBERLA_CUDA_CLANG_TIDY_CODEGEN "${ESPRESSO_CUDA_CLANG_TIDY}")
+endif()
 set(SKIP_CLANG_TIDY_CHECKS "")
 set(SKIP_CLANG_TIDY_CHECKS_CXX "")
 set(SKIP_CLANG_TIDY_CHECKS_CUDA "")
@@ -100,28 +107,33 @@ function(espresso_configure_walberla_target)
   endif()
 endfunction()
 
-add_library(espresso_walberla_cpp_flags INTERFACE)
-add_library(espresso::walberla::cpp_flags ALIAS espresso_walberla_cpp_flags)
+add_library(espresso_walberla_compiler_flags INTERFACE)
+add_library(espresso::walberla::compiler_flags ALIAS
+            espresso_walberla_compiler_flags)
 target_link_libraries(
-  espresso_walberla_cpp_flags
+  espresso_walberla_compiler_flags
   INTERFACE
-    espresso::cpp_flags
+    espresso::compiler_flags
     $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
 )
-add_library(espresso_walberla_cuda_flags INTERFACE)
-add_library(espresso::walberla::cuda_flags ALIAS espresso_walberla_cuda_flags)
-target_link_libraries(
-  espresso_walberla_cuda_flags
-  INTERFACE espresso::cuda_flags
-            $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>)
-add_library(espresso_walberla_codegen_cpp_flags INTERFACE)
-add_library(espresso::walberla_codegen::cpp_flags ALIAS
-            espresso_walberla_codegen_cpp_flags)
+add_library(espresso_walberla_codegen_compiler_flags INTERFACE)
+add_library(espresso::walberla_codegen::compiler_flags ALIAS
+            espresso_walberla_codegen_compiler_flags)
+# cmake-format: off
 target_compile_options(
-  espresso_walberla_codegen_cpp_flags
-  INTERFACE -Wno-cast-align
-            $<$<CXX_COMPILER_ID:GNU>:-Wno-shadow=compatible-local>)
+  espresso_walberla_codegen_compiler_flags
+  INTERFACE
+  $<$<COMPILE_LANGUAGE:CXX>:-Wno-cast-align>
+  $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-shadow=compatible-local>
+  # silence diagnostics from MPI vendors
+  $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM,AppleClang>>:-Wno-cast-function-type-mismatch>
+  $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>>:-Wno-cast-function-type-mismatch>
+  $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CXX,GNU>>:-Wno-cast-function-type>
+  $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>>:-Xcompiler=-Wno-cast-function-type>
+  $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},MPICH>,$<COMPILE_LANGUAGE:CXX>>:-Wno-cast-qual>
+)
+# cmake-format: on
 
 add_library(espresso_walberla SHARED)
 add_library(espresso_walberla_codegen OBJECT)
@@ -133,24 +145,26 @@ espresso_configure_walberla_target(espresso_walberla_codegen)
 
 target_link_libraries(
   espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils
-  PRIVATE espresso::walberla::cpp_flags espresso::walberla_codegen)
+  PRIVATE espresso::walberla::compiler_flags espresso::walberla_codegen
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>)
 target_link_libraries(
-  espresso_walberla_codegen PRIVATE espresso::walberla::cpp_flags
-                                    espresso::walberla_codegen::cpp_flags)
+  espresso_walberla_codegen PRIVATE espresso::walberla::compiler_flags
+                                    espresso::walberla_codegen::compiler_flags)
+
+function(espresso_set_walberla_codegen_kernel_source_properties source_file)
+  # disable sanitizers on kernels due to excessive runtime and VRAM usage
+  set_source_files_properties(
+    ${source_file} TARGET_DIRECTORY espresso_walberla_codegen
+    PROPERTIES
+      COMPILE_FLAGS
+      "-fno-sanitize=undefined $<$<CONFIG:Debug>:$<IF:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,-Xptxas=-O0 -Xcompiler=-Og,-Og>>"
+  )
+endfunction()
 
 if(WALBERLA_BUILD_WITH_CUDA)
-  espresso_add_gpu_library(espresso_walberla_cuda SHARED)
-  espresso_add_gpu_library(espresso_walberla_codegen_cuda OBJECT)
-  add_library(espresso::walberla_cuda ALIAS espresso_walberla_cuda)
-  add_library(espresso::walberla_codegen_cuda ALIAS
-              espresso_walberla_codegen_cuda)
-  espresso_configure_walberla_target(espresso_walberla_cuda)
-  espresso_configure_walberla_target(espresso_walberla_codegen_cuda)
-  target_link_libraries(
-    espresso_walberla_cuda PUBLIC espresso::utils
-    PRIVATE CUDA::cuda_driver CUDA::cudart espresso::walberla_codegen_cuda)
-  target_link_libraries(espresso_walberla_codegen_cuda PRIVATE CUDA::cuda_driver
-                                                               CUDA::cudart)
+  target_link_libraries(espresso_walberla PRIVATE CUDA::cuda_driver
+                                                  CUDA::cudart)
+  target_link_libraries(espresso_walberla_codegen PRIVATE CUDA::cudart)
 endif()
 
 add_subdirectory(src)

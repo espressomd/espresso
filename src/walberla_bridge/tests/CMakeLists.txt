@@ -22,7 +22,7 @@ include(espresso_unit_test)
 function(ESPRESSO_ADD_TEST)
   cmake_parse_arguments(TEST "" "SRC;NAME;NUM_PROC;NUM_THREADS" "DEPENDS"
                         ${ARGN})
-  espresso_unit_test_make_name(SRC ${TEST_SRC} NAME ${TEST_NAME})
+  espresso_unit_test_make_name(${ARGV})
   espresso_unit_test(
     SRC
     ${TEST_SRC}
@@ -35,27 +35,16 @@ function(ESPRESSO_ADD_TEST)
     DEPENDS
     ${TEST_DEPENDS}
     espresso::walberla
-    espresso::walberla_codegen
-    espresso::utils)
-  if(WALBERLA_BUILD_WITH_CUDA)
-    target_link_libraries(${TEST_NAME} PRIVATE espresso::walberla_cuda)
-  endif()
-  if(${TEST_SRC} MATCHES ".*\.cu$")
-    target_link_libraries(${TEST_NAME} PRIVATE espresso::walberla::cuda_flags)
-    if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-      set_target_properties(
-        ${TEST_NAME} PROPERTIES CUDA_CLANG_TIDY "${WALBERLA_CUDA_CLANG_TIDY}")
-    endif()
-  else()
-    target_link_libraries(${TEST_NAME} PRIVATE espresso::walberla::cpp_flags)
-    if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-      set_target_properties(
-        ${TEST_NAME} PROPERTIES CXX_CLANG_TIDY "${WALBERLA_CXX_CLANG_TIDY}")
-    endif()
+    espresso::utils
+    espresso::walberla::compiler_flags
+    ${WALBERLA_LIBS})
+  if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
+    set_target_properties(
+      ${TEST_NAME} PROPERTIES CXX_CLANG_TIDY "${WALBERLA_CXX_CLANG_TIDY}"
+                              CUDA_CLANG_TIDY "${WALBERLA_CUDA_CLANG_TIDY}")
   endif()
   target_include_directories(${TEST_NAME} PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                   ${walberla_BINARY_DIR}/src)
-  target_link_libraries(${TEST_NAME} PRIVATE ${WALBERLA_LIBS})
 endfunction()
 
 espresso_add_test(SRC ResourceManager_test.cpp)
@@ -71,12 +60,19 @@ espresso_add_test(SRC LBWalberlaImpl_flow_tests.cpp DEPENDS Boost::mpi)
 espresso_add_test(SRC LBWalberlaImpl_lees_edwards_tests.cpp DEPENDS Boost::mpi)
 espresso_add_test(SRC EKinWalberlaImpl_unit_tests.cpp DEPENDS Boost::mpi
                   NUM_PROC 2)
+espresso_add_test(
+  SRC PoissonSolver_test.cpp DEPENDS Boost::mpi
+  $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte> NUM_PROC 2)
 
 if(NOT (ESPRESSO_BUILD_WITH_ASAN OR ESPRESSO_BUILD_WITH_UBSAN))
   espresso_add_test(SRC LBWalberlaImpl_statistical_tests.cpp DEPENDS Boost::mpi)
 endif()
 
+espresso_add_test(SRC LBWalberlaImpl_field_accessors_tests.cpp DEPENDS
+                  Boost::mpi)
 if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
-  espresso_add_test(SRC LBWalberlaImpl_field_accessors_tests.cu DEPENDS
-                    Boost::mpi)
+  set_source_files_properties(LBWalberlaImpl_field_accessors_tests.cpp
+                              PROPERTIES LANGUAGE CUDA)
+  espresso_add_test(SRC LBWalberlaImpl_field_accessors_tests.cpp SUFFIX cuda
+                    DEPENDS Boost::mpi CUDA::cudart)
 endif()

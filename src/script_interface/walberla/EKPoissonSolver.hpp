@@ -29,7 +29,7 @@
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
 
-#include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp>
+#include <walberla_bridge/electrokinetics/PoissonSolver.hpp>
 
 #include <memory>
 #include <unordered_map>

@@ -60,11 +60,26 @@ extern int this_node;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-namespace Communication {
 struct KokkosHandle;
-} // namespace Communication
-extern std::shared_ptr<Communication::KokkosHandle> kokkos_handle;
+extern std::shared_ptr<KokkosHandle> kokkos_handle;
 #endif
+
+class CommunicationEnvironment {
+  std::shared_ptr<boost::mpi::environment> m_mpi_env;
+  std::shared_ptr<Communication::MpiCallbacks> m_callbacks;
+  bool m_is_mpi_gpu_aware;
+
+public:
+  CommunicationEnvironment();
+  explicit CommunicationEnvironment(
+      std::shared_ptr<boost::mpi::environment> mpi_env);
+  ~CommunicationEnvironment();
+
+  auto &mpiCallbacks() const { return *m_callbacks; }
+  auto mpiCallbacksHandle() { return m_callbacks; }
+  auto get_mpi_env() const { return m_mpi_env; }
+  auto is_mpi_gpu_aware() const { return m_is_mpi_gpu_aware; }
+};
 
 struct Communicator {
   boost::mpi::communicator &comm;
@@ -84,34 +99,16 @@ struct Communicator {
 };
 
 extern Communicator communicator;
+extern std::unique_ptr<CommunicationEnvironment> communication_environment;
 
 namespace Communication {
 /**
  * @brief Returns a reference to the global callback class instance.
  */
-MpiCallbacks &mpiCallbacks();
-std::shared_ptr<MpiCallbacks> mpiCallbacksHandle();
+inline MpiCallbacks &mpiCallbacks() {
+  return ::communication_environment->mpiCallbacks();
+}
 } // namespace Communication
-
-/**************************************************
- * for every procedure requesting a MPI negotiation,
- * a callback exists which processes this request on
- * the worker nodes. It is denoted by *_local.
- **************************************************/
-
-/** Initialize MPI. */
-std::shared_ptr<boost::mpi::environment> mpi_init(int argc = 0,
-                                                  char **argv = nullptr);
 
 /** Process requests from head node. Worker nodes main loop. */
 void mpi_loop();
-
-namespace Communication {
-/**
- * @brief Init globals for communication.
- *
- * @param mpi_env MPI environment that should be used
- */
-void init(std::shared_ptr<boost::mpi::environment> mpi_env);
-void deinit();
-} // namespace Communication

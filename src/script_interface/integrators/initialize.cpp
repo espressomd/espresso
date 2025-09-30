@@ -23,6 +23,7 @@
 #include "IntegratorHandle.hpp"
 #include "SteepestDescent.hpp"
 #include "StokesianDynamics.hpp"
+#include "SymplecticEuler.hpp"
 #include "VelocityVerlet.hpp"
 #include "VelocityVerletIsoNPT.hpp"
 #include "config/config.hpp"
@@ -37,6 +38,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef ESPRESSO_STOKESIAN_DYNAMICS
   om->register_new<StokesianDynamics>("Integrators::StokesianDynamics");
 #endif // ESPRESSO_STOKESIAN_DYNAMICS
+  om->register_new<SymplecticEuler>("Integrators::SymplecticEuler");
   om->register_new<VelocityVerlet>("Integrators::VelocityVerlet");
 #ifdef ESPRESSO_NPT
   om->register_new<VelocityVerletIsoNPT>("Integrators::VelocityVerletIsoNPT");

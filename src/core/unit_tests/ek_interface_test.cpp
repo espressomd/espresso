@@ -37,7 +37,6 @@
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/EKContainer.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
-#include <walberla_bridge/electrokinetics/ek_poisson_none_init.hpp>
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 #include <walberla_bridge/electrokinetics/reactions/EKReactant.hpp>
 #include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>

@@ -32,36 +32,24 @@ class ASEInterface:
     ASE interface for ESPResSo.
     """
 
-    type_mapping: dict
-    """
-    Mapping of ESPResSo particle types to ASE symbols. E.g. ``{0: "H", 1: "O"}``.
-    """
     _system: typing.Union["System", None] = None
 
     def register_system(self, system):
         """Register the system."""
         self._system = system
 
-    def __getstate__(self):
-        return {"type_mapping": self.type_mapping}
-
-    def get(self) -> ase.Atoms:
+    def get(self, folded=False) -> ase.Atoms:
         """Export the ESPResSo system particle data to an ASE atoms object."""
         particles = self._system.part.all()
-        positions = np.copy(particles.pos)
+        positions = np.copy(particles.pos_folded if folded else particles.pos)
         types = np.copy(particles.type)
         forces = np.copy(particles.f)
-        unknown_types = set(types) - set(self.type_mapping)
-        if unknown_types:
-            raise RuntimeError(
-                f"Particle types '{unknown_types}' haven't been registered in the ASE type map"  # nopep8
-            )
         if any(p.is_virtual() for p in particles):
             raise RuntimeError("ASE doesn't support virtual sites")
 
         atoms = ase.Atoms(
             positions=positions,
-            symbols=[self.type_mapping[t] for t in types],
+            numbers=types,
             pbc=np.copy(self._system.periodicity),
             cell=np.copy(self._system.box_l),
         )

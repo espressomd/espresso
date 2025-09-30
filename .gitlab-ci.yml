@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu:b858760d11a10767efa9e8b28b9a7fbfcf899e3a
+image: ghcr.io/espressomd/docker/ubuntu:3388b293a5e8a9b613b1bfa4220e54dfb4bff245
 
 stages:
   - prepare
@@ -16,7 +16,7 @@ stages:
 
 .notification_job_template: &notification_job_definition
   <<: *global_job_definition
-  image: ghcr.io/espressomd/docker/fedora:b858760d11a10767efa9e8b28b9a7fbfcf899e3a
+  image: ghcr.io/espressomd/docker/alpine:3388b293a5e8a9b613b1bfa4220e54dfb4bff245
   variables:
     GET_SOURCES_ATTEMPTS: 3
   dependencies: []
@@ -47,7 +47,7 @@ style:
     - cd build
     - cp ../style.patch .
     - cp ../maintainer/configs/maxset.hpp myconfig.hpp
-    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON -D ESPRESSO_BUILD_WITH_CALIPER=ON -D ESPRESSO_BUILD_WITH_FPE=ON -D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM=ON
+    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_FFTW=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON -D ESPRESSO_BUILD_WITH_CALIPER=ON -D ESPRESSO_BUILD_WITH_FPE=ON -D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM=ON
     - sh ../maintainer/CI/dox_warnings.sh
   tags:
     - espresso

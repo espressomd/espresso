@@ -19,7 +19,7 @@
 
 // kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
 // v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
-// waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
+// waLBerla commit e12db9965373887d86aab4aaaf4dd7b38fa588e8
 
 #pragma once
 

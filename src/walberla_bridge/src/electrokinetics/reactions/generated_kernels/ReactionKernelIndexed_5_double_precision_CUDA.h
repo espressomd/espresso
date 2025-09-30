@@ -20,12 +20,12 @@
 
 // kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
 // v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
-// waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
+// waLBerla commit e12db9965373887d86aab4aaaf4dd7b38fa588e8
 
 /*
  * Boundary class.
  * Adapted from the waLBerla source file
- * https://i10git.cs.fau.de/walberla/walberla/-/blob/fb076cd18daa6e2f24448349d1fffb974c845269/python/pystencils_walberla/templates/Boundary.tmpl.h
+ * https://i10git.cs.fau.de/walberla/walberla/-/blob/e12db9965373887d86aab4aaaf4dd7b38fa588e8/python/pystencils_walberla/templates/Boundary.tmpl.h
  */
 
 #pragma once
@@ -39,6 +39,7 @@
 #include <field/FlagField.h>
 #include <gpu/FieldCopy.h>
 #include <gpu/GPUField.h>
+#include <gpu/GPUWrapper.h>
 
 #include <cassert>
 #include <functional>
@@ -61,7 +62,10 @@
 #define RESTRICT __restrict
 #else
 #define RESTRICT
+#endif
 
+#ifdef WALBERLA_BUILD_WITH_HALF_PRECISION_SUPPORT
+using walberla::half;
 #endif
 
 namespace walberla {
@@ -91,25 +95,35 @@ public:
     }
 
     ~IndexVectors() {
-      for (auto &gpuVec : gpuVectors_)
-        gpuFree(gpuVec);
+      for (auto &gpuVec : gpuVectors_) {
+        if (gpuVec) {
+          WALBERLA_GPU_CHECK(gpuFree(gpuVec));
+        }
+      }
     }
     CpuIndexVector &indexVector(Type t) { return cpuVectors_[t]; }
-    IndexInfo *pointerCpu(Type t) { return cpuVectors_[t].data(); }
+    IndexInfo *pointerCpu(Type t) {
+      return cpuVectors_[t].empty() ? nullptr : cpuVectors_[t].data();
+    }
 
     IndexInfo *pointerGpu(Type t) { return gpuVectors_[t]; }
     void syncGPU() {
       for (auto &gpuVec : gpuVectors_)
-        gpuFree(gpuVec);
+        WALBERLA_GPU_CHECK(gpuFree(gpuVec));
       gpuVectors_.resize(cpuVectors_.size());
 
       WALBERLA_ASSERT_EQUAL(cpuVectors_.size(), NUM_TYPES);
       for (size_t i = 0; i < cpuVectors_.size(); ++i) {
         auto &gpuVec = gpuVectors_[i];
         auto &cpuVec = cpuVectors_[i];
-        gpuMalloc(&gpuVec, sizeof(IndexInfo) * cpuVec.size());
-        gpuMemcpy(gpuVec, &cpuVec[0], sizeof(IndexInfo) * cpuVec.size(),
-                  gpuMemcpyHostToDevice);
+        if (cpuVec.empty()) {
+          continue;
+        }
+        WALBERLA_GPU_CHECK(
+            gpuMalloc(&gpuVec, sizeof(IndexInfo) * cpuVec.size()));
+        WALBERLA_GPU_CHECK(gpuMemcpy(gpuVec, cpuVec.data(),
+                                     sizeof(IndexInfo) * cpuVec.size(),
+                                     gpuMemcpyHostToDevice));
       }
     }
 
@@ -139,7 +153,7 @@ public:
     indexVectorID = blocks->addStructuredBlockData<IndexVectors>(
         createIdxVector,
         "IndexField_ReactionKernelIndexed_5_double_precision_CUDA");
-  };
+  }
 
   ReactionKernelIndexed_5_double_precision_CUDA(
       BlockDataID indexVectorID_, BlockDataID rho_0ID_, BlockDataID rho_1ID_,
@@ -153,7 +167,7 @@ public:
         order_3_(order_3), order_4_(order_4),
         rate_coefficient_(rate_coefficient), stoech_0_(stoech_0),
         stoech_1_(stoech_1), stoech_2_(stoech_2), stoech_3_(stoech_3),
-        stoech_4_(stoech_4) {};
+        stoech_4_(stoech_4) {}
 
   void run(IBlock *block, gpuStream_t stream = nullptr);
 
@@ -164,6 +178,13 @@ public:
   void inner(IBlock *block, gpuStream_t stream = nullptr);
 
   void outer(IBlock *block, gpuStream_t stream = nullptr);
+
+  Vector3<real_t> getForce(IBlock * /*block*/) {
+
+    WALBERLA_ABORT(
+        "Boundary condition was not generated including force calculation.")
+    return Vector3<real_t>(real_c(0.0));
+  }
 
   std::function<void(IBlock *)> getSweep(gpuStream_t stream = nullptr) {
     return [this, stream](IBlock *b) { this->run(b, stream); };
@@ -196,8 +217,9 @@ public:
 
     auto *flagField = block->getData<FlagField_T>(flagFieldID);
 
-    assert(flagField->flagExists(boundaryFlagUID) and
-           flagField->flagExists(domainFlagUID));
+    if (!(flagField->flagExists(boundaryFlagUID) and
+          flagField->flagExists(domainFlagUID)))
+      return;
 
     auto boundaryFlag = flagField->getFlag(boundaryFlagUID);
     auto domainFlag = flagField->getFlag(domainFlagUID);
@@ -222,11 +244,11 @@ public:
 
         auto element = IndexInfo(it.x(), it.y(), it.z(), 0);
 
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 

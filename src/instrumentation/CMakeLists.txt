@@ -42,7 +42,7 @@ if(ESPRESSO_BUILD_WITH_FPE)
   add_library(espresso::fpe ALIAS espresso_fpe)
   espresso_set_common_target_properties(espresso_fpe)
   target_link_libraries(espresso_fpe PRIVATE espresso::config
-                                             espresso::cpp_flags)
+                                             espresso::compiler_flags)
   target_include_directories(
     espresso_fpe PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                         $<INSTALL_INTERFACE:include>)

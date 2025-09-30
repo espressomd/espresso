@@ -439,10 +439,6 @@ public:
    */
   boost::mpi::communicator const &comm() const { return m_comm; }
 
-  std::shared_ptr<boost::mpi::environment> share_mpi_env() const {
-    return m_mpi_env;
-  }
-
 private:
   /**
    * @brief Id for the @ref abort_loop. Has to be 0.

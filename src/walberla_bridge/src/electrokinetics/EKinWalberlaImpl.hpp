@@ -659,7 +659,7 @@ public:
           values_size += bci->numCells();
           auto kernel = [&values, &out](unsigned const block_index,
                                         unsigned const local_index,
-                                        Utils::Vector3i const &node) {
+                                        Utils::Vector3i const &) {
             out[local_index] = double_c(values[block_index]);
           };
 
@@ -687,7 +687,7 @@ public:
 
           auto kernel = [&values, &density](unsigned const block_index,
                                             unsigned const local_index,
-                                            Utils::Vector3i const &node) {
+                                            Utils::Vector3i const &) {
             values[block_index] = numeric_cast<FloatType>(density[local_index]);
           };
 
