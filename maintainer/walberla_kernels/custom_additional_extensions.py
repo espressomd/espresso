@@ -230,7 +230,8 @@ def generate_lb_boundary(
             boundary_object, lb_method, field_name, target=target)
 
     # pylint: disable=unused-argument
-    def boundary_creation_function(field, index_field, stencil, boundary_functor, target=Target.CPU, **kwargs):
+    def boundary_creation_function(
+            field, index_field, stencil, boundary_functor, target=Target.CPU, **kwargs):
         return create_lattice_boltzmann_boundary_kernel(field, index_field, lb_method, boundary_functor,
                                                         streaming_pattern=streaming_pattern,
                                                         prev_timestep=prev_timestep,
@@ -291,7 +292,7 @@ def generate_boundary(
 
     coordinate_names = ("x", "y", "z")[:dim]
 
-    if (boundary_object):
+    if boundary_object:
         boundary_object.name = class_name
         index_struct_dtype = numpy_data_type_for_boundary_object(
             boundary_object, dim)
@@ -312,7 +313,7 @@ def generate_boundary(
         strides=(1, 1),
     )
 
-    if (assignment):
+    if assignment:
         kernel_config = ps.CreateKernelConfig(
             index_fields=[index_field], target=target, **create_kernel_params
         )

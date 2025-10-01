@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
- * Copyright (C) 2020-2023 The waLBerla project
+ * Copyright (C) 2022-2025 The ESPResSo project
+ * Copyright (C) 2020-2025 The waLBerla project
  *
  * This file is part of ESPResSo.
  *
@@ -19,31 +19,41 @@
  */
 
 // kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
-// v1.3.7+15.g5018a18, sympy v1.10, lbmpy_walberla/pystencils_walberla from
-// waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
+// v1.3.7+15.g5018a18, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
+// waLBerla commit 191cf58b16b96d1d2f050dcbd9e88443995b2222
 
 /*
  * Boundary class.
  * Adapted from the waLBerla source file
- * https://i10git.cs.fau.de/walberla/walberla/-/blob/c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5/python/pystencils_walberla/templates/Boundary.tmpl.h
+ * https://i10git.cs.fau.de/walberla/walberla/-/blob/3e54d4f2336e47168ad87e3caaf7b3b082d86ca7/python/pystencils_walberla/templates/Boundary.tmpl.h
  */
 
 #pragma once
-#include "core/DataTypes.h"
-#include "core/logging/Logging.h"
 
-#include "blockforest/StructuredBlockForest.h"
-#include "core/debug/Debug.h"
-#include "domain_decomposition/BlockDataID.h"
-#include "domain_decomposition/IBlock.h"
-#include "field/FlagField.h"
-#include "field/GhostLayerField.h"
+#include <core/DataTypes.h>
+
+#include <blockforest/StructuredBlockForest.h>
+#include <core/debug/Debug.h>
+#include <domain_decomposition/BlockDataID.h>
+#include <domain_decomposition/IBlock.h>
+#include <field/FlagField.h>
+#include <field/GhostLayerField.h>
 
 #include <array>
 #include <cassert>
 #include <functional>
 #include <memory>
 #include <vector>
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#elif defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 
 #ifdef __GNUC__
 #define RESTRICT __restrict__
@@ -197,8 +207,8 @@ public:
   void fillFromFlagField(const std::shared_ptr<StructuredBlockForest> &blocks,
                          ConstBlockDataID flagFieldID, FlagUID boundaryFlagUID,
                          FlagUID domainFlagUID) {
-    for (auto blockIt = blocks->begin(); blockIt != blocks->end(); ++blockIt)
-      fillFromFlagField<FlagField_T>(blocks, &*blockIt, flagFieldID,
+    for (auto &block : *blocks)
+      fillFromFlagField<FlagField_T>(blocks, &block, flagFieldID,
                                      boundaryFlagUID, domainFlagUID);
   }
 
@@ -231,7 +241,7 @@ public:
     for (auto it = flagField->beginWithGhostLayerXYZ(
              cell_idx_c(flagField->nrOfGhostLayers() - 1));
          it != flagField->end(); ++it) {
-      if (!isFlagSet(it, domainFlag))
+      if (!isFlagSet(it, domainFlag) || isFlagSet(it, boundaryFlag))
         continue;
 
       if (isFlagSet(it.neighbor(0, 0, 0, 0), boundaryFlag)) {
@@ -632,21 +642,6 @@ public:
     forceVector->syncGPU();
   }
 
-  auto const &getForceVector(const IBlock *block) {
-    auto const * forceVector = block->getData<ForceVector>(forceVectorID);
-    return forceVector->forceVector();
-  }
-
-  auto const &getIndexVector(const IBlock *block) {
-    auto const * indexVectors = block->getData<IndexVectors>(indexVectorID);
-    return indexVectors->indexVector(IndexVectors::ALL);
-  }
-  static constexpr std::array<std::array<int, 19u>, 3u> neighborOffset = {{
-      {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1},
-      {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0},
-      {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1},
-  }};
-
 private:
   void run_impl(IBlock *block, IndexVectors::Type type);
 
@@ -657,8 +652,34 @@ private:
       elementInitialiser;
 
 public:
+  static constexpr std::array<std::array<int, 19u>, 3u> neighborOffset = {{
+      {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1},
+      {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0},
+      {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1},
+  }};
+
+  auto const &getForceVector(IBlock const *block) const {
+    auto const *forceVector = block->getData<ForceVector>(forceVectorID);
+    return forceVector->forceVector();
+  }
+
+  auto const &getIndexVector(IBlock const *block) const {
+    auto const *indexVectors = block->getData<IndexVectors>(indexVectorID);
+    return indexVectors->indexVector(IndexVectors::ALL);
+  }
+
+  BlockDataID getIndexVectorID() const { return indexVectorID; }
+  BlockDataID getForceVectorID() const { return forceVectorID; }
+
+public:
   BlockDataID pdfsID;
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic pop
+#endif
 
 } // namespace lbm
 } // namespace walberla

@@ -1753,14 +1753,14 @@ public:
       std::vector<int> const &raster_flat) const override {
     Utils::Vector3d force({0, 0, 0});
     auto const &grid_size = get_lattice().get_grid_dimensions();
-    for (auto const &block : *get_lattice().get_blocks()) {
+    for (auto &block : *get_lattice().get_blocks()) {
       auto const offset = get_lattice().get_block_corner(block, true);
       auto const &force_field = m_boundary->get_force_vector(&block);
       auto const &index_field = m_boundary->get_index_vector(&block);
       for (int i = 0; i < raster_flat.size(); i++) {
         if (raster_flat[i] != 0) {
           auto node = flat_index_to_node(i);
-          if (get_lattice().node_in_local_domain(node)) {
+          if (get_lattice().node_in_local_halo(node)) {
             // shift node to local frame
             node = (node - offset + grid_size) % grid_size;
             for (int j = 0; j < index_field.size(); j++) {
@@ -1781,9 +1781,9 @@ public:
   }
   // Global boundary force
   [[nodiscard]] Utils::Vector3d get_boundary_force() const override {
-    Vector3<FloatType> force(FloatType{0});
+    Vector3<double> force(0.);
     for (auto &block : *get_lattice().get_blocks()) {
-      force += m_boundary->get_force(&block);
+      force += m_boundary->get_total_force(&block);
     }
     return zero_centered_to_md(to_vector3d(force));
   }

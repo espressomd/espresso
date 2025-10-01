@@ -213,7 +213,8 @@ void LBFluid::do_construct(VariantMap const &params) {
   });
 }
 
-Variant LBFluid::get_boundary_force_from_shape(std::vector<int> raster) const {
+Variant
+LBFluid::get_boundary_force_from_shape(std::vector<int> const &raster) const {
   auto const local =
       m_instance->get_boundary_force_from_shape(raster) / m_conv_force;
   return mpi_reduce_sum(context()->get_comm(), local);

@@ -231,16 +231,18 @@ public:
   }
 #endif
 
-  Vector3<FloatType> get_force(IBlock *block) const {
+  Vector3<double> get_total_force(IBlock *block) const {
     return m_boundary->getForce(block);
   }
 
-  BlockDataID get_force_vector_id() const { return m_boundary->forceVectorID; }
-  BlockDataID get_index_vector_id() const { return m_boundary->indexVectorID; }
-  auto const &get_force_vector(const IBlock *block) {
+  auto const &get_force_vector(IBlock *block) const {
+    using ForceVector = BoundaryClass::ForceVector;
+    auto const force_vector_id = m_boundary->getForceVectorID();
+    auto *forceVector = block->getData<ForceVector>(force_vector_id);
+    forceVector->syncCPU();
     return m_boundary->getForceVector(block);
   }
-  auto const &get_index_vector(const IBlock *block) {
+  auto const &get_index_vector(IBlock const *block) const {
     return m_boundary->getIndexVector(block);
   }
 
