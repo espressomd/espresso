@@ -104,26 +104,34 @@ class LBBoundaryForceCommon:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBBoundaryForceWalberla(LBBoundaryForceCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in double-precision."""
-
+class LBBForceWalberlaDoublePrecisionCPU(LBBoundaryForceCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBBoundaryForceWalberlaSinglePrecision(
-        LBBoundaryForceCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in single-precision."""
-
+class LBBForceWalberlaSinglePrecisionCPU(LBBoundaryForceCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": True}
 
 
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBBForceWalberlaDoublePrecisionGPU(LBBoundaryForceCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": False}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBBForceWalberlaSinglePrecisionGPU(LBBoundaryForceCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": True}
+
+
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBBoundaryForceWalberlaBlocks(LBBoundaryForceCommon, ut.TestCase):
+class LBBForceWalberlaDoublePrecisionBlocks(
+        LBBoundaryForceCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": False, "blocks_per_mpi_rank": [2, 2, 2]}
 
