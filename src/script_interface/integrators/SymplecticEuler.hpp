@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,23 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "initialize.hpp"
+#pragma once
 
-#include "ParticleHandle.hpp"
-#include "ParticleList.hpp"
-#include "ParticleSlice.hpp"
-#include "Polymer.hpp"
+#include "Integrator.hpp"
+
+#include "script_interface/ScriptInterface.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
 
 namespace ScriptInterface {
-namespace Particles {
+namespace Integrators {
 
-void initialize(Utils::Factory<ObjectHandle> *om) {
-  om->register_new<ParticleHandle>("Particles::ParticleHandle");
-  om->register_new<ParticleList>("Particles::ParticleList");
-  om->register_new<ParticleSlice>("Particles::ParticleSlice");
-  om->register_new<ParticleModifier>("Particles::ParticleModifier");
-  om->register_new<Polymer>("Particles::Polymer");
-}
+class SymplecticEuler : public AutoParameters<SymplecticEuler, Integrator> {
+  void activate() override;
+};
 
-} // namespace Particles
+} // namespace Integrators
 } // namespace ScriptInterface

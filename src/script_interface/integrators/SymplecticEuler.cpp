@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,23 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "initialize.hpp"
+#include "SymplecticEuler.hpp"
 
-#include "ParticleHandle.hpp"
-#include "ParticleList.hpp"
-#include "ParticleSlice.hpp"
-#include "Polymer.hpp"
+#include "script_interface/ScriptInterface.hpp"
+
+#include "core/PropagationMode.hpp"
+#include "core/integrators/Propagation.hpp"
 
 namespace ScriptInterface {
-namespace Particles {
+namespace Integrators {
 
-void initialize(Utils::Factory<ObjectHandle> *om) {
-  om->register_new<ParticleHandle>("Particles::ParticleHandle");
-  om->register_new<ParticleList>("Particles::ParticleList");
-  om->register_new<ParticleSlice>("Particles::ParticleSlice");
-  om->register_new<ParticleModifier>("Particles::ParticleModifier");
-  om->register_new<Polymer>("Particles::Polymer");
+void SymplecticEuler::activate() {
+  get_system().propagation->set_integ_switch(INTEG_METHOD_SYMPLECTIC_EULER);
 }
 
-} // namespace Particles
+} // namespace Integrators
 } // namespace ScriptInterface
