@@ -1,25 +1,32 @@
-//======================================================================================================================
-//
-//  This file is part of waLBerla. waLBerla is free software: you can
-//  redistribute it and/or modify it under the terms of the GNU General Public
-//  License as published by the Free Software Foundation, either version 3 of
-//  the License, or (at your option) any later version.
-//
-//  waLBerla is distributed in the hope that it will be useful, but WITHOUT
-//  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-//  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-//  for more details.
-//
-//  You should have received a copy of the GNU General Public License along
-//  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
-//
-//! \\file DynamicUBBDoublePrecision.h
-//! \\author pystencils
-//======================================================================================================================
+/*
+ * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2020-2023 The waLBerla project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 // kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
-// v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
+// v1.3.7+15.g5018a18, sympy v1.10, lbmpy_walberla/pystencils_walberla from
 // waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
+
+/*
+ * Boundary class.
+ * Adapted from the waLBerla source file
+ * https://i10git.cs.fau.de/walberla/walberla/-/blob/c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5/python/pystencils_walberla/templates/Boundary.tmpl.h
+ */
 
 #pragma once
 #include "core/DataTypes.h"
@@ -625,6 +632,21 @@ public:
     forceVector->syncGPU();
   }
 
+  auto const &getForceVector(const IBlock *block) {
+    auto const * forceVector = block->getData<ForceVector>(forceVectorID);
+    return forceVector->forceVector();
+  }
+
+  auto const &getIndexVector(const IBlock *block) {
+    auto const * indexVectors = block->getData<IndexVectors>(indexVectorID);
+    return indexVectors->indexVector(IndexVectors::ALL);
+  }
+  static constexpr std::array<std::array<int, 19u>, 3u> neighborOffset = {{
+      {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1},
+      {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0},
+      {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1},
+  }};
+
 private:
   void run_impl(IBlock *block, IndexVectors::Type type);
 
@@ -633,23 +655,6 @@ private:
   std::function<Vector3<double>(
       const Cell &, const shared_ptr<StructuredBlockForest> &, IBlock &)>
       elementInitialiser;
-
-public:
-  static constexpr std::array<std::array<int, 19u>, 3u> neighborOffset = {{
-      {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1},
-      {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0},
-      {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1},
-  }};
-
-  auto const &getForceVector(IBlock const *block) const {
-    auto const *forceVector = block->getData<ForceVector>(forceVectorID);
-    return forceVector->forceVector();
-  }
-
-  auto const &getIndexVector(IBlock const *block) const {
-    auto const *indexVectors = block->getData<IndexVectors>(indexVectorID);
-    return indexVectors->indexVector(IndexVectors::ALL);
-  }
 
 public:
   BlockDataID pdfsID;
