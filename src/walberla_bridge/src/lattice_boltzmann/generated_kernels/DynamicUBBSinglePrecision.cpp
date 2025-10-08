@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7+4.gc7d65a7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+5.gd7100a3, sympy v1.10, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #include "DynamicUBBSinglePrecision.h"
 #include "core/DataTypes.h"
@@ -47,7 +47,7 @@ namespace lbm {
 #endif
 // NOLINTBEGIN(readability-non-const-parameter*)
 namespace internal_6cb25260a6784120b7639a911a9d03fd {
-static FUNC_PREFIX void dynamicubbsingleprecision_boundary_DynamicUBBSinglePrecision(uint8_t *RESTRICT const _data_indexVector, float *RESTRICT _data_pdfs, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int32_t indexVectorSize) {
+static FUNC_PREFIX void dynamicubbsingleprecision_boundary_DynamicUBBSinglePrecision(uint8_t *RESTRICT _data_forceVector, uint8_t *RESTRICT const _data_indexVector, float *RESTRICT _data_pdfs, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int32_t indexVectorSize) {
 
   const int32_t f_in_inv_dir_idx[] = {0, 2, 1, 4, 3, 6, 5, 10, 9, 8, 7, 16, 15, 18, 17, 12, 11, 14, 13};
   const int32_t f_in_inv_offsets_x[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1};
@@ -78,6 +78,10 @@ static FUNC_PREFIX void dynamicubbsingleprecision_boundary_DynamicUBBSinglePreci
       const float delta_rho = vel0Term + vel1Term + vel2Term + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 16 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 17 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 2 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 3 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 6 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 9 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z];
       const float rho = delta_rho + 1.0f;
       _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_0 * f_in_inv_offsets_x[dir] + _stride_pdfs_1 * y + _stride_pdfs_1 * f_in_inv_offsets_y[dir] + _stride_pdfs_2 * z + _stride_pdfs_2 * f_in_inv_offsets_z[dir] + _stride_pdfs_3 * f_in_inv_dir_idx[dir]] = -rho * (6.0f * ((float)(neighbour_offset_x[dir])) * *((float *)(&_data_indexVector[28 * ctr_0 + 16])) + 6.0f * ((float)(neighbour_offset_y[dir])) * *((float *)(&_data_indexVector[28 * ctr_0 + 20])) + 6.0f * ((float)(neighbour_offset_z[dir])) * *((float *)(&_data_indexVector[28 * ctr_0 + 24]))) * weights[dir] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + _stride_pdfs_3 * dir];
+      const float f = -rho * (6.0f * ((float)(neighbour_offset_x[dir])) * *((float *)(&_data_indexVector[28 * ctr_0 + 16])) + 6.0f * ((float)(neighbour_offset_y[dir])) * *((float *)(&_data_indexVector[28 * ctr_0 + 20])) + 6.0f * ((float)(neighbour_offset_z[dir])) * *((float *)(&_data_indexVector[28 * ctr_0 + 24]))) * weights[dir] + 2.0f * _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + _stride_pdfs_3 * dir];
+      *((double *)(&_data_forceVector[24 * ctr_0])) = ((double)(f * ((float)(neighbour_offset_x[dir]))));
+      *((double *)(&_data_forceVector[24 * ctr_0 + 8])) = ((double)(f * ((float)(neighbour_offset_y[dir]))));
+      *((double *)(&_data_forceVector[24 * ctr_0 + 16])) = ((double)(f * ((float)(neighbour_offset_z[dir]))));
     }
   }
 }
@@ -102,6 +106,13 @@ void DynamicUBBSinglePrecision::run_impl(IBlock *block, IndexVectors::Type type)
 
   uint8_t *_data_indexVector = reinterpret_cast<uint8_t *>(pointer);
 
+  auto *forceVector = block->getData<ForceVector>(forceVectorID);
+  WALBERLA_ASSERT_EQUAL(indexVectorSize, int32_c(forceVector->forceVector().size()))
+
+  auto forcePointer = forceVector->pointerCpu();
+
+  uint8_t *_data_forceVector = reinterpret_cast<uint8_t *>(forcePointer);
+
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(pdfs->nrOfGhostLayers()))
@@ -110,7 +121,7 @@ void DynamicUBBSinglePrecision::run_impl(IBlock *block, IndexVectors::Type type)
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_6cb25260a6784120b7639a911a9d03fd::dynamicubbsingleprecision_boundary_DynamicUBBSinglePrecision(_data_indexVector, _data_pdfs, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, indexVectorSize);
+  internal_6cb25260a6784120b7639a911a9d03fd::dynamicubbsingleprecision_boundary_DynamicUBBSinglePrecision(_data_forceVector, _data_indexVector, _data_pdfs, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, indexVectorSize);
 }
 
 void DynamicUBBSinglePrecision::run(IBlock *block) {

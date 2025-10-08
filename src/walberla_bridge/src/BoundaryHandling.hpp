@@ -231,6 +231,21 @@ public:
   }
 #endif
 
+  Vector3<double> get_total_force(IBlock *block) const {
+    return m_boundary->getForce(block);
+  }
+
+  auto const &get_force_vector(IBlock *block) const {
+    using ForceVector = BoundaryClass::ForceVector;
+    auto const force_vector_id = m_boundary->getForceVectorID();
+    auto *forceVector = block->getData<ForceVector>(force_vector_id);
+    forceVector->syncCPU();
+    return m_boundary->getForceVector(block);
+  }
+  auto const &get_index_vector(IBlock const *block) const {
+    return m_boundary->getIndexVector(block);
+  }
+
 private:
   std::shared_ptr<StructuredBlockForest> m_blocks;
   BlockDataID m_flag_field_id;

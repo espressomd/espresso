@@ -19,7 +19,7 @@
 
 // kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
 // v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
-// waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
+// waLBerla commit 191cf58b16b96d1d2f050dcbd9e88443995b2222
 
 #pragma once
 #include "core/DataTypes.h"
@@ -32,7 +32,8 @@
 #include "field/FlagField.h"
 #include "field/GhostLayerField.h"
 
-#include <set>
+#include <functional>
+#include <memory>
 #include <vector>
 
 #ifdef __GNUC__
@@ -80,7 +81,8 @@ public:
       return other.cpuVectors_ == cpuVectors_;
     }
 
-    CpuIndexVector &indexVector(Type t) { return cpuVectors_[t]; }
+    auto &indexVector(Type t) { return cpuVectors_[t]; }
+    auto const &indexVector(Type t) const { return cpuVectors_[t]; }
     IndexInfo *pointerCpu(Type t) {
       return cpuVectors_[t].empty() ? nullptr : cpuVectors_[t].data();
     }
@@ -92,7 +94,7 @@ public:
   };
 
   FixedFlux_single_precision(
-      const shared_ptr<StructuredBlockForest> &blocks, BlockDataID fluxID_,
+      const std::shared_ptr<StructuredBlockForest> &blocks, BlockDataID fluxID_,
       std::function<Vector3<float>(const Cell &,
                                    const shared_ptr<StructuredBlockForest> &,
                                    IBlock &)> &fluxCallback)
@@ -132,7 +134,7 @@ public:
   }
 
   template <typename FlagField_T>
-  void fillFromFlagField(const shared_ptr<StructuredBlockForest> &blocks,
+  void fillFromFlagField(const std::shared_ptr<StructuredBlockForest> &blocks,
                          ConstBlockDataID flagFieldID, FlagUID boundaryFlagUID,
                          FlagUID domainFlagUID) {
     for (auto blockIt = blocks->begin(); blockIt != blocks->end(); ++blockIt)

@@ -18,6 +18,7 @@
 #
 
 import espressomd
+import espressomd.lb
 import espressomd.shapes
 import unittest as ut
 import unittest_decorators as utx
@@ -29,7 +30,7 @@ AGRID = 0.5
 KVISC = 4
 DENS = 2
 G = 0.08
-BOX_SIZE = 18 * AGRID
+BOX_SIZE = 16 * AGRID
 
 LB_PARAMS = {'agrid': AGRID,
              'density': DENS,
@@ -79,50 +80,62 @@ class LBBuoyancy:
         self.system.integrator.run(100)
         while True:
             self.system.integrator.run(10)
-            force = np.linalg.norm(self.lbf.boundary['sphere'].get_force())
+            force = self.lbf.get_boundary_force_from_shape(sphere_shape)
             if np.linalg.norm(force - last_force) < 0.01:
                 break
             last_force = force
 
         # Check force balance
-        boundary_force = np.zeros(3)
-        for b in self.lbf.boundary:
-            boundary_force += b.get_force()
+        boundary_force = np.copy(self.lbf.boundary_force)
 
         fluid_nodes = np.sum(np.logical_not(
             self.lbf[:, :, :].is_boundary).astype(int))
-        fluid_volume = fluid_nodes * AGRID**3
-        applied_force = fluid_volume * np.array(LB_PARAMS['ext_force_density'])
+        fluid_volume = np.copy(fluid_nodes) * AGRID**3
+        applied_force = fluid_volume * np.copy(LB_PARAMS['ext_force_density'])
 
         np.testing.assert_allclose(
-            boundary_force,
-            applied_force,
+            boundary_force, applied_force,
             atol=0.08 * np.linalg.norm(applied_force))
 
         # Check buoyancy force on the sphere
         expected_force = np.array(
             [0, -sphere_volume * DENS * G, 0])
         np.testing.assert_allclose(
-            np.copy(self.lbf.boundary['sphere'].get_force()), expected_force,
+            np.copy(self.lbf.get_boundary_force_from_shape(sphere_shape)),
+            expected_force,
             atol=np.linalg.norm(expected_force) * 0.02)
 
 
 @utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "WALBERLA"])
-class LBBuoyancyWalberla(LBBuoyancy, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in double-precision."""
-
+class LBBuoyancyWalberlaDoublePrecisionCPU(LBBuoyancy, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": False}
 
 
 @utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "WALBERLA"])
-class LBBuoyancyWalberlaSinglePrecision(LBBuoyancy, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in single-precision."""
-
+class LBBuoyancyWalberlaSinglePrecisionCPU(LBBuoyancy, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBBuoyancyWalberlaDoublePrecisionGPU(LBBuoyancy, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": False}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBBuoyancyWalberlaSinglePrecisionGPU(LBBuoyancy, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": True}
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBBuoyancyWalberlaDoublePrecisionBlocks(LBBuoyancy, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False, "blocks_per_mpi_rank": [2, 2, 2]}
 
 
 if __name__ == "__main__":

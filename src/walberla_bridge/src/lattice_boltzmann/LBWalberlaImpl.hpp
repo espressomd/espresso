@@ -726,7 +726,7 @@ public:
       throw std::domain_error("LB LEbc doesn't support domain decomposition "
                               "along the shear and normal directions.");
     }
-    auto const grid_dimensions = lattice.get_grid_dimensions();
+    auto const &grid_dimensions = lattice.get_grid_dimensions();
     auto const grid_size = FloatType_c(grid_dimensions[shear_plane_normal]);
     m_collision_model =
         std::make_shared<CollisionModel>(StreamCollisionModelLeesEdwards(
@@ -1671,7 +1671,7 @@ public:
                              std::vector<double> const &data_flat) override {
     on_boundary_add();
     m_pending_ghost_comm.set(GhostComm::UBB);
-    auto const grid_size = get_lattice().get_grid_dimensions();
+    auto const &grid_size = get_lattice().get_grid_dimensions();
     auto data = fill_3D_vector_array(data_flat, grid_size);
     set_boundary_from_grid(*m_boundary, get_lattice(), raster_flat, data);
     ghost_communication();
@@ -1726,6 +1726,66 @@ public:
     return out;
   }
 
+  [[nodiscard]] Utils::Vector3i flat_index_to_node(int index) const {
+    Utils::Vector3i node({0, 0, 0});
+    auto const &grid_size = get_lattice().get_grid_dimensions();
+    node[2] = index % grid_size[2];
+    int tmp = index / grid_size[2];
+    node[1] = tmp % grid_size[1];
+    node[0] = tmp / grid_size[1];
+    return node;
+  }
+
+  [[nodiscard]] Utils::Vector3i get_neighbor_node(Utils::Vector3i const &node,
+                                                  int dir) const {
+    Utils::Vector3i neighbor({0, 0, 0});
+    auto const &grid_size = get_lattice().get_grid_dimensions();
+    auto constexpr neighbor_offset = DynamicUBB::neighborOffset;
+    for (int i = 0; i < neighbor.size(); i++) {
+      neighbor[i] =
+          (node[i] - neighbor_offset[i][dir] + grid_size[i]) % grid_size[i];
+    }
+    return neighbor;
+  }
+
+  [[nodiscard]] Utils::Vector3d get_boundary_force_from_shape(
+      std::vector<int> const &raster_flat) const override {
+    Utils::Vector3d force({0, 0, 0});
+    auto const &grid_size = get_lattice().get_grid_dimensions();
+    for (auto &block : *get_lattice().get_blocks()) {
+      auto const offset = get_lattice().get_block_corner(block, true);
+      auto const &force_field = m_boundary->get_force_vector(&block);
+      auto const &index_field = m_boundary->get_index_vector(&block);
+      for (int i = 0; i < raster_flat.size(); i++) {
+        if (raster_flat[i] != 0) {
+          auto node = flat_index_to_node(i);
+          if (get_lattice().node_in_local_halo(node)) {
+            // shift node to local frame
+            node = (node - offset + grid_size) % grid_size;
+            for (int j = 0; j < index_field.size(); j++) {
+              auto neighbor_node = get_neighbor_node(node, index_field[j].dir);
+              if (index_field[j].x == neighbor_node[0] &&
+                  index_field[j].y == neighbor_node[1] &&
+                  index_field[j].z == neighbor_node[2]) {
+                force[0] += force_field[j].F_0;
+                force[1] += force_field[j].F_1;
+                force[2] += force_field[j].F_2;
+              }
+            }
+          }
+        }
+      }
+    }
+    return zero_centered_to_md(force);
+  }
+  // Global boundary force
+  [[nodiscard]] Utils::Vector3d get_boundary_force() const override {
+    Vector3<double> force(0.);
+    for (auto &block : *get_lattice().get_blocks()) {
+      force += m_boundary->get_total_force(&block);
+    }
+    return zero_centered_to_md(to_vector3d(force));
+  }
   // Global pressure tensor
   [[nodiscard]] Utils::VectorXd<9> get_pressure_tensor() const override {
     Matrix3<FloatType> tensor(FloatType{0});
@@ -1733,7 +1793,7 @@ public:
       auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
       tensor += lbm::accessor::PressureTensor::reduce(pdf_field, m_density);
     }
-    auto const grid_size = get_lattice().get_grid_dimensions();
+    auto const &grid_size = get_lattice().get_grid_dimensions();
     auto const number_of_nodes = Utils::product(grid_size);
     pressure_tensor_correction(tensor);
     return to_vector9d(tensor) * (1. / static_cast<double>(number_of_nodes));
