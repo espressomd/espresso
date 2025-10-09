@@ -101,13 +101,11 @@ public:
   thrust::device_vector<GpuParticle> particle_data_device;
   pinned_vector<float> particle_forces_host;
   thrust::device_vector<float> particle_forces_device;
-
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   pinned_vector<float> particle_dip_fld_host;
   thrust::device_vector<float> particle_dip_fld_device;
 #endif
 #ifdef ESPRESSO_ROTATION
-
   pinned_vector<float> particle_torques_host;
   thrust::device_vector<float> particle_torques_device;
 #endif
@@ -145,8 +143,8 @@ public:
     }
   }
 #endif
-#ifdef ESPRESSO_ROTATION
 
+#ifdef ESPRESSO_ROTATION
   void copy_particle_torques_to_host() {
     if (not particle_torques_device.empty()) {
       thrust::copy(particle_torques_device.begin(),
@@ -164,8 +162,8 @@ public:
     return {particle_dip_fld_host.data(), particle_dip_fld_host.size()};
   }
 #endif
-#ifdef ESPRESSO_ROTATION
 
+#ifdef ESPRESSO_ROTATION
   std::span<float> get_particle_torques_host_span() {
     return {particle_torques_host.data(), particle_torques_host.size()};
   }
@@ -263,8 +261,8 @@ void GpuParticleData::Storage::copy_particles_to_device() {
   particle_dip_fld_host.resize(3ul * n_part);
   resize_or_replace(particle_dip_fld_device, 3ul * n_part);
 #endif
-#ifdef ESPRESSO_ROTATION
 
+#ifdef ESPRESSO_ROTATION
   particle_torques_host.resize(3ul * n_part);
   resize_or_replace(particle_torques_device, 3ul * n_part);
 #endif
@@ -277,8 +275,8 @@ void GpuParticleData::Storage::copy_particles_to_device() {
   cudaMemsetAsync(raw_data_pointer(particle_dip_fld_device), 0x0,
                   byte_size(particle_dip_fld_device), stream[0]);
 #endif
-#ifdef ESPRESSO_ROTATION
 
+#ifdef ESPRESSO_ROTATION
   cudaMemsetAsync(raw_data_pointer(particle_torques_device), 0x0,
                   byte_size(particle_torques_device), stream[0]);
 #endif
@@ -490,12 +488,10 @@ void GpuParticleData::Storage::free_device_memory() {
   };
   free_device_vector(particle_data_device);
   free_device_vector(particle_forces_device);
-
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   free_device_vector(particle_dip_fld_device);
 #endif
 #ifdef ESPRESSO_ROTATION
-
   free_device_vector(particle_torques_device);
 #endif
   free_device_pointer(particle_pos_device);

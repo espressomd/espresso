@@ -130,12 +130,10 @@ public:
   GpuEnergy *get_energy_device() const;
   float *get_particle_positions_device() const;
   float *get_particle_forces_device() const;
-
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   float *get_particle_dip_fld_device() const;
 #endif
 #ifdef ESPRESSO_ROTATION
-
   float *get_particle_torques_device() const;
 #endif
 #ifdef ESPRESSO_DIPOLES

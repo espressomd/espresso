@@ -137,10 +137,6 @@ void init_forces_and_thermostat(System::System const &system) {
 }
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
 void invalidate_dip_fld(const CellStructure &cell_structure) {
-#ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_FUNCTION;
-#endif
-
   cell_structure.for_each_local_particle(
       [](Particle &p) { p.dip_fld() = {0., 0., 0.}; });
 }

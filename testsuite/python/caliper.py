@@ -32,7 +32,6 @@ integrate
   Initial Force Calculation
     calculate_forces
       copy_particles_to_GPU
-      invalidate_dip_fld
       {'convert particles AoS to SoA' if HAS_CABANA else ''}
       init_forces_and_thermostat
       calc_long_range_forces
@@ -41,7 +40,6 @@ integrate
   Integration loop
     calculate_forces
       copy_particles_to_GPU
-      invalidate_dip_fld
       {'convert particles AoS to SoA' if HAS_CABANA else ''}
       init_forces_and_thermostat
       calc_long_range_forces
@@ -58,8 +56,6 @@ class Test(ut.TestCase):
     @utx.skipIfMissingFeatures(["P3M", "WCA"])
     def test_runtime_report(self):
         has_cuda = espressomd.has_features(["CUDA"])
-        has_dipfld = espressomd.has_features(["DIPOLE_FIELD_TRACKING"])
-
         script = str(pathlib.Path(__file__).parent / "caliper_child.py")
         my_env = os.environ.copy()
         my_env["CALI_CONFIG"] = "runtime-report"
@@ -76,20 +72,9 @@ class Test(ut.TestCase):
         header = "Path\tMin time/rank\tMax time/rank\tAvg time/rank\tTime %"
         self.assertEqual(lines[0].split(), header.split(),
                          msg=f"Caliper summary should start with '{header}'")
-
         labels = [line[:36].rstrip() for line in lines[1:]]
-
-        labels_ref = []
-        for x in EXPECTED_LABELS.strip().split("\n"):
-            x = x.rstrip()
-            if not x:
-                continue
-            if "GPU" in x.upper() and not has_cuda:
-                continue
-            if x.strip() == "invalidate_dip_fld" and not has_dipfld:
-                continue
-            labels_ref.append(x)
-
+        labels_ref = [x.rstrip() for x in EXPECTED_LABELS.strip().split("\n")
+                      if x.rstrip() and ("GPU" not in x.upper() or has_cuda)]
         self.assertEqual(labels[:len(labels_ref)], labels_ref,
                          msg=f"Caliper returned this summary:\n{stderr}")
 
