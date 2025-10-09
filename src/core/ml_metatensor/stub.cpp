@@ -11,5 +11,12 @@
 #endif
 
 #include <metatensor/torch.hpp>
-#include <metatensor/torch/atomistic.hpp>
+#include <metatomic/torch.hpp>
+
+#include "model.hpp"
+
+std::string load_metadata(const std::string &path) {
+	MetatensorModel model(path);
+	return model.print_metadata();
+}
 #endif

@@ -7,6 +7,7 @@ run_model(metatensor_torch::System &system, int64_t n_particles,
           const metatensor_torch::ModelEvaluationOptions evaluation_options,
           torch::Dtype dtype, torch::Device device, bool check_consistency) {
 
+
   // only run the calculation for atoms actually in the current domain
   auto options = torch::TensorOptions().dtype(torch::kInt32);
   auto selected_atoms_values = torch::zeros({n_particles, 2}, options);
@@ -20,7 +21,7 @@ run_model(metatensor_torch::System &system, int64_t n_particles,
   evaluation_options->set_selected_atoms(selected_atoms->to(device));
 
   torch::IValue result_ivalue;
-  model->forward({std::vector<metatensor_torch::System>{system},
+  model.forward({std::vector<metatensor_torch::System>{system},
                   evaluation_options, check_consistency});
 
   auto result = result_ivalue.toGenericDict();

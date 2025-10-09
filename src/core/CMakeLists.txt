@@ -75,6 +75,7 @@ endif()
 if(ESPRESSO_BUILD_WITH_METATENSOR)
   target_link_libraries(espresso_core PUBLIC "${TORCH_LIBRARIES}")
   target_link_libraries(espresso_core PUBLIC metatensor::shared)
+  target_link_libraries(espresso_core PUBLIC metatomic_torch)
   target_link_libraries(espresso_core PUBLIC metatensor_torch)
 endif()
 

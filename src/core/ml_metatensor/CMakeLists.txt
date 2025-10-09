@@ -18,4 +18,5 @@
 #
 
 target_sources(espresso_core PRIVATE stub.cpp)
+target_sources(espresso_core PRIVATE model.cpp)
 # target_sources(espresso_core PRIVATE load_model.cpp)
