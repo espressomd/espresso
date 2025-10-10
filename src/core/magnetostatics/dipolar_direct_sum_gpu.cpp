@@ -71,10 +71,9 @@ void DipolarDirectSumGpu::add_long_range_forces() const {
   auto const torques_device = gpu.get_particle_torques_device();
   auto const positions_device = gpu.get_particle_positions_device();
   auto const dipoles_device = gpu.get_particle_dipoles_device();
-#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  auto const dipole_fields_device = gpu.get_particle_dip_fld_device();
-#else
   float *dipole_fields_device{nullptr};
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  dipole_fields_device = gpu.get_particle_dip_fld_device();
 #endif
   DipolarDirectSum_kernel_wrapper_force(
       static_cast<float>(prefactor), npart, positions_device, dipoles_device,
@@ -101,4 +100,4 @@ void DipolarDirectSumGpu::long_range_energy() const {
                                          periodicity, energy_device);
 }
 
-#endif
+#endif // ESPRESSO_DIPOLAR_DIRECT_SUM

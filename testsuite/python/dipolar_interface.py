@@ -90,6 +90,8 @@ class Test(ut.TestCase):
             ddsg = DDSG(prefactor=1.)
             with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Dipoles::DipolarDirectSumGpu isn't supported by DLC"):
                 MDLC(gap_size=2., maxPWerror=0.1, actor=ddsg)
+            with self.assertRaisesRegex(ValueError, "Parameter 'n_replicas' must be >= 0"):
+                DDSG(prefactor=1., n_replicas=-2)
         with self.assertRaisesRegex(RuntimeError, "Parameter 'actor' is missing"):
             MDLC(gap_size=2., maxPWerror=0.1)
         with self.assertRaisesRegex(RuntimeError, "Parameter 'n_replica' is not a valid parameter"):
