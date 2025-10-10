@@ -74,7 +74,7 @@ void DipolarDirectSumGpu::add_long_range_forces() const {
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   auto const dipole_fields_device = gpu.get_particle_dip_fld_device();
 #else
-  float const *dipole_fields_device{nullptr};
+  float *dipole_fields_device{nullptr};
 #endif
   DipolarDirectSum_kernel_wrapper_force(
       static_cast<float>(prefactor), npart, positions_device, dipoles_device,
