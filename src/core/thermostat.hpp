@@ -74,7 +74,7 @@ inline auto const &handle_particle_gamma(GammaType const &particle_gamma,
 }
 #endif
 
-inline auto handle_particle_anisotropy(Particle const &p,
+inline auto handle_particle_anisotropy([[maybe_unused]] Particle const &p,
                                        GammaType const &gamma_body) {
 #ifdef ESPRESSO_PARTICLE_ANISOTROPY
   auto const aniso_flag =

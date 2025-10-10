@@ -346,7 +346,7 @@ python_test(FILE thermalized_bond.py MAX_NUM_PROC 4)
 python_test(FILE thole.py MAX_NUM_PROC 4)
 python_test(FILE lb_slice.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1)
-# python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 2) # TODO
+python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_boundary_ghost_layer.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_circular_couette.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_poiseuille.py MAX_NUM_PROC 4 GPU_SLOTS 1)
@@ -365,7 +365,7 @@ python_test(FILE lb_shear.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_thermostat.py MAX_NUM_PROC 2 GPU_SLOTS 0 LABELS long)
 python_test(FILE lb_thermostat.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS long SUFFIX
             1_core)
-# python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2 GPU_SLOTS 1) # TODO
+python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 2 GPU_SLOTS 1 LABELS
             long)
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS

@@ -130,7 +130,7 @@ void OifGlobal::run_force_kernel() {
     // There are two global quantities that need to be evaluated:
     // object's surface and object's volume.
     auto const local = calc_oif_mesh(i, box_geo, cell_structure, bonded_ias);
-    auto const global = boost::mpi::all_reduce(comm_cart, local, std::plus());
+    auto const global = boost::mpi::all_reduce(comm_cart, local, std::plus<>());
     auto const area = std::abs(global[0]);
     auto const volume = std::abs(global[1]);
     if (area < 1e-100 and volume < 1e-100) {

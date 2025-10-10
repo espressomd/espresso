@@ -135,7 +135,8 @@ std::vector<std::size_t> sort_indices(const std::vector<T> &v) {
   return idx;
 }
 
-std::pair<double, double> Cluster::fractal_dimension(double dr) {
+std::pair<double, double>
+Cluster::fractal_dimension([[maybe_unused]] double dr) {
 #ifdef ESPRESSO_GSL
   sanity_checks();
   auto const box_geo_handle = get_box_geo();

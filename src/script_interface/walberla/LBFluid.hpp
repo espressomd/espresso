@@ -142,6 +142,8 @@ private:
   void load_checkpoint(std::filesystem::path const &path, int mode);
   void save_checkpoint(std::filesystem::path const &path, int mode);
   std::vector<Variant> get_average_pressure_tensor() const;
+  Variant get_boundary_force_from_shape(std::vector<int> const &raster) const;
+  Variant get_boundary_force() const;
   Variant get_interpolated_velocity(Utils::Vector3d const &pos) const;
 };
 

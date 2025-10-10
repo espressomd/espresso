@@ -59,16 +59,18 @@ std::vector<double> compress_linear(std::vector<double> const &A1,
 }
 
 /** Compress discarding the 1st argument and return the 2nd */
-std::vector<double> compress_discard1(std::vector<double> const &A1,
-                                      std::vector<double> const &A2) {
+std::vector<double>
+compress_discard1([[maybe_unused]] std::vector<double> const &A1,
+                  [[maybe_unused]] std::vector<double> const &A2) {
   assert(A1.size() == A2.size());
   std::vector<double> A_compressed(A2);
   return A_compressed;
 }
 
 /** Compress discarding the 2nd argument and return the 1st */
-std::vector<double> compress_discard2(std::vector<double> const &A1,
-                                      std::vector<double> const &A2) {
+std::vector<double>
+compress_discard2([[maybe_unused]] std::vector<double> const &A1,
+                  [[maybe_unused]] std::vector<double> const &A2) {
   assert(A1.size() == A2.size());
   std::vector<double> A_compressed(A1);
   return A_compressed;

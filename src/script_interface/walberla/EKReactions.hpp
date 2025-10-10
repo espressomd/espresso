@@ -54,7 +54,7 @@ class EKReactions : public ObjectList<EKReaction> {
   }
 
 protected:
-  void do_construct(VariantMap const &params) override {
+  void do_construct(VariantMap const &) override {
     m_ek_reactions = std::make_shared<::EK::EKWalberla::ek_reactions_type>();
   }
 

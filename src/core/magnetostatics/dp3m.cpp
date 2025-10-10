@@ -217,7 +217,7 @@ template <int cao> struct AssignDipole {
 
 template <typename FloatType, Arch Architecture>
 void DipolarP3MImpl<FloatType, Architecture>::dipole_assign(
-    ParticleRange const &particles) {
+    [[maybe_unused]] ParticleRange const &particles) {
   dp3m.inter_weights.reset(dp3m.params.cao);
 
   /* prepare local FFT mesh */

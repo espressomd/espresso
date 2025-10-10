@@ -71,8 +71,7 @@
  *  @ref System::System::calculate_forces.
  */
 static void force_calc_icc(
-    CellStructure &cell_structure, ParticleRange const &particles,
-    ParticleRange const &ghost_particles,
+    CellStructure &cell_structure,
     Coulomb::ShortRangeForceKernel::result_type const &coulomb_kernel,
     Coulomb::ShortRangeForceCorrectionsKernel::result_type const &elc_kernel) {
   // reset forces
@@ -115,7 +114,6 @@ void ICCStar::iteration() {
   auto &cell_structure = *system.cell_structure;
   auto const &coulomb = system.coulomb;
   auto const particles = cell_structure.local_particles();
-  auto const ghost_particles = cell_structure.ghost_particles();
   auto const prefactor = std::visit(
       [](auto const &ptr) { return ptr->prefactor; }, *coulomb.impl->solver);
   auto const pref = 1. / (prefactor * 2. * std::numbers::pi);
@@ -135,8 +133,7 @@ void ICCStar::iteration() {
     auto charge_density_max = 0.;
 
     // calculate electrostatic forces (SR+LR) excluding self-interactions
-    force_calc_icc(cell_structure, particles, ghost_particles, kernel,
-                   elc_kernel);
+    force_calc_icc(cell_structure, kernel, elc_kernel);
     system.coulomb.calc_long_range_force(particles);
     cell_structure.ghosts_reduce_forces();
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM

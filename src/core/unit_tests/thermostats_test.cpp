@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
         thermostat.rng_increment();
         return {{
             propagate_therm0_nptiso(thermostat, p.v(), 1.0, 0),
-            propagate_thermV_nptiso(thermostat, 1.0, 1.5),
+            propagate_thermV_nptiso(thermostat, 1.0),
         }};
       },
       sample_size));

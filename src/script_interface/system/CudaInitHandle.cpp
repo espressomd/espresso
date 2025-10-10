@@ -54,7 +54,7 @@ CudaInitHandle::CudaInitHandle() {
 }
 
 Variant CudaInitHandle::do_call_method(std::string const &name,
-                                       VariantMap const &parameters) {
+                                       VariantMap const &) {
   if (name == "list_devices") {
     std::unordered_map<int, std::string> devices{};
 #ifdef ESPRESSO_CUDA

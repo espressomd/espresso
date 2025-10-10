@@ -25,8 +25,11 @@
 
 namespace walberla {
 
-/** @brief Initialize waLBerla's MPI manager. */
+/** @brief Initialize waLBerla's MPI manager and environment. */
 void mpi_init();
+
+/** @brief Release waLBerla's MPI manager and environment. */
+void mpi_deinit();
 
 /** @brief Get a lock on waLBerla's global resources for VTK. */
 std::unique_ptr<ResourceManager> get_vtk_dependent_resources();

@@ -32,8 +32,8 @@
 class BondedInteractionsMapTest : public BondedInteractionsMap {
 public:
   ~BondedInteractionsMapTest() override = default;
-  void activate_bond(mapped_type const &ptr) override {}
-  void deactivate_bond(mapped_type const &ptr) override {}
+  void activate_bond(mapped_type const &) override {}
+  void deactivate_bond(mapped_type const &) override {}
 };
 
 BOOST_AUTO_TEST_CASE(insert_bond_types) {

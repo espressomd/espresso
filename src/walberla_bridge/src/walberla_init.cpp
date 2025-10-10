@@ -28,7 +28,7 @@
 
 /** @brief waLBerla MPI communicator. */
 static std::shared_ptr<walberla::mpi::MPIManager> walberla_mpi_comm;
-/** @brief waLBerla MPI environment (destructor depends on the communicator). */
+/** @brief waLBerla MPI environment. */
 static std::shared_ptr<walberla::mpi::Environment> walberla_mpi_env;
 
 namespace walberla {
@@ -40,6 +40,13 @@ void mpi_init() {
   char **argv = nullptr;
   ::walberla_mpi_env = std::make_shared<walberla::mpi::Environment>(argc, argv);
   ::walberla_mpi_comm = walberla::MPIManager::instance();
+}
+
+void mpi_deinit() {
+  assert(::walberla_mpi_env.use_count() >= 1);
+  assert(::walberla_mpi_comm.use_count() >= 1);
+  ::walberla_mpi_env.reset();
+  ::walberla_mpi_comm.reset();
 }
 
 std::unique_ptr<ResourceManager> get_vtk_dependent_resources() {

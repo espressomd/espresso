@@ -29,6 +29,7 @@ EXT_FORCE = np.array([-.01, 0.02, 0.03])
 VISC = 3.5
 DENS = 1.5
 TIME_STEP = 0.05
+BOUNDARY_VELOCITY = np.array([.0, 0.4, 0.5])
 LB_PARAMS = {'agrid': AGRID,
              'density': DENS,
              'kinematic_viscosity': VISC,
@@ -64,55 +65,73 @@ class LBBoundaryForceCommon:
         wall_shape2 = espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-(self.system.box_l[0] - AGRID))
 
+        self.lbf.add_boundary_from_shape(wall_shape1, BOUNDARY_VELOCITY)
+        self.lbf.add_boundary_from_shape(wall_shape2, BOUNDARY_VELOCITY)
         fluid_nodes = np.sum(np.logical_not(
             self.lbf[:, :, :].is_boundary).astype(int))
-        self.lbf.add_boundary_from_shape(wall_shape1)
-        self.lbf.add_boundary_from_shape(wall_shape2)
-
-        # TODO WALBERLA: (#4381)
-        self.skipTest("boundary forces not implemented at the moment")
 
         self.system.integrator.run(20)
         diff = float("inf")
         old_val = float("inf")
-        while diff > 0.002:
+        while diff > 0.00002:
             self.system.integrator.run(10)
-            new_val = self.lbf.boundary['wall1'].get_force()[0]
+            new_val = self.lbf.get_boundary_force_from_shape(wall_shape1)[0]
             diff = abs(new_val - old_val)
             old_val = new_val
 
-        expected_force = fluid_nodes * AGRID**3 * \
-            np.copy(self.lbf.ext_force_density)
-        measured_force = np.array(self.lbf.boundary['wall1'].get_force()) + \
-            np.array(self.lbf.boundary['wall2'].get_force())
-        # TODO WALBERLA: the force converges to 90% of the expected force
+        expected_force = np.copy(fluid_nodes * AGRID**3 * EXT_FORCE)
+
+        measured_force_all = np.array(self.lbf.boundary_force)
+        measured_force_1 = np.array(
+            self.lbf.get_boundary_force_from_shape(wall_shape1))
+        measured_force_2 = np.array(
+            self.lbf.get_boundary_force_from_shape(wall_shape2))
+
         np.testing.assert_allclose(
-            measured_force,
-            expected_force * 0.9,
-            atol=1E-10)
+            measured_force_all,
+            expected_force,
+            rtol=2E-2)
+
+        np.testing.assert_allclose(
+            measured_force_1,
+            expected_force / 2,
+            rtol=2E-2)
+
+        np.testing.assert_allclose(
+            measured_force_2,
+            expected_force / 2,
+            rtol=2E-2)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBBoundaryForceWalberla(LBBoundaryForceCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in double-precision."""
-
+class LBBForceWalberlaDoublePrecisionCPU(LBBoundaryForceCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBBoundaryForceWalberlaSinglePrecision(
-        LBBoundaryForceCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in single-precision."""
-
+class LBBForceWalberlaSinglePrecisionCPU(LBBoundaryForceCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": True}
 
 
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBBForceWalberlaDoublePrecisionGPU(LBBoundaryForceCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": False}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBBForceWalberlaSinglePrecisionGPU(LBBoundaryForceCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": True}
+
+
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBBoundaryForceWalberlaBlocks(LBBoundaryForceCommon, ut.TestCase):
+class LBBForceWalberlaDoublePrecisionBlocks(
+        LBBoundaryForceCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": False, "blocks_per_mpi_rank": [2, 2, 2]}
 

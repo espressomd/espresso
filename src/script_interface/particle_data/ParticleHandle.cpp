@@ -95,6 +95,7 @@ static void sanity_checks_rotation(VariantMap const &params) {
 }
 #endif // ESPRESSO_ROTATION
 
+#if defined(ESPRESSO_ROTATION) or defined(ESPRESSO_EXTERNAL_FORCES)
 static uint8_t bitfield_from_flag(Utils::Vector3i const &flag) {
   auto bitfield = static_cast<uint8_t>(0u);
   if (flag[0])
@@ -105,7 +106,9 @@ static uint8_t bitfield_from_flag(Utils::Vector3i const &flag) {
     bitfield |= static_cast<uint8_t>(4u);
   return bitfield;
 }
+#endif
 
+#ifdef ESPRESSO_ROTATION
 static auto quat2vector(Utils::Quaternion<double> const &q) {
   return Utils::Vector4d{{q[0], q[1], q[2], q[3]}};
 }
@@ -117,6 +120,7 @@ static auto get_quaternion_safe(std::string const &name, Variant const &value) {
   }
   return Utils::Quaternion<double>{{q[0], q[1], q[2], q[3]}};
 }
+#endif // ESPRESSO_ROTATION
 
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
 static auto get_gamma_safe(Variant const &value) {

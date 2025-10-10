@@ -23,7 +23,7 @@
 
 #include <vector>
 
-constexpr bool use_one_sided_bond_storage = true;
+inline constexpr bool use_one_sided_bond_storage = true;
 
 /**
  * @brief Add a bond to a particle.

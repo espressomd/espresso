@@ -29,7 +29,7 @@
 #include "Particle.hpp"
 #include "lees_edwards/LeesEdwardsBC.hpp"
 
-#include "config/version.hpp"
+#include <config/version.hpp>
 
 #include <utils/Vector.hpp>
 
@@ -52,6 +52,7 @@
 #include <ranges>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace Writer {
@@ -473,12 +474,12 @@ public:
 };
 
 template <typename Functor> auto make_serializer(Functor lambda) {
-  return ParticleDataSerializer{lambda};
+  return ParticleDataSerializer<Functor>{lambda};
 }
 template <typename RetVal>
-auto make_serializer(RetVal const &(Particle::*getter)() const) {
-  return ParticleDataSerializer{
-      [getter](Particle const &p) -> RetVal const & { return (p.*getter)(); }};
+auto make_serializer(RetVal (Particle::*getter)() const) {
+  auto kernel = [getter](Particle const &p) -> RetVal { return (p.*getter)(); };
+  return ParticleDataSerializer<decltype(kernel)>{std::move(kernel)};
 }
 
 } // namespace detail

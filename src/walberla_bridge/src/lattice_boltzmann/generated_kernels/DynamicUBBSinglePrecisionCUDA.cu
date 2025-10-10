@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7+4.gc7d65a7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+5.gd7100a3, sympy v1.10, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
 
 #include "DynamicUBBSinglePrecisionCUDA.h"
 #include "core/DataTypes.h"
@@ -74,7 +74,7 @@ namespace lbm {
 
 // NOLINTBEGIN(readability-non-const-parameter*)
 namespace internal_dynamicubbsingleprecisioncuda_boundary_DynamicUBBSinglePrecisionCUDA {
-static FUNC_PREFIX __launch_bounds__(256) void dynamicubbsingleprecisioncuda_boundary_DynamicUBBSinglePrecisionCUDA(uint8_t *RESTRICT const _data_indexVector, float *RESTRICT _data_pdfs, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int32_t indexVectorSize) {
+static FUNC_PREFIX __launch_bounds__(256) void dynamicubbsingleprecisioncuda_boundary_DynamicUBBSinglePrecisionCUDA(uint8_t *RESTRICT _data_forceVector, uint8_t *RESTRICT const _data_indexVector, float *RESTRICT _data_pdfs, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int32_t forceVectorSize) {
 
   const int32_t f_in_inv_dir_idx[] = {0, 2, 1, 4, 3, 6, 5, 10, 9, 8, 7, 16, 15, 18, 17, 12, 11, 14, 13};
   const int32_t f_in_inv_offsets_x[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1};
@@ -87,7 +87,7 @@ static FUNC_PREFIX __launch_bounds__(256) void dynamicubbsingleprecisioncuda_bou
   const int32_t neighbour_offset_y[] = {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0};
   const int32_t neighbour_offset_z[] = {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1};
 
-  if (blockDim.x * blockIdx.x + threadIdx.x < indexVectorSize) {
+  if (blockDim.x * blockIdx.x + threadIdx.x < forceVectorSize) {
     uint8_t *RESTRICT _data_indexVector_10 = _data_indexVector;
     const int32_t x = *((int32_t *)(&_data_indexVector_10[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]));
     uint8_t *RESTRICT _data_indexVector_14 = _data_indexVector + 4;
@@ -120,12 +120,19 @@ static FUNC_PREFIX __launch_bounds__(256) void dynamicubbsingleprecisioncuda_bou
     float *RESTRICT _data_pdfs_10_20_39 = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 9 * _stride_pdfs_3;
     const float delta_rho = vel0Term + vel1Term + vel2Term + _data_pdfs_10_20_30[_stride_pdfs_0 * x] + _data_pdfs_10_20_316[_stride_pdfs_0 * x] + _data_pdfs_10_20_317[_stride_pdfs_0 * x] + _data_pdfs_10_20_32[_stride_pdfs_0 * x] + _data_pdfs_10_20_33[_stride_pdfs_0 * x] + _data_pdfs_10_20_36[_stride_pdfs_0 * x] + _data_pdfs_10_20_39[_stride_pdfs_0 * x];
     const float rho = delta_rho + 1.0f;
-    float *RESTRICT _data_pdfs0d3b92f5767f94ab = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_1 * f_in_inv_offsets_y[dir] + _stride_pdfs_2 * z + _stride_pdfs_2 * f_in_inv_offsets_z[dir] + _stride_pdfs_3 * f_in_inv_dir_idx[dir];
+    float *RESTRICT _data_pdfsd2c58fd92655e6db = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_1 * f_in_inv_offsets_y[dir] + _stride_pdfs_2 * z + _stride_pdfs_2 * f_in_inv_offsets_z[dir] + _stride_pdfs_3 * f_in_inv_dir_idx[dir];
     uint8_t *RESTRICT _data_indexVector_116 = _data_indexVector + 16;
     uint8_t *RESTRICT _data_indexVector_120 = _data_indexVector + 20;
     uint8_t *RESTRICT _data_indexVector_124 = _data_indexVector + 24;
-    float *RESTRICT _data_pdfs_10_20f2872d991a624ccb = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_2 * z + _stride_pdfs_3 * dir;
-    _data_pdfs0d3b92f5767f94ab[_stride_pdfs_0 * x + _stride_pdfs_0 * f_in_inv_offsets_x[dir]] = -rho * (6.0f * ((float)(neighbour_offset_x[dir])) * *((float *)(&_data_indexVector_116[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x])) + 6.0f * ((float)(neighbour_offset_y[dir])) * *((float *)(&_data_indexVector_120[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x])) + 6.0f * ((float)(neighbour_offset_z[dir])) * *((float *)(&_data_indexVector_124[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]))) * weights[dir] + _data_pdfs_10_20f2872d991a624ccb[_stride_pdfs_0 * x];
+    float *RESTRICT _data_pdfs_10_20863d428c3d09cb53 = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_2 * z + _stride_pdfs_3 * dir;
+    _data_pdfsd2c58fd92655e6db[_stride_pdfs_0 * x + _stride_pdfs_0 * f_in_inv_offsets_x[dir]] = -rho * (6.0f * ((float)(neighbour_offset_x[dir])) * *((float *)(&_data_indexVector_116[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x])) + 6.0f * ((float)(neighbour_offset_y[dir])) * *((float *)(&_data_indexVector_120[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x])) + 6.0f * ((float)(neighbour_offset_z[dir])) * *((float *)(&_data_indexVector_124[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]))) * weights[dir] + _data_pdfs_10_20863d428c3d09cb53[_stride_pdfs_0 * x];
+    const float f = -rho * (6.0f * ((float)(neighbour_offset_x[dir])) * *((float *)(&_data_indexVector_116[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x])) + 6.0f * ((float)(neighbour_offset_y[dir])) * *((float *)(&_data_indexVector_120[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x])) + 6.0f * ((float)(neighbour_offset_z[dir])) * *((float *)(&_data_indexVector_124[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]))) * weights[dir] + 2.0f * _data_pdfs_10_20863d428c3d09cb53[_stride_pdfs_0 * x];
+    uint8_t *RESTRICT _data_forceVector_10 = _data_forceVector;
+    *((double *)(&_data_forceVector_10[24 * blockDim.x * blockIdx.x + 24 * threadIdx.x])) = ((double)(f * ((float)(neighbour_offset_x[dir]))));
+    uint8_t *RESTRICT _data_forceVector_18 = _data_forceVector + 8;
+    *((double *)(&_data_forceVector_18[24 * blockDim.x * blockIdx.x + 24 * threadIdx.x])) = ((double)(f * ((float)(neighbour_offset_y[dir]))));
+    uint8_t *RESTRICT _data_forceVector_116 = _data_forceVector + 16;
+    *((double *)(&_data_forceVector_116[24 * blockDim.x * blockIdx.x + 24 * threadIdx.x])) = ((double)(f * ((float)(neighbour_offset_z[dir]))));
   }
 }
 } // namespace internal_dynamicubbsingleprecisioncuda_boundary_DynamicUBBSinglePrecisionCUDA
@@ -162,6 +169,14 @@ void DynamicUBBSinglePrecisionCUDA::run_impl(IBlock *block, IndexVectors::Type t
 
   uint8_t *_data_indexVector = reinterpret_cast<uint8_t *>(pointer);
 
+  auto *forceVector = block->getData<ForceVector>(forceVectorID);
+  WALBERLA_ASSERT_EQUAL(indexVectorSize, int32_c(forceVector->forceVector().size()))
+
+  auto forcePointer = forceVector->pointerGpu();
+  int32_t forceVectorSize = int32_c(forceVector->forceVector().size());
+
+  uint8_t *_data_forceVector = reinterpret_cast<uint8_t *>(forcePointer);
+
   auto pdfs = block->getData<gpu::GPUField<float>>(pdfsID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(pdfs->nrOfGhostLayers()))
@@ -172,7 +187,7 @@ void DynamicUBBSinglePrecisionCUDA::run_impl(IBlock *block, IndexVectors::Type t
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
   dim3 _block(uint32_c(((256 < indexVectorSize) ? 256 : indexVectorSize)), uint32_c(1), uint32_c(1));
   dim3 _grid(uint32_c(((indexVectorSize) % (((256 < indexVectorSize) ? 256 : indexVectorSize)) == 0 ? (int64_t)(indexVectorSize) / (int64_t)(((256 < indexVectorSize) ? 256 : indexVectorSize)) : ((int64_t)(indexVectorSize) / (int64_t)(((256 < indexVectorSize) ? 256 : indexVectorSize))) + 1)), uint32_c(1), uint32_c(1));
-  internal_dynamicubbsingleprecisioncuda_boundary_DynamicUBBSinglePrecisionCUDA::dynamicubbsingleprecisioncuda_boundary_DynamicUBBSinglePrecisionCUDA<<<_grid, _block, 0, stream>>>(_data_indexVector, _data_pdfs, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, indexVectorSize);
+  internal_dynamicubbsingleprecisioncuda_boundary_DynamicUBBSinglePrecisionCUDA::dynamicubbsingleprecisioncuda_boundary_DynamicUBBSinglePrecisionCUDA<<<_grid, _block, 0, stream>>>(_data_forceVector, _data_indexVector, _data_pdfs, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, forceVectorSize);
 }
 
 void DynamicUBBSinglePrecisionCUDA::run(IBlock *block, gpuStream_t stream) {

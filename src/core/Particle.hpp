@@ -487,7 +487,7 @@ public:
   auto calc_director() const { return r.calc_director(); }
 #else  // ESPRESSO_ROTATION
   auto can_rotate() const { return false; }
-  auto can_rotate_around(unsigned int const axis) const { return false; }
+  auto can_rotate_around(unsigned int const) const { return false; }
 #endif // ESPRESSO_ROTATION
 #ifdef ESPRESSO_DIPOLES
   auto const &dipm() const { return p.dipm; }

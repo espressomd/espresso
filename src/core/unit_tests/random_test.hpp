@@ -81,7 +81,7 @@ std::size_t get_size(VariantVectorXd const &vec) {
 }
 
 double get_value(VariantVectorXd const &vec, std::size_t i) {
-  return std::visit(visitor_get_at(i), vec);
+  return std::visit(visitor_get_at{i}, vec);
 }
 
 template <typename T> auto square_matrix(std::size_t N) {

@@ -93,6 +93,13 @@ Variant LBFluid::do_call_method(std::string const &name,
     auto const pos = get_value<Utils::Vector3d>(params, "pos");
     return get_interpolated_velocity(pos);
   }
+  if (name == "get_boundary_force_from_shape") {
+    return get_boundary_force_from_shape(
+        get_value<std::vector<int>>(params, "raster"));
+  }
+  if (name == "get_boundary_force") {
+    return get_boundary_force();
+  }
   if (name == "get_pressure_tensor") {
     return get_average_pressure_tensor();
   }
@@ -204,6 +211,18 @@ void LBFluid::do_construct(VariantMap const &params) {
       vtk->attach_to_lattice(m_instance, get_lattice_to_md_units_conversion());
     }
   });
+}
+
+Variant
+LBFluid::get_boundary_force_from_shape(std::vector<int> const &raster) const {
+  auto const local =
+      m_instance->get_boundary_force_from_shape(raster) / m_conv_force;
+  return mpi_reduce_sum(context()->get_comm(), local);
+}
+
+Variant LBFluid::get_boundary_force() const {
+  auto const local = m_instance->get_boundary_force() / m_conv_force;
+  return mpi_reduce_sum(context()->get_comm(), local);
 }
 
 std::vector<Variant> LBFluid::get_average_pressure_tensor() const {
