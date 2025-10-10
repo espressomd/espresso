@@ -135,12 +135,6 @@ void init_forces_and_thermostat(System::System const &system) {
   // Initialize ghost forces (unchanged)
   init_forces_ghosts(cell_structure);
 }
-#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-void invalidate_dip_fld(const CellStructure &cell_structure) {
-  cell_structure.for_each_local_particle(
-      [](Particle &p) { p.dip_fld() = {0., 0., 0.}; });
-}
-#endif
 
 void init_forces_ghosts(const CellStructure &cell_structure) {
   cell_structure.for_each_ghost_particle(
@@ -159,6 +153,13 @@ static void force_capping(CellStructure &cell_structure, double force_cap) {
         });
   }
 }
+
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+static void reinit_dip_fld(CellStructure const &cell_structure) {
+  cell_structure.for_each_local_particle(
+      [](Particle &p) { p.dip_fld() = {0., 0., 0.}; });
+}
+#endif
 
 void System::System::calculate_forces() {
 #ifdef ESPRESSO_CALIPER
@@ -190,7 +191,7 @@ void System::System::calculate_forces() {
 #endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   // reset dipole field
-  invalidate_dip_fld(*cell_structure);
+  reinit_dip_fld(*cell_structure);
 #endif
 
   // Use combined function instead of two separate calls

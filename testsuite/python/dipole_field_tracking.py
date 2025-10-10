@@ -115,6 +115,7 @@ class Test(ut.TestCase):
         self.assertGreater(np.linalg.norm(rel_diff), 10)
 
     @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures(["DIPOLAR_DIRECT_SUM"])
     def test_dds_gpu(self):
         for replicas in [0, 1]:
             solver = espressomd.magnetostatics.DipolarDirectSumGpu(
@@ -122,8 +123,9 @@ class Test(ut.TestCase):
             self.system.magnetostatics.solver = solver
             self.system.integrator.run(steps=1)
             for p in self.system.part.all():
-                np.testing.assert_allclose(np.copy(p.torque_lab), np.cross(
-                    p.dip, p.dip_fld), rtol=1e-9, atol=1e-5)
+                np.testing.assert_allclose(
+                    np.copy(p.torque_lab), np.cross(p.dip, p.dip_fld),
+                    rtol=1e-9, atol=1e-5)
 
 
 if __name__ == "__main__":

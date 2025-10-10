@@ -135,7 +135,6 @@ Variant Analysis::do_call_method(std::string const &name,
     auto const local = system.particle_bond_energy(pid, bond_id, partners);
     return Utils::Mpi::reduce_optional(context()->get_comm(), local);
   }
-
   if (name == "particle_neighbor_pids") {
     auto &system = get_system();
     system.on_observable_calc();

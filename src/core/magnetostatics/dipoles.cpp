@@ -138,14 +138,6 @@ struct LongRangeForce {
     actor->add_long_range_forces();
   }
 #endif
-#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  template <typename T,
-            std::enable_if_t<!traits::has_dipole_fields<T>::value> * = nullptr>
-  void operator()(std::shared_ptr<T> const &) const {
-    runtimeErrorMsg() << "Dipoles field calculation not implemented by "
-                      << "dipolar method " << Utils::demangle<T>();
-  }
-#endif
 };
 
 struct LongRangeEnergy {

@@ -262,57 +262,30 @@ class Test(ut.TestCase):
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] == 1,
                "only runs for 2 or more MPI ranks")
     def test_inner_loop_consistency_cpu(self):
-        system = self.system
-        system.periodicity = [True, True, True]
-        tol = {"atol": 1e-10, "rtol": 1e-10}
-        p1 = system.part.add(pos=[0., 0., 0.], dip=[0., 0., 1.],
-                             rotation=[True, True, True])
-        p2 = system.part.add(pos=[1., 0., 0.], dip=[0., 0., 1.],
-                             rotation=[True, True, True])
-        for n_replicas in [0, 1]:
-            system.magnetostatics.clear()
-            solver = espressomd.magnetostatics.DipolarDirectSumCpu(
-                prefactor=1., n_replicas=n_replicas)
-            system.magnetostatics.solver = solver
+        self.check_inner_loop_consistency(
+            solver=espressomd.magnetostatics.DipolarDirectSumCpu,
+            tol={"atol": 1e-10, "rtol": 1e-10})
 
-            # intra-node calculation
-            p1.pos = [system.box_l[0] / 2. - 0.1, 0., 2.]
-            p2.pos = [system.box_l[0] / 2. + 0.1, 0., 0.]
-            system.integrator.run(steps=0, recalc_forces=True)
-            assert p1.node != p2.node
-            node_01_energy = system.analysis.energy()["dipolar"]
-            node_01_forces = np.copy(system.part.all().f)
-            node_01_torques = np.copy(system.part.all().torque_lab)
-
-            # inter-node calculation
-            p1.pos = [0.1, 0., 2.]
-            p2.pos = [0.3, 0., 0.]
-            system.integrator.run(steps=0, recalc_forces=True)
-            assert p1.node == p2.node
-            node_00_energy = system.analysis.energy()["dipolar"]
-            node_00_forces = np.copy(system.part.all().f)
-            node_00_torques = np.copy(system.part.all().torque_lab)
-
-            np.testing.assert_allclose(node_01_energy, node_00_energy, **tol)
-            np.testing.assert_allclose(node_01_forces, node_00_forces, **tol)
-            np.testing.assert_allclose(node_01_torques, node_00_torques, **tol)
-
+    @utx.skipIfMissingFeatures("DIPOLAR_DIRECT_SUM")
     @utx.skipIfMissingGPU()
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] == 1,
                "only runs for 2 or more MPI ranks")
     def test_inner_loop_consistency_gpu(self):
+        self.check_inner_loop_consistency(
+            solver=espressomd.magnetostatics.DipolarDirectSumGpu,
+            tol={"atol": 1e-6, "rtol": 1e-6})
+
+    def check_inner_loop_consistency(self, solver, tol):
         system = self.system
         system.periodicity = [True, True, True]
-        tol = {"atol": 1e-6, "rtol": 1e-6}
         p1 = system.part.add(pos=[0., 0., 0.], dip=[0., 0., 1.],
                              rotation=[True, True, True])
         p2 = system.part.add(pos=[1., 0., 0.], dip=[0., 0., 1.],
                              rotation=[True, True, True])
         for n_replicas in [0, 1]:
             system.magnetostatics.clear()
-            solver = espressomd.magnetostatics.DipolarDirectSumGpu(
+            system.magnetostatics.solver = solver(
                 prefactor=1., n_replicas=n_replicas)
-            system.magnetostatics.solver = solver
 
             # intra-node calculation
             p1.pos = [system.box_l[0] / 2. - 0.1, 0., 2.]

@@ -23,23 +23,16 @@
 
 #ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
 
-// simple 3-int struct for image shifts
-struct Int3 {
-  int x, y, z;
-};
-
-void DipolarDirectSum_kernel_wrapper_energy(float k, unsigned int n, float *pos,
-                                            float *dip, float box_l[3],
-                                            int periodic[3], float *E);
-void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n, float *pos,
-                                           float *dip
-#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-                                           ,
-                                           float *dip_fld
-#endif
-                                           ,
-                                           float *f, float *torque,
-                                           float box_l[3], int periodic[3],
-                                           int n_replicas);
+void DipolarDirectSum_kernel_wrapper_energy(float k, unsigned int n,
+                                            float const *const pos,
+                                            float const *const dip,
+                                            float box_l[3], int periodic[3],
+                                            float *E);
+void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n,
+                                           float const *const pos,
+                                           float const *const dip,
+                                           float *dip_fld, float *f,
+                                           float *torque, float box_l[3],
+                                           int periodic[3], int n_replicas);
 
 #endif // ESPRESSO_DIPOLAR_DIRECT_SUM

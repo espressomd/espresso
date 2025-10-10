@@ -111,12 +111,6 @@ class Test(ut.TestCase):
             mdlc = MDLC(gap_size=1., maxPWerror=1e-5, actor=ddsr)
             self.system.magnetostatics.solver = mdlc
         self.assertIsNone(self.system.magnetostatics.solver)
-        if espressomd.has_features(
-                ["DIPOLAR_DIRECT_SUM", "DIPOLE_FIELD_TRACKING"]) and has_gpu:
-            ddsg = DDSG(prefactor=1.)
-            self.system.magnetostatics.solver = ddsg
-            self.system.part.clear()
-            self.system.magnetostatics.clear()
         # check it's safe to resize the box, i.e. there are no currently
         # active sanity check in the core
         self.system.change_volume_and_rescale_particles(10., "y")
