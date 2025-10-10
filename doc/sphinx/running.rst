@@ -68,7 +68,8 @@ which is also located in the build directory:
 
     ./ipypresso console
 
-The name comes from the IPython interpreter, today known as Jupyter.
+The name comes from the IPython interpreter :cite:`perez07a`,
+whose notebook feature is today known as Jupyter :cite:`kluyver16a`.
 
 Interactive notebooks
 ~~~~~~~~~~~~~~~~~~~~~
@@ -256,8 +257,7 @@ The simulation box partition is controlled by the cell system
 By default, MPI ranks are assigned in decreasing order, e.g. on 6 MPI ranks
 ``node_grid`` is ``[3, 2, 1]``. It is possible to re-assign the ranks by
 changing the value of the ``node_grid`` property, however a few algorithms
-(such as FFT-based electrostatic methods) only work for the default
-partitioning scheme where values must be arranged in decreasing order.
+only work for the default partitioning scheme.
 
 ::
 
@@ -279,6 +279,32 @@ extra arguments are passed to the ``mpiexec`` program.
 
 On cluster computers, it might be necessary to load the MPI library with
 ``module load openmpi`` or similar.
+
+On modern NUMA architectures, |es| can leverage shared-memory parallelism
+(SMP) using the `OpenMP <https://www.openmp.org>`__ programming model.
+This is enabled via the CMake option ``-D SHARED_MEMORY_PARALLELISM=ON``.
+To run a simulation with 4 OpenMP threads, use the following syntax:
+
+.. code-block:: bash
+
+    OMP_NUM_THREADS=4 OMP_PROC_BIND=true ./pypresso simulation.py
+
+Not all features benefit from SMP. For example, the P3M tuning algorithm
+might choose to use only 1 thread for small enough mesh sizes.
+
+To run a simulation with :math:`n` MPI ranks and :math:`p` OpenMP threads
+per MPI rank, one has to specify a PE value of :math:`p` to avoid overlaps
+between threads. This can be achieved with the following syntax:
+
+.. code-block:: bash
+
+    OMP_NUM_THREADS=4 OMP_PROC_BIND=close OMP_PLACES=cores mpiexec \
+        -n 2 --map-by socket:PE=4 --bind-to core ./pypresso simulation.py
+
+This simulation will reserve 8 cores, but the simulation box will only be
+partitioned into 2 MPI domains. The affinity policy needs to be adjusted
+according to the hardware and simulation type.
+See next section for more details.
 
 .. _Performance gain:
 
@@ -321,6 +347,19 @@ split the data structures over multiple machines. This becomes necessary
 when running simulations with millions of particles, as the memory
 available on a single compute node would otherwise saturate.
 
+With OpenMP algorithms, the affinity policy must be chosen according
+to the hardware and algorithms.
+Setting ``OMP_PROC_BIND=close`` packs cores as closely as possible,
+and ``OMP_PLACES=ll_caches`` resp. ``OMP_PLACES=numa_domain`` will
+bind threads to cores that share the same L3 cache resp. NUMA domain,
+ensuring that threads can access each other's data with minimal latency.
+Setting ``OMP_PROC_BIND=spread`` spreads out the cores, which can be
+beneficial in bandwidth-limited problems, for example when each GPU
+belongs to a different NUMA domain or core complex.
+When in doubt, use ``lstopo`` to show the CPU topology
+and ``numactl -H`` to show which GPUs belong to which NUMA domain;
+on Ubuntu these tools are provided by packages ``hwloc`` and ``numactl``.
+
 .. _Communication model:
 
 Communication model
@@ -329,9 +368,14 @@ Communication model
 |es| was originally designed for the "flat" model of communication:
 each MPI rank binds to a logical CPU core. This communication model
 doesn't fully leverage shared memory on recent CPUs, such as `NUMA
-architectures <https://en.wikipedia.org/wiki/Non-uniform_memory_access>`__,
-and |es| currently doesn't support the hybrid
-MPI+\ `OpenMP <https://www.openmp.org>`__ programming model.
+architectures <https://en.wikipedia.org/wiki/Non-uniform_memory_access>`__.
+
+The hybrid MPI+\ `OpenMP <https://www.openmp.org>`__ programming model
+is supported by a few |es| features. For small simulations, users will
+typically prefer running |es| with :math:`p` OpenMP threads and 1 MPI rank.
+For larger jobs that reserve more cores than a NUMA domain can provide,
+it is usually best to request one MPI rank per NUMA domain and as many
+OpenMP threads as cores in the NUMA domain.
 
 The MPI+CUDA programming model is supported, although only one GPU can be
 used for the entire simulation. As a result, a blocking *gather* operation
@@ -340,6 +384,7 @@ blocking *scatter* operation is carried out to transfer the result of the
 GPU calculation from the main rank back to all ranks. This latency limits
 GPU-acceleration to simulations running on fewer than 8 MPI ranks.
 For more details, see section :ref:`GPU acceleration`.
+Lattice-Boltzmann is the only algorithm that can use multiple GPUs.
 
 .. _The MPI callbacks framework:
 
@@ -561,8 +606,6 @@ no arguments are passed, sensible default values will be used instead.
     +------------------------+-------------------------------------------------------------+
     | ``--cuda-gdb``         | ``cuda-gdb --args python script.py``                        |
     +------------------------+-------------------------------------------------------------+
-    | ``--cuda-memcheck``    | ``cuda-memcheck python script.py``                          |
-    +------------------------+-------------------------------------------------------------+
     | ``--cuda-sanitizer``   | ``compute-sanitizer --leak-check full python script.py``    |
     +------------------------+-------------------------------------------------------------+
     | ``--kernprof``         | ``kernprof --line-by-line --view script.py``                |
@@ -603,8 +646,15 @@ To catch a runtime error, use e.g. ``catch throw std::runtime_error``.
 To catch a specific function, use ``break`` followed by the function name
 (answer yes to the prompt about pending the breakpoint), or alternatively
 provide the absolute filepath and line number separated by a colon symbol.
+Use ``step`` to execute the next line, ``next`` to execute the next line
+without traversing function calls, and ``skip -gfi /usr/include/c++/``
+to make ``step`` execute the next line without traversing function calls
+of the C++ standard library. Use ``print`` followed by a variable name
+to show its contents. Simple expressions like pointer dereferencing
+and calling inlined pure functions are also allowed in most situations.
+
 For a segmentation fault, no action is needed since it is automatically
-caught via the SIGSEV signal. Run the simulation with ``run`` and wait
+caught via the SIGSEV signal; run the simulation with ``run`` and wait
 for GDB to suspend the program execution. At this point, use ``bt`` to
 show the complete backtrace, then use ``frame <n>`` with ``<n>`` the number
 of the innermost frame that is located inside the |es| source directory,
@@ -642,6 +692,16 @@ The same syntax is used for C++ unit tests:
 
     mpiexec -np 2 xterm -fa 'Monospace' -fs 12 \
         -e gdb src/core/unit_tests/EspressoSystemStandAlone_test
+
+GDB automatically breaks on signals and assertions.
+To break on thrown exceptions, waLBerla diagnostics and MPI fatal errors:
+
+.. code-block:: bash
+
+    set breakpoint pending on
+    catch throw std::runtime_error
+    break walberla::debug::printStacktrace
+    break MPI_Abort
 
 .. _GDB-example:
 
@@ -745,6 +805,13 @@ On affected environments, one can temporarily reduce the entropy via
 ``sudo sysctl vm.mmap_rnd_bits=28`` (default is usually 32 bits)
 for the time of the ASAN analysis, and then revert back to the default value.
 
+GDB can investigate ASAN reports with break points:
+
+.. code-block:: bash
+
+    set breakpoint pending on
+    break __asan_report_error
+
 .. _UBSAN:
 
 UBSAN
@@ -758,6 +825,28 @@ UBSAN
 The UndefinedBehaviorSanitizer (UBSAN) :cite:`misc-ubsan` is a detection tool
 for undefined behavior. It detects bugs caused by dangling references,
 array accesses out of bounds, signed integer overflows, etc.
+
+GDB can investigate UBSAN reports with break points:
+
+.. code-block:: bash
+
+    set breakpoint pending on
+    break __ubsan::Diag::~Diag
+
+Depending on the environment, GDB might be unable to add a break point.
+In that case, the application needs to run once to load all UBSAN symbols,
+then break points can be added to all UBSAN handlers except ``dynamic_type_cache_miss``:
+
+.. code-block:: bash
+
+    set breakpoint pending on
+    run
+    rbreak ^__ubsan_handle_[^d]
+    rbreak ^__ubsan_handle_d[^y]
+    run
+
+Alternatively, one can use ``-D CMAKE_CXX_FLAGS="-fsanitize-undefined-trap-on-error"``
+to replace the UBSAN diagnostic report by a signal trap that GDB can capture.
 
 For more details, please consult the tool online documentation [6]_.
 
@@ -978,6 +1067,47 @@ To detect access to uninitialized data:
 
 Checking for uninitialized data is quite expensive
 for the GPU and can slow down other running GPU processes.
+
+.. _Nsight Systems:
+
+Nsight Systems
+~~~~~~~~~~~~~~
+
+.. note::
+
+    Requires a CUDA build, enabled with the CMake options
+    ``-D ESPRESSO_BUILD_WITH_CUDA=ON``.
+
+The NVIDIA Nsight Systems profiles CUDA, MPI, OpenMP and Python applications to
+reveal bottlenecks. It uses :ref:`perf` under the hood to collect CPU information,
+and therefore requires the same kernel settings change explained in :ref:`perf`.
+
+Command line usage:
+
+.. code-block:: bash
+
+    nsys profile --trace=cuda -o ./report-nsys-nbody --force-overwrite=true src/walberla_bridge/tests/PoissonSolver_test
+    nsys analyze ./report-nsys-nbody.nsys-rep
+
+Graphical interface usage:
+
+.. code-block:: bash
+
+    nsys-ui
+
+In the UI, create a new project. Under section "Target application",
+paste ``./pypresso ../testsuite/python/ek_fluctuations.py EKFluctuationsGPU``
+in the "Command line" field and provide the absolute path of the build directory
+in the "Working directory" field. Under section "Environment variables",
+set any relevant variables, such as OpenMP-specific variables when applicable.
+Enable OpenMP tracing, when applicable. Enable CUDA tracing.
+Under section "Network profiling options", enable MPI tracing and choose
+the correct MPI vendor for the target environment, and enable UCX if the
+MPI library was configured with UCX support.
+Under section "Python profiling options", enable Python backtrace samples.
+Finally, click on the Start button to collect samples.
+Once inside the report, open "Timeline View" and unroll all "CUDA HW" timelines
+to display the performance profile of the application.
 
 .. _perf:
 

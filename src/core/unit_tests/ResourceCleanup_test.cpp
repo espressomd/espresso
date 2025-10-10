@@ -17,15 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE ResourceCleanup test
-#define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "config/config.hpp"
 
-#include "communication.hpp"
+#include "EspressoCoreGlobalConfig.hpp"
 #include "cuda/utils.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/ResourceCleanup.hpp"
@@ -54,11 +52,14 @@ public:
   }
 };
 
+BOOST_TEST_GLOBAL_CONFIGURATION(EspressoCoreGlobalConfig);
+BOOST_AUTO_TEST_SUITE(suite)
+
 BOOST_AUTO_TEST_CASE(checks) {
   auto system = ::System::System::create();
   System::set_system(system);
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
   BOOST_REQUIRE_EQUAL(system->cleanup_queue.size(), 1);
   BOOST_REQUIRE_EQUAL(system->cleanup_queue.empty(), false);
 #else
@@ -66,7 +67,7 @@ BOOST_AUTO_TEST_CASE(checks) {
   BOOST_REQUIRE_EQUAL(system->cleanup_queue.empty(), true);
 #endif
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
   if (system->gpu.has_compatible_device()) {
     // allocate device memory to populate the cleanup queue
     system->gpu.enable_property(GpuParticleData::prop::pos);
@@ -84,9 +85,4 @@ BOOST_AUTO_TEST_CASE(checks) {
   BOOST_REQUIRE_EQUAL(obj->size(), 0);
 }
 
-int main(int argc, char **argv) {
-  auto mpi_env = mpi_init(argc, argv);
-  Communication::init(mpi_env);
-
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}
+BOOST_AUTO_TEST_SUITE_END()

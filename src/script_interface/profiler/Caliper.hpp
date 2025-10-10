@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef CALIPER
+#ifdef ESPRESSO_CALIPER
 
 #include "script_interface/ScriptInterface.hpp"
 
@@ -51,4 +51,4 @@ public:
 
 } // namespace ScriptInterface::Profiler
 
-#endif // CALIPER
+#endif // ESPRESSO_CALIPER

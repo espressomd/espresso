@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "Actor.hpp"
 
@@ -32,10 +32,9 @@
 
 #include "script_interface/get_value.hpp"
 
-#include "boost/variant.hpp"
-
 #include <memory>
 #include <string>
+#include <variant>
 
 namespace ScriptInterface {
 namespace Dipoles {
@@ -43,17 +42,16 @@ namespace Dipoles {
 class DipolarLayerCorrection
     : public Actor<DipolarLayerCorrection, ::DipolarLayerCorrection> {
   using DipolarDSR = DipolarDirectSum;
-  using BaseSolver = boost::variant<
-#ifdef DP3M
+  using BaseSolver = std::variant<
+#ifdef ESPRESSO_DP3M
       std::shared_ptr<DipolarP3M<Arch::CPU>>,
 #endif
       std::shared_ptr<DipolarDSR>>;
   BaseSolver m_solver;
 
-  void on_bind_system(::System::System &system) override {
-    boost::apply_visitor(
-        [this](auto &solver) { solver->bind_system(m_system.lock()); },
-        m_solver);
+  void on_bind_system(::System::System &) override {
+    std::visit([this](auto &solver) { solver->bind_system(m_system.lock()); },
+               m_solver);
   }
 
 public:
@@ -67,8 +65,8 @@ public:
          [this]() { return actor()->dlc.far_cut; }},
         {"actor", AutoParameter::read_only,
          [this]() {
-           return boost::apply_visitor(
-               [](auto &solver) { return Variant{solver}; }, m_solver);
+           return std::visit([](auto &solver) { return Variant{solver}; },
+                             m_solver);
          }},
     });
   }
@@ -77,20 +75,20 @@ public:
     ::DipolarLayerCorrection::BaseSolver solver;
     auto so_ptr = get_value<ObjectRef>(params, "actor");
     context()->parallel_try_catch([&]() {
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
       if (auto so = std::dynamic_pointer_cast<DipolarP3M<Arch::CPU>>(so_ptr)) {
         solver = so->actor();
         m_solver = so;
         return;
       }
-#endif // DP3M
+#endif // ESPRESSO_DP3M
       if (auto so = std::dynamic_pointer_cast<DipolarDSR>(so_ptr)) {
         solver = so->actor();
         m_solver = so;
         return;
       }
       throw std::invalid_argument("Parameter 'actor' of type " +
-                                  so_ptr->name().to_string() +
+                                  std::string{so_ptr->name()} +
                                   " isn't supported by DLC");
     });
     context()->parallel_try_catch([&]() {
@@ -106,4 +104,4 @@ public:
 } // namespace Dipoles
 } // namespace ScriptInterface
 
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES

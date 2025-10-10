@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "core/actor/registration.hpp"
 #include "core/electrostatics/icc.hpp"
@@ -80,7 +80,7 @@ public:
     auto const n_icc = get_value<int>(params, "n_icc");
     // by default, sigmas are zeros
     std::vector<double> sigmas{};
-    if (params.count("sigmas")) {
+    if (params.contains("sigmas")) {
       sigmas = get_value<std::vector<double>>(params, "sigmas");
     } else if (n_icc >= 1) {
       sigmas.resize(n_icc);
@@ -104,8 +104,7 @@ public:
     });
   }
 
-  Variant do_call_method(std::string const &name,
-                         VariantMap const &params) override {
+  Variant do_call_method(std::string const &name, VariantMap const &) override {
     if (name == "activate") {
       context()->parallel_try_catch([&]() {
         auto &system = get_system();
@@ -125,4 +124,4 @@ public:
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

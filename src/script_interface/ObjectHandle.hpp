@@ -21,11 +21,10 @@
 
 #include "Variant.hpp"
 
-#include <boost/utility/string_ref.hpp>
-
+#include <algorithm>
 #include <memory>
-#include <span>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -49,7 +48,7 @@ private:
   std::shared_ptr<Context> m_context = {};
 
 public:
-  boost::string_ref name() const;
+  std::string_view name() const;
 
 public:
   /**
@@ -78,8 +77,8 @@ public:
   void construct(VariantMap const &params) { do_construct(params); }
 
   virtual void do_construct(VariantMap const &params) {
-    for (auto const &p : params) {
-      do_set_parameter(p.first, p.second);
+    for (auto const &[key, value] : params) {
+      do_set_parameter(key, value);
     }
   }
 
@@ -91,8 +90,8 @@ public:
   VariantMap get_parameters() const {
     VariantMap values;
 
-    for (auto const &p : valid_parameters()) {
-      values[p.data()] = get_parameter(p.data());
+    for (auto const &name : valid_parameters()) {
+      values[std::string{name}] = get_parameter(std::string{name});
     }
 
     return values;
@@ -102,13 +101,11 @@ public:
    * @brief Get required and optional parameters for class.
    * @return Expected parameters.
    */
-  virtual std::span<const boost::string_ref> valid_parameters() const {
-    return {};
-  }
+  virtual std::vector<std::string_view> valid_parameters() const { return {}; }
 
-  auto get_valid_parameters() const {
+  virtual bool has_parameter(std::string const &needle) const {
     auto const names = valid_parameters();
-    return std::vector<std::string>(names.begin(), names.end());
+    return std::ranges::find(names, std::string_view{needle}) != names.end();
   }
 
   /**
@@ -128,7 +125,6 @@ public:
    */
   void set_parameter(const std::string &name, const Variant &value);
 
-private:
   /**
    * @brief Local implementation of @ref set_parameter.
    */

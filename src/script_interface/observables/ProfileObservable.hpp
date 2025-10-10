@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_OBSERVABLES_PROFILEOBSERVABLE_HPP
-#define SCRIPT_INTERFACE_OBSERVABLES_PROFILEOBSERVABLE_HPP
+#pragma once
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/observables/Observable.hpp"
@@ -103,7 +102,7 @@ public:
           [this]() { return profile_observable()->limits[2].second; }}});
   }
 
-  void construct(VariantMap const &params) override {}
+  void construct(VariantMap const &) override {}
 
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
@@ -130,5 +129,3 @@ private:
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */
-
-#endif

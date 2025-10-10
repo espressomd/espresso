@@ -66,7 +66,7 @@ public:
   [[nodiscard]] std::pair<Utils::Vector3d, Utils::Vector3d>
   get_local_domain() const;
   [[nodiscard]] std::pair<Utils::Vector3i, Utils::Vector3i>
-  get_local_grid_range() const;
+  get_local_grid_range(bool with_halo = false) const;
 
   [[nodiscard]] Utils::Vector3i get_block_corner(IBlock const &block,
                                                  bool lower) const;

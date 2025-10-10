@@ -22,6 +22,7 @@
 #include "EKinWalberlaBase.hpp"
 
 #include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/electrokinetics/PoissonSolver.hpp>
 #include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>
 #include <walberla_bridge/electrokinetics/reactions/EKReactionBaseIndexed.hpp>
 
@@ -32,20 +33,49 @@
 namespace walberla {
 
 std::shared_ptr<EKinWalberlaBase>
-new_ek_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
-                double diffusion, double kT, double valency,
-                Utils::Vector3d ext_efield, double density, bool advection,
-                bool friction_coupling, bool single_precision, bool thermalized,
-                unsigned int seed);
+new_ek_walberla_cpu(std::shared_ptr<LatticeWalberla> const &lattice,
+                    double diffusion, double kT, double valency,
+                    Utils::Vector3d ext_efield, double density, bool advection,
+                    bool friction_coupling, bool single_precision,
+                    bool thermalized, unsigned int seed);
 
-std::shared_ptr<EKReactionBase>
-new_ek_reaction_bulk(std::shared_ptr<LatticeWalberla> const &lattice,
-                     typename EKReactionBase::reactants_type const &reactants,
-                     double coefficient);
+std::shared_ptr<EKinWalberlaBase>
+new_ek_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
+                    double diffusion, double kT, double valency,
+                    Utils::Vector3d ext_efield, double density, bool advection,
+                    bool friction_coupling, bool single_precision,
+                    bool thermalized, unsigned int seed);
 
-std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed(
+std::shared_ptr<EKReactionBase> new_ek_reaction_bulk_cpu(
     std::shared_ptr<LatticeWalberla> const &lattice,
     typename EKReactionBase::reactants_type const &reactants,
     double coefficient);
+
+std::shared_ptr<EKReactionBase> new_ek_reaction_bulk_gpu(
+    std::shared_ptr<LatticeWalberla> const &lattice,
+    typename EKReactionBase::reactants_type const &reactants,
+    double coefficient);
+
+std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed_cpu(
+    std::shared_ptr<LatticeWalberla> const &lattice,
+    typename EKReactionBase::reactants_type const &reactants,
+    double coefficient);
+
+std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed_gpu(
+    std::shared_ptr<LatticeWalberla> const &lattice,
+    typename EKReactionBase::reactants_type const &reactants,
+    double coefficient);
+
+std::shared_ptr<walberla::PoissonSolver>
+new_ek_poisson_none(std::shared_ptr<LatticeWalberla> const &lattice,
+                    bool single_precision);
+
+std::shared_ptr<walberla::PoissonSolver>
+new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,
+                   double permittivity, bool single_precision);
+
+std::shared_ptr<walberla::PoissonSolver>
+new_ek_poisson_fft_cuda(std::shared_ptr<LatticeWalberla> const &lattice,
+                        double permittivity, bool single_precision);
 
 } // namespace walberla

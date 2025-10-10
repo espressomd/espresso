@@ -20,12 +20,21 @@
 include(espresso_resource_files)
 
 add_custom_target(espressomd)
+if(TARGET espresso_packaging_dependencies)
+  add_dependencies(espresso_packaging_dependencies espressomd)
+endif()
 
 file(GLOB cython_SRC *.pyx)
 file(GLOB cython_HEADER *.pxd)
 file(GLOB python_SRC RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" *.py)
+list(REMOVE_ITEM python_SRC __init__.py)
 
 espresso_target_resources(espressomd ${python_SRC})
+
+configure_file("__init__.py" "__init__.py" @ONLY)
+set_property(
+  TARGET espressomd APPEND PROPERTY EspressoResourceFiles
+                                    "${CMAKE_CURRENT_BINARY_DIR}/__init__.py")
 
 add_subdirectory(io)
 add_subdirectory(detail)
@@ -53,13 +62,20 @@ target_compile_options(
     $<$<NOT:$<CXX_COMPILER_ID:IntelLLVM>>:-Wno-deprecated-declarations>
     $<$<CXX_COMPILER_ID:IntelLLVM>:-diag-disable=1224>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-cpp>
-    $<$<CXX_COMPILER_ID:GNU>:-Wno-strict-aliasing>
-    $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-volatile>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-redundant-tags>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-shadow=compatible-local>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-conditionally-supported>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-suggest-attribute=format>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-sometimes-uninitialized>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-\#warnings>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-deprecated-volatile>
+    $<$<CXX_COMPILER_ID:GNU,Clang>:-Wno-format-signedness>
+    -Wno-cast-align
     -Wno-missing-field-initializers
+    -Wno-format-nonliteral
+    -Wno-unused-macros
     -Wno-unused-variable)
 
 # Configure, compile and install Cython files
@@ -93,8 +109,9 @@ foreach(cython_file ${cython_SRC})
   set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
   target_link_libraries(${target} PRIVATE espresso::config espresso::core
                                           espresso::script_interface)
-  target_link_libraries(${target} PRIVATE espresso::cpp_flags)
+  target_link_libraries(${target} PRIVATE espresso::compiler_flags)
   target_link_libraries(${target} PRIVATE espresso::pyx_flags)
+  set_target_properties(${target} PROPERTIES CXX_EXTENSIONS OFF)
   target_include_directories(
     ${target} SYSTEM PRIVATE ${Python_INCLUDE_DIRS}
                              ${Python_NumPy_INCLUDE_DIRS})
@@ -102,3 +119,7 @@ foreach(cython_file ${cython_SRC})
   install(TARGETS "${target}"
           LIBRARY DESTINATION "${ESPRESSO_INSTALL_PYTHON}/espressomd")
 endforeach()
+
+if(ESPRESSO_BUILD_WITH_CUDA)
+  espresso_add_cuda_rpaths(espressomd__init) # for GPU-aware MPI vendors
+endif()

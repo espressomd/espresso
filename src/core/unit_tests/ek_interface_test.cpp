@@ -19,9 +19,9 @@
 
 #define BOOST_TEST_MODULE EK interface test
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_NO_MAIN
 #include <boost/test/unit_test.hpp>
 
+#include "EspressoCoreGlobalConfig.hpp"
 #include "ParticleFactory.hpp"
 
 #include "cell_system/CellStructureType.hpp"
@@ -33,11 +33,10 @@
 #include "errorhandling.hpp"
 #include "system/System.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/EKContainer.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
-#include <walberla_bridge/electrokinetics/ek_poisson_none_init.hpp>
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 #include <walberla_bridge/electrokinetics/reactions/EKReactant.hpp>
 #include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>
@@ -71,7 +70,7 @@ namespace espresso {
 // ESPResSo system instance
 static std::shared_ptr<System::System> system;
 // ESPResSo actors
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 static std::shared_ptr<EK::EKWalberla::ek_container_type> ek_container;
 static std::shared_ptr<EK::EKWalberla::ek_reactions_type> ek_reactions;
 static std::shared_ptr<EK::EKWalberla> ek_instance;
@@ -79,7 +78,7 @@ static std::shared_ptr<LatticeWalberla> ek_lattice;
 #endif
 
 static auto make_ek_actor() {
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
   auto constexpr n_ghost_layers = 1u;
   auto constexpr single_precision = true;
   ek_lattice = std::make_shared<LatticeWalberla>(
@@ -93,7 +92,7 @@ static auto make_ek_actor() {
 }
 
 static void add_ek_actor() {
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
   espresso::system->ek.set<::EK::EKWalberla>(ek_instance);
 #endif
 }
@@ -101,7 +100,24 @@ static void add_ek_actor() {
 static void remove_ek_actor() { espresso::system->ek.reset(); }
 } // namespace espresso
 
-#ifdef WALBERLA
+struct GlobalConfig : public EspressoCoreGlobalConfig {
+  GlobalConfig() {
+    espresso::system = System::System::create();
+    espresso::system->set_box_l(params.box_dimensions);
+    espresso::system->set_time_step(params.time_step);
+    espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+    espresso::system->cell_structure->set_verlet_skin(params.skin);
+    ::System::set_system(espresso::system);
+
+    assert(boost::mpi::communicator().size() <= 2);
+  }
+  ~GlobalConfig() {
+    espresso::system.reset();
+    ::System::reset_system();
+  }
+};
+
+#ifdef ESPRESSO_WALBERLA
 namespace walberla {
 class EKReactionImpl : public EKReactionBase {
 public:
@@ -114,7 +130,7 @@ public:
   ~EKReactionImpl() override = default;
 };
 } // namespace walberla
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA
 
 /** Fixture to manage the lifetime of the EK actor. */
 struct CleanupActorEK : public ParticleFactory {
@@ -127,11 +143,12 @@ struct CleanupActorEK : public ParticleFactory {
   ~CleanupActorEK() { espresso::remove_ek_actor(); }
 };
 
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
 BOOST_FIXTURE_TEST_SUITE(suite, CleanupActorEK)
 
 static auto get_n_runtime_errors() { return check_runtime_errors_local(); }
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
   auto &ek = espresso::system->ek;
 
@@ -147,7 +164,7 @@ BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
     auto constexpr single_precision = true;
     auto constexpr stoich = 1.;
     auto constexpr order = 2.;
-    auto ek_species = walberla::new_ek_walberla(
+    auto ek_species = walberla::new_ek_walberla_cpu(
         espresso::ek_lattice, params.diffusion, params.kT, params.valency,
         params.ext_efield, params.density, false, false, single_precision,
         false, 0u);
@@ -203,7 +220,7 @@ BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
     }
   }
 }
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA
 
 BOOST_AUTO_TEST_CASE(ek_interface_none) {
   auto &ek = espresso::system->ek;
@@ -235,18 +252,3 @@ BOOST_AUTO_TEST_CASE(ek_interface_none) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-
-int main(int argc, char **argv) {
-  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
-  espresso::system = System::System::create();
-  espresso::system->set_box_l(params.box_dimensions);
-  espresso::system->set_time_step(params.time_step);
-  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
-  espresso::system->cell_structure->set_verlet_skin(params.skin);
-  ::System::set_system(espresso::system);
-
-  boost::mpi::communicator world;
-  assert(world.size() <= 2);
-
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}

@@ -24,6 +24,7 @@
 #include "BrownianDynamics.hpp"
 #include "SteepestDescent.hpp"
 #include "StokesianDynamics.hpp"
+#include "SymplecticEuler.hpp"
 #include "VelocityVerlet.hpp"
 #include "VelocityVerletIsoNPT.hpp"
 
@@ -58,31 +59,36 @@ IntegratorHandle::IntegratorHandle() {
       {"integrator",
        [this](Variant const &v) {
          auto const old_instance = m_instance;
-         m_instance = get_value<std::shared_ptr<Integrator>>(v);
+         auto const new_instance = get_value<std::shared_ptr<Integrator>>(v);
+         new_instance->bind_system(m_system.lock());
+         new_instance->activate();
          if (old_instance) {
            old_instance->deactivate();
          }
-         m_instance->bind_system(m_system.lock());
-         m_instance->activate();
+         m_instance = new_instance;
        },
        [this]() {
          switch (get_system().propagation->integ_switch) {
          case INTEG_METHOD_STEEPEST_DESCENT:
            return Variant{
                std::dynamic_pointer_cast<SteepestDescent>(m_instance)};
-#ifdef NPT
-         case INTEG_METHOD_NPT_ISO:
+#ifdef ESPRESSO_NPT
+         case INTEG_METHOD_NPT_ISO_AND:
+         case INTEG_METHOD_NPT_ISO_MTK:
            return Variant{
                std::dynamic_pointer_cast<VelocityVerletIsoNPT>(m_instance)};
 #endif
          case INTEG_METHOD_BD:
            return Variant{
                std::dynamic_pointer_cast<BrownianDynamics>(m_instance)};
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
          case INTEG_METHOD_SD:
            return Variant{
                std::dynamic_pointer_cast<StokesianDynamics>(m_instance)};
-#endif // STOKESIAN_DYNAMICS
+#endif // ESPRESSO_STOKESIAN_DYNAMICS
+         case INTEG_METHOD_SYMPLECTIC_EULER:
+           return Variant{
+               std::dynamic_pointer_cast<SymplecticEuler>(m_instance)};
          default: {
            auto ptr = std::dynamic_pointer_cast<VelocityVerlet>(m_instance);
            assert(ptr.get());

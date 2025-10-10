@@ -19,10 +19,6 @@
 
 #pragma once
 
-#include "config/config.hpp"
-
-#ifdef WALBERLA
-
 #include "tests_common.hpp"
 
 #include "../src/lattice_boltzmann/LBWalberlaImpl.hpp"
@@ -90,5 +86,3 @@ inline LbGeneratorVector all_lbs() {
 
 // Disable printing of type which does not support it
 BOOST_TEST_DONT_PRINT_LOG_VALUE(LbGeneratorVector::value_type)
-
-#endif // WALBERLA

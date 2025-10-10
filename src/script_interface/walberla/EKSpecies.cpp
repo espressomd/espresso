@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "EKSpecies.hpp"
 #include "EKWalberlaNodeState.hpp"
@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -44,6 +45,7 @@ namespace ScriptInterface::walberla {
 
 std::unordered_map<std::string, int> const EKVTKHandle::obs_map = {
     {"density", static_cast<int>(EKOutputVTK::density)},
+    {"flux", static_cast<int>(EKOutputVTK::flux)},
 };
 
 Variant EKSpecies::do_call_method(std::string const &method,
@@ -72,13 +74,13 @@ Variant EKSpecies::do_call_method(std::string const &method,
     return {};
   }
   if (method == "save_checkpoint") {
-    auto const path = get_value<std::string>(parameters, "path");
+    auto const path = get_value<std::filesystem::path>(parameters, "path");
     auto const mode = get_value<int>(parameters, "mode");
     save_checkpoint(path, mode);
     return {};
   }
   if (method == "load_checkpoint") {
-    auto const path = get_value<std::string>(parameters, "path");
+    auto const path = get_value<std::filesystem::path>(parameters, "path");
     auto const mode = get_value<int>(parameters, "mode");
     load_checkpoint(path, mode);
     return {};
@@ -86,7 +88,7 @@ Variant EKSpecies::do_call_method(std::string const &method,
   return Base::do_call_method(method, parameters);
 }
 
-void EKSpecies::make_instance(VariantMap const &params) {
+void EKSpeciesCPU::make_instance(VariantMap const &params) {
   auto const diffusion = get_value<double>(params, "diffusion");
   auto const ext_efield = get_value<Utils::Vector3d>(params, "ext_efield");
   auto const density = get_value<double>(params, "density");
@@ -95,7 +97,7 @@ void EKSpecies::make_instance(VariantMap const &params) {
   auto const ek_ext_efield = ext_efield * m_conv_ext_efield;
   auto const ek_density = density * m_conv_density;
   auto const ek_kT = kT * m_conv_energy;
-  m_instance = ::walberla::new_ek_walberla(
+  m_instance = ::walberla::new_ek_walberla_cpu(
       m_lattice->lattice(), ek_diffusion, ek_kT,
       get_value<double>(params, "valency"), ek_ext_efield, ek_density,
       get_value<bool>(params, "advection"),
@@ -105,6 +107,28 @@ void EKSpecies::make_instance(VariantMap const &params) {
       static_cast<uint>(get_value_or<int>(params, "seed", 0)));
   m_instance->ghost_communication();
 }
+
+#ifdef ESPRESSO_CUDA
+void EKSpeciesGPU::make_instance(VariantMap const &params) {
+  auto const diffusion = get_value<double>(params, "diffusion");
+  auto const ext_efield = get_value<Utils::Vector3d>(params, "ext_efield");
+  auto const density = get_value<double>(params, "density");
+  auto const kT = get_value<double>(params, "kT");
+  auto const ek_diffusion = diffusion * m_conv_diffusion;
+  auto const ek_ext_efield = ext_efield * m_conv_ext_efield;
+  auto const ek_density = density * m_conv_density;
+  auto const ek_kT = kT * m_conv_energy;
+  m_instance = ::walberla::new_ek_walberla_gpu(
+      m_lattice->lattice(), ek_diffusion, ek_kT,
+      get_value<double>(params, "valency"), ek_ext_efield, ek_density,
+      get_value<bool>(params, "advection"),
+      get_value<bool>(params, "friction_coupling"),
+      get_value<bool>(params, "single_precision"),
+      get_value_or<bool>(params, "thermalized", false),
+      static_cast<uint>(get_value_or<int>(params, "seed", 0)));
+  m_instance->ghost_communication();
+}
+#endif // ESPRESSO_CUDA
 
 void EKSpecies::do_construct(VariantMap const &params) {
   m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice");
@@ -141,12 +165,12 @@ void EKSpecies::do_construct(VariantMap const &params) {
     m_density = density * m_conv_density;
     make_instance(params);
     for (auto &vtk : m_vtk_writers) {
-      vtk->attach_to_lattice(m_instance, get_latice_to_md_units_conversion());
+      vtk->attach_to_lattice(m_instance, get_lattice_to_md_units_conversion());
     }
   });
 }
 
-void EKSpecies::load_checkpoint(std::string const &filename, int mode) {
+void EKSpecies::load_checkpoint(std::filesystem::path const &path, int mode) {
   auto &ek_obj = *m_instance;
 
   auto const read_metadata = [&ek_obj](CheckpointFile &cpfile) {
@@ -194,11 +218,11 @@ void EKSpecies::load_checkpoint(std::string const &filename, int mode) {
 
   auto const on_success = [&ek_obj]() { ek_obj.ghost_communication(); };
 
-  load_checkpoint_common(*context(), "EK", filename, mode, read_metadata,
-                         read_data, on_success);
+  load_checkpoint_common(*context(), "EK", path, mode, read_metadata, read_data,
+                         on_success);
 }
 
-void EKSpecies::save_checkpoint(std::string const &filename, int mode) {
+void EKSpecies::save_checkpoint(std::filesystem::path const &path, int mode) {
   auto &ek_obj = *m_instance;
 
   auto const write_metadata = [&ek_obj,
@@ -298,10 +322,10 @@ void EKSpecies::save_checkpoint(std::string const &filename, int mode) {
     }
   };
 
-  save_checkpoint_common(*context(), "EK", filename, mode, write_metadata,
+  save_checkpoint_common(*context(), "EK", path, mode, write_metadata,
                          write_data, on_failure);
 }
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

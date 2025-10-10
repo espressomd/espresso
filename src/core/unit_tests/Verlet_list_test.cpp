@@ -21,11 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef LENNARD_JONES
-
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_NO_MAIN
-#define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/data/monomorphic.hpp>
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/unit_test.hpp>
@@ -35,6 +31,7 @@ namespace bdata = boost::unit_test::data;
 #include "ParticleFactory.hpp"
 #include "particle_management.hpp"
 
+#include "EspressoCoreGlobalConfig.hpp"
 #include "Particle.hpp"
 #include "PropagationMode.hpp"
 #include "cell_system/CellStructureType.hpp"
@@ -64,6 +61,36 @@ namespace espresso {
 static std::shared_ptr<System::System> system;
 } // namespace espresso
 
+struct GlobalConfig : public EspressoCoreGlobalConfig {
+  GlobalConfig() {
+    espresso::system = System::System::create();
+    espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+    ::System::set_system(espresso::system);
+  }
+  ~GlobalConfig() {
+    espresso::system.reset();
+    ::System::reset_system();
+  }
+};
+
+// Decorator to skip tests when the number of MPI ranks isn't 4
+boost::test_tools::assertion_result has_4_mpi_ranks(utf::test_unit_id) {
+  boost::mpi::communicator world;
+  return world.size() == 4;
+}
+
+// Decorator to skip tests if Lennard-Jones isn't compiled in
+boost::test_tools::assertion_result has_lj(utf::test_unit_id) {
+#ifdef ESPRESSO_LENNARD_JONES
+  return true;
+#else
+  return false;
+#endif
+}
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_AUTO_TEST_SUITE(suite)
+
 namespace Testing {
 /**
  * Helper class to setup an integrator and particle properties such that the
@@ -83,7 +110,7 @@ struct IntegratorHelper : public ParticleFactory {
   }
 };
 
-#ifdef EXTERNAL_FORCES
+#ifdef ESPRESSO_EXTERNAL_FORCES
 struct : public IntegratorHelper {
   void set_integrator() const override {
     espresso::system->thermostat->thermo_switch = THERMO_OFF;
@@ -97,7 +124,7 @@ struct : public IntegratorHelper {
   }
   char const *name() const override { return "SteepestDescent"; }
 } steepest_descent;
-#endif // EXTERNAL_FORCES
+#endif // ESPRESSO_EXTERNAL_FORCES
 
 struct : public IntegratorHelper {
   void set_integrator() const override {
@@ -110,12 +137,13 @@ struct : public IntegratorHelper {
   char const *name() const override { return "VelocityVerlet"; }
 } velocity_verlet;
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 struct : public IntegratorHelper {
   void set_integrator() const override {
     auto &npt_iso = espresso::system->thermostat->npt_iso;
-    ::nptiso = NptIsoParameters(1., 1e9, {true, true, true}, true);
-    espresso::system->propagation->set_integ_switch(INTEG_METHOD_NPT_ISO);
+    espresso::system->nptiso = std::make_shared<NptIsoParameters>(
+        1., 1e16, Utils::Vector<bool, 3>{true, true, true}, true);
+    espresso::system->propagation->set_integ_switch(INTEG_METHOD_NPT_ISO_AND);
     espresso::system->thermostat->thermo_switch = THERMO_NPT_ISO;
     espresso::system->thermostat->kT = 1.;
     npt_iso = std::make_shared<IsotropicNptThermostat>();
@@ -128,7 +156,7 @@ struct : public IntegratorHelper {
   }
   char const *name() const override { return "VelocityVerletNpT"; }
 } velocity_verlet_npt;
-#endif // NPT
+#endif // ESPRESSO_NPT
 
 } // namespace Testing
 
@@ -144,17 +172,20 @@ auto const node_grids = std::vector<Utils::Vector3i>{{4, 1, 1}, {2, 2, 1}};
 auto const propagators =
     std::vector<std::reference_wrapper<Testing::IntegratorHelper>>{
         Testing::velocity_verlet,
-#ifdef NPT
+#ifdef ESPRESSO_NPT
         Testing::velocity_verlet_npt,
-#endif // NPT
-#ifdef EXTERNAL_FORCES
+#endif // ESPRESSO_NPT
+#ifdef ESPRESSO_EXTERNAL_FORCES
         Testing::steepest_descent
-#endif // EXTERNAL_FORCES
+#endif // ESPRESSO_EXTERNAL_FORCES
     };
 
+BOOST_TEST_DECORATOR(*utf::precondition(has_4_mpi_ranks) *
+                     utf::precondition(has_lj))
 BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
                        bdata::make(node_grids) * bdata::make(propagators),
                        node_grid, integration_helper) {
+#ifdef ESPRESSO_LENNARD_JONES
   auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   auto const comm = boost::mpi::communicator();
   auto const rank = comm.rank();
@@ -227,21 +258,21 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
     {
       system.integrate(1, INTEG_REUSE_FORCES_CONDITIONALLY);
       auto const p1_opt = copy_particle_to_head_node(comm, system, pid1);
-#ifdef EXTERNAL_FORCES
+#ifdef ESPRESSO_EXTERNAL_FORCES
       auto const p2_opt = copy_particle_to_head_node(comm, system, pid2);
-#endif // EXTERNAL_FORCES
+#endif // ESPRESSO_EXTERNAL_FORCES
       if (rank == 0) {
         auto const &p1 = *p1_opt;
-#ifdef EXTERNAL_FORCES
+#ifdef ESPRESSO_EXTERNAL_FORCES
         auto const &p2 = *p2_opt;
         BOOST_CHECK_CLOSE(p1.force()[0] - p1.ext_force()[0], 480., 1e-9);
-#endif // EXTERNAL_FORCES
+#endif // ESPRESSO_EXTERNAL_FORCES
         BOOST_CHECK_CLOSE(p1.force()[1], 0., tol);
         BOOST_CHECK_CLOSE(p1.force()[2], 0., tol);
-#ifdef EXTERNAL_FORCES
+#ifdef ESPRESSO_EXTERNAL_FORCES
         BOOST_TEST(p1.force() - p1.ext_force() == -p2.force(),
                    boost::test_tools::per_element());
-#endif // EXTERNAL_FORCES
+#endif // ESPRESSO_EXTERNAL_FORCES
         BOOST_CHECK_LT(get_dist_from_last_verlet_update(p1), skin / 2.);
       }
     }
@@ -270,21 +301,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
       }
     }
   }
+#endif // ESPRESSO_LENNARD_JONES
 }
 
-int main(int argc, char **argv) {
-  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
-  espresso::system = System::System::create();
-  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
-  ::System::set_system(espresso::system);
-  // the test case only works for 4 MPI ranks
-  boost::mpi::communicator world;
-  int error_code = 0;
-  if (world.size() == 4) {
-    error_code = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-  }
-  return error_code;
-}
-#else // ifdef LENNARD_JONES
-int main(int argc, char **argv) {}
-#endif
+BOOST_AUTO_TEST_SUITE_END()

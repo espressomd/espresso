@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SRC_UTILS_INCLUDE_UTILS_MATRIX_HPP
-#define SRC_UTILS_INCLUDE_UTILS_MATRIX_HPP
+
+#pragma once
 
 /**
  * @file
@@ -64,13 +64,13 @@ namespace Utils {
  */
 template <typename T, std::size_t Rows, std::size_t Cols> struct Matrix {
   using container = Utils::Array<T, Cols * Rows>;
-  using pointer = typename container::pointer;
-  using const_pointer = typename container::const_pointer;
-  using iterator = typename container::iterator;
-  using const_iterator = typename container::const_iterator;
-  using value_type = typename container::value_type;
-  using reference = typename container::reference;
-  using const_reference = typename container::const_reference;
+  using pointer = container::pointer;
+  using const_pointer = container::const_pointer;
+  using iterator = container::iterator;
+  using const_iterator = container::const_iterator;
+  using value_type = container::value_type;
+  using reference = container::reference;
+  using const_reference = container::const_reference;
 
   container m_data;
 
@@ -236,12 +236,11 @@ Matrix<T, Rows, Cols> identity_mat() {
 
 } // namespace Utils
 
-namespace boost {
-namespace qvm {
+namespace boost::qvm {
 
 template <typename T, std::size_t Rows, std::size_t Cols>
 struct mat_traits<Utils::Matrix<T, Rows, Cols>> {
-  using mat_type = typename Utils::Matrix<T, Rows, Cols>;
+  using mat_type = Utils::Matrix<T, Rows, Cols>;
   static int const rows = Rows;
   static int const cols = Cols;
   using scalar_type = T;
@@ -299,6 +298,4 @@ struct deduce_mat2<Utils::Matrix<T, 3, 3>, Utils::Matrix<U, 3, 3>, 3, 3> {
   using type = Utils::Matrix<std::common_type_t<T, U>, 3, 3>;
 };
 
-} // namespace qvm
-} // namespace boost
-#endif // SRC_UTILS_INCLUDE_UTILS_MATRIX_HPP
+} // namespace boost::qvm

@@ -26,6 +26,7 @@
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "dpd.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -98,22 +99,26 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
       },
       *cell_structure, maximal_cutoff(), bonded_ias->maximal_cutoff());
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   auto const coulomb_pressure = coulomb.calc_pressure_long_range(local_parts);
   std::ranges::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9u);
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
   Dipoles::get_dipoles().calc_pressure_long_range();
 #endif
 
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   if (!obs_pressure.virtual_sites.empty()) {
     auto const vs_pressure = vs_relative_pressure_tensor(*cell_structure);
     std::ranges::copy(Utils::flatten(vs_pressure),
                       obs_pressure.virtual_sites.begin());
   }
+#endif
+
+#ifdef ESPRESSO_DPD
+  std::ranges::copy(dpd_pressure_local(), obs_pressure.dpd.begin());
 #endif
 
   obs_pressure.rescale(volume);

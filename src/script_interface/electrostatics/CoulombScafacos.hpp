@@ -19,13 +19,12 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef SCAFACOS
+#ifdef ESPRESSO_SCAFACOS
 
 #include "Actor.hpp"
 
-#include "core/MpiCallbacks.hpp"
 #include "core/communication.hpp"
 #include "core/electrostatics/scafacos.hpp"
 #include "core/scafacos/ScafacosContextBase.hpp"
@@ -59,7 +58,7 @@ public:
            auto parameters_string = actor()->get_parameters();
            auto const method_name = actor()->get_method();
            auto const delegate = actor()->get_near_field_delegation();
-           if (delegate and m_tuned_methods.count(method_name)) {
+           if (delegate and m_tuned_methods.contains(method_name)) {
              auto const tuned_r_cut = actor()->get_r_cut();
              auto const field_name = method_name + "_r_cut";
              std::ostringstream serializer;
@@ -100,7 +99,7 @@ public:
     });
     set_charge_neutrality_tolerance(params);
     // MPI communicator is needed to destroy the FFT plans
-    m_mpi_env_lock = ::Communication::mpiCallbacksHandle()->share_mpi_env();
+    m_mpi_env_lock = ::communication_environment->get_mpi_env();
   }
 
   Variant do_call_method(std::string const &name,
@@ -124,4 +123,4 @@ public:
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // SCAFACOS
+#endif // ESPRESSO_SCAFACOS

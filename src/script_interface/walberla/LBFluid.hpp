@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "LatticeModel.hpp"
 #include "LatticeWalberla.hpp"
@@ -37,9 +37,11 @@
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace ScriptInterface::walberla {
@@ -127,7 +129,8 @@ public:
   [[nodiscard]] auto get_lb_fluid() const { return m_instance; }
   [[nodiscard]] auto get_lb_params() const { return m_lb_params; }
 
-  ::LatticeModel::units_map get_latice_to_md_units_conversion() const override {
+  ::LatticeModel::units_map
+  get_lattice_to_md_units_conversion() const override {
     return {
         {"density", 1. / m_conv_dens},
         {"velocity", 1. / m_conv_speed},
@@ -136,9 +139,11 @@ public:
   }
 
 private:
-  void load_checkpoint(std::string const &filename, int mode);
-  void save_checkpoint(std::string const &filename, int mode);
+  void load_checkpoint(std::filesystem::path const &path, int mode);
+  void save_checkpoint(std::filesystem::path const &path, int mode);
   std::vector<Variant> get_average_pressure_tensor() const;
+  Variant get_boundary_force_from_shape(std::vector<int> const &raster) const;
+  Variant get_boundary_force() const;
   Variant get_interpolated_velocity(Utils::Vector3d const &pos) const;
 };
 
@@ -147,13 +152,13 @@ protected:
   void make_instance(VariantMap const &params) override;
 };
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 class LBFluidGPU : public LBFluid {
 protected:
   void make_instance(VariantMap const &params) override;
 };
-#endif // CUDA
+#endif // ESPRESSO_CUDA
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

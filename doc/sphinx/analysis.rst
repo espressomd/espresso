@@ -483,6 +483,8 @@ documentation for all available observables in :mod:`espressomd.observables`.
 
    - :class:`~espressomd.observables.RDF`: Radial distribution function. Can be used on two different sets of particles.
 
+   - :class:`~espressomd.observables.PairwiseDistances`: Distance matrix between two sets of particles.
+
 - Profile observables sampling the spatial profile of various quantities:
    - :class:`~espressomd.observables.DensityProfile`
 
@@ -570,6 +572,42 @@ In order to calculate the running mean and variance of an observable,
     system.integrator.run(10)
     print(accumulator.mean())
     print(accumulator.variance())
+
+In the example above the automatic update of the accumulator is used. However,
+it's also possible to manually update the accumulator by calling
+:meth:`espressomd.accumulators.MeanVarianceCalculator.update`.
+
+.. _Contact times:
+
+Contact times
+^^^^^^^^^^^^^
+
+The contact time of particle pairs can be recorded with
+:class:`espressomd.accumulators.ContactTimes`::
+
+    import espressomd
+    import espressomd.accumulators
+    import espressomd.observables
+    import numpy as np
+
+    system = espressomd.System(box_l=[10., 10., 10.])
+    system.time_step = 0.01
+    system.cell_system.skin = 1.
+    rng = np.random.default_rng(42)
+    system.part.add(pos=rng.random((10, 3)) * 10.)
+    ids = np.copy(system.part.all().id)
+    system.non_bonded_inter[0, 0].wca.set_params(epsilon=1., sigma=1.)
+    system.integrator.set_steepest_descent(f_max=0.05, gamma=1., max_displacement=0.01)
+    system.integrator.run(1000)
+    system.integrator.set_vv()
+    system.thermostat.set_langevin(kT=1., gamma=1., seed=42)
+
+    obs = espressomd.observables.PairwiseDistances(ids=ids, target_ids=ids)
+    acc = espressomd.accumulators.ContactTimes(obs=obs, contact_threshold=1.)
+    system.auto_update_accumulators.add(acc)
+    system.integrator.run(5000)
+    contact_times = acc.contact_times()
+    print(f"The contact times are {contact_times}")
 
 In the example above the automatic update of the accumulator is used. However,
 it's also possible to manually update the accumulator by calling

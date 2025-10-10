@@ -33,6 +33,7 @@
 #include <utils/Vector.hpp>
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -68,6 +69,10 @@ public:
   /** @brief Whether kernels use double-precision floating point numbers. */
   [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
 
+  /** @brief Make a functor to check if a position is in the local domain. */
+  virtual std::function<bool(Utils::Vector3d const &)>
+  make_lattice_position_checker(bool consider_points_in_halo) const = 0;
+
   /** @brief Get interpolated velocities at a position. */
   virtual std::optional<Utils::Vector3d>
   get_velocity_at_pos(Utils::Vector3d const &position,
@@ -81,6 +86,10 @@ public:
   virtual std::optional<double>
   get_density_at_pos(Utils::Vector3d const &position,
                      bool consider_points_in_halo = false) const = 0;
+
+  /** @brief Get interpolated densities at positions. */
+  virtual std::vector<double>
+  get_densities_at_pos(std::vector<Utils::Vector3d> const &pos) = 0;
 
   /**
    * @brief Interpolate a force to the stored forces to be applied on nodes
@@ -246,6 +255,13 @@ public:
   virtual std::vector<double>
   get_slice_pressure_tensor(Utils::Vector3i const &lower_corner,
                             Utils::Vector3i const &upper_corner) const = 0;
+
+  /** @brief Calculate boundary force from a rasterized shape. */
+  virtual Utils::Vector3d
+  get_boundary_force_from_shape(std::vector<int> const &raster_flat) const = 0;
+
+  /** @brief Calculate boundary force of the local domain. */
+  virtual Utils::Vector3d get_boundary_force() const = 0;
 
   /** @brief Calculate average pressure tensor of the local domain. */
   virtual Utils::VectorXd<9> get_pressure_tensor() const = 0;

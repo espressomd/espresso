@@ -21,12 +21,13 @@
 
 #include <config/config.hpp>
 
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
 
 #include "CollisionPair.hpp"
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "bonds.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "virtual_sites.hpp"
@@ -55,7 +56,7 @@ inline auto &get_part(CellStructure &cell_structure, int id) {
   return *p;
 }
 
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 inline void place_vs_and_relate_to_particle(
     CellStructure &cell_structure, BoxGeometry const &box_geo,
     int const part_type_vs, double const min_global_cut,
@@ -68,7 +69,7 @@ inline void place_vs_and_relate_to_particle(
                min_global_cut);
   p_vs->type() = part_type_vs;
 }
-#endif // VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 
 inline auto gather_collision_queue(std::vector<CollisionPair> const &local) {
   auto global = local;
@@ -80,20 +81,22 @@ inline auto gather_collision_queue(std::vector<CollisionPair> const &local) {
 }
 
 inline void add_bind_centers(std::vector<CollisionPair> &collision_queue,
-                             CellStructure &cell_structure, int bond_centers) {
+                             System::System &system, int bond_id) {
   for (auto &c : collision_queue) {
     // Ensure that the bond is associated with the non-ghost particle
-    if (cell_structure.get_local_particle(c.first)->is_ghost()) {
+    if (system.cell_structure->get_local_particle(c.first)->is_ghost()) {
       std::swap(c.first, c.second);
     }
 
-    const int bondG[] = {c.second};
-
-    // Insert the bond for the non-ghost particle
-    get_part(cell_structure, c.first).bonds().insert({bond_centers, bondG});
+    // Because MPI rank 1's queue containing (@c p1_on_rank_1, @c p2_on_rank_2)
+    // doesn't guarantee that the same pair (with or without swapped order) is
+    // also queued on the MPI rank 2.
+    // Once we change bond storage, some syncing has to be done.
+    assert(use_one_sided_bond_storage);
+    ::add_bond(system, bond_id, {c.first, c.second});
   }
 }
 
 } // namespace CollisionDetection
 
-#endif // COLLISION_DETECTION
+#endif // ESPRESSO_COLLISION_DETECTION

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2022 The ESPResSo project
+# Copyright (C) 2009-2025 The ESPResSo project
 # Copyright (C) 2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -19,54 +19,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Verify the NVCC compiler matches the NVIDIA toolkit,
 # include the toolkit libraries and declare a custom
 # `add_library()` wrapper function named `espresso_add_gpu_library()`.
 
-file(REAL_PATH "${CUDAToolkit_ROOT}/bin/nvcc" ESPRESO_CUDAToolkit_ROOT_RESOLVED)
-file(REAL_PATH "${CMAKE_CUDA_COMPILER}" ESPRESO_CMAKE_CUDA_COMPILER_RESOLVED)
-if(NOT "${ESPRESO_CUDAToolkit_ROOT_RESOLVED}" STREQUAL "${ESPRESO_CMAKE_CUDA_COMPILER_RESOLVED}"
-   AND NOT ESPRESSO_INSIDE_DOCKER)
-  cmake_path(GET CMAKE_CUDA_COMPILER PARENT_PATH ESPRESSO_NVCC_EXECUTABLE_DIRNAME)
-  cmake_path(GET ESPRESSO_NVCC_EXECUTABLE_DIRNAME PARENT_PATH ESPRESSO_NVCC_EXECUTABLE_DIRNAME)
-  message(
-    WARNING
-      "Your nvcc compiler (${CMAKE_CUDA_COMPILER}) does not appear to match your CUDA toolkit installation (${CUDAToolkit_ROOT}). While ESPResSo will still compile, you might get unexpected crashes. Try hinting it with '-D CUDAToolkit_ROOT=\"${ESPRESSO_NVCC_EXECUTABLE_DIRNAME}\"'."
-  )
-endif()
-
 set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-
-add_library(espresso_cuda_flags INTERFACE)
-add_library(espresso::cuda_flags ALIAS espresso_cuda_flags)
-target_compile_options(
-  espresso_cuda_flags
-  INTERFACE
-  $<$<CONFIG:Debug>:-g -G>
-  $<$<CONFIG:Release>:-Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG>
-  $<$<CONFIG:MinSizeRel>:-Xptxas=-O2 -Xcompiler=-Os -DNDEBUG>
-  $<$<CONFIG:RelWithDebInfo>:-Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG>
-  $<$<CONFIG:Coverage>:-Xptxas=-O3 -Xcompiler=-Og,-g,--coverage,-fprofile-abs-path>
-  $<$<CONFIG:RelWithAssert>:-Xptxas=-O3 -Xcompiler=-O3,-g>
-  $<$<BOOL:${CMAKE_OSX_SYSROOT}>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>
-  # workaround for https://github.com/espressomd/espresso/issues/4943
-  $<$<BOOL:${ESPRESSO_BUILD_WITH_CCACHE}>:$<$<CONFIG:Coverage>:--coverage -fprofile-abs-path>>
-)
-
-function(espresso_add_gpu_library)
-  add_library(${ARGV})
-  set(TARGET_NAME ${ARGV0})
-  set_target_properties(${TARGET_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-  target_link_libraries(${TARGET_NAME} PRIVATE espresso::cuda_flags $<$<CONFIG:Coverage>:gcov>)
-endfunction()
-
-function(espresso_add_gpu_executable)
-  add_executable(${ARGV})
-  set(TARGET_NAME ${ARGV0})
-  set_target_properties(${TARGET_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-  target_link_libraries(${TARGET_NAME} PRIVATE espresso::cuda_flags $<$<CONFIG:Coverage>:gcov>)
-endfunction()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(

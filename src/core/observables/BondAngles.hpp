@@ -21,6 +21,7 @@
 
 #include "BoxGeometry.hpp"
 #include "PidObservable.hpp"
+#include "bonded_interactions/angle_common.hpp"
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
@@ -66,8 +67,8 @@ public:
       auto v2 = box_geo.get_mi_vector(positions_sorted[i + 2],
                                       positions_sorted[i + 1]);
       auto const n2 = v2.norm();
-      auto const cosine =
-          std::clamp((v1 * v2) / (n1 * n2), -TINY_COS_VALUE, TINY_COS_VALUE);
+      auto const cosine = std::clamp(
+          (v1 * v2) / (n1 * n2), -tiny_cos_angle_value, +tiny_cos_angle_value);
       /* to reduce computational time, after calculating an angle ijk, the
        * vector r_ij takes the value r_jk, but to orient it correctly, it has
        * to be multiplied -1; it's cheaper to do this operation on a double

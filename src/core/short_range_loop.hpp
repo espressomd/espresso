@@ -23,7 +23,7 @@
 
 #include "cell_system/CellStructure.hpp"
 
-#ifdef CALIPER
+#ifdef ESPRESSO_CALIPER
 #include <caliper/cali.h>
 #endif
 
@@ -45,7 +45,7 @@ void short_range_loop(BondKernel bond_kernel, PairKernel pair_kernel,
                       CellStructure &cell_structure, double pair_cutoff,
                       double bond_cutoff,
                       VerletCriterion const &verlet_criterion = {}) {
-#ifdef CALIPER
+#ifdef ESPRESSO_CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
 

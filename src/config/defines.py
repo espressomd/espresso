@@ -20,6 +20,7 @@
 import tempfile
 import subprocess
 import sys
+import re
 
 
 class Defines:
@@ -54,10 +55,10 @@ class Defines:
     def defines(self, filename, include_build_in=False):
         all_defs = set(self._get_defs(filename))
 
-        if include_build_in:
-            return all_defs
-        else:
-            return all_defs - self._buildin
+        if not include_build_in:
+            all_defs -= self._buildin
+
+        return {re.sub("^ESPRESSO_(?:BUILD_WITH_)?", "", x) for x in all_defs}
 
 
 if __name__ == "__main__":

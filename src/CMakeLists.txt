@@ -19,15 +19,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Target for the unit tests
-add_custom_target(
-  check_unit_tests
-  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
-          ${ESPRESSO_CTEST_ARGS} --output-on-failure)
-
 if(ESPRESSO_BUILD_TESTS)
+  # Target for the unit tests
+  add_custom_target(unit_tests_executables)
+  add_custom_target(
+    check_unit_tests
+    COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
+            ${ESPRESSO_CTEST_ARGS} --output-on-failure)
+
   # Run unit tests on check
   add_dependencies(check check_unit_tests)
+  add_dependencies(check_unit_tests unit_tests_executables)
+  if(TARGET espresso_packaging_dependencies)
+    add_dependencies(espresso_packaging_dependencies unit_tests_executables)
+  endif()
 endif()
 
 add_subdirectory(utils)

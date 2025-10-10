@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 
 #include "Integrator.hpp"
 
@@ -39,6 +39,7 @@ namespace Integrators {
 class VelocityVerletIsoNPT
     : public AutoParameters<VelocityVerletIsoNPT, Integrator> {
   std::shared_ptr<::NptIsoParameters> m_instance;
+  std::string m_barostat;
 
 public:
   VelocityVerletIsoNPT();
@@ -52,4 +53,4 @@ public:
 } // namespace Integrators
 } // namespace ScriptInterface
 
-#endif // NPT
+#endif // ESPRESSO_NPT

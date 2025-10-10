@@ -55,12 +55,12 @@ class MPIIOMockGenerator:
 
 
 class MPIIOTest(ut.TestCase):
-
     """
     Test class for the MPI-IO core functionality.
     Check for exceptions when data cannot be read or written.
     With 1 MPI rank, fatal errors are just exceptions.
     """
+
     system = espressomd.system.System(box_l=[1, 1, 1])
     n_nodes = system.cell_system.get_state()["n_nodes"]
 
@@ -90,21 +90,24 @@ class MPIIOTest(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Parameter 'system' is missing"):
             espressomd.io.mpiio.Mpiio()
 
-        # exception when the metadata cannot be written
-        path, fn = generator.create('head', read_only=True)
-        with self.assertRaisesRegex(RuntimeError, f'Could not open file "{fn}"'):
-            mpiio.write(path, types=True)
+        # since root (user id 0) doesn't respect read/write permissions,
+        # exceptions caused by read-only files cannot be checked
+        if os.geteuid() != 0:
+            # exception when the metadata cannot be written
+            path, fn = generator.create('head', read_only=True)
+            with self.assertRaisesRegex(RuntimeError, f'Could not open file "{fn}"'):
+                mpiio.write(path, types=True)
 
-        # exception when the payload cannot be written
-        path, fn = generator.create('pref', read_only=True)
-        with self.assertRaisesRegex(RuntimeError, f'Could not open file "{fn}"'):
-            mpiio.write(path, types=True)
+            # exception when the payload cannot be written
+            path, fn = generator.create('pref', read_only=True)
+            with self.assertRaisesRegex(RuntimeError, f'Could not open file "{fn}"'):
+                mpiio.write(path, types=True)
 
-        # exception when calculating the size of a non-existent file
-        path, _ = generator.create(read_only=True)
-        fn = f'{path}.pref'
-        with self.assertRaisesRegex(RuntimeError, f'Could not get file size of "{fn}"'):
-            mpiio.read(path, types=True)
+            # exception when calculating the size of a non-existent file
+            path, _ = generator.create(read_only=True)
+            fn = f'{path}.pref'
+            with self.assertRaisesRegex(RuntimeError, f'Could not get file size of "{fn}"'):
+                mpiio.read(path, types=True)
 
         # exception when the MPI world size differs for reading and writing
         # (empty .pref file -> data was written with MPI world size of 0)

@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>
 
@@ -39,7 +39,7 @@ namespace ScriptInterface::walberla {
 
 class EKReactions : public ObjectList<EKReaction> {
   using Base = ObjectList<EKReaction>;
-  using value_type = typename Base::value_type;
+  using Base::value_type;
 
   std::shared_ptr<::EK::EKWalberla::ek_reactions_type> m_ek_reactions;
 
@@ -54,7 +54,7 @@ class EKReactions : public ObjectList<EKReaction> {
   }
 
 protected:
-  void do_construct(VariantMap const &params) override {
+  void do_construct(VariantMap const &) override {
     m_ek_reactions = std::make_shared<::EK::EKWalberla::ek_reactions_type>();
   }
 
@@ -66,4 +66,4 @@ public:
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

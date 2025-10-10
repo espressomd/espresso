@@ -20,9 +20,9 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <boost/variant.hpp>
-
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+
+#include <variant>
 
 using ScriptInterface::AutoParameters;
 
@@ -42,13 +42,13 @@ BOOST_AUTO_TEST_CASE(basic) {
   BOOST_CHECK(std::ranges::find(parameters, "i") != parameters.end());
   BOOST_CHECK(std::ranges::find(parameters, "j") != parameters.end());
 
-  BOOST_CHECK(0 == boost::get<int>(a.get_parameter("i")));
-  BOOST_CHECK(42 == boost::get<int>(a.get_parameter("j")));
+  BOOST_CHECK(0 == std::get<int>(a.get_parameter("i")));
+  BOOST_CHECK(42 == std::get<int>(a.get_parameter("j")));
 
   a.set_parameter("i", 12);
 
-  BOOST_CHECK(12 == boost::get<int>(a.get_parameter("i")));
-  BOOST_CHECK(42 == boost::get<int>(a.get_parameter("j")));
+  BOOST_CHECK(12 == std::get<int>(a.get_parameter("i")));
+  BOOST_CHECK(42 == std::get<int>(a.get_parameter("j")));
 }
 
 struct B : public A {
@@ -65,12 +65,12 @@ BOOST_AUTO_TEST_CASE(add_parameters) {
 
   BOOST_CHECK_EQUAL(a.i, 1);
   BOOST_CHECK_EQUAL(b.i, 1);
-  BOOST_CHECK_EQUAL(boost::get<int>(b.get_parameter("j")), 2);
-  BOOST_CHECK_EQUAL(boost::get<int>(b.get_parameter("k")), 3);
-  BOOST_CHECK_EQUAL(boost::get<int>(b.get_parameter("i")), 4);
-  BOOST_CHECK_EQUAL(boost::get<int>(a.get_parameter("i")), 4);
+  BOOST_CHECK_EQUAL(std::get<int>(b.get_parameter("j")), 2);
+  BOOST_CHECK_EQUAL(std::get<int>(b.get_parameter("k")), 3);
+  BOOST_CHECK_EQUAL(std::get<int>(b.get_parameter("i")), 4);
+  BOOST_CHECK_EQUAL(std::get<int>(a.get_parameter("i")), 4);
   b.set_parameter("k", 12);
-  BOOST_CHECK_EQUAL(boost::get<int>(b.get_parameter("k")), 12);
+  BOOST_CHECK_EQUAL(std::get<int>(b.get_parameter("k")), 12);
 }
 
 BOOST_AUTO_TEST_CASE(exceptions) {

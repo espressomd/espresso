@@ -137,7 +137,8 @@ if args.gpu:
 # tuning and equilibration
 min_skin = 0.2
 max_skin = 1.6
-p3m_params = {"prefactor": args.prefactor, "accuracy": 1e-3}
+p3m_params = {"prefactor": args.prefactor, "accuracy": 1e-3, "timings": 15,
+              "tune_limits": [12, 160]}
 p3m = p3m_class(**p3m_params)
 print("Quick equilibration")
 system.integrator.run(min(3 * measurement_steps, 1000))
@@ -150,6 +151,12 @@ print("Tune p3m")
 system.electrostatics.solver = p3m
 print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 3000))
+print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
+    min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100,
+    adjust_max_skin=True)))
+print("Re-tune p3m")
+p3m = p3m_class(**p3m_params)
+system.electrostatics.solver = p3m
 print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
     min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100,
     adjust_max_skin=True)))

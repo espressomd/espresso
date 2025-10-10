@@ -23,18 +23,21 @@
 
 #include "config/config.hpp"
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
 
 #include "electrostatics/p3m.hpp"
 
+#include "ParticleRange.hpp"
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
 #include "p3m/interpolation.hpp"
-
-#include "ParticleRange.hpp"
+#include "p3m/send_mesh.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/index.hpp>
 
+#include <algorithm>
+#include <complex>
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -42,9 +45,13 @@
 #include <type_traits>
 #include <utility>
 
+template <typename FloatType> class P3MFFT;
+
 template <typename FloatType>
-struct p3m_data_struct_coulomb : public p3m_data_struct<FloatType> {
-  using p3m_data_struct<FloatType>::p3m_data_struct;
+struct CoulombP3MState : public P3MStateCommon<FloatType> {
+  using P3MStateCommon<FloatType>::P3MStateCommon;
+
+  constexpr static auto memory_order = Utils::MemoryOrder::ROW_MAJOR;
 
   /** number of charged particles. */
   std::size_t sum_qpart = 0;
@@ -54,9 +61,18 @@ struct p3m_data_struct_coulomb : public p3m_data_struct<FloatType> {
   double square_sum_q = 0.;
 
   p3m_interpolation_cache inter_weights;
+
+  /* fields */
+  std::vector<FloatType> rs_charge_density;
+  std::vector<std::complex<FloatType>> ks_charge_density;
+  std::array<std::vector<FloatType>, 3> rs_E_fields;
+  std::vector<std::complex<FloatType>> ks_E_fields_storage;
+  std::vector<std::complex<FloatType>> rs_E_fields_no_halo;
+  p3m_send_mesh<FloatType> halo_comm;
+  std::shared_ptr<P3MFFT<FloatType>> fft;
 };
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 struct P3MGpuParams;
 #endif
 
@@ -65,24 +81,32 @@ struct CoulombP3MImpl : public CoulombP3M {
   ~CoulombP3MImpl() override = default;
 
   /** @brief Coulomb P3M parameters. */
-  p3m_data_struct_coulomb<FloatType> &p3m;
+  CoulombP3MState<FloatType> &p3m;
 
 private:
-  /** @brief Coulomb P3M meshes and FFT algorithm. */
-  std::unique_ptr<p3m_data_struct_coulomb<FloatType>> p3m_impl;
+  std::unique_ptr<CoulombP3MState<FloatType>> p3m_state_ptr;
   int tune_timings;
   std::pair<std::optional<int>, std::optional<int>> tune_limits;
   bool tune_verbose;
   bool check_complex_residuals;
   bool m_is_tuned;
 
+  constexpr const Utils::Vector3i get_memory_layout() const {
+    auto constexpr memory_order =
+        std::remove_reference<decltype(p3m)>::type::memory_order;
+    if constexpr (memory_order == Utils::MemoryOrder::COLUMN_MAJOR) {
+      return {2, 1, 0};
+    }
+    return {0, 1, 2};
+  }
+
 public:
-  CoulombP3MImpl(
-      std::unique_ptr<p3m_data_struct_coulomb<FloatType>> &&p3m_handle,
-      double prefactor, int tune_timings, bool tune_verbose,
-      decltype(tune_limits) tune_limits, bool check_complex_residuals)
-      : CoulombP3M(p3m_handle->params), p3m{*p3m_handle},
-        p3m_impl{std::move(p3m_handle)}, tune_timings{tune_timings},
+  CoulombP3MImpl(std::unique_ptr<CoulombP3MState<FloatType>> &&p3m_state,
+                 double prefactor, int tune_timings, bool tune_verbose,
+                 decltype(tune_limits) tune_limits,
+                 bool check_complex_residuals)
+      : CoulombP3M(p3m_state->params), p3m{*p3m_state},
+        p3m_state_ptr{std::move(p3m_state)}, tune_timings{tune_timings},
         tune_limits{std::move(tune_limits)}, tune_verbose{tune_verbose},
         check_complex_residuals{check_complex_residuals} {
 
@@ -98,7 +122,7 @@ public:
     if constexpr (Architecture == Arch::CPU) {
       init_cpu_kernels();
     }
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     if constexpr (Architecture == Arch::GPU) {
       init_gpu_kernels();
     }
@@ -125,14 +149,14 @@ public:
   }
 
   void on_activation() override {
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     if constexpr (Architecture == Arch::GPU) {
       request_gpu();
     }
 #endif
     sanity_checks();
     tune();
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     if constexpr (Architecture == Arch::GPU) {
       if (is_tuned()) {
         init_cpu_kernels();
@@ -149,7 +173,7 @@ public:
     if constexpr (Architecture == Arch::CPU) {
       long_range_kernel(true, false, particles);
     }
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     if constexpr (Architecture == Arch::GPU) {
       add_long_range_forces_gpu(particles);
     }
@@ -165,9 +189,8 @@ public:
     if (reset_weights) {
       p3m.inter_weights.reset(p3m.params.cao);
     }
-    for (int i = 0; i < p3m.local_mesh.size; i++) {
-      p3m.mesh.rs_scalar[i] = FloatType(0);
-    }
+    p3m.rs_charge_density.resize(Utils::product(p3m.local_mesh.dim));
+    std::ranges::fill(p3m.rs_charge_density, FloatType{});
   }
 
 protected:
@@ -178,25 +201,25 @@ protected:
   void calc_influence_function_energy() override;
   void scaleby_box_l() override;
   void init_cpu_kernels();
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
   void init_gpu_kernels();
   void add_long_range_forces_gpu(ParticleRange const &particles);
   std::shared_ptr<P3MGpuParams> m_gpu_data = nullptr;
   void request_gpu() const;
 #endif
+private:
+  void kernel_ks_charge_density();
+  void kernel_rs_electric_field();
 };
 
-template <typename FloatType, Arch Architecture,
-          template <typename> class FFTBackendImpl,
-          template <typename> class P3MFFTMeshImpl, class... Args>
-std::shared_ptr<CoulombP3M> new_p3m_handle(P3MParameters &&p3m,
-                                           Args &&...args) {
+template <typename FloatType, Arch Architecture, typename... Args>
+std::shared_ptr<CoulombP3M> new_coulomb_p3m(P3MParameters &&p3m_params,
+                                            Args &&...args) {
+  auto state_ptr =
+      std::make_unique<CoulombP3MState<FloatType>>(std::move(p3m_params));
   auto obj = std::make_shared<CoulombP3MImpl<FloatType, Architecture>>(
-      std::make_unique<p3m_data_struct_coulomb<FloatType>>(std::move(p3m)),
-      std::forward<Args>(args)...);
-  obj->p3m.template make_mesh_instance<P3MFFTMeshImpl<FloatType>>();
-  obj->p3m.template make_fft_instance<FFTBackendImpl<FloatType>>();
+      std::move(state_ptr), std::forward<Args>(args)...);
   return obj;
 }
 
-#endif // P3M
+#endif // ESPRESSO_P3M

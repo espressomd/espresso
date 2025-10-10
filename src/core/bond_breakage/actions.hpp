@@ -20,7 +20,6 @@
 #pragma once
 
 #include <boost/functional/hash.hpp>
-#include <boost/variant.hpp>
 
 #include <array>
 #include <cstddef>
@@ -74,7 +73,7 @@ struct DeleteAllBonds {
 } // namespace BondBreakage
 
 // Hash support for std::unordered_set
-namespace boost {
+namespace std {
 template <> struct hash<BondBreakage::DeleteBond> {
   std::size_t operator()(BondBreakage::DeleteBond const &t) const noexcept {
     return t.hash_value();
@@ -84,11 +83,11 @@ template <> struct hash<BondBreakage::DeleteAngleBond> {
   std::size_t
   operator()(BondBreakage::DeleteAngleBond const &t) const noexcept {
     return t.hash_value();
-  };
+  }
 };
 template <> struct hash<BondBreakage::DeleteAllBonds> {
   std::size_t operator()(BondBreakage::DeleteAllBonds const &t) const noexcept {
     return t.hash_value();
   }
 };
-} // namespace boost
+} // namespace std

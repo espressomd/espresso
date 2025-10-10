@@ -34,7 +34,7 @@
 
 #include <boost/mpi.hpp>
 
-#ifdef CALIPER
+#ifdef ESPRESSO_CALIPER
 #include <caliper/cali.h>
 #endif
 
@@ -42,27 +42,28 @@
 #include <cstdint>
 #include <initializer_list>
 #include <limits>
+#include <ranges>
 #include <stdexcept>
 #include <vector>
 
 static Thermostat::GammaType lb_handle_particle_anisotropy(Particle const &p,
                                                            double lb_gamma) {
-#ifdef THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   auto const &partcl_gamma = p.gamma();
-#ifdef PARTICLE_ANISOTROPY
+#ifdef ESPRESSO_PARTICLE_ANISOTROPY
   auto const default_gamma = Thermostat::GammaType::broadcast(lb_gamma);
 #else
   auto const default_gamma = lb_gamma;
-#endif // PARTICLE_ANISOTROPY
+#endif // ESPRESSO_PARTICLE_ANISOTROPY
   return Thermostat::handle_particle_gamma(partcl_gamma, default_gamma);
 #else
   return lb_gamma;
-#endif // THERMOSTAT_PER_PARTICLE
+#endif // ESPRESSO_THERMOSTAT_PER_PARTICLE
 }
 
 static Utils::Vector3d lb_drag_force(Particle const &p, double lb_gamma,
                                      Utils::Vector3d const &v_fluid) {
-#ifdef LB_ELECTROHYDRODYNAMICS
+#ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
   auto const v_drift = v_fluid + p.mu_E();
 #else
   auto const &v_drift = v_fluid;
@@ -118,8 +119,8 @@ static void positions_in_halo_impl(Utils::Vector3d const &pos_folded,
 
   // Lees-Edwards: pre-calc positional offset folded into the simulation box
   double folded_le_offset = 0.;
+  auto const &le = box_geo.lees_edwards_bc();
   if (box_geo.type() == BoxType::LEES_EDWARDS) {
-    auto const &le = box_geo.lees_edwards_bc();
     folded_le_offset = Algorithm::periodic_fold(
         le.pos_offset, box_geo.length()[le.shear_direction]);
   }
@@ -129,24 +130,17 @@ static void positions_in_halo_impl(Utils::Vector3d const &pos_folded,
       for (int k : {-1, 0, 1}) {
         Utils::Vector3d shift{{double(i), double(j), double(k)}};
 
+        auto pos_shifted = pos_folded;
         // Lees Edwards: folded position incl. LE pos offset
         // This is needed to ensure that the position from which `pos_shifted`
         // is calculated below, is always in the primary simulation box.
-        auto with_le_offset = [&](auto pos) {
-          auto const &le = box_geo.lees_edwards_bc();
-          pos[le.shear_direction] = Algorithm::periodic_fold(
-              pos[le.shear_direction] +
+        if (box_geo.type() == BoxType::LEES_EDWARDS) {
+          pos_shifted[le.shear_direction] = Algorithm::periodic_fold(
+              pos_folded[le.shear_direction] +
                   shift[le.shear_plane_normal] * folded_le_offset,
               box_geo.length()[le.shear_direction]);
-          return pos;
-        };
-
-        Utils::Vector3d pos_shifted =
-            (box_geo.type() != BoxType::LEES_EDWARDS) ? // no Lees Edwards
-                pos_folded + Utils::hadamard_product(box_geo.length(), shift)
-                                                      : // Lees Edwards
-                with_le_offset(pos_folded) +
-                    Utils::hadamard_product(box_geo.length(), shift);
+        }
+        pos_shifted += Utils::hadamard_product(box_geo.length(), shift);
 
         if (in_box(pos_shifted, halo_lower_corner, halo_upper_corner)) {
           res.emplace_back(pos_shifted);
@@ -231,7 +225,7 @@ void ParticleCoupling::kernel(std::vector<Particle *> const &particles) {
   std::vector<Particle *> coupled_particles;
   for (auto ptr : particles) {
     auto &p = *ptr;
-    auto span_size = 1u;
+    auto span_size = uint8_t{1u};
     auto const folded_pos = m_box_geo.folded_position(p.pos());
     if (in_box(folded_pos, fully_inside_lower, fully_inside_upper)) {
       positions_force_coupling.emplace_back(folded_pos);
@@ -243,15 +237,14 @@ void ParticleCoupling::kernel(std::vector<Particle *> const &particles) {
       span_size = static_cast<uint8_t>(new_size - old_size);
     }
     auto coupling_mode = none;
-#ifdef ENGINE
+#ifdef ESPRESSO_ENGINE
     if (p.swimming().is_engine_force_on_fluid) {
       coupling_mode = swimmer_force_on_fluid;
     }
 #endif
     if (coupling_mode == none) {
-      for (auto end = positions_force_coupling.end(), it = end - span_size;
-           it != end; ++it) {
-        auto const &pos = *it;
+      for (auto end = positions_force_coupling.end();
+           auto const &pos : std::views::counted(end - span_size, span_size)) {
         if (pos >= halo_lower_corner and pos < halo_upper_corner) {
           positions_velocity_coupling.emplace_back(pos);
           coupling_mode = particle_force;
@@ -284,14 +277,14 @@ void ParticleCoupling::kernel(std::vector<Particle *> const &particles) {
   for (auto ptr : coupled_particles) {
     auto &p = *ptr;
     auto coupling_mode = particle_force;
-#ifdef ENGINE
+#ifdef ESPRESSO_ENGINE
     if (p.swimming().is_engine_force_on_fluid) {
       coupling_mode = swimmer_force_on_fluid;
     }
 #endif
     Utils::Vector3d force_on_particle = {};
     if (coupling_mode == particle_force) {
-#ifndef THERMOSTAT_PER_PARTICLE
+#ifndef ESPRESSO_THERMOSTAT_PER_PARTICLE
       if (m_thermostat.gamma > 0.)
 #endif
       {
@@ -313,7 +306,7 @@ void ParticleCoupling::kernel(std::vector<Particle *> const &particles) {
     }
 
     auto force_on_fluid = -force_on_particle;
-#ifdef ENGINE
+#ifdef ESPRESSO_ENGINE
     if (coupling_mode == swimmer_force_on_fluid) {
       force_on_fluid = p.calc_director() * p.swimming().f_swim;
     }
@@ -335,7 +328,8 @@ void ParticleCoupling::kernel(std::vector<Particle *> const &particles) {
   m_lb.add_forces_at_pos(positions_force_coupling, force_coupling_forces);
 }
 
-#if defined(THERMOSTAT_PER_PARTICLE) and defined(PARTICLE_ANISOTROPY)
+#if defined(ESPRESSO_THERMOSTAT_PER_PARTICLE) and                              \
+    defined(ESPRESSO_PARTICLE_ANISOTROPY)
 static void lb_coupling_sanity_checks(Particle const &p) {
   /*
   lb does (at the moment) not support rotational particle coupling.
@@ -352,7 +346,7 @@ static void lb_coupling_sanity_checks(Particle const &p) {
 } // namespace LB
 
 void System::System::lb_couple_particles() {
-#ifdef CALIPER
+#ifdef ESPRESSO_CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
   assert(thermostat->lb != nullptr);
@@ -370,7 +364,8 @@ void System::System::lb_couple_particles() {
     for (auto const *particle_range : {&real_particles, &ghost_particles}) {
       for (auto &p : *particle_range) {
         if (not LB::is_tracer(p) and bookkeeping.should_be_coupled(p)) {
-#if defined(THERMOSTAT_PER_PARTICLE) and defined(PARTICLE_ANISOTROPY)
+#if defined(ESPRESSO_THERMOSTAT_PER_PARTICLE) and                              \
+    defined(ESPRESSO_PARTICLE_ANISOTROPY)
           LB::lb_coupling_sanity_checks(p);
 #endif
           particles.emplace_back(&p);

@@ -81,6 +81,10 @@
 
 namespace Mpiio {
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunreachable-code-return"
+#endif
 /**
  * @brief Fatal error handler.
  * On 1 MPI rank the error is recoverable and an exception is thrown.
@@ -108,6 +112,9 @@ static bool fatal_error(char const *msg, std::string const &fn = "",
   errexit();
   return false;
 }
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 /**
  * @brief Fatal error handler that closes an open file and queries the

@@ -34,6 +34,7 @@
 
 #include <boost/mpi.hpp>
 
+#include <cassert>
 #include <memory>
 #include <stdexcept>
 
@@ -67,11 +68,16 @@ BOOST_FIXTURE_TEST_CASE(particle_type_map_test, ParticleFactory) {
 }
 
 int main(int argc, char **argv) {
-  auto mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
-  Communication::init(mpi_env);
+  auto mpi_env = std::make_shared<boost::mpi::environment>(
+      argc, argv, boost::mpi::threading::multiple);
+  ::communication_environment =
+      std::make_unique<CommunicationEnvironment>(mpi_env);
+  assert(::comm_cart.size() == 1);
 
   auto &system = System::get_system();
   system.set_cell_structure_topology(CellStructureType::REGULAR);
 
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  auto const res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  ::communication_environment.reset();
+  return res;
 }

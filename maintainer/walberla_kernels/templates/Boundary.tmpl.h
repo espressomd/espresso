@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
- * Copyright (C) 2020-2023 The waLBerla project
+ * Copyright (C) 2022-2025 The ESPResSo project
+ * Copyright (C) 2020-2025 The waLBerla project
  *
  * This file is part of ESPResSo.
  *
@@ -21,7 +21,7 @@
 /*
  * Boundary class.
  * Adapted from the waLBerla source file
- * https://i10git.cs.fau.de/walberla/walberla/-/blob/fb076cd18daa6e2f24448349d1fffb974c845269/python/pystencils_walberla/templates/Boundary.tmpl.h
+ * https://i10git.cs.fau.de/walberla/walberla/-/blob/3e54d4f2336e47168ad87e3caaf7b3b082d86ca7/python/pystencils_walberla/templates/Boundary.tmpl.h
  */
 
 #pragma once
@@ -31,8 +31,9 @@
 {% if target is equalto 'cpu' -%}
 #include <field/GhostLayerField.h>
 {%- elif target is equalto 'gpu' -%}
-#include <gpu/GPUField.h>
 #include <gpu/FieldCopy.h>
+#include <gpu/GPUField.h>
+#include <gpu/GPUWrapper.h>
 {%- endif %}
 #include <domain_decomposition/BlockDataID.h>
 #include <domain_decomposition/IBlock.h>
@@ -40,6 +41,7 @@
 #include <field/FlagField.h>
 #include <core/debug/Debug.h>
 
+#include <array>
 #include <cassert>
 #include <functional>
 #include <memory>
@@ -65,7 +67,10 @@
 #define RESTRICT __restrict
 #else
 #define RESTRICT
+#endif
 
+#ifdef WALBERLA_BUILD_WITH_HALF_PRECISION_SUPPORT
+using walberla::half;
 #endif
 
 namespace walberla {
@@ -96,12 +101,18 @@ public:
         {% if target == 'gpu' -%}
         ~IndexVectors() {
             for( auto & gpuVec: gpuVectors_)
-                gpuFree( gpuVec );
+            {
+                if ( gpuVec )
+                {
+                    WALBERLA_GPU_CHECK(gpuFree( gpuVec ));
+                }
+            }
         }
         {% endif -%}
 
-        CpuIndexVector & indexVector(Type t) { return cpuVectors_[t]; }
-        {{StructName}} * pointerCpu(Type t)  { return cpuVectors_[t].data(); }
+        auto & indexVector(Type t) { return cpuVectors_[t]; }
+        auto const & indexVector(Type t) const { return cpuVectors_[t]; }
+        {{StructName}} * pointerCpu(Type t)  { return cpuVectors_[t].empty() ? nullptr : cpuVectors_[t].data(); }
 
         {% if target == 'gpu' -%}
         {{StructName}} * pointerGpu(Type t)  { return gpuVectors_[t]; }
@@ -111,7 +122,13 @@ public:
         {
             {% if target == 'gpu' -%}
             for( auto & gpuVec: gpuVectors_)
-                gpuFree( gpuVec );
+            {
+                if ( gpuVec )
+                {
+                    WALBERLA_GPU_CHECK(gpuFree( gpuVec ));
+                    gpuVec = nullptr;
+                }
+            }
             gpuVectors_.resize( cpuVectors_.size() );
 
             WALBERLA_ASSERT_EQUAL(cpuVectors_.size(), NUM_TYPES);
@@ -119,8 +136,12 @@ public:
             {
                 auto & gpuVec = gpuVectors_[i];
                 auto & cpuVec = cpuVectors_[i];
-                gpuMalloc( &gpuVec, sizeof({{StructName}}) * cpuVec.size() );
-                gpuMemcpy( gpuVec, &cpuVec[0], sizeof({{StructName}}) * cpuVec.size(), gpuMemcpyHostToDevice );
+                if ( cpuVec.empty() )
+                {
+                    continue;
+                }
+                WALBERLA_GPU_CHECK(gpuMalloc( &gpuVec, sizeof({{StructName}}) * cpuVec.size() ));
+                WALBERLA_GPU_CHECK(gpuMemcpy( gpuVec, cpuVec.data(), sizeof({{StructName}}) * cpuVec.size(), gpuMemcpyHostToDevice ));
             }
             {%- endif %}
         }
@@ -134,17 +155,106 @@ public:
         {%- endif %}
     };
 
+    {% if calculate_force -%}
+
+    struct ForceStruct {
+       {% if dim == 3 -%}
+       double F_0;
+       double F_1;
+       double F_2;
+       ForceStruct() : F_0(double_c(0.0)), F_1(double_c(0.0)), F_2(double_c(0.0)) {}
+       bool operator==(const ForceStruct & o) const {
+          return floatIsEqual(F_0, o.F_0) && floatIsEqual(F_1, o.F_1) && floatIsEqual(F_2, o.F_2);
+       }
+       {%- else -%}
+       double F_0;
+       double F_1;
+       ForceStruct() : F_0(double_c(0.0)), F_1(double_c(0.0)) {}
+       bool operator==(const ForceStruct & o) const {
+          return floatIsEqual(F_0, o.F_0) && floatIsEqual(F_1, o.F_1);
+       }
+       {%- endif -%}
+
+    };
+
+    class ForceVector
+    {
+     public:
+       ForceVector() = default;
+       bool operator==(ForceVector const &other) const { return other.cpuVector_ == cpuVector_; }
+
+       {% if target == 'gpu' -%}
+       ~ForceVector() {if(!gpuVector_.empty()){WALBERLA_GPU_CHECK(gpuFree( gpuVector_[0] ))}}
+       {% endif -%}
+
+       auto & forceVector() { return cpuVector_; }
+       auto const & forceVector() const { return cpuVector_; }
+       ForceStruct * pointerCpu()  { return cpuVector_.empty() ? nullptr : cpuVector_.data(); }
+       bool empty() const { return cpuVector_.empty(); }
+
+       {% if target == 'gpu' -%}
+       ForceStruct * pointerGpu()  { return gpuVector_[0]; }
+       {% endif -%}
+
+       Vector3<double> getForce()
+       {
+          syncCPU();
+          Vector3<double> result(double_c(0.0));
+          for(auto const &force : cpuVector_)
+          {
+             result[0] += force.F_0;
+             result[1] += force.F_1;
+             {% if dim == 3 -%}
+             result[2] += force.F_2;
+             {% endif -%}
+          }
+          return result;
+       }
+
+       void syncGPU()
+       {
+          {% if target == 'gpu' -%}
+          if(!gpuVector_.empty())
+          {
+             WALBERLA_GPU_CHECK(gpuFree( gpuVector_[0] ))
+             gpuVector_[0] = nullptr;
+          }
+          if(!cpuVector_.empty())
+          {
+             gpuVector_.resize(cpuVector_.size());
+             WALBERLA_GPU_CHECK(gpuMalloc(&gpuVector_[0], sizeof(ForceStruct) * cpuVector_.size()))
+             WALBERLA_GPU_CHECK(gpuMemcpy(gpuVector_[0], &cpuVector_[0], sizeof(ForceStruct) * cpuVector_.size(), gpuMemcpyHostToDevice))
+          }
+          {%- endif %}
+       }
+
+       void syncCPU()
+       {
+          {% if target == 'gpu' -%}
+          WALBERLA_GPU_CHECK(gpuMemcpy( &cpuVector_[0], gpuVector_[0] , sizeof(ForceStruct) * cpuVector_.size(), gpuMemcpyDeviceToHost ))
+          {%- endif %}
+       }
+
+     private:
+       std::vector<ForceStruct> cpuVector_;
+       {% if target == 'gpu' -%}
+       std::vector<ForceStruct *> gpuVector_;
+       {%- endif %}
+    };
+
+    {%- endif %}
+
     {{class_name}}( const std::shared_ptr<StructuredBlockForest> & blocks,
-                   {{kernel|generate_constructor_parameters(['indexVector', 'indexVectorSize'])}}{{additional_data_handler.constructor_arguments}})
-        :{{additional_data_handler.initialiser_list}} {{ kernel|generate_constructor_initializer_list(['indexVector', 'indexVectorSize']) }}
+                   {{kernel|generate_constructor_parameters(['indexVector', 'indexVectorSize', 'forceVector', 'forceVectorSize'])}}{{additional_data_handler.constructor_arguments}})
+        : {{additional_data_handler.initialiser_list}} {{ kernel|generate_constructor_initializer_list(['indexVector', 'indexVectorSize', 'forceVector', 'forceVectorSize']) }}
     {
         auto createIdxVector = []( IBlock * const , StructuredBlockStorage * const ) { return new IndexVectors(); };
         indexVectorID = blocks->addStructuredBlockData< IndexVectors >( createIdxVector, "IndexField_{{class_name}}");
-    };
-
-    {{class_name}}({{kernel|generate_constructor_parameters(['indexVectorSize'])}}{{additional_data_handler.constructor_arguments}})
-        : {{additional_data_handler.initialiser_list}} {{ kernel|generate_constructor_initializer_list(['indexVectorSize']) }}
-    {};
+        {% if calculate_force -%}
+        auto createForceVector = []( IBlock * const , StructuredBlockStorage * const ) { return new ForceVector(); };
+        forceVectorID = blocks->addStructuredBlockData< ForceVector >( createForceVector, "forceVector_{{class_name}}");
+        {%- endif %}
+    }
 
     void run (
         {{- ["IBlock * block", kernel.kernel_selection_parameters, ["gpuStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}}
@@ -166,6 +276,19 @@ public:
     void outer (
         {{- ["IBlock * block", kernel.kernel_selection_parameters, ["gpuStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}}
     );
+
+    Vector3<double> getForce(IBlock * {% if calculate_force -%}block{%else%}/*block*/{%- endif %})
+    {
+       {% if calculate_force -%}
+       auto * forceVector = block->getData<ForceVector>(forceVectorID);
+       if(forceVector->empty())
+          return Vector3<double>(double_c(0.0));
+       return forceVector->getForce();
+       {% else %}
+       WALBERLA_ABORT("Boundary condition was not generated including force calculation.")
+       return Vector3<double>(double_c(0.0));
+       {%- endif %}
+    }
 
     std::function<void (IBlock *)> getSweep( {{- [interface_spec.high_level_args, ["gpuStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}} )
     {
@@ -192,8 +315,8 @@ public:
     void fillFromFlagField( const std::shared_ptr<StructuredBlockForest> & blocks, ConstBlockDataID flagFieldID,
                             FlagUID boundaryFlagUID, FlagUID domainFlagUID)
     {
-        for( auto blockIt = blocks->begin(); blockIt != blocks->end(); ++blockIt )
-            fillFromFlagField<FlagField_T>({{additional_data_handler.additional_arguments_for_fill_function}}&*blockIt, flagFieldID, boundaryFlagUID, domainFlagUID );
+        for( auto &block : *blocks )
+            fillFromFlagField<FlagField_T>({{additional_data_handler.additional_arguments_for_fill_function}}&block, flagFieldID, boundaryFlagUID, domainFlagUID );
     }
 
 
@@ -205,12 +328,16 @@ public:
         auto & indexVectorAll = indexVectors->indexVector(IndexVectors::ALL);
         auto & indexVectorInner = indexVectors->indexVector(IndexVectors::INNER);
         auto & indexVectorOuter = indexVectors->indexVector(IndexVectors::OUTER);
+        {% if calculate_force -%}
+        auto * forceVector = block->getData< ForceVector > ( forceVectorID );
+        {%- endif %}
 
         auto * flagField = block->getData< FlagField_T > ( flagFieldID );
         {{additional_data_handler.additional_field_data|indent(4)}}
 
-        assert(flagField->flagExists(boundaryFlagUID) and
-               flagField->flagExists(domainFlagUID));
+        if( !(flagField->flagExists(boundaryFlagUID) and
+              flagField->flagExists(domainFlagUID) ))
+            return;
 
         auto boundaryFlag = flagField->getFlag(boundaryFlagUID);
         auto domainFlag = flagField->getFlag(domainFlagUID);
@@ -223,23 +350,50 @@ public:
         indexVectorOuter.clear();
 
         {% if inner_or_boundary -%}
-        for( auto it = flagField->begin(); it != flagField->end(); ++it )
+        {% if layout == "fzyx" -%}
+        {%- for dirIdx, dirVec, offset in additional_data_handler.stencil_info %}
+        for( auto it = flagField->beginWithGhostLayerXYZ( cell_idx_c( flagField->nrOfGhostLayers() - 1 ) ); it != flagField->end(); ++it )
         {
-            if( ! isFlagSet(it, domainFlag) )
+           if( ! isFlagSet(it, domainFlag) || isFlagSet(it, boundaryFlag) )
+              continue;
+
+           if ( isFlagSet( it.neighbor({{offset}} {%if dim == 3%}, 0 {%endif %}), boundaryFlag ) )
+           {
+              auto element = {{StructName}}(it.x(), it.y(), {%if dim == 3%} it.z(), {%endif %} {{dirIdx}} );
+              {{"auto const InitialisationAdditionalData = elementInitialiser(Cell(it.x() + %(x)s, it.y() + %(y)s, it.z() + %(z)s), blocks, *block);" | format(x=dirVec[0], y=dirVec[1], z=dirVec[2]) | replace("+ -", "-")}}
+              element.vel_0 = InitialisationAdditionalData[0];
+              element.vel_1 = InitialisationAdditionalData[1];
+              element.vel_2 = InitialisationAdditionalData[2];
+              indexVectorAll.emplace_back( element );
+              if( inner.contains( it.x(), it.y(), it.z() ) )
+                 indexVectorInner.emplace_back( element );
+              else
+                 indexVectorOuter.emplace_back( element );
+           }
+        }
+        {% endfor %}
+        {%else%}
+        for( auto it = flagField->beginWithGhostLayerXYZ( cell_idx_c( flagField->nrOfGhostLayers() - 1 ) ); it != flagField->end(); ++it )
+        {
+            if( ! isFlagSet(it, domainFlag) || isFlagSet(it, boundaryFlag) )
                 continue;
             {%- for dirIdx, dirVec, offset in additional_data_handler.stencil_info %}
             if ( isFlagSet( it.neighbor({{offset}} {%if dim == 3%}, 0 {%endif %}), boundaryFlag ) )
             {
                 auto element = {{StructName}}(it.x(), it.y(), {%if dim == 3%} it.z(), {%endif %} {{dirIdx}} );
-                {{additional_data_handler.data_initialisation(dirIdx)|indent(16)}}
-                indexVectorAll.push_back( element );
+                {{"auto const InitialisationAdditionalData = elementInitialiser(Cell(it.x() + %(x)s, it.y() + %(y)s, it.z() + %(z)s), blocks, *block);" | format(x=dirVec[0], y=dirVec[1], z=dirVec[2]) | replace("+ -", "-")}}
+                element.vel_0 = InitialisationAdditionalData[0];
+                element.vel_1 = InitialisationAdditionalData[1];
+                element.vel_2 = InitialisationAdditionalData[2];
+                indexVectorAll.emplace_back( element );
                 if( inner.contains( it.x(), it.y(), it.z() ) )
-                    indexVectorInner.push_back( element );
+                    indexVectorInner.emplace_back( element );
                 else
-                    indexVectorOuter.push_back( element );
+                    indexVectorOuter.emplace_back( element );
             }
             {% endfor %}
         }
+        {%endif%}
         {%else%}
         auto flagWithGLayers = flagField->xyzSizeWithGhostLayer();
         {% if single_link %}
@@ -263,11 +417,11 @@ public:
                 {% else %}
                 auto element = {{StructName}}(it.x(), it.y(), {%if dim == 3%} it.z(), {%endif %} {{dirIdx}} );
                 {{additional_data_handler.data_initialisation(dirIdx)|indent(16)}}
-                indexVectorAll.push_back( element );
+                indexVectorAll.emplace_back( element );
                 if( inner.contains( it.x(), it.y(), it.z() ) )
-                    indexVectorInner.push_back( element );
+                    indexVectorInner.emplace_back( element );
                 else
-                    indexVectorOuter.push_back( element );
+                    indexVectorOuter.emplace_back( element );
                 {% endif %}
             }
             {% endfor %}
@@ -278,7 +432,7 @@ public:
             {
             {%- for dirIdx, dirVec, offset in additional_data_handler.stencil_info %}
                 dx = {{dirVec[0]}}; dy = {{dirVec[1]}}; {%if dim == 3%} dz = {{dirVec[2]}}; {% endif %}
-                dot = numeric_cast< {{dtype}} >( dx*sum_x + dy*sum_y {%if dim == 3%} + dz*sum_z {% endif %});
+                dot = {{dtype}}( dx*sum_x + dy*sum_y {%if dim == 3%} + dz*sum_z {% endif %});
                 if (dot > maxn)
                 {
                     maxn = dot;
@@ -286,12 +440,11 @@ public:
                 }
             {% endfor %}
                 auto element = {{StructName}}(it.x(), it.y(), {%if dim == 3%} it.z(), {%endif %} calculated_idx );
-                {{additional_data_handler.data_initialisation(dirIdx)|indent(16)}}
-                indexVectorAll.push_back( element );
+                indexVectorAll.emplace_back( element );
                 if( inner.contains( it.x(), it.y(), it.z() ) )
-                indexVectorInner.push_back( element );
+                indexVectorInner.emplace_back( element );
                 else
-                indexVectorOuter.push_back( element );
+                indexVectorOuter.emplace_back( element );
             }
         {% endif -%}
 
@@ -299,6 +452,10 @@ public:
         {% endif %}
 
         indexVectors->syncGPU();
+        {% if calculate_force -%}
+        forceVector->forceVector().resize(indexVectorAll.size());
+        forceVector->syncGPU();
+        {%- endif %}
     }
 
 private:
@@ -309,10 +466,42 @@ private:
    );
 
     BlockDataID indexVectorID;
+    {% if calculate_force -%}
+    BlockDataID forceVectorID;
+    {%- endif %}
     {{additional_data_handler.additional_member_variable|indent(4)}}
+
+{% if calculate_force -%}
 public:
-    {{kernel|generate_members(('indexVector', 'indexVectorSize'))|indent(4)}}
+    static constexpr std::array<std::array<int, {{additional_data_handler.Q}}u>, {{dim}}u> neighborOffset = { {
+        {% for i in range(dim) -%}
+            { {{additional_data_handler.neighbor_directions[i][1:-1]}} },
+        {%- endfor %}
+    } };
+
+    auto const & getForceVector(IBlock const *block) const {
+        auto const * forceVector = block->getData<ForceVector>(forceVectorID);
+        return forceVector->forceVector();
+    }
+
+    auto const & getIndexVector(IBlock const *block) const {
+        auto const * indexVectors = block->getData<IndexVectors>(indexVectorID);
+        return indexVectors->indexVector(IndexVectors::ALL);
+    }
+
+    BlockDataID getIndexVectorID() const { return indexVectorID; }
+    BlockDataID getForceVectorID() const { return forceVectorID; }
+{%- endif %}
+
+public:
+    {{kernel|generate_members(('indexVector', 'indexVectorSize', 'forceVector', 'forceVectorSize'))|indent(4)}}
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic pop
+#endif
 
 } // namespace {{namespace}}
 } // namespace walberla

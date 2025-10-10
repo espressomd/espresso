@@ -54,8 +54,9 @@
 
 #]=======================================================================]
 function(python_test)
-  cmake_parse_arguments(TEST "NO_MPI" "FILE;MAX_NUM_PROC;GPU_SLOTS;SUFFIX"
-                        "DEPENDS;DEPENDENCIES;LABELS;ARGUMENTS" ${ARGN})
+  cmake_parse_arguments(
+    TEST "NO_MPI" "FILE;MAX_NUM_PROC;NUM_THREADS;GPU_SLOTS;SUFFIX"
+    "DEPENDS;DEPENDENCIES;LABELS;ARGUMENTS" ${ARGN})
   cmake_path(GET TEST_FILE STEM TEST_NAME)
   set(TEST_FILE_CONFIGURED "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}.py")
   if(TEST_SUFFIX)
@@ -80,6 +81,9 @@ function(python_test)
   if(NOT DEFINED TEST_GPU_SLOTS)
     set(TEST_GPU_SLOTS 0)
   endif()
+  if(NOT DEFINED TEST_NUM_THREADS)
+    set(TEST_NUM_THREADS 2)
+  endif()
 
   if(${TEST_MAX_NUM_PROC} GREATER ${ESPRESSO_TEST_NP})
     set(TEST_NUM_PROC ${ESPRESSO_TEST_NP})
@@ -92,13 +96,15 @@ function(python_test)
     add_test(
       NAME ${TEST_NAME}
       COMMAND
-        ${MPIEXEC} ${ESPRESSO_MPIEXEC_PREFLAGS} ${MPIEXEC_NUMPROC_FLAG}
-        ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${ESPRESSO_MPIEXEC_TMPDIR}
+        ${MPIEXEC} ${MPIEXEC_PREFLAGS} ${ESPRESSO_MPIEXEC_PREFLAGS}
+        ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${ESPRESSO_MPIEXEC_TMPDIR}
         ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
-        ${TEST_FILE_CONFIGURED} ${TEST_ARGUMENTS} ${MPIEXEC_POSTFLAGS})
+        ${TEST_FILE_CONFIGURED} --verbose ${TEST_ARGUMENTS}
+        ${MPIEXEC_POSTFLAGS})
   else()
-    add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
-             ${TEST_FILE_CONFIGURED} ${TEST_ARGUMENTS})
+    add_test(NAME ${TEST_NAME}
+             COMMAND ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
+                     ${TEST_FILE_CONFIGURED} --verbose ${TEST_ARGUMENTS})
   endif()
 
   if(${TEST_GPU_SLOTS} GREATER 0 AND ESPRESSO_BUILD_WITH_CUDA)
@@ -115,10 +121,20 @@ function(python_test)
   if(${TEST_NUM_PROC} EQUAL 3)
     list(APPEND TEST_LABELS "parallel_odd")
   endif()
+  list(APPEND TEST_LABELS "python_test")
 
+  set(TEST_NUM_CORES ${TEST_NUM_PROC})
+  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+    math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
+  endif()
+
+  # cmake-format: off
   set_tests_properties(
-    ${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC} SKIP_RETURN_CODE 5
+    ${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_CORES} SKIP_RETURN_CODE 5
+                            ENVIRONMENT "OMP_PROC_BIND=false"
+                            ENVIRONMENT "OMP_NUM_THREADS=${TEST_NUM_THREADS}"
                             DEPENDS "${TEST_DEPENDS}" LABELS "${TEST_LABELS}")
+  # cmake-format: on
 
   set(python_tests ${python_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
 endfunction(python_test)
@@ -202,13 +218,13 @@ checkpoint_test(MODES dp3m_cpu__therm_langevin__int_nvt)
 checkpoint_test(MODES therm_dpd__int_nvt)
 checkpoint_test(MODES scafacos__therm_bd__int_bd)
 checkpoint_test(MODES therm_sdm__int_sdm)
-checkpoint_test(MODES lj__ase SUFFIX 1_core MAX_NUM_PROC 1)
 
 python_test(FILE bond_breakage.py MAX_NUM_PROC 4)
 python_test(FILE cell_system.py MAX_NUM_PROC 4)
 python_test(FILE get_neighbors.py MAX_NUM_PROC 4)
 python_test(FILE get_neighbors.py MAX_NUM_PROC 3 SUFFIX 3_cores)
 python_test(FILE tune_skin.py MAX_NUM_PROC 1)
+python_test(FILE contact_time.py MAX_NUM_PROC 4)
 python_test(FILE code_info.py MAX_NUM_PROC 1)
 python_test(FILE constraint_homogeneous_magnetic_field.py MAX_NUM_PROC 4)
 python_test(FILE cutoffs.py MAX_NUM_PROC 4)
@@ -225,6 +241,7 @@ python_test(FILE engine_langevin.py MAX_NUM_PROC 4)
 python_test(FILE engine_lb.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE engine_lb.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
 python_test(FILE icc.py MAX_NUM_PROC 4)
+python_test(FILE icc_electrodes.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE icc_interface.py MAX_NUM_PROC 1 GPU_SLOTS 1)
 python_test(FILE mass-and-rinertia_per_particle.py MAX_NUM_PROC 2 LABELS long)
 python_test(FILE interactions_bond_angle.py MAX_NUM_PROC 4)
@@ -260,11 +277,8 @@ python_test(FILE constant_pH_stats.py MAX_NUM_PROC 4 LABELS long)
 python_test(FILE canonical_ensemble.py MAX_NUM_PROC 2)
 python_test(FILE writevtf.py MAX_NUM_PROC 4)
 # python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 4 GPU_SLOTS 1 LABELS long)
-python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 GPU_SLOTS 3 LABELS long)
-python_test(FILE ek_fluctuations.py MAX_NUM_PROC 2)
+python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS long)
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
-python_test(FILE integrator_langevin_stats.py MAX_NUM_PROC 1 LABELS long)
-python_test(FILE integrator_brownian_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE lees_edwards.py MAX_NUM_PROC 4)
 python_test(FILE lb_lees_edwards.py MAX_NUM_PROC 1)
 python_test(FILE lb_lees_edwards_particle_coupling.py MAX_NUM_PROC 1)
@@ -277,10 +291,10 @@ python_test(FILE virtual_sites_tracers.py MAX_NUM_PROC 2 DEPENDENCIES
 # python_test(FILE virtual_sites_tracers_gpu.py MAX_NUM_PROC 2 GPU_SLOTS 1
 # DEPENDENCIES virtual_sites_tracers_common.py)
 python_test(FILE regular_decomposition.py MAX_NUM_PROC 4)
+python_test(FILE regular_decomposition.py MAX_NUM_PROC 1 SUFFIX 1_core)
 python_test(FILE hybrid_decomposition.py MAX_NUM_PROC 1 SUFFIX 1_core)
 python_test(FILE hybrid_decomposition.py MAX_NUM_PROC 4)
-python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)
-python_test(FILE integrator_steepest_descent.py MAX_NUM_PROC 4)
+python_test(FILE coordinates_folding.py MAX_NUM_PROC 2)
 python_test(FILE ibm.py MAX_NUM_PROC 2)
 python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1)
 python_test(FILE dipolar_direct_summation.py MAX_NUM_PROC 2 GPU_SLOTS 1)
@@ -332,7 +346,7 @@ python_test(FILE thermalized_bond.py MAX_NUM_PROC 4)
 python_test(FILE thole.py MAX_NUM_PROC 4)
 python_test(FILE lb_slice.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1)
-# python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 2) # TODO
+python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_boundary_ghost_layer.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_circular_couette.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_poiseuille.py MAX_NUM_PROC 4 GPU_SLOTS 1)
@@ -344,12 +358,14 @@ python_test(FILE oif_volume_conservation.py MAX_NUM_PROC 2)
 python_test(FILE simple_pore.py MAX_NUM_PROC 1)
 python_test(FILE field_test.py MAX_NUM_PROC 1)
 python_test(FILE lb_boundary.py MAX_NUM_PROC 2 GPU_SLOTS 1)
+python_test(FILE lb_boundary.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
 python_test(FILE lb_streaming.py MAX_NUM_PROC 4 GPU_SLOTS 0)
 python_test(FILE lb_streaming.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
 python_test(FILE lb_shear.py MAX_NUM_PROC 2 GPU_SLOTS 1)
-python_test(FILE lb_thermostat.py MAX_NUM_PROC 2 GPU_SLOTS 0)
-python_test(FILE lb_thermostat.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
-# python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2 GPU_SLOTS 1) # TODO
+python_test(FILE lb_thermostat.py MAX_NUM_PROC 2 GPU_SLOTS 0 LABELS long)
+python_test(FILE lb_thermostat.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS long SUFFIX
+            1_core)
+python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 2 GPU_SLOTS 1 LABELS
             long)
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS
@@ -371,7 +387,6 @@ python_test(FILE galilei.py MAX_NUM_PROC 4)
 python_test(FILE linear_momentum.py MAX_NUM_PROC 4)
 python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE mmm1d.py MAX_NUM_PROC 2)
-python_test(FILE integrator_stokesian_stats.py MAX_NUM_PROC 2 LABELS long)
 python_test(FILE elc.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE elc_vs_analytic.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE rotation.py MAX_NUM_PROC 1)
@@ -384,7 +399,6 @@ if(${ESPRESSO_TEST_NP} GREATER_EQUAL 8)
   python_test(FILE p3m_fft.py MAX_NUM_PROC 8 SUFFIX 8_cores)
 endif()
 python_test(FILE p3m_tuning_exceptions.py MAX_NUM_PROC 1 GPU_SLOTS 1)
-python_test(FILE integrator_exceptions.py MAX_NUM_PROC 1)
 python_test(FILE utils.py MAX_NUM_PROC 1)
 python_test(FILE npt_thermostat.py MAX_NUM_PROC 4)
 python_test(FILE box_geometry.py MAX_NUM_PROC 1)
@@ -393,23 +407,34 @@ python_test(FILE lattice_vtk.py MAX_NUM_PROC 4 GPU_SLOTS 1)
 if(${ESPRESSO_TEST_NP} GREATER_EQUAL 6)
   python_test(FILE lattice_vtk.py MAX_NUM_PROC 6 SUFFIX 6_cores GPU_SLOTS 1)
 endif()
-python_test(FILE ek_interface.py MAX_NUM_PROC 2)
-python_test(FILE ek_diffusion.py MAX_NUM_PROC 1)
-python_test(FILE ek_noflux.py MAX_NUM_PROC 1)
-python_test(FILE ek_eof.py MAX_NUM_PROC 1)
-python_test(FILE ek_fixedflux.py MAX_NUM_PROC 1)
-python_test(FILE ek_bulk_reactions.py MAX_NUM_PROC 1)
-python_test(FILE ek_indexed_reactions.py MAX_NUM_PROC 1)
-python_test(FILE ek_fixeddensity.py MAX_NUM_PROC 1)
-python_test(FILE ek_boundary.py MAX_NUM_PROC 2)
-python_test(FILE ek_slice.py MAX_NUM_PROC 2)
+python_test(FILE ek_interface.py MAX_NUM_PROC 2 GPU_SLOTS 1)
+python_test(FILE ek_diffusion.py MAX_NUM_PROC 1 GPU_SLOTS 1)
+python_test(FILE ek_diffusive_flux.py MAX_NUM_PROC 1 GPU_SLOTS 1)
+python_test(FILE ek_noflux.py MAX_NUM_PROC 1 GPU_SLOTS 1)
+python_test(FILE ek_eof.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS long)
+python_test(FILE ek_bulk_reactions.py MAX_NUM_PROC 1 GPU_SLOTS 1)
+python_test(FILE ek_indexed_reactions.py MAX_NUM_PROC 1 GPU_SLOTS 1)
+python_test(FILE ek_fixeddensity.py MAX_NUM_PROC 1 GPU_SLOTS 1)
+python_test(FILE ek_fixedflux.py MAX_NUM_PROC 1 GPU_SLOTS 1)
+python_test(FILE ek_boundary.py MAX_NUM_PROC 2 GPU_SLOTS 1)
+python_test(FILE ek_slice.py MAX_NUM_PROC 2 GPU_SLOTS 1)
+python_test(FILE ek_potential.py MAX_NUM_PROC 2 GPU_SLOTS 1)
+python_test(FILE ek_ion_conductivity.py MAX_NUM_PROC 1 GPU_SLOTS 1)
+python_test(FILE ek_fluctuations.py MAX_NUM_PROC 2 GPU_SLOTS 1 LABELS long)
 python_test(FILE propagation_newton.py MAX_NUM_PROC 4)
+python_test(FILE propagation_symplectic_euler.py MAX_NUM_PROC 4)
 python_test(FILE propagation_langevin.py MAX_NUM_PROC 2)
 python_test(FILE propagation_brownian.py MAX_NUM_PROC 1)
 python_test(FILE propagation_lb.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE propagation_npt.py MAX_NUM_PROC 4 GPU_SLOTS 1)
 python_test(FILE propagation_stokesian.py MAX_NUM_PROC 2)
-python_test(FILE coordinates_folding.py MAX_NUM_PROC 2)
+python_test(FILE integrator_symplectic_euler_langevin.py MAX_NUM_PROC 4)
+python_test(FILE integrator_steepest_descent.py MAX_NUM_PROC 4)
+python_test(FILE integrator_exceptions.py MAX_NUM_PROC 1)
+python_test(FILE integrator_langevin_stats.py MAX_NUM_PROC 1 LABELS long)
+python_test(FILE integrator_brownian_stats.py MAX_NUM_PROC 1 LABELS long)
+python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)
+python_test(FILE integrator_stokesian_stats.py MAX_NUM_PROC 2 LABELS long)
 
 set(ESPRESSO_CTEST_RESOURCE_SPEC_FILE resources.json)
 configure_file(
@@ -430,6 +455,7 @@ add_custom_target(
 
 add_custom_target(
   check_python_parallel_odd
+  JOB_POOL console
   COMMAND
     ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -L parallel_odd
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}
@@ -437,6 +463,7 @@ add_custom_target(
 add_dependencies(check_python_parallel_odd pypresso python_test_data)
 add_custom_target(
   check_python_gpu
+  JOB_POOL console
   COMMAND
     ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -L gpu
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}
@@ -445,6 +472,7 @@ add_dependencies(check_python_gpu pypresso python_test_data)
 
 add_custom_target(
   check_python_skip_long
+  JOB_POOL console
   COMMAND
     ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -LE long
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}
@@ -453,6 +481,7 @@ add_dependencies(check_python_skip_long pypresso python_test_data)
 
 add_custom_target(
   check_python
+  JOB_POOL console
   COMMAND
     ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}

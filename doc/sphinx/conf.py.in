@@ -247,7 +247,8 @@ rst_prolog = """
 """
 # Style ESPResSo
 rst_epilog = """
-.. |es| replace:: *ESPResSo*
+.. |es| replace:: ESPResSo
+.. |p3m| replace:: P\\ :superscript:`3`\\ M
 """
 # Re-enable grouping of arguments in numpydoc
 # https://github.com/sphinx-doc/sphinx/issues/2227

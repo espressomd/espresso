@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
 
 #include "electrostatics/elc.hpp"
 
@@ -39,6 +39,10 @@
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+#include <Kokkos_Core.hpp>
+#endif
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/range/combine.hpp>
@@ -993,7 +997,7 @@ void ElectrostaticLayerCorrection::sanity_checks_periodicity() const {
 void ElectrostaticLayerCorrection::sanity_checks_dielectric_contrasts() const {
   if (elc.dielectric_contrast_on) {
     auto const &cell_structure = *get_system().cell_structure;
-    auto const precision_threshold = std::sqrt(ROUND_ERROR_PREC);
+    auto const precision_threshold = std::sqrt(round_error_prec);
     auto const total_charge = std::abs(calc_total_charge(cell_structure));
     if (total_charge >= precision_threshold) {
       if (elc.const_pot) {
@@ -1072,7 +1076,7 @@ elc_data::elc_data(double maxPWerror, double gap_size, double far_cut,
       space_layer{(dielectric_contrast_on) ? gap_size / 3. : 0.},
       space_box{gap_size - ((dielectric_contrast_on) ? 2. * space_layer : 0.)} {
 
-  auto const delta_range = 1. + std::sqrt(ROUND_ERROR_PREC);
+  auto const delta_range = 1. + std::sqrt(round_error_prec);
   if (far_cut <= 0. and not far_calculated) {
     throw std::domain_error("Parameter 'far_cut' must be > 0");
   }
@@ -1098,7 +1102,7 @@ elc_data::elc_data(double maxPWerror, double gap_size, double far_cut,
    * no constant potential difference is applied. The case of two non-metallic
    * parallel boundaries can only be treated with a constant potential. */
   if (dielectric_contrast_on and not const_pot and
-      (std::fabs(1. - delta_mid_top * delta_mid_bot) < ROUND_ERROR_PREC)) {
+      (std::fabs(1. - delta_mid_top * delta_mid_bot) < round_error_prec)) {
     throw std::domain_error("ELC with two parallel metallic boundaries "
                             "requires the const_pot option");
   }
@@ -1117,10 +1121,17 @@ void charge_assign(elc_data const &elc, CoulombP3M &solver,
   solver.prepare_fft_mesh(protocol == ChargeProtocol::BOTH or
                           protocol == ChargeProtocol::IMAGE);
 
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  // multi-threading -> cache sizes must be equal to the number of particles
+  auto const include_neutral_particles = Kokkos::num_threads() > 1;
+#else
+  auto constexpr include_neutral_particles = false;
+#endif
+
   for (auto zipped : p_q_pos_range) {
     auto const p_q = boost::get<0>(zipped);
     auto const &p_pos = boost::get<1>(zipped);
-    if (p_q != 0.) {
+    if (include_neutral_particles or p_q != 0.) {
       // assign real charges
       if (protocol == ChargeProtocol::BOTH or
           protocol == ChargeProtocol::REAL) {

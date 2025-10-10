@@ -36,6 +36,9 @@
 #include <cmath>
 #include <tuple>
 
+/** Tiny OIF elasticity cutoff. */
+inline constexpr auto tiny_oif_elasticity_coefficient{1e-10};
+
 /** Parameters for OIF local forces
  *
  *  Characterize the deformation of two triangles sharing an edge.
@@ -105,18 +108,18 @@ OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
   Utils::Vector3d force1{}, force2{}, force3{}, force4{};
 
   // surface strain constraint
-  if (ks > TINY_OIF_ELASTICITY_COEFFICIENT or
-      kslin > TINY_OIF_ELASTICITY_COEFFICIENT) {
+  if (ks > tiny_oif_elasticity_coefficient or
+      kslin > tiny_oif_elasticity_coefficient) {
     auto const dx = fp2 - fp3;
     auto const len = dx.norm();
     auto const dr = len - r0;
     auto fac = 0.;
     // linear stretching
-    if (kslin > TINY_OIF_ELASTICITY_COEFFICIENT) {
+    if (kslin > tiny_oif_elasticity_coefficient) {
       fac -= kslin * dr; // no normalization
     }
     // non-linear stretching
-    if (ks > TINY_OIF_ELASTICITY_COEFFICIENT) {
+    if (ks > tiny_oif_elasticity_coefficient) {
       /** For non-linear stretching, see eq. (19) in @cite dupin07a */
       auto const lambda = len / r0;
       auto const spring = (std::pow(lambda, 0.5) + std::pow(lambda, -2.5)) /
@@ -129,7 +132,7 @@ OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
   }
 
   // viscous force
-  if (kvisc > TINY_OIF_ELASTICITY_COEFFICIENT) { // to be implemented....
+  if (kvisc > tiny_oif_elasticity_coefficient) { // to be implemented....
     auto const dx = fp2 - fp3;
     auto const len2 = dx.norm2();
     auto const v_ij = p3.v() - p2.v();
@@ -168,18 +171,16 @@ OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
      forceT1 is restoring force for triangle p1,p2,p3 and forceT2 restoring
      force for triangle p2,p3,p4 p1 += forceT1; p2 -= 0.5*forceT1+0.5*forceT2;
      p3 -= 0.5*forceT1+0.5*forceT2; p4 += forceT2; */
-  if (kb > TINY_OIF_ELASTICITY_COEFFICIENT) {
+  if (kb > tiny_oif_elasticity_coefficient) {
     auto const phi = Utils::angle_btw_triangles(fp1, fp2, fp3, fp4);
     auto const aa = (phi - phi0); // no renormalization by phi0, to be
                                   // consistent with Krueger and Fedosov
     auto const fac = kb * aa;
 
-    auto const Nc = Utils::get_n_triangle(
-        fp1, fp2,
-        fp3); // returns (fp2 - fp1)x(fp3 - fp1), thus Nc = (A - C)x(B - C)
-    auto const Nd = Utils::get_n_triangle(
-        fp4, fp3,
-        fp2); // returns (fp3 - fp4)x(fp2 - fp4), thus Nd = (B - D)x(A - D)
+    // calculates (fp2 - fp1)x(fp3 - fp1), thus Nc = (A - C)x(B - C)
+    auto const Nc = Utils::get_n_triangle(fp1, fp2, fp3);
+    // calculates (fp3 - fp4)x(fp2 - fp4), thus Nd = (B - D)x(A - D)
+    auto const Nd = Utils::get_n_triangle(fp4, fp3, fp2);
 
     auto const BminA = fp3 - fp2;
 
@@ -204,36 +205,31 @@ OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
    * Proportional distribution of forces, implemented according to
    * @cite jancigova16a.
    */
-  if (kal > TINY_OIF_ELASTICITY_COEFFICIENT) {
+  if (kal > tiny_oif_elasticity_coefficient) {
+    auto handle_triangle =
+        [this](double A0, Utils::Vector3d const &c1, Utils::Vector3d const &c2,
+               Utils::Vector3d const &c3, Utils::Vector3d &f1,
+               Utils::Vector3d &f2, Utils::Vector3d &f3) {
+          // calculate triangle barycenter and surface
+          auto const h = (1. / 3.) * (c1 + c2 + c3);
+          auto const A = Utils::area_triangle(c1, c2, c3);
+          auto const t = sqrt(A / A0) - 1.0;
 
-    auto handle_triangle = [](double kal, double A0, Utils::Vector3d const &fp1,
-                              Utils::Vector3d const &fp2,
-                              Utils::Vector3d const &fp3,
-                              Utils::Vector3d &force1, Utils::Vector3d &force2,
-                              Utils::Vector3d &force3) {
-      auto const h = (1. / 3.) * (fp1 + fp2 + fp3);
-      auto const A = Utils::area_triangle(fp1, fp2, fp3);
-      auto const t = sqrt(A / A0) - 1.0;
+          auto const m1 = h - c1;
+          auto const m2 = h - c2;
+          auto const m3 = h - c3;
 
-      auto const m1 = h - fp1;
-      auto const m2 = h - fp2;
-      auto const m3 = h - fp3;
+          auto const fac = kal * A0 * (2 * t + t * t) /
+                           (m1.norm2() + m2.norm2() + m3.norm2());
 
-      auto const m1_length2 = m1.norm2();
-      auto const m2_length2 = m2.norm2();
-      auto const m3_length2 = m3.norm2();
+          // local area force for triangle
+          f1 += (fac / 3.0) * m1;
+          f2 += (fac / 3.0) * m2;
+          f3 += (fac / 3.0) * m3;
+        };
 
-      auto const fac =
-          kal * A0 * (2 * t + t * t) / (m1_length2 + m2_length2 + m3_length2);
-
-      // local area force for p1
-      force1 += (fac / 3.0) * m1;
-      force2 += (fac / 3.0) * m2;
-      force3 += (fac / 3.0) * m3;
-    };
-
-    handle_triangle(kal, A01, fp1, fp2, fp3, force1, force2, force3);
-    handle_triangle(kal, A02, fp2, fp3, fp4, force2, force3, force4);
+    handle_triangle(A01, fp1, fp2, fp3, force1, force2, force3);
+    handle_triangle(A02, fp2, fp3, fp4, force2, force3, force4);
   }
   return std::make_tuple(force2, force1, force3, force4);
 }

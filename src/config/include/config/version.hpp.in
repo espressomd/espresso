@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2022 The ESPResSo project
+ * Copyright (C) 2012-2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,15 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CONFIG_VERSION_HPP
-#define ESPRESSO_SRC_CONFIG_VERSION_HPP
+#pragma once
 
-#define ESPRESSO_VERSION_MAJOR 4
-#define ESPRESSO_VERSION_MINOR 3
+#define ESPRESSO_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define ESPRESSO_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define ESPRESSO_VERSION_PATCH @PROJECT_VERSION_PATCH@
 #define ESPRESSO_VERSION "@PROJECT_VERSION@"
 #define ESPRESSO_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
 #define GIT_BRANCH "@GIT_BRANCH@"
 #define GIT_COMMIT_HASH "@GIT_COMMIT_HASH@"
 #define GIT_STATE "@GIT_STATE@"
-
-#endif

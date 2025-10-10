@@ -69,7 +69,7 @@ HarmonicBond::force(Utils::Vector3d const &dx) const {
 
   auto const dr = dist - r;
   auto fac = -k * dr;
-  if (dist > ROUND_ERROR_PREC) { /* Regular case */
+  if (dist > round_error_prec) { /* Regular case */
     fac /= dist;
   } else {
     if (r > 0.) {

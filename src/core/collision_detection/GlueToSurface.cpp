@@ -19,8 +19,8 @@
 
 #include <config/config.hpp>
 
-#ifdef COLLISION_DETECTION
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_COLLISION_DETECTION
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 
 #include "CollisionPair.hpp"
 #include "GlueToSurface.hpp"
@@ -107,11 +107,11 @@ void GlueToSurface::handle_collisions(
   int current_vs_pid = global_max_seen_particle + 1;
 
   // Iterate over global collision queue
-  for (auto &c : global_collision_queue) {
+  for (auto const &[pid1, pid2] : global_collision_queue) {
 
     // Get particle pointers
-    Particle *p1 = cell_structure.get_local_particle(c.first);
-    Particle *p2 = cell_structure.get_local_particle(c.second);
+    Particle *p1 = cell_structure.get_local_particle(pid1);
+    Particle *p2 = cell_structure.get_local_particle(pid2);
 
     // Only nodes take part in particle creation and binding
     // that see both particles
@@ -164,8 +164,8 @@ void GlueToSurface::handle_collisions(
     // Add a bond between the centers of the colliding particles
     // The bond is placed on the node that has p1
     if (!p1->is_ghost()) {
-      const int bondG[] = {c.second};
-      get_part(cell_structure, c.first).bonds().insert({bond_centers, bondG});
+      const int bondG[] = {pid2};
+      get_part(cell_structure, pid1).bonds().insert({bond_centers, bondG});
     }
 
     // Change type of particle being attached, to make it inert
@@ -184,8 +184,8 @@ void GlueToSurface::handle_collisions(
                                       min_global_cut, current_vs_pid, pos,
                                       attach_vs_to.id());
       // Particle storage locations may have changed due to added particle
-      p1 = cell_structure.get_local_particle(c.first);
-      p2 = cell_structure.get_local_particle(c.second);
+      p1 = cell_structure.get_local_particle(pid1);
+      p2 = cell_structure.get_local_particle(pid2);
       current_vs_pid++;
     }
     // Create bond between the virtual particles
@@ -194,7 +194,7 @@ void GlueToSurface::handle_collisions(
     get_part(cell_structure, p->id()).bonds().insert({bond_vs, bondG});
   } // Loop over all collisions in the queue
 
-#ifdef ADDITIONAL_CHECKS
+#ifdef ESPRESSO_ADDITIONAL_CHECKS
   assert(Utils::Mpi::all_compare(::comm_cart, current_vs_pid) &&
          "Nodes disagree about current_vs_pid");
 #endif
@@ -210,5 +210,5 @@ void GlueToSurface::handle_collisions(
 
 } // namespace CollisionDetection
 
-#endif // VIRTUAL_SITES_RELATIVE
-#endif // COLLISION_DETECTION
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_COLLISION_DETECTION

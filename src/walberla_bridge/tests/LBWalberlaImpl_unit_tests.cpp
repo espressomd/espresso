@@ -18,10 +18,6 @@
  */
 #define BOOST_TEST_MODULE LB walberla node setters and getters test
 #define BOOST_TEST_DYN_LINK
-#include "config/config.hpp"
-
-#ifdef WALBERLA
-
 #define BOOST_TEST_NO_MAIN
 
 #include <boost/test/data/monomorphic.hpp>
@@ -240,6 +236,8 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(params);
   auto const n_ghost_layers = lb->get_lattice().get_ghost_layers();
   auto const [my_left, my_right] = lb->get_lattice().get_local_domain();
+  auto const pos_checker_halo = lb->make_lattice_position_checker(true);
+  auto const pos_checker_domain = lb->make_lattice_position_checker(false);
 
   for (auto const &n : all_nodes_incl_ghosts(lb->get_lattice())) {
     auto const pos = n + Vector3d::broadcast(.5);
@@ -251,6 +249,9 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
 
       BOOST_CHECK(lb->get_lattice().pos_in_local_domain(pos));
       BOOST_CHECK(lb->get_lattice().pos_in_local_halo(pos));
+
+      BOOST_CHECK(pos_checker_halo(pos));
+      BOOST_CHECK(pos_checker_domain(pos));
       is_local = 1;
     } else {
       // in local halo?
@@ -261,6 +262,9 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
 
         BOOST_CHECK(!lb->get_lattice().pos_in_local_domain(pos));
         BOOST_CHECK(lb->get_lattice().pos_in_local_halo(pos));
+
+        BOOST_CHECK(pos_checker_halo(pos));
+        BOOST_CHECK(!pos_checker_domain(pos));
       } else {
         // neither in domain nor in halo
         BOOST_CHECK(!lb->get_lattice().node_in_local_domain(n));
@@ -268,6 +272,9 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
 
         BOOST_CHECK(!lb->get_lattice().pos_in_local_domain(pos));
         BOOST_CHECK(!lb->get_lattice().pos_in_local_halo(pos));
+
+        BOOST_CHECK(!pos_checker_halo(pos));
+        BOOST_CHECK(!pos_checker_domain(pos));
       }
     }
 
@@ -587,15 +594,15 @@ BOOST_DATA_TEST_CASE(vtk_exceptions,
   auto const flag =
       static_cast<std::underlying_type_t<OutputVTK>>(OutputVTK::density);
   // cannot create the same observable twice
-  lb->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step");
+  lb->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step", false);
   BOOST_CHECK_THROW(
-      lb->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step"),
+      lb->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step", false),
       std::runtime_error);
   // cannot manually call an automatic observable
-  lb->create_vtk(1u, 0u, flag, units, "auto", "vtk_out", "step");
+  lb->create_vtk(1u, 0u, flag, units, "auto", "vtk_out", "step", false);
   BOOST_CHECK_THROW(lb->write_vtk("vtk_out/auto"), std::runtime_error);
   // cannot activate a manual observable
-  lb->create_vtk(0u, 0u, flag, units, "manual", "vtk_out", "step");
+  lb->create_vtk(0u, 0u, flag, units, "manual", "vtk_out", "step", false);
   BOOST_CHECK_THROW(lb->switch_vtk("vtk_out/manual", 0), std::runtime_error);
   // cannot call or activate observables that haven't been registered yet
   BOOST_CHECK_THROW(lb->write_vtk("unknown"), std::runtime_error);
@@ -654,7 +661,3 @@ int main(int argc, char **argv) {
   MPI_Finalize();
   return res;
 }
-
-#else // WALBERLA
-int main(int argc, char **argv) {}
-#endif

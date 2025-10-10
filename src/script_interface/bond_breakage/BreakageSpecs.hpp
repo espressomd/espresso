@@ -42,8 +42,8 @@ class BreakageSpecs : public BreakageSpecsBase_t {
   using Base = BreakageSpecsBase_t;
 
 public:
-  using key_type = typename Base::key_type;
-  using mapped_type = typename Base::mapped_type;
+  using Base::key_type;
+  using Base::mapped_type;
 
 private:
   std::shared_ptr<::BondBreakage::BondBreakage> m_bond_breakage;
@@ -54,6 +54,15 @@ public:
   void do_construct(VariantMap const &params) override {
     m_bond_breakage = std::make_shared<::BondBreakage::BondBreakage>();
     restore_from_checkpoint(params);
+  }
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &parameters) override {
+    if (name == "execute") {
+      context()->parallel_try_catch(
+          [this]() { m_bond_breakage->execute_bond_breakage(get_system()); });
+      return {};
+    }
+    return Base::do_call_method(name, parameters);
   }
 
 private:

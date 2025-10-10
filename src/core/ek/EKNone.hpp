@@ -40,6 +40,7 @@ struct EKNone {
   void on_node_grid_change() const { throw NoEKActive{}; }
   void on_timestep_change() const { throw NoEKActive{}; }
   void on_temperature_change() const { throw NoEKActive{}; }
+  bool is_gpu() const { throw NoEKActive{}; }
 };
 
 } // namespace EK

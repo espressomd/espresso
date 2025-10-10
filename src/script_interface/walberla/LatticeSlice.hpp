@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "LatticeIndices.hpp"
 
@@ -80,14 +80,14 @@ private:
 
 protected:
   template <class LatticeModel, typename T>
-  Variant gather_3d(VariantMap const &params, std::vector<int> const &data_dims,
+  Variant gather_3d(std::vector<int> const &data_dims,
                     LatticeModel const &lattice_model,
                     std::vector<T> (LatticeModel::*getter)(
                         Utils::Vector3i const &, Utils::Vector3i const &) const,
                     double units_conversion = 1.) const;
 
   template <class LatticeModel, typename T>
-  void scatter_3d(VariantMap const &params, std::vector<int> const &data_dims,
+  void scatter_3d(Variant const &grid_values, std::vector<int> const &data_dims,
                   LatticeModel &lattice_model,
                   void (LatticeModel::*setter)(Utils::Vector3i const &,
                                                Utils::Vector3i const &,
@@ -96,4 +96,4 @@ protected:
 };
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

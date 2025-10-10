@@ -219,7 +219,7 @@ class Drude(ut.TestCase):
 
             system.integrator.run(115)
 
-            for _ in range(100):
+            for _ in range(200):
                 system.integrator.run(1)
 
                 dm_pf6.append(dipole_moment(part0, part1))

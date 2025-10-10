@@ -40,29 +40,41 @@ CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
   using pos_type = decltype(traits.position(std::declval<Particle>()));
   using flux_type = Utils::Vector3d;
 
+  auto const buffer_size = local_particles.size();
   std::vector<pos_type> local_folded_positions{};
   std::vector<flux_type> local_flux_densities{};
-  local_folded_positions.reserve(local_particles.size());
-  local_flux_densities.reserve(local_particles.size());
+  local_folded_positions.reserve(buffer_size);
+  local_flux_densities.reserve(buffer_size);
 
   auto &system = System::get_system();
   auto const &box_geo = *system.box_geo;
   auto &lb = system.lb;
-  auto const vel_conv = lb.get_lattice_speed();
   lb.ghost_communication_pdf();
   lb.ghost_communication_vel();
 
+  std::vector<Utils::Vector3d> unfolded_pos{};
+  std::vector<Utils::Vector3d> folded_pos{};
+  unfolded_pos.reserve(buffer_size);
+  folded_pos.reserve(buffer_size);
   for (auto const &p : local_particles) {
-    auto const pos = box_geo.folded_position(traits.position(p));
+    unfolded_pos.emplace_back(traits.position(p));
+    folded_pos.emplace_back(box_geo.folded_position(traits.position(p)));
+  }
+  auto const interpolated_vel =
+      lb.get_coupling_interpolated_velocities(folded_pos);
+  auto const interpolated_rho = lb.get_interpolated_densities(unfolded_pos);
+  auto vel_it = interpolated_vel.begin();
+  auto rho_it = interpolated_rho.begin();
+  for (auto const &pos : folded_pos) {
     auto const pos_shifted = pos - transform_params->center();
-    auto const vel = *lb.get_interpolated_velocity(pos);
-    auto const dens = *lb.get_interpolated_density(pos);
     auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
         pos_shifted, transform_params->axis(), transform_params->orientation());
     auto const flux_cyl = Utils::transform_vector_cartesian_to_cylinder(
-        vel * vel_conv * dens, transform_params->axis(), pos_shifted);
+        (*vel_it) * (*rho_it), transform_params->axis(), pos_shifted);
     local_folded_positions.emplace_back(pos_cyl);
     local_flux_densities.emplace_back(flux_cyl);
+    ++vel_it;
+    ++rho_it;
   }
 
   auto const [global_folded_positions, global_flux_densities] =

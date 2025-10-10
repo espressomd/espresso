@@ -96,6 +96,8 @@ public:
 
   void clear_queue() { m_queue.clear(); }
 
+  void execute_bond_breakage(System::System &system);
+
   void process_queue(System::System &system) {
     if (not breakage_specs.empty()) {
       process_queue_impl(system);

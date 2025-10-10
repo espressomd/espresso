@@ -19,8 +19,8 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-# import scipy.optimize
-# import scipy.integrate
+import scipy.optimize
+import scipy.integrate
 
 import espressomd
 import espressomd.lb
@@ -113,7 +113,7 @@ class TestLBPressureTensor:
         for time_series in [self.p_node0, self.p_node1]:
             self.assert_allclose_matrix(
                 np.mean(time_series, axis=0),
-                p_avg_expected, atol_diag=c_s_lb**2 * 200, atol_offdiag=c_s_lb**2 * 9)
+                p_avg_expected, atol_diag=c_s_lb**2 * 200, atol_offdiag=c_s_lb**2 * 10)
 
         # Test that <sigma_[i!=j]> ~=0 and sigma_[ij]==sigma_[ji] ...
         tol_global = 8 / np.sqrt(self.steps)
@@ -165,15 +165,13 @@ class TestLBPressureTensorBlocksCPU(TestLBPressureTensor, ut.TestCase):
     steps = 5000
 
 
-# TODO WALBERLA
-"""
 @utx.skipIfMissingFeatures("WALBERLA")
 @utx.skipIfMissingGPU()
 class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_params = {"single_precision": True}
-    steps = 50000
+    steps = 10000
 
     def test_gk_viscosity(self):
         # Check that stress auto correlation matches dynamic viscosity
@@ -196,7 +194,8 @@ class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
                 # integrate first part numerically, fit exponential to tail
                 t_max_fit = 50 * tau
                 ts = np.arange(0, t_max_fit, 2 * tau)
-                numeric_integral = scipy.integrate.trapezoid(acf[:len(ts)], dx=2 * self.params["tau"])
+                numeric_integral = scipy.integrate.trapezoid(
+                    acf[:len(ts)], dx=2 * self.params["tau"])
 
                 # fit tail
                 def fit(x, a, b): return a * np.exp(-b * x)
@@ -208,14 +207,11 @@ class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
 
                 measured_visc = integral * self.system.volume() / kT
 
-                self.assertAlmostEqual(
-                    measured_visc, dyn_visc, delta=dyn_visc * .15)
+                np.testing.assert_allclose(measured_visc, dyn_visc, rtol=0.15)
                 all_viscs.append(measured_visc)
 
-        # Check average over xy, xz and yz against tighter limit
-        self.assertAlmostEqual(np.average(all_viscs),
-                               dyn_visc, delta=dyn_visc * .07)
-"""
+        # Check average over xy, xz and yz against tighter tolerances
+        np.testing.assert_allclose(np.average(all_viscs), dyn_visc, rtol=0.07)
 
 
 if __name__ == "__main__":

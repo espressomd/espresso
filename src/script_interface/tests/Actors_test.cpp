@@ -22,8 +22,8 @@
 
 #include "config/config.hpp"
 
-#if defined(ELECTROSTATICS) or defined(DIPOLES) or defined(SCAFACOS) or        \
-    defined(SCAFACOS_DIPOLES)
+#if defined(ESPRESSO_ELECTROSTATICS) or defined(ESPRESSO_DIPOLES) or           \
+    defined(ESPRESSO_SCAFACOS) or defined(ESPRESSO_SCAFACOS_DIPOLES)
 
 #include <boost/test/unit_test.hpp>
 
@@ -57,7 +57,7 @@
 namespace ScriptInterface {
 namespace Coulomb {
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 struct MockDebyeHueckel : public Actor<MockDebyeHueckel, ::DebyeHueckel> {
   MockDebyeHueckel() = default;
 
@@ -67,13 +67,13 @@ struct MockDebyeHueckel : public Actor<MockDebyeHueckel, ::DebyeHueckel> {
         get_value<double>(params, "kappa"), get_value<double>(params, "r_cut"));
   }
 };
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
 
 } // namespace Coulomb
 
 namespace Dipoles {
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 struct MockDipolarDirectSum
     : public Actor<MockDipolarDirectSum, ::DipolarDirectSum> {
   MockDipolarDirectSum() = default;
@@ -84,12 +84,12 @@ struct MockDipolarDirectSum
         get_value<double>(params, "n_replicas"));
   }
 };
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES
 
 } // namespace Dipoles
 } // namespace ScriptInterface
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 BOOST_AUTO_TEST_CASE(coulomb_actor) {
   auto constexpr tol = 100. * std::numeric_limits<double>::epsilon();
   ScriptInterface::Coulomb::MockDebyeHueckel actor;
@@ -103,9 +103,9 @@ BOOST_AUTO_TEST_CASE(coulomb_actor) {
   BOOST_CHECK(not has_actor_of_type<decltype(actor)>(
       std::optional<Coulomb::ElectrostaticsActor>(actor.actor())));
 }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 BOOST_AUTO_TEST_CASE(dipoles_actor) {
   auto constexpr tol = 100. * std::numeric_limits<double>::epsilon();
   ScriptInterface::Dipoles::MockDipolarDirectSum actor;
@@ -115,9 +115,9 @@ BOOST_AUTO_TEST_CASE(dipoles_actor) {
   BOOST_CHECK_CLOSE(actor.actor()->prefactor, 2., tol);
   BOOST_CHECK_CLOSE(std::as_const(actor).actor()->prefactor, 2., tol);
 }
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES
 
-#if defined(SCAFACOS) or defined(SCAFACOS_DIPOLES)
+#if defined(ESPRESSO_SCAFACOS) or defined(ESPRESSO_SCAFACOS_DIPOLES)
 
 BOOST_AUTO_TEST_CASE(scafacos_parameters_serialization) {
   using ScriptInterface::Variant;
@@ -170,8 +170,9 @@ BOOST_AUTO_TEST_CASE(scafacos_parameters_serialization_exceptions) {
     BOOST_CHECK(caught);
   }
 }
-#endif // SCAFACOS or SCAFACOS_DIPOLES
+#endif // ESPRESSO_SCAFACOS or ESPRESSO_SCAFACOS_DIPOLES
 
 #else
 int main(int argc, char **argv) {}
-#endif // ELECTROSTATICS or DIPOLES or SCAFACOS or SCAFACOS_DIPOLES
+#endif // ESPRESSO_ELECTROSTATICS or ESPRESSO_DIPOLES or ESPRESSO_SCAFACOS or
+       // ESPRESSO_SCAFACOS_DIPOLES

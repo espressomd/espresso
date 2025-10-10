@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE ScriptInterface::GlobalContext test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -31,8 +30,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
-#include <span>
 #include <string>
+#include <variant>
+#include <vector>
 
 static std::weak_ptr<boost::mpi::environment> mpi_env;
 
@@ -50,10 +50,10 @@ struct Dummy : si::ObjectHandle {
     params[name] = val;
   }
 
-  std::span<const boost::string_ref> valid_parameters() const override {
-    static const boost::string_ref parameter_names[] = {"id", "object_param"};
+  std::vector<std::string_view> valid_parameters() const override {
+    static std::string_view names[] = {"id", "object_param"};
 
-    return {parameter_names, std::min(params.size(), std::size_t{2u})};
+    return {names, names + std::min(params.size(), std::size_t{2u})};
   }
 };
 
@@ -64,6 +64,21 @@ auto make_global_context(std::shared_ptr<Communication::MpiCallbacks> &cb) {
   return std::make_shared<si::GlobalContext>(
       cb, std::make_shared<si::LocalContext>(factory, cb->comm()));
 }
+
+struct GlobalConfig {
+  std::shared_ptr<boost::mpi::environment> m_mpi_env;
+  GlobalConfig() {
+    m_mpi_env = std::make_shared<boost::mpi::environment>(
+        boost::unit_test::framework::master_test_suite().argc,
+        boost::unit_test::framework::master_test_suite().argv,
+        boost::mpi::threading::multiple);
+    mpi_env = m_mpi_env;
+  }
+  ~GlobalConfig() { m_mpi_env.reset(); }
+};
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_AUTO_TEST_SUITE(suite)
 
 BOOST_AUTO_TEST_CASE(GlobalContext_make_shared) {
   boost::mpi::communicator world;
@@ -104,21 +119,16 @@ BOOST_AUTO_TEST_CASE(GlobalContext_serialization) {
 
     auto d1 = si::ObjectHandle::deserialize(serialized, *ctx);
     BOOST_REQUIRE(d1);
-    BOOST_CHECK_EQUAL(boost::get<int>(d1->get_parameter("id")), 1);
-    auto d2 = boost::get<si::ObjectRef>(d1->get_parameter("object_param"));
+    BOOST_CHECK_EQUAL(std::get<int>(d1->get_parameter("id")), 1);
+    auto d2 = std::get<si::ObjectRef>(d1->get_parameter("object_param"));
     BOOST_REQUIRE(d2);
-    BOOST_CHECK_EQUAL(boost::get<int>(d2->get_parameter("id")), 2);
-    auto d3 = boost::get<si::ObjectRef>(d2->get_parameter("object_param"));
+    BOOST_CHECK_EQUAL(std::get<int>(d2->get_parameter("id")), 2);
+    auto d3 = std::get<si::ObjectRef>(d2->get_parameter("object_param"));
     BOOST_REQUIRE(d3);
-    BOOST_CHECK_EQUAL(boost::get<int>(d3->get_parameter("id")), 3);
+    BOOST_CHECK_EQUAL(std::get<int>(d3->get_parameter("id")), 3);
   } else {
     cb->loop();
   }
 }
 
-int main(int argc, char **argv) {
-  auto const mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
-  ::mpi_env = mpi_env;
-
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}
+BOOST_AUTO_TEST_SUITE_END()

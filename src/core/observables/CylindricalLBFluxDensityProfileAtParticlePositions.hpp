@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_CYLINDRICALLBFLUXDENSITYPROFILEATPARTICLEPOSITIONS_HPP
-#define OBSERVABLES_CYLINDRICALLBFLUXDENSITYPROFILEATPARTICLEPOSITIONS_HPP
+
+#pragma once
 
 #include "CylindricalPidProfileObservable.hpp"
 
@@ -45,5 +45,3 @@ public:
 };
 
 } // Namespace Observables
-
-#endif

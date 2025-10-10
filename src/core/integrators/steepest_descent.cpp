@@ -67,7 +67,7 @@ bool steepest_descent_step(const ParticleRange &particles) {
         p.pos()[j] += dp;
       }
     }
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     {
       // Rotational increment
       auto const dq = params.gamma * p.torque(); // Vector parallel to torque

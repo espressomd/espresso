@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import numpy as np
+from .utils cimport mpi_gather_runtime_errors, ErrorLevel
 
 
 def is_valid_type(value, t):
@@ -82,36 +83,41 @@ def check_type_or_throw_except(x, n, t, msg):
                 f"{msg} -- Item {i} was of type {type(x[i]).__name__}")
 
 
-def to_char_pointer(s):
+def to_bytes(s):
     """
-    Returns a Cython bytes object which contains the information of the provided
+    Return a Cython bytes object which contains the information of the provided
     Python string. Cython bytes objects implicitly cast to raw char pointers.
 
     Parameters
     ----------
-    s : :obj:`str`
+    s : :obj:`str` or :obj:`bytes`
 
     """
-    if isinstance(s, unicode):
-        s = ( < unicode > s).encode('utf8')
-    return s
+    if isinstance(s, str):
+        return s.encode()
+    if isinstance(s, np.bytes_):
+        return bytes(s)
+    if isinstance(s, bytes):
+        return s
+    raise ValueError(f"Unknown string type {type(s)}")
 
 
 def to_str(s):
     """
-    Returns a python string.
+    Return a python string.
 
     Parameters
     ----------
     s : char*
 
     """
-    if isinstance(s, unicode):
-        return < unicode > s
-    elif isinstance(s, bytes):
-        return ( < bytes > s).decode('ascii')
-    else:
-        raise ValueError(f'Unknown string type {type(s)}')
+    if isinstance(s, bytes):
+        return s.decode()
+    if isinstance(s, np.str_):
+        return str(s)
+    if isinstance(s, str):
+        return s
+    raise ValueError(f"Unknown string type {type(s)}")
 
 
 class array_locked(np.ndarray):
@@ -190,14 +196,15 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
         raise ValueError(array_locked.ERR_MSG)
 
 
-def handle_errors(msg):
+def handle_errors(note):
     """
-    Gathers runtime errors.
+    Gather runtime exceptions that did not interrupt the program execution.
+    Runtime warnings are output directly to stderr.
 
     Parameters
     ----------
-    msg: :obj:`str`
-         Error message that is to be raised.
+    note: :obj:`str`
+        Contextual information, such as which method was called last.
 
     """
     errors = mpi_gather_runtime_errors()
@@ -207,9 +214,8 @@ def handle_errors(msg):
 
     # raise an exception with the first error
     for err in errors:
-        # Cast because cython does not support typed enums completely
-        if < int > err.level() == < int > ERROR:
-            raise Exception(f"{msg}: {to_str(err.format())}")
+        if err.level() == ErrorLevel.ERROR:
+            raise Exception(f"{note}: {to_str(err.format())}")
 
 
 def nesting_level(obj):

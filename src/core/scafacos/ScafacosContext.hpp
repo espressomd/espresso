@@ -21,15 +21,15 @@
 
 #pragma once
 
+#include <config/config.hpp>
+
+#if defined(ESPRESSO_SCAFACOS) or defined(ESPRESSO_SCAFACOS_DIPOLES)
+
 /**
  * @file
  * @ref ScafacosContext implements the interface of the ScaFaCoS bridge.
  * It is further derived for the coulombic and dipolar versions of ScaFaCoS.
  */
-
-#include "config/config.hpp"
-
-#if defined(SCAFACOS) or defined(SCAFACOS_DIPOLES)
 
 #include "scafacos/ScafacosContextBase.hpp"
 
@@ -64,4 +64,4 @@ struct ScafacosContext : virtual public ScafacosContextBase,
   }
 };
 
-#endif // SCAFACOS or SCAFACOS_DIPOLES
+#endif // ESPRESSO_SCAFACOS or ESPRESSO_SCAFACOS_DIPOLES

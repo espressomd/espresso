@@ -18,14 +18,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1,
-// lbmpy_walberla/pystencils_walberla from waLBerla commit
-// f36fa0a68bae59f0b516f6587ea8fa7c24a41141
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
+// v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
+// waLBerla commit e12db9965373887d86aab4aaaf4dd7b38fa588e8
 
 /*
  * Boundary class.
  * Adapted from the waLBerla source file
- * https://i10git.cs.fau.de/walberla/walberla/-/blob/fb076cd18daa6e2f24448349d1fffb974c845269/python/pystencils_walberla/templates/Boundary.tmpl.h
+ * https://i10git.cs.fau.de/walberla/walberla/-/blob/e12db9965373887d86aab4aaaf4dd7b38fa588e8/python/pystencils_walberla/templates/Boundary.tmpl.h
  */
 
 #pragma once
@@ -60,7 +60,10 @@
 #define RESTRICT __restrict
 #else
 #define RESTRICT
+#endif
 
+#ifdef WALBERLA_BUILD_WITH_HALF_PRECISION_SUPPORT
+using walberla::half;
 #endif
 
 namespace walberla {
@@ -90,7 +93,9 @@ public:
     }
 
     CpuIndexVector &indexVector(Type t) { return cpuVectors_[t]; }
-    IndexInfo *pointerCpu(Type t) { return cpuVectors_[t].data(); }
+    IndexInfo *pointerCpu(Type t) {
+      return cpuVectors_[t].empty() ? nullptr : cpuVectors_[t].data();
+    }
 
     void syncGPU() {}
 
@@ -116,7 +121,7 @@ public:
     };
     indexVectorID = blocks->addStructuredBlockData<IndexVectors>(
         createIdxVector, "IndexField_ReactionKernelIndexed_5_single_precision");
-  };
+  }
 
   ReactionKernelIndexed_5_single_precision(
       BlockDataID indexVectorID_, BlockDataID rho_0ID_, BlockDataID rho_1ID_,
@@ -139,6 +144,13 @@ public:
   void inner(IBlock *block);
 
   void outer(IBlock *block);
+
+  Vector3<real_t> getForce(IBlock * /*block*/) {
+
+    WALBERLA_ABORT(
+        "Boundary condition was not generated including force calculation.")
+    return Vector3<real_t>(real_c(0.0));
+  }
 
   std::function<void(IBlock *)> getSweep() {
     return [this](IBlock *b) { this->run(b); };
@@ -171,8 +183,9 @@ public:
 
     auto *flagField = block->getData<FlagField_T>(flagFieldID);
 
-    assert(flagField->flagExists(boundaryFlagUID) and
-           flagField->flagExists(domainFlagUID));
+    if (!(flagField->flagExists(boundaryFlagUID) and
+          flagField->flagExists(domainFlagUID)))
+      return;
 
     auto boundaryFlag = flagField->getFlag(boundaryFlagUID);
     auto domainFlag = flagField->getFlag(domainFlagUID);
@@ -197,11 +210,11 @@ public:
 
         auto element = IndexInfo(it.x(), it.y(), it.z(), 0);
 
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 

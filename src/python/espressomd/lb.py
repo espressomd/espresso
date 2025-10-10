@@ -100,6 +100,10 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
             raise ValueError(f"Slip velocity exceeds Mach {mach_number:.2f}")
 
     @property
+    def boundary_force(self):
+        return self.call_method("get_boundary_force")
+
+    @property
     def pressure_tensor(self):
         tensor = self.call_method("get_pressure_tensor")
         return utils.array_locked(tensor)
@@ -178,7 +182,7 @@ class LBFluidWalberla(HydrodynamicInteraction,
 
         Parameters
         ----------
-        path : :obj:`str`
+        path : :obj:`str` or :obj:`pathlib.Path`
             Destination file path.
         binary : :obj:`bool`
             Whether to write in binary or ASCII mode.
@@ -188,7 +192,7 @@ class LBFluidWalberla(HydrodynamicInteraction,
 
         Parameters
         ----------
-        path : :obj:`str`
+        path : :obj:`str` or :obj:`pathlib.Path`
             File path to read from.
         binary : :obj:`bool`
             Whether to read in binary or ASCII mode.
@@ -315,6 +319,23 @@ class LBFluidWalberla(HydrodynamicInteraction,
             raster=array_variant(mask.flatten()),
             values=array_variant(velocity.flatten()))
 
+    def get_boundary_force_from_shape(self, shape):
+        """
+        Returns the boundary force from a shape.
+
+        Parameters
+        ----------
+        shape : :obj:`espressomd.shapes.Shape`
+            Shape to rasterize.
+        """
+        utils.check_type_or_throw_except(
+            shape, 1, espressomd.shapes.Shape, "expected an espressomd.shapes.Shape")
+
+        mask = self.get_shape_bitmask(shape=shape).astype(int)
+        return self.call_method(
+            "get_boundary_force_from_shape",
+            raster=array_variant(mask.flatten()))
+
 
 @script_interface_register
 class LBFluidWalberlaGPU(LBFluidWalberla):
@@ -368,11 +389,11 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
         self.call_method("set_density", value=value)
 
     @property
-    def population(self):
+    def _population(self):
         return utils.array_locked(self.call_method("get_population"))
 
-    @population.setter
-    def population(self, value):
+    @_population.setter
+    def _population(self, value):
         self.call_method("set_population", value=value)
 
     @property
@@ -538,11 +559,11 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
         self._setter("density", value)
 
     @property
-    def population(self):
+    def _population(self):
         return self._getter("population")
 
-    @population.setter
-    def population(self, value):
+    @_population.setter
+    def _population(self, value):
         self._setter("population", value)
 
     @property
@@ -639,8 +660,8 @@ class VTKOutput(VTKOutputBase):
     """
     Create a VTK writer.
 
-    Files are written to ``<base_folder>/<identifier>/<prefix>_*.vtu``.
-    Summary is written to ``<base_folder>/<identifier>.pvd``.
+    Files are written to :file:`<base_folder>/<identifier>/<prefix>_*.vtu`.
+    Summary is written to :file:`<base_folder>/<identifier>.pvd`.
 
     Manual VTK callbacks can be called at any time to take a snapshot
     of the current state of the LB fluid.
@@ -661,10 +682,14 @@ class VTKOutput(VTKOutputBase):
         manual VTK callback that must be triggered manually. Otherwise,
         it is an automatic callback that is added to the time loop and
         writes every ``delta_N`` LB steps.
-    base_folder : :obj:`str` (optional), default is 'vtk_out'
+    base_folder : :obj:`str` or :obj:`pathlib.Path` (optional), default is :file:`vtk_out`
         Path to the output VTK folder.
     prefix : :obj:`str` (optional), default is 'simulation_step'
         Prefix for VTK files.
+    force_pvtu : :obj:`bool` (optional), default is ``True``
+        Force parallel unstructured grid format (file extension: ``.vtu``).
+        If ``False``, uses parallel structured grid format if possible
+        (file extension: ``.vti``).
 
     """
     _so_name = "walberla::LBVTKHandle"

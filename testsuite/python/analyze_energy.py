@@ -66,6 +66,8 @@ class AnalyzeEnergy(ut.TestCase):
         p1.v = [0, 0, 0]
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 25., delta=1e-7)
+        self.assertAlmostEqual(energy["kinetic_lin"], 25., delta=1e-7)
+        self.assertAlmostEqual(energy["kinetic_rot"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 25., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
@@ -73,9 +75,20 @@ class AnalyzeEnergy(ut.TestCase):
         p1.v = [3, 4, 5]
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 50., delta=1e-7)
+        self.assertAlmostEqual(energy["kinetic_lin"], 50., delta=1e-7)
+        self.assertAlmostEqual(energy["kinetic_rot"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
+        if espressomd.has_features(["ROTATION"]):
+            p0.omega_lab = [1, 2, 3]
+            p1.omega_lab = [1, 2, 3]
+            p0.rotation = [True, True, True]
+            p1.rotation = [False, False, False]
+            energy = self.system.analysis.energy()
+            self.assertAlmostEqual(energy["kinetic_lin"], 50., delta=1e-7)
+            self.assertAlmostEqual(energy["kinetic_rot"], 7., delta=1e-7)
+            self.assertAlmostEqual(energy["kinetic"], 57., delta=1e-7)
 
     def test_non_bonded(self):
         p0, p1 = self.system.part.all()
@@ -161,6 +174,10 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
             [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
+        if espressomd.has_features(["VIRTUAL_SITES"]):
+            self.assertAlmostEqual(energy["virtual_sites"], 0., delta=1e-7)
+        if espressomd.has_features(["DPD"]):
+            self.assertAlmostEqual(energy["dpd"], 0., delta=1e-7)
         # two bonds
         p1.add_bond((self.harmonic, p0))
         energy = self.system.analysis.energy()

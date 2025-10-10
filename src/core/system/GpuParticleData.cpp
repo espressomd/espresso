@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 
 #include "GpuParticleData.hpp"
 
@@ -88,10 +88,10 @@ static void pack_particles(ParticleRange const &particles,
   std::size_t i = 0u;
   for (auto const &p : particles) {
     buffer[i].p = static_cast<Utils::Vector3f>(box.folded_position(p.pos()));
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
     buffer[i].dip = static_cast<Utils::Vector3f>(p.calc_dip());
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     buffer[i].q = static_cast<float>(p.q());
 #endif
     buffer[i].identity = p.id();
@@ -136,7 +136,7 @@ static void add_forces_and_torques(ParticleRange const &particles,
   for (auto &p : particles) {
     for (std::size_t j = 0ul; j < 3ul; j++) {
       p.force()[j] += static_cast<double>(forces[3ul * i + j]);
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
       p.torque()[j] += static_cast<double>(torques[3ul * i + j]);
 #endif
     }
@@ -168,14 +168,14 @@ void GpuParticleData::particles_scatter_forces(
 
     buffer_forces.resize(size);
     Utils::Mpi::scatter_buffer(buffer_forces.data(), n_elements, ::comm_cart);
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     buffer_torques.resize(size);
     Utils::Mpi::scatter_buffer(buffer_torques.data(), n_elements, ::comm_cart);
 #endif
     add_forces_and_torques(particles, buffer_forces, buffer_torques);
   } else {
     Utils::Mpi::scatter_buffer(host_forces.data(), n_elements, ::comm_cart);
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     Utils::Mpi::scatter_buffer(host_torques.data(), n_elements, ::comm_cart);
 #endif
     add_forces_and_torques(particles, host_forces, host_torques);

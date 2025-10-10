@@ -19,13 +19,12 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef SCAFACOS_DIPOLES
+#ifdef ESPRESSO_SCAFACOS_DIPOLES
 
 #include "Actor.hpp"
 
-#include "core/MpiCallbacks.hpp"
 #include "core/communication.hpp"
 #include "core/magnetostatics/scafacos.hpp"
 #include "core/scafacos/ScafacosContextBase.hpp"
@@ -75,7 +74,7 @@ public:
       actor()->set_prefactor(prefactor);
     });
     // MPI communicator is needed to destroy the FFT plans
-    m_mpi_env_lock = ::Communication::mpiCallbacksHandle()->share_mpi_env();
+    m_mpi_env_lock = ::communication_environment->get_mpi_env();
   }
 
   Variant do_call_method(std::string const &name,
@@ -90,4 +89,4 @@ public:
 } // namespace Dipoles
 } // namespace ScriptInterface
 
-#endif // SCAFACOS_DIPOLES
+#endif // ESPRESSO_SCAFACOS_DIPOLES

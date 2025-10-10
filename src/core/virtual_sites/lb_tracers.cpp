@@ -18,7 +18,7 @@
  */
 #include "config/config.hpp"
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+#ifdef ESPRESSO_VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
@@ -46,7 +46,7 @@ void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
   auto const agrid = lb.get_agrid();
 
   // Distribute summed-up forces from physical particles to ghosts
-  init_forces_ghosts(cell_structure.ghost_particles());
+  init_forces_ghosts(cell_structure);
   cell_structure.update_ghosts_and_resort_particle(Cells::DATA_PART_FORCE);
 
   // Keep track of ghost particles (ids) that have already been coupled
@@ -68,7 +68,7 @@ void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
   }
 
   // Clear ghost forces to avoid double counting later
-  init_forces_ghosts(cell_structure.ghost_particles());
+  init_forces_ghosts(cell_structure);
 }
 
 void lb_tracers_propagate(CellStructure &cell_structure, LB::Solver const &lb,
@@ -95,4 +95,4 @@ void lb_tracers_propagate(CellStructure &cell_structure, LB::Solver const &lb,
     }
   }
 }
-#endif // VIRTUAL_SITES_INERTIALESS_TRACERS
+#endif // ESPRESSO_VIRTUAL_SITES_INERTIALESS_TRACERS

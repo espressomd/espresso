@@ -27,6 +27,7 @@
 #include "script_interface/get_value.hpp"
 
 #include <memory>
+#include <ranges>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -128,8 +129,8 @@ public:
    * @brief Clear the map.
    */
   void clear() {
-    for (auto const &kv : m_elements) {
-      erase_in_core(kv.first);
+    for (auto const &key : std::views::elements<0>(m_elements)) {
+      erase_in_core(key);
     }
 
     m_elements.clear();
@@ -142,7 +143,7 @@ protected:
     if (method == "insert") {
       auto obj_ptr = get_value<mapped_type>(parameters.at("object"));
 
-      if (parameters.count("key")) {
+      if (parameters.contains("key")) {
         auto const key = get_key(parameters.at("key"));
         insert(key, obj_ptr);
         return none;
@@ -166,11 +167,8 @@ protected:
     }
 
     if (method == "keys") {
-      std::vector<Variant> res;
-      for (auto const &kv : m_elements) {
-        res.push_back(kv.first);
-      }
-      return res;
+      auto const view = std::views::elements<0>(m_elements);
+      return std::vector<KeyType>{view.begin(), view.end()};
     }
 
     if (method == "clear") {

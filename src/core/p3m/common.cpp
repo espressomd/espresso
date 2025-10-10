@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) or defined(DP3M)
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 #include "common.hpp"
 
@@ -63,9 +63,9 @@ void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
 
   /* correct roundoff errors at boundary */
   for (i = 0; i < 3; i++) {
-    if (inner_ur_grid_pos[i] - in_ur[i] < ROUND_ERROR_PREC)
+    if (inner_ur_grid_pos[i] - in_ur[i] < round_error_prec)
       in_ur[i]--;
-    if (inner_ld_grid_pos[i] - in_ld[i] + 1. < ROUND_ERROR_PREC)
+    if (inner_ld_grid_pos[i] - in_ld[i] + 1. < round_error_prec)
       in_ld[i]--;
   }
   /* inner grid dimensions */
@@ -103,6 +103,12 @@ void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
 
   q_2_off = dim[2] - params.cao;
   q_21_off = dim[2] * (dim[1] - params.cao);
+
+  n_halo_ld = {margin[0], margin[2], margin[4]};
+  n_halo_ur = {margin[1], margin[3], margin[5]};
+  ld_no_halo = Utils::Vector3i(ld_ind) + n_halo_ld;
+  ur_no_halo = ld_no_halo + dim - n_halo_ld - n_halo_ur;
+  dim_no_halo = ur_no_halo - ld_no_halo;
 }
 
-#endif // defined(P3M) or defined(DP3M)
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

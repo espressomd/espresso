@@ -24,7 +24,7 @@
  */
 #include "ljcos.hpp"
 
-#ifdef LJCOS
+#ifdef ESPRESSO_LJCOS
 #include "nonbonded_interaction_data.hpp"
 
 #include <utils/math/sqr.hpp>
@@ -53,4 +53,4 @@ LJcos_Parameters::LJcos_Parameters(double epsilon, double sigma, double cutoff,
   beta = std::numbers::pi * (1. - (1. / (Utils::sqr(cut) / facsq - 1.)));
 }
 
-#endif // LJCOS
+#endif // ESPRESSO_LJCOS

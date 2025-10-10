@@ -185,7 +185,7 @@ class LBShearCommon:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBShearWalberla(LBShearCommon, ut.TestCase):
+class LBShearWalberlaDoublePrecisionCPU(LBShearCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
@@ -196,7 +196,7 @@ class LBShearWalberla(LBShearCommon, ut.TestCase):
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBShearWalberlaSinglePrecision(LBShearCommon, ut.TestCase):
+class LBShearWalberlaSinglePrecisionCPU(LBShearCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""
 
@@ -216,6 +216,24 @@ class LBShearWalberlaBlocks(LBShearCommon, ut.TestCase):
                  "blocks_per_mpi_rank": [2, 2, 2]}
     atol = 5e-5
     rtol = 5e-4
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBShearWalberlaDoublePrecisionGPU(LBShearCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": False}
+    atol = 5e-5
+    rtol = 5e-4
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBShearWalberlaSinglePrecisionGPU(LBShearCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": True}
+    atol = 5e-5
+    rtol = 5e-3
 
 
 if __name__ == '__main__':

@@ -115,7 +115,7 @@ else:
 # warmup
 benchmarks.minimize(system, n_part / 2.)
 
-system.integrator.set_vv()
+system.integrator.set_symplectic_euler()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # tuning and equilibration

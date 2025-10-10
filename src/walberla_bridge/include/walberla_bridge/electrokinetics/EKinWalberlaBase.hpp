@@ -32,7 +32,7 @@ class EKinWalberlaBase : public LatticeModel {
 public:
   /** @brief Integrate EKin for one time step */
   virtual void integrate(std::size_t potential_id, std::size_t velocity_id,
-                         std::size_t force_id) = 0;
+                         std::size_t force_id, double lb_density) = 0;
 
   /** @brief perform ghost communication of densities */
   virtual void ghost_communication() = 0;
@@ -58,6 +58,16 @@ public:
   [[nodiscard]] virtual std::vector<double>
   get_slice_density(Utils::Vector3i const &lower_corner,
                     Utils::Vector3i const &upper_corner) const = 0;
+
+  /** @brief Get node flux vector. */
+  [[nodiscard]] virtual std::optional<Utils::Vector3d>
+  get_node_flux_vector(Utils::Vector3i const &node,
+                       bool consider_ghosts = false) const = 0;
+
+  /** @brief Get slice density. */
+  [[nodiscard]] virtual std::vector<double>
+  get_slice_flux_vector(Utils::Vector3i const &lower_corner,
+                        Utils::Vector3i const &upper_corner) const = 0;
 
   /** @brief Set node flux boundary conditions. */
   virtual bool set_node_flux_boundary(Utils::Vector3i const &node,
@@ -152,6 +162,9 @@ public:
   virtual void set_ext_efield(Utils::Vector3d const &field) = 0;
 
   [[nodiscard]] virtual std::size_t get_density_id() const noexcept = 0;
+
+  /** @brief Get whether the kernels run on GPUs. */
+  [[nodiscard]] virtual bool is_gpu() const noexcept = 0;
 
   ~EKinWalberlaBase() override = default;
 };

@@ -28,7 +28,7 @@
 namespace ScriptInterface::Profiler {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
-#ifdef CALIPER
+#ifdef ESPRESSO_CALIPER
   om->register_new<Caliper>("ScriptInterface::Profiler::Caliper");
 #else
   static_cast<void>(om);

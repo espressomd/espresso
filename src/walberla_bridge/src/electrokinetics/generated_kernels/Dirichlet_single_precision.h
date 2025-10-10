@@ -17,9 +17,9 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1,
-// lbmpy_walberla/pystencils_walberla from waLBerla commit
-// f36fa0a68bae59f0b516f6587ea8fa7c24a41141
+// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
+// v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
+// waLBerla commit 191cf58b16b96d1d2f050dcbd9e88443995b2222
 
 #pragma once
 #include "core/DataTypes.h"
@@ -32,7 +32,8 @@
 #include "field/FlagField.h"
 #include "field/GhostLayerField.h"
 
-#include <set>
+#include <functional>
+#include <memory>
 #include <vector>
 
 #ifdef __GNUC__
@@ -77,8 +78,11 @@ public:
       return other.cpuVectors_ == cpuVectors_;
     }
 
-    CpuIndexVector &indexVector(Type t) { return cpuVectors_[t]; }
-    IndexInfo *pointerCpu(Type t) { return cpuVectors_[t].data(); }
+    auto &indexVector(Type t) { return cpuVectors_[t]; }
+    auto const &indexVector(Type t) const { return cpuVectors_[t]; }
+    IndexInfo *pointerCpu(Type t) {
+      return cpuVectors_[t].empty() ? nullptr : cpuVectors_[t].data();
+    }
 
     void syncGPU() {}
 
@@ -87,7 +91,8 @@ public:
   };
 
   Dirichlet_single_precision(
-      const shared_ptr<StructuredBlockForest> &blocks, BlockDataID fieldID_,
+      const std::shared_ptr<StructuredBlockForest> &blocks,
+      BlockDataID fieldID_,
       std::function<float(const Cell &,
                           const shared_ptr<StructuredBlockForest> &, IBlock &)>
           &dirichletCallback)
@@ -107,11 +112,11 @@ public:
 
   void outer(IBlock *block);
 
-  Vector3<double> getForce(IBlock * /*block*/) {
+  Vector3<float> getForce(IBlock * /*block*/) {
 
     WALBERLA_ABORT(
         "Boundary condition was not generated including force calculation.")
-    return Vector3<double>(double_c(0.0));
+    return Vector3<float>(float_c(0.0));
   }
 
   std::function<void(IBlock *)> getSweep() {
@@ -127,7 +132,7 @@ public:
   }
 
   template <typename FlagField_T>
-  void fillFromFlagField(const shared_ptr<StructuredBlockForest> &blocks,
+  void fillFromFlagField(const std::shared_ptr<StructuredBlockForest> &blocks,
                          ConstBlockDataID flagFieldID, FlagUID boundaryFlagUID,
                          FlagUID domainFlagUID) {
     for (auto blockIt = blocks->begin(); blockIt != blocks->end(); ++blockIt)
@@ -175,11 +180,11 @@ public:
         float InitialisatonAdditionalData =
             elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);
         element.value = InitialisatonAdditionalData;
-        indexVectorAll.push_back(element);
+        indexVectorAll.emplace_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
-          indexVectorInner.push_back(element);
+          indexVectorInner.emplace_back(element);
         else
-          indexVectorOuter.push_back(element);
+          indexVectorOuter.emplace_back(element);
       }
     }
 

@@ -238,7 +238,7 @@ class VirtualSites(ut.TestCase):
         """
         system = self.system
         # Parameters
-        n = 40
+        n_part = 40
         phi = 0.6
         sigma = 1.
         eps = .025
@@ -248,7 +248,7 @@ class VirtualSites(ut.TestCase):
         gamma = .5
 
         # box
-        l = np.cbrt(n / 6. * np.pi * sigma**3 / phi)
+        l = np.cbrt(n_part / 6. * np.pi * sigma**3 / phi)
 
         # Setup
         system.box_l = [l, l, l]
@@ -257,7 +257,7 @@ class VirtualSites(ut.TestCase):
 
         # Dumbbells consist of 2 virtual lj spheres + central particle
         # w/o interactions. For n spheres, n/2 dumbbells.
-        for i in range(n // 2):
+        for i in range(n_part // 2):
             # Type=1, i.e., no lj ia for the center of mass particles
             p3i = system.part.add(
                 rotation=3 * [True], id=3 * i, pos=np.random.random(3) * l, type=1,
@@ -280,7 +280,7 @@ class VirtualSites(ut.TestCase):
             f_max=0, gamma=0.1, max_displacement=0.1)
         n_loops = 0
         n_max = 10
-        while system.analysis.energy()["total"] > 10 * n and n_loops < n_max:
+        while system.analysis.energy()["total"] > n_part and n_loops < n_max:
             system.integrator.run(20)
             n_loops += 1
         assert n_loops < n_max, "Steepest descent didn't converge"
@@ -295,14 +295,15 @@ class VirtualSites(ut.TestCase):
             # verification
             system.integrator.run(2)
             # Check the virtual sites config, pos and vel of the lj spheres
-            for j in range(int(n / 2)):
+            for j in range(n_part // 2):
                 self.verify_vs(system.part.by_id(3 * j + 1))
                 self.verify_vs(system.part.by_id(3 * j + 2))
 
             # Verify lj forces on the particles. The non-virtual particles are
             # skipped because the forces on them originate from the vss and not
             # the lj interaction
-            tests_common.verify_lj_forces(system, 1E-10, 3 * np.arange(n // 2))
+            tests_common.verify_lj_forces(
+                system, 1E-10, 3 * np.arange(n_part // 2))
 
         # Test applying changes
         energy_pre_change = system.analysis.energy()['total']
@@ -321,17 +322,17 @@ class VirtualSites(ut.TestCase):
         with self.subTest(msg='N-square cell system with Verlet lists'):
             self.system.cell_system.set_n_square(use_verlet_lists=True)
             self.run_test_lj()
-            self.tearDown()
+        self.tearDown()
         with self.subTest(msg='regular decomposition cell system with Verlet lists'):
             self.system.cell_system.set_regular_decomposition(
                 use_verlet_lists=True)
             self.run_test_lj()
-            self.tearDown()
+        self.tearDown()
         with self.subTest(msg='regular decomposition cell system without Verlet lists'):
             self.system.cell_system.set_regular_decomposition(
                 use_verlet_lists=False)
             self.run_test_lj()
-            self.tearDown()
+        self.tearDown()
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_zz_pressure_tensor(self):

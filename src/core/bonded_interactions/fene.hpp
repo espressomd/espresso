@@ -77,7 +77,7 @@ FeneBond::force(Utils::Vector3d const &dx) const {
   }
 
   auto fac = -k * dr / (1.0 - dr * dr * drmax2i);
-  if (len > ROUND_ERROR_PREC) {
+  if (len > round_error_prec) {
     fac /= len;
   } else {
     if (r0 > 0.) {

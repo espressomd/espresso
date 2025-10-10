@@ -85,6 +85,8 @@
  *  The ghost communicators are created by the cell systems.
  */
 
+#include <config/config.hpp>
+
 #include "BoxGeometry.hpp"
 #include "ParticleList.hpp"
 
@@ -130,7 +132,7 @@ enum : unsigned {
   GHOSTTRANS_MOMENTUM = 8u,
   /// transfer \ref ParticleForce
   GHOSTTRANS_FORCE = 16u,
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   /// transfer \ref ParticleRattle
   GHOSTTRANS_RATTLE = 32u,
 #endif

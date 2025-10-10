@@ -19,12 +19,13 @@
 
 #include "CudaInitHandle.hpp"
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
+#include "core/communication.hpp"
 #include "core/cuda/init.hpp"
 #include "core/cuda/utils.hpp"
 
-#if defined(CUDA) && defined(WALBERLA)
+#if defined(ESPRESSO_CUDA) && defined(ESPRESSO_WALBERLA)
 #include "walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp"
 #endif
 
@@ -38,7 +39,7 @@ namespace System {
 
 CudaInitHandle::CudaInitHandle() {
   add_parameters({
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
       {"device",
        [this](Variant const &v) {
          if (context()->is_head_node()) {
@@ -48,41 +49,38 @@ CudaInitHandle::CudaInitHandle() {
        [this]() {
          return (context()->is_head_node()) ? cuda_get_device() : 0;
        }},
-#endif // CUDA
+#endif // ESPRESSO_CUDA
   });
 }
 
 Variant CudaInitHandle::do_call_method(std::string const &name,
-                                       VariantMap const &parameters) {
+                                       VariantMap const &) {
   if (name == "list_devices") {
     std::unordered_map<int, std::string> devices{};
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     if (context()->is_head_node()) {
-      // only GPUs on the head node can be used
+      // only GPUs on the head node can be displayed
       auto n_gpus = 0;
       invoke_skip_cuda_exceptions([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
       for (int i = 0; i < n_gpus; ++i) {
-        invoke_skip_cuda_exceptions([&devices, i]() {
-          char gpu_name_buffer[256] = {'\0'};
-          cuda_get_gpu_name(i, gpu_name_buffer);
-          devices[i] = std::string{gpu_name_buffer};
-        });
+        invoke_skip_cuda_exceptions(
+            [&devices, i]() { devices[i] = cuda_get_gpu_name(i); });
       }
     }
-#endif // CUDA
+#endif // ESPRESSO_CUDA
     return make_unordered_map_of_variants(devices);
   }
   if (name == "list_devices_properties") {
     std::unordered_map<std::string, std::unordered_map<int, Variant>> dict{};
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
     std::vector<EspressoGpuDevice> devices = cuda_gather_gpus();
     for (auto const &dev : devices) {
-      auto const hostname = std::string{dev.proc_name};
-      if (dict.count(hostname) == 0) {
+      auto const hostname = dev.proc_name;
+      if (not dict.contains(hostname)) {
         dict[hostname] = {};
       }
       std::unordered_map<std::string, Variant> dev_properties = {
-          {"name", std::string{dev.name}},
+          {"name", dev.name},
           {"compute_capability",
            Variant{std::vector<int>{
                {dev.compute_capability_major, dev.compute_capability_minor}}}},
@@ -91,20 +89,21 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
       };
       dict[hostname][dev.id] = std::move(dev_properties);
     }
-#endif // CUDA
+#endif // ESPRESSO_CUDA
     return make_unordered_map_of_variants(dict);
   }
   if (name == "get_n_gpus") {
     auto n_gpus = 0;
-#ifdef CUDA
-    if (context()->is_head_node()) {
-      // only GPUs on the head node can be used
-      invoke_skip_cuda_exceptions([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
-    }
-#endif // CUDA
+#ifdef ESPRESSO_CUDA
+    auto const devices = cuda_gather_gpus();
+    n_gpus = static_cast<int>(devices.size());
+#endif // ESPRESSO_CUDA
     return n_gpus;
   }
-#if defined(CUDA) && defined(WALBERLA)
+  if (name == "is_mpi_gpu_aware") {
+    return ::communication_environment->is_mpi_gpu_aware();
+  }
+#if defined(ESPRESSO_CUDA) && defined(ESPRESSO_WALBERLA)
   if (name == "set_device_id_per_rank") {
     if (cuda_get_n_gpus()) {
       set_device_id_per_rank();

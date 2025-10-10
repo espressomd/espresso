@@ -25,6 +25,13 @@ import pystencils as ps
 import pystencils_walberla
 import sympy as sp
 import pystencils_walberla.utility
+from lbmpy.boundaries.boundaryhandling import create_lattice_boltzmann_boundary_kernel
+from lbmpy_walberla.additional_data_handler import default_additional_data_handler
+from pystencils import Field, FieldType, Target
+from lbmpy.advanced_streaming import Timestep
+from pystencils.boundaries.boundaryhandling import create_boundary_kernel
+from pystencils.boundaries.createindexlist import numpy_data_type_for_boundary_object
+from pystencils.typing import TypedSymbol, create_type
 
 
 class Dirichlet_Custom(ps.boundaries.Dirichlet):
@@ -204,23 +211,71 @@ class FluxAdditionalDataHandler(
         return f"std::function<Vector3<{self.data_type}>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> elementInitaliser; "  # nopep8
 
 
+def generate_lb_boundary(
+        generation_context,
+        class_name,
+        boundary_object,
+        lb_method,
+        field_name='pdfs',
+        streaming_pattern='pull',
+        prev_timestep=Timestep.BOTH,
+        additional_data_handler=None,
+        namespace='lbm',
+        template_file="templates/Boundary_lb.tmpl.h",
+        **create_kernel_params,
+):
+    if boundary_object.additional_data and additional_data_handler is None:
+        target = create_kernel_params.get('target', Target.CPU)
+        additional_data_handler = default_additional_data_handler(
+            boundary_object, lb_method, field_name, target=target)
+
+    # pylint: disable=unused-argument
+    def boundary_creation_function(
+            field, index_field, stencil, boundary_functor, target=Target.CPU, **kwargs):
+        return create_lattice_boltzmann_boundary_kernel(field, index_field, lb_method, boundary_functor,
+                                                        streaming_pattern=streaming_pattern,
+                                                        prev_timestep=prev_timestep,
+                                                        target=target,
+                                                        **kwargs)
+    # pylint: disable=unused-argument
+
+    generate_boundary(generation_context,
+                      lb_method.stencil,
+                      class_name,
+                      boundary_object=boundary_object,
+                      field_name=field_name,
+                      kernel_creation_function=boundary_creation_function,
+                      namespace=namespace,
+                      additional_data_handler=additional_data_handler,
+                      template_file=template_file,
+                      **create_kernel_params)
+
+
 # this custom boundary generator is necessary because our boundary condition
 # writes to several fields at once which is impossible with the shipped one
 def generate_boundary(
         generation_context,
         stencil,
         class_name,
-        dim: int,
-        assignment,
+        assignment=None,
+        boundary_object=None,
         target=ps.enums.Target.CPU,
         data_type=None,
         cpu_openmp=None,
         namespace="pystencils",
+        kernel_creation_function=None,
+        additional_data_handler=None,
+        field_data_type=None,
         interface_mappings=(),
         generate_functor=True,
+        field_name="",
+        layout='fzyx',
+        template_file="templates/Boundary_ek_reactions.tmpl.h",
         **create_kernel_params,
 ):
     struct_name = "IndexInfo"
+    dim = stencil.D
+    index_shape = [len(stencil)]
 
     config = pystencils_walberla.utility.config_from_context(
         generation_context,
@@ -237,9 +292,14 @@ def generate_boundary(
 
     coordinate_names = ("x", "y", "z")[:dim]
 
-    index_struct_dtype = np.dtype(
-        [(name, np.int32) for name in coordinate_names], align=True
-    )
+    if boundary_object:
+        boundary_object.name = class_name
+        index_struct_dtype = numpy_data_type_for_boundary_object(
+            boundary_object, dim)
+    else:
+        index_struct_dtype = np.dtype(
+            [(name, np.int32) for name in coordinate_names], align=True
+        )
 
     index_field = ps.Field(
         "indexVector",
@@ -253,17 +313,41 @@ def generate_boundary(
         strides=(1, 1),
     )
 
-    kernel_config = ps.CreateKernelConfig(
-        index_fields=[index_field], target=target, **create_kernel_params
-    )
+    if assignment:
+        kernel_config = ps.CreateKernelConfig(
+            index_fields=[index_field], target=target, **create_kernel_params
+        )
 
-    elements = [ps.boundaries.boundaryhandling.BoundaryOffsetInfo(stencil)]
-    # dummy read, such that it recognizes the field....
-    elements += [ps.astnodes.SympyAssignment(
-        ps.TypedSymbol("dummy", np.int32), index_field[0]("x"))]
-    elements += assignment
+        elements = [ps.boundaries.boundaryhandling.BoundaryOffsetInfo(stencil)]
+        # dummy read, such that it recognizes the field....
+        elements += [ps.astnodes.SympyAssignment(
+            ps.TypedSymbol("dummy", np.int32), index_field[0]("x"))]
+        elements += assignment
 
-    kernel = ps.kernelcreation.create_kernel(elements, config=kernel_config)
+        kernel = ps.kernelcreation.create_kernel(
+            elements, config=kernel_config)
+    else:
+        if field_data_type is None:
+            field_data_type = config.data_type[field_name].numpy_dtype
+
+        field = Field.create_generic(field_name, dim, dtype=field_data_type, index_dimensions=len(index_shape),
+                                     layout=layout, index_shape=index_shape, field_type=FieldType.GENERIC)
+
+        if not kernel_creation_function:
+            kernel_creation_function = create_boundary_kernel
+
+        bc_force = hasattr(
+            boundary_object, "calculate_force_on_boundary") and boundary_object.calculate_force_on_boundary
+        if bc_force:
+            force_vector_type = np.dtype(
+                [(f"F_{i}", np.float64) for i in range(dim)], align=True)
+            force_vector = Field('forceVector', FieldType.INDEXED, force_vector_type, layout=[0],
+                                 shape=(TypedSymbol("forceVectorSize", create_type("int32")), 1), strides=(1, 1))
+            kernel = kernel_creation_function(field, index_field, stencil, boundary_object,
+                                              target=target, force_vector=force_vector, **create_kernel_params)
+        else:
+            kernel = kernel_creation_function(field, index_field, stencil, boundary_object,
+                                              target=target, **create_kernel_params)
 
     if isinstance(kernel, ps.astnodes.KernelFunction):
         kernel.function_name = f"boundary_{class_name}"
@@ -282,9 +366,6 @@ def generate_boundary(
         kernel_family.kernel_selection_parameters, interface_mappings
     )
 
-    additional_data_handler = pystencils_walberla.additional_data_handler.AdditionalDataHandler(
-        stencil=stencil)
-
     context = {
         "kernel": kernel_family,
         "class_name": class_name,
@@ -295,10 +376,11 @@ def generate_boundary(
         "dim": dim,
         "target": target.name.lower(),
         "namespace": namespace,
-        "inner_or_boundary": False,
+        "inner_or_boundary": boundary_object.inner_or_boundary,
         "single_link": False,
-        "calculate_force": False,
+        "calculate_force": bc_force,
         "additional_data_handler": additional_data_handler,
+        'layout': layout,
     }
 
     env = jinja2.Environment(
@@ -312,7 +394,7 @@ def generate_boundary(
         custom_env)
 
     header = custom_env.get_template(
-        "templates/Boundary.tmpl.h").render(**context)
+        template_file).render(**context)
     source = env.get_template("Boundary.tmpl.cpp").render(**context)
 
     source_extension = "cpp" if target == ps.enums.Target.CPU else "cu"
@@ -326,6 +408,7 @@ def generate_kernel_selector(
         namespace="pystencils",
         max_num_reactants=None,
         precision_suffix=None,
+        processor_suffix=None
 ):
     """
     Generate helper functions to select a kernel with the appropriate
@@ -338,6 +421,7 @@ def generate_kernel_selector(
         "class_name": class_name,
         "precision_suffix": precision_suffix,
         "max_num_reactants": max_num_reactants,
+        "processor_suffix": processor_suffix,
     }
 
     custom_env = jinja2.Environment(
@@ -367,6 +451,18 @@ def generate_device_preprocessor(kernel, defines=()):
             "clang_host": ["-Wstrict-aliasing", "-Wunused-variable", "-Wconversion", "-Wsign-compare"],  # nopep8
             "clang_dev": ["-Wstrict-aliasing", "-Wunused-variable", "-Wconversion", "-Wsign-compare"],  # nopep8
             "gcc": ["-Wstrict-aliasing", "-Wunused-variable", "-Wconversion"],
+        },
+        "advection": {
+            "nvcc": ["diag_suppress 177 // unused variable"],
+            "clang_host": ["-Wunused-variable"],
+            "clang_dev": ["-Wunused-variable"],
+            "gcc": ["-Wunused-variable"],
+        },
+        "reactions": {
+            "nvcc": ["diag_suppress 177 // unused variable"],
+            "clang_host": ["-Wunused-variable"],
+            "clang_dev": ["-Wunused-variable"],
+            "gcc": ["-Wunused-variable"],
         },
     }
 

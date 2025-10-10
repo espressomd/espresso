@@ -37,6 +37,12 @@
 #include <optional>
 #include <tuple>
 
+/** @brief Tiny length cutoff. */
+inline constexpr auto dihe_tiny_length_value{0.0001};
+
+/** @brief Tiny angle cutoff for sinus calculations. */
+inline constexpr auto dihe_tiny_sin_value{1e-10};
+
 /** Parameters for four-body angular potential (dihedral-angle potentials). */
 struct DihedralBond {
   double mult;
@@ -99,7 +105,7 @@ inline bool calc_dihedral_angle(Utils::Vector3d const &a,
   l_bXc = bXc.norm();
 
   /* catch case of undefined dihedral angle */
-  if (l_aXb <= TINY_LENGTH_VALUE || l_bXc <= TINY_LENGTH_VALUE) {
+  if (l_aXb <= dihe_tiny_length_value or l_bXc <= dihe_tiny_length_value) {
     phi = -1.;
     cosphi = 0.;
     return true;
@@ -110,7 +116,7 @@ inline bool calc_dihedral_angle(Utils::Vector3d const &a,
 
   cosphi = aXb * bXc;
 
-  if (fabs(fabs(cosphi) - 1.) < TINY_SIN_VALUE)
+  if (fabs(fabs(cosphi) - 1.) < dihe_tiny_sin_value)
     cosphi = std::round(cosphi);
 
   /* Calculate dihedral angle */
@@ -158,7 +164,7 @@ DihedralBond::forces(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
   /* calculate force magnitude */
   auto fac = -bend * mult;
 
-  if (fabs(sin(phi)) < TINY_SIN_VALUE) {
+  if (fabs(sin(phi)) < dihe_tiny_sin_value) {
     /* comes from taking the first term of the MacLaurin expansion of
      * sin(n * phi - phi0) and sin(phi) and then making the division */
     sin_mphi_over_sin_phi = mult * cos(mult * phi - phase) / cos_phi;

@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
@@ -43,6 +43,8 @@
 
 namespace EK {
 
+bool EKWalberla::is_gpu() const { return ek_container->is_gpu(); }
+
 double EKWalberla::get_tau() const { return ek_container->get_tau(); }
 
 bool EKWalberla::is_ready_for_propagation() const noexcept {
@@ -52,6 +54,7 @@ bool EKWalberla::is_ready_for_propagation() const noexcept {
 struct FieldsConnector {
   std::size_t velocity_field_id{};
   std::size_t force_field_id{};
+  double lb_density;
   void operator()(LB::Solver::Implementation const &impl) {
     using lb_value_type = std::shared_ptr<LB::LBWalberla>;
     if (impl.solver.has_value()) {
@@ -59,6 +62,7 @@ struct FieldsConnector {
         auto const &instance = **ptr;
         velocity_field_id = instance.lb_fluid->get_velocity_field_id();
         force_field_id = instance.lb_fluid->get_force_field_id();
+        lb_density = instance.lb_fluid->get_density();
       }
     }
   }
@@ -78,8 +82,7 @@ void EKWalberla::propagate() {
   ek_container->reset_charge();
   for (auto const &ek_species : *ek_container) {
     ek_container->add_charge(ek_species->get_density_id(),
-                             ek_species->get_valency(),
-                             ek_species->is_double_precision());
+                             ek_species->get_valency());
   }
   ek_container->solve_poisson();
 
@@ -89,7 +92,7 @@ void EKWalberla::propagate() {
     try {
       ek_species->integrate(ek_container->get_potential_field_id(),
                             connector.velocity_field_id,
-                            connector.force_field_id);
+                            connector.force_field_id, connector.lb_density);
     } catch (std::runtime_error const &e) {
       runtimeErrorMsg() << e.what();
     }
@@ -137,4 +140,4 @@ void EKWalberla::sanity_checks(System::System const &system) const {
 
 } // namespace EK
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

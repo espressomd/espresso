@@ -120,7 +120,7 @@ public:
         (propagation & PropagationMode::TRANS_LB_TRACER) == 0) {
       return false;
     }
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
     if ((propagation & PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE) == 0 and
         propagation & (PropagationMode::TRANS_VS_RELATIVE |
                        PropagationMode::ROT_VS_RELATIVE)) {
@@ -133,7 +133,7 @@ public:
     }
     // ghosts: check we don't have the corresponding real particle on the same
     // node, and that a ghost for the same particle hasn't been coupled already
-    if (m_coupled_ghosts.count(p.id()) != 0 or is_ghost_for_local_particle(p)) {
+    if (m_coupled_ghosts.contains(p.id()) or is_ghost_for_local_particle(p)) {
       return false;
     }
     m_coupled_ghosts.insert(p.id());

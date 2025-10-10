@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "magnetostatics/dipolar_direct_sum.hpp"
 
@@ -103,6 +103,7 @@ static auto pair_potential(Utils::Vector3d const &d, Utils::Vector3d const &m1,
   return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
 }
 
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
 /**
  * @brief Dipole field contribution from a particle with dipole moment @c m1
  * at a distance @c d.
@@ -121,6 +122,7 @@ static auto dipole_field(Utils::Vector3d const &d, Utils::Vector3d const &m1) {
 
   return 3.0 * pe2 * d / r5 - m1 / r3;
 }
+#endif
 
 /**
  * @brief Call kernel for every 3d index in a sphere around the origin.
@@ -413,7 +415,7 @@ DipolarDirectSum::long_range_energy(ParticleRange const &particles) const {
  * a naive N-square sum. The difference is summation range,
  * and the kernel calculates the dipole field rather than the energy.
  */
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
 void DipolarDirectSum::dipole_field_at_part(
     ParticleRange const &particles) const {
   auto const &box_geo = *get_system().box_geo;
@@ -451,4 +453,4 @@ DipolarDirectSum::DipolarDirectSum(double prefactor, int n_replicas) {
   }
 }
 
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES

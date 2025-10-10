@@ -23,7 +23,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "actor/traits.hpp"
 
@@ -77,7 +77,7 @@ struct dlc_data {
  */
 struct DipolarLayerCorrection : public Dipoles::Actor<DipolarLayerCorrection> {
   using BaseSolver = std::variant<
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
       std::shared_ptr<DipolarP3M>,
 #endif
       std::shared_ptr<DipolarDirectSum>>;
@@ -98,7 +98,7 @@ struct DipolarLayerCorrection : public Dipoles::Actor<DipolarLayerCorrection> {
   void on_activation() {
     visit_base_solver(
         [this](auto &solver) { solver->bind_system(m_system.lock()); });
-    sanity_checks_node_grid();
+    sanity_checks_periodicity();
     /* None of the DLC parameters depend on the DP3M parameters,
      * but the DP3M parameters depend on the DLC parameters during tuning,
      * therefore DLC needs to be tuned before DP3M. */
@@ -113,10 +113,10 @@ struct DipolarLayerCorrection : public Dipoles::Actor<DipolarLayerCorrection> {
     visit_base_solver([](auto &actor) { actor->on_boxl_change(); });
   }
   void on_node_grid_change() const {
-    sanity_checks_node_grid();
     visit_base_solver([](auto &solver) { solver->on_node_grid_change(); });
   }
   void on_periodicity_change() const {
+    sanity_checks_periodicity();
     visit_base_solver([](auto &solver) { solver->on_periodicity_change(); });
   }
   void on_cell_structure_change() const {
@@ -129,7 +129,7 @@ struct DipolarLayerCorrection : public Dipoles::Actor<DipolarLayerCorrection> {
   }
 
   void sanity_checks() const {
-    sanity_checks_node_grid();
+    sanity_checks_periodicity();
     visit_base_solver([](auto &actor) { actor->sanity_checks(); });
   }
 
@@ -158,11 +158,11 @@ private:
   void check_gap(Particle const &p) const;
   double tune_far_cut() const;
 
-  void sanity_checks_node_grid() const;
+  void sanity_checks_periodicity() const;
 
   template <class Visitor> void visit_base_solver(Visitor &&visitor) const {
     std::visit(visitor, base_solver);
   }
 };
 
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES

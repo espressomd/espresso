@@ -34,73 +34,73 @@
 #include <vector>
 
 static double recalc_maximal_cutoff(IA_parameters const &data) {
-  auto max_cut_current = INACTIVE_CUTOFF;
+  auto max_cut_current = inactive_cutoff;
 
-#ifdef LENNARD_JONES
+#ifdef ESPRESSO_LENNARD_JONES
   max_cut_current = std::max(max_cut_current, data.lj.max_cutoff());
 #endif
 
-#ifdef WCA
+#ifdef ESPRESSO_WCA
   max_cut_current = std::max(max_cut_current, data.wca.max_cutoff());
 #endif
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
   max_cut_current = std::max(max_cut_current, data.dpd.max_cutoff());
 #endif
 
-#ifdef LENNARD_JONES_GENERIC
+#ifdef ESPRESSO_LENNARD_JONES_GENERIC
   max_cut_current = std::max(max_cut_current, data.ljgen.max_cutoff());
 #endif
 
-#ifdef SMOOTH_STEP
+#ifdef ESPRESSO_SMOOTH_STEP
   max_cut_current = std::max(max_cut_current, data.smooth_step.max_cutoff());
 #endif
 
-#ifdef HERTZIAN
+#ifdef ESPRESSO_HERTZIAN
   max_cut_current = std::max(max_cut_current, data.hertzian.max_cutoff());
 #endif
 
-#ifdef GAUSSIAN
+#ifdef ESPRESSO_GAUSSIAN
   max_cut_current = std::max(max_cut_current, data.gaussian.max_cutoff());
 #endif
 
-#ifdef BMHTF_NACL
+#ifdef ESPRESSO_BMHTF_NACL
   max_cut_current = std::max(max_cut_current, data.bmhtf.max_cutoff());
 #endif
 
-#ifdef MORSE
+#ifdef ESPRESSO_MORSE
   max_cut_current = std::max(max_cut_current, data.morse.max_cutoff());
 #endif
 
-#ifdef BUCKINGHAM
+#ifdef ESPRESSO_BUCKINGHAM
   max_cut_current = std::max(max_cut_current, data.buckingham.max_cutoff());
 #endif
 
-#ifdef SOFT_SPHERE
+#ifdef ESPRESSO_SOFT_SPHERE
   max_cut_current = std::max(max_cut_current, data.soft_sphere.max_cutoff());
 #endif
 
-#ifdef HAT
+#ifdef ESPRESSO_HAT
   max_cut_current = std::max(max_cut_current, data.hat.max_cutoff());
 #endif
 
-#ifdef LJCOS
+#ifdef ESPRESSO_LJCOS
   max_cut_current = std::max(max_cut_current, data.ljcos.max_cutoff());
 #endif
 
-#ifdef LJCOS2
+#ifdef ESPRESSO_LJCOS2
   max_cut_current = std::max(max_cut_current, data.ljcos2.max_cutoff());
 #endif
 
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
   max_cut_current = std::max(max_cut_current, data.gay_berne.max_cutoff());
 #endif
 
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
   max_cut_current = std::max(max_cut_current, data.tab.cutoff());
 #endif
 
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
   // If THOLE is active, use p3m cutoff
   if (data.thole.scaling_coeff != 0.)
     max_cut_current =
@@ -117,7 +117,7 @@ void InteractionsNonBonded::recalc_maximal_cutoffs() {
 }
 
 double InteractionsNonBonded::maximal_cutoff() const {
-  auto max_cut_nonbonded = INACTIVE_CUTOFF;
+  auto max_cut_nonbonded = inactive_cutoff;
   for (auto &data : m_nonbonded_ia_params) {
     max_cut_nonbonded = std::max(max_cut_nonbonded, data->max_cut);
   }

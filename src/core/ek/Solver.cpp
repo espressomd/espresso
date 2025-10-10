@@ -127,6 +127,11 @@ void Solver::on_temperature_change() {
   }
 }
 
+bool Solver::is_gpu() const {
+  check_solver(impl);
+  return std::visit([](auto &ptr) { return ptr->is_gpu(); }, *impl->solver);
+}
+
 double Solver::get_tau() const {
   check_solver(impl);
   return std::visit([](auto &ptr) { return ptr->get_tau(); }, *impl->solver);
@@ -138,7 +143,7 @@ template <> void Solver::set<EKNone>(std::shared_ptr<EKNone> ek_instance) {
   impl->solver = ek_instance;
 }
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 template <>
 void Solver::set<EKWalberla>(std::shared_ptr<EKWalberla> ek_instance) {
   assert(impl);
@@ -147,6 +152,6 @@ void Solver::set<EKWalberla>(std::shared_ptr<EKWalberla> ek_instance) {
   ek_instance->sanity_checks(system);
   impl->solver = ek_instance;
 }
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA
 
 } // namespace EK

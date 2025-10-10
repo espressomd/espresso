@@ -40,6 +40,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -49,7 +50,7 @@
 namespace ScriptInterface {
 namespace Particles {
 
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
 /**
  * @brief Use the bond topology to automatically add exclusions between
  * particles that are up to @c n_bonds_max bonds apart in a chain.
@@ -83,8 +84,8 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
     auto const add_partner = [&partners](int pid1, int pid2, int n_bonds) {
       if (pid2 == pid1)
         return;
-      for (auto const &partner : partners[pid1])
-        if (partner.first == pid2)
+      for (auto const &partner_pid : std::views::elements<0>(partners[pid1]))
+        if (partner_pid == pid2)
           return;
       partners[pid1].emplace_back(pid2, n_bonds);
     };
@@ -96,26 +97,21 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
 
     // determine transient connectivity
     for (int iteration = 1; iteration < n_bonds_max; iteration++) {
-      std::vector<int> pids;
-      for (auto const &kv : partners) {
-        pids.emplace_back(kv.first);
-      }
-      for (auto const pid1 : pids) {
+      for (auto const pid1 : std::views::elements<0>(partners)) {
         // loop over partners (counter-based loops due to iterator invalidation)
         // NOLINTNEXTLINE(modernize-loop-convert)
         for (std::size_t i = 0u; i < partners[pid1].size(); ++i) {
           auto const [pid2, dist21] = partners[pid1][i];
-          if (dist21 > n_bonds_max)
-            continue;
+          assert(dist21 <= n_bonds_max);
           // loop over all partners of the partner
           // NOLINTNEXTLINE(modernize-loop-convert)
           for (std::size_t j = 0u; j < partners[pid2].size(); ++j) {
             auto const [pid3, dist32] = partners[pid2][j];
             auto const dist31 = dist32 + dist21;
-            if (dist31 > n_bonds_max)
-              continue;
-            add_partner(pid1, pid3, dist31);
-            add_partner(pid3, pid1, dist31);
+            if (dist31 <= n_bonds_max) {
+              add_partner(pid1, pid3, dist31);
+              add_partner(pid3, pid1, dist31);
+            }
           }
         }
       }
@@ -123,11 +119,8 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   }
 
   boost::mpi::broadcast(comm, partners, 0);
-  for (auto const &kv : partners) {
-    auto const pid1 = kv.first;
-    auto const &partner_list = kv.second;
-    for (auto const &partner : partner_list) {
-      auto const pid2 = partner.first;
+  for (auto const &[pid1, partner_list] : partners) {
+    for (auto const &pid2 : std::views::elements<0>(partner_list)) {
       if (auto p1 = cell_structure.get_local_particle(pid1)) {
         add_exclusion(*p1, pid2);
       }
@@ -138,17 +131,17 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   }
   system.on_particle_change();
 }
-#endif // EXCLUSIONS
+#endif // ESPRESSO_EXCLUSIONS
 
 Variant ParticleList::do_call_method(std::string const &name,
                                      VariantMap const &params) {
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
   if (name == "auto_exclusions") {
     auto const distance = get_value<int>(params, "distance");
     auto_exclusions(context()->get_comm(), distance);
     return {};
   }
-#endif // EXCLUSIONS
+#endif // ESPRESSO_EXCLUSIONS
   if (name == "get_highest_particle_id") {
     return get_maximal_particle_id();
   }
@@ -189,12 +182,12 @@ Variant ParticleList::do_call_method(std::string const &name,
     local_params["__bonded_ias"] = m_bonded_ias.lock();
     auto so = std::dynamic_pointer_cast<ParticleHandle>(
         context()->make_shared("Particles::ParticleHandle", local_params));
-#ifdef EXCLUSIONS
-    if (params.count("exclusions")) {
+#ifdef ESPRESSO_EXCLUSIONS
+    if (params.contains("exclusions")) {
       so->call_method("set_exclusions", {{"p_ids", params.at("exclusions")}});
     }
-#endif // EXCLUSIONS
-    return so->get_parameter("id");
+#endif // ESPRESSO_EXCLUSIONS
+    return so;
   }
   return {};
 }

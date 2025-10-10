@@ -71,8 +71,21 @@ static auto get_summary(::System::System const &system,
   };
 
   std::unordered_map<std::string, Variant> dict;
-  dict["kinetic"] = get_obs_contrib(obs.kinetic);
+  dict["kinetic_lin"] = get_obs_contrib(obs.kinetic_lin);
+  dict["kinetic_rot"] = get_obs_contrib(obs.kinetic_rot);
   dict["external_fields"] = get_obs_contrib(obs.external_fields);
+  if (is_type<double>(dict["kinetic_lin"])) {
+    dict["kinetic"] = get_value<double>(dict["kinetic_lin"]) +
+                      get_value<double>(dict["kinetic_rot"]);
+  } else {
+    auto const v1 = get_value<std::vector<double>>(dict["kinetic_lin"]);
+    auto const v2 = get_value<std::vector<double>>(dict["kinetic_rot"]);
+    std::vector<double> value{};
+    for (auto i = 0u; i < 9u; ++i) {
+      value.emplace_back(v1[i] + v2[i]);
+    }
+    dict["kinetic"] = value;
+  }
 
   {
     auto values = std::vector<double>(obs_dim);
@@ -102,38 +115,47 @@ static auto get_summary(::System::System const &system,
     }
   }
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   {
     auto const values = get_obs_contribs(obs.coulomb);
     for (std::size_t i = 0ul; i < values.size(); ++i) {
       dict["coulomb," + std::to_string(i)] = values[i];
     }
   }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   {
     auto const values = get_obs_contribs(obs.dipolar);
     for (std::size_t i = 0ul; i < values.size(); ++i) {
       dict["dipolar," + std::to_string(i)] = values[i];
     }
   }
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES
 
-#ifdef VIRTUAL_SITES
+#ifdef ESPRESSO_VIRTUAL_SITES
   {
     auto const values = get_obs_contribs(obs.virtual_sites);
     for (std::size_t i = 0ul; i < values.size(); ++i) {
       dict["virtual_sites," + std::to_string(i)] = values[i];
     }
   }
-#endif // VIRTUAL_SITES
+#endif // ESPRESSO_VIRTUAL_SITES
+
+#ifdef ESPRESSO_DPD
+  {
+    auto const values = get_obs_contribs(obs.dpd);
+    for (std::size_t i = 0ul; i < values.size(); ++i) {
+      dict["dpd," + std::to_string(i)] = values[i];
+    }
+  }
+#endif // ESPRESSO_DPD
 
   return dict;
 }
 
 Variant ObservableStat::do_call_method(std::string const &name,
-                                       VariantMap const &parameters) {
+                                       VariantMap const &) {
   auto &system = get_system();
   if (name == "calculate_energy") {
     auto const obs = system.calculate_energy();

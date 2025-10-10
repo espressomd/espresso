@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef SCAFACOS
+#ifdef ESPRESSO_SCAFACOS
 
 #include "electrostatics/scafacos.hpp"
 #include "electrostatics/scafacos_impl.hpp"
@@ -145,4 +145,4 @@ void CoulombScafacosImpl::tune_impl() {
   get_system().on_coulomb_change();
 }
 
-#endif // SCAFACOS
+#endif // ESPRESSO_SCAFACOS

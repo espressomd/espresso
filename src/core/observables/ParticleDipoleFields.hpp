@@ -41,7 +41,7 @@ public:
   evaluate(boost::mpi::communicator const &comm,
            ParticleReferenceRange const &local_particles,
            const ParticleObservables::traits<Particle> &traits) const override {
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
     System::get_system().calculate_long_range_fields();
 #endif
     return ParticleObservable<ParticleObservables::DipoleFields>::evaluate(

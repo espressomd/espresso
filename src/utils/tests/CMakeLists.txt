@@ -22,6 +22,9 @@
 include(espresso_unit_test)
 
 espresso_unit_test(SRC Vector_test.cpp DEPENDS espresso::utils)
+if("cxx_std_23" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+  target_compile_features(Vector_test PUBLIC cxx_std_23)
+endif()
 espresso_unit_test(SRC Factory_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC NumeratedContainer_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC Cache_test.cpp DEPENDS espresso::utils)
@@ -38,7 +41,6 @@ espresso_unit_test(SRC linear_interpolation_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC interpolation_gradient_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC interpolation_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC bspline_test.cpp DEPENDS espresso::utils)
-espresso_unit_test(SRC matrix_vector_product_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC index_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC Array_test.cpp DEPENDS Boost::serialization
                    espresso::utils)

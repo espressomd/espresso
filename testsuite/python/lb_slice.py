@@ -79,12 +79,12 @@ class LBTest:
 
         # population on test slice [:, :, :]
         input_pop = np.random.rand(10, 10, 10, 19)
-        lb_fluid[:, :, :].population = input_pop
-        output_pop = lb_fluid[:, :, :].population
+        lb_fluid[:, :, :]._setter("population", input_pop)
+        output_pop = lb_fluid[:, :, :]._getter("population")
         np.testing.assert_array_almost_equal(input_pop, np.copy(output_pop))
 
         with self.assertRaisesRegex(ValueError, r"Input-dimensions of 'population' array \(10, 10, 10, 5\) does not match slice dimensions \(10, 10, 10, 19\)"):
-            lb_fluid[:, :, :].population = input_pop[:, :, :, :5]
+            lb_fluid[:, :, :]._setter("population", input_pop[:, :, :, :5])
 
         # pressure tensor on test slice [3, 6, 2:5]
         output_pressure_shape = lb_fluid[3, 6, 2:5].pressure_tensor.shape

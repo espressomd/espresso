@@ -21,7 +21,7 @@
 
 #include <config/config.hpp>
 
-#ifdef FPE
+#ifdef ESPRESSO_FPE
 
 #include <memory>
 #include <mutex>
@@ -144,4 +144,4 @@ public:
   make_shared_scoped(std::optional<int> excepts = std::nullopt);
 };
 
-#endif // FPE
+#endif // ESPRESSO_FPE

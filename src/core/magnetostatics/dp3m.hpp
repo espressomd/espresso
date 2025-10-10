@@ -33,12 +33,13 @@
 
 #include "config/config.hpp"
 
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
 
 #include "magnetostatics/actor.hpp"
 
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
+#include "p3m/math.hpp"
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
@@ -49,11 +50,6 @@
 
 #include <cmath>
 #include <numbers>
-
-#ifdef NPT
-/** Update the NpT virial */
-void npt_add_virial_magnetic_contribution(double energy);
-#endif
 
 /** @brief Dipolar P3M solver. */
 struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
@@ -139,15 +135,13 @@ public:
   /** Calculate real-space contribution of p3m dipolar pair forces and torques.
    *  If NPT is compiled in, update the NpT virial.
    */
-  inline ParticleForce pair_force(Particle const &p1, Particle const &p2,
-                                  Utils::Vector3d const &d, double dist2,
-                                  double dist) const {
-    if ((p1.dipm() == 0.) || (p2.dipm() == 0.) || dist >= dp3m_params.r_cut ||
-        dist <= 0.)
+  inline ParticleForce pair_force(double d1d2, Utils::Vector3d const &dip1,
+                                  Utils::Vector3d const &dip2,
+                                  Utils::Vector3d const &d, double dist,
+                                  double dist2) const {
+    if (d1d2 == 0. or dist >= dp3m_params.r_cut or dist <= 0.)
       return {};
 
-    auto const dip1 = p1.calc_dip();
-    auto const dip2 = p2.calc_dip();
     auto const alpsq = dp3m_params.alpha * dp3m_params.alpha;
     auto const adist = dp3m_params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
@@ -184,23 +178,23 @@ public:
 
     // Calculate real-space torques
     auto const torque = prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 #if USE_ERFC_APPROXIMATION
-    auto const fac = prefactor * p1.dipm() * p2.dipm() * exp_adist2;
+    auto const fac = prefactor * d1d2 * exp_adist2;
 #else
-    auto const fac = prefactor * p1.dipm() * p2.dipm();
+    auto const fac = prefactor * d1d2;
 #endif
     auto const energy = fac * (mimj * B_r - mir * mjr * C_r);
-    npt_add_virial_magnetic_contribution(energy);
-#endif // NPT
+    npt_add_virial_contribution(energy);
+#endif // ESPRESSO_NPT
     return ParticleForce{force, torque};
   }
 
   /** Calculate real-space contribution of dipolar pair energy. */
   inline double pair_energy(Particle const &p1, Particle const &p2,
-                            Utils::Vector3d const &d, double dist2,
-                            double dist) const {
-    if ((p1.dipm() == 0.) || (p2.dipm() == 0.) || dist >= dp3m_params.r_cut ||
+                            Utils::Vector3d const &d, double dist,
+                            double dist2) const {
+    if (p1.dipm() == 0. or p2.dipm() == 0. or dist >= dp3m_params.r_cut or
         dist <= 0.)
       return {};
 
@@ -259,6 +253,11 @@ protected:
   void sanity_checks_cell_structure() const;
 
   virtual void scaleby_box_l() = 0;
+
+#ifdef ESPRESSO_NPT
+  /** Update the NpT virial */
+  virtual void npt_add_virial_contribution(double energy) const = 0;
+#endif
 };
 
-#endif // DP3M
+#endif // ESPRESSO_DP3M

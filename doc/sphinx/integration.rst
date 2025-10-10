@@ -105,13 +105,14 @@ A code snippet would look like::
 
     system = espressomd.System(box_l=[1, 1, 1])
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0, seed=42)
-    system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
+    system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0, barostat='MTK')
 
 The parameters of the integrator are
 
 * ``ext_pressure``: The external pressure
 * ``piston``: The mass of the applied piston
 * ``direction``: Flags to enable/disable box dimensions to be subject to fluctuations. By default, all directions are enabled.
+* ``barostat``: The barostat scheme. ``Andersen`` or ``MTK`` can be choosed. By default, ``Andersen``.
 
 Additionally, an NpT thermostat has to be set by :meth:`~espressomd.thermostat.Thermostat.set_npt()`
 with parameters:
@@ -125,14 +126,14 @@ We recommend reading :ref:`Langevin thermostat` before continuing.
 
 The relaxation towards a desired pressure :math:`P` (parameter ``ext_pressure``)
 is enabled by treating the box
-volume :math:`V` as a degree of freedom with corresponding momentum :math:`\Pi = Q\dot{V}`,
-where :math:`Q` (parameter ``piston``) is an artificial piston mass.
+volume :math:`V` as a degree of freedom with corresponding momentum :math:`p_{\epsilon} = W\dot{V}`,
+where :math:`W` (parameter ``piston``) is an artificial piston mass.
 Which box dimensions are affected to change the volume can be controlled by a list of
 boolean flags for parameter ``direction``.
-An additional energy :math:`H_V = 1/(2Q)\Pi + PV`
+An additional energy :math:`H_V = 1/(2W)p_{\epsilon}^2 + PV`
 associated with the volume is postulated. This results in a "force" on the box such that
 
-.. math:: \dot{\Pi} = \mathcal{P} - P
+.. math:: \dot{p}_{\epsilon} = \mathcal{P} - P
 
 where
 
@@ -143,18 +144,27 @@ of the system (number of flags set by ``direction``), :math:`\vec{f}_{ij}` the
 short range interaction force between particles :math:`i` and :math:`j` and
 :math:`\vec{x}_{ij}= \vec{x}_j - \vec{x}_i`.
 
-In addition to this deterministic force, a friction :math:`-\frac{\gamma^V}{Q}\Pi(t)`
-and noise :math:`\sqrt{k_B T \gamma^V} \eta(t)` are added for the box
-volume dynamics and the particle dynamics. This introduces three new parameters:
-The friction coefficient for the box :math:`\gamma^V` (parameter ``gammav``),
+In addition to this deterministic force, a friction :math:`-\frac{\gamma^V}{W}p_{\epsilon}(t)`
+and noise :math:`\sigma^V \mathcal{N}(0,1)` are added for the box
+volume dynamics and the particle dynamics,
+where :math:`\mathcal{N}(0,1)` are uncorrelated
+random numbers drawn from a standard normal distribution,
+and :math:`\sigma^V = \sqrt{k_B T W (1 - \exp(-2\frac{\gamma^V}{W}dt))}`.
+This introduces three new parameters:
+the friction coefficient for the box :math:`\gamma^V` (parameter ``gammav``),
 the friction coefficient of the particles :math:`\gamma^0` (parameter ``gamma0``)
 and the thermal energy :math:`k_BT` (parameter ``kT``).
 For a discussion of these terms and their discretisation, see :ref:`Langevin thermostat`,
 which uses the same approach, but only for particles.
-As a result of box geometry changes, the particle positions and velocities have to be rescaled
-during integration.
 
-The discretisation consists of the following steps (see :cite:`kolb99a` for a full derivation of the algorithm):
+.. _Andersen scheme:
+
+Andersen scheme
+"""""""""""""""
+
+Within Andersen scheme, the particle positions and velocities have to be rescaled
+during integration due to box geometry changes.
+The discretisation consists of the following steps (see :cite:`kolb99a` for a derivation of the algorithm and :cite:`leimkuhler13a` for implementation of stochastic process):
 
 1. Calculate the particle velocities at the half step
 
@@ -163,29 +173,50 @@ The discretisation consists of the following steps (see :cite:`kolb99a` for a fu
 2. Calculate the instantaneous pressure and "volume momentum"
 
    .. math:: \mathcal{P} = \mathcal{P}(\vec{x}(t),V(t),\vec{f}(\vec{x}(t)), \vec{v}'(t+dt/2))
-   .. math:: \Pi(t+dt/2) = \Pi(t) + (\mathcal{P}-P) dt/2 -\frac{\gamma^V}{Q}\Pi(t) dt/2  +  \sqrt{k_B T \gamma^V dt} {\eta_*}
+   .. math:: p_{\epsilon}(t+dt/2) = p_{\epsilon}(t) + (\mathcal{P}-P) dt/2
 
 3. Calculate box volume and scaling parameter :math:`L` at half step and full step, scale the simulation box accordingly
 
-   .. math:: V(t+dt/2) = V(t) + \frac{\Pi(t+dt/2)}{Q} dt/2
+   .. math:: V(t+dt/2) = V(t) + \frac{p_{\epsilon}(t+dt/2)}{W} dt/2
    .. math:: L(t+dt/2) = V(t+dt/2)^{1/d}
-   .. math:: V(t+dt) = V(t+dt/2) + \frac{\Pi(t+dt/2)}{Q} dt/2
+
+4. Update particle positions at the half step and scale velocities
+
+   .. math:: \vec{x}(t+dt/2) = \frac{L(t+dt/2)}{L(t)} \left[ \vec{x}(t) + \frac{L^2(t)}{L^2(t+dt/2)} \vec{v}(t+dt/2) dt \right]
+   .. math:: \vec{v}(t+dt/2) = \frac{L(t)}{L(t+dt/2)} \vec{v}'(t+dt/2)
+
+5. Add friction and thermal fluctuations to velocity and "volume momentum"
+
+   .. math:: \vec{v}(t+dt/2) = \Gamma^0 \vec{v}(t+dt/2) + \sigma^0 \vec{\mathcal{N}}(0,1)
+   .. math:: p_{\epsilon}(t+dt/2) = \Gamma^V p_{\epsilon}(t+dt/2) + \sigma^V \mathcal{N}(0,1)
+
+   where
+
+   .. math:: \Gamma^0 = \exp\left(-\frac{\gamma^0}{m} dt \right), \sigma^0 = \sqrt{k_B T \left(1 - \exp\left(- 2 \frac{\gamma^0}{m} dt \right) \right) / m},
+   .. math:: \Gamma^V = \exp\left(-\frac{\gamma^V}{W} dt \right), \sigma^V = \sqrt{k_B T W \left(1 - \exp\left(- 2 \frac{\gamma^C}{W} dt \right) \right)}
+
+
+6. Update particle positions and volume at the half step
+
+   .. math:: \vec{x}'(t+dt) = \left[ \vec{x}(t+dt/2) + \vec{v}(t+dt/2) dt \right]
+   .. math:: V(t+dt) = V(t+dt/2) + \frac{p_{\epsilon}(t+dt/2)}{W} dt/2
    .. math:: L(t+dt) = V(t+dt)^{1/d}
 
-4. Update particle positions and scale velocities
+   Here, :math:`{\vec{v}(t+dt/2)}` is rewritten as :math:`\vec{v}'(t+dt/2)`
+   since velocities should be rescaled due to volume change
 
-   .. math:: \vec{x}(t+dt) = \frac{L(t+dt)}{L(t)} \left[ \vec{x}(t) + \frac{L^2(t)}{L^2(t+dt/2)} \vec{v}(t+dt/2) dt \right]
-   .. math:: \vec{v}(t+dt/2) = \frac{L(t)}{L(t+dt)} \vec{v}'(t+dt/2)
+7. Scale positions and velocities
 
-5. Calculate forces, instantaneous pressure and "volume momentum"
+   .. math:: \vec{x}(t+dt) = \frac{L(t)}{L(t+dt/2)} \vec{x}'(t+dt)
+   .. math:: \vec{v}(t+dt/2) = \frac{L(t+dt/2)}{L(t+dt)} \vec{v}'(t+dt/2)
+
+8. Calculate forces, instantaneous pressure and "volume momentum"
 
    .. math:: \vec{F} = \vec{F}(\vec{x}(t+dt),\vec{v}(t+dt/2),t)
    .. math:: \mathcal{P} = \mathcal{P}(\vec{x}(t+dt),V(t+dt),\vec{f}(\vec{x}(t+dt)), \vec{v}(t+dt/2))
-   .. math:: \Pi(t+dt) = \Pi(t+dt/2) + (\mathcal{P}-P) dt/2 -\frac{\gamma^V}{Q}\Pi(t+dt/2) dt/2  +  \sqrt{k_B T \gamma^V dt} {\eta_*}
+   .. math:: p_{\epsilon}(t+dt) = p_{\epsilon}(t+dt/2) + (\mathcal{P}-P) dt/2
 
-   with uncorrelated numbers :math:`{\eta_*}` drawn from a random uniform process.
-
-6. Update the velocities
+9. Update velocities
 
    .. math:: \vec{v}(t+dt) = \vec{v}(t+dt/2) + \frac{\vec{F}(t+dt)}{m} dt/2
 
@@ -194,10 +225,90 @@ Notes:
 * The NpT algorithm is only tested for ``direction = 3 * [True]``. Usage of other ``direction`` is considered an experimental feature.
 * In step 4, only those coordinates are scaled for which ``direction`` is set.
 * For the instantaneous pressure, the same limitations of applicability hold as described in :ref:`Pressure`.
-* The particle forces :math:`\vec{F}` include interactions as well as a friction (:math:`\gamma^0`) and noise term (:math:`\sqrt{k_B T \gamma^0 dt} {\eta_*}`) analogous to the terms in the :ref:`Langevin thermostat`.
-* The particle forces are only calculated in step 5 and then reused in step 1 of the next iteration. See :ref:`Velocity Verlet Algorithm` for the implications of that.
+* The particle forces :math:`\vec{F}` include interactions as well as a friction (:math:`\gamma^0`) and noise term (:math:`\sigma^0 \mathcal{N}(0,1)`) analogous to the terms in the :ref:`Langevin thermostat`.
+* The particle forces are only calculated in step 8 and then reused in step 1 of the next iteration. See :ref:`Velocity Verlet Algorithm` for the implications of that.
 * The NpT algorithm doesn't support :ref:`Lees-Edwards boundary conditions`.
 * The NpT algorithm doesn't support propagation of angular velocities.
+* The NpT algorithm doesn't support :ref:`Rigid bonds`.
+* The NpT algorithm doesn't support :ref:`Magnetostatics`.
+
+.. _MTK scheme:
+
+MTK scheme
+"""""""""""""""
+
+MTK scheme is a corected version of Hoover scheme where the equation of motions are rewritten using the rescaled particle positions and velocities :cite:`martyna94a`.
+Therefore, there is no need to scale them during integration.
+The discretisation consists of the following steps (see :cite:`demichele25a` for operator decomposition and :cite:`leimkuhler13a` for implementation of stochastic process):
+
+#. Calculate the particle velocities with volume change at the half step
+
+   .. math:: \vec{v}'(t+dt/2) = \exp\left[ -\left(1 + \frac{d}{N_{f}} \right) \frac{p_{\epsilon}(t)}{W} dt/2 \right] \vec{v}(t)
+
+   where :math:`N_{f}=d(N-1)` is particle's degree of freedom and :math:`N` is the number of particles.
+
+#. Calculate the instantaneous pressure and "volume momentum"
+
+   .. math:: \mathcal{P} = \mathcal{P}(\vec{x}(t),V(t),\vec{f}(\vec{x}(t)), \vec{v}'(t+dt/2))
+   .. math:: p_{\epsilon}(t+dt/2) = p_{\epsilon}(t) + \left( dV(\mathcal{P}-P) + \frac{d}{N_{f}}\sum_{i}m_{i}\vec{v}'(t+dt/2)^2 \right) dt/2
+
+#. Calculate the particle velocities at the half step
+
+   .. math:: \vec{v}(t+dt/2) = \vec{v}'(t+dt/2) + \frac{\vec{F}(\vec{x}(t),\vec{v}(t-dt/2),t)}{m} dt/2
+
+#. Calculate box volume at the half step
+
+   .. math:: V(t+dt/2) = \exp(\frac{dVp_{\epsilon}(t+dt/2)}{W} dt/2) V(t)
+
+#. Update particle positions at the half step
+
+   .. math:: \vec{x}'(t+dt/2) = \exp\left( \frac{p_{\epsilon}}{W}dt/2 \right) \vec{x}(t)
+   .. math:: \vec{x}(t+dt/2) = \vec{x}'(t+dt/2) + \vec{v}(t+dt/2) dt
+
+#. Add friction and thermal fluctuations to velocity and "volume momentum"
+
+   .. math:: \vec{v}(t+dt/2) = \Gamma^0 \vec{v}(t+dt/2) + \sigma^0 \vec{\mathcal{N}}(0,1)
+   .. math:: p_{\epsilon}(t+dt/2) = \Gamma^V p_{\epsilon}(t+dt/2) + \sigma^V \mathcal{N}(0,1)
+
+   where
+
+   .. math:: \Gamma^0 = \exp\left(-\frac{\gamma^0}{m} dt \right), \sigma^0 = \sqrt{k_B T \left(1 - \exp\left(- 2 \frac{\gamma^0}{m} dt \right) \right) / m},
+   .. math:: \Gamma^V = \exp\left(-\frac{\gamma^V}{W} dt \right), \sigma^V = \sqrt{k_B T W \left(1 - \exp\left(- 2 \frac{\gamma^C}{W} dt \right) \right)}
+
+
+#. Update particle positions and volume at the half step
+
+   .. math:: \vec{x}'(t+dt) = \vec{x}(t+dt/2) + \vec{v}(t+dt/2) dt
+   .. math:: \vec{x}(t+dt) = \exp\left( \frac{p_{\epsilon}}{W}dt/2 \right) \vec{x}'(t+dt)
+   .. math:: V(t+dt) = V(t+dt/2) + \frac{p_{\epsilon}(t+dt/2)}{W} dt/2
+
+#. Calculate forces
+
+   .. math:: \vec{F}(t+dt) = \vec{F}(\vec{x}(t+dt),\vec{v}(t+dt/2),t)
+
+#. Update velocities
+
+   .. math:: \vec{v}'(t+dt) = \vec{v}(t+dt/2) + \frac{\vec{F}(t+dt)}{m} dt/2
+
+#. Calculate instantaneous pressure and volume momentum
+
+   .. math:: \mathcal{P} = \mathcal{P}(\vec{x}(t+dt),V(t+dt),\vec{f}(\vec{x}(t+dt)), \vec{v}(t+dt/2))
+   .. math:: p_{\epsilon}(t+dt) = p_{\epsilon}(t+dt/2) + \left( dV(\mathcal{P}-P) + \frac{d}{N_{f}}\sum_{i}m_{i}\vec{v}(t+dt/2)^2 \right) dt/2
+
+#. Update velocities with volume changes
+
+   .. math:: \vec{v}(t+dt) = \exp\left[ -\left(1 + \frac{d}{N_{f}} \right) \frac{p_{\epsilon}(t+dt)}{W} dt/2 \right] \vec{v}'(t+dt)
+
+Notes:
+
+* The NpT algorithm is only tested for ``direction = 3 * [True]``. Usage of other ``direction`` is considered an experimental feature.
+* For the instantaneous pressure, the same limitations of applicability hold as described in :ref:`Pressure`.
+* The particle forces :math:`\vec{F}` include interactions as well as a friction (:math:`\gamma^0`) and noise term (:math:`\sigma^0 \mathcal{N}(0,1)`) analogous to the terms in the :ref:`Langevin thermostat`.
+* The particle forces are only calculated in step 8 and then reused in step 3 of the next iteration. See :ref:`Velocity Verlet Algorithm` for the implications of that.
+* The NpT algorithm doesn't support :ref:`Lees-Edwards boundary conditions`.
+* The NpT algorithm doesn't support propagation of angular velocities.
+* The NpT algorithm doesn't support :ref:`Rigid bonds`.
+* The NpT algorithm doesn't support :ref:`Magnetostatics`.
 
 .. _Steepest descent:
 

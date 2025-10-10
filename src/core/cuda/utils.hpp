@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
 
 #include <exception>
 #include <stdexcept>
@@ -80,4 +80,4 @@ void invoke_skip_cuda_exceptions(F &&f, Args &&...args) {
   }
 }
 
-#endif // CUDA
+#endif // ESPRESSO_CUDA

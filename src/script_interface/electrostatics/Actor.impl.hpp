@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "Actor.hpp"
 
@@ -85,8 +85,8 @@ template <class SIClass, class CoreClass> Actor<SIClass, CoreClass>::Actor() {
 }
 
 template <class SIClass, class CoreClass>
-Variant Actor<SIClass, CoreClass>::do_call_method(std::string const &name,
-                                                  VariantMap const &params) {
+Variant Actor<SIClass, CoreClass>::do_call_method(
+    std::string const &name, [[maybe_unused]] VariantMap const &params) {
   assert(params.empty());
   if (name == "activate") {
     context()->parallel_try_catch([this]() {
@@ -103,4 +103,4 @@ Variant Actor<SIClass, CoreClass>::do_call_method(std::string const &name,
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

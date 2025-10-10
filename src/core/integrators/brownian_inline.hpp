@@ -36,7 +36,7 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
   p.v() += bd_random_walk_vel(brownian, p);
 }
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
 inline void brownian_dynamics_rotator(BrownianThermostat const &brownian,
                                       Particle &p, double time_step,
                                       double kT) {
@@ -48,4 +48,4 @@ inline void brownian_dynamics_rotator(BrownianThermostat const &brownian,
   p.quat() = bd_random_walk_rot(brownian, p, time_step, kT);
   p.omega() += bd_random_walk_vel_rot(brownian, p);
 }
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION

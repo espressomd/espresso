@@ -21,11 +21,10 @@
 
 #include "config/config.hpp"
 
-#ifdef H5MD
+#ifdef ESPRESSO_H5MD
 
 #include "h5md.hpp"
 
-#include "core/MpiCallbacks.hpp"
 #include "core/cell_system/CellStructure.hpp"
 #include "core/communication.hpp"
 #include "core/io/writer/h5md_core.hpp"
@@ -33,6 +32,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -42,6 +42,7 @@ namespace Writer {
 H5md::H5md() {
   add_parameters(
       {{"file_path", m_h5md, &::Writer::H5md::File::file_path},
+       {"chunk_size", m_h5md, &::Writer::H5md::File::chunk_size},
        {"script_path", m_h5md, &::Writer::H5md::File::script_path},
        {"fields", AutoParameter::read_only,
         [this]() { return make_vector_of_variants(m_output_fields); }},
@@ -56,14 +57,15 @@ H5md::H5md() {
 void H5md::do_construct(VariantMap const &params) {
   m_output_fields = get_value<std::vector<std::string>>(params, "fields");
   m_h5md =
-      make_shared_from_args<::Writer::H5md::File, std::string, std::string,
-                            std::vector<std::string>, std::string, std::string,
-                            std::string, std::string, std::string, std::string>(
+      make_shared_from_args<::Writer::H5md::File, std::filesystem::path,
+                            std::filesystem::path, std::vector<std::string>,
+                            std::string, std::string, std::string, std::string,
+                            std::string, std::string, int>(
           params, "file_path", "script_path", "fields", "mass_unit",
           "length_unit", "time_unit", "force_unit", "velocity_unit",
-          "charge_unit");
+          "charge_unit", "chunk_size");
   // MPI communicator is needed to close parallel file handles
-  m_mpi_env_lock = ::Communication::mpiCallbacksHandle()->share_mpi_env();
+  m_mpi_env_lock = ::communication_environment->get_mpi_env();
 }
 
 H5md::~H5md() {
@@ -72,8 +74,7 @@ H5md::~H5md() {
   m_mpi_env_lock.reset();
 }
 
-Variant H5md::do_call_method(const std::string &name,
-                             const VariantMap &parameters) {
+Variant H5md::do_call_method(std::string const &name, VariantMap const &) {
   if (name == "write") {
     auto const &system = ::System::get_system();
     auto const particles = system.cell_structure->local_particles();
@@ -94,4 +95,4 @@ Variant H5md::do_call_method(const std::string &name,
 } // namespace Writer
 } // namespace ScriptInterface
 
-#endif // H5MD
+#endif // ESPRESSO_H5MD

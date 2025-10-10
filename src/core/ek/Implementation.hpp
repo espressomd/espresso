@@ -33,7 +33,7 @@
 namespace EK {
 
 using DiffusionAdvectionReactionActor = std::variant<
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
     std::shared_ptr<EK::EKWalberla>,
 #endif
     std::shared_ptr<EK::EKNone>>;

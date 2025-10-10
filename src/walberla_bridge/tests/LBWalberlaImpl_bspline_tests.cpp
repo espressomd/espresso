@@ -18,10 +18,6 @@
  */
 #define BOOST_TEST_MODULE Walberla interpolation test
 #define BOOST_TEST_DYN_LINK
-#include "config/config.hpp"
-
-#ifdef WALBERLA
-
 #define BOOST_TEST_NO_MAIN
 
 #include <boost/test/data/monomorphic.hpp>
@@ -128,8 +124,8 @@ BOOST_DATA_TEST_CASE(velocity_interpolation_bspline, bdata::make(all_lbs()),
         Vector3d const pos{x, y, z};
         if (lb->get_lattice().pos_in_local_domain(pos)) {
           auto const factor = std::accumulate(
-              pos.begin(), pos.end(), 1., [](double a, double x) {
-                return a * std::max(0., 1. - std::fabs(std::fmod(x, 3.) - 1.5));
+              pos.begin(), pos.end(), 1., [](double a, double p) {
+                return a * std::max(0., 1. - std::fabs(std::fmod(p, 3.) - 1.5));
               });
           auto const ref = factor * vel;
           auto const res = lb->get_velocity_at_pos(pos, true);
@@ -210,7 +206,3 @@ int main(int argc, char **argv) {
   MPI_Finalize();
   return res;
 }
-
-#else // WALBERLA
-int main(int argc, char **argv) {}
-#endif

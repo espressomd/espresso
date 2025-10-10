@@ -20,11 +20,13 @@
 #include "CodeInfo.hpp"
 
 #include "config/config-features.hpp"
+#include "config/config-features.impl.hpp"
 #include "config/version.hpp"
 #include "script_interface/scafacos/scafacos.hpp"
 
 #include <boost/algorithm/string/join.hpp>
 
+#include <cstddef>
 #include <stdexcept>
 #include <string>
 #include <unordered_set>
@@ -33,16 +35,15 @@
 namespace ScriptInterface {
 namespace CodeInfo {
 
-static auto get_feature_vector(char const *const ptr[], unsigned int len) {
+static auto get_feature_vector(char const *const ptr[], std::size_t len) {
   return std::vector<std::string>{ptr, ptr + len};
 }
 
-static auto get_feature_set(char const *const ptr[], unsigned int len) {
+static auto get_feature_set(char const *const ptr[], std::size_t len) {
   return std::unordered_set<std::string>(ptr, ptr + len);
 }
 
-Variant CodeInfo::do_call_method(std::string const &name,
-                                 VariantMap const &parameters) {
+Variant CodeInfo::do_call_method(std::string const &name, VariantMap const &) {
   if (name == "features") {
     return make_vector_of_variants(get_feature_vector(FEATURES, NUM_FEATURES));
   }
@@ -54,11 +55,18 @@ Variant CodeInfo::do_call_method(std::string const &name,
     return std::string(ESPRESSO_BUILD_TYPE);
   }
   if (name == "scafacos_methods") {
-#ifdef SCAFACOS
+#ifdef ESPRESSO_SCAFACOS
     return make_vector_of_variants(Scafacos::available_methods());
-#else  // SCAFACOS
+#else  // ESPRESSO_SCAFACOS
     return make_vector_of_variants(std::vector<std::string>(0));
-#endif // SCAFACOS
+#endif // ESPRESSO_SCAFACOS
+  }
+  if (name == "has_fast_math") {
+#if defined(__FAST_MATH__)
+    return true;
+#else
+    return false;
+#endif
   }
   return {};
 }

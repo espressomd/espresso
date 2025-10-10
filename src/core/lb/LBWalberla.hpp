@@ -21,14 +21,16 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
 
 #include <utils/Vector.hpp>
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 class LBWalberlaBase;
 namespace System {
@@ -39,8 +41,8 @@ namespace LB {
 
 struct LBWalberlaParams {
   LBWalberlaParams(double agrid, double tau) : m_agrid(agrid), m_tau(tau) {}
-  double get_agrid() const { return m_agrid; };
-  double get_tau() const { return m_tau; };
+  double get_agrid() const { return m_agrid; }
+  double get_tau() const { return m_tau; }
 
 private:
   double m_agrid;
@@ -65,10 +67,14 @@ struct LBWalberla {
   std::optional<double> get_density_at_pos(Utils::Vector3d const &pos,
                                            bool consider_points_in_halo) const;
   Utils::Vector3d get_momentum() const;
+  std::function<bool(Utils::Vector3d const &)>
+  make_lattice_position_checker(bool consider_points_in_halo) const;
   bool add_force_at_pos(Utils::Vector3d const &pos,
                         Utils::Vector3d const &force);
   void add_forces_at_pos(std::vector<Utils::Vector3d> const &pos,
                          std::vector<Utils::Vector3d> const &forces);
+  std::vector<double>
+  get_densities_at_pos(std::vector<Utils::Vector3d> const &pos);
   std::vector<Utils::Vector3d>
   get_velocities_at_pos(std::vector<Utils::Vector3d> const &pos);
   void propagate();
@@ -100,4 +106,4 @@ struct LBWalberla {
 
 } // namespace LB
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

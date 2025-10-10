@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
   // real particle
   {
     Particle p;
-#ifdef MASS
+#ifdef ESPRESSO_MASS
     p.mass() = 2.;
 #endif
     p.v() = {3., 4., 5.};
@@ -42,10 +42,10 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
 
   // virtual particle
   {
-#ifdef VIRTUAL_SITES
+#ifdef ESPRESSO_VIRTUAL_SITES
 
     Particle p;
-#ifdef MASS
+#ifdef ESPRESSO_MASS
     p.mass() = 2.;
 #endif
     p.propagation() = PropagationMode::TRANS_VS_RELATIVE;
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
 BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
   BOOST_CHECK_EQUAL(rotational_kinetic_energy(Particle{}), 0.);
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   {
     Particle p;
     p.omega() = {1., 2., 3.};
@@ -73,10 +73,10 @@ BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
 
   // virtual particle
   {
-#ifdef VIRTUAL_SITES
+#ifdef ESPRESSO_VIRTUAL_SITES
 
     Particle p;
-#ifdef ROTATIONAL_INERTIA
+#ifdef ESPRESSO_ROTATIONAL_INERTIA
     p.rinertia() = {1., 2., 3.};
 #endif
     p.propagation() = PropagationMode::ROT_VS_RELATIVE;
@@ -88,21 +88,4 @@ BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
 #endif
   }
 #endif
-}
-
-BOOST_AUTO_TEST_CASE(kinetic_energy_) {
-  Particle p;
-#ifdef MASS
-  p.mass() = 2.;
-#endif
-  p.v() = {3., 4., 5.};
-
-#ifdef ROTATION
-  p.omega() = {1., 2., 3.};
-  p.set_can_rotate_all_axes();
-#endif
-
-  auto const expected =
-      translational_kinetic_energy(p) + rotational_kinetic_energy(p);
-  BOOST_CHECK_EQUAL(calc_kinetic_energy(p), expected);
 }

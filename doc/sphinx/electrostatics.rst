@@ -35,7 +35,7 @@ the particles via the particle property
 :py:attr:`~espressomd.particle_data.ParticleHandle.q`.
 
 All solvers need a prefactor and a set of other required parameters.
-This example shows the general usage of the electrostatic method ``P3M``.
+This example shows the general usage of the electrostatic method P3M (often stylized as |p3m|).
 An instance of the solver is created and attached to the system, at which
 point it will be automatically activated. This activation will internally
 call a tuning function to achieve the requested accuracy::

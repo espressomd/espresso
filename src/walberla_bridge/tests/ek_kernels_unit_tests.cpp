@@ -19,10 +19,6 @@
 #define BOOST_TEST_MODULE waLBerla EK kernels
 #define BOOST_TEST_DYN_LINK
 
-#include "config/config.hpp"
-
-#ifdef WALBERLA
-
 #include <boost/test/unit_test.hpp>
 
 #include "../src/electrokinetics/generated_kernels/Dirichlet_double_precision.h"
@@ -163,5 +159,3 @@ BOOST_AUTO_TEST_CASE(dirichlet_flux) {
   BOOST_TEST((vec1_f != vec2_f));
   BOOST_TEST((vec1_d != vec2_d));
 }
-
-#endif

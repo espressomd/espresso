@@ -50,7 +50,7 @@ class NSquare(ut.TestCase):
         self.system.part.add(pos=[(0.01, 0.01, 0.01)], type=[0])
         if espressomd.has_features(['LENNARD_JONES']):
             self.system.non_bonded_inter[0, 1].lennard_jones.set_params(
-                epsilon=1.0, sigma=0.14, cutoff=0.15, shift=0.1)
+                epsilon=50., sigma=0.11, cutoff=0.12, shift=0.1)
             ref_energy = self.system.analysis.energy()['total']
             assert ref_energy > 10.
 

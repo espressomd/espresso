@@ -74,10 +74,10 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   System::initialize(f);
   Thermostat::initialize(f);
   ReactionMethods::initialize(f);
-#ifdef H5MD
+#ifdef ESPRESSO_H5MD
   Writer::initialize(f);
 #endif
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
   walberla::initialize(f);
 #endif
 }

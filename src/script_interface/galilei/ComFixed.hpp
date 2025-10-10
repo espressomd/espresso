@@ -38,8 +38,8 @@ class ComFixed : public AutoParameters<ComFixed, System::Leaf> {
 
   void do_construct(VariantMap const &params) override {
     m_comfixed = std::make_shared<::ComFixed>();
-    for (auto const &p : params) {
-      do_set_parameter(p.first, p.second);
+    for (auto const &[key, value] : params) {
+      do_set_parameter(key, value);
     }
   }
 

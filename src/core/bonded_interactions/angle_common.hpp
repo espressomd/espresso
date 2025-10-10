@@ -33,6 +33,9 @@
 #include <cmath>
 #include <tuple>
 
+/** @brief Tiny angle cutoff for cosine calculations. */
+inline constexpr auto tiny_cos_angle_value{0.9999999999};
+
 /** Compute the cosine of the angle between three particles.
  *
  *  @param[in]  vec1             Vector from central particle to left particle.
@@ -49,7 +52,7 @@ inline double calc_cosine(Utils::Vector3d const &vec1,
   /* cosine of the angle between vec1 and vec2 */
   auto cos_phi = (vec1 * vec2) / std::sqrt(vec1.norm2() * vec2.norm2());
   if (sanitize_cosine) {
-    cos_phi = std::clamp(cos_phi, -TINY_COS_VALUE, TINY_COS_VALUE);
+    cos_phi = std::clamp(cos_phi, -tiny_cos_angle_value, tiny_cos_angle_value);
   }
   return cos_phi;
 }
@@ -75,7 +78,7 @@ angle_generic_force(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2,
   auto const d2 = vec2.norm();
   auto cos_phi = (vec1 * vec2) / (d1 * d2);
   if (sanitize_cosine) {
-    cos_phi = std::clamp(cos_phi, -TINY_COS_VALUE, TINY_COS_VALUE);
+    cos_phi = std::clamp(cos_phi, -tiny_cos_angle_value, tiny_cos_angle_value);
   }
   /* force factor */
   auto const fac = forceFactor(cos_phi);

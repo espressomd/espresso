@@ -20,10 +20,8 @@
 import unittest as ut
 import unittest_generator as utg
 import numpy as np
-import contextlib
 import pathlib
 import tempfile
-import sys
 
 import espressomd
 import espressomd.checkpointing
@@ -43,8 +41,6 @@ import espressomd.constraints
 import espressomd.bond_breakage
 import espressomd.reaction_methods
 
-with contextlib.suppress(ImportError):
-    import espressomd.plugins.ase
 
 config = utg.TestGenerator()
 modes = config.get_modes()
@@ -65,7 +61,6 @@ n_nodes = system.cell_system.get_state()["n_nodes"]
 config.cleanup_old_checkpoint()
 checkpoint = espressomd.checkpointing.Checkpoint(
     **config.get_checkpoint_params())
-path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
 
 # Lees-Edwards boundary conditions
 if 'INT.NPT' not in modes and 'LB.GPU' not in modes and (
@@ -74,8 +69,6 @@ if 'INT.NPT' not in modes and 'LB.GPU' not in modes and (
         initial_pos_offset=0.1, time_0=0.2, shear_velocity=1.2)
     system.lees_edwards.set_boundary_conditions(
         shear_direction="z", shear_plane_normal="y", protocol=protocol)
-
-has_ase = "ASE" in modes
 
 lbf_class = None
 lb_lattice = None
@@ -171,18 +164,17 @@ if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
         system.electrostatics.solver = p3m
         p3m.charge_neutrality_tolerance = 5e-12
 
-if has_ase and "ase" in sys.modules:
-    system.ase = espressomd.plugins.ase.ASEInterface(
-        type_mapping={0: "H", 1: "O", 10: "Cl"},
-    )
-
 # accumulators
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
+obs_dist = espressomd.observables.PairwiseDistances(
+    ids=[0, 2, 1], target_ids=[4, 3])
 acc_mean_variance = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
 acc_time_series = espressomd.accumulators.TimeSeries(obs=obs)
 acc_correlator = espressomd.accumulators.Correlator(
     obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
     corr_operation="componentwise_product")
+acc_contact_times = espressomd.accumulators.ContactTimes(
+    obs=obs_dist, delta_N=2, contact_threshold=0.2)
 acc_mean_variance.update()
 acc_time_series.update()
 acc_correlator.update()
@@ -194,6 +186,7 @@ acc_correlator.update()
 system.auto_update_accumulators.add(acc_mean_variance)
 system.auto_update_accumulators.add(acc_time_series)
 system.auto_update_accumulators.add(acc_correlator)
+system.auto_update_accumulators.add(acc_contact_times)
 
 # constraints
 system.constraints.add(shape=espressomd.shapes.Sphere(center=system.box_l / 2, radius=0.1),
@@ -255,7 +248,7 @@ if 'LB' not in modes:
             approximation_method='ft', viscosity=0.5, radii={0: 1.5},
             pair_mobility=False, self_mobility=True)
 
-if espressomd.has_features(['VIRTUAL_SITES_RELATIVE']) and not has_ase:
+if espressomd.has_features(['VIRTUAL_SITES_RELATIVE']):
     p2.vs_auto_relate_to(p1, couple_to_lb=lbf_class is not None)
 
 # non-bonded interactions
@@ -396,16 +389,16 @@ if lbf_class:
     grid_3D = np.fromfunction(
         lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
         lbf.shape, dtype=float)
-    lbf[:, :, :].population = np.einsum(
+    lbf[:, :, :]._population = np.einsum(
         'abc,d->abcd', grid_3D, np.arange(1, 20))
     lbf[:, :, :].last_applied_force = np.einsum(
         'abc,d->abcd', grid_3D, np.arange(1, 4))
     # save LB checkpoint file
-    lbf_cpt_path = path_cpt_root / "lb.cpt"
+    lbf_cpt_path = checkpoint.root / "lb.cpt"
     lbf.save_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
     # save EK checkpoint file
     ek_species[:, :, :].density = grid_3D
-    ek_cpt_path = path_cpt_root / "ek.cpt"
+    ek_cpt_path = checkpoint.root / "ek.cpt"
     ek_species.save_checkpoint(str(ek_cpt_path), lbf_cpt_mode)
     # setup VTK folder
     vtk_suffix = config.test_name
@@ -416,12 +409,12 @@ if lbf_class:
     config.recursive_unlink(vtk_root / lb_vtk_auto_id)
     config.recursive_unlink(vtk_root / lb_vtk_manual_id)
     lb_vtk_auto = espressomd.lb.VTKOutput(
-        identifier=lb_vtk_auto_id, delta_N=1,
+        identifier=lb_vtk_auto_id, delta_N=1, force_pvtu=False,
         observables=('density', 'velocity_vector'), base_folder=str(vtk_root))
     lbf.add_vtk_writer(vtk=lb_vtk_auto)
     lb_vtk_auto.disable()
     lb_vtk_manual = espressomd.lb.VTKOutput(
-        identifier=lb_vtk_manual_id, delta_N=0,
+        identifier=lb_vtk_manual_id, delta_N=0, force_pvtu=True,
         observables=('density',), base_folder=str(vtk_root))
     lbf.add_vtk_writer(vtk=lb_vtk_manual)
     lb_vtk_manual.write()
@@ -473,7 +466,6 @@ if espressomd.has_features('THERMOSTAT_PER_PARTICLE'):
 if espressomd.has_features(["ENGINE"]):
     p3.swimming = {"f_swim": 0.03}
 if espressomd.has_features(["ENGINE", "VIRTUAL_SITES_RELATIVE"]) and lbf_class:
-    assert not has_ase
     p4.swimming = {"v_swim": 0.02, "is_engine_force_on_fluid": True}
 if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and lbf_class:
     p8.mu_E = [-0.1, 0.2, -0.3]
@@ -483,7 +475,7 @@ if espressomd.has_features("H5MD"):
     h5_units = espressomd.io.writer.h5md.UnitSystem(
         time="ps", mass="u", length="m", charge="e")
     h5 = espressomd.io.writer.h5md.H5md(
-        file_path=str(path_cpt_root / "test.h5"),
+        file_path=checkpoint.root / "test.h5",
         unit_system=h5_units)
     h5.write()
     h5.flush()
@@ -501,10 +493,10 @@ class TestCheckpoint(ut.TestCase):
         '''
         Check for the presence of the checkpoint files.
         '''
-        self.assertTrue(path_cpt_root.is_dir(),
+        self.assertTrue(checkpoint.root.is_dir(),
                         "checkpoint directory not created")
 
-        checkpoint_filepath = path_cpt_root / "0.checkpoint"
+        checkpoint_filepath = checkpoint.root / "0.checkpoint"
         self.assertTrue(checkpoint_filepath.is_file(),
                         "checkpoint file not created")
 
@@ -532,22 +524,22 @@ class TestCheckpoint(ut.TestCase):
         lbf_cpt_root = lbf_cpt_path.parent
         with self.assertRaisesRegex(RuntimeError, "could not open file"):
             invalid_path = lbf_cpt_root / "unknown_dir" / "lb.cpt"
-            lbf.save_checkpoint(str(invalid_path), lbf_cpt_mode)
+            lbf.save_checkpoint(invalid_path, lbf_cpt_mode)
         with self.assertRaisesRegex(RuntimeError, "unit test error"):
-            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -1)
+            lbf.save_checkpoint(lbf_cpt_root / "lb_err.cpt", -1)
         with self.assertRaisesRegex(RuntimeError, "could not write to"):
-            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -2)
+            lbf.save_checkpoint(lbf_cpt_root / "lb_err.cpt", -2)
         with self.assertRaisesRegex(ValueError, "Unknown mode -3"):
-            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -3)
+            lbf.save_checkpoint(lbf_cpt_root / "lb_err.cpt", -3)
         with self.assertRaisesRegex(ValueError, "Unknown mode 2"):
-            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), 2)
+            lbf.save_checkpoint(lbf_cpt_root / "lb_err.cpt", 2)
 
         # deactivate LB actor
         system.lb = None
 
         # read the valid LB checkpoint file
         lbf_cpt_data = lbf_cpt_path.read_bytes()
-        cpt_path = str(path_cpt_root / "lb") + "{}.cpt"
+        cpt_path = str(checkpoint.root / "lb") + "{}.cpt"
         # write checkpoint file with missing data
         with open(cpt_path.format("-missing-data"), "wb") as f:
             f.write(lbf_cpt_data[:len(lbf_cpt_data) // 2])
@@ -577,19 +569,19 @@ class TestCheckpoint(ut.TestCase):
         ek_cpt_root = ek_cpt_path.parent
         with self.assertRaisesRegex(RuntimeError, "could not open file"):
             invalid_path = ek_cpt_root / "unknown_dir" / "ek.cpt"
-            ek_species.save_checkpoint(str(invalid_path), lbf_cpt_mode)
+            ek_species.save_checkpoint(invalid_path, lbf_cpt_mode)
         with self.assertRaisesRegex(RuntimeError, "unit test error"):
-            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -1)
+            ek_species.save_checkpoint(ek_cpt_root / "ek_err.cpt", -1)
         with self.assertRaisesRegex(RuntimeError, "could not write to"):
-            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -2)
+            ek_species.save_checkpoint(ek_cpt_root / "ek_err.cpt", -2)
         with self.assertRaisesRegex(ValueError, "Unknown mode -3"):
-            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -3)
+            ek_species.save_checkpoint(ek_cpt_root / "ek_err.cpt", -3)
         with self.assertRaisesRegex(ValueError, "Unknown mode 2"):
-            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), 2)
+            ek_species.save_checkpoint(ek_cpt_root / "ek_err.cpt", 2)
 
         # read the valid EK checkpoint file
         ek_cpt_data = ek_cpt_path.read_bytes()
-        cpt_path = str(path_cpt_root / "ek") + "{}.cpt"
+        cpt_path = str(checkpoint.root / "ek") + "{}.cpt"
         # write checkpoint file with missing data
         with open(cpt_path.format("-missing-data"), "wb") as f:
             f.write(ek_cpt_data[:len(ek_cpt_data) // 2])

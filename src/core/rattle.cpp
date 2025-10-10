@@ -21,7 +21,7 @@
 
 #include "rattle.hpp"
 
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
@@ -38,10 +38,14 @@
 #include <cmath>
 #include <functional>
 #include <span>
+#include <variant>
+
+/** Maximal number of iterations before the RATTLE algorithm bails out. */
+static constexpr auto shake_max_iterations = 1000;
 
 static void check_convergence(int cnt, char const *const name) {
   static constexpr char const *const msg = " failed to converge after ";
-  if (cnt >= SHAKE_MAX_ITERATIONS) {
+  if (cnt >= shake_max_iterations) {
     runtimeErrorMsg() << name << msg << cnt << " iterations";
   }
 }
@@ -125,7 +129,7 @@ static bool compute_correction_vector(CellStructure &cs,
                    Particle &p1, int bond_id, std::span<Particle *> partners) {
     auto const &iaparams = *bonded_ias.at(bond_id);
 
-    if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
+    if (auto const *bond = std::get_if<RigidBond>(&iaparams)) {
       auto const corrected = kernel(*bond, box_geo, p1, *partners[0]);
       if (corrected)
         correction = true;
@@ -159,7 +163,7 @@ void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo,
   auto ghost_particles = cs.ghost_particles();
 
   int cnt;
-  for (cnt = 0; cnt < SHAKE_MAX_ITERATIONS; ++cnt) {
+  for (cnt = 0; cnt < shake_max_iterations; ++cnt) {
     init_correction_vector(particles, ghost_particles);
     bool const repeat_ = compute_correction_vector(
         cs, box_geo, bonded_ias, calculate_positional_correction);
@@ -233,7 +237,7 @@ void correct_velocity_shake(CellStructure &cs, BoxGeometry const &box_geo,
   auto ghost_particles = cs.ghost_particles();
 
   int cnt;
-  for (cnt = 0; cnt < SHAKE_MAX_ITERATIONS; ++cnt) {
+  for (cnt = 0; cnt < shake_max_iterations; ++cnt) {
     init_correction_vector(particles, ghost_particles);
     bool const repeat_ = compute_correction_vector(
         cs, box_geo, bonded_ias, calculate_velocity_correction);

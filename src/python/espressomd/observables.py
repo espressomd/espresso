@@ -75,8 +75,8 @@ class CylindricalProfileObservable(ProfileObservable):
     Base class for observables that work with cylinder coordinates
     """
 
-    def __init__(
-            self, transform_params=CylindricalTransformationParameters(), **kwargs):
+    def __init__(self, transform_params=CylindricalTransformationParameters(),
+                 **kwargs):
         # Provide default transformation parameters if not user-provided
         kwargs['transform_params'] = transform_params
         super().__init__(**kwargs)
@@ -152,17 +152,17 @@ class DensityProfile(ProfileObservable):
     n_z_bins : :obj:`int`
         Number of bins in ``z`` direction.
     min_x : :obj:`float`
-        Minimum ``x`` to consider.
+        Minimum ``x`` to consider (inclusive).
     min_y : :obj:`float`
-        Minimum ``y`` to consider.
+        Minimum ``y`` to consider (inclusive).
     min_z : :obj:`float`
-        Minimum ``z`` to consider.
+        Minimum ``z`` to consider (inclusive).
     max_x : :obj:`float`
-        Maximum ``x`` to consider.
+        Maximum ``x`` to consider (exclusive).
     max_y : :obj:`float`
-        Maximum ``y`` to consider.
+        Maximum ``y`` to consider (exclusive).
     max_z : :obj:`float`
-        Maximum ``z`` to consider.
+        Maximum ``z`` to consider (exclusive).
 
     Methods
     -------
@@ -218,17 +218,17 @@ class FluxDensityProfile(ProfileObservable):
     n_z_bins : :obj:`int`
         Number of bins in ``z`` direction.
     min_x : :obj:`float`
-        Minimum ``x`` to consider.
+        Minimum ``x`` to consider (inclusive).
     min_y : :obj:`float`
-        Minimum ``y`` to consider.
+        Minimum ``y`` to consider (inclusive).
     min_z : :obj:`float`
-        Minimum ``z`` to consider.
+        Minimum ``z`` to consider (inclusive).
     max_x : :obj:`float`
-        Maximum ``x`` to consider.
+        Maximum ``x`` to consider (exclusive).
     max_y : :obj:`float`
-        Maximum ``y`` to consider.
+        Maximum ``y`` to consider (exclusive).
     max_z : :obj:`float`
-        Maximum ``z`` to consider.
+        Maximum ``z`` to consider (exclusive).
 
     Methods
     -------
@@ -261,17 +261,17 @@ class ForceDensityProfile(ProfileObservable):
     n_z_bins : :obj:`int`
         Number of bins in ``z`` direction.
     min_x : :obj:`float`
-        Minimum ``x`` to consider.
+        Minimum ``x`` to consider (inclusive).
     min_y : :obj:`float`
-        Minimum ``y`` to consider.
+        Minimum ``y`` to consider (inclusive).
     min_z : :obj:`float`
-        Minimum ``z`` to consider.
+        Minimum ``z`` to consider (inclusive).
     max_x : :obj:`float`
-        Maximum ``x`` to consider.
+        Maximum ``x`` to consider (exclusive).
     max_y : :obj:`float`
-        Maximum ``y`` to consider.
+        Maximum ``y`` to consider (exclusive).
     max_z : :obj:`float`
-        Maximum ``z`` to consider.
+        Maximum ``z`` to consider (exclusive).
 
     Methods
     -------
@@ -306,17 +306,17 @@ class LBVelocityProfile(ProfileObservable):
     n_z_bins : :obj:`int`
         Number of bins in ``z`` direction.
     min_x : :obj:`float`
-        Minimum ``x`` to consider.
+        Minimum ``x`` to consider (inclusive).
     min_y : :obj:`float`
-        Minimum ``y`` to consider.
+        Minimum ``y`` to consider (inclusive).
     min_z : :obj:`float`
-        Minimum ``z`` to consider.
+        Minimum ``z`` to consider (inclusive).
     max_x : :obj:`float`
-        Maximum ``x`` to consider.
+        Maximum ``x`` to consider (exclusive).
     max_y : :obj:`float`
-        Maximum ``y`` to consider.
+        Maximum ``y`` to consider (exclusive).
     max_z : :obj:`float`
-        Maximum ``z`` to consider.
+        Maximum ``z`` to consider (exclusive).
     sampling_delta_x : :obj:`float`, default=1.0
         Spacing for the sampling grid in ``x``-direction.
     sampling_delta_y : :obj:`float`, default=1.0
@@ -641,6 +641,36 @@ class ParticleDistances(Observable):
 
 
 @script_interface_register
+class PairwiseDistances(Observable):
+    """
+    Calculates the distance matrix between two sets of particles.
+    Duplicate entries in each set are only counted once.
+    The calculation yields a flattened triangular matrix.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+        The first set of ids of particles.
+
+    target_ids : array_like of :obj:`int`
+        The second set of (target) ids of particles.
+        In case of overlap with the first set,
+        self-interactions are removed from the result.
+
+    Methods
+    -------
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (N * M / 2,) :obj:`ndarray` of :obj:`float`
+
+    """
+    _so_name = "Observables::PairwiseDistances"
+
+
+@script_interface_register
 class TotalForce(Observable):
 
     """Calculates the total force on particles with given ids.
@@ -836,17 +866,17 @@ class CylindricalDensityProfile(CylindricalProfileObservable):
     n_z_bins : :obj:`int`, default = 1
         Number of bins in ``z`` direction.
     min_r : :obj:`float`, default = 0
-        Minimum ``r`` to consider.
+        Minimum ``r`` to consider (inclusive).
     min_phi : :obj:`float`, default = :math:`-\\pi`
-        Minimum ``phi`` to consider. Must be in :math:`[-\\pi,\\pi)`.
+        Minimum ``phi`` to consider (inclusive). Must be in :math:`[-\\pi,\\pi)`.
     min_z : :obj:`float`
-        Minimum ``z`` to consider.
+        Minimum ``z`` to consider (inclusive).
     max_r : :obj:`float`
-        Maximum ``r`` to consider.
+        Maximum ``r`` to consider (exclusive).
     max_phi : :obj:`float`, default = :math:`\\pi`
-        Maximum ``phi`` to consider. Must be in :math:`(-\\pi,\\pi]`.
+        Maximum ``phi`` to consider (exclusive). Must be in :math:`(-\\pi,\\pi]`.
     max_z : :obj:`float`
-        Maximum ``z`` to consider.
+        Maximum ``z`` to consider (exclusive).
 
     Methods
     -------
@@ -879,17 +909,17 @@ class CylindricalFluxDensityProfile(CylindricalProfileObservable):
     n_z_bins : :obj:`int`, default = 1
         Number of bins in ``z`` direction.
     min_r : :obj:`float`, default = 0
-        Minimum ``r`` to consider.
+        Minimum ``r`` to consider (inclusive).
     min_phi : :obj:`float`, default = :math:`-\\pi`
-        Minimum ``phi`` to consider. Must be in :math:`[-\\pi,\\pi)`.
+        Minimum ``phi`` to consider (inclusive). Must be in :math:`[-\\pi,\\pi)`.
     min_z : :obj:`float`
-        Minimum ``z`` to consider.
+        Minimum ``z`` to consider (inclusive).
     max_r : :obj:`float`
-        Maximum ``r`` to consider.
+        Maximum ``r`` to consider (exclusive).
     max_phi : :obj:`float`, default = :math:`\\pi`
-        Maximum ``phi`` to consider. Must be in :math:`(-\\pi,\\pi]`.
+        Maximum ``phi`` to consider (exclusive). Must be in :math:`(-\\pi,\\pi]`.
     max_z : :obj:`float`
-        Maximum ``z`` to consider.
+        Maximum ``z`` to consider (exclusive).
 
     Methods
     -------
@@ -927,17 +957,17 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(
     n_z_bins : :obj:`int`, default = 1
         Number of bins in ``z`` direction.
     min_r : :obj:`float`, default = 0
-        Minimum ``r`` to consider.
+        Minimum ``r`` to consider (inclusive).
     min_phi : :obj:`float`, default = :math:`-\\pi`
-        Minimum ``phi`` to consider. Must be in :math:`[-\\pi,\\pi)`.
+        Minimum ``phi`` to consider (inclusive). Must be in :math:`[-\\pi,\\pi)`.
     min_z : :obj:`float`
-        Minimum ``z`` to consider.
+        Minimum ``z`` to consider (inclusive).
     max_r : :obj:`float`
-        Maximum ``r`` to consider.
+        Maximum ``r`` to consider (exclusive).
     max_phi : :obj:`float`, default = :math:`\\pi`
-        Maximum ``phi`` to consider. Must be in :math:`(-\\pi,\\pi]`.
+        Maximum ``phi`` to consider (exclusive). Must be in :math:`(-\\pi,\\pi]`.
     max_z : :obj:`float`
-        Maximum ``z`` to consider.
+        Maximum ``z`` to consider (exclusive).
 
     Methods
     -------
@@ -975,17 +1005,17 @@ class CylindricalLBVelocityProfileAtParticlePositions(
     n_z_bins : :obj:`int`, default = 1
         Number of bins in ``z`` direction.
     min_r : :obj:`float`, default = 0
-        Minimum ``r`` to consider.
+        Minimum ``r`` to consider (inclusive).
     min_phi : :obj:`float`, default = :math:`-\\pi`
-        Minimum ``phi`` to consider. Must be in :math:`[-\\pi,\\pi)`.
+        Minimum ``phi`` to consider (inclusive). Must be in :math:`[-\\pi,\\pi)`.
     min_z : :obj:`float`
-        Minimum ``z`` to consider.
+        Minimum ``z`` to consider (inclusive).
     max_r : :obj:`float`
-        Maximum ``r`` to consider.
+        Maximum ``r`` to consider (exclusive).
     max_phi : :obj:`float`, default = :math:`\\pi`
-        Maximum ``phi`` to consider. Must be in :math:`(-\\pi,\\pi]`.
+        Maximum ``phi`` to consider (exclusive). Must be in :math:`(-\\pi,\\pi]`.
     max_z : :obj:`float`
-        Maximum ``z`` to consider.
+        Maximum ``z`` to consider (exclusive).
 
     Methods
     -------
@@ -1021,17 +1051,17 @@ class CylindricalVelocityProfile(CylindricalProfileObservable):
     n_z_bins : :obj:`int`, default = 1
         Number of bins in ``z`` direction.
     min_r : :obj:`float`, default = 0
-        Minimum ``r`` to consider.
+        Minimum ``r`` to consider (inclusive).
     min_phi : :obj:`float`, default = :math:`-\\pi`
-        Minimum ``phi`` to consider. Must be in :math:`[-\\pi,\\pi)`.
+        Minimum ``phi`` to consider (inclusive). Must be in :math:`[-\\pi,\\pi)`.
     min_z : :obj:`float`
-        Minimum ``z`` to consider.
+        Minimum ``z`` to consider (inclusive).
     max_r : :obj:`float`
-        Maximum ``r`` to consider.
+        Maximum ``r`` to consider (exclusive).
     max_phi : :obj:`float`, default = :math:`\\pi`
-        Maximum ``phi`` to consider. Must be in :math:`(-\\pi,\\pi]`.
+        Maximum ``phi`` to consider (exclusive). Must be in :math:`(-\\pi,\\pi]`.
     max_z : :obj:`float`
-        Maximum ``z`` to consider.
+        Maximum ``z`` to consider (exclusive).
 
     Methods
     -------
@@ -1069,17 +1099,17 @@ class CylindricalLBVelocityProfile(CylindricalProfileObservable):
     n_z_bins : :obj:`int`, default = 1
         Number of bins in ``z`` direction.
     min_r : :obj:`float`, default = 0
-        Minimum ``r`` to consider.
+        Minimum ``r`` to consider (inclusive).
     min_phi : :obj:`float`, default = :math:`-\\pi`
-        Minimum ``phi`` to consider. Must be in :math:`[-\\pi,\\pi)`.
+        Minimum ``phi`` to consider (inclusive). Must be in :math:`[-\\pi,\\pi)`.
     min_z : :obj:`float`
-        Minimum ``z`` to consider.
+        Minimum ``z`` to consider (inclusive).
     max_r : :obj:`float`
-        Maximum ``r`` to consider.
+        Maximum ``r`` to consider (exclusive).
     max_phi : :obj:`float`, default = :math:`\\pi`
-        Maximum ``phi`` to consider. Must be in :math:`(-\\pi,\\pi]`.
+        Maximum ``phi`` to consider (exclusive). Must be in :math:`(-\\pi,\\pi]`.
     max_z : :obj:`float`
-        Maximum ``z`` to consider.
+        Maximum ``z`` to consider (exclusive).
     sampling_density : :obj:`float`
         Samples per unit volume for the LB velocity interpolation.
 
@@ -1115,9 +1145,9 @@ class RDF(Observable):
     n_r_bins : :obj:`int`
         Number of bins in radial direction.
     min_r : :obj:`float`
-        Minimum ``r`` to consider.
+        Minimum ``r`` to consider (exclusive).
     max_r : :obj:`float`
-        Maximum ``r`` to consider.
+        Maximum ``r`` to consider (exclusive).
 
     Methods
     -------

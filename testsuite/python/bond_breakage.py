@@ -22,7 +22,7 @@ import espressomd
 import numpy as np
 import espressomd.interactions
 from espressomd.bond_breakage import BreakageSpec
-from espressomd.interactions import HarmonicBond, AngleHarmonic
+from espressomd.interactions import HarmonicBond, AngleHarmonic, Dihedral
 
 
 class BondBreakageCommon:
@@ -33,16 +33,18 @@ class BondBreakageCommon:
 
 
 @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
-class BondBreakage(BondBreakageCommon, ut.TestCase):
+class BondBreakageTest(BondBreakageCommon, ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
         pos1 = cls.system.box_l / 2 - 0.5
         pos2 = cls.system.box_l / 2 + 0.5
         pos3 = cls.system.box_l / 2 - 1.5
+        pos4 = cls.system.box_l / 2 - 1.5 + [0.5, 0., 0.]
         cls.p1 = cls.system.part.add(pos=pos1)
         cls.p2 = cls.system.part.add(pos=pos2)
         cls.p3 = cls.system.part.add(pos=pos3)
+        cls.p4 = cls.system.part.add(pos=pos4)
 
         cls.p1v = cls.system.part.add(pos=pos1)
         cls.p1v.vs_auto_relate_to(cls.p1)
@@ -53,9 +55,11 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         cls.h1 = HarmonicBond(k=1, r_0=0)
         cls.h2 = HarmonicBond(k=1, r_0=0)
         cls.angle = AngleHarmonic(bend=1, phi0=np.pi)
+        cls.dihe = Dihedral(bend=1, mult=1, phase=np.pi)
         cls.system.bonded_inter.add(cls.h1)
         cls.system.bonded_inter.add(cls.h2)
         cls.system.bonded_inter.add(cls.angle)
+        cls.system.bonded_inter.add(cls.dihe)
 
     @classmethod
     def tearDownClass(cls):
@@ -84,6 +88,7 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         self.system.bond_breakage.clear()
         self.assertEqual(len(self.system.bond_breakage), 0)
         self.assertEqual(self.system.bond_breakage.keys(), [])
+        self.assertIsNone(self.system.bond_breakage.call_method("unknown"))
         with self.assertRaisesRegex(ValueError, "Key has to be of type 'int'"):
             self.system.bond_breakage[None]
         with self.assertRaisesRegex(ValueError, "Key has to be of type 'int'"):
@@ -134,6 +139,10 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         system.integrator.run(1)
         self.assertEqual(self.p2.bonds, ())
 
+        self.p1.bonds = [(self.h1, self.p2)]
+        system.bond_breakage.execute()
+        self.assertEqual(self.p1.bonds, ())
+
     def test_delete_angle_bond(self):
         system = self.system
 
@@ -143,13 +152,23 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         self.p1.bonds = ((self.angle, self.p2, self.p3),)
         bonds = self.p1.bonds
         system.integrator.run(1)
-        # should still be there. Not bfeyond breakage disst
+        # should still be there. Not beyond breakage dist
         self.assertEqual(self.p1.bonds, bonds)
         self.system.bond_breakage.clear()
         system.bond_breakage[self.angle] = BreakageSpec(
             breakage_length=1, action_type="delete_bond")
         system.integrator.run(1)
         self.assertEqual(self.p1.bonds, ())
+        # manual trigger
+        self.p1.bonds = ((self.angle, self.p2, self.p3),)
+        system.bond_breakage.execute()
+        self.assertEqual(self.p1.bonds, ())
+        # manual trigger for dihedral angle bond (no-op)
+        self.p2.bonds = ((self.dihe, self.p1, self.p3, self.p4),)
+        bonds = self.p2.bonds
+        system.bond_breakage.execute()
+        self.assertEqual(self.p2.bonds, bonds)
+        self.p2.bonds = ()
 
     def test_revert_bind_at_point_of_collision_pair(self):
         system = self.system

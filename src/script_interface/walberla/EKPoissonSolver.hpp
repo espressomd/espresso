@@ -19,25 +19,45 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
+
+#include "LatticeModel.hpp"
+#include "VTKHandle.hpp"
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
 
-#include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp>
+#include <walberla_bridge/electrokinetics/PoissonSolver.hpp>
 
 #include <memory>
+#include <unordered_map>
 
 namespace ScriptInterface::walberla {
 
-class EKPoissonSolver : public AutoParameters<EKPoissonSolver> {
+class EKPoissonVTKHandle : public VTKHandleBase<::walberla::PoissonSolver> {
+  static std::unordered_map<std::string, int> const obs_map;
+
+  std::unordered_map<std::string, int> const &get_obs_map() const override {
+    return obs_map;
+  }
+};
+
+class EKPoissonSolver
+    : public LatticeModel<::walberla::PoissonSolver, EKPoissonVTKHandle> {
 public:
   virtual std::shared_ptr<::walberla::PoissonSolver>
   get_instance() const noexcept = 0;
+
+  ::LatticeModel::units_map
+  get_lattice_to_md_units_conversion() const override {
+    return {
+        {"potential", 1.},
+    };
+  }
 };
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA
+#endif // ESPRESSO_WALBERLA

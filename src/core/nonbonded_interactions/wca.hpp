@@ -16,8 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef WCA_HPP
-#define WCA_HPP
+
+#pragma once
+
 /** \file
  *  Routines to calculate the Weeks-Chandler-Andersen potential between
  *  particle pairs.
@@ -27,7 +28,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WCA
+#ifdef ESPRESSO_WCA
 
 #include "nonbonded_interaction_data.hpp"
 
@@ -54,5 +55,4 @@ inline double wca_pair_energy(IA_parameters const &ia_params, double dist) {
   return 0.0;
 }
 
-#endif /* ifdef WCA */
-#endif
+#endif // ESPRESSO_WCA

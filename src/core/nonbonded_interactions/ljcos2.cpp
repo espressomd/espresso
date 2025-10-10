@@ -24,7 +24,7 @@
  */
 #include "ljcos2.hpp"
 
-#ifdef LJCOS2
+#ifdef ESPRESSO_LJCOS2
 #include "nonbonded_interaction_data.hpp"
 
 #include <cmath>
@@ -48,4 +48,4 @@ LJcos2_Parameters::LJcos2_Parameters(double epsilon, double sigma,
   }
 }
 
-#endif /* ifdef LJCOS2 */
+#endif /* ifdef ESPRESSO_LJCOS2 */

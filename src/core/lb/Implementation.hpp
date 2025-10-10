@@ -33,7 +33,7 @@
 namespace LB {
 
 using HydrodynamicsActor = std::variant<
-#ifdef WALBERLA
+#ifdef ESPRESSO_WALBERLA
     std::shared_ptr<LBWalberla>,
 #endif
     std::shared_ptr<LBNone>>;

@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "magnetostatics/dlc.hpp"
 
@@ -343,7 +343,7 @@ void DipolarLayerCorrection::add_force_corrections(
       auto const dip = p.calc_dip();
       // SDC correction for the torques
       auto d = Utils::Vector3d{0., 0., -correc * box_dip[2]};
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
       if (epsilon != P3M_EPSILON_METALLIC) {
         d += correc * epsilon_correction * box_dip;
       }
@@ -386,7 +386,7 @@ double DipolarLayerCorrection::energy_correction(
 
   if (this_node == 0) {
     dip_DLC_energy += pref * Utils::sqr(box_dip[2]);
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
     if (epsilon != P3M_EPSILON_METALLIC) {
       dip_DLC_energy -= pref * epsilon_correction * box_dip.norm2();
     }
@@ -474,7 +474,7 @@ struct AdaptSolver {
     m_actor->epsilon = P3M_EPSILON_METALLIC;
   }
 
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
   void operator()(std::shared_ptr<DipolarP3M> const &solver) {
     m_actor->prefactor = solver->prefactor;
     m_actor->epsilon = solver->dp3m_params.epsilon;
@@ -492,7 +492,7 @@ void DipolarLayerCorrection::adapt_solver() {
       (epsilon == P3M_EPSILON_METALLIC) ? 0. : 1. / (2. * epsilon + 1.);
 }
 
-void DipolarLayerCorrection::sanity_checks_node_grid() const {
+void DipolarLayerCorrection::sanity_checks_periodicity() const {
   auto const &box_geo = *get_system().box_geo;
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("DLC: requires periodicity (True, True, True)");
@@ -530,4 +530,4 @@ DipolarLayerCorrection::DipolarLayerCorrection(dlc_data &&parameters,
   adapt_solver();
 }
 
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES

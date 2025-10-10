@@ -39,7 +39,6 @@
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/mpi/collectives/gather.hpp>
-#include <boost/variant.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -51,6 +50,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 static int coord(std::string const &s) {
@@ -205,7 +205,7 @@ Variant CellSystem::do_call_method(std::string const &name,
       system.on_observable_calc();
       std::vector<std::pair<int, int>> pair_list;
       auto const distance = get_value<double>(params, "distance");
-      if (boost::get<std::string>(&params.at("types")) != nullptr) {
+      if (std::get_if<std::string>(&params.at("types"))) {
         auto const key = get_value<std::string>(params, "types");
         if (key != "all") {
           throw std::invalid_argument("Unknown argument types='" + key + "'");
@@ -304,8 +304,8 @@ void CellSystem::initialize(CellStructureType const &cs_type,
       auto const variant =
           get_value<VariantMap>(params, "fully_connected_boundary");
       context()->parallel_try_catch([&fcb_pair, &variant]() {
-        fcb_pair = {{coord(boost::get<std::string>(variant.at("boundary"))),
-                     coord(boost::get<std::string>(variant.at("direction")))}};
+        fcb_pair = {{coord(std::get<std::string>(variant.at("boundary"))),
+                     coord(std::get<std::string>(variant.at("direction")))}};
       });
     }
     context()->parallel_try_catch([this, &fcb_pair]() {

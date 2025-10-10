@@ -110,6 +110,54 @@ class TimeSeries(_AccumulatorBase):
 
 
 @script_interface_register
+class ContactTimes(_AccumulatorBase):
+
+    """
+    Record for how long two particles are within a certain distance.
+
+    The contact time is defined as :math:`\\tau = t_f - t_0` where
+    :math:`t_f` is the last measured time at which a pairwise distance was below the threshold and
+    :math:`t_0` is the first measured time at which the same distance was below the threshold.
+
+    Parameters
+    ----------
+    obs : :class:`espressomd.observables.Observable`
+        Must be an observable tracking distances between particle pairs.
+    delta_N : :obj:`int`
+        Number of timesteps between subsequent samples for the auto update mechanism.
+    contact_threshold : :obj:`float`
+        Cutoff below which two particles are considered to be in contact.
+
+    Methods
+    -------
+    update()
+        Update the accumulator (get the current values from the observable).
+    clear()
+        Clear the data
+
+    """
+    _so_name = "Accumulators::ContactTimes"
+    _so_bind_methods = (
+        "update",
+        "shape",
+        "clear"
+    )
+    _so_creation_policy = "GLOBAL"
+
+    def contact_times(self):
+        """
+        Get recorded contact times.
+
+        Returns
+        -------
+        :obj:`ndarray` of :obj:`float`
+            The result of the measurement function.
+        """
+        return np.array(self.call_method(
+            "contact_times")).reshape(self.shape())
+
+
+@script_interface_register
 class Correlator(_AccumulatorBase):
 
     """

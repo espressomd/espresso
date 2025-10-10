@@ -43,7 +43,7 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
   // The friction tensor Z from the Eq. (14.31) of schlick10a:
   Thermostat::GammaType gamma;
 
-#ifdef THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   if (p.gamma() >= Thermostat::GammaType{}) {
     gamma = p.gamma();
   } else
@@ -52,7 +52,7 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
     gamma = brownian_gamma;
   }
 
-#ifdef PARTICLE_ANISOTROPY
+#ifdef ESPRESSO_PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
   auto const aniso_flag = (gamma[0] != gamma[1]) || (gamma[1] != gamma[2]);
   Utils::Vector3d delta_pos_lab;
@@ -67,7 +67,7 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
   for (unsigned int j = 0; j < 3; j++) {
     // Second (deterministic) term of the Eq. (14.39) of schlick10a.
     // Only a conservative part of the force is used here
-#ifdef PARTICLE_ANISOTROPY
+#ifdef ESPRESSO_PARTICLE_ANISOTROPY
     if (aniso_flag) {
       if (!p.is_fixed_along(j)) {
         position[j] = delta_pos_lab[j];
@@ -81,7 +81,7 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
     if (!p.is_fixed_along(j)) {
       position[j] = p.force()[j] * dt / gamma;
     }
-#endif // PARTICLE_ANISOTROPY
+#endif // ESPRESSO_PARTICLE_ANISOTROPY
   }
   return position;
 }
@@ -96,7 +96,7 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
   // The friction tensor Z from the eq. (14.31) of schlick10a:
   Thermostat::GammaType gamma;
 
-#ifdef THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   if (p.gamma() >= Thermostat::GammaType{}) {
     gamma = p.gamma();
   } else
@@ -105,7 +105,7 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
     gamma = brownian_gamma;
   }
 
-#ifdef PARTICLE_ANISOTROPY
+#ifdef ESPRESSO_PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
   auto const aniso_flag = (gamma[0] != gamma[1]) || (gamma[1] != gamma[2]);
   Utils::Vector3d vel_lab;
@@ -121,7 +121,7 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
     // First (deterministic) term of the eq. (14.34) of schlick10a taking
     // into account eq. (14.35). Only conservative part of the force is used
     // here.
-#ifdef PARTICLE_ANISOTROPY
+#ifdef ESPRESSO_PARTICLE_ANISOTROPY
     if (aniso_flag) {
       if (!p.is_fixed_along(j)) {
         velocity[j] = vel_lab[j];
@@ -131,11 +131,11 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
         velocity[j] = p.force()[j] / gamma[j];
       }
     }
-#else  // PARTICLE_ANISOTROPY
+#else  // ESPRESSO_PARTICLE_ANISOTROPY
     if (!p.is_fixed_along(j)) {
       velocity[j] = p.force()[j] / gamma;
     }
-#endif // PARTICLE_ANISOTROPY
+#endif // ESPRESSO_PARTICLE_ANISOTROPY
   }
   return velocity;
 }
@@ -148,9 +148,10 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
  *  @param[in]     kT             Thermal energy
  */
 inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
-                                      Particle const &p, double dt, double kT) {
+                                      Particle const &p, double dt,
+                                      [[maybe_unused]] double kT) {
   Thermostat::GammaType sigma_pos = brownian.sigma_pos;
-#ifdef THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma
   if (p.gamma() >= Thermostat::GammaType{}) {
     if (kT > 0.0) {
@@ -159,7 +160,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
       sigma_pos = Thermostat::GammaType{};
     }
   }
-#endif // THERMOSTAT_PER_PARTICLE
+#endif // ESPRESSO_THERMOSTAT_PER_PARTICLE
 
   // Eq. (14.37) is factored by the Gaussian noise (12.22) with its squared
   // magnitude defined in the second eq. (14.38), schlick10a.
@@ -168,7 +169,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
       brownian.rng_counter(), brownian.rng_seed(), p.id());
   for (unsigned int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
-#ifndef PARTICLE_ANISOTROPY
+#ifndef ESPRESSO_PARTICLE_ANISOTROPY
       if (sigma_pos > 0.0) {
         delta_pos_body[j] = sigma_pos * sqrt(dt) * noise[j];
       } else {
@@ -180,11 +181,11 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
       } else {
         delta_pos_body[j] = 0.0;
       }
-#endif // PARTICLE_ANISOTROPY
+#endif // ESPRESSO_PARTICLE_ANISOTROPY
     }
   }
 
-#ifdef PARTICLE_ANISOTROPY
+#ifdef ESPRESSO_PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
   auto const aniso_flag =
       (sigma_pos[0] != sigma_pos[1]) || (sigma_pos[1] != sigma_pos[2]);
@@ -197,7 +198,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
   Utils::Vector3d position = {};
   for (unsigned int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
-#ifdef PARTICLE_ANISOTROPY
+#ifdef ESPRESSO_PARTICLE_ANISOTROPY
       position[j] += aniso_flag ? delta_pos_lab[j] : delta_pos_body[j];
 #else
       position[j] += delta_pos_body[j];
@@ -232,7 +233,7 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
   return velocity;
 }
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
 
 /** Determine quaternions: viscous drag driven by conservative torques.
  *  An analogy of eq. (14.39) in @cite schlick10a.
@@ -245,7 +246,7 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
             double dt) {
   Thermostat::GammaType gamma;
 
-#ifdef THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   if (p.gamma_rot() >= Thermostat::GammaType{}) {
     gamma = p.gamma_rot();
   } else
@@ -258,11 +259,11 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
   for (unsigned int j = 0; j < 3; j++) {
     if (p.can_rotate_around(j)) {
       // only a conservative part of the torque is used here
-#ifndef PARTICLE_ANISOTROPY
+#ifndef ESPRESSO_PARTICLE_ANISOTROPY
       dphi[j] = p.torque()[j] * dt / gamma;
 #else
       dphi[j] = p.torque()[j] * dt / gamma[j];
-#endif // PARTICLE_ANISOTROPY
+#endif // ESPRESSO_PARTICLE_ANISOTROPY
     }
   }
   dphi = mask(p.rotation(), dphi);
@@ -284,7 +285,7 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
                 Particle const &p) {
   Thermostat::GammaType gamma;
 
-#ifdef THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   if (p.gamma_rot() >= Thermostat::GammaType{}) {
     gamma = p.gamma_rot();
   } else
@@ -296,11 +297,11 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
   Utils::Vector3d omega = {};
   for (unsigned int j = 0; j < 3; j++) {
     if (p.can_rotate_around(j)) {
-#ifdef PARTICLE_ANISOTROPY
+#ifdef ESPRESSO_PARTICLE_ANISOTROPY
       omega[j] = p.torque()[j] / gamma[j];
 #else
       omega[j] = p.torque()[j] / gamma;
-#endif // PARTICLE_ANISOTROPY
+#endif // ESPRESSO_PARTICLE_ANISOTROPY
     }
   }
   return mask(p.rotation(), omega);
@@ -318,7 +319,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
                    double dt, double kT) {
 
   Thermostat::GammaType sigma_pos = brownian.sigma_pos_rotation;
-#ifdef THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma
   if (p.gamma_rot() >= Thermostat::GammaType{}) {
     if (kT > 0.) {
@@ -327,14 +328,14 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
       sigma_pos = {}; // just an indication of the infinity
     }
   }
-#endif // THERMOSTAT_PER_PARTICLE
+#endif // ESPRESSO_THERMOSTAT_PER_PARTICLE
 
   Utils::Vector3d dphi = {};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_INC>(
       brownian.rng_counter(), brownian.rng_seed(), p.id());
   for (unsigned int j = 0; j < 3; j++) {
     if (p.can_rotate_around(j)) {
-#ifndef PARTICLE_ANISOTROPY
+#ifndef ESPRESSO_PARTICLE_ANISOTROPY
       if (sigma_pos > 0.0) {
         dphi[j] = noise[j] * sigma_pos * sqrt(dt);
       }
@@ -342,7 +343,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
       if (sigma_pos[j] > 0.0) {
         dphi[j] = noise[j] * sigma_pos[j] * sqrt(dt);
       }
-#endif // PARTICLE_ANISOTROPY
+#endif // ESPRESSO_PARTICLE_ANISOTROPY
     }
   }
   dphi = mask(p.rotation(), dphi);
@@ -374,4 +375,4 @@ bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
   }
   return mask(p.rotation(), domega);
 }
-#endif // ROTATION
+#endif // ESPRESSO_ROTATION

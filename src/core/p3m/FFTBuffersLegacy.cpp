@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) or defined(DP3M)
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 #include "FFTBuffersLegacy.hpp"
 
@@ -63,11 +63,6 @@ void FFTBuffersLegacy<FloatType>::perform_vector_halo_spread() {
 }
 
 template <typename FloatType>
-void FFTBuffersLegacy<FloatType>::perform_scalar_halo_gather() {
-  mesh_comm.gather_grid(::comm_cart, rs_mesh.data(), local_mesh.dim);
-}
-
-template <typename FloatType>
 void FFTBuffersLegacy<FloatType>::perform_vector_halo_gather() {
   std::array<FloatType *, 3u> meshes = {{rs_mesh_fields[0u].data(),
                                          rs_mesh_fields[1u].data(),
@@ -87,11 +82,11 @@ FloatType *FFTBuffersLegacy<FloatType>::get_scalar_mesh() {
 
 template <typename FloatType>
 std::array<FloatType *, 3u> FFTBuffersLegacy<FloatType>::get_vector_mesh() {
-  return {rs_mesh_fields[0u].data(), rs_mesh_fields[1u].data(),
-          rs_mesh_fields[2u].data()};
+  return {{rs_mesh_fields[0u].data(), rs_mesh_fields[1u].data(),
+           rs_mesh_fields[2u].data()}};
 }
 
 template class FFTBuffersLegacy<float>;
 template class FFTBuffersLegacy<double>;
 
-#endif // defined(P3M) or defined(DP3M)
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

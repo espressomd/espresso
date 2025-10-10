@@ -23,7 +23,7 @@
 
 #include "config/config.hpp"
 
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
 
 #include "magnetostatics/dp3m.hpp"
 
@@ -143,6 +143,9 @@ protected:
                            ParticleRange const &particles) override;
   void init_cpu_kernels();
   void scaleby_box_l() override;
+#ifdef ESPRESSO_NPT
+  void npt_add_virial_contribution(double energy) const override;
+#endif
 };
 
 template <typename FloatType, Arch Architecture,
@@ -158,4 +161,4 @@ std::shared_ptr<DipolarP3M> new_dp3m_handle(P3MParameters &&p3m,
   return obj;
 }
 
-#endif // DP3M
+#endif // ESPRESSO_DP3M

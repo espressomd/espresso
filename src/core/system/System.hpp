@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "GpuParticleData.hpp"
 #include "ResourceCleanup.hpp"
@@ -38,7 +38,7 @@
 
 class BoxGeometry;
 class LocalBox;
-struct CellStructure;
+class CellStructure;
 class Propagation;
 class InteractionsNonBonded;
 class BondedInteractionsMap;
@@ -65,6 +65,8 @@ class AutoUpdateAccumulators;
 namespace Constraints {
 class Constraints;
 }
+struct NptIsoParameters;
+struct InstantaneousPressure;
 
 namespace System {
 
@@ -84,7 +86,7 @@ public:
 
   static std::shared_ptr<System> create();
 
-#ifdef CUDA
+#ifdef ESPRESSO_CUDA
   GpuParticleData gpu;
 #endif
   ResourceCleanup cleanup_queue;
@@ -129,6 +131,9 @@ public:
 
   /** @brief Rebuild cell lists. Use e.g. after a skin change. */
   void rebuild_cell_structure();
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  void rebuild_aosoa();
+#endif
 
   /** @brief Calculate the maximal cutoff of all interactions. */
   double maximal_cutoff() const;
@@ -149,12 +154,32 @@ public:
   /** @brief Calculate the pressure from a virial expansion. */
   std::shared_ptr<Observable_stat> calculate_pressure();
 
+#ifdef ESPRESSO_NPT
+  /** @brief get the instantaneous pressure with (q(t+dt), p(t+dt/2))*/
+  double get_instantaneous_pressure();
+
+  /** @brief get the instantaneous virial pressure with q(t+dt)*/
+  double get_instantaneous_pressure_virial();
+
+  /** @brief Synchronize NpT state such as instantaneous and average pressure */
+  void synchronize_npt_state();
+  /** @brief Reinitialize the NpT state. */
+  void npt_ensemble_init(bool recalc_forces);
+  void npt_add_virial_contribution(double energy);
+  bool has_npt_enabled() const;
+#endif // ESPRESSO_NPT
+  Utils::Vector3d *get_npt_virial() const;
+
   /** @brief Calculate all forces. */
   void calculate_forces();
 
-#ifdef DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   /** @brief Calculate dipole fields. */
   void calculate_long_range_fields();
+#endif
+
+#ifdef ESPRESSO_COLLISION_DETECTION
+  bool has_collision_detection_enabled() const;
 #endif
 
   /**
@@ -221,8 +246,6 @@ public:
   int integrate_with_signal_handler(int n_steps, int reuse_forces,
                                     bool update_accumulators);
 
-  /** @brief Calculate initial particle forces from active thermostats. */
-  void thermostat_force_init();
   /** @brief Calculate particle-lattice interactions. */
   void lb_couple_particles();
 
@@ -302,7 +325,7 @@ public:
   std::shared_ptr<Galilei> galilei;
   std::shared_ptr<OifGlobal> oif_global;
   std::shared_ptr<ImmersedBoundaries> immersed_boundaries;
-#ifdef COLLISION_DETECTION
+#ifdef ESPRESSO_COLLISION_DETECTION
   std::shared_ptr<CollisionDetection::CollisionDetection> collision_detection;
 #endif
   std::shared_ptr<BondBreakage::BondBreakage> bond_breakage;
@@ -310,6 +333,10 @@ public:
   std::shared_ptr<Accumulators::AutoUpdateAccumulators>
       auto_update_accumulators;
   std::shared_ptr<Constraints::Constraints> constraints;
+#ifdef ESPRESSO_NPT
+  std::shared_ptr<NptIsoParameters> nptiso;
+  std::shared_ptr<InstantaneousPressure> npt_inst_pressure;
+#endif
 
 protected:
   /** @brief Whether the thermostat has to be reinitialized before integration.
@@ -329,9 +356,10 @@ protected:
   double min_global_cut;
 
   void update_local_geo();
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   void update_icc_particles();
-#endif // ELECTROSTATICS
+  bool has_icc_enabled() const;
+#endif // ESPRESSO_ELECTROSTATICS
 
 private:
   /**

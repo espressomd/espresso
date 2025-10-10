@@ -21,6 +21,7 @@
 #include "CylindricalLBProfileObservable.hpp"
 #include "CylindricalPidProfileObservable.hpp"
 #include "LBProfileObservable.hpp"
+#include "PairwiseDistances.hpp"
 #include "ParamlessObservable.hpp"
 #include "PidObservable.hpp"
 #include "PidProfileObservable.hpp"
@@ -42,6 +43,7 @@
 #include "core/observables/DipoleMoment.hpp"
 #include "core/observables/LBVelocityProfile.hpp"
 #include "core/observables/MagneticDipoleMoment.hpp"
+#include "core/observables/PairwiseDistances.hpp"
 #include "core/observables/ParticleAngularVelocities.hpp"
 #include "core/observables/ParticleBodyAngularVelocities.hpp"
 #include "core/observables/ParticleBodyVelocities.hpp"
@@ -105,6 +107,10 @@ namespace Observables {
       "Observables::" #name "");
 /**@}*/
 
+#define REGISTER_PAIRWISE_DISTANCES(name)                                      \
+  om->register_new<PairwiseDistances<::Observables::name>>(                    \
+      "Observables::" #name "");
+
 void initialize(Utils::Factory<ObjectHandle> *om) {
   // Manual registration:
   //  om->register_new<ScriptInterface::Observables::ParticleVelocities>::
@@ -119,14 +125,14 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   REGISTER_PID_OBS(ParticleVelocities);
   REGISTER_PID_OBS(ParticleForces);
   REGISTER_PID_OBS(ParticleBodyVelocities);
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   REGISTER_PID_OBS(ParticleAngularVelocities);
   REGISTER_PID_OBS(ParticleBodyAngularVelocities);
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   REGISTER_PID_OBS(DipoleMoment);
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   REGISTER_PID_OBS(MagneticDipoleMoment);
 #endif
   REGISTER_PID_OBS(ComPosition);
@@ -142,7 +148,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   REGISTER_CYLPID_PROFILE_OBS(CylindricalDensityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalVelocityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalFluxDensityProfile);
-#ifdef DPD
+  REGISTER_PAIRWISE_DISTANCES(PairwiseDistances);
+
+#ifdef ESPRESSO_DPD
   REGISTER(DPDStress)
 #endif
   REGISTER(LBFluidPressureTensor);

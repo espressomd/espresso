@@ -224,13 +224,6 @@ class Test(ut.TestCase):
         with self.assertRaisesRegex(Exception, periodicity_err_msg):
             self.system.analysis.pressure()
         self.system.periodicity = [True, True, True]
-        n_nodes = self.system.cell_system.get_state()["n_nodes"]
-        if n_nodes > 1:
-            with self.assertRaisesRegex(Exception, "P3M: node grid must be sorted, largest first"):
-                self.system.cell_system.node_grid = [1, n_nodes, 1]
-            self.assertEqual(
-                list(self.system.cell_system.node_grid),
-                list(self.original_node_grid))
         with self.assertRaisesRegex(Exception, "ERROR: ELC gap size .+ larger than box length in z-direction"):
             self.system.change_volume_and_rescale_particles(2.5, "z")
         self.system.change_volume_and_rescale_particles(10., "z")

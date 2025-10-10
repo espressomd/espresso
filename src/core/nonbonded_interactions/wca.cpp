@@ -22,7 +22,7 @@
  */
 #include "wca.hpp"
 
-#ifdef WCA
+#ifdef ESPRESSO_WCA
 #include "nonbonded_interaction_data.hpp"
 
 #include <cmath>
@@ -41,4 +41,4 @@ WCA_Parameters::WCA_Parameters(double epsilon, double sigma)
   }
 }
 
-#endif /* ifdef WCA */
+#endif /* ifdef ESPRESSO_WCA */

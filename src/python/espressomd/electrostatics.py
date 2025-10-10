@@ -51,7 +51,7 @@ class ElectrostaticInteraction(ScriptInterfaceHelper):
             self.validate_params(params)
             super().__init__(**params)
             for key in params:
-                if key not in self._valid_parameters():
+                if not self._has_parameter(key):
                     raise RuntimeError(
                         f"Parameter '{key}' is not a valid parameter")
         else:

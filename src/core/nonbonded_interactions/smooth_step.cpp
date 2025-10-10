@@ -24,7 +24,7 @@
  */
 #include "smooth_step.hpp"
 
-#ifdef SMOOTH_STEP
+#ifdef ESPRESSO_SMOOTH_STEP
 #include "nonbonded_interaction_data.hpp"
 
 #include <stdexcept>
@@ -44,4 +44,4 @@ SmoothStep_Parameters::SmoothStep_Parameters(double eps, double sig,
   }
 }
 
-#endif // SMOOTH_STEP
+#endif // ESPRESSO_SMOOTH_STEP

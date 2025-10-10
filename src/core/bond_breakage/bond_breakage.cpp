@@ -30,18 +30,18 @@
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
-#include <boost/variant.hpp>
 
 #include <cassert>
 #include <memory>
 #include <unordered_set>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace BondBreakage {
 
 // Variant holding any of the actions
-using Action = boost::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
+using Action = std::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
 
 // Set of actions
 using ActionSet = std::unordered_set<Action>;
@@ -80,7 +80,7 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
     }
     return {DeleteBond{e.particle_id, *(e.bond_partners[0]), e.bond_type}};
   }
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   // revert bind at point of collision for pair bonds
   if (spec.action_type == ActionType::REVERT_BIND_AT_POINT_OF_COLLISION and
       not is_angle_bond(e.bond_partners)) {
@@ -130,7 +130,7 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
               DeleteAllBonds{p2->id(), p1->id()}};
     }
   }
-#endif // VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
   return {};
 }
 
@@ -160,7 +160,7 @@ static void remove_pair_bonds_to(Particle &p, int other_pid) {
 }
 
 // Handler for the different delete events
-class execute : public boost::static_visitor<> {
+class execute {
   CellStructure &cell_structure;
 
 public:
@@ -192,16 +192,54 @@ void BondBreakage::process_queue_impl(System::System &system) {
   ActionSet actions = {};
   for (auto const &e : global_queue) {
     // Retrieve relevant breakage spec
-    assert(breakage_specs.count(e.bond_type) != 0);
+    assert(breakage_specs.contains(e.bond_type));
     auto const &spec = breakage_specs.at(e.bond_type);
     actions.merge(actions_for_breakage(cell_structure, e, *spec));
   }
 
   // Execute actions
   for (auto const &a : actions) {
-    boost::apply_visitor(execute(cell_structure), a);
+    std::visit(execute(cell_structure), a);
     system.on_particle_change();
   }
+}
+
+static bool bond_handler(BondBreakage &bond_breakage, Particle &p,
+                         std::span<Particle *> partners, int bond_id,
+                         BoxGeometry const &box_geo) {
+  auto retval = false;
+  if (partners.size() == 1u) { // pair bonds
+    auto d = box_geo.get_mi_vector(p.pos(), partners[0]->pos()).norm();
+    retval = bond_breakage.check_and_handle_breakage(
+        p.id(), {{partners[0]->id(), std::nullopt}}, bond_id, d);
+  } else if (partners.size() == 2u) { // angle bond
+    auto d =
+        box_geo.get_mi_vector(partners[0]->pos(), partners[1]->pos()).norm();
+    retval = bond_breakage.check_and_handle_breakage(
+        p.id(), {{partners[0]->id(), partners[1]->id()}}, bond_id, d);
+  }
+  return retval;
+}
+
+void BondBreakage::execute_bond_breakage(System::System &system) {
+  system.cell_structure->update_ghosts_and_resort_particle(
+      system.get_global_ghost_flags());
+
+  // Clear the bond breakage queue
+  clear_queue();
+
+  // Create the bond kernel function (the bond handler)
+  auto bond_kernel = [&](Particle &p, int bond_id,
+                         std::span<Particle *> partners) {
+    bond_handler(*this, p, partners, bond_id, *system.box_geo);
+    return false;
+  };
+
+  // Use the CellStructure::bond_loop to process bonds
+  system.cell_structure->bond_loop(bond_kernel);
+
+  // Process the bond breakage queue
+  process_queue(system);
 }
 
 } // namespace BondBreakage

@@ -29,7 +29,7 @@
 
 #include "config/config.hpp"
 
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
 
 #include "BoxGeometry.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"

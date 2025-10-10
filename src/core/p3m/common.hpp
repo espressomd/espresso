@@ -34,7 +34,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include <utils/Vector.hpp>
 
@@ -43,9 +43,9 @@
 #include <vector>
 
 /** This value indicates metallic boundary conditions. */
-auto constexpr P3M_EPSILON_METALLIC = 0.0;
+inline auto constexpr P3M_EPSILON_METALLIC = 0.0;
 
-#if defined(P3M) or defined(DP3M)
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 #include "LocalBox.hpp"
 
@@ -136,7 +136,7 @@ struct P3MParameters {
     if (not(mesh_off >= Utils::Vector3d::broadcast(0.) and
             mesh_off <= Utils::Vector3d::broadcast(1.))) {
       if (mesh_off == Utils::Vector3d::broadcast(-1.)) {
-        this->mesh_off = Utils::Vector3d::broadcast(P3M_MESHOFF);
+        this->mesh_off = Utils::Vector3d::broadcast(0.5);
       } else {
         throw std::domain_error("Parameter 'mesh_off' must be >= 0 and <= 1");
       }
@@ -174,23 +174,28 @@ struct P3MParameters {
 
 /** @brief Properties of the local mesh. */
 struct P3MLocalMesh {
-  /** dimension (size) of local mesh. */
+  /** dimension (size) of local mesh including halo layers. */
   Utils::Vector3i dim;
+  Utils::Vector3i dim_no_halo;
   /** number of local mesh points. */
   int size;
   /** index of lower left corner of the
       local mesh in the global mesh. */
-  int ld_ind[3];
+  Utils::Vector3i ld_ind;
   /** position of the first local mesh point. */
-  double ld_pos[3];
+  Utils::Vector3d ld_pos;
+  Utils::Vector3i ld_no_halo;
+  Utils::Vector3i ur_no_halo;
   /** dimension of mesh inside node domain. */
-  int inner[3];
+  Utils::Vector3i inner;
   /** inner left down grid point */
-  int in_ld[3];
+  Utils::Vector3i in_ld;
   /** inner up right grid point + (1,1,1) */
-  int in_ur[3];
+  Utils::Vector3i in_ur;
   /** number of margin mesh points. */
-  int margin[6];
+  int margin[6]; // !! legacy
+  Utils::Vector3i n_halo_ld;
+  Utils::Vector3i n_halo_ur;
   /** number of margin mesh points from neighbour nodes */
   int r_margin[6];
   /** offset between mesh lines of the last dimension */
@@ -222,6 +227,9 @@ struct P3MLocalMesh {
 template <typename FloatType> struct P3MFFTMesh {
   /** @brief real-space scalar mesh for charge assignment and FFT. */
   std::span<FloatType> rs_scalar;
+  /** @brief real-space scalar charge density. */
+  std::span<FloatType> rs_charge_density;
+
   /** @brief real-space vector meshes for the electric or dipolar field. */
   std::array<std::span<FloatType>, 3> rs_fields;
 
@@ -236,7 +244,7 @@ template <typename FloatType> struct P3MFFTMesh {
   int ks_pnum = 0;
 };
 
-#endif // defined(P3M) or defined(DP3M)
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 /** @brief Calculate indices that shift @ref P3MParameters::mesh by `mesh/2`.
  *  For each mesh size @f$ n @f$ in @c mesh_size, create a sequence of integer

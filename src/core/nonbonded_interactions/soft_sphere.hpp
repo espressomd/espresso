@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef soft_H
-#define soft_H
+
+#pragma once
 
 /** \file
  *  Routines to calculate the soft-sphere potential between particle pairs.
@@ -29,7 +29,7 @@
 
 #include "config/config.hpp"
 
-#ifdef SOFT_SPHERE
+#ifdef ESPRESSO_SOFT_SPHERE
 
 #include "nonbonded_interaction_data.hpp"
 
@@ -59,5 +59,4 @@ inline double soft_pair_energy(IA_parameters const &ia_params, double dist) {
   return 0.0;
 }
 
-#endif // SOFT_SPHERE
-#endif
+#endif // ESPRESSO_SOFT_SPHERE

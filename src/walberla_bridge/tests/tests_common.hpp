@@ -19,10 +19,6 @@
 
 #pragma once
 
-#include "config/config.hpp"
-
-#ifdef WALBERLA
-
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/walberla_init.hpp>
 
@@ -81,5 +77,3 @@ inline auto corner_nodes(Utils::Vector3i const &n) {
   }
   return res;
 }
-
-#endif // WALBERLA

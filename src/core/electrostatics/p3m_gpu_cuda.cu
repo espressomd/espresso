@@ -25,14 +25,14 @@
  * The corresponding header file is @ref p3m_gpu_cuda.cuh.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_P3M
 
-#define P3M_GPU_FLOAT
-// #define P3M_GPU_REAL_DOUBLE
+#define ESPRESSO_P3M_GPU_FLOAT
+// #define ESPRESSO_P3M_GPU_REAL_DOUBLE
 
-#ifdef P3M_GPU_FLOAT
+#ifdef ESPRESSO_P3M_GPU_FLOAT
 #define REAL_TYPE float
 #define FFT_TYPE_COMPLEX cufftComplex
 #define FFT_FORW_FFT cufftExecR2C
@@ -41,7 +41,7 @@
 #define FFT_PLAN_BACK_FLAG CUFFT_C2R
 #endif
 
-#ifdef P3M_GPU_REAL_DOUBLE
+#ifdef ESPRESSO_P3M_GPU_REAL_DOUBLE
 #define REAL_TYPE double
 #define FFT_TYPE_COMPLEX cufftDoubleComplex
 #define FFT_FORW_FFT cufftExecD2Z
@@ -721,4 +721,4 @@ void p3m_gpu_add_farfield_force(P3MGpuParams &data, GpuParticleData &gpu,
                 pref);
 }
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_P3M
