@@ -182,9 +182,9 @@ endforeach()
 add_library(espresso_compiler_flags INTERFACE)
 add_library(espresso::compiler_flags ALIAS espresso_compiler_flags)
 
-set_target_properties(
-  espresso_compiler_flags PROPERTIES INTERFACE_COMPILE_FEATURES
-                                     cxx_std_${ESPRESSO_MINIMAL_CXX_STANDARD})
+set_property(
+  TARGET espresso_compiler_flags APPEND
+  PROPERTY INTERFACE_COMPILE_FEATURES cxx_std_${ESPRESSO_MINIMAL_CXX_STANDARD})
 
 #
 # AVX2 support
@@ -248,8 +248,6 @@ if(ESPRESSO_BUILD_WITH_CUDA)
   include(CheckLanguage)
   enable_language(CUDA)
   check_language(CUDA)
-  add_library(espresso_cuda_flags INTERFACE)
-  add_library(espresso::cuda_flags ALIAS espresso_cuda_flags)
   find_package(CUDAToolkit ${ESPRESSO_MINIMAL_CUDA_VERSION} REQUIRED)
   if(NOT DEFINED ESPRESSO_CMAKE_CUDA_ARCHITECTURES)
     if("$ENV{CUDAARCHS}" STREQUAL "")
@@ -294,9 +292,10 @@ if(ESPRESSO_BUILD_WITH_CUDA)
   else()
     message(FATAL_ERROR "Unknown CUDA compiler '${CMAKE_CUDA_COMPILER_ID}'")
   endif()
-  set_target_properties(
-    espresso_cuda_flags PROPERTIES INTERFACE_COMPILE_FEATURES
-                                   cuda_std_${ESPRESSO_MINIMAL_CUDA_STANDARD})
+  set_property(
+    TARGET espresso_compiler_flags APPEND
+    PROPERTY INTERFACE_COMPILE_FEATURES
+             cuda_std_${ESPRESSO_MINIMAL_CUDA_STANDARD})
 endif()
 
 # Python interpreter and Cython interface library
@@ -347,44 +346,56 @@ target_compile_options(
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wall>
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wextra>
     $<$<COMPILE_LANGUAGE:CXX>:-pedantic>
-    $<$<COMPILE_LANGUAGE:CUDA>:-Wno-sign-compare>
-    $<$<COMPILE_LANGUAGE:CUDA>:-Wno-unused-parameter>
     # add extra warnings
-    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wextern-initializer>
-    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wrange-loop-analysis>
     $<$<COMPILE_LANGUAGE:CXX>:-Wfloat-conversion>
-    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wimplicit-float-conversion>
-    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wunused-exception-parameter>
-    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wmissing-variable-declarations>
-    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wnon-c-typedef-for-linkage>
     $<$<COMPILE_LANGUAGE:CXX>:-Wdelete-non-virtual-dtor>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
     $<$<COMPILE_LANGUAGE:CXX>:-Wcast-qual>
     $<$<COMPILE_LANGUAGE:CXX>:-Wcast-align>
     $<$<COMPILE_LANGUAGE:CXX>:-Wunused-macros>
     $<$<COMPILE_LANGUAGE:CXX>:-Wpointer-arith>
     $<$<COMPILE_LANGUAGE:CXX>:-Winit-self>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wextern-initializer>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wrange-loop-analysis>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wnon-c-typedef-for-linkage>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wshadow-uncaptured-local>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wimplicit-float-conversion>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wunused-exception-parameter>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wmissing-variable-declarations>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wctad-maybe-unsupported>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wbuiltin-macro-redefined>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wformat-signedness>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wdiv-by-zero>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wextra-semi>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wexceptions>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wdeprecated-declarations>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wdeprecated-enum-enum-conversion>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wdeprecated-enum-float-conversion>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wformat=2>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wbidi-chars>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wcomma-subscript>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wduplicated-branches>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wshadow=compatible-local>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wshadow-field-in-constructor-modified>
-    # disable warnings from -Wall and -Wextra
-    $<$<COMPILE_LANGUAGE:CXX>:-Wno-sign-compare>
-    $<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-function>
-    $<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-parameter>
+    # disable warnings from -Wall and -Wextra, as well as warnings triggered by third-party libraries
+    $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-sign-compare>
+    $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-unused-parameter>
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-array-bounds>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-restrict>
-    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-clobbered>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-cast-function-type>
     $<$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>:-diag-disable=592>
-    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang>:-Wno-gnu-zero-variadic-macro-arguments>
-    $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CXX_COMPILER_ID:IntelLLVM,GNU>>>:-Wno-unused-private-field>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-global-constructors>
     $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU>,$<STREQUAL:${CMAKE_SYSTEM_PROCESSOR},arm>>:-Wno-psabi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-format-nonliteral>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-float-conversion>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-int-float-conversion>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-float-conversion>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM,GNU>>:-Wno-ctad-maybe-unsupported>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-cast-qual>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-old-style-cast>
     # warnings are errors
     $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<COMPILE_LANGUAGE:CXX>>:-Werror>
     $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>>:--Werror=all-warnings>
@@ -921,7 +932,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        e12db996 # v7.2 with patches
+    GIT_TAG        fc081850 # v7.2 with patches
   )
   # cmake-format: on
   string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
@@ -1006,6 +1017,10 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
   set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR}")
   set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
+  target_compile_options(
+    caliper-common
+    PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-free-nonheap-object
+            -Wno-deprecated-enum-enum-conversion -Wno-volatile>)
 endif()
 
 #

@@ -151,7 +151,7 @@ CartInfo<dim> cart_get(const boost::mpi::communicator &comm) {
   CartInfo<dim> ret{};
 
   BOOST_MPI_CHECK_RESULT(MPI_Cart_get, (comm, dim, ret.dims.data(),
-                                        ret.periods.data(), ret.coords.data()));
+                                        ret.periods.data(), ret.coords.data()))
 
   return ret;
 }

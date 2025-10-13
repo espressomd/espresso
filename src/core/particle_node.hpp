@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_PARTICLE_NODE_HPP
-#define CORE_PARTICLE_NODE_HPP
+
+#pragma once
+
 /** \file
  *  Particles creation and deletion.
  *
@@ -37,8 +38,8 @@
 #include <vector>
 
 namespace type_tracking {
-auto constexpr any_type = -2;
-auto constexpr new_part = -3;
+inline auto constexpr any_type = -2;
+inline auto constexpr new_part = -3;
 } // namespace type_tracking
 
 /**
@@ -139,5 +140,3 @@ int get_maximal_particle_id();
  * @brief Get number of particles.
  */
 int get_n_part();
-
-#endif

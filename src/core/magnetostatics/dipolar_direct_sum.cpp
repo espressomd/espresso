@@ -103,6 +103,7 @@ static auto pair_potential(Utils::Vector3d const &d, Utils::Vector3d const &m1,
   return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
 }
 
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
 /**
  * @brief Dipole field contribution from a particle with dipole moment @c m1
  * at a distance @c d.
@@ -121,6 +122,7 @@ static auto dipole_field(Utils::Vector3d const &d, Utils::Vector3d const &m1) {
 
   return 3.0 * pe2 * d / r5 - m1 / r3;
 }
+#endif
 
 /**
  * @brief Call kernel for every 3d index in a sphere around the origin.
@@ -368,6 +370,9 @@ void DipolarDirectSum::add_long_range_forces(
     (*p)->force() += prefactor * fi.f;
     (*p)->torque() += prefactor * fi.torque;
   }
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  DipolarDirectSum::dipole_field_at_part(particles);
+#endif
 }
 
 /**

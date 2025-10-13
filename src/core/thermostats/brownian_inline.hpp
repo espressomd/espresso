@@ -148,7 +148,8 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
  *  @param[in]     kT             Thermal energy
  */
 inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
-                                      Particle const &p, double dt, double kT) {
+                                      Particle const &p, double dt,
+                                      [[maybe_unused]] double kT) {
   Thermostat::GammaType sigma_pos = brownian.sigma_pos;
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma

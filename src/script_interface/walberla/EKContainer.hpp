@@ -84,9 +84,9 @@ class EKContainer : public ObjectList<EKSpecies> {
     return get_value<bool>(species->get_parameter("single_precision"));
   }
 
-  auto get_precision(std::vector<value_type> const &species) const {
+  auto get_precision(std::vector<value_type> const &species_list) const {
     std::optional<bool> result = std::nullopt;
-    for (auto const &species : elements()) {
+    for (auto const &species : species_list) {
       result = get_precision(species);
     }
     return result;

@@ -36,7 +36,7 @@ class Analysis : public System::Leaf {
   /** @brief Check if a particle type exists. */
   void check_particle_type(int p_type) const;
 
-  void do_construct(VariantMap const &params) override {
+  void do_construct(VariantMap const &) override {
     m_obs_stat = std::make_shared<ObservableStat>();
   }
 

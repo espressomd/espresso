@@ -177,4 +177,4 @@ jobs:
           with_walberla_avx: 'false'
           with_stokesian_dynamics: 'true'
           with_shared_memory_parallelism: 'false'
-          cmake_params: '-D CMAKE_INCLUDE_PATH=/usr/include/mpich-x86_64 -D CMAKE_PREFIX_PATH=/usr/lib64/mpich/lib/'
+          cmake_params: '-D CMAKE_CXX_STANDARD=23 -D CMAKE_INCLUDE_PATH=/usr/include/mpich-x86_64 -D CMAKE_PREFIX_PATH=/usr/lib64/mpich/lib/'

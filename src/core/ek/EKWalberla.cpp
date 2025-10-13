@@ -82,8 +82,7 @@ void EKWalberla::propagate() {
   ek_container->reset_charge();
   for (auto const &ek_species : *ek_container) {
     ek_container->add_charge(ek_species->get_density_id(),
-                             ek_species->get_valency(),
-                             ek_species->is_double_precision());
+                             ek_species->get_valency());
   }
   ek_container->solve_poisson();
 

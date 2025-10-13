@@ -43,8 +43,7 @@ static auto get_feature_set(char const *const ptr[], std::size_t len) {
   return std::unordered_set<std::string>(ptr, ptr + len);
 }
 
-Variant CodeInfo::do_call_method(std::string const &name,
-                                 VariantMap const &parameters) {
+Variant CodeInfo::do_call_method(std::string const &name, VariantMap const &) {
   if (name == "features") {
     return make_vector_of_variants(get_feature_vector(FEATURES, NUM_FEATURES));
   }

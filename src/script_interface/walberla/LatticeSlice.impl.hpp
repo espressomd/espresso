@@ -110,8 +110,7 @@ inline auto gather_slices_topology(boost::mpi::communicator const &comm,
 template <class FieldSerializer>
 template <class LatticeModel, typename T>
 Variant LatticeSlice<FieldSerializer>::gather_3d(
-    VariantMap const &params, std::vector<int> const &data_dims,
-    LatticeModel const &lattice_model,
+    std::vector<int> const &data_dims, LatticeModel const &lattice_model,
     std::vector<T> (LatticeModel::*getter)(Utils::Vector3i const &,
                                            Utils::Vector3i const &) const,
     double units_conversion) const {
@@ -164,7 +163,7 @@ Variant LatticeSlice<FieldSerializer>::gather_3d(
 template <class FieldSerializer>
 template <class LatticeModel, typename T>
 void LatticeSlice<FieldSerializer>::scatter_3d(
-    VariantMap const &params, std::vector<int> const &data_dims,
+    Variant const &grid_values, std::vector<int> const &data_dims,
     LatticeModel &lattice_model,
     void (LatticeModel::*setter)(Utils::Vector3i const &,
                                  Utils::Vector3i const &,
@@ -180,8 +179,7 @@ void LatticeSlice<FieldSerializer>::scatter_3d(
   auto const sentinel = get_sentinel_index(lattice_model.get_lattice());
   std::vector<std::vector<T>> nodes_values(comm.size());
   if (comm.rank() == 0) {
-    auto const values =
-        FieldSerializer::template deserialize<T>(params.at("values"));
+    auto const values = FieldSerializer::template deserialize<T>(grid_values);
     auto const dims = slice_upper_corner - slice_lower_corner;
     using index_range = boost::multi_array_types::index_range;
     using array_type = boost::multi_array<T, 4>;

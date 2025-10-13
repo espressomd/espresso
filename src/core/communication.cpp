@@ -73,7 +73,7 @@ std::shared_ptr<KokkosHandle> kokkos_handle{};
 #endif
 int this_node = -1;
 
-static std::optional<std::string> get_env_variable(char const *const name) {
+[[maybe_unused]] static auto get_env_variable(char const *const name) {
   char const *const value = std::getenv(name);
   std::optional<std::string> result{std::nullopt};
   if (value) {
@@ -150,6 +150,10 @@ CommunicationEnvironment::~CommunicationEnvironment() {
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   Kokkos::fence();
   kokkos_handle.reset();
+#endif
+
+#ifdef ESPRESSO_WALBERLA
+  walberla::mpi_deinit();
 #endif
 
   ErrorHandling::deinit_error_handling();

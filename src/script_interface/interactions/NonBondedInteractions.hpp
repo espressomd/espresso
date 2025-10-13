@@ -54,7 +54,7 @@ private:
 public:
   ~NonBondedInteractions() override = default;
 
-  void do_construct(VariantMap const &params) override {
+  void do_construct(VariantMap const &) override {
     m_handle = std::make_shared<::InteractionsNonBonded>();
     m_notify_cutoff_change = std::make_shared<std::function<void()>>([]() {});
   }

@@ -235,8 +235,10 @@ class DipolarDirectSumGpu(MagnetostaticInteraction):
     Calculate magnetostatic interactions by direct summation over all
     pairs. See :ref:`Dipolar direct sum` for more details.
 
-    If the system has periodic boundaries, the minimum image convention
-    is applied in the respective directions.
+    If the system has periodic boundaries, the minimum image convention is
+    applied in the respective directions when no replicas are used. When
+    replicas are used, ``n_replicas`` copies of the system are taken into
+    account in the respective directions, and a spherical cutoff is applied.
 
     This is the GPU version of :class:`espressomd.magnetostatics.DipolarDirectSumCpu`
     but uses floating point precision.
@@ -248,6 +250,8 @@ class DipolarDirectSumGpu(MagnetostaticInteraction):
     ----------
     prefactor : :obj:`float`
         Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
+    n_replicas : :obj:`int`
+        Number of replicas to be taken into account at periodic boundaries.
 
     """
     _so_name = "Dipoles::DipolarDirectSumGpu"
@@ -255,7 +259,7 @@ class DipolarDirectSumGpu(MagnetostaticInteraction):
     _so_features = ("DIPOLAR_DIRECT_SUM", "CUDA")
 
     def default_params(self):
-        return {}
+        return {"n_replicas": 0}
 
     def required_keys(self):
         return {"prefactor"}

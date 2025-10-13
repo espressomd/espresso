@@ -814,10 +814,10 @@ public:
     if (not context()->is_head_node()) {
       return;
     }
-    apply([this, &params]<typename T>(std::shared_ptr<T> &member,
+    apply([this, &params]<typename T>(std::shared_ptr<T> const &,
                                       std::string const &name,
                                       std::string const &so_name) {
-      auto so = (params.contains(name))
+      auto so = params.contains(name)
                     ? get_value<std::shared_ptr<T>>(params.at(name))
                     : std::dynamic_pointer_cast<T>(
                           context()->make_shared(so_name, {}));

@@ -154,6 +154,13 @@ static void force_capping(CellStructure &cell_structure, double force_cap) {
   }
 }
 
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+static void reinit_dip_fld(CellStructure const &cell_structure) {
+  cell_structure.for_each_local_particle(
+      [](Particle &p) { p.dip_fld() = {0., 0., 0.}; });
+}
+#endif
+
 void System::System::calculate_forces() {
 #ifdef ESPRESSO_CALIPER
   CALI_CXX_MARK_FUNCTION;
@@ -182,6 +189,11 @@ void System::System::calculate_forces() {
     npt_inst_pressure->p_vir = Utils::Vector3d{};
   }
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  // reset dipole field
+  reinit_dip_fld(*cell_structure);
+#endif
+
   // Use combined function instead of two separate calls
 
   auto const elc_kernel = coulomb.pair_force_elc_kernel();
@@ -358,6 +370,11 @@ void System::System::calculate_forces() {
   CALI_MARK_BEGIN("copy_forces_from_GPU");
 #endif
   gpu.copy_forces_to_host(particles, this_node);
+
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  gpu.copy_dip_fld_to_host(particles, this_node);
+#endif
+
 #ifdef ESPRESSO_CALIPER
   CALI_MARK_END("copy_forces_from_GPU");
 #endif

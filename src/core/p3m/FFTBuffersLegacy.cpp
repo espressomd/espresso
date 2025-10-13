@@ -82,8 +82,8 @@ FloatType *FFTBuffersLegacy<FloatType>::get_scalar_mesh() {
 
 template <typename FloatType>
 std::array<FloatType *, 3u> FFTBuffersLegacy<FloatType>::get_vector_mesh() {
-  return {rs_mesh_fields[0u].data(), rs_mesh_fields[1u].data(),
-          rs_mesh_fields[2u].data()};
+  return {{rs_mesh_fields[0u].data(), rs_mesh_fields[1u].data(),
+           rs_mesh_fields[2u].data()}};
 }
 
 template class FFTBuffersLegacy<float>;

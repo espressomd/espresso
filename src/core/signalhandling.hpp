@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SIGNAL_HANDLER_HPP
-#define SIGNAL_HANDLER_HPP
+
+#pragma once
 
 #include "errorhandling.hpp"
 
@@ -32,13 +32,14 @@
  * destruction.
  */
 class SignalHandler {
+  int m_signal;
   struct sigaction old_action;
 
 public:
   // Delete all copy and move constructors
   SignalHandler(SignalHandler &&) = delete;
-  SignalHandler &operator=(SignalHandler &&) = delete;
   SignalHandler(SignalHandler const &) = delete;
+  SignalHandler &operator=(SignalHandler &&) = delete;
   SignalHandler &operator=(SignalHandler const &) = delete;
 
   /** @brief Constructor
@@ -47,12 +48,13 @@ public:
    * @param[in] handler Function to handle the signal
    */
   SignalHandler(int signal, void (*handler)(int)) {
+    m_signal = signal;
     struct sigaction new_action;
     new_action.sa_handler = handler;
     sigemptyset(&new_action.sa_mask);
     new_action.sa_flags = 0;
 
-    if (sigaction(SIGINT, &new_action, &old_action) < 0) {
+    if (sigaction(m_signal, &new_action, &old_action) < 0) {
       runtimeErrorMsg() << "Failed to replace signal handler!";
     }
   }
@@ -63,10 +65,8 @@ public:
    * construction.
    */
   ~SignalHandler() {
-    if (sigaction(SIGINT, &old_action, nullptr) < 0) {
+    if (sigaction(m_signal, &old_action, nullptr) < 0) {
       runtimeErrorMsg() << "Failed to restore signal handler!";
     }
   }
 };
-
-#endif // SIGNAL_HANDLER_HPP

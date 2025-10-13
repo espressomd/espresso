@@ -150,8 +150,7 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
    * and prepare pos- and vel-rescaling
    */
   if (::this_node == 0) {
-    nptiso.p_epsilon =
-        propagate_thermV_nptiso(npt_iso, nptiso.p_epsilon, nptiso.piston);
+    nptiso.p_epsilon = propagate_thermV_nptiso(npt_iso, nptiso.p_epsilon);
     nptiso.volume += nptiso.inv_piston * nptiso.p_epsilon * 0.5 * time_step;
     L_dt = pow(nptiso.volume, 1.0 / nptiso.dimension);
 

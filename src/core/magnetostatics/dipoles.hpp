@@ -68,12 +68,6 @@ namespace traits {
 template <typename T>
 using is_solver = std::is_convertible<std::shared_ptr<T>, MagnetostaticsActor>;
 
-/** @brief The dipolar method supports dipole fields calculation. */
-template <class T> struct has_dipole_fields : std::false_type {};
-#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-template <> struct has_dipole_fields<DipolarDirectSum> : std::true_type {};
-#endif // ESPRESSO_DIPOLE_FIELD_TRACKING
-
 } // namespace traits
 } // namespace Dipoles
 

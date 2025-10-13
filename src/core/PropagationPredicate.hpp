@@ -31,7 +31,7 @@ template <typename Predicate> struct PropagationPredicate {
 
   PropagationPredicate(Predicate pred) : predicate(pred) {}
 
-  bool operator()(Particle const &p) { return predicate(p.propagation()); };
+  bool operator()(Particle const &p) { return predicate(p.propagation()); }
 };
 
 template <typename Predicate>
@@ -43,5 +43,5 @@ class ParticleRangeFiltered
 
 public:
   using base_type::base_type;
-  auto size() const { return std::distance(this->begin(), this->end()); };
+  auto size() const { return std::distance(this->begin(), this->end()); }
 };

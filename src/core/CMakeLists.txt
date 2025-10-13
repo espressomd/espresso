@@ -63,7 +63,7 @@ if(ESPRESSO_BUILD_WITH_CUDA)
             electrostatics/p3m_gpu_cuda.cu electrostatics/p3m_gpu_error_cuda.cu
             system/GpuParticleData_cuda.cu)
   target_link_libraries(espresso_core PRIVATE CUDA::cuda_driver CUDA::cudart
-                                              CUDA::cufft espresso::cuda_flags)
+                                              CUDA::cufft)
   target_include_directories(
     espresso_core
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}

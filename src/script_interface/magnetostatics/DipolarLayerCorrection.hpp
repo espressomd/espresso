@@ -49,7 +49,7 @@ class DipolarLayerCorrection
       std::shared_ptr<DipolarDSR>>;
   BaseSolver m_solver;
 
-  void on_bind_system(::System::System &system) override {
+  void on_bind_system(::System::System &) override {
     std::visit([this](auto &solver) { solver->bind_system(m_system.lock()); },
                m_solver);
   }

@@ -76,7 +76,8 @@ inline double calc_non_bonded_pair_energy(
     Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
     Utils::Vector3d const &d, double const dist,
     [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
-    Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_kernel) {
+    [[maybe_unused]] Coulomb::ShortRangeEnergyKernel::kernel_type const
+        *coulomb_kernel) {
 
   double ret = 0;
 
@@ -310,7 +311,7 @@ inline double translational_kinetic_energy(Particle const &p) {
 /** Calculate kinetic energies from rotation for one particle.
  *  @param p   particle for which to calculate energies
  */
-inline double rotational_kinetic_energy(Particle const &p) {
+inline double rotational_kinetic_energy([[maybe_unused]] Particle const &p) {
 #ifdef ESPRESSO_ROTATION
   return (p.can_rotate() and not p.is_virtual())
              ? 0.5 * (hadamard_product(p.omega(), p.omega()) * p.rinertia())
