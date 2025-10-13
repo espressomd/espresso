@@ -46,14 +46,6 @@
 #include <cmath>
 
 /** Calculate Gay-Berne force and torques */
-inline ParticleForce gb_pair_force(Utils::Quaternion<double> const &qi,
-                                   Utils::Quaternion<double> const &qj,
-                                   IA_parameters const &ia_params,
-                                   Utils::Vector3d const &d, double dist) {
-  auto const ui = Utils::convert_quaternion_to_director(qi);
-  auto const uj = Utils::convert_quaternion_to_director(qj);
-  return gb_pair_force(ui, uj, ia_params, d, dist);
-}
 inline ParticleForce gb_pair_force(Utils::Vector3d const &ui,
                                    Utils::Vector3d const &uj,
                                    IA_parameters const &ia_params,
@@ -181,5 +173,12 @@ inline double gb_pair_energy(Utils::Quaternion<double> const &qi,
 
   return E(r_eff(dist)) - E(r_eff(ia_params.gay_berne.cut));
 }
-
+inline ParticleForce gb_pair_force(Utils::Quaternion<double> const &qi,
+                                   Utils::Quaternion<double> const &qj,
+                                   IA_parameters const &ia_params,
+                                   Utils::Vector3d const &d, double dist) {
+  auto const ui = Utils::convert_quaternion_to_director(qi);
+  auto const uj = Utils::convert_quaternion_to_director(qj);
+  return gb_pair_force(ui, uj, ia_params, d, dist);
+}
 #endif // ESPRESSO_GAY_BERNE
