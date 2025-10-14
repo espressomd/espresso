@@ -174,9 +174,7 @@ template <int cao> struct AssignDipole {
     dp3m.inter_weights.zfill(n_part); // allocate buffer for parallel write
     kokkos_parallel_range_for(
         "InterpolationWeights", std::size_t{0u}, n_part, [&](auto p_index) {
-          Utils::Vector3d const p_pos{aosoa.position(p_index, 0),
-                                      aosoa.position(p_index, 1),
-                                      aosoa.position(p_index, 2)};
+          auto const p_pos = aosoa.get_vector_at(aosoa.position, p_index);
           auto const weights =
               p3m_calculate_interpolation_weights<cao, memory_order>(
                   p_pos, dp3m.params.ai, dp3m.local_mesh);

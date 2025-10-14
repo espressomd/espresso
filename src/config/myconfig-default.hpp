@@ -57,6 +57,7 @@
 #define LJCOS2
 #define GAUSSIAN
 #define HAT
+#define GAY_BERNE
 #define SMOOTH_STEP
 #define HERTZIAN
 #define SOFT_SPHERE
