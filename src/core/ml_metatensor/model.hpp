@@ -1,3 +1,6 @@
+#include "config/config.hpp"
+
+#ifdef ESPRESSO_METATENSOR
 #include <memory>
 #include <metatensor/torch.hpp>
 #include <metatomic/torch.hpp>
@@ -12,3 +15,4 @@ struct MetatensorModel {
   metatomic_torch::ModelCapabilities capabilities;
   metatomic_torch::ModelEvaluationOptions evaluation_options;
 };
+#endif

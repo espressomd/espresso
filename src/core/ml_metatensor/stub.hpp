@@ -1,6 +1,6 @@
 #include "config/config.hpp"
 
-#ifdef METATENSOR
+#ifdef ESPRESSO_METATENSOR
 #undef CUDA
 
 #include <torch/cuda.h>

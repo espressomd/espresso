@@ -331,6 +331,11 @@ class System(ScriptInterfaceHelper):
 
         return float(np.prod(self.box_l))
 
+    def get_metadata(self, path):
+        assert_features("METATENSOR")
+        metadata = self.call_method("get_metadata", path=path)
+        return metadata
+
     def distance(self, p1, p2):
         """Return the scalar distance between particles, between a particle
         and a point or between two points, respecting periodic boundaries.

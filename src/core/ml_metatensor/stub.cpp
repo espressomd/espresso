@@ -1,6 +1,6 @@
 #include "config/config.hpp"
 
-#ifdef METATENSOR
+#ifdef ESPRESSO_METATENSOR
 #undef CUDA
 #include <torch/cuda.h>
 #include <torch/script.h>
@@ -14,6 +14,7 @@
 #include <metatomic/torch.hpp>
 
 #include "model.hpp"
+#include "stub.hpp"
 
 std::string load_metadata(const std::string &path) {
 	MetatensorModel model(path);

@@ -38,6 +38,8 @@
 #include "core/system/System.hpp"
 #include "core/system/System.impl.hpp"
 
+#include "core/ml_metatensor/stub.hpp"
+
 #include "script_interface/ObjectState.hpp"
 #include "script_interface/accumulators/AutoUpdateAccumulators.hpp"
 #include "script_interface/analysis/Analysis.hpp"
@@ -440,6 +442,12 @@ Variant System::do_call_method(std::string const &name,
     }
     return {};
   }
+#ifdef ESPRESSO_METATENSOR
+	if (name == "get_metadata") {
+		auto const path = get_value<std::string>(parameters, "path");
+		return load_metadata(path);
+	}
+#endif
   if (name == "number_of_particles") {
     auto const type = get_value<int>(parameters, "type");
     return ::number_of_particles_with_type(type);

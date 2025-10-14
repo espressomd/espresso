@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-target_sources(espresso_core PRIVATE stub.cpp)
-target_sources(espresso_core PRIVATE model.cpp)
-# target_sources(espresso_core PRIVATE load_model.cpp)
+if(ESPRESSO_BUILD_WITH_METATENSOR)
+  target_sources(espresso_core PRIVATE model.cpp stub.cpp)
+  # target_sources(espresso_core PRIVATE load_model.cpp)
+endif()

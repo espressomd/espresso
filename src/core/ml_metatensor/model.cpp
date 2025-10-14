@@ -1,3 +1,4 @@
+#ifdef ESPRESSO_METATENSOR
 #include "model.hpp"
 #include <string>
 
@@ -26,3 +27,4 @@ std::string MetatensorModel::print_metadata() {
       metadata_ivalue.toCustomClass<metatomic_torch::ModelMetadataHolder>();
   return metadata->print();
 }
+#endif
