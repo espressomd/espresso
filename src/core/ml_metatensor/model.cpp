@@ -1,3 +1,5 @@
+#include "config/config.hpp"
+
 #ifdef ESPRESSO_METATENSOR
 #include "model.hpp"
 #include <string>
