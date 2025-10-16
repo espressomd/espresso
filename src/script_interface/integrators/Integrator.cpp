@@ -50,10 +50,10 @@ Variant Integrator::integrate(VariantMap const &params) {
                                 ? INTEG_REUSE_FORCES_ALWAYS
                                 : INTEG_REUSE_FORCES_CONDITIONALLY;
   int return_value;
-  context()->parallel_try_catch(
-    [&]() {
-      return_value = get_system().integrate_with_signal_handler(steps, reuse_forces, update_accumulators);
-    });
+  context()->parallel_try_catch([&]() {
+    return_value = get_system().integrate_with_signal_handler(
+        steps, reuse_forces, update_accumulators);
+  });
   return return_value;
 }
 

@@ -103,12 +103,13 @@ class CellSystem(ut.TestCase):
             sigma=0.01, epsilon=1., cutoff=1.0, shift="auto")
 
         n_small = int(5 * system.volume())
-        system.part.add(pos=np.random.random((n_small, 3))*system.box_l)
+        system.part.add(pos=np.random.random((n_small, 3)) * system.box_l)
 
         system.time_step = 0.01
-        system.cell_system.skin=0.1
+        system.cell_system.skin = 0.1
 
-        system.integrator.set_steepest_descent(f_max=1,max_displacement=0.01,gamma=1E-10)
+        system.integrator.set_steepest_descent(
+            f_max=1, max_displacement=0.01, gamma=1E-10)
         system.integrator.run(200)
 
         system.integrator.set_vv()

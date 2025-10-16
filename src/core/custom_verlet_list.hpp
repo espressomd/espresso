@@ -49,7 +49,8 @@ public:
   // Method to initialize _data without filling neighbors
   KOKKOS_INLINE_FUNCTION
   void initializeData(std::size_t const num_particles,
-                      std::size_t const max_neigh, std::size_t const num_threads) {
+                      std::size_t const max_neigh,
+                      std::size_t const num_threads) {
     counts = Kokkos::View<int *, MemorySpace>("num_neighbors", num_particles);
     neighbors = Kokkos::View<int **, Kokkos::LayoutRight, MemorySpace>(
         Kokkos::ViewAllocateWithoutInitializing("neighbors"), num_particles,
@@ -178,15 +179,15 @@ public:
     bool overflow_detected = false;
     Kokkos::LOr<bool> or_reduce(overflow_detected);
     Kokkos::parallel_reduce(
-	"check_overflows",
-      	Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0},
+        "check_overflows",
+        Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0},
                                                            overflows.size()),
-	[&](const int i, bool &local_flag) {
-	  if (overflows(i)) {
-	    local_flag = true;
-	  }
-	},
-	or_reduce);
+        [&](const int i, bool &local_flag) {
+          if (overflows(i)) {
+            local_flag = true;
+          }
+        },
+        or_reduce);
     return overflow_detected;
   }
 
