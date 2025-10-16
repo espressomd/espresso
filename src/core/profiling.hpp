@@ -27,41 +27,41 @@
 #include "likwid.h"
 #endif
 
-void inline profiling_init(){
+void inline profiling_init() {
 #ifdef ESPRESSO_LIKWID
   likwid_markerInit();
 #pragma omp parallel
-    {
-        likwid_markerThreadInit();
-    }
+  {
+    likwid_markerThreadInit();
+  }
 #endif
 }
-void inline profiling_close(){
+void inline profiling_close() {
 #ifdef ESPRESSO_LIKWID
   likwid_markerClose();
 #endif
 }
 
-void inline profiling_section_begin(const char* name){
+void inline profiling_section_begin(const char *name) {
 #ifdef ESPRESSO_LIKWID
 #pragma omp parallel
-    {
-        likwid_markerStartRegion(name);
-    }
+  {
+    likwid_markerStartRegion(name);
+  }
 #endif
 #ifdef ESPRESSO_CALIPER
-    CALI_MARK_BEGIN(name);
+  CALI_MARK_BEGIN(name);
 #endif
 }
 
-void inline profiling_section_end(const char* name){
+void inline profiling_section_end(const char *name) {
 #ifdef ESPRESSO_CALIPER
-    CALI_MARK_END(name);
+  CALI_MARK_END(name);
 #endif
 #ifdef ESPRESSO_LIKWID
 #pragma omp parallel
-    {
-        likwid_markerStopRegion(name);
-    }
+  {
+    likwid_markerStopRegion(name);
+  }
 #endif
 }

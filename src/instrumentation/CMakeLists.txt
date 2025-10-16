@@ -38,7 +38,8 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
 endif()
 
 if(ESPRESSO_BUILD_WITH_LIKWID)
-  target_link_libraries(espresso_instrumentation INTERFACE ${likwid_BINARY_DIR}/lib/liblikwid.so.5.4)
+  target_link_libraries(espresso_instrumentation
+                        INTERFACE ${likwid_BINARY_DIR}/lib/liblikwid.so.5.4)
   target_include_directories(
     espresso_instrumentation INTERFACE "${likwid_SOURCE_DIR}/include"
                                        "${likwid_BINARY_DIR}/include")
