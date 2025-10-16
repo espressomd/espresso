@@ -29,7 +29,10 @@
 #include "script_interface/Exception.hpp"
 #include "script_interface/Variant.hpp"
 #include "script_interface/get_value.hpp"
+#include "utils/mpi/gather_buffer.hpp"
 
+#include <functional>
+#include <utility>
 #include <utils/Vector.hpp>
 
 #include <algorithm>
@@ -37,6 +40,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace ScriptInterface {
@@ -245,6 +249,51 @@ Variant ParticleSlice::do_call_method(std::string const &name,
     }
     return {};
   }
+  if (name == "get_param_parallel") {
+    auto const param_name = get_value<std::string>(params, "name");
+
+    // Handle special optimized properties
+    if (param_name == "type") {
+      auto const getter{[](Particle const &p) { return p.type(); }};
+      return get_particles_properties<int>(m_id_selection, getter, context(),
+                                           *get_cell_structure(),
+                                           *get_system());
+    }
+    if (param_name == "q") {
+      auto const getter{[](Particle const &p) { return p.q(); }};
+      return get_particles_properties<double>(m_id_selection, getter, context(),
+                                              *get_cell_structure(),
+                                              *get_system());
+    }
+    if (param_name == "pos") {
+      auto const getter{[this](Particle const &p) {
+        auto const pos = p.pos();
+        auto const image_box = p.image_box();
+        return get_system()->box_geo->unfolded_position(pos, image_box);
+      }};
+      return get_particles_properties<Utils::Vector3d>(
+          m_id_selection, getter, context(), *get_cell_structure(),
+          *get_system());
+    }
+
+    // Handle all other particle properties
+    std::vector<Variant> result;
+    result.reserve(m_id_selection.size());
+    if (!context()->is_head_node()) {
+      return {};
+    }
+    auto so = std::dynamic_pointer_cast<ParticleModifier>(
+        context()->make_shared("Particles::ParticleModifier",
+                               {{"id", -1},
+                                {"__cell_structure", m_cell_structure.lock()},
+                                {"__bonded_ias", m_bonded_ias.lock()}}));
+    for (int pid : m_id_selection) {
+      so->set_pid(pid);
+      result.emplace_back(so->get_parameter(param_name));
+    }
+    return result;
+  }
+
   if (not context()->is_head_node()) {
     return {};
   }

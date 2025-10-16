@@ -22,13 +22,16 @@
 #include "ParticleHandle.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/Variant.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/cell_system/CellSystem.hpp"
 #include "script_interface/get_value.hpp"
 #include "script_interface/interactions/BondedInteractions.hpp"
 
 #include "core/system/System.hpp"
+#include "utils/mpi/gather_buffer.hpp"
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -60,6 +63,43 @@ struct SetParticleParametersVisitor {
     }
   }
 };
+
+template <typename T>
+inline std::vector<Variant>
+get_particles_properties(std::vector<int> const &pids,
+                         std::function<T(Particle const &)> const &getter,
+                         Context *context, CellStructure &cell_structure,
+                         ::System::System const &system) {
+  std::vector<Variant> result;
+  result.reserve(pids.size());
+  std::vector<std::pair<int, T>> index_value_vec;
+  for (auto const &pid : pids) {
+    auto const p = cell_structure.get_local_particle(pid);
+    if (p and not p->is_ghost()) {
+      index_value_vec.emplace_back(pid, getter(*p));
+    }
+  }
+  // Collect values from all nodes
+  Utils::Mpi::gather_buffer(index_value_vec, context->get_comm(), 0);
+  if (!context->is_head_node()) {
+    return {};
+  }
+
+  // Sort results by particle ids to retain original order
+  std::ranges::sort(index_value_vec, [](const auto &pair1, const auto &pair2) {
+    return pair1.first < pair2.first;
+  });
+  assert(std::ranges::equal(
+             pids, index_value_vec,
+             [](int const &pid1, std::pair<int, T> const &index_value_pair) {
+               return pid1 == index_value_pair.first;
+             }) &&
+         "Unexpected returned values.");
+  for (auto const &index_value_pair : index_value_vec) {
+    result.emplace_back(std::move(index_value_pair.second));
+  }
+  return result;
+}
 
 class ParticleSlice : public AutoParameters<ParticleSlice> {
   std::vector<int> m_id_selection;

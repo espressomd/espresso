@@ -1462,26 +1462,18 @@ def _add_particle_slice_properties():
         if N == 0:
             return np.empty(0, dtype=type(None))
 
-        # get first slice member to determine its type
-        p_id = particle_slice.id_selection[0]
-        is_trivially_serializable = attribute in ParticleSlice._particle_attributes_trivially_serializable
-        target = getattr(particle_slice._get_particle(p_id), attribute)
-        if isinstance(target, array_locked):  # vectorial quantity
-            target_type = target.dtype
-        else:  # scalar quantity
-            target_type = type(target)
-
         if attribute in ["exclusions", "bonds", "vs_relative", "swimming"]:
             values = []
             for part in particle_slice._id_gen():
                 values.append(getattr(part, attribute))
         else:
-            values = np.empty((N,) + np.shape(target), dtype=target_type)
-            for i, part in enumerate(particle_slice._id_gen()):
-                if is_trivially_serializable:
-                    values[i] = part.get_parameter(attribute)
-                else:
-                    values[i] = getattr(part, attribute)
+            values = particle_slice.call_method(
+                "get_param_parallel", name=attribute)
+            if attribute == "propagation":
+                values = np.array([Propagation(value)
+                                  for value in values], dtype=object)
+            else:
+                values = np.stack(values)
 
         return values
 
