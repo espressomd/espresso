@@ -1035,20 +1035,15 @@ if(ESPRESSO_BUILD_WITH_LIKWID)
     GIT_TAG        v5.4
   )
   # cmake-format: on
-  # set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
-  # set(CALIPER_WITH_MPI on CACHE BOOL "")
-  # set(CALIPER_WITH_NVTX off CACHE BOOL "")
-  # set(CALIPER_WITH_CUPTI off CACHE BOOL "")
-  # set(CALIPER_INSTALL_CONFIG off CACHE BOOL "")
-  # set(CALIPER_INSTALL_HEADERS off CACHE BOOL "")
   set(BUILD_SHARED_LIBS ON)
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_INSTALL_LIBDIR}")
   set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
   FetchContent_MakeAvailable(likwid)
-  # FetchContent_Populate(likwid
-  #                       SOURCE_DIR "/tikhome/itischler/Desktop/espresso/likwid"
-  #                       BINARY_DIR "/tikhome/itischler/Desktop/espresso/likwid/local/bin")
   FetchContent_GetProperties(likwid)
+  add_custom_target(likwid_make
+      COMMAND $(MAKE) PREFIX=${likwid_BINARY_DIR} ACCESSMODE=perf_event
+      COMMAND $(MAKE) PREFIX=${likwid_BINARY_DIR} ACCESSMODE=perf_event install
+      WORKING_DIRECTORY ${likwid_SOURCE_DIR})
   message(STATUS "TEST: ${likwid_SOURCE_DIR} ${likwid_BINARY_DIR}")
   set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR}")
