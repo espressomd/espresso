@@ -150,7 +150,7 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
     m_aosoa->resize(num_part);
 
     m_verlet_list_cabana =
-        std::make_unique<ListType>(0ul, num_part, max_counts);
+        std::make_unique<ListType>(0ul, num_part, max_counts, num_threads);
   }
 #ifdef ESPRESSO_NPT
   m_local_virial = std::make_unique<VirialType>("local_virial", num_threads);

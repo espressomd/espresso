@@ -38,21 +38,24 @@ class CustomVerletList : public Cabana::VerletList<MemorySpace, AlgorithmTag,
 public:
   CustomVerletList() = default;
   CustomVerletList(std::size_t const begin, std::size_t const end,
-                   std::size_t const max_neigh) {
-    initializeData(end - begin, max_neigh);
+                   std::size_t const max_neigh, std::size_t const num_threads) {
+    initializeData(end - begin, max_neigh, num_threads);
   }
 
   Kokkos::View<int *, MemorySpace> counts;
   Kokkos::View<int **, Kokkos::LayoutRight, MemorySpace> neighbors;
+  Kokkos::View<bool *, MemorySpace> overflows;
 
   // Method to initialize _data without filling neighbors
   KOKKOS_INLINE_FUNCTION
   void initializeData(std::size_t const num_particles,
-                      std::size_t const max_neigh) {
+                      std::size_t const max_neigh, std::size_t const num_threads) {
     counts = Kokkos::View<int *, MemorySpace>("num_neighbors", num_particles);
     neighbors = Kokkos::View<int **, Kokkos::LayoutRight, MemorySpace>(
         Kokkos::ViewAllocateWithoutInitializing("neighbors"), num_particles,
         max_neigh);
+    overflows = Kokkos::View<bool *, MemorySpace>("overflow_flag", num_threads);
+    Kokkos::deep_copy(overflows, false);
   }
 
   // Method to realloc _data
@@ -74,8 +77,12 @@ public:
       std::swap(pid, nid);
     }
     count = Kokkos::atomic_fetch_add(&counts(pid), 1);
-    assert(count < neighbors.extent(1));
-    neighbors(pid, count) = nid;
+    auto overflow = count >= neighbors.extent(1);
+    if (overflow) {
+      setOverflow();
+    } else {
+      neighbors(pid, count) = nid;
+    }
   }
 
   // Thread safe but non atomic method to add a neighbor
@@ -83,9 +90,13 @@ public:
   void addNeighbor(int pid, int nid) {
     auto const count = counts(pid);
 
-    assert(count < neighbors.extent(1));
-    neighbors(pid, count) = nid;
-    counts(pid) += 1;
+    auto overflow = count >= neighbors.extent(1);
+    if (overflow) {
+      setOverflow();
+    } else {
+      neighbors(pid, count) = nid;
+      counts(pid) += 1;
+    }
   }
 
   // Non atomic and load balancing method to add a neighbor
@@ -98,9 +109,13 @@ public:
       std::swap(pid, nid);
       count = counts(pid);
     }
-    assert(count < neighbors.extent(1));
-    neighbors(pid, count) = nid;
-    counts(pid) += 1;
+    auto overflow = count >= neighbors.extent(1);
+    if (overflow) {
+      setOverflow();
+    } else {
+      neighbors(pid, count) = nid;
+      counts(pid) += 1;
+    }
   }
 
   // Sorting a neighbor
@@ -155,6 +170,32 @@ public:
         max_reduce);
     Kokkos::fence();
     return max_counts;
+  }
+
+  // Method to get overflows_flag
+  KOKKOS_INLINE_FUNCTION
+  bool hasOverflow() const {
+    bool overflow_detected = false;
+    Kokkos::LOr<bool> or_reduce(overflow_detected);
+    Kokkos::parallel_reduce(
+	"check_overflows",
+      	Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0},
+                                                           overflows.size()),
+	[&](const int i, bool &local_flag) {
+	  if (overflows(i)) {
+	    local_flag = true;
+	  }
+	},
+	or_reduce);
+    return overflow_detected;
+  }
+
+private:
+  // Method to set overflows
+  KOKKOS_INLINE_FUNCTION
+  void setOverflow() {
+    auto const thread_id = omp_get_thread_num();
+    overflows(thread_id) = true;
   }
 };
 
