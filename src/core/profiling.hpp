@@ -56,7 +56,7 @@ void inline profiling_section_end(const char *name) {
 #define PROFILING_MARK_LOOP_BEGIN(loop_id, name)
 #define PROFILING_MARK_LOOP_ITERATION(loop_id, step)
 #define PROFILING_MARK_LOOP_END(loop_id)
-#elif ESPRESSO_CALIPER
+#elif defined(ESPRESSO_CALIPER)
 #include <caliper/cali.h>
 #define PROFILING_INIT
 #define PROFILING_CLOSE

@@ -60,6 +60,8 @@ class defs:
         derivations = list()
         # list of external features
         externals = set()
+        # list of excludes (pairs of feature -> excluded expr)
+        excludes = list()
 
         for line in fileinput.input(filename):
             line = line.strip()
@@ -130,6 +132,13 @@ class defs:
                         raise SyntaxError("<feature> requires <expr>", line)
                     requirements.append((feature, rest, toCPPExpr(rest)))
 
+                # excludes
+                elif keyword == 'excludes':
+                    if rest is None:
+                        raise SyntaxError(
+                            "<feature> excludes [<feature>...]", line)
+                    excludes.append((feature, rest, toCPPExpr(rest)))
+
         # allfeatures minus externals and derived
         features = allfeatures.difference(derived)
         features = features.difference(externals)
@@ -141,6 +150,7 @@ class defs:
         self.derived = derived
         self.derivations = derivations
         self.externals = externals
+        self.excludes = excludes
 
     def check_validity(self, activated):
         """Check whether a set of features is valid.

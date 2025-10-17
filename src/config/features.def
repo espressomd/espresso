@@ -102,6 +102,8 @@ SCAFACOS                        requires ELECTROSTATICS
 
 /* Debugging */
 ADDITIONAL_CHECKS
+CALIPER                         excludes LIKWID
+LIKWID                          excludes CALIPER
 
 # External switches
 # Switches that are set by the build system, not to be set manually
