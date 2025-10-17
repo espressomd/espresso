@@ -38,25 +38,26 @@ class CustomVerletList : public Cabana::VerletList<MemorySpace, AlgorithmTag,
 public:
   CustomVerletList() = default;
   CustomVerletList(std::size_t const begin, std::size_t const end,
-                   std::size_t const max_neigh, std::size_t const num_threads) {
-    initializeData(end - begin, max_neigh, num_threads);
+                   std::size_t const max_neigh) {
+    initializeData(end - begin, max_neigh);
   }
 
   Kokkos::View<int *, MemorySpace> counts;
   Kokkos::View<int **, Kokkos::LayoutRight, MemorySpace> neighbors;
-  Kokkos::View<bool *, MemorySpace> overflows;
+
+  // Note: Writing to 'overflow' from multiple threads by 'setOverflow()' without synchronization is a data race.
+  // This is unspecified behaviour and may be changed in the future.
+  // https://www.openmp.org/spec-html/5.0/openmpsu9.html
+  bool overflow = false;
 
   // Method to initialize _data without filling neighbors
   KOKKOS_INLINE_FUNCTION
   void initializeData(std::size_t const num_particles,
-                      std::size_t const max_neigh,
-                      std::size_t const num_threads) {
+                      std::size_t const max_neigh) {
     counts = Kokkos::View<int *, MemorySpace>("num_neighbors", num_particles);
     neighbors = Kokkos::View<int **, Kokkos::LayoutRight, MemorySpace>(
         Kokkos::ViewAllocateWithoutInitializing("neighbors"), num_particles,
         max_neigh);
-    overflows = Kokkos::View<bool *, MemorySpace>("overflow_flag", num_threads);
-    Kokkos::deep_copy(overflows, false);
   }
 
   // Method to realloc _data
@@ -173,30 +174,17 @@ public:
     return max_counts;
   }
 
-  // Method to get overflows_flag
+  // Method to get overflow_flag
   KOKKOS_INLINE_FUNCTION
   bool hasOverflow() const {
-    bool overflow_detected = false;
-    Kokkos::LOr<bool> or_reduce(overflow_detected);
-    Kokkos::parallel_reduce(
-        "check_overflows",
-        Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0},
-                                                           overflows.size()),
-        [&](const int i, bool &local_flag) {
-          if (overflows(i)) {
-            local_flag = true;
-          }
-        },
-        or_reduce);
-    return overflow_detected;
+    return overflow;
   }
 
 private:
   // Method to set overflows
   KOKKOS_INLINE_FUNCTION
   void setOverflow() {
-    auto const thread_id = omp_get_thread_num();
-    overflows(thread_id) = true;
+    overflow = true;
   }
 };
 

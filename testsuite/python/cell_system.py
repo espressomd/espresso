@@ -113,8 +113,12 @@ class CellSystem(ut.TestCase):
         system.integrator.run(200)
 
         system.integrator.set_vv()
-        with self.assertRaisesRegex(RuntimeError, "Verlet list overflow is detected: neighbor count exceeded max_counts. Consider using link cell by setting use_verlet_lists=False in cell_system, e.g. system.cell_system.use_verlet_lists = False."):
+        exception_msg = ""
+        try:
             self.system.integrator.run(0, recalc_forces=True)
+        except Exception as err:
+            exception_msg = f"{exception_msg}\n{err}"
+        self.assertIn("Verlet list overflow is detected", exception_msg)
 
         system.cell_system.use_verlet_lists = False
         self.system.integrator.run(0, recalc_forces=True)

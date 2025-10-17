@@ -193,11 +193,11 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
                   verlet_list.addNeighbor(i, j);
                 });
             if (verlet_list.hasOverflow()) {
-              throw std::runtime_error(
+    	      runtimeErrorMsg() <<
                   "Verlet list overflow is detected: neighbor count exceeded "
                   "max_counts. Consider using link cell by setting "
                   "use_verlet_lists=False in cell_system, e.g. "
-                  "system.cell_system.use_verlet_lists = False.");
+                  "system.cell_system.use_verlet_lists = False.";
             }
           });
     }
