@@ -59,3 +59,7 @@ espresso_unit_test(
 espresso_unit_test(
   SRC ParticleSlice_test.cpp DEPENDS espresso::core espresso::script_interface
   espresso::instrumentation Boost::mpi MPI::MPI_CXX NUM_PROC 1)
+espresso_unit_test(
+  SRC get_particles_properties_test.cpp DEPENDS espresso::core
+  espresso::script_interface espresso::instrumentation Boost::mpi MPI::MPI_CXX
+  NUM_PROC 2)
