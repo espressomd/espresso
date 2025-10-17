@@ -56,10 +56,6 @@
 #include <utility>
 #include <vector>
 
-#ifdef ESPRESSO_CALIPER
-#include <caliper/cali.h>
-#endif
-
 // forward declarations
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 namespace Kokkos {

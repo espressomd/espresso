@@ -58,10 +58,6 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#ifdef ESPRESSO_CALIPER
-#include <caliper/cali.h>
-#endif
-
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Cabana_Core.hpp>
 #endif
@@ -96,9 +92,7 @@ static ParticleForce external_force(Particle const &p) {
 
 /** Combined force initialization and Langevin noise application */
 void init_forces_and_thermostat(System::System const &system) {
-#ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_FUNCTION;
-#endif
+  PROFILING_MARK_FUNCTION;
 
   auto &cell_structure = *system.cell_structure;
   auto const &propagation = *system.propagation;
@@ -163,13 +157,11 @@ static void reinit_dip_fld(CellStructure const &cell_structure) {
 #endif
 
 void System::System::calculate_forces() {
-#ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_FUNCTION;
-#endif
+  PROFILING_MARK_FUNCTION;
 #ifdef ESPRESSO_CUDA
-  profiling_section_begin("copy_particles_to_GPU");
+  PROFILING_SECTION_BEGIN("copy_particles_to_GPU");
   gpu.update();
-  profiling_section_end("copy_particles_to_GPU");
+  PROFILING_SECTION_END("copy_particles_to_GPU");
 #endif // ESPRESSO_CUDA
 
 #ifdef ESPRESSO_COLLISION_DETECTION
@@ -217,10 +209,10 @@ void System::System::calculate_forces() {
                                            collision_detection_cutoff};
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-  profiling_section_begin("convert particles AoS to SoA");
+  PROFILING_SECTION_BEGIN("convert_particles_AoS_to_SoA");
   update_cabana_state(*cell_structure, verlet_criterion,
                       get_interaction_range(), propagation->integ_switch);
-  profiling_section_end("convert particles AoS to SoA");
+  PROFILING_SECTION_END("convert_particles_AoS_to_SoA");
 #endif
 #ifdef ESPRESSO_ELECTROSTATICS
   if (coulomb.impl->extension) {
@@ -231,7 +223,7 @@ void System::System::calculate_forces() {
   calc_long_range_forces(particles);
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-  profiling_section_begin("parallel short range");
+  PROFILING_SECTION_BEGIN("parallel_short_range");
   using execution_space = Kokkos::DefaultExecutionSpace;
   auto const &unique_particles = cell_structure->get_unique_particles();
   auto const &local_force = cell_structure->get_local_force();
@@ -310,7 +302,7 @@ void System::System::calculate_forces() {
   cell_structure->non_bonded_loop(collision_kernel, verlet_criterion);
 #endif
 
-  profiling_section_end("parallel short range");
+  PROFILING_SECTION_END("parallel_short_range");
 
 #else // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
@@ -355,14 +347,14 @@ void System::System::calculate_forces() {
   }
 
 #ifdef ESPRESSO_CUDA
-  profiling_section_begin("copy_forces_from_GPU");
+  PROFILING_SECTION_BEGIN("copy_forces_from_GPU");
   gpu.copy_forces_to_host(particles, this_node);
 
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   gpu.copy_dip_fld_to_host(particles, this_node);
 #endif
 
-  profiling_section_begin("copy_forces_from_GPU");
+  PROFILING_SECTION_END("copy_forces_from_GPU");
 #endif // ESPRESSO_CUDA
 
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
@@ -386,9 +378,7 @@ void System::System::calculate_forces() {
 }
 
 void calc_long_range_forces(const ParticleRange &particles) {
-#ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_FUNCTION;
-#endif
+  PROFILING_MARK_FUNCTION;
 
 #ifdef ESPRESSO_ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */

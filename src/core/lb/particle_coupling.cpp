@@ -25,6 +25,7 @@
 #include "communication.hpp"
 #include "config/config.hpp"
 #include "errorhandling.hpp"
+#include "profiling.hpp"
 #include "random.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
@@ -33,10 +34,6 @@
 #include <utils/Vector.hpp>
 
 #include <boost/mpi.hpp>
-
-#ifdef ESPRESSO_CALIPER
-#include <caliper/cali.h>
-#endif
 
 #include <cmath>
 #include <cstdint>
@@ -346,9 +343,7 @@ static void lb_coupling_sanity_checks(Particle const &p) {
 } // namespace LB
 
 void System::System::lb_couple_particles() {
-#ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_FUNCTION;
-#endif
+  PROFILING_MARK_FUNCTION;
   assert(thermostat->lb != nullptr);
   if (thermostat->lb->couple_to_md) {
     if (not lb.is_solver_set()) {

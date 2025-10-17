@@ -18,15 +18,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifdef ESPRESSO_CALIPER
-#include <caliper/cali.h>
-#endif
+#pragma once
 
 #ifdef ESPRESSO_LIKWID
-#include "likwid.h"
-#endif
-
+#include <likwid.h>
 void inline profiling_init() {
 #ifdef ESPRESSO_LIKWID
   likwid_markerInit();
@@ -36,32 +31,50 @@ void inline profiling_init() {
   }
 #endif
 }
-void inline profiling_close() {
-#ifdef ESPRESSO_LIKWID
-  likwid_markerClose();
-#endif
-}
 
 void inline profiling_section_begin(const char *name) {
-#ifdef ESPRESSO_LIKWID
 #pragma omp parallel
   {
     likwid_markerStartRegion(name);
+#pragma omp barrier
   }
-#endif
-#ifdef ESPRESSO_CALIPER
-  CALI_MARK_BEGIN(name);
-#endif
 }
 
 void inline profiling_section_end(const char *name) {
-#ifdef ESPRESSO_CALIPER
-  CALI_MARK_END(name);
-#endif
-#ifdef ESPRESSO_LIKWID
 #pragma omp parallel
   {
     likwid_markerStopRegion(name);
+#pragma omp barrier
   }
-#endif
 }
+
+#define PROFILING_INIT profiling_init()
+#define PROFILING_CLOSE likwid_markerClose()
+#define PROFILING_SECTION_BEGIN(name) profiling_section_begin(name)
+#define PROFILING_SECTION_END(name) profiling_section_end(name)
+#define PROFILING_MARK_FUNCTION
+#define PROFILING_MARK_LOOP_BEGIN(loop_id, name)
+#define PROFILING_MARK_LOOP_ITERATION(loop_id, step)
+#define PROFILING_MARK_LOOP_END(loop_id)
+#elif ESPRESSO_CALIPER
+#include <caliper/cali.h>
+#define PROFILING_INIT
+#define PROFILING_CLOSE
+#define PROFILING_SECTION_BEGIN(name) CALI_MARK_BEGIN(name)
+#define PROFILING_SECTION_END(name) CALI_MARK_END(name)
+#define PROFILING_MARK_FUNCTION CALI_CXX_MARK_FUNCTION
+#define PROFILING_MARK_LOOP_BEGIN(loop_id, name)                               \
+  CALI_CXX_MARK_LOOP_BEGIN(loop_id, name)
+#define PROFILING_MARK_LOOP_ITERATION(loop_id, step)                           \
+  CALI_CXX_MARK_LOOP_ITERATION(loop_id, step)
+#define PROFILING_MARK_LOOP_END(loop_id) CALI_CXX_MARK_LOOP_END(loop_id)
+#else
+#define PROFILING_INIT
+#define PROFILING_CLOSE
+#define PROFILING_SECTION_BEGIN(name)
+#define PROFILING_SECTION_END(name)
+#define PROFILING_MARK_FUNCTION
+#define PROFILING_MARK_LOOP_BEGIN(loop_id, name)
+#define PROFILING_MARK_LOOP_ITERATION(loop_id, step)
+#define PROFILING_MARK_LOOP_END(loop_id)
+#endif
