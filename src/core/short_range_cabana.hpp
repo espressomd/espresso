@@ -179,27 +179,29 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
       // ===================================================
       // Get Verlet pairs and fill Verlet list
       // ===================================================
-      cell_structure.rebuild_verlet_list_cabana(
-          [&](std::span<Cell *const> cells, BoxGeometry const &box,
-              CellStructure::ListType &verlet_list) {
-            link_cell_kokkos(
-                std::move(cells), box, verlet_criterion, id_to_index, max_id,
-                [&](const int i, const int j) {
-                  // intra cell loop
-                  verlet_list.addNeighborLB(i, j);
-                },
-                [&](const int i, const int j) {
-                  // inter cell loop
-                  verlet_list.addNeighbor(i, j);
-                });
-            if (verlet_list.hasOverflow()) {
-    	      runtimeErrorMsg() <<
-                  "Verlet list overflow is detected: neighbor count exceeded "
-                  "max_counts. Consider using link cell by setting "
-                  "use_verlet_lists=False in cell_system, e.g. "
-                  "system.cell_system.use_verlet_lists = False.";
-            }
-          });
+      cell_structure.rebuild_verlet_list_cabana([&](std::span<Cell *const>
+                                                        cells,
+                                                    BoxGeometry const &box,
+                                                    CellStructure::ListType
+                                                        &verlet_list) {
+        link_cell_kokkos(
+            std::move(cells), box, verlet_criterion, id_to_index, max_id,
+            [&](const int i, const int j) {
+              // intra cell loop
+              verlet_list.addNeighborLB(i, j);
+            },
+            [&](const int i, const int j) {
+              // inter cell loop
+              verlet_list.addNeighbor(i, j);
+            });
+        if (verlet_list.hasOverflow()) {
+          runtimeErrorMsg()
+              << "Verlet list overflow is detected: neighbor count exceeded "
+                 "max_counts. Consider using link cell by setting "
+                 "use_verlet_lists=False in cell_system, e.g. "
+                 "system.cell_system.use_verlet_lists = False.";
+        }
+      });
     }
   } else {
     // ===================================================

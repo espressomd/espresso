@@ -45,8 +45,9 @@ public:
   Kokkos::View<int *, MemorySpace> counts;
   Kokkos::View<int **, Kokkos::LayoutRight, MemorySpace> neighbors;
 
-  // Note: Writing to 'overflow' from multiple threads by 'setOverflow()' without synchronization is a data race.
-  // This is unspecified behaviour and may be changed in the future.
+  // Note: Writing to 'overflow' from multiple threads by 'setOverflow()'
+  // without synchronization is a data race. This is unspecified behaviour and
+  // may be changed in the future.
   // https://www.openmp.org/spec-html/5.0/openmpsu9.html
   bool overflow = false;
 
@@ -176,16 +177,12 @@ public:
 
   // Method to get overflow_flag
   KOKKOS_INLINE_FUNCTION
-  bool hasOverflow() const {
-    return overflow;
-  }
+  bool hasOverflow() const { return overflow; }
 
 private:
   // Method to set overflows
   KOKKOS_INLINE_FUNCTION
-  void setOverflow() {
-    overflow = true;
-  }
+  void setOverflow() { overflow = true; }
 };
 
 template <class MemorySpace, class AlgorithmTag, class BuildTag>

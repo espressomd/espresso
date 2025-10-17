@@ -50,7 +50,7 @@ Variant Integrator::integrate(VariantMap const &params) {
                                 ? INTEG_REUSE_FORCES_ALWAYS
                                 : INTEG_REUSE_FORCES_CONDITIONALLY;
   return get_system().integrate_with_signal_handler(steps, reuse_forces,
-		  				    update_accumulators);
+                                                    update_accumulators);
 }
 
 Variant Integrator::do_call_method(std::string const &name,
