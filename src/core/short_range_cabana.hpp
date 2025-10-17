@@ -58,21 +58,13 @@ commit_particle(Particle const &p, auto const index,
   aosoa.charge(index) = p.q();
 #endif
   aosoa.type(index) = p.type();
-  auto const &pos = p.pos();
-  aosoa.position(index, 0) = pos[0];
-  aosoa.position(index, 1) = pos[1];
-  aosoa.position(index, 2) = pos[2];
+  aosoa.set_vector_at(aosoa.position, index, p.pos());
 #ifdef ESPRESSO_DPD
-  auto const &vel = p.v();
-  aosoa.velocity(index, 0) = vel[0];
-  aosoa.velocity(index, 1) = vel[1];
-  aosoa.velocity(index, 2) = vel[2];
+  aosoa.set_vector_at(aosoa.velocity, index, p.v());
 #endif
 #if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
-  auto const &director = Utils::convert_quaternion_to_director(p.quat());
-  aosoa.director(index, 0) = director[0];
-  aosoa.director(index, 1) = director[1];
-  aosoa.director(index, 2) = director[2];
+  aosoa.set_vector_at(aosoa.director, index,
+                      Utils::convert_quaternion_to_director(p.quat()));
 #endif
 #ifdef ESPRESSO_DIPOLES
   aosoa.dipm(index) = p.dipm();

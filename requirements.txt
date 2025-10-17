@@ -1,5 +1,5 @@
 # build system
-cython>=3.0.8,<3.1.0
+cython>=3.0.4,<3.2.0
 setuptools>=68.1.2
 packaging>=24.0
 # required scientific packages

@@ -38,9 +38,9 @@ jobs:
          codesign -d -vv /usr/local/lib/libomp.dylib
          echo "::endgroup::"
          # Python dependencies
-         python3 -m venv venv
+         python -m venv venv
          . venv/bin/activate
-         pip3 install -c requirements.txt cython numpy scipy packaging
+         python -m pip install -c requirements.txt cython numpy scipy packaging
          deactivate
         shell: bash
       - name: Build and check
@@ -48,6 +48,7 @@ jobs:
         env:
           build_procs: 3
           check_procs: 3
+          cmake_params: '-D ESPRESSO_TEST_NP=3'
           with_ccache: 'true'
           with_fftw: 'true'
           with_walberla: 'true'

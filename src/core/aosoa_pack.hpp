@@ -90,6 +90,22 @@ struct CellStructure::AoSoA_pack {
 #endif
     }
   }
+
+  template <typename array_layout>
+  Utils::Vector3d get_vector_at(
+      Kokkos::View<double *[3], array_layout, Kokkos::HostSpace> const &view,
+      std::size_t i) const {
+    return {view(i, 0), view(i, 1), view(i, 2)};
+  }
+
+  template <typename array_layout>
+  void set_vector_at(
+      Kokkos::View<double *[3], array_layout, Kokkos::HostSpace> &view,
+      std::size_t i, Utils::Vector3d const &value) {
+    view(i, 0) = value[0];
+    view(i, 1) = value[1];
+    view(i, 2) = value[2];
+  }
 };
 
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

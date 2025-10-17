@@ -301,7 +301,10 @@ endif()
 # Python interpreter and Cython interface library
 if(ESPRESSO_BUILD_WITH_PYTHON)
   find_package(Python 3.11 REQUIRED COMPONENTS Interpreter Development NumPy)
-  find_package(Cython 3.0.8...<3.1.0 REQUIRED)
+  find_package(Cython 3.0.4...<3.2.0 REQUIRED)
+  if(CYTHON_VERSION VERSION_LESS 3.0.8)
+    message(WARNING "We strongly recommend using Cython 3.0.8 or later")
+  endif()
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif()
 
@@ -746,7 +749,7 @@ if(ESPRESSO_BUILD_WITH_HDF5)
   FetchContent_Declare(
     HighFive
     GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
-    GIT_TAG        v.3.1.1
+    GIT_TAG        v3.2.0
   )
   # cmake-format: on
   FetchContent_MakeAvailable(HighFive)

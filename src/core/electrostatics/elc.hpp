@@ -116,10 +116,6 @@ struct elc_data {
   double space_box;
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-  static auto copy_aosoa_vector_elc(std::size_t i, auto &slice) {
-    return Utils::Vector3d{slice(i, 0), slice(i, 1), slice(i, 2)};
-  }
-
   /// pairwise contributions from lower and upper layers
   void dielectric_layers_contribution(BoxGeometry const &box_geo,
                                       std::size_t p1, std::size_t p2,
@@ -127,8 +123,8 @@ struct elc_data {
                                       auto &&kernel) const {
     if (aosoa.position(p1, 2) < space_layer) {
       auto const q_eff = delta_mid_bot * q1q2;
-      auto pos2 = copy_aosoa_vector_elc(p2, aosoa.position);
-      auto pos1 = copy_aosoa_vector_elc(p1, aosoa.position);
+      auto pos2 = aosoa.get_vector_at(aosoa.position, p2);
+      auto pos1 = aosoa.get_vector_at(aosoa.position, p1);
       pos1[2] *= -1.;
       auto const d = box_geo.get_mi_vector(pos2, pos1);
       kernel(q_eff, d);
@@ -136,8 +132,8 @@ struct elc_data {
     if (aosoa.position(p1, 2) > (box_h - space_layer)) {
       auto const q_eff = delta_mid_top * q1q2;
       auto const z = 2. * box_h - aosoa.position(p1, 2);
-      auto pos2 = copy_aosoa_vector_elc(p2, aosoa.position);
-      auto pos1 = copy_aosoa_vector_elc(p1, aosoa.position);
+      auto pos2 = aosoa.get_vector_at(aosoa.position, p2);
+      auto pos1 = aosoa.get_vector_at(aosoa.position, p1);
       pos1[2] = 2. * box_h - pos1[2];
       auto const d = box_geo.get_mi_vector(pos2, pos1);
       kernel(q_eff, d);
