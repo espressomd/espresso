@@ -71,7 +71,10 @@ BOOST_AUTO_TEST_CASE(test_transient_shear) {
   auto lb = LBImplementation(lattice, viscosity, density);
   auto le_pack = std::make_unique<LeesEdwardsPack>(
       0u, 1u, []() { return 0.0; }, [=]() { return v0; });
-  lb.set_collision_model(std::move(le_pack));
+  auto kT = 0.0;
+  auto seed = 0u;
+
+  lb.set_collision_model(std::move(le_pack), kT, seed);
   lb.ghost_communication();
   auto const grid_size_y = lattice->get_grid_dimensions()[1];
   for (int i = 0; i < 200; i++) {
@@ -97,7 +100,9 @@ static auto setup_lb_with_offset(double offset) {
   auto lb = std::make_shared<LBImplementation>(lattice, viscosity, density);
   auto le_pack = std::make_unique<LeesEdwardsPack>(
       0u, 1u, [=]() { return offset; }, []() { return 0.0; });
-  lb->set_collision_model(std::move(le_pack));
+  auto kT = 0.0;
+  auto seed = 0u;
+  lb->set_collision_model(std::move(le_pack), kT, seed);
   lb->ghost_communication();
   return lb;
 }

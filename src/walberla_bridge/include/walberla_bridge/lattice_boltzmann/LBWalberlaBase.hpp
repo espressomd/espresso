@@ -241,7 +241,8 @@ public:
 
   /** @brief Configure a thermalized collision model for Lees-Edwards. */
   virtual void
-  set_collision_model(std::unique_ptr<LeesEdwardsPack> &&lees_edwards_pack) = 0;
+  set_collision_model(std::unique_ptr<LeesEdwardsPack> &&lees_edwards_pack,
+                      double kT, unsigned int seed) = 0;
 
   /** @brief Check Lees-Edwards boundary conditions. */
   virtual void check_lebc(unsigned int shear_direction,

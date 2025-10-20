@@ -210,6 +210,7 @@ private:
     }
 
     void operator()(StreamCollisionModelLeesEdwards &cm, IBlock *b) {
+      cm.configure(m_storage, b);
       cm.setV_s(static_cast<decltype(cm.getV_s())>(
           m_lees_edwards_callbacks->get_shear_velocity()));
       cm(b);
@@ -531,9 +532,8 @@ private:
       auto const block_variant = std::variant<IBlock *>(&block);
       std::visit(m_run_stream_collide_sweep, cm_variant, block_variant);
     }
-    if (auto *cm = std::get_if<StreamCollisionModelThermalized>(&cm_variant)) {
-      cm->setTime_step(cm->getTime_step() + 1u);
-    }
+    std::visit([](auto &cm) { cm.setTime_step(cm.getTime_step() + 1u); },
+               cm_variant);
   }
 
   auto has_lees_edwards_bc() const {
@@ -700,8 +700,8 @@ public:
     setup_streaming_communicator();
   }
 
-  void set_collision_model(
-      std::unique_ptr<LeesEdwardsPack> &&lees_edwards_pack) override {
+  void set_collision_model(std::unique_ptr<LeesEdwardsPack> &&lees_edwards_pack,
+                           double kT, unsigned int seed) override {
     assert(m_kT == 0.);
 #if defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
@@ -712,6 +712,7 @@ public:
     auto const shear_plane_normal = lees_edwards_pack->shear_plane_normal;
     auto const shear_vel = FloatType_c(lees_edwards_pack->get_shear_velocity());
     auto const omega = shear_mode_relaxation_rate();
+    auto const omega_odd = odd_mode_relaxation_rate(omega);
     if (shear_plane_normal != 1u) {
       throw std::domain_error(
           "Lees-Edwards LB only supports shear_plane_normal=\"y\"");
@@ -728,10 +729,13 @@ public:
     }
     auto const &grid_dimensions = lattice.get_grid_dimensions();
     auto const grid_size = FloatType_c(grid_dimensions[shear_plane_normal]);
+    m_kT = FloatType_c(kT);
+    m_seed = seed;
     m_collision_model =
         std::make_shared<CollisionModel>(StreamCollisionModelLeesEdwards(
-            m_last_applied_force_field_id, m_pdf_field_id, grid_size, omega,
-            shear_vel));
+            m_last_applied_force_field_id, m_pdf_field_id, grid_size,
+            zero_centered_to_lb(m_kT), omega, omega, omega_odd, omega, seed,
+            uint32_t{0u}, shear_vel));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
     m_run_stream_collide_sweep =
         StreamCollideSweepVisitor(blocks, m_lees_edwards_callbacks);
@@ -1830,23 +1834,25 @@ public:
   }
 
   [[nodiscard]] std::optional<uint64_t> get_rng_state() const override {
-    auto const cm =
-        std::get_if<StreamCollisionModelThermalized>(&*m_collision_model);
-    if (!cm or m_kT == 0.) {
+    if (m_kT == 0.) {
       return std::nullopt;
     }
-    return {static_cast<uint64_t>(cm->getTime_step())};
+    return std::visit(
+        [](auto const &cm) { return static_cast<uint64_t>(cm.getTime_step()); },
+        *m_collision_model);
   }
 
   void set_rng_state(uint64_t counter) override {
-    auto const cm =
-        std::get_if<StreamCollisionModelThermalized>(&*m_collision_model);
-    if (!cm or m_kT == 0.) {
+    if (m_kT == 0.) {
       throw std::runtime_error("This LB instance is unthermalized");
     }
     assert(counter <=
            static_cast<uint32_t>(std::numeric_limits<uint_t>::max()));
-    cm->setTime_step(static_cast<uint32_t>(counter));
+    std::visit(
+        [counter](auto &cm) {
+          cm.setTime_step(static_cast<uint32_t>(counter));
+        },
+        *m_collision_model);
   }
 
   [[nodiscard]] LatticeWalberla const &get_lattice() const noexcept override {

@@ -350,28 +350,6 @@ class LBLeesEdwards(ut.TestCase):
         with LEContextManager('x', 'y', -1.):
             system.lb = lbf
             system.lb = None
-        # no thermalization
-        system.lees_edwards.protocol = None
-        with self.assertRaisesRegex(RuntimeError, "Lees-Edwards LB doesn't support thermalization"):
-            with LEContextManager('x', 'y', 1.):
-                system.lb = espressomd.lb.LBFluidWalberla(
-                    agrid=1., density=1., kinematic_viscosity=1., kT=1., seed=42,
-                    tau=system.time_step)
-        self.assertIsNone(system.lb)
-        system.lees_edwards.protocol = None
-        with self.assertRaisesRegex(RuntimeError, "Lees-Edwards LB doesn't support thermalization"):
-            with LBContextManager(kT=1., seed=42) as lbf:
-                LEContextManager('x', 'y', 1.).initialize()
-        self.assertIsNone(system.lb)
-        system.lees_edwards.protocol = None
-        with self.assertRaisesRegex(RuntimeError, "Lees-Edwards LB doesn't support thermalization"):
-            with LBContextManager(kT=1., seed=42) as lbf:
-                system.lees_edwards.set_boundary_conditions(
-                    shear_direction='x', shear_plane_normal='y',
-                    protocol=espressomd.lees_edwards.Off())
-                system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
-                    shear_velocity=0., initial_pos_offset=0., time_0=0.)
-        self.assertIsNone(system.lb)
 
         with self.assertRaisesRegex(ValueError, "Lees-Edwards sweep is implemented for a ghost layer of thickness 1"):
             lattice = espressomd.lb.LatticeWalberla(agrid=1., n_ghost_layers=2)
