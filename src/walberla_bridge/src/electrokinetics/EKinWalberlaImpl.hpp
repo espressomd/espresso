@@ -119,6 +119,9 @@ protected:
     template <class Stencil>
     using RegularCommScheme =
         blockforest::communication::UniformBufferedScheme<Stencil>;
+    template <class Stencil>
+    using BoundaryCommScheme =
+        blockforest::communication::UniformBufferedScheme<Stencil>;
   };
   using FlagField = walberla::FlagField<walberla::uint8_t>;
 #if defined(__CUDACC__)
@@ -143,6 +146,9 @@ protected:
     template <class Field> using PackInfo = MemcpyPackInfo<Field>;
     template <class Stencil>
     using RegularCommScheme = UniformGPUScheme<Stencil>;
+    template <class Stencil>
+    using BoundaryCommScheme =
+        blockforest::communication::UniformBufferedScheme<Stencil>;
   };
   using GPUField = gpu::GPUField<FloatType>;
 #endif
@@ -289,7 +295,7 @@ protected:
       typename FieldTrait<FloatType, Architecture>::template RegularCommScheme<
           typename stencil::D3Q27>;
   using BoundaryFullCommunicator =
-      blockforest::communication::UniformBufferedScheme<
+      typename FieldTrait<FloatType, Architecture>::template BoundaryCommScheme<
           typename stencil::D3Q27>;
   std::shared_ptr<FullCommunicator> m_full_communication;
   std::shared_ptr<BoundaryFullCommunicator> m_boundary_communicator;
@@ -345,7 +351,7 @@ public:
     m_boundary_communicator =
         std::make_shared<BoundaryFullCommunicator>(blocks);
     m_boundary_communicator->addPackInfo(
-        std::make_shared<PackInfo<FlagField>>(
+        std::make_shared<field::communication::BoundaryFlagPackInfo<FlagField>>(
             m_flag_field_flux_id));
     auto flux_boundary_packinfo = std::make_shared<
         field::communication::BoundaryPackInfo<FlagField, BoundaryModelFlux>>(

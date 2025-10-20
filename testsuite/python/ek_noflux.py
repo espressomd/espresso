@@ -27,7 +27,7 @@ import espressomd.electrokinetics
 
 
 class EKTest:
-    BOX_L = 15.
+    BOX_L = 16.
     AGRID = 1.0
     DENSITY = 1
     DIFFUSION_COEFFICIENT = 0.1
