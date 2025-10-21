@@ -48,7 +48,7 @@ class EKTest:
     @classmethod
     def setUpClass(cls):
         cls.lattice = espressomd.electrokinetics.LatticeWalberla(
-            agrid=1., n_ghost_layers=1)
+            agrid=1., n_ghost_layers=2)
         cls.ek_species = cls.ek_species_class(
             lattice=cls.lattice,
             single_precision=False,

@@ -43,7 +43,7 @@ class EKBoundariesBase:
     wall_shape2 = espressomd.shapes.Wall(normal=[-1., 0., 0.], dist=-7.5)
 
     def setUp(self):
-        self.lattice = self.ek_lattice_class(agrid=0.5, n_ghost_layers=1)
+        self.lattice = self.ek_lattice_class(agrid=0.5, n_ghost_layers=2)
         ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.ek_species_params["tau"], solver=ek_solver)

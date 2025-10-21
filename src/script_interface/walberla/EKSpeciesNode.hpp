@@ -67,6 +67,10 @@ public:
 
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override;
+
+  ::LatticeWalberla const &get_lattice() const {
+    return m_ek_species->get_lattice();
+  }
 };
 } // namespace ScriptInterface::walberla
 
