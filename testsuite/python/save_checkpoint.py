@@ -77,7 +77,7 @@ if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
         lbf_class = espressomd.lb.LBFluidWalberlaGPU
     elif 'LB.CPU' in modes:
         lbf_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_kwargs = {'agrid': 2.0, 'n_ghost_layers': 1}
+    lb_lattice_kwargs = {'agrid': 2.0, 'n_ghost_layers': 2}
     lb_lattice = espressomd.lb.LatticeWalberla(**lb_lattice_kwargs)
     lb_lattice_kwargs['blocks_per_mpi_rank'] = [1, 1, 2]
     lb_lattice_blocks_per_mpi = espressomd.lb.LatticeWalberla(

@@ -136,7 +136,7 @@ class CheckpointTest(ut.TestCase):
                                        atol=1E-7, err_msg=f"{key} differs")
 
         state = lbf.lattice.get_params()
-        reference = {"agrid": 2.0, "n_ghost_layers": 1,
+        reference = {"agrid": 2.0, "n_ghost_layers": 2,
                      "blocks_per_mpi_rank": [1, 1, 1]}
         for key in reference:
             self.assertIn(key, state)
