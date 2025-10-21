@@ -22,6 +22,7 @@ import espressomd
 import numpy as np
 import tests_common
 
+
 class CellSystem(ut.TestCase):
     system = espressomd.System(box_l=[5.0, 5.0, 5.0])
     system.cell_system.skin = 0.0

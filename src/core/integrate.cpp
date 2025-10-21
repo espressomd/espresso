@@ -748,7 +748,8 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     return INTEG_ERROR_RUNTIME;
   }
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-  if (boost::mpi::all_reduce(::comm_cart, not cell_structure->use_verlet_list, std::logical_or<>())) {
+  if (boost::mpi::all_reduce(::comm_cart, not cell_structure->use_verlet_list,
+                             std::logical_or<>())) {
     cell_structure->use_verlet_list = false;
   }
 #endif
