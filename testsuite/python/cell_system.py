@@ -22,7 +22,6 @@ import espressomd
 import numpy as np
 import tests_common
 
-
 class CellSystem(ut.TestCase):
     system = espressomd.System(box_l=[5.0, 5.0, 5.0])
     system.cell_system.skin = 0.0
@@ -113,15 +112,14 @@ class CellSystem(ut.TestCase):
         system.integrator.run(200)
 
         system.integrator.set_vv()
-        exception_msg = ""
-        try:
-            self.system.integrator.run(0, recalc_forces=True)
-        except Exception as err:
-            exception_msg = f"{exception_msg}\n{err}"
-        self.assertIn("Verlet list overflow is detected", exception_msg)
 
+        # When we use link cell, there is no exception and warning
         system.cell_system.use_verlet_lists = False
+        self.assertIsNone(self.system.integrator.run(0, recalc_forces=True))
+
+        # When we use verlet list, there is warning and use_verlet_list change to False.
         self.system.integrator.run(0, recalc_forces=True)
+        self.assertFalse(system.cell_system.use_verlet_lists)
 
 
 if __name__ == "__main__":
