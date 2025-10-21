@@ -119,6 +119,7 @@ class CellSystem(ut.TestCase):
         self.assertIsNone(self.system.integrator.run(0, recalc_forces=True))
 
         # When we use verlet list, there is warning and use_verlet_list change to False.
+        system.cell_system.use_verlet_lists = True
         self.system.integrator.run(0, recalc_forces=True)
         self.assertFalse(system.cell_system.use_verlet_lists)
 
