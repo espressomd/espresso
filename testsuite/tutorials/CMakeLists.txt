@@ -58,6 +58,7 @@ tutorial_test(FILE test_electrodes_2.py)
 tutorial_test(FILE test_constant_pH__interactions.py)
 tutorial_test(FILE test_widom_insertion.py)
 tutorial_test(FILE test_grand_canonical_monte_carlo.py)
+tutorial_test(FILE test_boltzmann_inversion.py)
 
 add_custom_target(
   check_tutorials JOB_POOL console
