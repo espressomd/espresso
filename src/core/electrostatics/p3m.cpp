@@ -377,9 +377,7 @@ template <int cao> struct AssignCharge {
     p3m.inter_weights.zfill(n_part); // allocate buffer for parallel write
     kokkos_parallel_range_for(
         "InterpolationWeights", std::size_t{0u}, n_part, [&](auto p_index) {
-          Utils::Vector3d const p_pos{aosoa.position(p_index, 0),
-                                      aosoa.position(p_index, 1),
-                                      aosoa.position(p_index, 2)};
+          auto const p_pos = aosoa.get_vector_at(aosoa.position, p_index);
           auto constexpr memory_order =
               std::remove_reference<decltype(p3m)>::type::memory_order;
           auto const weights =

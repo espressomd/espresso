@@ -487,4 +487,6 @@ add_custom_target(
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}
     ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python pypresso python_test_data)
+
 add_dependencies(check check_python)
+add_dependencies(espresso_packaging_dependencies python_test_data)
