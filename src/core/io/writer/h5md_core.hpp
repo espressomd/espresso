@@ -56,7 +56,6 @@ enum H5MDOutputFields : unsigned int {
   H5MD_OUT_NONE = 0u,
   H5MD_OUT_TYPE = 1u,
   H5MD_OUT_POS = 2u,
-  H5MD_OUT_DIP = 2u,
   H5MD_OUT_IMG = 4u,
   H5MD_OUT_VEL = 8u,
   H5MD_OUT_FORCE = 16u,

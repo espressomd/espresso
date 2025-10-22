@@ -137,7 +137,7 @@ struct ParticleProperties {
   double dipm = 0.;
 #endif
 
-#ifdef THERMAL_STONER_WOHLFARTH
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
   /** value of total dipole field at part */
   Utils::Vector3d dip_fld = {0., 0., 0.};
   /** boolean flags used to tell SW solver which particle is real and carries
@@ -256,7 +256,7 @@ struct ParticleProperties {
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
     ar & vs_relative;
 #endif
-#ifdef THERMAL_STONER_WOHLFARTH
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
     ar & dip_fld;
     ar & sw_real;
     ar & sw_virt;
@@ -532,7 +532,7 @@ public:
   auto &dipm() { return p.dipm; }
   auto calc_dip() const { return calc_director() * dipm(); }
 #endif
-#ifdef THERMAL_STONER_WOHLFARTH
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
   auto const &dip_fld() const { return p.dip_fld; }
   auto &dip_fld() { return p.dip_fld; }
   bool sw_real() const { return p.sw_real; }

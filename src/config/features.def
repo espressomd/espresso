@@ -62,8 +62,9 @@ DIPOLES                         implies ROTATION
 DP3M                            equals DIPOLES and FFTW
 DIPOLAR_DIRECT_SUM              requires CUDA
 DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA
-THERMAL_STONER_WOHLFARTH        implies DIPOLES
 DIPOLE_FIELD_TRACKING           implies DIPOLES
+THERMAL_STONER_WOHLFARTH        implies VIRTUAL_SITES_RELATIVE, DIPOLE_FIELD_TRACKING
+
 
 /* Virtual sites features */
 VIRTUAL_SITES

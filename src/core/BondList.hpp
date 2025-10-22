@@ -243,10 +243,4 @@ inline bool pair_bond_exists_on(BondList const &bonds, int partner_id,
   });
 }
 
-inline bool bond_exists_on(BondList const &bonds, int bond_id) {
-  return std::any_of(bonds.begin(), bonds.end(), [=](BondView const &bond) {
-    return (bond.bond_id() == bond_id);
-  });
-}
-
 #endif // ESPRESSO_BONDLIST_HPP

@@ -264,7 +264,7 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() { return get_particle_data(m_pid).dipm(); }},
 #endif // ESPRESSO_DIPOLES
-#ifdef THERMAL_STONER_WOHLFARTH
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
       {"dip_fld",
        [this](Variant const &value) {
          set_particle_dip_fld(m_pid, get_value<Utils::Vector3d>(value));

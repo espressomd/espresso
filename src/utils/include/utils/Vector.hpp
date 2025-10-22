@@ -170,14 +170,7 @@ public:
     return *this;
   }
 
-  Vector normalized() const {
-    auto duzina = (*this).norm();
-    if (duzina != 0) {
-      return (*this) / (*this).norm();
-    } else {
-      return (*this);
-    }
-  }
+  Vector normalized() const { return (*this) / (*this).norm(); }
 };
 
 template <class T> using Vector3 = Vector<T, 3>;

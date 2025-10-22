@@ -70,15 +70,15 @@ using is_solver = std::is_convertible<std::shared_ptr<T>, MagnetostaticsActor>;
 
 /** @brief The dipolar method supports dipoles field calculation. */
 template <class T> struct has_dipoles_field : std::false_type {};
-#ifdef DIPSUS
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 template <> struct has_dipoles_field<DipolarDirectSum> : std::true_type {};
-#endif // DIPSUS
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 
 /** @brief The dipolar method supports stoner wolfarth calculation. */
 template <class T> struct has_sw : std::false_type {};
-#ifdef DIPSUS
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 template <> struct has_sw<DipolarDirectSum> : std::true_type {};
-#endif // DIPSUS
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 
 } // namespace traits
 } // namespace Dipoles

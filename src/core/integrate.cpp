@@ -45,7 +45,6 @@
 #include "cells.hpp"
 #include "collision_detection/CollisionDetection.hpp"
 #include "communication.hpp"
-#include "energy.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
 #include "lb/particle_coupling.hpp"
@@ -89,7 +88,7 @@
 #endif
 #endif
 
-#ifdef THERMAL_STONER_WOHLFARTH
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 std::random_device rd;
 static std::mt19937 generator = Random::mt19937(static_cast<unsigned>(rd()));
 #endif
@@ -491,8 +490,6 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   auto const n_rigid_bonds = bonded_ias->get_n_rigid_bonds();
 #endif
 
-  // auto const has_magnetic_field = find_magnetic_field_constraint();
-
   // Prepare particle structure and run sanity checks of all active algorithms
   propagation.update_default_propagation(thermostat->thermo_switch);
   update_used_propagations();
@@ -595,9 +592,6 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     {
       resort_particles_if_needed(*this);
     }
-    // if (has_magnetic_field) {
-    //   // TODO
-    // }
     // Propagate philox RNG counters
     thermostat->philox_counter_increment();
 
@@ -626,7 +620,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 
-#ifdef THERMAL_STONER_WOHLFARTH
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
     particles = cell_structure.local_particles();
     stoner_wolfarth_main(cell_structure.local_particles(), generator);
 #endif
