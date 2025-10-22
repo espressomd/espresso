@@ -38,6 +38,8 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/mpi/communicator.hpp>
 
+#include <mpi.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
