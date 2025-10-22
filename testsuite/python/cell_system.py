@@ -94,7 +94,7 @@ class CellSystem(ut.TestCase):
             n_square_types={1}, cutoff_regular=0)
         self.check_node_grid()
 
-    @utx.skipIfMissingFeatures("LENNARD_JONES", "SHARED_MEMORY_PARALLELISM")
+    @utx.skipIfMissingFeatures(["LENNARD_JONES", "SHARED_MEMORY_PARALLELISM"])
     def test_verlet_list_overflow(self):
         system = self.system
         system.part.clear()
@@ -114,11 +114,11 @@ class CellSystem(ut.TestCase):
 
         system.integrator.set_vv()
 
-        # When we use link cell, there is no exception and warning
+        # with link cell, there is no exception and warning
         system.cell_system.use_verlet_lists = False
-        self.assertIsNone(self.system.integrator.run(0, recalc_forces=True))
+        self.system.integrator.run(0, recalc_forces=True)
 
-        # When we use verlet list, there is warning and use_verlet_list change to False.
+        # with Verlet lists, there is a warning and 'use_verlet_list' changes
         system.cell_system.use_verlet_lists = True
         self.system.integrator.run(0, recalc_forces=True)
         self.assertFalse(system.cell_system.use_verlet_lists)

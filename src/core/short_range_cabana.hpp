@@ -177,7 +177,7 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
     // ===================================================
     // Get Verlet pairs and fill Verlet list
     // ===================================================
-    bool rebuild_VL = (integ_switch != INTEG_METHOD_STEEPEST_DESCENT and
+    bool rebuild_vl = (integ_switch != INTEG_METHOD_STEEPEST_DESCENT and
                        cell_structure.use_verlet_list);
     cell_structure.rebuild_verlet_list_cabana(
         [&](std::span<Cell *const> cells, BoxGeometry const &box,
@@ -195,12 +195,11 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
           if (verlet_list.hasOverflow()) {
             cell_structure.use_verlet_list = false;
             runtimeWarningMsg()
-                << "Verlet list overflow is detected: neighbor count exceeded "
-                   "max_counts. Switching to link cell for all further "
-                   "computions.";
+                << "Verlet list overflow detected: neighbor count exceeded "
+                   "max_counts. Falling back to the link cell algorithm.";
           }
         },
-        rebuild_VL);
+        rebuild_vl);
   } else {
     // ===================================================
     // Fill particle storage

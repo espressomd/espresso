@@ -762,9 +762,9 @@ public:
     return rebuild;
   }
 
-  void rebuild_verlet_list_cabana(auto &&kernel, bool rebuild_VL) {
+  void rebuild_verlet_list_cabana(auto &&kernel, bool rebuild_verlet_list) {
     assert(is_verlet_list_cabana_rebuild_needed());
-    if (rebuild_VL) {
+    if (rebuild_verlet_list) {
       kernel(m_decomposition->local_cells(), m_decomposition->box(),
              *m_verlet_list_cabana);
     }

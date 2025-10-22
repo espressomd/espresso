@@ -45,9 +45,10 @@ public:
   Kokkos::View<int *, MemorySpace> counts;
   Kokkos::View<int **, Kokkos::LayoutRight, MemorySpace> neighbors;
 
-  // Note: Writing to 'overflow' from multiple threads by 'setOverflow()'
-  // without synchronization is a data race. This is unspecified behaviour and
-  // may be changed in the future.
+  // Note: writing to 'overflow' from multiple threads by 'setOverflow()'
+  // without synchronization can lead to a data race (unspecified behavior).
+  // Since the same value is written from multiple threads concurrently,
+  // this should not affect program behavior.
   // https://www.openmp.org/spec-html/5.0/openmpsu9.html
   bool overflow = false;
 
@@ -88,7 +89,7 @@ public:
     }
   }
 
-  // Thread safe but non atomic method to add a neighbor
+  // Thread-safe but non-atomic method to add a neighbor
   KOKKOS_INLINE_FUNCTION
   void addNeighbor(int pid, int nid) {
     auto const count = counts(pid);
@@ -102,7 +103,7 @@ public:
     }
   }
 
-  // Non atomic and load balancing method to add a neighbor
+  // Non-atomic and load-balanced method to add a neighbor
   KOKKOS_INLINE_FUNCTION
   void addNeighborLB(int pid, int nid) {
     auto count = counts(pid);
@@ -175,14 +176,10 @@ public:
     return max_counts;
   }
 
-  // Method to get overflow_flag
-  KOKKOS_INLINE_FUNCTION
-  bool hasOverflow() const { return overflow; }
+  KOKKOS_INLINE_FUNCTION bool hasOverflow() const { return overflow; }
 
 private:
-  // Method to set overflows
-  KOKKOS_INLINE_FUNCTION
-  void setOverflow() { overflow = true; }
+  KOKKOS_INLINE_FUNCTION void setOverflow() { overflow = true; }
 };
 
 template <class MemorySpace, class AlgorithmTag, class BuildTag>
