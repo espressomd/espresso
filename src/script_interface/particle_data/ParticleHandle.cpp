@@ -264,6 +264,58 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() { return get_particle_data(m_pid).dipm(); }},
 #endif // ESPRESSO_DIPOLES
+#ifdef THERMAL_STONER_WOHLFARTH
+      {"dip_fld",
+       [this](Variant const &value) {
+         set_particle_dip_fld(m_pid, get_value<Utils::Vector3d>(value));
+       },
+       [this]() { return particle().dip_fld(); }},
+      {"sw_real",
+       [this](Variant const &value) {
+         set_particle_sw_real(m_pid, get_value<bool>(value));
+       },
+       [this]() { return particle().sw_real(); }},
+      {"sw_virt",
+       [this](Variant const &value) {
+         set_particle_sw_virt(m_pid, get_value<bool>(value));
+       },
+       [this]() { return particle().sw_virt(); }},
+      {"phi0",
+       [this](Variant const &value) {
+         set_particle_phi0(m_pid, get_value<double>(value));
+       },
+       [this]() { return particle().phi0(); }},
+      {"sat_mag",
+       [this](Variant const &value) {
+         set_particle_sat_mag(m_pid, get_value<double>(value));
+       },
+       [this]() { return particle().sat_mag(); }},
+      {"Hkinv",
+       [this](Variant const &value) {
+         set_particle_Hkinv(m_pid, get_value<double>(value));
+       },
+       [this]() { return particle().Hkinv(); }},
+      {"kT_KVm_inv",
+       [this](Variant const &value) {
+         set_particle_kT_KVm_inv(m_pid, get_value<double>(value));
+       },
+       [this]() { return particle().kT_KVm_inv(); }},
+      {"tau0_inv",
+       [this](Variant const &value) {
+         set_particle_tau0_inv(m_pid, get_value<double>(value));
+       },
+       [this]() { return particle().tau0_inv(); }},
+      {"tau_trans_inv",
+       [this](Variant const &value) {
+         set_particle_tau_trans_inv(m_pid, get_value<double>(value));
+       },
+       [this]() { return particle().tau_trans_inv(); }},
+      {"dt_incr",
+       [this](Variant const &value) {
+         set_particle_dt_incr(m_pid, get_value<double>(value));
+       },
+       [this]() { return particle().dt_incr(); }},
+#endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
       {"dip_fld",
        [this](Variant const &value) {

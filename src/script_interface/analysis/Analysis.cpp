@@ -48,6 +48,9 @@
 #include <string>
 #include <vector>
 
+std::random_device rd;
+static std::mt19937 generator = Random::mt19937(static_cast<unsigned>(rd()));
+
 namespace ScriptInterface {
 namespace Analysis {
 
@@ -115,6 +118,29 @@ void Analysis::check_particle_type(int p_type) const {
 
 Variant Analysis::do_call_method(std::string const &name,
                                  VariantMap const &parameters) {
+  /* src/script_interface module provides a framework to run a C++ function in
+   * parallel without the need to register a callback. this is a template
+   * where `my_calculation()` would be a function that takes a MPI
+   * communicator as argument and is run from the pythin interface with
+   * system.analysis.call_method("my_calculation").The `call_method()`
+   * function takes **kwargs, so that values passed as keyword arguments in
+   * python can be read in C++ using the `get_value<ARGUMENT_TYPE>(parameters,
+   * "ARGUMENT_NAME")` syntax. The return value is discarded on the worker
+   * nodes, so make sure the calculated value is on MPI rank 0. */
+  if (name == "my_calculation") {
+    auto comm_cart = static_cast<MPI_Comm>(context()->get_comm());
+    int rank;
+    int world;
+    MPI_Comm_rank(comm_cart, &rank);
+    MPI_Comm_size(comm_cart, &world);
+    fprintf(stderr, "Starting processes %d out of %d\n", rank, world);
+    return {}; /* or return my_calculation(comm_cart); */
+  }
+  if (name == "sw_hot") {
+    stoner_wolfarth_main(::cell_structure.local_particles(), generator);
+    return {};
+  }
+
   if (name == "linear_momentum") {
     auto const local = calc_linear_momentum(
         get_system(), get_value_or<bool>(parameters, "include_particles", true),

@@ -93,4 +93,4 @@ def writevcf(system, fp, types='all'):
     vtf_index = vtf_pid_map(system, types)
     fp.write("\ntimestep indexed\n")
     for pid, vtf_id, in vtf_index.items():
-        fp.write(f"{vtf_id} {' '.join(map(str, system.part.by_id(pid).pos))}\n")
+        fp.write(f"{vtf_id} {' '.join(map(str, system.part.by_id(pid).pos_folded))}\n")

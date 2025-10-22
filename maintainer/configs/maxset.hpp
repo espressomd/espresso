@@ -32,6 +32,8 @@
 #ifdef SCAFACOS
 #define SCAFACOS_DIPOLES
 #endif
+
+#define THERMAL_STONER_WOHLFARTH
 #define DIPOLE_FIELD_TRACKING
 
 #define ENGINE

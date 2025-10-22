@@ -137,12 +137,40 @@ struct ParticleProperties {
   double dipm = 0.;
 #endif
 
+#ifdef THERMAL_STONER_WOHLFARTH
+  /** value of total dipole field at part */
+  Utils::Vector3d dip_fld = {0., 0., 0.};
+  /** boolean flags used to tell SW solver which particle is real and carries
+   * the director of the SW particle (sw_real) and which particles carries the
+   * dipole moment (sw_virt) */
+  bool sw_real = false;
+  bool sw_virt = false;
+  /** angle between the directior and dipole moment of a SW particle */
+  double phi0 = 0.;
+  /** saturation magnetisation of a polarisable particle */
+  double sat_mag = 0.;
+  /* Hk=2.*K1/(mu0 * Ms) # anisotropy field in [A / m] where K1 is the magnetic
+   * aisotropy constant [kg / (m s^2)]. On particle we save the inverse of Hk,
+   * Hkinv in reduced units! */
+  double Hkinv = 0.;
+  /** units parameter for the kinetic MC step */
+  double kT_KVm_inv = 0.;
+  /** units parameter for the kinetic MC step */
+  double tau0_inv = 0.;
+  double tau_trans_inv = 0.;
+
+  /** units parameter for the kinetic MC step */
+  double dt_incr = 0.;
+
+#endif
+
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   /** total dipole field */
   Utils::Vector3d dip_fld = {0., 0., 0.};
 #endif
 
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
+
   /** The following properties define, with respect to which real particle a
    *  virtual site is placed and at what distance. The relative orientation of
    *  the vector pointing from real particle to virtual site with respect to the
@@ -228,6 +256,16 @@ struct ParticleProperties {
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
     ar & vs_relative;
 #endif
+#ifdef THERMAL_STONER_WOHLFARTH
+    ar & dip_fld;
+    ar & sw_real;
+    ar & sw_virt;
+    ar & phi0;
+    ar & sat_mag;
+    ar & Hkinv;
+    ar & kT_KVm_inv;
+    ar & tau0_inv;
+    ar & tau_trans_inv;
 
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
     ar & gamma;
@@ -493,6 +531,26 @@ public:
   auto const &dipm() const { return p.dipm; }
   auto &dipm() { return p.dipm; }
   auto calc_dip() const { return calc_director() * dipm(); }
+#endif
+#ifdef THERMAL_STONER_WOHLFARTH
+  auto const &dip_fld() const { return p.dip_fld; }
+  auto &dip_fld() { return p.dip_fld; }
+  bool sw_real() const { return p.sw_real; }
+  bool sw_virt() const { return p.sw_virt; }
+  auto const &phi0() const { return p.phi0; }
+  auto &phi0() { return p.phi0; }
+  auto const &sat_mag() const { return p.sat_mag; }
+  auto &sat_mag() { return p.sat_mag; }
+  auto const &Hkinv() const { return p.Hkinv; }
+  auto &Hkinv() { return p.Hkinv; }
+  auto const &kT_KVm_inv() const { return p.kT_KVm_inv; }
+  auto &kT_KVm_inv() { return p.kT_KVm_inv; }
+  auto const &tau0_inv() const { return p.tau0_inv; }
+  auto &tau0_inv() { return p.tau0_inv; };
+  auto const &tau_trans_inv() const { return p.tau_trans_inv; }
+  auto &tau_trans_inv() { return p.tau_trans_inv; };
+  auto const &dt_incr() const { return p.dt_incr; }
+  auto &dt_incr() { return p.dt_incr; }
 #endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   auto const &dip_fld() const { return p.dip_fld; }

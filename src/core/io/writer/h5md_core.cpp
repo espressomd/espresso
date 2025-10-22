@@ -610,6 +610,11 @@ void File::write(const ParticleRange &particles, double time, int step,
           return box_geo.folded_position(p.pos());
         }));
   }
+  if (m_fields & H5MD_OUT_DIP) {
+    write_td_particle_property<3>(prefix, n_part_global, particles,
+                                  datasets["particles/atoms/dip_mom/value"],
+                                  [&](auto const &p) { return p.calc_dip(); });
+  }
   if (m_fields & H5MD_OUT_IMG) {
     write_td_particle_property<3>(
         prefix, n_part_global, particles,

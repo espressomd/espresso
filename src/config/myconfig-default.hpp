@@ -41,6 +41,7 @@
 // Charges and dipoles
 #define ELECTROSTATICS
 #define DIPOLES
+#define DIPSUS
 
 // Active matter
 #define ENGINE

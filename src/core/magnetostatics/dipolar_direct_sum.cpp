@@ -28,6 +28,8 @@
 #include "BoxGeometry.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "constraints.hpp"
+#include "constraints/HomogeneousMagneticField.hpp"
 #include "errorhandling.hpp"
 #include "system/System.hpp"
 
@@ -38,8 +40,10 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/mpi/communicator.hpp>
 
-#include <mpi.h>
+#include <nlopt.hpp>
 
+#include "event.hpp"
+#include "rotation.hpp"
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -123,6 +127,24 @@ static auto dipole_field(Utils::Vector3d const &d, Utils::Vector3d const &m1) {
   return 3.0 * pe2 * d / r5 - m1 / r3;
 }
 #endif
+
+/**
+ * @brief Dipole field of a particle with dip_mom m1 @ a distance d.
+ *
+ * @param d Distance vector.
+ * @param m1 Dipole moment of one particle.
+ *
+ * @return Utils::Vector3d wcontaining dipole field components.
+ */
+auto dipole_field(Utils::Vector3d const &d, Utils::Vector3d const &m1) {
+  auto const r2 = d * d;
+  auto const r = sqrt(r2);
+  auto const r3 = r2 * r;
+  auto const r5 = r3 * r2;
+  auto const pe2 = m1 * d;
+
+  return 3.0 * pe2 * d / r5 - m1 / r3;
+}
 
 /**
  * @brief Call kernel for every 3d index in a sphere around the origin.
@@ -407,6 +429,44 @@ DipolarDirectSum::long_range_energy(ParticleRange const &particles) const {
   }
 
   return prefactor * u;
+}
+/**
+ * @brief Calculate total dipole field at the position of each particle and
+ * store it in a part property called dip_fld.
+ *
+ * This employs a parallel N-square loop over all particles.
+ * Logically this is equivalent to the potential calculation
+ * in @ref DipolarDirectSum::long_range_energy, which calculates
+ * a naive N-square sum. The difference is summation range and kernel calcluated
+ * the dipole filed rather than the energy. Threfore the return in of type
+ * Vector3D.
+ */
+void DipolarDirectSum::dipole_field_at_part(
+    ParticleRange const &particles) const {
+  auto const &box_l = ::box_geo.length();
+  /* collect particle data */
+  auto [local_particles, all_posmom, reqs, offset] =
+      gather_particle_data(particles, n_replicas);
+
+  auto const ncut = get_n_cut(n_replicas);
+  auto const with_replicas = (ncut.norm2() > 0);
+
+  boost::mpi::wait_all(reqs.begin(), reqs.end());
+
+  auto const local_posmom_begin = all_posmom.begin() + offset;
+  auto const local_posmom_end =
+      local_posmom_begin + static_cast<long>(local_particles.size());
+
+  Utils::Vector3d u_init = {0., 0., 0.};
+  auto p = local_particles.begin();
+  for (auto pi = local_posmom_begin; pi != local_posmom_end; ++pi, ++p) {
+    auto u = image_sum(
+        all_posmom.begin(), all_posmom.end(), pi, with_replicas, ncut, box_l,
+        u_init, [](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
+          return dipole_field(rn, mj);
+        });
+    (*p)->dip_fld() = prefactor * u;
+  }
 }
 
 /**

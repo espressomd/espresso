@@ -429,6 +429,19 @@ class ParticleHandle(ScriptInterfaceHelper):
         pdict["bonds"] = self.bonds
         return pdict
 
+    def to_dict_of_god(self, list_prop=['id', 'type', 'pos_folded', 'image_box', 'f', 'dip', 'director']):
+        """
+        Custom vesion of the to_dict().Returns the particle's attributes as a dictionary.
+        It includes the content of the list_prop argument to be passed as a list of strings.
+        """
+
+        pdict = self.get_params()
+        p_dict_ret = self.get_params()
+        for k in pdict:
+            if k not in list_prop:
+                del p_dict_ret[k]
+        return p_dict_ret
+
     def __str__(self):
         res = collections.OrderedDict()
         # Id and pos first, then the rest
@@ -1021,6 +1034,23 @@ class ParticleSlice(ScriptInterfaceHelper):
         odict = {}
         for p in self:
             pdict = self._get_particle(p.id).to_dict()
+            for p_key, p_value in pdict.items():
+                if p_key in odict:
+                    odict[p_key].append(p_value)
+                else:
+                    odict[p_key] = [p_value]
+        return odict
+
+    def to_dict_of_god(self):
+        """
+        Generalisation of the ParticleHandle .to_dict_of_god() method 
+        to be able to wokr on ParticleSLice objects. See to_dict_of_god() 
+        description in the ParticleHandle class.
+        """
+
+        odict = {}
+        for p in self:
+            pdict = ParticleHandle(id=p.id).to_dict_of_god()
             for p_key, p_value in pdict.items():
                 if p_key in odict:
                     odict[p_key].append(p_value)

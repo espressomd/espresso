@@ -90,6 +90,7 @@ option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
 option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
 option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
        OFF)
+option(ESPRESSO_BUILD_WITH_NLOPT "Build with NLopt support" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA
        "Build with waLBerla lattice-Boltzmann support" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
@@ -776,6 +777,26 @@ if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_INSTALL_LIBDIR}")
   FetchContent_MakeAvailable(stokesian_dynamics)
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR}")
+endif()
+
+if(ESPRESSO_BUILD_WITH_NLOPT)
+  include(FetchContent)
+  FetchContent_Declare(
+    nlopt
+    GIT_REPOSITORY https://github.com/stevengj/nlopt.git
+    GIT_TAG        f8692f86b5269112b3760704093d0600adb033e7
+  )
+  if(NOT nlopt_POPULATED)
+    FetchContent_Populate(nlopt)
+    set(BUILD_SHARED_LIBS on CACHE BOOL "")
+    set(NLOPT_FORTRAN off CACHE BOOL "")
+    set(NLOPT_PYTHON off CACHE BOOL "")
+    set(NLOPT_OCTAVE off CACHE BOOL "")
+    set(NLOPT_MATLAB off CACHE BOOL "")
+    set(NLOPT_GUILE off CACHE BOOL "")
+    set(NLOPT_SWIG off CACHE BOOL "")
+    add_subdirectory("${nlopt_SOURCE_DIR}" "${nlopt_BINARY_DIR}")
+  endif()
 endif()
 
 if(ESPRESSO_BUILD_WITH_VALGRIND)
