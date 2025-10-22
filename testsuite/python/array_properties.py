@@ -102,13 +102,15 @@ class ArrayPropertyTest(ArrayCommon):
     system.box_l = [12.0, 12.0, 12.0]
     system.time_step = 0.01
     system.cell_system.skin = 0.01
-    partcl = system.part.add(pos=[0, 0, 0])
 
     def setUp(self):
         self.system.box_l = [12.0, 12.0, 12.0]
+        self.partcl = self.system.part.add(pos=[0, 0, 0])
 
     def tearDown(self):
-        self.system.actors.clear()
+        if espressomd.has_features("WALBERLA"):
+            self.system.lb = None
+        self.system.part.clear()
 
     def assert_copy_is_writable(self, array):
         cpy = np.copy(array)
@@ -187,14 +189,15 @@ class ArrayPropertyTest(ArrayCommon):
 
         self.assert_copy_is_writable(self.partcl.gamma_rot)
 
+    @utx.skipIfMissingFeatures("WALBERLA")
     def test_lb(self):
-        lbf = espressomd.lb.LBFluid(agrid=0.5, dens=1, visc=1, tau=0.01)
-        self.system.actors.add(lbf)
+        lbf = espressomd.lb.LBFluidWalberla(
+            agrid=0.5, density=1., kinematic_viscosity=1., tau=0.01)
+        self.system.lb = lbf
 
         self.assert_operator_usage_raises(lbf[0, 0, 0].velocity)
         self.assert_operator_usage_raises(lbf[0, 0, 0].pressure_tensor)
-        self.assert_operator_usage_raises(lbf[0, 0, 0].pressure_tensor_neq)
-        self.assert_operator_usage_raises(lbf[0, 0, 0].population)
+        self.assert_operator_usage_raises(lbf[0, 0, 0]._population)
 
     @utx.skipIfMissingFeatures(["THERMOSTAT_PER_PARTICLE",
                                 "PARTICLE_ANISOTROPY"])

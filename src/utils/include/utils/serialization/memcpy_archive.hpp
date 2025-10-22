@@ -16,10 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_MEMCPY_ARCHIVE_HPP
-#define ESPRESSO_MEMCPY_ARCHIVE_HPP
 
-#include "utils/Span.hpp"
+#pragma once
 
 #include <boost/mpl/bool.hpp>
 #include <boost/serialization/is_bitwise_serializable.hpp>
@@ -30,13 +28,14 @@
 #include <cstddef>
 #include <cstring>
 #include <memory>
+#include <span>
 #include <type_traits>
 
 namespace Utils {
 /** @brief Type trait to indicate that a type is
  *         serializable with a static size, e.g. is
  *         suitable for memcpy serialization. Only
- *         specialize this to std::true_type if it is
+ *         specialize this to @c std::true_type if it is
  *         guaranteed that serializing this type always
  *         returns the same number of bytes, independent
  *         of object state.
@@ -45,64 +44,70 @@ namespace Utils {
  */
 template <class T>
 struct is_statically_serializable
-    : std::integral_constant<
-          bool, std::is_trivially_copyable_v<T> or
-                    boost::serialization::is_bitwise_serializable<T>::value> {};
+    : std::bool_constant<
+          std::is_trivially_copyable_v<T> or
+          boost::serialization::is_bitwise_serializable<T>::value> {};
 
 namespace detail {
 /* Use memcpy for packing */
 template <class T>
-using use_memcpy = std::integral_constant<
-    bool, std::is_trivially_copyable_v<T> or
-              boost::serialization::is_bitwise_serializable<T>::value>;
+using use_memcpy =
+    std::bool_constant<std::is_trivially_copyable_v<T> or
+                       boost::serialization::is_bitwise_serializable<T>::value>;
 /* Use serialize function only if the type is opt-in but not
  * trivially copyable, in which case memcpy is more efficient. */
 template <class T>
-using use_serialize =
-    std::integral_constant<bool, not use_memcpy<T>::value and
-                                     is_statically_serializable<T>::value>;
+using use_serialize = std::bool_constant<not use_memcpy<T>::value and
+                                         is_statically_serializable<T>::value>;
 
 template <class Derived> class BasicMemcpyArchive {
   /** Buffer to write to */
-  Utils::Span<char> buf;
+  std::span<char> buf;
   /** Current position in the buffer */
   char *insert;
 
-public:
-  explicit BasicMemcpyArchive(Utils::Span<char> buf)
+protected:
+  // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
+  explicit BasicMemcpyArchive(std::span<char> buf)
       : buf(buf), insert(buf.data()) {}
 
-  std::size_t get_library_version() const { return 4; }
+public:
+  auto get_library_version() const { return std::size_t{4}; }
 
-  std::size_t bytes_processed() const { return insert - buf.data(); }
+  auto bytes_processed() const {
+    return static_cast<std::size_t>(insert - buf.data());
+  }
+
   void skip(std::size_t bytes) {
-    assert((insert + bytes) <= buf.end());
+    assert((insert + bytes) <= &*buf.end());
     insert += bytes;
   }
 
 private:
   void read(void *data, std::size_t bytes) {
     /* check that there is enough space left in the buffer */
-    assert((insert + bytes) <= buf.end());
+    assert((insert + bytes) <= &*buf.end());
     std::memcpy(data, insert, bytes);
     insert += bytes;
   }
 
   void write(const void *data, std::size_t bytes) {
     /* check that there is enough space left in the buffer */
-    assert((insert + bytes) <= buf.end());
+    assert((insert + bytes) <= &*buf.end());
     std::memcpy(insert, data, bytes);
     insert += bytes;
   }
 
 public:
   template <typename T>
-  auto operator>>(T &value) -> std::enable_if_t<use_memcpy<T>::value> {
+    requires use_memcpy<T>::value
+  void operator>>(T &value) {
     read(&value, sizeof(T));
   }
 
   template <typename T>
-  auto operator<<(T const &value) -> std::enable_if_t<use_memcpy<T>::value> {
+    requires use_memcpy<T>::value
+  void operator<<(T const &value) {
     write(&value, sizeof(T));
   }
 
@@ -112,7 +117,7 @@ private:
     boost::serialization::serialize_adl(*static_cast<Derived *>(this), value,
                                         4);
     auto const new_pos = insert;
-    assert((new_pos - old_pos) <= sizeof(T));
+    assert(static_cast<std::size_t>(new_pos - old_pos) <= sizeof(T));
 
     auto const padding_size = sizeof(T) - (new_pos - old_pos);
     skip(padding_size);
@@ -120,14 +125,14 @@ private:
 
 public:
   template <class T>
-  auto operator>>(T &value)
-      -> std::enable_if_t<detail::use_serialize<T>::value> {
+    requires detail::use_serialize<T>::value
+  void operator>>(T &value) {
     process(value);
   }
 
   template <class T>
-  auto operator<<(T &value)
-      -> std::enable_if_t<detail::use_serialize<T>::value> {
+    requires detail::use_serialize<T>::value
+  void operator<<(T &value) {
     process(value);
   }
 
@@ -157,7 +162,7 @@ public:
  * e.g. that serialize to the same number of bytes independent of
  * the state of the object. This can either be automatically detected
  * for types that are trivially copyable, or by explicitly assured
- * by specializing @c is_statically_serializable to std::true_type.
+ * by specializing @ref is_statically_serializable to @c std::true_type.
  */
 class MemcpyIArchive : public detail::BasicMemcpyArchive<MemcpyIArchive> {
 private:
@@ -170,7 +175,7 @@ public:
   /**
    * @param buf Buffer to read from.
    */
-  explicit MemcpyIArchive(Utils::Span<char> buf) : base_type(buf) {}
+  explicit MemcpyIArchive(std::span<char> buf) : base_type(buf) {}
 
   /**
    * @brief Number of bytes read from the buffer.
@@ -204,7 +209,7 @@ public:
   /**
    * @param buf Buffer to write to.
    */
-  explicit MemcpyOArchive(Utils::Span<char> buf) : base_type(buf) {}
+  explicit MemcpyOArchive(std::span<char> buf) : base_type(buf) {}
 
   /**
    * @brief Number of bytes written to the buffer.
@@ -223,5 +228,3 @@ public:
   }
 };
 } // namespace Utils
-
-#endif // ESPRESSO_MEMCPY_ARCHIVE_HPP

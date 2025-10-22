@@ -41,17 +41,13 @@ namespace ReactionMethods {
 class ConstantpHEnsemble : public ReactionAlgorithm {
 public:
   ConstantpHEnsemble(
-      int seed, double kT, double exclusion_range, double constant_pH,
+      boost::mpi::communicator const &comm, int seed, double kT,
+      double exclusion_range, double constant_pH,
       const std::unordered_map<int, double> &exclusion_radius_per_type)
-      : ReactionAlgorithm(seed, kT, exclusion_range, exclusion_radius_per_type),
+      : ReactionAlgorithm(comm, seed, kT, exclusion_range,
+                          exclusion_radius_per_type),
         m_constant_pH(constant_pH) {}
   double m_constant_pH;
-
-protected:
-  double calculate_acceptance_probability(
-      SingleReaction const &current_reaction, double E_pot_old,
-      double E_pot_new,
-      std::map<int, int> const &old_particle_numbers) const override;
 };
 
 } // namespace ReactionMethods

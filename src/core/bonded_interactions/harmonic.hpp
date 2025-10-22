@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BN_IA_HARMONIC_HPP
-#define CORE_BN_IA_HARMONIC_HPP
+
+#pragma once
+
 /** \file
  *  Routines to calculate the harmonic bond potential between particle pairs.
  */
@@ -30,7 +31,7 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/optional.hpp>
+#include <optional>
 
 /** Parameters for harmonic bond Potential */
 struct HarmonicBond {
@@ -51,23 +52,14 @@ struct HarmonicBond {
     this->r_cut = r_cut;
   }
 
-  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
-  boost::optional<double> energy(Utils::Vector3d const &dx) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar &k;
-    ar &r;
-    ar &r_cut;
-  }
+  std::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  std::optional<double> energy(Utils::Vector3d const &dx) const;
 };
 
 /** Compute the harmonic bond force.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<Utils::Vector3d>
+inline std::optional<Utils::Vector3d>
 HarmonicBond::force(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
@@ -77,7 +69,7 @@ HarmonicBond::force(Utils::Vector3d const &dx) const {
 
   auto const dr = dist - r;
   auto fac = -k * dr;
-  if (dist > ROUND_ERROR_PREC) { /* Regular case */
+  if (dist > round_error_prec) { /* Regular case */
     fac /= dist;
   } else {
     if (r > 0.) {
@@ -89,9 +81,9 @@ HarmonicBond::force(Utils::Vector3d const &dx) const {
 }
 
 /** Compute the harmonic bond energy.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<double>
+inline std::optional<double>
 HarmonicBond::energy(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
@@ -101,5 +93,3 @@ HarmonicBond::energy(Utils::Vector3d const &dx) const {
 
   return 0.5 * k * Utils::sqr(dist - r);
 }
-
-#endif

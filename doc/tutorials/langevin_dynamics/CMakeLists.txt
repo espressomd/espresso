@@ -17,6 +17,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-configure_tutorial_target(TARGET tutorial_ld DEPENDS langevin_dynamics.ipynb)
-
-nb_export(TARGET tutorial_ld SUFFIX "" FILE "langevin_dynamics.ipynb" HTML_RUN)
+espresso_add_tutorial(TARGET tutorial_ld FILE "langevin_dynamics.ipynb"
+                      HTML_RUN)

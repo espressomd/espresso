@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_LBVELOCITYPROFILE_HPP
-#define OBSERVABLES_LBVELOCITYPROFILE_HPP
+
+#pragma once
 
 #include "LBProfileObservable.hpp"
 
@@ -33,9 +33,8 @@ public:
     auto const b = n_bins();
     return {b[0], b[1], b[2], 3};
   }
-  std::vector<double> operator()() const override;
+  std::vector<double>
+  operator()(boost::mpi::communicator const &comm) const override;
 };
 
 } // Namespace Observables
-
-#endif

@@ -16,9 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
-#define CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 
+#pragma once
+
+#include "BoxGeometry.hpp"
 #include "Constraint.hpp"
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
@@ -31,16 +32,20 @@
 #include <utils/Vector.hpp>
 
 #include <memory>
+#include <utility>
+
+namespace System {
+class System;
+}
 
 namespace Constraints {
 
 class ShapeBasedConstraint : public Constraint {
 public:
   ShapeBasedConstraint()
-      : m_shape(std::make_shared<Shapes::NoWhere>()), m_penetrable(false),
-        m_only_positive(false) {
-    ShapeBasedConstraint::reset_force();
-  }
+      : part_rep{}, m_shape{std::make_shared<Shapes::NoWhere>()},
+        m_penetrable{false}, m_only_positive{false}, m_local_force{},
+        m_outer_normal_force{}, m_system{} {}
 
   void add_energy(const Particle &p, const Utils::Vector3d &folded_pos,
                   double time, Observable_stat &energy) const override;
@@ -50,11 +55,12 @@ public:
 
   bool fits_in_box(Utils::Vector3d const &) const override { return true; }
 
-  /* finds the minimum distance to all particles */
-  double min_dist(const ParticleRange &particles);
+  /** @brief Calculate the minimum distance between all particle pairs. */
+  double min_dist(BoxGeometry const &box_geo,
+                  ParticleRange const &particles) const;
 
-  /* Calculate distance from the constraint */
-  void calc_dist(const Utils::Vector3d &pos, double &dist,
+  /** @brief Calculate distance from the constraint */
+  void calc_dist(Utils::Vector3d const &pos, double &dist,
                  Utils::Vector3d &vec) const {
     m_shape->calculate_dist(pos, dist, vec);
   }
@@ -75,26 +81,24 @@ public:
   int &type() { return part_rep.type(); }
   Utils::Vector3d &velocity() { return part_rep.v(); }
 
-  void set_type(const int &type) {
-    part_rep.type() = type;
-    make_particle_type_exist_local(type);
-  }
+  void set_type(int type);
 
   Utils::Vector3d total_force() const;
   double total_normal_force() const;
+  void bind_system(std::shared_ptr<System::System const> const &system) {
+    m_system = system;
+  }
 
 private:
   Particle part_rep;
-
-  /** Private data members */
   std::shared_ptr<Shapes::Shape> m_shape;
-
   bool m_penetrable;
   bool m_only_positive;
   Utils::Vector3d m_local_force;
   double m_outer_normal_force;
+  std::weak_ptr<System::System const> m_system;
+
+  IA_parameters const &get_ia_param(int type) const;
 };
 
 } // namespace Constraints
-
-#endif

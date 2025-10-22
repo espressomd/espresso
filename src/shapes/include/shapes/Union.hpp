@@ -33,13 +33,16 @@ namespace Shapes {
 
 class Union : public Shape {
 public:
+  bool contains(std::shared_ptr<Shapes::Shape> const &shape) const noexcept {
+    return std::ranges::find(m_shapes, shape) != m_shapes.end();
+  }
+
   void add(std::shared_ptr<Shapes::Shape> const &shape) {
     m_shapes.emplace_back(shape);
   }
 
   void remove(std::shared_ptr<Shapes::Shape> const &shape) {
-    m_shapes.erase(std::remove(m_shapes.begin(), m_shapes.end(), shape),
-                   m_shapes.end());
+    std::erase(m_shapes, shape);
   }
 
   /**
@@ -54,14 +57,15 @@ public:
                       Utils::Vector3d &vec) const override {
     auto dist_compare = [&pos](std::pair<double, Utils::Vector3d> const &res,
                                std::shared_ptr<Shapes::Shape> const &shape) {
-      double d;
-      Utils::Vector3d vec;
-      shape->calculate_dist(pos, d, vec);
-      if (d < 0.0)
+      auto const &old_dist = res.first;
+      double new_dist;
+      Utils::Vector3d new_vec;
+      shape->calculate_dist(pos, new_dist, new_vec);
+      if (new_dist < 0.0)
         throw std::domain_error(
             "Distance to Union not well-defined for given position!");
-      if (d < res.first) {
-        return std::make_pair(d, vec);
+      if (new_dist < old_dist) {
+        return std::make_pair(new_dist, new_vec);
       }
       return res;
     };
@@ -73,9 +77,8 @@ public:
   }
 
   bool is_inside(Utils::Vector3d const &pos) const override {
-    return std::any_of(
-        m_shapes.begin(), m_shapes.end(),
-        [&pos](auto const &shape) { return shape->is_inside(pos); });
+    return std::ranges::any_of(
+        m_shapes, [&pos](auto const &shape) { return shape->is_inside(pos); });
   }
 
 private:

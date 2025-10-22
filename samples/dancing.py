@@ -49,6 +49,7 @@ system.time_step = 1.5
 system.cell_system.skin = 0.4
 system.periodicity = [False, False, False]
 
+system.thermostat.set_stokesian(kT=0.)
 system.integrator.set_stokesian_dynamics(
     viscosity=1.0, radii={0: 1.0}, approximation_method=sd_method)
 

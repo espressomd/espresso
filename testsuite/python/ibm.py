@@ -18,15 +18,13 @@
 #
 import numpy as np
 import itertools
+import pickle
 import unittest as ut
-import unittest_decorators as utx
 
 import espressomd
 import espressomd.interactions
-import espressomd.virtual_sites
 
 
-@utx.skipIfMissingFeatures(['VIRTUAL_SITES_INERTIALESS_TRACERS'])
 class IBM(ut.TestCase):
     '''Test IBM implementation with a Langevin thermostat.'''
     system = espressomd.System(box_l=3 * [8.])
@@ -35,7 +33,6 @@ class IBM(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
         self.system.thermostat.turn_off()
 
     def compute_dihedral_angle(self, pos0, pos1, pos2, pos3):
@@ -50,6 +47,10 @@ class IBM(ut.TestCase):
 
         cos_alpha = min(1, np.dot(n1, n2))
         alpha = np.arccos(cos_alpha)
+        desc = np.dot((pos1 - pos0), np.cross(n1, n2))
+        if desc > 0.:
+            alpha = 2. * np.pi - alpha
+
         return alpha
 
     def test_tribend(self):
@@ -57,10 +58,9 @@ class IBM(ut.TestCase):
         # move nodes, should relax back
 
         system = self.system
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
         system.thermostat.set_langevin(kT=0, gamma=10, seed=1)
 
-        # Add four particles
+        # Add four particles arranged in a U-shape, dihedral angle is zero
         p0 = system.part.add(pos=[4, 4, 4])
         p1 = system.part.add(pos=[4, 4, 5])
         p2 = system.part.add(pos=[4, 5, 5])
@@ -89,8 +89,9 @@ class IBM(ut.TestCase):
 
         # Perform integration
         system.integrator.run(200)
-        angle = self.compute_dihedral_angle(p0.pos, p1.pos, p2.pos, p3.pos)
-        self.assertLess(angle, 2E-2)
+        theta = self.compute_dihedral_angle(p0.pos, p1.pos, p2.pos, p3.pos)
+        theta = np.fmod(theta + 0.1, 2. * np.pi) - 0.1
+        self.assertLess(np.abs(theta), 2E-2)
 
         # IBM doesn't implement energy and pressure kernels.
         energy = self.system.analysis.energy()
@@ -100,7 +101,6 @@ class IBM(ut.TestCase):
 
     def test_triel(self):
         system = self.system
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
         system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
 
         # Add particles: 0-2 are not bonded, 3-5 are bonded
@@ -138,7 +138,6 @@ class IBM(ut.TestCase):
     def test_volcons(self):
         '''Check volume conservation forces on a simple mesh (cube).'''
         system = self.system
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
         system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
 
         # Place particles on a cube.
@@ -168,9 +167,13 @@ class IBM(ut.TestCase):
         KAPPA_V = 0.01
         volCons = espressomd.interactions.IBM_VolCons(
             softID=15, kappaV=KAPPA_V)
+        self.assertEqual(volCons.current_volume(), 0.)
         system.bonded_inter.add(volCons)
         for p in system.part:
             p.add_bond((volCons,))
+
+        # The default volume is zero
+        self.assertEqual(volCons.current_volume(), 0.)
 
         # Run the integrator to initialize the mesh reference volume.
         system.integrator.run(0, recalc_forces=True)
@@ -232,6 +235,74 @@ class IBM(ut.TestCase):
             previous_volume = current_volume
             mesh_center = np.mean(partcls.pos, axis=0)
             np.testing.assert_allclose(mesh_center, mesh_center_ref, rtol=1e-3)
+
+    def test_tribend_checkpointing(self):
+        system = self.system
+        # Add four particles arranged in a U-shape, dihedral angle is non-zero
+        p1 = system.part.add(pos=[3.5, 3.5, 4.0])
+        p2 = system.part.add(pos=[4.5, 3.5, 4.0])
+        p3 = system.part.add(pos=[4.5, 4.5, 4.0])
+        p4 = system.part.add(pos=[3.5, 4.5, 4.2])
+        theta0 = self.compute_dihedral_angle(p1.pos, p2.pos, p3.pos, p4.pos)
+        assert abs(theta0 - 6.) < 0.1
+        tribend_original = espressomd.interactions.IBM_Tribend(
+            ind1=p1.id, ind2=p2.id, ind3=p3.id, ind4=p4.id, kb=1., refShape="Initial")
+        tribend_unpickled = pickle.loads(pickle.dumps(tribend_original))
+        for tribend in [tribend_original, tribend_unpickled]:
+            self.assertFalse(tribend.is_initialized)
+            self.assertEqual(tribend.theta0, 0.)
+            self.assertEqual(tribend.ind1, p1.id)
+            self.assertEqual(tribend.ind2, p2.id)
+            self.assertEqual(tribend.ind3, p3.id)
+            self.assertEqual(tribend.ind4, p4.id)
+        system.bonded_inter.add(tribend_original)
+        system.bonded_inter.add(tribend_unpickled)
+        tribend_skip_init = pickle.loads(pickle.dumps(tribend_original))
+        for tribend in [tribend_original,
+                        tribend_unpickled, tribend_skip_init]:
+            self.assertTrue(tribend.is_initialized)
+            self.assertAlmostEqual(tribend.theta0, theta0, delta=1e-6)
+            self.assertEqual(tribend.ind1, p1.id)
+            self.assertEqual(tribend.ind2, p2.id)
+            self.assertEqual(tribend.ind3, p3.id)
+            self.assertEqual(tribend.ind4, p4.id)
+
+    def test_triel_checkpointing(self):
+        system = self.system
+        p1 = system.part.add(pos=[1, 4, 4])
+        p2 = system.part.add(pos=[1, 4, 5])
+        p3 = system.part.add(pos=[1, 5, 5])
+        sqrt2 = np.sqrt(2.)
+        cache = [sqrt2, 1., sqrt2 / 2., sqrt2 / 2., 0.5, -1., 1., 0., -1.]
+        triel_original = espressomd.interactions.IBM_Triel(
+            ind1=p1.id, ind2=p2.id, ind3=p3.id, elasticLaw="Skalak", k1=15.,
+            k2=0.5, maxDist=2.4)
+        triel_unpickled = pickle.loads(pickle.dumps(triel_original))
+        for triel in [triel_original, triel_unpickled]:
+            self.assertFalse(triel.is_initialized)
+            np.testing.assert_allclose(np.copy(triel._cache), 0., atol=1e-12,
+                                       rtol=0.)
+            self.assertEqual(triel.ind1, p1.id)
+            self.assertEqual(triel.ind2, p2.id)
+            self.assertEqual(triel.ind3, p3.id)
+            self.assertEqual(triel.elasticLaw, "Skalak")
+            self.assertEqual(triel.k1, 15.)
+            self.assertEqual(triel.k2, 0.5)
+            self.assertEqual(triel.maxDist, 2.4)
+        system.bonded_inter.add(triel_original)
+        system.bonded_inter.add(triel_unpickled)
+        triel_skip_init = pickle.loads(pickle.dumps(triel_original))
+        for triel in [triel_original, triel_unpickled, triel_skip_init]:
+            self.assertTrue(triel.is_initialized)
+            np.testing.assert_allclose(np.copy(triel._cache), cache,
+                                       atol=1e-12, rtol=1e-7)
+            self.assertEqual(triel.ind1, p1.id)
+            self.assertEqual(triel.ind2, p2.id)
+            self.assertEqual(triel.ind3, p3.id)
+            self.assertEqual(triel.elasticLaw, "Skalak")
+            self.assertEqual(triel.k1, 15.)
+            self.assertEqual(triel.k2, 0.5)
+            self.assertEqual(triel.maxDist, 2.4)
 
 
 if __name__ == "__main__":

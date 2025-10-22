@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SCRIPT_INTERFACE_CONTEXT_HPP
-#define ESPRESSO_SCRIPT_INTERFACE_CONTEXT_HPP
+
+#pragma once
 
 /** @file
  *
@@ -30,10 +30,9 @@
 #include "ObjectHandle.hpp"
 #include "Variant.hpp"
 
-#include <boost/utility/string_ref.hpp>
-
 #include <memory>
 #include <string>
+#include <string_view>
 
 namespace boost {
 namespace mpi {
@@ -87,12 +86,6 @@ public:
   virtual std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) = 0;
 
-  /**
-   * @copydoc Context::make_shared
-   */
-  virtual std::shared_ptr<ObjectHandle>
-  make_shared_local(std::string const &name, VariantMap const &parameters) = 0;
-
 protected:
   /**
    * @brief Set the context of an object to this.
@@ -103,11 +96,11 @@ protected:
 
 public:
   /**
-   *  @brief Get the class name for an ObjectHandle instance.
+   *  @brief Get the class name for an @ref ObjectHandle instance.
    *
    *  This returns the name by which the object can be created.
    */
-  virtual boost::string_ref name(const ObjectHandle *o) const = 0;
+  virtual std::string_view name(const ObjectHandle *o) const = 0;
 
   virtual bool is_head_node() const = 0;
   virtual void parallel_try_catch(std::function<void()> const &cb) const = 0;
@@ -116,4 +109,3 @@ public:
   virtual ~Context() = default;
 };
 } // namespace ScriptInterface
-#endif // ESPRESSO_CONTEXT_HPP

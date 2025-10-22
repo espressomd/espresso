@@ -21,14 +21,13 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
-#include "Actor_impl.hpp"
+#include "Actor.impl.hpp"
 
+#include "Container.hpp"
 #include "CoulombMMM1D.hpp"
-#include "CoulombMMM1DGpu.hpp"
 #include "CoulombP3M.hpp"
-#include "CoulombP3MGPU.hpp"
 #include "CoulombScafacos.hpp"
 #include "DebyeHueckel.hpp"
 #include "ElectrostaticLayerCorrection.hpp"
@@ -36,11 +35,10 @@
 #include "ReactionField.hpp"
 
 #include "core/electrostatics/coulomb.hpp"
-#include "core/electrostatics/registration.hpp"
 
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
 
 #include <utils/Factory.hpp>
 
@@ -48,26 +46,24 @@ namespace ScriptInterface {
 namespace Coulomb {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   om->register_new<DebyeHueckel>("Coulomb::DebyeHueckel");
-#ifdef P3M
-  om->register_new<CoulombP3M>("Coulomb::CoulombP3M");
-#ifdef CUDA
-  om->register_new<CoulombP3MGPU>("Coulomb::CoulombP3MGPU");
+#ifdef ESPRESSO_P3M
+  om->register_new<CoulombP3M<Arch::CPU>>("Coulomb::CoulombP3M");
+#ifdef ESPRESSO_CUDA
+  om->register_new<CoulombP3M<Arch::GPU>>("Coulomb::CoulombP3MGPU");
 #endif
   om->register_new<ElectrostaticLayerCorrection>(
       "Coulomb::ElectrostaticLayerCorrection");
-#endif // P3M
+#endif // ESPRESSO_P3M
   om->register_new<ICCStar>("Coulomb::ICCStar");
-#ifdef MMM1D_GPU
-  om->register_new<CoulombMMM1DGpu>("Coulomb::CoulombMMM1DGpu");
-#endif
   om->register_new<CoulombMMM1D>("Coulomb::CoulombMMM1D");
-#ifdef SCAFACOS
+#ifdef ESPRESSO_SCAFACOS
   om->register_new<CoulombScafacos>("Coulomb::CoulombScafacos");
 #endif
   om->register_new<ReactionField>("Coulomb::ReactionField");
-#endif // ELECTROSTATICS
+  om->register_new<Container>("Coulomb::Container");
+#endif // ESPRESSO_ELECTROSTATICS
 }
 
 } // namespace Coulomb

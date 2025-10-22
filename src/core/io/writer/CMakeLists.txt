@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2022 The ESPResSo project
+# Copyright (C) 2016-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,14 +18,16 @@
 #
 
 if(ESPRESSO_BUILD_WITH_HDF5)
-  target_link_libraries(espresso_core PUBLIC ${HDF5_LIBRARIES}
-                                             Boost::filesystem h5xx)
-  target_include_directories(espresso_core PUBLIC ${CMAKE_CURRRENT_SOURCE_DIR}
-                                                  ${HDF5_INCLUDE_DIRS})
-
-  target_compile_definitions(espresso_core PUBLIC H5XX_USE_MPI)
-
-  target_sources(
-    espresso_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/h5md_core.cpp
-                          ${CMAKE_CURRENT_SOURCE_DIR}/h5md_specification.cpp)
+  add_library(espresso_hdf5 SHARED h5md_core.cpp h5md_specification.cpp)
+  add_library(espresso::hdf5 ALIAS espresso_hdf5)
+  espresso_set_common_target_properties(espresso_hdf5)
+  set_target_properties(espresso_hdf5 PROPERTIES CXX_CLANG_TIDY "")
+  target_include_directories(espresso_hdf5 PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
+  target_link_libraries(
+    espresso_hdf5
+    PRIVATE HighFive hdf5 espresso::compiler_flags MPI::MPI_CXX Boost::mpi
+            espresso::utils espresso::config espresso::instrumentation)
+  target_link_libraries(espresso_core PUBLIC espresso_hdf5)
+  install(TARGETS espresso_hdf5
+          LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 endif()

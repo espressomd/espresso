@@ -25,6 +25,7 @@
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/range/algorithm/equal.hpp>
 
 #include <array>
 #include <iterator>

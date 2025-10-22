@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SRC_PARTICLE_OBSERVABLES_OBSERVABLE_HPP
-#define SRC_PARTICLE_OBSERVABLES_OBSERVABLE_HPP
+
+#pragma once
 
 #include "algorithms.hpp"
 #include "properties.hpp"
@@ -50,13 +50,13 @@ using Momentum = Product<Mass, Velocity>;
 using AverageMomentum = Average<Momentum>;
 using CenterOfMassPosition = WeightedAverage<Position, Mass>;
 using CenterOfMassVelocity = WeightedAverage<Velocity, Mass>;
+using Identities = Map<Identity>;
 using Forces = Map<Force>;
 using Positions = Map<Position>;
 using Velocities = Map<Velocity>;
 using Directors = Map<Director>;
+using DipoleFields = Map<DipoleField>;
 using BodyVelocities = Map<BodyVelocity>;
 using AngularVelocities = Map<AngularVelocity>;
 using BodyAngularVelocities = Map<BodyAngularVelocity>;
 } // namespace ParticleObservables
-
-#endif // SRC_PARTICLE_OBSERVABLES_OBSERVABLE_HPP

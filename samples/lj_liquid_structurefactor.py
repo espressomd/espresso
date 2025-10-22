@@ -26,8 +26,10 @@ structure factor of particles of type 0 and type 1 is calculated
 with :meth:`~espressomd.analyze.Analysis.structure_factor()`.
 See :ref:`Structure factor`.
 """
+import matplotlib.pyplot as plt
 import numpy as np
 import espressomd
+import tqdm
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
@@ -73,15 +75,6 @@ int_n_times = 20
 #############################################################
 #  Setup System                                             #
 #############################################################
-
-# structure factor file
-structurefactor_type_list = [0, 1]
-structurefactor_order = 20
-structurefactor_bins = len(system.analysis.structure_factor(
-    sf_types=[0], sf_order=structurefactor_order)[0])
-structurefactor_k = np.zeros(structurefactor_bins)
-structurefactor_Sk = np.zeros(structurefactor_bins)
-
 
 # Interaction setup
 #############################################################
@@ -139,7 +132,6 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 # Just to see what else we may get from the C++ core
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
-pprint.pprint(system.__getstate__())
 
 
 #############################################################
@@ -147,26 +139,16 @@ pprint.pprint(system.__getstate__())
 #############################################################
 print(f"\nStart integration: run {int_n_times} times {int_steps} steps")
 
-for i in range(int_n_times):
-    print(f"run {i} at time={system.time:.2f}")
-
+types = [0, 1]
+sf_Sk_avg = None
+for i in tqdm.trange(int_n_times):
     system.integrator.run(int_steps)
+    sf_k, sf_Sk = system.analysis.structure_factor(sf_types=types, sf_order=20)
+    if sf_Sk_avg is None:
+        sf_Sk_avg = np.zeros(sf_Sk.shape, dtype=float)
+    sf_Sk_avg += np.copy(sf_Sk) / int_n_times
 
-    structurefactor_k, structurefactor_Sk = system.analysis.structure_factor(
-        sf_types=structurefactor_type_list, sf_order=structurefactor_order)
-
-    energies = system.analysis.energy()
-    print(energies['total'])
-    linear_momentum = system.analysis.linear_momentum()
-    print(linear_momentum)
-
-
-# rescale structure factor values and write out data
-structurefactor_Sk /= int_n_times
-table = np.column_stack([structurefactor_k, structurefactor_Sk])
-np.savetxt("pylj_liquid_structurefactor.tsv", table, delimiter='\t',
-           fmt='%.5e', header="k,S(k)")
-# reload: sf_k, sf_Sk = np.loadtxt("pylj_liquid_structurefactor.tsv").T
-
-# terminate program
-print("\nFinished.")
+plt.plot(sf_k, sf_Sk_avg)
+plt.xlabel("Wavevector $q$")
+plt.ylabel("Structure factor $S(q)$")
+plt.show()

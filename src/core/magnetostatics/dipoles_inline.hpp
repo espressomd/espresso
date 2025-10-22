@@ -17,109 +17,106 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLES_INLINE_HPP
-#define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLES_INLINE_HPP
+#pragma once
 
 #include "config/config.hpp"
+
+#include "magnetostatics/dipoles.hpp"
+#include "magnetostatics/dp3m.hpp"
+#include "magnetostatics/solver.hpp"
 
 #include "Particle.hpp"
 
 #include "actor/traits.hpp"
 #include "actor/visitors.hpp"
 
-#include "magnetostatics/dipoles.hpp"
-#include "magnetostatics/dp3m.hpp"
-
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <functional>
+#include <optional>
+#include <variant>
 
 namespace Dipoles {
 
-struct ShortRangeForceKernel
-    : public boost::static_visitor<boost::optional<std::function<ParticleForce(
-          Particle const &, Particle const &, Utils::Vector3d const &, double,
-          double)>>> {
+struct ShortRangeForceKernel {
 
-  using kernel_type = result_type::value_type;
+  using kernel_type = Solver::ShortRangeForceKernel;
+  using result_type = std::optional<kernel_type>;
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   template <typename T>
   result_type operator()(std::shared_ptr<T> const &) const {
     return {};
   }
 
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
   result_type operator()(std::shared_ptr<DipolarP3M> const &ptr) const {
     auto const &actor = *ptr;
-    return kernel_type{[&actor](Particle const &p1, Particle const &p2,
+    return kernel_type{[&actor](double d1d2, Utils::Vector3d const &dip1,
+                                Utils::Vector3d const &dip2,
                                 Utils::Vector3d const &d, double dist,
                                 double dist2) {
-      return actor.pair_force(p1, p2, d, dist2, dist);
+      return actor.pair_force(d1d2, dip1, dip2, d, dist, dist2);
     }};
   }
-#endif // DP3M
+#endif // ESPRESSO_DP3M
 
   result_type
   operator()(std::shared_ptr<DipolarLayerCorrection> const &ptr) const {
-    return boost::apply_visitor(*this, ptr->base_solver);
+    return std::visit(*this, ptr->base_solver);
   }
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES
 };
 
-struct ShortRangeEnergyKernel
-    : public boost::static_visitor<boost::optional<
-          std::function<double(Particle const &, Particle const &,
-                               Utils::Vector3d const &, double, double)>>> {
+struct ShortRangeEnergyKernel {
 
-  using kernel_type = result_type::value_type;
+  using kernel_type = Solver::ShortRangeEnergyKernel;
+  using result_type = std::optional<kernel_type>;
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   template <typename T>
   result_type operator()(std::shared_ptr<T> const &) const {
     return {};
   }
 
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
   result_type operator()(std::shared_ptr<DipolarP3M> const &ptr) const {
     auto const &actor = *ptr;
     return kernel_type{[&actor](Particle const &p1, Particle const &p2,
                                 Utils::Vector3d const &d, double dist,
                                 double dist2) {
-      return actor.pair_energy(p1, p2, d, dist2, dist);
+      return actor.pair_energy(p1, p2, d, dist, dist2);
     }};
   }
-#endif // DP3M
+#endif // ESPRESSO_DP3M
 
   result_type
   operator()(std::shared_ptr<DipolarLayerCorrection> const &ptr) const {
-    return boost::apply_visitor(*this, ptr->base_solver);
+    return std::visit(*this, ptr->base_solver);
   }
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES
 };
 
-inline ShortRangeForceKernel::result_type pair_force_kernel() {
-#ifdef DIPOLES
-  if (magnetostatics_actor) {
-    auto const visitor = ShortRangeForceKernel();
-    return boost::apply_visitor(visitor, *magnetostatics_actor);
+inline std::optional<Solver::ShortRangeForceKernel>
+Solver::pair_force_kernel() const {
+#ifdef ESPRESSO_DIPOLES
+  if (auto &solver = impl->solver; solver.has_value()) {
+    auto const visitor = Dipoles::ShortRangeForceKernel();
+    return std::visit(visitor, *solver);
   }
-#endif // DIPOLES
-  return {};
+#endif // ESPRESSO_DIPOLES
+  return std::nullopt;
 }
 
-inline ShortRangeEnergyKernel::result_type pair_energy_kernel() {
-#ifdef DIPOLES
-  if (magnetostatics_actor) {
-    auto const visitor = ShortRangeEnergyKernel();
-    return boost::apply_visitor(visitor, *magnetostatics_actor);
+inline std::optional<Solver::ShortRangeEnergyKernel>
+Solver::pair_energy_kernel() const {
+#ifdef ESPRESSO_DIPOLES
+  if (auto &solver = impl->solver; solver.has_value()) {
+    auto const visitor = Dipoles::ShortRangeEnergyKernel();
+    return std::visit(visitor, *solver);
   }
-#endif // DIPOLES
-  return {};
+#endif // ESPRESSO_DIPOLES
+  return std::nullopt;
 }
 
 } // namespace Dipoles
-
-#endif

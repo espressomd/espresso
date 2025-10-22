@@ -17,30 +17,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_PARTICLE_DATA_PARTICLE_LIST_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_PARTICLE_DATA_PARTICLE_LIST_HPP
+#pragma once
 
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/cell_system/CellSystem.hpp"
+#include "script_interface/interactions/BondedInteractions.hpp"
+#include "script_interface/system/Leaf.hpp"
 
+#include <memory>
 #include <string>
 
 namespace ScriptInterface {
 namespace Particles {
 
-class ParticleList : public ObjectHandle {
+class ParticleList : public System::Leaf {
+  std::weak_ptr<CellSystem::CellSystem> m_cell_structure;
+  std::weak_ptr<Interactions::BondedInteractions> m_bonded_ias;
+
+  auto get_cell_structure() {
+    auto ptr = m_cell_structure.lock();
+    assert(ptr != nullptr);
+    return ptr;
+  }
 
 public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override;
 
-  void do_construct(VariantMap const &params) override {}
+  void do_construct(VariantMap const &) override {}
 
-private:
-  std::string get_internal_state() const override;
-  void set_internal_state(std::string const &state) override;
+  void attach(std::weak_ptr<CellSystem::CellSystem> cell_structure,
+              std::weak_ptr<Interactions::BondedInteractions> bonded_ias) {
+    m_cell_structure = cell_structure;
+    m_bonded_ias = bonded_ias;
+  }
 };
 
 } // namespace Particles
 } // namespace ScriptInterface
-
-#endif

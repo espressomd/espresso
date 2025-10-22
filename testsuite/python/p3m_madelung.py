@@ -29,7 +29,7 @@ import espressomd.magnetostatics
 class Test(ut.TestCase):
     """
     Check all P3M algorithms against the Madelung constant of 1D, 2D and 3D
-    NaCl lattices. See user guide sections :ref:`Madelung electrostatics` and
+    lattices. See user guide sections :ref:`Madelung electrostatics` and
     :ref:`Madelung magnetostatics` for more details.
     """
 
@@ -39,7 +39,10 @@ class Test(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        if espressomd.has_features("DIPOLES"):
+            self.system.magnetostatics.clear()
+        if espressomd.has_features("ELECTROSTATICS"):
+            self.system.electrostatics.clear()
 
     def get_normalized_obs_per_ion(self, pressure=True):
         energy = self.system.analysis.energy()["coulomb"]
@@ -95,13 +98,16 @@ class Test(ut.TestCase):
             energy_per_dip = self.get_normalized_obs_per_dipole(dipm, spacing)
             np.testing.assert_allclose(energy_per_dip, mc, atol=0., rtol=2e-9)
 
-        dp3m = espressomd.magnetostatics.DipolarP3M(**dp3m_params)
-        self.system.actors.add(dp3m)
-        check()
-        self.system.actors.remove(dp3m)
-        mdlc = espressomd.magnetostatics.DLC(actor=dp3m, **mdlc_params)
-        self.system.actors.add(mdlc)
-        check()
+        for single_precision in [False, True]:
+            with self.subTest(msg=f"DP3M CPU {single_precision=}"):
+                dp3m = espressomd.magnetostatics.DipolarP3M(
+                    single_precision=single_precision, **dp3m_params)
+                self.system.magnetostatics.solver = dp3m
+                check()
+                self.system.magnetostatics.clear()
+                mdlc = espressomd.magnetostatics.DLC(actor=dp3m, **mdlc_params)
+                self.system.magnetostatics.solver = mdlc
+                check()
 
     @utx.skipIfMissingFeatures(["DP3M"])
     def test_infinite_magnetic_sheet(self):
@@ -139,13 +145,16 @@ class Test(ut.TestCase):
             energy_per_dip = self.get_normalized_obs_per_dipole(dipm, spacing)
             np.testing.assert_allclose(energy_per_dip, mc, atol=0., rtol=4e-6)
 
-        dp3m = espressomd.magnetostatics.DipolarP3M(**dp3m_params)
-        self.system.actors.add(dp3m)
-        check()
-        self.system.actors.remove(dp3m)
-        mdlc = espressomd.magnetostatics.DLC(actor=dp3m, **mdlc_params)
-        self.system.actors.add(mdlc)
-        check()
+        for single_precision in [False, True]:
+            with self.subTest(msg=f"DP3M CPU {single_precision=}"):
+                dp3m = espressomd.magnetostatics.DipolarP3M(
+                    single_precision=single_precision, **dp3m_params)
+                self.system.magnetostatics.solver = dp3m
+                check()
+                self.system.magnetostatics.clear()
+                mdlc = espressomd.magnetostatics.DLC(actor=dp3m, **mdlc_params)
+                self.system.magnetostatics.solver = mdlc
+                check()
 
     @utx.skipIfMissingFeatures(["DP3M"])
     def test_infinite_magnetic_cube(self):
@@ -183,9 +192,12 @@ class Test(ut.TestCase):
             energy_per_dip = self.get_normalized_obs_per_dipole(dipm, spacing)
             np.testing.assert_allclose(energy_per_dip, mc, atol=0., rtol=3e-4)
 
-        dp3m = espressomd.magnetostatics.DipolarP3M(**dp3m_params)
-        self.system.actors.add(dp3m)
-        check()
+        for single_precision in [False, True]:
+            with self.subTest(msg=f"DP3M CPU {single_precision=}"):
+                dp3m = espressomd.magnetostatics.DipolarP3M(
+                    single_precision=single_precision, **dp3m_params)
+                self.system.magnetostatics.solver = dp3m
+                check()
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_infinite_ionic_wire(self):
@@ -203,20 +215,23 @@ class Test(ut.TestCase):
 
         def check():
             energy, p_scalar, p_tensor = self.get_normalized_obs_per_ion()
-            np.testing.assert_allclose(energy, ref_energy, atol=0., rtol=5e-7)
+            np.testing.assert_allclose(energy, ref_energy, atol=0., rtol=7e-7)
             np.testing.assert_allclose(p_scalar, np.trace(ref_pressure) / 3.,
                                        atol=1e-12, rtol=1e-6)
             np.testing.assert_allclose(p_tensor, ref_pressure, atol=1e-12,
                                        rtol=1e-6)
 
-        p3m = espressomd.electrostatics.P3M(**p3m_params)
-        self.system.actors.add(p3m)
-        check()
+        for single_precision in [False, True]:
+            with self.subTest(msg=f"P3M CPU {single_precision=}"):
+                p3m = espressomd.electrostatics.P3M(
+                    single_precision=single_precision, **p3m_params)
+                self.system.electrostatics.solver = p3m
+                check()
         if espressomd.has_features("CUDA") and espressomd.gpu_available():
-            self.system.actors.clear()
-            p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
-            self.system.actors.add(p3m)
-            check()
+            with self.subTest(msg=f"P3M GPU single_precision=True"):
+                p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
+                self.system.electrostatics.solver = p3m
+                check()
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_infinite_ionic_sheet(self):
@@ -243,22 +258,23 @@ class Test(ut.TestCase):
             np.testing.assert_allclose(p_tensor, ref_pressure, atol=1e-12,
                                        rtol=5e-7)
 
-        p3m = espressomd.electrostatics.P3M(**p3m_params)
-        self.system.actors.add(p3m)
-        check(pressure=True)
-        self.system.actors.remove(p3m)
-        elc = espressomd.electrostatics.ELC(actor=p3m, **elc_params)
-        self.system.actors.add(elc)
-        check(pressure=False)
+        for single_precision in [False, True]:
+            with self.subTest(msg=f"P3M CPU {single_precision=}"):
+                p3m = espressomd.electrostatics.P3M(
+                    single_precision=single_precision, **p3m_params)
+                self.system.electrostatics.solver = p3m
+                check(pressure=True)
+                elc = espressomd.electrostatics.ELC(actor=p3m, **elc_params)
+                self.system.electrostatics.solver = elc
+                check(pressure=False)
         if espressomd.has_features("CUDA") and espressomd.gpu_available():
-            self.system.actors.clear()
-            p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
-            self.system.actors.add(p3m)
-            check(pressure=True)
-            self.system.actors.remove(p3m)
-            elc = espressomd.electrostatics.ELC(actor=p3m, **elc_params)
-            self.system.actors.add(elc)
-            check(pressure=False)
+            with self.subTest(msg=f"P3M GPU single_precision=True"):
+                p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
+                self.system.electrostatics.solver = p3m
+                check(pressure=True)
+                elc = espressomd.electrostatics.ELC(actor=p3m, **elc_params)
+                self.system.electrostatics.solver = elc
+                check(pressure=False)
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_infinite_ionic_cube(self):
@@ -270,27 +286,30 @@ class Test(ut.TestCase):
         mc = -1.74756459463318219
         base = [1., 1., 1.]
         ref_energy, ref_pressure = self.get_reference_obs_per_ion(mc, base)
-        p3m_params = dict(prefactor=1., accuracy=3e-7, mesh=52, r_cut=4.4, cao=7,
-                          alpha=0.8895166, tune=False)
+        p3m_params = dict(prefactor=1., accuracy=1e-9, mesh=72, r_cut=5.6,
+                          cao=7, alpha=0.8163977, tune=False)
 
         def check():
             energy, p_scalar, p_tensor = self.get_normalized_obs_per_ion()
-            np.testing.assert_allclose(energy, ref_energy, atol=0., rtol=1e-6)
+            np.testing.assert_allclose(energy, ref_energy, atol=0., rtol=2e-6)
             np.testing.assert_allclose(p_scalar, np.trace(ref_pressure) / 3.,
                                        atol=1e-12, rtol=5e-6)
-            np.testing.assert_allclose(p_tensor, ref_pressure, atol=1e-12,
+            np.testing.assert_allclose(p_tensor, ref_pressure, atol=5e-9,
                                        rtol=5e-6)
 
-        p3m = espressomd.electrostatics.P3M(**p3m_params)
-        self.system.actors.add(p3m)
-        check()
+        for single_precision in [False, True]:
+            with self.subTest(msg=f"P3M CPU {single_precision=}"):
+                p3m = espressomd.electrostatics.P3M(
+                    single_precision=single_precision, **p3m_params)
+                self.system.electrostatics.solver = p3m
+                check()
         if espressomd.has_features("CUDA") and espressomd.gpu_available():
-            self.system.actors.clear()
-            p3m_params = dict(prefactor=1., accuracy=3e-7, mesh=42, r_cut=5.5,
-                              cao=7, alpha=0.709017, tune=False)
-            p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
-            self.system.actors.add(p3m)
-            check()
+            with self.subTest(msg=f"P3M GPU single_precision=True"):
+                p3m_params = dict(prefactor=1., accuracy=3e-7, mesh=42,
+                                  r_cut=5.5, cao=7, alpha=0.709017, tune=False)
+                p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
+                self.system.electrostatics.solver = p3m
+                check()
 
 
 if __name__ == "__main__":

@@ -51,9 +51,13 @@ class Test(ut.TestCase):
     def setUp(self):
         self.system.box_l = [10., 10., 10.]
         self.system.periodicity = [True, True, True]
+        self.system.cell_system.skin = 0.1
 
     def tearDown(self):
-        self.system.actors.clear()
+        if espressomd.has_features(["ELECTROSTATICS"]):
+            self.system.electrostatics.clear()
+        if espressomd.has_features(["DIPOLES"]):
+            self.system.magnetostatics.clear()
         self.system.part.clear()
         # assertion: there should be no pending runtime error
         espressomd.utils.handle_errors("tearDown")
@@ -62,7 +66,7 @@ class Test(ut.TestCase):
         self.system.part.add(pos=[[0., 0., 0.], [0.5, 0.5, 0.5]], q=[-1., 1.])
 
     def add_magnetic_particles(self):
-        self.system.part.add(pos=[[0.01, 0.01, 0.01], [0.5, 0.5, 0.5]],
+        self.system.part.add(pos=[[0., 0., 0.], [0.5, 0.5, 0.5]],
                              dip=[(1., 0., 0.), (-1., 0., 0.)],
                              rotation=2 * [(True, True, True)])
 
@@ -77,7 +81,7 @@ class Test(ut.TestCase):
 
         solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-2)
         with self.assertRaisesRegex(Exception, 'time_step not set'):
-            self.system.actors.add(solver)
+            self.system.electrostatics.solver = solver
 
     @utx.skipIfMissingFeatures("P3M")
     def test_01_time_not_set_p3m_cpu(self):
@@ -85,7 +89,7 @@ class Test(ut.TestCase):
 
         solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2)
         with self.assertRaisesRegex(Exception, 'time_step not set'):
-            self.system.actors.add(solver)
+            self.system.electrostatics.solver = solver
 
     @utx.skipIfMissingFeatures("DP3M")
     def test_01_time_not_set_dp3m_cpu(self):
@@ -94,7 +98,7 @@ class Test(ut.TestCase):
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
         with self.assertRaisesRegex(Exception, 'time_step not set'):
-            self.system.actors.add(solver)
+            self.system.magnetostatics.solver = solver
 
     ##############################################
     # block of tests where particles are missing #
@@ -107,7 +111,7 @@ class Test(ut.TestCase):
 
         solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-2)
         with self.assertRaisesRegex(RuntimeError, 'no charged particles in the system'):
-            self.system.actors.add(solver)
+            self.system.electrostatics.solver = solver
 
     @utx.skipIfMissingFeatures("P3M")
     def test_02_no_particles_p3m_cpu(self):
@@ -115,7 +119,7 @@ class Test(ut.TestCase):
 
         solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2)
         with self.assertRaisesRegex(RuntimeError, 'no charged particles in the system'):
-            self.system.actors.add(solver)
+            self.system.electrostatics.solver = solver
 
     @utx.skipIfMissingFeatures("DP3M")
     def test_02_no_particles_dp3m_cpu(self):
@@ -124,7 +128,7 @@ class Test(ut.TestCase):
         solver = espressomd.magnetostatics.DipolarP3M(
             **self.get_valid_params('DP3M'))
         with self.assertRaisesRegex(RuntimeError, 'DipolarP3M: no dipolar particles in the system'):
-            self.system.actors.add(solver)
+            self.system.magnetostatics.solver = solver
 
     @utx.skipIfMissingFeatures("DP3M")
     def test_02_accuracy_dp3m_cpu(self):
@@ -134,7 +138,7 @@ class Test(ut.TestCase):
         solver = espressomd.magnetostatics.DipolarP3M(
             **self.get_valid_params('DP3M', accuracy=1e-20))
         with self.assertRaisesRegex(Exception, 'DipolarP3M: failed to reach requested accuracy'):
-            self.system.actors.add(solver)
+            self.system.magnetostatics.solver = solver
 
     #######################################
     # block of tests with non-cubic boxes #
@@ -150,7 +154,7 @@ class Test(ut.TestCase):
         solver = espressomd.electrostatics.P3MGPU(
             prefactor=2, accuracy=1e-2, epsilon=1)
         with self.assertRaisesRegex(RuntimeError, 'P3M: non-metallic epsilon requires cubic box'):
-            self.system.actors.add(solver)
+            self.system.electrostatics.solver = solver
 
     @utx.skipIfMissingFeatures("P3M")
     def test_03_non_cubic_box_p3m_cpu(self):
@@ -161,13 +165,15 @@ class Test(ut.TestCase):
         solver = espressomd.electrostatics.P3M(
             prefactor=2, accuracy=1e-2, epsilon=1, mesh=[8, 8, 8])
         with self.assertRaisesRegex(RuntimeError, 'P3M: non-metallic epsilon requires cubic box'):
-            self.system.actors.add(solver)
+            self.system.electrostatics.solver = solver
 
+        self.system.part.clear()
         self.system.box_l = [10., 10., 10.]
+        self.add_charged_particles()
         solver = espressomd.electrostatics.P3M(
             prefactor=2, accuracy=1e-2, epsilon=1, mesh=[4, 8, 8])
         with self.assertRaisesRegex(RuntimeError, 'P3M: non-metallic epsilon requires cubic box'):
-            self.system.actors.add(solver)
+            self.system.electrostatics.solver = solver
 
     @utx.skipIfMissingFeatures("DP3M")
     def test_03_non_cubic_box_dp3m_cpu(self):
@@ -176,14 +182,15 @@ class Test(ut.TestCase):
         self.add_magnetic_particles()
 
         with self.assertRaisesRegex(RuntimeError, 'DipolarP3M: requires a cubic box'):
-            self.system.actors.add(espressomd.magnetostatics.DipolarP3M(
-                **self.get_valid_params('DP3M'), tune=False))
+            solver = espressomd.magnetostatics.DipolarP3M(
+                **self.get_valid_params('DP3M'), tune=False)
+            self.system.magnetostatics.solver = solver
 
     ##########################################
     # block of tests with invalid parameters #
     ##########################################
 
-    def check_invalid_params(self, class_solver, **custom_params):
+    def check_invalid_params(self, container, class_solver, **custom_params):
         valid_params = {
             'prefactor': 2.0, 'accuracy': .01, 'tune': False, 'cao': 3,
             'r_cut': 0.373, 'alpha': 3.81, 'mesh': (8, 8, 8), 'epsilon': 0.,
@@ -199,6 +206,9 @@ class Test(ut.TestCase):
             ('alpha', -2.0, "Parameter 'alpha' must be > 0"),
             ('accuracy', -2.0, "Parameter 'accuracy' must be > 0"),
             ('mesh', (-1, -1, -1), "Parameter 'mesh' must be > 0"),
+            ('tune_limits', (-1,), "Parameter 'tune_limits' needs 2 values"),
+            ('tune_limits', (-1, 1), "Parameter 'tune_limits' must be > 0"),
+            ('tune_limits', (1, 0), "Parameter 'tune_limits' must be > 0"),
             ('mesh', (2, 2, 2), "Parameter 'cao' cannot be larger than 'mesh'"),
             ('mesh_off', (-2, 1, 1), "Parameter 'mesh_off' must be >= 0 and <= 1"),
         ]
@@ -217,8 +227,8 @@ class Test(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, "P3M: requires periodicity"):
             self.system.periodicity = (True, True, False)
             solver = class_solver(**valid_params)
-            self.system.actors.add(solver)
-        self.assertEqual(len(self.system.actors), 0)
+            container.solver = solver
+        self.assertIsNone(container.solver)
         self.system.periodicity = (True, True, True)
 
     def check_invalid_cell_systems(self):
@@ -231,9 +241,8 @@ class Test(ut.TestCase):
         self.system.periodicity = (True, True, True)
 
         # check cell system exceptions
-        with self.assertRaisesRegex(Exception, "P3M: requires the regular decomposition cell system"):
+        with self.assertRaisesRegex(Exception, "P3M: requires the regular or hybrid decomposition cell system"):
             self.system.cell_system.set_n_square()
-            self.system.analysis.energy()
         self.system.cell_system.set_regular_decomposition()
 
     @utx.skipIfMissingFeatures("P3M")
@@ -241,12 +250,14 @@ class Test(ut.TestCase):
         self.system.time_step = 0.01
         self.add_charged_particles()
 
-        self.check_invalid_params(espressomd.electrostatics.P3M)
+        self.check_invalid_params(
+            self.system.electrostatics,
+            espressomd.electrostatics.P3M)
 
         # set up a valid actor
         solver = espressomd.electrostatics.P3M(
             prefactor=2, accuracy=0.1, cao=2, r_cut=3.18, mesh=8)
-        self.system.actors.add(solver)
+        self.system.electrostatics.solver = solver
         self.check_invalid_cell_systems()
 
     @utx.skipIfMissingGPU()
@@ -255,7 +266,7 @@ class Test(ut.TestCase):
         self.system.time_step = 0.01
         self.add_charged_particles()
 
-        self.check_invalid_params(espressomd.electrostatics.P3MGPU,
+        self.check_invalid_params(self.system.electrostatics, espressomd.electrostatics.P3MGPU,
                                   mesh=3 * [28], alpha=0.3548, r_cut=4.4434)
 
     @utx.skipIfMissingFeatures("DP3M")
@@ -263,23 +274,26 @@ class Test(ut.TestCase):
         self.system.time_step = 0.01
         self.add_magnetic_particles()
 
-        self.check_invalid_params(espressomd.magnetostatics.DipolarP3M)
+        self.check_invalid_params(
+            self.system.magnetostatics,
+            espressomd.magnetostatics.DipolarP3M)
 
         # check bisection exception
         with self.assertRaisesRegex(RuntimeError, r"Root must be bracketed for bisection in dp3m_rtbisection"):
             solver = espressomd.magnetostatics.DipolarP3M(
                 prefactor=2, accuracy=0.01, cao=1,
                 r_cut=0.373, alpha=3.81, mesh=(8, 8, 8))
-            self.system.actors.add(solver)
-        self.system.actors.clear()
+            self.system.magnetostatics.solver = solver
+        self.system.magnetostatics.clear()
 
         # set up a valid actor
         solver = espressomd.magnetostatics.DipolarP3M(
             **self.get_valid_params('DP3M'), tune=False)
-        self.system.actors.add(solver)
+        self.system.magnetostatics.solver = solver
         self.check_invalid_cell_systems()
 
-    def check_invalid_params_layer_corrections(self, solver_p3m, class_lc):
+    def check_invalid_params_layer_corrections(
+            self, container, solver_p3m, class_lc):
         with self.assertRaisesRegex(ValueError, "Parameter 'gap_size' must be > 0"):
             class_lc(actor=solver_p3m, gap_size=-1., maxPWerror=0.01)
         with self.assertRaisesRegex(ValueError, "Parameter 'maxPWerror' must be > 0"):
@@ -290,12 +304,12 @@ class Test(ut.TestCase):
             class_lc(actor=solver_p3m, gap_size=1., maxPWerror=1., far_cut=-2.)
         with self.assertRaisesRegex(RuntimeError, "LC gap size .+ larger than box length in z-direction"):
             lc = class_lc(actor=solver_p3m, gap_size=100., maxPWerror=0.01)
-            self.system.actors.add(lc)
-        self.assertEqual(len(self.system.actors), 0)
+            container.solver = lc
+        self.assertIsNone(container.solver)
 
-    def check_invalid_params_elc_p3m(self, solver_p3m):
+    def check_invalid_params_elc_p3m(self, container, solver_p3m):
         ELC = espressomd.electrostatics.ELC
-        self.check_invalid_params_layer_corrections(solver_p3m, ELC)
+        self.check_invalid_params_layer_corrections(container, solver_p3m, ELC)
 
         self.system.part.by_id(0).q = -1.00001
 
@@ -303,25 +317,25 @@ class Test(ut.TestCase):
             actor = ELC(actor=solver_p3m, gap_size=1., maxPWerror=1.,
                         pot_diff=3., delta_mid_top=0.5, delta_mid_bot=0.5,
                         const_pot=True, check_neutrality=False)
-            self.system.actors.add(actor)
-        self.system.actors.clear()
+            self.system.electrostatics.solver = actor
+        self.system.electrostatics.clear()
 
         with self.assertRaisesRegex(RuntimeError, "ELC does not work for non-neutral systems and non-metallic dielectric contrast"):
             actor = ELC(actor=solver_p3m, gap_size=1., maxPWerror=1.,
                         pot_diff=0., delta_mid_top=0.5, delta_mid_bot=0.5,
                         const_pot=False, check_neutrality=False)
-            self.system.actors.add(actor)
-        self.system.actors.clear()
+            self.system.electrostatics.solver = actor
+        self.system.electrostatics.clear()
 
         self.system.part.by_id(0).q = -1
 
         with self.assertRaisesRegex(RuntimeError, "ELC tuning failed: maxPWerror too small"):
             # reduce box size to make tuning converge in at most 50 steps
-            self.system.box_l = [1., 1., 1.]
+            self.system.change_volume_and_rescale_particles(1., "xyz")
             elc = ELC(actor=solver_p3m, gap_size=0.5, maxPWerror=1e-90)
-            self.system.actors.add(elc)
-        self.assertEqual(len(self.system.actors), 0)
-        self.system.box_l = [10., 10., 10.]
+            self.system.electrostatics.solver = elc
+        self.assertIsNone(self.system.electrostatics.solver)
+        self.system.change_volume_and_rescale_particles(10., "xyz")
 
         # r_cut > gap isn't allowed with dielectric contrasts
         p3m = espressomd.electrostatics.P3M(
@@ -330,13 +344,12 @@ class Test(ut.TestCase):
             elc = ELC(actor=p3m, gap_size=p3m.r_cut / 2., maxPWerror=0.01,
                       delta_mid_top=0.5, delta_mid_bot=0.5, pot_diff=-3.,
                       const_pot=True)
-            self.system.actors.add(elc)
-        self.assertEqual(len(self.system.actors), 0)
+            self.system.electrostatics.solver = elc
+        self.assertIsNone(self.system.electrostatics.solver)
 
         # r_cut > gap is allowed without dielectric contrasts
         elc = ELC(actor=p3m, gap_size=p3m.r_cut / 2., maxPWerror=0.01)
-        self.system.actors.add(elc)
-        self.assertEqual(len(self.system.actors), 1)
+        self.system.electrostatics.solver = elc
         self.assertAlmostEqual(elc.prefactor, 1.5, delta=1e-12)
 
     @utx.skipIfMissingFeatures("P3M")
@@ -345,7 +358,8 @@ class Test(ut.TestCase):
         self.add_charged_particles()
         params = self.get_valid_params('P3M', tune=False)
         solver = espressomd.electrostatics.P3M(**params)
-        self.check_invalid_params_elc_p3m(solver)
+        self.check_invalid_params_elc_p3m(
+            self.system.electrostatics, solver)
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures("P3M")
@@ -354,7 +368,7 @@ class Test(ut.TestCase):
         self.add_charged_particles()
         params = self.get_valid_params('P3MGPU', tune=False)
         solver = espressomd.electrostatics.P3MGPU(**params)
-        self.check_invalid_params_elc_p3m(solver)
+        self.check_invalid_params_elc_p3m(self.system.electrostatics, solver)
 
     @utx.skipIfMissingFeatures("DP3M")
     def test_04_invalid_params_dlc_dp3m_cpu(self):
@@ -367,12 +381,12 @@ class Test(ut.TestCase):
         solver_dp3m = espressomd.magnetostatics.DipolarP3M(
             epsilon='metallic', tune=False, **dp3m_params)
         self.check_invalid_params_layer_corrections(
-            solver_dp3m, espressomd.magnetostatics.DLC)
+            self.system.magnetostatics, solver_dp3m, espressomd.magnetostatics.DLC)
 
         solver_mdlc = espressomd.magnetostatics.DLC(
             gap_size=1, maxPWerror=1e-30, actor=solver_dp3m)
         with self.assertRaisesRegex(RuntimeError, "DLC tuning failed: maxPWerror too small"):
-            self.system.actors.add(solver_mdlc)
+            self.system.magnetostatics.solver = solver_mdlc
 
         dp3m_params = {'accuracy': 1e-30, 'mesh': [6, 6, 6],
                        'prefactor': 1.1, 'r_cut': 4.50}
@@ -382,7 +396,7 @@ class Test(ut.TestCase):
         solver_mdlc = espressomd.magnetostatics.DLC(
             gap_size=1., maxPWerror=1e-2, actor=solver_dp3m)
         with self.assertRaisesRegex(RuntimeError, "P3M: failed to reach requested accuracy"):
-            self.system.actors.add(solver_mdlc)
+            self.system.magnetostatics.solver = solver_mdlc
 
     ###########################################################
     # block of tests where tuning should not throw exceptions #
@@ -397,7 +411,7 @@ class Test(ut.TestCase):
         # mesh is fixed to significantly speed up tuning
         solver = espressomd.electrostatics.P3MGPU(
             prefactor=2, accuracy=1e-2, epsilon='metallic', mesh=[20, 20, 20])
-        self.system.actors.add(solver)
+        self.system.electrostatics.solver = solver
 
     @utx.skipIfMissingFeatures("P3M")
     def test_09_no_errors_p3m_cpu(self):
@@ -411,9 +425,20 @@ class Test(ut.TestCase):
         # tuning with cao or r_cut or mesh constrained, or without constraints
         for key, value in valid_params.items():
             solver = espressomd.electrostatics.P3M(
-                prefactor=2, accuracy=1e-2, epsilon=0.0, **{key: value})
-            self.system.actors.add(solver)
-            self.system.actors.clear()
+                prefactor=2, accuracy=1e-2, epsilon=0.0,
+                tune_limits=[2, 20], **{key: value})
+            self.system.electrostatics.solver = solver
+            self.system.electrostatics.solver = None
+        # tuning with mesh range constraint
+        for lower_limit in [None, 6]:
+            solver = espressomd.electrostatics.P3M(
+                prefactor=2, accuracy=1e-2, epsilon=0.0,
+                tune_limits=[lower_limit, 8], **{key: value})
+            self.system.electrostatics.solver = solver
+            if lower_limit is not None:
+                for i in range(3):
+                    self.assertIn(solver.mesh[i], [6, 8])
+            self.system.electrostatics.solver = None
 
     @utx.skipIfMissingFeatures("DP3M")
     def test_09_no_errors_dp3m_cpu(self):
@@ -427,9 +452,20 @@ class Test(ut.TestCase):
         # tuning with cao or r_cut or mesh constrained, or without constraints
         for key, value in valid_params.items():
             solver = espressomd.magnetostatics.DipolarP3M(
-                prefactor=2, accuracy=1e-2, **{key: value})
-            self.system.actors.add(solver)
-            self.system.actors.clear()
+                prefactor=2, accuracy=1e-2,
+                tune_limits=[3, 17], **{key: value})
+            self.system.magnetostatics.solver = solver
+            self.system.magnetostatics.solver = None
+        # tuning with mesh range constraint
+        for lower_limit in [None, 3]:
+            solver = espressomd.magnetostatics.DipolarP3M(
+                prefactor=2, accuracy=1e-2,
+                tune_limits=[lower_limit, 5], **{key: value})
+            self.system.magnetostatics.solver = solver
+            if lower_limit is not None:
+                for i in range(3):
+                    self.assertIn(solver.mesh[i], [3, 5])
+            self.system.magnetostatics.solver = None
 
     @utx.skipIfMissingFeatures("P3M")
     def test_09_no_errors_p3m_cpu_rescale_mesh(self):
@@ -440,13 +476,20 @@ class Test(ut.TestCase):
         solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2,
                                                epsilon='metallic',
                                                mesh=[8, -1, -1])
-        self.system.actors.add(solver)
+        self.system.electrostatics.solver = solver
         np.testing.assert_equal(np.copy(solver.mesh), [8, 12, 16])
 
         # check MD cell reset event
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(10., "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
+
+        # check solver can handle a system without particles
+        self.system.part.clear()
+        self.system.integrator.run(0, recalc_forces=True)
+        self.system.analysis.energy()["coulomb"]
+        self.assertEqual(self.system.analysis.energy()["coulomb"], 0.)
+        self.assertEqual(self.system.analysis.pressure()["coulomb"], 0.)
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures("P3M")
@@ -458,13 +501,32 @@ class Test(ut.TestCase):
         solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-1,
                                                   epsilon='metallic',
                                                   mesh=[20, -1, -1])
-        self.system.actors.add(solver)
+        self.system.electrostatics.solver = solver
         np.testing.assert_equal(np.copy(solver.mesh), [20, 20, 40])
 
         # check MD cell reset event
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(10., "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
+
+        # check GPU data structure reinitialization is safe
+        solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-3,
+                                                  epsilon='metallic',
+                                                  mesh=[-1, -1, -1])
+        self.system.electrostatics.solver = solver
+        self.system.integrator.run(0, recalc_forces=True)
+        ref_forces = np.copy(self.system.part.all().f)
+        solver = espressomd.electrostatics.P3MGPU(**solver.get_params())
+        self.system.electrostatics.solver = solver
+        self.system.integrator.run(0, recalc_forces=True)
+        cur_forces = np.copy(self.system.part.all().f)
+        np.testing.assert_allclose(cur_forces, ref_forces, rtol=1e-5)
+
+        # check solver can handle a system without particles
+        self.system.part.clear()
+        self.system.integrator.run(0, recalc_forces=True)
+        self.assertEqual(self.system.analysis.energy()["coulomb"], 0.)
+        self.assertEqual(self.system.analysis.pressure()["coulomb"], 0.)
 
     @utx.skipIfMissingFeatures("DP3M")
     def test_09_no_errors_dp3m_cpu_rescale_mesh(self):
@@ -475,19 +537,29 @@ class Test(ut.TestCase):
                        'prefactor': 1.1, 'r_cut': 4.50, 'alpha': 0.8216263}
         solver = espressomd.magnetostatics.DipolarP3M(
             epsilon='metallic', tune=False, **dp3m_params)
-        self.system.actors.add(solver)
+        self.system.magnetostatics.solver = solver
 
         # check MD cell reset event
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(10., "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
-    def check_tuning_layer_corrections(self, class_p3m, class_lc, params):
+        # check solver can handle a system without particles
+        self.system.part.clear()
+        self.system.integrator.run(0, recalc_forces=True)
+        self.assertEqual(self.system.analysis.energy()["dipolar"], 0.)
+
+    def check_tuning_layer_corrections(
+            self, container, class_p3m, class_lc, params):
         if class_p3m is espressomd.magnetostatics.DipolarP3M:
             mesh_a = np.array([2., 2., 2.])
+            self.system.change_volume_and_rescale_particles(
+                mesh_a[0] * params["mesh"][0], "xyz")
         else:
             mesh_a = np.array([2., 4., 8.])
-        self.system.box_l = mesh_a * params["mesh"]
+            for i in range(3):
+                self.system.change_volume_and_rescale_particles(
+                    mesh_a[i] * params["mesh"][i], "xyz"[i])
         self.system.time_step = 0.01
         non_metallic_epsilon = 20.
         p3m = class_p3m(epsilon=non_metallic_epsilon, **params)
@@ -498,7 +570,7 @@ class Test(ut.TestCase):
         # epsilon values either, it sets metallic epsilon before tuning.
         if class_lc is espressomd.electrostatics.ELC:
             self.assertEqual(p3m.epsilon, 0.)
-        self.system.actors.add(lc)
+        container.solver = lc
 
         # check parameter rescaling
         alpha = p3m.alpha
@@ -510,7 +582,13 @@ class Test(ut.TestCase):
         np.testing.assert_allclose(p3m.r_cut_iL, r_cut_iL, atol=1e-12)
         np.testing.assert_allclose(p3m.alpha_L, alpha_L, atol=1e-12)
         mesh_a = np.array([4., 4., 4.])
-        self.system.box_l = mesh_a * params["mesh"]
+        if class_p3m is espressomd.magnetostatics.DipolarP3M:
+            self.system.change_volume_and_rescale_particles(
+                mesh_a[0] * params["mesh"][0], "xyz")
+        else:
+            for i in range(3):
+                self.system.change_volume_and_rescale_particles(
+                    mesh_a[i] * params["mesh"][i], "xyz"[i])
         np.testing.assert_allclose(np.copy(p3m.a), mesh_a, atol=1e-12)
         np.testing.assert_allclose(p3m.r_cut, r_cut * 2., atol=1e-12)
         np.testing.assert_allclose(p3m.r_cut_iL, r_cut_iL, atol=1e-12)
@@ -521,6 +599,7 @@ class Test(ut.TestCase):
     def test_09_no_errors_elc_p3m_cpu_rescale_mesh(self):
         self.add_charged_particles()
         self.check_tuning_layer_corrections(
+            self.system.electrostatics,
             espressomd.electrostatics.P3M,
             espressomd.electrostatics.ELC,
             self.get_valid_params("P3M", accuracy=0.1))
@@ -530,6 +609,7 @@ class Test(ut.TestCase):
     def test_09_no_errors_elc_p3m_gpu_rescale_mesh(self):
         self.add_charged_particles()
         self.check_tuning_layer_corrections(
+            self.system.electrostatics,
             espressomd.electrostatics.P3MGPU,
             espressomd.electrostatics.ELC,
             self.get_valid_params("P3MGPU", accuracy=0.1))
@@ -538,9 +618,42 @@ class Test(ut.TestCase):
     def test_09_no_errors_dlc_dp3m_cpu_rescale_mesh(self):
         self.add_magnetic_particles()
         self.check_tuning_layer_corrections(
+            self.system.magnetostatics,
             espressomd.magnetostatics.DipolarP3M,
             espressomd.magnetostatics.DLC,
             self.get_valid_params("DP3M", accuracy=0.1))
+
+    def check_extended_precision_edge_case(self, class_p3m, precisions):
+        # the following parameters lead to precision loss on extended precision
+        # architectures (80-bit floating-point arithmetic); particle positions
+        # in mesh units are lying outside the mesh domain by a tiny amount, but
+        # that shouldn't affect charge assignment (see PR #5135 for details)
+        length = 5.81825
+        system = self.system
+        system.box_l = 3 * [length]
+        system.time_step = 0.01
+        system.cell_system.skin = 0.  # skin=0 is mandatory to trigger the bug
+        system.part.add(pos=[[0., 0., 0.], [1., 1., 1.]], q=[-1., 1.])
+        for precision in precisions:
+            system.electrostatics.solver = class_p3m(
+                prefactor=2., accuracy=1e-2, mesh=3 * [10], cao=7, r_cut=1.5,
+                alpha=29.4842, tune=False, single_precision=precision)
+            system.integrator.run(0, recalc_forces=True)
+            f0 = np.copy(system.part.by_id(0).f)
+            f1 = np.copy(system.part.by_id(1).f)
+            np.testing.assert_allclose(f0, +0.34, rtol=0., atol=0.1)
+            np.testing.assert_allclose(f1, -0.34, rtol=0., atol=0.1)
+
+    @utx.skipIfMissingFeatures("P3M")
+    def test_09_no_errors_p3m_cpu_extended_precision_edge_case(self):
+        self.check_extended_precision_edge_case(
+            espressomd.electrostatics.P3M, precisions=[True, False])
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures("P3M")
+    def test_09_no_errors_p3m_gpu_extended_precision_edge_case(self):
+        self.check_extended_precision_edge_case(
+            espressomd.electrostatics.P3MGPU, precisions=[True])
 
 
 if __name__ == "__main__":

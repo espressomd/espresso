@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import socket
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -43,6 +44,8 @@ class GPUAvailability(ut.TestCase):
             self.assertEqual(devices_prop, {})
             with self.assertRaisesRegex(AttributeError, "Object 'CudaInitHandle' has no attribute 'device'"):
                 cuda_init_handle.device
+        self.assertIn(
+            cuda_init_handle.call_method("is_mpi_gpu_aware"), [True, False])
 
     @utx.skipIfMissingFeatures("CUDA")
     def test_exceptions(self):
@@ -62,8 +65,10 @@ class GPUAvailability(ut.TestCase):
         # check if GPU properties can be queried
         device_list = self.system.cuda_init_handle.list_devices()
         device_list_p = self.system.cuda_init_handle.list_devices_properties()
-        self.assertEqual(len(device_list_p), 1)
-        device_list_p_head = list(device_list_p.values())[0]
+        hostname = socket.gethostname()
+        self.assertGreaterEqual(len(device_list_p), 1)
+        self.assertIn(hostname, device_list_p)
+        device_list_p_head = device_list_p[hostname]
         dev_keys = {'name', 'compute_capability', 'cores', 'total_memory'}
         # check both dicts agree
         self.assertEqual(device_list.keys(), device_list_p_head.keys())

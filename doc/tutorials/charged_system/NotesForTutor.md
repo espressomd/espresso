@@ -17,5 +17,5 @@
 
 * Setting up WCA interactions (should be clear from previous tutorial)
 * Using particle properties like ``q``, ``fix`` and ``type``
-* Setting up electrostatic methods, the concept of ``actors``
+* Setting up electrostatic methods, the concept of system solver
 * There can only be one ESPResSo system. For multiple runs, the relevant parts of the system have to be reset manually

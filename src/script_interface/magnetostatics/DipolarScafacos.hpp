@@ -17,20 +17,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_MAGNETOSTATICS_DIPOLAR_SCAFACOS_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_MAGNETOSTATICS_DIPOLAR_SCAFACOS_HPP
+#pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef SCAFACOS_DIPOLES
+#ifdef ESPRESSO_SCAFACOS_DIPOLES
 
 #include "Actor.hpp"
 
+#include "core/communication.hpp"
 #include "core/magnetostatics/scafacos.hpp"
 #include "core/scafacos/ScafacosContextBase.hpp"
 
 #include "script_interface/scafacos/scafacos.hpp"
 
+#include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -38,6 +40,7 @@ namespace ScriptInterface {
 namespace Dipoles {
 
 class DipolarScafacos : public Actor<DipolarScafacos, ::DipolarScafacos> {
+  std::shared_ptr<boost::mpi::environment> m_mpi_env_lock;
 
 public:
   DipolarScafacos() {
@@ -49,6 +52,11 @@ public:
            return Scafacos::deserialize_parameters(actor()->get_parameters());
          }},
     });
+  }
+
+  ~DipolarScafacos() override {
+    m_actor.reset();
+    m_mpi_env_lock.reset();
   }
 
   void do_construct(VariantMap const &params) override {
@@ -63,8 +71,10 @@ public:
       ScafacosContextBase::sanity_check_method(method_name);
       auto const method_params = Scafacos::serialize_parameters(param_list);
       m_actor = make_dipolar_scafacos(method_name, method_params);
-      actor()->prefactor = prefactor;
+      actor()->set_prefactor(prefactor);
     });
+    // MPI communicator is needed to destroy the FFT plans
+    m_mpi_env_lock = ::communication_environment->get_mpi_env();
   }
 
   Variant do_call_method(std::string const &name,
@@ -79,5 +89,4 @@ public:
 } // namespace Dipoles
 } // namespace ScriptInterface
 
-#endif // SCAFACOS_DIPOLES
-#endif
+#endif // ESPRESSO_SCAFACOS_DIPOLES

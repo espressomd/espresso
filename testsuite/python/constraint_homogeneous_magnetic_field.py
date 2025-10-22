@@ -72,28 +72,23 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
         # check dipolar energy when adding dipole moments
         p0 = self.system.part.add(
             pos=[0, 0, 0], dip=dip_mom0, rotation=(True, True, True))
-        self.assertEqual(self.system.analysis.energy()["dipolar"],
-                         -1.0 * np.dot(H_field, dip_mom0))
+        self.assertAlmostEqual(self.system.analysis.energy()["dipolar"],
+                               -np.dot(H_field, dip_mom0), delta=1e-7)
         p1 = self.system.part.add(
             pos=[1, 1, 1], dip=dip_mom1, rotation=(True, True, True))
-        self.assertEqual(self.system.analysis.energy()["dipolar"],
-                         -(np.dot(H_field, dip_mom0) +
-                           np.dot(H_field, dip_mom1)))
+        self.assertAlmostEqual(self.system.analysis.energy()["dipolar"],
+                               -(np.dot(H_field, dip_mom0) +
+                                 np.dot(H_field, dip_mom1)),
+                               delta=1e-7)
 
-        if espressomd.has_features(["ROTATION"]):
-            # check that running the integrator leads to expected torques
-            self.system.integrator.run(0)
-            torque_expected0 = np.cross(dip_mom0, H_field)
-            torque_expected1 = np.cross(dip_mom1, H_field)
-            for i in range(3):
-                self.assertAlmostEqual(
-                    p0.torque_lab[i],
-                    torque_expected0[i],
-                    places=10)
-                self.assertAlmostEqual(
-                    p1.torque_lab[i],
-                    torque_expected1[i],
-                    places=10)
+        # check that running the integrator leads to expected torques
+        self.system.integrator.run(0, recalc_forces=True)
+        torque_expected0 = np.cross(dip_mom0, H_field)
+        torque_expected1 = np.cross(dip_mom1, H_field)
+        np.testing.assert_allclose(np.copy(p0.torque_lab), torque_expected0,
+                                   atol=1e-12, rtol=1e-10)
+        np.testing.assert_allclose(np.copy(p1.torque_lab), torque_expected1,
+                                   atol=1e-12, rtol=1e-10)
 
 
 if __name__ == "__main__":

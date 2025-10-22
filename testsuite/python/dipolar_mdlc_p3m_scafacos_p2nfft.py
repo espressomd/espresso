@@ -47,7 +47,7 @@ class Test(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.magnetostatics.clear()
 
     def vector_error(self, a, b):
         return np.sum(np.linalg.norm(a - b, axis=1)) / np.sqrt(a.shape[0])
@@ -78,7 +78,7 @@ class Test(ut.TestCase):
             prefactor=DIPOLAR_PREFACTOR, mesh=32, accuracy=1E-4)
         mdlc = espressomd.magnetostatics.DLC(
             maxPWerror=1E-5, gap_size=gap_size, actor=dp3m)
-        s.actors.add(mdlc)
+        s.magnetostatics.solver = mdlc
         s.integrator.run(0)
         err_f = self.vector_error(
             partcls.f, data[:, 7:10] * DIPOLAR_PREFACTOR)
@@ -132,7 +132,7 @@ class Test(ut.TestCase):
 
         dp3m = espressomd.magnetostatics.DipolarP3M(
             prefactor=DIPOLAR_PREFACTOR, mesh=32, accuracy=1E-6, epsilon="metallic")
-        s.actors.add(dp3m)
+        s.magnetostatics.solver = dp3m
         s.integrator.run(0)
         expected = np.genfromtxt(
             tests_common.data_path("p3m_magnetostatics_expected.data"))[:, 1:]
@@ -183,7 +183,7 @@ class Test(ut.TestCase):
                 "pnfft_diff_ik": "0",
                 "p2nfft_r_cut": "11",
                 "p2nfft_alpha": "0.31"})
-        s.actors.add(scafacos)
+        s.magnetostatics.solver = scafacos
         s.integrator.run(0)
         expected = np.genfromtxt(
             tests_common.data_path("p3m_magnetostatics_expected.data"))[:, 1:]

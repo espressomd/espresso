@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2024 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -29,84 +29,42 @@
  *  Further reading: @cite cerda08d
  */
 
-#ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLAR_P3M_HPP
-#define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLAR_P3M_HPP
+#pragma once
 
 #include "config/config.hpp"
 
-#ifdef DP3M
+#ifdef ESPRESSO_DP3M
+
+#include "magnetostatics/actor.hpp"
 
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
-#include "p3m/fft.hpp"
-#include "p3m/interpolation.hpp"
-#include "p3m/send_mesh.hpp"
+#include "p3m/math.hpp"
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/AS_erfc_part.hpp>
+#include <utils/math/sqr.hpp>
 
-#include <array>
 #include <cmath>
-#include <vector>
-
-#ifdef NPT
-/** Update the NpT virial */
-void npt_add_virial_magnetic_contribution(double energy);
-#endif
-
-struct dp3m_data_struct : public p3m_data_struct_base {
-  explicit dp3m_data_struct(P3MParameters &&parameters)
-      : p3m_data_struct_base{std::move(parameters)} {}
-
-  /** local mesh. */
-  P3MLocalMesh local_mesh;
-  /** real space mesh (local) for CA/FFT. */
-  fft_vector<double> rs_mesh;
-  /** real space mesh (local) for CA/FFT of the dipolar field. */
-  std::array<fft_vector<double>, 3> rs_mesh_dip;
-  /** k-space mesh (local) for k-space calculation and FFT. */
-  std::vector<double> ks_mesh;
-
-  /** number of dipolar particles (only on head node). */
-  int sum_dip_part = 0;
-  /** Sum of square of magnetic dipoles (only on head node). */
-  double sum_mu2 = 0.;
-
-  /** position shift for calculation of first assignment mesh point. */
-  double pos_shift = 0.;
-
-  p3m_interpolation_cache inter_weights;
-
-  /** send/recv mesh sizes */
-  p3m_send_mesh sm;
-
-  /** cached k-space self-energy correction */
-  double energy_correction = 0.;
-
-  fft_data_struct fft;
-};
+#include <numbers>
 
 /** @brief Dipolar P3M solver. */
-struct DipolarP3M {
-  /** Dipolar P3M parameters. */
-  dp3m_data_struct dp3m;
+struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
+  P3MParameters const &dp3m_params;
 
-  /** Magnetostatics prefactor. */
-  double prefactor;
-  int tune_timings;
-  bool tune_verbose;
+public:
+  DipolarP3M(P3MParameters const &dp3m_params) : dp3m_params{dp3m_params} {}
 
-  DipolarP3M(P3MParameters &&parameters, double prefactor, int tune_timings,
-             bool tune_verbose);
+  virtual ~DipolarP3M() = default;
 
-  void on_activation() {
-    sanity_checks();
-    tune();
-  }
+  [[nodiscard]] virtual bool is_tuned() const noexcept = 0;
+  [[nodiscard]] virtual bool is_gpu() const noexcept = 0;
+  [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
+
+  virtual void on_activation() = 0;
   /** @brief Recalculate all box-length-dependent parameters. */
   void on_boxl_change() { scaleby_box_l(); }
   void on_node_grid_change() const { sanity_checks_node_grid(); }
@@ -116,7 +74,7 @@ struct DipolarP3M {
     init();
   }
   /** @brief Recalculate all derived parameters. */
-  void init();
+  virtual void init() = 0;
 
   void sanity_checks() const {
     sanity_checks_boxl();
@@ -129,10 +87,10 @@ struct DipolarP3M {
    * @brief Count the number of magnetic particles and calculate
    * the sum of the squared dipole moments.
    */
-  void count_magnetic_particles();
+  virtual void count_magnetic_particles() = 0;
 
   /** Assign the physical dipoles using the tabulated assignment function. */
-  void dipole_assign(ParticleRange const &particles);
+  virtual void dipole_assign(ParticleRange const &particles) = 0;
 
   /**
    * @brief Tune dipolar P3M parameters to desired accuracy.
@@ -143,7 +101,7 @@ struct DipolarP3M {
    * @ref P3MParameters::r_cut_iL "r_cut_iL" and
    * @ref P3MParameters::alpha_L "alpha_L" are tuned to obtain the target
    * @ref P3MParameters::accuracy "accuracy" in optimal time.
-   * These parameters are stored in the @ref dp3m object.
+   * These parameters are stored in the @ref dp3m_params object.
    *
    * The function utilizes the analytic expression of the error estimate
    * for the dipolar P3M method in the paper of @cite cerda08d in
@@ -166,27 +124,26 @@ struct DipolarP3M {
    * The function is based on routines of the program HE_Q.cpp for charges
    * written by M. Deserno.
    */
-  void tune();
-  bool is_tuned() const { return m_is_tuned; }
+  virtual void tune() = 0;
 
-  /** Compute the k-space part of forces and energies. */
-  double kernel(bool force_flag, bool energy_flag,
-                ParticleRange const &particles);
+  /** Compute the k-space part of energies. */
+  virtual double long_range_energy(ParticleRange const &particles) = 0;
+
+  /** Compute the k-space part of forces. */
+  virtual void add_long_range_forces(ParticleRange const &particles) = 0;
 
   /** Calculate real-space contribution of p3m dipolar pair forces and torques.
    *  If NPT is compiled in, update the NpT virial.
    */
-  inline ParticleForce pair_force(Particle const &p1, Particle const &p2,
-                                  Utils::Vector3d const &d, double dist2,
-                                  double dist) const {
-    if ((p1.dipm() == 0.) || (p2.dipm() == 0.) || dist >= dp3m.params.r_cut ||
-        dist <= 0.)
+  inline ParticleForce pair_force(double d1d2, Utils::Vector3d const &dip1,
+                                  Utils::Vector3d const &dip2,
+                                  Utils::Vector3d const &d, double dist,
+                                  double dist2) const {
+    if (d1d2 == 0. or dist >= dp3m_params.r_cut or dist <= 0.)
       return {};
 
-    auto const dip1 = p1.calc_dip();
-    auto const dip2 = p2.calc_dip();
-    auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
-    auto const adist = dp3m.params.alpha * dist;
+    auto const alpsq = dp3m_params.alpha * dp3m_params.alpha;
+    auto const adist = dp3m_params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
     auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
 #else
@@ -199,11 +156,11 @@ struct DipolarP3M {
     auto const mir = dip1 * d;
     auto const mjr = dip2 * d;
 
-    auto const coeff = 2. * dp3m.params.alpha * Utils::sqrt_pi_i();
+    auto const coeff = 2. * dp3m_params.alpha * std::numbers::inv_sqrtpi;
     auto const dist2i = 1. / dist2;
     auto const exp_adist2 = exp(-Utils::sqr(adist));
 
-    auto const B_r = (dp3m.params.accuracy > 5e-06)
+    auto const B_r = (dp3m_params.accuracy > 5e-06)
                          ? (erfc_part_ri + coeff) * exp_adist2 * dist2i
                          : (erfc(adist) / dist + coeff * exp_adist2) * dist2i;
 
@@ -221,31 +178,31 @@ struct DipolarP3M {
 
     // Calculate real-space torques
     auto const torque = prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 #if USE_ERFC_APPROXIMATION
-    auto const fac = prefactor * p1.dipm() * p2.dipm() * exp_adist2;
+    auto const fac = prefactor * d1d2 * exp_adist2;
 #else
-    auto const fac = prefactor * p1.dipm() * p2.dipm();
+    auto const fac = prefactor * d1d2;
 #endif
     auto const energy = fac * (mimj * B_r - mir * mjr * C_r);
-    npt_add_virial_magnetic_contribution(energy);
-#endif // NPT
+    npt_add_virial_contribution(energy);
+#endif // ESPRESSO_NPT
     return ParticleForce{force, torque};
   }
 
   /** Calculate real-space contribution of dipolar pair energy. */
   inline double pair_energy(Particle const &p1, Particle const &p2,
-                            Utils::Vector3d const &d, double dist2,
-                            double dist) const {
-    if ((p1.dipm() == 0.) || (p2.dipm() == 0.) || dist >= dp3m.params.r_cut ||
+                            Utils::Vector3d const &d, double dist,
+                            double dist2) const {
+    if (p1.dipm() == 0. or p2.dipm() == 0. or dist >= dp3m_params.r_cut or
         dist <= 0.)
       return {};
 
     auto const dip1 = p1.calc_dip();
     auto const dip2 = p2.calc_dip();
 
-    auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
-    auto const adist = dp3m.params.alpha * dist;
+    auto const alpsq = dp3m_params.alpha * dp3m_params.alpha;
+    auto const adist = dp3m_params.alpha * dist;
 
 #if USE_ERFC_APPROXIMATION
     auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
@@ -258,11 +215,11 @@ struct DipolarP3M {
     auto const mir = dip1 * d;
     auto const mjr = dip2 * d;
 
-    auto const coeff = 2. * dp3m.params.alpha * Utils::sqrt_pi_i();
+    auto const coeff = 2. * dp3m_params.alpha * std::numbers::inv_sqrtpi;
     auto const dist2i = 1. / dist2;
     auto const exp_adist2 = exp(-Utils::sqr(adist));
 
-    auto const B_r = (dp3m.params.accuracy > 5e-06)
+    auto const B_r = (dp3m_params.accuracy > 5e-06)
                          ? dist2i * (erfc_part_ri + coeff) * exp_adist2
                          : dist2i * (erfc(adist) / dist + coeff * exp_adist2);
     auto const C_r = (3. * B_r + 2. * alpsq * coeff * exp_adist2) * dist2i;
@@ -270,26 +227,24 @@ struct DipolarP3M {
     return prefactor * (mimj * B_r - mir * mjr * C_r);
   }
 
-private:
-  bool m_is_tuned;
-
+protected:
   /** Calculate self-energy in k-space. */
-  double calc_average_self_energy_k_space() const;
+  virtual double calc_average_self_energy_k_space() const = 0;
 
   /** Calculate energy correction that minimizes the error.
    *  This quantity is only calculated once and is cached.
    */
-  void calc_energy_correction();
+  virtual void calc_energy_correction() = 0;
 
   /** Calculate the influence function for the dipolar forces and torques. */
-  void calc_influence_function_force();
+  virtual void calc_influence_function_force() = 0;
 
   /** Calculate the influence function for the dipolar energy. */
-  void calc_influence_function_energy();
+  virtual void calc_influence_function_energy() = 0;
 
   /** Compute the dipolar surface terms */
-  double calc_surface_term(bool force_flag, bool energy_flag,
-                           ParticleRange const &particles);
+  virtual double calc_surface_term(bool force_flag, bool energy_flag,
+                                   ParticleRange const &particles) = 0;
 
   /** Checks for correctness of the k-space cutoff. */
   void sanity_checks_boxl() const;
@@ -297,8 +252,12 @@ private:
   void sanity_checks_periodicity() const;
   void sanity_checks_cell_structure() const;
 
-  void scaleby_box_l();
+  virtual void scaleby_box_l() = 0;
+
+#ifdef ESPRESSO_NPT
+  /** Update the NpT virial */
+  virtual void npt_add_virial_contribution(double energy) const = 0;
+#endif
 };
 
-#endif // DP3M
-#endif
+#endif // ESPRESSO_DP3M

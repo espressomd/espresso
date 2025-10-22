@@ -30,16 +30,14 @@
  *  formula, the Bessel functions are evaluated using several different
  *  Chebychev expansions. Both achieve a precision of nearly machine precision,
  *  which is no problem for the Hurwitz zeta function, which is only used when
- *  determining the coefficients for the modified polygamma functions (see @ref
- *  mmm-common.hpp).
+ *  determining the coefficients for the modified polygamma functions.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_SPECFUNC_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_SPECFUNC_HPP
-
-#include <utils/Span.hpp>
+#pragma once
 
 #include <cassert>
+#include <numeric>
+#include <span>
 #include <utility>
 
 /** Hurwitz zeta function. This function was taken from the GSL code. */
@@ -90,21 +88,19 @@ std::pair<double, double> LPK01(double x);
 /** Evaluate the polynomial interpreted as a Taylor series via the
  *  Horner scheme.
  */
-inline double evaluateAsTaylorSeriesAt(Utils::Span<const double> series,
+inline double evaluateAsTaylorSeriesAt(std::span<const double> series,
                                        double x) {
   assert(not series.empty());
-  auto cnt = static_cast<int>(series.size()) - 1;
-  auto const *c = series.data();
-  auto r = c[cnt];
-  while (--cnt >= 0)
-    r = r * x + c[cnt];
-  return r;
+  auto const value = std::accumulate(
+      series.rbegin(), series.rend(), 0.,
+      [x](auto const &acc, auto const &coeff) { return acc * x + coeff; });
+  return value;
 }
 
 /** Evaluate the polynomial interpreted as a Chebychev series. Requires a
  *  series with at least three coefficients, i.e. no linear approximations!
  */
-inline double evaluateAsChebychevSeriesAt(Utils::Span<const double> series,
+inline double evaluateAsChebychevSeriesAt(std::span<const double> series,
                                           double x) {
   assert(series.size() >= 3);
 
@@ -119,5 +115,3 @@ inline double evaluateAsChebychevSeriesAt(Utils::Span<const double> series,
   }
   return x * d - dd + 0.5 * c[0];
 }
-
-#endif

@@ -17,43 +17,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef UTILS_MAKE_LIN_SPACE_HPP
-#define UTILS_MAKE_LIN_SPACE_HPP
+#pragma once
 
-#include <boost/iterator/counting_iterator.hpp>
-#include <boost/iterator/transform_iterator.hpp>
-#include <boost/range/iterator_range.hpp>
-
+#include <algorithm>
 #include <cstddef>
+#include <ranges>
 
 namespace Utils {
 /**
  * @brief Equally spaced values in interval
  *
  * Returns a range of equally spaced values in
- * the range of start and stop, like numpy.linspace.
+ * the range @p start to @p stop, like @c numpy.linspace().
  *
  * @tparam T floating point type
  * @param start Start value of the interval
  * @param stop End value of the interval
  * @param number Number of partition points
- * @param endpoint If true, the last point is
- *        stop, otherwise one less.
- * @return Range of equally spaced values
+ * @param endpoint If true, the last point is @p stop.
+ * @return Range of equally-spaced values
  */
 template <class T>
 auto make_lin_space(T start, T stop, std::size_t number, bool endpoint = true) {
-  using boost::make_counting_iterator;
-  using boost::make_iterator_range;
-  using boost::make_transform_iterator;
-
   auto const dx = (stop - start) / T(number - endpoint);
-  auto x = [dx, start](std::size_t i) { return start + T(i) * dx; };
 
-  return make_iterator_range(
-      make_transform_iterator(make_counting_iterator(std::size_t(0)), x),
-      make_transform_iterator(make_counting_iterator(number), x));
+  return std::ranges::views::transform(
+      std::views::iota(std::size_t{0u}, number),
+      [dx, start](std::size_t i) { return start + T(i) * dx; });
 }
 } // namespace Utils
-
-#endif

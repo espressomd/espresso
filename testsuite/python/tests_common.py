@@ -18,6 +18,7 @@
 #
 
 import pathlib
+import itertools
 import numpy as np
 
 
@@ -57,7 +58,7 @@ def assert_params_match(ut_obj, inParams, outParams, msg_long=""):
             ut_obj.assertEqual(value_out, value_in, msg=msg)
 
 
-def generate_test_for_actor_class(_system, _class_actor, _params):
+def generate_test_for_actor_class(_container, _class_actor, _params):
     """
     Generate a test case for an actor to verify parameters in the interface
     and the core match.
@@ -65,7 +66,7 @@ def generate_test_for_actor_class(_system, _class_actor, _params):
     """
     params_in = _params
     class_actor = _class_actor
-    system = _system
+    container = _container
 
     def func(self):
         # This code is run at the execution of the generated function.
@@ -74,10 +75,10 @@ def generate_test_for_actor_class(_system, _class_actor, _params):
 
         # set parameters
         actor = class_actor(**params_in)
-        system.actors.add(actor)
+        container.solver = actor
         # read them out again
         params_out = {key: getattr(actor, key) for key in params_in}
-        system.actors.remove(actor)
+        container.solver = None
 
         assert_params_match(self, params_in, params_out,
                             msg_long=f"Parameters set {params_in} vs. {params_out}")
@@ -147,7 +148,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
 
 def data_path(filename):
     """
-    Resolve abosulte path to a resource.
+    Resolve absolute path to a resource.
     """
     return pathlib.Path(__file__).resolve().parent / "data" / filename
 
@@ -317,14 +318,13 @@ def lj_generic_potential(r, epsilon, sigma, cutoff, offset=0., shift=0.,
 
 def lj_generic_force(espressomd, r, epsilon, sigma, cutoff, offset=0., e1=12,
                      e2=6, b1=4., b2=4., delta=0., lam=1., generic=True):
-    f = 1.
-    if r >= offset + cutoff:
-        f = 0.
-    else:
+    f = 0.
+    if r < offset + cutoff:
         h = (r - offset)**2 + delta * (1. - lam) * sigma**2
         f = (r - offset) * epsilon * lam * (
-            b1 * e1 * np.power(sigma / np.sqrt(h), e1) - b2 * e2 * np.power(sigma / np.sqrt(h), e2)) / h
-        if (not espressomd.has_features("LJGEN_SOFTCORE")) and generic:
+            b1 * e1 * np.power(sigma / np.sqrt(h), e1) -
+            b2 * e2 * np.power(sigma / np.sqrt(h), e2)) / h
+        if generic and not espressomd.has_features("LJGEN_SOFTCORE"):
             f *= np.sign(r - offset)
     return f
 
@@ -337,21 +337,35 @@ def lj_potential(r, epsilon, sigma, cutoff, shift, offset=0.):
     return V
 
 
-def lj_force(espressomd, r, epsilon, sigma, cutoff, offset=0.):
+def lj_force(r, epsilon, sigma, cutoff, offset=0.):
     f = lj_generic_force(
-        espressomd, r, epsilon, sigma, cutoff, offset=offset, generic=False)
+        None, r, epsilon, sigma, cutoff, offset=offset, generic=False)
     return f
 
 
-def count_fluid_nodes(lbf):
-    """Counts the non-boundary nodes in the passed lb fluid instance."""
+def fold_index(idx, shape):
+    """Fold index into the range 0<x<shape"""
 
-    fluid_nodes = 0
-    for n in lbf.nodes():
-        if not n.boundary:
-            fluid_nodes += 1
+    res = np.copy(idx)
+    for i in range(len(idx)):
+        while res[i] >= shape[i]:
+            res[i] -= shape[i]
+        while res[i] < 0:
+            res[i] += shape[i]
+    return res
 
-    return fluid_nodes
+
+def get_lb_nodes_around_pos(pos, lbf):
+    """Returns LB node(s) relevant for interpolation around the given position"""
+
+    pos_lb_units = pos / lbf.agrid - 0.5  # relative to node centers
+    lower_left_index = np.array(np.floor(pos_lb_units), dtype=int)
+
+    nodes = []
+    for i, j, k in itertools.product([0, 1], repeat=3):
+        index = lower_left_index + np.array((i, j, k), dtype=int)
+        nodes.append(lbf[fold_index(index, lbf.shape)])
+    return nodes
 
 
 def random_dipoles(n_particles):

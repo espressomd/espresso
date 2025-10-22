@@ -35,7 +35,7 @@ class TestICC(ut.TestCase):
     system.time_step = 0.01
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
         self.system.part.clear()
 
     def add_icc_particles(self, side_num_particles,
@@ -108,11 +108,11 @@ class TestICC(ut.TestCase):
                              q=-DIPOLE_CHARGE, fix=[True, True, True])
 
         p3m = espressomd.electrostatics.P3M(
-            prefactor=1., mesh=32, cao=7, accuracy=1e-5)
-        p3m.charge_neutrality_tolerance = 1e-11
+            prefactor=1., mesh=[24, 24, 26], cao=6, accuracy=1e-5)
+        p3m.charge_neutrality_tolerance = 1e-10
 
-        self.system.actors.add(p3m)
-        self.system.actors.add(icc)
+        self.system.electrostatics.solver = p3m
+        self.system.electrostatics.extension = icc
         self.system.integrator.run(0)
 
         charge_lower = sum(part_slice_lower.q)
@@ -122,6 +122,26 @@ class TestICC(ut.TestCase):
         induced_dipole = 0.5 * (abs(charge_lower) + abs(charge_upper)) * BOX_L
 
         self.assertAlmostEqual(1, induced_dipole / testcharge_dipole, places=4)
+
+        with self.subTest(msg="smoke test, see `icc_electrodes.py` for a statistical test"):
+            # remove periodic images in the direction of the dipole
+            self.system.electrostatics.clear()
+            p3m.check_neutrality = False
+            icc = espressomd.electrostatic_extensions.ICC(
+                **(icc.get_params() | {"convergence": 1e-4}))
+            elc = espressomd.electrostatics.ELC(
+                actor=p3m, gap_size=BOX_SPACE, maxPWerror=1e-5,
+                check_neutrality=False)
+            self.system.electrostatics.solver = elc
+            self.system.electrostatics.extension = icc
+            self.system.integrator.run(0)
+
+            new_charge_lower = sum(part_slice_lower.q)
+            new_charge_upper = sum(part_slice_upper.q)
+            self.assertAlmostEqual(
+                1., new_charge_lower / charge_lower, delta=1e-3)
+            self.assertAlmostEqual(
+                1., new_charge_upper / charge_upper, delta=1e-3)
 
 
 if __name__ == "__main__":

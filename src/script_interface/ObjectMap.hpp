@@ -19,16 +19,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_OBJECT_MAP_HPP
-#define SCRIPT_INTERFACE_OBJECT_MAP_HPP
+#pragma once
 
+#include "script_interface/ObjectContainer.hpp"
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/Variant.hpp"
 #include "script_interface/get_value.hpp"
-#include "script_interface/object_container_mpi_guard.hpp"
-
-#include <utils/serialization/pack.hpp>
 
 #include <memory>
+#include <ranges>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -36,29 +35,65 @@
 
 namespace ScriptInterface {
 /**
- * @brief Owning map of ObjectHandles
+ * @brief Owning map of object handles.
+ *
+ * Mapped elements are cleared from the core during destruction.
+ * Due to how dynamic dispatch works, derived types must mark
+ * @ref erase_in_core as @c final` and call @ref do_destruct in
+ * their virtual destructor. This is to ensure that pure virtual
+ * functions called by @ref clear cannot be executed in a type
+ * derived from the type currently being destructed, since derived
+ * types no longer exist at this point of the destruction sequence.
+ *
  * @tparam ManagedType Type of the managed objects, needs to be
- *         derived from ObjectHandle
+ *         derived from @ref ObjectHandle
  */
-template <
-    typename ManagedType, class BaseType = ObjectHandle, class KeyType = int,
-    class = std::enable_if_t<std::is_base_of_v<ObjectHandle, ManagedType>>>
-class ObjectMap : public BaseType {
+template <typename ManagedType, class BaseType = ObjectHandle,
+          class KeyType = int>
+class ObjectMap : public ObjectContainer<ObjectMap, ManagedType, BaseType> {
+public:
+  using Base = ObjectContainer<ObjectMap, ManagedType, BaseType>;
+  using Base::add_parameters;
+  using key_type = KeyType;
+  using mapped_type = std::shared_ptr<ManagedType>;
+  using container_type = std::unordered_map<key_type, mapped_type>;
+
 private:
-  virtual KeyType
-  insert_in_core(std::shared_ptr<ManagedType> const &obj_ptr) = 0;
-  virtual void insert_in_core(KeyType const &key,
-                              std::shared_ptr<ManagedType> const &obj_ptr) = 0;
-  virtual void erase_in_core(KeyType const &key) = 0;
+  container_type m_elements;
+  bool dtor_sequence_initiated = false;
+
+  virtual key_type insert_in_core(mapped_type const &obj_ptr) = 0;
+  virtual void insert_in_core(key_type const &key,
+                              mapped_type const &obj_ptr) = 0;
+  virtual void erase_in_core(key_type const &key) = 0;
+
+protected:
+  void do_destruct() {
+    assert(not dtor_sequence_initiated);
+    clear();
+    dtor_sequence_initiated = true;
+  }
 
 public:
+  ObjectMap() {
+    add_parameters({
+        {"_objects", AutoParameter::read_only,
+         [this]() { return make_unordered_map_of_variants(m_elements); }},
+    });
+  }
+
+  ~ObjectMap() override { assert(dtor_sequence_initiated); }
+
+  // prevent inheritance of the default implementation
+  void do_construct(VariantMap const &params) override = 0;
+
   /**
    * @brief Add an element to the map.
    *
    * @param key Identifier of the element to add.
    * @param element The element to add.
    */
-  void insert(KeyType const &key, std::shared_ptr<ManagedType> const &element) {
+  void insert(key_type const &key, mapped_type const &element) {
     insert_in_core(key, element);
     m_elements[key] = element;
   }
@@ -69,7 +104,7 @@ public:
    *
    * @param element The element to add.
    */
-  KeyType insert(std::shared_ptr<ManagedType> const &element) {
+  key_type insert(mapped_type const &element) {
     auto const key = insert_in_core(element);
     m_elements[key] = element;
     return key;
@@ -80,7 +115,7 @@ public:
    *
    * @param key Identifier of the element to remove.
    */
-  void erase(KeyType const &key) {
+  void erase(key_type const &key) {
     erase_in_core(key);
     m_elements.erase(key);
   }
@@ -94,8 +129,8 @@ public:
    * @brief Clear the map.
    */
   void clear() {
-    for (auto const &kv : m_elements) {
-      erase_in_core(kv.first);
+    for (auto const &key : std::views::elements<0>(m_elements)) {
+      erase_in_core(key);
     }
 
     m_elements.clear();
@@ -106,11 +141,10 @@ protected:
                          VariantMap const &parameters) override {
 
     if (method == "insert") {
-      auto obj_ptr =
-          get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
+      auto obj_ptr = get_value<mapped_type>(parameters.at("object"));
 
-      if (parameters.count("key")) {
-        auto key = get_value<KeyType>(parameters.at("key"));
+      if (parameters.contains("key")) {
+        auto const key = get_key(parameters.at("key"));
         insert(key, obj_ptr);
         return none;
       }
@@ -118,14 +152,13 @@ protected:
     }
 
     if (method == "erase") {
-      auto key = get_value<KeyType>(parameters.at("key"));
-
+      auto const key = get_key(parameters.at("key"));
       erase(key);
       return none;
     }
 
     if (method == "get") {
-      auto key = get_value<KeyType>(parameters.at("key"));
+      auto const key = get_key(parameters.at("key"));
       return Variant{m_elements.at(key)};
     }
 
@@ -134,11 +167,8 @@ protected:
     }
 
     if (method == "keys") {
-      std::vector<Variant> res;
-      for (auto const &kv : m_elements) {
-        res.push_back(kv.first);
-      }
-      return res;
+      auto const view = std::views::elements<0>(m_elements);
+      return std::vector<KeyType>{view.begin(), view.end()};
     }
 
     if (method == "clear") {
@@ -155,40 +185,32 @@ protected:
     }
 
     if (method == "contains") {
-      return m_elements.find(get_value<KeyType>(parameters.at("key"))) !=
-             m_elements.end();
+      return m_elements.find(get_key(parameters.at("key"))) != m_elements.end();
     }
 
-    return BaseType::do_call_method(method, parameters);
+    return Base::do_call_method(method, parameters);
   }
 
-private:
-  std::string get_internal_state() const override {
-    object_container_mpi_guard(BaseType::name(), m_elements.size(),
-                               BaseType::context()->get_comm().size());
-
-    using packed_type = std::pair<KeyType, std::string>;
-    std::vector<packed_type> object_states(m_elements.size());
-
-    boost::transform(m_elements, object_states.begin(), [](auto const &kv) {
-      return std::make_pair(kv.first, kv.second->serialize());
-    });
-
-    return Utils::pack(object_states);
-  }
-
-  void set_internal_state(std::string const &state) override {
-    using packed_type = std::pair<KeyType, std::string>;
-    auto const object_states = Utils::unpack<std::vector<packed_type>>(state);
-
-    for (auto const &packed_object : object_states) {
-      auto o = std::dynamic_pointer_cast<ManagedType>(
-          BaseType::deserialize(packed_object.second, *BaseType::context()));
-      insert(packed_object.first, std::move(o));
+  void restore_from_checkpoint(VariantMap const &params) {
+    m_elements = get_value_or<decltype(m_elements)>(params, "_objects", {});
+    for (auto const &[key, element] : m_elements) {
+      insert_in_core(key, element);
     }
   }
 
-  std::unordered_map<KeyType, std::shared_ptr<ManagedType>> m_elements;
+  key_type get_key(Variant const &key) const {
+    try {
+      return get_value<key_type>(key);
+    } catch (...) {
+      using namespace detail::demangle;
+      auto const actual = simplify_symbol_variant(key);
+      auto const target = simplify_symbol(static_cast<key_type *>(nullptr));
+      if (Base::context()->is_head_node()) {
+        throw std::invalid_argument("Key has to be of type '" + target +
+                                    "', got type '" + actual + "'");
+      }
+      throw;
+    }
+  }
 };
 } // Namespace ScriptInterface
-#endif

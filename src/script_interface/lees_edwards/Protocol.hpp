@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_LEES_EDWARDS_PROTOCOL_HPP
-#define SCRIPT_INTERFACE_LEES_EDWARDS_PROTOCOL_HPP
+
+#pragma once
 
 #include "core/lees_edwards/lees_edwards.hpp"
 
@@ -36,5 +36,3 @@ public:
 
 } // namespace LeesEdwards
 } // namespace ScriptInterface
-
-#endif

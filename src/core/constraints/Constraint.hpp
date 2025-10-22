@@ -16,13 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CONSTRAINTS_CONSTRAINT_HPP
-#define CONSTRAINTS_CONSTRAINT_HPP
+
+#pragma once
 
 #include "Observable_stat.hpp"
-#include "Particle.hpp"
 
 #include <utils/Vector.hpp>
+
+struct Particle;
+struct ParticleForce;
 
 namespace Constraints {
 class Constraint {
@@ -58,6 +60,4 @@ public:
 
   virtual ~Constraint() = default;
 };
-} /* namespace Constraints */
-
-#endif
+} // namespace Constraints

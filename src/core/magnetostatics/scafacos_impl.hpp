@@ -19,12 +19,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_SCAFACOS_IMPL_HPP
-#define ESPRESSO_SRC_CORE_MAGNETOSTATICS_SCAFACOS_IMPL_HPP
+#pragma once
 
 #include "config/config.hpp"
 
-#ifdef SCAFACOS_DIPOLES
+#ifdef ESPRESSO_SCAFACOS_DIPOLES
 
 #include "magnetostatics/scafacos.hpp"
 
@@ -69,5 +68,4 @@ private:
   std::vector<double> fields, potentials;
 };
 
-#endif // SCAFACOS_DIPOLES
-#endif
+#endif // ESPRESSO_SCAFACOS_DIPOLES

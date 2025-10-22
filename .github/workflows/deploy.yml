@@ -2,24 +2,27 @@ name: deploy
 
 on:
   schedule:
-    - cron: '0 7 * * *'
+    - cron: '0 7 * * *' # daily at 07:00 AM
 
 permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
   deploy_docs:
-    runs-on: ubuntu-22.04
-    if: github.repository == 'espressomd/espresso'
+    runs-on: ubuntu-24.04
+    if: ${{ github.repository == 'espressomd/espresso' }}
     environment: deploy_documentation
     steps:
-      - name: Install pandoc
-        uses: r-lib/actions/setup-pandoc@v2
+      - name: Install dependencies
+        run: sudo apt-get install --no-install-recommends -y curl rsync ssh unzip make grep sed jq python3 pandoc
       - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.7.0
+        uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.GH_PAGES_SSH_PRIVATE_KEY }}
       - name: Checkout
         uses: actions/checkout@main
       - name: Deploy documentation
-        uses: ./.github/actions/deploy_docs
+        shell: sh
+        env:
+          GITLAB_READ_API: ${{ secrets.GITLAB_READ_API }}
+        run: maintainer/CI/make_gh_pages.sh

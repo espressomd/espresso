@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef RATTLE_H
-#define RATTLE_H
+
+#pragma once
 
 /** \file
  *  RATTLE algorithm (@cite andersen83a).
@@ -29,31 +29,30 @@
 
 #include "config/config.hpp"
 
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
 
+#include "BoxGeometry.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
 
-/** Transfer the current particle positions from @ref Particle::pos
- *  "Particle::pos" to @ref Particle::pos_last_time_step
- *  "Particle::pos_last_time_step"
+/**
+ * @brief Transfer the current particle positions from @ref Particle::pos
+ * to @ref Particle::pos_last_time_step.
  */
-void save_old_position(const ParticleRange &particles,
-                       const ParticleRange &ghost_particles);
+void save_old_position(ParticleRange const &particles,
+                       ParticleRange const &ghost_particles);
 
 /**
  * @brief Propagate velocity and position while using SHAKE algorithm for bond
  * constraint.
- *
- * @param cs cell structure
  */
-void correct_position_shake(CellStructure &cs);
+void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo,
+                            BondedInteractionsMap const &bonded_ias);
 
 /**
  * @brief Correction of current velocities using RATTLE algorithm.
- *
- * @param cs cell structure
  */
-void correct_velocity_shake(CellStructure &cs);
+void correct_velocity_shake(CellStructure &cs, BoxGeometry const &box_geo,
+                            BondedInteractionsMap const &bonded_ias);
 
-#endif
 #endif

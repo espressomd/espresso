@@ -17,7 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
 import sys
+import time
 import subprocess
 
 import defines
@@ -71,39 +73,46 @@ def check_myconfig(compiler, feature_file, cmakedefine_file,
     try:
         Defines = defines.Defines
         external_features = Defines(compiler).defines(cmake_config)
-        external_defs = ['-D' + s for s in external_features]
+        external_defs = ['-DESPRESSO_' + s for s in external_features]
+        # gracefully handle file system latency by waiting on file creation
+        wait_time = 0.01
+        for _ in range(8):
+            time.sleep(wait_time)
+            wait_time *= 2.
+            if os.path.exists(myconfig):
+                break
         my_features = Defines(compiler, flags=external_defs).defines(myconfig)
     except subprocess.CalledProcessError as ex:
-        message = ex.output.decode("utf-8").split("\n")[0].strip()
-        raise RuntimeError(
-            f"Command `{' '.join(ex.cmd)}` returned non-zero exit code "
-            f"{ex.returncode}, output: {message}.")
+        exception = RuntimeError(
+            f"Command `{subprocess.list2cmdline(ex.cmd)}` returned non-zero "
+            f"exit status {ex.returncode}.")
+        diagnostic = ex.output.decode("utf-8").split("\n")[0].strip()
+        exception.add_note(f"compiler output: {diagnostic}")
+        raise exception
 
     defs = featuredefs.defs(feature_file)
     cmakedefs = featuredefs.cmakedefs(cmakedefine_file)
-    error_queue = []
+    exceptions = []
 
     for e in defs.externals - cmakedefs.externals:
-        error_queue.append(
-            f"- cmakedefine '{e}' is missing from '{cmakedefine_file}'")
+        exceptions.append(RuntimeError(
+            f"- cmakedefine '{e}' is missing from '{cmakedefine_file}'"))
     for e in cmakedefs.externals - defs.externals:
-        error_queue.append(
-            f"- external feature '{e}' is missing from '{feature_file}'")
+        exceptions.append(RuntimeError(
+            f"- external feature '{e}' is missing from '{feature_file}'"))
 
     for e in (my_features & defs.externals):
         my_features.remove(e)
-        error_queue.append(
-            f"- external feature '{e}' cannot be defined in myconfig")
+        exceptions.append(RuntimeError(
+            f"- external feature '{e}' cannot be defined in myconfig"))
 
     for u in (my_features - defs.features):
         if u.startswith('__'):
             continue
-        error_queue.append(handle_unknown(u, defs.features))
+        exceptions.append(RuntimeError(handle_unknown(u, defs.features)))
 
-    if error_queue:
-        error_report = "\n".join(error_queue)
-        raise RuntimeError(
-            f"There were errors in '{myconfig}':\n{error_report}")
+    if exceptions:
+        raise ExceptionGroup(f"There were errors in '{myconfig}'", exceptions)
 
 
 if __name__ == "__main__":

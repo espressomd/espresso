@@ -18,7 +18,5 @@
 #
 
 if(ESPRESSO_BUILD_WITH_HDF5)
-  target_sources(
-    espresso_script_interface PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/initialize.cpp
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/h5md.cpp)
+  target_sources(espresso_script_interface PRIVATE initialize.cpp h5md.cpp)
 endif()

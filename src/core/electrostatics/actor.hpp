@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,20 +16,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_ACTOR_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_ACTOR_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
+
+#include "system/Leaf.hpp"
 
 #include <stdexcept>
 
 namespace Coulomb {
 
-void check_charge_neutrality(double excess_ratio);
+/** @brief Check if the system is charge-neutral. */
+void check_charge_neutrality(System::System const &system,
+                             double relative_tolerance);
 
-template <typename Class> class Actor {
+template <typename Class> class Actor : public System::Leaf<Actor<Class>> {
+private:
+  Actor() = default;
+  friend Class;
+
 public:
   static auto constexpr charge_neutrality_tolerance_default = 2e-12;
   /**
@@ -51,12 +59,12 @@ public:
 
   void sanity_checks_charge_neutrality() const {
     if (charge_neutrality_tolerance != -1.) {
-      Coulomb::check_charge_neutrality(charge_neutrality_tolerance);
+      check_charge_neutrality(System::Leaf<Actor<Class>>::get_system(),
+                              charge_neutrality_tolerance);
     }
   }
 };
 
 } // namespace Coulomb
 
-#endif // ELECTROSTATICS
-#endif
+#endif // ESPRESSO_ELECTROSTATICS

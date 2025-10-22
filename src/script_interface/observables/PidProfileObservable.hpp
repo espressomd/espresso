@@ -30,8 +30,7 @@
 #include "core/observables/ForceDensityProfile.hpp"
 #include "core/observables/PidProfileObservable.hpp"
 
-#include <boost/range/algorithm.hpp>
-
+#include <algorithm>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -80,19 +79,21 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    m_observable =
-        make_shared_from_args<CoreObs, std::vector<int>, int, int, int, double,
-                              double, double, double, double, double>(
-            params, "ids", "n_x_bins", "n_y_bins", "n_z_bins", "min_x", "max_x",
-            "min_y", "max_y", "min_z", "max_z");
+    ObjectHandle::context()->parallel_try_catch([&]() {
+      m_observable =
+          make_shared_from_args<CoreObs, std::vector<int>, int, int, int,
+                                double, double, double, double, double, double>(
+              params, "ids", "n_x_bins", "n_y_bins", "n_z_bins", "min_x",
+              "max_x", "min_y", "max_y", "min_z", "max_z");
+    });
   }
 
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
     if (method == "edges") {
       std::vector<Variant> variant_edges;
-      boost::copy(pid_profile_observable()->edges(),
-                  std::back_inserter(variant_edges));
+      std::ranges::copy(pid_profile_observable()->edges(),
+                        std::back_inserter(variant_edges));
       return variant_edges;
     }
     return Base::do_call_method(method, parameters);

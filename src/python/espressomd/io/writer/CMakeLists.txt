@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2022 The ESPResSo project
+# Copyright (C) 2016-2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,6 +17,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-configure_file(__init__.py __init__.py COPYONLY)
-configure_file(vtf.py vtf.py COPYONLY)
-configure_file(h5md.py h5md.py COPYONLY)
+espresso_target_resources(espressomd __init__.py vtf.py h5md.py)

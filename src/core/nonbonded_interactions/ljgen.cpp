@@ -24,19 +24,19 @@
  */
 #include "ljgen.hpp"
 
-#ifdef LENNARD_JONES_GENERIC
+#ifdef ESPRESSO_LENNARD_JONES_GENERIC
 #include "nonbonded_interaction_data.hpp"
 
 #include <stdexcept>
 
 LJGen_Parameters::LJGen_Parameters(double epsilon, double sigma, double cutoff,
                                    double shift, double offset,
-#ifdef LJGEN_SOFTCORE
+#ifdef ESPRESSO_LJGEN_SOFTCORE
                                    double lam, double delta,
 #endif
                                    double e1, double e2, double b1, double b2)
     : eps{epsilon}, sig{sigma}, cut{cutoff}, shift{shift}, offset{offset},
-#ifdef LJGEN_SOFTCORE
+#ifdef ESPRESSO_LJGEN_SOFTCORE
       lambda{lam}, softrad{delta},
 #endif
       a1{e1}, a2{e2}, b1{b1}, b2{b2} {
@@ -49,7 +49,7 @@ LJGen_Parameters::LJGen_Parameters(double epsilon, double sigma, double cutoff,
   if (cutoff < 0.) {
     throw std::domain_error("Generic LJ parameter 'cutoff' has to be >= 0");
   }
-#ifdef LJGEN_SOFTCORE
+#ifdef ESPRESSO_LJGEN_SOFTCORE
   if (delta < 0.) {
     throw std::domain_error("Generic LJ parameter 'delta' has to be >= 0");
   }
@@ -57,7 +57,7 @@ LJGen_Parameters::LJGen_Parameters(double epsilon, double sigma, double cutoff,
     throw std::domain_error(
         "Generic LJ parameter 'lam' has to be in the range [0, 1]");
   }
-#endif // LJGEN_SOFTCORE
+#endif // ESPRESSO_LJGEN_SOFTCORE
 }
 
-#endif // LENNARD_JONES_GENERIC
+#endif // ESPRESSO_LENNARD_JONES_GENERIC

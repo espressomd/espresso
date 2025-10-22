@@ -18,7 +18,7 @@
 #
 
 """
-Write ESPResSo trajectories in the H5MD format. See :ref:`Writing H5MD-files`.
+Write ESPResSo trajectories in the H5MD format. See :ref:`Writing hdf5 files`.
 """
 
 import espressomd

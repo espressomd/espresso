@@ -19,31 +19,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_GALILEI_GALILEI_HPP
-#define ESPRESSO_SRC_CORE_GALILEI_GALILEI_HPP
+#pragma once
+
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
 class Galilei {
 public:
   /** Stop particle motion by setting the velocity of each particle to zero.
+   *  @param system the system to modify
    *  @param omega  if true, also set particle angular velocities to zero
    */
-  void kill_particle_motion(bool omega) const;
+  void kill_particle_motion(System::System &system, bool omega) const;
 
   /** Set all the forces acting on the particles to zero.
+   *  @param system  the system to modify
    *  @param torque  if true, also set particle torques to zero
    */
-  void kill_particle_forces(bool torque) const;
+  void kill_particle_forces(System::System &system, bool torque) const;
 
   /** Calculate the CMS of the system */
-  Utils::Vector3d calc_system_cms_position() const;
+  Utils::Vector3d calc_system_cms_position(System::System const &system) const;
 
   /** Calculate the CMS velocity of the system */
-  Utils::Vector3d calc_system_cms_velocity() const;
+  Utils::Vector3d calc_system_cms_velocity(System::System const &system) const;
 
   /** Remove the CMS velocity */
-  void galilei_transform() const;
+  void galilei_transform(System::System &system) const;
 };
-
-#endif

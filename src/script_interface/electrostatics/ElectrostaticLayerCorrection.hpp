@@ -17,12 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_ELC_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_ELC_HPP
+#pragma once
 
 #include "config/config.hpp"
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
 
 #include "Actor.hpp"
 
@@ -32,10 +31,9 @@
 
 #include "script_interface/get_value.hpp"
 
-#include "boost/variant.hpp"
-
 #include <memory>
 #include <string>
+#include <variant>
 
 namespace ScriptInterface {
 namespace Coulomb {
@@ -44,12 +42,17 @@ class ElectrostaticLayerCorrection
     : public Actor<ElectrostaticLayerCorrection,
                    ::ElectrostaticLayerCorrection> {
 
-  using BaseSolver = boost::variant<
-#ifdef CUDA
-      std::shared_ptr<CoulombP3MGPU>,
-#endif // CUDA
-      std::shared_ptr<CoulombP3M>>;
+  using BaseSolver = std::variant<
+#ifdef ESPRESSO_CUDA
+      std::shared_ptr<CoulombP3M<Arch::GPU>>,
+#endif // ESPRESSO_CUDA
+      std::shared_ptr<CoulombP3M<Arch::CPU>>>;
   BaseSolver m_solver;
+
+  void on_bind_system(::System::System &) override {
+    std::visit([this](auto &solver) { solver->bind_system(m_system.lock()); },
+               m_solver);
+  }
 
 public:
   ElectrostaticLayerCorrection() {
@@ -72,8 +75,8 @@ public:
          [this]() { return actor()->elc.pot_diff; }},
         {"actor", AutoParameter::read_only,
          [this]() {
-           return boost::apply_visitor(
-               [](auto &solver) { return Variant{solver}; }, m_solver);
+           return std::visit([](auto &solver) { return Variant{solver}; },
+                             m_solver);
          }},
     });
   }
@@ -82,20 +85,21 @@ public:
     ::ElectrostaticLayerCorrection::BaseSolver solver;
     auto so_ptr = get_value<ObjectRef>(params, "actor");
     context()->parallel_try_catch([&]() {
-#ifdef CUDA
-      if (auto so_solver = std::dynamic_pointer_cast<CoulombP3MGPU>(so_ptr)) {
-        solver = so_solver->actor();
-        m_solver = so_solver;
-      } else
-#endif // CUDA
-        if (auto so_solver = std::dynamic_pointer_cast<CoulombP3M>(so_ptr)) {
-          solver = so_solver->actor();
-          m_solver = so_solver;
-        } else {
-          throw std::invalid_argument("Parameter 'actor' of type " +
-                                      so_ptr->name().to_string() +
-                                      " isn't supported by ELC");
-        }
+#ifdef ESPRESSO_CUDA
+      if (auto so = std::dynamic_pointer_cast<CoulombP3M<Arch::GPU>>(so_ptr)) {
+        solver = so->actor();
+        m_solver = so;
+        return;
+      }
+#endif // ESPRESSO_CUDA
+      if (auto so = std::dynamic_pointer_cast<CoulombP3M<Arch::CPU>>(so_ptr)) {
+        solver = so->actor();
+        m_solver = so;
+        return;
+      }
+      throw std::invalid_argument("Parameter 'actor' of type " +
+                                  std::string{so_ptr->name()} +
+                                  " isn't supported by ELC");
     });
     context()->parallel_try_catch([&]() {
       auto elc = elc_data{get_value<double>(params, "maxPWerror"),
@@ -116,5 +120,4 @@ public:
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // P3M
-#endif
+#endif // ESPRESSO_P3M

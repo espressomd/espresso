@@ -27,7 +27,7 @@
 #include "script_interface/ScriptInterface.hpp"
 
 #include "Observable.hpp"
-#ifdef DPD
+#ifdef ESPRESSO_DPD
 #include "core/observables/DPDStress.hpp"
 #endif
 #include "core/observables/EnergyObservable.hpp"
@@ -66,7 +66,7 @@ NEW_PARAMLESS_OBSERVABLE(Energy)
 NEW_PARAMLESS_OBSERVABLE(Pressure)
 NEW_PARAMLESS_OBSERVABLE(PressureTensor)
 NEW_PARAMLESS_OBSERVABLE(LBFluidPressureTensor)
-#ifdef DPD
+#ifdef ESPRESSO_DPD
 NEW_PARAMLESS_OBSERVABLE(DPDStress)
 #endif
 

@@ -23,11 +23,8 @@
 
 #include "config/config.hpp"
 
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/index.hpp>
 
 #include <boost/mpi/collectives/reduce.hpp>
@@ -35,53 +32,54 @@
 #include <cassert>
 #include <cstddef>
 #include <functional>
+#include <span>
 #include <vector>
 
-inline std::size_t max_non_bonded_pairs() {
-  auto const n = static_cast<std::size_t>(max_seen_particle_type);
-  return (n * (n + 1)) / 2;
-}
-
-Observable_stat::Observable_stat(std::size_t chunk_size)
-    : m_chunk_size(chunk_size) {
+Observable_stat::Observable_stat(std::size_t chunk_size, std::size_t n_bonded,
+                                 int max_type)
+    : m_data{}, m_chunk_size{chunk_size} {
   // number of chunks for different interaction types
   constexpr std::size_t n_coulomb = 2;
   constexpr std::size_t n_dipolar = 2;
-#ifdef VIRTUAL_SITES
+#ifdef ESPRESSO_VIRTUAL_SITES
   constexpr std::size_t n_vs = 1;
 #else
   constexpr std::size_t n_vs = 0;
 #endif
-  auto const n_bonded = bonded_ia_params.get_next_key();
-  auto const n_non_bonded = max_non_bonded_pairs();
-  constexpr std::size_t n_ext_fields = 1; // reduction over all fields
-  constexpr std::size_t n_kinetic = 1; // linear+angular kinetic contributions
+#ifdef ESPRESSO_DPD
+  constexpr std::size_t n_dpd = 1;
+#else
+  constexpr std::size_t n_dpd = 0;
+#endif
+  auto const n_non_bonded = get_non_bonded_offset(max_type, max_type) + 1ul;
+  constexpr std::size_t n_ext_fields = 1;  // reduction over all fields
+  constexpr std::size_t n_kinetic_lin = 1; // linear kinetic contribution
+  constexpr std::size_t n_kinetic_rot = 1; // angular kinetic contribution
 
-  auto const n_elements = n_kinetic + n_bonded + 2 * n_non_bonded + n_coulomb +
-                          n_dipolar + n_vs + n_ext_fields;
+  auto const n_elements = n_kinetic_lin + n_kinetic_rot + n_bonded +
+                          2ul * n_non_bonded + n_coulomb + n_dipolar + n_vs +
+                          n_ext_fields + n_dpd;
   m_data = std::vector<double>(m_chunk_size * n_elements);
 
   // spans for the different contributions
-  kinetic = Utils::Span<double>(m_data.data(), m_chunk_size);
-  bonded = Utils::Span<double>(kinetic.end(), n_bonded * m_chunk_size);
-  coulomb = Utils::Span<double>(bonded.end(), n_coulomb * m_chunk_size);
-  dipolar = Utils::Span<double>(coulomb.end(), n_dipolar * m_chunk_size);
-  virtual_sites = Utils::Span<double>(dipolar.end(), n_vs * m_chunk_size);
-  external_fields =
-      Utils::Span<double>(virtual_sites.end(), n_ext_fields * m_chunk_size);
+  kinetic_lin = std::span<double>(m_data.data(), m_chunk_size);
+  kinetic_rot = std::span<double>(kinetic_lin.end(), m_chunk_size);
+  bonded = std::span<double>(kinetic_rot.end(), n_bonded * m_chunk_size);
+  coulomb = std::span<double>(bonded.end(), n_coulomb * m_chunk_size);
+  dipolar = std::span<double>(coulomb.end(), n_dipolar * m_chunk_size);
+  virtual_sites = std::span<double>(dipolar.end(), n_vs * m_chunk_size);
+  dpd = std::span<double>(virtual_sites.end(), n_dpd * m_chunk_size);
+  external_fields = std::span<double>(dpd.end(), n_ext_fields * m_chunk_size);
   non_bonded_intra =
-      Utils::Span<double>(external_fields.end(), n_non_bonded * m_chunk_size);
+      std::span<double>(external_fields.end(), n_non_bonded * m_chunk_size);
   non_bonded_inter =
-      Utils::Span<double>(non_bonded_intra.end(), n_non_bonded * m_chunk_size);
-  assert(non_bonded_inter.end() == (m_data.data() + m_data.size()));
+      std::span<double>(non_bonded_intra.end(), n_non_bonded * m_chunk_size);
+  assert(&*non_bonded_inter.end() == (m_data.data() + m_data.size()));
 }
 
-Utils::Span<double>
-Observable_stat::non_bonded_contribution(Utils::Span<double> base_pointer,
-                                         int type1, int type2) const {
-  auto const offset = static_cast<std::size_t>(Utils::upper_triangular(
-      std::min(type1, type2), std::max(type1, type2), max_seen_particle_type));
-  return {base_pointer.begin() + offset * m_chunk_size, m_chunk_size};
+std::size_t Observable_stat::get_non_bonded_offset(int type1, int type2) const {
+  return static_cast<std::size_t>(
+      Utils::lower_triangular(std::max(type1, type2), std::min(type1, type2)));
 }
 
 void Observable_stat::mpi_reduce() {

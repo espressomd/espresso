@@ -22,6 +22,8 @@ import unittest as ut
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.interactions
+import espressomd.script_interface
+import espressomd.code_info
 
 
 class SphereWithProperties(espressomd.shapes.Sphere):
@@ -100,9 +102,44 @@ class ScriptInterface(ut.TestCase):
         with self.assertRaisesRegex(AttributeError, "Object 'HarmonicBond' has no attribute 'unknown'"):
             bond.unknown
 
+    def test_objectlist_exceptions(self):
+        """Check ObjectList framework"""
+        constraint = espressomd.constraints.Gravity(g=[0., 0., 1.])
+        constraints = espressomd.constraints.Constraints()
+        self.assertEqual(len(constraints), 0)
+        constraints.add(constraint)
+        self.assertEqual(len(constraints), 1)
+        with self.assertRaisesRegex(RuntimeError, "This object is already present in the list"):
+            constraints.add(constraint)
+        self.assertEqual(len(constraints), 1)
+        constraints.remove(constraint)
+        self.assertEqual(len(constraints), 0)
+        with self.assertRaisesRegex(RuntimeError, "This object is absent from the list"):
+            constraints.remove(constraint)
+
+    def test_feature_exceptions(self):
+        """Check feature verification"""
+        all_features = set(espressomd.code_info.all_features())
+        active_features = set(espressomd.code_info.features())
+        missing_features = sorted(list(all_features - active_features))
+
+        class Unknown(espressomd.script_interface.ScriptInterfaceHelper):
+            _so_features = ("UNKNOWN",)
+
+        class Missing(espressomd.script_interface.ScriptInterfaceHelper):
+            _so_features = missing_features
+
+        with self.assertRaisesRegex(RuntimeError, "Unknown feature 'UNKNOWN'"):
+            Unknown()
+
+        if missing_features:
+            with self.assertRaisesRegex(RuntimeError, f"Missing features {', '.join(missing_features)}"):
+                Missing()
+
     def test_variant_exceptions(self):
-        """Check AutoParameters framework"""
-        constraint = espressomd.constraints.ShapeBasedConstraint()
+        """Check variant conversion"""
+        wall = espressomd.shapes.Wall(normal=[-1, 0, 0])
+        constraint = espressomd.constraints.ShapeBasedConstraint(shape=wall)
         # check conversion of unsupported types
         err_msg = "No conversion from type 'module' to 'Variant'"
         with self.assertRaisesRegex(TypeError, err_msg):
@@ -124,6 +161,8 @@ class ScriptInterface(ut.TestCase):
             constraint.shape = None
         with self.assertRaisesRegex(RuntimeError, error_msg.format("std::(__1::)?shared_ptr<ScriptInterface::ObjectHandle>")):
             constraint.shape = constraint
+        # check the original object was preserved
+        self.assertEqual(constraint.shape, wall)
 
     def test_compare(self):
         """Check that script interface objects are equality comparable"""

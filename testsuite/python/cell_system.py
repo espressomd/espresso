@@ -44,6 +44,19 @@ class CellSystem(ut.TestCase):
             params_out = self.system.cell_system.get_state()
             tests_common.assert_params_match(self, params_in, params_out)
 
+    def test_interface(self):
+        self.system.cell_system.set_regular_decomposition()
+        for value in [True, False]:
+            self.system.cell_system.use_verlet_lists = value
+            self.assertEqual(self.system.cell_system.use_verlet_lists, value)
+        for value in [0.1, 0.]:
+            self.system.cell_system.skin = value
+            self.assertEqual(self.system.cell_system.skin, value)
+        for key in ["decomposition_type", "n_square_types", "cutoff_regular",
+                    "max_cut_nonbonded", "max_cut_bonded", "interaction_range"]:
+            with self.assertRaisesRegex(RuntimeError, f"Parameter '{key}' is read-only"):
+                setattr(self.system.cell_system, key, None)
+
     @ut.skipIf(n_nodes == 1, "Skipping test: only runs for n_nodes >= 2")
     def check_node_grid(self):
         system = self.system

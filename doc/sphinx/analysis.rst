@@ -86,7 +86,7 @@ For example, ::
 .. _Particles in the neighborhood:
 
 Particles in the neighborhood
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :meth:`espressomd.analyze.Analysis.nbhood`
 
@@ -94,6 +94,22 @@ Returns a list of the ids of particles that fall within a given radius of a targ
 For example, ::
 
     ids = system.analysis.nbhood(pos=system.box_l * 0.5, r_catch=5.0)
+
+.. _Particles environment descriptors:
+
+Particles environment descriptors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:meth:`espressomd.analyze.Analysis.particle_neighbor_pids`
+
+Returns for each particle in the system a list of all neighboring particles
+that are within interaction range. For example, ::
+
+    neighborhood_dict = system.analysis.particle_neighbor_pids()
+
+From this dictionary one can extract descriptors of the environment around
+each particle. These descriptors can be used to calculate forces with
+machine-learned potentials.
 
 .. _Particle distribution:
 
@@ -115,7 +131,6 @@ Two arrays are returned corresponding to the normalized distribution and the bin
     ...     system.part.add(pos=i * system.box_l, type=0)
     >>> bins, count = system.analysis.distribution(type_list_a=[0], type_list_b=[0],
     ...                                            r_min=0.0, r_max=10.0, r_bins=10)
-    >>>
     >>> print(bins)
     [ 0.5  1.5  2.5  3.5  4.5  5.5  6.5  7.5  8.5  9.5]
     >>> print(count)
@@ -251,65 +266,45 @@ Chains
 ~~~~~~
 
 All analysis functions in this section require the topology of the chains to be set correctly.
-The above set of functions is designed to facilitate analysis of molecules.
-Molecules are expected to be a group of particles comprising a contiguous range of particle IDs.
-Each molecule is a set of consecutively numbered particles and all molecules are supposed to consist of the same number of particles.
+A chain needs to be set up with a contiguous range of particle IDs, and the
+head resp. tail particle must be have the first resp. last id in the range.
+For chain observables that rely on connectivity information, the chain topology
+must be linear, i.e. particle :math:`n` is connected to :math:`n+1` and so on.
+Each chain is a set of consecutively numbered particles and all chains are
+supposed to consist of the same number of particles.
 
-Some functions in this group require that the particles constituting a molecule are connected into
-linear chains (particle :math:`n` is connected to :math:`n+1` and so on)
-while others are applicable to molecules of whatever topology.
+The particles :attr:`~espressomd.particle_data.ParticleHandle.image_box`
+values must also be consistent, since these observables are calculated using
+*unfolded coordinates*. For example, if all particles were to be inserted in
+the central box except for the tail particle, which would be e.g. inserted in
+the fourth periodic image, the end-to-end distance and radius of gyration
+would be quite large, even if the tail particle is in close proximity to the
+penultimate particle in *folded coordinates*, because the last inter-particle
+distance would be evaluated as being 4 times the box length plus the bond
+length. Particles *can* have different ``image_box`` values, for example
+in a chain with equilibrium bond length 2, if the penultimate particle is at
+``[box_l - 1, 0, 0]`` and the tail particle at ``[box_l + 1, 0, 0]``, their
+inter-particle distance would be evaluated as 2 and the observables would
+be correctly calculated. This can lead to counter-intuitive behavior when
+chains are longer than half the box size in a fully periodic system. As an
+example, consider the end-to-end distance of a linear polymer growing on
+the x-axis. While :meth:`espressomd.system.System.distance()` would feature
+a triangle wave with a period equal to the box length in the x-direction,
+:meth:`espressomd.analyze.Analysis.calc_re` would be monotonically increasing,
+assuming the ``image_box`` values were properly set up. This is important to
+consider when setting up systems where the polymers are much longer than the
+box length, which is common when simulating polymer melts.
 
+.. _Available chain analysis functions:
 
-.. _End to end distance:
+Available chain analysis functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-End-to-end distance
-^^^^^^^^^^^^^^^^^^^
-:meth:`espressomd.analyze.Analysis.calc_re`
+* :meth:`espressomd.analyze.Analysis.calc_re`: average end-to-end-distance
 
-Returns the quadratic end-to-end-distance and its root averaged over all chains.
+* :meth:`espressomd.analyze.Analysis.calc_rg`: average radius of gyration
 
-.. _Radius of gyration:
-
-Radius of gyration
-^^^^^^^^^^^^^^^^^^
-:meth:`espressomd.analyze.Analysis.calc_rg`
-
-Returns the radius of gyration averaged over all chains.
-It is a radius of a sphere, which would have the same moment of inertia as the
-molecule, defined as
-
-.. math::
-
-   \label{eq:Rg}
-   R_{\mathrm G}^2 = \frac{1}{N} \sum\limits_{i=1}^{N} \left(\vec r_i - \vec r_{\mathrm{cm}}\right)^2\,,
-
-where :math:`\vec r_i` are position vectors of individual particles
-constituting a molecule and :math:`\vec r_{\mathrm{cm}}` is the position
-vector of its center of mass. The sum runs over all :math:`N` particles
-comprising the molecule. For more information see any polymer science
-book, e.g. :cite:`rubinstein03a`.
-
-
-.. _Hydrodynamic radius:
-
-Hydrodynamic radius
-^^^^^^^^^^^^^^^^^^^
-:meth:`espressomd.analyze.Analysis.calc_rh`
-
-Returns the hydrodynamic radius averaged over all chains.
-The following formula is used for the computation:
-
-.. math::
-
-   \label{eq:Rh}
-   \frac{1}{R_{\mathrm H}} = \frac{2}{N(N-1)} \sum\limits_{i=1}^{N} \sum\limits_{j<i}^{N} \frac{1}{|\vec r_i - \vec r_j|}\,,
-
-The above-mentioned formula is only valid under certain assumptions.
-For more information, see chapter 4 and equation 4.102 in :cite:`doi86a`.
-Note that the hydrodynamic radius is sometimes defined in a similar fashion
-but with a denominator of :math:`N^2` instead of :math:`N(N-1)` in the prefactor.
-Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give
-numerically different values for finite polymers.
+* :meth:`espressomd.analyze.Analysis.calc_rh`: average hydrodynamic radius
 
 
 .. _Observables framework:
@@ -488,6 +483,8 @@ documentation for all available observables in :mod:`espressomd.observables`.
 
    - :class:`~espressomd.observables.RDF`: Radial distribution function. Can be used on two different sets of particles.
 
+   - :class:`~espressomd.observables.PairwiseDistances`: Distance matrix between two sets of particles.
+
 - Profile observables sampling the spatial profile of various quantities:
    - :class:`~espressomd.observables.DensityProfile`
 
@@ -575,6 +572,42 @@ In order to calculate the running mean and variance of an observable,
     system.integrator.run(10)
     print(accumulator.mean())
     print(accumulator.variance())
+
+In the example above the automatic update of the accumulator is used. However,
+it's also possible to manually update the accumulator by calling
+:meth:`espressomd.accumulators.MeanVarianceCalculator.update`.
+
+.. _Contact times:
+
+Contact times
+^^^^^^^^^^^^^
+
+The contact time of particle pairs can be recorded with
+:class:`espressomd.accumulators.ContactTimes`::
+
+    import espressomd
+    import espressomd.accumulators
+    import espressomd.observables
+    import numpy as np
+
+    system = espressomd.System(box_l=[10., 10., 10.])
+    system.time_step = 0.01
+    system.cell_system.skin = 1.
+    rng = np.random.default_rng(42)
+    system.part.add(pos=rng.random((10, 3)) * 10.)
+    ids = np.copy(system.part.all().id)
+    system.non_bonded_inter[0, 0].wca.set_params(epsilon=1., sigma=1.)
+    system.integrator.set_steepest_descent(f_max=0.05, gamma=1., max_displacement=0.01)
+    system.integrator.run(1000)
+    system.integrator.set_vv()
+    system.thermostat.set_langevin(kT=1., gamma=1., seed=42)
+
+    obs = espressomd.observables.PairwiseDistances(ids=ids, target_ids=ids)
+    acc = espressomd.accumulators.ContactTimes(obs=obs, contact_threshold=1.)
+    system.auto_update_accumulators.add(acc)
+    system.integrator.run(5000)
+    contact_times = acc.contact_times()
+    print(f"The contact times are {contact_times}")
 
 In the example above the automatic update of the accumulator is used. However,
 it's also possible to manually update the accumulator by calling
@@ -792,7 +825,7 @@ To obtain the cluster structure of a system, an instance of
 To to create a cluster structure with above criterion::
 
     import espressomd.cluster_analysis
-    cs = espressomd.cluster_analysis.ClusterStructure(distance_criterion=dc)
+    cs = espressomd.cluster_analysis.ClusterStructure(distance_criterion=dc, system=system)
 
 In most cases, the cluster analysis is carried out by calling the
 :any:`espressomd.cluster_analysis.ClusterStructure.run_for_all_pairs` method.

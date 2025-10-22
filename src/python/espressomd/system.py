@@ -20,8 +20,8 @@
 import numpy as np
 import collections
 
+# pylint: disable=unused-import
 from . import accumulators
-from . import actors
 from . import analyze
 from . import bond_breakage
 from . import cell_system
@@ -29,50 +29,18 @@ from . import cuda_init
 from . import collision_detection
 from . import comfixed
 from . import constraints
-from . import ekboundaries
+from . import electrostatics
+from . import magnetostatics
 from . import galilei
 from . import interactions
 from . import integrate
-from . import lbboundaries
 from . import lees_edwards
 from . import particle_data
 from . import thermostat
-from . import virtual_sites
+# pylint: enable=unused-import
 
 from .code_features import has_features, assert_features
-from . import utils
-
 from .script_interface import script_interface_register, ScriptInterfaceHelper
-
-
-@script_interface_register
-class _Globals(ScriptInterfaceHelper):
-    """
-    Wrapper class required for technical reasons only.
-
-    When reloading from a checkpoint file, the box length, periodicity, and
-    global cutoff must be set before anything else. Due to how pickling works,
-    this can only be achieved by encapsulating them in a member object of the
-    System class, and adding that object as the first element of the ordered
-    dict that is used during serialization. When the System class is reloaded,
-    the ordered dict is walked through and objects are deserialized in the same
-    order. Since many objects depend on the box length, the `_Globals` has
-    to be deserialized first. This guarantees the box geometry is already set
-    in the core before e.g. particles and bonds are deserialized.
-
-    """
-    _so_name = "System::Globals"
-    _so_creation_policy = "GLOBAL"
-
-    def __setattr__(self, attr, value):
-        if attr == "periodicity":
-            utils.check_type_or_throw_except(
-                value, 3, bool, "Attribute 'periodicity' must be a list of 3 bools")
-        if attr == "box_l":
-            utils.check_type_or_throw_except(
-                value, 3, float, "Attribute 'box_l' must be a list of 3 floats")
-        super().__setattr__(attr, value)
-        utils.handle_errors(f"while assigning system parameter '{attr}'")
 
 
 @script_interface_register
@@ -82,7 +50,6 @@ class System(ScriptInterfaceHelper):
 
     Attributes
     ----------
-    actors: :class:`espressomd.actors.Actors`
     analysis: :class:`espressomd.analyze.Analysis`
     auto_update_accumulators: :class:`espressomd.accumulators.AutoUpdateAccumulators`
     bond_breakage: :class:`espressomd.bond_breakage.BreakageSpecs`
@@ -92,14 +59,19 @@ class System(ScriptInterfaceHelper):
     comfixed: :class:`espressomd.comfixed.ComFixed`
     constraints: :class:`espressomd.constraints.Constraints`
     cuda_init_handle: :class:`espressomd.cuda_init.CudaInitHandle`
-    ekboundaries: :class:`espressomd.ekboundaries.EKBoundaries`
     galilei: :class:`espressomd.galilei.GalileiTransform`
     integrator: :class:`espressomd.integrate.IntegratorHandle`
-    lbboundaries: :class:`espressomd.lbboundaries.LBBoundaries`
     lees_edwards: :class:`espressomd.lees_edwards.LeesEdwards`
     non_bonded_inter: :class:`espressomd.interactions.NonBondedInteractions`
     part: :class:`espressomd.particle_data.ParticleList`
     thermostat: :class:`espressomd.thermostat.Thermostat`
+    box_l: (3,) array_like of :obj:`float`
+        Dimensions of the simulation box.
+    periodicity: (3,) array_like of :obj:`bool`
+        System periodicity in ``[x, y, z]``, ``False`` for no periodicity
+        in this direction, ``True`` for periodicity
+    min_global_cut : :obj:`float`
+        Minimal interaction cutoff.
 
     Methods
     -------
@@ -159,71 +131,30 @@ class System(ScriptInterfaceHelper):
         "number_of_particles",
         "rotate_system")
 
-    def __getattr__(self, attr):
-        if attr in self.__dict__.get("_globals_parameters", []):
-            return self._globals.__getattr__(attr)
-        else:
-            return super().__getattr__(attr)
-
-    def __setattr__(self, attr, value):
-        if attr in self.__dict__.get("_globals_parameters", []):
-            self._globals.__setattr__(attr, value)
-        else:
-            super().__setattr__(attr, value)
-
     def __init__(self, **kwargs):
         if "sip" in kwargs:
             super().__init__(**kwargs)
-            return
-        super().__init__()
+            self._setup_atexit()
+        else:
+            super().__init__(_regular_constructor=True, **kwargs)
+            if has_features("CUDA"):
+                self.cuda_init_handle = cuda_init.CudaInitHandle()
+            if has_features("WALBERLA"):
+                self._lb = None
+                self._ekcontainer = None
 
-        if self.call_method("is_system_created"):
-            raise RuntimeError(
-                "You can only have one instance of the system class at a time.")
-        if "box_l" not in kwargs:
-            raise ValueError("Required argument 'box_l' not provided.")
+            # lock class
+            self.call_method("lock_system_creation")
+            self._setup_atexit()
 
-        setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
-                              "time_step", "force_cap", "max_oif_objects"]
-        if has_features("VIRTUAL_SITES"):
-            setable_properties.append("_active_virtual_sites_handle")
+        self._ase_interface = None
 
-        self._globals = _Globals()
-        self._globals_parameters = self._globals._valid_parameters()
-        self.integrator = integrate.IntegratorHandle()
-        self.box_l = kwargs.pop("box_l")
-        for arg in kwargs:
-            if arg not in setable_properties:
-                raise ValueError(
-                    f"Property '{arg}' can not be set via argument to System class.")
-            System.__setattr__(self, arg, kwargs.get(arg))
-        self.actors = actors.Actors()
-        self.analysis = analyze.Analysis()
-        self.auto_update_accumulators = accumulators.AutoUpdateAccumulators()
-        self.bonded_inter = interactions.BondedInteractions()
-        self.cell_system = cell_system.CellSystem()
-        self.bond_breakage = bond_breakage.BreakageSpecs()
-        if has_features("COLLISION_DETECTION"):
-            self.collision_detection = collision_detection.CollisionDetection(
-                mode="off")
-        self.comfixed = comfixed.ComFixed()
-        self.constraints = constraints.Constraints()
-        if has_features("CUDA"):
-            self.cuda_init_handle = cuda_init.CudaInitHandle()
-        self.galilei = galilei.GalileiTransform()
-        if has_features("LB_BOUNDARIES") or has_features("LB_BOUNDARIES_GPU"):
-            self.lbboundaries = lbboundaries.LBBoundaries()
-            self.ekboundaries = ekboundaries.EKBoundaries()
-        self.lees_edwards = lees_edwards.LeesEdwards()
-        self.non_bonded_inter = interactions.NonBondedInteractions()
-        self.part = particle_data.ParticleList()
-        self.thermostat = thermostat.Thermostat()
-        if has_features("VIRTUAL_SITES"):
-            self._active_virtual_sites_handle = virtual_sites.ActiveVirtualSitesHandle(
-                implementation=virtual_sites.VirtualSitesOff())
+    def _setup_atexit(self):
+        import atexit
 
-        # lock class
-        self.call_method("lock_system_creation")
+        def session_shutdown():
+            self.call_method("session_shutdown")
+        atexit.register(session_shutdown)
 
     def __reduce__(self):
         so_callback, so_callback_args = super().__reduce__()
@@ -234,23 +165,12 @@ class System(ScriptInterfaceHelper):
     def _restore_object(cls, so_callback, so_callback_args, state):
         so = so_callback(*so_callback_args)
         so.__setstate__(state)
-        so._globals_parameters = so._globals._valid_parameters()
         return so
 
     def __getstate__(self):
-        checkpointable_properties = ["_globals", "integrator"]
-        if has_features("VIRTUAL_SITES"):
-            checkpointable_properties.append("_active_virtual_sites_handle")
-        checkpointable_properties += [
-            "non_bonded_inter", "bonded_inter", "cell_system", "lees_edwards",
-            "part", "actors", "analysis", "auto_update_accumulators",
-            "comfixed", "constraints", "galilei", "thermostat",
-            "bond_breakage"
-        ]
-        if has_features("LB_BOUNDARIES") or has_features("LB_BOUNDARIES_GPU"):
-            checkpointable_properties.append("lbboundaries")
-        if has_features("COLLISION_DETECTION"):
-            checkpointable_properties.append("collision_detection")
+        checkpointable_properties = []
+        if has_features("WALBERLA"):
+            checkpointable_properties += ["_lb", "_ekcontainer"]
 
         odict = collections.OrderedDict()
         for property_name in checkpointable_properties:
@@ -258,53 +178,18 @@ class System(ScriptInterfaceHelper):
         return odict
 
     def __setstate__(self, params):
-        # note: this class is initialized twice by pickle
+        # initialize Python-only members
         for property_name in params.keys():
             System.__setattr__(self, property_name, params[property_name])
+        # note: several members can only be instantiated once
+        if has_features("WALBERLA"):
+            if self._lb is not None:
+                lb, self._lb = self._lb, None
+                self.lb = lb
+            if self._ekcontainer is not None:
+                ekcontainer, self._ekcontainer = self._ekcontainer, None
+                self.ekcontainer = ekcontainer
         self.call_method("lock_system_creation")
-
-    @property
-    def box_l(self):
-        """
-        Dimensions of the simulation box.
-
-        Type: (3,) array_like of :obj:`float`
-
-        """
-        return self._globals.box_l
-
-    @box_l.setter
-    def box_l(self, value):
-        self._globals.box_l = value
-
-    @property
-    def periodicity(self):
-        """
-        System periodicity in ``[x, y, z]``, ``False`` for no periodicity
-        in this direction, ``True`` for periodicity
-
-        Type: (3,) array_like of :obj:`bool`
-
-        """
-        return self._globals.periodicity
-
-    @periodicity.setter
-    def periodicity(self, value):
-        self._globals.periodicity = value
-
-    @property
-    def min_global_cut(self):
-        """
-        Minimal interaction cutoff.
-
-        Type: :obj:`float`
-
-        """
-        return self._globals.min_global_cut
-
-    @min_global_cut.setter
-    def min_global_cut(self, value):
-        self._globals.min_global_cut = value
 
     @property
     def force_cap(self):
@@ -370,22 +255,55 @@ class System(ScriptInterfaceHelper):
         return self.cell_system.max_cut_bonded
 
     @property
-    def virtual_sites(self):
+    def lb(self):
         """
-        Set the virtual site implementation.
-
-        Requires feature ``VIRTUAL_SITES``.
-
-        Type: :obj:`espressomd.virtual_sites.ActiveVirtualSitesHandle`
+        LB solver.
 
         """
-        assert_features("VIRTUAL_SITES")
-        return self._active_virtual_sites_handle.implementation
+        assert_features("WALBERLA")
+        return self._lb
 
-    @virtual_sites.setter
-    def virtual_sites(self, value):
-        assert_features("VIRTUAL_SITES")
-        self._active_virtual_sites_handle.implementation = value
+    @lb.setter
+    def lb(self, lb):
+        assert_features("WALBERLA")
+        if lb != self._lb:
+            if self._lb is not None:
+                self._lb.call_method("deactivate")
+                self._lb = None
+            if lb is not None:
+                lb.call_method("activate")
+                self._lb = lb
+
+    @property
+    def ase(self):
+        return self._ase_interface
+
+    @ase.setter
+    def ase(self, ase):
+        ase.register_system(self)
+        self._ase_interface = ase
+
+    @property
+    def ekcontainer(self):
+        """
+        EK system (diffusion-advection-reaction models).
+
+        Type: :class:`espressomd.electrokinetics.EKContainer`
+
+        """
+        assert_features("WALBERLA")
+        return self._ekcontainer
+
+    @ekcontainer.setter
+    def ekcontainer(self, ekcontainer):
+        assert_features("WALBERLA")
+        if ekcontainer != self._ekcontainer:
+            if self._ekcontainer is not None:
+                self._ekcontainer.call_method("deactivate")
+                self._ekcontainer = None
+            if ekcontainer is not None:
+                ekcontainer.call_method("activate")
+                self._ekcontainer = ekcontainer
 
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
@@ -443,14 +361,10 @@ class System(ScriptInterfaceHelper):
         if isinstance(p1, particle_data.ParticleHandle):
             pos1 = p1.pos_folded
         else:
-            utils.check_type_or_throw_except(
-                p1, 3, float, "p1 must be a particle or 3 floats")
             pos1 = p1
         if isinstance(p2, particle_data.ParticleHandle):
             pos2 = p2.pos_folded
         else:
-            utils.check_type_or_throw_except(
-                p2, 3, float, "p2 must be a particle or 3 floats")
             pos2 = p2
 
         return self.call_method("distance_vec", pos1=pos1, pos2=pos2)
@@ -485,4 +399,4 @@ class System(ScriptInterfaceHelper):
 
         """
         assert_features("EXCLUSIONS")
-        self.call_method("auto_exclusions", distance=distance)
+        self.part.auto_exclusions(distance=distance)

@@ -54,20 +54,20 @@ BOOST_AUTO_TEST_CASE(get_linear_index) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(upper_triangular_test) {
+BOOST_AUTO_TEST_CASE(lower_triangular_test) {
   // clang-format off
   const Utils::VectorXi<2> A[] =
       {
-        {0, 0}, {0, 1}, {0, 2},
-                {1, 1}, {1, 2},
-                        {2, 2}
+        {0, 0},
+        {1, 0}, {1, 1},
+        {2, 0}, {2, 1}, {2, 2}
       };
   // clang-format on
 
   for (int i = 0; i < 3; i++) {
-    for (int j = i; j < 3; j++) {
+    for (int j = 0; j <= i; j++) {
       auto const expected = Utils::VectorXi<2>{i, j};
-      auto const result = A[Utils::upper_triangular(i, j, 3)];
+      auto const result = A[Utils::lower_triangular(i, j)];
 
       BOOST_CHECK(expected == result);
     }

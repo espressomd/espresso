@@ -18,7 +18,7 @@
  */
 
 #include "config/config.hpp"
-#ifdef H5MD
+#ifdef ESPRESSO_H5MD
 #include "h5md.hpp"
 #include "initialize.hpp"
 

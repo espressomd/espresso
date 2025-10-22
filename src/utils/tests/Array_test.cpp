@@ -22,7 +22,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include <utils/Array.hpp>
-#include <utils/get.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -65,9 +64,9 @@ BOOST_AUTO_TEST_CASE(element_access) {
   auto a = Array<int, 5>{{{5, 6, 7, 8, 9}}};
   auto const &b = a;
 
-  int c = 5;
-  int j = 0;
-  for (int i : a) {
+  auto c = 5;
+  auto j = 0u;
+  for (auto i : a) {
     BOOST_CHECK_EQUAL(i, c);
     BOOST_CHECK_EQUAL(a[j], c);
     BOOST_CHECK_EQUAL(b[j], c);
@@ -120,11 +119,21 @@ BOOST_AUTO_TEST_CASE(zero_size) {
 BOOST_AUTO_TEST_CASE(tuple_protocol) {
   using A = Utils::Array<int, 4>;
 
-  static_assert(std::is_same_v<Utils::tuple_element_t<0, A>, int>);
-  static_assert(std::is_same_v<Utils::tuple_element_t<1, A>, int>);
-  static_assert(A{}.size() == Utils::tuple_size<A>::value);
+  static_assert(std::is_same_v<std::tuple_element_t<0, A>, int>);
+  static_assert(std::is_same_v<std::tuple_element_t<1, A>, int>);
+  static_assert(A{}.size() == std::tuple_size<A>::value);
 
-  BOOST_CHECK_EQUAL(Utils::get<1>(A{{{1, 2, 3, 4}}}), 2);
+  BOOST_CHECK_EQUAL(get<1>(A{{{1, 2, 3, 4}}}), 2);
+  BOOST_CHECK_EQUAL(get<1>(A{{1, 2, 3, 4}}), 2);
+  BOOST_CHECK_EQUAL(get<1>(A{1, 2, 3, 4}), 2);
+
+  auto array_mutable = A{{{1, 2, 3, 4}}};
+  auto const array_const = A{{{1, 2, 3, 4}}};
+  BOOST_CHECK_EQUAL(get<0>(array_const), 1);
+  BOOST_CHECK_EQUAL(get<0>(array_mutable), 1);
+  get<0>(array_mutable) = 5;
+  BOOST_CHECK_EQUAL(get<0>(array_mutable), 5);
+  BOOST_CHECK_EQUAL(get<0>(std::as_const(array_mutable)), 5);
 }
 
 BOOST_AUTO_TEST_CASE(streaming_operator) {

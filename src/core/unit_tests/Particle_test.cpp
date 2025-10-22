@@ -24,9 +24,9 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Particle.hpp"
+#include "PropagationMode.hpp"
 #include "config/config.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/compact_vector.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
@@ -36,7 +36,16 @@
 #include <algorithm>
 #include <array>
 #include <sstream>
+#include <type_traits>
+#include <utility>
 #include <vector>
+
+void check_particle_force(ParticleForce const &out, ParticleForce const &ref) {
+  BOOST_TEST(out.f == ref.f, boost::test_tools::per_element());
+#ifdef ESPRESSO_ROTATION
+  BOOST_TEST(out.torque == ref.torque, boost::test_tools::per_element());
+#endif
+}
 
 BOOST_AUTO_TEST_CASE(comparison) {
   {
@@ -68,7 +77,11 @@ BOOST_AUTO_TEST_CASE(serialization) {
 
   p.id() = 15;
   p.bonds().insert({bond_id, bond_partners});
-#ifdef EXCLUSIONS
+  p.force() = {1., -2., 3.};
+#ifdef ESPRESSO_ROTATION
+  p.torque() = {-4., 5., -6.};
+#endif
+#ifdef ESPRESSO_EXCLUSIONS
   std::vector<int> el = {5, 6, 7, 8};
   p.exclusions() = Utils::compact_vector<int>{el.begin(), el.end()};
 #endif
@@ -81,12 +94,14 @@ BOOST_AUTO_TEST_CASE(serialization) {
   auto q = Particle();
   in_ar >> q;
 
+  auto const &pf = std::as_const(p).force_and_torque();
   BOOST_CHECK(q.id() == p.id());
   BOOST_CHECK((*q.bonds().begin() == BondView{bond_id, bond_partners}));
-
-#ifdef EXCLUSIONS
-  BOOST_CHECK(q.exclusions_as_vector() == el);
+  BOOST_TEST(q.force() == pf.f, boost::test_tools::per_element());
+#ifdef ESPRESSO_ROTATION
+  BOOST_TEST(q.torque() == pf.torque, boost::test_tools::per_element());
 #endif
+  check_particle_force(q.force_and_torque(), pf);
 }
 
 namespace Utils {
@@ -106,7 +121,7 @@ BOOST_AUTO_TEST_CASE(properties_serialization) {
   prop.identity = 1234;
 
   {
-    auto oa = Utils::MemcpyOArchive{Utils::make_span(buf)};
+    auto oa = Utils::MemcpyOArchive{buf};
 
     oa << prop;
 
@@ -114,20 +129,13 @@ BOOST_AUTO_TEST_CASE(properties_serialization) {
   }
 
   {
-    auto ia = Utils::MemcpyIArchive{Utils::make_span(buf)};
+    auto ia = Utils::MemcpyIArchive{buf};
     ParticleProperties out;
 
     ia >> out;
     BOOST_CHECK_EQUAL(ia.bytes_read(), expected_size);
     BOOST_CHECK_EQUAL(out.identity, prop.identity);
   }
-}
-
-void check_particle_force(ParticleForce const &out, ParticleForce const &ref) {
-  BOOST_TEST(out.f == ref.f, boost::test_tools::per_element());
-#ifdef ROTATION
-  BOOST_TEST(out.torque == ref.torque, boost::test_tools::per_element());
-#endif
 }
 
 namespace Utils {
@@ -144,12 +152,12 @@ BOOST_AUTO_TEST_CASE(force_serialization) {
   std::vector<char> buf(expected_size);
 
   auto pf = ParticleForce{{1, 2, 3}};
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   pf.torque = {4, 5, 6};
 #endif
 
   {
-    auto oa = Utils::MemcpyOArchive{Utils::make_span(buf)};
+    auto oa = Utils::MemcpyOArchive{buf};
 
     oa << pf;
 
@@ -157,7 +165,7 @@ BOOST_AUTO_TEST_CASE(force_serialization) {
   }
 
   {
-    auto ia = Utils::MemcpyIArchive{Utils::make_span(buf)};
+    auto ia = Utils::MemcpyIArchive{buf};
     ParticleForce out;
 
     ia >> out;
@@ -170,7 +178,7 @@ BOOST_AUTO_TEST_CASE(force_serialization) {
 BOOST_AUTO_TEST_CASE(force_constructors) {
 
   auto pf = ParticleForce{{1, 2, 3}};
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   pf.torque = {4, 5, 6};
 #endif
 
@@ -188,7 +196,7 @@ BOOST_AUTO_TEST_CASE(force_constructors) {
   }
 }
 
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
 
 void check_particle_rattle(ParticleRattle const &out,
                            ParticleRattle const &ref) {
@@ -207,7 +215,7 @@ BOOST_AUTO_TEST_CASE(rattle_serialization) {
   auto pr = ParticleRattle{{1, 2, 3}};
 
   {
-    auto oa = Utils::MemcpyOArchive{Utils::make_span(buf)};
+    auto oa = Utils::MemcpyOArchive{buf};
 
     oa << pr;
 
@@ -215,7 +223,7 @@ BOOST_AUTO_TEST_CASE(rattle_serialization) {
   }
 
   {
-    auto ia = Utils::MemcpyIArchive{Utils::make_span(buf)};
+    auto ia = Utils::MemcpyIArchive{buf};
     ParticleRattle out;
 
     ia >> out;
@@ -241,7 +249,7 @@ BOOST_AUTO_TEST_CASE(rattle_constructors) {
     check_particle_rattle(out, pr);
   }
 }
-#endif // BOND_CONSTRAINT
+#endif // ESPRESSO_BOND_CONSTRAINT
 
 BOOST_AUTO_TEST_CASE(particle_bitfields) {
   auto p = Particle();
@@ -253,29 +261,29 @@ BOOST_AUTO_TEST_CASE(particle_bitfields) {
   BOOST_CHECK(not p.can_rotate_around(1));
 
   // check setting of one axis
-#ifdef EXTERNAL_FORCES
+#ifdef ESPRESSO_EXTERNAL_FORCES
   p.set_fixed_along(1, true);
   BOOST_CHECK(p.is_fixed_along(1));
   BOOST_CHECK(p.has_fixed_coordinates());
 #endif
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   p.set_can_rotate_around(1, true);
   BOOST_CHECK(p.can_rotate_around(1));
   BOOST_CHECK(p.can_rotate());
 #endif
 
   // check that unsetting is properly registered
-#ifdef EXTERNAL_FORCES
+#ifdef ESPRESSO_EXTERNAL_FORCES
   p.set_fixed_along(1, false);
   BOOST_CHECK(not p.has_fixed_coordinates());
 #endif
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   p.set_can_rotate_around(1, false);
   BOOST_CHECK(not p.can_rotate());
 #endif
 
   // check setting of all flags at once
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   p.set_can_rotate_all_axes();
   BOOST_CHECK(p.can_rotate_around(0));
   BOOST_CHECK(p.can_rotate_around(1));
@@ -283,4 +291,8 @@ BOOST_AUTO_TEST_CASE(particle_bitfields) {
   p.set_cannot_rotate_all_axes();
   BOOST_CHECK(not p.can_rotate());
 #endif
+
+  static_assert(
+      std::is_same_v<std::underlying_type_t<PropagationMode::PropagationMode>,
+                     decltype(ParticleProperties::propagation)>);
 }

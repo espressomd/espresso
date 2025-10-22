@@ -131,7 +131,7 @@ print(f"After Minimization: E_total = {energy['total']:.2e}")
 
 print("Tune p3m")
 p3m = espressomd.electrostatics.P3M(prefactor=coulomb_prefactor, accuracy=1e-1)
-system.actors.add(p3m)
+system.electrostatics.solver = p3m
 
 system.thermostat.set_langevin(kT=temperature, gamma=2.0, seed=42)
 

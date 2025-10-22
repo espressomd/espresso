@@ -26,10 +26,10 @@
 #include "utils/math/triangle_functions.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 
 #include <cstdlib>
 #include <limits>
+#include <numbers>
 
 auto const epsilon = std::numeric_limits<double>::epsilon();
 
@@ -87,11 +87,11 @@ BOOST_AUTO_TEST_CASE(angle_triangles) {
   angle_btw_triangles(B,C,A,D) so that N1 = CB x CA and N2 = CA x CD.
   */
 
-  constexpr double half_pi = Utils::pi() / 2.0;
+  constexpr double half_pi = std::numbers::pi / 2.;
   const Utils::Vector3d a{1, 1, 1}, b{2, 1, 1}, c{1, 2, 1}, d{1, 1, 2};
   using Utils::angle_btw_triangles;
   BOOST_CHECK_SMALL(std::abs(angle_btw_triangles(b, a, c, d) - half_pi),
                     epsilon);
-  BOOST_CHECK_SMALL(std::abs(angle_btw_triangles(b, c, a, d) - 3 * half_pi),
+  BOOST_CHECK_SMALL(std::abs(angle_btw_triangles(b, c, a, d) - 3. * half_pi),
                     epsilon);
 }

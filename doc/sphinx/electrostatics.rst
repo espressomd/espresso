@@ -27,8 +27,7 @@ interactions as efficiently as possible, but almost all of them require
 some knowledge to use them properly. Uneducated use can result in
 completely unphysical simulations.
 
-Coulomb interactions have to be added to the list of active actors of the system object to become
-active. This is done by calling the add-method of :attr:`espressomd.system.System.actors`.
+Coulomb interactions have to be attached to the system object to become active.
 Only one electrostatics method can be active at any time.
 
 Note that using the electrostatic interaction also requires assigning charges to
@@ -36,8 +35,8 @@ the particles via the particle property
 :py:attr:`~espressomd.particle_data.ParticleHandle.q`.
 
 All solvers need a prefactor and a set of other required parameters.
-This example shows the general usage of the electrostatic method ``P3M``.
-An instance of the solver is created and added to the actors list, at which
+This example shows the general usage of the electrostatic method P3M (often stylized as |p3m|).
+An instance of the solver is created and attached to the system, at which
 point it will be automatically activated. This activation will internally
 call a tuning function to achieve the requested accuracy::
 
@@ -48,13 +47,17 @@ call a tuning function to achieve the requested accuracy::
     system.time_step = 0.01
     system.part.add(pos=[[0, 0, 0], [1, 1, 1]], q=[-1, 1])
     solver = espressomd.electrostatics.P3M(prefactor=2., accuracy=1e-3)
-    system.actors.add(solver)
+    system.electrostatics.solver = solver
 
 where the prefactor is defined as :math:`C` in Eqn. :eq:`coulomb_prefactor`.
 
-The list of actors can be cleared with
-:meth:`system.actors.clear() <espressomd.actors.Actors.clear>` and
-:meth:`system.actors.remove(actor) <espressomd.actors.Actors.remove>`.
+The solver can be detached with either::
+
+    system.electrostatics.solver = None
+
+or::
+
+    system.electrostatics.clear()
 
 
 .. _Coulomb P3M:
@@ -67,7 +70,7 @@ Coulomb P3M
 For this feature to work, you need to have the ``fftw3`` library
 installed on your system. In |es|, you can check if it is compiled in by
 checking for the feature ``FFTW`` with ``espressomd.features``.
-P3M requires full periodicity (1 1 1). When using a non-metallic dielectric
+P3M requires full periodicity ``(True, True, True)``. When using a non-metallic dielectric
 constant (``epsilon != 0.0``), the box must be cubic.
 Make sure that you know the relevance of the P3M parameters before using P3M!
 If you are not sure, read the following references:
@@ -123,10 +126,8 @@ with only single precision which limits the maximum precision.
 The algorithm does not work in combination with the electrostatic extension
 :ref:`Dielectric interfaces with the ICC* algorithm <Dielectric interfaces with the ICC algorithm>`.
 
-The algorithm doesn't have kernels to compute energies, and will therefore
-contribute 0 to the long-range potential energy of the system. This can be
-an issue for other algorithms, such as :ref:`reaction methods <Reaction methods>`
-and :ref:`energy-based steepest descent <Using a custom convergence criterion>`.
+The algorithm doesn't have kernels to compute energies and pressures and therefore
+uses the respective CPU kernels with the parameters tuned for the GPU force kernel.
 
 .. _Debye-Hückel potential:
 
@@ -190,9 +191,12 @@ surface. ICC relies on a Coulomb solver that is already initialized. So far, it
 is implemented and well tested with the Coulomb solver P3M. ICC is an |es|
 actor and can be activated via::
 
+    import espressomd.electrostatics
     import espressomd.electrostatic_extensions
+    p3m = espressomd.electrostatics.P3M(...)
     icc = espressomd.electrostatic_extensions.ICC(...)
-    system.actors.add(icc)
+    system.electrostatics.solver = p3m
+    system.electrostatics.extension = icc
 
 The ICC particles are setup as normal |es| particles. Note that they should
 be fixed in space and need an initial non-zero charge. The following example
@@ -248,7 +252,7 @@ sets up parallel metallic plates and activates ICC::
         sigmas=iccSigmas,
         epsilons=iccEpsilons)
 
-    system.actors.add(icc)
+    system.electrostatics.extension = icc
 
 
 With each iteration, ICC has to solve electrostatics which can severely slow
@@ -269,17 +273,17 @@ Electrostatic Layer Correction (ELC)
 systems. It can account for different dielectric jumps on both sides of the
 non-periodic direction. In more detail, it is a special procedure that
 converts a 3D electrostatic method to a 2D method in computational order N.
-The periodicity has to be set to (1 1 1). *ELC* cancels the electrostatic
-contribution of the periodic replica in **z-direction**. Make sure that you
-read the papers on ELC (:cite:`arnold02c,arnold02d,tyagi08a`) before using it.
+The periodicity has to be set to ``(True, True, True)``. *ELC* cancels the electrostatic
+contribution of the periodic replica in :math:`z`-direction. Make sure that you
+read the papers on *ELC* (:cite:`arnold02c,dejoannis02a,tyagi08a`) before using it.
 See :ref:`ELC theory` for more details.
 
 Usage notes:
 
-* The non-periodic direction is always the **z-direction**.
+* The non-periodic direction is always the :math:`z`-direction.
 
 * The method relies on a slab of the simulation box perpendicular to the
-  z-direction not to contain particles. The size in z-direction of this slab
+  :math:`z`-direction not to contain particles. The size in :math:`z`-direction of this slab
   is controlled by the ``gap_size`` parameter. The user has to ensure that
   no particles enter this region by means of constraints or by fixing the
   particles' z-coordinate. When particles enter the slab of the specified
@@ -290,10 +294,10 @@ Usage notes:
     import espressomd.electrostatics
     p3m = espressomd.electrostatics.P3M(prefactor=1, accuracy=1e-4)
     elc = espressomd.electrostatics.ELC(actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3)
-    system.actors.add(elc)
+    system.electrostatics.solver = elc
 
-Although it is technically feasible to remove ``elc`` from the list of actors
-and then to add the ``p3m`` object, it is not recommended because the P3M
+Although it is technically feasible to detach ``elc`` from the system
+and then to attach the ``p3m`` object, it is not recommended because the P3M
 parameters are mutated by *ELC*, e.g. the ``epsilon`` is made metallic.
 It is safer to instantiate a new P3M object instead of recycling one that
 has been adapted by *ELC*.
@@ -336,11 +340,7 @@ MMM1D
 
 :class:`espressomd.electrostatics.MMM1D`
 
-.. note::
-    Required features: ``ELECTROSTATICS`` for MMM1D, the GPU version
-    additionally needs the features ``CUDA`` and ``MMM1D_GPU``.
-
-Please cite :cite:`arnold05a` when using MMM1D. See :ref:`MMM1D theory` for
+Please cite :cite:`arnold05b` when using MMM1D. See :ref:`MMM1D theory` for
 the details.
 
 MMM1D is used with::
@@ -363,34 +363,6 @@ change the value of the ``timings`` argument of the
 :class:`~espressomd.electrostatics.MMM1D` class,
 which controls the number of test force calculations.
 
-.. _MMM1D on GPU:
-
-MMM1D on GPU
-~~~~~~~~~~~~
-
-:class:`espressomd.electrostatics.MMM1DGPU`
-
-MMM1D is also available in a GPU implementation. Unlike its CPU
-counterpart, it does not need the N-squared cell system.
-
-::
-
-    import espressomd.electrostatics
-    mmm1d = espressomd.electrostatics.MMM1DGPU(prefactor=C, far_switch_radius=fr,
-                                               maxPWerror=err, tune=False, bessel_cutoff=bc)
-    mmm1d = espressomd.electrostatics.MMM1DGPU(prefactor=C, maxPWerror=err)
-
-The first form sets parameters manually. The switch radius determines at which
-xy-distance the force calculation switches from the near to the far
-formula. If the Bessel cutoff is not explicitly given, it is determined
-from the maximal pairwise error, otherwise this error only counts for
-the near formula. The second tuning form just takes the maximal pairwise
-error and tries out a lot of switching radii to find out the fastest one.
-
-For details on the MMM family of algorithms, refer to appendix
-:ref:`The MMM family of algorithms`.
-
-
 .. _ScaFaCoS electrostatics:
 
 ScaFaCoS electrostatics
@@ -404,7 +376,7 @@ the library, and can be queried with
 :meth:`espressomd.electrostatics.Scafacos.get_available_methods`.
 
 To use ScaFaCoS, create an instance of :class:`~espressomd.electrostatics.Scafacos`
-and add it to the list of active actors. Three parameters have to be specified:
+and attach it to the system. Three parameters have to be specified:
 ``prefactor`` (as defined in :eq:`coulomb_prefactor`), ``method_name``,
 ``method_params``. The method-specific parameters are described in the
 ScaFaCoS manual. In addition, methods supporting tuning have a parameter
@@ -415,11 +387,11 @@ To use a specific electrostatics solver from ScaFaCoS for your system,
 e.g. ``ewald``, set its cutoff to :math:`1.5` and tune the other parameters
 for an accuracy of :math:`10^{-3}`::
 
-   import espressomd.electrostatics
-   scafacos = espressomd.electrostatics.Scafacos(
-      prefactor=1, method_name="ewald",
-      method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
-   system.actors.add(scafacos)
+    import espressomd.electrostatics
+    scafacos = espressomd.electrostatics.Scafacos(
+       prefactor=1, method_name="ewald",
+       method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
+    system.electrostatics.solver = scafacos
 
 For details of the various methods and their parameters please refer to
 the ScaFaCoS manual. To use this feature, ScaFaCoS has to be built as a

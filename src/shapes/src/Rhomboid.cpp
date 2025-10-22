@@ -29,10 +29,10 @@ namespace Shapes {
 void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
                               Utils::Vector3d &vec) const {
 
-  auto const le = std::less_equal<double>();
-  auto const ge = std::greater_equal<double>();
-  auto const lt = std::less<double>();
-  auto const gt = std::greater<double>();
+  auto constexpr le = std::less_equal<double>();
+  auto constexpr ge = std::greater_equal<double>();
+  auto constexpr lt = std::less<double>();
+  auto constexpr gt = std::greater<double>();
 
   // calculate vectors and scalars that are going to be used frequently
 
@@ -49,22 +49,22 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // compute distance from the rhomboid corners, edges and faces using linear
   // combinations of the rhomboid edge vectors
 
-  auto const corner = [this, &vec, &dist, a = bxc / a_dot_bxc,
-                       b = axc / b_dot_axc,
-                       c = axb / c_dot_axb](auto op1, auto op2, auto op3,
-                                            Utils::Vector3d const &d) {
-    /* coefficients A, B, C tell whether ppos lies within a cone defined
-     * by pos and the adjacent edges */
-    auto const A = a * d;
-    auto const B = b * d;
-    auto const C = c * d;
-    if (op1(A, 0) and op2(B, 0) and op3(C, 0)) {
-      vec = d;
-      dist = m_direction * vec.norm();
-      return true;
-    }
-    return false;
-  };
+  auto const corner =
+      [this, &vec, &dist, a = bxc / a_dot_bxc, b = axc / b_dot_axc,
+       c = axb / c_dot_axb](auto const op1, auto const op2, auto const op3,
+                            Utils::Vector3d const &d) {
+        /* coefficients A, B, C tell whether ppos lies within a cone defined
+         * by pos and the adjacent edges */
+        auto const A = a * d;
+        auto const B = b * d;
+        auto const C = c * d;
+        if (op1(A, 0) and op2(B, 0) and op3(C, 0)) {
+          vec = d;
+          dist = m_direction * vec.norm();
+          return true;
+        }
+        return false;
+      };
 
   if ( // check for cone at m_pos
       corner(le, le, le, dpos) ||
@@ -84,18 +84,18 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
       corner(ge, ge, ge, dpos - m_a - m_b - m_c))
     return;
 
-  auto const edge = [this, &vec, &dist](auto op1, auto op2,
+  auto const edge = [this, &vec, &dist](auto const op1, auto const op2,
                                         Utils::Vector3d const &d,
                                         Utils::Vector3d const &axis1,
                                         double const dir1_dot_axis1,
                                         Utils::Vector3d const &axis2,
                                         double const dir2_dot_axis2,
-                                        Utils::Vector3d const &edge) {
+                                        Utils::Vector3d const &shape_edge) {
     auto const A = (d * axis1) / dir1_dot_axis1;
     auto const B = (d * axis2) / dir2_dot_axis2;
     if (op1(A, 0) and op2(B, 0)) {
-      auto const tmp = (d * edge) / edge.norm2();
-      vec = d - edge * tmp;
+      auto const tmp = (d * shape_edge) / shape_edge.norm2();
+      vec = d - shape_edge * tmp;
       dist = m_direction * vec.norm();
       return true;
     }
@@ -128,26 +128,27 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
       edge(ge, ge, dpos - m_a - m_c, bxc, a_dot_bxc, axb, c_dot_axb, m_b))
     return;
 
-  auto const face_outside =
-      [this, &vec, &dist](auto op1, auto op2, Utils::Vector3d const &distance,
-                          Utils::Vector3d const &axis,
-                          double const dir_dot_axis, int sign) {
-        auto d = distance * axis;
-        if (op1(dir_dot_axis, 0)) {
-          d *= -1;
-        }
-        if (d >= 0) {
-          auto const tmp = axis.norm();
-          d /= tmp;
-          dist = d * m_direction;
-          if (op2(dir_dot_axis, 0)) {
-            d *= -1;
-          }
-          vec = (sign * d / tmp) * axis;
-          return true;
-        }
-        return false;
-      };
+  auto const face_outside = [this, &vec, &dist](auto const op1, auto const op2,
+                                                Utils::Vector3d const &distance,
+                                                Utils::Vector3d const &axis,
+                                                double const dir_dot_axis,
+                                                int sign) {
+    auto d = distance * axis;
+    if (op1(dir_dot_axis, 0)) {
+      d *= -1;
+    }
+    if (d >= 0) {
+      auto const tmp = axis.norm();
+      d /= tmp;
+      dist = d * m_direction;
+      if (op2(dir_dot_axis, 0)) {
+        d *= -1;
+      }
+      vec = (sign * d / tmp) * axis;
+      return true;
+    }
+    return false;
+  };
 
   if ( // check for face with normal -axb
       face_outside(gt, lt, dpos, axb, c_dot_axb, -1) ||
@@ -181,24 +182,25 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
     vec = (-d / tmp) * axb;
   }
 
-  auto const face_inside =
-      [this, &vec, &dist](auto op1, auto op2, Utils::Vector3d const &distance,
-                          Utils::Vector3d const &axis,
-                          double const dir_dot_axis, int sign) {
-        auto d = distance * axis;
-        if (op1(dir_dot_axis, 0)) {
-          d *= -1;
-        }
-        auto const tmp = axis.norm();
-        d /= tmp;
-        if (std::abs(d) < std::abs(dist)) {
-          dist = d * m_direction;
-          if (op2(dir_dot_axis, 0)) {
-            d *= -1;
-          }
-          vec = (sign * d / tmp) * axis;
-        }
-      };
+  auto const face_inside = [this, &vec, &dist](auto const op1, auto const op2,
+                                               Utils::Vector3d const &distance,
+                                               Utils::Vector3d const &axis,
+                                               double const dir_dot_axis,
+                                               int sign) {
+    auto d = distance * axis;
+    if (op1(dir_dot_axis, 0)) {
+      d *= -1;
+    }
+    auto const tmp = axis.norm();
+    d /= tmp;
+    if (std::abs(d) < std::abs(dist)) {
+      dist = d * m_direction;
+      if (op2(dir_dot_axis, 0)) {
+        d *= -1;
+      }
+      vec = (sign * d / tmp) * axis;
+    }
+  };
 
   // calculate distance to face with normal axc
   face_inside(gt, gt, dpos, axc, b_dot_axc, +1);

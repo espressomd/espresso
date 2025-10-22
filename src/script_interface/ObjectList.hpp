@@ -19,12 +19,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_OBJECT_LIST_HPP
-#define SCRIPT_INTERFACE_OBJECT_LIST_HPP
+#pragma once
 
+#include "script_interface/ObjectContainer.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/get_value.hpp"
-#include "script_interface/object_container_mpi_guard.hpp"
 
 #include <utils/serialization/pack.hpp>
 
@@ -35,27 +34,74 @@
 #include <vector>
 
 namespace ScriptInterface {
+
 /**
- * @brief Owning list of ObjectHandles
+ * @brief Owning list of object handles.
+ *
+ * Stored elements are cleared from the core during destruction.
+ * Due to how dynamic dispatch works, derived types must mark
+ * @ref remove_in_core as @c final` and call @ref do_destruct in
+ * their virtual destructor. This is to ensure that pure virtual
+ * functions called by @ref clear cannot be executed in a type
+ * derived from the type currently being destructed, since derived
+ * types no longer exist at this point of the destruction sequence.
+ *
  * @tparam ManagedType Type of the managed objects, needs to be
- *         derived from ObjectHandle
+ *         derived from @ref ObjectHandle
  */
-template <typename ManagedType, class BaseType = ObjectHandle,
-          class =
-              std::enable_if_t<std::is_base_of_v<ObjectHandle, ManagedType>>>
-class ObjectList : public BaseType {
+template <typename ManagedType, class BaseType = ObjectHandle>
+class ObjectList : public ObjectContainer<ObjectList, ManagedType, BaseType> {
+public:
+  using Base = ObjectContainer<ObjectList, ManagedType, BaseType>;
+  using Base::add_parameters;
+  using Base::context;
+  using value_type = std::shared_ptr<ManagedType>;
+
 private:
-  virtual void add_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;
-  virtual void remove_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;
+  std::vector<value_type> m_elements;
+  bool dtor_sequence_initiated = false;
+
+  virtual void add_in_core(value_type const &obj_ptr) = 0;
+  virtual void remove_in_core(value_type const &obj_ptr) = 0;
+  virtual bool has_in_core(value_type const &obj_ptr) const = 0;
+
+protected:
+  void do_destruct() {
+    assert(not dtor_sequence_initiated);
+    clear();
+    dtor_sequence_initiated = true;
+  }
 
 public:
+  ObjectList() {
+    add_parameters({
+        {"_objects", AutoParameter::read_only,
+         [this]() { return make_vector_of_variants(m_elements); }},
+    });
+  }
+
+  ~ObjectList() override { assert(dtor_sequence_initiated); }
+
+  void do_construct(VariantMap const &params) override {
+    m_elements = get_value_or<decltype(m_elements)>(params, "_objects", {});
+    for (auto const &object : m_elements) {
+      add_in_core(object);
+    }
+  }
+
   /**
    * @brief Add an element to the list.
    *
    * @param element The element to add.
    */
-  void add(std::shared_ptr<ManagedType> const &element) {
-    add_in_core(element);
+  void add(value_type const &element) {
+    if (has_in_core(element)) {
+      if (Base::context()->is_head_node()) {
+        throw std::runtime_error("This object is already present in the list");
+      }
+      throw Exception("");
+    }
+    context()->parallel_try_catch([&]() { add_in_core(element); });
     m_elements.push_back(element);
   }
 
@@ -64,10 +110,15 @@ public:
    *
    * @param element The element to remove.
    */
-  void remove(std::shared_ptr<ManagedType> const &element) {
+  void remove(value_type const &element) {
+    if (not has_in_core(element)) {
+      if (Base::context()->is_head_node()) {
+        throw std::runtime_error("This object is absent from the list");
+      }
+      throw Exception("");
+    }
     remove_in_core(element);
-    m_elements.erase(std::remove(m_elements.begin(), m_elements.end(), element),
-                     m_elements.end());
+    std::erase(m_elements, element);
   }
 
   /**
@@ -91,28 +142,21 @@ protected:
                          VariantMap const &parameters) override {
 
     if (method == "add") {
-      auto obj_ptr =
-          get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
+      auto obj_ptr = get_value<value_type>(parameters.at("object"));
 
       add(obj_ptr);
       return none;
     }
 
     if (method == "remove") {
-      auto obj_ptr =
-          get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
+      auto obj_ptr = get_value<value_type>(parameters.at("object"));
 
       remove(obj_ptr);
       return none;
     }
 
     if (method == "get_elements") {
-      std::vector<Variant> ret;
-      ret.reserve(m_elements.size());
-      for (auto const &e : m_elements)
-        ret.emplace_back(e);
-
-      return ret;
+      return make_vector_of_variants(m_elements);
     }
 
     if (method == "clear") {
@@ -128,33 +172,7 @@ protected:
       return m_elements.empty();
     }
 
-    return BaseType::do_call_method(method, parameters);
+    return Base::do_call_method(method, parameters);
   }
-
-private:
-  std::string get_internal_state() const override {
-    object_container_mpi_guard(BaseType::name(), m_elements.size(),
-                               BaseType::context()->get_comm().size());
-
-    std::vector<std::string> object_states(m_elements.size());
-
-    boost::transform(m_elements, object_states.begin(),
-                     [](auto const &e) { return e->serialize(); });
-
-    return Utils::pack(object_states);
-  }
-
-  void set_internal_state(std::string const &state) override {
-    auto const object_states = Utils::unpack<std::vector<std::string>>(state);
-
-    for (auto const &packed_object : object_states) {
-      auto o = std::dynamic_pointer_cast<ManagedType>(
-          BaseType::deserialize(packed_object, *BaseType::context()));
-      add(std::move(o));
-    }
-  }
-
-  std::vector<std::shared_ptr<ManagedType>> m_elements;
 };
 } // Namespace ScriptInterface
-#endif

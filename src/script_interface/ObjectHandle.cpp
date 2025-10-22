@@ -24,13 +24,21 @@
 #include "ObjectState.hpp"
 #include "packed_variant.hpp"
 
-#include <utils/serialization/pack.hpp>
+#include <config/config.hpp>
 
+#include <instrumentation/fe_trap.hpp>
+
+#include <utils/serialization/pack.hpp>
+#include <utils/serialization/variant.hpp>
+
+#include <algorithm>
 #include <iterator>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 
 namespace ScriptInterface {
 void ObjectHandle::set_parameter(const std::string &name,
@@ -38,6 +46,9 @@ void ObjectHandle::set_parameter(const std::string &name,
   if (m_context)
     m_context->notify_set_parameter(this, name, value);
 
+#ifdef ESPRESSO_FPE
+  auto const trap = fe_trap::make_shared_scoped();
+#endif
   this->do_set_parameter(name, value);
 }
 
@@ -46,30 +57,36 @@ Variant ObjectHandle::call_method(const std::string &name,
   if (m_context)
     m_context->notify_call_method(this, name, params);
 
+#ifdef ESPRESSO_FPE
+  auto const trap = fe_trap::make_shared_scoped();
+#endif
   return this->do_call_method(name, params);
 }
 
 std::string ObjectHandle::serialize() const {
   ObjectState state;
 
-  auto const params = this->get_parameters();
-  state.params.resize(params.size());
+  auto const params = serialize_parameters();
+  state.params.reserve(params.size());
 
-  PackVisitor v;
+  PackVisitor visitor;
 
   /* Pack parameters and keep track of ObjectRef parameters */
-  boost::transform(params, state.params.begin(),
-                   [&v](auto const &kv) -> PackedMap::value_type {
-                     return {kv.first, boost::apply_visitor(v, kv.second)};
-                   });
+  std::ranges::transform(params, std::back_inserter(state.params),
+                         [&visitor](auto const &kv) -> PackedMap::value_type {
+                           auto const &[name, value] = kv;
+                           return {name, std::visit(visitor, value)};
+                         });
 
   /* Packed Object parameters */
-  state.objects.resize(v.objects().size());
-  boost::transform(v.objects(), state.objects.begin(), [](auto const &kv) {
-    return std::make_pair(kv.first, kv.second->serialize());
-  });
+  state.objects.reserve(visitor.objects().size());
+  std::ranges::transform(visitor.objects(), std::back_inserter(state.objects),
+                         [](auto const &kv) {
+                           auto const &[name, obj] = kv;
+                           return std::make_pair(name, obj->serialize());
+                         });
 
-  state.name = name().to_string();
+  state.name = name();
   state.internal_state = get_internal_state();
 
   return Utils::pack(state);
@@ -80,15 +97,15 @@ ObjectRef ObjectHandle::deserialize(const std::string &packed_state,
   auto const state = Utils::unpack<ObjectState>(packed_state);
 
   std::unordered_map<ObjectId, ObjectRef> objects;
-  boost::transform(state.objects, std::inserter(objects, objects.end()),
-                   [&ctx](auto const &kv) {
-                     return std::make_pair(kv.first,
-                                           deserialize(kv.second, ctx));
-                   });
+  std::ranges::transform(state.objects, std::inserter(objects, objects.end()),
+                         [&ctx](auto const &kv) {
+                           auto const &[name, buf] = kv;
+                           return std::make_pair(name, deserialize(buf, ctx));
+                         });
 
   VariantMap params;
-  for (auto const &kv : state.params) {
-    params[kv.first] = boost::apply_visitor(UnpackVisitor(objects), kv.second);
+  for (auto const &[name, variant] : state.params) {
+    params[name] = std::visit(UnpackVisitor(objects), variant);
   }
 
   auto o = ctx.make_shared(state.name, params);
@@ -97,8 +114,8 @@ ObjectRef ObjectHandle::deserialize(const std::string &packed_state,
   return o;
 }
 
-boost::string_ref ObjectHandle::name() const {
-  return context() ? context()->name(this) : boost::string_ref{};
+std::string_view ObjectHandle::name() const {
+  return context() ? context()->name(this) : std::string_view{};
 }
 
 } /* namespace ScriptInterface */

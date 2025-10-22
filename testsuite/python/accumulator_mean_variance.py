@@ -26,8 +26,6 @@ import espressomd
 import espressomd.observables
 import espressomd.accumulators
 
-N_PART = 4
-
 
 class MeanVarianceCalculatorTest(ut.TestCase):
 
@@ -50,12 +48,13 @@ class MeanVarianceCalculatorTest(ut.TestCase):
         """Check that accumulator results are the same as the respective numpy result.
 
         """
+        n_part = 4
         system = self.system
-        system.part.add(pos=np.zeros((N_PART, 3)))
-        obs = espressomd.observables.ParticlePositions(ids=range(N_PART))
+        system.part.add(pos=np.zeros((n_part, 3)))
+        obs = espressomd.observables.ParticlePositions(ids=range(n_part))
         acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
         system.auto_update_accumulators.add(acc)
-        positions = np.copy(system.box_l) * np.random.random((10, N_PART, 3))
+        positions = np.copy(system.box_l) * np.random.random((10, n_part, 3))
 
         for pos in positions:
             system.part.all().pos = pos
@@ -71,6 +70,8 @@ class MeanVarianceCalculatorTest(ut.TestCase):
         np.testing.assert_allclose(acc.std_error(), pos_sem, atol=1e-12)
 
         # Check pickling
+        from espressomd.script_interface import ScriptInterfaceHelper
+        acc.__reduce__ = lambda: ScriptInterfaceHelper.__reduce__(acc)
         acc_unpkl = pickle.loads(pickle.dumps(acc))
         np.testing.assert_allclose(acc_unpkl.mean(), pos_mean, atol=1e-12)
         np.testing.assert_allclose(acc_unpkl.variance(), pos_var, atol=1e-12)

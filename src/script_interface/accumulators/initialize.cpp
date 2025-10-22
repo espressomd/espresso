@@ -18,6 +18,7 @@
  */
 
 #include "AutoUpdateAccumulators.hpp"
+#include "ContactTimes.hpp"
 #include "Correlator.hpp"
 #include "MeanVarianceCalculator.hpp"
 #include "TimeSeries.hpp"
@@ -33,6 +34,8 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
       "Accumulators::MeanVarianceCalculator");
 
   om->register_new<TimeSeries>("Accumulators::TimeSeries");
+
+  om->register_new<ContactTimes>("Accumulators::ContactTimes");
 
   om->register_new<Correlator>("Accumulators::Correlator");
 }

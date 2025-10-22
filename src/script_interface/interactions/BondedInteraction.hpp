@@ -17,17 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 /** @file
  *  The ScriptInterface counterparts of the bonded interactions parameters
  *  structs from the core are defined here.
  *
  */
 
-#ifndef SCRIPT_INTERFACE_INTERACTIONS_BONDED_INTERACTION_HPP
-#define SCRIPT_INTERFACE_INTERACTIONS_BONDED_INTERACTION_HPP
-
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
-#include "core/immersed_boundaries.hpp"
+#include "core/immersed_boundary/ImmersedBoundaries.hpp"
 #include "core/thermostat.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
@@ -35,7 +34,6 @@
 #include "script_interface/get_value.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/variant.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -44,9 +42,13 @@
 #include <iterator>
 #include <limits>
 #include <memory>
+#include <ranges>
 #include <set>
 #include <stdexcept>
 #include <string>
+#include <tuple>
+#include <utility>
+#include <variant>
 #include <vector>
 
 namespace ScriptInterface {
@@ -66,55 +68,37 @@ protected:
   using AutoParameters<BondedInteraction>::context;
   using AutoParameters<BondedInteraction>::valid_parameters;
 
-  virtual std::set<std::string> get_valid_parameters() const {
+  std::set<std::string> get_valid_parameters() const {
     auto const vec = valid_parameters();
-    auto valid_keys = std::set<std::string>();
-    std::transform(vec.begin(), vec.end(),
-                   std::inserter(valid_keys, valid_keys.begin()),
-                   [](auto const &key) { return std::string{key}; });
-    return valid_keys;
+    return {vec.begin(), vec.end()};
   }
 
 private:
   void check_valid_parameters(VariantMap const &params) const {
     auto const valid_keys = get_valid_parameters();
     for (auto const &key : valid_keys) {
-      if (params.count(std::string(key)) == 0) {
+      if (not params.contains(key)) {
         throw std::runtime_error("Parameter '" + key + "' is missing");
       }
     }
-    for (auto const &kv : params) {
-      if (valid_keys.count(kv.first) == 0) {
-        throw std::runtime_error("Parameter '" + kv.first +
-                                 "' is not recognized");
+    for (auto const &key : std::views::elements<0>(params)) {
+      if (not valid_keys.contains(key)) {
+        throw std::runtime_error("Parameter '" + key + "' is not recognized");
       }
     }
   }
 
   void do_construct(VariantMap const &params) override {
-    // Check if initialization "by id" or "by parameters"
-    if (params.find("bond_id") != params.end()) {
-      auto const bond_id = get_value<int>(params, "bond_id");
-      context()->parallel_try_catch([&]() {
-        if (not ::bonded_ia_params.contains(bond_id)) {
-          throw std::runtime_error("No bond with id " +
-                                   std::to_string(bond_id) +
-                                   " exists in the ESPResSo core");
-        }
-      });
-      m_bonded_ia = ::bonded_ia_params.at(bond_id);
-    } else {
-      context()->parallel_try_catch([&]() {
-        check_valid_parameters(params);
-        construct_bond(params);
-      });
-    }
+    context()->parallel_try_catch([&]() {
+      check_valid_parameters(params);
+      construct_bond(params);
+    });
   }
 
   virtual void construct_bond(VariantMap const &params) = 0;
 
 public:
-  bool operator==(BondedInteraction const &other) {
+  bool operator==(BondedInteraction const &other) const {
     return m_bonded_ia == other.m_bonded_ia;
   }
 
@@ -129,21 +113,16 @@ public:
     if (name == "get_num_partners") {
       return number_of_partners(*bonded_ia());
     }
-    if (name == "get_zero_based_type") {
-      auto const bond_id = get_value<int>(params, "bond_id");
-      return ::bonded_ia_params.get_zero_based_type(bond_id);
-    }
 
     return {};
   }
 };
 
 template <class CoreIA> class BondedInteractionImpl : public BondedInteraction {
-
 public:
   using CoreBondedInteraction = CoreIA;
   CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
+    return std::get<CoreBondedInteraction>(*bonded_ia());
   }
 };
 
@@ -411,20 +390,7 @@ public:
          [this]() { return get_struct().gamma_distance; }},
         {"r_cut", AutoParameter::read_only,
          [this]() { return get_struct().r_cut; }},
-        {"seed", AutoParameter::read_only,
-         []() { return static_cast<size_t>(thermalized_bond.rng_seed()); }},
     });
-  }
-
-  Variant do_call_method(std::string const &name,
-                         VariantMap const &params) override {
-    if (name == "get_rng_state") {
-      auto const state = ::thermalized_bond.rng_counter();
-      // check it's safe to forward the current state as an integer
-      assert(state < static_cast<uint64_t>(std::numeric_limits<int>::max()));
-      return static_cast<int>(state);
-    }
-    return BondedInteraction::do_call_method(name, params);
   }
 
 private:
@@ -435,33 +401,6 @@ private:
                               get_value<double>(params, "temp_distance"),
                               get_value<double>(params, "gamma_distance"),
                               get_value<double>(params, "r_cut")));
-
-    if (is_none(params.at("seed"))) {
-      if (::thermalized_bond.is_seed_required()) {
-        throw std::invalid_argument("A parameter 'seed' has to be given on "
-                                    "first activation of a thermalized bond");
-      }
-    } else {
-      auto const seed = get_value<int>(params, "seed");
-      if (seed < 0) {
-        throw std::domain_error("Parameter 'seed' must be >= 0");
-      }
-      ::thermalized_bond.rng_initialize(static_cast<uint32_t>(seed));
-    }
-
-    // handle checkpointing
-    if (params.count("rng_state") and not is_none(params.at("rng_state"))) {
-      auto const state = get_value<int>(params, "rng_state");
-      assert(state >= 0);
-      ::thermalized_bond.set_rng_counter(static_cast<uint64_t>(state));
-    }
-  }
-
-  std::set<std::string> get_valid_parameters() const override {
-    auto names =
-        BondedInteractionImpl<CoreBondedInteraction>::get_valid_parameters();
-    names.insert("rng_state");
-    return names;
   }
 };
 
@@ -493,6 +432,12 @@ public:
     add_parameters({
         {"k1", AutoParameter::read_only, [this]() { return get_struct().k1; }},
         {"k2", AutoParameter::read_only, [this]() { return get_struct().k2; }},
+        {"ind1", AutoParameter::read_only,
+         [this]() { return std::get<0>(get_struct().p_ids); }},
+        {"ind2", AutoParameter::read_only,
+         [this]() { return std::get<1>(get_struct().p_ids); }},
+        {"ind3", AutoParameter::read_only,
+         [this]() { return std::get<2>(get_struct().p_ids); }},
         {"maxDist", AutoParameter::read_only,
          [this]() { return get_struct().maxDist; }},
         {"elasticLaw", AutoParameter::read_only,
@@ -501,6 +446,14 @@ public:
              return std::string("NeoHookean");
            }
            return std::string("Skalak");
+         }},
+        {"is_initialized", AutoParameter::read_only,
+         [this]() { return get_struct().is_initialized; }},
+        {"_cache", AutoParameter::read_only,
+         [this]() {
+           auto &s = get_struct();
+           return std::vector<double>{{s.l0, s.lp0, s.sinPhi0, s.cosPhi0,
+                                       s.area0, s.a1, s.a2, s.b1, s.b2}};
          }},
     });
   }
@@ -517,21 +470,26 @@ private:
       throw std::invalid_argument(
           "Invalid value for parameter 'elasticLaw': '" + law_name + "'");
     }
-    m_bonded_ia =
-        std::make_shared<::Bonded_IA_Parameters>(CoreBondedInteraction(
-            get_value<int>(params, "ind1"), get_value<int>(params, "ind2"),
-            get_value<int>(params, "ind3"),
-            get_value<double>(params, "maxDist"), elastic_law,
-            get_value<double>(params, "k1"), get_value<double>(params, "k2")));
-  }
-
-  std::set<std::string> get_valid_parameters() const override {
-    auto names =
-        BondedInteractionImpl<CoreBondedInteraction>::get_valid_parameters();
-    names.insert("ind1");
-    names.insert("ind2");
-    names.insert("ind3");
-    return names;
+    auto bond = CoreBondedInteraction(
+        get_value<int>(params, "ind1"), get_value<int>(params, "ind2"),
+        get_value<int>(params, "ind3"), get_value<double>(params, "maxDist"),
+        elastic_law, get_value<double>(params, "k1"),
+        get_value<double>(params, "k2"));
+    if (get_value_or<bool>(params, "is_initialized", false)) {
+      auto const cache = get_value<std::vector<double>>(params, "_cache");
+      assert(cache.size() == 9ul);
+      bond.l0 = cache[0];
+      bond.lp0 = cache[1];
+      bond.sinPhi0 = cache[2];
+      bond.cosPhi0 = cache[3];
+      bond.area0 = cache[4];
+      bond.a1 = cache[5];
+      bond.a2 = cache[6];
+      bond.b1 = cache[7];
+      bond.b2 = cache[8];
+      bond.is_initialized = true;
+    }
+    m_bonded_ia = std::make_shared<::Bonded_IA_Parameters>(std::move(bond));
   }
 };
 
@@ -540,7 +498,7 @@ public:
   IBMVolCons() {
     add_parameters({
         {"softID", AutoParameter::read_only,
-         [this]() { return get_struct().softID; }},
+         [this]() { return static_cast<int>(get_struct().softID); }},
         {"kappaV", AutoParameter::read_only,
          [this]() { return get_struct().kappaV; }},
     });
@@ -549,7 +507,7 @@ public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "current_volume") {
-      return ::immersed_boundaries.get_current_volume(get_struct().softID);
+      return get_struct().get_current_volume();
     }
     return BondedInteraction::do_call_method(name, params);
   }
@@ -567,43 +525,46 @@ public:
   IBMTribend() {
     add_parameters({
         {"kb", AutoParameter::read_only, [this]() { return get_struct().kb; }},
+        {"ind1", AutoParameter::read_only,
+         [this]() { return std::get<0>(get_struct().p_ids); }},
+        {"ind2", AutoParameter::read_only,
+         [this]() { return std::get<1>(get_struct().p_ids); }},
+        {"ind3", AutoParameter::read_only,
+         [this]() { return std::get<2>(get_struct().p_ids); }},
+        {"ind4", AutoParameter::read_only,
+         [this]() { return std::get<3>(get_struct().p_ids); }},
         {"refShape", AutoParameter::read_only,
          [this]() {
-           return (m_flat) ? std::string("Flat") : std::string("Initial");
+           return std::string((get_struct().flat) ? "Flat" : "Initial");
          }},
         {"theta0", AutoParameter::read_only,
          [this]() { return get_struct().theta0; }},
+        {"is_initialized", AutoParameter::read_only,
+         [this]() { return get_struct().is_initialized; }},
     });
   }
 
 private:
-  bool m_flat;
   void construct_bond(VariantMap const &params) override {
     auto const shape_name = get_value<std::string>(params, "refShape");
+    bool flat;
     if (shape_name == "Flat") {
-      m_flat = true;
+      flat = true;
     } else if (shape_name == "Initial") {
-      m_flat = false;
+      flat = false;
     } else {
       throw std::invalid_argument("Invalid value for parameter 'refShape': '" +
                                   shape_name + "'");
     }
-    m_bonded_ia =
-        std::make_shared<::Bonded_IA_Parameters>(CoreBondedInteraction(
-            get_value<int>(params, "ind1"), get_value<int>(params, "ind2"),
-            get_value<int>(params, "ind3"), get_value<int>(params, "ind4"),
-            get_value<double>(params, "kb"), m_flat));
-  }
-
-  std::set<std::string> get_valid_parameters() const override {
-    auto names =
-        BondedInteractionImpl<CoreBondedInteraction>::get_valid_parameters();
-    names.erase("theta0");
-    names.insert("ind1");
-    names.insert("ind2");
-    names.insert("ind3");
-    names.insert("ind4");
-    return names;
+    auto bond = CoreBondedInteraction(
+        get_value<int>(params, "ind1"), get_value<int>(params, "ind2"),
+        get_value<int>(params, "ind3"), get_value<int>(params, "ind4"),
+        get_value<double>(params, "kb"), flat);
+    if (get_value_or<bool>(params, "is_initialized", false)) {
+      bond.theta0 = get_value<double>(params, "theta0");
+      bond.is_initialized = true;
+    }
+    m_bonded_ia = std::make_shared<::Bonded_IA_Parameters>(std::move(bond));
   }
 };
 
@@ -679,5 +640,3 @@ private:
 
 } // namespace Interactions
 } // namespace ScriptInterface
-
-#endif

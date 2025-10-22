@@ -20,15 +20,13 @@
 #include "immersed_boundary/ibm_triel.hpp"
 
 #include "BoxGeometry.hpp"
-#include "Particle.hpp"
-#include "grid.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "ibm_common.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/optional.hpp>
-
+#include <optional>
 #include <tuple>
 
 namespace {
@@ -72,18 +70,16 @@ RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
 }
 } // namespace
 
-boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-IBMTriel::calc_forces(Particle const &p1, Particle const &p2,
-                      Particle const &p3) const {
+std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
+IBMTriel::calc_forces(Utils::Vector3d const &vec1,
+                      Utils::Vector3d const &vec2) const {
 
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
   // get_mi_vector is an ESPResSo function which considers PBC
-  auto const vec2 = box_geo.get_mi_vector(p3.pos(), p1.pos());
   auto const l = vec2.norm();
 
   // lp = length between 1 and 2
-  auto const vec1 = box_geo.get_mi_vector(p2.pos(), p1.pos());
   auto const lp = vec1.norm();
 
   // Check for sanity
@@ -93,7 +89,7 @@ IBMTriel::calc_forces(Particle const &p1, Particle const &p2,
 
   // angles between these vectors; calculated directly via the products
   auto const cosPhi = (vec1 * vec2) / (lp * l);
-  auto const vecpro = vector_product(vec1, vec2);
+  auto const vecpro = Utils::vector_product(vec1, vec2);
   auto const sinPhi = vecpro.norm() / (l * lp);
 
   // Displacement gradient tensor D: eq. (C.9) in @cite kruger12a
@@ -195,14 +191,16 @@ IBMTriel::calc_forces(Particle const &p1, Particle const &p2,
   return {forces};
 }
 
-IBMTriel::IBMTriel(const int ind1, const int ind2, const int ind3,
-                   const double maxDist, const tElasticLaw elasticLaw,
-                   const double k1, const double k2) {
-
+void IBMTriel::initialize(BoxGeometry const &box_geo,
+                          CellStructure const &cell_structure) {
+  if (is_initialized) {
+    return;
+  }
   // collect particles from nodes
-  auto const pos1 = get_ibm_particle_position(ind1);
-  auto const pos2 = get_ibm_particle_position(ind2);
-  auto const pos3 = get_ibm_particle_position(ind3);
+  auto const [ind1, ind2, ind3] = p_ids;
+  auto const pos1 = get_ibm_particle_position(cell_structure, ind1);
+  auto const pos2 = get_ibm_particle_position(cell_structure, ind2);
+  auto const pos3 = get_ibm_particle_position(cell_structure, ind3);
 
   // Calculate equilibrium lengths and angle; Note the sequence of the points!
   // l0 = length between 1 and 3
@@ -215,7 +213,7 @@ IBMTriel::IBMTriel(const int ind1, const int ind2, const int ind3,
   // cospo / sinpo angle functions between these vectors; calculated directly
   // via the products
   cosPhi0 = (temp_l0 * temp_lp0) / (l0 * lp0);
-  auto const vecpro = vector_product(temp_l0, temp_lp0);
+  auto const vecpro = Utils::vector_product(temp_l0, temp_lp0);
   sinPhi0 = vecpro.norm() / (l0 * lp0);
 
   // Use the values determined above for further constants of the stretch-force
@@ -226,9 +224,5 @@ IBMTriel::IBMTriel(const int ind1, const int ind2, const int ind3,
   b1 = (l0 * cosPhi0 - lp0) / area2;
   b2 = -(l0 * cosPhi0) / area2;
   area0 = 0.5 * area2;
-  this->maxDist = maxDist;
-  this->elasticLaw = elasticLaw;
-  // Always store two constants, for NeoHookean only k1 is used
-  this->k1 = k1;
-  this->k2 = k2;
+  is_initialized = true;
 }

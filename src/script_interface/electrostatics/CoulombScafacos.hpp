@@ -17,21 +17,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_COULOMB_SCAFACOS_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_COULOMB_SCAFACOS_HPP
+#pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef SCAFACOS
+#ifdef ESPRESSO_SCAFACOS
 
 #include "Actor.hpp"
 
+#include "core/communication.hpp"
 #include "core/electrostatics/scafacos.hpp"
 #include "core/scafacos/ScafacosContextBase.hpp"
 
 #include "script_interface/get_value.hpp"
 #include "script_interface/scafacos/scafacos.hpp"
 
+#include <iomanip>
+#include <memory>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -42,6 +44,8 @@ namespace ScriptInterface {
 namespace Coulomb {
 
 class CoulombScafacos : public Actor<CoulombScafacos, ::CoulombScafacos> {
+  std::shared_ptr<boost::mpi::environment> m_mpi_env_lock;
+
 public:
   CoulombScafacos() {
     add_parameters({
@@ -54,7 +58,7 @@ public:
            auto parameters_string = actor()->get_parameters();
            auto const method_name = actor()->get_method();
            auto const delegate = actor()->get_near_field_delegation();
-           if (delegate and m_tuned_methods.count(method_name)) {
+           if (delegate and m_tuned_methods.contains(method_name)) {
              auto const tuned_r_cut = actor()->get_r_cut();
              auto const field_name = method_name + "_r_cut";
              std::ostringstream serializer;
@@ -77,6 +81,11 @@ public:
     });
   }
 
+  ~CoulombScafacos() override {
+    m_actor.reset();
+    m_mpi_env_lock.reset();
+  }
+
   void do_construct(VariantMap const &params) override {
     auto const method_name = get_value<std::string>(params, "method_name");
     auto const param_list = params.at("method_params");
@@ -89,6 +98,8 @@ public:
       actor()->set_prefactor(prefactor);
     });
     set_charge_neutrality_tolerance(params);
+    // MPI communicator is needed to destroy the FFT plans
+    m_mpi_env_lock = ::communication_environment->get_mpi_env();
   }
 
   Variant do_call_method(std::string const &name,
@@ -112,5 +123,4 @@ public:
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // SCAFACOS
-#endif
+#endif // ESPRESSO_SCAFACOS

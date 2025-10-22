@@ -27,6 +27,7 @@ Observables/Correlators framework.
 import espressomd
 import espressomd.accumulators
 import espressomd.observables
+import scipy.integrate
 import numpy as np
 
 gamma = 2.4
@@ -72,7 +73,7 @@ np.savetxt("vacf.dat", vacf)
 # D= 1/3 int_0^infty <v(t_0)v(t_0+t)> dt
 
 # Integrate with trapezoidal rule
-I = np.trapz(vacf[:, 2], vacf[:, 0])
+I = scipy.integrate.trapezoid(vacf[:, 2], vacf[:, 0])
 ratio = 1. / 3. * I / (kT / gamma)
 print("Ratio of measured and expected diffusion coefficients from Green-Kubo:",
       ratio)

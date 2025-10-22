@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_INTERACTIONS_BONDED_INTERACTIONS_HPP
-#define SCRIPT_INTERFACE_INTERACTIONS_BONDED_INTERACTIONS_HPP
+#pragma once
 
 #include "BondedInteraction.hpp"
 
@@ -26,9 +25,13 @@
 
 #include "script_interface/ObjectMap.hpp"
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/system/Leaf.hpp"
 
 #include <cassert>
 #include <memory>
+#include <ranges>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -36,81 +39,96 @@
 
 namespace ScriptInterface {
 namespace Interactions {
-class BondedInteractions : public ObjectMap<BondedInteraction> {
-  using container_type =
-      std::unordered_map<int, std::shared_ptr<BondedInteraction>>;
+
+using BondedInteractionsBase_t = ObjectMap<
+    BondedInteraction,
+    AutoParameters<ObjectMap<BondedInteraction, System::Leaf>, System::Leaf>>;
+
+class BondedInteractions : public BondedInteractionsBase_t {
+  using Base = BondedInteractionsBase_t;
 
 public:
-  using key_type = typename container_type::key_type;
-  using mapped_type = typename container_type::mapped_type;
+  using Base::key_type;
+  using Base::mapped_type;
+
+private:
+  std::shared_ptr<::BondedInteractionsMap> m_handle;
+  std::unique_ptr<VariantMap> m_params;
+
+public:
+  ~BondedInteractions() override { do_destruct(); }
+
+  void do_construct(VariantMap const &params) override {
+    m_handle = std::make_shared<::BondedInteractionsMap>();
+    m_params = std::make_unique<VariantMap>(params);
+  }
+
+private:
+  void on_bind_system(::System::System &system) override {
+    system.bonded_ias = m_handle;
+    m_handle->bind_system(m_system.lock());
+    m_handle->on_ia_change();
+    if (m_params and not m_params->empty()) {
+      restore_from_checkpoint(*m_params);
+    }
+    m_params.reset();
+  }
 
   key_type insert_in_core(mapped_type const &obj_ptr) override {
-    auto const key = ::bonded_ia_params.insert(obj_ptr->bonded_ia());
-    m_bonds[key] = std::move(obj_ptr);
-    mpi_update_cell_system_ia_range_local();
+    key_type key{};
+    context()->parallel_try_catch(
+        [&]() { key = m_handle->insert(obj_ptr->bonded_ia()); });
     return key;
   }
 
   void insert_in_core(key_type const &key,
                       mapped_type const &obj_ptr) override {
-    ::bonded_ia_params.insert(key, obj_ptr->bonded_ia());
-    m_bonds[key] = std::move(obj_ptr);
-    mpi_update_cell_system_ia_range_local();
+    context()->parallel_try_catch(
+        [&]() { m_handle->insert(key, obj_ptr->bonded_ia()); });
   }
 
-  void erase_in_core(key_type const &key) override {
-    ::bonded_ia_params.erase(key);
-    m_bonds.erase(key);
-    mpi_update_cell_system_ia_range_local();
-  }
+  void erase_in_core(key_type const &key) final { m_handle->erase(key); }
 
+public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "get_size") {
-      return {static_cast<int>(::bonded_ia_params.size())};
+      return {static_cast<int>(m_handle->size())};
     }
 
     if (name == "get_bond_ids") {
-      std::vector<int> bond_ids;
-      for (auto const &kv : ::bonded_ia_params)
-        bond_ids.push_back(kv.first);
+      auto const view = std::views::elements<0>(*m_handle);
+      std::vector<int> bond_ids(view.begin(), view.end());
       return bond_ids;
     }
 
     if (name == "has_bond") {
-      auto const bond_id = get_value<int>(params, "bond_id");
-      return {m_bonds.count(bond_id) != 0};
+      auto const bond_id = get_key(params.at("bond_id"));
+      return {elements().contains(bond_id)};
     }
 
     if (name == "get_bond") {
-      auto const bond_id = get_value<int>(params, "bond_id");
+      auto const bond_id = get_key(params.at("bond_id"));
       // core and script interface must agree
-      assert(m_bonds.count(bond_id) == ::bonded_ia_params.count(bond_id));
+      assert(elements().contains(bond_id) == m_handle->contains(bond_id));
       if (not context()->is_head_node())
         return {};
       // bond must exist
-      if (m_bonds.count(bond_id) == 0) {
+      if (not elements().contains(bond_id)) {
         throw std::out_of_range("The bond with id " + std::to_string(bond_id) +
                                 " is not yet defined.");
       }
-      return {m_bonds.at(bond_id)};
+      return {elements().at(bond_id)};
     }
 
     if (name == "get_zero_based_type") {
-      auto const bond_id = get_value<int>(params, "bond_id");
-      return ::bonded_ia_params.get_zero_based_type(bond_id);
+      auto const bond_id = get_key(params.at("bond_id"));
+      return m_handle->get_zero_based_type(bond_id);
     }
 
-    return ObjectMap<BondedInteraction>::do_call_method(name, params);
+    return Base::do_call_method(name, params);
   }
-
-private:
-  // disable serialization: pickling done by the python interface
-  std::string get_internal_state() const override { return {}; }
-  void set_internal_state(std::string const &state) override {}
-  container_type m_bonds;
 };
+
 } // namespace Interactions
 } // namespace ScriptInterface
-
-#endif

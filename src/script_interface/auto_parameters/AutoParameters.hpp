@@ -16,15 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
-#define SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
+
+#pragma once
 
 #include "script_interface/Exception.hpp"
 #include "script_interface/ObjectHandle.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
+#include <algorithm>
+#include <ranges>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
@@ -105,31 +108,39 @@ public:
   };
 
 protected:
+  // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
   AutoParameters() = default;
+  // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
   explicit AutoParameters(std::vector<AutoParameter> &&params) {
     add_parameters(std::move(params));
+  }
+  ~AutoParameters() override = default;
+
+  bool has_parameter(std::string const &name) const override {
+    return m_parameters.contains(name);
   }
 
   void add_parameters(std::vector<AutoParameter> &&params) {
     for (auto const &p : params) {
-      if (m_parameters.count(p.name)) {
+      if (m_parameters.contains(p.name)) {
         m_parameters.erase(p.name);
+        if (auto const it = std::ranges::find(m_key_order, p.name);
+            it != m_key_order.end()) {
+          m_key_order.erase(it);
+        }
       }
-      m_parameters.emplace(std::make_pair(p.name, std::move(p)));
+      m_key_order.emplace_back(p.name);
+      m_parameters.emplace(p.name, std::move(p));
     }
   }
 
+  auto const &get_parameter_insertion_order() const { return m_key_order; }
+
 public:
   /* ObjectHandle implementation */
-  Utils::Span<const boost::string_ref> valid_parameters() const final {
-    static std::vector<boost::string_ref> valid_params;
-    valid_params.clear();
-
-    for (auto const &p : m_parameters) {
-      valid_params.emplace_back(p.first);
-    }
-
-    return valid_params;
+  std::vector<std::string_view> valid_parameters() const final {
+    auto const view = std::views::elements<0>(m_parameters);
+    return {view.begin(), view.end()};
   }
 
   Variant get_parameter(const std::string &name) const final {
@@ -150,9 +161,20 @@ public:
     }
   }
 
+  std::vector<std::pair<std::string, Variant>>
+  serialize_parameters() const final {
+    std::vector<std::pair<std::string, Variant>> parameter_pack{};
+    auto const params = this->get_parameters();
+    for (auto const &key : m_key_order) {
+      parameter_pack.emplace_back(key, params.at(key));
+    }
+    return parameter_pack;
+  }
+
 private:
+  /** @brief Data structure for the stored parameters. */
   std::unordered_map<std::string, AutoParameter> m_parameters;
+  /** @brief Keep track of the insertion order of parameters. */
+  std::vector<std::string> m_key_order;
 };
 } // namespace ScriptInterface
-
-#endif

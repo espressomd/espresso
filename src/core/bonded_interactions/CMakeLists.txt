@@ -17,13 +17,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-target_sources(
-  espresso_core
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/angle_cosine.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/angle_cossquare.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/bonded_interaction_data.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/bonded_tab.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/fene.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/rigid_bond.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/thermalized_bond.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/thermalized_bond_utils.cpp)
+target_sources(espresso_core PRIVATE bonded_interaction_data.cpp)

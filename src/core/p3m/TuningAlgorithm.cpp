@@ -21,18 +21,19 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) || defined(DP3M)
+#if defined(ESPRESSO_P3M) || defined(ESPRESSO_DP3M)
 
 #include "p3m/TuningAlgorithm.hpp"
 #include "p3m/common.hpp"
+#include "p3m/math.hpp"
 
 #include "tuning.hpp"
 
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "grid.hpp"
-#include "integrate.hpp"
-
-#include <boost/range/algorithm/min_element.hpp>
+#include "system/System.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -49,18 +50,23 @@ static auto constexpr P3M_TUNE_CAO_TOO_LARGE = 1.;
 static auto constexpr P3M_TUNE_ELC_GAP_SIZE = 2.;
 /** could not achieve target accuracy */
 static auto constexpr P3M_TUNE_ACCURACY_TOO_LARGE = 3.;
+/** conflict with FFT domain decomposition */
+static auto constexpr P3M_TUNE_FFT_MESH_SIZE = 4.;
 /**@}*/
 
 /** @brief Precision threshold for a non-zero real-space cutoff. */
 static auto constexpr P3M_RCUT_PREC = 1e-3;
 
 void TuningAlgorithm::determine_r_cut_limits() {
+  auto const &box_geo = *m_system.box_geo;
+  auto const &local_geo = *m_system.local_geo;
+  auto const verlet_skin = m_system.cell_structure->get_verlet_skin();
   auto const r_cut_iL = get_params().r_cut_iL;
   if (r_cut_iL == 0.) {
-    auto const min_box_l = *boost::min_element(box_geo.length());
-    auto const min_local_box_l = *boost::min_element(local_geo.length());
+    auto const min_box_l = std::ranges::min(box_geo.length());
+    auto const min_local_box_l = std::ranges::min(local_geo.length());
     m_r_cut_iL_min = 0.;
-    m_r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2.) - skin;
+    m_r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2.) - verlet_skin;
     m_r_cut_iL_min *= box_geo.length_inv()[0];
     m_r_cut_iL_max *= box_geo.length_inv()[0];
   } else {
@@ -70,11 +76,11 @@ void TuningAlgorithm::determine_r_cut_limits() {
 }
 
 void TuningAlgorithm::determine_cao_limits(int initial_cao) {
-  assert(initial_cao >= 1 and initial_cao <= 7);
+  assert(initial_cao >= p3m_min_cao and initial_cao <= p3m_max_cao);
   auto const cao = get_params().cao;
   if (cao == -1) {
-    cao_min = 1;
-    cao_max = 7;
+    cao_min = p3m_min_cao;
+    cao_max = p3m_max_cao;
     cao_best = initial_cao;
   } else {
     cao_min = cao_max = cao_best = cao;
@@ -84,6 +90,7 @@ void TuningAlgorithm::determine_cao_limits(int initial_cao) {
 
 void TuningAlgorithm::commit(Utils::Vector3i const &mesh, int cao,
                              double r_cut_iL, double alpha_L) {
+  auto const &box_geo = *m_system.box_geo;
   auto &p3m_params = get_params();
   p3m_params.r_cut = r_cut_iL * box_geo.length()[0];
   p3m_params.r_cut_iL = r_cut_iL;
@@ -106,13 +113,16 @@ void TuningAlgorithm::commit(Utils::Vector3i const &mesh, int cao,
  * @param[in,out] tuned_accuracy  @copybrief P3MParameters::accuracy
  *
  * @returns The integration time in case of success, otherwise
- *          -@ref P3M_TUNE_ACCURACY_TOO_LARGE,
+ *          -@ref P3M_TUNE_ACCURACY_TOO_LARGE, -@ref P3M_TUNE_FFT_MESH_SIZE,
  *          -@ref P3M_TUNE_CAO_TOO_LARGE, or -@ref P3M_TUNE_ELC_GAP_SIZE
  */
 double TuningAlgorithm::get_mc_time(Utils::Vector3i const &mesh, int cao,
                                     double &tuned_r_cut_iL,
                                     double &tuned_alpha_L,
                                     double &tuned_accuracy) {
+  auto const &box_geo = *m_system.box_geo;
+  auto const &local_geo = *m_system.local_geo;
+  auto const verlet_skin = m_system.cell_structure->get_verlet_skin();
   auto const target_accuracy = get_params().accuracy;
   double rs_err, ks_err;
   double r_cut_iL_min = m_r_cut_iL_min;
@@ -121,12 +131,12 @@ double TuningAlgorithm::get_mc_time(Utils::Vector3i const &mesh, int cao,
   /* initial checks. */
   auto const k_cut_per_dir = (static_cast<double>(cao) / 2.) *
                              Utils::hadamard_division(box_geo.length(), mesh);
-  auto const k_cut = *boost::min_element(k_cut_per_dir);
-  auto const min_box_l = *boost::min_element(box_geo.length());
-  auto const min_local_box_l = *boost::min_element(local_geo.length());
-  auto const k_cut_max = std::min(min_box_l, min_local_box_l) - skin;
+  auto const k_cut = std::ranges::min(k_cut_per_dir);
+  auto const min_box_l = std::ranges::min(box_geo.length());
+  auto const min_local_box_l = std::ranges::min(local_geo.length());
+  auto const k_cut_max = std::min(min_box_l, min_local_box_l) - verlet_skin;
 
-  if (cao >= *boost::min_element(mesh) or k_cut >= k_cut_max) {
+  if (cao >= std::ranges::min(mesh) or k_cut >= k_cut_max) {
     m_logger->log_cao_too_large(mesh[0], cao);
     return -P3M_TUNE_CAO_TOO_LARGE;
   }
@@ -164,18 +174,26 @@ double TuningAlgorithm::get_mc_time(Utils::Vector3i const &mesh, int cao,
    * we know that the desired minimal accuracy is obtained */
   tuned_r_cut_iL = r_cut_iL = r_cut_iL_max;
 
+  auto const report_veto = [&](auto const &veto) {
+    if (veto) {
+      m_logger->log_skip(*veto, mesh[0], cao, r_cut_iL, tuned_alpha_L,
+                         tuned_accuracy, rs_err, ks_err);
+    }
+    return static_cast<bool>(veto);
+  };
+
   /* if we are running P3M+ELC, check that r_cut is compatible */
   auto const r_cut = r_cut_iL * box_geo.length()[0];
-  auto const veto = layer_correction_veto_r_cut(r_cut);
-  if (veto) {
-    m_logger->log_skip(*veto, mesh[0], cao, r_cut_iL, tuned_alpha_L,
-                       tuned_accuracy, rs_err, ks_err);
+  if (report_veto(layer_correction_veto_r_cut(r_cut))) {
     return -P3M_TUNE_ELC_GAP_SIZE;
   }
 
   commit(mesh, cao, r_cut_iL, tuned_alpha_L);
   on_solver_change();
-  auto const int_time = benchmark_integration_step(m_timings);
+  if (report_veto(fft_decomposition_veto(mesh))) {
+    return -P3M_TUNE_FFT_MESH_SIZE;
+  }
+  auto const int_time = benchmark_integration_step(m_system, m_timings);
 
   std::tie(tuned_accuracy, rs_err, ks_err, tuned_alpha_L) =
       calculate_accuracy(mesh, cao, r_cut_iL);
@@ -320,4 +338,4 @@ double TuningAlgorithm::get_m_time(Utils::Vector3i const &mesh, int &tuned_cao,
   return best_time;
 }
 
-#endif // P3M or DP3M
+#endif // ESPRESSO_P3M or ESPRESSO_DP3M

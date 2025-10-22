@@ -64,13 +64,14 @@ def get_random_mock_particles():
                          v=np.random.rand(3),
                          bonds=[])
         # Up to 20 bonds; otherwise this test will take ages
-        for _ in range(random.randint(0, 20)):
+        while len(p.bonds) < 20:
             btype = random.randint(0, nbonds - 1)
             # Don't create loops, i.e. exclude "i" itself
             p1 = randint_different_from(0, npart, i)
             p2 = randint_different_from(0, npart, i)
-            # Don't add the same bond twice
-            if (btype, p1, p2) not in p.bonds:
+
+            # avoid adding the same bond twice or using the same particle twice
+            if p1 != p2 and (btype, p1, p2) not in p.bonds:
                 p.bonds.append((btype, p1, p2))
         parts.append(p)
     return parts
@@ -159,7 +160,7 @@ class MPIIOTest(ut.TestCase):
             'velocities': True,
             'bonds': True}
         prefix = self.generate_prefix(self.id())
-        mpiio = espressomd.io.mpiio.Mpiio()
+        mpiio = espressomd.io.mpiio.Mpiio(system=self.system)
 
         self.add_particles()
         mpiio.write(prefix, **fields)
@@ -171,7 +172,7 @@ class MPIIOTest(ut.TestCase):
 
     def test_mpiio_without_positions(self):
         prefix = self.generate_prefix(self.id())
-        mpiio = espressomd.io.mpiio.Mpiio()
+        mpiio = espressomd.io.mpiio.Mpiio(system=self.system)
         self.add_particles()
         mpiio.write(prefix, types=True, positions=False)
         self.system.part.clear()
@@ -180,7 +181,7 @@ class MPIIOTest(ut.TestCase):
 
     def test_mpiio_without_types(self):
         prefix = self.generate_prefix(self.id())
-        mpiio = espressomd.io.mpiio.Mpiio()
+        mpiio = espressomd.io.mpiio.Mpiio(system=self.system)
         self.add_particles()
         mpiio.write(prefix, types=False, positions=True)
         self.system.part.clear()
@@ -200,8 +201,8 @@ class MPIIOTest(ut.TestCase):
             'bonds': False}
         prefix1 = self.generate_prefix(self.id()) + '.1'
         prefix2 = self.generate_prefix(self.id()) + '.2'
-        mpiio1 = espressomd.io.mpiio.Mpiio()
-        mpiio2 = espressomd.io.mpiio.Mpiio()
+        mpiio1 = espressomd.io.mpiio.Mpiio(system=self.system)
+        mpiio2 = espressomd.io.mpiio.Mpiio(system=self.system)
 
         self.add_particles()
         mpiio1.write(prefix1, **fields1)
@@ -218,7 +219,7 @@ class MPIIOTest(ut.TestCase):
         self.check_sample_system(**fields2)
 
     def test_mpiio_exceptions(self):
-        mpiio = espressomd.io.mpiio.Mpiio()
+        mpiio = espressomd.io.mpiio.Mpiio(system=self.system)
         prefix = self.generate_prefix(self.id())
         msg_prefix = "Need to supply output prefix via the 'prefix' argument."
         with self.assertRaisesRegex(ValueError, msg_prefix):

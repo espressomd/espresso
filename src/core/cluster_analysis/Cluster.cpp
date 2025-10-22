@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef GSL
+#ifdef ESPRESSO_GSL
 #include "gsl/gsl_fit.h"
 #endif
 
@@ -28,7 +28,6 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "particle_node.hpp"
 
 #include <utils/Vector.hpp>
@@ -37,6 +36,7 @@
 #include <cmath>
 #include <cstddef>
 #include <numeric>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -50,6 +50,9 @@ Utils::Vector3d Cluster::center_of_mass() {
 // Center of mass of an aggregate
 Utils::Vector3d
 Cluster::center_of_mass_subcluster(std::vector<int> const &particle_ids) {
+  sanity_checks();
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
   Utils::Vector3d com{};
 
   // The distances between the particles are "folded", such that all distances
@@ -57,11 +60,11 @@ Cluster::center_of_mass_subcluster(std::vector<int> const &particle_ids) {
   // of the cluster is arbitrarily chosen as reference.
 
   auto const reference_position =
-      folded_position(get_particle_data(particles[0]).pos(), box_geo);
+      box_geo.folded_position(get_particle_data(particles[0]).pos());
   double total_mass = 0.;
   for (int pid : particle_ids) {
     auto const folded_pos =
-        folded_position(get_particle_data(pid).pos(), box_geo);
+        box_geo.folded_position(get_particle_data(pid).pos());
     auto const dist_to_reference =
         box_geo.get_mi_vector(folded_pos, reference_position);
     com += dist_to_reference * get_particle_data(pid).mass();
@@ -75,10 +78,13 @@ Cluster::center_of_mass_subcluster(std::vector<int> const &particle_ids) {
   com += reference_position;
 
   // Fold into simulation box
-  return folded_position(com, box_geo);
+  return box_geo.folded_position(com);
 }
 
 double Cluster::longest_distance() {
+  sanity_checks();
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
   double ld = 0.;
   for (auto a = particles.begin(); a != particles.end(); a++) {
     for (auto b = a; ++b != particles.end();) {
@@ -101,6 +107,9 @@ double Cluster::radius_of_gyration() {
 
 double
 Cluster::radius_of_gyration_subcluster(std::vector<int> const &particle_ids) {
+  sanity_checks();
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
   // Center of mass
   Utils::Vector3d com = center_of_mass_subcluster(particle_ids);
   double sum_sq_dist = 0.;
@@ -118,16 +127,20 @@ std::vector<std::size_t> sort_indices(const std::vector<T> &v) {
 
   // Unsorted for unsorted vector (0..n-1)
   std::vector<std::size_t> idx(v.size());
-  std::iota(idx.begin(), idx.end(), 0);
+  std::iota(idx.begin(), idx.end(), std::size_t{0u});
 
   // sort indices based on comparing values in v
-  std::sort(idx.begin(), idx.end(),
-            [&v](std::size_t i1, std::size_t i2) { return v[i1] < v[i2]; });
+  std::ranges::sort(
+      idx, [&v](std::size_t i1, std::size_t i2) { return v[i1] < v[i2]; });
   return idx;
 }
 
-std::pair<double, double> Cluster::fractal_dimension(double dr) {
-#ifdef GSL
+std::pair<double, double>
+Cluster::fractal_dimension([[maybe_unused]] double dr) {
+#ifdef ESPRESSO_GSL
+  sanity_checks();
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
   Utils::Vector3d com = center_of_mass();
   // calculate Df using linear regression on the logarithms of the radii of
   // gyration against the number of particles in sub-clusters. Particles are
@@ -174,6 +187,15 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
                        "dimension calculation.";
   return {0, 0};
 #endif
+}
+
+void Cluster::sanity_checks() const {
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
+  if (box_geo.type() != BoxType::CUBOID) {
+    throw std::runtime_error(
+        "Cluster analysis is not compatible with non-cuboid box types");
+  }
 }
 
 } // namespace ClusterAnalysis

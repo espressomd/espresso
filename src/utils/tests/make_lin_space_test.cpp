@@ -25,30 +25,32 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <limits>
 #include <vector>
 
 BOOST_AUTO_TEST_CASE(make_lin_space_test) {
   using Utils::make_lin_space;
+  constexpr auto tol = 100. * std::numeric_limits<double>::epsilon();
 
   /* With endpoint */
   {
     auto const start = 1.;
     auto const stop = 2.;
-    auto const num = 13;
+    auto const num = 13u;
 
     auto const lin_space =
         make_lin_space(start, stop, num, /* endpoint */ true);
     BOOST_CHECK_EQUAL(lin_space.size(), num);
 
-    std::vector<double> values(lin_space.begin(), lin_space.end());
+    std::vector<double> values;
+    std::ranges::copy(lin_space, std::back_inserter(values));
     BOOST_CHECK_EQUAL(values.front(), start);
-    BOOST_CHECK_EQUAL(values.back(), stop);
+    BOOST_CHECK_CLOSE(values.back(), stop, tol);
 
-    auto const dx = (stop - start) / (num - 1);
-    for (int i = 0; i < values.size(); i++) {
-      BOOST_CHECK(std::fabs(start + i * dx - values.at(i)) <=
-                  std::numeric_limits<double>::epsilon());
+    auto const dx = (stop - start) / static_cast<double>(num - 1u);
+    for (std::size_t i = 0u; i < values.size(); i++) {
+      BOOST_CHECK_CLOSE(values.at(i), start + static_cast<double>(i) * dx, tol);
     }
   }
 
@@ -56,20 +58,20 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
   {
     auto const start = 1.;
     auto const stop = 2.;
-    auto const num = 13;
+    auto const num = 13u;
 
     auto const lin_space =
         make_lin_space(start, stop, num, /* endpoint */ false);
     BOOST_CHECK_EQUAL(lin_space.size(), num);
 
-    std::vector<double> values(lin_space.begin(), lin_space.end());
+    std::vector<double> values;
+    std::ranges::copy(lin_space, std::back_inserter(values));
     BOOST_CHECK_EQUAL(values.front(), start);
     BOOST_CHECK_LT(values.back(), stop);
 
-    auto const dx = (stop - start) / num;
-    for (int i = 0; i < values.size(); i++) {
-      BOOST_CHECK(std::fabs(start + i * dx - values.at(i)) <=
-                  std::numeric_limits<double>::epsilon());
+    auto const dx = (stop - start) / static_cast<double>(num);
+    for (std::size_t i = 0u; i < values.size(); i++) {
+      BOOST_CHECK_CLOSE(values.at(i), start + static_cast<double>(i) * dx, tol);
     }
   }
 }

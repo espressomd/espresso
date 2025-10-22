@@ -31,7 +31,7 @@
 # not enclosed within <a href="..."></a> tags. Sphinx doesn't use line
 # wrapping, so these broken links can be found via text search. The first
 # negative lookahead filters out common Python types (for performance reasons).
-regex_sphinx_broken_link='<code class=\"xref py py-[a-z]+ docutils literal notranslate\"><span class=\"pre\">(?!(int|float|complex|bool|str|bytes|array|bytearray|memoryview|object|list|tuple|range|slice|dict|set|frozenset|(?:numpy\.|np\.)?(?:nd)?array)<)[^<>]+?</span></code>(?!</a>)'
+regex_sphinx_broken_link='<code class=\"xref py py-[a-z]+ docutils literal notranslate\"><span class=\"pre\">(?!(int|float|complex|bool|str|bytes|array|bytearray|memoryview|object|list|tuple|range|slice|dict|set|frozenset|(?:numpy\.|np\.)?(?:nd)?array|EnumType|IntEnum|StrEnum|ReprEnum|Enum|IntFlag|Flag)<)[^<>]+?</span></code>(?!</a>)'
 
 if [ ! -f doc/sphinx/html/index.html ]; then
     echo "Please run Sphinx first."
@@ -51,7 +51,7 @@ if [ "${?}" = "0" ]; then
         # skip if broken link refers to a standard Python type or to a
         # class/function from an imported module other than espressomd
         is_standard_type_or_module="false"
-        grep -Pq '^([a-zA-Z0-9_]+Error|[a-zA-Z0-9_]*Exception|(?!espressomd\.)[a-zA-Z0-9_]+\.[a-zA-Z0-9_\.]+)$' <<< "${reference}"
+        grep -Pq '^([a-zA-Z0-9_]+Error|[a-zA-Z0-9_]*Exception|ConverterBase|(?!espressomd\.)[a-zA-Z0-9_]+\.[a-zA-Z0-9_\.]+)$' <<< "${reference}"
         [ "${?}" = "0" ] && is_standard_type_or_module="true"
         # private objects are not documented and cannot be linked
         is_private="false"
@@ -103,7 +103,7 @@ fi
 #    * incorrect syntax, e.g. "obj:float:"
 #    * incorrect numpydoc syntax, e.g. ":rtype:`float`"
 # They are difficult to predict, so we leave them to the user's discretion
-grep -qrP --include='*.html' --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
+grep -qrP --include='*.html' --exclude-dir=_modules '(:py)?:(?!digit:)[a-z]+:' doc/sphinx/html/
 if [ "${?}" = "0" ]; then
     echo "Possibly errors:"
     grep -rP --color --include='*.html' --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/

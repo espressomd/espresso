@@ -21,13 +21,14 @@
 
 #include "config/config.hpp"
 
-#if defined(SCAFACOS) or defined(SCAFACOS_DIPOLES)
+#if defined(ESPRESSO_SCAFACOS) or defined(ESPRESSO_SCAFACOS_DIPOLES)
 
 #include "scafacos/ScafacosContext.hpp"
 
-#include "cells.hpp"
+#include "BoxGeometry.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -39,13 +40,16 @@
 namespace detail {
 std::tuple<Utils::Vector3d const &, Utils::Vector3i, std::size_t>
 get_system_params() {
-  auto periodicity = Utils::Vector3i{static_cast<int>(box_geo.periodic(0)),
-                                     static_cast<int>(box_geo.periodic(1)),
-                                     static_cast<int>(box_geo.periodic(2))};
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const &cell_structure = *system.cell_structure;
+  auto periodicity = Utils::Vector3i{static_cast<int>(box_geo.periodic(0u)),
+                                     static_cast<int>(box_geo.periodic(1u)),
+                                     static_cast<int>(box_geo.periodic(2u))};
   auto const n_part = boost::mpi::all_reduce(
       comm_cart, cell_structure.local_particles().size(), std::plus<>());
   return {box_geo.length(), periodicity, n_part};
 }
 } // namespace detail
 
-#endif // SCAFACOS or SCAFACOS_DIPOLES
+#endif // ESPRESSO_SCAFACOS or ESPRESSO_SCAFACOS_DIPOLES

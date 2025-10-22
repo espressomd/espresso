@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef TESTS_MOCK_HPP
-#define TESTS_MOCK_HPP
+
+#pragma once
 
 namespace Testing {
 
@@ -45,5 +45,3 @@ template <> struct traits<Testing::Particle> {
   double dipole_moment(Particle const &p) const { return p.dipole_moment(); }
 };
 } // namespace ParticleObservables
-
-#endif

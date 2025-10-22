@@ -26,10 +26,8 @@ import writeVTK
 import espressomd
 import espressomd.lb
 import espressomd.shapes
-import espressomd.lbboundaries
-import espressomd.virtual_sites
 
-required_features = ["LB_BOUNDARIES", "VIRTUAL_SITES_INERTIALESS_TRACERS"]
+required_features = ["VIRTUAL_SITES_INERTIALESS_TRACERS", "WALBERLA"]
 espressomd.assert_features(required_features)
 
 parser = argparse.ArgumentParser()
@@ -49,7 +47,6 @@ boxZ = 20
 system = espressomd.System(box_l=(20, 20, boxZ))
 system.time_step = 1 / 6.
 system.cell_system.skin = 0.1
-system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
 print(f"Parallelization: {system.cell_system.node_grid}")
 
 force = 0.001
@@ -76,20 +73,19 @@ if args.volcons:
     outputDir = "outputVolParaCUDA"
 
 # Add LB Fluid
-lbf = espressomd.lb.LBFluid(agrid=1, dens=1, visc=1, tau=system.time_step,
-                            ext_force_density=[force, 0, 0])
-system.actors.add(lbf)
-
-system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0, act_on_virtual=False)
+lbf = espressomd.lb.LBFluidWalberla(
+    agrid=1, density=1, kinematic_viscosity=1, tau=system.time_step,
+    ext_force_density=[force, 0, 0])
+system.lb = lbf
+system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0)
 
 # Setup boundaries
-walls = [espressomd.lbboundaries.LBBoundary() for k in range(2)]
-walls[0].set_params(shape=espressomd.shapes.Wall(normal=[0, 0, 1], dist=0.5))
-walls[1].set_params(shape=espressomd.shapes.Wall(
-    normal=[0, 0, -1], dist=-boxZ + 0.5))
+wall_shapes = [None] * 2
+wall_shapes[0] = espressomd.shapes.Wall(normal=[0, 0, 1], dist=0.5)
+wall_shapes[1] = espressomd.shapes.Wall(normal=[0, 0, -1], dist=-boxZ + 0.5)
 
-for wall in walls:
-    system.lbboundaries.add(wall)
+for wall_shape in wall_shapes:
+    lbf.add_boundary_from_shape(wall_shape)
 
 # make directory
 os.makedirs(outputDir)

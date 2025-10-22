@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ERROR_HANDLING_RUNTIME_ERROR_STREAM_HPP
-#define ESPRESSO_SRC_CORE_ERROR_HANDLING_RUNTIME_ERROR_STREAM_HPP
+#pragma once
 
 #include "RuntimeError.hpp"
 
@@ -50,5 +49,3 @@ private:
 };
 
 } // namespace ErrorHandling
-
-#endif

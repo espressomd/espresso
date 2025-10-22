@@ -18,14 +18,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ANGLE_COSINE_H
-#define ANGLE_COSINE_H
+
+#pragma once
+
 /** \file
  *  Routines to calculate the angle energy or/and and force
  *  for a particle triple using the potential described in
  *  @ref bondedIA_angle_cosine.
  */
 
+#include "BoxGeometry.hpp"
 #include "angle_common.hpp"
 
 #include <utils/Vector.hpp>
@@ -49,35 +51,26 @@ struct AngleCosineBond {
 
   static constexpr int num = 2;
 
-  AngleCosineBond(double bend, double phi0);
+  AngleCosineBond(double bend, double phi0) {
+    this->bend = bend;
+    this->phi0 = phi0;
+    this->cos_phi0 = cos(phi0);
+    this->sin_phi0 = sin(phi0);
+  }
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-  forces(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-         Utils::Vector3d const &r_right) const;
-  double energy(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-                Utils::Vector3d const &r_right) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar &bend;
-    ar &phi0;
-    ar &cos_phi0;
-    ar &sin_phi0;
-  }
+  forces(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2) const;
+  double energy(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2) const;
 };
 
 /** Compute the three-body angle interaction force.
- *  @param[in]  r_mid     Position of second/middle particle.
- *  @param[in]  r_left    Position of first/left particle.
- *  @param[in]  r_right   Position of third/right particle.
+ *  @param[in]  vec1  Vector from central particle to left particle.
+ *  @param[in]  vec2  Vector from central particle to right particle.
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-AngleCosineBond::forces(Utils::Vector3d const &r_mid,
-                        Utils::Vector3d const &r_left,
-                        Utils::Vector3d const &r_right) const {
+AngleCosineBond::forces(Utils::Vector3d const &vec1,
+                        Utils::Vector3d const &vec2) const {
 
   auto forceFactor = [this](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
@@ -86,23 +79,18 @@ AngleCosineBond::forces(Utils::Vector3d const &r_mid,
     return -bend * (sin_phi * cos_phi0 - cos_phi * sin_phi0) / sin_phi;
   };
 
-  return angle_generic_force(r_mid, r_left, r_right, forceFactor, false);
+  return angle_generic_force(vec1, vec2, forceFactor, false);
 }
 
 /** Computes the three-body angle interaction energy.
- *  @param[in]  r_mid     Position of second/middle particle.
- *  @param[in]  r_left    Position of first/left particle.
- *  @param[in]  r_right   Position of third/right particle.
+ *  @param[in]  vec1  Vector from central particle to left particle.
+ *  @param[in]  vec2  Vector from central particle to right particle.
  */
-inline double AngleCosineBond::energy(Utils::Vector3d const &r_mid,
-                                      Utils::Vector3d const &r_left,
-                                      Utils::Vector3d const &r_right) const {
-  auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
-  auto const cos_phi = std::get<4>(vectors);
+inline double AngleCosineBond::energy(Utils::Vector3d const &vec1,
+                                      Utils::Vector3d const &vec2) const {
+  auto const cos_phi = calc_cosine(vec1, vec2, true);
   auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
   // potential: U(phi) = k * [1 - cos(phi - phi0)]
   // trig identity: cos(phi - phi0) = cos(phi)cos(phi0) + sin(phi)sin(phi0)
   return bend * (1 - (cos_phi * cos_phi0 + sin_phi * sin_phi0));
 }
-
-#endif /* ANGLE_COSINE_H */

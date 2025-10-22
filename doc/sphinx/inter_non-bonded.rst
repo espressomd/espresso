@@ -48,6 +48,18 @@ For many non-bonded interactions, it is possible to artificially cap the
 forces, which often allows to equilibrate the system much faster. See
 the subsection :ref:`Capping the force during warmup` for more details.
 
+It is possible to exclude particle pairs from the non-bonded interaction
+calculation. For example::
+
+    system.part.by_id(0).exclusions = [1, 2]
+
+excludes short-range interactions of the particle pairs ``0 <-> 1`` and ``0 <-> 2``.
+It is possible to automatically exclude particle pairs that are involved in
+bonded interactions, for example to prevent virtual sites from interacting
+with the real particles they are tracking, or to facilitate the use of custom
+potentials in polymers. This is achieved via the
+:meth:`espressomd.particle_data.ParticleList.auto_exclusions()` method.
+
 .. _Isotropic non-bonded interactions:
 
 Isotropic non-bonded interactions
@@ -66,8 +78,12 @@ The interface for tabulated interactions are implemented in the
 :class:`~espressomd.interactions.TabulatedNonBonded` class. They can be configured
 via the following syntax::
 
-  system.non_bonded_inter[type1, type2].tabulated.set_params(
-      min='min', max='max', energy='energy', force='force')
+    import numpy as np
+    r = np.linspace(0., 8., 100)
+    energy = 4 * eps * ((sig / r)**12 - (sig / r)**6)
+    force = -4 * eps * (-12 / r * (sig / r)**12 + 6 / r * (sig / r)**6)
+    system.non_bonded_inter[type1, type2].tabulated.set_params(
+        min=0., max=8., energy=energy, force=force)
 
 This defines an interaction between particles of the types ``type1`` and
 ``type2`` according to an arbitrary tabulated pair potential by linear interpolation.
@@ -81,6 +97,22 @@ value for the potential.
 The values of :math:`r` are assumed to be equally distributed between
 :math:`r_\mathrm{min}` and :math:`r_\mathrm{max}` with a fixed distance
 of :math:`(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)`.
+
+Alternatively, one can generate the tabulated interaction from an analytical
+expression of the potential. The expression of the force is automatically
+determined through symbolic differentiation, via method
+:meth:`~espressomd.interactions.TabulatedNonBonded.set_analytical()`::
+
+    system.non_bonded_inter[type1, type2].tabulated.set_analytical(
+        min=0., max=8., steps=100, sigma=1., epsilon=4.,
+        energy_expr="4*epsilon*((sigma/r)**12-(sigma/r)**6)")
+
+    # optional: plot tabulated values
+    import matplotlib.pyplot as plt
+    plt.plot(system.non_bonded_inter[type1, type2].tabulated.force, label="force")
+    plt.plot(system.non_bonded_inter[type1, type2].tabulated.energy, label="energy")
+    plt.legend()
+    plt.show()
 
 .. _Lennard-Jones interaction:
 
@@ -180,7 +212,7 @@ the normal LJ potential is recovered for :math:`b_1=b_2=4`,
 The optional ``LJGEN_SOFTCORE`` feature activates a softcore version of
 the potential, where the following transformations apply:
 :math:`\epsilon \rightarrow \lambda \epsilon` and
-:math:`r-r_\mathrm{off} \rightarrow \sqrt{(r-r_\mathrm{off})^2 +
+:math:`(r-r_\mathrm{off}) \rightarrow \sqrt{(r-r_\mathrm{off})^2 +
 (1-\lambda) \delta \sigma^2}`. :math:`\lambda` allows to tune the strength of the
 interaction, while :math:`\delta` varies how smoothly the potential goes to zero as
 :math:`\lambda\rightarrow 0`. Such a feature allows one to perform

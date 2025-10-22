@@ -21,100 +21,89 @@
 
 add_library(
   espresso_core SHARED
-  accumulators.cpp
   bond_error.cpp
+  bonds.cpp
   cells.cpp
-  collision.cpp
   communication.cpp
-  constraints.cpp
   dpd.cpp
   energy.cpp
   errorhandling.cpp
-  EspressoSystemInterface.cpp
-  forcecap.cpp
   forces.cpp
   ghosts.cpp
-  grid.cpp
-  immersed_boundaries.cpp
-  interactions.cpp
-  event.cpp
   integrate.cpp
   npt.cpp
-  partCfg_global.cpp
-  particle_data.cpp
   particle_node.cpp
   polymer.cpp
   pressure.cpp
+  propagation.cpp
   rattle.cpp
-  rotate_system.cpp
   rotation.cpp
   Observable_stat.cpp
-  SystemInterface.cpp
   thermostat.cpp
   tuning.cpp
   virtual_sites.cpp
   exclusions.cpp
+  system/GpuParticleData.cpp
+  system/System.cpp
   PartCfg.cpp
-  EspressoSystemStandAlone.cpp
   TabulatedPotential.cpp)
 add_library(espresso::core ALIAS espresso_core)
-set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY
-                                               "${ESPRESSO_CXX_CLANG_TIDY}")
+
 if(ESPRESSO_BUILD_WITH_NLOPT)
   target_include_directories(espresso_core PRIVATE "${nlopt_SOURCE_DIR}/src")
   target_link_libraries(espresso_core PRIVATE nlopt)
+
+espresso_set_common_target_properties(espresso_core)
+if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+  set_target_properties(
+    espresso_core PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CABANA_CXX_CLANG_TIDY}")
+
 endif()
 
 if(ESPRESSO_BUILD_WITH_CUDA)
   target_sources(
     espresso_core
-    PRIVATE cuda_init.cpp cuda_interface.cpp
-            grid_based_algorithms/electrokinetics.cpp
-            grid_based_algorithms/lbgpu.cpp)
-  espresso_add_gpu_library(
-    espresso_cuda
-    SHARED
-    cuda_common_cuda.cu
-    cuda_init_cuda.cu
-    CudaHostAllocator.cu
-    magnetostatics/barnes_hut_gpu_cuda.cu
-    magnetostatics/dipolar_direct_sum_gpu_cuda.cu
-    electrostatics/mmm1d_gpu_cuda.cu
-    electrostatics/p3m_gpu_cuda.cu
-    electrostatics/p3m_gpu_error_cuda.cu
-    EspressoSystemInterface_cuda.cu
-    grid_based_algorithms/electrokinetics_cuda.cu
-    grid_based_algorithms/lbgpu_cuda.cu
-    grid_based_algorithms/fd-electrostatics_cuda.cu
-    virtual_sites/lb_inertialess_tracers_cuda.cu)
-  add_library(espresso::cuda ALIAS espresso_cuda)
-  target_link_libraries(
-    espresso_cuda PRIVATE CUDA::cuda_driver CUDA::cudart CUDA::cufft
-                          espresso::config espresso::utils espresso::shapes)
+    PRIVATE cuda/init.cpp cuda/common_cuda.cu cuda/init_cuda.cu
+            cuda/CudaHostAllocator.cu
+            magnetostatics/dipolar_direct_sum_gpu_cuda.cu
+            electrostatics/p3m_gpu_cuda.cu electrostatics/p3m_gpu_error_cuda.cu
+            system/GpuParticleData_cuda.cu)
+  target_link_libraries(espresso_core PRIVATE CUDA::cuda_driver CUDA::cudart
+                                              CUDA::cufft)
   target_include_directories(
-    espresso_cuda
+    espresso_core
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-            ${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites
-            ${CMAKE_CURRENT_SOURCE_DIR}/grid_based_algorithms
             ${CMAKE_CURRENT_SOURCE_DIR}/electrostatics
             ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
-  set_target_properties(espresso_cuda PROPERTIES CUDA_CLANG_TIDY
-                                                 "${ESPRESSO_CUDA_CLANG_TIDY}")
-  target_link_libraries(espresso_core PUBLIC espresso::cuda)
-  install(TARGETS espresso_cuda
-          LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
+  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+    set_target_properties(espresso_core PROPERTIES CUDA_CLANG_TIDY
+                                                   "${CABANA_CUDA_CLANG_TIDY}")
+  endif()
 endif()
 
 install(TARGETS espresso_core
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 target_link_libraries(
-  espresso_core PRIVATE espresso::config espresso::utils::mpi espresso::shapes
-                        espresso::profiler espresso::cpp_flags
+  espresso_core
+  PRIVATE
+    espresso::config
+    espresso::utils::mpi
+    espresso::shapes
+    espresso::compiler_flags
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Cabana::Core>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>
   PUBLIC espresso::utils MPI::MPI_CXX Random123 espresso::particle_observables
-         Boost::serialization Boost::mpi)
+         Boost::serialization Boost::mpi espresso::instrumentation)
 
 target_include_directories(espresso_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+if(ESPRESSO_BUILD_WITH_FFTW)
+  add_subdirectory(p3m)
+  add_subdirectory(fft)
+endif()
 
 add_subdirectory(accumulators)
 add_subdirectory(analysis)
@@ -122,19 +111,20 @@ add_subdirectory(bond_breakage)
 add_subdirectory(bonded_interactions)
 add_subdirectory(cell_system)
 add_subdirectory(cluster_analysis)
+add_subdirectory(collision_detection)
 add_subdirectory(constraints)
+add_subdirectory(ek)
 add_subdirectory(electrostatics)
 add_subdirectory(error_handling)
 add_subdirectory(galilei)
-add_subdirectory(grid_based_algorithms)
 add_subdirectory(immersed_boundary)
 add_subdirectory(integrators)
 add_subdirectory(io)
+add_subdirectory(lb)
 add_subdirectory(magnetostatics)
 add_subdirectory(nonbonded_interactions)
 add_subdirectory(object-in-fluid)
 add_subdirectory(observables)
-add_subdirectory(p3m)
 add_subdirectory(reaction_methods)
 add_subdirectory(scafacos)
 add_subdirectory(stokesian_dynamics)
@@ -142,4 +132,11 @@ add_subdirectory(virtual_sites)
 
 if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(unit_tests)
+endif()
+
+if(ESPRESSO_BUILD_WITH_HDF5 AND ESPRESSO_BUILD_WITH_COVERAGE
+   AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set_source_files_properties(
+    io/writer/h5md_core.cpp PROPERTIES COMPILE_OPTIONS -felide-constructors
+                                       DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()

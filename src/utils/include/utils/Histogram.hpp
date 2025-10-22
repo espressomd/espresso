@@ -16,10 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_HISTOGRAM_HPP
-#define UTILS_HISTOGRAM_HPP
 
-#include "utils/Span.hpp"
+#pragma once
 
 #include <boost/multi_array.hpp>
 
@@ -30,6 +28,7 @@
 #include <cstddef>
 #include <functional>
 #include <numeric>
+#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -47,6 +46,8 @@ template <typename T, std::size_t N, std::size_t M = 3, typename U = double>
 class Histogram {
   using array_type = boost::multi_array<T, M + 1>;
   using count_type = boost::multi_array<std::size_t, M + 1>;
+
+protected:
   using array_index = typename array_type::index;
 
 public:
@@ -89,14 +90,14 @@ public:
    * \brief Add data to the histogram.
    * \param pos    Position to update.
    */
-  void update(Span<const U> pos) { update(pos, m_ones); }
+  void update(std::span<const U> pos) { update(pos, m_ones); }
 
   /**
    * \brief Add data to the histogram.
    * \param pos    Position to update.
    * \param value  Value to add.
    */
-  void update(Span<const U> pos, Span<const T> value) {
+  void update(std::span<const U> pos, std::span<const T> value) {
     if (pos.size() != M) {
       throw std::invalid_argument("Wrong dimensions for the coordinates");
     }
@@ -104,12 +105,9 @@ public:
       throw std::invalid_argument("Wrong dimensions for the value");
     }
     if (check_limits(pos)) {
-      boost::array<array_index, M + 1> index;
-      for (std::size_t i = 0; i < M; ++i) {
-        index[i] = calc_bin_index(pos[i], m_limits[i].first, m_bin_sizes[i]);
-      }
-      for (array_index i = 0; i < N; ++i) {
-        index.back() = i;
+      auto index = calc_bin_index(pos);
+      for (std::size_t i = 0; i < N; ++i) {
+        index.back() = static_cast<array_index>(i);
         m_array(index) += value[i];
         m_count(index)++;
       }
@@ -120,20 +118,29 @@ public:
   virtual void normalize() {
     auto const bin_volume = std::accumulate(
         m_bin_sizes.begin(), m_bin_sizes.end(), U{1}, std::multiplies<U>());
-    std::transform(
-        m_array.data(), m_array.data() + m_array.num_elements(), m_array.data(),
+    std::ranges::transform(
+        std::span(m_array.data(), m_array.num_elements()), m_array.data(),
         [bin_volume](T v) { return static_cast<T>(v / bin_volume); });
   }
 
 private:
   /**
    * \brief Calculate the bin index.
-   * \param value  Position on that dimension.
-   * \param offset Bin offset on that dimension.
-   * \param size   Bin size on that dimension.
+   * \param pos  Position.
    */
-  array_index calc_bin_index(double value, double offset, double size) const {
-    return static_cast<array_index>(std::floor((value - offset) / size));
+  auto calc_bin_index(std::span<const U> const &pos) const {
+    boost::array<array_index, M + 1> index;
+    for (std::size_t i = 0; i < M; ++i) {
+      auto const offset = m_limits[i].first;
+      auto const size = m_bin_sizes[i];
+      auto const n_bins = static_cast<long>(m_n_bins[i]);
+      auto const bin = static_cast<long>(std::floor((pos[i] - offset) / size));
+      // handle edge cases when the position is exactly between two bins:
+      // due to precision loss in the offset subtraction, the bin index might
+      // be off by one, so we fold it here back inside the valid range
+      index[i] = static_cast<array_index>(std::clamp(bin, 0l, n_bins - 1l));
+    }
+    return index;
   }
 
   /**
@@ -152,19 +159,19 @@ private:
    * \brief Check if the position lies within the histogram limits.
    * \param pos     Position to check.
    */
-  bool check_limits(Span<const U> pos) const {
+  bool check_limits(std::span<const U> const &pos) const {
     assert(pos.size() == M);
-    bool within_range = true;
-    for (std::size_t i = 0; i < M; ++i) {
-      if (pos[i] < m_limits[i].first or pos[i] >= m_limits[i].second)
-        within_range = false;
-    }
-    return within_range;
+    auto it_limits = m_limits.begin();
+    return std::ranges::all_of(pos, [&it_limits](U const value) {
+      auto const [lower, upper] = *it_limits;
+      ++it_limits;
+      return value >= lower and value < upper;
+    });
   }
 
   std::array<std::size_t, M + 1> m_array_dim() const {
     std::array<std::size_t, M + 1> dimensions;
-    std::copy(m_n_bins.begin(), m_n_bins.end(), dimensions.begin());
+    std::ranges::copy(m_n_bins, dimensions.begin());
     dimensions.back() = N;
     return dimensions;
   }
@@ -192,33 +199,33 @@ protected:
  */
 template <typename T, std::size_t N, std::size_t M = 3, typename U = double>
 class CylindricalHistogram : public Histogram<T, N, M, U> {
-  using Histogram<T, N, M, U>::m_n_bins;
-  using Histogram<T, N, M, U>::m_limits;
-  using Histogram<T, N, M, U>::m_bin_sizes;
-  using Histogram<T, N, M, U>::m_array;
+  using Base = Histogram<T, N, M, U>;
+  using Base::m_array;
+  using Base::m_bin_sizes;
+  using Base::m_limits;
+  using Base::m_n_bins;
+  using typename Base::array_index;
 
 public:
-  using Histogram<T, N, M, U>::Histogram;
+  using Base::Histogram;
 
   void normalize() override {
     auto const min_r = m_limits[0].first;
     auto const r_bin_size = m_bin_sizes[0];
     auto const phi_bin_size = m_bin_sizes[1];
     auto const z_bin_size = m_bin_sizes[2];
-    auto const n_bins_r = m_n_bins[0];
-    for (std::size_t i = 0; i < n_bins_r; i++) {
+    auto const n_bins_r = static_cast<array_index>(m_n_bins[0]);
+    for (array_index i = 0; i < n_bins_r; i++) {
       auto const r_left = min_r + static_cast<U>(i) * r_bin_size;
       auto const r_right = r_left + r_bin_size;
-      auto const bin_volume =
-          (r_right * r_right - r_left * r_left) * z_bin_size * phi_bin_size / 2;
+      auto const bin_volume = (r_right * r_right - r_left * r_left) *
+                              z_bin_size * phi_bin_size / U(2);
       auto *begin = m_array[i].origin();
-      std::transform(
-          begin, begin + m_array[i].num_elements(), begin,
+      std::ranges::transform(
+          std::span(begin, m_array[i].num_elements()), begin,
           [bin_volume](T v) { return static_cast<T>(v / bin_volume); });
     }
   }
 };
 
 } // Namespace Utils
-
-#endif

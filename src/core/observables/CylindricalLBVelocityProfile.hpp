@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_CYLINDRICALLBVELOCITYPROFILE_HPP
-#define OBSERVABLES_CYLINDRICALLBVELOCITYPROFILE_HPP
+
+#pragma once
 
 #include "CylindricalLBProfileObservable.hpp"
 
@@ -28,7 +28,8 @@ namespace Observables {
 class CylindricalLBVelocityProfile : public CylindricalLBProfileObservable {
 public:
   using CylindricalLBProfileObservable::CylindricalLBProfileObservable;
-  std::vector<double> operator()() const override;
+  std::vector<double>
+  operator()(boost::mpi::communicator const &comm) const override;
   std::vector<std::size_t> shape() const override {
     auto const b = n_bins();
     return {b[0], b[1], b[2], 3};
@@ -36,5 +37,3 @@ public:
 };
 
 } // Namespace Observables
-
-#endif

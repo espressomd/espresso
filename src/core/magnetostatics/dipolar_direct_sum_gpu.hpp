@@ -17,19 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLAR_DIRECT_SUM_GPU_HPP
-#define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLAR_DIRECT_SUM_GPU_HPP
+#pragma once
 
 #include "config/config.hpp"
 
-#ifdef DIPOLAR_DIRECT_SUM
+#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
 
-struct DipolarDirectSumGpu {
-  double prefactor;
+#include "magnetostatics/actor.hpp"
 
-  DipolarDirectSumGpu(double prefactor);
+struct DipolarDirectSumGpu : public Dipoles::Actor<DipolarDirectSumGpu> {
+  int n_replicas;
+  DipolarDirectSumGpu(double prefactor, int n_replicas);
 
-  void on_activation() const {}
+  void on_activation() const;
   void on_boxl_change() const {}
   void on_node_grid_change() const {}
   void on_periodicity_change() const {}
@@ -41,5 +41,4 @@ struct DipolarDirectSumGpu {
   void long_range_energy() const;
 };
 
-#endif // DIPOLAR_DIRECT_SUM
-#endif
+#endif // ESPRESSO_DIPOLAR_DIRECT_SUM

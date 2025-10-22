@@ -16,11 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_ENERGY_HPP
-#define OBSERVABLES_ENERGY_HPP
+
+#pragma once
 
 #include "Observable.hpp"
-#include "energy.hpp"
+#include "Observable_stat.hpp"
+#include "system/System.hpp"
 
 #include <cstddef>
 #include <vector>
@@ -29,14 +30,11 @@ namespace Observables {
 
 class Energy : public Observable {
 public:
-  std::vector<std::size_t> shape() const override { return {1}; }
-  std::vector<double> operator()() const override {
-    std::vector<double> res{1};
-    res[0] = mpi_observable_compute_energy();
-    return res;
+  std::vector<std::size_t> shape() const override { return {1u}; }
+  std::vector<double>
+  operator()(boost::mpi::communicator const &) const override {
+    return {System::get_system().calculate_energy()->accumulate(0u)};
   }
 };
 
 } // Namespace Observables
-
-#endif

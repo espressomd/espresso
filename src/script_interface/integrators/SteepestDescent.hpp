@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_STEEPEST_DESCENT_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_STEEPEST_DESCENT_HPP
+#pragma once
 
 #include "Integrator.hpp"
 
@@ -40,7 +39,8 @@ public:
   SteepestDescent();
 
   void do_construct(VariantMap const &params) override;
-  void activate() const override;
+  Variant integrate(VariantMap const &params) override;
+  void activate() override;
 
   ::SteepestDescentParameters const &get_instance() const {
     return *m_instance;
@@ -49,5 +49,3 @@ public:
 
 } // namespace Integrators
 } // namespace ScriptInterface
-
-#endif

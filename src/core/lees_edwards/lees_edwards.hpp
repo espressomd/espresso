@@ -16,12 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_LEES_EDWARDS_LEES_EDWARDS_HPP
-#define CORE_LEES_EDWARDS_LEES_EDWARDS_HPP
+
+#pragma once
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "lees_edwards/protocols.hpp"
+#include "system/Leaf.hpp"
 
 #include <cmath>
 #include <memory>
@@ -30,33 +31,30 @@ namespace LeesEdwards {
 class UpdateOffset {
 protected:
   LeesEdwardsBC const &m_le;
-  double const m_half_time_step;
 
 public:
-  UpdateOffset(BoxGeometry const &box, double time_step)
-      : m_le{box.lees_edwards_bc()}, m_half_time_step{0.5 * time_step} {}
+  UpdateOffset(BoxGeometry const &box) : m_le{box.lees_edwards_bc()} {}
 
-  void operator()(Particle &p) const {
-    p.lees_edwards_offset() -= m_half_time_step *
-                               p.image_box()[m_le.shear_plane_normal] *
-                               m_le.shear_velocity;
+  void operator()(Particle &,
+                  [[maybe_unused]] double pos_prefactor = 1.0) const {
+    // Disabled as long as we do not use a two step LE update
   }
 };
 
 class Push : public UpdateOffset {
-  Utils::Vector3d const &m_box_l;
+  BoxGeometry const &m_box;
 
 public:
-  Push(BoxGeometry const &box, double time_step)
-      : UpdateOffset{box, time_step}, m_box_l{box.length()} {}
+  Push(BoxGeometry const &box) : UpdateOffset{box}, m_box{box} {}
 
-  void operator()(Particle &p) const {
+  void operator()(Particle &p, double pos_prefactor = 1.0) const {
     // Lees-Edwards acts at the zero step for the velocity half update and at
     // the midstep for the position.
     //
     // The update of the velocity at the end of the time step is triggered by
     // the flag and occurs in @ref propagate_vel_finalize_p_inst
-    if (p.pos()[m_le.shear_plane_normal] >= m_box_l[m_le.shear_plane_normal]) {
+    if (p.pos()[m_le.shear_plane_normal] >=
+        m_box.length()[m_le.shear_plane_normal]) {
       p.lees_edwards_flag() = -1; // perform a negative half velocity shift
     } else if (p.pos()[m_le.shear_plane_normal] < 0) {
       p.lees_edwards_flag() = 1; // perform a positive half velocity shift
@@ -66,12 +64,10 @@ public:
 
     auto const dir = static_cast<double>(p.lees_edwards_flag());
     p.v()[m_le.shear_direction] += dir * m_le.shear_velocity;
-    p.pos()[m_le.shear_direction] += dir * m_le.pos_offset;
-    p.lees_edwards_offset() -= dir * m_le.pos_offset;
-    // TODO: clarify whether the fold is needed
-    //  p.pos()[m_le.shear_direction] = Algorithm::periodic_fold(
-    //      p.pos()[m_le.shear_direction], m_box_l()[m_le.shear_direction]);
-    UpdateOffset::operator()(p);
+    p.pos()[m_le.shear_direction] += pos_prefactor * dir * m_le.pos_offset;
+    p.lees_edwards_offset() -= pos_prefactor * dir * m_le.pos_offset;
+    m_box.fold_position(p.pos(), p.image_box());
+    //    UpdateOffset::operator()(p,pos_prefactor);
   }
 };
 
@@ -95,11 +91,20 @@ inline Utils::Vector3d verlet_list_offset(BoxGeometry const &box,
   return {};
 }
 
-/** @brief Set a new Lees-Edwards protocol. */
-void set_protocol(std::shared_ptr<ActiveProtocol> new_protocol);
+class LeesEdwards : public System::Leaf<LeesEdwards> {
+  std::shared_ptr<ActiveProtocol> m_protocol;
 
-/** @brief Delete the currently active Lees-Edwards protocol. */
-void unset_protocol();
+public:
+  /** @brief Get currently active Lees-Edwards protocol. */
+  auto get_protocol() const { return m_protocol; }
+
+  /** @brief Set a new Lees-Edwards protocol. */
+  void set_protocol(std::shared_ptr<ActiveProtocol> protocol);
+
+  /** @brief Delete the currently active Lees-Edwards protocol. */
+  void unset_protocol();
+
+  void update_box_params(BoxGeometry &box_geo, double sim_time);
+};
 
 } // namespace LeesEdwards
-#endif

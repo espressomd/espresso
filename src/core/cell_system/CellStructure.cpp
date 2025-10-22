@@ -26,28 +26,191 @@
 #include "cell_system/ParticleDecomposition.hpp"
 #include "cell_system/RegularDecomposition.hpp"
 
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
+#include "Particle.hpp"
+#include "aosoa_pack.hpp"
 #include "cell_system/CellStructureType.hpp"
-#include "grid.hpp"
+#include "communication.hpp"
+#include "custom_verlet_list.hpp"
+#include "integrators/Propagation.hpp"
 #include "lees_edwards/lees_edwards.hpp"
+#include "particle_enumeration.hpp"
+#include "particle_reduction.hpp"
+#include "system/System.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/contains.hpp>
+#include <utils/math/int_pow.hpp>
+#include <utils/math/sqr.hpp>
 
-#include <boost/mpi/communicator.hpp>
-#include <boost/variant.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+#include <Cabana_Core.hpp>
+#include <Cabana_NeighborList.hpp>
+#include <Kokkos_Core.hpp>
+#include <omp.h>
+#endif
 
 #include <algorithm>
+#include <cassert>
+#include <cstddef>
 #include <iterator>
 #include <memory>
+#include <optional>
+#include <ranges>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
+
+CellStructure::~CellStructure() {
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  clear_local_properties();
+  // Kokkos handle can only be freed after all Cabana containers have been freed
+  m_kokkos_handle.reset();
+#endif
+}
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+void CellStructure::clear_local_properties() {
+  m_local_force.reset();
+#ifdef ESPRESSO_ROTATION
+  m_local_torque.reset();
+#endif
+#ifdef ESPRESSO_NPT
+  m_local_virial.reset();
+#endif
+  m_id_to_index.reset();
+  m_aosoa.reset();
+  m_verlet_list_cabana.reset();
+  m_rebuild_verlet_list_cabana = true;
+}
+
+void CellStructure::set_kokkos_handle(std::shared_ptr<KokkosHandle> handle) {
+  m_kokkos_handle = std::move(handle);
+}
+
+static auto estimate_max_counts(double pair_cutoff,
+                                std::size_t number_of_unique_particles) {
+  if (std::isinf(pair_cutoff)) {
+    return number_of_unique_particles;
+  }
+  if (pair_cutoff < 0.) {
+    pair_cutoff = 0.;
+  }
+  auto const volume = Utils::int_pow<3>(pair_cutoff);
+  auto max_counts = static_cast<std::size_t>(std::ceil(8. * volume));
+  std::size_t constexpr threshold_num = 16;
+  if (max_counts < threshold_num) {
+    max_counts = std::min(threshold_num, number_of_unique_particles);
+  }
+  return max_counts;
+}
+
+void CellStructure::rebuild_local_properties(double const pair_cutoff) {
+  assert(m_kokkos_handle);
+  using execution_space = Kokkos::DefaultExecutionSpace;
+  auto const num_threads = execution_space().concurrency();
+  auto const num_part = get_unique_particles().size();
+  auto max_counts = estimate_max_counts(pair_cutoff, num_part);
+#ifdef ESPRESSO_COLLISION_DETECTION
+  auto const &system = get_system();
+  if (system.has_collision_detection_enabled()) {
+    // TODO: use other types of Verlet list data structures
+    max_counts = num_part * 2ul;
+  }
+#endif
+  if (m_local_force) { // local properties are reallocated
+    Kokkos::realloc(get_local_force(), num_part, num_threads);
+#ifdef ESPRESSO_ROTATION
+    Kokkos::realloc(get_local_torque(), num_part, num_threads);
+#endif
+    Kokkos::realloc(get_id_to_index(), get_cached_max_local_particle_id() + 1);
+    Kokkos::deep_copy(get_id_to_index(), -1);
+    // Resize particle views using AoSoA_pack's resize method
+    m_aosoa->resize(num_part);
+    m_verlet_list_cabana->reallocData(num_part, max_counts);
+  } else { // local properties are initialized
+    m_local_force =
+        std::make_unique<ForceType>("local_force", num_part, num_threads);
+#ifdef ESPRESSO_ROTATION
+    m_local_torque =
+        std::make_unique<ForceType>("local_torque", num_part, num_threads);
+#endif
+    m_id_to_index = std::make_unique<Kokkos::View<int *>>(
+        Kokkos::ViewAllocateWithoutInitializing("id_to_index"),
+        get_cached_max_local_particle_id() + 1);
+    Kokkos::deep_copy(get_id_to_index(), -1);
+    // Create AoSoA_pack and initialize with resize
+    m_aosoa = std::make_unique<AoSoA_pack>();
+    m_aosoa->resize(num_part);
+
+    m_verlet_list_cabana =
+        std::make_unique<ListType>(0ul, num_part, max_counts);
+  }
+#ifdef ESPRESSO_NPT
+  m_local_virial = std::make_unique<VirialType>("local_virial", num_threads);
+#endif
+}
+
+void CellStructure::reset_local_force() {
+  Kokkos::deep_copy(get_local_force(), 0.);
+}
+
+void CellStructure::reset_local_properties() {
+  Kokkos::deep_copy(get_local_force(), 0.);
+#ifdef ESPRESSO_ROTATION
+  Kokkos::deep_copy(get_local_torque(), 0.);
+#endif
+#ifdef ESPRESSO_NPT
+  Kokkos::deep_copy(get_local_virial(), 0.);
+#endif
+}
+
+void CellStructure::set_index_map() {
+  auto &unique_particles = m_unique_particles;
+  unique_particles.clear();
+  unique_particles.resize(count_local_particles());
+  std::unordered_set<int> registered_index{};
+  using execution_space = Kokkos::DefaultExecutionSpace;
+  int n_threads = execution_space().concurrency();
+  std::vector<int> max_ids(n_threads);
+  enumerate_local_particles(
+      *this, [&unique_particles, &max_ids](std::size_t index, Particle &p) {
+        unique_particles[index] = &p;
+        const int thread_num = omp_get_thread_num();
+        max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
+      });
+  int max_id = *(std::max_element(max_ids.begin(), max_ids.end()));
+  for (auto &p : ghost_particles()) {
+    auto const *local_particle = get_local_particle(p.id());
+    if (not local_particle) {
+      continue;
+    }
+    if (not local_particle->is_ghost()) {
+      continue;
+    }
+    if (registered_index.contains(p.id())) {
+      continue;
+    }
+    registered_index.insert(p.id());
+    unique_particles.emplace_back(&p);
+    max_id = std::max(p.id(), max_id);
+  }
+  registered_index.clear();
+  m_cached_max_local_particle_id = max_id;
+}
+
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 CellStructure::CellStructure(BoxGeometry const &box)
     : m_decomposition{std::make_unique<AtomDecomposition>(box)} {}
 
-void CellStructure::check_particle_index() {
+void CellStructure::check_particle_index() const {
   auto const max_id = get_max_local_particle_id();
 
   for (auto const &p : local_particles()) {
@@ -63,7 +226,7 @@ void CellStructure::check_particle_index() {
   }
 
   /* checks: local particle id */
-  int local_part_cnt = 0;
+  std::size_t local_part_cnt = 0u;
   for (int n = 0; n < get_max_local_particle_id() + 1; n++) {
     if (get_local_particle(n) != nullptr) {
       local_part_cnt++;
@@ -80,8 +243,8 @@ void CellStructure::check_particle_index() {
   }
 }
 
-void CellStructure::check_particle_sorting() {
-  for (auto cell : local_cells()) {
+void CellStructure::check_particle_sorting() const {
+  for (auto cell : decomposition().local_cells()) {
     for (auto const &p : cell->particles()) {
       if (particle_to_cell(p) != cell) {
         throw std::runtime_error("misplaced particle with id " +
@@ -89,10 +252,6 @@ void CellStructure::check_particle_sorting() {
       }
     }
   }
-}
-
-Cell *CellStructure::particle_to_cell(const Particle &p) {
-  return decomposition().particle_to_cell(p);
 }
 
 void CellStructure::remove_particle(int id) {
@@ -106,9 +265,8 @@ void CellStructure::remove_particle(int id) {
     }
   };
 
-  for (auto c : decomposition().local_cells()) {
-    auto &parts = c->particles();
-
+  for (auto cell : decomposition().local_cells()) {
+    auto &parts = cell->particles();
     for (auto it = parts.begin(); it != parts.end();) {
       if (it->id() == id) {
         it = parts.erase(it);
@@ -125,7 +283,6 @@ void CellStructure::remove_particle(int id) {
 Particle *CellStructure::add_local_particle(Particle &&p) {
   auto const sort_cell = particle_to_cell(p);
   if (sort_cell) {
-
     return std::addressof(
         append_indexed_particle(sort_cell->particles(), std::move(p)));
   }
@@ -137,7 +294,7 @@ Particle *CellStructure::add_particle(Particle &&p) {
   auto const sort_cell = particle_to_cell(p);
   /* There is always at least one cell, so if the particle
    * does not belong to a cell on this node we can put it there. */
-  auto cell = sort_cell ? sort_cell : local_cells()[0];
+  auto cell = sort_cell ? sort_cell : decomposition().local_cells()[0];
 
   /* If the particle isn't local a global resort may be
    * needed, otherwise a local resort if sufficient. */
@@ -148,15 +305,15 @@ Particle *CellStructure::add_particle(Particle &&p) {
 }
 
 int CellStructure::get_max_local_particle_id() const {
-  auto it = std::find_if(m_particle_index.rbegin(), m_particle_index.rend(),
-                         [](const Particle *p) { return p != nullptr; });
+  auto it = std::ranges::find_if(std::ranges::views::reverse(m_particle_index),
+                                 [](auto const *p) { return p != nullptr; });
 
   return (it != m_particle_index.rend()) ? (*it)->id() : -1;
 }
 
 void CellStructure::remove_all_particles() {
-  for (auto c : decomposition().local_cells()) {
-    c->particles().clear();
+  for (auto cell : decomposition().local_cells()) {
+    cell->particles().clear();
   }
 
   m_particle_index.clear();
@@ -169,55 +326,35 @@ unsigned map_data_parts(unsigned data_parts) {
 
   /* clang-format off */
   return GHOSTTRANS_NONE
-         | ((DATA_PART_PROPERTIES & data_parts) ? GHOSTTRANS_PROPRTS : 0u)
-         | ((DATA_PART_POSITION & data_parts) ? GHOSTTRANS_POSITION : 0u)
-         | ((DATA_PART_MOMENTUM & data_parts) ? GHOSTTRANS_MOMENTUM : 0u)
-         | ((DATA_PART_FORCE & data_parts) ? GHOSTTRANS_FORCE : 0u)
-#ifdef BOND_CONSTRAINT
-         | ((DATA_PART_RATTLE & data_parts) ? GHOSTTRANS_RATTLE : 0u)
+         | ((data_parts & DATA_PART_PROPERTIES) ? GHOSTTRANS_PROPRTS : 0u)
+         | ((data_parts & DATA_PART_POSITION) ? GHOSTTRANS_POSITION : 0u)
+         | ((data_parts & DATA_PART_MOMENTUM) ? GHOSTTRANS_MOMENTUM : 0u)
+         | ((data_parts & DATA_PART_FORCE) ? GHOSTTRANS_FORCE : 0u)
+#ifdef ESPRESSO_BOND_CONSTRAINT
+         | ((data_parts & DATA_PART_RATTLE) ? GHOSTTRANS_RATTLE : 0u)
 #endif
-         | ((DATA_PART_BONDS & data_parts) ? GHOSTTRANS_BONDS : 0u);
+         | ((data_parts & DATA_PART_BONDS) ? GHOSTTRANS_BONDS : 0u);
   /* clang-format on */
 }
 
 void CellStructure::ghosts_count() {
   ghost_communicator(decomposition().exchange_ghosts_comm(),
-                     GHOSTTRANS_PARTNUM);
+                     *get_system().box_geo, GHOSTTRANS_PARTNUM);
 }
 void CellStructure::ghosts_update(unsigned data_parts) {
   ghost_communicator(decomposition().exchange_ghosts_comm(),
-                     map_data_parts(data_parts));
+                     *get_system().box_geo, map_data_parts(data_parts));
 }
 void CellStructure::ghosts_reduce_forces() {
   ghost_communicator(decomposition().collect_ghost_force_comm(),
-                     GHOSTTRANS_FORCE);
+                     *get_system().box_geo, GHOSTTRANS_FORCE);
 }
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
 void CellStructure::ghosts_reduce_rattle_correction() {
   ghost_communicator(decomposition().collect_ghost_force_comm(),
-                     GHOSTTRANS_RATTLE);
+                     *get_system().box_geo, GHOSTTRANS_RATTLE);
 }
 #endif
-
-Utils::Span<Cell *> CellStructure::local_cells() {
-  return decomposition().local_cells();
-}
-
-ParticleRange CellStructure::local_particles() {
-  return Cells::particles(decomposition().local_cells());
-}
-
-ParticleRange CellStructure::ghost_particles() {
-  return Cells::particles(decomposition().ghost_cells());
-}
-
-Utils::Vector3d CellStructure::max_cutoff() const {
-  return decomposition().max_cutoff();
-}
-
-Utils::Vector3d CellStructure::max_range() const {
-  return decomposition().max_range();
-}
 
 namespace {
 /**
@@ -233,7 +370,7 @@ struct UpdateParticleIndexVisitor {
 };
 } // namespace
 
-void CellStructure::resort_particles(bool global_flag, BoxGeometry const &box) {
+void CellStructure::resort_particles(bool global_flag) {
   invalidate_ghosts();
 
   static std::vector<ParticleChange> diff;
@@ -242,41 +379,143 @@ void CellStructure::resort_particles(bool global_flag, BoxGeometry const &box) {
   m_decomposition->resort(global_flag, diff);
 
   for (auto d : diff) {
-    boost::apply_visitor(UpdateParticleIndexVisitor{this}, d);
+    std::visit(UpdateParticleIndexVisitor{this}, d);
   }
 
+  auto const &lebc = get_system().box_geo->lees_edwards_bc();
   m_rebuild_verlet_list = true;
-  m_le_pos_offset_at_last_resort = box.lees_edwards_bc().pos_offset;
+  m_rebuild_verlet_list_cabana = true;
+  m_le_pos_offset_at_last_resort = lebc.pos_offset;
 
-#ifdef ADDITIONAL_CHECKS
+#ifdef ESPRESSO_ADDITIONAL_CHECKS
   check_particle_index();
   check_particle_sorting();
 #endif
 }
 
-void CellStructure::set_atom_decomposition(boost::mpi::communicator const &comm,
-                                           BoxGeometry const &box,
-                                           LocalBox<double> &local_geo) {
-  set_particle_decomposition(std::make_unique<AtomDecomposition>(comm, box));
-  m_type = CellStructureType::CELL_STRUCTURE_NSQUARE;
+void CellStructure::set_atom_decomposition() {
+  auto &system = get_system();
+  auto &local_geo = *system.local_geo;
+  auto const &box_geo = *system.box_geo;
+  set_particle_decomposition(
+      std::make_unique<AtomDecomposition>(::comm_cart, box_geo));
+  m_type = CellStructureType::NSQUARE;
   local_geo.set_cell_structure_type(m_type);
+  system.on_cell_structure_change();
 }
 
 void CellStructure::set_regular_decomposition(
-    boost::mpi::communicator const &comm, double range, BoxGeometry const &box,
-    LocalBox<double> &local_geo) {
-  set_particle_decomposition(
-      std::make_unique<RegularDecomposition>(comm, range, box, local_geo));
-  m_type = CellStructureType::CELL_STRUCTURE_REGULAR;
+    double range, std::optional<std::pair<int, int>> fully_connected_boundary) {
+  auto &system = get_system();
+  auto &local_geo = *system.local_geo;
+  auto const &box_geo = *system.box_geo;
+  set_particle_decomposition(std::make_unique<RegularDecomposition>(
+      ::comm_cart, range, box_geo, local_geo, fully_connected_boundary));
+  m_type = CellStructureType::REGULAR;
   local_geo.set_cell_structure_type(m_type);
+  system.on_cell_structure_change();
 }
 
-void CellStructure::set_hybrid_decomposition(
-    boost::mpi::communicator const &comm, double cutoff_regular,
-    BoxGeometry const &box, LocalBox<double> &local_geo,
-    std::set<int> n_square_types) {
+void CellStructure::set_hybrid_decomposition(double cutoff_regular,
+                                             std::set<int> n_square_types) {
+  auto &system = get_system();
+  auto &local_geo = *system.local_geo;
+  auto const &box_geo = *system.box_geo;
   set_particle_decomposition(std::make_unique<HybridDecomposition>(
-      comm, cutoff_regular, box, local_geo, n_square_types));
-  m_type = CellStructureType::CELL_STRUCTURE_HYBRID;
+      ::comm_cart, cutoff_regular, m_verlet_skin,
+      [&system]() { return system.get_global_ghost_flags(); }, box_geo,
+      local_geo, n_square_types));
+  m_type = CellStructureType::HYBRID;
   local_geo.set_cell_structure_type(m_type);
+  system.on_cell_structure_change();
+}
+
+void CellStructure::set_verlet_skin(double value) {
+  assert(value >= 0.);
+  m_verlet_skin = value;
+  m_verlet_skin_set = true;
+  m_rebuild_verlet_list_cabana = true;
+  get_system().on_verlet_skin_change();
+}
+
+void CellStructure::set_verlet_skin_heuristic() {
+  assert(not is_verlet_skin_set());
+  auto const max_cut = get_system().maximal_cutoff();
+  if (max_cut <= 0.) {
+    throw std::runtime_error(
+        "cannot automatically determine skin, please set it manually");
+  }
+  /* maximal skin that can be used without resorting is the maximal
+   * range of the cell system minus what is needed for interactions. */
+  auto const max_range = std::ranges::min(max_cutoff());
+  auto const new_skin = std::min(0.4 * max_cut, max_range - max_cut);
+  set_verlet_skin(new_skin);
+}
+
+void CellStructure::update_ghosts_and_resort_particle(unsigned data_parts) {
+  /* data parts that are only updated on resort */
+  auto constexpr resort_only_parts =
+      Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS;
+
+  auto const global_resort = boost::mpi::all_reduce(
+      ::comm_cart, m_resort_particles, std::bit_or<unsigned>());
+
+  if (global_resort != Cells::RESORT_NONE) {
+    auto const do_global_resort = (global_resort & Cells::RESORT_GLOBAL) != 0;
+
+    /* Resort cell system */
+    resort_particles(do_global_resort);
+    ghosts_count();
+    ghosts_update(data_parts);
+
+    /* Add the ghost particles to the index if we don't already
+     * have them. */
+    for (auto &p : ghost_particles()) {
+      if (get_local_particle(p.id()) == nullptr) {
+        update_particle_index(p.id(), &p);
+      }
+    }
+
+    /* Particles are now sorted */
+    clear_resort_particles();
+  } else {
+    /* Communication step: ghost information */
+    ghosts_update(data_parts & ~resort_only_parts);
+  }
+}
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+void CellStructure::parallel_for_each_particle_impl(
+    std::span<Cell *const> cells, ParticleUnaryOp &f) const {
+  if (cells.size() > 1) {
+    Kokkos::parallel_for( // loop over cells
+        "for_each_local_particle", cells.size(), [&](auto cell_idx) {
+          for (auto &p : cells[cell_idx]->particles())
+            f(p);
+        });
+  } else if (cells.size() == 1) {
+    auto &particles = cells.front()->particles();
+    Kokkos::parallel_for( // loop over particles
+        "for_each_local_particle", particles.size(),
+        [&](auto part_idx) { f(*(particles.begin() + part_idx)); });
+  }
+}
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
+
+bool CellStructure::check_resort_required(
+    Utils::Vector3d const &additional_offset) const {
+  auto const lim = Utils::sqr(m_verlet_skin / 2.) - additional_offset.norm2();
+
+  Reduction::AddPartialResultKernel<bool> add_partial =
+      [lim](bool &result, Particle const &p) {
+        if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim) {
+          result = true;
+        }
+      };
+
+  Reduction::ReductionOp<bool> reduce_op = [](bool &acc, bool const &val) {
+    acc |= val;
+  };
+
+  return reduce_over_local_particles(*this, add_partial, reduce_op);
 }

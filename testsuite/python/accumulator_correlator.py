@@ -33,7 +33,12 @@ class CorrelatorTest(ut.TestCase):
     Test class for the Correlator accumulator.
 
     """
-    # Handle for espresso system
+    # create an accumulator bound to the default-constructed system
+    expired_system_obs = espressomd.observables.ParticleVelocities(ids=(0,))
+    expired_system_acc = espressomd.accumulators.Correlator(
+        obs1=expired_system_obs, tau_lin=10, tau_max=2., delta_N=1,
+        corr_operation="scalar_product")
+    # create a new system to replace the default-constructed system
     system = espressomd.System(box_l=[10, 10, 10])
     system.cell_system.skin = 0.4
     system.time_step = 0.01
@@ -71,6 +76,8 @@ class CorrelatorTest(ut.TestCase):
                 i = j
 
     def check_pickling(self, acc):
+        from espressomd.script_interface import ScriptInterfaceHelper
+        acc.__reduce__ = lambda: ScriptInterfaceHelper.__reduce__(acc)
         corr = acc.result()
         lags = acc.lag_times()
         sizes = acc.sample_sizes()
@@ -86,7 +93,7 @@ class CorrelatorTest(ut.TestCase):
 
         obs = espressomd.observables.ParticlePositions(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
-            obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
+            obs1=obs, tau_lin=10, tau_max=2, delta_N=1, system=s,
             corr_operation="square_distance_componentwise")
 
         s.integrator.run(1000)
@@ -109,7 +116,7 @@ class CorrelatorTest(ut.TestCase):
 
         obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
-            obs1=obs, tau_lin=12, tau_max=2, delta_N=1,
+            obs1=obs, tau_lin=12, tau_max=2, delta_N=1, system=s,
             corr_operation="tensor_product")
 
         s.auto_update_accumulators.add(acc)
@@ -132,7 +139,7 @@ class CorrelatorTest(ut.TestCase):
 
         obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
-            obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
+            obs1=obs, tau_lin=10, tau_max=2, delta_N=1, system=s,
             corr_operation="componentwise_product")
 
         s.auto_update_accumulators.add(acc)
@@ -154,7 +161,7 @@ class CorrelatorTest(ut.TestCase):
 
         obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
-            obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
+            obs1=obs, tau_lin=10, tau_max=2, delta_N=1, system=s,
             corr_operation="scalar_product")
 
         s.auto_update_accumulators.add(acc)
@@ -178,7 +185,7 @@ class CorrelatorTest(ut.TestCase):
         obs = espressomd.observables.ParticlePositions(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=9.9 * self.system.time_step,
-            delta_N=1, corr_operation="fcs_acf", args=w)
+            delta_N=1, system=s, corr_operation="fcs_acf", args=w)
 
         s.auto_update_accumulators.add(acc)
         s.integrator.run(1000)
@@ -215,7 +222,7 @@ class CorrelatorTest(ut.TestCase):
                 acc = espressomd.accumulators.Correlator(
                     obs1=obs, tau_lin=tau_lin, tau_max=2, delta_N=1,
                     compress1=compression, compress2=compression,
-                    corr_operation="scalar_product")
+                    corr_operation="scalar_product", system=self.system)
                 accumulators[compression] = acc
                 self.system.auto_update_accumulators.add(acc)
             # record oscillating data with frequency of 1/time_step
@@ -351,6 +358,12 @@ class CorrelatorTest(ut.TestCase):
             acc = create_accumulator(
                 obs2=obs2, corr_operation="fcs_acf", args=[1, 1, 1])
             acc.update()
+
+        # check checkpointing mechanism
+        with self.assertRaisesRegex(RuntimeError, "This accumulator is bound to another system"):
+            self.system.auto_update_accumulators.add(self.expired_system_acc)
+        with self.assertRaisesRegex(RuntimeError, "auto_update_accumulators property"):
+            pickle.dumps(acc)
 
 
 if __name__ == "__main__":

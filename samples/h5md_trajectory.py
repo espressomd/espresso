@@ -20,7 +20,7 @@
 """
 Write ESPResSo trajectories in the H5MD format with a Lees-Edwards offset,
 aperiodic boundaries and a fluctuating box size. Read the trajectory and
-reconstruct the unfolded positions. See :ref:`Writing H5MD-files` for details.
+reconstruct the unfolded positions. See :ref:`Writing hdf5 files` for details.
 """
 
 import espressomd
@@ -66,7 +66,8 @@ h5.write()
 xyz_folded.append(system.part.all().pos_folded[:])
 xyz_unfolded.append(system.part.all().pos[:])
 # resize box (simulates NpT)
-system.box_l = system.box_l + 1.
+for i in range(3):
+    system.change_volume_and_rescale_particles(system.box_l[i] + 1., "xyz"[i])
 system.integrator.run(10)
 h5.write()
 xyz_folded.append(system.part.all().pos_folded[:])

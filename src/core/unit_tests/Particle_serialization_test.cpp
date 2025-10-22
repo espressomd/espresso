@@ -31,6 +31,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/hana.hpp>
 #include <boost/mpl/list.hpp>
+#include <boost/utility/identity_type.hpp>
 
 #include <cstddef>
 #include <regex>
@@ -69,11 +70,12 @@ auto hasnt_serialize_method = boost::hana::is_valid(
 /**
  * Does the type contain a <tt>serialize(Archive &, long int)</tt> method.
  */
-template <class T, typename Enable = void>
+template <class T>
 struct has_serialize_method : std::integral_constant<bool, false> {};
 
 template <class T>
-struct has_serialize_method<T, typename std::enable_if_t<std::is_class_v<T>>>
+  requires(std::is_class_v<T>)
+struct has_serialize_method<T>
     : std::integral_constant<
           bool, !static_cast<bool>(detail::hasnt_serialize_method(
                     detail::DetectMember<T, detail::SerializableClass>{}))> {};
@@ -145,14 +147,14 @@ class BitwiseSerializable {
 
   friend boost::serialization::access;
   template <class Archive> void serialize(Archive &ar, long int) {
-    ar &a &b;
+    ar & a & b;
     ar << c << d;
   }
 };
 
 class NotBitwiseSerializable {
   friend boost::serialization::access;
-  template <class Archive> void serialize(Archive &ar, long int) {}
+  template <class Archive> void serialize(Archive &, long int) {}
 };
 
 class MixedSerializable {
@@ -184,7 +186,7 @@ BOOST_AUTO_TEST_CASE(TraitChecker_test) {
   Checker::buffer_type buffer;
   Checker oa{buffer};
   Testing::BitwiseSerializable serializable;
-  oa &serializable;
+  oa & serializable;
   BOOST_REQUIRE_EQUAL(buffer.size(), 0);
   Testing::MixedSerializable mixed;
   oa | mixed;
@@ -216,7 +218,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
     typename Checker::buffer_type buffer = {};
     Checker oa{buffer};
     Particle p;
-    oa &p;
+    oa & p;
     BOOST_TEST(buffer == buffer_ref, boost::test_tools::per_element());
   }
 
@@ -224,7 +226,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
   {
     typename Checker::buffer_type buffer_ref = {
         "BondList",
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
         "Utils::compact_vector<int>",
 #endif
     };
@@ -232,11 +234,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
     Checker oa{buffer};
     Particle p;
     oa | p;
-    std::transform(buffer.begin(), buffer.end(), buffer.begin(),
-                   [](std::string const &symbol) {
-                     return std::regex_replace(symbol, std::regex("std::__1::"),
-                                               "std::");
-                   });
+    std::ranges::transform(
+        buffer, buffer.begin(), [](std::string const &symbol) {
+          return std::regex_replace(symbol, std::regex("std::__1::"), "std::");
+        });
     BOOST_TEST(buffer == buffer_ref, boost::test_tools::per_element());
   }
 }

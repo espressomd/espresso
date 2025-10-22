@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,42 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_LIST_CONTAINS_HPP
-#define UTILS_LIST_CONTAINS_HPP
+
+#pragma once
 
 #include <algorithm>
 #include <iterator>
 
 namespace Utils {
-/** @brief Check whether an iterator range contains a value.
+/**
+ * @brief Check whether a range contains a value.
  *
- * @param first Beginning of the range
- * @param last End of the range.
- * @param value The value to search for.
- *
- * @return True iff range contains the value.
- *
- * */
-template <class InputIt, class T>
-bool contains(InputIt first, InputIt last, T const &value) {
-  return std::any_of(first, last, [value](T const &e) { return e == value; });
-}
-
-/** @brief Check whether a range contains a value.
+ * Re-implementation of <tt>std::ranges::contains()</tt> from C++23.
  *
  * @param rng The range to search in.
  * @param value The value to search for.
  *
  * @return True iff range contains the value.
- *
- * */
-template <class Range, class T>
-bool contains(const Range &rng, T const &value) {
-  using std::begin;
+ */
+template <class Range, class T> bool contains(Range &&rng, T const &value) {
   using std::end;
 
-  return contains(begin(rng), end(rng), value);
+  return std::ranges::find(rng, value) != end(rng);
 }
 } // namespace Utils
-
-#endif

@@ -54,17 +54,16 @@ ROTATIONAL_INERTIA              implies ROTATION
 /* Electrostatics */
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
-MMM1D_GPU                       requires CUDA and ELECTROSTATICS
 MMM1D_MACHINE_PREC              requires ELECTROSTATICS
+WALBERLA_FFT                    equals WALBERLA and FFTW
 
 /* Magnetostatics */
 DIPOLES                         implies ROTATION
 DP3M                            equals DIPOLES and FFTW
 DIPOLAR_DIRECT_SUM              requires CUDA
 DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA
-DIPSUS                          implies DIPOLES
-DIPOLAR_BARNES_HUT              requires CUDA
-DIPOLAR_BARNES_HUT              equals DIPOLES and ROTATION and CUDA
+THERMAL_STONER_WOHLFARTH        implies DIPOLES
+DIPOLE_FIELD_TRACKING           implies DIPOLES
 
 /* Virtual sites features */
 VIRTUAL_SITES
@@ -76,14 +75,7 @@ VIRTUAL_SITES_INERTIALESS_TRACERS implies VIRTUAL_SITES
 DPD
 
 /* Lattice-Boltzmann features */
-LB_BOUNDARIES
-LB_BOUNDARIES_GPU               requires CUDA
 LB_ELECTROHYDRODYNAMICS
-ELECTROKINETICS                 implies EXTERNAL_FORCES, ELECTROSTATICS
-ELECTROKINETICS                 requires CUDA
-EK_BOUNDARIES                   implies ELECTROKINETICS, LB_BOUNDARIES_GPU, EXTERNAL_FORCES, ELECTROSTATICS
-EK_BOUNDARIES                   requires CUDA
-EK_DEBUG                        requires ELECTROKINETICS
 
 /* Interaction features */
 TABULATED
@@ -113,7 +105,7 @@ SCAFACOS                        requires ELECTROSTATICS
 ADDITIONAL_CHECKS
 
 # External switches
-# Switches that are set by configure or gcc, not to be set manually
+# Switches that are set by the build system, not to be set manually
 # All these switches must also be present in cmake/espresso_cmake_config.cmakein
 CUDA external
 FFTW external
@@ -122,4 +114,8 @@ SCAFACOS external
 GSL external
 STOKESIAN_DYNAMICS external
 NLOPT external
-VALGRIND_MARKERS external
+WALBERLA external
+VALGRIND external
+CALIPER external
+FPE external
+SHARED_MEMORY_PARALLELISM external

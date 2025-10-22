@@ -17,20 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_MAGNETOSTATICS_ACTOR_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_MAGNETOSTATICS_ACTOR_HPP
+#pragma once
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "script_interface/Context.hpp"
 #include "script_interface/Variant.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/get_value.hpp"
+#include "script_interface/system/Leaf.hpp"
 
 #include <memory>
-#include <stdexcept>
 #include <string>
 
 namespace ScriptInterface {
@@ -43,15 +42,23 @@ namespace Dipoles {
  * included in this header file for separation of concerns reasons.
  */
 template <class SIClass, class CoreClass>
-class Actor : public AutoParameters<Actor<SIClass, CoreClass>> {
+class Actor : public AutoParameters<Actor<SIClass, CoreClass>, System::Leaf> {
 protected:
   using SIActorClass = SIClass;
   using CoreActorClass = CoreClass;
-  using AutoParameters<Actor<SIClass, CoreClass>>::context;
-  using AutoParameters<Actor<SIClass, CoreClass>>::add_parameters;
+  using ObjectClass = Actor<SIClass, CoreClass>;
+  using AutoParameters<ObjectClass, System::Leaf>::context;
+  using AutoParameters<ObjectClass, System::Leaf>::add_parameters;
+  using System::Leaf::get_system;
+  using System::Leaf::m_system;
   std::shared_ptr<CoreActorClass> m_actor;
 
-public:
+  void on_bind_system(::System::System &) override {
+    m_actor->bind_system(m_system.lock());
+  }
+
+private:
+  friend SIClass;
   Actor() {
     add_parameters({
         {"prefactor", AutoParameter::read_only,
@@ -59,6 +66,7 @@ public:
     });
   }
 
+public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override;
 
@@ -69,5 +77,4 @@ public:
 } // namespace Dipoles
 } // namespace ScriptInterface
 
-#endif // DIPOLES
-#endif
+#endif // ESPRESSO_DIPOLES

@@ -16,7 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#define BOOST_TEST_MODULE AutoParameter test
+
+#define BOOST_TEST_MODULE Field coupling test for fields
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 

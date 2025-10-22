@@ -24,6 +24,7 @@ import espressomd
 import espressomd.interactions
 import espressomd.observables
 
+import itertools
 import numpy as np
 
 # allowed deviation from analytical results
@@ -96,6 +97,8 @@ class PressureLJ(ut.TestCase):
 
     def tearDown(self):
         system.part.clear()
+        system.non_bonded_inter.reset()
+        system.thermostat.turn_off()
 
     def test(self):
         # system parameters
@@ -103,6 +106,7 @@ class PressureLJ(ut.TestCase):
         skin = 0.4
         time_step = 0.01
         system.time_step = time_step
+        system.integrator.set_vv()
 
         # thermostat and cell system
         system.thermostat.set_langevin(kT=0.0, gamma=1.0, seed=41)
@@ -138,6 +142,10 @@ class PressureLJ(ut.TestCase):
 
         sim_pressure_tensor = system.analysis.pressure_tensor()
         sim_pressure_tensor_kinetic = np.copy(sim_pressure_tensor['kinetic'])
+        sim_pressure_tensor_kinetic_lin = np.copy(
+            sim_pressure_tensor['kinetic_lin'])
+        sim_pressure_tensor_kinetic_rot = np.copy(
+            sim_pressure_tensor['kinetic_rot'])
         sim_pressure_tensor_bonded = np.copy(sim_pressure_tensor['bonded'])
         sim_pressure_tensor_bonded_harmonic = np.copy(
             sim_pressure_tensor['bonded', len(system.bonded_inter) - 1])
@@ -155,6 +163,8 @@ class PressureLJ(ut.TestCase):
 
         sim_pressure = system.analysis.pressure()
         sim_pressure_kinetic = sim_pressure['kinetic']
+        sim_pressure_kinetic_lin = sim_pressure['kinetic_lin']
+        sim_pressure_kinetic_rot = sim_pressure['kinetic_rot']
         sim_pressure_bonded = sim_pressure['bonded']
         sim_pressure_bonded_harmonic = sim_pressure[
             'bonded', len(system.bonded_inter) - 1]
@@ -192,6 +202,12 @@ class PressureLJ(ut.TestCase):
             sim_pressure_tensor_kinetic, anal_pressure_tensor_kinetic, rtol=0, atol=tol,
             err_msg='kinetic pressure tensor does not match analytical result')
         np.testing.assert_allclose(
+            sim_pressure_tensor_kinetic_lin, anal_pressure_tensor_kinetic, rtol=0, atol=tol,
+            err_msg='kinetic pressure tensor does not match analytical result')
+        np.testing.assert_allclose(
+            sim_pressure_tensor_kinetic_rot, np.zeros((3, 3)), rtol=0, atol=tol,
+            err_msg='kinetic pressure tensor does not match analytical result')
+        np.testing.assert_allclose(
             sim_pressure_tensor_bonded, anal_pressure_tensor_bonded, rtol=0, atol=tol,
             err_msg='bonded pressure tensor does not match analytical result')
         np.testing.assert_allclose(
@@ -220,6 +236,12 @@ class PressureLJ(ut.TestCase):
             err_msg='total pressure tensor is not given as the sum of all major pressure components')
         self.assertAlmostEqual(
             sim_pressure_kinetic, anal_pressure_kinetic, delta=tol,
+            msg='kinetic pressure does not match analytical result')
+        self.assertAlmostEqual(
+            sim_pressure_kinetic_lin, anal_pressure_kinetic, delta=tol,
+            msg='kinetic pressure does not match analytical result')
+        self.assertAlmostEqual(
+            sim_pressure_kinetic_rot, 0., delta=tol,
             msg='kinetic pressure does not match analytical result')
         self.assertAlmostEqual(
             sim_pressure_bonded, anal_pressure_bonded, delta=tol,
@@ -259,12 +281,75 @@ class PressureLJ(ut.TestCase):
             sim_pressure["total"],
             delta=tol)
 
+    def run_npt(self, barostat):
+        # system parameters
+        system.box_l = 3 * [10.0]
+        skin = 0.4
+        time_step = 0.01
+        system.time_step = time_step
+        if barostat == "Andersen":
+            piston = 1.0
+        else:
+            piston = 6.0
+
+        # thermostat and cell system
+        system.cell_system.skin = skin
+        system.periodicity = [True, True, True]
+        system.thermostat.set_npt(kT=1., gamma0=0.01, gammav=0.01, seed=42)
+        system.integrator.set_isotropic_npt(
+            ext_pressure=1., piston=piston, barostat=barostat)
+
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0, cutoff=2.0, shift="auto")
+
+        def calc_reference_values(p1, p0, direction):
+            mask = ~direction
+            box_l = np.copy(system.box_l)
+            dimension = np.sum(direction.astype(int))
+            volume = dimension * np.prod(np.ma.array(box_l, mask=mask))
+            p_vel = np.zeros(3)
+            for p in [p1, p0]:
+                p_vel += np.copy((p.v - p.f * time_step /
+                                 2.0 / p.mass)**2) * p.mass
+            p_diagonal = np.copy(p1.f * system.distance_vec(p0, p1))
+            p_virial = np.sum(np.ma.array(p_diagonal, mask=mask)) / volume
+            p_inst = np.sum(np.ma.array(p_vel, mask=mask) / volume) + p_virial
+            return float(p_inst), float(p_virial)
+
+        for direction in itertools.product([True, False], repeat=3):
+            if True not in direction:
+                continue
+            direction = np.array(direction)
+            system.box_l = 3 * [10.0]
+            p0 = system.part.add(pos=[9.6, 9.7, 9.6], mass=1.1, type=0)
+            p1 = system.part.add(pos=[0.4, 0.4, 0.2], mass=1.2, type=0)
+            system.integrator.set_isotropic_npt(ext_pressure=1., piston=piston,
+                                                direction=direction,
+                                                barostat=barostat)
+            system.integrator.run(steps=1)
+            p_inst_ref, p_virial_ref = calc_reference_values(p1, p0, direction)
+            p_inst = system.analysis.get_instantaneous_pressure()
+            p_virial = system.analysis.get_instantaneous_pressure_virial()
+            np.testing.assert_allclose(p_virial, p_virial_ref, atol=1e-16)
+            np.testing.assert_allclose(p_inst, p_inst_ref, rtol=1e-3)
+            system.part.clear()
+
+    @utx.skipIfMissingFeatures(["NPT", "MASS"])
+    def test_npt_Andersen(self):
+        self.run_npt("Andersen")
+
+    @utx.skipIfMissingFeatures(["NPT", "MASS"])
+    def test_npt_MTK(self):
+        self.run_npt("MTK")
+
 
 @utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
 class PressureFENE(ut.TestCase):
 
     def tearDown(self):
         system.part.clear()
+        system.non_bonded_inter.reset()
+        system.thermostat.turn_off()
 
     def get_analytic_pressure_tensor_fene(self, pos_1, pos_2, k, d_r_max, r_0):
         tensor = np.zeros([3, 3])
@@ -279,6 +364,7 @@ class PressureFENE(ut.TestCase):
         skin = 0.4
         time_step = 0.01
         system.time_step = time_step
+        system.integrator.set_vv()
 
         # thermostat and cell system
         system.cell_system.skin = skin

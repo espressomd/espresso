@@ -39,21 +39,21 @@ void check_pointer(boost::mpi::communicator comm, int root) {
 
     for (int i = 1; i <= comm.size(); i++) {
       for (int j = 0; j < i; j++) {
-        buf.push_back(i);
+        buf.emplace_back(i);
       }
     }
 
-    BOOST_CHECK(buf.size() == total_size);
+    BOOST_CHECK_EQUAL(static_cast<int>(buf.size()), total_size);
 
     Utils::Mpi::scatter_buffer(buf.data(), comm.rank(), comm, root);
   } else {
     for (int i = 0; i < comm.rank(); i++)
-      buf.push_back(-1);
+      buf.emplace_back(-1);
 
     Utils::Mpi::scatter_buffer(buf.data(), comm.rank(), comm, root);
 
-    BOOST_CHECK(std::all_of(buf.begin(), buf.end(),
-                            [&comm](int i) { return i == comm.rank(); }));
+    BOOST_CHECK(
+        std::ranges::all_of(buf, [&comm](int i) { return i == comm.rank(); }));
   }
 }
 

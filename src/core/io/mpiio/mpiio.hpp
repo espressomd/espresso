@@ -18,14 +18,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_IO_MPIIO_MPIIO_HPP
-#define CORE_IO_MPIIO_MPIIO_HPP
+
+#pragma once
 
 /** @file
  *  Implements binary output using MPI-IO.
  */
 
 #include "ParticleRange.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "cell_system/CellStructure.hpp"
 
 #include <string>
 
@@ -44,6 +46,13 @@ enum MPIIOOutputFields : unsigned int {
   MPIIO_OUT_BND = 8u,
 };
 
+struct write_buffers {
+  std::vector<double> pos;
+  std::vector<double> vel;
+  std::vector<int> id;
+  std::vector<int> type;
+};
+
 /**
  * @brief Parallel binary output using MPI-IO.
  * To be called by all MPI processes. Aborts ESPResSo if an error occurs.
@@ -52,10 +61,14 @@ enum MPIIOOutputFields : unsigned int {
  *
  * @param prefix Filepath prefix.
  * @param fields Specifier for which fields to dump.
+ * @param bonded_ias Bonds to serialize.
  * @param particles Range of particles to serialize.
+ * @param buffers Write buffers.
  */
-void mpi_mpiio_common_write(const std::string &prefix, unsigned fields,
-                            const ParticleRange &particles);
+void mpi_mpiio_common_write(std::string const &prefix, unsigned fields,
+                            BondedInteractionsMap const &bonded_ias,
+                            ParticleRange const &particles,
+                            write_buffers &buffers);
 
 /**
  * @brief Parallel binary input using MPI-IO.
@@ -65,9 +78,9 @@ void mpi_mpiio_common_write(const std::string &prefix, unsigned fields,
  *
  * @param prefix Filepath prefix.
  * @param fields Specifier for which fields to read.
+ * @param cell_structure Bonds to serialize.
  */
-void mpi_mpiio_common_read(const std::string &prefix, unsigned fields);
+void mpi_mpiio_common_read(std::string const &prefix, unsigned fields,
+                           CellStructure &cell_structure);
 
 } // namespace Mpiio
-
-#endif

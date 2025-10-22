@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 The ESPResSo project
+ * Copyright (C) 2019-2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -24,6 +24,7 @@
 #include "utils/contains.hpp"
 
 #include <iterator>
+#include <vector>
 
 BOOST_AUTO_TEST_CASE(contains_test) {
   using Utils::contains;
@@ -32,17 +33,14 @@ BOOST_AUTO_TEST_CASE(contains_test) {
   int const true_rng[] = {9, 10, search_value, 11};
   int const false_rng[] = {1, 2, 3};
 
-  /* iterator version */
-  {
-    BOOST_CHECK(
-        contains(std::begin(true_rng), std::end(true_rng), search_value));
-    BOOST_CHECK(
-        not contains(std::begin(false_rng), std::end(false_rng), search_value));
-  }
-
-  /* range version */
+  /* lvalue version */
   {
     BOOST_CHECK(contains(true_rng, search_value));
     BOOST_CHECK(not contains(false_rng, search_value));
+  }
+  /* rvalue version */
+  {
+    BOOST_CHECK(contains(std::vector({9, 10, search_value, 11}), search_value));
+    BOOST_CHECK(not contains(std::vector({1, 2, 3}), search_value));
   }
 }

@@ -31,6 +31,9 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <string_view>
+#include <variant>
+#include <vector>
 
 namespace si = ScriptInterface;
 
@@ -46,11 +49,10 @@ struct Dummy : si::ObjectHandle {
     params[name] = val;
   }
 
-  Utils::Span<const boost::string_ref> valid_parameters() const override {
-    static const boost::string_ref parameter_names[] = {"id", "object_param"};
+  std::vector<std::string_view> valid_parameters() const override {
+    static std::string_view names[] = {"id", "object_param"};
 
-    return Utils::make_const_span(parameter_names,
-                                  std::min(params.size(), std::size_t{2u}));
+    return {names, names + std::min(params.size(), std::size_t{2u})};
   }
 };
 
@@ -66,16 +68,6 @@ BOOST_AUTO_TEST_CASE(LocalContext_make_shared) {
   auto ctx = std::make_shared<si::LocalContext>(factory, comm);
 
   auto res = ctx->make_shared("Dummy", {});
-  BOOST_REQUIRE(res != nullptr);
-  BOOST_CHECK_EQUAL(res->context(), ctx.get());
-  BOOST_CHECK_EQUAL(ctx->name(res.get()), "Dummy");
-}
-
-BOOST_AUTO_TEST_CASE(LocalContext_make_shared_local) {
-  boost::mpi::communicator comm;
-  auto ctx = std::make_shared<si::LocalContext>(factory, comm);
-
-  auto res = ctx->make_shared_local("Dummy", {});
   BOOST_REQUIRE(res != nullptr);
   BOOST_CHECK_EQUAL(res->context(), ctx.get());
   BOOST_CHECK_EQUAL(ctx->name(res.get()), "Dummy");
@@ -102,13 +94,13 @@ BOOST_AUTO_TEST_CASE(LocalContext_serialization) {
   {
     auto d1 = si::ObjectHandle::deserialize(serialized, *ctx);
     BOOST_REQUIRE(d1);
-    BOOST_CHECK_EQUAL(boost::get<int>(d1->get_parameter("id")), 1);
-    auto d2 = boost::get<si::ObjectRef>(d1->get_parameter("object_param"));
+    BOOST_CHECK_EQUAL(std::get<int>(d1->get_parameter("id")), 1);
+    auto d2 = std::get<si::ObjectRef>(d1->get_parameter("object_param"));
     BOOST_REQUIRE(d2);
-    BOOST_CHECK_EQUAL(boost::get<int>(d2->get_parameter("id")), 2);
-    auto d3 = boost::get<si::ObjectRef>(d2->get_parameter("object_param"));
+    BOOST_CHECK_EQUAL(std::get<int>(d2->get_parameter("id")), 2);
+    auto d3 = std::get<si::ObjectRef>(d2->get_parameter("object_param"));
     BOOST_REQUIRE(d3);
-    BOOST_CHECK_EQUAL(boost::get<int>(d3->get_parameter("id")), 3);
+    BOOST_CHECK_EQUAL(std::get<int>(d3->get_parameter("id")), 3);
   }
 }
 

@@ -226,7 +226,6 @@ The following particle properties are related to rotation:
 * :attr:`~espressomd.particle_data.ParticleHandle.director`
 * :attr:`~espressomd.particle_data.ParticleHandle.ext_torque`
 * :attr:`~espressomd.particle_data.ParticleHandle.gamma_rot`
-* :attr:`~espressomd.particle_data.ParticleHandle.gamma_rot`
 * :attr:`~espressomd.particle_data.ParticleHandle.omega_body`
 * :attr:`~espressomd.particle_data.ParticleHandle.omega_lab`
 * :attr:`~espressomd.particle_data.ParticleHandle.quat`
@@ -251,26 +250,8 @@ according to their respective particle type. Before the next integration
 step, the forces accumulated on a virtual site are distributed back to
 those particles, from which the virtual site was derived.
 
-
-There are different schemes for virtual sites, described in the
-following sections. To switch the active scheme, the system
-:attr:`~espressomd.system.System.virtual_sites` property can be used::
-
-    import espressomd
-    import espressomd.virtual_sites
-
-    system = espressomd.System(box_l=[1, 1, 1])
-    system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(have_quaternion=False)
-    # or
-    system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
-
-By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected.
-This means that virtual particles are not touched during integration.
-The ``have_quaternion`` parameter determines whether the quaternion of
-the virtual particle is updated (useful in combination with the
-:attr:`~espressomd.particle_data.ParticleHandle.vs_quat` property of the
-virtual particle which defines the orientation of the virtual particle
-in the body fixed frame of the related real particle).
+There are different schemes for virtual sites, described in the following sections.
+The scheme acting on a virtual site is dependent on its propagation mode.
 
 .. _Rigid arrangements of particles:
 
@@ -298,19 +279,16 @@ the non-virtual particle rotates, the virtual sites rotates on an orbit
 around the non-virtual particles center.
 
 To use this implementation of virtual sites, activate the feature
-``VIRTUAL_SITES_RELATIVE``. Furthermore, an instance of
-:class:`~espressomd.virtual_sites.VirtualSitesRelative` has to be set as the
-active virtual sites scheme (see above). To set up a virtual site:
+``VIRTUAL_SITES_RELATIVE``. Furthermore, particles have to be set up with the
+propagation modes :attr:`~espressomd.propagation.Propagation.TRANS_VS_RELATIVE`
+and :attr:`~espressomd.propagation.Propagation.ROT_VS_RELATIVE`.
 
 #. Place the particle to which the virtual site should be related.
    It needs to be in the center of mass of the rigid arrangement of
    particles you create::
 
        import espressomd
-       import espressomd.virtual_sites
-
        system = espressomd.System(box_l=[10., 10., 10.])
-       system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
        p1 = system.part.add(pos=[1., 2., 3.])
 
 #. Place a particle at the desired relative position, make it virtual
@@ -320,8 +298,10 @@ active virtual sites scheme (see above). To set up a virtual site:
        p2 = system.part.add(pos=p1.pos + rel_offset)
        p2.vs_auto_relate_to(p1)
 
-   This will set the :attr:`~espressomd.particle_data.ParticleHandle.virtual`
-   attribute on particle ``p2`` to ``True``.
+   The :meth:`~espressomd.particle_data.ParticleHandle.is_virtual`
+   method of particle ``p2`` will now return ``True``, and its
+   :attr:`~espressomd.particle_data.ParticleHandle.propagation`
+   attribute will return the correct combination of flags.
 
 #. Repeat the previous step with more virtual sites, if desired.
 
@@ -337,7 +317,8 @@ Please note:
    virtual site in the non-virtual particles body-fixed frame. This
    information is saved in the virtual site's
    :attr:`~espressomd.particle_data.ParticleHandle.vs_relative` attribute.
-   Take care, not to overwrite it after using ``vs_auto_relate``.
+   Take care, not to overwrite it after using
+   :meth:`~espressomd.particle_data.ParticleHandle.vs_auto_relate_to`.
 
 -  Virtual sites can not be placed relative to other virtual sites, as
    the order in which the positions of virtual sites are updated is not
@@ -346,7 +327,7 @@ Please note:
 
 -  In case you know the correct quaternions, you can also setup a virtual
    site using its :attr:`~espressomd.particle_data.ParticleHandle.vs_relative`
-   and :attr:`~espressomd.particle_data.ParticleHandle.virtual` attributes.
+   and :attr:`~espressomd.particle_data.ParticleHandle.propagation` attributes.
 
 -  In a simulation on more than one CPU, the effective cell size needs
    to be larger than the largest distance between a non-virtual particle
@@ -366,26 +347,107 @@ Please note:
 -  The presence of rigid bodies constructed by means of virtual sites
    adds a contribution to the scalar pressure and pressure tensor.
 
+-  The :meth:`~espressomd.particle_data.ParticleHandle.vs_auto_relate_to`
+   has additional keyword arguments for controlling whether the virtual site
+   should be coupled to a lattice-Boltzmann fluid (``couple_to_lb=True``) or
+   to the Langevin thermostat (``couple_to_langevin=True``), or both
+   (in that case LB is used for translation and Langevin for rotation);
+   this is achieved internally by adding extra propagation flags.
+
+
 .. _Inertialess lattice-Boltzmann tracers:
 
 Inertialess lattice-Boltzmann tracers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:class:`espressomd.virtual_sites.VirtualSitesInertialessTracers`
-
-When this implementation is selected, the virtual sites follow the motion of a
-lattice-Boltzmann fluid (both, CPU and GPU). This is achieved by integrating
+Using the propagation mode :attr:`~espressomd.propagation.Propagation.TRANS_LB_TRACER`,
+the virtual sites follow the motion of a LB fluid. This is achieved by integrating
 their position using the fluid velocity at the virtual sites' position.
-Forces acting on the virtual sites are directly transferred as force density
+Forces acting on the virtual sites are directly transferred as a force density
 onto the lattice-Boltzmann fluid, making the coupling free of inertia.
+Please note that the velocity attribute of the virtual particles
+does not carry valid information for this virtual sites scheme.
 The feature stems from the implementation of the
 :ref:`Immersed Boundary Method for soft elastic objects`, but can be used independently.
 
-For correct results, the LB thermostat has to be deactivated for virtual sites::
+In the following example, a particle is advected by a fluid flowing along the x-axis::
 
-   system.thermostat.set_lb(kT=0, act_on_virtual=False)
+    import espressomd
+    import espressomd.lb
+    import espressomd.propagation
+    Propagation = espressomd.propagation.Propagation
+    system = espressomd.System(box_l=[8., 8., 8.])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.
+    lbf = espressomd.lb.LBFluidWalberla(agrid=1., tau=0.01, density=1.,
+                                        kinematic_viscosity=1.)
+    system.lb = lbf
+    system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
+    lbf[:, :, :].velocity = [0.1, 0., 0.]
+    p = system.part.add(pos=[0., 0., 0.], propagation=Propagation.TRANS_LB_TRACER)
+    system.integrator.run(10)
+    print(p.pos.round(3))
 
-Please note that the velocity attribute of the virtual particles does not carry valid information for this virtual sites scheme.
+
+.. _Per-particle propagation:
+
+Per-particle propagation
+------------------------
+
+Particle positions, quaternions, velocities and angular velocities are integrated
+according to the main integrator, which may be coupled to a thermostat and a barostat
+(see :ref:`Particle integration and propagation` for more details).
+The default integrator is the :ref:`Velocity Verlet algorithm`.
+
+Which equations of motion are being used can be controlled on a per-particle level.
+This is achieved by setting the particle
+:attr:`~espressomd.particle_data.ParticleHandle.propagation` attribute with a
+combination of propagation flags from :class:`~espressomd.propagation.Propagation`.
+
+Depending on which main integrator is selected, different "secondary" integrators
+become available. The velocity Verlet integrator is available as a secondary
+integrator, using flags :class:`~espressomd.propagation.Propagation.TRANS_NEWTON`
+for translation following Newton's equations of motion and
+:class:`~espressomd.propagation.Propagation.ROT_EULER` for rotation
+following Euler's equations of rotation; in this way, selected particles
+can be decoupled from a thermostat.
+:ref:`Virtual sites` also rely on secondary integrators, such as
+:class:`~espressomd.propagation.Propagation.TRANS_VS_RELATIVE` and
+:class:`~espressomd.propagation.Propagation.ROT_VS_RELATIVE` for
+:ref:`Rigid arrangements of particles` or
+:class:`~espressomd.propagation.Propagation.TRANS_LB_TRACER` for
+:ref:`Inertialess lattice-Boltzmann tracers`.
+
+In the following example, particle 1 follows Langevin dynamics (NVT ensemble),
+while particle 2 follows Newtonian dynamics (NVE ensemble)::
+
+    import espressomd
+    import espressomd.propagation
+    Propagation = espressomd.propagation.Propagation
+    system = espressomd.System(box_l=[8., 8., 8.])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.
+    system.thermostat.set_langevin(kT=0.001, gamma=2., seed=42)
+    p1 = system.part.add(pos=[0., 0., 0.], v=[1., 0., 0.],
+                         omega_lab=[1., 0., 0.], rotation=[True, True, True])
+    p2 = system.part.add(pos=[0., 0., 0.], v=[1., 0., 0.],
+                         omega_lab=[1., 0., 0.], rotation=[True, True, True])
+    p1.propagation = Propagation.TRANS_LANGEVIN | Propagation.ROT_LANGEVIN
+    p2.propagation = Propagation.TRANS_NEWTON | Propagation.ROT_EULER
+    system.integrator.run(1)
+
+Not all combinations of propagation flags are allowed!
+
+The friction coefficient of thermostats can be controlled on a per-particle level too.
+Values stored in particle attributes :attr:`~espressomd.particle_data.ParticleHandle.gamma`
+and :attr:`~espressomd.particle_data.ParticleHandle.gamma_rot` will override
+the friction coefficients of most thermostats.
+Requires feature ``THERMOSTAT_PER_PARTICLE``.
+This is used for example to model
+:ref:`particle polarizability with thermalized cold Drude oscillators`.
+These attributes can also be defined as 3D vectors to model particle anisotropy.
+Requires feature ``PARTICLE_ANISOTROPY``.
+
 
 .. _Interacting with groups of particles:
 
@@ -393,8 +455,8 @@ Interacting with groups of particles
 ------------------------------------
 
 Groups of particles are addressed using :class:`~espressomd.particle_data.ParticleSlice` objects.
-Usually, these objects do not have to be instantiated by the user. There are several ways
-to retrieve a particle slice:
+The objects behave similarly to :class:`~espressomd.particle_data.ParticleList` objects.
+There are several ways to retrieve a particle slice:
 
 - By calling :meth:`ParticleList.add() <espressomd.particle_data.ParticleList.add>`
 
@@ -629,60 +691,72 @@ Self-propelled swimmers
 Langevin swimmers
 ~~~~~~~~~~~~~~~~~
 
+.. note::
+
+    Requires feature ``ENGINE``.
+
 ::
 
     import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
     system.part.add(pos=[1, 0, 0], swimming={'f_swim': 0.03})
 
-This enables the particle to be self-propelled in the direction determined by
-its quaternion. For setting the particle's quaternion see
-:attr:`~espressomd.particle_data.ParticleHandle.quat`. The self-propulsion
-speed will relax to a constant velocity, that is specified by ``v_swim``.
-Alternatively it is possible to achieve a constant velocity by imposing a
-constant force term ``f_swim`` that is balanced by friction of a (Langevin)
-thermostat. The way the velocity of the particle decays to the constant
-terminal velocity in either of these methods is completely determined by the
-friction coefficient. You may only set one of the possibilities ``v_swim`` *or*
-``f_swim`` as you cannot relax to constant force *and* constant velocity at the
-same time. Note that there is no real difference between ``v_swim`` and
-``f_swim``, since the latter may always be chosen such that the same terminal
-velocity is achieved for a given friction coefficient.
+This enables the particle to be self-propelled along its director.
+The terminal propulsion speed is determined by the friction of a (Langevin)
+thermostat (``v_swim = f_swim / gamma``).
 
 .. _Lattice-Boltzmann swimmers:
 
 Lattice-Boltzmann swimmers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. note::
+
+    Requires features ``ENGINE`` and ``VIRTUAL_SITES_RELATIVE``.
+
 ::
 
     import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
-    system.part.add(pos=[2, 0, 0], rotation=[True, True, True], swimming={
-        'f_swim': 0.01, 'mode': 'pusher', 'dipole_length': 2.0})
+    swimmer = system.part.add(pos=[2, 0, 0],
+                              rotation=[True, True, True],
+                              swimming={'f_swim': 0.01})
 
-For an explanation of the parameters ``v_swim`` and ``f_swim`` see the previous
-item. In lattice-Boltzmann self-propulsion is less trivial than for regular MD,
-because the self-propulsion is achieved by a force-free mechanism, which has
-strong implications for the far-field hydrodynamic flow field induced by the
-self-propelled particle. In |es| only the dipolar component of the flow field
-of an active particle is taken into account. This flow field can be generated
-by a *pushing* or a *pulling* mechanism, leading to change in the sign of the
-dipolar flow field with respect to the direction of motion. You can specify the
-nature of the particle's flow field by using one of the modes: ``pusher`` or
-``puller``. You will also need to specify a ``dipole_length`` which determines
-the distance of the source of propulsion from the particle's center. Note that
-you should not put this distance to zero; |es| (currently) does not support
-mathematical dipole flow fields.
+In lattice-Boltzmann, self-propulsion is less trivial than for regular MD, because for hydrodynamic
+interactions it is important that the propulsion force is generated by the swimmer itself and
+not by an external force. Since the swimmer can only push itself forward by pushing fluid backward,
+the total system is net force-free at all times. The resulting flow-field can thus not contain
+monopolar contributions in the far field and the slowest-decaying flow-field mode is a dipole.
+In |es|, the propulsion mechanism can be mimicked by applying a force to the fluid that is equal in
+magnitude but opposite in sign to the forward force on the swimming particle.
+For this, particles can be marked as force appliers as shown in the following example::
 
-You may ask: "Why are there two methods ``v_swim`` and ``f_swim`` for the
-self-propulsion using the lattice-Boltzmann algorithm?" The answer is
-straightforward. When a particle is accelerating, it has a monopolar flow-field
-contribution which vanishes when it reaches its terminal velocity (for which
-there will only be a dipolar flow field). The major difference between the
-above two methods is that with ``v_swim`` the flow field *only* has a monopolar
-moment and *only* while the particle is accelerating. As soon as the particle
-reaches a constant speed (given by ``v_swim``) this monopolar moment is gone
-and the flow field is zero! In contrast, ``f_swim`` always, i.e., while
-accelerating *and* while swimming at constant force possesses a dipolar flow
-field.
+    dipole = system.part.add(pos=[1, 0, 0],
+                             swimming={"f_swim": swimmer.swimming["f_swim"],
+                                       "is_engine_force_on_fluid": True})
+    dipole.vs_auto_relate_to(swimmer)
+    dipole.vs_quat = calc_quaternions_from_angles(np.pi, 0.)
+
+This makes the dipole particle not experience any friction or stochastic forces,
+but apply ``f_swim`` along its internal orientation (``director``)
+and follow the swimmer while updating its orientation accordingly.
+|es| provides a helper function :func:`~espressomd.swimmer_helpers.add_dipole_particle` to set
+up the virtual particle with the correct distance, relative position and orientation::
+
+    import espressomd.swimmer_helpers.add_dipole_particle as add_dip
+    dipole = add_dip(system, swimmer, 2., 0, mode="pusher")
+
+It creates pushers with the propulsion behind the swimmer and pullers with the
+propulsion in front of the swimmer.
+
+Notes:
+
+* The terminal velocity is **not** ``v_swim = gamma_lb * f_swim``. The flow-field generated
+  by the dipole particle interacts in a non-trivial way with the swimmer particle.
+  You will have to calibrate your propulsion force to the desired swim velocity.
+* For the same reason, do not place the dipole particle too close to the swimmer
+  (at least one grid spacing is recommended). Lattice-Boltzmann cannot create an exact,
+  mathematical dipole, which would require zero distance but diverging forces.
+* Since the swimmer is a point particle, it cannot experience shear or rotational flow
+  components, only random rotational noise. If shear or rotational flow are important in your
+  system, consider creating an extended, raspberry particle as described in :ref:`Rigid arrangements of particles`.

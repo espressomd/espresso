@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_LOCAL_CONTEXT_HPP
-#define SCRIPT_INTERFACE_LOCAL_CONTEXT_HPP
+
+#pragma once
 
 #include "Context.hpp"
 #include "ObjectHandle.hpp"
@@ -31,6 +31,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace ScriptInterface {
@@ -71,13 +72,7 @@ public:
     return sp;
   }
 
-  std::shared_ptr<ObjectHandle>
-  make_shared_local(std::string const &name,
-                    VariantMap const &parameters) override {
-    return make_shared(name, parameters);
-  }
-
-  boost::string_ref name(const ObjectHandle *o) const override {
+  std::string_view name(const ObjectHandle *o) const override {
     assert(o);
 
     return factory().type_name(*o);
@@ -90,5 +85,3 @@ public:
   boost::mpi::communicator const &get_comm() const override { return m_comm; }
 };
 } // namespace ScriptInterface
-
-#endif

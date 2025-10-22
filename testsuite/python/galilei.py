@@ -43,8 +43,7 @@ class Galilei(ut.TestCase):
         self.system.part.clear()
 
     def test_kill_particle_motion(self):
-        g = espressomd.galilei.GalileiTransform()
-        g.kill_particle_motion()
+        self.system.galilei.kill_particle_motion()
 
         np.testing.assert_array_equal(np.copy(self.partcls.v), 0)
 
@@ -52,14 +51,13 @@ class Galilei(ut.TestCase):
             np.testing.assert_array_less(
                 np.copy(self.partcls.omega_lab), 0)
 
-            g.kill_particle_motion(rotation=True)
+            self.system.galilei.kill_particle_motion(rotation=True)
 
             np.testing.assert_array_equal(
                 np.copy(self.partcls.omega_lab), 0)
 
     def test_kill_particle_forces(self):
-        g = espressomd.galilei.GalileiTransform()
-        g.kill_particle_forces()
+        self.system.galilei.kill_particle_forces()
 
         np.testing.assert_array_equal(np.copy(self.partcls.f), 0)
 
@@ -67,14 +65,14 @@ class Galilei(ut.TestCase):
             np.testing.assert_array_less(
                 np.copy(self.partcls.torque_lab), 0)
 
-            g.kill_particle_forces(torque=True)
+            self.system.galilei.kill_particle_forces(torque=True)
 
             np.testing.assert_array_equal(
                 np.copy(self.partcls.torque_lab), 0)
 
     def test_cms(self):
         parts = self.partcls
-        g = espressomd.galilei.GalileiTransform()
+        g = self.system.galilei
 
         total_mass = np.sum(parts.mass)
         com = np.sum(
@@ -84,7 +82,7 @@ class Galilei(ut.TestCase):
 
     def test_cms_velocity(self):
         parts = self.partcls
-        g = espressomd.galilei.GalileiTransform()
+        g = self.system.galilei
         total_mass = np.sum(parts.mass)
         com_v = np.sum(
             np.multiply(parts.mass.reshape((-1, 1)), parts.v), axis=0) / total_mass
@@ -92,7 +90,7 @@ class Galilei(ut.TestCase):
         np.testing.assert_allclose(np.copy(g.system_CMS_velocity()), com_v)
 
     def test_galilei_transform(self):
-        g = espressomd.galilei.GalileiTransform()
+        g = self.system.galilei
         g.galilei_transform()
 
         np.testing.assert_allclose(

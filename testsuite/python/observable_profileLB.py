@@ -40,8 +40,8 @@ BOX_L_Z = 12.0 * AGRID
 VISC = .7
 DENS = 1.7
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'kinematic_viscosity': VISC,
              'tau': TIME_STEP
              }
 
@@ -70,21 +70,16 @@ class ObservableProfileLBCommon:
     system.cell_system.skin = 0.4 * AGRID
 
     def setUp(self):
-        self.lbf = self.lb_class(**LB_PARAMS)
-        self.system.actors.add(self.lbf)
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
+        self.system.lb = self.lbf
 
     def tearDown(self):
-        self.system.actors.clear()
-
-    def set_fluid_velocities(self):
-        """Set an x dependent fluid velocity."""
-        for x in range(int(np.around(self.system.box_l[0] / AGRID))):
-            for y in range(int(np.around(self.system.box_l[1] / AGRID))):
-                for z in range(int(np.around(self.system.box_l[2] / AGRID))):
-                    self.lbf[x, y, z].velocity = [float(x), 0.0, 0.0]
+        self.system.lb = None
 
     def test_velocity_profile(self):
-        self.set_fluid_velocities()
+        # set an x-dependent fluid velocity
+        for x in range(self.lbf.shape[0]):
+            self.lbf[x, :, :].velocity = [float(x), 0.0, 0.0]
         obs = espressomd.observables.LBVelocityProfile(
             **LB_VELOCITY_PROFILE_PARAMS)
         obs_data = obs.calculate()
@@ -105,7 +100,7 @@ class ObservableProfileLBCommon:
                          LB_VELOCITY_PROFILE_PARAMS['n_z_bins'] * 3)
 
     def test_error_if_no_LB(self):
-        self.system.actors.clear()
+        self.system.lb = None
         obs = espressomd.observables.LBVelocityProfile(
             **LB_VELOCITY_PROFILE_PARAMS)
         with self.assertRaises(RuntimeError):
@@ -199,19 +194,34 @@ class ObservableProfileLBCommon:
         self.assertEqual(obs.sampling_offset_z, 15)
 
 
-class LBCPU(ObservableProfileLBCommon, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class ObservableProfileWalberlaDoublePrecisionCPU(
+        ObservableProfileLBCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
 
-    """Test for the CPU implementation of the LB."""
 
-    lb_class = espressomd.lb.LBFluid
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class ObservableProfileWalberlaSinglePrecisionCPU(
+        ObservableProfileLBCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
 
 
 @utx.skipIfMissingGPU()
-class LBGPU(ObservableProfileLBCommon, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class ObservableProfileWalberlaDoublePrecisionGPU(
+        ObservableProfileLBCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": False}
 
-    """Test for the GPU implementation of the LB."""
 
-    lb_class = espressomd.lb.LBFluidGPU
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class ObservableProfileWalberlaSinglePrecisionGPU(
+        ObservableProfileLBCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": True}
 
 
 if __name__ == "__main__":

@@ -193,8 +193,10 @@ class openGLLive():
         Rescale LB node velocity arrow length.
     LB_vel_radius_scale : :obj:`float`, optional
         Rescale LB node velocity arrow radii.
-    LB_arrow_color : (3,) array_like of :obj:`float`, optional
-        RGB of the LB velocity arrows.
+    LB_arrow_color_fluid : (3,) array_like of :obj:`float`, optional
+        RGB of the LB velocity arrows inside the fluid.
+    LB_arrow_color_boundary : (3,) array_like of :obj:`float`, optional
+        RGB of the LB velocity arrows inside boundaries.
     LB_arrow_material : :obj:`str`, optional
         Material of LB arrows.
     quality_constraints : :obj:`int`, optional
@@ -338,7 +340,8 @@ class openGLLive():
             'LB_plane_ngrid': 5,
             'LB_vel_scale': 1.0,
             'LB_vel_radius_scale': 0.005,
-            'LB_arrow_color': [1.0, 1.0, 1.0],
+            'LB_arrow_color_fluid': [1.0, 1.0, 1.0],
+            'LB_arrow_color_boundary': [1.0, 0.25, 0.25],
             'LB_arrow_material': 'transparent1',
             'LB_arrow_quality': 16,
 
@@ -373,11 +376,6 @@ class openGLLive():
 
         if not espressomd.has_features('ROTATION'):
             self.specs['director_arrows'] = False
-
-        if not espressomd.has_features('LB_BOUNDARIES') and \
-                not espressomd.has_features('LB_BOUNDARIES_GPU'):
-            self.specs['LB_draw_boundaries'] = False
-            self.specs['LB_draw_node_boundaries'] = False
 
         # ESPResSo-related inits that are known only when running the
         # integration loop are called once in the update loop
@@ -483,19 +481,39 @@ class openGLLive():
         or constraint information, in the visualizer window.
 
         """
+
+        def filter_active_nb_ia(nb):
+            for attr in ('cutoff', 'r_cut', 'eps', 'epsilon', 'scaling_coeff'):
+                if hasattr(nb, attr) and getattr(nb, attr) <= 0.:
+                    return False
+            return True
+
         # collect system information
         self.system_info = {
-            'Actors': [], 'Non-bonded interactions': [],
+            'Actors': [], 'Non-bonded interactions': [], 'Constraints': [],
             'Bonded interactions': [b for b in self.system.bonded_inter],
-            'Constraints': [], 'Thermostat': self.system.thermostat.get_state()
+            'Thermostats': self.system.thermostat.get_state(),
         }
 
         if len(self.system_info['Bonded interactions']) == 0:
             self.system_info['Bonded interactions'].append('None')
 
-        # collect all actors
-        for a in self.system.actors:
-            self.system_info['Actors'].append(str(a))
+        # collect all solvers
+        if espressomd.has_features('ELECTROSTATICS'):
+            if self.system.electrostatics.solver:
+                self.system_info['Actors'].append(
+                    self.system.electrostatics.solver.__class__.__name__)
+        if espressomd.has_features('DIPOLES'):
+            if self.system.magnetostatics.solver:
+                self.system_info['Actors'].append(
+                    self.system.magnetostatics.solver.__class__.__name__)
+        if espressomd.has_features('WALBERLA'):
+            if self.system.ekcontainer:
+                self.system_info['Actors'].append(
+                    self.system.ekcontainer.__class__.__name__)
+            if self.system.lb:
+                self.system_info['Actors'].append(
+                    self.system.lb.__class__.__name__)
         if len(self.system_info['Actors']) == 0:
             self.system_info['Actors'].append('None')
 
@@ -515,9 +533,9 @@ class openGLLive():
                 for check_nb in all_non_bonded_inters:
                     nb = getattr(
                         self.system.non_bonded_inter[t1, t2], check_nb)
-                    if nb is not None and nb.is_active():
+                    if nb is not None and filter_active_nb_ia(nb):
                         self.system_info['Non-bonded interactions'].append(
-                            [t1, t2, nb.type_name(), nb.get_params()])
+                            [t1, t2, nb.__class__.__name__, nb.get_params()])
         if len(self.system_info['Non-bonded interactions']) == 0:
             self.system_info['Non-bonded interactions'].append('None')
 
@@ -590,17 +608,9 @@ class openGLLive():
 
         # read the pixels
         OpenGL.GL.glReadBuffer(OpenGL.GL.GL_COLOR_ATTACHMENT0)
-        data = OpenGL.GL.glReadPixels(
-            0,
-            0,
-            self.specs['window_size'][0],
-            self.specs['window_size'][1],
-            OpenGL.GL.GL_RGB,
-            OpenGL.GL.GL_FLOAT)
 
         # save image
-        data = np.flipud(data.reshape((data.shape[1], data.shape[0], 3)))
-        matplotlib.pyplot.imsave(path, data)
+        self._make_screenshot(path)
 
     def run(self, integration_steps=1):
         """Convenience method with a simple integration thread.
@@ -771,7 +781,8 @@ class openGLLive():
                               xj * 1.0 / ng * self.lb_plane_b2) % self.system.box_l)
                 i, j, k = (int(ppp / agrid) for ppp in pp)
                 lb_vel = np.copy(self.lb[i, j, k].velocity)
-                self.lb_plane_vel.append([pp, lb_vel])
+                lb_boundary = self.lb[i, j, k].is_boundary
+                self.lb_plane_vel.append([pp, lb_vel, lb_boundary])
 
     def _update_lb_velocity_plane_gpu(self):
         ng = self.specs['LB_plane_ngrid']
@@ -785,8 +796,9 @@ class openGLLive():
         lb_vels = self.lb.get_interpolated_fluid_velocity_at_positions(
             np.array(col_pos))
         self.lb_plane_vel = []
+        lb_boundary = False  # TODO WALBERLA
         for p, v in zip(col_pos, lb_vels):
-            self.lb_plane_vel.append([p, v])
+            self.lb_plane_vel.append([p, v, lb_boundary])
 
     def _update_cells(self):
         self.cell_box_origins = []
@@ -878,21 +890,6 @@ class openGLLive():
                     except KeyError:
                         self.shapes.append(Shape(*arguments))
 
-        if self.specs['LB_draw_boundaries']:
-            ni = 0
-            for constraint in self.system.lbboundaries:
-                if isinstance(constraint, espressomd.lbboundaries.LBBoundary):
-                    part_type = ni
-                    ni += 1
-                    shape = constraint.get_parameter('shape')
-                    for sub_shape in unpack_shapes(shape):
-                        arguments = shape_arguments(sub_shape, part_type)
-                        try:
-                            self.shapes.append(
-                                shape_mapping[sub_shape.name()](*arguments))
-                        except KeyError:
-                            self.shapes.append(Shape(*arguments))
-
     def _update_bonds(self, particle_data):
         """Update bond data used for drawing bonds.
         Do not call directly but use
@@ -955,6 +952,8 @@ class openGLLive():
             self._draw_cells()
         if self.specs['LB_draw_nodes'] or self.specs['LB_draw_node_boundaries']:
             self._draw_lb_grid()
+        if self.specs['LB_draw_boundaries']:
+            self._draw_lb_boundaries()
 
     def _draw_system_box(self):
         draw_box([0, 0, 0], self.system.box_l, self.inverse_bg_color,
@@ -981,13 +980,28 @@ class openGLLive():
                 for k in range(int(dims[2])):
                     n = np.array([i, j, k]) * cell_size
                     if self.specs['LB_draw_node_boundaries'] \
-                            and self.lb[i, j, k].boundary:
+                            and self.lb[i, j, k].is_boundary:
                         draw_box(n, cell_size, self.lb_box_color_boundary,
                                  self.materials['transparent2'], 5.0)
                     if self.specs['LB_draw_nodes'] \
-                            and not self.lb[i, j, k].boundary:
+                            and not self.lb[i, j, k].is_boundary:
                         draw_box(n, cell_size, self.lb_box_color,
                                  self.materials['transparent2'], 1.5)
+
+    def _draw_lb_boundaries(self):
+        a = self.lb_params['agrid']
+        dims = np.rint(np.array(self.system.box_l) / a)
+
+        set_solid_material(self.inverse_bg_color)
+        OpenGL.GL.glPointSize(self.specs['rasterize_pointsize'])
+        OpenGL.GL.glBegin(OpenGL.GL.GL_POINTS)
+        for i in range(int(dims[0])):
+            for j in range(int(dims[1])):
+                for k in range(int(dims[2])):
+                    if self.lb[i, j, k].is_boundary:
+                        OpenGL.GL.glVertex3f(
+                            i * a + 0.5, j * a + 0.5, k * a + 0.5)
+        OpenGL.GL.glEnd()
 
     def _draw_constraints(self):
 
@@ -1005,14 +1019,12 @@ class openGLLive():
 
     def _determine_radius(self, part_type):
         def radius_by_lj(part_type):
-            try:
-                radius = self.system.non_bonded_inter[part_type, part_type].lennard_jones.get_params()[
-                    'sigma'] * 0.5
-                if radius == 0.0:
-                    radius = self.system.non_bonded_inter[part_type, part_type].wca.get_params()[
-                        'sigma'] * 0.5
-            except Exception:
-                radius = 0.5
+            ia = self.system.non_bonded_inter[part_type, part_type]
+            radius = 0.0
+            if hasattr(ia, "lennard_jones"):
+                radius = ia.lennard_jones.sigma * 0.5
+            if radius == 0.0 and hasattr(ia, "wca"):
+                radius = ia.wca.sigma * 0.5
             if radius == 0.0:
                 radius = 0.5
             return radius
@@ -1039,8 +1051,9 @@ class openGLLive():
 
             # Only change material if type/charge has changed, color_by_id or
             # material was reset by arrows
-            if reset_material or color_by_id or not part_type == part_type_last or \
-                    part_id == self.drag_id or part_id == self.info_id or self.specs['particle_coloring'] == 'node':
+            if reset_material or color_by_id or part_type != part_type_last or \
+                    part_id == self.drag_id or part_id == self.info_id or \
+                    self.specs['particle_coloring'] == 'node':
                 reset_material = False
 
                 radius = self._determine_radius(part_type)
@@ -1072,6 +1085,9 @@ class openGLLive():
                     elif self.specs['particle_coloring'] == 'node':
                         color = self._modulo_indexing(
                             self.specs['particle_type_colors'], self.particles['node'][index])
+                    else:
+                        raise ValueError(
+                            f"Cannot process particle_coloring={self.specs['particle_coloring']}")
 
                     # Invert color of highlighted particle
                     if part_id == self.drag_id or part_id == self.info_id:
@@ -1118,6 +1134,7 @@ class openGLLive():
                 self._draw_arrow_property(
                     part_id, part_type, self.specs['velocity_arrows_type_scale'],
                     self.specs['velocity_arrows_type_colors'],
+                    self.specs['velocity_arrows_type_materials'],
                     self.specs['velocity_arrows_type_radii'], 'velocity')
                 reset_material = True
 
@@ -1125,6 +1142,7 @@ class openGLLive():
                 self._draw_arrow_property(
                     part_id, part_type, self.specs['force_arrows_type_scale'],
                     self.specs['force_arrows_type_colors'],
+                    self.specs['force_arrows_type_materials'],
                     self.specs['force_arrows_type_radii'], 'force')
                 reset_material = True
 
@@ -1132,19 +1150,21 @@ class openGLLive():
                 self._draw_arrow_property(
                     part_id, part_type, self.specs['director_arrows_type_scale'],
                     self.specs['director_arrows_type_colors'],
+                    self.specs['director_arrows_type_materials'],
                     self.specs['director_arrows_type_radii'], 'director')
                 reset_material = True
 
-    def _draw_arrow_property(self, part_id, part_type,
-                             type_scale, type_colors, type_radii, prop):
+    def _draw_arrow_property(self, part_id, part_type, type_scale,
+                             type_colors, type_materials, type_radii, prop):
         sc = self._modulo_indexing(type_scale, part_type)
         if sc > 0:
             v = self.particles[prop][self.index_from_id[part_id]]
             col = self._modulo_indexing(type_colors, part_type)
             radius = self._modulo_indexing(type_radii, part_type)
+            material = self._modulo_indexing(type_materials, part_type)
             draw_arrow(self.particles['pos'][self.index_from_id[part_id]],
                        np.array(v, dtype=float) * sc, radius, col,
-                       self.materials['chrome'], self.specs['quality_arrows'])
+                       self.materials[material], self.specs['quality_arrows'])
 
     def _draw_bonds(self):
         half_box_l = self.system.box_l / 2.0
@@ -1161,8 +1181,9 @@ class openGLLive():
             try:
                 x_a = self.particles['pos'][self.index_from_id[b[0]]]
                 x_b = self.particles['pos'][self.index_from_id[b[1]]]
-            except BaseException:
-                pass
+            except Exception:
+                # skip this bond
+                continue
             dx = x_b - x_a
 
             if np.all(np.abs(dx) < half_box_l):
@@ -1243,12 +1264,12 @@ class openGLLive():
     # arrows in a plane for LB velocities
     def _draw_lb_vel(self):
 
-        for lb_pos, lb_vel in self.lb_plane_vel:
+        for lb_pos, lb_vel, lb_boundary in self.lb_plane_vel:
             draw_arrow(
                 lb_pos,
                 lb_vel * self.specs['LB_vel_scale'],
                 self.lb_arrow_radius,
-                self.specs['LB_arrow_color'],
+                self.specs['LB_arrow_color_boundary'] if lb_boundary else self.specs['LB_arrow_color_fluid'],
                 self.materials[self.specs['LB_arrow_material']],
                 self.specs['LB_arrow_quality'])
 
@@ -1279,9 +1300,6 @@ class openGLLive():
     def _handle_screenshot(self):
         if self.take_screenshot:
             self.take_screenshot = False
-            data = OpenGL.GL.glReadPixels(0, 0, self.specs['window_size'][0],
-                                          self.specs['window_size'][1],
-                                          OpenGL.GL.GL_RGB, OpenGL.GL.GL_FLOAT)
             script_name = os.path.splitext(sys.argv[0])[0]
 
             i = 0
@@ -1289,12 +1307,18 @@ class openGLLive():
                 i += 1
             file_name = f"{script_name}_{i:04d}.png"
 
-            data = np.flipud(data.reshape((data.shape[1], data.shape[0], 3)))
-            matplotlib.pyplot.imsave(file_name, data)
+            self._make_screenshot(file_name)
 
             self.screenshot_captured = True
             self.screenshot_capture_time = time.time()
             self.screenshot_capture_txt = f"Saved screenshot {file_name}"
+
+    def _make_screenshot(self, filepath):
+        data = OpenGL.GL.glReadPixels(0, 0, self.specs['window_size'][0],
+                                      self.specs['window_size'][1],
+                                      OpenGL.GL.GL_RGB, OpenGL.GL.GL_FLOAT)
+        data = np.flipud(data.reshape((data.shape[1], data.shape[0], 3)))
+        matplotlib.pyplot.imsave(filepath, data)
 
     def _display_all(self):
 
@@ -1403,36 +1427,30 @@ class openGLLive():
         def display():
             if self.hasParticleData and self.glut_main_loop_started:
                 self._display_all()
-            return
 
         # pylint: disable=unused-argument
         def keyboard_up(button, x, y):
             if isinstance(button, bytes):
                 button = button.decode("utf-8")
             self.keyboard_manager.keyboard_up(button)
-            return
 
         # pylint: disable=unused-argument
         def keyboard_down(button, x, y):
             if isinstance(button, bytes):
                 button = button.decode("utf-8")
             self.keyboard_manager.keyboard_down(button)
-            return
 
         def mouse(button, state, x, y):
             self.mouse_manager.mouse_click(button, state, x, y)
-            return
 
         def motion(x, y):
             self.mouse_manager.mouse_move(x, y)
-            return
 
         def redraw_on_idle():
             # don't repost faster than 60 fps
             if (time.time() - self.last_draw) > 1.0 / 60.0:
                 OpenGL.GLUT.glutPostRedisplay()
                 self.last_draw = time.time()
-            return
 
         def reshape_callback(w, h):
             self._reshape_window(w, h)
@@ -1449,7 +1467,6 @@ class openGLLive():
         OpenGL.GLUT.glutReshapeFunc(reshape_callback)
         OpenGL.GLUT.glutMotionFunc(motion)
         OpenGL.GLUT.glutWMCloseFunc(close_window)
-
         OpenGL.GLUT.glutIdleFunc(redraw_on_idle)
 
     def _init_timers(self):
@@ -1546,10 +1563,9 @@ class openGLLive():
     def _fcolor_to_id(fcolor):
         if (fcolor == [0, 0, 0]).all():
             return -1
-        else:
-            return int(fcolor[0] * 255) * 256 ** 2 + \
-                int(fcolor[1] * 255) * 256 + \
-                int(fcolor[2] * 255) - 1
+        return int(fcolor[0] * 255) * 256 ** 2 + \
+            int(fcolor[1] * 255) * 256 + \
+            int(fcolor[2] * 255) - 1
 
     # pylint: disable=unused-argument
     def _set_particle_drag(self, pos, pos_old):
@@ -1597,16 +1613,12 @@ class openGLLive():
 
         self.depth = 0
 
-        # LOOK FOR LB ACTOR
-        lb_types = [espressomd.lb.LBFluid]
-        if espressomd.has_features('CUDA'):
-            lb_types.append(espressomd.lb.LBFluidGPU)
-        for actor in self.system.actors:
-            if isinstance(actor, tuple(lb_types)):
-                self.lb_params = actor.get_params()
-                self.lb = actor
-                self.lb_is_cpu = isinstance(actor, espressomd.lb.LBFluid)
-                break
+        # LOOK FOR HYDRODYNAMICS SOLVER
+        if espressomd.has_features('WALBERLA'):
+            if self.system.lb:
+                self.lb = self.system.lb
+                self.lb_params = self.lb.get_params()
+                self.lb_is_cpu = True
 
         if self.specs['LB_draw_velocity_plane']:
             if self.specs['LB_plane_axis'] == 0:
@@ -1898,7 +1910,6 @@ class Shape():
         self.box_l = box_l
         self.rasterize_resolution = rasterize_resolution
         self.pointsize = rasterize_pointsize
-
         self.rasterized_surface_points = None
 
     def draw(self):
@@ -1928,19 +1939,24 @@ class Shape():
         for i in range(int(resolution[0])):
             for j in range(int(resolution[1])):
                 for k in range(int(resolution[2])):
-                    # some shapes may not have a well-defined distance function in the whole domain
-                    # and may throw upon asking for a distance
+                    # some shapes may not have a well-defined distance function
+                    # in the whole domain and may throw a ValueError
                     try:
                         p = np.array([i, j, k]) * spacing
                         dist, vec = self.shape.call_method(
                             "calc_distance", position=p.tolist())
-                        if not np.isnan(vec).any() and not np.isnan(
-                                dist) and abs(dist) < spacing:
+                        if not (np.isnan(vec).any() or np.isnan(dist)) \
+                                and abs(dist) < spacing:
                             points.append((p - vec).tolist())
-                    # domain error translates to ValueError (cython)
                     except ValueError:
                         continue
         return points
+
+    def _has_gle_features(self, feature_names):
+        for feature_name in feature_names:
+            if not bool(getattr(OpenGL.GLE, feature_name)):
+                return False
+        return True
 
 
 class Cylinder(Shape):
@@ -2012,6 +2028,8 @@ class HollowConicalFrustum(Shape):
         self.length = self.shape.get_parameter('length')
         self.thickness = self.shape.get_parameter('thickness')
         self.central_angle = self.shape.get_parameter('central_angle')
+        self.use_gle = self._has_gle_features(
+            ["gleSpiral", "gleSetNumSides", "gleSetJoinStyle"])
 
     def draw(self):
         """
@@ -2019,7 +2037,7 @@ class HollowConicalFrustum(Shape):
         Use rasterization of base class, otherwise.
 
         """
-        if bool(OpenGL.GLE.gleSpiral) and self.central_angle == 0.:
+        if self.use_gle and self.central_angle == 0.:
             self._draw_using_gle()
         else:
             super().draw()
@@ -2078,6 +2096,8 @@ class SimplePore(Shape):
         self.smoothing_radius = np.array(
             self.shape.get_parameter('smoothing_radius'))
         self.max_box_l = max(box_l)
+        self.use_gle = self._has_gle_features(
+            ["gleSpiral", "gleSetNumSides", "gleSetJoinStyle"])
 
     def draw(self):
         """
@@ -2092,7 +2112,7 @@ class SimplePore(Shape):
         ax, rx, ry = rotation_helper(self.axis)
         OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
 
-        if bool(OpenGL.GLE.gleSpiral):
+        if self.use_gle:
             self._draw_using_gle()
         else:
             self._draw_using_primitives()
@@ -2100,27 +2120,25 @@ class SimplePore(Shape):
         OpenGL.GL.glPopMatrix()
 
     def _draw_using_gle(self):
-        # if available, use the GL Extrusion library
-        if bool(OpenGL.GLE.gleSpiral):
-            n = max(10, self.quality // 3)
-            contour = [[0.5 * self.max_box_l, -0.5 * self.length]]
-            for theta in np.linspace(0, 0.5 * np.pi, n):
-                contour.append([(1. - np.sin(theta)) * self.smoothing_radius,
-                                -0.5 * self.length + (1. - np.cos(theta)) * self.smoothing_radius])
-            for theta in np.linspace(0.5 * np.pi, np.pi, n):
-                contour.append([(1. - np.sin(theta)) * self.smoothing_radius,
-                                0.5 * self.length - (1. + np.cos(theta)) * self.smoothing_radius])
-            contour.append([0.5 * self.max_box_l, 0.5 * self.length])
+        n = max(10, self.quality // 3)
+        contour = [[0.5 * self.max_box_l, -0.5 * self.length]]
+        for theta in np.linspace(0, 0.5 * np.pi, n):
+            contour.append([(1. - np.sin(theta)) * self.smoothing_radius,
+                            -0.5 * self.length + (1. - np.cos(theta)) * self.smoothing_radius])
+        for theta in np.linspace(0.5 * np.pi, np.pi, n):
+            contour.append([(1. - np.sin(theta)) * self.smoothing_radius,
+                            0.5 * self.length - (1. + np.cos(theta)) * self.smoothing_radius])
+        contour.append([0.5 * self.max_box_l, 0.5 * self.length])
 
-            normals = np.diff(np.array(contour), axis=0)
-            normals /= np.linalg.norm(normals, ord=2, axis=1, keepdims=True)
-            normals = np.roll(normals, 1, axis=1)
-            normals[:, 0] *= -1
+        normals = np.diff(np.array(contour), axis=0)
+        normals /= np.linalg.norm(normals, ord=2, axis=1, keepdims=True)
+        normals = np.roll(normals, 1, axis=1)
+        normals[:, 0] *= -1
 
-            OpenGL.GLE.gleSetJoinStyle(OpenGL.GLE.TUBE_JN_ANGLE)
-            OpenGL.GLE.gleSetNumSides(max(90, 3 * self.quality))
-            OpenGL.GLE.gleSpiral(contour, normals, [0, 0, 1], self.radius, 0., 0., 0.,
-                                 [[1, 0, 0], [0, 1, 0]], [[0, 0, 0], [0, 0, 0]], 0., 360)
+        OpenGL.GLE.gleSetJoinStyle(OpenGL.GLE.TUBE_JN_ANGLE)
+        OpenGL.GLE.gleSetNumSides(max(90, 3 * self.quality))
+        OpenGL.GLE.gleSpiral(contour, normals, [0, 0, 1], self.radius, 0., 0., 0.,
+                             [[1, 0, 0], [0, 1, 0]], [[0, 0, 0], [0, 0, 0]], 0., 360)
 
     def _draw_using_primitives(self):
         clip_plane = get_extra_clip_plane()
@@ -2476,7 +2494,6 @@ def draw_cylinder(posA, posB, radius, color, material, quality,
 
     d = posB - posA
 
-    # angle,t,length = calcAngle(d)
     length = np.linalg.norm(d)
     OpenGL.GL.glTranslatef(posA[0], posA[1], posA[2])
 
@@ -2870,6 +2887,6 @@ class Camera:
 
         self.modelview = trans.dot(rotate_cam.dot(trans_cam))
 
-        c_xyz = -1 * np.mat(self.modelview[:3, :3]) * \
-            np.mat(self.modelview[3, :3]).T
+        c_xyz = -1 * np.asmatrix(self.modelview[:3, :3]) * \
+            np.asmatrix(self.modelview[3, :3]).T
         self.cam_pos = np.array([c_xyz[0, 0], c_xyz[1, 0], c_xyz[2, 0]])

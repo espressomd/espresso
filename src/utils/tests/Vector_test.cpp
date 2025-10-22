@@ -19,8 +19,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for the Utils::Vector class. */
-
 #define BOOST_TEST_MODULE Vector test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -36,6 +34,8 @@
 #include <iterator>
 #include <limits>
 #include <numeric>
+#include <ranges>
+#include <span>
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
@@ -43,8 +43,7 @@
 using Utils::Vector;
 
 /* Number of nontrivial Baxter permutations of length 2n-1. (A001185) */
-#define TEST_NUMBERS                                                           \
-  { 0, 1, 1, 7, 21, 112, 456, 2603, 13203 }
+#define TEST_NUMBERS {0, 1, 1, 7, 21, 112, 456, 2603, 13203}
 
 constexpr int test_numbers[] = TEST_NUMBERS;
 constexpr std::size_t n_test_numbers = sizeof(test_numbers) / sizeof(int);
@@ -106,9 +105,8 @@ BOOST_AUTO_TEST_CASE(range_constructor_test) {
 }
 
 BOOST_AUTO_TEST_CASE(unit_vector_test) {
-  BOOST_CHECK((Utils::unit_vector<int>(2) == Utils::Vector3i{0, 0, 1}));
-  BOOST_CHECK_THROW(Utils::unit_vector<double>(3), std::domain_error);
-  BOOST_CHECK_THROW(Utils::unit_vector<float>(-1), std::domain_error);
+  BOOST_CHECK((Utils::unit_vector<int>(2u) == Utils::Vector3i{0, 0, 1}));
+  BOOST_CHECK_THROW(Utils::unit_vector<double>(3u), std::domain_error);
 }
 
 BOOST_AUTO_TEST_CASE(test_norm2) {
@@ -116,13 +114,20 @@ BOOST_AUTO_TEST_CASE(test_norm2) {
   BOOST_CHECK(norm2<2>());
   BOOST_CHECK(norm2<3>());
   BOOST_CHECK(norm2<4>());
+  // constexpr context
+  {
+    constexpr Vector<int, n_test_numbers> v(TEST_NUMBERS);
+    constexpr auto result = v.norm2();
+    BOOST_CHECK(result == std::inner_product(v.begin(), v.end(), v.begin(), 0));
+  }
 }
 
 BOOST_AUTO_TEST_CASE(normalize) {
-  Utils::Vector3d v{1, 2, 3};
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
+  Utils::Vector3d v{1., 2., 3.};
   v.normalize();
 
-  BOOST_CHECK((v.norm2() - 1.0) <= std::numeric_limits<double>::epsilon());
+  BOOST_CHECK_CLOSE(v.norm2(), 1.0, tol);
 }
 
 BOOST_AUTO_TEST_CASE(comparison_operators) {
@@ -186,6 +191,13 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
     Utils::Vector3i v3{2, 4, 6};
     auto v4 = v3 / 2;
     BOOST_CHECK(v4 == (v3 /= 2));
+  }
+
+  {
+    Utils::Vector3i v3{2, 12, 91};
+    Utils::Vector3i v4{180, 30, 3};
+    auto v5 = 360 / v3;
+    BOOST_CHECK(v5 == v4);
   }
 
   BOOST_CHECK((sqrt(Utils::Vector3d{1., 2., 3.}) ==
@@ -286,7 +298,21 @@ BOOST_AUTO_TEST_CASE(conversion) {
       Vector3f{static_cast<float>(orig[0]), static_cast<float>(orig[1]),
                static_cast<float>(orig[2])};
 
-  // check range-based conversion
+#if __cpp_lib_containers_ranges
+  // check range-based ctor with STL container
+  {
+    auto const result = Vector3f(std::from_range, expected.as_vector());
+    BOOST_TEST(result == expected);
+  }
+
+  // check range-based ctor with vector container
+  {
+    auto const result = Vector3f(std::from_range, expected);
+    BOOST_TEST(result == expected);
+  }
+#endif
+
+  // check cast operator
   {
     auto const result = static_cast<Vector3f>(orig);
     BOOST_TEST(result == expected);
@@ -309,6 +335,37 @@ BOOST_AUTO_TEST_CASE(conversion) {
     auto const result = Utils::Vector3d{orig.as_vector()};
     BOOST_TEST(result == orig);
   }
+
+  // check span conversion
+  {
+    auto const view = static_cast<std::span<double, 3>>(orig);
+    BOOST_TEST(view.data() == orig.data());
+    BOOST_TEST(view.size() == orig.size());
+  }
+
+  // check span conversion
+  {
+    auto const view = std::span(orig);
+    BOOST_TEST(view.data() == orig.data());
+    BOOST_TEST(view.size() == orig.size());
+  }
+
+  // check span conversion
+  {
+    auto const view = orig.as_span();
+    BOOST_TEST(view.data() == orig.data());
+    BOOST_TEST(view.size() == orig.size());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(tuple_protocol) {
+  using A = Utils::Vector<int, 4>;
+
+  static_assert(std::is_same_v<std::tuple_element_t<0, A>, int>);
+  static_assert(std::is_same_v<std::tuple_element_t<1, A>, int>);
+  static_assert(A{}.size() == std::tuple_size<A>::value);
+
+  BOOST_CHECK_EQUAL(get<1>(A{{1, 2, 3, 4}}), 2);
 }
 
 BOOST_AUTO_TEST_CASE(vector_product_test) {

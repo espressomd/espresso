@@ -31,6 +31,7 @@ class ProfileObservablesTest(ut.TestCase):
     system.time_step = 0.01
     system.part.add(pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
     system.part.add(pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
+    system.part.add(pos=[6.0, 8.0, 16.0], v=[0.0, 1.0, 0.0])
     bin_volume = 5.0**3
     kwargs = {'ids': list(system.part.all().id),
               'n_x_bins': 2,
@@ -79,7 +80,8 @@ class ProfileObservablesTest(ut.TestCase):
             obs_data.shape, [self.kwargs['n_x_bins'], self.kwargs['n_y_bins'],
                              self.kwargs['n_z_bins'], 3])
         self.assertEqual(obs_data[0, 0, 1, 2], 2.0 / self.bin_volume)
-        self.assertEqual(np.sum(np.abs(obs_data)), 2.0 / self.bin_volume)
+        self.assertEqual(obs_data[1, 1, 3, 2], 1.0 / self.bin_volume)
+        self.assertEqual(np.sum(np.abs(obs_data)), 3.0 / self.bin_volume)
 
     def test_flux_density_profile(self):
         density_profile = espressomd.observables.FluxDensityProfile(
@@ -90,7 +92,8 @@ class ProfileObservablesTest(ut.TestCase):
             obs_data.shape, [self.kwargs['n_x_bins'], self.kwargs['n_y_bins'],
                              self.kwargs['n_z_bins'], 3])
         self.assertEqual(obs_data[0, 0, 1, 2], 2.0 / self.bin_volume)
-        self.assertEqual(np.sum(np.abs(obs_data)), 2.0 / self.bin_volume)
+        self.assertEqual(obs_data[1, 1, 3, 1], 1.0 / self.bin_volume)
+        self.assertEqual(np.sum(np.abs(obs_data)), 3.0 / self.bin_volume)
 
     def test_pid_profile_interface(self):
         # test setters and getters

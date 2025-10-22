@@ -19,7 +19,13 @@
 
 from . import utils
 from .script_interface import ScriptInterfaceHelper, script_interface_register
-from .code_features import has_features
+
+
+@script_interface_register
+class Container(ScriptInterfaceHelper):
+    _so_name = "Coulomb::Container"
+    _so_features = ("ELECTROSTATICS",)
+    _so_bind_methods = ("clear",)
 
 
 class ElectrostaticInteraction(ScriptInterfaceHelper):
@@ -33,10 +39,9 @@ class ElectrostaticInteraction(ScriptInterfaceHelper):
 
     """
     _so_creation_policy = "GLOBAL"
+    _so_features = ("ELECTROSTATICS",)
 
     def __init__(self, **kwargs):
-        self._check_required_features()
-
         if 'sip' not in kwargs:
             for key in self.required_keys():
                 if key not in kwargs:
@@ -46,15 +51,11 @@ class ElectrostaticInteraction(ScriptInterfaceHelper):
             self.validate_params(params)
             super().__init__(**params)
             for key in params:
-                if key not in self._valid_parameters():
+                if not self._has_parameter(key):
                     raise RuntimeError(
                         f"Parameter '{key}' is not a valid parameter")
         else:
             super().__init__(**kwargs)
-
-    def _check_required_features(self):
-        if not has_features("ELECTROSTATICS"):
-            raise NotImplementedError("Feature ELECTROSTATICS not compiled in")
 
     def validate_params(self, params):
         """Check validity of given parameters.
@@ -67,15 +68,6 @@ class ElectrostaticInteraction(ScriptInterfaceHelper):
 
     def required_keys(self):
         raise NotImplementedError("Derived classes must implement this method")
-
-    def _activate(self):
-        self.call_method("check_charge_neutrality")
-        self.call_method("activate")
-        utils.handle_errors("Coulomb actor activation failed")
-
-    def _deactivate(self):
-        self.call_method("deactivate")
-        utils.handle_errors("Coulomb actor deactivation failed")
 
 
 @script_interface_register
@@ -217,6 +209,10 @@ class P3M(_P3MBase):
     tune : :obj:`bool`, optional
         Used to activate/deactivate the tuning method on activation.
         Defaults to ``True``.
+    tune_limits : (2,) array_like of :obj:`int`, optional
+        Lower and upper limits (inclusive) for the mesh size during tuning,
+        along the largest box dimension. Use ``None`` to not impose a limit.
+        Defaults to ``[None, None]``.
     timings : :obj:`int`
         Number of force calculations during tuning.
     verbose : :obj:`bool`, optional
@@ -227,14 +223,16 @@ class P3M(_P3MBase):
     check_complex_residuals: :obj:`bool`, optional
         Raise a warning if the backward Fourier transform has non-zero
         complex residuals when set to ``True`` (default).
+    single_precision : :obj:`bool`
+        Use single-precision floating-point arithmetic.
 
     """
     _so_name = "Coulomb::CoulombP3M"
     _so_creation_policy = "GLOBAL"
+    _so_features = ("P3M",)
 
-    def _check_required_features(self):
-        if not has_features("P3M"):
-            raise NotImplementedError("Feature P3M not compiled in")
+    def default_params(self):
+        return {"single_precision": False, **super().default_params()}
 
 
 @script_interface_register
@@ -272,6 +270,10 @@ class P3MGPU(_P3MBase):
         Defaults to ``True``.
     timings : :obj:`int`
         Number of force calculations during tuning.
+    tune_limits : (2,) array_like of :obj:`int`, optional
+        Lower and upper limits (inclusive) for the mesh size during tuning,
+        along the largest box dimension. Use ``None`` to not impose a limit.
+        Defaults to ``[None, None]``.
     verbose : :obj:`bool`, optional
         If ``False``, disable log output during tuning.
     check_neutrality : :obj:`bool`, optional
@@ -284,12 +286,10 @@ class P3MGPU(_P3MBase):
     """
     _so_name = "Coulomb::CoulombP3MGPU"
     _so_creation_policy = "GLOBAL"
+    _so_features = ("P3M", "CUDA")
 
-    def _check_required_features(self):
-        if not has_features("P3M"):
-            raise NotImplementedError("Feature P3M not compiled in")
-        if not has_features("CUDA"):
-            raise NotImplementedError("Feature CUDA not compiled in")
+    def default_params(self):
+        return {"single_precision": True, **super().default_params()}
 
 
 @script_interface_register
@@ -348,10 +348,7 @@ class ELC(ElectrostaticInteraction):
     """
     _so_name = "Coulomb::ElectrostaticLayerCorrection"
     _so_creation_policy = "GLOBAL"
-
-    def _check_required_features(self):
-        if not has_features("P3M"):
-            raise NotImplementedError("Feature P3M not compiled in")
+    _so_features = ("P3M",)
 
     def validate_params(self, params):
         utils.check_type_or_throw_except(
@@ -390,11 +387,13 @@ class MMM1D(ElectrostaticInteraction):
         Maximal pairwise error.
     far_switch_radius : :obj:`float`, optional
         Radius where near-field and far-field calculation are switched.
-    bessel_cutoff : :obj:`int`, optional
-    tune : :obj:`bool`, optional
-        Specify whether to automatically tune or not. Defaults to ``True``.
-    timings : :obj:`int`
+    verbose : :obj:`bool`, optional
+        If ``False``, disable log output during tuning.
+    timings : :obj:`int`, optional
         Number of force calculations during tuning.
+    check_neutrality : :obj:`bool`, optional
+        Raise a warning if the system is not electrically neutral when
+        set to ``True`` (default).
 
     """
     _so_name = "Coulomb::CoulombMMM1D"
@@ -404,40 +403,6 @@ class MMM1D(ElectrostaticInteraction):
         return {"far_switch_radius": -1.,
                 "verbose": True,
                 "timings": 15,
-                "check_neutrality": True}
-
-    def required_keys(self):
-        return {"prefactor", "maxPWerror"}
-
-
-@script_interface_register
-class MMM1DGPU(ElectrostaticInteraction):
-    """
-    Electrostatics solver with GPU support for systems with one periodic
-    direction. See :ref:`MMM1D on GPU` for more details.
-
-    Parameters
-    ----------
-    prefactor : :obj:`float`
-        Electrostatics prefactor (see :eq:`coulomb_prefactor`).
-    maxWPerror : :obj:`float`
-        Maximal pairwise error.
-    far_switch_radius : :obj:`float`, optional
-        Radius where near-field and far-field calculation are switched
-    bessel_cutoff : :obj:`int`, optional
-    tune : :obj:`bool`, optional
-        Specify whether to automatically tune or not. Defaults to ``True``.
-    """
-    _so_name = "Coulomb::CoulombMMM1DGpu"
-    _so_creation_policy = "GLOBAL"
-
-    def _check_required_features(self):
-        if not has_features("MMM1D_GPU"):
-            raise NotImplementedError("Feature MMM1D_GPU not compiled in")
-
-    def default_params(self):
-        return {"far_switch_radius": -1.,
-                "bessel_cutoff": -1,
                 "check_neutrality": True}
 
     def required_keys(self):
@@ -488,16 +453,11 @@ class Scafacos(ElectrostaticInteraction):
     """
     _so_name = "Coulomb::CoulombScafacos"
     _so_creation_policy = "GLOBAL"
+    _so_features = ("ELECTROSTATICS", "SCAFACOS")
     _so_bind_methods = ElectrostaticInteraction._so_bind_methods + \
         ("get_available_methods",
          "get_near_field_delegation",
          "set_near_field_delegation")
-
-    def _check_required_features(self):
-        if not has_features("ELECTROSTATICS"):
-            raise NotImplementedError("Feature ELECTROSTATICS not compiled in")
-        if not has_features("SCAFACOS"):
-            raise NotImplementedError("Feature SCAFACOS not compiled in")
 
     def default_params(self):
         return {"check_neutrality": True}

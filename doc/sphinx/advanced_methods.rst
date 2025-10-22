@@ -19,160 +19,168 @@ automatically during the simulation, every time two particles collide.
 This is useful for simulations of chemical reactions and irreversible
 adhesion processes. Both, sliding and non-sliding contacts can be created.
 
-The collision detection is controlled via the system
-:attr:`~espressomd.system.System.collision_detection` attribute,
+The collision detection is controlled via the
+:attr:`system.collision_detection
+<espressomd.system.System.collision_detection>` attribute,
 which is an instance of the class
 :class:`~espressomd.collision_detection.CollisionDetection`.
 
-Several modes are available for different types of binding.
+Several protocols are available for different types of dynamic binding.
+The currently active collision mode can be removed by assigning ``None``
+or :class:`~espressomd.collision_detection.Off` to the
+:attr:`system.collision_detection.protocol
+<espressomd.collision_detection.CollisionDetection.protocol>` attribute.
 
-* ``"bind_centers"``: adds a pair-bond between two particles at their first collision.
-  By making the bonded interaction *stiff* enough, the particles can be held together
-  after the collision. Note that the particles can still slide on each others' surface,
-  as the pair bond is not directional. This mode is set up as follows::
+.. _Bind centers:
 
-      import espressomd
-      import espressomd.interactions
+Bind centers
+~~~~~~~~~~~~
 
-      system = espressomd.System(box_l=[1, 1, 1])
-      bond_centers = espressomd.interactions.HarmonicBond(k=1000, r_0=1.5)
-      system.bonded_inter.add(bond_centers)
-      system.collision_detection.set_params(mode="bind_centers", distance=1.5,
-                                            bond_centers=bond_centers)
+Add a pair-bond between two particles at their first collision.
+By making the bonded interaction *stiff* enough, the particles can be held together
+after the collision. Note that the particles can still slide on each others' surface,
+as the pair bond is not directional. This protocol affects all particle types.
+This protocol is set up with :class:`~espressomd.collision_detection.BindCenters` as follows::
 
-  The parameters are as follows:
+    import espressomd
+    import espressomd.interactions
+    import espressomd.collision_detection
+    system = espressomd.System(box_l=[1, 1, 1])
+    bond_centers = espressomd.interactions.HarmonicBond(k=1000, r_0=0.1)
+    system.bonded_inter.add(bond_centers)
+    system.collision_detection.protocol = espressomd.collision_detection.BindCenters(
+        distance=0.1, bond_centers=bond_centers)
 
-  * ``distance`` is the distance between two particles at which the binding is triggered.
-    This cutoff distance, ``1.5`` in the example above, is typically chosen slightly larger
-    than the particle diameter. It is also a good choice for the equilibrium length of the bond.
-  * ``bond_centers`` is the bonded interaction to be created between the particles
-    (an instance of :class:`~espressomd.interactions.HarmonicBond` in the example above).
-    No guarantees are made regarding which of the two colliding particles gets the bond.
-    Once there is a bond of this type on any of the colliding particles,
-    no further binding occurs for this pair of particles.
+The parameters are as follows:
 
-* ``"bind_at_point_of_collision"``: this mode prevents sliding of the colliding particles at the contact.
-  This is achieved by creating two virtual sites at the point of collision.
-  They are rigidly connected to each of the colliding particles.
-  A bond is then created between the virtual sites, or an angular bond between
-  the two colliding particles and the virtual particles. In the latter case,
-  the virtual particles are the centers of the angle potentials
-  (particle 2 in the description of the angle potential, see :ref:`Bond-angle interactions`).
-  Due to the rigid connection between each of the
-  particles in the collision and its respective virtual site, a sliding
-  at the contact point is no longer possible. See the documentation on
-  :ref:`Rigid arrangements of particles` for details. In addition to the bond between the virtual
-  sites, the bond between the colliding particles is also created, i.e.,
-  the ``"bind_at_point_of_collision"`` mode implicitly includes the ``"bind_centers"`` mode.
-  You can either use a real bonded interaction to prevent wobbling around
-  the point of contact or you can use :class:`espressomd.interactions.Virtual` which acts as a marker, only.
-  The method is setup as follows::
+* ``distance`` is the distance between two particles at which the binding is triggered.
+  This cutoff distance, ``0.1`` in the example above, is typically chosen slightly larger
+  than the particle diameter. It is also a good choice for the equilibrium length of the bond.
+* ``bond_centers`` is the bonded interaction to be created between the particles
+  (an instance of :class:`~espressomd.interactions.HarmonicBond` in the example above).
+  No guarantees are made regarding which of the two colliding particles gets the bond.
+  Once there is a bond of this type on any of the colliding particles,
+  no further binding occurs for this pair of particles.
 
-      system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
-      system.collision_detection.set_params(
-          mode="bind_at_point_of_collision",
-          distance=0.1,
-          bond_centers=harmonic_bond1,
-          bond_vs=harmonic_bond2,
-          part_type_vs=1,
-          vs_placement=0)
+.. note::
 
-  The parameters ``distance`` and ``bond_centers`` have the same meaning
-  as in the ``"bind_centers"`` mode. The remaining parameters are as follows:
+    The following features are required:
+    ``COLLISION_DETECTION``.
 
-  * ``bond_vs`` is the bond to be added between the two virtual sites created on collision.
-    This is either a pair-bond with an equilibrium length matching the distance between
-    the virtual sites, or an angle bond fully stretched in its equilibrium configuration.
-  * ``part_type_vs`` is the particle type assigned to the virtual sites created on collision.
-    In nearly all cases, no non-bonded interactions should be defined for this particle type.
-  * ``vs_placement`` controls, where on the line connecting the centers of the colliding
-    particles, the virtual sites are placed. A value of 0 means that the virtual sites are
-    placed at the same position as the colliding particles on which they are based.
-    A value of 0.5 will result in the virtual sites being placed at the mid-point between
-    the two colliding particles. A value of 1 will result the virtual site associated
-    to the first colliding particle to be placed at the position of the second colliding
-    particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual
-    sites should have an equilibrium length of zero.
+.. _Bind at point of collision:
 
-* ``"glue_to_surface"``: This mode is used to irreversibly attach small particles
-  to the surface of a big particle. It is asymmetric in that several small particles
-  can be bound to a big particle but not vice versa. The small particles can change type
-  after collision to make them *inert*. On collision, a single virtual site is placed
-  and related to the big particle. Then, a bond (``bond_centers``) connects the big
-  and the small particle. A second bond (``bond_vs``) connects the virtual site and
-  the small particle. Further required parameters are:
+Bind at point of collision
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  * ``part_type_to_attach_vs_to``: Type of the particle to which the virtual site is attached, i.e., the *big* particle.
-  * ``part_type_to_be_glued``: Type of the particle bound to the virtual site (the *small* particle).
-  * ``part_type_after_glueing``: The type assigned to the particle bound to the virtual site (*small* particle) after the collision.
-  * ``part_type_vs``: Particle type assigned to the virtual site created during the collision.
-  * ``distance_glued_particle_to_vs``: Distance of the virtual site to the particle being bound to it (*small* particle).
+Add two pair-bonds between two particles and two automatically generated virtual sites at their first collision.
 
-  Note: When the type of a particle is changed on collision, this makes the
-  particle inert with regards to further collision. Should a particle  of
-  type ``part_type_to_be_glued`` collide with two particles in a single
-  time step, no guarantees are made with regards to which partner is selected.
-  In particular, there is no guarantee that the choice is unbiased.
+This protocol prevents sliding of the colliding particles at the contact point.
+This is achieved by creating two virtual sites at the point of collision.
+They are rigidly connected to each of the colliding particles.
+Then, either a pair bond is added between the virtual sites, or an angular bond
+is added between the two colliding particles and the virtual particles.
+In the latter case, the virtual particles are the centers of the angle potentials
+(particle 2 in the description of the angle potential, see :ref:`Bond-angle interactions`).
+Due to the rigid connection between each of the colliding particles and their
+respective virtual sites, sliding at the contact point is no longer possible.
+See :ref:`Rigid arrangements of particles` for details. This protocol affects all particle types.
 
-  The method is used as follows::
+In addition to the bond between the virtual sites, a bond between the colliding
+particles is also created. You can either use a real bonded interaction to prevent wobbling
+around the point of contact or you can use :class:`espressomd.interactions.Virtual`
+which acts as a marker, only.
 
-      system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
-      system.collision_detection.set_params(
-            mode="glue_to_surface",
-            distance=0.1,
-            distance_glued_particle_to_vs=0.02,
-            bond_centers=harmonic_bond1,
-            bond_vs=harmonic_bond2,
-            part_type_vs=1,
-            part_type_to_attach_vs_to=2,
-            part_type_to_be_glued=3,
-            part_type_after_glueing=4)
+This protocol is set up with :class:`~espressomd.collision_detection.BindAtPointOfCollision` as follows::
 
-* ``"bind_three_particles"`` allows for the creation of agglomerates which maintain
-  their shape similarly to those create by the mode ``"bind_at_point_of_collision"``.
-  The present approach works without virtual sites. Instead, for each two-particle
-  collision, the surrounding is searched for a third particle. If one is found,
-  angular bonds are placed to maintain the local shape.
-  If all three particles are within the cutoff distance, an angle bond is added
-  on each of the three particles in addition
-  to the distance based bonds between the particle centers.
-  If two particles are within the cutoff of a central particle (e.g., chain of three particles)
-  an angle bond is placed on the central particle.
-  The angular bonds being added are determined from the angle between the particles.
-  This method does not depend on the particles' rotational
-  degrees of freedom being integrated. Virtual sites are not required.
-  The method, along with the corresponding bonds are setup as follows::
+    import espressomd
+    import espressomd.interactions
+    import espressomd.collision_detection
+    system = espressomd.System(box_l=[1, 1, 1])
+    bond_centers = espressomd.interactions.HarmonicBond(k=1000, r_0=0.1)
+    bond_vs = espressomd.interactions.HarmonicBond(k=10000, r_0=0.02)
+    system.bonded_inter.add(bond_centers)
+    system.bonded_inter.add(bond_vs)
+    system.collision_detection.protocol = espressomd.collision_detection.BindAtPointOfCollision(
+        distance=0.1,
+        bond_centers=bond_centers,
+        bond_vs=bond_vs,
+        part_type_vs=1,
+        vs_placement=0.5)
 
-        n_angle_bonds = 181  # 0 to 180 degrees in one degree steps
-        for i in range(0, n_angle_bonds, 1):
-            system.bonded_inter[i] = espressomd.interactions.AngleHarmonic(
-                bend=1., phi0=float(i) / float(n_angle_bonds - 1) * np.pi)
+The parameters ``distance`` and ``bond_centers`` have the same meaning
+as in the :ref:`Bind centers` protocol. The remaining parameters are as follows:
 
-        bond_centers = espressomd.interactions.HarmonicBond(k=1., r_0=0.1, r_cut=0.5)
-        system.bonded_inter.add(bond_centers)
+* ``bond_vs`` is the bond to be added between the two virtual sites created on collision.
+  This is either a pair-bond with an equilibrium length matching the distance between
+  the virtual sites, or an angle bond fully stretched in its equilibrium configuration.
+* ``part_type_vs`` is the particle type assigned to the virtual sites created on collision.
+  In nearly all cases, no non-bonded interactions should be defined for this particle type.
+* ``vs_placement`` controls where the virtual sites are placed on the line connecting
+  the colliding particles. A value of 0 means that the virtual sites are
+  placed at the same position as the colliding particles on which they are based.
+  A value of 0.5 will result in the virtual sites being placed at the mid-point between
+  the two colliding particles. A value of 1 will result the virtual site associated
+  to the first colliding particle to be placed at the position of the second colliding
+  particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual
+  sites should have an equilibrium length of zero.
 
-        system.collision_detection.set_params(
-            mode="bind_three_particles",
-            bond_centers=bond_centers,
-            bond_three_particles=0,
-            three_particle_binding_angle_resolution=n_angle_bonds,
-            distance=0.1)
+.. note::
 
-  Important: The bonds for the angles are mapped via their numerical bond ids.
-  In this example, ids from 0 to 180 are used. All other bonds required for
-  the simulation need to be added to the system after those bonds. In particular,
-  this applies to the bonded interaction passed via ``bond_centers``
+    The following features are required:
+    ``COLLISION_DETECTION``, ``VIRTUAL_SITES_RELATIVE``.
 
+.. _Glue to surface:
 
-The following limitations currently apply for the collision detection:
+Glue to surface
+~~~~~~~~~~~~~~~
 
-* No distinction is currently made between different particle types for the ``"bind_centers"`` method.
+Attach small particles to the surface of a large particle.
+The bond can be made irreversible.
 
-* The ``"bind_at_point_of_collision"`` and ``"glue_to_surface"`` approaches require
-  the feature ``VIRTUAL_SITES_RELATIVE`` to be activated in :file:`myconfig.hpp`.
+Several small particles can be bound to a large particle but not vice versa.
+The small particles can change type after collision to become *inert*.
 
-* The ``"bind_at_point_of_collision"`` approach cannot handle collisions
-  between virtual sites
+This protocol is set up with :class:`~espressomd.collision_detection.GlueToSurface` as follows::
+
+    import espressomd
+    import espressomd.interactions
+    import espressomd.collision_detection
+    system = espressomd.System(box_l=[1, 1, 1])
+    bond_centers = espressomd.interactions.HarmonicBond(k=1000, r_0=0.1)
+    bond_vs = espressomd.interactions.HarmonicBond(k=10000, r_0=0.02)
+    system.bonded_inter.add(bond_centers)
+    system.bonded_inter.add(bond_vs)
+    system.collision_detection.protocol = espressomd.collision_detection.GlueToSurface(
+        distance=0.1,
+        distance_glued_particle_to_vs=0.02,
+        bond_centers=bond_centers,
+        bond_vs=bond_vs,
+        part_type_vs=1,
+        part_type_to_attach_vs_to=2,
+        part_type_to_be_glued=3,
+        part_type_after_glueing=4)
+
+On collision, a single virtual site is placed and related to the large particle.
+Then a bond (``bond_centers``) connects the large and the small particle.
+A second bond (``bond_vs``) connects the virtual site and the small particle.
+Further required parameters are:
+
+* ``part_type_to_attach_vs_to``: Type of the particle to which the virtual site is attached, i.e., the *large* particle.
+* ``part_type_to_be_glued``: Type of the particle bound to the virtual site (the *small* particle).
+* ``part_type_after_glueing``: The type assigned to the particle bound to the virtual site (*small* particle) after the collision.
+* ``part_type_vs``: Particle type assigned to the virtual site created during the collision.
+* ``distance_glued_particle_to_vs``: Distance of the virtual site to the particle being bound to it (*small* particle), as a fraction of the pair distance.
+
+Note: When the type of a particle is changed on collision, this makes the
+particle inert with regards to further collisions. Should a particle of
+type ``part_type_to_be_glued`` collide with two particles in a single
+time step, no guarantees are made with regards to which partner is selected.
+In particular, there is no guarantee that the choice is unbiased.
+
+.. note::
+
+    The following features are required:
+    ``COLLISION_DETECTION``, ``VIRTUAL_SITES_RELATIVE``.
 
 .. _Deleting bonds when particles are pulled apart:
 
@@ -192,6 +200,8 @@ Several modes are available:
 * ``"revert_bind_at_point_of_collision"``: delete a bond between the virtual site
 * ``"none"``: cancel an existing bond breakage specification
 
+For a pair bond, the breakage distance refers to the minimum image distance between the primary particle and its bond partner.
+For an angle bond, the distance refers to the distance *between the two bond partners* of the primary particle.
 Example::
 
     import espressomd
@@ -244,10 +254,10 @@ features can be combined to model reversible bonds.
 Two combinations are possible:
 
 * ``"delete_bond"`` mode for breakable bonds together with
-  ``"bind_centers"`` mode for collision detection:
+  the :ref:`Bind centers` protocol of collision detection:
   used to create or delete a bond between two real particles
 * ``"revert_bind_at_point_of_collision"`` mode for breakable bonds together
-  with ``"bind_at_point_of_collision"`` mode for collision detection:
+  with the :ref:`Bind at point of collision` protocol of collision detection:
   used to create or delete virtual sites (the implicitly created
   bond between the real particles isn't affected)
 
@@ -268,7 +278,7 @@ Please contact the Biofluid Simulation and Modeling Group at the
 University of Bayreuth if you plan to use this feature.
 
 With the Immersed Boundary Method (IBM), soft particles are considered as an infinitely
-thin shell filled with liquid (see e.g. :cite:`peskin02a,crowl10a,kruger11a`). When the
+thin shell filled with liquid (see e.g. :cite:`peskin02a,crowl10a,kruger12a`). When the
 shell is deformed by an external flow, it responds with elastic restoring
 forces which are transmitted into the fluid. In the present case, the
 inner and outer liquid are of the same type and are simulated using
@@ -277,7 +287,7 @@ lattice-Boltzmann.
 Numerically, the shell is discretized by a set of marker points
 connected by triangles. The marker points are advected with *exactly*
 the local fluid velocity, i.e., they do not possess a mass nor a
-friction coefficient (this is different from the Object-in-Fluid method
+friction coefficient (this is different from the :ref:`Object-in-Fluid` method
 below). We implement these marker points as virtual tracer
 particles which are not integrated using the usual velocity-Verlet
 scheme, but instead are propagated using a simple Euler algorithm with
@@ -370,7 +380,6 @@ Description of sample script
 .. note::
 
     The following features are required:
-    ``LB_BOUNDARIES``,
     ``EXTERNAL_FORCES``,
     ``MASS``, ``SOFT_SPHERE``
 
@@ -455,17 +464,15 @@ Specification of fluid and movement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
-    lbf = espressomd.lb.LBFluid(agrid=1, dens=1.0, visc=1.5, fric=1.5,
-                                tau=time_step, ext_force_density=[0.002, 0.0, 0.0])
-    system.actors.add(lbf)
+    lbf = espressomd.lb.LBFluidWalberla(agrid=1, density=1.0, kinematic_viscosity=1.5,
+                                        tau=time_step, ext_force_density=[0.002, 0.0, 0.0])
+    self.system.lb = lbf
 
 This part of the script specifies the fluid that will get the system
 moving. Here ``agrid`` :math:`=\Delta x` is the spatial discretisation
 step, ``tau`` is the time step that will be the same as the time step
-for particles, viscosity ``visc`` and density ``dens`` of the fluid are
-physical parameters scaled to lattice units. ``fric`` is a
-(non-physical) friction parameter that enters the fluid-object
-interaction and has to be set carefully. Finally, ``ext_force_density`` sets the
+for particles, viscosity ``viscosity`` and density ``density`` of the fluid are
+physical parameters scaled to lattice units, ``ext_force_density`` sets the
 force-per-unit-volume vector that drives the fluid. Another option to
 add momentum to fluid is by specifying the velocity on the boundaries.
 
@@ -481,7 +488,7 @@ Specification of boundaries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To set up the geometry of the channels, we mostly use rhomboids and
-cylinders, but there are also other boundary types available in |es|.
+cylinders, but there are also other shape types available in |es|.
 Their usage is described elsewhere.
 
 
@@ -514,14 +521,14 @@ defined as follows. First we define the two shapes:
                                 direction=1)
 
 The ``direction=1`` determines that the fluid is on the *outside*. Next
-we create boundaries for the fluid:
+we mark the LB nodes within the shapes as boundaries:
 
 ::
 
-    system.lbboundaries.add(lbboundaries.LBBoundary(shape=boundary1))
-    system.lbboundaries.add(lbboundaries.LBBoundary(shape=boundary2))
+    lbf.add_boundary_from_shape(boundary1)
+    lbf.add_boundary_from_shape(boundary2)
 
-Followed by constraints for cells:
+Followed by creating the constraints for cells:
 
 ::
 
@@ -652,7 +659,7 @@ or data files for further processing and analysis.
 Visualization in ParaView
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For visualization we suggest the free software ParaView. All .vtk
+For visualization we suggest the free software ParaView [5]_. All .vtk
 files (boundaries, fluid, objects at all time steps) can be loaded at
 the same time. The loading is a two step process, because only after
 pressing the Apply button, are the files actually imported. Using the
@@ -1262,6 +1269,8 @@ this type is created. This saves computational time, since the data for
 elastic interactions of the given object do not need to be recalculated
 every time.
 
+.. [5]
+   https://www.paraview.org/
 
 .. _Particle polarizability with thermalized cold Drude oscillators:
 
@@ -1300,8 +1309,7 @@ In |es|, the basic ingredients to simulate such a system are split into three bo
 The system-wide thermostat has to be applied to the centre of mass and not to
 the core particle directly. Therefore, the particles have to be excluded from
 global thermostatting.  With ``THERMOSTAT_PER_PARTICLE`` enabled, we set the
-friction coefficient of the Drude complex to zero, which allows
-to still use a global Langevin thermostat for non-polarizable particles.
+friction coefficient of the Drude complex to zero.
 
 As the Drude charge should not alter the *charge* or *mass* of the Drude
 complex, both properties have to be subtracted from the core when adding the
@@ -1312,9 +1320,11 @@ polarizability :math:`\alpha` (in units of inverse volume) with :math:`q_d =
 
 The following helper method takes into account all the preceding considerations
 and can be used to conveniently add a Drude particle to a given core particle.
-It returns an `espressomd.particle_data.ParticleHandle` to the created Drude
+It returns a :class:`~espressomd.particle_data.ParticleHandle` of the created Drude
 particle. Note that as the function also adds the first two bonds between Drude
-and core, these bonds have to be already available.::
+and core, these bonds have to be already available.
+
+.. code-block::
 
     import espressomd.drude_helpers
     dh = espressomd.drude_helpers.DrudeHelpers()

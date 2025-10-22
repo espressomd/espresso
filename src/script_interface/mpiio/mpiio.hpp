@@ -19,29 +19,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SCRIPT_INTERFACE_MPIIO_MPIIO_HPP
-#define ESPRESSO_SCRIPT_INTERFACE_MPIIO_MPIIO_HPP
+#pragma once
 
+#include "script_interface/ObjectHandle.hpp"
 #include "script_interface/ScriptInterface.hpp"
-#include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/get_value.hpp"
+#include "script_interface/system/System.hpp"
 
-#include "core/cells.hpp"
+#include "core/bonded_interactions/bonded_interaction_data.hpp"
+#include "core/cell_system/CellStructure.hpp"
 #include "core/io/mpiio/mpiio.hpp"
+#include "core/system/System.hpp"
 
+#include <filesystem>
+#include <memory>
 #include <string>
 
 namespace ScriptInterface {
 namespace MPIIO {
 
-class MPIIOScript : public AutoParameters<MPIIOScript> {
+class MPIIOScript : public ObjectHandle {
+  std::weak_ptr<System::System> m_system;
+  std::shared_ptr<Mpiio::write_buffers> m_buffers;
+
 public:
-  MPIIOScript() { add_parameters({}); }
+  void do_construct(VariantMap const &parameters) override {
+    m_system = get_value<std::shared_ptr<System::System>>(parameters, "system");
+    m_buffers = std::make_shared<Mpiio::write_buffers>();
+  }
 
-  Variant do_call_method(const std::string &name,
-                         const VariantMap &parameters) override {
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &parameters) override {
 
-    auto prefix = get_value<std::string>(parameters.at("prefix"));
+    auto prefix = get_value<std::filesystem::path>(parameters.at("prefix"));
     auto pos = get_value<bool>(parameters.at("pos"));
     auto vel = get_value<bool>(parameters.at("vel"));
     auto typ = get_value<bool>(parameters.at("typ"));
@@ -52,11 +62,20 @@ public:
                         ((typ) ? Mpiio::MPIIO_OUT_TYP : Mpiio::MPIIO_OUT_NON) |
                         ((bnd) ? Mpiio::MPIIO_OUT_BND : Mpiio::MPIIO_OUT_NON);
 
-    if (name == "write")
-      Mpiio::mpi_mpiio_common_write(prefix, fields,
-                                    cell_structure.local_particles());
-    else if (name == "read")
-      Mpiio::mpi_mpiio_common_read(prefix, fields);
+    if (name == "write") {
+      auto const system_si = m_system.lock();
+      auto &system = system_si->get_system();
+      auto &cell_structure = *system.cell_structure;
+      auto &bonded_ias = *system.bonded_ias;
+      Mpiio::mpi_mpiio_common_write(prefix.string(), fields, bonded_ias,
+                                    cell_structure.local_particles(),
+                                    *m_buffers);
+    } else if (name == "read") {
+      auto const system_si = m_system.lock();
+      auto &system = system_si->get_system();
+      auto &cell_structure = *system.cell_structure;
+      Mpiio::mpi_mpiio_common_read(prefix.string(), fields, cell_structure);
+    }
 
     return {};
   }
@@ -64,5 +83,3 @@ public:
 
 } // namespace MPIIO
 } // namespace ScriptInterface
-
-#endif

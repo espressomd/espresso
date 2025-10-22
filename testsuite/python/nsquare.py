@@ -44,14 +44,13 @@ class NSquare(ut.TestCase):
             pos=n_part * [(0, 0, 0)], type=n_part * [1])
 
         # And now change their positions
-        partcls.pos = self.system.box_l * \
-            np.random.random((n_part, 3))
+        partcls.pos = self.system.box_l * np.random.random((n_part, 3))
 
         # Add an interacting particle in a corner of the box
         self.system.part.add(pos=[(0.01, 0.01, 0.01)], type=[0])
         if espressomd.has_features(['LENNARD_JONES']):
             self.system.non_bonded_inter[0, 1].lennard_jones.set_params(
-                epsilon=1.0, sigma=0.14, cutoff=0.15, shift=0.1)
+                epsilon=50., sigma=0.11, cutoff=0.12, shift=0.1)
             ref_energy = self.system.analysis.energy()['total']
             assert ref_energy > 10.
 

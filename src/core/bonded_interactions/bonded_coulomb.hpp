@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BN_IA_BONDED_COULOMB_HPP
-#define CORE_BN_IA_BONDED_COULOMB_HPP
+
+#pragma once
+
 /** \file
  *  Routines to calculate the bonded Coulomb potential between
  *  particle pairs.
@@ -29,13 +30,12 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cmath>
+#include <optional>
 
-/** Parameters for %Coulomb bond Potential */
+/** Parameters for Coulomb bond Potential */
 struct BondedCoulomb {
-  /** %Coulomb prefactor */
+  /** Coulomb prefactor */
   double prefactor;
 
   double cutoff() const { return 0.; }
@@ -44,25 +44,18 @@ struct BondedCoulomb {
 
   BondedCoulomb(double prefactor) { this->prefactor = prefactor; }
 
-  boost::optional<Utils::Vector3d> force(double q1q2,
-                                         Utils::Vector3d const &dx) const;
-  boost::optional<double> energy(double q1q2, Utils::Vector3d const &dx) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar &prefactor;
-  }
+  std::optional<Utils::Vector3d> force(double q1q2,
+                                       Utils::Vector3d const &dx) const;
+  std::optional<double> energy(double q1q2, Utils::Vector3d const &dx) const;
 };
 
 /** Compute the bonded Coulomb pair force.
  *  @param[in]  q1q2      Product of the particle charges.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<Utils::Vector3d>
+inline std::optional<Utils::Vector3d>
 BondedCoulomb::force(double const q1q2, Utils::Vector3d const &dx) const {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   auto const dist2 = dx.norm2();
   auto const dist3 = dist2 * std::sqrt(dist2);
   auto const fac = prefactor * q1q2 / dist3;
@@ -74,16 +67,14 @@ BondedCoulomb::force(double const q1q2, Utils::Vector3d const &dx) const {
 
 /** Compute the bonded Coulomb pair energy.
  *  @param[in]  q1q2      Product of the particle charges.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<double>
+inline std::optional<double>
 BondedCoulomb::energy(double const q1q2, Utils::Vector3d const &dx) const {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   auto const dist = dx.norm();
   return prefactor * q1q2 / dist;
 #else
   return .0;
 #endif
 }
-
-#endif

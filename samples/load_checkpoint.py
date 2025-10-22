@@ -30,6 +30,7 @@ Basic usage of the checkpointing feature. Show how to load the state of:
 import espressomd
 import espressomd.electrostatics
 import espressomd.checkpointing
+import numpy as np
 
 required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
@@ -37,11 +38,9 @@ espressomd.assert_features(required_features)
 checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
 checkpoint.load()
 
-# print out actors
-
-print("\n### current active actors ###")
-for act in system.actors.active_actors:
-    print(act)
+# test solver
+print("\n### current active electrostatics method ###")
+print(system.electrostatics.solver)
 
 # test user variable
 print("\n### user variable test ###")
@@ -61,14 +60,9 @@ print(
 print("\n### system.part test ###")
 print(f"system.part.all().pos = {system.part.all().pos}")
 
-# test "system.thermostat"
-print("\n### system.thermostat test ###")
-print(f"system.thermostat.get_state() = {system.thermostat.get_state()}")
-
 # test "p3m"
 print("\n### p3m test ###")
 print(f"p3m.get_params() = {p3m.get_params()}")
-
 
 # test registered objects
 # all objects that are registered when writing a checkpoint are
@@ -77,8 +71,11 @@ print("\n### checkpoint register test ###")
 print(
     f"checkpoint.get_registered_objects() = {checkpoint.get_registered_objects()}")
 
-
-# integrate system
+# integrate system while re-using forces (and velocities at half time step)
 print("Integrating...")
+system.integrator.run(2, reuse_forces=True)
 
-system.integrator.run(1000)
+# measure deviation from reference forces (trajectory must be deterministic)
+forces_ref = np.loadtxt("mycheckpoint/forces.npy")
+forces_diff = np.abs(system.part.all().f - forces_ref)
+print(f"max deviation from reference forces = {np.max(forces_diff):.2e}")

@@ -19,18 +19,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_SCAFACOS_SCAFACOS_CONTEXT_HPP
-#define ESPRESSO_SRC_CORE_SCAFACOS_SCAFACOS_CONTEXT_HPP
+#pragma once
+
+#include <config/config.hpp>
+
+#if defined(ESPRESSO_SCAFACOS) or defined(ESPRESSO_SCAFACOS_DIPOLES)
 
 /**
  * @file
  * @ref ScafacosContext implements the interface of the ScaFaCoS bridge.
  * It is further derived for the coulombic and dipolar versions of ScaFaCoS.
  */
-
-#include "config/config.hpp"
-
-#if defined(SCAFACOS) or defined(SCAFACOS_DIPOLES)
 
 #include "scafacos/ScafacosContextBase.hpp"
 
@@ -65,5 +64,4 @@ struct ScafacosContext : virtual public ScafacosContextBase,
   }
 };
 
-#endif // SCAFACOS or SCAFACOS_DIPOLES
-#endif
+#endif // ESPRESSO_SCAFACOS or ESPRESSO_SCAFACOS_DIPOLES

@@ -39,11 +39,11 @@ class CoulombCloudWallTune(ut.TestCase):
         self.system.part.add(pos=data['pos'], q=data['charges'])
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
         self.system.part.clear()
 
     def compare(self, actor):
-        self.system.actors.add(actor)
+        self.system.electrostatics.solver = actor
         self.system.integrator.run(0)
         np.testing.assert_allclose(
             np.copy(self.system.part.all().f), self.ref_forces, atol=2e-3)

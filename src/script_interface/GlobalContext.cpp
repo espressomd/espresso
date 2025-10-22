@@ -50,7 +50,7 @@ void GlobalContext::make_handle(ObjectId id, const std::string &name,
         name, unpack(parameters, m_local_objects));
 
     m_local_objects[id] = std::move(so);
-  } catch (Exception const &) {
+  } catch (Exception const &) { // NOLINT(bugprone-empty-catch)
   }
 }
 
@@ -63,14 +63,14 @@ void GlobalContext::set_parameter(ObjectId id, std::string const &name,
                                   PackedVariant const &value) {
   try {
     m_local_objects.at(id)->set_parameter(name, unpack(value, m_local_objects));
-  } catch (Exception const &) {
+  } catch (Exception const &) { // NOLINT(bugprone-empty-catch)
   }
 }
 
 void GlobalContext::notify_set_parameter(const ObjectHandle *o,
                                          std::string const &name,
                                          Variant const &value) {
-  cb_set_parameter(object_id(o), name, pack(value));
+  cb_set_parameter(ObjectId(o), name, pack(value));
 }
 
 void GlobalContext::call_method(ObjectId id, std::string const &name,
@@ -78,25 +78,14 @@ void GlobalContext::call_method(ObjectId id, std::string const &name,
   try {
     m_local_objects.at(id)->call_method(name,
                                         unpack(arguments, m_local_objects));
-  } catch (Exception const &) {
+  } catch (Exception const &) { // NOLINT(bugprone-empty-catch)
   }
 }
 
 void GlobalContext::notify_call_method(const ObjectHandle *o,
                                        std::string const &name,
                                        VariantMap const &arguments) {
-  cb_call_method(object_id(o), name, pack(arguments));
-}
-
-std::shared_ptr<ObjectHandle>
-GlobalContext::make_shared_local(std::string const &name,
-                                 VariantMap const &parameters) {
-  auto sp = m_node_local_context->factory().make(name);
-  set_context(sp.get());
-
-  sp->construct(parameters);
-
-  return sp;
+  cb_call_method(ObjectId(o), name, pack(arguments));
 }
 
 std::shared_ptr<ObjectHandle>
@@ -106,7 +95,7 @@ GlobalContext::make_shared(std::string const &name,
   auto sp = m_node_local_context->factory().make(name);
   set_context(sp.get());
 
-  auto const id = object_id(sp.get());
+  auto const id = ObjectId(sp.get());
   remote_make_handle(id, name, parameters);
 
   sp->construct(parameters);
@@ -119,14 +108,14 @@ GlobalContext::make_shared(std::string const &name,
              * required
              * to have synchronous destructors, which is needed by some client
              * code. */
-            global_context->cb_delete_handle(object_id(o));
+            global_context->cb_delete_handle(ObjectId(o));
 
             /* Locally destroy the object. */
             deleter(o);
           }};
 }
 
-boost::string_ref GlobalContext::name(const ObjectHandle *o) const {
+std::string_view GlobalContext::name(const ObjectHandle *o) const {
   assert(o);
 
   return m_node_local_context->factory().type_name(*o);

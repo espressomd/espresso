@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_IO_WRITER_H5MD_CORE_HPP
-#define CORE_IO_WRITER_H5MD_CORE_HPP
+#pragma once
 
 #include "BoxGeometry.hpp"
 #include "ParticleRange.hpp"
@@ -28,22 +27,22 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/filesystem.hpp>
 #include <boost/mpi/communicator.hpp>
 
-#include <h5xx/h5xx.hpp>
-
 #include <cstddef>
+#include <filesystem>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
-namespace h5xx {
-template <typename T, std::size_t size>
-struct is_array<Utils::Vector<T, size>> : std::true_type {};
-} // namespace h5xx
+namespace HighFive {
+class File;
+class DataSet;
+} // namespace HighFive
 
 namespace Writer {
 namespace H5md {
@@ -71,41 +70,13 @@ enum H5MDOutputFields : unsigned int {
   H5MD_OUT_ALL = 0b1111111111111111u,
 };
 
-static std::unordered_map<std::string, H5MDOutputFields> const fields_map = {
-    {"all", H5MD_OUT_ALL},
-    {"particle.type", H5MD_OUT_TYPE},
-    {"particle.position", H5MD_OUT_POS},
-    {"particle.dip_mom", H5MD_OUT_DIP},
-    {"particle.image", H5MD_OUT_IMG},
-    {"particle.velocity", H5MD_OUT_VEL},
-    {"particle.force", H5MD_OUT_FORCE},
-    {"particle.bonds", H5MD_OUT_BONDS},
-    {"particle.charge", H5MD_OUT_CHARGE},
-    {"particle.mass", H5MD_OUT_MASS},
-    {"box.length", H5MD_OUT_BOX_L},
-    {"lees_edwards.offset", H5MD_OUT_LE_OFF},
-    {"lees_edwards.direction", H5MD_OUT_LE_DIR},
-    {"lees_edwards.normal", H5MD_OUT_LE_NORMAL},
-};
-
-inline auto fields_list_to_bitfield(std::vector<std::string> const &fields) {
-  unsigned int bitfield = H5MD_OUT_NONE;
-  for (auto const &field_name : fields) {
-    if (fields_map.count(field_name) == 0) {
-      throw std::invalid_argument("Unknown field '" + field_name + "'");
-    }
-    bitfield |= fields_map.at(field_name);
-  }
-  return bitfield;
-}
-
 /**
  * @brief Class for writing H5MD files.
  */
 class File {
 public:
   /**
-   * @brief Constructor of the File class.
+   * @brief Constructor.
    * @param file_path Name for the hdf5 file on disk.
    * @param script_path Path to the simulation script.
    * @param output_fields Properties to write to disk.
@@ -115,24 +86,13 @@ public:
    * @param force_unit The unit for force.
    * @param velocity_unit The unit for velocity.
    * @param charge_unit The unit for charge.
-   * @param comm The MPI communicator.
+   * @param chunk_size The chunk size for DataSet in hdf5 file
    */
-  File(std::string file_path, std::string script_path,
+  File(std::filesystem::path file_path, std::filesystem::path script_path,
        std::vector<std::string> const &output_fields, std::string mass_unit,
        std::string length_unit, std::string time_unit, std::string force_unit,
-       std::string velocity_unit, std::string charge_unit,
-       boost::mpi::communicator comm = boost::mpi::communicator())
-      : m_script_path(std::move(script_path)),
-        m_mass_unit(std::move(mass_unit)),
-        m_length_unit(std::move(length_unit)),
-        m_time_unit(std::move(time_unit)), m_force_unit(std::move(force_unit)),
-        m_velocity_unit(std::move(velocity_unit)),
-        m_charge_unit(std::move(charge_unit)), m_comm(std::move(comm)),
-        m_fields(fields_list_to_bitfield(output_fields)),
-        m_h5md_specification(m_fields) {
-    init_file(file_path);
-  }
-  ~File() = default;
+       std::string velocity_unit, std::string charge_unit, int chunk_size);
+  ~File();
 
   /**
    * @brief Method to perform the renaming of the temporary file from
@@ -152,13 +112,13 @@ public:
 
   /**
    * @brief Retrieve the path to the hdf5 file.
-   * @return The path as a string.
+   * @return The path as a file system object.
    */
-  auto file_path() const { return m_h5md_file.name(); }
+  auto const &file_path() const { return m_file_path; }
 
   /**
    * @brief Retrieve the path to the simulation script.
-   * @return The path as a string.
+   * @return The path as a file system object.
    */
   auto const &script_path() const { return m_script_path; }
 
@@ -199,16 +159,15 @@ public:
   auto const &charge_unit() const { return m_charge_unit; }
 
   /**
+   * @brief Retrieve the set chunk size.
+   */
+  auto const &chunk_size() const { return m_chunk_size; }
+
+  /**
    * @brief Build the list of valid output fields.
    * @return The list as a vector of strings.
    */
-  auto valid_fields() const {
-    std::vector<std::string> out = {};
-    for (auto const &kv : fields_map) {
-      out.push_back(kv.first);
-    }
-    return out;
-  }
+  std::vector<std::string> valid_fields() const;
 
   /**
    * @brief Method to enforce flushing the buffer to disk.
@@ -219,19 +178,17 @@ private:
   /**
    * @brief Initialize the File object.
    */
-  void init_file(std::string const &file_path);
+  void init_file();
 
   /**
    * @brief Creates a new H5MD file.
-   * @param file_path The filename.
    */
-  void create_file(const std::string &file_path);
+  void create_file();
 
   /**
    * @brief Loads an existing H5MD file.
-   * @param file_path The filename.
    */
-  void load_file(const std::string &file_path);
+  void load_file();
 
   /**
    * @brief Create the HDF5 groups according to the H5MD specification.
@@ -259,25 +216,28 @@ private:
    */
   void write_units();
   /**
-   * @brief Create hard links for the time and step entries of time-dependent
-   * datasets.
+   * @brief Create hard links for the simulation time and simulation step
+   * entries of time-dependent datasets.
    */
   void create_hard_links();
 
-  std::string m_script_path;
+  std::filesystem::path m_file_path;
+  std::filesystem::path m_backup_path;
+  std::filesystem::path m_script_path;
+  std::filesystem::path m_absolute_script_path;
   std::string m_mass_unit;
   std::string m_length_unit;
   std::string m_time_unit;
   std::string m_force_unit;
   std::string m_velocity_unit;
   std::string m_charge_unit;
+  int m_chunk_size;
   boost::mpi::communicator m_comm;
   unsigned int m_fields;
-  std::string m_backup_filename;
-  boost::filesystem::path m_absolute_script_path;
-  h5xx::file m_h5md_file;
-  std::unordered_map<std::string, h5xx::dataset> datasets;
-  H5MD_Specification m_h5md_specification;
+  std::unique_ptr<HighFive::File> m_h5md_file;
+  std::unique_ptr<std::unordered_map<std::string, HighFive::DataSet>>
+      m_datasets;
+  Specification m_h5md_specification;
 };
 
 struct incompatible_h5mdfile : public std::exception {
@@ -295,4 +255,3 @@ struct left_backupfile : public std::exception {
 
 } /* namespace H5md */
 } /* namespace Writer */
-#endif

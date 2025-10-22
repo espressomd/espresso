@@ -17,11 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE tests
+#define BOOST_TEST_MODULE energy calculation
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "Particle.hpp"
+#include "PropagationMode.hpp"
 #include "energy_inline.hpp"
 
 #include <utils/Vector.hpp>
@@ -30,7 +31,7 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
   // real particle
   {
     Particle p;
-#ifdef MASS
+#ifdef ESPRESSO_MASS
     p.mass() = 2.;
 #endif
     p.v() = {3., 4., 5.};
@@ -41,13 +42,13 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
 
   // virtual particle
   {
-#ifdef VIRTUAL_SITES
+#ifdef ESPRESSO_VIRTUAL_SITES
 
     Particle p;
-#ifdef MASS
+#ifdef ESPRESSO_MASS
     p.mass() = 2.;
 #endif
-    p.set_virtual(true);
+    p.propagation() = PropagationMode::TRANS_VS_RELATIVE;
     p.v() = {3., 4., 5.};
 
     auto const expected = 0.;
@@ -59,7 +60,7 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
 BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
   BOOST_CHECK_EQUAL(rotational_kinetic_energy(Particle{}), 0.);
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   {
     Particle p;
     p.omega() = {1., 2., 3.};
@@ -69,22 +70,22 @@ BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
         0.5 * (hadamard_product(p.omega(), p.omega()) * p.rinertia());
     BOOST_CHECK_EQUAL(rotational_kinetic_energy(p), expected);
   }
-#endif
-}
 
-BOOST_AUTO_TEST_CASE(kinetic_energy_) {
-  Particle p;
-#ifdef MASS
-  p.mass() = 2.;
-#endif
-  p.v() = {3., 4., 5.};
+  // virtual particle
+  {
+#ifdef ESPRESSO_VIRTUAL_SITES
 
-#ifdef ROTATION
-  p.omega() = {1., 2., 3.};
-  p.set_can_rotate_all_axes();
+    Particle p;
+#ifdef ESPRESSO_ROTATIONAL_INERTIA
+    p.rinertia() = {1., 2., 3.};
 #endif
+    p.propagation() = PropagationMode::ROT_VS_RELATIVE;
+    p.omega() = {3., 4., 5.};
+    p.set_can_rotate_all_axes();
 
-  auto const expected =
-      translational_kinetic_energy(p) + rotational_kinetic_energy(p);
-  BOOST_CHECK_EQUAL(calc_kinetic_energy(p), expected);
+    auto const expected = 0.;
+    BOOST_CHECK_EQUAL(rotational_kinetic_energy(p), expected);
+#endif
+  }
+#endif
 }

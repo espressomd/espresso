@@ -28,9 +28,9 @@ if(EXISTS ${MPIEXEC})
     OUTPUT_VARIABLE mpi_version_output ERROR_VARIABLE mpi_version_output)
   if(mpi_version_result EQUAL 0 AND mpi_version_output MATCHES
                                     "\\(Open(RTE| MPI)\\) ([3-9]\\.|1[0-9])")
-    set(ESPRESSO_MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
+    set(ESPRESSO_MPIEXEC_PREFLAGS "--oversubscribe")
   else()
-    set(ESPRESSO_MPIEXEC_OVERSUBSCRIBE "")
+    set(ESPRESSO_MPIEXEC_PREFLAGS "")
   endif()
 endif()
 
@@ -50,8 +50,7 @@ function(PYTHON_BENCHMARK)
     string(REGEX REPLACE "^[-_]+" "" argument ${argument})
     set(BENCHMARK_NAME "${BENCHMARK_NAME}__${argument}")
   endforeach(argument)
-  configure_file(${BENCHMARK_FILE}
-                 ${CMAKE_CURRENT_BINARY_DIR}/${BENCHMARK_FILE})
+  list(APPEND BENCHMARK_DEPENDENCIES ${BENCHMARK_FILE} benchmarks.py)
   foreach(dependency IN LISTS BENCHMARK_DEPENDENCIES)
     configure_file(${dependency} ${CMAKE_CURRENT_BINARY_DIR}/${dependency})
   endforeach(dependency)
@@ -86,7 +85,7 @@ function(PYTHON_BENCHMARK)
       add_test(
         NAME ${BENCHMARK_TEST_NAME}
         COMMAND
-          ${MPIEXEC} ${ESPRESSO_MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG}
+          ${MPIEXEC} ${ESPRESSO_MPIEXEC_PREFLAGS} ${MPIEXEC_NUMPROC_FLAG}
           ${BENCHMARK_NUM_PROC} ${MPIEXEC_PREFLAGS}
           ${CMAKE_BINARY_DIR}/pypresso ${BENCHMARK_FILE} ${BENCHMARK_ARGUMENTS}
           ${MPIEXEC_POSTFLAGS})
@@ -130,6 +129,16 @@ python_benchmark(
 python_benchmark(FILE ferrofluid.py ARGUMENTS "--particles_per_core=400")
 python_benchmark(FILE mc_acid_base_reservoir.py ARGUMENTS
                  "--particles_per_core=500" RUN_WITH_MPI FALSE)
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=32;--single_precision")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=32")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=64;--single_precision")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=64")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=128;--single_precision")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=128")
+if(NOT ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX)
+  python_benchmark(FILE lb.py ARGUMENTS "--box_l=196;--single_precision")
+  python_benchmark(FILE lb.py ARGUMENTS "--box_l=196")
+endif()
 
 add_custom_target(
   benchmarks_data
@@ -140,4 +149,5 @@ add_custom_target(
   COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
           ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 
-add_dependencies(benchmark benchmark_python benchmarks_data)
+add_dependencies(benchmark_python pypresso benchmarks_data)
+add_dependencies(benchmark benchmark_python)

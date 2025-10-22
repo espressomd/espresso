@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 from .script_interface import ScriptObjectList, ScriptInterfaceHelper, script_interface_register
 import numpy as np
 import itertools
@@ -89,6 +91,10 @@ class Constraint(ScriptInterfaceHelper):
     """
 
     _so_name = "Constraints::Constraint"
+
+    def __reduce__(self):
+        raise RuntimeError(
+            "Constraints can only be checkpointed through an ESPResSo system's constraints property")
 
 
 @script_interface_register
@@ -183,8 +189,19 @@ class ShapeBasedConstraint(Constraint):
 
 @script_interface_register
 class HomogeneousMagneticField(Constraint):
-
     """
+    Homogeneous magnetic field :math:`\\vec{H}`.
+    The resulting force :math:`\\vec{F}`, torque :math:`\\vec{\\tau}`
+    and energy `U` on the particles are then
+
+    :math:`\\vec{F} = \\vec{0}`
+
+    :math:`\\vec{\\tau} = \\vec{\\mu} \\times \\vec{H}`
+
+    :math:`U = -\\vec{\\mu} \\cdot \\vec{H}`
+
+    where :math:`\\vec{\\mu}` is the particle dipole moment.
+
     Attributes
     ----------
     H : (3,) array_like of :obj:`float`
@@ -348,9 +365,6 @@ class ForceField(_Interpolated):
 
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     _codim = 3
     _so_name = "Constraints::ForceField"
 
@@ -380,9 +394,6 @@ class PotentialField(_Interpolated):
 
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     _codim = 1
     _so_name = "Constraints::PotentialField"
 
@@ -393,12 +404,12 @@ class Gravity(Constraint):
     """
     Gravity force
 
-    :math:`F = m \\cdot g`
+    :math:`\\vec{F} = m \\cdot \\vec{g}`
 
     Arguments
     ----------
     g : (3,) array_like of :obj:`float`
-        The gravitational acceleration.
+        The gravitational constant.
 
     """
 
@@ -420,21 +431,21 @@ class LinearElectricPotential(Constraint):
     """
     Electric potential of the form
 
-    :math:`\\phi = -E \\cdot x + \\phi_0`,
+    :math:`\\phi = -\\vec{E} \\cdot \\vec{x} + \\phi_0`,
 
-    resulting in the electric field E
-    everywhere. (E.g. in a plate capacitor).
+    resulting in the electric field :math:`\\vec{E}` everywhere.
     The resulting force on the particles are then
 
-    :math:`F = q \\cdot E`
+    :math:`\\vec{F} = q \\cdot \\vec{E}`
 
-    where :math:`q` is the charge of the particle.
+    where :math:`q` and :math:`\\vec{x}` are the particle charge and position
+    in folded coordinates.
+    This can be used to model a plate capacitor.
 
     Arguments
     ----------
     E : array_like of :obj:`float`
         The electric field.
-
     phi0 : :obj:`float`
         The potential at the origin
 
@@ -463,15 +474,18 @@ class ElectricPlaneWave(Constraint):
     """
     Electric field of the form
 
-    :math:`E = E0 \\cdot \\sin(k \\cdot x + \\omega \\cdot t + \\phi)`
+    :math:`\\vec{E} = \\vec{E_0} \\cdot \\sin(\\vec{k} \\cdot \\vec{x} + \\omega \\cdot t + \\phi)`
 
     The resulting force on the particles are then
 
-    :math:`F = q \\cdot E`
+    :math:`\\vec{F} = q \\cdot \\vec{E}`
 
-    where :math:`q` is the charge of the particle.
+    where :math:`q` and :math:`\\vec{x}` are the particle charge and position
+    in folded coordinates.
     This can be used to generate a homogeneous AC
-    field by setting k to zero.
+    field by setting :math:`\\vec{k}` to the null vector.
+    For periodic systems, :math:`\\vec{k}` must be an integer multiple
+    of :math:`2\\pi \\vec{L}^{-1}` with :math:`\\vec{L}` the box length.
 
     Arguments
     ----------
@@ -482,7 +496,7 @@ class ElectricPlaneWave(Constraint):
     omega : :obj:`float`
         Frequency of the wave
     phi : :obj:`float`, optional
-        Phase shift
+        Phase
 
     """
 
@@ -520,9 +534,10 @@ class FlowField(_Interpolated):
     Viscous coupling to a flow field that is
     interpolated from tabulated data like
 
-    :math:`F = -\\gamma \\cdot \\left( u(r) - v \\right)`
+    :math:`\\vec{F} = -\\gamma \\cdot \\left( \\vec{u}(\\vec{x}) - \\vec{v} \\right)`
 
-    where :math:`v` is the velocity of the particle.
+    where :math:`\\vec{v}` and :math:`\\vec{x}` are the particle velocity and position
+    in folded coordinates, and :math:`\\vec{u}(\\vec{x})` is a 3D flow field on a grid.
 
     Arguments
     ----------
@@ -535,9 +550,6 @@ class FlowField(_Interpolated):
 
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     _codim = 3
     _so_name = "Constraints::FlowField"
 
@@ -549,9 +561,10 @@ class HomogeneousFlowField(Constraint):
     Viscous coupling to a flow field that is
     constant in space with the force
 
-    :math:`F = -\\gamma \\cdot (u - v)`
+    :math:`\\vec{F} = -\\gamma \\cdot (\\vec{u} - \\vec{v})`
 
-    where :math:`v` is the velocity of the particle.
+    where :math:`\\vec{v}` is the velocity of the particle
+    and :math:`\\vec{u}` is the constant flow field.
 
     Attributes
     ----------
@@ -580,11 +593,11 @@ class ElectricPotential(_Interpolated):
 
     """
     Electric potential interpolated from
-    provided data. The electric field E is
+    provided data. The electric field :math:`\\vec{E}` is
     calculated numerically from the potential,
     and the resulting force on the particles are
 
-    :math:`F = q \\cdot E`
+    :math:`\\vec{F} = q \\cdot \\vec{E}`
 
     where :math:`q` is the charge of the particle.
 
@@ -596,9 +609,6 @@ class ElectricPotential(_Interpolated):
         Spacing of the grid points.
 
     """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
     _codim = 1
     _so_name = "Constraints::ElectricPotential"

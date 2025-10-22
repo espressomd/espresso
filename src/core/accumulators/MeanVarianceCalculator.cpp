@@ -32,7 +32,13 @@
 #include <vector>
 
 namespace Accumulators {
-void MeanVarianceCalculator::update() { m_acc(m_obs->operator()()); }
+void MeanVarianceCalculator::update(boost::mpi::communicator const &comm) {
+  if (comm.rank() == 0) {
+    m_acc(m_obs->operator()(comm));
+  } else {
+    m_obs->operator()(comm);
+  }
+}
 
 std::vector<double> MeanVarianceCalculator::mean() { return m_acc.mean(); }
 
@@ -60,5 +66,6 @@ void MeanVarianceCalculator::set_internal_state(std::string const &state) {
   boost::archive::binary_iarchive ia(ss);
 
   ia >> m_acc;
+  m_system = nullptr;
 }
 } // namespace Accumulators

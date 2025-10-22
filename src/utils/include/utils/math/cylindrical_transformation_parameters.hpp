@@ -16,13 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_CYLINDER_TRANSFORMATION_PARAMETERS_HPP
-#define ESPRESSO_CYLINDER_TRANSFORMATION_PARAMETERS_HPP
 
+#pragma once
+
+#include <cmath>
+#include <limits>
 #include <stdexcept>
 #include <string>
 
-#include <utils/math/abs.hpp>
 #include <utils/math/orthonormal_vec.hpp>
 
 namespace Utils {
@@ -63,30 +64,28 @@ public:
 
 private:
   void validate() const {
-    auto constexpr eps = 10 * std::numeric_limits<double>::epsilon();
-    if (Utils::abs(m_orientation * m_axis) > eps) {
+    auto constexpr eps = 10. * std::numeric_limits<double>::epsilon();
+    if (std::fabs(m_orientation * m_axis) > eps) {
       throw std::runtime_error(
           "CylindricalTransformationParameters: Axis and orientation must be "
           "orthogonal. Scalar product is " +
           std::to_string(m_orientation * m_axis));
     }
-    if (Utils::abs(m_axis.norm() - 1) > eps) {
+    if (std::fabs(m_axis.norm() - 1.) > eps) {
       throw std::runtime_error("CylindricalTransformationParameters: Axis must "
                                "be normalized. Norm is " +
                                std::to_string(m_axis.norm()));
     }
-    if (Utils::abs(m_orientation.norm() - 1) > eps) {
+    if (std::fabs(m_orientation.norm() - 1.) > eps) {
       throw std::runtime_error("CylindricalTransformationParameters: "
                                "orientation must be normalized. Norm is " +
                                std::to_string(m_orientation.norm()));
     }
   }
 
-  const Utils::Vector3d m_center{};
-  const Utils::Vector3d m_axis{0, 0, 1};
-  const Utils::Vector3d m_orientation{1, 0, 0};
+  Utils::Vector3d const m_center{};
+  Utils::Vector3d const m_axis{0., 0., 1.};
+  Utils::Vector3d const m_orientation{1., 0., 0.};
 };
 
 } // namespace Utils
-
-#endif // ESPRESSO_CYLINDER_TRANSFORMATION_PARAMETERS_HPP

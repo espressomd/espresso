@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,7 +19,6 @@
 
 import abc
 import enum
-from . import utils
 from . import code_features
 from .script_interface import ScriptObjectMap, ScriptInterfaceHelper, script_interface_register
 
@@ -57,14 +56,6 @@ class NonBondedInteraction(ScriptInterfaceHelper, metaclass=abc.ABCMeta):
 
         err_msg = f"setting {self.__class__.__name__} raised an error"
         self.call_method("set_params", handle_errors_message=err_msg, **params)
-
-    def __reduce__(self):
-        return (NonBondedInteraction._restore_object,
-                (self.__class__, self.get_params()))
-
-    @classmethod
-    def _restore_object(cls, derived_class, kwargs):
-        return derived_class(**kwargs)
 
     @abc.abstractmethod
     def default_params(self):
@@ -340,9 +331,9 @@ class TabulatedNonBonded(NonBondedInteraction):
 
         Parameters
         ----------
-        min : :obj:`float`,
+        min : :obj:`float`
             The minimal interaction distance.
-        max : :obj:`float`,
+        max : :obj:`float`
             The maximal interaction distance.
         energy: array_like of :obj:`float`
             The energy table.
@@ -359,6 +350,80 @@ class TabulatedNonBonded(NonBondedInteraction):
 
         """
         return {}
+
+    def set_analytical(self, dist_param="r", **kwargs):
+        """
+        Set new parameters from a function :math:`f(r)` that evaluates the
+        force magnitude for a given inter-particle distance :math:`r`.
+
+        Parameters
+        ----------
+        min : :obj:`float`
+            The minimal interaction distance.
+        max : :obj:`float`
+            The maximal interaction distance.
+        energy_expr: :obj:`str` or :obj:`sympy.Expr` or :obj:`sympy.Piecewise`
+            Analytical expression for the inter-atomic potential.
+        dist_param: :obj:`str` or :obj:`sympy.Symbol`, optional
+            Symbol for the inter-particle distance variable in ``energy_expr``.
+        steps: :obj:`int`
+            Number of values in the force and energy arrays.
+        \\*\\*kwargs:
+            All mathematical constants that appear in ``energy_expr``.
+            Argument names are used as symbols.
+
+        """
+        import sympy as sp
+        import numpy as np
+
+        min_val = kwargs.pop("min")
+        max_val = kwargs.pop("max")
+        steps = kwargs.pop("steps")
+        expression = kwargs.pop("energy_expr")
+
+        if isinstance(expression, (sp.Expr, sp.Piecewise)):
+            energy = expression.copy()
+            if type(energy) is sp.Expr:
+                assert len(energy.args) == 1
+                energy = energy.args[0].copy()
+        elif isinstance(expression, str):
+            energy = sp.sympify(expression)
+        else:
+            raise TypeError("Parameter 'energy_expr' isn't sympy-compatible")
+
+        if isinstance(dist_param, str):
+            r = sp.symbols(dist_param)
+        elif isinstance(dist_param, sp.Symbol):
+            r = dist_param
+        else:
+            raise TypeError("Parameter 'dist_param' isn't sympy-compatible")
+
+        if r not in energy.free_symbols:
+            raise ValueError(
+                f"Parameter 'energy_expr' isn't a function of '{r}'")
+
+        for var, value in kwargs.items():
+            symbol = sp.symbols(var)
+            if symbol not in energy.free_symbols:
+                raise ValueError(
+                    f"Parameter '{var}' isn't a constant in 'energy_expr'")
+            energy = energy.subs(symbol, value)
+
+        def evaluate_tab(expr, xdata):
+            tabulated = []
+            for x in xdata:
+                result = expr.subs(r, x)
+                assert not result.has(sp.oo, sp.nan)
+                tabulated.append(float(result))
+            return tabulated
+
+        force = -energy.diff(r)
+        xdata = np.linspace(min_val, max_val, steps)
+        energy_tab = evaluate_tab(energy, xdata)
+        force_tab = evaluate_tab(force, xdata)
+
+        self.set_params(min=min_val, max=max_val,
+                        energy=energy_tab, force=force_tab)
 
     @property
     def cutoff(self):
@@ -682,31 +747,8 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
     """
     _so_name = "Interactions::NonBondedInteractionHandle"
 
-    def __getattr__(self, key):
-        obj = super().__getattr__(key)
-        return globals()[obj.__class__.__name__](
-            _types=self.call_method("get_types"), **obj.get_params())
-
-    def _serialize(self):
-        serialized = []
-        for name, obj in self.get_params().items():
-            serialized.append((name, obj.__reduce__()[1]))
-        return serialized
-
     def reset(self):
-        for key in self._valid_parameters():
-            getattr(self, key).deactivate()
-
-    @classmethod
-    def _restore_object(cls, types, kwargs):
-        objects = {}
-        for name, (obj_class, obj_params) in kwargs:
-            objects[name] = obj_class(**obj_params)
-        return NonBondedInteractionHandle(_types=types, **objects)
-
-    def __reduce__(self):
-        return (NonBondedInteractionHandle._restore_object,
-                (self.call_method("get_types"), self._serialize()))
+        self.call_method("reset")
 
 
 @script_interface_register
@@ -725,47 +767,8 @@ class NonBondedInteractions(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = ("reset",)
 
-    def keys(self):
-        return [tuple(x) for x in self.call_method("keys")]
-
-    def _assert_key_type(self, key):
-        if not isinstance(key, tuple) or len(key) != 2 or \
-                not utils.is_valid_type(key[0], int) or not utils.is_valid_type(key[1], int):
-            raise TypeError(
-                "NonBondedInteractions[] expects two particle types as indices.")
-
     def __getitem__(self, key):
-        self._assert_key_type(key)
-        return NonBondedInteractionHandle(_types=key)
-
-    def __setitem__(self, key, value):
-        self._assert_key_type(key)
-        self.call_method("insert", key=key, object=value)
-
-    def __getstate__(self):
-        n_types = self.call_method("get_n_types")
-        state = []
-        for i in range(n_types):
-            for j in range(i, n_types):
-                handle = NonBondedInteractionHandle(_types=(i, j))
-                state.append(((i, j), handle._serialize()))
-        return {"state": state}
-
-    def __setstate__(self, params):
-        for types, kwargs in params["state"]:
-            obj = NonBondedInteractionHandle._restore_object(types, kwargs)
-            self.call_method("insert", key=types, object=obj)
-
-    @classmethod
-    def _restore_object(cls, so_callback, so_callback_args, state):
-        so = so_callback(*so_callback_args)
-        so.__setstate__(state)
-        return so
-
-    def __reduce__(self):
-        so_callback, (so_name, so_bytestring) = super().__reduce__()
-        return (NonBondedInteractions._restore_object,
-                (so_callback, (so_name, so_bytestring), self.__getstate__()))
+        return self.call_method("get_handle", key=key)
 
 
 class BONDED_IA(enum.IntEnum):
@@ -810,53 +813,16 @@ class BondedInteraction(ScriptInterfaceHelper, metaclass=abc.ABCMeta):
         feature = self.__class__.__dict__.get("_so_feature")
         if feature is not None:
             code_features.assert_features(feature)
-
-        if "sip" not in kwargs:
-            if "bond_id" in kwargs:
-                # create a new script interface object for a bond that already
-                # exists in the core via its id (BondedInteractions getter and
-                # checkpointing constructor #1)
-                bond_id = kwargs["bond_id"]
-                super().__init__(bond_id=bond_id)
-                # Check if the bond type in ESPResSo core matches this class
-                if self.call_method("get_zero_based_type",
-                                    bond_id=bond_id) != self._type_number:
-                    raise RuntimeError(
-                        f"The bond with id {bond_id} is not defined as a "
-                        f"{self._type_number.name} bond in the ESPResSo core.")
-                self._bond_id = bond_id
-                self._ctor_params = self.get_params()
-            else:
-                # create a new script interface object from bond parameters
-                # (normal bond creation and checkpointing constructor #2)
-                params = self.get_default_params()
-                params.update(kwargs)
-                super().__init__(**params)
-                self._ctor_params = params
-                self._bond_id = -1
-        else:
-            # create a new bond based on a bond in the script interface
-            # (checkpointing constructor #3)
+        if "sip" in kwargs:
             super().__init__(**kwargs)
-            self._bond_id = -1
             self._ctor_params = self.get_params()
-
-    def __reduce__(self):
-        if self._bond_id != -1:
-            # checkpointing constructor #1
-            return (BondedInteraction._restore_object,
-                    (self.__class__, {"bond_id": self._bond_id}))
+            self._bond_id = -1
         else:
-            # checkpointing constructor #2
-            return (BondedInteraction._restore_object,
-                    (self.__class__, self._serialize()))
-
-    def _serialize(self):
-        return self._ctor_params.copy()
-
-    @classmethod
-    def _restore_object(cls, derived_class, kwargs):
-        return derived_class(**kwargs)
+            params = self.get_default_params()
+            params.update(kwargs)
+            super().__init__(**params)
+            self._ctor_params = params
+            self._bond_id = -1
 
     def __setattr__(self, attr, value):
         super().__setattr__(attr, value)
@@ -1018,33 +984,17 @@ class ThermalizedBond(BondedInteraction):
         distance vector of the particle pair.
     r_cut: :obj:`float`, optional
         Maximum distance beyond which the bond is considered broken.
-    seed : :obj:`int`
-        Seed of the philox RNG. Must be positive.
-        Required for the first thermalized bond in the system. Subsequent
-        thermalized bonds don't need a seed; if one is provided nonetheless,
-        it will overwrite the seed of all previously defined thermalized bonds,
-        even if the new bond is not added to the system.
 
     """
 
     _so_name = "Interactions::ThermalizedBond"
     _type_number = BONDED_IA.THERMALIZED_DIST
 
-    def __init__(self, *args, **kwargs):
-        if kwargs and "sip" not in kwargs:
-            kwargs["rng_state"] = kwargs.get("rng_state")
-        super().__init__(*args, **kwargs)
-
-    def _serialize(self):
-        params = self._ctor_params.copy()
-        params["rng_state"] = self.call_method("get_rng_state")
-        return params
-
     def get_default_params(self):
         """Gets default values of optional parameters.
 
         """
-        return {"r_cut": 0., "seed": None}
+        return {"r_cut": 0.}
 
 
 @script_interface_register
@@ -1154,11 +1104,10 @@ class TabulatedAngle(BondedInteraction):
     _so_feature = "TABULATED"
     _type_number = BONDED_IA.TABULATED_ANGLE
 
-    pi = 3.14159265358979
-
     def __init__(self, *args, **kwargs):
+        pi = 3.14159265358979
         if len(args) == 0 and "sip" not in kwargs:
-            kwargs.update({"min": 0., "max": self.pi})
+            kwargs.update({"min": 0., "max": pi})
         super().__init__(*args, **kwargs)
 
     def get_default_params(self):
@@ -1188,11 +1137,10 @@ class TabulatedDihedral(BondedInteraction):
     _so_feature = "TABULATED"
     _type_number = BONDED_IA.TABULATED_DIHEDRAL
 
-    pi = 3.14159265358979
-
     def __init__(self, *args, **kwargs):
+        pi = 3.14159265358979
         if len(args) == 0 and "sip" not in kwargs:
-            kwargs.update({"min": 0., "max": 2. * self.pi})
+            kwargs.update({"min": 0., "max": 2. * pi})
         super().__init__(*args, **kwargs)
 
     def get_default_params(self):
@@ -1325,7 +1273,7 @@ class IBM_Triel(BondedInteraction):
         """Gets default values of optional parameters.
 
         """
-        return {"k2": 0}
+        return {"k2": 0., "is_initialized": False, "_cache": None}
 
 
 @script_interface_register
@@ -1355,7 +1303,7 @@ class IBM_Tribend(BondedInteraction):
         """Gets default values of optional parameters.
 
         """
-        return {"refShape": "Flat"}
+        return {"refShape": "Flat", "theta0": 0., "is_initialized": False}
 
 
 @script_interface_register
@@ -1542,12 +1490,10 @@ class BondedInteractions(ScriptObjectMap):
             bonded_ia = args[0]
         else:
             raise TypeError("A BondedInteraction object needs to be passed.")
-        bond_id = self._insert_bond(None, bonded_ia)
-        return bond_id
+        bonded_ia._bond_id = self._insert_bond(None, bonded_ia)
+        return bonded_ia._bond_id
 
     def __getitem__(self, bond_id):
-        self._assert_key_type(bond_id)
-
         if self.call_method('has_bond', bond_id=bond_id):
             bond_obj = self.call_method('get_bond', bond_id=bond_id)
             bond_obj._bond_id = bond_id
@@ -1590,7 +1536,6 @@ class BondedInteractions(ScriptObjectMap):
             bond_id = self.call_method("insert", object=bond_obj)
         else:
             # Throw error if attempting to overwrite a bond of different type
-            self._assert_key_type(bond_id)
             if self.call_method("contains", key=bond_id):
                 old_type = self._bond_classes[
                     self.call_method("get_zero_based_type", bond_id=bond_id)]
@@ -1612,16 +1557,3 @@ class BondedInteractions(ScriptObjectMap):
         for bond_id in self.call_method('get_bond_ids'):
             if self.call_method("get_zero_based_type", bond_id=bond_id):
                 yield self[bond_id]
-
-    def __getstate__(self):
-        params = {}
-        for bond_id in self.call_method('get_bond_ids'):
-            if self.call_method("get_zero_based_type", bond_id=bond_id):
-                obj = self[bond_id]
-                if hasattr(obj, "params"):
-                    params[bond_id] = (obj._type_number, obj._serialize())
-        return params
-
-    def __setstate__(self, params):
-        for bond_id, (type_number, bond_params) in params.items():
-            self[bond_id] = self._bond_classes[type_number](**bond_params)

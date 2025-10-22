@@ -16,15 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_LINEAR_INTERPOLATION_HPP
-#define UTILS_LINEAR_INTERPOLATION_HPP
+
+#pragma once
 
 #include <cassert>
+#include <cstddef>
 
 namespace Utils {
 /** Linear interpolation between two data points.
  *  @param[in] table   Tabulated values, equally-spaced along the x-axis
- *  @param[in] hi      %Distance on the x-axis between tabulated values
+ *  @param[in] hi      Inverse distance on the x-axis between tabulated values
  *  @param[in] offset  Position on the x-axis of the first tabulated value
  *  @param[in] x       Position on the x-axis at which to interpolate the value
  *  @return Interpolated value on the y-axis at @p x.
@@ -34,12 +35,11 @@ T linear_interpolation(Container const &table, T hi, T offset, T x) {
   auto const dind = (x - offset) * hi;
   auto const ind = static_cast<int>(dind);
   assert(ind <= dind);
-  assert((ind >= 0) and (ind < table.size()));
-  auto const dx = dind - ind;
+  assert((ind >= 0) and (static_cast<std::size_t>(ind) < table.size()));
+  auto const dx = dind - static_cast<T>(ind);
+  auto const uind = static_cast<unsigned int>(ind);
 
   /* linear interpolation between data points */
-  return table[ind] * (T{1} - dx) + table[ind + 1] * dx;
+  return table[uind] * (T{1} - dx) + table[uind + 1] * dx;
 }
 } // namespace Utils
-
-#endif

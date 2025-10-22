@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2023 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -27,170 +27,301 @@
  */
 
 #include "integrate.hpp"
+#include "integrators/Propagation.hpp"
 #include "integrators/brownian_inline.hpp"
 #include "integrators/steepest_descent.hpp"
 #include "integrators/stokesian_dynamics_inline.hpp"
+#include "integrators/symplectic_euler_inline.hpp"
 #include "integrators/velocity_verlet_inline.hpp"
 #include "integrators/velocity_verlet_npt.hpp"
 
+#include "BoxGeometry.hpp"
 #include "ParticleRange.hpp"
-#include "accumulators.hpp"
+#include "PropagationMode.hpp"
+#include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
-#include "bonded_interactions/rigid_bond.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
-#include "collision.hpp"
+#include "collision_detection/CollisionDetection.hpp"
 #include "communication.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "forces.hpp"
-#include "grid.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_particle_coupling.hpp"
-#include "interactions.hpp"
+#include "lb/particle_coupling.hpp"
+#include "lb/utils.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
 #include "rotation.hpp"
 #include "signalhandling.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
-#include "virtual_sites.hpp"
-
-#include <profiler/profiler.hpp>
+#include "thermostats/langevin_inline.hpp"
+#include "virtual_sites/lb_tracers.hpp"
+#include "virtual_sites/relative.hpp"
 
 #include "magnetostatics/stoner_wolfarth_thermal.hpp"
-#include <boost/mpi/collectives/reduce.hpp>
-#include <boost/range/algorithm/min_element.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
+
+#ifdef ESPRESSO_CALIPER
+#include <caliper/cali.h>
+#endif
+
+#ifdef ESPRESSO_VALGRIND
+#include <callgrind.h>
+#endif
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <csignal>
 #include <functional>
+#include <limits>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
-#ifdef VALGRIND_MARKERS
-#include <callgrind.h>
+#ifdef ESPRESSO_WALBERLA
+#ifdef ESPRESSO_WALBERLA_STATIC_ASSERT
+#error "waLberla headers should not be visible to the ESPResSo core"
+#endif
 #endif
 
+#ifdef THERMAL_STONER_WOHLFARTH
 std::random_device rd;
 static std::mt19937 generator = Random::mt19937(static_cast<unsigned>(rd()));
+#endif
 
-int integ_switch = INTEG_METHOD_NVT;
-
-/** Time step for the integration. */
-static double time_step = -1.0;
-
-/** Actual simulation time. */
-static double sim_time = 0.0;
-
-double skin = 0.0;
-
-/** True iff the user has changed the skin setting. */
-static bool skin_set = false;
-
-bool recalc_forces = true;
-
-/** Average number of integration steps the Verlet list has been re-using. */
-static double verlet_reuse = 0.0;
-
-static int fluid_step = 0;
-
-bool set_py_interrupt = false;
 namespace {
 volatile std::sig_atomic_t ctrl_C = 0;
-
-void notify_sig_int() {
-  ctrl_C = 0;              // reset
-  set_py_interrupt = true; // global to notify Python
-}
 } // namespace
 
 namespace LeesEdwards {
-/** @brief Currently active Lees-Edwards protocol. */
-static std::shared_ptr<ActiveProtocol> protocol = nullptr;
 
 /**
  * @brief Update the Lees-Edwards parameters of the box geometry
  * for the current simulation time.
  */
-static void update_box_params() {
+void LeesEdwards::update_box_params(BoxGeometry &box_geo, double sim_time) {
   if (box_geo.type() == BoxType::LEES_EDWARDS) {
-    assert(protocol != nullptr);
-    box_geo.lees_edwards_update(get_pos_offset(sim_time, *protocol),
-                                get_shear_velocity(sim_time, *protocol));
+    assert(m_protocol != nullptr);
+    box_geo.lees_edwards_update(get_pos_offset(sim_time, *m_protocol),
+                                get_shear_velocity(sim_time, *m_protocol));
   }
 }
 
-void set_protocol(std::shared_ptr<ActiveProtocol> new_protocol) {
+void LeesEdwards::set_protocol(std::shared_ptr<ActiveProtocol> protocol) {
+  auto &system = get_system();
+  auto &cell_structure = *system.cell_structure;
+  auto &box_geo = *system.box_geo;
   box_geo.set_type(BoxType::LEES_EDWARDS);
-  protocol = std::move(new_protocol);
-  LeesEdwards::update_box_params();
-  ::recalc_forces = true;
+  m_protocol = std::move(protocol);
+  update_box_params(box_geo, system.get_sim_time());
+  system.propagation->recalc_forces = true;
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 }
 
-void unset_protocol() {
-  protocol = nullptr;
+void LeesEdwards::unset_protocol() {
+  auto &system = get_system();
+  auto &cell_structure = *system.cell_structure;
+  auto &box_geo = *system.box_geo;
+  m_protocol = nullptr;
   box_geo.set_type(BoxType::CUBOID);
-  ::recalc_forces = true;
+  system.propagation->recalc_forces = true;
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 }
 
-template <class Kernel> void run_kernel() {
-  if (box_geo.type() == BoxType::LEES_EDWARDS) {
-    auto const kernel = Kernel{box_geo, time_step};
-    auto const particles = cell_structure.local_particles();
-    std::for_each(particles.begin(), particles.end(),
-                  [&kernel](auto &p) { kernel(p); });
-  }
-}
 } // namespace LeesEdwards
 
-void integrator_sanity_checks() {
-  if (time_step < 0.0) {
-    runtimeErrorMsg() << "time_step not set";
-  }
+void Propagation::update_default_propagation(int thermo_switch) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
-    if (thermo_switch != THERMO_OFF)
-      runtimeErrorMsg()
-          << "The steepest descent integrator is incompatible with thermostats";
+    default_propagation = PropagationMode::NONE;
     break;
   case INTEG_METHOD_NVT:
-    if (thermo_switch & (THERMO_NPT_ISO | THERMO_BROWNIAN | THERMO_SD))
-      runtimeErrorMsg() << "The VV integrator is incompatible with the "
-                           "currently active combination of thermostats";
+  case INTEG_METHOD_SYMPLECTIC_EULER: {
+    // NOLINTNEXTLINE(bugprone-branch-clone)
+    if ((thermo_switch & THERMO_LB) and (thermo_switch & THERMO_LANGEVIN)) {
+      default_propagation = PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE;
+#ifdef ESPRESSO_ROTATION
+      default_propagation |= PropagationMode::ROT_LANGEVIN;
+#endif
+    } else if (thermo_switch & THERMO_LB) {
+      default_propagation = PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE;
+#ifdef ESPRESSO_ROTATION
+      default_propagation |= PropagationMode::ROT_EULER;
+#endif
+    } else if (thermo_switch & THERMO_LANGEVIN) {
+      default_propagation = PropagationMode::TRANS_LANGEVIN;
+#ifdef ESPRESSO_ROTATION
+      default_propagation |= PropagationMode::ROT_LANGEVIN;
+#endif
+    } else {
+      default_propagation = PropagationMode::TRANS_NEWTON;
+#ifdef ESPRESSO_ROTATION
+      default_propagation |= PropagationMode::ROT_EULER;
+#endif
+    }
     break;
-#ifdef NPT
-  case INTEG_METHOD_NPT_ISO:
-    if (thermo_switch != THERMO_OFF and thermo_switch != THERMO_NPT_ISO)
-      runtimeErrorMsg() << "The NpT integrator requires the NpT thermostat";
-    if (box_geo.type() == BoxType::LEES_EDWARDS)
-      runtimeErrorMsg() << "The NpT integrator cannot use Lees-Edwards";
+  }
+#ifdef ESPRESSO_NPT
+  case INTEG_METHOD_NPT_ISO_AND:
+  case INTEG_METHOD_NPT_ISO_MTK:
+    default_propagation = PropagationMode::TRANS_LANGEVIN_NPT;
     break;
 #endif
   case INTEG_METHOD_BD:
-    if (thermo_switch != THERMO_BROWNIAN)
-      runtimeErrorMsg() << "The BD integrator requires the BD thermostat";
-    break;
-#ifdef STOKESIAN_DYNAMICS
-  case INTEG_METHOD_SD:
-    if (thermo_switch != THERMO_OFF and thermo_switch != THERMO_SD)
-      runtimeErrorMsg() << "The SD integrator requires the SD thermostat";
-    break;
+    default_propagation = PropagationMode::TRANS_BROWNIAN;
+#ifdef ESPRESSO_ROTATION
+    default_propagation |= PropagationMode::ROT_BROWNIAN;
 #endif
+    break;
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
+  case INTEG_METHOD_SD:
+    default_propagation = PropagationMode::TRANS_STOKESIAN;
+    break;
+#endif // ESPRESSO_STOKESIAN_DYNAMICS
   default:
-    runtimeErrorMsg() << "Unknown value for integ_switch";
+    throw std::runtime_error("Unknown value for integ_switch");
   }
 }
 
-static void resort_particles_if_needed(ParticleRange const &particles) {
+void System::System::update_used_propagations() {
+  int used_propagations = PropagationMode::NONE;
+  for (auto &p : cell_structure->local_particles()) {
+    used_propagations |= p.propagation();
+  }
+  if (used_propagations & PropagationMode::SYSTEM_DEFAULT) {
+    used_propagations |= propagation->default_propagation;
+  }
+  used_propagations = boost::mpi::all_reduce(::comm_cart, used_propagations,
+                                             std::bit_or<int>());
+  propagation->used_propagations = used_propagations;
+}
+
+void System::System::integrator_sanity_checks() const {
+  auto const thermo_switch = thermostat->thermo_switch;
+  if (time_step <= 0.) {
+    runtimeErrorMsg() << "time_step not set";
+  }
+  if (propagation->integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
+    if (thermo_switch != THERMO_OFF) {
+      runtimeErrorMsg()
+          << "The steepest descent integrator is incompatible with thermostats";
+    }
+  }
+  if (propagation->integ_switch == INTEG_METHOD_NVT) {
+    if (thermo_switch & (THERMO_NPT_ISO | THERMO_BROWNIAN | THERMO_SD)) {
+      runtimeErrorMsg() << "The VV integrator is incompatible with the "
+                           "currently active combination of thermostats";
+    }
+  }
+#ifdef ESPRESSO_NPT
+  if (propagation->used_propagations & PropagationMode::TRANS_LANGEVIN_NPT) {
+    if (thermo_switch != THERMO_NPT_ISO) {
+      runtimeErrorMsg() << "The NpT integrator requires the NpT thermostat";
+    }
+    if (box_geo->type() == BoxType::LEES_EDWARDS) {
+      runtimeErrorMsg() << "The NpT integrator cannot use Lees-Edwards";
+    }
+    try {
+      nptiso->coulomb_dipole_sanity_checks(*this);
+    } catch (std::runtime_error const &err) {
+      runtimeErrorMsg() << err.what();
+    }
+  }
+#endif
+  if (propagation->used_propagations & PropagationMode::TRANS_BROWNIAN) {
+    if (thermo_switch != THERMO_BROWNIAN) {
+      runtimeErrorMsg() << "The BD integrator requires the BD thermostat";
+    }
+  }
+  if (propagation->used_propagations & PropagationMode::TRANS_STOKESIAN) {
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
+    if (thermo_switch != THERMO_SD) {
+      runtimeErrorMsg() << "The SD integrator requires the SD thermostat";
+    }
+#endif
+  }
+  if (lb.is_solver_set() and (propagation->used_propagations &
+                              (PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE |
+                               PropagationMode::TRANS_LB_TRACER))) {
+    if (thermostat->lb == nullptr) {
+      runtimeErrorMsg() << "The LB integrator requires the LB thermostat";
+    }
+  }
+  if (bonded_ias->get_n_thermalized_bonds() >= 1 and
+      (thermostat->thermalized_bond == nullptr or
+       (thermo_switch & THERMO_BOND) == 0)) {
+    runtimeErrorMsg()
+        << "Thermalized bonds require the thermalized_bond thermostat";
+  }
+
+#ifdef ESPRESSO_ROTATION
+  for (auto const &p : cell_structure->local_particles()) {
+    using namespace PropagationMode;
+    if (p.can_rotate() and not p.is_virtual() and
+        (p.propagation() & (SYSTEM_DEFAULT | ROT_EULER | ROT_LANGEVIN |
+                            ROT_BROWNIAN | ROT_STOKESIAN)) == 0) {
+      runtimeErrorMsg()
+          << "Rotating particles must have a rotation propagation mode enabled";
+      break;
+    }
+  }
+#endif
+}
+
+#ifdef ESPRESSO_WALBERLA
+void walberla_tau_sanity_checks(std::string method, double tau,
+                                double time_step) {
+  if (time_step <= 0.) {
+    return;
+  }
+  // use float epsilon since tau may be a float
+  auto const eps = static_cast<double>(std::numeric_limits<float>::epsilon());
+  if ((tau - time_step) / (tau + time_step) < -eps)
+    throw std::invalid_argument(method + " tau (" + std::to_string(tau) +
+                                ") must be >= MD time_step (" +
+                                std::to_string(time_step) + ")");
+  auto const factor = tau / time_step;
+  if (std::fabs(std::round(factor) - factor) / factor > eps)
+    throw std::invalid_argument(method + " tau (" + std::to_string(tau) +
+                                ") must be an integer multiple of the "
+                                "MD time_step (" +
+                                std::to_string(time_step) + "). Factor is " +
+                                std::to_string(factor));
+}
+
+void walberla_agrid_sanity_checks(std::string method,
+                                  Utils::Vector3d const &geo_left,
+                                  Utils::Vector3d const &geo_right,
+                                  Utils::Vector3d const &lattice_left,
+                                  Utils::Vector3d const &lattice_right,
+                                  double agrid) {
+  // waLBerla and ESPResSo must agree on domain decomposition
+  auto const tol = agrid / 1E6;
+  if ((lattice_left - geo_left).norm2() > tol or
+      (lattice_right - geo_right).norm2() > tol) {
+    runtimeErrorMsg() << "\nMPI rank " << ::this_node << ": "
+                      << "left ESPResSo: [" << geo_left << "], "
+                      << "left waLBerla: [" << lattice_left << "]"
+                      << "\nMPI rank " << ::this_node << ": "
+                      << "right ESPResSo: [" << geo_right << "], "
+                      << "right waLBerla: [" << lattice_right << "]"
+                      << "\nfor method: " << method;
+    throw std::runtime_error(
+        "waLBerla and ESPResSo disagree about domain decomposition.");
+  }
+}
+#endif // ESPRESSO_WALBERLA
+
+static void resort_particles_if_needed(System::System &system) {
+  auto &cell_structure = *system.cell_structure;
   auto const offset = LeesEdwards::verlet_list_offset(
-      box_geo, cell_structure.get_le_pos_offset_at_last_resort());
-  if (cell_structure.check_resort_required(particles, skin, offset)) {
+      *system.box_geo, cell_structure.get_le_pos_offset_at_last_resort());
+  if (cell_structure.check_resort_required(offset)) {
     cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
 }
@@ -198,363 +329,494 @@ static void resort_particles_if_needed(ParticleRange const &particles) {
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */
-static bool integrator_step_1(ParticleRange const &particles) {
-  bool early_exit = false;
-  switch (integ_switch) {
-  case INTEG_METHOD_STEEPEST_DESCENT:
-    early_exit = steepest_descent_step(particles);
-    break;
-  case INTEG_METHOD_NVT:
-    velocity_verlet_step_1(particles, time_step);
-    break;
-#ifdef NPT
-  case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_1(particles, time_step);
-    break;
+static bool integrator_step_1(CellStructure &cell_structure,
+                              Propagation const &propagation,
+                              System::System &system, double time_step) {
+  // steepest decent
+  if (propagation.integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
+    return steepest_descent_step(cell_structure.local_particles());
+
+  auto const &thermostat = *system.thermostat;
+  auto const kT = thermostat.kT;
+  cell_structure.for_each_local_particle([&](Particle &p) {
+#ifdef ESPRESSO_VIRTUAL_SITES
+    // virtual sites are updated later in the integration loop
+    if (p.is_virtual())
+      return;
 #endif
-  case INTEG_METHOD_BD:
-    // the Ermak-McCammon's Brownian Dynamics requires a single step
-    // so, just skip here
-    break;
-#ifdef STOKESIAN_DYNAMICS
-  case INTEG_METHOD_SD:
-    stokesian_dynamics_step_1(particles, time_step);
-    break;
-#endif // STOKESIAN_DYNAMICS
-  default:
-    throw std::runtime_error("Unknown value for integ_switch");
+    if (propagation.integ_switch == INTEG_METHOD_SYMPLECTIC_EULER) {
+      if (propagation.should_propagate_with(
+              p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
+        symplectic_euler_propagator_1(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
+        symplectic_euler_propagator_1(p, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
+        symplectic_euler_rotator_1(p, time_step);
+#endif
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
+        symplectic_euler_propagator_1(p, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
+        symplectic_euler_rotator_1(p, time_step);
+#endif
+    } else {
+      if (propagation.should_propagate_with(
+              p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
+        velocity_verlet_propagator_1(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
+        velocity_verlet_propagator_1(p, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
+        velocity_verlet_rotator_1(p, time_step);
+#endif
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
+        velocity_verlet_propagator_1(p, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
+        velocity_verlet_rotator_1(p, time_step);
+#endif
+    }
+    if (propagation.should_propagate_with(p, PropagationMode::TRANS_BROWNIAN))
+      brownian_dynamics_propagator(*thermostat.brownian, p, time_step, kT);
+#ifdef ESPRESSO_ROTATION
+    if (propagation.should_propagate_with(p, PropagationMode::ROT_BROWNIAN))
+      brownian_dynamics_rotator(*thermostat.brownian, p, time_step, kT);
+#endif
+  });
+
+#ifdef ESPRESSO_NPT
+  if ((propagation.used_propagations & PropagationMode::TRANS_LANGEVIN_NPT) and
+      (propagation.default_propagation & PropagationMode::TRANS_LANGEVIN_NPT)) {
+    auto pred = PropagationPredicateNPT(propagation.default_propagation);
+    if (propagation.integ_switch == INTEG_METHOD_NPT_ISO_AND) {
+      velocity_verlet_npt_Andersen_step_1(
+          cell_structure.local_particles().filter(pred), *thermostat.npt_iso,
+          time_step, system);
+    } else if (propagation.integ_switch == INTEG_METHOD_NPT_ISO_MTK) {
+      velocity_verlet_npt_MTK_step_1(
+          cell_structure.local_particles().filter(pred), *thermostat.npt_iso,
+          time_step, system);
+    }
   }
-  return early_exit;
+#endif
+
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
+  if ((propagation.used_propagations & PropagationMode::TRANS_STOKESIAN) and
+      (propagation.default_propagation & PropagationMode::TRANS_STOKESIAN)) {
+    auto pred = PropagationPredicateStokesian(propagation.default_propagation);
+    stokesian_dynamics_step_1(cell_structure.local_particles().filter(pred),
+                              *thermostat.stokesian, time_step, kT);
+  }
+#endif // ESPRESSO_STOKESIAN_DYNAMICS
+
+  return false;
 }
 
-/** Calls the hook of the propagation kernels after force calculation */
-static void integrator_step_2(ParticleRange const &particles, double kT) {
-  switch (integ_switch) {
-  case INTEG_METHOD_STEEPEST_DESCENT:
-    // Nothing
-    break;
-  case INTEG_METHOD_NVT:
-    velocity_verlet_step_2(particles, time_step);
-    break;
-#ifdef NPT
-  case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_2(particles, time_step);
-    break;
+static void integrator_step_2(CellStructure &cell_structure,
+                              Propagation const &propagation,
+                              [[maybe_unused]] System::System &system,
+                              double time_step) {
+  if (propagation.integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
+    return;
+
+  cell_structure.for_each_local_particle([&](Particle &p) {
+#ifdef ESPRESSO_VIRTUAL_SITES
+    // virtual sites are updated later in the integration loop
+    if (p.is_virtual())
+      return;
 #endif
-  case INTEG_METHOD_BD:
-    // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(brownian, particles, time_step, kT);
-    resort_particles_if_needed(particles);
-    break;
-#ifdef STOKESIAN_DYNAMICS
-  case INTEG_METHOD_SD:
-    // Nothing
-    break;
-#endif // STOKESIAN_DYNAMICS
-  default:
-    throw std::runtime_error("Unknown value for INTEG_SWITCH");
+    if (propagation.integ_switch == INTEG_METHOD_SYMPLECTIC_EULER) {
+      if (propagation.should_propagate_with(
+              p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
+        symplectic_euler_propagator_2(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
+        symplectic_euler_propagator_2(p, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
+        symplectic_euler_rotator_2(p, time_step);
+#endif
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
+        symplectic_euler_propagator_2(p, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
+        symplectic_euler_rotator_2(p, time_step);
+#endif
+    } else {
+      if (propagation.should_propagate_with(
+              p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
+        velocity_verlet_propagator_2(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
+        velocity_verlet_propagator_2(p, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
+        velocity_verlet_rotator_2(p, time_step);
+#endif
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
+        velocity_verlet_propagator_2(p, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
+        velocity_verlet_rotator_2(p, time_step);
+#endif
+    }
+  });
+
+#ifdef ESPRESSO_NPT
+  if ((propagation.used_propagations & PropagationMode::TRANS_LANGEVIN_NPT) and
+      (propagation.default_propagation & PropagationMode::TRANS_LANGEVIN_NPT)) {
+    auto pred = PropagationPredicateNPT(propagation.default_propagation);
+    if (propagation.integ_switch == INTEG_METHOD_NPT_ISO_AND) {
+      velocity_verlet_npt_Andersen_step_2(
+          cell_structure.local_particles().filter(pred), time_step, system);
+    } else if (propagation.integ_switch == INTEG_METHOD_NPT_ISO_MTK) {
+      velocity_verlet_npt_MTK_step_2(
+          cell_structure.local_particles().filter(pred), time_step, system);
+    }
   }
+#endif
 }
 
-int integrate(int n_steps, int reuse_forces) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+int System::System::integrate(int n_steps, int reuse_forces) {
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
+  auto &propagation = *this->propagation;
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
+  auto const has_vs_rel = [&propagation]() {
+    return propagation.used_propagations & (PropagationMode::ROT_VS_RELATIVE |
+                                            PropagationMode::TRANS_VS_RELATIVE);
+  };
+#endif
+#ifdef ESPRESSO_BOND_CONSTRAINT
+  auto const n_rigid_bonds = bonded_ias->get_n_rigid_bonds();
+#endif
 
   // auto const has_magnetic_field = find_magnetic_field_constraint();
 
   // Prepare particle structure and run sanity checks of all active algorithms
-  on_integration_start(time_step);
+  propagation.update_default_propagation(thermostat->thermo_switch);
+  update_used_propagations();
+  on_integration_start();
 
   // If any method vetoes (e.g. P3M not initialized), immediately bail out
   if (check_runtime_errors(comm_cart))
-    return 0;
+    return INTEG_ERROR_RUNTIME;
 
   // Additional preparations for the first integration step
-  if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
-    ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
-    lb_lbcoupling_deactivate();
+  if (reuse_forces == INTEG_REUSE_FORCES_NEVER or
+      ((reuse_forces != INTEG_REUSE_FORCES_ALWAYS) and
+       propagation.recalc_forces)) {
+#ifdef ESPRESSO_CALIPER
+    CALI_MARK_BEGIN("Initial Force Calculation");
+#endif
+    thermostat->lb_coupling_deactivate();
 
-#ifdef VIRTUAL_SITES
-    virtual_sites()->update();
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
+    if (has_vs_rel()) {
+      vs_relative_update_particles(*cell_structure, *box_geo);
+    }
 #endif
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts(global_ghost_flags());
+    cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 
-    force_calc(cell_structure, time_step, temperature);
+    calculate_forces();
 
-    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-#ifdef ROTATION
-      convert_initial_torques(cell_structure.local_particles());
+    if (propagation.integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+#ifdef ESPRESSO_ROTATION
+      convert_initial_torques(cell_structure->local_particles());
 #endif
     }
 
-    ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
+#ifdef ESPRESSO_CALIPER
+    CALI_MARK_END("Initial Force Calculation");
+#endif
   }
 
-  lb_lbcoupling_activate();
+  thermostat->lb_coupling_activate();
 
   if (check_runtime_errors(comm_cart))
-    return 0;
+    return INTEG_ERROR_RUNTIME;
 
   // Keep track of the number of Verlet updates (i.e. particle resorts)
   int n_verlet_updates = 0;
 
-#ifdef VALGRIND_MARKERS
+  // Keep track of whether an interrupt signal was caught (only in singleton
+  // mode, since signal handlers are unreliable with more than 1 MPI rank)
+  auto const singleton_mode = comm_cart.size() == 1;
+  auto caught_sigint = false;
+  auto caught_error = false;
+
+  auto lb_active = false;
+  auto ek_active = false;
+  if (propagation.integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+    lb_active = lb.is_solver_set();
+    ek_active = ek.is_ready_for_propagation();
+  }
+  auto const calc_md_steps_per_tau = [this](double tau) {
+    return static_cast<int>(std::round(tau / time_step));
+  };
+
+#ifdef ESPRESSO_VALGRIND
   CALLGRIND_START_INSTRUMENTATION;
 #endif
   // Integration loop
-  ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
+#endif
   int integrated_steps = 0;
   for (int step = 0; step < n_steps; step++) {
-    ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
-
-    auto particles = cell_structure.local_particles();
-
-#ifdef BOND_CONSTRAINT
-    if (n_rigidbonds)
-      save_old_position(particles, cell_structure.ghost_particles());
+#ifdef ESPRESSO_CALIPER
+    CALI_CXX_MARK_LOOP_ITERATION(integration_loop, step);
 #endif
 
-    LeesEdwards::update_box_params();
-    bool early_exit = integrator_step_1(particles);
+#ifdef ESPRESSO_BOND_CONSTRAINT
+    if (n_rigid_bonds)
+      save_old_position(cell_structure->local_particles(),
+                        cell_structure->ghost_particles());
+#endif
+
+    lees_edwards->update_box_params(*box_geo, sim_time);
+    bool early_exit =
+        integrator_step_1(*cell_structure, propagation, *this, time_step);
     if (early_exit)
       break;
 
-    LeesEdwards::run_kernel<LeesEdwards::Push>();
+    sim_time += time_step;
+    if (box_geo->type() == BoxType::LEES_EDWARDS) {
+      auto const kernel = LeesEdwards::Push{*box_geo};
+      cell_structure->for_each_local_particle(
+          [&kernel](Particle &p) { kernel(p); });
+    }
 
-#ifdef NPT
-    if (integ_switch != INTEG_METHOD_NPT_ISO)
+#ifdef ESPRESSO_NPT
+    if (not has_npt_enabled())
 #endif
     {
-      resort_particles_if_needed(particles);
+      resort_particles_if_needed(*this);
     }
     // if (has_magnetic_field) {
     //   // TODO
     // }
     // Propagate philox RNG counters
-    philox_counter_increment();
+    thermostat->philox_counter_increment();
 
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
     // Correct particle positions that participate in a rigid/constrained bond
-    if (n_rigidbonds) {
-      correct_position_shake(cell_structure);
+    if (n_rigid_bonds) {
+      correct_position_shake(*cell_structure, *box_geo, *bonded_ias);
     }
 #endif
 
-#ifdef VIRTUAL_SITES
-    virtual_sites()->update();
-#endif
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
+    if (has_vs_rel()) {
+#ifdef ESPRESSO_NPT
+      if (has_npt_enabled()) {
+        cell_structure->update_ghosts_and_resort_particle(
+            Cells::DATA_PART_PROPERTIES);
+      }
+#endif // ESPRESSO_NPT
+      vs_relative_update_particles(*cell_structure, *box_geo);
+    }
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 
-    if (cell_structure.get_resort_particles() >= Cells::RESORT_LOCAL)
+    if (cell_structure->get_resort_particles() >= Cells::RESORT_LOCAL)
       n_verlet_updates++;
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts(global_ghost_flags());
+    cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 
+#ifdef THERMAL_STONER_WOHLFARTH
     particles = cell_structure.local_particles();
     stoner_wolfarth_main(cell_structure.local_particles(), generator);
-    force_calc(cell_structure, time_step, temperature);
-
-#ifdef VIRTUAL_SITES
-    virtual_sites()->after_force_calc();
 #endif
-    integrator_step_2(particles, temperature);
-    LeesEdwards::run_kernel<LeesEdwards::UpdateOffset>();
-#ifdef BOND_CONSTRAINT
-    // SHAKE velocity updates
-    if (n_rigidbonds) {
-      correct_velocity_shake(cell_structure);
+
+    calculate_forces();
+
+#ifdef ESPRESSO_VIRTUAL_SITES_INERTIALESS_TRACERS
+    if (thermostat->lb and
+        (propagation.used_propagations & PropagationMode::TRANS_LB_TRACER)) {
+      lb_tracers_add_particle_force_to_fluid(*cell_structure, *box_geo,
+                                             *local_geo, lb);
+    }
+
+#endif
+    integrator_step_2(*cell_structure, propagation, *this, time_step);
+    if (propagation.integ_switch == INTEG_METHOD_BD) {
+      resort_particles_if_needed(*this);
+    }
+    if (box_geo->type() == BoxType::LEES_EDWARDS) {
+      auto const kernel = LeesEdwards::UpdateOffset{*box_geo};
+      cell_structure->for_each_local_particle(
+          [&kernel](Particle &p) { kernel(p); });
+    }
+#ifdef ESPRESSO_BOND_CONSTRAINT
+    if (n_rigid_bonds) {
+      correct_velocity_shake(*cell_structure, *box_geo, *bonded_ias);
     }
 #endif
 
     // propagate one-step functionalities
-    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
-        auto const tau = lb_lbfluid_get_tau();
-        auto const lb_steps_per_md_step =
-            static_cast<int>(std::round(tau / time_step));
-        fluid_step += 1;
-        if (fluid_step >= lb_steps_per_md_step) {
-          fluid_step = 0;
-          lb_lbfluid_propagate();
+    if (propagation.integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+      if (lb_active and ek_active) {
+        // assume that they are coupled, which is not necessarily true
+        auto const md_steps_per_lb_step = calc_md_steps_per_tau(lb.get_tau());
+        auto const md_steps_per_ek_step = calc_md_steps_per_tau(ek.get_tau());
+
+        if (md_steps_per_lb_step != md_steps_per_ek_step) {
+          runtimeErrorMsg()
+              << "LB and EK are active but with different time steps.";
         }
-        lb_lbcoupling_propagate();
+
+        assert(lb.is_gpu() == ek.is_gpu());
+        assert(propagation.lb_skipped_md_steps ==
+               propagation.ek_skipped_md_steps);
+
+        propagation.lb_skipped_md_steps += 1;
+        propagation.ek_skipped_md_steps += 1;
+        if (propagation.lb_skipped_md_steps >= md_steps_per_lb_step) {
+          propagation.lb_skipped_md_steps = 0;
+          propagation.ek_skipped_md_steps = 0;
+          lb.propagate();
+          lb.ghost_communication_vel();
+          ek.propagate();
+        }
+      } else if (lb_active) {
+        auto const md_steps_per_lb_step = calc_md_steps_per_tau(lb.get_tau());
+        propagation.lb_skipped_md_steps += 1;
+        if (propagation.lb_skipped_md_steps >= md_steps_per_lb_step) {
+          propagation.lb_skipped_md_steps = 0;
+          lb.propagate();
+        }
+      } else if (ek_active) {
+        auto const md_steps_per_ek_step = calc_md_steps_per_tau(ek.get_tau());
+        propagation.ek_skipped_md_steps += 1;
+        if (propagation.ek_skipped_md_steps >= md_steps_per_ek_step) {
+          propagation.ek_skipped_md_steps = 0;
+          ek.propagate();
+        }
+      }
+      if (lb_active and (propagation.used_propagations &
+                         PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE)) {
+        thermostat->lb->rng_increment();
       }
 
-#ifdef VIRTUAL_SITES
-      virtual_sites()->after_lb_propagation(time_step);
+#ifdef ESPRESSO_VIRTUAL_SITES_INERTIALESS_TRACERS
+      if (thermostat->lb and
+          (propagation.used_propagations & PropagationMode::TRANS_LB_TRACER)) {
+        if (lb_active) {
+          lb.ghost_communication_vel();
+        }
+        lb_tracers_propagate(*cell_structure, lb, time_step);
+      }
 #endif
 
-#ifdef COLLISION_DETECTION
-      handle_collisions();
+#ifdef ESPRESSO_COLLISION_DETECTION
+      collision_detection->handle_collisions();
 #endif
-      BondBreakage::process_queue();
+      bond_breakage->process_queue(*this);
     }
     integrated_steps++;
 
-    if (check_runtime_errors(comm_cart))
+    if (check_runtime_errors(comm_cart)) {
+      caught_error = true;
       break;
+    }
 
     // Check if SIGINT has been caught.
-    if (ctrl_C == 1) {
-      notify_sig_int();
+    if (singleton_mode and ctrl_C == 1) {
+      caught_sigint = true;
       break;
     }
 
   } // for-loop over integration steps
-  LeesEdwards::update_box_params();
-  ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
+  if (lb_active) {
+    lb.ghost_communication();
+  }
+  lees_edwards->update_box_params(*box_geo, sim_time);
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_LOOP_END(integration_loop);
+#endif
 
-#ifdef VALGRIND_MARKERS
+#ifdef ESPRESSO_VALGRIND
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif
 
-#ifdef VIRTUAL_SITES
-  virtual_sites()->update();
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
+  if (has_vs_rel()) {
+    vs_relative_update_particles(*cell_structure, *box_geo);
+  }
 #endif
 
   // Verlet list statistics
-  if (n_verlet_updates > 0)
-    verlet_reuse = n_steps / static_cast<double>(n_verlet_updates);
-  else
-    verlet_reuse = 0;
+  cell_structure->update_verlet_stats(n_steps, n_verlet_updates);
 
-#ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+#ifdef ESPRESSO_NPT
+  if (has_npt_enabled()) {
     synchronize_npt_state();
   }
 #endif
-  /*will calculate the value of dipole field at every intergration which might
-   * not be necessary! The idea is that the valu could be usefully for
-   * polarisable objects, which would need to be updated at every
-   * integration.*/
-  // #ifdef DIPSUS
-  //   calc_long_range_fields(cell_structure);
-  //   calc_stoner_wolfarth_dip(cell_structure);
-  // #endif // DIPOLES
+  if (caught_sigint) {
+    ctrl_C = 0;
+    return INTEG_ERROR_SIGINT;
+  }
+  if (caught_error) {
+    return INTEG_ERROR_RUNTIME;
+  }
   return integrated_steps;
 }
 
-int python_integrate(int n_steps, bool recalc_forces_par,
-                     bool reuse_forces_par) {
-
+int System::System::integrate_with_signal_handler(int n_steps, int reuse_forces,
+                                                  bool update_accumulators) {
   assert(n_steps >= 0);
 
   // Override the signal handler so that the integrator obeys Ctrl+C
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
 
-  int reuse_forces = reuse_forces_par;
-
-  if (recalc_forces_par) {
-    if (reuse_forces) {
-      runtimeErrorMsg() << "cannot reuse old forces and recalculate forces";
-    }
-    reuse_forces = -1;
-  }
-
   /* if skin wasn't set, do an educated guess now */
-  if (!skin_set) {
-    auto const max_cut = maximal_cutoff(n_nodes);
-    if (max_cut <= 0.0) {
-      runtimeErrorMsg()
-          << "cannot automatically determine skin, please set it manually";
-      return ES_ERROR;
+  if (not cell_structure->is_verlet_skin_set()) {
+    try {
+      cell_structure->set_verlet_skin_heuristic();
+    } catch (...) {
+      if (comm_cart.rank() == 0) {
+        throw;
+      }
+      return INTEG_ERROR_RUNTIME;
     }
-    /* maximal skin that can be used without resorting is the maximal
-     * range of the cell system minus what is needed for interactions. */
-    auto const new_skin =
-        std::min(0.4 * max_cut,
-                 *boost::min_element(cell_structure.max_cutoff()) - max_cut);
-    mpi_call_all(mpi_set_skin_local, new_skin);
   }
 
-  using Accumulators::auto_update;
-  using Accumulators::auto_update_next_update;
+  if (not update_accumulators or n_steps == 0) {
+    return integrate(n_steps, reuse_forces);
+  }
 
   for (int i = 0; i < n_steps;) {
     /* Integrate to either the next accumulator update, or the
      * end, depending on what comes first. */
-    auto const steps = std::min((n_steps - i), auto_update_next_update());
-    if (mpi_integrate(steps, reuse_forces))
-      return ES_ERROR;
+    auto const steps =
+        std::min((n_steps - i), auto_update_accumulators->next_update());
 
-    reuse_forces = 1;
+    auto const local_retval = integrate(steps, reuse_forces);
 
-    auto_update(steps);
+    // make sure all ranks exit when one rank fails
+    std::remove_const_t<decltype(local_retval)> global_retval;
+    boost::mpi::all_reduce(comm_cart, local_retval, global_retval,
+                           std::plus<int>());
+    if (global_retval < 0) {
+      return global_retval; // propagate error code
+    }
+
+    reuse_forces = INTEG_REUSE_FORCES_ALWAYS;
+
+    (*auto_update_accumulators)(comm_cart, steps);
 
     i += steps;
   }
 
-  if (n_steps == 0) {
-    if (mpi_integrate(0, reuse_forces))
-      return ES_ERROR;
-  }
-
-  return ES_OK;
+  return 0;
 }
 
-static int mpi_steepest_descent_local(int steps) {
-  return integrate(steps, -1);
-}
-
-REGISTER_CALLBACK_MAIN_RANK(mpi_steepest_descent_local)
-
-int mpi_steepest_descent(int steps) {
-  return mpi_call(Communication::Result::main_rank, mpi_steepest_descent_local,
-                  steps);
-}
-
-static int mpi_integrate_local(int n_steps, int reuse_forces) {
-  integrate(n_steps, reuse_forces);
-
-  return check_runtime_errors_local();
-}
-
-REGISTER_CALLBACK_REDUCTION(mpi_integrate_local, std::plus<int>())
-
-int mpi_integrate(int n_steps, int reuse_forces) {
-  return mpi_call(Communication::Result::reduction, std::plus<int>(),
-                  mpi_integrate_local, n_steps, reuse_forces);
-}
-
-double interaction_range() {
-  /* Consider skin only if there are actually interactions */
-  auto const max_cut = maximal_cutoff(n_nodes == 1);
-  return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
-}
-
-double get_verlet_reuse() { return verlet_reuse; }
-
-double get_time_step() { return time_step; }
-
-double get_sim_time() { return sim_time; }
-
-void increment_sim_time(double amount) { sim_time += amount; }
-
-void set_time_step(double value) {
-  if (value <= 0.)
-    throw std::domain_error("time_step must be > 0.");
-  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
-    check_tau_time_step_consistency(lb_lbfluid_get_tau(), value);
-  ::time_step = value;
-  on_timestep_change();
-}
-
-void mpi_set_skin_local(double value) {
-  ::skin = value;
-  skin_set = true;
-  on_skin_change();
-}
-
-REGISTER_CALLBACK(mpi_set_skin_local)
-
-void set_time(double value) {
-  ::sim_time = value;
-  ::recalc_forces = true;
-  LeesEdwards::update_box_params();
-}
-
-void set_integ_switch(int value) {
-  ::integ_switch = value;
-  ::recalc_forces = true;
+void System::System::set_sim_time(double value) {
+  sim_time = value;
+  propagation->recalc_forces = true;
+  lees_edwards->update_box_params(*box_geo, sim_time);
 }

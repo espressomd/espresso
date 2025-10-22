@@ -17,11 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_INTEGRATOR_HANDLE_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_INTEGRATOR_HANDLE_HPP
+#pragma once
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/system/Leaf.hpp"
 
 #include "Integrator.hpp"
 
@@ -31,16 +31,19 @@
 namespace ScriptInterface {
 namespace Integrators {
 
-class IntegratorHandle : public AutoParameters<IntegratorHandle> {
+class IntegratorHandle : public AutoParameters<IntegratorHandle, System::Leaf> {
   std::shared_ptr<Integrator> m_instance;
+  std::shared_ptr<VariantMap> m_params;
+
+  void on_bind_system(::System::System &system) override;
 
 public:
   IntegratorHandle();
 
-  void do_construct(VariantMap const &params) override;
+  void do_construct(VariantMap const &params) override {
+    m_params = std::make_shared<VariantMap>(params);
+  }
 };
 
 } // namespace Integrators
 } // namespace ScriptInterface
-
-#endif

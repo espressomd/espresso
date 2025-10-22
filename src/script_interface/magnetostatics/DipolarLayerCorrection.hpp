@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_DIPOLAR_LAYER_CORRECTION_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_DIPOLAR_LAYER_CORRECTION_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 #include "Actor.hpp"
 
@@ -32,10 +32,9 @@
 
 #include "script_interface/get_value.hpp"
 
-#include "boost/variant.hpp"
-
 #include <memory>
 #include <string>
+#include <variant>
 
 namespace ScriptInterface {
 namespace Dipoles {
@@ -43,12 +42,17 @@ namespace Dipoles {
 class DipolarLayerCorrection
     : public Actor<DipolarLayerCorrection, ::DipolarLayerCorrection> {
   using DipolarDSR = DipolarDirectSum;
-  using BaseSolver = boost::variant<
-#ifdef DP3M
-      std::shared_ptr<DipolarP3M>,
+  using BaseSolver = std::variant<
+#ifdef ESPRESSO_DP3M
+      std::shared_ptr<DipolarP3M<Arch::CPU>>,
 #endif
       std::shared_ptr<DipolarDSR>>;
   BaseSolver m_solver;
+
+  void on_bind_system(::System::System &) override {
+    std::visit([this](auto &solver) { solver->bind_system(m_system.lock()); },
+               m_solver);
+  }
 
 public:
   DipolarLayerCorrection() {
@@ -61,8 +65,8 @@ public:
          [this]() { return actor()->dlc.far_cut; }},
         {"actor", AutoParameter::read_only,
          [this]() {
-           return boost::apply_visitor(
-               [](auto &solver) { return Variant{solver}; }, m_solver);
+           return std::visit([](auto &solver) { return Variant{solver}; },
+                             m_solver);
          }},
     });
   }
@@ -71,20 +75,21 @@ public:
     ::DipolarLayerCorrection::BaseSolver solver;
     auto so_ptr = get_value<ObjectRef>(params, "actor");
     context()->parallel_try_catch([&]() {
-#ifdef DP3M
-      if (auto so_solver = std::dynamic_pointer_cast<DipolarP3M>(so_ptr)) {
-        solver = so_solver->actor();
-        m_solver = so_solver;
-      } else
-#endif // DP3M
-        if (auto so_solver = std::dynamic_pointer_cast<DipolarDSR>(so_ptr)) {
-          solver = so_solver->actor();
-          m_solver = so_solver;
-        } else {
-          throw std::invalid_argument("Parameter 'actor' of type " +
-                                      so_ptr->name().to_string() +
-                                      " isn't supported by DLC");
-        }
+#ifdef ESPRESSO_DP3M
+      if (auto so = std::dynamic_pointer_cast<DipolarP3M<Arch::CPU>>(so_ptr)) {
+        solver = so->actor();
+        m_solver = so;
+        return;
+      }
+#endif // ESPRESSO_DP3M
+      if (auto so = std::dynamic_pointer_cast<DipolarDSR>(so_ptr)) {
+        solver = so->actor();
+        m_solver = so;
+        return;
+      }
+      throw std::invalid_argument("Parameter 'actor' of type " +
+                                  std::string{so_ptr->name()} +
+                                  " isn't supported by DLC");
     });
     context()->parallel_try_catch([&]() {
       auto dlc = dlc_data(get_value<double>(params, "maxPWerror"),
@@ -99,5 +104,4 @@ public:
 } // namespace Dipoles
 } // namespace ScriptInterface
 
-#endif // DIPOLES
-#endif
+#endif // ESPRESSO_DIPOLES

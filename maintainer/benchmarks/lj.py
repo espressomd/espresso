@@ -73,8 +73,7 @@ lj_cut = lj_sig * 2**(1. / 6.)  # cutoff distance
 
 # System parameters
 #############################################################
-
-n_proc = system.cell_system.get_state()['n_nodes']
+n_proc = system.cell_system.get_state()["n_nodes"]
 n_part = n_proc * args.particles_per_core
 # volume of N spheres with radius r: N * (4/3*pi*r^3)
 box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
@@ -88,7 +87,6 @@ system.box_l = 3 * (box_l,)
 #############################################################
 system.time_step = 0.01
 system.cell_system.skin = 0.5
-system.thermostat.turn_off()
 
 # Interaction setup
 #############################################################
@@ -117,7 +115,7 @@ else:
 # warmup
 benchmarks.minimize(system, n_part / 2.)
 
-system.integrator.set_vv()
+system.integrator.set_symplectic_euler()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # tuning and equilibration

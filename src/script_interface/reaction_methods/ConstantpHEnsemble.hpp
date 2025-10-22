@@ -26,6 +26,7 @@
 
 #include "core/reaction_methods/ConstantpHEnsemble.hpp"
 #include "core/reaction_methods/ReactionAlgorithm.hpp"
+#include "core/reaction_methods/utils.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -36,6 +37,10 @@ namespace ReactionMethods {
 class ConstantpHEnsemble : public ReactionAlgorithm {
 public:
   std::shared_ptr<::ReactionMethods::ReactionAlgorithm> RE() override {
+    return m_re;
+  }
+  std::shared_ptr<::ReactionMethods::ReactionAlgorithm> const
+  RE() const override {
     return m_re;
   }
 
@@ -50,15 +55,26 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    m_re = std::make_shared<::ReactionMethods::ConstantpHEnsemble>(
-        get_value<int>(params, "seed"), get_value<double>(params, "kT"),
-        get_value<double>(params, "exclusion_range"),
-        get_value<double>(params, "constant_pH"),
-        get_value_or<std::unordered_map<int, double>>(
-            params, "exclusion_radius_per_type", {}));
+    context()->parallel_try_catch([&]() {
+      m_re = std::make_shared<::ReactionMethods::ConstantpHEnsemble>(
+          context()->get_comm(), get_value<int>(params, "seed"),
+          get_value<double>(params, "kT"),
+          get_value<double>(params, "exclusion_range"),
+          get_value<double>(params, "constant_pH"),
+          get_value_or<std::unordered_map<int, double>>(
+              params, "exclusion_radius_per_type", {}));
+    });
     do_set_parameter("search_algorithm",
                      Variant{get_value_or<std::string>(
                          params, "search_algorithm", "order_n")});
+  }
+
+protected:
+  double calculate_factorial_expression(
+      ::ReactionMethods::SingleReaction const &reaction,
+      std::unordered_map<int, int> const &particle_numbers) const override {
+    return ::ReactionMethods::calculate_factorial_expression_cpH(
+        reaction, particle_numbers);
   }
 
 private:

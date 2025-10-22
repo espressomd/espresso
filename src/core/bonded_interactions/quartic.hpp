@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BN_IA_QUARTIC_HPP
-#define CORE_BN_IA_QUARTIC_HPP
+
+#pragma once
+
 /** \file
  *  Routines to calculate the quartic potential between particle pairs.
  */
@@ -29,7 +30,7 @@
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/optional.hpp>
+#include <optional>
 
 /** Parameters for quartic bond Potential */
 struct QuarticBond {
@@ -48,24 +49,14 @@ struct QuarticBond {
     this->r_cut = r_cut;
   }
 
-  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
-  boost::optional<double> energy(Utils::Vector3d const &dx) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar &k0;
-    ar &k1;
-    ar &r;
-    ar &r_cut;
-  }
+  std::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  std::optional<double> energy(Utils::Vector3d const &dx) const;
 };
 
 /** Compute the quartic bond force.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<Utils::Vector3d>
+inline std::optional<Utils::Vector3d>
 QuarticBond::force(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
@@ -76,7 +67,7 @@ QuarticBond::force(Utils::Vector3d const &dx) const {
   auto const dr = dist - r;
   auto fac = (k0 * dr + k1 * Utils::int_pow<3>(dr));
 
-  if (dist > ROUND_ERROR_PREC) { /* Regular case */
+  if (dist > round_error_prec) { /* Regular case */
     fac /= dist;
   } else {
     if (r > 0.) {
@@ -88,9 +79,9 @@ QuarticBond::force(Utils::Vector3d const &dx) const {
 }
 
 /** Compute the quartic bond energy.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<double>
+inline std::optional<double>
 QuarticBond::energy(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
@@ -102,5 +93,3 @@ QuarticBond::energy(Utils::Vector3d const &dx) const {
 
   return 0.5 * k0 * dr2 + 0.25 * k1 * Utils::sqr(dr2);
 }
-
-#endif

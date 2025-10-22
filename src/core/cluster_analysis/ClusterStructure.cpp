@@ -18,16 +18,17 @@
  */
 #include "ClusterStructure.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Cluster.hpp"
 #include "PartCfg.hpp"
 #include "errorhandling.hpp"
-#include "partCfg_global.hpp"
 #include "particle_node.hpp"
 
 #include <utils/for_each_pair.hpp>
 
 #include <algorithm>
 #include <memory>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -49,9 +50,13 @@ inline bool ClusterStructure::part_of_cluster(const Particle &p) {
 void ClusterStructure::run_for_all_pairs() {
   // clear data structs
   clear();
+  sanity_checks();
 
   // Iterate over pairs
-  Utils::for_each_pair(partCfg().begin(), partCfg().end(),
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
+  PartCfg partCfg{box_geo};
+  Utils::for_each_pair(partCfg.begin(), partCfg.end(),
                        [this](const Particle &p1, const Particle &p2) {
                          this->add_pair(p1, p2);
                        });
@@ -60,7 +65,11 @@ void ClusterStructure::run_for_all_pairs() {
 
 void ClusterStructure::run_for_bonded_particles() {
   clear();
-  for (const auto &p : partCfg()) {
+  sanity_checks();
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
+  PartCfg partCfg{box_geo};
+  for (const auto &p : partCfg) {
     for (auto const bond : p.bonds()) {
       if (bond.partner_ids().size() == 1) {
         add_pair(p, get_particle_data(bond.partner_ids()[0]));
@@ -142,7 +151,7 @@ void ClusterStructure::merge_clusters() {
     to_be_changed.emplace_back(it.first, cid);
     // Empty cluster object
     if (clusters.find(cid) == clusters.end()) {
-      clusters[cid] = std::make_shared<Cluster>();
+      clusters[cid] = std::make_shared<Cluster>(m_box_geo);
     }
   }
 
@@ -158,14 +167,14 @@ void ClusterStructure::merge_clusters() {
     // If this is the first particle in this cluster, instance a new cluster
     // object
     if (clusters.find(it.second) == clusters.end()) {
-      clusters[it.second] = std::make_shared<Cluster>();
+      clusters[it.second] = std::make_shared<Cluster>(m_box_geo);
     }
     clusters[it.second]->particles.push_back(it.first);
   }
 
   // Sort particles ids in the clusters
   for (const auto &c : clusters) {
-    std::sort(c.second->particles.begin(), c.second->particles.end());
+    std::ranges::sort(c.second->particles);
   }
 }
 
@@ -187,6 +196,13 @@ int ClusterStructure::get_next_free_cluster_id() {
     }
   }
   return max_seen_cluster + 1;
+}
+
+void ClusterStructure::sanity_checks() const {
+  if (get_box_geo()->type() != BoxType::CUBOID) {
+    throw std::runtime_error(
+        "Cluster analysis is not compatible with non-cuboid box types");
+  }
 }
 
 } // namespace ClusterAnalysis

@@ -25,3 +25,5 @@ from .system import System
 from .code_info import features, all_features
 from .code_features import has_features, assert_features
 from .cuda_init import gpu_available
+
+__version__ = "@PROJECT_VERSION@"

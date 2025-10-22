@@ -52,8 +52,9 @@
 
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "errorhandling.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -80,6 +81,10 @@
 
 namespace Mpiio {
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunreachable-code-return"
+#endif
 /**
  * @brief Fatal error handler.
  * On 1 MPI rank the error is recoverable and an exception is thrown.
@@ -107,6 +112,9 @@ static bool fatal_error(char const *msg, std::string const &fn = "",
   errexit();
   return false;
 }
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 /**
  * @brief Fatal error handler that closes an open file and queries the
@@ -183,42 +191,44 @@ static unsigned long mpi_calculate_file_offset(unsigned long n_items) {
  *
  * @param fn The filename to write to
  * @param fields The dumped fields
+ * @param bonded_ias The list of bonds
  */
-static void dump_info(const std::string &fn, unsigned fields) {
+static void dump_info(std::string const &fn, unsigned fields,
+                      BondedInteractionsMap const &bonded_ias) {
   // MPI-IO requires consecutive bond ids
-  auto const nbonds = bonded_ia_params.size();
-  assert(static_cast<std::size_t>(bonded_ia_params.get_next_key()) == nbonds);
+  auto const nbonds = bonded_ias.size();
+  assert(static_cast<std::size_t>(bonded_ias.get_next_key()) == nbonds);
 
   FILE *f = fopen(fn.c_str(), "wb");
   if (!f) {
     fatal_error("Could not open file", fn);
   }
-  static std::vector<int> npartners;
+  std::vector<int> npartners;
   bool success = (fwrite(&fields, sizeof(fields), 1u, f) == 1);
-  // Pack the necessary information of bonded_ia_params:
-  // The number of partners. This is needed to interpret the bond IntList.
-  if (nbonds > npartners.size())
-    npartners.resize(nbonds);
-
-  auto npartners_it = npartners.begin();
-  for (int i = 0; i < bonded_ia_params.get_next_key(); ++i, ++npartners_it) {
-    *npartners_it = number_of_partners(*bonded_ia_params.at(i));
+  // Pack the number of partners. This is needed to interpret the bond IntList.
+  npartners.reserve(nbonds);
+  for (int bond_id = 0; bond_id < bonded_ias.get_next_key(); ++bond_id) {
+    if (bonded_ias.contains(bond_id)) {
+      npartners.emplace_back(number_of_partners(*bonded_ias.at(bond_id)));
+    }
   }
-  success = success && (fwrite(&nbonds, sizeof(std::size_t), 1u, f) == 1);
-  success =
-      success && (fwrite(npartners.data(), sizeof(int), nbonds, f) == nbonds);
+  success &= fwrite(&nbonds, sizeof(std::size_t), 1u, f) == 1;
+  success &= fwrite(npartners.data(), sizeof(int), nbonds, f) == nbonds;
   fclose(f);
   static_cast<void>(success or fatal_error("Could not write file", fn));
 }
 
-void mpi_mpiio_common_write(const std::string &prefix, unsigned fields,
-                            const ParticleRange &particles) {
+void mpi_mpiio_common_write(std::string const &prefix, unsigned fields,
+                            BondedInteractionsMap const &bonded_ias,
+                            ParticleRange const &particles,
+                            write_buffers &buffers) {
   auto const nlocalpart = static_cast<unsigned long>(particles.size());
   auto const offset = mpi_calculate_file_offset(nlocalpart);
-  // Keep static buffers in order to avoid allocating them on every
-  // function call
-  static std::vector<double> pos, vel;
-  static std::vector<int> id, type;
+  // keep buffers in order to avoid allocating them on every function call
+  auto &pos = buffers.pos;
+  auto &vel = buffers.vel;
+  auto &id = buffers.id;
+  auto &type = buffers.type;
 
   // Realloc static buffers if necessary
   if (nlocalpart > id.size())
@@ -255,7 +265,7 @@ void mpi_mpiio_common_write(const std::string &prefix, unsigned fields,
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0)
-    dump_info(prefix + ".head", fields);
+    dump_info(prefix + ".head", fields, bonded_ias);
   auto const pref_offset = static_cast<unsigned long>(rank);
   mpiio_dump_array<unsigned long>(prefix + ".pref", &offset, 1ul, pref_offset,
                                   MPI_UNSIGNED_LONG);
@@ -400,7 +410,8 @@ read_prefs(const std::string &fn, int rank, int size,
   return {pref, nlocalpart};
 }
 
-void mpi_mpiio_common_read(const std::string &prefix, unsigned fields) {
+void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
+                           CellStructure &cell_structure) {
   cell_structure.remove_all_particles();
 
   int size, rank;

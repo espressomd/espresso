@@ -19,32 +19,62 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
-#define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
+#pragma once
 
 #include "Constraint.hpp"
 
-#include "core/constraints.hpp"
-
 #include "script_interface/ObjectList.hpp"
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/system/Leaf.hpp"
+#include "script_interface/system/System.hpp"
+
+#include "core/constraints/Constraints.hpp"
+#include "core/system/System.hpp"
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace Constraints {
-class Constraints : public ObjectList<Constraint> {
-  void add_in_core(std::shared_ptr<Constraint> const &obj_ptr) override {
-    ::Constraints::constraints.add(obj_ptr->constraint());
+
+using Constraints_t =
+    ObjectList<Constraint, AutoParameters<ObjectList<Constraint, System::Leaf>,
+                                          System::Leaf>>;
+
+class Constraints : public Constraints_t {
+  using Base = Constraints_t;
+  using value_type = typename Base::value_type;
+
+  std::shared_ptr<::Constraints::Constraints> m_handle;
+  std::unique_ptr<VariantMap> m_params;
+
+  bool has_in_core(value_type const &obj_ptr) const override {
+    return m_handle->contains(obj_ptr->constraint());
   }
-  void remove_in_core(std::shared_ptr<Constraint> const &obj_ptr) override {
-    ::Constraints::constraints.remove(obj_ptr->constraint());
+  void add_in_core(value_type const &obj_ptr) override {
+    m_handle->add(obj_ptr->constraint());
+    obj_ptr->bind_system(m_system.lock());
+  }
+  void remove_in_core(value_type const &obj_ptr) final {
+    m_handle->remove(obj_ptr->constraint());
+  }
+
+public:
+  ~Constraints() override { do_destruct(); }
+
+  void do_construct(VariantMap const &params) override {
+    m_handle = std::make_shared<::Constraints::Constraints>();
+    m_handle->bind_system(::System::get_system().shared_from_this());
+    m_params = std::make_unique<VariantMap>(params);
   }
 
 private:
-  // disable serialization: pickling done by the python interface
-  std::string get_internal_state() const override { return {}; }
-  void set_internal_state(std::string const &state) override {}
+  void on_bind_system(::System::System &system) override {
+    m_handle = system.constraints;
+    m_handle->bind_system(m_system.lock());
+    Base::do_construct(*m_params);
+    m_params.reset();
+  }
 };
-} /* namespace Constraints */
-} /* namespace ScriptInterface */
 
-#endif
+} // namespace Constraints
+} // namespace ScriptInterface

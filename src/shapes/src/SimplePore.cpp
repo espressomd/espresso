@@ -20,6 +20,7 @@
 #include <shapes/SimplePore.hpp>
 
 #include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <cassert>
 #include <cmath>
@@ -39,28 +40,33 @@ std::pair<double, double> SimplePore::dist_half_pore(double r, double z) const {
   assert(r >= 0.0);
 
   /*
-   *  We have to find the line that splits area 1 (r determines distance) from
-   *  area 2 (z determines distance) inside pore. In area 3 we have to consider
-   *  z and r to determine the distance.
+   * We have to find the line that splits area (1), where r determines
+   * the distance, from area (2), where z determines the distance.
+   * In area (3) we have to consider z and r to determine the distance.
+   * The line that separates area (1) from area (2) has parametric equation
+   * @f$ r = c_z + c_r - z @f$.
    *
-   *   |        x
-   *   |   2  x
-   *   |    x
-   *  _|_ x    1
-   *    \|       ^ r
-   *  3  |-------|
-   *     |   z <-
+   *          |       .  ^ r
+   *          | (2) .    |
+   *          |   .      |
+   *  ........|..  (1)   |
+   *     ^    \ :        |
+   *     |     \_________|
+   * c_r | (3)  :        |
+   *     |      :<------>|
+   *     v      :  c_z   |
+   * z <-----------------+
    */
 
   if ((z <= c_z) && (r <= (c_z + c_r - z))) {
-    /* Cylinder section, inner */
+    /* Cylinder section, inner, area (1) */
     return {m_rad - r, 0};
   }
   if (((z >= c_z) && (r >= c_r)) || ((z <= c_z) && (r > (c_z + c_r - z)))) {
-    /* Wall section and outer cylinder */
+    /* Wall section and outer cylinder, area (2) */
     return {0, m_half_length - z};
   }
-  /* Smoothing area */
+  /* Smoothing area (3) */
   /* Vector to center of torus segment */
   auto const dr = c_r - r;
   auto const dz = c_z - z;
@@ -76,7 +82,7 @@ void SimplePore::calculate_dist(const Utils::Vector3d &pos, double &dist,
                                 Utils::Vector3d &vec) const {
   /* Coordinate transform to cylinder coords
      with origin at m_center. */
-  Utils::Vector3d const c_dist = pos - m_center;
+  auto const c_dist = pos - m_center;
   auto const z = e_z * c_dist;
   auto const r_vec = c_dist - z * e_z;
   auto const r = r_vec.norm();
@@ -97,10 +103,8 @@ void SimplePore::calculate_dist(const Utils::Vector3d &pos, double &dist,
   } else {
     // smoothing area
     if (std::abs(z) >= c_z) {
-      auto const angle = std::asin((std::abs(z) - c_z) / m_smoothing_rad);
-      auto const dist_offset =
-          m_smoothing_rad - (std::cos(angle) * m_smoothing_rad);
-      if (m_half_length < std::abs(z) || r <= (m_rad + dist_offset)) {
+      auto const d_sq = Utils::sqr(r - c_r) + Utils::sqr(z - c_z);
+      if (d_sq > Utils::sqr(m_smoothing_rad)) {
         side = 1;
       }
     }

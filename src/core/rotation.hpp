@@ -18,15 +18,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ROTATION_H
-#define ROTATION_H
+
+#pragma once
+
 /** \file
  *  This file contains all subroutines required to process rotational motion.
  */
 
 #include "config/config.hpp"
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
@@ -47,11 +48,7 @@
  */
 void propagate_omega_quat_particle(Particle &p, double time_step);
 
-/** @brief Convert torques to the body-fixed frame and propagate
- *  angular velocities.
- */
-void convert_torques_propagate_omega(const ParticleRange &particles,
-                                     double time_step);
+void convert_torque_propagate_omega(Particle &p, double time_step);
 
 /** Convert torques to the body-fixed frame before the integration loop. */
 void convert_initial_torques(const ParticleRange &particles);
@@ -77,21 +74,35 @@ inline Utils::Vector3d convert_vector_space_to_body(const Particle &p,
  * by the map between the space-fixed and body-fixed frame \f$O\f$ like
  *
  * \f[
- *     A' = O^T A O.
+ *     A' = O A O^T.
  * \f]
  *
  * @tparam T Scalar type
+ * @param quat quaternion to transform from, i.e. the rotation
+ *             that transforms space- to body-fixed frame.
+ * @param A Matrix representation in body-fixed coordinates.
+ * @return Matrix representation in space-fixed coordinates.
+ */
+template <class T>
+auto convert_body_to_space(const Utils::Quaternion<double> &quat,
+                           const Utils::Matrix<T, 3, 3> &A) {
+  auto const O = rotation_matrix(quat);
+  return O * A * O.transposed();
+}
+
+/**
+ * @brief Transform matrix from body- to space-fixed frame.
+ * @tparam T Scalar type
  * @param p Particle transforming from.
- * @param A Matrix to transform
+ * @param A Matrix representation in body-fixed coordinates.
  * @return Matrix representation in space-fixed coordinates.
  */
 template <class T>
 auto convert_body_to_space(const Particle &p, const Utils::Matrix<T, 3, 3> &A) {
-  auto const O = rotation_matrix(p.quat());
-  return O.transposed() * A * O;
+  return convert_body_to_space(p.quat(), A);
 }
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
 
 /** convert a dipole moment to quaternions and dipolar strength  */
 inline std::pair<Utils::Quaternion<double>, double>
@@ -135,5 +146,4 @@ inline void convert_torque_to_body_frame_apply_fix(Particle &p) {
   p.torque() = mask(p.rotation(), torque);
 }
 
-#endif // ROTATION
-#endif
+#endif // ESPRESSO_ROTATION

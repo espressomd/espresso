@@ -26,7 +26,6 @@
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
-#include "event.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/sendrecv.hpp>
@@ -36,59 +35,58 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <iterator>
+#include <optional>
 #include <set>
 #include <utility>
 
 HybridDecomposition::HybridDecomposition(boost::mpi::communicator comm,
-                                         double cutoff_regular,
+                                         double cutoff_regular, double skin,
+                                         std::function<bool()> get_ghost_flags,
                                          BoxGeometry const &box_geo,
-                                         LocalBox<double> const &local_box,
+                                         LocalBox const &local_box,
                                          std::set<int> n_square_types)
     : m_comm(std::move(comm)), m_box(box_geo), m_cutoff_regular(cutoff_regular),
       m_regular_decomposition(RegularDecomposition(
-          m_comm, cutoff_regular + skin, m_box, local_box)),
+          m_comm, cutoff_regular + skin, m_box, local_box, std::nullopt)),
       m_n_square(AtomDecomposition(m_comm, m_box)),
-      m_n_square_types(std::move(n_square_types)) {
+      m_n_square_types(std::move(n_square_types)),
+      m_get_global_ghost_flags(std::move(get_ghost_flags)) {
 
   /* Vector containing cells of both child decompositions */
   m_local_cells = m_regular_decomposition.get_local_cells();
   auto local_cells_n_square = m_n_square.get_local_cells();
-  std::copy(local_cells_n_square.begin(), local_cells_n_square.end(),
-            std::back_inserter(m_local_cells));
+  std::ranges::copy(local_cells_n_square, std::back_inserter(m_local_cells));
 
   /* Vector containing ghost cells of both child decompositions */
   m_ghost_cells = m_regular_decomposition.get_ghost_cells();
   auto ghost_cells_n_square = m_n_square.get_ghost_cells();
-  std::copy(ghost_cells_n_square.begin(), ghost_cells_n_square.end(),
-            std::back_inserter(m_ghost_cells));
+  std::ranges::copy(ghost_cells_n_square, std::back_inserter(m_ghost_cells));
 
   /* Communicators that contain communications of both child decompositions */
   m_exchange_ghosts_comm = m_regular_decomposition.exchange_ghosts_comm();
   auto exchange_ghosts_comm_n_square = m_n_square.exchange_ghosts_comm();
-  std::copy(exchange_ghosts_comm_n_square.communications.begin(),
-            exchange_ghosts_comm_n_square.communications.end(),
-            std::back_inserter(m_exchange_ghosts_comm.communications));
+  std::ranges::copy(exchange_ghosts_comm_n_square.communications,
+                    std::back_inserter(m_exchange_ghosts_comm.communications));
 
   m_collect_ghost_force_comm =
       m_regular_decomposition.collect_ghost_force_comm();
   auto collect_ghost_force_comm_n_square =
       m_n_square.collect_ghost_force_comm();
-  std::copy(collect_ghost_force_comm_n_square.communications.begin(),
-            collect_ghost_force_comm_n_square.communications.end(),
-            std::back_inserter(m_collect_ghost_force_comm.communications));
+  std::ranges::copy(
+      collect_ghost_force_comm_n_square.communications,
+      std::back_inserter(m_collect_ghost_force_comm.communications));
 
   /* coupling between the child decompositions via neighborship relation */
   std::vector<Cell *> additional_reds = m_n_square.get_local_cells();
-  std::copy(ghost_cells_n_square.begin(), ghost_cells_n_square.end(),
-            std::back_inserter(additional_reds));
+  std::ranges::copy(ghost_cells_n_square, std::back_inserter(additional_reds));
   for (auto &local_cell : m_regular_decomposition.local_cells()) {
     std::vector<Cell *> red_neighbors(local_cell->m_neighbors.red().begin(),
                                       local_cell->m_neighbors.red().end());
     std::vector<Cell *> black_neighbors(local_cell->m_neighbors.black().begin(),
                                         local_cell->m_neighbors.black().end());
-    std::copy(additional_reds.begin(), additional_reds.end(),
-              std::back_inserter(red_neighbors));
+    std::ranges::copy(additional_reds, std::back_inserter(red_neighbors));
     local_cell->m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
   }
 }
@@ -98,8 +96,9 @@ void HybridDecomposition::resort(bool global,
   ParticleList displaced_parts;
 
   /* Check for n_square type particles in regular decomposition */
-  for (auto &c : m_regular_decomposition.local_cells()) {
-    for (auto it = c->particles().begin(); it != c->particles().end();) {
+  for (auto &cell_rd : m_regular_decomposition.local_cells()) {
+    for (auto it = cell_rd->particles().begin();
+         it != cell_rd->particles().end();) {
       /* Particle is in the right decomposition, i.e. has no n_square type */
       if (not is_n_square_type(it->type())) {
         std::advance(it, 1);
@@ -108,8 +107,8 @@ void HybridDecomposition::resort(bool global,
 
       /* else remove from current cell ... */
       auto p = std::move(*it);
-      it = c->particles().erase(it);
-      diff.emplace_back(ModifiedList{c->particles()});
+      it = cell_rd->particles().erase(it);
+      diff.emplace_back(ModifiedList{cell_rd->particles()});
       diff.emplace_back(RemovedParticle{p.id()});
 
       /* ... and insert into a n_square cell */
@@ -119,8 +118,9 @@ void HybridDecomposition::resort(bool global,
     }
 
     /* Now check for regular decomposition type particles in n_square */
-    for (auto &c : m_n_square.local_cells()) {
-      for (auto it = c->particles().begin(); it != c->particles().end();) {
+    for (auto &cell_ns : m_n_square.local_cells()) {
+      for (auto it = cell_ns->particles().begin();
+           it != cell_ns->particles().end();) {
         /* Particle is of n_square type */
         if (is_n_square_type(it->type())) {
           std::advance(it, 1);
@@ -129,8 +129,8 @@ void HybridDecomposition::resort(bool global,
 
         /* else remove from current cell ... */
         auto p = std::move(*it);
-        it = c->particles().erase(it);
-        diff.emplace_back(ModifiedList{c->particles()});
+        it = cell_ns->particles().erase(it);
+        diff.emplace_back(ModifiedList{cell_ns->particles()});
         diff.emplace_back(RemovedParticle{p.id()});
 
         /* ... and insert in regular decomposition */
@@ -154,12 +154,9 @@ void HybridDecomposition::resort(bool global,
   m_regular_decomposition.resort(global, diff);
   m_n_square.resort(global, diff);
 
-  /* basically do CellStructure::ghost_count() */
-  ghost_communicator(exchange_ghosts_comm(), GHOSTTRANS_PARTNUM);
-
-  /* basically do CellStructure::ghost_update(unsigned data_parts) */
-  ghost_communicator(exchange_ghosts_comm(),
-                     map_data_parts(global_ghost_flags()));
+  ghost_communicator(exchange_ghosts_comm(), m_box, GHOSTTRANS_PARTNUM);
+  ghost_communicator(exchange_ghosts_comm(), m_box,
+                     map_data_parts(m_get_global_ghost_flags()));
 }
 
 std::size_t HybridDecomposition::count_particles(

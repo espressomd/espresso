@@ -155,17 +155,18 @@ class Drude(ut.TestCase):
             kT=temperature_com,
             gamma=gamma_com,
             seed=42)
+        system.thermostat.set_thermalized_bond(seed=123)
 
         p3m = espressomd.electrostatics.P3M(prefactor=coulomb_prefactor,
                                             accuracy=1e-4, mesh=3 * [18], cao=5)
 
-        system.actors.add(p3m)
+        system.electrostatics.solver = p3m
 
         # Drude related Bonds
 
         thermalized_dist_bond = espressomd.interactions.ThermalizedBond(
             temp_com=temperature_com, gamma_com=gamma_com, r_cut=1.0,
-            temp_distance=temperature_drude, gamma_distance=gamma_drude, seed=123)
+            temp_distance=temperature_drude, gamma_distance=gamma_drude)
         harmonic_bond = espressomd.interactions.HarmonicBond(
             k=k_drude, r_0=0.0, r_cut=1.0)
         system.bonded_inter.add(thermalized_dist_bond)
@@ -218,7 +219,7 @@ class Drude(ut.TestCase):
 
             system.integrator.run(115)
 
-            for _ in range(100):
+            for _ in range(200):
                 system.integrator.run(1)
 
                 dm_pf6.append(dipole_moment(part0, part1))

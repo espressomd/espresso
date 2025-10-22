@@ -19,18 +19,15 @@
 
 #include "PartCfg.hpp"
 
-#include "grid.hpp"
+#include "BoxGeometry.hpp"
 #include "particle_node.hpp"
-
-#include <utils/Span.hpp>
+#include "system/System.hpp"
 
 #include <algorithm>
 #include <cstddef>
+#include <span>
 
 void PartCfg::update() {
-  if (m_valid)
-    return;
-
   m_parts.clear();
 
   auto const ids = get_particle_ids();
@@ -39,8 +36,7 @@ void PartCfg::update() {
   for (std::size_t offset = 0; offset < ids.size();) {
     auto const this_size = std::clamp(chunk_size, std::size_t{0},
                                       std::size_t{ids.size() - offset});
-    auto const chunk_ids =
-        Utils::make_const_span(ids.data() + offset, this_size);
+    auto const chunk_ids = std::span(ids.data() + offset, this_size);
 
     prefetch_particle_data(chunk_ids);
 
@@ -48,12 +44,10 @@ void PartCfg::update() {
       m_parts.push_back(get_particle_data(id));
 
       auto &p = m_parts.back();
-      p.pos() += image_shift(p.image_box(), box_geo.length());
+      p.pos() += m_box_geo.image_shift(p.image_box());
       p.image_box() = {};
     }
 
     offset += this_size;
   }
-
-  m_valid = true;
 }

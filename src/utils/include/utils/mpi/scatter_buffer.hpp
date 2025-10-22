@@ -43,14 +43,14 @@ namespace Mpi {
 template <typename T>
 void scatter_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
                     int root = 0) {
-  static_assert(std::is_trivial_v<T>);
+  static_assert(std::is_trivially_copy_assignable_v<T>);
   if (comm.rank() == root) {
     static std::vector<int> sizes;
     static std::vector<int> displ;
 
     detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
 
-    for (int i = 0; i < comm.size(); i++) {
+    for (auto i = 0u; i < static_cast<unsigned>(comm.size()); i++) {
       sizes[i] *= sizeof(T);
       displ[i] *= sizeof(T);
     }

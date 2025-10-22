@@ -34,7 +34,6 @@ import espressomd.accumulators
 import espressomd.electrostatics
 import espressomd.interactions
 import espressomd.drude_helpers
-import espressomd.virtual_sites
 import espressomd.visualization
 
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
@@ -80,7 +79,6 @@ box_l = box_volume**(1. / 3.)
 print("\n-->Ion pairs:", n_ionpairs, "Box size:", box_l)
 
 system = espressomd.System(box_l=[box_l, box_l, box_l])
-system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
 
 if args.visu:
     d_scale = 0.988 * 0.5
@@ -109,7 +107,7 @@ if not os.path.exists(args.path):
 
 # TIMESTEP
 fs_to_md_time = 1.0e-2
-time_step_fs = 1.0
+time_step_fs = 0.5
 time_step_ns = time_step_fs * 1e-6
 dt = time_step_fs * fs_to_md_time
 system.time_step = dt
@@ -231,7 +229,7 @@ for i in range(n_ionpairs):
 # ENERGY MINIMIZATION
 print("\n-->E minimization")
 print(f"Before: {system.analysis.energy()['total']:.2e}")
-n_max_steps = 100000
+n_max_steps = 10000
 system.integrator.set_steepest_descent(f_max=5.0, gamma=0.01,
                                        max_displacement=0.01)
 system.integrator.run(n_max_steps)
@@ -254,16 +252,17 @@ else:
     print("\n-->Tune P3M CPU")
     p3m = espressomd.electrostatics.P3M(**p3m_params)
 
-system.actors.add(p3m)
+system.electrostatics.solver = p3m
 
 cation_drude_parts = []
 
 if args.drude:
     print("-->Adding Drude related bonds")
+    system.thermostat.set_thermalized_bond(seed=123)
     thermalized_dist_bond = espressomd.interactions.ThermalizedBond(
         temp_com=temperature_com, gamma_com=gamma_com,
         temp_distance=temperature_drude, gamma_distance=gamma_drude,
-        r_cut=min(lj_sigmas.values()) * 0.5, seed=123)
+        r_cut=min(lj_sigmas.values()) * 0.5)
     harmonic_bond = espressomd.interactions.HarmonicBond(
         k=k_drude, r_0=0.0, r_cut=1.0)
     system.bonded_inter.add(thermalized_dist_bond)

@@ -19,9 +19,10 @@
 
 add_library(
   espresso_script_interface SHARED
-  initialize.cpp ObjectHandle.cpp object_container_mpi_guard.cpp
-  GlobalContext.cpp ContextManager.cpp ParallelExceptionHandler.cpp)
+  initialize.cpp ObjectHandle.cpp GlobalContext.cpp ContextManager.cpp
+  ParallelExceptionHandler.cpp)
 add_library(espresso::script_interface ALIAS espresso_script_interface)
+espresso_set_common_target_properties(espresso_script_interface)
 set_target_properties(espresso_script_interface
                       PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
 
@@ -38,7 +39,6 @@ add_subdirectory(galilei)
 add_subdirectory(h5md)
 add_subdirectory(integrators)
 add_subdirectory(interactions)
-add_subdirectory(lbboundaries)
 add_subdirectory(lees_edwards)
 add_subdirectory(magnetostatics)
 add_subdirectory(math)
@@ -46,22 +46,33 @@ add_subdirectory(mpiio)
 add_subdirectory(observables)
 add_subdirectory(pair_criteria)
 add_subdirectory(particle_data)
+add_subdirectory(profiler)
 add_subdirectory(reaction_methods)
 add_subdirectory(scafacos)
 add_subdirectory(shapes)
 add_subdirectory(system)
-add_subdirectory(virtual_sites)
+add_subdirectory(thermostat)
+add_subdirectory(walberla)
 
 install(TARGETS espresso_script_interface
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 target_link_libraries(
   espresso_script_interface PRIVATE espresso::config espresso::core
+                                    espresso::instrumentation
   PUBLIC espresso::utils MPI::MPI_CXX Boost::mpi espresso::shapes
-  PRIVATE espresso::cpp_flags)
+  PRIVATE espresso::compiler_flags)
+
+set_source_files_properties(
+  ${CMAKE_CURRENT_SOURCE_DIR}/particle_data/ParticleHandle.cpp
+  PROPERTIES COMPILE_OPTIONS -fno-finite-math-only)
 
 target_include_directories(espresso_script_interface
                            PUBLIC ${CMAKE_SOURCE_DIR}/src)
+if(ESPRESSO_BUILD_WITH_COVERAGE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(espresso_script_interface
+                         PRIVATE -fno-default-inline -fno-elide-constructors)
+endif()
 
 if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(tests)

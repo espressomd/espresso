@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef THERMALIZED_DIST_KERNEL_H
-#define THERMALIZED_DIST_KERNEL_H
+#pragma once
 
 #include "thermalized_bond.hpp"
 
@@ -30,18 +29,17 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cmath>
+#include <optional>
 #include <tuple>
 
 /** Separately thermalizes the com and distance of a particle pair.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  *  @return the forces on @p p1 and @p p2
  */
-inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
+inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
 ThermalizedBond::forces(Particle const &p1, Particle const &p2,
                         Utils::Vector3d const &dx) const {
   // Bond broke?
@@ -55,15 +53,17 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
   auto const sqrt_mass_red = sqrt(p1.mass() * p2.mass() / mass_tot);
   auto const com_vel = mass_tot_inv * (p1.mass() * p1.v() + p2.mass() * p2.v());
   auto const dist_vel = p2.v() - p1.v();
+  auto const thermostat_view = m_thermostat.lock();
+  assert(thermostat_view);
+  auto const &thermalized_bond = *thermostat_view->thermalized_bond;
 
-  extern ThermalizedBondThermostat thermalized_bond;
   Utils::Vector3d force1{};
   Utils::Vector3d force2{};
   auto const noise = Random::noise_uniform<RNGSalt::THERMALIZED_BOND>(
       thermalized_bond.rng_counter(), thermalized_bond.rng_seed(), p1.id(),
       p2.id());
 
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0u; i < 3u; ++i) {
     double force_lv_com, force_lv_dist;
 
     // Langevin thermostat for center of mass
@@ -88,5 +88,3 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
 
   return std::make_tuple(force1, force2);
 }
-
-#endif

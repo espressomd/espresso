@@ -30,7 +30,7 @@ class BondedInteractions(ut.TestCase):
     system = espressomd.System(box_l=[20.0, 20.0, 20.0])
 
     def setUp(self):
-        self.system.part.add(pos=4 * [[0, 0, 0]])
+        self.system.part.add(pos=[[i, (i + 1) % 2, 0] for i in range(4)])
 
     def tearDown(self):
         self.system.part.clear()
@@ -142,7 +142,7 @@ class BondedInteractions(ut.TestCase):
         0, espressomd.interactions.IBM_Tribend,
         {"ind1": 0, "ind2": 1, "ind3": 2, "ind4": 3,
             "kb": 1.1, "refShape": "Initial"},
-        {"kb": 1.1, "theta0": 0.0})
+        {"kb": 1.1, "theta0": np.pi})
     test_ibm_tribend_flat = generateTestForBondParams(
         0, espressomd.interactions.IBM_Tribend,
         {"ind1": 0, "ind2": 1, "ind3": 2, "ind4": 3,
@@ -224,10 +224,6 @@ class BondedInteractions(ut.TestCase):
             self.system.bonded_inter[0] = fene_bond
         with self.assertRaisesRegex(ValueError, 'Bonds can only be overwritten by bonds of equal type'):
             self.system.bonded_inter[0] = angle_bond
-        with self.assertRaisesRegex(RuntimeError, "No bond with id 8 exists in the ESPResSo core"):
-            espressomd.interactions.FeneBond(bond_id=8)
-        with self.assertRaisesRegex(RuntimeError, "The bond with id 0 is not defined as a FENE bond in the ESPResSo core"):
-            espressomd.interactions.FeneBond(bond_id=0)
 
         # bonds can only be compared for equality
         self.assertEqual(angle_bond, angle_bond)
@@ -253,14 +249,12 @@ class BondedInteractions(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "Invalid value for parameter 'elasticLaw': 'Unknown'"):
             espressomd.interactions.IBM_Triel(
                 ind1=0, ind2=1, ind3=2, k1=1.1, k2=1.2, maxDist=1.6, elasticLaw='Unknown')
-        with self.assertRaisesRegex(ValueError, "A parameter 'seed' has to be given on first activation of a thermalized bond"):
-            espressomd.interactions.ThermalizedBond(
-                temp_com=1., gamma_com=1., temp_distance=1., gamma_distance=1.,
-                r_cut=2.)
-        with self.assertRaisesRegex(ValueError, "Parameter 'seed' must be >= 0"):
-            espressomd.interactions.ThermalizedBond(
-                temp_com=1., gamma_com=1., temp_distance=1., gamma_distance=1.,
-                r_cut=2., seed=-1)
+        with self.assertRaisesRegex(ValueError, "IBMVolCons parameter 'softID' has to be >= 0"):
+            espressomd.interactions.IBM_VolCons(softID=-1, kappaV=0.)
+        with self.assertRaisesRegex(Exception, "Immersed Boundary: Particle not found"):
+            self.system.bonded_inter.add(espressomd.interactions.IBM_Triel(
+                ind1=0, ind2=1, ind3=10000, k1=1.1, k2=1.2, maxDist=1.6, elasticLaw='NeoHookean'))
+        self.assertEqual(len(self.system.bonded_inter), 1)
 
         # sanity checks when removing bonds
         self.system.bonded_inter.clear()

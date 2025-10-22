@@ -16,52 +16,40 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import numpy as np
-cimport numpy as np
 
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp cimport bool as cbool
 
-cdef extern from "utils/Span.hpp" namespace "Utils":
-    cppclass Span[T]:
-        Span()
-        Span(T *, size_t)
-
-        T & operator[](size_t)
-
-        T * begin()
-        T * end()
-
-        T * data()
-        size_t size()
-
-    Span[const T] make_const_span[T](T *, size_t)
-
-cpdef check_array_type_or_throw_except(x, n, t, msg)
-cpdef check_type_or_throw_except(x, n, t, msg)
+cdef extern from "<filesystem>" namespace "std::filesystem" nogil:
+    cdef cppclass path:
+        ctypedef char value_type
+        path() except +
+        path(const string & source) except +
+        path & assign(const string & source) except +
+        string native_string "string"() except +
+        string generic_string() except +
 
 cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":
-    cdef cppclass ErrorLevel:
-        pass
+    cdef enum class ErrorLevel:
+        WARNING
+        ERROR
 
-cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling::RuntimeError::ErrorLevel":
-    cdef ErrorLevel WARNING
-    cdef ErrorLevel ERROR
-
-cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling":
-    cdef cppclass RuntimeError:
+cdef extern from "error_handling/RuntimeError.hpp":
+    cdef cppclass CoreRuntimeError "ErrorHandling::RuntimeError":
         string format()
         void print()
         ErrorLevel level()
 
 cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
-    cdef vector[RuntimeError] mpi_gather_runtime_errors()
-
-cpdef handle_errors(msg)
+    cdef vector[CoreRuntimeError] mpi_gather_runtime_errors()
 
 cdef extern from "utils/Vector.hpp" namespace "Utils":
     cppclass Vector2d:
+        double & operator[](int i)
+        double * data()
+
+    cppclass Vector3d:
         double & operator[](int i)
         double * data()
 
@@ -76,36 +64,3 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
     cppclass Vector3i:
         int & operator[](int i)
         int * data()
-
-    cppclass Vector3d:
-        Vector3d()
-        Vector3d(const Vector3d & )
-
-        double & operator[](int i)
-        double * data()
-        Vector3d operator * (double i)
-        Vector3d operator / (double i)
-
-    cppclass Vector6d:
-        double & operator[](int i)
-        double * data()
-        Vector6d operator * (double i)
-        Vector6d operator / (double i)
-
-    cppclass Vector9d:
-        double & operator[](int i)
-        double * data()
-        Vector9d operator * (double i)
-        Vector9d operator / (double i)
-
-    cppclass Vector19d:
-        double & operator[](int i)
-        double * data()
-
-cdef make_array_locked(Vector3d)
-cdef Vector3d make_Vector3d(a)
-cdef Vector3i make_Vector3i(a)
-
-cdef extern from "utils/Factory.hpp" namespace "Utils":
-    cdef cppclass Factory[T]:
-        pass

@@ -19,34 +19,48 @@
 
 #include "CylindricalLBVelocityProfile.hpp"
 
-#include "grid_based_algorithms/lb_interface.hpp"
+#include "system/System.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 
-#include <algorithm>
-#include <functional>
 #include <vector>
 
 namespace Observables {
 
-std::vector<double> CylindricalLBVelocityProfile::operator()() const {
-  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
-  for (auto const &p : sampling_positions) {
-    auto const velocity = lb_lbfluid_get_interpolated_velocity(p) *
-                          lb_lbfluid_get_lattice_speed();
-    auto const pos_shifted = p - transform_params->center();
-    auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
-        pos_shifted, transform_params->axis(), transform_params->orientation());
-    histogram.update(pos_cyl,
-                     Utils::transform_vector_cartesian_to_cylinder(
-                         velocity, transform_params->axis(), pos_shifted));
+std::vector<double> CylindricalLBVelocityProfile::operator()(
+    boost::mpi::communicator const &comm) const {
+  auto &system = System::get_system();
+  auto &lb = system.lb;
+  lb.ghost_communication_vel();
+
+  if (lb_sanity_checks.mismatch(*system.box_geo, lb)) {
+    calculate_sampling_positions(*system.box_geo, lb);
   }
-  auto hist_data = histogram.get_histogram();
-  auto const tot_count = histogram.get_tot_count();
-  std::transform(hist_data.begin(), hist_data.end(), tot_count.begin(),
-                 hist_data.begin(), std::divides<double>());
-  return hist_data;
+
+  auto velocities = lb.get_coupling_interpolated_velocities(sampling_positions);
+  auto pos_shifted_it = sampling_positions_cart.begin();
+  std::vector<Utils::Vector3d> local_velocities{};
+  local_velocities.reserve(velocities.size());
+
+  for (auto const &vel : velocities) {
+    auto const vel_cyl = Utils::transform_vector_cartesian_to_cylinder(
+        vel, transform_params->axis(), *pos_shifted_it);
+    local_velocities.emplace_back(vel_cyl);
+    ++pos_shifted_it;
+  }
+
+  auto const [global_positions, global_velocities] =
+      detail::gather(comm, sampling_positions_cyl, local_velocities);
+
+  if (comm.rank() != 0) {
+    return {};
+  }
+
+  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
+  detail::accumulate(histogram, global_positions, global_velocities);
+  return detail::normalize_by_bin_size(histogram);
 }
 
 } // namespace Observables

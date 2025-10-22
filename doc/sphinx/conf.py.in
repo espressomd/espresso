@@ -24,7 +24,7 @@ sys.path.insert(0, '@CMAKE_BINARY_DIR@/src/python')
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '2.3'
+needs_sphinx = '3.5'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -58,7 +58,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ESPResSo'
-copyright = '2018-2021, The ESPResSo project'
+copyright = '2018-2023, The ESPResSo project'
 author = 'C. Holm, F. Weik, R. Weeber'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -247,7 +247,8 @@ rst_prolog = """
 """
 # Style ESPResSo
 rst_epilog = """
-.. |es| replace:: *ESPResSo*
+.. |es| replace:: ESPResSo
+.. |p3m| replace:: P\\ :superscript:`3`\\ M
 """
 # Re-enable grouping of arguments in numpydoc
 # https://github.com/sphinx-doc/sphinx/issues/2227
@@ -258,7 +259,7 @@ napoleon_use_param = False
 
 # Suppress warnings for features not compiled in
 # https://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
-autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'vtk']
+autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'vtk', 'zndraw', 'znsocket', 'znjson']
 
 # Add custom stylesheets
 def setup(app):
@@ -274,3 +275,35 @@ def isfunction(obj):
 
 import inspect
 inspect.isfunction = isfunction
+
+
+# -- Custom Pybtex formatter to handle LaTeX macros in BibTeX records -----
+
+import pybtex.plugin
+import pybtex.richtext
+
+BaseFormatter = pybtex.plugin.find_plugin(
+    "pybtex.style.formatting", bibtex_default_style)
+
+class Formatter(BaseFormatter):
+
+    @classmethod
+    def visitor(cls, node, token, markup):
+        for i, x in enumerate(node.parts):
+            if isinstance(x, pybtex.richtext.BaseMultipartText):
+                cls.visitor(x, token, markup)
+            elif isinstance(x, pybtex.richtext.String) and x.endswith(token):
+                if (j := i + 1) >= len(node.parts):
+                    continue
+                if isinstance(node.parts[j], pybtex.richtext.Protected):
+                    node.parts[i] = node.parts[i][:-len(token)]
+                    node.parts[j] = pybtex.richtext.Tag(markup, node.parts[j])
+
+    def format_entry(self, *args, **kwargs):
+        formatted = super().format_entry(*args, **kwargs)
+        self.visitor(formatted.text, r"\textsuperscript ", "sup")
+        self.visitor(formatted.text, r"\textsubscript ", "sub")
+        return formatted
+
+pybtex.plugin.register_plugin(
+    "pybtex.style.formatting", bibtex_default_style, Formatter, force=True)

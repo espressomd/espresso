@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_SERIALIZATION_PACK_HPP
-#define UTILS_SERIALIZATION_PACK_HPP
+
+#pragma once
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -62,5 +62,3 @@ template <class T> T unpack(std::string const &state) {
   return val;
 }
 } // namespace Utils
-
-#endif // UTILS_SERIALIZATION_PACK_HPP

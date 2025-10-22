@@ -41,7 +41,10 @@ class Test(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        if espressomd.has_features(["ELECTROSTATICS"]):
+            self.system.electrostatics.clear()
+        if espressomd.has_features(["DIPOLES"]):
+            self.system.magnetostatics.clear()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
         self.system.periodicity = [True, True, True]
@@ -90,36 +93,40 @@ class Test(ut.TestCase):
         import espressomd.highlander
         icc, _ = self.setup_icc_particles_and_solver()
         p3m = espressomd.electrostatics.P3M(**self.valid_p3m_parameters())
-        dh = espressomd.electrostatics.DH(
-            prefactor=2., kappa=0.8, r_cut=1.2)
+        p3m_new = espressomd.electrostatics.P3M(**self.valid_p3m_parameters())
 
         self.assertIsNone(p3m.call_method("unknown"))
-
-        with self.assertRaisesRegex(RuntimeError, "The given electrostatics solver is not currently active"):
-            p3m._deactivate()
-        with self.assertRaisesRegex(RuntimeError, "The given electrostatics extension is not currently active"):
-            icc._deactivate()
+        self.assertIsNone(icc.call_method("unknown"))
 
         with self.assertRaisesRegex(RuntimeError, "An electrostatics solver is needed by ICC"):
-            self.system.actors.add(icc)
+            self.system.electrostatics.extension = icc
 
-        self.system.actors.add(p3m)
-        self.system.actors.add(icc)
+        self.system.electrostatics.solver = p3m
+        self.system.electrostatics.extension = icc
 
-        with self.assertRaises(espressomd.highlander.ThereCanOnlyBeOne):
-            self.system.actors.add(p3m)
-        with self.assertRaisesRegex(RuntimeError, r"An electrostatics solver is already active \(CoulombP3M\)"):
-            self.system.actors.add(dh)
+        def run_with_npt(barostat):
+            with self.assertRaisesRegex(Exception, "ERROR: ICC does not work in the NpT ensemble"):
+                self.system.thermostat.set_npt(
+                    kT=1., gamma0=2., gammav=0., seed=42)
+                self.system.integrator.set_isotropic_npt(
+                    ext_pressure=2., piston=0.01, barostat=barostat)
+                self.system.integrator.run(0)
+            self.system.thermostat.turn_off()
+            self.system.integrator.set_vv()
 
-        with self.assertRaises(espressomd.highlander.ThereCanOnlyBeOne):
-            self.system.actors.add(icc)
-        with self.assertRaisesRegex(RuntimeError, r"An electrostatics extension is already active \(ICCStar\)"):
-            icc_new, _ = self.setup_icc_particles_and_solver()
-            self.system.actors.add(icc_new)
-
-        with self.assertRaisesRegex(Exception, r"An electrostatics solver is needed by ICC"):
-            self.system.actors.remove(p3m)
-            self.system.integrator.run(0)
+        if espressomd.has_features(["NPT"]):
+            run_with_npt("Andersen")
+            run_with_npt("MTK")
+        with self.assertRaisesRegex(RuntimeError, "Cannot change solver when an extension is active"):
+            self.system.electrostatics.solver = p3m_new
+        with self.assertRaisesRegex(RuntimeError, "Cannot change solver when an extension is active"):
+            self.system.electrostatics.solver = None
+        self.assertIsNotNone(self.system.electrostatics.extension)
+        self.system.electrostatics.clear()
+        self.assertIsNone(self.system.electrostatics.solver)
+        self.assertIsNone(self.system.electrostatics.extension)
+        self.system.integrator.run(0)
+        self.assertIsNone(self.system.electrostatics.call_method("unknown"))
 
     @utx.skipIfMissingFeatures(["DP3M"])
     def test_magnetostatics_registration(self):
@@ -128,18 +135,8 @@ class Test(ut.TestCase):
             **self.valid_dp3m_parameters())
 
         self.assertIsNone(dp3m.call_method("unknown"))
-
-        with self.assertRaisesRegex(RuntimeError, "The given magnetostatics solver is not currently active"):
-            dp3m._deactivate()
-
-        self.system.actors.add(dp3m)
-
-        with self.assertRaises(espressomd.highlander.ThereCanOnlyBeOne):
-            self.system.actors.add(dp3m)
-        with self.assertRaisesRegex(RuntimeError, r"A magnetostatics solver is already active \(DipolarP3M\)"):
-            dp3m_new = espressomd.magnetostatics.DipolarP3M(
-                **self.valid_dp3m_parameters())
-            self.system.actors.add(dp3m_new)
+        self.system.magnetostatics.solver = dp3m
+        self.assertIsNone(self.system.magnetostatics.call_method("unknown"))
 
     def check_obs_stats(self, key):
         # check observable statistics have the correct shape
@@ -159,7 +156,7 @@ class Test(ut.TestCase):
     def test_dp3m_cpu_pressure(self):
         dp3m = espressomd.magnetostatics.DipolarP3M(
             **self.valid_dp3m_parameters())
-        self.system.actors.add(dp3m)
+        self.system.magnetostatics.solver = dp3m
         pressure_tensor, pressure_scalar = self.check_obs_stats("dipolar")
         # DP3M doesn't contribute to the pressure
         np.testing.assert_allclose(pressure_tensor["dipolar"], 0., atol=1e-12)
@@ -169,7 +166,7 @@ class Test(ut.TestCase):
     def test_p3m_cpu_pressure(self):
         self.add_charged_particles()
         p3m = espressomd.electrostatics.P3M(**self.valid_p3m_parameters())
-        self.system.actors.add(p3m)
+        self.system.electrostatics.solver = p3m
         self.check_obs_stats("coulomb")
 
     @utx.skipIfMissingGPU()
@@ -177,7 +174,7 @@ class Test(ut.TestCase):
     def test_p3m_gpu_pressure(self):
         self.add_charged_particles()
         p3m = espressomd.electrostatics.P3MGPU(**self.valid_p3m_parameters())
-        self.system.actors.add(p3m)
+        self.system.electrostatics.solver = p3m
         self.check_obs_stats("coulomb")
 
     @utx.skipIfMissingFeatures(["P3M"])
@@ -186,7 +183,7 @@ class Test(ut.TestCase):
         p3m = espressomd.electrostatics.P3M(**self.valid_p3m_parameters())
         elc = espressomd.electrostatics.ELC(
             actor=p3m, gap_size=2., maxPWerror=1e-3, check_neutrality=False)
-        self.system.actors.add(elc)
+        self.system.electrostatics.solver = elc
         pressure_tensor, pressure_scalar = self.check_obs_stats("coulomb")
         # ELC doesn't contribute to the pressure
         pressure_tensor_far_field = pressure_tensor[("coulomb", 1)]
@@ -203,7 +200,7 @@ class Test(ut.TestCase):
         self.add_charged_particles()
         actor = espressomd.electrostatics.ReactionField(
             prefactor=1., kappa=2., epsilon1=1., epsilon2=2., r_cut=2.)
-        self.system.actors.add(actor)
+        self.system.electrostatics.solver = actor
         pressure_tensor, pressure_scalar = self.check_obs_stats("coulomb")
         # actor doesn't contribute to the pressure in the far field
         pressure_tensor_far_field = pressure_tensor[("coulomb", 1)]
@@ -215,7 +212,7 @@ class Test(ut.TestCase):
     def test_dh_pressure(self):
         self.add_charged_particles()
         actor = espressomd.electrostatics.DH(prefactor=1., kappa=1., r_cut=1.)
-        self.system.actors.add(actor)
+        self.system.electrostatics.solver = actor
         pressure_tensor, pressure_scalar = self.check_obs_stats("coulomb")
         # actor doesn't contribute to the pressure in the far field
         pressure_tensor_far_field = pressure_tensor[("coulomb", 1)]
@@ -224,46 +221,49 @@ class Test(ut.TestCase):
         np.testing.assert_allclose(pressure_scalar_far_field, 0., atol=1e-12)
 
     @utx.skipIfMissingFeatures(["DIPOLES"])
-    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_mdds_cpu_no_magnetic_particles(self):
         self.system.part.add(pos=2 * [[1., 1., 1.]], dip=2 * [[0., 0., 0.]])
         mdds = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=2.)
-        self.system.actors.add(mdds)
+        self.system.magnetostatics.solver = mdds
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["dipolar"], 0., delta=1e-12)
 
-    def check_p3m_pre_conditions(self, class_p3m):
+    def check_p3m_pre_conditions(self, container, class_p3m):
         params = {"prefactor": 1., "accuracy": 1., "r_cut": 1., "alpha": 1.}
 
         # P3M pre-condition: cao / mesh[i] < 1
         with self.assertRaisesRegex(RuntimeError, "k-space cutoff .+ is larger than half of box dimension"):
-            self.system.actors.add(
-                class_p3m(cao=6, mesh=6, tune=False, **params))
+            container.solver = class_p3m(cao=6, mesh=6, tune=False, **params)
 
         # P3M pre-condition: cao / mesh[i] < 2 / n_nodes[i]
         with self.assertRaisesRegex(RuntimeError, "k-space cutoff .+ is larger than local box dimension"):
             self.system.cell_system.node_grid = [self.n_nodes, 1, 1]
-            self.system.actors.add(
-                class_p3m(cao=7, mesh=8, tune=False, **params))
+            container.solver = class_p3m(cao=7, mesh=8, tune=False, **params)
 
     @utx.skipIfMissingFeatures(["P3M"])
     @ut.skipIf(n_nodes < 3, "only runs for 3+ MPI ranks")
     def test_p3m_cpu_pre_condition_exceptions(self):
         self.add_charged_particles()
-        self.check_p3m_pre_conditions(espressomd.electrostatics.P3M)
+        self.check_p3m_pre_conditions(
+            self.system.electrostatics,
+            espressomd.electrostatics.P3M)
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["P3M"])
     @ut.skipIf(n_nodes < 3, "only runs for 3+ MPI ranks")
     def test_p3m_gpu_pre_condition_exceptions(self):
         self.add_charged_particles()
-        self.check_p3m_pre_conditions(espressomd.electrostatics.P3MGPU)
+        self.check_p3m_pre_conditions(
+            self.system.electrostatics,
+            espressomd.electrostatics.P3MGPU)
 
     @utx.skipIfMissingFeatures(["DP3M"])
     @ut.skipIf(n_nodes < 3, "only runs for 3+ MPI ranks")
     def test_dp3m_cpu_pre_condition_exceptions(self):
         self.add_magnetic_particles()
-        self.check_p3m_pre_conditions(espressomd.magnetostatics.DipolarP3M)
+        self.check_p3m_pre_conditions(
+            self.system.magnetostatics,
+            espressomd.magnetostatics.DipolarP3M)
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_cpu_tuning_accuracy_exception(self):
@@ -271,40 +271,42 @@ class Test(ut.TestCase):
         p3m = espressomd.electrostatics.P3M(prefactor=1., mesh=8, alpha=60.,
                                             r_cut=1.25625, accuracy=1e-5)
         with self.assertRaisesRegex(RuntimeError, "failed to reach requested accuracy"):
-            self.system.actors.add(p3m)
+            self.system.electrostatics.solver = p3m
         self.assertFalse(p3m.is_tuned)
-        self.assertEqual(len(self.system.actors), 0)
+        self.assertIsNone(self.system.electrostatics.solver)
 
-    def check_p3m_tuning_errors(self, p3m):
+    def check_p3m_tuning_errors(self, module, p3m):
         # set an incompatible combination of thermostat and integrators
         self.system.integrator.set_isotropic_npt(ext_pressure=2., piston=0.01)
         self.system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=42)
         with self.assertRaisesRegex(RuntimeError, r"tuning failed: an exception was thrown while benchmarking the integration loop"):
-            self.system.actors.add(p3m)
+            getattr(self.system, module).solver = p3m
         self.assertFalse(p3m.is_tuned)
-        self.assertEqual(len(self.system.actors), 0)
+        self.assertIsNone(getattr(self.system, module).solver)
 
     @utx.skipIfMissingFeatures(["P3M", "NPT"])
     def test_p3m_cpu_tuning_errors(self):
         self.add_charged_particles()
         p3m = espressomd.electrostatics.P3M(prefactor=1., accuracy=1e-3)
-        self.check_p3m_tuning_errors(p3m)
+        self.check_p3m_tuning_errors("electrostatics", p3m)
 
     @utx.skipIfMissingFeatures(["DP3M", "NPT"])
     def test_dp3m_cpu_tuning_errors(self):
         self.add_magnetic_particles()
         dp3m = espressomd.magnetostatics.DipolarP3M(
             prefactor=1., accuracy=1e-3)
-        self.check_p3m_tuning_errors(dp3m)
+        self.check_p3m_tuning_errors("magnetostatics", dp3m)
 
-    def check_mmm1d_exceptions(self, mmm1d_class):
-        mmm1d = mmm1d_class(prefactor=1., maxPWerror=1e-2)
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
+    def test_mmm1d_cpu_exceptions(self):
+        self.system.periodicity = (False, False, True)
+        mmm1d = espressomd.electrostatics.MMM1D(prefactor=1., maxPWerror=1e-2)
 
         # check cell system exceptions
         with self.assertRaisesRegex(Exception, "MMM1D requires the N-square cellsystem"):
             self.system.cell_system.set_regular_decomposition()
-            self.system.actors.add(mmm1d)
-        self.assertEqual(len(self.system.actors), 0)
+            self.system.electrostatics.solver = mmm1d
+        self.assertIsNone(self.system.electrostatics.solver)
         self.assertFalse(mmm1d.is_tuned)
         self.system.cell_system.set_n_square()
 
@@ -314,27 +316,12 @@ class Test(ut.TestCase):
                 continue
             self.system.periodicity = periodicity
             with self.assertRaisesRegex(Exception, r"MMM1D requires periodicity \(False, False, True\)"):
-                mmm1d = mmm1d_class(prefactor=1., maxPWerror=1e-2)
-                self.system.actors.add(mmm1d)
-            self.assertEqual(len(self.system.actors), 0)
+                mmm1d = espressomd.electrostatics.MMM1D(
+                    prefactor=1., maxPWerror=1e-2)
+                self.system.electrostatics.solver = mmm1d
+            self.assertIsNone(self.system.electrostatics.solver)
             self.assertFalse(mmm1d.is_tuned)
         self.system.periodicity = (False, False, True)
-
-    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
-    def test_mmm1d_cpu_exceptions(self):
-        self.system.periodicity = (False, False, True)
-        self.check_mmm1d_exceptions(espressomd.electrostatics.MMM1D)
-
-    @utx.skipIfMissingGPU()
-    @utx.skipIfMissingFeatures(["MMM1D_GPU"])
-    def test_mmm1d_gpu_exceptions(self):
-        self.system.periodicity = (False, False, True)
-        self.check_mmm1d_exceptions(espressomd.electrostatics.MMM1DGPU)
-
-        with self.assertRaisesRegex(ValueError, "Parameter 'far_switch_radius' must not be larger than box length"):
-            espressomd.electrostatics.MMM1DGPU(
-                prefactor=1., maxPWerror=1e-2,
-                far_switch_radius=2. * self.system.box_l[2])
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_elc_tuning_exceptions(self):
@@ -351,7 +338,7 @@ class Test(ut.TestCase):
         )
         self.system.part.add(pos=[0., 0., 0.], q=1.)
         with self.assertRaisesRegex(RuntimeError, "ELC does not currently support non-neutral systems"):
-            self.system.actors.add(elc)
+            self.system.electrostatics.solver = elc
 
 
 if __name__ == "__main__":

@@ -24,62 +24,68 @@
  *  The corresponding header file is forces.hpp.
  */
 
-#include "EspressoSystemInterface.hpp"
+#include <config/config.hpp>
 
+#include "BoxGeometry.hpp"
+#include "Particle.hpp"
+#include "ParticleRange.hpp"
+#include "PropagationMode.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
-#include "collision.hpp"
+#include "collision_detection/CollisionDetection.hpp"
 #include "communication.hpp"
-#include "constraints.hpp"
+#include "constraints/Constraints.hpp"
 #include "electrostatics/icc.hpp"
-#include "electrostatics/p3m_gpu.hpp"
-#include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "galilei/ComFixed.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_particle_coupling.hpp"
-#include "immersed_boundaries.hpp"
-#include "integrate.hpp"
-#include "interactions.hpp"
+#include "immersed_boundary/ImmersedBoundaries.hpp"
+#include "integrators/Propagation.hpp"
+#include "lb/particle_coupling.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "rotation.hpp"
+#include "short_range_cabana.hpp"
 #include "short_range_loop.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 #include "thermostats/langevin_inline.hpp"
-#include "virtual_sites.hpp"
+#include "virtual_sites/relative.hpp"
 
-#include <boost/variant.hpp>
+#include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
 
-#include <profiler/profiler.hpp>
+#ifdef ESPRESSO_CALIPER
+#include <caliper/cali.h>
+#endif
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+#include <Cabana_Core.hpp>
+#endif
 
 #include <cassert>
+#include <cmath>
 #include <memory>
-
-std::shared_ptr<ComFixed> comfixed = std::make_shared<ComFixed>();
-
-/** Initialize the forces for a ghost particle */
-inline ParticleForce init_ghost_force(Particle const &) { return {}; }
+#include <span>
+#include <variant>
 
 /** External particle forces */
-inline ParticleForce external_force(Particle const &p) {
+static ParticleForce external_force(Particle const &p) {
   ParticleForce f = {};
 
-#ifdef EXTERNAL_FORCES
+#ifdef ESPRESSO_EXTERNAL_FORCES
   f.f += p.ext_force();
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   f.torque += p.ext_torque();
 #endif
 #endif
 
-#ifdef ENGINE
+#ifdef ESPRESSO_ENGINE
   // apply a swimming force in the direction of
   // the particle's orientation axis
-  if (p.swimming().swimming) {
+  if (p.swimming().swimming and !p.swimming().is_engine_force_on_fluid) {
     f.f += p.swimming().f_swim * p.calc_director();
   }
 #endif
@@ -87,186 +93,325 @@ inline ParticleForce external_force(Particle const &p) {
   return f;
 }
 
-inline ParticleForce thermostat_force(Particle const &p, double time_step,
-                                      double kT) {
-  extern LangevinThermostat langevin;
-  if (!(thermo_switch & THERMO_LANGEVIN)) {
-    return {};
-  }
-
-#ifdef ROTATION
-  return {friction_thermo_langevin(langevin, p, time_step, kT),
-          p.can_rotate() ? convert_vector_body_to_space(
-                               p, friction_thermo_langevin_rotation(
-                                      langevin, p, time_step, kT))
-                         : Utils::Vector3d{}};
-#else
-  return friction_thermo_langevin(langevin, p, time_step, kT);
-#endif
-}
-
-/** Initialize the forces for a real particle */
-inline ParticleForce init_real_particle_force(Particle const &p,
-                                              double time_step, double kT) {
-  return thermostat_force(p, time_step, kT) + external_force(p);
-}
-
-static void init_forces(const ParticleRange &particles,
-                        const ParticleRange &ghost_particles, double time_step,
-                        double kT) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
-  /* The force initialization depends on the used thermostat and the
-     thermodynamic ensemble */
-
-#ifdef NPT
-  npt_reset_instantaneous_virials();
+/** Combined force initialization and Langevin noise application */
+void init_forces_and_thermostat(System::System const &system) {
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
 #endif
 
-  /* initialize forces with Langevin thermostat forces
-     or zero depending on the thermostat
-     set torque to zero for all and rescale quaternions
-  */
-  for (auto &p : particles) {
-    p.f = init_real_particle_force(p, time_step, kT);
-  }
+  auto &cell_structure = *system.cell_structure;
+  auto const &propagation = *system.propagation;
+  auto const &thermostat = *system.thermostat;
+  auto const kT = thermostat.kT;
+  auto const time_step = system.get_time_step();
 
-  /* initialize ghost forces with zero
-     set torque to zero for all and rescale quaternions
-  */
-  for (auto &p : ghost_particles) {
-    p.f = init_ghost_force(p);
-  }
-}
+  // Check if Langevin thermostat is active
+  bool const langevin_active =
+      thermostat.langevin &&
+      (propagation.used_propagations &
+       (PropagationMode::TRANS_LANGEVIN | PropagationMode::ROT_LANGEVIN));
 
-void init_forces_ghosts(const ParticleRange &particles) {
-  for (auto &p : particles) {
-    p.f = init_ghost_force(p);
-  }
-}
+  // Single pass over all local particles
+  cell_structure.for_each_local_particle([&](Particle &p) {
+    // Initialize force with external forces
+    p.force_and_torque() = external_force(p);
 
-void force_calc(CellStructure &cell_structure, double time_step, double kT) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
-
-  auto &espresso_system = EspressoSystemInterface::Instance();
-  espresso_system.update();
-
-#ifdef COLLISION_DETECTION
-  prepare_local_collision_queue();
+    // Apply Langevin noise if thermostat is active
+    if (langevin_active) {
+      auto const &langevin = *thermostat.langevin;
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
+        p.force() += friction_thermo_langevin(langevin, p, time_step, kT);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
+        p.torque() += convert_vector_body_to_space(
+            p, friction_thermo_langevin_rotation(langevin, p, time_step, kT));
 #endif
-  BondBreakage::clear_queue();
-  auto particles = cell_structure.local_particles();
-  auto ghost_particles = cell_structure.ghost_particles();
-#ifdef ELECTROSTATICS
-  if (electrostatics_extension) {
-    if (auto icc = boost::get<std::shared_ptr<ICCStar>>(
-            electrostatics_extension.get_ptr())) {
-      (**icc).iteration(cell_structure, particles, ghost_particles);
     }
+  });
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  cell_structure.reset_local_force();
+#endif
+
+  // Initialize ghost forces (unchanged)
+  init_forces_ghosts(cell_structure);
+}
+
+void init_forces_ghosts(const CellStructure &cell_structure) {
+  cell_structure.for_each_ghost_particle(
+      [](Particle &p) { p.force_and_torque() = {}; });
+}
+
+static void force_capping(CellStructure &cell_structure, double force_cap) {
+  if (force_cap > 0.) {
+    auto const force_cap_sq = Utils::sqr(force_cap);
+    cell_structure.for_each_local_particle(
+        [&force_cap, &force_cap_sq](Particle &p) {
+          auto const force_sq = p.force().norm2();
+          if (force_sq > force_cap_sq) {
+            p.force() *= force_cap / std::sqrt(force_sq);
+          }
+        });
+  }
+}
+
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+static void reinit_dip_fld(CellStructure const &cell_structure) {
+  cell_structure.for_each_local_particle(
+      [](Particle &p) { p.dip_fld() = {0., 0., 0.}; });
+}
+#endif
+
+void System::System::calculate_forces() {
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
+#ifdef ESPRESSO_CUDA
+#ifdef ESPRESSO_CALIPER
+  CALI_MARK_BEGIN("copy_particles_to_GPU");
+#endif
+  gpu.update();
+#ifdef ESPRESSO_CALIPER
+  CALI_MARK_END("copy_particles_to_GPU");
+#endif
+#endif // ESPRESSO_CUDA
+
+#ifdef ESPRESSO_COLLISION_DETECTION
+  collision_detection->clear_queue();
+  auto const collision_detection_cutoff = collision_detection->cutoff();
+#else
+  auto const collision_detection_cutoff = inactive_cutoff;
+#endif
+  bond_breakage->clear_queue();
+  auto particles = cell_structure->local_particles();
+#ifdef ESPRESSO_NPT
+  if (propagation->used_propagations & PropagationMode::TRANS_LANGEVIN_NPT) {
+    // reset virial part of instantaneous pressure
+    npt_inst_pressure->p_vir = Utils::Vector3d{};
   }
 #endif
-  init_forces(particles, ghost_particles, time_step, kT);
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  // reset dipole field
+  reinit_dip_fld(*cell_structure);
+#endif
 
+  // Use combined function instead of two separate calls
+
+  auto const elc_kernel = coulomb.pair_force_elc_kernel();
+  auto const coulomb_kernel = coulomb.pair_force_kernel();
+  auto const dipoles_kernel = dipoles.pair_force_kernel();
+  auto const coulomb_u_kernel = coulomb.pair_energy_kernel();
+  auto *const virial = get_npt_virial();
+
+  // interaction kernel is defined
+  auto bond_kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+                      &bonded_ias = *bonded_ias,
+                      &bond_breakage = *bond_breakage, virial,
+                      &box_geo = *box_geo](Particle &p1, int bond_id,
+                                           std::span<Particle *> partners) {
+    return add_bonded_force(p1, bond_id, partners, bonded_ias, bond_breakage,
+                            box_geo, virial, coulomb_kernel_ptr);
+  };
+
+  VerletCriterion<> const verlet_criterion{*this,
+                                           cell_structure->get_verlet_skin(),
+                                           get_interaction_range(),
+                                           coulomb.cutoff(),
+                                           dipoles.cutoff(),
+                                           collision_detection_cutoff};
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_CALIPER
+  CALI_MARK_BEGIN("convert particles AoS to SoA");
+#endif
+  update_cabana_state(*cell_structure, verlet_criterion,
+                      get_interaction_range(), propagation->integ_switch);
+#ifdef ESPRESSO_CALIPER
+  CALI_MARK_END("convert particles AoS to SoA");
+#endif
+#endif
+#ifdef ESPRESSO_ELECTROSTATICS
+  if (coulomb.impl->extension) {
+    update_icc_particles();
+  }
+#endif // ESPRESSO_ELECTROSTATICS
+  init_forces_and_thermostat(*this);
   calc_long_range_forces(particles);
 
-  auto const elc_kernel = Coulomb::pair_force_elc_kernel();
-  auto const coulomb_kernel = Coulomb::pair_force_kernel();
-  auto const dipoles_kernel = Dipoles::pair_force_kernel();
-
-#ifdef ELECTROSTATICS
-  auto const coulomb_cutoff = Coulomb::cutoff();
-#else
-  auto const coulomb_cutoff = INACTIVE_CUTOFF;
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_CALIPER
+  CALI_MARK_BEGIN("parallel short range");
 #endif
-
-#ifdef DIPOLES
-  auto const dipole_cutoff = Dipoles::cutoff();
-#else
-  auto const dipole_cutoff = INACTIVE_CUTOFF;
+  using execution_space = Kokkos::DefaultExecutionSpace;
+  auto const &unique_particles = cell_structure->get_unique_particles();
+  auto const &local_force = cell_structure->get_local_force();
+#ifdef ESPRESSO_ROTATION
+  auto const &local_torque = cell_structure->get_local_torque();
 #endif
-
-  short_range_loop(
-      [coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
-          Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
-        return add_bonded_force(p1, bond_id, partners, coulomb_kernel_ptr);
-      },
-      [coulomb_kernel_ptr = coulomb_kernel.get_ptr(),
-       dipoles_kernel_ptr = dipoles_kernel.get_ptr(),
-       elc_kernel_ptr = elc_kernel.get_ptr()](Particle &p1, Particle &p2,
-                                              Distance const &d) {
-        add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
-                                  coulomb_kernel_ptr, dipoles_kernel_ptr,
-                                  elc_kernel_ptr);
-#ifdef COLLISION_DETECTION
-        if (collision_params.mode != CollisionModeType::OFF)
-          detect_collision(p1, p2, d.dist2);
+#ifdef ESPRESSO_NPT
+  auto const &local_virial = cell_structure->get_local_virial();
 #endif
-      },
-      maximal_cutoff(n_nodes), maximal_cutoff_bonded(),
-      VerletCriterion<>{skin, interaction_range(), coulomb_cutoff,
-                        dipole_cutoff, collision_detection_cutoff()});
+  auto const &aosoa = cell_structure->get_aosoa();
 
-  Constraints::constraints.add_forces(particles, get_sim_time());
+  ForcesKernel first_neighbor_kernel(
+      *bonded_ias, *nonbonded_ias, get_ptr(coulomb_kernel),
+      get_ptr(dipoles_kernel), get_ptr(elc_kernel), get_ptr(coulomb_u_kernel),
+      *thermostat, *box_geo, unique_particles, local_force,
+#ifdef ESPRESSO_ROTATION
+      local_torque,
+#endif
+#ifdef ESPRESSO_NPT
+      virial, local_virial,
+#endif
+      aosoa);
 
-  if (max_oif_objects) {
-    // There are two global quantities that need to be evaluated:
-    // object's surface and object's volume.
-    for (int i = 0; i < max_oif_objects; i++) {
-      auto const area_volume = boost::mpi::all_reduce(
-          comm_cart, calc_oif_global(i, cell_structure), std::plus<>());
-      auto const oif_part_area = std::abs(area_volume[0]);
-      auto const oif_part_vol = std::abs(area_volume[1]);
-      if (oif_part_area < 1e-100 and oif_part_vol < 1e-100) {
-        break;
-      }
-      add_oif_global_forces(area_volume, i, cell_structure);
+  cabana_short_range(bond_kernel, first_neighbor_kernel, *cell_structure,
+                     get_interaction_range(), bonded_ias->maximal_cutoff(),
+                     verlet_criterion, propagation->integ_switch);
+  // Force and Torque reduction
+  int num_threads = execution_space().concurrency();
+  Kokkos::RangePolicy<execution_space> policy(std::size_t{0},
+                                              unique_particles.size());
+  Kokkos::parallel_for("reduction", policy,
+                       [&local_force,
+#ifdef ESPRESSO_ROTATION
+                        &local_torque,
+#endif
+                        &unique_particles, num_threads](std::size_t const i) {
+                         Utils::Vector3d force{};
+#ifdef ESPRESSO_ROTATION
+                         Utils::Vector3d torque{};
+#endif
+                         for (int tid = 0; tid < num_threads; ++tid) {
+                           force[0] += local_force(i, tid, 0);
+                           force[1] += local_force(i, tid, 1);
+                           force[2] += local_force(i, tid, 2);
+#ifdef ESPRESSO_ROTATION
+                           torque[0] += local_torque(i, tid, 0);
+                           torque[1] += local_torque(i, tid, 1);
+                           torque[2] += local_torque(i, tid, 2);
+#endif
+                         }
+                         unique_particles.at(i)->force() += force;
+#ifdef ESPRESSO_ROTATION
+                         unique_particles.at(i)->torque() += torque;
+#endif
+                       });
+  Kokkos::fence();
+
+#ifdef ESPRESSO_NPT
+  if (virial) {
+    for (int tid = 0; tid < num_threads; ++tid) {
+      (*virial)[0] += local_virial(tid, 0);
+      (*virial)[1] += local_virial(tid, 1);
+      (*virial)[2] += local_virial(tid, 2);
     }
   }
+#endif
+
+#ifdef ESPRESSO_COLLISION_DETECTION
+  auto collision_kernel = [&collision_detection = *collision_detection](
+                              Particle const &p1, Particle const &p2,
+                              Distance const &d) {
+    if (not collision_detection.is_off()) {
+      collision_detection.detect_collision(p1, p2, d.dist2);
+    }
+  };
+  cell_structure->non_bonded_loop(collision_kernel, verlet_criterion);
+#endif
+
+#ifdef ESPRESSO_CALIPER
+  CALI_MARK_END("parallel short range");
+#endif
+
+#else // ESPRESSO_SHARED_MEMORY_PARALLELISM
+
+  auto pair_kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+                      dipoles_kernel_ptr = get_ptr(dipoles_kernel),
+                      elc_kernel_ptr = get_ptr(elc_kernel),
+                      coulomb_u_kernel_ptr = get_ptr(coulomb_u_kernel),
+                      &nonbonded_ias = *nonbonded_ias,
+                      &thermostat = *thermostat, &bonded_ias = *bonded_ias,
+                      virial,
+#ifdef ESPRESSO_COLLISION_DETECTION
+                      &collision_detection = *collision_detection,
+#endif
+                      &box_geo = *box_geo](Particle &p1, Particle &p2,
+                                           Distance const &d) {
+    auto const &ia_params = nonbonded_ias.get_ia_param(p1.type(), p2.type());
+    add_non_bonded_pair_force(
+        p1, p2, d.vec21, sqrt(d.dist2), d.dist2, p1.q() * p2.q(), ia_params,
+        thermostat, box_geo, bonded_ias, virial, coulomb_kernel_ptr,
+        dipoles_kernel_ptr, elc_kernel_ptr, coulomb_u_kernel_ptr);
+#ifdef ESPRESSO_COLLISION_DETECTION
+    if (not collision_detection.is_off()) {
+      collision_detection.detect_collision(p1, p2, d.dist2);
+    }
+#endif
+  };
+
+  short_range_loop(bond_kernel, pair_kernel, *cell_structure, maximal_cutoff(),
+                   bonded_ias->maximal_cutoff(), verlet_criterion);
+
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
+
+  constraints->add_forces(particles, get_sim_time());
+  oif_global->calculate_forces();
 
   // Must be done here. Forces need to be ghost-communicated
-  immersed_boundaries.volume_conservation(cell_structure);
+  immersed_boundaries->volume_conservation(*cell_structure);
 
-  lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
-                                         ghost_particles, time_step);
+  if (thermostat->lb and (propagation->used_propagations &
+                          PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE)) {
+    lb_couple_particles();
+  }
 
-#ifdef CUDA
-  copy_forces_from_GPU(particles, this_node);
+#ifdef ESPRESSO_CUDA
+#ifdef ESPRESSO_CALIPER
+  CALI_MARK_BEGIN("copy_forces_from_GPU");
+#endif
+  gpu.copy_forces_to_host(particles, this_node);
+
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  gpu.copy_dip_fld_to_host(particles, this_node);
 #endif
 
-// VIRTUAL_SITES distribute forces
-#ifdef VIRTUAL_SITES
-  virtual_sites()->back_transfer_forces_and_torques();
+#ifdef ESPRESSO_CALIPER
+  CALI_MARK_END("copy_forces_from_GPU");
+#endif
+#endif // ESPRESSO_CUDA
+
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
+  if (propagation->used_propagations &
+      (PropagationMode::TRANS_VS_RELATIVE | PropagationMode::ROT_VS_RELATIVE)) {
+    vs_relative_back_transfer_forces_and_torques(*cell_structure);
+  }
 #endif
 
-  // Communication Step: ghost forces
-  cell_structure.ghosts_reduce_forces();
+  // Communication step: ghost forces
+  cell_structure->ghosts_reduce_forces();
 
   // should be pretty late, since it needs to zero out the total force
-  comfixed->apply(comm_cart, particles);
+  comfixed->apply(particles);
 
   // Needs to be the last one to be effective
-  forcecap_cap(particles);
+  force_capping(*cell_structure, force_cap);
 
   // mark that forces are now up-to-date
-  recalc_forces = false;
+  propagation->recalc_forces = false;
 }
 
 void calc_long_range_forces(const ParticleRange &particles) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
-#ifdef ELECTROSTATICS
-  /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_long_range_force(particles);
-
-#endif // ELECTROSTATICS
-
-#ifdef DIPOLES
-  /* calculate k-space part of the magnetostatic interaction. */
-  Dipoles::calc_long_range_force(particles);
-#endif // DIPOLES
-}
-
-#ifdef NPT
-void npt_add_virial_force_contribution(const Utils::Vector3d &force,
-                                       const Utils::Vector3d &d) {
-  npt_add_virial_contribution(force, d);
-}
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
 #endif
+
+#ifdef ESPRESSO_ELECTROSTATICS
+  /* calculate k-space part of electrostatic interaction. */
+  Coulomb::get_coulomb().calc_long_range_force(particles);
+#endif // ESPRESSO_ELECTROSTATICS
+
+#ifdef ESPRESSO_DIPOLES
+  /* calculate k-space part of the magnetostatic interaction. */
+  Dipoles::get_dipoles().calc_long_range_force(particles);
+#endif // ESPRESSO_DIPOLES
+}

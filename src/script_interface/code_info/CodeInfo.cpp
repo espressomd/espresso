@@ -20,38 +20,73 @@
 #include "CodeInfo.hpp"
 
 #include "config/config-features.hpp"
+#include "config/config-features.impl.hpp"
 #include "config/version.hpp"
 #include "script_interface/scafacos/scafacos.hpp"
 
+#include <boost/algorithm/string/join.hpp>
+
+#include <cstddef>
+#include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace ScriptInterface {
 namespace CodeInfo {
 
-static Variant get_feature_list(char const *const ptr[], unsigned int len) {
-  return make_vector_of_variants(std::vector<std::string>{ptr, ptr + len});
+static auto get_feature_vector(char const *const ptr[], std::size_t len) {
+  return std::vector<std::string>{ptr, ptr + len};
 }
 
-Variant CodeInfo::do_call_method(std::string const &name,
-                                 VariantMap const &parameters) {
+static auto get_feature_set(char const *const ptr[], std::size_t len) {
+  return std::unordered_set<std::string>(ptr, ptr + len);
+}
+
+Variant CodeInfo::do_call_method(std::string const &name, VariantMap const &) {
   if (name == "features") {
-    return get_feature_list(FEATURES, NUM_FEATURES);
+    return make_vector_of_variants(get_feature_vector(FEATURES, NUM_FEATURES));
   }
   if (name == "all_features") {
-    return get_feature_list(FEATURES_ALL, NUM_FEATURES_ALL);
+    return make_vector_of_variants(
+        get_feature_vector(FEATURES_ALL, NUM_FEATURES_ALL));
   }
   if (name == "build_type") {
     return std::string(ESPRESSO_BUILD_TYPE);
   }
   if (name == "scafacos_methods") {
-#ifdef SCAFACOS
+#ifdef ESPRESSO_SCAFACOS
     return make_vector_of_variants(Scafacos::available_methods());
-#else  // SCAFACOS
+#else  // ESPRESSO_SCAFACOS
     return make_vector_of_variants(std::vector<std::string>(0));
-#endif // SCAFACOS
+#endif // ESPRESSO_SCAFACOS
+  }
+  if (name == "has_fast_math") {
+#if defined(__FAST_MATH__)
+    return true;
+#else
+    return false;
+#endif
   }
   return {};
+}
+
+void check_features(std::vector<std::string> const &features) {
+  auto const allowed = get_feature_set(FEATURES_ALL, NUM_FEATURES_ALL);
+  auto const compiled_features = get_feature_set(FEATURES, NUM_FEATURES);
+  std::vector<std::string> missing_features{};
+  for (auto const &feature : features) {
+    if (not allowed.contains(feature)) {
+      throw std::runtime_error("Unknown feature '" + feature + "'");
+    }
+    if (not compiled_features.contains(feature)) {
+      missing_features.emplace_back(feature);
+    }
+  }
+  if (not missing_features.empty()) {
+    throw std::runtime_error("Missing features " +
+                             boost::algorithm::join(missing_features, ", "));
+  }
 }
 
 } // namespace CodeInfo

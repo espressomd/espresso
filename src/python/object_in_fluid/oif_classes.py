@@ -1147,7 +1147,7 @@ class OifCell:
         if (el_forces[0] == 1) or (el_forces[5] == 1) or (
                 f_metric[0] == 1) or (f_metric[5] == 1):
             # initialize list
-            stretching_forces_list = np.zeros((self.mesh.points, 3))
+            stretching_forces_list = np.zeros((len(self.mesh.points), 3))
             # calculation uses edges, but results are stored for nodes
             for e in self.mesh.edges:
                 a_current_pos = e.A.get_pos()
@@ -1171,7 +1171,7 @@ class OifCell:
         if (el_forces[1] == 1) or (el_forces[5] == 1) or (
                 f_metric[1] == 1) or (f_metric[5] == 1):
             # initialize list
-            bending_forces_list = np.zeros((self.mesh.points, 3))
+            bending_forces_list = np.zeros((len(self.mesh.points), 3))
             # calculation uses bending incidences, but results are stored for
             # nodes
             for angle in self.mesh.angles:
@@ -1209,7 +1209,7 @@ class OifCell:
         if (el_forces[2] == 1) or (el_forces[5] == 1) or (
                 f_metric[2] == 1) or (f_metric[5] == 1):
             # initialize list
-            local_area_forces_list = np.zeros((self.mesh.points, 3))
+            local_area_forces_list = np.zeros((len(self.mesh.points), 3))
             # calculation uses triangles, but results are stored for nodes
             for t in self.mesh.triangles:
                 a_current_pos = t.A.get_pos()
@@ -1243,9 +1243,7 @@ class OifCell:
         if (el_forces[3] == 1) or (el_forces[5] == 1) or (
                 f_metric[3] == 1) or (f_metric[5] == 1):
             # initialize list
-            global_area_forces_list = []
-            for _ in self.mesh.points:
-                global_area_forces_list.append([0.0, 0.0, 0.0])
+            global_area_forces_list = np.zeros((len(self.mesh.points), 3))
             # calculation uses triangles, but results are stored for nodes
             for t in self.mesh.triangles:
                 a_current_pos = t.A.get_pos()
@@ -1275,7 +1273,7 @@ class OifCell:
         if (el_forces[4] == 1) or (el_forces[5] == 1) or (
                 f_metric[4] == 1) or (f_metric[5] == 1):
             # initialize list
-            volume_forces_list = np.zeros((self.mesh.points, 3))
+            volume_forces_list = np.zeros((len(self.mesh.points), 3))
             # calculation uses triangles, but results are stored for nodes
             for t in self.mesh.triangles:
                 a_current_pos = t.A.get_pos()
@@ -1344,7 +1342,7 @@ class OifCell:
 
         # output vtk (folded)
         if vtk_file is not None:
-            if el_forces == (0, 0, 0, 0, 0, 0):
+            if sum(el_forces) == 0:
                 raise Exception("OifCell: elastic_forces: The option elastic_forces was not used. "
                                 "Nothing to output to vtk file.")
             self.output_vtk_pos_folded(vtk_file)
@@ -1405,8 +1403,7 @@ class OifCell:
                     file_name=raw_data_file, data=elastic_forces_list)
 
         # return f_metric
-        if f_metric[0] + f_metric[1] + f_metric[2] + \
-                f_metric[3] + f_metric[4] + f_metric[5] > 0:
+        if sum(f_metric) > 0:
             results = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
             if f_metric[0] == 1:
                 results[0] = ks_f_metric

@@ -1,0 +1,66 @@
+/* Custom CSS for doxygen 1.9.1 */
+
+body, table, div, p, dl {
+	font: 400 14px/22px Lato,Roboto,sans-serif;
+}
+
+p.reference, p.definition {
+	font: 400 14px/22px Lato,Roboto,sans-serif;
+}
+
+.title {
+	font: 400 14px/28px Lato,Roboto,sans-serif;
+}
+
+pre.fragment {
+	font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace, fixed;
+}
+
+div.line {
+	font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace, fixed;
+}
+
+.overload {
+	font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace, fixed;
+}
+
+.params .paramdir, .tparams .paramdir {
+	font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace, fixed;
+}
+
+table.directory {
+	font: 400 14px Lato,Roboto,sans-serif;
+}
+
+.navpath li.navelem a {
+	font-family: Lato,Roboto,sans-serif;
+}
+
+#projectname {
+	font: 300% Tahoma, Lato,Roboto,sans-serif;
+}
+
+#projectbrief {
+	font: 120% Tahoma, Lato,Roboto,sans-serif;
+}
+
+#projectnumber {
+	font: 50% Tahoma, Lato,Roboto,sans-serif;
+}
+
+div.toc li {
+	font: 10px/1.2 Verdana,DejaVu Sans,Geneva,sans-serif;
+}
+
+div.toc h3 {
+	font: bold 12px/1.2 Arial,FreeSans,sans-serif;
+}
+
+#powerTip div {
+	font: 12px/16px Lato,Roboto,sans-serif;
+}
+
+td#projectlogo img {
+	max-height:68px;
+	max-width:600px;
+}

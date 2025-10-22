@@ -197,8 +197,9 @@ A thermalized bond can be instantiated via
     thermalized_bond = espressomd.interactions.ThermalizedBond(
         temp_com=<float>, gamma_com=<float>,
         temp_distance=<float>, gamma_distance=<float>,
-        r_cut=<float>, seed=<int>)
+        r_cut=<float>)
     system.bonded_inter.add(thermalized_bond)
+    system.thermostat.set_thermalized_bond(seed=<int>)
 
 This bond can be used to apply Langevin thermalization on the centre of mass
 and the distance of a particle pair.  Each thermostat can have its own

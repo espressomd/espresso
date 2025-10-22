@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,8 +18,6 @@
 #
 
 from .script_interface import ScriptInterfaceHelper, script_interface_register
-from .interactions import BondedInteraction, BondedInteractions
-from .code_features import assert_features
 
 
 @script_interface_register
@@ -34,113 +32,127 @@ class CollisionDetection(ScriptInterfaceHelper):
     the :attr:`~espressomd.system.System.collision_detection` attribute
     of the system class to access the collision detection.
 
-    Use method :meth:`~espressomd.collision_detection.CollisionDetection.set_params`
-    to change the parameters of the collision detection.
+    Attributes
+    ----------
+    protocol :
+        Protocol instance, or ``None`` if not set.
 
     """
 
     _so_name = "CollisionDetection::CollisionDetection"
-
-    def __init__(self, **kwargs):
-        assert_features("COLLISION_DETECTION")
-        if "sip" in kwargs:
-            super().__init__(**kwargs)
-            return
-        super().__init__()
-        self.set_params(**kwargs)
-
-    # Do not allow setting of individual attributes
-    def __setattr__(self, *args, **kwargs):
-        raise Exception(
-            "Please set all parameters at once via collision_detection.set_params()")
-
-    def set_params(self, **kwargs):
-        """
-        Set the parameters for the collision detection
-
-        See :ref:`Creating bonds when particles collide` for detailed instructions.
+    _so_features = ("COLLISION_DETECTION",)
 
 
-        Parameters
-        ----------
-        mode : :obj:`str`, {"off", "bind_centers", "bind_at_point_of_collision", "bind_three_particles", "glue_to_surface"}
-            Collision detection mode
+@script_interface_register
+class Off(ScriptInterfaceHelper):
 
-        distance : :obj:`float`
-            Distance below which a pair of particles is considered in the
-            collision detection
+    """
+    Disable collision detection.
+    """
 
-        bond_centers : :obj:`espressomd.interactions.BondedInteraction`
-            Bond to add between the colliding particles
+    _so_name = "CollisionDetection::Off"
+    _so_features = ("COLLISION_DETECTION",)
 
-        bond_vs : :obj:`espressomd.interactions.BondedInteraction`
-            Bond to add between virtual sites (for modes using virtual sites)
 
-        part_type_vs : :obj:`int`
-            Particle type of the virtual sites being created on collision
-            (virtual sites based modes)
+@script_interface_register
+class BindCenters(ScriptInterfaceHelper):
 
-        part_type_to_be_glued : :obj:`int`
-            particle type for ``"glue_to_surface"`` mode. See user guide.
+    """
+    Add a pair bond between two particles upon collision.
+    Particles can still slide around their contact point.
 
-        part_type_to_attach_vs_to : :obj:`int`
-            particle type for ``"glue_to_surface"`` mode. See user guide.
+    Parameters
+    ----------
+    distance : :obj:`float`
+        Distance below which two particles are considered to have collided.
 
-        part_type_after_glueing : :obj:`int`
-            particle type for ``"glue_to_surface"`` mode. See user guide.
+    bond_centers : :obj:`espressomd.interactions.BondedInteraction`
+        Bond to add between the colliding particles.
 
-        distance_glued_particle_to_vs : :obj:`float`
-            Distance for ``"glue_to_surface"`` mode. See user guide.
+    """
+    _so_name = "CollisionDetection::BindCenters"
+    _so_features = ("COLLISION_DETECTION",)
 
-        bond_three_particles : :obj:`espressomd.interactions.BondedInteraction`
-            First angular bond for the ``"bind_three_particles"`` mode. See
-            user guide
 
-        three_particle_binding_angle_resolution : :obj:`int`
-            Resolution for the angular bonds (mode ``"bind_three_particles"``).
-            Resolution+1 bonds are needed to accommodate the case of 180 degrees
-            angles
+@script_interface_register
+class BindAtPointOfCollision(ScriptInterfaceHelper):
 
-        """
+    """
+    Add a pair bond between two particles upon collision, and two extra
+    pair bonds or angle bonds with two automatically-generated virtual sites.
+    This protocol prevents sliding of the particles at the contact point.
 
-        if "mode" not in kwargs:
-            raise ValueError(
-                "Collision mode must be specified via the 'mode' argument")
-        # Convert bonds to bond ids
-        for name in ["bond_centers", "bond_vs", "bond_three_particle_binding"]:
-            if name in kwargs:
-                if isinstance(kwargs[name], BondedInteraction):
-                    kwargs[name] = kwargs[name]._bond_id
-        self.call_method('instantiate', **kwargs)
+    Parameters
+    ----------
+    distance : :obj:`float`
+        Distance below which two particles are considered to have collided.
 
-    def get_parameter(self, name):
-        """Gets a single parameter from the collision detection."""
+    bond_centers : :obj:`espressomd.interactions.BondedInteraction`
+        Bond to add between the colliding particles.
 
-        value = super().get_parameter(name)
-        if name in ["bond_centers", "bond_vs", "bond_three_particle_binding"]:
-            if value == -1:  # Not defined
-                value = None
-            else:
-                value = BondedInteractions()[value]
-        return value
+    bond_vs : :obj:`espressomd.interactions.BondedInteraction`
+        Bond to add between virtual sites.
 
-    def get_params(self):
-        """Returns the parameters of the collision detection as dict.
+    part_type_vs : :obj:`int`
+        Particle type of the virtual sites created on collision.
 
-        """
-        params = {}
-        mode = super().get_parameter("mode")
-        for name in self.call_method("params_for_mode", mode=mode):
-            params[name] = self.get_parameter(name)
-        return params
+    vs_placement : :obj:`float`
+        Barycenter of the virtual sites. A value of 0 means that the virtual sites
+        are placed at the same position as the colliding particles on which they are based.
+        A value of 0.5 will result in the virtual sites being placed at the mid-point between
+        the two colliding particles. A value of 1 will result the virtual site associated to
+        the first colliding particle to be placed at the position of the second colliding particle.
+        In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites
+        should have an equilibrium length of zero.
 
-    def __reduce__(self):
-        so_callback, so_callback_args = super().__reduce__()
-        return (CollisionDetection._restore_object,
-                (so_callback, so_callback_args, self.get_params()))
+    """
+    _so_name = "CollisionDetection::BindAtPointOfCollision"
+    _so_features = ("COLLISION_DETECTION", "VIRTUAL_SITES_RELATIVE")
 
-    @classmethod
-    def _restore_object(cls, so_callback, so_callback_args, state):
-        so = so_callback(*so_callback_args)
-        so.set_params(**state)
-        return so
+
+@script_interface_register
+class GlueToSurface(ScriptInterfaceHelper):
+
+    """
+    Attach small particles to the surface of a larger particle.
+
+    It is asymmetric: several small particles can be bound to a large particle
+    but not vice versa. It can be made irreversible: the small particles can
+    change type after collision to become *inert*.
+
+    On collision, a single virtual site is placed and related to the large
+    particle. Then a bond (``bond_centers``) connects the large and the small
+    particle. A second bond (``bond_vs``) connects the virtual site and
+    the small particle.
+
+    Parameters
+    ----------
+    distance : :obj:`float`
+        Distance below which two particles are considered to have collided.
+
+    bond_centers : :obj:`espressomd.interactions.BondedInteraction`
+        Bond to add between the colliding particles.
+
+    bond_vs : :obj:`espressomd.interactions.BondedInteraction`
+        Bond to add between virtual sites.
+
+    part_type_vs : :obj:`int`
+        Particle type of the virtual sites created on collision.
+
+    part_type_to_attach_vs_to : :obj:`int`
+        Type of the large particle.
+
+    part_type_to_be_glued : :obj:`int`
+        Type of the small particle.
+
+    part_type_after_glueing : :obj:`int`
+        Type of the small particle after collision. If different from
+        ``part_type_to_be_glued``, the bond is irreversible.
+
+    distance_glued_particle_to_vs : :obj:`float`
+        Distance of the virtual site to the small particle,
+        as a fraction of the pair distance.
+
+    """
+    _so_name = "CollisionDetection::GlueToSurface"
+    _so_features = ("COLLISION_DETECTION", "VIRTUAL_SITES_RELATIVE")

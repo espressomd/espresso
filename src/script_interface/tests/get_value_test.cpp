@@ -25,6 +25,7 @@
 #include "script_interface/get_value.hpp"
 
 #include <cassert>
+#include <filesystem>
 #include <memory>
 #include <regex>
 #include <stdexcept>
@@ -37,10 +38,16 @@ BOOST_AUTO_TEST_CASE(default_case) {
   using ScriptInterface::Variant;
 
   {
-    auto const s = std::string{"Abc"};
+    auto const s = std::string{"gemäß"};
     auto const v = Variant(s);
 
     BOOST_CHECK_EQUAL(get_value<std::string>(v), s);
+  }
+  {
+    auto const p = std::filesystem::path("ab/cd/ef/gemäß.txt");
+    auto const v = Variant(p);
+
+    BOOST_CHECK_EQUAL(get_value<std::filesystem::path>(v), p);
   }
   {
     auto const vec = Utils::Vector<double, 3>{1., 2., 3.};
@@ -49,6 +56,14 @@ BOOST_AUTO_TEST_CASE(default_case) {
     BOOST_CHECK_EQUAL((get_value<Utils::Vector<double, 3>>(var)), vec);
     BOOST_CHECK_EQUAL((get_value<Utils::Vector3<double>>(var)), vec);
     BOOST_CHECK_EQUAL((get_value<Utils::Vector3d>(var)), vec);
+  }
+  {
+    auto const vec = Utils::Vector3i{1, 2, 3};
+    auto const var = Variant{vec};
+    auto const ref = static_cast<Utils::Vector3d>(vec);
+
+    BOOST_CHECK_EQUAL((get_value<Utils::Vector3d>(vec)), ref);
+    BOOST_CHECK_EQUAL((get_value<Utils::Vector3d>(var)), ref);
   }
 }
 
@@ -127,7 +142,7 @@ BOOST_AUTO_TEST_CASE(get_value_from_map) {
   using ScriptInterface::Variant;
   using ScriptInterface::VariantMap;
 
-  VariantMap map{{"a", 13}, {"e", 3.1}, {"f", "s"}};
+  VariantMap map{{"a", 13}, {"e", 3.1}, {"f", std::string("s")}};
 
   BOOST_CHECK(3.1 == get_value<double>(map, "e"));
   BOOST_CHECK(13 == get_value_or(map, "a", -1));
@@ -161,8 +176,9 @@ BOOST_AUTO_TEST_CASE(unordered_map) {
   }
 }
 
-auto exception_message_predicate(std::string const &pattern) {
-  return [=](std::exception const &ex) {
+struct exception_message_predicate {
+  std::string pattern;
+  auto operator()(std::exception const &ex) const {
     boost::test_tools::predicate_result result = true;
     std::string const what = ex.what();
     std::smatch match;
@@ -172,15 +188,15 @@ auto exception_message_predicate(std::string const &pattern) {
                        << "doesn't match pattern \"" << pattern << "\"";
     }
     return result;
-  };
-}
+  }
+};
 
 BOOST_AUTO_TEST_CASE(check_exceptions) {
   using ScriptInterface::get_value;
   using ScriptInterface::Variant;
 
-  assert(!!exception_message_predicate("A")(std::runtime_error("A")));
-  assert(!exception_message_predicate("A")(std::runtime_error("B")));
+  assert(!!exception_message_predicate{"A"}(std::runtime_error("A")));
+  assert(!exception_message_predicate{"A"}(std::runtime_error("B")));
 
   using so_ptr_t = std::shared_ptr<ScriptInterface::ObjectHandle>;
 
@@ -195,9 +211,9 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
     auto const obj_variant_pattern = Utils::demangle<so_ptr_t>();
     auto const what = msg_prefix + "'" + obj_variant_pattern + "'";
     auto const predicate_nullptr =
-        exception_message_predicate(what + " is a null pointer");
+        exception_message_predicate{what + " is a null pointer"};
     auto const predicate_conversion =
-        exception_message_predicate(what + " is not convertible to 'int'");
+        exception_message_predicate{what + " is not convertible to 'int'"};
     BOOST_CHECK_EXCEPTION(get_value<so_ptr_t>(obj_variant), std::exception,
                           predicate_nullptr);
     BOOST_CHECK_EXCEPTION(get_value<int>(obj_variant), std::exception,
@@ -208,14 +224,14 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
     auto const int_variant = Variant{1.5};
     auto const vec_variant = Variant{std::vector<Variant>{{so_obj}}};
     auto const vec_variant_pattern = "std::vector<" + variant_sip_name + ">";
-    auto const what = msg_prefix + "'" + vec_variant_pattern + "'";
-    auto const predicate_nullptr = exception_message_predicate(
-        what + " contains a value that is a null pointer");
-    auto const predicate_conversion_containee = exception_message_predicate(
+    auto const what = msg_prefix + "'" + vec_variant_pattern + "\\{.size=1\\}'";
+    auto const predicate_nullptr = exception_message_predicate{
+        what + " contains a value that is a null pointer"};
+    auto const predicate_conversion_containee = exception_message_predicate{
         what + " is not convertible to 'std::vector<int>' because"
-               " it contains a value that is not convertible to 'int'");
-    auto const predicate_conversion = exception_message_predicate(
-        msg_prefix + "'double' is not convertible to 'std::vector<int>'");
+               " it contains a value that is not convertible to 'int'"};
+    auto const predicate_conversion = exception_message_predicate{
+        msg_prefix + "'double' is not convertible to 'std::vector<int>'"};
     BOOST_CHECK_EXCEPTION(get_value<std::vector<so_ptr_t>>(vec_variant),
                           std::exception, predicate_nullptr);
     BOOST_CHECK_EXCEPTION(get_value<std::vector<int>>(vec_variant),
@@ -230,12 +246,12 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
     auto const map_variant_pattern =
         "std::unordered_map<int, " + variant_sip_name + ">";
     auto const what = msg_prefix + "'" + map_variant_pattern + "'";
-    auto const predicate_nullptr = exception_message_predicate(
-        what + " contains a value that is a null pointer");
-    auto const predicate_conversion = exception_message_predicate(
+    auto const predicate_nullptr = exception_message_predicate{
+        what + " contains a value that is a null pointer"};
+    auto const predicate_conversion = exception_message_predicate{
         what +
         " is not convertible to 'std::unordered_map<int, double>' because"
-        " it contains a value that is not convertible to 'int' or 'double'");
+        " it contains a value that is not convertible to 'int' or 'double'"};
     BOOST_CHECK_EXCEPTION(
         (get_value<std::unordered_map<int, so_ptr_t>>(map_variant)),
         std::exception, predicate_nullptr);
@@ -250,13 +266,13 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
     auto const map_variant_pattern =
         "std::unordered_map<std::string, " + variant_sip_name + ">";
     auto const what = msg_prefix + "'" + map_variant_pattern + "'";
-    auto const predicate_nullptr = exception_message_predicate(
-        what + " contains a value that is a null pointer");
-    auto const predicate_conversion = exception_message_predicate(
+    auto const predicate_nullptr = exception_message_predicate{
+        what + " contains a value that is a null pointer"};
+    auto const predicate_conversion = exception_message_predicate{
         what +
         " is not convertible to 'std::unordered_map<std::string, int>' because"
         " it contains a value that is not convertible to 'std::string' or "
-        "'int'");
+        "'int'"};
     BOOST_CHECK_EXCEPTION(
         (get_value<std::unordered_map<std::string, so_ptr_t>>(map_variant)),
         std::exception, predicate_nullptr);

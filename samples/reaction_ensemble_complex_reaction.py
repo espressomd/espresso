@@ -100,10 +100,10 @@ numbers = {type_A: [], type_B: [], type_C: [], type_D: [], type_E: []}
 RE.set_non_interacting_type(type=max(types) + 1)
 
 # warmup
-RE.reaction(reaction_steps=200)
+RE.reaction(steps=200)
 
 for i in range(200):
-    RE.reaction(reaction_steps=10)
+    RE.reaction(steps=10)
     for _type in types:
         numbers[_type].append(system.number_of_particles(type=_type))
 
@@ -148,7 +148,9 @@ concentrations_numerical = {
 
 print("concentrations sampled with the reaction ensemble vs. analytical solutions:")
 for ptype in types:
-    print(f"  type {types_name[ptype]}: {concentrations[ptype]:.4f} +/- {concentrations_95ci[ptype]:.4f} mol/l (95% CI), expected: {concentrations_numerical[ptype]:.4f} mol/l")
+    print(f"  type {types_name[ptype]}: {concentrations[ptype]:.4f} "
+          f"+/- {concentrations_95ci[ptype]:.4f} mol/l (95% CI), "
+          f"expected: {concentrations_numerical[ptype]:.4f} mol/l")
 
 K_sim = ((concentrations[type_C] / c_ref_in_mol_per_l)**nu_C
          * (concentrations[type_D] / c_ref_in_mol_per_l)**nu_D

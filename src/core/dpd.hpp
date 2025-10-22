@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_DPD_HPP
-#define ESPRESSO_SRC_CORE_DPD_HPP
+
+#pragma once
+
 /** \file
  *  Routines to use DPD as thermostat or pair force @cite soddemann03a
  *
@@ -28,21 +29,36 @@
 
 #include "config/config.hpp"
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
+
+// Forward declaration
+namespace boost::mpi {
+class communicator;
+}
 
 struct IA_parameters;
 
 void dpd_init(double kT, double time_step);
 
-Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
-                               IA_parameters const &ia_params,
-                               Utils::Vector3d const &d, double dist,
-                               double dist2);
-Utils::Vector9d dpd_stress();
+Utils::Vector3d
+dpd_pair_force(Utils::Vector3d const &p1_position,
+               Utils::Vector3d const &p1_velocity, int const &p1_id,
+               Utils::Vector3d const &p2_position,
+               Utils::Vector3d const &p2_velocity, int const &p2_id,
+               DPDThermostat const &dpd, BoxGeometry const &box_geo,
+               IA_parameters const &ia_params, Utils::Vector3d const &d,
+               double dist, double dist2);
+Utils::Vector9d dpd_stress(boost::mpi::communicator const &comm);
+/**
+ * @brief Local contribution to the pressure tensor.
+ * Needs to be rescaled by the box volume.
+ */
+Utils::Vector9d dpd_pressure_local();
 
-#endif // DPD
-#endif
+#endif // ESPRESSO_DPD

@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SCRIPT_INTERFACE_OBJECTMANAGER_HPP
-#define ESPRESSO_SCRIPT_INTERFACE_OBJECTMANAGER_HPP
+
+#pragma once
 
 /** @file
  *
@@ -30,6 +30,7 @@
 #include "Context.hpp"
 #include "LocalContext.hpp"
 #include "ObjectHandle.hpp"
+#include "ObjectId.hpp"
 #include "ParallelExceptionHandler.hpp"
 #include "packed_variant.hpp"
 
@@ -44,6 +45,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 
@@ -63,7 +65,7 @@ namespace ScriptInterface {
  * the remote copies are also destroyed.
  */
 class GlobalContext : public Context {
-  using ObjectId = std::size_t;
+  using ObjectId = ScriptInterface::ObjectId;
 
   /* Instances on this node that are managed by the
    * head node. */
@@ -71,8 +73,8 @@ class GlobalContext : public Context {
 
   std::shared_ptr<LocalContext> m_node_local_context;
 
-  bool m_is_head_node;
   boost::mpi::communicator const &m_comm;
+  bool m_is_head_node;
 
   ParallelExceptionHandler m_parallel_exception_handler;
 
@@ -88,28 +90,28 @@ class GlobalContext : public Context {
   Communication::CallbackHandle<ObjectId> cb_delete_handle;
 
 public:
-  GlobalContext(Communication::MpiCallbacks &callbacks,
+  GlobalContext(std::shared_ptr<Communication::MpiCallbacks> const &callbacks,
                 std::shared_ptr<LocalContext> node_local_context)
       : m_local_objects(), m_node_local_context(std::move(node_local_context)),
-        m_is_head_node(callbacks.comm().rank() == 0), m_comm(callbacks.comm()),
+        m_comm(callbacks->comm()), m_is_head_node(m_comm.rank() == 0),
         // NOLINTNEXTLINE(bugprone-throw-keyword-missing)
-        m_parallel_exception_handler(callbacks.comm()),
-        cb_make_handle(&callbacks,
+        m_parallel_exception_handler(m_comm),
+        cb_make_handle(callbacks,
                        [this](ObjectId id, const std::string &name,
                               const PackedMap &parameters) {
                          make_handle(id, name, parameters);
                        }),
-        cb_set_parameter(&callbacks,
+        cb_set_parameter(callbacks,
                          [this](ObjectId id, std::string const &name,
                                 PackedVariant const &value) {
                            set_parameter(id, name, value);
                          }),
-        cb_call_method(&callbacks,
+        cb_call_method(callbacks,
                        [this](ObjectId id, std::string const &name,
                               PackedMap const &arguments) {
                          call_method(id, name, arguments);
                        }),
-        cb_delete_handle(&callbacks,
+        cb_delete_handle(callbacks,
                          [this](ObjectId id) { delete_handle(id); }) {}
 
 private:
@@ -165,11 +167,8 @@ public:
    */
   std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) override;
-  std::shared_ptr<ObjectHandle>
-  make_shared_local(std::string const &name,
-                    VariantMap const &parameters) override;
 
-  boost::string_ref name(const ObjectHandle *o) const override;
+  std::string_view name(const ObjectHandle *o) const override;
 
   bool is_head_node() const override { return m_is_head_node; }
   void parallel_try_catch(std::function<void()> const &cb) const override {
@@ -178,5 +177,3 @@ public:
   boost::mpi::communicator const &get_comm() const override { return m_comm; }
 };
 } // namespace ScriptInterface
-
-#endif

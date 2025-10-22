@@ -22,6 +22,8 @@ Set up a lattice-Boltzmann fluid and apply an external force density on it.
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
+import espressomd
+import espressomd.lb
 
 parser = argparse.ArgumentParser(epilog=__doc__)
 group = parser.add_mutually_exclusive_group()
@@ -36,7 +38,7 @@ print("""
 =======================================================
 """)
 
-required_features = ["EXTERNAL_FORCES"]
+required_features = ["WALBERLA", "EXTERNAL_FORCES"]
 if args.gpu:
     print("Using GPU implementation")
     required_features.append("CUDA")
@@ -45,8 +47,6 @@ else:
     if not args.cpu:
         print("(select the implementation with --cpu or --gpu)")
 
-import espressomd
-import espressomd.lb
 espressomd.assert_features(required_features)
 
 
@@ -59,14 +59,15 @@ system.cell_system.skin = 0.1
 particle = system.part.add(pos=[box_l / 2.0] * 3, fix=[True, True, True])
 
 
-lb_params = {'agrid': 1, 'dens': 1, 'visc': 1, 'tau': 0.01,
+lb_params = {'agrid': 1, 'density': 1, 'kinematic_viscosity': 1, 'tau': 0.01,
+             'single_precision': False,
              'ext_force_density': [0, 0, -1.0 / (box_l**3)]}
 
 if args.gpu:
-    lbf = espressomd.lb.LBFluidGPU(**lb_params)
+    lbf = espressomd.lb.LBFluidWalberlaGPU(**lb_params)
 else:
-    lbf = espressomd.lb.LBFluid(**lb_params)
-system.actors.add(lbf)
+    lbf = espressomd.lb.LBFluidWalberla(**lb_params)
+system.lb = lbf
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0)
 print(lbf.get_params())
 

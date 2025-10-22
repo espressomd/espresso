@@ -25,6 +25,7 @@
 
 #include "script_interface/ObjectMap.hpp"
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/system/Leaf.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -32,12 +33,42 @@
 
 namespace ScriptInterface {
 namespace BondBreakage {
-class BreakageSpecs : public ObjectMap<BreakageSpec> {
-  using container_type = std::unordered_map<int, std::shared_ptr<BreakageSpec>>;
+
+using BreakageSpecsBase_t = ObjectMap<
+    BreakageSpec,
+    AutoParameters<ObjectMap<BreakageSpec, System::Leaf>, System::Leaf>>;
+
+class BreakageSpecs : public BreakageSpecsBase_t {
+  using Base = BreakageSpecsBase_t;
 
 public:
-  using key_type = typename container_type::key_type;
-  using mapped_type = typename container_type::mapped_type;
+  using Base::key_type;
+  using Base::mapped_type;
+
+private:
+  std::shared_ptr<::BondBreakage::BondBreakage> m_bond_breakage;
+
+public:
+  ~BreakageSpecs() override { do_destruct(); }
+
+  void do_construct(VariantMap const &params) override {
+    m_bond_breakage = std::make_shared<::BondBreakage::BondBreakage>();
+    restore_from_checkpoint(params);
+  }
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &parameters) override {
+    if (name == "execute") {
+      context()->parallel_try_catch(
+          [this]() { m_bond_breakage->execute_bond_breakage(get_system()); });
+      return {};
+    }
+    return Base::do_call_method(name, parameters);
+  }
+
+private:
+  void on_bind_system(::System::System &system) override {
+    system.bond_breakage = m_bond_breakage;
+  }
 
   key_type insert_in_core(mapped_type const &) override {
     if (context()->is_head_node()) {
@@ -48,17 +79,11 @@ public:
   }
   void insert_in_core(key_type const &key,
                       mapped_type const &obj_ptr) override {
-    auto core_spec = obj_ptr->breakage_spec();
-    ::BondBreakage::insert_spec(key, core_spec);
+    m_bond_breakage->breakage_specs.emplace(key, obj_ptr->breakage_spec());
   }
-  void erase_in_core(key_type const &key) override {
-    ::BondBreakage::erase_spec(key);
+  void erase_in_core(key_type const &key) final {
+    m_bond_breakage->breakage_specs.erase(key);
   }
-
-private:
-  // disable serialization: bond breakage has its own pickling logic
-  std::string get_internal_state() const override { return {}; }
-  void set_internal_state(std::string const &state) override {}
 };
 } // namespace BondBreakage
 } // namespace ScriptInterface

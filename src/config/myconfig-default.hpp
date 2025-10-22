@@ -40,22 +40,11 @@
 
 // Charges and dipoles
 #define ELECTROSTATICS
-#ifdef CUDA
-#define MMM1D_GPU
-#endif
 #define DIPOLES
 #define DIPSUS
 
 // Active matter
 #define ENGINE
-
-// Hydrodynamics, Electrokinetics
-#define LB_BOUNDARIES
-#ifdef CUDA
-#define LB_BOUNDARIES_GPU
-#define ELECTROKINETICS
-#define EK_BOUNDARIES
-#endif
 
 // Force/energy calculation
 #define EXCLUSIONS
@@ -69,6 +58,7 @@
 #define LJCOS2
 #define GAUSSIAN
 #define HAT
+#define GAY_BERNE
 #define SMOOTH_STEP
 #define HERTZIAN
 #define SOFT_SPHERE

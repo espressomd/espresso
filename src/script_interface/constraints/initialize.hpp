@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CONSTRAINTS_INITIALIZE_HPP
-#define SCRIPT_INTERFACE_CONSTRAINTS_INITIALIZE_HPP
+#pragma once
 
 #include <script_interface/ObjectHandle.hpp>
 
@@ -31,5 +30,3 @@ void initialize(Utils::Factory<ObjectHandle> *om);
 
 } /* namespace Constraints */
 } /* namespace ScriptInterface */
-
-#endif

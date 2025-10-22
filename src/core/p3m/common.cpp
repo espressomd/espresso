@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2024 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -21,63 +21,19 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) || defined(DP3M)
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 #include "common.hpp"
 
 #include "LocalBox.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
-#include <utils/math/sqr.hpp>
 
 #include <cmath>
-#include <stdexcept>
-
-double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
-  auto const c =
-      Utils::sqr(std::cos(Utils::pi() * mesh_i * static_cast<double>(n)));
-
-  switch (cao) {
-  case 1: {
-    return 1.0;
-  }
-  case 2: {
-    return (1.0 + c * 2.0) / 3.0;
-  }
-  case 3: {
-    return (2.0 + c * (11.0 + c * 2.0)) / 15.0;
-  }
-  case 4: {
-    return (17.0 + c * (180.0 + c * (114.0 + c * 4.0))) / 315.0;
-  }
-  case 5: {
-    return (62.0 + c * (1072.0 + c * (1452.0 + c * (247.0 + c * 2.0)))) /
-           2835.0;
-  }
-  case 6: {
-    return (1382.0 +
-            c * (35396.0 +
-                 c * (83021.0 + c * (34096.0 + c * (2026.0 + c * 4.0))))) /
-           155925.0;
-  }
-  case 7: {
-    return (21844.0 +
-            c * (776661.0 +
-                 c * (2801040.0 +
-                      c * (2123860.0 +
-                           c * (349500.0 + c * (8166.0 + c * 4.0)))))) /
-           6081075.0;
-  }
-  default: {
-    throw std::logic_error("Invalid value cao=" + std::to_string(cao));
-  }
-  }
-}
 
 void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
-                                      LocalBox<double> const &local_geo,
-                                      double skin, double space_layer) {
+                                      LocalBox const &local_geo, double skin,
+                                      double space_layer) {
   int i;
   int ind[3];
   // total skin size
@@ -92,23 +48,24 @@ void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
   auto const outer_ur_pos = inner_ur_pos + full_skin;
   // outer left down corner
   auto const outer_ld_pos = inner_ld_pos - full_skin;
-  // convert spatial positions to grid indices
-  auto const calc_grid_pos = [&params](Utils::Vector3d const &pos, int i) {
-    return pos[i] * params.ai[i] - params.mesh_off[i];
-  };
+  // convert spatial positions to grid positions
+  auto const inner_ld_grid_pos = params.calc_grid_pos(inner_ld_pos);
+  auto const inner_ur_grid_pos = params.calc_grid_pos(inner_ur_pos);
+  auto const outer_ld_grid_pos = params.calc_grid_pos(outer_ld_pos);
+  auto const outer_ur_grid_pos = params.calc_grid_pos(outer_ur_pos);
 
   /* inner left down grid point (global index) */
   for (i = 0; i < 3; i++)
-    in_ld[i] = static_cast<int>(std::ceil(calc_grid_pos(inner_ld_pos, i)));
+    in_ld[i] = static_cast<int>(std::ceil(inner_ld_grid_pos[i]));
   /* inner up right grid point (global index) */
   for (i = 0; i < 3; i++)
-    in_ur[i] = static_cast<int>(std::floor(calc_grid_pos(inner_ur_pos, i)));
+    in_ur[i] = static_cast<int>(std::floor(inner_ur_grid_pos[i]));
 
   /* correct roundoff errors at boundary */
   for (i = 0; i < 3; i++) {
-    if (calc_grid_pos(inner_ur_pos, i) - in_ur[i] < ROUND_ERROR_PREC)
+    if (inner_ur_grid_pos[i] - in_ur[i] < round_error_prec)
       in_ur[i]--;
-    if (calc_grid_pos(inner_ld_pos, i) - in_ld[i] + 1. < ROUND_ERROR_PREC)
+    if (inner_ld_grid_pos[i] - in_ld[i] + 1. < round_error_prec)
       in_ld[i]--;
   }
   /* inner grid dimensions */
@@ -116,16 +73,16 @@ void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
     inner[i] = in_ur[i] - in_ld[i] + 1;
   /* index of left down grid point in global mesh */
   for (i = 0; i < 3; i++)
-    ld_ind[i] = static_cast<int>(std::ceil(calc_grid_pos(outer_ld_pos, i)));
+    ld_ind[i] = static_cast<int>(std::ceil(outer_ld_grid_pos[i]));
   /* left down margin */
   for (i = 0; i < 3; i++)
     margin[i * 2] = in_ld[i] - ld_ind[i];
   /* up right grid point */
   for (i = 0; i < 3; i++)
-    ind[i] = static_cast<int>(std::floor(calc_grid_pos(outer_ur_pos, i)));
+    ind[i] = static_cast<int>(std::floor(outer_ur_grid_pos[i]));
   /* correct roundoff errors at up right boundary */
   for (i = 0; i < 3; i++)
-    if (calc_grid_pos(outer_ur_pos, i) - ind[i] == 0.)
+    if (outer_ur_grid_pos[i] - ind[i] == 0.)
       ind[i]--;
   /* up right margin */
   for (i = 0; i < 3; i++)
@@ -146,6 +103,12 @@ void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
 
   q_2_off = dim[2] - params.cao;
   q_21_off = dim[2] * (dim[1] - params.cao);
+
+  n_halo_ld = {margin[0], margin[2], margin[4]};
+  n_halo_ur = {margin[1], margin[3], margin[5]};
+  ld_no_halo = Utils::Vector3i(ld_ind) + n_halo_ld;
+  ur_no_halo = ld_no_halo + dim - n_halo_ld - n_halo_ur;
+  dim_no_halo = ur_no_halo - ld_no_halo;
 }
 
-#endif /* defined(P3M) || defined(DP3M) */
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

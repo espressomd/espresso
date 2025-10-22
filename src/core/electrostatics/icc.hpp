@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_ICC_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_ICC_HPP
+#pragma once
 
 /**
  * @file
@@ -48,10 +47,11 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "ParticleRange.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "system/Leaf.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -87,7 +87,7 @@ struct icc_data {
   void sanity_checks() const;
 };
 
-struct ICCStar {
+struct ICCStar : public System::Leaf<ICCStar> {
   /** ICC parameters */
   icc_data icc_cfg;
 
@@ -97,15 +97,11 @@ struct ICCStar {
    * The main iterative scheme, where the surface element charges are calculated
    * self-consistently.
    */
-  void iteration(CellStructure &cell_structure, ParticleRange const &particles,
-                 ParticleRange const &ghost_particles);
+  void iteration();
 
   void on_activation() const;
   void sanity_checks_active_solver() const;
   void sanity_check() const;
 };
 
-void update_icc_particles();
-
-#endif // ELECTROSTATICS
-#endif
+#endif // ESPRESSO_ELECTROSTATICS

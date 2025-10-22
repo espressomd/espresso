@@ -17,25 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE ScriptInterface::ParallelExceptionHandler test
 #define BOOST_TEST_DYN_LINK
 
-/* Guard against a GCC 12 diagnostic for Boost versions <= 1.79.
- * More details in https://github.com/boostorg/function/issues/42
- */
-#include <boost/serialization/version.hpp>
-#if BOOST_VERSION <= 107900 and defined(BOOST_GCC) and (BOOST_GCC >= 120000)
-#define BOOST_HAS_GCC_12_UNINITIALIZED_DIAGNOSTIC
-#endif
-#if defined(BOOST_HAS_GCC_12_UNINITIALIZED_DIAGNOSTIC)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wuninitialized"
-#endif
 #include <boost/test/unit_test.hpp>
-#if defined(BOOST_HAS_GCC_12_UNINITIALIZED_DIAGNOSTIC)
-#pragma GCC diagnostic pop
-#endif
 
 #include "script_interface/Exception.hpp"
 #include "script_interface/ParallelExceptionHandler.hpp"
@@ -45,12 +30,15 @@
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
 
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
 
 namespace utf = boost::unit_test;
+
+static std::weak_ptr<boost::mpi::environment> mpi_env;
 
 namespace Testing {
 struct Error : public std::exception {};
@@ -65,11 +53,27 @@ struct if_parallel_test {
   }
 };
 
+struct GlobalConfig {
+  std::shared_ptr<boost::mpi::environment> m_mpi_env;
+  GlobalConfig() {
+    m_mpi_env = std::make_shared<boost::mpi::environment>(
+        boost::unit_test::framework::master_test_suite().argc,
+        boost::unit_test::framework::master_test_suite().argv,
+        boost::mpi::threading::multiple);
+    mpi_env = m_mpi_env;
+  }
+  ~GlobalConfig() { m_mpi_env.reset(); }
+};
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_AUTO_TEST_SUITE(suite)
+
 BOOST_TEST_DECORATOR(*utf::precondition(if_parallel_test()))
 BOOST_AUTO_TEST_CASE(parallel_exceptions) {
   boost::mpi::communicator world;
-  Communication::MpiCallbacks callbacks{world};
-  ErrorHandling::init_error_handling(callbacks);
+  auto callbacks =
+      std::make_shared<Communication::MpiCallbacks>(world, ::mpi_env.lock());
+  ErrorHandling::init_error_handling(world);
   auto handler = ScriptInterface::ParallelExceptionHandler{world};
 
   {
@@ -130,10 +134,9 @@ BOOST_AUTO_TEST_CASE(parallel_exceptions) {
     // runtime error messages are printed to stderr and cleared
     BOOST_CHECK_EQUAL(check_runtime_errors_local(), 0);
   }
+  if (world.rank() != 0) {
+    callbacks->loop();
+  }
 }
 
-int main(int argc, char **argv) {
-  boost::mpi::environment mpi_env(argc, argv);
-
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}
+BOOST_AUTO_TEST_SUITE_END()

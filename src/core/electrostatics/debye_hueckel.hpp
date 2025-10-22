@@ -24,12 +24,11 @@
  * Calculate the Debye-Hückel energy and force for a particle pair.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_DEBYE_HUECKEL_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_DEBYE_HUECKEL_HPP
+#pragma once
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "electrostatics/actor.hpp"
 
@@ -107,6 +106,4 @@ struct DebyeHueckel : public Coulomb::Actor<DebyeHueckel> {
   }
 };
 
-#endif // ELECTROSTATICS
-
-#endif
+#endif // ESPRESSO_ELECTROSTATICS

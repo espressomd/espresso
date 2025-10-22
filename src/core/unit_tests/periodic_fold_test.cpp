@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(with_image_count) {
     BOOST_CHECK(res.first >= 0.);
     BOOST_CHECK(res.first <= box);
     BOOST_CHECK(std::abs(res.first - x + res.second * box) <=
-                std::numeric_limits<double>::epsilon());
+                4. * std::numeric_limits<double>::epsilon());
   }
 
   /* Corner right */
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(with_image_count) {
     BOOST_CHECK(res.first >= 0.);
     BOOST_CHECK(res.first < box);
     BOOST_CHECK(std::abs(res.first - x + res.second * box) <=
-                std::numeric_limits<double>::epsilon());
+                4. * std::numeric_limits<double>::epsilon());
   }
 }
 

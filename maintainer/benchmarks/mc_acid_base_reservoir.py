@@ -24,7 +24,6 @@ import benchmarks
 import espressomd
 import espressomd.electrostatics
 import espressomd.reaction_methods
-import setuptools
 import argparse
 
 parser = argparse.ArgumentParser(description="Benchmark MC simulations in the grand-reaction ensemble. "
@@ -45,8 +44,6 @@ args = parser.parse_args()
 # process and check arguments
 assert args.particles_per_core >= 100, "you need to use at least 100 particles per core to avoid finite-size effects in the simulation"
 espressomd.assert_features(['WCA', 'ELECTROSTATICS'])
-assert setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet('>=0.10.1').contains(pint.__version__), \
-    f'pint version {pint.__version__} is too old: several numpy operations can cast away the unit'
 
 
 def calc_ideal_alpha(pH, pKa):
@@ -96,7 +93,7 @@ TOTAL_NUM_MC_STEPS = int(1e5)
 NUM_SAMPLES = 100
 INTEGRATION_STEPS_PER_SAMPLE = 100
 assert TOTAL_NUM_MC_STEPS % NUM_SAMPLES == 0, \
-    f"Total number of MC steps must be divisible by total number of samples, got {TOTAL_NUM_MC_STEPS} and {NUM_SAMPLES}"
+    f"Total number of MC steps must be divisible by total number of samples, got {TOTAL_NUM_MC_STEPS} and {NUM_SAMPLES}"  # nopep8
 MC_STEPS_PER_SAMPLE = TOTAL_NUM_MC_STEPS // NUM_SAMPLES
 
 # definitions of reduced units
@@ -224,7 +221,7 @@ else:
                                            kappa=KAPPA_REDUCED,
                                            r_cut=1. / KAPPA_REDUCED)
 
-system.actors.add(coulomb)
+system.electrostatics.solver = coulomb
 
 # ### Set up the constant pH ensemble using the reaction ensemble module
 exclusion_range = PARTICLE_SIZE_REDUCED
@@ -259,7 +256,7 @@ RE.add_reaction(
 
 
 def equilibrate_reaction(reaction_steps=1):
-    RE.reaction(reaction_steps=reaction_steps)
+    RE.reaction(steps=reaction_steps)
 
 
 def report_progress(system, i, next_i):
@@ -269,7 +266,8 @@ def report_progress(system, i, next_i):
     n_All = len(system.part)
     if i == next_i:
         print(
-            f"run {i:d} time {system.time:.3g} completed {i / NUM_SAMPLES * 100:.0f}%",
+            f"run {i:d} time {system.time:.3g} completed "
+            f"{i / NUM_SAMPLES * 100:.0f}%",
             f"instantaneous values: All {n_All:d}  Na {n_Na:d}  Cl {n_Cl:d}",
             f"A {n_A:d}  alpha {n_A / N_ACID:.3f}")
         if i == 0:
@@ -295,7 +293,7 @@ if args.output:
 
         if MC_STEPS_PER_SAMPLE > 0:
             tick_MC = time.time()
-            RE.reaction(reaction_steps=MC_STEPS_PER_SAMPLE)
+            RE.reaction(steps=MC_STEPS_PER_SAMPLE)
             tock_MC = time.time()
 
         t_MC = (tock_MC - tick_MC) / MC_STEPS_PER_SAMPLE
@@ -311,7 +309,8 @@ if args.output:
         energy = system.analysis.energy()["total"]
         verlet = system.cell_system.get_state()["verlet_reuse"]
         print(
-            f"step {i}, time MD: {t_MD:.2e}, time MC: {t_MC:.2e}, verlet: {verlet:.2f}, energy: {energy:.2e}")
+            f"step {i}, time MD: {t_MD:.2e}, time MC: {t_MC:.2e}, "
+            f"verlet: {verlet:.2f}, energy: {energy:.2e}")
 
     # average time
     avg_MC, ci_MC = benchmarks.get_average_time(timings_MC)
@@ -332,7 +331,7 @@ elif args.script_tune:
     for i in range(NUM_SAMPLES):
         if RUN_INTEGRATION:
             system.integrator.run(INTEGRATION_STEPS_PER_SAMPLE)
-        RE.reaction(reaction_steps=MC_STEPS_PER_SAMPLE)
+        RE.reaction(steps=MC_STEPS_PER_SAMPLE)
         n_A = system.number_of_particles(type=TYPES['A'])
         n_As.append(n_A)
         n_All = len(system.part)

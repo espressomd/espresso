@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CONSTRAINTS_HOMOGENEOUSMAGNETICFIELD_HPP
-#define CONSTRAINTS_HOMOGENEOUSMAGNETICFIELD_HPP
+
+#pragma once
 
 #include "Constraint.hpp"
 #include "Observable_stat.hpp"
@@ -47,6 +47,4 @@ private:
   Utils::Vector3d m_field;
 };
 
-} /* namespace Constraints */
-
-#endif
+} // namespace Constraints

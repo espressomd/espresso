@@ -53,15 +53,16 @@ std::string ContextManager::serialize(const ObjectHandle *o) const {
   return Utils::pack(std::make_pair(policy(ctx), o->serialize()));
 }
 
-ContextManager::ContextManager(Communication::MpiCallbacks &callbacks,
-                               const Utils::Factory<ObjectHandle> &factory) {
+ContextManager::ContextManager(
+    std::shared_ptr<Communication::MpiCallbacks> const &callbacks,
+    const Utils::Factory<ObjectHandle> &factory) {
   auto local_context =
-      std::make_shared<LocalContext>(factory, callbacks.comm());
+      std::make_shared<LocalContext>(factory, callbacks->comm());
 
   /* If there is only one node, we can treat all objects as local, and thus
    * never invoke any callback. */
   m_global_context =
-      (callbacks.comm().size() > 1)
+      (callbacks->comm().size() > 1)
           ? std::make_shared<GlobalContext>(callbacks, local_context)
           : std::static_pointer_cast<Context>(local_context);
 

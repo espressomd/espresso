@@ -20,7 +20,6 @@ import espressomd
 import espressomd.bond_breakage
 import espressomd.interactions
 import espressomd.lees_edwards
-import espressomd.virtual_sites
 
 import unittest as ut
 import unittest_decorators as utx
@@ -34,8 +33,17 @@ params_lin = {'initial_pos_offset': 0.1, 'time_0': 0.1, 'shear_velocity': 1.2}
 params_osc = {'initial_pos_offset': 0.1, 'time_0': -2.1, 'amplitude': 2.3,
               'omega': 2.51}
 lin_protocol = espressomd.lees_edwards.LinearShear(**params_lin)
+
+
+def get_lin_pos_offset(time, initial_pos_offset=None,
+                       time_0=None, shear_velocity=None):
+    return initial_pos_offset + (time - time_0) * shear_velocity
+
+
 osc_protocol = espressomd.lees_edwards.OscillatoryShear(**params_osc)
 off_protocol = espressomd.lees_edwards.Off()
+const_offset_protocol = espressomd.lees_edwards.LinearShear(
+    initial_pos_offset=2.2, shear_velocity=0)
 
 
 def axis(coord):
@@ -47,26 +55,31 @@ def axis(coord):
 
 
 class LeesEdwards(ut.TestCase):
+    box_l = [5, 5, 5]
+    system = espressomd.System(box_l=box_l)
+    node_grid = np.copy(system.cell_system.node_grid)
+    n_nodes = np.prod(node_grid)
 
-    system = espressomd.System(box_l=[5.0, 5.0, 5.0])
-    system.cell_system.skin = 0.0
-    system.cell_system.set_n_square(use_verlet_lists=True)
-
-    time_step = 0.5
-    system.time_step = time_step
     direction_permutations = list(itertools.permutations(["x", "y", "z"], 2))
 
     def setUp(self):
-        self.system.time = 0.0
+        system = self.system
+        system.box_l = self.box_l
+        system.cell_system.skin = 0.
+        system.cell_system.set_n_square(use_verlet_lists=True)
+        system.time = 0.0
+        system.time_step = 0.5
+        system.min_global_cut = 0.
+        system.cell_system.node_grid = self.node_grid
 
     def tearDown(self):
         system = self.system
         system.part.clear()
+        system.non_bonded_inter.reset()
+        system.bonded_inter.clear()
         system.lees_edwards.protocol = None
-        if espressomd.has_features("VIRTUAL_SITES"):
-            system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
         if espressomd.has_features("COLLISION_DETECTION"):
-            system.collision_detection.set_params(mode="off")
+            system.collision_detection.protocol = espressomd.collision_detection.Off()
 
     def test_00_is_none_by_default(self):
 
@@ -187,6 +200,21 @@ class LeesEdwards(ut.TestCase):
                     shear_direction=valid, shear_plane_normal=valid,
                     protocol=lin_protocol)
 
+        with self.assertRaisesRegex(ValueError, "fully_connected_boundary normal and connection coordinates need to differ"):
+            system.cell_system.set_regular_decomposition(
+                fully_connected_boundary={"boundary": "z", "direction": "z"})
+        self.assertEqual(system.cell_system.decomposition_type, "n_square")
+        with self.assertRaisesRegex(ValueError, "Invalid Cartesian coordinate: 't'"):
+            system.cell_system.set_regular_decomposition(
+                fully_connected_boundary={"boundary": "z", "direction": "t"})
+        self.assertEqual(system.cell_system.decomposition_type, "n_square")
+        if self.n_nodes > 1:
+            with self.assertRaisesRegex(RuntimeError, "The MPI nodegrid must be 1 in the fully connected direction"):
+                system.cell_system.node_grid = [1, self.n_nodes, 1]
+                system.cell_system.set_regular_decomposition(
+                    fully_connected_boundary={"boundary": "z", "direction": "y"})
+            self.assertEqual(system.cell_system.decomposition_type, "n_square")
+
     def test_boundary_crossing_lin(self):
         """
         A particle crosses the upper and lower boundary with linear shear.
@@ -284,29 +312,27 @@ class LeesEdwards(ut.TestCase):
 
     def test_trajectory_reconstruction(self):
         system = self.system
+        system.time = 3.4
 
-        protocol = espressomd.lees_edwards.LinearShear(
-            shear_velocity=1., initial_pos_offset=0.0, time_0=0.0)
         system.lees_edwards.set_boundary_conditions(
-            shear_direction="x", shear_plane_normal="y", protocol=protocol)
+            shear_direction="x", shear_plane_normal="y", protocol=lin_protocol)
 
         pos = system.box_l - 0.01
         vel = np.array([0, 1, 0])
         p = system.part.add(pos=pos, v=vel)
 
+        crossing_time = system.time
         system.integrator.run(1)
-
         np.testing.assert_almost_equal(
-            p.lees_edwards_flag * 1.0 * system.time_step * 0.5,
-            p.lees_edwards_offset)
+            p.lees_edwards_offset,
+            get_lin_pos_offset(crossing_time, **params_lin))
         np.testing.assert_almost_equal(p.lees_edwards_flag, -1)
 
-        offset1 = p.lees_edwards_flag * 1.0 * system.time_step * 0.5
-
-        system.integrator.run(1)
-
+        system.integrator.run(1)  # no boundary crossing
         np.testing.assert_almost_equal(
-            offset1 - 1.0 * 0.5, p.lees_edwards_offset)
+            p.lees_edwards_offset,
+            get_lin_pos_offset(crossing_time, **params_lin))
+
         np.testing.assert_almost_equal(p.lees_edwards_flag, 0)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
@@ -330,18 +356,104 @@ class LeesEdwards(ut.TestCase):
                 pos=system.box_l - epsilon, v=np.random.random(3), fix=[True] * 3)
             r_euclid = -2 * np.array([epsilon] * 3)
 
+            p3 = system.part.add(
+                pos=[epsilon] * 3, v=np.random.random(3), fix=[True] * 3)
+            p4 = system.part.add(
+                pos=0.5 * system.box_l + 2 * epsilon, v=np.random.random(3), fix=[True] * 3)
+            p5 = system.part.add(
+                pos=0.5 * system.box_l, v=np.random.random(3), fix=[True] * 3)
+
             # check distance
             np.testing.assert_allclose(
                 np.copy(system.distance_vec(p1, p2)),
-                r_euclid + system.lees_edwards.pos_offset * shear_axis)
+                r_euclid - system.lees_edwards.pos_offset * shear_axis, atol=1E-10)
             np.testing.assert_allclose(
                 np.copy(system.distance_vec(p1, p2)),
                 -np.copy(system.distance_vec(p2, p1)))
 
-            # Check velocity difference
+            # Check velocity difference for bond across the domain boundary
             np.testing.assert_allclose(
-                np.copy(system.velocity_difference(p1, p2)),
-                np.copy(p2.v - p1.v) - system.lees_edwards.shear_velocity * shear_axis)
+                np.copy(system.velocity_difference(p3, p4)),
+                np.copy(p4.v - p3.v) - system.lees_edwards.shear_velocity * shear_axis)
+            # Check velocity difference for bond within the domain boundary
+            np.testing.assert_allclose(
+                np.copy(system.velocity_difference(p3, p5)),
+                np.copy(p5.v - p3.v))
+
+    def test_push_and_distance_consistency(self):
+        """
+        The Lees-Edwards-aware distance between a pair of particles should
+        stay constant even after one of them has crossed a
+        LE boundary with a constant position offset.
+        """
+
+        system = self.system
+        atol = 1E-10
+        for shear_direction, shear_plane_normal in self.direction_permutations:
+            system.lees_edwards.set_boundary_conditions(
+                shear_direction=shear_direction,
+                shear_plane_normal=shear_plane_normal, protocol=const_offset_protocol)
+
+            shear_normal_axis = axis(shear_plane_normal)
+            for direction in [1, -1]:  # up, down
+                p1 = system.part.add(
+                    pos=system.box_l / 2, v=direction * shear_normal_axis)
+                p2 = system.part.add(
+                    pos=p1.pos + shear_normal_axis, v=p1.v)
+                # Integrate until the first particle crosses the boundary
+                while p1.lees_edwards_offset == 0 and p2.lees_edwards_offset == 0:
+                    np.testing.assert_allclose(
+                        np.copy(system.distance_vec(p1, p2)), shear_normal_axis, atol=atol)
+                    system.integrator.run(1)
+                # make sure only one particle has crossed
+                assert p1.lees_edwards_offset != p2.lees_edwards_offset
+                # make sure the distance stays constant until both particles
+                # have crossed
+                while p1.lees_edwards_offset != p2.lees_edwards_offset:
+                    np.testing.assert_allclose(
+                        np.copy(system.distance_vec(p1, p2)), shear_normal_axis, atol=atol)
+                    system.integrator.run(1)
+                # chekc the distance is still correct after both have crossed
+                np.testing.assert_allclose(
+                    np.copy(system.distance_vec(p1, p2)), shear_normal_axis, atol=atol)
+
+    def test_push_and_vel_difference_consistency(self):
+        """
+        The Lees-Edwards-aware velocity difference between a pair of particles
+        should stay constant even after one of them has crossed a
+        LE boundary with a linear shear.
+        """
+
+        system = self.system
+        atol = 1E-10
+        for shear_direction, shear_plane_normal in self.direction_permutations:
+            system.lees_edwards.set_boundary_conditions(
+                shear_direction=shear_direction,
+                shear_plane_normal=shear_plane_normal, protocol=const_offset_protocol)
+
+            shear_normal_axis = axis(shear_plane_normal)
+            for direction in [1, -1]:  # up, down
+                dv = np.random.random(3) * 0.1
+                p1 = system.part.add(
+                    pos=system.box_l / 2, v=direction * shear_normal_axis)
+                p2 = system.part.add(
+                    pos=p1.pos + shear_normal_axis, v=p1.v + dv)
+                # Integrate until the first particle crosses the boundary
+                while p1.lees_edwards_offset == 0 and p2.lees_edwards_offset == 0:
+                    np.testing.assert_allclose(
+                        np.copy(system.velocity_difference(p1, p2)), dv, atol=atol)
+                    system.integrator.run(1)
+                # make sure only one particle has crossed
+                assert p1.lees_edwards_offset != p2.lees_edwards_offset
+                # make sure the distance stays constant until both particles
+                # have crossed
+                while p1.lees_edwards_offset != p2.lees_edwards_offset:
+                    np.testing.assert_allclose(
+                        np.copy(system.velocity_difference(p1, p2)), dv, atol=atol)
+                    system.integrator.run(1)
+                # chekc the distance is still correct after both have crossed
+                np.testing.assert_allclose(
+                    np.copy(system.velocity_difference(p1, p2)), dv, atol=atol)
 
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "SOFT_SPHERE"])
     def test_interactions(self):
@@ -390,7 +502,7 @@ class LeesEdwards(ut.TestCase):
             system.non_bonded_inter[0, 0].soft_sphere.set_params(
                 a=k_non_bonded / 2, n=-2, cutoff=r_cut)
             system.integrator.run(0)
-            r_12 = system.distance_vec(p1, p2)
+            r_12 = np.copy(system.distance_vec(p1, p2))
 
             np.testing.assert_allclose(
                 k_non_bonded * r_12, np.copy(p1.f))
@@ -398,7 +510,7 @@ class LeesEdwards(ut.TestCase):
 
             np.testing.assert_allclose(
                 np.copy(system.analysis.pressure_tensor()["non_bonded"]),
-                np.outer(r_12, p2.f) / system.volume())
+                np.outer(r_12, np.copy(p2.f)) / system.volume())
 
             np.testing.assert_almost_equal(
                 system.analysis.energy()["non_bonded"],
@@ -416,25 +528,37 @@ class LeesEdwards(ut.TestCase):
         """
         system = self.system
         system.min_global_cut = 2.5
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         tol = 1e-10
 
         # Construct pair of VS across normal boundary
         system.lees_edwards.protocol = None
-        p1 = system.part.add(pos=(2.5, 0.0, 2.5), rotation=[False] * 3, id=0)
+        p1 = system.part.add(pos=(2.5, 0.0, 2.5), rotation=[False] * 3,
+                             id=0, v=np.array((-1, 2, 3)))
         p2 = system.part.add(pos=(2.5, 1.0, 2.5))
         p2.vs_auto_relate_to(p1)
         p3 = system.part.add(pos=(2.5, 4.0, 2.5))
         p3.vs_auto_relate_to(p1)
-        system.integrator.run(1)
 
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=lin_protocol)
-        system.integrator.run(1)
+        # Test position and velocity of VS with Le shift
+        old_p3_pos = np.copy(p3.pos)
+        expected_p3_pos = old_p3_pos + \
+            np.array((get_lin_pos_offset(system.time, **params_lin), 0, 0))
+        system.integrator.run(0, recalc_forces=True)
+        np.testing.assert_allclose(np.copy(p3.pos_folded), expected_p3_pos)
+        np.testing.assert_allclose(
+            np.copy(p3.v), np.copy(p1.v) + np.array((params_lin["shear_velocity"], 0, 0)))
+
+        # Check distances
         np.testing.assert_allclose(
             np.copy(system.distance_vec(p3, p2)), [0, 2, 0], atol=tol)
         np.testing.assert_allclose(
+            np.copy(system.distance_vec(p2, p3)), [0, -2, 0], atol=tol)
+        np.testing.assert_allclose(
             np.copy(system.velocity_difference(p3, p2)), [0, 0, 0], atol=tol)
+        np.testing.assert_allclose(
+            np.copy(system.velocity_difference(p2, p3)), [0, 0, 0], atol=tol)
         system.integrator.run(0)
         np.testing.assert_allclose(
             np.copy(system.distance_vec(p3, p2)), [0, 2, 0], atol=tol)
@@ -461,7 +585,6 @@ class LeesEdwards(ut.TestCase):
         """
 
         system = self.system
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
 
         system.thermostat.set_dpd(kT=0.0, seed=1)
         system.non_bonded_inter[11, 11].dpd.set_params(
@@ -472,6 +595,7 @@ class LeesEdwards(ut.TestCase):
             shear_velocity=2.0, initial_pos_offset=0.0)
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=protocol)
+        system.min_global_cut = 2.5
         p1 = system.part.add(pos=[2.5, 2.5, 2.5], type=10,
                              rotation=3 * (True,), v=(0.0, -0.1, -0.25))
         p2 = system.part.add(pos=(2.5, 3.5, 2.5), type=11)
@@ -523,13 +647,49 @@ class LeesEdwards(ut.TestCase):
             trans_weight_function=0, trans_gamma=0, trans_r_cut=0)
 
     @utx.skipIfMissingFeatures(
-        ["EXTERNAL_FORCES", "VIRTUAL_SITES_RELATIVE", "COLLISION_DETECTION"])
-    def test_le_colldet(self):
+        ["EXTERNAL_FORCES", "VIRTUAL_SITES_RELATIVE"])
+    def test__virt_sites_rotation(self):
+        """
+        A particle with virtual sites is placed on the boundary. We check if
+        the forces yield the correct torque and if a rotation frequency is
+        transmitted back to the virtual sites.
+        """
+
         system = self.system
-        system.min_global_cut = 1.0
+        system.part.clear()
+        system.min_global_cut = 2.5
+
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction="x", shear_plane_normal="y", protocol=lin_protocol)
+
+        p1 = system.part.add(
+            id=0, pos=[2.5, 5.0, 2.5], rotation=[True] * 3)
+
+        p2 = system.part.add(pos=(2.5, 6.0, 2.5), ext_force=(1.0, 0., 0.))
+        p2.vs_auto_relate_to(0)
+        p3 = system.part.add(pos=(2.5, 4.0, 2.5), ext_force=(-1.0, 0., 0.))
+        p3.vs_auto_relate_to(0)
+
+        system.integrator.run(0, recalc_forces=True)
+
+        np.testing.assert_array_almost_equal(
+            np.copy(p1.torque_lab), [0.0, 0.0, -2.0])
+
+        p1.omega_lab = (0., 0., 2.5)
+        system.integrator.run(0, recalc_forces=True)
+        for vs in p2, p3:
+            np.testing.assert_array_almost_equal(
+                system.velocity_difference(p1, vs),
+                np.cross(p1.omega_lab, system.distance_vec(p1, vs)))
+
+    @utx.skipIfMissingFeatures(
+        ["EXTERNAL_FORCES", "VIRTUAL_SITES_RELATIVE", "COLLISION_DETECTION"])
+    def test_le_collision_detection(self):
+        system = self.system
+        system.min_global_cut = 1.2
         system.time = 0
         protocol = espressomd.lees_edwards.LinearShear(
-            shear_velocity=-1.0, initial_pos_offset=0.0)
+            shear_velocity=1.0, initial_pos_offset=0.0)
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
@@ -543,11 +703,11 @@ class LeesEdwards(ut.TestCase):
         virt = espressomd.interactions.Virtual()
         system.bonded_inter.add(virt)
 
-        system.collision_detection.set_params(
-            mode="bind_centers", distance=1., bond_centers=harm)
+        system.collision_detection.protocol = espressomd.collision_detection.BindCenters(
+            distance=1., bond_centers=harm)
 
         # After two integration steps we should not have a bond,
-        # as the collision detection uses the distant calculation
+        # as the collision detection uses the distance calculation
         # of the short range loop
         system.integrator.run(2)
         bond_list = col_part1.bonds + col_part2.bonds
@@ -561,15 +721,15 @@ class LeesEdwards(ut.TestCase):
         np.testing.assert_array_equal(len(bond_list), 1)
 
         system.part.clear()
-        system.collision_detection.set_params(mode="off")
+        system.collision_detection.protocol = espressomd.collision_detection.Off()
 
         system.time = 0
         system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
-            shear_velocity=-1.0, initial_pos_offset=0.0)
+            shear_velocity=1.0, initial_pos_offset=0.0)
 
-        system.collision_detection.set_params(
-            mode="bind_at_point_of_collision", distance=1., bond_centers=virt,
-            bond_vs=harm, part_type_vs=31, vs_placement=1 / 3)
+        system.collision_detection.protocol = espressomd.collision_detection.BindAtPointOfCollision(
+            distance=1., bond_centers=virt, bond_vs=harm, part_type_vs=31,
+            vs_placement=1. / 3.)
 
         col_part1 = system.part.add(
             pos=(2.5, 4.5, 2.5), type=30, fix=[True, True, True])
@@ -603,7 +763,7 @@ class LeesEdwards(ut.TestCase):
         # generated VS. The other components are inherited from the real
         # particles.
         box_l = np.copy(system.box_l)
-        p_vs = system.part.select(virtual=True)
+        p_vs = system.part.select(lambda p: p.is_virtual())
         np.testing.assert_array_almost_equal(
             np.minimum(np.abs(p_vs.pos[:, 0] - col_part1.pos[0]),
                        np.abs(p_vs.pos[:, 0] - col_part2.pos[0])), 0.)
@@ -615,8 +775,7 @@ class LeesEdwards(ut.TestCase):
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
     def test_le_breaking_bonds(self):
         system = self.system
-        system.min_global_cut = 1.0
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
+        system.min_global_cut = 1.2
         protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=-1.0, initial_pos_offset=0.0)
         system.lees_edwards.set_boundary_conditions(
@@ -626,15 +785,13 @@ class LeesEdwards(ut.TestCase):
             k=1.0, r_0=0.0, r_cut=np.sqrt(2.))
         system.bonded_inter.add(harm)
 
-        p1 = system.part.add(pos=(2.5, 4.5, 2.5))
-        p2 = system.part.add(pos=(2.5, 0.5, 2.5))
+        p1 = system.part.add(pos=(2.5, 4.5, 2.5), fix=[True] * 3)
+        p2 = system.part.add(pos=(2.5, 0.5, 2.5), fix=[True] * 3)
         p1.add_bond((harm, p2))
 
         system.bond_breakage[harm] = espressomd.bond_breakage.BreakageSpec(
             breakage_length=np.sqrt(2.), action_type="delete_bond")
-
         system.integrator.run(3)
-
         # Bond list should be empty
         bond_list = []
         for p in system.part:
@@ -664,7 +821,7 @@ class LeesEdwards(ut.TestCase):
             breakage_length=np.sqrt(2.) / 2.,
             action_type="revert_bind_at_point_of_collision")
 
-        system.integrator.run(3)
+        system.integrator.run(1)
 
         # Check that all bonds have been removed from the system
         # So the bond list should be empty
@@ -673,64 +830,83 @@ class LeesEdwards(ut.TestCase):
             bond_list += p.bonds
         np.testing.assert_array_equal(len(bond_list), 0)
 
-    def setup_lj_liquid(self):
-        system = self.system
-        system.cell_system.set_n_square(use_verlet_lists=False)
-        # Parameters
-        n = 100
-        phi = 0.4
-        sigma = 1.
-        eps = 1
-        cut = sigma * 2**(1 / 6)
-
-        # box
-        l = (n / 6. * np.pi * sigma**3 / phi)**(1. / 3.)
-
-        # Setup
-        system.box_l = [l, l, l]
-        system.lees_edwards.protocol = None
-
-        system.time_step = 0.01
-        system.thermostat.turn_off()
-
-        np.random.seed(42)
-        system.part.add(pos=np.random.random((n, 3)) * l)
-
-        # interactions
-        system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=eps, sigma=sigma, cutoff=cut, shift="auto")
-        # Remove overlap
-        system.integrator.set_steepest_descent(
-            f_max=0, gamma=0.05, max_displacement=0.05)
-        while system.analysis.energy()["total"] > 0.5 * n:
-            system.integrator.run(5)
-
-        system.integrator.set_vv()
-
-    @utx.skipIfMissingFeatures("LENNARD_JONES")
-    def test_zz_lj(self):
+    def run_lj_pair_visibility(self, shear_direction, shear_plane_normal):
         """
-        Simulate an LJ liquid under linear shear and verify forces.
+        Simulate LJ particles coming into contact under linear shear and verify forces.
         This is to make sure that no pairs get lost or are outdated
-        in the short range loop. To have deterministic forces, velocity
-        capping is used rather than a thermostat.
+        in the short range loop.
         """
+        assert espressomd.has_features(["LENNARD_JONES"])
+        shear_axis, normal_axis = axis(
+            shear_direction), axis(shear_plane_normal)
         system = self.system
-        self.setup_lj_liquid()
+        system.part.clear()
+        system.time = 0
+        system.time_step = 0.1
+        cutoff = 1.5
         protocol = espressomd.lees_edwards.LinearShear(
-            shear_velocity=0.3, initial_pos_offset=0.01)
+            shear_velocity=3, initial_pos_offset=5)
         system.lees_edwards.set_boundary_conditions(
-            shear_direction="z", shear_plane_normal="x", protocol=protocol)
-        system.integrator.run(1, recalc_forces=True)
-        tests_common.check_non_bonded_loop_trace(self, system)
+            shear_direction=shear_direction, shear_plane_normal=shear_plane_normal, protocol=protocol)
+        system.cell_system.skin = 0.2
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1E-6, sigma=1, cutoff=cutoff, shift="auto")
+        system.part.add(
+            pos=(0.1 * normal_axis, -0.8 * normal_axis),
+            v=(1.0 * shear_axis, -0.3 * shear_axis))
+        assert np.all(system.part.all().f == 0.)
+        tests_common.check_non_bonded_loop_trace(
+            self, system, cutoff=cutoff + system.cell_system.skin)
 
         # Rewind the clock to get back the LE offset applied during force calc
         system.time = system.time - system.time_step
         tests_common.verify_lj_forces(system, 1E-7)
+        have_interacted = False
+        for _ in range(50):
+            system.integrator.run(3)
+            if np.any(np.abs(system.part.all().f) > 0):
+                have_interacted = True
+            tests_common.check_non_bonded_loop_trace(
+                self, system, cutoff=cutoff + system.cell_system.skin)
+            system.time = system.time - system.time_step
+            tests_common.verify_lj_forces(system, 1E-7)
+        assert have_interacted
 
-        system.thermostat.set_langevin(kT=.1, gamma=5, seed=2)
-        system.integrator.run(50)
-        tests_common.check_non_bonded_loop_trace(self, system)
+    @utx.skipIfMissingFeatures(["LENNARD_JONES"])
+    def test_zz_lj_pair_visibility(self):
+        # check that regular decomposition without fully connected doesn't
+        # catch the particle
+        system = self.system
+        system.box_l = [10, 10, 10]
+        with self.assertRaises(AssertionError):
+            system.cell_system.set_regular_decomposition(
+                fully_connected_boundary=None)
+            self.assertIsNone(system.cell_system.fully_connected_boundary)
+            system.cell_system.node_grid = [1, self.n_nodes, 1]
+            self.run_lj_pair_visibility("x", "y")
+
+        for verlet in (False, True):
+            for shear_direction, shear_plane_normal in self.direction_permutations:
+                system.cell_system.set_n_square(use_verlet_lists=verlet)
+                self.run_lj_pair_visibility(
+                    shear_direction, shear_plane_normal)
+
+        for verlet in (False, True):
+            for shear_direction, shear_plane_normal in self.direction_permutations:
+                system.cell_system.set_regular_decomposition(
+                    fully_connected_boundary=None)
+                normal_axis = axis(shear_plane_normal)
+                system.cell_system.node_grid = [
+                    self.n_nodes if normal_axis[i] == 1 else 1 for i in range(3)]
+                fully_connected_boundary = {"boundary": shear_plane_normal,
+                                            "direction": shear_direction}
+                system.cell_system.set_regular_decomposition(
+                    use_verlet_lists=verlet,
+                    fully_connected_boundary=fully_connected_boundary)
+                self.assertEqual(system.cell_system.fully_connected_boundary,
+                                 fully_connected_boundary)
+                self.run_lj_pair_visibility(
+                    shear_direction, shear_plane_normal)
 
 
 if __name__ == "__main__":

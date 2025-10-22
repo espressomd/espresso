@@ -21,17 +21,19 @@
 
 #include "reaction_methods/ReactionAlgorithm.hpp"
 
-#include "analysis/statistics.hpp"
+#include "BoxGeometry.hpp"
+#include "Observable_stat.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
-#include "energy.hpp"
-#include "grid.hpp"
-#include "partCfg_global.hpp"
-#include "particle_data.hpp"
 #include "particle_node.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/contains.hpp>
+
+#include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/collectives/broadcast.hpp>
+#include <boost/serialization/serialization.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -40,29 +42,22 @@
 #include <iterator>
 #include <limits>
 #include <map>
+#include <numbers>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
-namespace ReactionMethods {
-
-/**
- * Performs a randomly selected reaction in the reaction ensemble
- */
-void ReactionAlgorithm::do_reaction(int reaction_steps) {
-  // calculate potential energy; only consider potential energy since we
-  // assume that the kinetic part drops out in the process of calculating
-  // ensemble averages (kinetic part may be separated and crossed out)
-  auto current_E_pot = mpi_calculate_potential_energy();
-  // Setup the list of empty pids for bookeeping
-  setup_bookkeeping_of_empty_pids();
-  for (int i = 0; i < reaction_steps; i++) {
-    int reaction_id = i_random(static_cast<int>(reactions.size()));
-    generic_oneway_reaction(*reactions[reaction_id], current_E_pot);
-  }
+namespace boost::serialization {
+template <typename Archive, typename... Types>
+void serialize(Archive &ar, std::tuple<Types...> &tuple, const unsigned int) {
+  std::apply([&](auto &...item) { ((ar & item), ...); }, tuple);
 }
+} // namespace boost::serialization
+
+namespace ReactionMethods {
 
 /**
  * Adds a reaction to the reaction system
@@ -81,70 +76,60 @@ void ReactionAlgorithm::add_reaction(
   reactions.push_back(new_reaction);
 }
 
-void ParticleChangeRecorder::restore_original_state() const {
-  auto const restore_state = [](StoredParticleProperty const &item) {
-#ifdef ELECTROSTATICS
-    set_particle_q(item.p_id, item.charge);
-#endif
-    set_particle_type(item.p_id, item.type);
-  };
-  // 1) delete created product particles
-  std::for_each(m_created.begin(), m_created.end(), m_deleter);
-  // 2) restore previously hidden reactant particles
-  std::for_each(m_hidden.begin(), m_hidden.end(), restore_state);
-  // 3) restore previously changed reactant particles
-  std::for_each(m_changed.begin(), m_changed.end(), restore_state);
-}
-
-void ParticleChangeRecorder::delete_hidden_particles() const {
-  for (auto const &item : m_hidden) {
-    // change back type otherwise the bookkeeping algorithm breaks
-    set_particle_type(item.p_id, item.type);
-    m_deleter(item.p_id);
-  }
-}
-
 /**
- * Checks whether all necessary variables for the reaction ensemble have been
- * set.
+ * @details This method tries to keep the cell system overhead to a minimum.
+ * Event callbacks are only called once after all particles are updated,
+ * except for particle deletion (the cell structure is still reinitialized
+ * after each deletion).
  */
-void ReactionAlgorithm::check_reaction_method() const {
-  if (reactions.empty()) {
-    throw std::runtime_error("Reaction system not initialized");
-  }
-
-#ifdef ELECTROSTATICS
-  // check for the existence of default charges for all types that take part in
-  // the reactions
-
-  for (const auto &current_reaction : reactions) {
-    // check for reactants
-    for (int reactant_type : current_reaction->reactant_types) {
-      auto it = charges_of_types.find(reactant_type);
-      if (it == charges_of_types.end()) {
-        std::string message = std::string("Forgot to assign charge to type ") +
-                              std::to_string(reactant_type);
-        throw std::runtime_error(message);
-      }
-    }
-    // check for products
-    for (int product_type : current_reaction->product_types) {
-      auto it = charges_of_types.find(product_type);
-      if (it == charges_of_types.end()) {
-        std::string message = std::string("Forgot to assign charge to type ") +
-                              std::to_string(product_type);
-        throw std::runtime_error(message);
-      }
-    }
-  }
+void ReactionAlgorithm::restore_old_system_state() {
+  auto &system = System::get_system();
+  auto const &old_state = get_old_system_state();
+  auto const &box_geo = *system.box_geo;
+  // restore the properties of changed and hidden particles
+  for (auto const &state : {old_state.changed, old_state.hidden}) {
+    for (auto const &[p_id, p_type] : state) {
+      on_particle_type_change(p_id, type_tracking::any_type, p_type);
+      if (auto p = get_local_particle(p_id)) {
+        p->type() = p_type;
+#ifdef ESPRESSO_ELECTROSTATICS
+        p->q() = charges_of_types.at(p_type);
 #endif
+      }
+    }
+  }
+  // delete created particles
+  for (auto const p_id : old_state.created) {
+    delete_particle(p_id);
+  }
+  // restore original positions and velocities
+  for (auto const &[p_id, pos, vel] : old_state.moved) {
+    if (auto p = get_local_particle(p_id)) {
+      p->v() = vel;
+      auto folded_pos = pos;
+      auto image_box = Utils::Vector3i{};
+      box_geo.fold_position(folded_pos, image_box);
+      p->pos() = folded_pos;
+      p->image_box() = image_box;
+    }
+  }
+  if (not old_state.moved.empty()) {
+    auto const &system = System::get_system();
+    auto &cell_structure = *system.cell_structure;
+    cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+  }
+  system.on_particle_change();
+  clear_old_system_state();
 }
 
 /**
  * Automatically sets the volume which is used by the reaction ensemble to the
  * volume of a cuboid box.
  */
-void ReactionAlgorithm::update_volume() { volume = box_geo.volume(); }
+void ReactionAlgorithm::update_volume() {
+  auto const &box_geo = *System::get_system().box_geo;
+  volume = box_geo.volume();
+}
 
 /**
  * Checks whether all particles exist for the provided reaction.
@@ -163,11 +148,8 @@ bool ReactionAlgorithm::all_reactant_particles_exist(
   return enough_particles;
 }
 
-/**
- *Performs a trial reaction move
- */
-ParticleChangeRecorder
-ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction) {
+void ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction,
+                                              ParticleChanges &bookkeeping) {
   // create or hide particles of types with corresponding types in reaction
   auto const n_product_types = reaction.product_types.size();
   auto const n_reactant_types = reaction.reactant_types.size();
@@ -175,17 +157,29 @@ ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction) {
     auto const random_index = i_random(number_of_particles_with_type(type));
     return get_random_p_id(type, random_index);
   };
-  ParticleChangeRecorder tracker{[this](int p_id) { delete_particle(p_id); }};
+  auto only_local_changes = true;
   for (int i = 0; i < std::min(n_product_types, n_reactant_types); i++) {
     auto const n_product_coef = reaction.product_coefficients[i];
     auto const n_reactant_coef = reaction.reactant_coefficients[i];
     // change std::min(reactant_coefficients(i),product_coefficients(i)) many
     // particles of reactant_types(i) to product_types(i)
-    auto const type = reaction.reactant_types[i];
+    auto const old_type = reaction.reactant_types[i];
+    auto const new_type = reaction.product_types[i];
+#ifdef ESPRESSO_ELECTROSTATICS
+    if (charges_of_types.at(new_type) != charges_of_types.at(old_type)) {
+      only_local_changes = false;
+    }
+#endif
     for (int j = 0; j < std::min(n_product_coef, n_reactant_coef); j++) {
-      auto const p_id = get_random_p_id_of_type(type);
-      tracker.save_changed_particle({p_id, type, charges_of_types[type]});
-      replace_particle(p_id, reaction.product_types[i]);
+      auto const p_id = get_random_p_id_of_type(old_type);
+      on_particle_type_change(p_id, old_type, new_type);
+      if (auto p = get_local_particle(p_id)) {
+        p->type() = new_type;
+#ifdef ESPRESSO_ELECTROSTATICS
+        p->q() = charges_of_types.at(new_type);
+#endif
+      }
+      bookkeeping.changed.emplace_back(p_id, old_type);
     }
     // create product_coefficients(i)-reactant_coefficients(i) many product
     // particles iff product_coefficients(i)-reactant_coefficients(i)>0,
@@ -196,107 +190,108 @@ ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction) {
       auto const type = reaction.product_types[i];
       for (int j = 0; j < delta_n; j++) {
         auto const p_id = create_particle(type);
-        check_exclusion_range(p_id);
-        tracker.save_created_particle(p_id);
+        check_exclusion_range(p_id, type);
+        bookkeeping.created.emplace_back(p_id);
       }
+      only_local_changes = false;
     } else if (delta_n < 0) {
       auto const type = reaction.reactant_types[i];
       for (int j = 0; j < -delta_n; j++) {
         auto const p_id = get_random_p_id_of_type(type);
-        tracker.save_hidden_particle({p_id, type, charges_of_types[type]});
-        check_exclusion_range(p_id);
-        hide_particle(p_id);
+        bookkeeping.hidden.emplace_back(p_id, type);
+        check_exclusion_range(p_id, type);
+        hide_particle(p_id, type);
       }
+      only_local_changes = false;
     }
   }
   // create or hide particles of types with noncorresponding replacement types
   for (auto i = std::min(n_product_types, n_reactant_types);
        i < std::max(n_product_types, n_reactant_types); i++) {
     if (n_product_types < n_reactant_types) {
-      auto const type = reaction.reactant_types[i];
       // hide superfluous reactant_types particles
+      auto const type = reaction.reactant_types[i];
       for (int j = 0; j < reaction.reactant_coefficients[i]; j++) {
         auto const p_id = get_random_p_id_of_type(type);
-        tracker.save_hidden_particle({p_id, type, charges_of_types[type]});
-        check_exclusion_range(p_id);
-        hide_particle(p_id);
+        bookkeeping.hidden.emplace_back(p_id, type);
+        check_exclusion_range(p_id, type);
+        hide_particle(p_id, type);
       }
     } else {
       // create additional product_types particles
+      auto const type = reaction.product_types[i];
       for (int j = 0; j < reaction.product_coefficients[i]; j++) {
-        auto const p_id = create_particle(reaction.product_types[i]);
-        check_exclusion_range(p_id);
-        tracker.save_created_particle(p_id);
+        auto const p_id = create_particle(type);
+        check_exclusion_range(p_id, type);
+        bookkeeping.created.emplace_back(p_id);
       }
     }
   }
-
-  return tracker;
-}
-
-std::map<int, int> ReactionAlgorithm::save_old_particle_numbers(
-    SingleReaction const &current_reaction) const {
-  std::map<int, int> old_particle_numbers;
-  // reactants
-  for (int type : current_reaction.reactant_types) {
-    old_particle_numbers[type] = number_of_particles_with_type(type);
-  }
-
-  // products
-  for (int type : current_reaction.product_types) {
-    old_particle_numbers[type] = number_of_particles_with_type(type);
-  }
-  return old_particle_numbers;
-}
-
-void ReactionAlgorithm::generic_oneway_reaction(
-    SingleReaction &current_reaction, double &E_pot_old) {
-
-  current_reaction.tried_moves += 1;
-  particle_inside_exclusion_range_touched = false;
-  if (!all_reactant_particles_exist(current_reaction)) {
-    // makes sure, no incomplete reaction is performed -> only need to consider
-    // rollback of complete reactions
-    return;
-  }
-
-  // find reacting molecules in reactants and save their properties for later
-  // re-creation if step is not accepted
-  auto const old_particle_numbers = save_old_particle_numbers(current_reaction);
-  auto const change_tracker = make_reaction_attempt(current_reaction);
-
-  auto const E_pot_new = (particle_inside_exclusion_range_touched)
-                             ? std::numeric_limits<double>::max()
-                             : mpi_calculate_potential_energy();
-
-  auto const bf = calculate_acceptance_probability(
-      current_reaction, E_pot_old, E_pot_new, old_particle_numbers);
-
-  std::vector<double> exponential = {exp(-1.0 / kT * (E_pot_new - E_pot_old))};
-  current_reaction.accumulator_potential_energy_difference_exponential(
-      exponential);
-
-  if (m_uniform_real_distribution(m_generator) < bf) {
-    // accept
-    // delete hidden reactant particles (remark: don't delete changed particles)
-    change_tracker.delete_hidden_particles();
-    current_reaction.accepted_moves += 1;
-    E_pot_old = E_pot_new; // Update the system energy
+  // determine which fine-grained event to trigger
+  if (n_product_types == n_reactant_types and only_local_changes) {
+    System::get_system().on_particle_local_change();
   } else {
-    // reject
-    change_tracker.restore_original_state();
+    System::get_system().on_particle_change();
   }
 }
 
-/**
- * Replaces a particle with the given particle id to be of a certain type. This
- * especially means that the particle type and the particle charge are changed.
- */
-void ReactionAlgorithm::replace_particle(int p_id, int desired_type) const {
-  set_particle_type(p_id, desired_type);
-#ifdef ELECTROSTATICS
-  set_particle_q(p_id, charges_of_types.at(desired_type));
-#endif
+std::unordered_map<int, int>
+ReactionAlgorithm::get_particle_numbers(SingleReaction const &reaction) const {
+  std::unordered_map<int, int> particle_numbers;
+  // reactants
+  for (int type : reaction.reactant_types) {
+    particle_numbers[type] = ::number_of_particles_with_type(type);
+  }
+  // products
+  for (int type : reaction.product_types) {
+    particle_numbers[type] = ::number_of_particles_with_type(type);
+  }
+  return particle_numbers;
+}
+
+std::optional<double>
+ReactionAlgorithm::create_new_trial_state(int reaction_id) {
+  auto &reaction = *reactions[reaction_id];
+  reaction.tried_moves++;
+  particle_inside_exclusion_range_touched = false;
+  if (!all_reactant_particles_exist(reaction)) {
+    // make sure that no incomplete reaction is performed -> only need to
+    // consider rollback of complete reactions
+    return {};
+  }
+  auto &bookkeeping = make_new_system_state();
+  bookkeeping.reaction_id = reaction_id;
+  bookkeeping.old_particle_numbers = get_particle_numbers(reaction);
+  make_reaction_attempt(reaction, bookkeeping);
+  auto E_pot_new = std::numeric_limits<double>::max();
+  if (not particle_inside_exclusion_range_touched) {
+    E_pot_new = calculate_potential_energy();
+  }
+  return {E_pot_new};
+}
+
+double ReactionAlgorithm::make_reaction_mc_move_attempt(int reaction_id,
+                                                        double bf,
+                                                        double E_pot_old,
+                                                        double E_pot_new) {
+  auto constexpr exp_min = -708.4; // for IEEE-compatible double
+  auto const exponent = -(E_pot_new - E_pot_old) / kT;
+  auto const exponential = (exponent < exp_min) ? 0. : std::exp(exponent);
+  auto &reaction = *reactions[reaction_id];
+  reaction.accumulator_potential_energy_difference_exponential(
+      std::vector<double>{exponential});
+  if (get_random_uniform_number() >= bf) {
+    // reject trial move: restore previous state, energy is unchanged
+    restore_old_system_state();
+    return E_pot_old;
+  }
+  // accept trial move: delete hidden particles and return new system energy
+  for (auto const &[p_id, p_type] : get_old_system_state().hidden) {
+    delete_particle(p_id);
+  }
+  reaction.accepted_moves++;
+  clear_old_system_state();
+  return E_pot_new;
 }
 
 /**
@@ -315,62 +310,85 @@ void ReactionAlgorithm::replace_particle(int p_id, int desired_type) const {
  * there would be a need for a rule for such "collision" reactions (a reaction
  * like the one above).
  */
-void ReactionAlgorithm::hide_particle(int p_id) const {
-  set_particle_type(p_id, non_interacting_type);
-#ifdef ELECTROSTATICS
-  set_particle_q(p_id, 0.0);
+void ReactionAlgorithm::hide_particle(int p_id, int p_type) const {
+  on_particle_type_change(p_id, p_type, non_interacting_type);
+  if (auto p = get_local_particle(p_id)) {
+    p->type() = non_interacting_type;
+#ifdef ESPRESSO_ELECTROSTATICS
+    p->q() = 0.;
 #endif
+  }
 }
 
 /**
  * Check if the inserted particle is too close to neighboring particles.
  */
-void ReactionAlgorithm::check_exclusion_range(int inserted_particle_id) {
-
-  auto const &inserted_particle = get_particle_data(inserted_particle_id);
+void ReactionAlgorithm::check_exclusion_range(int p_id, int p_type) {
 
   /* Check the exclusion radius of the inserted particle */
-  if (exclusion_radius_per_type.count(inserted_particle.type()) != 0) {
-    if (exclusion_radius_per_type[inserted_particle.type()] == 0.) {
+  if (exclusion_radius_per_type.contains(p_type)) {
+    if (exclusion_radius_per_type[p_type] == 0.) {
       return;
     }
   }
 
+  auto p1_ptr = get_real_particle(p_id);
+
   std::vector<int> particle_ids;
   if (neighbor_search_order_n) {
-    particle_ids = get_particle_ids();
+    auto all_ids = get_particle_ids_parallel();
     /* remove the inserted particle id */
-    particle_ids.erase(std::remove(particle_ids.begin(), particle_ids.end(),
-                                   inserted_particle_id),
-                       particle_ids.end());
+    std::erase(all_ids, p_id);
+    particle_ids = all_ids;
   } else {
-    particle_ids = mpi_get_short_range_neighbors(inserted_particle.id(),
-                                                 m_max_exclusion_range);
-  }
-
-  /* Check if the inserted particle within the exclusion radius of any other
-   * particle */
-  for (auto const &particle_id : particle_ids) {
-    auto const &p = get_particle_data(particle_id);
-    double excluded_distance;
-    if (exclusion_radius_per_type.count(inserted_particle.type()) == 0 ||
-        exclusion_radius_per_type.count(p.type()) == 0) {
-      excluded_distance = exclusion_range;
-    } else if (exclusion_radius_per_type[p.type()] == 0.) {
-      continue;
-    } else {
-      excluded_distance = exclusion_radius_per_type[inserted_particle.type()] +
-                          exclusion_radius_per_type[p.type()];
-    }
-
-    auto const d_min =
-        box_geo.get_mi_vector(p.pos(), inserted_particle.pos()).norm();
-
-    if (d_min < excluded_distance) {
-      particle_inside_exclusion_range_touched = true;
-      break;
+    auto &system = System::get_system();
+    system.on_observable_calc();
+    auto const local_ids =
+        get_short_range_neighbors(system, p_id, m_max_exclusion_range);
+    assert(p1_ptr == nullptr or !!local_ids);
+    if (local_ids) {
+      particle_ids = std::move(*local_ids);
     }
   }
+
+  if (p1_ptr != nullptr) {
+    auto &p1 = *p1_ptr;
+    auto const &system = System::get_system();
+    auto const &box_geo = *system.box_geo;
+    auto &cell_structure = *system.cell_structure;
+
+    /* Check if the inserted particle within the exclusion radius of any other
+     * particle */
+    for (auto const p2_id : particle_ids) {
+      if (auto const p2_ptr = cell_structure.get_local_particle(p2_id)) {
+        auto const &p2 = *p2_ptr;
+        double excluded_distance;
+        if (not exclusion_radius_per_type.contains(p_type) or
+            not exclusion_radius_per_type.contains(p2.type())) {
+          excluded_distance = exclusion_range;
+        } else if (exclusion_radius_per_type[p2.type()] == 0.) {
+          continue;
+        } else {
+          excluded_distance = exclusion_radius_per_type[p_type] +
+                              exclusion_radius_per_type[p2.type()];
+        }
+
+        auto const d_min = box_geo.get_mi_vector(p2.pos(), p1.pos()).norm();
+
+        if (d_min < excluded_distance) {
+          particle_inside_exclusion_range_touched = true;
+          break;
+        }
+      }
+    }
+    if (m_comm.rank() != 0) {
+      m_comm.send(0, 1, particle_inside_exclusion_range_touched);
+    }
+  } else if (m_comm.rank() == 0) {
+    m_comm.recv(boost::mpi::any_source, 1,
+                particle_inside_exclusion_range_touched);
+  }
+  boost::mpi::broadcast(m_comm, particle_inside_exclusion_range_touched, 0);
 }
 
 /**
@@ -380,7 +398,10 @@ void ReactionAlgorithm::check_exclusion_range(int inserted_particle_id) {
  * avoid the id range becoming excessively huge.
  */
 void ReactionAlgorithm::delete_particle(int p_id) {
-  auto const old_max_seen_id = get_maximal_particle_id();
+  if (p_id < 0) {
+    throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
+  }
+  auto const old_max_seen_id = ::get_maximal_particle_id();
   if (p_id == old_max_seen_id) {
     // last particle, just delete
     remove_particle(p_id);
@@ -405,6 +426,7 @@ void ReactionAlgorithm::delete_particle(int p_id) {
 
 void ReactionAlgorithm::set_cyl_constraint(double center_x, double center_y,
                                            double radius) {
+  auto const &box_geo = *System::get_system().box_geo;
   if (center_x < 0. or center_x > box_geo.length()[0])
     throw std::domain_error("center_x is outside the box");
   if (center_y < 0. or center_y > box_geo.length()[1])
@@ -419,6 +441,7 @@ void ReactionAlgorithm::set_cyl_constraint(double center_x, double center_y,
 
 void ReactionAlgorithm::set_slab_constraint(double slab_start_z,
                                             double slab_end_z) {
+  auto const &box_geo = *System::get_system().box_geo;
   if (slab_start_z < 0. or slab_start_z > box_geo.length()[2])
     throw std::domain_error("slab_start_z is outside the box");
   if (slab_end_z < 0. or slab_end_z > box_geo.length()[2])
@@ -434,6 +457,7 @@ void ReactionAlgorithm::set_slab_constraint(double slab_start_z,
  * Writes a random position inside the central box into the provided array.
  */
 Utils::Vector3d ReactionAlgorithm::get_random_position_in_box() {
+  auto const &box_geo = *System::get_system().box_geo;
   Utils::Vector3d out_pos{};
 
   if (m_reaction_constraint == ReactionConstraint::CYL_Z) {
@@ -442,7 +466,7 @@ Utils::Vector3d ReactionAlgorithm::get_random_position_in_box() {
     auto const random_radius =
         m_cyl_radius * std::sqrt(m_uniform_real_distribution(m_generator));
     auto const random_phi =
-        2. * Utils::pi() * m_uniform_real_distribution(m_generator);
+        2. * std::numbers::pi * m_uniform_real_distribution(m_generator);
     out_pos[0] = m_cyl_x + random_radius * cos(random_phi);
     out_pos[1] = m_cyl_y + random_radius * sin(random_phi);
     out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
@@ -463,46 +487,35 @@ Utils::Vector3d ReactionAlgorithm::get_random_position_in_box() {
 /**
  * Creates a particle at the end of the observed particle id range.
  */
-int ReactionAlgorithm::create_particle(int desired_type) {
+int ReactionAlgorithm::create_particle(int p_type) {
   int p_id;
   if (!m_empty_p_ids_smaller_than_max_seen_particle.empty()) {
-    auto p_id_iter = std::min_element(
-        std::begin(m_empty_p_ids_smaller_than_max_seen_particle),
-        std::end(m_empty_p_ids_smaller_than_max_seen_particle));
+    auto p_id_iter =
+        std::ranges::min_element(m_empty_p_ids_smaller_than_max_seen_particle);
     p_id = *p_id_iter;
     m_empty_p_ids_smaller_than_max_seen_particle.erase(p_id_iter);
   } else {
-    p_id = get_maximal_particle_id() + 1;
+    p_id = ::get_maximal_particle_id() + 1;
   }
 
-  // we use mass=1 for all particles, think about adapting this
-  auto const new_pos = get_random_position_in_box();
-  mpi_make_new_particle(p_id, new_pos);
-  move_particle(p_id, new_pos, std::sqrt(kT));
-  set_particle_type(p_id, desired_type);
-#ifdef ELECTROSTATICS
-  set_particle_q(p_id, charges_of_types[desired_type]);
+  // create random velocity vector according to Maxwell-Boltzmann distribution
+  auto pos = get_random_position_in_box();
+  auto vel = get_random_velocity_vector();
+
+  ::make_new_particle(p_id, pos);
+  if (auto p = get_local_particle(p_id)) {
+    p->v() = std::sqrt(kT / p->mass()) * vel;
+    p->type() = p_type;
+#ifdef ESPRESSO_ELECTROSTATICS
+    p->q() = charges_of_types.at(p_type);
 #endif
+  }
+  on_particle_type_change(p_id, ::type_tracking::new_part, p_type);
   return p_id;
 }
 
-void ReactionAlgorithm::move_particle(int p_id, Utils::Vector3d const &new_pos,
-                                      double velocity_prefactor) {
-  mpi_set_particle_pos(p_id, new_pos);
-  // create random velocity vector according to Maxwell-Boltzmann distribution
-  Utils::Vector3d vel;
-  vel[0] = velocity_prefactor * m_normal_distribution(m_generator);
-  vel[1] = velocity_prefactor * m_normal_distribution(m_generator);
-  vel[2] = velocity_prefactor * m_normal_distribution(m_generator);
-  set_particle_v(p_id, vel);
-}
-
-std::vector<std::tuple<int, Utils::Vector3d, Utils::Vector3d>>
-ReactionAlgorithm::generate_new_particle_positions(int type, int n_particles) {
-
-  std::vector<std::tuple<int, Utils::Vector3d, Utils::Vector3d>> old_state;
-  old_state.reserve(n_particles);
-
+void ReactionAlgorithm::displacement_mc_move(int type, int n_particles) {
+  auto &bookkeeping = make_new_system_state();
   // draw particle ids at random without replacement
   int p_id = -1;
   std::vector<int> drawn_pids{p_id};
@@ -513,42 +526,42 @@ ReactionAlgorithm::generate_new_particle_positions(int type, int n_particles) {
       p_id = get_random_p_id(type, random_index);
     }
     drawn_pids.emplace_back(p_id);
-    // store original state
-    auto const &p = get_particle_data(p_id);
-    old_state.emplace_back(std::tuple<int, Utils::Vector3d, Utils::Vector3d>{
-        p_id, p.pos(), p.v()});
     // write new position and new velocity
-    auto const prefactor = std::sqrt(kT / p.mass());
+    typename decltype(ParticleChanges::moved)::value_type old_state;
     auto const new_pos = get_random_position_in_box();
-    move_particle(p_id, new_pos, prefactor);
-    check_exclusion_range(p_id);
+    auto vel = get_random_velocity_vector();
+    if (auto p = get_real_particle(p_id)) {
+      old_state = {p_id, p->pos(), p->v()};
+      p->v() = std::sqrt(kT / p->mass()) * vel;
+      if (m_comm.rank() != 0) {
+        m_comm.send(0, 42, old_state);
+      }
+    } else if (m_comm.rank() == 0) {
+      m_comm.recv(boost::mpi::any_source, 42, old_state);
+    }
+    boost::mpi::broadcast(m_comm, old_state, 0);
+    bookkeeping.moved.emplace_back(old_state);
+    ::set_particle_pos(p_id, new_pos);
+
+    check_exclusion_range(p_id, type);
     if (particle_inside_exclusion_range_touched) {
       break;
     }
   }
-
-  return old_state;
 }
 
-/**
- * Performs a global MC move for particles of a given type.
- * Particles are selected without replacement.
- * @param type     Type of particles to move.
- * @param n_part   Number of particles of that type to move.
- * @returns true if all moves were accepted.
- */
-bool ReactionAlgorithm::displacement_move_for_particles_of_type(int type,
-                                                                int n_part) {
+bool ReactionAlgorithm::make_displacement_mc_move_attempt(int type,
+                                                          int n_particles) {
 
   if (type < 0) {
     throw std::domain_error("Parameter 'type_mc' must be >= 0");
   }
-  if (n_part < 0) {
+  if (n_particles < 0) {
     throw std::domain_error(
         "Parameter 'particle_number_to_be_changed' must be >= 0");
   }
 
-  if (n_part == 0) {
+  if (n_particles == 0) {
     // reject
     return false;
   }
@@ -556,24 +569,23 @@ bool ReactionAlgorithm::displacement_move_for_particles_of_type(int type,
   m_tried_configurational_MC_moves += 1;
   particle_inside_exclusion_range_touched = false;
 
-  auto const n_particles_of_type = number_of_particles_with_type(type);
-  if (n_part > n_particles_of_type) {
+  auto const n_particles_of_type = ::number_of_particles_with_type(type);
+  if (n_particles > n_particles_of_type) {
     // reject
     return false;
   }
 
-  auto const E_pot_old = mpi_calculate_potential_energy();
-
-  auto const original_state = generate_new_particle_positions(type, n_part);
-
+  auto const E_pot_old = calculate_potential_energy();
+  displacement_mc_move(type, n_particles);
   auto const E_pot_new = (particle_inside_exclusion_range_touched)
                              ? std::numeric_limits<double>::max()
-                             : mpi_calculate_potential_energy();
-
-  auto const beta = 1.0 / kT;
+                             : calculate_potential_energy();
+  auto constexpr exp_min = -708.4; // for IEEE-compatible double
+  auto const exponent = -(E_pot_new - E_pot_old) / kT;
+  auto const exponential = (exponent < exp_min) ? 0. : std::exp(exponent);
 
   // Metropolis algorithm since proposal density is symmetric
-  auto const bf = std::min(1.0, exp(-beta * (E_pot_new - E_pot_old)));
+  auto const bf = std::min(1., exponential);
 
   // // correct for enhanced proposal of small radii by using the
   // // Metropolis-Hastings algorithm for asymmetric proposal densities
@@ -589,13 +601,11 @@ bool ReactionAlgorithm::displacement_move_for_particles_of_type(int type,
   if (m_uniform_real_distribution(m_generator) < bf) {
     // accept
     m_accepted_configurational_MC_moves += 1;
+    clear_old_system_state();
     return true;
   }
   // reject: restore original particle properties
-  for (auto const &item : original_state) {
-    set_particle_v(std::get<0>(item), std::get<2>(item));
-    mpi_set_particle_pos(std::get<0>(item), std::get<1>(item));
-  }
+  restore_old_system_state();
   return false;
 }
 
@@ -606,8 +616,8 @@ void ReactionAlgorithm::setup_bookkeeping_of_empty_pids() {
   // Clean-up the list of empty pids
   m_empty_p_ids_smaller_than_max_seen_particle.clear();
 
-  auto particle_ids = get_particle_ids();
-  std::sort(particle_ids.begin(), particle_ids.end());
+  auto particle_ids = get_particle_ids_parallel();
+  std::ranges::sort(particle_ids);
   auto pid1 = -1;
   for (auto pid2 : particle_ids) {
     for (int pid = pid1 + 1; pid < pid2; ++pid) {
@@ -615,6 +625,37 @@ void ReactionAlgorithm::setup_bookkeeping_of_empty_pids() {
     }
     pid1 = pid2;
   }
+}
+
+double ReactionAlgorithm::calculate_potential_energy() const {
+  auto &system = System::get_system();
+  auto const obs = system.calculate_energy();
+  auto const kinetic_energy = obs->kinetic_lin[0] + obs->kinetic_rot[0];
+  auto pot = obs->accumulate(-kinetic_energy);
+  boost::mpi::broadcast(m_comm, pot, 0);
+  return pot;
+}
+
+Particle *ReactionAlgorithm::get_real_particle(int p_id) const {
+  assert(p_id >= 0);
+  auto const &system = System::get_system();
+  auto ptr = system.cell_structure->get_local_particle(p_id);
+  if (ptr != nullptr and ptr->is_ghost()) {
+    ptr = nullptr;
+  }
+  assert(boost::mpi::all_reduce(m_comm, static_cast<int>(ptr != nullptr),
+                                std::plus<>()) == 1);
+  return ptr;
+}
+
+Particle *ReactionAlgorithm::get_local_particle(int p_id) const {
+  assert(p_id >= 0);
+  auto const &system = System::get_system();
+  auto ptr = system.cell_structure->get_local_particle(p_id);
+  assert(boost::mpi::all_reduce(
+             m_comm, static_cast<int>(ptr != nullptr and not ptr->is_ghost()),
+             std::plus<>()) == 1);
+  return ptr;
 }
 
 } // namespace ReactionMethods

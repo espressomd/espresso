@@ -20,7 +20,6 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import espressomd.interactions
-import espressomd.virtual_sites
 import numpy as np
 
 
@@ -47,11 +46,6 @@ class CollisionDetection(ut.TestCase):
             "bond_vs": bond_harmonic, "bond_centers": bond_harmonic,
             "part_type_vs": 1, "distance": 0.1, "vs_placement": 0.1
         },
-        "bind_three_particles": {
-            "bond_centers": bond_harmonic, "bond_three_particles": 0,
-            "three_particle_binding_angle_resolution": bond_angle_resolution,
-            "distance": 0.1
-        },
         "glue_to_surface": {
             "distance": 0.1, "distance_glued_particle_to_vs": 0.02,
             "bond_centers": bond_harmonic, "bond_vs": bond_harmonic,
@@ -59,37 +53,22 @@ class CollisionDetection(ut.TestCase):
             "part_type_to_be_glued": 2, "part_type_after_glueing": 3
         },
     }
+    classes = {"bind_centers": espressomd.collision_detection.BindCenters,
+               "bind_at_point_of_collision": espressomd.collision_detection.BindAtPointOfCollision,
+               "glue_to_surface": espressomd.collision_detection.GlueToSurface}
 
     def tearDown(self):
-        self.system.collision_detection.set_params(mode="off")
-        if espressomd.has_features("VIRTUAL_SITES"):
-            self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
+        self.system.collision_detection.protocol = None
 
     def test_00_interface_and_defaults(self):
-        # Is it off by default
-        self.assertEqual(self.system.collision_detection.mode, "off")
-
-        # Make sure params cannot be set individually
-        with self.assertRaises(Exception):
-            self.system.collision_detection.mode = "bind_centers"
-
-        # Verify exception throwing for unknown collision modes
-        with self.assertRaisesRegex(ValueError, "Unknown collision mode 'unknown'"):
-            self.system.collision_detection.set_params(mode="unknown")
-        with self.assertRaisesRegex(ValueError, "Collision mode must be specified via the 'mode' argument"):
-            self.system.collision_detection.set_params()
-
+        self.assertIsNone(self.system.collision_detection.protocol)
         self.assertIsNone(self.system.collision_detection.call_method("none"))
-
-        # That should work
-        self.system.collision_detection.set_params(mode="off")
-        self.assertEqual(self.system.collision_detection.mode, "off")
 
     def check_stored_parameters(self, mode, **kwargs):
         """
         Check if collision detection stored parameters match input values.
         """
-        parameters = self.system.collision_detection.get_params()
+        parameters = self.system.collision_detection.protocol.get_params()
         parameters_ref = self.valid_coldet_params[mode].copy()
         parameters_ref.update(kwargs)
         for key, value_ref in parameters_ref.items():
@@ -104,7 +83,14 @@ class CollisionDetection(ut.TestCase):
         """
         params = self.valid_coldet_params.get(mode).copy()
         params.update(invalid_params)
-        self.system.collision_detection.set_params(mode=mode, **params)
+        self.system.collision_detection.protocol = self.classes[mode](**params)
+
+    def test_off(self):
+        self.system.collision_detection.protocol = None
+        with self.assertRaisesRegex(ValueError, "Parameter 'distance' must be > 0"):
+            self.set_coldet("bind_centers", distance=-2.)
+        # check if original parameters have been preserved
+        self.assertIsNone(self.system.collision_detection.protocol)
 
     def test_bind_centers(self):
         self.set_coldet("bind_centers", distance=0.5)
@@ -112,35 +98,32 @@ class CollisionDetection(ut.TestCase):
             self.set_coldet("bind_centers", distance=-2.)
         with self.assertRaisesRegex(ValueError, "Parameter 'distance' must be > 0"):
             self.set_coldet("bind_centers", distance=0.)
-        with self.assertRaisesRegex(RuntimeError, "Bond in parameter 'bond_centers' was not added to the system"):
+        with self.assertRaisesRegex(ValueError, "Bond in parameter list was not added to the system"):
             bond = espressomd.interactions.HarmonicBond(k=1., r_0=0.1)
             self.set_coldet("bind_centers", bond_centers=bond)
         with self.assertRaisesRegex(RuntimeError, "The bond type to be used for binding particle centers needs to be a pair bond"):
             self.set_coldet("bind_centers", bond_centers=self.bond_angle)
-        with self.assertRaisesRegex(RuntimeError, "Unknown parameter 'unknown'"):
-            self.set_coldet("bind_centers", unknown=1)
-        with self.assertRaisesRegex(RuntimeError, "Parameter 'part_type_vs' is not required for mode 'bind_centers'"):
-            self.set_coldet("bind_centers", part_type_vs=1)
-        with self.assertRaisesRegex(RuntimeError, "Parameter 'distance' is required for mode 'bind_centers'"):
-            self.system.collision_detection.set_params(
-                mode="bind_centers", bond_centers=self.bond_harmonic)
-        with self.assertRaisesRegex(Exception, "Please set all parameters at once via collision_detection.set_params"):
-            self.system.collision_detection.mode = "bind_at_point_of_collision"
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'distance' is missing"):
+            self.system.collision_detection.protocol = espressomd.collision_detection.BindCenters(
+                bond_centers=self.bond_harmonic)
         # check if original parameters have been preserved
         self.check_stored_parameters("bind_centers", distance=0.5)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_bind_at_point_of_collision(self):
         self.set_coldet("bind_at_point_of_collision", distance=0.5)
-        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
+        with self.assertRaisesRegex(ValueError, "Parameter 'distance' must be > 0"):
+            self.set_coldet("bind_at_point_of_collision", distance=-2.)
+        with self.assertRaisesRegex(ValueError, "Parameter 'distance' must be > 0"):
+            self.set_coldet("bind_at_point_of_collision", distance=0.)
         with self.assertRaisesRegex(ValueError, "Parameter 'vs_placement' must be between 0 and 1"):
             self.set_coldet("bind_at_point_of_collision", vs_placement=-0.01)
         with self.assertRaisesRegex(ValueError, "Parameter 'vs_placement' must be between 0 and 1"):
             self.set_coldet("bind_at_point_of_collision", vs_placement=1.01)
-        with self.assertRaisesRegex(RuntimeError, "Bond in parameter 'bond_vs' was not added to the system"):
+        with self.assertRaisesRegex(ValueError, "Bond in parameter list was not added to the system"):
             bond = espressomd.interactions.HarmonicBond(k=1., r_0=0.1)
             self.set_coldet("bind_at_point_of_collision", bond_vs=bond)
-        with self.assertRaisesRegex(RuntimeError, "bond type to be used for binding virtual sites needs to be a pair or three-particle bond"):
+        with self.assertRaisesRegex(RuntimeError, "bond type to be used for binding virtual sites needs to be a pair bond"):
             self.set_coldet(
                 "bind_at_point_of_collision", bond_vs=self.bond_dihe)
         with self.assertRaisesRegex(ValueError, "type for virtual sites needs to be >=0"):
@@ -152,26 +135,16 @@ class CollisionDetection(ut.TestCase):
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_bind_at_point_of_collision_norotation(self):
         if not espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
-            with self.assertRaisesRegex(RuntimeError, "require the VIRTUAL_SITES_RELATIVE feature"):
+            with self.assertRaisesRegex(RuntimeError, "Missing features VIRTUAL_SITES_RELATIVE"):
                 self.set_coldet("bind_at_point_of_collision")
-
-    def test_bind_three_particles(self):
-        self.set_coldet("bind_three_particles", distance=0.5)
-        with self.assertRaisesRegex(RuntimeError, "Insufficient bonds defined for three particle binding"):
-            self.set_coldet(
-                "bind_three_particles",
-                three_particle_binding_angle_resolution=self.bond_angle_resolution +
-                1000)
-        with self.assertRaisesRegex(RuntimeError, "The bonds for three particle binding need to be angle bonds"):
-            self.set_coldet(
-                "bind_three_particles",
-                three_particle_binding_angle_resolution=self.bond_angle_resolution + 1)
-        # check if original parameters have been preserved
-        self.check_stored_parameters("bind_three_particles", distance=0.5)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_glue_to_surface(self):
         self.set_coldet("glue_to_surface", distance=0.5)
+        with self.assertRaisesRegex(ValueError, "Parameter 'distance' must be > 0"):
+            self.set_coldet("glue_to_surface", distance=-2.)
+        with self.assertRaisesRegex(ValueError, "Parameter 'distance' must be > 0"):
+            self.set_coldet("glue_to_surface", distance=0.)
         with self.assertRaisesRegex(ValueError, "type for virtual sites needs to be >=0"):
             self.set_coldet("glue_to_surface", part_type_vs=-1)
         with self.assertRaisesRegex(ValueError, "type to be glued needs to be >=0"):

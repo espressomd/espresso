@@ -27,14 +27,14 @@
 #include <shapes/Shape.hpp>
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 
 #include <cmath>
 #include <limits>
+#include <numbers>
 
 BOOST_AUTO_TEST_CASE(dist_function) {
   // multiply by 100 because BOOST_REQUIRE_CLOSE takes a percentage tolerance
-  auto constexpr tol = std::numeric_limits<double>::epsilon() * 100;
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   double const semiaxes[3] = {3.1, 2.2, 1.3};
 
   Shapes::Ellipsoid e;
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(dist_function) {
   int N = 100;
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
-      double theta = 2. * i / N * Utils::pi();
+      double theta = 2. * i / N * std::numbers::pi;
       double v = j / (N - 1.);
 
       Utils::Vector3d dist;

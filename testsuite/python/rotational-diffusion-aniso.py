@@ -210,9 +210,7 @@ class RotDiffAniso(ut.TestCase):
             dcosjj_validate[2] = np.exp(-(D[0] + D[1]) * self.system.time)
             dcosjj_dev = np.absolute(
                 dcosjj - dcosjj_validate) / dcosjj_validate
-            for j in range(3):
-                if np.absolute(dcosjj_validate[j]) < min_value:
-                    dcosjj_dev[j] = 0.0
+            dcosjj_dev[np.nonzero(dcosjj_validate < min_value)] = 0.0
 
             # Eq. (24) [Perrin1936].
             dcosijpp_validate[0, 1] = np.exp(
@@ -229,10 +227,7 @@ class RotDiffAniso(ut.TestCase):
                 -(4 * D[0] + D[2] + D[1]) * self.system.time)
             dcosijpp_dev = np.absolute(
                 dcosijpp - dcosijpp_validate) / dcosijpp_validate
-            for i in range(3):
-                for j in range(3):
-                    if np.absolute(dcosijpp_validate[i, j]) < min_value:
-                        dcosijpp_dev[i, j] = 0.0
+            dcosijpp_dev[np.nonzero(dcosijpp_validate < min_value)] = 0.0
 
             # Eq. (25) [Perrin1936].
             dcosijnn_validate[0, 1] = np.exp(-(D[1] + D[0]) * self.system.time)
@@ -243,10 +238,7 @@ class RotDiffAniso(ut.TestCase):
             dcosijnn_validate[2, 1] = np.exp(-(D[2] + D[1]) * self.system.time)
             dcosijnn_dev = np.absolute(
                 dcosijnn - dcosijnn_validate) / dcosijnn_validate
-            for i in range(3):
-                for j in range(3):
-                    if np.absolute(dcosijnn_validate[i, j]) < min_value:
-                        dcosijnn_dev[i, j] = 0.0
+            dcosijnn_dev[np.nonzero(dcosijnn_validate < min_value)] = 0.0
 
             # Eq. (30) [Perrin1936].
             D0 = sum(D[:]) / 3.0
@@ -258,8 +250,7 @@ class RotDiffAniso(ut.TestCase):
             D1D1 /= 6.0
             # Technical workaround of a digital arithmetic issue for isotropic
             # particle
-            if np.absolute((D0**2 - D1D1) / (D0**2 + D1D1)
-                           ) < self.round_error_prec:
+            if np.abs((D0**2 - D1D1) / (D0**2 + D1D1)) < self.round_error_prec:
                 D1D1 *= (1.0 - 2.0 * self.round_error_prec)
             # Eq. (32) [Perrin1936].
             dcosjj2_validate = 1. / 3. + (1. / 3.) * (1. + (D - D0) / (2. * np.sqrt(D0**2 - D1D1))) \
@@ -268,9 +259,7 @@ class RotDiffAniso(ut.TestCase):
                 * np.exp(-6. * (D0 + np.sqrt(D0**2 - D1D1)) * self.system.time)
             dcosjj2_dev = np.absolute(
                 dcosjj2 - dcosjj2_validate) / dcosjj2_validate
-            for j in range(3):
-                if np.absolute(dcosjj2_validate[j]) < min_value:
-                    dcosjj2_dev[j] = 0.0
+            dcosjj2_dev[np.nonzero(dcosjj2_validate < min_value)] = 0.0
 
             # Eq. (33) [Perrin1936].
             dcosij2_validate[0, 1] = 1. / 3. - (1. / 6.) * (1. - (D[2] - D0) / (2. * np.sqrt(D0**2 - D1D1))) \
@@ -292,10 +281,7 @@ class RotDiffAniso(ut.TestCase):
             dcosij2_validate[2, 1] = dcosij2_validate[1, 2]
             dcosij2_dev = np.absolute(
                 dcosij2 - dcosij2_validate) / dcosij2_validate
-            for i in range(3):
-                for j in range(3):
-                    if np.absolute(dcosij2_validate[i, j]) < min_value:
-                        dcosij2_dev[i, j] = 0.0
+            dcosij2_dev[np.nonzero(dcosij2_validate < min_value)] = 0.0
 
             for j in range(3):
                 self.assertLessEqual(

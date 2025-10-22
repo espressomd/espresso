@@ -16,15 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_PROFILEOBSERVABLE_HPP
-#define OBSERVABLES_PROFILEOBSERVABLE_HPP
+
+#pragma once
 
 #include "Observable.hpp"
 
 #include <utils/math/make_lin_space.hpp>
 
-#include <boost/range/algorithm.hpp>
-
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <stdexcept>
@@ -75,21 +74,17 @@ public:
   /** Calculate the bin edges for each dimension */
   std::array<std::vector<double>, 3> edges() const {
     std::array<std::vector<double>, 3> profile_edges = {
-        {std::vector<double>(m_n_bins[0] + 1),
-         std::vector<double>(m_n_bins[1] + 1),
-         std::vector<double>(m_n_bins[2] + 1)}};
-    boost::copy(Utils::make_lin_space(m_limits[0].first, m_limits[0].second,
-                                      m_n_bins[0] + 1),
-                profile_edges[0].begin());
-    boost::copy(Utils::make_lin_space(m_limits[1].first, m_limits[1].second,
-                                      m_n_bins[1] + 1),
-                profile_edges[1].begin());
-    boost::copy(Utils::make_lin_space(m_limits[2].first, m_limits[2].second,
-                                      m_n_bins[2] + 1),
-                profile_edges[2].begin());
+        {std::vector<double>(m_n_bins[0u] + 1u),
+         std::vector<double>(m_n_bins[1u] + 1u),
+         std::vector<double>(m_n_bins[2u] + 1u)}};
+    for (auto i = 0u; i < 3u; ++i) {
+      std::ranges::copy(Utils::make_lin_space(m_limits[i].first,
+                                              m_limits[i].second,
+                                              m_n_bins[i] + 1u),
+                        profile_edges[i].begin());
+    }
     return profile_edges;
   }
 };
 
 } // Namespace Observables
-#endif

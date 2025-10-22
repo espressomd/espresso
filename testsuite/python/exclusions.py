@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Integration test for exclusions
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -28,10 +27,14 @@ class Exclusions(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def setUp(self):
-        self.system.part.clear()
         self.system.box_l = 3 * [10]
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01
+
+    def tearDown(self):
+        if espressomd.has_features("P3M"):
+            self.system.electrostatics.clear()
+        self.system.part.clear()
 
     def test_add_remove(self):
         p0 = self.system.part.add(id=0, pos=[0, 0, 0])
@@ -134,7 +137,7 @@ class Exclusions(ut.TestCase):
         p3m = espressomd.electrostatics.P3M(
             prefactor=1, r_cut=3.0, accuracy=1e-3, mesh=32, cao=7, alpha=0.1,
             tune=False)
-        self.system.actors.add(p3m)
+        self.system.electrostatics.solver = p3m
 
         # Only short-range part of the coulomb energy
         pair_energy = self.system.analysis.energy()[('coulomb', 0)]

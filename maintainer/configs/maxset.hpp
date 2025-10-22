@@ -28,25 +28,16 @@
 #define DPD
 
 #define ELECTROSTATICS
-#ifdef CUDA
-#define MMM1D_GPU
-#endif
 #define DIPOLES
 #ifdef SCAFACOS
 #define SCAFACOS_DIPOLES
 #endif
-#define DIPSUS
+
+#define THERMAL_STONER_WOHLFARTH
+#define DIPOLE_FIELD_TRACKING
 
 #define ENGINE
-
 #define LB_ELECTROHYDRODYNAMICS
-#define LB_BOUNDARIES
-#ifdef CUDA
-#define LB_BOUNDARIES_GPU
-#define ELECTROKINETICS
-#define EK_BOUNDARIES
-#define EK_DEBUG
-#endif
 
 #define EXCLUSIONS
 

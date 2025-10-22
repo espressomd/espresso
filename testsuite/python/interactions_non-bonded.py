@@ -47,12 +47,12 @@ def lj_cos_potential(r, epsilon, sigma, cutoff, offset):
     return V
 
 
-def lj_cos_force(espressomd, r, epsilon, sigma, cutoff, offset):
+def lj_cos_force(r, epsilon, sigma, cutoff, offset):
     f = 0.
     r_min = offset + np.power(2., 1. / 6.) * sigma
     r_cut = cutoff + offset
     if r < r_min:
-        f = tests_common.lj_force(espressomd, r, epsilon=epsilon, sigma=sigma,
+        f = tests_common.lj_force(r, epsilon=epsilon, sigma=sigma,
                                   cutoff=cutoff, offset=offset)
     elif r < r_cut:
         alpha = np.pi / \
@@ -78,12 +78,12 @@ def lj_cos2_potential(r, epsilon, sigma, offset, width):
     return V
 
 
-def lj_cos2_force(espressomd, r, epsilon, sigma, offset, width):
+def lj_cos2_force(r, epsilon, sigma, offset, width):
     f = 0.
     r_min = offset + np.power(2., 1. / 6.) * sigma
     r_cut = r_min + width
     if r < r_min:
-        f = tests_common.lj_force(espressomd, r, epsilon=epsilon, sigma=sigma,
+        f = tests_common.lj_force(r, epsilon=epsilon, sigma=sigma,
                                   cutoff=r_cut, offset=offset)
     elif r < r_cut:
         f = - np.pi * epsilon * \
@@ -304,8 +304,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                       params,
                       force_kernel=tests_common.lj_generic_force,
                       energy_kernel=tests_common.lj_generic_potential,
-                      n_steps=231,
-                      force_kernel_needs_espressomd=True)
+                      n_steps=231)
 
         params["shift"] = "auto"
         obj = espressomd.interactions.GenericLennardJonesInteraction(**params)
@@ -316,6 +315,31 @@ class InteractionsNonBondedTest(ut.TestCase):
         params["cutoff"] = 0.
         obj = espressomd.interactions.GenericLennardJonesInteraction(**params)
         self.assertEqual(obj.shift, 0.)
+
+    def test_lj_generic_reference_potential(self):
+
+        class HasFeatures:
+            """Mock class to override ``espressomd.has_features()``."""
+
+            def __init__(self, feature_name, has_feature):
+                self.feature_name = feature_name
+                self.has_feature = has_feature
+
+            def has_features(self, feature_name):
+                assert isinstance(feature_name, str)
+                result = espressomd.has_features(feature_name)
+                if feature_name == self.feature_name:
+                    result = self.has_feature
+                return result
+
+        params = {
+            "r": 1., "epsilon": 1., "sigma": 1., "cutoff": 5., "offset": 2.}
+        lj_gen_force_with_softcore = tests_common.lj_generic_force(
+            espressomd=HasFeatures("LJGEN_SOFTCORE", True), **params)
+        lj_gen_force_without_softcore = tests_common.lj_generic_force(
+            espressomd=HasFeatures("LJGEN_SOFTCORE", False), **params)
+        self.assertAlmostEqual(lj_gen_force_with_softcore, -24., delta=1e-7)
+        self.assertAlmostEqual(lj_gen_force_without_softcore, 24., delta=1e-7)
 
     # Test WCA Potential
     @utx.skipIfMissingFeatures("WCA")
@@ -333,8 +357,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                           espressomd, r, epsilon=epsilon, sigma=sigma, cutoff=wca_cutoff),
                       energy_kernel=lambda r, epsilon, sigma: tests_common.lj_generic_potential(
                           r, epsilon=epsilon, sigma=sigma, cutoff=wca_cutoff, shift=4. * wca_shift),
-                      n_steps=231,
-                      force_kernel_needs_espressomd=True)
+                      n_steps=231)
 
     # Test Generic Lennard-Jones Softcore Potential
     @utx.skipIfMissingFeatures("LJGEN_SOFTCORE")
@@ -354,8 +377,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "lam": 0.34},
                       force_kernel=tests_common.lj_generic_force,
                       energy_kernel=tests_common.lj_generic_potential,
-                      n_steps=231,
-                      force_kernel_needs_espressomd=True)
+                      n_steps=231)
 
     # Test Lennard-Jones Potential
     @utx.skipIfMissingFeatures("LENNARD_JONES")
@@ -368,8 +390,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "shift": 0.92},
                       force_kernel=tests_common.lj_force,
                       energy_kernel=tests_common.lj_potential,
-                      n_steps=113,
-                      force_kernel_needs_espressomd=True)
+                      n_steps=113)
 
     # Test Lennard-Jones Cosine Potential
     @utx.skipIfMissingFeatures("LJCOS")
@@ -382,8 +403,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "offset": 0.223},
                       force_kernel=lj_cos_force,
                       energy_kernel=lj_cos_potential,
-                      n_steps=175,
-                      force_kernel_needs_espressomd=True)
+                      n_steps=175)
 
     # Test Lennard-Jones Cosine^2 Potential
     @utx.skipIfMissingFeatures("LJCOS2")
@@ -396,8 +416,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "offset": 0.321},
                       force_kernel=lj_cos2_force,
                       energy_kernel=lj_cos2_potential,
-                      n_steps=267,
-                      force_kernel_needs_espressomd=True)
+                      n_steps=267)
 
     # Test Smooth-step Potential
     @utx.skipIfMissingFeatures("SMOOTH_STEP")
@@ -456,8 +475,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "shift": 0.133},
                       force_kernel=buckingham_force,
                       energy_kernel=buckingham_potential,
-                      n_steps=226,
-                      force_kernel_remove_shift=False)
+                      n_steps=226)
 
     # Test Soft-sphere Potential
     @utx.skipIfMissingFeatures("SOFT_SPHERE")
@@ -640,9 +658,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.assertEqual(self.system.analysis.energy()["non_bonded"], 0.0)
 
     def run_test(self, name, parameters, force_kernel,
-                 energy_kernel, n_steps, n_initial_steps=0,
-                 force_kernel_needs_espressomd=False,
-                 force_kernel_remove_shift=True):
+                 energy_kernel, n_steps, n_initial_steps=0):
 
         getattr(self.system.non_bonded_inter[0, 0], name).set_params(
             **parameters)
@@ -650,9 +666,11 @@ class InteractionsNonBondedTest(ut.TestCase):
         p1.pos = p0.pos + self.step * n_initial_steps
 
         force_parameters = parameters.copy()
-        if "shift" in force_parameters and force_kernel_remove_shift:
+        energy_parameters = parameters.copy()
+        force_kernel_varnames = force_kernel.__code__.co_varnames
+        if "shift" in parameters and "shift" not in force_kernel_varnames:
             del force_parameters["shift"]
-        if force_kernel_needs_espressomd:
+        if "espressomd" in force_kernel_varnames:
             force_parameters["espressomd"] = espressomd
 
         for _ in range(n_steps):
@@ -662,7 +680,7 @@ class InteractionsNonBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = energy_kernel(r=d, **parameters)
+            E_ref = energy_kernel(r=d, **energy_parameters)
 
             # Calculate forces
             f0_sim = np.copy(p0.f)

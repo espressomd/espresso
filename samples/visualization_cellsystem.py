@@ -47,7 +47,7 @@ visualizer = espressomd.visualization.openGLLive(
 system.time_step = 0.0005
 system.cell_system.set_regular_decomposition(use_verlet_lists=True)
 system.cell_system.skin = 0.4
-#system.cell_system.node_grid = [i, j, k]
+# system.cell_system.node_grid = [i, j, k]
 
 for i in range(100):
     system.part.add(pos=box * np.random.random(3))

@@ -16,17 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_CELL_HPP
-#define CORE_CELL_HPP
+
+#pragma once
 
 #include "Particle.hpp"
 #include "ParticleList.hpp"
 
-#include <utils/Span.hpp>
-
 #include <boost/range/iterator_range.hpp>
 
 #include <algorithm>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -34,9 +33,9 @@ template <class CellRef> class Neighbors {
   using storage_type = std::vector<CellRef>;
 
 public:
-  using value_type = typename storage_type::value_type;
-  using iterator = typename storage_type::iterator;
-  using const_iterator = typename storage_type::const_iterator;
+  using value_type = storage_type::value_type;
+  using iterator = storage_type::iterator;
+  using const_iterator = storage_type::const_iterator;
   using cell_range = boost::iterator_range<iterator>;
 
 private:
@@ -56,13 +55,12 @@ public:
     return *this;
   }
 
-  Neighbors(Utils::Span<const CellRef> red_neighbors,
-            Utils::Span<const CellRef> black_neighbors) {
+  Neighbors(std::span<const CellRef> red_neighbors,
+            std::span<const CellRef> black_neighbors) {
     m_neighbors.resize(red_neighbors.size() + black_neighbors.size());
-    m_red_black_divider = std::copy(red_neighbors.begin(), red_neighbors.end(),
-                                    m_neighbors.begin());
-    std::copy(black_neighbors.begin(), black_neighbors.end(),
-              m_red_black_divider);
+    auto const res = std::ranges::copy(red_neighbors, m_neighbors.begin());
+    m_red_black_divider = res.out;
+    std::ranges::copy(black_neighbors, m_red_black_divider);
   }
 
   /**
@@ -115,5 +113,3 @@ public:
    */
   neighbors_type &neighbors() { return m_neighbors; }
 };
-
-#endif

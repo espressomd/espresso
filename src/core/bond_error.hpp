@@ -21,11 +21,10 @@
 #ifndef ESPRESSO_BOND_ERROR_HPP
 #define ESPRESSO_BOND_ERROR_HPP
 
-#include <utils/Span.hpp>
-
 #include <exception>
+#include <span>
 
-void bond_broken_error(int id, Utils::Span<const int> partner_ids);
+void bond_broken_error(int id, std::span<const int> partner_ids);
 
 /**
  * Exception indicating that a particle id

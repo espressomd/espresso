@@ -17,33 +17,60 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_ACCUMULATOR_AUTOUPDATEACCUMULATORS_HPP
-#define SCRIPT_INTERFACE_ACCUMULATOR_AUTOUPDATEACCUMULATORS_HPP
+#pragma once
 
 #include "AccumulatorBase.hpp"
 
-#include "core/accumulators.hpp"
+#include "core/accumulators/AutoUpdateAccumulators.hpp"
+#include "core/system/System.hpp"
+
 #include "script_interface/ObjectList.hpp"
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/system/Leaf.hpp"
+#include "script_interface/system/System.hpp"
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace Accumulators {
-class AutoUpdateAccumulators : public ObjectList<AccumulatorBase> {
-  void add_in_core(std::shared_ptr<AccumulatorBase> const &obj_ptr) override {
-    ::Accumulators::auto_update_add(obj_ptr->accumulator().get());
+
+using AutoUpdateAccumulators_t = ObjectList<
+    AccumulatorBase,
+    AutoParameters<ObjectList<AccumulatorBase, System::Leaf>, System::Leaf>>;
+
+class AutoUpdateAccumulators : public AutoUpdateAccumulators_t {
+  using Base = AutoUpdateAccumulators_t;
+  using Base::value_type;
+
+  std::shared_ptr<::Accumulators::AutoUpdateAccumulators> m_handle;
+  std::unique_ptr<VariantMap> m_params;
+
+  bool has_in_core(value_type const &obj_ptr) const override {
+    return m_handle->contains(obj_ptr->accumulator().get());
   }
 
-  void
-  remove_in_core(std::shared_ptr<AccumulatorBase> const &obj_ptr) override {
-    ::Accumulators::auto_update_remove(obj_ptr->accumulator().get());
+  void add_in_core(value_type const &obj_ptr) override {
+    m_handle->add(obj_ptr->accumulator().get());
+  }
+
+  void remove_in_core(value_type const &obj_ptr) final {
+    m_handle->remove(obj_ptr->accumulator().get());
+  }
+
+public:
+  ~AutoUpdateAccumulators() override { do_destruct(); }
+
+  void do_construct(VariantMap const &params) override {
+    m_params = std::make_unique<VariantMap>(params);
   }
 
 private:
-  // disable serialization: pickling done by the python interface
-  std::string get_internal_state() const override { return {}; }
-  void set_internal_state(std::string const &state) override {}
+  void on_bind_system(::System::System &system) override {
+    m_handle = system.auto_update_accumulators;
+    m_handle->bind_system(m_system.lock());
+    Base::do_construct(*m_params);
+    m_params.reset();
+  }
 };
 } /* namespace Accumulators */
 } /* namespace ScriptInterface */
-
-#endif // SCRIPT_INTERFACE_ACCUMULATOR_AUTOUPDATEACCUMULATORS_HPP

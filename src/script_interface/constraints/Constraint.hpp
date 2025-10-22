@@ -19,11 +19,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
-#define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
+#pragma once
+
+#include "script_interface/ScriptInterface.hpp"
 
 #include "core/constraints/Constraint.hpp"
-#include "script_interface/ScriptInterface.hpp"
+
+namespace System {
+class System;
+}
 
 namespace ScriptInterface {
 namespace Constraints {
@@ -33,9 +37,8 @@ public:
   virtual std::shared_ptr<const ::Constraints::Constraint>
   constraint() const = 0;
   virtual std::shared_ptr<::Constraints::Constraint> constraint() = 0;
+  virtual void bind_system(std::shared_ptr<::System::System const> const &) {}
 };
 
-} /* namespace Constraints */
-} /* namespace ScriptInterface */
-
-#endif
+} // namespace Constraints
+} // namespace ScriptInterface

@@ -19,43 +19,62 @@
 #include "CylindricalLBVelocityProfileAtParticlePositions.hpp"
 
 #include "BoxGeometry.hpp"
-#include "grid.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
+#include "system/System.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
-#include <utils/Span.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 
-#include <cstddef>
+#include <utility>
 #include <vector>
 
 namespace Observables {
 std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
-    Utils::Span<std::reference_wrapper<const Particle>> particles,
+    boost::mpi::communicator const &comm,
+    ParticleReferenceRange const &local_particles,
     const ParticleObservables::traits<Particle> &traits) const {
-  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
+  using pos_type = decltype(traits.position(std::declval<Particle>()));
+  using vel_type = Utils::Vector3d;
 
-  for (auto const &p : particles) {
-    auto const pos = folded_position(traits.position(p), box_geo);
-    auto const v = lb_lbfluid_get_interpolated_velocity(pos) *
-                   lb_lbfluid_get_lattice_speed();
+  std::vector<pos_type> local_folded_positions{};
+  std::vector<vel_type> local_velocities{};
+  local_folded_positions.reserve(local_particles.size());
+  local_velocities.reserve(local_particles.size());
 
-    histogram.update(
-        Utils::transform_coordinate_cartesian_to_cylinder(
-            pos - transform_params->center(), transform_params->axis(),
-            transform_params->orientation()),
-        Utils::transform_vector_cartesian_to_cylinder(
-            v, transform_params->axis(), pos - transform_params->center()));
+  auto &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto &lb = system.lb;
+  lb.ghost_communication_vel();
+
+  std::vector<Utils::Vector3d> folded_pos{};
+  folded_pos.reserve(local_particles.size());
+  for (auto const &p : local_particles) {
+    folded_pos.emplace_back(box_geo.folded_position(traits.position(p)));
+  }
+  auto const interpolated_vel =
+      lb.get_coupling_interpolated_velocities(folded_pos);
+  auto vel_it = interpolated_vel.begin();
+  for (auto const &pos : folded_pos) {
+    auto const pos_shifted = pos - transform_params->center();
+    auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
+        pos_shifted, transform_params->axis(), transform_params->orientation());
+    auto const vel_cyl = Utils::transform_vector_cartesian_to_cylinder(
+        *vel_it, transform_params->axis(), pos_shifted);
+    local_folded_positions.emplace_back(pos_cyl);
+    local_velocities.emplace_back(vel_cyl);
+    ++vel_it;
   }
 
-  // normalize by number of hits per bin
-  auto hist_tmp = histogram.get_histogram();
-  auto tot_count = histogram.get_tot_count();
-  std::transform(hist_tmp.begin(), hist_tmp.end(), tot_count.begin(),
-                 hist_tmp.begin(), [](auto hi, auto ci) {
-                   return ci > 0 ? hi / static_cast<double>(ci) : 0.;
-                 });
-  return hist_tmp;
+  auto const [global_folded_positions, global_velocities] =
+      detail::gather(comm, local_folded_positions, local_velocities);
+
+  if (comm.rank() != 0) {
+    return {};
+  }
+
+  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
+  detail::accumulate(histogram, global_folded_positions, global_velocities);
+  return detail::normalize_by_bin_size(histogram);
 }
 
 } // namespace Observables

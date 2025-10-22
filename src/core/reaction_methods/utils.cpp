@@ -17,74 +17,68 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "reaction_methods/SingleReaction.hpp"
+
 #include "reaction_methods/utils.hpp"
 
 #include <cmath>
-#include <map>
+#include <unordered_map>
 
 namespace ReactionMethods {
 
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
-  double value = 1.0;
+  auto value = 1.;
   if (nu_i) {
     if (nu_i > 0) {
       for (int i = 1; i <= nu_i; i++) {
-        value /= Ni0 + i;
+        value *= static_cast<double>(Ni0 + i);
       }
+      value = 1. / value;
     } else {
-      auto const abs_nu_i = std::abs(nu_i);
-      for (int i = 0; i < abs_nu_i; i++) {
-        value *= Ni0 - i;
+      for (int i = 0; i < -nu_i; i++) {
+        value *= static_cast<double>(Ni0 - i);
       }
     }
   }
   return value;
 }
 
-double
-calculate_factorial_expression(SingleReaction const &current_reaction,
-                               std::map<int, int> const &old_particle_numbers) {
-  double factorial_expr = 1.0;
+double calculate_factorial_expression(
+    SingleReaction const &reaction,
+    std::unordered_map<int, int> const &particle_numbers) {
+  auto value = 1.;
   // factorial contribution of reactants
-  for (int i = 0; i < current_reaction.reactant_types.size(); i++) {
-    int nu_i = -1 * current_reaction.reactant_coefficients[i];
-    int N_i0 = old_particle_numbers.at(current_reaction.reactant_types[i]);
-    factorial_expr *= factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-        N_i0, nu_i); // zeta = 1 (see @cite smith94c)
-                     // since we only perform one reaction
-                     // at one call of the function
+  for (int i = 0; i < reaction.reactant_types.size(); i++) {
+    auto const nu_i = -1 * reaction.reactant_coefficients[i];
+    auto const N_i0 = particle_numbers.at(reaction.reactant_types[i]);
+    value *= factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0, nu_i);
   }
   // factorial contribution of products
-  for (int i = 0; i < current_reaction.product_types.size(); i++) {
-    int nu_i = current_reaction.product_coefficients[i];
-    int N_i0 = old_particle_numbers.at(current_reaction.product_types[i]);
-    factorial_expr *= factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-        N_i0, nu_i); // zeta = 1 (see @cite smith94c)
-                     // since we only perform one reaction
-                     // at one call of the function
+  for (int i = 0; i < reaction.product_types.size(); i++) {
+    auto const nu_i = reaction.product_coefficients[i];
+    auto const N_i0 = particle_numbers.at(reaction.product_types[i]);
+    value *= factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0, nu_i);
   }
-  return factorial_expr;
+  return value;
 }
 
 double calculate_factorial_expression_cpH(
-    SingleReaction const &current_reaction,
-    std::map<int, int> const &old_particle_numbers) {
-  double factorial_expr = 1.0;
+    SingleReaction const &reaction,
+    std::unordered_map<int, int> const &particle_numbers) {
+  auto value = 1.;
   // factorial contribution of reactants
   {
-    int nu_i = -1 * current_reaction.reactant_coefficients[0];
-    int N_i0 = old_particle_numbers.at(current_reaction.reactant_types[0]);
-    factorial_expr *=
-        factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0, nu_i);
+    auto const nu_i = -1 * reaction.reactant_coefficients[0];
+    auto const N_i0 = particle_numbers.at(reaction.reactant_types[0]);
+    value *= factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0, nu_i);
   }
   // factorial contribution of products
   {
-    int nu_i = current_reaction.product_coefficients[0];
-    int N_i0 = old_particle_numbers.at(current_reaction.product_types[0]);
-    factorial_expr *=
-        factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0, nu_i);
+    auto const nu_i = reaction.product_coefficients[0];
+    auto const N_i0 = particle_numbers.at(reaction.product_types[0]);
+    value *= factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0, nu_i);
   }
-  return factorial_expr;
+  return value;
 }
 
 } // namespace ReactionMethods

@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-URL="https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/pipelines/${CI_PIPELINE_ID}"
+URL="https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/-/pipelines/${CI_PIPELINE_ID}"
 
 curl -s "https://api.github.com/repos/espressomd/espresso/issues" \
      -H "Accept: application/vnd.github.full+json" \

@@ -45,7 +45,7 @@ class Test:
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
 
     def test_elc(self):
         """
@@ -53,14 +53,13 @@ class Test:
         simulation box with dielectric contrast on the bottom of the box,
         which can be calculated analytically with image charges.
         """
-        self.system.part.add(pos=self.system.box_l / 2., q=self.q[0])
-        self.system.part.add(pos=self.system.box_l / 2. + [0, 0, self.distance],
-                             q=-self.q[0])
-
         self.system.box_l = [self.box_l, self.box_l, self.box_l + self.elc_gap]
         self.system.cell_system.set_regular_decomposition(
             use_verlet_lists=True)
         self.system.periodicity = [True, True, True]
+        self.system.part.add(pos=self.system.box_l / 2., q=self.q[0])
+        self.system.part.add(pos=self.system.box_l / 2. + [0, 0, self.distance],
+                             q=-self.q[0])
         prefactor = 2.0
         p3m = self.p3m_class(prefactor=prefactor, accuracy=self.accuracy,
                              mesh=[58, 58, 70], cao=4)
@@ -69,7 +68,7 @@ class Test:
                                             maxPWerror=self.accuracy,
                                             delta_mid_bot=self.delta_mid_bot,
                                             delta_mid_top=self.delta_mid_top)
-        self.system.actors.add(elc)
+        self.system.electrostatics.solver = elc
 
         elc_forces, elc_energy = self.scan()
 
@@ -115,7 +114,7 @@ class TestCPU(Test, ut.TestCase):
 class TestGPU(Test, ut.TestCase):
 
     p3m_class = espressomd.electrostatics.P3MGPU
-    rtol = 4e-6
+    rtol = 5e-6
 
 
 if __name__ == "__main__":

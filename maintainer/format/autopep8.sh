@@ -1,4 +1,5 @@
 #!/bin/sh
+#
 # Copyright (C) 2018-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -15,10 +16,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 
-AUTOPEP8_VER=1.6.0
-PYCODESTYLE_VER=2.8.0
+AUTOPEP8_VER=2.1.0
+PYCODESTYLE_VER=2.11.1
 
 python3 -m autopep8 --help 2>&1 > /dev/null
 if [ "$?" = "0" ]; then

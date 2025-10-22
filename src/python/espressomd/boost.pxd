@@ -16,21 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from libcpp.string cimport string
-from libcpp cimport bool
-
-cdef extern from "boost/utility/string_ref.hpp" namespace "boost":
-    cdef cppclass string_ref:
-        string_ref()
-        string_ref(const char * )
-        string_ref(const string & )
-
-        bool operator == (const string_ref & )
-        bool operator != (const string_ref & )
-
-        string to_string()
-        const char * data()
-
 cdef extern from "boost/mpi/environment.hpp" namespace "boost::mpi":
     cdef cppclass environment:
         pass

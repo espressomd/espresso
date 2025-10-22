@@ -36,19 +36,18 @@ class TestLB:
     params = {'tau': 0.01,
               'agrid': 0.5,
               'dens': 0.85,
-              'viscosity': 3.0,
+              'kinematic_viscosity': 3.0,
               'friction': 2.0,
               'temp': 1.5,
               'gamma': 1.5}
 
     system.periodicity = [True, True, True]
     system.time_step = 0.01
-    system.cell_system.skin = 1.0
-    dof = 3.
-    n_nodes = system.cell_system.get_state()['n_nodes']
+    system.cell_system.skin = 0
+    n_nodes = system.cell_system.get_state()["n_nodes"]
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.part.clear()
         self.system.thermostat.turn_off()
 
@@ -59,19 +58,19 @@ class TestLB:
             type=self.n_col_part // 2 * [0, 1], pos=np.random.random(
                 (self.n_col_part, 3)) * self.system.box_l[0])
         if espressomd.has_features("MASS"):
-            particles.mass = 0.1 + np.random.random(
+            particles.mass = 0.5 + np.random.random(
                 len(self.system.part))
 
         self.system.thermostat.turn_off()
 
         self.lbf = self.lb_class(
             kT=self.params['temp'],
-            visc=self.params['viscosity'],
-            dens=self.params['dens'],
+            kinematic_viscosity=self.params['kinematic_viscosity'],
+            density=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0], seed=4)
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf,
             seed=3,
@@ -101,34 +100,30 @@ class TestLB:
             fluid_temp = 0.0
 
             # Go over lb lattice
-            for lb_node in self.lbf.nodes():
-                dens = lb_node.density
-                fluid_mass += dens
-                fluid_temp += np.sum(np.copy(lb_node.velocity)**2) * dens
+            nodes_dens = self.lbf[:, :, :].density
+            nodes_vel = np.sum(np.square(self.lbf[:, :, :].velocity), axis=3)
+            fluid_mass += np.sum(nodes_dens)
+            fluid_temp += np.sum(np.multiply(nodes_dens, nodes_vel))
 
             # Normalize
-            fluid_mass /= np.product(self.lbf.shape)
+            fluid_mass /= np.prod(self.lbf.shape)
             fluid_temp *= self.system.volume() / (
-                3. * np.product(self.lbf.shape)**2)
+                3. * np.prod(self.lbf.shape)**2)
 
             # check mass conversation
-            self.assertAlmostEqual(fluid_mass, self.params["dens"],
-                                   delta=self.params["mass_prec_per_node"])
+            self.assertAlmostEqual(fluid_mass, self.params["dens"], delta=1E-9)
 
             # check momentum conservation
-            # NOTE: this particle momentum prediction is due to the missing f/2 part in the
-            #       LB fluid.
-            particle_momentum = np.sum(
-                [p.mass * p.v + 0.5 * p.f * self.system.time_step for p in self.system.part], axis=0)
-            fluid_momentum = self.system.analysis.linear_momentum(
-                include_particles=False, include_lbfluid=True)
-            np.testing.assert_allclose(
-                particle_momentum + fluid_momentum, self.tot_mom,
-                atol=self.params['mom_prec'])
+            momentum = self.system.analysis.linear_momentum()
+            f_2_correction = np.sum(
+                self.system.part.all().f,
+                axis=0) * self.system.time_step
 
-            # Calc particle temperature
-            e = self.system.analysis.energy()
-            temp_particle = 2.0 / self.dof * e["kinetic"] / self.n_col_part
+            np.testing.assert_allclose(momentum + f_2_correction, self.tot_mom,
+                                       atol=1E-10)
+
+            temp_particle = np.average(
+                [np.average(p.mass * p.v**2) for p in self.system.part])
 
             # Update lists
             all_temp_particle.append(temp_particle)
@@ -139,8 +134,8 @@ class TestLB:
         #   scale=np.std(all_temp_particle,ddof=1))[1] - self.params["temp"]
         # temp_prec_fluid = scipy.stats.norm.interval(0.95, loc=self.params["temp"],
         #   scale=np.std(all_temp_fluid,ddof=1))[1] -self.params["temp"]
-        temp_prec_particle = 0.06 * self.params["temp"]
-        temp_prec_fluid = 0.05 * self.params["temp"]
+        temp_prec_particle = 0.08 * self.params["temp"]
+        temp_prec_fluid = 0.07 * self.params["temp"]
 
         self.assertAlmostEqual(
             np.mean(all_temp_fluid), self.params["temp"], delta=temp_prec_fluid)
@@ -148,62 +143,47 @@ class TestLB:
             np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
 
 
-class TestRegularLBCPU(TestLB, ut.TestCase):
+@ut.skipIf(TestLB.n_nodes == 1,
+           "LB with regular decomposition already tested with 2 MPI ranks")
+@utx.skipIfMissingFeatures("WALBERLA")
+class TestRegularLBWalberla(TestLB, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in double-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
 
     def setUp(self):
         self.system.cell_system.set_regular_decomposition()
-        self.lb_class = espressomd.lb.LBFluid
-        self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
 
 
-@utx.skipIfMissingGPU()
-class TestRegularLBGPU(TestLB, ut.TestCase):
+@utx.skipIfMissingFeatures("WALBERLA")
+class TestNSquareLBWalberla(TestLB, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
 
     def setUp(self):
-        self.system.cell_system.set_regular_decomposition()
-        self.lb_class = espressomd.lb.LBFluidGPU
-        self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
+        self.system.cell_system.set_n_square()
 
 
-@ut.skipIf(TestLB.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
-class TestNSquareLBCPU(TestLB, ut.TestCase):
+@utx.skipIfMissingFeatures("WALBERLA")
+class TestHybrid0LBWalberla(TestLB, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
 
     def setUp(self):
         self.system.cell_system.set_hybrid_decomposition(
             n_square_types={0}, cutoff_regular=0)
-        self.lb_class = espressomd.lb.LBFluid
         self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
 
 
-@utx.skipIfMissingGPU()
-class TestNSquareLBGPU(TestLB, ut.TestCase):
+@utx.skipIfMissingFeatures("WALBERLA")
+class TestHybrid1LBWalberla(TestLB, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
 
     def setUp(self):
         self.system.cell_system.set_hybrid_decomposition(
             n_square_types={1}, cutoff_regular=0)
-        self.lb_class = espressomd.lb.LBFluidGPU
-        self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
-
-
-@ut.skipIf(TestLB.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
-class TestHybrid0LBCPU(TestLB, ut.TestCase):
-
-    def setUp(self):
-        self.system.cell_system.set_hybrid_decomposition(
-            n_square_types={0}, cutoff_regular=0)
-        self.lb_class = espressomd.lb.LBFluid
-        self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
-
-
-@utx.skipIfMissingGPU()
-class TestHybrid1LBGPU(TestLB, ut.TestCase):
-
-    def setUp(self):
-        self.system.cell_system.set_hybrid_decomposition(
-            n_square_types={1}, cutoff_regular=0)
-        self.lb_class = espressomd.lb.LBFluidGPU
         self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2024 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -32,38 +32,31 @@
  *
  */
 
-#ifndef ESPRESSO_SRC_CORE_P3M_COMMON_HPP
-#define ESPRESSO_SRC_CORE_P3M_COMMON_HPP
+#pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include <utils/Vector.hpp>
 
+#include <algorithm>
 #include <array>
 #include <vector>
 
 /** This value indicates metallic boundary conditions. */
-auto constexpr P3M_EPSILON_METALLIC = 0.0;
+inline auto constexpr P3M_EPSILON_METALLIC = 0.0;
 
-#if defined(P3M) || defined(DP3M)
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 #include "LocalBox.hpp"
 
 #include <cstddef>
+#include <span>
 #include <stdexcept>
 
-namespace detail {
-/** @brief Index helpers for direct and reciprocal space.
- *  After the FFT the data is in order YZX, which
- *  means that Y is the slowest changing index.
- */
-namespace FFT_indexing {
-enum FFT_REAL_VECTOR : int { RX = 0, RY = 1, RZ = 2 };
-enum FFT_WAVE_VECTOR : int { KY = 0, KZ = 1, KX = 2 };
-} // namespace FFT_indexing
-} // namespace detail
+/** @brief P3M kernel architecture. */
+enum class Arch { CPU, GPU };
 
-/** Structure to hold P3M parameters and some dependent variables. */
+/** @brief Structure to hold P3M parameters and some dependent variables. */
 struct P3MParameters {
   /** tuning or production? */
   bool tuning;
@@ -73,8 +66,8 @@ struct P3MParameters {
   /** cutoff radius for real space electrostatics (>0), rescaled to
    *  @p r_cut_iL = @p r_cut * @p box_l_i. */
   double r_cut_iL;
-  /** number of mesh points per coordinate direction (>0). */
-  Utils::Vector3i mesh = {};
+  /** number of mesh points per coordinate direction (>0), in real space. */
+  Utils::Vector3i mesh;
   /** offset of the first mesh point (lower left corner) from the
    *  coordinate origin ([0,1[). */
   Utils::Vector3d mesh_off;
@@ -135,22 +128,21 @@ struct P3MParameters {
     }
 
     if (not(mesh >= Utils::Vector3i::broadcast(1) or
-            ((mesh[0] >= 1) and
-             (mesh == Utils::Vector3i{{mesh[0], -1, -1}}))) and
-        not(tuning and mesh == Utils::Vector3i::broadcast(-1))) {
+            ((mesh[0] >= 1) and (mesh == Utils::Vector3i{{mesh[0], -1, -1}})) or
+            (tuning and mesh == Utils::Vector3i::broadcast(-1)))) {
       throw std::domain_error("Parameter 'mesh' must be > 0");
     }
 
     if (not(mesh_off >= Utils::Vector3d::broadcast(0.) and
             mesh_off <= Utils::Vector3d::broadcast(1.))) {
       if (mesh_off == Utils::Vector3d::broadcast(-1.)) {
-        this->mesh_off = Utils::Vector3d::broadcast(P3M_MESHOFF);
+        this->mesh_off = Utils::Vector3d::broadcast(0.5);
       } else {
         throw std::domain_error("Parameter 'mesh_off' must be >= 0 and <= 1");
       }
     }
 
-    if ((cao < 1 or cao > 7) and not(tuning and cao == -1)) {
+    if ((cao < 1 or cao > 7) and (not tuning or cao != -1)) {
       throw std::domain_error("Parameter 'cao' must be >= 1 and <= 7");
     }
 
@@ -170,28 +162,40 @@ struct P3MParameters {
     a = Utils::hadamard_division(Utils::Vector3d::broadcast(1.), ai);
     cao_cut = (static_cast<double>(cao) / 2.) * a;
   }
+
+  /**
+   * @brief Convert spatial position to grid position.
+   * To get the grid index, round the result to the nearest integer.
+   */
+  auto calc_grid_pos(Utils::Vector3d const &pos) const {
+    return Utils::hadamard_product(pos, ai) - mesh_off;
+  }
 };
 
-/** Structure for local mesh parameters. */
+/** @brief Properties of the local mesh. */
 struct P3MLocalMesh {
-  /* local mesh characterization. */
-  /** dimension (size) of local mesh. */
+  /** dimension (size) of local mesh including halo layers. */
   Utils::Vector3i dim;
+  Utils::Vector3i dim_no_halo;
   /** number of local mesh points. */
   int size;
   /** index of lower left corner of the
       local mesh in the global mesh. */
-  int ld_ind[3];
+  Utils::Vector3i ld_ind;
   /** position of the first local mesh point. */
-  double ld_pos[3];
+  Utils::Vector3d ld_pos;
+  Utils::Vector3i ld_no_halo;
+  Utils::Vector3i ur_no_halo;
   /** dimension of mesh inside node domain. */
-  int inner[3];
+  Utils::Vector3i inner;
   /** inner left down grid point */
-  int in_ld[3];
+  Utils::Vector3i in_ld;
   /** inner up right grid point + (1,1,1) */
-  int in_ur[3];
+  Utils::Vector3i in_ur;
   /** number of margin mesh points. */
-  int margin[6];
+  int margin[6]; // !! legacy
+  Utils::Vector3i n_halo_ld;
+  Utils::Vector3i n_halo_ur;
   /** number of margin mesh points from neighbour nodes */
   int r_margin[6];
   /** offset between mesh lines of the last dimension */
@@ -205,7 +209,7 @@ struct P3MLocalMesh {
    */
   void recalc_ld_pos(P3MParameters const &params) {
     // spatial position of left down mesh point
-    for (int i = 0; i < 3; i++) {
+    for (auto i = 0u; i < 3u; i++) {
       ld_pos[i] = (ld_ind[i] + params.mesh_off[i]) * params.a[i];
     }
   }
@@ -215,36 +219,46 @@ struct P3MLocalMesh {
    * for the charge assignment process.
    */
   void calc_local_ca_mesh(P3MParameters const &params,
-                          LocalBox<double> const &local_geo, double skin,
+                          LocalBox const &local_geo, double skin,
                           double space_layer);
 };
 
-/** One of the aliasing sums used to compute k-space errors.
- *  Fortunately the one which is most important (because it converges
- *  most slowly, since it is not damped exponentially) can be
- *  calculated analytically. The result (which depends on the order of
- *  the spline interpolation) can be written as an even trigonometric
- *  polynomial. The results are tabulated here (the employed formula
- *  is eq. (7.66) in @cite hockney88a).
- */
-double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
+/** @brief Local mesh FFT buffers. */
+template <typename FloatType> struct P3MFFTMesh {
+  /** @brief real-space scalar mesh for charge assignment and FFT. */
+  std::span<FloatType> rs_scalar;
+  /** @brief real-space scalar charge density. */
+  std::span<FloatType> rs_charge_density;
 
-#endif /* P3M || DP3M */
+  /** @brief real-space vector meshes for the electric or dipolar field. */
+  std::array<std::span<FloatType>, 3> rs_fields;
 
-namespace detail {
-/** Calculate indices that shift @ref P3MParameters::mesh "mesh" by `mesh/2`.
+  /** @brief Indices of the lower left corner of the local mesh grid. */
+  Utils::Vector3i start;
+  /** @brief Indices of the upper right corner of the local mesh grid. */
+  Utils::Vector3i stop;
+  /** @brief Extents of the local mesh grid. */
+  Utils::Vector3i size;
+
+  /** @brief number of permutations in k_space */
+  int ks_pnum = 0;
+};
+
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
+
+/** @brief Calculate indices that shift @ref P3MParameters::mesh by `mesh/2`.
  *  For each mesh size @f$ n @f$ in @c mesh_size, create a sequence of integer
  *  values @f$ \left( 0, \ldots, \lfloor n/2 \rfloor, -\lfloor n/2 \rfloor,
  *  \ldots, -1\right) @f$ if @c zero_out_midpoint is false, otherwise
  *  @f$ \left( 0, \ldots, \lfloor n/2 - 1 \rfloor, 0, -\lfloor n/2 \rfloor,
  *  \ldots, -1\right) @f$.
  */
-std::array<std::vector<int>, 3> inline calc_meshift(
+std::array<std::vector<int>, 3> inline calc_p3m_mesh_shift(
     Utils::Vector3i const &mesh_size, bool zero_out_midpoint = false) {
   std::array<std::vector<int>, 3> ret{};
 
-  for (std::size_t i = 0; i < 3; i++) {
-    ret[i] = std::vector<int>(mesh_size[i]);
+  for (auto i = 0u; i < 3u; ++i) {
+    ret[i] = std::vector<int>(static_cast<std::size_t>(mesh_size[i]));
 
     for (int j = 1; j <= mesh_size[i] / 2; j++) {
       ret[i][j] = j;
@@ -256,6 +270,3 @@ std::array<std::vector<int>, 3> inline calc_meshift(
 
   return ret;
 }
-} // namespace detail
-
-#endif

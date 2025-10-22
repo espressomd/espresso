@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_COMMUNICATION_HPP
-#define CORE_COMMUNICATION_HPP
+
+#pragma once
+
 /** \file
  *  This file contains the asynchronous MPI communication.
  *
@@ -28,9 +29,9 @@
  *  The asynchronous MPI communication is used during the script
  *  evaluation. Except for the head node that interprets the interface
  *  script, all other nodes wait in @ref mpi_loop() for the head node to
- *  issue an action using @ref mpi_call(). @ref mpi_loop() immediately
+ *  issue an action using @c MpiCallbacks::call(). @ref mpi_loop() immediately
  *  executes an @c MPI_Bcast and therefore waits for the head node to
- *  broadcast a command, which is done by @ref mpi_call(). The request
+ *  broadcast a command, which is done by @c MpiCallbacks::call(). The request
  *  consists of a callback function with an arbitrary number of arguments.
  *
  *  To add new actions (e.g. to implement new interface functionality), do the
@@ -46,102 +47,68 @@
 
 #include "MpiCallbacks.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
 
 #include <memory>
 #include <utility>
 
 /** The number of this node. */
 extern int this_node;
-/** The total number of nodes. */
-extern int n_nodes;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+struct KokkosHandle;
+extern std::shared_ptr<KokkosHandle> kokkos_handle;
+#endif
+
+class CommunicationEnvironment {
+  std::shared_ptr<boost::mpi::environment> m_mpi_env;
+  std::shared_ptr<Communication::MpiCallbacks> m_callbacks;
+  bool m_is_mpi_gpu_aware;
+
+public:
+  CommunicationEnvironment();
+  explicit CommunicationEnvironment(
+      std::shared_ptr<boost::mpi::environment> mpi_env);
+  ~CommunicationEnvironment();
+
+  auto &mpiCallbacks() const { return *m_callbacks; }
+  auto mpiCallbacksHandle() { return m_callbacks; }
+  auto get_mpi_env() const { return m_mpi_env; }
+  auto is_mpi_gpu_aware() const { return m_is_mpi_gpu_aware; }
+};
+
+struct Communicator {
+  boost::mpi::communicator &comm;
+  Utils::Vector3i node_grid;
+  /** @brief The MPI rank. */
+  int &this_node;
+  /** @brief The MPI world size. */
+  int size;
+
+  Communicator();
+  void init_comm_cart();
+  void full_initialization();
+  /** @brief Calculate the node index in the Cartesian topology. */
+  Utils::Vector3i calc_node_index() const;
+  /** @brief Set new Cartesian topology. */
+  void set_node_grid(Utils::Vector3i const &value);
+};
+
+extern Communicator communicator;
+extern std::unique_ptr<CommunicationEnvironment> communication_environment;
 
 namespace Communication {
 /**
  * @brief Returns a reference to the global callback class instance.
  */
-MpiCallbacks &mpiCallbacks();
+inline MpiCallbacks &mpiCallbacks() {
+  return ::communication_environment->mpiCallbacks();
+}
 } // namespace Communication
-
-/**************************************************
- * for every procedure requesting a MPI negotiation,
- * a callback exists which processes this request on
- * the worker nodes. It is denoted by *_local.
- **************************************************/
-
-/** Initialize MPI. */
-std::shared_ptr<boost::mpi::environment> mpi_init(int argc = 0,
-                                                  char **argv = nullptr);
-
-/** @brief Call a local function.
- *  @tparam Args   Local function argument types
- *  @tparam ArgRef Local function argument types
- *  @param fp      Local function
- *  @param args    Local function arguments
- */
-template <class... Args, class... ArgRef>
-void mpi_call(void (*fp)(Args...), ArgRef &&...args) {
-  Communication::mpiCallbacks().call(fp, std::forward<ArgRef>(args)...);
-}
-
-/** @brief Call a local function.
- *  @tparam Args   Local function argument types
- *  @tparam ArgRef Local function argument types
- *  @param fp      Local function
- *  @param args    Local function arguments
- */
-template <class... Args, class... ArgRef>
-void mpi_call_all(void (*fp)(Args...), ArgRef &&...args) {
-  Communication::mpiCallbacks().call_all(fp, std::forward<ArgRef>(args)...);
-}
-
-/** @brief Call a local function.
- *  @tparam Tag    Any tag type defined in @ref Communication::Result
- *  @tparam R      Return type of the local function
- *  @tparam Args   Local function argument types
- *  @tparam ArgRef Local function argument types
- *  @param tag     Reduction strategy
- *  @param fp      Local function
- *  @param args    Local function arguments
- */
-template <class Tag, class R, class... Args, class... ArgRef>
-auto mpi_call(Tag tag, R (*fp)(Args...), ArgRef &&...args) {
-  return Communication::mpiCallbacks().call(tag, fp,
-                                            std::forward<ArgRef>(args)...);
-}
-
-/** @brief Call a local function.
- *  @tparam Tag    Any tag type defined in @ref Communication::Result
- *  @tparam TagArg Types of arguments to @p Tag
- *  @tparam R      Return type of the local function
- *  @tparam Args   Local function argument types
- *  @tparam ArgRef Local function argument types
- *  @param tag     Reduction strategy
- *  @param tag_arg Arguments to the reduction strategy
- *  @param fp      Local function
- *  @param args    Local function arguments
- */
-template <class Tag, class TagArg, class R, class... Args, class... ArgRef>
-auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&...args) {
-  return Communication::mpiCallbacks().call(tag, std::forward<TagArg>(tag_arg),
-                                            fp, std::forward<ArgRef>(args)...);
-}
 
 /** Process requests from head node. Worker nodes main loop. */
 void mpi_loop();
-
-namespace Communication {
-/**
- * @brief Init globals for communication.
- *
- * and calls @ref on_program_start. Keeps a copy of
- * the pointer to the mpi environment to keep it alive
- * while the program is loaded.
- *
- * @param mpi_env MPI environment that should be used
- */
-void init(std::shared_ptr<boost::mpi::environment> mpi_env);
-} // namespace Communication
-#endif

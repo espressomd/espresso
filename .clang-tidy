@@ -10,6 +10,8 @@ Checks: |
    -bugprone-implicit-widening-of-multiplication-result,
    -bugprone-macro-parentheses,
    -bugprone-reserved-identifier,
+   -bugprone-switch-missing-default-case,
+   -bugprone-unchecked-optional-access,
    clang-analyzer-alpha.*,
    modernize-deprecated-headers,
    modernize-make-shared,
@@ -41,10 +43,10 @@ Checks: |
    readability-function-size'
 WarningsAsErrors: '*,-clang-analyzer-core.StackAddrEscapeBase,-clang-analyzer-optin.mpi.MPI-Checker'
 HeaderFilterRegex: '.*'
-AnalyzeTemporaryDtors: false
+ExcludeHeaderFilterRegex: '^/usr/'
 FormatStyle:     none
 User: espresso
-CheckOptions:    
+CheckOptions:
   - key:             bugprone-argument-comment.StrictMode
     value:           '0'
   - key:             bugprone-assert-side-effect.AssertMacros
@@ -108,11 +110,13 @@ CheckOptions:
   - key:             modernize-use-noexcept.ReplacementString
     value:           ''
   - key:             modernize-use-noexcept.UseNoexceptFalse
-    value:           '1'
+    value:           'true'
   - key:             modernize-use-nullptr.NullMacros
     value:           'NULL'
   - key:             modernize-use-transparent-functors.SafeMode
-    value:           '1'
+    value:           'true'
+  - key:             modernize-use-using.IgnoreExternC
+    value:           'true'
   - key:             readability-simplify-boolean-expr.ChainedConditionalAssignment
     value:           '0'
   - key:             readability-simplify-boolean-expr.ChainedConditionalReturn

@@ -19,15 +19,15 @@
 #ifndef CORE_UNIT_TESTS_MOCK_CELL_HPP
 #define CORE_UNIT_TESTS_MOCK_CELL_HPP
 
-#include <utils/Span.hpp>
-
+#include <span>
+#include <utility>
 #include <vector>
 
 namespace Testing {
 template <typename Particle> class Cell {
 public:
-  auto particles() { return Utils::make_span(part); }
-  auto particles() const { return Utils::make_const_span(part); }
+  auto particles() { return std::span(part); }
+  auto particles() const { return std::span(std::as_const(part)); }
 
   std::vector<Particle> part;
 };

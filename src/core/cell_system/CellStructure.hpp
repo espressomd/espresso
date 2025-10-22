@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
-#define ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
+#pragma once
 
 #include "cell_system/ParticleDecomposition.hpp"
 
@@ -35,23 +34,59 @@
 #include "cell_system/CellStructureType.hpp"
 #include "config/config.hpp"
 #include "ghosts.hpp"
+#include "system/Leaf.hpp"
 
-#include <utils/math/sqr.hpp>
+#include <utils/Vector.hpp>
 
 #include <boost/container/static_vector.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
-#include <boost/mpi/communicator.hpp>
-#include <boost/range/algorithm/find_if.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
 #include <algorithm>
 #include <cassert>
+#include <concepts>
+#include <functional>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <set>
+#include <span>
 #include <stdexcept>
+#include <unordered_set>
 #include <utility>
 #include <vector>
+
+#ifdef ESPRESSO_CALIPER
+#include <caliper/cali.h>
+#endif
+
+// forward declarations
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+namespace Kokkos {
+template <class DataType, class... Properties> class View;
+class HostSpace;
+struct LayoutRight;
+template <unsigned T> struct MemoryTraits;
+} // namespace Kokkos
+namespace Cabana {
+class HalfNeighborTag;
+struct VerletLayout2D;
+class TeamVectorOpTag;
+template <typename... Types> struct MemberTypes;
+template <class DataType, class MemorySpace, int, class MemoryTraits>
+class AoSoA;
+} // namespace Cabana
+struct KokkosHandle;
+template <class MemorySpace, class ListAlgorithm, class Layout, class BuildTag>
+class CustomVerletList;
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
+
+template <typename Callable>
+concept ParticleCallback = requires(Callable c, Particle &p) {
+  { c(p) } -> std::same_as<void>;
+};
+
+using ParticleUnaryOp = std::function<void(Particle &)>;
 
 namespace Cells {
 enum Resort : unsigned {
@@ -69,7 +104,7 @@ enum DataPart : unsigned {
   DATA_PART_POSITION = 2u,   /**< Particle::r */
   DATA_PART_MOMENTUM = 8u,   /**< Particle::m */
   DATA_PART_FORCE = 16u,     /**< Particle::f */
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   DATA_PART_RATTLE = 32u, /**< Particle::rattle */
 #endif
   DATA_PART_BONDS = 64u /**< Particle::bonds */
@@ -86,11 +121,10 @@ enum DataPart : unsigned {
 unsigned map_data_parts(unsigned data_parts);
 
 namespace Cells {
-inline ParticleRange particles(Utils::Span<Cell *> cells) {
+inline ParticleRange particles(std::span<Cell *const> cells) {
   /* Find first non-empty cell */
-  auto first_non_empty =
-      std::find_if(cells.begin(), cells.end(),
-                   [](const Cell *c) { return not c->particles().empty(); });
+  auto first_non_empty = std::ranges::find_if(
+      cells, [](const Cell *c) { return not c->particles().empty(); });
 
   return {CellParticleIterator(first_non_empty, cells.end()),
           CellParticleIterator(cells.end())};
@@ -132,23 +166,60 @@ struct EuclidianDistance {
  *  system which are not common between different cell systems have to
  *  be stored in separate structures.
  */
-struct CellStructure {
+class CellStructure : public System::Leaf<CellStructure> {
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+public:
+  static constexpr auto vector_length = 1;
+  struct AoSoA_pack;
+  using ForceType = Kokkos::View<double **[3], Kokkos::LayoutRight>;
+  using VirialType = Kokkos::View<double *[3], Kokkos::LayoutRight>;
+  using memory_space = Kokkos::HostSpace;
+  using ListAlgorithm = Cabana::HalfNeighborTag;
+  using ListType =
+      CustomVerletList<Kokkos::HostSpace, ListAlgorithm, Cabana::VerletLayout2D,
+                       Cabana::TeamVectorOpTag>;
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
+
 private:
   /** The local id-to-particle index */
   std::vector<Particle *> m_particle_index;
   /** Implementation of the primary particle decomposition */
   std::unique_ptr<ParticleDecomposition> m_decomposition;
   /** Active type in m_decomposition */
-  CellStructureType m_type = CellStructureType::CELL_STRUCTURE_NSQUARE;
+  CellStructureType m_type = CellStructureType::NSQUARE;
   /** One of @ref Cells::Resort, announces the level of resort needed.
    */
   unsigned m_resort_particles = Cells::RESORT_NONE;
+  bool m_verlet_skin_set = false;
   bool m_rebuild_verlet_list = true;
+  bool m_rebuild_verlet_list_cabana = true;
   std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
   double m_le_pos_offset_at_last_resort = 0.;
+  /** @brief Verlet list skin. */
+  double m_verlet_skin = 0.;
+  double m_verlet_reuse = 0.;
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  int m_cached_max_local_particle_id = 0;
+  int m_max_id = 0;
+  std::unique_ptr<Kokkos::View<int *>> m_id_to_index;
+  std::unique_ptr<ForceType> m_local_force;
+#ifdef ESPRESSO_ROTATION
+  std::unique_ptr<ForceType> m_local_torque;
+#endif
+#ifdef ESPRESSO_NPT
+  std::unique_ptr<VirialType> m_local_virial;
+#endif
+  std::unique_ptr<ListType> m_verlet_list_cabana;
+  /** particle properties using individual Kokkos Views */
+  std::unique_ptr<AoSoA_pack> m_aosoa;
+  /** The local id-to-index for aosoa data */
+  std::vector<Particle *> m_unique_particles;
+  std::shared_ptr<KokkosHandle> m_kokkos_handle;
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 public:
   CellStructure(BoxGeometry const &box);
+  virtual ~CellStructure();
 
   bool use_verlet_list = true;
 
@@ -166,10 +237,10 @@ public:
     // cppcheck-suppress assertWithSideEffect
     assert(not p or p->id() == id);
 
-    if (id >= m_particle_index.size())
-      m_particle_index.resize(id + 1);
+    if (static_cast<unsigned int>(id) >= m_particle_index.size())
+      m_particle_index.resize(static_cast<unsigned int>(id + 1));
 
-    m_particle_index[id] = p;
+    m_particle_index[static_cast<unsigned int>(id)] = p;
   }
 
   /**
@@ -234,38 +305,86 @@ public:
   Particle *get_local_particle(int id) {
     assert(id >= 0);
 
-    if (id >= m_particle_index.size())
+    if (static_cast<unsigned int>(id) >= m_particle_index.size())
       return nullptr;
 
-    return m_particle_index[id];
+    return m_particle_index[static_cast<unsigned int>(id)];
   }
 
   /** @overload */
   const Particle *get_local_particle(int id) const {
     assert(id >= 0);
 
-    if (id >= m_particle_index.size())
+    if (static_cast<unsigned int>(id) >= m_particle_index.size())
       return nullptr;
 
-    return m_particle_index[id];
+    return m_particle_index[static_cast<unsigned int>(id)];
   }
 
   template <class InputRange, class OutputIterator>
   void get_local_particles(InputRange ids, OutputIterator out) {
-    boost::transform(ids, out,
-                     [this](int id) { return get_local_particle(id); });
+    std::ranges::transform(ids, out,
+                           [this](int id) { return get_local_particle(id); });
   }
 
   CellStructureType decomposition_type() const { return m_type; }
 
   /** Maximal cutoff supported by current cell system. */
-  Utils::Vector3d max_cutoff() const;
+  Utils::Vector3d max_cutoff() const { return decomposition().max_cutoff(); }
 
   /** Maximal pair range supported by current cell system. */
-  Utils::Vector3d max_range() const;
+  Utils::Vector3d max_range() const { return decomposition().max_range(); }
 
-  ParticleRange local_particles();
-  ParticleRange ghost_particles();
+  ParticleRange local_particles() const {
+    return Cells::particles(decomposition().local_cells());
+  }
+
+  ParticleRange ghost_particles() const {
+    return Cells::particles(decomposition().ghost_cells());
+  }
+
+  std::size_t count_local_particles() const {
+    std::size_t count = 0;
+    for (auto const &cell : m_decomposition->local_cells()) {
+      count += cell->particles().size();
+    }
+    return count;
+  }
+
+  /** @brief whether to use parallel version of @ref for_each_local_particle */
+  bool use_parallel_for_each_local_particle() const {
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    return true;
+#else
+    return false;
+#endif
+  }
+
+  /**
+   * @brief Run a kernel on all local particles.
+   * The kernel is assumed to be thread-safe.
+   */
+  void for_each_local_particle(ParticleUnaryOp &&f) const {
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    if (use_parallel_for_each_local_particle()) {
+      parallel_for_each_particle_impl(decomposition().local_cells(), f);
+      return;
+    }
+#endif
+    for (auto &p : local_particles()) {
+      f(p);
+    }
+  }
+
+  /**
+   * @brief Run a kernel on all ghost particles.
+   * The kernel is assumed to be thread-safe.
+   */
+  void for_each_ghost_particle(ParticleUnaryOp &&f) const {
+    for (auto &p : ghost_particles()) {
+      f(p);
+    }
+  }
 
 private:
   /** Cell system dependent function to find the right cell for a
@@ -274,9 +393,17 @@ private:
    *  \return pointer to cell where to put the particle, nullptr
    *          if the particle does not belong on this node.
    */
-  Cell *particle_to_cell(const Particle &p);
+  Cell *particle_to_cell(const Particle &p) {
+    return decomposition().particle_to_cell(p);
+  }
+  Cell const *particle_to_cell(const Particle &p) const {
+    return decomposition().particle_to_cell(p);
+  }
 
-  Utils::Span<Cell *> local_cells();
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  void parallel_for_each_particle_impl(std::span<Cell *const> cells,
+                                       ParticleUnaryOp &f) const;
+#endif
 
 public:
   /**
@@ -326,6 +453,11 @@ public:
    * this node, or -1 if there are no particles on this node.
    */
   int get_max_local_particle_id() const;
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  int get_cached_max_local_particle_id() const {
+    return m_cached_max_local_particle_id;
+  }
+#endif
 
   /**
    * @brief Remove all particles from the cell system.
@@ -374,22 +506,13 @@ public:
   /**
    * @brief Check whether a particle has moved further than half the skin
    * since the last Verlet list update, thus requiring a resort.
-   * @param particles           Particles to check
-   * @param skin                Skin
    * @param additional_offset   Offset which is added to the distance the
    *                            particle has travelled when comparing to half
-   *                            the skin (e.g., for Lees-Edwards BC).
+   *                            the Verlet skin (e.g., for Lees-Edwards BC).
    * @return Whether a resort is needed.
    */
   bool
-  check_resort_required(ParticleRange const &particles, double skin,
-                        Utils::Vector3d const &additional_offset = {}) const {
-    auto const lim = Utils::sqr(skin / 2.) - additional_offset.norm2();
-    return std::any_of(
-        particles.begin(), particles.end(), [lim](const auto &p) {
-          return ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim);
-        });
-  }
+  check_resort_required(Utils::Vector3d const &additional_offset = {}) const;
 
   auto get_le_pos_offset_at_last_resort() const {
     return m_le_pos_offset_at_last_resort;
@@ -403,8 +526,7 @@ public:
   /**
    * @brief Update ghost particles.
    *
-   * This function updates the ghost particles with data
-   * from the real particles.
+   * Update ghost particles with data from the real particles.
    *
    * @param data_parts Particle parts to update, combination of @ref
    * Cells::DataPart
@@ -412,11 +534,22 @@ public:
   void ghosts_update(unsigned data_parts);
 
   /**
+   * @brief Update ghost particles, with particle resort if needed.
+   *
+   * Update ghost particles with data from the real particles.
+   * Resort particles if a resort is due.
+   *
+   * @param data_parts Particle parts to update, combination of @ref
+   * Cells::DataPart
+   */
+  void update_ghosts_and_resort_particle(unsigned data_parts);
+
+  /**
    * @brief Add forces from ghost particles to real particles.
    */
   void ghosts_reduce_forces();
 
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   /**
    * @brief Add rattle corrections from ghost particles to real particles.
    */
@@ -426,9 +559,31 @@ public:
   /**
    * @brief Resort particles.
    */
-  void resort_particles(bool global_flag, BoxGeometry const &box);
+  void resort_particles(bool global_flag);
 
-private:
+  /** @brief Whether the Verlet skin is set. */
+  auto is_verlet_skin_set() const { return m_verlet_skin_set; }
+
+  /** @brief Get the Verlet skin. */
+  auto get_verlet_skin() const { return m_verlet_skin; }
+
+  /** @brief Set the Verlet skin. */
+  void set_verlet_skin(double value);
+
+  /** @brief Set the Verlet skin using a heuristic. */
+  void set_verlet_skin_heuristic();
+
+  void update_verlet_stats(int n_steps, int n_verlet_updates) {
+    if (n_verlet_updates > 0) {
+      m_verlet_reuse = n_steps / static_cast<double>(n_verlet_updates);
+    } else {
+      m_verlet_reuse = 0.;
+    }
+  }
+
+  /** @brief Average number of integration steps the Verlet list was re-used */
+  auto get_verlet_reuse() const { return m_verlet_reuse; }
+
   /**
    * @brief Resolve ids to particles.
    *
@@ -438,23 +593,23 @@ private:
    * @param partner_ids Ids to resolve.
    * @return Vector of Particle pointers.
    */
-  auto resolve_bond_partners(Utils::Span<const int> partner_ids) {
+  auto resolve_bond_partners(std::span<const int> partner_ids) {
     boost::container::static_vector<Particle *, 4> partners;
     get_local_particles(partner_ids, std::back_inserter(partners));
 
     /* Check if id resolution failed for any partner */
-    if (std::any_of(partners.begin(), partners.end(),
-                    [](Particle const *const p) { return p == nullptr; })) {
+    if (std::ranges::find(partners, nullptr) != partners.end()) {
       throw BondResolutionError{};
     }
 
     return partners;
   }
 
+private:
   /**
    * @brief Execute kernel for every bond on particle.
    * @tparam Handler Callable, which can be invoked with
-   *                 (Particle, int, Utils::Span<Particle *>),
+   *                 (Particle, int, std::span<Particle *>),
    *                 returning a bool.
    * @param p Particles for whom the bonds are evaluated.
    * @param handler is called for every bond, and handed
@@ -469,10 +624,8 @@ private:
 
       try {
         auto partners = resolve_bond_partners(partner_ids);
-
-        auto const bond_broken =
-            handler(p, bond.bond_id(), Utils::make_span(partners));
-
+        auto const partners_span = std::span(partners.data(), partners.size());
+        auto const bond_broken = handler(p, bond.bond_id(), partners_span);
         if (bond_broken) {
           bond_broken_error(p.id(), partner_ids);
         }
@@ -511,39 +664,26 @@ private:
 public:
   /**
    * @brief Set the particle decomposition to @ref AtomDecomposition.
-   *
-   * @param comm Communicator to use.
-   * @param box Box Geometry.
-   * @param local_geo Geometry of the local box (holds cell structure type).
    */
-  void set_atom_decomposition(boost::mpi::communicator const &comm,
-                              BoxGeometry const &box,
-                              LocalBox<double> &local_geo);
+  void set_atom_decomposition();
 
   /**
    * @brief Set the particle decomposition to @ref RegularDecomposition.
    *
-   * @param comm Cartesian communicator to use.
    * @param range Interaction range.
-   * @param box Box Geometry.
-   * @param local_geo Geometry of the local box.
+   * @param fully_connected_boundary neighbor cell directions for Lees-Edwards.
    */
-  void set_regular_decomposition(boost::mpi::communicator const &comm,
-                                 double range, BoxGeometry const &box,
-                                 LocalBox<double> &local_geo);
+  void set_regular_decomposition(
+      double range,
+      std::optional<std::pair<int, int>> fully_connected_boundary);
 
   /**
    * @brief Set the particle decomposition to @ref HybridDecomposition.
    *
-   * @param comm Communicator to use.
    * @param cutoff_regular Interaction cutoff_regular.
-   * @param box Box geometry.
-   * @param local_geo Geometry of the local box.
    * @param n_square_types Particle types to put into n_square decomposition.
    */
-  void set_hybrid_decomposition(boost::mpi::communicator const &comm,
-                                double cutoff_regular, BoxGeometry const &box,
-                                LocalBox<double> &local_geo,
+  void set_hybrid_decomposition(double cutoff_regular,
                                 std::set<int> n_square_types);
 
 private:
@@ -555,8 +695,9 @@ private:
    */
   template <class Kernel> void link_cell(Kernel kernel) {
     auto const maybe_box = decomposition().minimum_image_distance();
-    auto const first = boost::make_indirect_iterator(local_cells().begin());
-    auto const last = boost::make_indirect_iterator(local_cells().end());
+    auto const local_cells_span = decomposition().local_cells();
+    auto const first = boost::make_indirect_iterator(local_cells_span.begin());
+    auto const last = boost::make_indirect_iterator(local_cells_span.end());
 
     if (maybe_box) {
       Algorithm::link_cell(
@@ -576,6 +717,66 @@ private:
     }
   }
 
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+public:
+  auto get_max_id() const { return m_max_id; }
+
+  void set_kokkos_handle(std::shared_ptr<KokkosHandle> handle);
+  void rebuild_local_properties(double pair_cutoff);
+  void reset_local_properties();
+  void reset_local_force();
+
+  auto &get_id_to_index() { return *m_id_to_index; }
+  auto &get_local_force() { return *m_local_force; }
+#ifdef ESPRESSO_ROTATION
+  auto &get_local_torque() { return *m_local_torque; }
+#endif
+#ifdef ESPRESSO_NPT
+  auto &get_local_virial() { return *m_local_virial; }
+#endif
+  auto &get_aosoa() { return *m_aosoa; }
+  auto const &get_unique_particles() const { return m_unique_particles; }
+  auto const &get_verlet_list_cabana() const { return *m_verlet_list_cabana; }
+  void clear_local_properties();
+
+  [[nodiscard]] auto is_verlet_list_cabana_rebuild_needed() const {
+    return m_rebuild_verlet_list_cabana or (not use_verlet_list);
+  }
+
+  /**
+   * @brief Reset local properties of the Verlet list.
+   * @param cutoff    Pair interaction cutoff.
+   * @return True if a rebuild is needed.
+   */
+  [[nodiscard]] auto prepare_verlet_list_cabana(double cutoff) {
+    auto const rebuild = is_verlet_list_cabana_rebuild_needed();
+    if (rebuild) {
+      // If we have to rebuild, we need to count the particles
+      set_index_map(); // parallelized index_map
+      // Create essential variables for MD
+      rebuild_local_properties(cutoff);
+    } else {
+      // If we do not rebuild we can use the saved map
+      reset_local_properties();
+    }
+    return rebuild;
+  }
+
+  void rebuild_verlet_list_cabana(auto &&kernel) {
+    assert(is_verlet_list_cabana_rebuild_needed());
+    kernel(m_decomposition->local_cells(), m_decomposition->box(),
+           *m_verlet_list_cabana);
+    m_rebuild_verlet_list_cabana = false;
+  }
+
+  void set_index_map();
+
+  inline void cell_list_loop(auto &&kernel) {
+    kernel(m_decomposition->local_cells(), m_decomposition->box());
+  }
+#endif
+
+private:
   /** Non-bonded pair loop with verlet lists.
    *
    * @param pair_kernel Kernel to apply
@@ -598,21 +799,20 @@ private:
       });
 
       m_rebuild_verlet_list = false;
+      m_rebuild_verlet_list_cabana = true;
     } else {
       auto const maybe_box = decomposition().minimum_image_distance();
       /* In this case the pair kernel is just run over the verlet list. */
       if (maybe_box) {
         auto const distance_function =
             detail::MinimalImageDistance{decomposition().box()};
-        for (auto &pair : m_verlet_list) {
-          pair_kernel(*pair.first, *pair.second,
-                      distance_function(*pair.first, *pair.second));
+        for (auto const &[p1, p2] : m_verlet_list) {
+          pair_kernel(*p1, *p2, distance_function(*p1, *p2));
         }
       } else {
         auto const distance_function = detail::EuclidianDistance{};
-        for (auto &pair : m_verlet_list) {
-          pair_kernel(*pair.first, *pair.second,
-                      distance_function(*pair.first, *pair.second));
+        for (auto const &[p1, p2] : m_verlet_list) {
+          pair_kernel(*p1, *p2, distance_function(*p1, *p2));
         }
       }
     }
@@ -651,7 +851,6 @@ public:
     }
   }
 
-private:
   /**
    * @brief Check that particle index is commensurate with particles.
    *
@@ -659,7 +858,7 @@ private:
    * in the particles index, and that there are no excess (non-existing)
    * particles in the index.
    */
-  void check_particle_index();
+  void check_particle_index() const;
 
   /**
    * @brief Check that particles are in the correct cell.
@@ -669,7 +868,7 @@ private:
    * actually in, e.g. that the particles are sorted according
    * to particles_to_cell.
    */
-  void check_particle_sorting();
+  void check_particle_sorting() const;
 
 public:
   /**
@@ -744,5 +943,3 @@ private:
     }
   }
 };
-
-#endif

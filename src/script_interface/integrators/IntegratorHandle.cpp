@@ -24,11 +24,13 @@
 #include "BrownianDynamics.hpp"
 #include "SteepestDescent.hpp"
 #include "StokesianDynamics.hpp"
+#include "SymplecticEuler.hpp"
 #include "VelocityVerlet.hpp"
 #include "VelocityVerletIsoNPT.hpp"
 
-#include "core/forcecap.hpp"
-#include "core/integrate.hpp"
+#include "core/PropagationMode.hpp"
+#include "core/integrators/Propagation.hpp"
+#include "core/system/System.hpp"
 
 #include <memory>
 #include <string>
@@ -38,29 +40,55 @@ namespace Integrators {
 
 IntegratorHandle::IntegratorHandle() {
   add_parameters({
+      {"time_step",
+       [this](Variant const &v) {
+         context()->parallel_try_catch(
+             [&]() { get_system().set_time_step(get_value<double>(v)); });
+       },
+       [this]() { return get_system().get_time_step(); }},
+      {"time",
+       [&](Variant const &v) {
+         get_system().set_sim_time(get_value<double>(v));
+       },
+       [this]() { return get_system().get_sim_time(); }},
+      {"force_cap",
+       [this](Variant const &v) {
+         get_system().set_force_cap(get_value<double>(v));
+       },
+       [this]() { return get_system().get_force_cap(); }},
       {"integrator",
        [this](Variant const &v) {
-         m_instance = get_value<std::shared_ptr<Integrator>>(v);
-         m_instance->activate();
+         auto const old_instance = m_instance;
+         auto const new_instance = get_value<std::shared_ptr<Integrator>>(v);
+         new_instance->bind_system(m_system.lock());
+         new_instance->activate();
+         if (old_instance) {
+           old_instance->deactivate();
+         }
+         m_instance = new_instance;
        },
        [this]() {
-         switch (::integ_switch) {
+         switch (get_system().propagation->integ_switch) {
          case INTEG_METHOD_STEEPEST_DESCENT:
            return Variant{
                std::dynamic_pointer_cast<SteepestDescent>(m_instance)};
-#ifdef NPT
-         case INTEG_METHOD_NPT_ISO:
+#ifdef ESPRESSO_NPT
+         case INTEG_METHOD_NPT_ISO_AND:
+         case INTEG_METHOD_NPT_ISO_MTK:
            return Variant{
                std::dynamic_pointer_cast<VelocityVerletIsoNPT>(m_instance)};
 #endif
          case INTEG_METHOD_BD:
            return Variant{
                std::dynamic_pointer_cast<BrownianDynamics>(m_instance)};
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
          case INTEG_METHOD_SD:
            return Variant{
                std::dynamic_pointer_cast<StokesianDynamics>(m_instance)};
-#endif // STOKESIAN_DYNAMICS
+#endif // ESPRESSO_STOKESIAN_DYNAMICS
+         case INTEG_METHOD_SYMPLECTIC_EULER:
+           return Variant{
+               std::dynamic_pointer_cast<SymplecticEuler>(m_instance)};
          default: {
            auto ptr = std::dynamic_pointer_cast<VelocityVerlet>(m_instance);
            assert(ptr.get());
@@ -68,37 +96,32 @@ IntegratorHandle::IntegratorHandle() {
          }
          }
        }},
-      {"time_step",
-       [this](Variant const &v) {
-         context()->parallel_try_catch(
-             [&]() { set_time_step(get_value<double>(v)); });
-       },
-       []() { return get_time_step(); }},
-      {"time", [](Variant const &v) { set_time(get_value<double>(v)); },
-       []() { return get_sim_time(); }},
-      {"force_cap",
-       [](Variant const &v) { set_force_cap(get_value<double>(v)); },
-       []() { return get_force_cap(); }},
   });
 }
 
-static bool checkpoint_filter(typename VariantMap::value_type const &kv) {
-  /* When loading from a checkpoint file, defer the integrator object to last,
-   * and skip the time_step if it is -1 to avoid triggering sanity checks.
-   */
-  return kv.first != "integrator" and
-         not(kv.first == "time_step" and ::integ_switch == INTEG_METHOD_NVT and
-             get_time_step() == -1. and is_type<double>(kv.second) and
-             get_value<double>(kv.second) == -1.);
-}
-
-void IntegratorHandle::do_construct(VariantMap const &params) {
-  for (auto const &kv : params) {
-    if (checkpoint_filter(kv)) {
-      do_set_parameter(kv.first, kv.second);
+void IntegratorHandle::on_bind_system(::System::System &system) {
+  auto const &params = *m_params;
+  for (auto const &key : get_parameter_insertion_order()) {
+    if (params.contains(key)) {
+      // NOLINTNEXTLINE(readability-simplify-boolean-expr)
+      if (not(key == "time_step" and
+              system.propagation->integ_switch == INTEG_METHOD_NVT and
+              system.get_time_step() == -1. and
+              is_type<double>(params.at(key)) and
+              get_value<double>(is_type<double>(params.at(key))) == -1.)) {
+        do_set_parameter(key, params.at(key));
+      }
     }
   }
-  do_set_parameter("integrator", params.at("integrator"));
+  auto use_default_integrator = not params.contains("integrator");
+  m_params.reset();
+  if (use_default_integrator) {
+    if (not context()->is_head_node()) {
+      return;
+    }
+    set_parameter("integrator",
+                  context()->make_shared("Integrators::VelocityVerlet", {}));
+  }
 }
 
 } // namespace Integrators

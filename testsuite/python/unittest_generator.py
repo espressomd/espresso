@@ -108,7 +108,7 @@ class TestGenerator:
                 self.test_feat = arg.split('__', 1)[1]
                 self.test_idx = arg.split('_', 1)[1].lstrip('_')
                 break
-        err_msg = f"please provide a test name as argument, like '{prefix}lb_cpu__p3m_cpu' (got {sys.argv})"
+        err_msg = f"please provide a test name as argument, like '{prefix}lb_cpu__p3m_cpu' (got {sys.argv})"  # nopep8
         assert self.test_name is not None, err_msg
 
     def bind_test_class(self, base_class):
@@ -135,6 +135,27 @@ class TestGenerator:
                 modes.add(f"{feature}.{option}")
             modes.add(feature)
         return modes
+
+    @classmethod
+    def recursive_unlink(cls, root):
+        """
+        Delete files in a folder recursively but preserve the tree structure.
+        """
+        if root.exists():
+            for filepath in root.iterdir():
+                if filepath.is_file():
+                    filepath.unlink()
+
+    def cleanup_old_checkpoint(self):
+        """
+        Remove the contents of the checkpoint directory if it exists.
+        The directory itself and its subfolder structure are preserved
+        since they will typically be created soon afterwards (risk of
+        race condition on file systems with latency).
+        """
+        args = self.get_checkpoint_params()
+        root = pathlib.Path(args["checkpoint_path"]) / args["checkpoint_id"]
+        self.recursive_unlink(root)
 
     def get_checkpoint_params(self):
         """

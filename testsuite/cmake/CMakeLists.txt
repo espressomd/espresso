@@ -19,7 +19,7 @@
 
 function(CMAKE_TEST)
   cmake_parse_arguments(TEST "" "FILE" "DEPENDENCIES" ${ARGN})
-  get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+  cmake_path(GET TEST_FILE STEM TEST_NAME)
   configure_file(${TEST_FILE} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE} @ONLY)
   foreach(dependency IN LISTS TEST_DEPENDENCIES)
     configure_file(${dependency} ${CMAKE_CURRENT_BINARY_DIR}/${dependency}
@@ -35,10 +35,10 @@ set(ESPRESSO_PYTHON_DIR ${CMAKE_INSTALL_PREFIX}/${Python_STDARCH})
 
 cmake_test(FILE test_install.sh DEPENDENCIES BashUnitTests.sh)
 
-add_custom_target(setup_install COMMAND make install
+add_custom_target(setup_install COMMAND ${CMAKE_COMMAND} --install .
                   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_custom_target(
-  check_cmake_install
+  check_cmake_install JOB_POOL console
   COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -C serial
           --output-on-failure)
 add_dependencies(check_cmake_install setup_install)

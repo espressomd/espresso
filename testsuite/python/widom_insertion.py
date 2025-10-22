@@ -22,6 +22,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
+import scipy.integrate
 import espressomd
 import espressomd.reaction_methods
 import tests_common
@@ -50,7 +51,7 @@ class WidomInsertionTest(ut.TestCase):
     radius = np.linspace(1e-10, LJ_CUT, 1000)
     # numerical integration for radii smaller than the cut-off in spherical
     # coordinates
-    integrateUpToCutOff = 4 * np.pi * np.trapz(
+    integrateUpToCutOff = 4 * np.pi * scipy.integrate.trapezoid(
         radius**2 * np.exp(-tests_common.lj_potential(radius,
                                                       LJ_EPS,
                                                       LJ_SIG,

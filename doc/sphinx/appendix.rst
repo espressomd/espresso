@@ -292,7 +292,7 @@ In pseudo code, the far formula algorithm looks like:
          :math:`\xi^{(+,s/c,s/c)}_j\Xi^{(l,s/c,s/c)}_s` and
          :math:`\xi^{(-,s/c,s/c)}_j\Xi^{(h,s/c,s/c)}_s`
 
-For further details, see :cite:`arnold02a,arnold02b,arnold02c,arnold02d`.
+For further details, see :cite:`arnold02a,arnold02b,arnold02c,dejoannis02a`.
 
 .. _Dielectric contrast:
 
@@ -366,7 +366,7 @@ neither the near nor far formula allow a product decomposition or
 similar tricks. MMM1D has to be implemented as a simple NxN loop.
 However, the formulas can be evaluated efficiently, so that MMM1D can
 still be used reasonably for up to 400 particles on a single processor
-:cite:`arnold05a`.
+:cite:`arnold05b`.
 
 .. _ELC theory:
 
@@ -467,7 +467,7 @@ Ewald methods, for which decreasing the error bound can lead to
 excessive computation time. For example, P3M cannot reach a precision
 beyond :math:`10^{-5}` in general. The precise form of the error
 estimates is of little importance here, for details see
-:cite:`arnold02c,arnold02d`.
+:cite:`arnold02c,dejoannis02a`.
 
 One important aspect is that the error estimates are also exponential in
 the non-periodic coordinate. Since the number of close by and far away
@@ -510,7 +510,7 @@ prefactor, :math:`q` the electric charge and :math:`a` the lattice constant.
 Likewise, the pressure per ion can be derived as :math:`MC\frac{q}{aV}`
 with :math:`V` the simulation box volume. For details, see :cite:`ciftja19a`.
 
-For an infinite 2D or 3D NaCl crystal lattice, the Madelung constant can be
+For an infinite 2D or 3D ionic crystal lattice, the Madelung constant can be
 obtained in a numerical simulation with the Evjen method :cite:`evjen32a` or
 the Ewald method :cite:`ewald21a`.
 
@@ -527,6 +527,6 @@ with :math:`M` the orientation-dependent 1D Madelung constant,
 :math:`C` the magnetostatics prefactor, :math:`\mu` the dipole moment and
 :math:`a` the lattice constant :cite:`batle20a`.
 
-For an infinite 2D or 3D NaCl crystal lattice, the Madelung constant for
+For an infinite 2D or 3D magnetic crystal lattice, the Madelung constant for
 the maximal energy and minimal energy dipole orientation can be estimated
 in a numerical simulation :cite:`batle20a`.

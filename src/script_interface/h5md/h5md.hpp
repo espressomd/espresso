@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2025 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -19,55 +19,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_H5MD_H5MD_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_H5MD_H5MD_HPP
+#pragma once
 
 #include "config/config.hpp"
 
-#ifdef H5MD
-
-#include "io/writer/h5md_core.hpp"
+#ifdef ESPRESSO_H5MD
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+
+#include <boost/mpi/environment.hpp>
 
 #include <memory>
 #include <string>
 #include <vector>
 
+namespace Writer::H5md {
+class File;
+} // namespace Writer::H5md
+
 namespace ScriptInterface {
 namespace Writer {
+
 class H5md : public AutoParameters<H5md> {
 public:
-  H5md() {
-    add_parameters(
-        {{"file_path", m_h5md, &::Writer::H5md::File::file_path},
-         {"script_path", m_h5md, &::Writer::H5md::File::script_path},
-         {"fields", AutoParameter::read_only,
-          [this]() { return make_vector_of_variants(m_output_fields); }},
-         {"mass_unit", m_h5md, &::Writer::H5md::File::mass_unit},
-         {"length_unit", m_h5md, &::Writer::H5md::File::length_unit},
-         {"time_unit", m_h5md, &::Writer::H5md::File::time_unit},
-         {"force_unit", m_h5md, &::Writer::H5md::File::force_unit},
-         {"velocity_unit", m_h5md, &::Writer::H5md::File::velocity_unit},
-         {"charge_unit", m_h5md, &::Writer::H5md::File::charge_unit}});
-  };
+  H5md();
 
-private:
   Variant do_call_method(const std::string &name,
                          const VariantMap &parameters) override;
 
-  void do_construct(VariantMap const &params) override {
-    m_output_fields = get_value<std::vector<std::string>>(params, "fields");
-    m_h5md = make_shared_from_args<::Writer::H5md::File, std::string,
-                                   std::string, std::vector<std::string>,
-                                   std::string, std::string, std::string,
-                                   std::string, std::string, std::string>(
-        params, "file_path", "script_path", "fields", "mass_unit",
-        "length_unit", "time_unit", "force_unit", "velocity_unit",
-        "charge_unit");
-  }
+  void do_construct(VariantMap const &params) override;
 
+  ~H5md() override;
+
+private:
+  std::shared_ptr<boost::mpi::environment> m_mpi_env_lock;
   std::shared_ptr<::Writer::H5md::File> m_h5md;
   std::vector<std::string> m_output_fields;
 };
@@ -75,5 +61,4 @@ private:
 } // namespace Writer
 } // namespace ScriptInterface
 
-#endif // H5MD
-#endif
+#endif // ESPRESSO_H5MD

@@ -18,7 +18,6 @@
 #
 import numpy as np
 
-from . import utils
 from .code_features import assert_features, has_features
 from .script_interface import script_interface_register, ScriptInterfaceHelper
 
@@ -81,64 +80,6 @@ def autocorrelation(time_series):
 
 
 @script_interface_register
-class _ObservableStat(ScriptInterfaceHelper):
-    _so_name = "ScriptInterface::Analysis::ObservableStat"
-    _so_creation_policy = "GLOBAL"
-
-    def _generate_summary(self, obj, dim, calc_sp):
-        """
-        Compute derived quantities and reshape pressure tensors as 3x3 matrices.
-        """
-
-        def zero():
-            if dim == 1 or calc_sp:
-                return 0.
-            return np.zeros(9, dtype=float)
-
-        def reduction(obj, key):
-            total = zero()
-            for k in obj.keys():
-                if isinstance(k, tuple) and k[0] == key:
-                    total += obj[k]
-            obj[key] = total
-
-        out = {}
-        out["bonded"] = zero()
-        out["non_bonded_intra"] = zero()
-        out["non_bonded_inter"] = zero()
-        for k, v in obj.items():
-            if "," not in k:
-                out[k] = v
-            else:
-                k = k.split(",")
-                k = (k[0], *map(int, k[1:]))
-                out[k] = v
-                if k[0] == "bonded":
-                    out["bonded"] += v
-                elif k[0].startswith("non_bonded_"):
-                    if k[0] == "non_bonded_intra":
-                        out["non_bonded_intra"] += v
-                    else:
-                        out["non_bonded_inter"] += v
-                    k = ("non_bonded", *k[1:])
-                    if k not in out:
-                        out[k] = zero()
-                    out[k] += v
-
-        out["non_bonded"] = out["non_bonded_intra"] + out["non_bonded_inter"]
-        if has_features("ELECTROSTATICS"):
-            reduction(out, "coulomb")
-        if has_features("DIPOLES"):
-            reduction(out, "dipolar")
-        if has_features("VIRTUAL_SITES"):
-            reduction(out, "virtual_sites")
-
-        if dim == 1 or calc_sp:
-            return out
-        return {k: np.reshape(v, (3, 3)) for k, v in out.items()}
-
-
-@script_interface_register
 class Analysis(ScriptInterfaceHelper):
     """
     Methods
@@ -192,6 +133,15 @@ class Analysis(ScriptInterfaceHelper):
         (N,) array_like of :obj:`int`
             The neighbouring particle ids.
 
+    particle_neighbor_pids()
+        Get a list of all short-range neighbors for each particle.
+
+        Returns
+        -------
+        :obj: `dict`
+            A dictionary where each item is a pair of a particle id and
+            its respective neighboring particle ids.
+
     calc_re()
         Calculate the mean end-to-end distance of chains and its
         standard deviation, as well as mean square end-to-end distance of
@@ -228,6 +178,19 @@ class Analysis(ScriptInterfaceHelper):
         numbered, the last particle in that topology having id number
         ``chain_start + number_of_chains * chain_length - 1``.
 
+        The radius of gyration is the radius of a sphere which would have
+        the same moment of inertia as a polymer, and is defined as
+
+        .. math::
+
+           R_{\\mathrm G}^2 = \\frac{1}{N} \\sum\\limits_{i=1}^{N} \\left(\\vec r_i - \\vec r_{\\mathrm{cm}}\\right)^2\\,,
+
+        where :math:`\\vec r_i` are position vectors of individual particles
+        constituting the polymer and :math:`\\vec r_{\\mathrm{cm}}` is the
+        position of its center of mass. The sum runs over all :math:`N`
+        particles comprising the polymer. For more information see any
+        polymer science book, e.g. :cite:`rubinstein03a`.
+
         Parameters
         ----------
         chain_start : :obj:`int`
@@ -245,13 +208,27 @@ class Analysis(ScriptInterfaceHelper):
             its standard deviation.
 
     calc_rh()
-        Calculate the hydrodynamic mean radius of chains and its standard
+        Calculate the mean hydrodynamic radius of chains and its standard
         deviation.
 
         This requires that a set of chains of equal length which start
         with the particle number ``chain_start`` and are consecutively
         numbered, the last particle in that topology having id number
         ``chain_start + number_of_chains * chain_length - 1``.
+
+        The following formula is used for the calculation:
+
+        .. math::
+
+           \\frac{1}{R_{\\mathrm H}} = \\frac{2}{N(N-1)} \\sum\\limits_{i=1}^{N} \\sum\\limits_{j<i}^{N} \\frac{1}{|\\vec r_i - \\vec r_j|}\\,,
+
+        This formula is only valid under certain assumptions. For more
+        information, see chapter 4 and equation 4.102 in :cite:`doi86a`.
+        Note that the hydrodynamic radius is sometimes defined in a similar
+        fashion but with a denominator of :math:`N^2` instead of :math:`N(N-1)`
+        in the prefactor. Both versions are equivalent in the
+        :math:`N\\rightarrow \\infty` limit but give numerically different
+        values for finite polymers.
 
         Parameters
         ----------
@@ -308,13 +285,16 @@ class Analysis(ScriptInterfaceHelper):
             and [1] contains the structure factors S(q)
 
     distribution()
-        Calculates the distance distribution of particles (probability of
-        finding a particle of type A at a certain distance around a particle of
+        Calculate the minimal distance distribution of particles (probability of
+        finding a particle of type A at a certain distance to the nearest particle of
         type B, disregarding the fact that a spherical shell of a larger radius
         covers a larger volume). The distance is defined as the minimal distance
         between a particle of group ``type_list_a`` to any of the group
         ``type_list_b``. Returns two arrays, the bins and the (normalized)
         distribution.
+
+        For the radial distribution function,
+        use :class:`espressomd.observables.RDF` instead.
 
         Parameters
         ----------
@@ -342,15 +322,16 @@ class Analysis(ScriptInterfaceHelper):
         -------
         :obj:`ndarray`
             Where [0] contains the midpoints of the bins,
-            and [1] contains the values of the rdf.
+            and [1] contains the values of the minimal distance distribution function.
 
     """
-    _so_name = "ScriptInterface::Analysis::Analysis"
+    _so_name = "Analysis::Analysis"
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
         "linear_momentum",
         "center_of_mass",
         "nbhood",
+        "particle_neighbor_pids",
         "calc_re",
         "calc_rg",
         "calc_rh",
@@ -422,10 +403,8 @@ class Analysis(ScriptInterfaceHelper):
             * ``"external_fields"``: external fields contribution
 
         """
-        obs_stat = _ObservableStat()
-        observable = obs_stat.call_method("calculate_scalar_pressure")
-        utils.handle_errors("calculate_pressure() failed")
-        return obs_stat._generate_summary(observable, 9, True)
+        observable = self.call_method("calculate_scalar_pressure")
+        return self._generate_summary(observable, 9, True)
 
     def pressure_tensor(self):
         """
@@ -465,10 +444,18 @@ class Analysis(ScriptInterfaceHelper):
             * ``"external_fields"``: external fields contribution
 
         """
-        obs_stat = _ObservableStat()
-        observable = obs_stat.call_method("calculate_pressure_tensor")
-        utils.handle_errors("calculate_pressure() failed")
-        return obs_stat._generate_summary(observable, 9, False)
+        observable = self.call_method("calculate_pressure_tensor")
+        return self._generate_summary(observable, 9, False)
+
+    def get_instantaneous_pressure(self):
+        assert_features("NPT")
+        observable = self.call_method("get_instantaneous_pressure")
+        return observable
+
+    def get_instantaneous_pressure_virial(self):
+        assert_features("NPT")
+        observable = self.call_method("get_instantaneous_pressure_virial")
+        return observable
 
     def energy(self):
         """
@@ -481,6 +468,8 @@ class Analysis(ScriptInterfaceHelper):
 
             * ``"total"``: total energy
             * ``"kinetic"``: linear and rotational kinetic energy
+            * ``"kinetic_lin"``: linear kinetic energy
+            * ``"kinetic_rot"``: rotational kinetic energy
             * ``"bonded"``: total bonded energy
             * ``"bonded", <bond_id>``: bonded energy from the bond
               identified by ``bond_id``
@@ -514,10 +503,8 @@ class Analysis(ScriptInterfaceHelper):
         >>> print(energy["external_fields"])
 
         """
-        obs_stat = _ObservableStat()
-        observable = obs_stat.call_method("calculate_energy")
-        utils.handle_errors("calculate_energy() failed")
-        return obs_stat._generate_summary(observable, 1, False)
+        observable = self.call_method("calculate_energy")
+        return self._generate_summary(observable, 1, False)
 
     def particle_energy(self, particle):
         """
@@ -534,6 +521,25 @@ class Analysis(ScriptInterfaceHelper):
 
         """
         return self.call_method("particle_energy", pid=particle.id)
+
+    def particle_bond_energy(self, particle, bond):
+        """
+        Calculate the bonded energy for the given particle and bond.
+
+        Parameters
+        ----------
+        particle : :class:`~espressomd.particle_data.ParticleHandle`
+        bond : :class:`~espressomd.interactions.BondedInteraction`. The bond has to exist on the given particle
+
+        Returns
+        -------
+        :obj: `float`
+           Energy contribution of the bond
+
+        """
+        interaction, *partners = bond
+        return self.call_method("particle_bond_energy", pid=particle.id,
+                                bond_id=interaction._bond_id, partners=partners)
 
     def dpd_stress(self):
         assert_features("DPD")
@@ -601,3 +607,57 @@ class Analysis(ScriptInterfaceHelper):
         """
         vec = self.call_method("moment_of_inertia_matrix", p_type=p_type)
         return np.reshape(vec, (3, 3))
+
+    def _generate_summary(self, obj, dim, calc_sp):
+        """
+        Compute derived quantities and reshape pressure tensors as 3x3 matrices.
+        """
+
+        def zero():
+            if dim == 1 or calc_sp:
+                return 0.
+            return np.zeros(9, dtype=float)
+
+        def reduction(obj, key):
+            total = zero()
+            for k in obj.keys():
+                if isinstance(k, tuple) and k[0] == key:
+                    total += obj[k]
+            obj[key] = total
+
+        out = {}
+        out["bonded"] = zero()
+        out["non_bonded_intra"] = zero()
+        out["non_bonded_inter"] = zero()
+        for k, v in obj.items():
+            if "," not in k:
+                out[k] = v
+            else:
+                k = k.split(",")
+                k = (k[0], *map(int, k[1:]))
+                out[k] = v
+                if k[0] == "bonded":
+                    out["bonded"] += v
+                elif k[0].startswith("non_bonded_"):
+                    if k[0] == "non_bonded_intra":
+                        out["non_bonded_intra"] += v
+                    else:
+                        out["non_bonded_inter"] += v
+                    k = ("non_bonded", *k[1:])
+                    if k not in out:
+                        out[k] = zero()
+                    out[k] += v
+
+        out["non_bonded"] = out["non_bonded_intra"] + out["non_bonded_inter"]
+        if has_features("ELECTROSTATICS"):
+            reduction(out, "coulomb")
+        if has_features("DIPOLES"):
+            reduction(out, "dipolar")
+        if has_features("VIRTUAL_SITES"):
+            reduction(out, "virtual_sites")
+        if has_features("DPD"):
+            reduction(out, "dpd")
+
+        if dim == 1 or calc_sp:
+            return out
+        return {k: np.reshape(v, (3, 3)) for k, v in out.items()}

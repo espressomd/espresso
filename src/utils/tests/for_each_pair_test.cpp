@@ -95,7 +95,7 @@ void check_cartesian_pairs(std::size_t n_values_1, std::size_t n_values_2,
   auto it = pairs.begin();
   for (std::size_t i = 0; i < n_values_1; ++i) {
     for (std::size_t j = 0; j < n_values_2; ++j) {
-      if (!(exclude_diagonal and i == j)) {
+      if (!exclude_diagonal or i != j) {
         BOOST_CHECK((it->first == i) && (it->second == j));
         ++it;
       }

@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_GHOSTS_HPP
-#define CORE_GHOSTS_HPP
+
+#pragma once
+
 /** \file
  *  Ghost particles and particle exchange.
  *
@@ -83,6 +84,10 @@
  *
  *  The ghost communicators are created by the cell systems.
  */
+
+#include <config/config.hpp>
+
+#include "BoxGeometry.hpp"
 #include "ParticleList.hpp"
 
 #include <utils/Vector.hpp>
@@ -127,7 +132,7 @@ enum : unsigned {
   GHOSTTRANS_MOMENTUM = 8u,
   /// transfer \ref ParticleForce
   GHOSTTRANS_FORCE = 16u,
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   /// transfer \ref ParticleRattle
   GHOSTTRANS_RATTLE = 32u,
 #endif
@@ -164,8 +169,7 @@ struct GhostCommunicator {
 };
 
 /**
- * @brief Do a ghost communication with caller specified data parts.
+ * @brief Do a ghost communication with the specified data parts.
  */
-void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts);
-
-#endif
+void ghost_communicator(GhostCommunicator const &gcr,
+                        BoxGeometry const &box_geo, unsigned int data_parts);

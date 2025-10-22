@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
- * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
- *   Max-Planck-Institute for Polymer Research, Theory Group
+ * Copyright (C) 2022-2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,17 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_CELLSTRUCTURETYPE_HPP
-#define ESPRESSO_CELLSTRUCTURETYPE_HPP
+#pragma once
 
-/** Cell structure */
+/** @brief Cell structure topology */
 enum class CellStructureType : int {
-  /** cell structure regular decomposition */
-  CELL_STRUCTURE_REGULAR = 1,
-  /** cell structure n square */
-  CELL_STRUCTURE_NSQUARE = 2,
-  /** cell structure hybrid */
-  CELL_STRUCTURE_HYBRID = 3
+  /** @brief Regular decomposition. */
+  REGULAR = 1,
+  /** @brief Atom decomposition (N-square). */
+  NSQUARE = 2,
+  /** @brief Hybrid decomposition. */
+  HYBRID = 3
 };
-
-#endif // ESPRESSO_CELLSTRUCTURETYPE_HPP

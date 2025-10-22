@@ -18,14 +18,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_NB_IA_INTERACTION_DATA_HPP
-#define CORE_NB_IA_INTERACTION_DATA_HPP
+
+#pragma once
+
 /** \file
  *  Various procedures concerning interactions between particles.
  */
 
+#include <config/config.hpp>
+
 #include "TabulatedPotential.hpp"
-#include "config/config.hpp"
+#include "system/Leaf.hpp"
 
 #include <utils/index.hpp>
 #include <utils/math/int_pow.hpp>
@@ -36,16 +39,11 @@
 #include <memory>
 #include <vector>
 
-/** Cutoff for deactivated interactions. Must be negative, so that even
- *  particles on top of each other don't interact by chance.
- */
-constexpr double INACTIVE_CUTOFF = -1.;
-
 /** Lennard-Jones with shift */
 struct LJ_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double shift = 0.0;
   double offset = 0.0;
   double min = 0.0;
@@ -67,7 +65,7 @@ struct LJ_Parameters {
 struct WCA_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   WCA_Parameters() = default;
   WCA_Parameters(double epsilon, double sigma);
   double max_cutoff() const { return cut; }
@@ -77,7 +75,7 @@ struct WCA_Parameters {
 struct LJGen_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double shift = 0.0;
   double offset = 0.0;
   double lambda = 1.0;
@@ -89,7 +87,7 @@ struct LJGen_Parameters {
   LJGen_Parameters() = default;
   LJGen_Parameters(double epsilon, double sigma, double cutoff, double shift,
                    double offset,
-#ifdef LJGEN_SOFTCORE
+#ifdef ESPRESSO_LJGEN_SOFTCORE
                    double lam, double delta,
 #endif
                    double e1, double e2, double b1, double b2);
@@ -107,7 +105,7 @@ struct LJGen_Parameters {
 struct SmoothStep_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double d = 0.0;
   int n = 0;
   double k0 = 0.0;
@@ -120,7 +118,7 @@ struct SmoothStep_Parameters {
 /** Hertzian potential */
 struct Hertzian_Parameters {
   double eps = 0.0;
-  double sig = INACTIVE_CUTOFF;
+  double sig = inactive_cutoff;
   Hertzian_Parameters() = default;
   Hertzian_Parameters(double eps, double sig);
   double max_cutoff() const { return sig; }
@@ -130,7 +128,7 @@ struct Hertzian_Parameters {
 struct Gaussian_Parameters {
   double eps = 0.0;
   double sig = 1.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   Gaussian_Parameters() = default;
   Gaussian_Parameters(double eps, double sig, double cutoff);
   double max_cutoff() const { return cut; }
@@ -143,7 +141,7 @@ struct BMHTF_Parameters {
   double C = 0.0;
   double D = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double computed_shift = 0.0;
   BMHTF_Parameters() = default;
   BMHTF_Parameters(double A, double B, double C, double D, double sig,
@@ -154,10 +152,10 @@ struct BMHTF_Parameters {
 /** Morse potential */
 struct Morse_Parameters {
   double eps = 0.;
-  double alpha = INACTIVE_CUTOFF;
-  double rmin = INACTIVE_CUTOFF;
-  double cut = INACTIVE_CUTOFF;
-  double rest = INACTIVE_CUTOFF;
+  double alpha = inactive_cutoff;
+  double rmin = inactive_cutoff;
+  double cut = inactive_cutoff;
+  double rest = inactive_cutoff;
   Morse_Parameters() = default;
   Morse_Parameters(double eps, double alpha, double rmin, double cutoff);
   double max_cutoff() const { return cut; }
@@ -169,7 +167,7 @@ struct Buckingham_Parameters {
   double B = 0.0;
   double C = 0.0;
   double D = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double discont = 0.0;
   double shift = 0.0;
   double F1 = 0.0;
@@ -184,7 +182,7 @@ struct Buckingham_Parameters {
 struct SoftSphere_Parameters {
   double a = 0.0;
   double n = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double offset = 0.0;
   SoftSphere_Parameters() = default;
   SoftSphere_Parameters(double a, double n, double cutoff, double offset);
@@ -194,7 +192,7 @@ struct SoftSphere_Parameters {
 /** hat potential */
 struct Hat_Parameters {
   double Fmax = 0.0;
-  double r = INACTIVE_CUTOFF;
+  double r = inactive_cutoff;
   Hat_Parameters() = default;
   Hat_Parameters(double F_max, double cutoff);
   double max_cutoff() const { return r; }
@@ -204,7 +202,7 @@ struct Hat_Parameters {
 struct LJcos_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double offset = 0.0;
   double alfa = 0.0;
   double beta = 0.0;
@@ -218,7 +216,7 @@ struct LJcos_Parameters {
 struct LJcos2_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double offset = 0.0;
   double w = 0.0;
   double rchange = 0.0;
@@ -231,7 +229,7 @@ struct LJcos2_Parameters {
 struct GayBerne_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = INACTIVE_CUTOFF;
+  double cut = inactive_cutoff;
   double k1 = 0.0;
   double k2 = 0.0;
   double mu = 0.0;
@@ -257,7 +255,7 @@ struct Thole_Parameters {
 struct DPDParameters {
   double gamma = 0.;
   double k = 1.;
-  double cutoff = INACTIVE_CUTOFF;
+  double cutoff = inactive_cutoff;
   int wf = 0;
   double pref = 0.0;
 };
@@ -274,136 +272,167 @@ struct DPD_Parameters {
   double max_cutoff() const { return std::max(radial.cutoff, trans.cutoff); }
 };
 
-/** Data structure containing the interaction parameters for non-bonded
- *  interactions.
- *  Access via <tt>get_ia_param(i, j)</tt> with
- *  <tt>i</tt>, <tt>j</tt> \< \ref max_seen_particle_type
- */
+/** @brief Parameters for non-bonded interactions. */
 struct IA_parameters {
   /** maximal cutoff for this pair of particle types. This contains
    *  contributions from the short-ranged interactions, plus any
    *  cutoffs from global interactions like electrostatics.
    */
-  double max_cut = INACTIVE_CUTOFF;
+  double max_cut = inactive_cutoff;
 
-#ifdef LENNARD_JONES
+#ifdef ESPRESSO_LENNARD_JONES
   LJ_Parameters lj;
 #endif
 
-#ifdef WCA
+#ifdef ESPRESSO_WCA
   WCA_Parameters wca;
 #endif
 
-#ifdef LENNARD_JONES_GENERIC
+#ifdef ESPRESSO_LENNARD_JONES_GENERIC
   LJGen_Parameters ljgen;
 #endif
 
-#ifdef SMOOTH_STEP
+#ifdef ESPRESSO_SMOOTH_STEP
   SmoothStep_Parameters smooth_step;
 #endif
 
-#ifdef HERTZIAN
+#ifdef ESPRESSO_HERTZIAN
   Hertzian_Parameters hertzian;
 #endif
 
-#ifdef GAUSSIAN
+#ifdef ESPRESSO_GAUSSIAN
   Gaussian_Parameters gaussian;
 #endif
 
-#ifdef BMHTF_NACL
+#ifdef ESPRESSO_BMHTF_NACL
   BMHTF_Parameters bmhtf;
 #endif
 
-#ifdef MORSE
+#ifdef ESPRESSO_MORSE
   Morse_Parameters morse;
 #endif
 
-#ifdef BUCKINGHAM
+#ifdef ESPRESSO_BUCKINGHAM
   Buckingham_Parameters buckingham;
 #endif
 
-#ifdef SOFT_SPHERE
+#ifdef ESPRESSO_SOFT_SPHERE
   SoftSphere_Parameters soft_sphere;
 #endif
 
-#ifdef HAT
+#ifdef ESPRESSO_HAT
   Hat_Parameters hat;
 #endif
 
-#ifdef LJCOS
+#ifdef ESPRESSO_LJCOS
   LJcos_Parameters ljcos;
 #endif
 
-#ifdef LJCOS2
+#ifdef ESPRESSO_LJCOS2
   LJcos2_Parameters ljcos2;
 #endif
 
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
   GayBerne_Parameters gay_berne;
 #endif
 
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
   TabulatedPotential tab;
 #endif
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
   DPD_Parameters dpd;
 #endif
 
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
   Thole_Parameters thole;
 #endif
 };
 
-extern std::vector<std::shared_ptr<IA_parameters>> nonbonded_ia_params;
+class InteractionsNonBonded : public System::Leaf<InteractionsNonBonded> {
+  /** @brief List of pairwise interactions. */
+  std::vector<std::shared_ptr<IA_parameters>> m_nonbonded_ia_params{};
+  /** @brief Maximal particle type seen so far. */
+  int max_seen_particle_type = -1;
 
-/** Maximal particle type seen so far. */
-extern int max_seen_particle_type;
+  void realloc_ia_params(int type) {
+    assert(type >= 0);
+    auto const old_size = m_nonbonded_ia_params.size();
+    m_nonbonded_ia_params.resize(Utils::lower_triangular(type, type) + 1);
+    auto const new_size = m_nonbonded_ia_params.size();
+    if (new_size > old_size) {
+      for (auto &data : m_nonbonded_ia_params) {
+        if (data == nullptr) {
+          data = std::make_shared<IA_parameters>();
+        }
+      }
+    }
+  }
 
-/** Maximal interaction cutoff (real space/short range non-bonded
- *  interactions).
- */
-double maximal_cutoff_nonbonded();
+public:
+  InteractionsNonBonded() {
+    /* make sure interaction 0<->0 always exists */
+    make_particle_type_exist(0);
+  }
 
-inline int get_ia_param_key(int i, int j) {
-  assert(i >= 0 && i < ::max_seen_particle_type);
-  assert(j >= 0 && j < ::max_seen_particle_type);
-  return Utils::upper_triangular(std::min(i, j), std::max(i, j),
-                                 ::max_seen_particle_type);
-}
+  /**
+   * @brief Make sure the interaction parameter list is large enough to cover
+   * interactions for this particle type.
+   * New interactions are initialized with values such that no physical
+   * interaction occurs.
+   */
+  void make_particle_type_exist(int type) {
+    assert(type >= 0);
+    if (type > max_seen_particle_type) {
+      realloc_ia_params(type);
+      max_seen_particle_type = type;
+    }
+  }
 
-/**
- * @brief Get interaction parameters between particle types i and j
- *
- * This is symmetric, e.g. it holds that get_ia_param(i, j) and
- * get_ia_param(j, i) point to the same data.
- *
- * @param i First type, has to be smaller than @ref max_seen_particle_type.
- * @param j Second type, has to be smaller than @ref max_seen_particle_type.
- *
- * @return Reference to interaction parameters for the type pair.
- */
-inline IA_parameters &get_ia_param(int i, int j) {
-  return *::nonbonded_ia_params[get_ia_param_key(i, j)];
-}
+  auto get_ia_param_key(int i, int j) const {
+    assert(i >= 0 and i <= max_seen_particle_type);
+    assert(j >= 0 and j <= max_seen_particle_type);
+    auto const key = static_cast<unsigned int>(
+        Utils::lower_triangular(std::max(i, j), std::min(i, j)));
+    assert(key < m_nonbonded_ia_params.size());
+    return key;
+  }
 
-void mpi_realloc_ia_params_local(int new_size);
+  /**
+   * @brief Get interaction parameters between particle types i and j
+   *
+   * This is symmetric, e.g. it holds that `get_ia_param(i, j)` and
+   * `get_ia_param(j, i)` point to the same data.
+   *
+   * @param i First type, must exist
+   * @param j Second type, must exist
+   *
+   * @return Reference to interaction parameters for the type pair.
+   */
+  auto &get_ia_param(int i, int j) {
+    return *m_nonbonded_ia_params[get_ia_param_key(i, j)];
+  }
 
-bool is_new_particle_type(int type);
-/** Make sure that ia_params is large enough to cover interactions
- *  for this particle type. The interactions are initialized with values
- *  such that no physical interaction occurs.
- */
-void make_particle_type_exist(int type);
+  auto const &get_ia_param(int i, int j) const {
+    return *m_nonbonded_ia_params[get_ia_param_key(i, j)];
+  }
 
-void make_particle_type_exist_local(int type);
+  auto get_ia_param_ref_counted(int i, int j) const {
+    return m_nonbonded_ia_params[get_ia_param_key(i, j)];
+  }
 
-/** Check if a non-bonded interaction is defined */
-inline bool checkIfInteraction(IA_parameters const &data) {
-  return data.max_cut != INACTIVE_CUTOFF;
-}
+  void set_ia_param(int i, int j, std::shared_ptr<IA_parameters> const &ia) {
+    m_nonbonded_ia_params[get_ia_param_key(i, j)] = ia;
+  }
 
-void set_min_global_cut(double min_global_cut);
+  auto get_max_seen_particle_type() const { return max_seen_particle_type; }
 
-double get_min_global_cut();
-#endif
+  /** @brief Recalculate cutoff of each interaction struct. */
+  void recalc_maximal_cutoffs();
+
+  /** @brief Get maximal cutoff. */
+  double maximal_cutoff() const;
+
+  /** @brief Notify system that non-bonded interactions changed. */
+  void on_non_bonded_ia_change() const;
+};

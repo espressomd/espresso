@@ -35,11 +35,11 @@
 # Use the Cython executable that lives next to the Python executable
 # if it is a local installation.
 if(Python_EXECUTABLE)
-  get_filename_component(_python_path ${Python_EXECUTABLE} PATH)
+  cmake_path(GET Python_EXECUTABLE PARENT_PATH _python_path)
 elseif(Python3_EXECUTABLE)
-  get_filename_component(_python_path ${Python3_EXECUTABLE} PATH)
+  cmake_path(GET Python3_EXECUTABLE PARENT_PATH _python_path)
 elseif(DEFINED PYTHON_EXECUTABLE)
-  get_filename_component(_python_path ${PYTHON_EXECUTABLE} PATH)
+  cmake_path(GET PYTHON_EXECUTABLE PARENT_PATH _python_path)
 endif()
 
 if(DEFINED _python_path)
@@ -79,7 +79,8 @@ if(CYTHON_EXECUTABLE)
 endif()
 
 include(FindPackageHandleStandardArgs)
-# add HANDLE_VERSION_RANGE in CMake 3.19
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(Cython REQUIRED_VARS CYTHON_EXECUTABLE VERSION_VAR CYTHON_VERSION)
+find_package_handle_standard_args(
+  Cython REQUIRED_VARS CYTHON_EXECUTABLE VERSION_VAR CYTHON_VERSION
+                                                     HANDLE_VERSION_RANGE)
 
 mark_as_advanced(CYTHON_EXECUTABLE)

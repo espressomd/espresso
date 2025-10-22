@@ -19,22 +19,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef RANDOM_H
-#define RANDOM_H
+
+#pragma once
 
 /** \file
  *  Random number generation using Philox.
  */
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/u32_to_u64.hpp>
 #include <utils/uniform.hpp>
 
 #include <Random123/philox.h>
 
 #include <cstddef>
+#include <numbers>
 #include <random>
+#include <ranges>
 #include <vector>
 
 /*
@@ -53,9 +54,8 @@ enum class RNGSalt : uint32_t {
   BROWNIAN_INC,
   BROWNIAN_ROT_INC,
   BROWNIAN_ROT_WALK,
-  NPTISO0_HALF_STEP1,
-  NPTISO0_HALF_STEP2,
-  NPTISOV,
+  NPTISO_PARTICLE,
+  NPTISO_VOLUME,
   SALT_DPD,
   THERMALIZED_BOND
 };
@@ -69,7 +69,6 @@ namespace Random {
  * If any of the keys and salt differ, the noise is
  * not correlated between two calls along the same counter
  * sequence.
- *
  */
 template <RNGSalt salt>
 auto philox_4_uint64s(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
@@ -107,22 +106,14 @@ auto philox_4_uint64s(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
  *
  * @return Vector of uniform random numbers.
  */
-template <RNGSalt salt, std::size_t N = 3,
-          std::enable_if_t<(N > 1) and (N <= 4), int> = 0>
+template <RNGSalt salt, std::size_t N = 3>
+  requires((N >= 1) and (N <= 4))
 auto noise_uniform(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
-
   auto const integers = philox_4_uint64s<salt>(counter, seed, key1, key2);
   Utils::VectorXd<N> noise{};
-  std::transform(integers.begin(), integers.begin() + N, noise.begin(),
-                 [](std::size_t value) { return Utils::uniform(value) - 0.5; });
+  std::ranges::transform(integers | std::ranges::views::take(N), noise.begin(),
+                         [](std::size_t v) { return Utils::uniform(v) - 0.5; });
   return noise;
-}
-
-template <RNGSalt salt, std::size_t N, std::enable_if_t<N == 1, int> = 0>
-auto noise_uniform(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
-
-  auto const integers = philox_4_uint64s<salt>(counter, seed, key1, key2);
-  return Utils::uniform(integers[0]) - 0.5;
 }
 
 /** @brief Generator for Gaussian noise.
@@ -143,43 +134,41 @@ auto noise_uniform(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
  * @param key2 key for random number generation
  *
  * @return Vector of Gaussian random numbers.
- *
  */
-template <RNGSalt salt, std::size_t N = 3,
-          class = std::enable_if_t<(N >= 1) and (N <= 4)>>
+template <RNGSalt salt, std::size_t N = 3>
+  requires((N >= 1) and (N <= 4))
 auto noise_gaussian(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
 
   auto const integers = philox_4_uint64s<salt>(counter, seed, key1, key2);
-  static const double epsilon = std::numeric_limits<double>::min();
 
   constexpr std::size_t M = (N <= 2) ? 2 : 4;
   Utils::VectorXd<M> u{};
-  std::transform(integers.begin(), integers.begin() + M, u.begin(),
-                 [](std::size_t value) {
-                   auto u = Utils::uniform(value);
-                   return (u < epsilon) ? epsilon : u;
-                 });
+  std::ranges::transform(
+      integers | std::ranges::views::take(M), u.begin(), [](std::size_t value) {
+        auto constexpr epsilon = std::numeric_limits<double>::min();
+        auto res = Utils::uniform(value);
+        return (res < epsilon) ? epsilon : res;
+      });
 
   // Box-Muller transform code adapted from
   // https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
   // optimizations: the modulo is cached (logarithms are expensive), the
   // sin/cos are evaluated simultaneously by gcc or separately by Clang
   Utils::VectorXd<N> noise{};
-  constexpr double two_pi = 2.0 * Utils::pi();
   {
-    auto const modulo = sqrt(-2.0 * log(u[0]));
-    auto const angle = two_pi * u[1];
-    noise[0] = modulo * cos(angle);
+    auto const modulo = std::sqrt(-2. * std::log(u[0]));
+    auto const angle = 2. * std::numbers::pi * u[1];
+    noise[0] = modulo * std::cos(angle);
     if (N > 1) {
-      noise[1] = modulo * sin(angle);
+      noise[1] = modulo * std::sin(angle);
     }
   }
   if (N > 2) {
-    auto const modulo = sqrt(-2.0 * log(u[2]));
-    auto const angle = two_pi * u[3];
-    noise[2] = modulo * cos(angle);
+    auto const modulo = std::sqrt(-2. * log(u[2]));
+    auto const angle = 2. * std::numbers::pi * u[3];
+    noise[2] = modulo * std::cos(angle);
     if (N > 3) {
-      noise[3] = modulo * sin(angle);
+      noise[3] = modulo * std::sin(angle);
     }
   }
   return noise;
@@ -199,5 +188,3 @@ template <typename T> std::mt19937 mt19937(T &&seed) {
 }
 
 } // namespace Random
-
-#endif

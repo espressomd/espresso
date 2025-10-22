@@ -18,43 +18,37 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
- *  Implementation of pressure.hpp.
- */
 
-#include "pressure.hpp"
+#include "config/config.hpp"
+
+#include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "cells.hpp"
-#include "communication.hpp"
+#include "dpd.hpp"
 #include "electrostatics/coulomb.hpp"
-#include "event.hpp"
-#include "grid.hpp"
-#include "interactions.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "pressure_inline.hpp"
 #include "short_range_loop.hpp"
-#include "virtual_sites.hpp"
+#include "system/System.hpp"
+#include "virtual_sites/relative.hpp"
 
-#include "config/config.hpp"
-
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
-
-#include <boost/range/algorithm/copy.hpp>
+#include <utils/flatten.hpp>
 
 #include <algorithm>
-#include <cmath>
 #include <cstddef>
 #include <memory>
-#include <utility>
+#include <span>
 
-std::shared_ptr<Observable_stat> calculate_pressure() {
+namespace System {
+std::shared_ptr<Observable_stat> System::calculate_pressure() {
 
-  auto obs_pressure_ptr = std::make_shared<Observable_stat>(9);
+  auto obs_pressure_ptr = std::make_shared<Observable_stat>(
+      9ul, static_cast<std::size_t>(bonded_ias->get_next_key()),
+      nonbonded_ias->get_max_seen_particle_type());
 
   if (long_range_interactions_sanity_checks()) {
     return obs_pressure_ptr;
@@ -64,59 +58,67 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
 
   on_observable_calc();
 
-  auto const volume = box_geo.volume();
-  auto const local_parts = cell_structure.local_particles();
+  auto const volume = box_geo->volume();
+  auto const local_parts = cell_structure->local_particles();
 
   for (auto const &p : local_parts) {
     add_kinetic_virials(p, obs_pressure);
   }
 
-  auto const coulomb_force_kernel = Coulomb::pair_force_kernel();
-  auto const coulomb_pressure_kernel = Coulomb::pair_pressure_kernel();
+  auto const coulomb_force_kernel = coulomb.pair_force_kernel();
+  auto const coulomb_pressure_kernel = coulomb.pair_pressure_kernel();
 
   short_range_loop(
-      [&obs_pressure,
-       coulomb_force_kernel_ptr = coulomb_force_kernel.get_ptr()](
-          Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
-        auto const &iaparams = *bonded_ia_params.at(bond_id);
+      [this, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
+       &obs_pressure](Particle const &p1, int bond_id,
+                      std::span<Particle *> partners) {
+        auto const &iaparams = *bonded_ias->at(bond_id);
         auto const result = calc_bonded_pressure_tensor(
-            iaparams, p1, partners, coulomb_force_kernel_ptr);
+            iaparams, p1, partners, *box_geo, coulomb_force_kernel_ptr);
         if (result) {
-          auto const &tensor = result.get();
+          auto const &tensor = result.value();
           /* pressure tensor part */
-          for (int k = 0; k < 3; k++)
-            for (int l = 0; l < 3; l++)
-              obs_pressure.bonded_contribution(bond_id)[k * 3 + l] +=
+          for (std::size_t k = 0u; k < 3u; k++)
+            for (std::size_t l = 0u; l < 3u; l++)
+              obs_pressure.bonded_contribution(bond_id)[k * 3u + l] +=
                   tensor(k, l);
 
           return false;
         }
         return true;
       },
-      [&obs_pressure, coulomb_force_kernel_ptr = coulomb_force_kernel.get_ptr(),
-       coulomb_pressure_kernel_ptr = coulomb_pressure_kernel.get_ptr()](
-          Particle const &p1, Particle const &p2, Distance const &d) {
-        add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
-                                    obs_pressure, coulomb_force_kernel_ptr,
-                                    coulomb_pressure_kernel_ptr);
+      [coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
+       coulomb_pressure_kernel_ptr = get_ptr(coulomb_pressure_kernel), this,
+       &obs_pressure](Particle const &p1, Particle const &p2,
+                      Distance const &d) {
+        auto const &ia_params =
+            nonbonded_ias->get_ia_param(p1.type(), p2.type());
+        add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2), ia_params,
+                                    *bonded_ias, coulomb_force_kernel_ptr,
+                                    coulomb_pressure_kernel_ptr, obs_pressure);
       },
-      maximal_cutoff(n_nodes), maximal_cutoff_bonded());
+      *cell_structure, maximal_cutoff(), bonded_ias->maximal_cutoff());
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  auto const coulomb_pressure = Coulomb::calc_pressure_long_range(local_parts);
-  boost::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9);
+  auto const coulomb_pressure = coulomb.calc_pressure_long_range(local_parts);
+  std::ranges::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9u);
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  Dipoles::calc_pressure_long_range();
+  Dipoles::get_dipoles().calc_pressure_long_range();
 #endif
 
-#ifdef VIRTUAL_SITES
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   if (!obs_pressure.virtual_sites.empty()) {
-    auto const vs_pressure = virtual_sites()->pressure_tensor();
-    boost::copy(flatten(vs_pressure), obs_pressure.virtual_sites.begin());
+    auto const vs_pressure = vs_relative_pressure_tensor(*cell_structure);
+    std::ranges::copy(Utils::flatten(vs_pressure),
+                      obs_pressure.virtual_sites.begin());
   }
+#endif
+
+#ifdef ESPRESSO_DPD
+  std::ranges::copy(dpd_pressure_local(), obs_pressure.dpd.begin());
 #endif
 
   obs_pressure.rescale(volume);
@@ -124,15 +126,4 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
   obs_pressure.mpi_reduce();
   return obs_pressure_ptr;
 }
-
-REGISTER_CALLBACK_MAIN_RANK(calculate_pressure)
-
-Utils::Vector9d mpi_observable_compute_pressure_tensor() {
-  auto const obs =
-      mpi_call(Communication::Result::main_rank, calculate_pressure);
-  Utils::Vector9d pressure_tensor{};
-  for (std::size_t j = 0; j < 9; j++) {
-    pressure_tensor[j] = obs->accumulate(0, j);
-  }
-  return pressure_tensor;
-}
+} // namespace System

@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BN_IA_BONDED_COULOMB_SR_HPP
-#define CORE_BN_IA_BONDED_COULOMB_SR_HPP
+
+#pragma once
+
 /** \file
  *  Routines to calculate the short-range part of the bonded Coulomb potential
  *  between particle pairs. Can be used to subtract certain intramolecular
@@ -32,12 +33,11 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cmath>
 #include <functional>
+#include <optional>
 
-/** Parameters for %Coulomb bond short-range Potential */
+/** Parameters for Coulomb bond short-range Potential */
 struct BondedCoulombSR {
   /** charge factor */
   double q1q2;
@@ -48,33 +48,26 @@ struct BondedCoulombSR {
 
   BondedCoulombSR(double q1q2) { this->q1q2 = q1q2; }
 
-  boost::optional<Utils::Vector3d>
+  std::optional<Utils::Vector3d>
   force(Utils::Vector3d const &dx,
         std::function<Utils::Vector3d(double, Utils::Vector3d const &,
                                       double)> const &kernel) const;
-  boost::optional<double>
+  std::optional<double>
   energy(Particle const &p1, Particle const &p2, Utils::Vector3d const &dx,
-         std::function<double(Particle const &, Particle const &, double,
-                              Utils::Vector3d const &, double)> const &kernel)
-      const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar &q1q2;
-  }
+         std::function<double(Utils::Vector3d const &, Utils::Vector3d const &,
+                              double, Utils::Vector3d const &, double)> const
+             &kernel) const;
 };
 
 /** Compute the short-range bonded Coulomb pair force.
- *  @param[in]  dx        %Distance between the particles.
- *  @param[in]  kernel    %Coulomb force kernel.
+ *  @param[in]  dx        Distance between the particles.
+ *  @param[in]  kernel    Coulomb force kernel.
  */
-inline boost::optional<Utils::Vector3d> BondedCoulombSR::force(
+inline std::optional<Utils::Vector3d> BondedCoulombSR::force(
     Utils::Vector3d const &dx,
     std::function<Utils::Vector3d(double, Utils::Vector3d const &,
                                   double)> const &kernel) const {
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   return kernel(q1q2, dx, dx.norm());
 #else
   return Utils::Vector3d{};
@@ -84,19 +77,17 @@ inline boost::optional<Utils::Vector3d> BondedCoulombSR::force(
 /** Compute the short-range bonded Coulomb pair energy.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
- *  @param[in]  dx        %Distance between the particles.
- *  @param[in]  kernel    %Coulomb energy kernel.
+ *  @param[in]  dx        Distance between the particles.
+ *  @param[in]  kernel    Coulomb energy kernel.
  */
-inline boost::optional<double> BondedCoulombSR::energy(
+inline std::optional<double> BondedCoulombSR::energy(
     Particle const &p1, Particle const &p2, Utils::Vector3d const &dx,
-    std::function<double(Particle const &, Particle const &, double,
-                         Utils::Vector3d const &, double)> const &kernel)
-    const {
-#ifdef ELECTROSTATICS
-  return kernel(p1, p2, q1q2, dx, dx.norm());
+    std::function<double(Utils::Vector3d const &, Utils::Vector3d const &,
+                         double, Utils::Vector3d const &, double)> const
+        &kernel) const {
+#ifdef ESPRESSO_ELECTROSTATICS
+  return kernel(p1.pos(), p2.pos(), q1q2, dx, dx.norm());
 #else
   return 0.;
 #endif
 }
-
-#endif

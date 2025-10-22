@@ -26,7 +26,7 @@ from .script_interface import script_interface_register, ScriptInterfaceHelper
 @script_interface_register
 class _Polymer(ScriptInterfaceHelper):
     _so_name = "Particles::Polymer"
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
 
 
 def linear_polymer_positions(

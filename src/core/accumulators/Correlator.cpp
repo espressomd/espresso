@@ -18,8 +18,6 @@
  */
 #include "Correlator.hpp"
 
-#include "integrate.hpp"
-
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/serialization/multi_array.hpp>
@@ -28,7 +26,6 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
-#include <boost/range/algorithm/transform.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -55,23 +52,25 @@ std::vector<double> compress_linear(std::vector<double> const &A1,
   assert(A1.size() == A2.size());
   std::vector<double> A_compressed(A1.size());
 
-  std::transform(A1.begin(), A1.end(), A2.begin(), A_compressed.begin(),
-                 [](double a, double b) -> double { return 0.5 * (a + b); });
+  std::ranges::transform(A1, A2, A_compressed.begin(),
+                         [](double a, double b) { return 0.5 * (a + b); });
 
   return A_compressed;
 }
 
 /** Compress discarding the 1st argument and return the 2nd */
-std::vector<double> compress_discard1(std::vector<double> const &A1,
-                                      std::vector<double> const &A2) {
+std::vector<double>
+compress_discard1([[maybe_unused]] std::vector<double> const &A1,
+                  [[maybe_unused]] std::vector<double> const &A2) {
   assert(A1.size() == A2.size());
   std::vector<double> A_compressed(A2);
   return A_compressed;
 }
 
 /** Compress discarding the 2nd argument and return the 1st */
-std::vector<double> compress_discard2(std::vector<double> const &A1,
-                                      std::vector<double> const &A2) {
+std::vector<double>
+compress_discard2([[maybe_unused]] std::vector<double> const &A1,
+                  [[maybe_unused]] std::vector<double> const &A2) {
   assert(A1.size() == A2.size());
   std::vector<double> A_compressed(A1);
   return A_compressed;
@@ -98,7 +97,7 @@ std::vector<double> componentwise_product(std::vector<double> const &A,
         "Error in componentwise product: The vector sizes do not match");
   }
 
-  std::transform(A.begin(), A.end(), B.begin(), C.begin(), std::multiplies<>());
+  std::ranges::transform(A, B, C.begin(), std::multiplies<>());
 
   return C;
 }
@@ -129,9 +128,9 @@ std::vector<double> square_distance_componentwise(std::vector<double> const &A,
 
   std::vector<double> C(A.size());
 
-  std::transform(
-      A.begin(), A.end(), B.begin(), C.begin(),
-      [](double a, double b) -> double { return Utils::sqr(a - b); });
+  std::ranges::transform(A, B, C.begin(), [](double a, double b) -> double {
+    return Utils::sqr(a - b);
+  });
 
   return C;
 }
@@ -146,33 +145,31 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
         "Error in fcs_acf: The vector sizes do not match.");
   }
 
-  auto const C_size = A.size() / 3;
-  assert(3 * C_size == A.size());
+  auto const C_size = A.size() / 3u;
+  assert(3u * C_size == A.size());
 
-  std::vector<double> C(C_size, 0);
+  std::vector<double> C{};
+  C.reserve(C_size);
 
-  for (std::size_t i = 0; i < C_size; i++) {
-    for (int j = 0; j < 3; j++) {
-      auto const &a = A[3 * i + j];
-      auto const &b = B[3 * i + j];
-
-      C[i] -= Utils::sqr(a - b) / wsquare[j];
+  for (std::size_t i = 0u; i < C_size; i++) {
+    auto acc = 0.;
+    for (std::size_t j = 0u; j < 3u; j++) {
+      auto const a = A[3u * i + j];
+      auto const b = B[3u * i + j];
+      acc -= Utils::sqr(a - b) / wsquare[j];
     }
+    C.emplace_back(std::exp(acc));
   }
-
-  std::transform(C.begin(), C.end(), C.begin(),
-                 [](double c) -> double { return std::exp(c); });
 
   return C;
 }
 
-void Correlator::initialize() {
+void Correlator::initialize_operations() {
   // Class members are assigned via the initializer list
 
   if (m_tau_lin == 1) { // use the default
-    m_tau_lin = static_cast<int>(ceil(m_tau_max / m_dt));
-    if (m_tau_lin % 2)
-      m_tau_lin += 1;
+    m_tau_lin = static_cast<int>(std::ceil(m_tau_max / m_dt));
+    m_tau_lin += m_tau_lin % 2;
   }
 
   if (m_tau_lin < 2) {
@@ -190,8 +187,9 @@ void Correlator::initialize() {
   if ((m_tau_max / m_dt) < m_tau_lin) {
     m_hierarchy_depth = 1;
   } else {
-    m_hierarchy_depth = static_cast<int>(
-        ceil(1 + log((m_tau_max / m_dt) / (m_tau_lin - 1)) / log(2.0)));
+    auto const operand = (m_tau_max / m_dt) / double(m_tau_lin - 1);
+    assert(operand > 0.);
+    m_hierarchy_depth = static_cast<int>(std::ceil(1. + std::log2(operand)));
   }
 
   assert(A_obs);
@@ -199,10 +197,10 @@ void Correlator::initialize() {
   dim_A = A_obs->n_values();
   dim_B = B_obs->n_values();
 
-  if (dim_A == 0) {
+  if (dim_A == 0u) {
     throw std::runtime_error("dimension of first observable has to be >= 1");
   }
-  if (dim_B == 0) {
+  if (dim_B == 0u) {
     throw std::runtime_error("dimension of second observable has to be >= 1");
   }
 
@@ -214,7 +212,9 @@ void Correlator::initialize() {
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "tensor_product") {
     m_dim_corr = dim_A * dim_B;
-    m_shape = {dim_A, dim_B};
+    m_shape.clear();
+    m_shape.emplace_back(dim_A);
+    m_shape.emplace_back(dim_B);
     corr_operation = &tensor_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "square_distance_componentwise") {
@@ -225,24 +225,24 @@ void Correlator::initialize() {
   } else if (corr_operation_name == "fcs_acf") {
     // note: user provides w=(wx,wy,wz) but we want to use
     // wsquare=(wx^2,wy^2,wz^2)
-    if (m_correlation_args[0] <= 0 || m_correlation_args[1] <= 0 ||
-        m_correlation_args[2] <= 0) {
+    if (not(m_correlation_args_input > Utils::Vector3d::broadcast(0.))) {
       throw std::runtime_error("missing parameter for fcs_acf: w_x w_y w_z");
     }
-    m_correlation_args =
-        Utils::hadamard_product(m_correlation_args, m_correlation_args);
-    if (dim_A % 3)
+    m_correlation_args = Utils::hadamard_product(m_correlation_args_input,
+                                                 m_correlation_args_input);
+    if (dim_A % 3u)
       throw std::runtime_error("dimA must be divisible by 3 for fcs_acf");
-    m_dim_corr = dim_A / 3;
+    m_dim_corr = dim_A / 3u;
     m_shape = A_obs->shape();
-    if (m_shape.back() != 3)
+    if (m_shape.back() != 3u)
       throw std::runtime_error(
           "the last dimension of dimA must be 3 for fcs_acf");
     m_shape.pop_back();
     corr_operation = &fcs_acf;
   } else if (corr_operation_name == "scalar_product") {
-    m_dim_corr = 1;
-    m_shape = {1};
+    m_dim_corr = 1u;
+    m_shape.clear();
+    m_shape.emplace_back(1u);
     corr_operation = &scalar_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else {
@@ -272,7 +272,9 @@ void Correlator::initialize() {
     throw std::invalid_argument("unknown compression method '" +
                                 compressB_name + "' for second observable");
   }
+}
 
+void Correlator::initialize_buffers() {
   using index_type = decltype(result)::index;
 
   A.resize(std::array<int, 2>{{m_hierarchy_depth, m_tau_lin + 1}});
@@ -310,11 +312,22 @@ void Correlator::initialize() {
   }
 }
 
-void Correlator::update() {
+void Correlator::update(boost::mpi::communicator const &comm) {
   if (finalized) {
     throw std::runtime_error(
         "No data can be added after finalize() was called.");
   }
+
+  if (comm.rank() != 0) {
+    // worker nodes just need to update the observables and exit
+    A_obs->operator()(comm);
+    if (A_obs != B_obs) {
+      B_obs->operator()(comm);
+    }
+
+    return;
+  }
+
   // We must now go through the hierarchy and make sure there is space for the
   // new datapoint. For every hierarchy level we have to decide if it is
   // necessary to move something
@@ -360,9 +373,9 @@ void Correlator::update() {
   newest[0] = (newest[0] + 1) % (m_tau_lin + 1);
   n_vals[0]++;
 
-  A[0][newest[0]] = A_obs->operator()();
+  A[0][newest[0]] = A_obs->operator()(comm);
   if (A_obs != B_obs) {
-    B[0][newest[0]] = B_obs->operator()();
+    B[0][newest[0]] = B_obs->operator()(comm);
   } else {
     B[0][newest[0]] = A[0][newest[0]];
   }
@@ -411,7 +424,7 @@ void Correlator::update() {
   }
 }
 
-int Correlator::finalize() {
+int Correlator::finalize(boost::mpi::communicator const &comm) {
   using index_type = decltype(result)::index;
   if (finalized) {
     throw std::runtime_error("Correlator::finalize() can only be called once.");
@@ -422,6 +435,11 @@ int Correlator::finalize() {
 
   // mark the correlation as finalized
   finalized = true;
+
+  // worker nodes don't need to do anything
+  if (comm.rank() != 0) {
+    return 0;
+  }
 
   for (int ll = 0; ll < m_hierarchy_depth - 1; ll++) {
     long vals_ll; // number of values remaining in the lowest level
@@ -510,8 +528,8 @@ std::vector<double> Correlator::get_correlation() {
 
 std::vector<double> Correlator::get_lag_times() const {
   std::vector<double> res(n_values());
-  boost::transform(tau, res.begin(),
-                   [dt = m_dt](auto const &a) { return a * dt; });
+  std::ranges::transform(tau, res.begin(),
+                         [dt = m_dt](auto const &a) { return a * dt; });
   return res;
 }
 
@@ -520,7 +538,9 @@ std::string Correlator::get_internal_state() const {
   boost::archive::binary_oarchive oa(ss);
 
   oa << t;
+  oa << m_dt;
   oa << m_shape;
+  oa << m_correlation_args_input;
   oa << A;
   oa << B;
   oa << result;
@@ -541,7 +561,9 @@ void Correlator::set_internal_state(std::string const &state) {
   boost::archive::binary_iarchive ia(ss);
 
   ia >> t;
+  ia >> m_dt;
   ia >> m_shape;
+  ia >> m_correlation_args_input;
   ia >> A;
   ia >> B;
   ia >> result;
@@ -551,6 +573,8 @@ void Correlator::set_internal_state(std::string const &state) {
   ia >> A_accumulated_average;
   ia >> B_accumulated_average;
   ia >> n_data;
+  initialize_operations();
+  m_system = nullptr;
 }
 
 } // namespace Accumulators

@@ -53,3 +53,50 @@ BOOST_AUTO_TEST_CASE(dist_function) {
     }
   }
 }
+
+BOOST_AUTO_TEST_CASE(rasterize_function) {
+  {
+    Shapes::Wall shape;
+    shape.set_normal(Utils::Vector3d{1., 0., 0.});
+    shape.d() = 1.0;
+    auto const agrid = 1.0;
+
+    auto const raster = shape.rasterize({5, 5, 5}, agrid, 0.5);
+    for (auto i = 0u; i < 25u; ++i) {
+      BOOST_REQUIRE_EQUAL(raster[i], 1);
+    }
+    for (auto i = 25u; i < 125u; ++i) {
+      BOOST_REQUIRE_EQUAL(raster[i], 0);
+    }
+  }
+  // edge case: wall right before the second slice of LB nodes
+  {
+    Shapes::Wall shape;
+    shape.set_normal(Utils::Vector3d{1., 0., 0.});
+    shape.d() = 1.49999999;
+    auto const agrid = 1.0;
+
+    auto const raster = shape.rasterize({5, 5, 5}, agrid, 0.5);
+    for (auto i = 0u; i < 25u; ++i) {
+      BOOST_REQUIRE_EQUAL(raster[i], 1);
+    }
+    for (auto i = 25u; i < 125u; ++i) {
+      BOOST_REQUIRE_EQUAL(raster[i], 0);
+    }
+  }
+  // edge case: wall right on the second slice of LB nodes
+  {
+    Shapes::Wall shape;
+    shape.set_normal(Utils::Vector3d{1., 0., 0.});
+    shape.d() = 1.50000000;
+    auto const agrid = 1.0;
+
+    auto const raster = shape.rasterize({5, 5, 5}, agrid, 0.5);
+    for (auto i = 0u; i < 2u * 25u; ++i) {
+      BOOST_REQUIRE_EQUAL(raster[i], 1);
+    }
+    for (auto i = 2u * 25u; i < 125u; ++i) {
+      BOOST_REQUIRE_EQUAL(raster[i], 0);
+    }
+  }
+}

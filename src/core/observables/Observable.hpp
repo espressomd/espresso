@@ -25,6 +25,8 @@
 #include <numeric>
 #include <vector>
 
+#include <boost/mpi/communicator.hpp>
+
 namespace Observables {
 
 /** Base class for observables.
@@ -32,7 +34,7 @@ namespace Observables {
  *  An observable extracts raw data from a system or compute a statistic based
  *  on the state of a system, and returns an array of doubles.
  *
- *  %Observables typically don't have setters or getters to access and modify
+ *  Observables typically don't have setters or getters to access and modify
  *  their member variables, and usually only have a default constructor with no
  *  argument. Each observable class has a corresponding interface in
  *  @ref ScriptInterface::Observables, where setters and getters are defined.
@@ -42,7 +44,8 @@ public:
   Observable() = default;
   virtual ~Observable() = default;
   /** Calculate the set of values measured by the observable */
-  virtual std::vector<double> operator()() const = 0;
+  virtual std::vector<double>
+  operator()(boost::mpi::communicator const &comm) const = 0;
 
   /** Size of the flat array returned by the observable */
   std::size_t n_values() const {

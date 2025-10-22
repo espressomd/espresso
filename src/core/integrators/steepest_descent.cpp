@@ -23,10 +23,11 @@
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
 #include "rotation.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
@@ -51,25 +52,22 @@ bool steepest_descent_step(const ParticleRange &particles) {
     auto f = 0.0;
 
     // For all Cartesian coordinates
-    for (int j = 0; j < 3; j++) {
+    for (auto j = 0u; j < 3u; ++j) {
       // Skip, if coordinate is fixed
       if (!p.is_fixed_along(j)) {
-        // Skip positional increments of virtual particles
-        if (!p.is_virtual()) {
-          // Square of force on particle
-          f += Utils::sqr(p.force()[j]);
+        // Square of force on particle
+        f += Utils::sqr(p.force()[j]);
 
-          // Positional increment, crop to maximum allowed by user
-          auto const dp =
-              std::clamp(params.gamma * p.force()[j], -params.max_displacement,
-                         params.max_displacement);
+        // Positional increment, crop to maximum allowed by user
+        auto const dp =
+            std::clamp(params.gamma * p.force()[j], -params.max_displacement,
+                       params.max_displacement);
 
-          // Move particle
-          p.pos()[j] += dp;
-        }
+        // Move particle
+        p.pos()[j] += dp;
       }
     }
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     {
       // Rotational increment
       auto const dq = params.gamma * p.torque(); // Vector parallel to torque
@@ -93,6 +91,7 @@ bool steepest_descent_step(const ParticleRange &particles) {
     f_max = std::max(f_max, f);
   }
 
+  auto &cell_structure = *System::get_system().cell_structure;
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 
   // Synchronize maximum force/torque encountered

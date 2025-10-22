@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_BOX_GEOMETRY_HPP
-#define ESPRESSO_SRC_CORE_BOX_GEOMETRY_HPP
+
+#pragma once
 
 #include "algorithm/periodic_fold.hpp"
 #include "lees_edwards/LeesEdwardsBC.hpp"
@@ -29,7 +29,14 @@
 #include <cassert>
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 #include <utility>
+
+#if defined(__GNUG__) or defined(__clang__)
+#define ESPRESSO_ATTR_ALWAYS_INLINE [[gnu::always_inline]]
+#else
+#define ESPRESSO_ATTR_ALWAYS_INLINE
+#endif
 
 namespace detail {
 /**
@@ -68,6 +75,28 @@ template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
   return get_mi_coord(a, b, box_length, 1. / box_length, 0.5 * box_length,
                       periodic);
 }
+
+/** @brief Calculate image box shift vector.
+ *  @param image_box  image box offset
+ *  @param box        box length
+ *  @return Image box coordinates.
+ */
+inline auto image_shift(Utils::Vector3i const &image_box,
+                        Utils::Vector3d const &box) {
+  return hadamard_product(image_box, box);
+}
+
+/** @brief Unfold particle coordinates to image box.
+ *  @param pos        coordinate to unfold
+ *  @param image_box  image box offset
+ *  @param box        box length
+ *  @return Unfolded coordinates.
+ */
+inline auto unfolded_position(Utils::Vector3d const &pos,
+                              Utils::Vector3i const &image_box,
+                              Utils::Vector3d const &box) {
+  return pos + image_shift(image_box, box);
+}
 } // namespace detail
 
 enum class BoxType { CUBOID = 0, LEES_EDWARDS = 1 };
@@ -76,17 +105,17 @@ class BoxGeometry {
 public:
   BoxGeometry() {
     set_length(Utils::Vector3d{1., 1., 1.});
-    set_periodic(0, true);
-    set_periodic(1, true);
-    set_periodic(2, true);
+    set_periodic(0u, true);
+    set_periodic(1u, true);
+    set_periodic(2u, true);
     set_type(BoxType::CUBOID);
   }
   BoxGeometry(BoxGeometry const &rhs) {
     m_type = rhs.type();
     set_length(rhs.length());
-    set_periodic(0, rhs.periodic(0));
-    set_periodic(1, rhs.periodic(1));
-    set_periodic(2, rhs.periodic(2));
+    set_periodic(0u, rhs.periodic(0u));
+    set_periodic(1u, rhs.periodic(1u));
+    set_periodic(2u, rhs.periodic(2u));
     m_lees_edwards_bc = rhs.m_lees_edwards_bc;
   }
 
@@ -120,7 +149,7 @@ public:
    * @return true iff periodic in direction.
    */
   constexpr bool periodic(unsigned coord) const {
-    assert(coord <= 2);
+    assert(coord <= 2u);
     return m_periodic[coord];
   }
 
@@ -167,7 +196,7 @@ public:
    *         i.e. <tt>a - b</tt>. Can be negative.
    */
   template <typename T> T inline get_mi_coord(T a, T b, unsigned coord) const {
-    assert(coord <= 2);
+    assert(coord <= 2u);
 
     return detail::get_mi_coord(a, b, m_length[coord], m_length_inv[coord],
                                 m_length_half[coord], m_periodic[coord]);
@@ -184,15 +213,57 @@ public:
    *         periodic images, i.e. <tt>a - b</tt>.
    */
   template <typename T>
-  Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
-                                    const Utils::Vector<T, 3> &b) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline Utils::Vector<T, 3>
+  get_mi_vector(const Utils::Vector<T, 3> &a,
+                const Utils::Vector<T, 3> &b) const {
     if (type() == BoxType::LEES_EDWARDS) {
-      return lees_edwards_bc().distance(a - b, length(), length_half(),
-                                        length_inv(), m_periodic);
+      auto const shear_plane_normal = lees_edwards_bc().shear_plane_normal;
+      auto a_tmp = a;
+      auto b_tmp = b;
+      a_tmp[shear_plane_normal] = Algorithm::periodic_fold(
+          a_tmp[shear_plane_normal], m_length[shear_plane_normal]);
+      b_tmp[shear_plane_normal] = Algorithm::periodic_fold(
+          b_tmp[shear_plane_normal], m_length[shear_plane_normal]);
+      return lees_edwards_bc().distance(a_tmp - b_tmp, m_length, m_length_half,
+                                        m_length_inv, m_periodic);
     }
     assert(type() == BoxType::CUBOID);
     return {get_mi_coord(a[0], b[0], 0), get_mi_coord(a[1], b[1], 1),
             get_mi_coord(a[2], b[2], 2)};
+  }
+
+  /**
+   * @brief Get the minimum-image vector between two coordinates.
+   *
+   * @tparam T Floating point type.
+   *
+   * @param a0     x element of the terminal point.
+   * @param a1     y element of the terminal point.
+   * @param a2     z element of the terminal point.
+   * @param b0     x element of the initial point.
+   * @param b1     y element of the initial point.
+   * @param b2     z element of the initial point.
+   * @return Vector from @p b to @p a that minimizes the distance across
+   *         periodic images, i.e. <tt>a - b</tt>.
+   */
+  template <typename T>
+  ESPRESSO_ATTR_ALWAYS_INLINE inline Utils::Vector<T, 3>
+  get_mi_vector(T const &a0, T const &a1, T const &a2, T const &b0, T const &b1,
+                T const &b2) const {
+    if (type() == BoxType::LEES_EDWARDS) {
+      auto const shear_plane_normal = lees_edwards_bc().shear_plane_normal;
+      auto a_tmp = Utils::Vector<T, 3>{a0, a1, a2};
+      auto b_tmp = Utils::Vector<T, 3>{b0, b1, b2};
+      a_tmp[shear_plane_normal] = Algorithm::periodic_fold(
+          a_tmp[shear_plane_normal], m_length[shear_plane_normal]);
+      b_tmp[shear_plane_normal] = Algorithm::periodic_fold(
+          b_tmp[shear_plane_normal], m_length[shear_plane_normal]);
+      return lees_edwards_bc().distance(a_tmp - b_tmp, m_length, m_length_half,
+                                        m_length_inv, m_periodic);
+    }
+    assert(type() == BoxType::CUBOID);
+    return {get_mi_coord(a0, b0, 0), get_mi_coord(a1, b1, 1),
+            get_mi_coord(a2, b2, 2)};
   }
 
   BoxType type() const { return m_type; }
@@ -219,68 +290,81 @@ public:
     auto ret = u - v;
     if (type() == BoxType::LEES_EDWARDS) {
       auto const &le = m_lees_edwards_bc;
-      auto const dy = x[le.shear_plane_normal] - y[le.shear_plane_normal];
-      if (fabs(dy) > 0.5 * length_half()[le.shear_plane_normal]) {
-        ret[le.shear_direction] -= Utils::sgn(dy) * le.shear_velocity;
+      auto const shear_plane_normal = le.shear_plane_normal;
+      auto const shear_direction = le.shear_direction;
+      auto const dy = x[shear_plane_normal] - y[shear_plane_normal];
+      if (fabs(dy) > length_half()[shear_plane_normal]) {
+        ret[shear_direction] -= Utils::sgn(dy) * le.shear_velocity;
       }
     }
     return ret;
   }
+
+  /** @brief Fold coordinates to primary simulation box in-place.
+   *  Lees-Edwards offset is ignored.
+   *  @param[in,out] pos        coordinates to fold
+   *  @param[in,out] image_box  image box offset
+   */
+  void fold_position(Utils::Vector3d &pos, Utils::Vector3i &image_box) const {
+    for (auto i = 0u; i < 3u; i++) {
+      if (m_periodic[i]) {
+        auto const result =
+            Algorithm::periodic_fold(pos[i], image_box[i], m_length[i]);
+        if (result.second == std::numeric_limits<int>::min() or
+            result.second == std::numeric_limits<int>::max()) {
+          throw std::runtime_error(
+              "Overflow in the image box count while folding a particle "
+              "coordinate into the primary simulation box. Maybe a particle "
+              "experienced a huge force.");
+        }
+        std::tie(pos[i], image_box[i]) = result;
+      }
+    }
+  }
+
+  /**
+   * @brief Calculate coordinates folded to primary simulation box.
+   * @param[in] pos    coordinates to fold
+   * @return Folded coordinates.
+   */
+  auto folded_position(Utils::Vector3d const &pos) const {
+    auto pos_folded = pos;
+    for (unsigned int i = 0u; i < 3u; i++) {
+      if (m_periodic[i]) {
+        pos_folded[i] = Algorithm::periodic_fold(pos[i], m_length[i]);
+      }
+    }
+
+    return pos_folded;
+  }
+
+  /**
+   * @brief Calculate image box of coordinates folded to primary simulation box.
+   * @param[in] pos        coordinates
+   * @param[in] image_box  image box to fold
+   * @return Folded image box.
+   */
+  auto folded_image_box(Utils::Vector3d const &pos,
+                        Utils::Vector3i const &image_box) const {
+    auto image_box_folded = image_box;
+    for (auto i = 0u; i < 3u; i++) {
+      if (m_periodic[i]) {
+        image_box_folded[i] =
+            Algorithm::periodic_fold(pos[i], image_box[i], m_length[i]).second;
+      }
+    }
+
+    return image_box_folded;
+  }
+
+  /** @brief Calculate image box shift vector */
+  auto image_shift(Utils::Vector3i const &image_box) const {
+    return detail::image_shift(image_box, m_length);
+  }
+
+  /** @brief Unfold particle coordinates to image box. */
+  auto unfolded_position(Utils::Vector3d const &pos,
+                         Utils::Vector3i const &image_box) const {
+    return detail::unfolded_position(pos, image_box, m_length);
+  }
 };
-
-/** @brief Fold a coordinate to primary simulation box.
- *  @param pos        coordinate to fold
- *  @param image_box  image box offset
- *  @param length     box length
- */
-inline std::pair<double, int> fold_coordinate(double pos, int image_box,
-                                              double const &length) {
-  std::tie(pos, image_box) = Algorithm::periodic_fold(pos, image_box, length);
-
-  if ((image_box == std::numeric_limits<int>::min()) ||
-      (image_box == std::numeric_limits<int>::max())) {
-    throw std::runtime_error(
-        "Overflow in the image box count while folding a particle coordinate "
-        "into the primary simulation box. Maybe a particle experienced a "
-        "huge force.");
-  }
-
-  return {pos, image_box};
-}
-
-/** @brief Fold particle coordinates to primary simulation box.
- *  Lees-Edwards offset is ignored.
- *  @param[in,out] pos        coordinate to fold
- *  @param[in,out] image_box  image box offset
- *  @param[in] box            box parameters (side lengths, periodicity)
- */
-inline void fold_position(Utils::Vector3d &pos, Utils::Vector3i &image_box,
-                          const BoxGeometry &box) {
-  for (int i = 0; i < 3; i++) {
-    if (box.periodic(i)) {
-      std::tie(pos[i], image_box[i]) =
-          fold_coordinate(pos[i], image_box[i], box.length()[i]);
-    }
-  }
-}
-
-/** @brief Fold particle coordinates to primary simulation box.
- *  @param p    coordinate to fold
- *  @param box  box parameters (side lengths, periodicity)
- *  @return Folded coordinates.
- */
-inline Utils::Vector3d folded_position(const Utils::Vector3d &p,
-                                       const BoxGeometry &box) {
-  Utils::Vector3d p_folded;
-  for (int i = 0; i < 3; i++) {
-    if (box.periodic(i)) {
-      p_folded[i] = Algorithm::periodic_fold(p[i], box.length()[i]);
-    } else {
-      p_folded[i] = p[i];
-    }
-  }
-
-  return p_folded;
-}
-
-#endif

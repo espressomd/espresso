@@ -34,7 +34,7 @@ namespace Utils {
  *
  * @param axis The axis to rotate about
  * @param angle Angle to rotate
- * @param vector %Vector to act on
+ * @param vector Vector to act on
  * @return Rotated vector
  */
 inline Vector3d vec_rotate(const Vector3d &axis, double angle,

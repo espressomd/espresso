@@ -18,5 +18,7 @@
 #
 
 target_sources(
-  espresso_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/HomogeneousMagneticField.cpp
-                        ${CMAKE_CURRENT_SOURCE_DIR}/ShapeBasedConstraint.cpp)
+  espresso_core
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/HomogeneousMagneticField.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/Constraints.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ShapeBasedConstraint.cpp)

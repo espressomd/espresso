@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2022 The ESPResSo project
+ * Copyright (C) 2015-2024 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,19 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_COLLISIONDETECTION_INITIALIZE_HPP
-#define SCRIPT_INTERFACE_COLLISIONDETECTION_INITIALIZE_HPP
+#pragma once
 
 #include <script_interface/ObjectHandle.hpp>
 
 #include <utils/Factory.hpp>
 
-namespace ScriptInterface {
-namespace CollisionDetection {
-
+namespace ScriptInterface::CollisionDetection {
 void initialize(Utils::Factory<ObjectHandle> *om);
-
-} /* namespace CollisionDetection */
-} /* namespace ScriptInterface */
-
-#endif
+} // namespace ScriptInterface::CollisionDetection

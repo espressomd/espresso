@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_HYBRID_DECOMPOSITION_HPP
-#define ESPRESSO_SRC_CORE_CELL_SYSTEM_HYBRID_DECOMPOSITION_HPP
+#pragma once
 
 #include "cell_system/AtomDecomposition.hpp"
 #include "cell_system/ParticleDecomposition.hpp"
@@ -32,16 +31,16 @@
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "ghosts.hpp"
-#include "integrate.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
 
 #include <cstddef>
+#include <functional>
+#include <optional>
 #include <set>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -71,29 +70,27 @@ class HybridDecomposition : public ParticleDecomposition {
   /** Set containing the types that should be handled using n_square */
   std::set<int> const m_n_square_types;
 
-  bool is_n_square_type(int type_id) {
+  std::function<bool()> m_get_global_ghost_flags;
+
+  bool is_n_square_type(int type_id) const {
     return (m_n_square_types.find(type_id) != m_n_square_types.end());
   }
 
 public:
   HybridDecomposition(boost::mpi::communicator comm, double cutoff_regular,
-                      BoxGeometry const &box_geo,
-                      LocalBox<double> const &local_box,
+                      double skin, std::function<bool()> get_ghost_flags,
+                      BoxGeometry const &box_geo, LocalBox const &local_box,
                       std::set<int> n_square_types);
 
-  Utils::Vector3i get_cell_grid() const {
-    return m_regular_decomposition.cell_grid;
-  }
+  auto get_cell_grid() const { return m_regular_decomposition.cell_grid; }
 
-  Utils::Vector3d get_cell_size() const {
-    return m_regular_decomposition.cell_size;
-  }
+  auto get_cell_size() const { return m_regular_decomposition.cell_size; }
 
-  std::set<int> get_n_square_types() const { return m_n_square_types; }
+  auto get_n_square_types() const { return m_n_square_types; }
 
   void resort(bool global, std::vector<ParticleChange> &diff) override;
 
-  double get_cutoff_regular() const { return m_cutoff_regular; }
+  auto get_cutoff_regular() const { return m_cutoff_regular; }
 
   GhostCommunicator const &exchange_ghosts_comm() const override {
     return m_exchange_ghosts_comm;
@@ -103,15 +100,17 @@ public:
     return m_collect_ghost_force_comm;
   }
 
-  Utils::Span<Cell *> local_cells() override {
-    return Utils::make_span(m_local_cells);
-  }
-
-  Utils::Span<Cell *> ghost_cells() override {
-    return Utils::make_span(m_ghost_cells);
-  }
+  std::span<Cell *const> local_cells() const override { return m_local_cells; }
+  std::span<Cell *const> ghost_cells() const override { return m_ghost_cells; }
 
   Cell *particle_to_cell(Particle const &p) override {
+    if (is_n_square_type(p.type())) {
+      return m_n_square.particle_to_cell(p);
+    }
+    return m_regular_decomposition.particle_to_cell(p);
+  }
+
+  Cell const *particle_to_cell(Particle const &p) const override {
     if (is_n_square_type(p.type())) {
       return m_n_square.particle_to_cell(p);
     }
@@ -121,9 +120,10 @@ public:
   Utils::Vector3d max_cutoff() const override {
     return m_n_square.max_cutoff();
   }
+
   Utils::Vector3d max_range() const override { return m_n_square.max_range(); }
 
-  boost::optional<BoxGeometry> minimum_image_distance() const override {
+  std::optional<BoxGeometry> minimum_image_distance() const override {
     return m_box;
   }
 
@@ -142,5 +142,3 @@ public:
 private:
   std::size_t count_particles(std::vector<Cell *> const &local_cells) const;
 };
-
-#endif

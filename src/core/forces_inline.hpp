@@ -18,16 +18,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_FORCES_INLINE_HPP
-#define CORE_FORCES_INLINE_HPP
+
+#pragma once
+
 /** \file
  *  Force calculation.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "forces.hpp"
 
+#include "BoxGeometry.hpp"
 #include "actor/visitors.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
@@ -56,7 +58,7 @@
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
 #include "dpd.hpp"
 #endif
 
@@ -66,93 +68,100 @@
 #include "exclusions.hpp"
 #include "thermostat.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
-
+#include <optional>
+#include <span>
 #include <tuple>
+#include <variant>
 
-inline ParticleForce calc_non_bonded_pair_force(
-    Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
-    Utils::Vector3d const &d, double const dist,
-    Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel) {
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+ESPRESSO_ATTR_ALWAYS_INLINE
+#endif
+inline ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
+                                               Utils::Vector3d const &d,
+                                               double const dist) {
 
   ParticleForce pf{};
-  double force_factor = 0;
+  auto force_factor = 0.;
 /* Lennard-Jones */
-#ifdef LENNARD_JONES
+#ifdef ESPRESSO_LENNARD_JONES
   force_factor += lj_pair_force_factor(ia_params, dist);
 #endif
 /* WCA */
-#ifdef WCA
+#ifdef ESPRESSO_WCA
   force_factor += wca_pair_force_factor(ia_params, dist);
 #endif
 /* Lennard-Jones generic */
-#ifdef LENNARD_JONES_GENERIC
+#ifdef ESPRESSO_LENNARD_JONES_GENERIC
   force_factor += ljgen_pair_force_factor(ia_params, dist);
 #endif
 /* smooth step */
-#ifdef SMOOTH_STEP
+#ifdef ESPRESSO_SMOOTH_STEP
   force_factor += SmSt_pair_force_factor(ia_params, dist);
 #endif
 /* Hertzian force */
-#ifdef HERTZIAN
+#ifdef ESPRESSO_HERTZIAN
   force_factor += hertzian_pair_force_factor(ia_params, dist);
 #endif
 /* Gaussian force */
-#ifdef GAUSSIAN
+#ifdef ESPRESSO_GAUSSIAN
   force_factor += gaussian_pair_force_factor(ia_params, dist);
 #endif
 /* BMHTF NaCl */
-#ifdef BMHTF_NACL
+#ifdef ESPRESSO_BMHTF_NACL
   force_factor += BMHTF_pair_force_factor(ia_params, dist);
 #endif
 /* Buckingham*/
-#ifdef BUCKINGHAM
+#ifdef ESPRESSO_BUCKINGHAM
   force_factor += buck_pair_force_factor(ia_params, dist);
 #endif
 /* Morse*/
-#ifdef MORSE
+#ifdef ESPRESSO_MORSE
   force_factor += morse_pair_force_factor(ia_params, dist);
 #endif
 /*soft-sphere potential*/
-#ifdef SOFT_SPHERE
+#ifdef ESPRESSO_SOFT_SPHERE
   force_factor += soft_pair_force_factor(ia_params, dist);
 #endif
 /*hat potential*/
-#ifdef HAT
+#ifdef ESPRESSO_HAT
   force_factor += hat_pair_force_factor(ia_params, dist);
 #endif
 /* Lennard-Jones cosine */
-#ifdef LJCOS
+#ifdef ESPRESSO_LJCOS
   force_factor += ljcos_pair_force_factor(ia_params, dist);
 #endif
 /* Lennard-Jones cosine */
-#ifdef LJCOS2
+#ifdef ESPRESSO_LJCOS2
   force_factor += ljcos2_pair_force_factor(ia_params, dist);
 #endif
-/* Thole damping */
-#ifdef THOLE
-  pf.f += thole_pair_force(p1, p2, ia_params, d, dist, coulomb_kernel);
-#endif
 /* tabulated */
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
   force_factor += tabulated_pair_force_factor(ia_params, dist);
 #endif
+  pf.f += force_factor * d;
+  return pf;
+}
+
+inline ParticleForce calc_non_central_force(Particle const &p1,
+                                            Particle const &p2,
+                                            IA_parameters const &ia_params,
+                                            Utils::Vector3d const &d,
+                                            double const dist) {
+
+  ParticleForce pf{};
 /* Gay-Berne */
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
   pf += gb_pair_force(p1.quat(), p2.quat(), ia_params, d, dist);
 #endif
-  pf.f += force_factor * d;
   return pf;
 }
 
 inline ParticleForce calc_opposing_force(ParticleForce const &pf,
                                          Utils::Vector3d const &d) {
   ParticleForce out{-pf.f};
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   // if torque is a null vector, the opposing torque is a null vector too
   // (this check guards from returning a small yet non-null opposing
   // torque due to numerical imprecision)
@@ -163,72 +172,81 @@ inline ParticleForce calc_opposing_force(ParticleForce const &pf,
   return out;
 }
 
-/** Calculate non-bonded forces between a pair of particles and update their
- *  forces and torques.
- *  @param[in,out] p1      particle 1.
- *  @param[in,out] p2      particle 2.
- *  @param[in] d           vector between @p p1 and @p p2.
- *  @param[in] dist        distance between @p p1 and @p p2.
- *  @param[in] dist2       distance squared between @p p1 and @p p2.
- *  @param[in] coulomb_kernel  %Coulomb force kernel.
- *  @param[in] dipoles_kernel  Dipolar force kernel.
- *  @param[in] elc_kernel      ELC force correction kernel.
+/**
+ * @brief For interactions which need particle information.
  */
-inline void add_non_bonded_pair_force(
-    Particle &p1, Particle &p2, Utils::Vector3d const &d, double dist,
-    double dist2,
+inline void add_non_bonded_pair_force_with_p(
+    Particle &p1, Particle &p2, ParticleForce &pf, ParticleForce &p1f_asym,
+    ParticleForce &p2f_asym, Utils::Vector3d const &d, double dist,
+    double dist2, double q1q2, IA_parameters const &ia_params,
+    [[maybe_unused]] bool do_nonbonded_flag,
+    Thermostat::Thermostat const &thermostat, BoxGeometry const &box_geo,
+    [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
+    [[maybe_unused]] Utils::Vector3d *const virial,
     Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel,
     Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel,
-    Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel) {
-  auto const &ia_params = get_ia_param(p1.type(), p2.type());
-  ParticleForce pf{};
+    Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel,
+    Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_u_kernel) {
 
   /***********************************************/
   /* non-bonded pair potentials                  */
   /***********************************************/
 
   if (dist < ia_params.max_cut) {
-#ifdef EXCLUSIONS
-    if (do_nonbonded(p1, p2))
+#ifdef ESPRESSO_EXCLUSIONS
+    if (do_nonbonded_flag) {
 #endif
-      pf += calc_non_bonded_pair_force(p1, p2, ia_params, d, dist,
-                                       coulomb_kernel);
+#ifdef ESPRESSO_THOLE
+      pf.f += thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias,
+                               coulomb_kernel);
+#endif
+      pf += calc_non_central_force(p1, p2, ia_params, d, dist);
+#ifdef ESPRESSO_EXCLUSIONS
+    }
+#endif
   }
+
+  /*********************************************************************/
+  /* everything before this contributes to the virial pressure in NpT, */
+  /* but nothing afterwards, since the contribution to pressure from   */
+  /* electrostatic is calculated by energy                             */
+  /*********************************************************************/
+#ifdef ESPRESSO_NPT
+  if (virial) {
+    *virial += hadamard_product(pf.f, d);
+  }
+#endif // ESPRESSO_NPT
 
   /***********************************************/
   /* short-range electrostatics                  */
   /***********************************************/
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   // real-space electrostatic charge-charge interaction
-  auto const q1q2 = p1.q() * p2.q();
   if (q1q2 != 0. and coulomb_kernel != nullptr) {
     pf.f += (*coulomb_kernel)(q1q2, d, dist);
-#ifdef P3M
-    if (elc_kernel)
-      (*elc_kernel)(p1, p2, q1q2);
-#endif // P3M
+#ifdef ESPRESSO_NPT
+    if (virial) {
+      (*virial)[0] += (*coulomb_u_kernel)(p1.pos(), p2.pos(), q1q2, d, dist);
+    }
+#endif // ESPRESSO_NPT
+    if (elc_kernel) {
+      (*elc_kernel)(p1.pos(), p2.pos(), p1f_asym, p2f_asym, q1q2);
+    }
   }
-#endif // ELECTROSTATICS
-
-  /*********************************************************************/
-  /* everything before this contributes to the virial pressure in NpT, */
-  /* but nothing afterwards                                            */
-  /*********************************************************************/
-#ifdef NPT
-  npt_add_virial_force_contribution(pf.f, d);
-#endif
+#endif // ESPRESSO_ELECTROSTATICS
 
   /***********************************************/
   /* thermostat                                  */
   /***********************************************/
 
   /* The inter dpd force should not be part of the virial */
-#ifdef DPD
-  if (thermo_switch & THERMO_DPD) {
-    auto const force = dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
-    p1.force() += force;
-    p2.force() -= force;
+#ifdef ESPRESSO_DPD
+  if (thermostat.thermo_switch & THERMO_DPD) {
+    auto const force =
+        dpd_pair_force(p1.pos(), p1.v(), p1.id(), p2.pos(), p2.v(), p2.id(),
+                       *thermostat.dpd, box_geo, ia_params, d, dist, dist2);
+    pf += force;
   }
 #endif
 
@@ -236,75 +254,135 @@ inline void add_non_bonded_pair_force(
   /* short-range magnetostatics                  */
   /***********************************************/
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   // real-space magnetic dipole-dipole
   if (dipoles_kernel) {
-    pf += (*dipoles_kernel)(p1, p2, d, dist, dist2);
+    auto const d1d2 = p1.dipm() * p2.dipm();
+    if (d1d2 != 0.) {
+      pf +=
+          (*dipoles_kernel)(d1d2, p1.calc_dip(), p2.calc_dip(), d, dist, dist2);
+    }
   }
 #endif
+}
+
+/** Calculate non-bonded forces between a pair of particles and update their
+ *  forces and torques.
+ *  @param[in,out] p1      particle 1.
+ *  @param[in,out] p2      particle 2.
+ *  @param[in] d           vector between @p p1 and @p p2.
+ *  @param[in] dist        distance between @p p1 and @p p2.
+ *  @param[in] dist2       distance squared between @p p1 and @p p2.
+ *  @param[in] q1q2        charge x charge between @p p1 and @p p2.
+ *  @param[in] ia_params       non-bonded interaction kernels.
+ *  @param[in] thermostat      thermostat.
+ *  @param[in] box_geo         box geometry.
+ *  @param[in] bonded_ias      bonded interaction kernels.
+ *  @param[out] virial         NpT virial.
+ *  @param[in] coulomb_kernel  Coulomb force kernel.
+ *  @param[in] dipoles_kernel  Dipolar force kernel.
+ *  @param[in] elc_kernel      ELC force correction kernel.
+ *  @param[in] coulomb_u_kernel Coulomb energy kernel.
+ */
+inline void add_non_bonded_pair_force(
+    Particle &p1, Particle &p2, Utils::Vector3d const &d, double dist,
+    double dist2, double q1q2, IA_parameters const &ia_params,
+    Thermostat::Thermostat const &thermostat, BoxGeometry const &box_geo,
+    [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
+    [[maybe_unused]] Utils::Vector3d *const virial,
+    Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel,
+    Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel,
+    Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel,
+    Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_u_kernel) {
+
+  ParticleForce pf{};
+  ParticleForce p1f_asym{};
+  ParticleForce p2f_asym{};
+
+#ifdef ESPRESSO_EXCLUSIONS
+  auto const do_nonbonded_flag = do_nonbonded(p1, p2);
+#else
+  auto constexpr do_nonbonded_flag = true;
+#endif
+
+  if (dist < ia_params.max_cut) {
+#ifdef ESPRESSO_EXCLUSIONS
+    if (do_nonbonded_flag) {
+#endif
+      pf += calc_central_radial_force(ia_params, d, dist);
+#ifdef ESPRESSO_EXCLUSIONS
+    }
+#endif
+  }
+
+  add_non_bonded_pair_force_with_p(
+      p1, p2, pf, p1f_asym, p2f_asym, d, dist, dist2, q1q2, ia_params,
+      do_nonbonded_flag, thermostat, box_geo, bonded_ias, virial,
+      coulomb_kernel, dipoles_kernel, elc_kernel, coulomb_u_kernel);
 
   /***********************************************/
   /* add total non-bonded forces to particles    */
   /***********************************************/
 
-  p1.f += pf;
-  p2.f += calc_opposing_force(pf, d);
+  p1.force_and_torque() += pf + p1f_asym;
+  p2.force_and_torque() += calc_opposing_force(pf, d) + p2f_asym;
 }
 
 /** Compute the bonded interaction force between particle pairs.
  *
+ *  @param[in] iaparams    Bonded parameters for the interaction.
  *  @param[in] p1          First particle.
  *  @param[in] p2          Second particle.
- *  @param[in] iaparams    Bonded parameters for the interaction.
  *  @param[in] dx          Vector between @p p1 and @p p2.
- *  @param[in] kernel      %Coulomb force kernel.
+ *  @param[in] kernel      Coulomb force kernel.
  */
-inline boost::optional<Utils::Vector3d> calc_bond_pair_force(
-    Particle const &p1, Particle const &p2,
-    Bonded_IA_Parameters const &iaparams, Utils::Vector3d const &dx,
+inline std::optional<Utils::Vector3d> calc_bond_pair_force(
+    Bonded_IA_Parameters const &iaparams, Particle const &p1,
+    Particle const &p2, Utils::Vector3d const &dx,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
-  if (auto const *iap = boost::get<FeneBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
     return iap->force(dx);
   }
-  if (auto const *iap = boost::get<HarmonicBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<HarmonicBond>(&iaparams)) {
     return iap->force(dx);
   }
-  if (auto const *iap = boost::get<QuarticBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
     return iap->force(dx);
   }
-#ifdef ELECTROSTATICS
-  if (auto const *iap = boost::get<BondedCoulomb>(&iaparams)) {
+#ifdef ESPRESSO_ELECTROSTATICS
+  if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
     return iap->force(p1.q() * p2.q(), dx);
   }
-  if (auto const *iap = boost::get<BondedCoulombSR>(&iaparams)) {
+  if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
     return iap->force(dx, *kernel);
   }
 #endif
-#ifdef BOND_CONSTRAINT
-  if (boost::get<RigidBond>(&iaparams)) {
+#ifdef ESPRESSO_BOND_CONSTRAINT
+  if (std::get_if<RigidBond>(&iaparams)) {
     return Utils::Vector3d{};
   }
 #endif
-#ifdef TABULATED
-  if (auto const *iap = boost::get<TabulatedDistanceBond>(&iaparams)) {
+#ifdef ESPRESSO_TABULATED
+  if (auto const *iap = std::get_if<TabulatedDistanceBond>(&iaparams)) {
     return iap->force(dx);
   }
 #endif
-  if (boost::get<VirtualBond>(&iaparams)) {
+  if (std::get_if<VirtualBond>(&iaparams)) {
     return Utils::Vector3d{};
   }
   throw BondUnknownTypeError();
 }
 
 inline bool add_bonded_two_body_force(
-    Bonded_IA_Parameters const &iaparams, Particle &p1, Particle &p2,
+    Bonded_IA_Parameters const &iaparams, BoxGeometry const &box_geo,
+    Particle &p1, Particle &p2, [[maybe_unused]] Utils::Vector3d *const virial,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
 
-  if (auto const *iap = boost::get<ThermalizedBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
     auto result = iap->forces(p1, p2, dx);
     if (result) {
-      auto const &forces = result.get();
+      auto const &forces = result.value();
 
       p1.force() += std::get<0>(forces);
       p2.force() += std::get<1>(forces);
@@ -312,13 +390,15 @@ inline bool add_bonded_two_body_force(
       return false;
     }
   } else {
-    auto result = calc_bond_pair_force(p1, p2, iaparams, dx, kernel);
+    auto result = calc_bond_pair_force(iaparams, p1, p2, dx, kernel);
     if (result) {
-      p1.force() += result.get();
-      p2.force() -= result.get();
+      p1.force() += result.value();
+      p2.force() -= result.value();
 
-#ifdef NPT
-      npt_add_virial_force_contribution(result.get(), dx);
+#ifdef ESPRESSO_NPT
+      if (virial) {
+        *virial += hadamard_product(result.value(), dx);
+      }
 #endif
       return false;
     }
@@ -326,40 +406,44 @@ inline bool add_bonded_two_body_force(
   return true;
 }
 
-inline boost::optional<
+inline std::optional<
     std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
-                             Particle const &p1, Particle const &p2,
-                             Particle const &p3) {
-  if (auto const *iap = boost::get<AngleHarmonicBond>(&iaparams)) {
-    return iap->forces(p1.pos(), p2.pos(), p3.pos());
+                             BoxGeometry const &box_geo, Particle const &p1,
+                             Particle const &p2, Particle const &p3) {
+  auto const vec1 = box_geo.get_mi_vector(p2.pos(), p1.pos());
+  auto const vec2 = box_geo.get_mi_vector(p3.pos(), p1.pos());
+  if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
+    return iap->forces(vec1, vec2);
   }
-  if (auto const *iap = boost::get<AngleCosineBond>(&iaparams)) {
-    return iap->forces(p1.pos(), p2.pos(), p3.pos());
+  if (auto const *iap = std::get_if<AngleCosineBond>(&iaparams)) {
+    return iap->forces(vec1, vec2);
   }
-  if (auto const *iap = boost::get<AngleCossquareBond>(&iaparams)) {
-    return iap->forces(p1.pos(), p2.pos(), p3.pos());
+  if (auto const *iap = std::get_if<AngleCossquareBond>(&iaparams)) {
+    return iap->forces(vec1, vec2);
   }
-#ifdef TABULATED
-  if (auto const *iap = boost::get<TabulatedAngleBond>(&iaparams)) {
-    return iap->forces(p1.pos(), p2.pos(), p3.pos());
+#ifdef ESPRESSO_TABULATED
+  if (auto const *iap = std::get_if<TabulatedAngleBond>(&iaparams)) {
+    return iap->forces(vec1, vec2);
   }
 #endif
-  if (auto const *iap = boost::get<IBMTriel>(&iaparams)) {
-    return iap->calc_forces(p1, p2, p3);
+  if (auto const *iap = std::get_if<IBMTriel>(&iaparams)) {
+    return iap->calc_forces(vec1, vec2);
   }
   throw BondUnknownTypeError();
 }
 
 inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
+                                        BoxGeometry const &box_geo,
                                         Particle &p1, Particle &p2,
                                         Particle &p3) {
-  if (boost::get<OifGlobalForcesBond>(&iaparams)) {
+  if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
     return false;
   }
-  auto const result = calc_bonded_three_body_force(iaparams, p1, p2, p3);
+  auto const result =
+      calc_bonded_three_body_force(iaparams, box_geo, p1, p2, p3);
   if (result) {
-    auto const &forces = result.get();
+    auto const &forces = result.value();
 
     p1.force() += std::get<0>(forces);
     p2.force() += std::get<1>(forces);
@@ -370,34 +454,41 @@ inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
   return true;
 }
 
-inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
-                                  Utils::Vector3d, Utils::Vector3d>>
+inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
+                                Utils::Vector3d, Utils::Vector3d>>
 calc_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
-                            Particle const &p1, Particle const &p2,
-                            Particle const &p3, Particle const &p4) {
-  if (auto const *iap = boost::get<OifLocalForcesBond>(&iaparams)) {
-    return iap->calc_forces(p1, p2, p3, p4);
+                            BoxGeometry const &box_geo, Particle const &p1,
+                            Particle const &p2, Particle const &p3,
+                            Particle const &p4) {
+  if (auto const *iap = std::get_if<OifLocalForcesBond>(&iaparams)) {
+    return iap->calc_forces(box_geo, p1, p2, p3, p4);
   }
-  if (auto const *iap = boost::get<IBMTribend>(&iaparams)) {
-    return iap->calc_forces(p1, p2, p3, p4);
+  if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
+    return iap->calc_forces(box_geo, p1, p2, p3, p4);
   }
-  if (auto const *iap = boost::get<DihedralBond>(&iaparams)) {
-    return iap->forces(p2.pos(), p1.pos(), p3.pos(), p4.pos());
+  // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
+  auto const v12 = box_geo.get_mi_vector(p1.pos(), p2.pos());
+  auto const v23 = box_geo.get_mi_vector(p3.pos(), p1.pos());
+  auto const v34 = box_geo.get_mi_vector(p4.pos(), p3.pos());
+  if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
+    return iap->forces(v12, v23, v34);
   }
-#ifdef TABULATED
-  if (auto const *iap = boost::get<TabulatedDihedralBond>(&iaparams)) {
-    return iap->forces(p2.pos(), p1.pos(), p3.pos(), p4.pos());
+#ifdef ESPRESSO_TABULATED
+  if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
+    return iap->forces(v12, v23, v34);
   }
 #endif
   throw BondUnknownTypeError();
 }
 
 inline bool add_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
-                                       Particle &p1, Particle &p2, Particle &p3,
+                                       BoxGeometry const &box_geo, Particle &p1,
+                                       Particle &p2, Particle &p3,
                                        Particle &p4) {
-  auto const result = calc_bonded_four_body_force(iaparams, p1, p2, p3, p4);
+  auto const result =
+      calc_bonded_four_body_force(iaparams, box_geo, p1, p2, p3, p4);
   if (result) {
-    auto const &forces = result.get();
+    auto const &forces = result.value();
 
     p1.force() += std::get<0>(forces);
     p2.force() += std::get<1>(forces);
@@ -411,15 +502,28 @@ inline bool add_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
 }
 
 inline bool
-add_bonded_force(Particle &p1, int bond_id, Utils::Span<Particle *> partners,
+add_bonded_force(Particle &p1, int bond_id, std::span<Particle *> partners,
+                 BondedInteractionsMap const &bonded_ia_params,
+                 BondBreakage::BondBreakage &bond_breakage,
+                 BoxGeometry const &box_geo,
+                 [[maybe_unused]] Utils::Vector3d *const virial,
                  Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
 
   // Consider for bond breakage
-  if (partners.size() == 1) {
+  if (partners.size() == 1u) { // pair bonds
     auto d = box_geo.get_mi_vector(p1.pos(), partners[0]->pos()).norm();
-    if (BondBreakage::check_and_handle_breakage(p1.id(), partners[0]->id(),
-                                                bond_id, d))
+    if (bond_breakage.check_and_handle_breakage(
+            p1.id(), {{partners[0]->id(), std::nullopt}}, bond_id, d)) {
       return false;
+    }
+  }
+  if (partners.size() == 2u) { // angle bond
+    auto d =
+        box_geo.get_mi_vector(partners[0]->pos(), partners[1]->pos()).norm();
+    if (bond_breakage.check_and_handle_breakage(
+            p1.id(), {{partners[0]->id(), partners[1]->id()}}, bond_id, d)) {
+      return false;
+    }
   }
 
   auto const &iaparams = *bonded_ia_params.at(bond_id);
@@ -428,16 +532,15 @@ add_bonded_force(Particle &p1, int bond_id, Utils::Span<Particle *> partners,
   case 0:
     return false;
   case 1:
-    return add_bonded_two_body_force(iaparams, p1, *partners[0], kernel);
+    return add_bonded_two_body_force(iaparams, box_geo, p1, *partners[0],
+                                     virial, kernel);
   case 2:
-    return add_bonded_three_body_force(iaparams, p1, *partners[0],
+    return add_bonded_three_body_force(iaparams, box_geo, p1, *partners[0],
                                        *partners[1]);
   case 3:
-    return add_bonded_four_body_force(iaparams, p1, *partners[0], *partners[1],
-                                      *partners[2]);
+    return add_bonded_four_body_force(iaparams, box_geo, p1, *partners[0],
+                                      *partners[1], *partners[2]);
   default:
     throw BondInvalidSizeError{number_of_partners(iaparams)};
   }
 }
-
-#endif // CORE_FORCES_INLINE_HPP

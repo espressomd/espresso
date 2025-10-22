@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#if defined(SCAFACOS) or defined(SCAFACOS_DIPOLES)
+#if defined(ESPRESSO_SCAFACOS) or defined(ESPRESSO_SCAFACOS_DIPOLES)
 
 #include "script_interface/Variant.hpp"
 #include "script_interface/get_value.hpp"
@@ -30,17 +30,16 @@
 
 #include <utils/demangle.hpp>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/optional.hpp>
-
 #include <algorithm>
 #include <functional>
 #include <iomanip>
 #include <iterator>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace ScriptInterface {
@@ -50,63 +49,49 @@ std::vector<std::string> available_methods() {
   return ScafacosContextBase::available_methods();
 }
 
-struct ConvertToStringVector
-    : public boost::static_visitor<std::vector<std::string>> {
-  auto operator()(std::string const &value) const {
-    return std::vector<std::string>{value};
-  }
+struct ConvertToStringVector {
+  using result_type = std::vector<std::string>;
 
-  template <typename T, typename = std::enable_if_t<!std::is_arithmetic_v<T>>>
-  std::vector<std::string> operator()(T const &value) const {
+  auto operator()(std::string const &value) const { return result_type{value}; }
+
+  template <typename T> result_type operator()(T const &value) const {
+    if constexpr (std::is_arithmetic_v<T>) {
+      return operator()(to_str(value));
+    }
     throw std::runtime_error("Cannot convert " + Utils::demangle<T>());
   }
 
-  template <typename T, typename = std::enable_if_t<std::is_same_v<T, int>>>
-  auto operator()(T const &value) const {
-    return operator()(to_str(value));
-  }
+  auto operator()(result_type const &values) const { return values; }
 
-  auto operator()(double const &value) const {
-    return operator()(to_str(value));
-  }
-
-  auto operator()(std::vector<std::string> const &values) const {
-    return values;
-  }
-
-  auto operator()(std::vector<Variant> const &values) const {
-    std::vector<std::string> values_str;
+  template <typename T> auto operator()(std::vector<T> const &values) const {
+    result_type values_str;
     for (auto const &v : values) {
-      values_str.emplace_back(boost::apply_visitor(*this, v).front());
-    }
-    return values_str;
-  }
-
-  template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
-  auto operator()(std::vector<T> const &values) const {
-    std::vector<std::string> values_str;
-    for (auto const &v : values) {
-      values_str.emplace_back(to_str(v));
+      if constexpr (std::is_same_v<T, Variant>) {
+        values_str.emplace_back(std::visit(*this, v).front());
+      } else {
+        values_str.emplace_back(to_str(v));
+      }
     }
     return values_str;
   }
 
 private:
-  std::string to_str(int const value) const { return std::to_string(value); }
-
-  std::string to_str(double const value) const {
+  template <typename T>
+    requires std::is_arithmetic_v<T>
+  std::string to_str(T const &value) const {
     std::ostringstream serializer;
-    serializer << std::scientific << std::setprecision(17);
+    if constexpr (std::is_floating_point_v<T>) {
+      serializer << std::scientific << std::setprecision(17);
+    }
     serializer << value;
     return serializer.str();
   }
 };
 
-struct GetParameterList
-    : public boost::static_visitor<std::unordered_map<std::string, Variant>> {
-  auto operator()(std::unordered_map<std::string, Variant> const &obj) const {
-    return obj;
-  }
+struct GetParameterList {
+  using result_type = std::unordered_map<std::string, Variant>;
+
+  auto operator()(result_type const &obj) const { return obj; }
 
   template <typename T>
   auto operator()(std::unordered_map<T, Variant> const &obj) const {
@@ -125,16 +110,16 @@ private:
 };
 
 std::string serialize_parameters(Variant const &pack) {
-  auto const parameters = boost::apply_visitor(GetParameterList(), pack);
+  auto const parameters = std::visit(GetParameterList(), pack);
   if (parameters.empty()) {
     throw std::invalid_argument(
         "ScaFaCoS methods require at least 1 parameter");
   }
   auto const visitor = ConvertToStringVector();
   std::string method_params = "";
-  for (auto const &kv : parameters) {
-    method_params += "," + kv.first;
-    for (auto const &value : boost::apply_visitor(visitor, kv.second)) {
+  for (auto const &[name, values] : parameters) {
+    method_params += "," + name;
+    for (auto const &value : std::visit(visitor, values)) {
       method_params += "," + value;
     }
   }
@@ -142,7 +127,7 @@ std::string serialize_parameters(Variant const &pack) {
 }
 
 template <typename T>
-boost::optional<Variant> string_to_number(std::string const &s) {
+std::optional<Variant> string_to_number(std::string const &s) {
   auto deserializer = std::istringstream(s);
   T result;
   deserializer >> result;
@@ -165,9 +150,11 @@ deserialize_parameters(std::string const &parameters) {
   auto const numbers = std::string("-0123456789");
   std::unordered_map<std::string, Variant> method_params{};
   std::vector<std::string> flat_array;
-  // Clang 10 false positive: https://github.com/boostorg/algorithm/issues/63
-  // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
-  boost::split(flat_array, parameters, boost::is_any_of(","));
+  std::istringstream buffer;
+  buffer.str(parameters);
+  for (std::string line; std::getline(buffer, line, ',');) {
+    flat_array.emplace_back(line);
+  }
   for (auto it = flat_array.begin(); it != flat_array.end();) {
     auto const parameter_name = *it;
     auto parameter_list = std::vector<Variant>{};
@@ -197,4 +184,4 @@ deserialize_parameters(std::string const &parameters) {
 } // namespace Scafacos
 } // namespace ScriptInterface
 
-#endif // SCAFACOS or SCAFACOS_DIPOLES
+#endif // ESPRESSO_SCAFACOS or ESPRESSO_SCAFACOS_DIPOLES

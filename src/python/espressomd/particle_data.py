@@ -19,14 +19,14 @@
 
 import numpy as np
 import collections
+import itertools
 import functools
 from .interactions import BondedInteraction
-from .interactions import BondedInteractions
-from .utils import nesting_level, array_locked, is_valid_type, handle_errors
+from .utils import nesting_level, array_locked, is_valid_type
 from .utils import check_type_or_throw_except
 from .code_features import assert_features, has_features
 from .script_interface import script_interface_register, ScriptInterfaceHelper
-import itertools
+from .propagation import Propagation
 
 
 @script_interface_register
@@ -178,7 +178,7 @@ class ParticleHandle(ScriptInterfaceHelper):
     rinertia: (3,) array_like of :obj:`float`
         The particle rotational inertia.
 
-        Sets the diagonal elements of this particles rotational inertia
+        Sets the diagonal elements of this particle's rotational inertia
         tensor. These correspond with the inertial moments along the
         coordinate axes in the particle's co-rotating coordinate system.
         When the particle's quaternions are set to ``[1, 0, 0, 0,]``, the
@@ -245,6 +245,12 @@ class ParticleHandle(ScriptInterfaceHelper):
         .. note::
            This needs the feature ``DIPOLES``.
 
+    dip_fld: (3,) array_like of :obj:`float`
+        Total dipole field value at the position of the particle.
+
+        .. note::
+           This needs the feature ``DIPOLE_FIELD_TRACKING``.
+
     ext_force: (3,) array_like of :obj:`float`
         An additional external force applied to the particle.
 
@@ -272,8 +278,8 @@ class ParticleHandle(ScriptInterfaceHelper):
             * This needs features ``EXTERNAL_FORCES`` and ``ROTATION``.
 
     gamma: :obj:`float` or (3,) array_like of :obj:`float`
-        The translational frictional coefficient used in the Langevin
-        and Brownian thermostats.
+        The translational frictional coefficient used in the Langevin,
+        Brownian and LB thermostats.
 
         .. note::
             This needs feature ``THERMOSTAT_PER_PARTICLE`` and
@@ -311,56 +317,46 @@ class ParticleHandle(ScriptInterfaceHelper):
 
         This property takes a dictionary with a different number of entries
         depending whether there is an implicit fluid (i.e. with the Langevin
-        thermostat) of an explicit fluid (with LB).
+        thermostat) of an explicit fluid (with lattice-Boltzmann).
 
-        Swimming enables the particle to be self-propelled in the direction
+        Swimming enables particle self-propulsion in the direction
         determined by its quaternion. For setting the quaternion of the
-        particle see :attr:`~espressomd.particle_data.ParticleHandle.quat`. The
-        self-propulsion speed will relax to a constant velocity, that is specified by
-        ``v_swim``. Alternatively it is possible to achieve a constant velocity by
-        imposing a constant force term ``f_swim`` that is balanced by friction of a
-        (Langevin) thermostat. The way the velocity of the particle decays to the
-        constant terminal velocity in either of these methods is completely
-        determined by the friction coefficient. You may only set one of the
-        possibilities ``v_swim`` *or* ``f_swim`` as you cannot relax to constant force
-        *and* constant velocity at the same time. Setting both ``v_swim`` and
-        ``f_swim`` to 0.0 disables swimming. This option applies to all
-        non-lattice-Boltzmann thermostats. Note that there is no real difference
-        between ``v_swim`` and ``f_swim`` since the latter may always be chosen such that
-        the same terminal velocity is achieved for a given friction coefficient.
+        particle see :attr:`~espressomd.particle_data.ParticleHandle.quat`.
+        Self-propulsion is achieved by imposing a constant force term
+        ``f_swim`` along the particle direction. The steady-state propulsion
+        speed (``v_swim``) can be calculated from the friction (``gamma``)
+        of a thermostat: ``v_swim = f_swim / gamma``.
+        When resolving hydrodynamics via lattice-Boltzmann, the swimming
+        attribute can be used to create the typical dipolar flowfield of
+        self-propelled particles: setting ``is_engine_force_on_fluid``
+        to ``True`` will make the particle not experience any friction
+        or noise, but instead apply the swim force ``f_swim`` to the fluid.
+        Use :func:`espressomd.swimmer_helpers.add_dipole_particle`
+        to automate such a setup.
 
         Parameters
         ----------
         f_swim : :obj:`float`
-            Achieve a constant velocity by imposing a constant
-            force term ``f_swim`` that is balanced by friction of a
-            (Langevin) thermostat. This excludes the option ``v_swim``.
-        v_swim : :obj:`float`
-            Achieve a constant velocity by imposing a constant terminal
-            velocity ``v_swim``. This excludes the option ``f_swim``.
-        mode : :obj:`str`, {'pusher', 'puller', 'N/A'}
-            The LB flow field can be generated by a pushing or a
-            pulling mechanism, leading to change in the sign of the
-            dipolar flow field with respect to the direction of motion.
-        dipole_length : :obj:`float`
-            This determines the distance of the source of
-            propulsion from the particle's center.
+            Magnitude of the self-propulsion force.
+        is_engine_force_on_fluid : :obj:`bool`
+            Default: ``False``.
+            If ``True``, the particle will apply the swimming force to the fluid
+            instead of experiencing drag.
 
         Notes
         -----
-        This needs the feature ``ENGINE``.  The keys ``'mode'``,
-        and ``'dipole_length'`` are only available if ``ENGINE``
-        is used with LB or ``CUDA``.
+        This needs feature ``ENGINE``, and optionally ``VIRTUAL_SITES_RELATIVE``
+        to add the propulsion force on a lattice-Boltzmann fluid.
 
         Examples
         --------
         >>> import espressomd
+        >>> # swimming withut hydrodynamics
         >>> system = espressomd.System(box_l=[10, 10, 10])
-        >>> # Langevin swimmer
-        >>> system.part.add(pos=[1, 0, 0], swimming={'f_swim': 0.03})
-        >>> # LB swimmer
-        >>> system.part.add(pos=[2, 0, 0], swimming={'f_swim': 0.01,
-        ...     'mode': 'pusher', 'dipole_length': 2.0})
+        >>> partcl = system.part.add(pos=[1, 0, 0], swimming={'f_swim': 0.03})
+        >>> # swimming with hydrodynamics
+        >>> import espressomd.swimmer_helpers.add_dipole_particle as add_dip
+        >>> dipole_partcl = add_dip(system, partcl, 2., 0)
 
     Methods
     -------
@@ -372,13 +368,28 @@ class ParticleHandle(ScriptInterfaceHelper):
         delete_bond : Delete an unverified bond held by the particle.
         bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
+    is_virtual()
+        Whether the particle is a virtual site.
+
     """
 
     _so_name = "Particles::ParticleHandle"
-    _so_creation_policy = "LOCAL"
+    _so_checkpointable = False
+    _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
-        "delete_all_bonds",
+        "delete_all_bonds", "is_virtual",
     )
+
+    # here we must redefine the script interface setters
+
+    def set_params(self, **kwargs):
+        for name, value in kwargs.items():
+            self.set_parameter(name, value)
+
+    def set_parameter(self, name, value):
+        if name == "propagation":
+            value = int(value)
+        return self.call_method("set_param_parallel", name=name, value=value)
 
     def remove(self):
         """
@@ -414,6 +425,7 @@ class ParticleHandle(ScriptInterfaceHelper):
                 del pdict[k]
         if has_features("EXCLUSIONS"):
             pdict["exclusions"] = self.exclusions
+        pdict["propagation"] = self.propagation
         pdict["bonds"] = self.bonds
         return pdict
 
@@ -516,10 +528,10 @@ class ParticleHandle(ScriptInterfaceHelper):
 
         """
         bonds = []
-        for bond_view in self.call_method("get_bonds_view"):
-            bond_id = bond_view[0]
-            partner_ids = bond_view[1:]
-            bonds.append((BondedInteractions()[bond_id], *partner_ids))
+        for bond_id, *partner_ids in self.call_method("get_bonds_view"):
+            bond = self.call_method("get_bond_by_id", bond_id=bond_id)
+            bond._bond_id = bond_id
+            bonds.append((bond, *partner_ids))
 
         return tuple(bonds)
 
@@ -560,7 +572,16 @@ class ParticleHandle(ScriptInterfaceHelper):
         assert_features("EXCLUSIONS")
         self.call_method("set_exclusions", p_ids=p_ids)
 
-    def vs_auto_relate_to(self, rel_to):
+    @property
+    def propagation(self):
+        return Propagation(self.get_parameter("propagation"))
+
+    @propagation.setter
+    def propagation(self, value):
+        self.set_parameter("propagation", int(value))
+
+    def vs_auto_relate_to(self, rel_to, override_cutoff_check=False,
+                          couple_to_lb=False, couple_to_langevin=False):
         """
         Setup this particle as virtual site relative to the particle
         in argument ``rel_to``. A particle cannot relate to itself.
@@ -569,6 +590,16 @@ class ParticleHandle(ScriptInterfaceHelper):
         -----------
         rel_to : :obj:`int` or :obj:`ParticleHandle`
             Particle to relate to (either particle id or particle object).
+        override_cutoff_check : :obj:`bool`
+            If True, does not check whether the cell system cutoffs
+            are consistent with the distance between virtual and
+            non-virtual particles.
+        couple_to_lb : :obj:`bool`
+            If True, the virtual site is coupled to LB friction and noise.
+        couple_to_langevin : :obj:`bool`
+            If True, the virtual site is coupled to Langevin friction
+            and noise. If ``couple_to_lb`` is also True, propagate LB's
+            equations of motion and Langevin's equations of rotation.
 
         """
         if isinstance(rel_to, ParticleHandle):
@@ -576,8 +607,24 @@ class ParticleHandle(ScriptInterfaceHelper):
         else:
             check_type_or_throw_except(
                 rel_to, 1, int, "Argument of 'vs_auto_relate_to' has to be of type ParticleHandle or int")
-        self.call_method("vs_relate_to", pid=rel_to)
-        handle_errors("vs_auto_relate_to")
+        self.call_method("vs_auto_relate_to", pid=rel_to,
+                         override_cutoff_check=override_cutoff_check)
+        if self.propagation != Propagation.NONE:
+            if couple_to_lb:
+                self.propagation |= Propagation.TRANS_LB_MOMENTUM_EXCHANGE
+            if couple_to_langevin:
+                if not couple_to_lb:
+                    self.propagation |= Propagation.ROT_LANGEVIN | Propagation.TRANS_LANGEVIN
+                else:
+                    self.propagation |= Propagation.ROT_LANGEVIN
+
+    def _bond_sanity_checks(self, bond):
+        if self.id in bond[1:]:
+            raise Exception(
+                f"Bond partners {bond[1:]} include the particle {self.id} itself")
+        if len(set(bond[1:])) is not len(bond[1:]):
+            raise Exception(
+                f"Cannot add duplicate bond partners {bond[1:]} to particle {self.id}")
 
     def add_verified_bond(self, bond):
         """
@@ -589,9 +636,7 @@ class ParticleHandle(ScriptInterfaceHelper):
         bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         """
-        if self.id in bond[1:]:
-            raise Exception(
-                f"Bond partners {bond[1:]} include the particle {self.id} itself")
+        self._bond_sanity_checks(bond)
         self.call_method("add_bond",
                          bond_id=bond[0]._bond_id,
                          part_id=bond[1:])
@@ -641,7 +686,9 @@ class ParticleHandle(ScriptInterfaceHelper):
         bond = list(bond)
         # Bond type or numerical bond id
         if is_valid_type(bond[0], int):
-            bond[0] = BondedInteractions()[bond[0]]
+            bond_id = bond[0]
+            bond[0] = self.call_method("get_bond_by_id", bond_id=bond_id)
+            bond[0]._bond_id = bond_id
         elif not isinstance(bond[0], BondedInteraction):
             raise Exception(
                 f"1st element of Bond has to be of type BondedInteraction or int, got {type(bond[0])}")
@@ -766,7 +813,7 @@ class ParticleHandle(ScriptInterfaceHelper):
         Parameters
         ----------
         new_properties : :obj:`dict`
-            Map particle property names to values. All properties except
+            New particle properties. All properties except
             for the particle id can be changed.
 
         Examples
@@ -782,11 +829,30 @@ class ParticleHandle(ScriptInterfaceHelper):
         [4. 5. 6.] 0.0 False
 
         """
+        overrides = dict()
         if "id" in new_properties:
             raise RuntimeError("Cannot change particle id.")
 
-        for k, v in new_properties.items():
-            setattr(self, k, v)
+        if "propagation" in new_properties.keys():
+            overrides["propagation"] = int(new_properties["propagation"])
+        if "bonds" in new_properties:
+            bonds_ids, bonds_parts = [], []
+            bonds = new_properties["bonds"]
+            nlvl = nesting_level(bonds)
+            if nlvl not in (1, 2):
+                raise ValueError(
+                    "Bonds have to specified as lists of tuples/lists or a single list")
+            if nlvl == 1 and len(bonds) > 0:
+                bonds = [bonds]
+            for bond in bonds:
+                _bond = self.normalize_and_check_bond_or_throw_exception(bond)
+                self._bond_sanity_checks(_bond)
+                bonds_ids.append(_bond[0]._bond_id)
+                bonds_parts.append(_bond[1:])
+            overrides["bonds_ids"] = bonds_ids
+            overrides["bonds_parts"] = bonds_parts
+        return self.call_method(
+            "update_params", **(new_properties | overrides))
 
     def convert_vector_body_to_space(self, vec):
         """
@@ -831,17 +897,17 @@ class ParticleSlice(ScriptInterfaceHelper):
 
     """
     _so_name = "Particles::ParticleSlice"
-    _so_creation_policy = "LOCAL"
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        if "sip" not in kwargs:
-            for p_id in self.id_selection:
-                if not self.call_method("particle_exists", p_id=p_id):
-                    raise IndexError(f"Particle does not exist: {p_id}")
+    _so_checkpointable = False
+    _so_creation_policy = "GLOBAL"
+    _particle_cache_size = 10000  # size of the particle cache for slices
+    _particle_attributes_trivially_serializable = {
+        x for x in particle_attributes if x not in vars(ParticleHandle)}
 
     def __iter__(self):
         return self._id_gen()
+
+    def _get_particle_impl(self, p_id):
+        return self.call_method("get_particle", p_id=p_id)
 
     def _id_gen(self):
         """
@@ -849,8 +915,8 @@ class ParticleSlice(ScriptInterfaceHelper):
         """
         for chunk in self.chunks(self.id_selection, self.chunk_size):
             self.call_method("prefetch_particle_data", chunk=chunk)
-            for i in chunk:
-                yield ParticleHandle(id=i)
+            for p_id in chunk:
+                yield self._get_particle(p_id)
 
     def chunks(self, l, n):
         """
@@ -862,6 +928,11 @@ class ParticleSlice(ScriptInterfaceHelper):
     def __len__(self):
         return len(self.id_selection)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._get_particle = functools.lru_cache(
+            maxsize=self._particle_cache_size)(self._get_particle_impl)
+
     @property
     def pos_folded(self):
         """
@@ -870,8 +941,8 @@ class ParticleSlice(ScriptInterfaceHelper):
         """
         pos_array = np.zeros((len(self.id_selection), 3))
         for i in range(len(self.id_selection)):
-            pos_array[i, :] = ParticleHandle(
-                id=self.id_selection[i]).pos_folded
+            pos_array[i, :] = self._get_particle(
+                self.id_selection[i]).pos_folded
         return pos_array
 
     @pos_folded.setter
@@ -881,17 +952,18 @@ class ParticleSlice(ScriptInterfaceHelper):
     def add_exclusion(self, _partner):
         assert_features(["EXCLUSIONS"])
         for p_id in self.id_selection:
-            ParticleHandle(id=p_id).add_exclusion(_partner)
+            self._get_particle(p_id).add_exclusion(_partner)
 
     def delete_exclusion(self, _partner):
         assert_features(["EXCLUSIONS"])
         for p_id in self.id_selection:
-            ParticleHandle(id=p_id).delete_exclusion(_partner)
+            p = self._get_particle(p_id)
+            p.delete_exclusion(_partner)
 
     def __str__(self):
         return "ParticleSlice([" + \
-            ", ".join(str(ParticleHandle(id=i))
-                      for i in self.id_selection) + "])"
+            ", ".join(str(self._get_particle(p_id))
+                      for p_id in self.id_selection) + "])"
 
     def update(self, new_properties):
         if "id" in new_properties:
@@ -907,7 +979,7 @@ class ParticleSlice(ScriptInterfaceHelper):
 
         """
         for p_id in self.id_selection:
-            ParticleHandle(id=p_id).add_bond(_bond)
+            self._get_particle(p_id).add_bond(_bond)
 
     def delete_bond(self, _bond):
         """
@@ -915,11 +987,11 @@ class ParticleSlice(ScriptInterfaceHelper):
 
         """
         for p_id in self.id_selection:
-            ParticleHandle(id=p_id).delete_bond(_bond)
+            self._get_particle(p_id).delete_bond(_bond)
 
     def delete_all_bonds(self):
         for p_id in self.id_selection:
-            ParticleHandle(id=p_id).delete_all_bonds()
+            self._get_particle(p_id).delete_all_bonds()
 
     def remove(self):
         """
@@ -931,10 +1003,10 @@ class ParticleSlice(ScriptInterfaceHelper):
 
         """
         for p_id in self.id_selection:
-            ParticleHandle(id=p_id).remove()
+            self._get_particle(p_id).remove()
 
     def __setattr__(self, name, value):
-        if name != "chunk_size" and name != "id_selection" and name not in particle_attributes:
+        if name != "chunk_size" and name != "id_selection" and name != "_get_particle" and name not in particle_attributes:
             raise AttributeError(
                 f"ParticleHandle does not have the attribute {name}.")
         super().__setattr__(name, value)
@@ -961,7 +1033,7 @@ class ParticleSlice(ScriptInterfaceHelper):
 
         odict = {}
         for p in self:
-            pdict = ParticleHandle(id=p.id).to_dict()
+            pdict = self._get_particle(p.id).to_dict()
             for p_key, p_value in pdict.items():
                 if p_key in odict:
                     odict[p_key].append(p_value)
@@ -1001,24 +1073,46 @@ class ParticleList(ScriptInterfaceHelper):
         --------
         :meth:`espressomd.particle_data.ParticleHandle.remove`
 
+    auto_exclusions()
+        Add exclusions between particles that are connected by pair bonds,
+        including virtual bonds. Angle and dihedral bonds are ignored. The most
+        common use case for this method is to auto-exclude virtual sites.
+
+        Another use case is to exclude 1-2, 1-3 and optionally 1-4 non-nonded
+        interactions on polymer chains. This technique is commonly used in
+        atomistic molecular dynamics engines such as NAMD, AMBER or GROMACS,
+        where the short-range part of the potential energy surface is better
+        approximated with Fourier sums (using dihedral bonds) than with pair
+        potentials. Linear, branched and circular topologies are supported.
+
+        Requires feature ``EXCLUSIONS``.
+
+        Parameters
+        ----------
+        distance : :obj:`int`
+            Maximal length of a chain in unit of bonds. The topology
+            will be traversed recursively until the bond chain either
+            terminates or reaches that distance.
+
     """
     _so_name = "Particles::ParticleList"
-    _so_creation_policy = "LOCAL"
+    _so_checkpointable = False
+    _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
-        "clear",
+        "clear", "auto_exclusions"
     )
 
     def by_id(self, p_id):
         """
         Access a particle by its integer id.
         """
-        return ParticleHandle(id=p_id)
+        return self.call_method("by_id", p_id=p_id)
 
     def by_ids(self, ids):
         """
         Get a slice of particles by their integer ids.
         """
-        return ParticleSlice(id_selection=ids)
+        return self.call_method("by_ids", id_selection=ids)
 
     def all(self):
         """
@@ -1092,12 +1186,13 @@ class ParticleList(ScriptInterfaceHelper):
 
     def _place_new_particle(self, p_dict):
         bonds = []
+        if "propagation" in p_dict:
+            p_dict["propagation"] = int(p_dict["propagation"])
         if "bonds" in p_dict:
             bonds = p_dict.pop("bonds")
             if nesting_level(bonds) == 1:
                 bonds = [bonds]
-        p_id = self.call_method("add_particle", **p_dict)
-        p = self.by_id(p_id)
+        p = self.call_method("add_particle", **p_dict)
         for bond in bonds:
             if len(bond):
                 bond = p.normalize_and_check_bond_or_throw_exception(bond)
@@ -1243,7 +1338,7 @@ class ParticleList(ScriptInterfaceHelper):
             for p in self:
                 if args[0](p):
                     ids.append(p.id)
-            return ParticleSlice(id_selection=ids)
+            return self.call_method("by_ids", id_selection=ids)
 
         # Did we get a set of keyword args?
         elif len(args) == 0:
@@ -1264,20 +1359,37 @@ class ParticleList(ScriptInterfaceHelper):
                         break
                 if select:
                     ids.append(p.id)
-            return ParticleSlice(id_selection=ids)
+            return self.call_method("by_ids", id_selection=ids)
         else:
             raise Exception(
                 "select() takes either selection function as positional argument or a set of keyword arguments.")
 
 
-def set_slice_one_for_all(particle_slice, attribute, values):
-    for i in particle_slice.id_selection:
-        setattr(ParticleHandle(id=i), attribute, values)
+def set_slice_one_for_all(p_slice, attribute, value):
+    set_slice_one_for_each(p_slice, attribute, [value] * len(p_slice))
 
 
-def set_slice_one_for_each(particle_slice, attribute, values):
-    for i, v in zip(particle_slice.id_selection, values):
-        setattr(ParticleHandle(id=i), attribute, v)
+def set_slice_one_for_each(p_slice, attribute, values):
+    if attribute == "bonds":
+        all_bonds_ids = []
+        all_bonds_partner_ids = []
+        for i, bonds in enumerate(values):
+            p = p_slice._get_particle(p_slice.id_selection[i])
+            bonds_ids = []
+            bonds_partner_ids = []
+            for bond in bonds:
+                _bond = p.normalize_and_check_bond_or_throw_exception(bond)
+                p._bond_sanity_checks(_bond)
+                bonds_ids.append(_bond[0]._bond_id)
+                bonds_partner_ids.append(_bond[1:])
+            all_bonds_ids.append(bonds_ids)
+            all_bonds_partner_ids.append(bonds_partner_ids)
+        p_slice.call_method("set_param_parallel", name=attribute,
+                            all_bonds_ids=all_bonds_ids,
+                            all_bonds_partner_ids=all_bonds_partner_ids)
+    else:
+        p_slice.call_method("set_param_parallel",
+                            name=attribute, values=values)
 
 
 def _add_particle_slice_properties():
@@ -1305,7 +1417,11 @@ def _add_particle_slice_properties():
         # Special attributes
         if attribute == "bonds":
             nlvl = nesting_level(values)
-            if nlvl == 1 or nlvl == 2:
+            if nlvl == 1:
+                if len(values) > 0:
+                    values = [values]
+                set_slice_one_for_all(particle_slice, attribute, values)
+            elif nlvl == 2:
                 set_slice_one_for_all(particle_slice, attribute, values)
             elif nlvl == 3 and len(values) == N:
                 set_slice_one_for_each(particle_slice, attribute, values)
@@ -1339,7 +1455,7 @@ def _add_particle_slice_properties():
 
         else:
             target = getattr(
-                ParticleHandle(id=particle_slice.id_selection[0]), attribute)
+                particle_slice._get_particle(particle_slice.id_selection[0]), attribute)
             target_shape = np.shape(target)
 
             if not target_shape:  # scalar quantity
@@ -1377,8 +1493,9 @@ def _add_particle_slice_properties():
             return np.empty(0, dtype=type(None))
 
         # get first slice member to determine its type
-        target = getattr(ParticleHandle(
-            id=particle_slice.id_selection[0]), attribute)
+        p_id = particle_slice.id_selection[0]
+        is_trivially_serializable = attribute in ParticleSlice._particle_attributes_trivially_serializable
+        target = getattr(particle_slice._get_particle(p_id), attribute)
         if isinstance(target, array_locked):  # vectorial quantity
             target_type = target.dtype
         else:  # scalar quantity
@@ -1390,10 +1507,11 @@ def _add_particle_slice_properties():
                 values.append(getattr(part, attribute))
         else:
             values = np.empty((N,) + np.shape(target), dtype=target_type)
-            i = 0
-            for part in particle_slice._id_gen():
-                values[i] = getattr(part, attribute)
-                i += 1
+            for i, part in enumerate(particle_slice._id_gen()):
+                if is_trivially_serializable:
+                    values[i] = part.get_parameter(attribute)
+                else:
+                    values[i] = getattr(part, attribute)
 
         return values
 

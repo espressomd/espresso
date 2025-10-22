@@ -19,16 +19,28 @@
 
 #include "ParticleList.hpp"
 #include "ParticleHandle.hpp"
+#include "ParticleSlice.hpp"
 
 #include "script_interface/ObjectState.hpp"
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/system/Leaf.hpp"
 
+#include "core/cell_system/CellStructure.hpp"
+#include "core/exclusions.hpp"
 #include "core/particle_node.hpp"
+#include "core/system/System.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 #include <utils/serialization/pack.hpp>
 
+#include <boost/mpi/collectives.hpp>
+#include <boost/mpi/communicator.hpp>
+
+#include <algorithm>
+#include <cstddef>
 #include <memory>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -38,86 +50,122 @@
 namespace ScriptInterface {
 namespace Particles {
 
-#ifdef EXCLUSIONS
-static void set_exclusions(ParticleHandle &p, Variant const &exclusions) {
-  p.do_call_method("set_exclusions", {{"p_ids", exclusions}});
-}
-#endif // EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
+/**
+ * @brief Use the bond topology to automatically add exclusions between
+ * particles that are up to @c n_bonds_max bonds apart in a chain.
+ */
+static void auto_exclusions(boost::mpi::communicator const &comm,
+                            int const n_bonds_max) {
+  // bookkeeping of particle exclusions, with their n-bond distance
+  std::unordered_map<int, std::vector<std::pair<int, int>>> partners;
+  std::vector<int> bonded_pairs;
 
-static void set_bonds(ParticleHandle &p, Variant const &bonds) {
-  auto const bond_list_flat = get_value<std::vector<std::vector<int>>>(bonds);
-  for (auto const &bond_flat : bond_list_flat) {
-    auto const bond_id = bond_flat[0];
-    auto const part_id =
-        std::vector<int>{bond_flat.begin() + 1, bond_flat.end()};
-    p.do_call_method("add_bond",
-                     {{"bond_id", bond_id}, {"part_id", std::move(part_id)}});
-  }
-}
+  auto &system = ::System::get_system();
+  auto &cell_structure = *system.cell_structure;
 
-std::string ParticleList::get_internal_state() const {
-  auto const p_ids = get_particle_ids();
-  std::vector<std::string> object_states(p_ids.size());
-
-  boost::transform(p_ids, object_states.begin(), [](auto const p_id) {
-    ParticleHandle p_handle{};
-    p_handle.do_construct({{"id", p_id}});
-    auto const packed_state = p_handle.serialize();
-    // custom particle serialization
-    auto state = Utils::unpack<ObjectState>(packed_state);
-    state.name = "Particles::ParticleHandle";
-    auto const bonds_view = p_handle.call_method("get_bonds_view", {});
-    state.params.emplace_back(
-        std::pair<std::string, PackedVariant>{"bonds", pack(bonds_view)});
-#ifdef EXCLUSIONS
-    auto const exclusions = p_handle.call_method("get_exclusions", {});
-    state.params.emplace_back(
-        std::pair<std::string, PackedVariant>{"exclusions", pack(exclusions)});
-#endif // EXCLUSIONS
-    state.params.emplace_back(
-        std::pair<std::string, PackedVariant>{"__cpt_sentinel", pack(None{})});
-    return Utils::pack(state);
-  });
-
-  return Utils::pack(object_states);
-}
-
-void ParticleList::set_internal_state(std::string const &state) {
-  auto const object_states = Utils::unpack<std::vector<std::string>>(state);
-#ifdef EXCLUSIONS
-  std::unordered_map<int, Variant> exclusions = {};
-#endif // EXCLUSIONS
-  std::unordered_map<int, Variant> bonds = {};
-
-  for (auto const &packed_object : object_states) {
-    auto const state = Utils::unpack<ObjectState>(packed_object);
-    auto o = std::dynamic_pointer_cast<ParticleHandle>(
-        ObjectHandle::deserialize(packed_object, *ObjectHandle::context()));
-    auto const p_id = get_value<int>(o->get_parameter("id"));
-    for (auto const &kv : state.params) {
-      if (kv.first == "bonds") {
-        bonds[p_id] = unpack(kv.second, {});
+  // determine initial connectivity
+  for (auto const &p : cell_structure.local_particles()) {
+    auto const pid1 = p.id();
+    for (auto const bond : p.bonds()) {
+      if (bond.partner_ids().size() == 1u) {
+        auto const pid2 = bond.partner_ids()[0];
+        if (pid1 != pid2) {
+          bonded_pairs.emplace_back(pid1);
+          bonded_pairs.emplace_back(pid2);
+        }
       }
-#ifdef EXCLUSIONS
-      else if (kv.first == "exclusions") {
-        exclusions[p_id] = unpack(kv.second, {});
-      }
-#endif // EXCLUSIONS
     }
   }
 
-  for (auto const p_id : get_particle_ids()) {
-    ParticleHandle p_handle{};
-    p_handle.do_construct({{"id", p_id}});
-    set_bonds(p_handle, bonds[p_id]);
-#ifdef EXCLUSIONS
-    set_exclusions(p_handle, exclusions[p_id]);
-#endif // EXCLUSIONS
+  Utils::Mpi::gather_buffer(bonded_pairs, comm);
+
+  if (comm.rank() == 0) {
+    auto const add_partner = [&partners](int pid1, int pid2, int n_bonds) {
+      if (pid2 == pid1)
+        return;
+      for (auto const &partner_pid : std::views::elements<0>(partners[pid1]))
+        if (partner_pid == pid2)
+          return;
+      partners[pid1].emplace_back(pid2, n_bonds);
+    };
+
+    for (auto it = bonded_pairs.begin(); it != bonded_pairs.end(); it += 2) {
+      add_partner(it[0], it[1], 1);
+      add_partner(it[1], it[0], 1);
+    }
+
+    // determine transient connectivity
+    for (int iteration = 1; iteration < n_bonds_max; iteration++) {
+      for (auto const pid1 : std::views::elements<0>(partners)) {
+        // loop over partners (counter-based loops due to iterator invalidation)
+        // NOLINTNEXTLINE(modernize-loop-convert)
+        for (std::size_t i = 0u; i < partners[pid1].size(); ++i) {
+          auto const [pid2, dist21] = partners[pid1][i];
+          assert(dist21 <= n_bonds_max);
+          // loop over all partners of the partner
+          // NOLINTNEXTLINE(modernize-loop-convert)
+          for (std::size_t j = 0u; j < partners[pid2].size(); ++j) {
+            auto const [pid3, dist32] = partners[pid2][j];
+            auto const dist31 = dist32 + dist21;
+            if (dist31 <= n_bonds_max) {
+              add_partner(pid1, pid3, dist31);
+              add_partner(pid3, pid1, dist31);
+            }
+          }
+        }
+      }
+    }
   }
+
+  boost::mpi::broadcast(comm, partners, 0);
+  for (auto const &[pid1, partner_list] : partners) {
+    for (auto const &pid2 : std::views::elements<0>(partner_list)) {
+      if (auto p1 = cell_structure.get_local_particle(pid1)) {
+        add_exclusion(*p1, pid2);
+      }
+      if (auto p2 = cell_structure.get_local_particle(pid2)) {
+        add_exclusion(*p2, pid1);
+      }
+    }
+  }
+  system.on_particle_change();
 }
+#endif // ESPRESSO_EXCLUSIONS
 
 Variant ParticleList::do_call_method(std::string const &name,
                                      VariantMap const &params) {
+#ifdef ESPRESSO_EXCLUSIONS
+  if (name == "auto_exclusions") {
+    auto const distance = get_value<int>(params, "distance");
+    auto_exclusions(context()->get_comm(), distance);
+    return {};
+  }
+#endif // ESPRESSO_EXCLUSIONS
+  if (name == "get_highest_particle_id") {
+    return get_maximal_particle_id();
+  }
+  if (name == "clear") {
+    remove_all_particles();
+    return {};
+  }
+  if (not context()->is_head_node()) {
+    return {};
+  }
+  if (name == "by_id") {
+    return std::dynamic_pointer_cast<ParticleHandle>(
+        context()->make_shared("Particles::ParticleHandle",
+                               {{"id", get_value<int>(params, "p_id")},
+                                {"__cell_structure", m_cell_structure.lock()},
+                                {"__bonded_ias", m_bonded_ias.lock()}}));
+  }
+  if (name == "by_ids") {
+    return context()->make_shared(
+        "Particles::ParticleSlice",
+        {{"id_selection", get_value<std::vector<int>>(params, "id_selection")},
+         {"__cell_structure", m_cell_structure.lock()},
+         {"__bonded_ias", m_bonded_ias.lock()}});
+  }
   if (name == "get_n_part") {
     return get_n_part();
   }
@@ -127,34 +175,19 @@ Variant ParticleList::do_call_method(std::string const &name,
   if (name == "particle_exists") {
     return particle_exists(get_value<int>(params, "p_id"));
   }
-  if (name == "clear") {
-    remove_all_particles();
-  } else if (name == "add_particle") {
-    assert(params.count("bonds") == 0);
-    // sanitize particle properties
-#ifdef DIPOLES
-    if (params.count("dip") and params.count("dipm")) {
-      throw std::invalid_argument("Contradicting attributes: 'dip' and 'dipm'. \
-Setting 'dip' is sufficient as the length of the vector defines the scalar \
-dipole moment.");
+  if (name == "add_particle") {
+    assert(not params.contains("bonds"));
+    VariantMap local_params = params;
+    local_params["__cell_structure"] = m_cell_structure.lock();
+    local_params["__bonded_ias"] = m_bonded_ias.lock();
+    auto so = std::dynamic_pointer_cast<ParticleHandle>(
+        context()->make_shared("Particles::ParticleHandle", local_params));
+#ifdef ESPRESSO_EXCLUSIONS
+    if (params.contains("exclusions")) {
+      so->call_method("set_exclusions", {{"p_ids", params.at("exclusions")}});
     }
-    if (params.count("dip") and params.count("quat")) {
-      throw std::invalid_argument("Contradicting attributes: 'dip' and 'quat'. \
-Setting 'dip' overwrites the rotation of the particle around the dipole axis. \
-Set attribute 'quat' together with 'dipm' (scalar dipole moment) instead.");
-    }
-#endif // DIPOLES
-    ParticleHandle p_handle{};
-    p_handle.do_construct(params);
-#ifdef EXCLUSIONS
-    if (params.count("exclusions")) {
-      set_exclusions(p_handle, params.at("exclusions"));
-    }
-#endif // EXCLUSIONS
-    return p_handle.get_parameter("id");
-  }
-  if (name == "get_highest_particle_id") {
-    return get_maximal_particle_id();
+#endif // ESPRESSO_EXCLUSIONS
+    return so;
   }
   return {};
 }

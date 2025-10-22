@@ -30,13 +30,14 @@
 #include <utils/serialization/pack.hpp>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/variant.hpp>
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 
 using namespace ScriptInterface;
@@ -65,7 +66,7 @@ struct CallMethod {
   }
 };
 
-using Info = boost::variant<Construct, SetParameter, CallMethod>;
+using Info = std::variant<Construct, SetParameter, CallMethod>;
 } // namespace MockCall
 
 /**
@@ -78,13 +79,13 @@ struct LogHandle : public ObjectHandle {
     call_log.emplace_back(MockCall::Construct{&params});
   }
 
-  void do_set_parameter(const std::string &name,
-                        const Variant &value) override {
+  void do_set_parameter(std::string const &name,
+                        Variant const &value) override {
     call_log.emplace_back(MockCall::SetParameter{&name, &value});
   }
 
-  Variant do_call_method(const std::string &name,
-                         const VariantMap &params) override {
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
     call_log.emplace_back(MockCall::CallMethod{&name, &params});
 
     return none;
@@ -132,7 +133,7 @@ BOOST_AUTO_TEST_CASE(do_construct_) {
   VariantMap test_params;
 
   log_handle.construct(test_params);
-  BOOST_CHECK(boost::get<MockCall::Construct>(log_handle.call_log[0]) ==
+  BOOST_CHECK(std::get<MockCall::Construct>(log_handle.call_log[0]) ==
               MockCall::Construct{&test_params});
 }
 
@@ -147,7 +148,7 @@ BOOST_AUTO_TEST_CASE(do_set_parameter_) {
   Variant value;
 
   log_handle.set_parameter(name, value);
-  BOOST_CHECK((boost::get<MockCall::SetParameter>(log_handle.call_log[0]) ==
+  BOOST_CHECK((std::get<MockCall::SetParameter>(log_handle.call_log[0]) ==
                MockCall::SetParameter{&name, &value}));
 }
 
@@ -162,7 +163,7 @@ BOOST_AUTO_TEST_CASE(do_call_method_) {
   VariantMap params;
 
   log_handle.call_method(name, params);
-  BOOST_CHECK((boost::get<MockCall::CallMethod>(log_handle.call_log[0]) ==
+  BOOST_CHECK((std::get<MockCall::CallMethod>(log_handle.call_log[0]) ==
                MockCall::CallMethod{&name, &params}));
 }
 
@@ -177,32 +178,26 @@ namespace Testing {
  * Logging mock for Context.
  */
 struct LogContext : public Context {
-  std::vector<std::pair<const ObjectHandle *, MockCall::Info>> call_log;
+  std::vector<std::pair<ObjectHandle const *, MockCall::Info>> call_log;
 
-  void notify_call_method(const ObjectHandle *o, std::string const &n,
+  void notify_call_method(ObjectHandle const *o, std::string const &n,
                           VariantMap const &p) override {
     call_log.emplace_back(o, MockCall::CallMethod{&n, &p});
   }
-  void notify_set_parameter(const ObjectHandle *o, std::string const &n,
+  void notify_set_parameter(ObjectHandle const *o, std::string const &n,
                             Variant const &v) override {
     call_log.emplace_back(o, MockCall::SetParameter{&n, &v});
   }
 
   std::shared_ptr<ObjectHandle> make_shared(std::string const &,
-                                            const VariantMap &) override {
+                                            VariantMap const &) override {
     auto it = std::make_shared<Testing::LogHandle>();
     set_context(it.get());
 
     return it;
   }
-  std::shared_ptr<ObjectHandle>
-  make_shared_local(std::string const &s, VariantMap const &v) override {
-    return make_shared(s, v);
-  }
 
-  boost::string_ref name(const ObjectHandle *o) const override {
-    return "Dummy";
-  }
+  std::string_view name(ObjectHandle const *) const override { return "Dummy"; }
 
   bool is_head_node() const override { return true; }
   void parallel_try_catch(std::function<void()> const &) const override {}
@@ -231,7 +226,7 @@ BOOST_AUTO_TEST_CASE(notify_set_parameter_) {
   auto const log_entry = log_ctx->call_log.at(0);
   BOOST_CHECK_EQUAL(log_entry.first, o.get());
 
-  BOOST_CHECK((boost::get<MockCall::SetParameter>(log_entry.second) ==
+  BOOST_CHECK((std::get<MockCall::SetParameter>(log_entry.second) ==
                MockCall::SetParameter{&name, &value}));
 }
 
@@ -251,7 +246,7 @@ BOOST_AUTO_TEST_CASE(notify_call_method_) {
 
   auto const log_entry = log_ctx->call_log.at(0);
   BOOST_CHECK_EQUAL(log_entry.first, o.get());
-  BOOST_CHECK((boost::get<MockCall::CallMethod>(log_entry.second) ==
+  BOOST_CHECK((std::get<MockCall::CallMethod>(log_entry.second) ==
                MockCall::CallMethod{&name, &params}));
 }
 
@@ -262,10 +257,8 @@ BOOST_AUTO_TEST_CASE(interface_) {
   using namespace Testing;
   auto log_ctx = std::make_shared<Testing::LogContext>();
   auto o = log_ctx->make_shared({}, {});
-  auto l = log_ctx->make_shared_local({}, {});
   BOOST_CHECK(log_ctx->is_head_node());
   BOOST_CHECK_EQUAL(log_ctx->name(o.get()), "Dummy");
-  BOOST_CHECK_EQUAL(log_ctx->name(l.get()), "Dummy");
   log_ctx->parallel_try_catch([]() {});
   std::ignore = log_ctx->get_comm();
 }

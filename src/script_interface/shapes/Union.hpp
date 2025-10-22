@@ -36,13 +36,21 @@ namespace Shapes {
 
 class Union : public ObjectList<Shape, Shape> {
 public:
+  using Base = ObjectList<Shape, Shape>;
+  using value_type = typename Base::value_type;
+
   Union() : m_core_shape(std::make_shared<::Shapes::Union>()) {}
 
+  ~Union() override { do_destruct(); }
+
 private:
-  void add_in_core(const std::shared_ptr<Shape> &obj_ptr) override {
+  bool has_in_core(value_type const &obj_ptr) const override {
+    return m_core_shape->contains(obj_ptr->shape());
+  }
+  void add_in_core(value_type const &obj_ptr) override {
     m_core_shape->add(obj_ptr->shape());
   }
-  void remove_in_core(const std::shared_ptr<Shape> &obj_ptr) override {
+  void remove_in_core(value_type const &obj_ptr) final {
     m_core_shape->remove(obj_ptr->shape());
   }
 

@@ -22,6 +22,7 @@
 #include <utils/Accumulator.hpp>
 
 #include <numeric>
+#include <stdexcept>
 #include <vector>
 
 namespace ReactionMethods {
@@ -39,6 +40,9 @@ struct SingleReaction {
     if (product_types.size() != product_coefficients.size()) {
       throw std::invalid_argument(
           "products: number of types and coefficients have to match");
+    }
+    if (gamma <= 0.) {
+      throw std::domain_error("gamma needs to be a strictly positive value");
     }
     this->reactant_types = reactant_types;
     this->reactant_coefficients = reactant_coefficients;

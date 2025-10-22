@@ -22,8 +22,8 @@
 #include "script_interface/Variant.hpp"
 #include "script_interface/get_value.hpp"
 
-#include "core/partCfg_global.hpp"
 #include "core/polymer.hpp"
+#include "core/system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -36,22 +36,27 @@ namespace Particles {
 Variant Polymer::do_call_method(std::string const &name,
                                 VariantMap const &parameters) {
   if (name == "draw_polymer_positions") {
-    auto const positions = draw_polymer_positions(
-        partCfg(), get_value<int>(parameters, "n_polymers"),
-        get_value<int>(parameters, "beads_per_chain"),
-        get_value<double>(parameters, "bond_length"),
-        get_value<std::vector<Utils::Vector3d>>(parameters, "start_positions"),
-        get_value<double>(parameters, "min_distance"),
-        get_value<int>(parameters, "max_tries"),
-        get_value<bool>(parameters, "use_bond_angle"),
-        get_value_or<double>(parameters, "bond_angle", 0.),
-        get_value<bool>(parameters, "respect_constraints"),
-        get_value<int>(parameters, "seed"));
-    std::vector<Variant> pack;
-    for (auto const &chain : positions) {
-      pack.emplace_back(make_vector_of_variants(chain));
-    }
-    return pack;
+    Variant output;
+    context()->parallel_try_catch([&]() {
+      auto const positions = draw_polymer_positions(
+          System::get_system(), get_value<int>(parameters, "n_polymers"),
+          get_value<int>(parameters, "beads_per_chain"),
+          get_value<double>(parameters, "bond_length"),
+          get_value<std::vector<Utils::Vector3d>>(parameters,
+                                                  "start_positions"),
+          get_value<double>(parameters, "min_distance"),
+          get_value<int>(parameters, "max_tries"),
+          get_value<bool>(parameters, "use_bond_angle"),
+          get_value_or<double>(parameters, "bond_angle", 0.),
+          get_value<bool>(parameters, "respect_constraints"),
+          get_value<int>(parameters, "seed"));
+      std::vector<Variant> pack;
+      for (auto const &chain : positions) {
+        pack.emplace_back(make_vector_of_variants(chain));
+      }
+      output = Variant{pack};
+    });
+    return output;
   }
   return {};
 }

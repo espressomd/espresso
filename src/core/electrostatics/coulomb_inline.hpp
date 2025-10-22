@@ -17,12 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_COULOMB_INLINE_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_COULOMB_INLINE_HPP
+#pragma once
 
 #include "config/config.hpp"
 
 #include "electrostatics/coulomb.hpp"
+#include "electrostatics/solver.hpp"
 
 #include "Particle.hpp"
 
@@ -33,18 +33,18 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <tuple>
-#include <type_traits>
+#include <variant>
 
 namespace Coulomb {
 
-struct ShortRangeForceKernel
-    : public boost::static_visitor<boost::optional<std::function<
-          Utils::Vector3d(double, Utils::Vector3d const &, double)>>> {
+struct ShortRangeForceKernel {
 
-  using kernel_type = result_type::value_type;
+  using kernel_type = Solver::ShortRangeForceKernel;
+  using result_type = std::optional<kernel_type>;
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   template <typename T>
   result_type operator()(std::shared_ptr<T> const &ptr) const {
     auto const &actor = *ptr;
@@ -54,159 +54,140 @@ struct ShortRangeForceKernel
         }};
   }
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
   auto
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &ptr) const {
-    return boost::apply_visitor(*this, ptr->base_solver);
+    return std::visit(*this, ptr->base_solver);
   }
-#endif // P3M
-
-#ifdef MMM1D_GPU
-  result_type operator()(std::shared_ptr<CoulombMMM1DGpu> const &) const {
-    return {};
-  }
-#endif // MMM1D_GPU
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_P3M
+#endif // ESPRESSO_ELECTROSTATICS
 };
 
-struct ShortRangeForceCorrectionsKernel
-    : public boost::static_visitor<boost::optional<
-          std::function<void(Particle &, Particle &, double)>>> {
+struct ShortRangeForceCorrectionsKernel {
 
-  using kernel_type = result_type::value_type;
+  using kernel_type = Solver::ShortRangeForceCorrectionsKernel;
+  using result_type = std::optional<kernel_type>;
 
   template <typename T>
   result_type operator()(std::shared_ptr<T> const &) const {
     return {};
   }
 
-#ifdef P3M
+#ifdef ESPRESSO_P3M
   result_type
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &ptr) const {
     auto const &actor = *ptr;
-    return kernel_type{[&actor](Particle &p1, Particle &p2, double q1q2) {
-      actor.add_pair_force_corrections(p1, p2, q1q2);
+    return kernel_type{[&actor](Utils::Vector3d const &pos1,
+                                Utils::Vector3d const &pos2,
+                                ParticleForce &p1f_asym,
+                                ParticleForce &p2f_asym, double q1q2) {
+      actor.add_pair_force_corrections(pos1, pos2, p1f_asym, p2f_asym, q1q2);
     }};
   }
-#endif // P3M
+#endif // ESPRESSO_P3M
 };
 
-inline ShortRangeForceKernel::result_type pair_force_kernel() {
-#ifdef ELECTROSTATICS
-  if (electrostatics_actor) {
-    auto const visitor = ShortRangeForceKernel();
-    return boost::apply_visitor(visitor, *electrostatics_actor);
-  }
-#endif // ELECTROSTATICS
-  return {};
-}
+struct ShortRangePressureKernel {
 
-struct ShortRangePressureKernel
-    : public boost::static_visitor<boost::optional<std::function<Utils::Matrix<
-          double, 3, 3>(double, Utils::Vector3d const &, double)>>> {
+  using kernel_type = Solver::ShortRangePressureKernel;
+  using result_type = std::optional<kernel_type>;
 
-  using kernel_type = result_type::value_type;
-
-#ifdef ELECTROSTATICS
-  template <typename T,
-            std::enable_if_t<traits::has_pressure<T>::value> * = nullptr>
+#ifdef ESPRESSO_ELECTROSTATICS
+  template <typename T>
   result_type operator()(std::shared_ptr<T> const &ptr) const {
-    result_type pressure_kernel = {};
-    if (auto const force_kernel_opt = pair_force_kernel()) {
-      pressure_kernel =
-          kernel_type{[force_kernel = *force_kernel_opt](
-                          double q1q2, Utils::Vector3d const &d, double dist) {
-            auto const force = force_kernel(q1q2, d, dist);
-            return Utils::tensor_product(force, d);
+    if constexpr (traits::has_pressure<T>::value) {
+      return kernel_type{
+          [&actor = *ptr](double q1q2, Utils::Vector3d const &d, double dist) {
+            return Utils::tensor_product(actor.pair_force(q1q2, d, dist), d);
           }};
     }
-    return pressure_kernel;
-  }
-
-  template <typename T,
-            std::enable_if_t<!traits::has_pressure<T>::value> * = nullptr>
-  result_type operator()(std::shared_ptr<T> const &) const {
     return {};
   }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
 };
 
-struct ShortRangeEnergyKernel
-    : public boost::static_visitor<boost::optional<
-          std::function<double(Particle const &, Particle const &, double,
-                               Utils::Vector3d const &, double)>>> {
+struct ShortRangeEnergyKernel {
 
-  using kernel_type = result_type::value_type;
+  using kernel_type = Solver::ShortRangeEnergyKernel;
+  using result_type = std::optional<kernel_type>;
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   template <typename T>
   result_type operator()(std::shared_ptr<T> const &ptr) const {
     auto const &actor = *ptr;
-    return kernel_type{[&actor](Particle const &, Particle const &, double q1q2,
-                                Utils::Vector3d const &, double dist) {
-      return actor.pair_energy(q1q2, dist);
-    }};
+    return kernel_type{
+        [&actor](Utils::Vector3d const &, Utils::Vector3d const &, double q1q2,
+                 Utils::Vector3d const &,
+                 double dist) { return actor.pair_energy(q1q2, dist); }};
   }
-#ifdef P3M
+#ifdef ESPRESSO_P3M
   result_type
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &ptr) const {
     auto const &actor = *ptr;
-    auto const energy_kernel = boost::apply_visitor(*this, actor.base_solver);
-    return kernel_type{[&actor, energy_kernel](
-                           Particle const &p1, Particle const &p2, double q1q2,
-                           Utils::Vector3d const &d, double dist) {
-      auto energy = 0.;
-      if (energy_kernel) {
-        energy = (*energy_kernel)(p1, p2, q1q2, d, dist);
-      }
-      return energy + actor.pair_energy_correction(q1q2, p1, p2);
-    }};
-  }
-#endif // P3M
-#ifdef MMM1D_GPU
-  result_type operator()(std::shared_ptr<CoulombMMM1DGpu> const &) const {
-    return {};
-  }
-#endif // MMM1D_GPU
-  result_type operator()(std::shared_ptr<CoulombMMM1D> const &actor) const {
-    return kernel_type{[&actor](Particle const &, Particle const &, double q1q2,
+    auto const energy_kernel = std::visit(*this, actor.base_solver);
+    return kernel_type{
+        [&actor, energy_kernel](Utils::Vector3d const &pos1,
+                                Utils::Vector3d const &pos2, double q1q2,
                                 Utils::Vector3d const &d, double dist) {
-      return actor->pair_energy(q1q2, d, dist);
-    }};
+          auto energy = 0.;
+          if (energy_kernel) {
+            energy = (*energy_kernel)(pos1, pos2, q1q2, d, dist);
+          }
+          return energy + actor.pair_energy_correction(pos1, pos2, q1q2);
+        }};
   }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_P3M
+  result_type operator()(std::shared_ptr<CoulombMMM1D> const &actor) const {
+    return kernel_type{
+        [&actor](Utils::Vector3d const &, Utils::Vector3d const &, double q1q2,
+                 Utils::Vector3d const &d,
+                 double dist) { return actor->pair_energy(q1q2, d, dist); }};
+  }
+#endif // ESPRESSO_ELECTROSTATICS
 };
 
-inline ShortRangeForceCorrectionsKernel::result_type pair_force_elc_kernel() {
-#ifdef ELECTROSTATICS
-  if (electrostatics_actor) {
-    auto const visitor = ShortRangeForceCorrectionsKernel();
-    return boost::apply_visitor(visitor, *electrostatics_actor);
+inline std::optional<Solver::ShortRangeForceKernel>
+Solver::pair_force_kernel() const {
+#ifdef ESPRESSO_ELECTROSTATICS
+  if (auto &solver = impl->solver; solver.has_value()) {
+    auto const visitor = Coulomb::ShortRangeForceKernel();
+    return std::visit(visitor, *solver);
   }
-#endif // ELECTROSTATICS
-  return {};
+#endif // ESPRESSO_ELECTROSTATICS
+  return std::nullopt;
 }
 
-inline ShortRangePressureKernel::result_type pair_pressure_kernel() {
-#ifdef ELECTROSTATICS
-  if (electrostatics_actor) {
-    auto const visitor = ShortRangePressureKernel();
-    return boost::apply_visitor(visitor, *electrostatics_actor);
+inline std::optional<Solver::ShortRangeForceCorrectionsKernel>
+Solver::pair_force_elc_kernel() const {
+#ifdef ESPRESSO_ELECTROSTATICS
+  if (auto &solver = impl->solver; solver.has_value()) {
+    auto const visitor = Coulomb::ShortRangeForceCorrectionsKernel();
+    return std::visit(visitor, *solver);
   }
-#endif // ELECTROSTATICS
-  return {};
+#endif // ESPRESSO_ELECTROSTATICS
+  return std::nullopt;
 }
 
-inline ShortRangeEnergyKernel::result_type pair_energy_kernel() {
-#ifdef ELECTROSTATICS
-  if (electrostatics_actor) {
-    auto const visitor = ShortRangeEnergyKernel();
-    return boost::apply_visitor(visitor, *electrostatics_actor);
+inline std::optional<Solver::ShortRangePressureKernel>
+Solver::pair_pressure_kernel() const {
+#ifdef ESPRESSO_ELECTROSTATICS
+  if (auto &solver = impl->solver; solver.has_value()) {
+    auto const visitor = Coulomb::ShortRangePressureKernel();
+    return std::visit(visitor, *solver);
   }
-#endif // ELECTROSTATICS
-  return {};
+#endif // ESPRESSO_ELECTROSTATICS
+  return std::nullopt;
+}
+
+inline std::optional<Solver::ShortRangeEnergyKernel>
+Solver::pair_energy_kernel() const {
+#ifdef ESPRESSO_ELECTROSTATICS
+  if (auto &solver = impl->solver; solver.has_value()) {
+    auto const visitor = Coulomb::ShortRangeEnergyKernel();
+    return std::visit(visitor, *solver);
+  }
+#endif // ESPRESSO_ELECTROSTATICS
+  return std::nullopt;
 }
 
 } // namespace Coulomb
-
-#endif

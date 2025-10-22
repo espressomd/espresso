@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2022 The ESPResSo project
+# Copyright (C) 2016-2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,16 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-include(unit_test)
-unit_test(NAME Wall_test SRC Wall_test.cpp DEPENDS espresso::shapes
-          espresso::utils)
-unit_test(NAME HollowConicalFrustum_test SRC HollowConicalFrustum_test.cpp
-          DEPENDS espresso::shapes espresso::utils)
-unit_test(NAME Union_test SRC Union_test.cpp DEPENDS espresso::shapes
-          espresso::utils)
-unit_test(NAME Ellipsoid_test SRC Ellipsoid_test.cpp DEPENDS espresso::shapes
-          espresso::utils)
-unit_test(NAME Sphere_test SRC Sphere_test.cpp DEPENDS espresso::shapes
-          espresso::utils)
-unit_test(NAME NoWhere_test SRC NoWhere_test.cpp DEPENDS espresso::shapes
-          espresso::utils)
+include(espresso_unit_test)
+
+espresso_unit_test(SRC Wall_test.cpp DEPENDS espresso::shapes espresso::utils)
+espresso_unit_test(SRC HollowConicalFrustum_test.cpp DEPENDS espresso::shapes
+                   espresso::utils)
+espresso_unit_test(SRC Union_test.cpp DEPENDS espresso::shapes espresso::utils)
+espresso_unit_test(SRC Ellipsoid_test.cpp DEPENDS espresso::shapes
+                   espresso::utils)
+espresso_unit_test(SRC Sphere_test.cpp DEPENDS espresso::shapes espresso::utils)
+espresso_unit_test(SRC NoWhere_test.cpp DEPENDS espresso::shapes
+                   espresso::utils)

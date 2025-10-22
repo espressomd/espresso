@@ -27,8 +27,7 @@
 #include "Observable.hpp"
 #include "core/observables/LBProfileObservable.hpp"
 
-#include <boost/range/algorithm.hpp>
-
+#include <algorithm>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -91,22 +90,24 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    m_observable =
-        make_shared_from_args<CoreLBObs, double, double, double, double, double,
-                              double, int, int, int, double, double, double,
-                              double, double, double, bool>(
-            params, "sampling_delta_x", "sampling_delta_y", "sampling_delta_z",
-            "sampling_offset_x", "sampling_offset_y", "sampling_offset_z",
-            "n_x_bins", "n_y_bins", "n_z_bins", "min_x", "max_x", "min_y",
-            "max_y", "min_z", "max_z", "allow_empty_bins");
+    ObjectHandle::context()->parallel_try_catch([&]() {
+      m_observable =
+          make_shared_from_args<CoreLBObs, double, double, double, double,
+                                double, double, int, int, int, double, double,
+                                double, double, double, double, bool>(
+              params, "sampling_delta_x", "sampling_delta_y",
+              "sampling_delta_z", "sampling_offset_x", "sampling_offset_y",
+              "sampling_offset_z", "n_x_bins", "n_y_bins", "n_z_bins", "min_x",
+              "max_x", "min_y", "max_y", "min_z", "max_z", "allow_empty_bins");
+    });
   }
 
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
     if (method == "edges") {
       std::vector<Variant> variant_edges;
-      boost::copy(profile_observable()->edges(),
-                  std::back_inserter(variant_edges));
+      std::ranges::copy(profile_observable()->edges(),
+                        std::back_inserter(variant_edges));
       return variant_edges;
     }
     return Base::do_call_method(method, parameters);

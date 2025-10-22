@@ -42,6 +42,10 @@ class BreakageSpec(ScriptInterfaceHelper):
 class BreakageSpecs(ScriptObjectMap):
     _so_name = "BondBreakage::BreakageSpecs"
 
+    def execute(self):
+        """Execute the bond breakage on the current state of the system"""
+        self.call_method("execute")
+
     def _get_key(self, key):
         """Convert a bond object to a bond id."""
         if isinstance(key, interactions.BondedInteraction):

@@ -17,12 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_SCAFACOS_SCAFACOS_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_SCAFACOS_SCAFACOS_HPP
+#pragma once
 
 #include "config/config.hpp"
 
-#if defined(SCAFACOS) or defined(SCAFACOS_DIPOLAR)
+#if defined(ESPRESSO_SCAFACOS) or defined(ESPRESSO_SCAFACOS_DIPOLES)
 
 #include "script_interface/Variant.hpp"
 
@@ -46,5 +45,4 @@ deserialize_parameters(std::string const &parameters);
 } // namespace Scafacos
 } // namespace ScriptInterface
 
-#endif // SCAFACOS or SCAFACOS_DIPOLAR
-#endif
+#endif // ESPRESSO_SCAFACOS or ESPRESSO_SCAFACOS_DIPOLES

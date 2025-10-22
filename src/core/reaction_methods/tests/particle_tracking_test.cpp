@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for the particle tracking mechanism. */
-
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE Particle tracking test
 #define BOOST_TEST_ALTERNATIVE_INIT_API
@@ -27,11 +25,16 @@
 
 #include "unit_tests/ParticleFactory.hpp"
 
+#include "cell_system/CellStructure.hpp"
+#include "cell_system/CellStructureType.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
-#include "particle_data.hpp"
+#include "particle_node.hpp"
+#include "system/System.hpp"
 
 #include <boost/mpi.hpp>
 
+#include <cassert>
 #include <memory>
 #include <stdexcept>
 
@@ -65,8 +68,16 @@ BOOST_FIXTURE_TEST_CASE(particle_type_map_test, ParticleFactory) {
 }
 
 int main(int argc, char **argv) {
-  auto mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
-  Communication::init(mpi_env);
+  auto mpi_env = std::make_shared<boost::mpi::environment>(
+      argc, argv, boost::mpi::threading::multiple);
+  ::communication_environment =
+      std::make_unique<CommunicationEnvironment>(mpi_env);
+  assert(::comm_cart.size() == 1);
 
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  auto &system = System::get_system();
+  system.set_cell_structure_topology(CellStructureType::REGULAR);
+
+  auto const res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  ::communication_environment.reset();
+  return res;
 }

@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef BMHTF_NACL_H
-#define BMHTF_NACL_H
+
+#pragma once
+
 /** \file
  *  Routines to calculate the Born-Meyer-Huggins-Tosi-Fumi potential
  *  between particle pairs.
@@ -29,7 +30,7 @@
 
 #include "config/config.hpp"
 
-#ifdef BMHTF_NACL
+#ifdef ESPRESSO_BMHTF_NACL
 
 #include "nonbonded_interaction_data.hpp"
 
@@ -63,5 +64,4 @@ inline double BMHTF_pair_energy(IA_parameters const &ia_params, double dist) {
   return 0.0;
 }
 
-#endif // BMHTF_NACL
-#endif
+#endif // ESPRESSO_BMHTF_NACL

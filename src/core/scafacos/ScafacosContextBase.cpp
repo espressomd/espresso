@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#if defined(SCAFACOS) or defined(SCAFACOS_DIPOLAR)
+#if defined(ESPRESSO_SCAFACOS) or defined(ESPRESSO_SCAFACOS_DIPOLES)
 
 #include "scafacos/ScafacosContextBase.hpp"
 
@@ -39,7 +39,7 @@ std::vector<std::string> ScafacosContextBase::available_methods() {
 void ScafacosContextBase::sanity_check_method(std::string const &method_name) {
   auto const all = ScafacosContextBase::available_methods();
   auto const valid_methods = std::set<std::string>(all.begin(), all.end());
-  if (valid_methods.count(method_name) == 0) {
+  if (not valid_methods.contains(method_name)) {
     auto const method_names = "'" + boost::algorithm::join(all, "', '") + "'";
     throw std::invalid_argument("Method '" + method_name +
                                 "' is unknown or not compiled in ScaFaCoS; "
@@ -48,4 +48,4 @@ void ScafacosContextBase::sanity_check_method(std::string const &method_name) {
   }
 }
 
-#endif // SCAFACOS or SCAFACOS_DIPOLAR
+#endif // ESPRESSO_SCAFACOS or ESPRESSO_SCAFACOS_DIPOLES

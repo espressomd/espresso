@@ -19,21 +19,21 @@
 
 #include "config/config.hpp"
 
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
 #include "sd_interface.hpp"
 
 #include "stokesian_dynamics/sd_cpu.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
-#include "grid.hpp"
+#include "communication.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
 
-#include <boost/range/algorithm.hpp>
 #include <boost/serialization/is_bitwise_serializable.hpp>
 
 #include <algorithm>
@@ -49,7 +49,7 @@
 struct SD_particle_data {
   SD_particle_data() = default;
   explicit SD_particle_data(Particle const &p)
-      : type(p.type()), pos(p.pos()), ext_force(p.f) {}
+      : type(p.type()), pos(p.pos()), ext_force(p.force_and_torque()) {}
 
   int type = 0;
 
@@ -60,9 +60,9 @@ struct SD_particle_data {
   ParticleForce ext_force;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &type;
-    ar &pos;
-    ar &ext_force;
+    ar & type;
+    ar & pos;
+    ar & ext_force;
   }
 };
 
@@ -70,14 +70,13 @@ BOOST_IS_BITWISE_SERIALIZABLE(SD_particle_data)
 
 static StokesianDynamicsParameters params{0., {}, 0};
 
-static double sd_kT = 0.0;
-
 /** Buffer that holds the (translational and angular) velocities of the local
  *  particles on each node, used for returning results. */
 static std::vector<double> v_sd{};
 
 void register_integrator(StokesianDynamicsParameters const &obj) {
-  if (::box_geo.periodic(0) or ::box_geo.periodic(1) or ::box_geo.periodic(2)) {
+  auto const &box_geo = *System::get_system().box_geo;
+  if (box_geo.periodic(0) or box_geo.periodic(1) or box_geo.periodic(2)) {
     throw std::runtime_error(
         "Stokesian Dynamics requires periodicity (False, False, False)");
   }
@@ -85,7 +84,8 @@ void register_integrator(StokesianDynamicsParameters const &obj) {
 }
 
 /** Update translational and rotational velocities of all particles. */
-void sd_update_locally(ParticleRange const &parts) {
+template <typename ParticleIterable>
+void sd_update_locally(ParticleIterable const &parts) {
   std::size_t i = 0;
 
   // Even though on the head node, the v_sd vector is larger than
@@ -94,11 +94,6 @@ void sd_update_locally(ParticleRange const &parts) {
   // (which holds the velocities of ALL particles).
 
   for (auto &p : parts) {
-    // skip virtual particles
-    if (p.is_virtual()) {
-      continue;
-    }
-
     // Copy velocities
     p.v()[0] = v_sd[6 * i + 0];
     p.v()[1] = v_sd[6 * i + 1];
@@ -108,7 +103,7 @@ void sd_update_locally(ParticleRange const &parts) {
     p.omega()[1] = v_sd[6 * i + 4];
     p.omega()[2] = v_sd[6 * i + 5];
 
-    i++;
+    ++i;
   }
 }
 
@@ -120,38 +115,29 @@ StokesianDynamicsParameters::StokesianDynamicsParameters(
                             std::to_string(viscosity));
   }
   /* Check that radii are positive */
-  for (auto const &kv : radii) {
-    if (kv.second < 0.) {
+  for (auto const &[p_type, radius] : radii) {
+    if (radius < 0.) {
       throw std::domain_error(
-          "Particle radius for type " + std::to_string(kv.first) +
-          " has an invalid value: " + std::to_string(kv.second));
+          "Particle radius for type " + std::to_string(p_type) +
+          " has an invalid value: " + std::to_string(radius));
     }
   }
 }
 
-void set_sd_kT(double kT) {
-  if (kT < 0.0) {
-    throw std::domain_error("kT has an invalid value: " + std::to_string(kT));
-  }
+void propagate_vel_pos_sd(ParticleRangeStokesian const &particles,
+                          StokesianThermostat const &stokesian,
+                          double const time_step, double const kT) {
 
-  sd_kT = kT;
-}
-
-double get_sd_kT() { return sd_kT; }
-
-void propagate_vel_pos_sd(const ParticleRange &particles,
-                          const boost::mpi::communicator &comm,
-                          const double time_step) {
   static std::vector<SD_particle_data> parts_buffer{};
 
   parts_buffer.clear();
-  boost::transform(particles, std::back_inserter(parts_buffer),
-                   [](auto const &p) { return SD_particle_data(p); });
-  Utils::Mpi::gather_buffer(parts_buffer, comm, 0);
+  std::ranges::transform(particles, std::back_inserter(parts_buffer),
+                         [](auto const &p) { return SD_particle_data(p); });
+  Utils::Mpi::gather_buffer(parts_buffer, ::comm_cart, 0);
 
   /* Buffer that holds local particle data, and all particles on the head
    * node used for sending particle data to head node. */
-  if (comm.rank() == 0) {
+  if (::comm_cart.rank() == 0) {
     std::size_t n_part = parts_buffer.size();
 
     static std::vector<double> x_host{};
@@ -180,24 +166,22 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
       f_host[6 * i + 4] = p.ext_force.torque[1];
       f_host[6 * i + 5] = p.ext_force.torque[2];
 
-      double radius = params.radii[p.type];
-
-      a_host[i] = radius;
+      a_host[i] = params.radii.at(p.type);
 
       ++i;
     }
 
     v_sd = sd_cpu(x_host, f_host, a_host, n_part, params.viscosity,
-                  std::sqrt(sd_kT / time_step),
+                  std::sqrt(kT / time_step),
                   static_cast<std::size_t>(stokesian.rng_counter()),
                   static_cast<std::size_t>(stokesian.rng_seed()), params.flags);
   } else { // if (this_node == 0)
     v_sd.resize(particles.size() * 6);
   } // if (this_node == 0) {...} else
 
-  Utils::Mpi::scatter_buffer(v_sd.data(),
-                             static_cast<int>(particles.size() * 6), comm, 0);
+  Utils::Mpi::scatter_buffer(
+      v_sd.data(), static_cast<int>(particles.size() * 6), ::comm_cart, 0);
   sd_update_locally(particles);
 }
 
-#endif // STOKESIAN_DYNAMICS
+#endif // ESPRESSO_STOKESIAN_DYNAMICS

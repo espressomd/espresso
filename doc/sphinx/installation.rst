@@ -8,10 +8,10 @@ This chapter will describe how to get, compile and run the software.
 |es| releases are available as source code packages from the homepage [1]_.
 This is where new users should get the code. The code within release packages
 is tested and known to run on a number of platforms.
-Alternatively, people that want to use the newest features of |es| or that
-want to start contributing to the software can instead obtain the
+Alternatively, people who want to use the newest features of |es| or
+start contributing to the software can instead obtain the
 current development code via the version control system software  [2]_
-from |es|'s project page at Github  [3]_. This code might be not as well
+from |es|'s project page at GitHub  [3]_. This code might be not as well
 tested and documented as the release code; it is recommended to use this
 code only if you have already gained some experience in using |es|.
 
@@ -25,7 +25,7 @@ performance of the code. Therefore it is not possible to build a single
 binary that can satisfy all needs. For performance reasons a user
 should always activate only those features that are actually needed.
 This means, however, that learning how to compile is a necessary evil.
-The build system of |es| uses CMake [4]_ to compile
+The build system of |es| uses CMake to compile
 software easily on a wide range of platforms.
 
 Users who only need a "default" installation of |es| and have an account
@@ -33,6 +33,26 @@ on the `Gitpod <https://gitpod.io>`__ platform can build the software
 automatically in the cloud and skip this chapter. For more details on
 running |es| in Gitpod, go to section :ref:`Running in the cloud`.
 
+Quickstart
+----------
+
+Installing |es| usually involves the following steps:
+
+#. downloading the source code: one of the
+   `stable releases <https://github.com/espressomd/espresso/releases>`__
+   (.zip files, or .tar.gz files before 2025) or the development version
+   (``git clone -b python https://github.com/espressomd/espresso.git``)
+#. installing dependencies on
+   :ref:`Ubuntu <Installing requirements on Ubuntu>`,
+   :ref:`macOS <Installing requirements on macOS>`,
+   :ref:`Windows <Installing requirements on Windows via WSL>`,
+   or :ref:`other Linux distributions <Installing requirements on other Linux distributions>`
+#. building the application: default build (:ref:`Quick installation`)
+   or custom build (requires :ref:`Configuring`)
+
+A troubleshooting guide is available on the project
+`GitHub wiki <https://github.com/espressomd/espresso/wiki/Installation-FAQ>`__,
+featuring contributed patches for compiler-related and library-related issues.
 
 .. _Requirements:
 
@@ -45,18 +65,23 @@ are required to be able to compile and use |es|:
 .. glossary::
 
     CMake
-        The build system is based on CMake.
+        The build system is based on CMake version 3 or later [4]_.
 
     C++ compiler
-        The C++ core of |es| needs to be built by a C++17-capable compiler.
+        The C++ core of |es| needs to be built by a C++20-capable compiler.
 
     Boost
         A number of advanced C++ features used by |es| are provided by Boost.
-        We strongly recommend to use at least Boost 1.71.
 
     FFTW
-        For some algorithms like P\ :math:`^3`\ M, |es| needs the FFTW library
+        For some algorithms like |p3m|, |es| needs the FFTW library
         version 3 or later [5]_ for Fourier transforms, including header files.
+        |es| leverages heFFTe :cite:`ayala20a`.
+
+    CUDA
+        For some algorithms like |p3m|,
+        |es| provides GPU-accelerated implementations for NVIDIA GPUs.
+        We require CUDA 12.0 or later [6]_.
 
     MPI
         An MPI library that implements the MPI standard version 1.2 is required
@@ -76,39 +101,74 @@ are required to be able to compile and use |es|:
         such as "l3cache" to bind to a NUMA shared memory block, or to
         "none" to disable binding (can cause performance loss).
 
+    OpenMP
+        A compiler that implements the OpenMP standard version 5.0 is required
+        to run simulations with shared-memory parallelization.
+        |es| leverages Kokkos :cite:`trott22a` and Cabana :cite:`slattery22a`.
+
     Python
         |es|'s main user interface relies on Python 3.
+
+        We strongly recommend using Python environments to isolate
+        packages required by |es| from packages installed system-wide.
+        This can be achieved using venv [7]_, conda [8]_, uv [9]_, or any similar tool.
+        Inside an environment, commands of the form
+        ``sudo apt install python3-numpy python3-scipy``
+        can be rewritten as ``python3 -m pip install numpy scipy``,
+        and thus do not require root privileges.
+        Whenever this documentation refers to :file:`requirements.txt`,
+        it is the one located in the top-level directory of the project.
+
+        Depending on your needs, you may choose to install all |es|
+        dependencies inside the environment, or only the subset of
+        dependencies not already satisfied by your workstation or cluster.
+        For the exact syntax to create and configure an environment,
+        please refer to the tool documentation.
 
     Cython
         Cython is used for connecting the C++ core to Python.
 
+        Python environment tools may allow you to install a Python executable
+        that is more recent than the system-wide Python executable.
+        Be aware this might lead to compatibility issues if Cython
+        accidentally picks up the system-wide :file:`Python.h` header file.
+        In that scenario, you will have to manually adapt the C++ compiler
+        include paths to find the correct :file:`Python.h` header file.
 
-.. _Installing requirements on Ubuntu Linux:
 
-Installing requirements on Ubuntu Linux
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _Installing requirements on Ubuntu:
 
-To compile |es| on Ubuntu 22.04 LTS, install the following dependencies:
+Installing requirements on Ubuntu
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To compile |es| on Ubuntu 24.04 LTS, install the following build dependencies:
 
 .. code-block:: bash
 
-    sudo apt install build-essential cmake cython3 python3-pip python3-numpy \
-      libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
-      python3-scipy python3-opengl libgsl-dev
+    sudo apt install build-essential cmake cmake-curses-gui python3-dev openmpi-bin \
+      libboost-all-dev libfftw3-dev libfftw3-mpi-dev libhdf5-dev libhdf5-openmpi-dev \
+      python3-pip libgsl-dev freeglut3-dev
 
-Optionally the ccmake utility can be installed for easier configuration:
+To run |es|, install the following Python dependencies:
 
 .. code-block:: bash
 
-    sudo apt install cmake-curses-gui
+    python3 -m venv espresso_env # here other virtual environment tools are also ok
+    . espresso_env/bin/activate
+    python3 -m pip install -c requirements.txt \
+      cmake cython numpy scipy packaging setuptools h5py
+
+These are the only hard requirements. In the following subsections,
+only optional dependencies will be discussed. Unless you need extra features,
+you can jump directly to the next section :ref:`Quick installation`.
 
 .. _Nvidia GPU acceleration:
 
 Nvidia GPU acceleration
 """""""""""""""""""""""
 
-If your computer has an Nvidia graphics card, you should also download and install the
-CUDA SDK to make use of GPU computation:
+If your computer has an Nvidia graphics card and you would like to leverage
+|es|'s GPU algorithms, you should also download and install the CUDA SDK:
 
 .. code-block:: bash
 
@@ -120,7 +180,7 @@ paths before building the project, for example via environment variables:
 
 .. code-block:: bash
 
-    export CUDA_TOOLKIT_ROOT_DIR="/usr/local/cuda-11.5"
+    export CUDA_TOOLKIT_ROOT_DIR="/usr/local/cuda-12.0"
     export PATH="${CUDA_TOOLKIT_ROOT_DIR}/bin${PATH:+:$PATH}"
     export LD_LIBRARY_PATH="${CUDA_TOOLKIT_ROOT_DIR}/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
@@ -130,59 +190,47 @@ to activate CUDA. These commands may need to be adapted depending on which
 operating system and CUDA version you are using.
 
 You can control the list of CUDA architectures to generate device code for.
-For example, ``-D CMAKE_CUDA_ARCHITECTURES=61;75`` will generate device code
-for both sm_61 and sm_75 architectures.
+For example, ``CUDAARCHS="75;86" cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
+will generate device code for both sm_75 and sm_86 architectures.
+The CMake option ``ESPRESSO_CMAKE_CUDA_ARCHITECTURES`` achieves the same effect.
+Both take a semicolon-separated list of integers. There are online resources
+to help determine which architecture match specific hardware [12]_.
+The CMake option ``CMAKE_CUDA_ARCHITECTURES`` cannot be used to set CUDA
+architectures, because it has a default value that is too old for the
+minimally required CUDA version.
 
-On Ubuntu 22.04, the default GCC compiler is too recent for nvcc and will fail
-to compile sources that rely on ``std::function``. You can either use GCC 10:
-
-.. code-block:: bash
-
-    CC=gcc-10 CXX=g++-10 CUDACXX=/usr/local/cuda-11.5/bin/nvcc cmake .. \
-      -D ESPRESSO_BUILD_WITH_CUDA=ON \
-      -D CUDAToolkit_ROOT=/usr/local/cuda-11.5 \
-      -D CMAKE_CUDA_FLAGS="--compiler-bindir=/usr/bin/g++-10"
-
-or alternatively install Clang 14 as a replacement for nvcc and GCC:
+On Ubuntu 24.04, the default GCC compiler may be too recent for nvcc.
+You can either use GCC 12:
 
 .. code-block:: bash
 
-    CC=clang-14 CXX=clang++-14 CUDACXX=clang++-14 cmake .. \
+    CC=gcc-12 CXX=g++-12 CUDACXX=/usr/local/cuda-12.0/bin/nvcc cmake .. \
       -D ESPRESSO_BUILD_WITH_CUDA=ON \
-      -D CUDAToolkit_ROOT=/usr/local/cuda-11.5 \
-      -D CMAKE_CXX_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/10 -I/usr/include/c++/10 --cuda-path=/usr/local/cuda-11.5" \
-      -D CMAKE_CUDA_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/10 -I/usr/include/c++/10 --cuda-path=/usr/local/cuda-11.5"
+      -D CUDAToolkit_ROOT=/usr/local/cuda-12.0 \
+      -D CMAKE_CUDA_FLAGS="--compiler-bindir=/usr/bin/g++-12"
+
+or alternatively install Clang 19 as a replacement for nvcc and GCC:
+
+.. code-block:: bash
+
+    CC=clang-19 CXX=clang++-19 CUDACXX=clang++-19 cmake .. \
+      -D ESPRESSO_BUILD_WITH_CUDA=ON \
+      -D CUDAToolkit_ROOT=/usr/local/cuda-12.0 \
+      -D CMAKE_CXX_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/12 -I/usr/include/c++/12 --cuda-path=/usr/local/cuda-12.0" \
+      -D CMAKE_CUDA_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/12 -I/usr/include/c++/12 --cuda-path=/usr/local/cuda-12.0"
 
 Please note that all CMake options and compiler flags that involve
 ``/usr/local/cuda-*`` need to be adapted to your CUDA environment.
 But they are only necessary on systems with multiple CUDA releases installed,
 and can be safely removed if you have only one CUDA release installed.
 
-Please also note that with Clang, you still need the GCC 10 toolchain,
-which can be set up with ``apt install gcc-10 g++-10 libstdc++-10-dev``.
+Please also note that with Clang, you still need the GCC 12 toolchain,
+which can be set up with ``apt install gcc-12 g++-12 libstdc++-12-dev``.
 The extra compiler flags in the Clang CMake command above are needed to pin
 the search paths of Clang. By default, it searches trough the most recent
-GCC version, which is GCC 12 on Ubuntu 22.04. It is not possible to install
-the NVIDIA driver without GCC 12 due to a dependency resolution issue
-(``nvidia-dkms`` depends on ``dkms`` which depends on ``gcc-12``).
-
-.. _Requirements for building the documentation:
-
-Requirements for building the documentation
-"""""""""""""""""""""""""""""""""""""""""""
-
-To generate the Sphinx documentation, install the following packages:
-
-.. code-block:: bash
-
-    pip3 install --user -c requirements.txt \
-        sphinx sphinxcontrib-bibtex sphinx-toggleprompt
-
-To generate the Doxygen documentation, install the following packages:
-
-.. code-block:: bash
-
-    sudo apt install doxygen graphviz
+GCC version, which is GCC 13 on Ubuntu 24.04. It is not possible to install
+the NVIDIA driver without GCC 13 due to a dependency resolution issue
+(``nvidia-dkms`` depends on ``dkms`` which depends on ``gcc-13``).
 
 .. _Setting up a Jupyter environment:
 
@@ -193,44 +241,38 @@ To run the samples and tutorials, start by installing the following packages:
 
 .. code-block:: bash
 
-    sudo apt install python3-matplotlib python3-pint python3-tqdm ffmpeg
+    sudo apt install ffmpeg
+    python3 -m pip install -c requirements.txt matplotlib pint tqdm
 
 The tutorials are written in the
 `Notebook Format <https://nbformat.readthedocs.io/en/latest/>`__
-version <= 4.4 and can be executed by any of these tools:
+:cite:`kluyver16a` version 4.5 and can be executed by any of these tools:
 
-* `Jupyter Notebook <https://jupyter-notebook.readthedocs.io/en/stable/notebook.html>`__
 * `JupyterLab <https://jupyterlab.readthedocs.io/en/stable/>`__
-* `IPython <https://ipython.org/>`__ (not recommended)
 * `VS Code Jupyter <https://github.com/microsoft/vscode-jupyter>`__
+* `Jupyter Notebook <https://jupyter-notebook.readthedocs.io/en/stable/notebook.html>`__
 
 To check whether one of them is installed, run these commands:
 
 .. code-block:: bash
 
-    jupyter notebook --version
     jupyter lab --version
-    ipython --version
+    jupyter notebook --version
     code --version
 
 If you don't have any of these tools installed and aren't sure which one
-to use, we recommend installing the historic Jupyter Notebook, since the
-|es| tutorials have been designed with the ``exercise2`` plugin in mind.
-
-To use Jupyter Notebook, install the following packages:
+to use, we recommend installing JupyterLab:
 
 .. code-block:: bash
 
-    pip3 install --user nbformat notebook 'jupyter_contrib_nbextensions==0.5.1'
-    jupyter contrib nbextension install --user
-    jupyter nbextension enable rubberband/main
-    jupyter nbextension enable exercise2/main
+    python3 -m pip install -c requirements.txt \
+        "jupyterlab>=4.3" nbformat nbconvert "lxml[html_clean]" jupyter_console
 
-Alternatively, to use JupyterLab, install the following packages:
+If you prefer the look and feel of Jupyter Classic, install the following extra package:
 
 .. code-block:: bash
 
-    pip3 install --user nbformat notebook jupyterlab
+    python3 -m pip install -c requirements.txt nbclassic
 
 Alternatively, to use VS Code Jupyter, install the following extensions:
 
@@ -240,6 +282,41 @@ Alternatively, to use VS Code Jupyter, install the following extensions:
     code --install-extension ms-toolsai.jupyter
     code --install-extension ms-toolsai.jupyter-keymap
     code --install-extension ms-toolsai.jupyter-renderers
+
+.. _Requirements for visualizers:
+
+Requirements for visualizers
+""""""""""""""""""""""""""""
+
+To install the OpenGL visualizer:
+
+.. code-block:: bash
+
+    python3 -m pip install -c requirements.txt PyOpenGL
+
+To install the ZnDraw visualizer:
+
+.. code-block:: bash
+
+    python3 -m pip install -c requirements.txt 'zndraw==0.4.6'
+
+.. _Requirements for building the documentation:
+
+Requirements for building the documentation
+"""""""""""""""""""""""""""""""""""""""""""
+
+To generate the Sphinx documentation, install the following packages:
+
+.. code-block:: bash
+
+    python3 -m pip install -c requirements.txt \
+        sphinx sphinxcontrib-bibtex sphinx-toggleprompt
+
+To generate the Doxygen documentation, install the following packages:
+
+.. code-block:: bash
+
+    sudo apt install doxygen graphviz
 
 .. _Installing requirements on other Linux distributions:
 
@@ -257,66 +334,57 @@ required to compile |es| on other Linux distributions:
 Installing requirements on Windows via WSL
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To run |es| on Windows, use the Linux subsystem. For that you need to
+To run |es| on Windows, use the Linux subsystem (WSL). For that you need to
 
-* follow `these instructions <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`__ to install Ubuntu
-* start Ubuntu (or open an Ubuntu tab in `Windows Terminal <https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701>`__)
+* follow `these instructions <https://learn.microsoft.com/en-us/windows/wsl/install>`__ to install Ubuntu
+* start Ubuntu (or open an Ubuntu tab in `Windows Terminal <https://apps.microsoft.com/detail/9n0dx20hk701?hl=en-us&gl=US>`__)
 * execute ``sudo apt update`` to prepare the installation of dependencies
 * optional step: If you have a NVIDIA graphics card available and want to make
-  use of |es|'s GPU acceleration, follow `these instructions <https://docs.nvidia.com/cuda/wsl-user-guide/index.html#ch03a-setting-up-cuda>`__
+  use of |es|'s GPU acceleration, follow `these instructions <https://docs.nvidia.com/cuda/wsl-user-guide/index.html>`__
   to set up CUDA.
-* follow the instructions for :ref:`Installing requirements on Ubuntu Linux`
+* follow the instructions for :ref:`Installing requirements on Ubuntu`
 
 .. _Installing requirements on macOS:
 
 Installing requirements on macOS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To build |es| on macOS 10.15 or higher, you need to install its dependencies.
-There are two possibilities for this, MacPorts and Homebrew. We strongly
-recommend Homebrew, but if you already have MacPorts installed, you can use
-that too, although we do not provide MacPorts installation instructions.
+The first step is to install a C++ compiler, such as Xcode [10]_.
+Xcode is missing OpenMP, which is needed to enable shared-memory parallelization,
+but the "R for macOS Developers" project provides binaries [11]_.
 
-To check whether you already have one or the other installed, run the
-following commands:
+To install libraries, a package manager will be needed.
+While our instructions below are specific to Homebrew,
+they should be fairly easy to adapt for other package managers.
+If Homebrew isn't available, it can be installed with
+`these instructions <https://docs.brew.sh/Installation>`__,
+but bear in mind that it might conflict with other installed managers,
+such as MacPorts.
 
-.. code-block:: bash
-
-    test -e /opt/local/bin/port && echo "MacPorts is installed"
-    test -e /usr/local/bin/brew && echo "Homebrew is installed"
-
-If Homebrew is already installed, you should resolve any problems reported by
-the command
+If Homebrew is already installed, resolve any problems reported by the command:
 
 .. code-block:: bash
 
     brew doctor
 
-If you want to install Homebrew, follow the installation instructions at
-https://docs.brew.sh/Installation, but bear in mind that MacPorts and Homebrew
-may conflict with one another.
-
-If Anaconda Python or the Python from www.python.org are installed, you
-will likely not be able to run |es|. Therefore, please uninstall them
-using the following commands:
+Install the following libraries:
 
 .. code-block:: bash
 
-    sudo rm -r ~/anaconda[23]
-    sudo rm -r /Library/Python
+    brew install boost boost-mpi fftw gsl freeglut hdf5-mpi
 
-Installing packages using Homebrew
-""""""""""""""""""""""""""""""""""
-
-Run the following commands:
+For the last step, we will use the uv utility
+(`installation instructions <https://docs.astral.sh/uv/getting-started/installation/>`__)
+to install the Python interpreter and all required Python packages
+in a virtual environment:
 
 .. code-block:: bash
 
-    brew install cmake python cython boost boost-mpi fftw \
-      doxygen gsl numpy scipy ipython jupyter
-    brew install hdf5-mpi
-    brew link --force cython
-    pip install -c requirements.txt PyOpenGL matplotlib
+    uv venv --python 3.13
+    . .venv/bin/activate
+    uv pip install -c requirements.txt \
+      cmake cython numpy scipy matplotlib tqdm packaging setuptools h5py \
+      PyOpenGL "jupyterlab>=4.3" nbformat nbconvert "lxml[html_clean]"
 
 .. _Quick installation:
 
@@ -334,7 +402,7 @@ lines below (optional steps which modify the build process are commented out):
     cd build
     cmake ..
     #ccmake . // in order to add/remove features like ScaFaCoS or CUDA
-    make -j
+    make -j$(nproc)
 
 This will build |es| with a default feature set, namely
 :file:`src/config/myconfig-default.hpp`. This file is a C++ header file,
@@ -345,7 +413,7 @@ the :file:`build` directory to :file:`myconfig.hpp` and only uncomment
 the features you want to use in your simulation.
 
 The ``cmake`` command looks for libraries and tools needed by |es|.
-So |es| can only be built if ``cmake`` reports no errors.
+The application can only be built if CMake reports no errors.
 
 The command ``make`` will compile the source code. Depending on the
 options passed to the program, ``make`` can also be used for a number of
@@ -389,13 +457,19 @@ This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
 will negatively affect |es|'s performance.
 
-Features can be activated in the configuration header :file:`myconfig.hpp`
+Most features can be activated in the configuration header :file:`myconfig.hpp`
 (see section :ref:`myconfig.hpp\: Activating and deactivating features`).
 To activate ``FEATURE``, add the following line to the header file:
 
 .. code-block:: c++
 
     #define FEATURE
+
+Some features cannot be manually enabled; they are instead automatically
+enabled when a specific list of dependent features are enabled. For example,
+``DIPOLAR_DIRECT_SUM`` is automatically enabled when ``DIPOLES``, ``ROTATION``
+and ``CUDA`` are enabled. Please note that ``CUDA`` is an external feature
+and can only be enabled via a CMake option (see :ref:`External features`).
 
 
 .. _General features:
@@ -406,10 +480,6 @@ General features
 -  ``ELECTROSTATICS`` This enables the use of the various electrostatics algorithms, such as P3M.
 
    .. seealso:: :ref:`Electrostatics`
-
--  ``MMM1D_GPU``: This enables MMM1D on GPU. It is faster than the CPU version
-   by several orders of magnitude, but has float precision instead of double
-   precision.
 
 -  ``MMM1D_MACHINE_PREC``: This enables high-precision Bessel functions
    for MMM1D on CPU. Comes with a 60% slow-down penalty. The low-precision
@@ -424,6 +494,9 @@ General features
 
 -  ``DIPOLAR_DIRECT_SUM`` This activates the GPU implementation of the dipolar direct sum.
 
+-  ``DIPOLE_FIELD_TRACKING`` This enables the CPU implementation of the dipolar direct sum
+   to calculate the total dipole field at particle positions.
+
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
    the corresponding quaternion integrator.
 
@@ -437,25 +510,31 @@ General features
 -  ``THERMOSTAT_PER_PARTICLE`` Allows setting a per-particle friction
    coefficient for the Langevin and Brownian thermostats.
 
--  ``ROTATIONAL_INERTIA``
+-  ``ROTATIONAL_INERTIA`` Allows particles to have individual rotational inertia matrix eigenvalues.
+   When not built in, all eigenvalues are unity in simulation units.
 
 -  ``EXTERNAL_FORCES`` Allows to define an arbitrary constant force for each particle
    individually. Also allows to fix individual coordinates of particles,
    keep them at a fixed position or within a plane.
 
--  ``MASS`` Allows particles to have individual masses. Note that some analysis
-   procedures have not yet been adapted to take the masses into account
-   correctly.
+-  ``MASS`` Allows particles to have individual masses.
+   When not built in, all masses are unity in simulation units.
 
    .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.mass`
 
--  ``EXCLUSIONS`` Allows to exclude specific short ranged interactions within
-   molecules.
+-  ``EXCLUSIONS`` Allows particle pairs to be excluded from non-bonded interaction calculations.
 
    .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
 
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
+
+-  ``VIRTUAL_SITES`` Allows the creation of pseudo-particles whose forces,
+   torques, and orientations can be transferred to real particles.
+   They don't have mass, and their position is generally
+   fixed in the simulation box or fixed to other particles.
+
+-  ``VIRTUAL_SITES_INERTIALESS_TRACERS`` Allows to use virtual sites as tracers by advecting them with a LB fluid 
 
 -  ``VIRTUAL_SITES_RELATIVE`` Virtual sites are particles, the position and velocity of which is
    not obtained by integrating equations of motion. Rather, they are
@@ -469,14 +548,13 @@ General features
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 
--  ``NPT`` Enables an on-the-fly NpT integration scheme.
+-  ``NPT`` Enables the NpT integration scheme.
 
    .. seealso:: :ref:`Isotropic NpT thermostat`
 
--  ``ENGINE``
+-  ``ENGINE`` Activates swimming parameters for active particles (self-propelled particles)
 
--  ``PARTICLE_ANISOTROPY``
-
+-  ``PARTICLE_ANISOTROPY`` Allows the use of non-isotropic friction coefficients in thermostats.
 
 .. _Fluid dynamics and fluid structure interaction:
 
@@ -487,18 +565,8 @@ Fluid dynamics and fluid structure interaction
 
    .. seealso:: :ref:`DPD interaction`
 
--  ``LB_BOUNDARIES``
-
--  ``LB_BOUNDARIES_GPU``
-
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
    particles and salt ions in an electric field.
-
--  ``ELECTROKINETICS``
-
--  ``EK_BOUNDARIES``
-
--  ``EK_DEBUG``
 
 
 .. _Interaction features:
@@ -562,14 +630,6 @@ Finally, there is a flag for debugging:
    inconsistencies especially in the cell systems. These checks are however
    too slow to be enabled in production runs.
 
-   .. note::
-      Because of a bug in OpenMPI versions 2.0-2.1, 3.0.0-3.0.2 and 3.1.0-3.1.2
-      that causes a segmentation fault when running the |es| OpenGL visualizer
-      with feature ``ADDITIONAL_CHECKS`` enabled together with either
-      ``ELECTROSTATICS`` or ``DIPOLES``, the subset of additional checks for
-      those two features are disabled if an unpatched version of OpenMPI is
-      detected during compilation.
-
 
 .. _External features:
 
@@ -581,22 +641,33 @@ They are added by CMake if the corresponding dependency was found on the
 system. Some of these external features are optional and must be activated
 using a CMake flag (see :ref:`Options and Variables`).
 
-- ``CUDA`` Enables GPU-specific features.
+- ``CUDA``: enable offloading to Nvidia GPUs for features that support it
+  (see :ref:`CUDA acceleration`)
 
-- ``FFTW`` Enables features relying on the fast Fourier transforms, e.g. P3M.
+- ``FFTW``: enables features relying on the fast Fourier transforms,
+  such as the P3M method (see :ref:`Coulomb P3M` and :ref:`Dipolar P3M`)
 
-- ``H5MD`` Write data to H5MD-formatted hdf5 files (see :ref:`Writing H5MD-files`)
+- ``H5MD``: enable parallel input/output to hdf5 files with H5MD specification
+  (see :ref:`Writing hdf5 files`)
 
-- ``SCAFACOS`` Enables features relying on the ScaFaCoS library (see
+- ``WALBERLA``: enable continuum-based solvers: lattice-Boltzmann method,
+  diffusion-advection-reaction equations solver, and Poisson equation solver
+  if ``FFTW`` is enabled (see :ref:`Lattice-Boltzmann` and :ref:`Electrokinetics`)
+
+- ``SCAFACOS``: enables features from the ScaFaCoS library (see
   :ref:`ScaFaCoS electrostatics`, :ref:`ScaFaCoS magnetostatics`).
 
-- ``GSL`` Enables features relying on the GNU Scientific Library, e.g.
+- ``GSL``: enables features relying on the GNU Scientific Library, e.g.
   :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension`.
 
-- ``STOKESIAN_DYNAMICS`` Enables the Stokesian Dynamics feature
+- ``STOKESIAN_DYNAMICS``: enable the Stokesian Dynamics propagator
   (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.
 
+- ``SHARED_MEMORY_PARALLELISM``: enable shared-memory parallelism
+  (OpenMP, Kokkos, Cabana)
 
+- ``CALIPER``, ``VALGRIND``, ``FPE``: enable various instrumentation tools
+  (see :ref:`Instrumentation`)
 
 .. _Configuring:
 
@@ -705,7 +776,7 @@ are ever modified by the build process.
 
     cd build
     cmake ..
-    make -j
+    make -j$(nproc)
 
 Afterwards |es| can be run by calling ``./pypresso`` from the command line.
 
@@ -758,12 +829,15 @@ The following options control features from external libraries:
 * ``ESPRESSO_BUILD_WITH_SCAFACOS``: Build with ScaFaCoS support.
 * ``ESPRESSO_BUILD_WITH_GSL``: Build with GSL support.
 * ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
+* ``ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM``: Build with shared-memory parallelism support (OpenMP, Cabana, Kokkos, etc.)
+* ``ESPRESSO_BUILD_WITH_WALBERLA``: Build with waLBerla support.
+* ``ESPRESSO_BUILD_WITH_WALBERLA_AVX``: Build waLBerla with AVX kernels instead of regular kernels.
 * ``ESPRESSO_BUILD_WITH_PYTHON``: Build with the Python interface.
 
 The following options control code instrumentation:
 
-* ``ESPRESSO_BUILD_WITH_VALGRIND_MARKERS``: Build with valgrind instrumentation markers
-* ``ESPRESSO_BUILD_WITH_PROFILER``: Build with Caliper profiler annotations
+* ``ESPRESSO_BUILD_WITH_VALGRIND``: Build with Valgrind instrumentation
+* ``ESPRESSO_BUILD_WITH_CALIPER``: Build with Caliper instrumentation
 * ``ESPRESSO_BUILD_WITH_MSAN``: Compile C++ code with memory sanitizer
 * ``ESPRESSO_BUILD_WITH_ASAN``: Compile C++ code with address sanitizer
 * ``ESPRESSO_BUILD_WITH_UBSAN``: Compile C++ code with undefined behavior sanitizer
@@ -777,7 +851,7 @@ The following options control how the project is built and tested:
 * ``ESPRESSO_BUILD_WITH_CCACHE``: Enable compiler cache for faster rebuilds.
 * ``ESPRESSO_BUILD_TESTS``: Enable C++ and Python tests.
 * ``ESPRESSO_BUILD_BENCHMARKS``: Enable benchmarks.
-* ``ESPRESSO_CTEST_ARGS`` (string): Arguments passed to the ``ctest`` command.
+* ``ESPRESSO_CTEST_ARGS`` (string): Arguments passed to the ``ctest`` command (semicolon-separated list).
 * ``ESPRESSO_TEST_TIMEOUT``: Test timeout.
 * ``ESPRESSO_ADD_OMPI_SINGLETON_WARNING``: Add a runtime warning in the
   pypresso and ipypresso scripts that is triggered in singleton mode
@@ -804,12 +878,13 @@ When an option is enabled, additional options may become available.
 For example with ``-D ESPRESSO_BUILD_TESTS=ON``, one can specify
 the CTest parameters with ``-D ESPRESSO_CTEST_ARGS=-j$(nproc)``.
 
-Environment variables can be passed to CMake. For example, to select Clang, use
-``CC=clang CXX=clang++ CUDACXX=clang++ cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``.
-If you have multiple versions of the CUDA library installed, you can select the
-correct one with ``CUDA_BIN_PATH=/usr/local/cuda-11.5 cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
-(with Clang as the CUDA compiler, you also need to override its default CUDA
-path with ``-D CMAKE_CUDA_FLAGS=--cuda-path=/usr/local/cuda-11.5``).
+Environment variables can be passed to CMake. For example, to select the Clang
+compiler and specify which GPU architectures to generate device code for, use
+``CC=clang CXX=clang++ CUDACXX=clang++ CUDAARCHS="61;75" cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``.
+When multiple versions of the CUDA library are available, the correct one can be
+selected with ``CUDA_BIN_PATH=/usr/local/cuda-12.0 cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
+(with Clang as the CUDA compiler, it is also necessary to override its default
+CUDA path with ``-D CMAKE_CUDA_FLAGS=--cuda-path=/usr/local/cuda-12.0``).
 
 .. _Build types and compiler flags:
 
@@ -852,31 +927,19 @@ Configuring without a network connection
 Several :ref:`external features <External features>` in |es| rely on
 external libraries that are downloaded automatically by CMake. When a
 network connection cannot be established due to firewall restrictions,
-the CMake logic needs editing:
+the CMake logic needs editing.
 
-* ``ESPRESSO_BUILD_WITH_HDF5``: when cloning |es|, the :file:`libs/h5xx` folder
-  will be a git submodule containing a :file:`.git` subfolder. To prevent CMake
-  from updating this submodule with git, delete the corresponding command with:
+External libraries are downloaded and included into the CMake project using
+`FetchContent <https://cmake.org/cmake/help/latest/module/FetchContent.html>`__.
+The repository URLs can be found in the ``GIT_REPOSITORY`` field of the
+corresponding ``FetchContent_Declare()`` commands. The ``GIT_TAG`` field
+provides the commit. Clone these repositories locally and edit the |es|
+build system such that ``GIT_REPOSITORY`` points to the absolute path of
+the clone. You can automate this text substitution by adapting the following command:
 
-  .. code-block:: bash
+.. code-block:: bash
 
-    sed -i '/execute_process(COMMAND ${GIT_EXECUTABLE} submodule update -- libs\/h5xx/,+1 d' CMakeLists.txt
-
-  When installing a release version of |es|, no network communication
-  is needed for HDF5.
-
-* ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS``: this library is installed using
-  `FetchContent <https://cmake.org/cmake/help/latest/module/FetchContent.html>`__.
-  The repository URL can be found in the ``GIT_REPOSITORY`` field of the
-  corresponding ``FetchContent_Declare()`` command. The ``GIT_TAG`` field
-  provides the commit. Clone this repository locally next to the |es|
-  folder and edit the |es| build system such that ``GIT_REPOSITORY`` points
-  to the absolute path of the Stokesian Dynamics clone, for example with:
-
-  .. code-block:: bash
-
-    sed -ri 's|GIT_REPOSITORY +.+stokesian-dynamics.git|GIT_REPOSITORY /work/username/stokesian_dynamics|' CMakeLists.txt
-
+   sed -ri 's|GIT_REPOSITORY +.+/([^/]+).git|GIT_REPOSITORY /work/username/\1|' CMakeLists.txt
 
 Compiling, testing and installing
 ---------------------------------
@@ -893,12 +956,11 @@ When no target is given, the target ``all`` is used. The following
 targets are available:
 
 ``all``
-    Compiles the complete source code. The variable can be used to
-    specify the name of the configuration header to be used.
+    Compiles the complete source code.
 
 ``check``
-    Runs the testsuite. By default, all available tests will be run on
-    1, 2, 3, 4, 6, or 8 processors.
+    Runs the full testsuite. More fine-grained testsuites are available,
+    such as ``check_unit_tests`` and ``check_python_skip_long``.
 
 ``test``
     Do not use this target, it is a broken feature
@@ -944,50 +1006,8 @@ Troubleshooting
 
 If you encounter issues when building |es| or running it for the first time,
 please have a look at the `Installation FAQ <https://github.com/espressomd/espresso/wiki/Installation-FAQ>`__
-on the wiki. If you still didn't find an answer, see :ref:`Community support`.
-
-Many algorithms require parameters that must be provided within valid ranges.
-Range checks are implemented to catch invalid input values and generate
-meaningful error messages, however these checks cannot always catch errors
-arising from an invalid combination of two or more features. If you encounter
-issues with a script, you can activate extra runtime checks by enabling C++
-assertions. This is achieved by updating the CMake project and rebuilding
-|es| with:
-
-.. code-block:: bash
-
-    cmake . -D CMAKE_BUILD_TYPE=RelWithAssert
-    make -j
-
-The resulting build will run slightly slower, but will produce an error
-message for common issues, such as divisions by zero, array access out
-of bounds, or square roots of negative numbers.
-
-If this still doesn't help, you can activate debug symbols to help with
-instrumentation:
-
-.. code-block:: bash
-
-    cmake . -D CMAKE_BUILD_TYPE=Debug
-    make -j
-
-The resulting build will be quite slow but will allow many debugging tools
-to be used. For details, please refer to chapter :ref:`Debugging es`.
-
-If you are dealing with a segmentation fault or undefined behavior, and GDB
-doesn't help or is too cumbersome to use (e.g. in MPI-parallel simulations),
-you can as a last resort activate sanitizers:
-
-.. code-block:: bash
-
-    cmake . -D ESPRESSO_BUILD_WITH_ASAN=ON -D ESPRESSO_BUILD_WITH_UBSAN=ON -D CMAKE_BUILD_TYPE=Release
-    make -j
-
-The resulting build will be around 5 times slower that a debug build,
-but it will generate valuable reports when detecting fatal exceptions.
-For more details, please consult the online documentation of
-`UBSAN <https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html>`__ and
-`ASAN <https://github.com/google/sanitizers/wiki/AddressSanitizer>`__.
+on the wiki. If you still didn't find an answer, try the debugging tools
+documented in :ref:`Debugging`. If this still didn't help, see :ref:`Community support`.
 
 ____
 
@@ -1005,3 +1025,24 @@ ____
 
 .. [5]
    https://www.fftw.org/
+
+.. [6]
+   https://docs.nvidia.com/cuda/
+
+.. [7]
+   https://docs.python.org/3/library/venv.html
+
+.. [8]
+   https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+
+.. [9]
+   https://docs.astral.sh/uv/
+
+.. [10]
+   https://developer.apple.com/xcode/
+
+.. [11]
+   https://mac.r-project.org/openmp/
+
+.. [12]
+   https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/

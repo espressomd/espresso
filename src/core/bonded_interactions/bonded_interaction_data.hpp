@@ -16,12 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BN_IA_BONDED_INTERACTION_DATA_HPP
-#define CORE_BN_IA_BONDED_INTERACTION_DATA_HPP
+
+#pragma once
+
 /** @file
  *  Data structures for bonded interactions.
  *  For more information on how to add new interactions, see @ref bondedIA_new.
  */
+
+#include <config/config.hpp>
 
 #include "angle_common.hpp"
 #include "angle_cosine.hpp"
@@ -42,75 +45,58 @@
 #include "rigid_bond.hpp"
 #include "thermalized_bond.hpp"
 
+#include "BondList.hpp"
 #include "TabulatedPotential.hpp"
-
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/variant.hpp>
-#include <boost/variant.hpp>
+#include "system/Leaf.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <optional>
 #include <stdexcept>
 #include <unordered_map>
+#include <variant>
 #include <vector>
-
-/* Special cutoff value for a disabled bond.
- * Bonds that have this cutoff are not visited during bond evaluation.
- */
-static constexpr double BONDED_INACTIVE_CUTOFF = -1.;
 
 /** Interaction type for unused bonded interaction slots */
 struct NoneBond {
   static constexpr int num = 0;
-  double cutoff() const { return BONDED_INACTIVE_CUTOFF; }
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive> void serialize(Archive &, long int) {}
+  double cutoff() const { return bonded_inactive_cutoff; }
 };
 
 /** Interaction type for virtual bonds */
 struct VirtualBond {
   static constexpr int num = 1;
-  double cutoff() const { return BONDED_INACTIVE_CUTOFF; }
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive> void serialize(Archive &, long int) {}
-};
-
-/** Visitor to get the number of bound partners from the bond parameter
- *  variant.
- */
-class BondNumPartners : public boost::static_visitor<int> {
-public:
-  template <typename T> int operator()(T const &) const { return T::num; }
+  double cutoff() const { return bonded_inactive_cutoff; }
 };
 
 /** Variant in which to store the parameters of an individual bonded
  *  interaction
  */
 using Bonded_IA_Parameters =
-    boost::variant<NoneBond, FeneBond, HarmonicBond, QuarticBond, BondedCoulomb,
-                   BondedCoulombSR, AngleHarmonicBond, AngleCosineBond,
-                   AngleCossquareBond, DihedralBond, TabulatedDistanceBond,
-                   TabulatedAngleBond, TabulatedDihedralBond, ThermalizedBond,
-                   RigidBond, IBMTriel, IBMVolCons, IBMTribend,
-                   OifGlobalForcesBond, OifLocalForcesBond, VirtualBond>;
+    std::variant<NoneBond, FeneBond, HarmonicBond, QuarticBond, BondedCoulomb,
+                 BondedCoulombSR, AngleHarmonicBond, AngleCosineBond,
+                 AngleCossquareBond, DihedralBond, TabulatedDistanceBond,
+                 TabulatedAngleBond, TabulatedDihedralBond, ThermalizedBond,
+                 RigidBond, IBMTriel, IBMVolCons, IBMTribend,
+                 OifGlobalForcesBond, OifLocalForcesBond, VirtualBond>;
 
-class BondedInteractionsMap {
+/**
+ * @brief container for bonded interactions.
+ */
+class BondedInteractionsMap : public System::Leaf<BondedInteractionsMap> {
   using container_type =
       std::unordered_map<int, std::shared_ptr<Bonded_IA_Parameters>>;
 
 public:
-  using key_type = typename container_type::key_type;
-  using mapped_type = typename container_type::mapped_type;
-  using value_type = typename container_type::value_type;
-  using iterator = typename container_type::iterator;
-  using const_iterator = typename container_type::const_iterator;
+  using key_type = container_type::key_type;
+  using mapped_type = container_type::mapped_type;
+  using value_type = container_type::value_type;
+  using iterator = container_type::iterator;
+  using const_iterator = container_type::const_iterator;
 
-  explicit BondedInteractionsMap() = default;
+  BondedInteractionsMap() = default;
+  virtual ~BondedInteractionsMap() = default;
 
   iterator begin() { return m_params.begin(); }
   iterator end() { return m_params.end(); }
@@ -118,53 +104,123 @@ public:
   const_iterator end() const { return m_params.end(); }
 
   void insert(key_type const &key, mapped_type const &ptr) {
+    if (m_params.contains(key)) {
+      deactivate_bond(m_params.at(key));
+    }
+    activate_bond(ptr);
     next_key = std::max(next_key, key + 1);
     m_params[key] = ptr;
+    on_ia_change();
   }
   key_type insert(mapped_type const &ptr) {
+    activate_bond(ptr);
     auto const key = next_key++;
     m_params[key] = ptr;
+    on_ia_change();
     return key;
   }
-  auto erase(key_type const &key) { return m_params.erase(key); }
+  auto erase(key_type const &key) {
+    if (m_params.contains(key)) {
+      deactivate_bond(m_params.at(key));
+    }
+    auto &&obj = m_params.erase(key);
+    on_ia_change();
+    return obj;
+  }
+  virtual void activate_bond(mapped_type const &ptr);
+  virtual void deactivate_bond(mapped_type const &ptr);
   mapped_type at(key_type const &key) const { return m_params.at(key); }
-  auto count(key_type const &key) const { return m_params.count(key); }
-  bool contains(key_type const &key) const { return m_params.count(key); }
+  bool contains(key_type const &key) const { return m_params.contains(key); }
   bool empty() const { return m_params.empty(); }
   auto size() const { return m_params.size(); }
   auto get_next_key() const { return next_key; }
   auto get_zero_based_type(int bond_id) const {
-    return contains(bond_id) ? at(bond_id)->which() : 0;
+    return contains(bond_id) ? static_cast<int>(at(bond_id)->index()) : 0;
   }
+  auto get_n_thermalized_bonds() const {
+    assert(n_thermalized_bonds >= 0);
+    return n_thermalized_bonds;
+  }
+#ifdef ESPRESSO_BOND_CONSTRAINT
+  auto get_n_rigid_bonds() const {
+    assert(n_rigid_bonds >= 0);
+    return n_rigid_bonds;
+  }
+#endif
+  std::optional<key_type> find_bond_id(mapped_type const &target_bond) const {
+    for (auto const &[bond_id, bond] : m_params) {
+      if (bond == target_bond) {
+        return bond_id;
+      }
+    }
+    return std::nullopt;
+  }
+
+  /**
+   * @brief Calculate the maximal cutoff of bonded interactions, required to
+   * determine the cell size for communication.
+   *
+   * Bond angle and dihedral potentials do not contain a cutoff intrinsically.
+   * The cutoff for these potentials depends on the bond length potentials
+   * (it is assumed that particles participating in a bond angle or dihedral
+   * potential are bound to each other by some bond length potential). For bond
+   * angle potentials nothing has to be done. For dihedral potentials the cutoff
+   * is set to twice the maximal cutoff because the particle in which the bond
+   * is stored is only bonded to the first two partners, one of which has an
+   * additional bond to the third partner.
+   */
+  double maximal_cutoff() const;
+
+  /**
+   * @brief Checks both particles for a specific bond, even on ghost particles.
+   *
+   * @param p           particle to check for the bond
+   * @param p_partner   possible bond partner
+   * @tparam BondType   Bond type to check for. Must be of one of the types in
+   *                    @ref Bonded_IA_Parameters.
+   */
+  template <typename BondType>
+  bool pair_bond_exists_on(Particle const &p, Particle const &p_partner) const {
+    auto const &bonds = p.bonds();
+    return std::any_of(
+        bonds.begin(), bonds.end(),
+        [this, partner_id = p_partner.id()](BondView const &bond) {
+          auto const &bond_ptr = at(bond.bond_id());
+          return std::holds_alternative<BondType>(*bond_ptr.get()) and
+                 (bond.partner_ids()[0] == partner_id);
+        });
+  }
+
+  /**
+   * @brief Checks both particles for a specific bond, even on ghost particles.
+   *
+   * @param p1     particle on which the bond may be stored
+   * @param p2     particle on which the bond may be stored
+   * @tparam BondType Bond type to check for.
+   */
+  template <typename BondType>
+  bool pair_bond_exists_between(Particle const &p1, Particle const &p2) const {
+    if (&p1 == &p2)
+      return false;
+
+    // Check if particles have bonds and search for the bond of interest.
+    // Could be saved on either particle, so we need to check both.
+    return pair_bond_exists_on<BondType>(p1, p2) or
+           pair_bond_exists_on<BondType>(p2, p1);
+  }
+
+  void on_ia_change();
 
 private:
   container_type m_params = {};
   key_type next_key = static_cast<key_type>(0);
+  int n_thermalized_bonds = 0;
+#ifdef ESPRESSO_BOND_CONSTRAINT
+  int n_rigid_bonds = 0;
+#endif
 };
 
-/** Notify the cell system about changes to the maximal interaction range. */
-void mpi_update_cell_system_ia_range_local();
-
-/** Field containing the parameters of the bonded ia types */
-extern BondedInteractionsMap bonded_ia_params;
-
-/** Calculate the maximal cutoff of bonded interactions, required to
- *  determine the cell size for communication.
- *
- *  Bond angle and dihedral potentials do not contain a cutoff intrinsically.
- *  The cutoff for these potentials depends on the bond length potentials
- *  (it is assumed that particles participating in a bond angle or dihedral
- *  potential are bound to each other by some bond length potential). For bond
- *  angle potentials nothing has to be done. For dihedral potentials the cutoff
- *  is set to twice the maximal cutoff because the particle in which the bond
- *  is stored is only bonded to the first two partners, one of which has an
- *  additional bond to the third partner.
- */
-double maximal_cutoff_bonded();
-
-/** Return the number of bonded partners for the specified bond */
+/** @brief Get the number of bonded partners for the specified bond. */
 inline int number_of_partners(Bonded_IA_Parameters const &iaparams) {
-  return boost::apply_visitor(BondNumPartners(), iaparams);
+  return std::visit([]<typename T>(T const &) { return T::num; }, iaparams);
 }
-
-#endif

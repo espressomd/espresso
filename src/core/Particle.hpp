@@ -16,12 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_CORE_PARTICLE_HPP
-#define ESPRESSO_CORE_PARTICLE_HPP
 
-#include "config/config.hpp"
+#pragma once
+
+#include <config/config.hpp>
 
 #include "BondList.hpp"
+#include "PropagationMode.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/compact_vector.hpp>
@@ -34,43 +35,31 @@
 #include <boost/serialization/vector.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cstdint>
 #include <vector>
 
 namespace detail {
-inline void check_axis_idx_valid(int const axis) {
-  assert(axis >= 0 and axis <= 2);
-}
-
-inline bool get_nth_bit(uint8_t const bitfield, int const bit_idx) {
+inline bool get_nth_bit(uint8_t const bitfield, unsigned int const bit_idx) {
   return bitfield & (1u << bit_idx);
 }
 } // namespace detail
 
+#ifdef ESPRESSO_ENGINE
 /** Properties of a self-propelled particle. */
 struct ParticleParametersSwimming {
-  /** Is the particle a swimmer. */
-  bool swimming = false;
   /** Imposed constant force. */
   double f_swim = 0.;
-  /** Constant velocity to relax to. */
-  double v_swim = 0.;
-  /** Flag for the swimming mode in a LB fluid.
-   *  Values:
-   *  - -1: pusher
-   *  - +1: puller
-   *  - 0: no swimming
-   */
-  int push_pull = 0;
-  /** Distance of the source of propulsion from the particle
-   *  center in a LB fluid.
-   */
-  double dipole_length = 0.;
+  /** Is the particle a swimmer. */
+  bool swimming = false;
+  /** Whether f_swim is applied to the particle or to the fluid. */
+  bool is_engine_force_on_fluid = false;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar & swimming & f_swim & v_swim & push_pull & dipole_length;
+    ar & f_swim & swimming & is_engine_force_on_fluid;
   }
 };
+#endif
 
 /** Properties of a particle which are not supposed to
  *  change during the integration, but have to be known
@@ -85,15 +74,10 @@ struct ParticleProperties {
   int mol_id = 0;
   /** particle type, used for non-bonded interactions. */
   int type = 0;
+  /** which propagation schemes should be applied to the particle **/
+  int propagation = PropagationMode::SYSTEM_DEFAULT;
 
-#ifdef VIRTUAL_SITES
-  /** is particle virtual */
-  bool is_virtual = false;
-#else  // VIRTUAL_SITES
-  static constexpr bool is_virtual = false;
-#endif // VIRTUAL_SITES
-
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   /** Bitfield for the particle axes of rotation.
    *  Values:
    *  - 0: no rotation
@@ -108,7 +92,7 @@ struct ParticleProperties {
   static constexpr uint8_t rotation = static_cast<uint8_t>(0b000u);
 #endif
 
-#ifdef EXTERNAL_FORCES
+#ifdef ESPRESSO_EXTERNAL_FORCES
   /** Flag for fixed particle coordinates.
    *  Values:
    *  - 0: no fixed coordinates
@@ -117,43 +101,43 @@ struct ParticleProperties {
    *  - 4: fix translation along the z axis
    */
   uint8_t ext_flag = static_cast<uint8_t>(0b000u);
-#else  // EXTERNAL_FORCES
+#else  // ESPRESSO_EXTERNAL_FORCES
   /** Bitfield for fixed particle coordinates. Coordinates cannot be fixed. */
   static constexpr uint8_t ext_flag = static_cast<uint8_t>(0b000u);
-#endif // EXTERNAL_FORCES
+#endif // ESPRESSO_EXTERNAL_FORCES
 
   /** particle mass */
-#ifdef MASS
+#ifdef ESPRESSO_MASS
   double mass = 1.0;
 #else
   constexpr static double mass{1.0};
 #endif
 
   /** rotational inertia */
-#ifdef ROTATIONAL_INERTIA
+#ifdef ESPRESSO_ROTATIONAL_INERTIA
   Utils::Vector3d rinertia = {1., 1., 1.};
 #else
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
 #endif
 
   /** charge. */
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   double q = 0.0;
 #else
   constexpr static double q{0.0};
 #endif
 
-#ifdef LB_ELECTROHYDRODYNAMICS
+#ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
   /** electrophoretic mobility times E-field: mu_0 * E */
   Utils::Vector3d mu_E = {0., 0., 0.};
 #endif
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   /** dipole moment (absolute value) */
   double dipm = 0.;
 #endif
 
-#ifdef DIPSUS
+#ifdef THERMAL_STONER_WOHLFARTH
   /** value of total dipole field at part */
   Utils::Vector3d dip_fld = {0., 0., 0.};
   /** boolean flags used to tell SW solver which particle is real and carries
@@ -180,7 +164,13 @@ struct ParticleProperties {
 
 #endif
 
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  /** total dipole field */
+  Utils::Vector3d dip_fld = {0., 0., 0.};
+#endif
+
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
+
   /** The following properties define, with respect to which real particle a
    *  virtual site is placed and at what distance. The relative orientation of
    *  the vector pointing from real particle to virtual site with respect to the
@@ -188,7 +178,7 @@ struct ParticleProperties {
    *  quaternion attribute.
    */
   struct VirtualSitesRelativeParameters {
-    int to_particle_id = 0;
+    int to_particle_id = -1;
     double distance = 0.;
     /** Relative position of the virtual site. */
     Utils::Quaternion<double> rel_orientation =
@@ -203,35 +193,35 @@ struct ParticleProperties {
       ar & quat;
     }
   } vs_relative;
-#endif // VIRTUAL_SITES_RELATIVE
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 
-#ifdef THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
 /** Friction coefficient for translation */
-#ifndef PARTICLE_ANISOTROPY
+#ifndef ESPRESSO_PARTICLE_ANISOTROPY
   double gamma = -1.;
 #else
   Utils::Vector3d gamma = {-1., -1., -1.};
-#endif // PARTICLE_ANISOTROPY
-#ifdef ROTATION
+#endif // ESPRESSO_PARTICLE_ANISOTROPY
+#ifdef ESPRESSO_ROTATION
 /** Friction coefficient for rotation */
-#ifndef PARTICLE_ANISOTROPY
+#ifndef ESPRESSO_PARTICLE_ANISOTROPY
   double gamma_rot = -1.;
 #else
   Utils::Vector3d gamma_rot = {-1., -1., -1.};
-#endif // PARTICLE_ANISOTROPY
-#endif // ROTATION
-#endif // THERMOSTAT_PER_PARTICLE
+#endif // ESPRESSO_PARTICLE_ANISOTROPY
+#endif // ESPRESSO_ROTATION
+#endif // ESPRESSO_THERMOSTAT_PER_PARTICLE
 
-#ifdef EXTERNAL_FORCES
+#ifdef ESPRESSO_EXTERNAL_FORCES
   /** External force. */
   Utils::Vector3d ext_force = {0., 0., 0.};
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   /** External torque. */
   Utils::Vector3d ext_torque = {0., 0., 0.};
-#endif // ROTATION
-#endif // EXTERNAL_FORCES
+#endif // ESPRESSO_ROTATION
+#endif // ESPRESSO_EXTERNAL_FORCES
 
-#ifdef ENGINE
+#ifdef ESPRESSO_ENGINE
   ParticleParametersSwimming swim;
 #endif
 
@@ -239,26 +229,34 @@ struct ParticleProperties {
     ar & identity;
     ar & mol_id;
     ar & type;
-#ifdef MASS
+    ar & propagation;
+
+#ifdef ESPRESSO_MASS
     ar & mass;
 #endif
-#ifdef ROTATIONAL_INERTIA
+#ifdef ESPRESSO_ROTATIONAL_INERTIA
     ar & rinertia;
 #endif
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     ar & rotation;
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
     ar & q;
 #endif
 
-#ifdef LB_ELECTROHYDRODYNAMICS
+#ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
     ar & mu_E;
 #endif
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
     ar & dipm;
 #endif
-#ifdef DIPSUS
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    ar & dip_fld;
+#endif
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
+    ar & vs_relative;
+#endif
+#ifdef THERMAL_STONER_WOHLFARTH
     ar & dip_fld;
     ar & sw_real;
     ar & sw_virt;
@@ -269,31 +267,21 @@ struct ParticleProperties {
     ar & tau0_inv;
     ar & tau_trans_inv;
 
-    ar & dt_incr;
-
-#endif
-#ifdef VIRTUAL_SITES
-    ar & is_virtual;
-#ifdef VIRTUAL_SITES_RELATIVE
-    ar & vs_relative;
-#endif
-#endif // VIRTUAL_SITES
-
-#ifdef THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
     ar & gamma;
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     ar & gamma_rot;
 #endif
-#endif // THERMOSTAT_PER_PARTICLE
-#ifdef EXTERNAL_FORCES
+#endif // ESPRESSO_THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_EXTERNAL_FORCES
     ar & ext_flag;
     ar & ext_force;
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     ar & ext_torque;
 #endif
-#endif // EXTERNAL_FORCES
+#endif // ESPRESSO_EXTERNAL_FORCES
 
-#ifdef ENGINE
+#ifdef ESPRESSO_ENGINE
     ar & swim;
 #endif
   }
@@ -305,8 +293,10 @@ struct ParticleProperties {
 struct ParticlePosition {
   /** periodically folded position. */
   Utils::Vector3d p = {0., 0., 0.};
+  /** index of the simulation box image where the particle really sits. */
+  Utils::Vector3i i = {0, 0, 0};
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   /** quaternion to define particle orientation */
   Utils::Quaternion<double> quat = Utils::Quaternion<double>::identity();
   /** unit director calculated from the quaternion */
@@ -315,17 +305,18 @@ struct ParticlePosition {
   }
 #endif
 
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   /** particle position at the previous time step (RATTLE algorithm) */
   Utils::Vector3d p_last_timestep = {0., 0., 0.};
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar & p;
-#ifdef ROTATION
+    ar & i;
+#ifdef ESPRESSO_ROTATION
     ar & quat;
 #endif
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
     ar & p_last_timestep;
 #endif
   }
@@ -339,35 +330,37 @@ struct ParticleForce {
   ParticleForce(ParticleForce const &) = default;
   ParticleForce &operator=(ParticleForce const &) = default;
   ParticleForce(const Utils::Vector3d &f) : f(f) {}
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   ParticleForce(const Utils::Vector3d &f, const Utils::Vector3d &torque)
       : f(f), torque(torque) {}
 #endif
 
   friend ParticleForce operator+(ParticleForce const &lhs,
                                  ParticleForce const &rhs) {
-#ifdef ROTATION
-    return {lhs.f + rhs.f, lhs.torque + rhs.torque};
-#else
-    return lhs.f + rhs.f;
-#endif
+    ParticleForce result = lhs;
+    result += rhs;
+    return result;
   }
 
   ParticleForce &operator+=(ParticleForce const &rhs) {
-    return *this = *this + rhs;
+    f += rhs.f;
+#ifdef ESPRESSO_ROTATION
+    torque += rhs.torque;
+#endif
+    return *this;
   }
 
   /** force. */
   Utils::Vector3d f = {0., 0., 0.};
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   /** torque. */
   Utils::Vector3d torque = {0., 0., 0.};
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar & f;
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     ar & torque;
 #endif
   }
@@ -381,7 +374,7 @@ struct ParticleMomentum {
   /** velocity. */
   Utils::Vector3d v = {0., 0., 0.};
 
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   /** angular velocity.
    *  ALWAYS IN PARTICLE FIXED, I.E., CO-ROTATING COORDINATE SYSTEM.
    */
@@ -390,7 +383,7 @@ struct ParticleMomentum {
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar & v;
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     ar & omega;
 #endif
   }
@@ -403,8 +396,6 @@ struct ParticleLocal {
   /** is particle a ghost particle. */
   bool ghost = false;
   short int lees_edwards_flag = 0;
-  /** index of the simulation box image where the particle really sits. */
-  Utils::Vector3i i = {0, 0, 0};
   /** position from the last Verlet list update. */
   Utils::Vector3d p_old = {0., 0., 0.};
   /** Accumulated applied Lees-Edwards offset. */
@@ -413,13 +404,12 @@ struct ParticleLocal {
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar & ghost;
     ar & lees_edwards_flag;
-    ar & i;
     ar & p_old;
     ar & lees_edwards_offset;
   }
 };
 
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
 struct ParticleRattle {
   /** position/velocity correction */
   Utils::Vector3d correction = {0., 0., 0.};
@@ -441,26 +431,17 @@ struct ParticleRattle {
 
 /** Struct holding all information for one particle. */
 struct Particle { // NOLINT(bugprone-exception-escape)
-  ///
-  ParticleProperties p;
-  ///
-  ParticlePosition r;
-  ///
-  ParticleMomentum m;
-  ///
-  ParticleForce f;
-  ///
-  ParticleLocal l;
-
 private:
-#ifdef BOND_CONSTRAINT
-  ///
+  ParticleProperties p;
+  ParticlePosition r;
+  ParticleMomentum m;
+  ParticleForce f;
+  ParticleLocal l;
+#ifdef ESPRESSO_BOND_CONSTRAINT
   ParticleRattle rattle;
 #endif
-
   BondList bl;
-
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
   /** list of particles, with which this particle has no non-bonded
    *  interactions
    */
@@ -475,6 +456,9 @@ public:
   auto const &type() const { return p.type; }
   auto &type() { return p.type; }
 
+  auto const &propagation() const { return p.propagation; }
+  auto &propagation() { return p.propagation; }
+
   bool operator==(Particle const &rhs) const { return id() == rhs.id(); }
 
   bool operator!=(Particle const &rhs) const { return id() != rhs.id(); }
@@ -488,34 +472,36 @@ public:
   auto &v() { return m.v; }
   auto const &force() const { return f.f; }
   auto &force() { return f.f; }
+  auto const &force_and_torque() const { return f; }
+  auto &force_and_torque() { return f; }
 
   bool is_ghost() const { return l.ghost; }
   void set_ghost(bool const ghost_flag) { l.ghost = ghost_flag; }
   auto &pos_at_last_verlet_update() { return l.p_old; }
   auto const &pos_at_last_verlet_update() const { return l.p_old; }
-  auto const &image_box() const { return l.i; }
-  auto &image_box() { return l.i; }
+  auto const &image_box() const { return r.i; }
+  auto &image_box() { return r.i; }
   auto const &lees_edwards_offset() const { return l.lees_edwards_offset; }
   auto &lees_edwards_offset() { return l.lees_edwards_offset; }
   auto const &lees_edwards_flag() const { return l.lees_edwards_flag; }
   auto &lees_edwards_flag() { return l.lees_edwards_flag; }
 
-#ifdef MASS
+#ifdef ESPRESSO_MASS
   auto const &mass() const { return p.mass; }
   auto &mass() { return p.mass; }
 #else
   constexpr auto &mass() const { return p.mass; }
 #endif
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
+  auto const &rotation() const { return p.rotation; }
   auto &rotation() { return p.rotation; }
-  auto rotation() const { return p.rotation; }
   bool can_rotate() const { return static_cast<bool>(p.rotation); }
-  bool can_rotate_around(int const axis) const {
-    detail::check_axis_idx_valid(axis);
+  bool can_rotate_around(unsigned int const axis) const {
+    assert(axis <= 2u);
     return detail::get_nth_bit(p.rotation, axis);
   }
-  void set_can_rotate_around(int const axis, bool const rot_flag) {
-    detail::check_axis_idx_valid(axis);
+  void set_can_rotate_around(unsigned int const axis, bool const rot_flag) {
+    assert(axis <= 2u);
     if (rot_flag) {
       p.rotation |= static_cast<uint8_t>(1u << axis);
     } else {
@@ -532,21 +518,21 @@ public:
   auto &torque() { return f.torque; }
   auto const &omega() const { return m.omega; }
   auto &omega() { return m.omega; }
-#ifdef EXTERNAL_FORCES
+#ifdef ESPRESSO_EXTERNAL_FORCES
   auto const &ext_torque() const { return p.ext_torque; }
   auto &ext_torque() { return p.ext_torque; }
-#endif // EXTERNAL_FORCES
+#endif // ESPRESSO_EXTERNAL_FORCES
   auto calc_director() const { return r.calc_director(); }
-#else  // ROTATION
-  bool can_rotate() const { return false; }
-  bool can_rotate_around(int const axis) const { return false; }
-#endif // ROTATION
-#ifdef DIPOLES
+#else  // ESPRESSO_ROTATION
+  auto can_rotate() const { return false; }
+  auto can_rotate_around(unsigned int const) const { return false; }
+#endif // ESPRESSO_ROTATION
+#ifdef ESPRESSO_DIPOLES
   auto const &dipm() const { return p.dipm; }
   auto &dipm() { return p.dipm; }
   auto calc_dip() const { return calc_director() * dipm(); }
 #endif
-#ifdef DIPSUS
+#ifdef THERMAL_STONER_WOHLFARTH
   auto const &dip_fld() const { return p.dip_fld; }
   auto &dip_fld() { return p.dip_fld; }
   bool sw_real() const { return p.sw_real; }
@@ -566,46 +552,53 @@ public:
   auto const &dt_incr() const { return p.dt_incr; }
   auto &dt_incr() { return p.dt_incr; }
 #endif
-#ifdef ROTATIONAL_INERTIA
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  auto const &dip_fld() const { return p.dip_fld; }
+  auto &dip_fld() { return p.dip_fld; }
+#endif
+#ifdef ESPRESSO_ROTATIONAL_INERTIA
   auto const &rinertia() const { return p.rinertia; }
   auto &rinertia() { return p.rinertia; }
 #else
   constexpr auto &rinertia() const { return p.rinertia; }
 #endif
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   auto const &q() const { return p.q; }
   auto &q() { return p.q; }
 #else
   constexpr auto &q() const { return p.q; }
 #endif
-#ifdef LB_ELECTROHYDRODYNAMICS
+#ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
   auto const &mu_E() const { return p.mu_E; }
   auto &mu_E() { return p.mu_E; }
 #endif
-#ifdef VIRTUAL_SITES
-  bool &virtual_flag() { return p.is_virtual; }
-  bool is_virtual() const { return p.is_virtual; }
-  void set_virtual(bool const virt_flag) { p.is_virtual = virt_flag; }
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES
+  auto is_virtual() const {
+    return (p.propagation & (PropagationMode::TRANS_VS_RELATIVE |
+                             PropagationMode::ROT_VS_RELATIVE |
+                             PropagationMode::TRANS_LB_TRACER)) != 0;
+  }
+#else
+  constexpr auto is_virtual() const { return false; }
+#endif // ESPRESSO_VIRTUAL_SITES
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   auto const &vs_relative() const { return p.vs_relative; }
   auto &vs_relative() { return p.vs_relative; }
-#endif // VIRTUAL_SITES_RELATIVE
-#else
-  constexpr auto is_virtual() const { return p.is_virtual; }
-#endif
-#ifdef THERMOSTAT_PER_PARTICLE
+#endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   auto const &gamma() const { return p.gamma; }
   auto &gamma() { return p.gamma; }
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
   auto const &gamma_rot() const { return p.gamma_rot; }
   auto &gamma_rot() { return p.gamma_rot; }
-#endif // ROTATION
-#endif // THERMOSTAT_PER_PARTICLE
-#ifdef EXTERNAL_FORCES
+#endif // ESPRESSO_ROTATION
+#endif // ESPRESSO_THERMOSTAT_PER_PARTICLE
+#ifdef ESPRESSO_EXTERNAL_FORCES
+  auto const &fixed() const { return p.ext_flag; }
   auto &fixed() { return p.ext_flag; }
   bool has_fixed_coordinates() const { return static_cast<bool>(p.ext_flag); }
-  bool is_fixed_along(int const axis) const {
-    detail::check_axis_idx_valid(axis);
+  bool is_fixed_along(unsigned int const axis) const {
+    assert(axis <= 2u);
     return detail::get_nth_bit(p.ext_flag, axis);
   }
   void set_fixed_along(int const axis, bool const fixed_flag) {
@@ -618,15 +611,15 @@ public:
   }
   auto const &ext_force() const { return p.ext_force; }
   auto &ext_force() { return p.ext_force; }
-#else  // EXTERNAL_FORCES
+#else  // ESPRESSO_EXTERNAL_FORCES
   constexpr bool has_fixed_coordinates() const { return false; }
-  constexpr bool is_fixed_along(int const) const { return false; }
-#endif // EXTERNAL_FORCES
-#ifdef ENGINE
+  constexpr bool is_fixed_along(unsigned int const) const { return false; }
+#endif // ESPRESSO_EXTERNAL_FORCES
+#ifdef ESPRESSO_ENGINE
   auto const &swimming() const { return p.swim; }
   auto &swimming() { return p.swim; }
 #endif
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   auto const &pos_last_time_step() const { return r.p_last_timestep; }
   auto &pos_last_time_step() { return r.p_last_timestep; }
   auto const &rattle_params() const { return rattle; }
@@ -635,14 +628,11 @@ public:
   auto &rattle_correction() { return rattle.correction; }
 #endif
 
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
   Utils::compact_vector<int> &exclusions() { return el; }
   Utils::compact_vector<int> const &exclusions() const { return el; }
-  std::vector<int> const exclusions_as_vector() const {
-    return {el.begin(), el.end()};
-  }
   bool has_exclusion(int pid) const {
-    return std::find(el.begin(), el.end(), pid) != el.end();
+    return std::ranges::find(el, pid) != el.end();
   }
 #endif
 
@@ -655,38 +645,40 @@ private:
     ar & f;
     ar & l;
     ar & bl;
-#ifdef EXCLUSIONS
+#ifdef ESPRESSO_EXCLUSIONS
     ar & el;
 #endif
   }
 };
 
 BOOST_CLASS_IMPLEMENTATION(Particle, object_serializable)
+#ifdef ESPRESSO_ENGINE
 BOOST_CLASS_IMPLEMENTATION(ParticleParametersSwimming, object_serializable)
+#endif
 BOOST_CLASS_IMPLEMENTATION(ParticleProperties, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticlePosition, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticleMomentum, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticleForce, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticleLocal, object_serializable)
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
 BOOST_CLASS_IMPLEMENTATION(ParticleRattle, object_serializable)
 #endif
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 BOOST_CLASS_IMPLEMENTATION(decltype(ParticleProperties::vs_relative),
                            object_serializable)
 #endif
 
+#ifdef ESPRESSO_ENGINE
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleParametersSwimming)
+#endif
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleProperties)
 BOOST_IS_BITWISE_SERIALIZABLE(ParticlePosition)
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleMomentum)
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleForce)
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleLocal)
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleRattle)
 #endif
-#ifdef VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 BOOST_IS_BITWISE_SERIALIZABLE(decltype(ParticleProperties::vs_relative))
-#endif
-
 #endif

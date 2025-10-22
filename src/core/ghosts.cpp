@@ -29,9 +29,11 @@
  * - a "GhostCommunication" is always named "ghost_comm".
  */
 #include "ghosts.hpp"
-#include "Particle.hpp"
 
-#include <utils/Span.hpp>
+#include "BoxGeometry.hpp"
+#include "Particle.hpp"
+#include "system/System.hpp"
+
 #include <utils/serialization/memcpy_archive.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
@@ -48,6 +50,7 @@
 #include <cstddef>
 #include <functional>
 #include <iterator>
+#include <span>
 #include <vector>
 
 /** Tag for ghosts communications. */
@@ -79,6 +82,8 @@ public:
   auto &bonds() { return bondbuf; }
   const auto &bonds() const { return bondbuf; }
 
+  auto make_span() { return std::span(buf.data(), buf.size()); }
+
 private:
   std::vector<char> buf;     ///< Buffer for everything but bonds
   std::vector<char> bondbuf; ///< Buffer for bond lists
@@ -91,7 +96,7 @@ class SerializationSizeCalculator {
 public:
   auto size() const { return m_size; }
 
-  template <class T> auto &operator<<(T &t) {
+  template <class T> auto &operator<<(T &) {
     m_size += sizeof(T);
     return *this;
   }
@@ -120,133 +125,139 @@ template <class Archive>
 static void
 serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
                      ReductionPolicy policy, SerializationDirection direction,
+                     BoxGeometry const &box_geo,
                      Utils::Vector3d const *ghost_shift) {
   if (data_parts & GHOSTTRANS_PROPRTS) {
-    ar &p.id() & p.mol_id() & p.type();
-#ifdef VIRTUAL_SITES
-    ar &p.virtual_flag();
-#endif
-#ifdef ROTATION
-    ar &p.rotation();
-#ifdef ROTATIONAL_INERTIA
-    ar &p.rinertia();
+    ar & p.id() & p.mol_id() & p.type() & p.propagation();
+#ifdef ESPRESSO_ROTATION
+    ar & p.rotation();
+#ifdef ESPRESSO_ROTATIONAL_INERTIA
+    ar & p.rinertia();
 #endif
 #endif
-#ifdef MASS
-    ar &p.mass();
+#ifdef ESPRESSO_MASS
+    ar & p.mass();
 #endif
-#ifdef ELECTROSTATICS
-    ar &p.q();
+#ifdef ESPRESSO_ELECTROSTATICS
+    ar & p.q();
 #endif
-#ifdef DIPOLES
-    ar &p.dipm();
+#ifdef ESPRESSO_DIPOLES
+    ar & p.dipm();
 #endif
-#ifdef LB_ELECTROHYDRODYNAMICS
-    ar &p.mu_E();
+#ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
+    ar & p.mu_E();
 #endif
-#ifdef VIRTUAL_SITES_RELATIVE
-    ar &p.vs_relative();
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
+    ar & p.vs_relative();
 #endif
-#ifdef THERMOSTAT_PER_PARTICLE
-    ar &p.gamma();
-#ifdef ROTATION
-    ar &p.gamma_rot();
-#endif
-#endif
-#ifdef EXTERNAL_FORCES
-    ar &p.fixed();
-    ar &p.ext_force();
-#ifdef ROTATION
-    ar &p.ext_torque();
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
+    ar & p.gamma();
+#ifdef ESPRESSO_ROTATION
+    ar & p.gamma_rot();
 #endif
 #endif
-#ifdef ENGINE
-    ar &p.swimming();
+#ifdef ESPRESSO_EXTERNAL_FORCES
+    ar & p.fixed();
+    ar & p.ext_force();
+#ifdef ESPRESSO_ROTATION
+    ar & p.ext_torque();
+#endif
+#endif
+#ifdef ESPRESSO_ENGINE
+    ar & p.swimming();
 #endif
   }
   if (data_parts & GHOSTTRANS_POSITION) {
     if (direction == SerializationDirection::SAVE and ghost_shift != nullptr) {
       /* ok, this is not nice, but perhaps fast */
       auto pos = p.pos() + *ghost_shift;
-      ar &pos;
+      auto img = p.image_box();
+      box_geo.fold_position(pos, img);
+      ar & pos;
+      ar & img;
     } else {
-      ar &p.pos();
+      ar & p.pos();
+      ar & p.image_box();
     }
-#ifdef ROTATION
-    ar &p.quat();
+#ifdef ESPRESSO_ROTATION
+    ar & p.quat();
 #endif
-#ifdef BOND_CONSTRAINT
-    ar &p.pos_last_time_step();
+#ifdef ESPRESSO_BOND_CONSTRAINT
+    ar & p.pos_last_time_step();
 #endif
   }
   if (data_parts & GHOSTTRANS_MOMENTUM) {
-    ar &p.v();
-#ifdef ROTATION
-    ar &p.omega();
+    ar & p.v();
+#ifdef ESPRESSO_ROTATION
+    ar & p.omega();
 #endif
   }
   if (data_parts & GHOSTTRANS_FORCE) {
     if (policy == ReductionPolicy::UPDATE and
         direction == SerializationDirection::LOAD) {
       Utils::Vector3d force;
-      ar &force;
+      ar & force;
       p.force() += force;
     } else {
-      ar &p.force();
+      ar & p.force();
     }
-#ifdef ROTATION
+#ifdef ESPRESSO_ROTATION
     if (policy == ReductionPolicy::UPDATE and
         direction == SerializationDirection::LOAD) {
       Utils::Vector3d torque;
-      ar &torque;
+      ar & torque;
       p.torque() += torque;
     } else {
-      ar &p.torque();
+      ar & p.torque();
     }
 #endif
   }
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
   if (data_parts & GHOSTTRANS_RATTLE) {
     if (policy == ReductionPolicy::UPDATE and
         direction == SerializationDirection::LOAD) {
       Utils::Vector3d correction;
-      ar &correction;
+      ar & correction;
       p.rattle_correction() += correction;
     } else {
-      ar &p.rattle_correction();
+      ar & p.rattle_correction();
     }
   }
 #endif
 }
 
-static std::size_t calc_transmit_size(unsigned data_parts) {
+static auto calc_transmit_size(BoxGeometry const &box_geo,
+                               unsigned data_parts) {
   SerializationSizeCalculator sizeof_archive;
   Particle p{};
   serialize_and_reduce(sizeof_archive, p, data_parts, ReductionPolicy::MOVE,
-                       SerializationDirection::SAVE, nullptr);
+                       SerializationDirection::SAVE, box_geo, nullptr);
   return sizeof_archive.size();
 }
 
-static std::size_t calc_transmit_size(const GhostCommunication &ghost_comm,
-                                      unsigned int data_parts) {
+static auto calc_transmit_size(GhostCommunication const &ghost_comm,
+                               BoxGeometry const &box_geo,
+                               unsigned int data_parts) {
   if (data_parts & GHOSTTRANS_PARTNUM)
-    return sizeof(int) * ghost_comm.part_lists.size();
+    return sizeof(unsigned int) * ghost_comm.part_lists.size();
 
   auto const n_part = boost::accumulate(
-      ghost_comm.part_lists, 0ul,
+      ghost_comm.part_lists, std::size_t{0},
       [](std::size_t sum, auto part_list) { return sum + part_list->size(); });
 
-  return n_part * calc_transmit_size(data_parts);
+  return n_part * calc_transmit_size(box_geo, data_parts);
 }
 
 static void prepare_send_buffer(CommBuf &send_buffer,
-                                const GhostCommunication &ghost_comm,
+                                GhostCommunication const &ghost_comm,
+                                BoxGeometry const &box_geo,
                                 unsigned int data_parts) {
+
   /* reallocate send buffer */
-  send_buffer.resize(calc_transmit_size(ghost_comm, data_parts));
+  send_buffer.resize(calc_transmit_size(ghost_comm, box_geo, data_parts));
   send_buffer.bonds().clear();
 
-  auto archiver = Utils::MemcpyOArchive{Utils::make_span(send_buffer)};
+  auto archiver = Utils::MemcpyOArchive{send_buffer.make_span()};
 
   /* Construct archive that pushes back to the bond buffer */
   namespace io = boost::iostreams;
@@ -257,12 +268,14 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   /* put in data */
   for (auto part_list : ghost_comm.part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      int np = static_cast<int>(part_list->size());
+      assert(part_list->size() <= std::numeric_limits<unsigned int>::max());
+      auto np = static_cast<unsigned int>(part_list->size());
       archiver << np;
     } else {
       for (auto &p : *part_list) {
         serialize_and_reduce(archiver, p, data_parts, ReductionPolicy::MOVE,
-                             SerializationDirection::SAVE, &ghost_comm.shift);
+                             SerializationDirection::SAVE, box_geo,
+                             &ghost_comm.shift);
         if (data_parts & GHOSTTRANS_BONDS) {
           bond_archiver << p.bonds();
         }
@@ -273,7 +286,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   assert(archiver.bytes_written() == send_buffer.size());
 }
 
-static void prepare_ghost_cell(ParticleList *cell, int size) {
+static void prepare_ghost_cell(ParticleList *cell, std::size_t size) {
   /* Adapt size */
   cell->resize(size);
 
@@ -284,23 +297,25 @@ static void prepare_ghost_cell(ParticleList *cell, int size) {
 }
 
 static void prepare_recv_buffer(CommBuf &recv_buffer,
-                                const GhostCommunication &ghost_comm,
+                                GhostCommunication const &ghost_comm,
+                                BoxGeometry const &box_geo,
                                 unsigned int data_parts) {
   /* reallocate recv buffer */
-  recv_buffer.resize(calc_transmit_size(ghost_comm, data_parts));
+  recv_buffer.resize(calc_transmit_size(ghost_comm, box_geo, data_parts));
   /* clear bond buffer */
   recv_buffer.bonds().clear();
 }
 
 static void put_recv_buffer(CommBuf &recv_buffer,
-                            const GhostCommunication &ghost_comm,
+                            GhostCommunication const &ghost_comm,
+                            BoxGeometry const &box_geo,
                             unsigned int data_parts) {
   /* put back data */
-  auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
+  auto archiver = Utils::MemcpyIArchive{recv_buffer.make_span()};
 
   if (data_parts & GHOSTTRANS_PARTNUM) {
     for (auto part_list : ghost_comm.part_lists) {
-      int np;
+      unsigned int np;
       archiver >> np;
       prepare_ghost_cell(part_list, np);
     }
@@ -308,7 +323,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
     for (auto part_list : ghost_comm.part_lists) {
       for (auto &p : *part_list) {
         serialize_and_reduce(archiver, p, data_parts, ReductionPolicy::MOVE,
-                             SerializationDirection::LOAD, nullptr);
+                             SerializationDirection::LOAD, box_geo, nullptr);
       }
     }
     if (data_parts & GHOSTTRANS_BONDS) {
@@ -330,12 +345,12 @@ static void put_recv_buffer(CommBuf &recv_buffer,
   recv_buffer.bonds().clear();
 }
 
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
 static void
 add_rattle_correction_from_recv_buffer(CommBuf &recv_buffer,
                                        const GhostCommunication &ghost_comm) {
   /* put back data */
-  auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
+  auto archiver = Utils::MemcpyIArchive{recv_buffer.make_span()};
   for (auto &part_list : ghost_comm.part_lists) {
     for (Particle &part : *part_list) {
       ParticleRattle pr;
@@ -349,21 +364,22 @@ add_rattle_correction_from_recv_buffer(CommBuf &recv_buffer,
 static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
                                         const GhostCommunication &ghost_comm) {
   /* put back data */
-  auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
+  auto archiver = Utils::MemcpyIArchive{recv_buffer.make_span()};
   for (auto &part_list : ghost_comm.part_lists) {
     for (Particle &part : *part_list) {
       ParticleForce pf;
       archiver >> pf;
-      part.f += pf;
+      part.force_and_torque() += pf;
     }
   }
 }
 
-static void cell_cell_transfer(const GhostCommunication &ghost_comm,
+static void cell_cell_transfer(GhostCommunication const &ghost_comm,
+                               BoxGeometry const &box_geo,
                                unsigned int data_parts) {
   CommBuf buffer;
   if (!(data_parts & GHOSTTRANS_PARTNUM)) {
-    buffer.resize(calc_transmit_size(data_parts));
+    buffer.resize(calc_transmit_size(box_geo, data_parts));
   }
   /* transfer data */
   auto const offset = ghost_comm.part_lists.size() / 2;
@@ -372,21 +388,22 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
     auto *dst_list = ghost_comm.part_lists[pl + offset];
 
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      prepare_ghost_cell(dst_list, static_cast<int>(src_list->size()));
+      prepare_ghost_cell(dst_list, src_list->size());
     } else {
       auto &src_part = *src_list;
       auto &dst_part = *dst_list;
       assert(src_part.size() == dst_part.size());
 
       for (std::size_t i = 0; i < src_part.size(); i++) {
-        auto ar_out = Utils::MemcpyOArchive{Utils::make_span(buffer)};
-        auto ar_in = Utils::MemcpyIArchive{Utils::make_span(buffer)};
+        auto ar_out = Utils::MemcpyOArchive{buffer.make_span()};
+        auto ar_in = Utils::MemcpyIArchive{buffer.make_span()};
         auto &p1 = src_part.begin()[i];
         auto &p2 = dst_part.begin()[i];
         serialize_and_reduce(ar_out, p1, data_parts, ReductionPolicy::UPDATE,
-                             SerializationDirection::SAVE, &ghost_comm.shift);
+                             SerializationDirection::SAVE, box_geo,
+                             &ghost_comm.shift);
         serialize_and_reduce(ar_in, p2, data_parts, ReductionPolicy::UPDATE,
-                             SerializationDirection::LOAD, nullptr);
+                             SerializationDirection::LOAD, box_geo, nullptr);
         if (data_parts & GHOSTTRANS_BONDS) {
           p2.bonds() = p1.bonds();
         }
@@ -422,7 +439,8 @@ static bool is_poststorable(GhostCommunication const &ghost_comm,
   return is_recv_op(comm_type, node, this_node) && poststore;
 }
 
-void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
+void ghost_communicator(GhostCommunicator const &gcr,
+                        BoxGeometry const &box_geo, unsigned int data_parts) {
   if (GHOSTTRANS_NONE == data_parts)
     return;
 
@@ -430,13 +448,13 @@ void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
 
   auto const &comm = gcr.mpi_comm;
 
-  for (auto it = gcr.communications.begin(); it != gcr.communications.end();
-       ++it) {
-    const GhostCommunication &ghost_comm = *it;
+  for (auto cit = gcr.communications.cbegin(); cit != gcr.communications.cend();
+       ++cit) {
+    auto const &ghost_comm = *cit;
     int const comm_type = ghost_comm.type & GHOST_JOBMASK;
 
     if (comm_type == GHOST_LOCL) {
-      cell_cell_transfer(ghost_comm, data_parts);
+      cell_cell_transfer(ghost_comm, box_geo, data_parts);
       continue;
     }
 
@@ -448,26 +466,28 @@ void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
     if (is_send_op(comm_type, node, comm.rank())) {
       /* ok, we send this step, prepare send buffer if not yet done */
       if (!prefetch) {
-        prepare_send_buffer(send_buffer, ghost_comm, data_parts);
+        prepare_send_buffer(send_buffer, ghost_comm, box_geo, data_parts);
       }
       // Check prefetched send buffers (must also hold for buffers allocated
       // in the previous lines.)
-      assert(send_buffer.size() == calc_transmit_size(ghost_comm, data_parts));
+      assert(send_buffer.size() ==
+             calc_transmit_size(ghost_comm, box_geo, data_parts));
     } else if (prefetch) {
       /* we do not send this time, let's look for a prefetch */
-      auto prefetch_ghost_comm = std::find_if(
-          std::next(it), gcr.communications.end(),
-          [this_node = comm.rank()](GhostCommunication const &ghost_comm) {
-            return is_prefetchable(ghost_comm, this_node);
-          });
+      auto prefetch_ghost_comm =
+          std::find_if(std::next(cit), gcr.communications.cend(),
+                       [this_node = comm.rank()](auto const &other_ghost_comm) {
+                         return is_prefetchable(other_ghost_comm, this_node);
+                       });
 
       if (prefetch_ghost_comm != gcr.communications.end())
-        prepare_send_buffer(send_buffer, *prefetch_ghost_comm, data_parts);
+        prepare_send_buffer(send_buffer, *prefetch_ghost_comm, box_geo,
+                            data_parts);
     }
 
     /* recv buffer for recv and multinode operations to this node */
     if (is_recv_op(comm_type, node, comm.rank()))
-      prepare_recv_buffer(recv_buffer, ghost_comm, data_parts);
+      prepare_recv_buffer(recv_buffer, ghost_comm, box_geo, data_parts);
 
     /* transfer data */
     // Use two send/recvs in order to avoid having to serialize CommBuf
@@ -516,36 +536,37 @@ void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
          * where the addition is integrated into the communication. */
         if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
           add_forces_from_recv_buffer(recv_buffer, ghost_comm);
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
         else if (data_parts == GHOSTTRANS_RATTLE && comm_type != GHOST_RDCE)
           add_rattle_correction_from_recv_buffer(recv_buffer, ghost_comm);
 #endif
         else
-          put_recv_buffer(recv_buffer, ghost_comm, data_parts);
+          put_recv_buffer(recv_buffer, ghost_comm, box_geo, data_parts);
       }
     } else if (poststore) {
       /* send op; write back delayed data from last recv, when this was a
        * prefetch send. */
       /* find previous action where we recv and which has PSTSTORE set */
       auto poststore_ghost_comm = std::find_if(
-          std::make_reverse_iterator(it), gcr.communications.rend(),
-          [this_node = comm.rank()](GhostCommunication const &ghost_comm) {
-            return is_poststorable(ghost_comm, this_node);
+          std::make_reverse_iterator(cit), gcr.communications.crend(),
+          [this_node = comm.rank()](auto const &other_ghost_comm) {
+            return is_poststorable(other_ghost_comm, this_node);
           });
 
       if (poststore_ghost_comm != gcr.communications.rend()) {
         assert(recv_buffer.size() ==
-               calc_transmit_size(*poststore_ghost_comm, data_parts));
+               calc_transmit_size(*poststore_ghost_comm, box_geo, data_parts));
         /* as above */
         if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
           add_forces_from_recv_buffer(recv_buffer, *poststore_ghost_comm);
-#ifdef BOND_CONSTRAINT
+#ifdef ESPRESSO_BOND_CONSTRAINT
         else if (data_parts == GHOSTTRANS_RATTLE && comm_type != GHOST_RDCE)
           add_rattle_correction_from_recv_buffer(recv_buffer,
                                                  *poststore_ghost_comm);
 #endif
         else
-          put_recv_buffer(recv_buffer, *poststore_ghost_comm, data_parts);
+          put_recv_buffer(recv_buffer, *poststore_ghost_comm, box_geo,
+                          data_parts);
       }
     }
   }

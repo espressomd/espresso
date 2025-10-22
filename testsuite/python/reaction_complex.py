@@ -84,11 +84,11 @@ class Test(ut.TestCase):
         RE.set_non_interacting_type(type=max(types) + 1)
 
         # warmup
-        RE.reaction(reaction_steps=50)
+        RE.reaction(steps=50)
 
         numbers = {type_A: [], type_B: [], type_C: [], type_D: [], type_E: []}
         for _ in range(40):
-            RE.reaction(reaction_steps=6)
+            RE.reaction(steps=6)
             for key in types:
                 numbers[key].append(self.system.number_of_particles(type=key))
 

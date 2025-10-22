@@ -16,18 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_CYLINDRICALLBVELOCITYPROFILEATPARTICLEPOSITIONS_HPP
-#define OBSERVABLES_CYLINDRICALLBVELOCITYPROFILEATPARTICLEPOSITIONS_HPP
+
+#pragma once
 
 #include "CylindricalPidProfileObservable.hpp"
 
 #include "Particle.hpp"
 #include "observables/ParticleTraits.hpp"
 
-#include <utils/Span.hpp>
-
 #include <cstddef>
-#include <functional>
 #include <vector>
 
 namespace Observables {
@@ -37,7 +34,8 @@ public:
   using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
 
   std::vector<double>
-  evaluate(ParticleReferenceRange particles,
+  evaluate(boost::mpi::communicator const &comm,
+           ParticleReferenceRange const &particles,
            const ParticleObservables::traits<Particle> &) const override;
 
   std::vector<std::size_t> shape() const override {
@@ -47,5 +45,3 @@ public:
 };
 
 } // Namespace Observables
-
-#endif

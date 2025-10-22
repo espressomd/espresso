@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ERROR_HANDLING_RUNTIME_ERROR_HPP
-#define ESPRESSO_SRC_CORE_ERROR_HANDLING_RUNTIME_ERROR_HPP
+#pragma once
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
@@ -34,10 +33,7 @@ namespace ErrorHandling {
  * severity.
  */
 struct RuntimeError {
-  /** The error level, warnings are only displayed to the user,
-   *  errors are fatal.
-   */
-  enum class ErrorLevel { DEBUG, INFO, WARNING, ERROR };
+  enum class ErrorLevel { WARNING, ERROR };
   RuntimeError() = default;
   RuntimeError(ErrorLevel level, int who, std::string what,
                std::string function, std::string file, int line)
@@ -65,12 +61,12 @@ private:
   /** Boost serialization */
   friend class boost::serialization::access;
   template <class Archive> void serialize(Archive &ar, const unsigned int) {
-    ar &m_level;
-    ar &m_who;
-    ar &m_what;
-    ar &m_function;
-    ar &m_file;
-    ar &m_line;
+    ar & m_level;
+    ar & m_who;
+    ar & m_what;
+    ar & m_function;
+    ar & m_file;
+    ar & m_line;
   }
 
   ErrorLevel m_level;
@@ -82,5 +78,3 @@ private:
 };
 
 } // namespace ErrorHandling
-
-#endif

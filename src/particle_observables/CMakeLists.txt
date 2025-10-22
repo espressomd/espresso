@@ -19,6 +19,7 @@
 
 add_library(espresso_particle_observables INTERFACE)
 add_library(espresso::particle_observables ALIAS espresso_particle_observables)
+espresso_set_common_target_properties(espresso_particle_observables)
 target_include_directories(
   espresso_particle_observables SYSTEM
   INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

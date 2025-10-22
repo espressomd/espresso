@@ -17,12 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_RF_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_RF_HPP
+#pragma once
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "Actor.hpp"
 
@@ -68,5 +67,4 @@ public:
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // ELECTROSTATICS
-#endif
+#endif // ESPRESSO_ELECTROSTATICS

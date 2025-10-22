@@ -24,12 +24,10 @@
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#include "core/energy.hpp"
-#include "core/pressure.hpp"
-
-#include <utils/Span.hpp>
+#include "core/Observable_stat.hpp"
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -38,24 +36,26 @@ namespace Analysis {
 
 /**
  * @brief Generate an observable summary.
+ * @param[in] system   The system to analyze.
  * @param[in] obs      The observable handle.
  * @param[in] calc_sp  Whether to compute a scalar pressure.
  */
-static auto get_summary(Observable_stat const &obs, bool const calc_sp) {
+static auto get_summary(::System::System const &system,
+                        Observable_stat const &obs, bool const calc_sp) {
   auto const obs_dim = obs.get_chunk_size();
 
   auto const get_obs_contribs = [obs_dim,
-                                 calc_sp](Utils::Span<double> const views) {
-    if (obs_dim == 1) {
+                                 calc_sp](std::span<double> const &views) {
+    if (obs_dim == 1ul) {
       return std::vector<Variant>(views.begin(), views.end());
     }
     assert(obs_dim == 9ul);
     assert(views.size() % 9ul == 0ul);
     std::vector<Variant> out;
     for (std::size_t i = 0ul; i < views.size() / 9ul; ++i) {
-      auto const view = Utils::Span<double>{views.data() + i * 9ul, 9ul};
+      auto const view = views.subspan(i * 9ul, 9ul);
       if (calc_sp) {
-        auto const trace = view[0] + view[4] + view[8];
+        auto const trace = view[0ul] + view[4ul] + view[8ul];
         out.emplace_back(trace / 3.);
       } else {
         auto const flat_matrix = std::vector<double>(view.begin(), view.end());
@@ -66,31 +66,45 @@ static auto get_summary(Observable_stat const &obs, bool const calc_sp) {
   };
 
   auto const get_obs_contrib =
-      [&get_obs_contribs](Utils::Span<double> const views) -> Variant {
-    return get_obs_contribs(views)[0];
+      [&get_obs_contribs](std::span<double> const &views) -> Variant {
+    return get_obs_contribs(views)[0ul];
   };
 
   std::unordered_map<std::string, Variant> dict;
-  dict["kinetic"] = get_obs_contrib(obs.kinetic);
+  dict["kinetic_lin"] = get_obs_contrib(obs.kinetic_lin);
+  dict["kinetic_rot"] = get_obs_contrib(obs.kinetic_rot);
   dict["external_fields"] = get_obs_contrib(obs.external_fields);
+  if (is_type<double>(dict["kinetic_lin"])) {
+    dict["kinetic"] = get_value<double>(dict["kinetic_lin"]) +
+                      get_value<double>(dict["kinetic_rot"]);
+  } else {
+    auto const v1 = get_value<std::vector<double>>(dict["kinetic_lin"]);
+    auto const v2 = get_value<std::vector<double>>(dict["kinetic_rot"]);
+    std::vector<double> value{};
+    for (auto i = 0u; i < 9u; ++i) {
+      value.emplace_back(v1[i] + v2[i]);
+    }
+    dict["kinetic"] = value;
+  }
 
   {
     auto values = std::vector<double>(obs_dim);
-    for (std::size_t i = 0; i < obs_dim; ++i) {
+    for (std::size_t i = 0ul; i < obs_dim; ++i) {
       values[i] = obs.accumulate(0., i);
     }
     dict["total"] = get_obs_contrib({values.data(), obs_dim});
   }
 
-  auto const n_bonds = static_cast<int>(::bonded_ia_params.get_next_key());
+  auto const n_bonds = static_cast<int>(system.bonded_ias->get_next_key());
   for (int bond_id = 0; bond_id < n_bonds; ++bond_id) {
-    if (::bonded_ia_params.get_zero_based_type(bond_id) != 0) {
+    if (system.bonded_ias->get_zero_based_type(bond_id) != 0) {
       dict["bonded," + std::to_string(bond_id)] =
           get_obs_contrib(obs.bonded_contribution(bond_id));
     }
   }
 
-  auto const n_nonbonded = ::max_seen_particle_type;
+  auto const n_nonbonded =
+      system.nonbonded_ias->get_max_seen_particle_type() + 1;
   for (int i = 0; i < n_nonbonded; ++i) {
     for (int j = i; j < n_nonbonded; ++j) {
       auto const indices = std::to_string(i) + "," + std::to_string(j);
@@ -101,49 +115,59 @@ static auto get_summary(Observable_stat const &obs, bool const calc_sp) {
     }
   }
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   {
     auto const values = get_obs_contribs(obs.coulomb);
-    for (std::size_t i = 0; i < values.size(); ++i) {
+    for (std::size_t i = 0ul; i < values.size(); ++i) {
       dict["coulomb," + std::to_string(i)] = values[i];
     }
   }
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   {
     auto const values = get_obs_contribs(obs.dipolar);
-    for (std::size_t i = 0; i < values.size(); ++i) {
+    for (std::size_t i = 0ul; i < values.size(); ++i) {
       dict["dipolar," + std::to_string(i)] = values[i];
     }
   }
-#endif // DIPOLES
+#endif // ESPRESSO_DIPOLES
 
-#ifdef VIRTUAL_SITES
+#ifdef ESPRESSO_VIRTUAL_SITES
   {
     auto const values = get_obs_contribs(obs.virtual_sites);
-    for (std::size_t i = 0; i < values.size(); ++i) {
+    for (std::size_t i = 0ul; i < values.size(); ++i) {
       dict["virtual_sites," + std::to_string(i)] = values[i];
     }
   }
-#endif // VIRTUAL_SITES
+#endif // ESPRESSO_VIRTUAL_SITES
+
+#ifdef ESPRESSO_DPD
+  {
+    auto const values = get_obs_contribs(obs.dpd);
+    for (std::size_t i = 0ul; i < values.size(); ++i) {
+      dict["dpd," + std::to_string(i)] = values[i];
+    }
+  }
+#endif // ESPRESSO_DPD
 
   return dict;
 }
 
 Variant ObservableStat::do_call_method(std::string const &name,
-                                       VariantMap const &parameters) {
+                                       VariantMap const &) {
+  auto &system = get_system();
   if (name == "calculate_energy") {
-    auto const obs = calculate_energy();
-    return get_summary(*obs, false);
+    auto const obs = system.calculate_energy();
+    return get_summary(system, *obs, false);
   }
   if (name == "calculate_scalar_pressure") {
-    auto const obs = calculate_pressure();
-    return get_summary(*obs, true);
+    auto const obs = system.calculate_pressure();
+    return get_summary(system, *obs, true);
   }
   if (name == "calculate_pressure_tensor") {
-    auto const obs = calculate_pressure();
-    return get_summary(*obs, false);
+    auto const obs = system.calculate_pressure();
+    return get_summary(system, *obs, false);
   }
   return {};
 }

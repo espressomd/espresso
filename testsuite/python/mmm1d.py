@@ -23,9 +23,9 @@ import tests_common
 import espressomd.electrostatics
 
 
-class ElectrostaticInteractionsTests:
+@utx.skipIfMissingFeatures(["ELECTROSTATICS"])
+class Test(ut.TestCase):
 
-    # Handle to espresso system
     system = espressomd.System(box_l=[10.0] * 3)
     system.periodicity = [False, False, True]
     system.time_step = 0.01
@@ -38,6 +38,7 @@ class ElectrostaticInteractionsTests:
     p_q = data[:, 4]
     forces_target = data[:, 5:8]
     energy_target = -7.156365298205383
+    allowed_error = 2e-5
 
     def setUp(self):
         self.system.box_l = [10.0] * 3
@@ -46,12 +47,12 @@ class ElectrostaticInteractionsTests:
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
 
     def test_forces_and_energy(self):
         self.system.part.add(pos=self.p_pos, q=self.p_q)
-        mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-20)
-        self.system.actors.add(mmm1d)
+        mmm1d = espressomd.electrostatics.MMM1D(prefactor=1., maxPWerror=1e-20)
+        self.system.electrostatics.solver = mmm1d
         self.system.integrator.run(steps=0)
         measured_f = np.copy(self.system.part.all().f)
         np.testing.assert_allclose(measured_f, self.forces_target,
@@ -84,8 +85,8 @@ class ElectrostaticInteractionsTests:
     def test_with_analytical_result(self):
         self.system.part.add(pos=[0, 0, 0], q=1)
         self.system.part.add(pos=[0, 0, 1], q=-1)
-        mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-20)
-        self.system.actors.add(mmm1d)
+        mmm1d = espressomd.electrostatics.MMM1D(prefactor=1., maxPWerror=1e-20)
+        self.system.electrostatics.solver = mmm1d
         self.assertTrue(mmm1d.is_tuned)
         self.system.integrator.run(steps=0, recalc_forces=True)
         self.check_with_analytical_result(prefactor=1.0, accuracy=0.0004)
@@ -93,15 +94,16 @@ class ElectrostaticInteractionsTests:
     def test_bjerrum_length_change(self):
         self.system.part.add(pos=[0, 0, 0], q=1)
         self.system.part.add(pos=[0, 0, 1], q=-1)
-        mmm1d = self.MMM1D(prefactor=2.0, maxPWerror=1e-20)
-        self.system.actors.add(mmm1d)
+        mmm1d = espressomd.electrostatics.MMM1D(prefactor=2., maxPWerror=1e-20)
+        self.system.electrostatics.solver = mmm1d
         self.assertTrue(mmm1d.is_tuned)
         self.system.integrator.run(steps=0, recalc_forces=True)
         self.check_with_analytical_result(prefactor=2.0, accuracy=0.0017)
 
         # actor should remain in a valid state after a cell system reset
         forces1 = np.copy(self.system.part.all().f)
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(
+            self.system.box_l[0], "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
         self.system.integrator.run(steps=0, recalc_forces=True)
@@ -122,8 +124,9 @@ class ElectrostaticInteractionsTests:
         for i in range(n_pairs):
             self.system.part.add(pos=[0., 0., 2. * i + 0.], q=+1.)
             self.system.part.add(pos=[0., 0., 2. * i + 1.], q=-1.)
-        self.system.actors.add(self.MMM1D(
-            prefactor=1., maxPWerror=1e-20, far_switch_radius=n_pairs / 2.))
+        mmm1d = espressomd.electrostatics.MMM1D(
+            prefactor=1., maxPWerror=1e-20, far_switch_radius=n_pairs / 2.)
+        self.system.electrostatics.solver = mmm1d
         energy = self.system.analysis.energy()["coulomb"]
         p_scalar = self.system.analysis.pressure()["coulomb"]
         p_tensor = self.system.analysis.pressure_tensor()["coulomb"]
@@ -131,21 +134,6 @@ class ElectrostaticInteractionsTests:
         np.testing.assert_allclose(energy, ref_energy, atol=0., rtol=5e-7)
         np.testing.assert_allclose(p_scalar, 0., atol=1e-12)
         np.testing.assert_allclose(p_tensor, 0., atol=1e-12)
-
-
-@utx.skipIfMissingFeatures(["ELECTROSTATICS"])
-class MMM1D_Test(ElectrostaticInteractionsTests, ut.TestCase):
-
-    allowed_error = 2e-5
-    MMM1D = espressomd.electrostatics.MMM1D
-
-
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "MMM1D_GPU"])
-@utx.skipIfMissingGPU()
-class MMM1D_GPU_Test(ElectrostaticInteractionsTests, ut.TestCase):
-
-    allowed_error = 1e-4
-    MMM1D = espressomd.electrostatics.MMM1DGPU
 
 
 if __name__ == "__main__":

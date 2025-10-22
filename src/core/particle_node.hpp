@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_PARTICLE_NODE_HPP
-#define CORE_PARTICLE_NODE_HPP
+
+#pragma once
+
 /** \file
  *  Particles creation and deletion.
  *
@@ -30,11 +31,16 @@
 
 #include "Particle.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <cstddef>
+#include <span>
 #include <vector>
+
+namespace type_tracking {
+inline auto constexpr any_type = -2;
+inline auto constexpr new_part = -3;
+} // namespace type_tracking
 
 /**
  * @brief Get particle data.
@@ -55,7 +61,7 @@ const Particle &get_particle_data(int p_id);
  *
  * @param ids Ids of the particles that should be fetched.
  */
-void prefetch_particle_data(Utils::Span<const int> ids);
+void prefetch_particle_data(std::span<const int> ids);
 
 /** @brief Invalidate the fetch cache for get_particle_data. */
 void invalidate_fetch_cache();
@@ -72,19 +78,17 @@ void clear_particle_node();
 
 /**
  * @brief Create a new particle and attach it to a cell.
- * Also call @ref on_particle_change.
  * @param p_id  The identity of the particle to create.
  * @param pos   The particle position.
  */
-void mpi_make_new_particle(int p_id, Utils::Vector3d const &pos);
+void make_new_particle(int p_id, Utils::Vector3d const &pos);
 
 /**
  * @brief Move particle to a new position.
- * Also call @ref on_particle_change.
  * @param p_id  The identity of the particle to move.
  * @param pos   The new particle position.
  */
-void mpi_set_particle_pos(int p_id, Utils::Vector3d const &pos);
+void set_particle_pos(int p_id, Utils::Vector3d const &pos);
 
 /** Remove particle with a given identity. Also removes all bonds to the
  *  particle.
@@ -96,7 +100,7 @@ void remove_particle(int p_id);
 void remove_all_particles();
 
 void init_type_map(int type);
-void on_particle_type_change(int p_id, int type);
+void on_particle_type_change(int p_id, int old_type, int new_type);
 
 /** Find a particle of given type and return its id */
 int get_random_p_id(int type, int random_index_in_type_map);
@@ -117,6 +121,7 @@ bool particle_exists(int p_id);
  *  @return The MPI rank the particle is on.
  */
 int get_particle_node(int p_id);
+int get_particle_node_parallel(int p_id);
 
 /**
  * @brief Get all particle ids.
@@ -124,6 +129,7 @@ int get_particle_node(int p_id);
  * @return Sorted ids of all existing particles.
  */
 std::vector<int> get_particle_ids();
+std::vector<int> get_particle_ids_parallel();
 
 /**
  * @brief Get maximal particle id.
@@ -134,5 +140,3 @@ int get_maximal_particle_id();
  * @brief Get number of particles.
  */
 int get_n_part();
-
-#endif

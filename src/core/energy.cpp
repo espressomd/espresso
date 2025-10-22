@@ -18,95 +18,90 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
- *  Energy calculation.
- */
 
-#include "EspressoSystemInterface.hpp"
+#include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
-#include "communication.hpp"
-#include "constraints.hpp"
-#include "cuda_interface.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "constraints/Constraints.hpp"
 #include "energy_inline.hpp"
-#include "event.hpp"
-#include "forces.hpp"
-#include "integrate.hpp"
-#include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include <utils/mpi/iall_gatherv.hpp>
-
 #include "short_range_loop.hpp"
+#include "system/System.hpp"
 
 #include "electrostatics/coulomb.hpp"
 #include "magnetostatics/dipoles.hpp"
 
-#include <utils/Span.hpp>
-
 #include <memory>
+#include <span>
 
-std::shared_ptr<Observable_stat> calculate_energy() {
+namespace System {
 
-  auto obs_energy_ptr = std::make_shared<Observable_stat>(1);
+std::shared_ptr<Observable_stat> System::calculate_energy() {
+
+  auto obs_energy_ptr = std::make_shared<Observable_stat>(
+      1ul, static_cast<std::size_t>(bonded_ias->get_next_key()),
+      nonbonded_ias->get_max_seen_particle_type());
 
   if (long_range_interactions_sanity_checks()) {
     return obs_energy_ptr;
   }
 
   auto &obs_energy = *obs_energy_ptr;
-
-#ifdef CUDA
-  clear_energy_on_GPU();
+#if defined(ESPRESSO_CUDA) and                                                 \
+    (defined(ESPRESSO_ELECTROSTATICS) or defined(ESPRESSO_DIPOLES))
+  gpu.clear_energy_on_device();
+  gpu.update();
 #endif
-
-  auto &espresso_system = EspressoSystemInterface::Instance();
-  espresso_system.update();
-
   on_observable_calc();
 
-  auto const local_parts = cell_structure.local_particles();
+  auto const local_parts = cell_structure->local_particles();
 
   for (auto const &p : local_parts) {
-    obs_energy.kinetic[0] += calc_kinetic_energy(p);
+    obs_energy.kinetic_lin[0] += translational_kinetic_energy(p);
+    obs_energy.kinetic_rot[0] += rotational_kinetic_energy(p);
   }
 
-  auto const coulomb_kernel = Coulomb::pair_energy_kernel();
-  auto const dipoles_kernel = Dipoles::pair_energy_kernel();
+  auto const coulomb_kernel = coulomb.pair_energy_kernel();
+  auto const dipoles_kernel = dipoles.pair_energy_kernel();
 
   short_range_loop(
-      [&obs_energy, coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
-          Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
-        auto const &iaparams = *bonded_ia_params.at(bond_id);
-        auto const result =
-            calc_bonded_energy(iaparams, p1, partners, coulomb_kernel_ptr);
+      [this, coulomb_kernel_ptr = get_ptr(coulomb_kernel), &obs_energy](
+          Particle const &p1, int bond_id, std::span<Particle *> partners) {
+        auto const &iaparams = *bonded_ias->at(bond_id);
+        auto const result = calc_bonded_energy(iaparams, p1, partners, *box_geo,
+                                               coulomb_kernel_ptr);
         if (result) {
-          obs_energy.bonded_contribution(bond_id)[0] += result.get();
+          obs_energy.bonded_contribution(bond_id)[0] += result.value();
           return false;
         }
         return true;
       },
-      [&obs_energy, coulomb_kernel_ptr = coulomb_kernel.get_ptr(),
-       dipoles_kernel_ptr = dipoles_kernel.get_ptr()](
-          Particle const &p1, Particle const &p2, Distance const &d) {
+      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+       dipoles_kernel_ptr = get_ptr(dipoles_kernel), this,
+       &obs_energy](Particle const &p1, Particle const &p2, Distance const &d) {
+        auto const &ia_params =
+            nonbonded_ias->get_ia_param(p1.type(), p2.type());
         add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
-                                   coulomb_kernel_ptr, dipoles_kernel_ptr,
-                                   obs_energy);
+                                   ia_params, *bonded_ias, coulomb_kernel_ptr,
+                                   dipoles_kernel_ptr, obs_energy);
       },
-      maximal_cutoff(n_nodes), maximal_cutoff_bonded());
+      *cell_structure, maximal_cutoff(), bonded_ias->maximal_cutoff());
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  obs_energy.coulomb[1] = Coulomb::calc_energy_long_range(local_parts);
+  obs_energy.coulomb[1] = coulomb.calc_energy_long_range(local_parts);
 #endif
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  obs_energy.dipolar[1] = Dipoles::calc_energy_long_range(local_parts);
+  obs_energy.dipolar[1] = dipoles.calc_energy_long_range(local_parts);
 #endif
 
-  Constraints::constraints.add_energy(local_parts, get_sim_time(), obs_energy);
+  constraints->add_energy(local_parts, get_sim_time(), obs_energy);
 
-#ifdef CUDA
-  auto const energy_host = copy_energy_from_GPU();
+#if defined(ESPRESSO_CUDA) and                                                 \
+    (defined(ESPRESSO_ELECTROSTATICS) or defined(ESPRESSO_DIPOLES))
+  auto const energy_host = gpu.copy_energy_to_host();
   if (!obs_energy.coulomb.empty())
     obs_energy.coulomb[1] += static_cast<double>(energy_host.coulomb);
   if (!obs_energy.dipolar.empty())
@@ -118,49 +113,51 @@ std::shared_ptr<Observable_stat> calculate_energy() {
   // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 
-REGISTER_CALLBACK_MAIN_RANK(calculate_energy)
-
-double mpi_calculate_potential_energy() {
-  auto const obs = mpi_call(Communication::Result::main_rank, calculate_energy);
-  return obs->accumulate(-obs->kinetic[0]);
-}
-
-double mpi_observable_compute_energy() {
-  auto const obs = mpi_call(Communication::Result::main_rank, calculate_energy);
-  return obs->accumulate(0);
-}
-
-double particle_short_range_energy_contribution(int pid) {
-  double ret = 0.0;
-
-  if (cell_structure.get_resort_particles()) {
-    cells_update_ghosts(global_ghost_flags());
+double System::particle_short_range_energy_contribution(int pid) {
+  if (cell_structure->get_resort_particles()) {
+    cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
   }
 
-  if (auto const p = cell_structure.get_local_particle(pid)) {
-    auto const coulomb_kernel = Coulomb::pair_energy_kernel();
-    auto kernel = [&ret, coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
-                      Particle const &p, Particle const &p1,
-                      Utils::Vector3d const &vec) {
-#ifdef EXCLUSIONS
+  auto ret = 0.0;
+  if (auto const p = cell_structure->get_local_particle(pid)) {
+    auto const coulomb_kernel = coulomb.pair_energy_kernel();
+    auto kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel), &ret,
+                   this](Particle const &p, Particle const &p1,
+                         Utils::Vector3d const &vec) {
+#ifdef ESPRESSO_EXCLUSIONS
       if (not do_nonbonded(p, p1))
         return;
 #endif
-      auto const &ia_params = get_ia_param(p.type(), p1.type());
+      auto const &ia_params = nonbonded_ias->get_ia_param(p.type(), p1.type());
       // Add energy for current particle pair to result
       ret += calc_non_bonded_pair_energy(p, p1, ia_params, vec, vec.norm(),
-                                         coulomb_kernel_ptr);
+                                         *bonded_ias, coulomb_kernel_ptr);
     };
-    cell_structure.run_on_particle_short_range_neighbors(*p, kernel);
+    cell_structure->run_on_particle_short_range_neighbors(*p, kernel);
   }
   return ret;
 }
 
-void calc_long_range_fields(CellStructure &cell_structure) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
-#ifdef DIPOLES
-  /* calculate k-space part of the magnetostatic interaction. */
-  auto particles = cell_structure.local_particles();
-  Dipoles::calc_long_range_field(particles);
-#endif // DIPOLES
+std::optional<double> System::particle_bond_energy(int pid, int bond_id,
+                                                   std::vector<int> partners) {
+  if (cell_structure->get_resort_particles()) {
+    cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
+  }
+  Particle const *p = cell_structure->get_local_particle(pid);
+  if (not p or p->is_ghost())
+    return {}; // not available on this MPI rank or ghost
+  auto const &iaparams = *bonded_ias->at(bond_id);
+  try {
+    auto resolved_partners = cell_structure->resolve_bond_partners(partners);
+    auto const coulomb_kernel = coulomb.pair_energy_kernel();
+    return calc_bonded_energy(
+        iaparams, *p,
+        std::span(resolved_partners.data(), resolved_partners.size()), *box_geo,
+        get_ptr(coulomb_kernel));
+  } catch (const BondResolutionError &) {
+    bond_broken_error(p->id(), partners);
+    return {};
+  }
 }
+
+} // namespace System

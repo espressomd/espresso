@@ -18,37 +18,43 @@
  */
 #include "LBVelocityProfile.hpp"
 
-#include "grid_based_algorithms/lb_interface.hpp"
+#include "system/System.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
+#include <utils/Vector.hpp>
 
-#include <cstddef>
 #include <stdexcept>
-#include <string>
 #include <vector>
 
 namespace Observables {
 
-std::vector<double> LBVelocityProfile::operator()() const {
+std::vector<double>
+LBVelocityProfile::operator()(boost::mpi::communicator const &comm) const {
+  auto &system = System::get_system();
+  auto &lb = system.lb;
+  lb.ghost_communication_vel();
+
+  if (lb_sanity_checks.mismatch(*system.box_geo, lb)) {
+    calculate_sampling_positions(*system.box_geo, lb);
+  }
+  auto velocities = lb.get_coupling_interpolated_velocities(sampling_positions);
+
+  auto const [global_positions, global_velocities] =
+      detail::gather(comm, sampling_positions, velocities);
+
+  if (comm.rank() != 0) {
+    return {};
+  }
+
   Utils::Histogram<double, 3> histogram(n_bins(), limits());
-  for (auto const &p : sampling_positions) {
-    const auto v = lb_lbfluid_get_interpolated_velocity(p) *
-                   lb_lbfluid_get_lattice_speed();
-    histogram.update(p, v);
+  detail::accumulate(histogram, global_positions, global_velocities);
+  try {
+    return detail::normalize_by_bin_size(histogram, allow_empty_bins);
+  } catch (detail::empty_bin_exception const &) {
+    throw std::runtime_error(
+        "Decrease sampling delta(s), some bins have no hit");
   }
-  auto hist_tmp = histogram.get_histogram();
-  auto const tot_count = histogram.get_tot_count();
-  for (std::size_t ind = 0; ind < hist_tmp.size(); ++ind) {
-    if (tot_count[ind] == 0 and not allow_empty_bins) {
-      auto const error = "Decrease sampling delta(s), bin " +
-                         std::to_string(ind) + " has no hit";
-      throw std::runtime_error(error);
-    }
-    if (tot_count[ind] > 0) {
-      hist_tmp[ind] /= static_cast<double>(tot_count[ind]);
-    }
-  }
-  return hist_tmp;
 }
 
 } // namespace Observables

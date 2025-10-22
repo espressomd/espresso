@@ -38,13 +38,20 @@ public:
   std::shared_ptr<::ReactionMethods::ReactionAlgorithm> RE() override {
     return m_re;
   }
+  std::shared_ptr<::ReactionMethods::ReactionAlgorithm> const
+  RE() const override {
+    return m_re;
+  }
 
   void do_construct(VariantMap const &params) override {
-    m_re = std::make_shared<::ReactionMethods::ReactionEnsemble>(
-        get_value<int>(params, "seed"), get_value<double>(params, "kT"),
-        get_value<double>(params, "exclusion_range"),
-        get_value_or<std::unordered_map<int, double>>(
-            params, "exclusion_radius_per_type", {}));
+    context()->parallel_try_catch([&]() {
+      m_re = std::make_shared<::ReactionMethods::ReactionEnsemble>(
+          context()->get_comm(), get_value<int>(params, "seed"),
+          get_value<double>(params, "kT"),
+          get_value<double>(params, "exclusion_range"),
+          get_value_or<std::unordered_map<int, double>>(
+              params, "exclusion_radius_per_type", {}));
+    });
     do_set_parameter("search_algorithm",
                      Variant{get_value_or<std::string>(
                          params, "search_algorithm", "order_n")});

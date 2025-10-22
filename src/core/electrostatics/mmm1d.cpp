@@ -21,69 +21,69 @@
 
 #include "config/config.hpp"
 
-#ifdef ELECTROSTATICS
+#ifdef ESPRESSO_ELECTROSTATICS
 
 #include "electrostatics/mmm1d.hpp"
 
 #include "electrostatics/coulomb.hpp"
-#include "electrostatics/mmm-common.hpp"
-#include "electrostatics/mmm-modpsi.hpp"
 
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
-#include "grid.hpp"
 #include "specfunc.hpp"
 #include "tuning.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <limits>
+#include <numbers>
 #include <vector>
 
 /* if you define this feature, the Bessel functions are calculated up
  * to machine precision, otherwise 10^-14, which should be
  * definitely enough for daily life. */
-#ifndef MMM1D_MACHINE_PREC
+#ifndef ESPRESSO_MMM1D_MACHINE_PREC
 #define K0 LPK0
 #define K1 LPK1
 #endif
 
-static double far_error(int P, double minrad) {
-  auto const wavenumber = 2. * Utils::pi() * box_geo.length_inv()[2];
+static auto far_error(int P, double minrad, Utils::Vector3d const &box_l_inv) {
+  auto const wavenumber = 2. * std::numbers::pi * box_l_inv[2];
   // this uses an upper bound to all force components and the potential
   auto const rhores = wavenumber * minrad;
-  auto const pref = 4. * box_geo.length_inv()[2] * std::max(1., wavenumber);
+  auto const pref = 4. * box_l_inv[2] * std::max(1., wavenumber);
 
   return pref * K1(rhores * P) * exp(rhores) / rhores * (P - 1. + 1. / rhores);
 }
 
-static double determine_minrad(double maxPWerror, int P) {
+static auto determine_minrad(double maxPWerror, int P,
+                             Utils::Vector3d const &box_l,
+                             Utils::Vector3d const &box_l_inv) {
   // bisection to search for where the error is maxPWerror
   auto constexpr min_rad = 0.01;
-  auto const rgranularity = min_rad * box_geo.length()[2];
+  auto const rgranularity = min_rad * box_l[2];
   auto rmin = rgranularity;
-  auto rmax = std::min(box_geo.length()[0], box_geo.length()[1]);
-  auto const errmin = far_error(P, rmin);
-  auto const errmax = far_error(P, rmax);
+  auto rmax = std::min(box_l[0], box_l[1]);
+  auto const errmin = far_error(P, rmin, box_l_inv);
+  auto const errmax = far_error(P, rmax, box_l_inv);
   if (errmin < maxPWerror) {
     // we can do almost all radii with this P
     return rmin;
   }
   if (errmax > maxPWerror) {
     // make sure that this switching radius cannot be reached
-    return 2. * std::max(box_geo.length()[0], box_geo.length()[1]);
+    return 2. * std::max(box_l[0], box_l[1]);
   }
 
   while (rmax - rmin > rgranularity) {
     auto const c = 0.5 * (rmin + rmax);
-    auto const errc = far_error(P, c);
+    auto const errc = far_error(P, c, box_l_inv);
     if (errc > maxPWerror) {
       rmin = c;
     } else {
@@ -93,9 +93,22 @@ static double determine_minrad(double maxPWerror, int P) {
   return 0.5 * (rmin + rmax);
 }
 
+/** Modified polygamma for even order <tt>2*n, n >= 0</tt> */
+static double mod_psi_even(auto const &modPsi, int n, double x) {
+  return evaluateAsTaylorSeriesAt(modPsi[2 * n], x * x);
+}
+
+/** Modified polygamma for odd order <tt>2*n+1, n>= 0</tt> */
+static double mod_psi_odd(auto const &modPsi, int n, double x) {
+  return x * evaluateAsTaylorSeriesAt(modPsi[2 * n + 1], x * x);
+}
+
 void CoulombMMM1D::determine_bessel_radii() {
+  auto const &box_geo = *get_system().box_geo;
+  auto const &box_l = box_geo.length();
+  auto const &box_l_inv = box_geo.length_inv();
   for (int i = 0; i < MAXIMAL_B_CUT; ++i) {
-    bessel_radii[i] = determine_minrad(maxPWerror, i + 1);
+    bessel_radii[i] = determine_minrad(maxPWerror, i + 1, box_l, box_l_inv);
   }
 }
 
@@ -110,7 +123,8 @@ void CoulombMMM1D::prepare_polygamma_series() {
     create_mod_psi_up_to(n + 1);
 
     /* |uz*z| <= 0.5 */
-    err = 2. * static_cast<double>(n) * fabs(mod_psi_even(n, 0.5)) * rhomax2nm2;
+    err = 2. * static_cast<double>(n) * fabs(mod_psi_even(modPsi, n, 0.5)) *
+          rhomax2nm2;
     rhomax2nm2 *= rhomax2;
     n++;
   } while (err > 0.1 * maxPWerror);
@@ -138,19 +152,22 @@ CoulombMMM1D::CoulombMMM1D(double prefactor, double maxPWerror,
 }
 
 void CoulombMMM1D::sanity_checks_periodicity() const {
+  auto const &box_geo = *get_system().box_geo;
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("MMM1D requires periodicity (False, False, True)");
   }
 }
 
 void CoulombMMM1D::sanity_checks_cell_structure() const {
-  if (local_geo.cell_structure_type() !=
-      CellStructureType::CELL_STRUCTURE_NSQUARE) {
+  auto const &local_geo = *get_system().local_geo;
+  if (local_geo.cell_structure_type() != CellStructureType::NSQUARE) {
     throw std::runtime_error("MMM1D requires the N-square cellsystem");
   }
 }
 
 void CoulombMMM1D::recalc_boxl_parameters() {
+  auto const &box_geo = *get_system().box_geo;
+
   if (far_switch_radius_sq >= Utils::sqr(box_geo.length()[2]))
     far_switch_radius_sq = 0.8 * Utils::sqr(box_geo.length()[2]);
 
@@ -164,7 +181,8 @@ void CoulombMMM1D::recalc_boxl_parameters() {
 
 Utils::Vector3d CoulombMMM1D::pair_force(double q1q2, Utils::Vector3d const &d,
                                          double dist) const {
-  auto constexpr c_2pi = 2. * Utils::pi();
+  auto constexpr c_2pi = 2. * std::numbers::pi;
+  auto const &box_geo = *get_system().box_geo;
   auto const n_modPsi = static_cast<int>(modPsi.size()) >> 1;
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
@@ -174,12 +192,12 @@ Utils::Vector3d CoulombMMM1D::pair_force(double q1q2, Utils::Vector3d const &d,
   if (rxy2 <= far_switch_radius_sq) {
     /* polygamma summation */
     auto sr = 0.;
-    auto sz = mod_psi_odd(0, z_d);
+    auto sz = mod_psi_odd(modPsi, 0, z_d);
     auto r2nm1 = 1.;
     for (int n = 1; n < n_modPsi; n++) {
       auto const deriv = static_cast<double>(2 * n);
-      auto const mpe = mod_psi_even(n, z_d);
-      auto const mpo = mod_psi_odd(n, z_d);
+      auto const mpe = mod_psi_even(modPsi, n, z_d);
+      auto const mpo = mod_psi_odd(modPsi, n, z_d);
       auto const r2n = r2nm1 * rxy2_d;
 
       sz += r2n * mpo;
@@ -232,7 +250,7 @@ Utils::Vector3d CoulombMMM1D::pair_force(double q1q2, Utils::Vector3d const &d,
         break;
 
       auto const fq = c_2pi * bp;
-#ifdef MMM1D_MACHINE_PREC
+#ifdef ESPRESSO_MMM1D_MACHINE_PREC
       auto const k0 = K0(fq * rxy_d);
       auto const k1 = K1(fq * rxy_d);
 #else
@@ -257,7 +275,8 @@ double CoulombMMM1D::pair_energy(double const q1q2, Utils::Vector3d const &d,
   if (q1q2 == 0.)
     return 0.;
 
-  auto constexpr c_2pi = 2. * Utils::pi();
+  auto constexpr c_2pi = 2. * std::numbers::pi;
+  auto const &box_geo = *get_system().box_geo;
   auto const n_modPsi = static_cast<int>(modPsi.size()) >> 1;
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
@@ -266,12 +285,12 @@ double CoulombMMM1D::pair_energy(double const q1q2, Utils::Vector3d const &d,
 
   if (rxy2 <= far_switch_radius_sq) {
     /* near range formula */
-    energy = -2. * Utils::gamma();
+    energy = -2. * std::numbers::egamma;
 
     /* polygamma summation */
-    double r2n = 1.0;
+    double r2n = 1.;
     for (int n = 0; n < n_modPsi; n++) {
-      auto const add = mod_psi_even(n, z_d) * r2n;
+      auto const add = mod_psi_even(modPsi, n, z_d) * r2n;
       energy -= add;
 
       if (fabs(add) < maxPWerror)
@@ -300,7 +319,8 @@ double CoulombMMM1D::pair_energy(double const q1q2, Utils::Vector3d const &d,
     auto const rxy_d = rxy * box_geo.length_inv()[2];
     /* The first Bessel term will compensate a little bit the
        log term, so add them close together */
-    energy = -0.25 * log(rxy2_d) + 0.5 * (Utils::ln_2() - Utils::gamma());
+    energy =
+        -0.25 * log(rxy2_d) + 0.5 * (std::numbers::ln2 - std::numbers::egamma);
     for (int bp = 1; bp < MAXIMAL_B_CUT; bp++) {
       if (bessel_radii[bp - 1] < rxy)
         break;
@@ -319,8 +339,10 @@ void CoulombMMM1D::tune() {
     return;
   }
   recalc_boxl_parameters();
+  auto &system = get_system();
 
   if (far_switch_radius_sq < 0.) {
+    auto const &box_geo = *system.box_geo;
     auto const maxrad = box_geo.length()[2];
     auto min_time = std::numeric_limits<double>::infinity();
     auto min_rad = -1.;
@@ -330,10 +352,10 @@ void CoulombMMM1D::tune() {
       if (switch_radius > bessel_radii.back()) {
         // this switching radius is large enough for our Bessel series
         far_switch_radius_sq = Utils::sqr(switch_radius);
-        on_coulomb_change();
+        system.on_coulomb_change();
 
         /* perform force calculation test */
-        auto const int_time = benchmark_integration_step(tune_timings);
+        auto const int_time = benchmark_integration_step(system, tune_timings);
 
         if (tune_verbose) {
           std::printf("r= %f t= %f ms\n", switch_radius, int_time);
@@ -357,7 +379,7 @@ void CoulombMMM1D::tune() {
   }
 
   m_is_tuned = true;
-  on_coulomb_change();
+  system.on_coulomb_change();
 }
 
-#endif // ELECTROSTATICS
+#endif // ESPRESSO_ELECTROSTATICS

@@ -17,12 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_NPT_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_NPT_HPP
+#pragma once
 
 #include "config/config.hpp"
 
-#ifdef NPT
+#ifdef ESPRESSO_NPT
 
 #include "Integrator.hpp"
 
@@ -40,12 +39,13 @@ namespace Integrators {
 class VelocityVerletIsoNPT
     : public AutoParameters<VelocityVerletIsoNPT, Integrator> {
   std::shared_ptr<::NptIsoParameters> m_instance;
+  std::string m_barostat;
 
 public:
   VelocityVerletIsoNPT();
 
   void do_construct(VariantMap const &params) override;
-  void activate() const override;
+  void activate() override;
 
   ::NptIsoParameters const &get_instance() const { return *m_instance; }
 };
@@ -53,5 +53,4 @@ public:
 } // namespace Integrators
 } // namespace ScriptInterface
 
-#endif // NPT
-#endif
+#endif // ESPRESSO_NPT

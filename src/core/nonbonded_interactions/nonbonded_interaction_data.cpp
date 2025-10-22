@@ -23,165 +23,107 @@
  */
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
-#include "event.hpp"
-
-#include <utils/index.hpp>
+#include "system/System.hpp"
 
 #include <algorithm>
+#include <cassert>
+#include <cstddef>
 #include <memory>
 #include <utility>
 #include <vector>
 
-/****************************************
- * variables
- *****************************************/
-int max_seen_particle_type = 0;
-std::vector<std::shared_ptr<IA_parameters>> nonbonded_ia_params;
+static double recalc_maximal_cutoff(IA_parameters const &data) {
+  auto max_cut_current = inactive_cutoff;
 
-/** Minimal global interaction cutoff. Particles with a distance
- *  smaller than this are guaranteed to be available on the same node
- *  (through ghosts).
- */
-static double min_global_cut = INACTIVE_CUTOFF;
-
-/*****************************************
- * general low-level functions
- *****************************************/
-
-void mpi_realloc_ia_params_local(int new_size) {
-  auto const old_size = ::max_seen_particle_type;
-  if (new_size <= old_size)
-    return;
-
-  auto const n_pairs = new_size * (new_size + 1) / 2;
-  auto new_params = std::vector<std::shared_ptr<IA_parameters>>(n_pairs);
-
-  /* if there is an old field, move entries */
-  for (int i = 0; i < old_size; i++) {
-    for (int j = i; j < old_size; j++) {
-      auto const new_key = Utils::upper_triangular(i, j, new_size);
-      auto const old_key = Utils::upper_triangular(i, j, old_size);
-      new_params[new_key] = std::move(nonbonded_ia_params[old_key]);
-    }
-  }
-  for (auto &ia_params : new_params) {
-    if (ia_params == nullptr) {
-      ia_params = std::make_shared<IA_parameters>();
-    }
-  }
-
-  ::max_seen_particle_type = new_size;
-  ::nonbonded_ia_params = std::move(new_params);
-}
-
-REGISTER_CALLBACK(mpi_realloc_ia_params_local)
-
-static double recalc_maximal_cutoff(const IA_parameters &data) {
-  auto max_cut_current = INACTIVE_CUTOFF;
-
-#ifdef LENNARD_JONES
+#ifdef ESPRESSO_LENNARD_JONES
   max_cut_current = std::max(max_cut_current, data.lj.max_cutoff());
 #endif
 
-#ifdef WCA
+#ifdef ESPRESSO_WCA
   max_cut_current = std::max(max_cut_current, data.wca.max_cutoff());
 #endif
 
-#ifdef DPD
+#ifdef ESPRESSO_DPD
   max_cut_current = std::max(max_cut_current, data.dpd.max_cutoff());
 #endif
 
-#ifdef LENNARD_JONES_GENERIC
+#ifdef ESPRESSO_LENNARD_JONES_GENERIC
   max_cut_current = std::max(max_cut_current, data.ljgen.max_cutoff());
 #endif
 
-#ifdef SMOOTH_STEP
+#ifdef ESPRESSO_SMOOTH_STEP
   max_cut_current = std::max(max_cut_current, data.smooth_step.max_cutoff());
 #endif
 
-#ifdef HERTZIAN
+#ifdef ESPRESSO_HERTZIAN
   max_cut_current = std::max(max_cut_current, data.hertzian.max_cutoff());
 #endif
 
-#ifdef GAUSSIAN
+#ifdef ESPRESSO_GAUSSIAN
   max_cut_current = std::max(max_cut_current, data.gaussian.max_cutoff());
 #endif
 
-#ifdef BMHTF_NACL
+#ifdef ESPRESSO_BMHTF_NACL
   max_cut_current = std::max(max_cut_current, data.bmhtf.max_cutoff());
 #endif
 
-#ifdef MORSE
+#ifdef ESPRESSO_MORSE
   max_cut_current = std::max(max_cut_current, data.morse.max_cutoff());
 #endif
 
-#ifdef BUCKINGHAM
+#ifdef ESPRESSO_BUCKINGHAM
   max_cut_current = std::max(max_cut_current, data.buckingham.max_cutoff());
 #endif
 
-#ifdef SOFT_SPHERE
+#ifdef ESPRESSO_SOFT_SPHERE
   max_cut_current = std::max(max_cut_current, data.soft_sphere.max_cutoff());
 #endif
 
-#ifdef HAT
+#ifdef ESPRESSO_HAT
   max_cut_current = std::max(max_cut_current, data.hat.max_cutoff());
 #endif
 
-#ifdef LJCOS
+#ifdef ESPRESSO_LJCOS
   max_cut_current = std::max(max_cut_current, data.ljcos.max_cutoff());
 #endif
 
-#ifdef LJCOS2
+#ifdef ESPRESSO_LJCOS2
   max_cut_current = std::max(max_cut_current, data.ljcos2.max_cutoff());
 #endif
 
-#ifdef GAY_BERNE
+#ifdef ESPRESSO_GAY_BERNE
   max_cut_current = std::max(max_cut_current, data.gay_berne.max_cutoff());
 #endif
 
-#ifdef TABULATED
+#ifdef ESPRESSO_TABULATED
   max_cut_current = std::max(max_cut_current, data.tab.cutoff());
 #endif
 
-#ifdef THOLE
+#ifdef ESPRESSO_THOLE
   // If THOLE is active, use p3m cutoff
   if (data.thole.scaling_coeff != 0.)
-    max_cut_current = std::max(max_cut_current, Coulomb::cutoff());
+    max_cut_current =
+        std::max(max_cut_current, Coulomb::get_coulomb().cutoff());
 #endif
 
   return max_cut_current;
 }
 
-double maximal_cutoff_nonbonded() {
-  auto max_cut_nonbonded = INACTIVE_CUTOFF;
-
-  for (auto &data : nonbonded_ia_params) {
+void InteractionsNonBonded::recalc_maximal_cutoffs() {
+  for (auto &data : m_nonbonded_ia_params) {
     data->max_cut = recalc_maximal_cutoff(*data);
+  }
+}
+
+double InteractionsNonBonded::maximal_cutoff() const {
+  auto max_cut_nonbonded = inactive_cutoff;
+  for (auto &data : m_nonbonded_ia_params) {
     max_cut_nonbonded = std::max(max_cut_nonbonded, data->max_cut);
   }
-
   return max_cut_nonbonded;
 }
 
-bool is_new_particle_type(int type) {
-  return (type + 1) > max_seen_particle_type;
+void InteractionsNonBonded::on_non_bonded_ia_change() const {
+  get_system().on_non_bonded_ia_change();
 }
-
-void make_particle_type_exist(int type) {
-  if (is_new_particle_type(type))
-    mpi_call_all(mpi_realloc_ia_params_local, type + 1);
-}
-
-void make_particle_type_exist_local(int type) {
-  if (is_new_particle_type(type))
-    mpi_realloc_ia_params_local(type + 1);
-}
-
-void set_min_global_cut(double min_global_cut) {
-  ::min_global_cut = min_global_cut;
-  on_skin_change();
-}
-
-double get_min_global_cut() { return ::min_global_cut; }

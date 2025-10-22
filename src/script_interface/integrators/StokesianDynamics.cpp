@@ -19,14 +19,14 @@
 
 #include "config/config.hpp"
 
-#ifdef STOKESIAN_DYNAMICS
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
 
 #include "StokesianDynamics.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 
-#include "core/grid.hpp"
-#include "core/integrate.hpp"
+#include "core/PropagationMode.hpp"
+#include "core/integrators/Propagation.hpp"
 #include "core/stokesian_dynamics/sd_interface.hpp"
 
 #include <memory>
@@ -90,14 +90,14 @@ void StokesianDynamics::do_construct(VariantMap const &params) {
   });
 }
 
-void StokesianDynamics::activate() const {
+void StokesianDynamics::activate() {
   context()->parallel_try_catch([&]() {
     register_integrator(get_instance());
-    set_integ_switch(INTEG_METHOD_SD);
+    get_system().propagation->set_integ_switch(INTEG_METHOD_SD);
   });
 }
 
 } // namespace Integrators
 } // namespace ScriptInterface
 
-#endif // STOKESIAN_DYNAMICS
+#endif // ESPRESSO_STOKESIAN_DYNAMICS

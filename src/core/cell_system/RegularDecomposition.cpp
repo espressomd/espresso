@@ -23,9 +23,10 @@
 
 #include "cell_system/Cell.hpp"
 
+#include "communication.hpp"
 #include "error_handling/RuntimeErrorStream.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
@@ -43,17 +44,16 @@
 #include <cmath>
 #include <cstddef>
 #include <functional>
+#include <initializer_list>
 #include <iterator>
 #include <utility>
 #include <vector>
 
-/** Returns pointer to the cell which corresponds to the position if the
- *  position is in the node's spatial domain otherwise a nullptr.
- */
-Cell *RegularDecomposition::position_to_cell(const Utils::Vector3d &pos) {
+int RegularDecomposition::position_to_cell_index(
+    Utils::Vector3d const &pos) const {
   Utils::Vector3i cpos;
 
-  for (int i = 0; i < 3; i++) {
+  for (auto i = 0u; i < 3u; i++) {
     cpos[i] = static_cast<int>(std::floor(pos[i] * inv_cell_size[i])) + 1 -
               cell_offset[i];
 
@@ -63,22 +63,21 @@ Cell *RegularDecomposition::position_to_cell(const Utils::Vector3d &pos) {
        the particle belongs here and could otherwise potentially be dismissed
        due to rounding errors. */
     if (cpos[i] < 1) {
-      if ((!m_box.periodic(i) or (pos[i] >= m_box.length()[i])) &&
-          m_local_box.boundary()[2 * i])
+      if ((!m_box.periodic(i) or (pos[i] >= m_box.length()[i])) and
+          m_local_box.boundary()[2u * i])
         cpos[i] = 1;
       else
-        return nullptr;
+        return -1;
     } else if (cpos[i] > cell_grid[i]) {
-      if ((!m_box.periodic(i) or (pos[i] < m_box.length()[i])) &&
-          m_local_box.boundary()[2 * i + 1])
+      if ((!m_box.periodic(i) or (pos[i] < m_box.length()[i])) and
+          m_local_box.boundary()[2u * i + 1u])
         cpos[i] = cell_grid[i];
       else
-        return nullptr;
+        return -1;
     }
   }
 
-  auto const ind = get_linear_index(cpos, ghost_cell_grid);
-  return &(cells.at(ind));
+  return get_linear_index(cpos, ghost_cell_grid);
 }
 
 void RegularDecomposition::move_if_local(
@@ -102,17 +101,19 @@ void RegularDecomposition::move_left_or_right(ParticleList &src,
                                               ParticleList &left,
                                               ParticleList &right,
                                               int dir) const {
+  auto const is_open_boundary_left = m_local_box.boundary()[2 * dir] != 0;
+  auto const is_open_boundary_right = m_local_box.boundary()[2 * dir + 1] != 0;
+  auto const can_move_left = m_box.periodic(dir) or not is_open_boundary_left;
+  auto const can_move_right = m_box.periodic(dir) or not is_open_boundary_right;
+  auto const my_left = m_local_box.my_left()[dir];
+  auto const my_right = m_local_box.my_right()[dir];
   for (auto it = src.begin(); it != src.end();) {
-    if ((m_box.get_mi_coord(it->pos()[dir], m_local_box.my_left()[dir], dir) <
-         0.0) and
-        (m_box.periodic(dir) || (m_local_box.boundary()[2 * dir] == 0))) {
-      left.insert(std::move(*it));
-      it = src.erase(it);
-    } else if ((m_box.get_mi_coord(it->pos()[dir], m_local_box.my_right()[dir],
-                                   dir) >= 0.0) and
-               (m_box.periodic(dir) ||
-                (m_local_box.boundary()[2 * dir + 1] == 0))) {
+    auto const pos = it->pos()[dir];
+    if (m_box.get_mi_coord(pos, my_right, dir) >= 0. and can_move_right) {
       right.insert(std::move(*it));
+      it = src.erase(it);
+    } else if (m_box.get_mi_coord(pos, my_left, dir) < 0. and can_move_left) {
+      left.insert(std::move(*it));
       it = src.erase(it);
     } else {
       ++it;
@@ -162,16 +163,14 @@ void RegularDecomposition::exchange_neighbors(
   }
 }
 
-namespace {
 /**
  * @brief Fold coordinates to box and reset the old position.
  */
-void fold_and_reset(Particle &p, BoxGeometry const &box_geo) {
-  fold_position(p.pos(), p.image_box(), box_geo);
+static void fold_and_reset(Particle &p, BoxGeometry const &box_geo) {
+  box_geo.fold_position(p.pos(), p.image_box());
 
   p.pos_at_last_verlet_update() = p.pos();
 }
-} // namespace
 
 void RegularDecomposition::resort(bool global,
                                   std::vector<ParticleChange> &diff) {
@@ -266,12 +265,13 @@ void RegularDecomposition::fill_comm_cell_lists(ParticleList **part_lists,
         *part_lists++ = &(cells.at(i).particles());
       }
 }
+
 Utils::Vector3d RegularDecomposition::max_cutoff() const {
-  auto dir_max_range = [this](int i) {
+  auto dir_max_range = [this](unsigned int i) {
     return std::min(0.5 * m_box.length()[i], m_local_box.length()[i]);
   };
 
-  return {dir_max_range(0), dir_max_range(1), dir_max_range(2)};
+  return {dir_max_range(0u), dir_max_range(1u), dir_max_range(2u)};
 }
 
 Utils::Vector3d RegularDecomposition::max_range() const { return cell_size; }
@@ -307,7 +307,7 @@ void RegularDecomposition::create_cell_grid(double range) {
     auto const volume = Utils::product(local_box_l);
     auto const scale = std::cbrt(RegularDecomposition::max_num_cells / volume);
 
-    for (int i = 0; i < 3; i++) {
+    for (auto i = 0u; i < 3u; i++) {
       /* this is at least 1 */
       cell_grid[i] = static_cast<int>(std::ceil(local_box_l[i] * scale));
       cell_range[i] = local_box_l[i] / static_cast<double>(cell_grid[i]);
@@ -337,11 +337,11 @@ void RegularDecomposition::create_cell_grid(double range) {
         break;
 
       /* find coordinate with the smallest cell range */
-      int min_ind = 0;
-      double min_size = cell_range[0];
+      auto min_ind = 0u;
+      auto min_size = cell_range[0];
 
-      for (int i = 1; i < 3; i++) {
-        if (cell_grid[i] > 1 && cell_range[i] < min_size) {
+      for (auto i = 1u; i < 3u; ++i) {
+        if (cell_grid[i] > 1 and cell_range[i] < min_size) {
           min_ind = i;
           min_size = cell_range[i];
         }
@@ -370,7 +370,7 @@ void RegularDecomposition::create_cell_grid(double range) {
 
   /* now set all dependent variables */
   int new_cells = 1;
-  for (int i = 0; i < 3; i++) {
+  for (auto i = 0u; i < 3u; i++) {
     ghost_cell_grid[i] = cell_grid[i] + 2;
     new_cells *= ghost_cell_grid[i];
     cell_size[i] = m_local_box.length()[i] / static_cast<double>(cell_grid[i]);
@@ -380,7 +380,7 @@ void RegularDecomposition::create_cell_grid(double range) {
 
   /* allocate cell array and cell pointer arrays */
   cells.clear();
-  cells.resize(new_cells);
+  cells.resize(static_cast<unsigned int>(new_cells));
   m_local_cells.resize(n_local_cells);
   m_ghost_cells.resize(new_cells - n_local_cells);
 }
@@ -392,13 +392,42 @@ template <class K, class Comparator> auto make_flat_set(Comparator &&comp) {
 
 void RegularDecomposition::init_cell_interactions() {
 
-  auto const halo = Utils::Vector3i{1, 1, 1};
+  // Note: the global index for physical cells is 0-based.
+  // I.e., a global index of -1 refers to a ghost cell.
+  auto const halo = Utils::Vector3i{1, 1, 1}; // number of ghost layers
   auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
-  auto const node_pos = cart_info.coords;
+  // 3D index of the MPI rank in the Cartesian grid of MPI ranks
+  auto const &node_pos = cart_info.coords;
+  // size of the Cartesian grid of MPI ranks
+  auto const &node_grid = ::communicator.node_grid;
   auto const global_halo_offset = hadamard_product(node_pos, cell_grid) - halo;
+  // MD cell index of lower halo layer on this MPI rank
   auto const global_size = hadamard_product(node_grid, cell_grid);
 
-  /* Tanslate a node local index (relative to the origin of the local grid)
+  // is a cell at the system boundary in the given coord
+  auto const at_boundary = [&global_size](int coord, Utils::Vector3i cell_idx) {
+    return (cell_idx[coord] == 0 or cell_idx[coord] == global_size[coord]);
+  };
+
+  // For the fully connected feature (cells that don't share at least a corner)
+  // only apply if one cell is a ghost cell (i.e. connections across the
+  // periodic boundary.
+  auto const fcb_is_inner_connection = [&global_size, this](Utils::Vector3i a,
+                                                            Utils::Vector3i b) {
+    if (fully_connected_boundary()) {
+      auto const [fc_normal, fc_dir] = *fully_connected_boundary();
+      auto const involves_ghost_cell =
+          (a[fc_normal] == -1 or a[fc_normal] == global_size[fc_normal] or
+           b[fc_normal] == -1 or b[fc_normal] == global_size[fc_normal]);
+      if (not involves_ghost_cell) {
+        // check if cells do not share at least a corner
+        return std::abs((a - b)[fc_dir]) > 1;
+      }
+    }
+    return false;
+  };
+
+  /* Translate a node local index (relative to the origin of the local grid)
    * to a global index. */
   auto global_index =
       [&](Utils::Vector3i const &local_index) -> Utils::Vector3i {
@@ -418,10 +447,25 @@ void RegularDecomposition::init_cell_interactions() {
     return (global_index - global_halo_offset);
   };
 
+  // sanity checks
+  if (fully_connected_boundary()) {
+    auto const [fc_normal, fc_dir] = *fully_connected_boundary();
+    if (fc_normal == fc_dir) {
+      throw std::domain_error("fully_connected_boundary normal and connection "
+                              "coordinates need to differ.");
+    }
+    if (node_grid[fc_dir] != 1) {
+      throw std::runtime_error(
+          "The MPI nodegrid must be 1 in the fully connected direction.");
+    }
+  }
+
   /* We only consider local cells (e.g. not halo cells), which
    * span the range [(1,1,1), cell_grid) in local coordinates. */
   auto const start = global_index(Utils::Vector3i{1, 1, 1});
   auto const end = start + cell_grid;
+
+  bool one_mpi_rank = m_comm.size() == 1;
 
   /* loop all local cells */
   for (int o = start[2]; o < end[2]; o++)
@@ -431,25 +475,23 @@ void RegularDecomposition::init_cell_interactions() {
         Utils::Vector3i lower_index = {m - 1, n - 1, o - 1};
         Utils::Vector3i upper_index = {m + 1, n + 1, o + 1};
 
-        //        /* In the fully connected case, we consider all cells
-        //         * in the direction as neighbors, not only the nearest ones.
+        /* In the fully connected case, we consider all cells
+        * in the direction as neighbors, not only the nearest ones.
         //         */
-        //        for (int i = 0; i < 3; i++) {
-        //          if (dd.fully_connected[i]) {
-        //            // Fully connected is only needed at the box surface
-        //            if (i==0 and (n!=start[1] or n!=end[1]-1) and (o!=start[2]
-        //            or o!=end[2]-1)) continue; if (i==1 and (m!=start[0] or
-        //            m!=end[0]-1) and (o!=start[2] or o!=end[2]-1)) continue;
-        //            if (i==2 and (m!=start[0] or m!=end[0]-1) and (n!=start[1]
-        //            or n!=end[1]-1)) continue; lower_index[i] = 0;
-        //            upper_index[i] = global_size[i] - 1;
-        //          }
-        //        }
+        if (fully_connected_boundary()) {
+          auto const [fc_boundary, fc_direction] = *fully_connected_boundary();
+
+          // Fully connected is only needed at the box surface
+          if (at_boundary(fc_boundary, {m, n, o})) {
+            lower_index[fc_direction] = -1;
+            upper_index[fc_direction] = global_size[fc_boundary];
+          }
+        }
 
         /* In non-periodic directions, the halo needs not
          * be considered. */
-        for (int i = 0; i < 3; i++) {
-          if (not box_geo.periodic(i)) {
+        for (auto i = 0u; i < 3u; i++) {
+          if (not m_box.periodic(i)) {
             lower_index[i] = std::max(0, lower_index[i]);
             upper_index[i] = std::min(global_size[i] - 1, upper_index[i]);
           }
@@ -466,6 +508,12 @@ void RegularDecomposition::init_cell_interactions() {
         for (int p = lower_index[2]; p <= upper_index[2]; p++)
           for (int q = lower_index[1]; q <= upper_index[1]; q++)
             for (int r = lower_index[0]; r <= upper_index[0]; r++) {
+              if (fully_connected_boundary()) {
+                // Avoid fully connecting the boundary layer and the
+                // next INNER layer
+                if (fcb_is_inner_connection({m, n, o}, {r, q, p}))
+                  continue;
+              }
               neighbors.insert(Utils::Vector3i{r, q, p});
             }
 
@@ -474,7 +522,21 @@ void RegularDecomposition::init_cell_interactions() {
 
         std::vector<Cell *> red_neighbors;
         std::vector<Cell *> black_neighbors;
-        for (auto const &neighbor : neighbors) {
+
+        /* If we are running on a single MPI rank, it is not necessary to use
+         * ghost cells. Instead of adding a ghost cell as neighbor,
+         * we directly connect to the corresponding
+         * physical cell across the periodic boundary */
+        for (auto &neighbor : neighbors) {
+          if (one_mpi_rank) {
+            for (auto coord : {0u, 1u, 2u}) {
+              if (neighbor[coord] == -1) {
+                neighbor[coord] += cell_grid[coord];
+              } else if (neighbor[coord] == cell_grid[coord]) {
+                neighbor[coord] -= cell_grid[coord];
+              }
+            }
+          }
           auto const ind2 = folded_linear_index(neighbor);
           /* Exclude cell itself */
           if (ind1 == ind2)
@@ -482,6 +544,8 @@ void RegularDecomposition::init_cell_interactions() {
 
           auto cell = &cells.at(
               get_linear_index(local_index(neighbor), ghost_cell_grid));
+
+          // Divide red and black neighbors
           if (ind2 > ind1) {
             red_neighbors.push_back(cell);
           } else {
@@ -489,6 +553,7 @@ void RegularDecomposition::init_cell_interactions() {
           }
         }
 
+        // Assign neighbors to the cell
         cells[get_linear_index(local_index({m, n, o}), ghost_cell_grid)]
             .m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
       }
@@ -532,6 +597,13 @@ void assign_prefetches(GhostCommunicator &comm) {
 } // namespace
 
 GhostCommunicator RegularDecomposition::prepare_comm() {
+  // When running on a single MPI rank, the ghost cells are not needed,
+  // as the corresponding physical cell is available on the same MPI rank.
+  // The cell neighborships are set up such that cells across the periodic
+  // boundaries are connected as neighbors directly.
+  if (m_comm.size() == 1)
+    return {};
+
   int dir, lr, i, cnt, n_comm_cells[3];
   Utils::Vector3i lc{}, hc{}, done{};
 
@@ -629,11 +701,13 @@ GhostCommunicator RegularDecomposition::prepare_comm() {
   return ghost_comm;
 }
 
-RegularDecomposition::RegularDecomposition(boost::mpi::communicator comm,
-                                           double range,
-                                           BoxGeometry const &box_geo,
-                                           LocalBox<double> const &local_geo)
-    : m_comm(std::move(comm)), m_box(box_geo), m_local_box(local_geo) {
+RegularDecomposition::RegularDecomposition(
+    boost::mpi::communicator comm, double range, BoxGeometry const &box_geo,
+    LocalBox const &local_geo,
+    std::optional<std::pair<int, int>> fully_connected)
+    : m_comm(std::move(comm)), m_box(box_geo), m_local_box(local_geo),
+      m_fully_connected_boundary(std::move(fully_connected)) {
+
   /* set up new regular decomposition cell structure */
   create_cell_grid(range);
 

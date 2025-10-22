@@ -111,19 +111,21 @@ Be aware of the following limitations:
   for a specific combination of features, please share your findings
   with the |es| community.
 
-* Checkpointing only supports recursion on the head node. It is therefore
-  impossible to checkpoint a :class:`espressomd.system.System` instance that
-  contains LB boundaries, constraint unions or auto-update accumulators when the
-  simulation is running with 2 or more MPI nodes.
-
-* The active actors, i.e., the content of ``system.actors``, are checkpointed.
-  For lattice-Boltzmann fluids, this only includes the parameters such as the
-  lattice constant (``agrid``). The actual flow field has to be saved
-  separately with the lattice-Boltzmann specific methods
-  :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
-  and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint`
+* All long-range solvers for electrostatics, magnetostatics, lattice-Boltzmann
+  and advection-diffusion-reaction are checkpointed. For lattice-Boltzmann
+  fluids and advection-diffusion-reaction models, this only includes the
+  parameters such as the lattice constant (``agrid``) and initial densities.
+  The actual fields have to be saved separately with the lattice-specific
+  methods :meth:`espressomd.lb.LBFluidWalberla.save_checkpoint
+  <espressomd.detail.walberla.LatticeModel.save_checkpoint>` resp.
+  :meth:`espressomd.electrokinetics.EKSpecies.save_checkpoint
+  <espressomd.detail.walberla.LatticeModel.save_checkpoint>`
+  and loaded via :meth:`espressomd.lb.LBFluidWalberla.load_checkpoint
+  <espressomd.detail.walberla.LatticeModel.load_checkpoint>` resp.
+  :meth:`espressomd.electrokinetics.EKSpecies.load_checkpoint
+  <espressomd.detail.walberla.LatticeModel.load_checkpoint>`
   after restoring the checkpoint. See :ref:`LB checkpointing <Checkpointing LB>`
-  for more details.
+  resp. :ref:`EK checkpointing <Checkpointing EK>` for more details.
 
 * References between Python objects are not maintained during checkpointing.
   For example, if an instance of a shape and an instance of a constraint
@@ -172,26 +174,46 @@ Be aware of the following limitations:
 
       system = setup_system()
 
+* To be fully deterministic when loading from a checkpoint with an active
+  thermostat, the first step of the integration should be called with the flag
+  ``reuse_forces=True``, e.g. ``system.integrator.run(2, reuse_forces=True)``.
+  This is because loading a checkpoint reinitializes the system and enforces
+  a recalculation of the forces. However, this computes the forces from the
+  velocities at the current time step and not at the previous half time step.
+  Please note that long-range solvers can make trajectories non-reproducible.
+  For example, lattice-Boltzmann introduces errors of the order of 1e-15 with
+  binary checkpoint files, or 1e-7 with ASCII checkpoint files. In addition,
+  several electrostatic and magnetostatic solvers automatically introduce
+  a deviation of the order of 1e-7, either due to floating-point rounding
+  errors (:class:`~espressomd.electrostatics.P3MGPU`), or due to re-tuning
+  using the most recent system state (:class:`~espressomd.electrostatics.MMM1D`).
+  When in doubt, you can easily verify the absence of a "force jump" when
+  loading from a checkpoint by replacing the electrostatics actor with your
+  combination of features in files :file:`samples/save_checkpoint.py` and
+  :file:`samples/load_checkpoint.py` and running them sequentially.
+
 For additional methods of the checkpointing class, see
 :class:`espressomd.checkpointing.Checkpoint`.
 
-.. _Writing H5MD-files:
+.. _Writing hdf5 files:
 
-Writing H5MD-files
+Writing hdf5 files
 ------------------
 
 .. note::
 
-    Requires ``H5MD`` external feature, enabled with ``-D ESPRESSO_BUILD_WITH_HDF5=ON``.
+    Requires ``HDF5`` external feature, enabled with ``-D ESPRESSO_BUILD_WITH_HDF5=ON``.
     Also requires a parallel version of HDF5. On Ubuntu, this can be installed
     via either ``libhdf5-openmpi-dev`` for OpenMPI or ``libhdf5-mpich-dev`` for
-    MPICH, but not ``libhdf5-dev`` which is the serial version.
+    MPICH, but not via ``libhdf5-dev`` which is the serial version.
 
-For long simulations, it's a good idea to store data in the hdf5 file format
-(see https://www.hdfgroup.org for details, H5MD is based on hdf5).
-Currently |es| supports some basic functions for writing simulation
-data to H5MD files. The implementation is MPI-parallelized and is capable
-of dealing with a varying number of particles.
+It is good practice to store trajectory files in the hdf5 file format :cite:`misc-hdf5`
+using the H5MD specification :cite:`buyl14a` to store metadata, such as SI units.
+This is a performance-portable and interoperable file format commonly used
+to exchange data between molecular dynamics software or archive simulation data.
+|es| uses the HighFive library :cite:`devresse24a` for read/write operations.
+The implementation is MPI-parallel, scales well on parallel file systems,
+and is capable of dealing with a varying number of particles.
 
 To write data in a hdf5-file according to the H5MD proposal
 (https://nongnu.org/h5md), first an object of the class
@@ -245,19 +267,19 @@ entry belongs to which particle.
 
 For an example involving physical units, see :file:`/samples/h5md.py`.
 
-.. _Reading H5MD-files:
+.. _Reading hdf5 files:
 
-Reading H5MD-files
+Reading hdf5 files
 ------------------
 
-H5MD files can be read and sometimes modified by many tools. If the data was
-stored with `physical units <https://nongnu.org/h5md/modules/units.html>`__,
-they can be accessed by reading the group attributes. Since the data is
+Numerous tools are available to read hdf5 files. Since the data is
 written in parallel, the particles are unsorted; if particles were created
 with increasing particle id and no particle deletion occurred during the
-simulation, the coordinates can be sorted with a simply numpy operation.
+simulation, the coordinates can be sorted with a simple NumPy operation.
+If the data was stored with `SI units <https://nongnu.org/h5md/modules/units.html>`__
+according to the H5MD specification, they can be accessed by reading group attributes.
 
-To read with the python module ``h5py`` (documentation:
+To read with the Python package ``h5py`` (documentation:
 `HDF5 for Python <https://docs.h5py.org/en/stable>`__)::
 
     import h5py
@@ -269,7 +291,7 @@ To read with the python module ``h5py`` (documentation:
         sim_time = h5file['particles/atoms/id/time']
         print(f"last frame: {sim_time[-2]:.3f} {sim_time.attrs['unit'].decode('utf8')}")
 
-To read with the python module ``pandas`` (documentation: `HDFStore: PyTables
+To read with the Python package ``pandas`` (documentation: `HDFStore: PyTables
 <https://pandas.pydata.org/docs/reference/io.html#hdfstore-pytables-hdf5>`_)::
 
     import pandas
@@ -292,7 +314,7 @@ To read from the command line with
     # show metadata + data
     h5dump sample.h5 | less
 
-H5MD files can also be inspected with the GUI tool
+hdf5 files can also be inspected with the GUI tool
 `HDFView <https://www.hdfgroup.org/downloads/hdfview>`__ (Ubuntu package
 ``hdfview``) or visually with the H5MD VMD plugin (GitHub project
 `h5md/VMD-h5mdplugin <https://github.com/h5md/VMD-h5mdplugin>`__).
@@ -317,7 +339,7 @@ capabilities. The usage is quite simple:
     import espressomd.io
     system = espressomd.System(box_l=[1, 1, 1])
     # ... add particles here
-    mpiio = espressomd.io.mpiio.Mpiio()
+    mpiio = espressomd.io.mpiio.Mpiio(system=system)
     mpiio.write("/tmp/mydata", positions=True, velocities=True, types=True, bonds=True)
 
 Here, :file:`/tmp/mydata` is the prefix used to generate several files.
@@ -487,3 +509,33 @@ requires increasing and continuous indexing. The |es| ``id`` can be used as *key
     vtf_index[3]
 
 Note that the |es| particles are ordered in increasing order, thus ``id=3`` corresponds to the zeroth VTF index.
+
+.. _Reading VTK files:
+
+Reading VTK files
+-----------------
+
+The waLBerla library writes VTK multi-piece uniform grids in XML format.
+Each piece contains information about its spatial extent, from which it is
+possible to deduce the grid dimensions. Each piece may contain one or more
+array, which are uniquely identified by name. While the Python package ``vtk``
+provides tools to read VTK files as numpy arrays, it doesn't automatically
+reconstruct the 3D grids using the topology information of each piece; this
+functionality is provided by the wrapper :class:`~espressomd.io.vtk.VTKReader`:
+
+.. code-block:: python
+
+    import espressomd.io.vtk
+    vtk_reader = espressomd.io.vtk.VTKReader()
+    vtk_grids = vtk_reader.parse("simulation_step_0.vtu")
+    vtk_density = vtk_grids["density"]
+    print(vtk_density.shape)
+
+For self-contained examples, please refer to :ref:`LB VTK output` and
+:ref:`EK VTK output`.
+
+Some lattice-based methods support structured uniform grids. In this case,
+the file extension is ``.vti`` and each piece has absolute coordinates,
+making the reconstruction of the 3D grid trivial. The aforementioned
+VTK reader natively supports both structured and unstructured grid formats,
+and selects the correct reader backend based on the XML metadata.

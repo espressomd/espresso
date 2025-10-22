@@ -38,6 +38,10 @@ using ErrorHandling::RuntimeError;
 using ErrorHandling::RuntimeErrorCollector;
 using ErrorLevel = ErrorHandling::RuntimeError::ErrorLevel;
 
+template <ErrorLevel level>
+auto static constexpr filter_by =
+    [](RuntimeError const &error) { return error.level() == level; };
+
 BOOST_AUTO_TEST_CASE(count) {
   boost::mpi::communicator world;
 
@@ -97,18 +101,15 @@ BOOST_AUTO_TEST_CASE(gather) {
     }
 
     /* Check if we got 2 messages from every node. */
-    BOOST_CHECK(std::all_of(present.begin(), present.end(),
-                            [](int i) { return i == 2; }));
+    BOOST_CHECK(std::ranges::all_of(present, [](int i) { return i == 2; }));
     /* Count warnings, should be world.rank() many */
-    BOOST_CHECK(std::count_if(results.begin(), results.end(),
-                              [](const RuntimeError &e) {
-                                return e.level() == ErrorLevel::WARNING;
-                              }) == world.size());
+    BOOST_CHECK_EQUAL(
+        std::ranges::count_if(results, filter_by<ErrorLevel::WARNING>),
+        world.size());
     /* Count errors, should be world.rank() many */
-    BOOST_CHECK(std::count_if(results.begin(), results.end(),
-                              [](const RuntimeError &e) {
-                                return e.level() == ErrorLevel::ERROR;
-                              }) == world.size());
+    BOOST_CHECK_EQUAL(
+        std::ranges::count_if(results, filter_by<ErrorLevel::ERROR>),
+        world.size());
   } else {
     rec.gather_local();
   }

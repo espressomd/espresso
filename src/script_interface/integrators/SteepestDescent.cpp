@@ -21,7 +21,9 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
+#include "core/PropagationMode.hpp"
 #include "core/integrate.hpp"
+#include "core/integrators/Propagation.hpp"
 #include "core/integrators/steepest_descent.hpp"
 
 #include <utils/Vector.hpp>
@@ -31,6 +33,19 @@
 
 namespace ScriptInterface {
 namespace Integrators {
+
+Variant SteepestDescent::integrate(VariantMap const &params) {
+  auto constexpr reuse_forces = INTEG_REUSE_FORCES_NEVER;
+  auto constexpr update_accumulators = false;
+  auto const steps = get_value<int>(params, "steps");
+  context()->parallel_try_catch([&]() {
+    if (steps < 0) {
+      throw std::domain_error("Parameter 'steps' must be positive");
+    }
+  });
+  return get_system().integrate_with_signal_handler(steps, reuse_forces,
+                                                    update_accumulators);
+}
 
 SteepestDescent::SteepestDescent() {
   add_parameters({
@@ -54,9 +69,9 @@ void SteepestDescent::do_construct(VariantMap const &params) {
   });
 }
 
-void SteepestDescent::activate() const {
+void SteepestDescent::activate() {
   register_integrator(get_instance());
-  set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
+  get_system().propagation->set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
 }
 
 } // namespace Integrators

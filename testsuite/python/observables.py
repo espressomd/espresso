@@ -15,23 +15,25 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
 import espressomd.observables
+import espressomd.propagation
 
 
-def calc_com_x(system, x, id_list):
+def calc_com_x(system, attr, id_list):
     """Mass-weighted average, skipping virtual sites"""
     partcls = system.part.by_ids(id_list)
     masses = partcls.mass
 
     # Filter out virtual particles by using mass=0 for them
-    virtual = partcls.virtual
+    virtual = [p.is_virtual() for p in partcls]
     masses[np.nonzero(virtual)] = 0.
 
-    return np.average(getattr(partcls, x), weights=masses, axis=0)
+    return np.average(getattr(partcls, attr), weights=masses, axis=0)
 
 
 class Observables(ut.TestCase):
@@ -50,6 +52,9 @@ class Observables(ut.TestCase):
     if espressomd.has_features(["DIPOLES"]):
         partcls.dip = np.random.random((N_PART, 3)) - .3
 
+    if espressomd.has_features(["DIPOLE_FIELD_TRACKING"]):
+        partcls.dip_fld = np.random.random((N_PART, 3)) - .3
+
     if espressomd.has_features(["ROTATION"]):
         partcls.omega_body = np.random.random((N_PART, 3)) - .5
         partcls.torque_lab = np.random.random((N_PART, 3)) - .5
@@ -63,9 +68,9 @@ class Observables(ut.TestCase):
     if espressomd.has_features("ELECTROSTATICS"):
         partcls.q = np.random.random(N_PART)
 
-    if espressomd.has_features("VIRTUAL_SITES"):
+    if espressomd.has_features("VIRTUAL_SITES_INERTIALESS_TRACERS"):
         p = system.part.by_id(partcls.id[8])
-        p.virtual = True
+        p.propagation = espressomd.propagation.Propagation.TRANS_LB_TRACER
 
     def generate_test_for_pid_observable(
             _obs_class, _pprop_name, _agg_type=None):
@@ -93,7 +98,7 @@ class Observables(ut.TestCase):
             # Get data from particles
             if pprop_name == "f":
                 for p_id in id_list:
-                    if self.system.part.by_id(p_id).virtual:
+                    if self.system.part.by_id(p_id).is_virtual():
                         id_list.remove(p_id)
 
             part_data = getattr(self.system.part.by_ids(id_list), pprop_name)
@@ -116,7 +121,7 @@ class Observables(ut.TestCase):
             np.testing.assert_array_almost_equal(
                 obs_data,
                 part_data,
-                err_msg=f"Data did not agree for observable {obs_class.__name__} and particle property {pprop_name}",
+                err_msg=f"Data did not agree for observable {obs_class.__name__} and particle property {pprop_name}",  # nopep8
                 decimal=11)
 
             # Test setters and getters
@@ -141,6 +146,10 @@ class Observables(ut.TestCase):
         test_mag_dip = generate_test_for_pid_observable(
             espressomd.observables.MagneticDipoleMoment, "dip", "sum")
 
+    if espressomd.has_features(["DIPOLE_FIELD_TRACKING"]):
+        test_dip_fld = generate_test_for_pid_observable(
+            espressomd.observables.ParticleDipoleFields, "dip_fld")
+
     if espressomd.has_features(["ROTATION"]):
         test_body_angular_velocity = generate_test_for_pid_observable(
             espressomd.observables.ParticleBodyAngularVelocities, "omega_body")
@@ -148,6 +157,15 @@ class Observables(ut.TestCase):
             espressomd.observables.ParticleAngularVelocities, "omega_lab")
         test_director = generate_test_for_pid_observable(
             espressomd.observables.ParticleDirectors, "director")
+
+    @ut.skipIf(espressomd.has_features(["DIPOLE_FIELD_TRACKING"]),
+               "default dipole fields are needed")
+    def test_director_no_dipole_fields(self):
+        id_list = self.system.part.all().id
+        observable = espressomd.observables.ParticleDipoleFields(ids=id_list)
+        obs_data = observable.calculate()
+        np.testing.assert_array_almost_equal(
+            obs_data, self.N_PART * [[0., 0., 0.]], decimal=11)
 
     @ut.skipIf(espressomd.has_features(["ROTATION"]),
                "check default directors")
@@ -213,12 +231,11 @@ class Observables(ut.TestCase):
         id_list = sorted(
             np.random.choice(
                 self.partcls.id,
-                size=int(
-                    self.N_PART * .9),
+                size=int(self.N_PART * .9),
                 replace=False))
 
         particles = self.system.part.select(
-            lambda p: p.id in id_list and not p.virtual)
+            lambda p: p.id in id_list and not p.is_virtual())
 
         np.testing.assert_allclose(
             np.sum(particles.f, axis=0),

@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_OBSERVABLES_PROFILEOBSERVABLE_HPP
-#define SCRIPT_INTERFACE_OBSERVABLES_PROFILEOBSERVABLE_HPP
+#pragma once
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/observables/Observable.hpp"
@@ -28,6 +27,7 @@
 #include "core/observables/LBVelocityProfile.hpp"
 #include "core/observables/ProfileObservable.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -102,14 +102,14 @@ public:
           [this]() { return profile_observable()->limits[2].second; }}});
   }
 
-  void construct(VariantMap const &params) override {}
+  void construct(VariantMap const &) override {}
 
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "edges") {
       std::vector<Variant> variant_edges;
-      boost::copy(profile_observable()->edges(),
-                  std::back_inserter(variant_edges));
+      std::ranges::copy(profile_observable()->edges(),
+                        std::back_inserter(variant_edges));
       return variant_edges;
     }
     return Base::call_method(method, parameters);
@@ -129,5 +129,3 @@ private:
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */
-
-#endif

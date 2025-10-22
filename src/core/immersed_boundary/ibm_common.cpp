@@ -19,33 +19,35 @@
 
 #include "ibm_common.hpp"
 
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/serialization/optional.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/optional.hpp>
-#include <boost/serialization/optional.hpp>
 
+#include <optional>
 #include <stdexcept>
 
-Utils::Vector3d get_ibm_particle_position(int pid) {
+Utils::Vector3d get_ibm_particle_position(CellStructure const &cell_structure,
+                                          int pid) {
   auto *p = cell_structure.get_local_particle(pid);
-  boost::optional<Particle> opt_part{boost::none};
+  std::optional<Particle> opt_part{std::nullopt};
 
   if (p and not p->is_ghost()) {
     opt_part = *p;
   }
   opt_part = boost::mpi::all_reduce(comm_cart, opt_part,
-                                    [](boost::optional<Particle> const &acc,
-                                       boost::optional<Particle> const &item) {
+                                    [](std::optional<Particle> const &acc,
+                                       std::optional<Particle> const &item) {
                                       if (acc) {
                                         return acc;
                                       }
                                       return item;
                                     });
   if (opt_part)
-    return opt_part.get().pos();
+    return opt_part.value().pos();
   throw std::runtime_error("Immersed Boundary: Particle not found");
 }

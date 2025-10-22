@@ -19,60 +19,85 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLAR_DIRECT_SUM
+#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
 
 #include "magnetostatics/dipolar_direct_sum_gpu.hpp"
 #include "magnetostatics/dipolar_direct_sum_gpu_cuda.cuh"
 
-#include "EspressoSystemInterface.hpp"
+#include "BoxGeometry.hpp"
 #include "communication.hpp"
-#include "cuda_interface.hpp"
-#include "grid.hpp"
+#include "system/GpuParticleData.hpp"
+#include "system/System.hpp"
 
-static void get_simulation_box(float *box, int *per) {
-  for (int i = 0; i < 3; i++) {
+static void get_simulation_box(BoxGeometry const &box_geo, float *box,
+                               int *per) {
+  for (unsigned int i = 0u; i < 3u; i++) {
     box[i] = static_cast<float>(box_geo.length()[i]);
     per[i] = box_geo.periodic(i);
   }
 }
 
-DipolarDirectSumGpu::DipolarDirectSumGpu(double prefactor)
-    : prefactor{prefactor} {
-  auto &system = EspressoSystemInterface::Instance();
-  system.requestFGpu();
-  system.requestTorqueGpu();
-  system.requestRGpu();
-  system.requestDipGpu();
+DipolarDirectSumGpu::DipolarDirectSumGpu(double prefactor, int n_replicas) {
+  set_prefactor(prefactor);
+  this->n_replicas = n_replicas;
+  if (n_replicas < 0) {
+    throw std::domain_error("Parameter 'n_replicas' must be >= 0");
+  }
+}
+
+void DipolarDirectSumGpu::on_activation() const {
+  auto &gpu_particle_data = get_system().gpu;
+  gpu_particle_data.enable_property(GpuParticleData::prop::force);
+  gpu_particle_data.enable_property(GpuParticleData::prop::torque);
+  gpu_particle_data.enable_property(GpuParticleData::prop::pos);
+  gpu_particle_data.enable_property(GpuParticleData::prop::dip);
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  gpu_particle_data.enable_property(GpuParticleData::prop::dip_fld);
+#endif
 }
 
 void DipolarDirectSumGpu::add_long_range_forces() const {
-  auto &system = EspressoSystemInterface::Instance();
-  system.update();
+  auto &system = get_system();
+  auto &gpu = system.gpu;
+  gpu.update();
   if (this_node != 0) {
     return;
   }
   float box[3];
   int periodicity[3];
-  get_simulation_box(box, periodicity);
+  get_simulation_box(*system.box_geo, box, periodicity);
+  auto const npart = static_cast<unsigned>(gpu.n_particles());
+  auto const forces_device = gpu.get_particle_forces_device();
+  auto const torques_device = gpu.get_particle_torques_device();
+  auto const positions_device = gpu.get_particle_positions_device();
+  auto const dipoles_device = gpu.get_particle_dipoles_device();
+  float *dipole_fields_device{nullptr};
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  dipole_fields_device = gpu.get_particle_dip_fld_device();
+#endif
   DipolarDirectSum_kernel_wrapper_force(
-      static_cast<float>(prefactor), static_cast<unsigned>(system.npart_gpu()),
-      system.rGpuBegin(), system.dipGpuBegin(), system.fGpuBegin(),
-      system.torqueGpuBegin(), box, periodicity);
+      static_cast<float>(prefactor), npart, positions_device, dipoles_device,
+      dipole_fields_device, forces_device, torques_device, box, periodicity,
+      n_replicas);
 }
 
 void DipolarDirectSumGpu::long_range_energy() const {
-  auto &system = EspressoSystemInterface::Instance();
-  system.update();
+  auto &system = get_system();
+  auto &gpu = system.gpu;
+  gpu.update();
   if (this_node != 0) {
     return;
   }
   float box[3];
   int periodicity[3];
-  get_simulation_box(box, periodicity);
-  auto energy = &(reinterpret_cast<CUDA_energy *>(system.eGpu())->dipolar);
-  DipolarDirectSum_kernel_wrapper_energy(
-      static_cast<float>(prefactor), static_cast<unsigned>(system.npart_gpu()),
-      system.rGpuBegin(), system.dipGpuBegin(), box, periodicity, energy);
+  get_simulation_box(*system.box_geo, box, periodicity);
+  auto const npart = static_cast<unsigned>(gpu.n_particles());
+  auto const energy_device = &(gpu.get_energy_device()->dipolar);
+  auto const positions_device = gpu.get_particle_positions_device();
+  auto const dipoles_device = gpu.get_particle_dipoles_device();
+  DipolarDirectSum_kernel_wrapper_energy(static_cast<float>(prefactor), npart,
+                                         positions_device, dipoles_device, box,
+                                         periodicity, energy_device);
 }
 
-#endif
+#endif // ESPRESSO_DIPOLAR_DIRECT_SUM

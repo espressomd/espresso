@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SRC_UTILS_INCLUDE_UTILS_VECTOR_HPP
-#define SRC_UTILS_INCLUDE_UTILS_VECTOR_HPP
+
+#pragma once
 
 /**
  * @file
@@ -34,11 +34,14 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <initializer_list>
 #include <iterator>
 #include <numeric>
+#include <ranges>
+#include <span>
 #include <type_traits>
 #include <vector>
 
@@ -48,40 +51,57 @@ template <typename T, std::size_t N> class Vector : public Array<T, N> {
   using Base = Array<T, N>;
 
 public:
+  using Base::at;
   using Base::Base;
-  using Array<T, N>::at;
-  using Array<T, N>::operator[];
-  using Array<T, N>::front;
-  using Array<T, N>::back;
-  using Array<T, N>::data;
-  using Array<T, N>::begin;
-  using Array<T, N>::cbegin;
-  using Array<T, N>::end;
-  using Array<T, N>::cend;
-  using Array<T, N>::empty;
-  using Array<T, N>::size;
-  using Array<T, N>::max_size;
-  using Array<T, N>::fill;
-  using Array<T, N>::broadcast;
-  Vector() = default;
+  using Base::operator[];
+  using Base::back;
+  using Base::begin;
+  using Base::broadcast;
+  using Base::cbegin;
+  using Base::cend;
+  using Base::data;
+  using Base::empty;
+  using Base::end;
+  using Base::fill;
+  using Base::front;
+  using Base::max_size;
+  using Base::size;
+
+  template <class U> struct is_vector : std::false_type {};
+  template <class U, std::size_t Np>
+  struct is_vector<Vector<U, Np>> : std::true_type {};
+
+  Vector() noexcept = default;
   Vector(Vector const &) = default;
   Vector &operator=(Vector const &) = default;
 
-  void swap(Vector &rhs) { std::swap_ranges(begin(), end(), rhs.begin()); }
+  void swap(Vector &rhs) { std::ranges::swap_ranges(*this, rhs); }
 
 private:
-  constexpr void copy_init(T const *first, T const *last) {
+  constexpr void copy_init(T const *data) noexcept {
     auto it = begin();
-    while (first != last) {
-      *it++ = *first++;
+    for (std::size_t i{0}; i != N; ++i) {
+      *it++ = data[i];
     }
   }
 
 public:
+  // range-based ctor that excludes Vector<T,N> to avoid ambiguous calls with
+  // the copy ctor, move ctor and cast operator; std::ranges::input_range is
+  // not used due to conflicts with move assignment in recursive variant types
   template <class Range>
-  explicit Vector(Range const &rng) : Vector(std::begin(rng), std::end(rng)) {}
-  explicit constexpr Vector(T const (&v)[N]) : Base() {
-    copy_init(std::begin(v), std::end(v));
+    requires(not is_vector<std::remove_cvref_t<Range>>::value)
+  explicit constexpr Vector(Range &&rng)
+      : Vector(std::begin(rng), std::end(rng)) {}
+
+#if __cpp_lib_containers_ranges
+  template <std::ranges::input_range Range>
+  Vector(std::from_range_t, Range &&rng)
+      : Vector(std::begin(rng), std::end(rng)) {}
+#endif
+
+  explicit constexpr Vector(T const (&v)[N]) noexcept : Base() {
+    copy_init(std::begin(v));
   }
 
   constexpr Vector(std::initializer_list<T> v) : Base() {
@@ -89,8 +109,7 @@ public:
       throw std::length_error(
           "Construction of Vector from Container of wrong length.");
     }
-
-    copy_init(v.begin(), v.end());
+    copy_init(v.begin());
   }
 
   template <typename InputIterator>
@@ -103,14 +122,13 @@ public:
     }
   }
 
-  /**
-   * @brief Create a vector that has all entries set to
-   *         one value.
-   */
-  static Vector<T, N> broadcast(T const &s) {
+  /** @brief Create a vector that has all entries set to the same value. */
+  DEVICE_QUALIFIER static constexpr Vector<T, N>
+  broadcast(typename Base::value_type const &value) noexcept {
     Vector<T, N> ret;
-    std::fill(ret.begin(), ret.end(), s);
-
+    for (std::size_t i = 0u; i != N; ++i) {
+      ret[i] = value;
+    }
     return ret;
   }
 
@@ -118,16 +136,22 @@ public:
 
   operator std::vector<T>() const { return as_vector(); }
 
+  constexpr std::span<T, N> as_span() const {
+    return std::span<T, N>(const_cast<T *>(begin()), size());
+  }
+
+  constexpr operator std::span<T, N>() const { return as_span(); }
+
   template <class U> explicit operator Vector<U, N>() const {
     Vector<U, N> ret;
 
-    std::transform(begin(), end(), ret.begin(),
-                   [](auto e) { return static_cast<U>(e); });
+    std::ranges::transform(*this, ret.begin(),
+                           [](T const &e) { return static_cast<U>(e); });
 
     return ret;
   }
 
-  T norm2() const { return (*this) * (*this); }
+  constexpr T norm2() const { return (*this) * (*this); }
   T norm() const { return std::sqrt(norm2()); }
 
   /*
@@ -136,11 +160,10 @@ public:
    * Normalize the vector by its length,
    * if not zero, otherwise the vector is unchanged.
    */
-
   Vector &normalize() {
     auto const l = norm();
-    if (l > T(0)) {
-      for (int i = 0; i < N; i++)
+    if (l != T(0)) {
+      for (std::size_t i = 0u; i < N; ++i)
         this->operator[](i) /= l;
     }
 
@@ -165,7 +188,6 @@ using Vector3d = VectorXd<3>;
 using Vector4d = VectorXd<4>;
 using Vector6d = VectorXd<6>;
 using Vector9d = VectorXd<9>;
-using Vector19d = VectorXd<19>;
 
 template <std::size_t N> using VectorXf = Vector<float, N>;
 using Vector3f = VectorXf<3>;
@@ -176,11 +198,13 @@ using Vector3i = VectorXi<3>;
 namespace detail {
 template <std::size_t N, typename T, typename U, typename Op>
 auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
-  using std::declval;
-
-  using R = decltype(op(declval<T>(), declval<U>()));
+  // we must use the non-range version std::transform for Vector<T, N> because:
+  // GCC 12 cannot inspect -Wmaybe-uninitialized through std::ranges::transform
+  // Clang/Xcode libc++ cannot select the binary form of std::ranges::transform
+  using R = decltype(std::declval<T>() + std::declval<U>());
   Vector<R, N> ret;
 
+  // NOLINTNEXTLINE(modernize-use-ranges)
   std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(ret),
                  op);
 
@@ -188,20 +212,12 @@ auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
 }
 
 template <std::size_t N, typename T, typename Op>
-Vector<T, N> &binary_op_assign(Vector<T, N> &a, Vector<T, N> const &b, Op op) {
-  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(a), op);
-  return a;
-}
-
-template <std::size_t N, typename T, typename Op>
 constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
-  for (int i = 0; i < a.size(); i++) {
-    /* Short circuit */
-    if (!static_cast<bool>(op(a[i], b[i]))) {
+  for (std::size_t i = 0u; i < N; ++i) {
+    if (not op(a[i], b[i])) {
       return false;
     }
   }
-
   return true;
 }
 } // namespace detail
@@ -242,8 +258,9 @@ auto operator+(Vector<T, N> const &a, Vector<U, N> const &b) {
 }
 
 template <std::size_t N, typename T>
-Vector<T, N> &operator+=(Vector<T, N> &a, Vector<T, N> const &b) {
-  return detail::binary_op_assign(a, b, std::plus<T>());
+auto &operator+=(Vector<T, N> &a, Vector<T, N> const &b) {
+  std::ranges::transform(a, b, std::begin(a), std::plus<T>());
+  return a;
 }
 
 template <std::size_t N, typename T, typename U>
@@ -254,106 +271,97 @@ auto operator-(Vector<T, N> const &a, Vector<U, N> const &b) {
 template <std::size_t N, typename T>
 Vector<T, N> operator-(Vector<T, N> const &a) {
   Vector<T, N> ret;
-
-  std::transform(std::begin(a), std::end(a), std::begin(ret),
-                 [](T const &v) { return -v; });
-
+  std::ranges::transform(a, std::begin(ret), std::negate<T>());
   return ret;
 }
 
 template <std::size_t N, typename T>
 Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
-  return detail::binary_op_assign(a, b, std::minus<T>());
+  std::ranges::transform(a, b, std::begin(a), std::minus<T>());
+  return a;
 }
 
 /* Scalar multiplication */
-template <std::size_t N, typename T, class U,
-          std::enable_if_t<std::is_arithmetic_v<U>, bool> = true>
+template <std::size_t N, typename T, class U>
+  requires(std::is_arithmetic_v<U>)
 auto operator*(U const &a, Vector<T, N> const &b) {
   using R = decltype(a * std::declval<T>());
   Vector<R, N> ret;
-
-  std::transform(std::begin(b), std::end(b), std::begin(ret),
-                 [a](T const &val) { return a * val; });
-
+  std::ranges::transform(b, std::begin(ret), [a](T const &v) { return a * v; });
   return ret;
 }
 
-template <std::size_t N, typename T, class U,
-          std::enable_if_t<std::is_arithmetic_v<U>, bool> = true>
-auto operator*(Vector<T, N> const &b, U const &a) {
-  using R = decltype(std::declval<T>() * a);
+template <std::size_t N, typename T, class U>
+  requires(std::is_arithmetic_v<U>)
+auto operator*(Vector<T, N> const &a, U const &b) {
+  using R = decltype(std::declval<T>() * b);
   Vector<R, N> ret;
-
-  std::transform(std::begin(b), std::end(b), std::begin(ret),
-                 [a](T const &val) { return a * val; });
-
+  std::ranges::transform(a, std::begin(ret), [b](T const &v) { return b * v; });
   return ret;
 }
 
 template <std::size_t N, typename T>
-Vector<T, N> &operator*=(Vector<T, N> &b, T const &a) {
-  std::transform(std::begin(b), std::end(b), std::begin(b),
-                 [a](T const &val) { return a * val; });
+auto &operator*=(Vector<T, N> &b, T const &a) {
+  std::ranges::transform(b, std::begin(b), [a](T const &v) { return a * v; });
   return b;
 }
 
 /* Scalar division */
-template <std::size_t N, typename T>
-Vector<T, N> operator/(Vector<T, N> const &a, T const &b) {
-  Vector<T, N> ret;
+template <std::size_t N, typename T, class U>
+auto operator/(Vector<T, N> const &a, U const &b) {
+  using R = decltype(std::declval<T>() / b);
+  Vector<R, N> ret;
+  std::ranges::transform(a, std::begin(ret), [b](T const &v) { return v / b; });
+  return ret;
+}
 
-  std::transform(std::begin(a), std::end(a), ret.begin(),
-                 [b](T const &val) { return val / b; });
+template <std::size_t N, typename T, class U>
+auto operator/(U const &a, Vector<T, N> const &b) {
+  using R = decltype(a / std::declval<T>());
+  Vector<R, N> ret;
+  std::ranges::transform(b, std::begin(ret), [a](T const &v) { return a / v; });
   return ret;
 }
 
 template <std::size_t N, typename T>
-Vector<T, N> &operator/=(Vector<T, N> &a, T const &b) {
-  std::transform(std::begin(a), std::end(a), std::begin(a),
-                 [b](T const &val) { return val / b; });
+auto &operator/=(Vector<T, N> &a, T const &b) {
+  std::ranges::transform(a, std::begin(a), [b](T const &v) { return v / b; });
   return a;
 }
 
 namespace detail {
-template <class T> struct is_vector : std::false_type {};
-template <class T, std::size_t N>
-struct is_vector<Vector<T, N>> : std::true_type {};
+template <class T> using is_vector = Vector<int, 1>::is_vector<T>;
 } // namespace detail
 
 /* Scalar product */
-template <std::size_t N, typename T, class U,
-          class = std::enable_if_t<not(detail::is_vector<T>::value or
-                                       detail::is_vector<U>::value)>>
-auto operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
-  using std::declval;
-  using R = decltype(declval<T>() * declval<U>());
-
-  return std::inner_product(std::begin(a), std::end(a), std::begin(b), R{});
+template <std::size_t N, typename T, class U>
+  requires(not(detail::is_vector<T>::value or detail::is_vector<U>::value))
+auto constexpr operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
+  using R = decltype(std::declval<T>() * std::declval<U>());
+  // std::inner_product isn't always inlined on Intel CPUs even with -O3,
+  // but a for loop can be inlined
+  R acc{};
+  for (std::size_t i = 0u; i < N; ++i) {
+    acc += a[i] * b[i];
+  }
+  return acc;
 }
 
-template <
-    std::size_t N, typename T, class U,
-    class = std::enable_if_t<std::is_integral_v<T> and std::is_integral_v<U>>>
+template <std::size_t N, typename T, class U>
+  requires(std::is_integral_v<T> and std::is_integral_v<U>)
 auto operator%(Vector<T, N> const &a, Vector<U, N> const &b) {
-  using std::declval;
-  using R = decltype(declval<T>() % declval<U>());
+  using R = decltype(std::declval<T>() % std::declval<U>());
   Vector<R, N> ret;
-
-  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(ret),
-                 [](T const &ai, U const &bi) { return ai % bi; });
-
+  std::ranges::transform(a, b, std::begin(ret), std::modulus<>());
   return ret;
 }
 
 /* Componentwise square root */
-template <std::size_t N, typename T> Vector<T, N> sqrt(Vector<T, N> const &a) {
+template <std::size_t N, typename T> auto sqrt(Vector<T, N> const &a) {
   using std::sqrt;
-  Vector<T, N> ret;
-
-  std::transform(std::begin(a), std::end(a), ret.begin(),
-                 [](T const &v) { return sqrt(v); });
-
+  using R = decltype(sqrt(std::declval<T>()));
+  Vector<R, N> ret;
+  std::ranges::transform(a, ret.begin(), [](T const &v) { return sqrt(v); });
   return ret;
 }
 
@@ -370,103 +378,50 @@ template <class T, std::size_t N> T product(Vector<T, N> const &v) {
 
 template <class T, class U, std::size_t N>
 auto hadamard_product(Vector<T, N> const &a, Vector<U, N> const &b) {
-  using std::declval;
-  using R = decltype(declval<T>() * declval<U>());
-
+  using R = decltype(std::declval<T>() * std::declval<U>());
+  auto constexpr proj = std::identity{}; // required by Clang/Xcode libc++
   Vector<R, N> ret;
-  std::transform(a.cbegin(), a.cend(), b.cbegin(), ret.begin(),
-                 [](auto ai, auto bi) { return ai * bi; });
-
+  std::ranges::transform(a, b, ret.begin(), std::multiplies<>(), proj, proj);
   return ret;
 }
 
-// specializations for when one or both operands is a scalar depending on
+// specialization for when one or both operands is a scalar depending on
 // compile time features (e.g. when PARTICLE_ANISOTROPY is not enabled)
-template <class T, class U, std::size_t N,
-          class = std::enable_if_t<not(detail::is_vector<T>::value)>>
-auto hadamard_product(T const &a, Vector<U, N> const &b) {
-  using std::declval;
-  using R = decltype(declval<T>() * declval<U>());
-
-  Vector<R, N> ret = a * b;
-
-  return ret;
-}
-
-template <class T, class U, std::size_t N,
-          class = std::enable_if_t<not(detail::is_vector<U>::value)>>
-auto hadamard_product(Vector<T, N> const &a, U const &b) {
-  using std::declval;
-  using R = decltype(declval<T>() * declval<U>());
-
-  Vector<R, N> ret = a * b;
-
-  return ret;
-}
-
-template <typename T, typename U,
-          class = std::enable_if_t<not(detail::is_vector<T>::value or
-                                       detail::is_vector<U>::value)>>
+template <typename T, typename U>
+  requires(not(detail::is_vector<T>::value and detail::is_vector<U>::value))
 auto hadamard_product(T const &a, U const &b) {
   return a * b;
 }
 
 template <class T, class U, std::size_t N>
 auto hadamard_division(Vector<T, N> const &a, Vector<U, N> const &b) {
-  using std::declval;
-  using R = decltype(declval<T>() * declval<U>());
-
+  using R = decltype(std::declval<T>() / std::declval<U>());
+  auto constexpr proj = std::identity{}; // required by Clang/Xcode libc++
   Vector<R, N> ret;
-  std::transform(a.cbegin(), a.cend(), b.cbegin(), ret.begin(),
-                 [](auto ai, auto bi) { return ai / bi; });
-
+  std::ranges::transform(a, b, std::begin(ret), std::divides<>(), proj, proj);
   return ret;
 }
 
-// specializations for when one or both operands is a scalar depending on
+// specialization for when one or both operands is a scalar depending on
 // compile time features (e.g. when PARTICLE_ANISOTROPY is not enabled)
-template <class T, class U, std::size_t N,
-          class = std::enable_if_t<not(detail::is_vector<U>::value)>>
-auto hadamard_division(Vector<T, N> const &a, U const &b) {
-  using std::declval;
-  using R = decltype(declval<T>() * declval<U>());
-
-  Vector<R, N> ret = a / b;
-
-  return ret;
-}
-
-template <class T, class U, std::size_t N,
-          class = std::enable_if_t<not(detail::is_vector<T>::value)>>
-auto hadamard_division(T const &a, Vector<U, N> const &b) {
-  using std::declval;
-  using R = decltype(declval<T>() * declval<U>());
-
-  Vector<R, N> ret;
-  std::transform(std::begin(b), std::end(b), ret.begin(),
-                 [a](T const &bi) { return a / bi; });
-  return ret;
-}
-
-template <typename T, typename U,
-          class = std::enable_if_t<not(detail::is_vector<T>::value or
-                                       detail::is_vector<U>::value)>>
+template <typename T, typename U>
+  requires(not(detail::is_vector<T>::value and detail::is_vector<U>::value))
 auto hadamard_division(T const &a, U const &b) {
   return a / b;
 }
 
-template <typename T> Vector<T, 3> unit_vector(int i) {
-  if (i == 0)
+template <typename T> Vector<T, 3> unit_vector(unsigned int i) {
+  if (i == 0u)
     return {T{1}, T{0}, T{0}};
-  if (i == 1)
+  if (i == 1u)
     return {T{0}, T{1}, T{0}};
-  if (i == 2)
+  if (i == 2u)
     return {T{0}, T{0}, T{1}};
   throw std::domain_error("coordinate out of range");
 }
 
 /**
- * @brief Meta function to turns a Vector<1, T> into T.
+ * @brief Meta function to turn a Vector<T, 1> into T.
  */
 template <typename T> struct decay_to_scalar {};
 template <typename T, std::size_t N> struct decay_to_scalar<Vector<T, N>> {
@@ -478,20 +433,28 @@ template <typename T> struct decay_to_scalar<Vector<T, 1>> {
 };
 
 template <std::size_t I, class T, std::size_t N>
-struct tuple_element<I, Vector<T, N>> {
+T &get(Vector<T, N> &a) noexcept {
+  return a[I];
+}
+
+template <std::size_t I, class T, std::size_t N>
+T const &get(Vector<T, N> const &a) noexcept {
+  return a[I];
+}
+
+} // namespace Utils
+
+template <std::size_t I, class T, std::size_t N>
+struct std::tuple_element<I, Utils::Vector<T, N>> {
+  static_assert(I < N, "Utils::Vector index must be in range");
   using type = T;
 };
 
 template <class T, std::size_t N>
-struct tuple_size<Vector<T, N>> : std::integral_constant<std::size_t, N> {};
+struct std::tuple_size<Utils::Vector<T, N>>
+    : std::integral_constant<std::size_t, N> {};
 
-template <std::size_t I, class T, std::size_t N>
-auto get(Vector<T, N> const &a) -> std::enable_if_t<(I < N), const T &> {
-  return a[I];
-}
-} // namespace Utils
-namespace boost {
-namespace qvm {
+namespace boost::qvm {
 
 template <class T, std::size_t N> struct vec_traits<::Utils::Vector<T, N>> {
 
@@ -520,15 +483,12 @@ template <class T, std::size_t N> struct vec_traits<::Utils::Vector<T, N>> {
 };
 
 template <typename T> struct deduce_vec<Utils::Vector<T, 3>, 3> {
-  using type = typename Utils::Vector<T, 3>;
+  using type = Utils::Vector<T, 3>;
 };
 
-} // namespace qvm
-} // namespace boost
+} // namespace boost::qvm
 
 UTILS_ARRAY_BOOST_MPI_T(Utils::Vector, N)
 UTILS_ARRAY_BOOST_BIT_S(Utils::Vector, N)
 UTILS_ARRAY_BOOST_CLASS(Utils::Vector, N, object_serializable)
 UTILS_ARRAY_BOOST_TRACK(Utils::Vector, N, track_never)
-
-#endif

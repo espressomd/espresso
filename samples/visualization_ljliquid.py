@@ -93,7 +93,7 @@ print(
     f"Simulate {n_part} particles in a cubic box {box_l} at density {density}.")
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
-print(f"Start with minimal distance {act_min_dist}")
+print(f"Start with minimal distance {act_min_dist:.3f}")
 
 visualizer = espressomd.visualization.openGLLive(system)
 
@@ -127,7 +127,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 #############################################################
 #      Integration                                          #
 #############################################################
-print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
+print(f"\nStart integration: run {int_n_times} times {int_steps} steps")
 
 # print initial energies
 energies = system.analysis.energy()

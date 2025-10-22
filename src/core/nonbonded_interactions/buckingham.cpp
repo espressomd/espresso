@@ -24,7 +24,7 @@
  */
 #include "buckingham.hpp"
 
-#ifdef BUCKINGHAM
+#ifdef ESPRESSO_BUCKINGHAM
 #include "nonbonded_interaction_data.hpp"
 
 #include <stdexcept>
@@ -56,4 +56,4 @@ Buckingham_Parameters::Buckingham_Parameters(double a, double b, double c,
   F2 = -F;
 }
 
-#endif // BUCKINGHAM
+#endif // ESPRESSO_BUCKINGHAM

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2022 The ESPResSo project
+# Copyright (C) 2009-2025 The ESPResSo project
 # Copyright (C) 2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -29,9 +29,6 @@ if(NOT CMAKE_CXX_COMPILER_ID STREQUAL CMAKE_CUDA_COMPILER_ID)
       "To compile CUDA code with ${CMAKE_CUDA_COMPILER_ID}, the C++ compiler must be ${CMAKE_CUDA_COMPILER_ID}, not ${CMAKE_CXX_COMPILER_ID}."
   )
 endif()
-
-add_library(espresso_cuda_flags INTERFACE)
-add_library(espresso::cuda_flags ALIAS espresso_cuda_flags)
 
 function(espresso_detect_clang_cuda_path)
   separate_arguments(ESPRESSO_CMAKE_CUDA_FLAGS_LIST NATIVE_COMMAND "${CMAKE_CUDA_FLAGS}")
@@ -79,39 +76,9 @@ if(NOT CMAKE_CUDA_FLAGS MATCHES "-Wno-unknown-cuda-version")
   set(ESPRESSO_CUDA_TOOLKIT_UNKNOWN_WARN "use '-D CMAKE_CUDA_FLAGS=\"-Wno-unknown-cuda-version\"' to override this check")
   if(ESPRESSO_CLANG_DETECTED_CUDA_VERSION STREQUAL "unknown")
     message(FATAL_ERROR "${CMAKE_CUDA_COMPILER_ID} could not detect the version of the CUDA toolkit library; ${ESPRESSO_CUDA_TOOLKIT_UNKNOWN_WARN}")
-  elseif(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL "12.0.0" AND
-         CMAKE_CUDA_COMPILER_VERSION VERSION_LESS "13.0.0" AND
-         ESPRESSO_CLANG_DETECTED_CUDA_VERSION VERSION_LESS "12.0")
-    message(WARNING "${CMAKE_CUDA_COMPILER_ID} ${CMAKE_CUDA_COMPILER_VERSION} doesn't natively support CUDA ${CUDAToolkit_VERSION_MAJOR}.${CUDAToolkit_VERSION_MINOR}; ${ESPRESSO_CUDA_TOOLKIT_UNKNOWN_WARN}.")
-    target_compile_options(espresso_cuda_flags INTERFACE -Wno-unknown-cuda-version)
   endif()
 endif()
 message(STATUS "Found CUDA toolkit installation: ${ESPRESSO_CLANG_DETECTED_CUDA_DIR} (recognized by ${CMAKE_CUDA_COMPILER_ID} as CUDA ${ESPRESSO_CLANG_DETECTED_CUDA_VERSION})")
-
-target_compile_options(
-  espresso_cuda_flags
-  INTERFACE
-  $<$<CONFIG:Debug>:-g>
-  $<$<CONFIG:Release>:-O3 -DNDEBUG>
-  $<$<CONFIG:MinSizeRel>:-O2 -DNDEBUG>
-  $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
-  $<$<CONFIG:Coverage>:-O3 -g>
-  $<$<CONFIG:RelWithAssert>:-O3 -g>
-)
-
-function(espresso_add_gpu_library)
-  set(options STATIC SHARED MODULE EXCLUDE_FROM_ALL)
-  set(oneValueArgs)
-  set(multiValueArgs)
-  cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  list(GET ARG_UNPARSED_ARGUMENTS 0 TARGET_NAME)
-  list(REMOVE_AT ARG_UNPARSED_ARGUMENTS 0)
-  set(TARGET_SOURCES ${ARG_UNPARSED_ARGUMENTS})
-  set_source_files_properties(${TARGET_SOURCES} PROPERTIES LANGUAGE "CUDA")
-  add_library(${ARGV})
-  set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE "CXX")
-  target_link_libraries(${TARGET_NAME} PRIVATE espresso::cuda_flags)
-endfunction()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(

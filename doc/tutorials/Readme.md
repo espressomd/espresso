@@ -50,6 +50,9 @@ physical systems.
 * **Raspberry electrophoresis**  
   Extended objects in a Lattice-Boltzmann fluid, raspberry particles.  
   [Guide](raspberry_electrophoresis/raspberry_electrophoresis.ipynb)
+* **Machine-learned interatomic potential**  
+  Atomistic simulations using the MACE-MP-0 model.  
+  [Guide](mlip/mlip.ipynb)
 
 ### Advanced tutorials
 
@@ -59,13 +62,19 @@ physical systems.
 * **Electrokinetics**  
   Modelling electrokinetics together with hydrodynamic interactions.  
   [Guide](electrokinetics/electrokinetics.ipynb)
+* **Electrodes**  
+  Modelling electrodes and measuring differential capacitance with the ELC method.  
+  [Part 1](electrodes/electrodes_part1.ipynb) |
+  [Part 2](electrodes/electrodes_part2.ipynb)
 * **Constant pH method**  
   Modelling an acid dissociation curve using the constant pH method.  
   [Guide](constant_pH/constant_pH.ipynb)
 * **Widom particle insertion method**  
   Measuring the excess chemical potential of a salt solution using the Widom particle insertion method.  
   [Guide](widom_insertion/widom_insertion.ipynb)
-
+* **Grand-Canonical Monte Carlo**
+  Simulating a polyelectrolyte solution coupled to a reservoir of salt.  
+  [Guide](grand_canonical_monte_carlo/grand_canonical_monte_carlo.ipynb)
 
 [comment]: # (End of tutorials landing page)
 
@@ -85,32 +94,12 @@ in the build folder, do:
 make tutorials
 ```
 
-The tutorials contain solutions hidden with the ``exercise2`` extension.
-Since this extension is only available for Jupyter Notebook, JupyterLab
-users need to convert the tutorials:
-
-```sh
-for f in doc/tutorials/*/*.ipynb; do
-  ./pypresso doc/tutorials/convert.py exercise2 --to-jupyterlab ${f};
-done
-```
-
 All tutorials can be viewed with their solutions
 [online](https://espressomd.github.io/doc/tutorials.html).
 
 ### Running the tutorials interactively
 
-To view the tutorials, first change to the tutorials directory and then run
-the `ipypresso` script from the directory into which espresso was compiled.
-
-For Jupyter Notebook and IPython users:
-
-```sh
-cd doc/tutorials
-../../ipypresso notebook
-```
-
-For JupyterLab users:
+To view the tutorials in the build folder, run the following commands:
 
 ```sh
 cd doc/tutorials

@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CONSTRAINTS_EXTERNAL_FIELD_HPP
-#define SCRIPT_INTERFACE_CONSTRAINTS_EXTERNAL_FIELD_HPP
+#pragma once
 
 #include "couplings.hpp"
 #include "fields.hpp"
@@ -30,7 +29,6 @@
 
 #include "core/constraints/Constraint.hpp"
 #include "core/constraints/ExternalField.hpp"
-#include "core/grid.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -80,5 +78,3 @@ private:
 };
 } /* namespace Constraints */
 } /* namespace ScriptInterface */
-
-#endif

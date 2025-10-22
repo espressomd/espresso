@@ -17,17 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_GALILEI_COMFIXED_HPP
-#define ESPRESSO_SRC_CORE_GALILEI_COMFIXED_HPP
+#pragma once
 
 #include "ParticleRange.hpp"
+#include "communication.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/keys.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
 
+#include <algorithm>
+#include <functional>
+#include <ranges>
 #include <unordered_map>
 #include <vector>
 
@@ -65,6 +67,8 @@ private:
   }
 
 public:
+  ComFixed() = default;
+
   void set_fixed_types(std::vector<int> const &p_types) {
     m_type_index.clear();
 
@@ -74,10 +78,13 @@ public:
     }
   }
 
-  std::vector<int> get_fixed_types() const { return Utils::keys(m_type_index); }
+  std::vector<int> get_fixed_types() const {
+    std::vector<int> res{};
+    std::ranges::copy(std::views::keys(m_type_index), std::back_inserter(res));
+    return res;
+  }
 
-  void apply(boost::mpi::communicator const &comm,
-             ParticleRange const &particles) const {
+  void apply(ParticleRange const &particles) const {
     /* Bail out early if there is nothing to do. */
     if (m_type_index.empty())
       return;
@@ -90,10 +97,10 @@ public:
     std::vector<double> masses(m_type_index.size(), 0.0);
 
     /* Add contributions from all nodes and redistribute them to all. */
-    boost::mpi::all_reduce(comm, local_forces.data(),
+    boost::mpi::all_reduce(::comm_cart, local_forces.data(),
                            static_cast<int>(local_forces.size()), forces.data(),
                            std::plus<Utils::Vector3d>{});
-    boost::mpi::all_reduce(comm, local_masses.data(),
+    boost::mpi::all_reduce(::comm_cart, local_masses.data(),
                            static_cast<int>(local_masses.size()), masses.data(),
                            std::plus<double>{});
 
@@ -103,12 +110,10 @@ public:
       if (it != m_type_index.end()) {
         auto const mass_frac = p.mass() / masses[it->second];
         auto const &type_force = forces[it->second];
-        for (int i = 0; i < 3; i++) {
+        for (unsigned int i = 0u; i < 3u; i++) {
           p.force()[i] -= mass_frac * type_force[i];
         }
       }
     }
   }
 };
-
-#endif

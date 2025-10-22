@@ -17,12 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_BOND_BREAKAGE_ACTIONS_HPP
-#define CORE_BOND_BREAKAGE_ACTIONS_HPP
+#pragma once
 
 #include <boost/functional/hash.hpp>
-#include <boost/variant.hpp>
 
+#include <array>
 #include <cstddef>
 
 namespace BondBreakage {
@@ -39,11 +38,23 @@ struct DeleteBond {
     boost::hash_combine(seed, bond_type);
     return seed;
   }
-  bool operator==(DeleteBond const &rhs) const {
-    return rhs.particle_id == particle_id and
-           rhs.bond_partner_id == bond_partner_id and
-           rhs.bond_type == bond_type;
+  bool operator==(DeleteBond const &) const = default;
+  bool operator!=(DeleteBond const &) const = default;
+};
+
+struct DeleteAngleBond {
+  int particle_id;
+  std::array<int, 2> bond_partner_id;
+  int bond_type;
+  std::size_t hash_value() const {
+    std::size_t seed = 3876;
+    boost::hash_combine(seed, particle_id);
+    boost::hash_combine(seed, bond_partner_id);
+    boost::hash_combine(seed, bond_type);
+    return seed;
   }
+  bool operator==(DeleteAngleBond const &) const = default;
+  bool operator!=(DeleteAngleBond const &) const = default;
 };
 
 struct DeleteAllBonds {
@@ -55,17 +66,22 @@ struct DeleteAllBonds {
     boost::hash_combine(seed, particle_id_2);
     return seed;
   }
-  bool operator==(DeleteAllBonds const &rhs) const {
-    return rhs.particle_id_1 == particle_id_1 and
-           rhs.particle_id_2 == particle_id_2;
-  }
+  bool operator==(DeleteAllBonds const &) const = default;
+  bool operator!=(DeleteAllBonds const &) const = default;
 };
+
 } // namespace BondBreakage
 
 // Hash support for std::unordered_set
-namespace boost {
+namespace std {
 template <> struct hash<BondBreakage::DeleteBond> {
   std::size_t operator()(BondBreakage::DeleteBond const &t) const noexcept {
+    return t.hash_value();
+  }
+};
+template <> struct hash<BondBreakage::DeleteAngleBond> {
+  std::size_t
+  operator()(BondBreakage::DeleteAngleBond const &t) const noexcept {
     return t.hash_value();
   }
 };
@@ -74,5 +90,4 @@ template <> struct hash<BondBreakage::DeleteAllBonds> {
     return t.hash_value();
   }
 };
-} // namespace boost
-#endif
+} // namespace std

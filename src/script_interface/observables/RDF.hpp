@@ -27,10 +27,6 @@
 
 #include "core/observables/RDF.hpp"
 
-#include <boost/range/algorithm.hpp>
-
-#include <cstddef>
-#include <iterator>
 #include <memory>
 #include <vector>
 
@@ -55,9 +51,12 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    m_observable = make_shared_from_args<::Observables::RDF, std::vector<int>,
-                                         std::vector<int>, int, double, double>(
-        params, "ids1", "ids2", "n_r_bins", "min_r", "max_r");
+    context()->parallel_try_catch([&]() {
+      m_observable =
+          make_shared_from_args<::Observables::RDF, std::vector<int>,
+                                std::vector<int>, int, double, double>(
+              params, "ids1", "ids2", "n_r_bins", "min_r", "max_r");
+    });
   }
 
   std::shared_ptr<::Observables::RDF> rdf_observable() const {

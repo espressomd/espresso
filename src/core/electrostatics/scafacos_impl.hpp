@@ -19,12 +19,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_SCAFACOS_IMPL_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_SCAFACOS_IMPL_HPP
+#pragma once
 
 #include "config/config.hpp"
 
-#ifdef SCAFACOS
+#ifdef ESPRESSO_SCAFACOS
 
 #include "electrostatics/scafacos.hpp"
 
@@ -94,5 +93,4 @@ private:
   }
 };
 
-#endif // SCAFACOS
-#endif
+#endif // ESPRESSO_SCAFACOS

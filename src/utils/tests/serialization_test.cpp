@@ -22,19 +22,13 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-/* This <boost/serialization/version.hpp> include guards against an issue
- * in boost::serialization from boost 1.74.0 that leads to compiler error
- * "explicit specialization of undeclared template struct 'version'" when
- * including <boost/serialization/optional.hpp>. More details in tickets:
- * https://github.com/boostorg/serialization/issues/210
- * https://github.com/boostorg/serialization/issues/217
- */
-#include <boost/serialization/version.hpp>
-
 #include <utils/Array.hpp>
 #include <utils/Vector.hpp>
 #include <utils/compact_vector.hpp>
 #include <utils/quaternion.hpp>
+#include <utils/serialization/optional.hpp>
+#include <utils/serialization/unordered_map.hpp>
+#include <utils/serialization/variant.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -204,7 +198,7 @@ template <std::size_t Length, class InputIt>
 auto sorted_view(InputIt const &buffer_it) {
   std::array<Testing::Serial_T, Length> subset;
   std::copy_n(buffer_it, Length, subset.begin());
-  std::sort(subset.begin(), subset.end(), std::greater<>());
+  std::ranges::sort(subset, std::greater<>());
   return subset;
 }
 
@@ -279,8 +273,8 @@ BOOST_AUTO_TEST_CASE(mpi_archive_test) {
   BOOST_TEST(buffer_vector == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_storage == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_quat == buffer_ref, boost::test_tools::per_element());
-  auto const index_lsb = (is_big_endian()) ? 1 : 0;
-  auto const index_hsb = (is_big_endian()) ? 0 : 1;
+  auto const index_lsb = (is_big_endian()) ? 1u : 0u;
+  auto const index_hsb = (is_big_endian()) ? 0u : 1u;
   BOOST_TEST(buffer_cv[index_lsb] == Testing::N);
   BOOST_TEST(buffer_cv[index_hsb] == 0);
   buffer_cv.erase(buffer_cv.begin());
@@ -332,6 +326,73 @@ BOOST_AUTO_TEST_CASE(compact_vector_test) {
   static_assert(boost::mpi::is_mpi_datatype<compact_vector<int>>::value);
   static_assert(sizeof(compact_vector<int>) < sizeof(std::vector<int>));
   BOOST_TEST_PASSPOINT();
+}
+
+BOOST_AUTO_TEST_CASE(std_unordered_map_test) {
+  boost::mpi::communicator comm;
+  {
+    boost::mpi::packed_archive buffer;
+    std::unordered_map<int, unsigned int> const value_send{{1, 2u}, {-3, 4u}};
+    std::unordered_map<int, unsigned int> value_recv{};
+    boost::mpi::packed_oarchive oa{comm, buffer};
+    oa << value_send;
+    boost::mpi::packed_iarchive ia{comm, buffer};
+    ia >> value_recv;
+    BOOST_REQUIRE_EQUAL(value_recv.size(), 2ul);
+    BOOST_CHECK_EQUAL(value_recv.at(1), 2u);
+    BOOST_CHECK_EQUAL(value_recv.at(-3), 4u);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(std_optional_test) {
+  boost::mpi::communicator comm;
+  {
+    boost::mpi::packed_archive buffer;
+    std::optional<int> const value_send{-10};
+    std::optional<int> value_recv = std::nullopt;
+    boost::mpi::packed_oarchive oa{comm, buffer};
+    oa << value_send;
+    boost::mpi::packed_iarchive ia{comm, buffer};
+    ia >> value_recv;
+    BOOST_REQUIRE(value_recv.has_value());
+    BOOST_CHECK_EQUAL(*value_recv, *value_send);
+  }
+  {
+    boost::mpi::packed_archive buffer;
+    std::optional<int> const value_send = std::nullopt;
+    std::optional<int> value_recv{1};
+    boost::mpi::packed_oarchive oa{comm, buffer};
+    oa << value_send;
+    boost::mpi::packed_iarchive ia{comm, buffer};
+    ia >> value_recv;
+    BOOST_REQUIRE(not value_recv.has_value());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(std_variant_test) {
+  boost::mpi::communicator comm;
+  {
+    boost::mpi::packed_archive buffer;
+    std::variant<int, double> const value_send{-10};
+    std::variant<int, double> value_recv{1.};
+    boost::mpi::packed_oarchive oa{comm, buffer};
+    oa << value_send;
+    boost::mpi::packed_iarchive ia{comm, buffer};
+    ia >> value_recv;
+    BOOST_REQUIRE(std::holds_alternative<int>(value_recv));
+    BOOST_CHECK_EQUAL(std::get<int>(value_recv), std::get<int>(value_send));
+  }
+  {
+    boost::mpi::packed_archive buffer;
+    std::variant<int, double> const value_send{-2.};
+    std::variant<int> value_recv{1};
+    boost::mpi::packed_oarchive oa{comm, buffer};
+    oa << value_send;
+    boost::mpi::packed_iarchive ia{comm, buffer};
+    BOOST_CHECK_THROW((ia >> value_recv), std::domain_error);
+    BOOST_REQUIRE(std::holds_alternative<int>(value_recv));
+    BOOST_CHECK_EQUAL(std::get<int>(value_recv), 1);
+  }
 }
 
 int main(int argc, char **argv) {

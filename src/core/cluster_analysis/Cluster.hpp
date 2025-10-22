@@ -16,14 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CLUSTER_ANALYSIS_CLUSTER_HPP
-#define CLUSTER_ANALYSIS_CLUSTER_HPP
 
+#pragma once
+
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 
 #include <utils/Vector.hpp>
 
 #include <algorithm>
+#include <cassert>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -32,6 +35,8 @@ namespace ClusterAnalysis {
 /** @brief Represents a single cluster of particles */
 class Cluster {
 public:
+  explicit Cluster(std::weak_ptr<BoxGeometry const> const &box_geo)
+      : m_box_geo{box_geo} {}
   /** @brief Ids of the particles in the cluster */
   std::vector<int> particles;
   /** @brief add a particle to the cluster */
@@ -53,8 +58,15 @@ public:
    *
    *  @return fractal dimension, rms error of the fit */
   std::pair<double, double> fractal_dimension(double dr);
+
+private:
+  void sanity_checks() const;
+  auto get_box_geo() const {
+    auto ptr = m_box_geo.lock();
+    assert(ptr);
+    return ptr;
+  }
+  mutable std::weak_ptr<BoxGeometry const> m_box_geo;
 };
 
 } // namespace ClusterAnalysis
-
-#endif

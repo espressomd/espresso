@@ -19,13 +19,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
-#define SCRIPT_INTERFACE_CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
+#pragma once
 
 #include "Constraint.hpp"
-#include "core/cells.hpp"
+
+#include "core/BoxGeometry.hpp"
+#include "core/cell_system/CellStructure.hpp"
 #include "core/constraints/Constraint.hpp"
 #include "core/constraints/ShapeBasedConstraint.hpp"
+#include "core/system/System.hpp"
 
 #include "script_interface/shapes/Shape.hpp"
 
@@ -36,10 +38,16 @@ namespace ScriptInterface {
 namespace Constraints {
 
 class ShapeBasedConstraint : public Constraint {
+  std::unique_ptr<VariantMap> m_params;
+  std::weak_ptr<::System::System const> m_system;
+
 public:
   ShapeBasedConstraint()
       : m_constraint(std::make_shared<::Constraints::ShapeBasedConstraint>()),
         m_shape(nullptr) {
+    auto system = ::System::get_system().shared_from_this();
+    m_constraint->bind_system(system);
+    m_system = system;
     add_parameters({{"only_positive", m_constraint->only_positive()},
                     {"penetrable", m_constraint->penetrable()},
                     {"particle_type",
@@ -64,8 +72,10 @@ public:
       return shape_based_constraint()->total_force();
     }
     if (name == "min_dist") {
+      auto const system = m_system.lock();
+      assert(system);
       return shape_based_constraint()->min_dist(
-          cell_structure.local_particles());
+          *system->box_geo, system->cell_structure->local_particles());
     }
     if (name == "total_normal_force") {
       return shape_based_constraint()->total_normal_force();
@@ -85,6 +95,25 @@ public:
     return m_constraint;
   }
 
+  void do_construct(VariantMap const &params) override {
+    m_params = std::make_unique<VariantMap>(params);
+    for (auto const &[name, value] : *m_params) {
+      do_set_parameter(name, value);
+    }
+  }
+
+  void
+  bind_system(std::shared_ptr<::System::System const> const &system) override {
+    assert(m_params);
+    assert(system);
+    m_system = system;
+    shape_based_constraint()->bind_system(system);
+    for (auto const &[name, value] : *m_params) {
+      do_set_parameter(name, value);
+    }
+    m_params.reset();
+  }
+
 private:
   /* The actual constraint */
   std::shared_ptr<::Constraints::ShapeBasedConstraint> m_constraint;
@@ -93,7 +122,5 @@ private:
   std::shared_ptr<Shapes::Shape> m_shape;
 };
 
-} /* namespace Constraints */
-} /* namespace ScriptInterface */
-
-#endif
+} // namespace Constraints
+} // namespace ScriptInterface

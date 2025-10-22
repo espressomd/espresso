@@ -72,28 +72,28 @@ if(SPHINX_FOUND)
       "${CMAKE_CURRENT_SOURCE_DIR}/bibliography.rst")
 
   foreach(file ${FILE_LIST})
-    get_filename_component(basename ${file} NAME)
+    cmake_path(GET file FILENAME basename)
     configure_file(${file} ${CMAKE_CURRENT_BINARY_DIR}/${basename} COPYONLY)
   endforeach()
-  configure_file(${CMAKE_SOURCE_DIR}/doc/bibliography.bib
-                 ${CMAKE_CURRENT_BINARY_DIR}/bibliography.bib COPYONLY)
-
-  # Place files to be excluded from SPHINX documentation
-  set(EXCLUDE "${SPHINX_PYTHON_DIR}/gen_code_info.py"
-              "${SPHINX_PYTHON_DIR}/gen_pxiconfig*")
+  configure_file("${CMAKE_SOURCE_DIR}/doc/bibliography.bib"
+                 "${CMAKE_CURRENT_BINARY_DIR}/bibliography.bib" COPYONLY)
 
   add_custom_target(
     sphinx
     ${Python_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/samples.py"
     COMMAND ${SPHINX_API_DOC_EXE} -f -o ${CMAKE_CURRENT_BINARY_DIR}
-            ${SPHINX_PYTHON_DIR} ${EXCLUDE}
+            ${SPHINX_PYTHON_DIR}
+    COMMAND ${Python_EXECUTABLE}
+            "${CMAKE_CURRENT_SOURCE_DIR}/autodoc_overrides.py"
     COMMAND
-      ${SPHINX_EXECUTABLE} -q -W -b html -c "${CMAKE_CURRENT_BINARY_DIR}" -d
-      "${SPHINX_CACHE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" "${SPHINX_HTML_DIR}"
+      ${CMAKE_BINARY_DIR}/pypresso -m sphinx -q -W -b html -c
+      "${CMAKE_CURRENT_BINARY_DIR}" -d "${SPHINX_CACHE_DIR}"
+      "${CMAKE_CURRENT_BINARY_DIR}" "${SPHINX_HTML_DIR}"
     DEPENDS espressomd pypresso
     COMMENT "Building HTML documentation with Sphinx.")
   add_custom_target(
-    doctest ${SPHINX_EXECUTABLE} -b doctest -d "${SPHINX_CACHE_DIR}"
-            "${CMAKE_CURRENT_BINARY_DIR}" "${SPHINX_HTML_DIR}" DEPENDS sphinx
+    doctest
+    ${CMAKE_BINARY_DIR}/pypresso -m sphinx -b doctest -d "${SPHINX_CACHE_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}" "${SPHINX_HTML_DIR}" DEPENDS sphinx
     COMMENT "Performing doctests within the Sphinx documentation.")
 endif(SPHINX_FOUND)

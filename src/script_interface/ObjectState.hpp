@@ -16,15 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SCRIPT_INTERFACE_OBJECTSTATE_HPP
-#define ESPRESSO_SCRIPT_INTERFACE_OBJECTSTATE_HPP
+
+#pragma once
 
 #include "packed_variant.hpp"
 
-#include <boost/serialization/utility.hpp>
-#include <boost/serialization/variant.hpp>
-#include <boost/serialization/vector.hpp>
 #include <utils/serialization/unordered_map.hpp>
+#include <utils/serialization/variant.hpp>
+
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/utility.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <string>
 #include <utility>
@@ -44,9 +46,7 @@ struct ObjectState {
   std::string internal_state;
 
   template <class Archive> void serialize(Archive &ar, long int) {
-    ar &name &params &objects &internal_state;
+    ar & name & params & objects & internal_state;
   }
 };
 } // namespace ScriptInterface
-
-#endif

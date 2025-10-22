@@ -20,28 +20,43 @@
 
 /* Unit tests for the MpiCallbacks class. */
 
-#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE MpiCallbacks test
-#define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "MpiCallbacks.hpp"
 
 #include <boost/mpi.hpp>
-#include <boost/optional.hpp>
+#include <boost/mpi/environment.hpp>
 
 #include <algorithm>
 #include <functional>
+#include <memory>
 #include <stdexcept>
 #include <string>
 
+static std::weak_ptr<boost::mpi::environment> mpi_env;
 static bool called = false;
+
+struct GlobalConfig {
+  std::shared_ptr<boost::mpi::environment> m_mpi_env;
+  GlobalConfig() {
+    m_mpi_env = std::make_shared<boost::mpi::environment>(
+        boost::unit_test::framework::master_test_suite().argc,
+        boost::unit_test::framework::master_test_suite().argv,
+        boost::mpi::threading::multiple);
+    mpi_env = m_mpi_env;
+  }
+  ~GlobalConfig() { m_mpi_env.reset(); }
+};
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_AUTO_TEST_SUITE(suite)
 
 BOOST_AUTO_TEST_CASE(invoke_test) {
   using Communication::detail::invoke;
 
-  auto f = [](int i, unsigned j) { return i + j; };
+  auto f = [](int i, unsigned j) { return i + static_cast<int>(j); };
 
   boost::mpi::communicator world;
   boost::mpi::packed_oarchive::buffer_type buff;
@@ -111,7 +126,7 @@ BOOST_AUTO_TEST_CASE(callback_model_t) {
 
 BOOST_AUTO_TEST_CASE(adding_function_ptr_cb) {
   boost::mpi::communicator world;
-  Communication::MpiCallbacks cb(world);
+  Communication::MpiCallbacks cb(world, ::mpi_env.lock());
 
   void (*fp)(int, const std::string &) = [](int i, const std::string &s) {
     BOOST_CHECK_EQUAL(537, i);
@@ -143,7 +158,7 @@ BOOST_AUTO_TEST_CASE(RegisterCallback) {
   Communication::RegisterCallback{fp};
 
   boost::mpi::communicator world;
-  Communication::MpiCallbacks cb(world);
+  Communication::MpiCallbacks cb(world, ::mpi_env.lock());
 
   called = false;
 
@@ -157,11 +172,12 @@ BOOST_AUTO_TEST_CASE(RegisterCallback) {
 
 BOOST_AUTO_TEST_CASE(CallbackHandle) {
   boost::mpi::communicator world;
-  Communication::MpiCallbacks cbs(world);
+  auto const cbs =
+      std::make_shared<Communication::MpiCallbacks>(world, ::mpi_env.lock());
 
   bool m_called = false;
   Communication::CallbackHandle<std::string> cb(
-      &cbs, [&m_called](std::string s) {
+      cbs, [&m_called](std::string s) {
         BOOST_CHECK_EQUAL("CallbackHandle", s);
 
         m_called = true;
@@ -170,98 +186,30 @@ BOOST_AUTO_TEST_CASE(CallbackHandle) {
   if (0 == world.rank()) {
     cb(std::string("CallbackHandle"));
   } else {
-    cbs.loop();
+    cbs->loop();
     BOOST_CHECK(called);
   }
 }
 
-BOOST_AUTO_TEST_CASE(reduce_callback) {
-  auto cb = []() -> int { return boost::mpi::communicator().rank(); };
-  Communication::MpiCallbacks::add_static(Communication::Result::Reduction{},
-                                          static_cast<int (*)()>(cb),
-                                          std::plus<int>());
-
-  boost::mpi::communicator world;
-  Communication::MpiCallbacks cbs(world);
-
-  if (0 == world.rank()) {
-    auto const ret = cbs.call(Communication::Result::reduction,
-                              std::plus<int>(), static_cast<int (*)()>(cb));
-    auto const n = world.size();
-    BOOST_CHECK_EQUAL(ret, (n * (n - 1)) / 2);
-  } else {
-    cbs.loop();
-  }
-}
-
-BOOST_AUTO_TEST_CASE(ignore_callback) {
+BOOST_AUTO_TEST_CASE(call) {
   called = false;
-  auto cb = []() -> int { return called = true, -1; };
+  auto cb = []() { called = true; };
 
-  auto const fp = static_cast<int (*)()>(cb);
+  auto const fp = static_cast<void (*)()>(cb);
 
-  Communication::MpiCallbacks::add_static(Communication::Result::ignore, fp);
+  Communication::MpiCallbacks::add_static(fp);
 
   boost::mpi::communicator world;
-  Communication::MpiCallbacks cbs(world);
+  Communication::MpiCallbacks cbs(world, ::mpi_env.lock());
 
   if (0 == world.rank()) {
-    cbs.call(Communication::Result::ignore, fp);
+    cbs.call(fp);
+    fp();
   } else {
     cbs.loop();
   }
 
   BOOST_CHECK(called);
-}
-
-BOOST_AUTO_TEST_CASE(one_rank_callback) {
-  auto cb = []() -> boost::optional<int> {
-    boost::mpi::communicator world;
-    if (world.rank() == (world.size() - 1)) {
-      return world.rank();
-    }
-
-    return {};
-  };
-
-  auto const fp = static_cast<boost::optional<int> (*)()>(cb);
-
-  Communication::MpiCallbacks::add_static(Communication::Result::one_rank, fp);
-
-  boost::mpi::communicator world;
-  Communication::MpiCallbacks cbs(world);
-
-  if (0 == world.rank()) {
-    BOOST_CHECK_EQUAL(cbs.call(Communication::Result::one_rank, fp),
-                      world.size() - 1);
-  } else {
-    cbs.loop();
-  }
-}
-
-BOOST_AUTO_TEST_CASE(main_rank_callback) {
-  auto cb = []() -> int {
-    boost::mpi::communicator world;
-    if (world.rank() == 0) {
-      return world.size();
-    }
-
-    return -1;
-  };
-
-  auto const fp = static_cast<int (*)()>(cb);
-
-  Communication::MpiCallbacks::add_static(Communication::Result::main_rank, fp);
-
-  boost::mpi::communicator world;
-  Communication::MpiCallbacks cbs(world);
-
-  if (0 == world.rank()) {
-    BOOST_CHECK_EQUAL(cbs.call(Communication::Result::main_rank, fp),
-                      world.size());
-  } else {
-    cbs.loop();
-  }
 }
 
 BOOST_AUTO_TEST_CASE(call_all) {
@@ -273,7 +221,7 @@ BOOST_AUTO_TEST_CASE(call_all) {
   Communication::MpiCallbacks::add_static(fp);
 
   boost::mpi::communicator world;
-  Communication::MpiCallbacks cbs(world);
+  Communication::MpiCallbacks cbs(world, ::mpi_env.lock());
 
   if (0 == world.rank()) {
     cbs.call_all(fp);
@@ -294,7 +242,7 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
   Communication::MpiCallbacks::add_static(fp1);
 
   boost::mpi::communicator world;
-  Communication::MpiCallbacks cbs(world);
+  Communication::MpiCallbacks cbs(world, ::mpi_env.lock());
 
   if (0 == world.rank()) {
     // can't call an unregistered callback
@@ -302,11 +250,8 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
   } else {
     // can't call a callback from worker nodes
     BOOST_CHECK_THROW(cbs.call(fp1), std::logic_error);
+    cbs.loop();
   }
 }
 
-int main(int argc, char **argv) {
-  boost::mpi::environment mpi_env(argc, argv);
-
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}
+BOOST_AUTO_TEST_SUITE_END()

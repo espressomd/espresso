@@ -33,9 +33,6 @@ import espressomd.polymer
 
 logging.basicConfig(level=logging.INFO)
 
-# Use a fixed int for a deterministic behavior
-np.random.seed()
-
 required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
 espressomd.assert_features(required_features)
 
@@ -133,8 +130,9 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # activate electrostatics
 #############################################################
-p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
-system.actors.add(p3m)
+p3m_params = {"prefactor": 1., "accuracy": 1e-2}
+p3m = espressomd.electrostatics.P3M(**p3m_params)
+system.electrostatics.solver = p3m
 
 # apply external force (external electric field)
 #############################################################
@@ -160,17 +158,15 @@ acc_bond_length = espressomd.accumulators.MeanVarianceCalculator(
     obs=obs_bond_length, delta_N=1)
 system.auto_update_accumulators.add(acc_bond_length)
 
-# data storage for python analysis
-#############################################################
-pos = np.full((N_SAMPLES, N_MONOMERS, 3), np.nan)
+obs_pos = espressomd.observables.ParticlePositions(ids=range(N_MONOMERS))
+acc_pos = espressomd.accumulators.TimeSeries(obs=obs_pos, delta_N=100)
+system.auto_update_accumulators.add(acc_pos)
 
 # sampling Loop
 #############################################################
-for i in range(N_SAMPLES):
-    if i % 100 == 0:
-        logging.info(f"\rsampling: {i:4d}")
-    system.integrator.run(N_INT_STEPS)
-    pos[i] = system.part.by_ids(range(N_MONOMERS)).pos
+for i in range(N_SAMPLES // 100):
+    logging.info(f"\rsampling: {100 * i:4d}")
+    system.integrator.run(100 * N_INT_STEPS)
 
 logging.info("\nsampling finished!\n")
 
@@ -179,6 +175,7 @@ logging.info("\nsampling finished!\n")
 
 # calculate center of mass (COM) and its velocity
 #############################################################
+pos = acc_pos.time_series()
 COM = pos.sum(axis=1) / N_MONOMERS
 COM_v = (COM[1:] - COM[:-1]) / (N_INT_STEPS * system.time_step)
 
@@ -220,7 +217,7 @@ logging.info(f"persistence length (python analysis): {persistence_length}")
 # ...second by using observables
 
 
-def persistence_length_obs(
+def persistence_length_from_obs(
         acc_bond_length, acc_persistence_angles, exponential):
     bond_lengths_obs = np.array(acc_bond_length.mean())
     sampling_positions_obs = np.insert(
@@ -233,7 +230,7 @@ def persistence_length_obs(
     return sampling_positions_obs, cos_thetas_obs, opt_obs[0]
 
 
-sampling_positions_obs, cos_thetas_obs, persistence_length_obs = persistence_length_obs(
+sampling_positions_obs, cos_thetas_obs, persistence_length_obs = persistence_length_from_obs(
     acc_bond_length, acc_persistence_angles, exponential)
 logging.info(f"persistence length (observables): {persistence_length_obs}")
 

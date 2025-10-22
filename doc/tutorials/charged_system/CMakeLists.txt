@@ -17,6 +17,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-configure_tutorial_target(TARGET tutorial_crg DEPENDS charged_system.ipynb)
-
-nb_export(TARGET tutorial_crg FILE "charged_system.ipynb" HTML_RUN)
+espresso_add_tutorial(TARGET tutorial_crg FILE "charged_system.ipynb" HTML_RUN)

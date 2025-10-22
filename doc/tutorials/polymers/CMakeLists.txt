@@ -17,7 +17,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-configure_tutorial_target(TARGET tutorial_polymers DEPENDS polymers.ipynb)
-
-nb_export(TARGET tutorial_polymers SUFFIX "" FILE "polymers.ipynb" HTML_RUN
-          VAR_SUBST "STEPS=200;BOX_L=16;N_MONOMERS=[6,8,10,12,14]")
+espresso_add_tutorial(TARGET tutorial_polymers FILE "polymers.ipynb" HTML_RUN
+                      VAR_SUBST "STEPS=200;BOX_L=16;N_MONOMERS=[6,8,10,12,14]")
