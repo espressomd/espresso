@@ -492,7 +492,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   if (reuse_forces == INTEG_REUSE_FORCES_NEVER or
       ((reuse_forces != INTEG_REUSE_FORCES_ALWAYS) and
        propagation.recalc_forces)) {
-    PROFILING_SECTION_BEGIN("Initial Force Calculation");
+    PROFILING_SECTION_BEGIN("Initial_Force_Calculation");
     thermostat->lb_coupling_deactivate();
 
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
@@ -512,7 +512,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #endif
     }
 
-    PROFILING_SECTION_END("Initial Force Calculation");
+    PROFILING_SECTION_END("Initial_Force_Calculation");
   }
 
   thermostat->lb_coupling_activate();
