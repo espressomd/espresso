@@ -265,11 +265,6 @@ ParticleHandle::ParticleHandle() {
        [this]() { return get_particle_data(m_pid).dipm(); }},
 #endif // ESPRESSO_DIPOLES
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-      {"dip_fld",
-       [this](Variant const &value) {
-         set_particle_dip_fld(m_pid, get_value<Utils::Vector3d>(value));
-       },
-       [this]() { return particle().dip_fld(); }},
       {"sw_real",
        [this](Variant const &value) {
          set_particle_sw_real(m_pid, get_value<bool>(value));
