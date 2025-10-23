@@ -136,7 +136,11 @@ class CheckpointTest(ut.TestCase):
                                        atol=1E-7, err_msg=f"{key} differs")
 
         state = lbf.lattice.get_params()
-        reference = {"agrid": 2.0, "n_ghost_layers": 2,
+        ref_ghost_layers = 2
+        if 'INT.NPT' not in modes and 'LB.GPU' not in modes and (
+                'LB' not in modes or n_nodes in (1, 2, 3)):
+            ref_ghost_layers = 1
+        reference = {"agrid": 2.0, "n_ghost_layers": ref_ghost_layers,
                      "blocks_per_mpi_rank": [1, 1, 1]}
         for key in reference:
             self.assertIn(key, state)

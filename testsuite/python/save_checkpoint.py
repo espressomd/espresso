@@ -63,8 +63,10 @@ checkpoint = espressomd.checkpointing.Checkpoint(
     **config.get_checkpoint_params())
 
 # Lees-Edwards boundary conditions
+le_active = False
 if 'INT.NPT' not in modes and 'LB.GPU' not in modes and (
         'LB' not in modes or n_nodes in (1, 2, 3)):
+    le_active = True
     protocol = espressomd.lees_edwards.LinearShear(
         initial_pos_offset=0.1, time_0=0.2, shear_velocity=1.2)
     system.lees_edwards.set_boundary_conditions(
@@ -77,7 +79,10 @@ if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
         lbf_class = espressomd.lb.LBFluidWalberlaGPU
     elif 'LB.CPU' in modes:
         lbf_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_kwargs = {'agrid': 2.0, 'n_ghost_layers': 2}
+    if le_active:
+        lb_lattice_kwargs = {'agrid': 2.0, 'n_ghost_layers': 1}
+    else:
+        lb_lattice_kwargs = {'agrid': 2.0, 'n_ghost_layers': 2}
     lb_lattice = espressomd.lb.LatticeWalberla(**lb_lattice_kwargs)
     lb_lattice_kwargs['blocks_per_mpi_rank'] = [1, 1, 2]
     lb_lattice_blocks_per_mpi = espressomd.lb.LatticeWalberla(
@@ -93,26 +98,27 @@ if lbf_class:
     lbf.add_boundary_from_shape(wall1, (1e-4, 1e-4, 0))
     lbf.add_boundary_from_shape(wall2, (0, 0, 0))
 
-    ek_solver = espressomd.electrokinetics.EKNone(lattice=lb_lattice)
-    ek_species = espressomd.electrokinetics.EKSpecies(
-        lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
-        advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
-        single_precision=False, tau=system.time_step)
-    ekcontainer = espressomd.electrokinetics.EKContainer(
-        solver=ek_solver, tau=ek_species.tau)
-    ekcontainer.add(ek_species)
-    ek_species.add_boundary_from_shape(
-        shape=wall1, value=1e-3 * np.array([1., 2., 3.]),
-        boundary_type=espressomd.electrokinetics.FluxBoundary)
-    ek_species.add_boundary_from_shape(
-        shape=wall2, value=1e-3 * np.array([4., 5., 6.]),
-        boundary_type=espressomd.electrokinetics.FluxBoundary)
-    ek_species.add_boundary_from_shape(
-        shape=wall1, value=1.,
-        boundary_type=espressomd.electrokinetics.DensityBoundary)
-    ek_species.add_boundary_from_shape(
-        shape=wall2, value=2.,
-        boundary_type=espressomd.electrokinetics.DensityBoundary)
+    if not le_active:
+        ek_solver = espressomd.electrokinetics.EKNone(lattice=lb_lattice)
+        ek_species = espressomd.electrokinetics.EKSpecies(
+            lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
+            advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
+            single_precision=False, tau=system.time_step)
+        ekcontainer = espressomd.electrokinetics.EKContainer(
+            solver=ek_solver, tau=ek_species.tau)
+        ekcontainer.add(ek_species)
+        ek_species.add_boundary_from_shape(
+            shape=wall1, value=1e-3 * np.array([1., 2., 3.]),
+            boundary_type=espressomd.electrokinetics.FluxBoundary)
+        ek_species.add_boundary_from_shape(
+            shape=wall2, value=1e-3 * np.array([4., 5., 6.]),
+            boundary_type=espressomd.electrokinetics.FluxBoundary)
+        ek_species.add_boundary_from_shape(
+            shape=wall1, value=1.,
+            boundary_type=espressomd.electrokinetics.DensityBoundary)
+        ek_species.add_boundary_from_shape(
+            shape=wall2, value=2.,
+            boundary_type=espressomd.electrokinetics.DensityBoundary)
 
 p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0])
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
