@@ -782,10 +782,8 @@ endif()
 if(ESPRESSO_BUILD_WITH_NLOPT)
   include(FetchContent)
   FetchContent_Declare(
-    nlopt
-    GIT_REPOSITORY https://github.com/stevengj/nlopt.git
-    GIT_TAG        f8692f86b5269112b3760704093d0600adb033e7
-  )
+    nlopt GIT_REPOSITORY https://github.com/stevengj/nlopt.git
+    GIT_TAG f8692f86b5269112b3760704093d0600adb033e7)
   if(NOT nlopt_POPULATED)
     FetchContent_Populate(nlopt)
     set(BUILD_SHARED_LIBS on CACHE BOOL "")
