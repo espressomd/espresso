@@ -45,6 +45,13 @@ public:
   Kokkos::View<int *, MemorySpace> counts;
   Kokkos::View<int **, Kokkos::LayoutRight, MemorySpace> neighbors;
 
+  // Note: writing to 'overflow' from multiple threads by 'setOverflow()'
+  // without synchronization can lead to a data race (unspecified behavior).
+  // Since the same value is written from multiple threads concurrently,
+  // this should not affect program behavior.
+  // https://www.openmp.org/spec-html/5.0/openmpsu9.html
+  bool overflow = false;
+
   // Method to initialize _data without filling neighbors
   KOKKOS_INLINE_FUNCTION
   void initializeData(std::size_t const num_particles,
@@ -74,21 +81,29 @@ public:
       std::swap(pid, nid);
     }
     count = Kokkos::atomic_fetch_add(&counts(pid), 1);
-    assert(count < neighbors.extent(1));
-    neighbors(pid, count) = nid;
+    auto overflow = count >= neighbors.extent(1);
+    if (overflow) {
+      setOverflow();
+    } else {
+      neighbors(pid, count) = nid;
+    }
   }
 
-  // Thread safe but non atomic method to add a neighbor
+  // Thread-safe but non-atomic method to add a neighbor
   KOKKOS_INLINE_FUNCTION
   void addNeighbor(int pid, int nid) {
     auto const count = counts(pid);
 
-    assert(count < neighbors.extent(1));
-    neighbors(pid, count) = nid;
-    counts(pid) += 1;
+    auto overflow = count >= neighbors.extent(1);
+    if (overflow) {
+      setOverflow();
+    } else {
+      neighbors(pid, count) = nid;
+      counts(pid) += 1;
+    }
   }
 
-  // Non atomic and load balancing method to add a neighbor
+  // Non-atomic and load-balanced method to add a neighbor
   KOKKOS_INLINE_FUNCTION
   void addNeighborLB(int pid, int nid) {
     auto count = counts(pid);
@@ -98,9 +113,13 @@ public:
       std::swap(pid, nid);
       count = counts(pid);
     }
-    assert(count < neighbors.extent(1));
-    neighbors(pid, count) = nid;
-    counts(pid) += 1;
+    auto overflow = count >= neighbors.extent(1);
+    if (overflow) {
+      setOverflow();
+    } else {
+      neighbors(pid, count) = nid;
+      counts(pid) += 1;
+    }
   }
 
   // Sorting a neighbor
@@ -156,6 +175,11 @@ public:
     Kokkos::fence();
     return max_counts;
   }
+
+  KOKKOS_INLINE_FUNCTION bool hasOverflow() const { return overflow; }
+
+private:
+  KOKKOS_INLINE_FUNCTION void setOverflow() { overflow = true; }
 };
 
 template <class MemorySpace, class AlgorithmTag, class BuildTag>
