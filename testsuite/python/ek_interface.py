@@ -246,16 +246,17 @@ class EKTest:
             lattice=incompatible_lattice,
             **self.ek_params,
             **self.ek_species_params)
-        with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and mpi."):
-            ek_small_gl_species[0, 0, 0].flux_boundary = espressomd.electrokinetics.FluxBoundary([
-                                                                                                 1., 2., 3.])
-        with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and mpi."):
-            ek_small_gl_species[:, :, 0].flux_boundary = espressomd.electrokinetics.FluxBoundary([
-                                                                                                 1., 2., 3.])
-        wall_shape = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
-        with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and mpi."):
-            ek_small_gl_species.add_boundary_from_shape(shape=wall_shape, value=[
-                                                        1., 2., 3.], boundary_type=espressomd.electrokinetics.FluxBoundary)
+        if (np.max(self.system.cell_system.node_grid) > 1):
+            with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and mpi."):
+                ek_small_gl_species[0, 0, 0].flux_boundary = espressomd.electrokinetics.FluxBoundary([
+                    1., 2., 3.])
+            with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and mpi."):
+                ek_small_gl_species[:, :, 0].flux_boundary = espressomd.electrokinetics.FluxBoundary([
+                    1., 2., 3.])
+            wall_shape = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
+            with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and mpi."):
+                ek_small_gl_species.add_boundary_from_shape(shape=wall_shape, value=[
+                                                            1., 2., 3.], boundary_type=espressomd.electrokinetics.FluxBoundary)
 
     def test_ek_solver_exceptions(self):
         ek_solver = self.system.ekcontainer.solver
