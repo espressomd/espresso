@@ -57,10 +57,9 @@ Variant EKSpecies::do_call_method(std::string const &method,
         if (context()->get_comm().size() > 1) {
           throw std::runtime_error("The number of ghostlayers should be > 1 "
                                    "when using flux boundaries and mpi.");
-        } else {
-          runtimeWarningMsg() << "The number of ghostlayers should be > 1 when "
-                                 "using flux boundaries and mpi.";
         }
+        runtimeWarningMsg() << "The number of ghostlayers should be > 1 when "
+                               "using flux boundaries and mpi.";
       }
     });
     auto values = get_value<std::vector<double>>(parameters, "values");
