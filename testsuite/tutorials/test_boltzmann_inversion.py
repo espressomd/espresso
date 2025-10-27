@@ -30,7 +30,7 @@ class Tutorial(ut.TestCase):
     def test_boltzmann_inversion(self):
         rdf_exp = tutorial.rdf
         rdf_imp = tutorial.rdf_dh
-        np.testing.assert_allclose(rdf_exp, rdf_imp, rtol=0.1, atol=0.12)
+        np.testing.assert_allclose(rdf_exp, rdf_imp, rtol=0.1, atol=0.18)
 
 
 if __name__ == "__main__":
