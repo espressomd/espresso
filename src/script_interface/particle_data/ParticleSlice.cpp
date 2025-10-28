@@ -21,25 +21,25 @@
 #include "ParticleHandle.hpp"
 
 #include "core/bonds.hpp"
+#include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/particle_node.hpp"
 #include "core/system/System.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "script_interface/Context.hpp"
 #include "script_interface/Exception.hpp"
 #include "script_interface/Variant.hpp"
 #include "script_interface/get_value.hpp"
-#include "utils/mpi/gather_buffer.hpp"
 
-#include <functional>
-#include <utility>
 #include <utils/Vector.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -252,36 +252,40 @@ Variant ParticleSlice::do_call_method(std::string const &name,
   if (name == "get_param_parallel") {
     auto const param_name = get_value<std::string>(params, "name");
 
-    // Handle special optimized properties
+    // handle special optimized properties
     if (param_name == "type") {
       auto const getter{[](Particle const &p) { return p.type(); }};
       return get_particles_properties<int>(m_id_selection, getter, context(),
-                                           *get_cell_structure(),
-                                           *get_system());
+                                           *get_cell_structure());
     }
     if (param_name == "q") {
       auto const getter{[](Particle const &p) { return p.q(); }};
       return get_particles_properties<double>(m_id_selection, getter, context(),
-                                              *get_cell_structure(),
-                                              *get_system());
+                                              *get_cell_structure());
     }
     if (param_name == "pos") {
-      auto const getter{[this](Particle const &p) {
-        auto const pos = p.pos();
-        auto const image_box = p.image_box();
-        return get_system()->box_geo->unfolded_position(pos, image_box);
-      }};
+      auto const &box_geo = *get_system()->box_geo;
+      auto const getter = [&box_geo](Particle const &p) {
+        return box_geo.unfolded_position(p.pos(), p.image_box());
+      };
       return get_particles_properties<Utils::Vector3d>(
-          m_id_selection, getter, context(), *get_cell_structure(),
-          *get_system());
+          m_id_selection, getter, context(), *get_cell_structure());
+    }
+    if (param_name == "pos_folded") {
+      auto const &box_geo = *get_system()->box_geo;
+      auto const getter = [&box_geo](Particle const &p) {
+        return box_geo.folded_position(p.pos());
+      };
+      return get_particles_properties<Utils::Vector3d>(
+          m_id_selection, getter, context(), *get_cell_structure());
     }
 
-    // Handle all other particle properties
-    std::vector<Variant> result;
-    result.reserve(m_id_selection.size());
+    // handle all other particle properties using expensive MPI reductions
     if (!context()->is_head_node()) {
       return {};
     }
+    std::vector<Variant> result;
+    result.reserve(m_id_selection.size());
     auto so = std::dynamic_pointer_cast<ParticleModifier>(
         context()->make_shared("Particles::ParticleModifier",
                                {{"id", -1},

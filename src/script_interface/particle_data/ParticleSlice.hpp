@@ -29,11 +29,16 @@
 #include "script_interface/interactions/BondedInteractions.hpp"
 
 #include "core/system/System.hpp"
-#include "utils/mpi/gather_buffer.hpp"
 
+#include <utils/mpi/gather_buffer.hpp>
+
+#include <algorithm>
+#include <cassert>
 #include <functional>
 #include <memory>
+#include <ranges>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ScriptInterface {
@@ -65,38 +70,42 @@ struct SetParticleParametersVisitor {
 };
 
 template <typename T>
-inline std::vector<Variant>
+inline auto
 get_particles_properties(std::vector<int> const &pids,
                          std::function<T(Particle const &)> const &getter,
-                         Context *context, CellStructure &cell_structure,
-                         ::System::System const &system) {
-  std::vector<Variant> result;
-  result.reserve(pids.size());
-  std::vector<std::pair<int, T>> index_value_vec;
+                         Context *context,
+                         CellStructure const &cell_structure) {
+
+  using value_type =
+      std::conditional_t<Variant::has_type<std::vector<T>>::value, T, Variant>;
+  std::vector<value_type> result;
+
+  auto const n_ranks = static_cast<std::size_t>(context->get_comm().size());
+  auto const size_hint = pids.size() / n_ranks;
+  std::vector<std::pair<int, T>> parameters;
+  parameters.reserve(size_hint);
   for (auto const &pid : pids) {
     auto const p = cell_structure.get_local_particle(pid);
     if (p and not p->is_ghost()) {
-      index_value_vec.emplace_back(pid, getter(*p));
+      parameters.emplace_back(pid, getter(*p));
     }
   }
-  // Collect values from all nodes
-  Utils::Mpi::gather_buffer(index_value_vec, context->get_comm(), 0);
+
+  // collect values from all nodes
+  Utils::Mpi::gather_buffer(parameters, context->get_comm(), 0);
   if (!context->is_head_node()) {
-    return {};
+    return result;
   }
 
-  // Sort results by particle ids to retain original order
-  std::ranges::sort(index_value_vec, [](const auto &pair1, const auto &pair2) {
-    return pair1.first < pair2.first;
-  });
-  assert(std::ranges::equal(
-             pids, index_value_vec,
-             [](int const &pid1, std::pair<int, T> const &index_value_pair) {
-               return pid1 == index_value_pair.first;
-             }) &&
-         "Unexpected returned values.");
-  for (auto const &index_value_pair : index_value_vec) {
-    result.emplace_back(std::move(index_value_pair.second));
+  // sort values by particle id to retain original order
+  auto const projector = [](auto const &pair) { return pair.first; };
+  std::ranges::sort(parameters, std::less<int>{}, projector);
+  assert(std::ranges::equal(pids, parameters | std::views::keys) &&
+         "Missing or duplicate particle ids");
+
+  result.reserve(pids.size());
+  for (auto const &value : parameters | std::views::values) {
+    result.emplace_back(std::move(value));
   }
   return result;
 }

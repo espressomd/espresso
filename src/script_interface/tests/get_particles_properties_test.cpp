@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2025 The ESPResSo project
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,26 +17,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE ParticleSlice test
+#define BOOST_TEST_MODULE "particle property parallel getters"
 #define BOOST_TEST_DYN_LINK
+
+#include <boost/test/unit_test.hpp>
+
+#include "script_interface/Context.hpp"
 #include "script_interface/LocalContext.hpp"
 #include "script_interface/Variant.hpp"
 #include "script_interface/particle_data/ParticleSlice.hpp"
-#include "utils/Factory.hpp"
-#include <boost/mpi/graph_communicator.hpp>
-#include <boost/test/tools/old/interface.hpp>
-#include <vector>
 
-#include <utils/Vector.hpp>
-
-#include "Particle.hpp"
-#include "script_interface/Context.hpp"
-
+#include "core/Particle.hpp"
 #include "core/cell_system/CellStructure.hpp"
 #include "core/unit_tests/EspressoCoreGlobalConfig.hpp"
 #include "core/unit_tests/ParticleFactory.hpp"
 
+#include <utils/Factory.hpp>
+#include <utils/Vector.hpp>
+
+#include <boost/mpi/graph_communicator.hpp>
+#include <boost/test/tools/old/interface.hpp>
+
+#include <algorithm>
 #include <functional>
+#include <memory>
+#include <vector>
 
 using namespace ScriptInterface;
 
@@ -60,18 +65,15 @@ struct GlobalConfig : public EspressoCoreGlobalConfig {
 BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
 
 BOOST_FIXTURE_TEST_CASE(test_get_particles_properties, ParticleFactory) {
-  // Create particles and get their type attributes
+  // particle ids and types
   std::vector<int> pids{0, 1, 2, 3, 4};
-  std::vector<Variant> expected_types{1, 0, 3, 2, 2};
+  std::vector<int> expected_types{1, 0, 3, 2, 2};
 
   Utils::Factory<ObjectHandle> f;
   boost::mpi::communicator comm;
   auto ctx = std::make_shared<LocalContext>(f, comm);
-  std::shared_ptr<CellStructure> cell_structure{
-      espresso::system->cell_structure};
 
-  std::function<int(Particle const &)> const get_type{
-      [](Particle const &p) { return p.type(); }};
+  auto const get_type = [](Particle const &p) { return p.type(); };
 
   // Create particle core objects
   create_particle(Utils::Vector3d{0., 0., 0.}, 1, 0);
@@ -80,10 +82,10 @@ BOOST_FIXTURE_TEST_CASE(test_get_particles_properties, ParticleFactory) {
   create_particle(Utils::Vector3d{0., 0., 0.}, 4, 2);
   create_particle(Utils::Vector3d{0., 0., 0.}, 3, 2);
 
-  auto const &result{Particles::get_particles_properties(
-      pids, get_type, ctx.get(), *cell_structure, *espresso::system)};
+  auto const result = Particles::get_particles_properties<int>(
+      pids, get_type, ctx.get(), *espresso::system->cell_structure);
 
   if (comm.rank() == 0) {
-    BOOST_CHECK(std::ranges::equal(expected_types, result));
+    BOOST_CHECK(std::ranges::equal(result, expected_types));
   }
 }
