@@ -38,6 +38,7 @@
 #include <memory>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -118,7 +119,7 @@ class ParticleSlice : public AutoParameters<ParticleSlice> {
   std::weak_ptr<::System::System> m_system;
   /** @brief Data structure to store names of parameters with special setters.
    */
-  std::set<std::string> m_special_parameters{
+  std::set<std::string_view> const m_special_parameters{
       "pos",        "type", "bonds",
 #ifdef ESPRESSO_ELECTROSTATICS
       "q",

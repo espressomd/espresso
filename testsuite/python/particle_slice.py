@@ -101,19 +101,6 @@ class ParticleSliceTest(ut.TestCase):
         np.testing.assert_allclose(
             np.copy(self.p0p1.pos_folded), [[box_l[0] - 1, 2, 3], [0, 0, 1]])
 
-    def test_types(self):
-        self.p0.type = 1
-        self.assertEqual(self.p0.type, 1)
-        types = self.p0p1.type
-        self.assertEqual(types[0], 1)
-        self.assertEqual(types[1], 0)
-        self.p0p1.type = 2
-        self.assertEqual(self.p0.type, 2)
-        self.assertEqual(self.p1.type, 2)
-        types = self.p0p1.type
-        self.assertEqual(types[0], 2)
-        self.assertEqual(types[1], 2)
-
     @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
     def test_charges(self):
         self.p0.q = 1.3

@@ -58,6 +58,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <type_traits>
 #include <vector>
@@ -807,7 +808,7 @@ void ParticleHandle::do_construct(VariantMap const &params) {
     context()->parallel_try_catch([&]() {
       /* clang-format off */
       // set particle properties (filter out read-only and deferred properties)
-      std::set<std::string> const skip = {
+      std::set<std::string_view> const skip = {
           "pos_folded", "pos", "id", "exclusions", "node", "image_box", "bonds",
           "lees_edwards_flag", "__cpt_sentinel",
       };
