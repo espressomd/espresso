@@ -920,22 +920,6 @@ class ParticleSlice(ScriptInterfaceHelper):
         self._get_particle = functools.lru_cache(
             maxsize=self._particle_cache_size)(self._get_particle_impl)
 
-    @property
-    def pos_folded(self):
-        """
-        Particle position (folded into central image).
-
-        """
-        pos_array = np.zeros((len(self.id_selection), 3))
-        for i in range(len(self.id_selection)):
-            pos_array[i, :] = self._get_particle(
-                self.id_selection[i]).pos_folded
-        return pos_array
-
-    @pos_folded.setter
-    def pos_folded(self, value):
-        raise RuntimeError("Parameter 'pos_folded' is read-only.")
-
     def add_exclusion(self, _partner):
         assert_features(["EXCLUSIONS"])
         for p_id in self.id_selection:
