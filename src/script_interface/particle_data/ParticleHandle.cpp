@@ -267,49 +267,49 @@ ParticleHandle::ParticleHandle() {
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
       {"sw_real",
        [this](Variant const &value) {
-         set_particle_sw_real(m_pid, get_value<bool>(value));
+         set_particle_property(&Particle::sw_real, value);
        },
-       [this]() { return particle().sw_real(); }},
+       [this]() { return get_particle_data(m_pid).sw_real(); }},
       {"sw_virt",
        [this](Variant const &value) {
-         set_particle_sw_virt(m_pid, get_value<bool>(value));
+         set_particle_property(&Particle::sw_virt, value);
        },
-       [this]() { return particle().sw_virt(); }},
+       [this]() { return get_particle_data(m_pid).sw_virt(); }},
       {"phi0",
        [this](Variant const &value) {
-         set_particle_phi0(m_pid, get_value<double>(value));
+         set_particle_property(&Particle::phi0, value);
        },
-       [this]() { return particle().phi0(); }},
+       [this]() { return get_particle_data(m_pid).phi0(); }},
       {"sat_mag",
        [this](Variant const &value) {
-         set_particle_sat_mag(m_pid, get_value<double>(value));
+         set_particle_property(&Particle::sat_mag, value);
        },
-       [this]() { return particle().sat_mag(); }},
+       [this]() { return get_particle_data(m_pid).sat_mag(); }},
       {"Hkinv",
        [this](Variant const &value) {
-         set_particle_Hkinv(m_pid, get_value<double>(value));
+         set_particle_property(&Particle::Hkinv, value);
        },
-       [this]() { return particle().Hkinv(); }},
+       [this]() { return get_particle_data(m_pid).Hkinv(); }},
       {"kT_KVm_inv",
        [this](Variant const &value) {
-         set_particle_kT_KVm_inv(m_pid, get_value<double>(value));
+         set_particle_property(&Particle::kT_KVm_inv, value);
        },
-       [this]() { return particle().kT_KVm_inv(); }},
+       [this]() { return get_particle_data(m_pid).kT_KVm_inv(); }},
       {"tau0_inv",
        [this](Variant const &value) {
-         set_particle_tau0_inv(m_pid, get_value<double>(value));
+         set_particle_property(&Particle::tau0_inv, value);
        },
-       [this]() { return particle().tau0_inv(); }},
+       [this]() { return get_particle_data(m_pid).tau0_inv(); }},
       {"tau_trans_inv",
        [this](Variant const &value) {
-         set_particle_tau_trans_inv(m_pid, get_value<double>(value));
+         set_particle_property(&Particle::tau_trans_inv, value);
        },
-       [this]() { return particle().tau_trans_inv(); }},
+       [this]() { return get_particle_data(m_pid).tau_trans_inv(); }},
       {"dt_incr",
        [this](Variant const &value) {
-         set_particle_dt_incr(m_pid, get_value<double>(value));
+         set_particle_property(&Particle::dt_incr, value);
        },
-       [this]() { return particle().dt_incr(); }},
+       [this]() { return get_particle_data(m_pid).dt_incr(); }},
 #endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
       {"dip_fld",

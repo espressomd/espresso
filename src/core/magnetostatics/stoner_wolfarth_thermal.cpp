@@ -21,20 +21,18 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 #define TWO_M_PI 2 * M_PI
 
 #include "magnetostatics/dipolar_direct_sum.hpp"
 
 #include "cells.hpp"
 #include "communication.hpp"
-#include "constraints.hpp"
+#include "constraints/Constraints.hpp"
 #include "constraints/HomogeneousMagneticField.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 
 #include <utils/cartesian_product.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/math/vec_rotate.hpp>
 #include <utils/mpi/iall_gatherv.hpp>
@@ -45,14 +43,12 @@
 
 #include <nlopt.hpp>
 
-#include "event.hpp"
 #include "magnetostatics/stoner_wolfarth_thermal.hpp"
 #include "rotation.hpp"
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <iterator>
-#include <mpi.h>
 #include <random>
 #include <stdexcept>
 #include <tuple>
@@ -173,10 +169,13 @@ void stoner_wolfarth_main(ParticleRange const &particles,
   Utils::Vector3d cntrl = {0., 0., 0.};
   Utils::Vector3d ext_fld = {0., 0., 0.};
   /* collect HomogeneousMagneticFields if active */
-  for (auto const &constraint : ::Constraints::constraints) {
-    auto ptr = dynamic_cast<::Constraints::HomogeneousMagneticField *const>(
-        &*constraint);
-    if (ptr != nullptr) {
+
+  auto &system = System::get_system();
+  for (auto const &constraint : *system.constraints) {
+    auto ptr =
+        std::dynamic_pointer_cast<::Constraints::HomogeneousMagneticField>(
+            constraint);
+    if (ptr) {
       ext_fld += ptr->H();
     }
   }
@@ -281,4 +280,4 @@ void stoner_wolfarth_main(ParticleRange const &particles,
   // this call might be necessart when using p3m! significant overhead
   // on_dipoles_change();
 }
-#endif
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH

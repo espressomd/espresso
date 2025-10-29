@@ -52,7 +52,7 @@ add_library(espresso::core ALIAS espresso_core)
 if(ESPRESSO_BUILD_WITH_NLOPT)
   target_include_directories(espresso_core PRIVATE "${nlopt_SOURCE_DIR}/src")
   target_link_libraries(espresso_core PRIVATE nlopt)
-
+endif()
 espresso_set_common_target_properties(espresso_core)
 if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
   set_target_properties(

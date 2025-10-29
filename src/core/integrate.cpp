@@ -621,8 +621,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-    particles = cell_structure.local_particles();
-    stoner_wolfarth_main(cell_structure.local_particles(), generator);
+    stoner_wolfarth_main(cell_structure->local_particles(), generator);
 #endif
 
     calculate_forces();

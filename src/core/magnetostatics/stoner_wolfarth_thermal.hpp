@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef DIPOLES
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 
 #include "ParticleRange.hpp"
 #include <random>
@@ -34,4 +34,4 @@ void stoner_wolfarth_main(ParticleRange const &particles,
                           std::mt19937 &rng_generator);
 void reset_dipoles_SW(ParticleRange const &particles);
 
-#endif // DIPOLES
+#endif

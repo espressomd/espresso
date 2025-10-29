@@ -530,8 +530,10 @@ public:
   auto calc_dip() const { return calc_director() * dipm(); }
 #endif
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-  bool sw_real() const { return p.sw_real; }
-  bool sw_virt() const { return p.sw_virt; }
+  bool const &sw_real() const { return p.sw_real; }
+  auto &sw_real() { return p.sw_real; }
+  bool const &sw_virt() const { return p.sw_virt; }
+  auto &sw_virt() { return p.sw_virt; }
   auto const &phi0() const { return p.phi0; }
   auto &phi0() { return p.phi0; }
   auto const &sat_mag() const { return p.sat_mag; }
