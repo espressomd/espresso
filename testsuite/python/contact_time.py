@@ -82,16 +82,14 @@ class ContactTimeTest(ut.TestCase):
         # Get the coordinates
         coords = accumulator_pos.time_series()
         # Check for the initial contacts (if any)
-        n_coords = len(coords)
         n_ids = len(coords[0])
-        contacts = np.zeros((n_ids, n_ids))
-        time_first_contact = np.zeros((n_ids, n_ids))
+        contacts = np.zeros((n_ids, n_ids), dtype=bool)
+        time_first_contact = np.zeros((n_ids, n_ids), dtype=float)
         # Calculate contact times:
         frame_time = 0
         contact_times = []
         distances = []
-        for n_coord in range(n_coords):
-            coords_frame = coords[n_coord]
+        for coords_frame in coords:
             frame_dists = []
             for index1 in range(n_ids):
                 for index2 in range(index1 + 1, n_ids):
@@ -119,7 +117,7 @@ class ContactTimeTest(ut.TestCase):
                             contact_times.append(float(contact_time))
             frame_time += system.time_step
             distances.append(frame_dists)
-        return (contact_times, distances)
+        return (np.array(contact_times), np.array(distances))
 
     @utx.skipIfMissingFeatures(["LENNARD_JONES"])
     def test_contact_time(self):
