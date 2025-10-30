@@ -475,11 +475,11 @@ int System::System::integrate(int n_steps, int reuse_forces) {
       vs_relative_update_particles(*cell_structure, *box_geo);
     }
 #endif
-// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
-//     if (has_vs_com()) {
-//       vs_com_update_particles(*cell_structure, *box_geo);
-//     }
-// #endif
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+    if (has_vs_com()) {
+      vs_com_update_particles(*cell_structure, *box_geo);
+    }
+#endif
 
     // Communication step: distribute ghost positions
     cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
@@ -581,17 +581,17 @@ int System::System::integrate(int n_steps, int reuse_forces) {
       vs_relative_update_particles(*cell_structure, *box_geo);
     }
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
-// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
-//     if (has_vs_com()) {
-// #ifdef ESPRESSO_NPT
-//       if (has_npt_enabled()) {
-//         cell_structure->update_ghosts_and_resort_particle(
-//             Cells::DATA_PART_PROPERTIES);
-//       }
-// #endif // ESPRESSO_NPT
-//       vs_com_update_particles(*cell_structure, *box_geo);
-//     }
-// #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+    if (has_vs_com()) {
+#ifdef ESPRESSO_NPT
+      if (has_npt_enabled()) {
+        cell_structure->update_ghosts_and_resort_particle(
+            Cells::DATA_PART_PROPERTIES);
+      }
+#endif // ESPRESSO_NPT
+      vs_com_update_particles(*cell_structure, *box_geo);
+    }
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 
     if (cell_structure->get_resort_particles() >= Cells::RESORT_LOCAL)
       n_verlet_updates++;
@@ -715,11 +715,11 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     vs_relative_update_particles(*cell_structure, *box_geo);
   }
 #endif
-// #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
-//   if (has_vs_com()) {
-//     vs_com_update_particles(*cell_structure, *box_geo);
-//   }
-// #endif
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+  if (has_vs_com()) {
+    vs_com_update_particles(*cell_structure, *box_geo);
+  }
+#endif
 
   // Verlet list statistics
   cell_structure->update_verlet_stats(n_steps, n_verlet_updates);
