@@ -114,9 +114,14 @@ static bool is_vs_relative_trans(Particle const &p) {
 static bool is_vs_relative_rot(Particle const &p) {
   return p.propagation() & PropagationMode::ROT_VS_RELATIVE;
 }
-
-static bool is_vs_relative(Particle const &p) {
-  return (is_vs_relative_trans(p) or is_vs_relative_rot(p));
+static bool is_vs_independent_rot(Particle const &p) {
+  return p.propagation() & PropagationMode::ROT_VS_INDEPENDENT;
+}
+static bool is_vs_rot(Particle const &p) {
+  return (is_vs_relative_rot(p) or is_vs_independent_rot(p));
+}
+static bool is_vs(Particle const &p) {
+  return (is_vs_relative_trans(p) or is_vs_rot(p));
 }
 
 void vs_relative_update_particles(CellStructure &cell_structure,
@@ -125,7 +130,7 @@ void vs_relative_update_particles(CellStructure &cell_structure,
                                Cells::DATA_PART_MOMENTUM);
 
   cell_structure.for_each_local_particle([&](Particle &p) {
-    if (!is_vs_relative(p)) {
+    if (!is_vs(p)) {
       return;
     }
 
@@ -170,7 +175,7 @@ void vs_relative_back_transfer_forces_and_torques(
 
   // Iterate over all the particles in the local cells
   cell_structure.for_each_local_particle([&](Particle &p) {
-    if (!is_vs_relative(p))
+    if (!is_vs(p))
       return;
 
     auto *p_ref_ptr = get_reference_particle(cell_structure, p);
@@ -182,7 +187,7 @@ void vs_relative_back_transfer_forces_and_torques(
       p_ref.torque() += vector_product(connection_vector(p_ref, p), p.force());
     }
 
-    if (is_vs_relative_rot(p)) {
+    if (is_vs_rot(p)) {
       p_ref.torque() += p.torque();
     }
   });

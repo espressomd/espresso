@@ -482,8 +482,10 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   auto &propagation = *this->propagation;
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   auto const has_vs_rel = [&propagation]() {
-    return propagation.used_propagations & (PropagationMode::ROT_VS_RELATIVE |
-                                            PropagationMode::TRANS_VS_RELATIVE);
+    return propagation.used_propagations &
+           (PropagationMode::ROT_VS_RELATIVE |
+            PropagationMode::ROT_VS_INDEPENDENT |
+            PropagationMode::TRANS_VS_RELATIVE);
   };
 #endif
 #ifdef ESPRESSO_BOND_CONSTRAINT
