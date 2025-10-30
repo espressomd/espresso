@@ -35,7 +35,7 @@ def generate_random_unit_vectors(N_PART):
     return np.column_stack((x, y, z))
 
 
-@utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
+@utx.skipIfMissingFeatures(["NLOPT"])
 class Test(ut.TestCase):
     """
     Check the total dipole field for a magnetic LJ fluid (500 particles,
@@ -102,7 +102,8 @@ class Test(ut.TestCase):
         self.system.integrator.run(self.SNAPSHOT_SEPARATION)
         mag_el = dipm_tot.calculate() * norm
         return mag_el[-1]
-
+    
+    @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
     def setUp(self):
         system = self.system
         system.cell_system.skin = 0.4
@@ -111,7 +112,8 @@ class Test(ut.TestCase):
         system.periodicity = [True, True, True]
         system.thermostat.set_langevin(kT=self.temperature, gamma=self.gamma_T,
                                        gamma_rotation=self.gamma_R, seed=self.seed)
-
+        
+    @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
     def test_tSW_fluid(self):
         self.SNAPSHOT_SEPARATION = 12477
         self.n_part = 100
@@ -122,6 +124,7 @@ class Test(ut.TestCase):
             self.assertAlmostEqual(
                 self._measure_dipole_moment(), res, delta=self.error)
 
+    @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
     def test_tSW_solid(self):
         self.SNAPSHOT_SEPARATION = 3447
         self.n_part = 500
