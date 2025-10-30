@@ -59,4 +59,4 @@ class Propagation(enum.IntFlag):
     ROT_STOKESIAN = 2**14
     """Euler algorithm that integrates Stokes' equations of rotation."""
     ROT_VS_INDEPENDENT = 2**15
-     """Algorithm for virtual sites rotation where the quaterion of the virtual doesnt follow the quaternion of the real. Usefull for magnetodynamics."""
+    """Algorithm for virtual sites rotation where the quaterion of the virtual dosnt follow the quaternion of the real. Usefull for magnetodynamics."""
