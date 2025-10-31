@@ -102,7 +102,7 @@ class Test(ut.TestCase):
         self.system.integrator.run(self.SNAPSHOT_SEPARATION)
         mag_el = dipm_tot.calculate() * norm
         return mag_el[-1]
-    
+
     @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
     def setUp(self):
         system = self.system
@@ -112,7 +112,7 @@ class Test(ut.TestCase):
         system.periodicity = [True, True, True]
         system.thermostat.set_langevin(kT=self.temperature, gamma=self.gamma_T,
                                        gamma_rotation=self.gamma_R, seed=self.seed)
-        
+
     @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
     def test_tSW_fluid(self):
         self.SNAPSHOT_SEPARATION = 12477
