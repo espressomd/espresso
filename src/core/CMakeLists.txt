@@ -126,3 +126,7 @@ if(ESPRESSO_BUILD_WITH_HDF5 AND ESPRESSO_BUILD_WITH_COVERAGE
     io/writer/h5md_core.cpp PROPERTIES COMPILE_OPTIONS -felide-constructors
                                        DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
+
+if(ESPRESSO_BUILD_WITH_LIKWID)
+  add_dependencies(espresso_core likwid_make)
+endif()

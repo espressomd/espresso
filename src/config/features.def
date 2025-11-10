@@ -102,6 +102,8 @@ SCAFACOS                        requires ELECTROSTATICS
 
 /* Debugging */
 ADDITIONAL_CHECKS
+CALIPER                         excludes LIKWID
+LIKWID                          excludes CALIPER
 
 # External switches
 # Switches that are set by the build system, not to be set manually
@@ -115,5 +117,6 @@ STOKESIAN_DYNAMICS external
 WALBERLA external
 VALGRIND external
 CALIPER external
+LIKWID external
 FPE external
 SHARED_MEMORY_PARALLELISM external

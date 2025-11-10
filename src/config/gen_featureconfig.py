@@ -150,8 +150,6 @@ for feature, expr, cppexpr in sorted(defs.requirements):
     hfile.write(requirement_string.format(
         feature=feature, cppexpr=cppexpr, expr=expr))
 
-hfile.close()
-
 print(f"Writing {path_impl_hpp}")
 cfile = open(path_impl_hpp, "w")
 
@@ -163,6 +161,36 @@ cfile.write(f"""
 /***********************/
 /* Handle requirements */
 /***********************/
+""")
+
+hfile.write("""\
+/*******************/
+/* Handle excludes */
+/*******************/
+""")
+requirement_string = """
+// {feature} excludes {expr}
+#if defined(ESPRESSO_{feature}) && ({cppexpr})
+#error "Feature {feature} excludes {expr}"
+#endif
+"""
+for feature, expr, cppexpr in sorted(defs.excludes):
+    hfile.write(requirement_string.format(
+        feature=feature, cppexpr=cppexpr, expr=expr))
+
+hfile.close()
+
+print(f"Writing {path_impl_hpp}")
+cfile = open(path_impl_hpp, "w")
+
+cfile.write(disclaimer)
+cfile.write(f"""
+#include "config/config-features.hpp"
+#include "config/config.hpp"
+
+/*******************/
+/* Handle excludes */
+/*******************/
 """)
 
 cfile.write("""

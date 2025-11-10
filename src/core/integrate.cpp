@@ -52,6 +52,7 @@
 #include "lees_edwards/lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
+#include "profiling.hpp"
 #include "rattle.hpp"
 #include "rotation.hpp"
 #include "signalhandling.hpp"
@@ -62,10 +63,6 @@
 #include "virtual_sites/relative.hpp"
 
 #include <boost/mpi/collectives/all_reduce.hpp>
-
-#ifdef ESPRESSO_CALIPER
-#include <caliper/cali.h>
-#endif
 
 #ifdef ESPRESSO_VALGRIND
 #include <callgrind.h>
@@ -470,9 +467,8 @@ static void integrator_step_2(CellStructure &cell_structure,
 }
 
 int System::System::integrate(int n_steps, int reuse_forces) {
-#ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_FUNCTION;
-#endif
+  PROFILING_MARK_FUNCTION;
+  PROFILING_INIT;
   auto &propagation = *this->propagation;
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   auto const has_vs_rel = [&propagation]() {
@@ -483,7 +479,6 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #ifdef ESPRESSO_BOND_CONSTRAINT
   auto const n_rigid_bonds = bonded_ias->get_n_rigid_bonds();
 #endif
-
   // Prepare particle structure and run sanity checks of all active algorithms
   propagation.update_default_propagation(thermostat->thermo_switch);
   update_used_propagations();
@@ -497,9 +492,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   if (reuse_forces == INTEG_REUSE_FORCES_NEVER or
       ((reuse_forces != INTEG_REUSE_FORCES_ALWAYS) and
        propagation.recalc_forces)) {
-#ifdef ESPRESSO_CALIPER
-    CALI_MARK_BEGIN("Initial Force Calculation");
-#endif
+    PROFILING_SECTION_BEGIN("Initial_Force_Calculation");
     thermostat->lb_coupling_deactivate();
 
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
@@ -519,9 +512,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #endif
     }
 
-#ifdef ESPRESSO_CALIPER
-    CALI_MARK_END("Initial Force Calculation");
-#endif
+    PROFILING_SECTION_END("Initial_Force_Calculation");
   }
 
   thermostat->lb_coupling_activate();
@@ -552,14 +543,10 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   CALLGRIND_START_INSTRUMENTATION;
 #endif
   // Integration loop
-#ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
-#endif
+  PROFILING_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
   int integrated_steps = 0;
   for (int step = 0; step < n_steps; step++) {
-#ifdef ESPRESSO_CALIPER
-    CALI_CXX_MARK_LOOP_ITERATION(integration_loop, step);
-#endif
+    PROFILING_MARK_LOOP_ITERATION(integration_loop, step);
 
 #ifdef ESPRESSO_BOND_CONSTRAINT
     if (n_rigid_bonds)
@@ -712,15 +699,13 @@ int System::System::integrate(int n_steps, int reuse_forces) {
       caught_sigint = true;
       break;
     }
-
   } // for-loop over integration steps
   if (lb_active) {
     lb.ghost_communication();
   }
   lees_edwards->update_box_params(*box_geo, sim_time);
-#ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_LOOP_END(integration_loop);
-#endif
+  PROFILING_MARK_LOOP_END(integration_loop);
+  PROFILING_CLOSE;
 
 #ifdef ESPRESSO_VALGRIND
   CALLGRIND_STOP_INSTRUMENTATION;
