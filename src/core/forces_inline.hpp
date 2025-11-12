@@ -78,11 +78,10 @@
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 ESPRESSO_ATTR_ALWAYS_INLINE
 #endif
-inline ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
-                                               Utils::Vector3d const &d,
-                                               double const dist) {
+inline Utils::Vector3d calc_central_radial_force(IA_parameters const &ia_params,
+                                                 Utils::Vector3d const &d,
+                                                 double const dist) {
 
-  ParticleForce pf{};
   auto force_factor = 0.;
 /* Lennard-Jones */
 #ifdef ESPRESSO_LENNARD_JONES
@@ -140,8 +139,7 @@ inline ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
 #ifdef ESPRESSO_TABULATED
   force_factor += tabulated_pair_force_factor(ia_params, dist);
 #endif
-  pf.f += force_factor * d;
-  return pf;
+  return force_factor * d;
 }
 
 inline ParticleForce calc_non_central_force(Particle const &p1,
@@ -231,7 +229,7 @@ inline void add_non_bonded_pair_force_with_p(
     }
 #endif // ESPRESSO_NPT
     if (elc_kernel) {
-      (*elc_kernel)(p1.pos(), p2.pos(), p1f_asym, p2f_asym, q1q2);
+      (*elc_kernel)(p1.pos(), p2.pos(), p1f_asym.f, p2f_asym.f, q1q2);
     }
   }
 #endif // ESPRESSO_ELECTROSTATICS
@@ -309,7 +307,7 @@ inline void add_non_bonded_pair_force(
 #ifdef ESPRESSO_EXCLUSIONS
     if (do_nonbonded_flag) {
 #endif
-      pf += calc_central_radial_force(ia_params, d, dist);
+      pf.f += calc_central_radial_force(ia_params, d, dist);
 #ifdef ESPRESSO_EXCLUSIONS
     }
 #endif

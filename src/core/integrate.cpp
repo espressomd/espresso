@@ -311,6 +311,9 @@ void walberla_agrid_sanity_checks(std::string method,
 #endif // ESPRESSO_WALBERLA
 
 static void resort_particles_if_needed(System::System &system) {
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
   auto &cell_structure = *system.cell_structure;
   auto const offset = LeesEdwards::verlet_list_offset(
       *system.box_geo, cell_structure.get_le_pos_offset_at_last_resort());
@@ -325,6 +328,9 @@ static void resort_particles_if_needed(System::System &system) {
 static bool integrator_step_1(CellStructure &cell_structure,
                               Propagation const &propagation,
                               System::System &system, double time_step) {
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
   // steepest decent
   if (propagation.integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
     return steepest_descent_step(cell_structure.local_particles());
@@ -410,6 +416,9 @@ static void integrator_step_2(CellStructure &cell_structure,
                               Propagation const &propagation,
                               [[maybe_unused]] System::System &system,
                               double time_step) {
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
   if (propagation.integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
     return;
 
@@ -660,23 +669,45 @@ int System::System::integrate(int n_steps, int reuse_forces) {
         if (propagation.lb_skipped_md_steps >= md_steps_per_lb_step) {
           propagation.lb_skipped_md_steps = 0;
           propagation.ek_skipped_md_steps = 0;
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_BEGIN("lb_propagation");
+#endif
           lb.propagate();
           lb.ghost_communication_vel();
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_END("lb_propagation");
+          CALI_MARK_BEGIN("ek_propagation");
+#endif
           ek.propagate();
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_END("ek_propagation");
+#endif
         }
       } else if (lb_active) {
         auto const md_steps_per_lb_step = calc_md_steps_per_tau(lb.get_tau());
         propagation.lb_skipped_md_steps += 1;
         if (propagation.lb_skipped_md_steps >= md_steps_per_lb_step) {
           propagation.lb_skipped_md_steps = 0;
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_BEGIN("lb_propagation");
+#endif
           lb.propagate();
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_END("lb_propagation");
+#endif
         }
       } else if (ek_active) {
         auto const md_steps_per_ek_step = calc_md_steps_per_tau(ek.get_tau());
         propagation.ek_skipped_md_steps += 1;
         if (propagation.ek_skipped_md_steps >= md_steps_per_ek_step) {
           propagation.ek_skipped_md_steps = 0;
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_BEGIN("ek_propagation");
+#endif
           ek.propagate();
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_END("ek_propagation");
+#endif
         }
       }
       if (lb_active and (propagation.used_propagations &
@@ -687,10 +718,16 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #ifdef ESPRESSO_VIRTUAL_SITES_INERTIALESS_TRACERS
       if (thermostat->lb and
           (propagation.used_propagations & PropagationMode::TRANS_LB_TRACER)) {
+#ifdef ESPRESSO_CALIPER
+        CALI_MARK_BEGIN("lb_tracers_propagation");
+#endif
         if (lb_active) {
           lb.ghost_communication_vel();
         }
         lb_tracers_propagate(*cell_structure, lb, time_step);
+#ifdef ESPRESSO_CALIPER
+        CALI_MARK_END("lb_tracers_propagation");
+#endif
       }
 #endif
 

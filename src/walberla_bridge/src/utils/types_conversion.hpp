@@ -51,11 +51,13 @@ template <typename T> auto to_vector3d(Vector3<T> const &v) noexcept {
 }
 
 inline Utils::Vector3i to_vector3i(Vector3<int> const &v) noexcept {
-  return {v[0], v[1], v[2]};
+  return Utils::Vector3i{
+      Utils::detail::carray_alias<int, 3u>{v[0], v[1], v[2]}};
 }
 
 inline Utils::Vector3i to_vector3i(Cell const &v) noexcept {
-  return {v.x(), v.y(), v.z()};
+  return Utils::Vector3i{
+      Utils::detail::carray_alias<int, 3u>{v.x(), v.y(), v.z()}};
 }
 
 template <typename T> auto to_vector3(Utils::Vector3d const &v) noexcept {

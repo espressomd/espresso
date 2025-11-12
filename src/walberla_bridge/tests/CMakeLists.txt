@@ -38,11 +38,6 @@ function(ESPRESSO_ADD_TEST)
     espresso::utils
     espresso::walberla::compiler_flags
     ${WALBERLA_LIBS})
-  if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-    set_target_properties(
-      ${TEST_NAME} PROPERTIES CXX_CLANG_TIDY "${WALBERLA_CXX_CLANG_TIDY}"
-                              CUDA_CLANG_TIDY "${WALBERLA_CUDA_CLANG_TIDY}")
-  endif()
   target_include_directories(${TEST_NAME} PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                   ${walberla_BINARY_DIR}/src)
 endfunction()

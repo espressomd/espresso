@@ -185,7 +185,7 @@ class CheckpointTest(ut.TestCase):
     def test_ek_species(self):
         lbf = system.lb
         n_ghost_layers = lbf.lattice.get_params()["n_ghost_layers"]
-        if (n_ghost_layers > 1):
+        if n_ghost_layers > 1:
             cpt_mode = 0 if 'LB.ASCII' in modes else 1
             cpt_path = str(self.checkpoint.root / "ek") + "{}.cpt"
 
@@ -341,7 +341,7 @@ class CheckpointTest(ut.TestCase):
     def test_ek_vtk(self):
         lbf = system.lb
         n_ghost_layers = lbf.lattice.get_params()["n_ghost_layers"]
-        if (n_ghost_layers > 1):
+        if n_ghost_layers > 1:
             ek_species = system.ekcontainer[0]
             vtk_suffix = config.test_name
             key_auto = f"vtk_out/auto_ek_{vtk_suffix}"

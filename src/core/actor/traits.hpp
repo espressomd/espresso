@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_ACTOR_TRAITS_HPP
-#define ESPRESSO_SRC_CORE_ACTOR_TRAITS_HPP
+
+#pragma once
 
 #include <type_traits>
 
@@ -25,5 +25,3 @@ namespace traits {
 /** @brief Whether an actor is a layer correction method. */
 template <class T> struct is_layer_correction : std::false_type {};
 } // namespace traits
-
-#endif

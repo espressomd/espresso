@@ -78,10 +78,9 @@ public:
   void swap(Vector &rhs) { std::ranges::swap_ranges(*this, rhs); }
 
 private:
-  constexpr void copy_init(T const *data) noexcept {
-    auto it = begin();
+  constexpr void copy_init(T const *values) noexcept {
     for (std::size_t i{0}; i != N; ++i) {
-      *it++ = data[i];
+      (*this)[i] = values[i];
     }
   }
 
@@ -89,8 +88,10 @@ public:
   // range-based ctor that excludes Vector<T,N> to avoid ambiguous calls with
   // the copy ctor, move ctor and cast operator; std::ranges::input_range is
   // not used due to conflicts with move assignment in recursive variant types
+  // and T[N] must be excluded to avoid shadowing the noexcept ctor
   template <class Range>
-    requires(not is_vector<std::remove_cvref_t<Range>>::value)
+    requires(not is_vector<std::remove_cvref_t<Range>>::value and
+             not std::is_same_v<std::remove_cvref_t<Range>, T[N]>)
   explicit constexpr Vector(Range &&rng)
       : Vector(std::begin(rng), std::end(rng)) {}
 
@@ -101,7 +102,9 @@ public:
 #endif
 
   explicit constexpr Vector(T const (&v)[N]) noexcept : Base() {
-    copy_init(std::begin(v));
+    if constexpr (N != 0) {
+      copy_init(std::cbegin(v));
+    }
   }
 
   constexpr Vector(std::initializer_list<T> v) : Base() {
@@ -109,7 +112,9 @@ public:
       throw std::length_error(
           "Construction of Vector from Container of wrong length.");
     }
-    copy_init(v.begin());
+    if constexpr (N != 0) {
+      copy_init(v.begin());
+    }
   }
 
   template <typename InputIterator>
@@ -164,7 +169,7 @@ public:
     auto const l = norm();
     if (l != T(0)) {
       for (std::size_t i = 0u; i < N; ++i)
-        this->operator[](i) /= l;
+        (*this)[i] /= l;
     }
 
     return *this;

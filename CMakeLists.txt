@@ -515,20 +515,7 @@ if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
   find_package(ClangTidy "${CMAKE_CXX_COMPILER_VERSION}" EXACT REQUIRED)
   set(ESPRESSO_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
   set(ESPRESSO_CUDA_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
-  unset(SKIP_CLANG_TIDY_CHECKS)
-  unset(SKIP_CLANG_TIDY_CHECKS_CXX)
-  unset(SKIP_CLANG_TIDY_CHECKS_CUDA)
-  if(ESPRESSO_BUILD_WITH_CALIPER)
-    # Clang-Tidy sometimes emits diagnostics in code enclosed in `extern "C"`
-    # that are not always actionable, since they may rely on keywords only
-    # available in the C++ language. While some checks have an extra flag
-    # 'IgnoreExternC' to disable them inside C code, not all affected checks
-    # have been fixed yet. For an in-depth discussion on this topic, see
-    # https://github.com/llvm/llvm-project/issues/35272
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-auto")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-nullptr")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-deprecated-headers")
-  endif()
+  block(SCOPE_FOR VARIABLES)
   if(ESPRESSO_BUILD_WITH_CUDA)
     # silence casts in cuda_runtime.h (for both C++ and CUDA source files)
     list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-casting-through-void")
@@ -536,12 +523,14 @@ if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
     list(APPEND SKIP_CLANG_TIDY_CHECKS_CUDA
          "-clang-analyzer-core.NonNullParamChecker")
   endif()
-  espresso_override_clang_tidy_checks(
-    ESPRESSO_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-    "${SKIP_CLANG_TIDY_CHECKS_CXX}")
-  espresso_override_clang_tidy_checks(
-    ESPRESSO_CUDA_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-    "${SKIP_CLANG_TIDY_CHECKS_CUDA}")
+  foreach(LANG CXX CUDA)
+    espresso_override_clang_tidy_checks(
+      ESPRESSO_${LANG}_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
+      "${SKIP_CLANG_TIDY_CHECKS_${LANG}}")
+    set(ESPRESSO_${LANG}_CLANG_TIDY "${ESPRESSO_${LANG}_CLANG_TIDY}"
+        PARENT_SCOPE)
+  endforeach()
+  endblock()
 endif()
 
 if(ESPRESSO_BUILD_WITH_CPPCHECK)
@@ -593,32 +582,8 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     endforeach()
     add_library(Heffte::Heffte INTERFACE IMPORTED GLOBAL)
     target_link_libraries(Heffte::Heffte INTERFACE Heffte)
+    set_property(TARGET Heffte PROPERTY INSTALL_RPATH "")
     install(TARGETS Heffte LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
-    if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-      set(ESPRESSO_HEFFTE_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
-      set(ESPRESSO_HEFFTE_CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
-      unset(SKIP_CLANG_TIDY_CHECKS)
-      unset(SKIP_CLANG_TIDY_CHECKS_CXX)
-      unset(SKIP_CLANG_TIDY_CHECKS_CUDA)
-      # silence heFFTe diagnostics
-      list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-exception-escape")
-      list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-narrowing-conversions")
-      list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-branch-clone")
-      list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-loop-convert")
-      list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-override")
-      list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-auto")
-      list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-else-after-return")
-      list(APPEND SKIP_CLANG_TIDY_CHECKS
-           "-readability-avoid-const-params-in-decls")
-      espresso_override_clang_tidy_checks(
-        ESPRESSO_HEFFTE_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-        "${SKIP_CLANG_TIDY_CHECKS_CXX}")
-      espresso_override_clang_tidy_checks(
-        ESPRESSO_HEFFTE_CUDA_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-        "${SKIP_CLANG_TIDY_CHECKS_CUDA}")
-      set(ESPRESSO_P3M_CXX_CLANG_TIDY "${ESPRESSO_HEFFTE_CXX_CLANG_TIDY}")
-      set(ESPRESSO_P3M_CUDA_CLANG_TIDY "${ESPRESSO_HEFFTE_CUDA_CLANG_TIDY}")
-    endif()
   endif()
 endif()
 
@@ -676,51 +641,6 @@ if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
     # cmake-format: on
     set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
     FetchContent_MakeAvailable(cabana)
-  endif()
-
-  if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-    # silence Kokkos and Cabana diagnostics
-    set(ESPRESSO_CABANA_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
-    set(ESPRESSO_CABANA_CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
-    unset(SKIP_CLANG_TIDY_CHECKS)
-    unset(SKIP_CLANG_TIDY_CHECKS_CXX)
-    unset(SKIP_CLANG_TIDY_CHECKS_CUDA)
-    list(APPEND SKIP_CLANG_TIDY_CHECKS
-         "-bugprone-return-const-ref-from-parameter")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-narrowing-conversions")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-sizeof-expression")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-auto")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-override")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-bool-literals")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-equals-delete")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-equals-default")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-nullptr")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-pass-by-value")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-loop-convert")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-return-braced-init-list")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-else-after-return")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-non-const-parameter")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-simplify-boolean-expr")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS
-         "-readability-avoid-const-params-in-decls")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS
-         "-clang-analyzer-optin.performance.Padding")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS
-         "-clang-analyzer-security.insecureAPI.strcpy")
-    espresso_override_clang_tidy_checks(
-      ESPRESSO_CABANA_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-      "${SKIP_CLANG_TIDY_CHECKS_CXX}")
-    espresso_override_clang_tidy_checks(
-      ESPRESSO_CABANA_CUDA_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-      "${SKIP_CLANG_TIDY_CHECKS_CUDA}")
-    if(ESPRESSO_BUILD_WITH_FFTW)
-      espresso_override_clang_tidy_checks(
-        ESPRESSO_P3M_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-        "${SKIP_CLANG_TIDY_CHECKS_CXX}")
-      espresso_override_clang_tidy_checks(
-        ESPRESSO_P3M_CUDA_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-        "${SKIP_CLANG_TIDY_CHECKS_CUDA}")
-    endif()
   endif()
 endif()
 
@@ -1039,10 +959,13 @@ function(espresso_set_common_target_properties)
     set_target_properties(${TARGET_NAME} PROPERTIES C_EXTENSIONS OFF)
     set_target_properties(${TARGET_NAME} PROPERTIES CXX_EXTENSIONS OFF)
     set_target_properties(${TARGET_NAME} PROPERTIES CUDA_EXTENSIONS OFF)
-    set_target_properties(
-      ${TARGET_NAME} PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
-    set_target_properties(
-      ${TARGET_NAME} PROPERTIES CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
+    if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
+      foreach(LANG CXX CUDA)
+        set_target_properties(
+          ${TARGET_NAME} PROPERTIES ${LANG}_CLANG_TIDY
+                                    "${ESPRESSO_${LANG}_CLANG_TIDY}")
+      endforeach()
+    endif()
     if(ESPRESSO_BUILD_WITH_CUDA)
       if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
         set_target_properties(${TARGET_NAME}

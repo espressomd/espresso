@@ -104,16 +104,17 @@ void DipolarP3MImpl<FloatType, Architecture>::count_magnetic_particles() {
 }
 
 static double dp3m_k_space_error(double box_size, int mesh, int cao,
-                                 int n_c_part, double sum_q2, double alpha_L);
+                                 std::size_t n_c_part, double sum_q2,
+                                 double alpha_L);
 
 static double dp3m_real_space_error(double box_size, double r_cut_iL,
-                                    int n_c_part, double sum_q2,
+                                    std::size_t n_c_part, double sum_q2,
                                     double alpha_L);
 
 /** Compute the value of alpha through a bisection method.
  *  Based on eq. (33) @cite wang01a.
  */
-double dp3m_rtbisection(double box_size, double r_cut_iL, int n_c_part,
+double dp3m_rtbisection(double box_size, double r_cut_iL, std::size_t n_c_part,
                         double sum_q2, double x1, double x2, double xacc,
                         double tuned_accuracy);
 
@@ -842,7 +843,8 @@ static auto dp3m_tune_aliasing_sums(Utils::Vector3i const &shift, int mesh,
 
 /** Calculate the k-space error of dipolar-P3M */
 static double dp3m_k_space_error(double box_size, int mesh, int cao,
-                                 int n_c_part, double sum_q2, double alpha_L) {
+                                 std::size_t n_c_part, double sum_q2,
+                                 double alpha_L) {
 
   auto const cotangent_sum = math::get_analytic_cotangent_sum_kernel(cao);
   auto const mesh_i = 1. / static_cast<double>(mesh);
@@ -875,7 +877,8 @@ static double dp3m_k_space_error(double box_size, int mesh, int cao,
       });
 
   return 8. * Utils::sqr(std::numbers::pi) / 3. * sum_q2 *
-         sqrt(he_q / n_c_part) / Utils::int_pow<4>(box_size);
+         sqrt(he_q / static_cast<double>(n_c_part)) /
+         Utils::int_pow<4>(box_size);
 }
 
 /** Calculate the value of the errors for the REAL part of the force in terms
@@ -885,7 +888,7 @@ static double dp3m_k_space_error(double box_size, int mesh, int cao,
  *  eq. (37), but eq. (33) which maintains all the powers in alpha.
  */
 static double dp3m_real_space_error(double box_size, double r_cut_iL,
-                                    int n_c_part, double sum_q2,
+                                    std::size_t n_c_part, double sum_q2,
                                     double alpha_L) {
   auto constexpr exp_min = -708.4; // for IEEE-compatible double
   double d_error_f, d_cc, d_dc, d_con;
@@ -918,7 +921,7 @@ static double dp3m_real_space_error(double box_size, double r_cut_iL,
  *  known to lie between x1 and x2. The root, returned as rtbis, will be
  *  refined until its accuracy is \f$\pm\f$ @p xacc.
  */
-double dp3m_rtbisection(double box_size, double r_cut_iL, int n_c_part,
+double dp3m_rtbisection(double box_size, double r_cut_iL, std::size_t n_c_part,
                         double sum_q2, double x1, double x2, double xacc,
                         double tuned_accuracy) {
   constexpr int JJ_RTBIS_MAX = 40;

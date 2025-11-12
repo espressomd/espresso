@@ -66,13 +66,15 @@ inline void add_non_bonded_pair_virials(
   if (do_nonbonded(p1, p2))
 #endif
   {
-    auto const force = calc_central_radial_force(ia_params, d, dist).f +
+    ParticleForce pf{};
+    pf.f = calc_central_radial_force(ia_params, d, dist) +
 #ifdef ESPRESSO_THOLE
-                       thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias,
-                                        kernel_forces) +
+           thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias,
+                            kernel_forces) +
 #endif
-                       calc_non_central_force(p1, p2, ia_params, d, dist).f;
-    auto const stress = Utils::tensor_product(d, force);
+           Utils::Vector3d{};
+    pf += calc_non_central_force(p1, p2, ia_params, d, dist);
+    auto const stress = Utils::tensor_product(d, pf.f);
     obs_pressure.add_non_bonded_contribution(p1.type(), p2.type(), p1.mol_id(),
                                              p2.mol_id(), flatten(stress));
   }

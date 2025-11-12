@@ -246,7 +246,7 @@ class EKTest:
             lattice=incompatible_lattice,
             **self.ek_params,
             **self.ek_species_params)
-        if (np.max(self.system.cell_system.node_grid) > 1):
+        if np.max(self.system.cell_system.node_grid) > 1:
             with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and mpi."):
                 ek_small_gl_species[0, 0, 0].flux_boundary = espressomd.electrokinetics.FluxBoundary([
                     1., 2., 3.])

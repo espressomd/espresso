@@ -43,7 +43,7 @@ Checks: |
    readability-function-size'
 WarningsAsErrors: '*,-clang-analyzer-core.StackAddrEscapeBase,-clang-analyzer-optin.mpi.MPI-Checker'
 HeaderFilterRegex: '.*'
-ExcludeHeaderFilterRegex: '^/usr/'
+ExcludeHeaderFilterRegex: '^/usr/|^/opt/|/_deps/[a-zA-Z0-9_]+-(src|build|subbuild)/'
 FormatStyle:     none
 User: espresso
 CheckOptions:

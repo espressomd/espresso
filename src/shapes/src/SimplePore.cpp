@@ -89,7 +89,7 @@ void SimplePore::calculate_dist(const Utils::Vector3d &pos, double &dist,
 
   /* If exactly on the axis, chose e_r orthogonal
      to e_z. */
-  auto const e_r = (r == 0) ? e_r_axis : r_vec / r;
+  auto const e_r = (r == 0.) ? e_r_axis : r_vec / r;
 
   /* The pore has mirror symmetry in z with regard to
      the center in the {r,z} system. We calculate always
@@ -97,8 +97,8 @@ void SimplePore::calculate_dist(const Utils::Vector3d &pos, double &dist,
   auto [dr, dz] = dist_half_pore(r, std::abs(z));
 
   double side = -1;
-  if (((dz == 0) && (r <= m_rad)) ||                  // cylinder section
-      ((dr == 0) && (std::abs(z) > m_half_length))) { // ||
+  if (((dz == 0.) and (r <= m_rad)) ||                  // cylinder section
+      ((dr == 0.) and (std::abs(z) > m_half_length))) { // ||
     side = 1;
   } else {
     // smoothing area

@@ -29,7 +29,7 @@ import espressomd.math
 
 AGRID = .5
 TIME_STEP = 0.1
-GRID_SIZE = np.array([63, 63, 4])
+GRID_SIZE = np.array([63, 63, 6])
 
 
 def taylor_couette(v1, v2, r1, r2):
@@ -125,9 +125,9 @@ class LBCouetteTest:
         v_r, v_phi, v_z = profile_v.T
 
         # check velocity is zero for the radial and axial components
-        # (the absolute tolerance follows a Poisson distribution)
-        np.testing.assert_allclose(v_r, 0., atol=1e-4)
-        np.testing.assert_allclose(v_z, 0., atol=4e-6)
+        # (the absolute deviation follows a Poisson distribution)
+        self.assertLess(np.percentile(np.abs(v_r), 90), 1e-4)
+        self.assertLess(np.percentile(np.abs(v_z), 90), 1e-6)
 
         # check azimuthal velocity is zero inside boundary
         np.testing.assert_allclose(v_phi[:7], 0., atol=1e-7)

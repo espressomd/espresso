@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_DIPOLES
 
@@ -62,13 +62,6 @@ struct Solver::Implementation {
   Implementation() : solver{} {}
 };
 
-namespace traits {
-
-/** @brief Whether an actor is a solver. */
-template <typename T>
-using is_solver = std::is_convertible<std::shared_ptr<T>, MagnetostaticsActor>;
-
-} // namespace traits
 } // namespace Dipoles
 
 #endif // ESPRESSO_DIPOLES

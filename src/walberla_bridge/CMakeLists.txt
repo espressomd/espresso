@@ -17,17 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-if(ESPRESSO_BUILD_WITH_FFTW)
-  set(WALBERLA_CXX_CLANG_TIDY "${ESPRESSO_HEFFTE_CXX_CLANG_TIDY}")
-  set(WALBERLA_CUDA_CLANG_TIDY "${ESPRESSO_HEFFTE_CUDA_CLANG_TIDY}")
-  set(WALBERLA_CXX_CLANG_TIDY_CODEGEN "${ESPRESSO_HEFFTE_CXX_CLANG_TIDY}")
-  set(WALBERLA_CUDA_CLANG_TIDY_CODEGEN "${ESPRESSO_HEFFTE_CUDA_CLANG_TIDY}")
-else()
-  set(WALBERLA_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
-  set(WALBERLA_CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
-  set(WALBERLA_CXX_CLANG_TIDY_CODEGEN "${ESPRESSO_CXX_CLANG_TIDY}")
-  set(WALBERLA_CUDA_CLANG_TIDY_CODEGEN "${ESPRESSO_CUDA_CLANG_TIDY}")
-endif()
 set(SKIP_CLANG_TIDY_CHECKS "")
 set(SKIP_CLANG_TIDY_CHECKS_CXX "")
 set(SKIP_CLANG_TIDY_CHECKS_CUDA "")
@@ -50,53 +39,40 @@ if(WALBERLA_BUILD_WITH_CUDA)
   list(APPEND SKIP_CLANG_TIDY_CHECKS_CUDA
        "-clang-analyzer-core.NonNullParamChecker")
 endif()
-
-if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-  espresso_override_clang_tidy_checks(
-    WALBERLA_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-    "${SKIP_CLANG_TIDY_CHECKS_CXX}")
-  espresso_override_clang_tidy_checks(
-    WALBERLA_CUDA_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-    "${SKIP_CLANG_TIDY_CHECKS_CUDA}")
-endif()
-
 # codegen-specific Clang-Tidy overrides
 list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-auto")
 list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-non-const-parameter")
 list(APPEND SKIP_CLANG_TIDY_CHECKS_CXX "-clang-analyzer-deadcode.DeadStores")
 list(APPEND SKIP_CLANG_TIDY_CHECKS_CUDA
      "-bugprone-multi-level-implicit-pointer-conversion")
-if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-  espresso_override_clang_tidy_checks(
-    WALBERLA_CXX_CLANG_TIDY_CODEGEN "${SKIP_CLANG_TIDY_CHECKS}"
-    "${SKIP_CLANG_TIDY_CHECKS_CXX}")
-  espresso_override_clang_tidy_checks(
-    WALBERLA_CUDA_CLANG_TIDY_CODEGEN "${SKIP_CLANG_TIDY_CHECKS}"
-    "${SKIP_CLANG_TIDY_CHECKS_CUDA}")
-endif()
 
-function(espresso_configure_walberla_target_clangtidy)
-  set(TARGET_NAME ${ARGV0})
-  foreach(LANG CXX CUDA)
-    set(TARGET_SUFFIX "")
-    if(TARGET_NAME MATCHES "_codegen")
-      set(TARGET_SUFFIX "_CODEGEN")
-    endif()
-    set_target_properties(
-      ${TARGET_NAME}
-      PROPERTIES ${LANG}_CLANG_TIDY
-                 "${WALBERLA_${LANG}_CLANG_TIDY${TARGET_SUFFIX}}")
-  endforeach()
-endfunction()
+foreach(LANG CXX CUDA)
+  set(ESPRESSO_WALBERLA_${LANG}_CLANG_TIDY_CODEGEN
+      "${ESPRESSO_${LANG}_CLANG_TIDY}")
+  espresso_override_clang_tidy_checks(
+    ESPRESSO_WALBERLA_${LANG}_CLANG_TIDY_CODEGEN "${SKIP_CLANG_TIDY_CHECKS}"
+    "${SKIP_CLANG_TIDY_CHECKS_${LANG}}")
+  unset(SKIP_CLANG_TIDY_CHECKS_${LANG})
+endforeach()
+unset(SKIP_CLANG_TIDY_CHECKS)
 
 function(espresso_configure_walberla_target)
   set(TARGET_NAME ${ARGV0})
   espresso_set_common_target_properties(${TARGET_NAME})
-  espresso_configure_walberla_target_clangtidy(${TARGET_NAME})
   target_link_libraries(${TARGET_NAME} PRIVATE ${WALBERLA_LIBS})
   target_include_directories(
     ${TARGET_NAME} PUBLIC include PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                           ${walberla_BINARY_DIR}/src)
+  if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
+    foreach(LANG CXX CUDA)
+      set(TARGET_CLANG_TIDY "${ESPRESSO_${LANG}_CLANG_TIDY}")
+      if(TARGET_NAME MATCHES "_codegen")
+        set(TARGET_CLANG_TIDY "${ESPRESSO_WALBERLA_${LANG}_CLANG_TIDY_CODEGEN}")
+      endif()
+      set_target_properties(${TARGET_NAME} PROPERTIES ${LANG}_CLANG_TIDY
+                                                      "${TARGET_CLANG_TIDY}")
+    endforeach()
+  endif()
   get_target_property(TARGET_TYPE ${TARGET_NAME} TYPE)
   if(TARGET_TYPE STREQUAL "OBJECT_LIBRARY")
     set_target_properties(${TARGET_NAME} PROPERTIES POSITION_INDEPENDENT_CODE
