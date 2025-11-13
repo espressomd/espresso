@@ -88,6 +88,7 @@ def velocity_offset_eqs(config, method, pdfs,
     print(f"{delta_pdf_eqs=}")
     # Replace the assignments of (rho,u) by (rho, u+v) - (rho,u)
     ma = []
+
     for a, c in zip(delta_pdf_eqs.main_assignments, method.stencil):
         print(f"Direction {c}: {a}")
         # Determine direction of the stencil component in the
@@ -135,12 +136,26 @@ def add_lees_edwards_to_collision(
         stencil,
         combined_kernel)
 
-    print("Lees edwards collisoi nassigments")
-    ma = []
-    for i, a in enumerate(collision.main_assignments):
-        # Add Lees-Edwards-shift to collision main assignments
-        new_a = Assignment(a.lhs, a.rhs + offset[i].rhs)
-        if a != new_a: print(f"Initial: {a}\nLE:     {new_a}")
-        ma.append(new_a)
-    collision.main_assignments = ma
+    print("Lees edwards collision assigments")
+
+    keys = [sp.Symbol(f"d_{i}") for i in range(19)]
+
+    for i, key in enumerate(keys):
+        match_found = False
+        for j, a in enumerate(collision.main_assignments):
+            if a.lhs == key:
+                collision.main_assignments[j] = Assignment(
+                    a.lhs, a.rhs + offset[i].rhs)
+                match_found = True
+                print(f"m:{a.lhs}, o:{offset[i].lhs}")
+                break
+        if match_found:
+            continue
+        for j, a in enumerate(collision.subexpressions):
+            if hasattr(a, 'lhs'):
+                if a.lhs == key:
+                    collision.subexpressions[j] = Assignment(
+                        a.lhs, a.rhs + offset[i].rhs)
+                    print(f"s:{a.lhs}, o:{offset[i].lhs}")
+                    break
     return collision

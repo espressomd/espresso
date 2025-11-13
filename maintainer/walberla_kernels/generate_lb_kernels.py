@@ -221,7 +221,6 @@ def generate_stream_collide_kernels(ctx, method, data_type):
         },
         optimization=optimization
     )
-
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
         stem = f"StreamCollideSweepThermalized{precision_prefix}{target_suffix}"  # nopep8
         pystencils_espresso.generate_stream_collision_sweep(
