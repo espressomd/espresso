@@ -88,11 +88,6 @@
 #endif
 #endif
 
-#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-std::random_device rd;
-static std::mt19937 generator = Random::mt19937(static_cast<unsigned>(rd()));
-#endif
-
 namespace {
 volatile std::sig_atomic_t ctrl_C = 0;
 } // namespace
@@ -623,7 +618,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-    stoner_wolfarth_main(cell_structure->local_particles(), generator);
+    run_magnetodynamics(*cell_structure, *thermostat);
 #endif
 
     calculate_forces();

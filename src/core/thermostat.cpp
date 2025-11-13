@@ -87,6 +87,62 @@ void Thermostat::Thermostat::philox_counter_increment() {
   }
 }
 
+uint64_t Thermostat::Thermostat::get_philox_counter() const {
+  if (thermo_switch & THERMO_LANGEVIN) {
+    return langevin->rng_counter();
+  }
+  if (thermo_switch & THERMO_BROWNIAN) {
+    return brownian->rng_counter();
+  }
+#ifdef ESPRESSO_NPT
+  if (thermo_switch & THERMO_NPT_ISO) {
+    return npt_iso->rng_counter();
+  }
+#endif
+#ifdef ESPRESSO_DPD
+  if (thermo_switch & THERMO_DPD) {
+    return dpd->rng_counter();
+  }
+#endif
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
+  if (thermo_switch & THERMO_SD) {
+    return stokesian->rng_counter();
+  }
+#endif
+  if (thermo_switch & THERMO_BOND) {
+    return thermalized_bond->rng_counter();
+  }
+  return 0;
+}
+
+uint32_t Thermostat::Thermostat::get_philox_seed() const {
+  if (thermo_switch & THERMO_LANGEVIN) {
+    return langevin->rng_seed();
+  }
+  if (thermo_switch & THERMO_BROWNIAN) {
+    return brownian->rng_seed();
+  }
+#ifdef ESPRESSO_NPT
+  if (thermo_switch & THERMO_NPT_ISO) {
+    return npt_iso->rng_seed();
+  }
+#endif
+#ifdef ESPRESSO_DPD
+  if (thermo_switch & THERMO_DPD) {
+    return dpd->rng_seed();
+  }
+#endif
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
+  if (thermo_switch & THERMO_SD) {
+    return stokesian->rng_seed();
+  }
+#endif
+  if (thermo_switch & THERMO_BOND) {
+    return thermalized_bond->rng_seed();
+  }
+  return 0;
+}
+
 void Thermostat::Thermostat::lb_coupling_deactivate() {
   if (lb) {
     if (get_system().lb.is_solver_set() and ::comm_cart.rank() == 0 and

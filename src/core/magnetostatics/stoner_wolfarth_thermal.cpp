@@ -24,38 +24,67 @@
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 #define TWO_M_PI 2 * M_PI
 
-#include "magnetostatics/dipolar_direct_sum.hpp"
-
 #include "cells.hpp"
-#include "communication.hpp"
 #include "constraints/Constraints.hpp"
 #include "constraints/HomogeneousMagneticField.hpp"
 #include "errorhandling.hpp"
 
-#include <utils/cartesian_product.hpp>
-#include <utils/math/sqr.hpp>
-#include <utils/math/vec_rotate.hpp>
-#include <utils/mpi/iall_gatherv.hpp>
-
-#include <boost/mpi/collectives.hpp>
-#include <boost/mpi/communicator.hpp>
-#include <boost/range/counting_range.hpp>
-
 #include <nlopt.hpp>
 
 #include "magnetostatics/stoner_wolfarth_thermal.hpp"
+#include "random.hpp"
 #include "rotation.hpp"
-#include <algorithm>
-#include <cassert>
+#include "thermostat.hpp"
 #include <cmath>
-#include <iterator>
-#include <random>
-#include <stdexcept>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 namespace {
+// small perturbation to avoid starting exactly at a stationary point
+constexpr double eps_phi = 1e-3;
+// absolute error precision required for the optimiser
+constexpr double eps_abs = 1e-15;
+// relative error precision required for the optimiser
+constexpr double eps_rel = 1e-15;
+
+/**
+ * @brief Get real particle tracked by a virtual site.
+ *
+ * @param cell_structure Cell structure.
+ * @param p Virtual site.
+ * @return Pointer to real particle.
+ */
+static Particle *get_reference_particle(CellStructure &cell_structure,
+                                        Particle const &p) {
+  auto const &vs_rel = p.vs_relative();
+  if (vs_rel.to_particle_id == -1) {
+    runtimeErrorMsg() << "Particle with id " << p.id()
+                      << " is a dangling virtual site";
+    return nullptr;
+  }
+  auto p_ref_ptr = cell_structure.get_local_particle(vs_rel.to_particle_id);
+  if (!p_ref_ptr) {
+    runtimeErrorMsg() << "No real particle with id " << vs_rel.to_particle_id
+                      << " for virtual site with id " << p.id();
+  }
+  return p_ref_ptr;
+}
+
+/**
+ * @brief Objective (energy) function for the Stoner–Wohlfarth phi minimisation.
+ *
+ * Evaluates the magnetic energy (normalized by the anisotropy field) for a
+ * given in-plane angle phi according to Eq. 5 in
+ * https://doi.org/10.1103/PhysRevB.111.014438. Assumes minima lie in the
+ * plane phi = zeta and uses trig identities to reduce the expression.
+ *
+ * @param n Number of optimization variables (should be 1: phi).
+ * @param x Pointer to variables; x[0] is the angle phi.
+ * @param grad If non-null, gradient is written to grad[0].
+ * @param my_func_data Pointer to a double[2] array with {theta, h}.
+ * @return Energy value for the given phi.
+ */
 double phi_objective(unsigned n, const double *x, double *grad,
                      void *my_func_data) {
   double phi = x[0];
@@ -68,16 +97,26 @@ double phi_objective(unsigned n, const double *x, double *grad,
   return -0.5 - 0.5 * std::cos(2 * (phi - theta)) - 2 * h * std::cos(phi);
 }
 
-/*
-SW energy minimisation step with MC dip_mom flip step. SW energy normalised by
-the anisotropy field H_k (Hkinv stored on part to avoid division, h is the
-reduced field  due to the normalisation)
-*/
-double funct(double theta, double h, double phi0, double kT_KVm_inv,
-             double tau0_inv, double dt, std::mt19937 &rng_generator) {
+/**
+ * @brief Find the in-plane angle phi corresponding to the correct
+ *        energy minimum for the thermal Stoner–Wohlfarth particles.
+ *
+ * @param theta Angle between anisotropy director and external field (rad).
+ * @param h Reduced field (external + dipolar) normalised by H_k.
+ * @param phi0 Initial in‑plane angle guess (rad).
+ * @param ani_param Inverse thermal energy factor (1/(k_B T V) scaled).
+ * @param tau0_inv Attempt frequency inverse (1/tau0).
+ * @param dt Time increment for switching probability.
+ * @param noise Uniform random number in (0,1) used for the kinetic Monte‑Carlo
+ * step.
+ * @return In‑plane angle phi in range [0,2π).
+ */
+double get_phi_at_energy_min(double theta, double h, double phi0,
+                             double ani_param, double tau0_inv, double dt,
+                             const double &noise) {
 
-  std::uniform_real_distribution<double> distribution(0.0, 1.0);
-  double eps_phi = 1e-3;
+  // critical filed, above which there is only one minimum  (no need to do the
+  // thermal step); Eq. 6 in https://doi.org/10.1103/PhysRevB.111.014438.
   double h_crit = std::pow(std::pow(std::sin(theta), 2.0 / 3) +
                                std::pow(std::cos(theta), 2.0 / 3),
                            -3.0 / 2);
@@ -86,90 +125,59 @@ double funct(double theta, double h, double phi0, double kT_KVm_inv,
 
   opt.set_min_objective(phi_objective, &params);
   opt.set_ftol_rel(
-      1e-15); // Set the relative tolerance for the objective function value
+      eps_rel); // Set the relative tolerance for the objective function value
   opt.set_ftol_abs(
-      1e-15); // Set the relative tolerance for the objective function value
-  std::vector<double> x(1);
+      eps_abs); // Set the relative tolerance for the objective function value
+  std::vector<double> phi(1);
 
-  x[0] = phi0 + eps_phi; /* make initial guess from previos position plus
+  phi[0] = phi0 + eps_phi; /* make initial guess from previos position plus
                                    an arbitrary perturbation*/
   double min1; /* this is the actuall value of the energy from minimiser */
-  opt.optimize(x, min1);
-  double phi_min1 = fmod(x[0], TWO_M_PI);
+  opt.optimize(phi, min1);
+  double phi_min1 = fmod(phi[0], TWO_M_PI);
   double sol = phi_min1;
   if (fabs(h) < h_crit) {
     opt.set_max_objective(phi_objective, &params);
-    x[0] = phi0 + eps_phi;
+    phi[0] = phi0 + eps_phi;
     double max1;
-    opt.optimize(x, max1);
-    double phi_max1 = fmod(x[0], TWO_M_PI);
-    x[0] = fmod(phi_max1 + M_PI, 2 * M_PI);
+    opt.optimize(phi, max1);
+    double phi_max1 = fmod(phi[0], TWO_M_PI);
+    phi[0] = fmod(phi_max1 + M_PI, 2 * M_PI);
     double max2;
-    opt.optimize(x, max2);
-
-    double b1 = std::abs(max1 - min1) * kT_KVm_inv;
-    double b2 = std::abs(max2 - min1) * kT_KVm_inv;
+    opt.optimize(phi, max2);
+    // Eqs. 12 in https://doi.org/10.1103/PhysRevB.111.014438.
+    double b1 = std::abs(max1 - min1) * ani_param;
+    double b2 = std::abs(max2 - min1) * ani_param;
     double b_min = (b1 < b2) ? b1 : b2;
+    // Eq. 13 in https://doi.org/10.1103/PhysRevB.111.014438.
     double tau_inv = tau0_inv * exp(-b_min);
+    // switching probability (without backflip)
     double p12 = 1. - exp(-dt * tau_inv);
-
-    if (distribution(rng_generator) < p12) {
+    // if MC move accepted, find the location of the other minimum
+    if (noise < p12) {
       opt.set_min_objective(phi_objective, &params);
-      x[0] = fmod(phi_min1 + M_PI + eps_phi, 2 * M_PI);
+      phi[0] = fmod(phi_min1 + M_PI + eps_phi, 2 * M_PI);
       /*try to find another minimimum from the other side*/
       double min2;
-      opt.optimize(x, min2);
-
-      double phi_min2 = fmod(x[0], TWO_M_PI);
+      opt.optimize(phi, min2);
+      double phi_min2 = fmod(phi[0], TWO_M_PI);
       sol = phi_min2;
     }
   }
   return fmod(sol + TWO_M_PI, TWO_M_PI);
 }
 
-double funct_tans(double sol, double theta, double h, double kT_KVm_inv,
-                  double tau_trans_inv, double dt,
-                  std::mt19937 &rng_generator) {
-
-  std::uniform_real_distribution<double> ang_distribution(-M_PI_2, M_PI_2);
-  std::uniform_real_distribution<double> distribution(0, 1);
-
-  double shift = ang_distribution(rng_generator);
-  double attempot_ang = sol + shift;
-  double params[] = {theta, h};
-  double b_min = std::abs(phi_objective(1, &sol, nullptr, &params) -
-                          phi_objective(1, &attempot_ang, nullptr, &params)) *
-                 kT_KVm_inv;
-  double tau_inv = tau_trans_inv * b_min;
-  double p12 = 1. - exp(-dt * tau_inv);
-  // std::cout << p12 << "\n";s
-  if (distribution(rng_generator) > p12) {
-    shift = 0;
-  }
-  return shift;
-}
-
-} // namespace
-
-void stoner_wolfarth_main(ParticleRange const &particles,
-                          std::mt19937 &rng_generator) {
-  /* collect particle data */
-  std::vector<Particle *> local_real_particles;
-  std::vector<Particle *> local_virt_particles;
-  local_real_particles.reserve(particles.size());
-  local_virt_particles.reserve(particles.size());
-  for (auto &p : particles) {
-    if (p.sw_real() == 1) {
-      local_real_particles.emplace_back(&p);
-    } else if (p.sw_virt() == 1) {
-      local_virt_particles.emplace_back(&p);
-    }
-  }
-  // must assert that there is an equal number of sw_reals and sw_virts
-  Utils::Vector3d cntrl = {0., 0., 0.};
+/**
+ * @brief Collect external homogeneous magnetic field from active constraints.
+ *
+ * Iterates over System::get_system().constraints and sums the homogeneous
+ * magnetic field vectors provided by Constraints::HomogeneousMagneticField
+ * constraint objects.
+ *
+ * @return Utils::Vector3d The total external homogeneous magnetic field.
+ */
+const Utils::Vector3d get_external_field() {
   Utils::Vector3d ext_fld = {0., 0., 0.};
-  /* collect HomogeneousMagneticFields if active */
-
   auto &system = System::get_system();
   for (auto const &constraint : *system.constraints) {
     auto ptr =
@@ -179,105 +187,167 @@ void stoner_wolfarth_main(ParticleRange const &particles,
       ext_fld += ptr->H();
     }
   }
-  if (ext_fld != cntrl) {
-    auto p = local_virt_particles.begin();
-    for (auto pi = local_real_particles.begin();
-         pi != local_real_particles.end(); ++pi, ++p) {
-      Utils::Vector3d ext_fld_dpl = {0., 0., 0.};
-      ext_fld_dpl = ext_fld + (*p)->dip_fld();
-      double h = ext_fld_dpl.norm() * (*p)->Hkinv();
-      auto e_h = ext_fld_dpl.normalized();
-      // calc_director() result already normalised
-      Utils::Vector3d e_k = (*pi)->calc_director();
-      double theta = std::acos(e_h * e_k);
-      if (theta > M_PI_2) {
-        theta = M_PI - theta;
-        h = -h;
-        e_h = -e_h;
-      }
-      auto rot_axis =
-          vector_product(vector_product(e_h, e_k), e_h).normalized();
-      auto phi = funct(theta, h, (*pi)->phi0(), (*pi)->kT_KVm_inv(),
-                       (*pi)->tau0_inv(), (*pi)->dt_incr(), rng_generator);
-      auto shift =
-          funct_tans(phi, theta, h, (*pi)->kT_KVm_inv(), (*pi)->tau_trans_inv(),
-                     (*pi)->dt_incr(), rng_generator);
-      auto mom = e_h * std::cos(phi) + rot_axis * std::sin(phi);
-      mom = Utils::vec_rotate(vector_product(e_h, rot_axis), shift, mom);
-      (*pi)->phi0() = phi + shift;
-      auto const [quat, dipm] = convert_dip_to_quat(mom * (*p)->sat_mag());
-      (*p)->dipm() = dipm;
-      (*p)->quat() = quat;
-    }
-    // on_dipoles_change();
-  } else {
-    std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    auto p = local_virt_particles.begin();
-    for (auto pi = local_real_particles.begin();
-         pi != local_real_particles.end(); ++pi, ++p) {
-      Utils::Vector3d e_k = (*pi)->calc_director();
-      double tau_inv = (*pi)->tau0_inv() * exp(-(*pi)->kT_KVm_inv());
-      double p12 = 1. - exp(-(*pi)->dt_incr() * tau_inv);
-      if (distribution(rng_generator) < p12) {
-        if ((*pi)->phi0() == 0) {
-          auto const [quat, dipm] = convert_dip_to_quat((*p)->sat_mag() * -e_k);
-          (*pi)->phi0() = M_PI;
-          (*p)->dipm() = dipm;
-          (*p)->quat() = quat;
-        } else if ((*pi)->phi0() == M_PI) {
-          auto const [quat, dipm] = convert_dip_to_quat((*p)->sat_mag() * e_k);
-          (*pi)->phi0() = 0;
-          (*p)->dipm() = dipm;
-          (*p)->quat() = quat;
-        } else {
-          double diff_0 = std::abs((*pi)->phi0() - 0);
-          double diff_PI = std::abs((*pi)->phi0() - M_PI);
-          // Compare the differences and determine the closer angle
-          if (diff_0 < diff_PI) {
-            auto const [quat, dipm] =
-                convert_dip_to_quat((*p)->sat_mag() * -e_k);
-            (*pi)->phi0() = M_PI;
-            (*p)->dipm() = dipm;
-            (*p)->quat() = quat;
-          } else {
-            auto const [quat, dipm] =
-                convert_dip_to_quat((*p)->sat_mag() * e_k);
-            (*pi)->phi0() = 0;
-            (*p)->dipm() = dipm;
-            (*p)->quat() = quat;
-          }
-        }
+  return ext_fld;
+}
+} // namespace
+/**
+ * @brief Simplified Stoner–Wohlfarth update in field free case.
+ *
+ * @param p Virtual particle to update (modified).
+ * @param pi Reference particle providing the anisotropy director (read-only).
+ * @param noise Uniform random number in (0,1) used for the kinetic Monte‑Carlo
+ * step.
+ */
+void stoner_wohlfarth_no_field(Particle &p, Particle &pi, const double &noise) {
+
+  Utils::Vector3d e_k = pi.calc_director();
+  double tau_inv =
+      p.magnetodynamics().tau0_inv * exp(-p.magnetodynamics().ani_param);
+  double p12 = 1. - exp(-p.magnetodynamics().dt_incr * tau_inv);
+  if (noise < p12) {
+    if (p.magnetodynamics().phi0 == 0) {
+      auto const [quat, dipm] =
+          convert_dip_to_quat(p.magnetodynamics().sat_mag * -e_k);
+      p.magnetodynamics().phi0 = M_PI;
+      p.dipm() = dipm;
+      p.quat() = quat;
+    } else if (p.magnetodynamics().phi0 == M_PI) {
+      auto const [quat, dipm] =
+          convert_dip_to_quat(p.magnetodynamics().sat_mag * e_k);
+      p.magnetodynamics().phi0 = 0;
+      p.dipm() = dipm;
+      p.quat() = quat;
+    } else {
+      double diff_0 = std::abs(p.magnetodynamics().phi0 - 0);
+      double diff_PI = std::abs(p.magnetodynamics().phi0 - M_PI);
+      // Compare the differences and determine the closer angle
+      if (diff_0 < diff_PI) {
+        auto const [quat, dipm] =
+            convert_dip_to_quat(p.magnetodynamics().sat_mag * -e_k);
+        p.magnetodynamics().phi0 = M_PI;
+        p.dipm() = dipm;
+        p.quat() = quat;
       } else {
-        if ((*pi)->phi0() == 0) {
-          auto const [quat, dipm] = convert_dip_to_quat((*p)->sat_mag() * e_k);
-          (*p)->dipm() = dipm;
-          (*p)->quat() = quat;
-        } else if ((*pi)->phi0() == M_PI) {
-          auto const [quat, dipm] = convert_dip_to_quat((*p)->sat_mag() * -e_k);
-          (*p)->dipm() = dipm;
-          (*p)->quat() = quat;
-        } else {
-          double diff_0 = std::abs((*pi)->phi0() - 0);
-          double diff_PI = std::abs((*pi)->phi0() - M_PI);
-          // Compare the differences and determine the closer angle
-          if (diff_0 < diff_PI) {
-            auto const [quat, dipm] =
-                convert_dip_to_quat((*p)->sat_mag() * e_k);
-            (*pi)->phi0() = 0;
-            (*p)->dipm() = dipm;
-            (*p)->quat() = quat;
-          } else {
-            auto const [quat, dipm] =
-                convert_dip_to_quat((*p)->sat_mag() * -e_k);
-            (*pi)->phi0() = M_PI;
-            (*p)->dipm() = dipm;
-            (*p)->quat() = quat;
-          }
-        }
+        auto const [quat, dipm] =
+            convert_dip_to_quat(p.magnetodynamics().sat_mag * e_k);
+        p.magnetodynamics().phi0 = 0;
+        p.dipm() = dipm;
+        p.quat() = quat;
+      }
+    }
+  } else {
+    if (p.magnetodynamics().phi0 == 0) {
+      auto const [quat, dipm] =
+          convert_dip_to_quat(p.magnetodynamics().sat_mag * e_k);
+      p.dipm() = dipm;
+      p.quat() = quat;
+    } else if (p.magnetodynamics().phi0 == M_PI) {
+      auto const [quat, dipm] =
+          convert_dip_to_quat(p.magnetodynamics().sat_mag * -e_k);
+      p.dipm() = dipm;
+      p.quat() = quat;
+    } else {
+      double diff_0 = std::abs(p.magnetodynamics().phi0 - 0);
+      double diff_PI = std::abs(p.magnetodynamics().phi0 - M_PI);
+      // Compare the differences and determine the closer angle
+      if (diff_0 < diff_PI) {
+        auto const [quat, dipm] =
+            convert_dip_to_quat(p.magnetodynamics().sat_mag * e_k);
+        p.magnetodynamics().phi0 = 0;
+        p.dipm() = dipm;
+        p.quat() = quat;
+      } else {
+        auto const [quat, dipm] =
+            convert_dip_to_quat(p.magnetodynamics().sat_mag * -e_k);
+        p.magnetodynamics().phi0 = M_PI;
+        p.dipm() = dipm;
+        p.quat() = quat;
       }
     }
   }
-  // this call might be necessart when using p3m! significant overhead
-  // on_dipoles_change();
+}
+/**
+ * @brief Update virtual site dipole moment accodring to the full in-field
+ * (incl. dipole field) thermal Stoner-Wohlfarth model (incl. the kinetic MC
+ * step)
+ *
+ * @param p Virtual particle to update (modified).
+ * @param pi Reference particle providing the anisotropy director (read-only).
+ * @param ext_fld_dpl External homogeneous magnetic field + total dipolar field
+ * acting on the particle.
+ * @param noise Uniform random number in (0,1) used for the kinetic Monte‑Carlo
+ * step.
+ */
+void stoner_wohlfarth_main(Particle &p, Particle &pi,
+                           const Utils::Vector3d &ext_fld_dpl,
+                           const double &noise) {
+  // reduced field; Eq. 4 in https://doi.org/10.1103/PhysRevB.111.014438.
+  double h = ext_fld_dpl.norm() * p.magnetodynamics().ani_fld_inv;
+  auto e_h = ext_fld_dpl.normalized();
+  // calc_director() result already normalised
+  Utils::Vector3d e_k = pi.calc_director();
+  double theta = std::acos(e_h * e_k);
+  if (theta > M_PI_2) {
+    theta = M_PI - theta;
+    h = -h;
+    e_h = -e_h;
+  }
+  auto rot_axis = vector_product(vector_product(e_h, e_k), e_h).normalized();
+  auto phi = get_phi_at_energy_min(
+      theta, h, p.magnetodynamics().phi0, p.magnetodynamics().ani_param,
+      p.magnetodynamics().tau0_inv, p.magnetodynamics().dt_incr, noise);
+  auto mom = e_h * std::cos(phi) + rot_axis * std::sin(phi);
+  p.magnetodynamics().phi0 = phi;
+  auto const [quat, dipm] =
+      convert_dip_to_quat(mom * p.magnetodynamics().sat_mag);
+  p.dipm() = dipm;
+  p.quat() = quat;
+}
+/**
+ * @brief Run magnetodynamics update for local virtual particles.
+ *
+ * Iterates over local particles and updates the dipole moment of virtual
+ * particles according to the thermal Stoner–Wohlfarth model. Collects
+ * active homogeneous external magnetic fields from constraints and adds the
+ * per-particle dipolar contribution before performing either the simplified
+ * no-field update or the full thermal Stoner–Wohlfarth update.
+ *
+ * @param cell_structure CellStructure providing access to local particles.
+ * @param thermostat Const reference to Thermostat used to access Philox RNG
+ * state and seeds.
+ */
+void run_magnetodynamics(CellStructure &cell_structure,
+                         Thermostat::Thermostat const &thermostat) {
+  /* collect HomogeneousMagneticFields if active */
+  Utils::Vector3d ext_fld = get_external_field();
+  Utils::Vector3d cntrl = {0., 0., 0.};
+  cell_structure.for_each_local_particle([&](Particle &p) {
+    /* collect particle data */
+    if (!p.is_virtual() || !p.magnetodynamics().is_enabled) {
+      return;
+    }
+
+    auto *pref = get_reference_particle(cell_structure, p);
+    if (!pref) {
+      return;
+    }
+    auto &pi = *pref;
+    Utils::Vector3d ext_fld_dpl = {0., 0., 0.};
+    ext_fld_dpl = ext_fld + p.dip_fld();
+    // if no external field and no dipolar field, do simplified Stoner-Wohlfarth
+    // update
+    auto const noise =
+        Random::philox_4_uint64s<RNGSalt::THERMAL_STONER_WOHLFARTH>(
+            thermostat.get_philox_counter(), thermostat.get_philox_seed(),
+            p.id());
+    double random_uniform_dist_cast =
+        Utils::uniform(static_cast<std::size_t>(noise[0])); // uniform (0,1)
+    if (ext_fld_dpl == cntrl) {
+      stoner_wohlfarth_no_field(p, pi, random_uniform_dist_cast);
+      return;
+    }
+    // full Stoner-Wohlfarth update with external + dipolar field
+    stoner_wohlfarth_main(p, pi, ext_fld_dpl, random_uniform_dist_cast);
+  });
 }
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH

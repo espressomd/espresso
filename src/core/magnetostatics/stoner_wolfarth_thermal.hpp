@@ -30,8 +30,6 @@
  * Assumes minimum image convention for those axis in which the
  * system is periodic.
  */
-void stoner_wolfarth_main(ParticleRange const &particles,
-                          std::mt19937 &rng_generator);
-void reset_dipoles_SW(ParticleRange const &particles);
-
+void run_magnetodynamics(CellStructure &cell_structure,
+                         Thermostat::Thermostat const &thermostat);
 #endif

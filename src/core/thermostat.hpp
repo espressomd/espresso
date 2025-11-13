@@ -399,6 +399,11 @@ public:
   /** Increment RNG counters */
   void philox_counter_increment();
 
+  /** Get RNG counter */
+  uint64_t get_philox_counter() const;
+
+  /** Get RNG seed */
+  uint32_t get_philox_seed() const;
   /** Initialize constants of all thermostats. */
   void recalc_prefactors(double time_step);
 

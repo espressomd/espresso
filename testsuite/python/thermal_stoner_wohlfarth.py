@@ -60,7 +60,7 @@ class Test(ut.TestCase):
     tau0_inv = 735412234.8230474
     SNAPSHOT_SEPARATION = 12477
     n_part = 100
-    error = 0.05
+    error = 0.035
 
     def tearDown(self):
         self.system.part.clear()
@@ -75,16 +75,10 @@ class Test(ut.TestCase):
             n_polymers=self.n_part, beads_per_chain=1, min_distance=1., bond_length=1., seed=self.seed)
         positions = np.reshape(positions, (-1, 3))
         particles = system.part.add(pos=positions, director=orientor_list)
-        particles.sw_real = True
         particles.rotation = (True, True, True)
-        particles.kT_KVm_inv = self.kT_KVm_inv
-        particles.dt_incr = self.dt_incr
-        particles.tau0_inv = self.tau0_inv
         for p1, dipm_el in zip(list(particles), dip_mom_list):
             p2 = system.part.add(
-                pos=p1.pos, dip=dipm_el, rotation=[False, False, False],
-                sw_virt=True, Hkinv=self.HK_inv,
-                sat_mag=self.dip_reduced)
+                pos=p1.pos, dip=dipm_el, rotation=[False, False, False], magnetodynamics={'ani_fld_inv': self.HK_inv, 'sat_mag': self.dip_reduced, 'ani_param': self.kT_KVm_inv, 'dt_incr': self.dt_incr, 'tau0_inv': self.tau0_inv})
             p2.vs_auto_relate_to(p1)
             p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
 
@@ -97,7 +91,7 @@ class Test(ut.TestCase):
 
     def _measure_dipole_moment(self):
         dipm_tot = MagneticDipoleMoment(
-            ids=self.system.part.select(lambda p: p.sw_virt == True).id)
+            ids=self.system.part.select(lambda p: p.magnetodynamics['is_enabled'] == True).id)
         norm = 1 / (self.dip_reduced * self.n_part)
         self.system.integrator.run(self.SNAPSHOT_SEPARATION)
         mag_el = dipm_tot.calculate() * norm
@@ -132,7 +126,7 @@ class Test(ut.TestCase):
         for h_reduced, res in self.res_dict_solid.items():
             print('test_tSW_solid: ', h_reduced)
             self._init_particles()
-            part_slice = system.part.select(lambda p: p.sw_real == True)
+            part_slice = system.part.select(lambda p: p.is_virtual() == False)
             part_slice.rotation = [False, False, False]
             part_slice.fix = [True, True, True]
             self._apply_single_field(h_reduced)

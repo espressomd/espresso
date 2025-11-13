@@ -61,6 +61,37 @@ struct ParticleParametersSwimming {
 };
 #endif
 
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+/** Properties of a particle required for thermal Stoner-Wolfarth
+ * magnetodynamics.
+ */
+struct ParticleParameterstSW {
+  /** boolean flag used to get virtual particles carrying the dipole moment in
+   * the thermal stoner-wohlfarth model */
+  bool is_enabled = false;
+  /** angle between the directior and dipole moment of a Stoner-Wohlfarth
+   * particle */
+  double phi0 = 0.;
+  /** saturation magnetisation of a polarisable particle */
+  double sat_mag = 0.;
+  /* anisotropy field = 2.*K1/(mu0 * Ms) in [A / m] where K1 is the magnetic
+   * anisotropy constant [kg / (m s^2)]. On particle we save the inverse of the
+   * anisotropy field ani_fld_inv in reduced units! */
+  double ani_fld_inv = 0.;
+  /** Eq.3 in https://doi.org/10.1103/PhysRevB.111.014438. */
+  double ani_param = 0.;
+  /** Browns attempt frequency; Prefactor in Eq.9 from
+   * https://doi.org/10.1103/PhysRevB.111.014438.  */
+  double tau0_inv = 0.;
+  /** time units parameter for the kinetic MC step */
+  double dt_incr = 0.;
+
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+    ar & is_enabled & phi0 & sat_mag & ani_fld_inv & ani_param & tau0_inv;
+  }
+};
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
+
 /** Properties of a particle which are not supposed to
  *  change during the integration, but have to be known
  *  for all ghosts. Ghosts are particles which are
@@ -137,31 +168,6 @@ struct ParticleProperties {
   double dipm = 0.;
 #endif
 
-#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-  /** boolean flags used to tell SW solver which particle is real and carries
-   * the director of the SW particle (sw_real) and which particles carries the
-   * dipole moment (sw_virt) */
-  bool sw_real = false;
-  bool sw_virt = false;
-  /** angle between the directior and dipole moment of a SW particle */
-  double phi0 = 0.;
-  /** saturation magnetisation of a polarisable particle */
-  double sat_mag = 0.;
-  /* Hk=2.*K1/(mu0 * Ms) # anisotropy field in [A / m] where K1 is the magnetic
-   * aisotropy constant [kg / (m s^2)]. On particle we save the inverse of Hk,
-   * Hkinv in reduced units! */
-  double Hkinv = 0.;
-  /** units parameter for the kinetic MC step */
-  double kT_KVm_inv = 0.;
-  /** units parameter for the kinetic MC step */
-  double tau0_inv = 0.;
-  double tau_trans_inv = 0.;
-
-  /** units parameter for the kinetic MC step */
-  double dt_incr = 0.;
-
-#endif
-
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   /** total dipole field */
   Utils::Vector3d dip_fld = {0., 0., 0.};
@@ -223,6 +229,10 @@ struct ParticleProperties {
   ParticleParametersSwimming swim;
 #endif
 
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+  ParticleParameterstSW magnetodynamics;
+#endif
+
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar & identity;
     ar & mol_id;
@@ -254,16 +264,6 @@ struct ParticleProperties {
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
     ar & vs_relative;
 #endif
-#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-    ar & sw_real;
-    ar & sw_virt;
-    ar & phi0;
-    ar & sat_mag;
-    ar & Hkinv;
-    ar & kT_KVm_inv;
-    ar & tau0_inv;
-    ar & tau_trans_inv;
-#endif
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
     ar & gamma;
 #ifdef ESPRESSO_ROTATION
@@ -280,6 +280,9 @@ struct ParticleProperties {
 
 #ifdef ESPRESSO_ENGINE
     ar & swim;
+#endif
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+    ar & magnetodynamics;
 #endif
   }
 };
@@ -530,24 +533,8 @@ public:
   auto calc_dip() const { return calc_director() * dipm(); }
 #endif
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-  bool const &sw_real() const { return p.sw_real; }
-  auto &sw_real() { return p.sw_real; }
-  bool const &sw_virt() const { return p.sw_virt; }
-  auto &sw_virt() { return p.sw_virt; }
-  auto const &phi0() const { return p.phi0; }
-  auto &phi0() { return p.phi0; }
-  auto const &sat_mag() const { return p.sat_mag; }
-  auto &sat_mag() { return p.sat_mag; }
-  auto const &Hkinv() const { return p.Hkinv; }
-  auto &Hkinv() { return p.Hkinv; }
-  auto const &kT_KVm_inv() const { return p.kT_KVm_inv; }
-  auto &kT_KVm_inv() { return p.kT_KVm_inv; }
-  auto const &tau0_inv() const { return p.tau0_inv; }
-  auto &tau0_inv() { return p.tau0_inv; };
-  auto const &tau_trans_inv() const { return p.tau_trans_inv; }
-  auto &tau_trans_inv() { return p.tau_trans_inv; };
-  auto const &dt_incr() const { return p.dt_incr; }
-  auto &dt_incr() { return p.dt_incr; }
+  auto const &magnetodynamics() const { return p.magnetodynamics; }
+  auto &magnetodynamics() { return p.magnetodynamics; }
 #endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   auto const &dip_fld() const { return p.dip_fld; }
@@ -653,6 +640,9 @@ BOOST_CLASS_IMPLEMENTATION(Particle, object_serializable)
 #ifdef ESPRESSO_ENGINE
 BOOST_CLASS_IMPLEMENTATION(ParticleParametersSwimming, object_serializable)
 #endif
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+BOOST_CLASS_IMPLEMENTATION(ParticleParameterstSW, object_serializable)
+#endif
 BOOST_CLASS_IMPLEMENTATION(ParticleProperties, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticlePosition, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticleMomentum, object_serializable)
@@ -668,6 +658,9 @@ BOOST_CLASS_IMPLEMENTATION(decltype(ParticleProperties::vs_relative),
 
 #ifdef ESPRESSO_ENGINE
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleParametersSwimming)
+#endif
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleParameterstSW)
 #endif
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleProperties)
 BOOST_IS_BITWISE_SERIALIZABLE(ParticlePosition)

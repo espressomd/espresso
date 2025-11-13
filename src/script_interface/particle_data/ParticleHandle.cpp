@@ -264,53 +264,6 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() { return get_particle_data(m_pid).dipm(); }},
 #endif // ESPRESSO_DIPOLES
-#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-      {"sw_real",
-       [this](Variant const &value) {
-         set_particle_property(&Particle::sw_real, value);
-       },
-       [this]() { return get_particle_data(m_pid).sw_real(); }},
-      {"sw_virt",
-       [this](Variant const &value) {
-         set_particle_property(&Particle::sw_virt, value);
-       },
-       [this]() { return get_particle_data(m_pid).sw_virt(); }},
-      {"phi0",
-       [this](Variant const &value) {
-         set_particle_property(&Particle::phi0, value);
-       },
-       [this]() { return get_particle_data(m_pid).phi0(); }},
-      {"sat_mag",
-       [this](Variant const &value) {
-         set_particle_property(&Particle::sat_mag, value);
-       },
-       [this]() { return get_particle_data(m_pid).sat_mag(); }},
-      {"Hkinv",
-       [this](Variant const &value) {
-         set_particle_property(&Particle::Hkinv, value);
-       },
-       [this]() { return get_particle_data(m_pid).Hkinv(); }},
-      {"kT_KVm_inv",
-       [this](Variant const &value) {
-         set_particle_property(&Particle::kT_KVm_inv, value);
-       },
-       [this]() { return get_particle_data(m_pid).kT_KVm_inv(); }},
-      {"tau0_inv",
-       [this](Variant const &value) {
-         set_particle_property(&Particle::tau0_inv, value);
-       },
-       [this]() { return get_particle_data(m_pid).tau0_inv(); }},
-      {"tau_trans_inv",
-       [this](Variant const &value) {
-         set_particle_property(&Particle::tau_trans_inv, value);
-       },
-       [this]() { return get_particle_data(m_pid).tau_trans_inv(); }},
-      {"dt_incr",
-       [this](Variant const &value) {
-         set_particle_property(&Particle::dt_incr, value);
-       },
-       [this]() { return get_particle_data(m_pid).dt_incr(); }},
-#endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
       {"dip_fld",
        [this](Variant const &value) {
@@ -318,6 +271,38 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() { return get_particle_data(m_pid).dip_fld(); }},
 #endif
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+      {"magnetodynamics",
+       [this](Variant const &value) {
+         set_particle_property([&value](Particle &p) {
+           ParticleParameterstSW md{};
+           md.is_enabled = true;
+           auto const dict = get_value<VariantMap>(value);
+           if (dict.contains("phi0"))
+             md.phi0 = get_value<double>(dict.at("phi0"));
+           if (dict.contains("sat_mag"))
+             md.sat_mag = get_value<double>(dict.at("sat_mag"));
+           if (dict.contains("ani_fld_inv"))
+             md.ani_fld_inv = get_value<double>(dict.at("ani_fld_inv"));
+           if (dict.contains("ani_param"))
+             md.ani_param = get_value<double>(dict.at("ani_param"));
+           if (dict.contains("tau0_inv"))
+             md.tau0_inv = get_value<double>(dict.at("tau0_inv"));
+           if (dict.contains("dt_incr"))
+             md.dt_incr = get_value<double>(dict.at("dt_incr"));
+           p.magnetodynamics() = md;
+         });
+       },
+       [this]() {
+         auto const md = get_particle_data(m_pid).magnetodynamics();
+         return VariantMap{
+             {"is_enabled", md.is_enabled}, {"phi0", md.phi0},
+             {"sat_mag", md.sat_mag},       {"ani_fld_inv", md.ani_fld_inv},
+             {"ani_param", md.ani_param},   {"tau0_inv", md.tau0_inv},
+             {"dt_incr", md.dt_incr},
+         };
+       }},
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 #ifdef ESPRESSO_ROTATION
       {"director",
        [this](Variant const &value) {
