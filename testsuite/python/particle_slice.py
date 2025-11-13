@@ -90,8 +90,19 @@ class ParticleSliceTest(ut.TestCase):
         self.assertEqual(repr(self.p0p1.pos),
                          repr(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 1.0]])))
 
+    def test_pos(self):
+        box_l = self.system.box_l
+        self.p0.pos = [-1, 2, box_l[2] + 3]
+        self.p1.pos = [0, 0, 1]
+        np.testing.assert_equal(
+            np.copy(self.p0p1.image_box), [[-1, 0, 1], [0, 0, 0]])
+        np.testing.assert_allclose(
+            np.copy(self.p0p1.pos), [[-1, 2, box_l[2] + 3], [0, 0, 1]])
+        np.testing.assert_allclose(
+            np.copy(self.p0p1.pos_folded), [[box_l[0] - 1, 2, 3], [0, 0, 1]])
+
     @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
-    def test_scalar(self):
+    def test_charges(self):
         self.p0.q = 1.3
         self.assertEqual(self.p0.q, 1.3)
         self.p0p1.q = 2.0

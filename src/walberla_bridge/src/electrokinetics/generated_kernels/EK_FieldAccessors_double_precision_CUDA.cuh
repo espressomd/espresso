@@ -50,13 +50,13 @@ namespace Scalar {
 /** @brief Get value from a single cell. */
 double get(gpu::GPUField<double> const *field, Cell const &cell);
 /** @brief Set value on a single cell. */
-void set(gpu::GPUField<double> *field, double const value, Cell const &cell);
+void set(gpu::GPUField<double> *field, double value, Cell const &cell);
 /** @brief Add value to a single cell. */
-void add(gpu::GPUField<double> *field, double const value, Cell const &cell);
+void add(gpu::GPUField<double> *field, double value, Cell const &cell);
 /** @brief Initialize all cells with the same value. */
-void initialize(gpu::GPUField<double> *field, double const value);
+void initialize(gpu::GPUField<double> *field, double value);
 /** @brief Add value to all cells. */
-void add_to_all(gpu::GPUField<double> *field, double const value);
+void add_to_all(gpu::GPUField<double> *field, double value);
 /** @brief Get values from a cell interval. */
 std::vector<double> get(gpu::GPUField<double> const *ield,
                         CellInterval const &ci);

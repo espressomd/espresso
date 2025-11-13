@@ -237,8 +237,9 @@ static auto p3m_tune_aliasing_sums(Utils::Vector3i const &shift,
  *  \param box_l      box dimensions.
  *  \return real space error
  */
-static double p3m_real_space_error(double pref, double r_cut_iL, int n_c_part,
-                                   double sum_q2, double alpha_L,
+static double p3m_real_space_error(double pref, double r_cut_iL,
+                                   std::size_t n_c_part, double sum_q2,
+                                   double alpha_L,
                                    Utils::Vector3d const &box_l) {
   auto const volume = Utils::product(box_l);
   return (2. * pref * sum_q2 * exp(-Utils::sqr(r_cut_iL * alpha_L))) /
@@ -259,7 +260,7 @@ static double p3m_real_space_error(double pref, double r_cut_iL, int n_c_part,
  *  \return reciprocal (k) space error
  */
 static double p3m_k_space_error(double pref, Utils::Vector3i const &mesh,
-                                int cao, int n_c_part, double sum_q2,
+                                int cao, std::size_t n_c_part, double sum_q2,
                                 double alpha_L, Utils::Vector3d const &box_l) {
 
   auto const cotangent_sum = math::get_analytic_cotangent_sum_kernel(cao);

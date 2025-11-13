@@ -60,7 +60,7 @@ public:
   ReductionOp<ResultType> reduction_op;
   Kernel kernel;
   KokkosReducer(Kernel kernel, ReductionOp<ResultType> reduction_op)
-      : reduction_op(reduction_op), kernel(kernel) {}
+      : reduction_op(std::move(reduction_op)), kernel(std::move(kernel)) {}
   KokkosReducer(KokkosReducer const &other)
       : reduction_op(other.reduction_op), kernel(other.kernel) {};
 

@@ -411,7 +411,7 @@ check_sphinx:
       artifacts: true
   script:
     - cd ${CI_PROJECT_DIR}/build
-    - ninja sphinx
+    - ninja -d explain sphinx
     - ninja -j2 tutorials
     - bash ${CI_PROJECT_DIR}/maintainer/CI/doc_warnings.sh
     - python3 ${CI_PROJECT_DIR}/maintainer/CI/jupyter_warnings.py
@@ -485,7 +485,7 @@ maxset_no_gpu:
     - export CUDA_VISIBLE_DEVICES=""
     - cd ${CI_PROJECT_DIR}/build
     - ninja -t restat
-    - ninja check
+    - ninja -d explain check
   tags:
     - espresso
     - no-cuda
@@ -503,7 +503,7 @@ maxset_3_cores:
     - ninja -t restat
     - cmake -D ESPRESSO_TEST_NP=3 .
     - ninja -t restat
-    - ninja check_unit_tests
+    - ninja -d explain check_unit_tests
     - ninja check_python_parallel_odd
   timeout: 90m
   tags:
@@ -524,7 +524,7 @@ maxset_1_cores:
     - ninja -t restat
     - cmake -D ESPRESSO_TEST_NP=1 .
     - ninja -t restat
-    - ninja check_unit_tests
+    - ninja -d explain check_unit_tests
     - ninja check_python
   timeout: 90m
   tags:

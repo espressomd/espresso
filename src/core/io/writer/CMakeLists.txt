@@ -21,7 +21,6 @@ if(ESPRESSO_BUILD_WITH_HDF5)
   add_library(espresso_hdf5 SHARED h5md_core.cpp h5md_specification.cpp)
   add_library(espresso::hdf5 ALIAS espresso_hdf5)
   espresso_set_common_target_properties(espresso_hdf5)
-  set_target_properties(espresso_hdf5 PROPERTIES CXX_CLANG_TIDY "")
   target_include_directories(espresso_hdf5 PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
   target_link_libraries(
     espresso_hdf5

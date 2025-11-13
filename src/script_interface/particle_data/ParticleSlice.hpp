@@ -22,6 +22,7 @@
 #include "ParticleHandle.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/Variant.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/cell_system/CellSystem.hpp"
 #include "script_interface/get_value.hpp"
@@ -29,8 +30,16 @@
 
 #include "core/system/System.hpp"
 
+#include <utils/mpi/gather_buffer.hpp>
+
+#include <algorithm>
+#include <cassert>
+#include <functional>
 #include <memory>
+#include <ranges>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 namespace ScriptInterface {
@@ -61,6 +70,47 @@ struct SetParticleParametersVisitor {
   }
 };
 
+template <typename T>
+inline auto
+get_particles_properties(std::vector<int> const &pids,
+                         std::function<T(Particle const &)> const &getter,
+                         Context *context,
+                         CellStructure const &cell_structure) {
+
+  using value_type =
+      std::conditional_t<Variant::has_type<std::vector<T>>::value, T, Variant>;
+  std::vector<value_type> result;
+
+  auto const n_ranks = static_cast<std::size_t>(context->get_comm().size());
+  auto const size_hint = pids.size() / n_ranks;
+  std::vector<std::pair<int, T>> parameters;
+  parameters.reserve(size_hint);
+  for (auto const &pid : pids) {
+    auto const p = cell_structure.get_local_particle(pid);
+    if (p and not p->is_ghost()) {
+      parameters.emplace_back(pid, getter(*p));
+    }
+  }
+
+  // collect values from all nodes
+  Utils::Mpi::gather_buffer(parameters, context->get_comm(), 0);
+  if (!context->is_head_node()) {
+    return result;
+  }
+
+  // sort values by particle id to retain original order
+  auto const projector = [](auto const &pair) { return pair.first; };
+  std::ranges::sort(parameters, std::less<int>{}, projector);
+  assert(std::ranges::equal(pids, parameters | std::views::keys) &&
+         "Missing or duplicate particle ids");
+
+  result.reserve(pids.size());
+  for (auto const &value : parameters | std::views::values) {
+    result.emplace_back(std::move(value));
+  }
+  return result;
+}
+
 class ParticleSlice : public AutoParameters<ParticleSlice> {
   std::vector<int> m_id_selection;
   int m_chunk_size;
@@ -69,7 +119,7 @@ class ParticleSlice : public AutoParameters<ParticleSlice> {
   std::weak_ptr<::System::System> m_system;
   /** @brief Data structure to store names of parameters with special setters.
    */
-  std::set<std::string> m_special_parameters{
+  std::set<std::string_view> const m_special_parameters{
       "pos",        "type", "bonds",
 #ifdef ESPRESSO_ELECTROSTATICS
       "q",

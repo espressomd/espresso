@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
@@ -91,8 +91,6 @@ struct p3m_data_struct : public P3MStateCommon<FloatType> {
   std::unique_ptr<FFTBackend<FloatType>> fft;
   /** @brief FFT buffers. */
   std::unique_ptr<FFTBuffers<FloatType>> fft_buffers;
-
-  void init();
 
   void update_mesh_views() {
     auto const mesh_size_ptr = fft->get_mesh_size();

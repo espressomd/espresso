@@ -68,7 +68,7 @@ std::pair<T, I> periodic_fold(T x, I i, T const l) {
 template <FloatingPointOrRef T> T periodic_fold(T x, T const l) {
 #ifndef __FAST_MATH__
   /* Can't fold if either x or l is nan or inf. */
-  if (std::isnan(x) or std::isnan(l) or std::isinf(x) or (l == 0)) {
+  if (std::isnan(x) or std::isnan(l) or std::isinf(x) or (l == T{0})) {
     return std::nan("");
   }
   if (std::isinf(l)) {
