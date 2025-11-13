@@ -104,33 +104,33 @@ void vs_com_update_particles(CellStructure &cell_structure,
     }
     });
 
-    std::cout << "Particles in the local cell structure" << std::endl;
-    cell_structure.for_each_local_particle([&](Particle &p) {
-        std::cout << "\tParticle ID: " << p.id() 
+    // std::cout << "Particles in the local cell structure" << std::endl;
+    // cell_structure.for_each_local_particle([&](Particle &p) {
+        // std::cout << "\tParticle ID: " << p.id() 
                 //   << " Mol ID: " << p.mol_id() 
                 //   << " Is VS COM: " << is_vs_com(p)
                 //   << " Position: (" << p.pos() << ")"
                 //   << " Image Box: (" << p.image_box() << ")"
                 //   << " Mass: " << p.mass()
-                  << std::endl;
-    });
-    std::cout << " m_com_by_mol_id -------------- " << std::endl;
-    for (const auto &[mol_id, com_info] : m_com_by_mol_id) {
-        std::cout <<  "\tMol ID: " << mol_id 
-                  << " Total Mass: " << com_info->total_mass 
-                  << " Weighted Position: (" 
-                  << com_info->weighted_position << ")"
-                  << std::endl;
-    }
+                //   << std::endl;
+    // });
+    // std::cout << " m_com_by_mol_id -------------- " << std::endl;
+    // for (const auto &[mol_id, com_info] : m_com_by_mol_id) {
+    //     std::cout <<  "\tMol ID: " << mol_id 
+    //               << " Total Mass: " << com_info->total_mass 
+    //               << " Weighted Position: (" 
+    //               << com_info->weighted_position << ")"
+    //               << std::endl;
+    // }
 
-    std::cout << " virtual_site_id_for_mol_id ----- " << std::endl;
-    for (const auto &[mol_id, vs_id] : virtual_site_id_for_mol_id) {
-        std::cout << "\tMol ID: " << mol_id 
-                  << " VS ID: " << vs_id 
-                  << std::endl;
-    }
+    // std::cout << " virtual_site_id_for_mol_id ----- " << std::endl;
+    // for (const auto &[mol_id, vs_id] : virtual_site_id_for_mol_id) {
+    //     std::cout << "\tMol ID: " << mol_id 
+    //               << " VS ID: " << vs_id 
+    //               << std::endl;
+    // }
 
-    std::cout << "#########################################################" << std::endl;
+    // std::cout << "#########################################################" << std::endl;
 
 
     // Reduction of m_com_by_mol_id across all processes
@@ -211,8 +211,8 @@ void vs_com_update_particles(CellStructure &cell_structure,
     Utils::Mpi::gather_buffer(com_ptrs, comm_cart);
     boost::mpi::broadcast(comm_cart, com_ptrs, 0);
 
-    std::cout << "After gather and broadcast ----- " << std::endl;
-    std::cout << mol_ids.size() << " " << com_ptrs.size() << std::endl;
+    // std::cout << "After gather and broadcast ----- " << std::endl;
+    // std::cout << mol_ids.size() << " " << com_ptrs.size() << std::endl;
 
     std::unordered_map<int, std::shared_ptr<ComInfo>> all_com_info;
     for (size_t i = 0; i < mol_ids.size(); ++i) {
@@ -320,21 +320,21 @@ void vs_com_update_particles(CellStructure &cell_structure,
     std::unordered_map<int, int>(all_tmp.begin(), all_tmp.end()).swap(virtual_site_id_for_mol_id);
     // End option JN ----------------------------------------------------
 
-    std::cout << " m_com_by_mol_id -------------- " << std::endl;
-    for (const auto &[mol_id, com_info] : m_com_by_mol_id) {
-        std::cout << "\tMol ID: " << mol_id 
-                  << " Total Mass: " << com_info->total_mass 
-                  << " Weighted Position: (" 
-                  << com_info->weighted_position << ")"
-                  << std::endl;
-    }
+    // std::cout << " m_com_by_mol_id -------------- " << std::endl;
+    // for (const auto &[mol_id, com_info] : m_com_by_mol_id) {
+    //     std::cout << "\tMol ID: " << mol_id 
+    //               << " Total Mass: " << com_info->total_mass 
+    //               << " Weighted Position: (" 
+    //               << com_info->weighted_position << ")"
+    //               << std::endl;
+    // }
 
-    std::cout << " virtual_site_id_for_mol_id ----- " << std::endl;
-    for (const auto &[mol_id, vs_id] : virtual_site_id_for_mol_id) {
-        std::cout << "\tMol ID: " << mol_id 
-                  << " VS ID: " << vs_id 
-                  << std::endl;
-    }
+    // std::cout << " virtual_site_id_for_mol_id ----- " << std::endl;
+    // for (const auto &[mol_id, vs_id] : virtual_site_id_for_mol_id) {
+    //     std::cout << "\tMol ID: " << mol_id 
+    //               << " VS ID: " << vs_id 
+    //               << std::endl;
+    // }
 
 
 
@@ -370,8 +370,8 @@ void vs_com_update_particles(CellStructure &cell_structure,
 
     }
 
-    std::cout << "#########################################################" << std::endl;
-    std::cout << "#########################################################" << std::endl;
+    // std::cout << "#########################################################" << std::endl;
+    // std::cout << "#########################################################" << std::endl;
 }
 
 
@@ -382,14 +382,83 @@ void vs_com_back_transfer_forces_and_torques(
 
     cell_structure.ghosts_reduce_forces();
     init_forces_ghosts(cell_structure);
+
+
+    std::cout << "Particles in the local cell structure" << std::endl;
+    cell_structure.for_each_local_particle([&](Particle &p) {
+        std::cout << "\tParticle ID: " << p.id() 
+                  << " Mol ID: " << p.mol_id() 
+                  << " Is VS COM: " << is_vs_com(p)
+                  << " Position: (" << p.pos() << ")"
+                  << " Image Box: (" << p.image_box() << ")"
+                  << " Mass: " << p.mass()
+                  << std::endl;
+    });
+
+    // Store forces for virtual site com particles
+    // (vs_com_id: force)
+    std::unordered_map<int, Utils::Vector3d> force_for_vs_id;
+
     // Store virtual site center of mass particles
     // (mold_id: vs_com_id)
     std::unordered_map<int, int> virtual_site_id_for_mol_id;
     cell_structure.for_each_local_particle([&](Particle &p) {
         if (is_vs_com(p)) { // get vs_com particle
             virtual_site_id_for_mol_id[p.vs_com().to_molecule_id] = p.id();
+            force_for_vs_id[p.id()] = p.force();
         }
     });
+    
+    std::cout << " virtual_site_id_for_mol_id ----- " << std::endl;
+    for (const auto &[mol_id, vs_id] : virtual_site_id_for_mol_id) {
+        std::cout << "\tMol ID: " << mol_id 
+                  << " VS ID: " << vs_id 
+                  << std::endl;
+    }
+
+    std::cout << "#########################################################" << std::endl;
+
+    // gather and broadcast virtual_site_id_for_mol_id across all processes
+    std::vector<std::vector<int>> tmp;
+    for (const auto &[mol_id, vs_id] : virtual_site_id_for_mol_id) {
+        tmp.emplace_back(std::vector<int>{mol_id, vs_id});
+    }
+    Utils::Mpi::gather_buffer(tmp, comm_cart);
+    boost::mpi::broadcast(comm_cart, tmp, 0);
+    std::unordered_map<int, int> all_tmp;
+    for (const auto &inner_vec : tmp) {
+        all_tmp[inner_vec[0]] = inner_vec[1];
+    }
+    std::unordered_map<int, int>(all_tmp.begin(), all_tmp.end()).swap(virtual_site_id_for_mol_id);
+
+
+    std::cout << " virtual_site_id_for_mol_id ----- " << std::endl;
+    for (const auto &[mol_id, vs_id] : virtual_site_id_for_mol_id) {
+        std::cout << "\tMol ID: " << mol_id 
+                  << " VS ID: " << vs_id 
+                  << std::endl;
+    }
+
+    // communicate force_for_vs_id, namely the force acting on the virtual site com particles to all processes 
+    std::vector<int> vs_ids;
+    std::vector<Utils::Vector3d> forces;
+    for (const auto &[vs_id, force] : force_for_vs_id) {
+        vs_ids.emplace_back(vs_id);
+        forces.emplace_back(force);
+    }
+    Utils::Mpi::gather_buffer(vs_ids, comm_cart);
+    Utils::Mpi::gather_buffer(forces, comm_cart);
+    boost::mpi::broadcast(comm_cart, vs_ids, 0);
+    boost::mpi::broadcast(comm_cart, forces, 0);
+    std::unordered_map<int, Utils::Vector3d> all_force_for_vs_id;
+    for (size_t i = 0; i < vs_ids.size(); ++i) {
+        all_force_for_vs_id[vs_ids[i]] = forces[i];
+    }
+    // force_for_vs_id = all_force_for_vs_id;
+    std::unordered_map<int, Utils::Vector3d>(all_force_for_vs_id.begin(), all_force_for_vs_id.end()).swap(force_for_vs_id);
+
+
+
 
     // Iterate over all the particles in the local cells
     cell_structure.for_each_local_particle([&](Particle &p) {
@@ -400,9 +469,25 @@ void vs_com_back_transfer_forces_and_torques(
             return; // No virtual site for this molecule id
         }
         auto const vs_id = virtual_site_id_for_mol_id.at(p.mol_id());
+        std::cout << "Found VS COM for Particle ID: " << p.id() 
+                  << " Mol ID: " << p.mol_id() 
+                  << " VS ID: " << vs_id 
+                  << std::endl;
         auto vs_ptr = cell_structure.get_local_particle(vs_id);
-        p.force() += (p.mass() / vs_ptr->mass()) * vs_ptr->force();
+        // p.force() += (p.mass() / vs_ptr->mass()) * vs_ptr->force();
+        auto exc_force = (p.mass() / vs_ptr->mass()) * force_for_vs_id.at(vs_id);
+        std::cout << "\t Particle ID: " << p.id()
+                  << " Mass: " << p.mass()
+                  << " VS Mass: " << vs_ptr->mass()
+                  << " VS Force: (" << force_for_vs_id.at(vs_id) << ")"
+                  << " Exc Force: (" << exc_force << ")"
+                  << std::endl;
+        p.force() += exc_force;
+
   });
+
+    std::cout << "#########################################################" << std::endl;
+    std::cout << "#########################################################" << std::endl;
 
 }
 

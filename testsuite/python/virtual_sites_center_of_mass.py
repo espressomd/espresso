@@ -114,30 +114,30 @@ class VirtualSitesCOM(ut.TestCase):
             self.assertEqual(expected_vs_mass, vs_mass)
 
 
-    # def test_particle_forces(self):
-    #     """
-    #     Test force on molecule particles when the vs undergoes given force 
-    #     """
+    def test_particle_forces(self):
+        """
+        Test force on molecule particles when the vs undergoes given force 
+        """
 
-    #     molecule_id = [1]
-    #     n_monomers = [50]
-    #     monomer_types = [0]
-    #     applied_force = np.array([100, 0, 0], dtype=float)
+        molecule_id = [1]
+        n_monomers = [200] # larger polymer to have a complete distribution over the ranks
+        monomer_types = [0]
+        applied_force = np.array([100, 0, 0], dtype=float)
 
-    #     mid_for_vs = self.set_molecules_and_vs(molecule_id, n_monomers, monomer_types)
+        mid_for_vs = self.set_molecules_and_vs(molecule_id, n_monomers, monomer_types)
 
-    #     self.system.integrator.set_steepest_descent(f_max=10, gamma=50.0, max_displacement=0.2)
-    #     self.system.integrator.run(1000)
+        self.system.integrator.set_steepest_descent(f_max=10, gamma=50.0, max_displacement=0.2)
+        self.system.integrator.run(1000)
 
-    #     vs_part = self.system.part.by_id(mid_for_vs[molecule_id[0]])
-    #     vs_part.ext_force = applied_force
-    #     expected_force = applied_force/n_monomers[0]
+        vs_part = self.system.part.by_id(mid_for_vs[molecule_id[0]])
+        vs_part.ext_force = applied_force
+        expected_force = applied_force/n_monomers[0]
         
-    #     self.system.integrator.run(1)
+        self.system.integrator.run(1)
 
-    #     for part in self.system.part.select(mol_id=molecule_id[0]):
-    #         for pair in zip(expected_force, part.f):
-    #             self.assertAlmostEqual(pair[0], pair[1])
+        for part in self.system.part.select(mol_id=molecule_id[0]):
+            for pair in zip(expected_force, part.f):
+                self.assertAlmostEqual(pair[0], pair[1])
 
 
     # def test_vs_exceptions(self):
