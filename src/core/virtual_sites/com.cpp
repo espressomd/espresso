@@ -41,7 +41,14 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/all_gather.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
 #include <boost/serialization/list.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/version.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/utility.hpp>
 
 #include <functional>
 #include <unordered_map>
@@ -50,6 +57,17 @@
 struct ComInfo {
 double total_mass = 0.0;
 Utils::Vector3d weighted_position = {0., 0., 0.};
+
+    friend class boost::serialization::access;
+    // When the class Archive corresponds to an output archive, the
+    // & operator is defined similar to <<.  Likewise, when the class Archive
+    // is a type of input archive the & operator is defined similar to >>.
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+        ar & total_mass;
+        ar & weighted_position;
+    }
 };
 
 static bool is_vs_com(Particle const &p) {
@@ -86,9 +104,19 @@ void vs_com_update_particles(CellStructure &cell_structure,
     }
     });
 
+    std::cout << "Particles in the local cell structure" << std::endl;
+    cell_structure.for_each_local_particle([&](Particle &p) {
+        std::cout << "\tParticle ID: " << p.id() 
+                //   << " Mol ID: " << p.mol_id() 
+                //   << " Is VS COM: " << is_vs_com(p)
+                //   << " Position: (" << p.pos() << ")"
+                //   << " Image Box: (" << p.image_box() << ")"
+                //   << " Mass: " << p.mass()
+                  << std::endl;
+    });
     std::cout << " m_com_by_mol_id -------------- " << std::endl;
     for (const auto &[mol_id, com_info] : m_com_by_mol_id) {
-        std::cout <<  "Mol ID: " << mol_id 
+        std::cout <<  "\tMol ID: " << mol_id 
                   << " Total Mass: " << com_info->total_mass 
                   << " Weighted Position: (" 
                   << com_info->weighted_position << ")"
@@ -97,7 +125,7 @@ void vs_com_update_particles(CellStructure &cell_structure,
 
     std::cout << " virtual_site_id_for_mol_id ----- " << std::endl;
     for (const auto &[mol_id, vs_id] : virtual_site_id_for_mol_id) {
-        std::cout <<  "Mol ID: " << mol_id 
+        std::cout << "\tMol ID: " << mol_id 
                   << " VS ID: " << vs_id 
                   << std::endl;
     }
@@ -162,9 +190,45 @@ void vs_com_update_particles(CellStructure &cell_structure,
         }
     }
 
+
+    //-------------------------
+    //-------------------------
+    // Communicate m_com_by_mol_id across all processes
+    std::vector<int> mol_ids;
+    std::vector<std::shared_ptr<ComInfo>> com_ptrs;
+    for (const auto &[mol_id, com_info] : m_com_by_mol_id) {
+        mol_ids.emplace_back(mol_id);
+        com_ptrs.emplace_back(com_info);
+    }
+
     // gather and broadcast m_com_by_mol_id across all processes
-    // std::vector<std::vector<std::pair<int, std::shared_ptr<ComInfo>>>> gather_buffer;
-    // boost::mpi::all_gather(comm_cart, m_com_by_mol_id, gather_buffer);
+    std::vector<int> gathered_mol_ids;
+    std::vector<std::shared_ptr<ComInfo>> gathered_com_ptrs;
+
+    Utils::Mpi::gather_buffer(mol_ids, comm_cart);
+    boost::mpi::broadcast(comm_cart, mol_ids, 0);
+
+    Utils::Mpi::gather_buffer(com_ptrs, comm_cart);
+    boost::mpi::broadcast(comm_cart, com_ptrs, 0);
+
+    std::cout << "After gather and broadcast ----- " << std::endl;
+    std::cout << mol_ids.size() << " " << com_ptrs.size() << std::endl;
+
+    std::unordered_map<int, std::shared_ptr<ComInfo>> all_com_info;
+    for (size_t i = 0; i < mol_ids.size(); ++i) {
+        all_com_info[mol_ids[i]] = com_ptrs[i];
+    }
+    
+    m_com_by_mol_id = all_com_info;
+
+    // -----
+    
+    // std::vector<std::vector<int>> gathered_mol_ids;
+    // std::vector<std::vector<std::shared_ptr<ComInfo>>> gathered_com_ptrs;
+    // boost::mpi::all_gather(comm_cart, mol_ids, gathered_mol_ids);
+    // boost::mpi::all_gather(comm_cart, m_com_by_mol_id, gathered_com_ptrs);
+    // std::cout << "After all_gather ----- " << std::endl;
+    // std::cout << gathered_mol_ids.size() << " " << gathered_com_ptrs.size() << std::endl;
     // boost::mpi::broadcast(comm_cart, gather_buffer, 0);
     // std::unordered_map<int, std::shared_ptr<ComInfo>> all_com_info;
     // for (const auto &vec : gather_buffer) {
@@ -173,8 +237,11 @@ void vs_com_update_particles(CellStructure &cell_structure,
     //     }
     // }
     // std::unordered_map<int, std::shared_ptr<ComInfo>>(all_com_info.begin(), all_com_info.end()).swap(m_com_by_mol_id);
+    // m_com_by_mol_id = all_com_info;
+    //-------------------------
+    //-------------------------
 
-
+    
     // Reduction of virtual_site_id_for_mol_id across all processes
     // TODO : allreduce virtual_site_id_for_mol_id
 
@@ -255,7 +322,7 @@ void vs_com_update_particles(CellStructure &cell_structure,
 
     std::cout << " m_com_by_mol_id -------------- " << std::endl;
     for (const auto &[mol_id, com_info] : m_com_by_mol_id) {
-        std::cout <<  "Mol ID: " << mol_id 
+        std::cout << "\tMol ID: " << mol_id 
                   << " Total Mass: " << com_info->total_mass 
                   << " Weighted Position: (" 
                   << com_info->weighted_position << ")"
@@ -264,7 +331,7 @@ void vs_com_update_particles(CellStructure &cell_structure,
 
     std::cout << " virtual_site_id_for_mol_id ----- " << std::endl;
     for (const auto &[mol_id, vs_id] : virtual_site_id_for_mol_id) {
-        std::cout <<  "Mol ID: " << mol_id 
+        std::cout << "\tMol ID: " << mol_id 
                   << " VS ID: " << vs_id 
                   << std::endl;
     }

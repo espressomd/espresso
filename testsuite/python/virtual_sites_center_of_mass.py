@@ -85,59 +85,59 @@ class VirtualSitesCOM(ut.TestCase):
         self.system.integrator.set_vv()
 
 
-    # def test_vs_position_mass(self):
-    #     """
-    #     Test update of the vs positions and masses
-    #     """
-
-    #     molecule_ids = [1, 2]
-    #     n_monomers = [20, 50]
-    #     monomer_types = [0, 1]
-
-    #     mid_for_vs = self.set_molecules_and_vs(molecule_ids, n_monomers, monomer_types)
-
-    #     self.system.integrator.set_steepest_descent(f_max=10, gamma=50.0, max_displacement=0.2)
-    #     self.system.integrator.run(1)
-
-    #     # Check position of virtual sites after a steepest descent inegration
-    #     for mol_id_,vs_id_,monomer_type_ in zip(mid_for_vs.keys(), mid_for_vs.values(), monomer_types):
-    #         # test vs position
-    #         vs_pos = self.system.part.by_id(vs_id_).pos
-    #         expected_vs_pos = self.system.analysis.center_of_mass(p_type=monomer_type_)
-    #         for pair in zip(expected_vs_pos, vs_pos):
-    #             self.assertAlmostEqual(pair[0], pair[1])
-    #         # test vs mass
-    #         vs_mass = self.system.part.by_id(vs_id_).mass
-    #         expected_vs_mass = 0
-    #         for part in self.system.part.select(mol_id=mol_id_):
-    #             expected_vs_mass += part.mass
-    #         self.assertEqual(expected_vs_mass, vs_mass)
-
-
-    def test_particle_forces(self):
+    def test_vs_position_mass(self):
         """
-        Test force on molecule particles when the vs undergoes given force 
+        Test update of the vs positions and masses
         """
 
-        molecule_id = [1]
-        n_monomers = [50]
-        monomer_types = [0]
-        applied_force = np.array([100, 0, 0], dtype=float)
+        molecule_ids = [1, 2]
+        n_monomers = [20, 50]
+        monomer_types = [0, 1]
 
-        mid_for_vs = self.set_molecules_and_vs(molecule_id, n_monomers, monomer_types)
+        mid_for_vs = self.set_molecules_and_vs(molecule_ids, n_monomers, monomer_types)
 
         self.system.integrator.set_steepest_descent(f_max=10, gamma=50.0, max_displacement=0.2)
-        self.system.integrator.run(1000)
-
-        vs_part = self.system.part.by_id(mid_for_vs[molecule_id[0]])
-        vs_part.ext_force = applied_force
-        expected_force = applied_force/n_monomers[0]
-        
         self.system.integrator.run(1)
 
-        for part in self.system.part.select(mol_id=molecule_id[0]):
-            for pair in zip(expected_force, part.f):
+        # Check position of virtual sites after a steepest descent inegration
+        for mol_id_,vs_id_,monomer_type_ in zip(mid_for_vs.keys(), mid_for_vs.values(), monomer_types):
+            # test vs position
+            vs_pos = self.system.part.by_id(vs_id_).pos
+            expected_vs_pos = self.system.analysis.center_of_mass(p_type=monomer_type_)
+            for pair in zip(expected_vs_pos, vs_pos):
                 self.assertAlmostEqual(pair[0], pair[1])
+            # test vs mass
+            vs_mass = self.system.part.by_id(vs_id_).mass
+            expected_vs_mass = 0
+            for part in self.system.part.select(mol_id=mol_id_):
+                expected_vs_mass += part.mass
+            self.assertEqual(expected_vs_mass, vs_mass)
+
+
+    # def test_particle_forces(self):
+    #     """
+    #     Test force on molecule particles when the vs undergoes given force 
+    #     """
+
+    #     molecule_id = [1]
+    #     n_monomers = [50]
+    #     monomer_types = [0]
+    #     applied_force = np.array([100, 0, 0], dtype=float)
+
+    #     mid_for_vs = self.set_molecules_and_vs(molecule_id, n_monomers, monomer_types)
+
+    #     self.system.integrator.set_steepest_descent(f_max=10, gamma=50.0, max_displacement=0.2)
+    #     self.system.integrator.run(1000)
+
+    #     vs_part = self.system.part.by_id(mid_for_vs[molecule_id[0]])
+    #     vs_part.ext_force = applied_force
+    #     expected_force = applied_force/n_monomers[0]
+        
+    #     self.system.integrator.run(1)
+
+    #     for part in self.system.part.select(mol_id=molecule_id[0]):
+    #         for pair in zip(expected_force, part.f):
+    #             self.assertAlmostEqual(pair[0], pair[1])
 
 
     # def test_vs_exceptions(self):
