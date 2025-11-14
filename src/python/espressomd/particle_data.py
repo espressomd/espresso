@@ -616,7 +616,7 @@ class ParticleHandle(ScriptInterfaceHelper):
                 else:
                     self.propagation |= Propagation.ROT_LANGEVIN
 
-    def vs_com_auto_relate_to(self, rel_to):
+    def vs_com_relate_to(self, rel_to):
         """
         Setup this particle as COM virtual site relative to the particles constituting the molecules
         in argument ``rel_to``. A particle cannot relate to itself.
@@ -632,8 +632,8 @@ class ParticleHandle(ScriptInterfaceHelper):
             rel_to = rel_to.mol_id
         else:
             check_type_or_throw_except(
-                rel_to, 1, int, "Argument of 'vs_com_auto_relate_to' has to be of type ParticleHandle or int")
-        self.call_method("vs_com_auto_relate_to", molid=rel_to)
+                rel_to, 1, int, "Argument of 'vs_com_relate_to' has to be of type ParticleHandle or int")
+        self.call_method("vs_com_relate_to", molid=rel_to)
         # if self.propagation != Propagation.NONE: # CHECK THIS PART!
 
     def _bond_sanity_checks(self, bond):

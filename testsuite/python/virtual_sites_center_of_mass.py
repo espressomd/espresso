@@ -68,7 +68,7 @@ class VirtualSitesCOM(ut.TestCase):
             self.build_polymer(n_monomers_, self.POLYMER_PARAMS, self.fene, monomer_type_, molecule_id_)
             # Add virtual particle at the origin
             vs = self.system.part.add(pos=[0, 0, 0], virtual=True, type=vs_type, mol_id=molecule_id_+id_shift)
-            vs.vs_com_auto_relate_to(molecule_id_)
+            vs.vs_com_relate_to(molecule_id_)
             mid_for_vs[molecule_id_] = vs.id
 
         return mid_for_vs
@@ -148,22 +148,21 @@ class VirtualSitesCOM(ut.TestCase):
         vs2 = self.system.part.add(pos=[1, 1, 1], virtual=True, type=1, id=2)
         # relate to empty
         with self.assertRaisesRegex(TypeError, "missing 1 required positional argument"):
-            vs1.vs_com_auto_relate_to()
+            vs1.vs_com_relate_to()
         # relating to anything else other than a particle or id is not allowed
-        with self.assertRaisesRegex(ValueError, "Argument of 'vs_com_auto_relate_to' has to be of type ParticleHandle or int"):
-            vs1.vs_com_auto_relate_to('0')
+        with self.assertRaisesRegex(ValueError, "Argument of 'vs_com_relate_to' has to be of type ParticleHandle or int"):
+            vs1.vs_com_relate_to('0')
         with self.assertRaisesRegex(ValueError, "Invalid particle id: -2"):
-            vs1.vs_com_auto_relate_to(-2)
+            vs1.vs_com_relate_to(-2)
         # relating to itself is not allowed
         # with self.assertRaisesRegex(ValueError, "A virtual site cannot relate to itself"):
-        #     vs1.vs_com_auto_relate_to(vs1)
+        #     vs1.vs_com_relate_to(vs1)
         # # relating to a non-existing particle id is not allowed
         # with self.assertRaisesRegex(ValueError, "No real particle with id 3 for virtual site with id 1"):
-        #     vs1.vs_com_auto_relate_to(3)
+        #     vs1.vs_com_relate_to(3)
 
 
 if __name__ == "__main__":
     ut.main(verbosity=2)
 
 # virtual site is a particle with its properties -> vs have also mol_id=0 by default 
-# Naming: vs.vs_com_auto_relate_to() ok?

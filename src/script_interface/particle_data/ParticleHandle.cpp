@@ -739,7 +739,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
                                            PropagationMode::ROT_VS_RELATIVE)});
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
-} else if (name == "vs_com_auto_relate_to") {
+} else if (name == "vs_com_relate_to") {
   if (not context()->is_head_node()) {
       return {};
     }
