@@ -140,60 +140,26 @@ class VirtualSitesCOM(ut.TestCase):
                 self.assertAlmostEqual(pair[0], pair[1])
 
 
-    # def test_vs_exceptions(self):
-    #     """
-    #     Test exceptions related to virtual sites com
-    #     """
-    #     vs1 = self.system.part.add(pos=[0, 0, 0], virtual=True, type=1, id=1)
-    #     vs2 = self.system.part.add(pos=[1, 1, 1], virtual=True, type=1, id=2)
-    #     # relate to empty
-    #     with self.assertRaisesRegex(TypeError, "Argument of 'vs_com_auto_relate_to' has to be of type int list of integers"):
-    #         vs1.vs_com_auto_relate_to()
-    #     # relating to anything else other than a particle or id is not allowed
-    #     with self.assertRaisesRegex(ValueError, "Argument of 'vs_com_auto_relate_to' has to be of type int list of integers"):
-    #         vs1.vs_com_auto_relate_to('0')
-    #     with self.assertRaisesRegex(ValueError, "Invalid particle id: -2"):
-    #         vs1.vs_com_auto_relate_to(-2)
-    #     # relating to itself is not allowed
-    #     with self.assertRaisesRegex(ValueError, "A virtual site cannot relate to itself"):
-    #         vs1.vs_com_auto_relate_to(vs1)
-    #     # relating to a non-existing particle id is not allowed
-    #     with self.assertRaisesRegex(ValueError, "No real particle with id 3 for virtual site with id 1"):
-    #         vs1.vs_com_auto_relate_to(3)
-
-
-
-
-
-
-
-
-
-
-    #     # dangling virtual sites are not allowed
-    #     with self.assertRaisesRegex(Exception, "Particle with id 4 is a dangling virtual site"):
-    #         p4.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_RELATIVE
-    #         self.assertEqual(p4.vs_relative[0], -1)
-    #         system.integrator.run(0, recalc_forces=True)
-    #     p4.remove()
-    #     # relating to a deleted particle is not allowed
-    #     with self.assertRaisesRegex(Exception, "No real particle with id 3 for virtual site with id 2"):
-    #         p2.vs_auto_relate_to(p3)
-    #         p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_RELATIVE
-    #         p3.remove()
-    #         system.integrator.run(0, recalc_forces=True)
-    #     if system.cell_system.get_state()["n_nodes"] > 1:
-    #         with self.assertRaisesRegex(Exception, r"The distance between virtual and non-virtual particle \([0-9\.]+\) is larger than the minimum global cutoff"):
-    #             p2.vs_auto_relate_to(p1)
-    #         # If overridden this check should not raise an exception
-    #         p2.vs_auto_relate_to(p1, override_cutoff_check=True)
-
-    # def test_exceptions(self):
-    #     """
-    #     """
-
-
-    #     self.assertRaises(vs.vs_com_auto_relate_to([]))
+    def test_vs_exceptions(self):
+        """
+        Test exceptions related to virtual sites com
+        """
+        vs1 = self.system.part.add(pos=[0, 0, 0], virtual=True, type=1, id=1)
+        vs2 = self.system.part.add(pos=[1, 1, 1], virtual=True, type=1, id=2)
+        # relate to empty
+        with self.assertRaisesRegex(TypeError, "missing 1 required positional argument"):
+            vs1.vs_com_auto_relate_to()
+        # relating to anything else other than a particle or id is not allowed
+        with self.assertRaisesRegex(ValueError, "Argument of 'vs_com_auto_relate_to' has to be of type ParticleHandle or int"):
+            vs1.vs_com_auto_relate_to('0')
+        with self.assertRaisesRegex(ValueError, "Invalid particle id: -2"):
+            vs1.vs_com_auto_relate_to(-2)
+        # relating to itself is not allowed
+        # with self.assertRaisesRegex(ValueError, "A virtual site cannot relate to itself"):
+        #     vs1.vs_com_auto_relate_to(vs1)
+        # # relating to a non-existing particle id is not allowed
+        # with self.assertRaisesRegex(ValueError, "No real particle with id 3 for virtual site with id 1"):
+        #     vs1.vs_com_auto_relate_to(3)
 
 
 if __name__ == "__main__":

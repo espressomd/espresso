@@ -220,7 +220,6 @@ void vs_com_update_particles(CellStructure &cell_structure,
     }
 }
 
-
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
 void vs_com_back_transfer_forces_and_torques(
