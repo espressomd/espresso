@@ -231,6 +231,8 @@ void vs_com_back_transfer_forces_and_torques(
     // Store forces for virtual site com particles
     // (vs_com_id: force)
     std::unordered_map<int, Utils::Vector3d> force_for_vs_id;
+    // (vs_com_id: mass)
+    std::unordered_map<int, double> mass_for_vs_id;
 
     // Store virtual site center of mass particles
     // (mold_id: vs_com_id)
@@ -239,24 +241,16 @@ void vs_com_back_transfer_forces_and_torques(
         if (is_vs_com(p)) { // get vs_com particle
             virtual_site_id_for_mol_id[p.vs_com().to_molecule_id] = p.id();
             force_for_vs_id[p.id()] = p.force();
+            mass_for_vs_id[p.id()] = p.mass();
         }
     });
-    
-    // gather and broadcast virtual_site_id_for_mol_id across all processes
-    std::vector<std::vector<int>> tmp;
-    for (const auto &[mol_id, vs_id] : virtual_site_id_for_mol_id) {
-        tmp.emplace_back(std::vector<int>{mol_id, vs_id});
-    }
-    Utils::Mpi::gather_buffer(tmp, comm_cart);
-    boost::mpi::broadcast(comm_cart, tmp, 0);
-    std::unordered_map<int, int> all_tmp;
-    for (const auto &inner_vec : tmp) {
-        all_tmp[inner_vec[0]] = inner_vec[1];
-    }
-    std::unordered_map<int, int>(all_tmp.begin(), all_tmp.end()).swap(virtual_site_id_for_mol_id);
-
+        
+    // communicate virtual_site_id_for_mol_id across all processes
+    communicate_map(virtual_site_id_for_mol_id, comm_cart);
     // communicate force_for_vs_id, namely the force acting on the virtual site com particles to all processes 
     communicate_map(force_for_vs_id, comm_cart);
+    // communicate mass_for_vs_id, namely the mass of the virtual site com particles to all processes
+    communicate_map(mass_for_vs_id, comm_cart);
 
     // Iterate over all the particles in the local cells
     cell_structure.for_each_local_particle([&](Particle &p) {
@@ -267,10 +261,10 @@ void vs_com_back_transfer_forces_and_torques(
             return; // No virtual site for this molecule id
         }
         auto const vs_id = virtual_site_id_for_mol_id.at(p.mol_id());
-        auto vs_ptr = cell_structure.get_local_particle(vs_id);
-        p.force() += (p.mass() / vs_ptr->mass()) * force_for_vs_id.at(vs_id);
+        p.force() += (p.mass() / mass_for_vs_id.at(vs_id)) * force_for_vs_id.at(vs_id);
 
   });
+
 }
 
 #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
