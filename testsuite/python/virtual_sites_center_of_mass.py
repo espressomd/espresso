@@ -28,8 +28,9 @@ class VirtualSitesCOM(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     FENE_PARAMS = {'k': 7, 'r_0': 1, 'd_r_max': 2}
     fene = espressomd.interactions.FeneBond(**FENE_PARAMS)
-    POLYMER_PARAMS = {'n_polymers': 1, 'bond_length': 1, 'seed': 42, 'min_distance': 0.9}
-    
+    POLYMER_PARAMS = {'n_polymers': 1, 'bond_length': 1,
+                      'seed': 42, 'min_distance': 0.9}
+
     np.random.seed(42)
 
     def build_polymer(self, n_monomers, polymer_params, fene, monomer_type=0, mol_id=0):
@@ -63,11 +64,13 @@ class VirtualSitesCOM(ut.TestCase):
         - dict: A dictionary mapping molecule IDs to the IDs of their corresponding virtual sites.
         """
         mid_for_vs = {}
-        for molecule_id_,n_monomers_,monomer_type_ in zip(molecule_ids, n_monomers, monomer_types):
+        for molecule_id_, n_monomers_, monomer_type_ in zip(molecule_ids, n_monomers, monomer_types):
             # Build polymer chain
-            self.build_polymer(n_monomers_, self.POLYMER_PARAMS, self.fene, monomer_type_, molecule_id_)
+            self.build_polymer(n_monomers_, self.POLYMER_PARAMS,
+                               self.fene, monomer_type_, molecule_id_)
             # Add virtual particle at the origin
-            vs = self.system.part.add(pos=[0, 0, 0], virtual=True, type=vs_type, mol_id=molecule_id_+id_shift)
+            vs = self.system.part.add(
+                pos=[0, 0, 0], virtual=True, type=vs_type, mol_id=molecule_id_ + id_shift)
             vs.vs_com_relate_to(molecule_id_)
             mid_for_vs[molecule_id_] = vs.id
 
@@ -89,17 +92,18 @@ class VirtualSitesCOM(ut.TestCase):
         Test initialization of virtual sites com
         """
 
-        p1 = self.system.part.add(pos=[0, 0, 0], virtual=True, type=1, id=1, mol_id=10)
+        p1 = self.system.part.add(
+            pos=[0, 0, 0], virtual=True, type=1, id=1, mol_id=10)
         vs1 = self.system.part.add(pos=[1, 1, 1], virtual=True, type=1, id=2)
         vs1.vs_com_relate_to(p1)
         self.assertEqual(vs1.vs_com[0], p1.mol_id)
 
         mol_id_p2 = 20
-        p2 = self.system.part.add(pos=[2, 2, 2], virtual=True, type=1, id=3, mol_id=mol_id_p2)
+        p2 = self.system.part.add(
+            pos=[2, 2, 2], virtual=True, type=1, id=3, mol_id=mol_id_p2)
         vs2 = self.system.part.add(pos=[3, 3, 3], virtual=True, type=1, id=4)
         vs2.vs_com_relate_to(mol_id_p2)
         self.assertEqual(vs2.vs_com[0], p2.mol_id)
-
 
     def test_vs_position_mass(self):
         """
@@ -110,16 +114,19 @@ class VirtualSitesCOM(ut.TestCase):
         n_monomers = [20, 50]
         monomer_types = [0, 1]
 
-        mid_for_vs = self.set_molecules_and_vs(molecule_ids, n_monomers, monomer_types)
+        mid_for_vs = self.set_molecules_and_vs(
+            molecule_ids, n_monomers, monomer_types)
 
-        self.system.integrator.set_steepest_descent(f_max=10, gamma=50.0, max_displacement=0.2)
+        self.system.integrator.set_steepest_descent(
+            f_max=10, gamma=50.0, max_displacement=0.2)
         self.system.integrator.run(1)
 
         # Check position of virtual sites after a steepest descent inegration
-        for mol_id_,vs_id_,monomer_type_ in zip(mid_for_vs.keys(), mid_for_vs.values(), monomer_types):
+        for mol_id_, vs_id_, monomer_type_ in zip(mid_for_vs.keys(), mid_for_vs.values(), monomer_types):
             # test vs position
             vs_pos = self.system.part.by_id(vs_id_).pos
-            expected_vs_pos = self.system.analysis.center_of_mass(p_type=monomer_type_)
+            expected_vs_pos = self.system.analysis.center_of_mass(
+                p_type=monomer_type_)
             for pair in zip(expected_vs_pos, vs_pos):
                 self.assertAlmostEqual(pair[0], pair[1])
             # test vs mass
@@ -129,32 +136,33 @@ class VirtualSitesCOM(ut.TestCase):
                 expected_vs_mass += part.mass
             self.assertEqual(expected_vs_mass, vs_mass)
 
-
     def test_particle_forces(self):
         """
         Test force on molecule particles when the vs undergoes given force 
         """
 
         molecule_id = [1]
-        n_monomers = [200] # larger polymer to have a complete distribution over the ranks
+        # larger polymer to have a complete distribution over the ranks
+        n_monomers = [200]
         monomer_types = [0]
         applied_force = np.array([100, 0, 0], dtype=float)
 
-        mid_for_vs = self.set_molecules_and_vs(molecule_id, n_monomers, monomer_types)
+        mid_for_vs = self.set_molecules_and_vs(
+            molecule_id, n_monomers, monomer_types)
 
-        self.system.integrator.set_steepest_descent(f_max=10, gamma=50.0, max_displacement=0.2)
+        self.system.integrator.set_steepest_descent(
+            f_max=10, gamma=50.0, max_displacement=0.2)
         self.system.integrator.run(1000)
 
         vs_part = self.system.part.by_id(mid_for_vs[molecule_id[0]])
         vs_part.ext_force = applied_force
-        expected_force = applied_force/n_monomers[0]
-        
+        expected_force = applied_force / n_monomers[0]
+
         self.system.integrator.run(1)
 
         for part in self.system.part.select(mol_id=molecule_id[0]):
             for pair in zip(expected_force, part.f):
                 self.assertAlmostEqual(pair[0], pair[1])
-
 
     def test_vs_exceptions(self):
         """
@@ -172,7 +180,7 @@ class VirtualSitesCOM(ut.TestCase):
             vs1.vs_com_relate_to('0')
         with self.assertRaisesRegex(ValueError, "Invalid particle id: -2"):
             vs1.vs_com_relate_to(-2)
-        
+
         vs1.vs_com_relate_to(10)  # set to valid mol_id for further tests
         vs2.vs_com_relate_to(10)
         # relating to itself is not allowed
