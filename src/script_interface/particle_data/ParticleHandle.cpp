@@ -744,14 +744,11 @@ Variant ParticleHandle::do_call_method(std::string const &name,
       return {};
     }
   auto const other_molid = get_value<int>(params, "molid");
-  if (other_molid == m_pid) {
-      throw std::invalid_argument("A virtual site cannot relate to itself");
-    }
   if (other_molid < 0) {
       throw std::domain_error("Invalid particle id: " +
                               std::to_string(other_molid));
   }
-  set_parameter("vs_com", Variant{std::vector<Variant>{
+  set_parameter("vs_com", Variant{std::vector<int>{
                                  {other_molid}}});
   set_parameter("propagation",
                   Variant{static_cast<int>(PropagationMode::TRANS_VS_CENTER_OF_MASS)});

@@ -84,6 +84,22 @@ class VirtualSitesCOM(ut.TestCase):
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
+    def test_vs_initialization(self):
+        """
+        Test initialization of virtual sites com
+        """
+
+        p1 = self.system.part.add(pos=[0, 0, 0], virtual=True, type=1, id=1, mol_id=10)
+        vs1 = self.system.part.add(pos=[1, 1, 1], virtual=True, type=1, id=2)
+        vs1.vs_com_relate_to(p1)
+        self.assertEqual(vs1.vs_com[0], p1.mol_id)
+
+        mol_id_p2 = 20
+        p2 = self.system.part.add(pos=[2, 2, 2], virtual=True, type=1, id=3, mol_id=mol_id_p2)
+        vs2 = self.system.part.add(pos=[3, 3, 3], virtual=True, type=1, id=4)
+        vs2.vs_com_relate_to(mol_id_p2)
+        self.assertEqual(vs2.vs_com[0], p2.mol_id)
+
 
     def test_vs_position_mass(self):
         """
@@ -144,8 +160,10 @@ class VirtualSitesCOM(ut.TestCase):
         """
         Test exceptions related to virtual sites com
         """
+        p1 = self.system.part.add(pos=[0, 0, 0], virtual=True, type=1, id=0, mol_id=10)
         vs1 = self.system.part.add(pos=[0, 0, 0], virtual=True, type=1, id=1)
         vs2 = self.system.part.add(pos=[1, 1, 1], virtual=True, type=1, id=2)
+
         # relate to empty
         with self.assertRaisesRegex(TypeError, "missing 1 required positional argument"):
             vs1.vs_com_relate_to()
@@ -154,15 +172,17 @@ class VirtualSitesCOM(ut.TestCase):
             vs1.vs_com_relate_to('0')
         with self.assertRaisesRegex(ValueError, "Invalid particle id: -2"):
             vs1.vs_com_relate_to(-2)
+        
+        vs1.vs_com_relate_to(10)  # set to valid mol_id for further tests
+        vs2.vs_com_relate_to(10)
         # relating to itself is not allowed
-        # with self.assertRaisesRegex(ValueError, "A virtual site cannot relate to itself"):
-        #     vs1.vs_com_relate_to(vs1)
-        # # relating to a non-existing particle id is not allowed
-        # with self.assertRaisesRegex(ValueError, "No real particle with id 3 for virtual site with id 1"):
-        #     vs1.vs_com_relate_to(3)
+        with self.assertRaisesRegex(Exception, "Cannot relate COM virtual site to another virtual particle"):
+            vs1.vs_com_relate_to(vs1)
+        # relating to another virtual site is not allowed
+        with self.assertRaisesRegex(Exception, "Cannot relate COM virtual site to another virtual particle"):
+            vs1.vs_com_relate_to(vs2)
 
 
 if __name__ == "__main__":
     ut.main(verbosity=2)
-
-# virtual site is a particle with its properties -> vs have also mol_id=0 by default 
+    
