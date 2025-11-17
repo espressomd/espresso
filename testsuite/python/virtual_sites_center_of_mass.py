@@ -160,9 +160,9 @@ class VirtualSitesCOM(ut.TestCase):
         """
         Test exceptions related to virtual sites com
         """
-        p1 = self.system.part.add(pos=[0, 0, 0], virtual=True, type=1, id=0, mol_id=10)
-        vs1 = self.system.part.add(pos=[0, 0, 0], virtual=True, type=1, id=1)
-        vs2 = self.system.part.add(pos=[1, 1, 1], virtual=True, type=1, id=2)
+        self.system.part.add(pos=[0, 0, 0], type=1, id=0, mol_id=10)
+        vs1 = self.system.part.add(pos=[0, 0, 0], type=1, id=1)
+        vs2 = self.system.part.add(pos=[1, 1, 1], type=1, id=2)
 
         # relate to empty
         with self.assertRaisesRegex(TypeError, "missing 1 required positional argument"):
@@ -185,4 +185,3 @@ class VirtualSitesCOM(ut.TestCase):
 
 if __name__ == "__main__":
     ut.main(verbosity=2)
-    
