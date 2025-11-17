@@ -52,8 +52,8 @@
 #include "system/System.hpp"
 #include "thermostat.hpp"
 #include "thermostats/langevin_inline.hpp"
-#include "virtual_sites/relative.hpp"
 #include "virtual_sites/com.hpp"
+#include "virtual_sites/relative.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>

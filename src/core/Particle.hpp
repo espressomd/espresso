@@ -168,7 +168,7 @@ struct ParticleProperties {
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 
 #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
-  /** 
+  /**
    */
   struct VirtualSitesCenterOfMassParameters {
     /**  @brief Store molecule id to which virtual site belongs */

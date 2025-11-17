@@ -631,7 +631,8 @@ class ParticleHandle(ScriptInterfaceHelper):
         if isinstance(rel_to, ParticleHandle):
             print(f"is_virtual(): {rel_to.is_virtual()}")
             if rel_to.is_virtual():
-                raise Exception("Cannot relate COM virtual site to another virtual particle")
+                raise Exception(
+                    "Cannot relate COM virtual site to another virtual particle")
             rel_to = rel_to.mol_id
         else:
             check_type_or_throw_except(
@@ -1439,7 +1440,7 @@ def _add_particle_slice_properties():
                     "Failed to set vs_relative for particle slice.")
 
             return
-        
+
         elif attribute == "vs_com":
             nlvl = nesting_level(values)
             if nlvl in [1, 2]:

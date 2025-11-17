@@ -53,6 +53,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <set>
@@ -63,7 +64,6 @@
 #include <tuple>
 #include <type_traits>
 #include <vector>
-#include <iostream>
 
 namespace ScriptInterface {
 namespace Particles {
@@ -470,11 +470,10 @@ ParticleHandle::ParticleHandle() {
            }
            vs_com.to_molecule_id = get_value<int>(array[0]);
          } catch (...) {
-           throw std::invalid_argument(error_msg(
-               "vs_com", "must take the form [id]"));
+           throw std::invalid_argument(
+               error_msg("vs_com", "must take the form [id]"));
          }
-         set_particle_property(
-             [&vs_com](Particle &p) { p.vs_com() = vs_com; });
+         set_particle_property([&vs_com](Particle &p) { p.vs_com() = vs_com; });
        },
        [this]() {
          auto const vs_com = get_particle_data(m_pid).vs_com();
@@ -688,19 +687,19 @@ Variant ParticleHandle::do_call_method(std::string const &name,
                                            PropagationMode::ROT_VS_RELATIVE)});
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
-} else if (name == "vs_com_relate_to") {
-  if (not context()->is_head_node()) {
+  } else if (name == "vs_com_relate_to") {
+    if (not context()->is_head_node()) {
       return {};
     }
-  auto const other_molid = get_value<int>(params, "molid");
-  if (other_molid < 0) {
+    auto const other_molid = get_value<int>(params, "molid");
+    if (other_molid < 0) {
       throw std::domain_error("Invalid particle id: " +
                               std::to_string(other_molid));
-  }
-  set_parameter("vs_com", Variant{std::vector<int>{
-                                 {other_molid}}});
-  set_parameter("propagation",
-                  Variant{static_cast<int>(PropagationMode::TRANS_VS_CENTER_OF_MASS)});
+    }
+    set_parameter("vs_com", Variant{std::vector<int>{{other_molid}}});
+    set_parameter(
+        "propagation",
+        Variant{static_cast<int>(PropagationMode::TRANS_VS_CENTER_OF_MASS)});
 #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 #ifdef ESPRESSO_EXCLUSIONS
   } else if (name == "has_exclusion") {

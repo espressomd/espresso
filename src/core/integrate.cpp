@@ -58,9 +58,9 @@
 #include "system/System.hpp"
 #include "thermostat.hpp"
 #include "thermostats/langevin_inline.hpp"
+#include "virtual_sites/com.hpp"
 #include "virtual_sites/lb_tracers.hpp"
 #include "virtual_sites/relative.hpp"
-#include "virtual_sites/com.hpp"
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 
@@ -492,7 +492,8 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #endif
 #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
   auto const has_vs_com = [&propagation]() {
-    return propagation.used_propagations & (PropagationMode::TRANS_VS_CENTER_OF_MASS);
+    return propagation.used_propagations &
+           (PropagationMode::TRANS_VS_CENTER_OF_MASS);
   };
 #endif
 #ifdef ESPRESSO_BOND_CONSTRAINT

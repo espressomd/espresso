@@ -40,8 +40,8 @@
 #include "particle_node.hpp"
 #include "short_range_cabana.hpp"
 #include "thermostat.hpp"
-#include "virtual_sites/relative.hpp"
 #include "virtual_sites/com.hpp"
+#include "virtual_sites/relative.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/all_compare.hpp>

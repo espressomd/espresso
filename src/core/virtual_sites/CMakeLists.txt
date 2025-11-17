@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-target_sources(espresso_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_tracers.cpp
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/relative.cpp
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/com.cpp)
+target_sources(
+  espresso_core
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_tracers.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/relative.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/com.cpp)

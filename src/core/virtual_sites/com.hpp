@@ -49,8 +49,6 @@
 
 void vs_com_update_particles(CellStructure &cell_structure,
                              BoxGeometry const &box_geo);
-void vs_com_back_transfer_forces_and_torques(
-    CellStructure &cell_structure);
-
+void vs_com_back_transfer_forces_and_torques(CellStructure &cell_structure);
 
 #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
