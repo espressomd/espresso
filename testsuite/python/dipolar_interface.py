@@ -90,6 +90,8 @@ class Test(ut.TestCase):
             ddsg = DDSG(prefactor=1.)
             with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Dipoles::DipolarDirectSumGpu isn't supported by DLC"):
                 MDLC(gap_size=2., maxPWerror=0.1, actor=ddsg)
+            with self.assertRaisesRegex(ValueError, "Parameter 'n_replicas' must be >= 0"):
+                DDSG(prefactor=1., n_replicas=-2)
         with self.assertRaisesRegex(RuntimeError, "Parameter 'actor' is missing"):
             MDLC(gap_size=2., maxPWerror=0.1)
         with self.assertRaisesRegex(RuntimeError, "Parameter 'n_replica' is not a valid parameter"):
@@ -111,15 +113,6 @@ class Test(ut.TestCase):
             mdlc = MDLC(gap_size=1., maxPWerror=1e-5, actor=ddsr)
             self.system.magnetostatics.solver = mdlc
         self.assertIsNone(self.system.magnetostatics.solver)
-        if espressomd.has_features(
-                ["DIPOLAR_DIRECT_SUM", "DIPOLE_FIELD_TRACKING"]) and has_gpu:
-            ddsg = DDSG(prefactor=1.)
-            self.system.magnetostatics.solver = ddsg
-            with self.assertRaisesRegex(Exception, "Dipoles field calculation not implemented by dipolar method DipolarDirectSumGpu"):
-                self.system.part.add(pos=(0.2, 0.2, 0.2), dip=(0.0, 0.0, 1.0))
-                self.system.analysis.dipole_fields()
-            self.system.part.clear()
-            self.system.magnetostatics.clear()
         # check it's safe to resize the box, i.e. there are no currently
         # active sanity check in the core
         self.system.change_volume_and_rescale_particles(10., "y")

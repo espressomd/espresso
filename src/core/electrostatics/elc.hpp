@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_P3M
 
@@ -116,10 +116,6 @@ struct elc_data {
   double space_box;
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-  static auto copy_aosoa_vector_elc(std::size_t i, auto &slice) {
-    return Utils::Vector3d{slice(i, 0), slice(i, 1), slice(i, 2)};
-  }
-
   /// pairwise contributions from lower and upper layers
   void dielectric_layers_contribution(BoxGeometry const &box_geo,
                                       std::size_t p1, std::size_t p2,
@@ -127,8 +123,8 @@ struct elc_data {
                                       auto &&kernel) const {
     if (aosoa.position(p1, 2) < space_layer) {
       auto const q_eff = delta_mid_bot * q1q2;
-      auto pos2 = copy_aosoa_vector_elc(p2, aosoa.position);
-      auto pos1 = copy_aosoa_vector_elc(p1, aosoa.position);
+      auto pos2 = aosoa.get_vector_at(aosoa.position, p2);
+      auto pos1 = aosoa.get_vector_at(aosoa.position, p1);
       pos1[2] *= -1.;
       auto const d = box_geo.get_mi_vector(pos2, pos1);
       kernel(q_eff, d);
@@ -136,8 +132,8 @@ struct elc_data {
     if (aosoa.position(p1, 2) > (box_h - space_layer)) {
       auto const q_eff = delta_mid_top * q1q2;
       auto const z = 2. * box_h - aosoa.position(p1, 2);
-      auto pos2 = copy_aosoa_vector_elc(p2, aosoa.position);
-      auto pos1 = copy_aosoa_vector_elc(p1, aosoa.position);
+      auto pos2 = aosoa.get_vector_at(aosoa.position, p2);
+      auto pos1 = aosoa.get_vector_at(aosoa.position, p1);
       pos1[2] = 2. * box_h - pos1[2];
       auto const d = box_geo.get_mi_vector(pos2, pos1);
       kernel(q_eff, d);
@@ -335,8 +331,9 @@ struct ElectrostaticLayerCorrection
   /** @brief Add short-range pair force corrections. */
   void add_pair_force_corrections(Utils::Vector3d const &pos1,
                                   Utils::Vector3d const &pos2,
-                                  ParticleForce &p1f_asym,
-                                  ParticleForce &p2f_asym, double q1q2) const {
+                                  Utils::Vector3d &p1f_asym,
+                                  Utils::Vector3d &p2f_asym,
+                                  double q1q2) const {
     if (elc.dielectric_contrast_on) {
       std::visit(
           [this, &pos1, &pos2, &p1f_asym, &p2f_asym, q1q2](auto &p3m_ptr) {
@@ -344,12 +341,12 @@ struct ElectrostaticLayerCorrection
             elc.dielectric_layers_contribution(
                 *m_box_geo, pos1, pos2, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
-                  p1f_asym.f += p3m.pair_force(q_eff, d, d.norm());
+                  p1f_asym += p3m.pair_force(q_eff, d, d.norm());
                 });
             elc.dielectric_layers_contribution(
                 *m_box_geo, pos2, pos1, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
-                  p2f_asym.f += p3m.pair_force(q_eff, d, d.norm());
+                  p2f_asym += p3m.pair_force(q_eff, d, d.norm());
                 });
           },
           base_solver);

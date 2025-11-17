@@ -100,6 +100,10 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
             raise ValueError(f"Slip velocity exceeds Mach {mach_number:.2f}")
 
     @property
+    def boundary_force(self):
+        return self.call_method("get_boundary_force")
+
+    @property
     def pressure_tensor(self):
         tensor = self.call_method("get_pressure_tensor")
         return utils.array_locked(tensor)
@@ -314,6 +318,23 @@ class LBFluidWalberla(HydrodynamicInteraction,
             "add_boundary_from_shape",
             raster=array_variant(mask.flatten()),
             values=array_variant(velocity.flatten()))
+
+    def get_boundary_force_from_shape(self, shape):
+        """
+        Returns the boundary force from a shape.
+
+        Parameters
+        ----------
+        shape : :obj:`espressomd.shapes.Shape`
+            Shape to rasterize.
+        """
+        utils.check_type_or_throw_except(
+            shape, 1, espressomd.shapes.Shape, "expected an espressomd.shapes.Shape")
+
+        mask = self.get_shape_bitmask(shape=shape).astype(int)
+        return self.call_method(
+            "get_boundary_force_from_shape",
+            raster=array_variant(mask.flatten()))
 
 
 @script_interface_register
@@ -665,6 +686,10 @@ class VTKOutput(VTKOutputBase):
         Path to the output VTK folder.
     prefix : :obj:`str` (optional), default is 'simulation_step'
         Prefix for VTK files.
+    force_pvtu : :obj:`bool` (optional), default is ``True``
+        Force parallel unstructured grid format (file extension: ``.vtu``).
+        If ``False``, uses parallel structured grid format if possible
+        (file extension: ``.vti``).
 
     """
     _so_name = "walberla::LBVTKHandle"

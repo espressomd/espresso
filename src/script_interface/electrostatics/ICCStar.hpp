@@ -104,8 +104,7 @@ public:
     });
   }
 
-  Variant do_call_method(std::string const &name,
-                         VariantMap const &params) override {
+  Variant do_call_method(std::string const &name, VariantMap const &) override {
     if (name == "activate") {
       context()->parallel_try_catch([&]() {
         auto &system = get_system();

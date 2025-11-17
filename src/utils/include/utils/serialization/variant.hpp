@@ -30,7 +30,7 @@ namespace boost::serialization {
 
 namespace detail {
 template <std::size_t I, class Archive, class Variant>
-void load_impl(Archive &ar, int index, Variant &obj) {
+void load_impl(Archive &ar, std::size_t index, Variant &obj) {
   if (index == I) {
     std::variant_alternative_t<I, Variant> opt{};
     ar >> opt;

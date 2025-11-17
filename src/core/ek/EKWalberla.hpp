@@ -71,6 +71,7 @@ struct EKWalberla {
   }
   void on_timestep_change() const {}
   void on_temperature_change() const {}
+  bool is_gpu() const;
 };
 
 } // namespace EK

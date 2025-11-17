@@ -43,9 +43,10 @@ Checks: |
    readability-function-size'
 WarningsAsErrors: '*,-clang-analyzer-core.StackAddrEscapeBase,-clang-analyzer-optin.mpi.MPI-Checker'
 HeaderFilterRegex: '.*'
+ExcludeHeaderFilterRegex: '^/usr/|^/opt/|/_deps/[a-zA-Z0-9_]+-(src|build|subbuild)/'
 FormatStyle:     none
 User: espresso
-CheckOptions:    
+CheckOptions:
   - key:             bugprone-argument-comment.StrictMode
     value:           '0'
   - key:             bugprone-assert-side-effect.AssertMacros

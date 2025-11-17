@@ -20,9 +20,9 @@ description of the interface.
 
 .. note::
 
-    Requires external features ``WALBERLA`` and optionally ``WALBERLA_FFT``
+    Requires external features ``WALBERLA`` and optionally ``FFTW``
     (for the FFT-based Poisson solver), enabled with the CMake options
-    ``-D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON``.
+    ``-D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_FFTW=ON``.
 
 .. _Electrokinetic equations:
 
@@ -344,6 +344,11 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
         # check VTK values match node values
         ek_density = np.copy(ek_species[:, :, :].density)
         np.testing.assert_allclose(vtk_density, ek_density, rtol=1e-10, atol=0.)
+
+The Poisson grid can be written to a file in either unstructured (``.vtu``) or
+structured (``.vti``) grid format. The latter doesn't require topology reconstruction.
+Both file formats can be read by :class:`~espressomd.io.vtk.VTKReader`.
+To enforce unstructured grid format, pass parameter ``force_pvtu=True``.
 
 .. _Setting up EK boundary conditions:
 

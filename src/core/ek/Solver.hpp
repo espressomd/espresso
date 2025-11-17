@@ -70,6 +70,8 @@ struct Solver : public System::Leaf<Solver> {
    */
   void init() const {}
 
+  bool is_gpu() const;
+
   /**
    * @brief Get the EK time step.
    */

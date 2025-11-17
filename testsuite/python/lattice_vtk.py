@@ -105,6 +105,18 @@ class TestVTK:
         with self.assertRaisesRegex(RuntimeError, "This VTK object isn't attached to a lattice"):
             label_unattached.write()
 
+    @utx.skipIfMissingModules("espressomd.io.vtk")
+    def test_exceptions_invalid_files(self):
+        with tempfile.TemporaryDirectory() as tmp_directory:
+            root = pathlib.Path(tmp_directory)
+            invalid_vtk_file = root / "invalid_file.vtu"
+            invalid_vtk_file.write_text(1000 * "\n    ")
+            with self.assertRaisesRegex(RuntimeError, "is not a compliant XML file"):
+                espressomd.io.vtk.VTKReader().parse(invalid_vtk_file)
+            invalid_vtk_file.write_text('<VTKFile type="UnknownGrid"/>')
+            with self.assertRaisesRegex(NotImplementedError, "Unknown VTK file format 'UnknownGrid'"):
+                espressomd.io.vtk.VTKReader().parse(invalid_vtk_file)
+
 
 class TestLBVTK(TestVTK):
 
@@ -248,15 +260,17 @@ class TestLBVTK(TestVTK):
 
 class TestEKVTK(TestVTK):
 
-    valid_obs = ["density"]
+    valid_obs = ["density", "flux"]
+    valid_obs_poisson = ["potential"]
 
     def make_actor(self):
         return self.ek_class(
-            lattice=self.lattice, density=1., diffusion=0.1, valency=0.,
+            lattice=self.lattice, density=1., diffusion=0.1, valency=0.1, kT=1.,
             advection=False, friction_coupling=False, tau=0.1, **self.ek_params)
 
     def add_actor(self):
-        self.solver = self.ek_solver(lattice=self.lattice)
+        self.solver = self.ek_solver(
+            lattice=self.lattice, permittivity=0.1, **self.ek_params)
         self.species = self.make_actor()
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=0.1, solver=self.solver)
@@ -286,6 +300,8 @@ class TestEKVTK(TestVTK):
         shape = (shape[0] - 4, *shape[1:])
         vtk_reader = espressomd.io.vtk.VTKReader()
         label_density = "density"
+        label_flux = "flux"
+        label_potential = "potential"
 
         with tempfile.TemporaryDirectory() as tmp_directory:
             root = pathlib.Path(tmp_directory)
@@ -304,7 +320,30 @@ class TestEKVTK(TestVTK):
             actor.add_vtk_writer(vtk=vtk_obj)
             vtk_obj.disable()
             vtk_obj.enable()
+            self.assertFalse(vtk_obj.force_pvtu)
+
+            # prepare VTK Poisson
+            label_vtk_poisson_last_frame = f"test_vtk_{self.vtk_id}_poisson_end"  # nopep8
+            label_vtk_poisson_continuous = f"test_vtk_{self.vtk_id}_poisson_continuous"  # nopep8
+            path_vtk_poisson_last_frame = root / \
+                label_vtk_poisson_last_frame / "simulation_step_0.vti"
+            path_vtk_poisson_continuous = [
+                root / label_vtk_poisson_continuous / f"simulation_step_{i}.vtu" for i in range(n_steps)]
+            filepaths_poisson = [
+                path_vtk_poisson_last_frame] + path_vtk_poisson_continuous
+
+            vtk_obs_poisson = list(self.valid_obs_poisson)
+            vtk_obj_poisson = self.vtk_poisson_class(
+                identifier=label_vtk_poisson_continuous, force_pvtu=True,
+                observables=vtk_obs_poisson, base_folder=root, delta_N=1)
+            self.assertTrue(vtk_obj_poisson.force_pvtu)
+            self.solver.add_vtk_writer(vtk=vtk_obj_poisson)
+            vtk_obj_poisson.disable()
+            vtk_obj_poisson.enable()
+
             self.system.integrator.run(n_steps)
+
+            # write manual files after integration
             vtk_obj = self.vtk_class(
                 identifier=label_vtk_last_frame, delta_N=0, observables=vtk_obs,
                 base_folder=root)
@@ -313,27 +352,55 @@ class TestEKVTK(TestVTK):
             self.assertEqual(sorted(vtk_obj.observables), sorted(vtk_obs))
             self.assertEqual(vtk_obj.valid_observables(), set(self.valid_obs))
 
+            vtk_obj_poisson = self.vtk_poisson_class(
+                identifier=label_vtk_poisson_last_frame, force_pvtu=False,
+                observables=vtk_obs_poisson, base_folder=root, delta_N=0)
+            self.assertFalse(vtk_obj_poisson.force_pvtu)
+            self.solver.add_vtk_writer(vtk=vtk_obj_poisson)
+            vtk_obj_poisson.write()
+            self.assertEqual(sorted(vtk_obj_poisson.observables),
+                             sorted(vtk_obs_poisson))
+            self.assertEqual(vtk_obj_poisson.valid_observables(),
+                             set(self.valid_obs_poisson))
+
             # check VTK files exist
-            for filepath in filepaths:
+            for filepath in filepaths + filepaths_poisson:
                 self.assertTrue(
                     filepath.exists(),
                     f"VTK file \"{filepath}\" not written to disk")
             for filepath in [path_vtk_last_frame.parent.with_suffix(".pvd"),
-                             path_vtk_continuous[0].parent.with_suffix(".pvd")]:
+                             path_vtk_continuous[0].parent.with_suffix(".pvd"),
+                             path_vtk_poisson_last_frame.parent.with_suffix(
+                                 ".pvd"),
+                             path_vtk_poisson_continuous[0].parent.with_suffix(".pvd")]:
                 self.assertTrue(
                     filepath.exists(),
                     f"VTK summary file \"{filepath}\" not written to disk")
 
             # read VTK output of final time step
             last_frames = []
-            for filepath in (path_vtk_last_frame, path_vtk_continuous[-1]):
+            last_frames_flux = []
+            for filepath in (path_vtk_last_frame, path_vtk_continuous[-1],):
                 grids = vtk_reader.parse(filepath)
                 last_frames.append(grids[label_density])
+                last_frames_flux.append(grids[label_flux])
+
+            last_frames_poisson = []
+            for filepath in (path_vtk_poisson_last_frame,
+                             path_vtk_poisson_continuous[-1],):
+                grids = vtk_reader.parse(filepath)
+                last_frames_poisson.append(grids[label_potential])
 
             # check VTK output is identical in both continuous and manual mode
             for i in range(len(last_frames[0])):
                 np.testing.assert_allclose(last_frames[0][i],
                                            last_frames[1][i], atol=1e-10)
+                np.testing.assert_allclose(last_frames_flux[0][i],
+                                           last_frames_flux[1][i], atol=1e-10)
+
+            for i in range(len(last_frames_poisson[0])):
+                np.testing.assert_allclose(last_frames_poisson[0][i],
+                                           last_frames_poisson[1][i], atol=1e-10)
 
             # check VTK values match node values in the final time step
             ek_density = np.copy(actor[2:-2, :, :].density)
@@ -341,6 +408,17 @@ class TestEKVTK(TestVTK):
             for vtk_density in last_frames:
                 np.testing.assert_allclose(
                     vtk_density, ek_density, rtol=5e-7)
+
+            ek_flux = np.copy(actor[2:-2, :, :].flux)
+            for vtk_flux in last_frames_flux:
+                np.testing.assert_allclose(
+                    vtk_flux, ek_flux, rtol=5e-7)
+
+            ek_potential = np.copy(self.solver[:, :, :].potential)
+
+            for vtk_potential in last_frames_poisson:
+                np.testing.assert_allclose(
+                    vtk_potential, ek_potential, rtol=5e-7)
 
         self.assertEqual(len(actor.vtk_writers), 2)
         actor.clear_vtk_writers()
@@ -385,24 +463,50 @@ class LBWalberlaVTKSinglePrecisionGPU(TestLBVTK, ut.TestCase):
     vtk_id = "lb_single_precision_gpu"
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKWalberlaVTKDoublePrecisionCPU(TestEKVTK, ut.TestCase):
     vtk_class = espressomd.electrokinetics.VTKOutput
+    vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
     lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_class = espressomd.electrokinetics.EKSpecies
-    ek_solver = espressomd.electrokinetics.EKNone
+    ek_solver = espressomd.electrokinetics.EKFFT
     ek_params = {"single_precision": False}
     vtk_id = "ek_double_precision_cpu"
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
+class EKWalberlaVTKDoublePrecisionGPU(TestEKVTK, ut.TestCase):
+    vtk_class = espressomd.electrokinetics.VTKOutput
+    vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
+    lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_class = espressomd.electrokinetics.EKSpeciesGPU
+    ek_solver = espressomd.electrokinetics.EKFFTGPU
+    ek_params = {"single_precision": False}
+    vtk_id = "ek_double_precision_gpu"
+
+
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKWalberlaVTKSinglePrecisionCPU(TestEKVTK, ut.TestCase):
     vtk_class = espressomd.electrokinetics.VTKOutput
+    vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
     lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_class = espressomd.electrokinetics.EKSpecies
-    ek_solver = espressomd.electrokinetics.EKNone
+    ek_solver = espressomd.electrokinetics.EKFFT
     ek_params = {"single_precision": True}
     vtk_id = "ek_single_precision_cpu"
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
+class EKWalberlaVTKSinglePrecisionGPU(TestEKVTK, ut.TestCase):
+    vtk_class = espressomd.electrokinetics.VTKOutput
+    vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
+    lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_class = espressomd.electrokinetics.EKSpeciesGPU
+    ek_solver = espressomd.electrokinetics.EKFFTGPU
+    ek_params = {"single_precision": True}
+    vtk_id = "ek_single_precision_gpu"
 
 
 if __name__ == "__main__":

@@ -26,8 +26,7 @@ import espressomd
 import espressomd.electrokinetics
 
 
-@utx.skipIfMissingFeatures("WALBERLA")
-class Test(ut.TestCase):
+class EKTest:
 
     """This simple test first writes random numbers and then reads them
     to same slices of LB nodes and compares if the results are the same,
@@ -49,8 +48,8 @@ class Test(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.lattice = espressomd.electrokinetics.LatticeWalberla(
-            agrid=1., n_ghost_layers=1)
-        cls.ek_species = espressomd.electrokinetics.EKSpecies(
+            agrid=1., n_ghost_layers=2)
+        cls.ek_species = cls.ek_species_class(
             lattice=cls.lattice,
             single_precision=False,
             **cls.ek_species_params)
@@ -155,6 +154,17 @@ class Test(ut.TestCase):
         # use __eq()__ method form EKSpeciesNode()
         assert all([x == y for x, y in zip(
             arranged_indices, iterator_indices)])
+
+
+@utx.skipIfMissingFeatures("WALBERLA")
+class EKSliceCPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKSliceGPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
 
 
 if __name__ == "__main__":

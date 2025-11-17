@@ -81,12 +81,8 @@ default_check_procs=2
 if [ "${GITLAB_CI}" = "true" ]; then
     if [[ "${OSTYPE}" == "linux-gnu"* ]]; then
         # Linux runner
-        default_build_procs=4
-        default_check_procs=4
-        if [ "${with_cuda}" = "true" ]; then
-            default_build_procs=6
-            default_check_procs=4 # buffer for oversubscribed OpenMP threads
-        fi
+        default_build_procs=8
+        default_check_procs=8
     elif [[ "${OSTYPE}" == "darwin"* ]]; then
         # macOS runner
         default_build_procs=4
@@ -132,7 +128,6 @@ set_default_value with_fftw true
 set_default_value with_gsl true
 set_default_value with_scafacos false
 set_default_value with_walberla false
-set_default_value with_walberla_fft true
 set_default_value with_walberla_avx false
 set_default_value with_stokesian_dynamics false
 set_default_value test_timeout 500
@@ -169,9 +164,6 @@ cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=${with_s
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA=${with_walberla}"
 
 if [ "${with_walberla}" = true ]; then
-  if [ "${with_walberla_fft}" = true ]; then
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON"
-  fi
   if [ "${with_walberla_avx}" = true ]; then
     cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA_AVX=ON"
   fi
@@ -270,6 +262,9 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
+# build ESPResSo and hard dependencies
+time ninja -k 8 -j${build_procs} ${ninja_params} espresso_packaging_dependencies || exit ${?}
+# build objects that are needed for some tests, yet not essential for packaging
 time ninja -k 8 -j${build_procs} ${ninja_params} || exit ${?}
 
 end "BUILD"

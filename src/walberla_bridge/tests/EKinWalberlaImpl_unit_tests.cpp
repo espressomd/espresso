@@ -18,10 +18,6 @@
  */
 #define BOOST_TEST_MODULE EK walberla node setters and getters test
 #define BOOST_TEST_DYN_LINK
-#include "config/config.hpp"
-
-#ifdef ESPRESSO_WALBERLA
-
 #define BOOST_TEST_NO_MAIN
 
 #include <boost/test/data/monomorphic.hpp>
@@ -30,6 +26,7 @@
 
 #include "tests_common_ek.hpp"
 
+#include "../src/electrokinetics/PoissonSolverNone.hpp"
 #include <walberla_bridge/VTKHandle.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
@@ -74,7 +71,7 @@ BOOST_DATA_TEST_CASE(dimensions, bdata::make(all_eks()), ek_generator) {
 }
 
 BOOST_AUTO_TEST_CASE(stencil_size) {
-  auto constexpr stencil_size = std::size_t{9u};
+  auto constexpr stencil_size = std::size_t{13u};
   auto ek = std::make_shared<walberla::EKinWalberlaImpl<stencil_size, float>>(
       params.lattice, params.diffusion, 0., params.valency, params.ext_efield,
       params.density, params.advection, params.friction_coupling, false, 0u);
@@ -161,6 +158,7 @@ BOOST_DATA_TEST_CASE(node_flux_boundary, bdata::make(all_eks()), ek_generator) {
       }
       {
         BOOST_CHECK(ek->set_node_flux_boundary(node, flux));
+        ek->ghost_communication();
         {
           auto const res = ek->get_node_is_boundary(node, true);
           BOOST_REQUIRE(res);
@@ -186,6 +184,7 @@ BOOST_DATA_TEST_CASE(node_flux_boundary, bdata::make(all_eks()), ek_generator) {
       }
       {
         BOOST_CHECK(ek->remove_node_from_flux_boundary(node));
+        ek->ghost_communication();
         {
           auto const res = ek->get_node_is_boundary(node, true);
           BOOST_REQUIRE(res);
@@ -205,13 +204,16 @@ BOOST_DATA_TEST_CASE(node_flux_boundary, bdata::make(all_eks()), ek_generator) {
     } else {
       // Not in the local halo.
       BOOST_CHECK(!ek->set_node_flux_boundary(node, flux));
+      ek->ghost_communication();
       BOOST_CHECK(!ek->get_node_flux_at_boundary(node));
       BOOST_CHECK(!ek->remove_node_from_flux_boundary(node));
+      ek->ghost_communication();
       BOOST_CHECK(!ek->get_node_is_flux_boundary(node));
     }
   }
 
   ek->clear_flux_boundaries();
+  ek->ghost_communication();
   for (auto const &node : local_nodes_incl_ghosts(ek->get_lattice())) {
     BOOST_CHECK(!(*ek->get_node_is_flux_boundary(node, true)));
   }
@@ -321,6 +323,7 @@ BOOST_DATA_TEST_CASE(update_flux_boundary_from_shape, bdata::make(all_eks()),
     std::vector<double> flux_flat(flux_3d.data(),
                                   flux_3d.data() + flux_3d.num_elements());
     ek->update_flux_boundary_from_shape(raster_flat, flux_flat);
+    ek->ghost_communication();
   }
 
   for (auto const &node : nodes) {
@@ -525,15 +528,15 @@ BOOST_DATA_TEST_CASE(vtk_exceptions,
   auto const flag =
       static_cast<std::underlying_type_t<OutputVTK>>(OutputVTK::density);
   // cannot create the same observable twice
-  ek->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step");
+  ek->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step", false);
   BOOST_CHECK_THROW(
-      ek->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step"),
+      ek->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step", false),
       std::runtime_error);
   // cannot manually call an automatic observable
-  ek->create_vtk(1u, 0u, flag, units, "auto", "vtk_out", "step");
+  ek->create_vtk(1u, 0u, flag, units, "auto", "vtk_out", "step", false);
   BOOST_CHECK_THROW(ek->write_vtk("vtk_out/auto"), std::runtime_error);
   // cannot activate a manual observable
-  ek->create_vtk(0u, 0u, flag, units, "manual", "vtk_out", "step");
+  ek->create_vtk(0u, 0u, flag, units, "manual", "vtk_out", "step", false);
   BOOST_CHECK_THROW(ek->switch_vtk("vtk_out/manual", 0), std::runtime_error);
   // cannot call or activate observables that haven't been registered yet
   BOOST_CHECK_THROW(ek->write_vtk("unknown"), std::runtime_error);
@@ -550,6 +553,19 @@ BOOST_AUTO_TEST_CASE(ek_exceptions) {
   // no diffusion leads to early exit
   ek->set_diffusion(0.);
   ek->integrate(std::size_t{}, std::size_t{}, std::size_t{}, 0.);
+}
+
+BOOST_AUTO_TEST_CASE(ek_poisson_solver_none) {
+  auto ek_solver = walberla::PoissonSolverNone<double>(params.lattice);
+  // no-op
+  ek_solver.add_charge_to_field(std::size_t{}, 0.);
+  ek_solver.reset_charge_field();
+  ek_solver.solve();
+  // exceptions
+  BOOST_CHECK_THROW(ek_solver.get_node_potential({0, 0, 0}, true),
+                    std::runtime_error);
+  BOOST_CHECK_THROW(ek_solver.get_slice_potential({0, 0, 0}, {1, 1, 1}),
+                    std::runtime_error);
 }
 
 int main(int argc, char **argv) {
@@ -578,7 +594,3 @@ int main(int argc, char **argv) {
   MPI_Finalize();
   return res;
 }
-
-#else // ESPRESSO_WALBERLA
-int main(int argc, char **argv) {}
-#endif

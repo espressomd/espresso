@@ -90,8 +90,19 @@ class ParticleSliceTest(ut.TestCase):
         self.assertEqual(repr(self.p0p1.pos),
                          repr(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 1.0]])))
 
+    def test_pos(self):
+        box_l = self.system.box_l
+        self.p0.pos = [-1, 2, box_l[2] + 3]
+        self.p1.pos = [0, 0, 1]
+        np.testing.assert_equal(
+            np.copy(self.p0p1.image_box), [[-1, 0, 1], [0, 0, 0]])
+        np.testing.assert_allclose(
+            np.copy(self.p0p1.pos), [[-1, 2, box_l[2] + 3], [0, 0, 1]])
+        np.testing.assert_allclose(
+            np.copy(self.p0p1.pos_folded), [[box_l[0] - 1, 2, 3], [0, 0, 1]])
+
     @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
-    def test_scalar(self):
+    def test_charges(self):
         self.p0.q = 1.3
         self.assertEqual(self.p0.q, 1.3)
         self.p0p1.q = 2.0
@@ -122,6 +133,56 @@ class ParticleSliceTest(ut.TestCase):
         self.assertIsInstance(props[1], Propagation)
         self.assertEqual(props[0], Propagation.NONE)
         self.assertEqual(props[1], Propagation.TRANS_NEWTON)
+
+    def test_types(self):
+        # Set types on slices
+
+        # scalar
+        self.all_partcls.type = 0
+        self.assertEqual(repr(self.all_partcls.type),
+                         repr(np.array([0, 0, 0, 0])))
+
+        # list
+        self.p0p1.type = [1, 2]
+        self.assertEqual(self.p0.type, 1)
+        self.assertEqual(self.p1.type, 2)
+        self.assertEqual(self.p2.type, 0)
+        self.assertEqual(self.p3.type, 0)
+        self.assertEqual(repr(self.all_partcls.type),
+                         repr(np.array([1, 2, 0, 0])))
+
+        self.all_partcls.type = 0
+
+        # tuple
+        self.p0p1.type = (1, 2)
+        self.assertEqual(self.p0.type, 1)
+        self.assertEqual(self.p1.type, 2)
+        self.assertEqual(self.p2.type, 0)
+        self.assertEqual(self.p3.type, 0)
+        self.assertEqual(repr(self.all_partcls.type),
+                         repr(np.array([1, 2, 0, 0])))
+
+        # invalid values
+        with self.assertRaisesRegex(ValueError, "attribute 'type' of 'ParticleHandle' must be an integer >= 0"):
+            self.all_partcls.type = -1
+        with self.assertRaisesRegex(RuntimeError, "Provided argument of type.* is not convertible to.* because it contains a value that is not convertible to 'int'"):
+            self.p2p3.type = 1.
+
+        # incorrect number of types
+        with self.assertRaisesRegex(Exception, r"Value shape \(2,\) does not broadcast to attribute shape \(\)"):
+            self.all_partcls.type = [1, 2]
+        with self.assertRaisesRegex(Exception, r"Value shape \(5,\) does not broadcast to attribute shape \(\)"):
+            self.all_partcls.type = [0, 1, 2, 3, 4]
+
+        # missing parameters
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'all_bonds_ids' is missing"):
+            self.all_partcls.call_method("set_param_parallel", name="bonds",
+                                         all_bonds_partner_ids=[])
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'all_bonds_partner_ids' is missing"):
+            self.all_partcls.call_method("set_param_parallel", name="bonds",
+                                         all_bonds_ids=[])
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'values' is missing"):
+            self.all_partcls.call_method("set_param_parallel", name="type")
 
     def test_bonds(self):
 

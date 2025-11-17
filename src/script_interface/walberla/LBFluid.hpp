@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_WALBERLA
 
@@ -41,6 +41,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace ScriptInterface::walberla {
@@ -141,6 +142,8 @@ private:
   void load_checkpoint(std::filesystem::path const &path, int mode);
   void save_checkpoint(std::filesystem::path const &path, int mode);
   std::vector<Variant> get_average_pressure_tensor() const;
+  Variant get_boundary_force_from_shape(std::vector<int> const &raster) const;
+  Variant get_boundary_force() const;
   Variant get_interpolated_velocity(Utils::Vector3d const &pos) const;
 };
 

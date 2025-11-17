@@ -61,7 +61,7 @@ class TestCommon:
         def quadratic(x, a, b, c):
             return a * x**2 + b * x + c
 
-        self.system.integrator.run(40)
+        self.system.integrator.run(60)
         xdata, ydata = self.get_profile()
         popt_ref = (4e-8, -1e-6, 1e-5)
         popt, _ = scipy.optimize.curve_fit(

@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_DIPOLES
 
@@ -62,19 +62,6 @@ struct Solver::Implementation {
   Implementation() : solver{} {}
 };
 
-namespace traits {
-
-/** @brief Whether an actor is a solver. */
-template <typename T>
-using is_solver = std::is_convertible<std::shared_ptr<T>, MagnetostaticsActor>;
-
-/** @brief The dipolar method supports dipole fields calculation. */
-template <class T> struct has_dipole_fields : std::false_type {};
-#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-template <> struct has_dipole_fields<DipolarDirectSum> : std::true_type {};
-#endif // ESPRESSO_DIPOLE_FIELD_TRACKING
-
-} // namespace traits
 } // namespace Dipoles
 
 #endif // ESPRESSO_DIPOLES

@@ -39,7 +39,8 @@ struct EspressoCoreGlobalConfig {
         boost::unit_test::framework::master_test_suite().argc,
         boost::unit_test::framework::master_test_suite().argv,
         boost::mpi::threading::multiple);
-    Communication::init(mpi_env);
+    ::communication_environment =
+        std::make_unique<CommunicationEnvironment>(mpi_env);
   }
-  ~EspressoCoreGlobalConfig() { Communication::deinit(); }
+  ~EspressoCoreGlobalConfig() { ::communication_environment.reset(); }
 };

@@ -24,7 +24,7 @@
  *  The corresponding header file is @ref p3m.hpp.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_P3M
 
@@ -237,8 +237,9 @@ static auto p3m_tune_aliasing_sums(Utils::Vector3i const &shift,
  *  \param box_l      box dimensions.
  *  \return real space error
  */
-static double p3m_real_space_error(double pref, double r_cut_iL, int n_c_part,
-                                   double sum_q2, double alpha_L,
+static double p3m_real_space_error(double pref, double r_cut_iL,
+                                   std::size_t n_c_part, double sum_q2,
+                                   double alpha_L,
                                    Utils::Vector3d const &box_l) {
   auto const volume = Utils::product(box_l);
   return (2. * pref * sum_q2 * exp(-Utils::sqr(r_cut_iL * alpha_L))) /
@@ -259,7 +260,7 @@ static double p3m_real_space_error(double pref, double r_cut_iL, int n_c_part,
  *  \return reciprocal (k) space error
  */
 static double p3m_k_space_error(double pref, Utils::Vector3i const &mesh,
-                                int cao, int n_c_part, double sum_q2,
+                                int cao, std::size_t n_c_part, double sum_q2,
                                 double alpha_L, Utils::Vector3d const &box_l) {
 
   auto const cotangent_sum = math::get_analytic_cotangent_sum_kernel(cao);
@@ -355,7 +356,7 @@ template <int cao> struct AssignCharge {
   void operator()(auto &p3m, double q, Utils::Vector3d const &real_pos,
                   p3m_interpolation_cache &inter_weights) {
     auto constexpr memory_order =
-        std::remove_reference<decltype(p3m)>::type::memory_order;
+        std::remove_reference_t<decltype(p3m)>::memory_order;
     auto const weights = p3m_calculate_interpolation_weights<cao, memory_order>(
         real_pos, p3m.params.ai, p3m.local_mesh);
     inter_weights.store(weights);
@@ -364,7 +365,7 @@ template <int cao> struct AssignCharge {
 
   void operator()(auto &p3m, double q, Utils::Vector3d const &real_pos) {
     auto constexpr memory_order =
-        std::remove_reference<decltype(p3m)>::type::memory_order;
+        std::remove_reference_t<decltype(p3m)>::memory_order;
     auto const weights = p3m_calculate_interpolation_weights<cao, memory_order>(
         real_pos, p3m.params.ai, p3m.local_mesh);
     this->operator()(p3m, q, weights);
@@ -372,26 +373,40 @@ template <int cao> struct AssignCharge {
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   void operator()(auto &p3m, auto &cell_structure) {
+    using CoulombP3MStateClass = std::remove_reference_t<decltype(p3m)>;
+    using value_type = CoulombP3MStateClass::value_type;
     auto const &aosoa = cell_structure.get_aosoa();
     auto const n_part = cell_structure.count_local_particles();
     p3m.inter_weights.zfill(n_part); // allocate buffer for parallel write
     kokkos_parallel_range_for(
-        "InterpolationWeights", std::size_t{0u}, n_part, [&](auto p_index) {
-          Utils::Vector3d const p_pos{aosoa.position(p_index, 0),
-                                      aosoa.position(p_index, 1),
-                                      aosoa.position(p_index, 2)};
-          auto constexpr memory_order =
-              std::remove_reference<decltype(p3m)>::type::memory_order;
+        "InterpolateCharges", std::size_t{0u}, n_part, [&](auto p_index) {
+          auto const tid = omp_get_thread_num();
+          auto const pos = aosoa.get_vector_at(aosoa.position, p_index);
+          auto const q = aosoa.charge(p_index);
+          auto constexpr memory_order = CoulombP3MStateClass::memory_order;
           auto const weights =
               p3m_calculate_interpolation_weights<cao, memory_order>(
-                  p_pos, p3m.params.ai, p3m.local_mesh);
+                  pos, p3m.params.ai, p3m.local_mesh);
           p3m.inter_weights.store_at(p_index, weights);
+          p3m_interpolate(
+              p3m.local_mesh, weights, [&, tid, q](int ind, double w) {
+                p3m.rs_charge_density_kokkos(tid, ind) += value_type(w * q);
+              });
         });
-    // serial part of charge assignment
-    for (std::size_t p_index{0}; p_index < n_part; ++p_index) {
-      auto const weights = p3m.inter_weights.template load<cao>(p_index);
-      this->operator()(p3m, aosoa.charge(p_index), weights);
-    }
+    Kokkos::fence();
+    using execution_space = Kokkos::DefaultExecutionSpace;
+    int num_threads = execution_space().concurrency();
+    Kokkos::RangePolicy<execution_space> policy(std::size_t{0},
+                                                p3m.local_mesh.size);
+    Kokkos::parallel_for("ReduceInterpolatedCharges", policy,
+                         [&p3m, num_threads](std::size_t const i) {
+                           value_type acc{};
+                           for (int tid = 0; tid < num_threads; ++tid) {
+                             acc += p3m.rs_charge_density_kokkos(tid, i);
+                           }
+                           p3m.rs_charge_density.at(i) += acc;
+                         });
+    Kokkos::fence();
   }
 #else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
   void operator()(auto &p3m, auto const &p_q_pos_range) {
@@ -409,7 +424,7 @@ template <int cao> struct AssignCharge {
 
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::charge_assign(
-    ParticleRange const &particles) {
+    [[maybe_unused]] ParticleRange const &particles) {
   prepare_fft_mesh(true);
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
@@ -470,7 +485,7 @@ template <int cao> struct AssignForces {
     };
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-    auto const n_part = p3m.inter_weights.size();
+    auto const n_part = cell_structure.count_local_particles();
     auto const &aosoa = cell_structure.get_aosoa();
     auto &local_force = cell_structure.get_local_force();
     kokkos_parallel_range_for(
@@ -771,7 +786,7 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
     node_energy /= 2. * volume;
 
     // add up energy contributions from all mpi ranks
-    boost::mpi::reduce(comm_cart, node_energy, energy, std::plus<>(), 0);
+    boost::mpi::reduce(::comm_cart, node_energy, energy, std::plus<>(), 0);
     if (this_node == 0) {
       /* self energy correction */
       // Eq. (3.8) @cite deserno00b
@@ -802,7 +817,8 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
 
 template <typename FloatType, Arch Architecture>
 class CoulombTuningAlgorithm : public TuningAlgorithm {
-  CoulombP3MState<FloatType> &p3m;
+  using CoulombP3MStateClass = CoulombP3MState<FloatType>;
+  CoulombP3MStateClass &p3m;
   double m_mesh_density_min = -1., m_mesh_density_max = -1.;
   // indicates if mesh should be tuned
   bool m_tune_mesh = false;
@@ -823,7 +839,7 @@ public:
   void setup_logger(bool verbose) override {
     auto const &box_geo = *m_system.box_geo;
 #ifdef ESPRESSO_CUDA
-    auto const on_gpu = Architecture == Arch::GPU;
+    auto const on_gpu = Architecture == Arch::CUDA;
 #else
     auto const on_gpu = false;
 #endif
@@ -847,7 +863,7 @@ public:
   std::optional<std::string> fft_decomposition_veto(
       Utils::Vector3i const &mesh_size_r_space) const override {
 #ifdef ESPRESSO_CUDA
-    if constexpr (Architecture == Arch::GPU) {
+    if constexpr (Architecture == Arch::CUDA) {
       return std::nullopt;
     }
 #endif
@@ -904,7 +920,7 @@ public:
     rs_err = p3m_real_space_error(m_prefactor, r_cut_iL, p3m.sum_qpart,
                                   p3m.sum_q2, alpha_L, box_geo.length());
 #ifdef ESPRESSO_CUDA
-    if constexpr (Architecture == Arch::GPU) {
+    if constexpr (Architecture == Arch::CUDA) {
       if (this_node == 0) {
         ks_err =
             p3m_k_space_error_gpu(m_prefactor, mesh.data(), cao, p3m.sum_qpart,
@@ -1035,8 +1051,8 @@ void CoulombP3MImpl<FloatType, Architecture>::tune() {
     }
     try {
       CoulombTuningAlgorithm<FloatType, Architecture> parameters(
-          system, p3m, prefactor, tune_timings, tune_limits);
-      parameters.setup_logger(tune_verbose);
+          system, p3m, prefactor, tuning.timings, tuning.limits);
+      parameters.setup_logger(tuning.verbose);
       // parameter ranges
       parameters.determine_mesh_limits();
       parameters.determine_r_cut_limits();
@@ -1124,7 +1140,7 @@ void CoulombP3MImpl<FloatType, Architecture>::scaleby_box_l() {
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::add_long_range_forces_gpu(
     ParticleRange const &particles) {
-  if constexpr (Architecture == Arch::GPU) {
+  if constexpr (Architecture == Arch::CUDA) {
 #ifdef ESPRESSO_NPT
     if (get_system().has_npt_enabled()) {
       get_system().npt_add_virial_contribution(long_range_energy(particles));
@@ -1147,7 +1163,7 @@ void CoulombP3MImpl<FloatType, Architecture>::add_long_range_forces_gpu(
  */
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::init_gpu_kernels() {
-  if constexpr (Architecture == Arch::GPU) {
+  if constexpr (Architecture == Arch::CUDA) {
     auto &system = get_system();
     if (has_actor_of_type<ElectrostaticLayerCorrection>(
             system.coulomb.impl->solver)) {
@@ -1160,7 +1176,7 @@ void CoulombP3MImpl<FloatType, Architecture>::init_gpu_kernels() {
 
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::request_gpu() const {
-  if constexpr (Architecture == Arch::GPU) {
+  if constexpr (Architecture == Arch::CUDA) {
     auto &gpu_particle_data = get_system().gpu;
     gpu_particle_data.enable_property(GpuParticleData::prop::force);
     gpu_particle_data.enable_property(GpuParticleData::prop::q);
@@ -1169,9 +1185,36 @@ void CoulombP3MImpl<FloatType, Architecture>::request_gpu() const {
 }
 #endif // ESPRESSO_CUDA
 
-template struct CoulombP3MImpl<float, Arch::CPU>;
-template struct CoulombP3MImpl<float, Arch::GPU>;
-template struct CoulombP3MImpl<double, Arch::CPU>;
-template struct CoulombP3MImpl<double, Arch::GPU>;
+template <typename FloatType, Arch Architecture>
+std::shared_ptr<CoulombP3M>
+new_coulomb_p3m_impl(P3MParameters &&p3m, TuningParameters const &tuning_params,
+                     double prefactor) {
+  auto state_ptr = std::make_unique<CoulombP3MState<FloatType>>(std::move(p3m));
+  auto obj = std::make_shared<CoulombP3MImpl<FloatType, Architecture>>(
+      std::move(state_ptr), tuning_params, prefactor);
+  return obj;
+}
+
+std::shared_ptr<CoulombP3M>
+new_coulomb_p3m(P3MParameters &&p3m_params,
+                TuningParameters const &tuning_params, double prefactor,
+                bool single_precision, Arch arch) {
+  auto fptr = &new_coulomb_p3m_impl<float, Arch::CPU>;
+  if (single_precision) {
+    if (arch == Arch::CPU) {
+      fptr = new_coulomb_p3m_impl<float, Arch::CPU>;
+    } else {
+      fptr = new_coulomb_p3m_impl<float, Arch::CUDA>;
+    }
+  } else {
+    if (arch == Arch::CPU) {
+      fptr = new_coulomb_p3m_impl<double, Arch::CPU>;
+    } else {
+      throw std::invalid_argument(
+          "P3M GPU only implemented in single-precision mode");
+    }
+  }
+  return fptr(std::move(p3m_params), tuning_params, prefactor);
+}
 
 #endif // ESPRESSO_P3M

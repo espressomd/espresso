@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu:17ae5d9f6217a5653be3ec409178f0ee15cb519f
+image: ghcr.io/espressomd/docker/ubuntu:3388b293a5e8a9b613b1bfa4220e54dfb4bff245
 
 stages:
   - prepare
@@ -8,7 +8,7 @@ stages:
 
 .global_job_template: &global_job_definition
   before_script:
-    - git config --global --add safe.directory ${CI_PROJECT_DIR}
+    - git config --global --add safe.directory "${CI_PROJECT_DIR}"
   timeout: 1h
   interruptible: true
   rules:
@@ -16,11 +16,9 @@ stages:
 
 .notification_job_template: &notification_job_definition
   <<: *global_job_definition
-  image: ghcr.io/espressomd/docker/fedora:17ae5d9f6217a5653be3ec409178f0ee15cb519f
+  image: ghcr.io/espressomd/docker/alpine:3388b293a5e8a9b613b1bfa4220e54dfb4bff245
   variables:
     GET_SOURCES_ATTEMPTS: 3
-  before_script:
-    - git config --global --add safe.directory ${CI_PROJECT_DIR}
   dependencies: []
   timeout: 40m
   interruptible: false
@@ -43,10 +41,14 @@ style:
   <<: *global_job_definition
   stage: prepare
   dependencies: []
-  before_script:
-    - git config --global --add safe.directory ${CI_PROJECT_DIR}
   script:
     - sh maintainer/CI/fix_style.sh
+    - mkdir build
+    - cd build
+    - cp ../style.patch .
+    - cp ../maintainer/configs/maxset.hpp myconfig.hpp
+    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_FFTW=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON -D ESPRESSO_BUILD_WITH_CALIPER=ON -D ESPRESSO_BUILD_WITH_FPE=ON -D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM=ON
+    - sh ../maintainer/CI/dox_warnings.sh
   tags:
     - espresso
     - no-cuda
@@ -55,20 +57,6 @@ style:
     - style.patch
     expire_in: 1 week
     when: on_failure
-
-style_doxygen:
-  <<: *global_job_definition
-  stage: prepare
-  dependencies: []
-  script:
-    - mkdir build
-    - cd build
-    - cp ../maintainer/configs/maxset.hpp myconfig.hpp
-    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON -D ESPRESSO_BUILD_WITH_CALIPER=ON -D ESPRESSO_BUILD_WITH_FPE=ON
-    - sh ../maintainer/CI/dox_warnings.sh
-  tags:
-    - espresso
-    - no-cuda
 
 ### Builds without CUDA
 
@@ -136,25 +124,6 @@ no_rotation:
     - espresso
     - no-cuda
     - numa
-
-fedora:42:
-  <<: *global_job_definition
-  stage: build
-  image: ghcr.io/espressomd/docker/fedora:17ae5d9f6217a5653be3ec409178f0ee15cb519f
-  variables:
-     with_cuda: 'false'
-     with_gsl: 'false'
-     with_scafacos: 'false'
-     with_fpe: 'true'
-     myconfig: 'maxset'
-     make_check_python: 'true'
-     with_stokesian_dynamics: 'true'
-     cmake_params: '-D CMAKE_INCLUDE_PATH=/usr/include/mpich-x86_64 -D CMAKE_PREFIX_PATH=/usr/lib64/mpich/lib/'
-  script:
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - espresso
-    - no-cuda
 
 ### Builds with CUDA
 
@@ -442,7 +411,7 @@ check_sphinx:
       artifacts: true
   script:
     - cd ${CI_PROJECT_DIR}/build
-    - ninja sphinx
+    - ninja -d explain sphinx
     - ninja -j2 tutorials
     - bash ${CI_PROJECT_DIR}/maintainer/CI/doc_warnings.sh
     - python3 ${CI_PROJECT_DIR}/maintainer/CI/jupyter_warnings.py
@@ -516,7 +485,7 @@ maxset_no_gpu:
     - export CUDA_VISIBLE_DEVICES=""
     - cd ${CI_PROJECT_DIR}/build
     - ninja -t restat
-    - ninja check
+    - ninja -d explain check
   tags:
     - espresso
     - no-cuda
@@ -528,26 +497,35 @@ maxset_3_cores:
   stage: additional_checks
   needs:
     - job: cuda12-maxset
-      artifacts: false
-  variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
-     myconfig: 'maxset'
-     with_cuda: 'true'
-     with_coverage: 'false'
-     with_coverage_python: 'false'
-     srcdir: '${CI_PROJECT_DIR}'
-     with_caliper: 'true'
-     with_scafacos: 'true'
-     with_walberla: 'true'
-     with_walberla_avx: 'true'
-     with_stokesian_dynamics: 'true'
-     with_shared_memory_parallelism: 'true'
-     check_odd_only: 'true'
-     cmake_params: '-D ESPRESSO_TEST_NP=3'
+      artifacts: true
   script:
-    - bash maintainer/CI/build_cmake.sh
+    - cd ${CI_PROJECT_DIR}/build
+    - ninja -t restat
+    - cmake -D ESPRESSO_TEST_NP=3 .
+    - ninja -t restat
+    - ninja -d explain check_unit_tests
+    - ninja check_python_parallel_odd
+  timeout: 90m
+  tags:
+    - espresso
+    - cuda
+    - numa
+    - avx2
+    - reuse-artifacts-same-arch
+
+maxset_1_cores:
+  <<: *global_job_definition
+  stage: additional_checks
+  needs:
+    - job: cuda12-maxset
+      artifacts: true
+  script:
+    - cd ${CI_PROJECT_DIR}/build
+    - ninja -t restat
+    - cmake -D ESPRESSO_TEST_NP=1 .
+    - ninja -t restat
+    - ninja -d explain check_unit_tests
+    - ninja check_python
   timeout: 90m
   tags:
     - espresso

@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_ELECTROSTATICS
 
@@ -71,22 +71,6 @@ struct Solver::Implementation {
 };
 
 namespace traits {
-
-#ifdef ESPRESSO_P3M
-/** @brief Whether an actor can be adapted by ELC. */
-template <typename T>
-using elc_adaptable =
-    std::is_convertible<std::shared_ptr<T>,
-                        ElectrostaticLayerCorrection::BaseSolver>;
-#endif // ESPRESSO_P3M
-
-/** @brief Whether an actor is a solver. */
-template <typename T>
-using is_solver = std::is_convertible<std::shared_ptr<T>, ElectrostaticsActor>;
-/** @brief Whether an actor is an extension. */
-template <typename T>
-using is_extension =
-    std::is_convertible<std::shared_ptr<T>, ElectrostaticsExtension>;
 
 /** @brief The electrostatic method supports pressure calculation. */
 template <class T> struct has_pressure : std::true_type {};

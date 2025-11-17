@@ -206,28 +206,27 @@ OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
    * @cite jancigova16a.
    */
   if (kal > tiny_oif_elasticity_coefficient) {
-    auto handle_triangle = [kal = this->kal](
-                               double A0, Utils::Vector3d const &c1,
-                               Utils::Vector3d const &c2,
-                               Utils::Vector3d const &c3, Utils::Vector3d &f1,
-                               Utils::Vector3d &f2, Utils::Vector3d &f3) {
-      // calculate triangle barycenter and surface
-      auto const h = (1. / 3.) * (c1 + c2 + c3);
-      auto const A = Utils::area_triangle(c1, c2, c3);
-      auto const t = sqrt(A / A0) - 1.0;
+    auto handle_triangle =
+        [this](double A0, Utils::Vector3d const &c1, Utils::Vector3d const &c2,
+               Utils::Vector3d const &c3, Utils::Vector3d &f1,
+               Utils::Vector3d &f2, Utils::Vector3d &f3) {
+          // calculate triangle barycenter and surface
+          auto const h = (1. / 3.) * (c1 + c2 + c3);
+          auto const A = Utils::area_triangle(c1, c2, c3);
+          auto const t = sqrt(A / A0) - 1.0;
 
-      auto const m1 = h - c1;
-      auto const m2 = h - c2;
-      auto const m3 = h - c3;
+          auto const m1 = h - c1;
+          auto const m2 = h - c2;
+          auto const m3 = h - c3;
 
-      auto const fac =
-          kal * A0 * (2 * t + t * t) / (m1.norm2() + m2.norm2() + m3.norm2());
+          auto const fac = kal * A0 * (2 * t + t * t) /
+                           (m1.norm2() + m2.norm2() + m3.norm2());
 
-      // local area force for triangle
-      f1 += (fac / 3.0) * m1;
-      f2 += (fac / 3.0) * m2;
-      f3 += (fac / 3.0) * m3;
-    };
+          // local area force for triangle
+          f1 += (fac / 3.0) * m1;
+          f2 += (fac / 3.0) * m2;
+          f3 += (fac / 3.0) * m3;
+        };
 
     handle_triangle(A01, fp1, fp2, fp3, force1, force2, force3);
     handle_triangle(A02, fp2, fp3, fp4, force2, force3, force4);

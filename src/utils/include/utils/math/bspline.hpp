@@ -29,6 +29,14 @@
 #endif
 #include <stdexcept>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wimplicit-fallthrough"
+#elif defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
+
 namespace Utils {
 /** @brief Formula of the B-spline. */
 template <int order, typename T>
@@ -317,3 +325,9 @@ DEVICE_QUALIFIER auto bspline_d(int i, T x) -> T
   return T{};
 }
 } // namespace Utils
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic pop
+#endif

@@ -17,11 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_WALBERLA
 
 #include "EKSpeciesNode.hpp"
+#include "errorhandling.hpp"
 
 #include "LatticeIndices.hpp"
 
@@ -70,6 +71,11 @@ Variant EKSpeciesNode::do_call_method(std::string const &name,
     return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
            m_conv_dens;
   }
+  if (name == "get_flux_vector") {
+    auto const result = m_ek_species->get_node_flux_vector(m_index);
+    return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
+           m_conv_flux;
+  }
   if (name == "get_is_boundary") {
     auto const result = m_ek_species->get_node_is_boundary(m_index);
     return Utils::Mpi::reduce_optional(context()->get_comm(), result);
@@ -106,6 +112,16 @@ Variant EKSpeciesNode::do_call_method(std::string const &name,
     if (is_none(params.at("value"))) {
       m_ek_species->remove_node_from_flux_boundary(m_index);
     } else {
+      context()->parallel_try_catch([&]() {
+        if (get_lattice().get_ghost_layers() < 2) {
+          if (context()->get_comm().size() > 1) {
+            throw std::runtime_error("The number of ghostlayers should be > 1 "
+                                     "when using flux boundaries and mpi.");
+          }
+          runtimeWarningMsg() << "The number of ghostlayers should be > 1 when "
+                                 "using flux boundaries and mpi.";
+        }
+      });
       auto const flux =
           get_value<Utils::Vector3d>(params, "value") * m_conv_flux;
       m_ek_species->set_node_flux_boundary(m_index, flux);

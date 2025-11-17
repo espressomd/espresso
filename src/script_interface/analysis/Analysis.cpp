@@ -135,12 +135,6 @@ Variant Analysis::do_call_method(std::string const &name,
     auto const local = system.particle_bond_energy(pid, bond_id, partners);
     return Utils::Mpi::reduce_optional(context()->get_comm(), local);
   }
-#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  if (name == "calc_long_range_fields") {
-    get_system().calculate_long_range_fields();
-    return {};
-  }
-#endif
   if (name == "particle_neighbor_pids") {
     auto &system = get_system();
     system.on_observable_calc();

@@ -18,10 +18,6 @@
  */
 #define BOOST_TEST_MODULE LB walberla node setters and getters test
 #define BOOST_TEST_DYN_LINK
-#include "config/config.hpp"
-
-#ifdef ESPRESSO_WALBERLA
-
 #define BOOST_TEST_NO_MAIN
 
 #include <boost/test/data/monomorphic.hpp>
@@ -598,15 +594,15 @@ BOOST_DATA_TEST_CASE(vtk_exceptions,
   auto const flag =
       static_cast<std::underlying_type_t<OutputVTK>>(OutputVTK::density);
   // cannot create the same observable twice
-  lb->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step");
+  lb->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step", false);
   BOOST_CHECK_THROW(
-      lb->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step"),
+      lb->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step", false),
       std::runtime_error);
   // cannot manually call an automatic observable
-  lb->create_vtk(1u, 0u, flag, units, "auto", "vtk_out", "step");
+  lb->create_vtk(1u, 0u, flag, units, "auto", "vtk_out", "step", false);
   BOOST_CHECK_THROW(lb->write_vtk("vtk_out/auto"), std::runtime_error);
   // cannot activate a manual observable
-  lb->create_vtk(0u, 0u, flag, units, "manual", "vtk_out", "step");
+  lb->create_vtk(0u, 0u, flag, units, "manual", "vtk_out", "step", false);
   BOOST_CHECK_THROW(lb->switch_vtk("vtk_out/manual", 0), std::runtime_error);
   // cannot call or activate observables that haven't been registered yet
   BOOST_CHECK_THROW(lb->write_vtk("unknown"), std::runtime_error);
@@ -665,7 +661,3 @@ int main(int argc, char **argv) {
   MPI_Finalize();
   return res;
 }
-
-#else // ESPRESSO_WALBERLA
-int main(int argc, char **argv) {}
-#endif

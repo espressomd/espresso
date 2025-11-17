@@ -190,12 +190,9 @@ public:
   /** Perform an in-place backward 3D FFT.
    *  \warning The content of \a data is overwritten.
    *  \param[in,out] data           Mesh.
-   *  \param[in]     check_complex  Throw an error if the complex component is
-   *                                non-zero.
    *  \param[in]     comm           MPI communicator.
    */
-  void backward_fft(boost::mpi::communicator const &comm, FloatType *data,
-                    bool check_complex);
+  void backward_fft(boost::mpi::communicator const &comm, FloatType *data);
 
   auto const &get_mesh_size() const { return forw[3u].new_mesh; }
 

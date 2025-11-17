@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_P3M
 
@@ -44,12 +44,12 @@ class ElectrostaticLayerCorrection
 
   using BaseSolver = std::variant<
 #ifdef ESPRESSO_CUDA
-      std::shared_ptr<CoulombP3M<Arch::GPU>>,
+      std::shared_ptr<CoulombP3M<Arch::CUDA>>,
 #endif // ESPRESSO_CUDA
       std::shared_ptr<CoulombP3M<Arch::CPU>>>;
   BaseSolver m_solver;
 
-  void on_bind_system(::System::System &system) override {
+  void on_bind_system(::System::System &) override {
     std::visit([this](auto &solver) { solver->bind_system(m_system.lock()); },
                m_solver);
   }
@@ -86,7 +86,7 @@ public:
     auto so_ptr = get_value<ObjectRef>(params, "actor");
     context()->parallel_try_catch([&]() {
 #ifdef ESPRESSO_CUDA
-      if (auto so = std::dynamic_pointer_cast<CoulombP3M<Arch::GPU>>(so_ptr)) {
+      if (auto so = std::dynamic_pointer_cast<CoulombP3M<Arch::CUDA>>(so_ptr)) {
         solver = so->actor();
         m_solver = so;
         return;

@@ -143,6 +143,18 @@ static void add_forces_and_torques(ParticleRange const &particles,
     i++;
   }
 }
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+static void add_dip_fld(ParticleRange const &particles,
+                        std::span<const float> dip_fld) {
+  std::size_t i = 0ul;
+  for (auto &p : particles) {
+    for (std::size_t j = 0ul; j < 3ul; j++) {
+      p.dip_fld()[j] += static_cast<double>(dip_fld[3ul * i + j]);
+    }
+    i++;
+  }
+}
+#endif
 
 /**
  * @brief Distribute forces to the worker nodes, and add them to the particles.
@@ -181,5 +193,27 @@ void GpuParticleData::particles_scatter_forces(
     add_forces_and_torques(particles, host_forces, host_torques);
   }
 }
+
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+void GpuParticleData::particles_scatter_dip_fld(
+    ParticleRange const &particles, std::span<float> host_dip_fld) const {
+
+  auto const size = 3ul * particles.size();
+  auto const n_elements = static_cast<int>(size);
+
+  if (::this_node > 0) {
+    static std::vector<float> buffer_dip_fld;
+
+    buffer_dip_fld.resize(size);
+    Utils::Mpi::scatter_buffer(buffer_dip_fld.data(), n_elements, ::comm_cart);
+    add_dip_fld(particles, buffer_dip_fld);
+
+  } else {
+    Utils::Mpi::scatter_buffer(host_dip_fld.data(), n_elements, ::comm_cart);
+
+    add_dip_fld(particles, host_dip_fld);
+  }
+}
+#endif
 
 #endif

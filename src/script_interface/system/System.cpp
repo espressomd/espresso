@@ -143,7 +143,7 @@ struct System::Leaves {
 
 System::System() : m_instance{}, m_leaves{std::make_unique<Leaves>()} {
   auto const add_parameter =
-      [this, ptr = m_leaves.get()](std::string key, auto(Leaves::*member)) {
+      [this, ptr = m_leaves.get()](std::string key, auto Leaves::*member) {
         add_parameters({AutoParameter(
             key.c_str(),
             [this, ptr, member, key](Variant const &val) {

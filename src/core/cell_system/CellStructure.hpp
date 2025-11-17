@@ -76,9 +76,7 @@ template <typename... Types> struct MemberTypes;
 template <class DataType, class MemorySpace, int, class MemoryTraits>
 class AoSoA;
 } // namespace Cabana
-namespace Communication {
 struct KokkosHandle;
-} // namespace Communication
 template <class MemorySpace, class ListAlgorithm, class Layout, class BuildTag>
 class CustomVerletList;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
@@ -175,10 +173,7 @@ public:
   struct AoSoA_pack;
   using ForceType = Kokkos::View<double **[3], Kokkos::LayoutRight>;
   using VirialType = Kokkos::View<double *[3], Kokkos::LayoutRight>;
-  using data_types = Cabana::MemberTypes<double[3], double, int, int>;
   using memory_space = Kokkos::HostSpace;
-  using AoSoAType = Cabana::AoSoA<data_types, memory_space, vector_length,
-                                  Kokkos::MemoryTraits<0>>;
   using ListAlgorithm = Cabana::HalfNeighborTag;
   using ListType =
       CustomVerletList<Kokkos::HostSpace, ListAlgorithm, Cabana::VerletLayout2D,
@@ -206,6 +201,7 @@ private:
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   int m_cached_max_local_particle_id = 0;
   int m_max_id = 0;
+  std::unique_ptr<Kokkos::View<int *>> m_id_to_index;
   std::unique_ptr<ForceType> m_local_force;
 #ifdef ESPRESSO_ROTATION
   std::unique_ptr<ForceType> m_local_torque;
@@ -214,12 +210,11 @@ private:
   std::unique_ptr<VirialType> m_local_virial;
 #endif
   std::unique_ptr<ListType> m_verlet_list_cabana;
-  std::unique_ptr<AoSoAType> m_particle_storage;
-  /** particle properties for Cabana */
+  /** particle properties using individual Kokkos Views */
   std::unique_ptr<AoSoA_pack> m_aosoa;
   /** The local id-to-index for aosoa data */
   std::vector<Particle *> m_unique_particles;
-  std::shared_ptr<Communication::KokkosHandle> m_kokkos_handle;
+  std::shared_ptr<KokkosHandle> m_kokkos_handle;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 public:
@@ -726,11 +721,12 @@ private:
 public:
   auto get_max_id() const { return m_max_id; }
 
-  void set_kokkos_handle(std::shared_ptr<Communication::KokkosHandle> handle);
+  void set_kokkos_handle(std::shared_ptr<KokkosHandle> handle);
   void rebuild_local_properties(double pair_cutoff);
   void reset_local_properties();
   void reset_local_force();
 
+  auto &get_id_to_index() { return *m_id_to_index; }
   auto &get_local_force() { return *m_local_force; }
 #ifdef ESPRESSO_ROTATION
   auto &get_local_torque() { return *m_local_torque; }
@@ -744,7 +740,7 @@ public:
   void clear_local_properties();
 
   [[nodiscard]] auto is_verlet_list_cabana_rebuild_needed() const {
-    return m_rebuild_verlet_list_cabana or (not use_verlet_list);
+    return m_rebuild_verlet_list_cabana;
   }
 
   /**
@@ -766,14 +762,20 @@ public:
     return rebuild;
   }
 
-  void rebuild_verlet_list_cabana(auto &&kernel) {
+  void rebuild_verlet_list_cabana(auto &&kernel, bool rebuild_verlet_list) {
     assert(is_verlet_list_cabana_rebuild_needed());
-    kernel(m_decomposition->local_cells(), m_decomposition->box(),
-           *m_verlet_list_cabana);
+    if (rebuild_verlet_list) {
+      kernel(m_decomposition->local_cells(), m_decomposition->box(),
+             *m_verlet_list_cabana);
+    }
     m_rebuild_verlet_list_cabana = false;
   }
 
   void set_index_map();
+
+  inline void cell_list_loop(auto &&kernel) {
+    kernel(m_decomposition->local_cells(), m_decomposition->box());
+  }
 #endif
 
 private:

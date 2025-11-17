@@ -33,6 +33,7 @@
 #include <boost/mpi/communicator.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <memory>
 #include <unordered_map>
 #include <variant>
@@ -178,8 +179,13 @@ BOOST_AUTO_TEST_CASE(calling_methods) {
 }
 
 int main(int argc, char **argv) {
-  auto mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
-  Communication::init(mpi_env);
+  auto mpi_env = std::make_shared<boost::mpi::environment>(
+      argc, argv, boost::mpi::threading::multiple);
+  ::communication_environment =
+      std::make_unique<CommunicationEnvironment>(mpi_env);
+  assert(::comm_cart.size() == 1);
 
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  auto const res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  ::communication_environment.reset();
+  return res;
 }

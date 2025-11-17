@@ -101,7 +101,7 @@ void set_from_list(gpu::GPUField<float> const *field,
 
 namespace Interpolation {
 std::vector<float> get_rho(gpu::GPUField<float> const *field,
-                           std::vector<float> const &pos, float const density,
+                           std::vector<float> const &pos, float density,
                            uint gl);
 std::vector<float> get_vel(gpu::GPUField<float> const *field,
                            std::vector<float> const &pos, uint gl);
@@ -110,14 +110,14 @@ void add_force(gpu::GPUField<float> const *field, std::vector<float> const &pos,
 } // namespace Interpolation
 
 namespace Density {
-float get(gpu::GPUField<float> const *pdf_field, float const density,
+float get(gpu::GPUField<float> const *pdf_field, float density,
           Cell const &cell);
-void set(gpu::GPUField<float> *pdf_field, float const rho, float const density,
+void set(gpu::GPUField<float> *pdf_field, float rho, float density,
          Cell const &cell);
-std::vector<float> get(gpu::GPUField<float> const *pdf_field,
-                       float const density, CellInterval const &ci);
+std::vector<float> get(gpu::GPUField<float> const *pdf_field, float density,
+                       CellInterval const &ci);
 void set(gpu::GPUField<float> *pdf_field, std::vector<float> const &values,
-         float const density, CellInterval const &ci);
+         float density, CellInterval const &ci);
 } // namespace Density
 
 namespace Velocity {
@@ -138,11 +138,11 @@ namespace Force {
 void set(gpu::GPUField<float> const *pdf_field,
          gpu::GPUField<float> *velocity_field,
          gpu::GPUField<float> *force_field, Vector3<float> const &u,
-         float const density, Cell const &cell);
+         float density, Cell const &cell);
 void set(gpu::GPUField<float> const *pdf_field,
          gpu::GPUField<float> *velocity_field,
          gpu::GPUField<float> *force_field, std::vector<float> const &values,
-         float const density, CellInterval const &ci);
+         float density, CellInterval const &ci);
 } // namespace Force
 
 namespace DensityAndVelocity {
@@ -150,7 +150,7 @@ std::tuple<float, Vector3<float>> get(gpu::GPUField<float> const *pdf_field,
                                       gpu::GPUField<float> const *force_field,
                                       Cell const &cell);
 void set(gpu::GPUField<float> *pdf_field, gpu::GPUField<float> *force_field,
-         Vector3<float> const &u, float const rho, Cell const &cell);
+         Vector3<float> const &u, float rho, Cell const &cell);
 } // namespace DensityAndVelocity
 
 namespace DensityAndMomentumDensity {
@@ -161,17 +161,15 @@ std::tuple<float, Vector3<float>> get(gpu::GPUField<float> const *pdf_field,
 
 namespace MomentumDensity {
 Vector3<float> reduce(gpu::GPUField<float> const *pdf_field,
-                      gpu::GPUField<float> const *force_field,
-                      float const density);
+                      gpu::GPUField<float> const *force_field, float density);
 } // namespace MomentumDensity
 
 namespace PressureTensor {
-Matrix3<float> get(gpu::GPUField<float> const *pdf_field, float const density,
+Matrix3<float> get(gpu::GPUField<float> const *pdf_field, float density,
                    Cell const &cell);
-std::vector<float> get(gpu::GPUField<float> const *pdf_field,
-                       float const density, CellInterval const &ci);
-Matrix3<float> reduce(gpu::GPUField<float> const *pdf_field,
-                      float const density);
+std::vector<float> get(gpu::GPUField<float> const *pdf_field, float density,
+                       CellInterval const &ci);
+Matrix3<float> reduce(gpu::GPUField<float> const *pdf_field, float density);
 } // namespace PressureTensor
 
 } // namespace accessor

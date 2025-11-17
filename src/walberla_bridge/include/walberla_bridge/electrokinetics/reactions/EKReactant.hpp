@@ -55,6 +55,9 @@ public:
   }
 
   [[nodiscard]] auto get_species() const noexcept { return m_ekspecies; }
+
+  /** @brief Get whether the kernels run on GPUs. */
+  [[nodiscard]] bool is_gpu() const noexcept { return m_ekspecies->is_gpu(); }
 };
 
 } // namespace walberla

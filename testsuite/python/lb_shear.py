@@ -185,7 +185,7 @@ class LBShearCommon:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBShearWalberla(LBShearCommon, ut.TestCase):
+class LBShearWalberlaDoublePrecisionCPU(LBShearCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
@@ -196,7 +196,7 @@ class LBShearWalberla(LBShearCommon, ut.TestCase):
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBShearWalberlaSinglePrecision(LBShearCommon, ut.TestCase):
+class LBShearWalberlaSinglePrecisionCPU(LBShearCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""
 

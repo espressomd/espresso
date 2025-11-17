@@ -31,6 +31,7 @@
 #include "integrators/brownian_inline.hpp"
 #include "integrators/steepest_descent.hpp"
 #include "integrators/stokesian_dynamics_inline.hpp"
+#include "integrators/symplectic_euler_inline.hpp"
 #include "integrators/velocity_verlet_inline.hpp"
 #include "integrators/velocity_verlet_npt.hpp"
 
@@ -133,7 +134,8 @@ void Propagation::update_default_propagation(int thermo_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     default_propagation = PropagationMode::NONE;
     break;
-  case INTEG_METHOD_NVT: {
+  case INTEG_METHOD_NVT:
+  case INTEG_METHOD_SYMPLECTIC_EULER: {
     // NOLINTNEXTLINE(bugprone-branch-clone)
     if ((thermo_switch & THERMO_LB) and (thermo_switch & THERMO_LANGEVIN)) {
       default_propagation = PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE;
@@ -310,6 +312,9 @@ void walberla_agrid_sanity_checks(std::string method,
 #endif // ESPRESSO_WALBERLA
 
 static void resort_particles_if_needed(System::System &system) {
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
   auto &cell_structure = *system.cell_structure;
   auto const offset = LeesEdwards::verlet_list_offset(
       *system.box_geo, cell_structure.get_le_pos_offset_at_last_resort());
@@ -324,6 +329,9 @@ static void resort_particles_if_needed(System::System &system) {
 static bool integrator_step_1(CellStructure &cell_structure,
                               Propagation const &propagation,
                               System::System &system, double time_step) {
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
   // steepest decent
   if (propagation.integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
     return steepest_descent_step(cell_structure.local_particles());
@@ -336,21 +344,39 @@ static bool integrator_step_1(CellStructure &cell_structure,
     if (p.is_virtual())
       return;
 #endif
-    if (propagation.should_propagate_with(
-            p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
-      velocity_verlet_propagator_1(p, time_step);
-    if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
-      velocity_verlet_propagator_1(p, time_step);
+    if (propagation.integ_switch == INTEG_METHOD_SYMPLECTIC_EULER) {
+      if (propagation.should_propagate_with(
+              p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
+        symplectic_euler_propagator_1(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
+        symplectic_euler_propagator_1(p, time_step);
 #ifdef ESPRESSO_ROTATION
-    if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
-      velocity_verlet_rotator_1(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
+        symplectic_euler_rotator_1(p, time_step);
 #endif
-    if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
-      velocity_verlet_propagator_1(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
+        symplectic_euler_propagator_1(p, time_step);
 #ifdef ESPRESSO_ROTATION
-    if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
-      velocity_verlet_rotator_1(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
+        symplectic_euler_rotator_1(p, time_step);
 #endif
+    } else {
+      if (propagation.should_propagate_with(
+              p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
+        velocity_verlet_propagator_1(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
+        velocity_verlet_propagator_1(p, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
+        velocity_verlet_rotator_1(p, time_step);
+#endif
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
+        velocity_verlet_propagator_1(p, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
+        velocity_verlet_rotator_1(p, time_step);
+#endif
+    }
     if (propagation.should_propagate_with(p, PropagationMode::TRANS_BROWNIAN))
       brownian_dynamics_propagator(*thermostat.brownian, p, time_step, kT);
 #ifdef ESPRESSO_ROTATION
@@ -391,6 +417,9 @@ static void integrator_step_2(CellStructure &cell_structure,
                               Propagation const &propagation,
                               [[maybe_unused]] System::System &system,
                               double time_step) {
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
   if (propagation.integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
     return;
 
@@ -400,21 +429,39 @@ static void integrator_step_2(CellStructure &cell_structure,
     if (p.is_virtual())
       return;
 #endif
-    if (propagation.should_propagate_with(
-            p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
-      velocity_verlet_propagator_2(p, time_step);
-    if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
-      velocity_verlet_propagator_2(p, time_step);
+    if (propagation.integ_switch == INTEG_METHOD_SYMPLECTIC_EULER) {
+      if (propagation.should_propagate_with(
+              p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
+        symplectic_euler_propagator_2(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
+        symplectic_euler_propagator_2(p, time_step);
 #ifdef ESPRESSO_ROTATION
-    if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
-      velocity_verlet_rotator_2(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
+        symplectic_euler_rotator_2(p, time_step);
 #endif
-    if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
-      velocity_verlet_propagator_2(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
+        symplectic_euler_propagator_2(p, time_step);
 #ifdef ESPRESSO_ROTATION
-    if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
-      velocity_verlet_rotator_2(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
+        symplectic_euler_rotator_2(p, time_step);
 #endif
+    } else {
+      if (propagation.should_propagate_with(
+              p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
+        velocity_verlet_propagator_2(p, time_step);
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
+        velocity_verlet_propagator_2(p, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
+        velocity_verlet_rotator_2(p, time_step);
+#endif
+      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
+        velocity_verlet_propagator_2(p, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
+        velocity_verlet_rotator_2(p, time_step);
+#endif
+    }
   });
 
 #ifdef ESPRESSO_NPT
@@ -635,7 +682,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
               << "LB and EK are active but with different time steps.";
         }
 
-        assert(not lb.is_gpu());
+        assert(lb.is_gpu() == ek.is_gpu());
         assert(propagation.lb_skipped_md_steps ==
                propagation.ek_skipped_md_steps);
 
@@ -644,23 +691,45 @@ int System::System::integrate(int n_steps, int reuse_forces) {
         if (propagation.lb_skipped_md_steps >= md_steps_per_lb_step) {
           propagation.lb_skipped_md_steps = 0;
           propagation.ek_skipped_md_steps = 0;
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_BEGIN("lb_propagation");
+#endif
           lb.propagate();
           lb.ghost_communication_vel();
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_END("lb_propagation");
+          CALI_MARK_BEGIN("ek_propagation");
+#endif
           ek.propagate();
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_END("ek_propagation");
+#endif
         }
       } else if (lb_active) {
         auto const md_steps_per_lb_step = calc_md_steps_per_tau(lb.get_tau());
         propagation.lb_skipped_md_steps += 1;
         if (propagation.lb_skipped_md_steps >= md_steps_per_lb_step) {
           propagation.lb_skipped_md_steps = 0;
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_BEGIN("lb_propagation");
+#endif
           lb.propagate();
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_END("lb_propagation");
+#endif
         }
       } else if (ek_active) {
         auto const md_steps_per_ek_step = calc_md_steps_per_tau(ek.get_tau());
         propagation.ek_skipped_md_steps += 1;
         if (propagation.ek_skipped_md_steps >= md_steps_per_ek_step) {
           propagation.ek_skipped_md_steps = 0;
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_BEGIN("ek_propagation");
+#endif
           ek.propagate();
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_END("ek_propagation");
+#endif
         }
       }
       if (lb_active and (propagation.used_propagations &
@@ -671,10 +740,16 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #ifdef ESPRESSO_VIRTUAL_SITES_INERTIALESS_TRACERS
       if (thermostat->lb and
           (propagation.used_propagations & PropagationMode::TRANS_LB_TRACER)) {
+#ifdef ESPRESSO_CALIPER
+        CALI_MARK_BEGIN("lb_tracers_propagation");
+#endif
         if (lb_active) {
           lb.ghost_communication_vel();
         }
         lb_tracers_propagate(*cell_structure, lb, time_step);
+#ifdef ESPRESSO_CALIPER
+        CALI_MARK_END("lb_tracers_propagation");
+#endif
       }
 #endif
 
@@ -736,6 +811,12 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   if (caught_error) {
     return INTEG_ERROR_RUNTIME;
   }
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  if (boost::mpi::all_reduce(::comm_cart, not cell_structure->use_verlet_list,
+                             std::logical_or<>())) {
+    cell_structure->use_verlet_list = false;
+  }
+#endif
   return integrated_steps;
 }
 

@@ -953,22 +953,6 @@ class ParticleSlice(ScriptInterfaceHelper):
         self._get_particle = functools.lru_cache(
             maxsize=self._particle_cache_size)(self._get_particle_impl)
 
-    @property
-    def pos_folded(self):
-        """
-        Particle position (folded into central image).
-
-        """
-        pos_array = np.zeros((len(self.id_selection), 3))
-        for i in range(len(self.id_selection)):
-            pos_array[i, :] = self._get_particle(
-                self.id_selection[i]).pos_folded
-        return pos_array
-
-    @pos_folded.setter
-    def pos_folded(self, value):
-        raise RuntimeError("Parameter 'pos_folded' is read-only.")
-
     def add_exclusion(self, _partner):
         assert_features(["EXCLUSIONS"])
         for p_id in self.id_selection:
@@ -1369,23 +1353,30 @@ class ParticleList(ScriptInterfaceHelper):
 
 
 def set_slice_one_for_all(p_slice, attribute, value):
-    is_trivially_serializable = attribute in ParticleSlice._particle_attributes_trivially_serializable
-    for p_id in p_slice.id_selection:
-        p = p_slice._get_particle(p_id)
-        if is_trivially_serializable:
-            p.set_parameter(attribute, value)
-        else:
-            setattr(p, attribute, value)
+    set_slice_one_for_each(p_slice, attribute, [value] * len(p_slice))
 
 
 def set_slice_one_for_each(p_slice, attribute, values):
-    is_trivially_serializable = attribute in ParticleSlice._particle_attributes_trivially_serializable
-    for p_id, value in zip(p_slice.id_selection, values):
-        p = p_slice._get_particle(p_id)
-        if is_trivially_serializable:
-            p.set_parameter(attribute, value)
-        else:
-            setattr(p, attribute, value)
+    if attribute == "bonds":
+        all_bonds_ids = []
+        all_bonds_partner_ids = []
+        for i, bonds in enumerate(values):
+            p = p_slice._get_particle(p_slice.id_selection[i])
+            bonds_ids = []
+            bonds_partner_ids = []
+            for bond in bonds:
+                _bond = p.normalize_and_check_bond_or_throw_exception(bond)
+                p._bond_sanity_checks(_bond)
+                bonds_ids.append(_bond[0]._bond_id)
+                bonds_partner_ids.append(_bond[1:])
+            all_bonds_ids.append(bonds_ids)
+            all_bonds_partner_ids.append(bonds_partner_ids)
+        p_slice.call_method("set_param_parallel", name=attribute,
+                            all_bonds_ids=all_bonds_ids,
+                            all_bonds_partner_ids=all_bonds_partner_ids)
+    else:
+        p_slice.call_method("set_param_parallel",
+                            name=attribute, values=values)
 
 
 def _add_particle_slice_properties():
@@ -1413,7 +1404,11 @@ def _add_particle_slice_properties():
         # Special attributes
         if attribute == "bonds":
             nlvl = nesting_level(values)
-            if nlvl == 1 or nlvl == 2:
+            if nlvl == 1:
+                if len(values) > 0:
+                    values = [values]
+                set_slice_one_for_all(particle_slice, attribute, values)
+            elif nlvl == 2:
                 set_slice_one_for_all(particle_slice, attribute, values)
             elif nlvl == 3 and len(values) == N:
                 set_slice_one_for_each(particle_slice, attribute, values)
@@ -1496,26 +1491,18 @@ def _add_particle_slice_properties():
         if N == 0:
             return np.empty(0, dtype=type(None))
 
-        # get first slice member to determine its type
-        p_id = particle_slice.id_selection[0]
-        is_trivially_serializable = attribute in ParticleSlice._particle_attributes_trivially_serializable
-        target = getattr(particle_slice._get_particle(p_id), attribute)
-        if isinstance(target, array_locked):  # vectorial quantity
-            target_type = target.dtype
-        else:  # scalar quantity
-            target_type = type(target)
-
         if attribute in ["exclusions", "bonds", "vs_relative", "swimming", "vs_com"]:
             values = []
             for part in particle_slice._id_gen():
                 values.append(getattr(part, attribute))
         else:
-            values = np.empty((N,) + np.shape(target), dtype=target_type)
-            for i, part in enumerate(particle_slice._id_gen()):
-                if is_trivially_serializable:
-                    values[i] = part.get_parameter(attribute)
-                else:
-                    values[i] = getattr(part, attribute)
+            values = particle_slice.call_method(
+                "get_param_parallel", name=attribute)
+            if attribute == "propagation":
+                values = np.array([Propagation(value)
+                                  for value in values], dtype=object)
+            else:
+                values = np.stack(values)
 
         return values
 

@@ -262,18 +262,30 @@ class Test(ut.TestCase):
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] == 1,
                "only runs for 2 or more MPI ranks")
     def test_inner_loop_consistency_cpu(self):
+        self.check_inner_loop_consistency(
+            solver=espressomd.magnetostatics.DipolarDirectSumCpu,
+            tol={"atol": 1e-10, "rtol": 1e-10})
+
+    @utx.skipIfMissingFeatures("DIPOLAR_DIRECT_SUM")
+    @utx.skipIfMissingGPU()
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] == 1,
+               "only runs for 2 or more MPI ranks")
+    def test_inner_loop_consistency_gpu(self):
+        self.check_inner_loop_consistency(
+            solver=espressomd.magnetostatics.DipolarDirectSumGpu,
+            tol={"atol": 1e-6, "rtol": 1e-6})
+
+    def check_inner_loop_consistency(self, solver, tol):
         system = self.system
         system.periodicity = [True, True, True]
-        tol = {"atol": 1e-10, "rtol": 1e-10}
         p1 = system.part.add(pos=[0., 0., 0.], dip=[0., 0., 1.],
                              rotation=[True, True, True])
         p2 = system.part.add(pos=[1., 0., 0.], dip=[0., 0., 1.],
                              rotation=[True, True, True])
         for n_replicas in [0, 1]:
             system.magnetostatics.clear()
-            solver = espressomd.magnetostatics.DipolarDirectSumCpu(
+            system.magnetostatics.solver = solver(
                 prefactor=1., n_replicas=n_replicas)
-            system.magnetostatics.solver = solver
 
             # intra-node calculation
             p1.pos = [system.box_l[0] / 2. - 0.1, 0., 2.]

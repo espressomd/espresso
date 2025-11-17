@@ -20,7 +20,7 @@
 #pragma once
 
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp>
+#include <walberla_bridge/electrokinetics/PoissonSolver.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -41,6 +41,7 @@ private:
   double m_tau;
   std::shared_ptr<walberla::PoissonSolver> m_poisson_solver;
   container_type m_ekcontainer;
+  bool m_is_gpu;
 
   bool lattice_equal(LatticeWalberla const &lhs,
                      LatticeWalberla const &rhs) const {
@@ -79,6 +80,13 @@ public:
   void add(std::shared_ptr<EKSpecies> const &ek_species) {
     assert(not contains(ek_species));
     sanity_checks(ek_species);
+    if (!m_ekcontainer.empty()) {
+      if (ek_species->is_gpu() != m_is_gpu) {
+        throw std::runtime_error(
+            "All EK Species need to be on de same device.");
+      }
+    }
+    m_is_gpu = ek_species->is_gpu();
     m_ekcontainer.emplace_back(ek_species);
   }
 
@@ -100,15 +108,16 @@ public:
     m_poisson_solver = solver;
   }
 
+  [[nodiscard]] bool is_gpu() const noexcept { return m_is_gpu; }
+
   [[nodiscard]] double get_tau() const noexcept { return m_tau; }
 
   void set_tau(double tau) noexcept { m_tau = tau; }
 
   void reset_charge() const { m_poisson_solver->reset_charge_field(); }
 
-  void add_charge(std::size_t const id, double valency,
-                  bool is_double_precision) const {
-    m_poisson_solver->add_charge_to_field(id, valency, is_double_precision);
+  void add_charge(std::size_t const id, double valency) const {
+    m_poisson_solver->add_charge_to_field(id, valency);
   }
 
   void solve_poisson() const { m_poisson_solver->solve(); }

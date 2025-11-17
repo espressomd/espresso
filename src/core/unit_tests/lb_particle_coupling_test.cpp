@@ -416,8 +416,9 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       if (rank == 0) {
         auto const particles = cell_structure.local_particles();
         auto const ghost_particles = cell_structure.ghost_particles();
+        auto const gh_size = (comm.size() > 1 and with_ghosts) ? 1ul : 0ul;
         BOOST_REQUIRE_GE(particles.size(), 1);
-        BOOST_REQUIRE_GE(ghost_particles.size(), static_cast<int>(with_ghosts));
+        BOOST_REQUIRE_GE(ghost_particles.size(), gh_size);
       }
     }
 

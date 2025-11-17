@@ -107,8 +107,9 @@ calculate_vs_relate_to_params(Particle const &p_vs, Particle const &p_relate_to,
   constexpr auto const *function_name = location.function_name();
   constexpr auto *error_msg = "%s: component %u: %f instead of %f\n";
   Utils::Quaternion<double> qtemp = relate_to_quat * quat;
+  constexpr auto epsilon = 1e-10;
   for (unsigned int i = 0; i < 4; i++) {
-    if (fabs(qtemp[i] - quat_director[i]) != 0.) {
+    if (fabs(qtemp[i] - quat_director[i]) >= epsilon) {
       fprintf(stderr, error_msg, function_name, i, qtemp[i], quat_director[i]);
     }
   }

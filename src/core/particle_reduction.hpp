@@ -39,13 +39,13 @@ template <typename ResultType>
 using AddPartialResultKernel =
     std::function<void(ResultType &, Particle const &)>;
 
-/** @brief Join two partial reduciton results */
+/** @brief Join two partial reduction results */
 template <typename ResultType>
 using ReductionOp = std::function<void(ResultType &, ResultType const &)>;
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
-/** @brief Implements a custom reduction in the form required by  Kokkos */
+/** @brief Custom reduction in the form required by Kokkos */
 template <typename ResultType, typename Kernel> class KokkosReducer {
 public:
   // Kokkos reduction functors need the value_type typedef.
@@ -60,7 +60,7 @@ public:
   ReductionOp<ResultType> reduction_op;
   Kernel kernel;
   KokkosReducer(Kernel kernel, ReductionOp<ResultType> reduction_op)
-      : reduction_op(reduction_op), kernel(kernel) {}
+      : reduction_op(std::move(reduction_op)), kernel(std::move(kernel)) {}
   KokkosReducer(KokkosReducer const &other)
       : reduction_op(other.reduction_op), kernel(other.kernel) {};
 
@@ -101,7 +101,7 @@ template <typename ResultType>
 ResultType reduce_over_local_particles(
     CellStructure const &cs,
     Reduction::AddPartialResultKernel<ResultType> add_partial,
-    Reduction::ReductionOp<ResultType> reduce_op) {
+    [[maybe_unused]] Reduction::ReductionOp<ResultType> reduce_op) {
 
   ResultType result{};
 

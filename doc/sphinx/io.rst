@@ -195,23 +195,25 @@ Be aware of the following limitations:
 For additional methods of the checkpointing class, see
 :class:`espressomd.checkpointing.Checkpoint`.
 
-.. _Writing H5MD-files:
+.. _Writing hdf5 files:
 
-Writing H5MD-files
+Writing hdf5 files
 ------------------
 
 .. note::
 
-    Requires ``H5MD`` external feature, enabled with ``-D ESPRESSO_BUILD_WITH_HDF5=ON``.
+    Requires ``HDF5`` external feature, enabled with ``-D ESPRESSO_BUILD_WITH_HDF5=ON``.
     Also requires a parallel version of HDF5. On Ubuntu, this can be installed
     via either ``libhdf5-openmpi-dev`` for OpenMPI or ``libhdf5-mpich-dev`` for
-    MPICH, but not ``libhdf5-dev`` which is the serial version.
+    MPICH, but not via ``libhdf5-dev`` which is the serial version.
 
-For long simulations, it's a good idea to store data in the hdf5 file format
-(see https://www.hdfgroup.org for details, H5MD is based on hdf5).
-Currently |es| supports some basic functions for writing simulation
-data to H5MD files. The implementation is MPI-parallelized and is capable
-of dealing with a varying number of particles.
+It is good practice to store trajectory files in the hdf5 file format :cite:`misc-hdf5`
+using the H5MD specification :cite:`buyl14a` to store metadata, such as SI units.
+This is a performance-portable and interoperable file format commonly used
+to exchange data between molecular dynamics software or archive simulation data.
+|es| uses the HighFive library :cite:`devresse24a` for read/write operations.
+The implementation is MPI-parallel, scales well on parallel file systems,
+and is capable of dealing with a varying number of particles.
 
 To write data in a hdf5-file according to the H5MD proposal
 (https://nongnu.org/h5md), first an object of the class
@@ -265,19 +267,19 @@ entry belongs to which particle.
 
 For an example involving physical units, see :file:`/samples/h5md.py`.
 
-.. _Reading H5MD-files:
+.. _Reading hdf5 files:
 
-Reading H5MD-files
+Reading hdf5 files
 ------------------
 
-H5MD files can be read and sometimes modified by many tools. If the data was
-stored with `physical units <https://nongnu.org/h5md/modules/units.html>`__,
-they can be accessed by reading the group attributes. Since the data is
+Numerous tools are available to read hdf5 files. Since the data is
 written in parallel, the particles are unsorted; if particles were created
 with increasing particle id and no particle deletion occurred during the
-simulation, the coordinates can be sorted with a simply numpy operation.
+simulation, the coordinates can be sorted with a simple NumPy operation.
+If the data was stored with `SI units <https://nongnu.org/h5md/modules/units.html>`__
+according to the H5MD specification, they can be accessed by reading group attributes.
 
-To read with the python module ``h5py`` (documentation:
+To read with the Python package ``h5py`` (documentation:
 `HDF5 for Python <https://docs.h5py.org/en/stable>`__)::
 
     import h5py
@@ -289,7 +291,7 @@ To read with the python module ``h5py`` (documentation:
         sim_time = h5file['particles/atoms/id/time']
         print(f"last frame: {sim_time[-2]:.3f} {sim_time.attrs['unit'].decode('utf8')}")
 
-To read with the python module ``pandas`` (documentation: `HDFStore: PyTables
+To read with the Python package ``pandas`` (documentation: `HDFStore: PyTables
 <https://pandas.pydata.org/docs/reference/io.html#hdfstore-pytables-hdf5>`_)::
 
     import pandas
@@ -312,7 +314,7 @@ To read from the command line with
     # show metadata + data
     h5dump sample.h5 | less
 
-H5MD files can also be inspected with the GUI tool
+hdf5 files can also be inspected with the GUI tool
 `HDFView <https://www.hdfgroup.org/downloads/hdfview>`__ (Ubuntu package
 ``hdfview``) or visually with the H5MD VMD plugin (GitHub project
 `h5md/VMD-h5mdplugin <https://github.com/h5md/VMD-h5mdplugin>`__).
@@ -529,4 +531,11 @@ functionality is provided by the wrapper :class:`~espressomd.io.vtk.VTKReader`:
     vtk_density = vtk_grids["density"]
     print(vtk_density.shape)
 
-For a self-contained example, please refer to :ref:`LB VTK output`.
+For self-contained examples, please refer to :ref:`LB VTK output` and
+:ref:`EK VTK output`.
+
+Some lattice-based methods support structured uniform grids. In this case,
+the file extension is ``.vti`` and each piece has absolute coordinates,
+making the reconstruction of the 3D grid trivial. The aforementioned
+VTK reader natively supports both structured and unstructured grid formats,
+and selects the correct reader backend based on the XML metadata.

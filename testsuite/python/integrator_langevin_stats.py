@@ -37,6 +37,7 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
 
     def setUp(self):
         np.random.seed(42)
+        self.system.integrator.set_vv()
 
     def tearDown(self):
         self.system.time_step = 1e-12
@@ -47,7 +48,8 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         self.system.integrator.set_vv()
 
     def check_vel_dist_global_temp(self, recalc_forces, loops):
-        """Test velocity distribution for global Langevin parameters.
+        """
+        Test velocity distribution for global Langevin parameters.
 
         Parameters
         ----------
@@ -74,14 +76,15 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
 
     def test_vel_dist_global_temp_initial_forces(self):
         """Test velocity distribution for global Langevin parameters,
-           when using the initial force calculation.
+        when using the initial force calculation.
         """
         self.check_vel_dist_global_temp(True, loops=170)
 
     @utx.skipIfMissingFeatures("THERMOSTAT_PER_PARTICLE")
     def test_vel_dist_per_particle(self):
-        """Test Langevin dynamics with particle-specific kT and gamma. Covers
-           all combinations of particle-specific gamma and temp set or not set.
+        """
+        Test Langevin dynamics with particle-specific kT and gamma. Covers
+        all combinations of particle-specific gamma and temp set or not set.
         """
         N = 400
         system = self.system
@@ -97,6 +100,31 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         self.check_per_particle(
             N, kT, gamma2, loops, v_minmax, bins, error_tol)
 
+    def test_symplectic_euler_thermalization(self):
+        """Test that symplectic Euler + Langevin provides thermalization."""
+        # Add many particles for better statistics
+        n_particles = 5000
+        target_kT = 2.5
+
+        self.system.time_step = 0.01
+        self.system.cell_system.skin = 0.4
+        self.system.part.add(pos=np.random.random((n_particles, 3)))
+
+        # Set strong thermostat
+        self.system.thermostat.set_langevin(kT=target_kT, gamma=3., seed=42)
+        self.system.integrator.set_symplectic_euler()
+
+        # Calculate instantaneous temperature
+        particles = self.system.part.all()
+        for _ in range(3):
+            self.system.integrator.run(200)
+            kinetic_energy = sum(0.5 * p.mass * np.sum(p.v**2)
+                                 for p in particles)
+            temperature = 2. * kinetic_energy / (3. * n_particles)
+            # Should be reasonably close to target temperature
+            self.assertAlmostEqual(
+                temperature, target_kT, delta=target_kT / 20.)
+
     def setup_diff_mass_rinertia(self, p):
         if espressomd.has_features("MASS"):
             p.mass = 0.5
@@ -107,10 +135,11 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
                 p.rinertia = [0.4, 0.4, 0.4]
 
     def verify_diffusion(self, p, corr, kT, gamma):
-        """Verify diffusion coeff.
+        """
+        Verify diffusion coeff.
 
-           p: particle, corr: dict containing correlator with particle as key,
-           kT=kT, gamma=gamma as 3 component vector.
+        p: particle, corr: dict containing correlator with particle as key,
+        kT=kT, gamma=gamma as 3 component vector.
         """
         c = corr
         # Integral of vacf via Green-Kubo D = int_0^infty <v(t_0)v(t_0+t)> dt
@@ -129,7 +158,7 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
             self.assertAlmostEqual(ratio, 1., delta=0.07)
 
     def test_06__diffusion(self):
-        """This tests rotational and translational diffusion coeff via Green-Kubo"""
+        """Test rotational and translational diffusion coeff via Green-Kubo"""
         system = self.system
 
         kT = 1.37

@@ -25,8 +25,7 @@ import numpy as np
 import math
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
-class EKFluctuations(ut.TestCase):
+class EKTest:
     BOX_L = 8
     TAU = 0.1
     DENSITY = 27.0
@@ -54,7 +53,7 @@ class EKFluctuations(ut.TestCase):
 
         target_density = self.DENSITY * self.system.volume()
 
-        species = espressomd.electrokinetics.EKSpecies(
+        species = self.ek_species_class(
             lattice=lattice, density=self.DENSITY, valency=0.0, advection=False,
             diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
             single_precision=single_precision, tau=self.TAU, thermalized=True, seed=42)
@@ -100,6 +99,17 @@ class EKFluctuations(ut.TestCase):
         self.assertLess(max_diff, 5.0e-03,
                         f"Density distribution accuracy not achieved, allowed "
                         f"deviation: 5.0e-03, measured: {max_diff}")
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKFluctuationsCPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKFluctuationsGPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
 
 
 if __name__ == "__main__":
