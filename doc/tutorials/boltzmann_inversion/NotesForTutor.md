@@ -10,8 +10,8 @@
 
 After the tutorial, students should be able to:
 
-* Explain the reduced CPU time required for the coarse-grained simulation compared to simulation with explicit salt
-* Explain the discrepancy in the comparison of RDFs obtained (especially in the short range) with explicit and implicit salt.
+* Explain the shorter runtime of a coarse-grained simulation compared to a simulation with explicit salt.
+* Explain the discrepancy in the RDFs (especially in the short range) with explicit and implicit salt.
 * Limitations of the Boltzmann inversion method, particularly with regards to many-body effects.
 
 ## Learning objectives (ESPResSo)
@@ -19,4 +19,3 @@ After the tutorial, students should be able to:
 * Setting up a system with colloidal particles of desired size, counterions and salt.
 * Calculating the RDF between colloidal particles using observables and accumulators.
 * To use the effective potential via a tabulated interaction, while retaining the WCA potential for separations shorter than the tabulated cutoff.
-
