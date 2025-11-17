@@ -21,19 +21,26 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_DP3M
 
 #include "magnetostatics/dp3m.hpp"
 
+#include "ParticleRange.hpp"
+#include "communication.hpp"
+#include "p3m/FFTBackendLegacy.hpp"
+#include "p3m/FFTBuffersLegacy.hpp"
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
 #include "p3m/interpolation.hpp"
 
-#include "ParticleRange.hpp"
-
 #include <utils/Vector.hpp>
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+#include <Kokkos_Core.hpp>
+#include <omp.h>
+#endif
 
 #include <cstddef>
 #include <memory>
@@ -61,6 +68,17 @@ struct p3m_data_struct_dipoles : public p3m_data_struct<FloatType> {
   std::vector<FloatType> ks_scalar;
 
   p3m_interpolation_cache inter_weights;
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  Kokkos::View<FloatType ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+      rs_fields_kokkos;
+
+  void init_labels() {
+    assert(ks_scalar.empty());
+    rs_fields_kokkos = decltype(rs_fields_kokkos)(
+        "p3m_data_struct_dipoles::rs_fields_kokkos", 0, 0, 0);
+  }
+#endif
 };
 
 template <typename FloatType, Arch Architecture>
@@ -71,23 +89,26 @@ struct DipolarP3MImpl : public DipolarP3M {
   p3m_data_struct_dipoles<FloatType> &dp3m;
 
 private:
-  /** @brief Coulomb P3M meshes and FFT algorithm. */
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  // kokkos handle must outlive kokkos data structures from other class members
+  std::shared_ptr<KokkosHandle> m_kokkos_handle;
+#endif
+  /** @brief Dipolar P3M meshes and FFT algorithm. */
   std::unique_ptr<p3m_data_struct_dipoles<FloatType>> dp3m_impl;
-  int tune_timings;
-  std::pair<std::optional<int>, std::optional<int>> tune_limits;
-  bool tune_verbose;
+  TuningParameters tuning;
   bool m_is_tuned;
 
 public:
   DipolarP3MImpl(
       std::unique_ptr<p3m_data_struct_dipoles<FloatType>> &&dp3m_handle,
-      double prefactor, int tune_timings, bool tune_verbose,
-      decltype(tune_limits) tune_limits)
+      TuningParameters tuning_params, double prefactor)
       : DipolarP3M(dp3m_handle->params), dp3m{*dp3m_handle},
-        dp3m_impl{std::move(dp3m_handle)}, tune_timings{tune_timings},
-        tune_limits{std::move(tune_limits)}, tune_verbose{tune_verbose} {
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+        m_kokkos_handle{::kokkos_handle},
+#endif
+        dp3m_impl{std::move(dp3m_handle)}, tuning{std::move(tuning_params)} {
 
-    if (tune_timings <= 0) {
+    if (tuning.timings <= 0) {
       throw std::domain_error("Parameter 'timings' must be > 0");
     }
     if (dp3m.params.mesh != Utils::Vector3i::broadcast(dp3m.params.mesh[0])) {
@@ -96,6 +117,9 @@ public:
     m_is_tuned = not dp3m.params.tuning;
     dp3m.params.tuning = false;
     set_prefactor(prefactor);
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    dp3m.init_labels();
+#endif
   }
 
   void init() override {
@@ -108,7 +132,7 @@ public:
 
   [[nodiscard]] bool is_tuned() const noexcept override { return m_is_tuned; }
   [[nodiscard]] bool is_gpu() const noexcept override {
-    return Architecture == Arch::GPU;
+    return Architecture != Arch::CPU;
   }
   [[nodiscard]] bool is_double_precision() const noexcept override {
     return std::is_same_v<FloatType, double>;
@@ -131,6 +155,21 @@ public:
 
   void dipole_assign(ParticleRange const &particles) override;
 
+private:
+  void prepare_fft_mesh() {
+    dp3m.inter_weights.reset(dp3m.params.cao);
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    using execution_space = Kokkos::DefaultExecutionSpace;
+    auto const num_threads = execution_space().concurrency();
+    Kokkos::realloc(Kokkos::WithoutInitializing, dp3m.rs_fields_kokkos,
+                    num_threads, 3, dp3m.local_mesh.size);
+    Kokkos::deep_copy(dp3m.rs_fields_kokkos, FloatType{0});
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
+    for (auto &rs_mesh_field : dp3m.mesh.rs_fields) {
+      std::ranges::fill(rs_mesh_field, FloatType{0});
+    }
+  }
+
 protected:
   /** Compute the k-space part of forces and energies. */
   double long_range_kernel(bool force_flag, bool energy_flag,
@@ -147,18 +186,5 @@ protected:
   void npt_add_virial_contribution(double energy) const override;
 #endif
 };
-
-template <typename FloatType, Arch Architecture,
-          template <typename> class FFTBackendImpl,
-          template <typename> class P3MFFTMeshImpl, class... Args>
-std::shared_ptr<DipolarP3M> new_dp3m_handle(P3MParameters &&p3m,
-                                            Args &&...args) {
-  auto obj = std::make_shared<DipolarP3MImpl<FloatType, Architecture>>(
-      std::make_unique<p3m_data_struct_dipoles<FloatType>>(std::move(p3m)),
-      std::forward<Args>(args)...);
-  obj->dp3m.template make_mesh_instance<P3MFFTMeshImpl<FloatType>>();
-  obj->dp3m.template make_fft_instance<FFTBackendImpl<FloatType>>();
-  return obj;
-}
 
 #endif // ESPRESSO_DP3M

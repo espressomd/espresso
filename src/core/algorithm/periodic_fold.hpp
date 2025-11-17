@@ -16,21 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_ALGORITHM_PERIODIC_FOLD_HPP
-#define CORE_ALGORITHM_PERIODIC_FOLD_HPP
+
+#pragma once
 
 #include <cmath>
 #include <concepts>
 #include <limits>
-#include <type_traits>
 #include <utility>
-
-// Define a concept that checks if a type T is an integer or a reference to an
-// integer
-template <typename T>
-concept IntegralOrRef = std::integral<std::remove_reference_t<T>>;
-template <typename T>
-concept FloatingPointOrRef = std::floating_point<std::remove_reference_t<T>>;
 
 namespace Algorithm {
 /**
@@ -41,11 +33,13 @@ namespace Algorithm {
  * @param l Length of primary interval
  * @return x folded into [0, l) and number of folds.
  */
-template <FloatingPointOrRef T, IntegralOrRef I>
-std::pair<T, I> periodic_fold(T x, I i, T const l) {
-  using limits = std::numeric_limits<I>;
+inline auto periodic_fold(std::floating_point auto x, std::integral auto i,
+                          std::floating_point auto l) {
+  static_assert(std::is_same_v<decltype(x), decltype(l)>);
+  using limits = std::numeric_limits<decltype(i)>;
+  using value_type = decltype(x);
 
-  while ((x < T{0}) && (i > limits::min())) {
+  while ((x < value_type{0}) && (i > limits::min())) {
     x += l;
     --i;
   }
@@ -55,7 +49,7 @@ std::pair<T, I> periodic_fold(T x, I i, T const l) {
     ++i;
   }
 
-  return {x, i};
+  return std::make_pair(x, i);
 }
 
 /**
@@ -65,10 +59,12 @@ std::pair<T, I> periodic_fold(T x, I i, T const l) {
  * @param l Length of primary interval
  * @return x folded into [0, l).
  */
-template <FloatingPointOrRef T> T periodic_fold(T x, T const l) {
+inline auto periodic_fold(std::floating_point auto x,
+                          std::floating_point auto l) {
+  using value_type = decltype(x);
 #ifndef __FAST_MATH__
   /* Can't fold if either x or l is nan or inf. */
-  if (std::isnan(x) or std::isnan(l) or std::isinf(x) or (l == 0)) {
+  if (std::isnan(x) or std::isnan(l) or std::isinf(x) or (l == value_type{0})) {
     return std::nan("");
   }
   if (std::isinf(l)) {
@@ -76,7 +72,7 @@ template <FloatingPointOrRef T> T periodic_fold(T x, T const l) {
   }
 #endif // __FAST_MATH__
 
-  while (x < 0) {
+  while (x < value_type{0}) {
     x += l;
   }
 
@@ -87,5 +83,3 @@ template <FloatingPointOrRef T> T periodic_fold(T x, T const l) {
   return x;
 }
 } // namespace Algorithm
-
-#endif

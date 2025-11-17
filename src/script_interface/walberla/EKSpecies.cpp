@@ -23,6 +23,7 @@
 #include "EKSpecies.hpp"
 #include "EKWalberlaNodeState.hpp"
 #include "WalberlaCheckpoint.hpp"
+#include "errorhandling.hpp"
 
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 
@@ -51,6 +52,16 @@ std::unordered_map<std::string, int> const EKVTKHandle::obs_map = {
 Variant EKSpecies::do_call_method(std::string const &method,
                                   VariantMap const &parameters) {
   if (method == "update_flux_boundary_from_shape") {
+    context()->parallel_try_catch([&]() {
+      if (get_lattice()->lattice()->get_ghost_layers() < 2) {
+        if (context()->get_comm().size() > 1) {
+          throw std::runtime_error("The number of ghostlayers should be > 1 "
+                                   "when using flux boundaries and mpi.");
+        }
+        runtimeWarningMsg() << "The number of ghostlayers should be > 1 when "
+                               "using flux boundaries and mpi.";
+      }
+    });
     auto values = get_value<std::vector<double>>(parameters, "values");
     std::ranges::for_each(values, [this](double &v) { v *= m_conv_flux; });
 

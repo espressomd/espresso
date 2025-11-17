@@ -54,7 +54,7 @@ void FFTBackendLegacy<FloatType>::forward_fft(FloatType *rs_mesh) {
 
 template <typename FloatType>
 void FFTBackendLegacy<FloatType>::backward_fft(FloatType *rs_mesh) {
-  fft->backward_fft(::comm_cart, rs_mesh, check_complex_residuals);
+  fft->backward_fft(::comm_cart, rs_mesh);
 }
 
 template class FFTBackendLegacy<float>;

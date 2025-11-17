@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
@@ -92,8 +92,6 @@ struct p3m_data_struct : public P3MStateCommon<FloatType> {
   /** @brief FFT buffers. */
   std::unique_ptr<FFTBuffers<FloatType>> fft_buffers;
 
-  void init();
-
   void update_mesh_views() {
     auto const mesh_size_ptr = fft->get_mesh_size();
     auto const mesh_start_ptr = fft->get_mesh_start();
@@ -124,7 +122,6 @@ protected:
   P3MLocalMesh const &local_mesh;
 
 public:
-  bool check_complex_residuals = false;
   explicit FFTBackend(P3MLocalMesh const &local_mesh)
       : local_mesh{local_mesh} {}
   virtual ~FFTBackend() = default;
@@ -149,7 +146,6 @@ protected:
   P3MLocalMesh const &local_mesh;
 
 public:
-  bool check_complex_residuals = false;
   explicit FFTBuffers(P3MLocalMesh const &local_mesh)
       : local_mesh{local_mesh} {}
   virtual ~FFTBuffers() = default;

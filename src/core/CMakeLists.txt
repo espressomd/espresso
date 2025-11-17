@@ -49,10 +49,6 @@ add_library(
   TabulatedPotential.cpp)
 add_library(espresso::core ALIAS espresso_core)
 espresso_set_common_target_properties(espresso_core)
-if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-  set_target_properties(
-    espresso_core PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CABANA_CXX_CLANG_TIDY}")
-endif()
 
 if(ESPRESSO_BUILD_WITH_CUDA)
   target_sources(
@@ -69,10 +65,6 @@ if(ESPRESSO_BUILD_WITH_CUDA)
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
             ${CMAKE_CURRENT_SOURCE_DIR}/electrostatics
             ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
-  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-    set_target_properties(espresso_core PROPERTIES CUDA_CLANG_TIDY
-                                                   "${CABANA_CUDA_CLANG_TIDY}")
-  endif()
 endif()
 
 install(TARGETS espresso_core

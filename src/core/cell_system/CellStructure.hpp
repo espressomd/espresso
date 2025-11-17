@@ -740,7 +740,7 @@ public:
   void clear_local_properties();
 
   [[nodiscard]] auto is_verlet_list_cabana_rebuild_needed() const {
-    return m_rebuild_verlet_list_cabana or (not use_verlet_list);
+    return m_rebuild_verlet_list_cabana;
   }
 
   /**
@@ -762,10 +762,12 @@ public:
     return rebuild;
   }
 
-  void rebuild_verlet_list_cabana(auto &&kernel) {
+  void rebuild_verlet_list_cabana(auto &&kernel, bool rebuild_verlet_list) {
     assert(is_verlet_list_cabana_rebuild_needed());
-    kernel(m_decomposition->local_cells(), m_decomposition->box(),
-           *m_verlet_list_cabana);
+    if (rebuild_verlet_list) {
+      kernel(m_decomposition->local_cells(), m_decomposition->box(),
+             *m_verlet_list_cabana);
+    }
     m_rebuild_verlet_list_cabana = false;
   }
 

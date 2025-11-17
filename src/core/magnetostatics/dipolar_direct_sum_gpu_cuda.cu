@@ -66,10 +66,8 @@ __device__ void dipole_ia_force(float const pf, float const dr[3],
   auto const r_sq = scalar_product(dr, dr);
   if (r_sq == 0.0f) {
     f1[0] = f1[1] = f1[2] = 0.0f;
-#ifdef ROTATION
     torque1[0] = torque1[1] = torque1[2] = 0.0f;
     torque2[0] = torque2[1] = torque2[2] = 0.0f;
-#endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
     dip_fld1[0] = dip_fld1[1] = dip_fld1[2] = 0.0f;
     dip_fld2[0] = dip_fld2[1] = dip_fld2[2] = 0.0f;
@@ -111,7 +109,6 @@ __device__ void dipole_ia_force(float const pf, float const dr[3],
   f1[1] = (pf * (ab * dr[1] + cc * dip1[1] + dd * dip2[1]));
   f1[2] = (pf * (ab * dr[2] + cc * dip1[2] + dd * dip2[2]));
 
-#ifdef ESPRESSO_ROTATION
   // Torques
   float a[3];
   vector_product(dip1, dip2, a);
@@ -128,7 +125,6 @@ __device__ void dipole_ia_force(float const pf, float const dr[3],
   torque2[0] = pf * (a[0] * r3_inv + b[0] * dd);
   torque2[1] = pf * (a[1] * r3_inv + b[1] * dd);
   torque2[2] = pf * (a[2] * r3_inv + b[2] * dd);
-#endif
 }
 
 __device__ float dipole_ia_energy(float pf, float const *r1, float const *r2,

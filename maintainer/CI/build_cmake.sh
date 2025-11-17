@@ -262,6 +262,9 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
+# build ESPResSo and hard dependencies
+time ninja -k 8 -j${build_procs} ${ninja_params} espresso_packaging_dependencies || exit ${?}
+# build objects that are needed for some tests, yet not essential for packaging
 time ninja -k 8 -j${build_procs} ${ninja_params} || exit ${?}
 
 end "BUILD"

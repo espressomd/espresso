@@ -124,7 +124,7 @@ namespace Interpolation {
     get_rho(
         gpu::GPUField< {{dtype}} > const *field,
         std::vector< {{dtype}} > const &pos,
-        {{dtype}} const density,
+        {{dtype}} density,
         uint gl );
     std::vector< {{dtype}} >
     get_vel( gpu::GPUField< {{dtype}} > const *field,
@@ -140,21 +140,21 @@ namespace Interpolation {
 namespace Density {
     {{dtype}}
     get( gpu::GPUField< {{dtype}} > const * pdf_field,
-         {{dtype}} const density,
+         {{dtype}} density,
          Cell const & cell );
     void
     set( gpu::GPUField< {{dtype}} > * pdf_field,
-         {{dtype}} const rho,
-         {{dtype}} const density,
+         {{dtype}} rho,
+         {{dtype}} density,
          Cell const & cell );
     std::vector< {{dtype}} >
     get( gpu::GPUField< {{dtype}} > const * pdf_field,
-         {{dtype}} const density,
+         {{dtype}} density,
          CellInterval const & ci );
     void
     set( gpu::GPUField< {{dtype}} > * pdf_field,
          std::vector< {{dtype}} > const & values,
-         {{dtype}} const density,
+         {{dtype}} density,
          CellInterval const & ci );
 } // namespace Density
 
@@ -187,14 +187,14 @@ namespace Force {
          gpu::GPUField< {{dtype}} > * velocity_field,
          gpu::GPUField< {{dtype}} > * force_field,
          Vector{{D}}< {{dtype}} > const & u,
-         {{dtype}} const density,
+         {{dtype}} density,
          Cell const & cell );
     void
     set( gpu::GPUField< {{dtype}} > const * pdf_field,
          gpu::GPUField< {{dtype}} > * velocity_field,
          gpu::GPUField< {{dtype}} > * force_field,
          std::vector< {{dtype}} > const & values,
-         {{dtype}} const density,
+         {{dtype}} density,
          CellInterval const & ci );
 } // namespace Force
 
@@ -207,7 +207,7 @@ namespace DensityAndVelocity {
     set( gpu::GPUField< {{dtype}} > * pdf_field,
          gpu::GPUField< {{dtype}} > * force_field,
          Vector{{D}}< {{dtype}} > const & u,
-         {{dtype}} const rho,
+         {{dtype}} rho,
          Cell const & cell );
 } // namespace DensityAndVelocity
 
@@ -222,21 +222,21 @@ namespace MomentumDensity {
     Vector{{D}}< {{dtype}} >
     reduce( gpu::GPUField< {{dtype}} > const * pdf_field,
             gpu::GPUField< {{dtype}} > const * force_field,
-            {{dtype}} const density );
+            {{dtype}} density );
 } // namespace MomentumDensity
 
 namespace PressureTensor {
     Matrix{{D}}< {{dtype}} >
     get( gpu::GPUField< {{dtype}} > const * pdf_field,
-         {{dtype}} const density,
+         {{dtype}} density,
          Cell const & cell );
     std::vector< {{dtype}} >
     get( gpu::GPUField< {{dtype}} > const * pdf_field,
-        {{dtype}} const density,
+        {{dtype}} density,
          CellInterval const & ci );
     Matrix{{D}}< {{dtype}} >
     reduce( gpu::GPUField< {{dtype}} > const * pdf_field,
-            {{dtype}} const density );
+            {{dtype}} density );
 } // namespace PressureTensor
 
 } // namespace accessor

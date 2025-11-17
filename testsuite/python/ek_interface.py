@@ -53,7 +53,7 @@ class EKTest:
     def setUp(self):
         self.system.box_l = 3 * [6.0]
         self.lattice = self.ek_lattice_class(
-            n_ghost_layers=1, agrid=self.params["agrid"])
+            n_ghost_layers=2, agrid=self.params["agrid"])
         ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.system.time_step, solver=ek_solver)
@@ -108,7 +108,7 @@ class EKTest:
     def check_ek_species_properties(self, species):
         agrid = self.params["agrid"]
         # check getters
-        self.assertEqual(species.lattice.n_ghost_layers, 1)
+        self.assertEqual(species.lattice.n_ghost_layers, 2)
         self.assertAlmostEqual(species.lattice.agrid, agrid, delta=self.atol)
         self.assertAlmostEqual(species.diffusion, 0.1, delta=self.atol)
         self.assertAlmostEqual(species.valency, 0.0, delta=self.atol)
@@ -239,13 +239,31 @@ class EKTest:
                 lattice=incompatible_lattice,
                 **self.ek_params,
                 **self.ek_species_params)
+        incompatible_lattice = self.ek_lattice_class(
+            n_ghost_layers=1, agrid=self.params["agrid"],
+            blocks_per_mpi_rank=[1, 1, 1])
+        ek_small_gl_species = self.ek_species_class(
+            lattice=incompatible_lattice,
+            **self.ek_params,
+            **self.ek_species_params)
+        if np.max(self.system.cell_system.node_grid) > 1:
+            with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and mpi."):
+                ek_small_gl_species[0, 0, 0].flux_boundary = espressomd.electrokinetics.FluxBoundary([
+                    1., 2., 3.])
+            with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and mpi."):
+                ek_small_gl_species[:, :, 0].flux_boundary = espressomd.electrokinetics.FluxBoundary([
+                    1., 2., 3.])
+            wall_shape = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
+            with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and mpi."):
+                ek_small_gl_species.add_boundary_from_shape(shape=wall_shape, value=[
+                                                            1., 2., 3.], boundary_type=espressomd.electrokinetics.FluxBoundary)
 
     def test_ek_solver_exceptions(self):
         ek_solver = self.system.ekcontainer.solver
         ek_species = self.make_default_ek_species()
         self.system.ekcontainer.add(ek_species)
         incompatible_lattice = self.ek_lattice_class(
-            n_ghost_layers=2, agrid=self.params["agrid"])
+            n_ghost_layers=3, agrid=self.params["agrid"])
         incompatible_ek_solver = espressomd.electrokinetics.EKNone(
             lattice=incompatible_lattice, **self.ek_params)
         incompatible_ek_species = self.ek_species_class(
@@ -262,7 +280,7 @@ class EKTest:
         self.assertEqual(
             self.system.ekcontainer.solver, incompatible_ek_solver)
         incompatible_lattice = self.ek_lattice_class(
-            n_ghost_layers=1, agrid=self.params["agrid"],
+            n_ghost_layers=2, agrid=self.params["agrid"],
             blocks_per_mpi_rank=[2, 1, 1])
         with self.assertRaisesRegex(NotImplementedError, "Using more than one block per MPI rank is not supported for EKNone"):
             espressomd.electrokinetics.EKNone(lattice=incompatible_lattice)

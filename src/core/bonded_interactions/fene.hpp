@@ -72,7 +72,7 @@ FeneBond::force(Utils::Vector3d const &dx) const {
   auto const len = dx.norm();
   auto const dr = len - r0;
 
-  if (dr >= drmax) {
+  if (std::abs(dr) >= drmax) {
     return {};
   }
 

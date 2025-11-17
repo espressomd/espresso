@@ -770,11 +770,11 @@ public:
   }
 
   [[nodiscard]] double get_viscosity() const noexcept override {
-    return numeric_cast<double>(m_viscosity);
+    return static_cast<double>(m_viscosity);
   }
 
   [[nodiscard]] double get_density() const noexcept override {
-    return numeric_cast<double>(m_density);
+    return static_cast<double>(m_density);
   }
 
   template <typename T>
@@ -1822,7 +1822,7 @@ public:
   }
 
   [[nodiscard]] double get_kT() const noexcept override {
-    return numeric_cast<double>(m_kT);
+    return static_cast<double>(m_kT);
   }
 
   [[nodiscard]] unsigned int get_seed() const noexcept override {
