@@ -143,8 +143,7 @@ class Test(ut.TestCase):
     def test_exceptions_large_r_cut(self):
         icc, (_, p) = self.setup_icc_particles_and_solver(
             max_iterations=1, convergence=10.)
-        p3m = espressomd.electrostatics.P3M(
-            check_complex_residuals=False, **self.valid_p3m_parameters())
+        p3m = espressomd.electrostatics.P3M(**self.valid_p3m_parameters())
 
         self.system.electrostatics.solver = p3m
         self.system.electrostatics.extension = icc

@@ -122,7 +122,6 @@ protected:
   P3MLocalMesh const &local_mesh;
 
 public:
-  bool check_complex_residuals = false;
   explicit FFTBackend(P3MLocalMesh const &local_mesh)
       : local_mesh{local_mesh} {}
   virtual ~FFTBackend() = default;
@@ -147,7 +146,6 @@ protected:
   P3MLocalMesh const &local_mesh;
 
 public:
-  bool check_complex_residuals = false;
   explicit FFTBuffers(P3MLocalMesh const &local_mesh)
       : local_mesh{local_mesh} {}
   virtual ~FFTBuffers() = default;

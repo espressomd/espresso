@@ -48,7 +48,6 @@ class FFTBackendLegacy : public FFTBackend<FloatType> {
                 "FFTW only implements float and double");
   std::unique_ptr<fft::fft_data_struct<FloatType>> fft;
   using FFTBackend<FloatType>::local_mesh;
-  using FFTBackend<FloatType>::check_complex_residuals;
   int ca_mesh_size = -1;
   int ks_pnum = -1;
 

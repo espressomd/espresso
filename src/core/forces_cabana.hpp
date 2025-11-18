@@ -94,12 +94,14 @@ struct ForcesKernel {
   }
 
   // Helper functions to check if specific algorithms are active
-#ifdef ESPRESSO_GAY_BERNE
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
   gay_berne_active(double dist, IA_parameters const &ia_params) const {
+#ifdef ESPRESSO_GAY_BERNE
     return dist < ia_params.gay_berne.cut;
-  }
+#else
+    return false;
 #endif
+  }
 
 #ifdef ESPRESSO_NPT
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool npt_active() const {

@@ -25,7 +25,7 @@
  *  By default the magnetic epsilon is metallic = 0.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_DP3M
 
@@ -174,24 +174,37 @@ template <int cao> struct AssignDipole {
     auto const n_part = cell_structure.count_local_particles();
     dp3m.inter_weights.zfill(n_part); // allocate buffer for parallel write
     kokkos_parallel_range_for(
-        "InterpolationWeights", std::size_t{0u}, n_part, [&](auto p_index) {
+        "InterpolateDipoles", std::size_t{0u}, n_part, [&](auto p_index) {
+          auto const tid = omp_get_thread_num();
           auto const p_pos = aosoa.get_vector_at(aosoa.position, p_index);
+          auto const dip = unique_particles.at(p_index)->calc_dip();
           auto const weights =
               p3m_calculate_interpolation_weights<cao, memory_order>(
                   p_pos, dp3m.params.ai, dp3m.local_mesh);
           dp3m.inter_weights.store_at(p_index, weights);
+          p3m_interpolate(
+              dp3m.local_mesh, weights, [&dip, tid, &dp3m](int ind, double w) {
+                dp3m.rs_fields_kokkos(tid, 0u, ind) += value_type(w * dip[0u]);
+                dp3m.rs_fields_kokkos(tid, 1u, ind) += value_type(w * dip[1u]);
+                dp3m.rs_fields_kokkos(tid, 2u, ind) += value_type(w * dip[2u]);
+              });
         });
-    // serial part of dipole assignment
-    for (std::size_t p_index{0}; p_index < n_part; ++p_index) {
-      auto const weights = dp3m.inter_weights.template load<cao>(p_index);
-      auto const dip = unique_particles.at(p_index)->calc_dip();
-      p3m_interpolate<cao>(
-          dp3m.local_mesh, weights, [&dip, &dp3m](int ind, double w) {
-            dp3m.mesh.rs_fields[0u][ind] += value_type(w * dip[0u]);
-            dp3m.mesh.rs_fields[1u][ind] += value_type(w * dip[1u]);
-            dp3m.mesh.rs_fields[2u][ind] += value_type(w * dip[2u]);
-          });
-    }
+    Kokkos::fence();
+    using execution_space = Kokkos::DefaultExecutionSpace;
+    int num_threads = execution_space().concurrency();
+    Kokkos::RangePolicy<execution_space> policy(std::size_t{0},
+                                                dp3m.local_mesh.size);
+    Kokkos::parallel_for("ReduceInterpolatedDipoles", policy,
+                         [&dp3m, num_threads](std::size_t const i) {
+                           for (int dir = 0; dir < 3; ++dir) {
+                             value_type acc{};
+                             for (int tid = 0; tid < num_threads; ++tid) {
+                               acc += dp3m.rs_fields_kokkos(tid, dir, i);
+                             }
+                             dp3m.mesh.rs_fields[dir][i] += acc;
+                           }
+                         });
+    Kokkos::fence();
   }
 #else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
   void operator()(auto &dp3m, Utils::Vector3d const &real_pos,
@@ -217,12 +230,7 @@ template <int cao> struct AssignDipole {
 template <typename FloatType, Arch Architecture>
 void DipolarP3MImpl<FloatType, Architecture>::dipole_assign(
     [[maybe_unused]] ParticleRange const &particles) {
-  dp3m.inter_weights.reset(dp3m.params.cao);
-
-  /* prepare local FFT mesh */
-  for (auto &rs_mesh_field : dp3m.mesh.rs_fields) {
-    std::ranges::fill_n(rs_mesh_field.data(), dp3m.local_mesh.size, 0.);
-  }
+  prepare_fft_mesh();
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   Utils::integral_parameter<int, AssignDipole, p3m_min_cao, p3m_max_cao>(
@@ -793,8 +801,8 @@ void DipolarP3MImpl<FloatType, Architecture>::tune() {
     }
     try {
       DipolarTuningAlgorithm<FloatType, Architecture> parameters(
-          system, dp3m, prefactor, tune_timings, tune_limits);
-      parameters.setup_logger(tune_verbose);
+          system, dp3m, prefactor, tuning.timings, tuning.limits);
+      parameters.setup_logger(tuning.verbose);
       // parameter ranges
       parameters.determine_mesh_limits();
       parameters.determine_r_cut_limits();
@@ -1042,7 +1050,29 @@ void DipolarP3MImpl<FloatType, Architecture>::npt_add_virial_contribution(
 }
 #endif // ESPRESSO_NPT
 
-template struct DipolarP3MImpl<float, Arch::CPU>;
-template struct DipolarP3MImpl<double, Arch::CPU>;
+template <typename FloatType, Arch Architecture>
+std::shared_ptr<DipolarP3M>
+new_dipolar_p3m_impl(P3MParameters &&p3m, TuningParameters const &tuning_params,
+                     double prefactor) {
+  auto obj = std::make_shared<DipolarP3MImpl<FloatType, Architecture>>(
+      std::make_unique<p3m_data_struct_dipoles<FloatType>>(std::move(p3m)),
+      tuning_params, prefactor);
+  obj->dp3m.template make_mesh_instance<FFTBuffersLegacy<FloatType>>();
+  obj->dp3m.template make_fft_instance<FFTBackendLegacy<FloatType>>();
+  return obj;
+}
+
+std::shared_ptr<DipolarP3M>
+new_dipolar_p3m(P3MParameters &&p3m_params,
+                TuningParameters const &tuning_params, double prefactor,
+                bool single_precision, Arch arch) {
+  auto fptr = &new_dipolar_p3m_impl<float, Arch::CPU>;
+  if (single_precision) {
+    fptr = new_dipolar_p3m_impl<float, Arch::CPU>;
+  } else {
+    fptr = new_dipolar_p3m_impl<double, Arch::CPU>;
+  }
+  return fptr(std::move(p3m_params), tuning_params, prefactor);
+}
 
 #endif // ESPRESSO_DP3M

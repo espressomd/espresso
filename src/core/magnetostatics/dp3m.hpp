@@ -31,7 +31,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_DP3M
 
@@ -259,5 +259,10 @@ protected:
   virtual void npt_add_virial_contribution(double energy) const = 0;
 #endif
 };
+
+std::shared_ptr<DipolarP3M>
+new_dipolar_p3m(P3MParameters &&p3m_params,
+                TuningParameters const &tuning_params, double prefactor,
+                bool single_precision, Arch arch);
 
 #endif // ESPRESSO_DP3M

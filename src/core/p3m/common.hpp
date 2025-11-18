@@ -50,11 +50,12 @@ inline auto constexpr P3M_EPSILON_METALLIC = 0.0;
 #include "LocalBox.hpp"
 
 #include <cstddef>
+#include <optional>
 #include <span>
 #include <stdexcept>
 
 /** @brief P3M kernel architecture. */
-enum class Arch { CPU, GPU };
+enum class Arch { CPU, CUDA };
 
 /** @brief Structure to hold P3M parameters and some dependent variables. */
 struct P3MParameters {
@@ -177,8 +178,8 @@ struct P3MLocalMesh {
   /** dimension (size) of local mesh including halo layers. */
   Utils::Vector3i dim;
   Utils::Vector3i dim_no_halo;
-  /** number of local mesh points. */
-  int size;
+  /** number of local mesh points including halo layers. */
+  std::size_t size;
   /** index of lower left corner of the
       local mesh in the global mesh. */
   Utils::Vector3i ld_ind;
@@ -242,6 +243,12 @@ template <typename FloatType> struct P3MFFTMesh {
 
   /** @brief number of permutations in k_space */
   int ks_pnum = 0;
+};
+
+struct TuningParameters {
+  int timings;
+  std::pair<std::optional<int>, std::optional<int>> limits;
+  bool verbose;
 };
 
 #endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

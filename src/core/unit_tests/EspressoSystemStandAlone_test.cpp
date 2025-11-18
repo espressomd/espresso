@@ -41,7 +41,6 @@ namespace utf = boost::unit_test;
 #include "cuda/utils.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/p3m.hpp"
-#include "electrostatics/p3m.impl.hpp"
 #include "energy_inline.hpp"
 #include "forces_inline.hpp"
 #include "galilei/Galilei.hpp"
@@ -49,7 +48,6 @@ namespace utf = boost::unit_test;
 #include "integrators/Propagation.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "magnetostatics/dp3m.hpp"
-#include "magnetostatics/dp3m.impl.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "observables/ParticleVelocities.hpp"
@@ -250,8 +248,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
 
     // set up P3M
     auto const prefactor = 2.;
-    auto const mesh_range = std::pair<std::optional<int>, std::optional<int>>{
-        std::nullopt, std::nullopt};
+    auto tuning = TuningParameters{1, {std::nullopt, std::nullopt}, false};
     auto p3m = P3MParameters{false,
                              0.0,
                              3.5,
@@ -260,8 +257,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
                              5,
                              0.615,
                              1e-3};
-    auto solver = new_coulomb_p3m<double, Arch::CPU>(
-        std::move(p3m), prefactor, 1, false, mesh_range, true);
+    auto solver =
+        new_coulomb_p3m(std::move(p3m), tuning, prefactor, false, Arch::CPU);
     add_actor(comm, espresso::system, system.coulomb.impl->solver, solver,
               [&system]() { system.on_coulomb_change(); });
     BOOST_CHECK(not solver->is_gpu());
@@ -320,8 +317,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
 
     // set up P3M
     auto const prefactor = 2.;
-    auto const mesh_range = std::pair<std::optional<int>, std::optional<int>>{
-        std::nullopt, std::nullopt};
+    auto tuning = TuningParameters{1, {std::nullopt, std::nullopt}, false};
     auto p3m = P3MParameters{false,
                              0.0,
                              3.5,
@@ -331,8 +327,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
                              0.615,
                              1e-3};
     auto solver =
-        new_dp3m_handle<double, Arch::CPU, FFTBackendLegacy, FFTBuffersLegacy>(
-            std::move(p3m), prefactor, 1, false, mesh_range);
+        new_dipolar_p3m(std::move(p3m), tuning, prefactor, false, Arch::CPU);
     add_actor(comm, espresso::system, system.dipoles.impl->solver, solver,
               [&system]() { system.on_dipoles_change(); });
     BOOST_CHECK(not solver->is_gpu());

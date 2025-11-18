@@ -34,7 +34,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_P3M
 
@@ -200,5 +200,10 @@ protected:
 
   virtual void scaleby_box_l() = 0;
 };
+
+std::shared_ptr<CoulombP3M>
+new_coulomb_p3m(P3MParameters &&p3m_params,
+                TuningParameters const &tuning_params, double prefactor,
+                bool single_precision, Arch arch);
 
 #endif // ESPRESSO_P3M
