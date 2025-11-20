@@ -202,64 +202,64 @@ void stoner_wohlfarth_no_field(Particle &p, Particle &pi, const double &noise) {
 
   Utils::Vector3d e_k = pi.calc_director();
   double tau_inv =
-      p.magnetodynamics().tau0_inv * exp(-p.magnetodynamics().ani_param);
-  double p12 = 1. - exp(-p.magnetodynamics().dt_incr * tau_inv);
+      p.stoner_wolfarth_tau0_inv() * exp(-p.magnetic_anisotropy_param());
+  double p12 = 1. - exp(-p.stoner_wolfarth_dt_incr() * tau_inv);
   if (noise < p12) {
-    if (p.magnetodynamics().phi0 == 0) {
+    if (p.stoner_wolfarth_phi_0() == 0) {
       auto const [quat, dipm] =
-          convert_dip_to_quat(p.magnetodynamics().sat_mag * -e_k);
-      p.magnetodynamics().phi0 = M_PI;
+          convert_dip_to_quat(p.saturation_magnetization() * -e_k);
+      p.stoner_wolfarth_phi_0() = M_PI;
       p.dipm() = dipm;
       p.quat() = quat;
-    } else if (p.magnetodynamics().phi0 == M_PI) {
+    } else if (p.stoner_wolfarth_phi_0() == M_PI) {
       auto const [quat, dipm] =
-          convert_dip_to_quat(p.magnetodynamics().sat_mag * e_k);
-      p.magnetodynamics().phi0 = 0;
+          convert_dip_to_quat(p.saturation_magnetization() * e_k);
+      p.stoner_wolfarth_phi_0() = 0;
       p.dipm() = dipm;
       p.quat() = quat;
     } else {
-      double diff_0 = std::abs(p.magnetodynamics().phi0 - 0);
-      double diff_PI = std::abs(p.magnetodynamics().phi0 - M_PI);
+      double diff_0 = std::abs(p.stoner_wolfarth_phi_0() - 0);
+      double diff_PI = std::abs(p.stoner_wolfarth_phi_0() - M_PI);
       // Compare the differences and determine the closer angle
       if (diff_0 < diff_PI) {
         auto const [quat, dipm] =
-            convert_dip_to_quat(p.magnetodynamics().sat_mag * -e_k);
-        p.magnetodynamics().phi0 = M_PI;
+            convert_dip_to_quat(p.saturation_magnetization() * -e_k);
+        p.stoner_wolfarth_phi_0() = M_PI;
         p.dipm() = dipm;
         p.quat() = quat;
       } else {
         auto const [quat, dipm] =
-            convert_dip_to_quat(p.magnetodynamics().sat_mag * e_k);
-        p.magnetodynamics().phi0 = 0;
+            convert_dip_to_quat(p.saturation_magnetization() * e_k);
+        p.stoner_wolfarth_phi_0() = 0;
         p.dipm() = dipm;
         p.quat() = quat;
       }
     }
   } else {
-    if (p.magnetodynamics().phi0 == 0) {
+    if (p.stoner_wolfarth_phi_0() == 0) {
       auto const [quat, dipm] =
-          convert_dip_to_quat(p.magnetodynamics().sat_mag * e_k);
+          convert_dip_to_quat(p.saturation_magnetization() * e_k);
       p.dipm() = dipm;
       p.quat() = quat;
-    } else if (p.magnetodynamics().phi0 == M_PI) {
+    } else if (p.stoner_wolfarth_phi_0() == M_PI) {
       auto const [quat, dipm] =
-          convert_dip_to_quat(p.magnetodynamics().sat_mag * -e_k);
+          convert_dip_to_quat(p.saturation_magnetization() * -e_k);
       p.dipm() = dipm;
       p.quat() = quat;
     } else {
-      double diff_0 = std::abs(p.magnetodynamics().phi0 - 0);
-      double diff_PI = std::abs(p.magnetodynamics().phi0 - M_PI);
+      double diff_0 = std::abs(p.stoner_wolfarth_phi_0() - 0);
+      double diff_PI = std::abs(p.stoner_wolfarth_phi_0() - M_PI);
       // Compare the differences and determine the closer angle
       if (diff_0 < diff_PI) {
         auto const [quat, dipm] =
-            convert_dip_to_quat(p.magnetodynamics().sat_mag * e_k);
-        p.magnetodynamics().phi0 = 0;
+            convert_dip_to_quat(p.saturation_magnetization() * e_k);
+        p.stoner_wolfarth_phi_0() = 0;
         p.dipm() = dipm;
         p.quat() = quat;
       } else {
         auto const [quat, dipm] =
-            convert_dip_to_quat(p.magnetodynamics().sat_mag * -e_k);
-        p.magnetodynamics().phi0 = M_PI;
+            convert_dip_to_quat(p.saturation_magnetization() * -e_k);
+        p.stoner_wolfarth_phi_0() = M_PI;
         p.dipm() = dipm;
         p.quat() = quat;
       }
@@ -282,7 +282,7 @@ void stoner_wohlfarth_main(Particle &p, Particle &pi,
                            const Utils::Vector3d &ext_fld_dpl,
                            const double &noise) {
   // reduced field; Eq. 4 in https://doi.org/10.1103/PhysRevB.111.014438.
-  double h = ext_fld_dpl.norm() * p.magnetodynamics().ani_fld_inv;
+  double h = ext_fld_dpl.norm() * p.magnetic_anisotropy_field_inv();
   auto e_h = ext_fld_dpl.normalized();
   // calc_director() result already normalised
   Utils::Vector3d e_k = pi.calc_director();
@@ -294,12 +294,12 @@ void stoner_wohlfarth_main(Particle &p, Particle &pi,
   }
   auto rot_axis = vector_product(vector_product(e_h, e_k), e_h).normalized();
   auto phi = get_phi_at_energy_min(
-      theta, h, p.magnetodynamics().phi0, p.magnetodynamics().ani_param,
-      p.magnetodynamics().tau0_inv, p.magnetodynamics().dt_incr, noise);
+      theta, h, p.stoner_wolfarth_phi_0(), p.magnetic_anisotropy_param(),
+      p.stoner_wolfarth_tau0_inv(), p.stoner_wolfarth_dt_incr(), noise);
   auto mom = e_h * std::cos(phi) + rot_axis * std::sin(phi);
-  p.magnetodynamics().phi0 = phi;
+  p.stoner_wolfarth_phi_0() = phi;
   auto const [quat, dipm] =
-      convert_dip_to_quat(mom * p.magnetodynamics().sat_mag);
+      convert_dip_to_quat(mom * p.saturation_magnetization());
   p.dipm() = dipm;
   p.quat() = quat;
 }
@@ -320,10 +320,9 @@ void run_magnetodynamics(CellStructure &cell_structure,
                          Thermostat::Thermostat const &thermostat) {
   /* collect HomogeneousMagneticFields if active */
   Utils::Vector3d ext_fld = get_external_field();
-  Utils::Vector3d cntrl = {0., 0., 0.};
   cell_structure.for_each_local_particle([&](Particle &p) {
     /* collect particle data */
-    if (!p.is_virtual() || !p.magnetodynamics().is_enabled) {
+    if (!p.is_virtual() || !p.stoner_wolfarth_is_enabled()) {
       return;
     }
 
@@ -336,13 +335,13 @@ void run_magnetodynamics(CellStructure &cell_structure,
     ext_fld_dpl = ext_fld + p.dip_fld();
     // if no external field and no dipolar field, do simplified Stoner-Wohlfarth
     // update
-    auto const noise =
+    auto const random_int =
         Random::philox_4_uint64s<RNGSalt::THERMAL_STONER_WOHLFARTH>(
             thermostat.get_philox_counter(), thermostat.get_philox_seed(),
             p.id());
-    double random_uniform_dist_cast =
-        Utils::uniform(static_cast<std::size_t>(noise[0])); // uniform (0,1)
-    if (ext_fld_dpl == cntrl) {
+    double random_uniform_dist_cast = Utils::uniform(
+        static_cast<std::size_t>(random_int[0])); // uniform (0,1)
+    if (ext_fld_dpl.norm() == 0.) {
       stoner_wohlfarth_no_field(p, pi, random_uniform_dist_cast);
       return;
     }

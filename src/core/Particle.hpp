@@ -533,8 +533,34 @@ public:
   auto calc_dip() const { return calc_director() * dipm(); }
 #endif
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-  auto const &magnetodynamics() const { return p.magnetodynamics; }
-  auto &magnetodynamics() { return p.magnetodynamics; }
+  auto const &stoner_wolfarth_is_enabled() const {
+    return p.magnetodynamics.is_enabled;
+  }
+  auto &stoner_wolfarth_is_enabled() { return p.magnetodynamics.is_enabled; }
+  auto const &stoner_wolfarth_phi_0() const { return p.magnetodynamics.phi0; }
+  auto &stoner_wolfarth_phi_0() { return p.magnetodynamics.phi0; }
+  auto const &saturation_magnetization() const {
+    return p.magnetodynamics.sat_mag;
+  }
+  auto &saturation_magnetization() { return p.magnetodynamics.sat_mag; }
+  auto const &magnetic_anisotropy_field_inv() const {
+    return p.magnetodynamics.ani_fld_inv;
+  }
+  auto &magnetic_anisotropy_field_inv() {
+    return p.magnetodynamics.ani_fld_inv;
+  }
+  auto const &magnetic_anisotropy_param() const {
+    return p.magnetodynamics.ani_param;
+  }
+  auto &magnetic_anisotropy_param() { return p.magnetodynamics.ani_param; }
+  auto const &stoner_wolfarth_tau0_inv() const {
+    return p.magnetodynamics.tau0_inv;
+  }
+  auto &stoner_wolfarth_tau0_inv() { return p.magnetodynamics.tau0_inv; }
+  auto const &stoner_wolfarth_dt_incr() const {
+    return p.magnetodynamics.dt_incr;
+  }
+  auto &stoner_wolfarth_dt_incr() { return p.magnetodynamics.dt_incr; }
 #endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   auto const &dip_fld() const { return p.dip_fld; }
