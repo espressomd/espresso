@@ -87,10 +87,10 @@ static Particle *get_reference_particle(CellStructure &cell_structure,
  */
 double phi_objective(unsigned n, const double *x, double *grad,
                      void *my_func_data) {
-  double phi = x[0];
-  double *params = (double *)my_func_data;
-  double theta = params[0];
-  double h = params[1];
+  double const phi = x[0];
+  double const *params = (double const *)my_func_data;
+  double const theta = params[0];
+  double const h = params[1];
   if (grad) {
     grad[0] = std::sin(2 * (phi - theta)) + 2 * h * std::sin(phi);
   }
@@ -117,9 +117,9 @@ double get_phi_at_energy_min(double theta, double h, double phi0,
 
   // critical filed, above which there is only one minimum  (no need to do the
   // thermal step); Eq. 6 in https://doi.org/10.1103/PhysRevB.111.014438.
-  double h_crit = std::pow(std::pow(std::sin(theta), 2.0 / 3) +
-                               std::pow(std::cos(theta), 2.0 / 3),
-                           -3.0 / 2);
+  double const h_crit = std::pow(std::pow(std::sin(theta), 2.0 / 3) +
+                                     std::pow(std::cos(theta), 2.0 / 3),
+                                 -3.0 / 2);
   nlopt::opt opt(nlopt::LD_MMA, 1);
   double params[] = {theta, h};
 
@@ -134,25 +134,25 @@ double get_phi_at_energy_min(double theta, double h, double phi0,
                                    an arbitrary perturbation*/
   double min1; /* this is the actuall value of the energy from minimiser */
   opt.optimize(phi, min1);
-  double phi_min1 = fmod(phi[0], TWO_M_PI);
+  double const phi_min1 = fmod(phi[0], TWO_M_PI);
   double sol = phi_min1;
   if (fabs(h) < h_crit) {
     opt.set_max_objective(phi_objective, &params);
     phi[0] = phi0 + eps_phi;
     double max1;
     opt.optimize(phi, max1);
-    double phi_max1 = fmod(phi[0], TWO_M_PI);
+    double const phi_max1 = fmod(phi[0], TWO_M_PI);
     phi[0] = fmod(phi_max1 + M_PI, 2 * M_PI);
     double max2;
     opt.optimize(phi, max2);
     // Eqs. 12 in https://doi.org/10.1103/PhysRevB.111.014438.
-    double b1 = std::abs(max1 - min1) * ani_param;
-    double b2 = std::abs(max2 - min1) * ani_param;
-    double b_min = (b1 < b2) ? b1 : b2;
+    double const b1 = std::abs(max1 - min1) * ani_param;
+    double const b2 = std::abs(max2 - min1) * ani_param;
+    double const b_min = (b1 < b2) ? b1 : b2;
     // Eq. 13 in https://doi.org/10.1103/PhysRevB.111.014438.
-    double tau_inv = tau0_inv * exp(-b_min);
+    double const tau_inv = tau0_inv * exp(-b_min);
     // switching probability (without backflip)
-    double p12 = 1. - exp(-dt * tau_inv);
+    double const p12 = 1. - exp(-dt * tau_inv);
     // if MC move accepted, find the location of the other minimum
     if (noise < p12) {
       opt.set_min_objective(phi_objective, &params);
@@ -160,7 +160,7 @@ double get_phi_at_energy_min(double theta, double h, double phi0,
       /*try to find another minimimum from the other side*/
       double min2;
       opt.optimize(phi, min2);
-      double phi_min2 = fmod(phi[0], TWO_M_PI);
+      double const phi_min2 = fmod(phi[0], TWO_M_PI);
       sol = phi_min2;
     }
   }
@@ -200,10 +200,10 @@ const Utils::Vector3d get_external_field() {
  */
 void stoner_wohlfarth_no_field(Particle &p, Particle &pi, const double &noise) {
 
-  Utils::Vector3d e_k = pi.calc_director();
-  double tau_inv =
+  auto const e_k = pi.calc_director();
+  double const tau_inv =
       p.stoner_wolfarth_tau0_inv() * exp(-p.magnetic_anisotropy_param());
-  double p12 = 1. - exp(-p.stoner_wolfarth_dt_incr() * tau_inv);
+  double const p12 = 1. - exp(-p.stoner_wolfarth_dt_incr() * tau_inv);
   if (noise < p12) {
     if (p.stoner_wolfarth_phi_0() == 0) {
       auto const [quat, dipm] =
@@ -218,8 +218,8 @@ void stoner_wohlfarth_no_field(Particle &p, Particle &pi, const double &noise) {
       p.dipm() = dipm;
       p.quat() = quat;
     } else {
-      double diff_0 = std::abs(p.stoner_wolfarth_phi_0() - 0);
-      double diff_PI = std::abs(p.stoner_wolfarth_phi_0() - M_PI);
+      double const diff_0 = std::abs(p.stoner_wolfarth_phi_0() - 0);
+      double const diff_PI = std::abs(p.stoner_wolfarth_phi_0() - M_PI);
       // Compare the differences and determine the closer angle
       if (diff_0 < diff_PI) {
         auto const [quat, dipm] =
@@ -247,8 +247,8 @@ void stoner_wohlfarth_no_field(Particle &p, Particle &pi, const double &noise) {
       p.dipm() = dipm;
       p.quat() = quat;
     } else {
-      double diff_0 = std::abs(p.stoner_wolfarth_phi_0() - 0);
-      double diff_PI = std::abs(p.stoner_wolfarth_phi_0() - M_PI);
+      double const diff_0 = std::abs(p.stoner_wolfarth_phi_0() - 0);
+      double const diff_PI = std::abs(p.stoner_wolfarth_phi_0() - M_PI);
       // Compare the differences and determine the closer angle
       if (diff_0 < diff_PI) {
         auto const [quat, dipm] =
@@ -285,18 +285,19 @@ void stoner_wohlfarth_main(Particle &p, Particle &pi,
   double h = ext_fld_dpl.norm() * p.magnetic_anisotropy_field_inv();
   auto e_h = ext_fld_dpl.normalized();
   // calc_director() result already normalised
-  Utils::Vector3d e_k = pi.calc_director();
+  auto const e_k = pi.calc_director();
   double theta = std::acos(e_h * e_k);
   if (theta > M_PI_2) {
     theta = M_PI - theta;
     h = -h;
     e_h = -e_h;
   }
-  auto rot_axis = vector_product(vector_product(e_h, e_k), e_h).normalized();
-  auto phi = get_phi_at_energy_min(
+  auto const rot_axis =
+      vector_product(vector_product(e_h, e_k), e_h).normalized();
+  auto const phi = get_phi_at_energy_min(
       theta, h, p.stoner_wolfarth_phi_0(), p.magnetic_anisotropy_param(),
       p.stoner_wolfarth_tau0_inv(), p.stoner_wolfarth_dt_incr(), noise);
-  auto mom = e_h * std::cos(phi) + rot_axis * std::sin(phi);
+  auto const mom = e_h * std::cos(phi) + rot_axis * std::sin(phi);
   p.stoner_wolfarth_phi_0() = phi;
   auto const [quat, dipm] =
       convert_dip_to_quat(mom * p.saturation_magnetization());
@@ -319,7 +320,7 @@ void stoner_wohlfarth_main(Particle &p, Particle &pi,
 void run_magnetodynamics(CellStructure &cell_structure,
                          Thermostat::Thermostat const &thermostat) {
   /* collect HomogeneousMagneticFields if active */
-  Utils::Vector3d ext_fld = get_external_field();
+  auto const ext_fld = get_external_field();
   cell_structure.for_each_local_particle([&](Particle &p) {
     /* collect particle data */
     if (!p.is_virtual() || !p.stoner_wolfarth_is_enabled()) {
@@ -331,15 +332,14 @@ void run_magnetodynamics(CellStructure &cell_structure,
       return;
     }
     auto &pi = *pref;
-    Utils::Vector3d ext_fld_dpl = {0., 0., 0.};
-    ext_fld_dpl = ext_fld + p.dip_fld();
+    auto const ext_fld_dpl = ext_fld + p.dip_fld();
     // if no external field and no dipolar field, do simplified Stoner-Wohlfarth
     // update
     auto const random_int =
         Random::philox_4_uint64s<RNGSalt::THERMAL_STONER_WOHLFARTH>(
             thermostat.get_philox_counter(), thermostat.get_philox_seed(),
             p.id());
-    double random_uniform_dist_cast = Utils::uniform(
+    double const random_uniform_dist_cast = Utils::uniform(
         static_cast<std::size_t>(random_int[0])); // uniform (0,1)
     if (ext_fld_dpl.norm() == 0.) {
       stoner_wohlfarth_no_field(p, pi, random_uniform_dist_cast);
