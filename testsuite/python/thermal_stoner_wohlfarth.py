@@ -50,7 +50,7 @@ class Test(ut.TestCase):
     seed = 42
     np.random.seed(seed)
     time_step = 0.001
-    temperature = 1
+    temperature = 1.2
     kT_KVm_inv = 5
     dt_incr = 0.001 * 3.437060795580368e-08
     HK_inv = 0.17501031139401407
@@ -58,7 +58,7 @@ class Test(ut.TestCase):
     gamma_T = 74.86576383782938
     gamma_R = 24.955254612609792
     tau0_inv = 735412234.8230474
-    SNAPSHOT_SEPARATION = 12477
+    SNAPSHOT_SEPARATION = 10000 
     n_part = 100
     error = 0.035
 
@@ -78,7 +78,7 @@ class Test(ut.TestCase):
         particles.rotation = (True, True, True)
         for p1, dipm_el in zip(list(particles), dip_mom_list):
             p2 = system.part.add(
-                pos=p1.pos, dip=dipm_el, rotation=[False, False, False], magnetodynamics={'ani_fld_inv': self.HK_inv, 'sat_mag': self.dip_reduced, 'ani_param': self.kT_KVm_inv, 'dt_incr': self.dt_incr, 'tau0_inv': self.tau0_inv})
+                pos=p1.pos, dip=dipm_el, rotation=[False, False, False], magnetodynamics={'ani_fld_inv': self.HK_inv, 'sat_mag': self.dip_reduced, 'ani_energy': self.kT_KVm_inv * self.temperature, 'dt_incr': self.dt_incr, 'tau0_inv': self.tau0_inv})
             p2.vs_auto_relate_to(p1)
             p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
 
@@ -109,7 +109,7 @@ class Test(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
     def test_tSW_fluid(self):
-        self.SNAPSHOT_SEPARATION = 12477
+        #        self.SNAPSHOT_SEPARATION = 1000
         self.n_part = 100
         for h_reduced, res in self.res_dict_fluid.items():
             self._init_particles()
@@ -120,7 +120,7 @@ class Test(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
     def test_tSW_solid(self):
-        self.SNAPSHOT_SEPARATION = 3447
+        #        self.SNAPSHOT_SEPARATION = 1000 
         self.n_part = 500
         system = self.system
         for h_reduced, res in self.res_dict_solid.items():

@@ -78,8 +78,10 @@ struct ParticleParameterstSW {
    * anisotropy constant [kg / (m s^2)]. On particle we save the inverse of the
    * anisotropy field ani_fld_inv in reduced units! */
   double ani_fld_inv = 0.;
-  /** Eq.3 in https://doi.org/10.1103/PhysRevB.111.014438. */
-  double ani_param = 0.;
+  /** Magnetic anisotropy energy (K1 * V) in units of energy.
+   * Related to ani_param in Eq.3 of https://doi.org/10.1103/PhysRevB.111.014438
+   * by: ani_param = ani_energy / kT */
+  double ani_energy = 0.;
   /** Browns attempt frequency; Prefactor in Eq.9 from
    * https://doi.org/10.1103/PhysRevB.111.014438.  */
   double tau0_inv = 0.;
@@ -87,7 +89,7 @@ struct ParticleParameterstSW {
   double dt_incr = 0.;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar & is_enabled & phi0 & sat_mag & ani_fld_inv & ani_param & tau0_inv;
+    ar & is_enabled & phi0 & sat_mag & ani_fld_inv & ani_energy & tau0_inv;
   }
 };
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
@@ -549,10 +551,10 @@ public:
   auto &magnetic_anisotropy_field_inv() {
     return p.magnetodynamics.ani_fld_inv;
   }
-  auto const &magnetic_anisotropy_param() const {
-    return p.magnetodynamics.ani_param;
+  auto const &magnetic_anisotropy_energy() const {
+    return p.magnetodynamics.ani_energy;
   }
-  auto &magnetic_anisotropy_param() { return p.magnetodynamics.ani_param; }
+  auto &magnetic_anisotropy_energy() { return p.magnetodynamics.ani_energy; }
   auto const &stoner_wolfarth_tau0_inv() const {
     return p.magnetodynamics.tau0_inv;
   }

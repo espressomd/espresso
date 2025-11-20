@@ -195,14 +195,16 @@ const Utils::Vector3d get_external_field() {
  *
  * @param p Virtual particle to update (modified).
  * @param pi Reference particle providing the anisotropy director (read-only).
+ * @param kT Thermal energy from thermostat.
  * @param noise Uniform random number in (0,1) used for the kinetic Monte‑Carlo
  * step.
  */
-void stoner_wohlfarth_no_field(Particle &p, Particle &pi, const double &noise) {
+void stoner_wohlfarth_no_field(Particle &p, Particle &pi, double const kT,
+                               const double &noise) {
 
   auto const e_k = pi.calc_director();
-  double const tau_inv =
-      p.stoner_wolfarth_tau0_inv() * exp(-p.magnetic_anisotropy_param());
+  double const ani_param = p.magnetic_anisotropy_energy() / kT;
+  double const tau_inv = p.stoner_wolfarth_tau0_inv() * exp(-ani_param);
   double const p12 = 1. - exp(-p.stoner_wolfarth_dt_incr() * tau_inv);
   if (noise < p12) {
     if (p.stoner_wolfarth_phi_0() == 0) {
@@ -275,11 +277,12 @@ void stoner_wohlfarth_no_field(Particle &p, Particle &pi, const double &noise) {
  * @param pi Reference particle providing the anisotropy director (read-only).
  * @param ext_fld_dpl External homogeneous magnetic field + total dipolar field
  * acting on the particle.
+ * @param kT Thermal energy from thermostat.
  * @param noise Uniform random number in (0,1) used for the kinetic Monte‑Carlo
  * step.
  */
 void stoner_wohlfarth_main(Particle &p, Particle &pi,
-                           const Utils::Vector3d &ext_fld_dpl,
+                           const Utils::Vector3d &ext_fld_dpl, double const kT,
                            const double &noise) {
   // reduced field; Eq. 4 in https://doi.org/10.1103/PhysRevB.111.014438.
   double h = ext_fld_dpl.norm() * p.magnetic_anisotropy_field_inv();
@@ -294,8 +297,9 @@ void stoner_wohlfarth_main(Particle &p, Particle &pi,
   }
   auto const rot_axis =
       vector_product(vector_product(e_h, e_k), e_h).normalized();
+  double const ani_param = p.magnetic_anisotropy_energy() / kT;
   auto const phi = get_phi_at_energy_min(
-      theta, h, p.stoner_wolfarth_phi_0(), p.magnetic_anisotropy_param(),
+      theta, h, p.stoner_wolfarth_phi_0(), ani_param,
       p.stoner_wolfarth_tau0_inv(), p.stoner_wolfarth_dt_incr(), noise);
   auto const mom = e_h * std::cos(phi) + rot_axis * std::sin(phi);
   p.stoner_wolfarth_phi_0() = phi;
@@ -321,6 +325,7 @@ void run_magnetodynamics(CellStructure &cell_structure,
                          Thermostat::Thermostat const &thermostat) {
   /* collect HomogeneousMagneticFields if active */
   auto const ext_fld = get_external_field();
+  auto const kT = thermostat.kT;
   cell_structure.for_each_local_particle([&](Particle &p) {
     /* collect particle data */
     if (!p.is_virtual() || !p.stoner_wolfarth_is_enabled()) {
@@ -342,11 +347,11 @@ void run_magnetodynamics(CellStructure &cell_structure,
     double const random_uniform_dist_cast = Utils::uniform(
         static_cast<std::size_t>(random_int[0])); // uniform (0,1)
     if (ext_fld_dpl.norm() == 0.) {
-      stoner_wohlfarth_no_field(p, pi, random_uniform_dist_cast);
+      stoner_wohlfarth_no_field(p, pi, kT, random_uniform_dist_cast);
       return;
     }
     // full Stoner-Wohlfarth update with external + dipolar field
-    stoner_wohlfarth_main(p, pi, ext_fld_dpl, random_uniform_dist_cast);
+    stoner_wohlfarth_main(p, pi, ext_fld_dpl, kT, random_uniform_dist_cast);
   });
 }
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH

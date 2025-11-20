@@ -286,9 +286,9 @@ ParticleHandle::ParticleHandle() {
            if (dict.contains("ani_fld_inv"))
              p.magnetic_anisotropy_field_inv() =
                  get_value<double>(dict.at("ani_fld_inv"));
-           if (dict.contains("ani_param"))
-             p.magnetic_anisotropy_param() =
-                 get_value<double>(dict.at("ani_param"));
+           if (dict.contains("ani_energy"))
+             p.magnetic_anisotropy_energy() =
+                 get_value<double>(dict.at("ani_energy"));
            if (dict.contains("tau0_inv"))
              p.stoner_wolfarth_tau0_inv() =
                  get_value<double>(dict.at("tau0_inv"));
@@ -304,7 +304,7 @@ ParticleHandle::ParticleHandle() {
              {"phi0", p.stoner_wolfarth_phi_0()},
              {"sat_mag", p.saturation_magnetization()},
              {"ani_fld_inv", p.magnetic_anisotropy_field_inv()},
-             {"ani_param", p.magnetic_anisotropy_param()},
+             {"ani_energy", p.magnetic_anisotropy_energy()},
              {"tau0_inv", p.stoner_wolfarth_tau0_inv()},
              {"dt_incr", p.stoner_wolfarth_dt_incr()},
          };
