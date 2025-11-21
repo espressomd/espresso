@@ -71,13 +71,6 @@ static Utils::Vector3d velocity(Particle const &p_ref, Particle const &p_vs) {
   return vector_product(omega_space_frame, d) + p_ref.v();
 }
 
-/**
- * @brief Get real particle tracked by a virtual site.
- *
- * @param cell_structure Cell structure.
- * @param p Virtual site.
- * @return Pointer to real particle.
- */
 Particle *get_reference_particle(CellStructure &cell_structure,
                                  Particle const &p) {
   auto const &vs_rel = p.vs_relative();
