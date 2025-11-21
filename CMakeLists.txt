@@ -90,6 +90,7 @@ option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
 option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
 option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
        OFF)
+option(ESPRESSO_BUILD_WITH_METATENSOR "Build with Metatensor support" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA
        "Build with waLBerla lattice-Boltzmann support" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
@@ -845,6 +846,138 @@ endif()
 if(ESPRESSO_BUILD_BENCHMARKS)
   add_custom_target(benchmark)
   add_subdirectory(maintainer/benchmarks)
+endif()
+
+#
+# Metatensor
+#
+
+if(ESPRESSO_BUILD_WITH_METATENSOR)
+  if (BUILD_OMP AND APPLE)
+    message(FATAL_ERROR
+          "Can not enable both BUILD_OMP and PGK_ML-METATOMIC on Apple systems, "
+          "since this results in two different versions of the OpenMP library (one "
+          "from the system and one from Torch) being linked to the final "
+          "executable, which then crashes"
+      )
+  endif()
+
+  # Bring the `torch` target in scope to allow evaluation of cmake generator
+  # expression from `metatensor_torch`
+  find_package(Torch REQUIRED)
+
+  # # cmake-format: off set(METATENSOR_URL_BASE
+  # "https://github.com/lab-cosmo/metatensor/releases/download")
+  # set(METATENSOR_CORE_VERSION "0.1.8") set(METATENSOR_TORCH_VERSION "0.5.3")
+  #
+  # include(FetchContent) set(BUILD_SHARED_LIBS on CACHE BOOL "")
+  # FetchContent_Declare( metatensor URL
+  # "${METATENSOR_URL_BASE}/metatensor-core-v${METATENSOR_CORE_VERSION}/metatensor-core-cxx-${METATENSOR_CORE_VERSION}.tar.gz"
+  # URL_HASH SHA1=3ed389770e5ec6dbb8cbc9ed88f84d6809b552ef )
+  # set(BUILD_SHARED_LIBS on CACHE BOOL "")
+  #
+  # # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21146
+  # if(NOT DEFINED metatensor_SOURCE_DIR OR NOT EXISTS
+  # "${metatensor_SOURCE_DIR}") message(STATUS "Fetching metatensor
+  # v${METATENSOR_CORE_VERSION} from github") FetchContent_Populate(metatensor)
+  # endif() set(BUILD_SHARED_LIBS on CACHE BOOL "")
+  #
+  # FetchContent_Declare( metatensor_torch URL
+  # "${METATENSOR_URL_BASE}/metatensor-torch-v${METATENSOR_TORCH_VERSION}/metatensor-torch-cxx-${METATENSOR_TORCH_VERSION}.tar.gz"
+  # ) set(BUILD_SHARED_LIBS on CACHE BOOL "") if(NOT DEFINED
+  # metatensor_torch_SOURCE_DIR OR NOT EXISTS "${metatensor_torch_SOURCE_DIR}")
+  # message(STATUS "Fetching metatensor torch v${METATENSOR_CORE_VERSION} from
+  # github") FetchContent_Populate(metatensor_torch) endif() # cmake-format: on
+  # set(BUILD_SHARED_LIBS on CACHE BOOL "")
+  #
+  # set(METATENSOR_INSTALL_BOTH_STATIC_SHARED on CACHE BOOL "")
+  # add_subdirectory("${metatensor_SOURCE_DIR}")
+  # add_subdirectory("${metatensor_torch_SOURCE_DIR}")
+
+  # The caffe2::mkl target contains MKL_INCLUDE_DIR in it's
+  # INTERFACE_INCLUDE_DIRECTORIES even if MKL was not found, causing a build
+  # failure with "Imported target "torch" includes non-existent path" down the
+  # line. This code removes the missing path from INTERFACE_INCLUDE_DIRECTORIES,
+  # allowing the build to continue further.
+  # if (TARGET caffe2::mkl)
+  #   get_target_property(CAFFE2_MKL_INCLUDE_DIRECTORIES caffe2::mkl INTERFACE_INCLUDE_DIRECTORIES)
+  #   set(MKL_INCLUDE_DIR_NOTFOUND "")
+  #   foreach(_include_dir_ ${CAFFE2_MKL_INCLUDE_DIRECTORIES})
+  #     if ("${_include_dir_}" MATCHES "MKL_INCLUDE_DIR-NOTFOUND")
+  #       set(MKL_INCLUDE_DIR_NOTFOUND "${_include_dir_}")
+  #     endif()
+  #   endforeach()
+  #
+  #   if (NOT "${MKL_INCLUDE_DIR_NOTFOUND}" STREQUAL "")
+  #     list(REMOVE_ITEM CAFFE2_MKL_INCLUDE_DIRECTORIES "${MKL_INCLUDE_DIR_NOTFOUND}")
+  #   endif()
+  #   set_target_properties(caffe2::mkl PROPERTIES
+  #       INTERFACE_INCLUDE_DIRECTORIES "${CAFFE2_MKL_INCLUDE_DIRECTORIES}"
+  #   )
+  # endif()
+
+  set(METATENSOR_CORE_VERSION "0.1.17")
+  set(METATENSOR_CORE_SHA256 "42119e11908239915ccc187d7ca65449b461f1d4b5af4d6df1fb613d687da76a")
+
+  set(METATENSOR_TORCH_VERSION "0.8.1")
+  set(METATENSOR_TORCH_SHA256 "9da124e8e09dc1859700723a76ff29aef7a216b84a19d38746cc45bf45bc599b")
+
+  set(METATOMIC_TORCH_VERSION "0.1.5")
+  set(METATOMIC_TORCH_SHA256 "8ecd1587797fe1cf6b2162ddc10cc84c558fdfd55ab225bc5de4fe15ace8fc3d")
+
+  set(DOWNLOAD_METATENSOR_DEFAULT ON)
+  find_package(metatensor_torch QUIET ${METATENSOR_TORCH_VERSION})
+  if (metatensor_torch_FOUND)
+    set(DOWNLOAD_METATENSOR_DEFAULT OFF)
+  endif()
+
+  set(DOWNLOAD_METATOMIC_DEFAULT ON)
+  find_package(metatomic_torch QUIET ${METATOMIC_TORCH_VERSION})
+  if (metatomic_torch_FOUND)
+    set(DOWNLOAD_METATOMIC_DEFAULT OFF)
+  endif()
+
+  option(DOWNLOAD_METATENSOR "Download metatensor package instead of using an already installed one" ${DOWNLOAD_METATENSOR_DEFAULT})
+  option(DOWNLOAD_METATOMIC "Download metatomic package instead of using an already installed one" ${DOWNLOAD_METATOMIC_DEFAULT})
+  if (DOWNLOAD_METATENSOR)
+    include(FetchContent)
+
+    set(URL_BASE "https://github.com/metatensor/metatensor/releases/download")
+    FetchContent_Declare(metatensor
+        URL ${URL_BASE}/metatensor-core-v${METATENSOR_CORE_VERSION}/metatensor-core-cxx-${METATENSOR_CORE_VERSION}.tar.gz
+        URL_HASH SHA256=${METATENSOR_CORE_SHA256}
+    )
+
+    message(STATUS "Fetching metatensor v${METATENSOR_CORE_VERSION} from github")
+    FetchContent_MakeAvailable(metatensor)
+
+    FetchContent_Declare(metatensor-torch
+        URL ${URL_BASE}/metatensor-torch-v${METATENSOR_TORCH_VERSION}/metatensor-torch-cxx-${METATENSOR_TORCH_VERSION}.tar.gz
+        URL_HASH SHA256=${METATENSOR_TORCH_SHA256}
+    )
+
+    message(STATUS "Fetching metatensor-torch v${METATENSOR_TORCH_VERSION} from github")
+    FetchContent_MakeAvailable(metatensor-torch)
+  else()
+    # make sure to fail the configuration if cmake can not find metatensor-torch
+    find_package(metatensor_torch REQUIRED ${METATENSOR_TORCH_VERSION})
+  endif()
+
+  if (DOWNLOAD_METATOMIC)
+    include(FetchContent)
+
+    set(URL_BASE "https://github.com/metatensor/metatomic/releases/download")
+    FetchContent_Declare(metatomic-torch
+        URL ${URL_BASE}/metatomic-torch-v${METATOMIC_TORCH_VERSION}/metatomic-torch-cxx-${METATOMIC_TORCH_VERSION}.tar.gz
+        URL_HASH SHA256=${METATOMIC_TORCH_SHA256}
+    )
+
+    message(STATUS "Fetching metatomic-torch v${METATOMIC_TORCH_VERSION} from github")
+    FetchContent_MakeAvailable(metatomic-torch)
+  else()
+    # make sure to fail the configuration if cmake can not find metatomic-torch
+    find_package(metatomic_torch REQUIRED ${METATOMIC_TORCH_VERSION})
+  endif()
 endif()
 
 #
