@@ -222,6 +222,7 @@ endmacro()
 espresso_minimal_compiler_version("GNU" 12.2.0)
 espresso_minimal_compiler_version("Clang" 18.1.0)
 espresso_minimal_compiler_version("AppleClang" 17.0.0)
+espresso_minimal_compiler_version("CrayClang" 17.0.0)
 espresso_minimal_compiler_version("IntelLLVM" 2023.1)
 
 set(ESPRESSO_UNSUPPORTED_COMPILERS "Intel;MSVC")
@@ -589,7 +590,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
 endif()
 
 if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-  find_package(OpenMP REQUIRED)
+  find_package(OpenMP REQUIRED COMPONENTS CXX)
 
   if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
     find_package(Kokkos 4.3 QUIET)

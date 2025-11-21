@@ -86,22 +86,21 @@ endfunction()
 add_library(espresso_walberla_compiler_flags INTERFACE)
 add_library(espresso::walberla::compiler_flags ALIAS
             espresso_walberla_compiler_flags)
-target_link_libraries(
-  espresso_walberla_compiler_flags
-  INTERFACE
-    espresso::compiler_flags
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
-)
 add_library(espresso_walberla_codegen_compiler_flags INTERFACE)
 add_library(espresso::walberla_codegen::compiler_flags ALIAS
             espresso_walberla_codegen_compiler_flags)
 # cmake-format: off
 target_compile_options(
+  espresso_walberla_compiler_flags
+  INTERFACE
+  $<$<COMPILE_LANG_AND_ID:CXX,CrayClang>:-Wno-reorder-ctor>
+)
+target_compile_options(
   espresso_walberla_codegen_compiler_flags
   INTERFACE
   $<$<COMPILE_LANGUAGE:CXX>:-Wno-cast-align>
   $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-shadow=compatible-local>
+  $<$<COMPILE_LANG_AND_ID:CXX,CrayClang>:-Wno-reorder-ctor>
   # silence diagnostics from MPI vendors
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM,AppleClang>>:-Wno-cast-function-type-mismatch>
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>>:-Wno-cast-function-type-mismatch>
@@ -120,12 +119,25 @@ espresso_configure_walberla_target(espresso_walberla)
 espresso_configure_walberla_target(espresso_walberla_codegen)
 
 target_link_libraries(
-  espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils
-  PRIVATE espresso::walberla::compiler_flags espresso::walberla_codegen
-          $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>)
+  espresso_walberla
+  PUBLIC MPI::MPI_CXX espresso::utils
+  PRIVATE
+    espresso::compiler_flags
+    espresso::walberla::compiler_flags
+    espresso::walberla_codegen
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
+)
 target_link_libraries(
-  espresso_walberla_codegen PRIVATE espresso::walberla::compiler_flags
-                                    espresso::walberla_codegen::compiler_flags)
+  espresso_walberla_codegen
+  PRIVATE
+    espresso::compiler_flags
+    espresso::walberla::compiler_flags
+    espresso::walberla_codegen::compiler_flags
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
+)
 
 function(espresso_set_walberla_codegen_kernel_source_properties source_file)
   # disable sanitizers on kernels due to excessive runtime and VRAM usage

@@ -1572,9 +1572,8 @@ public:
         if (auto const bci = get_block_interval(
                 lattice, lower_corner, upper_corner, block_offset, block)) {
 
-          auto kernel = [&lattice, &block, &velocity,
-                         this](unsigned const, unsigned const local_index,
-                               Utils::Vector3i const &node) {
+          auto kernel = [&, this](unsigned const, unsigned const local_index,
+                                  Utils::Vector3i const &node) {
             auto const bc = get_block_and_cell(lattice, node, false);
             assert(bc->block->getAABB() == block.getAABB());
             auto const &opt = velocity[local_index];

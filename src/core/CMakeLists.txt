@@ -86,6 +86,7 @@ target_link_libraries(
     $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Cabana::Core>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_GSL}>:GSL::gsl>
   PUBLIC espresso::utils MPI::MPI_CXX Random123 espresso::particle_observables
          Boost::serialization Boost::mpi espresso::instrumentation)
 

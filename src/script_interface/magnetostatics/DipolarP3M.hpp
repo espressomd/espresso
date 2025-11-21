@@ -89,7 +89,12 @@ public:
          [this]() { return m_tuning.timings; }},
         {"tune_limits", AutoParameter::read_only,
          [this]() {
+#if defined(__clang__) and defined(__cray__)
+           auto const &range_min = m_tune_limits.first;
+           auto const &range_max = m_tune_limits.second;
+#else
            auto const &[range_min, range_max] = m_tuning.limits;
+#endif
            std::vector<Variant> retval = {
                range_min ? Variant{*range_min} : Variant{None{}},
                range_max ? Variant{*range_max} : Variant{None{}},

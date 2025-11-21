@@ -391,6 +391,7 @@ class MMM1D(ElectrostaticInteraction):
     """
     _so_name = "Coulomb::CoulombMMM1D"
     _so_creation_policy = "GLOBAL"
+    _so_features = ("ELECTROSTATICS", "GSL")
 
     def default_params(self):
         return {"far_switch_radius": -1.,

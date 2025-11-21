@@ -165,7 +165,7 @@ void System::set_min_global_cut(double value) {
 void System::set_cell_structure_topology(CellStructureType topology) {
   if (topology == CellStructureType::REGULAR) {
     if (cell_structure->decomposition_type() == CellStructureType::REGULAR) {
-      // get fully connected info from exising regular decomposition
+      // get fully connected info from existing regular decomposition
       auto &old_regular_decomposition =
           dynamic_cast<RegularDecomposition const &>(
               std::as_const(*cell_structure).decomposition());

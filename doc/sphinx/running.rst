@@ -182,47 +182,29 @@ path set to ``pypresso``.
 Running in the cloud
 ~~~~~~~~~~~~~~~~~~~~
 
-A `Gitpod <https://gitpod.io>`__ config file is provided to automatically
-build |es| in its default configuration (`direct link
-<https://gitpod.io/#https://github.com/espressomd/espresso>`__), which is
-sufficient to run most tutorials. The Gitpod workspace can be accessed from
-the `terminal via SSH <https://www.gitpod.io/docs/configure/ssh>`__ or from
-a `web browser <https://www.gitpod.io/docs/configure/browser-settings>`__,
-which uses the VS Code IDE.
+.. _Using Binder:
 
-To execute the tutorials, choose a Jupyter backend:
+Using Binder
+""""""""""""
 
-* VS Code Jupyter: navigate to ``ESPRESSO/build/doc/tutorials`` in the
-  project tree and open the notebook files; if the kernel drop-down menu
-  doesn't offer ``build/pypresso`` as a kernel, restart the VS Code IDE:
-  quit the workspace by closing the browser tab, re-open the tab and
-  click ``espressomd-espresso-...`` in the popup to restart the IDE
-  (don't click on the green button "New Workspace")
+A pre-compiled version of |es| is available
+for the `Binder platform <https://mybinder.org>`__ :cite:`jupyter18a`
+(`direct link <https://mybinder.org/v2/gh/jngrad/espresso-binder/HEAD>`__),
+which uses the JupyterLab IDE.
 
-* Jupyter Notebook:
+.. _Using Codespaces:
 
-  .. code-block:: bash
+Using Codespaces
+""""""""""""""""
 
-      cd ${GITPOD_REPO_ROOT}/build/doc/tutorials
-      ../../ipypresso notebook --NotebookApp.allow_origin="$(gp url 8888)" \
-          --port=8888 --no-browser
-
-* JupyterLab:
-
-  .. code-block:: bash
-
-      cd ${GITPOD_REPO_ROOT}/build/doc/tutorials
-      ../../ipypresso lab --NotebookApp.allow_origin="$(gp url 8888)" \
-          --port=8888 --no-browser
-
-For both Jupyter Notebook and JupyterLab, a notification will appear and say
-that a new port 8888 has been made available. Click the orange "Make public"
-button to open that port and then Ctrl+click one of the urls in the terminal
-output to open the Jupyter backed in a pop-up window.
-
-To start a workspace from a specific branch, use a link in the following form:
-``https://gitpod.io/#https://github.com/user_name/espresso/tree/branch_name``,
-where ``user_name`` and ``branch_name`` need to be adapted.
+A `Codespaces <https://github.com/features/codespaces>`__ config file is provided
+to facilitate the building of |es| in the default configuration (`direct link
+<https://codespaces.new/espressomd/espresso>`__).
+The codepace can be accessed from the terminal via the `GitHub CLI ssh command
+<https://cli.github.com/manual/gh_codespace_ssh>`__
+or from a web browser (default), which uses the VS Code IDE.
+Instructions to build |es| and execute the tutorials are available
+in file :file:`.devcontainer/Readme.md`.
 
 
 .. _Parallel computing:

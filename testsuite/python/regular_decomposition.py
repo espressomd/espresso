@@ -184,9 +184,8 @@ class RegularDecomposition(ut.TestCase):
             if np.abs(
                     p1.pos - p2.pos)[fc_normal_coord] < system.box_l[fc_normal_coord] / 2:
                 self.assertLess(np.linalg.norm(d), two_cells_3d)
-            # If across a the fully connected boundary
-            # substract the distance in the fully connected direciont (all are
-            # valid
+            # If across a fully connected boundary, substract the distance
+            # in the fully connected direction (all are valid)
             d_trans = d - d * fc_dir
             # in the other TWO directions, cells have to share a corner
             self.assertLess(np.linalg.norm(d_trans), two_cells_2d)

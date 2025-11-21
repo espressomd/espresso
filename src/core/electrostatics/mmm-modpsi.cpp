@@ -19,12 +19,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef ESPRESSO_ELECTROSTATICS
+#if defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)
 
 #include "mmm1d.hpp"
-#include "specfunc.hpp"
+
+#include <gsl/gsl_sf_zeta.h>
 
 #include <cmath>
 #include <numbers>
@@ -42,7 +43,7 @@ static void preparePolygammaEven(int n, double binom,
     series[0] = 2. * (1. - std::numbers::egamma);
     for (int order = 1;; order += 1) {
       auto const x_order = static_cast<double>(2 * order);
-      auto const coeff = -2 * hzeta(x_order + 1, 2);
+      auto const coeff = -2. * gsl_sf_hzeta(x_order + 1., 2.);
       if (fabs(maxx * coeff) * (4.0 / 3.0) < round_error_prec)
         break;
       series.push_back(coeff);
@@ -51,21 +52,21 @@ static void preparePolygammaEven(int n, double binom,
     }
   } else {
     // even, n > 0
-    double maxx = 1;
-    double pref = 2;
+    double maxx = 1.;
+    double pref = 2.;
 
     for (int order = 0;; order++) {
       // only even exponents of x
       auto const x_order = static_cast<double>(2 * order);
-      auto const coeff = pref * hzeta(1 + deriv + x_order, 2);
+      auto const coeff = pref * gsl_sf_hzeta(1. + deriv + x_order, 2.);
       if ((fabs(maxx * coeff) * (4.0 / 3.0) < round_error_prec) &&
           (x_order > deriv))
         break;
       series.push_back(-binom * coeff);
 
       maxx *= 0.25;
-      pref *= (1.0 + deriv / (x_order + 1));
-      pref *= (1.0 + deriv / (x_order + 2));
+      pref *= (1.0 + deriv / (x_order + 1.));
+      pref *= (1.0 + deriv / (x_order + 2.));
     }
   }
 }
@@ -80,7 +81,7 @@ static void preparePolygammaOdd(int n, double binom,
   for (int order = 0;; order++) {
     // only odd exponents of x
     auto const x_order = static_cast<double>(2 * order + 1);
-    auto const coeff = pref * hzeta(1 + deriv + x_order, 2);
+    auto const coeff = pref * gsl_sf_hzeta(1. + deriv + x_order, 2.);
     if ((fabs(maxx * coeff) * (4.0 / 3.0) < round_error_prec) &&
         (x_order > deriv))
       break;
@@ -109,4 +110,4 @@ void CoulombMMM1D::create_mod_psi_up_to(int new_n) {
   }
 }
 
-#endif // ESPRESSO_ELECTROSTATICS
+#endif // defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)

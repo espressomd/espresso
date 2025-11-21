@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
          echo '' > Brewfile
-         for dep in boost boost-mpi fftw ccache ninja; do echo "brew \"${dep}\"" >> Brewfile; done
+         for dep in boost boost-mpi fftw gsl ccache ninja; do echo "brew \"${dep}\"" >> Brewfile; done
          brew bundle check >/dev/null 2>&1 || brew bundle --verbose --no-upgrade
          # set up Xcode compiler
          echo "::group::List available Xcode compilers"
@@ -51,6 +51,7 @@ jobs:
           cmake_params: '-D ESPRESSO_TEST_NP=3'
           with_ccache: 'true'
           with_fftw: 'true'
+          with_gsl: 'true'
           with_walberla: 'true'
           with_walberla_avx: 'false'
           with_shared_memory_parallelism: 'false'

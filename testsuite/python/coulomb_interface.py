@@ -92,6 +92,7 @@ class Test(ut.TestCase):
                      prefactor=2., r_cut=1.5, cao=2, mesh=[8, 8, 8],
                      alpha=12., accuracy=0.01, tune=False)))
 
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "GSL"])
     def test_mmm1d_cpu(self):
         self.system.periodicity = [False, False, True]
         self.system.cell_system.set_n_square()
@@ -108,7 +109,7 @@ class Test(ut.TestCase):
             with self.assertRaisesRegex(ValueError, f"Parameter '{key}' must be > 0"):
                 espressomd.electrostatics.MMM1D(**invalid_params)
 
-    @utx.skipIfMissingFeatures(["P3M"])
+    @utx.skipIfMissingFeatures(["P3M", "GSL"])
     def test_solvers_rollback(self):
         # swapping two solvers should safely rollback to last valid solver
         self.system.periodicity = [False, False, True]
@@ -125,6 +126,7 @@ class Test(ut.TestCase):
         self.assertAlmostEqual(
             self.system.analysis.energy()["coulomb"], ref_energy, delta=1e-7)
 
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "GSL"])
     def test_charge_neutrality_check(self):
         self.system.part.add(pos=(0.0, 0.0, 0.0), q=1.)
         self.system.periodicity = [False, False, True]
@@ -148,6 +150,7 @@ class Test(ut.TestCase):
         self.assertFalse(actor.check_neutrality)
         self.assertIsNone(actor.charge_neutrality_tolerance)
 
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "GSL"])
     def test_mmm1d_cpu_tuning_exceptions(self):
         self.system.periodicity = [False, False, True]
         self.system.cell_system.set_n_square()

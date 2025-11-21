@@ -351,7 +351,7 @@ class ParticleHandle(ScriptInterfaceHelper):
         Examples
         --------
         >>> import espressomd
-        >>> # swimming withut hydrodynamics
+        >>> # swimming without hydrodynamics
         >>> system = espressomd.System(box_l=[10, 10, 10])
         >>> partcl = system.part.add(pos=[1, 0, 0], swimming={'f_swim': 0.03})
         >>> # swimming with hydrodynamics

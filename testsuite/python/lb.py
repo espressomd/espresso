@@ -337,7 +337,7 @@ class LBTest:
                 slice(0, 0), slice(5, 1), slice(0, -lbf.shape[i] + 1),
                 slice(-lbf.shape[i], None), slice(2, lbf.shape[i] - 1), 1])
 
-        # check gettters
+        # check getters
         for subset in itertools.product(*slices):
             # skip indexing without any slice
             if not any(isinstance(item, slice) for item in subset):
@@ -345,7 +345,7 @@ class LBTest:
             np.testing.assert_allclose(
                 np.copy(lbf[subset].density), ref_density[subset], rtol=1e-5)
 
-        # check settters
+        # check setters
         for subset in itertools.product(*slices):
             # skip indexing without any slice and skip slices with zero length
             if not any(isinstance(item, slice) for item in subset) or any(

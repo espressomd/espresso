@@ -82,11 +82,6 @@ espresso_unit_test(SRC BondList_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC energy_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC bonded_interactions_map_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC bond_breakage_test.cpp DEPENDS espresso::core)
-if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-  # AppleClang doesn't implement C++17's mathematical special functions
-  espresso_unit_test(SRC specfunc_test.cpp DEPENDS espresso::utils
-                     espresso::core)
-endif()
 if(ESPRESSO_BUILD_WITH_WALBERLA)
   espresso_unit_test(SRC lb_particle_coupling_test.cpp DEPENDS espresso::core
                      Boost::mpi MPI::MPI_CXX NUM_PROC 2)
