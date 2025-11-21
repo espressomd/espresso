@@ -30,6 +30,16 @@
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
 
+struct Particle;
+
+/** Get real particle tracked by a virtual site.
+ *  @param cell_structure Cell structure.
+ *  @param p Virtual site.
+ *  @return Pointer to real particle, or nullptr if lookup fails.
+ */
+Particle *get_reference_particle(CellStructure &cell_structure,
+                                 Particle const &p);
+
 void vs_relative_update_particles(CellStructure &cell_structure,
                                   BoxGeometry const &box_geo);
 void vs_relative_back_transfer_forces_and_torques(

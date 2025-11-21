@@ -35,6 +35,7 @@
 #include "random.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
+#include "virtual_sites/relative.hpp"
 #include <cmath>
 #include <tuple>
 #include <utility>
@@ -47,29 +48,6 @@ constexpr double eps_phi = 1e-3;
 constexpr double eps_abs = 1e-15;
 // relative error precision required for the optimiser
 constexpr double eps_rel = 1e-15;
-
-/**
- * @brief Get real particle tracked by a virtual site.
- *
- * @param cell_structure Cell structure.
- * @param p Virtual site.
- * @return Pointer to real particle.
- */
-static Particle *get_reference_particle(CellStructure &cell_structure,
-                                        Particle const &p) {
-  auto const &vs_rel = p.vs_relative();
-  if (vs_rel.to_particle_id == -1) {
-    runtimeErrorMsg() << "Particle with id " << p.id()
-                      << " is a dangling virtual site";
-    return nullptr;
-  }
-  auto p_ref_ptr = cell_structure.get_local_particle(vs_rel.to_particle_id);
-  if (!p_ref_ptr) {
-    runtimeErrorMsg() << "No real particle with id " << vs_rel.to_particle_id
-                      << " for virtual site with id " << p.id();
-  }
-  return p_ref_ptr;
-}
 
 /**
  * @brief Objective (energy) function for the Stoner–Wohlfarth phi minimisation.

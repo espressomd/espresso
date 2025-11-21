@@ -78,8 +78,8 @@ static Utils::Vector3d velocity(Particle const &p_ref, Particle const &p_vs) {
  * @param p Virtual site.
  * @return Pointer to real particle.
  */
-static Particle *get_reference_particle(CellStructure &cell_structure,
-                                        Particle const &p) {
+Particle *get_reference_particle(CellStructure &cell_structure,
+                                 Particle const &p) {
   auto const &vs_rel = p.vs_relative();
   if (vs_rel.to_particle_id == -1) {
     runtimeErrorMsg() << "Particle with id " << p.id()

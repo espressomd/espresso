@@ -50,8 +50,11 @@ class Test(ut.TestCase):
     seed = 42
     np.random.seed(seed)
     time_step = 0.001
-    temperature = 1.2
-    kT_KVm_inv = 5
+    temperature = 1
+    # ani_energy = K1 * V, where kT_KVm_inv was previously ani_param = ani_energy/kT
+    # So ani_energy = kT_KVm_inv * kT
+    kT_KVm_inv = 5  # old ani_param value
+    ani_energy = temperature * kT_KVm_inv
     dt_incr = 0.001 * 3.437060795580368e-08
     HK_inv = 0.17501031139401407
     dip_reduced = 1.7501031139401464
@@ -78,7 +81,7 @@ class Test(ut.TestCase):
         particles.rotation = (True, True, True)
         for p1, dipm_el in zip(list(particles), dip_mom_list):
             p2 = system.part.add(
-                pos=p1.pos, dip=dipm_el, rotation=[False, False, False], magnetodynamics={'ani_fld_inv': self.HK_inv, 'sat_mag': self.dip_reduced, 'ani_energy': self.kT_KVm_inv * self.temperature, 'dt_incr': self.dt_incr, 'tau0_inv': self.tau0_inv})
+                pos=p1.pos, dip=dipm_el, rotation=[False, False, False], magnetodynamics={'anisotropy_field_inv': self.HK_inv, 'sat_mag': self.dip_reduced, 'anisotropy_energy': self.ani_energy, 'sw_dt_incr': self.dt_incr, 'sw_tau0_inv': self.tau0_inv})
             p2.vs_auto_relate_to(p1)
             p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
 

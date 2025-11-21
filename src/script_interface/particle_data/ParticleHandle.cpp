@@ -278,35 +278,35 @@ ParticleHandle::ParticleHandle() {
          set_particle_property([&value](Particle &p) {
            auto const dict = get_value<VariantMap>(value);
            p.stoner_wolfarth_is_enabled() = true;
-           if (dict.contains("phi0"))
-             p.stoner_wolfarth_phi_0() = get_value<double>(dict.at("phi0"));
+           if (dict.contains("sw_phi_0"))
+             p.stoner_wolfarth_phi_0() = get_value<double>(dict.at("sw_phi_0"));
            if (dict.contains("sat_mag"))
              p.saturation_magnetization() =
                  get_value<double>(dict.at("sat_mag"));
-           if (dict.contains("ani_fld_inv"))
+           if (dict.contains("anisotropy_field_inv"))
              p.magnetic_anisotropy_field_inv() =
-                 get_value<double>(dict.at("ani_fld_inv"));
-           if (dict.contains("ani_energy"))
+                 get_value<double>(dict.at("anisotropy_field_inv"));
+           if (dict.contains("anisotropy_energy"))
              p.magnetic_anisotropy_energy() =
-                 get_value<double>(dict.at("ani_energy"));
-           if (dict.contains("tau0_inv"))
+                 get_value<double>(dict.at("anisotropy_energy"));
+           if (dict.contains("sw_tau0_inv"))
              p.stoner_wolfarth_tau0_inv() =
-                 get_value<double>(dict.at("tau0_inv"));
-           if (dict.contains("dt_incr"))
+                 get_value<double>(dict.at("sw_tau0_inv"));
+           if (dict.contains("sw_dt_incr"))
              p.stoner_wolfarth_dt_incr() =
-                 get_value<double>(dict.at("dt_incr"));
+                 get_value<double>(dict.at("sw_dt_incr"));
          });
        },
        [this]() {
          auto const &p = get_particle_data(m_pid);
          return VariantMap{
              {"is_enabled", p.stoner_wolfarth_is_enabled()},
-             {"phi0", p.stoner_wolfarth_phi_0()},
+             {"sw_phi_0", p.stoner_wolfarth_phi_0()},
              {"sat_mag", p.saturation_magnetization()},
-             {"ani_fld_inv", p.magnetic_anisotropy_field_inv()},
-             {"ani_energy", p.magnetic_anisotropy_energy()},
-             {"tau0_inv", p.stoner_wolfarth_tau0_inv()},
-             {"dt_incr", p.stoner_wolfarth_dt_incr()},
+             {"anisotropy_field_inv", p.magnetic_anisotropy_field_inv()},
+             {"anisotropy_energy", p.magnetic_anisotropy_energy()},
+             {"sw_tau0_inv", p.stoner_wolfarth_tau0_inv()},
+             {"sw_dt_incr", p.stoner_wolfarth_dt_incr()},
          };
        }},
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
