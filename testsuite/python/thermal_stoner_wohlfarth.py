@@ -61,7 +61,6 @@ class Test(ut.TestCase):
     gamma_T = 74.86576383782938
     gamma_R = 24.955254612609792
     tau0_inv = 735412234.8230474
-    SNAPSHOT_SEPARATION = 10000 
     n_part = 100
     error = 0.035
 
@@ -92,11 +91,11 @@ class Test(ut.TestCase):
             H=(0, 0, h_reduced))
         self.system.constraints.add(ExtH)
 
-    def _measure_dipole_moment(self):
+    def _measure_dipole_moment(self, steps):
         dipm_tot = MagneticDipoleMoment(
             ids=self.system.part.select(lambda p: p.magnetodynamics['is_enabled'] == True).id)
         norm = 1 / (self.dip_reduced * self.n_part)
-        self.system.integrator.run(self.SNAPSHOT_SEPARATION)
+        self.system.integrator.run(steps)
         mag_el = dipm_tot.calculate() * norm
         return mag_el[-1]
 
@@ -112,18 +111,19 @@ class Test(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
     def test_tSW_fluid(self):
-        #        self.SNAPSHOT_SEPARATION = 1000
+        STEPS = 12477
         self.n_part = 100
         for h_reduced, res in self.res_dict_fluid.items():
             self._init_particles()
             self._apply_single_field(h_reduced)
             print('test_tSW_fluid: ', h_reduced)
             self.assertAlmostEqual(
-                self._measure_dipole_moment(), res, delta=self.error)
+                self._measure_dipole_moment(STEPS), res, delta=self.error)
 
     @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
     def test_tSW_solid(self):
-        #        self.SNAPSHOT_SEPARATION = 1000 
+
+        STEPS = 3447
         self.n_part = 500
         system = self.system
         for h_reduced, res in self.res_dict_solid.items():
@@ -134,7 +134,7 @@ class Test(ut.TestCase):
             part_slice.fix = [True, True, True]
             self._apply_single_field(h_reduced)
             self.assertAlmostEqual(
-                self._measure_dipole_moment(), res, delta=self.error)
+                self._measure_dipole_moment(STEPS), res, delta=self.error)
 
 
 if __name__ == "__main__":
