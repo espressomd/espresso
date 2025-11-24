@@ -1450,16 +1450,18 @@ def _add_particle_slice_properties():
             values = []
             for part in particle_slice._id_gen():
                 values.append(getattr(part, attribute))
+            return values
         else:
             values = particle_slice.call_method(
                 "get_param_parallel", name=attribute)
             if attribute == "propagation":
-                values = np.array([Propagation(value)
+                return np.array([Propagation(value)
                                   for value in values], dtype=object)
+            elif isinstance(values, np.ndarray):
+                return values
             else:
-                values = np.stack(values)
+                return np.stack(values)
 
-        return values
 
     for attribute_name in sorted(particle_attributes):
         if attribute_name in dir(ParticleSlice):

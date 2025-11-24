@@ -20,11 +20,13 @@ from libcpp.utility cimport pair
 from libcpp.vector cimport vector
 from libcpp.memory cimport shared_ptr, make_shared
 import numpy as np
+cimport numpy as cnp
 import pathlib
 from . import utils
 from .utils cimport Vector3b, Vector3i, Vector2d, Vector3d, Vector4d
 from .utils cimport path
 cimport cpython.object
+cnp.import_array()
 
 
 cdef shared_ptr[ContextManager] _om
@@ -238,8 +240,11 @@ cdef Variant python_object_to_variant(value) except *:
     cdef int[::1] view_int
     cdef int * data_int
     cdef double[::1] view_double
+    cdef double[:, ::1] view_double_2d
     cdef double * data_double
     cdef path fs_path
+    cdef size_t index
+    cdef size_t n
 
     if value is None:
         return Variant()
@@ -308,6 +313,17 @@ cdef Variant python_object_to_variant(value) except *:
             for e in value:
                 vec_int.push_back(e)
             return make_variant[vector[int]](vec_int)
+        if isinstance(value, np.ndarray) and np.issubdtype(value.dtype, np.floating):
+            n = len(value)
+            vec_variant.reserve(n)
+            view_double_2d = np.ascontiguousarray(value, dtype=np.float64)
+            for index in range(n):
+                data_double = &view_double_2d[index, 0]
+                vec_double.assign(data_double, data_double +
+                                  len(view_double_2d[index]))
+                vec_variant.emplace_back(
+                    make_variant[vector[double]](vec_double))
+            return make_variant[vector[Variant]](vec_variant)
         for e in value:
             vec_variant.push_back(python_object_to_variant(e))
         return make_variant[vector[Variant]](vec_variant)
@@ -334,6 +350,9 @@ cdef variant_to_python_object(const Variant & value):
     cdef Vector2d vec2d
     cdef Vector3d vec3d
     cdef Vector4d vec4d
+    cdef cnp.ndarray[cnp.float64_t, ndim = 2] arrayN3d
+    cdef size_t index
+    cdef size_t n
     if is_none(value):
         return None
     if is_type[cbool](value):
@@ -392,11 +411,21 @@ cdef variant_to_python_object(const Variant & value):
             return None
     if is_type[vector[Variant]](value):
         vec = get_value[vector[Variant]](value)
+
+        if (vec.size() > 0) and (is_type[Vector3d](vec[0])):
+            n = vec.size()
+            arrayN3d = np.empty((n, 3), dtype=np.float64)
+
+            for index in range(n):
+                vec3d = get_value[Vector3d](vec[index])
+                arrayN3d[index, 0] = vec3d[0]
+                arrayN3d[index, 1] = vec3d[1]
+                arrayN3d[index, 2] = vec3d[2]
+            return arrayN3d
+
         res = []
-
-        for i in vec:
-            res.append(variant_to_python_object(i))
-
+        for index in range(vec.size()):
+            res.append(variant_to_python_object(vec[index]))
         return res
 
     if is_type[unordered_map[int, Variant]](value):
