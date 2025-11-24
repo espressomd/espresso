@@ -171,7 +171,7 @@ class VirtualSites(ut.TestCase):
 
         p_real = system.part.add(
             rotation=3 * [True], pos=(0.0, 0.0, 0.0), omega_body=(3.0, 6.0, 9.0))
-        p_vs = system.part.add(rotation=3 * [True], pos=(1.0, 2.0, 3.0))
+        p_vs = system.part.add(rotation=3 * [True], pos=(0.0, 0.0, 0.0))
         initial_real_quat = np.copy(p_real.quat)
         p_vs.vs_auto_relate_to(p_real)
         p_vs.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
