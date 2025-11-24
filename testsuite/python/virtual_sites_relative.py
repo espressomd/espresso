@@ -58,12 +58,14 @@ class VirtualSites(ut.TestCase):
             (quat[0] * quat[0] - quat[1] * quat[1]
              - quat[2] * quat[2] + quat[3] * quat[3])))
 
-    def verify_vs(self, vs, verify_velocity=True):
+    def verify_vs(self, vs, verify_velocity=True, expected_rot=None):
         """Verify virtual site position and velocity."""
         Propagation = espressomd.propagation.Propagation
+        if expected_rot is None:
+            expected_rot = Propagation.ROT_VS_RELATIVE
         self.assertTrue(vs.is_virtual())
         self.assertTrue(vs.propagation & Propagation.TRANS_VS_RELATIVE)
-        self.assertTrue(vs.propagation & Propagation.ROT_VS_RELATIVE)
+        self.assertTrue(vs.propagation & expected_rot)
         vs_r = vs.vs_relative
 
         # Get related particle
@@ -160,6 +162,36 @@ class VirtualSites(ut.TestCase):
                 p2.vs_auto_relate_to(p1)
             # If overridden this check should not raise an exception
             p2.vs_auto_relate_to(p1, override_cutoff_check=True)
+
+    def test_rot_vs_independent(self):
+        system = self.system
+        system.cell_system.skin = 0.2
+        system.time_step = 0.01
+        Propagation = espressomd.propagation.Propagation
+
+        p_real = system.part.add(
+            rotation=3 * [True], pos=(0.0, 0.0, 0.0), omega_body=(3.0, 6.0, 9.0))
+        p_vs = system.part.add(rotation=3 * [True], pos=(1.0, 2.0, 3.0))
+        initial_real_quat = np.copy(p_real.quat)
+        p_vs.vs_auto_relate_to(p_real)
+        p_vs.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
+
+        system.integrator.run(0, recalc_forces=True)
+        vs_initial_quat = np.copy(p_vs.quat)
+        self.verify_vs(p_vs, expected_rot=Propagation.ROT_VS_INDEPENDENT)
+
+        system.integrator.run(10)
+
+        self.verify_vs(p_vs, expected_rot=Propagation.ROT_VS_INDEPENDENT)
+        np.testing.assert_allclose(np.copy(p_vs.quat), vs_initial_quat)
+        self.assertFalse(np.allclose(np.copy(p_real.quat), initial_real_quat))
+
+        if espressomd.has_features("EXTERNAL_FORCES"):
+            torque = np.array([1.0, -0.5, 0.25])
+            p_vs.ext_torque = torque
+            system.integrator.run(0)
+            np.testing.assert_allclose(
+                np.copy(p_real.torque_lab), torque, atol=1E-12)
 
     def test_pos_vel_forces(self):
         system = self.system

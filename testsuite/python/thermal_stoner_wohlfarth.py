@@ -41,8 +41,10 @@ class Test(ut.TestCase):
     Check the total dipole field for a magnetic LJ fluid (500 particles,
     density approx 0.002, mu^2=1, no PBC).
     """
+    # Values coorespond to analytical solution for a ferrofluid in the thermal Stoner-Wohlfarth model. Obtained from Eq.17 in https://doi.org/10.1103/PhysRevB.111.014438.
     res_dict_fluid = {3.4283694213261087: 0.91,
                       1.1427898071087026: 0.62, 0.28569745177717565: 0.2}
+    # Values coorespond to analytical solution for a solid superparamagnet  in the thermal Stoner-Wohlfarth model. Obtained from Eq.15 in https://doi.org/10.1103/PhysRevB.111.014438.
     res_dict_solid = {3.4283694213261087: 0.8,
                       1.1427898071087026: 0.54, 0.28569745177717565: 0.19}
     system = espressomd.System(box_l=(29.69314567, 29.69314567, 29.69314567))
@@ -64,9 +66,43 @@ class Test(ut.TestCase):
     n_part = 100
     error = 0.035
 
+    def setUp(self):
+        system = self.system
+        system.cell_system.skin = 0.4
+        system.min_global_cut = 1.
+        system.time_step = 0.001
+        system.periodicity = [True, True, True]
+        system.thermostat.set_langevin(kT=self.temperature, gamma=self.gamma_T,
+                                       gamma_rotation=self.gamma_R, seed=self.seed)
+
     def tearDown(self):
         self.system.part.clear()
         self.system.thermostat.turn_off()
+
+    def _init_virtual_site_pair(self):
+        self.system.part.clear()
+        p1 = self.system.part.add(pos=[0, 0, 0], director=[1, 0, 0])
+        p1.rotation = (False, False, False)
+        p1.fix = (True, True, True)
+        p2 = self.system.part.add(
+            pos=p1.pos, dip=[1, 2, 3], rotation=[False, False, False], magnetodynamics={'anisotropy_field_inv': self.HK_inv, 'sat_mag': self.dip_reduced, 'anisotropy_energy': self.ani_energy, 'sw_dt_incr': self.dt_incr, 'sw_tau0_inv': self.tau0_inv})
+        p2.vs_auto_relate_to(p1)
+        p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
+        return p1, p2
+    # for h=0.5 and psi=90 degrees, there are two minima, at 60 and 300 degrees respectively.
+
+    def _find_phi_minima(self, p2, max_iterations=1000):
+        found_min1, found_min2 = False, False
+        count = 0
+        while (not found_min1 or not found_min2) and count < max_iterations:
+            self.system.integrator.run(100)
+            phi0_deg = np.degrees(p2.magnetodynamics['sw_phi_0'])
+            if np.isclose(phi0_deg, 60., atol=1e-06):
+                found_min1 = True
+            if np.isclose(phi0_deg, 300., atol=1e-06):
+                found_min2 = True
+            count += 1
+        return found_min1, found_min2
 
     def _init_particles(self):
         system = self.system
@@ -84,7 +120,7 @@ class Test(ut.TestCase):
             p2.vs_auto_relate_to(p1)
             p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
 
-    def _apply_single_field(self, h_reduced):
+    def _apply_single_field_z_axis(self, h_reduced):
         for x in self.system.constraints:
             self.system.constraints.remove(x)
         ExtH = espressomd.constraints.HomogeneousMagneticField(
@@ -100,23 +136,31 @@ class Test(ut.TestCase):
         return mag_el[-1]
 
     @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
-    def setUp(self):
-        system = self.system
-        system.cell_system.skin = 0.4
-        system.min_global_cut = 1.
-        system.time_step = 0.001
-        system.periodicity = [True, True, True]
-        system.thermostat.set_langevin(kT=self.temperature, gamma=self.gamma_T,
-                                       gamma_rotation=self.gamma_R, seed=self.seed)
+    def test_minimal(self):
+        p1, p2 = self._init_virtual_site_pair()
+        self.system.integrator.run(1)
+        np.testing.assert_allclose(
+            np.copy(p1.director), np.copy(p2.director), atol=1e-06)
+        # critical reduced field i.e. h=1
+        self._apply_single_field_z_axis(6.)
+        self.system.integrator.run(0, recalc_forces=True)
+        self.system.integrator.run(1)
+        np.testing.assert_allclose(
+            np.copy(p2.director), np.array([0, 0, 1]), atol=1e-06)
+        # reduced field h=0.5
+        self._apply_single_field_z_axis(2.8569745177717567)
+        found_min1, found_min2 = self._find_phi_minima(p2)
+        self.assertEqual(found_min1, True)
+        self.assertEqual(found_min2, True)
 
     @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
     def test_tSW_fluid(self):
+
         STEPS = 12477
         self.n_part = 100
         for h_reduced, res in self.res_dict_fluid.items():
             self._init_particles()
-            self._apply_single_field(h_reduced)
-            print('test_tSW_fluid: ', h_reduced)
+            self._apply_single_field_z_axis(h_reduced)
             self.assertAlmostEqual(
                 self._measure_dipole_moment(STEPS), res, delta=self.error)
 
@@ -127,12 +171,11 @@ class Test(ut.TestCase):
         self.n_part = 500
         system = self.system
         for h_reduced, res in self.res_dict_solid.items():
-            print('test_tSW_solid: ', h_reduced)
             self._init_particles()
             part_slice = system.part.select(lambda p: p.is_virtual() == False)
             part_slice.rotation = [False, False, False]
             part_slice.fix = [True, True, True]
-            self._apply_single_field(h_reduced)
+            self._apply_single_field_z_axis(h_reduced)
             self.assertAlmostEqual(
                 self._measure_dipole_moment(STEPS), res, delta=self.error)
 

@@ -86,30 +86,33 @@ A **trial move** is made by drawing a random number and comparing it with the tr
 
 For more details, particularly if you are unsire about the physcial quantities involved, please refer to the original publication.
 
-The example below shows how to set up and parametrise a particle to be used by the **thermal Stoner-Wohlfarth** solver. Note that seting any key in the magnetodynamics particle property will enable the thermal Stoner-Wohlfarth solver for that particle and set ``magnetodynamics['is_enabled'] = True`` (otherwise ``= False``).
+The example below shows how to set up and parametrise a particle to be used by the **thermal Stoner-Wohlfarth** solver. Note that seting any key in the magnetodynamics particle property will enable the thermal Stoner-Wohlfarth solver for that particle and set ``magnetodynamics['is_enabled'] = True`` (otherwise ``= False``). Virtual sites that are tagged for magnetodynamics should be set to use ``Propagation.ROT_VS_INDEPENDENT`` propagation mode.
 
 .. code-block:: python
 
    import espressomd
+   import espressomd.propagation
+   Propagation = espressomd.propagation.Propagation
 
    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
    system.time_step = 0.001  # MD time step in simulation units
 
    # --- One particle with thermal Stoner-Wohlfarth enabled ---
-   p1 = system.part.add(pos=[[1,1,1],]]))
+   p1 = system.part.add(pos=[1,1,1])
    p1.director = (1,0,0) # easy axis direction
    p1.rotation = (True, True, True)  # allow particle rotation
 
    p2=system.part.add(pos=p1.pos)
-   p2.dip=(1,75,0,0) # set dipole momnent for the virtual particle in reduced units
-   p2.rotation=(False, False, False) #disable rotations of the virtual
+   p2.dip=(1.75,0,0) # set dipole momnent for the virtual particle in reduced units
+   p2.rotation=(False, False, False) # disable rotations of the virtual
    p2.magnetodynamics={
       'ani_fld_inv': 0.175, # Anisotropy field in reduced units
       'sat_mag': 1.75, # set saturation magnetisation in reduced units
-      'ani_param': 5., # dimensionless ratio of magnetic anisotropy energy to thermal energy
-      'dt_incr': 1.0e-10, # kinetic Monte Carlo increment [s]
-      'tau0_inv': 1.0e9  # attempt frequency [1/s]
-      } #disable rotations of the virtual
-   p2.vs_auto_relate_to(p1) 
+      'anisotropy_energy': 5., # anisotropy energy K1 * V in reduced units
+      'sw_dt_incr': 1.0e-10, # kinetic Monte Carlo increment [s]
+      'sw_tau0_inv': 1.0e9  # attempt frequency [1/s]
+      }
+   p2.vs_auto_relate_to(p1) # make virtual
+   p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT # set correct propagation mode for magnetodynamics
 
 
