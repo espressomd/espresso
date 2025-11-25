@@ -24,7 +24,7 @@ To use this implementation of magnetodynamics, activate the feature ``THERMAL_ST
 
 .. note::
 
-    Requires ``NLOPT`` external feature, enabled with ``-D ESPRESSO_BUILD_WITH_NLOPT=ON``.
+    Requires ``NLOPT`` external feature, enabled by passing ``-D ESPRESSO_BUILD_WITH_NLOPT=ON`` to CMAke.
 
 In interacting systems, the method relies on the ``DIPOLE_FIELD_TRACKING`` feature. Make sure you use magnetostatics actors that support this feature.
 
@@ -84,9 +84,9 @@ A **trial move** is made by drawing a random number and comparing it with the tr
 - If the trial move is **successful**, the algorithm finds a new minimum :math:`\theta''_\mathrm{min}` and aligns the dipole moment accordingly.  
 - Otherwise, the dipole moment remains aligned with :math:`\theta'_\mathrm{min}`.
 
-For more details, particularly if you are unsire about the physcial quantities involved, please refer to the original publication.
+For more details, particularly if you are unsure about the physical quantities involved, please refer to the original publication.
 
-The example below shows how to set up and parametrise a particle to be used by the **thermal Stoner-Wohlfarth** solver. Note that seting any key in the magnetodynamics particle property will enable the thermal Stoner-Wohlfarth solver for that particle and set ``magnetodynamics['is_enabled'] = True`` (otherwise ``= False``). Virtual sites that are tagged for magnetodynamics should be set to use ``Propagation.ROT_VS_INDEPENDENT`` propagation mode.
+The example below shows how to set up and parametrise a particle to be used by the **thermal Stoner-Wohlfarth** solver. Note that `is_enabled` needs to be set to `True` explicitly on the virtual site. Moreover, the virtual sites that are tagged for magnetodynamics must be set to use ``Propagation.ROT_VS_INDEPENDENT`` propagation mode.
 
 .. code-block:: python
 
@@ -103,14 +103,15 @@ The example below shows how to set up and parametrise a particle to be used by t
    p1.rotation = (True, True, True)  # allow particle rotation
 
    p2=system.part.add(pos=p1.pos)
-   p2.dip=(1.75,0,0) # set dipole momnent for the virtual particle in reduced units
+   p2.dip=(1.75,0,0) # set dipole moment for the virtual particle in reduced units
    p2.rotation=(False, False, False) # disable rotations of the virtual
    p2.magnetodynamics={
-      'ani_fld_inv': 0.175, # Anisotropy field in reduced units
-      'sat_mag': 1.75, # set saturation magnetisation in reduced units
-      'anisotropy_energy': 5., # anisotropy energy K1 * V in reduced units
-      'sw_dt_incr': 1.0e-10, # kinetic Monte Carlo increment [s]
-      'sw_tau0_inv': 1.0e9  # attempt frequency [1/s]
+      'is_enabled': True,
+      'anisotropy_field_inv': 0.175, # inverse anisotropy field (1/H_k) in reduced units
+      'sat_mag': 1.75, # saturation magnetisation in reduced units
+      'anisotropy_energy': 5., # anisotropy energy K * V in reduced units
+      'sw_dt_incr': 1.0e-10, # kinetic Monte Carlo time increment [s]
+      'sw_tau0_inv': 1.0e9  # inverse attempt time (1/tau_0) [1/s]
       }
    p2.vs_auto_relate_to(p1) # make virtual
    p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT # set correct propagation mode for magnetodynamics
