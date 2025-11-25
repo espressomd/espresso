@@ -277,7 +277,9 @@ ParticleHandle::ParticleHandle() {
        [this](Variant const &value) {
          set_particle_property([&value](Particle &p) {
            auto const dict = get_value<VariantMap>(value);
-           p.stoner_wolfarth_is_enabled() = true;
+           if (dict.contains("is_enabled"))
+             p.stoner_wolfarth_is_enabled() =
+                 get_value<bool>(dict.at("is_enabled"));
            if (dict.contains("sw_phi_0"))
              p.stoner_wolfarth_phi_0() = get_value<double>(dict.at("sw_phi_0"));
            if (dict.contains("sat_mag"))

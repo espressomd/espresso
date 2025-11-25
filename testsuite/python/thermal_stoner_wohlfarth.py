@@ -85,7 +85,7 @@ class Test(ut.TestCase):
         p1.rotation = (False, False, False)
         p1.fix = (True, True, True)
         p2 = self.system.part.add(
-            pos=p1.pos, dip=[1, 2, 3], rotation=[False, False, False], magnetodynamics={'anisotropy_field_inv': self.HK_inv, 'sat_mag': self.dip_reduced, 'anisotropy_energy': self.ani_energy, 'sw_dt_incr': self.dt_incr, 'sw_tau0_inv': self.tau0_inv})
+            pos=p1.pos, dip=[1, 2, 3], rotation=[False, False, False], magnetodynamics={'is_enabled': True, 'anisotropy_field_inv': self.HK_inv, 'sat_mag': self.dip_reduced, 'anisotropy_energy': self.ani_energy, 'sw_dt_incr': self.dt_incr, 'sw_tau0_inv': self.tau0_inv})
         p2.vs_auto_relate_to(p1)
         p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
         return p1, p2
@@ -116,7 +116,7 @@ class Test(ut.TestCase):
         particles.rotation = (True, True, True)
         for p1, dipm_el in zip(list(particles), dip_mom_list):
             p2 = system.part.add(
-                pos=p1.pos, dip=dipm_el, rotation=[False, False, False], magnetodynamics={'anisotropy_field_inv': self.HK_inv, 'sat_mag': self.dip_reduced, 'anisotropy_energy': self.ani_energy, 'sw_dt_incr': self.dt_incr, 'sw_tau0_inv': self.tau0_inv})
+                pos=p1.pos, dip=dipm_el, rotation=[False, False, False], magnetodynamics={'is_enabled': True, 'anisoropy_field_inv': self.HK_inv, 'sat_mag': self.dip_reduced, 'anisotropy_energy': self.ani_energy, 'sw_dt_incr': self.dt_incr, 'sw_tau0_inv': self.tau0_inv})
             p2.vs_auto_relate_to(p1)
             p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
 
