@@ -217,6 +217,7 @@ cuda12-maxset:
      with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
      with_shared_memory_parallelism: 'true'
+     with_nlopt: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   artifacts:
