@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
- * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
- *   Max-Planck-Institute for Polymer Research, Theory Group
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -25,11 +23,9 @@
 #include <random>
 
 /**
- * @brief Dipolar all with all and no replica.
- * Handling of a system of dipoles where no replicas exist.
- * Assumes minimum image convention for those axis in which the
- * system is periodic.
+ * @brief Integrate equations of motions for magnetodynamics.
  */
 void run_magnetodynamics(CellStructure &cell_structure,
                          Thermostat::Thermostat const &thermostat);
-#endif
+
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH

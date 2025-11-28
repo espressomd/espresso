@@ -62,30 +62,33 @@ struct ParticleParametersSwimming {
 #endif
 
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-/** Properties of a particle required for thermal Stoner-Wolfarth
- * magnetodynamics.
- */
+/** Properties for thermal Stoner-Wolfarth magnetodynamics. */
 struct ParticleParameterstSW {
-  /** boolean flag used to get virtual particles carrying the dipole moment in
-   * the thermal stoner-wohlfarth model */
+  /**
+   * Flag to filter virtual particles carrying the dipole moment in
+   * the thermal Stoner-Wohlfarth model.
+   */
   bool is_enabled = false;
-  /** angle between the directior and dipole moment of a Stoner-Wohlfarth
+  /** angle between the director and dipole moment of a Stoner-Wohlfarth
    * particle */
   double phi0 = 0.;
   /** saturation magnetisation of a polarisable particle */
   double sat_mag = 0.;
-  /* anisotropy field = 2.*K1/(mu0 * Ms) in [A / m] where K1 is the magnetic
-   * anisotropy constant [kg / (m s^2)]. On particle we save the inverse of the
-   * anisotropy field ani_fld_inv in reduced units! */
+  /**
+   * @brief Inverse anisotropy field in reduced units.
+   * anisotropy field = 2.*K1/(mu0 * Ms) in [A / m] where K1 is the magnetic
+   * anisotropy constant [kg / (m s^2)].
+   */
   double ani_fld_inv = 0.;
-  /** Magnetic anisotropy energy (K1 * V) in units of energy.
-   * Related to ani_param in Eq.3 of https://doi.org/10.1103/PhysRevB.111.014438
-   * by: ani_param = ani_energy / kT */
+  /**
+   * @brief Magnetic anisotropy energy (K1 * V) in units of energy.
+   * Related to ani_param from Eq.3 in @cite mostarac25a
+   * by: ani_param = ani_energy / kT
+   */
   double ani_energy = 0.;
-  /** Browns attempt frequency; Prefactor in Eq.9 from
-   * https://doi.org/10.1103/PhysRevB.111.014438.  */
+  /** Browns attempt frequency. Prefactor from Eq.9 in @cite mostarac25a.  */
   double tau0_inv = 0.;
-  /** time units parameter for the kinetic MC step */
+  /** time units parameter for the kinetic Monte Carlo step */
   double dt_incr = 0.;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
@@ -563,7 +566,7 @@ public:
     return p.magnetodynamics.dt_incr;
   }
   auto &stoner_wolfarth_dt_incr() { return p.magnetodynamics.dt_incr; }
-#endif
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   auto const &dip_fld() const { return p.dip_fld; }
   auto &dip_fld() { return p.dip_fld; }

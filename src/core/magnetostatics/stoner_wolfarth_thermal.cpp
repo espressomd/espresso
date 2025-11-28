@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
- * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
- *   Max-Planck-Institute for Polymer Research, Theory Group
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -50,12 +48,12 @@ constexpr double eps_abs = 1e-15;
 constexpr double eps_rel = 1e-15;
 
 /**
- * @brief Objective (energy) function for the Stoner–Wohlfarth phi minimisation.
+ * @brief Objective (energy) function for the Stoner-Wohlfarth phi minimisation.
  *
- * Evaluates the magnetic energy (normalized by the anisotropy field) for a
- * given in-plane angle phi according to Eq. 5 in
- * https://doi.org/10.1103/PhysRevB.111.014438. Assumes minima lie in the
- * plane phi = zeta and uses trig identities to reduce the expression.
+ * Evaluate the magnetic energy (normalized by the anisotropy field) for a
+ * given in-plane angle phi according to Eq. 5 in @cite mostarac25a.
+ * Assumes minima lie in the plane phi = zeta and uses trig identities
+ * to reduce the expression.
  *
  * @param n Number of optimization variables (should be 1: phi).
  * @param x Pointer to variables; x[0] is the angle phi.
@@ -77,24 +75,24 @@ double phi_objective(unsigned n, const double *x, double *grad,
 
 /**
  * @brief Find the in-plane angle phi corresponding to the correct
- *        energy minimum for the thermal Stoner–Wohlfarth particles.
+ * energy minimum for the thermal Stoner-Wohlfarth particles.
  *
  * @param theta Angle between anisotropy director and external field (rad).
  * @param h Reduced field (external + dipolar) normalised by H_k.
- * @param phi0 Initial in‑plane angle guess (rad).
- * @param ani_param Inverse thermal energy factor (1/(k_B T V) scaled).
+ * @param phi0 Initial in-plane angle guess (rad).
+ * @param ani_param Inverse thermal energy factor (@f$1/(k_B T V)@f$ scaled).
  * @param tau0_inv Attempt frequency inverse (1/tau0).
  * @param dt Time increment for switching probability.
- * @param noise Uniform random number in (0,1) used for the kinetic Monte‑Carlo
+ * @param noise Uniform random number in (0,1) used for the kinetic Monte Carlo
  * step.
- * @return In‑plane angle phi in range [0,2π).
+ * @return In-plane angle phi in range @f$ [0,2\pi) @f$.
  */
 double get_phi_at_energy_min(double theta, double h, double phi0,
                              double ani_param, double tau0_inv, double dt,
                              const double &noise) {
 
-  // critical filed, above which there is only one minimum  (no need to do the
-  // thermal step); Eq. 6 in https://doi.org/10.1103/PhysRevB.111.014438.
+  // critical field, above which there is only one minimum (no need to do the
+  // thermal step); Eq. 6 in @cite mostarac25a.
   double const h_crit = std::pow(std::pow(std::sin(theta), 2.0 / 3) +
                                      std::pow(std::cos(theta), 2.0 / 3),
                                  -3.0 / 2);
@@ -102,10 +100,8 @@ double get_phi_at_energy_min(double theta, double h, double phi0,
   double params[] = {theta, h};
 
   opt.set_min_objective(phi_objective, &params);
-  opt.set_ftol_rel(
-      eps_rel); // Set the relative tolerance for the objective function value
-  opt.set_ftol_abs(
-      eps_abs); // Set the relative tolerance for the objective function value
+  opt.set_ftol_rel(eps_rel);
+  opt.set_ftol_abs(eps_abs);
   std::vector<double> phi(1);
 
   phi[0] = phi0 + eps_phi; /* make initial guess from previos position plus
@@ -148,11 +144,10 @@ double get_phi_at_energy_min(double theta, double h, double phi0,
 /**
  * @brief Collect external homogeneous magnetic field from active constraints.
  *
- * Iterates over System::get_system().constraints and sums the homogeneous
- * magnetic field vectors provided by Constraints::HomogeneousMagneticField
- * constraint objects.
+ * Iterate over constraints and sum the homogeneous magnetic field vectors
+ * provided by @ref Constraints::HomogeneousMagneticField objects.
  *
- * @return Utils::Vector3d The total external homogeneous magnetic field.
+ * @return The total external homogeneous magnetic field.
  */
 const Utils::Vector3d get_external_field() {
   Utils::Vector3d ext_fld = {0., 0., 0.};
@@ -169,12 +164,12 @@ const Utils::Vector3d get_external_field() {
 }
 } // namespace
 /**
- * @brief Simplified Stoner–Wohlfarth update in field free case.
+ * @brief Simplified Stoner-Wohlfarth update in field-free case.
  *
  * @param p Virtual particle to update (modified).
  * @param pi Reference particle providing the anisotropy director (read-only).
  * @param kT Thermal energy from thermostat.
- * @param noise Uniform random number in (0,1) used for the kinetic Monte‑Carlo
+ * @param noise Uniform random number in (0,1) used for the kinetic Monte Carlo
  * step.
  */
 void stoner_wohlfarth_no_field(Particle &p, Particle &pi, double const kT,
@@ -247,7 +242,7 @@ void stoner_wohlfarth_no_field(Particle &p, Particle &pi, double const kT,
   }
 }
 /**
- * @brief Update virtual site dipole moment accodring to the full in-field
+ * @brief Update virtual site dipole moment according to the full in-field
  * (incl. dipole field) thermal Stoner-Wohlfarth model (incl. the kinetic MC
  * step)
  *
@@ -256,7 +251,7 @@ void stoner_wohlfarth_no_field(Particle &p, Particle &pi, double const kT,
  * @param ext_fld_dpl External homogeneous magnetic field + total dipolar field
  * acting on the particle.
  * @param kT Thermal energy from thermostat.
- * @param noise Uniform random number in (0,1) used for the kinetic Monte‑Carlo
+ * @param noise Uniform random number in (0,1) used for the kinetic Monte-Carlo
  * step.
  */
 void stoner_wohlfarth_main(Particle &p, Particle &pi,
@@ -286,17 +281,18 @@ void stoner_wohlfarth_main(Particle &p, Particle &pi,
   p.dipm() = dipm;
   p.quat() = quat;
 }
+
 /**
  * @brief Run magnetodynamics update for local virtual particles.
  *
- * Iterates over local particles and updates the dipole moment of virtual
- * particles according to the thermal Stoner–Wohlfarth model. Collects
- * active homogeneous external magnetic fields from constraints and adds the
+ * Iterate over local particles and update the dipole moment of virtual
+ * particles according to the thermal Stoner-Wohlfarth model. Collect
+ * active homogeneous external magnetic fields from constraints and add the
  * per-particle dipolar contribution before performing either the simplified
- * no-field update or the full thermal Stoner–Wohlfarth update.
+ * no-field update or the full thermal Stoner-Wohlfarth update.
  *
  * @param cell_structure CellStructure providing access to local particles.
- * @param thermostat Const reference to Thermostat used to access Philox RNG
+ * @param thermostat thermostat used to access Philox RNG
  * state and seeds.
  */
 void run_magnetodynamics(CellStructure &cell_structure,

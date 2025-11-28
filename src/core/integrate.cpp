@@ -638,7 +638,6 @@ int System::System::integrate(int n_steps, int reuse_forces) {
       lb_tracers_add_particle_force_to_fluid(*cell_structure, *box_geo,
                                              *local_geo, lb);
     }
-
 #endif
     integrator_step_2(*cell_structure, propagation, *this, time_step);
     if (propagation.integ_switch == INTEG_METHOD_BD) {
@@ -743,6 +742,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #endif
       bond_breakage->process_queue(*this);
     }
+
     integrated_steps++;
 
     if (check_runtime_errors(comm_cart)) {

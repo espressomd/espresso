@@ -491,8 +491,11 @@ General features
 
 -  ``DIPOLAR_DIRECT_SUM`` This activates the GPU implementation of the dipolar direct sum.
 
--  ``DIPOLE_FIELD_TRACKING`` This enables the CPU implementation of the dipolar direct sum
+-  ``DIPOLE_FIELD_TRACKING`` enable dipolar direct sum algorithms
    to calculate the total dipole field at particle positions.
+
+-  ``THERMAL_STONER_WOHLFARTH`` enable dipolar algorithms to integrates
+   vritual sites that implement the thermal Stoner–Wohlfarth model
 
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
    the corresponding quaternion integrator.
@@ -657,6 +660,9 @@ using a CMake flag (see :ref:`Options and Variables`).
 - ``GSL``: enables features relying on the GNU Scientific Library, e.g.
   :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension` and
   :class:`espressomd.electrostatics.MMM1D`.
+
+- ``NLOPT``: enable features relying on the nonlinear optimization library NLopt,
+  e.g. :ref:`Thermal_Stoner_Wohlfarth`.
 
 - ``STOKESIAN_DYNAMICS``: enable the Stokesian Dynamics propagator
   (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.

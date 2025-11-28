@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 The ESPResSo project
+# Copyright (C) 2023-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -41,10 +41,12 @@ class Test(ut.TestCase):
     Check the total dipole field for a magnetic LJ fluid (500 particles,
     density approx 0.002, mu^2=1, no PBC).
     """
-    # Values coorespond to analytical solution for a ferrofluid in the thermal Stoner-Wohlfarth model. Obtained from Eq.17 in https://doi.org/10.1103/PhysRevB.111.014438.
+    # analytical solution for a ferrofluid in the thermal Stoner-Wohlfarth
+    # model. Obtained from Eq.17 in :cite:`mostarac25a`.
     res_dict_fluid = {3.4283694213261087: 0.91,
                       1.1427898071087026: 0.62, 0.28569745177717565: 0.2}
-    # Values coorespond to analytical solution for a solid superparamagnet  in the thermal Stoner-Wohlfarth model. Obtained from Eq.15 in https://doi.org/10.1103/PhysRevB.111.014438.
+    # analytical solution for a solid superparamagnet in the thermal
+    # Stoner-Wohlfarth model. Obtained from Eq.15 in :cite:`mostarac25a`.
     res_dict_solid = {3.4283694213261087: 0.8,
                       1.1427898071087026: 0.54, 0.28569745177717565: 0.19}
     system = espressomd.System(box_l=(29.69314567, 29.69314567, 29.69314567))
