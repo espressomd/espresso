@@ -50,6 +50,7 @@
 #include "lb/particle_coupling.hpp"
 #include "lb/utils.hpp"
 #include "lees_edwards/lees_edwards.hpp"
+#include "magnetostatics/stoner_wolfarth_thermal.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
@@ -61,7 +62,6 @@
 #include "virtual_sites/lb_tracers.hpp"
 #include "virtual_sites/relative.hpp"
 
-#include "magnetostatics/stoner_wolfarth_thermal.hpp"
 #include <boost/mpi/collectives/all_reduce.hpp>
 
 #ifdef ESPRESSO_CALIPER

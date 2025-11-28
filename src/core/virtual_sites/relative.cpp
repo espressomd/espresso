@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,7 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
+
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 
 #include "BoxGeometry.hpp"

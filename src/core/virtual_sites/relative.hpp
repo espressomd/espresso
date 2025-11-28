@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2025 The ESPResSo project
  * Copyright (C) 2010,2011 Rudolf Weeber
  *
  * This file is part of ESPResSo.
@@ -20,17 +20,16 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 
 #include "BoxGeometry.hpp"
+#include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
-
-struct Particle;
 
 /** Get real particle tracked by a virtual site.
  *  @param cell_structure Cell structure.

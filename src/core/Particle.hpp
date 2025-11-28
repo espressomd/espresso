@@ -63,10 +63,10 @@ struct ParticleParametersSwimming {
 
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 /** Properties for thermal Stoner-Wolfarth magnetodynamics. */
-struct ParticleParameterstSW {
+struct ThermalStonerWolfarthParameters {
   /**
-   * Flag to filter virtual particles carrying the dipole moment in
-   * the thermal Stoner-Wohlfarth model.
+   * Flag to distinguish virtual particles carrying the dipole moment in
+   * the thermal Stoner-Wohlfarth model from other types of virtual sites.
    */
   bool is_enabled = false;
   /** angle between the director and dipole moment of a Stoner-Wohlfarth
@@ -179,7 +179,6 @@ struct ParticleProperties {
 #endif
 
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
-
   /** The following properties define, with respect to which real particle a
    *  virtual site is placed and at what distance. The relative orientation of
    *  the vector pointing from real particle to virtual site with respect to the
@@ -235,7 +234,7 @@ struct ParticleProperties {
 #endif
 
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-  ParticleParameterstSW magnetodynamics;
+  ThermalStonerWolfarthParameters magnetodynamics;
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
@@ -243,7 +242,6 @@ struct ParticleProperties {
     ar & mol_id;
     ar & type;
     ar & propagation;
-
 #ifdef ESPRESSO_MASS
     ar & mass;
 #endif
@@ -256,7 +254,6 @@ struct ParticleProperties {
 #ifdef ESPRESSO_ELECTROSTATICS
     ar & q;
 #endif
-
 #ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
     ar & mu_E;
 #endif
@@ -282,7 +279,6 @@ struct ParticleProperties {
     ar & ext_torque;
 #endif
 #endif // ESPRESSO_EXTERNAL_FORCES
-
 #ifdef ESPRESSO_ENGINE
     ar & swim;
 #endif
@@ -672,7 +668,7 @@ BOOST_CLASS_IMPLEMENTATION(Particle, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticleParametersSwimming, object_serializable)
 #endif
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-BOOST_CLASS_IMPLEMENTATION(ParticleParameterstSW, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ThermalStonerWolfarthParameters, object_serializable)
 #endif
 BOOST_CLASS_IMPLEMENTATION(ParticleProperties, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticlePosition, object_serializable)
@@ -691,7 +687,7 @@ BOOST_CLASS_IMPLEMENTATION(decltype(ParticleProperties::vs_relative),
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleParametersSwimming)
 #endif
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-BOOST_IS_BITWISE_SERIALIZABLE(ParticleParameterstSW)
+BOOST_IS_BITWISE_SERIALIZABLE(ThermalStonerWolfarthParameters)
 #endif
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleProperties)
 BOOST_IS_BITWISE_SERIALIZABLE(ParticlePosition)

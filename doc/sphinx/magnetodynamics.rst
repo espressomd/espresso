@@ -102,7 +102,7 @@ A **trial move** is made by drawing a random number and comparing it with
 the transition probability, similar to a Metropolis Monte Carlo step.
 
 - If the trial move is **successful**, the algorithm finds a new minimum
-:math:`\theta''_\mathrm{min}` and aligns the dipole moment accordingly.
+  :math:`\theta''_\mathrm{min}` and aligns the dipole moment accordingly.
 - Otherwise, the dipole moment remains aligned with :math:`\theta'_\mathrm{min}`.
 
 For more details, particularly if you are unsure about the physical quantities involved,

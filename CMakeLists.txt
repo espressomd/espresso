@@ -701,21 +701,24 @@ if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
 endif()
 
 if(ESPRESSO_BUILD_WITH_NLOPT)
-  include(FetchContent)
+  # cmake-format: off
   FetchContent_Declare(
-    nlopt GIT_REPOSITORY https://github.com/stevengj/nlopt.git
-    GIT_TAG f8692f86b5269112b3760704093d0600adb033e7)
-  if(NOT nlopt_POPULATED)
-    FetchContent_Populate(nlopt)
-    set(BUILD_SHARED_LIBS on CACHE BOOL "")
-    set(NLOPT_FORTRAN off CACHE BOOL "")
-    set(NLOPT_PYTHON off CACHE BOOL "")
-    set(NLOPT_OCTAVE off CACHE BOOL "")
-    set(NLOPT_MATLAB off CACHE BOOL "")
-    set(NLOPT_GUILE off CACHE BOOL "")
-    set(NLOPT_SWIG off CACHE BOOL "")
-    add_subdirectory("${nlopt_SOURCE_DIR}" "${nlopt_BINARY_DIR}")
-  endif()
+    nlopt
+    GIT_REPOSITORY https://github.com/stevengj/nlopt.git
+    GIT_TAG        v2.10.0
+  )
+  # cmake-format: on
+  set(BUILD_SHARED_LIBS off)
+  set(NLOPT_FORTRAN off CACHE BOOL "")
+  set(NLOPT_PYTHON off CACHE BOOL "")
+  set(NLOPT_OCTAVE off CACHE BOOL "")
+  set(NLOPT_MATLAB off CACHE BOOL "")
+  set(NLOPT_GUILE off CACHE BOOL "")
+  set(NLOPT_JAVA off CACHE BOOL "")
+  set(NLOPT_SWIG off CACHE BOOL "")
+  set(NLOPT_LUKSAN off CACHE BOOL "")
+  FetchContent_MakeAvailable(nlopt)
+  set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
 endif()
 
 if(ESPRESSO_BUILD_WITH_VALGRIND)

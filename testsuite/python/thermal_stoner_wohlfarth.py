@@ -16,26 +16,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import espressomd
+
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
+import espressomd
 import espressomd.polymer
 import espressomd.propagation
+import espressomd.observables
 Propagation = espressomd.propagation.Propagation
-from espressomd.observables import MagneticDipoleMoment
 
 
 def generate_random_unit_vectors(N_PART):
-    z = np.random.uniform(-1, 1, N_PART)
-    r = np.sqrt(1 - z * z)
-    phi = np.random.uniform(0, 2 * np.pi, N_PART)
+    z = np.random.uniform(-1., 1., N_PART)
+    r = np.sqrt(1. - z**2)
+    phi = np.random.uniform(0., 2. * np.pi, N_PART)
     x = r * np.cos(phi)
     y = r * np.sin(phi)
     return np.column_stack((x, y, z))
 
 
-@utx.skipIfMissingFeatures(["NLOPT"])
+@utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
 class Test(ut.TestCase):
     """
     Check the total dipole field for a magnetic LJ fluid (500 particles,
@@ -54,10 +55,10 @@ class Test(ut.TestCase):
     seed = 42
     np.random.seed(seed)
     time_step = 0.001
-    temperature = 1
+    temperature = 1.
     # ani_energy = K1 * V, where kT_KVm_inv was previously ani_param = ani_energy/kT
     # So ani_energy = kT_KVm_inv * kT
-    kT_KVm_inv = 5  # old ani_param value
+    kT_KVm_inv = 5.  # old ani_param value
     ani_energy = temperature * kT_KVm_inv
     dt_incr = 0.001 * 3.437060795580368e-08
     HK_inv = 0.17501031139401407
@@ -67,6 +68,10 @@ class Test(ut.TestCase):
     tau0_inv = 735412234.8230474
     n_part = 100
     error = 0.035
+    default_magnetodynamics = {
+        "is_enabled": True, "anisotropy_field_inv": HK_inv,
+        "sat_mag": dip_reduced, "anisotropy_energy": ani_energy,
+        "sw_dt_incr": dt_incr, "sw_tau0_inv": tau0_inv}
 
     def setUp(self):
         system = self.system
@@ -83,22 +88,24 @@ class Test(ut.TestCase):
 
     def _init_virtual_site_pair(self):
         self.system.part.clear()
-        p1 = self.system.part.add(pos=[0, 0, 0], director=[1, 0, 0])
-        p1.rotation = (False, False, False)
-        p1.fix = (True, True, True)
+        p1 = self.system.part.add(pos=[0, 0, 0], director=[1, 0, 0],
+                                  rotation=[False, False, False],
+                                  fix=[True, True, True])
         p2 = self.system.part.add(
-            pos=p1.pos, dip=[1, 2, 3], rotation=[False, False, False], magnetodynamics={'is_enabled': True, 'anisotropy_field_inv': self.HK_inv, 'sat_mag': self.dip_reduced, 'anisotropy_energy': self.ani_energy, 'sw_dt_incr': self.dt_incr, 'sw_tau0_inv': self.tau0_inv})
+            pos=p1.pos, dip=[1, 2, 3], rotation=[False, False, False],
+            magnetodynamics=self.default_magnetodynamics)
         p2.vs_auto_relate_to(p1)
         p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
         return p1, p2
-    # for h=0.5 and psi=90 degrees, there are two minima, at 60 and 300 degrees respectively.
 
     def _find_phi_minima(self, p2, max_iterations=1000):
+        # for h=0.5 and psi=90 degrees, there are two minima at 60 and 300
+        # degrees
         found_min1, found_min2 = False, False
         count = 0
         while (not found_min1 or not found_min2) and count < max_iterations:
             self.system.integrator.run(100)
-            phi0_deg = np.degrees(p2.magnetodynamics['sw_phi_0'])
+            phi0_deg = np.degrees(p2.magnetodynamics["sw_phi_0"])
             if np.isclose(phi0_deg, 60., atol=1e-06):
                 found_min1 = True
             if np.isclose(phi0_deg, 300., atol=1e-06):
@@ -118,7 +125,8 @@ class Test(ut.TestCase):
         particles.rotation = (True, True, True)
         for p1, dipm_el in zip(list(particles), dip_mom_list):
             p2 = system.part.add(
-                pos=p1.pos, dip=dipm_el, rotation=[False, False, False], magnetodynamics={'is_enabled': True, 'anisotropy_field_inv': self.HK_inv, 'sat_mag': self.dip_reduced, 'anisotropy_energy': self.ani_energy, 'sw_dt_incr': self.dt_incr, 'sw_tau0_inv': self.tau0_inv})
+                pos=p1.pos, dip=dipm_el, rotation=[False, False, False],
+                magnetodynamics=self.default_magnetodynamics)
             p2.vs_auto_relate_to(p1)
             p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
 
@@ -126,18 +134,17 @@ class Test(ut.TestCase):
         for x in self.system.constraints:
             self.system.constraints.remove(x)
         ExtH = espressomd.constraints.HomogeneousMagneticField(
-            H=(0, 0, h_reduced))
+            H=(0., 0., h_reduced))
         self.system.constraints.add(ExtH)
 
     def _measure_dipole_moment(self, steps):
-        dipm_tot = MagneticDipoleMoment(
-            ids=self.system.part.select(lambda p: p.magnetodynamics['is_enabled'] == True).id)
+        dipm_tot = espressomd.observables.MagneticDipoleMoment(
+            ids=self.system.part.select(lambda p: p.magnetodynamics["is_enabled"] == True).id)
         norm = 1 / (self.dip_reduced * self.n_part)
         self.system.integrator.run(steps)
         mag_el = dipm_tot.calculate() * norm
         return mag_el[-1]
 
-    @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
     def test_minimal(self):
         p1, p2 = self._init_virtual_site_pair()
         self.system.integrator.run(1)
@@ -155,9 +162,7 @@ class Test(ut.TestCase):
         self.assertEqual(found_min1, True)
         self.assertEqual(found_min2, True)
 
-    @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
     def test_tSW_fluid(self):
-
         STEPS = 12477
         self.n_part = 100
         for h_reduced, res in self.res_dict_fluid.items():
@@ -166,9 +171,7 @@ class Test(ut.TestCase):
             self.assertAlmostEqual(
                 self._measure_dipole_moment(STEPS), res, delta=self.error)
 
-    @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
     def test_tSW_solid(self):
-
         STEPS = 3447
         self.n_part = 500
         system = self.system

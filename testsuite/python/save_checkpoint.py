@@ -40,6 +40,7 @@ import espressomd.shapes
 import espressomd.constraints
 import espressomd.bond_breakage
 import espressomd.reaction_methods
+import espressomd.propagation
 
 
 config = utg.TestGenerator()
@@ -120,6 +121,7 @@ if lbf_class:
             shape=wall2, value=2.,
             boundary_type=espressomd.electrokinetics.DensityBoundary)
 
+Propagation = espressomd.propagation.Propagation
 p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0])
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
 
@@ -255,6 +257,21 @@ if 'LB' not in modes:
 
 if espressomd.has_features(['VIRTUAL_SITES_RELATIVE']):
     p2.vs_auto_relate_to(p1, couple_to_lb=lbf_class is not None)
+
+if espressomd.has_features(['THERMAL_STONER_WOHLFARTH', 'EXTERNAL_FORCES']):
+    magnetodynamics_params = {
+        "is_enabled": True, "anisotropy_field_inv": 0.175,
+        "sat_mag": 1.75, "anisotropy_energy": 5.,
+        "sw_dt_incr": 3e-9, "sw_tau0_inv": 1e8}
+    checkpoint.register("magnetodynamics_params")
+    p_tsw1 = system.part.add(id=11, pos=[0, 0, 0], director=[1, 0, 0],
+                             rotation=(False, False, False),
+                             fix=(True, True, True))
+    p_tsw2 = system.part.add(
+        id=12, pos=p_tsw1.pos, dip=[1, 2, 3], rotation=[False, False, False],
+        magnetodynamics=magnetodynamics_params)
+    p_tsw2.vs_auto_relate_to(p_tsw1)
+    p_tsw2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
 
 # non-bonded interactions
 if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:

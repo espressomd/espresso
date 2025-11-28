@@ -17,14 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <config/config.hpp>
+
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 
-#include "ParticleRange.hpp"
-#include <random>
+#include "cell_system/CellStructure.hpp"
+#include "thermostat.hpp"
 
-/**
- * @brief Integrate equations of motions for magnetodynamics.
- */
 void run_magnetodynamics(CellStructure &cell_structure,
                          Thermostat::Thermostat const &thermostat);
 
