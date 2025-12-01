@@ -62,8 +62,8 @@ struct ParticleParametersSwimming {
 #endif
 
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-/** Properties for thermal Stoner-Wolfarth magnetodynamics. */
-struct ThermalStonerWolfarthParameters {
+/** Properties for thermal Stoner-Wohlfarth magnetodynamics. */
+struct ThermalStonerWohlfarthParameters {
   /**
    * Flag to distinguish virtual particles carrying the dipole moment in
    * the thermal Stoner-Wohlfarth model from other types of virtual sites.
@@ -235,7 +235,7 @@ struct ParticleProperties {
 #endif
 
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-  ThermalStonerWolfarthParameters magnetodynamics;
+  ThermalStonerWohlfarthParameters magnetodynamics;
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
@@ -535,12 +535,12 @@ public:
   auto calc_dip() const { return calc_director() * dipm(); }
 #endif
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-  auto const &stoner_wolfarth_is_enabled() const {
+  auto const &stoner_wohlfarth_is_enabled() const {
     return p.magnetodynamics.is_enabled;
   }
-  auto &stoner_wolfarth_is_enabled() { return p.magnetodynamics.is_enabled; }
-  auto const &stoner_wolfarth_phi_0() const { return p.magnetodynamics.phi0; }
-  auto &stoner_wolfarth_phi_0() { return p.magnetodynamics.phi0; }
+  auto &stoner_wohlfarth_is_enabled() { return p.magnetodynamics.is_enabled; }
+  auto const &stoner_wohlfarth_phi_0() const { return p.magnetodynamics.phi0; }
+  auto &stoner_wohlfarth_phi_0() { return p.magnetodynamics.phi0; }
   auto const &saturation_magnetization() const {
     return p.magnetodynamics.sat_mag;
   }
@@ -555,14 +555,14 @@ public:
     return p.magnetodynamics.ani_energy;
   }
   auto &magnetic_anisotropy_energy() { return p.magnetodynamics.ani_energy; }
-  auto const &stoner_wolfarth_tau0_inv() const {
+  auto const &stoner_wohlfarth_tau0_inv() const {
     return p.magnetodynamics.tau0_inv;
   }
-  auto &stoner_wolfarth_tau0_inv() { return p.magnetodynamics.tau0_inv; }
-  auto const &stoner_wolfarth_dt_incr() const {
+  auto &stoner_wohlfarth_tau0_inv() { return p.magnetodynamics.tau0_inv; }
+  auto const &stoner_wohlfarth_dt_incr() const {
     return p.magnetodynamics.dt_incr;
   }
-  auto &stoner_wolfarth_dt_incr() { return p.magnetodynamics.dt_incr; }
+  auto &stoner_wohlfarth_dt_incr() { return p.magnetodynamics.dt_incr; }
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   auto const &dip_fld() const { return p.dip_fld; }
@@ -669,7 +669,8 @@ BOOST_CLASS_IMPLEMENTATION(Particle, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticleParametersSwimming, object_serializable)
 #endif
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-BOOST_CLASS_IMPLEMENTATION(ThermalStonerWolfarthParameters, object_serializable)
+BOOST_CLASS_IMPLEMENTATION(ThermalStonerWohlfarthParameters,
+                           object_serializable)
 #endif
 BOOST_CLASS_IMPLEMENTATION(ParticleProperties, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticlePosition, object_serializable)
@@ -688,7 +689,7 @@ BOOST_CLASS_IMPLEMENTATION(decltype(ParticleProperties::vs_relative),
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleParametersSwimming)
 #endif
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-BOOST_IS_BITWISE_SERIALIZABLE(ThermalStonerWolfarthParameters)
+BOOST_IS_BITWISE_SERIALIZABLE(ThermalStonerWohlfarthParameters)
 #endif
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleProperties)
 BOOST_IS_BITWISE_SERIALIZABLE(ParticlePosition)

@@ -252,8 +252,8 @@ BOOST_AUTO_TEST_CASE(rattle_constructors) {
 
 #ifdef THERMAL_STONER_WOHLFARTH
 
-void check_particle_tsw(ThermalStonerWolfarthParameters const &out,
-                        ThermalStonerWolfarthParameters const &ref) {
+void check_particle_tsw(ThermalStonerWohlfarthParameters const &out,
+                        ThermalStonerWohlfarthParameters const &ref) {
   BOOST_CHECK_EQUAL(out.is_enabled == ref.is_enabled);
   BOOST_CHECK_EQUAL(out.phi0 == ref.phi0);
   BOOST_CHECK_EQUAL(out.sat_mag == ref.sat_mag);
@@ -265,19 +265,19 @@ void check_particle_tsw(ThermalStonerWolfarthParameters const &out,
 
 BOOST_AUTO_TEST_CASE(thermal_stoner_wohlfarth_serialization) {
   auto const expected_size =
-      Utils::MemcpyOArchive::packing_size<ThermalStonerWolfarthParameters>();
+      Utils::MemcpyOArchive::packing_size<ThermalStonerWohlfarthParameters>();
 
-  BOOST_CHECK_LE(expected_size, sizeof(ThermalStonerWolfarthParameters));
+  BOOST_CHECK_LE(expected_size, sizeof(ThermalStonerWohlfarthParameters));
 
   std::vector<char> buf(expected_size);
 
-  auto pr = ThermalStonerWolfarthParameters{.is_enabled = false,
-                                            .phi0 = 1.,
-                                            .sat_mag = 2.,
-                                            .ani_fld_inv = 3.,
-                                            .ani_energy = 4.,
-                                            .tau0_inv = 5.,
-                                            .dt_incr = 6.};
+  auto pr = ThermalStonerWohlfarthParameters{.is_enabled = false,
+                                             .phi0 = 1.,
+                                             .sat_mag = 2.,
+                                             .ani_fld_inv = 3.,
+                                             .ani_energy = 4.,
+                                             .tau0_inv = 5.,
+                                             .dt_incr = 6.};
 
   {
     auto oa = Utils::MemcpyOArchive{buf};
@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE(thermal_stoner_wohlfarth_serialization) {
 
   {
     auto ia = Utils::MemcpyIArchive{buf};
-    ThermalStonerWolfarthParameters out;
+    ThermalStonerWohlfarthParameters out;
 
     ia >> out;
 
@@ -299,23 +299,23 @@ BOOST_AUTO_TEST_CASE(thermal_stoner_wohlfarth_serialization) {
 }
 
 BOOST_AUTO_TEST_CASE(thermal_stoner_wohlfarth_constructors) {
-  auto pr = ThermalStonerWolfarthParameters{.is_enabled = false,
-                                            .phi0 = 1.,
-                                            .sat_mag = 2.,
-                                            .ani_fld_inv = 3.,
-                                            .ani_energy = 4.,
-                                            .tau0_inv = 5.,
-                                            .dt_incr = 6.};
+  auto pr = ThermalStonerWohlfarthParameters{.is_enabled = false,
+                                             .phi0 = 1.,
+                                             .sat_mag = 2.,
+                                             .ani_fld_inv = 3.,
+                                             .ani_energy = 4.,
+                                             .tau0_inv = 5.,
+                                             .dt_incr = 6.};
 
   // check copy constructor
   {
-    ThermalStonerWolfarthParameters out(pr);
+    ThermalStonerWohlfarthParameters out(pr);
     check_particle_tsw(out, pr);
   }
 
   // check copy assignment operator
   {
-    ThermalStonerWolfarthParameters out; // avoid copy elision
+    ThermalStonerWohlfarthParameters out; // avoid copy elision
     out = pr;
     check_particle_tsw(out, pr);
   }

@@ -278,10 +278,11 @@ ParticleHandle::ParticleHandle() {
          set_particle_property([&value](Particle &p) {
            auto const dict = get_value<VariantMap>(value);
            if (dict.contains("is_enabled"))
-             p.stoner_wolfarth_is_enabled() =
+             p.stoner_wohlfarth_is_enabled() =
                  get_value<bool>(dict.at("is_enabled"));
            if (dict.contains("sw_phi_0"))
-             p.stoner_wolfarth_phi_0() = get_value<double>(dict.at("sw_phi_0"));
+             p.stoner_wohlfarth_phi_0() =
+                 get_value<double>(dict.at("sw_phi_0"));
            if (dict.contains("sat_mag"))
              p.saturation_magnetization() =
                  get_value<double>(dict.at("sat_mag"));
@@ -292,23 +293,23 @@ ParticleHandle::ParticleHandle() {
              p.magnetic_anisotropy_energy() =
                  get_value<double>(dict.at("anisotropy_energy"));
            if (dict.contains("sw_tau0_inv"))
-             p.stoner_wolfarth_tau0_inv() =
+             p.stoner_wohlfarth_tau0_inv() =
                  get_value<double>(dict.at("sw_tau0_inv"));
            if (dict.contains("sw_dt_incr"))
-             p.stoner_wolfarth_dt_incr() =
+             p.stoner_wohlfarth_dt_incr() =
                  get_value<double>(dict.at("sw_dt_incr"));
          });
        },
        [this]() {
          auto const &p = get_particle_data(m_pid);
          return VariantMap{
-             {"is_enabled", p.stoner_wolfarth_is_enabled()},
-             {"sw_phi_0", p.stoner_wolfarth_phi_0()},
+             {"is_enabled", p.stoner_wohlfarth_is_enabled()},
+             {"sw_phi_0", p.stoner_wohlfarth_phi_0()},
              {"sat_mag", p.saturation_magnetization()},
              {"anisotropy_field_inv", p.magnetic_anisotropy_field_inv()},
              {"anisotropy_energy", p.magnetic_anisotropy_energy()},
-             {"sw_tau0_inv", p.stoner_wolfarth_tau0_inv()},
-             {"sw_dt_incr", p.stoner_wolfarth_dt_incr()},
+             {"sw_tau0_inv", p.stoner_wohlfarth_tau0_inv()},
+             {"sw_dt_incr", p.stoner_wohlfarth_dt_incr()},
          };
        }},
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH

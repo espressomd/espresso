@@ -21,7 +21,7 @@
 
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 
-#include "magnetostatics/stoner_wolfarth_thermal.hpp"
+#include "magnetostatics/stoner_wohlfarth_thermal.hpp"
 
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
@@ -179,23 +179,23 @@ static void stoner_wohlfarth_no_field(Particle &p, Utils::Vector3d const &e_k,
 
   auto constexpr pi = std::numbers::pi_v<double>;
   auto const ani_param = p.magnetic_anisotropy_energy() / kT;
-  auto const tau_inv = p.stoner_wolfarth_tau0_inv() * exp(-ani_param);
-  auto const p12 = 1. - std::exp(-p.stoner_wolfarth_dt_incr() * tau_inv);
+  auto const tau_inv = p.stoner_wohlfarth_tau0_inv() * exp(-ani_param);
+  auto const p12 = 1. - std::exp(-p.stoner_wohlfarth_dt_incr() * tau_inv);
   auto const kernel = [&](bool flip) {
     auto const sat_mag = (flip ? -1. : +1.) * p.saturation_magnetization();
     auto const [quat, dipm] = convert_dip_to_quat(sat_mag * e_k);
-    p.stoner_wolfarth_phi_0() = flip ? pi : 0.;
+    p.stoner_wohlfarth_phi_0() = flip ? pi : 0.;
     p.dipm() = dipm;
     p.quat() = quat;
   };
   auto const flip = noise < p12;
-  if (p.stoner_wolfarth_phi_0() == 0.) {
+  if (p.stoner_wohlfarth_phi_0() == 0.) {
     kernel(flip);
-  } else if (p.stoner_wolfarth_phi_0() == pi) {
+  } else if (p.stoner_wohlfarth_phi_0() == pi) {
     kernel(not flip);
   } else {
-    auto const dist_0 = std::abs(p.stoner_wolfarth_phi_0() - 0.);
-    auto const dist_pi = std::abs(p.stoner_wolfarth_phi_0() - pi);
+    auto const dist_0 = std::abs(p.stoner_wohlfarth_phi_0() - 0.);
+    auto const dist_pi = std::abs(p.stoner_wohlfarth_phi_0() - pi);
     // Compare the differences and determine the nearest angle (simplifies
     // down to an XNOR operation, i.e. equality operator for boolean types)
     kernel(flip == (dist_0 < dist_pi));
@@ -234,10 +234,10 @@ static void stoner_wohlfarth_main(Particle &p, Utils::Vector3d const &e_k,
       vector_product(vector_product(e_h, e_k), e_h).normalized();
   auto const ani_param = p.magnetic_anisotropy_energy() / kT;
   auto const phi = get_phi_at_energy_min(
-      theta, h, p.stoner_wolfarth_phi_0(), ani_param,
-      p.stoner_wolfarth_tau0_inv(), p.stoner_wolfarth_dt_incr(), noise);
+      theta, h, p.stoner_wohlfarth_phi_0(), ani_param,
+      p.stoner_wohlfarth_tau0_inv(), p.stoner_wohlfarth_dt_incr(), noise);
   auto const mom = e_h * std::cos(phi) + rot_axis * std::sin(phi);
-  p.stoner_wolfarth_phi_0() = phi;
+  p.stoner_wohlfarth_phi_0() = phi;
   auto const [quat, dipm] =
       convert_dip_to_quat(mom * p.saturation_magnetization());
   p.dipm() = dipm;
@@ -262,7 +262,7 @@ void run_magnetodynamics(CellStructure &cell_structure,
   auto const ext_fld = get_external_field();
   auto const kT = thermostat.kT;
   cell_structure.for_each_local_particle([&](Particle &p) {
-    if (not p.is_virtual() or not p.stoner_wolfarth_is_enabled()) {
+    if (not p.is_virtual() or not p.stoner_wohlfarth_is_enabled()) {
       return;
     }
 
