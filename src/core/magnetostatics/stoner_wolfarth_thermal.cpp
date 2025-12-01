@@ -85,8 +85,7 @@ static double phi_objective(unsigned n, const double *x, double *grad,
  * @param ani_param Inverse thermal energy factor (@f$1/(k_B T V)@f$ scaled).
  * @param tau0_inv Attempt frequency inverse (1/tau0).
  * @param dt Time increment for switching probability.
- * @param noise Uniform random number in (0,1) used for the kinetic Monte Carlo
- * step.
+ * @param noise Uniform random number in (0,1) used for the kinetic MC step.
  * @return In-plane angle phi in range @f$ [0,2\pi) @f$.
  */
 static double get_phi_at_energy_min(double theta, double h, double phi0,
@@ -114,7 +113,7 @@ static double get_phi_at_energy_min(double theta, double h, double phi0,
   auto min1 = 0.;
   opt.optimize(phi, min1);
   auto const phi_min1 = std::fmod(phi[0], two_pi);
-  auto sol = phi_min1;
+  auto solution = phi_min1;
   if (std::fabs(h) < h_crit) {
     opt.set_max_objective(phi_objective, &params);
     phi[0] = phi0 + eps_phi;
@@ -140,10 +139,10 @@ static double get_phi_at_energy_min(double theta, double h, double phi0,
       auto min2 = 0.;
       opt.optimize(phi, min2);
       auto const phi_min2 = std::fmod(phi[0], two_pi);
-      sol = phi_min2;
+      solution = phi_min2;
     }
   }
-  return std::fmod(sol + two_pi, two_pi);
+  return std::fmod(solution + two_pi, two_pi);
 }
 
 /**
@@ -173,8 +172,7 @@ static auto get_external_field() {
  * @param[in,out] p Virtual particle to update.
  * @param e_k Anisotropy director of the reference particle.
  * @param kT Thermal energy from thermostat.
- * @param noise Uniform random number in (0,1) used for the kinetic Monte Carlo
- * step.
+ * @param noise Uniform random number in (0,1) used for the kinetic MC step.
  */
 static void stoner_wohlfarth_no_field(Particle &p, Utils::Vector3d const &e_k,
                                       double const kT, double const noise) {
@@ -199,7 +197,7 @@ static void stoner_wohlfarth_no_field(Particle &p, Utils::Vector3d const &e_k,
     auto const dist_0 = std::abs(p.stoner_wolfarth_phi_0() - 0.);
     auto const dist_pi = std::abs(p.stoner_wolfarth_phi_0() - pi);
     // Compare the differences and determine the nearest angle (simplifies
-    // down to an XNOR operation, aka equality operator for boolean types)
+    // down to an XNOR operation, i.e. equality operator for boolean types)
     kernel(flip == (dist_0 < dist_pi));
   }
 }
@@ -214,8 +212,7 @@ static void stoner_wohlfarth_no_field(Particle &p, Utils::Vector3d const &e_k,
  * @param ext_fld_dpl External homogeneous magnetic field + total dipolar field
  * acting on the particle.
  * @param kT Thermal energy from thermostat.
- * @param noise Uniform random number in (0,1) used for the kinetic Monte-Carlo
- * step.
+ * @param noise Uniform random number in (0,1) used for the kinetic MC step.
  */
 static void stoner_wohlfarth_main(Particle &p, Utils::Vector3d const &e_k,
                                   Utils::Vector3d const &ext_fld_dpl,
@@ -251,10 +248,10 @@ static void stoner_wohlfarth_main(Particle &p, Utils::Vector3d const &e_k,
  * @brief Run magnetodynamics update for local virtual particles.
  *
  * Iterate over local particles and update the dipole moment of virtual
- * particles according to the thermal Stoner-Wohlfarth model. Collect
- * active homogeneous external magnetic fields from constraints and add the
- * per-particle dipolar contribution before performing either the simplified
- * no-field update or the full thermal Stoner-Wohlfarth update.
+ * particles according to the thermal Stoner-Wohlfarth model.
+ * Collect active homogeneous external magnetic fields from constraints and
+ * add the per-particle dipolar contribution before performing either the
+ * simplified no-field update or the full thermal Stoner-Wohlfarth update.
  *
  * @param cell_structure CellStructure providing access to local particles.
  * @param thermostat thermostat used to access Philox RNG state and seeds.

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023-2025 The ESPResSo project
+# Copyright (C) 2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -36,7 +36,7 @@ def generate_random_unit_vectors(N_PART):
     return np.column_stack((x, y, z))
 
 
-@utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH"])
+@utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH", "EXTERNAL_FORCES"])
 class Test(ut.TestCase):
     """
     Check the total dipole field for a magnetic LJ fluid (500 particles,
@@ -105,7 +105,7 @@ class Test(ut.TestCase):
         # degrees
         found_min1, found_min2 = False, False
         count = 0
-        while (not found_min1 or not found_min2) and count < max_iterations:
+        while not (found_min1 and found_min2) and count < max_iterations:
             self.system.integrator.run(100)
             phi0_deg = np.degrees(p2.magnetodynamics["sw_phi_0"])
             if np.isclose(phi0_deg, 60., atol=1e-06):
@@ -118,7 +118,7 @@ class Test(ut.TestCase):
     def _check_zero_field_flips(self, p2, phi0_start, max_iterations=10000):
         phi_no_flip, phi_yes_flip = False, False
         count = 0
-        while any(x == False for x in [phi_no_flip, phi_yes_flip]) and count < max_iterations:
+        while not (phi_no_flip and phi_yes_flip) and count < max_iterations:
             old_dip = np.copy(p2.dip)
             self.system.integrator.run(1)
             new_phi = p2.magnetodynamics["sw_phi_0"]
@@ -158,7 +158,7 @@ class Test(ut.TestCase):
 
     def _measure_dipole_moment(self, steps):
         dipm_tot = espressomd.observables.MagneticDipoleMoment(
-            ids=self.system.part.select(lambda p: p.magnetodynamics["is_enabled"] == True).id)
+            ids=self.system.part.select(lambda p: p.magnetodynamics["is_enabled"]).id)
         norm = 1 / (self.dip_reduced * self.n_part)
         self.system.integrator.run(steps)
         mag_el = dipm_tot.calculate() * norm
