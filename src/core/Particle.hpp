@@ -92,7 +92,8 @@ struct ThermalStonerWolfarthParameters {
   double dt_incr = 0.;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar & is_enabled & phi0 & sat_mag & ani_fld_inv & ani_energy & tau0_inv;
+    ar & is_enabled & phi0 & sat_mag & ani_fld_inv & ani_energy & tau0_inv &
+        dt_incr;
   }
 };
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH

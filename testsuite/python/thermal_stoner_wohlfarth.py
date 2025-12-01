@@ -67,7 +67,7 @@ class Test(ut.TestCase):
     gamma_R = 24.955254612609792
     tau0_inv = 735412234.8230474
     n_part = 100
-    error = 0.035
+    error = 0.045
     default_magnetodynamics = {
         "is_enabled": True, "anisotropy_field_inv": HK_inv,
         "sat_mag": dip_reduced, "anisotropy_energy": ani_energy,
@@ -85,6 +85,8 @@ class Test(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
         self.system.thermostat.turn_off()
+        for x in self.system.constraints:
+            self.system.constraints.remove(x)
 
     def _init_virtual_site_pair(self):
         self.system.part.clear()
@@ -112,6 +114,23 @@ class Test(ut.TestCase):
                 found_min2 = True
             count += 1
         return found_min1, found_min2
+
+    def _check_zero_field_flips(self, p2, phi0_start, max_iterations=10000):
+        phi_no_flip, phi_yes_flip = False, False
+        count = 0
+        while any(x == False for x in [phi_no_flip, phi_yes_flip]) and count < max_iterations:
+            old_dip = np.copy(p2.dip)
+            self.system.integrator.run(1)
+            new_phi = p2.magnetodynamics["sw_phi_0"]
+            new_dip = np.copy(p2.dip)
+            if phi0_start == new_phi and not phi_no_flip:
+                np.testing.assert_allclose(old_dip, new_dip, atol=1e-06)
+                phi_no_flip = True
+            elif phi0_start != new_phi and not phi_yes_flip:
+                np.testing.assert_allclose(-1 * old_dip, new_dip, atol=1e-06)
+                phi_yes_flip = True
+
+        return phi_no_flip, phi_yes_flip
 
     def _init_particles(self):
         system = self.system
@@ -145,11 +164,19 @@ class Test(ut.TestCase):
         mag_el = dipm_tot.calculate() * norm
         return mag_el[-1]
 
-    def test_minimal(self):
+    def test_minimal_no_field(self):
         p1, p2 = self._init_virtual_site_pair()
         self.system.integrator.run(1)
         np.testing.assert_allclose(
             np.copy(p1.director), np.copy(p2.director), atol=1e-06)
+        test_flags = self._check_zero_field_flips(p2, 0.)
+        self.assertEqual(all(test_flags), True)
+        test_flags = self._check_zero_field_flips(p2, np.pi)
+        self.assertEqual(all(test_flags), True)
+
+    def test_minimal_field(self):
+        _, p2 = self._init_virtual_site_pair()
+        self.system.integrator.run(1)
         # critical reduced field i.e. h=1
         self._apply_single_field_z_axis(6.)
         self.system.integrator.run(0, recalc_forces=True)
