@@ -264,7 +264,19 @@ void System::System::integrator_sanity_checks() const {
       break;
     }
   }
-#endif
+#endif // ESPRESSO_ROTATION
+
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+  if (thermo_switch == THERMO_OFF) {
+    for (auto const &p : cell_structure->local_particles()) {
+      if (p.stoner_wolfarth_is_enabled()) {
+        runtimeErrorMsg()
+            << "The thermal Stoner-Wohlfarth model requires a thermostat";
+        break;
+      }
+    }
+  }
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 }
 
 #ifdef ESPRESSO_WALBERLA

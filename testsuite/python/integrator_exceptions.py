@@ -46,6 +46,7 @@ class Test(ut.TestCase):
         self.system.lees_edwards.protocol = None
 
     def test_00_common_interface(self):
+        Propagation = espressomd.propagation.Propagation
         self.system.integrator.set_vv()
         with self.assertRaisesRegex(ValueError, 'time_step must be > 0.'):
             self.system.time_step = -2.
@@ -73,12 +74,25 @@ class Test(ut.TestCase):
                 self.system.analysis.energy()
             wca.set_params(epsilon=0., sigma=0.)
         if espressomd.has_features(["ROTATION"]):
+            p = self.system.part.by_id(0)
             with self.assertRaisesRegex(Exception, "Rotating particles must have a rotation propagation mode enabled"):
-                Propagation = espressomd.propagation.Propagation
-                p = self.system.part.by_id(0)
                 p.propagation = Propagation.TRANS_LANGEVIN
                 p.rotation = [False, False, True]
                 self.system.integrator.run(0, recalc_forces=True)
+            p.propagation = Propagation.SYSTEM_DEFAULT
+        if espressomd.has_features(["THERMAL_STONER_WOHLFARTH"]):
+            p0 = self.system.part.by_id(0)
+            p1 = self.system.part.add(pos=p0.pos)
+            p1.vs_auto_relate_to(p0)
+            p1.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
+            magnetodynamics = p1.magnetodynamics
+            with self.assertRaisesRegex(Exception, "The thermal Stoner-Wohlfarth model requires a thermostat"):
+                magnetodynamics["is_enabled"] = True
+                p1.magnetodynamics = magnetodynamics
+                self.system.integrator.run(0, recalc_forces=True)
+            magnetodynamics["is_enabled"] = False
+            p1.magnetodynamics = magnetodynamics
+            self.system.integrator.run(0, recalc_forces=True)
 
     def test_01_statefulness(self):
         # setting a thermostat with invalid values should be a no-op

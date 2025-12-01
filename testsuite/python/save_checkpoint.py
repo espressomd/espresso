@@ -316,7 +316,8 @@ break_spec = espressomd.bond_breakage.BreakageSpec(
 system.bond_breakage[strong_harmonic_bond._bond_id] = break_spec
 
 # create Stoner-Wohlfarth particles
-if espressomd.has_features(['THERMAL_STONER_WOHLFARTH', 'EXTERNAL_FORCES']):
+if not system.thermostat.call_method("is_off") and espressomd.has_features(
+        ['THERMAL_STONER_WOHLFARTH', 'EXTERNAL_FORCES']):
     magnetodynamics_params = {
         "is_enabled": True, "anisotropy_field_inv": 0.175,
         "sat_mag": 1.75, "anisotropy_energy": 5.,
@@ -584,8 +585,8 @@ class TestCheckpoint(ut.TestCase):
             with open(cpt_path.format("-wrong-popsize"), "wb") as f:
                 f.write(boxsize + b"\n" + b"2" + popsize + b"\n" + data)
 
-    @ut.skipIf(lbf_class is None, "Skipping test due to missing mode.")
-    @ut.skipIf(le_active, "Skipping test due to Lees-Edwards enforces only one ghost layer.")
+    @ut.skipIf(lbf_class is None, "missing LB mode.")
+    @ut.skipIf(le_active, "Lees-Edwards enforces only one ghost layer.")
     def test_ek_checkpointing_exceptions(self):
         '''
         Check the EK checkpointing exception mechanism. Write corrupted

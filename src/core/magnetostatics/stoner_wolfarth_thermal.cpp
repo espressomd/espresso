@@ -35,6 +35,7 @@
 
 #include <nlopt.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <numbers>
 #include <tuple>
@@ -256,8 +257,7 @@ static void stoner_wohlfarth_main(Particle &p, Utils::Vector3d const &e_k,
  * no-field update or the full thermal Stoner-Wohlfarth update.
  *
  * @param cell_structure CellStructure providing access to local particles.
- * @param thermostat thermostat used to access Philox RNG
- * state and seeds.
+ * @param thermostat thermostat used to access Philox RNG state and seeds.
  */
 void run_magnetodynamics(CellStructure &cell_structure,
                          Thermostat::Thermostat const &thermostat) {
@@ -273,6 +273,7 @@ void run_magnetodynamics(CellStructure &cell_structure,
     if (not p_ref) {
       return;
     }
+    assert(thermostat.thermo_switch != THERMO_OFF);
     auto const e_k = p_ref->calc_director();
     auto const ext_fld_dpl = ext_fld + p.dip_fld();
     auto const random_ints =
