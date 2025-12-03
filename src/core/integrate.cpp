@@ -267,11 +267,11 @@ void System::System::integrator_sanity_checks() const {
 #endif // ESPRESSO_ROTATION
 
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-  if (thermo_switch == THERMO_OFF) {
+  if ((thermo_switch & THERMO_LANGEVIN) == 0) {
     for (auto const &p : cell_structure->local_particles()) {
       if (p.stoner_wohlfarth_is_enabled()) {
-        runtimeErrorMsg()
-            << "The thermal Stoner-Wohlfarth model requires a thermostat";
+        runtimeErrorMsg() << "The thermal Stoner-Wohlfarth model requires the "
+                             "Langevin thermostat";
         break;
       }
     }

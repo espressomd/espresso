@@ -174,12 +174,11 @@ static auto get_external_field() {
  * @param kT Thermal energy from thermostat.
  * @param noise Uniform random number in (0,1) used for the kinetic MC step.
  */
-static void stoner_wohlfarth_no_field(Particle &p, Utils::Vector3d const &e_k,
-                                      double const kT, double const noise) {
-
+void stoner_wohlfarth_no_field(Particle &p, Utils::Vector3d const &e_k,
+                               double const kT, double const noise) {
   auto constexpr pi = std::numbers::pi_v<double>;
   auto const ani_param = p.magnetic_anisotropy_energy() / kT;
-  auto const tau_inv = p.stoner_wohlfarth_tau0_inv() * exp(-ani_param);
+  auto const tau_inv = p.stoner_wohlfarth_tau0_inv() * std::exp(-ani_param);
   auto const p12 = 1. - std::exp(-p.stoner_wohlfarth_dt_incr() * tau_inv);
   auto const kernel = [&](bool flip) {
     auto const sat_mag = (flip ? -1. : +1.) * p.saturation_magnetization();
@@ -270,13 +269,13 @@ void run_magnetodynamics(CellStructure &cell_structure,
     if (not p_ref) {
       return;
     }
-    assert(thermostat.thermo_switch != THERMO_OFF);
+    assert(thermostat.thermo_switch & THERMO_LANGEVIN);
+    auto const &langevin = *thermostat.langevin;
     auto const e_k = p_ref->calc_director();
     auto const ext_fld_dpl = ext_fld + p.dip_fld();
     auto const random_ints =
         Random::philox_4_uint64s<RNGSalt::THERMAL_STONER_WOHLFARTH>(
-            thermostat.get_philox_counter(), thermostat.get_philox_seed(),
-            p.id());
+            langevin.rng_counter(), langevin.rng_seed(), p.id());
     auto const noise = Utils::uniform(random_ints[0]);
     if (ext_fld_dpl.norm2() == 0.) {
       stoner_wohlfarth_no_field(p, e_k, kT, noise);

@@ -86,7 +86,7 @@ class Test(ut.TestCase):
             p1.vs_auto_relate_to(p0)
             p1.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
             magnetodynamics = p1.magnetodynamics
-            with self.assertRaisesRegex(Exception, "The thermal Stoner-Wohlfarth model requires a thermostat"):
+            with self.assertRaisesRegex(Exception, "The thermal Stoner-Wohlfarth model requires the Langevin thermostat"):
                 magnetodynamics["is_enabled"] = True
                 p1.magnetodynamics = magnetodynamics
                 self.system.integrator.run(0, recalc_forces=True)

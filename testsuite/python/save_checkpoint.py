@@ -316,7 +316,7 @@ break_spec = espressomd.bond_breakage.BreakageSpec(
 system.bond_breakage[strong_harmonic_bond._bond_id] = break_spec
 
 # create Stoner-Wohlfarth particles
-if not system.thermostat.call_method("is_off") and espressomd.has_features(
+if 'THERM.LANGEVIN' in modes and espressomd.has_features(
         ['THERMAL_STONER_WOHLFARTH', 'EXTERNAL_FORCES']):
     magnetodynamics_params = {
         "is_enabled": True, "anisotropy_field_inv": 0.175,

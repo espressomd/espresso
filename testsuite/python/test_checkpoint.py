@@ -62,7 +62,6 @@ class CheckpointTest(ut.TestCase):
     checkpoint.load(0)
     checkpoint.save(1)
     n_nodes = system.cell_system.get_state()["n_nodes"]
-    has_any_thermostat = not system.thermostat.call_method("is_off")
 
     @classmethod
     def setUpClass(cls):
@@ -794,7 +793,7 @@ class CheckpointTest(ut.TestCase):
             np.copy(p_real.vs_relative[2]), [1., 0., 0., 0.], atol=1e-10)
 
     @utx.skipIfMissingFeatures(['THERMAL_STONER_WOHLFARTH', 'EXTERNAL_FORCES'])
-    @ut.skipIf(not has_any_thermostat, 'no thermostat available')
+    @ut.skipIf('THERM.LANGEVIN' not in modes, 'missing a suitable thermostat')
     def test_thermal_stoner_wohlfarth_virtual_sites(self):
         p_real, p_virt = system.part.by_ids([11, 12])
         self.assertEqual(p_virt.magnetodynamics["is_enabled"],

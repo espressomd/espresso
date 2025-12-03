@@ -706,9 +706,6 @@ public:
       get_system().on_temperature_change();
       return {};
     }
-    if (name == "is_off") {
-      return m_handle->thermo_switch == THERMO_OFF;
-    }
     return {};
   }
 

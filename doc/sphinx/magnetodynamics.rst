@@ -122,6 +122,7 @@ to use the ``Propagation.ROT_VS_INDEPENDENT`` propagation mode.
 
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.time_step = 0.001  # MD time step in simulation units
+    system.thermostat.set_langevin(kT=1., gamma=75., gamma_rotation=25., seed=42)
 
     # One particle with thermal Stoner-Wohlfarth enabled
     p1 = system.part.add(pos=[1, 1, 1])
