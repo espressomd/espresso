@@ -50,6 +50,7 @@
 #include "lb/particle_coupling.hpp"
 #include "lb/utils.hpp"
 #include "lees_edwards/lees_edwards.hpp"
+#include "magnetostatics/stoner_wohlfarth_thermal.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
@@ -263,7 +264,19 @@ void System::System::integrator_sanity_checks() const {
       break;
     }
   }
-#endif
+#endif // ESPRESSO_ROTATION
+
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+  if ((thermo_switch & THERMO_LANGEVIN) == 0) {
+    for (auto const &p : cell_structure->local_particles()) {
+      if (p.stoner_wohlfarth_is_enabled()) {
+        runtimeErrorMsg() << "The thermal Stoner-Wohlfarth model requires the "
+                             "Langevin thermostat";
+        break;
+      }
+    }
+  }
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 }
 
 #ifdef ESPRESSO_WALBERLA
@@ -485,8 +498,10 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   auto &propagation = *this->propagation;
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   auto const has_vs_rel = [&propagation]() {
-    return propagation.used_propagations & (PropagationMode::ROT_VS_RELATIVE |
-                                            PropagationMode::TRANS_VS_RELATIVE);
+    return propagation.used_propagations &
+           (PropagationMode::ROT_VS_RELATIVE |
+            PropagationMode::ROT_VS_INDEPENDENT |
+            PropagationMode::TRANS_VS_RELATIVE);
   };
 #endif
 #ifdef ESPRESSO_BOND_CONSTRAINT
@@ -595,7 +610,6 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     {
       resort_particles_if_needed(*this);
     }
-
     // Propagate philox RNG counters
     thermostat->philox_counter_increment();
 
@@ -623,6 +637,10 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 
     // Communication step: distribute ghost positions
     cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
+
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+    run_magnetodynamics(*cell_structure, *thermostat);
+#endif
 
     calculate_forces();
 

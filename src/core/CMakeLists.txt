@@ -67,6 +67,10 @@ if(ESPRESSO_BUILD_WITH_CUDA)
             ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
 endif()
 
+if(ESPRESSO_BUILD_WITH_NLOPT)
+  target_include_directories(espresso_core PRIVATE "${nlopt_SOURCE_DIR}/src")
+endif()
+
 install(TARGETS espresso_core
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
@@ -81,6 +85,7 @@ target_link_libraries(
     $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Cabana::Core>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_NLOPT}>:nlopt>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_GSL}>:GSL::gsl>
   PUBLIC espresso::utils MPI::MPI_CXX Random123 espresso::particle_observables
          Boost::serialization Boost::mpi espresso::instrumentation)

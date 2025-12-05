@@ -281,7 +281,7 @@ around the non-virtual particles center.
 To use this implementation of virtual sites, activate the feature
 ``VIRTUAL_SITES_RELATIVE``. Furthermore, particles have to be set up with the
 propagation modes :attr:`~espressomd.propagation.Propagation.TRANS_VS_RELATIVE`
-and :attr:`~espressomd.propagation.Propagation.ROT_VS_RELATIVE`.
+and, :attr:`~espressomd.propagation.Propagation.ROT_VS_RELATIVE` or :attr:`~espressomd.propagation.Propagation.ROT_VS_INDEPENDENT`.
 
 #. Place the particle to which the virtual site should be related.
    It needs to be in the center of mass of the rigid arrangement of
@@ -413,7 +413,7 @@ following Euler's equations of rotation; in this way, selected particles
 can be decoupled from a thermostat.
 :ref:`Virtual sites` also rely on secondary integrators, such as
 :class:`~espressomd.propagation.Propagation.TRANS_VS_RELATIVE` and
-:class:`~espressomd.propagation.Propagation.ROT_VS_RELATIVE` for
+:class:`~espressomd.propagation.Propagation.ROT_VS_RELATIVE` or :class:`~espressomd.propagation.Propagation.ROT_VS_INDEPENDENT` for
 :ref:`Rigid arrangements of particles` or
 :class:`~espressomd.propagation.Propagation.TRANS_LB_TRACER` for
 :ref:`Inertialess lattice-Boltzmann tracers`.

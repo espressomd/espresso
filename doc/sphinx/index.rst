@@ -20,6 +20,7 @@ User's Guide
     inter_bonded.rst
     electrostatics.rst
     magnetostatics.rst
+    magnetodynamics.rst
     system_manipulation.rst
     constraints.rst
     lb.rst

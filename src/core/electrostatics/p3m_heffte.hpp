@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 The ESPResSo project
+ * Copyright (C) 2010-2025 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -37,6 +37,11 @@
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
 
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+#include <Kokkos_Core.hpp>
+#include <omp.h>
+#endif
+
 #include <algorithm>
 #include <complex>
 #include <cstddef>
@@ -46,13 +51,18 @@
 #include <type_traits>
 #include <utility>
 
-template <typename FloatType> class P3MFFT;
+template <typename FloatType, class FFTConfig> class P3MFFT;
 
-template <typename FloatType>
+/**
+ * @brief Base class for the electrostatics P3M algorithm.
+ * Contains a handle to the FFT backend, information about the local
+ * mesh, the differential operator, and various buffers.
+ */
+template <typename FloatType, class FFTConfig>
 struct CoulombP3MState : public P3MStateCommon<FloatType> {
   using P3MStateCommon<FloatType>::P3MStateCommon;
-
-  constexpr static auto memory_order = Utils::MemoryOrder::ROW_MAJOR;
+  using value_type = FloatType;
+  using ComplexType = std::complex<value_type>;
 
   /** number of charged particles. */
   std::size_t sum_qpart = 0;
@@ -63,14 +73,18 @@ struct CoulombP3MState : public P3MStateCommon<FloatType> {
 
   p3m_interpolation_cache inter_weights;
 
-  /* fields */
+  /** charge density in real-space with halo */
   std::vector<FloatType> rs_charge_density;
-  std::vector<std::complex<FloatType>> ks_charge_density;
+  /** charge density in k-space without halo */
+  std::vector<ComplexType> ks_charge_density;
+  /** electric fields in real-space with halo */
   std::array<std::vector<FloatType>, 3> rs_E_fields;
-  std::vector<std::complex<FloatType>> ks_E_fields_storage;
-  std::vector<std::complex<FloatType>> rs_E_fields_no_halo;
+  /** electric fields in k-space without halo */
+  std::array<std::vector<ComplexType>, 3> ks_E_fields;
+  /** electric fields in real-space without halo */
+  std::array<std::vector<FloatType>, 3> rs_E_fields_no_halo;
   p3m_send_mesh<FloatType> halo_comm;
-  std::shared_ptr<P3MFFT<FloatType>> fft;
+  std::shared_ptr<P3MFFT<FloatType, FFTConfig>> fft;
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   Kokkos::View<FloatType **, Kokkos::LayoutRight, Kokkos::HostSpace>
       rs_charge_density_kokkos;
@@ -87,13 +101,13 @@ struct CoulombP3MState : public P3MStateCommon<FloatType> {
 struct P3MGpuParams;
 #endif
 
-template <typename FloatType, Arch Architecture>
-struct CoulombP3MImpl : public CoulombP3M {
-  ~CoulombP3MImpl() override = default;
+template <typename FloatType, Arch Architecture, class FFTConfig>
+struct CoulombP3MHeffte : public CoulombP3M {
+  ~CoulombP3MHeffte() override = default;
 
-  using CoulombP3MStateClass = CoulombP3MState<FloatType>;
+  using CoulombP3MStateClass = CoulombP3MState<FloatType, FFTConfig>;
   /** @brief Coulomb P3M parameters. */
-  CoulombP3MState<FloatType> &p3m;
+  CoulombP3MStateClass &p3m;
 
 private:
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
@@ -113,8 +127,8 @@ private:
   }
 
 public:
-  CoulombP3MImpl(std::unique_ptr<CoulombP3MStateClass> &&p3m_state,
-                 TuningParameters tuning_params, double prefactor)
+  CoulombP3MHeffte(std::unique_ptr<CoulombP3MStateClass> &&p3m_state,
+                   TuningParameters tuning_params, double prefactor)
       : CoulombP3M(p3m_state->params), p3m{*p3m_state},
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
         m_kokkos_handle{::kokkos_handle},
@@ -211,7 +225,7 @@ public:
                     num_threads, p3m.local_mesh.size);
     Kokkos::deep_copy(p3m.rs_charge_density_kokkos, FloatType{0});
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
-    std::ranges::fill(p3m.rs_charge_density, FloatType{});
+    std::ranges::fill(p3m.rs_charge_density, FloatType{0});
   }
 
 protected:

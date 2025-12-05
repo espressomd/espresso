@@ -96,9 +96,28 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
 endif()
 
 if(ESPRESSO_BUILD_WITH_FFTW)
-  espresso_unit_test(
-    SRC p3m_test.cpp DEPENDS espresso::utils espresso::core
+  espresso_unit_test_executable(
+    NAME p3m_test_matrix SRC p3m_test.cpp DEPENDS espresso::core Boost::mpi
+    MPI::MPI_CXX
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:espresso::p3m::compiler_flags>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Cabana::Core>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>)
+  foreach(TEST_NUM_PROC 1 3 4)
+    foreach(TEST_NUM_THREADS 1 2)
+      if(${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM} OR ${TEST_NUM_THREADS}
+                                                             EQUAL 1)
+        if(${ESPRESSO_TEST_NP} GREATER_EQUAL ${TEST_NUM_PROC})
+          set(TEST_NAME
+              p3m_test_${TEST_NUM_PROC}_mpi_ranks_${TEST_NUM_THREADS}_omp_threads
+          )
+          espresso_unit_test_register(
+            NAME ${TEST_NAME} TARGET p3m_test_matrix DEPENDS MPI::MPI_CXX
+            NUM_PROC ${TEST_NUM_PROC} NUM_THREADS ${TEST_NUM_THREADS})
+        endif()
+      endif()
+    endforeach()
+  endforeach()
   espresso_unit_test(
     SRC fft_test.cpp DEPENDS espresso::utils espresso::core
     $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>)

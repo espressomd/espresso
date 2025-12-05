@@ -90,6 +90,7 @@ option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
 option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
 option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
        OFF)
+option(ESPRESSO_BUILD_WITH_NLOPT "Build with NLopt support" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA
        "Build with waLBerla lattice-Boltzmann support" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
@@ -697,6 +698,32 @@ if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_INSTALL_LIBDIR}")
   FetchContent_MakeAvailable(stokesian_dynamics)
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR}")
+endif()
+
+if(ESPRESSO_BUILD_WITH_NLOPT)
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/nlopt-src)
+    find_package(NLopt 2.7.1 QUIET)
+  endif()
+  if(NOT DEFINED NLopt_FOUND OR NOT ${NLopt_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      nlopt
+      GIT_REPOSITORY https://github.com/stevengj/nlopt.git
+      GIT_TAG        v2.10.0
+    )
+    # cmake-format: on
+    set(BUILD_SHARED_LIBS off)
+    set(NLOPT_FORTRAN off CACHE BOOL "")
+    set(NLOPT_PYTHON off CACHE BOOL "")
+    set(NLOPT_OCTAVE off CACHE BOOL "")
+    set(NLOPT_MATLAB off CACHE BOOL "")
+    set(NLOPT_GUILE off CACHE BOOL "")
+    set(NLOPT_JAVA off CACHE BOOL "")
+    set(NLOPT_SWIG off CACHE BOOL "")
+    set(NLOPT_LUKSAN off CACHE BOOL "")
+    FetchContent_MakeAvailable(nlopt)
+    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+  endif()
 endif()
 
 if(ESPRESSO_BUILD_WITH_VALGRIND)

@@ -261,8 +261,8 @@ protected:
 };
 
 std::shared_ptr<DipolarP3M>
-new_dipolar_p3m(P3MParameters &&p3m_params,
-                TuningParameters const &tuning_params, double prefactor,
-                bool single_precision, Arch arch);
+new_dipolar_p3m_heffte(P3MParameters &&p3m_params,
+                       TuningParameters const &tuning_params, double prefactor,
+                       bool single_precision, Arch arch);
 
 #endif // ESPRESSO_DP3M

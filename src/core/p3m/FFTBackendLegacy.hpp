@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
+#if defined(ESPRESSO_DP3M)
 
 #include "common.hpp"
 #include "data_struct.hpp"
@@ -65,18 +65,6 @@ public:
   std::array<int, 3u> const &get_mesh_start() const override {
     return fft->get_mesh_start();
   }
-
-  /**
-   * @brief Index helpers for reciprocal space.
-   * After the FFT the data is in order YZX, which
-   * means that Y is the slowest changing index.
-   */
-  std::tuple<int, int, int> get_permutations() const override {
-    constexpr static int KX = 2;
-    constexpr static int KY = 0;
-    constexpr static int KZ = 1;
-    return {KX, KY, KZ};
-  }
 };
 
-#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
+#endif // defined(ESPRESSO_DP3M)

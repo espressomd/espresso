@@ -26,7 +26,7 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/scafacos_impl.cpp)
 
 if(ESPRESSO_BUILD_WITH_FFTW)
-  target_sources(espresso_p3m PRIVATE p3m.cpp)
+  target_sources(espresso_p3m PRIVATE p3m_heffte.cpp)
   set_source_files_properties(
     p3m.cpp TARGET_DIRECTORY espresso_p3m
     PROPERTIES INCLUDE_DIRECTORIES ${CMAKE_SOURCE_DIR}/src/core)

@@ -37,6 +37,7 @@ enum PropagationMode : int {
   ROT_VS_RELATIVE = 1 << 12,
   ROT_BROWNIAN = 1 << 13,
   ROT_STOKESIAN = 1 << 14,
+  ROT_VS_INDEPENDENT = 1 << 15,
 };
 } // namespace PropagationMode
 

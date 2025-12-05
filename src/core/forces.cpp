@@ -394,7 +394,8 @@ void System::System::calculate_forces() {
 
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   if (propagation->used_propagations &
-      (PropagationMode::TRANS_VS_RELATIVE | PropagationMode::ROT_VS_RELATIVE)) {
+      (PropagationMode::TRANS_VS_RELATIVE | PropagationMode::ROT_VS_RELATIVE |
+       PropagationMode::ROT_VS_INDEPENDENT)) {
     vs_relative_back_transfer_forces_and_torques(*cell_structure);
   }
 #endif
