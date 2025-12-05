@@ -3,7 +3,7 @@
 [![GitLab CI](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/badges/python/pipeline.svg)](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/-/commits/python)
 [![codecov](https://codecov.io/gh/espressomd/espresso/branch/python/graph/badge.svg)](https://codecov.io/gh/espressomd/espresso)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jngrad/espresso-binder/HEAD)
-[![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/espressomd/espresso)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/launch-Codespaces-579aca?logo=github)](https://codespaces.new/espressomd/espresso)
 
 This is the Molecular Dynamics software ESPResSo ("Extensible
 Simulation Package for Research on Soft Matter Systems").
@@ -86,9 +86,9 @@ Common installation issues are addressed in the
 [FAQ](https://github.com/espressomd/espresso/wiki/Installation-FAQ),
 together with contributed patches for compiler-related and library-related issues.
 
-You can also try ESPReSSo in the cloud using
+You can also try ESPResSo in the cloud using
 [Binder](https://mybinder.org/v2/gh/jngrad/espresso-binder/HEAD) or
-[Gitpod](https://gitpod.io/#https://github.com/espressomd/espresso).
+[Codespaces](https://codespaces.new/espressomd/espresso).
 
 ### Join the community
 

@@ -4,7 +4,7 @@ runs:
   using: "composite"
   steps:
     - run: |
-        export myconfig=maxset with_cuda=false with_gsl=false with_hdf5=false test_timeout=800 check_skip_long=true
+        export myconfig=maxset with_cuda=false with_hdf5=false test_timeout=800 check_skip_long=true
         if test -d venv; then . venv/bin/activate; fi
         bash maintainer/CI/build_cmake.sh
       shell: bash

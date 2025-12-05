@@ -57,7 +57,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
       "Coulomb::ElectrostaticLayerCorrection");
 #endif // ESPRESSO_P3M
   om->register_new<ICCStar>("Coulomb::ICCStar");
+#ifdef ESPRESSO_GSL
   om->register_new<CoulombMMM1D>("Coulomb::CoulombMMM1D");
+#endif
 #ifdef ESPRESSO_SCAFACOS
   om->register_new<CoulombScafacos>("Coulomb::CoulombScafacos");
 #endif

@@ -123,6 +123,7 @@ public:
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
     if ((propagation & PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE) == 0 and
         propagation & (PropagationMode::TRANS_VS_RELATIVE |
+                       PropagationMode::ROT_VS_INDEPENDENT |
                        PropagationMode::ROT_VS_RELATIVE)) {
       return false;
     }

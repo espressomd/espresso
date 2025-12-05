@@ -198,6 +198,13 @@ public:
 
   auto const &get_mesh_start() const { return forw[3u].start; }
 
+#ifndef NDEBUG
+  /** Get a view to the FFT workspace buffer. For debugging purposes only. */
+  std::span<FloatType const> get_fft_workspace() const {
+    return {data_buf.begin(), static_cast<std::size_t>(forw[1].new_size)};
+  }
+#endif
+
 private:
   void forw_grid_comm(boost::mpi::communicator const &comm,
                       fft_forw_plan<FloatType> const &plan, FloatType const *in,

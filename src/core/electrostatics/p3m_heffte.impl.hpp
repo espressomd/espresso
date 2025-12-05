@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 The ESPResSo project
+ * Copyright (C) 2010-2025 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -19,16 +19,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file
- *
- *  The corresponding header file is @ref p3m.hpp.
- */
-
 #include <config/config.hpp>
 
 #ifdef ESPRESSO_P3M
 
 #include "electrostatics/p3m.hpp"
+#include "electrostatics/p3m_heffte.hpp"
 
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/elc.hpp"
@@ -36,8 +32,9 @@
 #include "electrostatics/p3m_gpu_cuda.cuh"
 #include "electrostatics/p3m_gpu_error.hpp"
 #endif // ESPRESSO_CUDA
+#include "short_range_cabana.hpp"
 
-#include "electrostatics/p3m.impl.hpp"
+#include "electrostatics/p3m_heffte.hpp" // must be included after coulomb.hpp
 
 #include "p3m/P3MFFT.hpp"
 #include "p3m/TuningAlgorithm.hpp"
@@ -64,7 +61,6 @@
 #include "npt.hpp"
 #include "p3m/send_mesh.hpp"
 #include "particle_reduction.hpp"
-#include "short_range_cabana.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
 #include "tuning.hpp"
@@ -118,26 +114,15 @@ multiply_complex_by_real(std::complex<FloatType> const &z, FloatType k) {
   return std::complex<FloatType>(z.real() * k, z.imag() * k);
 }
 
-template <typename FloatType>
-FloatType complex_norm2(std::complex<FloatType> const &z) {
-  return Utils::sqr(z.real()) + Utils::sqr(z.imag());
-}
-
-static bool is_node_grid_compatible_with_mesh(Utils::Vector3i const &node_grid,
+inline bool is_node_grid_compatible_with_mesh(Utils::Vector3i const &node_grid,
                                               Utils::Vector3i const &mesh) {
   return mesh[0u] % node_grid[0u] == 0 and mesh[1u] % node_grid[1u] == 0 and
          mesh[2u] % node_grid[2u] == 0;
 }
 
-static auto get_size_from_shape(Utils::Vector3i const &shape) {
-  return std::accumulate(shape.cbegin(), shape.cend(), std::size_t{1u},
-                         [](std::size_t const acc, int const value) {
-                           return acc * static_cast<std::size_t>(value);
-                         });
-}
-
-template <typename FloatType, Arch Architecture>
-void CoulombP3MImpl<FloatType, Architecture>::count_charged_particles() {
+template <typename FloatType, Arch Architecture, class FFTConfig>
+void CoulombP3MHeffte<FloatType, Architecture,
+                      FFTConfig>::count_charged_particles() {
   struct Res {
     std::size_t local_n = std::size_t{0u};
     double local_q = 0.0;
@@ -175,25 +160,39 @@ void CoulombP3MImpl<FloatType, Architecture>::count_charged_particles() {
  *  different convention for the prefactors, which is described in
  *  @cite deserno98a @cite deserno98b.
  */
-template <typename FloatType, Arch Architecture>
-void CoulombP3MImpl<FloatType, Architecture>::calc_influence_function_force() {
-  p3m.g_force = grid_influence_function<FloatType, 1, P3M_BRILLOUIN>(
+template <typename FloatType, Arch Architecture, class FFTConfig>
+void CoulombP3MHeffte<FloatType, Architecture,
+                      FFTConfig>::calc_influence_function_force() {
+  p3m.g_force = grid_influence_function<FloatType, 1, P3M_BRILLOUIN,
+                                        FFTConfig::k_space_order>(
       p3m.params, p3m.fft->ks_local_ld_index(), p3m.fft->ks_local_ur_index(),
       get_system().box_geo->length_inv());
+  if constexpr (FFTConfig::use_r2c) {
+    influence_function_r2c<FFTConfig::r2c_dir>(p3m.g_force, p3m.params.mesh,
+                                               p3m.fft->ks_local_size(),
+                                               p3m.fft->ks_local_ld_index());
+  }
 }
 
 /** Calculate the influence function optimized for the energy and the
  *  self energy correction.
  */
-template <typename FloatType, Arch Architecture>
-void CoulombP3MImpl<FloatType, Architecture>::calc_influence_function_energy() {
-  p3m.g_energy = grid_influence_function<FloatType, 0, P3M_BRILLOUIN>(
+template <typename FloatType, Arch Architecture, class FFTConfig>
+void CoulombP3MHeffte<FloatType, Architecture,
+                      FFTConfig>::calc_influence_function_energy() {
+  p3m.g_energy = grid_influence_function<FloatType, 0, P3M_BRILLOUIN,
+                                         FFTConfig::k_space_order>(
       p3m.params, p3m.fft->ks_local_ld_index(), p3m.fft->ks_local_ur_index(),
       get_system().box_geo->length_inv());
+  if constexpr (FFTConfig::use_r2c) {
+    influence_function_r2c<FFTConfig::r2c_dir>(p3m.g_energy, p3m.params.mesh,
+                                               p3m.fft->ks_local_size(),
+                                               p3m.fft->ks_local_ld_index());
+  }
 }
 
 /** Aliasing sum used by @ref p3m_k_space_error. */
-static auto p3m_tune_aliasing_sums(Utils::Vector3i const &shift,
+inline auto p3m_tune_aliasing_sums(Utils::Vector3i const &shift,
                                    Utils::Vector3i const &mesh,
                                    Utils::Vector3d const &mesh_i, int cao,
                                    double alpha_L_i) {
@@ -237,7 +236,7 @@ static auto p3m_tune_aliasing_sums(Utils::Vector3i const &shift,
  *  \param box_l      box dimensions.
  *  \return real space error
  */
-static double p3m_real_space_error(double pref, double r_cut_iL,
+inline double p3m_real_space_error(double pref, double r_cut_iL,
                                    std::size_t n_c_part, double sum_q2,
                                    double alpha_L,
                                    Utils::Vector3d const &box_l) {
@@ -259,7 +258,7 @@ static double p3m_real_space_error(double pref, double r_cut_iL,
  *  \param box_l    box dimensions.
  *  \return reciprocal (k) space error
  */
-static double p3m_k_space_error(double pref, Utils::Vector3i const &mesh,
+inline double p3m_k_space_error(double pref, Utils::Vector3i const &mesh,
                                 int cao, std::size_t n_c_part, double sum_q2,
                                 double alpha_L, Utils::Vector3d const &box_l) {
 
@@ -296,8 +295,8 @@ static double p3m_k_space_error(double pref, Utils::Vector3i const &mesh,
          (box_l[1] * box_l[2]);
 }
 
-template <typename FloatType, Arch Architecture>
-void CoulombP3MImpl<FloatType, Architecture>::init_cpu_kernels() {
+template <typename FloatType, Arch Architecture, class FFTConfig>
+void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::init_cpu_kernels() {
   assert(p3m.params.mesh >= Utils::Vector3i::broadcast(1));
   assert(p3m.params.cao >= p3m_min_cao and p3m.params.cao <= p3m_max_cao);
   assert(p3m.params.alpha > 0.);
@@ -319,21 +318,22 @@ void CoulombP3MImpl<FloatType, Architecture>::init_cpu_kernels() {
   }
 
   p3m.local_mesh.calc_local_ca_mesh(p3m.params, local_geo, skin, elc_layer);
-  p3m.fft = std::make_shared<P3MFFT<FloatType>>(
-      comm_cart, p3m.params.mesh, p3m.local_mesh.ld_no_halo,
-      p3m.local_mesh.ur_no_halo, get_memory_layout());
-  p3m.fft->set_preferred_kspace_decomposition(::communicator.node_grid);
-  auto const rs_array_size = get_size_from_shape(p3m.local_mesh.dim);
+  p3m.fft = std::make_shared<P3MFFT<FloatType, FFTConfig>>(
+      ::comm_cart, p3m.params.mesh, p3m.local_mesh.ld_no_halo,
+      p3m.local_mesh.ur_no_halo, ::communicator.node_grid);
+  auto const rs_array_size =
+      static_cast<std::size_t>(Utils::product(p3m.local_mesh.dim));
   auto const rs_array_size_no_halo =
-      get_size_from_shape(p3m.local_mesh.dim_no_halo);
-  auto const fft_mesh_size = get_size_from_shape(p3m.fft->ks_local_size());
+      static_cast<std::size_t>(Utils::product(p3m.local_mesh.dim_no_halo));
+  auto const fft_mesh_size =
+      static_cast<std::size_t>(Utils::product(p3m.fft->ks_local_size()));
   p3m.rs_charge_density.resize(rs_array_size);
   p3m.ks_charge_density.resize(fft_mesh_size);
   for (auto d : {0u, 1u, 2u}) {
+    p3m.ks_E_fields[d].resize(fft_mesh_size);
     p3m.rs_E_fields[d].resize(rs_array_size);
+    p3m.rs_E_fields_no_halo[d].resize(rs_array_size_no_halo);
   }
-  p3m.ks_E_fields_storage.resize(3u * fft_mesh_size);
-  p3m.rs_E_fields_no_halo.resize(3u * rs_array_size_no_halo);
   p3m.calc_differential_operator();
 
   /* fix box length dependent constants */
@@ -346,8 +346,8 @@ namespace {
 template <int cao> struct AssignCharge {
   void operator()(auto &p3m, double q,
                   InterpolationWeights<cao> const &weights) {
-    using value_type =
-        typename std::remove_reference_t<decltype(p3m)>::value_type;
+    using CoulombP3MState = std::remove_reference_t<decltype(p3m)>;
+    using value_type = CoulombP3MState::value_type;
     p3m_interpolate(p3m.local_mesh, weights, [q, &p3m](int ind, double w) {
       p3m.rs_charge_density[ind] += value_type(w * q);
     });
@@ -355,8 +355,7 @@ template <int cao> struct AssignCharge {
 
   void operator()(auto &p3m, double q, Utils::Vector3d const &real_pos,
                   p3m_interpolation_cache &inter_weights) {
-    auto constexpr memory_order =
-        std::remove_reference_t<decltype(p3m)>::memory_order;
+    auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
     auto const weights = p3m_calculate_interpolation_weights<cao, memory_order>(
         real_pos, p3m.params.ai, p3m.local_mesh);
     inter_weights.store(weights);
@@ -364,8 +363,7 @@ template <int cao> struct AssignCharge {
   }
 
   void operator()(auto &p3m, double q, Utils::Vector3d const &real_pos) {
-    auto constexpr memory_order =
-        std::remove_reference_t<decltype(p3m)>::memory_order;
+    auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
     auto const weights = p3m_calculate_interpolation_weights<cao, memory_order>(
         real_pos, p3m.params.ai, p3m.local_mesh);
     this->operator()(p3m, q, weights);
@@ -373,8 +371,9 @@ template <int cao> struct AssignCharge {
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   void operator()(auto &p3m, auto &cell_structure) {
-    using CoulombP3MStateClass = std::remove_reference_t<decltype(p3m)>;
-    using value_type = CoulombP3MStateClass::value_type;
+    using CoulombP3MState = std::remove_reference_t<decltype(p3m)>;
+    using value_type = CoulombP3MState::value_type;
+    auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
     auto const &aosoa = cell_structure.get_aosoa();
     auto const n_part = cell_structure.count_local_particles();
     p3m.inter_weights.zfill(n_part); // allocate buffer for parallel write
@@ -383,7 +382,6 @@ template <int cao> struct AssignCharge {
           auto const tid = omp_get_thread_num();
           auto const pos = aosoa.get_vector_at(aosoa.position, p_index);
           auto const q = aosoa.charge(p_index);
-          auto constexpr memory_order = CoulombP3MStateClass::memory_order;
           auto const weights =
               p3m_calculate_interpolation_weights<cao, memory_order>(
                   pos, p3m.params.ai, p3m.local_mesh);
@@ -422,8 +420,8 @@ template <int cao> struct AssignCharge {
 };
 } // namespace
 
-template <typename FloatType, Arch Architecture>
-void CoulombP3MImpl<FloatType, Architecture>::charge_assign(
+template <typename FloatType, Arch Architecture, class FFTConfig>
+void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::charge_assign(
     [[maybe_unused]] ParticleRange const &particles) {
   prepare_fft_mesh(true);
 
@@ -439,8 +437,8 @@ void CoulombP3MImpl<FloatType, Architecture>::charge_assign(
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 }
 
-template <typename FloatType, Arch Architecture>
-void CoulombP3MImpl<FloatType, Architecture>::assign_charge(
+template <typename FloatType, Arch Architecture, class FFTConfig>
+void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::assign_charge(
     double q, Utils::Vector3d const &real_pos, bool skip_cache) {
   if (skip_cache) {
     Utils::integral_parameter<int, AssignCharge, p3m_min_cao, p3m_max_cao>(
@@ -512,7 +510,7 @@ template <int cao> struct AssignForces {
 } // namespace
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-static auto calc_dipole_moment(boost::mpi::communicator const &comm,
+inline auto calc_dipole_moment(boost::mpi::communicator const &comm,
                                auto const &cs, auto const &box_geo) {
   auto const local_dip = reduce_over_local_particles<Utils::Vector3d>(
       cs,
@@ -523,7 +521,7 @@ static auto calc_dipole_moment(boost::mpi::communicator const &comm,
   return boost::mpi::all_reduce(comm, local_dip, std::plus<>());
 }
 #else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
-static auto calc_dipole_moment(boost::mpi::communicator const &comm,
+inline auto calc_dipole_moment(boost::mpi::communicator const &comm,
                                auto const &p_q_unfolded_pos_range) {
   auto const local_dip =
       boost::accumulate(p_q_unfolded_pos_range, Utils::Vector3d{},
@@ -536,16 +534,16 @@ static auto calc_dipole_moment(boost::mpi::communicator const &comm,
 }
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
-template <typename FloatType, Arch Architecture>
-void CoulombP3MImpl<FloatType, Architecture>::kernel_ks_charge_density() {
+template <typename FloatType, Arch Architecture, class FFTConfig>
+void CoulombP3MHeffte<FloatType, Architecture,
+                      FFTConfig>::kernel_ks_charge_density() {
   // halo communication of real space charge density
   p3m.halo_comm.gather_grid(comm_cart, p3m.rs_charge_density.data(),
                             p3m.local_mesh.dim);
 
   // get real space charge density without ghost layers
   auto charge_density_no_halos =
-      extract_block<Utils::MemoryOrder::ROW_MAJOR,
-                    Utils::MemoryOrder::COLUMN_MAJOR>(
+      extract_block<Utils::MemoryOrder::ROW_MAJOR, FFTConfig::r_space_order>(
           p3m.rs_charge_density, p3m.local_mesh.dim, p3m.local_mesh.n_halo_ld,
           p3m.local_mesh.dim - p3m.local_mesh.n_halo_ur);
 
@@ -557,32 +555,24 @@ void CoulombP3MImpl<FloatType, Architecture>::kernel_ks_charge_density() {
                    p3m.ks_charge_density.data());
 }
 
-template <typename FloatType, Arch Architecture>
-void CoulombP3MImpl<FloatType, Architecture>::kernel_rs_electric_field() {
+template <typename FloatType, Arch Architecture, class FFTConfig>
+void CoulombP3MHeffte<FloatType, Architecture,
+                      FFTConfig>::kernel_rs_electric_field() {
   auto const mesh_start = p3m.fft->ks_local_ld_index();
-  auto const mesh_stop = mesh_start + p3m.fft->ks_local_size();
+  auto const mesh_stop = p3m.fft->ks_local_ur_index();
   auto const &box_geo = *get_system().box_geo;
-
-  // hold electric field in k-space
-  std::array<std::span<std::complex<FloatType>>, 3> ks_E_fields;
-  auto const fft_mesh_length = get_size_from_shape(mesh_stop - mesh_start);
-  for (auto d : {0u, 1u, 2u}) {
-    auto const offset = d * fft_mesh_length;
-    auto const begin = p3m.ks_E_fields_storage.begin() + offset;
-    ks_E_fields[d] = {begin, fft_mesh_length};
-  }
 
   // i*k differentiation
   auto const wavevector =
       Utils::Vector3<FloatType>((2. * std::numbers::pi) * box_geo.length_inv());
 
   // compute electric field, Eq. (3.49) @cite deserno00b
-  for_each_3d_lin<Utils::MemoryOrder::COLUMN_MAJOR>(
+  for_each_3d_lin<FFTConfig::k_space_order>(
       mesh_start, mesh_stop,
-      [&](const Utils::Vector3i &indices, int local_index) {
+      [&](Utils::Vector3i const &indices, int local_index) {
 #ifdef ESPRESSO_ADDITIONAL_CHECKS
         assert(local_index ==
-               Utils::get_linear_index<Utils::MemoryOrder::COLUMN_MAJOR>(
+               Utils::get_linear_index<FFTConfig::k_space_order>(
                    indices - mesh_start, p3m.fft->ks_local_size()));
 #endif
         auto const phi_hat = multiply_complex_by_real(
@@ -592,7 +582,7 @@ void CoulombP3MImpl<FloatType, Architecture>::kernel_rs_electric_field() {
           // wave vector of the current mesh point
           auto const k = FloatType(p3m.d_op[d][indices[d]]) * wavevector[d];
           // electric field in k-space
-          ks_E_fields[d][local_index] =
+          p3m.ks_E_fields[d][local_index] =
               multiply_complex_by_imaginary(phi_hat, k);
         }
       });
@@ -601,26 +591,24 @@ void CoulombP3MImpl<FloatType, Architecture>::kernel_rs_electric_field() {
   auto const size = p3m.local_mesh.ur_no_halo - p3m.local_mesh.ld_no_halo;
   auto const rs_mesh_size_no_halo = Utils::product(size);
   for (auto d : {0u, 1u, 2u}) {
-    auto k_space = ks_E_fields[d].data();
-    auto real_space = p3m.rs_E_fields_no_halo.data() + d * rs_mesh_size_no_halo;
-    p3m.fft->backward(k_space, real_space);
+    auto k_space = p3m.ks_E_fields[d].data();
+    auto r_space = p3m.rs_E_fields_no_halo[d].data();
+    p3m.fft->backward(k_space, r_space);
 
     // add zeros around the E-field in real space to make room for ghost layers
-    auto const offset = d * rs_mesh_size_no_halo;
-    auto const begin = p3m.rs_E_fields_no_halo.begin() + offset;
-    auto f = std::span<std::complex<FloatType>>(begin, rs_mesh_size_no_halo);
+    auto const begin = p3m.rs_E_fields_no_halo[d].begin();
     p3m.rs_E_fields[d] =
-        pad_with_zeros_discard_imag<Utils::MemoryOrder::COLUMN_MAJOR,
+        pad_with_zeros_discard_imag<FFTConfig::r_space_order,
                                     Utils::MemoryOrder::ROW_MAJOR>(
-            std::span<std::complex<FloatType>>(f), p3m.local_mesh.dim_no_halo,
+            std::span(begin, rs_mesh_size_no_halo), p3m.local_mesh.dim_no_halo,
             p3m.local_mesh.n_halo_ld, p3m.local_mesh.n_halo_ur);
   }
 
   // ghost communicate the boundary layers of the E-field in real space
-  auto field_pointers = std::vector<FloatType *>{p3m.rs_E_fields[0u].data(),
-                                                 p3m.rs_E_fields[1u].data(),
-                                                 p3m.rs_E_fields[2u].data()};
-  p3m.halo_comm.spread_grid(comm_cart, field_pointers, p3m.local_mesh.dim);
+  std::array<FloatType *, 3u> rs_fields = {{p3m.rs_E_fields[0u].data(),
+                                            p3m.rs_E_fields[1u].data(),
+                                            p3m.rs_E_fields[2u].data()}};
+  p3m.halo_comm.spread_grid(comm_cart, rs_fields, p3m.local_mesh.dim);
 }
 
 /** @details Calculate the long range electrostatics part of the pressure
@@ -628,8 +616,9 @@ void CoulombP3MImpl<FloatType, Architecture>::kernel_rs_electric_field() {
  *  in @cite essmann95a. The part \f$\Pi_{\textrm{corr}, \alpha, \beta}\f$
  *  eq. (2.8) is not present here since M is the empty set in our simulations.
  */
-template <typename FloatType, Arch Architecture>
-Utils::Vector9d CoulombP3MImpl<FloatType, Architecture>::long_range_pressure(
+template <typename FloatType, Arch Architecture, class FFTConfig>
+Utils::Vector9d
+CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_pressure(
     ParticleRange const &particles) {
   auto const &box_geo = *get_system().box_geo;
   Utils::Vector9d node_k_space_pressure_tensor{};
@@ -638,37 +627,54 @@ Utils::Vector9d CoulombP3MImpl<FloatType, Architecture>::long_range_pressure(
     charge_assign(particles);
     kernel_ks_charge_density();
 
+    auto constexpr r2c_dir = FFTConfig::r2c_dir;
     auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
-    auto const &mesh_stop = p3m.fft->ks_local_size();
-    auto const &k_size = p3m.fft->ks_local_size();
+    auto const &global_size = p3m.params.mesh;
+    auto const local_size = p3m.fft->ks_local_size();
+    auto const local_origin = p3m.fft->ks_local_ld_index();
     auto const half_alpha_inv_sq = Utils::sqr(1. / 2. / p3m.params.alpha);
     auto const wavevector = (2. * std::numbers::pi) * box_geo.length_inv();
-    auto indices = Utils::Vector3i{};
+    auto const cutoff_left = 1 - local_origin[r2c_dir];
+    auto const cutoff_right = global_size[r2c_dir] / 2 - local_origin[r2c_dir];
+    auto local_index = Utils::Vector3i::broadcast(0);
+    auto &short_dim = local_index[r2c_dir];
     auto diagonal = 0.;
+    std::size_t index = 0u;
+    for_each_3d_order<FFTConfig::k_space_order>(
+        mesh_start, local_size, local_index, [&]() {
+          if (short_dim <= cutoff_right) {
+            auto const global_index = local_index + local_origin;
+            auto const kx = p3m.d_op[0u][global_index[0u]] * wavevector[0u];
+            auto const ky = p3m.d_op[1u][global_index[1u]] * wavevector[1u];
+            auto const kz = p3m.d_op[2u][global_index[2u]] * wavevector[2u];
+            auto const norm_sq =
+                Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
 
-    for_each_3d(mesh_start, mesh_stop, indices, [&]() {
-      auto const global_index = indices + p3m.fft->ks_local_ld_index();
-      auto const kx = p3m.d_op[0u][global_index[0u]] * wavevector[0u];
-      auto const ky = p3m.d_op[1u][global_index[1u]] * wavevector[1u];
-      auto const kz = p3m.d_op[2u][global_index[2u]] * wavevector[2u];
-      auto const norm_sq = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
-
-      if (norm_sq != 0.) {
-        auto const index = Utils::get_linear_index(
-            indices, k_size, Utils::MemoryOrder::COLUMN_MAJOR);
-        auto const node_k_space_energy = static_cast<double>(
-            p3m.g_energy[index] * complex_norm2(p3m.ks_charge_density[index]));
-        auto const vterm = -2. * (1. / norm_sq + half_alpha_inv_sq);
-        auto const pref = node_k_space_energy * vterm;
-        node_k_space_pressure_tensor[0u] += pref * kx * kx; /* sigma_xx */
-        node_k_space_pressure_tensor[1u] += pref * kx * ky; /* sigma_xy */
-        node_k_space_pressure_tensor[2u] += pref * kx * kz; /* sigma_xz */
-        node_k_space_pressure_tensor[4u] += pref * ky * ky; /* sigma_yy */
-        node_k_space_pressure_tensor[5u] += pref * ky * kz; /* sigma_yz */
-        node_k_space_pressure_tensor[8u] += pref * kz * kz; /* sigma_zz */
-        diagonal += node_k_space_energy;
-      }
-    });
+            if (norm_sq != 0.) {
+              auto cell_energy =
+                  static_cast<double>(p3m.g_energy[index] *
+                                      std::norm(p3m.ks_charge_density[index]));
+              if (short_dim >= cutoff_left and short_dim <= cutoff_right - 1) {
+                // k-space symmetry: double counting except in the first and
+                // last planes of the short dimension; although the wavevector
+                // points in the opposite direction in the redundant region of
+                // k-space, the product of two components of the wavevector
+                // cancels out the negative sign
+                cell_energy *= 2.;
+              }
+              auto const vterm = -2. * (1. / norm_sq + half_alpha_inv_sq);
+              auto const pref = cell_energy * vterm;
+              diagonal += cell_energy;
+              node_k_space_pressure_tensor[0u] += pref * kx * kx; /* sigma_xx */
+              node_k_space_pressure_tensor[1u] += pref * kx * ky; /* sigma_xy */
+              node_k_space_pressure_tensor[2u] += pref * kx * kz; /* sigma_xz */
+              node_k_space_pressure_tensor[4u] += pref * ky * ky; /* sigma_yy */
+              node_k_space_pressure_tensor[5u] += pref * ky * kz; /* sigma_yz */
+              node_k_space_pressure_tensor[8u] += pref * kz * kz; /* sigma_zz */
+            }
+          }
+          ++index;
+        });
 
     node_k_space_pressure_tensor[0u] += diagonal;
     node_k_space_pressure_tensor[4u] += diagonal;
@@ -681,8 +687,8 @@ Utils::Vector9d CoulombP3MImpl<FloatType, Architecture>::long_range_pressure(
   return node_k_space_pressure_tensor * prefactor / (2. * box_geo.volume());
 }
 
-template <typename FloatType, Arch Architecture>
-double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
+template <typename FloatType, Arch Architecture, class FFTConfig>
+double CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
     bool force_flag, bool energy_flag, ParticleRange const &particles) {
 
   auto const &system = get_system();
@@ -771,18 +777,32 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
 
   /* === k-space energy calculation  === */
   if (energy_flag or npt_flag) {
+    auto constexpr r2c_dir = FFTConfig::r2c_dir;
     auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
-    auto const &mesh_stop = p3m.fft->ks_local_size();
-    auto indices = Utils::Vector3i{};
+    auto const &global_size = p3m.params.mesh;
+    auto const local_size = p3m.fft->ks_local_size();
+    auto const local_origin = p3m.fft->ks_local_ld_index();
+    auto const cutoff_left = 1 - local_origin[r2c_dir];
+    auto const cutoff_right = global_size[r2c_dir] / 2 - local_origin[r2c_dir];
+    auto local_index = Utils::Vector3i::broadcast(0);
+    auto &short_dim = local_index[r2c_dir];
     auto node_energy = 0.;
-    for_each_3d(mesh_start, mesh_stop, indices, [&]() {
-      auto const index = Utils::get_linear_index(
-          indices, mesh_stop, Utils::MemoryOrder::COLUMN_MAJOR);
-      // Use the energy optimized influence function for energy!
-      // Eq. (3.40) @cite deserno00b
-      node_energy += static_cast<double>(
-          p3m.g_energy[index] * complex_norm2(p3m.ks_charge_density[index]));
-    });
+    std::size_t index = 0u;
+    for_each_3d_order<FFTConfig::k_space_order>(
+        mesh_start, local_size, local_index, [&]() {
+          if (short_dim <= cutoff_right) {
+            auto const &cell_field = p3m.ks_charge_density[index];
+            auto cell_energy = static_cast<double>(p3m.g_energy[index] *
+                                                   std::norm(cell_field));
+            if (short_dim >= cutoff_left and short_dim <= cutoff_right - 1) {
+              // leverage symmetry of k-space: double counting except in the
+              // first and last planes of the short dimension
+              cell_energy += cell_energy;
+            }
+            node_energy += cell_energy;
+          }
+          ++index;
+        });
     node_energy /= 2. * volume;
 
     // add up energy contributions from all mpi ranks
@@ -815,9 +835,9 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
   return energy;
 }
 
-template <typename FloatType, Arch Architecture>
+template <typename FloatType, Arch Architecture, class FFTConfig>
 class CoulombTuningAlgorithm : public TuningAlgorithm {
-  using CoulombP3MStateClass = CoulombP3MState<FloatType>;
+  using CoulombP3MStateClass = CoulombP3MState<FloatType, FFTConfig>;
   CoulombP3MStateClass &p3m;
   double m_mesh_density_min = -1., m_mesh_density_max = -1.;
   // indicates if mesh should be tuned
@@ -826,6 +846,14 @@ class CoulombTuningAlgorithm : public TuningAlgorithm {
 
 protected:
   P3MParameters &get_params() override { return p3m.params; }
+
+  constexpr std::tuple<int, int, int> get_memory_layout() const {
+    auto constexpr memory_order = FFTConfig::k_space_order;
+    if constexpr (memory_order == Utils::MemoryOrder::COLUMN_MAJOR) {
+      return {2, 1, 0};
+    }
+    return {0, 1, 2};
+  }
 
 public:
   CoulombTuningAlgorithm(System::System &system, auto &input_p3m,
@@ -867,8 +895,9 @@ public:
       return std::nullopt;
     }
 #endif
-    auto const [KX, KY, KZ] = p3m.fft->get_memory_layout();
+    auto const [KX, KY, KZ] = get_memory_layout();
     auto valid_decomposition = false;
+    // calculate box size in k-space
     Utils::Vector3i mesh_size_k_space = {};
     boost::mpi::reduce(
         ::comm_cart, p3m.fft->ks_local_ur_index(), mesh_size_k_space,
@@ -878,6 +907,12 @@ public:
                                   std::max(lhs[2u], rhs[2u])}};
         },
         0);
+    if constexpr (FFTConfig::use_r2c) {
+      // adjust for reduced dimension
+      mesh_size_k_space[FFTConfig::r2c_dir] -= 1;
+      mesh_size_k_space[FFTConfig::r2c_dir] *= 2;
+    }
+    // check consistency with box size in real-space
     if (::this_node == 0) {
       auto const &node_grid = ::communicator.node_grid;
       valid_decomposition =
@@ -1033,8 +1068,8 @@ public:
   }
 };
 
-template <typename FloatType, Arch Architecture>
-void CoulombP3MImpl<FloatType, Architecture>::tune() {
+template <typename FloatType, Arch Architecture, class FFTConfig>
+void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::tune() {
   auto &system = get_system();
   auto const &box_geo = *system.box_geo;
   if (p3m.params.alpha_L == 0. and p3m.params.alpha != 0.) {
@@ -1050,7 +1085,7 @@ void CoulombP3MImpl<FloatType, Architecture>::tune() {
           "CoulombP3M: no charged particles in the system");
     }
     try {
-      CoulombTuningAlgorithm<FloatType, Architecture> parameters(
+      CoulombTuningAlgorithm<FloatType, Architecture, FFTConfig> parameters(
           system, p3m, prefactor, tuning.timings, tuning.limits);
       parameters.setup_logger(tuning.verbose);
       // parameter ranges
@@ -1123,8 +1158,8 @@ void CoulombP3M::sanity_checks_cell_structure() const {
   }
 }
 
-template <typename FloatType, Arch Architecture>
-void CoulombP3MImpl<FloatType, Architecture>::scaleby_box_l() {
+template <typename FloatType, Arch Architecture, class FFTConfig>
+void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::scaleby_box_l() {
   auto const &box_geo = *get_system().box_geo;
   p3m.params.r_cut = p3m.params.r_cut_iL * box_geo.length()[0];
   p3m.params.alpha = p3m.params.alpha_L * box_geo.length_inv()[0];
@@ -1137,9 +1172,9 @@ void CoulombP3MImpl<FloatType, Architecture>::scaleby_box_l() {
 }
 
 #ifdef ESPRESSO_CUDA
-template <typename FloatType, Arch Architecture>
-void CoulombP3MImpl<FloatType, Architecture>::add_long_range_forces_gpu(
-    ParticleRange const &particles) {
+template <typename FloatType, Arch Architecture, class FFTConfig>
+void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::
+    add_long_range_forces_gpu(ParticleRange const &particles) {
   if constexpr (Architecture == Arch::CUDA) {
 #ifdef ESPRESSO_NPT
     if (get_system().has_npt_enabled()) {
@@ -1161,8 +1196,8 @@ void CoulombP3MImpl<FloatType, Architecture>::add_long_range_forces_gpu(
  * that are only relevant for ELC force corrections, since the
  * GPU implementation uses CPU kernels to compute energies.
  */
-template <typename FloatType, Arch Architecture>
-void CoulombP3MImpl<FloatType, Architecture>::init_gpu_kernels() {
+template <typename FloatType, Arch Architecture, class FFTConfig>
+void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::init_gpu_kernels() {
   if constexpr (Architecture == Arch::CUDA) {
     auto &system = get_system();
     if (has_actor_of_type<ElectrostaticLayerCorrection>(
@@ -1174,8 +1209,8 @@ void CoulombP3MImpl<FloatType, Architecture>::init_gpu_kernels() {
   }
 }
 
-template <typename FloatType, Arch Architecture>
-void CoulombP3MImpl<FloatType, Architecture>::request_gpu() const {
+template <typename FloatType, Arch Architecture, class FFTConfig>
+void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::request_gpu() const {
   if constexpr (Architecture == Arch::CUDA) {
     auto &gpu_particle_data = get_system().gpu;
     gpu_particle_data.enable_property(GpuParticleData::prop::force);
@@ -1184,37 +1219,5 @@ void CoulombP3MImpl<FloatType, Architecture>::request_gpu() const {
   }
 }
 #endif // ESPRESSO_CUDA
-
-template <typename FloatType, Arch Architecture>
-std::shared_ptr<CoulombP3M>
-new_coulomb_p3m_impl(P3MParameters &&p3m, TuningParameters const &tuning_params,
-                     double prefactor) {
-  auto state_ptr = std::make_unique<CoulombP3MState<FloatType>>(std::move(p3m));
-  auto obj = std::make_shared<CoulombP3MImpl<FloatType, Architecture>>(
-      std::move(state_ptr), tuning_params, prefactor);
-  return obj;
-}
-
-std::shared_ptr<CoulombP3M>
-new_coulomb_p3m(P3MParameters &&p3m_params,
-                TuningParameters const &tuning_params, double prefactor,
-                bool single_precision, Arch arch) {
-  auto fptr = &new_coulomb_p3m_impl<float, Arch::CPU>;
-  if (single_precision) {
-    if (arch == Arch::CPU) {
-      fptr = new_coulomb_p3m_impl<float, Arch::CPU>;
-    } else {
-      fptr = new_coulomb_p3m_impl<float, Arch::CUDA>;
-    }
-  } else {
-    if (arch == Arch::CPU) {
-      fptr = new_coulomb_p3m_impl<double, Arch::CPU>;
-    } else {
-      throw std::invalid_argument(
-          "P3M GPU only implemented in single-precision mode");
-    }
-  }
-  return fptr(std::move(p3m_params), tuning_params, prefactor);
-}
 
 #endif // ESPRESSO_P3M

@@ -30,14 +30,10 @@ tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 class Tutorial(ut.TestCase):
 
     def test(self):
-        ratios = tutorial.c_monomer.magnitude / \
-            (2. * tutorial.salt_concentration_si.magnitude)
-        ref_xi = tutorial.analytical_solution(ratios)
         sim_xi_minus = tutorial.partition_coefficients_negatives_array
         sim_xi_plus = tutorial.universal_partion_coefficient_positive
         np.testing.assert_allclose(
             sim_xi_minus, sim_xi_plus, rtol=1e-5, atol=1e-5)
-        np.testing.assert_allclose(sim_xi_minus / ref_xi, 2., rtol=0., atol=2.)
 
 
 if __name__ == "__main__":

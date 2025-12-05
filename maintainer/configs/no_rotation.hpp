@@ -18,13 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/* This is the default myconfig.hpp-file. If no other myconfig-file is
-   found, this file is used.
-
-   DO NOT MODIFY THIS FILE! It should be modified *only* by the
-   maintainers of ESPResSo, as it has a profound impact on many users,
-   in particular newbies.
-*/
 
 // Geometry, equation of motion, thermostat/barostat
 #define MASS
@@ -33,15 +26,7 @@
 #define BOND_CONSTRAINT
 #define NPT
 #define DPD
-
-// Charges and dipoles
 #define ELECTROSTATICS
-#define MMM1D_MACHINE_PREC
-#ifdef CUDA
-#define MMM1D_GPU
-#endif
-
-// Force/energy calculation
 #define EXCLUSIONS
 
 #define TABULATED

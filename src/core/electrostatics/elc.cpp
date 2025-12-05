@@ -248,7 +248,7 @@ void ElectrostaticLayerCorrection::add_dipole_force(
   // Yeh + Berkowitz dipole term @cite yeh99a
   auto field_tot = gblcblk[0];
 
-  // Constand potential contribution
+  // Constant potential contribution
   if (elc.const_pot) {
     auto const field_induced = gblcblk[1];
     auto const field_applied = elc.pot_diff / elc.box_h;

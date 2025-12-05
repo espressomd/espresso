@@ -86,7 +86,7 @@ system.box_l = 3 * (box_l,)
 # Integration parameters
 #############################################################
 system.time_step = 0.01
-system.cell_system.skin = 0.5
+system.cell_system.skin = 0.4
 
 # Interaction setup
 #############################################################
@@ -121,12 +121,10 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 # tuning and equilibration
 min_skin = 0.2
 max_skin = 1.0
-print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
-    min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100)))
 print("Equilibration")
 system.integrator.run(min(5 * measurement_steps, 60000))
 print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
-    min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100)))
+    min_skin=min_skin, max_skin=max_skin, tol=0.025, int_steps=200)))
 print("Equilibration")
 system.integrator.run(min(10 * measurement_steps, 60000))
 
@@ -150,7 +148,8 @@ if args.visualizer:
 
 
 # time integration loop
-timings = benchmarks.get_timings(system, measurement_steps, n_iterations)
+timings = benchmarks.get_timings(
+    system, measurement_steps, n_iterations, retune_skin_after_steps=5)
 
 # average time
 avg, ci = benchmarks.get_average_time(timings)

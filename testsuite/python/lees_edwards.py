@@ -153,7 +153,7 @@ class LeesEdwards(ut.TestCase):
         self.assertAlmostEqual(
             system.lees_edwards.pos_offset, expected_pos)
 
-        # Check that LE shear axes can be overriden
+        # Check that LE shear axes can be overridden
         self.assertEqual(system.lees_edwards.shear_direction, "x")
         self.assertEqual(system.lees_edwards.shear_plane_normal, "y")
         system.lees_edwards.set_boundary_conditions(
@@ -413,7 +413,7 @@ class LeesEdwards(ut.TestCase):
                     np.testing.assert_allclose(
                         np.copy(system.distance_vec(p1, p2)), shear_normal_axis, atol=atol)
                     system.integrator.run(1)
-                # chekc the distance is still correct after both have crossed
+                # check the distance is still correct after both have crossed
                 np.testing.assert_allclose(
                     np.copy(system.distance_vec(p1, p2)), shear_normal_axis, atol=atol)
 
@@ -451,7 +451,7 @@ class LeesEdwards(ut.TestCase):
                     np.testing.assert_allclose(
                         np.copy(system.velocity_difference(p1, p2)), dv, atol=atol)
                     system.integrator.run(1)
-                # chekc the distance is still correct after both have crossed
+                # check the distance is still correct after both have crossed
                 np.testing.assert_allclose(
                     np.copy(system.velocity_difference(p1, p2)), dv, atol=atol)
 

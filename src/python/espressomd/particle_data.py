@@ -25,7 +25,7 @@ from .interactions import BondedInteraction
 from .utils import nesting_level, array_locked, is_valid_type
 from .utils import check_type_or_throw_except
 from .code_features import assert_features, has_features
-from .script_interface import script_interface_register, ScriptInterfaceHelper
+from .script_interface import script_interface_register, ScriptInterfaceHelper, fast_tiling
 from .propagation import Propagation
 
 
@@ -362,7 +362,7 @@ class ParticleHandle(ScriptInterfaceHelper):
         Examples
         --------
         >>> import espressomd
-        >>> # swimming withut hydrodynamics
+        >>> # swimming without hydrodynamics
         >>> system = espressomd.System(box_l=[10, 10, 10])
         >>> partcl = system.part.add(pos=[1, 0, 0], swimming={'f_swim': 0.03})
         >>> # swimming with hydrodynamics
@@ -1354,7 +1354,8 @@ class ParticleList(ScriptInterfaceHelper):
 
 
 def set_slice_one_for_all(p_slice, attribute, value):
-    set_slice_one_for_each(p_slice, attribute, [value] * len(p_slice))
+    set_slice_one_for_each(
+        p_slice, attribute, fast_tiling(value, len(p_slice)))
 
 
 def set_slice_one_for_each(p_slice, attribute, values):
@@ -1496,16 +1497,14 @@ def _add_particle_slice_properties():
             values = []
             for part in particle_slice._id_gen():
                 values.append(getattr(part, attribute))
-        else:
-            values = particle_slice.call_method(
-                "get_param_parallel", name=attribute)
-            if attribute == "propagation":
-                values = np.array([Propagation(value)
-                                  for value in values], dtype=object)
-            else:
-                values = np.stack(values)
-
-        return values
+            return values
+        values = particle_slice.call_method(
+            "get_param_parallel", name=attribute)
+        if attribute == "propagation":
+            return np.array([Propagation(v) for v in values], dtype=object)
+        if isinstance(values, np.ndarray):
+            return values
+        return np.stack(values)
 
     for attribute_name in sorted(particle_attributes):
         if attribute_name in dir(ParticleSlice):

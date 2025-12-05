@@ -177,7 +177,7 @@ class LBThermostatCommon:
         np.testing.assert_almost_equal(np.copy(central_coupled.f), [-2, 0, 0])
         np.testing.assert_almost_equal(np.copy(virtual_coupled.f), [-1, 0, 0])
         np.testing.assert_almost_equal(np.copy(virtual_decoupled.f), [0, 0, 0])
-        # vs relative: setup with overriden forces
+        # vs relative: setup with overridden forces
         np.testing.assert_almost_equal(np.copy(central_recouple.f), [-3, 0, 0])
         np.testing.assert_almost_equal(np.copy(virtual_coupler.f), [-3, 0, 0])
 

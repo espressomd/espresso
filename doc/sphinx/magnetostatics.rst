@@ -54,6 +54,12 @@ Dipolar P3M
 
 :class:`espressomd.magnetostatics.DipolarP3M`
 
+.. note::
+
+    Requires feature ``DIPOLES`` and
+    external feature ``FFTW``, enabled with
+    ``-D ESPRESSO_BUILD_WITH_FFTW=ON``.
+
 This is the dipolar version of the P3M algorithm, described in :cite:`cerda08d`.
 
 Make sure that you know the relevance of the P3M parameters before using
@@ -84,6 +90,10 @@ Dipolar Layer Correction (DLC)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :class:`espressomd.magnetostatics.DLC`
+
+.. note::
+
+    Requires feature ``DIPOLES``.
 
 The dipolar layer correction (DLC) is used in conjunction with the dipolar P3M
 method to calculate dipolar interactions in a 2D-periodic system.
@@ -120,6 +130,12 @@ The method is used as follows::
 
 Dipolar direct sum
 ------------------
+
+.. note::
+
+    Requires feature ``DIPOLES`` and optionally
+    external feature ``CUDA``, enabled with
+    ``-D ESPRESSO_BUILD_WITH_CUDA=ON``.
 
 This interaction calculates energies and forces between dipoles by
 explicitly summing over all pairs. For the directions in which the
@@ -175,10 +191,15 @@ ScaFaCoS magnetostatics
 
 :class:`espressomd.magnetostatics.Scafacos`
 
+.. note::
+
+    Requires feature ``SCAFACOS_DIPOLES`` and
+    external feature ``SCAFACOS``, enabled with
+    ``-D ESPRESSO_BUILD_WITH_SCAFACOS=ON``.
+
 |es| can use the methods from the ScaFaCoS *Scalable fast Coulomb solvers*
-library for dipoles, if the methods support dipolar calculations. The feature
-``SCAFACOS_DIPOLES`` has to be added to :file:`myconfig.hpp` to activate this
-feature. Dipolar calculations are only included in the ``dipoles`` branch of
+library for dipoles, if the methods support dipolar calculations.
+Dipolar calculations are only included in the ``dipoles`` branch of
 the ScaFaCoS code. The specific methods available can be queried with
 :meth:`espressomd.electrostatics.Scafacos.get_available_methods`.
 

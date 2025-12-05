@@ -792,6 +792,25 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(
             np.copy(p_real.vs_relative[2]), [1., 0., 0., 0.], atol=1e-10)
 
+    @utx.skipIfMissingFeatures(['THERMAL_STONER_WOHLFARTH', 'EXTERNAL_FORCES'])
+    @ut.skipIf('THERM.LANGEVIN' not in modes, 'missing a suitable thermostat')
+    def test_thermal_stoner_wohlfarth_virtual_sites(self):
+        p_real, p_virt = system.part.by_ids([11, 12])
+        self.assertEqual(p_virt.magnetodynamics["is_enabled"],
+                         magnetodynamics_params.pop("is_enabled"))
+        for key, value in magnetodynamics_params.items():
+            np.testing.assert_allclose(p_virt.magnetodynamics[key], value)
+        Propagation = espressomd.propagation.Propagation
+        prop_flag = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
+        self.assertEqual(p_real.propagation, Propagation.SYSTEM_DEFAULT)
+        self.assertEqual(p_virt.propagation, prop_flag)
+        self.assertEqual(p_real.vs_relative[0], -1)
+        self.assertEqual(p_virt.vs_relative[0], p_real.id)
+        self.assertEqual(p_real.vs_relative[1], 0.)
+        self.assertEqual(p_virt.vs_relative[1], 0.)
+        np.testing.assert_allclose(
+            np.copy(p_virt.vs_relative[2]), [1., 0., 0., 0.], atol=1e-10)
+
     def test_mean_variance_calculator(self):
         acc_mean_variance = system.auto_update_accumulators[0]
         np.testing.assert_array_equal(
@@ -837,12 +856,18 @@ class CheckpointTest(ut.TestCase):
 
         with h5py.File(h5.file_path, 'r') as cur:
             # compare frame #0 against frame #1
-            def predicate(cur, key):
-                np.testing.assert_allclose(cur[key][0], cur[key][1],
+            def predicate(cur, key, sort=False):
+                if sort:
+                    s0 = np.argsort(cur["particles/atoms/id/value"][0])
+                    s1 = np.argsort(cur["particles/atoms/id/value"][1])
+                else:
+                    s0 = slice(None)
+                    s1 = slice(None)
+                np.testing.assert_allclose(cur[key][0][s0], cur[key][1][s1],
                                            err_msg=f"mismatch for '{key}'")
             for key in ('id', 'position', 'image', 'velocity',
                         'species', 'mass', 'charge', 'force'):
-                predicate(cur, f'particles/atoms/{key}/value')
+                predicate(cur, f'particles/atoms/{key}/value', sort=True)
             for key in ('offset', 'direction', 'normal'):
                 predicate(cur, f'particles/atoms/lees_edwards/{key}/value')
             predicate(cur, 'particles/atoms/box/edges/value')

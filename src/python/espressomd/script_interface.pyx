@@ -20,11 +20,13 @@ from libcpp.utility cimport pair
 from libcpp.vector cimport vector
 from libcpp.memory cimport shared_ptr, make_shared
 import numpy as np
+cimport numpy as cnp
 import pathlib
 from . import utils
 from .utils cimport Vector3b, Vector3i, Vector2d, Vector3d, Vector4d
 from .utils cimport path
 cimport cpython.object
+cnp.import_array()
 
 
 cdef shared_ptr[ContextManager] _om
@@ -226,6 +228,25 @@ class array_variant(np.ndarray):
         return obj
 
 
+def fast_tiling(value, n):
+    """
+    Repeat a value (scalar or vector) multiple times.
+    Based on the value type, either a NumPy n-dimensional array is returned,
+    or a list of references to the original object (if mutable),
+    or a list of copies of the original object (if immutable).
+    """
+    if isinstance(value, np.ndarray) and value.ndim == 1 and len(value) != 0 and \
+            any(np.issubdtype(value.dtype, x) for x in (np.floating, np.signedinteger)) or \
+            isinstance(value, (list, tuple)) and len(value) != 0 and \
+            all(map(lambda x: isinstance(x, (int, np.signedinteger, float, np.floating))
+                    and not isinstance(x, type(True)), value)):
+        return np.tile(value, (n, 1))
+    if isinstance(value, (int, np.signedinteger, float, np.floating)) and \
+            not isinstance(value, type(True)):
+        return array_variant(np.repeat(value, n))
+    return n * [value]
+
+
 cdef Variant python_object_to_variant(value) except *:
     """Convert Python objects to C++ Variant objects."""
 
@@ -236,10 +257,17 @@ cdef Variant python_object_to_variant(value) except *:
     cdef unordered_map[string, Variant] map_str2var
     cdef PObjectRef oref
     cdef int[::1] view_int
+    cdef int[:, ::1] view_int_2d
     cdef int * data_int
     cdef double[::1] view_double
+    cdef double[:, ::1] view_double_2d
     cdef double * data_double
     cdef path fs_path
+    cdef size_t index
+    cdef size_t nrows
+    cdef size_t bufsize
+    cdef Vector3d vector3d
+    cdef Vector3i vector3i
 
     if value is None:
         return Variant()
@@ -276,40 +304,80 @@ cdef Variant python_object_to_variant(value) except *:
     if isinstance(value, pathlib.Path):
         fs_path.assign(utils.to_bytes(str(value)))
         return make_variant[path](fs_path)
-    if isinstance(value, array_variant):
-        if np.issubdtype(value.dtype, np.signedinteger):
-            view_int = np.ascontiguousarray(value, dtype=np.int32)
-            data_int = &view_int[0]
-            vec_int.assign(data_int, data_int + len(view_int))
-            return make_variant[vector[int]](vec_int)
-        if np.issubdtype(value.dtype, np.floating):
-            view_double = np.ascontiguousarray(value, dtype=np.float64)
-            data_double = &view_double[0]
-            vec_double.assign(data_double, data_double + len(view_double))
-            return make_variant[vector[double]](vec_double)
-    if hasattr(value, "__iter__"):
-        if len(value) == 0:
-            return make_variant[vector[Variant]](vec_variant)
-        if isinstance(value, np.ndarray) and value.ndim == 1:
+    if isinstance(value, np.ndarray):
+        if isinstance(value, array_variant):
+            if np.issubdtype(value.dtype, np.signedinteger):
+                view_int = np.ascontiguousarray(value, dtype=np.int32)
+                data_int = &view_int[0]
+                vec_int.assign(data_int, data_int + len(view_int))
+                return make_variant[vector[int]](vec_int)
             if np.issubdtype(value.dtype, np.floating):
+                view_double = np.ascontiguousarray(value, dtype=np.float64)
+                data_double = &view_double[0]
+                vec_double.assign(data_double, data_double + len(view_double))
+                return make_variant[vector[double]](vec_double)
+        if value.ndim == 1:
+            if np.issubdtype(value.dtype, np.floating):
+                vec_double.reserve(len(value))
                 for e in value:
                     vec_double.push_back(e)
                 return make_variant[vector[double]](vec_double)
             if np.issubdtype(value.dtype, np.signedinteger):
+                vec_int.reserve(len(value))
                 for e in value:
                     vec_int.push_back(e)
                 return make_variant[vector[int]](vec_int)
+        if value.ndim == 2:
+            if np.issubdtype(value.dtype, np.signedinteger):
+                nrows = value.shape[0]
+                bufsize = value.shape[1]
+                vec_variant.reserve(nrows)
+                vec_int.reserve(bufsize)
+                view_int_2d = np.ascontiguousarray(value, dtype=np.int32)
+                for index in range(nrows):
+                    data_int = &view_int_2d[index, 0]
+                    vec_int.assign(data_int, data_int + bufsize)
+                    vec_variant.emplace_back(
+                        make_variant[vector[int]](vec_int))
+                return make_variant[vector[Variant]](vec_variant)
+            if np.issubdtype(value.dtype, np.floating):
+                nrows = value.shape[0]
+                bufsize = value.shape[1]
+                vec_variant.reserve(nrows)
+                vec_double.reserve(bufsize)
+                view_double_2d = np.ascontiguousarray(value, dtype=np.float64)
+                for index in range(nrows):
+                    data_double = &view_double_2d[index, 0]
+                    vec_double.assign(data_double, data_double + bufsize)
+                    vec_variant.emplace_back(
+                        make_variant[vector[double]](vec_double))
+                return make_variant[vector[Variant]](vec_variant)
+    if hasattr(value, "__iter__"):
+        bufsize = len(value)
+        if bufsize == 0:
+            return make_variant[vector[Variant]](vec_variant)
         if all(map(lambda x: isinstance(x, (float, np.floating)), value)):
+            if bufsize == 3:
+                for index in range(bufsize):
+                    vector3d[index] = value[index]
+                return make_variant[Vector3d](vector3d)
+            vec_double.reserve(bufsize)
             for e in value:
                 vec_double.push_back(e)
             return make_variant[vector[double]](vec_double)
         if all(map(lambda x: isinstance(x, (int, np.integer))
                    and not isinstance(x, type(True)), value)):
+            if bufsize == 3:
+                for index in range(bufsize):
+                    vector3i[index] = value[index]
+                return make_variant[Vector3i](vector3i)
+            vec_int.reserve(bufsize)
             for e in value:
                 vec_int.push_back(e)
             return make_variant[vector[int]](vec_int)
+        vec_variant.reserve(bufsize)
         for e in value:
-            vec_variant.push_back(python_object_to_variant(e))
+            vec_variant.emplace_back(python_object_to_variant(e))
         return make_variant[vector[Variant]](vec_variant)
     if isinstance(value, (type(True), np.bool_)):
         return make_variant[cbool](value)
@@ -319,6 +387,7 @@ cdef Variant python_object_to_variant(value) except *:
         return make_variant[double](value)
     raise TypeError(
         f"No conversion from type '{type(value).__name__}' to 'Variant'")
+
 
 cdef variant_to_python_object(const Variant & value):
     """Convert C++ Variant objects to Python objects."""
@@ -334,6 +403,9 @@ cdef variant_to_python_object(const Variant & value):
     cdef Vector2d vec2d
     cdef Vector3d vec3d
     cdef Vector4d vec4d
+    cdef cnp.ndarray[cnp.float64_t, ndim = 2] arrayNvec3d
+    cdef size_t index
+    cdef size_t nrows
     if is_none(value):
         return None
     if is_type[cbool](value):
@@ -392,11 +464,25 @@ cdef variant_to_python_object(const Variant & value):
             return None
     if is_type[vector[Variant]](value):
         vec = get_value[vector[Variant]](value)
+        nrows = vec.size()
+
+        if (nrows > 0) and is_type[Vector3d](vec[0]):
+            arrayNvec3d = np.empty((nrows, 3), dtype=np.float64)
+            mixed_types = False
+            for index in range(nrows):
+                if not is_type[Vector3d](vec[index]):
+                    mixed_types = True
+                    break
+                vec3d = get_value[Vector3d](vec[index])
+                arrayNvec3d[index, 0] = vec3d[0]
+                arrayNvec3d[index, 1] = vec3d[1]
+                arrayNvec3d[index, 2] = vec3d[2]
+            if not mixed_types:
+                return arrayNvec3d
+
         res = []
-
-        for i in vec:
-            res.append(variant_to_python_object(i))
-
+        for index in range(nrows):
+            res.append(variant_to_python_object(vec[index]))
         return res
 
     if is_type[unordered_map[int, Variant]](value):

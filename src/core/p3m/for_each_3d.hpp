@@ -79,6 +79,50 @@ void for_each_3d(detail::IndexVectorConcept auto &&start,
   }
 }
 
+/**
+ * @brief Repeat an operation on every element of a 3D grid.
+ *
+ * Intermediate values that depend on the iterated coordinates
+ * are calculated and stored once per iteration. This is useful
+ * when the operation is costly.
+ *
+ * @param start       Initial values for the loop counters.
+ * @param stop        Final values (one-past-the-end) for the loop counters.
+ * @param counters    Loop counters.
+ * @param kernel      Functor to execute.
+ * @param projector   Projection of the current loop counter.
+ * @tparam Order      Data layout.
+ * @tparam Kernel     Nullary function.
+ * @tparam Projector  Binary function that takes a nesting depth and a loop
+ *                    counter as arguments and projects a value.
+ */
+template <Utils::MemoryOrder Order, class Kernel,
+          class Projector = decltype(detail::noop_projector)>
+  requires std::invocable<Kernel> and std::invocable<Projector, unsigned, int>
+void for_each_3d_order(detail::IndexVectorConcept auto &&start,
+                       detail::IndexVectorConcept auto &&stop,
+                       detail::IndexVectorConcept auto &&counters,
+                       Kernel &&kernel,
+                       Projector &&projector = detail::noop_projector) {
+  auto constexpr is_row_major = Order == Utils::MemoryOrder::ROW_MAJOR;
+  auto constexpr index_fast = is_row_major ? 2u : 0u;
+  auto constexpr index_slow = is_row_major ? 0u : 2u;
+  auto constexpr index_medium = 1u;
+  auto &nx = counters[index_slow];
+  auto &ny = counters[index_medium];
+  auto &nz = counters[index_fast];
+  for (nx = start[index_slow]; nx < stop[index_slow]; ++nx) {
+    projector(index_slow, nx);
+    for (ny = start[index_medium]; ny < stop[index_medium]; ++ny) {
+      projector(index_medium, ny);
+      for (nz = start[index_fast]; nz < stop[index_fast]; ++nz) {
+        projector(index_fast, nz);
+        kernel();
+      }
+    }
+  }
+}
+
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 /** @brief Mapping between ESPResSo and Kokkos tags for memory order */
 template <Utils::MemoryOrder Order>

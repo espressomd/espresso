@@ -28,10 +28,9 @@ This means, however, that learning how to compile is a necessary evil.
 The build system of |es| uses CMake to compile
 software easily on a wide range of platforms.
 
-Users who only need a "default" installation of |es| and have an account
-on the `Gitpod <https://gitpod.io>`__ platform can build the software
-automatically in the cloud and skip this chapter. For more details on
-running |es| in Gitpod, go to section :ref:`Running in the cloud`.
+Users who only need a "default" installation of |es| and have a GitHub account
+can build the software automatically in the cloud and directly go to section
+:ref:`Using Codespaces`.
 
 Quickstart
 ----------
@@ -351,7 +350,9 @@ Installing requirements on macOS
 
 The first step is to install a C++ compiler, such as Xcode [10]_.
 Xcode is missing OpenMP, which is needed to enable shared-memory parallelization,
-but the "R for macOS Developers" project provides binaries [11]_.
+but binaries are available from Homebrew
+(formula `libomp <https://formulae.brew.sh/formula/libomp>`__)
+or from the "R for macOS Developers" project [11]_.
 
 To install libraries, a package manager will be needed.
 While our instructions below are specific to Homebrew,
@@ -481,10 +482,6 @@ General features
 
    .. seealso:: :ref:`Electrostatics`
 
--  ``MMM1D_MACHINE_PREC``: This enables high-precision Bessel functions
-   for MMM1D on CPU. Comes with a 60% slow-down penalty. The low-precision
-   functions are enabled by default and are precise enough for most applications.
-
 -  ``DIPOLES`` This activates the dipole-moment property of particles and switches
    on various magnetostatics algorithms
 
@@ -494,8 +491,11 @@ General features
 
 -  ``DIPOLAR_DIRECT_SUM`` This activates the GPU implementation of the dipolar direct sum.
 
--  ``DIPOLE_FIELD_TRACKING`` This enables the CPU implementation of the dipolar direct sum
+-  ``DIPOLE_FIELD_TRACKING`` enable dipolar direct sum algorithms
    to calculate the total dipole field at particle positions.
+
+-  ``THERMAL_STONER_WOHLFARTH`` enable dipolar algorithms to integrates
+   vritual sites that implement the thermal Stoner–Wohlfarth model
 
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
    the corresponding quaternion integrator.
@@ -658,7 +658,11 @@ using a CMake flag (see :ref:`Options and Variables`).
   :ref:`ScaFaCoS electrostatics`, :ref:`ScaFaCoS magnetostatics`).
 
 - ``GSL``: enables features relying on the GNU Scientific Library, e.g.
-  :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension`.
+  :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension` and
+  :class:`espressomd.electrostatics.MMM1D`.
+
+- ``NLOPT``: enable features relying on the nonlinear optimization library NLopt,
+  e.g. :ref:`Thermal_Stoner_Wohlfarth`.
 
 - ``STOKESIAN_DYNAMICS``: enable the Stokesian Dynamics propagator
   (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.

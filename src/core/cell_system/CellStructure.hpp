@@ -364,9 +364,10 @@ public:
    * @brief Run a kernel on all local particles.
    * The kernel is assumed to be thread-safe.
    */
-  void for_each_local_particle(ParticleUnaryOp &&f) const {
+  void for_each_local_particle(ParticleUnaryOp &&f,
+                               bool parallel = true) const {
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-    if (use_parallel_for_each_local_particle()) {
+    if (parallel and use_parallel_for_each_local_particle()) {
       parallel_for_each_particle_impl(decomposition().local_cells(), f);
       return;
     }

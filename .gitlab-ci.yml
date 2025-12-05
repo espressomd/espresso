@@ -47,7 +47,7 @@ style:
     - cd build
     - cp ../style.patch .
     - cp ../maintainer/configs/maxset.hpp myconfig.hpp
-    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_FFTW=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON -D ESPRESSO_BUILD_WITH_CALIPER=ON -D ESPRESSO_BUILD_WITH_FPE=ON -D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM=ON
+    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_FFTW=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON -D ESPRESSO_BUILD_WITH_CALIPER=ON -D ESPRESSO_BUILD_WITH_FPE=ON -D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM=ON -D ESPRESSO_BUILD_WITH_NLOPT=ON
     - sh ../maintainer/CI/dox_warnings.sh
   tags:
     - espresso
@@ -73,6 +73,7 @@ default:
      with_scafacos: 'true'
      with_walberla: 'true'
      with_stokesian_dynamics: 'true'
+     with_nlopt: 'true'
      check_skip_long: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
@@ -94,6 +95,7 @@ maxset:
      with_scafacos: 'true'
      with_walberla: 'true'
      with_stokesian_dynamics: 'true'
+     with_nlopt: 'true'
      with_caliper: 'true'
      check_skip_long: 'true'
      cmake_params: '-D CMAKE_CXX_STANDARD=23 -D CMAKE_CXX_EXTENSIONS=OFF -D ESPRESSO_TEST_NP=8'
@@ -145,6 +147,7 @@ clang-sanitizer:
      with_walberla: 'true'
      with_stokesian_dynamics: 'true'
      with_shared_memory_parallelism: 'true'
+     with_nlopt: 'true'
      with_coverage: 'false'
      with_coverage_python: 'false'
   script:
@@ -168,6 +171,7 @@ fast_math:
      with_scafacos: 'false'
      with_stokesian_dynamics: 'true'
      with_fast_math: 'true'
+     with_nlopt: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -190,6 +194,7 @@ cuda12-coverage:
      with_walberla: 'true'
      with_stokesian_dynamics: 'true'
      with_shared_memory_parallelism: 'true'
+     with_nlopt: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   timeout: 90m
@@ -217,6 +222,7 @@ cuda12-maxset:
      with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
      with_shared_memory_parallelism: 'true'
+     with_nlopt: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   artifacts:
@@ -362,6 +368,7 @@ installation:
      with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
      with_shared_memory_parallelism: 'true'
+     with_nlopt: 'true'
      srcdir: '${CI_PROJECT_DIR}'
      build_type: 'Release'
   script:

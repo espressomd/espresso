@@ -89,7 +89,12 @@ public:
          [this]() { return m_tuning.timings; }},
         {"tune_limits", AutoParameter::read_only,
          [this]() {
+#if defined(__clang__) and defined(__cray__)
+           auto const &range_min = m_tune_limits.first;
+           auto const &range_max = m_tune_limits.second;
+#else
            auto const &[range_min, range_max] = m_tuning.limits;
+#endif
            std::vector<Variant> retval = {
                range_min ? Variant{*range_min} : Variant{None{}},
                range_max ? Variant{*range_max} : Variant{None{}},
@@ -149,9 +154,9 @@ public:
                                get_value<int>(params, "cao"),
                                get_value<double>(params, "alpha"),
                                get_value<double>(params, "accuracy")};
-      m_actor = new_dipolar_p3m(std::move(p3m), m_tuning,
-                                get_value<double>(params, "prefactor"),
-                                single_precision, Architecture);
+      m_actor = new_dipolar_p3m_heffte(std::move(p3m), m_tuning,
+                                       get_value<double>(params, "prefactor"),
+                                       single_precision, Architecture);
     });
   }
 };

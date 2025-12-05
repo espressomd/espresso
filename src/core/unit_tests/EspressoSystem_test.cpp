@@ -64,7 +64,7 @@ boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
 
 BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
                         *boost::unit_test::precondition(has_gpu)) {
-  // smoke test: querying GPU awarenesss should not fail
+  // smoke test: querying GPU awareness should not fail
   ::communication_environment->is_mpi_gpu_aware();
 #ifdef ESPRESSO_CUDA
   auto const rank = boost::mpi::communicator().rank();

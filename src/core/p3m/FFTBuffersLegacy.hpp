@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
+#if defined(ESPRESSO_DP3M)
 
 #include "common.hpp"
 #include "data_struct.hpp"
@@ -45,7 +45,7 @@ class FFTBuffersLegacy : public FFTBuffers<FloatType> {
   p3m_send_mesh<FloatType> mesh_comm;
   /** @brief real-space mesh (local) for CA/FFT. */
   fft::vector<FloatType> rs_mesh;
-  /** @brief real-space mesh (local) for the electric or dipolar field. */
+  /** @brief real-space mesh (local) for the electric or magnetic field. */
   std::array<fft::vector<FloatType>, 3u> rs_mesh_fields;
 
 public:
@@ -60,4 +60,4 @@ public:
   std::array<FloatType *, 3u> get_vector_mesh() override;
 };
 
-#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
+#endif // defined(ESPRESSO_DP3M)

@@ -146,7 +146,7 @@ endfunction(python_test)
   Configure a python checkpoint test case.
 
   This is a specialization of python_test() for the checkpointing test cases.
-  It uses sane default values that can be overriden if necessary. It has one
+  It uses sane default values that can be overridden if necessary. It has one
   extra single-value argument ``MODES`` that lists the features to activate.
   See the comment lines at the point of use for more details.
 
@@ -201,7 +201,7 @@ function(checkpoint_test)
     save_checkpoint_${TEST_SUFFIX})
 endfunction(checkpoint_test)
 
-# Checkpoint tests run on 4 cores (can be overriden with MAX_NUM_PROC). The
+# Checkpoint tests run on 4 cores (can be overridden with MAX_NUM_PROC). The
 # combination of modes to activate is stored in MODES. A mode consists of a
 # feature with zero or more options; separate features with 2 underscores and
 # options with 1 underscore (options can appear in any order). For example,
@@ -320,6 +320,8 @@ python_test(FILE collision_detection.py MAX_NUM_PROC 4)
 python_test(FILE collision_detection_interface.py MAX_NUM_PROC 2)
 python_test(FILE lj.py MAX_NUM_PROC 4)
 python_test(FILE dipole_field_tracking.py MAX_NUM_PROC 2 GPU_SLOTS 1)
+python_test(FILE thermal_stoner_wohlfarth.py MAX_NUM_PROC 2)
+python_test(FILE thermal_stoner_wohlfarth_fluid.py MAX_NUM_PROC 4)
 python_test(FILE pairs.py MAX_NUM_PROC 4)
 python_test(FILE polymer_linear.py MAX_NUM_PROC 4)
 python_test(FILE polymer_diamond.py MAX_NUM_PROC 4)
