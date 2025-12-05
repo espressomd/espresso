@@ -122,7 +122,7 @@ if lbf_class:
             boundary_type=espressomd.electrokinetics.DensityBoundary)
 
 Propagation = espressomd.propagation.Propagation
-p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0])
+p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0], mol_id=3)
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
 
 if espressomd.has_features('ELECTROSTATICS'):
@@ -496,6 +496,8 @@ if espressomd.has_features(["ENGINE", "VIRTUAL_SITES_RELATIVE"]) and lbf_class:
     p4.swimming = {"v_swim": 0.02, "is_engine_force_on_fluid": True}
 if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and lbf_class:
     p8.mu_E = [-0.1, 0.2, -0.3]
+if espressomd.has_features(["VIRTUAL_SITES_CENTER_OF_MASS"]):
+    p8.vs_com_relate_to(p1)
 
 # h5md output
 if espressomd.has_features("H5MD"):

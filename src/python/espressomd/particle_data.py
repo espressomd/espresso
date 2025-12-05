@@ -237,9 +237,7 @@ class ParticleHandle(ScriptInterfaceHelper):
         Virtual sites center of mass parameters.
 
         Allows for manual access to the attributes of virtual site concerning
-        the "center of mass" implementation. Format: ``(PID, distance, quaternion)``.
-        PID denotes the id of the particles to which this virtual site is
-        related.
+        the "center of mass" implementation. Format: ``(mol_id,)``.
 
         .. note::
            This needs the feature ``VIRTUAL_SITES_CENTER_OF_MASS``
@@ -618,18 +616,18 @@ class ParticleHandle(ScriptInterfaceHelper):
 
     def vs_com_relate_to(self, rel_to):
         """
-        Setup this particle as COM virtual site relative to the particles constituting the molecules
-        in argument ``rel_to``. A particle cannot relate to itself.
+        Setup this particle as virtual site tracking the center of mass of the
+        particles constituting the molecule in argument ``rel_to``.
+        A particle cannot relate to its own molecule.
 
         Parameters
         -----------
         rel_to : :obj:`int` or :obj:`ParticleHandle`
-            Molecule or particle of the molecule to relate to (either mol id or particle object).
+            Molecule to relate to (either molecule id or particle object from that molecule).
 
         """
 
         if isinstance(rel_to, ParticleHandle):
-            print(f"is_virtual(): {rel_to.is_virtual()}")
             if rel_to.is_virtual():
                 raise Exception(
                     "Cannot relate COM virtual site to another virtual particle")
@@ -1493,7 +1491,8 @@ def _add_particle_slice_properties():
         if N == 0:
             return np.empty(0, dtype=type(None))
 
-        if attribute in ["exclusions", "bonds", "vs_relative", "swimming", "vs_com"]:
+        if attribute in ["exclusions", "bonds",
+                         "vs_relative", "vs_com", "swimming"]:
             values = []
             for part in particle_slice._id_gen():
                 values.append(getattr(part, attribute))

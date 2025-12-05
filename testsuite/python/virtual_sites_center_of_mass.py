@@ -33,7 +33,8 @@ class VirtualSitesCOM(ut.TestCase):
 
     np.random.seed(42)
 
-    def build_polymer(self, n_monomers, polymer_params, fene, monomer_type=0, mol_id=0):
+    def build_polymer(self, n_monomers, polymer_params,
+                      fene, monomer_type=0, mol_id=0):
         """
         Build a polymer chain with the specified number of monomers, bond type
         and molecule id.
@@ -47,7 +48,8 @@ class VirtualSitesCOM(ut.TestCase):
                 p.add_bond((fene, p_previous))
             p_previous = p
 
-    def set_molecules_and_vs(self, molecule_ids, n_monomers, monomer_types, vs_type=5, id_shift=10):
+    def set_molecules_and_vs(
+            self, molecule_ids, n_monomers, monomer_types, vs_type=5, id_shift=10):
         """
         Set virtual sites and the corresponding polymer molecules.
 
@@ -64,15 +66,17 @@ class VirtualSitesCOM(ut.TestCase):
         - dict: A dictionary mapping molecule IDs to the IDs of their corresponding virtual sites.
         """
         mid_for_vs = {}
-        for molecule_id_, n_monomers_, monomer_type_ in zip(molecule_ids, n_monomers, monomer_types):
+        for molecule_id, n_monomers, monomer_type in zip(
+                molecule_ids, n_monomers, monomer_types):
             # Build polymer chain
-            self.build_polymer(n_monomers_, self.POLYMER_PARAMS,
-                               self.fene, monomer_type_, molecule_id_)
+            self.build_polymer(n_monomers, self.POLYMER_PARAMS,
+                               self.fene, monomer_type, molecule_id)
             # Add virtual particle at the origin
             vs = self.system.part.add(
-                pos=[0, 0, 0], virtual=True, type=vs_type, mol_id=molecule_id_ + id_shift)
-            vs.vs_com_relate_to(molecule_id_)
-            mid_for_vs[molecule_id_] = vs.id
+                pos=[0, 0, 0], virtual=True, type=vs_type,
+                mol_id=molecule_id + id_shift)
+            vs.vs_com_relate_to(molecule_id)
+            mid_for_vs[molecule_id] = vs.id
 
         return mid_for_vs
 
@@ -121,18 +125,19 @@ class VirtualSitesCOM(ut.TestCase):
             f_max=10, gamma=50.0, max_displacement=0.2)
         self.system.integrator.run(1)
 
-        # Check position of virtual sites after a steepest descent inegration
-        for mol_id_, vs_id_, monomer_type_ in zip(mid_for_vs.keys(), mid_for_vs.values(), monomer_types):
+        # Check position of virtual sites after a steepest descent integration
+        for mol_id, vs_id, monomer_type in zip(
+                mid_for_vs.keys(), mid_for_vs.values(), monomer_types):
             # test vs position
-            vs_pos = self.system.part.by_id(vs_id_).pos
+            vs_pos = self.system.part.by_id(vs_id).pos
             expected_vs_pos = self.system.analysis.center_of_mass(
-                p_type=monomer_type_)
+                p_type=monomer_type)
             for pair in zip(expected_vs_pos, vs_pos):
                 self.assertAlmostEqual(pair[0], pair[1])
             # test vs mass
-            vs_mass = self.system.part.by_id(vs_id_).mass
+            vs_mass = self.system.part.by_id(vs_id).mass
             expected_vs_mass = 0
-            for part in self.system.part.select(mol_id=mol_id_):
+            for part in self.system.part.select(mol_id=mol_id):
                 expected_vs_mass += part.mass
             self.assertEqual(expected_vs_mass, vs_mass)
 
@@ -168,7 +173,7 @@ class VirtualSitesCOM(ut.TestCase):
         """
         Test exceptions related to virtual sites com
         """
-        self.system.part.add(pos=[0, 0, 0], type=1, id=0, mol_id=10)
+        p = self.system.part.add(pos=[0, 0, 0], type=1, id=0, mol_id=10)
         vs1 = self.system.part.add(pos=[0, 0, 0], type=1, id=1)
         vs2 = self.system.part.add(pos=[1, 1, 1], type=1, id=2)
 
@@ -178,18 +183,26 @@ class VirtualSitesCOM(ut.TestCase):
         # relating to anything else other than a particle or id is not allowed
         with self.assertRaisesRegex(ValueError, "Argument of 'vs_com_relate_to' has to be of type ParticleHandle or int"):
             vs1.vs_com_relate_to('0')
-        with self.assertRaisesRegex(ValueError, "Invalid particle id: -2"):
+        with self.assertRaisesRegex(ValueError, "Invalid molecule id: -2"):
             vs1.vs_com_relate_to(-2)
 
-        vs1.vs_com_relate_to(10)  # set to valid mol_id for further tests
-        vs2.vs_com_relate_to(10)
+        vs1.vs_com_relate_to(p.mol_id)
+        vs2.vs_com_relate_to(p.mol_id)
         # relating to itself is not allowed
         with self.assertRaisesRegex(Exception, "Cannot relate COM virtual site to another virtual particle"):
             vs1.vs_com_relate_to(vs1)
         # relating to another virtual site is not allowed
         with self.assertRaisesRegex(Exception, "Cannot relate COM virtual site to another virtual particle"):
             vs1.vs_com_relate_to(vs2)
+        # state remains unchanged
+        self.assertEqual(vs1.vs_com[0], p.mol_id)
+        self.assertEqual(vs2.vs_com[0], p.mol_id)
+
+        # relating to own molecule is allowed
+        vs3 = self.system.part.add(pos=[0, 0, 0], mol_id=p.mol_id)
+        vs3.vs_com_relate_to(p.mol_id)
+        self.assertEqual(vs3.vs_com[0], p.mol_id)
 
 
 if __name__ == "__main__":
-    ut.main(verbosity=2)
+    ut.main()

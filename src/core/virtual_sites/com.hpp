@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2010-2025 The ESPResSo project
- * Copyright (C) 2010,2011 Rudolf Weeber
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -34,18 +33,13 @@
  *  - move non-virtual particles
  *  - update virtual sites
  */
-#pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
+
 #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 
 #include "BoxGeometry.hpp"
 #include "cell_system/CellStructure.hpp"
-
-#include <memory>
-#include <unordered_map>
-#include <utils/Vector.hpp>
-#include <utils/matrix.hpp>
 
 void vs_com_update_particles(CellStructure &cell_structure,
                              BoxGeometry const &box_geo);

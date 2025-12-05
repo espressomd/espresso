@@ -484,7 +484,7 @@ Please note:
        pulling_part.add_bond((hb, vs))
 
   Last example sets a harmonic potential that pulls the com virtual site to the center
-  of the simulation box. 
+  of the simulation box.
 
 
 .. _Per-particle propagation:

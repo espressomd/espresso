@@ -322,6 +322,63 @@ BOOST_AUTO_TEST_CASE(thermal_stoner_wohlfarth_constructors) {
 }
 #endif // THERMAL_STONER_WOHLFARTH
 
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+
+using VirtualSitesCenterOfMassParameters =
+    ParticleProperties::VirtualSitesCenterOfMassParameters;
+
+void check_particle_vs_com(VirtualSitesCenterOfMassParameters const &out,
+                           VirtualSitesCenterOfMassParameters const &ref) {
+  BOOST_TEST(out.to_molecule_id == ref.to_molecule_id);
+}
+
+BOOST_AUTO_TEST_CASE(vs_com_serialization) {
+  auto const expected_size =
+      Utils::MemcpyOArchive::packing_size<VirtualSitesCenterOfMassParameters>();
+
+  BOOST_CHECK_LE(expected_size, sizeof(VirtualSitesCenterOfMassParameters));
+
+  std::vector<char> buf(expected_size);
+
+  auto pr = VirtualSitesCenterOfMassParameters{.to_molecule_id = 2};
+
+  {
+    auto oa = Utils::MemcpyOArchive{buf};
+
+    oa << pr;
+
+    BOOST_CHECK_EQUAL(oa.bytes_written(), expected_size);
+  }
+
+  {
+    auto ia = Utils::MemcpyIArchive{buf};
+    VirtualSitesCenterOfMassParameters out;
+
+    ia >> out;
+
+    BOOST_CHECK_EQUAL(ia.bytes_read(), expected_size);
+    check_particle_vs_com(out, pr);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(vs_com_constructors) {
+  auto pr = VirtualSitesCenterOfMassParameters{.to_molecule_id = 2};
+
+  // check copy constructor
+  {
+    VirtualSitesCenterOfMassParameters out(pr);
+    check_particle_vs_com(out, pr);
+  }
+
+  // check copy assignment operator
+  {
+    VirtualSitesCenterOfMassParameters out; // avoid copy elision
+    out = pr;
+    check_particle_vs_com(out, pr);
+  }
+}
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+
 BOOST_AUTO_TEST_CASE(particle_bitfields) {
   auto p = Particle();
 

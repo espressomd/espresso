@@ -53,7 +53,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
-#include <iostream>
 #include <memory>
 #include <optional>
 #include <set>
@@ -517,7 +516,7 @@ ParticleHandle::ParticleHandle() {
          set_particle_property([&vs_com](Particle &p) { p.vs_com() = vs_com; });
        },
        [this]() {
-         auto const vs_com = get_particle_data(m_pid).vs_com();
+         auto const &vs_com = get_particle_data(m_pid).vs_com();
          return std::vector<Variant>{{vs_com.to_molecule_id}};
        }},
 #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
@@ -734,10 +733,10 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     }
     auto const other_molid = get_value<int>(params, "molid");
     if (other_molid < 0) {
-      throw std::domain_error("Invalid particle id: " +
+      throw std::domain_error("Invalid molecule id: " +
                               std::to_string(other_molid));
     }
-    set_parameter("vs_com", Variant{std::vector<int>{{other_molid}}});
+    set_parameter("vs_com", Variant{std::vector<Variant>{{other_molid}}});
     set_parameter(
         "propagation",
         Variant{static_cast<int>(PropagationMode::TRANS_VS_CENTER_OF_MASS)});

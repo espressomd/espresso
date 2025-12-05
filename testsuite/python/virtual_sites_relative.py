@@ -207,14 +207,14 @@ class VirtualSites(ut.TestCase):
                              quat=(1, 0, 0, 0), omega_lab=(1, 2, 3))
 
         # Number of virtual sites to create
-        N = 100 
-        # Generate N random positions within 1.2 of central particle in each coordinate
+        N = 100
+        # Generate N random positions aroudn the central particle
         np.random.seed(42)
         vs_positions = p1.pos + np.random.uniform(-0.15, 0.15, (N, 3))
 
         # Create virtual sites at random positions
         sites = system.part.add(rotation=[3 * [True]] * N, pos=vs_positions)
-        for p in sites: 
+        for p in sites:
             p.vs_auto_relate_to(p1)
             # Was the particle made virtual
             self.assertTrue(p.is_virtual())
@@ -254,16 +254,14 @@ class VirtualSites(ut.TestCase):
 
             # Expected force = sum of all forces on the vs
             f_exp = np.sum(sites.ext_force, axis=0)
-            print()
-            print(f"{f=} {p1.f=}, {f_exp=}")
             self.assertAlmostEqual(np.linalg.norm(f - f_exp), 0., delta=1E-6)
 
             # Expected torque
             # Radial components of forces on a rigid body add to the torque
             t_exp = np.zeros(3)
             for vs_p in sites:
-                t_exp += np.cross(system.distance_vec(p1,
-                                  vs_p), vs_p.ext_force)
+                t_exp += np.cross(system.distance_vec(p1, vs_p),
+                                  vs_p.ext_force)
             # Check
             self.assertAlmostEqual(np.linalg.norm(t_exp - t), 0., delta=1E-6)
 
