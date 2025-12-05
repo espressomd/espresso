@@ -290,7 +290,7 @@ python_test(FILE virtual_sites_tracers.py MAX_NUM_PROC 2 DEPENDENCIES
             virtual_sites_tracers_common.py)
 # python_test(FILE virtual_sites_tracers_gpu.py MAX_NUM_PROC 2 GPU_SLOTS 1
 # DEPENDENCIES virtual_sites_tracers_common.py)
-python_test(FILE virtual_sites_center_of_mass.py MAX_NUM_PROC 2)
+python_test(FILE virtual_sites_center_of_mass.py MAX_NUM_PROC 4)
 python_test(FILE regular_decomposition.py MAX_NUM_PROC 4)
 python_test(FILE regular_decomposition.py MAX_NUM_PROC 1 SUFFIX 1_core)
 python_test(FILE hybrid_decomposition.py MAX_NUM_PROC 1 SUFFIX 1_core)

@@ -208,7 +208,7 @@ class VirtualSites(ut.TestCase):
 
         # Number of virtual sites to create
         N = 100
-        # Generate N random positions aroudn the central particle
+        # Generate N random positions around the central particle
         np.random.seed(42)
         vs_positions = p1.pos + np.random.uniform(-0.15, 0.15, (N, 3))
 
@@ -216,13 +216,9 @@ class VirtualSites(ut.TestCase):
         sites = system.part.add(rotation=[3 * [True]] * N, pos=vs_positions)
         for p in sites:
             p.vs_auto_relate_to(p1)
-            # Was the particle made virtual
             self.assertTrue(p.is_virtual())
-            # Are vs relative to id and
             vs_r = p.vs_relative
-            # id
             self.assertEqual(vs_r[0], p1.id)
-            # distance
             self.assertAlmostEqual(vs_r[1], system.distance(p1, p), places=6)
 
         # Move central particle and check vs placement

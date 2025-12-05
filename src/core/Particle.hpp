@@ -207,7 +207,7 @@ struct ParticleProperties {
 #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
   /** @brief Relate this particle to a molecule center of mass. */
   struct VirtualSitesCenterOfMassParameters {
-    /**  @brief Store molecule id to which virtual site belongs. */
+    /** @brief Store molecule id tracked by virtual site. */
     int to_molecule_id = -1;
 
     template <class Archive> void serialize(Archive &ar, long int) {

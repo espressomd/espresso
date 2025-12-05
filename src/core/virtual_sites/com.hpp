@@ -16,23 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
 
-/** \file
- *  This file contains routine to handle virtual sites at the center of mass of
- * a bunch of other particles (say, a molecule). Forces acting on this center of
- * mass are distributed back onto the constituents. The position/velocity/mass
- * of the virtual site at center of mass is calculated from the
- * positions/velocities/masses of many particles.
- *
- *  Virtual sites are like particles, but they will not be integrated.
- *  Step performed for virtual sites:
- *  - update virtual sites
- *  - calculate forces
- *  - distribute forces
- *  - move non-virtual particles
- *  - update virtual sites
- */
+#pragma once
 
 #include <config/config.hpp>
 
