@@ -121,3 +121,7 @@ option) any later version.
 
 You should have received a [copy](COPYING) of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+ESPResSo includes third-party code covered by licenses compatible with GNU GPLv3.
+For more details, please refer to the user guide, section
+[Licensing](https://espressomd.github.io/doc/introduction.html#licensing).

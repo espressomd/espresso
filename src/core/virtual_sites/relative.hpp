@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2010-2025 The ESPResSo project
- * Copyright (C) 2010,2011 Rudolf Weeber
  *
  * This file is part of ESPResSo.
  *
