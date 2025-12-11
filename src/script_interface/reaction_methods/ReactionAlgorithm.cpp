@@ -113,6 +113,15 @@ Variant ReactionAlgorithm::do_call_method(std::string const &name,
     }
     return {};
   }
+  if (name == "calculate_ln_factorial_expression") {
+    if (context()->is_head_node()) {
+      auto &bookkeeping = RE()->get_old_system_state();
+      auto &old_particle_numbers = bookkeeping.old_particle_numbers;
+      auto &reaction = *m_reactions[bookkeeping.reaction_id]->get_reaction();
+      return calculate_ln_factorial_expression(reaction, old_particle_numbers);
+    }
+    return {};
+  }
   if (name == "get_random_reaction_index") {
     return RE()->i_random(static_cast<int>(RE()->reactions.size()));
   }
@@ -142,6 +151,18 @@ Variant ReactionAlgorithm::do_call_method(std::string const &name,
     });
     return result;
   }
+  if (name == "make_reaction_mc_move_attempt_logarithmic") {
+    auto const ln_bf = get_value<double>(params, "ln_bf");
+    auto const E_pot_old = get_value<double>(params, "E_pot_old");
+    auto const E_pot_new = get_value<double>(params, "E_pot_new");
+    auto const reaction_id = get_value<int>(params, "reaction_id");
+    Variant result;
+    context()->parallel_try_catch([&]() {
+      result = RE()->make_reaction_mc_move_attempt_logarithmic(reaction_id, ln_bf, E_pot_old,
+                                                   E_pot_new);
+    });
+    return result;
+  }
   if (name == "setup_bookkeeping_of_empty_pids") {
     RE()->setup_bookkeeping_of_empty_pids();
   } else if (name == "remove_constraint") {
@@ -167,6 +188,8 @@ Variant ReactionAlgorithm::do_call_method(std::string const &name,
         [&]() { RE()->set_volume(get_value<double>(params, "volume")); });
   } else if (name == "get_volume") {
     return RE()->get_volume();
+  } else if (name == "get_log_volume") {
+    return RE()->get_log_volume();
   } else if (name == "get_acceptance_rate_reaction") {
     auto const index = get_value<int>(params, "reaction_id");
     context()->parallel_try_catch([&]() {

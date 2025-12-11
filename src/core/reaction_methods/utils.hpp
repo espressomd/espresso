@@ -35,6 +35,10 @@ double calculate_factorial_expression(
     SingleReaction const &reaction,
     std::unordered_map<int, int> const &particle_numbers);
 
+double calculate_ln_factorial_expression(
+    SingleReaction const &reaction,
+    std::unordered_map<int, int> const &particle_numbers);
+
 /**
  * Calculates the factorial expression which occurs in the constant pH method
  * with symmetric proposal probability.
@@ -47,11 +51,16 @@ double calculate_factorial_expression_cpH(
     SingleReaction const &reaction,
     std::unordered_map<int, int> const &particle_numbers);
 
+double calculate_ln_factorial_expression_cpH(
+    SingleReaction const &reaction,
+    std::unordered_map<int, int> const &particle_numbers);
+
 /**
  * Calculates the factorial expression which occurs in the reaction ensemble
  * acceptance probability
  */
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
+double ln_factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
 
 } // namespace ReactionMethods
 #endif
