@@ -35,7 +35,7 @@ double ln_factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
       }
     } else {
       if (Ni0 + nu_i < 0.) {
-	value = -std::numeric_limits<double>::max();
+        value = -std::numeric_limits<double>::max();
       } else {
         for (int i = 0; i < -nu_i; i++) {
           value += std::log(static_cast<double>(Ni0 - i));

@@ -195,9 +195,10 @@ public:
    * @returns Potential energy of the system after the move was accepted or
    * rejected.
    */
-  double make_reaction_mc_move_attempt_logarithmic(
-		  			int reaction_id, double ln_bf,
-                                       	double E_pot_old, double E_pot_new);
+  double make_reaction_mc_move_attempt_logarithmic(int reaction_id,
+                                                   double ln_bf,
+                                                   double E_pot_old,
+                                                   double E_pot_new);
 
   /**
    * Attempt displacement MC moves for particles of a given type.

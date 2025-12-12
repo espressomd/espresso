@@ -272,10 +272,7 @@ ReactionAlgorithm::create_new_trial_state(int reaction_id) {
 }
 
 double ReactionAlgorithm::make_reaction_mc_move_attempt_logarithmic(
-							int reaction_id,
-                                                        double ln_bf,
-                                                        double E_pot_old,
-                                                        double E_pot_new) {
+    int reaction_id, double ln_bf, double E_pot_old, double E_pot_new) {
   auto constexpr exp_min = -708.4; // for IEEE-compatible double
   auto const exponent = -(E_pot_new - E_pot_old) / kT;
   auto const exponential = (exponent < exp_min) ? 0. : std::exp(exponent);

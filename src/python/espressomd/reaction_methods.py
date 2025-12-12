@@ -447,7 +447,8 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         """
         ln_factorial = self.call_method("calculate_factorial_expression")
         reaction = self._reactions_cache[reaction_id]
-        ln_bf = -E_pot_diff / self.kT + reaction.nu_bar * self.get_log_volume() + math.log(reaction.gamma)
+        ln_bf = -E_pot_diff / self.kT + reaction.nu_bar * \
+            self.get_log_volume() + math.log(reaction.gamma)
         return ln_factorial + ln_bf
 
     def generic_oneway_reaction(self, reaction_id, E_pot_old):
@@ -485,7 +486,8 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
             if E_pot_new is None:
                 return E_pot_old
             E_pot_diff = E_pot_new - E_pot_old
-            ln_bf = self.calculate_acceptance_probability(reaction_id, E_pot_diff)
+            ln_bf = self.calculate_acceptance_probability(
+                reaction_id, E_pot_diff)
             return self.call_method("make_reaction_mc_move_attempt_logarithmic",
                                     reaction_id=reaction_id, ln_bf=ln_bf,
                                     E_pot_new=E_pot_new, E_pot_old=E_pot_old)

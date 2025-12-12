@@ -134,8 +134,7 @@ BOOST_FIXTURE_TEST_CASE(ConstantpHEnsemble_test, ParticleFactory) {
         // bf = f_expr * exp(- E / kT + nu_bar * log(10) * (pH - nu_bar * pKa))
         auto const acceptance_ref =
             f_expr - energy / r_algo.kT +
-                              std::log(10.) *
-                                  (constant_pH + std::log10(reaction.gamma));
+            std::log(10.) * (constant_pH + std::log10(reaction.gamma));
         auto const acceptance = r_algo_si->calculate_acceptance_probability(
             reaction, energy, p_numbers);
         BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5. * tol);

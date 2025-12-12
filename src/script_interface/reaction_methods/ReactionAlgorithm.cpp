@@ -137,8 +137,8 @@ Variant ReactionAlgorithm::do_call_method(std::string const &name,
     auto const reaction_id = get_value<int>(params, "reaction_id");
     Variant result;
     context()->parallel_try_catch([&]() {
-      result = RE()->make_reaction_mc_move_attempt_logarithmic(reaction_id, ln_bf, E_pot_old,
-                                                   E_pot_new);
+      result = RE()->make_reaction_mc_move_attempt_logarithmic(
+          reaction_id, ln_bf, E_pot_old, E_pot_new);
     });
     return result;
   }

@@ -65,8 +65,8 @@ public:
     auto const factorial_expr =
         ::ReactionMethods::calculate_factorial_expression(reaction,
                                                           old_particle_numbers);
-    return reaction.nu_bar * std::log(RE()->get_volume()) + std::log(reaction.gamma) +
-           factorial_expr - E_pot_diff / RE()->kT;
+    return reaction.nu_bar * std::log(RE()->get_volume()) +
+           std::log(reaction.gamma) + factorial_expr - E_pot_diff / RE()->kT;
   }
 };
 } // namespace ScriptInterface::Testing
@@ -156,9 +156,9 @@ BOOST_FIXTURE_TEST_CASE(ReactionEnsemble_test, ParticleFactory) {
           auto const f_expr =
               calculate_factorial_expression(reaction, p_numbers);
           // acceptance = V^{nu_bar} * gamma * f_expr * exp(- E / T)
-          auto const acceptance_ref = reaction.nu_bar * std::log(r_algo.volume) +
-                                      std::log(reaction.gamma) + f_expr +
-                                      -energy / r_algo.kT;
+          auto const acceptance_ref =
+              reaction.nu_bar * std::log(r_algo.volume) +
+              std::log(reaction.gamma) + f_expr + -energy / r_algo.kT;
           auto const acceptance = r_algo_si->calculate_acceptance_probability(
               reaction, energy, p_numbers);
           BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5 * tol);
@@ -262,7 +262,8 @@ BOOST_FIXTURE_TEST_CASE(ReactionEnsemble_test, ParticleFactory) {
 
       // force move to be rejected
       auto const energy_reject =
-          r_algo.make_reaction_mc_move_attempt_logarithmic(reaction_id, -std::numeric_limits<double>::max(), 0.2, 0.1);
+          r_algo.make_reaction_mc_move_attempt_logarithmic(
+              reaction_id, -std::numeric_limits<double>::max(), 0.2, 0.1);
       BOOST_CHECK_CLOSE(energy_reject, 0.2, tol);
 
       // the reaction was updated
