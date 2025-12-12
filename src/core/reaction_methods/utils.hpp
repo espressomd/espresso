@@ -26,7 +26,7 @@
 namespace ReactionMethods {
 
 /**
- * Calculates the whole product of factorial expressions which occur in the
+ * Calculates the logarithm of whole product of factorial expressions which occur in the
  * reaction ensemble acceptance probability.
  *
  * See @cite smith94c.
@@ -35,12 +35,8 @@ double calculate_factorial_expression(
     SingleReaction const &reaction,
     std::unordered_map<int, int> const &particle_numbers);
 
-double calculate_ln_factorial_expression(
-    SingleReaction const &reaction,
-    std::unordered_map<int, int> const &particle_numbers);
-
 /**
- * Calculates the factorial expression which occurs in the constant pH method
+ * Calculates the logarithm of factorial expression which occurs in the constant pH method
  * with symmetric proposal probability.
  *
  * See @cite landsgesell17b for details.
@@ -51,15 +47,10 @@ double calculate_factorial_expression_cpH(
     SingleReaction const &reaction,
     std::unordered_map<int, int> const &particle_numbers);
 
-double calculate_ln_factorial_expression_cpH(
-    SingleReaction const &reaction,
-    std::unordered_map<int, int> const &particle_numbers);
-
 /**
- * Calculates the factorial expression which occurs in the reaction ensemble
+ * Calculates the logaritm of factorial expression which occurs in the reaction ensemble
  * acceptance probability
  */
-double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
 double ln_factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
 
 } // namespace ReactionMethods

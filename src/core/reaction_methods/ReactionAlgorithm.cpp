@@ -271,30 +271,6 @@ ReactionAlgorithm::create_new_trial_state(int reaction_id) {
   return {E_pot_new};
 }
 
-double ReactionAlgorithm::make_reaction_mc_move_attempt(int reaction_id,
-                                                        double bf,
-                                                        double E_pot_old,
-                                                        double E_pot_new) {
-  auto constexpr exp_min = -708.4; // for IEEE-compatible double
-  auto const exponent = -(E_pot_new - E_pot_old) / kT;
-  auto const exponential = (exponent < exp_min) ? 0. : std::exp(exponent);
-  auto &reaction = *reactions[reaction_id];
-  reaction.accumulator_potential_energy_difference_exponential(
-      std::vector<double>{exponential});
-  if (get_random_uniform_number() >= bf) {
-    // reject trial move: restore previous state, energy is unchanged
-    restore_old_system_state();
-    return E_pot_old;
-  }
-  // accept trial move: delete hidden particles and return new system energy
-  for (auto const &[p_id, p_type] : get_old_system_state().hidden) {
-    delete_particle(p_id);
-  }
-  reaction.accepted_moves++;
-  clear_old_system_state();
-  return E_pot_new;
-}
-
 double ReactionAlgorithm::make_reaction_mc_move_attempt_logarithmic(
 							int reaction_id,
                                                         double ln_bf,

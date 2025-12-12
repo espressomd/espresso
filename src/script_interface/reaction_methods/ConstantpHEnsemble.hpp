@@ -77,13 +77,6 @@ protected:
         reaction, particle_numbers);
   }
 
-  double calculate_ln_factorial_expression(
-      ::ReactionMethods::SingleReaction const &reaction,
-      std::unordered_map<int, int> const &particle_numbers) const override {
-    return ::ReactionMethods::calculate_ln_factorial_expression_cpH(
-        reaction, particle_numbers);
-  }
-
 private:
   std::shared_ptr<::ReactionMethods::ConstantpHEnsemble> m_re;
 };

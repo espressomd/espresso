@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(SingleReaction_test) {
   }
 
   // check factorial expression
-  constexpr auto g = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i;
+  constexpr auto g = ln_factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i;
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 3; ++k) {
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(SingleReaction_test) {
         auto const p_numbers =
             std::unordered_map<int, int>{{type_A, i}, {type_B, j}, {type_C, k}};
         auto const val = calculate_factorial_expression(reaction, p_numbers);
-        auto const ref = g(i, -1) * g(j, 3) * g(k, 4);
+        auto const ref = g(i, -1) + g(j, 3) + g(k, 4);
         BOOST_CHECK_CLOSE(val, ref, 5. * tol);
       }
     }

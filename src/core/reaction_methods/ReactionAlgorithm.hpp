@@ -189,14 +189,12 @@ public:
   std::optional<double> create_new_trial_state(int reaction_id);
   /**
    * Accept or reject a reaction MC move made by @ref create_new_trial_state
-   * based on a probability acceptance @c bf.
+   * based on a logarithmic probability acceptance @c ln_bf.
    * The previous state of the system is either restored from the cache if
    * the move is rejected, or cleared from the cache if the move is accepted.
    * @returns Potential energy of the system after the move was accepted or
    * rejected.
    */
-  double make_reaction_mc_move_attempt(int reaction_id, double bf,
-                                       double E_pot_old, double E_pot_new);
   double make_reaction_mc_move_attempt_logarithmic(
 		  			int reaction_id, double ln_bf,
                                        	double E_pot_old, double E_pot_new);

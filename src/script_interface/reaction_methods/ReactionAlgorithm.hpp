@@ -76,13 +76,6 @@ protected:
                                                              particle_numbers);
   }
 
-  virtual double calculate_ln_factorial_expression(
-      ::ReactionMethods::SingleReaction const &reaction,
-      std::unordered_map<int, int> const &particle_numbers) const {
-    return ::ReactionMethods::calculate_ln_factorial_expression(reaction,
-                                                             particle_numbers);
-  }
-
 private:
   void delete_reaction(int reaction_id) {
     m_reactions.erase(m_reactions.begin() + reaction_id);
