@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
- * Copyright (C) 2020-2023 The waLBerla project
+ * Copyright (C) 2022-2025 The ESPResSo project
+ * Copyright (C) 2020-2025 The waLBerla project
  *
  * This file is part of ESPResSo.
  *
@@ -18,14 +18,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
-// v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
-// waLBerla commit e12db9965373887d86aab4aaaf4dd7b38fa588e8
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34,
+// sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit
+// 007e77e077ad9d22b5eed6f3d3118240993e553c
 
 /*
  * Boundary class.
  * Adapted from the waLBerla source file
- * https://i10git.cs.fau.de/walberla/walberla/-/blob/e12db9965373887d86aab4aaaf4dd7b38fa588e8/python/pystencils_walberla/templates/Boundary.tmpl.h
+ * https://i10git.cs.fau.de/walberla/walberla/-/blob/3e54d4f2336e47168ad87e3caaf7b3b082d86ca7/python/pystencils_walberla/templates/Boundary.tmpl.h
  */
 
 #pragma once
@@ -41,6 +41,7 @@
 #include <gpu/GPUField.h>
 #include <gpu/GPUWrapper.h>
 
+#include <array>
 #include <cassert>
 #include <functional>
 #include <memory>
@@ -101,15 +102,20 @@ public:
         }
       }
     }
-    CpuIndexVector &indexVector(Type t) { return cpuVectors_[t]; }
+    auto &indexVector(Type t) { return cpuVectors_[t]; }
+    auto const &indexVector(Type t) const { return cpuVectors_[t]; }
     IndexInfo *pointerCpu(Type t) {
       return cpuVectors_[t].empty() ? nullptr : cpuVectors_[t].data();
     }
 
     IndexInfo *pointerGpu(Type t) { return gpuVectors_[t]; }
     void syncGPU() {
-      for (auto &gpuVec : gpuVectors_)
-        WALBERLA_GPU_CHECK(gpuFree(gpuVec));
+      for (auto &gpuVec : gpuVectors_) {
+        if (gpuVec) {
+          WALBERLA_GPU_CHECK(gpuFree(gpuVec));
+          gpuVec = nullptr;
+        }
+      }
       gpuVectors_.resize(cpuVectors_.size());
 
       WALBERLA_ASSERT_EQUAL(cpuVectors_.size(), NUM_TYPES);
@@ -170,11 +176,11 @@ public:
 
   void outer(IBlock *block, gpuStream_t stream = nullptr);
 
-  Vector3<real_t> getForce(IBlock * /*block*/) {
+  Vector3<double> getForce(IBlock * /*block*/) {
 
     WALBERLA_ABORT(
         "Boundary condition was not generated including force calculation.")
-    return Vector3<real_t>(real_c(0.0));
+    return Vector3<double>(double_c(0.0));
   }
 
   std::function<void(IBlock *)> getSweep(gpuStream_t stream = nullptr) {
@@ -193,8 +199,8 @@ public:
   void fillFromFlagField(const std::shared_ptr<StructuredBlockForest> &blocks,
                          ConstBlockDataID flagFieldID, FlagUID boundaryFlagUID,
                          FlagUID domainFlagUID) {
-    for (auto blockIt = blocks->begin(); blockIt != blocks->end(); ++blockIt)
-      fillFromFlagField<FlagField_T>(&*blockIt, flagFieldID, boundaryFlagUID,
+    for (auto &block : *blocks)
+      fillFromFlagField<FlagField_T>(&block, flagFieldID, boundaryFlagUID,
                                      domainFlagUID);
   }
 
@@ -261,6 +267,12 @@ public:
   float stoech_0_;
   float stoech_1_;
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic pop
+#endif
 
 } // namespace pystencils
 } // namespace walberla

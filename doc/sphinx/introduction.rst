@@ -677,7 +677,8 @@ or (at your option) any later version (:spdx:`GPL-3.0-or-later`).
 
 |es| contains code that is not provided under the GNU GPLv3, but is governed
 by other open source license terms which are compatible with the GNU GPLv3,
-including, but not limited to, Apache License 2.0 (:spdx:`Apache-2.0`)
+including, but not limited to, Apache License 2.0 (:spdx:`Apache-2.0`),
+Revised BSD License (:spdx:`BSD-3-Clause`),
 and FSF All Permissive License (:spdx:`FSFAP`).
 Such third party codes feature a header containing the license
 (or a link to its full text) and a list of the copyright holders.

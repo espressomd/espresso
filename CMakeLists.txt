@@ -71,11 +71,20 @@ set(CMAKE_CXX_FLAGS_RELWITHASSERT "${CMAKE_CXX_FLAGS_RELWITHASSERT} -O3 -g")
 set(ESPRESSO_BUILD_SHARED_LIBS_DEFAULT OFF)
 set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
 
+# shared objects require position-independent code in static libraries
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
 
 # avoid applying patches twice with FetchContent
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
+
+# customize default options based on basic information
+set(ESPRESSO_BUILD_WITH_WALBERLA_AVX_DEFAULT OFF)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "[xX]86")
+  set(ESPRESSO_BUILD_WITH_WALBERLA_AVX_DEFAULT ON)
+endif()
 
 # ##############################################################################
 # User input options
@@ -91,10 +100,10 @@ option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
 option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
        OFF)
 option(ESPRESSO_BUILD_WITH_NLOPT "Build with NLopt support" OFF)
-option(ESPRESSO_BUILD_WITH_WALBERLA
-       "Build with waLBerla lattice-Boltzmann support" OFF)
+option(ESPRESSO_BUILD_WITH_WALBERLA "Build with waLBerla support" ON)
 option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
-       "Build waLBerla lattice-Boltzmann with AVX vectorization" OFF)
+       "Build waLBerla kernels with AVX2 vectorization"
+       ${ESPRESSO_BUILD_WITH_WALBERLA_AVX_DEFAULT})
 option(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM
        "Build with shared memory parallelism support" OFF)
 option(ESPRESSO_BUILD_BENCHMARKS "Enable benchmarks" OFF)
@@ -883,7 +892,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        fc081850 # v7.2 with patches
+    GIT_TAG        007e77e0 # v7.2 with patches
   )
   # cmake-format: on
   string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
@@ -910,8 +919,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     set(WALBERLA_BUILD_WITH_OPENMP on CACHE BOOL "")
   endif()
   set(WALBERLA_BUILD_WITH_FASTMATH off CACHE BOOL "")
-  set(BUILD_SHARED_LIBS ON)
-  set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
+  set(BUILD_SHARED_LIBS OFF)
   FetchContent_MakeAvailable(walberla)
   set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
   set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
@@ -924,18 +932,6 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   if(WALBERLA_BUILD_WITH_CUDA)
     list(APPEND WALBERLA_LIBS walberla::gpu)
   endif()
-  set(WALBERLA_LIBS_EXPORT
-      ${WALBERLA_LIBS} lodepng walberla::boundary walberla::executiontree
-      walberla::geometry walberla::lbm walberla::timeloop)
-  # install all waLBerla shared objects
-  foreach(target_alias IN LISTS WALBERLA_LIBS_EXPORT)
-    string(REPLACE "::" "_" target_name ${target_alias})
-    get_target_property(target_type ${target_name} TYPE)
-    if(${target_type} STREQUAL "SHARED_LIBRARY")
-      install(TARGETS ${target_name}
-              LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
-    endif()
-  endforeach()
   if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
     function(espresso_avx_flags_callback COMPILER_AVX2_FLAG)
       target_compile_options(

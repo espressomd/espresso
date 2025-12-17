@@ -18,9 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
-// v1.3.7+15.g5018a18, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
-// waLBerla commit 191cf58b16b96d1d2f050dcbd9e88443995b2222
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34,
+// sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit
+// 007e77e077ad9d22b5eed6f3d3118240993e553c
 
 /*
  * Boundary class.
