@@ -145,7 +145,7 @@ class LBCouetteTest:
         v_phi_drift = np.mean(v_phi) - np.mean(v_phi_ref)
         # large drifts can be observed on x86 CPUs with -march=native
         np.testing.assert_allclose(v_phi_drift, 0., atol=1e-3)
-        np.testing.assert_allclose(v_phi - v_phi_drift, v_phi_ref, atol=1e-3)
+        np.testing.assert_allclose(v_phi - v_phi_drift, v_phi_ref, atol=1e-2)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])

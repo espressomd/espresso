@@ -323,6 +323,9 @@ if(ESPRESSO_BUILD_WITH_PYTHON)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
   if(NOT DEFINED CACHE{ESPRESSO_NUMPY_SITEARCH}
      OR "$CACHE{ESPRESSO_NUMPY_SITEARCH}" STREQUAL "")
+    # NumPy isn't necessarily installed in Python_SITEARCH. EasyBuild packages
+    # NumPy within SciPy-bundle, for example. Cython needs to include NumPy's
+    # parent directory to properly detect file numpy/__init__.pxd.
     block(SCOPE_FOR VARIABLES PROPAGATE ESPRESSO_NUMPY_SITEARCH)
     execute_process(
       COMMAND ${Python_EXECUTABLE} -c "import numpy;print(numpy.__file__)"
