@@ -94,6 +94,7 @@ foreach(cython_file ${cython_SRC})
         --directive embedsignature=True
         --directive binding=True
         --include-dir ${Python_SITEARCH}
+        --include-dir ${ESPRESSO_NUMPY_SITEARCH}
         --include-dir ${CMAKE_CURRENT_SOURCE_DIR}
         --output-file ${outputpath}
         ${cython_file}

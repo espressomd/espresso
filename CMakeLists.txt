@@ -152,6 +152,10 @@ if(ESPRESSO_BUILD_WITH_CCACHE)
   endif()
 endif()
 
+set(ESPRESSO_NUMPY_SITEARCH ""
+    CACHE FILEPATH
+          "NumPy's third-party platform dependent installation directory")
+
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -317,6 +321,24 @@ if(ESPRESSO_BUILD_WITH_PYTHON)
     message(WARNING "We strongly recommend using Cython 3.0.8 or later")
   endif()
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
+  if(NOT DEFINED CACHE{ESPRESSO_NUMPY_SITEARCH}
+     OR "$CACHE{ESPRESSO_NUMPY_SITEARCH}" STREQUAL "")
+    block(SCOPE_FOR VARIABLES PROPAGATE ESPRESSO_NUMPY_SITEARCH)
+    execute_process(
+      COMMAND ${Python_EXECUTABLE} -c "import numpy;print(numpy.__file__)"
+      OUTPUT_VARIABLE numpy_init_path ERROR_VARIABLE numpy_init_error
+      RESULT_VARIABLE numpy_init_result)
+    if(NOT ${numpy_init_result} EQUAL 0)
+      message(FATAL_ERROR "Cannot import numpy:\n${numpy_init_error}")
+    endif()
+    cmake_path(GET numpy_init_path PARENT_PATH numpy_path)
+    cmake_path(GET numpy_path PARENT_PATH numpy_sitearch)
+    set(ESPRESSO_NUMPY_SITEARCH "${numpy_sitearch}"
+        CACHE FILEPATH
+              "NumPy's third-party platform dependent installation directory"
+              FORCE)
+    endblock()
+  endif()
 endif()
 
 #
