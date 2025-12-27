@@ -58,12 +58,14 @@ class VirtualSites(ut.TestCase):
             (quat[0] * quat[0] - quat[1] * quat[1]
              - quat[2] * quat[2] + quat[3] * quat[3])))
 
-    def verify_vs(self, vs, verify_velocity=True):
+    def verify_vs(self, vs, verify_velocity=True, expected_rot=None):
         """Verify virtual site position and velocity."""
         Propagation = espressomd.propagation.Propagation
+        if expected_rot is None:
+            expected_rot = Propagation.ROT_VS_RELATIVE
         self.assertTrue(vs.is_virtual())
         self.assertTrue(vs.propagation & Propagation.TRANS_VS_RELATIVE)
-        self.assertTrue(vs.propagation & Propagation.ROT_VS_RELATIVE)
+        self.assertTrue(vs.propagation & expected_rot)
         vs_r = vs.vs_relative
 
         # Get related particle
@@ -161,6 +163,36 @@ class VirtualSites(ut.TestCase):
             # If overridden this check should not raise an exception
             p2.vs_auto_relate_to(p1, override_cutoff_check=True)
 
+    def test_rot_vs_independent(self):
+        system = self.system
+        system.cell_system.skin = 0.2
+        system.time_step = 0.01
+        Propagation = espressomd.propagation.Propagation
+
+        p_real = system.part.add(
+            rotation=3 * [True], pos=(0.0, 0.0, 0.0), omega_body=(3.0, 6.0, 9.0))
+        p_vs = system.part.add(rotation=3 * [True], pos=(0.0, 0.0, 0.0))
+        initial_real_quat = np.copy(p_real.quat)
+        p_vs.vs_auto_relate_to(p_real)
+        p_vs.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
+
+        system.integrator.run(0, recalc_forces=True)
+        vs_initial_quat = np.copy(p_vs.quat)
+        self.verify_vs(p_vs, expected_rot=Propagation.ROT_VS_INDEPENDENT)
+
+        system.integrator.run(10)
+
+        self.verify_vs(p_vs, expected_rot=Propagation.ROT_VS_INDEPENDENT)
+        np.testing.assert_allclose(np.copy(p_vs.quat), vs_initial_quat)
+        self.assertFalse(np.allclose(np.copy(p_real.quat), initial_real_quat))
+
+        if espressomd.has_features("EXTERNAL_FORCES"):
+            torque = np.array([1.0, -0.5, 0.25])
+            p_vs.ext_torque = torque
+            system.integrator.run(0)
+            np.testing.assert_allclose(
+                np.copy(p_real.torque_lab), torque, atol=1E-12)
+
     def test_pos_vel_forces(self):
         system = self.system
         system.cell_system.skin = 0.3
@@ -170,22 +202,23 @@ class VirtualSites(ut.TestCase):
         system.min_global_cut = 0.23
         self.assertEqual(system.min_global_cut, 0.23)
 
-        # Place central particle + 3 vs
+        # Place central particle + N virtual sites
         p1 = system.part.add(rotation=3 * [True], pos=(0.5, 0.5, 0.5), id=1,
                              quat=(1, 0, 0, 0), omega_lab=(1, 2, 3))
-        pos2 = (0.5, 0.4, 0.5)
-        pos3 = (0.3, 0.5, 0.4)
-        pos4 = (0.5, 0.5, 0.5)
-        for pos in (pos2, pos3, pos4):
-            p = system.part.add(rotation=3 * [True], pos=pos)
+
+        # Number of virtual sites to create
+        N = 100
+        # Generate N random positions around the central particle
+        np.random.seed(42)
+        vs_positions = p1.pos + np.random.uniform(-0.15, 0.15, (N, 3))
+
+        # Create virtual sites at random positions
+        sites = system.part.add(rotation=[3 * [True]] * N, pos=vs_positions)
+        for p in sites:
             p.vs_auto_relate_to(p1)
-            # Was the particle made virtual
             self.assertTrue(p.is_virtual())
-            # Are vs relative to id and
             vs_r = p.vs_relative
-            # id
             self.assertEqual(vs_r[0], p1.id)
-            # distance
             self.assertAlmostEqual(vs_r[1], system.distance(p1, p), places=6)
 
         # Move central particle and check vs placement
@@ -194,39 +227,37 @@ class VirtualSites(ut.TestCase):
         p1.v = (0.45, 0.14, 0.447)
         p1.omega_lab = (0.45, 0.14, 0.447)
         system.integrator.run(0, recalc_forces=True)
-        for p in system.part:
-            if p.id != p1.id:
-                self.verify_vs(p)
+        for p in sites:
+            self.verify_vs(p)
 
         # Check if still true, when non-virtual particle has rotated and a
         # linear motion
         p1.omega_lab = [-5., 3., 8.4]
         system.integrator.run(10)
-        for p in system.part:
-            if p.id != p1.id:
-                self.verify_vs(p)
+        for p in sites:
+            self.verify_vs(p)
 
         if espressomd.has_features("EXTERNAL_FORCES"):
             # Test transfer of forces accumulating on virtual sites
             # to central particle
-            f2 = np.array((3, 4, 5))
-            f3 = np.array((-4, 5, 6))
-            # Add forces to vs
-            p2, p3 = system.part.by_ids([2, 3])
-            p2.ext_force = f2
-            p3.ext_force = f3
+            # Generate random forces for all N virtual sites
+            sites.ext_force = np.random.uniform(-5, 5, (N, 3))
+
             system.integrator.run(0)
             # get force/torques on non-vs
             f = p1.f
             t = p1.torque_lab
 
-            # Expected force = sum of the forces on the vs
-            self.assertAlmostEqual(np.linalg.norm(f - f2 - f3), 0., delta=1E-6)
+            # Expected force = sum of all forces on the vs
+            f_exp = np.sum(sites.ext_force, axis=0)
+            self.assertAlmostEqual(np.linalg.norm(f - f_exp), 0., delta=1E-6)
 
             # Expected torque
             # Radial components of forces on a rigid body add to the torque
-            t_exp = np.cross(system.distance_vec(p1, p2), f2)
-            t_exp += np.cross(system.distance_vec(p1, p3), f3)
+            t_exp = np.zeros(3)
+            for vs_p in sites:
+                t_exp += np.cross(system.distance_vec(p1, vs_p),
+                                  vs_p.ext_force)
             # Check
             self.assertAlmostEqual(np.linalg.norm(t_exp - t), 0., delta=1E-6)
 

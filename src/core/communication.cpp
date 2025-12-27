@@ -117,10 +117,10 @@ CommunicationEnvironment::CommunicationEnvironment(
   m_is_mpi_gpu_aware |= (mpich_gpu_env and *mpich_gpu_env == "1");
 #endif // defined(MPICH)
 
-#if defined(_CRAYC)
+#if defined(_CRAYC) or defined(__cray__)
   auto const cray_mpich_gpu_env = get_env_variable("MPICH_GPU_SUPPORT_ENABLED");
   m_is_mpi_gpu_aware |= (cray_mpich_gpu_env and *cray_mpich_gpu_env == "1");
-#endif // defined(_CRAYC)
+#endif // defined(_CRAYC) or defined(__cray__)
 
   communicator.full_initialization();
 

@@ -172,18 +172,21 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
     double dist = 0.0;
     Utils::Vector3d vec;
     m_shape->calculate_dist(folded_pos, dist, vec);
+    auto run_kernel = false;
     if (dist > 0.) {
-      energy = calc_non_bonded_pair_energy(p, part_rep, ia_params, vec, dist,
-                                           *system.bonded_ias,
-                                           get_ptr(coulomb_kernel));
+      run_kernel = true;
     } else if (dist <= 0. and m_penetrable) {
       if (!m_only_positive and dist < 0.) {
-        energy = calc_non_bonded_pair_energy(p, part_rep, ia_params, vec, -dist,
-                                             *system.bonded_ias,
-                                             get_ptr(coulomb_kernel));
+        run_kernel = true;
+        dist *= -1.;
       }
     } else {
       runtimeErrorMsg() << "Constraint violated by particle " << p.id();
+    }
+    if (run_kernel) {
+      energy = calc_non_bonded_pair_energy(p, part_rep, ia_params, vec, dist,
+                                           *system.bonded_ias, system.coulomb,
+                                           get_ptr(coulomb_kernel));
     }
   }
   // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)

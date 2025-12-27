@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
 
@@ -38,7 +38,12 @@ struct DipolarDirectSumGpu : public Dipoles::Actor<DipolarDirectSumGpu> {
   void sanity_checks() const {}
 
   void add_long_range_forces() const;
-  void long_range_energy() const;
+  /**
+   * @brief Calculate long-range dipolar energy.
+   * The energy is stored on a GPU accumulator,
+   * and zero is returned from this method.
+   */
+  double long_range_energy() const;
 };
 
 #endif // ESPRESSO_DIPOLAR_DIRECT_SUM

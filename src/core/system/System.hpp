@@ -65,6 +65,8 @@ class AutoUpdateAccumulators;
 namespace Constraints {
 class Constraints;
 }
+struct SteepestDescent;
+struct StokesianDynamics;
 struct NptIsoParameters;
 struct InstantaneousPressure;
 
@@ -333,6 +335,10 @@ public:
   std::shared_ptr<Accumulators::AutoUpdateAccumulators>
       auto_update_accumulators;
   std::shared_ptr<Constraints::Constraints> constraints;
+  std::shared_ptr<SteepestDescent> steepest_descent;
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
+  std::shared_ptr<StokesianDynamics> stokesian_dynamics;
+#endif
 #ifdef ESPRESSO_NPT
   std::shared_ptr<NptIsoParameters> nptiso;
   std::shared_ptr<InstantaneousPressure> npt_inst_pressure;
@@ -360,6 +366,9 @@ protected:
   void update_icc_particles();
   bool has_icc_enabled() const;
 #endif // ESPRESSO_ELECTROSTATICS
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+  void integrate_magnetodynamics();
+#endif
 
 private:
   /**

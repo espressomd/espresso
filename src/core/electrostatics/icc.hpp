@@ -49,8 +49,6 @@
 
 #ifdef ESPRESSO_ELECTROSTATICS
 
-#include "ParticleRange.hpp"
-#include "cell_system/CellStructure.hpp"
 #include "system/Leaf.hpp"
 
 #include <utils/Vector.hpp>

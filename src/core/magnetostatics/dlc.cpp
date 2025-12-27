@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_DIPOLES
 
@@ -68,8 +68,7 @@ void DipolarLayerCorrection::check_gap(Particle const &p) const {
 }
 
 /** Calculate the maximal dipole moment in the system */
-static double calc_mu_max(System::System const &system) {
-  auto const local_particles = system.cell_structure->local_particles();
+static double calc_mu_max(ParticleRange const &local_particles) {
   auto const mu_max_local = std::accumulate(
       local_particles.begin(), local_particles.end(), 0.,
       [](double mu, Particle const &p) { return std::max(mu, p.dipm()); });
@@ -302,10 +301,11 @@ static double dipolar_energy_correction(int kcut,
   return (this_node == 0) ? energy : 0.;
 }
 
-void DipolarLayerCorrection::add_force_corrections(
-    ParticleRange const &particles) const {
+void DipolarLayerCorrection::add_force_corrections() const {
   assert(dlc.far_cut > 0.);
-  auto const &box_geo = *get_system().box_geo;
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const particles = system.cell_structure->local_particles();
   auto const volume = box_geo.volume();
   auto const correc = 4. * std::numbers::pi / volume;
 
@@ -354,10 +354,11 @@ void DipolarLayerCorrection::add_force_corrections(
   }
 }
 
-double DipolarLayerCorrection::energy_correction(
-    ParticleRange const &particles) const {
+double DipolarLayerCorrection::energy_correction() const {
   assert(dlc.far_cut > 0.);
-  auto const &box_geo = *get_system().box_geo;
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const particles = system.cell_structure->local_particles();
   auto const volume = box_geo.volume();
   auto const pref = prefactor * 2. * std::numbers::pi / volume;
 
@@ -396,10 +397,10 @@ double DipolarLayerCorrection::energy_correction(
   return 0.;
 }
 
-static int count_magnetic_particles(System::System const &system) {
-  int local_n = 0;
+static std::size_t count_magnetic_particles(ParticleRange const &particles) {
+  std::size_t local_n = 0ul;
 
-  for (auto const &p : system.cell_structure->local_particles()) {
+  for (auto const &p : particles) {
     if (p.dipm() != 0.) {
       local_n++;
     }
@@ -418,11 +419,12 @@ double DipolarLayerCorrection::tune_far_cut() const {
   auto const &system = get_system();
   /* we take the maximum dipole in the system, to be sure that the errors
    * in the other case will be equal or less than for this one */
-  auto const mu_max_sq = Utils::sqr(calc_mu_max(system));
   auto const &box_geo = *system.box_geo;
   auto const lx = box_geo.length()[0];
   auto const ly = box_geo.length()[1];
   auto const lz = box_geo.length()[2];
+  auto const particles = system.cell_structure->local_particles();
+  auto const mu_max_sq = Utils::sqr(calc_mu_max(particles));
 
   if (std::abs(lx - ly) > 0.001) {
     throw std::runtime_error("DLC tuning: box size in x direction is "
@@ -435,7 +437,7 @@ double DipolarLayerCorrection::tune_far_cut() const {
   auto constexpr exp_min = -708.4; // for IEEE-compatible double
   auto const log_max = std::log(std::numeric_limits<double>::max());
   auto const piarea = std::numbers::pi / (lx * ly);
-  auto const nmp = static_cast<double>(count_magnetic_particles(system));
+  auto const nmp = static_cast<double>(count_magnetic_particles(particles));
   auto const h = dlc.box_h;
   auto far_cut = -1.;
   for (int kc = 1; kc < limitkc; kc++) {
@@ -528,6 +530,19 @@ DipolarLayerCorrection::DipolarLayerCorrection(dlc_data &&parameters,
                                                BaseSolver &&solver)
     : dlc{parameters}, base_solver{solver} {
   adapt_solver();
+}
+
+void DipolarLayerCorrection::add_long_range_forces() const {
+  std::visit([](auto const &solver) { solver->add_long_range_forces(); },
+             base_solver);
+  add_force_corrections();
+}
+
+double DipolarLayerCorrection::long_range_energy() const {
+  auto const energy =
+      std::visit([](auto const &solver) { return solver->long_range_energy(); },
+                 base_solver);
+  return energy + energy_correction();
 }
 
 #endif // ESPRESSO_DIPOLES

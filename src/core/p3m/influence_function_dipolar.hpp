@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #if defined(ESPRESSO_DP3M)
 
@@ -83,9 +83,9 @@ double G_opt_dipolar(P3MParameters const &params, Utils::Vector3i const &shift,
   auto constexpr m_start = Utils::Vector3i::broadcast(-m);
   auto constexpr m_stop = Utils::Vector3i::broadcast(m + 1);
   auto const cao = params.cao;
-  auto const mesh = params.mesh[0];
+  auto const &mesh = params.mesh;
   auto const offset =
-      static_cast<Utils::Vector3d>(shift) / static_cast<double>(mesh);
+      Utils::hadamard_division(static_cast<Utils::Vector3d>(shift), mesh);
   auto const exp_prefactor = Utils::sqr(std::numbers::pi / params.alpha_L);
   auto indices = Utils::Vector3i{};
   auto nm = Utils::Vector3i{};
@@ -106,8 +106,8 @@ double G_opt_dipolar(P3MParameters const &params, Utils::Vector3i const &shift,
         denominator += U2;
       },
       [&](unsigned dim, int n) {
-        nm[dim] = shift[dim] + n * mesh;
-        fnm[dim] = math::sinc(offset[dim] + n * mesh);
+        nm[dim] = shift[dim] + n * mesh[dim];
+        fnm[dim] = math::sinc(offset[dim] + n * mesh[dim]);
       });
 
   return numerator / (Utils::int_pow<S>(static_cast<double>(d_op.norm2())) *
@@ -129,8 +129,9 @@ double G_opt_dipolar(P3MParameters const &params, Utils::Vector3i const &shift,
  * @param inv_box_l Inverse box length
  * @return Values of the influence function at regular grid points.
  */
-template <typename FloatType, std::size_t S, std::size_t m>
-std::vector<FloatType> grid_influence_function(
+template <typename FloatType, std::size_t S, std::size_t m,
+          Utils::MemoryOrder memory_order = Utils::MemoryOrder::ROW_MAJOR>
+std::vector<FloatType> grid_influence_function_dipolar(
     P3MParameters const &params, Utils::Vector3i const &n_start,
     Utils::Vector3i const &n_stop, Utils::Vector3d const &inv_box_l) {
 
@@ -145,26 +146,27 @@ std::vector<FloatType> grid_influence_function(
     return g;
   }
 
-  auto prefactor = Utils::int_pow<3>(static_cast<double>(params.mesh[0])) * 2. *
-                   Utils::int_pow<2>(inv_box_l[0]);
+  auto prefactor =
+      Utils::product(params.mesh) * 2. * Utils::int_pow<2>(inv_box_l[0]);
 
   auto const offset = calc_p3m_mesh_shift(params.mesh, false)[0];
   auto const d_op = calc_p3m_mesh_shift(params.mesh, true)[0];
-  auto const half_mesh = params.mesh[0] / 2;
+  auto const half_mesh = params.mesh / 2;
   auto indices = Utils::Vector3i{};
   auto shift_off = Utils::Vector3i{};
   auto d_op_off = Utils::Vector3i{};
-  auto index = std::size_t(0u);
 
   for_each_3d(
       n_start, n_stop, indices,
       [&]() {
-        if (((indices[0] % half_mesh != 0) or (indices[1] % half_mesh != 0) or
-             (indices[2] % half_mesh != 0))) {
+        if (((indices[0u] % half_mesh[0u] != 0) or
+             (indices[1u] % half_mesh[1u] != 0) or
+             (indices[2u] % half_mesh[2u] != 0))) {
+          auto const index =
+              Utils::get_linear_index<memory_order>(indices - n_start, size);
           g[index] = FloatType(
               prefactor * G_opt_dipolar<S, m>(params, shift_off, d_op_off));
         }
-        ++index;
       },
       [&](unsigned dim, int n) {
         d_op_off[dim] = d_op[n];
@@ -181,9 +183,9 @@ inline double G_opt_dipolar_self_energy(P3MParameters const &params,
   auto constexpr m_start = Utils::Vector3i::broadcast(-m);
   auto constexpr m_stop = Utils::Vector3i::broadcast(m + 1);
   auto const cao = params.cao;
-  auto const mesh = params.mesh[0];
+  auto const &mesh = params.mesh;
   auto const offset =
-      static_cast<Utils::Vector3d>(shift) / static_cast<double>(mesh);
+      Utils::hadamard_division(static_cast<Utils::Vector3d>(shift), mesh);
   auto indices = Utils::Vector3i{};
   auto fnm = Utils::Vector3d{};
   auto energy = 0.;
@@ -192,7 +194,7 @@ inline double G_opt_dipolar_self_energy(P3MParameters const &params,
       m_start, m_stop, indices,
       [&]() { energy += std::pow(Utils::product(fnm), 2 * cao); },
       [&](unsigned dim, int n) {
-        fnm[dim] = math::sinc(offset[dim] + n * mesh);
+        fnm[dim] = math::sinc(offset[dim] + n * mesh[dim]);
       });
 
   return energy;
@@ -216,7 +218,7 @@ inline double grid_influence_function_self_energy(
 
   auto const offset = calc_p3m_mesh_shift(params.mesh, false)[0];
   auto const d_op = calc_p3m_mesh_shift(params.mesh, true)[0];
-  auto const half_mesh = params.mesh[0] / 2;
+  auto const half_mesh = params.mesh / 2;
   auto indices = Utils::Vector3i{};
   auto shift_off = Utils::Vector3i{};
   auto d_op_off = Utils::Vector3i{};
@@ -226,8 +228,9 @@ inline double grid_influence_function_self_energy(
   for_each_3d(
       n_start, n_stop, indices,
       [&]() {
-        if (((indices[0] % half_mesh != 0) or (indices[1] % half_mesh != 0) or
-             (indices[2] % half_mesh != 0))) {
+        if (((indices[0u] % half_mesh[0u] != 0) or
+             (indices[1u] % half_mesh[1u] != 0) or
+             (indices[2u] % half_mesh[2u] != 0))) {
           auto const U2 = G_opt_dipolar_self_energy<m>(params, shift_off);
           energy += static_cast<double>(g[index]) * U2 * d_op_off.norm2();
         }

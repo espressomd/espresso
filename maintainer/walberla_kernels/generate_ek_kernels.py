@@ -45,7 +45,7 @@ parser.add_argument("--kernels", nargs="+", type=str, default="all",
 args = parser.parse_args()
 
 # Make sure we have the correct versions of the required dependencies
-for module, requirement in [(ps, "==1.3.7"), (lbmpy, "==1.3.7")]:
+for module, requirement in [(ps, "==1.4.0"), (lbmpy, "==1.4.0")]:
     assert packaging.specifiers.SpecifierSet(requirement).contains(module.__version__), \
         f"{module.__name__} version {module.__version__} " \
         f"doesn't match requirement {requirement}"
@@ -210,6 +210,13 @@ with code_generation_context.CodeGeneration() as ctx:
 
     data_type = "float64" if ctx.double_accuracy else "float32"
 
+    dirichlet_stencil = lbmpy.stencils.LBStencil(
+        stencil=((0, 0, 0),), theta0=0.)
+    dirichlet = custom_additional_extensions.Dirichlet_Custom(
+        lambda *args: None, data_type=data_type_np)
+    dirichlet_additional_data = custom_additional_extensions.DirichletAdditionalDataHandler(
+        dirichlet_stencil, dirichlet)
+
     if "diffusion" in args.kernels:
         for midfix, fluctuation in (("", False), ("Thermalized", True)):
             cpu_vectorize_info["cpu_prepend_opt_remove_conditionals"] = False
@@ -311,13 +318,7 @@ with code_generation_context.CodeGeneration() as ctx:
                        patch_boundary_kernel, processor_suffix)
 
         # generate dynamic fixed density
-        dirichlet_stencil = lbmpy.stencils.LBStencil(stencil=((0, 0, 0),))
-        dirichlet = custom_additional_extensions.Dirichlet_Custom(
-            lambda *args: None, data_type=data_type_np)
-        dirichlet_additional_data = custom_additional_extensions.DirichletAdditionalDataHandler(
-            dirichlet_stencil, dirichlet)
         class_name = f"Dirichlet_{precision_suffix}{processor_suffix}"
-
         pystencils_walberla.boundary.generate_boundary(
             generation_context=ctx,
             class_name=class_name,
@@ -337,7 +338,6 @@ with code_generation_context.CodeGeneration() as ctx:
 
     if "reactions" in args.kernels:
         # ek reactions
-        dirichlet_stencil = lbmpy.stencils.LBStencil(stencil=((0, 0, 0),))
         for i in range(1, max_num_reactants + 1):
             assignments = list(reaction_obj.generate_reaction(num_reactants=i))
             class_name = f"ReactionKernelBulk_{i}_{precision_suffix}{processor_suffix}"  # nopep8
@@ -352,7 +352,10 @@ with code_generation_context.CodeGeneration() as ctx:
                 generation_context=ctx,
                 stencil=dirichlet_stencil,
                 class_name=class_name,
-                dim=dim,
+                context_params={
+                    "stencil_info": dirichlet_additional_data.stencil_info,
+                    "parameters_to_ignore": ["indexVectorSize", "indexVectorID"],
+                },
                 target=target,
                 assignment=assignments,
                 template_file="templates/Boundary.tmpl.h")

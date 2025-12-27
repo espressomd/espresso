@@ -16,7 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "config/config.hpp"
+
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_VIRTUAL_SITES_INERTIALESS_TRACERS
 
@@ -24,7 +25,6 @@
 #include "LocalBox.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "errorhandling.hpp"
-#include "forces.hpp"
 #include "lb/Solver.hpp"
 #include "lb/particle_coupling.hpp"
 
@@ -46,7 +46,7 @@ void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
   auto const agrid = lb.get_agrid();
 
   // Distribute summed-up forces from physical particles to ghosts
-  init_forces_ghosts(cell_structure);
+  cell_structure.ghosts_reset_forces();
   cell_structure.update_ghosts_and_resort_particle(Cells::DATA_PART_FORCE);
 
   // Keep track of ghost particles (ids) that have already been coupled
@@ -68,7 +68,7 @@ void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
   }
 
   // Clear ghost forces to avoid double counting later
-  init_forces_ghosts(cell_structure);
+  cell_structure.ghosts_reset_forces();
 }
 
 void lb_tracers_propagate(CellStructure &cell_structure, LB::Solver const &lb,

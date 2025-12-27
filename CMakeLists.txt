@@ -71,11 +71,20 @@ set(CMAKE_CXX_FLAGS_RELWITHASSERT "${CMAKE_CXX_FLAGS_RELWITHASSERT} -O3 -g")
 set(ESPRESSO_BUILD_SHARED_LIBS_DEFAULT OFF)
 set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
 
+# shared objects require position-independent code in static libraries
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
 
 # avoid applying patches twice with FetchContent
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
+
+# customize default options based on basic information
+set(ESPRESSO_BUILD_WITH_WALBERLA_AVX_DEFAULT OFF)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "[xX]86")
+  set(ESPRESSO_BUILD_WITH_WALBERLA_AVX_DEFAULT ON)
+endif()
 
 # ##############################################################################
 # User input options
@@ -90,10 +99,11 @@ option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
 option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
 option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
        OFF)
-option(ESPRESSO_BUILD_WITH_WALBERLA
-       "Build with waLBerla lattice-Boltzmann support" OFF)
+option(ESPRESSO_BUILD_WITH_NLOPT "Build with NLopt support" OFF)
+option(ESPRESSO_BUILD_WITH_WALBERLA "Build with waLBerla support" ON)
 option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
-       "Build waLBerla lattice-Boltzmann with AVX vectorization" OFF)
+       "Build waLBerla kernels with AVX2 vectorization"
+       ${ESPRESSO_BUILD_WITH_WALBERLA_AVX_DEFAULT})
 option(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM
        "Build with shared memory parallelism support" OFF)
 option(ESPRESSO_BUILD_BENCHMARKS "Enable benchmarks" OFF)
@@ -141,6 +151,10 @@ if(ESPRESSO_BUILD_WITH_CCACHE)
     set(CMAKE_CUDA_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
   endif()
 endif()
+
+set(ESPRESSO_NUMPY_SITEARCH ""
+    CACHE FILEPATH
+          "NumPy's third-party platform dependent installation directory")
 
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -221,6 +235,7 @@ endmacro()
 espresso_minimal_compiler_version("GNU" 12.2.0)
 espresso_minimal_compiler_version("Clang" 18.1.0)
 espresso_minimal_compiler_version("AppleClang" 17.0.0)
+espresso_minimal_compiler_version("CrayClang" 17.0.0)
 espresso_minimal_compiler_version("IntelLLVM" 2023.1)
 
 set(ESPRESSO_UNSUPPORTED_COMPILERS "Intel;MSVC")
@@ -306,6 +321,27 @@ if(ESPRESSO_BUILD_WITH_PYTHON)
     message(WARNING "We strongly recommend using Cython 3.0.8 or later")
   endif()
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
+  if(NOT DEFINED CACHE{ESPRESSO_NUMPY_SITEARCH}
+     OR "$CACHE{ESPRESSO_NUMPY_SITEARCH}" STREQUAL "")
+    # NumPy isn't necessarily installed in Python_SITEARCH. EasyBuild packages
+    # NumPy within SciPy-bundle, for example. Cython needs to include NumPy's
+    # parent directory to properly detect file numpy/__init__.pxd.
+    block(SCOPE_FOR VARIABLES PROPAGATE ESPRESSO_NUMPY_SITEARCH)
+    execute_process(
+      COMMAND ${Python_EXECUTABLE} -c "import numpy;print(numpy.__file__)"
+      OUTPUT_VARIABLE numpy_init_path ERROR_VARIABLE numpy_init_error
+      RESULT_VARIABLE numpy_init_result)
+    if(NOT ${numpy_init_result} EQUAL 0)
+      message(FATAL_ERROR "Cannot import numpy:\n${numpy_init_error}")
+    endif()
+    cmake_path(GET numpy_init_path PARENT_PATH numpy_path)
+    cmake_path(GET numpy_path PARENT_PATH numpy_sitearch)
+    set(ESPRESSO_NUMPY_SITEARCH "${numpy_sitearch}"
+        CACHE FILEPATH
+              "NumPy's third-party platform dependent installation directory"
+              FORCE)
+    endblock()
+  endif()
 endif()
 
 #
@@ -588,7 +624,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
 endif()
 
 if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-  find_package(OpenMP REQUIRED)
+  find_package(OpenMP REQUIRED COMPONENTS CXX)
 
   if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
     find_package(Kokkos 4.3 QUIET)
@@ -696,6 +732,32 @@ if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_INSTALL_LIBDIR}")
   FetchContent_MakeAvailable(stokesian_dynamics)
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR}")
+endif()
+
+if(ESPRESSO_BUILD_WITH_NLOPT)
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/nlopt-src)
+    find_package(NLopt 2.7.1 QUIET)
+  endif()
+  if(NOT DEFINED NLopt_FOUND OR NOT ${NLopt_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      nlopt
+      GIT_REPOSITORY https://github.com/stevengj/nlopt.git
+      GIT_TAG        v2.10.0
+    )
+    # cmake-format: on
+    set(BUILD_SHARED_LIBS off)
+    set(NLOPT_FORTRAN off CACHE BOOL "")
+    set(NLOPT_PYTHON off CACHE BOOL "")
+    set(NLOPT_OCTAVE off CACHE BOOL "")
+    set(NLOPT_MATLAB off CACHE BOOL "")
+    set(NLOPT_GUILE off CACHE BOOL "")
+    set(NLOPT_JAVA off CACHE BOOL "")
+    set(NLOPT_SWIG off CACHE BOOL "")
+    set(NLOPT_LUKSAN off CACHE BOOL "")
+    FetchContent_MakeAvailable(nlopt)
+    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+  endif()
 endif()
 
 if(ESPRESSO_BUILD_WITH_VALGRIND)
@@ -855,7 +917,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        fc081850 # v7.2 with patches
+    GIT_TAG        007e77e0 # v7.2 with patches
   )
   # cmake-format: on
   string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
@@ -882,8 +944,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     set(WALBERLA_BUILD_WITH_OPENMP on CACHE BOOL "")
   endif()
   set(WALBERLA_BUILD_WITH_FASTMATH off CACHE BOOL "")
-  set(BUILD_SHARED_LIBS ON)
-  set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
+  set(BUILD_SHARED_LIBS OFF)
   FetchContent_MakeAvailable(walberla)
   set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
   set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
@@ -896,18 +957,6 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   if(WALBERLA_BUILD_WITH_CUDA)
     list(APPEND WALBERLA_LIBS walberla::gpu)
   endif()
-  set(WALBERLA_LIBS_EXPORT
-      ${WALBERLA_LIBS} lodepng walberla::boundary walberla::executiontree
-      walberla::geometry walberla::lbm walberla::timeloop)
-  # install all waLBerla shared objects
-  foreach(target_alias IN LISTS WALBERLA_LIBS_EXPORT)
-    string(REPLACE "::" "_" target_name ${target_alias})
-    get_target_property(target_type ${target_name} TYPE)
-    if(${target_type} STREQUAL "SHARED_LIBRARY")
-      install(TARGETS ${target_name}
-              LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
-    endif()
-  endforeach()
   if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
     function(espresso_avx_flags_callback COMPILER_AVX2_FLAG)
       target_compile_options(

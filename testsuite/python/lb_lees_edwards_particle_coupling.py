@@ -106,7 +106,7 @@ def le_aware_lb_nodes_around_pos(
         coupling_weight(pos_unshifted_lb_units, idx, lbf.shape)
         for idx in dont_need_shift]
 
-    # Handle indices which are not in the primary box in the sheare plane
+    # Handle indices which are not in the primary box in the sheared plane
     # normal
     to_be_shifted_left = [
         (idx, ijk) for idx, ijk in zip(indices_unshifted, ijks)

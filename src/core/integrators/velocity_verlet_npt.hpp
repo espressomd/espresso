@@ -19,11 +19,10 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_NPT
 
-#include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
 #include "PropagationPredicate.hpp"
 #include "npt.hpp"
@@ -45,10 +44,6 @@ struct PropagationPredicateNPT {
 };
 
 using ParticleRangeNPT = ParticleRangeFiltered<PropagationPredicateNPT>;
-
-namespace System {
-class System;
-}
 
 /** Special propagator for NpT isotropic for Andersen method.
  *  Propagate the velocities and positions. Integration steps before force

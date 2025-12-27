@@ -156,7 +156,7 @@ public:
 
   /**
    * @brief Serialize parameters.
-   * Can be overriden to e.g. serialize parameters in a specific order.
+   * Can be overridden to e.g. serialize parameters in a specific order.
    */
   virtual std::vector<std::pair<std::string, Variant>>
   serialize_parameters() const {

@@ -17,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE rotation test
+#define BOOST_TEST_MODULE "Particle rotation test"
 #define BOOST_TEST_DYN_LINK
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_ROTATION
 
@@ -251,6 +251,65 @@ BOOST_AUTO_TEST_CASE(convert_dip_to_quat_test) {
   }
 }
 #endif // ESPRESSO_DIPOLES
+
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+// prototype of the function to test
+void stoner_wohlfarth_no_field(Particle &p, Utils::Vector3d const &e_k,
+                               double kT, double noise);
+
+static void prepare_tsw_flip(Particle &p, double phi0) {
+  p.dipm() = 0.5;
+  p.quat() = {1., 2., 3., 4.};
+  p.stoner_wohlfarth_phi_0() = phi0;
+}
+
+static void check_tsw_flip(auto const &p, auto const &quat, double dipm) {
+  for (unsigned int i : {0u, 1u, 2u, 3u}) {
+    BOOST_CHECK_CLOSE(p.quat()[i], quat[i], tol);
+  }
+  BOOST_CHECK_CLOSE(p.dipm(), dipm, tol);
+}
+
+BOOST_AUTO_TEST_CASE(stoner_wohlfarth_no_field_test) {
+  using Utils::convert_director_to_quaternion;
+  auto const kT = 1.;
+  auto const sat_mag = 0.65;
+  auto const e_k = Utils::Vector3d{{1., 2., 3.}};
+  auto const quat_ref_up = convert_director_to_quaternion(sat_mag * e_k);
+  auto const quat_ref_down = convert_director_to_quaternion(-sat_mag * e_k);
+  auto const dipm_ref = (sat_mag * e_k).norm();
+  auto p = Particle();
+  p.magnetic_anisotropy_energy() = 1.;
+  p.stoner_wohlfarth_tau0_inv() = 1.;
+  p.stoner_wohlfarth_dt_incr() = 1.;
+  p.saturation_magnetization() = sat_mag;
+  for (auto phi0 : {0., 0.01, -0.01}) {
+    {
+      prepare_tsw_flip(p, phi0);
+      stoner_wohlfarth_no_field(p, e_k, kT, 0.);
+      check_tsw_flip(p, quat_ref_down, dipm_ref);
+    }
+    {
+      prepare_tsw_flip(p, phi0);
+      stoner_wohlfarth_no_field(p, e_k, kT, 1.);
+      check_tsw_flip(p, quat_ref_up, dipm_ref);
+    }
+  }
+  for (auto phi0 : {std::numbers::pi_v<double>, 3.1, 3.2}) {
+    {
+      prepare_tsw_flip(p, phi0);
+      stoner_wohlfarth_no_field(p, e_k, kT, 0.);
+      check_tsw_flip(p, quat_ref_up, dipm_ref);
+    }
+    {
+      prepare_tsw_flip(p, phi0);
+      stoner_wohlfarth_no_field(p, e_k, kT, 1.);
+      check_tsw_flip(p, quat_ref_down, dipm_ref);
+    }
+  }
+}
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
+
 #else  // ESPRESSO_ROTATION
 int main(int argc, char **argv) {}
 #endif // ESPRESSO_ROTATION

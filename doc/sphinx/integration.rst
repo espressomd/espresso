@@ -562,10 +562,10 @@ the temperature, you have to provide a value for the thermal energy :math:`k_B T
 current unit system (see the discussion on units, Section (:ref:`On units`)).
 
 All thermostats have a ``seed`` argument that controls the state of the random
-number generator (Philox Counter-based RNG). This seed is required on first
-activation of a thermostat, unless stated otherwise. It can be omitted in
-subsequent calls of the method that activates the same thermostat. The random
-sequence also depends on the thermostats counters that are
+number generator (Philox counter-based RNG :cite:`salmon11a`).
+This seed is required on first activation of a thermostat, unless stated otherwise.
+It can be omitted in subsequent calls of the method that activates the same thermostat.
+The random sequence also depends on the thermostats counters that are
 incremented after each integration step.
 
 .. _Langevin thermostat:

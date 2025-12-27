@@ -39,7 +39,7 @@ parser.add_argument("--kernels", nargs="+", type=str, default="all",
 args = parser.parse_args()
 
 # Make sure we have the correct versions of the required dependencies
-for module, requirement in [(ps, "==1.3.7"), (lbmpy, "==1.3.7")]:
+for module, requirement in [(ps, "==1.4.0"), (lbmpy, "==1.4.0")]:
     assert packaging.specifiers.SpecifierSet(requirement).contains(module.__version__), \
         f"{module.__name__} version {module.__version__} " \
         f"doesn't match requirement {requirement}"

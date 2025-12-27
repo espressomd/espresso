@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 The ESPResSo project
+# Copyright (C) 2018-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,5 +17,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-target_sources(espresso_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_tracers.cpp
-                                     ${CMAKE_CURRENT_SOURCE_DIR}/relative.cpp)
+target_sources(espresso_core PRIVATE lb_tracers.cpp relative.cpp com.cpp)

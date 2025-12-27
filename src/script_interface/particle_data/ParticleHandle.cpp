@@ -39,6 +39,7 @@
 #include "core/rotation.hpp"
 #include "core/system/System.hpp"
 #include "core/virtual_sites.hpp"
+#include "core/virtual_sites/com.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/reduce_optional.hpp>
@@ -67,18 +68,18 @@ namespace ScriptInterface {
 namespace Particles {
 
 #ifdef ESPRESSO_ROTATION
-static auto const contradicting_arguments_quat = std::vector<
-    std::array<std::string, 3>>{{
-    {{"dip", "dipm",
-      "Setting 'dip' is sufficient as it defines the scalar dipole moment."}},
-    {{"quat", "director",
-      "Setting 'quat' is sufficient as it defines the director."}},
-    {{"dip", "quat",
-      "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."}},
-    {{"dip", "director",
-      "Setting 'dip' would overwrite 'director'. Set 'director' and "
-      "'dipm' instead."}},
-}};
+static auto constexpr contradicting_arguments_quat = std::to_array<
+    std::array<std::string_view, 3>>({
+    {"dip", "dipm",
+     "Setting 'dip' is sufficient as it defines the scalar dipole moment."},
+    {"quat", "director",
+     "Setting 'quat' is sufficient as it defines the director."},
+    {"dip", "quat",
+     "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."},
+    {"dip", "director",
+     "Setting 'dip' would overwrite 'director'. Set 'director' and "
+     "'dipm' instead."},
+});
 
 static void sanity_checks_rotation(VariantMap const &params) {
   // if we are not constructing a particle from a checkpoint file,
@@ -87,7 +88,8 @@ static void sanity_checks_rotation(VariantMap const &params) {
     auto formatter =
         boost::format("Contradicting particle attributes: '%s' and '%s'. %s");
     for (auto const &[prop1, prop2, reason] : contradicting_arguments_quat) {
-      if (params.contains(prop1) and params.contains(prop2)) {
+      if (params.contains(std::string{prop1}) and
+          params.contains(std::string{prop2})) {
         auto const err_msg = boost::str(formatter % prop1 % prop2 % reason);
         throw std::invalid_argument(err_msg);
       }
@@ -272,6 +274,47 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() { return get_particle_data(m_pid).dip_fld(); }},
 #endif
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+      {"magnetodynamics",
+       [this](Variant const &value) {
+         set_particle_property([&value](Particle &p) {
+           auto const dict = get_value<VariantMap>(value);
+           if (dict.contains("is_enabled"))
+             p.stoner_wohlfarth_is_enabled() =
+                 get_value<bool>(dict.at("is_enabled"));
+           if (dict.contains("sw_phi_0"))
+             p.stoner_wohlfarth_phi_0() =
+                 get_value<double>(dict.at("sw_phi_0"));
+           if (dict.contains("sat_mag"))
+             p.saturation_magnetization() =
+                 get_value<double>(dict.at("sat_mag"));
+           if (dict.contains("anisotropy_field_inv"))
+             p.magnetic_anisotropy_field_inv() =
+                 get_value<double>(dict.at("anisotropy_field_inv"));
+           if (dict.contains("anisotropy_energy"))
+             p.magnetic_anisotropy_energy() =
+                 get_value<double>(dict.at("anisotropy_energy"));
+           if (dict.contains("sw_tau0_inv"))
+             p.stoner_wohlfarth_tau0_inv() =
+                 get_value<double>(dict.at("sw_tau0_inv"));
+           if (dict.contains("sw_dt_incr"))
+             p.stoner_wohlfarth_dt_incr() =
+                 get_value<double>(dict.at("sw_dt_incr"));
+         });
+       },
+       [this]() {
+         auto const &p = get_particle_data(m_pid);
+         return VariantMap{
+             {"is_enabled", p.stoner_wohlfarth_is_enabled()},
+             {"sw_phi_0", p.stoner_wohlfarth_phi_0()},
+             {"sat_mag", p.saturation_magnetization()},
+             {"anisotropy_field_inv", p.magnetic_anisotropy_field_inv()},
+             {"anisotropy_energy", p.magnetic_anisotropy_energy()},
+             {"sw_tau0_inv", p.stoner_wohlfarth_tau0_inv()},
+             {"sw_dt_incr", p.stoner_wohlfarth_dt_incr()},
+         };
+       }},
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 #ifdef ESPRESSO_ROTATION
       {"director",
        [this](Variant const &value) {
@@ -457,6 +500,27 @@ ParticleHandle::ParticleHandle() {
                                       quat2vector(vs_rel.rel_orientation)}};
        }},
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+      {"vs_com",
+       [this](Variant const &value) {
+         ParticleProperties::VirtualSitesCenterOfMassParameters vs_com{};
+         try {
+           auto const array = get_value<std::vector<int>>(value);
+           if (array.size() != 1) {
+             throw 0;
+           }
+           vs_com.to_molecule_id = get_value<int>(array[0]);
+         } catch (...) {
+           throw std::invalid_argument(
+               error_msg("vs_com", "must take the form [id]"));
+         }
+         set_particle_property([&vs_com](Particle &p) { p.vs_com() = vs_com; });
+       },
+       [this]() {
+         auto const &vs_com = get_particle_data(m_pid).vs_com();
+         return std::vector<Variant>{{vs_com.to_molecule_id}};
+       }},
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
       {"propagation",
        [this](Variant const &value) {
          auto const propagation = get_value<int>(value);
@@ -663,6 +727,21 @@ Variant ParticleHandle::do_call_method(std::string const &name,
                   Variant{static_cast<int>(PropagationMode::TRANS_VS_RELATIVE |
                                            PropagationMode::ROT_VS_RELATIVE)});
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+  } else if (name == "vs_com_relate_to") {
+    if (not context()->is_head_node()) {
+      return {};
+    }
+    auto const other_molid = get_value<int>(params, "molid");
+    if (other_molid < 0) {
+      throw std::domain_error("Invalid molecule id: " +
+                              std::to_string(other_molid));
+    }
+    set_parameter("vs_com", Variant{std::vector<Variant>{{other_molid}}});
+    set_parameter(
+        "propagation",
+        Variant{static_cast<int>(PropagationMode::TRANS_VS_CENTER_OF_MASS)});
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 #ifdef ESPRESSO_EXCLUSIONS
   } else if (name == "has_exclusion") {
     auto const other_pid = get_value<int>(params, "pid");

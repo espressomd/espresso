@@ -23,7 +23,7 @@ import tests_common
 import espressomd.electrostatics
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS"])
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "GSL"])
 class Test(ut.TestCase):
 
     system = espressomd.System(box_l=[10.0] * 3)

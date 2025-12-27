@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
- * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
- *   Max-Planck-Institute for Polymer Research, Theory Group
+ * Copyright (C) 2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -21,23 +19,15 @@
 
 #pragma once
 
-/** \file
- *  Force calculation.
- *
- *  Implementation in forces.cpp.
- */
-
 #include <config/config.hpp>
 
-#include "ParticleRange.hpp"
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+
+#include "BoxGeometry.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "system/System.hpp"
 
-/** Combined force initialization and Langevin noise application. */
-void init_forces_and_thermostat(System::System const &system);
+void vs_com_update_particles(CellStructure &cell_structure,
+                             BoxGeometry const &box_geo);
+void vs_com_back_transfer_forces_and_torques(CellStructure &cell_structure);
 
-/** Set forces of all ghosts to zero */
-void init_forces_ghosts(const CellStructure &cell_structure);
-
-/** Calculate long range forces (P3M, ...). */
-void calc_long_range_forces(ParticleRange const &particles);
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS

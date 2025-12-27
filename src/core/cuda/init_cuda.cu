@@ -35,8 +35,8 @@
 
 /** \name minimally required compute capability. */
 /**@{*/
-static const int computeCapabilityMinMajor = 3;
-static const int computeCapabilityMinMinor = 0;
+static int constexpr computeCapabilityMinMajor = 3;
+static int constexpr computeCapabilityMinMinor = 0;
 /**@}*/
 
 void cuda_init() { CUDA_CHECK(cudaStreamCreate(&stream[0])) }

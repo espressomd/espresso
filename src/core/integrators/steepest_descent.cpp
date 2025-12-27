@@ -19,15 +19,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <config/config.hpp>
+
 #include "integrators/steepest_descent.hpp"
 
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "config/config.hpp"
 #include "rotation.hpp"
-#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
@@ -40,15 +39,12 @@
 #include <limits>
 #include <stdexcept>
 
-/** Currently active steepest descent instance */
-static SteepestDescentParameters params{0., 0., 0.};
-
-bool steepest_descent_step(const ParticleRange &particles) {
+bool SteepestDescent::propagate(CellStructure &cell_structure) const {
   // Maximal force encountered on node
-  auto f_max = -std::numeric_limits<double>::max();
+  auto f_max_local = -std::numeric_limits<double>::max();
 
   // Iteration over all local particles
-  for (auto &p : particles) {
+  for (auto &p : cell_structure.local_particles()) {
     auto f = 0.0;
 
     // For all Cartesian coordinates
@@ -59,9 +55,8 @@ bool steepest_descent_step(const ParticleRange &particles) {
         f += Utils::sqr(p.force()[j]);
 
         // Positional increment, crop to maximum allowed by user
-        auto const dp =
-            std::clamp(params.gamma * p.force()[j], -params.max_displacement,
-                       params.max_displacement);
+        auto const dp = std::clamp(gamma * p.force()[j], -max_displacement,
+                                   max_displacement);
 
         // Move particle
         p.pos()[j] += dp;
@@ -70,43 +65,37 @@ bool steepest_descent_step(const ParticleRange &particles) {
 #ifdef ESPRESSO_ROTATION
     {
       // Rotational increment
-      auto const dq = params.gamma * p.torque(); // Vector parallel to torque
+      auto const dq = gamma * p.torque(); // Vector parallel to torque
       auto const t = p.torque().norm2();
 
       // Normalize rotation axis and compute amount of rotation
       auto const l = dq.norm();
       if (l > 0.0) {
         auto const axis = dq / l;
-        auto const angle =
-            std::clamp(l, -params.max_displacement, params.max_displacement);
+        auto const angle = std::clamp(l, -max_displacement, max_displacement);
 
         // Rotate the particle around axis dq by amount l
         local_rotate_particle(p, axis, angle);
       }
 
-      f_max = std::max(f_max, t);
+      f_max_local = std::max(f_max_local, t);
     }
 #endif
     // Note maximum force/torque encountered
-    f_max = std::max(f_max, f);
+    f_max_local = std::max(f_max_local, f);
   }
 
-  auto &cell_structure = *System::get_system().cell_structure;
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 
   // Synchronize maximum force/torque encountered
-  auto const f_max_global =
-      boost::mpi::all_reduce(comm_cart, f_max, boost::mpi::maximum<double>());
+  auto const f_max_global = boost::mpi::all_reduce(
+      comm_cart, f_max_local, boost::mpi::maximum<double>());
 
-  return sqrt(f_max_global) < params.f_max;
+  return std::sqrt(f_max_global) < f_max;
 }
 
-void register_integrator(SteepestDescentParameters const &obj) {
-  ::params = obj;
-}
-
-SteepestDescentParameters::SteepestDescentParameters(
-    const double f_max, const double gamma, const double max_displacement)
+SteepestDescent::SteepestDescent(double f_max, double gamma,
+                                 double max_displacement)
     : f_max{f_max}, gamma{gamma}, max_displacement{max_displacement} {
   if (f_max < 0.0) {
     throw std::runtime_error("The maximal force must be positive.");

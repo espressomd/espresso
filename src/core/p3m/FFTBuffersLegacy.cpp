@@ -19,9 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
+#if defined(ESPRESSO_DP3M)
 
 #include "FFTBuffersLegacy.hpp"
 
@@ -56,17 +56,13 @@ void FFTBuffersLegacy<FloatType>::init_meshes(int ca_mesh_size) {
 
 template <typename FloatType>
 void FFTBuffersLegacy<FloatType>::perform_vector_halo_spread() {
-  std::array<FloatType *, 3u> meshes = {{rs_mesh_fields[0u].data(),
-                                         rs_mesh_fields[1u].data(),
-                                         rs_mesh_fields[2u].data()}};
+  std::array<FloatType *, 3u> meshes = get_vector_mesh();
   mesh_comm.spread_grid(::comm_cart, meshes, local_mesh.dim);
 }
 
 template <typename FloatType>
 void FFTBuffersLegacy<FloatType>::perform_vector_halo_gather() {
-  std::array<FloatType *, 3u> meshes = {{rs_mesh_fields[0u].data(),
-                                         rs_mesh_fields[1u].data(),
-                                         rs_mesh_fields[2u].data()}};
+  std::array<FloatType *, 3u> meshes = get_vector_mesh();
   mesh_comm.gather_grid(::comm_cart, meshes, local_mesh.dim);
 }
 
@@ -89,4 +85,4 @@ std::array<FloatType *, 3u> FFTBuffersLegacy<FloatType>::get_vector_mesh() {
 template class FFTBuffersLegacy<float>;
 template class FFTBuffersLegacy<double>;
 
-#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
+#endif // defined(ESPRESSO_DP3M)

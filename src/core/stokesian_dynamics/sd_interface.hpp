@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -24,11 +24,10 @@
  *  See @cite banchio03a and @cite brady88a for the thermalization method.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_STOKESIAN_DYNAMICS
 
-#include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
 #include "PropagationPredicate.hpp"
 #include "thermostat.hpp"
@@ -50,12 +49,33 @@ struct PropagationPredicateStokesian {
 using ParticleRangeStokesian =
     ParticleRangeFiltered<PropagationPredicateStokesian>;
 
-struct StokesianDynamicsParameters {
-  double viscosity;
-  std::unordered_map<int, double> radii;
-  int flags;
-  StokesianDynamicsParameters(double viscosity,
-                              std::unordered_map<int, double> radii, int flags);
+struct StokesianDynamics {
+  double viscosity = 0.;
+  std::unordered_map<int, double> radii = {};
+  int flags = 0;
+  StokesianDynamics() = default;
+  StokesianDynamics(double viscosity, std::unordered_map<int, double> radii,
+                    int flags);
+
+  /**
+   * Take the forces and torques on all particles and compute velocities.
+   * Act globally on particles on all nodes; i.e. particle data is
+   * gathered from all nodes and their velocities and angular velocities
+   * are set according to the Stokesian Dynamics method.
+   */
+  void propagate_vel_pos(ParticleRangeStokesian const &particles,
+                         StokesianThermostat const &stokesian, double time_step,
+                         double kT) const;
+
+private:
+  /**
+   * Buffer that holds the (translational and angular) velocities of the local
+   * particles on each node, used for returning results.
+   */
+  mutable std::vector<double> v_sd = {};
+  mutable std::vector<double> x_host = {};
+  mutable std::vector<double> f_host = {};
+  mutable std::vector<double> a_host = {};
 };
 
 enum class sd_flags : int {
@@ -65,16 +85,5 @@ enum class sd_flags : int {
   LUBRICATION = 1 << 2,
   FTS = 1 << 3
 };
-
-void register_integrator(StokesianDynamicsParameters const &obj);
-
-/** Takes the forces and torques on all particles and computes their
- *  velocities. Acts globally on particles on all nodes; i.e. particle data
- *  is gathered from all nodes and their velocities and angular velocities are
- *  set according to the Stokesian Dynamics method.
- */
-void propagate_vel_pos_sd(ParticleRangeStokesian const &particles,
-                          StokesianThermostat const &stokesian,
-                          double time_step, double kT);
 
 #endif // ESPRESSO_STOKESIAN_DYNAMICS

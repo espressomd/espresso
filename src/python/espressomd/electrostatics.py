@@ -140,7 +140,6 @@ class _P3MBase(ElectrostaticInteraction):
                 "mesh_off": [-1., -1., -1.],
                 "prefactor": 0.,
                 "check_neutrality": True,
-                "check_complex_residuals": True,
                 "tune": True,
                 "timings": 10,
                 "verbose": True}
@@ -220,9 +219,6 @@ class P3M(_P3MBase):
     check_neutrality : :obj:`bool`, optional
         Raise a warning if the system is not electrically neutral when
         set to ``True`` (default).
-    check_complex_residuals: :obj:`bool`, optional
-        Raise a warning if the backward Fourier transform has non-zero
-        complex residuals when set to ``True`` (default).
     single_precision : :obj:`bool`
         Use single-precision floating-point arithmetic.
 
@@ -279,9 +275,6 @@ class P3MGPU(_P3MBase):
     check_neutrality : :obj:`bool`, optional
         Raise a warning if the system is not electrically neutral when
         set to ``True`` (default).
-    check_complex_residuals: :obj:`bool`, optional
-        Raise a warning if the backward Fourier transform has non-zero
-        complex residuals when set to ``True`` (default).
 
     """
     _so_name = "Coulomb::CoulombP3MGPU"
@@ -398,6 +391,7 @@ class MMM1D(ElectrostaticInteraction):
     """
     _so_name = "Coulomb::CoulombMMM1D"
     _so_creation_policy = "GLOBAL"
+    _so_features = ("ELECTROSTATICS", "GSL")
 
     def default_params(self):
         return {"far_switch_radius": -1.,

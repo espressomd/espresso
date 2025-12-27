@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
 
@@ -81,12 +81,12 @@ void DipolarDirectSumGpu::add_long_range_forces() const {
       n_replicas);
 }
 
-void DipolarDirectSumGpu::long_range_energy() const {
+double DipolarDirectSumGpu::long_range_energy() const {
   auto &system = get_system();
   auto &gpu = system.gpu;
   gpu.update();
   if (this_node != 0) {
-    return;
+    return 0.;
   }
   float box[3];
   int periodicity[3];
@@ -98,6 +98,7 @@ void DipolarDirectSumGpu::long_range_energy() const {
   DipolarDirectSum_kernel_wrapper_energy(static_cast<float>(prefactor), npart,
                                          positions_device, dipoles_device, box,
                                          periodicity, energy_device);
+  return 0.;
 }
 
 #endif // ESPRESSO_DIPOLAR_DIRECT_SUM

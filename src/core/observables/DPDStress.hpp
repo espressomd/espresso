@@ -16,11 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_DPDSTRESS_HPP
-#define OBSERVABLES_DPDSTRESS_HPP
+#pragma once
+
+#include <config/config.hpp>
+
+#ifdef ESPRESSO_DPD
 
 #include "Observable.hpp"
 #include "dpd.hpp"
+#include "system/System.hpp"
 
 #include <cstddef>
 #include <vector>
@@ -32,10 +36,10 @@ public:
   std::vector<std::size_t> shape() const override { return {3, 3}; }
   std::vector<double>
   operator()(boost::mpi::communicator const &comm) const override {
-    return dpd_stress(comm);
+    return dpd_stress(System::get_system(), comm);
   }
 };
 
 } // Namespace Observables
 
-#endif
+#endif // ESPRESSO_DPD

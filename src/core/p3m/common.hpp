@@ -37,6 +37,7 @@
 #include <config/config.hpp>
 
 #include <utils/Vector.hpp>
+#include <utils/index.hpp>
 
 #include <algorithm>
 #include <array>
@@ -50,11 +51,12 @@ inline auto constexpr P3M_EPSILON_METALLIC = 0.0;
 #include "LocalBox.hpp"
 
 #include <cstddef>
+#include <optional>
 #include <span>
 #include <stdexcept>
 
 /** @brief P3M kernel architecture. */
-enum class Arch { CPU, GPU };
+enum class Arch { CPU, CUDA };
 
 /** @brief Structure to hold P3M parameters and some dependent variables. */
 struct P3MParameters {
@@ -177,8 +179,8 @@ struct P3MLocalMesh {
   /** dimension (size) of local mesh including halo layers. */
   Utils::Vector3i dim;
   Utils::Vector3i dim_no_halo;
-  /** number of local mesh points. */
-  int size;
+  /** number of local mesh points including halo layers. */
+  std::size_t size;
   /** index of lower left corner of the
       local mesh in the global mesh. */
   Utils::Vector3i ld_ind;
@@ -244,6 +246,45 @@ template <typename FloatType> struct P3MFFTMesh {
   int ks_pnum = 0;
 };
 
+struct TuningParameters {
+  int timings;
+  std::pair<std::optional<int>, std::optional<int>> limits;
+  bool verbose;
+};
+
+/**
+ * @brief Adapt an influence function grid for real-to-complex FFTs.
+ * @param[in]     global_size   size of the global mesh grid
+ * @param[in]     local_size    size of the local mesh grid
+ * @param[in]     local_origin  offset of the local mesh grid
+ * @param[in,out] g_function    influence function grid to modify in-place
+ * @tparam        r2c_dir       direction of the reduced dimension
+ */
+template <unsigned int r2c_dir>
+void influence_function_r2c(auto &g_function, auto const &global_size,
+                            auto const &local_size, auto const &local_origin) {
+  auto const cutoff_right = global_size[r2c_dir] / 2 - local_origin[r2c_dir];
+  std::remove_cvref_t<decltype(g_function)> g_function_r2c;
+  g_function_r2c.reserve(g_function.size() / 2ul);
+  auto local_index = Utils::Vector3i::broadcast(0);
+  auto &short_dim = local_index[r2c_dir];
+  auto &nx = local_index[0u];
+  auto &ny = local_index[1u];
+  auto &nz = local_index[2u];
+  std::size_t index = 0u;
+  for (nx = 0; nx < local_size[0u]; ++nx) {
+    for (ny = 0; ny < local_size[1u]; ++ny) {
+      for (nz = 0; nz < local_size[2u]; ++nz) {
+        if (short_dim <= cutoff_right) {
+          g_function_r2c.emplace_back(g_function[index]);
+        }
+        ++index;
+      }
+    }
+  }
+  std::swap(g_function, g_function_r2c);
+}
+
 #endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 /** @brief Calculate indices that shift @ref P3MParameters::mesh by `mesh/2`.
@@ -270,3 +311,17 @@ std::array<std::vector<int>, 3> inline calc_p3m_mesh_shift(
 
   return ret;
 }
+
+template <Utils::MemoryOrder RSpaceOrder = Utils::MemoryOrder::ROW_MAJOR,
+          Utils::MemoryOrder KSpaceOrder = Utils::MemoryOrder::ROW_MAJOR,
+          bool UseR2C = false, unsigned int R2CDir = 2u>
+struct P3MFFTConfig {
+  /** @brief Data layout of the input real-space 3D matrix. */
+  static auto constexpr r_space_order = RSpaceOrder;
+  /** @brief Data layout of the output k-space 3D matrix. */
+  static auto constexpr k_space_order = KSpaceOrder;
+  /** @brief Use real-to-complex implementation. */
+  static auto constexpr use_r2c = UseR2C;
+  /** @brief Direction of the reduced dimension (if @c use_r2c is true). */
+  static auto constexpr r2c_dir = R2CDir;
+};

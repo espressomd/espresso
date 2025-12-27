@@ -17,17 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_NPT
 #include "velocity_verlet_npt.hpp"
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "system/System.hpp"
 #include "thermostats/npt_inline.hpp"
 
 #include <utils/Vector.hpp>
@@ -104,7 +104,7 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
     // L(t)**2 / L(t+0.5*dt)**2, where the numerator follows time in position,
     // and the denominator follows time in velocity
     scal[2] = Utils::sqr(box_geo.length()[nptiso.non_const_dim]) /
-              pow(nptiso.volume, 2.0 / nptiso.dimension);
+              std::pow(nptiso.volume, 2.0 / nptiso.dimension);
     if (nptiso.volume < 0.0) {
       runtimeErrorMsg()
           << "your choice of piston= " << nptiso.piston << ", dt= " << time_step
@@ -114,7 +114,7 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
       scal[2] = 1;
     }
 
-    L_halfdt = pow(nptiso.volume, 1.0 / nptiso.dimension);
+    L_halfdt = std::pow(nptiso.volume, 1.0 / nptiso.dimension);
 
     // L(t+0.5*dt) / L(t)
     scal[1] = L_halfdt * box_geo.length_inv()[nptiso.non_const_dim];
@@ -152,7 +152,7 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
   if (::this_node == 0) {
     nptiso.p_epsilon = propagate_thermV_nptiso(npt_iso, nptiso.p_epsilon);
     nptiso.volume += nptiso.inv_piston * nptiso.p_epsilon * 0.5 * time_step;
-    L_dt = pow(nptiso.volume, 1.0 / nptiso.dimension);
+    L_dt = std::pow(nptiso.volume, 1.0 / nptiso.dimension);
 
     scal[2] = 1.0;
     scal[1] = L_dt / L_halfdt;

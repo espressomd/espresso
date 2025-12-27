@@ -21,13 +21,11 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_DIPOLES
 
 #include "magnetostatics/actor.hpp"
-
-#include "ParticleRange.hpp"
 
 /**
  * @brief Dipolar all with all and no replica.
@@ -47,10 +45,10 @@ struct DipolarDirectSum : public Dipoles::Actor<DipolarDirectSum> {
   void init() const {}
   void sanity_checks() const {}
 
-  double long_range_energy(ParticleRange const &particles) const;
-  void add_long_range_forces(ParticleRange const &particles) const;
+  double long_range_energy() const;
+  void add_long_range_forces() const;
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  void dipole_field_at_part(ParticleRange const &particles) const;
+  void dipole_field_at_part() const;
 #endif
 };
 

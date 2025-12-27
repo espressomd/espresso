@@ -17,12 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE Particle serialization test
+#define BOOST_TEST_MODULE "Particle serialization test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <config/config.hpp>
+
 #include "Particle.hpp"
-#include "config/config.hpp"
 
 #include <utils/demangle.hpp>
 #include <utils/serialization/memcpy_archive.hpp>

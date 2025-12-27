@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 import os
 import sys
 import time
@@ -51,7 +52,8 @@ def minimize(system, energy_target):
         exit(1)
 
 
-def get_timings(system, n_steps, n_iterations, verbose=True):
+def get_timings(system, n_steps, n_iterations, verbose=True,
+                retune_skin_after_steps=None):
     '''
     Time the integration loop and write the state of the system to stdout.
 
@@ -65,6 +67,9 @@ def get_timings(system, n_steps, n_iterations, verbose=True):
         Number of timings.
     verbose: :obj:`bool`
         Whether to print the state of the system during timing.
+    retune_skin_after_steps: :obj:`int`, optional
+        If provided, retune the skin every this many iterations to within 10%
+        of the current skin value.
 
     Returns
     -------
@@ -76,6 +81,21 @@ def get_timings(system, n_steps, n_iterations, verbose=True):
         print(f"Timing every {n_steps} steps")
     timings = []
     for i in range(n_iterations):
+        # Retune skin if requested
+        if retune_skin_after_steps is not None and i % retune_skin_after_steps == 0:
+            current_skin = system.cell_system.skin
+            min_skin_retune = current_skin / 1.1
+            max_skin_retune = current_skin * 1.1
+            if verbose:
+                print(f"Retuning skin at iteration {i} "
+                      f"(current: {current_skin:.3f}, "
+                      f"range: [{min_skin_retune:.3f}, "
+                      f"{max_skin_retune:.3f}])")
+            new_skin = system.cell_system.tune_skin(
+                min_skin=min_skin_retune, max_skin=max_skin_retune, tol=current_skin * 0.0125, int_steps=n_steps // 4)
+            if verbose:
+                print(f"New skin: {new_skin:.3f}")
+
         tick = time.time()
         system.integrator.run(n_steps)
         tock = time.time()
@@ -85,7 +105,7 @@ def get_timings(system, n_steps, n_iterations, verbose=True):
             energy = system.analysis.energy()["total"]
             verlet = system.cell_system.get_state()["verlet_reuse"]
             print(
-                f"step {i}, time: {1000 * t:.2f} ms, verlet: {verlet:.2f}, energy: {energy:.2e}")
+                f"step {i}, time: {1000 * t:.4f} ms, verlet: {verlet:.2f}, energy: {energy:.2e}")
     return np.array(timings)
 
 

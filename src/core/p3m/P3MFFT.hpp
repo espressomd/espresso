@@ -20,6 +20,7 @@
 #pragma once
 
 #include <utils/Vector.hpp>
+#include <utils/index.hpp>
 
 #include <boost/mpi/communicator.hpp>
 
@@ -31,62 +32,70 @@
 #include <initializer_list>
 #include <memory>
 
-template <typename T, std::size_t N>
-auto to_array(Utils::Vector<T, N> const &vec) {
-  std::array<T, N> res{};
-  std::ranges::copy(vec, res.begin());
-  return res;
-};
-
-template <typename FloatType> class P3MFFT {
+/**
+ * @brief FFT manager.
+ */
+template <typename FloatType, class FFTConfig> class P3MFFT {
 private:
   using backend_tag = heffte::backend::default_backend<heffte::tag::cpu>::type;
+  using FFT3D =
+      std::conditional_t<FFTConfig::use_r2c, heffte::fft3d_r2c<backend_tag>,
+                         heffte::fft3d<backend_tag>>;
   using Box = heffte::box3d<>;
-  boost::mpi::communicator comm;
-  Utils::Vector3i m_memory_layout;
-  Utils::Vector3i m_global_mesh;
-  std::shared_ptr<Box> in_box;
-  std::shared_ptr<Box> out_box;
-  std::vector<std::complex<FloatType>> m_buffer;
-  heffte::fft3d<backend_tag> fft3d;
+
+  /* input box */
+  std::unique_ptr<Box> in_box;
+  /* output box */
+  std::unique_ptr<Box> out_box;
+  /* workspace for the FFT */
+  std::vector<std::complex<FloatType>> m_workspace;
+  /* FFT backend */
+  std::unique_ptr<FFT3D> fft3d;
+
+  template <typename T, std::size_t N>
+  static auto to_array(Utils::Vector<T, N> const &vec) {
+    std::array<T, N> res{};
+    std::ranges::copy(vec, res.begin());
+    return res;
+  }
 
 public:
   P3MFFT(boost::mpi::communicator comm, Utils::Vector3i const &global_mesh,
          Utils::Vector3i const &rs_local_ld_index,
          Utils::Vector3i const &rs_local_ur_index,
-         Utils::Vector3i const &memory_layout)
-      : comm(comm), m_memory_layout(memory_layout), m_global_mesh(global_mesh),
-        in_box(std::make_shared<Box>(
-            to_array(rs_local_ld_index),
-            to_array(rs_local_ur_index - Utils::Vector3i::broadcast(1)),
-            to_array(m_memory_layout))),
-        out_box(std::make_shared<Box>(
-            to_array(rs_local_ld_index),
-            to_array(rs_local_ur_index - Utils::Vector3i::broadcast(1)),
-            to_array(m_memory_layout))),
-        fft3d(*in_box, *out_box, comm) {
-    init_fft();
-  }
-
-  void set_preferred_kspace_decomposition(Utils::Vector3i const &node_grid) {
-    auto const global_box = heffte::box3d<>(
-        {0, 0, 0}, to_array(m_global_mesh - Utils::Vector3i::broadcast(1)),
-        to_array(m_memory_layout));
+         Utils::Vector3i const &node_grid) {
+    auto constexpr row_major_order = std::array<int, 3>{2, 1, 0};
+    auto constexpr col_major_order = std::array<int, 3>{0, 1, 2};
+    auto constexpr in_box_order =
+        (FFTConfig::r_space_order == Utils::MemoryOrder::ROW_MAJOR)
+            ? row_major_order
+            : col_major_order;
+    auto constexpr out_box_order =
+        (FFTConfig::k_space_order == Utils::MemoryOrder::ROW_MAJOR)
+            ? row_major_order
+            : col_major_order;
     auto const n_procs = Utils::product(node_grid);
+    auto const high = to_array(global_mesh - Utils::Vector3i::broadcast(1));
+    auto const global_out_box_full = Box({0, 0, 0}, high, out_box_order);
+    auto const global_out_box =
+        FFTConfig::use_r2c ? global_out_box_full.r2c(FFTConfig::r2c_dir)
+                           : global_out_box_full;
     auto best_grid = node_grid;
     for (auto i : {0u, 1u, 2u}) {
-      if (m_global_mesh[i] % (2 * n_procs) == 0) {
+      if (global_mesh[i] % (2 * n_procs) == 0) {
         best_grid = {n_procs, 1, 1};
         break;
       }
     }
-    auto all_boxes = heffte::split_world(
-        global_box, {best_grid[0], best_grid[1], best_grid[2]});
-    out_box = std::make_shared<Box>(all_boxes[comm.rank()]);
-    init_fft();
-  }
+    // use optimal output box decomposition based on prime factors
+    auto out_boxes = heffte::split_world(global_out_box, to_array(best_grid));
+    out_box = std::make_unique<Box>(out_boxes[comm.rank()]);
 
-  void init_fft() {
+    in_box = std::make_unique<Box>(
+        to_array(rs_local_ld_index),
+        to_array(rs_local_ur_index - Utils::Vector3i::broadcast(1)),
+        in_box_order);
+
     // at this stage we can manually adjust some HeFFTe options
     heffte::plan_options options = heffte::default_options<backend_tag>();
 
@@ -94,7 +103,7 @@ public:
     // some backends work just as well when the entries of the data are not
     // contiguous then there is no need to reorder the data in the intermediate
     // stages which saves time
-    options.use_reorder = false;
+    options.use_reorder = true;
 
     // use point-to-point communications
     // collaborative all-to-all and individual point-to-point communications are
@@ -107,8 +116,13 @@ public:
     // pencil decomposition is better but for smaller problems, the slabs may
     // perform better (depending on hardware and backend)
     options.use_pencils = true;
-    fft3d = heffte::fft3d<backend_tag>(*in_box, *out_box, comm, options);
-    m_buffer.resize(fft3d.size_workspace());
+    if constexpr (FFTConfig::use_r2c) {
+      fft3d = std::make_unique<FFT3D>(*in_box, *out_box, FFTConfig::r2c_dir,
+                                      comm, options);
+    } else {
+      fft3d = std::make_unique<FFT3D>(*in_box, *out_box, comm, options);
+    }
+    m_workspace.resize(fft3d->size_workspace());
   }
 
   Utils::Vector3i ks_local_ld_index() const {
@@ -120,11 +134,14 @@ public:
   Utils::Vector3i ks_local_size() const {
     return ks_local_ur_index() - ks_local_ld_index();
   }
-  template <typename In, typename Out> void forward(In in, Out out) {
-    fft3d.forward(in, out, m_buffer.data());
+  Utils::Vector3i rs_local_size() const {
+    return Utils::Vector3i(in_box->high) + Utils::Vector3i::broadcast(1) -
+           Utils::Vector3i(in_box->low);
   }
-  template <typename T1, typename T2> auto backward(T1 &in, T2 &out) {
-    return fft3d.backward(in, out, m_buffer.data());
+  void forward(auto &&in, auto &&out) {
+    fft3d->forward(in, out, m_workspace.data());
   }
-  auto const &get_memory_layout() const { return m_memory_layout; }
+  void backward(auto &&in, auto &&out) {
+    fft3d->backward(in, out, m_workspace.data());
+  }
 };

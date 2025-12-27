@@ -16,13 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef RANDOM_SEQUENCE_HPP
-#define RANDOM_SEQUENCE_HPP
+
+#pragma once
 
 namespace Testing {
 namespace RandomSequence {
 
-static const double values[] = {
+constexpr inline double values[] = {
     5.36812441e-01, 9.05016283e-01, 2.21117887e-01, 5.02819496e-01,
     7.63086501e-01, 6.53893270e-01, 8.23665727e-01, 9.69872102e-01,
     3.40061134e-01, 1.51051652e-01, 1.90729935e-01, 3.95479722e-01,
@@ -2525,4 +2525,3 @@ static const double values[] = {
     8.03228185e-01, 1.88864574e-01, 4.64225071e-02, 2.85621607e-01};
 }
 } // namespace Testing
-#endif

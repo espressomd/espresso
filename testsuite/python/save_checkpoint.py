@@ -40,6 +40,7 @@ import espressomd.shapes
 import espressomd.constraints
 import espressomd.bond_breakage
 import espressomd.reaction_methods
+import espressomd.propagation
 
 
 config = utg.TestGenerator()
@@ -120,7 +121,8 @@ if lbf_class:
             shape=wall2, value=2.,
             boundary_type=espressomd.electrokinetics.DensityBoundary)
 
-p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0])
+Propagation = espressomd.propagation.Propagation
+p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0], mol_id=3)
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
 
 if espressomd.has_features('ELECTROSTATICS'):
@@ -153,7 +155,6 @@ if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
         cao=1,
         alpha=1.0,
         r_cut=1.0,
-        check_complex_residuals=False,
         timings=15,
         tune_limits=[8, 12],
         tune=False)
@@ -313,6 +314,23 @@ system.bonded_inter.add(ibm_tribend_bond)
 break_spec = espressomd.bond_breakage.BreakageSpec(
     breakage_length=5., action_type="delete_bond")
 system.bond_breakage[strong_harmonic_bond._bond_id] = break_spec
+
+# create Stoner-Wohlfarth particles
+if 'THERM.LANGEVIN' in modes and espressomd.has_features(
+        ['THERMAL_STONER_WOHLFARTH', 'EXTERNAL_FORCES']):
+    magnetodynamics_params = {
+        "is_enabled": True, "anisotropy_field_inv": 0.175,
+        "sat_mag": 1.75, "anisotropy_energy": 5.,
+        "sw_dt_incr": 3e-9, "sw_tau0_inv": 1e8}
+    checkpoint.register("magnetodynamics_params")
+    p_tsw1 = system.part.add(id=11, pos=[1, 1, 1], director=[1, 0, 0],
+                             rotation=(False, False, False),
+                             fix=(True, True, True))
+    p_tsw2 = system.part.add(
+        id=12, pos=p_tsw1.pos, dip=[1, 2, 3], rotation=[False, False, False],
+        magnetodynamics=magnetodynamics_params)
+    p_tsw2.vs_auto_relate_to(p_tsw1)
+    p_tsw2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
 
 checkpoint.register("system")
 checkpoint.register("ibm_volcons_bond")
@@ -478,6 +496,8 @@ if espressomd.has_features(["ENGINE", "VIRTUAL_SITES_RELATIVE"]) and lbf_class:
     p4.swimming = {"v_swim": 0.02, "is_engine_force_on_fluid": True}
 if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and lbf_class:
     p8.mu_E = [-0.1, 0.2, -0.3]
+if espressomd.has_features(["VIRTUAL_SITES_CENTER_OF_MASS"]):
+    p8.vs_com_relate_to(p1)
 
 # h5md output
 if espressomd.has_features("H5MD"):
@@ -567,8 +587,8 @@ class TestCheckpoint(ut.TestCase):
             with open(cpt_path.format("-wrong-popsize"), "wb") as f:
                 f.write(boxsize + b"\n" + b"2" + popsize + b"\n" + data)
 
-    @ut.skipIf(lbf_class is None, "Skipping test due to missing mode.")
-    @ut.skipIf(le_active, "Skipping test due to Lees-Edwards enforces only one ghost layer.")
+    @ut.skipIf(lbf_class is None, "missing LB mode.")
+    @ut.skipIf(le_active, "Lees-Edwards enforces only one ghost layer.")
     def test_ek_checkpointing_exceptions(self):
         '''
         Check the EK checkpointing exception mechanism. Write corrupted

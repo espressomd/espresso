@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "magnetostatics/dipoles.hpp"
@@ -50,6 +50,7 @@
  *  @param d         vector between p1 and p2.
  *  @param dist      distance between p1 and p2.
  *  @param ia_params              non-bonded interaction kernels.
+ *  @param dipoles                Magnetostatics solver.
  *  @param bonded_ias             bonded interaction kernels.
  *  @param kernel_forces          Coulomb force kernel.
  *  @param kernel_pressure        Coulomb pressure kernel.
@@ -59,6 +60,7 @@ inline void add_non_bonded_pair_virials(
     Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
     double dist, IA_parameters const &ia_params,
     [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
+    Dipoles::Solver const &dipoles,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel_forces,
     Coulomb::ShortRangePressureKernel::kernel_type const *kernel_pressure,
     Observable_stat &obs_pressure) {
@@ -66,15 +68,13 @@ inline void add_non_bonded_pair_virials(
   if (do_nonbonded(p1, p2))
 #endif
   {
-    ParticleForce pf{};
-    pf.f = calc_central_radial_force(ia_params, d, dist) +
+    auto f = calc_non_central_force(p1, p2, ia_params, d, dist).f;
+    f += calc_central_radial_force(ia_params, d, dist);
 #ifdef ESPRESSO_THOLE
-           thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias,
-                            kernel_forces) +
+    f +=
+        thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias, kernel_forces);
 #endif
-           Utils::Vector3d{};
-    pf += calc_non_central_force(p1, p2, ia_params, d, dist);
-    auto const stress = Utils::tensor_product(d, pf.f);
+    auto const stress = Utils::tensor_product(d, f);
     obs_pressure.add_non_bonded_contribution(p1.type(), p2.type(), p1.mol_id(),
                                              p2.mol_id(), flatten(stress));
   }
@@ -94,7 +94,7 @@ inline void add_non_bonded_pair_virials(
 
 #ifdef ESPRESSO_DIPOLES
   /* real space magnetic dipole-dipole */
-  if (Dipoles::get_dipoles().impl->solver) {
+  if (dipoles.impl->solver) {
     fprintf(stderr, "calculating pressure for magnetostatics which doesn't "
                     "have it implemented\n");
   }

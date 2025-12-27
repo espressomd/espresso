@@ -435,4 +435,8 @@ public:
 
   /** @brief Notify system that non-bonded interactions changed. */
   void on_non_bonded_ia_change() const;
+
+#ifdef ESPRESSO_DPD
+  void dpd_init(double kT, double time_step);
+#endif
 };

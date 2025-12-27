@@ -69,6 +69,7 @@
  *  @param d          vector between p1 and p2.
  *  @param dist       distance between p1 and p2.
  *  @param bonded_ias       bonded interaction kernels.
+ *  @param coulomb          Electrostatics solver.
  *  @param coulomb_kernel   Coulomb energy kernel.
  *  @return the short-range interaction energy between the two particles
  */
@@ -76,10 +77,11 @@ inline double calc_non_bonded_pair_energy(
     Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
     Utils::Vector3d const &d, double const dist,
     [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
+    [[maybe_unused]] Coulomb::Solver const &coulomb,
     [[maybe_unused]] Coulomb::ShortRangeEnergyKernel::kernel_type const
         *coulomb_kernel) {
 
-  double ret = 0;
+  double ret = 0.;
 
 #ifdef ESPRESSO_LENNARD_JONES
   /* Lennard-Jones */
@@ -143,8 +145,8 @@ inline double calc_non_bonded_pair_energy(
 
 #ifdef ESPRESSO_THOLE
   /* Thole damping */
-  ret +=
-      thole_pair_energy(p1, p2, ia_params, d, dist, bonded_ias, coulomb_kernel);
+  ret += thole_pair_energy(p1, p2, ia_params, d, dist, bonded_ias, coulomb,
+                           coulomb_kernel);
 #endif
 
 #ifdef ESPRESSO_TABULATED
@@ -174,6 +176,7 @@ inline double calc_non_bonded_pair_energy(
  *  @param[in] dist2     distance squared between p1 and p2.
  *  @param[in] ia_params        non-bonded interaction kernels.
  *  @param[in] bonded_ias       bonded interaction kernels.
+ *  @param[in] coulomb          Electrostatics solver.
  *  @param[in] coulomb_kernel   Coulomb energy kernel.
  *  @param[in] dipoles_kernel   Dipolar energy kernel.
  *  @param[in,out] obs_energy   energy observable.
@@ -182,6 +185,7 @@ inline void add_non_bonded_pair_energy(
     Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
     double const dist, double const dist2, IA_parameters const &ia_params,
     [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
+    [[maybe_unused]] Coulomb::Solver const &coulomb,
     Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_kernel,
     Dipoles::ShortRangeEnergyKernel::kernel_type const *dipoles_kernel,
     Observable_stat &obs_energy) {
@@ -192,7 +196,7 @@ inline void add_non_bonded_pair_energy(
     obs_energy.add_non_bonded_contribution(
         p1.type(), p2.type(), p1.mol_id(), p2.mol_id(),
         calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, bonded_ias,
-                                    coulomb_kernel));
+                                    coulomb, coulomb_kernel));
 
 #ifdef ESPRESSO_ELECTROSTATICS
   if (!obs_energy.coulomb.empty() and coulomb_kernel != nullptr) {

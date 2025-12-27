@@ -21,6 +21,9 @@
 /** \file
  *  Implementation of nonbonded_interaction_data.hpp
  */
+
+#include <config/config.hpp>
+
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "electrostatics/coulomb.hpp"
@@ -33,7 +36,9 @@
 #include <utility>
 #include <vector>
 
-static double recalc_maximal_cutoff(IA_parameters const &data) {
+static double
+recalc_maximal_cutoff(IA_parameters const &data,
+                      [[maybe_unused]] System::System const &system) {
   auto max_cut_current = inactive_cutoff;
 
 #ifdef ESPRESSO_LENNARD_JONES
@@ -103,16 +108,16 @@ static double recalc_maximal_cutoff(IA_parameters const &data) {
 #ifdef ESPRESSO_THOLE
   // If THOLE is active, use p3m cutoff
   if (data.thole.scaling_coeff != 0.)
-    max_cut_current =
-        std::max(max_cut_current, Coulomb::get_coulomb().cutoff());
+    max_cut_current = std::max(max_cut_current, system.coulomb.cutoff());
 #endif
 
   return max_cut_current;
 }
 
 void InteractionsNonBonded::recalc_maximal_cutoffs() {
+  auto const &system = get_system();
   for (auto &data : m_nonbonded_ia_params) {
-    data->max_cut = recalc_maximal_cutoff(*data);
+    data->max_cut = recalc_maximal_cutoff(*data, system);
   }
 }
 

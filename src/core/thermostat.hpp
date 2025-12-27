@@ -371,7 +371,7 @@ struct DPDThermostat : public BaseThermostat {};
 #ifdef ESPRESSO_STOKESIAN_DYNAMICS
 /** Thermostat for Stokesian dynamics. */
 struct StokesianThermostat : public BaseThermostat {
-  StokesianThermostat() { rng_initialize(0); }
+  StokesianThermostat() { rng_initialize(uint32_t{0u}); }
 };
 #endif
 

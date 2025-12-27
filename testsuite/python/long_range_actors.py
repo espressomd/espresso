@@ -297,7 +297,7 @@ class Test(ut.TestCase):
             prefactor=1., accuracy=1e-3)
         self.check_p3m_tuning_errors("magnetostatics", dp3m)
 
-    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "GSL"])
     def test_mmm1d_cpu_exceptions(self):
         self.system.periodicity = (False, False, True)
         mmm1d = espressomd.electrostatics.MMM1D(prefactor=1., maxPWerror=1e-2)

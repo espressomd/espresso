@@ -364,9 +364,10 @@ public:
    * @brief Run a kernel on all local particles.
    * The kernel is assumed to be thread-safe.
    */
-  void for_each_local_particle(ParticleUnaryOp &&f) const {
+  void for_each_local_particle(ParticleUnaryOp &&f,
+                               bool parallel = true) const {
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-    if (use_parallel_for_each_local_particle()) {
+    if (parallel and use_parallel_for_each_local_particle()) {
       parallel_for_each_particle_impl(decomposition().local_cells(), f);
       return;
     }
@@ -545,9 +546,14 @@ public:
   void update_ghosts_and_resort_particle(unsigned data_parts);
 
   /**
-   * @brief Add forces from ghost particles to real particles.
+   * @brief Add forces and torques from ghost particles to real particles.
    */
   void ghosts_reduce_forces();
+
+  /** Set forces and torques on all ghosts to zero. */
+  void ghosts_reset_forces() {
+    for_each_ghost_particle([](Particle &p) { p.force_and_torque() = {}; });
+  }
 
 #ifdef ESPRESSO_BOND_CONSTRAINT
   /**

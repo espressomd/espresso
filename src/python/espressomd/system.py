@@ -147,8 +147,6 @@ class System(ScriptInterfaceHelper):
             self.call_method("lock_system_creation")
             self._setup_atexit()
 
-        self._ase_interface = None
-
     def _setup_atexit(self):
         import atexit
 
@@ -273,15 +271,6 @@ class System(ScriptInterfaceHelper):
             if lb is not None:
                 lb.call_method("activate")
                 self._lb = lb
-
-    @property
-    def ase(self):
-        return self._ase_interface
-
-    @ase.setter
-    def ase(self, ase):
-        ase.register_system(self)
-        self._ase_interface = ase
 
     @property
     def ekcontainer(self):

@@ -451,6 +451,8 @@ class ParticleProperties(ut.TestCase):
             assert hasattr(system.part.by_id(0), attr), \
                 "Inconsistency between ParticleHandle and particle_data.particle_attributes"
             try:
+                print(f'getattr(system.part.by_id(0), attr) = {getattr(system.part.by_id(0), attr)}')  # nopep8
+                print(f'attr = {attr}')
                 setattr(partcls, attr, getattr(system.part.by_id(0), attr))
             except RuntimeError as err:
                 self.assertEqual(str(err), f"Parameter '{attr}' is read-only.")

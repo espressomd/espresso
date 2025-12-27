@@ -25,7 +25,6 @@
 #include "actor/traits.hpp"
 
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -44,8 +43,7 @@ struct Solver {
   /// @brief Whether to reinitialize the solver on observable calculation.
   bool reinit_on_observable_calc;
 
-  Utils::Vector9d
-  calc_pressure_long_range(ParticleRange const &particles) const;
+  Utils::Vector9d calc_pressure_long_range() const;
 
   void sanity_checks() const;
   double cutoff() const;
@@ -58,8 +56,8 @@ struct Solver {
   void on_cell_structure_change();
   void on_particle_change() { reinit_on_observable_calc = true; }
 
-  void calc_long_range_force(ParticleRange const &particles) const;
-  double calc_energy_long_range(ParticleRange const &particles) const;
+  void calc_long_range_force() const;
+  double calc_energy_long_range() const;
   Solver();
 #else  // ESPRESSO_ELECTROSTATICS
   Solver() = default;
@@ -83,9 +81,5 @@ struct Solver {
   inline std::optional<ShortRangeForceCorrectionsKernel>
   pair_force_elc_kernel() const;
 };
-
-#ifdef ESPRESSO_ELECTROSTATICS
-Solver const &get_coulomb();
-#endif
 
 } // namespace Coulomb

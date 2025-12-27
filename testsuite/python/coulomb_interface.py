@@ -59,8 +59,7 @@ class Test(ut.TestCase):
             system.electrostatics, espressomd.electrostatics.P3M,
             dict(prefactor=2., epsilon=0., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
                  cao=2, mesh=[8, 10, 8], alpha=12., accuracy=0.01, tune=False,
-                 check_neutrality=True, charge_neutrality_tolerance=7e-12,
-                 check_complex_residuals=False))
+                 check_neutrality=True, charge_neutrality_tolerance=7e-12))
         test_p3m_cpu_non_metallic = tests_common.generate_test_for_actor_class(
             system.electrostatics, espressomd.electrostatics.P3M,
             dict(prefactor=2., epsilon=3., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
@@ -79,8 +78,7 @@ class Test(ut.TestCase):
             system.electrostatics, espressomd.electrostatics.P3MGPU,
             dict(prefactor=2., epsilon=0., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
                  cao=2, mesh=[8, 10, 8], alpha=12., accuracy=0.01, tune=False,
-                 check_neutrality=True, charge_neutrality_tolerance=7e-12,
-                 check_complex_residuals=False))
+                 check_neutrality=True, charge_neutrality_tolerance=7e-12))
         test_p3m_gpu_non_metallic = tests_common.generate_test_for_actor_class(
             system.electrostatics, espressomd.electrostatics.P3MGPU,
             dict(prefactor=2., epsilon=3., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
@@ -94,6 +92,7 @@ class Test(ut.TestCase):
                      prefactor=2., r_cut=1.5, cao=2, mesh=[8, 8, 8],
                      alpha=12., accuracy=0.01, tune=False)))
 
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "GSL"])
     def test_mmm1d_cpu(self):
         self.system.periodicity = [False, False, True]
         self.system.cell_system.set_n_square()
@@ -110,7 +109,7 @@ class Test(ut.TestCase):
             with self.assertRaisesRegex(ValueError, f"Parameter '{key}' must be > 0"):
                 espressomd.electrostatics.MMM1D(**invalid_params)
 
-    @utx.skipIfMissingFeatures(["P3M"])
+    @utx.skipIfMissingFeatures(["P3M", "GSL"])
     def test_solvers_rollback(self):
         # swapping two solvers should safely rollback to last valid solver
         self.system.periodicity = [False, False, True]
@@ -127,6 +126,7 @@ class Test(ut.TestCase):
         self.assertAlmostEqual(
             self.system.analysis.energy()["coulomb"], ref_energy, delta=1e-7)
 
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "GSL"])
     def test_charge_neutrality_check(self):
         self.system.part.add(pos=(0.0, 0.0, 0.0), q=1.)
         self.system.periodicity = [False, False, True]
@@ -150,7 +150,8 @@ class Test(ut.TestCase):
         self.assertFalse(actor.check_neutrality)
         self.assertIsNone(actor.charge_neutrality_tolerance)
 
-    def test_mmm1d_cpu_tuning_exceptions(self):
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "GSL"])
+    def test_mmm1d_cpu_tuning(self):
         self.system.periodicity = [False, False, True]
         self.system.cell_system.set_n_square()
         actor = espressomd.electrostatics.MMM1D(
@@ -159,6 +160,13 @@ class Test(ut.TestCase):
             self.system.electrostatics.solver = actor
         self.assertIsNone(self.system.electrostatics.solver)
         self.assertFalse(actor.is_tuned)
+        # override far_switch_radius when larger than box size in z-direction
+        h_z = self.system.box_l[2]
+        actor = espressomd.electrostatics.MMM1D(
+            prefactor=1., maxPWerror=1e-3, far_switch_radius=2. * h_z)
+        self.system.electrostatics.solver = actor
+        self.assertTrue(actor.is_tuned)
+        self.assertAlmostEqual(actor.far_switch_radius**2, 0.8 * h_z**2)
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_elc_p3m_exceptions(self):

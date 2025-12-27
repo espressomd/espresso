@@ -26,14 +26,13 @@
  *  \ref icc.hpp.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_ELECTROSTATICS
 
 #include "icc.hpp"
 
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
 #include "actor/visitors.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -134,7 +133,7 @@ void ICCStar::iteration() {
 
     // calculate electrostatic forces (SR+LR) excluding self-interactions
     force_calc_icc(cell_structure, kernel, elc_kernel);
-    system.coulomb.calc_long_range_force(particles);
+    system.coulomb.calc_long_range_force();
     cell_structure.ghosts_reduce_forces();
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     // force reduction

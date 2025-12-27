@@ -257,6 +257,12 @@ template <typename T> struct VisitorVector {
 
     return ret;
   }
+
+  template <typename U, std::size_t N>
+    requires allow_conversion<T, U>::value
+  std::vector<T> operator()(Utils::Vector<U, N> const &vv) const {
+    return {vv.begin(), vv.end()};
+  }
 };
 
 /* std::vector cases */

@@ -37,6 +37,7 @@
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 
+#include <cstddef>
 #include <filesystem>
 #include <memory>
 #include <stdexcept>
