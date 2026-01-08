@@ -327,14 +327,26 @@ class Analysis(ScriptInterfaceHelper):
     particle_non_bonded_energy()
         Calculate the short-range non-bonded energy contribution of a single particle.
 
-            Notes
-            -----
-            This includes only short-range non-bonded interaction terms (e.g. Lennard-Jones,
-            WCA, etc., depending on enabled features). Electrostatic energy contributions
-            (both short-range real-space and long-range/k-space parts) are not included.
+        Parameters
+        ----------
+        particle : :class:`~espressomd.particle_data.ParticleHandle`
 
+        Returns
+        -------
+        :obj:`float`
+            Short-range non-bonded energy contribution of that particle.
+            
     particle_energy()
         Deprecated alias for :meth:`particle_non_bonded_energy`.
+
+        Parameters
+        ----------
+        particle : :class:`~espressomd.particle_data.ParticleHandle`
+
+        Returns
+        -------
+        :obj:`float`
+            Short-range non-bonded energy contribution of that particle.
 
     """
     _so_name = "Analysis::Analysis"
@@ -520,16 +532,12 @@ class Analysis(ScriptInterfaceHelper):
 
     def particle_non_bonded_energy(self, particle):
         """
-        Calculate the non-bonded energy of a single given particle.
         Calculate the short-range non-bonded energy contribution associated with
         a single particle.
 
-        Notes
-        -----
-        This value includes short-range non-bonded interaction terms (e.g. LJ/WCA,
-        etc., depending on enabled features). It does **not** include electrostatic
-        energy contributions (neither the short-range real-space part nor any
-        long-range/k-space part).
+        This includes only short-range non-bonded interaction terms (e.g. Lennard-Jones,
+        WCA, etc., depending on enabled features). Electrostatic energy contributions
+        are not included.
 
         Parameters
         ----------
@@ -537,11 +545,9 @@ class Analysis(ScriptInterfaceHelper):
 
         Returns
         -------
-        :obj: `float`
-            Non-bonded energy of that particle
-
         :obj:`float`
             Short-range non-bonded energy contribution for that particle.
+
         """
         return self.call_method("particle_energy", pid=particle.id)
 
@@ -549,10 +555,15 @@ class Analysis(ScriptInterfaceHelper):
         """
         Deprecated alias for :meth:`particle_non_bonded_energy`.
 
-        Notes
-        -----
-        This method will be removed in a future release. Use
-        :meth:`particle_non_bonded_energy` instead.
+        Parameters
+        ----------
+        particle : :class:`~espressomd.particle_data.ParticleHandle`
+
+        Returns
+        -------
+        :obj:`float`
+            Short-range non-bonded energy contribution of that particle.
+
         """
         import warnings
 
