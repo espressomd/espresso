@@ -335,7 +335,7 @@ class Analysis(ScriptInterfaceHelper):
         -------
         :obj:`float`
             Short-range non-bonded energy contribution of that particle.
-            
+
     particle_energy()
         Deprecated alias for :meth:`particle_non_bonded_energy`.
 
