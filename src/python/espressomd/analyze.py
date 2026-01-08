@@ -517,7 +517,7 @@ class Analysis(ScriptInterfaceHelper):
         """
         observable = self.call_method("calculate_energy")
         return self._generate_summary(observable, 1, False)
-    
+
     def particle_non_bonded_energy(self, particle):
         """
         Calculate the non-bonded energy of a single given particle.

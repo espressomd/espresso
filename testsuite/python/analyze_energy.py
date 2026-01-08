@@ -24,6 +24,7 @@ import espressomd.interactions
 import espressomd.electrostatics
 import warnings
 
+
 @utx.skipIfMissingFeatures("LENNARD_JONES")
 class AnalyzeEnergy(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -212,7 +213,8 @@ class AnalyzeEnergy(ut.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always", DeprecationWarning)
             old_method = self.system.analysis.particle_energy(p0)
-            self.assertTrue(any(issubclass(x.category, DeprecationWarning) for x in w))
+            self.assertTrue(
+                any(issubclass(x.category, DeprecationWarning) for x in w))
 
         new_method = self.system.analysis.particle_non_bonded_energy(p0)
         self.assertAlmostEqual(old_method, new_method, delta=1e-12)
