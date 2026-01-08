@@ -324,20 +324,6 @@ class Analysis(ScriptInterfaceHelper):
             Where [0] contains the midpoints of the bins,
             and [1] contains the values of the minimal distance distribution function.
 
-    particle_non_bonded_energy()
-        :no-index:
-
-        Calculate the short-range non-bonded energy contribution of a single particle.
-
-        Parameters
-        ----------
-        particle : :class:`~espressomd.particle_data.ParticleHandle`
-
-        Returns
-        -------
-        :obj:`float`
-            Short-range non-bonded energy contribution of that particle.
-
     """
     _so_name = "Analysis::Analysis"
     _so_creation_policy = "GLOBAL"
