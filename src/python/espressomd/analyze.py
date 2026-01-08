@@ -324,6 +324,18 @@ class Analysis(ScriptInterfaceHelper):
             Where [0] contains the midpoints of the bins,
             and [1] contains the values of the minimal distance distribution function.
 
+    particle_non_bonded_energy()
+        Calculate the short-range non-bonded energy contribution of a single particle.
+
+            Notes
+            -----
+            This includes only short-range non-bonded interaction terms (e.g. Lennard-Jones,
+            WCA, etc., depending on enabled features). Electrostatic energy contributions
+            (both short-range real-space and long-range/k-space parts) are not included.
+
+    particle_energy()
+        Deprecated alias for :meth:`particle_non_bonded_energy`.
+
     """
     _so_name = "Analysis::Analysis"
     _so_creation_policy = "GLOBAL"
@@ -505,10 +517,19 @@ class Analysis(ScriptInterfaceHelper):
         """
         observable = self.call_method("calculate_energy")
         return self._generate_summary(observable, 1, False)
-
-    def particle_energy(self, particle):
+    
+    def particle_non_bonded_energy(self, particle):
         """
         Calculate the non-bonded energy of a single given particle.
+        Calculate the short-range non-bonded energy contribution associated with
+        a single particle.
+
+        Notes
+        -----
+        This value includes short-range non-bonded interaction terms (e.g. LJ/WCA,
+        etc., depending on enabled features). It does **not** include electrostatic
+        energy contributions (neither the short-range real-space part nor any
+        long-range/k-space part).
 
         Parameters
         ----------
@@ -519,8 +540,28 @@ class Analysis(ScriptInterfaceHelper):
         :obj: `float`
             Non-bonded energy of that particle
 
+        :obj:`float`
+            Short-range non-bonded energy contribution for that particle.
         """
         return self.call_method("particle_energy", pid=particle.id)
+
+    def particle_energy(self, particle):
+        """
+        Deprecated alias for :meth:`particle_non_bonded_energy`.
+
+        Notes
+        -----
+        This method will be removed in a future release. Use
+        :meth:`particle_non_bonded_energy` instead.
+        """
+        import warnings
+
+        warnings.warn(
+            "particle_energy() is deprecated, use particle_non_bonded_energy() instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.particle_non_bonded_energy(particle)
 
     def particle_bond_energy(self, particle, bond):
         """

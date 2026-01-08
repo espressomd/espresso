@@ -50,7 +50,18 @@ For example, ::
     >>> print(energy["bonded"])
     >>> print(energy["non_bonded"])
 
+.. _Particle non-bonded energy:
 
+Particle non-bonded energy
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.particle_non_bonded_energy`
+
+Returns the non-bonded (short-range) energy contribution of a single particle.
+
+.. note::
+   :meth:`espressomd.analyze.Analysis.particle_energy` is a deprecated alias.
+   Use :meth:`espressomd.analyze.Analysis.particle_non_bonded_energy` instead.
+   
 .. _Momentum of the system:
 
 Momentum of the System

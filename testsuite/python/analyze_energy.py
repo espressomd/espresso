@@ -22,7 +22,7 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.interactions
 import espressomd.electrostatics
-
+import warnings
 
 @utx.skipIfMissingFeatures("LENNARD_JONES")
 class AnalyzeEnergy(ut.TestCase):
@@ -103,7 +103,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded_inter"], 0., delta=1e-7)
         # Test the single particle energy function
         self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
-            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
+            [self.system.analysis.particle_non_bonded_energy(p) for p in self.system.part.all()]), delta=1e-7)
         # add another pair of particles
         self.system.part.add(pos=[3, 2, 2], type=1, mol_id=7)
         self.system.part.add(pos=[4, 2, 2], type=1, mol_id=7)
@@ -130,7 +130,7 @@ class AnalyzeEnergy(ut.TestCase):
             energy["non_bonded_inter", 0, 1], 1., delta=1e-7)
         # Test the single particle energy function
         self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
-            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
+            [self.system.analysis.particle_non_bonded_energy(p) for p in self.system.part.all()]), delta=1e-7)
 
     def test_bonded(self):
         p0, p1 = self.system.part.all()
@@ -173,7 +173,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["bonded"], 3. / 2., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
-            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
+            [self.system.analysis.particle_non_bonded_energy(p) for p in self.system.part.all()]), delta=1e-7)
         if espressomd.has_features(["VIRTUAL_SITES"]):
             self.assertAlmostEqual(energy["virtual_sites"], 0., delta=1e-7)
         if espressomd.has_features(["DPD"]):
@@ -186,7 +186,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["bonded"], 3., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
-            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
+            [self.system.analysis.particle_non_bonded_energy(p) for p in self.system.part.all()]), delta=1e-7)
         # add another pair of particles
         self.system.part.add(pos=[1, 5, 5], type=1)
         self.system.part.add(pos=[2, 5, 5], type=1)
@@ -197,12 +197,25 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["bonded"], 3., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1. + 1., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
-            [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
+            [self.system.analysis.particle_non_bonded_energy(p) for p in self.system.part.all()]), delta=1e-7)
         # check effect of particle resort
-        p0_energy_old = self.system.analysis.particle_energy(p0)
+        p0_energy_old = self.system.analysis.particle_non_bonded_energy(p0)
         p0.pos = p0.pos  # trigger particle resort
-        p0_energy_new = self.system.analysis.particle_energy(p0)
+        p0_energy_new = self.system.analysis.particle_non_bonded_energy(p0)
         self.assertAlmostEqual(p0_energy_new, p0_energy_old, delta=1e-7)
+        # Backward-compatibility check:
+        # particle_energy() is kept as a deprecated alias for
+        # particle_non_bonded_energy(). We verify that the old method
+        # still works, emits a DeprecationWarning, and returns the
+        # same value as the new method. The check is done once to
+        # avoid warning spam in the test suite.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always", DeprecationWarning)
+            old_method = self.system.analysis.particle_energy(p0)
+            self.assertTrue(any(issubclass(x.category, DeprecationWarning) for x in w))
+
+        new_method = self.system.analysis.particle_non_bonded_energy(p0)
+        self.assertAlmostEqual(old_method, new_method, delta=1e-12)
 
     def check_electrostatics(self, p3m_class):
         p0, p1 = self.system.part.all()
