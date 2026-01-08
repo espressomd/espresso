@@ -326,7 +326,7 @@ class Analysis(ScriptInterfaceHelper):
 
     particle_non_bonded_energy()
         :no-index:
-        
+
         Calculate the short-range non-bonded energy contribution of a single particle.
 
         Parameters
