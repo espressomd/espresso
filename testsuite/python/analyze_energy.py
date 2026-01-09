@@ -239,18 +239,19 @@ class AnalyzeEnergy(ut.TestCase):
     def test_particle_energy(self):
         self.system.non_bonded_inter.reset()
         self.system.part.clear()
+        get_non_bonded_energy = self.system.analysis.particle_non_bonded_energy
         tol = 1e-5
         p1 = self.system.part.add(pos=[0., 0., 0.], type=0, q=+1.)
         p2 = self.system.part.add(pos=[1., 0., 0.], type=0, q=-1.)
-        self.assertEqual(self.system.analysis.particle_energy(p1), 0.)
-        self.assertEqual(self.system.analysis.particle_energy(p2), 0.)
+        self.assertEqual(get_non_bonded_energy(p1), 0.)
+        self.assertEqual(get_non_bonded_energy(p2), 0.)
         # check short-range electrostatics energy is excluded
         self.system.electrostatics.solver = espressomd.electrostatics.DH(
             prefactor=1., kappa=1., r_cut=2.)
         coulomb_energy = self.system.analysis.energy()["coulomb"]
         self.assertAlmostEqual(coulomb_energy, -np.exp(-1.), delta=tol)
-        self.assertEqual(self.system.analysis.particle_energy(p1), 0.)
-        self.assertEqual(self.system.analysis.particle_energy(p2), 0.)
+        self.assertEqual(get_non_bonded_energy(p1), 0.)
+        self.assertEqual(get_non_bonded_energy(p2), 0.)
         if espressomd.has_features(["THOLE"]):
             # check Thole correction is excluded, despite being a non-bonded IA
             self.system.non_bonded_inter[0, 0].thole.set_params(
@@ -259,8 +260,8 @@ class AnalyzeEnergy(ut.TestCase):
             nbonded_energy = self.system.analysis.energy()["non_bonded"]
             self.assertAlmostEqual(coulomb_energy, -np.exp(-1.), delta=tol)
             self.assertAlmostEqual(nbonded_energy, 2. * np.exp(-3.), delta=tol)
-            self.assertEqual(self.system.analysis.particle_energy(p1), 0.)
-            self.assertEqual(self.system.analysis.particle_energy(p2), 0.)
+            self.assertEqual(get_non_bonded_energy(p1), 0.)
+            self.assertEqual(get_non_bonded_energy(p2), 0.)
 
 
 if __name__ == "__main__":
