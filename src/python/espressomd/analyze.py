@@ -529,29 +529,6 @@ class Analysis(ScriptInterfaceHelper):
         """
         return self.call_method("particle_energy", pid=particle.id)
 
-    def particle_energy(self, particle):
-        """
-        Deprecated alias for :meth:`particle_non_bonded_energy`.
-
-        Parameters
-        ----------
-        particle : :class:`~espressomd.particle_data.ParticleHandle`
-
-        Returns
-        -------
-        :obj:`float`
-            Short-range non-bonded energy contribution of that particle.
-
-        """
-        import warnings
-
-        warnings.warn(
-            "particle_energy() is deprecated, use particle_non_bonded_energy() instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.particle_non_bonded_energy(particle)
-
     def particle_bond_energy(self, particle, bond):
         """
         Calculate the bonded energy for the given particle and bond.

@@ -22,7 +22,6 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.interactions
 import espressomd.electrostatics
-import warnings
 
 
 @utx.skipIfMissingFeatures("LENNARD_JONES")
@@ -204,20 +203,6 @@ class AnalyzeEnergy(ut.TestCase):
         p0.pos = p0.pos  # trigger particle resort
         p0_energy_new = self.system.analysis.particle_non_bonded_energy(p0)
         self.assertAlmostEqual(p0_energy_new, p0_energy_old, delta=1e-7)
-        # Backward-compatibility check:
-        # particle_energy() is kept as a deprecated alias for
-        # particle_non_bonded_energy(). We verify that the old method
-        # still works, emits a DeprecationWarning, and returns the
-        # same value as the new method. The check is done once to
-        # avoid warning spam in the test suite.
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always", DeprecationWarning)
-            old_method = self.system.analysis.particle_energy(p0)
-            self.assertTrue(
-                any(issubclass(x.category, DeprecationWarning) for x in w))
-
-        new_method = self.system.analysis.particle_non_bonded_energy(p0)
-        self.assertAlmostEqual(old_method, new_method, delta=1e-12)
 
     def check_electrostatics(self, p3m_class):
         p0, p1 = self.system.part.all()
