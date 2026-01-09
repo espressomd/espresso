@@ -56,7 +56,7 @@ Particle non-bonded energy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 :meth:`espressomd.analyze.Analysis.particle_non_bonded_energy`
 
-Returns the non-bonded (short-range) energy contribution of a single particle.
+Returns the non-bonded energy contribution from a single particle.
 
 .. _Momentum of the system:
 

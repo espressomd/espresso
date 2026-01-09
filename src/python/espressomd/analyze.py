@@ -508,14 +508,11 @@ class Analysis(ScriptInterfaceHelper):
 
     def particle_non_bonded_energy(self, particle):
         """
-        Calculate the short-range non-bonded energy contribution associated with
-        a single particle.
+        Calculate the non-bonded energy of a single given particle.
 
-        This includes short-range non-bonded interaction terms (e.g. Lennard-Jones,
-        WCA, etc., depending on enabled features). Depending on enabled features
-        (notably Thole damping for Drude oscillators), electrostatics-related
-        short-range correction terms may also contribute. Long-range / k-space
-        electrostatic energy contributions are not included.
+        This excludes the short-range part of electrostatics and magnetostatics
+        solvers, as well as corrections implemented as non-bonded interactions
+        (e.g. :ref:`Thole correction`).
 
         Parameters
         ----------
@@ -524,7 +521,7 @@ class Analysis(ScriptInterfaceHelper):
         Returns
         -------
         :obj:`float`
-            Short-range non-bonded energy contribution for that particle.
+            Non-bonded energy of that particle
 
         """
         return self.call_method("particle_energy", pid=particle.id)

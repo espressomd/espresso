@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -26,33 +27,28 @@ import espressomd.electrostatics
 
 @utx.skipIfMissingFeatures("LENNARD_JONES")
 class AnalyzeEnergy(ut.TestCase):
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-
+    system = espressomd.System(box_l=[20.0, 20.0, 20.0])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+    system.thermostat.set_langevin(kT=0., gamma=1., seed=42)
     harmonic = espressomd.interactions.HarmonicBond(r_0=0.0, k=3)
-
-    @classmethod
-    def setUpClass(cls):
-        box_l = 20
-        cls.system.box_l = [box_l, box_l, box_l]
-        cls.system.cell_system.skin = 0.4
-        cls.system.time_step = 0.01
-        cls.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=1.0, sigma=1.0,
-            cutoff=2**(1. / 6.), shift="auto")
-        cls.system.non_bonded_inter[0, 1].lennard_jones.set_params(
-            epsilon=1.0, sigma=1.0,
-            cutoff=2**(1. / 6.), shift="auto")
-        cls.system.non_bonded_inter[1, 1].lennard_jones.set_params(
-            epsilon=1.0, sigma=1.0,
-            cutoff=2**(1. / 6.), shift="auto")
-        cls.system.thermostat.set_langevin(kT=0., gamma=1., seed=42)
-        cls.system.bonded_inter[5] = cls.harmonic
+    system.bonded_inter[5] = harmonic
 
     def setUp(self):
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0,
+            cutoff=2**(1. / 6.), shift="auto")
+        self.system.non_bonded_inter[0, 1].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0,
+            cutoff=2**(1. / 6.), shift="auto")
+        self.system.non_bonded_inter[1, 1].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0,
+            cutoff=2**(1. / 6.), shift="auto")
         self.system.part.add(pos=[1, 2, 2], type=0, mol_id=6)
         self.system.part.add(pos=[5, 2, 2], type=0, mol_id=6)
 
     def tearDown(self):
+        self.system.non_bonded_inter.reset()
         self.system.part.clear()
         if espressomd.has_features(["ELECTROSTATICS"]):
             self.system.electrostatics.clear()
@@ -238,6 +234,33 @@ class AnalyzeEnergy(ut.TestCase):
     @utx.skipIfMissingFeatures(["P3M"])
     def test_electrostatics_gpu(self):
         self.check_electrostatics(espressomd.electrostatics.P3MGPU)
+
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
+    def test_particle_energy(self):
+        self.system.non_bonded_inter.reset()
+        self.system.part.clear()
+        tol = 1e-5
+        p1 = self.system.part.add(pos=[0., 0., 0.], type=0, q=+1.)
+        p2 = self.system.part.add(pos=[1., 0., 0.], type=0, q=-1.)
+        self.assertEqual(self.system.analysis.particle_energy(p1), 0.)
+        self.assertEqual(self.system.analysis.particle_energy(p2), 0.)
+        # check short-range electrostatics energy is excluded
+        self.system.electrostatics.solver = espressomd.electrostatics.DH(
+            prefactor=1., kappa=1., r_cut=2.)
+        coulomb_energy = self.system.analysis.energy()["coulomb"]
+        self.assertAlmostEqual(coulomb_energy, -np.exp(-1.), delta=tol)
+        self.assertEqual(self.system.analysis.particle_energy(p1), 0.)
+        self.assertEqual(self.system.analysis.particle_energy(p2), 0.)
+        if espressomd.has_features(["THOLE"]):
+            # check Thole correction is excluded, despite being a non-bonded IA
+            self.system.non_bonded_inter[0, 0].thole.set_params(
+                scaling_coeff=2., q1q2=p1.q * p2.q)
+            coulomb_energy = self.system.analysis.energy()["coulomb"]
+            nbonded_energy = self.system.analysis.energy()["non_bonded"]
+            self.assertAlmostEqual(coulomb_energy, -np.exp(-1.), delta=tol)
+            self.assertAlmostEqual(nbonded_energy, 2. * np.exp(-3.), delta=tol)
+            self.assertEqual(self.system.analysis.particle_energy(p1), 0.)
+            self.assertEqual(self.system.analysis.particle_energy(p2), 0.)
 
 
 if __name__ == "__main__":
