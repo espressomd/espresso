@@ -511,9 +511,11 @@ class Analysis(ScriptInterfaceHelper):
         Calculate the short-range non-bonded energy contribution associated with
         a single particle.
 
-        This includes only short-range non-bonded interaction terms (e.g. Lennard-Jones,
-        WCA, etc., depending on enabled features). Electrostatic energy contributions
-        are not included.
+        This includes short-range non-bonded interaction terms (e.g. Lennard-Jones,
+        WCA, etc., depending on enabled features). Depending on enabled features
+        (notably Thole damping for Drude oscillators), electrostatics-related
+        short-range correction terms may also contribute. Long-range / k-space
+        electrostatic energy contributions are not included.
 
         Parameters
         ----------
