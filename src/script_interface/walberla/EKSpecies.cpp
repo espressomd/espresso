@@ -26,6 +26,8 @@
 #include "errorhandling.hpp"
 
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
+#include <walberla_bridge/walberla_init.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -175,6 +177,7 @@ void EKSpecies::do_construct(VariantMap const &params) {
     m_conv_flux = tau * Utils::int_pow<2>(agrid);
     m_density = density * m_conv_density;
     make_instance(params);
+    m_mpi_cart_comm_observer = ::walberla::get_mpi_cart_comm_observer();
     for (auto &vtk : m_vtk_writers) {
       vtk->attach_to_lattice(m_instance, get_lattice_to_md_units_conversion());
     }

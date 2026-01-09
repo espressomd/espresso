@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "system/Leaf.hpp"
+
 #include "utils.hpp"
 
 #include <functional>
@@ -31,7 +33,7 @@ class System;
 
 namespace LB {
 
-struct LBNone {
+struct LBNone : public System::Leaf<LBNone> {
   void propagate() { throw NoLBActive{}; }
   void ghost_communication() { throw NoLBActive{}; }
   void ghost_communication_pdf() { throw NoLBActive{}; }

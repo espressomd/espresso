@@ -30,6 +30,7 @@
 #include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
 
 #include <script_interface/ScriptInterface.hpp>
 
@@ -37,6 +38,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -51,9 +53,18 @@ class EKVTKHandle : public VTKHandleBase<::EKinWalberlaBase> {
   }
 };
 
+inline void
+ek_throw_if_expired(std::optional<ResourceObserver> const &mpi_obs) {
+  if (not(mpi_obs and mpi_obs->is_valid())) {
+    throw std::runtime_error(
+        "the MPI Cartesian communicator of this EK object has expired");
+  }
+}
+
 class EKSpecies : public LatticeModel<::EKinWalberlaBase, EKVTKHandle> {
 protected:
   using Base = LatticeModel<::EKinWalberlaBase, EKVTKHandle>;
+  std::optional<ResourceObserver> m_mpi_cart_comm_observer;
   double m_conv_diffusion;
   double m_conv_ext_efield;
   double m_conv_energy;
@@ -138,6 +149,9 @@ public:
 
   [[nodiscard]] auto get_ekinstance() const { return m_instance; }
   [[nodiscard]] auto get_lattice() const { return m_lattice; }
+  [[nodiscard]] auto get_mpi_cart_comm_observer() const {
+    return m_mpi_cart_comm_observer;
+  }
 
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override;

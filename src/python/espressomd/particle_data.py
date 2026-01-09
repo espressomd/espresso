@@ -439,7 +439,7 @@ class ParticleHandle(ScriptInterfaceHelper):
         return pdict
 
     def __str__(self):
-        res = collections.OrderedDict()
+        res = {}
         # Id and pos first, then the rest
         res["id"] = self.id
         res["pos"] = self.pos
@@ -451,8 +451,7 @@ class ParticleHandle(ScriptInterfaceHelper):
             else:
                 res[attr] = tmp
 
-        # Get rid of OrderedDict in output
-        return str(res).replace("OrderedDict(", "ParticleHandle(")
+        return f"{self.__class__.__name__}({res})"
 
     def add_exclusion(self, partner):
         """

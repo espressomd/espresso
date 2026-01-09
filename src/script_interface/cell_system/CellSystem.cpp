@@ -88,6 +88,10 @@ CellSystem::CellSystem() {
            auto const error_msg = std::string("Parameter 'node_grid'");
            auto const old_node_grid = ::communicator.node_grid;
            auto const new_node_grid = get_value<Utils::Vector3i>(v);
+           if (::communicator.locked_for_checkpointing) {
+             assert(new_node_grid == old_node_grid);
+             return;
+           }
            auto const n_nodes_old = Utils::product(old_node_grid);
            auto const n_nodes_new = Utils::product(new_node_grid);
            if (n_nodes_new != n_nodes_old) {
@@ -323,6 +327,24 @@ void CellSystem::configure(Particles::ParticleHandle &particle) {
 
 void CellSystem::configure(Particles::ParticleSlice &slice) {
   slice.attach(m_system);
+}
+
+void CheckpointerContext::do_construct(VariantMap const &params) {
+  m_node_grid = get_value_or(params, "node_grid", ::communicator.node_grid);
+}
+
+Variant CheckpointerContext::do_call_method(std::string const &name,
+                                            VariantMap const &params) {
+  if (name == "get_node_grid") {
+    return ::communicator.node_grid;
+  }
+  if (name == "acquire_lock") {
+    ::communicator.set_node_grid(m_node_grid);
+    ::communicator.locked_for_checkpointing = true;
+  } else if (name == "release_lock") {
+    ::communicator.locked_for_checkpointing = false;
+  }
+  return {};
 }
 
 } // namespace CellSystem

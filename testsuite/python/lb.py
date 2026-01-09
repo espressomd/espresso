@@ -265,6 +265,64 @@ class LBTest:
         with self.assertRaisesRegex(ValueError, "Parameter 'seed' must be >= 0"):
             self.lb_class(**make_kwargs(kT=0., seed=-42))
 
+    def test_rollback(self):
+        """check rollback to a valid state when setter fails"""
+        node_grid = np.copy(self.system.cell_system.node_grid)
+        world_size = np.prod(node_grid)
+        if world_size <= 4:
+            wrong_box_l = [1., 1., 7.] if world_size == 1 else 2. * node_grid
+            lattice1 = espressomd.lb.LatticeWalberla(
+                n_ghost_layers=1, agrid=1., box_l=self.system.box_l)
+            lattice2 = espressomd.lb.LatticeWalberla(
+                n_ghost_layers=1, agrid=1., box_l=wrong_box_l)
+            kwargs = self.params.copy()
+            del kwargs["agrid"]
+            solver_valid = self.lb_class(lattice=lattice1, **kwargs)
+            solver_wrong = self.lb_class(lattice=lattice2, **kwargs)
+            self.system.lb = solver_valid
+            with self.assertRaisesRegex(RuntimeError, "waLBerla and ESPResSo disagree about domain decomposition"):
+                self.system.lb = solver_wrong
+            self.assertEqual(self.system.lb, solver_valid)
+
+    def test_node_grid_change(self):
+        """check MPI Cartesian communicator invalidation"""
+        node_grid = np.copy(self.system.cell_system.node_grid)
+        # create a lbf, slice and node for the current MPI topology
+        lbf = self.lb_class(**self.params, **self.lb_params)
+        lbnode = lbf[0, 0, 0]
+        lbslice = lbf[0:5, 0:5, 0:5]
+        self.system.lb = lbf
+        # veto node grid change
+        with self.assertRaisesRegex(RuntimeError, "MPI topology change not supported by LB"):
+            self.system.cell_system.node_grid = node_grid
+        self.system.lb = None
+        # invalidate MPI Cartesian communicator
+        self.system.cell_system.node_grid = node_grid
+        # create a new lbf
+        lbf_new = self.lb_class(**self.params, **self.lb_params)
+        self.system.lb = lbf_new
+        # prevent binding of an expired LB object
+        with self.assertRaisesRegex(RuntimeError, "the MPI Cartesian communicator of this LB object has expired"):
+            self.system.lb = lbf
+        self.assertEqual(self.system.lb, lbf_new)
+        # expired MPI communicator doesn't prevent read access to the fields
+        _ = lbnode.velocity
+        _ = lbslice.pressure_tensor_neq
+        # expired MPI communicator prevents write access to the fields
+        for handle in [lbnode, lbslice, lbf[0, 0, 0], lbf[0:5, 0:5, 0:5]]:
+            with self.assertRaisesRegex(RuntimeError, "the MPI Cartesian communicator of this LB object has expired"):
+                handle.velocity = [1., 2., 3.]
+
+    def test_lbcontainer(self):
+        self.assertIsInstance(self.system.lbcontainer, espressomd.lb.Container)
+        self.assertIsNone(self.system.lbcontainer.solver)
+        lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
+        self.system.lb = lbf
+        self.assertIsInstance(self.system.lbcontainer, espressomd.lb.Container)
+        self.system.lbcontainer.clear()
+        self.assertIsInstance(self.system.lbcontainer, espressomd.lb.Container)
+        self.assertIsNone(self.system.lbcontainer.solver)
+
     def test_node_exceptions(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
         self.system.lb = lbf
@@ -470,8 +528,6 @@ class LBTest:
         with self.assertRaisesRegex(RuntimeError, "MD cell geometry change not supported by LB"):
             self.system.box_l = [1., 2., 3.]
         np.testing.assert_allclose(np.copy(self.system.box_l), 6., atol=1e-7)
-        with self.assertRaisesRegex(RuntimeError, "MPI topology change not supported by LB"):
-            self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
     def test_grid_index(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
@@ -857,7 +913,6 @@ class LBTest:
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaDoublePrecisionCPU(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_class = espressomd.lb.LatticeWalberla
     lb_params = {"single_precision": False}
     atol = 1e-10
     rtol = 1e-7
@@ -866,7 +921,6 @@ class LBTestWalberlaDoublePrecisionCPU(LBTest, ut.TestCase):
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaSinglePrecisionCPU(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_class = espressomd.lb.LatticeWalberla
     lb_params = {"single_precision": True}
     atol = 5e-6
     rtol = 2e-4
@@ -876,7 +930,6 @@ class LBTestWalberlaSinglePrecisionCPU(LBTest, ut.TestCase):
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBTestWalberlaDoublePrecisionGPU(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_lattice_class = espressomd.lb.LatticeWalberla
     lb_params = {"single_precision": False}
     atol = 1e-10
     rtol = 1e-7
@@ -886,7 +939,6 @@ class LBTestWalberlaDoublePrecisionGPU(LBTest, ut.TestCase):
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBTestWalberlaSinglePrecisionGPU(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_lattice_class = espressomd.lb.LatticeWalberla
     lb_params = {"single_precision": True}
     atol = 5e-6
     rtol = 2e-4
@@ -895,7 +947,6 @@ class LBTestWalberlaSinglePrecisionGPU(LBTest, ut.TestCase):
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaDoublePrecisionBlocksCPU(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_class = espressomd.lb.LatticeWalberla
     blocks_per_mpi_rank = [2, 2, 2]
     lb_params = {"single_precision": False,
                  "blocks_per_mpi_rank": blocks_per_mpi_rank}
@@ -906,7 +957,6 @@ class LBTestWalberlaDoublePrecisionBlocksCPU(LBTest, ut.TestCase):
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaSinglePrecisionBlocksCPU(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_class = espressomd.lb.LatticeWalberla
     blocks_per_mpi_rank = [2, 2, 2]
     lb_params = {"single_precision": True,
                  "blocks_per_mpi_rank": blocks_per_mpi_rank}

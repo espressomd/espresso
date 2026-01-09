@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 The ESPResSo project
+ * Copyright (C) 2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,25 +19,8 @@
 
 #pragma once
 
-#include <walberla_bridge/utils/ResourceManager.hpp>
+#include <config/config.hpp>
 
-#include <memory>
-
-namespace walberla {
-
-/** @brief Initialize waLBerla's MPI manager and environment. */
-void mpi_init();
-
-/** @brief Release waLBerla's MPI manager and environment. */
-void mpi_deinit();
-
-/** @brief Re-initialize waLBerla's MPI Cartesian communicator. */
-void mpi_reinit(int const *cart_topol);
-
-/** @brief Get a lock on waLBerla's global resources for VTK. */
-std::unique_ptr<ResourceManager> get_vtk_dependent_resources();
-
-/** @brief Get an observer on waLBerla's MPI Cartesian communicator status. */
-ResourceObserver get_mpi_cart_comm_observer();
-
-} // namespace walberla
+namespace ScriptInterface::LB {
+void initialize(Utils::Factory<ObjectHandle> *om);
+} // namespace ScriptInterface::LB

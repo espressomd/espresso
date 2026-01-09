@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2022 The ESPResSo project
+ * Copyright (C) 2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,17 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "initialize.hpp"
+#include <config/config.hpp>
 
-#include "CellSystem.hpp"
+#include "Container.hpp"
 
-namespace ScriptInterface {
-namespace CellSystem {
+#include <script_interface/ObjectHandle.hpp>
+
+#include <utils/Factory.hpp>
+
+namespace ScriptInterface::EK {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
-  om->register_new<CellSystem>("CellSystem::CellSystem");
-  om->register_new<CheckpointerContext>("CellSystem::CheckpointerContext");
+  om->register_new<Container>("EK::Container");
 }
 
-} // namespace CellSystem
-} // namespace ScriptInterface
+} // namespace ScriptInterface::EK

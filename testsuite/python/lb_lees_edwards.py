@@ -33,7 +33,7 @@ system.time_step = 0.01
 
 class LBContextManager:
     """
-    Add an LB actor and remove it from the actor list at the end.
+    Add an LB solver and remove it at the end.
     """
 
     def __init__(self, **kwargs):

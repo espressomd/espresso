@@ -39,6 +39,7 @@
 
 #include <script_interface/ObjectList.hpp>
 #include <script_interface/ScriptInterface.hpp>
+#include <script_interface/ek/Container.hpp>
 
 #include <cassert>
 #include <memory>
@@ -48,8 +49,8 @@
 
 namespace ScriptInterface::walberla {
 
-class EKContainer : public ObjectList<EKSpecies> {
-  using Base = ObjectList<EKSpecies>;
+class EKContainer : public ObjectList<EKSpecies, EK::Container> {
+  using Base = ObjectList<EKSpecies, EK::Container>;
   using Base::value_type;
 
   std::variant<
@@ -105,6 +106,7 @@ class EKContainer : public ObjectList<EKSpecies> {
         throw std::runtime_error(
             "Cannot mix single and double precision kernels");
       }
+      ek_throw_if_expired(obj_ptr->get_mpi_cart_comm_observer());
       m_ek_container->add(obj_ptr->get_ekinstance());
     });
   }
@@ -205,17 +207,13 @@ protected:
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
     if (method == "activate") {
-      context()->parallel_try_catch([this]() {
-        ::System::get_system().ek.set<::EK::EKWalberla>(m_ek_instance);
-      });
+      get_system().ek.set<::EK::EKWalberla>(m_ek_instance);
       m_is_active = true;
       return {};
     }
     if (method == "deactivate") {
-      if (m_is_active) {
-        ::System::get_system().ek.reset();
-        m_is_active = false;
-      }
+      get_system().ek.reset();
+      m_is_active = false;
       return {};
     }
 

@@ -23,6 +23,8 @@
 
 #include "LBFluidNode.hpp"
 
+#include <walberla_bridge/utils/ResourceManager.hpp>
+
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
 #include <utils/mpi/reduce_optional.hpp>
@@ -44,6 +46,10 @@ static bool is_boundary_all_reduce(boost::mpi::communicator const &comm,
 
 Variant LBFluidNode::do_call_method(std::string const &name,
                                     VariantMap const &params) {
+  if (not name.starts_with("get_")) {
+    context()->parallel_try_catch(
+        [&]() { lb_throw_if_expired(m_mpi_cart_comm_observer); });
+  }
   if (name == "set_velocity_at_boundary") {
     if (is_none(params.at("value"))) {
       m_lb_fluid->remove_node_from_boundary(m_index);

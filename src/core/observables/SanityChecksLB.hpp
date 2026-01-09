@@ -28,7 +28,7 @@
 
 namespace Observables {
 
-/** @brief Bookkeeping of the box gometry and LB object memory address. */
+/** @brief Bookkeeping of the box geometry and LB object memory address. */
 class SanityChecksLB {
   Utils::Vector3d m_box_l = Utils::Vector3d::broadcast(0.);
   double m_agrid = 0.;

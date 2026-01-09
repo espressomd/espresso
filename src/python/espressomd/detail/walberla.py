@@ -34,9 +34,12 @@ class LatticeWalberla(ScriptInterfaceHelper):
     ----------
     agrid : :obj:`float`
         Lattice constant. The box size in every direction must be an integer
-        multiple of ``agrid``. Cannot be provided together with ``lattice``.
+        multiple of ``agrid``.
     n_ghost_layers : :obj:`int`, optional
         Lattice ghost layer thickness in units of ``agrid``.
+    box_l : (3,) array_like of :obj:`float`, optional
+        Domain size. If omitted, the currently active ESPResSo system's
+        :attr:`~espressomd.system.System.box_l` will be used.
     blocks_per_mpi_rank : (3,) array_like of :obj:`int`, optional
         Distribute more than one block to each MPI rank.
         Meant to improve cache locality. Experimental.

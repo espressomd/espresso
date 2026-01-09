@@ -26,6 +26,8 @@
 
 #include "LatticeSlice.impl.hpp"
 
+#include <walberla_bridge/utils/ResourceManager.hpp>
+
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -52,6 +54,11 @@ Variant EKSpeciesSlice::do_call_method(std::string const &name,
       });
     }
     return m_shape_val.at(name);
+  }
+
+  if (not name.starts_with("get_")) {
+    context()->parallel_try_catch(
+        [&]() { ek_throw_if_expired(m_mpi_cart_comm_observer); });
   }
 
   // slice getter/setter callback

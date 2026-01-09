@@ -30,11 +30,13 @@
 #include <script_interface/auto_parameters/AutoParameters.hpp>
 
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
 
 #include <utils/Vector.hpp>
 
 #include <cassert>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
@@ -42,6 +44,7 @@ namespace ScriptInterface::walberla {
 
 class EKSpeciesNode : public AutoParameters<EKSpeciesNode, LatticeIndices> {
   std::shared_ptr<::EKinWalberlaBase> m_ek_species;
+  std::optional<ResourceObserver> m_mpi_cart_comm_observer;
   Utils::Vector3i m_index;
   Utils::Vector3i m_grid_size;
   double m_conv_dens;
@@ -57,6 +60,7 @@ public:
     auto const ek_sip =
         get_value<std::shared_ptr<EKSpecies>>(params, "parent_sip");
     m_ek_species = ek_sip->get_ekinstance();
+    m_mpi_cart_comm_observer = ek_sip->get_mpi_cart_comm_observer();
     assert(m_ek_species);
     m_conv_dens = ek_sip->get_conversion_factor_density();
     m_conv_flux = ek_sip->get_conversion_factor_flux();

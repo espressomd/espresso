@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,7 +18,6 @@
 #
 
 import numpy as np
-import collections
 
 # pylint: disable=unused-import
 from . import accumulators
@@ -29,11 +28,13 @@ from . import cuda_init
 from . import collision_detection
 from . import comfixed
 from . import constraints
+from . import electrokinetics
 from . import electrostatics
 from . import magnetostatics
 from . import galilei
 from . import interactions
 from . import integrate
+from . import lb
 from . import lees_edwards
 from . import particle_data
 from . import thermostat
@@ -65,6 +66,8 @@ class System(ScriptInterfaceHelper):
     non_bonded_inter: :class:`espressomd.interactions.NonBondedInteractions`
     part: :class:`espressomd.particle_data.ParticleList`
     thermostat: :class:`espressomd.thermostat.Thermostat`
+    ekcontainer: :class:`espressomd.electrokinetics.EKContainer`
+        EK system (diffusion-advection-reaction models).
     box_l: (3,) array_like of :obj:`float`
         Dimensions of the simulation box.
     periodicity: (3,) array_like of :obj:`bool`
@@ -139,9 +142,6 @@ class System(ScriptInterfaceHelper):
             super().__init__(_regular_constructor=True, **kwargs)
             if has_features("CUDA"):
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
-            if has_features("WALBERLA"):
-                self._lb = None
-                self._ekcontainer = None
 
             # lock class
             self.call_method("lock_system_creation")
@@ -166,27 +166,12 @@ class System(ScriptInterfaceHelper):
         return so
 
     def __getstate__(self):
-        checkpointable_properties = []
-        if has_features("WALBERLA"):
-            checkpointable_properties += ["_lb", "_ekcontainer"]
-
-        odict = collections.OrderedDict()
-        for property_name in checkpointable_properties:
-            odict[property_name] = System.__getattribute__(self, property_name)
-        return odict
+        return {}
 
     def __setstate__(self, params):
         # initialize Python-only members
         for property_name in params.keys():
             System.__setattr__(self, property_name, params[property_name])
-        # note: several members can only be instantiated once
-        if has_features("WALBERLA"):
-            if self._lb is not None:
-                lb, self._lb = self._lb, None
-                self.lb = lb
-            if self._ekcontainer is not None:
-                ekcontainer, self._ekcontainer = self._ekcontainer, None
-                self.ekcontainer = ekcontainer
         self.call_method("lock_system_creation")
 
     @property
@@ -255,44 +240,15 @@ class System(ScriptInterfaceHelper):
     @property
     def lb(self):
         """
-        LB solver.
+        Lattice-Boltzmann method.
 
+        Type: :class:`espressomd.lb.LBFluidWalberla`
         """
-        assert_features("WALBERLA")
-        return self._lb
+        return self.lbcontainer.solver
 
     @lb.setter
     def lb(self, lb):
-        assert_features("WALBERLA")
-        if lb != self._lb:
-            if self._lb is not None:
-                self._lb.call_method("deactivate")
-                self._lb = None
-            if lb is not None:
-                lb.call_method("activate")
-                self._lb = lb
-
-    @property
-    def ekcontainer(self):
-        """
-        EK system (diffusion-advection-reaction models).
-
-        Type: :class:`espressomd.electrokinetics.EKContainer`
-
-        """
-        assert_features("WALBERLA")
-        return self._ekcontainer
-
-    @ekcontainer.setter
-    def ekcontainer(self, ekcontainer):
-        assert_features("WALBERLA")
-        if ekcontainer != self._ekcontainer:
-            if self._ekcontainer is not None:
-                self._ekcontainer.call_method("deactivate")
-                self._ekcontainer = None
-            if ekcontainer is not None:
-                ekcontainer.call_method("activate")
-                self._ekcontainer = ekcontainer
+        self.lbcontainer.solver = lb
 
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.

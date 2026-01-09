@@ -122,16 +122,16 @@ CommunicationEnvironment::CommunicationEnvironment(
   m_is_mpi_gpu_aware |= (cray_mpich_gpu_env and *cray_mpich_gpu_env == "1");
 #endif // defined(_CRAYC) or defined(__cray__)
 
+#ifdef ESPRESSO_WALBERLA
+  walberla::mpi_init();
+#endif
+
   communicator.full_initialization();
 
   m_callbacks =
       std::make_shared<Communication::MpiCallbacks>(comm_cart, m_mpi_env);
 
   ErrorHandling::init_error_handling(comm_cart);
-
-#ifdef ESPRESSO_WALBERLA
-  walberla::mpi_init();
-#endif
 
 #ifdef ESPRESSO_CUDA
   cuda_on_program_start();
@@ -161,7 +161,8 @@ CommunicationEnvironment::~CommunicationEnvironment() {
 }
 
 Communicator::Communicator()
-    : comm{::comm_cart}, node_grid{}, this_node{::this_node}, size{-1} {}
+    : comm{::comm_cart}, node_grid{}, this_node{::this_node}, size{-1},
+      locked_for_checkpointing{false} {}
 
 void Communicator::init_comm_cart() {
   auto constexpr reorder = false;
@@ -169,6 +170,9 @@ void Communicator::init_comm_cart() {
   this_node = comm.rank();
   // check topology validity
   std::ignore = Utils::Mpi::cart_neighbors<3>(comm);
+#ifdef ESPRESSO_WALBERLA
+  walberla::mpi_reinit(node_grid.data());
+#endif
 }
 
 void Communicator::full_initialization() {
@@ -180,6 +184,7 @@ void Communicator::full_initialization() {
 }
 
 void Communicator::set_node_grid(Utils::Vector3i const &value) {
+  assert(not locked_for_checkpointing);
   node_grid = value;
   init_comm_cart();
 }

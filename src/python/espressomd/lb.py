@@ -28,6 +28,12 @@ import espressomd.shapes
 import espressomd.code_features
 
 
+@script_interface_register
+class Container(ScriptInterfaceHelper):
+    _so_name = "LB::Container"
+    _so_bind_methods = ("clear",)
+
+
 class VelocityBounceBack:
     """
     Hold velocity information for the velocity bounce back boundary

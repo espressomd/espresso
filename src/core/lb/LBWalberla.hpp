@@ -19,9 +19,11 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_WALBERLA
+
+#include "system/Leaf.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -49,7 +51,7 @@ private:
   double m_tau;
 };
 
-struct LBWalberla {
+struct LBWalberla : public System::Leaf<LBWalberla> {
   std::shared_ptr<LBWalberlaBase> lb_fluid;
   std::shared_ptr<LBWalberlaParams> lb_params;
   LBWalberla(std::shared_ptr<LBWalberlaBase> lb_fluid_,
@@ -99,9 +101,9 @@ struct LBWalberla {
   void on_temperature_change() const {}
   void on_lees_edwards_change();
   void update_collision_model();
-  static void update_collision_model(LBWalberlaBase &instance,
-                                     LBWalberlaParams &params, double kT,
-                                     unsigned int seed);
+  void update_collision_model(LBWalberlaBase &instance,
+                              LBWalberlaParams &params, double kT,
+                              unsigned int seed);
 };
 
 } // namespace LB

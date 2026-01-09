@@ -356,8 +356,6 @@ class EKTest:
         with self.assertRaisesRegex(RuntimeError, "MD cell geometry change not supported by EK"):
             self.system.box_l = [1., 2., 3.]
         np.testing.assert_allclose(np.copy(self.system.box_l), 6., atol=1e-7)
-        with self.assertRaisesRegex(RuntimeError, "MPI topology change not supported by EK"):
-            self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
     def test_ek_reactants(self):
         ek_species = self.make_default_ek_species()
@@ -557,6 +555,70 @@ class EKTest:
                     **make_kwargs(thermalized=thermalized, seed=-1))
         with self.assertRaisesRegex(ValueError, "Parameter 'seed' is required for thermalized EKSpecies"):
             self.ek_species_class(**make_kwargs(thermalized=True))
+
+        # when ekcontainer is None, no solver can be attached
+        self.system.ekcontainer = None
+        self.system.ekcontainer.solver = None
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'solver' is read-only"):
+            self.system.ekcontainer.solver = espressomd.electrokinetics.EKNone(
+                lattice=self.lattice)
+        self.assertIsNone(self.system.ekcontainer.solver)
+
+    def test_rollback(self):
+        """check rollback to a valid state when setter fails"""
+        node_grid = np.copy(self.system.cell_system.node_grid)
+        world_size = np.prod(node_grid)
+        if world_size <= 4:
+            wrong_box_l = [1., 1., 7.] if world_size == 1 else 2. * node_grid
+            lattice1 = espressomd.electrokinetics.LatticeWalberla(
+                n_ghost_layers=2, agrid=1., box_l=self.system.box_l)
+            lattice2 = espressomd.electrokinetics.LatticeWalberla(
+                n_ghost_layers=2, agrid=1., box_l=wrong_box_l)
+            solver_valid = espressomd.electrokinetics.EKNone(lattice=lattice1)
+            solver_wrong = espressomd.electrokinetics.EKNone(lattice=lattice2)
+            self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+                tau=self.system.time_step, solver=solver_valid)
+            with self.assertRaisesRegex(RuntimeError, "waLBerla and ESPResSo disagree about domain decomposition"):
+                self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+                    tau=self.system.time_step, solver=solver_wrong)
+            self.assertEqual(self.system.ekcontainer.solver, solver_valid)
+
+    def test_node_grid_change(self):
+        """check MPI Cartesian communicator invalidation"""
+        node_grid = np.copy(self.system.cell_system.node_grid)
+        # create a species, slice and node for the current MPI topology
+        ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
+        ek_species = self.make_default_ek_species()
+        ek_node = ek_species[0, 0, 0]
+        ek_slice = ek_species[0:5, 0:5, 0:5]
+        self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+            tau=self.system.time_step, solver=ek_solver)
+        self.system.ekcontainer.add(ek_species)
+        # veto node grid change
+        with self.assertRaisesRegex(RuntimeError, "MPI topology change not supported by EK"):
+            self.system.cell_system.node_grid = node_grid
+        self.system.ekcontainer = None
+        # invalidate MPI Cartesian communicator
+        self.system.cell_system.node_grid = node_grid
+        # create a new species
+        ek_solver_new = espressomd.electrokinetics.EKNone(lattice=self.lattice)
+        ek_species_new = self.make_default_ek_species()
+        self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+            tau=self.system.time_step, solver=ek_solver_new)
+        self.system.ekcontainer.add(ek_species_new)
+        # prevent binding of an expired EK object
+        with self.assertRaisesRegex(RuntimeError, "the MPI Cartesian communicator of this EK object has expired"):
+            self.system.ekcontainer.add(ek_species)
+        self.assertEqual(len(self.system.ekcontainer), 1)
+        self.assertEqual(self.system.ekcontainer[0], ek_species_new)
+        # expired MPI communicator doesn't prevent read access to the fields
+        _ = ek_node.density
+        _ = ek_slice.density
+        # expired MPI communicator prevents write access to the fields
+        for handle in [ek_node, ek_slice,
+                       ek_species[0, 0, 0], ek_species[0:5, 0:5, 0:5]]:
+            with self.assertRaisesRegex(RuntimeError, "the MPI Cartesian communicator of this EK object has expired"):
+                handle.density = 1.
 
     def test_bool_operations_on_node(self):
         ekspecies = self.make_default_ek_species()

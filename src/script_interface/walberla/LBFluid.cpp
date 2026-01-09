@@ -35,6 +35,8 @@
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
 #include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
+#include <walberla_bridge/walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
@@ -68,21 +70,25 @@ std::unordered_map<std::string, int> const LBVTKHandle::obs_map = {
 Variant LBFluid::do_call_method(std::string const &name,
                                 VariantMap const &params) {
   if (name == "activate") {
-    context()->parallel_try_catch([this]() {
-      ::System::get_system().lb.set<::LB::LBWalberla>(m_instance, m_lb_params);
-    });
+    auto &system = get_system();
+    context()->parallel_try_catch(
+        [&]() { lb_throw_if_expired(m_mpi_cart_comm_observer); });
+    system.lb.set<::LB::LBWalberla>(m_instance, m_lb_params);
+    system.lb.update_collision_model();
     m_is_active = true;
     return {};
   }
   if (name == "deactivate") {
-    if (m_is_active) {
-      ::System::get_system().lb.reset();
-      m_is_active = false;
-    }
+    get_system().lb.reset();
+    m_is_active = false;
     return {};
   }
+  if (not name.starts_with("get_")) {
+    context()->parallel_try_catch(
+        [&]() { lb_throw_if_expired(m_mpi_cart_comm_observer); });
+  }
   if (name == "add_force_at_pos") {
-    auto const &box_geo = *::System::get_system().box_geo;
+    auto const &box_geo = *get_system().box_geo;
     auto const pos = get_value<Utils::Vector3d>(params, "pos");
     auto const f = get_value<Utils::Vector3d>(params, "force");
     auto const folded_pos = box_geo.folded_position(pos);
@@ -117,7 +123,7 @@ Variant LBFluid::do_call_method(std::string const &name,
   }
   if (name == "clear_boundaries") {
     m_instance->clear_boundaries();
-    ::System::get_system().on_lb_boundary_conditions_change();
+    get_system().on_lb_boundary_conditions_change();
     return {};
   }
   if (name == "add_boundary_from_shape") {
@@ -203,8 +209,8 @@ void LBFluid::do_construct(VariantMap const &params) {
       throw std::domain_error("Parameter 'kinematic_viscosity' must be >= 0");
     }
     make_instance(params);
-    ::LB::LBWalberla::update_collision_model(*m_instance, *m_lb_params, lb_kT,
-                                             static_cast<unsigned int>(seed));
+    m_mpi_cart_comm_observer = ::walberla::get_mpi_cart_comm_observer();
+    m_instance->set_collision_model(lb_kT, seed);
     m_instance->set_external_force(lb_ext_f);
     m_instance->ghost_communication();
     for (auto &vtk : m_vtk_writers) {
@@ -236,7 +242,7 @@ std::vector<Variant> LBFluid::get_average_pressure_tensor() const {
 }
 
 Variant LBFluid::get_interpolated_velocity(Utils::Vector3d const &pos) const {
-  auto const &box_geo = *::System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   auto const lb_pos = box_geo.folded_position(pos) * m_conv_dist;
   auto const result = m_instance->get_velocity_at_pos(lb_pos);
   return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
