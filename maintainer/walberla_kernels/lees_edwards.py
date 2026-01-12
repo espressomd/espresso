@@ -45,6 +45,7 @@ def velocity_offset_eqs(config, method, pdfs,
     populations in the boundary layer. Returns an AssignmentCollection
     with one Assignment per stencil direction.
     """
+    print("Lees Edwareds velocity offsets applied to PDF components")
     dim = len(stencil[0])
     default_dtype = config.data_type.default_factory()
 
@@ -84,10 +85,12 @@ def velocity_offset_eqs(config, method, pdfs,
     delta_pdf_eqs = macroscopic_values_setter(
         method, sp.Symbol("dens"), [
             sp.Symbol("v_0"), sp.Symbol("v_1"), sp.Symbol("v_2")], pdfs)
-
+    print(f"{delta_pdf_eqs=}")
     # Replace the assignments of (rho,u) by (rho, u+v) - (rho,u)
     ma = []
+
     for a, c in zip(delta_pdf_eqs.main_assignments, method.stencil):
+        print(f"Direction {c}: {a}")
         # Determine direction of the stencil component in the
         # shear_dir_normal
         if c[shear_dir_normal] == 1:
@@ -99,7 +102,7 @@ def velocity_offset_eqs(config, method, pdfs,
         else:
             up = False
             down = False
-
+        print(f"{up=} {down=} {layer_prefactor=}")
         # Replace (rho,u) by (rho,u+v) in boundary layers
         rhs = sp.simplify(
             a.rhs -
@@ -113,9 +116,10 @@ def velocity_offset_eqs(config, method, pdfs,
         rhs = rhs.replace(points_up, up)
         rhs = rhs.replace(points_down, down)
         new_a = Assignment(a.lhs, rhs)
+        print(f"velocity offset: {new_a}")
+        print()
 
         ma.append(new_a)
-        print(c, ma[-1])
     # Plug in modified assignments
     delta_pdf_eqs.main_assignments = ma
     return delta_pdf_eqs.main_assignments
@@ -132,10 +136,26 @@ def add_lees_edwards_to_collision(
         stencil,
         combined_kernel)
 
-    ma = []
-    for i, a in enumerate(collision.main_assignments):
-        # Add Lees-Edwards-shift to collision main assignments
-        new_a = Assignment(a.lhs, a.rhs + offset[i].rhs)
-        ma.append(new_a)
-    collision.main_assignments = ma
+    print("Lees edwards collision assigments")
+
+    keys = [sp.Symbol(f"d_{i}") for i in range(19)]
+
+    for i, key in enumerate(keys):
+        match_found = False
+        for j, a in enumerate(collision.main_assignments):
+            if a.lhs == key:
+                collision.main_assignments[j] = Assignment(
+                    a.lhs, a.rhs + offset[i].rhs)
+                match_found = True
+                print(f"m:{a.lhs}, o:{offset[i].lhs}")
+                break
+        if match_found:
+            continue
+        for j, a in enumerate(collision.subexpressions):
+            if hasattr(a, 'lhs'):
+                if a.lhs == key:
+                    collision.subexpressions[j] = Assignment(
+                        a.lhs, a.rhs + offset[i].rhs)
+                    print(f"s:{a.lhs}, o:{offset[i].lhs}")
+                    break
     return collision

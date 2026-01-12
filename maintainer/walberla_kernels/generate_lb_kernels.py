@@ -148,22 +148,36 @@ def generate_init_kernels(ctx, method):
 def generate_stream_collide_lees_edwards_kernels(
         ctx, method, data_type, fields):
     precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
-    lbm_opt = lbmpy.LBMOptimisation(symbolic_field=fields["pdfs"],
-                                    symbolic_temporary_field=fields["pdfs_tmp"])
-    shear_dir_normal = 1  # y-axis
+    precision_rng = pystencils_espresso.precision_rng[ctx.double_accuracy]
+    block_offsets = tuple(
+        ps.TypedSymbol(f"block_offset_{i}", np.uint32)
+        for i in range(3))
+    optimization = {"cse_global": True,
+                    "double_precision": ctx.double_accuracy}
     le_config = lbmpy.LBMConfig(stencil=stencil,
                                 method=lbmpy.Method.TRT,
-                                relaxation_rate=sp.Symbol("omega_shear"),
                                 streaming_pattern="pull",
+                                relaxation_rate=sp.Symbol("omega_shear"),
                                 force_model=lbmpy.ForceModel.GUO,
                                 force=fields["force"].center_vector,
                                 kernel_type="stream_pull_collide",
                                 **lbm_config_kwargs)
-    le_update_rule_unthermalized = lbmpy.create_lb_update_rule(
+    lbm_opt = lbmpy.LBMOptimisation(symbolic_field=fields["pdfs"],
+                                    symbolic_temporary_field=fields["pdfs_tmp"])
+    shear_dir_normal = 1  # y-axis
+    lb_collision_rule_thermalized = lbmpy.creationfunctions.create_lb_collision_rule(
+        method,
         lbm_config=le_config,
-        lbm_optimisation=lbm_opt)
-    le_collision_rule_unthermalized = lees_edwards.add_lees_edwards_to_collision(
-        config, le_update_rule_unthermalized, fields["pdfs"], stencil,
+        fluctuating={
+            "temperature": kT,
+            "block_offsets": block_offsets,
+            "rng_node": precision_rng
+        },
+        lbm_optimisation=lbm_opt,
+        optimization=optimization
+    )
+    le_lb_collision_rule_thermalized = lees_edwards.add_lees_edwards_to_collision(
+        config, lb_collision_rule_thermalized, fields["pdfs"], stencil,
         shear_dir_normal, True)
     optimization = {"cse_global": True,
                     "double_precision": ctx.double_accuracy}
@@ -174,10 +188,11 @@ def generate_stream_collide_lees_edwards_kernels(
             method,
             le_config,
             data_type,
-            le_collision_rule_unthermalized,
+            le_lb_collision_rule_thermalized,
             stem,
             optimization,
-            params
+            params,
+            block_offset=block_offsets
         )
         ctx.patch_file(stem, get_ext_source(target_suffix),
                        patch_openmp_kernels)
@@ -206,7 +221,6 @@ def generate_stream_collide_kernels(ctx, method, data_type):
         },
         optimization=optimization
     )
-
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
         stem = f"StreamCollideSweepThermalized{precision_prefix}{target_suffix}"  # nopep8
         pystencils_espresso.generate_stream_collision_sweep(

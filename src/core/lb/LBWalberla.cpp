@@ -154,10 +154,6 @@ void LBWalberla::update_collision_model(LBWalberlaBase &lb,
   auto le_protocol = system.lees_edwards->get_protocol();
   if (le_protocol and
       not std::holds_alternative<LeesEdwards::Off>(*le_protocol)) {
-    if (kT != 0.) {
-      throw std::runtime_error(
-          "Lees-Edwards LB doesn't support thermalization");
-    }
     auto const &le_bc = system.box_geo->lees_edwards_bc();
     auto lees_edwards_object = std::make_unique<LeesEdwardsPack>(
         le_bc.shear_direction, le_bc.shear_plane_normal,
@@ -169,7 +165,7 @@ void LBWalberla::update_collision_model(LBWalberlaBase &lb,
           return get_shear_velocity(system.get_sim_time(), *le_protocol) *
                  (params.get_tau() / params.get_agrid());
         });
-    lb.set_collision_model(std::move(lees_edwards_object));
+    lb.set_collision_model(std::move(lees_edwards_object), kT, seed);
   } else {
     lb.set_collision_model(kT, seed);
   }

@@ -54,12 +54,15 @@ namespace pystencils {
 
 class StreamCollideSweepLeesEdwardsSinglePrecisionCUDA {
 public:
-  StreamCollideSweepLeesEdwardsSinglePrecisionCUDA(BlockDataID forceID_,
-                                                   BlockDataID pdfsID_,
-                                                   float grid_size,
-                                                   float omega_shear, float v_s)
-      : forceID(forceID_), pdfsID(pdfsID_), grid_size_(grid_size),
-        omega_shear_(omega_shear), v_s_(v_s) {}
+  StreamCollideSweepLeesEdwardsSinglePrecisionCUDA(
+      BlockDataID forceID_, BlockDataID pdfsID_, float grid_size, float kT,
+      float omega_bulk, float omega_even, float omega_odd, float omega_shear,
+      uint32_t seed, uint32_t time_step, float v_s)
+      : forceID(forceID_), pdfsID(pdfsID_), grid_size_(grid_size), kT_(kT),
+        omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd),
+        omega_shear_(omega_shear), seed_(seed), time_step_(time_step),
+        v_s_(v_s), block_offset_0_(uint32_t(0)), block_offset_1_(uint32_t(0)),
+        block_offset_2_(uint32_t(0)), configured_(false) {}
 
   ~StreamCollideSweepLeesEdwardsSinglePrecisionCUDA() {
     for (auto p : cache_pdfs_) {
@@ -111,23 +114,64 @@ public:
     };
   }
 
-  void configure(const shared_ptr<StructuredBlockStorage> & /*blocks*/,
-                 IBlock * /*block*/) {}
+  void configure(const shared_ptr<StructuredBlockStorage> &blocks,
+                 IBlock *block) {
+    Cell BlockCellBB = blocks->getBlockCellBB(*block).min();
+    block_offset_0_ = uint32_t(BlockCellBB[0]);
+    block_offset_1_ = uint32_t(BlockCellBB[1]);
+    block_offset_2_ = uint32_t(BlockCellBB[2]);
+    configured_ = true;
+  }
 
+  inline uint32_t getBlock_offset_0() const { return block_offset_0_; }
+  inline uint32_t getBlock_offset_1() const { return block_offset_1_; }
+  inline uint32_t getBlock_offset_2() const { return block_offset_2_; }
   inline float getGrid_size() const { return grid_size_; }
+  inline float getKt() const { return kT_; }
+  inline float getOmega_bulk() const { return omega_bulk_; }
+  inline float getOmega_even() const { return omega_even_; }
+  inline float getOmega_odd() const { return omega_odd_; }
   inline float getOmega_shear() const { return omega_shear_; }
+  inline uint32_t getSeed() const { return seed_; }
+  inline uint32_t getTime_step() const { return time_step_; }
   inline float getV_s() const { return v_s_; }
+  inline void setBlock_offset_0(const uint32_t value) {
+    block_offset_0_ = value;
+  }
+  inline void setBlock_offset_1(const uint32_t value) {
+    block_offset_1_ = value;
+  }
+  inline void setBlock_offset_2(const uint32_t value) {
+    block_offset_2_ = value;
+  }
   inline void setGrid_size(const float value) { grid_size_ = value; }
+  inline void setKt(const float value) { kT_ = value; }
+  inline void setOmega_bulk(const float value) { omega_bulk_ = value; }
+  inline void setOmega_even(const float value) { omega_even_ = value; }
+  inline void setOmega_odd(const float value) { omega_odd_ = value; }
   inline void setOmega_shear(const float value) { omega_shear_ = value; }
+  inline void setSeed(const uint32_t value) { seed_ = value; }
+  inline void setTime_step(const uint32_t value) { time_step_ = value; }
   inline void setV_s(const float value) { v_s_ = value; }
 
 private:
   BlockDataID forceID;
   BlockDataID pdfsID;
+  uint32_t block_offset_0_;
+  uint32_t block_offset_1_;
+  uint32_t block_offset_2_;
   float grid_size_;
+  float kT_;
+  float omega_bulk_;
+  float omega_even_;
+  float omega_odd_;
   float omega_shear_;
+  uint32_t seed_;
+  uint32_t time_step_;
   float v_s_;
   std::unordered_map<IBlock *, gpu::GPUField<float> *> cache_pdfs_;
+
+  bool configured_;
 };
 
 } // namespace pystencils
