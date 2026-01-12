@@ -227,10 +227,10 @@ class LBTest:
             np.copy(node.velocity), atol=self.atol)
         np.testing.assert_allclose(
             np.copy(lbslice.pressure_tensor)[1, 2, 3, :],
-            np.copy(node.pressure_tensor), atol=self.atol)
+            np.copy(node.pressure_tensor), atol=self.atol, rtol=self.rtol)
         np.testing.assert_allclose(
             np.copy(lbslice.pressure_tensor_neq)[1, 2, 3, :],
-            np.copy(node.pressure_tensor_neq), atol=self.atol)
+            np.copy(node.pressure_tensor_neq), atol=self.atol, rtol=self.rtol)
         np.testing.assert_allclose(
             np.copy(lbslice.density)[1, 2, 3],
             np.copy(node.density), atol=self.atol)

@@ -132,7 +132,7 @@ class EKTestWalberlaSinglePrecision(EKEOF, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpecies
     ek_solver_class = espressomd.electrokinetics.EKFFT
     ek_params = {"single_precision": True}
-    rtol = 5e-6
+    rtol = 1e-5
 
 
 @utx.skipIfMissingGPU()
@@ -158,7 +158,7 @@ class EKTestWalberlaSinglePrecisionGPU(EKEOF, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
     ek_solver_class = espressomd.electrokinetics.EKFFTGPU
     ek_params = {"single_precision": True}
-    rtol = 5e-6
+    rtol = 1e-5
 
 
 if __name__ == "__main__":

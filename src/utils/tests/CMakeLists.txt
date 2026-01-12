@@ -22,7 +22,9 @@
 include(espresso_unit_test)
 
 espresso_unit_test(SRC Vector_test.cpp DEPENDS espresso::utils)
-if("cxx_std_23" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+if("cxx_std_23" IN_LIST CMAKE_CXX_COMPILE_FEATURES
+   AND (NOT CMAKE_CXX_COMPILER_ID STREQUAL IntelLLVM
+        OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 2024.0.0))
   target_compile_features(Vector_test PUBLIC cxx_std_23)
 endif()
 espresso_unit_test(SRC Factory_test.cpp DEPENDS espresso::utils)

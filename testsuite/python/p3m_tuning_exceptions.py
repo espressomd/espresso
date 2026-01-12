@@ -627,7 +627,7 @@ class Test(ut.TestCase):
         # the following parameters lead to precision loss on extended precision
         # architectures (80-bit floating-point arithmetic); particle positions
         # in mesh units are lying outside the mesh domain by a tiny amount, but
-        # that shouldn't affect charge assignment (see PR #5135 for details)
+        # that shouldn't affect charge assignment (see issue #5135 for details)
         length = 5.81825
         system = self.system
         system.box_l = 3 * [length]

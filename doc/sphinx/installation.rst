@@ -68,9 +68,21 @@ are required to be able to compile and use |es|:
 
     C++ compiler
         The C++ core of |es| needs to be built by a C++20-capable compiler.
+        The build system will identify the compiler toolchain version
+        and warn if it is unsupported.
+
+        When using Clang-based compiler toolchains with the GCC C++ library,
+        extra compiler and linker flags may be required for the compiler
+        toolchain to select a supported libstdc++ version.
+        On HPC clusters where the main compiler toolchain picks up
+        the operating system's default GCC version, the issue is sometimes
+        resolved by simply module loading both the main compiler toolchain
+        and a recent GCC compiler toolchain.
 
     Boost
         A number of advanced C++ features used by |es| are provided by Boost.
+        The Boost.MPI component is required. On HPC clusters where Boost is
+        packaged without Boost.MPI, one has to build Boost from sources.
 
     FFTW
         For some algorithms like |p3m|, |es| needs the FFTW library
@@ -78,9 +90,9 @@ are required to be able to compile and use |es|:
         |es| leverages heFFTe :cite:`ayala20a`.
 
     CUDA
-        For some algorithms like |p3m|,
+        For some algorithms like |p3m| and lattice-Boltzmann,
         |es| provides GPU-accelerated implementations for NVIDIA GPUs.
-        We require CUDA 12.0 or later [6]_.
+        CUDA 12.0 or later [6]_ is required.
 
     MPI
         An MPI library that implements the MPI standard version 1.2 is required
@@ -101,8 +113,8 @@ are required to be able to compile and use |es|:
         "none" to disable binding (can cause performance loss).
 
     OpenMP
-        A compiler that implements the OpenMP standard version 5.0 is required
-        to run simulations with shared-memory parallelization.
+        A compiler toolchain that implements the OpenMP standard version 5.0
+        is required to run simulations with shared-memory parallelization.
         |es| leverages Kokkos :cite:`trott22a` and Cabana :cite:`slattery22a`.
 
     Python
@@ -446,7 +458,7 @@ The actual invocation is implementation-dependent, but in many cases, such as
 
     mpirun -n 4 ./pypresso script.py
 
-where ``4`` is the number of processors to be used.
+where ``4`` is the number of CPU cores to be used.
 
 
 .. _Features:

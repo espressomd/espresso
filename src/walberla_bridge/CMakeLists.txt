@@ -93,14 +93,14 @@ add_library(espresso::walberla_codegen::compiler_flags ALIAS
 target_compile_options(
   espresso_walberla_compiler_flags
   INTERFACE
-  $<$<COMPILE_LANG_AND_ID:CXX,CrayClang>:-Wno-reorder-ctor>
+  $<$<COMPILE_LANG_AND_ID:CXX,CrayClang,IntelLLVM>:-Wno-reorder-ctor>
 )
 target_compile_options(
   espresso_walberla_codegen_compiler_flags
   INTERFACE
   $<$<COMPILE_LANGUAGE:CXX>:-Wno-cast-align>
   $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-shadow=compatible-local>
-  $<$<COMPILE_LANG_AND_ID:CXX,CrayClang>:-Wno-reorder-ctor>
+  $<$<COMPILE_LANG_AND_ID:CXX,CrayClang,IntelLLVM>:-Wno-reorder-ctor>
   # silence diagnostics from MPI vendors
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM,AppleClang>>:-Wno-cast-function-type-mismatch>
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>>:-Wno-cast-function-type-mismatch>

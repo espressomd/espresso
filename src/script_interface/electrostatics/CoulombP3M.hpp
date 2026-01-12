@@ -87,9 +87,9 @@ public:
          [this]() { return m_tuning.timings; }},
         {"tune_limits", AutoParameter::read_only,
          [this]() {
-#if defined(__clang__) and defined(__cray__)
-           auto const &range_min = m_tune_limits.first;
-           auto const &range_max = m_tune_limits.second;
+#if defined(__clang__) and defined(__cray__) or defined(__INTEL_LLVM_COMPILER)
+           auto const &range_min = m_tuning.limits.first;
+           auto const &range_max = m_tuning.limits.second;
 #else
            auto const &[range_min, range_max] = m_tuning.limits;
 #endif
