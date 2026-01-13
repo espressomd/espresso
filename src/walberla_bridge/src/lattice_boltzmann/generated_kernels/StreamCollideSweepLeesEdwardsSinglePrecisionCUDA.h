@@ -56,10 +56,11 @@ class StreamCollideSweepLeesEdwardsSinglePrecisionCUDA {
 public:
   StreamCollideSweepLeesEdwardsSinglePrecisionCUDA(BlockDataID forceID_,
                                                    BlockDataID pdfsID_,
-                                                   float grid_size,
+                                                   int64_t lebc_bot_index,
+                                                   int64_t lebc_top_index,
                                                    float omega_shear, float v_s)
-      : forceID(forceID_), pdfsID(pdfsID_), grid_size_(grid_size),
-        omega_shear_(omega_shear), v_s_(v_s) {}
+      : forceID(forceID_), pdfsID(pdfsID_), lebc_bot_index_(lebc_bot_index),
+        lebc_top_index_(lebc_top_index), omega_shear_(omega_shear), v_s_(v_s) {}
 
   ~StreamCollideSweepLeesEdwardsSinglePrecisionCUDA() {
     for (auto p : cache_pdfs_) {
@@ -114,17 +115,24 @@ public:
   void configure(const shared_ptr<StructuredBlockStorage> & /*blocks*/,
                  IBlock * /*block*/) {}
 
-  inline float getGrid_size() const { return grid_size_; }
+  inline int64_t getLebc_bot_index() const { return lebc_bot_index_; }
+  inline int64_t getLebc_top_index() const { return lebc_top_index_; }
   inline float getOmega_shear() const { return omega_shear_; }
   inline float getV_s() const { return v_s_; }
-  inline void setGrid_size(const float value) { grid_size_ = value; }
+  inline void setLebc_bot_index(const int64_t value) {
+    lebc_bot_index_ = value;
+  }
+  inline void setLebc_top_index(const int64_t value) {
+    lebc_top_index_ = value;
+  }
   inline void setOmega_shear(const float value) { omega_shear_ = value; }
   inline void setV_s(const float value) { v_s_ = value; }
 
 private:
   BlockDataID forceID;
   BlockDataID pdfsID;
-  float grid_size_;
+  int64_t lebc_bot_index_;
+  int64_t lebc_top_index_;
   float omega_shear_;
   float v_s_;
   std::unordered_map<IBlock *, gpu::GPUField<float> *> cache_pdfs_;

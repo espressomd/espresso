@@ -159,16 +159,17 @@ def generate_stream_collide_lees_edwards_kernels(
                                 force=fields["force"].center_vector,
                                 kernel_type="stream_pull_collide",
                                 **lbm_config_kwargs)
-    le_update_rule_unthermalized = lbmpy.create_lb_update_rule(
-        lbm_config=le_config,
-        lbm_optimisation=lbm_opt)
-    le_collision_rule_unthermalized = lees_edwards.add_lees_edwards_to_collision(
-        config, le_update_rule_unthermalized, fields["pdfs"], stencil,
-        shear_dir_normal, True)
     optimization = {"cse_global": True,
                     "double_precision": ctx.double_accuracy}
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
         stem = f"StreamCollideSweepLeesEdwards{precision_prefix}{target_suffix}"  # nopep8
+        simd = params.get("cpu_vectorize_info", {}).get("instruction_set")
+        le_update_rule_unthermalized = lbmpy.create_lb_update_rule(
+            lbm_config=le_config,
+            lbm_optimisation=lbm_opt)
+        le_collision_rule_unthermalized = lees_edwards.add_lees_edwards_to_collision(
+            config, le_update_rule_unthermalized, fields["pdfs"], stencil,
+            shear_dir_normal, simd is not None, True)
         pystencils_espresso.generate_stream_collision_sweep(
             ctx,
             method,

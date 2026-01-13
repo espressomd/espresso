@@ -731,18 +731,23 @@ public:
     auto const n_ghost_layers = lattice.get_ghost_layers();
     auto const blocks = lattice.get_blocks();
     if (lattice.get_node_grid()[shear_direction] != 1 or
-        lattice.get_node_grid()[shear_plane_normal] != 1 or
         blocks->getSize(shear_direction) != 1ul or
-        blocks->getSize(shear_plane_normal) != 1ul) {
+        blocks->getSize(shear_plane_normal) !=
+            lattice.get_node_grid()[shear_plane_normal]) {
       throw std::domain_error("LB LEbc doesn't support domain decomposition "
-                              "along the shear and normal directions.");
+                              "along the shear direction, nor multiple blocks "
+                              "along the normal direction");
     }
     auto const &grid_dimensions = lattice.get_grid_dimensions();
-    auto const grid_size = FloatType_c(grid_dimensions[shear_plane_normal]);
+    auto const block_origin = lattice.get_local_grid_range(false).first;
+    auto const lebc_slab_origin = block_origin[shear_plane_normal];
+    auto const lebc_slab_total_thickness = grid_dimensions[shear_plane_normal];
+    auto const lebc_bot_index = 0 - lebc_slab_origin;
+    auto const lebc_top_index = lebc_slab_total_thickness - lebc_slab_origin;
     m_collision_model =
         std::make_shared<CollisionModel>(StreamCollisionModelLeesEdwards(
-            m_last_applied_force_field_id, m_pdf_field_id, grid_size, omega,
-            shear_vel));
+            m_last_applied_force_field_id, m_pdf_field_id, lebc_bot_index,
+            lebc_top_index, omega, shear_vel));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
     m_run_stream_collide_sweep =
         StreamCollideSweepVisitor(blocks, m_lees_edwards_callbacks);

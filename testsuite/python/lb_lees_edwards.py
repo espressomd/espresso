@@ -381,7 +381,7 @@ class LBLeesEdwards(ut.TestCase):
                     tau=system.time_step)
 
         system.box_l = [16, 16, 1]
-        with self.assertRaisesRegex(ValueError, "LB LEbc doesn't support domain decomposition along the shear and normal directions"):
+        with self.assertRaisesRegex(ValueError, "LB LEbc doesn't support domain decomposition along the shear direction, nor multiple blocks along the normal direction"):
             for blocks_per_mpi_rank in ([2, 1, 1], [1, 2, 1]):
                 with LEContextManager('x', 'y', 1.):
                     system.lb = espressomd.lb.LBFluidWalberla(

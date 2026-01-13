@@ -54,10 +54,11 @@ class StreamCollideSweepLeesEdwardsDoublePrecision {
 public:
   StreamCollideSweepLeesEdwardsDoublePrecision(BlockDataID forceID_,
                                                BlockDataID pdfsID_,
-                                               double grid_size,
+                                               int64_t lebc_bot_index,
+                                               int64_t lebc_top_index,
                                                double omega_shear, double v_s)
-      : forceID(forceID_), pdfsID(pdfsID_), grid_size_(grid_size),
-        omega_shear_(omega_shear), v_s_(v_s) {}
+      : forceID(forceID_), pdfsID(pdfsID_), lebc_bot_index_(lebc_bot_index),
+        lebc_top_index_(lebc_top_index), omega_shear_(omega_shear), v_s_(v_s) {}
 
   ~StreamCollideSweepLeesEdwardsDoublePrecision() {
     for (auto p : cache_pdfs_) {
@@ -103,17 +104,24 @@ public:
   void configure(const shared_ptr<StructuredBlockStorage> & /*blocks*/,
                  IBlock * /*block*/) {}
 
-  inline double getGrid_size() const { return grid_size_; }
+  inline int64_t getLebc_bot_index() const { return lebc_bot_index_; }
+  inline int64_t getLebc_top_index() const { return lebc_top_index_; }
   inline double getOmega_shear() const { return omega_shear_; }
   inline double getV_s() const { return v_s_; }
-  inline void setGrid_size(const double value) { grid_size_ = value; }
+  inline void setLebc_bot_index(const int64_t value) {
+    lebc_bot_index_ = value;
+  }
+  inline void setLebc_top_index(const int64_t value) {
+    lebc_top_index_ = value;
+  }
   inline void setOmega_shear(const double value) { omega_shear_ = value; }
   inline void setV_s(const double value) { v_s_ = value; }
 
 private:
   BlockDataID forceID;
   BlockDataID pdfsID;
-  double grid_size_;
+  int64_t lebc_bot_index_;
+  int64_t lebc_top_index_;
   double omega_shear_;
   double v_s_;
   std::unordered_map<IBlock *, field::GhostLayerField<double, 19> *>
