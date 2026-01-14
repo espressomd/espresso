@@ -417,6 +417,27 @@ class Visualizer():
                 self.zndraw.geometries[key] = zndraw.geometries.Shape(
                      position=tuple(base_position), rotation=tuple(euler_angles), vertices=verticies)
 
+            elif shape_type == "Rhomboid":
+                vecs = np.array([shape.a, shape.b, shape.c])
+                corner_base = shape.corner
+                for dir in range(3):
+                    for side in range(2):
+                        vec1 = vecs[(dir + 1) % 3]
+                        vec2 = vecs[(dir + 2) % 3]
+                        corner = np.copy(corner_base)
+                        if(side == 1):
+                            corner += vecs[dir]
+                        corners = np.array([corner,
+                                            corner + vec1,
+                                            corner + vec1 + vec2,
+                                            corner + vec2])
+                        base_position = np.copy(corners[0])
+                        corners -= base_position
+                        verticies, euler_angles = corners_to_shape_geometry(corners)
+                        key = f"{shape_type}_{corner_base}_{vecs}_{dir}_{side}"
+                        self.zndraw.geometries[key] = zndraw.geometries.Shape(
+                            position=tuple(base_position), rotation=tuple(euler_angles), vertices=verticies)
+
             else:
                 raise NotImplementedError(
                     f"Shape of type {shape_type} isn't available in ZnDraw")
