@@ -399,44 +399,23 @@ class Visualizer():
                 self.zndraw.geometries[key] = zndraw.geometries.Sphere(
                     position=center, radius=radius)
 
-            # elif shape_type == "Wall":
-            #     dist = shape.dist
-            #     normal = np.array(shape.normal)
+            elif shape_type == "Wall":
+                dist = shape.dist
+                normal = np.array(shape.normal)
 
-            #     position = dist * normal
-            #     helper = WallIntersection(
-            #         plane_normal=normal, plane_point=position, box_l=self.system.box_l)
-            #     corners = helper.get_intersections()
+                position = dist * normal
+                helper = WallIntersection(
+                    plane_normal=normal, plane_point=position, box_l=self.system.box_l)
+                corners = helper.get_intersections()
 
-            #     base_position = np.copy(corners[0])
-            #     corners -= base_position
+                base_position = np.copy(corners[0])
+                corners -= base_position
 
-            #     # Rotate plane to align with z-axis, Custom2DShape only works
-            #     # in the xy-plane
-            #     unit_z = np.array([0, 0, 1])
-            #     r, _ = scipy.spatial.transform.Rotation.align_vectors(
-            #         [unit_z], [normal])
-            #     rotated_corners = r.apply(corners)
+                verticies, euler_angles = corners_to_shape_geometry(corners)
 
-            #     # Sort corners in a clockwise order, except the first corner
-            #     angles = np.arctan2(
-            #         rotated_corners[1:, 1], rotated_corners[1:, 0])
-            #     sorted_indices = np.argsort(angles)
-            #     sorted_corners = rotated_corners[1:][sorted_indices]
-            #     sorted_corners = np.vstack(
-            #         [rotated_corners[0], sorted_corners])[:, :2]
-
-            #     r, _ = scipy.spatial.transform.Rotation.align_vectors(
-            #         [normal], [unit_z])
-            #     euler_angles = r.as_euler("xyz")
-
-            #     # invert the z-axis, unsure why this is needed, maybe
-            #     # different coordinate systems
-            #     euler_angles[2] *= -1.
-            #     key = f"{shape_type}_{base_position}_{euler_angles}"
-
-            #     self.zndraw.geometries[key] = zndraw.geometries.Plane(
-            #         position=tuple(base_position), rotation=tuple(euler_angles), scale=np.max(self.system.box_l))
+                key = f"{shape_type}_{dist}_{normal}"
+                self.zndraw.geometries[key] = zndraw.geometries.Shape(
+                     position=tuple(base_position), rotation=tuple(euler_angles), vertices=verticies)
 
             else:
                 raise NotImplementedError(
@@ -571,3 +550,33 @@ class WallIntersection:
                 intersections.append(intersection)
 
         return np.array(intersections)
+
+def corners_to_shape_geometry(corners):
+    """
+    Calculates the verticies and euler angels of a flat shape defined by the cornes
+    """
+    unit_z = np.array([0, 0, 1])
+    v1 = corners[1] - corners[0]
+    v2 = corners[-1] - corners[0]
+    normal = np.cross(v2,v1)
+    normal = normal / np.linalg.norm(normal)
+
+    rot, _ = scipy.spatial.transform.Rotation.align_vectors(
+                    [normal],  [unit_z])
+
+    rot_matix = np.linalg.inv(rot.as_matrix())
+    vertices = np.column_stack([
+        corners @ rot_matix[0, :],
+        corners @ rot_matix[1, :]
+    ])
+
+    angles = np.arctan2(vertices[:,1], vertices[:,0])
+    sorted_indices = np.argsort(angles)
+    sorted_vertices = vertices[:][sorted_indices]
+
+    euler_angles = rot.as_euler('xyz')
+    # invert the z-axis, unsure why this is needed, maybe
+    # different coordinate systems
+    euler_angles[2] *= -1
+
+    return sorted_vertices, euler_angles
