@@ -192,13 +192,17 @@ void CellStructure::set_index_map() {
   auto &unique_particles = m_unique_particles;
   unique_particles.clear();
   unique_particles.resize(count_local_particles());
+  auto &bond_particles = m_bond_particles;
+  bond_particles.clear();
+  bond_particles.resize(count_local_particles());
   std::unordered_set<int> registered_index{};
   using execution_space = Kokkos::DefaultExecutionSpace;
   int n_threads = execution_space().concurrency();
   std::vector<int> max_ids(n_threads);
   enumerate_local_particles(
-      *this, [&unique_particles, &max_ids](std::size_t index, Particle &p) {
+      *this, [&unique_particles, &bond_particles, &max_ids](std::size_t index, Particle &p) {
         unique_particles[index] = &p;
+        bond_particles[index] = &p;
         const int thread_num = omp_get_thread_num();
         max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
       });

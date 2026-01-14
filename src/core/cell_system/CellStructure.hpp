@@ -178,6 +178,9 @@ public:
   using ListType =
       CustomVerletList<Kokkos::HostSpace, ListAlgorithm, Cabana::VerletLayout2D,
                        Cabana::TeamVectorOpTag>;
+  using BL2Type = Kokkos::View<double *[2], Kokkos::LayoutRight>;
+  using BL3Type = Kokkos::View<double *[3], Kokkos::LayoutRight>;
+  using BL4Type = Kokkos::View<double *[4], Kokkos::LayoutRight>;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 private:
@@ -210,10 +213,14 @@ private:
   std::unique_ptr<VirialType> m_local_virial;
 #endif
   std::unique_ptr<ListType> m_verlet_list_cabana;
+  std::unique_ptr<BL2Type> m_bond_list_two;
+  std::unique_ptr<BL3Type> m_bond_list_tree;
+  std::unique_ptr<BL4Type> m_bond_list_four;
   /** particle properties using individual Kokkos Views */
   std::unique_ptr<AoSoA_pack> m_aosoa;
   /** The local id-to-index for aosoa data */
   std::vector<Particle *> m_unique_particles;
+  std::vector<Particle *> m_bond_particles;
   std::shared_ptr<KokkosHandle> m_kokkos_handle;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
@@ -742,6 +749,7 @@ public:
 #endif
   auto &get_aosoa() { return *m_aosoa; }
   auto const &get_unique_particles() const { return m_unique_particles; }
+  auto const &get_bond_particles() const { return m_bond_particles; }
   auto const &get_verlet_list_cabana() const { return *m_verlet_list_cabana; }
   void clear_local_properties();
 

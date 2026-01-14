@@ -259,7 +259,8 @@ update_aosoa_charges(CellStructure &cell_structure) {
 }
 #endif
 
-void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
+void cabana_short_range(auto const &break_kernel, auto const &bond_kernel,
+			auto const &forces_kernel,
                         CellStructure &cell_structure, double pair_cutoff,
                         double bond_cutoff, auto const &verlet_criterion,
                         auto const integ_switch) {
@@ -270,7 +271,28 @@ void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_BEGIN("cabana_bond_loop");
 #endif
-    cell_structure.bond_loop(bond_kernel);
+    cell_structure.bond_loop(break_kernel);
+    //auto unique_particles = cell_structure.get_unique_particles();
+    auto unique_particles = cell_structure.get_bond_particles();
+    Kokkos::parallel_for( // loop over particles
+        "for_each_local_particle", unique_particles.size(), [&](auto idx) {
+	  auto &p = unique_particles.at(idx);
+	  for (const BondView bond : p->bonds()) {
+	    auto const partner_ids = bond.partner_ids();
+
+	    try {
+	      auto partners = cell_structure.resolve_bond_partners(partner_ids);
+	      auto const partners_span = std::span(partners.data(), partners.size());
+	      auto const bond_broken = bond_kernel(*p, bond.bond_id(), partners_span);
+	      if (bond_broken) {
+		bond_broken_error(p->id(), partner_ids);
+	      }
+	    } catch (const BondResolutionError &) {
+	      bond_broken_error(p->id(), partner_ids);
+	    }
+	  }
+        });
+    //cell_structure.bond_loop(bond_kernel);
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_END("cabana_bond_loop");
 #endif

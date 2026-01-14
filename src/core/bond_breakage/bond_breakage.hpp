@@ -78,7 +78,7 @@ public:
    */
   bool check_and_handle_breakage(int particle_id,
                                  BondPartners const &bond_partners,
-                                 int bond_type, double distance) {
+                                 int bond_type, double distance, bool queueing = true) {
     if (not breakage_specs.contains(bond_type)) {
       return false; // No breakage rule for this bond type
     }
@@ -88,7 +88,7 @@ public:
 
     // Is the bond length longer than the breakage length?
     if (distance >= spec.breakage_length) {
-      queue_breakage(particle_id, bond_partners, bond_type);
+      if (queueing) queue_breakage(particle_id, bond_partners, bond_type);
       return true;
     }
     return false;
