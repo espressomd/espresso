@@ -387,6 +387,9 @@ class Visualizer():
         if not isinstance(shapes, list):
             raise ValueError("Constraints must be given in a list")
 
+        options = {"hovering" : zndraw.geometries.InteractionSettings(enabled=False),
+                   "selecting" : zndraw.geometries.InteractionSettings(enabled=False)}
+
         for shape in shapes:
 
             shape_type = shape.__class__.__name__
@@ -397,7 +400,7 @@ class Visualizer():
                 key = f"{shape_type}_{center}_{radius}"
 
                 self.zndraw.geometries[key] = zndraw.geometries.Sphere(
-                    position=center, radius=radius)
+                    position=center, radius=radius, **options)
 
             elif shape_type == "Wall":
                 dist = shape.dist
@@ -415,7 +418,7 @@ class Visualizer():
 
                 key = f"{shape_type}_{dist}_{normal}"
                 self.zndraw.geometries[key] = zndraw.geometries.Shape(
-                     position=tuple(base_position), rotation=tuple(euler_angles), vertices=verticies)
+                     position=tuple(base_position), rotation=tuple(euler_angles), vertices=verticies, **options)
 
             elif shape_type == "Rhomboid":
                 vecs = np.array([shape.a, shape.b, shape.c])
@@ -436,7 +439,7 @@ class Visualizer():
                         verticies, euler_angles = corners_to_shape_geometry(corners)
                         key = f"{shape_type}_{corner_base}_{vecs}_{dir}_{side}"
                         self.zndraw.geometries[key] = zndraw.geometries.Shape(
-                            position=tuple(base_position), rotation=tuple(euler_angles), vertices=verticies)
+                            position=tuple(base_position), rotation=tuple(euler_angles), vertices=verticies, **options)
 
             else:
                 raise NotImplementedError(
