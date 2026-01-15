@@ -387,8 +387,8 @@ class Visualizer():
         if not isinstance(shapes, list):
             raise ValueError("Constraints must be given in a list")
 
-        options = {"hovering" : zndraw.geometries.InteractionSettings(enabled=False),
-                   "selecting" : zndraw.geometries.InteractionSettings(enabled=False)}
+        options = {"hovering": zndraw.geometries.InteractionSettings(enabled=False),
+                   "selecting": zndraw.geometries.InteractionSettings(enabled=False)}
 
         for shape in shapes:
 
@@ -418,7 +418,7 @@ class Visualizer():
 
                 key = f"{shape_type}_{dist}_{normal}"
                 self.zndraw.geometries[key] = zndraw.geometries.Shape(
-                     position=tuple(base_position), rotation=tuple(euler_angles), vertices=verticies, **options)
+                    position=tuple(base_position), rotation=tuple(euler_angles), vertices=verticies, **options)
 
             elif shape_type == "Rhomboid":
                 vecs = np.array([shape.a, shape.b, shape.c])
@@ -428,7 +428,7 @@ class Visualizer():
                         vec1 = vecs[(dir + 1) % 3]
                         vec2 = vecs[(dir + 2) % 3]
                         corner = np.copy(corner_base)
-                        if(side == 1):
+                        if (side == 1):
                             corner += vecs[dir]
                         corners = np.array([corner,
                                             corner + vec1,
@@ -436,7 +436,8 @@ class Visualizer():
                                             corner + vec2])
                         base_position = np.copy(corners[0])
                         corners -= base_position
-                        verticies, euler_angles = corners_to_shape_geometry(corners)
+                        verticies, euler_angles = corners_to_shape_geometry(
+                            corners)
                         key = f"{shape_type}_{corner_base}_{vecs}_{dir}_{side}"
                         self.zndraw.geometries[key] = zndraw.geometries.Shape(
                             position=tuple(base_position), rotation=tuple(euler_angles), vertices=verticies, **options)
@@ -575,6 +576,7 @@ class WallIntersection:
 
         return np.array(intersections)
 
+
 def corners_to_shape_geometry(corners):
     """
     Calculates the verticies and euler angels of a flat shape defined by the cornes
@@ -582,11 +584,11 @@ def corners_to_shape_geometry(corners):
     unit_z = np.array([0, 0, 1])
     v1 = corners[1] - corners[0]
     v2 = corners[-1] - corners[0]
-    normal = np.cross(v2,v1)
+    normal = np.cross(v2, v1)
     normal = normal / np.linalg.norm(normal)
 
     rot, _ = scipy.spatial.transform.Rotation.align_vectors(
-                    [normal],  [unit_z])
+        [normal], [unit_z])
 
     rot_matix = np.linalg.inv(rot.as_matrix())
     vertices = np.column_stack([
@@ -594,7 +596,7 @@ def corners_to_shape_geometry(corners):
         corners @ rot_matix[1, :]
     ])
 
-    angles = np.arctan2(vertices[:,1], vertices[:,0])
+    angles = np.arctan2(vertices[:, 1], vertices[:, 0])
     sorted_indices = np.argsort(angles)
     sorted_vertices = vertices[:][sorted_indices]
 
