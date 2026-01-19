@@ -291,7 +291,7 @@ class Visualizer():
         """
         Visualizer.SERVER_PORT = self.port
 
-        self.server = subprocess.Popen(["zndraw", "--no-browser", f"--port={self.port}", "--remove-storage"],
+        self.server = subprocess.Popen(["zndraw", "--no-browser", f"--port={self.port}"],
                                        stdout=subprocess.DEVNULL,
                                        stderr=subprocess.DEVNULL
                                        )
@@ -400,7 +400,7 @@ class Visualizer():
                 key = f"{shape_type}_{center}_{radius}"
 
                 self.zndraw.geometries[key] = zndraw.geometries.Sphere(
-                    position=center, radius=radius, **options)
+                    position=[tuple(center)], radius=[radius], **options)
 
             elif shape_type == "Wall":
                 dist = shape.dist
@@ -418,7 +418,7 @@ class Visualizer():
 
                 key = f"{shape_type}_{dist}_{normal}"
                 self.zndraw.geometries[key] = zndraw.geometries.Shape(
-                    position=tuple(base_position), rotation=tuple(euler_angles), vertices=verticies, **options)
+                    position=[tuple(base_position)], rotation=[tuple(euler_angles)], vertices=verticies, **options)
 
             elif shape_type == "Rhomboid":
                 vecs = np.array([shape.a, shape.b, shape.c])
@@ -437,10 +437,11 @@ class Visualizer():
                         base_position = np.copy(corners[0])
                         corners -= base_position
                         verticies, euler_angles = corners_to_shape_geometry(
-                            corners)
-                        key = f"{shape_type}_{corner_base}_{vecs}_{dir}_{side}"
+                            corners, False)
+                        key = f"{shape_type}_{corner_base}_{
+                            vecs}_{dir * 2 + side}"
                         self.zndraw.geometries[key] = zndraw.geometries.Shape(
-                            position=tuple(base_position), rotation=tuple(euler_angles), vertices=verticies, **options)
+                            position=[tuple(base_position)], rotation=[tuple(euler_angles)], vertices=verticies, **options)
 
             else:
                 raise NotImplementedError(
@@ -577,7 +578,7 @@ class WallIntersection:
         return np.array(intersections)
 
 
-def corners_to_shape_geometry(corners):
+def corners_to_shape_geometry(corners, sort=True):
     """
     Calculates the verticies and euler angels of a flat shape defined by the cornes
     """
@@ -596,9 +597,12 @@ def corners_to_shape_geometry(corners):
         corners @ rot_matix[1, :]
     ])
 
-    angles = np.arctan2(vertices[:, 1], vertices[:, 0])
-    sorted_indices = np.argsort(angles)
-    sorted_vertices = vertices[:][sorted_indices]
+    if (sort):
+        angles = np.arctan2(vertices[:, 1], vertices[:, 0])
+        sorted_indices = np.argsort(angles)
+        sorted_vertices = vertices[:][sorted_indices]
+    else:
+        sorted_vertices = vertices
 
     euler_angles = rot.as_euler('xyz')
     # invert the z-axis, unsure why this is needed, maybe
