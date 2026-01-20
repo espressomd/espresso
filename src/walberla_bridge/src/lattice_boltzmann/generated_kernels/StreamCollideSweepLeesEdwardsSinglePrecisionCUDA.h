@@ -19,7 +19,7 @@
 
 // kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34,
 // sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit
-// 007e77e077ad9d22b5eed6f3d3118240993e553c
+// 272d4a09ec35da50685afc9586645e1b9984b423
 
 #pragma once
 #include "core/DataTypes.h"
@@ -54,13 +54,14 @@ namespace pystencils {
 
 class StreamCollideSweepLeesEdwardsSinglePrecisionCUDA {
 public:
-  StreamCollideSweepLeesEdwardsSinglePrecisionCUDA(BlockDataID forceID_,
-                                                   BlockDataID pdfsID_,
-                                                   int64_t lebc_bot_index,
-                                                   int64_t lebc_top_index,
-                                                   float omega_shear, float v_s)
+  StreamCollideSweepLeesEdwardsSinglePrecisionCUDA(
+      BlockDataID forceID_, BlockDataID pdfsID_, int64_t lebc_bot_index,
+      int64_t lebc_top_index, float omega_bulk, float omega_even,
+      float omega_odd, float omega_shear, float v_s)
       : forceID(forceID_), pdfsID(pdfsID_), lebc_bot_index_(lebc_bot_index),
-        lebc_top_index_(lebc_top_index), omega_shear_(omega_shear), v_s_(v_s) {}
+        lebc_top_index_(lebc_top_index), omega_bulk_(omega_bulk),
+        omega_even_(omega_even), omega_odd_(omega_odd),
+        omega_shear_(omega_shear), v_s_(v_s) {}
 
   ~StreamCollideSweepLeesEdwardsSinglePrecisionCUDA() {
     for (auto p : cache_pdfs_) {
@@ -117,6 +118,9 @@ public:
 
   inline int64_t getLebc_bot_index() const { return lebc_bot_index_; }
   inline int64_t getLebc_top_index() const { return lebc_top_index_; }
+  inline float getOmega_bulk() const { return omega_bulk_; }
+  inline float getOmega_even() const { return omega_even_; }
+  inline float getOmega_odd() const { return omega_odd_; }
   inline float getOmega_shear() const { return omega_shear_; }
   inline float getV_s() const { return v_s_; }
   inline void setLebc_bot_index(const int64_t value) {
@@ -125,6 +129,9 @@ public:
   inline void setLebc_top_index(const int64_t value) {
     lebc_top_index_ = value;
   }
+  inline void setOmega_bulk(const float value) { omega_bulk_ = value; }
+  inline void setOmega_even(const float value) { omega_even_ = value; }
+  inline void setOmega_odd(const float value) { omega_odd_ = value; }
   inline void setOmega_shear(const float value) { omega_shear_ = value; }
   inline void setV_s(const float value) { v_s_ = value; }
 
@@ -133,6 +140,9 @@ private:
   BlockDataID pdfsID;
   int64_t lebc_bot_index_;
   int64_t lebc_top_index_;
+  float omega_bulk_;
+  float omega_even_;
+  float omega_odd_;
   float omega_shear_;
   float v_s_;
   std::unordered_map<IBlock *, gpu::GPUField<float> *> cache_pdfs_;

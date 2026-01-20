@@ -723,6 +723,7 @@ public:
     auto const shear_plane_normal = lees_edwards_pack->shear_plane_normal;
     auto const shear_vel = FloatType_c(lees_edwards_pack->get_shear_velocity());
     auto const omega = shear_mode_relaxation_rate();
+    auto const omega_odd = odd_mode_relaxation_rate(omega);
     if (shear_plane_normal != 1u) {
       throw std::domain_error(
           "Lees-Edwards LB only supports shear_plane_normal=\"y\"");
@@ -747,7 +748,7 @@ public:
     m_collision_model =
         std::make_shared<CollisionModel>(StreamCollisionModelLeesEdwards(
             m_last_applied_force_field_id, m_pdf_field_id, lebc_bot_index,
-            lebc_top_index, omega, shear_vel));
+            lebc_top_index, omega, omega, omega_odd, omega, shear_vel));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
     m_run_stream_collide_sweep =
         StreamCollideSweepVisitor(blocks, m_lees_edwards_callbacks);
