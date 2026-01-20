@@ -373,9 +373,11 @@ class Visualizer():
             raise ValueError("Constraints must be given in a list")
 
         if "hovering" not in shape_options:
-            shape_options["hovering"] = zndraw.geometries.InteractionSettings(enabled=False)
+            shape_options["hovering"] = zndraw.geometries.InteractionSettings(
+                enabled=False)
         if "selecting" not in shape_options:
-            shape_options["selecting"] = zndraw.geometries.InteractionSettings(enabled=False)
+            shape_options["selecting"] = zndraw.geometries.InteractionSettings(
+                enabled=False)
 
         for shape in shapes:
             shape_type = shape.__class__.__name__
