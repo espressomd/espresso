@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 The ESPResSo project
+# Copyright (C) 2024-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -31,21 +31,6 @@ import typing
 import scipy.spatial.transform
 
 from espressomd.plugins import ase
-
-# Standard colors
-color_dict = {"black": "#303030",
-              "red": "#e6194B",
-              "green": "#3cb44b",
-              "yellow": "#ffe119",
-              "blue": "#4363d8",
-              "orange": "#f58231",
-              "purple": "#911eb4",
-              "cyan": "#42d4f4",
-              "magenta": "#f032e6",
-              "lime": "#bfef45",
-              "brown": "#9A6324",
-              "grey": "#a9a9a9",
-              "white": "#f0f0f0"}
 
 
 class LBField:
@@ -380,18 +365,19 @@ class Visualizer():
     def register_setting(self, cls, **kwargs):
         self.zndraw.register_modifier(cls, **kwargs)
 
-    def draw_constraints(self, shapes: list):
+    def draw_constraints(self, shapes: list, **shape_options):
         """
         Draw constraints on the visualizer
         """
         if not isinstance(shapes, list):
             raise ValueError("Constraints must be given in a list")
 
-        options = {"hovering": zndraw.geometries.InteractionSettings(enabled=False),
-                   "selecting": zndraw.geometries.InteractionSettings(enabled=False)}
+        if "hovering" not in shape_options:
+            shape_options["hovering"] = zndraw.geometries.InteractionSettings(enabled=False)
+        if "selecting" not in shape_options:
+            shape_options["selecting"] = zndraw.geometries.InteractionSettings(enabled=False)
 
         for shape in shapes:
-
             shape_type = shape.__class__.__name__
 
             if shape_type == "Sphere":
@@ -400,7 +386,7 @@ class Visualizer():
                 key = f"{shape_type}_{center}_{radius}"
 
                 self.zndraw.geometries[key] = zndraw.geometries.Sphere(
-                    position=[tuple(center)], radius=[radius], **options)
+                    position=[tuple(center)], radius=[radius], **shape_options)
 
             elif shape_type == "Wall":
                 dist = shape.dist
@@ -414,34 +400,37 @@ class Visualizer():
                 base_position = np.copy(corners[0])
                 corners -= base_position
 
-                verticies, euler_angles = corners_to_shape_geometry(corners)
+                vertices, euler_angles = _corners_to_shape_geometry(corners)
 
                 key = f"{shape_type}_{dist}_{normal}"
                 self.zndraw.geometries[key] = zndraw.geometries.Shape(
-                    position=[tuple(base_position)], rotation=[tuple(euler_angles)], vertices=verticies, **options)
+                    position=[tuple(base_position)],
+                    rotation=[tuple(euler_angles)],
+                    vertices=vertices, **shape_options)
 
             elif shape_type == "Rhomboid":
                 vecs = np.array([shape.a, shape.b, shape.c])
                 corner_base = shape.corner
-                for dir in range(3):
+                for direction in range(3):
                     for side in range(2):
-                        vec1 = vecs[(dir + 1) % 3]
-                        vec2 = vecs[(dir + 2) % 3]
+                        vec1 = vecs[(direction + 1) % 3]
+                        vec2 = vecs[(direction + 2) % 3]
                         corner = np.copy(corner_base)
                         if (side == 1):
-                            corner += vecs[dir]
+                            corner += vecs[direction]
                         corners = np.array([corner,
                                             corner + vec1,
                                             corner + vec1 + vec2,
                                             corner + vec2])
                         base_position = np.copy(corners[0])
                         corners -= base_position
-                        verticies, euler_angles = corners_to_shape_geometry(
+                        vertices, euler_angles = _corners_to_shape_geometry(
                             corners, False)
-                        key = f"{shape_type}_{corner_base}_{
-                            vecs}_{dir * 2 + side}"
+                        key = f"{shape_type}_{corner_base}_{vecs}_{direction * 2 + side}"  # nopep8
                         self.zndraw.geometries[key] = zndraw.geometries.Shape(
-                            position=[tuple(base_position)], rotation=[tuple(euler_angles)], vertices=verticies, **options)
+                            position=[tuple(base_position)],
+                            rotation=[tuple(euler_angles)],
+                            vertices=vertices, **shape_options)
 
             else:
                 raise NotImplementedError(
@@ -578,11 +567,11 @@ class WallIntersection:
         return np.array(intersections)
 
 
-def corners_to_shape_geometry(corners, sort=True):
+def _corners_to_shape_geometry(corners, sort=True):
     """
-    Calculates the verticies and euler angels of a flat shape defined by the cornes
+    Calculate the vertices and Euler angles of a rhombus defined by its corners.
     """
-    unit_z = np.array([0, 0, 1])
+    unit_z = np.array([0., 0., 1.])
     v1 = corners[1] - corners[0]
     v2 = corners[-1] - corners[0]
     normal = np.cross(v2, v1)
@@ -597,7 +586,7 @@ def corners_to_shape_geometry(corners, sort=True):
         corners @ rot_matix[1, :]
     ])
 
-    if (sort):
+    if sort:
         angles = np.arctan2(vertices[:, 1], vertices[:, 0])
         sorted_indices = np.argsort(angles)
         sorted_vertices = vertices[:][sorted_indices]
@@ -605,8 +594,7 @@ def corners_to_shape_geometry(corners, sort=True):
         sorted_vertices = vertices
 
     euler_angles = rot.as_euler('xyz')
-    # invert the z-axis, unsure why this is needed, maybe
-    # different coordinate systems
+    # invert the z-axis (different coordinate system)
     euler_angles[2] *= -1
 
     return sorted_vertices, euler_angles

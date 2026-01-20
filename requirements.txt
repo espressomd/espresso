@@ -15,7 +15,7 @@ matplotlib>=3.6.3
 vtk>=9.1.0
 PyOpenGL>=3.1.5
 pygame>=2.1.2
-zndraw>=0.6.0
+zndraw~=0.6.0
 # waLBerla dependencies
 pystencils==1.4.0
 lbmpy==1.4.0

@@ -309,7 +309,7 @@ To install the ZnDraw visualizer:
 
 .. code-block:: bash
 
-    python3 -m pip install -c requirements.txt 'zndraw==0.4.6'
+    python3 -m pip install -c requirements.txt zndraw
 
 .. _Requirements for building the documentation:
 
