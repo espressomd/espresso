@@ -57,7 +57,7 @@ public:
       : m_comm{comm}, kT{kT}, exclusion_range{exclusion_range},
         m_generator(Random::mt19937(std::seed_seq({seed, seed, seed}))),
         m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0),
-        m_exponential_distribution(1) {
+        m_exponential_distribution(1.) {
     if (kT < 0.) {
       throw std::domain_error("Invalid value for 'kT'");
     }

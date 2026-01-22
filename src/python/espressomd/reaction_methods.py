@@ -428,7 +428,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
             reaction_id = self.call_method("get_random_reaction_index")
             E_pot = self.generic_oneway_reaction(reaction_id, E_pot)
 
-    def calculate_acceptance_probability(self, reaction_id, E_pot_diff):
+    def calculate_log_acceptance_probability(self, reaction_id, E_pot_diff):
         """
         Calculate the logarithmic acceptance probability of a Monte Carlo move.
 
@@ -486,7 +486,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
             if E_pot_new is None:
                 return E_pot_old
             E_pot_diff = E_pot_new - E_pot_old
-            ln_bf = self.calculate_acceptance_probability(
+            ln_bf = self.calculate_log_acceptance_probability(
                 reaction_id, E_pot_diff)
             return self.call_method("make_reaction_mc_move_attempt_logarithmic",
                                     reaction_id=reaction_id, ln_bf=ln_bf,
@@ -553,7 +553,7 @@ class ConstantpHEnsemble(ReactionAlgorithm):
     def required_keys(self):
         return {"kT", "exclusion_range", "seed", "constant_pH"}
 
-    def calculate_acceptance_probability(self, reaction_id, E_pot_diff):
+    def calculate_log_acceptance_probability(self, reaction_id, E_pot_diff):
         """
         Calculate the logarithmic acceptance probability of a Monte Carlo move.
 

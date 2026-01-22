@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE ReactionMethods utility functions test
+#define BOOST_TEST_MODULE "ReactionMethods utility functions test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -41,7 +41,6 @@ BOOST_AUTO_TEST_CASE(ln_factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i_test) {
       auto const val =
           ln_factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N0, nu);
       auto const ref = reaction_ensemble_combinations(N0, nu);
-      std::cout << N0 << " " << nu << " " << val << " " << ref << std::endl;
       BOOST_CHECK_CLOSE(val, ref, 10. * tol);
     }
   }

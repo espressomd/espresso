@@ -279,6 +279,8 @@ double ReactionAlgorithm::make_reaction_mc_move_attempt_logarithmic(
   auto &reaction = *reactions[reaction_id];
   reaction.accumulator_potential_energy_difference_exponential(
       std::vector<double>{exponential});
+  // probability space transformation: the uniform range [0, 1] from U(0, 1)
+  // is equivalent to the exponential range (-inf, 0] from -Exp(1) in log space
   if (-get_random_logarithmic_number() >= ln_bf) {
     // reject trial move: restore previous state, energy is unchanged
     restore_old_system_state();
