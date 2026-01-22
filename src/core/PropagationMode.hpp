@@ -32,6 +32,7 @@ enum PropagationMode : int {
   TRANS_LB_TRACER = 1 << 6,
   TRANS_BROWNIAN = 1 << 7,
   TRANS_STOKESIAN = 1 << 8,
+  TRANS_VS_CENTER_OF_MASS = 1 << 9,
   ROT_EULER = 1 << 10,
   ROT_LANGEVIN = 1 << 11,
   ROT_VS_RELATIVE = 1 << 12,

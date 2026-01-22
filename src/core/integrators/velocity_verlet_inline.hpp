@@ -19,11 +19,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
-#include "cell_system/CellStructure.hpp"
 #include "rotation.hpp"
 
 /** Propagate the velocities and positions. Integration steps before force

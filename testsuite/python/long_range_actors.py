@@ -173,7 +173,8 @@ class Test(ut.TestCase):
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_gpu_pressure(self):
         self.add_charged_particles()
-        p3m = espressomd.electrostatics.P3MGPU(**self.valid_p3m_parameters())
+        p3m = espressomd.electrostatics.P3M(
+            **self.valid_p3m_parameters(), gpu=True)
         self.system.electrostatics.solver = p3m
         self.check_obs_stats("coulomb")
 
@@ -223,13 +224,14 @@ class Test(ut.TestCase):
     @utx.skipIfMissingFeatures(["DIPOLES"])
     def test_mdds_cpu_no_magnetic_particles(self):
         self.system.part.add(pos=2 * [[1., 1., 1.]], dip=2 * [[0., 0., 0.]])
-        mdds = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=2.)
+        mdds = espressomd.magnetostatics.DipolarDirectSum(prefactor=2.)
         self.system.magnetostatics.solver = mdds
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["dipolar"], 0., delta=1e-12)
 
-    def check_p3m_pre_conditions(self, container, class_p3m):
-        params = {"prefactor": 1., "accuracy": 1., "r_cut": 1., "alpha": 1.}
+    def check_p3m_pre_conditions(self, container, class_p3m, **kwargs):
+        params = {
+            "prefactor": 1., "accuracy": 1., "r_cut": 1., "alpha": 1., **kwargs}
 
         # P3M pre-condition: cao / mesh[i] < 1
         with self.assertRaisesRegex(RuntimeError, "k-space cutoff .+ is larger than half of box dimension"):
@@ -255,7 +257,7 @@ class Test(ut.TestCase):
         self.add_charged_particles()
         self.check_p3m_pre_conditions(
             self.system.electrostatics,
-            espressomd.electrostatics.P3MGPU)
+            espressomd.electrostatics.P3M, gpu=True)
 
     @utx.skipIfMissingFeatures(["DP3M"])
     @ut.skipIf(n_nodes < 3, "only runs for 3+ MPI ranks")
@@ -297,7 +299,7 @@ class Test(ut.TestCase):
             prefactor=1., accuracy=1e-3)
         self.check_p3m_tuning_errors("magnetostatics", dp3m)
 
-    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "GSL"])
+    @utx.skipIfMissingFeatures(["MMM1D"])
     def test_mmm1d_cpu_exceptions(self):
         self.system.periodicity = (False, False, True)
         mmm1d = espressomd.electrostatics.MMM1D(prefactor=1., maxPWerror=1e-2)

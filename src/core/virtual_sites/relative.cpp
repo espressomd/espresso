@@ -27,7 +27,6 @@
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
-#include "forces.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "rotation.hpp"
 
@@ -164,8 +163,7 @@ void vs_relative_update_particles(CellStructure &cell_structure,
 void vs_relative_back_transfer_forces_and_torques(
     CellStructure &cell_structure) {
   cell_structure.ghosts_reduce_forces();
-
-  init_forces_ghosts(cell_structure);
+  cell_structure.ghosts_reset_forces();
 
   // Iterate over all the particles in the local cells
   cell_structure.for_each_local_particle(

@@ -21,7 +21,7 @@
 
 #include <config/config.hpp>
 
-#if defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)
+#ifdef ESPRESSO_MMM1D
 
 #include "electrostatics/mmm1d.hpp"
 
@@ -171,8 +171,10 @@ void CoulombMMM1D::sanity_checks_cell_structure() const {
 void CoulombMMM1D::recalc_boxl_parameters() {
   auto const &box_geo = *get_system().box_geo;
 
-  if (far_switch_radius_sq >= Utils::sqr(box_geo.length()[2]))
+  if (far_switch_radius_sq >= Utils::sqr(box_geo.length()[2])) {
     far_switch_radius_sq = 0.8 * Utils::sqr(box_geo.length()[2]);
+    far_switch_radius = std::sqrt(far_switch_radius_sq);
+  }
 
   uz2 = Utils::sqr(box_geo.length_inv()[2]);
   prefuz2 = prefactor * uz2;
@@ -371,6 +373,7 @@ void CoulombMMM1D::tune() {
       switch_radius += 0.025 * maxrad;
     }
     switch_radius = min_rad;
+    far_switch_radius = switch_radius;
     far_switch_radius_sq = Utils::sqr(switch_radius);
   } else if (far_switch_radius_sq <= Utils::sqr(bessel_radii.back())) {
     // this switching radius is too small for our Bessel series
@@ -381,4 +384,4 @@ void CoulombMMM1D::tune() {
   system.on_coulomb_change();
 }
 
-#endif // defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)
+#endif // ESPRESSO_MMM1D

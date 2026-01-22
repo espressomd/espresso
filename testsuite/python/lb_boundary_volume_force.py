@@ -105,35 +105,36 @@ class LBBoundaryForceCommon:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBBForceWalberlaDoublePrecisionCPU(LBBoundaryForceCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBBForceWalberlaSinglePrecisionCPU(LBBoundaryForceCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBBForceWalberlaDoublePrecisionGPU(LBBoundaryForceCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBBForceWalberlaSinglePrecisionGPU(LBBoundaryForceCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBBForceWalberlaDoublePrecisionBlocks(
         LBBoundaryForceCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False, "blocks_per_mpi_rank": [2, 2, 2]}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False,
+                 "blocks_per_mpi_rank": [2, 2, 2]}
 
 
 if __name__ == '__main__':

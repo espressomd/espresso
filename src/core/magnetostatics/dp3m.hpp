@@ -42,7 +42,6 @@
 #include "p3m/math.hpp"
 
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/AS_erfc_part.hpp>
@@ -90,7 +89,7 @@ public:
   virtual void count_magnetic_particles() = 0;
 
   /** Assign the physical dipoles using the tabulated assignment function. */
-  virtual void dipole_assign(ParticleRange const &particles) = 0;
+  virtual void dipole_assign() = 0;
 
   /**
    * @brief Tune dipolar P3M parameters to desired accuracy.
@@ -127,10 +126,10 @@ public:
   virtual void tune() = 0;
 
   /** Compute the k-space part of energies. */
-  virtual double long_range_energy(ParticleRange const &particles) = 0;
+  virtual double long_range_energy() = 0;
 
   /** Compute the k-space part of forces. */
-  virtual void add_long_range_forces(ParticleRange const &particles) = 0;
+  virtual void add_long_range_forces() = 0;
 
   /** Calculate real-space contribution of p3m dipolar pair forces and torques.
    *  If NPT is compiled in, update the NpT virial.
@@ -243,8 +242,7 @@ protected:
   virtual void calc_influence_function_energy() = 0;
 
   /** Compute the dipolar surface terms */
-  virtual double calc_surface_term(bool force_flag, bool energy_flag,
-                                   ParticleRange const &particles) = 0;
+  virtual double calc_surface_term(bool force_flag, bool energy_flag) = 0;
 
   /** Checks for correctness of the k-space cutoff. */
   void sanity_checks_boxl() const;

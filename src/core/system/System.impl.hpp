@@ -35,10 +35,12 @@
 #include "galilei/Galilei.hpp"
 #include "immersed_boundary/ImmersedBoundaries.hpp"
 #include "integrators/Propagation.hpp"
+#include "integrators/steepest_descent.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
+#include "stokesian_dynamics/sd_interface.hpp"
 #include "thermostat.hpp"
 
 #include "BoxGeometry.hpp"

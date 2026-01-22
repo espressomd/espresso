@@ -32,6 +32,7 @@
 
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
@@ -101,6 +102,7 @@ class LBFluidSlice : public LatticeSlice<LBFieldSerializer> {
   using LatticeModel = ::LBWalberlaBase;
   std::shared_ptr<LatticeModel> m_lb_fluid;
   std::shared_ptr<LBFluid> m_lb_sip;
+  std::optional<ResourceObserver> m_mpi_cart_comm_observer;
   double m_conv_dens;
   double m_conv_press;
   double m_conv_force;
@@ -111,6 +113,7 @@ public:
   void do_construct(VariantMap const &params) override {
     m_lb_sip = get_value<std::shared_ptr<LBFluid>>(params, "parent_sip");
     m_lb_fluid = m_lb_sip->get_lb_fluid();
+    m_mpi_cart_comm_observer = m_lb_sip->get_mpi_cart_comm_observer();
     auto const lb_params = m_lb_sip->get_lb_params();
     auto const tau = lb_params->get_tau();
     auto const agrid = lb_params->get_agrid();

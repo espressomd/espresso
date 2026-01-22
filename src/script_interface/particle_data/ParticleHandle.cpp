@@ -39,6 +39,7 @@
 #include "core/rotation.hpp"
 #include "core/system/System.hpp"
 #include "core/virtual_sites.hpp"
+#include "core/virtual_sites/com.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/reduce_optional.hpp>
@@ -67,18 +68,18 @@ namespace ScriptInterface {
 namespace Particles {
 
 #ifdef ESPRESSO_ROTATION
-static auto const contradicting_arguments_quat = std::vector<
-    std::array<std::string, 3>>{{
-    {{"dip", "dipm",
-      "Setting 'dip' is sufficient as it defines the scalar dipole moment."}},
-    {{"quat", "director",
-      "Setting 'quat' is sufficient as it defines the director."}},
-    {{"dip", "quat",
-      "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."}},
-    {{"dip", "director",
-      "Setting 'dip' would overwrite 'director'. Set 'director' and "
-      "'dipm' instead."}},
-}};
+static auto constexpr contradicting_arguments_quat = std::to_array<
+    std::array<std::string_view, 3>>({
+    {"dip", "dipm",
+     "Setting 'dip' is sufficient as it defines the scalar dipole moment."},
+    {"quat", "director",
+     "Setting 'quat' is sufficient as it defines the director."},
+    {"dip", "quat",
+     "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."},
+    {"dip", "director",
+     "Setting 'dip' would overwrite 'director'. Set 'director' and "
+     "'dipm' instead."},
+});
 
 static void sanity_checks_rotation(VariantMap const &params) {
   // if we are not constructing a particle from a checkpoint file,
@@ -87,7 +88,8 @@ static void sanity_checks_rotation(VariantMap const &params) {
     auto formatter =
         boost::format("Contradicting particle attributes: '%s' and '%s'. %s");
     for (auto const &[prop1, prop2, reason] : contradicting_arguments_quat) {
-      if (params.contains(prop1) and params.contains(prop2)) {
+      if (params.contains(std::string{prop1}) and
+          params.contains(std::string{prop2})) {
         auto const err_msg = boost::str(formatter % prop1 % prop2 % reason);
         throw std::invalid_argument(err_msg);
       }
@@ -704,6 +706,28 @@ Variant ParticleHandle::do_call_method(std::string const &name,
                   Variant{static_cast<int>(PropagationMode::TRANS_VS_RELATIVE |
                                            PropagationMode::ROT_VS_RELATIVE)});
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+  } else if (name == "vs_com_relate_to") {
+    auto &cell_structure = get_cell_structure()->get_cell_structure();
+    auto const molid = get_value<int>(params, "molid");
+    auto const maybe_exists_vs = get_pid_for_vs_com(cell_structure, molid);
+    if (not context()->is_head_node()) {
+      return {};
+    }
+    if (molid < 0) {
+      throw std::domain_error("Invalid molecule id: " + std::to_string(molid));
+    }
+    if (maybe_exists_vs) {
+      throw std::runtime_error(
+          "Molecule id: " + std::to_string(molid) +
+          " is already tracked by virtual site with particle id: " +
+          std::to_string(*maybe_exists_vs));
+    }
+    set_parameter("mol_id", params.at("molid"));
+    set_parameter(
+        "propagation",
+        Variant{static_cast<int>(PropagationMode::TRANS_VS_CENTER_OF_MASS)});
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 #ifdef ESPRESSO_EXCLUSIONS
   } else if (name == "has_exclusion") {
     auto const other_pid = get_value<int>(params, "pid");

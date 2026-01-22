@@ -269,31 +269,31 @@ class LBThermostatCommon:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBWalberlaThermostatDoublePrecisionCPU(LBThermostatCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
     lb_geom_progression = 10
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBWalberlaThermostatSinglePrecisionCPU(LBThermostatCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
     lb_geom_progression = 10
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBWalberlaThermostatDoublePrecisionGPU(LBThermostatCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
     lb_geom_progression = 9
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBWalberlaThermostatSinglePrecisionGPU(LBThermostatCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
     lb_geom_progression = 9
 
 

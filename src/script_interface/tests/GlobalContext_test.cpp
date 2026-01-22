@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE ScriptInterface::GlobalContext test
+#define BOOST_TEST_MODULE "ScriptInterface::GlobalContext test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -28,9 +28,11 @@
 #include <boost/mpi/environment.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -51,9 +53,10 @@ struct Dummy : si::ObjectHandle {
   }
 
   std::vector<std::string_view> valid_parameters() const override {
-    static std::string_view names[] = {"id", "object_param"};
+    auto const names = std::to_array<std::string_view>({"id", "object_param"});
+    auto const length = std::min(params.size(), names.size());
 
-    return {names, names + std::min(params.size(), std::size_t{2u})};
+    return {names.begin(), names.begin() + length};
   }
 };
 

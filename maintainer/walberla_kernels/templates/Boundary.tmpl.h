@@ -245,8 +245,8 @@ public:
     {%- endif %}
 
     {{class_name}}( const std::shared_ptr<StructuredBlockForest> & blocks,
-                   {{kernel|generate_constructor_parameters(['indexVector', 'indexVectorSize', 'forceVector', 'forceVectorSize'])}}{{additional_data_handler.constructor_arguments}})
-        : {{additional_data_handler.initialiser_list}} {{ kernel|generate_constructor_initializer_list(['indexVector', 'indexVectorSize', 'forceVector', 'forceVectorSize']) }}
+                   {{kernel|generate_constructor_parameters(['indexVector', 'indexVectorSize', 'forceVector', 'forceVectorSize'])}}{%- if additional_data_handler != None -%}{{additional_data_handler.constructor_arguments}}{%- endif -%})
+        : {%- if additional_data_handler != None -%}{{additional_data_handler.initialiser_list}}{%- endif -%} {{ kernel|generate_constructor_initializer_list(['indexVector', 'indexVectorSize', 'forceVector', 'forceVectorSize']) }}
     {
         auto createIdxVector = []( IBlock * const , StructuredBlockStorage * const ) { return new IndexVectors(); };
         indexVectorID = blocks->addStructuredBlockData< IndexVectors >( createIdxVector, "IndexField_{{class_name}}");
@@ -255,6 +255,14 @@ public:
         forceVectorID = blocks->addStructuredBlockData< ForceVector >( createForceVector, "forceVector_{{class_name}}");
         {%- endif %}
     }
+
+    {% if "ReactionKernelIndexed" in class_name %}
+    {{class_name}}( {{kernel|generate_constructor_parameters(parameters_to_ignore=parameters_to_ignore)}})
+      : {{ kernel|generate_constructor_initializer_list(parameters_to_ignore=parameters_to_ignore) }}
+    {}
+    {%- endif %}
+
+    {{ kernel| generate_destructor(class_name) |indent(3) }}
 
     void run (
         {{- ["IBlock * block", kernel.kernel_selection_parameters, ["gpuStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}}
@@ -316,12 +324,12 @@ public:
                             FlagUID boundaryFlagUID, FlagUID domainFlagUID)
     {
         for( auto &block : *blocks )
-            fillFromFlagField<FlagField_T>({{additional_data_handler.additional_arguments_for_fill_function}}&block, flagFieldID, boundaryFlagUID, domainFlagUID );
+            fillFromFlagField<FlagField_T>({%- if additional_data_handler != None -%}{{additional_data_handler.additional_arguments_for_fill_function}}{%- endif -%} &block, flagFieldID, boundaryFlagUID, domainFlagUID );
     }
 
 
     template<typename FlagField_T>
-    void fillFromFlagField({{additional_data_handler.additional_parameters_for_fill_function}}IBlock * block, ConstBlockDataID flagFieldID,
+    void fillFromFlagField({%- if additional_data_handler != None -%}{{additional_data_handler.additional_parameters_for_fill_function}}{%- endif -%} IBlock * block, ConstBlockDataID flagFieldID,
                             FlagUID boundaryFlagUID, FlagUID domainFlagUID )
     {
         auto * indexVectors = block->getData< IndexVectors > ( indexVectorID );
@@ -330,10 +338,10 @@ public:
         auto & indexVectorOuter = indexVectors->indexVector(IndexVectors::OUTER);
         {% if calculate_force -%}
         auto * forceVector = block->getData< ForceVector > ( forceVectorID );
-        {%- endif %}
+        {% endif %}
 
         auto * flagField = block->getData< FlagField_T > ( flagFieldID );
-        {{additional_data_handler.additional_field_data|indent(4)}}
+        {% if additional_data_handler != None -%}{{additional_data_handler.additional_field_data|indent(4)}}{%- endif %}
 
         if( !(flagField->flagExists(boundaryFlagUID) and
               flagField->flagExists(domainFlagUID) ))
@@ -351,7 +359,7 @@ public:
 
         {% if inner_or_boundary -%}
         {% if layout == "fzyx" -%}
-        {%- for dirIdx, dirVec, offset in additional_data_handler.stencil_info %}
+        {%- for dirIdx, dirVec, offset in stencil_info %}
         for( auto it = flagField->beginWithGhostLayerXYZ( cell_idx_c( flagField->nrOfGhostLayers() - 1 ) ); it != flagField->end(); ++it )
         {
            if( ! isFlagSet(it, domainFlag) || isFlagSet(it, boundaryFlag) )
@@ -360,10 +368,12 @@ public:
            if ( isFlagSet( it.neighbor({{offset}} {%if dim == 3%}, 0 {%endif %}), boundaryFlag ) )
            {
               auto element = {{StructName}}(it.x(), it.y(), {%if dim == 3%} it.z(), {%endif %} {{dirIdx}} );
+              {% if additional_data_handler != None -%}
               {{"auto const InitialisationAdditionalData = elementInitialiser(Cell(it.x() + %(x)s, it.y() + %(y)s, it.z() + %(z)s), blocks, *block);" | format(x=dirVec[0], y=dirVec[1], z=dirVec[2]) | replace("+ -", "-")}}
               element.vel_0 = InitialisationAdditionalData[0];
               element.vel_1 = InitialisationAdditionalData[1];
               element.vel_2 = InitialisationAdditionalData[2];
+              {% endif -%}
               indexVectorAll.emplace_back( element );
               if( inner.contains( it.x(), it.y(), it.z() ) )
                  indexVectorInner.emplace_back( element );
@@ -377,14 +387,16 @@ public:
         {
             if( ! isFlagSet(it, domainFlag) || isFlagSet(it, boundaryFlag) )
                 continue;
-            {%- for dirIdx, dirVec, offset in additional_data_handler.stencil_info %}
+            {%- for dirIdx, dirVec, offset in stencil_info %}
             if ( isFlagSet( it.neighbor({{offset}} {%if dim == 3%}, 0 {%endif %}), boundaryFlag ) )
             {
                 auto element = {{StructName}}(it.x(), it.y(), {%if dim == 3%} it.z(), {%endif %} {{dirIdx}} );
+                {% if additional_data_handler != None -%}
                 {{"auto const InitialisationAdditionalData = elementInitialiser(Cell(it.x() + %(x)s, it.y() + %(y)s, it.z() + %(z)s), blocks, *block);" | format(x=dirVec[0], y=dirVec[1], z=dirVec[2]) | replace("+ -", "-")}}
                 element.vel_0 = InitialisationAdditionalData[0];
                 element.vel_1 = InitialisationAdditionalData[1];
                 element.vel_2 = InitialisationAdditionalData[2];
+                {% endif -%}
                 indexVectorAll.emplace_back( element );
                 if( inner.contains( it.x(), it.y(), it.z() ) )
                     indexVectorInner.emplace_back( element );
@@ -409,14 +421,14 @@ public:
             {% endif %}
             if( ! isFlagSet(it, boundaryFlag) )
                 continue;
-            {%- for dirIdx, dirVec, offset in additional_data_handler.stencil_info %}
+            {%- for dirIdx, dirVec, offset in stencil_info %}
             if ( flagWithGLayers.contains(it.x() + cell_idx_c({{dirVec[0]}}), it.y() + cell_idx_c({{dirVec[1]}}), it.z() + cell_idx_c({{dirVec[2]}})) && isFlagSet( it.neighbor({{offset}} {%if dim == 3%}, 0 {%endif %}), domainFlag ) )
             {
                 {% if single_link -%}
                 sum_x += cell_idx_c({{dirVec[0]}}); sum_y += cell_idx_c({{dirVec[1]}}); {%if dim == 3%} sum_z += cell_idx_c({{dirVec[2]}}); {%endif %}
                 {% else %}
                 auto element = {{StructName}}(it.x(), it.y(), {%if dim == 3%} it.z(), {%endif %} {{dirIdx}} );
-                {{additional_data_handler.data_initialisation(dirIdx)|indent(16)}}
+                {% if additional_data_handler != None -%}{{additional_data_handler.data_initialisation(dirIdx)|indent(16)}}{%- endif %}
                 indexVectorAll.emplace_back( element );
                 if( inner.contains( it.x(), it.y(), it.z() ) )
                     indexVectorInner.emplace_back( element );
@@ -430,7 +442,7 @@ public:
             dot = 0.0; maxn = 0.0; calculated_idx = 0;
             if(sum_x != 0 or sum_y !=0 {%if dim == 3%} or sum_z !=0 {%endif %})
             {
-            {%- for dirIdx, dirVec, offset in additional_data_handler.stencil_info %}
+            {%- for dirIdx, dirVec, offset in stencil_info %}
                 dx = {{dirVec[0]}}; dy = {{dirVec[1]}}; {%if dim == 3%} dz = {{dirVec[2]}}; {% endif %}
                 dot = {{dtype}}( dx*sum_x + dy*sum_y {%if dim == 3%} + dz*sum_z {% endif %});
                 if (dot > maxn)
@@ -469,15 +481,17 @@ private:
     {% if calculate_force -%}
     BlockDataID forceVectorID;
     {%- endif %}
-    {{additional_data_handler.additional_member_variable|indent(4)}}
+    {%- if additional_data_handler != None -%}{{additional_data_handler.additional_member_variable|indent(4)}}{%- endif -%}
 
 {% if calculate_force -%}
 public:
+    {%- if additional_data_handler != None %}
     static constexpr std::array<std::array<int, {{additional_data_handler.Q}}u>, {{dim}}u> neighborOffset = { {
         {% for i in range(dim) -%}
             { {{additional_data_handler.neighbor_directions[i][1:-1]}} },
         {%- endfor %}
     } };
+    {%- endif %}
 
     auto const & getForceVector(IBlock const *block) const {
         auto const * forceVector = block->getData<ForceVector>(forceVectorID);

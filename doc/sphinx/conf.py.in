@@ -15,6 +15,8 @@
 # serve to show the default.
 
 import sys
+import docutils
+import sphinx.util.docutils
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -24,7 +26,7 @@ sys.path.insert(0, '@CMAKE_BINARY_DIR@/src/python')
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '3.5'
+needs_sphinx = '7.2'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -58,7 +60,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ESPResSo'
-copyright = '2018-2023, The ESPResSo project'
+copyright = '2018-2025, The ESPResSo project'
 author = 'C. Holm, F. Weik, R. Weeber'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -255,6 +257,19 @@ rst_epilog = """
 napoleon_use_param = False
 
 
+class SpdxRole(sphinx.util.docutils.SphinxRole):
+    """Role to reference a SPDX license identifier."""
+    def run(self):
+        spdx_id = self.text
+        node_spdx = docutils.nodes.inline(text='SPDX license identifier: ')
+        node_spdx_id = docutils.nodes.inline(text=spdx_id)
+        node_spdx_id.set_class('pre')
+        node_spdx_url = docutils.nodes.reference(refuri=f'https://spdx.org/licenses/{spdx_id}.html')
+        node_spdx_url += node_spdx_id
+        node_spdx += node_spdx_url
+        return [node_spdx], []
+
+
 # -- Other options --------------------------------------------------------
 
 # Suppress warnings for features not compiled in
@@ -265,6 +280,7 @@ autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'vtk', 'zndraw', 
 def setup(app):
     app.add_css_file('blockquotes.css')
     app.add_css_file('custom.css')
+    app.add_role('spdx', SpdxRole())
 
 
 # -- Options for Cython ---------------------------------------------------

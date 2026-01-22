@@ -55,8 +55,8 @@ class CoulombCloudWallTune(ut.TestCase):
 
     @utx.skipIfMissingGPU()
     def test_p3m_gpu(self):
-        actor = espressomd.electrostatics.P3MGPU(
-            prefactor=1., accuracy=5e-4, tune=True)
+        actor = espressomd.electrostatics.P3M(
+            prefactor=1., accuracy=5e-4, tune=True, gpu=True)
         self.compare(actor)
 
 

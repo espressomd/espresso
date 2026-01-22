@@ -17,11 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
+#if defined(ESPRESSO_DIPOLES) and defined(ESPRESSO_CUDA)
 
-#include "magnetostatics/dipolar_direct_sum_gpu.hpp"
+#include "magnetostatics/dipolar_direct_sum.hpp"
 #include "magnetostatics/dipolar_direct_sum_gpu_cuda.cuh"
 
 #include "BoxGeometry.hpp"
@@ -37,15 +37,7 @@ static void get_simulation_box(BoxGeometry const &box_geo, float *box,
   }
 }
 
-DipolarDirectSumGpu::DipolarDirectSumGpu(double prefactor, int n_replicas) {
-  set_prefactor(prefactor);
-  this->n_replicas = n_replicas;
-  if (n_replicas < 0) {
-    throw std::domain_error("Parameter 'n_replicas' must be >= 0");
-  }
-}
-
-void DipolarDirectSumGpu::on_activation() const {
+void DipolarDirectSum::on_activation_gpu() const {
   auto &gpu_particle_data = get_system().gpu;
   gpu_particle_data.enable_property(GpuParticleData::prop::force);
   gpu_particle_data.enable_property(GpuParticleData::prop::torque);
@@ -56,7 +48,7 @@ void DipolarDirectSumGpu::on_activation() const {
 #endif
 }
 
-void DipolarDirectSumGpu::add_long_range_forces() const {
+void DipolarDirectSum::add_long_range_forces_gpu() const {
   auto &system = get_system();
   auto &gpu = system.gpu;
   gpu.update();
@@ -81,7 +73,7 @@ void DipolarDirectSumGpu::add_long_range_forces() const {
       n_replicas);
 }
 
-void DipolarDirectSumGpu::long_range_energy() const {
+void DipolarDirectSum::long_range_energy_gpu() const {
   auto &system = get_system();
   auto &gpu = system.gpu;
   gpu.update();
@@ -100,4 +92,4 @@ void DipolarDirectSumGpu::long_range_energy() const {
                                          periodicity, energy_device);
 }
 
-#endif // ESPRESSO_DIPOLAR_DIRECT_SUM
+#endif // defined(ESPRESSO_DIPOLES) and defined(ESPRESSO_CUDA)

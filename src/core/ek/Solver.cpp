@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "ek/Implementation.hpp"
 #include "ek/Solver.hpp"
@@ -57,7 +57,13 @@ static void check_solver(std::unique_ptr<Solver::Implementation> const &ptr) {
 
 bool Solver::is_solver_set() const { return EK::is_solver_set(impl); }
 
-void Solver::reset() { System::get_system().ek.impl->solver = std::nullopt; }
+void Solver::reset() {
+  if (impl->solver) {
+    std::visit([this](auto &ptr) { ptr->detach_system(m_system.lock()); },
+               *impl->solver);
+    impl->solver = std::nullopt;
+  }
+}
 
 bool Solver::is_ready_for_propagation() const {
   return is_solver_set() and
@@ -140,6 +146,7 @@ double Solver::get_tau() const {
 template <> void Solver::set<EKNone>(std::shared_ptr<EKNone> ek_instance) {
   assert(impl);
   assert(not impl->solver.has_value());
+  ek_instance->bind_system(m_system.lock());
   impl->solver = ek_instance;
 }
 
@@ -149,6 +156,7 @@ void Solver::set<EKWalberla>(std::shared_ptr<EKWalberla> ek_instance) {
   assert(impl);
   assert(not impl->solver.has_value());
   auto const &system = get_system();
+  ek_instance->bind_system(m_system.lock());
   ek_instance->sanity_checks(system);
   impl->solver = ek_instance;
 }

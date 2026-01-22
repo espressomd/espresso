@@ -33,7 +33,7 @@ system = espressomd.System(box_l=[10.0, 10.0, 5.0])
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 
-lb_fluid = espressomd.lb.LBFluidWalberla(
+lb_fluid = espressomd.lb.LBFluid(
     agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01, ext_force_density=[0, 0, 0.15])
 system.lb = lb_fluid
 

@@ -25,6 +25,8 @@
 
 #include "LatticeSlice.impl.hpp"
 
+#include <walberla_bridge/utils/ResourceManager.hpp>
+
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -55,6 +57,11 @@ Variant LBFluidSlice::do_call_method(std::string const &name,
   }
   if (name == "get_lattice_speed") {
     return 1. / m_conv_velocity;
+  }
+
+  if (not name.starts_with("get_")) {
+    context()->parallel_try_catch(
+        [&]() { lb_throw_if_expired(m_mpi_cart_comm_observer); });
   }
 
   // slice getter/setter callback

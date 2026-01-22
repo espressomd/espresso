@@ -19,9 +19,11 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_WALBERLA
+
+#include "system/Leaf.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -42,7 +44,7 @@ class System;
 
 namespace EK {
 
-struct EKWalberla {
+struct EKWalberla : public System::Leaf<EKWalberla> {
   using ek_container_type = EKContainer<EKinWalberlaBase>;
   using ek_reactions_type = EKReactions<walberla::EKReactionBase>;
   std::shared_ptr<ek_container_type> ek_container;

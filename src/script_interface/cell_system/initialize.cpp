@@ -26,6 +26,7 @@ namespace CellSystem {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<CellSystem>("CellSystem::CellSystem");
+  om->register_new<CheckpointerContext>("CellSystem::CheckpointerContext");
 }
 
 } // namespace CellSystem

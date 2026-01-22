@@ -20,6 +20,7 @@
 #pragma once
 
 #include "Observable_stat.hpp"
+#include "Particle.hpp"
 
 #include <utils/Vector.hpp>
 

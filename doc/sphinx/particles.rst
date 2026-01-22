@@ -379,14 +379,109 @@ In the following example, a particle is advected by a fluid flowing along the x-
     system = espressomd.System(box_l=[8., 8., 8.])
     system.time_step = 0.01
     system.cell_system.skin = 0.
-    lbf = espressomd.lb.LBFluidWalberla(agrid=1., tau=0.01, density=1.,
-                                        kinematic_viscosity=1.)
+    lbf = espressomd.lb.LBFluid(agrid=1., tau=0.01, density=1.,
+                                kinematic_viscosity=1.)
     system.lb = lbf
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
     lbf[:, :, :].velocity = [0.1, 0., 0.]
     p = system.part.add(pos=[0., 0., 0.], propagation=Propagation.TRANS_LB_TRACER)
     system.integrator.run(10)
     print(p.pos.round(3))
+
+
+.. _Center-of-mass virtual sites:
+
+Center-of-mass virtual sites
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The center-of-mass (COM) implementation of virtual sites allows for the application or
+retrieval of forces acting on the center of mass of a set of particles. This tool is
+particularly useful when performing umbrella sampling.
+The position of a virtual site is obtained from the position of the center of mass of
+all the particles linked to this virtual site.
+COM virtual sites disregard orientation.
+Forces acting on a COM virtual site are transmitted to the particles linked to it,
+weighted by the corresponding particle mass.
+If :math:`M=m_1+...+m_N` is the total mass of the :math:`N` particles linked to the
+COM virtual site, and :math:`\vec{f_v}` is the force acting on it, the force acting on
+every particle is given by:
+
+.. math:: \vec{f_i} =\frac{m_i}{M}\vec{f_v}
+
+Unlike relative virtual sites, COM virtual sites allow working with non-rigid
+arrangements of particles.
+
+To use this implementation of virtual sites, activate the feature
+``VIRTUAL_SITES_CENTER_OF_MASS``. Furthermore, particles have to be set up with the
+propagation mode :attr:`~espressomd.propagation.Propagation.TRANS_VS_CENTER_OF_MASS`.
+To set up a COM virtual site:
+
+#. Place the particles to which the virtual site should be related.
+   All of them should have the same molecule ID ``mol_id``::
+
+       import espressomd
+       system = espressomd.System(box_l=[10., 10., 10.])
+       system.time_step = 0.01
+       system.cell_system.skin = 0.4
+       mol_id = 1
+       p1 = system.part.add(pos=[1., 2., 3.], mol_id=mol_id)
+       p2 = system.part.add(pos=[6., 7., 8.], mol_id=mol_id)
+
+#. Place the COM virtual site -it can be at an arbitrary position-
+   and relate it to the corresponding particles via the molecule ID ``mol_id``::
+
+       vs_type = 1
+       vs = system.part.add(pos=[0, 0, 0], type=vs_type)
+       vs.vs_com_relate_to(mol_id)
+
+   The :meth:`~espressomd.particle_data.ParticleHandle.is_virtual`
+   method of particle ``vs`` will now return ``True``, its
+   :attr:`~espressomd.particle_data.ParticleHandle.propagation`
+   attribute will return the correct combination of flags, and its
+   :attr:`~espressomd.particle_data.ParticleHandle.mol_id`
+   attribute will be set to the tracked molecule id.
+   To avoid malfunctioning in the simulations, it is recommended to explicitly
+   assign a type to the COM virtual sites that do not conflict with
+   those of the real particles.
+
+#. Repeat the previous step with more virtual sites, if desired.
+
+#. To update the positions of all virtual sites, call::
+
+      system.integrator.run(0)
+
+Please note:
+
+- The COM virtual site is related to non-virtual particles using the method
+  ``vs_com_relate_to()``, whose argument can be either the molecule ID of the set of
+  particles or a particle (ParticleHandle) from that set, from which the molecule ID
+  can be extracted.
+- Each molecule id can only have at most one COM virtual site.
+- Virtual sites can not be related to a set of particles or a molecule containing other
+  virtual sites, since the forces of the latter will not be transfered. Therefore,
+  it is important to keep clear track of the molecule IDs in the system. Remember
+  that adding particles, virtual or non-virtual, without specifying ``mol_id`` results
+  in the particles being initialized with the default value ``mol_id = 0``.
+- Applying forces to the COM virtual sites can be done explicitly via the
+  ``ext_force`` attribute of `~espressomd.particle_data.ParticleHandle`::
+
+       vs.ext_force = [100, 0, 0]
+
+  or setting up interactions associated to the virtual site type::
+
+       import espressomd.interactions
+       pulling_type = 3
+       pulling_part = system.part.add(pos=system.box_l/2, type=pulling_type)
+       # Fix particle in space
+       pulling_part.fix = [True, True, True]
+       # Add harmonic interaction
+       hb = espressomd.interactions.HarmonicBond(k=5., r_0=0., r_cut=10.)
+       system.bonded_inter.add(hb)
+       # Add harmonic interaction between the virtual site and fixed pulling particle
+       pulling_part.add_bond((hb, vs))
+
+  Last example sets a harmonic potential that pulls the com virtual site to the center
+  of the simulation box.
 
 
 .. _Per-particle propagation:

@@ -390,8 +390,7 @@ struct UpdateParticleIndexVisitor {
 void CellStructure::resort_particles(bool global_flag) {
   invalidate_ghosts();
 
-  static std::vector<ParticleChange> diff;
-  diff.clear();
+  std::vector<ParticleChange> diff;
 
   m_decomposition->resort(global_flag, diff);
 

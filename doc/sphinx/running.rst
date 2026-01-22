@@ -423,8 +423,6 @@ and it needs to have at least compute capability 2.0.
 For more details, please refer to the installation section
 :ref:`Nvidia GPU acceleration`.
 
-For more information please check :class:`espressomd.cuda_init.CudaInitHandle`.
-
 .. _List available devices:
 
 List available devices

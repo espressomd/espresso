@@ -19,10 +19,11 @@
 
 #pragma once
 
+#include <config/config.hpp>
+
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "lb/Solver.hpp"

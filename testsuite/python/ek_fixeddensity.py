@@ -25,7 +25,7 @@ import espressomd
 import espressomd.electrokinetics
 
 
-class EK_Test:
+class EKTest:
     AGRID = 1.1
     BOX_L = np.array([32., 3., 3.]) * AGRID
     DENSITY = 1
@@ -44,24 +44,18 @@ class EK_Test:
     def tearDown(self) -> None:
         self.system.ekcontainer = None
 
-    def test_constant_density_bc_single(self):
-        self.detail_test_constant_density_bc(single_precision=True)
+    def test_constant_density_bc(self):
+        """effective 1D system with linear equilibrium profile"""
 
-    def test_constant_density_bc_double(self):
-        self.detail_test_constant_density_bc(single_precision=False)
+        decimal_precision = 5 if self.ek_params["single_precision"] else 7
 
-    def detail_test_constant_density_bc(self, single_precision: bool):
-        """ effective 1D system with linear equilibrium profile """
-
-        decimal_precision: int = 5 if single_precision else 7
-
-        lattice = espressomd.electrokinetics.LatticeWalberla(
-            n_ghost_layers=1, agrid=self.AGRID)
+        lattice = espressomd.electrokinetics.Lattice(
+            n_ghost_layers=2, agrid=self.AGRID)
 
         ekspecies = self.ek_species_class(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             valency=0.0, advection=False, friction_coupling=False,
-            single_precision=single_precision, tau=self.TAU)
+            tau=self.TAU, **self.ek_params)
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
@@ -105,14 +99,29 @@ class EK_Test:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class EKFixedDensityCPU(EK_Test, ut.TestCase):
+class EKFixedDensityDoublePrecisionCPU(EKTest, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": False, "gpu": False}
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKFixedDensitySinglePrecisionCPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
-class EKFixedDensityGPU(EK_Test, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+class EKFixedDensityDoublePrecisionGPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": False, "gpu": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKFixedDensitySinglePrecisionGPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

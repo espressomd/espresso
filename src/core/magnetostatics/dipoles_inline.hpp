@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "magnetostatics/dipoles.hpp"
 #include "magnetostatics/dp3m.hpp"

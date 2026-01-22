@@ -54,6 +54,10 @@ bool is_valid_propagation_combination(int propagation) {
   case TRANS_LANGEVIN_NPT:
     return force_code_coverage(true);
 #endif
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+  case TRANS_VS_CENTER_OF_MASS:
+    return force_code_coverage(true);
+#endif
 #ifdef ESPRESSO_ROTATION
   case ROT_EULER:
     return force_code_coverage(true);
@@ -116,6 +120,7 @@ std::unordered_map<std::string, int> propagation_flags_map() {
   enum_values["TRANS_LB_TRACER"] = TRANS_LB_TRACER;
   enum_values["TRANS_BROWNIAN"] = TRANS_BROWNIAN;
   enum_values["TRANS_STOKESIAN"] = TRANS_STOKESIAN;
+  enum_values["TRANS_VS_CENTER_OF_MASS"] = TRANS_VS_CENTER_OF_MASS;
   enum_values["ROT_EULER"] = ROT_EULER;
   enum_values["ROT_LANGEVIN"] = ROT_LANGEVIN;
   enum_values["ROT_VS_RELATIVE"] = ROT_VS_RELATIVE;

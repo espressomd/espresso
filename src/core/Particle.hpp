@@ -587,6 +587,7 @@ public:
 #ifdef ESPRESSO_VIRTUAL_SITES
   auto is_virtual() const {
     return (p.propagation & (PropagationMode::TRANS_VS_RELATIVE |
+                             PropagationMode::TRANS_VS_CENTER_OF_MASS |
                              PropagationMode::ROT_VS_RELATIVE |
                              PropagationMode::ROT_VS_INDEPENDENT |
                              PropagationMode::TRANS_LB_TRACER)) != 0;

@@ -21,17 +21,17 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_DIPOLES
 
 #include "actor/traits.hpp"
 
+#include "Particle.hpp"
+
 #include "magnetostatics/actor.hpp"
 #include "magnetostatics/dipolar_direct_sum.hpp"
 #include "magnetostatics/dp3m.hpp"
-
-#include <ParticleRange.hpp>
 
 #include <memory>
 #include <variant>
@@ -140,10 +140,14 @@ struct DipolarLayerCorrection : public Dipoles::Actor<DipolarLayerCorrection> {
     }
   }
 
+  /** @brief Calculate long-range dipolar energy with corrections. */
+  double long_range_energy() const;
+  /** @brief Accumulate long-range dipolar forces with corrections. */
+  void add_long_range_forces() const;
   /** @brief Calculate the dipolar energy correction. */
-  double energy_correction(ParticleRange const &particles) const;
+  double energy_correction() const;
   /** @brief Add the dipolar force and torque corrections. */
-  void add_force_corrections(ParticleRange const &particles) const;
+  void add_force_corrections() const;
 
   void adapt_solver();
 

@@ -150,7 +150,7 @@ class TestRegularLBWalberla(TestLB, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
 
     def setUp(self):
         self.system.cell_system.set_regular_decomposition()
@@ -159,7 +159,7 @@ class TestRegularLBWalberla(TestLB, ut.TestCase):
 @utx.skipIfMissingFeatures("WALBERLA")
 class TestNSquareLBWalberla(TestLB, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
 
     def setUp(self):
         self.system.cell_system.set_n_square()
@@ -168,7 +168,7 @@ class TestNSquareLBWalberla(TestLB, ut.TestCase):
 @utx.skipIfMissingFeatures("WALBERLA")
 class TestHybrid0LBWalberla(TestLB, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
 
     def setUp(self):
         self.system.cell_system.set_hybrid_decomposition(
@@ -179,7 +179,7 @@ class TestHybrid0LBWalberla(TestLB, ut.TestCase):
 @utx.skipIfMissingFeatures("WALBERLA")
 class TestHybrid1LBWalberla(TestLB, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
 
     def setUp(self):
         self.system.cell_system.set_hybrid_decomposition(

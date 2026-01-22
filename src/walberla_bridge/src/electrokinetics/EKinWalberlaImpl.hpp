@@ -48,6 +48,8 @@
 #include <walberla_bridge/BlockAndCell.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
+#include <walberla_bridge/walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 
@@ -300,6 +302,7 @@ protected:
   std::shared_ptr<FullCommunicator> m_full_communication;
   std::shared_ptr<BoundaryFullCommunicator> m_boundary_communicator;
   std::bitset<GhostComm::SIZE> m_pending_ghost_comm;
+  ResourceObserver m_mpi_cart_comm_observer;
   template <class Field>
   using PackInfo =
       typename FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
@@ -312,7 +315,8 @@ public:
       : m_diffusion(FloatType_c(diffusion)), m_kT(FloatType_c(kT)),
         m_valency(FloatType_c(valency)), m_ext_efield(ext_efield),
         m_advection(advection), m_friction_coupling(friction_coupling),
-        m_seed(seed), m_lattice(std::move(lattice)) {
+        m_seed(seed), m_lattice(std::move(lattice)),
+        m_mpi_cart_comm_observer(get_mpi_cart_comm_observer()) {
 
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
@@ -453,6 +457,7 @@ public:
 
   void ghost_communication() override {
     if (m_pending_ghost_comm.test(GhostComm::DENS)) {
+      assert(m_mpi_cart_comm_observer.is_valid());
       (*m_full_communication)();
       m_pending_ghost_comm.reset(GhostComm::DENS);
     }
@@ -461,6 +466,7 @@ public:
 
   void ghost_communication_boundary() {
     if (m_pending_ghost_comm.test(GhostComm::FLB)) {
+      assert(m_mpi_cart_comm_observer.is_valid());
       m_boundary_communicator->communicate();
       m_pending_ghost_comm.reset(GhostComm::FLB);
     }
@@ -589,7 +595,7 @@ private:
 
   void kernel_migration() {}
 
-  void updated_boundary_fields() {
+  void update_boundary_fields() {
     m_boundary_flux->boundary_update();
     m_boundary_density->boundary_update();
   }
@@ -609,7 +615,8 @@ public:
   void integrate(std::size_t potential_id, std::size_t velocity_id,
                  std::size_t force_id, double lb_density) override {
 
-    updated_boundary_fields();
+    assert(m_mpi_cart_comm_observer.is_valid());
+    update_boundary_fields();
 
     if (get_diffusion() == 0.)
       return;

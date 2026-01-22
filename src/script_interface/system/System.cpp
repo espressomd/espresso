@@ -19,7 +19,7 @@
 
 #include "System.hpp"
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "core/BoxGeometry.hpp"
 #include "core/Particle.hpp"
@@ -45,12 +45,14 @@
 #include "script_interface/cell_system/CellSystem.hpp"
 #include "script_interface/collision_detection/CollisionDetection.hpp"
 #include "script_interface/constraints/Constraints.hpp"
+#include "script_interface/ek/Container.hpp"
 #include "script_interface/electrostatics/Container.hpp"
 #include "script_interface/galilei/ComFixed.hpp"
 #include "script_interface/galilei/Galilei.hpp"
 #include "script_interface/integrators/IntegratorHandle.hpp"
 #include "script_interface/interactions/BondedInteractions.hpp"
 #include "script_interface/interactions/NonBondedInteractions.hpp"
+#include "script_interface/lb/Container.hpp"
 #include "script_interface/lees_edwards/LeesEdwards.hpp"
 #include "script_interface/magnetostatics/Container.hpp"
 #include "script_interface/particle_data/ParticleHandle.hpp"
@@ -125,6 +127,8 @@ struct System::Leaves {
 #ifdef ESPRESSO_DIPOLES
   std::shared_ptr<Dipoles::Container> magnetostatics;
 #endif
+  std::shared_ptr<LB::Container> lb;
+  std::shared_ptr<EK::Container> ek;
   std::shared_ptr<Particles::ParticleList> part;
 
   ~Leaves() {
@@ -201,6 +205,7 @@ System::System() : m_instance{}, m_leaves{std::make_unique<Leaves>()} {
          m_instance->oif_global->max_oif_objects = get_value<int>(v);
        },
        [this]() { return m_instance->oif_global->max_oif_objects; }},
+
   });
   // note: the order of leaves matters! e.g. bonds depend on thermostats,
   // and thus a thermostat object must be instantiated before the bonds
@@ -225,6 +230,50 @@ System::System() : m_instance{}, m_leaves{std::make_unique<Leaves>()} {
 #ifdef ESPRESSO_DIPOLES
   add_parameter("magnetostatics", &Leaves::magnetostatics);
 #endif
+  add_parameter("lbcontainer", &Leaves::lb);
+  add_parameters({
+      {"ekcontainer",
+       [this](Variant const &v) {
+         if (is_none(v)) {
+           m_leaves->ek->do_call_method("deactivate", {});
+           if (not context()->is_head_node()) {
+             return;
+           }
+           set_parameter("ekcontainer",
+                         context()->make_shared("EK::Container", {}));
+         } else {
+           auto const detach_solver = [this]() {
+             auto &solver = m_leaves->ek;
+             if (solver) {
+               solver->do_call_method("deactivate", {});
+               solver->detach_system();
+             }
+             solver.reset();
+           };
+           auto const bind_solver = [this]() {
+             auto &solver = m_leaves->ek;
+             if (solver) {
+               solver->bind_system(m_instance);
+               solver->do_call_method("activate", {});
+             }
+           };
+           auto &solver = m_leaves->ek;
+           auto new_solver = get_value<std::shared_ptr<EK::Container>>(v);
+           auto old_solver = solver;
+           detach_solver();
+           try {
+             solver = new_solver;
+             context()->parallel_try_catch([&]() { bind_solver(); });
+           } catch (...) {
+             detach_solver();
+             solver = old_solver;
+             bind_solver();
+             throw;
+           }
+         }
+       },
+       [this]() { return m_leaves->ek; }},
+  });
   add_parameter("part", &Leaves::part);
 }
 
@@ -322,6 +371,8 @@ void System::do_construct(VariantMap const &params) {
 #ifdef ESPRESSO_DIPOLES
     do_set_default_parameter<Dipoles::Container>("magnetostatics");
 #endif
+    do_set_default_parameter<LB::Container>("lbcontainer");
+    do_set_default_parameter<EK::Container>("ekcontainer");
     do_set_default_parameter<Particles::ParticleList>("part");
   } else {
     for (auto const &key : get_parameter_insertion_order()) {

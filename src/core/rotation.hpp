@@ -25,7 +25,7 @@
  *  This file contains all subroutines required to process rotational motion.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_ROTATION
 

@@ -17,17 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_NPT
 #include "velocity_verlet_npt.hpp"
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "system/System.hpp"
 #include "thermostats/npt_inline.hpp"
 
 #include <utils/Vector.hpp>
@@ -164,7 +164,7 @@ static void velocity_verlet_npt_propagate_AVOVA_MTK(
     nptiso.p_epsilon = propagate_thermV_nptiso(npt_iso, nptiso.p_epsilon);
     nptiso.volume *=
         std::exp(1.5 * nptiso.inv_piston * nptiso.p_epsilon * time_step);
-    L_new = pow(nptiso.volume, 1.0 / nptiso.dimension);
+    L_new = std::pow(nptiso.volume, 1.0 / nptiso.dimension);
   }
 
   /* 2nd propagation pos and pos_MTK*/

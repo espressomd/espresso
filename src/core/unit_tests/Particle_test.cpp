@@ -250,17 +250,17 @@ BOOST_AUTO_TEST_CASE(rattle_constructors) {
 }
 #endif // ESPRESSO_BOND_CONSTRAINT
 
-#ifdef THERMAL_STONER_WOHLFARTH
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 
 void check_particle_tsw(ThermalStonerWohlfarthParameters const &out,
                         ThermalStonerWohlfarthParameters const &ref) {
-  BOOST_CHECK_EQUAL(out.is_enabled == ref.is_enabled);
-  BOOST_CHECK_EQUAL(out.phi0 == ref.phi0);
-  BOOST_CHECK_EQUAL(out.sat_mag == ref.sat_mag);
-  BOOST_CHECK_EQUAL(out.ani_fld_inv == ref.ani_fld_inv);
-  BOOST_CHECK_EQUAL(out.ani_energy == ref.ani_energy);
-  BOOST_CHECK_EQUAL(out.tau0_inv == ref.tau0_inv);
-  BOOST_CHECK_EQUAL(out.dt_incr == ref.dt_incr);
+  BOOST_TEST(out.is_enabled == ref.is_enabled);
+  BOOST_TEST(out.phi0 == ref.phi0);
+  BOOST_TEST(out.sat_mag == ref.sat_mag);
+  BOOST_TEST(out.ani_fld_inv == ref.ani_fld_inv);
+  BOOST_TEST(out.ani_energy == ref.ani_energy);
+  BOOST_TEST(out.tau0_inv == ref.tau0_inv);
+  BOOST_TEST(out.dt_incr == ref.dt_incr);
 }
 
 BOOST_AUTO_TEST_CASE(thermal_stoner_wohlfarth_serialization) {
@@ -320,7 +320,7 @@ BOOST_AUTO_TEST_CASE(thermal_stoner_wohlfarth_constructors) {
     check_particle_tsw(out, pr);
   }
 }
-#endif // THERMAL_STONER_WOHLFARTH
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 
 BOOST_AUTO_TEST_CASE(particle_bitfields) {
   auto p = Particle();

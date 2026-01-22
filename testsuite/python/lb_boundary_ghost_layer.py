@@ -90,38 +90,39 @@ class TestCommon:
 @utx.skipIfMissingFeatures(["WALBERLA"])
 @ut.skipIf(TestCommon.n_nodes != 2, "only runs for 2 MPI ranks")
 class LBPoiseuilleWalberlaSinglePrecisionCPU(TestCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 @ut.skipIf(TestCommon.n_nodes != 2, "only runs for 2 MPI ranks")
 class LBPoiseuilleWalberlaDoublePrecisionCPU(TestCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 @ut.skipIf(TestCommon.n_nodes != 2, "only runs for 2 MPI ranks")
 class LBPoiseuilleWalberlaSinglePrecisionGPU(TestCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 @ut.skipIf(TestCommon.n_nodes != 2, "only runs for 2 MPI ranks")
 class LBPoiseuilleWalberlaDoublePrecisionGPU(TestCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 # @ut.skipIf(TestCommon.n_nodes != 2, "only runs for 2 MPI ranks")
 class LBPoiseuilleWalberlaDoublePrecisionBlocksCPU(TestCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False, "blocks_per_mpi_rank": [2, 1, 1]}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False,
+                 "blocks_per_mpi_rank": [2, 1, 1]}
 
 
 if __name__ == "__main__":

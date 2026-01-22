@@ -29,11 +29,13 @@
 #include "code_info/initialize.hpp"
 #include "collision_detection/initialize.hpp"
 #include "constraints/initialize.hpp"
+#include "ek/initialize.hpp"
 #include "electrostatics/initialize.hpp"
 #include "galilei/initialize.hpp"
 #include "h5md/initialize.hpp"
 #include "integrators/initialize.hpp"
 #include "interactions/initialize.hpp"
+#include "lb/initialize.hpp"
 #include "lees_edwards/initialize.hpp"
 #include "magnetostatics/initialize.hpp"
 #include "math/initialize.hpp"
@@ -60,9 +62,11 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   Constraints::initialize(f);
   Coulomb::initialize(f);
   Dipoles::initialize(f);
+  EK::initialize(f);
   Galilei::initialize(f);
   Integrators::initialize(f);
   Interactions::initialize(f);
+  LB::initialize(f);
   LeesEdwards::initialize(f);
   Math::initialize(f);
   MPIIO::initialize(f);

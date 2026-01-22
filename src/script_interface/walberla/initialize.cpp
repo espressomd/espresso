@@ -29,7 +29,6 @@
 
 #include "EKContainer.hpp"
 #include "EKFFT.hpp"
-#include "EKFFT_GPU.hpp"
 #include "EKNone.hpp"
 #include "EKPoissonSolverNode.hpp"
 #include "EKPoissonSolverSlice.hpp"
@@ -55,28 +54,19 @@
 namespace ScriptInterface::walberla {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
-  om->register_new<LatticeWalberla>("walberla::LatticeWalberla");
+  om->register_new<LatticeWalberla>("walberla::Lattice");
 
-  om->register_new<LBFluidCPU>("walberla::LBFluidCPU");
-#ifdef ESPRESSO_CUDA
-  om->register_new<LBFluidGPU>("walberla::LBFluidGPU");
-#endif // ESPRESSO_CUDA
+  om->register_new<LBFluid>("walberla::LBFluid");
   om->register_new<LBFluidNode>("walberla::LBFluidNode");
   om->register_new<LBFluidSlice>("walberla::LBFluidSlice");
   om->register_new<LBVTKHandle>("walberla::LBVTKHandle");
 
   om->register_new<EKContainer>("walberla::EKContainer");
-  om->register_new<EKSpeciesCPU>("walberla::EKSpeciesCPU");
-#ifdef ESPRESSO_CUDA
-  om->register_new<EKSpeciesGPU>("walberla::EKSpeciesGPU");
-#endif // ESPRESSO_CUDA
+  om->register_new<EKSpecies>("walberla::EKSpecies");
   om->register_new<EKSpeciesNode>("walberla::EKSpeciesNode");
   om->register_new<EKSpeciesSlice>("walberla::EKSpeciesSlice");
 #ifdef ESPRESSO_WALBERLA_FFT
   om->register_new<EKFFT>("walberla::EKFFT");
-#ifdef ESPRESSO_CUDA
-  om->register_new<EKFFTGPU>("walberla::EKFFTGPU");
-#endif // ESPRESSO_CUDA
 #endif // WALBERLA_FFT
   om->register_new<EKNone>("walberla::EKNone");
   om->register_new<EKPoissonSolverNode>("walberla::EKPoissonSolverNode");

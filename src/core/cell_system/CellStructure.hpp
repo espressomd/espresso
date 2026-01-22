@@ -546,9 +546,14 @@ public:
   void update_ghosts_and_resort_particle(unsigned data_parts);
 
   /**
-   * @brief Add forces from ghost particles to real particles.
+   * @brief Add forces and torques from ghost particles to real particles.
    */
   void ghosts_reduce_forces();
+
+  /** Set forces and torques on all ghosts to zero. */
+  void ghosts_reset_forces() {
+    for_each_ghost_particle([](Particle &p) { p.force_and_torque() = {}; });
+  }
 
 #ifdef ESPRESSO_BOND_CONSTRAINT
   /**

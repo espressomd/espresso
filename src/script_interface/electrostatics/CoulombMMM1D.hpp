@@ -21,7 +21,7 @@
 
 #include <config/config.hpp>
 
-#if defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)
+#ifdef ESPRESSO_MMM1D
 
 #include "Actor.hpp"
 
@@ -69,4 +69,4 @@ public:
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)
+#endif // ESPRESSO_MMM1D

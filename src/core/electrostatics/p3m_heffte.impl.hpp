@@ -48,7 +48,6 @@
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "ParticlePropertyIterator.hpp"
-#include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
 #include "actor/visitors.hpp"
 #include "aosoa_pack.hpp"
@@ -421,14 +420,15 @@ template <int cao> struct AssignCharge {
 } // namespace
 
 template <typename FloatType, Arch Architecture, class FFTConfig>
-void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::charge_assign(
-    [[maybe_unused]] ParticleRange const &particles) {
+void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::charge_assign() {
   prepare_fft_mesh(true);
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   Utils::integral_parameter<int, AssignCharge, p3m_min_cao, p3m_max_cao>(
       p3m.params.cao, p3m, *get_system().cell_structure);
 #else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
+  auto const &system = get_system();
+  auto const particles = system.cell_structure->local_particles();
   auto p_q_range = ParticlePropertyRange::charge_range(particles);
   auto p_pos_range = ParticlePropertyRange::pos_range(particles);
 
@@ -618,13 +618,12 @@ void CoulombP3MHeffte<FloatType, Architecture,
  */
 template <typename FloatType, Arch Architecture, class FFTConfig>
 Utils::Vector9d
-CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_pressure(
-    ParticleRange const &particles) {
+CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_pressure() {
   auto const &box_geo = *get_system().box_geo;
   Utils::Vector9d node_k_space_pressure_tensor{};
 
   if (p3m.sum_q2 > 0.) {
-    charge_assign(particles);
+    charge_assign();
     kernel_ks_charge_density();
 
     auto constexpr r2c_dir = FFTConfig::r2c_dir;
@@ -689,7 +688,7 @@ CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_pressure(
 
 template <typename FloatType, Arch Architecture, class FFTConfig>
 double CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
-    bool force_flag, bool energy_flag, ParticleRange const &particles) {
+    bool force_flag, bool energy_flag) {
 
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
@@ -701,19 +700,20 @@ double CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
   if (p3m.sum_qpart == 0u) {
     return 0.;
   }
+  auto &cell_structure = *system.cell_structure;
 
   if (not has_actor_of_type<ElectrostaticLayerCorrection>(
           system.coulomb.impl->solver)) {
-    charge_assign(particles);
+    charge_assign();
   }
 
   kernel_ks_charge_density();
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-  auto &cell_structure = *system.cell_structure;
   auto const &local_force = cell_structure.get_local_force();
   auto const &aosoa = cell_structure.get_aosoa();
 #else
+  auto const particles = cell_structure.local_particles();
   auto p_q_range = ParticlePropertyRange::charge_range(particles);
   auto p_force_range = ParticlePropertyRange::force_range(particles);
   auto p_unfolded_pos_range =
@@ -847,12 +847,12 @@ class CoulombTuningAlgorithm : public TuningAlgorithm {
 protected:
   P3MParameters &get_params() override { return p3m.params; }
 
-  constexpr std::tuple<int, int, int> get_memory_layout() const {
+  static constexpr std::tuple<int, int, int> get_memory_layout() {
+    using enum Utils::MemoryOrder;
     auto constexpr memory_order = FFTConfig::k_space_order;
-    if constexpr (memory_order == Utils::MemoryOrder::COLUMN_MAJOR) {
-      return {2, 1, 0};
-    }
-    return {0, 1, 2};
+    auto constexpr layout_col_major = std::tuple(2, 1, 0);
+    auto constexpr layout_row_major = std::tuple(0, 1, 2);
+    return (memory_order == COLUMN_MAJOR) ? layout_col_major : layout_row_major;
   }
 
 public:
@@ -1173,15 +1173,13 @@ void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::scaleby_box_l() {
 
 #ifdef ESPRESSO_CUDA
 template <typename FloatType, Arch Architecture, class FFTConfig>
-void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::
-    add_long_range_forces_gpu(ParticleRange const &particles) {
+void CoulombP3MHeffte<FloatType, Architecture,
+                      FFTConfig>::add_long_range_forces_gpu() {
   if constexpr (Architecture == Arch::CUDA) {
 #ifdef ESPRESSO_NPT
     if (get_system().has_npt_enabled()) {
-      get_system().npt_add_virial_contribution(long_range_energy(particles));
+      get_system().npt_add_virial_contribution(long_range_energy());
     }
-#else
-    static_cast<void>(particles);
 #endif
     if (this_node == 0) {
       auto &gpu = get_system().gpu;

@@ -27,7 +27,6 @@
 
 #include "magnetostatics/dp3m.hpp"
 
-#include "ParticleRange.hpp"
 #include "communication.hpp"
 #include "p3m/FFTBackendLegacy.hpp"
 #include "p3m/FFTBuffersLegacy.hpp"
@@ -220,17 +219,15 @@ public:
     tune();
   }
 
-  double long_range_energy(ParticleRange const &particles) override {
-    return long_range_kernel(false, true, particles);
-  }
+  double long_range_energy() override { return long_range_kernel(false, true); }
 
-  void add_long_range_forces(ParticleRange const &particles) override {
+  void add_long_range_forces() override {
     if constexpr (Architecture == Arch::CPU) {
-      long_range_kernel(true, false, particles);
+      long_range_kernel(true, false);
     }
   }
 
-  void dipole_assign(ParticleRange const &particles) override;
+  void dipole_assign() override;
 
 private:
   void prepare_fft_mesh() {
@@ -255,14 +252,12 @@ private:
 
 protected:
   /** Compute the k-space part of forces and energies. */
-  double long_range_kernel(bool force_flag, bool energy_flag,
-                           ParticleRange const &particles);
+  double long_range_kernel(bool force_flag, bool energy_flag);
   double calc_average_self_energy_k_space() const override;
   void calc_energy_correction() override;
   void calc_influence_function_force() override;
   void calc_influence_function_energy() override;
-  double calc_surface_term(bool force_flag, bool energy_flag,
-                           ParticleRange const &particles) override;
+  double calc_surface_term(bool force_flag, bool energy_flag) override;
   void init_cpu_kernels();
   void scaleby_box_l() override;
 #ifdef ESPRESSO_NPT

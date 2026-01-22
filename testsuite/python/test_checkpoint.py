@@ -156,8 +156,10 @@ class CheckpointTest(ut.TestCase):
 
         self.assertTrue(lbf.is_active)
         if "LB.CPU" in modes:
+            self.assertFalse(lbf.gpu)
             self.assertFalse(lbf.single_precision)
         elif "LB.GPU" in modes:
+            self.assertTrue(lbf.gpu)
             self.assertTrue(lbf.single_precision)
 
         # check boundary objects
@@ -426,6 +428,8 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(p2.type, 0)
         self.assertEqual(p3.type, 1)
         self.assertEqual(p4.type, 1)
+        self.assertEqual(p1.mol_id, 3)
+        self.assertEqual(p2.mol_id, 0)
         np.testing.assert_allclose(np.copy(p3.v), [0., 0., 0.])
         np.testing.assert_allclose(np.copy(p4.v), [-1., 2., -4.])
         np.testing.assert_allclose(p8.lees_edwards_offset, 0.2)
@@ -792,6 +796,16 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(
             np.copy(p_real.vs_relative[2]), [1., 0., 0., 0.], atol=1e-10)
 
+    @utx.skipIfMissingFeatures(['VIRTUAL_SITES_CENTER_OF_MASS'])
+    def test_virtual_sites(self):
+        Propagation = espressomd.propagation.Propagation
+        p_real = system.part.by_id(0)
+        p_virt = system.part.by_id(8)
+        prop_flag = Propagation.TRANS_VS_CENTER_OF_MASS
+        self.assertEqual(p_real.propagation, Propagation.SYSTEM_DEFAULT)
+        self.assertEqual(p_virt.propagation, prop_flag)
+        self.assertEqual(p_virt.mol_id, p_real.mol_id)
+
     @utx.skipIfMissingFeatures(['THERMAL_STONER_WOHLFARTH', 'EXTERNAL_FORCES'])
     @ut.skipIf('THERM.LANGEVIN' not in modes, 'missing a suitable thermostat')
     def test_thermal_stoner_wohlfarth_virtual_sites(self):
@@ -906,14 +920,13 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_p3m_mode, "Skipping test due to missing combination.")
     def test_p3m(self):
         actor = system.electrostatics.solver
-        self.assertIsInstance(actor, espressomd.electrostatics._P3MBase)
-        single_precision = isinstance(actor, espressomd.electrostatics.P3MGPU)
+        self.assertIsInstance(actor, espressomd.electrostatics.P3M)
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                      'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
                      'timings': 15, 'check_neutrality': True,
-                     'tune_limits': [8, 12],
-                     'single_precision': single_precision,
+                     'tune_limits': [8, 12], 'gpu': 'P3M.GPU' in modes,
+                     'single_precision': 'P3M.GPU' in modes,
                      'charge_neutrality_tolerance': 1e-12}
         for key in reference:
             self.assertIn(key, state)

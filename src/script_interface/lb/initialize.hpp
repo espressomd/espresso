@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The ESPResSo project
+ * Copyright (C) 2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,14 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-
-#include "cell_system/CellStructure.hpp"
-#include "thermostat.hpp"
-
-void run_magnetodynamics(CellStructure &cell_structure,
-                         Thermostat::Thermostat const &thermostat);
-
-#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
+namespace ScriptInterface::LB {
+void initialize(Utils::Factory<ObjectHandle> *om);
+} // namespace ScriptInterface::LB

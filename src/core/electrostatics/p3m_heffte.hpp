@@ -27,7 +27,6 @@
 
 #include "electrostatics/p3m.hpp"
 
-#include "ParticleRange.hpp"
 #include "communication.hpp"
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
@@ -193,24 +192,22 @@ public:
 #endif
   }
 
-  double long_range_energy(ParticleRange const &particles) override {
-    return long_range_kernel(false, true, particles);
-  }
+  double long_range_energy() override { return long_range_kernel(false, true); }
 
-  void add_long_range_forces(ParticleRange const &particles) override {
+  void add_long_range_forces() override {
     if constexpr (Architecture == Arch::CPU) {
-      long_range_kernel(true, false, particles);
+      long_range_kernel(true, false);
     }
 #ifdef ESPRESSO_CUDA
     if constexpr (Architecture == Arch::CUDA) {
-      add_long_range_forces_gpu(particles);
+      add_long_range_forces_gpu();
     }
 #endif
   }
 
-  Utils::Vector9d long_range_pressure(ParticleRange const &particles) override;
+  Utils::Vector9d long_range_pressure() override;
 
-  void charge_assign(ParticleRange const &particles) override;
+  void charge_assign() override;
   void assign_charge(double q, Utils::Vector3d const &real_pos,
                      bool skip_cache) override;
   void prepare_fft_mesh(bool reset_weights) override {
@@ -230,15 +227,14 @@ public:
 
 protected:
   /** Compute the k-space part of forces and energies. */
-  double long_range_kernel(bool force_flag, bool energy_flag,
-                           ParticleRange const &particles);
+  double long_range_kernel(bool force_flag, bool energy_flag);
   void calc_influence_function_force() override;
   void calc_influence_function_energy() override;
   void scaleby_box_l() override;
   void init_cpu_kernels();
 #ifdef ESPRESSO_CUDA
   void init_gpu_kernels();
-  void add_long_range_forces_gpu(ParticleRange const &particles);
+  void add_long_range_forces_gpu();
   std::shared_ptr<P3MGpuParams> m_gpu_data = nullptr;
   void request_gpu() const;
 #endif

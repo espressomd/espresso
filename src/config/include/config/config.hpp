@@ -31,6 +31,15 @@
 
 #include "config/config-features.hpp"
 
+#include <version>
+
+#if defined(_GLIBCXX_RELEASE)
+static_assert(_GLIBCXX_RELEASE >= 12, "unsupported libstdc++ version");
+#endif
+#if defined(_LIBCPP_VERSION)
+static_assert(_LIBCPP_VERSION / 10000 >= 16, "unsupported libc++ version");
+#endif
+
 /**
  * @brief Precision below which a double-precision float is assumed to be zero.
  * Used in comparisons to determine if two floating-point numbers are equal.

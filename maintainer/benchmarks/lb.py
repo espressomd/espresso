@@ -153,14 +153,14 @@ if n_part:
 
 # LB fluid setup
 #############################################################
-lb_class = espressomd.lb.LBFluidWalberla
-if args.gpu or args.multi_gpu:
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
+lb_class = espressomd.lb.LBFluid
 if args.multi_gpu:
     system.cuda_init_handle.call_method("set_device_id_per_rank")
-lbf = lb_class(agrid=agrid, tau=system.time_step, kinematic_viscosity=1.,
-               density=1., single_precision=args.single_precision,
-               blocks_per_mpi_rank=args.blocks_per_mpi_rank)
+lbf = espressomd.lb.LBFluid(agrid=agrid, tau=system.time_step,
+                            kinematic_viscosity=1., density=1.,
+                            single_precision=args.single_precision,
+                            gpu=args.gpu or args.multi_gpu,
+                            blocks_per_mpi_rank=args.blocks_per_mpi_rank)
 system.lb = lbf
 if n_part:
     system.thermostat.set_lb(LB_fluid=lbf, gamma=1., seed=42)

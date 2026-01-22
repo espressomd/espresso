@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,9 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_STOKESIAN_DYNAMICS
+
 #include "sd_interface.hpp"
 
 #include "stokesian_dynamics/sd_cpu.hpp"
@@ -57,7 +58,7 @@ struct SD_particle_data {
   Utils::Vector3d pos = {0., 0., 0.};
 
   /* external force */
-  ParticleForce ext_force;
+  ParticleForce ext_force = {};
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar & type;
@@ -68,24 +69,10 @@ struct SD_particle_data {
 
 BOOST_IS_BITWISE_SERIALIZABLE(SD_particle_data)
 
-static StokesianDynamicsParameters params{0., {}, 0};
-
-/** Buffer that holds the (translational and angular) velocities of the local
- *  particles on each node, used for returning results. */
-static std::vector<double> v_sd{};
-
-void register_integrator(StokesianDynamicsParameters const &obj) {
-  auto const &box_geo = *System::get_system().box_geo;
-  if (box_geo.periodic(0) or box_geo.periodic(1) or box_geo.periodic(2)) {
-    throw std::runtime_error(
-        "Stokesian Dynamics requires periodicity (False, False, False)");
-  }
-  ::params = obj;
-}
-
 /** Update translational and rotational velocities of all particles. */
 template <typename ParticleIterable>
-void sd_update_locally(ParticleIterable const &parts) {
+static void sd_update_locally(ParticleIterable const &parts,
+                              std::vector<double> const &v_sd) {
   std::size_t i = 0;
 
   // Even though on the head node, the v_sd vector is larger than
@@ -107,8 +94,9 @@ void sd_update_locally(ParticleIterable const &parts) {
   }
 }
 
-StokesianDynamicsParameters::StokesianDynamicsParameters(
-    double viscosity, std::unordered_map<int, double> radii, int flags)
+StokesianDynamics::StokesianDynamics(double viscosity,
+                                     std::unordered_map<int, double> radii,
+                                     int flags)
     : viscosity{viscosity}, radii{radii}, flags{flags} {
   if (viscosity < 0.) {
     throw std::domain_error("Viscosity has an invalid value: " +
@@ -124,13 +112,14 @@ StokesianDynamicsParameters::StokesianDynamicsParameters(
   }
 }
 
-void propagate_vel_pos_sd(ParticleRangeStokesian const &particles,
-                          StokesianThermostat const &stokesian,
-                          double const time_step, double const kT) {
+void StokesianDynamics::propagate_vel_pos(
+    ParticleRangeStokesian const &particles,
+    StokesianThermostat const &stokesian, double const time_step,
+    double const kT) const {
 
-  static std::vector<SD_particle_data> parts_buffer{};
+  std::vector<SD_particle_data> parts_buffer{};
+  parts_buffer.reserve(particles.size());
 
-  parts_buffer.clear();
   std::ranges::transform(particles, std::back_inserter(parts_buffer),
                          [](auto const &p) { return SD_particle_data(p); });
   Utils::Mpi::gather_buffer(parts_buffer, ::comm_cart, 0);
@@ -139,10 +128,6 @@ void propagate_vel_pos_sd(ParticleRangeStokesian const &particles,
    * node used for sending particle data to head node. */
   if (::comm_cart.rank() == 0) {
     std::size_t n_part = parts_buffer.size();
-
-    static std::vector<double> x_host{};
-    static std::vector<double> f_host{};
-    static std::vector<double> a_host{};
 
     x_host.resize(6 * n_part);
     f_host.resize(6 * n_part);
@@ -166,22 +151,22 @@ void propagate_vel_pos_sd(ParticleRangeStokesian const &particles,
       f_host[6 * i + 4] = p.ext_force.torque[1];
       f_host[6 * i + 5] = p.ext_force.torque[2];
 
-      a_host[i] = params.radii.at(p.type);
+      a_host[i] = radii.at(p.type);
 
       ++i;
     }
 
-    v_sd = sd_cpu(x_host, f_host, a_host, n_part, params.viscosity,
+    v_sd = sd_cpu(x_host, f_host, a_host, n_part, viscosity,
                   std::sqrt(kT / time_step),
                   static_cast<std::size_t>(stokesian.rng_counter()),
-                  static_cast<std::size_t>(stokesian.rng_seed()), params.flags);
+                  static_cast<std::size_t>(stokesian.rng_seed()), flags);
   } else { // if (this_node == 0)
     v_sd.resize(particles.size() * 6);
   } // if (this_node == 0) {...} else
 
   Utils::Mpi::scatter_buffer(
       v_sd.data(), static_cast<int>(particles.size() * 6), ::comm_cart, 0);
-  sd_update_locally(particles);
+  sd_update_locally(particles, v_sd);
 }
 
 #endif // ESPRESSO_STOKESIAN_DYNAMICS

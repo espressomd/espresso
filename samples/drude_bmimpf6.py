@@ -247,11 +247,11 @@ if not args.drude:
 p3m_params = {'prefactor': coulomb_prefactor, 'accuracy': 1e-3}
 if args.gpup3m:
     print("\n-->Tune P3M GPU")
-    p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
+    p3m_params["gpu"] = True
 else:
     print("\n-->Tune P3M CPU")
-    p3m = espressomd.electrostatics.P3M(**p3m_params)
 
+p3m = espressomd.electrostatics.P3M(**p3m_params)
 system.electrostatics.solver = p3m
 
 cation_drude_parts = []

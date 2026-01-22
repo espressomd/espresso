@@ -271,6 +271,7 @@ def generate_boundary(
         field_name="",
         layout='fzyx',
         template_file="templates/Boundary_ek_reactions.tmpl.h",
+        context_params=None,
         **create_kernel_params,
 ):
     struct_name = "IndexInfo"
@@ -313,6 +314,10 @@ def generate_boundary(
         strides=(1, 1),
     )
 
+    if context_params is None:
+        context_params = {}
+    bc_force = hasattr(
+        boundary_object, "calculate_force_on_boundary") and boundary_object.calculate_force_on_boundary
     if assignment:
         kernel_config = ps.CreateKernelConfig(
             index_fields=[index_field], target=target, **create_kernel_params
@@ -336,8 +341,6 @@ def generate_boundary(
         if not kernel_creation_function:
             kernel_creation_function = create_boundary_kernel
 
-        bc_force = hasattr(
-            boundary_object, "calculate_force_on_boundary") and boundary_object.calculate_force_on_boundary
         if bc_force:
             force_vector_type = np.dtype(
                 [(f"F_{i}", np.float64) for i in range(dim)], align=True)
@@ -376,12 +379,16 @@ def generate_boundary(
         "dim": dim,
         "target": target.name.lower(),
         "namespace": namespace,
-        "inner_or_boundary": boundary_object.inner_or_boundary,
+        "inner_or_boundary": boundary_object.inner_or_boundary if boundary_object is not None else None,
         "single_link": False,
         "calculate_force": bc_force,
         "additional_data_handler": additional_data_handler,
-        'layout': layout,
+        "layout": layout,
+        "parameters_to_ignore": [],
     }
+    context.update(context_params)
+    if "stencil_info" not in context_params and additional_data_handler is not None:
+        context["stencil_info"] = additional_data_handler.stencil_info
 
     env = jinja2.Environment(
         loader=jinja2.PackageLoader("pystencils_walberla"), undefined=jinja2.StrictUndefined

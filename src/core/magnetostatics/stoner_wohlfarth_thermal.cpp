@@ -21,8 +21,7 @@
 
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 
-#include "magnetostatics/stoner_wohlfarth_thermal.hpp"
-
+#include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "constraints/Constraints.hpp"
@@ -30,8 +29,12 @@
 #include "errorhandling.hpp"
 #include "random.hpp"
 #include "rotation.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites/relative.hpp"
+
+#include <utils/Vector.hpp>
+#include <utils/uniform.hpp>
 
 #include <nlopt.hpp>
 
@@ -153,11 +156,10 @@ static double get_phi_at_energy_min(double theta, double h, double phi0,
  *
  * @return The total external homogeneous magnetic field.
  */
-static auto get_external_field() {
+static auto get_external_field(Constraints::Constraints const &constraints) {
   using HomogeneousMagneticField = ::Constraints::HomogeneousMagneticField;
   Utils::Vector3d ext_fld = {0., 0., 0.};
-  auto &system = System::get_system();
-  for (auto const &constraint : *system.constraints) {
+  for (auto const &constraint : constraints) {
     auto ptr = std::dynamic_pointer_cast<HomogeneousMagneticField>(constraint);
     if (ptr) {
       ext_fld += ptr->H();
@@ -251,26 +253,21 @@ static void stoner_wohlfarth_main(Particle &p, Utils::Vector3d const &e_k,
  * Collect active homogeneous external magnetic fields from constraints and
  * add the per-particle dipolar contribution before performing either the
  * simplified no-field update or the full thermal Stoner-Wohlfarth update.
- *
- * @param cell_structure CellStructure providing access to local particles.
- * @param thermostat thermostat used to access Philox RNG state and seeds.
  */
-void run_magnetodynamics(CellStructure &cell_structure,
-                         Thermostat::Thermostat const &thermostat) {
+void System::System::integrate_magnetodynamics() {
   // collect HomogeneousMagneticFields if active
-  auto const ext_fld = get_external_field();
-  auto const kT = thermostat.kT;
-  cell_structure.for_each_local_particle([&](Particle &p) {
+  auto const ext_fld = get_external_field(*constraints);
+  auto const kT = thermostat->kT;
+  cell_structure->for_each_local_particle([&](Particle &p) {
     if (not p.is_virtual() or not p.stoner_wohlfarth_is_enabled()) {
       return;
     }
-
-    auto *p_ref = get_reference_particle(cell_structure, p);
+    auto *p_ref = get_reference_particle(*cell_structure, p);
     if (not p_ref) {
       return;
     }
-    assert(thermostat.thermo_switch & THERMO_LANGEVIN);
-    auto const &langevin = *thermostat.langevin;
+    assert(thermostat->thermo_switch & THERMO_LANGEVIN);
+    auto const &langevin = *thermostat->langevin;
     auto const e_k = p_ref->calc_director();
     auto const ext_fld_dpl = ext_fld + p.dip_fld();
     auto const random_ints =

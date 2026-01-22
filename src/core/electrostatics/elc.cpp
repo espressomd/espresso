@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_P3M
 
@@ -202,10 +202,11 @@ void ElectrostaticLayerCorrection::check_gap(Particle const &p) const {
 /** Calculate the dipole force.
  *  See @cite yeh99a.
  */
-void ElectrostaticLayerCorrection::add_dipole_force(
-    ParticleRange const &particles) const {
+void ElectrostaticLayerCorrection::add_dipole_force() const {
   constexpr std::size_t size = 3;
-  auto const &box_geo = *get_system().box_geo;
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const particles = system.cell_structure->local_particles();
   auto const pref = prefactor * 4. * std::numbers::pi / box_geo.volume();
 
   /* for non-neutral systems, this shift gives the background contribution
@@ -268,10 +269,11 @@ void ElectrostaticLayerCorrection::add_dipole_force(
 /** Calculate the dipole energy.
  *  See @cite yeh99a.
  */
-double ElectrostaticLayerCorrection::dipole_energy(
-    ParticleRange const &particles) const {
+double ElectrostaticLayerCorrection::dipole_energy() const {
   constexpr std::size_t size = 7;
-  auto const &box_geo = *get_system().box_geo;
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const particles = system.cell_structure->local_particles();
   auto const pref = prefactor * 2. * std::numbers::pi / box_geo.volume();
   auto const lz = box_geo.length()[2];
   /* for nonneutral systems, this shift gives the background contribution
@@ -366,10 +368,11 @@ struct ImageSum {
   }
 };
 
-double
-ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
+double ElectrostaticLayerCorrection::z_energy() const {
   constexpr std::size_t size = 4;
-  auto const &box_geo = *get_system().box_geo;
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const particles = system.cell_structure->local_particles();
   auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
   auto const pref = prefactor * 2. * std::numbers::pi * xy_area_inv;
 
@@ -443,10 +446,11 @@ ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
   return (this_node == 0) ? -pref * energy : 0.;
 }
 
-void ElectrostaticLayerCorrection::add_z_force(
-    ParticleRange const &particles) const {
+void ElectrostaticLayerCorrection::add_z_force() const {
   constexpr std::size_t size = 1;
-  auto const &box_geo = *get_system().box_geo;
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const particles = system.cell_structure->local_particles();
   auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
   auto const pref = prefactor * 2. * std::numbers::pi * xy_area_inv;
 
@@ -834,17 +838,18 @@ static double PQ_energy(double omega, std::size_t n_part) {
 }
 /**@}*/
 
-void ElectrostaticLayerCorrection::add_force(
-    ParticleRange const &particles) const {
+void ElectrostaticLayerCorrection::add_force() const {
   auto constexpr c_2pi = 2. * std::numbers::pi;
-  auto const &box_geo = *get_system().box_geo;
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const particles = system.cell_structure->local_particles();
   auto const n_freqs = prepare_sc_cache(particles, box_geo, elc.far_cut);
   auto const n_scxcache = std::get<0>(n_freqs);
   auto const n_scycache = std::get<1>(n_freqs);
   partblk.resize(particles.size() * 8);
 
-  add_dipole_force(particles);
-  add_z_force(particles);
+  add_dipole_force();
+  add_z_force();
 
   /* the second condition is just for the case of numerical accident */
   for (std::size_t p = 1;
@@ -889,11 +894,12 @@ void ElectrostaticLayerCorrection::add_force(
   }
 }
 
-double ElectrostaticLayerCorrection::calc_energy(
-    ParticleRange const &particles) const {
+double ElectrostaticLayerCorrection::calc_energy() const {
   auto constexpr c_2pi = 2. * std::numbers::pi;
-  auto const &box_geo = *get_system().box_geo;
-  auto energy = dipole_energy(particles) + z_energy(particles);
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const particles = system.cell_structure->local_particles();
+  auto energy = dipole_energy() + z_energy();
   auto const n_freqs = prepare_sc_cache(particles, box_geo, elc.far_cut);
   auto const n_scxcache = std::get<0>(n_freqs);
   auto const n_scycache = std::get<1>(n_freqs);
@@ -1200,38 +1206,39 @@ void modify_p3m_sums(elc_data const &elc, CoulombP3M &solver,
   solver.count_charged_particles_elc(global_n, global_q2, Utils::sqr(global_q));
 }
 
-double ElectrostaticLayerCorrection::long_range_energy(
-    ParticleRange const &particles) const {
+double ElectrostaticLayerCorrection::long_range_energy() const {
+  auto const &system = get_system();
   auto const energy = std::visit(
-      [this, &particles](auto const &solver_ptr) {
+      [this, &system](auto const &solver_ptr) {
         auto &solver = *solver_ptr;
-        auto const &box_geo = *get_system().box_geo;
+        auto const particles = system.cell_structure->local_particles();
+        auto const &box_geo = *system.box_geo;
 
         auto p_q_range = ParticlePropertyRange::charge_range(particles);
         auto p_pos_range = ParticlePropertyRange::pos_range(particles);
         auto p_q_pos_range = boost::combine(p_q_range, p_pos_range);
 
         // assign the original charges (they may not have been assigned yet)
-        solver.charge_assign(particles);
+        solver.charge_assign();
 
         if (!elc.dielectric_contrast_on) {
-          return solver.long_range_energy(particles);
+          return solver.long_range_energy();
         }
 
         auto energy = 0.;
-        energy += 0.5 * solver.long_range_energy(particles);
+        energy += 0.5 * solver.long_range_energy();
         energy +=
             0.5 * elc.dielectric_layers_self_energy(solver, box_geo, particles);
 
         // assign both original and image charges
         charge_assign<ChargeProtocol::BOTH>(elc, solver, p_q_pos_range);
         modify_p3m_sums<ChargeProtocol::BOTH>(elc, solver, p_q_pos_range);
-        energy += 0.5 * solver.long_range_energy(particles);
+        energy += 0.5 * solver.long_range_energy();
 
         // assign only the image charges now
         charge_assign<ChargeProtocol::IMAGE>(elc, solver, p_q_pos_range);
         modify_p3m_sums<ChargeProtocol::IMAGE>(elc, solver, p_q_pos_range);
-        energy -= 0.5 * solver.long_range_energy(particles);
+        energy -= 0.5 * solver.long_range_energy();
 
         // restore modified sums
         modify_p3m_sums<ChargeProtocol::REAL>(elc, solver, p_q_pos_range);
@@ -1239,32 +1246,33 @@ double ElectrostaticLayerCorrection::long_range_energy(
         return energy;
       },
       base_solver);
-  return energy + calc_energy(particles);
+  return energy + calc_energy();
 }
 
-void ElectrostaticLayerCorrection::add_long_range_forces(
-    ParticleRange const &particles) const {
+void ElectrostaticLayerCorrection::add_long_range_forces() const {
+  auto const &system = get_system();
   std::visit(
-      [this, &particles](auto const &solver_ptr) {
+      [this, &system](auto const &solver_ptr) {
+        auto const particles = system.cell_structure->local_particles();
         auto &solver = *solver_ptr;
         auto p_q_range = ParticlePropertyRange::charge_range(particles);
         auto p_pos_range = ParticlePropertyRange::pos_range(particles);
         auto p_q_pos_range = boost::combine(p_q_range, p_pos_range);
         if (elc.dielectric_contrast_on) {
-          auto const &box_geo = *get_system().box_geo;
+          auto const &box_geo = *system.box_geo;
           modify_p3m_sums<ChargeProtocol::BOTH>(elc, solver, p_q_pos_range);
           charge_assign<ChargeProtocol::BOTH>(elc, solver, p_q_pos_range);
           elc.dielectric_layers_self_forces(solver, box_geo, particles);
         } else {
-          solver.charge_assign(particles);
+          solver.charge_assign();
         }
-        solver.add_long_range_forces(particles);
+        solver.add_long_range_forces();
         if (elc.dielectric_contrast_on) {
           modify_p3m_sums<ChargeProtocol::REAL>(elc, solver, p_q_pos_range);
         }
       },
       base_solver);
-  add_force(particles);
+  add_force();
 }
 
-#endif
+#endif // ESPRESSO_P3M

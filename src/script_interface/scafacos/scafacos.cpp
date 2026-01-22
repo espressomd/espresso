@@ -35,9 +35,11 @@
 #include <iomanip>
 #include <iterator>
 #include <optional>
+#include <span>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -63,16 +65,26 @@ struct ConvertToStringVector {
 
   auto operator()(result_type const &values) const { return values; }
 
-  template <typename T> auto operator()(std::vector<T> const &values) const {
+  template <typename T, std::size_t N>
+  auto operator()(std::span<T, N> const values) const {
     result_type values_str;
     for (auto const &v : values) {
-      if constexpr (std::is_same_v<T, Variant>) {
+      if constexpr (std::is_same_v<std::remove_cvref_t<T>, Variant>) {
         values_str.emplace_back(std::visit(*this, v).front());
       } else {
         values_str.emplace_back(to_str(v));
       }
     }
     return values_str;
+  }
+
+  template <typename T> auto operator()(std::vector<T> const &values) const {
+    return (*this)(std::span(values.begin(), values.size()));
+  }
+
+  template <typename T, std::size_t N>
+  auto operator()(Utils::Vector<T, N> const &values) const {
+    return (*this)(std::span(values.begin(), N));
   }
 
 private:

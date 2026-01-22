@@ -107,12 +107,11 @@ void System::System::npt_ensemble_init(bool recalc_forces) {
     npt_inst_pressure->p_vel = Utils::Vector3d{};
   }
 
-  auto const particle_number =
-      ::System::get_system().cell_structure->local_particles().size();
+  auto const particle_number = cell_structure->local_particles().size();
   nptiso->particle_number =
       boost::mpi::all_reduce(::comm_cart, particle_number, std::plus<>());
 
-  auto const dt = ::System::get_system().get_time_step();
+  auto const dt = get_time_step();
   nptiso->half_dt_inv_piston = 0.5 * dt * nptiso->inv_piston;
   nptiso->half_dt_inv_piston_and_Nf = -nptiso->half_dt_inv_piston;
   if (particle_number > 1) {

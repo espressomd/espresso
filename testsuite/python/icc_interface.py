@@ -166,10 +166,11 @@ class Test(ut.TestCase):
     @utx.skipIfMissingFeatures(["P3M"])
     def test_exceptions_gpu(self):
         icc, _ = self.setup_icc_particles_and_solver()
-        p3m = espressomd.electrostatics.P3MGPU(**self.valid_p3m_parameters())
+        p3m = espressomd.electrostatics.P3M(
+            **self.valid_p3m_parameters(), gpu=True)
 
         self.system.electrostatics.solver = p3m
-        with self.assertRaisesRegex(RuntimeError, "ICC does not work with P3MGPU"):
+        with self.assertRaisesRegex(RuntimeError, "ICC does not work with P3M on GPU"):
             self.system.electrostatics.extension = icc
         self.assertIsNone(self.system.electrostatics.extension)
         self.system.integrator.run(0)
@@ -178,7 +179,7 @@ class Test(ut.TestCase):
         elc = espressomd.electrostatics.ELC(
             actor=p3m, gap_size=5., maxPWerror=1e-3)
         self.system.electrostatics.solver = elc
-        with self.assertRaisesRegex(RuntimeError, "ICC does not work with P3MGPU"):
+        with self.assertRaisesRegex(RuntimeError, "ICC does not work with P3M on GPU"):
             self.system.electrostatics.extension = icc
         self.assertIsNone(self.system.electrostatics.extension)
         self.system.integrator.run(0)

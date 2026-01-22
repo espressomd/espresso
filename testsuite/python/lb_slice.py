@@ -153,7 +153,7 @@ class LBTest:
         lb_slice = lb_fluid[1, 2, i:i + 10]
         self.assertEqual(lb_slice.density.shape, (0,))
         self.assertIsInstance(lb_slice.density.dtype, object)
-        with self.assertRaisesRegex(AttributeError, "Cannot set properties of an empty 'LBFluidSliceWalberla' object"):
+        with self.assertRaisesRegex(AttributeError, "Cannot set properties of an empty 'LBFluidSlice' object"):
             lb_slice.density = [1., 2., 3.]
 
     def test_iterator(self):
@@ -172,46 +172,42 @@ class LBTest:
 
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaDoublePrecisionCPU(LBTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_class = espressomd.lb.LatticeWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaSinglePrecisionCPU(LBTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_class = espressomd.lb.LatticeWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBTestWalberlaDoublePrecisionGPU(LBTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_lattice_class = espressomd.lb.LatticeWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBTestWalberlaSinglePrecisionGPU(LBTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_lattice_class = espressomd.lb.LatticeWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaDoublePrecisionBlocksCPU(LBTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_class = espressomd.lb.LatticeWalberla
-    lb_params = {"single_precision": False, "blocks_per_mpi_rank": [1, 1, 2]}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False,
+                 "blocks_per_mpi_rank": [1, 1, 2]}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBTestWalberlaSinglePrecisionBlocksCPU(LBTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_class = espressomd.lb.LatticeWalberla
-    lb_params = {"single_precision": True, "blocks_per_mpi_rank": [1, 1, 2]}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False,
+                 "blocks_per_mpi_rank": [1, 1, 2]}
 
 
 if __name__ == "__main__":

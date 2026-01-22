@@ -28,7 +28,6 @@
 #include "magnetostatics/solver.hpp"
 
 #include "magnetostatics/dipolar_direct_sum.hpp"
-#include "magnetostatics/dipolar_direct_sum_gpu.hpp"
 #include "magnetostatics/dlc.hpp"
 #include "magnetostatics/dp3m.hpp"
 #include "magnetostatics/scafacos.hpp"
@@ -45,9 +44,6 @@ namespace Dipoles {
 
 using MagnetostaticsActor =
     std::variant<std::shared_ptr<DipolarDirectSum>,
-#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
-                 std::shared_ptr<DipolarDirectSumGpu>,
-#endif
 #ifdef ESPRESSO_DP3M
                  std::shared_ptr<DipolarP3M>,
 #endif

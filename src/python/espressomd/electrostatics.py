@@ -126,63 +126,14 @@ class ReactionField(ElectrostaticInteraction):
         return {"check_neutrality": True}
 
 
-class _P3MBase(ElectrostaticInteraction):
-
-    def required_keys(self):
-        return {"prefactor", "accuracy"}
-
-    def default_params(self):
-        return {"cao": -1,
-                "r_cut": -1.,
-                "alpha": -1.,
-                "mesh": [-1, -1, -1],
-                "epsilon": 0.,
-                "mesh_off": [-1., -1., -1.],
-                "prefactor": 0.,
-                "check_neutrality": True,
-                "tune": True,
-                "timings": 10,
-                "verbose": True}
-
-    def validate_params(self, params):
-        super().validate_params(params)
-
-        if utils.is_valid_type(params["mesh"], int):
-            params["mesh"] = 3 * [params["mesh"]]
-        utils.check_type_or_throw_except(
-            params["mesh"], 3, int,
-            "Parameter 'mesh' has to be an integer or integer list of length 3")
-        if (params["mesh"][0] % 2 != 0 and params["mesh"][0] != -1) or \
-           (params["mesh"][1] % 2 != 0 and params["mesh"][1] != -1) or \
-           (params["mesh"][2] % 2 != 0 and params["mesh"][2] != -1):
-            raise ValueError(
-                "P3M requires an even number of mesh points in all directions")
-
-        if params["epsilon"] == "metallic":
-            params["epsilon"] = 0.0
-
-        utils.check_type_or_throw_except(
-            params["epsilon"], 1, float,
-            "Parameter 'epsilon' has to be a float or 'metallic'")
-
-        utils.check_type_or_throw_except(
-            params["mesh_off"], 3, float,
-            "Parameter 'mesh_off' has to be a (3,) array_like of values between 0.0 and 1.0")
-
-        if not utils.is_valid_type(params["timings"], int):
-            raise TypeError("Parameter 'timings' has to be an integer")
-        if not utils.is_valid_type(params["tune"], bool):
-            raise TypeError("Parameter 'tune' has to be a boolean")
-
-
 @script_interface_register
-class P3M(_P3MBase):
+class P3M(ElectrostaticInteraction):
     """
     P3M electrostatics solver.
 
     Particle--Particle--Particle--Mesh (P3M) is a Fourier-based Ewald
     summation method to calculate potentials in N-body simulation.
-    See :ref:`Coulomb P3M` for more details.
+    See :ref:`Coulomb P3M` and :ref:`Coulomb P3M on GPU` for more details.
 
     Parameters
     ----------
@@ -219,6 +170,8 @@ class P3M(_P3MBase):
     check_neutrality : :obj:`bool`, optional
         Raise a warning if the system is not electrically neutral when
         set to ``True`` (default).
+    gpu : :obj:`bool`, optional
+        Use GPU implementation.
     single_precision : :obj:`bool`
         Use single-precision floating-point arithmetic.
 
@@ -227,62 +180,52 @@ class P3M(_P3MBase):
     _so_creation_policy = "GLOBAL"
     _so_features = ("P3M",)
 
-    def default_params(self):
-        return {"single_precision": False, **super().default_params()}
-
-
-@script_interface_register
-class P3MGPU(_P3MBase):
-    """
-    P3M electrostatics solver with GPU support.
-
-    Particle--Particle--Particle--Mesh (P3M) is a Fourier-based Ewald
-    summation method to calculate potentials in N-body simulation.
-    See :ref:`Coulomb P3M on GPU` for more details.
-
-    Parameters
-    ----------
-    prefactor : :obj:`float`
-        Electrostatics prefactor (see :eq:`coulomb_prefactor`).
-    accuracy : :obj:`float`
-        P3M tunes its parameters to provide this target accuracy.
-    alpha : :obj:`float`, optional
-        The Ewald parameter.
-    cao : :obj:`float`, optional
-        The charge-assignment order, an integer between 0 and 7.
-    epsilon : :obj:`float` or :obj:`str`, optional
-        A positive number for the dielectric constant of the
-        surrounding medium. Use ``'metallic'`` to set the dielectric
-        constant of the surrounding medium to infinity (default).
-    mesh : :obj:`int` or (3,) array_like of :obj:`int`, optional
-        The number of mesh points in x, y and z direction. Use a single
-        value for cubic boxes.
-    mesh_off : (3,) array_like of :obj:`float`, optional
-        Mesh offset.
-    r_cut : :obj:`float`, optional
-        The real space cutoff
-    tune : :obj:`bool`, optional
-        Used to activate/deactivate the tuning method on activation.
-        Defaults to ``True``.
-    timings : :obj:`int`
-        Number of force calculations during tuning.
-    tune_limits : (2,) array_like of :obj:`int`, optional
-        Lower and upper limits (inclusive) for the mesh size during tuning,
-        along the largest box dimension. Use ``None`` to not impose a limit.
-        Defaults to ``[None, None]``.
-    verbose : :obj:`bool`, optional
-        If ``False``, disable log output during tuning.
-    check_neutrality : :obj:`bool`, optional
-        Raise a warning if the system is not electrically neutral when
-        set to ``True`` (default).
-
-    """
-    _so_name = "Coulomb::CoulombP3MGPU"
-    _so_creation_policy = "GLOBAL"
-    _so_features = ("P3M", "CUDA")
+    def required_keys(self):
+        return {"prefactor", "accuracy"}
 
     def default_params(self):
-        return {"single_precision": True, **super().default_params()}
+        return {"cao": -1,
+                "r_cut": -1.,
+                "alpha": -1.,
+                "mesh": [-1, -1, -1],
+                "epsilon": 0.,
+                "mesh_off": [-1., -1., -1.],
+                "prefactor": 0.,
+                "check_neutrality": True,
+                "gpu": False,
+                "tune": True,
+                "timings": 10,
+                "verbose": True}
+
+    def validate_params(self, params):
+        super().validate_params(params)
+
+        if utils.is_valid_type(params["mesh"], int):
+            params["mesh"] = 3 * [params["mesh"]]
+        utils.check_type_or_throw_except(
+            params["mesh"], 3, int,
+            "Parameter 'mesh' has to be an integer or integer list of length 3")
+        if (params["mesh"][0] % 2 != 0 and params["mesh"][0] != -1) or \
+           (params["mesh"][1] % 2 != 0 and params["mesh"][1] != -1) or \
+           (params["mesh"][2] % 2 != 0 and params["mesh"][2] != -1):
+            raise ValueError(
+                "P3M requires an even number of mesh points in all directions")
+
+        if params["epsilon"] == "metallic":
+            params["epsilon"] = 0.0
+
+        utils.check_type_or_throw_except(
+            params["epsilon"], 1, float,
+            "Parameter 'epsilon' has to be a float or 'metallic'")
+
+        utils.check_type_or_throw_except(
+            params["mesh_off"], 3, float,
+            "Parameter 'mesh_off' has to be a (3,) array_like of values between 0.0 and 1.0")
+
+        if not utils.is_valid_type(params["timings"], int):
+            raise TypeError("Parameter 'timings' has to be an integer")
+        if not utils.is_valid_type(params["tune"], bool):
+            raise TypeError("Parameter 'tune' has to be a boolean")
 
 
 @script_interface_register

@@ -43,7 +43,6 @@
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
@@ -252,15 +251,14 @@ template <int cao> struct AssignDipole {
 } // namespace
 
 template <typename FloatType, Arch Architecture, class FFTConfig>
-void DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::dipole_assign(
-    [[maybe_unused]] ParticleRange const &particles) {
+void DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::dipole_assign() {
   prepare_fft_mesh();
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   Utils::integral_parameter<int, AssignDipole, p3m_min_cao, p3m_max_cao>(
       dp3m.params.cao, dp3m, *get_system().cell_structure);
 #else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
-  for (auto const &p : particles) {
+  for (auto const &p : get_system().cell_structure->local_particles()) {
     if (p.dipm() != 0.) {
       Utils::integral_parameter<int, AssignDipole, p3m_min_cao, p3m_max_cao>(
           dp3m.params.cao, dp3m, p.pos(), p.calc_dip());
@@ -272,12 +270,7 @@ void DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::dipole_assign(
 namespace {
 template <int cao> struct AssignTorques {
   void operator()(auto &dp3m, double prefac, int d_rs,
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-                  CellStructure &cell_structure
-#else
-                  ParticleRange const &particles
-#endif
-  ) const {
+                  CellStructure &cell_structure) const {
 
     assert(cao == dp3m.inter_weights.cao());
 
@@ -317,7 +310,7 @@ template <int cao> struct AssignTorques {
     /* magnetic particle index */
     auto p_index = std::size_t{0ul};
 
-    for (auto &p : particles) {
+    for (auto &p : cell_structure.local_particles()) {
       if (p.dipm() != 0.) {
         kernel(p.calc_dip() * prefac, p.torque(), p_index);
         ++p_index;
@@ -329,12 +322,7 @@ template <int cao> struct AssignTorques {
 
 template <int cao> struct AssignForcesDip {
   void operator()(auto &dp3m, double prefac, int d_rs,
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-                  CellStructure &cell_structure
-#else
-                  ParticleRange const &particles
-#endif
-  ) const {
+                  CellStructure &cell_structure) const {
 
     assert(cao == dp3m.inter_weights.cao());
 
@@ -373,7 +361,7 @@ template <int cao> struct AssignForcesDip {
     /* magnetic particle index */
     auto p_index = std::size_t{0ul};
 
-    for (auto &p : particles) {
+    for (auto &p : cell_structure.local_particles()) {
       if (p.dipm() != 0.) {
         kernel(p.calc_dip() * prefac, p.force(), p_index);
         ++p_index;
@@ -406,7 +394,7 @@ void DipolarP3MState<FloatType, FFTConfig>::resize_heffte_buffers() {
 
 template <typename FloatType, Arch Architecture, class FFTConfig>
 double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
-    bool force_flag, bool energy_flag, ParticleRange const &particles) {
+    bool force_flag, bool energy_flag) {
   /* k-space energy */
   double energy = 0.;
   auto const &system = get_system();
@@ -442,7 +430,7 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
 #endif
 
   if (dp3m.sum_mu2 > 0.) {
-    dipole_assign(particles);
+    dipole_assign();
     dp3m.fft_buffers->perform_vector_halo_gather();
     for (auto &rs_mesh : dp3m.fft_buffers->get_vector_mesh()) {
       dp3m.fft->forward_fft(rs_mesh);
@@ -721,14 +709,9 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
         dp3m.fft_buffers->perform_scalar_halo_spread();
         // assign torque component from mesh to particle
         auto const d_rs = (d + dp3m.mesh.ks_pnum) % 3;
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-        auto &particle_data = *system.cell_structure;
-#else
-        auto &particle_data = particles;
-#endif
         Utils::integral_parameter<int, AssignTorques, p3m_min_cao, p3m_max_cao>(
             dp3m.params.cao, dp3m, dipole_prefac * wavenumber, d_rs,
-            particle_data);
+            *system.cell_structure);
       }
 
       /***************************
@@ -889,22 +872,17 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
         dp3m.fft_buffers->perform_vector_halo_spread();
         // assign force component from mesh to particle
         auto const d_rs = (d + dp3m.mesh.ks_pnum) % 3;
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-        auto &particle_data = *system.cell_structure;
-#else
-        auto &particle_data = particles;
-#endif
         Utils::integral_parameter<int, AssignForcesDip, p3m_min_cao,
                                   p3m_max_cao>(
             dp3m.params.cao, dp3m, dipole_prefac * Utils::sqr(wavenumber), d_rs,
-            particle_data);
+            *system.cell_structure);
       }
     } /* if (dp3m.sum_mu2 > 0) */
   } /* if (force_flag) */
 
   if (dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
     auto const surface_term =
-        calc_surface_term(force_flag, energy_flag or npt_flag, particles);
+        calc_surface_term(force_flag, energy_flag or npt_flag);
     if (this_node == 0) {
       energy += surface_term;
     }
@@ -923,8 +901,10 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
 
 template <typename FloatType, Arch Architecture, class FFTConfig>
 double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::calc_surface_term(
-    bool force_flag, bool energy_flag, ParticleRange const &particles) {
-  auto const &box_geo = *get_system().box_geo;
+    bool force_flag, bool energy_flag) {
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const particles = system.cell_structure->local_particles();
   auto const pref = prefactor * 4. * std::numbers::pi / box_geo.volume() /
                     (2. * dp3m.params.epsilon + 1.);
   auto const n_local_part = particles.size();

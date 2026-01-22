@@ -296,9 +296,9 @@ class PropagationNPT:
     @utx.skipIfMissingFeatures(["P3M", "LENNARD_JONES"])
     def test_npt_p3m_gpu(self):
         import espressomd.electrostatics
-        p3m = espressomd.electrostatics.P3MGPU(
+        p3m = espressomd.electrostatics.P3M(
             prefactor=1.0, accuracy=1e-2, mesh=3 * [8], cao=3, r_cut=0.36,
-            alpha=5.35, tune=False)
+            alpha=5.35, tune=False, gpu=True)
         self.run_with_p3m(self.system.electrostatics, p3m, "electrostatics")
 
 

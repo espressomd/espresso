@@ -61,6 +61,8 @@
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 #include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
+#include <walberla_bridge/walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
@@ -314,6 +316,12 @@ protected:
   FlagUID const Boundary_flag{"boundary"};
   bool m_has_boundaries{false};
 
+  // lattice
+  std::shared_ptr<LatticeWalberla> m_lattice;
+
+  // boundaries
+  std::shared_ptr<BoundaryModel> m_boundary;
+
   /**
    * @brief Full communicator.
    * We use the D3Q27 directions to update cells along the diagonals during
@@ -344,11 +352,18 @@ protected:
   std::shared_ptr<RegularFullCommunicator> m_laf_communicator;
   std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communicator;
   std::bitset<GhostComm::SIZE> m_pending_ghost_comm;
+  ResourceObserver m_mpi_cart_comm_observer;
 
-  // ResetForce sweep + external force handling
+  // collision sweep
+  std::shared_ptr<CollisionModel> m_collision_model;
+
+  // force reset sweep + external force handling
   std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
 
-  // Lees Edwards boundary interpolation
+  // velocity update sweep
+  std::shared_ptr<UpdateVelFromPDF> m_update_velocities_from_pdf;
+
+  // Lees-Edwards boundary interpolation
   std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
   std::shared_ptr<InterpolateAndShiftAtBoundary<_PdfField, FloatType>>
       m_lees_edwards_pdf_interpol_sweep;
@@ -356,18 +371,6 @@ protected:
       m_lees_edwards_vel_interpol_sweep;
   std::shared_ptr<InterpolateAndShiftAtBoundary<_VectorField, FloatType>>
       m_lees_edwards_last_applied_force_interpol_sweep;
-
-  // Collision sweep
-  std::shared_ptr<CollisionModel> m_collision_model;
-
-  // Velocity update sweep
-  std::shared_ptr<UpdateVelFromPDF> m_update_velocities_from_pdf;
-
-  // boundaries
-  std::shared_ptr<BoundaryModel> m_boundary;
-
-  // lattice
-  std::shared_ptr<LatticeWalberla> m_lattice;
 
 #if defined(__CUDACC__)
   std::shared_ptr<gpu::HostFieldAllocator<FloatType>> m_host_field_allocator;
@@ -407,13 +410,13 @@ protected:
       auto field_id = gpu::addGPUFieldToStorage<GPUField>(
           blocks, tag, Field::F_SIZE, field::fzyx, n_ghost_layers);
       if constexpr (std::is_same_v<Field, _VectorField>) {
-        for (auto block = blocks->begin(); block != blocks->end(); ++block) {
-          auto field = block->template getData<GPUField>(field_id);
+        for (auto &block : *blocks) {
+          auto field = block.template getData<GPUField>(field_id);
           lbm::accessor::Vector::initialize(field, Vector3<FloatType>{0});
         }
       } else if constexpr (std::is_same_v<Field, _PdfField>) {
-        for (auto block = blocks->begin(); block != blocks->end(); ++block) {
-          auto field = block->template getData<GPUField>(field_id);
+        for (auto &block : *blocks) {
+          auto field = block.template getData<GPUField>(field_id);
           lbm::accessor::Population::initialize(
               field, std::array<FloatType, Stencil::Size>{});
         }
@@ -448,7 +451,8 @@ public:
                  double density)
       : m_viscosity(FloatType_c(viscosity)), m_density(FloatType_c(density)),
         m_kT(FloatType{0}), m_seed(0u), m_zc_to_md(density),
-        m_zc_to_lb(1. / density), m_lattice(std::move(lattice)) {
+        m_zc_to_lb(1. / density), m_lattice(std::move(lattice)),
+        m_mpi_cart_comm_observer(get_mpi_cart_comm_observer()) {
 
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
@@ -571,11 +575,12 @@ private:
 
   void integrate_update_velocities_from_pdf(
       std::shared_ptr<BlockStorage> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_update_velocities_from_pdf)(&*b);
+    for (auto &block : *blocks)
+      (*m_update_velocities_from_pdf)(&block);
   }
 
   void integrate_pull_scheme() {
+    assert(m_mpi_cart_comm_observer.is_valid());
     auto const &blocks = get_lattice().get_blocks();
     // Reset force fields
     integrate_reset_force(blocks);
@@ -621,6 +626,7 @@ public:
 
   void ghost_communication() override {
     if (m_pending_ghost_comm.any()) {
+      assert(m_mpi_cart_comm_observer.is_valid());
       ghost_communication_boundary();
       ghost_communication_pdf();
       ghost_communication_laf();
@@ -630,6 +636,7 @@ public:
 
   void ghost_communication_pdf() override {
     if (m_pending_ghost_comm.test(GhostComm::PDF)) {
+      assert(m_mpi_cart_comm_observer.is_valid());
       m_pdf_communicator->communicate();
       if (has_lees_edwards_bc()) {
         auto const &blocks = get_lattice().get_blocks();
@@ -641,6 +648,7 @@ public:
 
   void ghost_communication_vel() override {
     if (m_pending_ghost_comm.test(GhostComm::VEL)) {
+      assert(m_mpi_cart_comm_observer.is_valid());
       m_vel_communicator->communicate();
       if (has_lees_edwards_bc()) {
         auto const &blocks = get_lattice().get_blocks();
@@ -652,6 +660,7 @@ public:
 
   void ghost_communication_laf() override {
     if (m_pending_ghost_comm.test(GhostComm::LAF)) {
+      assert(m_mpi_cart_comm_observer.is_valid());
       m_laf_communicator->communicate();
       if (has_lees_edwards_bc()) {
         auto const &blocks = get_lattice().get_blocks();
@@ -663,12 +672,14 @@ public:
 
   void ghost_communication_boundary() {
     if (m_pending_ghost_comm.test(GhostComm::UBB)) {
+      assert(m_mpi_cart_comm_observer.is_valid());
       m_boundary_communicator->communicate();
       m_pending_ghost_comm.reset(GhostComm::UBB);
     }
   }
 
   void ghost_communication_full() {
+    assert(m_mpi_cart_comm_observer.is_valid());
     m_full_communicator->communicate();
     if (has_lees_edwards_bc()) {
       apply_lees_edwards_interpolation();
@@ -712,6 +723,7 @@ public:
     auto const shear_plane_normal = lees_edwards_pack->shear_plane_normal;
     auto const shear_vel = FloatType_c(lees_edwards_pack->get_shear_velocity());
     auto const omega = shear_mode_relaxation_rate();
+    auto const omega_odd = odd_mode_relaxation_rate(omega);
     if (shear_plane_normal != 1u) {
       throw std::domain_error(
           "Lees-Edwards LB only supports shear_plane_normal=\"y\"");
@@ -720,18 +732,23 @@ public:
     auto const n_ghost_layers = lattice.get_ghost_layers();
     auto const blocks = lattice.get_blocks();
     if (lattice.get_node_grid()[shear_direction] != 1 or
-        lattice.get_node_grid()[shear_plane_normal] != 1 or
         blocks->getSize(shear_direction) != 1ul or
-        blocks->getSize(shear_plane_normal) != 1ul) {
+        blocks->getSize(shear_plane_normal) !=
+            lattice.get_node_grid()[shear_plane_normal]) {
       throw std::domain_error("LB LEbc doesn't support domain decomposition "
-                              "along the shear and normal directions.");
+                              "along the shear direction, nor multiple blocks "
+                              "along the normal direction");
     }
     auto const &grid_dimensions = lattice.get_grid_dimensions();
-    auto const grid_size = FloatType_c(grid_dimensions[shear_plane_normal]);
+    auto const block_origin = lattice.get_local_grid_range(false).first;
+    auto const lebc_slab_origin = block_origin[shear_plane_normal];
+    auto const lebc_slab_total_thickness = grid_dimensions[shear_plane_normal];
+    auto const lebc_bot_index = 0 - lebc_slab_origin;
+    auto const lebc_top_index = lebc_slab_total_thickness - lebc_slab_origin;
     m_collision_model =
         std::make_shared<CollisionModel>(StreamCollisionModelLeesEdwards(
-            m_last_applied_force_field_id, m_pdf_field_id, grid_size, omega,
-            shear_vel));
+            m_last_applied_force_field_id, m_pdf_field_id, lebc_bot_index,
+            lebc_top_index, omega, omega, omega_odd, omega, shear_vel));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
     m_run_stream_collide_sweep =
         StreamCollideSweepVisitor(blocks, m_lees_edwards_callbacks);

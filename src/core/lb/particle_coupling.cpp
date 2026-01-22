@@ -17,7 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "lb/particle_coupling.hpp"
+#include <config/config.hpp>
+
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
@@ -25,6 +26,7 @@
 #include "communication.hpp"
 #include "config/config.hpp"
 #include "errorhandling.hpp"
+#include "lb/particle_coupling.hpp"
 #include "random.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"

@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/solver.hpp"
@@ -27,7 +27,6 @@
 #include "Particle.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/demangle.hpp>
 #include <utils/math/tensor_product.hpp>
 #include <utils/matrix.hpp>
 
@@ -53,13 +52,6 @@ struct ShortRangeForceKernel {
           return actor.pair_force(q1q2, d, dist);
         }};
   }
-
-#ifdef ESPRESSO_P3M
-  auto
-  operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &ptr) const {
-    return std::visit(*this, ptr->base_solver);
-  }
-#endif // ESPRESSO_P3M
 #endif // ESPRESSO_ELECTROSTATICS
 };
 
@@ -68,10 +60,12 @@ struct ShortRangeForceCorrectionsKernel {
   using kernel_type = Solver::ShortRangeForceCorrectionsKernel;
   using result_type = std::optional<kernel_type>;
 
+#ifdef ESPRESSO_ELECTROSTATICS
   template <typename T>
   result_type operator()(std::shared_ptr<T> const &) const {
-    return {};
+    return std::nullopt;
   }
+#endif // ESPRESSO_ELECTROSTATICS
 
 #ifdef ESPRESSO_P3M
   result_type
@@ -101,7 +95,7 @@ struct ShortRangePressureKernel {
             return Utils::tensor_product(actor.pair_force(q1q2, d, dist), d);
           }};
     }
-    return {};
+    return std::nullopt;
   }
 #endif // ESPRESSO_ELECTROSTATICS
 };
@@ -137,14 +131,14 @@ struct ShortRangeEnergyKernel {
         }};
   }
 #endif // ESPRESSO_P3M
-#ifdef ESPRESSO_GSL
+#ifdef ESPRESSO_MMM1D
   result_type operator()(std::shared_ptr<CoulombMMM1D> const &actor) const {
     return kernel_type{
         [&actor](Utils::Vector3d const &, Utils::Vector3d const &, double q1q2,
                  Utils::Vector3d const &d,
                  double dist) { return actor->pair_energy(q1q2, d, dist); }};
   }
-#endif // ESPRESSO_GSL
+#endif // ESPRESSO_MMM1D
 #endif // ESPRESSO_ELECTROSTATICS
 };
 

@@ -33,6 +33,9 @@
 #include <omp.h>
 
 #include <cstddef>
+#include <memory>
+#include <optional>
+#include <variant>
 #include <vector>
 
 #if defined(__GNUG__) or defined(__clang__)
@@ -60,6 +63,9 @@ struct ForcesKernel {
   CellStructure::VirialType const &local_virial;
 #endif
   CellStructure::AoSoA_pack const &aosoa;
+#ifdef ESPRESSO_P3M
+  CoulombP3M const *p3m;
+#endif
 
   ForcesKernel(
       BondedInteractionsMap const &bonded_ias_,
@@ -68,6 +74,7 @@ struct ForcesKernel {
       Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel_,
       Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel_,
       Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_u_kernel_,
+      Coulomb::Solver const &coulomb_,
       Thermostat::Thermostat const &thermostat_, BoxGeometry const &box_geo_,
       std::vector<Particle *> const &unique_particles_,
       CellStructure::ForceType const &local_force_,
@@ -91,6 +98,14 @@ struct ForcesKernel {
         global_virial(global_virial_), local_virial(local_virial_),
 #endif
         aosoa(aosoa_) {
+#ifdef ESPRESSO_P3M
+    p3m = nullptr;
+    if (auto &solver = coulomb_.impl->solver; solver.has_value()) {
+      if (std::holds_alternative<std::shared_ptr<CoulombP3M>>(*solver)) {
+        p3m = std::get<std::shared_ptr<CoulombP3M>>(*solver).get();
+      }
+    }
+#endif
   }
 
   // Helper functions to check if specific algorithms are active
@@ -232,7 +247,14 @@ struct ForcesKernel {
     if (coulomb_kernel != nullptr) {
       auto const q1q2 = aosoa.charge(i) * aosoa.charge(j);
       if (q1q2 != 0) {
-        pf.f += (*coulomb_kernel)(q1q2, d, dist);
+#ifdef ESPRESSO_P3M
+        if (p3m) [[likely]] {
+          pf.f += p3m->pair_force(q1q2, d, dist);
+        } else
+#endif
+        {
+          pf.f += (*coulomb_kernel)(q1q2, d, dist);
+        }
         if (elc_kernel) {
           (*elc_kernel)(pos1, pos2, f1_asym, f2_asym, q1q2);
         }

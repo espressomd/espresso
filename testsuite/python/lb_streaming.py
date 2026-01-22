@@ -130,8 +130,8 @@ class LBStreamingCommon:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBStreamingWalberlaDoublePrecisionCPU(LBStreamingCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
     box_l = [3., 2., 2.]
     rtol = 1e-10
     atol = 1e-9
@@ -139,8 +139,8 @@ class LBStreamingWalberlaDoublePrecisionCPU(LBStreamingCommon, ut.TestCase):
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBStreamingWalberlaSinglePrecisionCPU(LBStreamingCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
     box_l = [3., 2., 2.]
     rtol = 1e-7
     atol = 1e-4
@@ -151,8 +151,8 @@ class LBStreamingWalberlaSinglePrecisionCPU(LBStreamingCommon, ut.TestCase):
            "only runs for 2 or less MPI ranks")
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBStreamingWalberlaDoublePrecisionGPU(LBStreamingCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
     box_l = [2., 1.5, 1.5]
     rtol = 1e-10
     atol = 1e-9
@@ -163,8 +163,8 @@ class LBStreamingWalberlaDoublePrecisionGPU(LBStreamingCommon, ut.TestCase):
            "only runs for 2 or less MPI ranks")
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBStreamingWalberlaSinglePrecisionGPU(LBStreamingCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
     box_l = [2., 1.5, 1.5]
     rtol = 1e-7
     atol = 1e-4
@@ -173,8 +173,9 @@ class LBStreamingWalberlaSinglePrecisionGPU(LBStreamingCommon, ut.TestCase):
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBStreamingWalberlaDoublePrecisionBlocksCPU(
         LBStreamingCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False, "blocks_per_mpi_rank": [1, 2, 2]}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False,
+                 "blocks_per_mpi_rank": [1, 2, 2]}
     box_l = [3., 2., 2.]
     rtol = 1e-10
     atol = 1e-9

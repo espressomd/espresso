@@ -21,6 +21,7 @@
 #include "BoxGeometry.hpp"
 #include "Constraint.hpp"
 #include "Observable_stat.hpp"
+#include "ParticleRange.hpp"
 #include "system/System.hpp"
 
 #include <cassert>

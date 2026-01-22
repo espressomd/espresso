@@ -35,7 +35,7 @@ Magnetostatic interactions are activated when attached to the system::
     system.part.add(pos=[[0, 0, 0], [1, 1, 1]], dip=2 * [(1, 0, 0)],
                     rotation=2 * [(True, True, True)])
 
-    actor = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1.)
+    actor = espressomd.magnetostatics.DipolarDirectSum(prefactor=1.)
     system.magnetostatics.solver = actor
 
 The solver can be detached with either::
@@ -131,6 +131,8 @@ The method is used as follows::
 Dipolar direct sum
 ------------------
 
+:class:`~espressomd.magnetostatics.DipolarDirectSum`
+
 .. note::
 
     Requires feature ``DIPOLES`` and optionally
@@ -141,40 +143,24 @@ This interaction calculates energies and forces between dipoles by
 explicitly summing over all pairs. For the directions in which the
 system is periodic (as defined by ``system.periodicity``), it applies the
 minimum image convention, i.e. the interaction is effectively cut off at
-half a box length.
+half a box length. This can be changed by adding replicas.
 
-The direct summation methods are mainly intended for non-periodic systems
+The direct summation method is mainly intended for non-periodic systems
 which cannot be solved using the dipolar P3M method.
 Due to the long-range nature of dipolar interactions, direct summation with
 minimum image convention does not yield good accuracy with periodic systems.
 
-Two methods are available:
+The CPU implementation performs the calculation in double-precision,
+while the GPU implementation performs the calculations in single-precision.
 
-* :class:`~espressomd.magnetostatics.DipolarDirectSumCpu`
-  performs the calculation in double-precision on the CPU,
-  optionally with replicas.
-
-* :class:`~espressomd.magnetostatics.DipolarDirectSumGpu`
-  performs the calculations in single-precision on a CUDA-capable GPU.
-  The implementation is optimized for large systems of several thousand
-  particles. It makes use of one thread per particle. When there are fewer
-  particles than the number of threads the GPU can execute simultaneously,
-  the rest of the GPU remains idle. Hence, the method will perform poorly
-  for small systems.
-
-To use the methods, create an instance of either
-:class:`~espressomd.magnetostatics.DipolarDirectSumCpu` or
-:class:`~espressomd.magnetostatics.DipolarDirectSumGpu` and
-attach it to the system. The only required parameter is the prefactor
-:eq:`dipolar_prefactor`::
+The only required parameter is the prefactor :eq:`dipolar_prefactor`::
 
     import espressomd.magnetostatics
-    dds = espressomd.magnetostatics.DipolarDirectSumGpu(prefactor=1)
+    dds = espressomd.magnetostatics.DipolarDirectSum(prefactor=1., n_replicas=2, gpu=False)
     system.magnetostatics.solver = dds
 
-Both implementations have an optional argument ``n_replicas`` which
-adds periodic copies to the system along periodic directions. In that
-case, the minimum image convention is no longer used.
+The optional argument ``n_replicas`` adds periodic copies to the system along
+periodic directions. In that case, the minimum image convention is no longer used.
 Additionally, enabling the ``DIPOLE_FIELD_TRACKING`` feature enables either
 implementation to calculate the total dipole field at the position of each
 magnetic particle in the primary simulation box. These values are stored in
@@ -182,6 +168,7 @@ the particle handle's ``dip_fld`` property and can be accessed directly or
 via an observable.
 
 Both the CPU and GPU implementations support MPI-parallelization.
+The GPU implementation doesn't support multi-GPU acceleration.
 
 
 .. _ScaFaCoS magnetostatics:

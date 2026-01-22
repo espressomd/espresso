@@ -150,7 +150,7 @@ Variant Analysis::do_call_method(std::string const &name,
   }
 #ifdef ESPRESSO_DPD
   if (name == "dpd_stress") {
-    auto const result = dpd_stress(context()->get_comm());
+    auto const result = dpd_stress(get_system(), context()->get_comm());
     return result.as_vector();
   }
 #endif // ESPRESSO_DPD

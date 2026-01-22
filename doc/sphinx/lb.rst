@@ -41,23 +41,9 @@ The following minimal example illustrates how to use the LBM in |es|::
     system = espressomd.System(box_l=[10, 20, 30])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    lbf = espressomd.lb.LBFluidWalberla(agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01)
+    lbf = espressomd.lb.LBFluid(agrid=1., density=1., kinematic_viscosity=1., tau=0.01)
     system.lb = lbf
     system.integrator.run(100)
-
-To use the GPU-accelerated variant, replace line 6 in the example above by::
-
-    lbf = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01)
-
-.. note:: Feature ``CUDA`` required for the GPU-accelerated variant
-
-To use the (much faster) GPU implementation of the LBM, use
-:class:`~espressomd.lb.LBFluidWalberlaGPU` in place of :class:`~espressomd.lb.LBFluidWalberla`.
-Please note that the GPU implementation uses single precision floating point operations.
-This decreases the accuracy of calculations compared to the CPU implementation.
-In particular, due to rounding errors, the fluid density decreases over time,
-when external forces, coupling to particles, or thermalization is used.
-The loss of density is on the order of :math:`10^{-12}` per time step.
 
 The command initializes the fluid with a given set of parameters. It is
 also possible to change parameters on the fly, but this will only rarely
@@ -67,7 +53,7 @@ lattice constant of the fluid, so the size of the box in every direction
 must be a multiple of ``agrid``.
 
 In the following, we discuss the parameters that can be supplied to the LBM in |es|.
-The detailed interface definition is available at :class:`~espressomd.lb.LBFluidWalberla`.
+The detailed interface definition is available at :class:`~espressomd.lb.LBFluid`.
 
 The LB scheme and the MD scheme are not synchronized: In one LB time
 step typically several MD steps are performed. This allows to speed up
@@ -90,7 +76,7 @@ Thermalization of the fluid (and particle coupling later on) can be activated by
 providing a non-zero value for the parameter ``kT``. Then, a seed has to be provided for
 the fluid thermalization::
 
-    lb = espressomd.lb.LBFluidWalberla(kT=1.0, seed=134, ...)
+    lb = espressomd.lb.LBFluid(kT=1.0, seed=134, ...)
 
 The parameter ``ext_force_density`` takes a three dimensional vector as an
 array_like of :obj:`float`, representing a homogeneous external body force density in MD
@@ -107,7 +93,12 @@ To detach the LBM solver, use this syntax::
 Performance considerations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The CPU implementation of the LB has an extra flag ``single_precision`` to
+.. _LB CPU implementation:
+
+CPU implementation
+""""""""""""""""""
+
+The CPU implementation of the LB has a flag ``single_precision`` to
 use single-precision floating point values. These are approximately 10%
 faster than double-precision, at the cost of a small loss in precision.
 
@@ -123,7 +114,79 @@ your hardware supports it, run the following command:
     lscpu | grep avx2
 
 For small simulation boxes, best performance is obtained by making the box
-length along the x-axis an integer multiple of the vector size, times agrid.
+length along the x-axis an integer multiple of the vector size times agrid.
+
+.. _LB GPU implementation:
+
+GPU implementation
+""""""""""""""""""
+
+.. note:: Feature ``CUDA`` required
+
+The following minimal example illustrates how to use the GPU LBM in |es|::
+
+    import espressomd
+    system = espressomd.System(box_l=[10, 20, 30])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
+    lbf = espressomd.lb.LBFluid(agrid=1., density=1., kinematic_viscosity=1., tau=0.01, gpu=True)
+    system.lb = lbf
+    system.integrator.run(100)
+
+Please note that the GPU implementation uses single-precision floating point operations by default.
+This decreases the accuracy of calculations compared to the CPU implementation,
+which uses double-precision floating point operations by default.
+In particular, due to rounding errors, the fluid density decreases over time
+when external forces, coupling to particles, or thermalization is used.
+The loss of density is on the order of :math:`10^{-12}` per time step.
+On GPUs that support double-precision floating point operations,
+argument ``single_precision=False`` can be added to improve precision.
+
+Due to padding, the memory footprint of the GPU fields is not a linear function
+of the grid size. Instead, it is a step function of the size along the x-direction
+of the rank-local LB domain.
+For illustration, a local LB domain with dimensions 64x256x256 will take as
+much VRAM as a domain with size 127x256x256 in single-precision mode.
+As a rule of thumb, the VRAM in GiB per rank-local LB domain will be:
+
+.. math::
+
+   \label{eq:lj}
+     f(n_x, n_y, n_z) =
+       \begin{cases}
+         \left\lceil n_x / 64 \right\rceil \cdot 64 \cdot n_y \cdot n_z \cdot 204 / 1024^3
+         & \text{(in single-precision)}\\
+         \left\lceil n_x / 32 \right\rceil \cdot 32 \cdot n_y \cdot n_z \cdot 410 / 1024^3
+         & \text{(in double-precision)}
+       \end{cases}
+
+with :math:`n_x`, :math:`n_y`, :math:`n_z` the LB domain size in agrid units, including ghost layers.
+
+Multi-GPU support in |es| is an experimental feature whose API may change at any time.
+It can be activated by invoking the following expression before the creation
+of the first LB GPU instance::
+
+    system.cuda_init_handle.call_method("set_device_id_per_rank")
+
+For optimal performance the MPI Cartesian topology should divide
+the z-direction first, the y-direction second, and the x-direction last,
+i.e. ascending order of the integer factors. Please note the default MPI
+Cartesian grid in |es| is sorted in descending order of the integer factors,
+and leads to poor performance. For illustration, a Cartesian grid with
+shape ``[1, 1, 8]`` yields 94% weak scaling efficiency,
+shape ``[8, 1, 1]`` yields 90%,
+shape ``[1, 2, 4]`` yields 88%,
+shape ``[4, 2, 1]`` yields 86%,
+shape ``[2, 2, 2]`` yields 81%.
+This is assuming 1 GPU per CPU. Using more than 1 CPU per GPU or more
+than 1 GPU per CPU can degrade weak scaling efficiency further.
+
+Without a suitable CUDA-aware MPI library, multi-GPU simulations are slower
+than single-GPU simulations, and would only be relevant for LB systems that
+are too large to fit in the memory of a single GPU device.
+
+For further information on CUDA support see section :ref:`CUDA acceleration`.
+
 
 .. _Checkpointing LB:
 
@@ -193,10 +256,9 @@ the :ref:`LB thermostat` (see more detailed description there). A short example 
 
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
-where ``lbf`` is an instance of either :class:`~espressomd.lb.LBFluidWalberla` or
-:class:`~espressomd.lb.LBFluidWalberlaGPU`, ``gamma`` the friction coefficient and
-``seed`` the seed for the random number generator involved
-in the thermalization.
+where ``lbf`` is an instance of :class:`~espressomd.lb.LBFluid`,
+``gamma`` the friction coefficient and ``seed`` the seed for the random
+number generator involved in the thermalization.
 
 .. _LB and LEbc:
 
@@ -326,7 +388,7 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
     system.cell_system.skin = 0.4
     system.time_step = 0.1
 
-    lbf = espressomd.lb.LBFluidWalberla(
+    lbf = espressomd.lb.LBFluid(
         agrid=1., tau=0.1, density=1., kinematic_viscosity=1.)
     system.lb = lbf
     system.integrator.run(10)
@@ -363,74 +425,6 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
         np.testing.assert_allclose(vtk_density, lb_density, rtol=1e-10, atol=0.)
         np.testing.assert_allclose(vtk_velocity, lb_velocity, rtol=1e-7, atol=0.)
         np.testing.assert_allclose(vtk_pressure, lb_pressure, rtol=1e-7, atol=0.)
-
-.. _Choosing between the GPU and CPU implementations:
-
-Choosing between the GPU and CPU implementations
-------------------------------------------------
-
-|es| contains an implementation of the LBM for NVIDIA
-GPUs using the CUDA framework. On CUDA-supporting machines this can be
-activated by compiling with the feature ``CUDA``. Within the
-Python script, the :class:`~espressomd.lb.LBFluidWalberla` object can be substituted
-with the :class:`~espressomd.lb.LBFluidWalberlaGPU` object to switch from CPU based
-to GPU based execution. For further
-information on CUDA support see section :ref:`CUDA acceleration`.
-
-The following minimal example demonstrates how to use the GPU implementation
-of the LBM in analogy to the example for the CPU given in section
-:ref:`Setting up a LB fluid`::
-
-    import espressomd
-    system = espressomd.System(box_l=[10, 20, 30])
-    system.time_step = 0.01
-    system.cell_system.skin = 0.4
-    lbf = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01)
-    system.lb = lbf
-    system.integrator.run(100)
-
-The waLBerla library supports multi-GPU simulations.
-Without a suitable CUDA-aware MPI library, multi-GPU simulations are slower
-than single-GPU simulations, and would only be relevant for LB systems that
-are too large to fit in the memory of a single GPU device.
-Multi-GPU support in |es| is an experimental feature whose API may change at any time.
-It can be activated by invoking the following expression before the creation
-of the first LB GPU instance::
-
-    system.cuda_init_handle.call_method("set_device_id_per_rank")
-
-Due to padding, the memory footprint of the GPU fields is not a linear function
-of the grid size. Instead, it is a step function of the size along the x-direction
-of the rank-local LB domain.
-For illustration, a local LB domain with dimensions 64x256x256 will take as
-much VRAM as a domain with size 127x256x256 in single-precision mode.
-As a rule of thumb, the VRAM in GiB per rank-local LB domain will be:
-
-.. math::
-
-   \label{eq:lj}
-     f(n_x, n_y, n_z) =
-       \begin{cases}
-         \left\lceil n_x / 64 \right\rceil \cdot 64 \cdot n_y \cdot n_z \cdot 204 / 1024^3
-         & \text{(in single-precision)}\\
-         \left\lceil n_x / 32 \right\rceil \cdot 32 \cdot n_y \cdot n_z \cdot 410 / 1024^3
-         & \text{(in double-precision)}
-       \end{cases}
-
-with :math:`n_x`, :math:`n_y`, :math:`n_z` the LB domain size in agrid units, including the ghost layer.
-
-Regarding communication between GPUs, for optimal performance the MPI Cartesian topology
-should divide the z-direction first, the y-direction second, and the x-direction
-last, i.e. ascending order of the integer factors. Please note the default MPI
-Cartesian grid in |es| is sorted in descending order of the integer factors,
-and leads to poor performance. For illustration, a Cartesian grid with
-shape ``[1, 1, 8]`` yields 94% weak scaling efficiency,
-shape ``[8, 1, 1]`` yields 90%,
-shape ``[1, 2, 4]`` yields 88%,
-shape ``[4, 2, 1]`` yields 86%,
-shape ``[2, 2, 2]`` yields 81%.
-This is assuming 1 GPU per CPU. Using more than 1 CPU per GPU or more
-than 1 GPU per CPU can degrade weak scaling efficiency further.
 
 .. _Electrohydrodynamics:
 
@@ -478,7 +472,7 @@ One can set (or update) the slip velocity of individual nodes::
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
-    lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, density=1.0, kinematic_viscosity=1.0, tau=0.01)
+    lbf = espressomd.lb.LBFluid(agrid=0.5, density=1.0, kinematic_viscosity=1.0, tau=0.01)
     system.lb = lbf
     # make one node a boundary node with a slip velocity
     lbf[0, 0, 0].boundary = espressomd.lb.VelocityBounceBack([0, 0, 1])
@@ -499,7 +493,7 @@ Adding a shape-based boundary is straightforward::
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
-    lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, density=1.0, kinematic_viscosity=1.0, tau=0.01)
+    lbf = espressomd.lb.LBFluid(agrid=0.5, density=1.0, kinematic_viscosity=1.0, tau=0.01)
     system.lb = lbf
     # set up shear flow between two sliding walls
     wall1 = espressomd.shapes.Wall(normal=[+1., 0., 0.], dist=2.5)

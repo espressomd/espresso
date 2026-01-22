@@ -47,7 +47,7 @@ class EKTest:
 
     @classmethod
     def setUpClass(cls):
-        cls.lattice = espressomd.electrokinetics.LatticeWalberla(
+        cls.lattice = espressomd.electrokinetics.Lattice(
             agrid=1., n_ghost_layers=2)
         cls.ek_species = cls.ek_species_class(
             lattice=cls.lattice,
@@ -156,15 +156,30 @@ class EKTest:
             arranged_indices, iterator_indices)])
 
 
-@utx.skipIfMissingFeatures("WALBERLA")
-class EKSliceCPU(EKTest, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKSliceDoublePrecisionCPU(EKTest, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": False, "gpu": False}
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKSliceSinglePrecisionCPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
-class EKSliceGPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+class EKSliceDoublePrecisionGPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": False, "gpu": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKSliceSinglePrecisionGPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

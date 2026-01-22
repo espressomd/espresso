@@ -86,14 +86,21 @@ foreach(cython_file ${cython_SRC})
   cmake_path(GET relpath PARENT_PATH subfolder)
   cmake_path(APPEND CMAKE_CURRENT_BINARY_DIR ${subfolder} "${basename}.cpp"
              OUTPUT_VARIABLE outputpath)
+  # cmake-format: off
   add_custom_command(
     OUTPUT ${outputpath}
     COMMAND
-      ${CYTHON_EXECUTABLE} -3 --cplus --directive embedsignature=True
-      --directive binding=True -I ${CMAKE_CURRENT_SOURCE_DIR} -I
-      ${CMAKE_CURRENT_BINARY_DIR} ${cython_file} -o ${outputpath}
+      ${CYTHON_EXECUTABLE} -3 --cplus
+        --directive embedsignature=True
+        --directive binding=True
+        --include-dir ${Python_SITEARCH}
+        --include-dir ${ESPRESSO_NUMPY_SITEARCH}
+        --include-dir ${CMAKE_CURRENT_SOURCE_DIR}
+        --output-file ${outputpath}
+        ${cython_file}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
     DEPENDS ${cython_file} ${cython_HEADER})
+  # cmake-format: on
   set(target "espressomd_${basename}")
   add_library(${target} SHARED ${outputpath})
   if(NOT "${subfolder}" STREQUAL "")

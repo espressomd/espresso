@@ -205,14 +205,14 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBThermostatWalberlaDoublePrecisionCPU(LBThermostatCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBThermostatWalberlaSinglePrecisionCPU(LBThermostatCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
@@ -220,8 +220,8 @@ class LBThermostatWalberlaSinglePrecisionCPU(LBThermostatCommon, ut.TestCase):
            "only runs for 1 MPI rank")
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBThermostatWalberlaDoublePrecisionGPU(LBThermostatCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
@@ -229,15 +229,16 @@ class LBThermostatWalberlaDoublePrecisionGPU(LBThermostatCommon, ut.TestCase):
            "only runs for 1 MPI rank")
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBThermostatWalberlaSinglePrecisionGPU(LBThermostatCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBThermostatWalberlaDoublePrecisionBlocksCPU(
         LBThermostatCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False, "blocks_per_mpi_rank": [2, 2, 2]}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False,
+                 "blocks_per_mpi_rank": [2, 2, 2]}
 
 
 if __name__ == '__main__':

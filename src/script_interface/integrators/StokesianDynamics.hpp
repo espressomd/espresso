@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_STOKESIAN_DYNAMICS
 
@@ -37,7 +37,7 @@ namespace ScriptInterface {
 namespace Integrators {
 
 class StokesianDynamics : public AutoParameters<StokesianDynamics, Integrator> {
-  std::shared_ptr<::StokesianDynamicsParameters> m_instance;
+  std::shared_ptr<::StokesianDynamics> m_instance;
 
 public:
   StokesianDynamics();
@@ -45,9 +45,7 @@ public:
   void do_construct(VariantMap const &params) override;
   void activate() override;
 
-  ::StokesianDynamicsParameters const &get_instance() const {
-    return *m_instance;
-  }
+  ::StokesianDynamics const &get_instance() const { return *m_instance; }
 };
 
 } // namespace Integrators

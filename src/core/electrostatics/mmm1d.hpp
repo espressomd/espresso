@@ -37,7 +37,7 @@
 
 #include <config/config.hpp>
 
-#if defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)
+#ifdef ESPRESSO_MMM1D
 
 #include "electrostatics/actor.hpp"
 
@@ -46,6 +46,7 @@
 #include <utils/Vector.hpp>
 
 #include <array>
+#include <vector>
 
 /** @brief Parameters for the MMM1D electrostatic interaction */
 struct CoulombMMM1D : public Coulomb::Actor<CoulombMMM1D> {
@@ -130,4 +131,4 @@ private:
   void sanity_checks_cell_structure() const;
 };
 
-#endif // defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)
+#endif // ESPRESSO_MMM1D
