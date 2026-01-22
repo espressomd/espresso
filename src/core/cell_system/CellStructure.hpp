@@ -178,9 +178,8 @@ public:
   using ListType =
       CustomVerletList<Kokkos::HostSpace, ListAlgorithm, Cabana::VerletLayout2D,
                        Cabana::TeamVectorOpTag>;
-  using BL2Type = Kokkos::View<double *[2], Kokkos::LayoutRight>;
-  using BL3Type = Kokkos::View<double *[3], Kokkos::LayoutRight>;
-  using BL4Type = Kokkos::View<double *[4], Kokkos::LayoutRight>;
+  using BondlistType = Kokkos::View<int *[4], Kokkos::LayoutRight>;
+  using BondIDType = Kokkos::View<int *, Kokkos::LayoutRight>;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 private:
@@ -204,6 +203,7 @@ private:
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   int m_cached_max_local_particle_id = 0;
   int m_max_id = 0;
+  int m_bond_numbers = 0;
   std::unique_ptr<Kokkos::View<int *>> m_id_to_index;
   std::unique_ptr<ForceType> m_local_force;
 #ifdef ESPRESSO_ROTATION
@@ -213,9 +213,8 @@ private:
   std::unique_ptr<VirialType> m_local_virial;
 #endif
   std::unique_ptr<ListType> m_verlet_list_cabana;
-  std::unique_ptr<BL2Type> m_bond_list_two;
-  std::unique_ptr<BL3Type> m_bond_list_tree;
-  std::unique_ptr<BL4Type> m_bond_list_four;
+  std::unique_ptr<BondlistType> m_bond_list_kokkos;
+  std::unique_ptr<BondIDType> m_bond_id_kokkos;
   /** particle properties using individual Kokkos Views */
   std::unique_ptr<AoSoA_pack> m_aosoa;
   /** The local id-to-index for aosoa data */
@@ -464,6 +463,15 @@ public:
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   int get_cached_max_local_particle_id() const {
     return m_cached_max_local_particle_id;
+  }
+  int get_bond_numbers() const {
+    return m_bond_numbers;
+  }
+  void add_bond_numbers() {
+    m_bond_numbers += 1;
+  }
+  void reset_bond_numbers() {
+    m_bond_numbers = 0;
   }
 #endif
 
@@ -749,8 +757,10 @@ public:
 #endif
   auto &get_aosoa() { return *m_aosoa; }
   auto const &get_unique_particles() const { return m_unique_particles; }
-  auto const &get_bond_particles() const { return m_bond_particles; }
   auto const &get_verlet_list_cabana() const { return *m_verlet_list_cabana; }
+  auto const &get_bond_particles() const { return m_bond_particles; }
+  auto &get_bond_list_kokkos() const { return *m_bond_list_kokkos; }
+  auto &get_bond_id_kokkos() const { return *m_bond_id_kokkos; }
   void clear_local_properties();
 
   [[nodiscard]] auto is_verlet_list_cabana_rebuild_needed() const {

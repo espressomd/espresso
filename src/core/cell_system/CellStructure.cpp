@@ -55,6 +55,7 @@
 #include <Cabana_NeighborList.hpp>
 #include <Kokkos_Core.hpp>
 #include <omp.h>
+#include <execution>
 #endif
 
 #include <algorithm>
@@ -92,6 +93,8 @@ void CellStructure::clear_local_properties() {
   m_id_to_index.reset();
   m_aosoa.reset();
   m_verlet_list_cabana.reset();
+  m_bond_list_kokkos.reset();
+  m_bond_id_kokkos.reset();
   m_rebuild_verlet_list_cabana = true;
 }
 
@@ -161,6 +164,10 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
 
     m_verlet_list_cabana =
         std::make_unique<ListType>(0ul, num_part, max_counts);
+    m_bond_list_kokkos =
+        std::make_unique<BondlistType>("bond_list", get_bond_numbers());
+    m_bond_id_kokkos =
+        std::make_unique<BondIDType>("bond_id", get_bond_numbers());
   }
 #ifdef ESPRESSO_NPT
   m_local_virial = std::make_unique<VirialType>("local_virial", num_threads);
@@ -199,14 +206,17 @@ void CellStructure::set_index_map() {
   using execution_space = Kokkos::DefaultExecutionSpace;
   int n_threads = execution_space().concurrency();
   std::vector<int> max_ids(n_threads);
+  std::vector<int> bond_numbers(n_threads);
   enumerate_local_particles(
-      *this, [&unique_particles, &bond_particles, &max_ids](std::size_t index, Particle &p) {
+      *this, [&unique_particles, &bond_particles, &max_ids, &bond_numbers](std::size_t index, Particle &p) {
         unique_particles[index] = &p;
         bond_particles[index] = &p;
         const int thread_num = omp_get_thread_num();
         max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
+        bond_numbers[thread_num] += p.bonds().size();
       });
   int max_id = *(std::max_element(max_ids.begin(), max_ids.end()));
+  m_bond_numbers = std::reduce(std::execution::par_unseq, bond_numbers.begin(), bond_numbers.end());
   for (auto &p : ghost_particles()) {
     auto const *local_particle = get_local_particle(p.id());
     if (not local_particle) {
