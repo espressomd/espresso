@@ -129,7 +129,6 @@ void ReactionAlgorithm::restore_old_system_state() {
 void ReactionAlgorithm::update_volume() {
   auto const &box_geo = *System::get_system().box_geo;
   volume = box_geo.volume();
-  log_volume = std::log(volume);
 }
 
 /**

@@ -167,8 +167,6 @@ Variant ReactionAlgorithm::do_call_method(std::string const &name,
         [&]() { RE()->set_volume(get_value<double>(params, "volume")); });
   } else if (name == "get_volume") {
     return RE()->get_volume();
-  } else if (name == "get_log_volume") {
-    return RE()->get_log_volume();
   } else if (name == "get_acceptance_rate_reaction") {
     auto const index = get_value<int>(params, "reaction_id");
     context()->parallel_try_catch([&]() {

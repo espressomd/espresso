@@ -172,10 +172,6 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         Get the volume to be used in the acceptance probability of the reaction
         ensemble.
 
-    get_log_volume()
-        Get the logarithm of volume to be used in the acceptance probability of the reaction
-        ensemble.
-
     get_acceptance_rate_configurational_moves()
         Returns the acceptance rate for the configuration moves.
 
@@ -269,7 +265,6 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
                         "set_cylindrical_constraint_in_z_direction",
                         "set_volume",
                         "get_volume",
-                        "get_log_volume",
                         "get_acceptance_rate_reaction",
                         "set_non_interacting_type",
                         "get_non_interacting_type",
@@ -448,7 +443,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         ln_factorial = self.call_method("calculate_factorial_expression")
         reaction = self._reactions_cache[reaction_id]
         ln_bf = -E_pot_diff / self.kT + reaction.nu_bar * \
-            self.get_log_volume() + math.log(reaction.gamma)
+            math.log(self.get_volume()) + math.log(reaction.gamma)
         return ln_factorial + ln_bf
 
     def generic_oneway_reaction(self, reaction_id, E_pot_old):

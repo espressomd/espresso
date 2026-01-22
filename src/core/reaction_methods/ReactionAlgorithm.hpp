@@ -82,7 +82,6 @@ public:
   double exclusion_range;
   std::unordered_map<int, double> exclusion_radius_per_type;
   double volume;
-  double log_volume;
   int non_interacting_type = 100;
 
   int m_accepted_configurational_MC_moves = 0;
@@ -95,13 +94,11 @@ public:
   auto get_kT() const { return kT; }
   auto get_exclusion_range() const { return exclusion_range; }
   auto get_volume() const { return volume; }
-  auto get_log_volume() const { return log_volume; }
   void set_volume(double new_volume) {
     if (new_volume <= 0.) {
       throw std::domain_error("Invalid value for 'volume'");
     }
     volume = new_volume;
-    log_volume = std::log(volume);
   }
   void update_volume();
   void
