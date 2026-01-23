@@ -320,6 +320,8 @@ The following tutorials are available:
 * :file:`electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
 * :file:`constant_pH`: Modelling the titration of a weak acid using the constant pH method
 * :file:`widom_insertion`: Measuring the excess chemical potential of a salt solution using the Widom particle insertion method
+* :file:`mlip`: Atomistic simulations using machine-learned interatomic potentials and the MACE-MP-0 model :cite:`batatia25a`
+* :file:`mlip-water`: Modelling water using the TIP4P model :cite:`abascal05a` and machine-learning interatomic potentials with Apax :cite:`schafer25a`
 
 The executed notebooks with solutions and plots are periodically deployed
 online to the `GitHub Pages <https://espressomd.github.io/tutorials.html>`__.
