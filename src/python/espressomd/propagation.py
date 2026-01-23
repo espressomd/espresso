@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 The ESPResSo project
+# Copyright (C) 2023-2025 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -48,13 +48,17 @@ class Propagation(enum.IntFlag):
     """Euler algorithm that integrates Brownian's equations of motion."""
     TRANS_STOKESIAN = 2**8
     """Euler algorithm that integrates Stoke's equations of motion."""
+    TRANS_VS_CENTER_OF_MASS = 2**9
+    """Algorithm for virtual sites center of mass motion."""
     ROT_EULER = 2**10
     """Velocity-Verlet algorithm that integrates Euler's equations of rotation."""
     ROT_LANGEVIN = 2**11
     """Velocity-Verlet algorithm that integrates Langevin's equations of rotation."""
     ROT_VS_RELATIVE = 2**12
-    """Algorithm for virtual sites relative rotation."""
+    """Algorithm for virtual sites rotation where the quaternion of the virtual follows the quaternion of the real particle."""
     ROT_BROWNIAN = 2**13
     """Euler algorithm that integrates Brownian's equations of rotation."""
     ROT_STOKESIAN = 2**14
     """Euler algorithm that integrates Stokes' equations of rotation."""
+    ROT_VS_INDEPENDENT = 2**15
+    """Algorithm for virtual sites rotation where the quaternion of the virtual doesn't follow the quaternion of the real particle."""

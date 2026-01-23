@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2025 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -27,24 +27,37 @@
  *  Implementation in @ref dpd.cpp.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_DPD
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
+
+#include <cmath>
 
 // Forward declaration
 namespace boost::mpi {
 class communicator;
 }
 
-struct IA_parameters;
-
-void dpd_init(double kT, double time_step);
+inline Utils::Vector3d dpd_pair_force(DPDParameters const &params,
+                                      Utils::Vector3d const &v, double dist,
+                                      Utils::Vector3d const &noise) {
+  if (dist < params.cutoff) {
+    auto const r_cut = params.cutoff;
+    auto const omega = params.wf ? 1. - std::pow((dist / r_cut), params.k) : 1.;
+    auto const f_d = params.gamma * (omega * omega) * v;
+    auto const f_r = params.pref * omega * noise;
+    return f_r - f_d;
+  }
+  return {};
+}
 
 Utils::Vector3d
 dpd_pair_force(Utils::Vector3d const &p1_position,
@@ -54,11 +67,14 @@ dpd_pair_force(Utils::Vector3d const &p1_position,
                DPDThermostat const &dpd, BoxGeometry const &box_geo,
                IA_parameters const &ia_params, Utils::Vector3d const &d,
                double dist, double dist2);
-Utils::Vector9d dpd_stress(boost::mpi::communicator const &comm);
+
+Utils::Vector9d dpd_stress(System::System &system,
+                           boost::mpi::communicator const &comm);
+
 /**
  * @brief Local contribution to the pressure tensor.
  * Needs to be rescaled by the box volume.
  */
-Utils::Vector9d dpd_pressure_local();
+Utils::Vector9d dpd_pressure_local(System::System &system);
 
 #endif // ESPRESSO_DPD

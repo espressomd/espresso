@@ -27,7 +27,7 @@ import espressomd.magnetostatics
 
 
 @utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["DIPOLAR_DIRECT_SUM", "LENNARD_JONES"])
+@utx.skipIfMissingFeatures(["CUDA", "DIPOLES", "LENNARD_JONES"])
 class DDSGPUTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     np.random.seed(seed=42)
@@ -62,7 +62,7 @@ class DDSGPUTest(ut.TestCase):
             system.part.clear()
 
             system.part.add(**particles_params)
-            dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(
+            dds_cpu = espressomd.magnetostatics.DipolarDirectSum(
                 prefactor=pf_dds_cpu)
             system.magnetostatics.solver = dds_cpu
             system.integrator.run(steps=0, recalc_forces=True)
@@ -81,8 +81,8 @@ class DDSGPUTest(ut.TestCase):
 
             system.part.add(**particles_params)
             system.integrator.run(steps=0, recalc_forces=True)
-            dds_gpu = espressomd.magnetostatics.DipolarDirectSumGpu(
-                prefactor=pf_dds_gpu)
+            dds_gpu = espressomd.magnetostatics.DipolarDirectSum(
+                prefactor=pf_dds_gpu, gpu=True)
             system.magnetostatics.solver = dds_gpu
             system.integrator.run(steps=0, recalc_forces=True)
 

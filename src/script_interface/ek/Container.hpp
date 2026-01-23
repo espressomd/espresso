@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,36 +19,31 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
-
-#include "Actor.hpp"
-
-#include "core/magnetostatics/dipolar_direct_sum_gpu.hpp"
-
-#include "script_interface/get_value.hpp"
+#include <script_interface/ScriptInterface.hpp>
+#include <script_interface/auto_parameters/AutoParameter.hpp>
+#include <script_interface/system/Leaf.hpp>
 
 #include <memory>
+#include <optional>
 #include <string>
 
-namespace ScriptInterface {
-namespace Dipoles {
+namespace ScriptInterface::EK {
 
-class DipolarDirectSumGpu
-    : public Actor<DipolarDirectSumGpu, ::DipolarDirectSumGpu> {
+class Container : public AutoParameters<Container, System::Leaf> {
 public:
-  DipolarDirectSumGpu() = default;
-
-  void do_construct(VariantMap const &params) override {
-    context()->parallel_try_catch([this, &params]() {
-      m_actor = std::make_shared<CoreActorClass>(
-          get_value<double>(params, "prefactor"));
+  Container() {
+    add_parameters({
+        {"solver",
+         [](Variant const &v) {
+           if (not is_none(v)) {
+             throw WriteError("solver");
+           }
+         },
+         []() { return Variant{None{}}; }},
     });
   }
 };
 
-} // namespace Dipoles
-} // namespace ScriptInterface
-
-#endif // ESPRESSO_DIPOLAR_DIRECT_SUM
+} // namespace ScriptInterface::EK

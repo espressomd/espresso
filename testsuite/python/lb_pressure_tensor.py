@@ -152,16 +152,17 @@ class TestLBPressureTensor:
 @utx.skipIfMissingFeatures("WALBERLA")
 class TestLBPressureTensorCPU(TestLBPressureTensor, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
     steps = 5000
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
 class TestLBPressureTensorBlocksCPU(TestLBPressureTensor, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True, "blocks_per_mpi_rank": [2, 2, 2]}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False,
+                 "blocks_per_mpi_rank": [2, 2, 2]}
     steps = 5000
 
 
@@ -169,8 +170,8 @@ class TestLBPressureTensorBlocksCPU(TestLBPressureTensor, ut.TestCase):
 @utx.skipIfMissingGPU()
 class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
     steps = 10000
 
     def test_gk_viscosity(self):

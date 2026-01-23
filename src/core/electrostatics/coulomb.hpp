@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_ELECTROSTATICS
 
@@ -54,7 +54,9 @@ using ElectrostaticsActor =
                  std::shared_ptr<CoulombP3M>,
                  std::shared_ptr<ElectrostaticLayerCorrection>,
 #endif // ESPRESSO_P3M
+#ifdef ESPRESSO_MMM1D
                  std::shared_ptr<CoulombMMM1D>,
+#endif // ESPRESSO_MMM1D
 #ifdef ESPRESSO_SCAFACOS
                  std::shared_ptr<CoulombScafacos>,
 #endif // ESPRESSO_SCAFACOS
@@ -72,22 +74,6 @@ struct Solver::Implementation {
 
 namespace traits {
 
-#ifdef ESPRESSO_P3M
-/** @brief Whether an actor can be adapted by ELC. */
-template <typename T>
-using elc_adaptable =
-    std::is_convertible<std::shared_ptr<T>,
-                        ElectrostaticLayerCorrection::BaseSolver>;
-#endif // ESPRESSO_P3M
-
-/** @brief Whether an actor is a solver. */
-template <typename T>
-using is_solver = std::is_convertible<std::shared_ptr<T>, ElectrostaticsActor>;
-/** @brief Whether an actor is an extension. */
-template <typename T>
-using is_extension =
-    std::is_convertible<std::shared_ptr<T>, ElectrostaticsExtension>;
-
 /** @brief The electrostatic method supports pressure calculation. */
 template <class T> struct has_pressure : std::true_type {};
 #ifdef ESPRESSO_P3M
@@ -97,7 +83,9 @@ struct has_pressure<ElectrostaticLayerCorrection> : std::false_type {};
 #ifdef ESPRESSO_SCAFACOS
 template <> struct has_pressure<CoulombScafacos> : std::false_type {};
 #endif // ESPRESSO_SCAFACOS
+#ifdef ESPRESSO_MMM1D
 template <> struct has_pressure<CoulombMMM1D> : std::false_type {};
+#endif // ESPRESSO_MMM1D
 
 } // namespace traits
 } // namespace Coulomb

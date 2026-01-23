@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "System.hpp"
 #include "System.impl.hpp"
@@ -35,11 +35,14 @@
 #include "communication.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
+#include "integrators/steepest_descent.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "npt.hpp"
 #include "particle_node.hpp"
 #include "short_range_cabana.hpp"
+#include "stokesian_dynamics/sd_interface.hpp"
 #include "thermostat.hpp"
+#include "virtual_sites/com.hpp"
 #include "virtual_sites/relative.hpp"
 
 #include <utils/Vector.hpp>
@@ -88,6 +91,10 @@ System::System(Private) {
   auto_update_accumulators =
       std::make_shared<Accumulators::AutoUpdateAccumulators>();
   constraints = std::make_shared<Constraints::Constraints>();
+  steepest_descent = std::make_shared<SteepestDescent>();
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
+  stokesian_dynamics = std::make_shared<StokesianDynamics>();
+#endif
 #ifdef ESPRESSO_NPT
   nptiso = std::make_shared<NptIsoParameters>();
   npt_inst_pressure = std::make_shared<InstantaneousPressure>();
@@ -103,7 +110,6 @@ void System::initialize() {
   auto handle = shared_from_this();
   cell_structure->bind_system(handle);
   lees_edwards->bind_system(handle);
-  immersed_boundaries->bind_system(handle);
   bonded_ias->bind_system(handle);
   thermostat->bind_system(handle);
   nonbonded_ias->bind_system(handle);
@@ -165,7 +171,7 @@ void System::set_min_global_cut(double value) {
 void System::set_cell_structure_topology(CellStructureType topology) {
   if (topology == CellStructureType::REGULAR) {
     if (cell_structure->decomposition_type() == CellStructureType::REGULAR) {
-      // get fully connected info from exising regular decomposition
+      // get fully connected info from existing regular decomposition
       auto &old_regular_decomposition =
           dynamic_cast<RegularDecomposition const &>(
               std::as_const(*cell_structure).decomposition());
@@ -360,6 +366,9 @@ void System::update_dependent_particles() {
 #ifdef ESPRESSO_VIRTUAL_SITES
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   vs_relative_update_particles(*cell_structure, *box_geo);
+#endif
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+  vs_com_update_particles(*cell_structure, *box_geo);
 #endif
   cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 #endif

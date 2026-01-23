@@ -61,8 +61,9 @@ class Test:
         self.system.part.add(pos=self.system.box_l / 2. + [0, 0, self.distance],
                              q=-self.q[0])
         prefactor = 2.0
-        p3m = self.p3m_class(prefactor=prefactor, accuracy=self.accuracy,
-                             mesh=[58, 58, 70], cao=4)
+        p3m = espressomd.electrostatics.P3M(
+            prefactor=prefactor, accuracy=self.accuracy,
+            mesh=[58, 58, 70], cao=4, **self.p3m_params)
         elc = espressomd.electrostatics.ELC(actor=p3m,
                                             gap_size=self.elc_gap,
                                             maxPWerror=self.accuracy,
@@ -105,7 +106,7 @@ class Test:
 @utx.skipIfMissingFeatures(["P3M"])
 class TestCPU(Test, ut.TestCase):
 
-    p3m_class = espressomd.electrostatics.P3M
+    p3m_params = {"gpu": False}
     rtol = 1e-7
 
 
@@ -113,7 +114,7 @@ class TestCPU(Test, ut.TestCase):
 @utx.skipIfMissingFeatures(["P3M"])
 class TestGPU(Test, ut.TestCase):
 
-    p3m_class = espressomd.electrostatics.P3MGPU
+    p3m_params = {"gpu": True}
     rtol = 5e-6
 
 

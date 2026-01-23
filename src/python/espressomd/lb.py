@@ -21,11 +21,17 @@ import itertools
 import numpy as np
 
 from . import utils
-from .detail.walberla import VTKOutputBase, LatticeWalberla
+from .detail.walberla import VTKOutputBase, Lattice
 from .script_interface import ScriptInterfaceHelper, script_interface_register, array_variant
 import espressomd.detail.walberla
 import espressomd.shapes
 import espressomd.code_features
+
+
+@script_interface_register
+class Container(ScriptInterfaceHelper):
+    _so_name = "LB::Container"
+    _so_bind_methods = ("clear",)
 
 
 class VelocityBounceBack:
@@ -41,77 +47,8 @@ class VelocityBounceBack:
         self.velocity = velocity
 
 
-class HydrodynamicInteraction(ScriptInterfaceHelper):
-    """
-    Base class for LB implementations.
-
-    """
-
-    def __getitem__(self, key):
-        raise NotImplementedError("Derived classes must implement this method")
-
-    def __str__(self):
-        return f"{self.__class__.__name__}({self.get_params()})"
-
-    def validate_params(self, params):
-        pass
-
-    def valid_keys(self):
-        return {"agrid", "tau", "lattice", "density", "ext_force_density",
-                "kinematic_viscosity", "kT", "seed", "blocks_per_mpi_rank"}
-
-    def required_keys(self):
-        return {"lattice", "density", "kinematic_viscosity", "tau"}
-
-    def default_params(self):
-        return {"lattice": None, "seed": 0, "kT": 0.,
-                "ext_force_density": [0.0, 0.0, 0.0]}
-
-    def mach_limit(self):
-        """
-        The fluid velocity is limited to :math:`v_{\\mathrm{max}} = 0.20`
-        (see *quasi-incompressible limit* in :cite:`kruger17a`,
-        chapter 7, page 272), which corresponds to Mach 0.35.
-
-        The relative error in the fluid density between a compressible fluid
-        and an incompressible fluid at Mach 0.30 is less than 5% (see
-        *constant density assumption* in :cite:`kundu02a` chapter 16, page
-        663). Since the speed of sound is :math:`c_s = 1 / \\sqrt{3}` in LB
-        velocity units in a D3Q19 lattice, the velocity limit at Mach 0.30
-        is :math:`v_{\\mathrm{max}} = 0.30 / \\sqrt{3} \\approx 0.17`.
-        At Mach 0.35 the relative error is around 6% and
-        :math:`v_{\\mathrm{max}} = 0.35 / \\sqrt{3} \\approx 0.20`.
-
-        Returns
-        -------
-        v_max : :obj:`float`
-            The Mach limit expressed in LB velocity units.
-
-        """
-        return 0.20
-
-    @classmethod
-    def _check_mach_limit(cls, velocities):
-        vel_max = cls.mach_limit(cls)
-        velocities = np.reshape(velocities, (-1, 3))
-        if np.any(np.linalg.norm(velocities, axis=1) > vel_max):
-            speed_of_sound = 1. / np.sqrt(3.)
-            mach_number = vel_max / speed_of_sound
-            raise ValueError(f"Slip velocity exceeds Mach {mach_number:.2f}")
-
-    @property
-    def pressure_tensor(self):
-        tensor = self.call_method("get_pressure_tensor")
-        return utils.array_locked(tensor)
-
-    @pressure_tensor.setter
-    def pressure_tensor(self, value):
-        raise RuntimeError(f"Property 'pressure_tensor' is read-only")
-
-
 @script_interface_register
-class LBFluidWalberla(HydrodynamicInteraction,
-                      espressomd.detail.walberla.LatticeModel):
+class LBFluid(ScriptInterfaceHelper, espressomd.detail.walberla.LatticeModel):
     """
     The lattice-Boltzmann method for hydrodynamics using waLBerla.
     If argument ``lattice`` is not provided, one will be default
@@ -119,7 +56,7 @@ class LBFluidWalberla(HydrodynamicInteraction,
 
     Parameters
     ----------
-    lattice : :obj:`~espressomd.detail.walberla.LatticeWalberla`
+    lattice : :obj:`~espressomd.detail.walberla.Lattice`
         Lattice object. If not provided, a default one will be constructed
         using the ``agrid`` parameter.
     agrid : :obj:`float`
@@ -139,11 +76,13 @@ class LBFluidWalberla(HydrodynamicInteraction,
     seed : :obj:`int`, optional
         Initial counter value (or seed) of the philox RNG.
         Required for a thermalized fluid. Must be positive.
+    gpu : :obj:`bool`, optional
+        Use GPU implementation.
     single_precision : :obj:`bool`, optional
         Use single-precision floating-point arithmetic.
     \\*\\*kwargs :
         Additional parameters forwarded to the
-        :obj:`~espressomd.detail.walberla.LatticeWalberla` constructor.
+        :obj:`~espressomd.detail.walberla.Lattice` constructor.
 
     Methods
     -------
@@ -214,7 +153,7 @@ class LBFluidWalberla(HydrodynamicInteraction,
 
     """
 
-    _so_name = "walberla::LBFluidCPU"
+    _so_name = "walberla::LBFluid"
     _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
@@ -235,21 +174,22 @@ class LBFluidWalberla(HydrodynamicInteraction,
         else:
             super().__init__(**kwargs)
 
-    def validate_params(self, params):
-        super().validate_params(params)
+    def __str__(self):
+        return f"{self.__class__.__name__}({self.get_params()})"
 
+    def validate_params(self, params):
         # extract lattice-specific parameters
         lattice_params = {}
-        for key in LatticeWalberla.valid_keys():
+        for key in Lattice.valid_keys():
             if key in params:
                 lattice_params[key] = params.pop(key)
 
         # construct default lattice if necessary
         if params.get("lattice") is None:
-            for key in LatticeWalberla.required_keys():
+            for key in Lattice.required_keys():
                 if key not in lattice_params:
                     raise ValueError(f"missing argument 'lattice' or '{key}'")
-            params["lattice"] = LatticeWalberla(**lattice_params)
+            params["lattice"] = Lattice(**lattice_params)
         elif lattice_params:
             any_key = list(lattice_params.keys())[0]
             raise ValueError(f"cannot provide both 'lattice' and '{any_key}'")
@@ -258,22 +198,73 @@ class LBFluidWalberla(HydrodynamicInteraction,
         utils.check_valid_keys(self.valid_keys(), params.keys())
 
     def default_params(self):
-        return {"single_precision": False, **super().default_params()}
+        return {"lattice": None, "seed": 0, "kT": 0., "gpu": False,
+                "ext_force_density": [0.0, 0.0, 0.0]}
 
     def valid_keys(self):
-        return {"single_precision", *super().valid_keys()}
+        return {"agrid", "tau", "lattice", "density", "ext_force_density",
+                "kinematic_viscosity", "kT", "seed", "blocks_per_mpi_rank",
+                "single_precision", "gpu"}
+
+    def required_keys(self):
+        return {"lattice", "density", "kinematic_viscosity", "tau"}
 
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
             if any(isinstance(item, slice) for item in key):
-                return LBFluidSliceWalberla(parent_sip=self, slice_range=key)
+                return LBFluidSlice(parent_sip=self, slice_range=key)
             else:
-                return LBFluidNodeWalberla(
-                    parent_sip=self, index=np.array(key))
+                return LBFluidNode(parent_sip=self, index=np.array(key))
 
         raise TypeError(
             f"{key} is not a valid index. Should be a point on the "
             "nodegrid e.g. lbf[0,0,0], or a slice e.g. lbf[:,0,0]")
+
+    @staticmethod
+    def mach_limit():
+        """
+        The fluid velocity is limited to :math:`v_{\\mathrm{max}} = 0.20`
+        (see *quasi-incompressible limit* in :cite:`kruger17a`,
+        chapter 7, page 272), which corresponds to Mach 0.35.
+
+        The relative error in the fluid density between a compressible fluid
+        and an incompressible fluid at Mach 0.30 is less than 5% (see
+        *constant density assumption* in :cite:`kundu02a` chapter 16, page
+        663). Since the speed of sound is :math:`c_s = 1 / \\sqrt{3}` in LB
+        velocity units in a D3Q19 lattice, the velocity limit at Mach 0.30
+        is :math:`v_{\\mathrm{max}} = 0.30 / \\sqrt{3} \\approx 0.17`.
+        At Mach 0.35 the relative error is around 6% and
+        :math:`v_{\\mathrm{max}} = 0.35 / \\sqrt{3} \\approx 0.20`.
+
+        Returns
+        -------
+        v_max : :obj:`float`
+            The Mach limit expressed in LB velocity units.
+
+        """
+        return 0.20
+
+    @staticmethod
+    def _check_mach_limit(velocities):
+        vel_max = LBFluid.mach_limit()
+        velocities = np.reshape(velocities, (-1, 3))
+        if np.any(np.linalg.norm(velocities, axis=1) > vel_max):
+            speed_of_sound = 1. / np.sqrt(3.)
+            mach_number = vel_max / speed_of_sound
+            raise ValueError(f"Slip velocity exceeds Mach {mach_number:.2f}")
+
+    @property
+    def boundary_force(self):
+        return self.call_method("get_boundary_force")
+
+    @property
+    def pressure_tensor(self):
+        tensor = self.call_method("get_pressure_tensor")
+        return utils.array_locked(tensor)
+
+    @pressure_tensor.setter
+    def pressure_tensor(self, value):
+        raise RuntimeError(f"Property 'pressure_tensor' is read-only")
 
     def add_boundary_from_shape(self, shape,
                                 velocity=np.zeros(3, dtype=float),
@@ -315,27 +306,26 @@ class LBFluidWalberla(HydrodynamicInteraction,
             raster=array_variant(mask.flatten()),
             values=array_variant(velocity.flatten()))
 
+    def get_boundary_force_from_shape(self, shape):
+        """
+        Returns the boundary force from a shape.
+
+        Parameters
+        ----------
+        shape : :obj:`espressomd.shapes.Shape`
+            Shape to rasterize.
+        """
+        utils.check_type_or_throw_except(
+            shape, 1, espressomd.shapes.Shape, "expected an espressomd.shapes.Shape")
+
+        mask = self.get_shape_bitmask(shape=shape).astype(int)
+        return self.call_method(
+            "get_boundary_force_from_shape",
+            raster=array_variant(mask.flatten()))
+
 
 @script_interface_register
-class LBFluidWalberlaGPU(LBFluidWalberla):
-    """
-    Initialize the lattice-Boltzmann method for hydrodynamic flow using
-    waLBerla for the GPU. See :class:`HydrodynamicInteraction` for the
-    list of parameters.
-
-    """
-    _so_name = "walberla::LBFluidGPU"
-    _so_creation_policy = "GLOBAL"
-    _so_features = ("WALBERLA", "CUDA")
-
-    def default_params(self):
-        params = super().default_params()
-        params["single_precision"] = True
-        return params
-
-
-@script_interface_register
-class LBFluidNodeWalberla(ScriptInterfaceHelper):
+class LBFluidNode(ScriptInterfaceHelper):
     _so_name = "walberla::LBFluidNode"
     _so_creation_policy = "GLOBAL"
 
@@ -346,7 +336,7 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
         raise NotImplementedError("Cannot serialize LB fluid node objects")
 
     def __eq__(self, obj):
-        return isinstance(obj, LBFluidNodeWalberla) and self.index == obj.index
+        return isinstance(obj, LBFluidNode) and self.index == obj.index
 
     def __hash__(self):
         return hash(self.index)
@@ -433,8 +423,7 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
         if isinstance(value, VelocityBounceBack):
             value = value.velocity
             lattice_speed = self.call_method("get_lattice_speed")
-            HydrodynamicInteraction._check_mach_limit(
-                np.array(value) / lattice_speed)
+            LBFluid._check_mach_limit(np.array(value) / lattice_speed)
         elif value is not None:
             raise TypeError(
                 "Parameter 'value' must be an instance of VelocityBounceBack or None")
@@ -466,7 +455,7 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class LBFluidSliceWalberla(ScriptInterfaceHelper):
+class LBFluidSlice(ScriptInterfaceHelper):
     _so_name = "walberla::LBFluidSlice"
     _so_creation_policy = "GLOBAL"
 
@@ -485,7 +474,7 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
             grid_size = kwargs["parent_sip"].shape
             extra_kwargs = espressomd.detail.walberla.get_slice_bounding_box(
                 slice_range, grid_size)
-            node = LBFluidNodeWalberla(index=np.array([0, 0, 0]), **kwargs)
+            node = LBFluidNode(index=np.array([0, 0, 0]), **kwargs)
             super().__init__(*args, node_sip=node, **kwargs, **extra_kwargs)
 
     def __iter__(self):
@@ -493,7 +482,7 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
         indices = [list(range(lower[i], upper[i])) for i in range(3)]
         lb_sip = self.call_method("get_lb_sip")
         for index in itertools.product(*indices):
-            yield LBFluidNodeWalberla(parent_sip=lb_sip, index=np.array(index))
+            yield LBFluidNode(parent_sip=lb_sip, index=np.array(index))
 
     def __reduce__(self):
         raise NotImplementedError("Cannot serialize LB fluid slice objects")
@@ -604,7 +593,7 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
             if values[index] is not None:
                 if not isinstance(values[index], VelocityBounceBack):
                     raise TypeError(type_error_msg)
-                HydrodynamicInteraction._check_mach_limit(
+                LBFluid._check_mach_limit(
                     np.array(values[index].velocity) / lattice_speed)
                 values[index] = np.array(values[index].velocity)
         self._setter("velocity_at_boundary", values=values)

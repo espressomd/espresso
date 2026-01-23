@@ -112,5 +112,12 @@ private:
   }
 };
 
+class CheckpointerContext : public ObjectHandle {
+  Utils::Vector3i m_node_grid;
+  void do_construct(VariantMap const &params) override;
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override;
+};
+
 } // namespace CellSystem
 } // namespace ScriptInterface

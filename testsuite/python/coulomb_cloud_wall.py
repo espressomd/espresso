@@ -83,16 +83,15 @@ class CoulombCloudWall(ut.TestCase):
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_cpu_single_precision(self):
         self.system.electrostatics.solver = espressomd.electrostatics.P3M(
-            **self.p3m_params, prefactor=3., tune=False, single_precision=True,
-            check_complex_residuals=False)
+            **self.p3m_params, prefactor=3., tune=False, single_precision=True)
         self.system.integrator.run(0)
         self.compare("p3m", prefactor=3., force_tol=2e-3, energy_tol=1e-3)
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_gpu(self):
-        self.system.electrostatics.solver = espressomd.electrostatics.P3MGPU(
-            **self.p3m_params, prefactor=2.2, tune=False)
+        self.system.electrostatics.solver = espressomd.electrostatics.P3M(
+            **self.p3m_params, prefactor=2.2, tune=False, gpu=True)
         self.system.integrator.run(0)
         self.compare("p3m_gpu", prefactor=2.2, force_tol=2e-3, energy_tol=1e-3)
 

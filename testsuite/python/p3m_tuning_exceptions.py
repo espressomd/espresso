@@ -32,9 +32,6 @@ class Test(ut.TestCase):
 
     # tune parameters that are valid for all CPU methods
     valid_params = {
-        'P3MGPU':
-        {'cao': 2, 'r_cut': 3.1836, 'accuracy': 0.01, 'mesh': [8, 8, 8],
-         'mesh_off': [0.5, 0.5, 0.5], 'prefactor': 2.0, 'alpha': 0.5115},
         'P3M':
         {'cao': 2, 'r_cut': 3.1836, 'accuracy': 0.01, 'mesh': [8, 8, 8],
          'mesh_off': [0.5, 0.5, 0.5], 'prefactor': 2.0, 'alpha': 0.5115},
@@ -79,7 +76,8 @@ class Test(ut.TestCase):
     def test_01_time_not_set_p3m_gpu(self):
         self.add_charged_particles()
 
-        solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-2)
+        solver = espressomd.electrostatics.P3M(
+            prefactor=2, accuracy=1e-2, gpu=True)
         with self.assertRaisesRegex(Exception, 'time_step not set'):
             self.system.electrostatics.solver = solver
 
@@ -109,7 +107,8 @@ class Test(ut.TestCase):
     def test_02_no_particles_p3m_gpu(self):
         self.system.time_step = 0.01
 
-        solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-2)
+        solver = espressomd.electrostatics.P3M(
+            prefactor=2, accuracy=1e-2, gpu=True)
         with self.assertRaisesRegex(RuntimeError, 'no charged particles in the system'):
             self.system.electrostatics.solver = solver
 
@@ -151,8 +150,8 @@ class Test(ut.TestCase):
         self.system.time_step = 0.01
         self.add_charged_particles()
 
-        solver = espressomd.electrostatics.P3MGPU(
-            prefactor=2, accuracy=1e-2, epsilon=1)
+        solver = espressomd.electrostatics.P3M(
+            prefactor=2, accuracy=1e-2, epsilon=1., gpu=True)
         with self.assertRaisesRegex(RuntimeError, 'P3M: non-metallic epsilon requires cubic box'):
             self.system.electrostatics.solver = solver
 
@@ -266,8 +265,8 @@ class Test(ut.TestCase):
         self.system.time_step = 0.01
         self.add_charged_particles()
 
-        self.check_invalid_params(self.system.electrostatics, espressomd.electrostatics.P3MGPU,
-                                  mesh=3 * [28], alpha=0.3548, r_cut=4.4434)
+        self.check_invalid_params(self.system.electrostatics, espressomd.electrostatics.P3M,
+                                  mesh=3 * [28], alpha=0.3548, r_cut=4.4434, gpu=True)
 
     @utx.skipIfMissingFeatures("DP3M")
     def test_04_invalid_params_dp3m_cpu(self):
@@ -366,8 +365,8 @@ class Test(ut.TestCase):
     def test_04_invalid_params_elc_p3m_gpu(self):
         self.system.time_step = 0.01
         self.add_charged_particles()
-        params = self.get_valid_params('P3MGPU', tune=False)
-        solver = espressomd.electrostatics.P3MGPU(**params)
+        params = self.get_valid_params('P3M', tune=False)
+        solver = espressomd.electrostatics.P3M(**params, gpu=True)
         self.check_invalid_params_elc_p3m(self.system.electrostatics, solver)
 
     @utx.skipIfMissingFeatures("DP3M")
@@ -409,8 +408,8 @@ class Test(ut.TestCase):
         self.add_charged_particles()
 
         # mesh is fixed to significantly speed up tuning
-        solver = espressomd.electrostatics.P3MGPU(
-            prefactor=2, accuracy=1e-2, epsilon='metallic', mesh=[20, 20, 20])
+        solver = espressomd.electrostatics.P3M(
+            prefactor=2, accuracy=1e-2, epsilon='metallic', mesh=[20, 20, 20], gpu=True)
         self.system.electrostatics.solver = solver
 
     @utx.skipIfMissingFeatures("P3M")
@@ -498,9 +497,9 @@ class Test(ut.TestCase):
         self.system.time_step = 0.01
         self.add_charged_particles()
 
-        solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-1,
-                                                  epsilon='metallic',
-                                                  mesh=[20, -1, -1])
+        solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-1,
+                                               epsilon='metallic',
+                                               mesh=[20, -1, -1], gpu=True)
         self.system.electrostatics.solver = solver
         np.testing.assert_equal(np.copy(solver.mesh), [20, 20, 40])
 
@@ -510,13 +509,13 @@ class Test(ut.TestCase):
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
         # check GPU data structure reinitialization is safe
-        solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-3,
-                                                  epsilon='metallic',
-                                                  mesh=[-1, -1, -1])
+        solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-3,
+                                               epsilon='metallic',
+                                               mesh=[-1, -1, -1], gpu=True)
         self.system.electrostatics.solver = solver
         self.system.integrator.run(0, recalc_forces=True)
         ref_forces = np.copy(self.system.part.all().f)
-        solver = espressomd.electrostatics.P3MGPU(**solver.get_params())
+        solver = espressomd.electrostatics.P3M(**solver.get_params())
         self.system.electrostatics.solver = solver
         self.system.integrator.run(0, recalc_forces=True)
         cur_forces = np.copy(self.system.part.all().f)
@@ -610,9 +609,9 @@ class Test(ut.TestCase):
         self.add_charged_particles()
         self.check_tuning_layer_corrections(
             self.system.electrostatics,
-            espressomd.electrostatics.P3MGPU,
+            espressomd.electrostatics.P3M,
             espressomd.electrostatics.ELC,
-            self.get_valid_params("P3MGPU", accuracy=0.1))
+            self.get_valid_params("P3M", accuracy=0.1, gpu=True))
 
     @utx.skipIfMissingFeatures("DP3M")
     def test_09_no_errors_dlc_dp3m_cpu_rescale_mesh(self):
@@ -623,11 +622,11 @@ class Test(ut.TestCase):
             espressomd.magnetostatics.DLC,
             self.get_valid_params("DP3M", accuracy=0.1))
 
-    def check_extended_precision_edge_case(self, class_p3m, precisions):
+    def check_extended_precision_edge_case(self, class_p3m, precisions, gpu):
         # the following parameters lead to precision loss on extended precision
         # architectures (80-bit floating-point arithmetic); particle positions
         # in mesh units are lying outside the mesh domain by a tiny amount, but
-        # that shouldn't affect charge assignment (see PR #5135 for details)
+        # that shouldn't affect charge assignment (see issue #5135 for details)
         length = 5.81825
         system = self.system
         system.box_l = 3 * [length]
@@ -637,7 +636,7 @@ class Test(ut.TestCase):
         for precision in precisions:
             system.electrostatics.solver = class_p3m(
                 prefactor=2., accuracy=1e-2, mesh=3 * [10], cao=7, r_cut=1.5,
-                alpha=29.4842, tune=False, single_precision=precision)
+                alpha=29.4842, tune=False, single_precision=precision, gpu=gpu)
             system.integrator.run(0, recalc_forces=True)
             f0 = np.copy(system.part.by_id(0).f)
             f1 = np.copy(system.part.by_id(1).f)
@@ -647,13 +646,13 @@ class Test(ut.TestCase):
     @utx.skipIfMissingFeatures("P3M")
     def test_09_no_errors_p3m_cpu_extended_precision_edge_case(self):
         self.check_extended_precision_edge_case(
-            espressomd.electrostatics.P3M, precisions=[True, False])
+            espressomd.electrostatics.P3M, precisions=[True, False], gpu=False)
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures("P3M")
     def test_09_no_errors_p3m_gpu_extended_precision_edge_case(self):
         self.check_extended_precision_edge_case(
-            espressomd.electrostatics.P3MGPU, precisions=[True])
+            espressomd.electrostatics.P3M, precisions=[True], gpu=True)
 
 
 if __name__ == "__main__":

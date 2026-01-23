@@ -61,6 +61,8 @@
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 #include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
+#include <walberla_bridge/walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
@@ -314,6 +316,12 @@ protected:
   FlagUID const Boundary_flag{"boundary"};
   bool m_has_boundaries{false};
 
+  // lattice
+  std::shared_ptr<LatticeWalberla> m_lattice;
+
+  // boundaries
+  std::shared_ptr<BoundaryModel> m_boundary;
+
   /**
    * @brief Full communicator.
    * We use the D3Q27 directions to update cells along the diagonals during
@@ -344,11 +352,18 @@ protected:
   std::shared_ptr<RegularFullCommunicator> m_laf_communicator;
   std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communicator;
   std::bitset<GhostComm::SIZE> m_pending_ghost_comm;
+  ResourceObserver m_mpi_cart_comm_observer;
 
-  // ResetForce sweep + external force handling
+  // collision sweep
+  std::shared_ptr<CollisionModel> m_collision_model;
+
+  // force reset sweep + external force handling
   std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
 
-  // Lees Edwards boundary interpolation
+  // velocity update sweep
+  std::shared_ptr<UpdateVelFromPDF> m_update_velocities_from_pdf;
+
+  // Lees-Edwards boundary interpolation
   std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
   std::shared_ptr<InterpolateAndShiftAtBoundary<_PdfField, FloatType>>
       m_lees_edwards_pdf_interpol_sweep;
@@ -356,18 +371,6 @@ protected:
       m_lees_edwards_vel_interpol_sweep;
   std::shared_ptr<InterpolateAndShiftAtBoundary<_VectorField, FloatType>>
       m_lees_edwards_last_applied_force_interpol_sweep;
-
-  // Collision sweep
-  std::shared_ptr<CollisionModel> m_collision_model;
-
-  // Velocity update sweep
-  std::shared_ptr<UpdateVelFromPDF> m_update_velocities_from_pdf;
-
-  // boundaries
-  std::shared_ptr<BoundaryModel> m_boundary;
-
-  // lattice
-  std::shared_ptr<LatticeWalberla> m_lattice;
 
 #if defined(__CUDACC__)
   std::shared_ptr<gpu::HostFieldAllocator<FloatType>> m_host_field_allocator;
@@ -407,13 +410,13 @@ protected:
       auto field_id = gpu::addGPUFieldToStorage<GPUField>(
           blocks, tag, Field::F_SIZE, field::fzyx, n_ghost_layers);
       if constexpr (std::is_same_v<Field, _VectorField>) {
-        for (auto block = blocks->begin(); block != blocks->end(); ++block) {
-          auto field = block->template getData<GPUField>(field_id);
+        for (auto &block : *blocks) {
+          auto field = block.template getData<GPUField>(field_id);
           lbm::accessor::Vector::initialize(field, Vector3<FloatType>{0});
         }
       } else if constexpr (std::is_same_v<Field, _PdfField>) {
-        for (auto block = blocks->begin(); block != blocks->end(); ++block) {
-          auto field = block->template getData<GPUField>(field_id);
+        for (auto &block : *blocks) {
+          auto field = block.template getData<GPUField>(field_id);
           lbm::accessor::Population::initialize(
               field, std::array<FloatType, Stencil::Size>{});
         }
@@ -448,7 +451,8 @@ public:
                  double density)
       : m_viscosity(FloatType_c(viscosity)), m_density(FloatType_c(density)),
         m_kT(FloatType{0}), m_seed(0u), m_zc_to_md(density),
-        m_zc_to_lb(1. / density), m_lattice(std::move(lattice)) {
+        m_zc_to_lb(1. / density), m_lattice(std::move(lattice)),
+        m_mpi_cart_comm_observer(get_mpi_cart_comm_observer()) {
 
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
@@ -571,11 +575,12 @@ private:
 
   void integrate_update_velocities_from_pdf(
       std::shared_ptr<BlockStorage> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_update_velocities_from_pdf)(&*b);
+    for (auto &block : *blocks)
+      (*m_update_velocities_from_pdf)(&block);
   }
 
   void integrate_pull_scheme() {
+    assert(m_mpi_cart_comm_observer.is_valid());
     auto const &blocks = get_lattice().get_blocks();
     // Reset force fields
     integrate_reset_force(blocks);
@@ -621,6 +626,7 @@ public:
 
   void ghost_communication() override {
     if (m_pending_ghost_comm.any()) {
+      assert(m_mpi_cart_comm_observer.is_valid());
       ghost_communication_boundary();
       ghost_communication_pdf();
       ghost_communication_laf();
@@ -630,6 +636,7 @@ public:
 
   void ghost_communication_pdf() override {
     if (m_pending_ghost_comm.test(GhostComm::PDF)) {
+      assert(m_mpi_cart_comm_observer.is_valid());
       m_pdf_communicator->communicate();
       if (has_lees_edwards_bc()) {
         auto const &blocks = get_lattice().get_blocks();
@@ -641,6 +648,7 @@ public:
 
   void ghost_communication_vel() override {
     if (m_pending_ghost_comm.test(GhostComm::VEL)) {
+      assert(m_mpi_cart_comm_observer.is_valid());
       m_vel_communicator->communicate();
       if (has_lees_edwards_bc()) {
         auto const &blocks = get_lattice().get_blocks();
@@ -652,6 +660,7 @@ public:
 
   void ghost_communication_laf() override {
     if (m_pending_ghost_comm.test(GhostComm::LAF)) {
+      assert(m_mpi_cart_comm_observer.is_valid());
       m_laf_communicator->communicate();
       if (has_lees_edwards_bc()) {
         auto const &blocks = get_lattice().get_blocks();
@@ -663,12 +672,14 @@ public:
 
   void ghost_communication_boundary() {
     if (m_pending_ghost_comm.test(GhostComm::UBB)) {
+      assert(m_mpi_cart_comm_observer.is_valid());
       m_boundary_communicator->communicate();
       m_pending_ghost_comm.reset(GhostComm::UBB);
     }
   }
 
   void ghost_communication_full() {
+    assert(m_mpi_cart_comm_observer.is_valid());
     m_full_communicator->communicate();
     if (has_lees_edwards_bc()) {
       apply_lees_edwards_interpolation();
@@ -712,6 +723,7 @@ public:
     auto const shear_plane_normal = lees_edwards_pack->shear_plane_normal;
     auto const shear_vel = FloatType_c(lees_edwards_pack->get_shear_velocity());
     auto const omega = shear_mode_relaxation_rate();
+    auto const omega_odd = odd_mode_relaxation_rate(omega);
     if (shear_plane_normal != 1u) {
       throw std::domain_error(
           "Lees-Edwards LB only supports shear_plane_normal=\"y\"");
@@ -720,18 +732,23 @@ public:
     auto const n_ghost_layers = lattice.get_ghost_layers();
     auto const blocks = lattice.get_blocks();
     if (lattice.get_node_grid()[shear_direction] != 1 or
-        lattice.get_node_grid()[shear_plane_normal] != 1 or
         blocks->getSize(shear_direction) != 1ul or
-        blocks->getSize(shear_plane_normal) != 1ul) {
+        blocks->getSize(shear_plane_normal) !=
+            lattice.get_node_grid()[shear_plane_normal]) {
       throw std::domain_error("LB LEbc doesn't support domain decomposition "
-                              "along the shear and normal directions.");
+                              "along the shear direction, nor multiple blocks "
+                              "along the normal direction");
     }
-    auto const grid_dimensions = lattice.get_grid_dimensions();
-    auto const grid_size = FloatType_c(grid_dimensions[shear_plane_normal]);
+    auto const &grid_dimensions = lattice.get_grid_dimensions();
+    auto const block_origin = lattice.get_local_grid_range(false).first;
+    auto const lebc_slab_origin = block_origin[shear_plane_normal];
+    auto const lebc_slab_total_thickness = grid_dimensions[shear_plane_normal];
+    auto const lebc_bot_index = 0 - lebc_slab_origin;
+    auto const lebc_top_index = lebc_slab_total_thickness - lebc_slab_origin;
     m_collision_model =
         std::make_shared<CollisionModel>(StreamCollisionModelLeesEdwards(
-            m_last_applied_force_field_id, m_pdf_field_id, grid_size, omega,
-            shear_vel));
+            m_last_applied_force_field_id, m_pdf_field_id, lebc_bot_index,
+            lebc_top_index, omega, omega, omega_odd, omega, shear_vel));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
     m_run_stream_collide_sweep =
         StreamCollideSweepVisitor(blocks, m_lees_edwards_callbacks);
@@ -770,11 +787,11 @@ public:
   }
 
   [[nodiscard]] double get_viscosity() const noexcept override {
-    return numeric_cast<double>(m_viscosity);
+    return static_cast<double>(m_viscosity);
   }
 
   [[nodiscard]] double get_density() const noexcept override {
-    return numeric_cast<double>(m_density);
+    return static_cast<double>(m_density);
   }
 
   template <typename T>
@@ -915,7 +932,7 @@ public:
 
           auto kernel = [&values, &velocity](unsigned const block_index,
                                              unsigned const local_index,
-                                             Utils::Vector3i const &node) {
+                                             Utils::Vector3i const &) {
             for (uint_t f = 0u; f < 3u; ++f) {
               values[3u * block_index + f] =
                   numeric_cast<FloatType>(velocity[3u * local_index + f]);
@@ -1258,7 +1275,7 @@ public:
 
           auto kernel = [&values, &out](unsigned const block_index,
                                         unsigned const local_index,
-                                        Utils::Vector3i const &node) {
+                                        Utils::Vector3i const &) {
             for (uint_t f = 0u; f < 3u; ++f) {
               out[3u * local_index + f] = values[3u * block_index + f];
             }
@@ -1293,7 +1310,7 @@ public:
 
           auto kernel = [&values, &force](unsigned const block_index,
                                           unsigned const local_index,
-                                          Utils::Vector3i const &node) {
+                                          Utils::Vector3i const &) {
             for (uint_t f = 0u; f < 3u; ++f) {
               values[3u * block_index + f] =
                   numeric_cast<FloatType>(force[3u * local_index + f]);
@@ -1368,7 +1385,7 @@ public:
 
           auto kernel = [&values, &out, this](unsigned const block_index,
                                               unsigned const local_index,
-                                              Utils::Vector3i const &node) {
+                                              Utils::Vector3i const &) {
             for (uint_t f = 0u; f < stencil_size(); ++f) {
               out[stencil_size() * local_index + f] =
                   values[stencil_size() * block_index + f];
@@ -1399,10 +1416,9 @@ public:
               block.template getData<VectorField>(m_velocity_field_id);
           std::vector<FloatType> values(stencil_size() * bci->numCells());
 
-          auto kernel = [&values, &population,
-                         this](unsigned const block_index,
-                               unsigned const local_index,
-                               Utils::Vector3i const &node) {
+          auto kernel = [&values, &population, this](unsigned const block_index,
+                                                     unsigned const local_index,
+                                                     Utils::Vector3i const &) {
             for (uint_t f = 0u; f < stencil_size(); ++f) {
               values[stencil_size() * block_index + f] =
                   numeric_cast<FloatType>(
@@ -1493,7 +1509,7 @@ public:
 
           auto kernel = [&values, &density](unsigned const block_index,
                                             unsigned const local_index,
-                                            Utils::Vector3i const &node) {
+                                            Utils::Vector3i const &) {
             values[block_index] = numeric_cast<FloatType>(density[local_index]);
           };
 
@@ -1573,9 +1589,8 @@ public:
         if (auto const bci = get_block_interval(
                 lattice, lower_corner, upper_corner, block_offset, block)) {
 
-          auto kernel = [&lattice, &block, &velocity,
-                         this](unsigned const, unsigned const local_index,
-                               Utils::Vector3i const &node) {
+          auto kernel = [&, this](unsigned const, unsigned const local_index,
+                                  Utils::Vector3i const &node) {
             auto const bc = get_block_and_cell(lattice, node, false);
             assert(bc->block->getAABB() == block.getAABB());
             auto const &opt = velocity[local_index];
@@ -1672,7 +1687,7 @@ public:
                              std::vector<double> const &data_flat) override {
     on_boundary_add();
     m_pending_ghost_comm.set(GhostComm::UBB);
-    auto const grid_size = get_lattice().get_grid_dimensions();
+    auto const &grid_size = get_lattice().get_grid_dimensions();
     auto data = fill_3D_vector_array(data_flat, grid_size);
     set_boundary_from_grid(*m_boundary, get_lattice(), raster_flat, data);
     ghost_communication();
@@ -1712,7 +1727,7 @@ public:
 
           auto kernel = [&values, &out, this](unsigned const block_index,
                                               unsigned const local_index,
-                                              Utils::Vector3i const &node) {
+                                              Utils::Vector3i const &) {
             pressure_tensor_correction(
                 std::span<FloatType, 9ul>(&values[9u * block_index], 9ul));
             for (uint_t f = 0u; f < 9u; ++f) {
@@ -1727,6 +1742,66 @@ public:
     return out;
   }
 
+  [[nodiscard]] Utils::Vector3i flat_index_to_node(int index) const {
+    Utils::Vector3i node({0, 0, 0});
+    auto const &grid_size = get_lattice().get_grid_dimensions();
+    node[2] = index % grid_size[2];
+    int tmp = index / grid_size[2];
+    node[1] = tmp % grid_size[1];
+    node[0] = tmp / grid_size[1];
+    return node;
+  }
+
+  [[nodiscard]] Utils::Vector3i get_neighbor_node(Utils::Vector3i const &node,
+                                                  int dir) const {
+    Utils::Vector3i neighbor({0, 0, 0});
+    auto const &grid_size = get_lattice().get_grid_dimensions();
+    auto constexpr neighbor_offset = DynamicUBB::neighborOffset;
+    for (int i = 0; i < neighbor.size(); i++) {
+      neighbor[i] =
+          (node[i] - neighbor_offset[i][dir] + grid_size[i]) % grid_size[i];
+    }
+    return neighbor;
+  }
+
+  [[nodiscard]] Utils::Vector3d get_boundary_force_from_shape(
+      std::vector<int> const &raster_flat) const override {
+    Utils::Vector3d force({0, 0, 0});
+    auto const &grid_size = get_lattice().get_grid_dimensions();
+    for (auto &block : *get_lattice().get_blocks()) {
+      auto const offset = get_lattice().get_block_corner(block, true);
+      auto const &force_field = m_boundary->get_force_vector(&block);
+      auto const &index_field = m_boundary->get_index_vector(&block);
+      for (int i = 0; i < raster_flat.size(); i++) {
+        if (raster_flat[i] != 0) {
+          auto node = flat_index_to_node(i);
+          if (get_lattice().node_in_local_halo(node)) {
+            // shift node to local frame
+            node = (node - offset + grid_size) % grid_size;
+            for (int j = 0; j < index_field.size(); j++) {
+              auto neighbor_node = get_neighbor_node(node, index_field[j].dir);
+              if (index_field[j].x == neighbor_node[0] &&
+                  index_field[j].y == neighbor_node[1] &&
+                  index_field[j].z == neighbor_node[2]) {
+                force[0] += force_field[j].F_0;
+                force[1] += force_field[j].F_1;
+                force[2] += force_field[j].F_2;
+              }
+            }
+          }
+        }
+      }
+    }
+    return zero_centered_to_md(force);
+  }
+  // Global boundary force
+  [[nodiscard]] Utils::Vector3d get_boundary_force() const override {
+    Vector3<double> force(0.);
+    for (auto &block : *get_lattice().get_blocks()) {
+      force += m_boundary->get_total_force(&block);
+    }
+    return zero_centered_to_md(to_vector3d(force));
+  }
   // Global pressure tensor
   [[nodiscard]] Utils::VectorXd<9> get_pressure_tensor() const override {
     Matrix3<FloatType> tensor(FloatType{0});
@@ -1734,7 +1809,7 @@ public:
       auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
       tensor += lbm::accessor::PressureTensor::reduce(pdf_field, m_density);
     }
-    auto const grid_size = get_lattice().get_grid_dimensions();
+    auto const &grid_size = get_lattice().get_grid_dimensions();
     auto const number_of_nodes = Utils::product(grid_size);
     pressure_tensor_correction(tensor);
     return to_vector9d(tensor) * (1. / static_cast<double>(number_of_nodes));
@@ -1763,7 +1838,7 @@ public:
   }
 
   [[nodiscard]] double get_kT() const noexcept override {
-    return numeric_cast<double>(m_kT);
+    return static_cast<double>(m_kT);
   }
 
   [[nodiscard]] unsigned int get_seed() const noexcept override {

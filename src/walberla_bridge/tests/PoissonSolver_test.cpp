@@ -123,7 +123,7 @@ template <typename FloatType, lbmpy::Arch Architecture> struct Fixture {
       }
     }
     ek_species.set_slice_density(lc, uc, density);
-    ek_solver.add_charge_to_field(ek_species.get_density_id(), 0.1, false);
+    ek_solver.add_charge_to_field(ek_species.get_density_id(), 0.1);
     ek_solver.solve();
     auto const potential_calc_local = ek_solver.get_slice_potential(lc, uc);
     for (std::size_t i = 0; i < potential_calc_local.size(); ++i) {
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE(ek_poisson_solver_none) {
   BOOST_CHECK(ek_solver.is_double_precision());
   BOOST_CHECK(not ek_solver.is_gpu());
   // no-op
-  ek_solver.add_charge_to_field(std::size_t{}, 0., false);
+  ek_solver.add_charge_to_field(std::size_t{}, 0.);
   ek_solver.reset_charge_field();
   ek_solver.solve();
   // exceptions

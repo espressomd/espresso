@@ -19,15 +19,18 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
+#if defined(ESPRESSO_DIPOLES) and defined(ESPRESSO_CUDA)
 
-void DipolarDirectSum_kernel_wrapper_energy(float k, unsigned int n, float *pos,
-                                            float *dip, float box_l[3],
-                                            int periodic[3], float *E);
-void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n, float *pos,
-                                           float *dip, float *f, float *torque,
-                                           float box_l[3], int periodic[3]);
+void DipolarDirectSum_kernel_wrapper_energy(float k, unsigned int n,
+                                            float const *pos, float const *dip,
+                                            float box_l[3], int periodic[3],
+                                            float *E);
+void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n,
+                                           float const *pos, float const *dip,
+                                           float *dip_fld, float *f,
+                                           float *torque, float box_l[3],
+                                           int periodic[3], int n_replicas);
 
-#endif // ESPRESSO_DIPOLAR_DIRECT_SUM
+#endif // defined(ESPRESSO_DIPOLES) and defined(ESPRESSO_CUDA)

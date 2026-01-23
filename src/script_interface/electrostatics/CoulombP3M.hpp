@@ -19,37 +19,33 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_P3M
 
 #include "Actor.hpp"
 
 #include "core/electrostatics/p3m.hpp"
-#include "core/electrostatics/p3m.impl.hpp"
 
-#include "script_interface/get_value.hpp"
+#include <script_interface/code_info/CodeInfo.hpp>
+#include <script_interface/get_value.hpp>
 
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace ScriptInterface {
 namespace Coulomb {
 
-template <Arch Architecture>
-class CoulombP3M : public Actor<CoulombP3M<Architecture>, ::CoulombP3M> {
-  int m_tune_timings;
+class CoulombP3M : public Actor<CoulombP3M, ::CoulombP3M> {
+  TuningParameters m_tuning;
   bool m_tune;
-  bool m_tune_verbose;
-  bool m_check_complex_residuals;
-  bool m_single_precision;
-  std::pair<std::optional<int>, std::optional<int>> m_tune_limits;
 
 public:
-  using Base = Actor<CoulombP3M<Architecture>, ::CoulombP3M>;
+  using Base = Actor<CoulombP3M, ::CoulombP3M>;
   using Base::actor;
   using Base::add_parameters;
   using Base::context;
@@ -61,6 +57,8 @@ protected:
 public:
   CoulombP3M() {
     add_parameters({
+        {"gpu", AutoParameter::read_only,
+         [this]() { return actor()->is_gpu(); }},
         {"single_precision", AutoParameter::read_only,
          [this]() { return not actor()->is_double_precision(); }},
         {"alpha_L", AutoParameter::read_only,
@@ -86,12 +84,17 @@ public:
         {"is_tuned", AutoParameter::read_only,
          [this]() { return actor()->is_tuned(); }},
         {"verbose", AutoParameter::read_only,
-         [this]() { return m_tune_verbose; }},
+         [this]() { return m_tuning.verbose; }},
         {"timings", AutoParameter::read_only,
-         [this]() { return m_tune_timings; }},
+         [this]() { return m_tuning.timings; }},
         {"tune_limits", AutoParameter::read_only,
          [this]() {
-           auto const &[range_min, range_max] = m_tune_limits;
+#if defined(__clang__) and defined(__cray__) or defined(__INTEL_LLVM_COMPILER)
+           auto const &range_min = m_tuning.limits.first;
+           auto const &range_max = m_tuning.limits.second;
+#else
+           auto const &[range_min, range_max] = m_tuning.limits;
+#endif
            std::vector<Variant> retval = {
                range_min ? Variant{*range_min} : Variant{None{}},
                range_max ? Variant{*range_max} : Variant{None{}},
@@ -99,16 +102,14 @@ public:
            return retval;
          }},
         {"tune", AutoParameter::read_only, [this]() { return m_tune; }},
-        {"check_complex_residuals", AutoParameter::read_only,
-         [this]() { return m_check_complex_residuals; }},
     });
   }
 
   void do_construct(VariantMap const &params) override {
     m_tune = get_value<bool>(params, "tune");
-    m_tune_timings = get_value<int>(params, "timings");
-    m_tune_verbose = get_value<bool>(params, "verbose");
-    m_tune_limits = {std::nullopt, std::nullopt};
+    m_tuning.timings = get_value<int>(params, "timings");
+    m_tuning.verbose = get_value<bool>(params, "verbose");
+    m_tuning.limits = {std::nullopt, std::nullopt};
     if (params.contains("tune_limits")) {
       auto const &variant = params.at("tune_limits");
       std::size_t range_length = 0u;
@@ -116,17 +117,17 @@ public:
         auto const range = get_value<std::vector<int>>(variant);
         range_length = range.size();
         if (range_length == 2u) {
-          m_tune_limits = {range[0u], range[1u]};
+          m_tuning.limits = {range[0u], range[1u]};
         }
       } else {
         auto const range = get_value<std::vector<Variant>>(variant);
         range_length = range.size();
         if (range_length == 2u) {
           if (not is_none(range[0u])) {
-            m_tune_limits.first = get_value<int>(range[0u]);
+            m_tuning.limits.first = get_value<int>(range[0u]);
           }
           if (not is_none(range[1u])) {
-            m_tune_limits.second = get_value<int>(range[1u]);
+            m_tuning.limits.second = get_value<int>(range[1u]);
           }
         }
       }
@@ -134,21 +135,21 @@ public:
         if (range_length != 2u) {
           throw std::invalid_argument("Parameter 'tune_limits' needs 2 values");
         }
-        if (m_tune_limits.first and *m_tune_limits.first <= 0) {
+        if (m_tuning.limits.first and *m_tuning.limits.first <= 0) {
           throw std::domain_error("Parameter 'tune_limits' must be > 0");
         }
-        if (m_tune_limits.second and *m_tune_limits.second <= 0) {
+        if (m_tuning.limits.second and *m_tuning.limits.second <= 0) {
           throw std::domain_error("Parameter 'tune_limits' must be > 0");
         }
       });
     }
-    m_check_complex_residuals =
-        get_value<bool>(params, "check_complex_residuals");
-    auto const single_precision = get_value<bool>(params, "single_precision");
+    auto const gpu = get_value_or(params, "gpu", false);
+    auto const single_precision = get_value_or(params, "single_precision", gpu);
     context()->parallel_try_catch([&]() {
-      if (Architecture == Arch::GPU and not single_precision) {
-        throw std::invalid_argument(
-            "P3M GPU only implemented in single-precision mode");
+      if (gpu) {
+        std::vector<std::string> required_features;
+        required_features.emplace_back("CUDA");
+        CodeInfo::check_features(required_features);
       }
       auto p3m = P3MParameters{!get_value_or<bool>(params, "is_tuned", !m_tune),
                                get_value<double>(params, "epsilon"),
@@ -158,26 +159,11 @@ public:
                                get_value<int>(params, "cao"),
                                get_value<double>(params, "alpha"),
                                get_value<double>(params, "accuracy")};
-      make_handle(single_precision, std::move(p3m),
-                  get_value<double>(params, "prefactor"), m_tune_timings,
-                  m_tune_verbose, m_tune_limits, m_check_complex_residuals);
+      m_actor = new_coulomb_p3m_heffte(
+          std::move(p3m), m_tuning, get_value<double>(params, "prefactor"),
+          single_precision, gpu ? Arch::CUDA : Arch::CPU);
     });
     set_charge_neutrality_tolerance(params);
-  }
-
-private:
-  template <typename FloatType, class... Args>
-  void make_handle_impl(Args &&...args) {
-    m_actor =
-        new_coulomb_p3m<FloatType, Architecture>(std::forward<Args>(args)...);
-  }
-  template <class... Args>
-  void make_handle(bool single_precision, Args &&...args) {
-    if (single_precision) {
-      make_handle_impl<float, Args...>(std::forward<Args>(args)...);
-    } else {
-      make_handle_impl<double, Args...>(std::forward<Args>(args)...);
-    }
   }
 };
 

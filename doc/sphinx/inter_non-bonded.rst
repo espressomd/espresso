@@ -641,25 +641,22 @@ Thole correction
 
     Requires features ``THOLE`` and ``ELECTROSTATICS``.
 
-.. note::
-
-    ``THOLE`` is only implemented for the P3M electrostatics solver.
-
 The Thole correction is closely related to simulations involving
 :ref:`Particle polarizability with thermalized cold Drude oscillators`.
 In this context, it is used to correct for overestimation of
 induced dipoles at short distances. Ultimately, it alters the short-range
-electrostatics of P3M to result in a damped Coulomb interaction potential
-:math:`V(r) = \frac{q_1 q_2}{r} \cdot (1- e^{-s r} (1 + \frac{s r}{2}) )`.  The
-Thole scaling coefficient :math:`s` is related to the polarizabilities
+electrostatics to result in a damped Coulomb interaction potential
+:math:`V(r) = C\frac{q_1 q_2}{r} \cdot (1- e^{-s r} (1 + \frac{s r}{2}) )`
+derived from the charge density :math:`\varphi^\prime_1` in :cite:`thole81a`.
+The Thole scaling coefficient :math:`s` is related to the polarizabilities
 :math:`\alpha` and Thole damping parameters :math:`a` of the interacting
 species via :math:`s = \frac{ (a_i + a_j) / 2 }{ (\alpha_i \alpha_j)^{1/6} }`.
 Note that for the Drude oscillators, the Thole correction should be applied
 only for the dipole part :math:`\pm q_d` added by the Drude charge and not on
 the total core charge, which can be different for polarizable ions. Also note
 that the Thole correction acts between all dipoles, intra- and intermolecular.
-Again, the accuracy is related to the P3M accuracy and the split between
-short-range and long-range electrostatics interaction. It is configured by::
+The accuracy is related to the split between short-range and long-range
+electrostatics interaction. It is configured by::
 
     system = espressomd.System(box_l=[1, 1, 1])
     system.non_bonded_inter[type_1,type_2].thole.set_params(scaling_coeff=<float>, q1q2=<float>)

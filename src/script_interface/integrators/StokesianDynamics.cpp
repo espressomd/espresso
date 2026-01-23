@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_STOKESIAN_DYNAMICS
 
@@ -25,6 +25,7 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
+#include "core/BoxGeometry.hpp"
 #include "core/PropagationMode.hpp"
 #include "core/integrators/Propagation.hpp"
 #include "core/stokesian_dynamics/sd_interface.hpp"
@@ -84,7 +85,7 @@ void StokesianDynamics::do_construct(VariantMap const &params) {
     } else if (approx != "ft") {
       throw std::invalid_argument("Unknown approximation '" + approx + "'");
     }
-    m_instance = std::make_shared<::StokesianDynamicsParameters>(
+    m_instance = std::make_shared<::StokesianDynamics>(
         get_value<double>(params, "viscosity"),
         get_value<std::unordered_map<int, double>>(params, "radii"), bitfield);
   });
@@ -92,8 +93,14 @@ void StokesianDynamics::do_construct(VariantMap const &params) {
 
 void StokesianDynamics::activate() {
   context()->parallel_try_catch([&]() {
-    register_integrator(get_instance());
-    get_system().propagation->set_integ_switch(INTEG_METHOD_SD);
+    auto &system = get_system();
+    auto const &box_geo = *system.box_geo;
+    if (box_geo.periodic(0) or box_geo.periodic(1) or box_geo.periodic(2)) {
+      throw std::runtime_error(
+          "Stokesian Dynamics requires periodicity (False, False, False)");
+    }
+    system.stokesian_dynamics = m_instance;
+    system.propagation->set_integ_switch(INTEG_METHOD_SD);
   });
 }
 

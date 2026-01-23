@@ -19,9 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef ESPRESSO_ELECTROSTATICS
+#ifdef ESPRESSO_MMM1D
 
 #include "electrostatics/mmm1d.hpp"
 
@@ -32,11 +32,12 @@
 #include "Particle.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "errorhandling.hpp"
-#include "specfunc.hpp"
 #include "tuning.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
+
+#include <gsl/gsl_sf_bessel.h>
 
 #include <algorithm>
 #include <cmath>
@@ -45,21 +46,14 @@
 #include <numbers>
 #include <vector>
 
-/* if you define this feature, the Bessel functions are calculated up
- * to machine precision, otherwise 10^-14, which should be
- * definitely enough for daily life. */
-#ifndef ESPRESSO_MMM1D_MACHINE_PREC
-#define K0 LPK0
-#define K1 LPK1
-#endif
-
 static auto far_error(int P, double minrad, Utils::Vector3d const &box_l_inv) {
   auto const wavenumber = 2. * std::numbers::pi * box_l_inv[2];
   // this uses an upper bound to all force components and the potential
   auto const rhores = wavenumber * minrad;
   auto const pref = 4. * box_l_inv[2] * std::max(1., wavenumber);
 
-  return pref * K1(rhores * P) * exp(rhores) / rhores * (P - 1. + 1. / rhores);
+  return pref * gsl_sf_bessel_K1(rhores * P) * exp(rhores) / rhores *
+         (P - 1. + 1. / rhores);
 }
 
 static auto determine_minrad(double maxPWerror, int P,
@@ -91,6 +85,15 @@ static auto determine_minrad(double maxPWerror, int P,
     }
   }
   return 0.5 * (rmin + rmax);
+}
+
+static double evaluateAsTaylorSeriesAt(std::span<const double> series,
+                                       double x) {
+  assert(not series.empty());
+  auto const value = std::accumulate(
+      series.rbegin(), series.rend(), 0.,
+      [x](auto const &acc, auto const &coeff) { return acc * x + coeff; });
+  return value;
 }
 
 /** Modified polygamma for even order <tt>2*n, n >= 0</tt> */
@@ -168,8 +171,10 @@ void CoulombMMM1D::sanity_checks_cell_structure() const {
 void CoulombMMM1D::recalc_boxl_parameters() {
   auto const &box_geo = *get_system().box_geo;
 
-  if (far_switch_radius_sq >= Utils::sqr(box_geo.length()[2]))
+  if (far_switch_radius_sq >= Utils::sqr(box_geo.length()[2])) {
     far_switch_radius_sq = 0.8 * Utils::sqr(box_geo.length()[2]);
+    far_switch_radius = std::sqrt(far_switch_radius_sq);
+  }
 
   uz2 = Utils::sqr(box_geo.length_inv()[2]);
   prefuz2 = prefactor * uz2;
@@ -250,12 +255,8 @@ Utils::Vector3d CoulombMMM1D::pair_force(double q1q2, Utils::Vector3d const &d,
         break;
 
       auto const fq = c_2pi * bp;
-#ifdef ESPRESSO_MMM1D_MACHINE_PREC
-      auto const k0 = K0(fq * rxy_d);
-      auto const k1 = K1(fq * rxy_d);
-#else
-      auto const [k0, k1] = LPK01(fq * rxy_d);
-#endif
+      auto const k0 = gsl_sf_bessel_K0(fq * rxy_d);
+      auto const k1 = gsl_sf_bessel_K1(fq * rxy_d);
       sr += bp * k1 * cos(fq * z_d);
       sz += bp * k0 * sin(fq * z_d);
     }
@@ -326,7 +327,7 @@ double CoulombMMM1D::pair_energy(double const q1q2, Utils::Vector3d const &d,
         break;
 
       auto const fq = c_2pi * bp;
-      energy += K0(fq * rxy_d) * cos(fq * z_d);
+      energy += gsl_sf_bessel_K0(fq * rxy_d) * cos(fq * z_d);
     }
     energy *= 4. * box_geo.length_inv()[2];
   }
@@ -372,6 +373,7 @@ void CoulombMMM1D::tune() {
       switch_radius += 0.025 * maxrad;
     }
     switch_radius = min_rad;
+    far_switch_radius = switch_radius;
     far_switch_radius_sq = Utils::sqr(switch_radius);
   } else if (far_switch_radius_sq <= Utils::sqr(bessel_radii.back())) {
     // this switching radius is too small for our Bessel series
@@ -382,4 +384,4 @@ void CoulombMMM1D::tune() {
   system.on_coulomb_change();
 }
 
-#endif // ESPRESSO_ELECTROSTATICS
+#endif // ESPRESSO_MMM1D

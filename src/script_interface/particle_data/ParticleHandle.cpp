@@ -39,6 +39,7 @@
 #include "core/rotation.hpp"
 #include "core/system/System.hpp"
 #include "core/virtual_sites.hpp"
+#include "core/virtual_sites/com.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/reduce_optional.hpp>
@@ -58,6 +59,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <type_traits>
 #include <vector>
@@ -66,18 +68,18 @@ namespace ScriptInterface {
 namespace Particles {
 
 #ifdef ESPRESSO_ROTATION
-static auto const contradicting_arguments_quat = std::vector<
-    std::array<std::string, 3>>{{
-    {{"dip", "dipm",
-      "Setting 'dip' is sufficient as it defines the scalar dipole moment."}},
-    {{"quat", "director",
-      "Setting 'quat' is sufficient as it defines the director."}},
-    {{"dip", "quat",
-      "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."}},
-    {{"dip", "director",
-      "Setting 'dip' would overwrite 'director'. Set 'director' and "
-      "'dipm' instead."}},
-}};
+static auto constexpr contradicting_arguments_quat = std::to_array<
+    std::array<std::string_view, 3>>({
+    {"dip", "dipm",
+     "Setting 'dip' is sufficient as it defines the scalar dipole moment."},
+    {"quat", "director",
+     "Setting 'quat' is sufficient as it defines the director."},
+    {"dip", "quat",
+     "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."},
+    {"dip", "director",
+     "Setting 'dip' would overwrite 'director'. Set 'director' and "
+     "'dipm' instead."},
+});
 
 static void sanity_checks_rotation(VariantMap const &params) {
   // if we are not constructing a particle from a checkpoint file,
@@ -86,7 +88,8 @@ static void sanity_checks_rotation(VariantMap const &params) {
     auto formatter =
         boost::format("Contradicting particle attributes: '%s' and '%s'. %s");
     for (auto const &[prop1, prop2, reason] : contradicting_arguments_quat) {
-      if (params.contains(prop1) and params.contains(prop2)) {
+      if (params.contains(std::string{prop1}) and
+          params.contains(std::string{prop2})) {
         auto const err_msg = boost::str(formatter % prop1 % prop2 % reason);
         throw std::invalid_argument(err_msg);
       }
@@ -95,6 +98,7 @@ static void sanity_checks_rotation(VariantMap const &params) {
 }
 #endif // ESPRESSO_ROTATION
 
+#if defined(ESPRESSO_ROTATION) or defined(ESPRESSO_EXTERNAL_FORCES)
 static uint8_t bitfield_from_flag(Utils::Vector3i const &flag) {
   auto bitfield = static_cast<uint8_t>(0u);
   if (flag[0])
@@ -105,7 +109,9 @@ static uint8_t bitfield_from_flag(Utils::Vector3i const &flag) {
     bitfield |= static_cast<uint8_t>(4u);
   return bitfield;
 }
+#endif
 
+#ifdef ESPRESSO_ROTATION
 static auto quat2vector(Utils::Quaternion<double> const &q) {
   return Utils::Vector4d{{q[0], q[1], q[2], q[3]}};
 }
@@ -117,6 +123,7 @@ static auto get_quaternion_safe(std::string const &name, Variant const &value) {
   }
   return Utils::Quaternion<double>{{q[0], q[1], q[2], q[3]}};
 }
+#endif // ESPRESSO_ROTATION
 
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
 static auto get_gamma_safe(Variant const &value) {
@@ -267,6 +274,47 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() { return get_particle_data(m_pid).dip_fld(); }},
 #endif
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+      {"magnetodynamics",
+       [this](Variant const &value) {
+         set_particle_property([&value](Particle &p) {
+           auto const dict = get_value<VariantMap>(value);
+           if (dict.contains("is_enabled"))
+             p.stoner_wohlfarth_is_enabled() =
+                 get_value<bool>(dict.at("is_enabled"));
+           if (dict.contains("sw_phi_0"))
+             p.stoner_wohlfarth_phi_0() =
+                 get_value<double>(dict.at("sw_phi_0"));
+           if (dict.contains("sat_mag"))
+             p.saturation_magnetization() =
+                 get_value<double>(dict.at("sat_mag"));
+           if (dict.contains("anisotropy_field_inv"))
+             p.magnetic_anisotropy_field_inv() =
+                 get_value<double>(dict.at("anisotropy_field_inv"));
+           if (dict.contains("anisotropy_energy"))
+             p.magnetic_anisotropy_energy() =
+                 get_value<double>(dict.at("anisotropy_energy"));
+           if (dict.contains("sw_tau0_inv"))
+             p.stoner_wohlfarth_tau0_inv() =
+                 get_value<double>(dict.at("sw_tau0_inv"));
+           if (dict.contains("sw_dt_incr"))
+             p.stoner_wohlfarth_dt_incr() =
+                 get_value<double>(dict.at("sw_dt_incr"));
+         });
+       },
+       [this]() {
+         auto const &p = get_particle_data(m_pid);
+         return VariantMap{
+             {"is_enabled", p.stoner_wohlfarth_is_enabled()},
+             {"sw_phi_0", p.stoner_wohlfarth_phi_0()},
+             {"sat_mag", p.saturation_magnetization()},
+             {"anisotropy_field_inv", p.magnetic_anisotropy_field_inv()},
+             {"anisotropy_energy", p.magnetic_anisotropy_energy()},
+             {"sw_tau0_inv", p.stoner_wohlfarth_tau0_inv()},
+             {"sw_dt_incr", p.stoner_wohlfarth_dt_incr()},
+         };
+       }},
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 #ifdef ESPRESSO_ROTATION
       {"director",
        [this](Variant const &value) {
@@ -658,6 +706,28 @@ Variant ParticleHandle::do_call_method(std::string const &name,
                   Variant{static_cast<int>(PropagationMode::TRANS_VS_RELATIVE |
                                            PropagationMode::ROT_VS_RELATIVE)});
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+  } else if (name == "vs_com_relate_to") {
+    auto &cell_structure = get_cell_structure()->get_cell_structure();
+    auto const molid = get_value<int>(params, "molid");
+    auto const maybe_exists_vs = get_pid_for_vs_com(cell_structure, molid);
+    if (not context()->is_head_node()) {
+      return {};
+    }
+    if (molid < 0) {
+      throw std::domain_error("Invalid molecule id: " + std::to_string(molid));
+    }
+    if (maybe_exists_vs) {
+      throw std::runtime_error(
+          "Molecule id: " + std::to_string(molid) +
+          " is already tracked by virtual site with particle id: " +
+          std::to_string(*maybe_exists_vs));
+    }
+    set_parameter("mol_id", params.at("molid"));
+    set_parameter(
+        "propagation",
+        Variant{static_cast<int>(PropagationMode::TRANS_VS_CENTER_OF_MASS)});
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 #ifdef ESPRESSO_EXCLUSIONS
   } else if (name == "has_exclusion") {
     auto const other_pid = get_value<int>(params, "pid");
@@ -803,7 +873,7 @@ void ParticleHandle::do_construct(VariantMap const &params) {
     context()->parallel_try_catch([&]() {
       /* clang-format off */
       // set particle properties (filter out read-only and deferred properties)
-      std::set<std::string> const skip = {
+      std::set<std::string_view> const skip = {
           "pos_folded", "pos", "id", "exclusions", "node", "image_box", "bonds",
           "lees_edwards_flag", "__cpt_sentinel",
       };

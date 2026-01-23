@@ -49,10 +49,6 @@ add_library(
   TabulatedPotential.cpp)
 add_library(espresso::core ALIAS espresso_core)
 espresso_set_common_target_properties(espresso_core)
-if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-  set_target_properties(
-    espresso_core PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CABANA_CXX_CLANG_TIDY}")
-endif()
 
 if(ESPRESSO_BUILD_WITH_CUDA)
   target_sources(
@@ -63,16 +59,16 @@ if(ESPRESSO_BUILD_WITH_CUDA)
             electrostatics/p3m_gpu_cuda.cu electrostatics/p3m_gpu_error_cuda.cu
             system/GpuParticleData_cuda.cu)
   target_link_libraries(espresso_core PRIVATE CUDA::cuda_driver CUDA::cudart
-                                              CUDA::cufft espresso::cuda_flags)
+                                              CUDA::cufft)
   target_include_directories(
     espresso_core
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
             ${CMAKE_CURRENT_SOURCE_DIR}/electrostatics
             ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
-  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-    set_target_properties(espresso_core PROPERTIES CUDA_CLANG_TIDY
-                                                   "${CABANA_CUDA_CLANG_TIDY}")
-  endif()
+endif()
+
+if(ESPRESSO_BUILD_WITH_NLOPT)
+  target_include_directories(espresso_core PRIVATE "${nlopt_SOURCE_DIR}/src")
 endif()
 
 install(TARGETS espresso_core
@@ -89,6 +85,8 @@ target_link_libraries(
     $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Cabana::Core>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_NLOPT}>:nlopt>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_GSL}>:GSL::gsl>
   PUBLIC espresso::utils MPI::MPI_CXX Random123 espresso::particle_observables
          Boost::serialization Boost::mpi espresso::instrumentation)
 

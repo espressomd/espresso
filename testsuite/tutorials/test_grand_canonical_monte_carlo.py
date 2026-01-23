@@ -29,15 +29,22 @@ tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
 
-    def test(self):
+    def test_ideal_case(self):
         ratios = tutorial.c_monomer.magnitude / \
             (2. * tutorial.salt_concentration_si.magnitude)
-        ref_xi = tutorial.analytical_solution(ratios)
-        sim_xi_minus = tutorial.partition_coefficients_negatives_array
-        sim_xi_plus = tutorial.universal_partion_coefficient_positive
+        sim_xi_minus = tutorial.partition_coefficients_negative_ideal_array
+        sim_xi_plus = tutorial.universal_partition_coefficients_positive_ideal
+        sim_xi_minus_ref = tutorial.analytical_solution(ratios)
+        np.testing.assert_allclose(
+            sim_xi_plus, sim_xi_minus_ref, rtol=0.2)
         np.testing.assert_allclose(
             sim_xi_minus, sim_xi_plus, rtol=1e-5, atol=1e-5)
-        np.testing.assert_allclose(sim_xi_minus / ref_xi, 2., rtol=0., atol=2.)
+
+    def test_interacting_case(self):
+        sim_xi_minus = tutorial.partition_coefficients_negative_array
+        sim_xi_plus = tutorial.universal_partition_coefficients_positive
+        np.testing.assert_allclose(
+            sim_xi_minus, sim_xi_plus, rtol=1e-5, atol=1e-5)
 
 
 if __name__ == "__main__":

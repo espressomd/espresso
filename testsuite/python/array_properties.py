@@ -191,7 +191,7 @@ class ArrayPropertyTest(ArrayCommon):
 
     @utx.skipIfMissingFeatures("WALBERLA")
     def test_lb(self):
-        lbf = espressomd.lb.LBFluidWalberla(
+        lbf = espressomd.lb.LBFluid(
             agrid=0.5, density=1., kinematic_viscosity=1., tau=0.01)
         self.system.lb = lbf
 

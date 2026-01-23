@@ -26,14 +26,13 @@
  *  \ref icc.hpp.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_ELECTROSTATICS
 
 #include "icc.hpp"
 
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
 #include "actor/visitors.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -71,8 +70,7 @@
  *  @ref System::System::calculate_forces.
  */
 static void force_calc_icc(
-    CellStructure &cell_structure, ParticleRange const &particles,
-    ParticleRange const &ghost_particles,
+    CellStructure &cell_structure,
     Coulomb::ShortRangeForceKernel::result_type const &coulomb_kernel,
     Coulomb::ShortRangeForceCorrectionsKernel::result_type const &elc_kernel) {
   // reset forces
@@ -95,8 +93,8 @@ static void force_calc_icc(
           p2.force() -= force;
 #ifdef ESPRESSO_P3M
           if (elc_kernel_ptr) {
-            (*elc_kernel_ptr)(p1.pos(), p2.pos(), p1.force_and_torque(),
-                              p2.force_and_torque(), q1q2);
+            (*elc_kernel_ptr)(p1.pos(), p2.pos(), p1.force_and_torque().f,
+                              p2.force_and_torque().f, q1q2);
           }
 #endif // ESPRESSO_P3M
         }
@@ -115,7 +113,6 @@ void ICCStar::iteration() {
   auto &cell_structure = *system.cell_structure;
   auto const &coulomb = system.coulomb;
   auto const particles = cell_structure.local_particles();
-  auto const ghost_particles = cell_structure.ghost_particles();
   auto const prefactor = std::visit(
       [](auto const &ptr) { return ptr->prefactor; }, *coulomb.impl->solver);
   auto const pref = 1. / (prefactor * 2. * std::numbers::pi);
@@ -135,9 +132,8 @@ void ICCStar::iteration() {
     auto charge_density_max = 0.;
 
     // calculate electrostatic forces (SR+LR) excluding self-interactions
-    force_calc_icc(cell_structure, particles, ghost_particles, kernel,
-                   elc_kernel);
-    system.coulomb.calc_long_range_force(particles);
+    force_calc_icc(cell_structure, kernel, elc_kernel);
+    system.coulomb.calc_long_range_force();
     cell_structure.ghosts_reduce_forces();
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     // force reduction
@@ -283,7 +279,7 @@ struct SanityChecksICC {
 #ifdef ESPRESSO_CUDA
   void operator()(std::shared_ptr<CoulombP3M> const &p) const {
     if (p->is_gpu()) {
-      throw std::runtime_error("ICC does not work with P3MGPU");
+      throw std::runtime_error("ICC does not work with P3M on GPU");
     }
   }
 #endif // ESPRESSO_CUDA

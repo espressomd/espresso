@@ -264,7 +264,7 @@ class LangevinThermostat(ut.TestCase):
         system.time_step = 0.01
         o0 = np.array([0, 0, 0])
 
-        system.lb = espressomd.lb.LBFluidWalberla(
+        system.lb = espressomd.lb.LBFluid(
             tau=0.01, agrid=2., density=1., kinematic_viscosity=1., kT=0.)
         system.thermostat.set_lb(LB_fluid=system.lb, seed=42, gamma=1.)
         system.thermostat.set_langevin(

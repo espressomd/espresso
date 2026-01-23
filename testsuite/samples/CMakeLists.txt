@@ -60,6 +60,7 @@ sample_test(FILE test_lb_circular_couette.py)
 sample_test(FILE test_lb_four_roller_mill.py)
 sample_test(FILE test_lj_liquid_distribution.py)
 sample_test(FILE test_lj_liquid.py)
+sample_test(FILE test_lj_liquid_ase.py)
 sample_test(FILE test_lj_liquid_structurefactor.py)
 sample_test(FILE test_load_checkpoint.py)
 set_tests_properties(sample_load_checkpoint PROPERTIES FIXTURES_REQUIRED

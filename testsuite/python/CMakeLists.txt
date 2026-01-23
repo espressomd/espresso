@@ -146,7 +146,7 @@ endfunction(python_test)
   Configure a python checkpoint test case.
 
   This is a specialization of python_test() for the checkpointing test cases.
-  It uses sane default values that can be overriden if necessary. It has one
+  It uses sane default values that can be overridden if necessary. It has one
   extra single-value argument ``MODES`` that lists the features to activate.
   See the comment lines at the point of use for more details.
 
@@ -201,7 +201,7 @@ function(checkpoint_test)
     save_checkpoint_${TEST_SUFFIX})
 endfunction(checkpoint_test)
 
-# Checkpoint tests run on 4 cores (can be overriden with MAX_NUM_PROC). The
+# Checkpoint tests run on 4 cores (can be overridden with MAX_NUM_PROC). The
 # combination of modes to activate is stored in MODES. A mode consists of a
 # feature with zero or more options; separate features with 2 underscores and
 # options with 1 underscore (options can appear in any order). For example,
@@ -282,7 +282,7 @@ python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE lees_edwards.py MAX_NUM_PROC 4)
 python_test(FILE lb_lees_edwards.py MAX_NUM_PROC 1)
 python_test(FILE lb_lees_edwards_particle_coupling.py MAX_NUM_PROC 1)
-python_test(FILE lb_planar_couette.py MAX_NUM_PROC 1)
+python_test(FILE lb_planar_couette.py MAX_NUM_PROC 2)
 python_test(FILE nsquare.py MAX_NUM_PROC 4)
 python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
 python_test(FILE virtual_sites_relative_pbc.py MAX_NUM_PROC 2)
@@ -290,6 +290,7 @@ python_test(FILE virtual_sites_tracers.py MAX_NUM_PROC 2 DEPENDENCIES
             virtual_sites_tracers_common.py)
 # python_test(FILE virtual_sites_tracers_gpu.py MAX_NUM_PROC 2 GPU_SLOTS 1
 # DEPENDENCIES virtual_sites_tracers_common.py)
+python_test(FILE virtual_sites_center_of_mass.py MAX_NUM_PROC 4)
 python_test(FILE regular_decomposition.py MAX_NUM_PROC 4)
 python_test(FILE regular_decomposition.py MAX_NUM_PROC 1 SUFFIX 1_core)
 python_test(FILE hybrid_decomposition.py MAX_NUM_PROC 1 SUFFIX 1_core)
@@ -302,7 +303,9 @@ python_test(FILE dipolar_p3m.py MAX_NUM_PROC 2)
 python_test(FILE dipolar_interface.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE coulomb_interface.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb.py MAX_NUM_PROC 2 GPU_SLOTS 1)
-python_test(FILE lb_stats.py MAX_NUM_PROC 2 GPU_SLOTS 2 LABELS long)
+if(${ESPRESSO_TEST_NP} GREATER_EQUAL 2)
+  python_test(FILE lb_stats.py MAX_NUM_PROC 2 GPU_SLOTS 2 LABELS long)
+endif()
 python_test(FILE lb_stats.py MAX_NUM_PROC 1 GPU_SLOTS 2 LABELS long SUFFIX
             1_core)
 python_test(FILE force_cap.py MAX_NUM_PROC 2)
@@ -318,7 +321,9 @@ python_test(FILE coulomb_cloud_wall_duplicated.py MAX_NUM_PROC 4 GPU_SLOTS 3)
 python_test(FILE collision_detection.py MAX_NUM_PROC 4)
 python_test(FILE collision_detection_interface.py MAX_NUM_PROC 2)
 python_test(FILE lj.py MAX_NUM_PROC 4)
-python_test(FILE dipole_field_tracking.py MAX_NUM_PROC 2)
+python_test(FILE dipole_field_tracking.py MAX_NUM_PROC 2 GPU_SLOTS 1)
+python_test(FILE thermal_stoner_wohlfarth.py MAX_NUM_PROC 2)
+python_test(FILE thermal_stoner_wohlfarth_fluid.py MAX_NUM_PROC 4)
 python_test(FILE pairs.py MAX_NUM_PROC 4)
 python_test(FILE polymer_linear.py MAX_NUM_PROC 4)
 python_test(FILE polymer_diamond.py MAX_NUM_PROC 4)
@@ -346,7 +351,7 @@ python_test(FILE thermalized_bond.py MAX_NUM_PROC 4)
 python_test(FILE thole.py MAX_NUM_PROC 4)
 python_test(FILE lb_slice.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1)
-# python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 2) # TODO
+python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_boundary_ghost_layer.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_circular_couette.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_poiseuille.py MAX_NUM_PROC 4 GPU_SLOTS 1)
@@ -362,15 +367,21 @@ python_test(FILE lb_boundary.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
 python_test(FILE lb_streaming.py MAX_NUM_PROC 4 GPU_SLOTS 0)
 python_test(FILE lb_streaming.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
 python_test(FILE lb_shear.py MAX_NUM_PROC 2 GPU_SLOTS 1)
-python_test(FILE lb_thermostat.py MAX_NUM_PROC 2 GPU_SLOTS 0 LABELS long)
+if(${ESPRESSO_TEST_NP} GREATER_EQUAL 2)
+  python_test(FILE lb_thermostat.py MAX_NUM_PROC 2 GPU_SLOTS 0 LABELS long)
+endif()
 python_test(FILE lb_thermostat.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS long SUFFIX
             1_core)
-# python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2 GPU_SLOTS 1) # TODO
-python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 2 GPU_SLOTS 1 LABELS
-            long)
+python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2 GPU_SLOTS 1)
+if(${ESPRESSO_TEST_NP} GREATER_EQUAL 2)
+  python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 2 GPU_SLOTS 1
+              LABELS long)
+endif()
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS
             long SUFFIX 1_core)
-python_test(FILE lb_mass_conservation.py MAX_NUM_PROC 2 GPU_SLOTS 0)
+if(${ESPRESSO_TEST_NP} GREATER_EQUAL 2)
+  python_test(FILE lb_mass_conservation.py MAX_NUM_PROC 2 GPU_SLOTS 0)
+endif()
 python_test(FILE lb_mass_conservation.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX
             1_core)
 python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2 GPU_SLOTS 1)
@@ -410,7 +421,7 @@ endif()
 python_test(FILE ek_interface.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE ek_diffusion.py MAX_NUM_PROC 1 GPU_SLOTS 1)
 python_test(FILE ek_diffusive_flux.py MAX_NUM_PROC 1 GPU_SLOTS 1)
-python_test(FILE ek_noflux.py MAX_NUM_PROC 1 GPU_SLOTS 1)
+python_test(FILE ek_noflux.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE ek_eof.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS long)
 python_test(FILE ek_bulk_reactions.py MAX_NUM_PROC 1 GPU_SLOTS 1)
 python_test(FILE ek_indexed_reactions.py MAX_NUM_PROC 1 GPU_SLOTS 1)
@@ -487,4 +498,6 @@ add_custom_target(
     --resource-spec-file ${ESPRESSO_CTEST_RESOURCE_SPEC_FILE}
     ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python pypresso python_test_data)
+
 add_dependencies(check check_python)
+add_dependencies(espresso_packaging_dependencies python_test_data)

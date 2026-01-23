@@ -54,20 +54,21 @@ ROTATIONAL_INERTIA              implies ROTATION
 /* Electrostatics */
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
-MMM1D_MACHINE_PREC              requires ELECTROSTATICS
+MMM1D                           equals ELECTROSTATICS and GSL
 WALBERLA_FFT                    equals WALBERLA and FFTW
 
 /* Magnetostatics */
 DIPOLES                         implies ROTATION
 DP3M                            equals DIPOLES and FFTW
-DIPOLAR_DIRECT_SUM              requires CUDA
-DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA
 DIPOLE_FIELD_TRACKING           implies DIPOLES
+THERMAL_STONER_WOHLFARTH        requires NLOPT
+THERMAL_STONER_WOHLFARTH        implies VIRTUAL_SITES_RELATIVE, DIPOLE_FIELD_TRACKING
 
 /* Virtual sites features */
 VIRTUAL_SITES
 VIRTUAL_SITES_RELATIVE          implies VIRTUAL_SITES
 VIRTUAL_SITES_RELATIVE          implies ROTATION
+VIRTUAL_SITES_CENTER_OF_MASS    implies VIRTUAL_SITES
 VIRTUAL_SITES_INERTIALESS_TRACERS implies VIRTUAL_SITES
 
 /* DPD features */
@@ -112,6 +113,7 @@ HDF5 external
 SCAFACOS external
 GSL external
 STOKESIAN_DYNAMICS external
+NLOPT external
 WALBERLA external
 VALGRIND external
 CALIPER external

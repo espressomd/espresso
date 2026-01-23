@@ -762,7 +762,7 @@ void fft_data_struct<FloatType>::forward_fft(
 
 template <typename FloatType>
 void fft_data_struct<FloatType>::backward_fft(
-    boost::mpi::communicator const &comm, FloatType *data, bool check_complex) {
+    boost::mpi::communicator const &comm, FloatType *data) {
 
   auto *c_data = (typename fftw<FloatType>::complex *)data;
   auto *c_data_buf = (typename fftw<FloatType>::complex *)data_buf.data();
@@ -786,13 +786,6 @@ void fft_data_struct<FloatType>::backward_fft(
   /* throw away the (hopefully) empty complex component (in is data) */
   for (int i = 0; i < forw[1].new_size; i++) {
     data_buf[i] = data[2 * i]; /* real value */
-    // Vincent:
-    if (check_complex and std::abs(data[2 * i + 1]) > 1e-5) {
-      printf("Complex value is not zero (i=%d,data=%g)!!!\n", i,
-             data[2 * i + 1]);
-      if (i > 100)
-        throw std::runtime_error("Complex value is not zero");
-    }
   }
   /* communicate (in is data_buf) */
   back_grid_comm(comm, forw[1], back[1], data_buf.data(), data);

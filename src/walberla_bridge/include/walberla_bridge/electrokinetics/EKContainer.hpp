@@ -116,9 +116,8 @@ public:
 
   void reset_charge() const { m_poisson_solver->reset_charge_field(); }
 
-  void add_charge(std::size_t const id, double valency,
-                  bool is_double_precision) const {
-    m_poisson_solver->add_charge_to_field(id, valency, is_double_precision);
+  void add_charge(std::size_t const id, double valency) const {
+    m_poisson_solver->add_charge_to_field(id, valency);
   }
 
   void solve_poisson() const { m_poisson_solver->solve(); }

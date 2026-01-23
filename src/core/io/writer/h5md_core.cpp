@@ -29,7 +29,7 @@
 #include "Particle.hpp"
 #include "lees_edwards/LeesEdwardsBC.hpp"
 
-#include "config/version.hpp"
+#include <config/version.hpp>
 
 #include <utils/Vector.hpp>
 
@@ -52,6 +52,7 @@
 #include <ranges>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace Writer {
@@ -98,7 +99,6 @@ static void backup_file(std::filesystem::path const &from,
    * If the file itself *and* a backup file exists, something must
    * have gone wrong.
    */
-  std::filesystem::path pfrom(from), pto(to);
   auto constexpr option_fail_if_exists = std::filesystem::copy_options::none;
   try {
     std::filesystem::copy_file(from, to, option_fail_if_exists);
@@ -388,7 +388,8 @@ template <> struct slice_info<3> {
     auto const rows = count[1];
     auto const cols = count[2];
 
-    boost::multi_array<T, 3> data(boost::extents[1][rows][cols]);
+    boost::multi_array<T, 3> data(
+        boost::extents[1][static_cast<long>(rows)][static_cast<long>(cols)]);
 
     for (std::size_t i = 0; i < rows; ++i) {
       for (std::size_t j = 0; j < cols; ++j) {
@@ -417,7 +418,7 @@ template <> struct slice_info<2> {
     }
     auto const cols = count[1];
 
-    boost::multi_array<T, 2> data(boost::extents[1][cols]);
+    boost::multi_array<T, 2> data(boost::extents[1][static_cast<long>(cols)]);
 
     for (std::size_t i = 0; i < cols; ++i) {
       data[0][i] = v1d[i];
@@ -473,12 +474,12 @@ public:
 };
 
 template <typename Functor> auto make_serializer(Functor lambda) {
-  return ParticleDataSerializer{lambda};
+  return ParticleDataSerializer<Functor>{lambda};
 }
 template <typename RetVal>
-auto make_serializer(RetVal const &(Particle::*getter)() const) {
-  return ParticleDataSerializer{
-      [getter](Particle const &p) -> RetVal const & { return (p.*getter)(); }};
+auto make_serializer(RetVal (Particle::*getter)() const) {
+  auto kernel = [getter](Particle const &p) -> RetVal { return (p.*getter)(); };
+  return ParticleDataSerializer<decltype(kernel)>{std::move(kernel)};
 }
 
 } // namespace detail
@@ -694,8 +695,7 @@ File::File(std::filesystem::path file_path, std::filesystem::path script_path,
       m_mass_unit(std::move(mass_unit)), m_length_unit(std::move(length_unit)),
       m_time_unit(std::move(time_unit)), m_force_unit(std::move(force_unit)),
       m_velocity_unit(std::move(velocity_unit)),
-      m_charge_unit(std::move(charge_unit)),
-      m_chunk_size(static_cast<std::size_t>(std::max(0, chunk_size))),
+      m_charge_unit(std::move(charge_unit)), m_chunk_size(chunk_size),
       m_comm(boost::mpi::communicator()),
       m_fields(fields_list_to_bitfield(output_fields)),
       m_datasets(std::make_unique<decltype(m_datasets)::element_type>()),

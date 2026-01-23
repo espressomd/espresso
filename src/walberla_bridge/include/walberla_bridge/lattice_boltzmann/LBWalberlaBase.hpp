@@ -256,6 +256,13 @@ public:
   get_slice_pressure_tensor(Utils::Vector3i const &lower_corner,
                             Utils::Vector3i const &upper_corner) const = 0;
 
+  /** @brief Calculate boundary force from a rasterized shape. */
+  virtual Utils::Vector3d
+  get_boundary_force_from_shape(std::vector<int> const &raster_flat) const = 0;
+
+  /** @brief Calculate boundary force of the local domain. */
+  virtual Utils::Vector3d get_boundary_force() const = 0;
+
   /** @brief Calculate average pressure tensor of the local domain. */
   virtual Utils::VectorXd<9> get_pressure_tensor() const = 0;
 

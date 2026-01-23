@@ -19,10 +19,11 @@
 
 #pragma once
 
+#include <config/config.hpp>
+
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "lb/Solver.hpp"
@@ -123,6 +124,7 @@ public:
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
     if ((propagation & PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE) == 0 and
         propagation & (PropagationMode::TRANS_VS_RELATIVE |
+                       PropagationMode::ROT_VS_INDEPENDENT |
                        PropagationMode::ROT_VS_RELATIVE)) {
       return false;
     }

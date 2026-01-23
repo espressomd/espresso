@@ -19,34 +19,16 @@
 
 #pragma once
 
-#include "config/config.hpp"
-
 #include "PidObservable.hpp"
-#include "system/System.hpp"
-
-#include <vector>
 
 namespace Observables {
 
-/** Extract particle dipole fields.
- *  For \f$n\f$ particles, return \f$3 n\f$ dipole fields ordered as
- *  \f$(h_d1_x, h_d1_y, h_d1_z, \dots, h_dn_x, h_dn_y, h_dn_z)\f$.
+/**
+ * @brief Extract dip_flds.
+ * For \f$n\f$ particles, return \f$3 n\f$ dipole fields ordered as
+ * \f$(h_d1_x, h_d1_y, h_d1_z, \dots, h_dn_x, h_dn_y, h_dn_z)\f$.
  */
-class ParticleDipoleFields
-    : public ParticleObservable<ParticleObservables::DipoleFields> {
-public:
-  using ParticleObservable<
-      ParticleObservables::DipoleFields>::ParticleObservable;
-  std::vector<double>
-  evaluate(boost::mpi::communicator const &comm,
-           ParticleReferenceRange const &local_particles,
-           const ParticleObservables::traits<Particle> &traits) const override {
-#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-    System::get_system().calculate_long_range_fields();
-#endif
-    return ParticleObservable<ParticleObservables::DipoleFields>::evaluate(
-        comm, local_particles, traits);
-  }
-};
+using ParticleDipoleFields =
+    ParticleObservable<ParticleObservables::DipoleFields>;
 
 } // namespace Observables

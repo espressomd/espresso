@@ -101,6 +101,10 @@ public:
   thrust::device_vector<GpuParticle> particle_data_device;
   pinned_vector<float> particle_forces_host;
   thrust::device_vector<float> particle_forces_device;
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  pinned_vector<float> particle_dip_fld_host;
+  thrust::device_vector<float> particle_dip_fld_device;
+#endif
 #ifdef ESPRESSO_ROTATION
   pinned_vector<float> particle_torques_host;
   thrust::device_vector<float> particle_torques_device;
@@ -129,6 +133,17 @@ public:
                    particle_forces_host.begin());
     }
   }
+
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  void copy_particle_dip_fld_to_host() {
+    if (not particle_dip_fld_device.empty()) {
+      thrust::copy(particle_dip_fld_device.begin(),
+                   particle_dip_fld_device.end(),
+                   particle_dip_fld_host.begin());
+    }
+  }
+#endif
+
 #ifdef ESPRESSO_ROTATION
   void copy_particle_torques_to_host() {
     if (not particle_torques_device.empty()) {
@@ -141,6 +156,13 @@ public:
   std::span<float> get_particle_forces_host_span() {
     return {particle_forces_host.data(), particle_forces_host.size()};
   }
+
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  std::span<float> get_particle_dip_fld_host_span() {
+    return {particle_dip_fld_host.data(), particle_dip_fld_host.size()};
+  }
+#endif
+
 #ifdef ESPRESSO_ROTATION
   std::span<float> get_particle_torques_host_span() {
     return {particle_torques_host.data(), particle_torques_host.size()};
@@ -163,6 +185,11 @@ float *GpuParticleData::get_particle_positions_device() const {
 float *GpuParticleData::get_particle_forces_device() const {
   return raw_data_pointer(m_data->particle_forces_device);
 }
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+float *GpuParticleData::get_particle_dip_fld_device() const {
+  return raw_data_pointer(m_data->particle_dip_fld_device);
+}
+#endif
 
 #ifdef ESPRESSO_ROTATION
 float *GpuParticleData::get_particle_torques_device() const {
@@ -189,9 +216,16 @@ GpuParticleData::GpuEnergy *GpuParticleData::get_energy_device() const {
 void GpuParticleData::enable_property(std::size_t property) {
   m_need_particles_update = true;
   m_data->m_need[property] = true;
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  if (property != prop::force and property != prop::torque and
+      property != prop::dip_fld) {
+    m_split_particle_struct = true;
+  }
+#else
   if (property != prop::force and property != prop::torque) {
     m_split_particle_struct = true;
   }
+#endif
   enable_particle_transfer();
 }
 
@@ -222,6 +256,12 @@ void GpuParticleData::Storage::copy_particles_to_device() {
   resize_or_replace(particle_data_device, n_part);
   particle_forces_host.resize(3ul * n_part);
   resize_or_replace(particle_forces_device, 3ul * n_part);
+
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  particle_dip_fld_host.resize(3ul * n_part);
+  resize_or_replace(particle_dip_fld_device, 3ul * n_part);
+#endif
+
 #ifdef ESPRESSO_ROTATION
   particle_torques_host.resize(3ul * n_part);
   resize_or_replace(particle_torques_device, 3ul * n_part);
@@ -230,6 +270,12 @@ void GpuParticleData::Storage::copy_particles_to_device() {
   // zero out device memory for forces and torques
   cudaMemsetAsync(raw_data_pointer(particle_forces_device), 0x0,
                   byte_size(particle_forces_device), stream[0]);
+
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  cudaMemsetAsync(raw_data_pointer(particle_dip_fld_device), 0x0,
+                  byte_size(particle_dip_fld_device), stream[0]);
+#endif
+
 #ifdef ESPRESSO_ROTATION
   cudaMemsetAsync(raw_data_pointer(particle_torques_device), 0x0,
                   byte_size(particle_torques_device), stream[0]);
@@ -277,6 +323,22 @@ void GpuParticleData::copy_forces_to_host(ParticleRange const &particles,
     particles_scatter_forces(particles, forces_buffer, torques_buffer);
   }
 }
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+void GpuParticleData::copy_dip_fld_to_host(ParticleRange const &particles,
+                                           int this_node) {
+  if (m_communication_enabled) {
+    // copy results from device memory to host memory
+    if (this_node == 0) {
+      m_data->copy_particle_dip_fld_to_host();
+    }
+
+    auto dipole_field_buffer = m_data->get_particle_dip_fld_host_span();
+
+    // add dip_fld to the particles
+    particles_scatter_dip_fld(particles, dipole_field_buffer);
+  }
+}
+#endif
 
 void GpuParticleData::clear_energy_on_device() {
   if (m_communication_enabled) {
@@ -426,6 +488,9 @@ void GpuParticleData::Storage::free_device_memory() {
   };
   free_device_vector(particle_data_device);
   free_device_vector(particle_forces_device);
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  free_device_vector(particle_dip_fld_device);
+#endif
 #ifdef ESPRESSO_ROTATION
   free_device_vector(particle_torques_device);
 #endif

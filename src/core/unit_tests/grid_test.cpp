@@ -30,7 +30,7 @@
 #include <limits>
 #include <stdexcept>
 
-template <class T> static auto epsilon = std::numeric_limits<T>::epsilon();
+inline auto constexpr epsilon = std::numeric_limits<double>::epsilon();
 
 BOOST_AUTO_TEST_CASE(get_mi_coord_test) {
   using detail::get_mi_coord;
@@ -70,10 +70,10 @@ BOOST_AUTO_TEST_CASE(get_mi_coord_test) {
 
     BOOST_CHECK_SMALL(std::abs(get_mi_coord(a, b, box_l, /* periodic */ true) -
                                (a - b) - box_l),
-                      epsilon<double>);
+                      epsilon);
     BOOST_CHECK_SMALL(std::abs(get_mi_coord(b, a, box_l, /* periodic */ true) -
                                (b - a) + box_l),
-                      epsilon<double>);
+                      epsilon);
   }
 
   /* Corner cases */
@@ -85,11 +85,11 @@ BOOST_AUTO_TEST_CASE(get_mi_coord_test) {
       BOOST_CHECK_SMALL(
           std::abs(get_mi_coord(a, b, box_l, /* periodic */ true) - (a - b) -
                    box_l),
-          epsilon<double>);
+          epsilon);
       BOOST_CHECK_SMALL(
           std::abs(get_mi_coord(b, a, box_l, /* periodic */ true) - (b - a) +
                    box_l),
-          epsilon<double>);
+          epsilon);
     }
 
     {
@@ -99,11 +99,11 @@ BOOST_AUTO_TEST_CASE(get_mi_coord_test) {
       BOOST_CHECK_SMALL(
           std::abs(get_mi_coord(a, b, box_l, /* periodic */ true) - (a - b) -
                    box_l),
-          epsilon<double>);
+          epsilon);
       BOOST_CHECK_SMALL(
           std::abs(get_mi_coord(b, a, box_l, /* periodic */ true) - (b - a) +
                    box_l),
-          epsilon<double>);
+          epsilon);
     }
 
     {
@@ -112,10 +112,10 @@ BOOST_AUTO_TEST_CASE(get_mi_coord_test) {
 
       BOOST_CHECK_SMALL(
           std::abs(get_mi_coord(a, b, box_l, /* periodic */ true) - (a - b)),
-          epsilon<double>);
+          epsilon);
       BOOST_CHECK_SMALL(
           std::abs(get_mi_coord(b, a, box_l, /* periodic */ true) - (b - a)),
-          epsilon<double>);
+          epsilon);
     }
   }
 }
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(get_mi_vector_test) {
   for (auto i = 0u; i < 3u; i++) {
     auto const expected = get_mi_coord(a[i], b[i], box_l[i], box.periodic(i));
 
-    BOOST_CHECK_SMALL(std::abs(expected - result[i]), epsilon<double>);
+    BOOST_CHECK_SMALL(std::abs(expected - result[i]), epsilon);
   }
 }
 
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE(lees_edwards_mi_vector) {
 
     for (int i = 0; i < 3; i++) {
       auto const expected = get_mi_coord(a[i], b[i], box_l[i], box.periodic(i));
-      BOOST_CHECK_SMALL(std::abs(expected - result[i]), 5. * epsilon<double>);
+      BOOST_CHECK_SMALL(std::abs(expected - result[i]), 5. * epsilon);
     }
   }
 
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(lees_edwards_mi_vector) {
       if (i == le.shear_direction) {
         expected += le.pos_offset;
       }
-      BOOST_CHECK_SMALL(std::abs(expected - result[i]), 5. * epsilon<double>);
+      BOOST_CHECK_SMALL(std::abs(expected - result[i]), 5. * epsilon);
     }
   }
   // LE pos offset and distance > box in shear plane normal direction
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(lees_edwards_mi_vector) {
             box.length()[2] // Manually apply minimum image convention
     }};
     for (int i : {0, 1, 2}) {
-      BOOST_CHECK_CLOSE(expected[i], result[i], 100. * epsilon<double>);
+      BOOST_CHECK_CLOSE(expected[i], result[i], 100. * epsilon);
     }
   }
 
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(image_shift_test) {
   auto const expected =
       Utils::Vector3d{img[0] * box[0], img[1] * box[1], img[2] * box[2]};
 
-  BOOST_CHECK_SMALL((result - expected).norm(), epsilon<double>);
+  BOOST_CHECK_SMALL((result - expected).norm(), epsilon);
 }
 
 BOOST_AUTO_TEST_CASE(unfolded_position_test) {
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE(unfolded_position_test) {
   auto expected = pos + detail::image_shift(img, box);
   auto result = detail::unfolded_position(pos, img, box);
 
-  BOOST_CHECK_SMALL((result - expected).norm(), epsilon<double>);
+  BOOST_CHECK_SMALL((result - expected).norm(), epsilon);
 }
 
 BOOST_AUTO_TEST_CASE(fold_position_exceptions_test) {
@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE(fold_position_test) {
 
     box.fold_position(pos, img);
 
-    BOOST_CHECK_SMALL((pos - expected_pos).norm(), 3 * epsilon<double>);
+    BOOST_CHECK_SMALL((pos - expected_pos).norm(), 3. * epsilon);
     BOOST_CHECK_EQUAL((img - expected_img).norm2(), 0);
   }
 
@@ -280,7 +280,7 @@ BOOST_AUTO_TEST_CASE(fold_position_test) {
 
     box.fold_position(pos, img);
 
-    BOOST_CHECK_SMALL((pos - expected_pos).norm(), 3 * epsilon<double>);
+    BOOST_CHECK_SMALL((pos - expected_pos).norm(), 3. * epsilon);
     BOOST_CHECK_EQUAL((img - expected_img).norm2(), 0);
   }
 }

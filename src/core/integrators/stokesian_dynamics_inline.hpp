@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_STOKESIAN_DYNAMICS
 
@@ -28,9 +28,10 @@
 #include "thermostat.hpp"
 
 inline void stokesian_dynamics_step_1(ParticleRangeStokesian const &particles,
+                                      StokesianDynamics const &integrator,
                                       StokesianThermostat const &stokesian,
                                       double time_step, double kT) {
-  propagate_vel_pos_sd(particles, stokesian, time_step, kT);
+  integrator.propagate_vel_pos(particles, stokesian, time_step, kT);
 
   for (auto &p : particles) {
     // translate

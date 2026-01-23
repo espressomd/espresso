@@ -24,7 +24,6 @@
 #ifdef ESPRESSO_WALBERLA
 
 #include "EKFFT.hpp"
-#include "EKFFT_GPU.hpp"
 #include "EKNone.hpp"
 #include "EKReactions.hpp"
 #include "EKSpecies.hpp"
@@ -39,6 +38,7 @@
 
 #include <script_interface/ObjectList.hpp>
 #include <script_interface/ScriptInterface.hpp>
+#include <script_interface/ek/Container.hpp>
 
 #include <cassert>
 #include <memory>
@@ -48,16 +48,13 @@
 
 namespace ScriptInterface::walberla {
 
-class EKContainer : public ObjectList<EKSpecies> {
-  using Base = ObjectList<EKSpecies>;
+class EKContainer : public ObjectList<EKSpecies, EK::Container> {
+  using Base = ObjectList<EKSpecies, EK::Container>;
   using Base::value_type;
 
   std::variant<
 #ifdef ESPRESSO_WALBERLA_FFT
       std::shared_ptr<EKFFT>,
-#ifdef ESPRESSO_CUDA
-      std::shared_ptr<EKFFTGPU>,
-#endif
 #endif
       std::shared_ptr<EKNone>>
       m_poisson_solver;
@@ -84,9 +81,9 @@ class EKContainer : public ObjectList<EKSpecies> {
     return get_value<bool>(species->get_parameter("single_precision"));
   }
 
-  auto get_precision(std::vector<value_type> const &species) const {
+  auto get_precision(std::vector<value_type> const &species_list) const {
     std::optional<bool> result = std::nullopt;
-    for (auto const &species : elements()) {
+    for (auto const &species : species_list) {
       result = get_precision(species);
     }
     return result;
@@ -105,6 +102,7 @@ class EKContainer : public ObjectList<EKSpecies> {
         throw std::runtime_error(
             "Cannot mix single and double precision kernels");
       }
+      ek_throw_if_expired(obj_ptr->get_mpi_cart_comm_observer());
       m_ek_container->add(obj_ptr->get_ekinstance());
     });
   }
@@ -138,11 +136,6 @@ class EKContainer : public ObjectList<EKSpecies> {
       solver = std::move(ptr);
     }
 #ifdef ESPRESSO_WALBERLA_FFT
-#ifdef ESPRESSO_CUDA
-    else if (auto ptr = std::dynamic_pointer_cast<EKFFTGPU>(so_ptr)) {
-      solver = std::move(ptr);
-    }
-#endif // ESPRESSO_CUDA
     else if (auto ptr = std::dynamic_pointer_cast<EKFFT>(so_ptr)) {
       solver = std::move(ptr);
     }
@@ -205,17 +198,13 @@ protected:
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
     if (method == "activate") {
-      context()->parallel_try_catch([this]() {
-        ::System::get_system().ek.set<::EK::EKWalberla>(m_ek_instance);
-      });
+      get_system().ek.set<::EK::EKWalberla>(m_ek_instance);
       m_is_active = true;
       return {};
     }
     if (method == "deactivate") {
-      if (m_is_active) {
-        ::System::get_system().ek.reset();
-        m_is_active = false;
-      }
+      get_system().ek.reset();
+      m_is_active = false;
       return {};
     }
 

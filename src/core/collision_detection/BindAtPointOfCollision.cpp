@@ -94,7 +94,7 @@ void BindAtPointOfCollision::handle_collisions(
   // non-ghost particle
   auto global_collision_queue = gather_collision_queue(local_collision_queue);
 
-  // Synchornize max_seen_part
+  // Synchronize max_seen_part
   auto const global_max_seen_particle = boost::mpi::all_reduce(
       ::comm_cart, cell_structure.get_max_local_particle_id(),
       boost::mpi::maximum<int>());
@@ -132,7 +132,12 @@ void BindAtPointOfCollision::handle_collisions(
     auto const pos1 = p1->pos() - vec21 * vs_placement;
     auto const pos2 = p1->pos() - vec21 * (1. - vs_placement);
 
-    auto handle_particle = [&](Particle *p, Utils::Vector3d const &pos) {
+    auto handle_particle = [&
+#if defined(__clang__) and defined(__cray__) or defined(__INTEL_LLVM_COMPILER)
+                            ,
+                            pid1 = pid1, pid2 = pid2
+#endif
+    ](Particle *p, Utils::Vector3d const &pos) {
       if (not p->is_ghost()) {
         place_vs_and_relate_to_particle(cell_structure, box_geo, part_type_vs,
                                         min_global_cut, current_vs_pid, pos,

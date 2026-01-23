@@ -170,7 +170,7 @@ cfile.write("""
 /* Feature list */
 /****************/
 
-static constexpr char const *const FEATURES[] = {
+inline constexpr char const *const FEATURES[] = {
 """)
 
 feature_string = """
@@ -183,8 +183,11 @@ for feature in sorted(defs.externals.union(defs.features, defs.derived)):
     cfile.write(feature_string.format(feature=feature))
 
 cfile.write("""
+  // zero-length arrays are not allowed by the C standard
+  "__sentinel"
+
 };
-static constexpr auto const NUM_FEATURES = sizeof(FEATURES) / sizeof(char*);
+inline constexpr auto const NUM_FEATURES = sizeof(FEATURES) / sizeof(char*) - 1ul;
 """)
 
 cfile.write("""
@@ -192,7 +195,7 @@ cfile.write("""
 /* Feature full list */
 /*********************/
 
-static constexpr char const *const FEATURES_ALL[] = {\
+inline constexpr char const *const FEATURES_ALL[] = {\
 """)
 
 feature_string = """
@@ -203,7 +206,7 @@ for feature in sorted(defs.allfeatures):
 
 cfile.write("""
 };
-static constexpr auto const NUM_FEATURES_ALL = sizeof(FEATURES_ALL) / sizeof(char*);
+inline constexpr auto const NUM_FEATURES_ALL = sizeof(FEATURES_ALL) / sizeof(char*);
 """)
 
 cfile.close()

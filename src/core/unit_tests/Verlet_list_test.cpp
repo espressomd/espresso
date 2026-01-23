@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE Verlet list update test
+#define BOOST_TEST_MODULE "Verlet list update test"
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/data/monomorphic.hpp>
@@ -114,7 +114,8 @@ struct IntegratorHelper : public ParticleFactory {
 struct : public IntegratorHelper {
   void set_integrator() const override {
     espresso::system->thermostat->thermo_switch = THERMO_OFF;
-    register_integrator(SteepestDescentParameters(0., 0.01, 100.));
+    espresso::system->steepest_descent =
+        std::make_shared<SteepestDescent>(0., 0.01, 100.);
     espresso::system->propagation->set_integ_switch(
         INTEG_METHOD_STEEPEST_DESCENT);
   }
@@ -129,6 +130,7 @@ struct : public IntegratorHelper {
 struct : public IntegratorHelper {
   void set_integrator() const override {
     espresso::system->thermostat->thermo_switch = THERMO_OFF;
+    espresso::system->steepest_descent = std::make_shared<SteepestDescent>();
     espresso::system->propagation->set_integ_switch(INTEG_METHOD_NVT);
   }
   void set_particle_properties(int pid) const override {

@@ -32,6 +32,10 @@
 #include <Cabana_Core.hpp>
 #include <Cabana_NeighborList.hpp>
 
+#ifdef ESPRESSO_CALIPER
+#include <caliper/cali.h>
+#endif
+
 #include <iterator>
 #include <span>
 #include <utility>
@@ -52,16 +56,35 @@ kokkos_parallel_range_for(auto const &name, auto start, auto end,
 
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
 commit_particle(Particle const &p, auto const index,
-                CellStructure::AoSoA_pack &aosoa) {
-  aosoa.id(index) = p.id();
+                CellStructure::AoSoA_pack &aosoa, bool const rebuild) {
+  // Always commit: positions, velocities, charges, directors, dipm
+  aosoa.set_vector_at(aosoa.position, index, p.pos());
 #ifdef ESPRESSO_ELECTROSTATICS
   aosoa.charge(index) = p.q();
 #endif
-  aosoa.type(index) = p.type();
-  auto const &pos = p.pos();
-  aosoa.position(index, 0) = pos[0];
-  aosoa.position(index, 1) = pos[1];
-  aosoa.position(index, 2) = pos[2];
+#ifdef ESPRESSO_DPD
+  aosoa.set_vector_at(aosoa.velocity, index, p.v());
+#endif
+#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
+  aosoa.set_vector_at(aosoa.director, index,
+                      Utils::convert_quaternion_to_director(p.quat()));
+#endif
+#ifdef ESPRESSO_DIPOLES
+  aosoa.dipm(index) = p.dipm();
+#endif
+
+  // Only commit on rebuild: id, type
+  if (rebuild) {
+    aosoa.id(index) = p.id();
+    aosoa.type(index) = p.type();
+  }
+
+  // Always update exclusion flags (they can change during simulation)
+#ifdef ESPRESSO_EXCLUSIONS
+  aosoa.set_has_exclusion(index, !p.exclusions().empty());
+#else
+  aosoa.flags(index) = 0;
+#endif
 }
 
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
@@ -103,8 +126,7 @@ link_cell_kokkos(std::span<Cell *const> cells, BoxGeometry const &box_geo,
   auto inter_kernel = [&cells, &distance_function, &verlet_criterion,
                        &id_to_index, &inter_operator, max_id](const int i) {
     auto &local_particles = cells[i]->particles();
-    for (auto it = local_particles.begin(); it != local_particles.end(); ++it) {
-      auto const &p1 = *it;
+    for (auto const &p1 : local_particles) {
       if (p1.id() <= max_id) {
         auto const ii = id_to_index(p1.id());
         if (ii >= 0) {
@@ -136,6 +158,9 @@ link_cell_kokkos(std::span<Cell *const> cells, BoxGeometry const &box_geo,
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
 update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
                     double const pair_cutoff, auto const integ_switch) {
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
   using execution_space = Kokkos::DefaultExecutionSpace;
   using policy_type = Kokkos::RangePolicy<execution_space>;
   auto const rebuild = cell_structure.prepare_verlet_list_cabana(pair_cutoff);
@@ -148,47 +173,72 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
     auto &id_to_index = cell_structure.get_id_to_index();
 
     // ===================================================
-    // Fill particle storage
+    // Fill particle storage (full commit)
     // ===================================================
+#ifdef ESPRESSO_CALIPER
+    CALI_MARK_BEGIN("AoSoA commit full");
+#endif
     kokkos_parallel_range_for<policy_type>(
         "AoSoA write", std::size_t{0}, n_part,
         [&unique_particles, &aosoa, &id_to_index](int const index) {
           auto const &p = *unique_particles.at(index);
-          commit_particle(p, index, aosoa);
+          commit_particle(p, index, aosoa, true);
           id_to_index(p.id()) = index;
         });
     Kokkos::fence();
+#ifdef ESPRESSO_CALIPER
+    CALI_MARK_END("AoSoA commit full");
+#endif
 
-    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      // ===================================================
-      // Get Verlet pairs and fill Verlet list
-      // ===================================================
-      cell_structure.rebuild_verlet_list_cabana(
-          [&](std::span<Cell *const> cells, BoxGeometry const &box,
-              CellStructure::ListType &verlet_list) {
-            link_cell_kokkos(
-                std::move(cells), box, verlet_criterion, id_to_index, max_id,
-                [&](const int i, const int j) {
-                  // intra cell loop
-                  verlet_list.addNeighborLB(i, j);
-                },
-                [&](const int i, const int j) {
-                  // inter cell loop
-                  verlet_list.addNeighbor(i, j);
-                });
-          });
-    }
+    // ===================================================
+    // Get Verlet pairs and fill Verlet list
+    // ===================================================
+    bool rebuild_vl = (integ_switch != INTEG_METHOD_STEEPEST_DESCENT and
+                       cell_structure.use_verlet_list);
+#ifdef ESPRESSO_CALIPER
+    CALI_MARK_BEGIN("Verlet list creation");
+#endif
+    cell_structure.rebuild_verlet_list_cabana(
+        [&](std::span<Cell *const> cells, BoxGeometry const &box,
+            CellStructure::ListType &verlet_list) {
+          link_cell_kokkos(
+              std::move(cells), box, verlet_criterion, id_to_index, max_id,
+              [&](const int i, const int j) {
+                // intra cell loop
+                verlet_list.addNeighborLB(i, j);
+              },
+              [&](const int i, const int j) {
+                // inter cell loop
+                verlet_list.addNeighbor(i, j);
+              });
+          if (verlet_list.hasOverflow()) {
+            cell_structure.use_verlet_list = false;
+            runtimeWarningMsg()
+                << "Verlet list overflow detected: neighbor count exceeded "
+                   "max_counts. Falling back to the link cell algorithm.";
+          }
+        },
+        rebuild_vl);
+#ifdef ESPRESSO_CALIPER
+    CALI_MARK_END("Verlet list creation");
+#endif
   } else {
     // ===================================================
-    // Fill particle storage
+    // Fill particle storage (partial update)
     // ===================================================
+#ifdef ESPRESSO_CALIPER
+    CALI_MARK_BEGIN("AoSoA commit partial");
+#endif
     kokkos_parallel_range_for<policy_type>(
         "AoSoA write", std::size_t{0}, n_part,
         [&unique_particles, &aosoa](int const index) {
           auto const &p = *unique_particles.at(index);
-          commit_particle(p, index, aosoa);
+          commit_particle(p, index, aosoa, false);
         });
     Kokkos::fence();
+#ifdef ESPRESSO_CALIPER
+    CALI_MARK_END("AoSoA commit partial");
+#endif
   }
 }
 
@@ -217,11 +267,20 @@ void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
   if (bond_cutoff >= 0.) {
+#ifdef ESPRESSO_CALIPER
+    CALI_MARK_BEGIN("cabana_bond_loop");
+#endif
     cell_structure.bond_loop(bond_kernel);
+#ifdef ESPRESSO_CALIPER
+    CALI_MARK_END("cabana_bond_loop");
+#endif
   }
 
   // Cabana short range loop
   if (pair_cutoff > 0.) {
+#ifdef ESPRESSO_CALIPER
+    CALI_MARK_BEGIN("cabana_pair_loop");
+#endif
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT and
         cell_structure.use_verlet_list) {
       auto const &verlet_list = cell_structure.get_verlet_list_cabana();
@@ -248,6 +307,9 @@ void cabana_short_range(auto const &bond_kernel, auto const &forces_kernel,
           });
     }
     Kokkos::fence();
+#ifdef ESPRESSO_CALIPER
+    CALI_MARK_END("cabana_pair_loop");
+#endif
   }
 }
 

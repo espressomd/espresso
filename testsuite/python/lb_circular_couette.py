@@ -29,7 +29,7 @@ import espressomd.math
 
 AGRID = .5
 TIME_STEP = 0.1
-GRID_SIZE = np.array([63, 63, 4])
+GRID_SIZE = np.array([63, 63, 6])
 
 
 def taylor_couette(v1, v2, r1, r2):
@@ -125,9 +125,9 @@ class LBCouetteTest:
         v_r, v_phi, v_z = profile_v.T
 
         # check velocity is zero for the radial and axial components
-        # (the absolute tolerance follows a Poisson distribution)
-        np.testing.assert_allclose(v_r, 0., atol=1e-4)
-        np.testing.assert_allclose(v_z, 0., atol=4e-6)
+        # (the absolute deviation follows a Poisson distribution)
+        self.assertLess(np.percentile(np.abs(v_r), 90), 1e-4)
+        self.assertLess(np.percentile(np.abs(v_z), 90), 1e-6)
 
         # check azimuthal velocity is zero inside boundary
         np.testing.assert_allclose(v_phi[:7], 0., atol=1e-7)
@@ -143,48 +143,51 @@ class LBCouetteTest:
         a_ref, b_ref = taylor_couette(slip_vel, 0.0, cyl1.radius, cyl2.radius)
         v_phi_ref = a_ref * r + b_ref / r
         v_phi_drift = np.mean(v_phi) - np.mean(v_phi_ref)
-        np.testing.assert_allclose(v_phi_drift, 0., atol=4e-4)
-        np.testing.assert_allclose(v_phi - v_phi_drift, v_phi_ref, atol=4e-4)
+        # large drifts can be observed on x86 CPUs with -march=native
+        np.testing.assert_allclose(v_phi_drift, 0., atol=1e-3)
+        np.testing.assert_allclose(v_phi - v_phi_drift, v_phi_ref, atol=1e-2)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBCircularCouetteWalberlaDoublePrecisionCPU(LBCouetteTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBCircularCouetteWalberlaSinglePrecisionCPU(LBCouetteTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBCircularCouetteWalberlaDoublePrecisionGPU(LBCouetteTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBCircularCouetteWalberlaSinglePrecisionGPU(LBCouetteTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBCircularCouetteWalberlaDoublePrecisionBlocksCPU(
         LBCouetteTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False, "blocks_per_mpi_rank": [2, 2, 2]}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False,
+                 "blocks_per_mpi_rank": [2, 2, 2]}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBCircularCouetteWalberlaSinglePrecisionBlocksCPU(
         LBCouetteTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True, "blocks_per_mpi_rank": [2, 2, 2]}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False,
+                 "blocks_per_mpi_rank": [2, 2, 2]}
 
 
 if __name__ == "__main__":

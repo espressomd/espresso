@@ -17,11 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
+#if defined(ESPRESSO_DIPOLES) and defined(ESPRESSO_CUDA)
 
-#include "magnetostatics/dipolar_direct_sum_gpu.hpp"
+#include "magnetostatics/dipolar_direct_sum.hpp"
 #include "magnetostatics/dipolar_direct_sum_gpu_cuda.cuh"
 
 #include "BoxGeometry.hpp"
@@ -37,19 +37,18 @@ static void get_simulation_box(BoxGeometry const &box_geo, float *box,
   }
 }
 
-DipolarDirectSumGpu::DipolarDirectSumGpu(double prefactor) {
-  set_prefactor(prefactor);
-}
-
-void DipolarDirectSumGpu::on_activation() const {
+void DipolarDirectSum::on_activation_gpu() const {
   auto &gpu_particle_data = get_system().gpu;
   gpu_particle_data.enable_property(GpuParticleData::prop::force);
   gpu_particle_data.enable_property(GpuParticleData::prop::torque);
   gpu_particle_data.enable_property(GpuParticleData::prop::pos);
   gpu_particle_data.enable_property(GpuParticleData::prop::dip);
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  gpu_particle_data.enable_property(GpuParticleData::prop::dip_fld);
+#endif
 }
 
-void DipolarDirectSumGpu::add_long_range_forces() const {
+void DipolarDirectSum::add_long_range_forces_gpu() const {
   auto &system = get_system();
   auto &gpu = system.gpu;
   gpu.update();
@@ -64,12 +63,17 @@ void DipolarDirectSumGpu::add_long_range_forces() const {
   auto const torques_device = gpu.get_particle_torques_device();
   auto const positions_device = gpu.get_particle_positions_device();
   auto const dipoles_device = gpu.get_particle_dipoles_device();
+  float *dipole_fields_device{nullptr};
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  dipole_fields_device = gpu.get_particle_dip_fld_device();
+#endif
   DipolarDirectSum_kernel_wrapper_force(
       static_cast<float>(prefactor), npart, positions_device, dipoles_device,
-      forces_device, torques_device, box, periodicity);
+      dipole_fields_device, forces_device, torques_device, box, periodicity,
+      n_replicas);
 }
 
-void DipolarDirectSumGpu::long_range_energy() const {
+void DipolarDirectSum::long_range_energy_gpu() const {
   auto &system = get_system();
   auto &gpu = system.gpu;
   gpu.update();
@@ -88,4 +92,4 @@ void DipolarDirectSumGpu::long_range_energy() const {
                                          periodicity, energy_device);
 }
 
-#endif
+#endif // defined(ESPRESSO_DIPOLES) and defined(ESPRESSO_CUDA)

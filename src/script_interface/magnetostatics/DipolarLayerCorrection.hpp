@@ -49,7 +49,7 @@ class DipolarLayerCorrection
       std::shared_ptr<DipolarDSR>>;
   BaseSolver m_solver;
 
-  void on_bind_system(::System::System &system) override {
+  void on_bind_system(::System::System &) override {
     std::visit([this](auto &solver) { solver->bind_system(m_system.lock()); },
                m_solver);
   }
@@ -83,6 +83,11 @@ public:
       }
 #endif // ESPRESSO_DP3M
       if (auto so = std::dynamic_pointer_cast<DipolarDSR>(so_ptr)) {
+        if (so->actor()->is_gpu()) {
+          throw std::invalid_argument("Parameter 'actor' of type " +
+                                      std::string{so_ptr->name()} +
+                                      " on GPU isn't supported by DLC");
+        }
         solver = so->actor();
         m_solver = so;
         return;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 The ESPResSo project
+ * Copyright (C) 2017-2025 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE ScriptInterface::get_value test
+#define BOOST_TEST_MODULE "ScriptInterface::get_value test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -127,12 +127,22 @@ BOOST_AUTO_TEST_CASE(heap_vector) {
     auto const expected = std::vector<double>{1., 2., 3.};
     BOOST_CHECK(get_value<std::vector<double>>(Variant{vec_var}) == expected);
   }
+  {
+    auto const vec3d = Utils::Vector3d{{1., 2., 3.}};
+    auto const expected = std::vector<double>{1., 2., 3.};
+    BOOST_CHECK(get_value<std::vector<double>>(Variant{vec3d}) == expected);
+  }
 
   /* Conversion applied */
   {
     Variant v = std::vector<Variant>({1, 2, 3});
     auto const expected = std::vector<double>{1, 2, 3};
     BOOST_CHECK(get_value<std::vector<double>>(v) == expected);
+  }
+  {
+    auto const vec3i = Utils::Vector3i{{1, 2, 3}};
+    auto const expected = std::vector<double>{1., 2., 3.};
+    BOOST_CHECK(get_value<std::vector<double>>(Variant{vec3i}) == expected);
   }
 }
 

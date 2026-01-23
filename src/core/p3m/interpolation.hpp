@@ -21,12 +21,19 @@
 
 #pragma once
 
+#include <config/config.hpp>
+
 #include <utils/index.hpp>
 #include <utils/math/bspline.hpp>
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+#include <Kokkos_Core.hpp>
+#endif
 
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <iterator>
 #include <span>
 #include <tuple>
 #include <utility>
@@ -35,7 +42,7 @@
 /**
  * @brief Interpolation weights for one point.
  *
- * Interpolation weights and  grid offset for one point.
+ * Interpolation weights and grid offset for one point.
  *
  * @tparam cao Interpolation order.
  */
@@ -44,6 +51,13 @@ template <int cao> struct InterpolationWeights {
   int ind;
   /** Weights for the directions */
   Utils::Array<double, cao> w_x, w_y, w_z;
+};
+
+template <int cao> struct InterpolationWeightsView {
+  /** Linear index of the corner of the interpolation cube. */
+  int ind;
+  /** Weights for the directions */
+  std::span<double const, cao> w_x, w_y, w_z;
 };
 
 /**
@@ -55,16 +69,38 @@ template <int cao> struct InterpolationWeights {
 class p3m_interpolation_cache {
   int m_cao = 0;
   /** Charge fractions for mesh assignment. */
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> ca_frac;
+  std::vector<double> ca_frac_spillover;
+#else
   std::vector<double> ca_frac;
+#endif
   /** index of first mesh point for charge assignment. */
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  Kokkos::View<int *, Kokkos::LayoutRight, Kokkos::HostSpace> ca_fmp;
+  std::vector<int> ca_fmp_spillover;
+#else
   std::vector<int> ca_fmp;
+#endif
 
 public:
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  p3m_interpolation_cache()
+      : ca_frac("p3m_interpolation_cache::ca_frac", 0, 0),
+        ca_fmp("p3m_interpolation_cache::ca_fmp", 0, 0) {}
+#endif
+
   /**
    * @brief Number of points in the cache.
    * @return Number of points currently in the cache.
    */
-  auto size() const { return ca_fmp.size(); }
+  auto size() const {
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    return ca_fmp.size() + ca_fmp_spillover.size();
+#else
+    return ca_fmp.size();
+#endif
+  }
 
   /**
    * @brief Charge assignment order the weights are for.
@@ -78,10 +114,23 @@ public:
    * @param size Number of elements.
    */
   void zfill(std::size_t size) {
+    auto const size_frac = size * static_cast<std::size_t>(m_cao * 3);
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    if (ca_fmp.size() != size or ca_frac.size() != size_frac) {
+      Kokkos::realloc(Kokkos::WithoutInitializing, ca_fmp, size);
+      Kokkos::realloc(Kokkos::WithoutInitializing, ca_frac, size_frac);
+    }
+    assert(ca_frac_spillover.empty());
+    assert(ca_fmp_spillover.empty());
+    // data must be contiguous in memory
+    assert(size == 0 or
+           (std::distance(&ca_fmp(0), &ca_fmp(size - 1)) == size - 1));
+#else
     assert(ca_frac.empty());
     assert(ca_fmp.empty());
     ca_fmp.resize(size);
-    ca_frac.resize(size * static_cast<std::size_t>(m_cao * 3));
+    ca_frac.resize(size_frac);
+#endif
   }
 
   /**
@@ -91,14 +140,22 @@ public:
    *         set at last call to @ref p3m_interpolation_cache::reset.
    * @param weights Interpolation weights to store.
    */
-  template <int cao> void store(const InterpolationWeights<cao> &weights) {
+  template <int cao> void store(InterpolationWeights<cao> const &weights) {
     assert(cao == m_cao);
 
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    ca_fmp_spillover.emplace_back(weights.ind);
+    auto it = std::back_inserter(ca_frac_spillover);
+    std::ranges::copy(weights.w_x, it);
+    std::ranges::copy(weights.w_y, it);
+    std::ranges::copy(weights.w_z, it);
+#else
     ca_fmp.emplace_back(weights.ind);
     auto it = std::back_inserter(ca_frac);
     std::ranges::copy(weights.w_x, it);
     std::ranges::copy(weights.w_y, it);
     std::ranges::copy(weights.w_z, it);
+#endif
   }
 
   /**
@@ -110,18 +167,25 @@ public:
    * @param weights Interpolation weights to store.
    */
   template <int cao>
-  void store_at(std::size_t p_index, const InterpolationWeights<cao> &weights) {
+  void store_at(std::size_t p_index, InterpolationWeights<cao> const &weights) {
     assert(cao == m_cao);
-    assert(p_index < size());
+    assert(p_index < ca_fmp.size());
 
+    auto copy_weights = [](InterpolationWeights<cao> const &src, auto dst) {
+      std::copy_n(src.w_x.data(), cao, dst);
+      std::advance(dst, cao);
+      std::copy_n(src.w_y.data(), cao, dst);
+      std::advance(dst, cao);
+      std::copy_n(src.w_z.data(), cao, dst);
+    };
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    ca_fmp(p_index) = weights.ind;
+#else
     ca_fmp[p_index] = weights.ind;
-    auto it = ca_frac.begin();
-    std::advance(it, p_index * static_cast<std::size_t>(m_cao * 3));
-    std::ranges::copy(weights.w_x, it);
-    std::advance(it, m_cao);
-    std::ranges::copy(weights.w_y, it);
-    std::advance(it, m_cao);
-    std::ranges::copy(weights.w_z, it);
+#endif
+    auto const offset = p_index * static_cast<std::size_t>(cao * 3);
+    copy_weights(weights, ca_frac.data() + offset);
   }
 
   /**
@@ -135,21 +199,35 @@ public:
    * @param p_index Index of the entry to load.
    * @return Interpolation weights.
    */
-  template <int cao> InterpolationWeights<cao> load(std::size_t p_index) const {
+  template <int cao>
+  InterpolationWeightsView<cao> load(std::size_t p_index) const {
     assert(cao == m_cao);
     assert(p_index < size());
 
-    InterpolationWeights<cao> ret;
-    ret.ind = ca_fmp[p_index];
-
-    auto const view = std::span(std::as_const(ca_frac));
-    auto const offset = 3ul * p_index * static_cast<std::size_t>(cao);
-
-    std::ranges::copy(view.subspan(offset + 0ul * cao, cao), ret.w_x.begin());
-    std::ranges::copy(view.subspan(offset + 1ul * cao, cao), ret.w_y.begin());
-    std::ranges::copy(view.subspan(offset + 2ul * cao, cao), ret.w_z.begin());
-
-    return ret;
+    int index = -1;
+    double const *ptr = nullptr;
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    if (p_index >= ca_fmp.size()) {
+      p_index -= ca_fmp.size();
+      index = ca_fmp_spillover[p_index];
+      auto const offset = p_index * static_cast<std::size_t>(cao * 3);
+      ptr = std::as_const(ca_frac_spillover).data() + offset;
+    } else {
+      index = ca_fmp(p_index);
+      auto const offset = p_index * static_cast<std::size_t>(cao * 3);
+      ptr = std::as_const(ca_frac).data() + offset;
+    }
+#else
+    index = ca_fmp[p_index];
+    auto const offset = p_index * static_cast<std::size_t>(cao * 3);
+    ptr = std::as_const(ca_frac).data() + offset;
+#endif
+    std::span<double const, cao> w_x(ptr, cao);
+    std::advance(ptr, cao);
+    std::span<double const, cao> w_y(ptr, cao);
+    std::advance(ptr, cao);
+    std::span<double const, cao> w_z(ptr, cao);
+    return {index, w_x, w_y, w_z};
   }
 
   /**
@@ -159,8 +237,15 @@ public:
    */
   void reset(int cao) {
     m_cao = cao;
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    Kokkos::realloc(Kokkos::WithoutInitializing, ca_fmp, 0ul);
+    Kokkos::realloc(Kokkos::WithoutInitializing, ca_frac, 0ul);
+    ca_frac_spillover.clear();
+    ca_fmp_spillover.clear();
+#else
     ca_frac.clear();
     ca_fmp.clear();
+#endif
   }
 };
 
@@ -222,9 +307,9 @@ p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
  * @param weights Set of weights
  * @param kernel The kernel to run.
  */
-template <int cao, class Kernel>
+template <int cao, template <int> class WeightsStorage, class Kernel>
 void p3m_interpolate(P3MLocalMesh const &local_mesh,
-                     InterpolationWeights<cao> const &weights, Kernel kernel) {
+                     WeightsStorage<cao> const &weights, Kernel kernel) {
   auto q_ind = weights.ind;
   for (int i0 = 0; i0 < cao; i0++) {
     auto const w_x = weights.w_x[i0];

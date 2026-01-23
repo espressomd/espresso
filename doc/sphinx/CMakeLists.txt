@@ -62,6 +62,7 @@ if(SPHINX_FOUND)
       "${CMAKE_CURRENT_SOURCE_DIR}/io.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/lb.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics.rst"
+      "${CMAKE_CURRENT_SOURCE_DIR}/magnetodynamics.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/particles.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/reaction_methods.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/running.rst"

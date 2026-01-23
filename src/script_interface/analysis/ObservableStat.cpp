@@ -155,7 +155,7 @@ static auto get_summary(::System::System const &system,
 }
 
 Variant ObservableStat::do_call_method(std::string const &name,
-                                       VariantMap const &parameters) {
+                                       VariantMap const &) {
   auto &system = get_system();
   if (name == "calculate_energy") {
     auto const obs = system.calculate_energy();

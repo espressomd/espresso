@@ -20,6 +20,7 @@
 #pragma once
 
 #include "Constraint.hpp"
+#include "ParticleRange.hpp"
 #include "system/Leaf.hpp"
 
 #include <algorithm>

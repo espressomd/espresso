@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 The ESPResSo project
+ * Copyright (C) 2019-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -28,18 +28,46 @@
 
 /** @brief waLBerla MPI communicator. */
 static std::shared_ptr<walberla::mpi::MPIManager> walberla_mpi_comm;
-/** @brief waLBerla MPI environment (destructor depends on the communicator). */
+/** @brief waLBerla MPI environment. */
 static std::shared_ptr<walberla::mpi::Environment> walberla_mpi_env;
+/**
+ * @brief waLBerla MPI Cartesian communicator observer.
+ * It is purposefully decoupled from @ref walberla_mpi_comm.
+ * We are not tracking the lifetime of @ref walberla_mpi_comm itself,
+ * but the lifetime of its ownership by the waLBerla MPI singleton.
+ */
+static std::shared_ptr<int> walberla_mpi_cart_comm_observer;
 
 namespace walberla {
 
 void mpi_init() {
   assert(::walberla_mpi_env == nullptr);
   assert(::walberla_mpi_comm == nullptr);
+  assert(::walberla_mpi_cart_comm_observer == nullptr);
   int argc = 0;
   char **argv = nullptr;
   ::walberla_mpi_env = std::make_shared<walberla::mpi::Environment>(argc, argv);
-  ::walberla_mpi_comm = walberla::MPIManager::instance();
+  ::walberla_mpi_comm = walberla::mpi::MPIManager::instance();
+  ::walberla_mpi_cart_comm_observer = std::make_shared<int>(0);
+}
+
+void mpi_reinit(int const *const cart_topol) {
+  assert(::walberla_mpi_env.use_count() >= 1);
+  assert(::walberla_mpi_comm.use_count() >= 1);
+  assert(::walberla_mpi_cart_comm_observer.use_count() == 1);
+  ::walberla_mpi_comm->resetMPI();
+  ::walberla_mpi_comm->createCartesianComm(cart_topol[0], cart_topol[1],
+                                           cart_topol[2], true, true, true);
+  ::walberla_mpi_cart_comm_observer = std::make_shared<int>(0);
+}
+
+void mpi_deinit() {
+  assert(::walberla_mpi_env.use_count() >= 1);
+  assert(::walberla_mpi_comm.use_count() >= 1);
+  assert(::walberla_mpi_cart_comm_observer.use_count() == 1);
+  ::walberla_mpi_env.reset();
+  ::walberla_mpi_comm.reset();
+  ::walberla_mpi_cart_comm_observer.reset();
 }
 
 std::unique_ptr<ResourceManager> get_vtk_dependent_resources() {
@@ -49,6 +77,11 @@ std::unique_ptr<ResourceManager> get_vtk_dependent_resources() {
   // waLBerla MPI environment (destructor depends on the MPI communicator)
   vtk_dependencies->acquire_lock(::walberla_mpi_env);
   return vtk_dependencies;
+}
+
+ResourceObserver get_mpi_cart_comm_observer() {
+  assert(walberla_mpi_cart_comm_observer.use_count() <= 1);
+  return walberla_mpi_cart_comm_observer;
 }
 
 } // namespace walberla

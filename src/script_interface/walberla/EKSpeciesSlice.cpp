@@ -22,8 +22,11 @@
 #ifdef ESPRESSO_WALBERLA
 
 #include "EKSpeciesSlice.hpp"
+#include "errorhandling.hpp"
 
 #include "LatticeSlice.impl.hpp"
+
+#include <walberla_bridge/utils/ResourceManager.hpp>
 
 #include <stdexcept>
 #include <string>
@@ -53,6 +56,11 @@ Variant EKSpeciesSlice::do_call_method(std::string const &name,
     return m_shape_val.at(name);
   }
 
+  if (not name.starts_with("get_")) {
+    context()->parallel_try_catch(
+        [&]() { ek_throw_if_expired(m_mpi_cart_comm_observer); });
+  }
+
   // slice getter/setter callback
   auto const call = [this, params](auto method_ptr,
                                    std::vector<int> const &data_dims,
@@ -61,9 +69,9 @@ Variant EKSpeciesSlice::do_call_method(std::string const &name,
     if constexpr (std::is_invocable_v<decltype(method_ptr), LatticeModel *,
                                       Utils::Vector3i const &,
                                       Utils::Vector3i const &>) {
-      return gather_3d(params, data_dims, obj, method_ptr, units);
+      return gather_3d(data_dims, obj, method_ptr, units);
     } else {
-      scatter_3d(params, data_dims, obj, method_ptr, units);
+      scatter_3d(params.at("values"), data_dims, obj, method_ptr, units);
       return {};
     }
   };
@@ -85,6 +93,16 @@ Variant EKSpeciesSlice::do_call_method(std::string const &name,
                 1. / m_conv_flux);
   }
   if (name == "set_flux_at_boundary") {
+    context()->parallel_try_catch([&]() {
+      if (get_lattice().get_ghost_layers() < 2) {
+        if (context()->get_comm().size() > 1) {
+          throw std::runtime_error("The number of ghostlayers should be > 1 "
+                                   "when using flux boundaries and mpi.");
+        }
+        runtimeWarningMsg() << "The number of ghostlayers should be > 1 when "
+                               "using flux boundaries and mpi.";
+      }
+    });
     return call(&LatticeModel::set_slice_flux_boundary, {1}, m_conv_flux);
   }
   if (name == "get_density_at_boundary") {

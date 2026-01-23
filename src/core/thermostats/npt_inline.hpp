@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef THERMOSTATS_NPT_INLINE_HPP
-#define THERMOSTATS_NPT_INLINE_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -63,11 +62,10 @@ propagate_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
  *
  *  @param npt_iso     Parameters
  *  @param p_epsilon    conjugate momentum of volume
- *  @param piston      piston mass
  *  @return conjugate momentum of volume added noise
  */
 inline double propagate_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
-                                      double p_epsilon, double piston) {
+                                      double p_epsilon) {
   if (npt_iso.gammav > 0.0) {
     return npt_iso.pref_rescale_V * p_epsilon +
            npt_iso.pref_noise_V *
@@ -78,4 +76,3 @@ inline double propagate_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
 }
 
 #endif // ESPRESSO_NPT
-#endif

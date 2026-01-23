@@ -39,10 +39,10 @@ if(IPYTHON_EXECUTABLE)
   configure_file(pypresso.cmakein ${CMAKE_CURRENT_BINARY_DIR}/ipypresso @ONLY)
 endif()
 
-option(INSTALL_PYPRESSO
+option(ESPRESSO_INSTALL_PYPRESSO
        "Install pypresso script, not needed when ESPResSo is installed in /usr"
        ON)
-if(INSTALL_PYPRESSO)
+if(ESPRESSO_INSTALL_PYPRESSO)
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/pypresso
           DESTINATION ${CMAKE_INSTALL_BINDIR})
 
@@ -50,7 +50,7 @@ if(INSTALL_PYPRESSO)
     install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ipypresso
             DESTINATION ${CMAKE_INSTALL_BINDIR})
   endif()
-endif(INSTALL_PYPRESSO)
+endif()
 
 # Make a target for pypresso, so that things can depend on it
 add_custom_target(pypresso ALL)

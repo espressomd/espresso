@@ -74,7 +74,7 @@ inline auto const &handle_particle_gamma(GammaType const &particle_gamma,
 }
 #endif
 
-inline auto handle_particle_anisotropy(Particle const &p,
+inline auto handle_particle_anisotropy([[maybe_unused]] Particle const &p,
                                        GammaType const &gamma_body) {
 #ifdef ESPRESSO_PARTICLE_ANISOTROPY
   auto const aniso_flag =
@@ -371,7 +371,7 @@ struct DPDThermostat : public BaseThermostat {};
 #ifdef ESPRESSO_STOKESIAN_DYNAMICS
 /** Thermostat for Stokesian dynamics. */
 struct StokesianThermostat : public BaseThermostat {
-  StokesianThermostat() { rng_initialize(0); }
+  StokesianThermostat() { rng_initialize(uint32_t{0u}); }
 };
 #endif
 

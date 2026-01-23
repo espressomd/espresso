@@ -665,6 +665,25 @@ The URL of a branch can be ambiguous, since extra commits can be pushed in the f
 for example to fix a bug, thus creating confusion as to which commit was actually
 used to produce the paper data.
 
+.. _Licensing:
+
+Licensing
+^^^^^^^^^
+
+|es| is free software: you can redistribute it and/or modify it under the terms
+of the GNU General Public License as published by the Free Software Foundation,
+either `version 3 of the License (GNU GPLv3) <https://www.gnu.org/licenses/gpl-3.0.html>`__,
+or (at your option) any later version (:spdx:`GPL-3.0-or-later`).
+
+|es| contains code that is not provided under the GNU GPLv3, but is governed
+by other open source license terms which are compatible with the GNU GPLv3,
+including, but not limited to, Apache License 2.0 (:spdx:`Apache-2.0`),
+Revised BSD License (:spdx:`BSD-3-Clause`),
+and FSF All Permissive License (:spdx:`FSFAP`).
+Such third party codes feature a header containing the license
+(or a link to its full text) and a list of the copyright holders.
+When distributing modified versions of |es|, the terms of these licenses also apply.
+
 ____
 
 .. [1]

@@ -127,6 +127,7 @@ set_default_value with_hdf5 true
 set_default_value with_fftw true
 set_default_value with_gsl true
 set_default_value with_scafacos false
+set_default_value with_nlopt false
 set_default_value with_walberla false
 set_default_value with_walberla_avx false
 set_default_value with_stokesian_dynamics false
@@ -160,6 +161,7 @@ cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_HDF5=${with_hdf5}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FFTW=${with_fftw}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_GSL=${with_gsl}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SCAFACOS=${with_scafacos}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_NLOPT=${with_nlopt}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=${with_stokesian_dynamics}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA=${with_walberla}"
 
@@ -262,6 +264,9 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
+# build ESPResSo and hard dependencies
+time ninja -k 8 -j${build_procs} ${ninja_params} espresso_packaging_dependencies || exit ${?}
+# build objects that are needed for some tests, yet not essential for packaging
 time ninja -k 8 -j${build_procs} ${ninja_params} || exit ${?}
 
 end "BUILD"

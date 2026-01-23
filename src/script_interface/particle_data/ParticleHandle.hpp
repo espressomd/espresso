@@ -44,7 +44,7 @@ namespace Particles {
 
 class ParticleModifier;
 
-static auto error_msg(std::string const &name, std::string const &reason) {
+inline auto error_msg(std::string const &name, std::string const &reason) {
   std::stringstream msg;
   msg << "attribute '" << name << "' of 'ParticleHandle' " << reason;
   return msg.str();
@@ -68,7 +68,7 @@ inline auto get_real_particle(boost::mpi::communicator const &comm, int p_id,
   return ptr;
 }
 
-static void particle_checks(int p_id, Utils::Vector3d const &pos) {
+inline void particle_checks(int p_id, Utils::Vector3d const &pos) {
   if (p_id < 0) {
     throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
   }

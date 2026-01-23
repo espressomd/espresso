@@ -23,8 +23,6 @@ if(ESPRESSO_BUILD_WITH_FFTW)
   target_include_directories(espresso_p3m
                              PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
   espresso_set_common_target_properties(espresso_p3m)
-  set_target_properties(
-    espresso_p3m PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_P3M_CXX_CLANG_TIDY}")
   add_library(espresso_p3m_compiler_flags INTERFACE)
   add_library(espresso::p3m::compiler_flags ALIAS espresso_p3m_compiler_flags)
   target_compile_options(

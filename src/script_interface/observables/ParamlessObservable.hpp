@@ -19,17 +19,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_OBSERVABLES_PARAMLESSOBSERVABLE_HPP
-#define SCRIPT_INTERFACE_OBSERVABLES_PARAMLESSOBSERVABLE_HPP
+#pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "script_interface/ScriptInterface.hpp"
 
 #include "Observable.hpp"
-#ifdef ESPRESSO_DPD
 #include "core/observables/DPDStress.hpp"
-#endif
 #include "core/observables/EnergyObservable.hpp"
 #include "core/observables/LBFluidPressureTensor.hpp"
 #include "core/observables/Observable.hpp"
@@ -72,5 +69,3 @@ NEW_PARAMLESS_OBSERVABLE(DPDStress)
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */
-
-#endif

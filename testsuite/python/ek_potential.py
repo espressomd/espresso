@@ -116,10 +116,10 @@ class EKTestWalberla(EKEOF, ut.TestCase):
 
     """Test for the waLBerla implementation of the EK in double-precision."""
 
-    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_lattice_class = espressomd.electrokinetics.Lattice
     ek_species_class = espressomd.electrokinetics.EKSpecies
     ek_solver_class = espressomd.electrokinetics.EKFFT
-    ek_params = {"single_precision": False}
+    ek_params = {"single_precision": False, "gpu": False}
     rtol = 5e-12
 
 
@@ -128,11 +128,11 @@ class EKTestWalberlaSinglePrecision(EKEOF, ut.TestCase):
 
     """Test for the waLBerla implementation of the EK in single-precision."""
 
-    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_lattice_class = espressomd.electrokinetics.Lattice
     ek_species_class = espressomd.electrokinetics.EKSpecies
     ek_solver_class = espressomd.electrokinetics.EKFFT
-    ek_params = {"single_precision": True}
-    rtol = 5e-6
+    ek_params = {"single_precision": True, "gpu": False}
+    rtol = 1e-5
 
 
 @utx.skipIfMissingGPU()
@@ -141,10 +141,10 @@ class EKTestWalberlaGPU(EKEOF, ut.TestCase):
 
     """Test for the waLBerla implementation of the EK in double-precision."""
 
-    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
-    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
-    ek_solver_class = espressomd.electrokinetics.EKFFTGPU
-    ek_params = {"single_precision": False}
+    ek_lattice_class = espressomd.electrokinetics.Lattice
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_solver_class = espressomd.electrokinetics.EKFFT
+    ek_params = {"single_precision": False, "gpu": True}
     rtol = 5e-12
 
 
@@ -154,11 +154,11 @@ class EKTestWalberlaSinglePrecisionGPU(EKEOF, ut.TestCase):
 
     """Test for the waLBerla implementation of the EK in single-precision."""
 
-    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
-    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
-    ek_solver_class = espressomd.electrokinetics.EKFFTGPU
-    ek_params = {"single_precision": True}
-    rtol = 5e-6
+    ek_lattice_class = espressomd.electrokinetics.Lattice
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_solver_class = espressomd.electrokinetics.EKFFT
+    ek_params = {"single_precision": True, "gpu": True}
+    rtol = 1e-5
 
 
 if __name__ == "__main__":

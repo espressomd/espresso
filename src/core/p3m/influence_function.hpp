@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #if defined(ESPRESSO_P3M)
 
@@ -147,7 +147,8 @@ double G_opt(P3MParameters const &params, Utils::Vector3d const &k) {
  * @param inv_box_l Inverse box length.
  * @return Values of G_opt at regular grid points.
  */
-template <typename FloatType, std::size_t S, std::size_t m>
+template <typename FloatType, std::size_t S, std::size_t m,
+          Utils::MemoryOrder memory_order>
 std::vector<FloatType> grid_influence_function(
     P3MParameters const &params, Utils::Vector3i const &n_start,
     Utils::Vector3i const &n_stop, Utils::Vector3d const &inv_box_l) {
@@ -176,8 +177,8 @@ std::vector<FloatType> grid_influence_function(
           Utils::Vector3d{{shifts[0u][indices[0u]] * wavevector[0u],
                            shifts[1u][indices[1u]] * wavevector[1u],
                            shifts[2u][indices[2u]] * wavevector[2u]}};
-      auto const index = Utils::get_linear_index(
-          indices - n_start, size, Utils::MemoryOrder::COLUMN_MAJOR);
+      auto const index =
+          Utils::get_linear_index<memory_order>(indices - n_start, size);
       g[index] = FloatType(G_opt<S, m>(params, k));
     }
   });

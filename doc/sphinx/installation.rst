@@ -28,10 +28,9 @@ This means, however, that learning how to compile is a necessary evil.
 The build system of |es| uses CMake to compile
 software easily on a wide range of platforms.
 
-Users who only need a "default" installation of |es| and have an account
-on the `Gitpod <https://gitpod.io>`__ platform can build the software
-automatically in the cloud and skip this chapter. For more details on
-running |es| in Gitpod, go to section :ref:`Running in the cloud`.
+Users who only need a "default" installation of |es| and have a GitHub account
+can build the software automatically in the cloud and directly go to section
+:ref:`Using Codespaces`.
 
 Quickstart
 ----------
@@ -69,9 +68,21 @@ are required to be able to compile and use |es|:
 
     C++ compiler
         The C++ core of |es| needs to be built by a C++20-capable compiler.
+        The build system will identify the compiler toolchain version
+        and warn if it is unsupported.
+
+        When using Clang-based compiler toolchains with the GCC C++ library,
+        extra compiler and linker flags may be required for the compiler
+        toolchain to select a supported libstdc++ version.
+        On HPC clusters where the main compiler toolchain picks up
+        the operating system's default GCC version, the issue is sometimes
+        resolved by simply module loading both the main compiler toolchain
+        and a recent GCC compiler toolchain.
 
     Boost
         A number of advanced C++ features used by |es| are provided by Boost.
+        The Boost.MPI component is required. On HPC clusters where Boost is
+        packaged without Boost.MPI, one has to build Boost from sources.
 
     FFTW
         For some algorithms like |p3m|, |es| needs the FFTW library
@@ -79,9 +90,9 @@ are required to be able to compile and use |es|:
         |es| leverages heFFTe :cite:`ayala20a`.
 
     CUDA
-        For some algorithms like |p3m|,
+        For some algorithms like |p3m| and lattice-Boltzmann,
         |es| provides GPU-accelerated implementations for NVIDIA GPUs.
-        We require CUDA 12.0 or later [6]_.
+        CUDA 12.0 or later [6]_ is required.
 
     MPI
         An MPI library that implements the MPI standard version 1.2 is required
@@ -102,8 +113,8 @@ are required to be able to compile and use |es|:
         "none" to disable binding (can cause performance loss).
 
     OpenMP
-        A compiler that implements the OpenMP standard version 5.0 is required
-        to run simulations with shared-memory parallelization.
+        A compiler toolchain that implements the OpenMP standard version 5.0
+        is required to run simulations with shared-memory parallelization.
         |es| leverages Kokkos :cite:`trott22a` and Cabana :cite:`slattery22a`.
 
     Python
@@ -298,7 +309,7 @@ To install the ZnDraw visualizer:
 
 .. code-block:: bash
 
-    python3 -m pip install -c requirements.txt 'zndraw==0.4.6'
+    python3 -m pip install -c requirements.txt zndraw
 
 .. _Requirements for building the documentation:
 
@@ -351,7 +362,9 @@ Installing requirements on macOS
 
 The first step is to install a C++ compiler, such as Xcode [10]_.
 Xcode is missing OpenMP, which is needed to enable shared-memory parallelization,
-but the "R for macOS Developers" project provides binaries [11]_.
+but binaries are available from Homebrew
+(formula `libomp <https://formulae.brew.sh/formula/libomp>`__)
+or from the "R for macOS Developers" project [11]_.
 
 To install libraries, a package manager will be needed.
 While our instructions below are specific to Homebrew,
@@ -445,7 +458,7 @@ The actual invocation is implementation-dependent, but in many cases, such as
 
     mpirun -n 4 ./pypresso script.py
 
-where ``4`` is the number of processors to be used.
+where ``4`` is the number of CPU cores to be used.
 
 
 .. _Features:
@@ -467,8 +480,8 @@ To activate ``FEATURE``, add the following line to the header file:
 
 Some features cannot be manually enabled; they are instead automatically
 enabled when a specific list of dependent features are enabled. For example,
-``DIPOLAR_DIRECT_SUM`` is automatically enabled when ``DIPOLES``, ``ROTATION``
-and ``CUDA`` are enabled. Please note that ``CUDA`` is an external feature
+``MMM1D`` is automatically enabled when ``ELECTROSTATICS``
+and ``GSL`` are enabled. Please note that ``GSL`` is an external feature
 and can only be enabled via a CMake option (see :ref:`External features`).
 
 
@@ -481,10 +494,6 @@ General features
 
    .. seealso:: :ref:`Electrostatics`
 
--  ``MMM1D_MACHINE_PREC``: This enables high-precision Bessel functions
-   for MMM1D on CPU. Comes with a 60% slow-down penalty. The low-precision
-   functions are enabled by default and are precise enough for most applications.
-
 -  ``DIPOLES`` This activates the dipole-moment property of particles and switches
    on various magnetostatics algorithms
 
@@ -492,10 +501,11 @@ General features
 
 -  ``SCAFACOS_DIPOLES`` This activates magnetostatics methods of ScaFaCoS.
 
--  ``DIPOLAR_DIRECT_SUM`` This activates the GPU implementation of the dipolar direct sum.
-
--  ``DIPOLE_FIELD_TRACKING`` This enables the CPU implementation of the dipolar direct sum
+-  ``DIPOLE_FIELD_TRACKING`` enable dipolar direct sum algorithms
    to calculate the total dipole field at particle positions.
+
+-  ``THERMAL_STONER_WOHLFARTH`` enable dipolar algorithms to integrates
+   vritual sites that implement the thermal Stoner–Wohlfarth model
 
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
    the corresponding quaternion integrator.
@@ -658,7 +668,11 @@ using a CMake flag (see :ref:`Options and Variables`).
   :ref:`ScaFaCoS electrostatics`, :ref:`ScaFaCoS magnetostatics`).
 
 - ``GSL``: enables features relying on the GNU Scientific Library, e.g.
-  :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension`.
+  :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension` and
+  :class:`espressomd.electrostatics.MMM1D`.
+
+- ``NLOPT``: enable features relying on the nonlinear optimization library NLopt,
+  e.g. :ref:`Thermal_Stoner_Wohlfarth`.
 
 - ``STOKESIAN_DYNAMICS``: enable the Stokesian Dynamics propagator
   (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.

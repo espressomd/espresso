@@ -365,7 +365,7 @@ public:
           values_size += bci->numCells();
           auto kernel = [&values, &out](unsigned const block_index,
                                         unsigned const local_index,
-                                        Utils::Vector3i const &node) {
+                                        Utils::Vector3i const &) {
             out[local_index] = double_c(values[block_index]);
           };
 
@@ -425,8 +425,7 @@ public:
     integrate_vtk_writers();
   }
 
-  void add_charge_to_field(std::size_t id, double valency,
-                           bool is_double_precision) override {
+  void add_charge_to_field(std::size_t id, double valency) override {
     auto const factor = FloatType_c(valency / get_permittivity());
     auto const density_id = BlockDataID(id);
 #if not defined(__CUDACC__)

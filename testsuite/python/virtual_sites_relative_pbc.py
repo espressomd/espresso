@@ -181,7 +181,7 @@ class Test(ut.TestCase):
     def test_image_box_update(self):
         system = self.system
         Propagation = espressomd.propagation.Propagation
-        # virtual site image box is overriden by the real particle image box
+        # virtual site image box is overridden by the real particle image box
         real_part = system.part.add(pos=[0., 0., +self.vs_dist / 2.])
         virt_part = system.part.add(
             pos=[0., 0., -self.vs_dist / 2. + 4. * system.box_l[2]],

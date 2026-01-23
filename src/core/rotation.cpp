@@ -31,9 +31,13 @@
  *  freedom if ROTATION is compiled in.
  */
 
-#include "rotation.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_ROTATION
+
+#include "rotation.hpp"
+
+#include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mask.hpp>
@@ -171,9 +175,9 @@ void convert_torque_propagate_omega(Particle &p, double time_step) {
      Otherwise repeat this loop 2-3 times depending on the required accuracy
    */
 
-  const double rinertia_diff_01 = p.rinertia()[0] - p.rinertia()[1];
-  const double rinertia_diff_12 = p.rinertia()[1] - p.rinertia()[2];
-  const double rinertia_diff_20 = p.rinertia()[2] - p.rinertia()[0];
+  auto const rinertia_diff_01 = p.rinertia()[0] - p.rinertia()[1];
+  auto const rinertia_diff_12 = p.rinertia()[1] - p.rinertia()[2];
+  auto const rinertia_diff_20 = p.rinertia()[2] - p.rinertia()[0];
   for (int times = 0; times <= 5; times++) {
     Utils::Vector3d Wd;
 

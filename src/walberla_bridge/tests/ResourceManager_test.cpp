@@ -75,3 +75,11 @@ BOOST_AUTO_TEST_CASE(destruction_order) {
   BOOST_CHECK_EQUAL(Testing::logger[6], "~A()");
   BOOST_CHECK_EQUAL(Testing::logger[7], "~C()");
 }
+
+BOOST_AUTO_TEST_CASE(observer) {
+  auto resource = std::make_shared<int>(0);
+  auto observer = ResourceObserver(resource);
+  BOOST_CHECK(observer.is_valid());
+  resource.reset();
+  BOOST_CHECK(not observer.is_valid());
+}

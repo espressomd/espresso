@@ -1,12 +1,50 @@
-// kernel generated with pystencils v1.0+12.g54b91e2, lbmpy
-// v1.0+9.g19115d4.dirty, lbmpy_walberla/pystencils_walberla from commit
-// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
+/*
+Copyright 2019-2023, Michael Kuron.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+* Redistributions of source code must retain the above copyright
+  notice, this list of conditions, and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions, and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+// kernel generated with pystencils v1.4, lbmpy v1.4, sympy v1.12.1,
+// lbmpy_walberla/pystencils_walberla from waLBerla commit
+// b0376cce95f6817e924611cc2d9f9e2213610de6
+
+/**
+ * @file
+ * Philox counter-based RNG utility functions.
+ * Adapted from the pystencils source file
+ * https://i10git.cs.fau.de/pycodegen/pystencils/-/blob/ca4890a67757f066fc310b94b4b17b9f1b497ac2/src/pystencils/include/myintrin.h
+ */
 
 #pragma once
 
-#if defined(__SSE2__) || defined(_MSC_VER)
+#if defined(__SSE2__) || (defined(_MSC_VER) && !defined(_M_ARM64))
 QUALIFIERS __m128 _my_cvtepu32_ps(const __m128i v) {
-#ifdef __AVX512VL__
+#if defined(__AVX512VL__) || defined(__AVX10_1__)
   return _mm_cvtepu32_ps(v);
 #else
   __m128i v2 = _mm_srli_epi32(v, 1);
@@ -16,29 +54,16 @@ QUALIFIERS __m128 _my_cvtepu32_ps(const __m128i v) {
   return _mm_add_ps(_mm_add_ps(v2f, v2f), v1f);
 #endif
 }
-
-QUALIFIERS void _MY_TRANSPOSE4_EPI32(__m128i &R0, __m128i &R1, __m128i &R2,
-                                     __m128i &R3) {
-  __m128i T0, T1, T2, T3;
-  T0 = _mm_unpacklo_epi32(R0, R1);
-  T1 = _mm_unpacklo_epi32(R2, R3);
-  T2 = _mm_unpackhi_epi32(R0, R1);
-  T3 = _mm_unpackhi_epi32(R2, R3);
-  R0 = _mm_unpacklo_epi64(T0, T1);
-  R1 = _mm_unpackhi_epi64(T0, T1);
-  R2 = _mm_unpacklo_epi64(T2, T3);
-  R3 = _mm_unpackhi_epi64(T2, T3);
-}
 #endif
 
-#if defined(__SSE4_1__) || defined(_MSC_VER)
-#if !defined(__AVX512VL__) && defined(__GNUC__) && __GNUC__ >= 5 &&            \
-    !defined(__clang__)
+#if defined(__SSE4_1__) || (defined(_MSC_VER) && !defined(_M_ARM64))
+#if !defined(__AVX512VL__) && !defined(__AVX10_1__) && defined(__GNUC__) &&    \
+    __GNUC__ >= 5 && !defined(__clang__)
 __attribute__((optimize("no-associative-math")))
 #endif
 QUALIFIERS __m128d
 _my_cvtepu64_pd(const __m128i x) {
-#ifdef __AVX512VL__
+#if defined(__AVX512VL__) || defined(__AVX10_1__)
   return _mm_cvtepu64_pd(x);
 #elif defined(__clang__)
   return __builtin_convertvector(
@@ -75,7 +100,7 @@ QUALIFIERS __m256d _my256_set_m128d(__m128d hi, __m128d lo) {
 }
 
 QUALIFIERS __m256 _my256_cvtepu32_ps(const __m256i v) {
-#ifdef __AVX512VL__
+#if defined(__AVX512VL__) || defined(__AVX10_1__)
   return _mm256_cvtepu32_ps(v);
 #else
   __m256i v2 = _mm256_srli_epi32(v, 1);
@@ -86,13 +111,13 @@ QUALIFIERS __m256 _my256_cvtepu32_ps(const __m256i v) {
 #endif
 }
 
-#if !defined(__AVX512VL__) && defined(__GNUC__) && __GNUC__ >= 5 &&            \
-    !defined(__clang__)
+#if !defined(__AVX512VL__) && !defined(__AVX10_1__) && defined(__GNUC__) &&    \
+    __GNUC__ >= 5 && !defined(__clang__)
 __attribute__((optimize("no-associative-math")))
 #endif
 QUALIFIERS __m256d
 _my256_cvtepu64_pd(const __m256i x) {
-#ifdef __AVX512VL__
+#if defined(__AVX512VL__) || defined(__AVX10_1__)
   return _mm256_cvtepu64_pd(x);
 #elif defined(__clang__)
   return __builtin_convertvector(
@@ -112,7 +137,7 @@ _my256_cvtepu64_pd(const __m256i x) {
 }
 #endif
 
-#ifdef __AVX512F__
+#if defined(__AVX512F__) || defined(__AVX10_512BIT__)
 QUALIFIERS __m512i _my512_set_m128i(__m128i d, __m128i c, __m128i b,
                                     __m128i a) {
   return _mm512_inserti32x4(

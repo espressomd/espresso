@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef ESPRESSO_ELECTROSTATICS
+#ifdef ESPRESSO_MMM1D
 
 #include "Actor.hpp"
 
@@ -69,4 +69,4 @@ public:
 } // namespace Coulomb
 } // namespace ScriptInterface
 
-#endif // ESPRESSO_ELECTROSTATICS
+#endif // ESPRESSO_MMM1D

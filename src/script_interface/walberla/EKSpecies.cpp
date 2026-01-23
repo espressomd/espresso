@@ -23,8 +23,13 @@
 #include "EKSpecies.hpp"
 #include "EKWalberlaNodeState.hpp"
 #include "WalberlaCheckpoint.hpp"
+#include "errorhandling.hpp"
+
+#include <script_interface/code_info/CodeInfo.hpp>
 
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
+#include <walberla_bridge/walberla_init.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -51,6 +56,16 @@ std::unordered_map<std::string, int> const EKVTKHandle::obs_map = {
 Variant EKSpecies::do_call_method(std::string const &method,
                                   VariantMap const &parameters) {
   if (method == "update_flux_boundary_from_shape") {
+    context()->parallel_try_catch([&]() {
+      if (get_lattice()->lattice()->get_ghost_layers() < 2) {
+        if (context()->get_comm().size() > 1) {
+          throw std::runtime_error("The number of ghostlayers should be > 1 "
+                                   "when using flux boundaries and mpi.");
+        }
+        runtimeWarningMsg() << "The number of ghostlayers should be > 1 when "
+                               "using flux boundaries and mpi.";
+      }
+    });
     auto values = get_value<std::vector<double>>(parameters, "values");
     std::ranges::for_each(values, [this](double &v) { v *= m_conv_flux; });
 
@@ -88,47 +103,35 @@ Variant EKSpecies::do_call_method(std::string const &method,
   return Base::do_call_method(method, parameters);
 }
 
-void EKSpeciesCPU::make_instance(VariantMap const &params) {
+void EKSpecies::make_instance(VariantMap const &params) {
   auto const diffusion = get_value<double>(params, "diffusion");
   auto const ext_efield = get_value<Utils::Vector3d>(params, "ext_efield");
   auto const density = get_value<double>(params, "density");
   auto const kT = get_value<double>(params, "kT");
+  auto const gpu = get_value_or(params, "gpu", false);
   auto const ek_diffusion = diffusion * m_conv_diffusion;
   auto const ek_ext_efield = ext_efield * m_conv_ext_efield;
   auto const ek_density = density * m_conv_density;
   auto const ek_kT = kT * m_conv_energy;
-  m_instance = ::walberla::new_ek_walberla_cpu(
-      m_lattice->lattice(), ek_diffusion, ek_kT,
-      get_value<double>(params, "valency"), ek_ext_efield, ek_density,
-      get_value<bool>(params, "advection"),
-      get_value<bool>(params, "friction_coupling"),
-      get_value<bool>(params, "single_precision"),
-      get_value_or<bool>(params, "thermalized", false),
-      static_cast<uint>(get_value_or<int>(params, "seed", 0)));
-  m_instance->ghost_communication();
-}
-
+  auto *make_new_instance = &::walberla::new_ek_walberla_cpu;
+  if (gpu) {
+    std::vector<std::string> required_features;
+    required_features.emplace_back("CUDA");
+    CodeInfo::check_features(required_features);
 #ifdef ESPRESSO_CUDA
-void EKSpeciesGPU::make_instance(VariantMap const &params) {
-  auto const diffusion = get_value<double>(params, "diffusion");
-  auto const ext_efield = get_value<Utils::Vector3d>(params, "ext_efield");
-  auto const density = get_value<double>(params, "density");
-  auto const kT = get_value<double>(params, "kT");
-  auto const ek_diffusion = diffusion * m_conv_diffusion;
-  auto const ek_ext_efield = ext_efield * m_conv_ext_efield;
-  auto const ek_density = density * m_conv_density;
-  auto const ek_kT = kT * m_conv_energy;
-  m_instance = ::walberla::new_ek_walberla_gpu(
+    make_new_instance = &::walberla::new_ek_walberla_gpu;
+#endif
+  }
+  m_instance = make_new_instance(
       m_lattice->lattice(), ek_diffusion, ek_kT,
       get_value<double>(params, "valency"), ek_ext_efield, ek_density,
       get_value<bool>(params, "advection"),
       get_value<bool>(params, "friction_coupling"),
-      get_value<bool>(params, "single_precision"),
+      get_value_or<bool>(params, "single_precision", gpu),
       get_value_or<bool>(params, "thermalized", false),
       static_cast<uint>(get_value_or<int>(params, "seed", 0)));
   m_instance->ghost_communication();
 }
-#endif // ESPRESSO_CUDA
 
 void EKSpecies::do_construct(VariantMap const &params) {
   m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice");
@@ -164,6 +167,7 @@ void EKSpecies::do_construct(VariantMap const &params) {
     m_conv_flux = tau * Utils::int_pow<2>(agrid);
     m_density = density * m_conv_density;
     make_instance(params);
+    m_mpi_cart_comm_observer = ::walberla::get_mpi_cart_comm_observer();
     for (auto &vtk : m_vtk_writers) {
       vtk->attach_to_lattice(m_instance, get_lattice_to_md_units_conversion());
     }

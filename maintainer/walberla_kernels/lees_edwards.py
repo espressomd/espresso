@@ -30,16 +30,25 @@ from pystencils import Assignment
 from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 
 import sympy as sp
+import types
 
 
-def type_all_numbers(expr, dtype):
-    # originally from file pystencils/data_types.py in pycodegen/lbmpy@942c7d96
-    substitutions = {a: CastFunc(a, dtype) for a in expr.atoms(sp.Number)}
-    return expr.subs(substitutions)
+def bind_diff(self, *symbols, **kwargs):  # pylint: disable=unused-argument
+    """
+    Make a Symbol object behave as a constant during symbolic differentiation.
+    """
+    return sp.Derivative(sp.Integer(0), *symbols, **kwargs)
 
 
-def velocity_offset_eqs(config, method, pdfs,
-                        shear_dir_normal, stencil, combined_kernel=True):
+def bind_diff_wrt(self):  # pylint: disable=unused-argument
+    """
+    Make a Symbol object behave as a constant during symbolic differentiation.
+    """
+    return True
+
+
+def velocity_offset_eqs(config, method, pdfs, shear_dir_normal, stencil,
+                        with_simd, combined_kernel=True):
     """Calculates the difference between quilibrium pdf distributions
     with (rho, u) and (rho, u+v) and applies them to out-flowing
     populations in the boundary layer. Returns an AssignmentCollection
@@ -58,25 +67,41 @@ def velocity_offset_eqs(config, method, pdfs,
     # used to identify boundary layers
     counters = [get_loop_counter_symbol(i) for i in range(dim)]
 
-    grid_size = TypedSymbol("grid_size", dtype=default_dtype)
+    lebc_top_index = TypedSymbol("lebc_top_index", counters[1].dtype)
+    lebc_bot_index = TypedSymbol("lebc_bot_index", counters[1].dtype)
 
     # When the kernels are combined, the integration loop also reaches
     # one grid cell further to pull the populations. This changes the
     # position where to apply the LE boundary by one cell.
-    boundary_offset = [0, grid_size - 1]
+    boundary_offset = [0, -1]
     if combined_kernel:
-        boundary_offset = [1, grid_size - 0]
+        boundary_offset = [1, 0]
+    if with_simd:
+        # make type differentiable (CastFunc is a function taking 2 arguments,
+        # but the second argument is a C++ type, i.e. a compile-time constant)
+        default_dtype.diff = types.MethodType(bind_diff, default_dtype)
+        default_dtype._diff_wrt = types.MethodType(
+            bind_diff_wrt, default_dtype)
+        # cell index conversion to floating-point is mandatory for vectorization
+        # (only float32 and float64 are supported in pystencils 1.4)
+        index = CastFunc(counters[1], default_dtype)
+        # epsilon to avoid an off-by-one-error during floating-point comparison
+        epsilon = 0.1
+        index_bot = CastFunc(lebc_bot_index, default_dtype) + \
+            CastFunc(boundary_offset[0] + epsilon, default_dtype)
+        index_top = CastFunc(lebc_top_index, default_dtype) + \
+            CastFunc(boundary_offset[1] - epsilon, default_dtype)
+    else:
+        index = counters[1]
+        index_bot = lebc_bot_index + boundary_offset[0]
+        index_top = lebc_top_index + boundary_offset[1]
     # +,-1 for upper/lower boundary layers, 0 otherwise.
     # Based on symbolic counters defined above. Only becomes
     # non-zero if the corresponding points_up/down flags
     # are engaged (which is only done for out-flowing populations)
     layer_prefactor = sp.Piecewise(
-        (-1,
-         sp.And(type_all_numbers(counters[1] <= boundary_offset[0], default_dtype),
-                points_down)),
-        (+1,
-         sp.And(type_all_numbers(counters[1] >= boundary_offset[1], default_dtype),
-                points_up)),
+        (-1, sp.And(index <= index_bot, points_down)),
+        (+1, sp.And(index >= index_top, points_up)),
         (0, True)
     )
 
@@ -122,7 +147,7 @@ def velocity_offset_eqs(config, method, pdfs,
 
 
 def add_lees_edwards_to_collision(
-        config, collision, pdfs, stencil, shear_dir_normal, combined_kernel):
+        config, collision, pdfs, stencil, shear_dir_normal, with_simd, combined_kernel):
     # Get population shift for outflowing populations at the boundaries
     offset = velocity_offset_eqs(
         config,
@@ -130,6 +155,7 @@ def add_lees_edwards_to_collision(
         pdfs,
         shear_dir_normal,
         stencil,
+        with_simd,
         combined_kernel)
 
     ma = []

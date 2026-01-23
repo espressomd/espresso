@@ -28,7 +28,7 @@ namespace ScriptInterface {
 namespace CodeInfo {
 
 Variant CodeVersion::do_call_method(std::string const &name,
-                                    VariantMap const &parameters) {
+                                    VariantMap const &) {
   if (name == "version_major") {
     return ESPRESSO_VERSION_MAJOR;
   }

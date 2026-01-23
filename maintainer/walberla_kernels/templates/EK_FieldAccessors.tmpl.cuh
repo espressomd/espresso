@@ -49,18 +49,18 @@ namespace Scalar {
          Cell const & cell );
     /** @brief Set value on a single cell. */
     void set( gpu::GPUField< {{dtype}} > * field,
-              {{dtype}} const value,
+              {{dtype}} value,
               Cell const & cell );
     /** @brief Add value to a single cell. */
     void add( gpu::GPUField< {{dtype}} > * field,
-              {{dtype}} const value,
+              {{dtype}} value,
               Cell const & cell );
     /** @brief Initialize all cells with the same value. */
     void initialize( gpu::GPUField< {{dtype}} > * field,
-                    {{dtype}} const value);
+                    {{dtype}} value);
     /** @brief Add value to all cells. */
     void add_to_all( gpu::GPUField< {{dtype}} > * field,
-                     {{dtype}} const value);
+                     {{dtype}} value);
     /** @brief Get values from a cell interval. */
     std::vector< {{dtype}} >
     get( gpu::GPUField< {{dtype}} > const * ield,

@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE Utils::raster test
+#define BOOST_TEST_MODULE "Utils::raster test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -41,6 +41,6 @@ BOOST_AUTO_TEST_CASE(basic_test) {
     for (int j = 0; j < size[1]; j++)
       for (int k = 0; k < size[2]; k++) {
         auto const expected = origin + Vector3d{i * h[0], j * h[1], k * h[2]};
-        BOOST_CHECK(res[i][j][k] == expected);
+        BOOST_CHECK_LE((res[i][j][k] - expected).norm(), 1e-12);
       }
 }

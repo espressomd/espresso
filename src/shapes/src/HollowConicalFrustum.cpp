@@ -83,13 +83,11 @@ void HollowConicalFrustum::calculate_dist(const Utils::Vector3d &pos,
       Utils::Vector3d{{m_r2, endpoint_angle, -m_length / 2.}});
   auto const line_director = (r2_endpoint - r1_endpoint).normalized();
 
-  auto project_on_line = [](auto const &vec, auto const &line_start,
-                            auto const &line_director) {
-    return line_start + line_director * ((vec - line_start) * line_director);
+  auto project_on_line = [&](auto const &vector, auto const &line_start) {
+    return line_start + line_director * ((vector - line_start) * line_director);
   };
 
-  auto pos_closest_hcf_frame =
-      project_on_line(pos_hcf_frame, r1_endpoint, line_director);
+  auto pos_closest_hcf_frame = project_on_line(pos_hcf_frame, r1_endpoint);
 
   /* It can be that the projection onto the (infinite) line is outside the
    * frustum. In that case, the closest point is actually one of the endpoints.

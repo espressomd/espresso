@@ -57,6 +57,7 @@
 #define LJCOS2
 #define GAUSSIAN
 #define HAT
+#define GAY_BERNE
 #define SMOOTH_STEP
 #define HERTZIAN
 #define SOFT_SPHERE
@@ -69,4 +70,5 @@
 // Further features
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
+#define VIRTUAL_SITES_CENTER_OF_MASS
 #define COLLISION_DETECTION

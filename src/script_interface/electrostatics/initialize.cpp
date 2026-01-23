@@ -19,7 +19,7 @@
 
 #include "initialize.hpp"
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_ELECTROSTATICS
 
@@ -49,15 +49,14 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef ESPRESSO_ELECTROSTATICS
   om->register_new<DebyeHueckel>("Coulomb::DebyeHueckel");
 #ifdef ESPRESSO_P3M
-  om->register_new<CoulombP3M<Arch::CPU>>("Coulomb::CoulombP3M");
-#ifdef ESPRESSO_CUDA
-  om->register_new<CoulombP3M<Arch::GPU>>("Coulomb::CoulombP3MGPU");
-#endif
+  om->register_new<CoulombP3M>("Coulomb::CoulombP3M");
   om->register_new<ElectrostaticLayerCorrection>(
       "Coulomb::ElectrostaticLayerCorrection");
 #endif // ESPRESSO_P3M
   om->register_new<ICCStar>("Coulomb::ICCStar");
+#ifdef ESPRESSO_MMM1D
   om->register_new<CoulombMMM1D>("Coulomb::CoulombMMM1D");
+#endif
 #ifdef ESPRESSO_SCAFACOS
   om->register_new<CoulombScafacos>("Coulomb::CoulombScafacos");
 #endif

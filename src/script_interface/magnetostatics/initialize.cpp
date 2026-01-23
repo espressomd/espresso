@@ -19,7 +19,7 @@
 
 #include "initialize.hpp"
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_DIPOLES
 
@@ -27,7 +27,6 @@
 
 #include "Container.hpp"
 #include "DipolarDirectSum.hpp"
-#include "DipolarDirectSumGpu.hpp"
 #include "DipolarLayerCorrection.hpp"
 #include "DipolarP3M.hpp"
 #include "DipolarScafacos.hpp"
@@ -45,10 +44,7 @@ namespace Dipoles {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef ESPRESSO_DIPOLES
-  om->register_new<DipolarDirectSum>("Dipoles::DipolarDirectSumCpu");
-#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
-  om->register_new<DipolarDirectSumGpu>("Dipoles::DipolarDirectSumGpu");
-#endif
+  om->register_new<DipolarDirectSum>("Dipoles::DipolarDirectSum");
 #ifdef ESPRESSO_DP3M
   om->register_new<DipolarP3M<Arch::CPU>>("Dipoles::DipolarP3M");
 #endif

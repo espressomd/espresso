@@ -25,7 +25,7 @@ from .interactions import BondedInteraction
 from .utils import nesting_level, array_locked, is_valid_type
 from .utils import check_type_or_throw_except
 from .code_features import assert_features, has_features
-from .script_interface import script_interface_register, ScriptInterfaceHelper
+from .script_interface import script_interface_register, ScriptInterfaceHelper, fast_tiling
 from .propagation import Propagation
 
 
@@ -351,7 +351,7 @@ class ParticleHandle(ScriptInterfaceHelper):
         Examples
         --------
         >>> import espressomd
-        >>> # swimming withut hydrodynamics
+        >>> # swimming without hydrodynamics
         >>> system = espressomd.System(box_l=[10, 10, 10])
         >>> partcl = system.part.add(pos=[1, 0, 0], swimming={'f_swim': 0.03})
         >>> # swimming with hydrodynamics
@@ -430,7 +430,7 @@ class ParticleHandle(ScriptInterfaceHelper):
         return pdict
 
     def __str__(self):
-        res = collections.OrderedDict()
+        res = {}
         # Id and pos first, then the rest
         res["id"] = self.id
         res["pos"] = self.pos
@@ -442,8 +442,7 @@ class ParticleHandle(ScriptInterfaceHelper):
             else:
                 res[attr] = tmp
 
-        # Get rid of OrderedDict in output
-        return str(res).replace("OrderedDict(", "ParticleHandle(")
+        return f"{self.__class__.__name__}({res})"
 
     def add_exclusion(self, partner):
         """
@@ -604,6 +603,28 @@ class ParticleHandle(ScriptInterfaceHelper):
                     self.propagation |= Propagation.ROT_LANGEVIN | Propagation.TRANS_LANGEVIN
                 else:
                     self.propagation |= Propagation.ROT_LANGEVIN
+
+    def vs_com_relate_to(self, rel_to):
+        """
+        Setup this particle as virtual site tracking the center of mass of the
+        particles constituting the molecule in argument ``rel_to``.
+
+        .. note::
+           This needs the feature ``VIRTUAL_SITES_CENTER_OF_MASS``
+
+        Parameters
+        -----------
+        rel_to : :obj:`int` or :obj:`ParticleHandle`
+            Molecule to relate to (either molecule id or particle object from that molecule).
+
+        """
+
+        if isinstance(rel_to, ParticleHandle):
+            rel_to = rel_to.mol_id
+        else:
+            check_type_or_throw_except(
+                rel_to, 1, int, "Argument of 'vs_com_relate_to' has to be of type ParticleHandle or int")
+        self.call_method("vs_com_relate_to", molid=rel_to)
 
     def _bond_sanity_checks(self, bond):
         if self.id in bond[1:]:
@@ -919,22 +940,6 @@ class ParticleSlice(ScriptInterfaceHelper):
         super().__init__(*args, **kwargs)
         self._get_particle = functools.lru_cache(
             maxsize=self._particle_cache_size)(self._get_particle_impl)
-
-    @property
-    def pos_folded(self):
-        """
-        Particle position (folded into central image).
-
-        """
-        pos_array = np.zeros((len(self.id_selection), 3))
-        for i in range(len(self.id_selection)):
-            pos_array[i, :] = self._get_particle(
-                self.id_selection[i]).pos_folded
-        return pos_array
-
-    @pos_folded.setter
-    def pos_folded(self, value):
-        raise RuntimeError("Parameter 'pos_folded' is read-only.")
 
     def add_exclusion(self, _partner):
         assert_features(["EXCLUSIONS"])
@@ -1336,7 +1341,8 @@ class ParticleList(ScriptInterfaceHelper):
 
 
 def set_slice_one_for_all(p_slice, attribute, value):
-    set_slice_one_for_each(p_slice, attribute, [value] * len(p_slice))
+    set_slice_one_for_each(
+        p_slice, attribute, fast_tiling(value, len(p_slice)))
 
 
 def set_slice_one_for_each(p_slice, attribute, values):
@@ -1462,28 +1468,18 @@ def _add_particle_slice_properties():
         if N == 0:
             return np.empty(0, dtype=type(None))
 
-        # get first slice member to determine its type
-        p_id = particle_slice.id_selection[0]
-        is_trivially_serializable = attribute in ParticleSlice._particle_attributes_trivially_serializable
-        target = getattr(particle_slice._get_particle(p_id), attribute)
-        if isinstance(target, array_locked):  # vectorial quantity
-            target_type = target.dtype
-        else:  # scalar quantity
-            target_type = type(target)
-
         if attribute in ["exclusions", "bonds", "vs_relative", "swimming"]:
             values = []
             for part in particle_slice._id_gen():
                 values.append(getattr(part, attribute))
-        else:
-            values = np.empty((N,) + np.shape(target), dtype=target_type)
-            for i, part in enumerate(particle_slice._id_gen()):
-                if is_trivially_serializable:
-                    values[i] = part.get_parameter(attribute)
-                else:
-                    values[i] = getattr(part, attribute)
-
-        return values
+            return values
+        values = particle_slice.call_method(
+            "get_param_parallel", name=attribute)
+        if attribute == "propagation":
+            return np.array([Propagation(v) for v in values], dtype=object)
+        if isinstance(values, np.ndarray):
+            return values
+        return np.stack(values)
 
     for attribute_name in sorted(particle_attributes):
         if attribute_name in dir(ParticleSlice):

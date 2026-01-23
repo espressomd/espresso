@@ -54,6 +54,7 @@ private:
 
 public:
   virtual T kernel(Particle const &) const = 0;
+  virtual ~GatherParticleTraits() = default;
 
   void fetch(CellStructure const &cell_structure, int pid) {
     auto const ptr = cell_structure.get_local_particle(pid);
@@ -79,6 +80,7 @@ public:
 };
 
 struct GatherPos : public GatherParticleTraits<Utils::Vector3d> {
+  ~GatherPos() override = default;
   BoxGeometry const &m_box_geo;
   GatherPos(BoxGeometry const &box_geo) : m_box_geo{box_geo} {}
   Utils::Vector3d kernel(Particle const &p) const override {
@@ -87,6 +89,7 @@ struct GatherPos : public GatherParticleTraits<Utils::Vector3d> {
 };
 
 struct GatherCom : public GatherParticleTraits<Utils::Vector3d> {
+  ~GatherCom() override = default;
   BoxGeometry const &m_box_geo;
   GatherCom(BoxGeometry const &box_geo) : m_box_geo{box_geo} {}
   Utils::Vector3d kernel(Particle const &p) const override {
@@ -95,6 +98,7 @@ struct GatherCom : public GatherParticleTraits<Utils::Vector3d> {
 };
 
 struct GatherMass : public GatherParticleTraits<double> {
+  ~GatherMass() override = default;
   double kernel(Particle const &p) const override { return p.mass(); }
 };
 

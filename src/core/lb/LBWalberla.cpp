@@ -142,9 +142,7 @@ void LBWalberla::sanity_checks(System::System const &system) const {
 void LBWalberla::on_lees_edwards_change() { update_collision_model(); }
 
 void LBWalberla::update_collision_model() {
-  auto const energy_conversion =
-      Utils::int_pow<2>(lb_params->get_agrid() / lb_params->get_tau());
-  auto const kT = lb_fluid->get_kT() * energy_conversion;
+  auto const kT = lb_fluid->get_kT();
   auto const seed = lb_fluid->get_seed();
   update_collision_model(*lb_fluid, *lb_params, kT, seed);
 }
@@ -152,7 +150,7 @@ void LBWalberla::update_collision_model() {
 void LBWalberla::update_collision_model(LBWalberlaBase &lb,
                                         LBWalberlaParams &params, double kT,
                                         unsigned int seed) {
-  auto const &system = ::System::get_system();
+  auto const &system = get_system();
   auto le_protocol = system.lees_edwards->get_protocol();
   if (le_protocol and
       not std::holds_alternative<LeesEdwards::Off>(*le_protocol)) {

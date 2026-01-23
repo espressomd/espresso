@@ -1059,6 +1059,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
             np.copy(system.box_l), 0.75 * 0.5 * box_l, atol=1e-7)
         with self.assertRaisesRegex(RuntimeError, "constraints property"):
             pickle.dumps(constraint)
+        self.assertIsNone(constraint.call_method("unknown"))
 
 
 if __name__ == "__main__":

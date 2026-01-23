@@ -506,9 +506,13 @@ class Analysis(ScriptInterfaceHelper):
         observable = self.call_method("calculate_energy")
         return self._generate_summary(observable, 1, False)
 
-    def particle_energy(self, particle):
+    def particle_non_bonded_energy(self, particle):
         """
         Calculate the non-bonded energy of a single given particle.
+
+        This excludes the short-range part of electrostatics and magnetostatics
+        solvers, as well as corrections implemented as non-bonded interactions
+        (e.g. :ref:`Thole correction`).
 
         Parameters
         ----------
@@ -516,7 +520,7 @@ class Analysis(ScriptInterfaceHelper):
 
         Returns
         -------
-        :obj: `float`
+        :obj:`float`
             Non-bonded energy of that particle
 
         """
@@ -540,13 +544,6 @@ class Analysis(ScriptInterfaceHelper):
         interaction, *partners = bond
         return self.call_method("particle_bond_energy", pid=particle.id,
                                 bond_id=interaction._bond_id, partners=partners)
-
-    def dipole_fields(self):
-        """
-        Calculate the total dipole field on each particle.
-        """
-        assert_features("DIPOLE_FIELD_TRACKING")
-        self.call_method("calc_long_range_fields")
 
     def dpd_stress(self):
         assert_features("DPD")

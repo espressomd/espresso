@@ -116,11 +116,11 @@ Be aware of the following limitations:
   fluids and advection-diffusion-reaction models, this only includes the
   parameters such as the lattice constant (``agrid``) and initial densities.
   The actual fields have to be saved separately with the lattice-specific
-  methods :meth:`espressomd.lb.LBFluidWalberla.save_checkpoint
+  methods :meth:`espressomd.lb.LBFluid.save_checkpoint
   <espressomd.detail.walberla.LatticeModel.save_checkpoint>` resp.
   :meth:`espressomd.electrokinetics.EKSpecies.save_checkpoint
   <espressomd.detail.walberla.LatticeModel.save_checkpoint>`
-  and loaded via :meth:`espressomd.lb.LBFluidWalberla.load_checkpoint
+  and loaded via :meth:`espressomd.lb.LBFluid.load_checkpoint
   <espressomd.detail.walberla.LatticeModel.load_checkpoint>` resp.
   :meth:`espressomd.electrokinetics.EKSpecies.load_checkpoint
   <espressomd.detail.walberla.LatticeModel.load_checkpoint>`
@@ -185,7 +185,7 @@ Be aware of the following limitations:
   binary checkpoint files, or 1e-7 with ASCII checkpoint files. In addition,
   several electrostatic and magnetostatic solvers automatically introduce
   a deviation of the order of 1e-7, either due to floating-point rounding
-  errors (:class:`~espressomd.electrostatics.P3MGPU`), or due to re-tuning
+  errors (:class:`~espressomd.electrostatics.P3M` on GPU), or due to re-tuning
   using the most recent system state (:class:`~espressomd.electrostatics.MMM1D`).
   When in doubt, you can easily verify the absence of a "force jump" when
   loading from a checkpoint by replacing the electrostatics actor with your

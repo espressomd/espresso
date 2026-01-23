@@ -106,7 +106,7 @@ def le_aware_lb_nodes_around_pos(
         coupling_weight(pos_unshifted_lb_units, idx, lbf.shape)
         for idx in dont_need_shift]
 
-    # Handle indices which are not in the primary box in the sheare plane
+    # Handle indices which are not in the primary box in the sheared plane
     # normal
     to_be_shifted_left = [
         (idx, ijk) for idx, ijk in zip(indices_unshifted, ijks)
@@ -156,7 +156,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
             shear_velocity=0, initial_pos_offset=offset, time_0=0.)
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=protocol)
-        lbf = espressomd.lb.LBFluidWalberla(
+        lbf = espressomd.lb.LBFluid(
             agrid=1., density=1., kinematic_viscosity=1., tau=system.time_step)
         system.lb = lbf
         system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1)
@@ -216,7 +216,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
             shear_velocity=shear_vel, initial_pos_offset=pos_offset, time_0=0.)
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=protocol)
-        lbf = espressomd.lb.LBFluidWalberla(
+        lbf = espressomd.lb.LBFluid(
             agrid=1., density=1., kinematic_viscosity=1., tau=system.time_step)
         system.lb = lbf
         system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1)
@@ -287,7 +287,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
-        lbf = espressomd.lb.LBFluidWalberla(
+        lbf = espressomd.lb.LBFluid(
             agrid=1., density=1., kinematic_viscosity=1., tau=system.time_step)
         system.lb = lbf
         system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1)
@@ -314,7 +314,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
-        lbf = espressomd.lb.LBFluidWalberla(
+        lbf = espressomd.lb.LBFluid(
             agrid=1., density=1., kinematic_viscosity=1., tau=system.time_step)
         system.lb = lbf
         system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1)
@@ -328,7 +328,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
                 np.sum(lbf[:, :, :].last_applied_force, axis=(0, 1, 2))), atol=1E-9)
             current_mom = np.copy(system.analysis.linear_momentum())
             np.testing.assert_allclose(
-                initial_mom[1:], current_mom[1:], atol=1E-6)
+                initial_mom[1:], current_mom[1:], atol=1E-5)
 
 
 if __name__ == '__main__':

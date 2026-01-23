@@ -36,7 +36,6 @@
 #include "integrators/velocity_verlet_npt.hpp"
 
 #include "BoxGeometry.hpp"
-#include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
 #include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
@@ -46,7 +45,6 @@
 #include "collision_detection/CollisionDetection.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "forces.hpp"
 #include "lb/particle_coupling.hpp"
 #include "lb/utils.hpp"
 #include "lees_edwards/lees_edwards.hpp"
@@ -55,9 +53,12 @@
 #include "rattle.hpp"
 #include "rotation.hpp"
 #include "signalhandling.hpp"
+#include "stokesian_dynamics/sd_interface.hpp"
 #include "system/System.hpp"
+#include "system/System.impl.hpp"
 #include "thermostat.hpp"
 #include "thermostats/langevin_inline.hpp"
+#include "virtual_sites/com.hpp"
 #include "virtual_sites/lb_tracers.hpp"
 #include "virtual_sites/relative.hpp"
 
@@ -263,7 +264,19 @@ void System::System::integrator_sanity_checks() const {
       break;
     }
   }
-#endif
+#endif // ESPRESSO_ROTATION
+
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+  if ((thermo_switch & THERMO_LANGEVIN) == 0) {
+    for (auto const &p : cell_structure->local_particles()) {
+      if (p.stoner_wohlfarth_is_enabled()) {
+        runtimeErrorMsg() << "The thermal Stoner-Wohlfarth model requires the "
+                             "Langevin thermostat";
+        break;
+      }
+    }
+  }
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 }
 
 #ifdef ESPRESSO_WALBERLA
@@ -311,6 +324,9 @@ void walberla_agrid_sanity_checks(std::string method,
 #endif // ESPRESSO_WALBERLA
 
 static void resort_particles_if_needed(System::System &system) {
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
   auto &cell_structure = *system.cell_structure;
   auto const offset = LeesEdwards::verlet_list_offset(
       *system.box_geo, cell_structure.get_le_pos_offset_at_last_resort());
@@ -325,9 +341,12 @@ static void resort_particles_if_needed(System::System &system) {
 static bool integrator_step_1(CellStructure &cell_structure,
                               Propagation const &propagation,
                               System::System &system, double time_step) {
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
   // steepest decent
   if (propagation.integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
-    return steepest_descent_step(cell_structure.local_particles());
+    return system.steepest_descent->propagate(cell_structure);
 
   auto const &thermostat = *system.thermostat;
   auto const kT = thermostat.kT;
@@ -399,7 +418,8 @@ static bool integrator_step_1(CellStructure &cell_structure,
       (propagation.default_propagation & PropagationMode::TRANS_STOKESIAN)) {
     auto pred = PropagationPredicateStokesian(propagation.default_propagation);
     stokesian_dynamics_step_1(cell_structure.local_particles().filter(pred),
-                              *thermostat.stokesian, time_step, kT);
+                              *system.stokesian_dynamics, *thermostat.stokesian,
+                              time_step, kT);
   }
 #endif // ESPRESSO_STOKESIAN_DYNAMICS
 
@@ -410,6 +430,9 @@ static void integrator_step_2(CellStructure &cell_structure,
                               Propagation const &propagation,
                               [[maybe_unused]] System::System &system,
                               double time_step) {
+#ifdef ESPRESSO_CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
   if (propagation.integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
     return;
 
@@ -476,8 +499,16 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   auto &propagation = *this->propagation;
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   auto const has_vs_rel = [&propagation]() {
-    return propagation.used_propagations & (PropagationMode::ROT_VS_RELATIVE |
-                                            PropagationMode::TRANS_VS_RELATIVE);
+    return propagation.used_propagations &
+           (PropagationMode::ROT_VS_RELATIVE |
+            PropagationMode::ROT_VS_INDEPENDENT |
+            PropagationMode::TRANS_VS_RELATIVE);
+  };
+#endif
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+  auto const has_vs_com = [&propagation]() {
+    return propagation.used_propagations &
+           (PropagationMode::TRANS_VS_CENTER_OF_MASS);
   };
 #endif
 #ifdef ESPRESSO_BOND_CONSTRAINT
@@ -505,6 +536,11 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
     if (has_vs_rel()) {
       vs_relative_update_particles(*cell_structure, *box_geo);
+    }
+#endif
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+    if (has_vs_com()) {
+      vs_com_update_particles(*cell_structure, *box_geo);
     }
 #endif
 
@@ -586,7 +622,6 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     {
       resort_particles_if_needed(*this);
     }
-
     // Propagate philox RNG counters
     thermostat->philox_counter_increment();
 
@@ -608,12 +643,27 @@ int System::System::integrate(int n_steps, int reuse_forces) {
       vs_relative_update_particles(*cell_structure, *box_geo);
     }
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+    if (has_vs_com()) {
+#ifdef ESPRESSO_NPT
+      if (has_npt_enabled()) {
+        cell_structure->update_ghosts_and_resort_particle(
+            Cells::DATA_PART_PROPERTIES);
+      }
+#endif // ESPRESSO_NPT
+      vs_com_update_particles(*cell_structure, *box_geo);
+    }
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 
     if (cell_structure->get_resort_particles() >= Cells::RESORT_LOCAL)
       n_verlet_updates++;
 
     // Communication step: distribute ghost positions
     cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
+
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+    integrate_magnetodynamics();
+#endif
 
     calculate_forces();
 
@@ -660,23 +710,45 @@ int System::System::integrate(int n_steps, int reuse_forces) {
         if (propagation.lb_skipped_md_steps >= md_steps_per_lb_step) {
           propagation.lb_skipped_md_steps = 0;
           propagation.ek_skipped_md_steps = 0;
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_BEGIN("lb_propagation");
+#endif
           lb.propagate();
           lb.ghost_communication_vel();
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_END("lb_propagation");
+          CALI_MARK_BEGIN("ek_propagation");
+#endif
           ek.propagate();
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_END("ek_propagation");
+#endif
         }
       } else if (lb_active) {
         auto const md_steps_per_lb_step = calc_md_steps_per_tau(lb.get_tau());
         propagation.lb_skipped_md_steps += 1;
         if (propagation.lb_skipped_md_steps >= md_steps_per_lb_step) {
           propagation.lb_skipped_md_steps = 0;
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_BEGIN("lb_propagation");
+#endif
           lb.propagate();
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_END("lb_propagation");
+#endif
         }
       } else if (ek_active) {
         auto const md_steps_per_ek_step = calc_md_steps_per_tau(ek.get_tau());
         propagation.ek_skipped_md_steps += 1;
         if (propagation.ek_skipped_md_steps >= md_steps_per_ek_step) {
           propagation.ek_skipped_md_steps = 0;
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_BEGIN("ek_propagation");
+#endif
           ek.propagate();
+#ifdef ESPRESSO_CALIPER
+          CALI_MARK_END("ek_propagation");
+#endif
         }
       }
       if (lb_active and (propagation.used_propagations &
@@ -687,10 +759,16 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #ifdef ESPRESSO_VIRTUAL_SITES_INERTIALESS_TRACERS
       if (thermostat->lb and
           (propagation.used_propagations & PropagationMode::TRANS_LB_TRACER)) {
+#ifdef ESPRESSO_CALIPER
+        CALI_MARK_BEGIN("lb_tracers_propagation");
+#endif
         if (lb_active) {
           lb.ghost_communication_vel();
         }
         lb_tracers_propagate(*cell_structure, lb, time_step);
+#ifdef ESPRESSO_CALIPER
+        CALI_MARK_END("lb_tracers_propagation");
+#endif
       }
 #endif
 
@@ -731,6 +809,11 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     vs_relative_update_particles(*cell_structure, *box_geo);
   }
 #endif
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+  if (has_vs_com()) {
+    vs_com_update_particles(*cell_structure, *box_geo);
+  }
+#endif
 
   // Verlet list statistics
   cell_structure->update_verlet_stats(n_steps, n_verlet_updates);
@@ -747,6 +830,12 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   if (caught_error) {
     return INTEG_ERROR_RUNTIME;
   }
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  if (boost::mpi::all_reduce(::comm_cart, not cell_structure->use_verlet_list,
+                             std::logical_or<>())) {
+    cell_structure->use_verlet_list = false;
+  }
+#endif
   return integrated_steps;
 }
 

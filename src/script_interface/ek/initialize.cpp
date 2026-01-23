@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,27 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <config/config.hpp>
 
-#include "config/config.hpp"
+#include "Container.hpp"
 
-#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
+#include <script_interface/ObjectHandle.hpp>
 
-#include "magnetostatics/actor.hpp"
+#include <utils/Factory.hpp>
 
-struct DipolarDirectSumGpu : public Dipoles::Actor<DipolarDirectSumGpu> {
-  DipolarDirectSumGpu(double prefactor);
+namespace ScriptInterface::EK {
 
-  void on_activation() const;
-  void on_boxl_change() const {}
-  void on_node_grid_change() const {}
-  void on_periodicity_change() const {}
-  void on_cell_structure_change() const {}
-  void init() const {}
-  void sanity_checks() const {}
+void initialize(Utils::Factory<ObjectHandle> *om) {
+  om->register_new<Container>("EK::Container");
+}
 
-  void add_long_range_forces() const;
-  void long_range_energy() const;
-};
-
-#endif // ESPRESSO_DIPOLAR_DIRECT_SUM
+} // namespace ScriptInterface::EK

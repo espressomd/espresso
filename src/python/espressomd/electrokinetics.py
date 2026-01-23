@@ -21,7 +21,7 @@ import itertools
 import numpy as np
 
 from . import utils
-from .detail.walberla import VTKOutputBase, LatticeWalberla  # pylint: disable=unused-import
+from .detail.walberla import VTKOutputBase, Lattice  # pylint: disable=unused-import
 from .script_interface import ScriptInterfaceHelper, script_interface_register, ScriptObjectList, array_variant
 import espressomd.detail.walberla
 import espressomd.shapes
@@ -41,10 +41,12 @@ class EKFFT(ScriptInterfaceHelper):
 
     Parameters
     ----------
-    lattice : :obj:`espressomd.lb.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+    lattice : :obj:`espressomd.lb.Lattice <espressomd.detail.walberla.Lattice>`
         Lattice object.
     permittivity : :obj:`float`
         permittivity of the fluid :math:`\\epsilon_0 \\epsilon_{\\mathrm{r}}`.
+    gpu : :obj:`bool`, optional
+        Use GPU implementation.
     single_precision : :obj:`bool`, optional
         Use single-precision floating-point arithmetic.
     add_vtk_writer()
@@ -94,66 +96,6 @@ class EKFFT(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class EKFFTGPU(ScriptInterfaceHelper):
-    """
-    A FFT-based Poisson solver on the GPU.
-    Intrinsically assumes periodic boundary conditions.
-
-    Parameters
-    ----------
-    lattice : :obj:`espressomd.lb.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
-        Lattice object.
-    permittivity : :obj:`float`
-        permittivity of the fluid :math:`\\epsilon_0 \\epsilon_{\\mathrm{r}}`.
-    single_precision : :obj:`bool`, optional
-        Use single-precision floating-point arithmetic.
-    add_vtk_writer()
-        Attach a VTK writer.
-
-        Parameters
-        ----------
-        vtk : :class:`espressomd.electrokinetics.VTKOutput`
-            VTK writer.
-
-    remove_vtk_writer()
-        Detach a VTK writer.
-
-        Parameters
-        ----------
-        vtk : :class:`espressomd.electrokinetics.VTKOutput`
-            VTK writer.
-
-    clear_vtk_writers()
-        Detach all VTK writers.
-    """
-    _so_name = "walberla::EKFFTGPU"
-    _so_features = ("WALBERLA_FFT", "CUDA")
-    _so_creation_policy = "GLOBAL"
-    _so_bind_methods = (
-        "add_vtk_writer",
-        "remove_vtk_writer",
-        "clear_vtk_writers",
-    )
-
-    def __init__(self, *args, **kwargs):
-        _check_lattice_blocks(self.__class__.__name__, kwargs)
-        super().__init__(*args, **kwargs)
-
-    def __getitem__(self, key):
-        if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
-            if any(isinstance(item, slice) for item in key):
-                return EKPoissonSolverSlice(
-                    parent_sip=self, slice_range=key)
-            else:
-                return EKPoissonSolverNode(
-                    parent_sip=self, index=np.array(key))
-
-        raise TypeError(
-            f"{key} is not a valid index. Should be a point on the "
-            "nodegrid e.g. ek[0,0,0], or a slice, e.g. ek[:,0,0]")
-
-
-@script_interface_register
 class EKNone(ScriptInterfaceHelper):
     """
     The default Poisson solver.
@@ -161,7 +103,7 @@ class EKNone(ScriptInterfaceHelper):
 
     Parameters
     ----------
-    lattice : :obj:`espressomd.lb.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+    lattice : :obj:`espressomd.lb.Lattice <espressomd.detail.walberla.Lattice>`
         Lattice object.
     single_precision : :obj:`bool`, optional
         Use single-precision floating-point arithmetic.
@@ -349,7 +291,7 @@ class EKSpecies(ScriptInterfaceHelper,
 
     Parameters
     ----------
-    lattice : :obj:`espressomd.electrokinetics.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+    lattice : :obj:`espressomd.electrokinetics.Lattice <espressomd.detail.walberla.Lattice>`
         Lattice object.
     tau : :obj:`float`
         EK time step, must be an integer multiple of the MD time step.
@@ -368,12 +310,14 @@ class EKSpecies(ScriptInterfaceHelper,
     kT : :obj:`float`, optional
         Thermal energy of the simulated heat bath (for thermalized species).
         Set it to 0 for an unthermalized species.
-    single_precision : :obj:`bool`, optional
-        Use single-precision floating-point arithmetic.
     thermalized : :obj:`bool`, optional
         Whether the species is thermalized.
     seed : :obj:`int`, optional
         Seed for the random number generator.
+    gpu : :obj:`bool`, optional
+        Use GPU implementation.
+    single_precision : :obj:`bool`, optional
+        Use single-precision floating-point arithmetic.
 
     Methods
     -------
@@ -427,7 +371,7 @@ class EKSpecies(ScriptInterfaceHelper,
 
     """
 
-    _so_name = "walberla::EKSpeciesCPU"
+    _so_name = "walberla::EKSpecies"
     _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
@@ -449,8 +393,7 @@ class EKSpecies(ScriptInterfaceHelper,
             super().__init__(**kwargs)
 
     def default_params(self):
-        return {"single_precision": False,
-                "kT": 0., "ext_efield": [0., 0., 0.],
+        return {"kT": 0., "ext_efield": [0., 0., 0.], "gpu": False,
                 "thermalized": False}
 
     def __getitem__(self, key):
@@ -510,22 +453,6 @@ class EKSpecies(ScriptInterfaceHelper,
             boundaries_update_method,
             raster=array_variant(mask.flatten()),
             values=array_variant(value.flatten()))
-
-
-@script_interface_register
-class EKSpeciesGPU(EKSpecies):
-    """
-    GPU implementation of the `EKSpecies`
-
-    """
-    _so_name = "walberla::EKSpeciesGPU"
-    _so_creation_policy = "GLOBAL"
-    _so_features = ("WALBERLA", "CUDA")
-
-    def default_params(self):
-        params = super().default_params()
-        params["single_precision"] = True
-        return params
 
 
 class FluxBoundary:
@@ -925,7 +852,7 @@ class EKBulkReaction(ScriptInterfaceHelper):
 
     Parameters
     ----------
-    lattice : :obj:`espressomd.electrokinetics.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+    lattice : :obj:`espressomd.electrokinetics.Lattice <espressomd.detail.walberla.Lattice>`
         Lattice object.
     tau : :obj:`float`
         EK time step, must be an integer multiple of the MD time step.
@@ -946,7 +873,7 @@ class EKIndexedReaction(ScriptInterfaceHelper):
 
     Parameters
     ----------
-    lattice : :obj:`espressomd.electrokinetics.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+    lattice : :obj:`espressomd.electrokinetics.Lattice <espressomd.detail.walberla.Lattice>`
         Lattice object.
     tau : :obj:`float`
         EK time step, must be an integer multiple of the MD time step.

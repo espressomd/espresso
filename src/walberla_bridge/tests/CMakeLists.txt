@@ -34,15 +34,13 @@ function(ESPRESSO_ADD_TEST)
     ${TEST_NUM_THREADS}
     DEPENDS
     ${TEST_DEPENDS}
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
     espresso::walberla
-    espresso::utils
+    espresso::compiler_flags
     espresso::walberla::compiler_flags
+    espresso::utils
     ${WALBERLA_LIBS})
-  if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-    set_target_properties(
-      ${TEST_NAME} PROPERTIES CXX_CLANG_TIDY "${WALBERLA_CXX_CLANG_TIDY}"
-                              CUDA_CLANG_TIDY "${WALBERLA_CUDA_CLANG_TIDY}")
-  endif()
   target_include_directories(${TEST_NAME} PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                   ${walberla_BINARY_DIR}/src)
 endfunction()

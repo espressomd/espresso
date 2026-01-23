@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
@@ -89,10 +89,10 @@ void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
     margin[(i * 2) + 1] = ind[i] - in_ur[i];
 
   /* grid dimension */
-  size = 1;
+  size = 1ull;
   for (i = 0; i < 3; i++) {
     dim[i] = ind[i] - ld_ind[i] + 1;
-    size *= dim[i];
+    size *= static_cast<std::size_t>(dim[i]);
   }
 
   /* reduce inner grid indices from global to local */

@@ -67,7 +67,13 @@ Coulomb P3M
 
 :class:`espressomd.electrostatics.P3M`
 
-For this feature to work, you need to have the ``fftw3`` library
+.. note::
+
+    Requires feature ``ELECTROSTATICS`` and
+    external feature ``FFTW``, enabled with
+    ``-D ESPRESSO_BUILD_WITH_FFTW=ON``.
+
+For this feature to work, you need to have the FFTW3 library
 installed on your system. In |es|, you can check if it is compiled in by
 checking for the feature ``FFTW`` with ``espressomd.features``.
 P3M requires full periodicity ``(True, True, True)``. When using a non-metallic dielectric
@@ -95,7 +101,8 @@ homogeneous charge distributions, but might not achieve the requested
 precision for highly inhomogeneous or symmetric systems. For example,
 because of the nature of the P3M algorithm, systems are problematic
 where most charges are placed in one plane, one small region, or on a
-regular grid.
+regular grid, which typically happens in ionic crystals, plate capacitors
+and slitpore simulations.
 
 The function employs the analytical expression of the error estimate for
 the P3M method :cite:`hockney88a` and its real space error :cite:`kolafa92a` to
@@ -113,21 +120,29 @@ milliseconds, length scales are in units of inverse box lengths.
 Coulomb P3M on GPU
 ~~~~~~~~~~~~~~~~~~
 
-:class:`espressomd.electrostatics.P3MGPU`
+:class:`espressomd.electrostatics.P3M`
+
+.. note::
+
+    Requires feature ``ELECTROSTATICS`` and
+    external features ``FFTW`` and ``CUDA``, enabled with
+    ``-D ESPRESSO_BUILD_WITH_FFTW=ON -D ESPRESSO_BUILD_WITH_CUDA=ON``.
 
 The GPU implementation of P3M calculates the far field contribution to the
 forces on the GPU. The near-field contribution to the forces, as well as the
 near- and far-field contributions to the energies are calculated on the CPU.
-It uses the same parameters
-and interface functionality as the CPU version of the solver.
-It should be noted that this does not always provide significant
-increase in performance. Furthermore it computes the far field interactions
-with only single precision which limits the maximum precision.
-The algorithm does not work in combination with the electrostatic extension
-:ref:`Dielectric interfaces with the ICC* algorithm <Dielectric interfaces with the ICC algorithm>`.
+It uses the same parameters and interface as the CPU implementation;
+simply pass the extra argument ``gpu=True`` when instantiating the P3M solver.
+It should be noted the GPU implementation computes the far field interactions
+with single-precision floating point accuracy, which limits the maximum precision.
+The tuning algorithm will often select different parameters compared to the CPU
+implementation, because the long-range part is offloaded to the GPU and thus
+runs in parallel to the short-range loop.
 
 The algorithm doesn't have kernels to compute energies and pressures and therefore
 uses the respective CPU kernels with the parameters tuned for the GPU force kernel.
+The algorithm does not work in combination with the electrostatic extension
+:ref:`Dielectric interfaces with the ICC* algorithm <Dielectric interfaces with the ICC algorithm>`.
 
 .. _Debye-Hückel potential:
 
@@ -135,6 +150,10 @@ Debye-Hückel potential
 ----------------------
 
 :class:`espressomd.electrostatics.DH`
+
+.. note::
+
+    Requires feature ``ELECTROSTATICS``.
 
 The Debye-Hückel electrostatic potential is defined by
 
@@ -156,6 +175,10 @@ Reaction Field method
 ---------------------
 
 :class:`espressomd.electrostatics.ReactionField`
+
+.. note::
+
+    Requires feature ``ELECTROSTATICS``.
 
 The Reaction Field electrostatic potential is defined by
 
@@ -180,6 +203,10 @@ Dielectric interfaces with the ICC\ :math:`\star` algorithm
 -----------------------------------------------------------
 
 :class:`espressomd.electrostatic_extensions.ICC`
+
+.. note::
+
+    Requires feature ``ELECTROSTATICS``.
 
 The ICC\ :math:`\star` algorithm allows to take into account arbitrarily shaped
 dielectric interfaces and dynamic charge induction. For instance, it can be
@@ -269,6 +296,10 @@ Electrostatic Layer Correction (ELC)
 
 :class:`espressomd.electrostatics.ELC`
 
+.. note::
+
+    Requires feature ``ELECTROSTATICS``.
+
 *ELC* is an extension of the P3M electrostatics solver for explicit 2D periodic
 systems. It can account for different dielectric jumps on both sides of the
 non-periodic direction. In more detail, it is a special procedure that
@@ -340,6 +371,12 @@ MMM1D
 
 :class:`espressomd.electrostatics.MMM1D`
 
+.. note::
+
+    Requires feature ``ELECTROSTATICS`` and
+    external feature ``GSL``, enabled with
+    ``-D ESPRESSO_BUILD_WITH_GSL=ON``.
+
 Please cite :cite:`arnold05b` when using MMM1D. See :ref:`MMM1D theory` for
 the details.
 
@@ -369,6 +406,12 @@ ScaFaCoS electrostatics
 -----------------------
 
 :class:`espressomd.electrostatics.Scafacos`
+
+.. note::
+
+    Requires feature ``ELECTROSTATICS`` and
+    external feature ``SCAFACOS``, enabled with
+    ``-D ESPRESSO_BUILD_WITH_SCAFACOS=ON``.
 
 |es| can use the methods from the ScaFaCoS *Scalable fast Coulomb solvers*
 library. The specific methods available depend on the compile-time options of

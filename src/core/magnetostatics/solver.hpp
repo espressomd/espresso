@@ -25,7 +25,6 @@
 #include "actor/traits.hpp"
 
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -56,11 +55,8 @@ struct Solver {
   void on_particle_change() { reinit_on_observable_calc = true; }
 
   void calc_pressure_long_range() const;
-  void calc_long_range_force(ParticleRange const &particles) const;
-  double calc_energy_long_range(ParticleRange const &particles) const;
-#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  void calc_long_range_field(ParticleRange const &particles) const;
-#endif
+  void calc_long_range_force() const;
+  double calc_energy_long_range() const;
   Solver();
 #else  // ESPRESSO_DIPOLES
   Solver() = default;
@@ -77,9 +73,5 @@ struct Solver {
   inline std::optional<ShortRangeForceKernel> pair_force_kernel() const;
   inline std::optional<ShortRangeEnergyKernel> pair_energy_kernel() const;
 };
-
-#ifdef ESPRESSO_DIPOLES
-Solver const &get_dipoles();
-#endif
 
 } // namespace Dipoles
