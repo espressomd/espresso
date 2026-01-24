@@ -342,8 +342,24 @@ required to compile |es| on other Linux distributions:
 
 .. _Installing requirements on Windows via WSL:
 
-Installing requirements on Windows via WSL
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _Installing requirements on Windows via WSL:
+
+Windows Subsystem for Linux (WSL)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For users running Ubuntu 24.04 on WSL, the following dependencies are required to build from source, as official Conda channels may be unstable:
+
+.. code-block:: bash
+
+    sudo apt-get update
+    sudo apt-get install build-essential cmake cython3 python3-numpy \
+        libboost-all-dev libopenmpi-dev openmpi-bin libfftw3-dev \
+        python3-dev
+
+.. warning::
+    **File System Performance:** When using WSL, strictly avoid cloning or building the repository on the mounted Windows file system (e.g., ``/mnt/c/Users/...``). This causes severe I/O performance degradation. Always clone and build within the Linux filesystem (e.g., ``~/home/user/espresso``).
+
+To run |es| on Windows, use the Linux subsystem (WSL). For that you need to
 
 To run |es| on Windows, use the Linux subsystem (WSL). For that you need to
 
