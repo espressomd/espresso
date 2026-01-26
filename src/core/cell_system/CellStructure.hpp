@@ -180,6 +180,7 @@ public:
                        Cabana::TeamVectorOpTag>;
   using BondlistType = Kokkos::View<int *[4], Kokkos::LayoutRight>;
   using BondIDType = Kokkos::View<int *, Kokkos::LayoutRight>;
+  using BreakageType = Kokkos::View<bool *, Kokkos::LayoutRight>;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 private:
@@ -215,11 +216,12 @@ private:
   std::unique_ptr<ListType> m_verlet_list_cabana;
   std::unique_ptr<BondlistType> m_bond_list_kokkos;
   std::unique_ptr<BondIDType> m_bond_id_kokkos;
+  std::unique_ptr<BreakageType> m_breakage_list_kokkos;
   /** particle properties using individual Kokkos Views */
   std::unique_ptr<AoSoA_pack> m_aosoa;
   /** The local id-to-index for aosoa data */
   std::vector<Particle *> m_unique_particles;
-  std::vector<Particle *> m_bond_particles;
+  //std::vector<Particle *> m_bond_particles;
   std::shared_ptr<KokkosHandle> m_kokkos_handle;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
@@ -758,7 +760,7 @@ public:
   auto &get_aosoa() { return *m_aosoa; }
   auto const &get_unique_particles() const { return m_unique_particles; }
   auto const &get_verlet_list_cabana() const { return *m_verlet_list_cabana; }
-  auto const &get_bond_particles() const { return m_bond_particles; }
+  //auto const &get_bond_particles() const { return m_bond_particles; }
   auto &get_bond_list_kokkos() const { return *m_bond_list_kokkos; }
   auto &get_bond_id_kokkos() const { return *m_bond_id_kokkos; }
   void clear_local_properties();
