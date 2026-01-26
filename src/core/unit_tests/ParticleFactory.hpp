@@ -57,6 +57,7 @@ struct ParticleFactory {
     auto p = system.cell_structure->get_local_particle(p_id);
     if (p != nullptr and not p->is_ghost()) {
       p->bonds().insert(BondView(bond_id, partner_ids));
+      system.cell_structure->add_bond_numbers();
     }
     system.on_particle_change();
   }

@@ -200,23 +200,29 @@ void CellStructure::set_index_map() {
   unique_particles.clear();
   unique_particles.resize(count_local_particles());
   auto &bond_particles = m_bond_particles;
-  bond_particles.clear();
-  bond_particles.resize(count_local_particles());
+  //bond_particles.clear();
+  //bond_particles.resize(count_local_particles());
   std::unordered_set<int> registered_index{};
   using execution_space = Kokkos::DefaultExecutionSpace;
   int n_threads = execution_space().concurrency();
   std::vector<int> max_ids(n_threads);
-  std::vector<int> bond_numbers(n_threads);
+  //std::vector<int> bond_numbers(n_threads);
   enumerate_local_particles(
-      *this, [&unique_particles, &bond_particles, &max_ids, &bond_numbers](std::size_t index, Particle &p) {
+      //*this, [&unique_particles, &bond_particles, &max_ids, &bond_numbers](std::size_t index, Particle &p) {
+      *this, [&unique_particles, &bond_particles, &max_ids](std::size_t index, Particle &p) {
         unique_particles[index] = &p;
-        bond_particles[index] = &p;
+        //bond_particles[index] = &p;
         const int thread_num = omp_get_thread_num();
         max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
-        bond_numbers[thread_num] += p.bonds().size();
+        //bond_numbers[thread_num] += p.bonds().size();
       });
   int max_id = *(std::max_element(max_ids.begin(), max_ids.end()));
-  m_bond_numbers = std::reduce(std::execution::par_unseq, bond_numbers.begin(), bond_numbers.end());
+  m_bond_numbers = boost::mpi::all_reduce(
+      ::comm_cart, m_bond_numbers, std::plus<int>());
+  //std::cout << "Global " << global_bond_numbers << std::endl;
+  //std::cout << "Before " << m_bond_numbers << std::endl;
+  //m_bond_numbers = std::reduce(std::execution::par_unseq, bond_numbers.begin(), bond_numbers.end());
+  //std::cout << "After " << m_bond_numbers << std::endl;
   for (auto &p : ghost_particles()) {
     auto const *local_particle = get_local_particle(p.id());
     if (not local_particle) {

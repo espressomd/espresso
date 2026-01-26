@@ -353,7 +353,7 @@ void System::System::calculate_forces() {
       bond_list(count, 2) = partners[1]->id();
       bond_list(count, 3) = -1;
     }
-    else if (partners.size() == 3u) { // tortion bond
+    else if (partners.size() == 3u) { // dihedral bond
       bond_list(count, 0) = p1.id();
       bond_list(count, 1) = partners[0]->id();
       bond_list(count, 2) = partners[1]->id();
@@ -420,12 +420,10 @@ void System::System::calculate_forces() {
     	    local_force(id_to_index(p2.id()), thread_id, 1) -= f[1];
     	    local_force(id_to_index(p2.id()), thread_id, 2) -= f[2];
 #ifdef ESPRESSO_NPT
-	    if (local_virial) {
-	      auto virial = hadamard_product(result.value(), dx);
-      	      local_virial(thread_id, 0) += virial[0];
-      	      local_virial(thread_id, 1) += virial[1];
-      	      local_virial(thread_id, 2) += virial[2];
-	    }
+	    auto virial = hadamard_product(result.value(), dx);
+      	    local_virial(thread_id, 0) += virial[0];
+      	    local_virial(thread_id, 1) += virial[1];
+      	    local_virial(thread_id, 2) += virial[2];
 #endif
 	    return false;
 	  }
