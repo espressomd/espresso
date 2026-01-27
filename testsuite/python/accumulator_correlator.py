@@ -34,7 +34,8 @@ class CorrelatorTest(ut.TestCase):
 
     """
     # create an accumulator bound to the default-constructed system
-    expired_system_obs = espressomd.observables.ParticleVelocities(particles=(0,))
+    expired_system_obs = espressomd.observables.ParticleVelocities(
+        particles=(0,))
     expired_system_acc = espressomd.accumulators.Correlator(
         obs1=expired_system_obs, tau_lin=10, tau_max=2., delta_N=1,
         corr_operation="scalar_product")

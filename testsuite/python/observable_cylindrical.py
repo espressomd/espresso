@@ -212,7 +212,8 @@ class TestCylindricalObservable(ut.TestCase):
         params['particles'] = self.system.part.all().id
         observable = espressomd.observables.CylindricalDensityProfile(**params)
         # check pids
-        np.testing.assert_array_equal(np.copy(observable.ids), params['particles'])
+        np.testing.assert_array_equal(
+            np.copy(observable.ids), params['particles'])
         with self.assertRaises(RuntimeError):
             observable.ids = [observable.ids[0]]
         # check bins

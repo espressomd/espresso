@@ -162,7 +162,8 @@ class Observables(ut.TestCase):
                "default dipole fields are needed")
     def test_director_no_dipole_fields(self):
         id_list = self.system.part.all().id
-        observable = espressomd.observables.ParticleDipoleFields(particles=id_list)
+        observable = espressomd.observables.ParticleDipoleFields(
+            particles=id_list)
         obs_data = observable.calculate()
         np.testing.assert_array_almost_equal(
             obs_data, self.N_PART * [[0., 0., 0.]], decimal=11)
@@ -171,7 +172,8 @@ class Observables(ut.TestCase):
                "check default directors")
     def test_director_norotation(self):
         id_list = self.system.part.all().id
-        observable = espressomd.observables.ParticleDirectors(particles=id_list)
+        observable = espressomd.observables.ParticleDirectors(
+            particles=id_list)
         obs_data = observable.calculate()
         np.testing.assert_array_almost_equal(
             obs_data, self.N_PART * [[0., 0., 1.]], decimal=11)

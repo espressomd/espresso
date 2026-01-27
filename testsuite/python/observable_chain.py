@@ -93,7 +93,8 @@ class ObservableTests(ut.TestCase):
         # check exceptions
         for i in range(2):
             with self.assertRaises(RuntimeError):
-                espressomd.observables.ParticleDistances(particles=np.arange(i))
+                espressomd.observables.ParticleDistances(
+                    particles=np.arange(i))
 
     def test_BondAngles(self):
         """
@@ -242,7 +243,8 @@ class ObservableTests(ut.TestCase):
         # check exceptions
         for i in range(3):
             with self.assertRaises(RuntimeError):
-                espressomd.observables.CosPersistenceAngles(particles=np.arange(i))
+                espressomd.observables.CosPersistenceAngles(
+                    particles=np.arange(i))
 
 
 if __name__ == "__main__":

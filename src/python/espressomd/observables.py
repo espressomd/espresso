@@ -18,7 +18,7 @@ import itertools
 import numpy as np
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .math import CylindricalTransformationParameters
-import inspect
+
 
 def _particles_to_ids(particles):
     """
@@ -101,19 +101,21 @@ class Observable(ScriptInterfaceHelper):
     _particle_param_map = None
     _optional_particle_params = ()
 
-
     def __init__(self, **kwargs):
         # Observables without particle selection: reject particle keywords
         particle_map = getattr(type(self), "_particle_param_map", None)
         if particle_map is None:
-            forbidden = {"particles", "target_particles", "particles1", "particles2"}
+            forbidden = {"particles", "target_particles",
+                         "particles1", "particles2"}
             used = forbidden.intersection(kwargs.keys())
             if used:
-                raise TypeError(f"{type(self).__name__} does not accept {sorted(used)}")
+                raise TypeError(
+                    f"{type(self).__name__} does not accept {sorted(used)}")
             super().__init__(**kwargs)
             return
-        
-        defaults = dict(getattr(type(self), "_particle_param_defaults", {}) or {})
+
+        defaults = dict(
+            getattr(type(self), "_particle_param_defaults", {}) or {})
 
         old_to_new = {
             "ids": "particles",
@@ -123,7 +125,8 @@ class Observable(ScriptInterfaceHelper):
         }
         for old, new in old_to_new.items():
             if old in kwargs:
-                raise TypeError(f"Parameter '{old}' has been renamed to '{new}'")
+                raise TypeError(
+                    f"Parameter '{old}' has been renamed to '{new}'")
 
         # Fill defaults for missing optional params (e.g., RDF particles2 -> [])
         for public_name, default_val in defaults.items():
@@ -133,7 +136,8 @@ class Observable(ScriptInterfaceHelper):
         # Conversion for declared params
         for public_name, backend_name in type(self)._particle_param_map.items():
             if public_name in kwargs:
-                kwargs[backend_name] = _particles_to_ids(kwargs.pop(public_name))
+                kwargs[backend_name] = _particles_to_ids(
+                    kwargs.pop(public_name))
 
         super().__init__(**kwargs)
 
@@ -211,7 +215,6 @@ class ComPosition(Observable):
     """
     _so_name = "Observables::ComPosition"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -240,7 +243,6 @@ class ComVelocity(Observable):
     """
     _so_name = "Observables::ComVelocity"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -283,7 +285,6 @@ class DensityProfile(ProfileObservable):
     """
     _so_name = "Observables::DensityProfile"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -310,7 +311,6 @@ class DipoleMoment(Observable):
     """
     _so_name = "Observables::DipoleMoment"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -355,7 +355,6 @@ class FluxDensityProfile(ProfileObservable):
     """
     _so_name = "Observables::FluxDensityProfile"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -400,7 +399,6 @@ class ForceDensityProfile(ProfileObservable):
     """
     _so_name = "Observables::ForceDensityProfile"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -508,7 +506,6 @@ class MagneticDipoleMoment(Observable):
     """
     _so_name = "Observables::MagneticDipoleMoment"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -537,7 +534,6 @@ class ParticleAngularVelocities(Observable):
     """
     _so_name = "Observables::ParticleAngularVelocities"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -569,7 +565,6 @@ class ParticleBodyAngularVelocities(Observable):
     """
     _so_name = "Observables::ParticleBodyAngularVelocities"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -601,7 +596,6 @@ class ParticleBodyVelocities(Observable):
     """
     _so_name = "Observables::ParticleBodyVelocities"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -630,7 +624,6 @@ class ParticleForces(Observable):
     """
     _so_name = "Observables::ParticleForces"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -659,7 +652,6 @@ class ParticlePositions(Observable):
     """
     _so_name = "Observables::ParticlePositions"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -688,7 +680,6 @@ class ParticleVelocities(Observable):
     """
     _so_name = "Observables::ParticleVelocities"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -717,7 +708,6 @@ class ParticleDirectors(Observable):
     """
     _so_name = "Observables::ParticleDirectors"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -746,7 +736,6 @@ class ParticleDipoleFields(Observable):
     """
     _so_name = "Observables::ParticleDipoleFields"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -772,7 +761,6 @@ class ParticleDistances(Observable):
     """
     _so_name = "Observables::ParticleDistances"
     _particle_param_map = {"particles": "ids"}
- 
 
 
 @script_interface_register
@@ -803,8 +791,8 @@ class PairwiseDistances(Observable):
 
     """
     _so_name = "Observables::PairwiseDistances"
-    _particle_param_map = {"particles": "ids", "target_particles": "target_ids"}
- 
+    _particle_param_map = {"particles": "ids",
+                           "target_particles": "target_ids"}
 
 
 @script_interface_register

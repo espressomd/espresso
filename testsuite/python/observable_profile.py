@@ -109,7 +109,8 @@ class ProfileObservablesTest(ut.TestCase):
                   'max_z': 5.0}
         observable = espressomd.observables.DensityProfile(**params)
         # check pids
-        np.testing.assert_array_equal(np.copy(observable.ids), params['particles'])
+        np.testing.assert_array_equal(
+            np.copy(observable.ids), params['particles'])
         with self.assertRaises(RuntimeError):
             observable.ids = [observable.ids[0]]
         # check bins

@@ -153,7 +153,8 @@ class ContactTimeTest(ut.TestCase):
         # Setup observables to track pairwise distances and particle positions
         pairwise_dist_obs = espressomd.observables.PairwiseDistances(particles=ids,
                                                                      target_particles=ids)
-        particle_pos_obs = espressomd.observables.ParticlePositions(particles=ids)
+        particle_pos_obs = espressomd.observables.ParticlePositions(
+            particles=ids)
 
         # Setup the accumulators to track the contact times and the time series
         contact_time_accumulator = espressomd.accumulators.ContactTimes(
@@ -214,7 +215,8 @@ class ContactTimeTest(ut.TestCase):
         self.assertIsNone(obs.call_method("unknown"))
         self.assertIsNone(acc.call_method("unknown"))
         # empty set case
-        obs = espressomd.observables.PairwiseDistances(particles=[], target_particles=[])
+        obs = espressomd.observables.PairwiseDistances(
+            particles=[], target_particles=[])
         acc = espressomd.accumulators.ContactTimes(
             obs=obs, delta_N=1, contact_threshold=0.2)
         res = acc.contact_times()
