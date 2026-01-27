@@ -39,7 +39,7 @@ system.thermostat.set_langevin(kT=1, gamma=10, seed=42)
 system.integrator.run(1000)
 
 # Initialize observable for a particle with id = part.id
-p = espressomd.observables.ParticlePositions(ids=(part.id,))
+p = espressomd.observables.ParticlePositions(particles=(part.id,))
 # Ask the observable for its parameters
 print(p.get_params())
 # Calculate and return current value

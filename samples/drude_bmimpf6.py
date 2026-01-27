@@ -356,11 +356,11 @@ else:
     r_max = system.box_l[0] / 2.0
     pids_pf6 = system.part.select(type=types["PF6"]).id
     pids_bmim = system.part.select(type=types["BMIM_COM"]).id
-    obs_00 = espressomd.observables.RDF(ids1=pids_pf6, min_r=r_min,
+    obs_00 = espressomd.observables.RDF(particles1=pids_pf6, min_r=r_min,
                                         max_r=r_max, n_r_bins=rdf_bins)
-    obs_11 = espressomd.observables.RDF(ids1=pids_bmim, min_r=r_min,
+    obs_11 = espressomd.observables.RDF(particles1=pids_bmim, min_r=r_min,
                                         max_r=r_max, n_r_bins=rdf_bins)
-    obs_01 = espressomd.observables.RDF(ids1=pids_pf6, ids2=pids_bmim,
+    obs_01 = espressomd.observables.RDF(particles1=pids_pf6, particles2=pids_bmim,
                                         min_r=r_min, max_r=r_max,
                                         n_r_bins=rdf_bins)
     acc_00 = espressomd.accumulators.MeanVarianceCalculator(

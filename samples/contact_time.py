@@ -52,9 +52,9 @@ system.thermostat.set_langevin(kT=1., gamma=1., seed=seed)
 system.integrator.set_vv() 
 
 # Setup observables to track pairwise distances and particle positions
-pairwise_dist_obs = espressomd.observables.PairwiseDistances(ids=ids,
-                                                             target_ids=ids)
-particle_pos_obs = espressomd.observables.ParticlePositions(ids=ids)
+pairwise_dist_obs = espressomd.observables.PairwiseDistances(particles=ids,
+                                                             target_particles=ids)
+particle_pos_obs = espressomd.observables.ParticlePositions(particles=ids)
 
 # Setup the accumulators to track the contact times and the time series
 contact_time_accumulator = espressomd.accumulators.ContactTimes(
