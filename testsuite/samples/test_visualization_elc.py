@@ -39,7 +39,7 @@ class Sample(ut.TestCase):
     def test_dipole_moment(self):
         import espressomd.observables
         obs = espressomd.observables.DipoleMoment(
-            Particles=self.system.part.all().id)
+            particles=self.system.part.all().id)
         dipm = obs.calculate()
         self.assertLess(dipm[2], 0, msg="charges moved in the wrong direction")
         # the dipole moment should be the strongest along the z-axis

@@ -362,9 +362,9 @@ follows
 ::
 
     import espressomd.observables
-    part_pos = espressomd.observables.ParticlePositions(ids=(1, 2, 3, 4, 5))
+    part_pos = espressomd.observables.ParticlePositions(particles=(1, 2, 3, 4, 5))
 
-Here, the keyword argument ``ids`` specifies the ids of the particles,
+Here, the keyword argument ``particles`` specifies the ids of the particles,
 which the observable should take into account.
 
 The current value of an observable can be obtained using its
@@ -389,7 +389,7 @@ or bin edges for the axes. Example::
 
     # histogram in Cartesian coordinates
     density_profile = espressomd.observables.DensityProfile(
-        ids=[p1.id, p2.id],
+        particles=[p1.id, p2.id],
         n_x_bins=8, min_x=1.0, max_x=9.0,
         n_y_bins=8, min_y=1.0, max_y=9.0,
         n_z_bins=4, min_z=4.0, max_z=8.0)
@@ -421,7 +421,7 @@ to create a consistent set of the parameters needed. Example::
 
     # histogram in cylindrical coordinates
     density_profile = espressomd.observables.CylindricalDensityProfile(
-        ids=[p1.id, p2.id],
+        particles=[p1.id, p2.id],
         transform_params = cyl_transform_params,
         n_r_bins=8, min_r=1.0, max_r=4.0,
         n_phi_bins=16, min_phi=-np.pi, max_phi=np.pi,
@@ -538,7 +538,7 @@ In order to take snapshots of an observable,
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     p1 = system.part.add(pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
-    position_observable = espressomd.observables.ParticlePositions(ids=[p1.id])
+    position_observable = espressomd.observables.ParticlePositions(particles=[p1.id])
     accumulator = espressomd.accumulators.TimeSeries(
         obs=position_observable, delta_N=2)
     system.auto_update_accumulators.add(accumulator)
@@ -565,7 +565,7 @@ In order to calculate the running mean and variance of an observable,
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     p1 = system.part.add(pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
-    position_observable = espressomd.observables.ParticlePositions(ids=[p1.id])
+    position_observable = espressomd.observables.ParticlePositions(particles=[p1.id])
     accumulator = espressomd.accumulators.MeanVarianceCalculator(
         obs=position_observable, delta_N=2)
     system.auto_update_accumulators.add(accumulator)
@@ -602,7 +602,7 @@ The contact time of particle pairs can be recorded with
     system.integrator.set_vv()
     system.thermostat.set_langevin(kT=1., gamma=1., seed=42)
 
-    obs = espressomd.observables.PairwiseDistances(ids=ids, target_ids=ids)
+    obs = espressomd.observables.PairwiseDistances(particles=ids, target_particles=ids)
     acc = espressomd.accumulators.ContactTimes(obs=obs, contact_threshold=1.)
     system.auto_update_accumulators.add(acc)
     system.integrator.run(5000)
@@ -682,13 +682,13 @@ Example: Calculating a particle's diffusion coefficient
 
 For setting up an observable and correlator to obtain the mean square displacement of particle 0, use::
 
-    pos_obs = ParticlePositions(ids=[p1.id])
+    pos_obs = ParticlePositions(particles=[p1.id])
     c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
                        corr_operation="square_distance_componentwise", compress1="discard1")
 
 To obtain the velocity auto-correlation function of particle 0, use::
 
-    obs = ParticleVelocities(ids=[p1.id])
+    obs = ParticleVelocities(particles=[p1.id])
     c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., delta_N=1,
                        corr_operation="scalar_product", compress1="discard1")
 
