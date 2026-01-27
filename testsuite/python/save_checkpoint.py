@@ -172,9 +172,9 @@ if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
         p3m.charge_neutrality_tolerance = 5e-12
 
 # accumulators
-obs = espressomd.observables.ParticlePositions(ids=[0, 1])
+obs = espressomd.observables.ParticlePositions(particles=[0, 1])
 obs_dist = espressomd.observables.PairwiseDistances(
-    ids=[0, 2, 1], target_ids=[4, 3])
+    particles=[0, 2, 1], target_particles=[4, 3])
 acc_mean_variance = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
 acc_time_series = espressomd.accumulators.TimeSeries(obs=obs)
 acc_correlator = espressomd.accumulators.Correlator(

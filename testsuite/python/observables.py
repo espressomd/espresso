@@ -111,7 +111,7 @@ class Observables(ut.TestCase):
                     part_data = calc_com_x(self.system, pprop_name, id_list)
 
             # Data from observable
-            observable = obs_class(ids=id_list)
+            observable = obs_class(particles=id_list)
             obs_data = observable.calculate()
 
             # Check
@@ -162,7 +162,7 @@ class Observables(ut.TestCase):
                "default dipole fields are needed")
     def test_director_no_dipole_fields(self):
         id_list = self.system.part.all().id
-        observable = espressomd.observables.ParticleDipoleFields(ids=id_list)
+        observable = espressomd.observables.ParticleDipoleFields(particles=id_list)
         obs_data = observable.calculate()
         np.testing.assert_array_almost_equal(
             obs_data, self.N_PART * [[0., 0., 0.]], decimal=11)
@@ -171,7 +171,7 @@ class Observables(ut.TestCase):
                "check default directors")
     def test_director_norotation(self):
         id_list = self.system.part.all().id
-        observable = espressomd.observables.ParticleDirectors(ids=id_list)
+        observable = espressomd.observables.ParticleDirectors(particles=id_list)
         obs_data = observable.calculate()
         np.testing.assert_array_almost_equal(
             obs_data, self.N_PART * [[0., 0., 1.]], decimal=11)
@@ -179,7 +179,7 @@ class Observables(ut.TestCase):
     @utx.skipIfMissingFeatures(['ROTATION'])
     def test_particle_body_velocities(self):
         obs = espressomd.observables.ParticleBodyVelocities(
-            ids=self.system.part.all().id)
+            particles=self.system.part.all().id)
         obs_data = obs.calculate()
         part_data = np.array([p.convert_vector_space_to_body(p.v)
                               for p in self.system.part])
@@ -220,7 +220,7 @@ class Observables(ut.TestCase):
 
     @utx.skipIfMissingFeatures('ELECTROSTATICS')
     def test_dipolemoment(self):
-        obs = espressomd.observables.DipoleMoment(ids=self.partcls.id)
+        obs = espressomd.observables.DipoleMoment(particles=self.partcls.id)
         obs_data = obs.calculate()
         part_data = self.partcls.q.dot(self.partcls.pos)
         self.assertEqual(obs_data.shape, part_data.shape)
@@ -239,7 +239,7 @@ class Observables(ut.TestCase):
 
         np.testing.assert_allclose(
             np.sum(particles.f, axis=0),
-            espressomd.observables.TotalForce(ids=id_list).calculate())
+            espressomd.observables.TotalForce(particles=id_list).calculate())
 
 
 if __name__ == "__main__":

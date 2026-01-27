@@ -34,7 +34,7 @@ class CorrelatorTest(ut.TestCase):
 
     """
     # create an accumulator bound to the default-constructed system
-    expired_system_obs = espressomd.observables.ParticleVelocities(ids=(0,))
+    expired_system_obs = espressomd.observables.ParticleVelocities(particles=(0,))
     expired_system_acc = espressomd.accumulators.Correlator(
         obs1=expired_system_obs, tau_lin=10, tau_max=2., delta_N=1,
         corr_operation="scalar_product")
@@ -91,7 +91,7 @@ class CorrelatorTest(ut.TestCase):
         v = np.array([1, 2, 3])
         p = s.part.add(pos=(0, 0, 0), v=v)
 
-        obs = espressomd.observables.ParticlePositions(ids=(p.id,))
+        obs = espressomd.observables.ParticlePositions(particles=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=2, delta_N=1, system=s,
             corr_operation="square_distance_componentwise")
@@ -114,7 +114,7 @@ class CorrelatorTest(ut.TestCase):
         v = np.array([1, 2, 3])
         p = s.part.add(pos=(0, 0, 0), v=v)
 
-        obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
+        obs = espressomd.observables.ParticleVelocities(particles=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=12, tau_max=2, delta_N=1, system=s,
             corr_operation="tensor_product")
@@ -137,7 +137,7 @@ class CorrelatorTest(ut.TestCase):
         v = np.array([1, 2, 3])
         p = s.part.add(pos=(0, 0, 0), v=v)
 
-        obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
+        obs = espressomd.observables.ParticleVelocities(particles=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=2, delta_N=1, system=s,
             corr_operation="componentwise_product")
@@ -159,7 +159,7 @@ class CorrelatorTest(ut.TestCase):
         v = np.array([1, 2, 3])
         p = s.part.add(pos=(0, 0, 0), v=v)
 
-        obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
+        obs = espressomd.observables.ParticleVelocities(particles=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=2, delta_N=1, system=s,
             corr_operation="scalar_product")
@@ -182,7 +182,7 @@ class CorrelatorTest(ut.TestCase):
         p = s.part.add(pos=(0, 0, 0), v=v)
 
         w = np.array([3, 2, 1])
-        obs = espressomd.observables.ParticlePositions(ids=(p.id,))
+        obs = espressomd.observables.ParticlePositions(particles=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=9.9 * self.system.time_step,
             delta_N=1, system=s, corr_operation="fcs_acf", args=w)
@@ -209,7 +209,7 @@ class CorrelatorTest(ut.TestCase):
 
     def test_correlator_compression(self):
         p = self.system.part.add(pos=(0, 0, 0))
-        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+        obs = espressomd.observables.ParticleVelocities(particles=(0,))
         v1 = 3.
         v2 = 5.
         compressed_ref = {
@@ -246,7 +246,7 @@ class CorrelatorTest(ut.TestCase):
 
     def test_correlator_interface(self):
         # test setters and getters
-        obs = espressomd.observables.ParticleVelocities(ids=(123,))
+        obs = espressomd.observables.ParticleVelocities(particles=(123,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=12.0, delta_N=1,
             corr_operation="scalar_product")
@@ -292,7 +292,7 @@ class CorrelatorTest(ut.TestCase):
 
     def test_correlator_exceptions(self):
         self.system.part.add(pos=2 * [(0, 0, 0)])
-        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+        obs = espressomd.observables.ParticleVelocities(particles=(0,))
 
         def create_accumulator(obs1=obs, **kwargs):
             valid_kwargs = {'obs1': obs1, 'tau_lin': 10, 'tau_max': 10.,
@@ -323,10 +323,10 @@ class CorrelatorTest(ut.TestCase):
             create_accumulator(compress2="unknown2")
         with self.assertRaisesRegex(RuntimeError, "dimension of first observable has to be >= 1"):
             create_accumulator(
-                obs1=espressomd.observables.ParticleVelocities(ids=()))
+                obs1=espressomd.observables.ParticleVelocities(particles=()))
         with self.assertRaisesRegex(RuntimeError, "dimension of second observable has to be >= 1"):
             create_accumulator(
-                obs2=espressomd.observables.ParticleVelocities(ids=()))
+                obs2=espressomd.observables.ParticleVelocities(particles=()))
 
         # check FCS-specific arguments and input data
         with self.assertRaisesRegex(RuntimeError, "missing parameter for fcs_acf: w_x w_y w_z"):
@@ -336,13 +336,13 @@ class CorrelatorTest(ut.TestCase):
                                obs1=espressomd.observables.Energy())
         with self.assertRaisesRegex(RuntimeError, "the last dimension of dimA must be 3 for fcs_acf"):
             obs_dens = espressomd.observables.DensityProfile(
-                ids=(0,), n_x_bins=3, n_y_bins=3, n_z_bins=1, min_x=0.,
+                particles=(0,), n_x_bins=3, n_y_bins=3, n_z_bins=1, min_x=0.,
                 min_y=0., min_z=0., max_x=1., max_y=1., max_z=1.)
             create_accumulator(corr_operation="fcs_acf", args=[1, 1, 1],
                                obs1=obs_dens)
 
         # check correlation errors
-        obs2 = espressomd.observables.ParticleVelocities(ids=(0, 1))
+        obs2 = espressomd.observables.ParticleVelocities(particles=(0, 1))
         with self.assertRaisesRegex(RuntimeError, "Error in scalar product: The vector sizes do not match"):
             acc = create_accumulator(obs2=obs2)
             acc.update()

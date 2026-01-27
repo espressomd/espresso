@@ -61,8 +61,8 @@ class ObservableTests(ut.TestCase):
         Check ParticleDistances, for a particle pair and for a chain.
         """
         pids = list(range(self.n_parts))
-        obs_single = espressomd.observables.ParticleDistances(ids=[0, 1])
-        obs_chain = espressomd.observables.ParticleDistances(ids=pids)
+        obs_single = espressomd.observables.ParticleDistances(particles=[0, 1])
+        obs_chain = espressomd.observables.ParticleDistances(particles=pids)
         # take periodic boundaries into account: bond length cannot exceed
         # half the box size along the smallest axis
         min_dim = np.min(self.system.box_l)
@@ -93,15 +93,15 @@ class ObservableTests(ut.TestCase):
         # check exceptions
         for i in range(2):
             with self.assertRaises(RuntimeError):
-                espressomd.observables.ParticleDistances(ids=np.arange(i))
+                espressomd.observables.ParticleDistances(particles=np.arange(i))
 
     def test_BondAngles(self):
         """
         Check BondAngles, for a particle triple and for a chain.
         """
         pids = list(range(self.n_parts))
-        obs_single = espressomd.observables.BondAngles(ids=[0, 1, 2])
-        obs_chain = espressomd.observables.BondAngles(ids=pids)
+        obs_single = espressomd.observables.BondAngles(particles=[0, 1, 2])
+        obs_chain = espressomd.observables.BondAngles(particles=pids)
         # take periodic boundaries into account: bond length cannot exceed
         # half the box size along the smallest axis
         min_dim = np.min(self.system.box_l)
@@ -136,7 +136,7 @@ class ObservableTests(ut.TestCase):
         # check exceptions
         for i in range(3):
             with self.assertRaises(RuntimeError):
-                espressomd.observables.BondAngles(ids=np.arange(i))
+                espressomd.observables.BondAngles(particles=np.arange(i))
 
     def test_BondDihedrals(self):
         """
@@ -180,8 +180,8 @@ class ObservableTests(ut.TestCase):
             return pos
 
         pids = list(range(self.n_parts))
-        obs_single = espressomd.observables.BondDihedrals(ids=pids[:4])
-        obs_chain = espressomd.observables.BondDihedrals(ids=pids)
+        obs_single = espressomd.observables.BondDihedrals(particles=pids[:4])
+        obs_chain = espressomd.observables.BondDihedrals(particles=pids)
 
         # test multiple angles, take periodic boundaries into account
         p0, p4 = self.system.part.by_ids([0, 4])
@@ -215,7 +215,7 @@ class ObservableTests(ut.TestCase):
         # check exceptions
         for i in range(4):
             with self.assertRaises(RuntimeError):
-                espressomd.observables.BondDihedrals(ids=np.arange(i))
+                espressomd.observables.BondDihedrals(particles=np.arange(i))
 
     def test_CosPersistenceAngles(self):
         # First test: compare with python implementation
@@ -223,7 +223,7 @@ class ObservableTests(ut.TestCase):
         partcls = self.system.part.add(pos=np.array(
             [np.linspace(0, self.system.box_l[0], 20)] * 3).T + np.random.random((20, 3)))
         obs = espressomd.observables.CosPersistenceAngles(
-            ids=partcls.id)
+            particles=partcls.id)
         np.testing.assert_allclose(
             obs.calculate(), cos_persistence_angles(partcls.pos))
         self.system.part.clear()
@@ -235,14 +235,14 @@ class ObservableTests(ut.TestCase):
             self.system.part.add(pos=pos)
         new_partcls = self.system.part.all()
         obs = espressomd.observables.CosPersistenceAngles(
-            ids=new_partcls.id)
+            particles=new_partcls.id)
         expected = np.arange(1, 9) * delta_phi
         np.testing.assert_allclose(obs.calculate(), np.cos(expected))
 
         # check exceptions
         for i in range(3):
             with self.assertRaises(RuntimeError):
-                espressomd.observables.CosPersistenceAngles(ids=np.arange(i))
+                espressomd.observables.CosPersistenceAngles(particles=np.arange(i))
 
 
 if __name__ == "__main__":

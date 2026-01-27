@@ -39,7 +39,7 @@ class TestCylindricalObservable(ut.TestCase):
         center=3 * [7.5], axis=[1 / np.sqrt(2), 1 / np.sqrt(2), 0], orientation=[0, 0, 1])
 
     params = {
-        'ids': None,
+        'particles': None,
         'transform_params': cyl_transform_params,
         'n_r_bins': 4,
         'n_phi_bins': 3,
@@ -137,7 +137,7 @@ class TestCylindricalObservable(ut.TestCase):
                 self.cyl_transform_params.center)
             vel_aligned.append(self.align_with_observable_frame(vel))
         self.system.part.add(pos=pos_aligned, v=vel_aligned)
-        self.params['ids'] = self.system.part.all().id
+        self.params['particles'] = self.system.part.all().id
 
         return np_dens, np_edges
 
@@ -209,10 +209,10 @@ class TestCylindricalObservable(ut.TestCase):
         params['n_z_bins'] = 8
         self.system.part.add(pos=[0, 0, 0], type=0)
         self.system.part.add(pos=[0, 0, 0], type=1)
-        params['ids'] = self.system.part.all().id
+        params['particles'] = self.system.part.all().id
         observable = espressomd.observables.CylindricalDensityProfile(**params)
         # check pids
-        np.testing.assert_array_equal(np.copy(observable.ids), params['ids'])
+        np.testing.assert_array_equal(np.copy(observable.ids), params['particles'])
         with self.assertRaises(RuntimeError):
             observable.ids = [observable.ids[0]]
         # check bins
