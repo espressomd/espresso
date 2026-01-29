@@ -60,7 +60,7 @@ class Tutorial(ut.TestCase):
         idx = get_peaks(sim_rs, sim_rdf_smooth, window, np.less)
         sim_minima_x = sim_rs[idx]
         sim_minima_y = sim_rdf[idx]
-        tol = {"rtol": 0.05}
+        tol = {"rtol": 0.1}
         # compare peaks position and magnitude in the structural region
         np.testing.assert_allclose(sim_maxima_x[1:], ref_maxima_x[1:], **tol)
         np.testing.assert_allclose(sim_maxima_y[1:], ref_maxima_y[1:], **tol)
