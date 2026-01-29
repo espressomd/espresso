@@ -35,29 +35,41 @@ class Tutorial(ut.TestCase):
     system = tutorial.system
 
     def test(self):
-        def get_peaks(xdata, ydata, window, comparator):
+        def get_peaks_at(xdata, ydata, targets, comparator):
+            """
+            Determine all local extrema, but only return the subset of extrema
+            that are near the expected values (targets). This makes extrema
+            detection more robust against noise in the data.
+            """
             idx = scipy.signal.argrelextrema(ydata, comparator)
-            positions = np.array(xdata)[idx]
-            inside_window = np.logical_and(positions >= window[0],
-                                           positions <= window[1])
-            return (idx[0][np.nonzero(inside_window)],)
+            positions = np.array(len(xdata) * [np.inf])
+            positions[idx] = xdata[idx]
+            assert len(positions) >= len(targets)
+            best_matches = []
+            for target in targets:
+                dist = np.abs(positions - target)
+                index = np.argmin(dist)
+                best_matches.append(index)
+                positions[index] = np.inf
+            return (np.array(best_matches),)
 
+        targets_maxima = [2.8, 4.5, 6.75]
+        targets_minima = [3.4, 5.5]
         ref_rs = tutorial.df["rs"].to_numpy()
         ref_rdf = tutorial.df["rdf"].to_numpy()
         sim_rs = 10. * tutorial.bin_centers
         sim_rdf = tutorial.rdf
         sim_rdf_smooth = scipy.signal.savgol_filter(sim_rdf, 6, 2)
-        window = [2.5, 6.85]
-        idx = get_peaks(ref_rs, ref_rdf, window, np.greater)
+        idx = get_peaks_at(ref_rs, ref_rdf, targets_maxima, np.greater)
         ref_maxima_x = ref_rs[idx]
         ref_maxima_y = ref_rdf[idx]
-        idx = get_peaks(sim_rs, sim_rdf_smooth, window, np.greater)
+        idx = get_peaks_at(sim_rs, sim_rdf_smooth, targets_maxima, np.greater)
         sim_maxima_x = sim_rs[idx]
         sim_maxima_y = sim_rdf[idx]
-        idx = get_peaks(ref_rs, ref_rdf, window, np.less)
+        idx = get_peaks_at(ref_rs, ref_rdf, targets_minima, np.less)
         ref_minima_x = ref_rs[idx]
         ref_minima_y = ref_rdf[idx]
-        idx = get_peaks(sim_rs, sim_rdf_smooth, window, np.less)
+        idx = get_peaks_at(sim_rs, sim_rdf_smooth, targets_minima, np.less)
         sim_minima_x = sim_rs[idx]
         sim_minima_y = sim_rdf[idx]
         tol = {"rtol": 0.1}
