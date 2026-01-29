@@ -1,0 +1,73 @@
+#
+# Copyright (C) 2026 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import unittest as ut
+import importlib_wrapper
+import numpy as np
+import scipy.signal
+
+
+tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
+    "@TUTORIALS_DIR@/mlip-water/01_TIP4P_water.py",
+    rdf_samples=70, CI_P3M_PARAMS={"cao": 7, "mesh": [48, 48, 48]})
+
+
+@skipIfMissingFeatures
+class Tutorial(ut.TestCase):
+    system = tutorial.system
+
+    def test(self):
+        def get_peaks(xdata, ydata, window, comparator):
+            idx = scipy.signal.argrelextrema(ydata, comparator)
+            positions = np.array(xdata)[idx]
+            inside_window = np.logical_and(positions >= window[0],
+                                           positions <= window[1])
+            return (idx[0][np.nonzero(inside_window)],)
+
+        ref_rs = tutorial.df["rs"].to_numpy()
+        ref_rdf = tutorial.df["rdf"].to_numpy()
+        sim_rs = 10. * tutorial.bin_centers
+        sim_rdf = tutorial.rdf
+        sim_rdf_smooth = scipy.signal.savgol_filter(sim_rdf, 6, 2)
+        idx = get_peaks(ref_rs, ref_rdf, [2.5, 7.], np.greater)
+        ref_maxima_x = ref_rs[idx]
+        ref_maxima_y = ref_rdf[idx]
+        idx = get_peaks(sim_rs, sim_rdf_smooth, [2.5, 7.], np.greater)
+        sim_maxima_x = sim_rs[idx]
+        sim_maxima_y = sim_rdf[idx]
+        idx = get_peaks(ref_rs, ref_rdf, [2.5, 7.], np.less)
+        ref_minima_x = ref_rs[idx]
+        ref_minima_y = ref_rdf[idx]
+        idx = get_peaks(sim_rs, sim_rdf_smooth, [2.5, 7.], np.less)
+        sim_minima_x = sim_rs[idx]
+        sim_minima_y = sim_rdf[idx]
+        tol = {"rtol": 0.05}
+        # compare peaks position and magnitude in the structural region
+        np.testing.assert_allclose(sim_maxima_x[1:], ref_maxima_x[1:], **tol)
+        np.testing.assert_allclose(sim_maxima_y[1:], ref_maxima_y[1:], **tol)
+        np.testing.assert_allclose(sim_minima_x, ref_minima_x, **tol)
+        np.testing.assert_allclose(sim_minima_y, ref_minima_y, **tol)
+        # first peak should be 15% larger in magnitude with TIP4P/2005
+        np.testing.assert_allclose(sim_maxima_x[:1], ref_maxima_x[:1], **tol)
+        np.testing.assert_allclose(
+            sim_maxima_y[:1], 1.15 * ref_maxima_y[:1], **tol)
+
+
+if __name__ == "__main__":
+    ut.main()

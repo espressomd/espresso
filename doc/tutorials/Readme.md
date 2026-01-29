@@ -55,7 +55,7 @@ physical systems.
   [Guide](mlip/mlip.ipynb)
 * **Machine-learned interatomic potentials with ESPResSo**  
   Atomistic simulations of water with classical force fields and MLIPs.  
-  [Part 1](mlip-water/01_TIP4P_Water.ipynb) |
+  [Part 1](mlip-water/01_TIP4P_water.ipynb) |
   [Part 2](mlip-water/02_MLIPs.ipynb) |
   [Part 3](mlip-water/03_MLIP_within_ESPResSo.ipynb)
 

@@ -1,8 +1,8 @@
 [project]
-name = "2025-espresso-water"
+name = "espresso-mlip-water"
 version = "0.1.0"
-description = "Espresso summer school 2025 tutorial for MLIPs with water."
-readme = "README.md"
+description = "ESPResSo tutorial for atomistic simulations of water with TIP4P and MLIPs"
+readme = "Readme.md"
 requires-python = ">=3.11"
 dependencies = [
     "apax[cuda]==0.12.3",
