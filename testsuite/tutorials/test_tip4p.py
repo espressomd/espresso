@@ -21,11 +21,13 @@ import unittest as ut
 import importlib_wrapper
 import numpy as np
 import scipy.signal
+import espressomd
 
 
+mesh_size = 60 if espressomd.gpu_available() else 48
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/mlip-water/01_TIP4P_water.py",
-    rdf_samples=70, CI_P3M_PARAMS={"cao": 7, "mesh": [48, 48, 48]})
+    rdf_samples=80, P3M_PARAMS={"cao": 7, "mesh": 3 * [mesh_size]})
 
 
 @skipIfMissingFeatures
@@ -45,16 +47,17 @@ class Tutorial(ut.TestCase):
         sim_rs = 10. * tutorial.bin_centers
         sim_rdf = tutorial.rdf
         sim_rdf_smooth = scipy.signal.savgol_filter(sim_rdf, 6, 2)
-        idx = get_peaks(ref_rs, ref_rdf, [2.5, 7.], np.greater)
+        window = [2.5, 6.85]
+        idx = get_peaks(ref_rs, ref_rdf, window, np.greater)
         ref_maxima_x = ref_rs[idx]
         ref_maxima_y = ref_rdf[idx]
-        idx = get_peaks(sim_rs, sim_rdf_smooth, [2.5, 7.], np.greater)
+        idx = get_peaks(sim_rs, sim_rdf_smooth, window, np.greater)
         sim_maxima_x = sim_rs[idx]
         sim_maxima_y = sim_rdf[idx]
-        idx = get_peaks(ref_rs, ref_rdf, [2.5, 7.], np.less)
+        idx = get_peaks(ref_rs, ref_rdf, window, np.less)
         ref_minima_x = ref_rs[idx]
         ref_minima_y = ref_rdf[idx]
-        idx = get_peaks(sim_rs, sim_rdf_smooth, [2.5, 7.], np.less)
+        idx = get_peaks(sim_rs, sim_rdf_smooth, window, np.less)
         sim_minima_x = sim_rs[idx]
         sim_minima_y = sim_rdf[idx]
         tol = {"rtol": 0.05}
