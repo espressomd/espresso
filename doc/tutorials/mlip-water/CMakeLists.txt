@@ -20,7 +20,7 @@
 espresso_add_tutorial(
   TARGET tutorial_water SUFFIX 1 FILE "01_TIP4P_water.ipynb" DEPENDS
   soper2013tab5.csv TIP4P.png HTML_RUN VAR_SUBST
-  "\"CI_P3M_PARAMS={'cao':7,'mesh':[60,60,60]}\"")
+  "\"p3m_params={'cao':7,'mesh':[60,60,60]}\"")
 espresso_add_tutorial(
   TARGET
   tutorial_water

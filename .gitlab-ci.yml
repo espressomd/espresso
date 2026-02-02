@@ -432,7 +432,7 @@ check_sphinx:
     - numa
     - reuse-artifacts-same-arch
 
-run_tutorials:
+.run_tutorials_template: &run_tutorials_definition
   <<: *global_job_definition
   stage: additional_checks
   needs:
@@ -442,7 +442,7 @@ run_tutorials:
     - cd ${CI_PROJECT_DIR}/build
     - ninja -t restat
     - ninja tutorials
-    - ninja -j1 tutorials_html
+    - ninja -j2 tutorials_html
     - cd doc/tutorials
     - mkdir html
     - ${CI_PROJECT_DIR}/maintainer/CI/deploy_tutorials.py
@@ -457,8 +457,17 @@ run_tutorials:
     - cuda
     - numa
     - reuse-artifacts-same-arch
+
+run_tutorials:
+  <<: *run_tutorials_definition
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
+
+run_tutorials_manual:
+  <<: *run_tutorials_definition
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "schedule"
+  when: manual
 
 run_doxygen:
   <<: *global_job_definition

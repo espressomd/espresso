@@ -1,4 +1,4 @@
-# Integrating MLIPs with ESPResSo: A Tutorial on Simulating Water
+# Tutorial: integrating MLIPs with ESPResSo: a tutorial on simulating water
 
 ## Environment setup
 
@@ -38,10 +38,33 @@ The tutorial is split into 3 parts:
 
 Here, you'll learn how to run a classical MD simulation of water using the TIP4P potential.
 
+#### Learning objectives
+
+After the tutorial, students should know:
+
+- how to simulate liquid water using a rigid four-site model (non-polarizable model) in ESPResSo
+- how classical forcefields are iteratively improved (TIP4P, TIP4P/Ew, TIP4P/2005) to better capture physical properties from experimental data
+
 ### Part 2: MLIP Models
 
 Here, you'll learn the fundamentals of using MLIP with ASE. You'll load and evaluate pre-trained MLIPs model for water.
 
+#### Learning objectives
+
+After the tutorial, students should know:
+
+- how MLIPs differ from classical force fields and their advantages for complex chemical systems
+- how model parameters affect accuracy and computational cost
+- how to quantify model uncertainty with ensemble methods
+- how to connect APAX models with simulation engines through ASE calculators
+
 ### Part 3: MLIP with ESPResSo
 
 Here, you'll learn how to set up and run an MD simulation of water using MLIP with ESPResSo.
+
+#### Learning objectives
+
+After the tutorial, students should know:
+
+- how to use ASE to bridge MD engines with MLIPs
+- how to measure the impact of the short-range cutoff on the MLIP predictive power

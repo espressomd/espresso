@@ -27,7 +27,7 @@ import espressomd
 mesh_size = 60 if espressomd.gpu_available() else 48
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/mlip-water/01_TIP4P_water.py",
-    rdf_samples=80, P3M_PARAMS={"cao": 7, "mesh": 3 * [mesh_size]})
+    rdf_samples=80, p3m_params={"cao": 7, "mesh": 3 * [mesh_size]})
 
 
 @skipIfMissingFeatures

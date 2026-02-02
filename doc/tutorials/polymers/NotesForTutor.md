@@ -1,6 +1,6 @@
-# Polymer theory and Brownian motion of a polymer in a fluid
+# Tutorial: polymer theory and Brownian motion of a polymer in a fluid
 
-## Physics learning goals
+## Physics learning objectives
 
 * Getting a short introduction to the Flory theory of polymers
 * Modeling the Brownian motion of a polymer
@@ -14,7 +14,7 @@ After the tutorial, students should be able to:
 * Explain how hydrodynamic interactions qualitatively affect the diffusion of a polymer
 * Name the three important regimes for polymer diffusion and the corresponding scaling laws
 
-## ESPResSo learning goals
+## ESPResSo learning objectives
 
 * Creating linear polymers with ESPResSo functions
 * Using tools from the analysis module not based on the Observable framework

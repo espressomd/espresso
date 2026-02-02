@@ -1,6 +1,6 @@
-# Part 1: Charged rod
+# Tutorial: Charged rod
 
-## Physical learning goals
+## Physics learning objectives
 
 * The physical system to be investigated is a polyelectrolyte gel: A polymer that is linked into a gel and releases ions into solution
 * In the cell model simplification, we only look at one polymer segment and not the entire gel structure
@@ -12,8 +12,7 @@
 * By adding concentrated salt we go further beyond the applicability of mean-field theories. The effect we observe is an overcharging, where we see ions accumulating near the positively charged rod
 * A semi-analytical solution for the salt case exists (see the referenced paper) but it is not as trivial as in the salt-free case
 
-
-## Espresso learning goals
+## ESPResSo learning objectives
 
 * Setting up WCA interactions (should be clear from previous tutorial)
 * Using particle properties like ``q``, ``fix`` and ``type``
