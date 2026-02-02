@@ -167,7 +167,8 @@ void BindAtPointOfCollision::handle_collisions(
       if (auto p = cell_structure.get_local_particle(current_vs_pid - 1))
         p->bonds().insert({bond_vs, bondG});
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-        cell_structure.add_new_bond(bond_vs, {current_vs_pid - 1, current_vs_pid - 2, -1, -1});
+      cell_structure.add_new_bond(
+          bond_vs, {current_vs_pid - 1, current_vs_pid - 2, -1, -1});
 #endif
     }
     if (n_partners == 2) {
@@ -177,12 +178,14 @@ void BindAtPointOfCollision::handle_collisions(
       if (auto p = cell_structure.get_local_particle(current_vs_pid - 1))
         p->bonds().insert({bond_vs, bondG});
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-        cell_structure.add_new_bond(bond_vs, {current_vs_pid - 1, pid1, pid2, -1});
+      cell_structure.add_new_bond(bond_vs,
+                                  {current_vs_pid - 1, pid1, pid2, -1});
 #endif
       if (auto p = cell_structure.get_local_particle(current_vs_pid - 2))
         p->bonds().insert({bond_vs, bondG});
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-        cell_structure.add_new_bond(bond_vs, {current_vs_pid - 2, pid1, pid2, -1});
+      cell_structure.add_new_bond(bond_vs,
+                                  {current_vs_pid - 2, pid1, pid2, -1});
 #endif
     }
   } // Loop over all collisions in the queue

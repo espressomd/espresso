@@ -324,43 +324,39 @@ void System::System::calculate_forces() {
   auto const &local_virial = cell_structure->get_local_virial();
 #endif
   auto &id_to_index = cell_structure->get_id_to_index();
-  auto break_kernel = [&bond_breakage = *bond_breakage,
-		       &id_to_index,
-		       &unique_particles,
-                       &box_geo = *box_geo](Kokkos::View<int *> const &partners, int const bond_id) {
+  auto break_kernel = [&bond_breakage = *bond_breakage, &id_to_index,
+                       &unique_particles,
+                       &box_geo = *box_geo](Kokkos::View<int *> const &partners,
+                                            int const bond_id) {
     auto &p1 = *unique_particles.at(id_to_index(partners(0)));
     // Consider for bond breakage
     if (partners(2) == -1) { // pair bonds
       auto &p2 = *unique_particles.at(id_to_index(partners(1)));
       auto d = box_geo.get_mi_vector(p1.pos(), p2.pos()).norm();
       if (bond_breakage.check_and_handle_breakage(
-	      p1.id(), {{p2.id(), std::nullopt}}, bond_id, d)) {
-	return true;
+              p1.id(), {{p2.id(), std::nullopt}}, bond_id, d)) {
+        return true;
       }
     } else if (partners(3) == -1) { // angle bond
       auto &p2 = *unique_particles.at(id_to_index(partners(1)));
       auto &p3 = *unique_particles.at(id_to_index(partners(2)));
       auto d = box_geo.get_mi_vector(p2.pos(), p3.pos()).norm();
-      if (bond_breakage.check_and_handle_breakage(
-	      p1.id(), {{p2.id(), p3.id()}}, bond_id, d)) {
-	return true;
+      if (bond_breakage.check_and_handle_breakage(p1.id(), {{p2.id(), p3.id()}},
+                                                  bond_id, d)) {
+        return true;
       }
     }
     return false;
   };
   auto bond_kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
-       		      &bond_breakage = *bond_breakage,
-                      &bonded_ias = *bonded_ias,
-		      virial,
-		      &local_force,
+                      &bond_breakage = *bond_breakage,
+                      &bonded_ias = *bonded_ias, virial, &local_force,
 #ifdef ESPRESSO_NPT
-		      &local_virial,
+                      &local_virial,
 #endif
-		      &id_to_index,
-		      &unique_particles,
-                      &box_geo = *box_geo]
-                	(Kokkos::View<int *> const &partners, int const bond_id) {
-
+                      &id_to_index, &unique_particles,
+                      &box_geo = *box_geo](Kokkos::View<int *> const &partners,
+                                           int const bond_id) {
     auto const &iaparams = *bonded_ias.at(bond_id);
     auto const thread_id = omp_get_thread_num();
     auto &p1 = *unique_particles.at(id_to_index(partners(0)));
@@ -369,106 +365,131 @@ void System::System::calculate_forces() {
     case 0:
       return false;
 
-    case 1:
-      {
-	auto &p2 = *unique_particles.at(id_to_index(partners(1)));
-	auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
+    case 1: {
+      auto &p2 = *unique_particles.at(id_to_index(partners(1)));
+      auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
 
-	if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
-	  auto result = iap->forces(p1, p2, dx);
-	  if (result) {
-	    auto const &forces = result.value();
+      if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
+        auto result = iap->forces(p1, p2, dx);
+        if (result) {
+          auto const &forces = result.value();
 
-    	    local_force(id_to_index(p1.id()), thread_id, 0) += std::get<0>(forces)[0];
-    	    local_force(id_to_index(p1.id()), thread_id, 1) += std::get<0>(forces)[1];
-    	    local_force(id_to_index(p1.id()), thread_id, 2) += std::get<0>(forces)[2];
-    	    local_force(id_to_index(p2.id()), thread_id, 0) += std::get<1>(forces)[0];
-    	    local_force(id_to_index(p2.id()), thread_id, 1) += std::get<1>(forces)[1];
-    	    local_force(id_to_index(p2.id()), thread_id, 2) += std::get<1>(forces)[2];
-	    return false;
-	  }
-	} else {
-	  auto result = calc_bond_pair_force(iaparams, p1, p2, dx, coulomb_kernel_ptr);
-	  if (result) {
+          local_force(id_to_index(p1.id()), thread_id, 0) +=
+              std::get<0>(forces)[0];
+          local_force(id_to_index(p1.id()), thread_id, 1) +=
+              std::get<0>(forces)[1];
+          local_force(id_to_index(p1.id()), thread_id, 2) +=
+              std::get<0>(forces)[2];
+          local_force(id_to_index(p2.id()), thread_id, 0) +=
+              std::get<1>(forces)[0];
+          local_force(id_to_index(p2.id()), thread_id, 1) +=
+              std::get<1>(forces)[1];
+          local_force(id_to_index(p2.id()), thread_id, 2) +=
+              std::get<1>(forces)[2];
+          return false;
+        }
+      } else {
+        auto result =
+            calc_bond_pair_force(iaparams, p1, p2, dx, coulomb_kernel_ptr);
+        if (result) {
 
-	    auto const f = result.value();
-    	    local_force(id_to_index(p1.id()), thread_id, 0) += f[0];
-    	    local_force(id_to_index(p1.id()), thread_id, 1) += f[1];
-    	    local_force(id_to_index(p1.id()), thread_id, 2) += f[2];
-    	    local_force(id_to_index(p2.id()), thread_id, 0) -= f[0];
-    	    local_force(id_to_index(p2.id()), thread_id, 1) -= f[1];
-    	    local_force(id_to_index(p2.id()), thread_id, 2) -= f[2];
+          auto const f = result.value();
+          local_force(id_to_index(p1.id()), thread_id, 0) += f[0];
+          local_force(id_to_index(p1.id()), thread_id, 1) += f[1];
+          local_force(id_to_index(p1.id()), thread_id, 2) += f[2];
+          local_force(id_to_index(p2.id()), thread_id, 0) -= f[0];
+          local_force(id_to_index(p2.id()), thread_id, 1) -= f[1];
+          local_force(id_to_index(p2.id()), thread_id, 2) -= f[2];
 #ifdef ESPRESSO_NPT
-	    auto virial = hadamard_product(result.value(), dx);
-      	    local_virial(thread_id, 0) += virial[0];
-      	    local_virial(thread_id, 1) += virial[1];
-      	    local_virial(thread_id, 2) += virial[2];
+          auto virial = hadamard_product(result.value(), dx);
+          local_virial(thread_id, 0) += virial[0];
+          local_virial(thread_id, 1) += virial[1];
+          local_virial(thread_id, 2) += virial[2];
 #endif
-	    return false;
-	  }
-	}
-	return true;
+          return false;
+        }
       }
- 
-    case 2:
-      {
-	auto &p2 = *unique_particles.at(id_to_index(partners(1)));
-	auto &p3 = *unique_particles.at(id_to_index(partners(2)));
+      return true;
+    }
 
-	if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
-	  return false;
-	}
-	auto const result =
-	    calc_bonded_three_body_force(iaparams, box_geo, p1, p2, p3);
-	if (result) {
-	  auto const &forces = result.value();
+    case 2: {
+      auto &p2 = *unique_particles.at(id_to_index(partners(1)));
+      auto &p3 = *unique_particles.at(id_to_index(partners(2)));
 
-	  //p1.force() += std::get<0>(forces);
-	  //p2.force() += std::get<1>(forces);
-	  //p3.force() += std::get<2>(forces);
-    	  local_force(id_to_index(p1.id()), thread_id, 0) += std::get<0>(forces)[0];
-    	  local_force(id_to_index(p1.id()), thread_id, 1) += std::get<0>(forces)[1];
-    	  local_force(id_to_index(p1.id()), thread_id, 2) += std::get<0>(forces)[2];
-    	  local_force(id_to_index(p2.id()), thread_id, 0) += std::get<1>(forces)[0];
-    	  local_force(id_to_index(p2.id()), thread_id, 1) += std::get<1>(forces)[1];
-    	  local_force(id_to_index(p2.id()), thread_id, 2) += std::get<1>(forces)[2];
-    	  local_force(id_to_index(p3.id()), thread_id, 0) += std::get<2>(forces)[0];
-    	  local_force(id_to_index(p3.id()), thread_id, 1) += std::get<2>(forces)[1];
-    	  local_force(id_to_index(p3.id()), thread_id, 2) += std::get<2>(forces)[2];
-
-	  return false;
-	}
-	return true;
+      if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
+        return false;
       }
-    case 3:
-      {
-	auto &p2 = *unique_particles.at(id_to_index(partners(1)));
-	auto &p3 = *unique_particles.at(id_to_index(partners(2)));
-	auto &p4 = *unique_particles.at(id_to_index(partners(3)));
+      auto const result =
+          calc_bonded_three_body_force(iaparams, box_geo, p1, p2, p3);
+      if (result) {
+        auto const &forces = result.value();
 
-	auto const result =
-	    calc_bonded_four_body_force(iaparams, box_geo, p1, p2, p3, p4);
-	if (result) {
-	  auto const &forces = result.value();
+        // p1.force() += std::get<0>(forces);
+        // p2.force() += std::get<1>(forces);
+        // p3.force() += std::get<2>(forces);
+        local_force(id_to_index(p1.id()), thread_id, 0) +=
+            std::get<0>(forces)[0];
+        local_force(id_to_index(p1.id()), thread_id, 1) +=
+            std::get<0>(forces)[1];
+        local_force(id_to_index(p1.id()), thread_id, 2) +=
+            std::get<0>(forces)[2];
+        local_force(id_to_index(p2.id()), thread_id, 0) +=
+            std::get<1>(forces)[0];
+        local_force(id_to_index(p2.id()), thread_id, 1) +=
+            std::get<1>(forces)[1];
+        local_force(id_to_index(p2.id()), thread_id, 2) +=
+            std::get<1>(forces)[2];
+        local_force(id_to_index(p3.id()), thread_id, 0) +=
+            std::get<2>(forces)[0];
+        local_force(id_to_index(p3.id()), thread_id, 1) +=
+            std::get<2>(forces)[1];
+        local_force(id_to_index(p3.id()), thread_id, 2) +=
+            std::get<2>(forces)[2];
 
-    	  local_force(id_to_index(p1.id()), thread_id, 0) += std::get<0>(forces)[0];
-    	  local_force(id_to_index(p1.id()), thread_id, 1) += std::get<0>(forces)[1];
-    	  local_force(id_to_index(p1.id()), thread_id, 2) += std::get<0>(forces)[2];
-    	  local_force(id_to_index(p2.id()), thread_id, 0) += std::get<1>(forces)[0];
-    	  local_force(id_to_index(p2.id()), thread_id, 1) += std::get<1>(forces)[1];
-    	  local_force(id_to_index(p2.id()), thread_id, 2) += std::get<1>(forces)[2];
-    	  local_force(id_to_index(p3.id()), thread_id, 0) += std::get<2>(forces)[0];
-    	  local_force(id_to_index(p3.id()), thread_id, 1) += std::get<2>(forces)[1];
-    	  local_force(id_to_index(p3.id()), thread_id, 2) += std::get<2>(forces)[2];
-    	  local_force(id_to_index(p4.id()), thread_id, 0) += std::get<3>(forces)[0];
-    	  local_force(id_to_index(p4.id()), thread_id, 1) += std::get<3>(forces)[1];
-    	  local_force(id_to_index(p4.id()), thread_id, 2) += std::get<3>(forces)[2];
-
-	  return false;
-	}
-
-	return true;
+        return false;
       }
+      return true;
+    }
+    case 3: {
+      auto &p2 = *unique_particles.at(id_to_index(partners(1)));
+      auto &p3 = *unique_particles.at(id_to_index(partners(2)));
+      auto &p4 = *unique_particles.at(id_to_index(partners(3)));
+
+      auto const result =
+          calc_bonded_four_body_force(iaparams, box_geo, p1, p2, p3, p4);
+      if (result) {
+        auto const &forces = result.value();
+
+        local_force(id_to_index(p1.id()), thread_id, 0) +=
+            std::get<0>(forces)[0];
+        local_force(id_to_index(p1.id()), thread_id, 1) +=
+            std::get<0>(forces)[1];
+        local_force(id_to_index(p1.id()), thread_id, 2) +=
+            std::get<0>(forces)[2];
+        local_force(id_to_index(p2.id()), thread_id, 0) +=
+            std::get<1>(forces)[0];
+        local_force(id_to_index(p2.id()), thread_id, 1) +=
+            std::get<1>(forces)[1];
+        local_force(id_to_index(p2.id()), thread_id, 2) +=
+            std::get<1>(forces)[2];
+        local_force(id_to_index(p3.id()), thread_id, 0) +=
+            std::get<2>(forces)[0];
+        local_force(id_to_index(p3.id()), thread_id, 1) +=
+            std::get<2>(forces)[1];
+        local_force(id_to_index(p3.id()), thread_id, 2) +=
+            std::get<2>(forces)[2];
+        local_force(id_to_index(p4.id()), thread_id, 0) +=
+            std::get<3>(forces)[0];
+        local_force(id_to_index(p4.id()), thread_id, 1) +=
+            std::get<3>(forces)[1];
+        local_force(id_to_index(p4.id()), thread_id, 2) +=
+            std::get<3>(forces)[2];
+
+        return false;
+      }
+
+      return true;
+    }
     default:
       throw BondInvalidSizeError{number_of_partners(iaparams)};
     }
@@ -478,9 +499,10 @@ void System::System::calculate_forces() {
       create_cabana_neighbor_kernel(*this, virial, elc_kernel, coulomb_kernel,
                                     dipoles_kernel, coulomb_u_kernel);
 
-  cabana_short_range(break_kernel, bond_kernel, first_neighbor_kernel, *cell_structure,
-                     get_interaction_range(), bonded_ias->maximal_cutoff(),
-                     verlet_criterion, propagation->integ_switch);
+  cabana_short_range(break_kernel, bond_kernel, first_neighbor_kernel,
+                     *cell_structure, get_interaction_range(),
+                     bonded_ias->maximal_cutoff(), verlet_criterion,
+                     propagation->integ_switch);
 
   // Force and Torque reduction
   reduce_cabana_forces_and_torques(*this, virial);
@@ -513,7 +535,6 @@ void System::System::calculate_forces() {
     return add_bonded_force(p1, bond_id, partners, bonded_ias, bond_breakage,
                             box_geo, virial, coulomb_kernel_ptr);
   };
-
 
   auto pair_kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
                       dipoles_kernel_ptr = get_ptr(dipoles_kernel),

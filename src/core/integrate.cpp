@@ -776,7 +776,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
       collision_detection->handle_collisions();
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
       cell_structure->rebuild_bond_list();
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM 
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 #endif
       bond_breakage->process_queue(*this);
     }

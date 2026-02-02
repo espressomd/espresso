@@ -40,8 +40,10 @@ void bond_broken_error(std::span<const int> partner_ids) {
   error_msg << "bond broken between particles ";
   bool first = true;
   for (auto partner_id : partner_ids) {
-    if (partner_id == -1) continue;
-    if (!first) error_msg << ", ";
+    if (partner_id == -1)
+      continue;
+    if (!first)
+      error_msg << ", ";
     error_msg << partner_id;
     first = false;
   }
