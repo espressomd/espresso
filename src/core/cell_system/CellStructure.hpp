@@ -180,7 +180,7 @@ public:
                        Cabana::TeamVectorOpTag>;
   using BondlistType = Kokkos::View<int *[4], Kokkos::LayoutRight>;
   using BondIDType = Kokkos::View<int *, Kokkos::LayoutRight>;
-  using BreakageType = Kokkos::View<bool *, Kokkos::LayoutRight>;
+  //using BreakageType = Kokkos::View<bool *, Kokkos::LayoutRight>;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 private:
@@ -204,7 +204,8 @@ private:
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   int m_cached_max_local_particle_id = 0;
   int m_max_id = 0;
-  int m_bond_numbers = 0;
+  int m_global_bond_numbers = 0;
+  int m_local_bond_numbers = 0;
   std::unique_ptr<Kokkos::View<int *>> m_id_to_index;
   std::unique_ptr<ForceType> m_local_force;
 #ifdef ESPRESSO_ROTATION
@@ -214,14 +215,18 @@ private:
   std::unique_ptr<VirialType> m_local_virial;
 #endif
   std::unique_ptr<ListType> m_verlet_list_cabana;
+  //std::unique_ptr<Kokkos::View<int *>> m_bondid_to_index;
   std::unique_ptr<BondlistType> m_bond_list_kokkos;
   std::unique_ptr<BondIDType> m_bond_id_kokkos;
-  std::unique_ptr<BreakageType> m_breakage_list_kokkos;
+  //std::unique_ptr<BreakageType> m_breakage_list_kokkos;
+#ifdef ESPRESSO_COLLISION_DETECTION
+  std::vector<int> m_new_bond_list;
+  std::vector<int> m_new_bond_id;
+#endif
   /** particle properties using individual Kokkos Views */
   std::unique_ptr<AoSoA_pack> m_aosoa;
   /** The local id-to-index for aosoa data */
   std::vector<Particle *> m_unique_particles;
-  //std::vector<Particle *> m_bond_particles;
   std::shared_ptr<KokkosHandle> m_kokkos_handle;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
@@ -466,15 +471,42 @@ public:
   int get_cached_max_local_particle_id() const {
     return m_cached_max_local_particle_id;
   }
-  int get_bond_numbers() const {
-    return m_bond_numbers;
+  //int get_global_bond_numbers() const {
+  //  return m_global_bond_numbers;
+  //}
+  //void add_global_bond_numbers() {
+  //  m_global_bond_numbers += 1;
+  //}
+  //void reset_global_bond_numbers() {
+  //  m_global_bond_numbers = 0;
+  //}
+  int get_local_bond_numbers() const {
+    return m_local_bond_numbers;
   }
-  void add_bond_numbers() {
-    m_bond_numbers += 1;
+  void add_local_bond_numbers() {
+    m_local_bond_numbers += 1;
   }
-  void reset_bond_numbers() {
-    m_bond_numbers = 0;
+  void reset_local_bond_numbers() {
+    m_local_bond_numbers = 0;
   }
+  void set_local_bond_numbers(int value) {
+    m_local_bond_numbers = value;
+  }
+#ifdef ESPRESSO_COLLISION_DETECTION
+  void clear_new_bonds() {
+    m_new_bond_list.clear();
+    m_new_bond_id.clear();
+  }
+#endif
+  void add_new_bond(int bond_id, std::vector<int> const &particle_ids) {
+#ifdef ESPRESSO_COLLISION_DETECTION
+    m_new_bond_list.reserve(m_new_bond_list.size() + 4);
+    m_new_bond_list.insert(m_new_bond_list.end(), particle_ids.begin(), particle_ids.end());
+    m_new_bond_id.emplace_back(bond_id);
+#endif
+    add_local_bond_numbers();
+  }
+  void rebuild_bond_list();
 #endif
 
   /**
@@ -761,9 +793,12 @@ public:
   auto const &get_unique_particles() const { return m_unique_particles; }
   auto const &get_verlet_list_cabana() const { return *m_verlet_list_cabana; }
   //auto const &get_bond_particles() const { return m_bond_particles; }
+  //auto &get_bondid_to_index() { return *m_bondid_to_index; }
   auto &get_bond_list_kokkos() const { return *m_bond_list_kokkos; }
   auto &get_bond_id_kokkos() const { return *m_bond_id_kokkos; }
+  //auto &get_breakage_list_kokkos() const { return *m_breakage_list_kokkos; }
   void clear_local_properties();
+  void clear_bond_properties();
 
   [[nodiscard]] auto is_verlet_list_cabana_rebuild_needed() const {
     return m_rebuild_verlet_list_cabana;

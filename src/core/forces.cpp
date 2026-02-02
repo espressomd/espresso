@@ -291,7 +291,6 @@ void System::System::calculate_forces() {
                                            coulomb.cutoff(),
                                            dipoles.cutoff(),
                                            collision_detection_cutoff};
-
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   update_cabana_state(*cell_structure, verlet_criterion,
                       get_interaction_range(), propagation->integ_switch);
@@ -319,59 +318,38 @@ void System::System::calculate_forces() {
 #ifdef ESPRESSO_CALIPER
   CALI_MARK_BEGIN("cabana_short_range");
 #endif
-  auto &bond_list = cell_structure->get_bond_list_kokkos();
-  auto &bond_ids = cell_structure->get_bond_id_kokkos();
-  Kokkos::realloc(bond_list, cell_structure->get_bond_numbers());
-  Kokkos::realloc(bond_ids, cell_structure->get_bond_numbers());
-  cell_structure->reset_bond_numbers();
-  int count = 0;
-  auto break_kernel = [&bond_breakage = *bond_breakage,
-                       &box_geo = *box_geo, &cell_structure = *cell_structure,
-		       &bond_list, &bond_ids, &count]
-			(Particle &p1, int bond_id, std::span<Particle *> partners) {
-    // Consider for bond breakage
-    if (partners.size() == 1u) { // pair bonds
-      auto d = box_geo.get_mi_vector(p1.pos(), partners[0]->pos()).norm();
-      if (bond_breakage.check_and_handle_breakage(
-	      p1.id(), {{partners[0]->id(), std::nullopt}}, bond_id, d)) {
-	return false;
-      }
-      bond_list(count, 0) = p1.id();
-      bond_list(count, 1) = partners[0]->id();
-      bond_list(count, 2) = -1;
-      bond_list(count, 3) = -1;
-    }
-    else if (partners.size() == 2u) { // angle bond
-      auto d =
-	  box_geo.get_mi_vector(partners[0]->pos(), partners[1]->pos()).norm();
-      if (bond_breakage.check_and_handle_breakage(
-	      p1.id(), {{partners[0]->id(), partners[1]->id()}}, bond_id, d)) {
-	return false;
-      }
-      bond_list(count, 0) = p1.id();
-      bond_list(count, 1) = partners[0]->id();
-      bond_list(count, 2) = partners[1]->id();
-      bond_list(count, 3) = -1;
-    }
-    else if (partners.size() == 3u) { // dihedral bond
-      bond_list(count, 0) = p1.id();
-      bond_list(count, 1) = partners[0]->id();
-      bond_list(count, 2) = partners[1]->id();
-      bond_list(count, 3) = partners[2]->id();
-    }
-    bond_ids(count) = bond_id;
-    count += 1;
-    cell_structure.add_bond_numbers();
-    return false;
-  };
-
   auto const &unique_particles = cell_structure->get_unique_particles();
   auto const &local_force = cell_structure->get_local_force();
 #ifdef ESPRESSO_NPT
   auto const &local_virial = cell_structure->get_local_virial();
 #endif
   auto &id_to_index = cell_structure->get_id_to_index();
+  auto break_kernel = [&bond_breakage = *bond_breakage,
+		       &id_to_index,
+		       &unique_particles,
+                       &box_geo = *box_geo](Kokkos::View<int *> const &partners, int const bond_id) {
+    auto &p1 = *unique_particles.at(id_to_index(partners(0)));
+    // Consider for bond breakage
+    if (partners(2) == -1) { // pair bonds
+      auto &p2 = *unique_particles.at(id_to_index(partners(1)));
+      auto d = box_geo.get_mi_vector(p1.pos(), p2.pos()).norm();
+      if (bond_breakage.check_and_handle_breakage(
+	      p1.id(), {{p2.id(), std::nullopt}}, bond_id, d)) {
+	return true;
+      }
+    } else if (partners(3) == -1) { // angle bond
+      auto &p2 = *unique_particles.at(id_to_index(partners(1)));
+      auto &p3 = *unique_particles.at(id_to_index(partners(2)));
+      auto d = box_geo.get_mi_vector(p2.pos(), p3.pos()).norm();
+      if (bond_breakage.check_and_handle_breakage(
+	      p1.id(), {{p2.id(), p3.id()}}, bond_id, d)) {
+	return true;
+      }
+    }
+    return false;
+  };
   auto bond_kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+       		      &bond_breakage = *bond_breakage,
                       &bonded_ias = *bonded_ias,
 		      virial,
 		      &local_force,
@@ -386,6 +364,7 @@ void System::System::calculate_forces() {
     auto const &iaparams = *bonded_ias.at(bond_id);
     auto const thread_id = omp_get_thread_num();
     auto &p1 = *unique_particles.at(id_to_index(partners(0)));
+
     switch (number_of_partners(iaparams)) {
     case 0:
       return false;
@@ -515,7 +494,7 @@ void System::System::calculate_forces() {
   if (not collision_detection->is_off()) {
     cell_structure->non_bonded_loop(collision_kernel, verlet_criterion);
   }
-#endif
+#endif // ESPRESSO_COLLISION_DETECTION
 
 #ifdef ESPRESSO_CALIPER
   CALI_MARK_END("cabana_short_range");

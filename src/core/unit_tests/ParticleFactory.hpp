@@ -58,7 +58,7 @@ struct ParticleFactory {
     if (p != nullptr and not p->is_ghost()) {
       p->bonds().insert(BondView(bond_id, partner_ids));
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-      system.cell_structure->add_bond_numbers();
+      system.cell_structure->add_local_bond_numbers();
 #endif
     }
     system.on_particle_change();

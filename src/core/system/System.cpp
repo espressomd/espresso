@@ -505,6 +505,7 @@ void System::on_integration_start() {
   invalidate_fetch_cache();
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   cell_structure->clear_local_properties();
+  //cell_structure->clear_bond_properties();
 #endif
 
 #ifdef ESPRESSO_ADDITIONAL_CHECKS
