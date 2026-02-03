@@ -177,10 +177,12 @@ inline auto simplify_symbol_containee_variant(Variant const &v) {
  */
 template <class To, class From>
 using allow_conversion =
-    std::integral_constant<bool, std::is_same_v<To, From> ||
-                                     (std::is_convertible_v<To, From> &&
-                                      std::is_floating_point_v<To> &&
-                                      std::is_arithmetic_v<From>)>;
+    std::integral_constant<bool, 
+        std::is_same_v<To, From> ||
+        (std::is_convertible_v<To, From> &&
+         std::is_floating_point_v<To> &&
+         std::is_arithmetic_v<From> &&
+        !std::is_same_v<From, bool>)>; 
 
 template <class To> struct conversion_visitor {
   template <class From> To operator()(const From &value) const {
