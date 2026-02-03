@@ -40,7 +40,7 @@
 #include <vector>
 
 namespace BondBreakage {
-//std::mutex queue_mtx;
+// std::mutex queue_mtx;
 
 // Variant holding any of the actions
 using Action = std::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
