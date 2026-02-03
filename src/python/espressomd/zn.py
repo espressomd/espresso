@@ -347,16 +347,12 @@ class Visualizer():
             data.info["vector_positions"] = field_data[:, 0]
 
             # normalize the directions
+            vector_directions = field_data[:, 1]
             magnitudes = np.linalg.norm(
-                field_data[:, 1], axis=1, keepdims=True)
-
+                vector_directions, axis=1, keepdims=True)
             if self.arrow_config['normalize']:
-                vector_directions = np.zeros_like(field_data[:, 1])
-                non_zero_mask = magnitudes.flatten() > 0
-                vector_directions[non_zero_mask] = field_data[:,
-                                                              1][non_zero_mask] / magnitudes[non_zero_mask]
-            else:
-                vector_directions = field_data[:, 1]
+                magnitudes[magnitudes.flatten() == 0.] = 1.
+                vector_directions = field_data[:, 1] / magnitudes
             data.info["vector_directions"] = vector_directions
 
             colormap = np.array(self.arrow_config['colormap'])
@@ -383,7 +379,7 @@ class Visualizer():
         if self.frame_count != 0 or len(self.zndraw) == 0:
             self.zndraw.append(data)
         else:
-            self.zndraw[0] = data        
+            self.zndraw[0] = data
 
         self.frame_count += 1
 
