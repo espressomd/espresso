@@ -350,9 +350,9 @@ void CellStructure::rebuild_bond_list() {
                                          int(new_local_bond_numbers))),
           new_bond_id_view);
 
-      Kokkos::realloc(m_bond_list_kokkos, new_local_bond_numbers);
+      Kokkos::realloc(get_bond_list_kokkos(), new_local_bond_numbers);
       m_bond_list_kokkos = std::move(rebuild_bond_list);
-      Kokkos::realloc(m_bond_id_kokkos, new_local_bond_numbers);
+      Kokkos::realloc(get_bond_id_kokkos(), new_local_bond_numbers);
       m_bond_id_kokkos = std::move(rebuild_bond_ids);
     } else {
       auto &bond_list = get_bond_list_kokkos();
