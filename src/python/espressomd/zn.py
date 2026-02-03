@@ -345,14 +345,12 @@ class Visualizer():
         if self.params["vector_field"] is not None:
             field_data = self.params["vector_field"]()
             data.info["vector_positions"] = field_data[:, 0]
-
-            # normalize the directions
-            vector_directions = field_data[:, 1]
+            vector_directions = np.copy(field_data[:, 1])
             magnitudes = np.linalg.norm(
                 vector_directions, axis=1, keepdims=True)
             if self.arrow_config['normalize']:
-                magnitudes[magnitudes.flatten() == 0.] = 1.
-                vector_directions = field_data[:, 1] / magnitudes
+                mask = magnitudes.flatten() > 0.
+                vector_directions[mask] /= magnitudes[mask]
             data.info["vector_directions"] = vector_directions
 
             colormap = np.array(self.arrow_config['colormap'])
