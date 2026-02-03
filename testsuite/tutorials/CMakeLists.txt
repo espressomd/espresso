@@ -36,6 +36,7 @@ add_custom_target(
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/doc/tutorials
           ${TUTORIALS_DIR} DEPENDS tutorials_python)
 
+tutorial_test(FILE test_tip4p.py)
 tutorial_test(FILE test_error_analysis_part1.py)
 tutorial_test(FILE test_error_analysis_part2.py)
 tutorial_test(FILE test_lennard_jones.py)
