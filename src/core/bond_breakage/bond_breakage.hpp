@@ -107,6 +107,10 @@ public:
   }
 
 private:
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  std::mutex queue_mtx;
+#endif
+
   void process_queue_impl(System::System &system);
 
   /** Add a particle+bond combination to the breakage queue */

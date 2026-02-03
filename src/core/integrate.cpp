@@ -773,6 +773,9 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #endif
 
 #ifdef ESPRESSO_COLLISION_DETECTION
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+      cell_structure->clear_new_bonds();
+#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
       collision_detection->handle_collisions();
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
       cell_structure->rebuild_bond_list();

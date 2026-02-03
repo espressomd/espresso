@@ -201,9 +201,6 @@ void CellStructure::set_index_map() {
 #ifdef ESPRESSO_CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
-#ifdef ESPRESSO_COLLISION_DETECTION
-  clear_new_bonds();
-#endif
   auto &unique_particles = m_unique_particles;
   unique_particles.clear();
   unique_particles.resize(count_local_particles());
