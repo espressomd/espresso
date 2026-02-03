@@ -343,7 +343,7 @@ required to compile |es| on other Linux distributions:
 .. _Installing requirements on Windows via WSL:
 
 Installing requirements on Windows via WSL
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To install the requirements on WSL, follow the instructions in the :ref:Installing requirements on Ubuntu`` section.
 
