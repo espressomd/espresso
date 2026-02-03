@@ -350,7 +350,7 @@ void System::System::calculate_forces() {
   };
   auto bond_kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
                       &bond_breakage = *bond_breakage,
-                      &bonded_ias = *bonded_ias, virial, &local_force,
+                      &bonded_ias = *bonded_ias, &local_force,
 #ifdef ESPRESSO_NPT
                       &local_virial,
 #endif

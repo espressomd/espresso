@@ -300,7 +300,7 @@ void CellStructure::set_index_map() {
 
 #ifdef ESPRESSO_COLLISION_DETECTION
 void CellStructure::rebuild_bond_list() {
-  if (m_new_bond_list.size() > 0) {
+  if (!m_new_bond_list.empty()) {
     auto new_bond_list_view =
         Kokkos::View<const int *, Kokkos::HostSpace,
                      Kokkos::MemoryTraits<Kokkos::Unmanaged>>(
@@ -350,10 +350,9 @@ void CellStructure::rebuild_bond_list() {
                                          int(new_local_bond_numbers))),
           new_bond_id_view);
 
-      m_bond_list_kokkos.reset(
-          new BondlistType("bond_list", new_local_bond_numbers));
+      Kokkos::realloc(m_bond_list_kokkos, new_local_bond_numbers);
       m_bond_list_kokkos = std::move(rebuild_bond_list);
-      m_bond_id_kokkos.reset(new BondIDType("bond_id", new_local_bond_numbers));
+      Kokkos::realloc(m_bond_id_kokkos, new_local_bond_numbers);
       m_bond_id_kokkos = std::move(rebuild_bond_ids);
     } else {
       auto &bond_list = get_bond_list_kokkos();
