@@ -122,10 +122,6 @@ class ASEInterface:
             # No type mapping provided, don't set symbols
             symbols = None
 
-        # Check for virtual sites
-        if any(p.is_virtual() for p in particles):
-            raise RuntimeError("ASE doesn't support virtual sites")
-
         # Create new atoms object
         self.atoms = ase.Atoms(
             positions=positions,

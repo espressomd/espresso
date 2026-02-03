@@ -59,10 +59,12 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
+#include <numbers>
 #include <optional>
 #include <ranges>
 #include <set>
@@ -100,15 +102,28 @@ void CellStructure::set_kokkos_handle(std::shared_ptr<KokkosHandle> handle) {
 }
 
 static auto estimate_max_counts(double pair_cutoff,
-                                std::size_t number_of_unique_particles) {
+                                std::size_t number_of_unique_particles,
+                                double local_box_volume,
+                                std::size_t num_local_particles) {
   if (std::isinf(pair_cutoff)) {
     return number_of_unique_particles;
   }
   if (pair_cutoff < 0.) {
     pair_cutoff = 0.;
   }
-  auto const volume = Utils::int_pow<3>(pair_cutoff);
-  auto max_counts = static_cast<std::size_t>(std::ceil(8. * volume));
+  // Estimate number of neighbors based on local density and cutoff sphere:
+  // volume n_neighbors = rho * (4/3) * pi * r^3, where rho = n_particles /
+  // volume
+  auto const local_density =
+      (local_box_volume > 0. && num_local_particles > 0)
+          ? static_cast<double>(num_local_particles) / local_box_volume
+          : 0.;
+  auto const cutoff_sphere_volume =
+      (4. / 3.) * std::numbers::pi * Utils::int_pow<3>(pair_cutoff);
+  // account for local fluctuations. Empirical.
+  auto const fluctuation_factor = 2.;
+  auto max_counts = static_cast<std::size_t>(
+      std::ceil(fluctuation_factor * local_density * cutoff_sphere_volume));
   std::size_t constexpr threshold_num = 16;
   if (max_counts < threshold_num) {
     max_counts = std::min(threshold_num, number_of_unique_particles);
@@ -124,9 +139,11 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
   using execution_space = Kokkos::DefaultExecutionSpace;
   auto const num_threads = execution_space().concurrency();
   auto const num_part = get_unique_particles().size();
-  auto max_counts = estimate_max_counts(pair_cutoff, num_part);
-#ifdef ESPRESSO_COLLISION_DETECTION
   auto const &system = get_system();
+  auto const local_box_volume = system.local_geo->volume();
+  auto max_counts = estimate_max_counts(pair_cutoff, num_part, local_box_volume,
+                                        get_num_local_particles_cached());
+#ifdef ESPRESSO_COLLISION_DETECTION
   if (system.has_collision_detection_enabled()) {
     // TODO: use other types of Verlet list data structures
     max_counts = num_part * 2ul;
@@ -220,6 +237,7 @@ void CellStructure::set_index_map() {
   }
   registered_index.clear();
   m_cached_max_local_particle_id = max_id;
+  m_num_local_particles_cached = unique_particles.size();
 }
 
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

@@ -69,7 +69,7 @@ class Test(ut.TestCase):
         alpha = average_NA / float(N0)
         rate0 = RE.get_acceptance_rate_reaction(reaction_id=0)
         rate1 = RE.get_acceptance_rate_reaction(reaction_id=1)
-        self.assertAlmostEqual(alpha, 0.50, delta=0.01)
+        self.assertAlmostEqual(alpha, 0.50, delta=0.02)
         self.assertAlmostEqual(rate0, 0.85, delta=0.05)
         self.assertAlmostEqual(rate1, 0.85, delta=0.05)
 

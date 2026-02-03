@@ -65,8 +65,8 @@ public:
     auto const factorial_expr =
         ::ReactionMethods::calculate_factorial_expression(reaction,
                                                           old_particle_numbers);
-    return std::pow(RE()->get_volume(), reaction.nu_bar) * reaction.gamma *
-           factorial_expr * std::exp(-E_pot_diff / RE()->kT);
+    return reaction.nu_bar * std::log(RE()->get_volume()) +
+           std::log(reaction.gamma) + factorial_expr - E_pot_diff / RE()->kT;
   }
 };
 } // namespace ScriptInterface::Testing
@@ -156,9 +156,9 @@ BOOST_FIXTURE_TEST_CASE(ReactionEnsemble_test, ParticleFactory) {
           auto const f_expr =
               calculate_factorial_expression(reaction, p_numbers);
           // acceptance = V^{nu_bar} * gamma * f_expr * exp(- E / T)
-          auto const acceptance_ref = std::pow(r_algo.volume, reaction.nu_bar) *
-                                      reaction.gamma * f_expr *
-                                      std::exp(-energy / r_algo.kT);
+          auto const acceptance_ref =
+              reaction.nu_bar * std::log(r_algo.volume) +
+              std::log(reaction.gamma) + f_expr + -energy / r_algo.kT;
           auto const acceptance = r_algo_si->calculate_acceptance_probability(
               reaction, energy, p_numbers);
           BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5 * tol);
@@ -233,7 +233,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionEnsemble_test, ParticleFactory) {
       auto const bf = r_algo_si->calculate_acceptance_probability(
           reaction, energy_move, {{type_D, 1}, {type_E, 0}});
 
-      auto const energy_end = r_algo.make_reaction_mc_move_attempt(
+      auto const energy_end = r_algo.make_reaction_mc_move_attempt_logarithmic(
           reaction_id, bf, 0., energy_move);
       BOOST_CHECK_CLOSE(energy_end, energy_ref, tol);
 
@@ -262,7 +262,8 @@ BOOST_FIXTURE_TEST_CASE(ReactionEnsemble_test, ParticleFactory) {
 
       // force move to be rejected
       auto const energy_reject =
-          r_algo.make_reaction_mc_move_attempt(reaction_id, 0., 0.2, 0.1);
+          r_algo.make_reaction_mc_move_attempt_logarithmic(
+              reaction_id, -std::numeric_limits<double>::max(), 0.2, 0.1);
       BOOST_CHECK_CLOSE(energy_reject, 0.2, tol);
 
       // the reaction was updated

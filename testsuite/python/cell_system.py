@@ -94,33 +94,18 @@ class CellSystem(ut.TestCase):
             n_square_types={1}, cutoff_regular=0)
         self.check_node_grid()
 
-    @utx.skipIfMissingFeatures(["LENNARD_JONES", "SHARED_MEMORY_PARALLELISM"])
+    @utx.skipIfMissingFeatures(["WCA", "SHARED_MEMORY_PARALLELISM"])
     def test_verlet_list_overflow(self):
         system = self.system
         system.part.clear()
-
-        system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            sigma=0.01, epsilon=1., cutoff=1.0, shift="auto")
-
-        n_small = int(5 * system.volume())
-        system.part.add(pos=np.random.random((n_small, 3)) * system.box_l)
-
-        system.time_step = 0.01
-        system.cell_system.skin = 0.1
-
-        system.integrator.set_steepest_descent(
-            f_max=1, max_displacement=0.01, gamma=1E-10)
-        system.integrator.run(200)
-
+        # place all particles on top of each other
+        system.part.add(pos=[[0, 0, 0]] * 1000)
+        system.non_bonded_inter[0, 0].wca.set_params(epsilon=1., sigma=0.01)
         system.integrator.set_vv()
 
-        # with link cell, there is no exception and warning
-        system.cell_system.use_verlet_lists = False
-        self.system.integrator.run(0, recalc_forces=True)
-
-        # with Verlet lists, there is a warning and 'use_verlet_list' changes
         system.cell_system.use_verlet_lists = True
-        self.system.integrator.run(0, recalc_forces=True)
+        system.time_step = 0.01
+        self.system.integrator.run(0)
         self.assertFalse(system.cell_system.use_verlet_lists)
 
 

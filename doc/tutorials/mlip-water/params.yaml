@@ -1,0 +1,112 @@
+n_basis_16_Apax:
+  log_level: info
+  nl_skin: 0.5
+n_basis_16_ApaxBatchPrediction:
+  batch_size: 1
+n_basis_16_PredictionMetrics:
+  figure_ymax: {}
+n_basis_4_Apax:
+  log_level: info
+  nl_skin: 0.5
+n_basis_4_ApaxBatchPrediction:
+  batch_size: 1
+n_basis_4_PredictionMetrics:
+  figure_ymax: {}
+n_basis_8_Apax:
+  log_level: info
+  nl_skin: 0.5
+n_basis_8_ApaxBatchPrediction:
+  batch_size: 1
+n_basis_8_PredictionMetrics:
+  figure_ymax: {}
+n_radial_5_Apax:
+  log_level: info
+  nl_skin: 0.5
+n_radial_5_ApaxBatchPrediction:
+  batch_size: 1
+n_radial_5_PredictionMetrics:
+  figure_ymax: {}
+n_radial_6_Apax:
+  log_level: info
+  nl_skin: 0.5
+n_radial_6_ApaxBatchPrediction:
+  batch_size: 1
+n_radial_6_PredictionMetrics:
+  figure_ymax: {}
+n_radial_7_Apax:
+  log_level: info
+  nl_skin: 0.5
+n_radial_7_ApaxBatchPrediction:
+  batch_size: 1
+n_radial_7_PredictionMetrics:
+  figure_ymax: {}
+nn_128-128_Apax:
+  log_level: info
+  nl_skin: 0.5
+nn_128-128_ApaxBatchPrediction:
+  batch_size: 1
+nn_128-128_PredictionMetrics:
+  figure_ymax: {}
+nn_16-16_Apax:
+  log_level: info
+  nl_skin: 0.5
+nn_16-16_ApaxBatchPrediction:
+  batch_size: 1
+nn_16-16_PredictionMetrics:
+  figure_ymax: {}
+nn_32-32_Apax:
+  log_level: info
+  nl_skin: 0.5
+nn_32-32_ApaxBatchPrediction:
+  batch_size: 1
+nn_32-32_PredictionMetrics:
+  figure_ymax: {}
+nn_64-64_Apax:
+  log_level: info
+  nl_skin: 0.5
+nn_64-64_ApaxBatchPrediction:
+  batch_size: 1
+nn_64-64_PredictionMetrics:
+  figure_ymax: {}
+r_max_2_Apax:
+  log_level: info
+  nl_skin: 0.5
+r_max_2_ApaxBatchPrediction:
+  batch_size: 1
+r_max_2_PredictionMetrics:
+  figure_ymax: {}
+r_max_3_Apax:
+  log_level: info
+  nl_skin: 0.5
+r_max_3_ApaxBatchPrediction:
+  batch_size: 1
+r_max_3_PredictionMetrics:
+  figure_ymax: {}
+r_max_4_Apax:
+  log_level: info
+  nl_skin: 0.5
+r_max_4_ApaxBatchPrediction:
+  batch_size: 1
+r_max_4_PredictionMetrics:
+  figure_ymax: {}
+r_max_5_5_Apax:
+  log_level: info
+  nl_skin: 0.5
+r_max_5_5_ApaxBatchPrediction:
+  batch_size: 1
+r_max_5_5_PredictionMetrics:
+  figure_ymax: {}
+r_max_5_Apax:
+  log_level: info
+  nl_skin: 0.5
+r_max_5_ApaxBatchPrediction:
+  batch_size: 1
+r_max_5_PredictionMetrics:
+  figure_ymax: {}
+r_max_6_Apax:
+  log_level: info
+  nl_skin: 0.5
+r_max_6_ApaxBatchPrediction:
+  batch_size: 1
+r_max_6_PredictionMetrics:
+  figure_ymax: {}

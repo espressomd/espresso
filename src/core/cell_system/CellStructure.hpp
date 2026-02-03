@@ -45,6 +45,7 @@
 #include <algorithm>
 #include <cassert>
 #include <concepts>
+#include <cstddef>
 #include <functional>
 #include <iterator>
 #include <memory>
@@ -200,6 +201,7 @@ private:
   double m_verlet_reuse = 0.;
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   int m_cached_max_local_particle_id = 0;
+  std::size_t m_num_local_particles_cached = 0;
   int m_max_id = 0;
   std::unique_ptr<Kokkos::View<int *>> m_id_to_index;
   std::unique_ptr<ForceType> m_local_force;
@@ -457,6 +459,9 @@ public:
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   int get_cached_max_local_particle_id() const {
     return m_cached_max_local_particle_id;
+  }
+  std::size_t get_num_local_particles_cached() const {
+    return m_num_local_particles_cached;
   }
 #endif
 

@@ -205,8 +205,7 @@ public:
   //! Get the maximum number of neighbors per particle.
   KOKKOS_INLINE_FUNCTION
   static std::size_t maxNeighbor(list_type const &list) {
-    // Stored during neighbor search.
-    return list.max_n;
+    return list.neighbors.extent(1);
   }
 
   //! Get the number of neighbors for a given particle index.

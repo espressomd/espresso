@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE ReactionMethods utility functions test
+#define BOOST_TEST_MODULE "ReactionMethods utility functions test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -26,17 +26,20 @@
 #include <cmath>
 #include <limits>
 
-BOOST_AUTO_TEST_CASE(factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i_test) {
+BOOST_AUTO_TEST_CASE(ln_factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i_test) {
   using namespace ReactionMethods;
   auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
 
   auto const reaction_ensemble_combinations = [](int N, int nu) {
-    return (N + nu < 0) ? 0. : std::tgamma(N + 1) / std::tgamma(N + nu + 1);
+    return (N + nu < 0) ? -std::numeric_limits<double>::max()
+                        : std::log(std::tgamma(N + 1)) -
+                              std::log(std::tgamma(N + nu + 1));
   };
 
   for (int N0 = 0; N0 < 6; ++N0) {
     for (int nu = -4; nu <= 4; ++nu) {
-      auto const val = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N0, nu);
+      auto const val =
+          ln_factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N0, nu);
       auto const ref = reaction_ensemble_combinations(N0, nu);
       BOOST_CHECK_CLOSE(val, ref, 10. * tol);
     }

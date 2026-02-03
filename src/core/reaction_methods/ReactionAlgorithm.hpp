@@ -56,7 +56,8 @@ public:
       std::unordered_map<int, double> const &exclusion_radius_per_type)
       : m_comm{comm}, kT{kT}, exclusion_range{exclusion_range},
         m_generator(Random::mt19937(std::seed_seq({seed, seed, seed}))),
-        m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0) {
+        m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0),
+        m_exponential_distribution(1.) {
     if (kT < 0.) {
       throw std::domain_error("Invalid value for 'kT'");
     }
@@ -185,14 +186,17 @@ public:
   std::optional<double> create_new_trial_state(int reaction_id);
   /**
    * Accept or reject a reaction MC move made by @ref create_new_trial_state
-   * based on a probability acceptance @c bf.
+   * based on a logarithmic probability acceptance @c ln_bf.
    * The previous state of the system is either restored from the cache if
    * the move is rejected, or cleared from the cache if the move is accepted.
    * @returns Potential energy of the system after the move was accepted or
    * rejected.
    */
-  double make_reaction_mc_move_attempt(int reaction_id, double bf,
-                                       double E_pot_old, double E_pot_new);
+  double make_reaction_mc_move_attempt_logarithmic(int reaction_id,
+                                                   double ln_bf,
+                                                   double E_pot_old,
+                                                   double E_pot_new);
+
   /**
    * Attempt displacement MC moves for particles of a given type.
    * Particles are selected without replacement.
@@ -238,6 +242,7 @@ private:
   std::mt19937 m_generator;
   std::normal_distribution<double> m_normal_distribution;
   std::uniform_real_distribution<double> m_uniform_real_distribution;
+  std::exponential_distribution<double> m_exponential_distribution;
 
   std::unordered_map<int, int>
   get_particle_numbers(SingleReaction const &reaction) const;
@@ -247,6 +252,9 @@ private:
   void check_exclusion_range(int p_id, int p_type);
   auto get_random_uniform_number() {
     return m_uniform_real_distribution(m_generator);
+  }
+  auto get_random_logarithmic_number() {
+    return m_exponential_distribution(m_generator);
   }
   auto get_random_velocity_vector() {
     return Utils::Vector3d{m_normal_distribution(m_generator),
