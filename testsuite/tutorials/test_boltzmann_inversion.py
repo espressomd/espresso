@@ -22,7 +22,8 @@ import importlib_wrapper
 import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/boltzmann_inversion/boltzmann_inversion.py")
+    "@TUTORIALS_DIR@/boltzmann_inversion/boltzmann_inversion.py",
+    p3m_params={"mesh": [16, 16, 16], "cao": 3})
 
 
 @skipIfMissingFeatures

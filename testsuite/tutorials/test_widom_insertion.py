@@ -18,7 +18,7 @@
 #
 
 import unittest as ut
-import importlib_wrapper 
+import importlib_wrapper
 import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(

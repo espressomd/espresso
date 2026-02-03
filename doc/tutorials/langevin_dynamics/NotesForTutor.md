@@ -1,6 +1,6 @@
-# Langevin dynamics
+# Tutorial: Langevin dynamics
 
-## Learning objectives (physics)
+## Physics learning objectives
 
 * Learning the basics of Brownian motion
 * Modeling the Brownian motion of a spherical object
@@ -14,7 +14,7 @@ After the tutorial, students should be able to:
 * Estimate the diffusion coefficient from time series of a particle's position or velocity
 * Name the limitations of the Langevin equation, particularly with regards to hydrodynamic interactions
 
-## Learning objectives (ESPResSo)
+## ESPResSo learning objectives
 
 * Setting up a system in which particles move according to the Langevin equation
 * Calculating the diffusion coefficient using observables and accumulators based
