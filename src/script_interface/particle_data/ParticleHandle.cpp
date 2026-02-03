@@ -500,27 +500,6 @@ ParticleHandle::ParticleHandle() {
                                       quat2vector(vs_rel.rel_orientation)}};
        }},
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
-#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
-      {"vs_com",
-       [this](Variant const &value) {
-         ParticleProperties::VirtualSitesCenterOfMassParameters vs_com{};
-         try {
-           auto const array = get_value<std::vector<int>>(value);
-           if (array.size() != 1) {
-             throw 0;
-           }
-           vs_com.to_molecule_id = get_value<int>(array[0]);
-         } catch (...) {
-           throw std::invalid_argument(
-               error_msg("vs_com", "must take the form [id]"));
-         }
-         set_particle_property([&vs_com](Particle &p) { p.vs_com() = vs_com; });
-       },
-       [this]() {
-         auto const &vs_com = get_particle_data(m_pid).vs_com();
-         return std::vector<Variant>{{vs_com.to_molecule_id}};
-       }},
-#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
       {"propagation",
        [this](Variant const &value) {
          auto const propagation = get_value<int>(value);
@@ -729,15 +708,22 @@ Variant ParticleHandle::do_call_method(std::string const &name,
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 #ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
   } else if (name == "vs_com_relate_to") {
+    auto &cell_structure = get_cell_structure()->get_cell_structure();
+    auto const molid = get_value<int>(params, "molid");
+    auto const maybe_exists_vs = get_pid_for_vs_com(cell_structure, molid);
     if (not context()->is_head_node()) {
       return {};
     }
-    auto const other_molid = get_value<int>(params, "molid");
-    if (other_molid < 0) {
-      throw std::domain_error("Invalid molecule id: " +
-                              std::to_string(other_molid));
+    if (molid < 0) {
+      throw std::domain_error("Invalid molecule id: " + std::to_string(molid));
     }
-    set_parameter("vs_com", Variant{std::vector<Variant>{{other_molid}}});
+    if (maybe_exists_vs) {
+      throw std::runtime_error(
+          "Molecule id: " + std::to_string(molid) +
+          " is already tracked by virtual site with particle id: " +
+          std::to_string(*maybe_exists_vs));
+    }
+    set_parameter("mol_id", params.at("molid"));
     set_parameter(
         "propagation",
         Variant{static_cast<int>(PropagationMode::TRANS_VS_CENTER_OF_MASS)});

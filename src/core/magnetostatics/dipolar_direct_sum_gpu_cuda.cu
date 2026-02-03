@@ -19,7 +19,7 @@
 
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
+#if defined(ESPRESSO_DIPOLES) and defined(ESPRESSO_CUDA)
 
 #include "magnetostatics/dipolar_direct_sum_gpu_cuda.cuh"
 
@@ -421,4 +421,4 @@ void DipolarDirectSum_kernel_wrapper_energy(float k, unsigned int n,
   cuda_safe_mem(cudaFree(periodic_gpu));
 }
 
-#endif // ESPRESSO_DIPOLAR_DIRECT_SUM
+#endif // defined(ESPRESSO_DIPOLES) and defined(ESPRESSO_CUDA)

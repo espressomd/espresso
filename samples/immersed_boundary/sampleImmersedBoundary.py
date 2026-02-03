@@ -73,7 +73,7 @@ if args.volcons:
     outputDir = "outputVolParaCUDA"
 
 # Add LB Fluid
-lbf = espressomd.lb.LBFluidWalberla(
+lbf = espressomd.lb.LBFluid(
     agrid=1, density=1, kinematic_viscosity=1, tau=system.time_step,
     ext_force_density=[force, 0, 0])
 system.lb = lbf

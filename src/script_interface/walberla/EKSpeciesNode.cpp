@@ -27,6 +27,7 @@
 #include "LatticeIndices.hpp"
 
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/reduce_optional.hpp>
@@ -59,6 +60,10 @@ Variant EKSpeciesNode::do_call_method(std::string const &name,
     }
     m_index = index;
     return 0;
+  }
+  if (not name.starts_with("get_")) {
+    context()->parallel_try_catch(
+        [&]() { ek_throw_if_expired(m_mpi_cart_comm_observer); });
   }
   if (name == "set_density") {
     auto const dens = get_value<double>(params, "value");

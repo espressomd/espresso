@@ -54,9 +54,9 @@ using ElectrostaticsActor =
                  std::shared_ptr<CoulombP3M>,
                  std::shared_ptr<ElectrostaticLayerCorrection>,
 #endif // ESPRESSO_P3M
-#ifdef ESPRESSO_GSL
+#ifdef ESPRESSO_MMM1D
                  std::shared_ptr<CoulombMMM1D>,
-#endif // ESPRESSO_GSL
+#endif // ESPRESSO_MMM1D
 #ifdef ESPRESSO_SCAFACOS
                  std::shared_ptr<CoulombScafacos>,
 #endif // ESPRESSO_SCAFACOS
@@ -83,9 +83,9 @@ struct has_pressure<ElectrostaticLayerCorrection> : std::false_type {};
 #ifdef ESPRESSO_SCAFACOS
 template <> struct has_pressure<CoulombScafacos> : std::false_type {};
 #endif // ESPRESSO_SCAFACOS
-#ifdef ESPRESSO_GSL
+#ifdef ESPRESSO_MMM1D
 template <> struct has_pressure<CoulombMMM1D> : std::false_type {};
-#endif // ESPRESSO_GSL
+#endif // ESPRESSO_MMM1D
 
 } // namespace traits
 } // namespace Coulomb

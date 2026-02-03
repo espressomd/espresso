@@ -75,24 +75,24 @@ class Test(ut.TestCase):
 
     if espressomd.has_features(["P3M", "CUDA"]) and espressomd.gpu_available():
         test_p3m_gpu_metallic = tests_common.generate_test_for_actor_class(
-            system.electrostatics, espressomd.electrostatics.P3MGPU,
+            system.electrostatics, espressomd.electrostatics.P3M,
             dict(prefactor=2., epsilon=0., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
                  cao=2, mesh=[8, 10, 8], alpha=12., accuracy=0.01, tune=False,
-                 check_neutrality=True, charge_neutrality_tolerance=7e-12))
+                 check_neutrality=True, charge_neutrality_tolerance=7e-12, gpu=True))
         test_p3m_gpu_non_metallic = tests_common.generate_test_for_actor_class(
-            system.electrostatics, espressomd.electrostatics.P3MGPU,
+            system.electrostatics, espressomd.electrostatics.P3M,
             dict(prefactor=2., epsilon=3., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
                  cao=2, mesh=[8, 8, 8], alpha=12., accuracy=0.01, tune=False,
-                 check_neutrality=True, charge_neutrality_tolerance=7e-12))
+                 check_neutrality=True, charge_neutrality_tolerance=7e-12, gpu=True))
         test_p3m_gpu_elc = tests_common.generate_test_for_actor_class(
             system.electrostatics, espressomd.electrostatics.ELC,
             dict(gap_size=2., maxPWerror=1e-3, const_pot=True, pot_diff=-3.,
                  delta_mid_top=0.5, delta_mid_bot=0.5, check_neutrality=False,
-                 actor=espressomd.electrostatics.P3MGPU(
+                 actor=espressomd.electrostatics.P3M(
                      prefactor=2., r_cut=1.5, cao=2, mesh=[8, 8, 8],
-                     alpha=12., accuracy=0.01, tune=False)))
+                     alpha=12., accuracy=0.01, tune=False, gpu=True)))
 
-    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "GSL"])
+    @utx.skipIfMissingFeatures(["MMM1D"])
     def test_mmm1d_cpu(self):
         self.system.periodicity = [False, False, True]
         self.system.cell_system.set_n_square()
@@ -109,7 +109,7 @@ class Test(ut.TestCase):
             with self.assertRaisesRegex(ValueError, f"Parameter '{key}' must be > 0"):
                 espressomd.electrostatics.MMM1D(**invalid_params)
 
-    @utx.skipIfMissingFeatures(["P3M", "GSL"])
+    @utx.skipIfMissingFeatures(["P3M", "MMM1D"])
     def test_solvers_rollback(self):
         # swapping two solvers should safely rollback to last valid solver
         self.system.periodicity = [False, False, True]
@@ -126,7 +126,7 @@ class Test(ut.TestCase):
         self.assertAlmostEqual(
             self.system.analysis.energy()["coulomb"], ref_energy, delta=1e-7)
 
-    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "GSL"])
+    @utx.skipIfMissingFeatures(["MMM1D"])
     def test_charge_neutrality_check(self):
         self.system.part.add(pos=(0.0, 0.0, 0.0), q=1.)
         self.system.periodicity = [False, False, True]
@@ -150,7 +150,7 @@ class Test(ut.TestCase):
         self.assertFalse(actor.check_neutrality)
         self.assertIsNone(actor.charge_neutrality_tolerance)
 
-    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "GSL"])
+    @utx.skipIfMissingFeatures(["MMM1D"])
     def test_mmm1d_cpu_tuning(self):
         self.system.periodicity = [False, False, True]
         self.system.cell_system.set_n_square()
@@ -172,7 +172,6 @@ class Test(ut.TestCase):
     def test_elc_p3m_exceptions(self):
         P3M = espressomd.electrostatics.P3M
         ELC = espressomd.electrostatics.ELC
-        P3MGPU = espressomd.electrostatics.P3MGPU
         # create valid solvers
         dh = espressomd.electrostatics.DH(prefactor=1.2, kappa=0.8, r_cut=2.0)
         p3m_params = dict(prefactor=1., epsilon=0.1, accuracy=1e-2,
@@ -189,7 +188,7 @@ class Test(ut.TestCase):
             P3M(**{**p3m_params, 'mesh': [8, 8]})
         if espressomd.has_features(["CUDA"]) and espressomd.gpu_available():
             with self.assertRaisesRegex(ValueError, "P3M GPU only implemented in single-precision mode"):
-                P3MGPU(single_precision=False, **p3m_params)
+                P3M(single_precision=False, gpu=True, **p3m_params)
         with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Coulomb::ElectrostaticLayerCorrection isn't supported by ELC"):
             ELC(gap_size=2., maxPWerror=1., actor=elc)
         with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Coulomb::DebyeHueckel isn't supported by ELC"):

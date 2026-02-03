@@ -379,8 +379,8 @@ In the following example, a particle is advected by a fluid flowing along the x-
     system = espressomd.System(box_l=[8., 8., 8.])
     system.time_step = 0.01
     system.cell_system.skin = 0.
-    lbf = espressomd.lb.LBFluidWalberla(agrid=1., tau=0.01, density=1.,
-                                        kinematic_viscosity=1.)
+    lbf = espressomd.lb.LBFluid(agrid=1., tau=0.01, density=1.,
+                                kinematic_viscosity=1.)
     system.lb = lbf
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
     lbf[:, :, :].velocity = [0.1, 0., 0.]
@@ -430,21 +430,19 @@ To set up a COM virtual site:
 #. Place the COM virtual site -it can be at an arbitrary position-
    and relate it to the corresponding particles via the molecule ID ``mol_id``::
 
-       vs_mol_id = 2
        vs_type = 1
-       vs = system.part.add(
-           pos=[0, 0, 0], type=vs_type, mol_id=vs_mol_id)
+       vs = system.part.add(pos=[0, 0, 0], type=vs_type)
        vs.vs_com_relate_to(mol_id)
 
    The :meth:`~espressomd.particle_data.ParticleHandle.is_virtual`
-   method of particle ``vs`` will now return ``True``, and its
+   method of particle ``vs`` will now return ``True``, its
    :attr:`~espressomd.particle_data.ParticleHandle.propagation`
-   attribute will return the correct combination of flags.
+   attribute will return the correct combination of flags, and its
+   :attr:`~espressomd.particle_data.ParticleHandle.mol_id`
+   attribute will be set to the tracked molecule id.
    To avoid malfunctioning in the simulations, it is recommended to explicitly
-   assign type and molecule ID to the COM virtual sites that do not conflict with
-   those of the non-virtual particles.
-   The virtual site is related to the corresponding particles with the method
-   ``vs_com_relate_to()``.
+   assign a type to the COM virtual sites that do not conflict with
+   those of the real particles.
 
 #. Repeat the previous step with more virtual sites, if desired.
 
@@ -458,8 +456,7 @@ Please note:
   ``vs_com_relate_to()``, whose argument can be either the molecule ID of the set of
   particles or a particle (ParticleHandle) from that set, from which the molecule ID
   can be extracted.
-- A set of particles or a molecule can be assigned to different COM virtual sites;
-  however, a COM virtual site can only be related to a single set or molecule.
+- Each molecule id can only have at most one COM virtual site.
 - Virtual sites can not be related to a set of particles or a molecule containing other
   virtual sites, since the forces of the latter will not be transfered. Therefore,
   it is important to keep clear track of the molecule IDs in the system. Remember
@@ -478,7 +475,7 @@ Please note:
        # Fix particle in space
        pulling_part.fix = [True, True, True]
        # Add harmonic interaction
-       hb = espressomd.interactions.HarmonicBond(k=5, r_0=0, r_cut=10.)
+       hb = espressomd.interactions.HarmonicBond(k=5., r_0=0., r_cut=10.)
        system.bonded_inter.add(hb)
        # Add harmonic interaction between the virtual site and fixed pulling particle
        pulling_part.add_bond((hb, vs))

@@ -142,7 +142,7 @@ struct ShortRangeCutoff {
                     std::visit(*this, actor->base_solver));
   }
 #endif // ESPRESSO_P3M
-#ifdef ESPRESSO_GSL
+#ifdef ESPRESSO_MMM1D
   auto operator()(std::shared_ptr<CoulombMMM1D> const &) const {
     return std::numeric_limits<double>::infinity();
   }
@@ -196,7 +196,7 @@ struct LongRangeForce {
     actor->add_long_range_forces();
   }
   /* Several algorithms only provide near-field kernels */
-#ifdef ESPRESSO_GSL
+#ifdef ESPRESSO_MMM1D
   void operator()(std::shared_ptr<CoulombMMM1D> const &) const {}
 #endif
   void operator()(std::shared_ptr<DebyeHueckel> const &) const {}
@@ -209,7 +209,7 @@ struct LongRangeEnergy {
     return actor->long_range_energy();
   }
   /* Several algorithms only provide near-field kernels */
-#ifdef ESPRESSO_GSL
+#ifdef ESPRESSO_MMM1D
   auto operator()(std::shared_ptr<CoulombMMM1D> const &) const { return 0.; }
 #endif
   auto operator()(std::shared_ptr<DebyeHueckel> const &) const { return 0.; }

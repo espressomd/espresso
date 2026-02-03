@@ -37,7 +37,7 @@
 
 #include <config/config.hpp>
 
-#if defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)
+#ifdef ESPRESSO_MMM1D
 
 #include "electrostatics/actor.hpp"
 
@@ -131,4 +131,4 @@ private:
   void sanity_checks_cell_structure() const;
 };
 
-#endif // defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)
+#endif // ESPRESSO_MMM1D

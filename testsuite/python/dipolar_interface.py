@@ -40,19 +40,18 @@ class Test(ut.TestCase):
 
     if espressomd.has_features("DIPOLES"):
         test_dds_cpu = tests_common.generate_test_for_actor_class(
-            system.magnetostatics, espressomd.magnetostatics.DipolarDirectSumCpu,
+            system.magnetostatics, espressomd.magnetostatics.DipolarDirectSum,
             dict(prefactor=3.4))
 
     if espressomd.has_features("DIPOLES"):
         test_dds_replica_cpu = tests_common.generate_test_for_actor_class(
-            system.magnetostatics, espressomd.magnetostatics.DipolarDirectSumCpu,
+            system.magnetostatics, espressomd.magnetostatics.DipolarDirectSum,
             dict(prefactor=3.4, n_replicas=3))
 
-    if espressomd.has_features(
-            "DIPOLAR_DIRECT_SUM") and espressomd.gpu_available():
+    if espressomd.has_features("DIPOLES") and espressomd.gpu_available():
         test_dds_gpu = tests_common.generate_test_for_actor_class(
-            system.magnetostatics, espressomd.magnetostatics.DipolarDirectSumGpu,
-            dict(prefactor=3.4))
+            system.magnetostatics, espressomd.magnetostatics.DipolarDirectSum,
+            dict(prefactor=3.4, gpu=True))
 
     if espressomd.has_features("DP3M"):
         test_dp3m_metallic = tests_common.generate_test_for_actor_class(
@@ -72,7 +71,7 @@ class Test(ut.TestCase):
 
     def test_dds_mixed_particles(self):
         # check that non-magnetic particles don't influence the DDS kernels
-        actor = espressomd.magnetostatics.DipolarDirectSumCpu(
+        actor = espressomd.magnetostatics.DipolarDirectSum(
             prefactor=1., n_replicas=2)
         self.system.magnetostatics.solver = actor
         energy1 = self.system.analysis.energy()["dipolar"]
@@ -81,17 +80,16 @@ class Test(ut.TestCase):
         self.assertAlmostEqual(energy1, energy2, delta=1e-12)
 
     def test_exceptions_non_p3m(self):
-        DDSR = espressomd.magnetostatics.DipolarDirectSumCpu
-        DDSG = espressomd.magnetostatics.DipolarDirectSumGpu
+        DDSR = espressomd.magnetostatics.DipolarDirectSum
         MDLC = espressomd.magnetostatics.DLC
         has_gpu = espressomd.gpu_available()
         # check runtime errors and input parameters
-        if espressomd.has_features("DIPOLAR_DIRECT_SUM") and has_gpu:
-            ddsg = DDSG(prefactor=1.)
-            with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Dipoles::DipolarDirectSumGpu isn't supported by DLC"):
-                MDLC(gap_size=2., maxPWerror=0.1, actor=ddsg)
+        if espressomd.has_features("CUDA") and has_gpu:
+            ddsr_gpu = DDSR(prefactor=1., gpu=True)
+            with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Dipoles::DipolarDirectSum on GPU isn't supported by DLC"):
+                MDLC(gap_size=2., maxPWerror=0.1, actor=ddsr_gpu)
             with self.assertRaisesRegex(ValueError, "Parameter 'n_replicas' must be >= 0"):
-                DDSG(prefactor=1., n_replicas=-2)
+                DDSR(prefactor=1., n_replicas=-2, gpu=True)
         with self.assertRaisesRegex(RuntimeError, "Parameter 'actor' is missing"):
             MDLC(gap_size=2., maxPWerror=0.1)
         with self.assertRaisesRegex(RuntimeError, "Parameter 'n_replica' is not a valid parameter"):

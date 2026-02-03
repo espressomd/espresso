@@ -131,14 +131,14 @@ struct ShortRangeEnergyKernel {
         }};
   }
 #endif // ESPRESSO_P3M
-#ifdef ESPRESSO_GSL
+#ifdef ESPRESSO_MMM1D
   result_type operator()(std::shared_ptr<CoulombMMM1D> const &actor) const {
     return kernel_type{
         [&actor](Utils::Vector3d const &, Utils::Vector3d const &, double q1q2,
                  Utils::Vector3d const &d,
                  double dist) { return actor->pair_energy(q1q2, d, dist); }};
   }
-#endif // ESPRESSO_GSL
+#endif // ESPRESSO_MMM1D
 #endif // ESPRESSO_ELECTROSTATICS
 };
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2022 The ESPResSo project
+# Copyright (C) 2016-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -32,11 +32,13 @@ add_subdirectory(cluster_analysis)
 add_subdirectory(code_info)
 add_subdirectory(collision_detection)
 add_subdirectory(constraints)
+add_subdirectory(ek)
 add_subdirectory(electrostatics)
 add_subdirectory(galilei)
 add_subdirectory(h5md)
 add_subdirectory(integrators)
 add_subdirectory(interactions)
+add_subdirectory(lb)
 add_subdirectory(lees_edwards)
 add_subdirectory(magnetostatics)
 add_subdirectory(math)

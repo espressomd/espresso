@@ -23,8 +23,8 @@ add_custom_target(tutorials)
 add_custom_target(tutorials_html)
 add_custom_target(tutorials_python)
 
-configure_file(Readme.md ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-configure_file(convert.py ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(Readme.md Readme.md COPYONLY)
+configure_file(convert.py.in convert.py)
 
 # Convert a tutorial to the Python and HTML formats. Make these files
 # dependencies of targets `tutorials_html` and `tutorials_python`.
@@ -121,4 +121,5 @@ add_subdirectory(widom_insertion)
 add_subdirectory(electrodes)
 add_subdirectory(grand_canonical_monte_carlo)
 add_subdirectory(mlip)
+add_subdirectory(mlip-water)
 add_subdirectory(boltzmann_inversion)

@@ -42,11 +42,7 @@ class ElectrostaticLayerCorrection
     : public Actor<ElectrostaticLayerCorrection,
                    ::ElectrostaticLayerCorrection> {
 
-  using BaseSolver = std::variant<
-#ifdef ESPRESSO_CUDA
-      std::shared_ptr<CoulombP3M<Arch::CUDA>>,
-#endif // ESPRESSO_CUDA
-      std::shared_ptr<CoulombP3M<Arch::CPU>>>;
+  using BaseSolver = std::variant<std::shared_ptr<CoulombP3M>>;
   BaseSolver m_solver;
 
   void on_bind_system(::System::System &) override {
@@ -85,14 +81,7 @@ public:
     ::ElectrostaticLayerCorrection::BaseSolver solver;
     auto so_ptr = get_value<ObjectRef>(params, "actor");
     context()->parallel_try_catch([&]() {
-#ifdef ESPRESSO_CUDA
-      if (auto so = std::dynamic_pointer_cast<CoulombP3M<Arch::CUDA>>(so_ptr)) {
-        solver = so->actor();
-        m_solver = so;
-        return;
-      }
-#endif // ESPRESSO_CUDA
-      if (auto so = std::dynamic_pointer_cast<CoulombP3M<Arch::CPU>>(so_ptr)) {
+      if (auto so = std::dynamic_pointer_cast<CoulombP3M>(so_ptr)) {
         solver = so->actor();
         m_solver = so;
         return;

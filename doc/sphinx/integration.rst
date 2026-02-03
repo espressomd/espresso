@@ -720,7 +720,7 @@ where :math:`\vec{u}(\vec{x},t)` is the fluid velocity at position :math:`\vec{x
 Different from the Langevin thermostat, here, the friction is calculated with respect to a moving fluid. 
 
 An LB fluid must be used to provide the fluid velocity, while also including hydrodynamic interactions between particles.
-The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluidWalberla` or :class:`espressomd.lb.LBFluidWalberlaGPU`.
+The LB thermostat expects an instance of :class:`espressomd.lb.LBFluid`.
 Temperature is set via the ``kT`` argument of the LB fluid.
 
 The magnitude of the frictional coupling can be adjusted by the
@@ -731,8 +731,8 @@ parameter ``gamma``. To enable the LB thermostat, use::
     system = espressomd.System(box_l=[8., 8., 8.])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    lbf = espressomd.lb.LBFluidWalberla(agrid=1., tau=0.01, density=1.,
-                                        kinematic_viscosity=1.)
+    lbf = espressomd.lb.LBFluid(agrid=1., tau=0.01, density=1.,
+                                kinematic_viscosity=1.)
     system.lb = lbf
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
     system.part.add(pos=[0., 0., 0.], ext_force=[0., 0., 1.])

@@ -76,23 +76,21 @@ if 'INT.NPT' not in modes and 'LB.GPU' not in modes and (
 lbf_class = None
 lb_lattice = None
 if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
-    if 'LB.GPU' in modes and espressomd.gpu_available():
-        lbf_class = espressomd.lb.LBFluidWalberlaGPU
-    elif 'LB.CPU' in modes:
-        lbf_class = espressomd.lb.LBFluidWalberla
+    if 'LB.CPU' in modes or 'LB.GPU' in modes and espressomd.gpu_available():
+        lbf_class = espressomd.lb.LBFluid
     if le_active:
         lb_lattice_kwargs = {'agrid': 2.0, 'n_ghost_layers': 1}
     else:
         lb_lattice_kwargs = {'agrid': 2.0, 'n_ghost_layers': 2}
-    lb_lattice = espressomd.lb.LatticeWalberla(**lb_lattice_kwargs)
+    lb_lattice = espressomd.lb.Lattice(**lb_lattice_kwargs)
     lb_lattice_kwargs['blocks_per_mpi_rank'] = [1, 1, 2]
-    lb_lattice_blocks_per_mpi = espressomd.lb.LatticeWalberla(
+    lb_lattice_blocks_per_mpi = espressomd.lb.Lattice(
         **lb_lattice_kwargs)
 if lbf_class:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
     lbf = lbf_class(
         lattice=lb_lattice, kinematic_viscosity=1.3, density=1.5,
-        tau=system.time_step)
+        tau=system.time_step, gpu='LB.GPU' in modes)
     wall1 = espressomd.shapes.Wall(normal=(1, 0, 0), dist=1.0)
     wall2 = espressomd.shapes.Wall(normal=(-1, 0, 0),
                                    dist=-(system.box_l[0] - 1.0))
@@ -144,17 +142,14 @@ system.comfixed.types = [0, 2]
 p_slice = system.part.by_ids([4, 1])
 
 if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
-    if espressomd.gpu_available() and 'P3M.GPU' in modes:
-        ActorP3M = espressomd.electrostatics.P3MGPU
-    else:
-        ActorP3M = espressomd.electrostatics.P3M
-    p3m = ActorP3M(
+    p3m = espressomd.electrostatics.P3M(
         prefactor=1.0,
         accuracy=0.1,
         mesh=10,
         cao=1,
         alpha=1.0,
         r_cut=1.0,
+        gpu=espressomd.gpu_available() and 'P3M.GPU' in modes,
         timings=15,
         tune_limits=[8, 12],
         tune=False)

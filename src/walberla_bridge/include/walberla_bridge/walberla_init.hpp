@@ -31,7 +31,13 @@ void mpi_init();
 /** @brief Release waLBerla's MPI manager and environment. */
 void mpi_deinit();
 
+/** @brief Re-initialize waLBerla's MPI Cartesian communicator. */
+void mpi_reinit(int const *cart_topol);
+
 /** @brief Get a lock on waLBerla's global resources for VTK. */
 std::unique_ptr<ResourceManager> get_vtk_dependent_resources();
+
+/** @brief Get an observer on waLBerla's MPI Cartesian communicator status. */
+ResourceObserver get_mpi_cart_comm_observer();
 
 } // namespace walberla

@@ -429,6 +429,7 @@ target_compile_options(
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-float-conversion>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-int-float-conversion>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-float-conversion>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-tautological-constant-compare>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM,GNU>>:-Wno-ctad-maybe-unsupported>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
@@ -495,6 +496,11 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4
   target_compile_options(espresso_compiler_flags
                          INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-ffloat-store>)
 endif()
+
+# allow infinities
+target_compile_options(
+  espresso_compiler_flags
+  INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-fno-finite-math-only>)
 
 #
 # Sanitizers
@@ -917,7 +923,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        007e77e0 # v7.2 with patches
+    GIT_TAG        17fc54c8 # v7.2 with patches
   )
   # cmake-format: on
   string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR

@@ -41,6 +41,8 @@ public:
     add_parameters({
         {"n_replicas", AutoParameter::read_only,
          [this]() { return actor()->n_replicas; }},
+        {"gpu", AutoParameter::read_only,
+         [this]() { return actor()->is_gpu(); }},
     });
   }
 
@@ -48,7 +50,8 @@ public:
     context()->parallel_try_catch([this, &params]() {
       m_actor = std::make_shared<CoreActorClass>(
           get_value<double>(params, "prefactor"),
-          get_value<int>(params, "n_replicas"));
+          get_value<int>(params, "n_replicas"),
+          get_value_or(params, "gpu", false));
     });
   }
 };

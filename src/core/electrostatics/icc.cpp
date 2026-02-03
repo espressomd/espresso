@@ -279,7 +279,7 @@ struct SanityChecksICC {
 #ifdef ESPRESSO_CUDA
   void operator()(std::shared_ptr<CoulombP3M> const &p) const {
     if (p->is_gpu()) {
-      throw std::runtime_error("ICC does not work with P3MGPU");
+      throw std::runtime_error("ICC does not work with P3M on GPU");
     }
   }
 #endif // ESPRESSO_CUDA

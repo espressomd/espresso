@@ -133,7 +133,7 @@ void BindAtPointOfCollision::handle_collisions(
     auto const pos2 = p1->pos() - vec21 * (1. - vs_placement);
 
     auto handle_particle = [&
-#if defined(__clang__) and defined(__cray__)
+#if defined(__clang__) and defined(__cray__) or defined(__INTEL_LLVM_COMPILER)
                             ,
                             pid1 = pid1, pid2 = pid2
 #endif

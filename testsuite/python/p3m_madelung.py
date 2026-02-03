@@ -229,7 +229,7 @@ class Test(ut.TestCase):
                 check()
         if espressomd.has_features("CUDA") and espressomd.gpu_available():
             with self.subTest(msg=f"P3M GPU single_precision=True"):
-                p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
+                p3m = espressomd.electrostatics.P3M(gpu=True, **p3m_params)
                 self.system.electrostatics.solver = p3m
                 check()
 
@@ -269,7 +269,7 @@ class Test(ut.TestCase):
                 check(pressure=False)
         if espressomd.has_features("CUDA") and espressomd.gpu_available():
             with self.subTest(msg=f"P3M GPU single_precision=True"):
-                p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
+                p3m = espressomd.electrostatics.P3M(gpu=True, **p3m_params)
                 self.system.electrostatics.solver = p3m
                 check(pressure=True)
                 elc = espressomd.electrostatics.ELC(actor=p3m, **elc_params)
@@ -307,7 +307,7 @@ class Test(ut.TestCase):
             with self.subTest(msg=f"P3M GPU single_precision=True"):
                 p3m_params = dict(prefactor=1., accuracy=3e-7, mesh=42,
                                   r_cut=5.5, cao=7, alpha=0.709017, tune=False)
-                p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
+                p3m = espressomd.electrostatics.P3M(gpu=True, **p3m_params)
                 self.system.electrostatics.solver = p3m
                 check()
 

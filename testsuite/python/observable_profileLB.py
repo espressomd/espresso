@@ -197,31 +197,31 @@ class ObservableProfileLBCommon:
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class ObservableProfileWalberlaDoublePrecisionCPU(
         ObservableProfileLBCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class ObservableProfileWalberlaSinglePrecisionCPU(
         ObservableProfileLBCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class ObservableProfileWalberlaDoublePrecisionGPU(
         ObservableProfileLBCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class ObservableProfileWalberlaSinglePrecisionGPU(
         ObservableProfileLBCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

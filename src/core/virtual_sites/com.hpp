@@ -26,8 +26,13 @@
 #include "BoxGeometry.hpp"
 #include "cell_system/CellStructure.hpp"
 
+#include <optional>
+
 void vs_com_update_particles(CellStructure &cell_structure,
                              BoxGeometry const &box_geo);
 void vs_com_back_transfer_forces_and_torques(CellStructure &cell_structure);
+
+std::optional<int> get_pid_for_vs_com(CellStructure &cell_structure,
+                                      int mol_id);
 
 #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS

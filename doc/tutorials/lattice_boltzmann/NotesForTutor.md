@@ -1,41 +1,43 @@
-# Part 1: The Lattice-Boltzmann method
+# Tutorial: lattice-Boltzmann
 
-## Physics learning goals
+## Part 1: the lattice-Boltzmann method
+
+### Physics learning objectives
 
 After the tutorial, students should be able to:
 
 * Explain the basic idea of the Lattice-Boltzmann method
 
-## ESPResSo learning goals
+### ESPResSo learning objectives
 
 In the course of this tutorial, students should learn to:
 
 * Set up a Lattice-Boltzmann fluid
 
-# Part 2: Planar Poiseuille flow
+## Part 2: planar Poiseuille flow
 
-## Physics learning goals
+### Physics learning objectives
 
 After the tutorial, students should be able to:
 
 * Describe the geometry and expected flow field of a Poiseuille flow
 
-## ESPResSo learning goals
+### ESPResSo learning objectives
 
 In the course of this tutorial, students should learn to:
 
 * Set up an LB fluid with LB boundaries
 * Retrieve data from the LB grid
 
-# Part 3: Sedimentation
+## Part 3: sedimentation
 
-## Physics learning goals
+### Physics learning objectives
 
 After the tutorial, students should be able to:
 
 * Describe hydrodynamic effects on particle diffusion
 
-## ESPResSo learning goals
+### ESPResSo learning objectives
 
 In the course of this tutorial, students should learn to:
 

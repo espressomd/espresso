@@ -233,15 +233,6 @@ class ParticleHandle(ScriptInterfaceHelper):
         .. note::
            This needs the feature ``VIRTUAL_SITES_RELATIVE``
 
-    vs_com: :obj:`tuple`
-        Virtual sites center of mass parameters.
-
-        Allows for manual access to the attributes of virtual site concerning
-        the "center of mass" implementation. Format: ``(mol_id,)``.
-
-        .. note::
-           This needs the feature ``VIRTUAL_SITES_CENTER_OF_MASS``
-
     dip: (3,) array_like of :obj:`float`
         The orientation of the dipole axis.
 
@@ -439,7 +430,7 @@ class ParticleHandle(ScriptInterfaceHelper):
         return pdict
 
     def __str__(self):
-        res = collections.OrderedDict()
+        res = {}
         # Id and pos first, then the rest
         res["id"] = self.id
         res["pos"] = self.pos
@@ -451,8 +442,7 @@ class ParticleHandle(ScriptInterfaceHelper):
             else:
                 res[attr] = tmp
 
-        # Get rid of OrderedDict in output
-        return str(res).replace("OrderedDict(", "ParticleHandle(")
+        return f"{self.__class__.__name__}({res})"
 
     def add_exclusion(self, partner):
         """
@@ -618,7 +608,9 @@ class ParticleHandle(ScriptInterfaceHelper):
         """
         Setup this particle as virtual site tracking the center of mass of the
         particles constituting the molecule in argument ``rel_to``.
-        A particle cannot relate to its own molecule.
+
+        .. note::
+           This needs the feature ``VIRTUAL_SITES_CENTER_OF_MASS``
 
         Parameters
         -----------
@@ -628,9 +620,6 @@ class ParticleHandle(ScriptInterfaceHelper):
         """
 
         if isinstance(rel_to, ParticleHandle):
-            if rel_to.is_virtual():
-                raise Exception(
-                    "Cannot relate COM virtual site to another virtual particle")
             rel_to = rel_to.mol_id
         else:
             check_type_or_throw_except(
@@ -1440,18 +1429,6 @@ def _add_particle_slice_properties():
 
             return
 
-        elif attribute == "vs_com":
-            nlvl = nesting_level(values)
-            if nlvl in [1, 2]:
-                set_slice_one_for_all(particle_slice, attribute, values)
-            elif nlvl == 3 and len(values) == N:
-                set_slice_one_for_each(particle_slice, attribute, values)
-            else:
-                raise Exception(
-                    "Failed to set vs_com for particle slice.")
-
-            return
-
         else:
             target = getattr(
                 particle_slice._get_particle(particle_slice.id_selection[0]), attribute)
@@ -1491,8 +1468,7 @@ def _add_particle_slice_properties():
         if N == 0:
             return np.empty(0, dtype=type(None))
 
-        if attribute in ["exclusions", "bonds",
-                         "vs_relative", "vs_com", "swimming"]:
+        if attribute in ["exclusions", "bonds", "vs_relative", "swimming"]:
             values = []
             for part in particle_slice._id_gen():
                 values.append(getattr(part, attribute))

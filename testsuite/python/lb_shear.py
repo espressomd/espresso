@@ -189,8 +189,8 @@ class LBShearWalberlaDoublePrecisionCPU(LBShearCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
     atol = 5e-5
     rtol = 5e-4
 
@@ -200,8 +200,8 @@ class LBShearWalberlaSinglePrecisionCPU(LBShearCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
     atol = 5e-5
     rtol = 5e-3
 
@@ -211,8 +211,8 @@ class LBShearWalberlaBlocks(LBShearCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False,
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False,
                  "blocks_per_mpi_rank": [2, 2, 2]}
     atol = 5e-5
     rtol = 5e-4
@@ -221,8 +221,8 @@ class LBShearWalberlaBlocks(LBShearCommon, ut.TestCase):
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBShearWalberlaDoublePrecisionGPU(LBShearCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
     atol = 5e-5
     rtol = 5e-4
 
@@ -230,8 +230,8 @@ class LBShearWalberlaDoublePrecisionGPU(LBShearCommon, ut.TestCase):
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBShearWalberlaSinglePrecisionGPU(LBShearCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
     atol = 5e-5
     rtol = 5e-3
 

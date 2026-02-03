@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -53,16 +53,19 @@ public:
          [this]() { return static_cast<int>(m_lattice->get_ghost_layers()); }},
         {"shape", AutoParameter::read_only,
          [this]() { return m_lattice->get_grid_dimensions(); }},
-        {"_box_l", AutoParameter::read_only, [this]() { return m_box_l; }},
+        {"box_l", AutoParameter::read_only, [this]() { return m_box_l; }},
         {"blocks_per_mpi_rank", AutoParameter::read_only,
          [this]() { return m_blocks_per_mpi_rank; }},
     });
   }
 
   void do_construct(VariantMap const &args) override {
-    auto const &box_geo = *::System::get_system().box_geo;
     m_agrid = get_value<double>(args, "agrid");
-    m_box_l = get_value_or<Utils::Vector3d>(args, "_box_l", box_geo.length());
+    if (args.contains("box_l")) {
+      m_box_l = get_value<Utils::Vector3d>(args, "box_l");
+    } else {
+      m_box_l = ::System::get_system().box_geo->length();
+    }
     m_blocks_per_mpi_rank =
         get_value<Utils::Vector3i>(args, "blocks_per_mpi_rank");
     auto const n_ghost_layers = get_value<int>(args, "n_ghost_layers");

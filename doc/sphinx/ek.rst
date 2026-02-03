@@ -161,7 +161,7 @@ Here is a minimal working example::
     system.time_step = 0.01
     system.cell_system.skin = 1.0
 
-    lattice = espressomd.electrokinetics.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    lattice = espressomd.electrokinetics.Lattice(agrid=0.5, n_ghost_layers=1)
     ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
     system.ekcontainer = espressomd.electrokinetics.EKContainer(
         solver=ek_solver, tau=system.time_step)
@@ -311,7 +311,7 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
     system.cell_system.skin = 0.4
     system.time_step = 0.1
 
-    lattice = espressomd.electrokinetics.LatticeWalberla(agrid=1., n_ghost_layers=1)
+    lattice = espressomd.electrokinetics.Lattice(agrid=1., n_ghost_layers=1)
     ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
     ek_species = espressomd.electrokinetics.EKSpecies(
         lattice=lattice, density=1., kT=1., diffusion=0.1, valency=0.,
@@ -372,7 +372,7 @@ One can set (or update) the boundary conditions of individual nodes::
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
-    lattice = espressomd.electrokinetics.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    lattice = espressomd.electrokinetics.Lattice(agrid=0.5, n_ghost_layers=1)
     ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
     ek_species = espressomd.electrokinetics.EKSpecies(
         kT=1.5, lattice=lattice, density=0.85, valency=0., diffusion=0.1,
@@ -400,7 +400,7 @@ Adding a shape-based boundary is straightforward::
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
-    lattice = espressomd.electrokinetics.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    lattice = espressomd.electrokinetics.Lattice(agrid=0.5, n_ghost_layers=1)
     ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
     ek_species = espressomd.electrokinetics.EKSpecies(
         kT=1.5, lattice=lattice, density=0.85, valency=0.0, diffusion=0.1,

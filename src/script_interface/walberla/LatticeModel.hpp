@@ -25,6 +25,7 @@
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
+#include <script_interface/system/Leaf.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -35,7 +36,8 @@
 namespace ScriptInterface::walberla {
 
 template <class Method, class VTKHandle>
-class LatticeModel : public AutoParameters<LatticeModel<Method, VTKHandle>> {
+class LatticeModel
+    : public AutoParameters<LatticeModel<Method, VTKHandle>, System::Leaf> {
 protected:
   std::shared_ptr<LatticeWalberla> m_lattice;
   std::shared_ptr<Method> m_instance;

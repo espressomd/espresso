@@ -54,13 +54,12 @@ ROTATIONAL_INERTIA              implies ROTATION
 /* Electrostatics */
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
+MMM1D                           equals ELECTROSTATICS and GSL
 WALBERLA_FFT                    equals WALBERLA and FFTW
 
 /* Magnetostatics */
 DIPOLES                         implies ROTATION
 DP3M                            equals DIPOLES and FFTW
-DIPOLAR_DIRECT_SUM              requires CUDA
-DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA
 DIPOLE_FIELD_TRACKING           implies DIPOLES
 THERMAL_STONER_WOHLFARTH        requires NLOPT
 THERMAL_STONER_WOHLFARTH        implies VIRTUAL_SITES_RELATIVE, DIPOLE_FIELD_TRACKING

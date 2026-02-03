@@ -506,9 +506,13 @@ class Analysis(ScriptInterfaceHelper):
         observable = self.call_method("calculate_energy")
         return self._generate_summary(observable, 1, False)
 
-    def particle_energy(self, particle):
+    def particle_non_bonded_energy(self, particle):
         """
         Calculate the non-bonded energy of a single given particle.
+
+        This excludes the short-range part of electrostatics and magnetostatics
+        solvers, as well as corrections implemented as non-bonded interactions
+        (e.g. :ref:`Thole correction`).
 
         Parameters
         ----------
@@ -516,7 +520,7 @@ class Analysis(ScriptInterfaceHelper):
 
         Returns
         -------
-        :obj: `float`
+        :obj:`float`
             Non-bonded energy of that particle
 
         """

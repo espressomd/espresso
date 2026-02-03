@@ -91,7 +91,7 @@ class VirtualSites(ut.TestCase):
     def test_vs_quat(self):
         self.system.time_step = 0.01
         self.system.min_global_cut = 0.23
-        self.system.lb = lb_fluid = espressomd.lb.LBFluidWalberla(
+        self.system.lb = lb_fluid = espressomd.lb.LBFluid(
             tau=0.01, agrid=2., density=1., kinematic_viscosity=1., kT=0.)
         self.system.thermostat.set_lb(LB_fluid=lb_fluid, seed=42, gamma=1.)
         Propagation = espressomd.propagation.Propagation

@@ -32,6 +32,7 @@
 
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
@@ -113,6 +114,7 @@ class EKSpeciesSlice : public LatticeSlice<EKFieldSerializer> {
   using LatticeModel = ::EKinWalberlaBase;
   std::shared_ptr<LatticeModel> m_ek_species;
   std::shared_ptr<EKSpecies> m_ek_sip;
+  std::optional<ResourceObserver> m_mpi_cart_comm_observer;
   double m_conv_dens;
   double m_conv_flux;
   std::unordered_map<std::string, std::vector<int>> m_shape_val;
@@ -121,6 +123,7 @@ public:
   void do_construct(VariantMap const &params) override {
     m_ek_sip = get_value<std::shared_ptr<EKSpecies>>(params, "parent_sip");
     m_ek_species = m_ek_sip->get_ekinstance();
+    m_mpi_cart_comm_observer = m_ek_sip->get_mpi_cart_comm_observer();
     assert(m_ek_species);
     m_conv_dens = m_ek_sip->get_conversion_factor_density();
     m_conv_flux = m_ek_sip->get_conversion_factor_flux();

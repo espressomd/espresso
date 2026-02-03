@@ -21,7 +21,7 @@
 
 #include <config/config.hpp>
 
-#if defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)
+#ifdef ESPRESSO_MMM1D
 
 #include "electrostatics/mmm1d.hpp"
 
@@ -384,4 +384,4 @@ void CoulombMMM1D::tune() {
   system.on_coulomb_change();
 }
 
-#endif // defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)
+#endif // ESPRESSO_MMM1D

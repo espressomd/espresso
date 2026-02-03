@@ -1,15 +1,15 @@
-# Part 1: Introduction and Binning Analysis
+# Tutorial: error analysis
 
-## Learning goals
+## Learning objectives
+
+### Part 1: introduction and binning analysis
 
 * Give a brief overview of common measures of dispersion (standard deviation,
   confidence interval, standard error of the mean)
 * Teach binning analysis and apply it on well-behaved data and on data where
   it doesn't converge (synthetic data is generated using the AR1 process)
 
-# Part 2: Autocorrelation Analysis
-
-## Learning goals
+### Part 2: autocorrelation analysis
 
 * Teach autocorrelation analysis
 * Integrate the ACF to determine the standard error of the mean

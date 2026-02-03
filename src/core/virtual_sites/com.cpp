@@ -57,7 +57,9 @@
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <cassert>
 #include <functional>
+#include <optional>
 #include <ranges>
 #include <unordered_map>
 #include <unordered_set>
@@ -83,8 +85,31 @@ struct ComInfo {
   }
 };
 
+using ParticleId = decltype(ParticleProperties::identity);
+using MoleculeId = decltype(ParticleProperties::mol_id);
+
 static bool is_vs_com(Particle const &p) {
   return p.propagation() & PropagationMode::TRANS_VS_CENTER_OF_MASS;
+}
+
+std::optional<int> get_pid_for_vs_com(CellStructure &cell_structure,
+                                      int mol_id) {
+  auto constexpr parallel_execution_policy = false;
+  std::vector<int> pids;
+  cell_structure.for_each_local_particle(
+      [&](Particle const &p) {
+        if (is_vs_com(p) and p.mol_id() == mol_id) {
+          pids.emplace_back(p.id());
+        }
+      },
+      parallel_execution_policy);
+  Utils::Mpi::gather_buffer(pids, comm_cart);
+  std::optional<int> result = std::nullopt;
+  if (not pids.empty()) {
+    assert(pids.size() == 1ul);
+    result = pids.front();
+  }
+  return result;
 }
 
 /**
@@ -110,15 +135,16 @@ void vs_com_update_particles(CellStructure &cell_structure,
 
   // Store virtual site center of mass particles
   // (mol_id: vs_com_id)
-  std::unordered_map<int, int> virtual_site_id_for_mol_id;
+  std::unordered_map<ParticleId, MoleculeId> virtual_site_id_for_mol_id;
   // Store com information for each molecule id
   // (mol_id: com_info)
-  std::unordered_map<int, ComInfo> m_com_by_mol_id;
+  std::unordered_map<MoleculeId, ComInfo> m_com_by_mol_id;
 
   cell_structure.for_each_local_particle(
       [&](Particle const &p) {
         if (is_vs_com(p)) {
-          virtual_site_id_for_mol_id[p.vs_com().to_molecule_id] = p.id();
+          assert(not virtual_site_id_for_mol_id.contains(p.mol_id()));
+          virtual_site_id_for_mol_id[p.mol_id()] = p.id();
         } else if (not p.is_virtual()) {
           if (not m_com_by_mol_id.contains(p.mol_id())) {
             m_com_by_mol_id[p.mol_id()] = ComInfo{};
@@ -134,22 +160,22 @@ void vs_com_update_particles(CellStructure &cell_structure,
 
   // Reduction of m_com_by_mol_id across all processes
   // get a list of all molids that need to be communicated
-  std::unordered_set<int> local_mol_ids;
+  std::unordered_set<MoleculeId> local_mol_ids;
   for (auto const &mol_id : m_com_by_mol_id | std::views::keys) {
     local_mol_ids.insert(mol_id);
   }
 
   // Communicate the list of molids to all processes
-  std::vector<std::unordered_set<int>> global_mol_ids{};
+  std::vector<std::unordered_set<MoleculeId>> global_mol_ids{};
   boost::mpi::all_gather(comm_cart, local_mol_ids, global_mol_ids);
-  std::unordered_set<int> unique_mol_ids{};
+  std::unordered_set<MoleculeId> unique_mol_ids{};
   for (auto const &mol_id_set : global_mol_ids) {
     for (auto const &mol_id : mol_id_set) {
       unique_mol_ids.insert(mol_id);
     }
   }
-  std::vector<int> flattened_mol_ids{unique_mol_ids.begin(),
-                                     unique_mol_ids.end()};
+  std::vector<MoleculeId> flattened_mol_ids{unique_mol_ids.begin(),
+                                            unique_mol_ids.end()};
   std::ranges::sort(flattened_mol_ids);
 
   // MPI-Allreduce for total mass and weighted position
@@ -209,17 +235,18 @@ void vs_com_back_transfer_forces_and_torques(CellStructure &cell_structure) {
 
   // Store forces for virtual site com particles
   // (vs_com_id: force)
-  std::unordered_map<int, Utils::Vector3d> force_for_vs_id;
+  std::unordered_map<ParticleId, Utils::Vector3d> force_for_vs_id;
   // (vs_com_id: mass)
-  std::unordered_map<int, double> mass_for_vs_id;
+  std::unordered_map<ParticleId, double> mass_for_vs_id;
 
   // Store virtual site center of mass particles
-  // (mold_id: vs_com_id)
-  std::unordered_map<int, int> virtual_site_id_for_mol_id;
+  // (mol_id: vs_com_id)
+  std::unordered_map<MoleculeId, ParticleId> virtual_site_id_for_mol_id;
   cell_structure.for_each_local_particle(
       [&](Particle const &p) {
         if (is_vs_com(p)) { // get vs_com particle
-          virtual_site_id_for_mol_id[p.vs_com().to_molecule_id] = p.id();
+          assert(not virtual_site_id_for_mol_id.contains(p.mol_id()));
+          virtual_site_id_for_mol_id[p.mol_id()] = p.id();
           force_for_vs_id[p.id()] = p.force();
           mass_for_vs_id[p.id()] = p.mass();
         }

@@ -49,7 +49,7 @@ if args.visualizer:
     system.time_step = 0.001
 system.cell_system.skin = 0.1
 system.periodicity = [False, False, True]
-lb_fluid = espressomd.lb.LBFluidWalberla(
+lb_fluid = espressomd.lb.LBFluid(
     agrid=agrid, density=0.5, kinematic_viscosity=3.2, tau=system.time_step)
 system.lb = lb_fluid
 

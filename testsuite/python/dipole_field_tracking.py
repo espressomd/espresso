@@ -95,7 +95,7 @@ class Test(ut.TestCase):
         system.part.all().dip = dip_mom
 
     def test_dds(self):
-        solver = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1.)
+        solver = espressomd.magnetostatics.DipolarDirectSum(prefactor=1.)
         self.system.magnetostatics.solver = solver
         self.system.integrator.run(steps=0)
         slice_data = [(x.id, x.pos, x.dip) for x in self.system.part.all()]
@@ -115,11 +115,11 @@ class Test(ut.TestCase):
         self.assertGreater(np.linalg.norm(rel_diff), 10)
 
     @utx.skipIfMissingGPU()
-    @utx.skipIfMissingFeatures(["DIPOLAR_DIRECT_SUM"])
+    @utx.skipIfMissingFeatures(["CUDA"])
     def test_dds_gpu(self):
         for replicas in [0, 1]:
-            solver = espressomd.magnetostatics.DipolarDirectSumGpu(
-                prefactor=1., n_replicas=replicas)
+            solver = espressomd.magnetostatics.DipolarDirectSum(
+                prefactor=1., n_replicas=replicas, gpu=True)
             self.system.magnetostatics.solver = solver
             self.system.integrator.run(steps=1)
             for p in self.system.part.all():

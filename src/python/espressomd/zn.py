@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 The ESPResSo project
+# Copyright (C) 2024-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,7 +21,8 @@ import subprocess
 import numpy as np
 import zndraw
 import zndraw.utils
-import zndraw.draw
+import zndraw.materials
+import zndraw.geometries
 import espressomd
 import secrets
 import time
@@ -30,21 +31,6 @@ import typing
 import scipy.spatial.transform
 
 from espressomd.plugins import ase
-
-# Standard colors
-color_dict = {"black": "#303030",
-              "red": "#e6194B",
-              "green": "#3cb44b",
-              "yellow": "#ffe119",
-              "blue": "#4363d8",
-              "orange": "#f58231",
-              "purple": "#911eb4",
-              "cyan": "#42d4f4",
-              "magenta": "#f032e6",
-              "lime": "#bfef45",
-              "brown": "#9A6324",
-              "grey": "#a9a9a9",
-              "white": "#f0f0f0"}
 
 
 class LBField:
@@ -300,9 +286,9 @@ class Visualizer():
         Start the ZnDraw client and connect to the server
         """
         url = f"{self.url}:{self.SERVER_PORT}"
-        self.zndraw = zndraw.ZnDraw(url=url, token=self.token)
+        self.zndraw = zndraw.ZnDraw(url=url, room=self.token)
         parsed_url = urllib.parse.urlparse(
-            f"{self.zndraw.url}/token/{self.zndraw.token}")
+            f"{self.zndraw.url}/rooms/{self.zndraw.room}")
         self.address = parsed_url._replace(scheme="http").geturl()
 
     def _show_jupyter(self):
@@ -362,8 +348,6 @@ class Visualizer():
             self.zndraw[0] = data
 
         if self.frame_count == 0:
-            self.zndraw.socket.sleep(1)
-
             x, y, z = self.system.box_l / 2
             z_dist = max([1.5 * y, 1.5 * x, 1.5 * z])
 
@@ -381,36 +365,30 @@ class Visualizer():
     def register_setting(self, cls, **kwargs):
         self.zndraw.register_modifier(cls, **kwargs)
 
-    def draw_constraints(self, shapes: list):
+    def draw_constraints(self, shapes: list, **shape_options):
         """
         Draw constraints on the visualizer
         """
         if not isinstance(shapes, list):
             raise ValueError("Constraints must be given in a list")
 
-        objects = []
+        if "hovering" not in shape_options:
+            shape_options["hovering"] = zndraw.geometries.InteractionSettings(
+                enabled=False)
+        if "selecting" not in shape_options:
+            shape_options["selecting"] = zndraw.geometries.InteractionSettings(
+                enabled=False)
 
         for shape in shapes:
-
             shape_type = shape.__class__.__name__
 
-            mat = zndraw.draw.Material(color="#b0b0b0", opacity=0.8)
-
-            if shape_type == "Cylinder":
-                center = shape.center
-                axis = shape.axis
-                length = shape.length
+            if shape_type == "Sphere":
+                center = tuple(shape.center)
                 radius = shape.radius
+                key = f"{shape_type}_{center}_{radius}"
 
-                rotation_angles = zndraw.utils.direction_to_euler(
-                    axis, roll=np.pi / 2)
-
-                objects.append(zndraw.draw.Cylinder(position=center,
-                                                    rotation=rotation_angles,
-                                                    radius_bottom=radius,
-                                                    radius_top=radius,
-                                                    height=length,
-                                                    material=mat))
+                self.zndraw.geometries[key] = zndraw.geometries.Sphere(
+                    position=[tuple(center)], radius=[radius], **shape_options)
 
             elif shape_type == "Wall":
                 dist = shape.dist
@@ -424,62 +402,41 @@ class Visualizer():
                 base_position = np.copy(corners[0])
                 corners -= base_position
 
-                # Rotate plane to align with z-axis, Custom2DShape only works
-                # in the xy-plane
-                unit_z = np.array([0, 0, 1])
-                r, _ = scipy.spatial.transform.Rotation.align_vectors(
-                    [unit_z], [normal])
-                rotated_corners = r.apply(corners)
+                vertices, euler_angles = _corners_to_shape_geometry(corners)
 
-                # Sort corners in a clockwise order, except the first corner
-                angles = np.arctan2(
-                    rotated_corners[1:, 1], rotated_corners[1:, 0])
-                sorted_indices = np.argsort(angles)
-                sorted_corners = rotated_corners[1:][sorted_indices]
-                sorted_corners = np.vstack(
-                    [rotated_corners[0], sorted_corners])[:, :2]
-
-                r, _ = scipy.spatial.transform.Rotation.align_vectors(
-                    [normal], [unit_z])
-                euler_angles = r.as_euler("xyz")
-
-                # invert the z-axis, unsure why this is needed, maybe
-                # different coordinate systems
-                euler_angles[2] *= -1.
-
-                objects.append(zndraw.draw.Custom2DShape(
-                    position=base_position, rotation=euler_angles,
-                    points=sorted_corners, material=mat))
-
-            elif shape_type == "Sphere":
-                center = shape.center
-                radius = shape.radius
-
-                objects.append(
-                    zndraw.draw.Sphere(position=center, radius=radius, material=mat))
+                key = f"{shape_type}_{dist}_{normal}"
+                self.zndraw.geometries[key] = zndraw.geometries.Shape(
+                    position=[tuple(base_position)],
+                    rotation=[tuple(euler_angles)],
+                    vertices=vertices, **shape_options)
 
             elif shape_type == "Rhomboid":
-                a = shape.a
-                b = shape.b
-                c = shape.c
-                corner = shape.corner
-
-                objects.append(
-                    zndraw.draw.Rhomboid(position=corner, vectorA=a, vectorB=b, vectorC=c, material=mat))
-
-            elif shape_type == "Ellipsoid":
-                center = shape.center
-                a = shape.a
-                b = shape.b
-
-                objects.append(zndraw.draw.Ellipsoid(position=center,
-                               a=a, b=b, c=b, material=mat))
+                vecs = np.array([shape.a, shape.b, shape.c])
+                corner_base = shape.corner
+                for direction in range(3):
+                    for side in range(2):
+                        vec1 = vecs[(direction + 1) % 3]
+                        vec2 = vecs[(direction + 2) % 3]
+                        corner = np.copy(corner_base)
+                        if (side == 1):
+                            corner += vecs[direction]
+                        corners = np.array([corner,
+                                            corner + vec1,
+                                            corner + vec1 + vec2,
+                                            corner + vec2])
+                        base_position = np.copy(corners[0])
+                        corners -= base_position
+                        vertices, euler_angles = _corners_to_shape_geometry(
+                            corners, False)
+                        key = f"{shape_type}_{corner_base}_{vecs}_{direction * 2 + side}"  # nopep8
+                        self.zndraw.geometries[key] = zndraw.geometries.Shape(
+                            position=[tuple(base_position)],
+                            rotation=[tuple(euler_angles)],
+                            vertices=vertices, **shape_options)
 
             else:
                 raise NotImplementedError(
                     f"Shape of type {shape_type} isn't available in ZnDraw")
-
-            self.zndraw.geometries = objects
 
     def _handle_pbc_bonds(self, bonds, ase_data):
         box_l = self.system.box_l
@@ -610,3 +567,36 @@ class WallIntersection:
                 intersections.append(intersection)
 
         return np.array(intersections)
+
+
+def _corners_to_shape_geometry(corners, sort=True):
+    """
+    Calculate the vertices and Euler angles of a rhombus defined by its corners.
+    """
+    unit_z = np.array([0., 0., 1.])
+    v1 = corners[1] - corners[0]
+    v2 = corners[-1] - corners[0]
+    normal = np.cross(v2, v1)
+    normal = normal / np.linalg.norm(normal)
+
+    rot, _ = scipy.spatial.transform.Rotation.align_vectors(
+        [normal], [unit_z])
+
+    rot_matix = np.linalg.inv(rot.as_matrix())
+    vertices = np.column_stack([
+        corners @ rot_matix[0, :],
+        corners @ rot_matix[1, :]
+    ])
+
+    if sort:
+        angles = np.arctan2(vertices[:, 1], vertices[:, 0])
+        sorted_indices = np.argsort(angles)
+        sorted_vertices = vertices[:][sorted_indices]
+    else:
+        sorted_vertices = vertices
+
+    euler_angles = rot.as_euler('xyz')
+    # invert the z-axis (different coordinate system)
+    euler_angles[2] *= -1
+
+    return sorted_vertices, euler_angles

@@ -93,49 +93,49 @@ class EKIonConductivity:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKTestWalberla(EKIonConductivity, ut.TestCase):
+class EKIonConductivityDoublePrecisionCPU(EKIonConductivity, ut.TestCase):
 
     """Test for the waLBerla implementation of the EK in double-precision."""
 
-    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_lattice_class = espressomd.electrokinetics.Lattice
     ek_species_class = espressomd.electrokinetics.EKSpecies
     ek_solver_class = espressomd.electrokinetics.EKFFT
-    ek_params = {"single_precision": False}
+    ek_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKTestWalberlaSinglePrecision(EKIonConductivity, ut.TestCase):
+class EKIonConductivitySinglePrecisionCPU(EKIonConductivity, ut.TestCase):
 
     """Test for the waLBerla implementation of the EK in single-precision."""
 
-    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_lattice_class = espressomd.electrokinetics.Lattice
     ek_species_class = espressomd.electrokinetics.EKSpecies
     ek_solver_class = espressomd.electrokinetics.EKFFT
-    ek_params = {"single_precision": True}
+    ek_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
-class EKTestWalberlaGPU(EKIonConductivity, ut.TestCase):
+class EKIonConductivityDoublePrecisionGPU(EKIonConductivity, ut.TestCase):
 
     """Test for the waLBerla implementation of the EK in double-precision GPU."""
 
-    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
-    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
-    ek_solver_class = espressomd.electrokinetics.EKFFTGPU
-    ek_params = {"single_precision": False}
+    ek_lattice_class = espressomd.electrokinetics.Lattice
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_solver_class = espressomd.electrokinetics.EKFFT
+    ek_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
-class EKTestWalberlaSinglePrecisionGPU(EKIonConductivity, ut.TestCase):
+class EKIonConductivitySinglePrecisionGPU(EKIonConductivity, ut.TestCase):
 
     """Test for the waLBerla implementation of the EK in single-precision GPU."""
 
-    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
-    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
-    ek_solver_class = espressomd.electrokinetics.EKFFTGPU
-    ek_params = {"single_precision": True}
+    ek_lattice_class = espressomd.electrokinetics.Lattice
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_solver_class = espressomd.electrokinetics.EKFFT
+    ek_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

@@ -211,11 +211,15 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
                 // inter cell loop
                 verlet_list.addNeighbor(i, j);
               });
+
           if (verlet_list.hasOverflow()) {
             cell_structure.use_verlet_list = false;
             runtimeWarningMsg()
                 << "Verlet list overflow detected: neighbor count exceeded "
-                   "max_counts. Falling back to the link cell algorithm.";
+                   "max_counts. Falling back to the link cell algorithm. "
+                   "Configured max is "
+                << Cabana::NeighborList<CellStructure::ListType>::maxNeighbor(
+                       verlet_list);
           }
         },
         rebuild_vl);

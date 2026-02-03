@@ -79,9 +79,10 @@ struct MockDipolarDirectSum
   MockDipolarDirectSum() = default;
 
   void do_construct(VariantMap const &params) override {
+    auto constexpr use_gpu = false;
     m_actor = std::make_shared<CoreActorClass>(
         get_value<double>(params, "prefactor"),
-        get_value<double>(params, "n_replicas"));
+        get_value<double>(params, "n_replicas"), use_gpu);
   }
 };
 #endif // ESPRESSO_DIPOLES

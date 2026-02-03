@@ -21,7 +21,7 @@
 
 #include <config/config.hpp>
 
-#if defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)
+#ifdef ESPRESSO_MMM1D
 
 #include "mmm1d.hpp"
 
@@ -110,4 +110,4 @@ void CoulombMMM1D::create_mod_psi_up_to(int new_n) {
   }
 }
 
-#endif // defined(ESPRESSO_ELECTROSTATICS) and defined(ESPRESSO_GSL)
+#endif // ESPRESSO_MMM1D

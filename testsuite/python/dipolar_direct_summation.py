@@ -46,7 +46,8 @@ class Test(ut.TestCase):
     def dds_gpu_data(self):
         system = self.system
 
-        dds_cpu = espressomd.magnetostatics.DipolarDirectSumGpu(prefactor=1.2)
+        dds_cpu = espressomd.magnetostatics.DipolarDirectSum(
+            prefactor=1.2, gpu=True)
         system.magnetostatics.solver = dds_cpu
         # check MD cell reset has no impact
         self.system.change_volume_and_rescale_particles(
@@ -66,7 +67,7 @@ class Test(ut.TestCase):
     def dds_data(self):
         system = self.system
 
-        dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1.2)
+        dds_cpu = espressomd.magnetostatics.DipolarDirectSum(prefactor=1.2)
         system.magnetostatics.solver = dds_cpu
         # check MD cell reset has no impact
         self.system.change_volume_and_rescale_particles(
@@ -176,7 +177,6 @@ class Test(ut.TestCase):
             force_tol=1E-12,
             torque_tol=1E-12)
 
-    @utx.skipIfMissingFeatures("DIPOLAR_DIRECT_SUM")
     @utx.skipIfMissingGPU()
     def test_dds_gpu(self):
         self.check_open_bc(
@@ -250,32 +250,33 @@ class Test(ut.TestCase):
         np.testing.assert_allclose(min_img_torques, ref_min_img_torques, **tol)
 
     def test_min_image_convention_cpu(self):
-        solver = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1.)
+        solver = espressomd.magnetostatics.DipolarDirectSum(prefactor=1.)
         self.check_min_image_convention(solver, rtol=1e-10)
 
-    @utx.skipIfMissingFeatures("DIPOLAR_DIRECT_SUM")
     @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures("CUDA")
     def test_min_image_convention_gpu(self):
-        solver = espressomd.magnetostatics.DipolarDirectSumGpu(prefactor=1.)
+        solver = espressomd.magnetostatics.DipolarDirectSum(
+            prefactor=1., gpu=True)
         self.check_min_image_convention(solver, rtol=1e-5)
 
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] == 1,
                "only runs for 2 or more MPI ranks")
     def test_inner_loop_consistency_cpu(self):
         self.check_inner_loop_consistency(
-            solver=espressomd.magnetostatics.DipolarDirectSumCpu,
-            tol={"atol": 1e-10, "rtol": 1e-10})
+            solver=espressomd.magnetostatics.DipolarDirectSum,
+            tol={"atol": 1e-10, "rtol": 1e-10}, gpu=False)
 
-    @utx.skipIfMissingFeatures("DIPOLAR_DIRECT_SUM")
     @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures("CUDA")
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] == 1,
                "only runs for 2 or more MPI ranks")
     def test_inner_loop_consistency_gpu(self):
         self.check_inner_loop_consistency(
-            solver=espressomd.magnetostatics.DipolarDirectSumGpu,
-            tol={"atol": 1e-6, "rtol": 1e-6})
+            solver=espressomd.magnetostatics.DipolarDirectSum,
+            tol={"atol": 1e-6, "rtol": 1e-6}, gpu=True)
 
-    def check_inner_loop_consistency(self, solver, tol):
+    def check_inner_loop_consistency(self, solver, tol, **kwargs):
         system = self.system
         system.periodicity = [True, True, True]
         p1 = system.part.add(pos=[0., 0., 0.], dip=[0., 0., 1.],
@@ -285,7 +286,7 @@ class Test(ut.TestCase):
         for n_replicas in [0, 1]:
             system.magnetostatics.clear()
             system.magnetostatics.solver = solver(
-                prefactor=1., n_replicas=n_replicas)
+                prefactor=1., n_replicas=n_replicas, **kwargs)
 
             # intra-node calculation
             p1.pos = [system.box_l[0] / 2. - 0.1, 0., 2.]

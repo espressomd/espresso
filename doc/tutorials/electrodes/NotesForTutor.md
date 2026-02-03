@@ -1,6 +1,6 @@
-# Simulations of electrodes in ESPResSO
+# Tutorial: simulations of electrodes
 
-## Physics learning goals
+## Physics learning objectives
 
 ### Part 1
 
@@ -25,7 +25,7 @@ After the tutorial, students should be able to:
 * How to evaluate the differential capacitance from simulations.
 * The basic idea of super-ionic states.
 
-## ESPResSo learning goals
+## ESPResSo learning objectives
 
 * Setting up ELC, ICC and ELC-IC simulations
 * Why is choosing the ELC-gap a crucial parameter?

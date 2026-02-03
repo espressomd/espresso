@@ -423,9 +423,9 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
             reaction_id = self.call_method("get_random_reaction_index")
             E_pot = self.generic_oneway_reaction(reaction_id, E_pot)
 
-    def calculate_acceptance_probability(self, reaction_id, E_pot_diff):
+    def calculate_log_acceptance_probability(self, reaction_id, E_pot_diff):
         """
-        Calculate the acceptance probability of a Monte Carlo move.
+        Calculate the logarithmic acceptance probability of a Monte Carlo move.
 
         Parameters
         ----------
@@ -437,13 +437,14 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         Returns
         -------
         :obj:`float`
-            The acceptance probability.
+            The logarithmic acceptance probability.
 
         """
-        factorial_expr = self.call_method("calculate_factorial_expression")
+        ln_factorial = self.call_method("calculate_factorial_expression")
         reaction = self._reactions_cache[reaction_id]
-        return self.get_volume()**reaction.nu_bar * reaction.gamma * \
-            factorial_expr * math.exp(-E_pot_diff / self.kT)
+        ln_bf = -E_pot_diff / self.kT + reaction.nu_bar * \
+            math.log(self.get_volume()) + math.log(reaction.gamma)
+        return ln_factorial + ln_bf
 
     def generic_oneway_reaction(self, reaction_id, E_pot_old):
         """
@@ -480,9 +481,10 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
             if E_pot_new is None:
                 return E_pot_old
             E_pot_diff = E_pot_new - E_pot_old
-            bf = self.calculate_acceptance_probability(reaction_id, E_pot_diff)
-            return self.call_method("make_reaction_mc_move_attempt",
-                                    reaction_id=reaction_id, bf=bf,
+            ln_bf = self.calculate_log_acceptance_probability(
+                reaction_id, E_pot_diff)
+            return self.call_method("make_reaction_mc_move_attempt_logarithmic",
+                                    reaction_id=reaction_id, ln_bf=ln_bf,
                                     E_pot_new=E_pot_new, E_pot_old=E_pot_old)
         except BaseException as err:
             tb = sys.exc_info()[2]
@@ -546,9 +548,9 @@ class ConstantpHEnsemble(ReactionAlgorithm):
     def required_keys(self):
         return {"kT", "exclusion_range", "seed", "constant_pH"}
 
-    def calculate_acceptance_probability(self, reaction_id, E_pot_diff):
+    def calculate_log_acceptance_probability(self, reaction_id, E_pot_diff):
         """
-        Calculate the acceptance probability of a Monte Carlo move.
+        Calculate the logarithmic acceptance probability of a Monte Carlo move.
 
         Parameters
         ----------
@@ -563,11 +565,11 @@ class ConstantpHEnsemble(ReactionAlgorithm):
             The acceptance probability.
 
         """
-        factorial_expr = self.call_method("calculate_factorial_expression")
+        ln_factorial_expr = self.call_method("calculate_factorial_expression")
         reaction = self._reactions_cache[reaction_id]
         ln_bf = E_pot_diff - reaction.nu_bar * self.kT * math.log(10.) * (
             self.constant_pH + reaction.nu_bar * math.log10(reaction.gamma))
-        return factorial_expr * math.exp(-ln_bf / self.kT)
+        return ln_factorial_expr - ln_bf / self.kT
 
     def add_reaction(self, *args, **kwargs):
         warn_msg = (

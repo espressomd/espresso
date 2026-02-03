@@ -288,7 +288,8 @@ static auto get_n_cut(BoxGeometry const &box_geo, int n_replicas) {
  * in @ref DipolarDirectSum::long_range_energy, which calculates
  * a naive N-square sum, but has better performance and scaling.
  */
-void DipolarDirectSum::add_long_range_forces() const {
+void DipolarDirectSum::add_long_range_forces_cpu() const {
+  assert(not m_is_gpu);
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const &box_l = box_geo.length();
@@ -372,7 +373,9 @@ void DipolarDirectSum::add_long_range_forces() const {
     (*p)->torque() += prefactor * fi.torque;
   }
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  DipolarDirectSum::dipole_field_at_part();
+  if (not m_is_gpu) {
+    dipole_field_at_part_cpu();
+  }
 #endif
 }
 
@@ -381,7 +384,8 @@ void DipolarDirectSum::add_long_range_forces() const {
  *
  * This employs a parallel N-square loop over all particle pairs.
  */
-double DipolarDirectSum::long_range_energy() const {
+double DipolarDirectSum::long_range_energy_cpu() const {
+  assert(not m_is_gpu);
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const particles = system.cell_structure->local_particles();
@@ -421,7 +425,8 @@ double DipolarDirectSum::long_range_energy() const {
  * and the kernel calculates the dipole field rather than the energy.
  */
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-void DipolarDirectSum::dipole_field_at_part() const {
+void DipolarDirectSum::dipole_field_at_part_cpu() const {
+  assert(not m_is_gpu);
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const particles = system.cell_structure->local_particles();
@@ -451,8 +456,9 @@ void DipolarDirectSum::dipole_field_at_part() const {
 }
 #endif
 
-DipolarDirectSum::DipolarDirectSum(double prefactor, int n_replicas) {
+DipolarDirectSum::DipolarDirectSum(double prefactor, int n_replicas, bool gpu) {
   set_prefactor(prefactor);
+  m_is_gpu = gpu;
   this->n_replicas = n_replicas;
   if (n_replicas < 0) {
     throw std::domain_error("Parameter 'n_replicas' must be >= 0");

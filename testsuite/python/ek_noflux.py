@@ -41,26 +41,20 @@ class EKTest:
     def tearDown(self):
         self.system.ekcontainer = None
 
-    def test_noflux_single(self):
-        self.detail_test_noflux(single_precision=True)
-
-    def test_noflux_double(self):
-        self.detail_test_noflux(single_precision=False)
-
-    def detail_test_noflux(self, single_precision: bool):
+    def test_noflux(self):
         """
         Testing the EK noflux boundaries to not leak density outside of a sphere.
         """
 
-        decimal_precision: int = 7 if single_precision else 10
+        decimal_precision = 7 if self.ek_params["single_precision"] else 10
 
-        lattice = espressomd.electrokinetics.LatticeWalberla(
+        lattice = espressomd.electrokinetics.Lattice(
             n_ghost_layers=2, agrid=self.AGRID)
 
         ekspecies = self.ek_species_class(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             valency=0.0, advection=False, friction_coupling=False,
-            single_precision=single_precision, tau=1.0)
+            tau=1.0, **self.ek_params)
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
@@ -102,14 +96,29 @@ class EKTest:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class EKNoFluxCPU(EKTest, ut.TestCase):
+class EKNoFluxDoublePrecisionCPU(EKTest, ut.TestCase):
     ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": False, "gpu": False}
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKNoFluxSinglePrecisionCPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
-class EKNoFluxGPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+class EKNoFluxDoublePrecisionGPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": False, "gpu": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKNoFluxSinglePrecisionGPU(EKTest, ut.TestCase):
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

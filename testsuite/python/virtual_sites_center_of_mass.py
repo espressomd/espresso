@@ -49,7 +49,7 @@ class VirtualSitesCOM(ut.TestCase):
             p_previous = p
 
     def set_molecules_and_vs(
-            self, molecule_ids, n_monomers, monomer_types, vs_type=5, id_shift=10):
+            self, molecule_ids, n_monomers, monomer_types, vs_type=5):
         """
         Set virtual sites and the corresponding polymer molecules.
 
@@ -72,9 +72,7 @@ class VirtualSitesCOM(ut.TestCase):
             self.build_polymer(n_monomers, self.POLYMER_PARAMS,
                                self.fene, monomer_type, molecule_id)
             # Add virtual particle at the origin
-            vs = self.system.part.add(
-                pos=[0, 0, 0], virtual=True, type=vs_type,
-                mol_id=molecule_id + id_shift)
+            vs = self.system.part.add(pos=[0, 0, 0], type=vs_type)
             vs.vs_com_relate_to(molecule_id)
             mid_for_vs[molecule_id] = vs.id
 
@@ -100,14 +98,14 @@ class VirtualSitesCOM(ut.TestCase):
             pos=[0, 0, 0], virtual=True, type=1, id=1, mol_id=10)
         vs1 = self.system.part.add(pos=[1, 1, 1], virtual=True, type=1, id=2)
         vs1.vs_com_relate_to(p1)
-        self.assertEqual(vs1.vs_com[0], p1.mol_id)
+        self.assertEqual(vs1.mol_id, p1.mol_id)
 
         mol_id_p2 = 20
         p2 = self.system.part.add(
             pos=[2, 2, 2], virtual=True, type=1, id=3, mol_id=mol_id_p2)
         vs2 = self.system.part.add(pos=[3, 3, 3], virtual=True, type=1, id=4)
         vs2.vs_com_relate_to(mol_id_p2)
-        self.assertEqual(vs2.vs_com[0], p2.mol_id)
+        self.assertEqual(vs2.mol_id, p2.mol_id)
 
     def test_vs_position_mass(self):
         """
@@ -136,10 +134,11 @@ class VirtualSitesCOM(ut.TestCase):
                 self.assertAlmostEqual(pair[0], pair[1])
             # test vs mass
             vs_mass = self.system.part.by_id(vs_id).mass
-            expected_vs_mass = 0
-            for part in self.system.part.select(mol_id=mol_id):
-                expected_vs_mass += part.mass
-            self.assertEqual(expected_vs_mass, vs_mass)
+            expected_vs_mass = 0.
+            for p in self.system.part.select(mol_id=mol_id):
+                if not p.is_virtual():
+                    expected_vs_mass += p.mass
+            self.assertEqual(vs_mass, expected_vs_mass)
 
     def test_particle_forces(self):
         """
@@ -150,7 +149,7 @@ class VirtualSitesCOM(ut.TestCase):
         # larger polymer to have a complete distribution over the ranks
         n_monomers = [200]
         monomer_types = [0]
-        applied_force = np.array([100, 0, 0], dtype=float)
+        applied_force = np.array([100., 0., 0.])
 
         mid_for_vs = self.set_molecules_and_vs(
             molecule_id, n_monomers, monomer_types)
@@ -161,22 +160,23 @@ class VirtualSitesCOM(ut.TestCase):
 
         vs_part = self.system.part.by_id(mid_for_vs[molecule_id[0]])
         vs_part.ext_force = applied_force
-        expected_force = applied_force / n_monomers[0]
+        ref_force = applied_force / n_monomers[0]
 
         self.system.integrator.run(1)
 
-        for part in self.system.part.select(mol_id=molecule_id[0]):
-            for pair in zip(expected_force, part.f):
-                self.assertAlmostEqual(pair[0], pair[1])
+        for p in self.system.part.select(mol_id=molecule_id[0]):
+            if not p.is_virtual():
+                np.testing.assert_allclose(np.copy(p.f), ref_force, atol=1e-7)
 
     def test_vs_exceptions(self):
         """
         Test exceptions related to virtual sites com
         """
-        p = self.system.part.add(pos=[0, 0, 0], type=1, id=0, mol_id=10)
-        vs1 = self.system.part.add(pos=[0, 0, 0], type=1, id=1)
-        vs2 = self.system.part.add(pos=[1, 1, 1], type=1, id=2)
+        p = self.system.part.add(pos=0.9 * self.system.box_l, type=1, mol_id=8)
+        vs1 = self.system.part.add(pos=[0, 0, 0], type=1)
+        vs2 = self.system.part.add(pos=[1, 1, 1], type=1)
 
+        vs1.vs_com_relate_to(p)
         # relate to empty
         with self.assertRaisesRegex(TypeError, "missing 1 required positional argument"):
             vs1.vs_com_relate_to()
@@ -185,23 +185,18 @@ class VirtualSitesCOM(ut.TestCase):
             vs1.vs_com_relate_to('0')
         with self.assertRaisesRegex(ValueError, "Invalid molecule id: -2"):
             vs1.vs_com_relate_to(-2)
-
-        vs1.vs_com_relate_to(p.mol_id)
-        vs2.vs_com_relate_to(p.mol_id)
-        # relating to itself is not allowed
-        with self.assertRaisesRegex(Exception, "Cannot relate COM virtual site to another virtual particle"):
-            vs1.vs_com_relate_to(vs1)
-        # relating to another virtual site is not allowed
-        with self.assertRaisesRegex(Exception, "Cannot relate COM virtual site to another virtual particle"):
-            vs1.vs_com_relate_to(vs2)
+        # relating to the same molecule twice is not allowed
+        with self.assertRaisesRegex(RuntimeError, "Molecule id: 8 is already tracked by virtual site with particle id: 1"):
+            vs2.vs_com_relate_to(p)
         # state remains unchanged
-        self.assertEqual(vs1.vs_com[0], p.mol_id)
-        self.assertEqual(vs2.vs_com[0], p.mol_id)
+        self.assertEqual(vs1.mol_id, p.mol_id)
+        self.assertTrue(vs1.is_virtual())
+        self.assertFalse(vs2.is_virtual())
 
         # relating to own molecule is allowed
-        vs3 = self.system.part.add(pos=[0, 0, 0], mol_id=p.mol_id)
-        vs3.vs_com_relate_to(p.mol_id)
-        self.assertEqual(vs3.vs_com[0], p.mol_id)
+        vs3 = self.system.part.add(pos=[0, 0, 0], mol_id=p.mol_id + 1)
+        vs3.vs_com_relate_to(vs3.mol_id)
+        self.assertEqual(vs3.mol_id, p.mol_id + 1)
 
 
 if __name__ == "__main__":

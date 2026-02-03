@@ -35,10 +35,13 @@
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
+#include <script_interface/code_info/CodeInfo.hpp>
 
 #include <utils/math/int_pow.hpp>
 
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace ScriptInterface::walberla {
 
@@ -47,23 +50,35 @@ protected:
   std::unique_ptr<ResourceManager> m_resources_lock;
   std::shared_ptr<LatticeWalberla> m_lattice;
   double m_conv_permittivity;
+  bool m_gpu;
   bool m_single_precision;
 
-public:
+protected:
   void make_instance(VariantMap const &args) override {
     // unit conversions
     auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
     m_conv_permittivity = Utils::int_pow<2>(agrid);
     auto const permittivity =
         get_value<double>(args, "permittivity") * m_conv_permittivity;
-
-    m_instance = ::walberla::new_ek_poisson_fft(
-        m_lattice->lattice(), permittivity, m_single_precision);
-    m_instance->setup_fft(false);
+    auto *make_new_instance = &::walberla::new_ek_poisson_fft;
+    if (m_gpu) {
+      std::vector<std::string> required_features;
+      required_features.emplace_back("CUDA");
+      CodeInfo::check_features(required_features);
+#ifdef ESPRESSO_CUDA
+      make_new_instance = &::walberla::new_ek_poisson_fft_cuda;
+#endif
+    }
+    m_instance = make_new_instance(m_lattice->lattice(), permittivity,
+                                   m_single_precision);
+    m_instance->setup_fft(m_gpu and
+                          ::communication_environment->is_mpi_gpu_aware());
   }
 
+public:
   void do_construct(VariantMap const &args) override {
-    m_single_precision = get_value_or<bool>(args, "single_precision", false);
+    m_gpu = get_value_or<bool>(args, "gpu", false);
+    m_single_precision = get_value_or<bool>(args, "single_precision", m_gpu);
     m_lattice = get_value<decltype(m_lattice)>(args, "lattice");
     m_vtk_writers =
         get_value_or<decltype(m_vtk_writers)>(args, "vtk_writers", {});
@@ -88,6 +103,7 @@ public:
          }},
         {"single_precision", AutoParameter::read_only,
          [this]() { return m_single_precision; }},
+        {"gpu", AutoParameter::read_only, [this]() { return m_gpu; }},
         {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
         {"shape", AutoParameter::read_only,
          [this]() { return m_instance->get_lattice().get_grid_dimensions(); }},

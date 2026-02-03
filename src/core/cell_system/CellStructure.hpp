@@ -45,6 +45,7 @@
 #include <algorithm>
 #include <cassert>
 #include <concepts>
+#include <cstddef>
 #include <functional>
 #include <iterator>
 #include <memory>
@@ -203,6 +204,7 @@ private:
   double m_verlet_reuse = 0.;
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   int m_cached_max_local_particle_id = 0;
+  std::size_t m_num_local_particles_cached = 0;
   int m_max_id = 0;
   int m_global_bond_numbers = 0;
   int m_local_bond_numbers = 0;
@@ -471,15 +473,9 @@ public:
   int get_cached_max_local_particle_id() const {
     return m_cached_max_local_particle_id;
   }
-  // int get_global_bond_numbers() const {
-  //   return m_global_bond_numbers;
-  // }
-  // void add_global_bond_numbers() {
-  //   m_global_bond_numbers += 1;
-  // }
-  // void reset_global_bond_numbers() {
-  //   m_global_bond_numbers = 0;
-  // }
+  std::size_t get_num_local_particles_cached() const {
+    return m_num_local_particles_cached;
+  }
   int get_local_bond_numbers() const { return m_local_bond_numbers; }
   void add_local_bond_numbers() { m_local_bond_numbers += 1; }
   void reset_local_bond_numbers() { m_local_bond_numbers = 0; }

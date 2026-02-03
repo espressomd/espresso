@@ -127,18 +127,16 @@ double System::particle_short_range_energy_contribution(int pid) {
   auto ret = 0.0;
   if (auto const p = cell_structure->get_local_particle(pid)) {
     auto const coulomb_kernel = coulomb.pair_energy_kernel();
-    auto kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel), &ret,
-                   this](Particle const &p, Particle const &p1,
-                         Utils::Vector3d const &vec) {
+    auto kernel = [&ret, this](Particle const &p, Particle const &p1,
+                               Utils::Vector3d const &vec) {
 #ifdef ESPRESSO_EXCLUSIONS
       if (not do_nonbonded(p, p1))
         return;
 #endif
       auto const &ia_params = nonbonded_ias->get_ia_param(p.type(), p1.type());
       // Add energy for current particle pair to result
-      ret +=
-          calc_non_bonded_pair_energy(p, p1, ia_params, vec, vec.norm(),
-                                      *bonded_ias, coulomb, coulomb_kernel_ptr);
+      ret += calc_non_bonded_pair_energy(p, p1, ia_params, vec, vec.norm(),
+                                         *bonded_ias, coulomb, nullptr);
     };
     cell_structure->run_on_particle_short_range_neighbors(*p, kernel);
   }

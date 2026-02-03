@@ -1,0 +1,17 @@
+[project]
+name = "espresso-mlip-water"
+version = "0.1.0"
+description = "ESPResSo tutorial for atomistic simulations of water with TIP4P and MLIPs"
+readme = "Readme.md"
+requires-python = ">=3.11"
+dependencies = [
+    "apax[cuda]==0.12.3",
+    "dvc-s3>=3.2.2",
+    "ipsuite==0.2.7",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.30.1",
+    "ipywidgets>=8.1.7",
+]

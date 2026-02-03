@@ -17,5 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-espresso_add_tutorial(TARGET tutorial_bi FILE "boltzmann_inversion.ipynb"
-                      HTML_RUN)
+espresso_add_tutorial(
+  TARGET tutorial_bi FILE "boltzmann_inversion.ipynb" HTML_RUN VAR_SUBST
+  "\"p3m_params={'mesh':[16,16,16],'cao':3}\"")

@@ -30,6 +30,7 @@
 #include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
 
 #include <script_interface/ScriptInterface.hpp>
 
@@ -37,6 +38,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -51,9 +53,18 @@ class EKVTKHandle : public VTKHandleBase<::EKinWalberlaBase> {
   }
 };
 
+inline void
+ek_throw_if_expired(std::optional<ResourceObserver> const &mpi_obs) {
+  if (not(mpi_obs and mpi_obs->is_valid())) {
+    throw std::runtime_error(
+        "the MPI Cartesian communicator of this EK object has expired");
+  }
+}
+
 class EKSpecies : public LatticeModel<::EKinWalberlaBase, EKVTKHandle> {
 protected:
   using Base = LatticeModel<::EKinWalberlaBase, EKVTKHandle>;
+  std::optional<ResourceObserver> m_mpi_cart_comm_observer;
   double m_conv_diffusion;
   double m_conv_ext_efield;
   double m_conv_energy;
@@ -66,6 +77,10 @@ public:
   EKSpecies() {
     add_parameters(
         {{"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
+         {"single_precision", AutoParameter::read_only,
+          [this]() { return not m_instance->is_double_precision(); }},
+         {"gpu", AutoParameter::read_only,
+          [this]() { return m_instance->is_gpu(); }},
          {"diffusion",
           [this](Variant const &v) {
             m_instance->set_diffusion(get_value<double>(v) * m_conv_diffusion);
@@ -105,8 +120,6 @@ public:
             m_instance->set_friction_coupling(get_value<bool>(v));
           },
           [this]() { return m_instance->get_friction_coupling(); }},
-         {"single_precision", AutoParameter::read_only,
-          [this]() { return not m_instance->is_double_precision(); }},
          {"tau", AutoParameter::read_only, [this]() { return m_tau; }},
          {"density", AutoParameter::read_only,
           [this]() { return m_density / m_conv_density; }},
@@ -138,6 +151,9 @@ public:
 
   [[nodiscard]] auto get_ekinstance() const { return m_instance; }
   [[nodiscard]] auto get_lattice() const { return m_lattice; }
+  [[nodiscard]] auto get_mpi_cart_comm_observer() const {
+    return m_mpi_cart_comm_observer;
+  }
 
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override;
@@ -157,22 +173,13 @@ public:
     };
   }
 
+protected:
+  void make_instance(VariantMap const &params) override;
+
 private:
   void load_checkpoint(std::filesystem::path const &path, int mode);
   void save_checkpoint(std::filesystem::path const &path, int mode);
 };
-
-class EKSpeciesCPU : public EKSpecies {
-protected:
-  void make_instance(VariantMap const &params) override;
-};
-
-#ifdef ESPRESSO_CUDA
-class EKSpeciesGPU : public EKSpecies {
-protected:
-  void make_instance(VariantMap const &params) override;
-};
-#endif // ESPRESSO_CUDA
 
 } // namespace ScriptInterface::walberla
 

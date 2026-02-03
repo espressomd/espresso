@@ -464,8 +464,8 @@ Specification of fluid and movement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
-    lbf = espressomd.lb.LBFluidWalberla(agrid=1, density=1.0, kinematic_viscosity=1.5,
-                                        tau=time_step, ext_force_density=[0.002, 0.0, 0.0])
+    lbf = espressomd.lb.LBFluid(agrid=1, density=1.0, kinematic_viscosity=1.5,
+                                tau=time_step, ext_force_density=[0.002, 0.0, 0.0])
     self.system.lb = lbf
 
 This part of the script specifies the fluid that will get the system

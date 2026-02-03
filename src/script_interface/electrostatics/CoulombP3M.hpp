@@ -27,25 +27,25 @@
 
 #include "core/electrostatics/p3m.hpp"
 
-#include "script_interface/get_value.hpp"
+#include <script_interface/code_info/CodeInfo.hpp>
+#include <script_interface/get_value.hpp>
 
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace ScriptInterface {
 namespace Coulomb {
 
-template <Arch Architecture>
-class CoulombP3M : public Actor<CoulombP3M<Architecture>, ::CoulombP3M> {
+class CoulombP3M : public Actor<CoulombP3M, ::CoulombP3M> {
   TuningParameters m_tuning;
   bool m_tune;
-  bool m_single_precision;
 
 public:
-  using Base = Actor<CoulombP3M<Architecture>, ::CoulombP3M>;
+  using Base = Actor<CoulombP3M, ::CoulombP3M>;
   using Base::actor;
   using Base::add_parameters;
   using Base::context;
@@ -57,6 +57,8 @@ protected:
 public:
   CoulombP3M() {
     add_parameters({
+        {"gpu", AutoParameter::read_only,
+         [this]() { return actor()->is_gpu(); }},
         {"single_precision", AutoParameter::read_only,
          [this]() { return not actor()->is_double_precision(); }},
         {"alpha_L", AutoParameter::read_only,
@@ -87,9 +89,9 @@ public:
          [this]() { return m_tuning.timings; }},
         {"tune_limits", AutoParameter::read_only,
          [this]() {
-#if defined(__clang__) and defined(__cray__)
-           auto const &range_min = m_tune_limits.first;
-           auto const &range_max = m_tune_limits.second;
+#if defined(__clang__) and defined(__cray__) or defined(__INTEL_LLVM_COMPILER)
+           auto const &range_min = m_tuning.limits.first;
+           auto const &range_max = m_tuning.limits.second;
 #else
            auto const &[range_min, range_max] = m_tuning.limits;
 #endif
@@ -141,8 +143,14 @@ public:
         }
       });
     }
-    auto const single_precision = get_value<bool>(params, "single_precision");
+    auto const gpu = get_value_or(params, "gpu", false);
+    auto const single_precision = get_value_or(params, "single_precision", gpu);
     context()->parallel_try_catch([&]() {
+      if (gpu) {
+        std::vector<std::string> required_features;
+        required_features.emplace_back("CUDA");
+        CodeInfo::check_features(required_features);
+      }
       auto p3m = P3MParameters{!get_value_or<bool>(params, "is_tuned", !m_tune),
                                get_value<double>(params, "epsilon"),
                                get_value<double>(params, "r_cut"),
@@ -151,9 +159,9 @@ public:
                                get_value<int>(params, "cao"),
                                get_value<double>(params, "alpha"),
                                get_value<double>(params, "accuracy")};
-      m_actor = new_coulomb_p3m_heffte(std::move(p3m), m_tuning,
-                                       get_value<double>(params, "prefactor"),
-                                       single_precision, Architecture);
+      m_actor = new_coulomb_p3m_heffte(
+          std::move(p3m), m_tuning, get_value<double>(params, "prefactor"),
+          single_precision, gpu ? Arch::CUDA : Arch::CPU);
     });
     set_charge_neutrality_tolerance(params);
   }

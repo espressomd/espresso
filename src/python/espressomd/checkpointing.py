@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import collections
 import inspect
 import pickle
 import re
@@ -24,6 +23,22 @@ import signal
 import pathlib
 from . import utils
 from . import script_interface
+
+
+@script_interface.script_interface_register
+class CheckpointerContext(script_interface.ScriptInterfaceHelper):
+    _so_name = "CellSystem::CheckpointerContext"
+    _so_creation_policy = "GLOBAL"
+
+    def _get_node_grid(self):
+        return self.call_method("get_node_grid")
+
+    def __enter__(self):
+        self.call_method("acquire_lock")
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.call_method("release_lock")
 
 
 class Checkpoint:
@@ -201,7 +216,7 @@ class Checkpoint:
 
         """
         # get attributes of registered objects
-        checkpoint_data = collections.OrderedDict()
+        checkpoint_data = {}
         for obj_name in self.checkpoint_objects:
             checkpoint_data[obj_name] = self._getattr_submodule(
                 self.calling_module, obj_name, None)
@@ -212,7 +227,9 @@ class Checkpoint:
         checkpoint_file = self.root / f"{checkpoint_index}.checkpoint"
         checkpoint_file_tmp = checkpoint_file.with_suffix(".checkpoint.tmp")
         with checkpoint_file_tmp.open("wb") as f:
-            pickle.dump(checkpoint_data, f, -1)
+            pickler = pickle.Pickler(f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickler.dump(CheckpointerContext()._get_node_grid())
+            pickler.dump(checkpoint_data)
         checkpoint_file_tmp.rename(checkpoint_file)
 
     def load(self, checkpoint_index=None):
@@ -231,7 +248,9 @@ class Checkpoint:
 
         checkpoint_file = self.root / f"{checkpoint_index}.checkpoint"
         with checkpoint_file.open("rb") as f:
-            checkpoint_data = pickle.load(f)
+            unpickler = pickle.Unpickler(f)
+            with CheckpointerContext(node_grid=unpickler.load()):
+                checkpoint_data = unpickler.load()
 
         for key in checkpoint_data:
             self._setattr_submodule(

@@ -88,6 +88,7 @@ struct Communicator {
   int &this_node;
   /** @brief The MPI world size. */
   int size;
+  bool locked_for_checkpointing;
 
   Communicator();
   void init_comm_cart();

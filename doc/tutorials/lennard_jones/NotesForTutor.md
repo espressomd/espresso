@@ -1,11 +1,11 @@
-# Hints for Tutors: Tutorial 01 - Lennard-Jones
+# Tutorial: Lennard-Jones
 
-## Learning objectives (physics)
+## Physics learning objectives
 
-After the tutorial, students should be able to 
+After the tutorial, students should be able to:
 
 * explain
-    * role of Lennard-Jones potential:
+    * the role of the Lennard-Jones potential:
       * noble gases
       * first MD simulations by Verlet et al. (liquid argon)
     * role of radial distribution function
@@ -13,8 +13,7 @@ After the tutorial, students should be able to
       * LJ agrees well with experiments for noble gases!
     * how to use an auto correlation function to estimate correlation times and how that affects error estimation
 
-
-## Learning objectives (ESPResSo)
+## ESPResSo learning objectives
 
 After the tutorial, students should be able to 
 

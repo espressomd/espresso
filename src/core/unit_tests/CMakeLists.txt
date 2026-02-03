@@ -68,6 +68,7 @@ espresso_unit_test(
   $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>)
 espresso_unit_test(
   SRC particle_reduction_test.cpp DEPENDS espresso::utils espresso::core
+  Boost::mpi
   $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>)
 espresso_unit_test(SRC periodic_fold_test.cpp)
 espresso_unit_test(SRC grid_test.cpp DEPENDS espresso::core)

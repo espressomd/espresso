@@ -31,12 +31,14 @@
 #include <script_interface/auto_parameters/AutoParameters.hpp>
 
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 
 #include <cassert>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
@@ -44,6 +46,7 @@ namespace ScriptInterface::walberla {
 
 class LBFluidNode : public AutoParameters<LBFluidNode, LatticeIndices> {
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
+  std::optional<ResourceObserver> m_mpi_cart_comm_observer;
   Utils::Vector3i m_index;
   Utils::Vector3i m_grid_size;
   double m_conv_dens;
@@ -61,6 +64,7 @@ public:
     auto const lb_sip =
         get_value<std::shared_ptr<LBFluid>>(params, "parent_sip");
     m_lb_fluid = lb_sip->get_lb_fluid();
+    m_mpi_cart_comm_observer = lb_sip->get_mpi_cart_comm_observer();
     auto const lb_params = lb_sip->get_lb_params();
     auto const tau = lb_params->get_tau();
     auto const agrid = lb_params->get_agrid();

@@ -50,6 +50,13 @@ For example, ::
     >>> print(energy["bonded"])
     >>> print(energy["non_bonded"])
 
+.. _Particle non-bonded energy:
+
+Particle non-bonded energy
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.particle_non_bonded_energy`
+
+Returns the non-bonded energy contribution from a single particle.
 
 .. _Momentum of the system:
 
