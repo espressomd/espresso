@@ -19,17 +19,22 @@
 
 import unittest as ut
 import unittest_decorators as utx
+import unittest.mock
 import espressomd
-import espressomd.plugins.ase
 import numpy as np
-from ase.calculators.calculator import Calculator
+import contextlib
 
+Calculator = unittest.mock.MagicMock()
+with contextlib.suppress(ImportError):
+    import espressomd.plugins.ase
+    from ase.calculators.calculator import Calculator
 
 # Global system instance shared between test classes
 system = espressomd.System(box_l=[20., 20., 20.])
 
 
 @utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "MASS", "ELECTROSTATICS"])
+@utx.skipIfMissingModules("ase.calculators")
 class ASEInterfaceTest(ut.TestCase):
     """test suite for the ASE interface focusing on update_ase() method."""
 
@@ -453,12 +458,13 @@ class FixedForceCalculator(Calculator):
         if "energy" in properties:
             self.results["energy"] = self.energy_value
 
-    def get_forces(self, atoms):
+    def get_forces(self, atoms):  # pylint: disable=unused-argument
         """Get forces directly."""
         return self.forces_array.copy()
 
 
 @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
+@utx.skipIfMissingModules("ase.calculators")
 class ASEIntegrationTest(ut.TestCase):
     """Test suite for ASE interface integration functionality."""
 

@@ -122,14 +122,14 @@ class ParticleSliceTest(ut.TestCase):
     def test_masses(self):
         ps = self.system.part.by_ids([0, 1, 2])
         # handle Utils::Vector3d
-        ps.mass = [1., 2., 2.]
-        np.testing.assert_allclose(np.copy(ps.mass), [1., 2., 2.])
+        ps.mass = [1.5, 2.5, 2.5]
+        np.testing.assert_allclose(np.copy(ps.mass), [1.5, 2.5, 2.5])
         # handle Utils::Vector3i
         ps.mass = [3, 1, 3]
         np.testing.assert_allclose(np.copy(ps.mass), [3., 1., 3.])
         # handle std::vector<Variant>
-        ps.mass = [4., 5, 2]
-        np.testing.assert_allclose(np.copy(ps.mass), [4., 5., 2.])
+        ps.mass = [4.5, 5, 2]
+        np.testing.assert_allclose(np.copy(ps.mass), [4.5, 5., 2.])
 
     def test_propagation(self):
         Propagation = espressomd.propagation.Propagation
