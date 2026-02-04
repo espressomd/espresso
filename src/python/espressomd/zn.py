@@ -349,6 +349,21 @@ class Visualizer():
             for key in self.zndraw.sessions.keys():
                 self.zndraw.api.set_active_camera(key, "camera")
 
+            if self.params["forces"]:
+                self.zndraw.geometries["force_arrows"] = zndraw.geometries.Arrow(
+                    position="arrays.positions",
+                    direction="arrays.forces",
+                    color=["gray"] if self.params["colors"] else "arrays.colors",
+                    radius=4 *
+                    max(self.params["radii"].values()
+                        ) if self.params["radii"] else 1.0,
+                    opacity=0.8,
+                    hovering=zndraw.geometries.InteractionSettings(
+                        enabled=False),
+                    selecting=zndraw.geometries.InteractionSettings(
+                        enabled=False),
+                )
+
         if self.params["vector_field"] is not None:
             field_data = self.params["vector_field"]()
             data.info["vector_positions"] = field_data[:, 0]
@@ -530,6 +545,8 @@ class Visualizer():
         ase_data.arrays['radii'] = np.hstack(
             [ase_data.arrays['radii'], [1e-6 * min_radii] * len(ghost_positions)])
         ase_data.arrays['numbers'] = np.hstack([numbers, ghost_numbers])
+        ase_data.arrays['forces'] = np.vstack(
+            [ase_data.arrays['forces'], np.zeros((len(ghost_positions), 3))])
 
         bonds.extend(bonds_to_add)
         return bonds
