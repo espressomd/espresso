@@ -46,6 +46,24 @@ namespace ScriptInterface {
 namespace Particles {
 
 struct SetParticleParametersVisitor {
+private:
+  template <typename T>
+  void set_from_vector_like(
+      std::vector<int> const &pids, std::string const &param_name,
+      T const &values, Context *context,
+      std::shared_ptr<CellSystem::CellSystem> cell_structure,
+      std::shared_ptr<Interactions::BondedInteractions> bonded_ias) const {
+    auto so = std::dynamic_pointer_cast<ParticleModifier>(context->make_shared(
+        "Particles::ParticleModifier", {{"id", -1},
+                                        {"__cell_structure", cell_structure},
+                                        {"__bonded_ias", bonded_ias}}));
+    for (std::size_t i = 0; i < pids.size(); ++i) {
+      so->set_pid(pids[i]);
+      so->do_set_parameter(param_name, values[i]);
+    }
+  }
+
+public:
   void operator()(std::vector<int> const &, std::string const &,
                   auto const &values, Context *,
                   std::shared_ptr<CellSystem::CellSystem>,
@@ -59,14 +77,19 @@ struct SetParticleParametersVisitor {
       std::vector<T> const &values, Context *context,
       std::shared_ptr<CellSystem::CellSystem> cell_structure,
       std::shared_ptr<Interactions::BondedInteractions> bonded_ias) const {
-    auto so = std::dynamic_pointer_cast<ParticleModifier>(context->make_shared(
-        "Particles::ParticleModifier", {{"id", -1},
-                                        {"__cell_structure", cell_structure},
-                                        {"__bonded_ias", bonded_ias}}));
-    for (std::size_t i = 0; i < pids.size(); ++i) {
-      so->set_pid(pids[i]);
-      so->do_set_parameter(param_name, values[i]);
-    }
+    set_from_vector_like(pids, param_name, values, context, cell_structure,
+                         bonded_ias);
+  }
+  template <typename T>
+  void
+  operator()(std::vector<int> const &pids, std::string const &param_name,
+             Utils::Vector<T, 3> const &values, Context *context,
+             std::shared_ptr<CellSystem::CellSystem> cell_structure,
+             std::shared_ptr<Interactions::BondedInteractions> bonded_ias) const
+    requires(std::is_same_v<T, int> or std::is_same_v<T, double>)
+  {
+    set_from_vector_like(pids, param_name, values, context, cell_structure,
+                         bonded_ias);
   }
 };
 
