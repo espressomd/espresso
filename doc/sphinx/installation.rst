@@ -355,6 +355,11 @@ To run |es| on Windows, use the Linux subsystem (WSL). For that you need to
   to set up CUDA.
 * follow the instructions for :ref:`Installing requirements on Ubuntu`
 
+Note on file system performance: when using WSL, avoid cloning or building
+the repository on the mounted Windows file system (e.g., :file:`/mnt/c/Users/...`).
+This causes severe I/O performance degradation. Always clone and build within
+the Linux filesystem (e.g., :file:`/home/user/espresso`).
+
 .. _Installing requirements on macOS:
 
 Installing requirements on macOS

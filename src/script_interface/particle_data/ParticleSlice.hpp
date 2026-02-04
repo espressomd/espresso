@@ -39,20 +39,28 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 namespace ScriptInterface {
 namespace Particles {
+namespace traits {
+template <typename T> struct is_vector_like : std::false_type {};
+template <typename T, typename Alloc>
+struct is_vector_like<std::vector<T, Alloc>> : std::true_type {};
+template <typename T, std::size_t N>
+struct is_vector_like<Utils::Vector<T, N>> : std::true_type {};
+} // namespace traits
 
-struct SetParticleParametersVisitor {
-private:
-  template <typename T>
-  void set_from_vector_like(
-      std::vector<int> const &pids, std::string const &param_name,
-      T const &values, Context *context,
-      std::shared_ptr<CellSystem::CellSystem> cell_structure,
-      std::shared_ptr<Interactions::BondedInteractions> bonded_ias) const {
+template <class Container>
+void set_from_vector_like(
+    std::vector<int> const &pids, std::string const &param_name,
+    Container const &values, Context *context,
+    std::shared_ptr<CellSystem::CellSystem> cell_structure,
+    std::shared_ptr<Interactions::BondedInteractions> bonded_ias) {
+
+  if constexpr (traits::is_vector_like<Container>::value) {
     auto so = std::dynamic_pointer_cast<ParticleModifier>(context->make_shared(
         "Particles::ParticleModifier", {{"id", -1},
                                         {"__cell_structure", cell_structure},
@@ -61,37 +69,11 @@ private:
       so->set_pid(pids[i]);
       so->do_set_parameter(param_name, values[i]);
     }
-  }
-
-public:
-  void operator()(std::vector<int> const &, std::string const &,
-                  auto const &values, Context *,
-                  std::shared_ptr<CellSystem::CellSystem>,
-                  std::shared_ptr<Interactions::BondedInteractions>) const {
+  } else {
     throw Exception("Values must be of type vector, got " +
                     detail::demangle::simplify_symbol(&values));
   }
-  template <typename T>
-  void operator()(
-      std::vector<int> const &pids, std::string const &param_name,
-      std::vector<T> const &values, Context *context,
-      std::shared_ptr<CellSystem::CellSystem> cell_structure,
-      std::shared_ptr<Interactions::BondedInteractions> bonded_ias) const {
-    set_from_vector_like(pids, param_name, values, context, cell_structure,
-                         bonded_ias);
-  }
-  template <typename T>
-  void
-  operator()(std::vector<int> const &pids, std::string const &param_name,
-             Utils::Vector<T, 3> const &values, Context *context,
-             std::shared_ptr<CellSystem::CellSystem> cell_structure,
-             std::shared_ptr<Interactions::BondedInteractions> bonded_ias) const
-    requires(std::is_same_v<T, int> or std::is_same_v<T, double>)
-  {
-    set_from_vector_like(pids, param_name, values, context, cell_structure,
-                         bonded_ias);
-  }
-};
+}
 
 template <typename T>
 inline auto
