@@ -345,11 +345,6 @@ required to compile |es| on other Linux distributions:
 Installing requirements on Windows via WSL
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To install the requirements on WSL, follow the instructions in the :ref:Installing requirements on Ubuntu`` section.
-
-.. warning::
-    **File System Performance:** When using WSL, strictly avoid cloning or building the repository on the mounted Windows file system (e.g., ``/mnt/c/Users/...``). This causes severe I/O performance degradation. Always clone and build within the Linux filesystem (e.g., ``~/home/user/espresso``).
-
 To run |es| on Windows, use the Linux subsystem (WSL). For that you need to
 
 * follow `these instructions <https://learn.microsoft.com/en-us/windows/wsl/install>`__ to install Ubuntu
@@ -359,6 +354,11 @@ To run |es| on Windows, use the Linux subsystem (WSL). For that you need to
   use of |es|'s GPU acceleration, follow `these instructions <https://docs.nvidia.com/cuda/wsl-user-guide/index.html>`__
   to set up CUDA.
 * follow the instructions for :ref:`Installing requirements on Ubuntu`
+
+Note on file system performance: when using WSL, avoid cloning or building
+the repository on the mounted Windows file system (e.g., :file:`/mnt/c/Users/...`).
+This causes severe I/O performance degradation. Always clone and build within
+the Linux filesystem (e.g., :file:`/home/user/espresso`).
 
 .. _Installing requirements on macOS:
 
