@@ -240,9 +240,9 @@ Variant ParticleSlice::do_call_method(std::string const &name,
       context()->parallel_try_catch([&]() {
         std::visit(
             [&](auto &&vals) {
-              SetParticleParametersVisitor{}(m_id_selection, param_name, vals,
-                                             context(), m_cell_structure.lock(),
-                                             m_bonded_ias.lock());
+              set_from_vector_like(m_id_selection, param_name, vals, context(),
+                                   m_cell_structure.lock(),
+                                   m_bonded_ias.lock());
             },
             params.at("values"));
       });

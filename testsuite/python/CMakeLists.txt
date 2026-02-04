@@ -446,6 +446,7 @@ python_test(FILE integrator_langevin_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE integrator_brownian_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)
 python_test(FILE integrator_stokesian_stats.py MAX_NUM_PROC 2 LABELS long)
+python_test(FILE ase_interface.py MAX_NUM_PROC 1)
 
 set(ESPRESSO_CTEST_RESOURCE_SPEC_FILE resources.json)
 configure_file(
