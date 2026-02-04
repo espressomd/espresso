@@ -1,6 +1,6 @@
-# Boltzmann inversion
+# Tutorial: Boltzmann inversion
 
-## Learning objectives (physics)
+## Physics learning objectives
 
 * Develop a simple coarse-grained model for charged colloidal particles with explicit counterions and salt using the method of Boltzmann inversion.
 * In the coarse-grained model, only the colloidal particles are explicitly modeled, while the effects of the small ions are considered implicitly through an effective coarse-grained potential.
@@ -14,7 +14,7 @@ After the tutorial, students should be able to:
 * Explain the discrepancy in the RDFs (especially in the short range) with explicit and implicit salt.
 * Limitations of the Boltzmann inversion method, particularly with regards to many-body effects.
 
-## Learning objectives (ESPResSo)
+## ESPResSo learning objectives
 
 * Setting up a system with colloidal particles of desired size, counterions and salt.
 * Calculating the RDF between colloidal particles using observables and accumulators.

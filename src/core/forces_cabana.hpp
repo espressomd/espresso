@@ -66,6 +66,7 @@ struct ForcesKernel {
 #ifdef ESPRESSO_P3M
   CoulombP3M const *p3m;
 #endif
+  double system_max_cutoff;
 
   ForcesKernel(
       BondedInteractionsMap const &bonded_ias_,
@@ -85,7 +86,7 @@ struct ForcesKernel {
       Utils::Vector3d *const global_virial_,
       CellStructure::VirialType const &local_virial_,
 #endif
-      CellStructure::AoSoA_pack const &aosoa_)
+      CellStructure::AoSoA_pack const &aosoa_, double system_max_cutoff_)
       : bonded_ias(bonded_ias_), nonbonded_ias(nonbonded_ias_),
         coulomb_kernel(coulomb_kernel_), dipoles_kernel(dipoles_kernel_),
         elc_kernel(elc_kernel_), coulomb_u_kernel(coulomb_u_kernel_),
@@ -97,7 +98,7 @@ struct ForcesKernel {
 #ifdef ESPRESSO_NPT
         global_virial(global_virial_), local_virial(local_virial_),
 #endif
-        aosoa(aosoa_) {
+        aosoa(aosoa_), system_max_cutoff(system_max_cutoff_) {
 #ifdef ESPRESSO_P3M
     p3m = nullptr;
     if (auto &solver = coulomb_.impl->solver; solver.has_value()) {
@@ -142,16 +143,20 @@ struct ForcesKernel {
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
   operator()(std::size_t i, std::size_t j) const {
 
-    auto const &ia_params =
-        nonbonded_ias.get_ia_param(aosoa.type(i), aosoa.type(j));
-
-    ParticleForce pf{};
-
     // calc distance
     auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
     auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
     auto const d = box_geo.get_mi_vector(pos1, pos2);
     auto const dist = d.norm();
+
+    // Early exit if distance > maximal clobal cutoff
+    if (dist > system_max_cutoff)
+      return;
+
+    auto const &ia_params =
+        nonbonded_ias.get_ia_param(aosoa.type(i), aosoa.type(j));
+
+    ParticleForce pf{};
 
     // Determine which data needs to be loaded based on active algorithms
 #if defined(ESPRESSO_DIPOLES) or defined(ESPRESSO_GAY_BERNE)
@@ -183,7 +188,7 @@ struct ForcesKernel {
     /* non-bonded pair potentials                  */
     /***********************************************/
 
-    if (dist < ia_params.max_cut) {
+    if (dist <= ia_params.max_cut) {
 #ifdef ESPRESSO_EXCLUSIONS
       bool skip_non_bonded = false;
       if (aosoa.has_exclusion(i) or aosoa.has_exclusion(j)) {
@@ -209,7 +214,7 @@ struct ForcesKernel {
         }
 #endif
       } // not skip_non_bonded
-    }
+    } // not dist > ia_params.max_cut
 
     /*********************************************************************/
     /* everything before this contributes to the virial pressure in NpT, */
@@ -245,8 +250,8 @@ struct ForcesKernel {
     Utils::Vector3d f2_asym{};
     // real-space electrostatic charge-charge interaction
     if (coulomb_kernel != nullptr) {
-      auto const q1q2 = aosoa.charge(i) * aosoa.charge(j);
-      if (q1q2 != 0) {
+      if ((aosoa.charge(i) != 0.) and (aosoa.charge(j) != 0.)) {
+        auto const q1q2 = aosoa.charge(i) * aosoa.charge(j);
 #ifdef ESPRESSO_P3M
         if (p3m) [[likely]] {
           pf.f += p3m->pair_force(q1q2, d, dist);

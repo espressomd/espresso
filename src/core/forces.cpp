@@ -185,7 +185,8 @@ static ForcesKernel create_cabana_neighbor_kernel(
                              virial,
                              local_virial,
 #endif
-                             aosoa};
+                             aosoa,
+                             system.maximal_cutoff()};
 }
 
 static void reduce_cabana_forces_and_torques(System::System const &system,
@@ -372,8 +373,11 @@ void System::System::calculate_forces() {
 #ifdef ESPRESSO_COLLISION_DETECTION
                       &collision_detection = *collision_detection,
 #endif
-                      &box_geo = *box_geo](Particle &p1, Particle &p2,
-                                           Distance const &d) {
+                      &box_geo = *box_geo,
+                      system_max_cutoff2 = Utils::sqr(maximal_cutoff())](
+                         Particle &p1, Particle &p2, Distance const &d) {
+    if (d.dist2 > system_max_cutoff2)
+      return;
     auto const &ia_params = nonbonded_ias.get_ia_param(p1.type(), p2.type());
     add_non_bonded_pair_force(
         p1, p2, d.vec21, sqrt(d.dist2), d.dist2, p1.q() * p2.q(), ia_params,

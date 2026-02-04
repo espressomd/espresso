@@ -120,10 +120,9 @@ class LBField:
     def __call__(self):
         origins = self._build_grid()
         velocities = self._get_velocities()
-        velocities = origins + velocities
         vector_field = np.stack([origins, velocities], axis=1)
 
-        return vector_field.tolist()
+        return vector_field
 
 
 class VectorField:
@@ -145,14 +144,10 @@ class VectorField:
     arrow_config : :obj:`dict`, optional
         Configuration for the arrows, by default ``None`` and then uses the default configuration:
 
-        'colormap': [[-0.5, 0.9, 0.5], [-0.0, 0.9, 0.5]]
+        'colormap': [[0.5, 0.9, 0.5], [0.0, 0.9, 0.5]]
             HSL colormap for the arrows, where the first value is the minimum value and the second value is the maximum value.
         'normalize': True
             Normalize the colormap to the maximum value each frame
-        'colorrange': [0, 1]
-            Range of the colormap, only used if normalize is False
-        'scale_vector_thickness': True
-            Scale the thickness of the arrows with the velocity
         'opacity': 1.0
             Opacity of the arrows
     """
@@ -177,7 +172,7 @@ class VectorField:
         vectors = self.scale * vectors
         vector_field = np.stack([origins, vectors], axis=1)
 
-        return vector_field.tolist()
+        return vector_field
 
 
 class Visualizer():
@@ -252,10 +247,8 @@ class Visualizer():
         time.sleep(2)
 
         if vector_field is not None:
-            self.arrow_config = {'colormap': [[-0.5, 0.9, 0.5], [-0.0, 0.9, 0.5]],
+            self.arrow_config = {'colormap': [[0.5, 0.9, 0.5], [0.0, 0.9, 0.5]],
                                  'normalize': True,
-                                 'colorrange': [0, 1],
-                                 'scale_vector_thickness': True,
                                  'opacity': 1.0}
 
             if vector_field.arrow_config is not None:
@@ -340,13 +333,6 @@ class Visualizer():
             # data.info["connectivity"] = bonds  # from zndraw version 0.5.12
             data.connectivity = bonds
 
-        # Catch when the server is initializing an empty frame
-        # len(self.zndraw) is a expensive socket call, so we try to avoid it
-        if self.frame_count != 0 or len(self.zndraw) == 0:
-            self.zndraw.append(data)
-        else:
-            self.zndraw[0] = data
-
         if self.frame_count == 0:
             x, y, z = self.system.box_l / 2
             z_dist = max([1.5 * y, 1.5 * x, 1.5 * z])
@@ -356,9 +342,42 @@ class Visualizer():
                 'target': [x, y, z]
             }
 
-            if self.params["vector_field"] is not None:
-                for key, value in self.arrow_config.items():
-                    setattr(self.zndraw.config.arrows, key, value)
+        if self.params["vector_field"] is not None:
+            field_data = self.params["vector_field"]()
+            data.info["vector_positions"] = field_data[:, 0]
+            vector_directions = np.copy(field_data[:, 1])
+            magnitudes = np.linalg.norm(
+                vector_directions, axis=1, keepdims=True)
+            if self.arrow_config['normalize']:
+                mask = magnitudes.flatten() > 0.
+                vector_directions[mask] /= magnitudes[mask]
+            data.info["vector_directions"] = vector_directions
+
+            colormap = np.array(self.arrow_config['colormap'])
+            max_magnitude = np.max(magnitudes)
+            min_magnitude = np.min(magnitudes)
+            vector_color = colormap[0] + (magnitudes - min_magnitude) / (
+                max_magnitude - min_magnitude) * (colormap[1] - colormap[0])
+            vector_color = _convert_array_to_color(vector_color)
+            data.info["vector_color"] = vector_color
+
+            for key, value in self.arrow_config.items():
+                data.info[key] = value
+            if "vector_field" not in self.zndraw.geometries.keys():
+                shape_options = {"hovering": zndraw.geometries.InteractionSettings(enabled=False),
+                                 "selecting": zndraw.geometries.InteractionSettings(enabled=False)}
+                self.zndraw.geometries["vector_field"] = zndraw.geometries.Arrow(
+                    position="info.vector_positions",
+                    direction="info.vector_directions",
+                    color="info.vector_color",
+                    **shape_options)
+
+        # Catch when the server is initializing an empty frame
+        # len(self.zndraw) is a expensive socket call, so we try to avoid it
+        if self.frame_count != 0 or len(self.zndraw) == 0:
+            self.zndraw.append(data)
+        else:
+            self.zndraw[0] = data
 
         self.frame_count += 1
 
@@ -600,3 +619,18 @@ def _corners_to_shape_geometry(corners, sort=True):
     euler_angles[2] *= -1
 
     return sorted_vertices, euler_angles
+
+
+def _convert_array_to_color(array):
+    """
+    Converts a (n,3) array to a list of color strings.
+    """
+    if array.shape[-1] != 3:
+        raise NotImplementedError(
+            f"The color array should be 3 dimensional")
+    hex_array = array * 255
+    hex_array = np.clip(hex_array, 0, 255)
+    hex_array = hex_array.astype(np.uint8)
+    hex_array = hex_array.reshape((-1, hex_array.shape[-1]))
+    hex_strings = [f"#{r:02X}{g:02X}{b:02X}" for r, g, b in hex_array]
+    return hex_strings
