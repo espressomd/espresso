@@ -76,12 +76,11 @@ struct BondsKernel {
       : bonded_ias(bonded_ias_), bond_breakage(bond_breakage_),
         coulomb_kernel(coulomb_kernel_), box_geo(box_geo_),
         unique_particles(unique_particles_), id_to_index(id_to_index_),
-	local_force(local_force_),
+        local_force(local_force_),
 #ifdef ESPRESSO_NPT
         local_virial(local_virial_),
 #endif
-	bond_list(bond_list_), bond_ids(bond_ids_),
-        aosoa(aosoa_) {
+        bond_list(bond_list_), bond_ids(bond_ids_), aosoa(aosoa_) {
   }
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
@@ -108,7 +107,8 @@ struct BondsKernel {
   }
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
-  calculate_bond_forces(Kokkos::View<int *> const &partners, int const bond_id) const {
+  calculate_bond_forces(Kokkos::View<int *> const &partners,
+                        int const bond_id) const {
     auto const &iaparams = *bonded_ias.at(bond_id);
     auto const thread_id = omp_get_thread_num();
     auto &p1 = *unique_particles.at(id_to_index(partners(0)));
@@ -253,12 +253,12 @@ struct BondsKernel {
 
       auto breakage = check_breakage(partners, bond_id);
       if (not breakage) {
-	bond_broken = calculate_bond_forces(partners, bond_id);
+        bond_broken = calculate_bond_forces(partners, bond_id);
       }
 
       if (bond_broken) {
-	std::span<int> s(partners.data(), partners.extent(0));
-	bond_broken_error(s);
+        std::span<int> s(partners.data(), partners.extent(0));
+        bond_broken_error(s);
       }
     } catch (const BondResolutionError &) {
       std::span<int> s(partners.data(), partners.extent(0));

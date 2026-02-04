@@ -264,8 +264,7 @@ update_aosoa_charges(CellStructure &cell_structure) {
 }
 #endif
 
-void cabana_short_range(auto const &bonds_kernel,
-                        auto const &forces_kernel,
+void cabana_short_range(auto const &bonds_kernel, auto const &forces_kernel,
                         CellStructure &cell_structure, double pair_cutoff,
                         double bond_cutoff, auto const &verlet_criterion,
                         auto const integ_switch) {
@@ -278,9 +277,8 @@ void cabana_short_range(auto const &bonds_kernel,
 #endif
     if (cell_structure.get_local_bond_numbers() > 0) {
       Kokkos::parallel_for( // loop over bonds
-          "for_each_local_bonds",
-	  cell_structure.get_local_bond_numbers(),
-	  bonds_kernel);
+          "for_each_local_bonds", cell_structure.get_local_bond_numbers(),
+          bonds_kernel);
     }
     // cell_structure.bond_loop(bond_kernel);
 #ifdef ESPRESSO_CALIPER

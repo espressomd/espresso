@@ -152,8 +152,8 @@ static void reinit_dip_fld(CellStructure const &cell_structure) {
 #endif
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-static BondsKernel create_kokkos_bonds_kernel(
-    System::System const &system, auto const &coulomb_kernel) {
+static BondsKernel create_kokkos_bonds_kernel(System::System const &system,
+                                              auto const &coulomb_kernel) {
 
   auto const &unique_particles = system.cell_structure->get_unique_particles();
   auto const &id_to_index = system.cell_structure->get_id_to_index();
@@ -161,22 +161,24 @@ static BondsKernel create_kokkos_bonds_kernel(
 #ifdef ESPRESSO_NPT
   auto const &local_virial = system.cell_structure->get_local_virial();
 #endif
-  CellStructure::BondlistType const &bond_list = system.cell_structure->get_bond_list_kokkos();
-  CellStructure::BondIDType const &bond_ids = system.cell_structure->get_bond_id_kokkos();
+  CellStructure::BondlistType const &bond_list =
+      system.cell_structure->get_bond_list_kokkos();
+  CellStructure::BondIDType const &bond_ids =
+      system.cell_structure->get_bond_id_kokkos();
   auto const &aosoa = system.cell_structure->get_aosoa();
   return /* BondsKernel */ {*system.bonded_ias,
-	  		    *system.bond_breakage,
-	                    get_ptr(coulomb_kernel),
+                            *system.bond_breakage,
+                            get_ptr(coulomb_kernel),
                             *system.box_geo,
                             unique_particles,
-			    id_to_index,
+                            id_to_index,
                             local_force,
 #ifdef ESPRESSO_NPT
-			    local_virial,
+                            local_virial,
 #endif
-			    bond_list,
-			    bond_ids,
-			    aosoa};
+                            bond_list,
+                            bond_ids,
+                            aosoa};
 }
 
 static ForcesKernel create_cabana_neighbor_kernel(
@@ -351,10 +353,9 @@ void System::System::calculate_forces() {
       create_cabana_neighbor_kernel(*this, virial, elc_kernel, coulomb_kernel,
                                     dipoles_kernel, coulomb_u_kernel);
 
-  cabana_short_range(bonds_kernel, first_neighbor_kernel,
-                     *cell_structure, get_interaction_range(),
-                     bonded_ias->maximal_cutoff(), verlet_criterion,
-                     propagation->integ_switch);
+  cabana_short_range(bonds_kernel, first_neighbor_kernel, *cell_structure,
+                     get_interaction_range(), bonded_ias->maximal_cutoff(),
+                     verlet_criterion, propagation->integ_switch);
 
   // Force and Torque reduction
   reduce_cabana_forces_and_torques(*this, virial);
