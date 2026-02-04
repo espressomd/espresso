@@ -152,6 +152,33 @@ static void reinit_dip_fld(CellStructure const &cell_structure) {
 #endif
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+static BondsKernel create_kokkos_bonds_kernel(
+    System::System const &system, auto const &coulomb_kernel) {
+
+  auto const &unique_particles = system.cell_structure->get_unique_particles();
+  auto const &id_to_index = system.cell_structure->get_id_to_index();
+  auto const &local_force = system.cell_structure->get_local_force();
+#ifdef ESPRESSO_NPT
+  auto const &local_virial = system.cell_structure->get_local_virial();
+#endif
+  CellStructure::BondlistType const &bond_list = system.cell_structure->get_bond_list_kokkos();
+  CellStructure::BondIDType const &bond_ids = system.cell_structure->get_bond_id_kokkos();
+  auto const &aosoa = system.cell_structure->get_aosoa();
+  return /* BondsKernel */ {*system.bonded_ias,
+	  		    *system.bond_breakage,
+	                    get_ptr(coulomb_kernel),
+                            *system.box_geo,
+                            unique_particles,
+			    id_to_index,
+                            local_force,
+#ifdef ESPRESSO_NPT
+			    local_virial,
+#endif
+			    bond_list,
+			    bond_ids,
+			    aosoa};
+}
+
 static ForcesKernel create_cabana_neighbor_kernel(
     System::System const &system, Utils::Vector3d *virial,
     auto const &elc_kernel, auto const &coulomb_kernel,
@@ -318,188 +345,13 @@ void System::System::calculate_forces() {
 #ifdef ESPRESSO_CALIPER
   CALI_MARK_BEGIN("cabana_short_range");
 #endif
-  auto const &unique_particles = cell_structure->get_unique_particles();
-  auto const &local_force = cell_structure->get_local_force();
-#ifdef ESPRESSO_NPT
-  auto const &local_virial = cell_structure->get_local_virial();
-#endif
-  auto &id_to_index = cell_structure->get_id_to_index();
-  auto break_kernel = [&bond_breakage = *bond_breakage, &id_to_index,
-                       &unique_particles,
-                       &box_geo = *box_geo](Kokkos::View<int *> const &partners,
-                                            int const bond_id) {
-    auto &p1 = *unique_particles.at(id_to_index(partners(0)));
-    // Consider for bond breakage
-    if (partners(2) == -1) { // pair bonds
-      auto &p2 = *unique_particles.at(id_to_index(partners(1)));
-      auto d = box_geo.get_mi_vector(p1.pos(), p2.pos()).norm();
-      if (bond_breakage.check_and_handle_breakage(
-              p1.id(), {{p2.id(), std::nullopt}}, bond_id, d)) {
-        return true;
-      }
-    } else if (partners(3) == -1) { // angle bond
-      auto &p2 = *unique_particles.at(id_to_index(partners(1)));
-      auto &p3 = *unique_particles.at(id_to_index(partners(2)));
-      auto d = box_geo.get_mi_vector(p2.pos(), p3.pos()).norm();
-      if (bond_breakage.check_and_handle_breakage(p1.id(), {{p2.id(), p3.id()}},
-                                                  bond_id, d)) {
-        return true;
-      }
-    }
-    return false;
-  };
-  auto bond_kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
-                      &bond_breakage = *bond_breakage,
-                      &bonded_ias = *bonded_ias, &local_force,
-#ifdef ESPRESSO_NPT
-                      &local_virial,
-#endif
-                      &id_to_index, &unique_particles,
-                      &box_geo = *box_geo](Kokkos::View<int *> const &partners,
-                                           int const bond_id) {
-    auto const &iaparams = *bonded_ias.at(bond_id);
-    auto const thread_id = omp_get_thread_num();
-    auto &p1 = *unique_particles.at(id_to_index(partners(0)));
-
-    switch (number_of_partners(iaparams)) {
-    case 0:
-      return false;
-
-    case 1: {
-      auto &p2 = *unique_particles.at(id_to_index(partners(1)));
-      auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
-
-      if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
-        auto result = iap->forces(p1, p2, dx);
-        if (result) {
-          auto const &forces = result.value();
-
-          local_force(id_to_index(p1.id()), thread_id, 0) +=
-              std::get<0>(forces)[0];
-          local_force(id_to_index(p1.id()), thread_id, 1) +=
-              std::get<0>(forces)[1];
-          local_force(id_to_index(p1.id()), thread_id, 2) +=
-              std::get<0>(forces)[2];
-          local_force(id_to_index(p2.id()), thread_id, 0) +=
-              std::get<1>(forces)[0];
-          local_force(id_to_index(p2.id()), thread_id, 1) +=
-              std::get<1>(forces)[1];
-          local_force(id_to_index(p2.id()), thread_id, 2) +=
-              std::get<1>(forces)[2];
-          return false;
-        }
-      } else {
-        auto result =
-            calc_bond_pair_force(iaparams, p1, p2, dx, coulomb_kernel_ptr);
-        if (result) {
-
-          auto const f = result.value();
-          local_force(id_to_index(p1.id()), thread_id, 0) += f[0];
-          local_force(id_to_index(p1.id()), thread_id, 1) += f[1];
-          local_force(id_to_index(p1.id()), thread_id, 2) += f[2];
-          local_force(id_to_index(p2.id()), thread_id, 0) -= f[0];
-          local_force(id_to_index(p2.id()), thread_id, 1) -= f[1];
-          local_force(id_to_index(p2.id()), thread_id, 2) -= f[2];
-#ifdef ESPRESSO_NPT
-          auto virial = hadamard_product(result.value(), dx);
-          local_virial(thread_id, 0) += virial[0];
-          local_virial(thread_id, 1) += virial[1];
-          local_virial(thread_id, 2) += virial[2];
-#endif
-          return false;
-        }
-      }
-      return true;
-    }
-
-    case 2: {
-      auto &p2 = *unique_particles.at(id_to_index(partners(1)));
-      auto &p3 = *unique_particles.at(id_to_index(partners(2)));
-
-      if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
-        return false;
-      }
-      auto const result =
-          calc_bonded_three_body_force(iaparams, box_geo, p1, p2, p3);
-      if (result) {
-        auto const &forces = result.value();
-
-        // p1.force() += std::get<0>(forces);
-        // p2.force() += std::get<1>(forces);
-        // p3.force() += std::get<2>(forces);
-        local_force(id_to_index(p1.id()), thread_id, 0) +=
-            std::get<0>(forces)[0];
-        local_force(id_to_index(p1.id()), thread_id, 1) +=
-            std::get<0>(forces)[1];
-        local_force(id_to_index(p1.id()), thread_id, 2) +=
-            std::get<0>(forces)[2];
-        local_force(id_to_index(p2.id()), thread_id, 0) +=
-            std::get<1>(forces)[0];
-        local_force(id_to_index(p2.id()), thread_id, 1) +=
-            std::get<1>(forces)[1];
-        local_force(id_to_index(p2.id()), thread_id, 2) +=
-            std::get<1>(forces)[2];
-        local_force(id_to_index(p3.id()), thread_id, 0) +=
-            std::get<2>(forces)[0];
-        local_force(id_to_index(p3.id()), thread_id, 1) +=
-            std::get<2>(forces)[1];
-        local_force(id_to_index(p3.id()), thread_id, 2) +=
-            std::get<2>(forces)[2];
-
-        return false;
-      }
-      return true;
-    }
-    case 3: {
-      auto &p2 = *unique_particles.at(id_to_index(partners(1)));
-      auto &p3 = *unique_particles.at(id_to_index(partners(2)));
-      auto &p4 = *unique_particles.at(id_to_index(partners(3)));
-
-      auto const result =
-          calc_bonded_four_body_force(iaparams, box_geo, p1, p2, p3, p4);
-      if (result) {
-        auto const &forces = result.value();
-
-        local_force(id_to_index(p1.id()), thread_id, 0) +=
-            std::get<0>(forces)[0];
-        local_force(id_to_index(p1.id()), thread_id, 1) +=
-            std::get<0>(forces)[1];
-        local_force(id_to_index(p1.id()), thread_id, 2) +=
-            std::get<0>(forces)[2];
-        local_force(id_to_index(p2.id()), thread_id, 0) +=
-            std::get<1>(forces)[0];
-        local_force(id_to_index(p2.id()), thread_id, 1) +=
-            std::get<1>(forces)[1];
-        local_force(id_to_index(p2.id()), thread_id, 2) +=
-            std::get<1>(forces)[2];
-        local_force(id_to_index(p3.id()), thread_id, 0) +=
-            std::get<2>(forces)[0];
-        local_force(id_to_index(p3.id()), thread_id, 1) +=
-            std::get<2>(forces)[1];
-        local_force(id_to_index(p3.id()), thread_id, 2) +=
-            std::get<2>(forces)[2];
-        local_force(id_to_index(p4.id()), thread_id, 0) +=
-            std::get<3>(forces)[0];
-        local_force(id_to_index(p4.id()), thread_id, 1) +=
-            std::get<3>(forces)[1];
-        local_force(id_to_index(p4.id()), thread_id, 2) +=
-            std::get<3>(forces)[2];
-
-        return false;
-      }
-
-      return true;
-    }
-    default:
-      throw BondInvalidSizeError{number_of_partners(iaparams)};
-    }
-  };
+  auto bonds_kernel = create_kokkos_bonds_kernel(*this, coulomb_kernel);
 
   auto first_neighbor_kernel =
       create_cabana_neighbor_kernel(*this, virial, elc_kernel, coulomb_kernel,
                                     dipoles_kernel, coulomb_u_kernel);
 
-  cabana_short_range(break_kernel, bond_kernel, first_neighbor_kernel,
+  cabana_short_range(bonds_kernel, first_neighbor_kernel,
                      *cell_structure, get_interaction_range(),
                      bonded_ias->maximal_cutoff(), verlet_criterion,
                      propagation->integ_switch);

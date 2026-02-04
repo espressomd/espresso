@@ -26,6 +26,7 @@
 #include "cell_system/CellStructure.hpp"
 
 #include "aosoa_pack.hpp"
+#include "bonds_kokkos.hpp"
 #include "custom_verlet_list.hpp"
 #include "forces_cabana.hpp"
 
@@ -263,7 +264,7 @@ update_aosoa_charges(CellStructure &cell_structure) {
 }
 #endif
 
-void cabana_short_range(auto const &break_kernel, auto const &bond_kernel,
+void cabana_short_range(auto const &bonds_kernel,
                         auto const &forces_kernel,
                         CellStructure &cell_structure, double pair_cutoff,
                         double bond_cutoff, auto const &verlet_criterion,
@@ -277,36 +278,9 @@ void cabana_short_range(auto const &break_kernel, auto const &bond_kernel,
 #endif
     if (cell_structure.get_local_bond_numbers() > 0) {
       Kokkos::parallel_for( // loop over bonds
-          "for_each_local_bonds", cell_structure.get_local_bond_numbers(),
-          [&break_kernel, &bond_kernel,
-           &bond_list = cell_structure.get_bond_list_kokkos(),
-           &bond_ids = cell_structure.get_bond_id_kokkos()
-           //&breakage_list = cell_structure.get_breakage_list_kokkos(),
-           //&unique_particles = cell_structure.get_unique_particles()
-      ](auto idx) {
-            // if (1) {
-            auto const &partners = Kokkos::subview(bond_list, idx, Kokkos::ALL);
-            auto const &bond_id = bond_ids(idx);
-            try {
-              auto bond_broken = false;
-
-              auto breakage = break_kernel(partners, bond_id);
-              if (not breakage) {
-                bond_broken = bond_kernel(partners, bond_id);
-              } // else {
-              //  breakage_list(idx) = true;
-              //}
-
-              if (bond_broken) {
-                std::span<int> s(partners.data(), partners.extent(0));
-                bond_broken_error(s);
-              }
-            } catch (const BondResolutionError &) {
-              std::span<int> s(partners.data(), partners.extent(0));
-              bond_broken_error(s);
-            }
-            //}
-          });
+          "for_each_local_bonds",
+	  cell_structure.get_local_bond_numbers(),
+	  bonds_kernel);
     }
     // cell_structure.bond_loop(bond_kernel);
 #ifdef ESPRESSO_CALIPER
