@@ -29,6 +29,34 @@ if typing.TYPE_CHECKING:
 class ASEInterface:
     """
     Interface for ASE :cite:`hjorthlarsen17a` with calculator support.
+
+    Parameters
+    ----------
+    system : :obj:`espressomd.system.System`
+        The ESPResSo system object.
+    particle_slice : :obj:`espressomd.particle_data.ParticleSlice`
+        The particle slice to work on.
+    export_charges : :obj:`bool`, optional
+        Whether to make particle charges available to ASE.
+    export_masses : :obj:`bool`, optional
+        Whether to make particle masses available to ASE.
+    export_momenta : :obj:`bool`, optional
+        Whether to make particle momenta available to ASE.
+    export_forces : :obj:`bool`, optional
+        Whether to make particle forces available to ASE.
+    assume_constant_charges : :obj:`bool`, optional
+        Assume that the particles' charges won't change while this instance
+        is valid (faster update).
+    assume_constant_masses : :obj:`bool`, optional
+        Assume that the particles' masses won't change while this instance
+        is valid (faster update).
+    assume_constant_types : :obj:`bool`, optional
+        Assume that the particles' types won't change while this instance
+        is valid (faster update).
+    use_folded_positions : :obj:`bool`, optional
+        If True, use folded positions (particles.pos_folded) which are always
+        within the simulation box. If False, use unfolded positions (particles.pos).
+
     """
 
     def __init__(self, system: "System", particle_slice: "ParticleSlice",
@@ -38,38 +66,8 @@ class ASEInterface:
                  assume_constant_masses: bool = False,
                  assume_constant_types: bool = False,
                  use_folded_positions: bool = True):
-        """
-        Initialize ASE interface.
 
-        Parameters
-        ----------
-        system : :obj:`espressomd.system.System`
-            The ESPResSo system object.
-        particle_slice : :obj:`espressomd.particle_data.ParticleSlice`
-            The particle slice to work on.
-        export_charges : :obj:`bool`, optional
-            Whether to make particle charges available to ASE.
-        export_masses : :obj:`bool`, optional
-            Whether to make particle masses available to ASE.
-        export_momenta : :obj:`bool`, optional
-            Whether to make particle momenta available to ASE.
-        export_forces : :obj:`bool`, optional
-            Whether to make particle forces available to ASE.
-        assume_constant_charges : :obj:`bool`, optional
-            Assume that the particles' charges won't change while this instance
-            is valid (faster update).
-        assume_constant_masses : :obj:`bool`, optional
-            Assume that the particles' masses won't change while this instance
-            is valid (faster update).
-        assume_constant_types : :obj:`bool`, optional
-            Assume that the particles' types won't change while this instance
-            is valid (faster update).
-        use_folded_positions : :obj:`bool`, optional
-            If True, use folded positions (particles.pos_folded) which are always
-            within the simulation box. If False, use unfolded positions (particles.pos).
-        """
         espressomd.assert_features(["EXTERNAL_FORCES"])
-
         self._system = system
         self.particle_slice = particle_slice
         self.export_charges = export_charges
