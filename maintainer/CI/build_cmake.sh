@@ -370,6 +370,7 @@ fi
 if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     start "COVERAGE"
     cd "${builddir}"
+    rm -f _deps/highfive-src/.github/workflows/coverage.yml
 
     # import codecov key
     gpg --import "${CODECOV_PUBLIC_KEY}"
