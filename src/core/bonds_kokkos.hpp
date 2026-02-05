@@ -102,8 +102,8 @@ struct BondsKernel {
       auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
       auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
       auto d = box_geo.get_mi_vector(pos2, pos3).norm();
-      if (bond_breakage.check_and_handle_breakage(aosoa.id(i), {{aosoa.id(j), aosoa.id(k)}},
-                                                  bond_id, d)) {
+      if (bond_breakage.check_and_handle_breakage(
+              aosoa.id(i), {{aosoa.id(j), aosoa.id(k)}}, bond_id, d)) {
         return true;
       }
     }
