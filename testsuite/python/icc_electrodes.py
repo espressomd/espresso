@@ -25,7 +25,7 @@ import espressomd.electrostatic_extensions
 import numpy as np
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "EXTERNAL_FORCES"])
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "P3M", "EXTERNAL_FORCES"])
 class Test(ut.TestCase):
 
     def test_electrodes(self):

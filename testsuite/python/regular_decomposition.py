@@ -140,29 +140,31 @@ class RegularDecomposition(ut.TestCase):
         indices = [np.array((i, j, k)) for i in range(N)
                    for j in range(N) for k in range(N)]
 
-        def id_for_idx(idx): return (
-            idx[0] % N) * N * N + (idx[1] % N) * N + idx[2] % N
+        def id_for_idx(idx):
+            return int((idx[0] % N) * N * N + (idx[1] % N) * N + idx[2] % N)
 
         ids = [id_for_idx(idx) for idx in indices]
         dx = system.box_l / N
         positions = [idx * dx for idx in indices]
         system.part.add(id=ids, pos=positions)
         particles = {i: system.part.by_id(i) for i in ids}
+        pos_folded = {pid: p.pos_folded for pid, p in particles.items()}
 
-        def distance(id1, id2):
-            return system.distance(
-                particles[id1], particles[id2])
-        distances = {tuple(i): distance(*i)
-                     for i in itertools.combinations(ids, 2)}
+        vec_matrix = {
+            (pid1, pid2): system.distance_vec(pos_folded[pid1], pos_folded[pid2])
+            for pid1, pid2 in itertools.combinations(ids, 2)}
+        dist_sq_matrix = {k: np.dot(v, v) for k, v in vec_matrix.items()}
 
         max_range = np.amax(system.box_l) / N
+        max_range_sq = max_range**2
         two_cells = 2 * np.amax(system.cell_system.get_state()["cell_size"])
         two_cells_2d = two_cells * np.sqrt(2)
         two_cells_3d = two_cells * np.sqrt(3)
         assert np.all(system.box_l / 2 > two_cells)
 
         # next neighbors
-        must_find_nn = [i for i, d in distances.items() if d <= max_range]
+        must_find_nn = [
+            pid for pid, dist_sq in dist_sq_matrix.items() if dist_sq <= max_range_sq]
 
         # Fully connected neighbors
         indices_lower_boundary = [
@@ -178,17 +180,17 @@ class RegularDecomposition(ut.TestCase):
             # pair loop
             p1 = particles[pair[0]]
             p2 = particles[pair[1]]
-            d = system.distance_vec(p1, p2)
             # if not accross periodic boundary: particles must be in cells
             # sharing at least one corner
-            if np.abs(
-                    p1.pos - p2.pos)[fc_normal_coord] < system.box_l[fc_normal_coord] / 2:
-                self.assertLess(np.linalg.norm(d), two_cells_3d)
+            d_abs = np.abs(p1.pos - p2.pos)
+            if d_abs[fc_normal_coord] < system.box_l[fc_normal_coord] / 2:
+                self.assertLess(dist_sq_matrix[pair], two_cells_3d**2)
             # If across a fully connected boundary, substract the distance
             # in the fully connected direction (all are valid)
+            d = vec_matrix[pair]
             d_trans = d - d * fc_dir
             # in the other TWO directions, cells have to share a corner
-            self.assertLess(np.linalg.norm(d_trans), two_cells_2d)
+            self.assertLess(np.dot(d_trans, d_trans), two_cells_2d**2)
 
         # Use the cell system trace to get all pairs
         # as opposed to get_pairs() this does not have a distance check

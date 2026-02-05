@@ -98,11 +98,12 @@ if n_part == 0:
     lb_grid = box_l
     measurement_steps = 80
 else:
+    mpi_factor = min(2., float(np.amax(system.cell_system.node_grid)))
     # volume of N spheres with radius r: N * (4/3*pi*r^3)
     box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
              / args.volume_fraction)**(1. / 3.)
     lb_grid = (n_part * args.lb_sites_per_particle)**(1. / 3.)
-    lb_grid = int(2. * round(lb_grid / 2.))
+    lb_grid = int(mpi_factor * np.ceil(lb_grid / mpi_factor))
     agrid = box_l / lb_grid
     measurement_steps = max(50, int(120**3 / lb_grid**3))
     measurement_steps = 40
