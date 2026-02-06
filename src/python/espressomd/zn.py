@@ -29,6 +29,7 @@ import time
 import urllib.parse
 import typing
 import scipy.spatial.transform
+import httpx
 
 from espressomd.plugins import ase
 
@@ -241,12 +242,28 @@ class Visualizer():
         # A server is started in a subprocess, and we have to wait for it
         if self.SERVER_PORT is None:
             print("Starting ZnDraw server, this may take a few seconds")
-            self.port = port
-            self._start_server()
-            time.sleep(10)
+            Visualizer.SERVER_PORT = port
+            self.server = subprocess.Popen(
+                ["zndraw", "--no-browser", f"--port={self.SERVER_PORT}"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL)
+
+        # Check that the server is up
+        max_wait_iterations = 60
+        while True:
+            try:
+                r = httpx.get(f"{self.url}:{self.SERVER_PORT}/health")
+                if r.status_code == 200:
+                    break
+            except httpx.RequestError:
+                pass
+            time.sleep(0.5)
+            max_wait_iterations -= 1
+            if max_wait_iterations == 0:
+                raise RuntimeError(
+                    "ZnDraw server did not start within the expected time")
 
         self._start_zndraw()
-        time.sleep(2)
 
         if vector_field is not None:
             self.arrow_config = {'colormap': [[0.5, 0.9, 0.5], [0.0, 0.9, 0.5]],
@@ -265,16 +282,14 @@ class Visualizer():
             raise NotImplementedError(
                 "Only Jupyter notebook is supported at the moment")
 
-    def _start_server(self):
-        """
-        Start the ZnDraw server through a subprocess
-        """
-        Visualizer.SERVER_PORT = self.port
-
-        self.server = subprocess.Popen(["zndraw", "--no-browser", f"--port={self.port}"],
-                                       stdout=subprocess.DEVNULL,
-                                       stderr=subprocess.DEVNULL
-                                       )
+        # Wait until the session is ready
+        max_wait_iterations = 60
+        while len(self.zndraw.sessions) == 0:
+            time.sleep(0.5)
+            max_wait_iterations -= 1
+            if max_wait_iterations == 0:
+                raise RuntimeError(
+                    "ZnDraw session did not start within the expected time")
 
     def _start_zndraw(self):
         """
