@@ -28,8 +28,6 @@ import secrets
 import time
 import urllib.parse
 import requests
-import requests.adapters
-import logging
 import typing
 import scipy.spatial.transform
 
@@ -251,26 +249,19 @@ class Visualizer():
                 stderr=subprocess.DEVNULL)
 
         # Check that the server is up
-        max_wait_iterations = 60
-        previous_logging_level = logging.root.manager.disable
-        while True:
+        request_deadline = time.monotonic() + 30
+        while time.monotonic() < request_deadline:
             try:
-                logging.disable(logging.WARNING)
-                session = requests.Session()
-                adapter = requests.adapters.HTTPAdapter(max_retries=1)
-                req = session.mount(f"{self.url}:{self.SERVER_PORT}", adapter)
-                req = session.get(f"{self.url}:{self.SERVER_PORT}/health")
-                if req.status_code == 200:
-                    logging.disable(previous_logging_level)
+                r = requests.get(
+                    f"{self.url}:{self.SERVER_PORT}/health", timeout=1)
+                if r.status_code == 200:
                     break
-            except Exception:
+            except requests.RequestException:
                 pass
-            logging.disable(previous_logging_level)
             time.sleep(0.5)
-            max_wait_iterations -= 1
-            if max_wait_iterations == 0:
-                raise RuntimeError(
-                    "ZnDraw server did not start within the expected time")
+        else:
+            raise RuntimeError(
+                "ZnDraw server did not start within the expected time")
 
         self._start_zndraw()
 
@@ -292,13 +283,14 @@ class Visualizer():
                 "Only Jupyter notebook is supported at the moment")
 
         # Wait until the session is ready
-        max_wait_iterations = 60
-        while len(self.zndraw.sessions) == 0:
+        request_deadline = time.monotonic() + 30
+        while time.monotonic() < request_deadline:
+            if len(self.zndraw.sessions) > 0:
+                break
             time.sleep(0.5)
-            max_wait_iterations -= 1
-            if max_wait_iterations == 0:
-                raise RuntimeError(
-                    "ZnDraw session did not start within the expected time")
+        else:
+            raise RuntimeError(
+                "ZnDraw session did not start within the expected time")
 
     def _start_zndraw(self):
         """
