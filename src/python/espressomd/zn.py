@@ -27,9 +27,11 @@ import espressomd
 import secrets
 import time
 import urllib.parse
+import requests
+import requests.adapters
+import logging
 import typing
 import scipy.spatial.transform
-import httpx
 
 from espressomd.plugins import ase
 
@@ -250,13 +252,20 @@ class Visualizer():
 
         # Check that the server is up
         max_wait_iterations = 60
+        previous_logging_level = logging.root.manager.disable
         while True:
             try:
-                r = httpx.get(f"{self.url}:{self.SERVER_PORT}/health")
-                if r.status_code == 200:
+                logging.disable(logging.WARNING)
+                session = requests.Session()
+                adapter = requests.adapters.HTTPAdapter(max_retries=1)
+                req = session.mount(f"{self.url}:{self.SERVER_PORT}", adapter)
+                req = session.get(f"{self.url}:{self.SERVER_PORT}/health")
+                if req.status_code == 200:
+                    logging.disable(previous_logging_level)
                     break
-            except httpx.RequestError:
+            except Exception:
                 pass
+            logging.disable(previous_logging_level)
             time.sleep(0.5)
             max_wait_iterations -= 1
             if max_wait_iterations == 0:
