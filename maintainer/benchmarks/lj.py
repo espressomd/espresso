@@ -122,9 +122,9 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 min_skin = 0.2
 max_skin = 1.0
 print("Equilibration")
-system.force_cap = 100.
+system.time_step = system.time_step / 10.
 system.integrator.run(100)
-system.force_cap = 0.
+system.time_step = system.time_step * 10.
 system.integrator.run(min(5 * measurement_steps, 60000))
 print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
     min_skin=min_skin, max_skin=max_skin, tol=0.025, int_steps=200)))

@@ -180,10 +180,6 @@ if [ "${with_fast_math}" = true ]; then
   cmake_param_list+=(-D CMAKE_CXX_FLAGS=-ffast-math)
 fi
 
-if [ "${with_walberla}" = true ] && [ "${with_walberla_avx}" = true ]; then
-  cmake_param_list+=(-D ESPRESSO_BUILD_WITH_WALBERLA_AVX:BOOL=ON)
-fi
-
 if [ "${with_cuda}" = true ]; then
     cmake_param_list+=(-D CUDAToolkit_ROOT=/usr/lib/cuda)
     if [ "${CUDACXX}" = "" ] && [ "${CXX}" != "" ]; then
