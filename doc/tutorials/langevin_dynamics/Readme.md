@@ -1,5 +1,7 @@
 # Tutorial: Langevin dynamics
 
+Modelling of Brownian motion and measurement of diffusion coefficients.
+
 ## Physics learning objectives
 
 * Learning the basics of Brownian motion

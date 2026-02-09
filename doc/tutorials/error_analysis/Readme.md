@@ -1,5 +1,7 @@
 # Tutorial: error analysis
 
+Statistical analysis of simulation results.
+
 ## Learning objectives
 
 ### Part 1: introduction and binning analysis

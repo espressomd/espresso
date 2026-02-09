@@ -1,5 +1,7 @@
 # Tutorial: simulations of electrodes
 
+Modelling electrodes and measuring differential capacitance with the ELC method.
+
 ## Physics learning objectives
 
 ### Part 1

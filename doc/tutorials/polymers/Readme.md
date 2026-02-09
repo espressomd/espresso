@@ -1,5 +1,7 @@
 # Tutorial: polymer theory and Brownian motion of a polymer in a fluid
 
+Modelling polymers with hydrodynamic interactions.
+
 ## Physics learning objectives
 
 * Getting a short introduction to the Flory theory of polymers

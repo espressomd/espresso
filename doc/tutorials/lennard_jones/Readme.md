@@ -1,5 +1,7 @@
 # Tutorial: Lennard-Jones
 
+Modelling of a single-component and a two-component Lennard-Jones liquid.
+
 ## Physics learning objectives
 
 After the tutorial, students should be able to:

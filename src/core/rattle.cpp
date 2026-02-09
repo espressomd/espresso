@@ -189,9 +189,6 @@ void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo,
 /**
  * @brief Calculate the velocity correction for the particles.
  *
- * The position correction is accumulated in the forces
- * of the particles so that it can be reduced over the ghosts.
- *
  * @param ia_params Parameters
  * @param box_geo Box geometry.
  * @param p1 First particle.

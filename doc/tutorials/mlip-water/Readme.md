@@ -1,4 +1,6 @@
-# Tutorial: integrating MLIPs with ESPResSo: a tutorial on simulating water
+# Tutorial: integrating MLIPs with ESPResSo - a tutorial on simulating water
+
+Atomistic simulations of water with classical force fields and MLIPs.
 
 ## Environment setup
 

@@ -1,5 +1,7 @@
 # Machine-learned interatomic potential
 
+Atomistic simulations using the MACE-MP-0 model.
+
 ## Physics learning objectives
 
 * Short introduction to how machine-learned inter-atomic potentials (MLPs) work.

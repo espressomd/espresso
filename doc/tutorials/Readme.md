@@ -16,7 +16,7 @@ physical systems.
   Modelling of a single-component and a two-component Lennard-Jones liquid.  
   [Guide](lennard_jones/lennard_jones.ipynb)
 * **Error analysis**  
-  Statistical analysis of simulation results  
+  Statistical analysis of simulation results.  
   Guide
   [Part 1](error_analysis/error_analysis_part1.ipynb) |
   [Part 2](error_analysis/error_analysis_part2.ipynb)
@@ -39,7 +39,7 @@ physical systems.
   [Part 2](ferrofluid/ferrofluid_part2.ipynb) |
   [Part 3](ferrofluid/ferrofluid_part3.ipynb)
 * **Lattice-Boltzmann**  
-  Simulations including hydrodynamic interactions using the Lattice-Boltzmann method.  
+  Simulations including hydrodynamic interactions using the lattice-Boltzmann method.  
   Guide
   [Part 1](lattice_boltzmann/lattice_boltzmann_theory.ipynb) |
   [Part 2](lattice_boltzmann/lattice_boltzmann_poiseuille_flow.ipynb) |
@@ -55,6 +55,7 @@ physical systems.
   [Guide](mlip/mlip.ipynb)
 * **Machine-learned interatomic potentials with ESPResSo**  
   Atomistic simulations of water with classical force fields and MLIPs.  
+  Guide
   [Part 1](mlip-water/01_TIP4P_water.ipynb) |
   [Part 2](mlip-water/02_MLIPs.ipynb) |
   [Part 3](mlip-water/03_MLIP_within_ESPResSo.ipynb)
@@ -77,9 +78,12 @@ physical systems.
 * **Widom particle insertion method**  
   Measuring the excess chemical potential of a salt solution using the Widom particle insertion method.  
   [Guide](widom_insertion/widom_insertion.ipynb)
-* **Grand-Canonical Monte Carlo**
+* **Grand-canonical Monte Carlo**  
   Simulating a polyelectrolyte solution coupled to a reservoir of salt.  
   [Guide](grand_canonical_monte_carlo/grand_canonical_monte_carlo.ipynb)
+* **Boltzmann inversion**  
+  Systematic coarse-graining based on the Boltzmann inversion method.  
+  [Guide](boltzmann_inversion/boltzmann_inversion.ipynb)
 
 [comment]: # (End of tutorials landing page)
 

@@ -1,5 +1,7 @@
 # Tutorial: lattice-Boltzmann
 
+Simulations including hydrodynamic interactions using the lattice-Boltzmann method.
+
 ## Part 1: the lattice-Boltzmann method
 
 ### Physics learning objectives
