@@ -93,7 +93,7 @@ When resuming a simulation, you can either use the forces that are stored
 on the particles by using the additional parameter ``reuse_forces = True``,
 or recalculate the forces again from the current configuration ``reuse_forces = False``.
 Setting ``reuse_forces = True`` is useful when restarting a simulation from a checkpoint
-to obtain exactlty the same result as if the integration had continued without interruption.
+to obtain exactly the same result as if the integration had continued without interruption.
 You can also use ``recalc_forces = True`` to recalculate forces even if they are already correctly computed.
 
 .. _Isotropic NpT integrator:
