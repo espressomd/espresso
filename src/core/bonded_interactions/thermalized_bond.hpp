@@ -88,9 +88,9 @@ struct ThermalizedBond {
          Utils::Vector3d const &dx) const;
 
   std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
-  forces(double const mass1, double const mass2,
-         Utils::Vector<double, 3> const vel1,
-         Utils::Vector<double, 3> const vel2, int const id1, int const id2,
+  forces(double mass1, double mass2,
+         Utils::Vector<double, 3> vel1,
+         Utils::Vector<double, 3> vel2, int id1, int id2,
          Utils::Vector3d const &dx) const;
 
 private:
