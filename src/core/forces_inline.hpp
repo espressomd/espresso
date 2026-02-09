@@ -327,8 +327,8 @@ inline void add_non_bonded_pair_force(
 /** Compute the bonded interaction force between particle pairs.
  *
  *  @param[in] iaparams    Bonded parameters for the interaction.
- *  @param[in] p1          First particle.
- *  @param[in] p2          Second particle.
+ *  @param[in] q1          First particle's charge.
+ *  @param[in] q2          Second particle's charge.
  *  @param[in] dx          Vector between @p p1 and @p p2.
  *  @param[in] kernel      Coulomb force kernel.
  */
@@ -374,6 +374,14 @@ calc_bond_pair_force(Bonded_IA_Parameters const &iaparams,
   throw BondUnknownTypeError();
 }
 
+/** Compute the bonded interaction force between particle pairs.
+ *
+ *  @param[in] iaparams    Bonded parameters for the interaction.
+ *  @param[in] p1          First particle.
+ *  @param[in] p2          Second particle.
+ *  @param[in] dx          Vector between @p p1 and @p p2.
+ *  @param[in] kernel      Coulomb force kernel.
+ */
 inline std::optional<Utils::Vector3d> calc_bond_pair_force(
     Bonded_IA_Parameters const &iaparams, Particle const &p1,
     Particle const &p2, Utils::Vector3d const &dx,
