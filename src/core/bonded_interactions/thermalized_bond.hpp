@@ -89,10 +89,9 @@ struct ThermalizedBond {
 
   std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
   forces(double const mass1, double const mass2,
-	 Utils::Vector<double ,3> const vel1,
-	 Utils::Vector<double, 3> const vel2,
-	 int const id1, int const id2,
-	 Utils::Vector3d const &dx) const;
+         Utils::Vector<double, 3> const vel1,
+         Utils::Vector<double, 3> const vel2, int const id1, int const id2,
+         Utils::Vector3d const &dx) const;
 
 private:
   std::weak_ptr<Thermostat::Thermostat const> m_thermostat;

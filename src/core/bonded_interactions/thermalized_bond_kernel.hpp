@@ -42,7 +42,7 @@
 inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
 ThermalizedBond::forces(Particle const &p1, Particle const &p2,
                         Utils::Vector3d const &dx) const {
-  auto const mass1 = p1.mass(); 
+  auto const mass1 = p1.mass();
   auto const mass2 = p2.mass();
   auto const vel1 = p1.v();
   auto const vel2 = p2.v();
@@ -53,10 +53,9 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
 
 inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
 ThermalizedBond::forces(double const mass1, double const mass2,
-			Utils::Vector<double ,3> const vel1,
-			Utils::Vector<double, 3> const vel2,
-			int const id1, int const id2,
-                        Utils::Vector3d const &dx) const {
+                        Utils::Vector<double, 3> const vel1,
+                        Utils::Vector<double, 3> const vel2, int const id1,
+                        int const id2, Utils::Vector3d const &dx) const {
   // Bond broke?
   if (r_cut > 0.0 && dx.norm() > r_cut) {
     return {};

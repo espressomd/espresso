@@ -332,14 +332,15 @@ inline void add_non_bonded_pair_force(
  *  @param[in] dx          Vector between @p p1 and @p p2.
  *  @param[in] kernel      Coulomb force kernel.
  */
-inline std::optional<Utils::Vector3d> calc_bond_pair_force(
-    Bonded_IA_Parameters const &iaparams, Utils::Vector3d const &dx
+inline std::optional<Utils::Vector3d>
+calc_bond_pair_force(Bonded_IA_Parameters const &iaparams,
+                     Utils::Vector3d const &dx
 #ifdef ESPRESSO_ELECTROSTATICS
-    , double const &q1,
-    double const &q2,
-    Coulomb::ShortRangeForceKernel::kernel_type const *kernel
+                     ,
+                     double const &q1, double const &q2,
+                     Coulomb::ShortRangeForceKernel::kernel_type const *kernel
 #endif
-    ) {
+) {
   if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
     return iap->force(dx);
   }
@@ -378,14 +379,15 @@ inline std::optional<Utils::Vector3d> calc_bond_pair_force(
     Particle const &p2, Utils::Vector3d const &dx,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
 #ifdef ESPRESSO_ELECTROSTATICS
-    auto const q1 = p1.q();
-    auto const q2 = p2.q();
+  auto const q1 = p1.q();
+  auto const q2 = p2.q();
 #endif
-    return calc_bond_pair_force(iaparams, dx
+  return calc_bond_pair_force(iaparams, dx
 #ifdef ESPRESSO_ELECTROSTATICS
-		    , q1, q2, kernel
+                              ,
+                              q1, q2, kernel
 #endif
-		    );
+  );
 }
 
 inline bool add_bonded_two_body_force(
