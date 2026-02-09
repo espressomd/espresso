@@ -40,6 +40,7 @@ struct CellStructure::AoSoA_pack {
   using DipmViewType = Kokkos::View<double *, Kokkos::HostSpace>;
   using IdViewType = Kokkos::View<int *, Kokkos::HostSpace>;
   using TypeViewType = Kokkos::View<int *, Kokkos::HostSpace>;
+  using MassViewType = Kokkos::View<int *, Kokkos::HostSpace>;
   using IdToIndexViewType = Kokkos::View<int *, Kokkos::HostSpace>;
   using FlagsViewType = Kokkos::View<uint8_t *, Kokkos::HostSpace>;
 
@@ -50,6 +51,7 @@ struct CellStructure::AoSoA_pack {
   DipmViewType dipm;
   IdViewType id;
   TypeViewType type;
+  MassViewType mass;
   IdToIndexViewType id_to_index;
   FlagsViewType flags;
 
@@ -66,10 +68,11 @@ struct CellStructure::AoSoA_pack {
 #endif
       id = IdViewType("id", num_particles);
       type = TypeViewType("type", num_particles);
-      flags = FlagsViewType("flags", num_particles);
-#ifdef ESPRESSO_DPD
-      velocity = PositionViewType("velocity", num_particles);
+#ifdef ESPRESSO_MASS
+      mass = MassViewType("mass", num_particles);
 #endif
+      flags = FlagsViewType("flags", num_particles);
+      velocity = PositionViewType("velocity", num_particles);
 #if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
       director = DirectorViewType("director", num_particles);
 #endif
@@ -84,10 +87,11 @@ struct CellStructure::AoSoA_pack {
 #endif
       Kokkos::realloc(id, num_particles);
       Kokkos::realloc(type, num_particles);
-      Kokkos::realloc(flags, num_particles);
-#ifdef ESPRESSO_DPD
-      Kokkos::realloc(velocity, num_particles);
+#ifdef ESPRESSO_MASS
+      Kokkos::realloc(mass, num_particles);
 #endif
+      Kokkos::realloc(flags, num_particles);
+      Kokkos::realloc(velocity, num_particles);
 #if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
       Kokkos::realloc(director, num_particles);
 #endif

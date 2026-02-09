@@ -122,11 +122,15 @@ struct BondsKernel {
 
     case 1: {
       auto const j = id_to_index(partners(1));
-      auto &p2 = *unique_particles.at(j);
-      auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
+      auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
+      auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+      auto const vel1 = aosoa.get_vector_at(aosoa.velocity, i);
+      auto const vel2 = aosoa.get_vector_at(aosoa.velocity, j);
+      auto const dx = box_geo.get_mi_vector(pos1, pos2);
 
       if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
-        auto result = iap->forces(p1, p2, dx);
+        auto result = iap->forces(aosoa.mass(i), aosoa.mass(j),
+				  vel1, vel2, aosoa.id(i), aosoa.id(j), dx);
         if (result) {
           auto const &forces = result.value();
 
@@ -141,7 +145,11 @@ struct BondsKernel {
         }
       } else {
         auto result =
-            calc_bond_pair_force(iaparams, p1, p2, dx, coulomb_kernel);
+            calc_bond_pair_force(iaparams, dx
+#ifdef ESPRESSO_ELECTROSTATICS
+			    ,aosoa.charge(i), aosoa.charge(j), coulomb_kernel
+#endif
+			    );
         if (result) {
           auto const f = result.value();
           local_force(i, thread_id, 0) += f[0];

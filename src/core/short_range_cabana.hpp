@@ -63,9 +63,7 @@ commit_particle(Particle const &p, auto const index,
 #ifdef ESPRESSO_ELECTROSTATICS
   aosoa.charge(index) = p.q();
 #endif
-#ifdef ESPRESSO_DPD
   aosoa.set_vector_at(aosoa.velocity, index, p.v());
-#endif
 #if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
   aosoa.set_vector_at(aosoa.director, index,
                       Utils::convert_quaternion_to_director(p.quat()));
@@ -78,6 +76,9 @@ commit_particle(Particle const &p, auto const index,
   if (rebuild) {
     aosoa.id(index) = p.id();
     aosoa.type(index) = p.type();
+#ifdef ESPRESSO_MASS
+    aosoa.mass(index) = p.mass();
+#endif
   }
 
   // Always update exclusion flags (they can change during simulation)
