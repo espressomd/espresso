@@ -435,7 +435,8 @@ template <typename T>
 inline std::optional<
     std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
-                             Utils::Vector<T, 3> vec1, Utils::Vector<T, 3> vec2) {
+                             Utils::Vector<T, 3> vec1,
+                             Utils::Vector<T, 3> vec2) {
   if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
     return iap->forces(vec1, vec2);
   }

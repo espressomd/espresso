@@ -183,8 +183,7 @@ struct BondsKernel {
       auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
       auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
       auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
-      auto const result =
-      	  calc_bonded_three_body_force(iaparams, vec1, vec2);
+      auto const result = calc_bonded_three_body_force(iaparams, vec1, vec2);
       if (result) {
         auto const &forces = result.value();
 
