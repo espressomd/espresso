@@ -431,13 +431,11 @@ inline bool add_bonded_two_body_force(
   return true;
 }
 
+template <typename T>
 inline std::optional<
     std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
-                             BoxGeometry const &box_geo, Particle const &p1,
-                             Particle const &p2, Particle const &p3) {
-  auto const vec1 = box_geo.get_mi_vector(p2.pos(), p1.pos());
-  auto const vec2 = box_geo.get_mi_vector(p3.pos(), p1.pos());
+                             Utils::Vector<T, 3> vec1, Utils::Vector<T, 3> vec2) {
   if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
     return iap->forces(vec1, vec2);
   }
@@ -456,6 +454,16 @@ calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
     return iap->calc_forces(vec1, vec2);
   }
   throw BondUnknownTypeError();
+}
+
+inline std::optional<
+    std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
+calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
+                             BoxGeometry const &box_geo, Particle const &p1,
+                             Particle const &p2, Particle const &p3) {
+  auto const vec1 = box_geo.get_mi_vector(p2.pos(), p1.pos());
+  auto const vec2 = box_geo.get_mi_vector(p3.pos(), p1.pos());
+  return calc_bonded_three_body_force(iaparams, vec1, vec2);
 }
 
 inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,

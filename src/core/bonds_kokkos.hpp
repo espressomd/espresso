@@ -174,14 +174,17 @@ struct BondsKernel {
     case 2: {
       auto const j = id_to_index(partners(1));
       auto const k = id_to_index(partners(2));
-      auto &p2 = *unique_particles.at(j);
-      auto &p3 = *unique_particles.at(k);
 
       if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
         return false;
       }
+      auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
+      auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+      auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
+      auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
+      auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
       auto const result =
-          calc_bonded_three_body_force(iaparams, box_geo, p1, p2, p3);
+      	  calc_bonded_three_body_force(iaparams, vec1, vec2);
       if (result) {
         auto const &forces = result.value();
 
