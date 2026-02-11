@@ -43,9 +43,10 @@ IBMTribend::calc_forces(BoxGeometry const &box_geo, Particle const &p1,
 }
 
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-IBMTribend::calc_forces(BoxGeometry const &box_geo, 
-			Utils::Vector3d const &pos1, Utils::Vector3d const &pos2,
-			Utils::Vector3d const &pos3, Utils::Vector3d const &pos4) const{
+IBMTribend::calc_forces(BoxGeometry const &box_geo, Utils::Vector3d const &pos1,
+                        Utils::Vector3d const &pos2,
+                        Utils::Vector3d const &pos3,
+                        Utils::Vector3d const &pos4) const {
   // Get vectors making up the two triangles
   auto const dx1 = box_geo.get_mi_vector(pos1, pos3);
   auto const dx2 = box_geo.get_mi_vector(pos2, pos3);
@@ -80,19 +81,12 @@ IBMTribend::calc_forces(BoxGeometry const &box_geo,
 
   // Force on particles: eq. (C.28-C.31)
   auto const force1 =
-      Pre *
-      (vector_product(dx2, v1) / Ai +
-       vector_product(-dx3, v2) / Aj);
-  auto const force2 =
-      Pre *
-      (vector_product(-dx1, v1) / Ai);
+      Pre * (vector_product(dx2, v1) / Ai + vector_product(-dx3, v2) / Aj);
+  auto const force2 = Pre * (vector_product(-dx1, v1) / Ai);
   auto const force3 =
-      Pre *
-      (vector_product(box_geo.get_mi_vector(pos1, pos2), v1) / Ai +
-       vector_product(box_geo.get_mi_vector(pos4, pos1), v2) / Aj);
-  auto const force4 =
-      Pre *
-      (vector_product(dx1, v2) / Aj);
+      Pre * (vector_product(box_geo.get_mi_vector(pos1, pos2), v1) / Ai +
+             vector_product(box_geo.get_mi_vector(pos4, pos1), v2) / Aj);
+  auto const force4 = Pre * (vector_product(dx1, v2) / Aj);
   return std::make_tuple(force1, force2, force3, force4);
 }
 

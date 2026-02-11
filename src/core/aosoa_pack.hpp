@@ -130,9 +130,9 @@ struct CellStructure::AoSoA_pack {
   }
 
   template <typename array_layout>
-  void set_vector_at(
-      Kokkos::View<int *[3], array_layout, Kokkos::HostSpace> &view,
-      std::size_t i, Utils::Vector3i const &value) {
+  void
+  set_vector_at(Kokkos::View<int *[3], array_layout, Kokkos::HostSpace> &view,
+                std::size_t i, Utils::Vector3i const &value) {
     view(i, 0) = value[0];
     view(i, 1) = value[1];
     view(i, 2) = value[2];

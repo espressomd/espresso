@@ -75,5 +75,6 @@ struct IBMTribend {
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
   calc_forces(BoxGeometry const &box_geo, Utils::Vector3d const &pos1,
-              Utils::Vector3d const &pos2, Utils::Vector3d const &pos3, Utils::Vector3d const &pos4) const;
+              Utils::Vector3d const &pos2, Utils::Vector3d const &pos3,
+              Utils::Vector3d const &pos4) const;
 };

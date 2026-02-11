@@ -62,8 +62,7 @@ struct BondsKernel {
       BondedInteractionsMap const &bonded_ias_,
       BondBreakage::BondBreakage &bond_breakage_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel_,
-      BoxGeometry const &box_geo_,
-      Kokkos::View<int *> const &id_to_index_,
+      BoxGeometry const &box_geo_, Kokkos::View<int *> const &id_to_index_,
       CellStructure::ForceType const &local_force_,
 #ifdef ESPRESSO_NPT
       CellStructure::VirialType const &local_virial_,
@@ -73,8 +72,7 @@ struct BondsKernel {
       CellStructure::AoSoA_pack const &aosoa_)
       : bonded_ias(bonded_ias_), bond_breakage(bond_breakage_),
         coulomb_kernel(coulomb_kernel_), box_geo(box_geo_),
-	id_to_index(id_to_index_),
-        local_force(local_force_),
+        id_to_index(id_to_index_), local_force(local_force_),
 #ifdef ESPRESSO_NPT
         local_virial(local_virial_),
 #endif
@@ -208,31 +206,33 @@ struct BondsKernel {
       auto const pos4 = aosoa.get_vector_at(aosoa.position, m);
 
       std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
-                               Utils::Vector3d, Utils::Vector3d>> result;
+                               Utils::Vector3d, Utils::Vector3d>>
+          result;
       if (auto const *iap = std::get_if<OifLocalForcesBond>(&iaparams)) {
-	auto const fp2 = box_geo.unfolded_position(pos1, aosoa.get_vector_at(aosoa.image, i));
-	auto const fp1 = fp2 + box_geo.get_mi_vector(pos2, fp2);
-	auto const fp3 = fp2 + box_geo.get_mi_vector(pos3, fp2);
-	auto const fp4 = fp2 + box_geo.get_mi_vector(pos4, fp2);
-	auto const vel2 = aosoa.get_vector_at(aosoa.velocity, i);
-	auto const vel3 = aosoa.get_vector_at(aosoa.velocity, k);
+        auto const fp2 = box_geo.unfolded_position(
+            pos1, aosoa.get_vector_at(aosoa.image, i));
+        auto const fp1 = fp2 + box_geo.get_mi_vector(pos2, fp2);
+        auto const fp3 = fp2 + box_geo.get_mi_vector(pos3, fp2);
+        auto const fp4 = fp2 + box_geo.get_mi_vector(pos4, fp2);
+        auto const vel2 = aosoa.get_vector_at(aosoa.velocity, i);
+        auto const vel3 = aosoa.get_vector_at(aosoa.velocity, k);
 
-	result = iap->calc_forces(fp2, fp1, fp3, fp4, vel2, vel3);
+        result = iap->calc_forces(fp2, fp1, fp3, fp4, vel2, vel3);
       }
       if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
-	//result = iap->calc_forces(box_geo, p1, p2, p3, p4);
-	result = iap->calc_forces(box_geo, pos1, pos2, pos3, pos4);
+        // result = iap->calc_forces(box_geo, p1, p2, p3, p4);
+        result = iap->calc_forces(box_geo, pos1, pos2, pos3, pos4);
       }
       // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
       auto const v12 = box_geo.get_mi_vector(pos1, pos2);
       auto const v23 = box_geo.get_mi_vector(pos3, pos1);
       auto const v34 = box_geo.get_mi_vector(pos4, pos3);
       if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
-	result = iap->forces(v12, v23, v34);
+        result = iap->forces(v12, v23, v34);
       }
 #ifdef ESPRESSO_TABULATED
       if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
-	result = iap->forces(v12, v23, v34);
+        result = iap->forces(v12, v23, v34);
       }
 #endif
       if (result) {
@@ -253,7 +253,7 @@ struct BondsKernel {
 
         return false;
       }
-      //throw BondUnknownTypeError();
+      // throw BondUnknownTypeError();
       return true;
     }
     default:

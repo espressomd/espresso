@@ -85,9 +85,9 @@ struct OifLocalForcesBond {
               Particle const &p1, Particle const &p3, Particle const &p4) const;
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-  calc_forces(Utils::Vector3d fp2, Utils::Vector3d fp1,
-	      Utils::Vector3d fp3, Utils::Vector3d fp4,
-	      Utils::Vector3d vel2, Utils::Vector3d vel3) const;
+  calc_forces(Utils::Vector3d fp2, Utils::Vector3d fp1, Utils::Vector3d fp3,
+              Utils::Vector3d fp4, Utils::Vector3d vel2,
+              Utils::Vector3d vel3) const;
 };
 
 /** Compute the OIF local forces.
@@ -118,7 +118,8 @@ OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
 /** Compute the OIF local forces.
  *  See @cite dupin07a, @cite jancigova16a.
  *  @param fp2           Unfolded position of particle of triangle 1.
- *  @param fp1 , fp3     Unfolded position of particles common to triangle 1 and triangle 2.
+ *  @param fp1 , fp3     Unfolded position of particles common to triangle 1 and
+ * triangle 2.
  *  @param fp4           Unfolded position of particle of triangle 2.
  *  @param vel2          The velocity of particle of triangle 1.
  *  @param vel3          The velocity of particle of triangle 2.
@@ -126,9 +127,12 @@ OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                   Utils::Vector3d>
-OifLocalForcesBond::calc_forces(Utils::Vector3d const fp2, Utils::Vector3d const fp1,
-				Utils::Vector3d const fp3, Utils::Vector3d const fp4,
-				Utils::Vector3d const vel2, Utils::Vector3d const vel3) const {
+OifLocalForcesBond::calc_forces(Utils::Vector3d const fp2,
+                                Utils::Vector3d const fp1,
+                                Utils::Vector3d const fp3,
+                                Utils::Vector3d const fp4,
+                                Utils::Vector3d const vel2,
+                                Utils::Vector3d const vel3) const {
   Utils::Vector3d force1{}, force2{}, force3{}, force4{};
 
   // surface strain constraint
