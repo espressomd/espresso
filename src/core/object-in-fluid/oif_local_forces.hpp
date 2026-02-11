@@ -83,6 +83,11 @@ struct OifLocalForcesBond {
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
   calc_forces(BoxGeometry const &box_geo, Particle const &p2,
               Particle const &p1, Particle const &p3, Particle const &p4) const;
+
+  std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+  calc_forces(Utils::Vector3d fp2, Utils::Vector3d fp1,
+	      Utils::Vector3d fp3, Utils::Vector3d fp4,
+	      Utils::Vector3d vel2, Utils::Vector3d vel3) const;
 };
 
 /** Compute the OIF local forces.
@@ -104,7 +109,26 @@ OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
   auto const fp1 = fp2 + box_geo.get_mi_vector(p1.pos(), fp2);
   auto const fp3 = fp2 + box_geo.get_mi_vector(p3.pos(), fp2);
   auto const fp4 = fp2 + box_geo.get_mi_vector(p4.pos(), fp2);
+  auto const vel2 = p2.v();
+  auto const vel3 = p3.v();
 
+  return calc_forces(fp2, fp1, fp3, fp4, vel2, vel3);
+}
+
+/** Compute the OIF local forces.
+ *  See @cite dupin07a, @cite jancigova16a.
+ *  @param fp2           Unfolded position of particle of triangle 1.
+ *  @param fp1 , fp3     Unfolded position of particles common to triangle 1 and triangle 2.
+ *  @param fp4           Unfolded position of particle of triangle 2.
+ *  @param vel2          The velocity of particle of triangle 1.
+ *  @param vel3          The velocity of particle of triangle 2.
+ *  @return forces on @p p1, @p p2, @p p3, @p p4
+ */
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
+                  Utils::Vector3d>
+OifLocalForcesBond::calc_forces(Utils::Vector3d const fp2, Utils::Vector3d const fp1,
+				Utils::Vector3d const fp3, Utils::Vector3d const fp4,
+				Utils::Vector3d const vel2, Utils::Vector3d const vel3) const {
   Utils::Vector3d force1{}, force2{}, force3{}, force4{};
 
   // surface strain constraint
@@ -135,7 +159,7 @@ OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
   if (kvisc > tiny_oif_elasticity_coefficient) { // to be implemented....
     auto const dx = fp2 - fp3;
     auto const len2 = dx.norm2();
-    auto const v_ij = p3.v() - p2.v();
+    auto const v_ij = vel3 - vel2;
 
     // Variant A
     // Here the force is in the direction of relative velocity btw points

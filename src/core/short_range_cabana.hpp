@@ -76,6 +76,7 @@ commit_particle(Particle const &p, auto const index,
   if (rebuild) {
     aosoa.id(index) = p.id();
     aosoa.type(index) = p.type();
+    aosoa.set_vector_at(aosoa.image, index, p.image_box());
 #ifdef ESPRESSO_MASS
     aosoa.mass(index) = p.mass();
 #endif

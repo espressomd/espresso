@@ -36,6 +36,8 @@ struct CellStructure::AoSoA_pack {
       Kokkos::View<double *[3], Kokkos::LayoutRight, Kokkos::HostSpace>;
   using DirectorViewType =
       Kokkos::View<double *[3], Kokkos::LayoutRight, Kokkos::HostSpace>;
+  using ImageViewType =
+      Kokkos::View<int *[3], Kokkos::LayoutRight, Kokkos::HostSpace>;
   using ChargeViewType = Kokkos::View<double *, Kokkos::HostSpace>;
   using DipmViewType = Kokkos::View<double *, Kokkos::HostSpace>;
   using IdViewType = Kokkos::View<int *, Kokkos::HostSpace>;
@@ -47,6 +49,7 @@ struct CellStructure::AoSoA_pack {
   PositionViewType position;
   VelocityViewType velocity;
   DirectorViewType director;
+  ImageViewType image;
   ChargeViewType charge;
   DipmViewType dipm;
   IdViewType id;
@@ -63,6 +66,7 @@ struct CellStructure::AoSoA_pack {
     if (position.extent(0) == 0) {
       // First allocation
       position = PositionViewType("position", num_particles);
+      image = ImageViewType("image", num_particles);
 #ifdef ESPRESSO_ELECTROSTATICS
       charge = ChargeViewType("charge", num_particles);
 #endif
@@ -82,6 +86,7 @@ struct CellStructure::AoSoA_pack {
     } else {
       // Reallocation
       Kokkos::realloc(position, num_particles);
+      Kokkos::realloc(image, num_particles);
 #ifdef ESPRESSO_ELECTROSTATICS
       Kokkos::realloc(charge, num_particles);
 #endif
@@ -109,9 +114,25 @@ struct CellStructure::AoSoA_pack {
   }
 
   template <typename array_layout>
+  Utils::Vector3i get_vector_at(
+      Kokkos::View<int *[3], array_layout, Kokkos::HostSpace> const &view,
+      std::size_t i) const {
+    return {view(i, 0), view(i, 1), view(i, 2)};
+  }
+
+  template <typename array_layout>
   void set_vector_at(
       Kokkos::View<double *[3], array_layout, Kokkos::HostSpace> &view,
       std::size_t i, Utils::Vector3d const &value) {
+    view(i, 0) = value[0];
+    view(i, 1) = value[1];
+    view(i, 2) = value[2];
+  }
+
+  template <typename array_layout>
+  void set_vector_at(
+      Kokkos::View<int *[3], array_layout, Kokkos::HostSpace> &view,
+      std::size_t i, Utils::Vector3i const &value) {
     view(i, 0) = value[0];
     view(i, 1) = value[1];
     view(i, 2) = value[2];
