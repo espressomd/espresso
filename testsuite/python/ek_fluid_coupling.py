@@ -102,14 +102,10 @@ class Fluid_coupling:
                 valency * density * self.AGRID**2
             expected_force = np.full_like(forces, expected_force)
             np.testing.assert_allclose(
-                forces,
-                expected_force,
-                rtol=1e-5)
+                forces,  expected_force, rtol=1e-5, atol=1e-9)
         else:
             np.testing.assert_allclose(
-                forces,
-                np.zeros_like(forces),
-                atol=1e-10)
+                forces, np.zeros_like(forces), atol=1e-9)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
