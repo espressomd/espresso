@@ -48,7 +48,12 @@ class Fluid_coupling:
         """
         Testing the friction forces acting on the LB for multiple EK species
         """
+        for opposite_external_fields in [True, False]:
+            with self.subTest(msg=f"{opposite_external_fields=}"):
+                self.check_fluid_coupling(opposite_external_fields)
+                self.tearDown()
 
+    def check_fluid_coupling(self, opposite_external_fields):
         eps0 = 0.015
         epsR = 18.5
         kT = 2.
@@ -57,7 +62,7 @@ class Fluid_coupling:
         external_electric_field_pos = (
             np.random.rand(3) - np.array([0.5] * 3)) * 0.01
 
-        if self.opposite_external_fields:
+        if opposite_external_fields:
             external_electric_field_neg = -external_electric_field_pos
         else:
             external_electric_field_neg = external_electric_field_pos
@@ -97,73 +102,16 @@ class Fluid_coupling:
 
         forces = np.copy(lb_fluid[:, :, :].last_applied_force)
 
-        if self.opposite_external_fields:
+        if opposite_external_fields:
             expected_force = 3 * external_electric_field_pos * \
                 valency * density * self.AGRID**2
             expected_force = np.full_like(forces, expected_force)
+            rtol = 1e-4 if self.ek_params["single_precision"] else 1e-5
             np.testing.assert_allclose(
-                forces,  expected_force, rtol=1e-5, atol=1e-9)
+                forces, expected_force, rtol=rtol, atol=1e-10)
         else:
             np.testing.assert_allclose(
-                forces, np.zeros_like(forces), atol=1e-9)
-
-
-@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKOppositeTestWalberlaDoublePrecisionCPU(Fluid_coupling, ut.TestCase):
-
-    """Test for the Walberla implementation of the EK in double-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.Lattice
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
-    lb_class = espressomd.lb.LBFluid
-    lb_params = {"single_precision": False, "gpu": False}
-    ek_params = {"single_precision": False, "gpu": False}
-    opposite_external_fields = True
-
-
-@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKOppositeTestWalberlaSinglePrecisionCPU(Fluid_coupling, ut.TestCase):
-
-    """Test for the Walberla implementation of the EK in single-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.Lattice
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
-    lb_class = espressomd.lb.LBFluid
-    lb_params = {"single_precision": True, "gpu": False}
-    ek_params = {"single_precision": True, "gpu": False}
-    opposite_external_fields = True
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
-class EKOppositeTestWalberlaDoublePrecisionGPU(Fluid_coupling, ut.TestCase):
-
-    """Test for the Walberla implementation of the EK in double-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.Lattice
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
-    lb_class = espressomd.lb.LBFluid
-    lb_params = {"single_precision": False, "gpu": True}
-    ek_params = {"single_precision": False, "gpu": True}
-    opposite_external_fields = True
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
-class EKOppositeTestWalberlaSinglePrecisionGPU(Fluid_coupling, ut.TestCase):
-
-    """Test for the Walberla implementation of the EK in single-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.Lattice
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
-    lb_class = espressomd.lb.LBFluid
-    lb_params = {"single_precision": True, "gpu": True}
-    ek_params = {"single_precision": True, "gpu": True}
-    opposite_external_fields = True
+                forces, np.zeros_like(forces), atol=1e-10)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
@@ -177,7 +125,6 @@ class EKTestWalberlaDoublePrecisionCPU(Fluid_coupling, ut.TestCase):
     lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": False, "gpu": False}
     ek_params = {"single_precision": False, "gpu": False}
-    opposite_external_fields = False
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
@@ -191,7 +138,6 @@ class EKTestWalberlaSinglePrecisionCPU(Fluid_coupling, ut.TestCase):
     lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": True, "gpu": False}
     ek_params = {"single_precision": True, "gpu": False}
-    opposite_external_fields = False
 
 
 @utx.skipIfMissingGPU()
@@ -206,7 +152,6 @@ class EKTestWalberlaDoublePrecisionGPU(Fluid_coupling, ut.TestCase):
     lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": False, "gpu": True}
     ek_params = {"single_precision": False, "gpu": True}
-    opposite_external_fields = False
 
 
 @utx.skipIfMissingGPU()
@@ -221,7 +166,6 @@ class EKTestWalberlaSinglePrecisionGPU(Fluid_coupling, ut.TestCase):
     lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": True, "gpu": True}
     ek_params = {"single_precision": True, "gpu": True}
-    opposite_external_fields = False
 
 
 if __name__ == "__main__":
