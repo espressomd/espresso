@@ -79,10 +79,14 @@ struct BondsKernel {
         bond_list(bond_list_), bond_ids(bond_ids_), aosoa(aosoa_) {
   }
 
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
-  check_breakage(Kokkos::View<int *> const &partners, int const bond_id) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
+  operator()(std::size_t idx) const {
+    auto const &partners = Kokkos::subview(bond_list, idx, Kokkos::ALL);
+    auto const &bond_id = bond_ids(idx);
+
     auto const i = id_to_index(partners(0));
     // Consider for bond breakage
+    auto breakage = false;
     if (partners(2) == -1) { // pair bonds
       auto const j = id_to_index(partners(1));
       auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
@@ -90,7 +94,7 @@ struct BondsKernel {
       auto d = box_geo.get_mi_vector(pos1, pos2).norm();
       if (bond_breakage.check_and_handle_breakage(
               aosoa.id(i), {{aosoa.id(j), std::nullopt}}, bond_id, d)) {
-        return true;
+        breakage = true;
       }
     } else if (partners(3) == -1) { // angle bond
       auto const j = id_to_index(partners(1));
@@ -100,181 +104,242 @@ struct BondsKernel {
       auto d = box_geo.get_mi_vector(pos2, pos3).norm();
       if (bond_breakage.check_and_handle_breakage(
               aosoa.id(i), {{aosoa.id(j), aosoa.id(k)}}, bond_id, d)) {
-        return true;
+        breakage = true;
       }
     }
-    return false;
-  }
 
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
-  calculate_bond_forces(Kokkos::View<int *> const &partners,
-                        int const bond_id) const {
-    auto const &iaparams = *bonded_ias.at(bond_id);
-    auto const thread_id = omp_get_thread_num();
-    auto const i = id_to_index(partners(0));
-
-    switch (number_of_partners(iaparams)) {
-
-    case 1: {
-      auto const j = id_to_index(partners(1));
-      auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-      auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-      auto const vel1 = aosoa.get_vector_at(aosoa.velocity, i);
-      auto const vel2 = aosoa.get_vector_at(aosoa.velocity, j);
-      auto const dx = box_geo.get_mi_vector(pos1, pos2);
-
-      if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
-        auto result = iap->forces(aosoa.mass(i), aosoa.mass(j), vel1, vel2,
-                                  aosoa.id(i), aosoa.id(j), dx);
-        if (result) {
-          auto const &forces = result.value();
-
-          local_force(i, thread_id, 0) += std::get<0>(forces)[0];
-          local_force(i, thread_id, 1) += std::get<0>(forces)[1];
-          local_force(i, thread_id, 2) += std::get<0>(forces)[2];
-          local_force(j, thread_id, 0) += std::get<1>(forces)[0];
-          local_force(j, thread_id, 1) += std::get<1>(forces)[1];
-          local_force(j, thread_id, 2) += std::get<1>(forces)[2];
-
-          return false;
-        }
-      } else {
-        auto result = calc_bond_pair_force(iaparams, dx
-#ifdef ESPRESSO_ELECTROSTATICS
-                                           ,
-                                           aosoa.charge(i), aosoa.charge(j),
-                                           coulomb_kernel
-#endif
-        );
-        if (result) {
-          auto const f = result.value();
-          local_force(i, thread_id, 0) += f[0];
-          local_force(i, thread_id, 1) += f[1];
-          local_force(i, thread_id, 2) += f[2];
-          local_force(j, thread_id, 0) -= f[0];
-          local_force(j, thread_id, 1) -= f[1];
-          local_force(j, thread_id, 2) -= f[2];
-#ifdef ESPRESSO_NPT
-          auto virial = hadamard_product(result.value(), dx);
-          local_virial(thread_id, 0) += virial[0];
-          local_virial(thread_id, 1) += virial[1];
-          local_virial(thread_id, 2) += virial[2];
-#endif
-          return false;
-        }
-      }
-      return true;
-    }
-
-    case 2: {
-      auto const j = id_to_index(partners(1));
-      auto const k = id_to_index(partners(2));
-
-      if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
-        return false;
-      }
-      auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-      auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-      auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
-      auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
-      auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
-      auto const result = calc_bonded_three_body_force(iaparams, vec1, vec2);
-      if (result) {
-        auto const &forces = result.value();
-
-        local_force(i, thread_id, 0) += std::get<0>(forces)[0];
-        local_force(i, thread_id, 1) += std::get<0>(forces)[1];
-        local_force(i, thread_id, 2) += std::get<0>(forces)[2];
-        local_force(j, thread_id, 0) += std::get<1>(forces)[0];
-        local_force(j, thread_id, 1) += std::get<1>(forces)[1];
-        local_force(j, thread_id, 2) += std::get<1>(forces)[2];
-        local_force(k, thread_id, 0) += std::get<2>(forces)[0];
-        local_force(k, thread_id, 1) += std::get<2>(forces)[1];
-        local_force(k, thread_id, 2) += std::get<2>(forces)[2];
-
-        return false;
-      }
-      return true;
-    }
-    case 3: {
-      auto const j = id_to_index(partners(1));
-      auto const k = id_to_index(partners(2));
-      auto const m = id_to_index(partners(3));
-      auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-      auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-      auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
-      auto const pos4 = aosoa.get_vector_at(aosoa.position, m);
-
-      std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
-                               Utils::Vector3d, Utils::Vector3d>>
-          result;
-      if (auto const *iap = std::get_if<OifLocalForcesBond>(&iaparams)) {
-        auto const fp2 = box_geo.unfolded_position(
-            pos1, aosoa.get_vector_at(aosoa.image, i));
-        auto const fp1 = fp2 + box_geo.get_mi_vector(pos2, fp2);
-        auto const fp3 = fp2 + box_geo.get_mi_vector(pos3, fp2);
-        auto const fp4 = fp2 + box_geo.get_mi_vector(pos4, fp2);
-        auto const vel2 = aosoa.get_vector_at(aosoa.velocity, i);
-        auto const vel3 = aosoa.get_vector_at(aosoa.velocity, k);
-
-        result = iap->calc_forces(fp2, fp1, fp3, fp4, vel2, vel3);
-      }
-      if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
-        // result = iap->calc_forces(box_geo, p1, p2, p3, p4);
-        result = iap->calc_forces(box_geo, pos1, pos2, pos3, pos4);
-      }
-      // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
-      auto const v12 = box_geo.get_mi_vector(pos1, pos2);
-      auto const v23 = box_geo.get_mi_vector(pos3, pos1);
-      auto const v34 = box_geo.get_mi_vector(pos4, pos3);
-      if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
-        result = iap->forces(v12, v23, v34);
-      }
-#ifdef ESPRESSO_TABULATED
-      if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
-        result = iap->forces(v12, v23, v34);
-      }
-#endif
-      if (result) {
-        auto const &forces = result.value();
-
-        local_force(i, thread_id, 0) += std::get<0>(forces)[0];
-        local_force(i, thread_id, 1) += std::get<0>(forces)[1];
-        local_force(i, thread_id, 2) += std::get<0>(forces)[2];
-        local_force(j, thread_id, 0) += std::get<1>(forces)[0];
-        local_force(j, thread_id, 1) += std::get<1>(forces)[1];
-        local_force(j, thread_id, 2) += std::get<1>(forces)[2];
-        local_force(k, thread_id, 0) += std::get<2>(forces)[0];
-        local_force(k, thread_id, 1) += std::get<2>(forces)[1];
-        local_force(k, thread_id, 2) += std::get<2>(forces)[2];
-        local_force(m, thread_id, 0) += std::get<3>(forces)[0];
-        local_force(m, thread_id, 1) += std::get<3>(forces)[1];
-        local_force(m, thread_id, 2) += std::get<3>(forces)[2];
-
-        return false;
-      }
-      // throw BondUnknownTypeError();
-      return true;
-    }
-    default:
-      return false;
-    }
-  }
-
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
-  operator()(std::size_t idx) const {
-    auto const &partners = Kokkos::subview(bond_list, idx, Kokkos::ALL);
-    auto const &bond_id = bond_ids(idx);
-    auto bond_broken = false;
-
-    auto breakage = check_breakage(partners, bond_id);
     if (not breakage) {
-      bond_broken = calculate_bond_forces(partners, bond_id);
-    }
+      auto const &iaparams = *bonded_ias.at(bond_id);
+      auto const thread_id = omp_get_thread_num();
 
-    if (bond_broken) {
-      std::span<int> s(partners.data(), partners.extent(0));
-      bond_broken_error(s);
+      switch (number_of_partners(iaparams)) {
+
+      case 1: {
+	auto const j = id_to_index(partners(1));
+	auto const dx = box_geo.get_mi_vector(
+			aosoa.get_vector_at(aosoa.position, i),
+			aosoa.get_vector_at(aosoa.position, j));
+
+	std::optional<Utils::Vector3d> result;
+        switch (iaparams.index()) {
+
+	//if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
+	case 13: {
+	  auto const iap = std::get<ThermalizedBond>(iaparams);
+	  auto const res = iap.forces(aosoa.mass(i), aosoa.mass(j), 
+				    aosoa.get_vector_at(aosoa.velocity, i),
+				    aosoa.get_vector_at(aosoa.velocity, j),
+				    aosoa.id(i), aosoa.id(j), dx);
+	  if (res) {
+	    auto const &forces = res.value();
+
+	    local_force(i, thread_id, 0) += std::get<0>(forces)[0];
+	    local_force(i, thread_id, 1) += std::get<0>(forces)[1];
+	    local_force(i, thread_id, 2) += std::get<0>(forces)[2];
+	    local_force(j, thread_id, 0) += std::get<1>(forces)[0];
+	    local_force(j, thread_id, 1) += std::get<1>(forces)[1];
+	    local_force(j, thread_id, 2) += std::get<1>(forces)[2];
+	  } else {
+	    std::span<int> s(partners.data(), partners.extent(0));
+	    bond_broken_error(s);
+	  }
+	  result = Utils::Vector3d{};
+	  break;
+	}
+
+	case 1: { //FENE
+	  auto const iap = std::get<FeneBond>(iaparams);
+	  result = iap.force(dx);
+	  break;
+	}
+	case 2: {
+	  auto const iap = std::get<HarmonicBond>(iaparams);
+	  result = iap.force(dx);
+	  break;
+	}
+	case 3: {
+	  auto const iap = std::get<QuarticBond>(iaparams);
+	  result = iap.force(dx);
+	  break;
+	}
+#ifdef ESPRESSO_ELECTROSTATICS
+	case 4: {
+	  auto const iap = std::get<BondedCoulomb>(iaparams);
+	  result = iap.force(aosoa.charge(i) * aosoa.charge(j), dx);
+	  break;
+	}
+	case 5: {
+	  auto const iap = std::get<BondedCoulombSR>(iaparams);
+	  result = iap.force(dx, *coulomb_kernel);
+	  break;
+	}
+#endif
+#ifdef ESPRESSO_BOND_CONSTRAINT
+	case 14: {
+	  if (std::get_if<RigidBond>(&iaparams)) {
+	    result = Utils::Vector3d{};
+	  }
+	  break;
+	}
+#endif
+#ifdef ESPRESSO_TABULATED
+	case 10: {
+	  auto const iap = std::get<TabulatedDistanceBond>(iaparams);
+	  result = iap.force(dx);
+	  break;
+	}
+#endif
+	case 20: {
+	  if (std::get_if<VirtualBond>(&iaparams)) {
+	    result = Utils::Vector3d{};
+	  }
+	  break;
+	}
+	default:
+	  throw BondUnknownTypeError();
+	}
+
+	if (result) {
+	  auto const f = result.value();
+	  local_force(i, thread_id, 0) += f[0];
+	  local_force(i, thread_id, 1) += f[1];
+	  local_force(i, thread_id, 2) += f[2];
+	  local_force(j, thread_id, 0) -= f[0];
+	  local_force(j, thread_id, 1) -= f[1];
+	  local_force(j, thread_id, 2) -= f[2];
+#ifdef ESPRESSO_NPT
+	  auto virial = hadamard_product(result.value(), dx);
+	  local_virial(thread_id, 0) += virial[0];
+	  local_virial(thread_id, 1) += virial[1];
+	  local_virial(thread_id, 2) += virial[2];
+#endif
+	} else {
+	  std::span<int> s(partners.data(), partners.extent(0));
+	  bond_broken_error(s);
+	}
+	break;
+      }
+
+      case 2: {
+	std::optional<
+	  std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>> result;
+	if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
+	  break;
+	  //result = std::tuple{Utils::Vector3d{}, Utils::Vector3d{}, Utils::Vector3d{}};
+	}
+	auto const j = id_to_index(partners(1));
+	auto const k = id_to_index(partners(2));
+	auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
+	auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+	auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
+	auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
+	auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
+	if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
+	  result = iap->forces(vec1, vec2);
+	}
+	else if (auto const *iap = std::get_if<AngleCosineBond>(&iaparams)) {
+	  result = iap->forces(vec1, vec2);
+	}
+	else if (auto const *iap = std::get_if<AngleCossquareBond>(&iaparams)) {
+	  result = iap->forces(vec1, vec2);
+	}
+#ifdef ESPRESSO_TABULATED
+	else if (auto const *iap = std::get_if<TabulatedAngleBond>(&iaparams)) {
+	  result = iap->forces(vec1, vec2);
+	}
+#endif
+	else if (auto const *iap = std::get_if<IBMTriel>(&iaparams)) {
+	  result = iap->calc_forces(vec1, vec2);
+	} else {
+	  throw BondUnknownTypeError();
+	}
+
+	if (result) {
+	  auto const &forces = result.value();
+
+	  local_force(i, thread_id, 0) += std::get<0>(forces)[0];
+	  local_force(i, thread_id, 1) += std::get<0>(forces)[1];
+	  local_force(i, thread_id, 2) += std::get<0>(forces)[2];
+	  local_force(j, thread_id, 0) += std::get<1>(forces)[0];
+	  local_force(j, thread_id, 1) += std::get<1>(forces)[1];
+	  local_force(j, thread_id, 2) += std::get<1>(forces)[2];
+	  local_force(k, thread_id, 0) += std::get<2>(forces)[0];
+	  local_force(k, thread_id, 1) += std::get<2>(forces)[1];
+	  local_force(k, thread_id, 2) += std::get<2>(forces)[2];
+	} else {
+	  std::span<int> s(partners.data(), partners.extent(0));
+	  bond_broken_error(s);
+	}
+	break;
+      }
+      case 3: {
+	auto const j = id_to_index(partners(1));
+	auto const k = id_to_index(partners(2));
+	auto const m = id_to_index(partners(3));
+	auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
+	auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+	auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
+	auto const pos4 = aosoa.get_vector_at(aosoa.position, m);
+	// note: particles in a dihedral bond are ordered as p2-p1-p3-p4
+	auto const v12 = box_geo.get_mi_vector(pos1, pos2);
+	auto const v23 = box_geo.get_mi_vector(pos3, pos1);
+	auto const v34 = box_geo.get_mi_vector(pos4, pos3);
+
+	std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
+				 Utils::Vector3d, Utils::Vector3d>>
+	    result;
+	if (auto const *iap = std::get_if<OifLocalForcesBond>(&iaparams)) {
+	  auto const fp2 = box_geo.unfolded_position(
+	      pos1, aosoa.get_vector_at(aosoa.image, i));
+	  auto const fp1 = fp2 + box_geo.get_mi_vector(pos2, fp2);
+	  auto const fp3 = fp2 + box_geo.get_mi_vector(pos3, fp2);
+	  auto const fp4 = fp2 + box_geo.get_mi_vector(pos4, fp2);
+	  auto const vel2 = aosoa.get_vector_at(aosoa.velocity, i);
+	  auto const vel3 = aosoa.get_vector_at(aosoa.velocity, k);
+
+	  result = iap->calc_forces(fp2, fp1, fp3, fp4, vel2, vel3);
+	}
+	else if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
+	  result = iap->calc_forces(box_geo, pos1, pos2, pos3, pos4);
+	}
+	else if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
+	  result = iap->forces(v12, v23, v34);
+	}
+#ifdef ESPRESSO_TABULATED
+	else if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
+	  result = iap->forces(v12, v23, v34);
+	}
+#endif
+	else {
+	  throw BondUnknownTypeError();
+	}
+
+	if (result) {
+	  auto const &forces = result.value();
+
+	  local_force(i, thread_id, 0) += std::get<0>(forces)[0];
+	  local_force(i, thread_id, 1) += std::get<0>(forces)[1];
+	  local_force(i, thread_id, 2) += std::get<0>(forces)[2];
+	  local_force(j, thread_id, 0) += std::get<1>(forces)[0];
+	  local_force(j, thread_id, 1) += std::get<1>(forces)[1];
+	  local_force(j, thread_id, 2) += std::get<1>(forces)[2];
+	  local_force(k, thread_id, 0) += std::get<2>(forces)[0];
+	  local_force(k, thread_id, 1) += std::get<2>(forces)[1];
+	  local_force(k, thread_id, 2) += std::get<2>(forces)[2];
+	  local_force(m, thread_id, 0) += std::get<3>(forces)[0];
+	  local_force(m, thread_id, 1) += std::get<3>(forces)[1];
+	  local_force(m, thread_id, 2) += std::get<3>(forces)[2];
+	} else {
+	  std::span<int> s(partners.data(), partners.extent(0));
+	  bond_broken_error(s);
+	}
+	break;
+      }
+      default: {
+        std::span<int> s(partners.data(), partners.extent(0));
+        bond_broken_error(s);
+      }
+      }
     }
   }
 };

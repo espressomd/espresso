@@ -327,20 +327,15 @@ inline void add_non_bonded_pair_force(
 /** Compute the bonded interaction force between particle pairs.
  *
  *  @param[in] iaparams    Bonded parameters for the interaction.
- *  @param[in] q1          First particle's charge.
- *  @param[in] q2          Second particle's charge.
+ *  @param[in] p1          First particle.
+ *  @param[in] p2          Second particle.
  *  @param[in] dx          Vector between @p p1 and @p p2.
  *  @param[in] kernel      Coulomb force kernel.
  */
-inline std::optional<Utils::Vector3d>
-calc_bond_pair_force(Bonded_IA_Parameters const &iaparams,
-                     Utils::Vector3d const &dx
-#ifdef ESPRESSO_ELECTROSTATICS
-                     ,
-                     double const &q1, double const &q2,
-                     Coulomb::ShortRangeForceKernel::kernel_type const *kernel
-#endif
-) {
+inline std::optional<Utils::Vector3d> calc_bond_pair_force(
+    Bonded_IA_Parameters const &iaparams, Particle const &p1,
+    Particle const &p2, Utils::Vector3d const &dx,
+    Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
     return iap->force(dx);
   }
@@ -352,7 +347,7 @@ calc_bond_pair_force(Bonded_IA_Parameters const &iaparams,
   }
 #ifdef ESPRESSO_ELECTROSTATICS
   if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
-    return iap->force(q1 * q2, dx);
+    return iap->force(p1.q() * p2.q(), dx);
   }
   if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
     return iap->force(dx, *kernel);
@@ -372,30 +367,6 @@ calc_bond_pair_force(Bonded_IA_Parameters const &iaparams,
     return Utils::Vector3d{};
   }
   throw BondUnknownTypeError();
-}
-
-/** Compute the bonded interaction force between particle pairs.
- *
- *  @param[in] iaparams    Bonded parameters for the interaction.
- *  @param[in] p1          First particle.
- *  @param[in] p2          Second particle.
- *  @param[in] dx          Vector between @p p1 and @p p2.
- *  @param[in] kernel      Coulomb force kernel.
- */
-inline std::optional<Utils::Vector3d> calc_bond_pair_force(
-    Bonded_IA_Parameters const &iaparams, Particle const &p1,
-    Particle const &p2, Utils::Vector3d const &dx,
-    Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
-#ifdef ESPRESSO_ELECTROSTATICS
-  auto const q1 = p1.q();
-  auto const q2 = p2.q();
-#endif
-  return calc_bond_pair_force(iaparams, dx
-#ifdef ESPRESSO_ELECTROSTATICS
-                              ,
-                              q1, q2, kernel
-#endif
-  );
 }
 
 inline bool add_bonded_two_body_force(
@@ -431,12 +402,13 @@ inline bool add_bonded_two_body_force(
   return true;
 }
 
-template <typename T>
 inline std::optional<
     std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
-                             Utils::Vector<T, 3> vec1,
-                             Utils::Vector<T, 3> vec2) {
+                             BoxGeometry const &box_geo, Particle const &p1,
+                             Particle const &p2, Particle const &p3) {
+  auto const vec1 = box_geo.get_mi_vector(p2.pos(), p1.pos());
+  auto const vec2 = box_geo.get_mi_vector(p3.pos(), p1.pos());
   if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
     return iap->forces(vec1, vec2);
   }
@@ -455,16 +427,6 @@ calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
     return iap->calc_forces(vec1, vec2);
   }
   throw BondUnknownTypeError();
-}
-
-inline std::optional<
-    std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
-                             BoxGeometry const &box_geo, Particle const &p1,
-                             Particle const &p2, Particle const &p3) {
-  auto const vec1 = box_geo.get_mi_vector(p2.pos(), p1.pos());
-  auto const vec2 = box_geo.get_mi_vector(p3.pos(), p1.pos());
-  return calc_bonded_three_body_force(iaparams, vec1, vec2);
 }
 
 inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
