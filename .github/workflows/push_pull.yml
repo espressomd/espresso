@@ -24,19 +24,18 @@ jobs:
       - name: Install dependencies
         run: |
          echo '' > Brewfile
-         for dep in boost boost-mpi fftw gsl ccache ninja; do echo "brew \"${dep}\"" >> Brewfile; done
+         for dep in boost boost-mpi fftw gsl ccache ninja libomp; do echo "brew \"${dep}\"" >> Brewfile; done
          brew bundle check >/dev/null 2>&1 || brew bundle --verbose --no-upgrade
          # set up Xcode compiler
          echo "::group::List available Xcode compilers"
          ls /Applications | grep Xcode
          echo "::endgroup::"
          sudo xcode-select -switch /Applications/Xcode_16.4.app
-         echo "::group::Install OpenMP (https://mac.r-project.org/openmp/)"
-         curl -s -o ${{ runner.temp }}/openmp.tar.gz https://mac.r-project.org/openmp/openmp-19.1.0-darwin20-Release.tar.gz
-         sudo tar fvxz ${{ runner.temp }}/openmp.tar.gz -C /
-         rm ${{ runner.temp }}/openmp.tar.gz
-         codesign -d -vv /usr/local/lib/libomp.dylib
-         echo "::endgroup::"
+         # Configure environment to use Homebrew's OpenMP
+         export LDFLAGS="-L$(brew --prefix libomp)/lib"
+         export CPPFLAGS="-I$(brew --prefix libomp)/include"
+         echo "LDFLAGS=${LDFLAGS}" >> $GITHUB_ENV
+         echo "CPPFLAGS=${CPPFLAGS}" >> $GITHUB_ENV
          # Python dependencies
          python -m venv venv
          . venv/bin/activate
