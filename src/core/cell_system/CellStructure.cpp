@@ -245,45 +245,45 @@ void CellStructure::set_index_map() {
   auto &bond_ids = get_bond_id_kokkos();
   reset_local_bond_numbers();
   int count = 0;
-  enumerate_local_particles(
-      *this, [this, &unique_particles, &max_ids, &bond_list, &bond_ids,
-              &count](std::size_t index, Particle &p) {
-        unique_particles[index] = &p;
-        const int thread_num = omp_get_thread_num();
-        max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
-        for (const BondView bond : p.bonds()) {
-          auto const partner_ids = bond.partner_ids();
-          try {
-            auto partners_source = resolve_bond_partners(partner_ids);
-            auto const partners =
-                std::span(partners_source.data(), partners_source.size());
-            if (partners.size() == 1u) { // pair bonds
-              auto index = Kokkos::atomic_fetch_add(&count, 1);
-              bond_list(index, 0) = p.id();
-              bond_list(index, 1) = partners[0]->id();
-              bond_list(index, 2) = -1;
-              bond_list(index, 3) = -1;
-              bond_ids(index) = bond.bond_id();
-            } else if (partners.size() == 2u) { // angle bond
-              auto index = Kokkos::atomic_fetch_add(&count, 1);
-              bond_list(index, 0) = p.id();
-              bond_list(index, 1) = partners[0]->id();
-              bond_list(index, 2) = partners[1]->id();
-              bond_list(index, 3) = -1;
-              bond_ids(index) = bond.bond_id();
-            } else if (partners.size() == 3u) { // dihedral bond
-              auto index = Kokkos::atomic_fetch_add(&count, 1);
-              bond_list(index, 0) = p.id();
-              bond_list(index, 1) = partners[0]->id();
-              bond_list(index, 2) = partners[1]->id();
-              bond_list(index, 3) = partners[2]->id();
-              bond_ids(index) = bond.bond_id();
-            }
-          } catch (const BondResolutionError &) {
-            bond_broken_error(p.id(), partner_ids);
-          }
+  enumerate_local_particles(*this, [this, &unique_particles, &max_ids,
+                                    &bond_list, &bond_ids,
+                                    &count](std::size_t index, Particle &p) {
+    unique_particles[index] = &p;
+    const int thread_num = omp_get_thread_num();
+    max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
+    for (const BondView bond : p.bonds()) {
+      auto const partner_ids = bond.partner_ids();
+      try {
+        auto partners_source = resolve_bond_partners(partner_ids);
+        auto const partners =
+            std::span(partners_source.data(), partners_source.size());
+        if (partners.size() == 1u) { // pair bonds
+          auto index = Kokkos::atomic_fetch_add(&count, 1);
+          bond_list(index, 0) = p.id();
+          bond_list(index, 1) = partners[0]->id();
+          bond_list(index, 2) = -1;
+          bond_list(index, 3) = -1;
+          bond_ids(index) = bond.bond_id();
+        } else if (partners.size() == 2u) { // angle bond
+          auto index = Kokkos::atomic_fetch_add(&count, 1);
+          bond_list(index, 0) = p.id();
+          bond_list(index, 1) = partners[0]->id();
+          bond_list(index, 2) = partners[1]->id();
+          bond_list(index, 3) = -1;
+          bond_ids(index) = bond.bond_id();
+        } else if (partners.size() == 3u) { // dihedral bond
+          auto index = Kokkos::atomic_fetch_add(&count, 1);
+          bond_list(index, 0) = p.id();
+          bond_list(index, 1) = partners[0]->id();
+          bond_list(index, 2) = partners[1]->id();
+          bond_list(index, 3) = partners[2]->id();
+          bond_ids(index) = bond.bond_id();
         }
-      });
+      } catch (const BondResolutionError &) {
+        bond_broken_error(p.id(), partner_ids);
+      }
+    }
+  });
   Kokkos::fence();
   set_local_bond_numbers(count);
   int max_id = *(std::max_element(max_ids.begin(), max_ids.end()));
