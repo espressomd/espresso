@@ -217,10 +217,8 @@ private:
   std::unique_ptr<VirialType> m_local_virial;
 #endif
   std::unique_ptr<ListType> m_verlet_list_cabana;
-  // std::unique_ptr<Kokkos::View<int *>> m_bondid_to_index;
   std::unique_ptr<BondlistType> m_bond_list_kokkos;
   std::unique_ptr<BondIDType> m_bond_id_kokkos;
-  // std::unique_ptr<BreakageType> m_breakage_list_kokkos;
 #ifdef ESPRESSO_COLLISION_DETECTION
   std::vector<int> m_new_bond_list;
   std::vector<int> m_new_bond_id;
