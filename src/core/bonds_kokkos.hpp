@@ -126,19 +126,22 @@ struct BondsKernel {
 
       if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
         result = iap->force(dx);
-      } else if (auto const *iap = std::get_if<HarmonicBond>(&iaparams)) {
+      }
+      if (auto const *iap = std::get_if<HarmonicBond>(&iaparams)) {
         result = iap->force(dx);
-      } else if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
+      }
+      if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
         result = iap->force(dx);
       }
 #ifdef ESPRESSO_ELECTROSTATICS
-      else if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
+      if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
         result = iap->force(aosoa.charge(i) * aosoa.charge(j), dx);
-      } else if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
+      }
+      if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
         result = iap->force(dx, *coulomb_kernel);
       }
 #endif
-      else if (std::get_if<VirtualBond>(&iaparams)
+      if (std::get_if<VirtualBond>(&iaparams)
 #ifdef ESPRESSO_BOND_CONSTRAINT
                or std::get_if<RigidBond>(&iaparams)
 #endif
@@ -147,14 +150,14 @@ struct BondsKernel {
         // result = Utils::Vector3d{};
       }
 #ifdef ESPRESSO_TABULATED
-      else if (auto const *iap =
+      if (auto const *iap =
                    std::get_if<TabulatedDistanceBond>(&iaparams)) {
         result = iap->force(dx);
       }
 #endif
-      else {
-        throw BondUnknownTypeError();
-      }
+      //else {
+      //  throw BondUnknownTypeError();
+      //}
 
       if (result) {
         auto const f = result.value();
@@ -199,21 +202,24 @@ struct BondsKernel {
       auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
       if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
         result = iap->forces(vec1, vec2);
-      } else if (auto const *iap = std::get_if<AngleCosineBond>(&iaparams)) {
+      }
+      if (auto const *iap = std::get_if<AngleCosineBond>(&iaparams)) {
         result = iap->forces(vec1, vec2);
-      } else if (auto const *iap = std::get_if<AngleCossquareBond>(&iaparams)) {
+      }
+      if (auto const *iap = std::get_if<AngleCossquareBond>(&iaparams)) {
         result = iap->forces(vec1, vec2);
       }
 #ifdef ESPRESSO_TABULATED
-      else if (auto const *iap = std::get_if<TabulatedAngleBond>(&iaparams)) {
+      if (auto const *iap = std::get_if<TabulatedAngleBond>(&iaparams)) {
         result = iap->forces(vec1, vec2);
       }
 #endif
-      else if (auto const *iap = std::get_if<IBMTriel>(&iaparams)) {
+      if (auto const *iap = std::get_if<IBMTriel>(&iaparams)) {
         result = iap->calc_forces(vec1, vec2);
-      } else {
-        throw BondUnknownTypeError();
       }
+      //else {
+      //  throw BondUnknownTypeError();
+      //}
 
       if (result) {
         auto const &forces = result.value();
@@ -259,20 +265,22 @@ struct BondsKernel {
         auto const vel3 = aosoa.get_vector_at(aosoa.velocity, k);
 
         result = iap->calc_forces(fp2, fp1, fp3, fp4, vel2, vel3);
-      } else if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
+      }
+      if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
         result = iap->calc_forces(box_geo, pos1, pos2, pos3, pos4);
-      } else if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
+      }
+      if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
         result = iap->forces(v12, v23, v34);
       }
 #ifdef ESPRESSO_TABULATED
-      else if (auto const *iap =
+      if (auto const *iap =
                    std::get_if<TabulatedDihedralBond>(&iaparams)) {
         result = iap->forces(v12, v23, v34);
       }
 #endif
-      else {
-        throw BondUnknownTypeError();
-      }
+      //else {
+      //  throw BondUnknownTypeError();
+      //}
 
       if (result) {
         auto const &forces = result.value();
@@ -295,10 +303,10 @@ struct BondsKernel {
       }
       break;
     }
-    default: {
-      std::span<int> s(partners.data(), partners.extent(0));
-      bond_broken_error(s);
-    }
+    //default: {
+    //  std::span<int> s(partners.data(), partners.extent(0));
+    //  bond_broken_error(s);
+    //}
     }
   }
 };
