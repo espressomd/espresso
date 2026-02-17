@@ -143,21 +143,20 @@ struct BondsKernel {
 #endif
       if (std::get_if<VirtualBond>(&iaparams)
 #ifdef ESPRESSO_BOND_CONSTRAINT
-               or std::get_if<RigidBond>(&iaparams)
+          or std::get_if<RigidBond>(&iaparams)
 #endif
       ) {
         break;
         // result = Utils::Vector3d{};
       }
 #ifdef ESPRESSO_TABULATED
-      if (auto const *iap =
-                   std::get_if<TabulatedDistanceBond>(&iaparams)) {
+      if (auto const *iap = std::get_if<TabulatedDistanceBond>(&iaparams)) {
         result = iap->force(dx);
       }
 #endif
-      //else {
-      //  throw BondUnknownTypeError();
-      //}
+      // else {
+      //   throw BondUnknownTypeError();
+      // }
 
       if (result) {
         auto const f = result.value();
@@ -217,9 +216,9 @@ struct BondsKernel {
       if (auto const *iap = std::get_if<IBMTriel>(&iaparams)) {
         result = iap->calc_forces(vec1, vec2);
       }
-      //else {
-      //  throw BondUnknownTypeError();
-      //}
+      // else {
+      //   throw BondUnknownTypeError();
+      // }
 
       if (result) {
         auto const &forces = result.value();
@@ -273,14 +272,13 @@ struct BondsKernel {
         result = iap->forces(v12, v23, v34);
       }
 #ifdef ESPRESSO_TABULATED
-      if (auto const *iap =
-                   std::get_if<TabulatedDihedralBond>(&iaparams)) {
+      if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
         result = iap->forces(v12, v23, v34);
       }
 #endif
-      //else {
-      //  throw BondUnknownTypeError();
-      //}
+      // else {
+      //   throw BondUnknownTypeError();
+      // }
 
       if (result) {
         auto const &forces = result.value();
@@ -303,10 +301,10 @@ struct BondsKernel {
       }
       break;
     }
-    //default: {
-    //  std::span<int> s(partners.data(), partners.extent(0));
-    //  bond_broken_error(s);
-    //}
+      // default: {
+      //   std::span<int> s(partners.data(), partners.extent(0));
+      //   bond_broken_error(s);
+      // }
     }
   }
 };
