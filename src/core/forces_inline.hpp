@@ -338,24 +338,20 @@ inline std::optional<Utils::Vector3d> calc_bond_pair_force(
     Bonded_IA_Parameters const &iaparams, Utils::Vector3d const &dx
 #ifdef ESPRESSO_ELECTROSTATICS
     ,
-    double const q1q2,
-    Coulomb::ShortRangeForceKernel::kernel_type const *kernel
+    double const q1q2, Coulomb::ShortRangeForceKernel::kernel_type const *kernel
 #endif
-    ) {
+) {
   if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
     return iap->force(dx);
-  }
-  else if (auto const *iap = std::get_if<HarmonicBond>(&iaparams)) {
+  } else if (auto const *iap = std::get_if<HarmonicBond>(&iaparams)) {
     return iap->force(dx);
-  }
-  else if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
+  } else if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
     return iap->force(dx);
   }
 #ifdef ESPRESSO_ELECTROSTATICS
   else if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
     return iap->force(q1q2, dx);
-  }
-  else if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
+  } else if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
     return iap->force(dx, *kernel);
   }
 #endif
@@ -394,9 +390,10 @@ inline bool add_bonded_two_body_force(
   } else {
     auto result = calc_bond_pair_force(iaparams, dx
 #ifdef ESPRESSO_ELECTROSTATICS
-		    , p1.q() * p2.q(), kernel
+                                       ,
+                                       p1.q() * p2.q(), kernel
 #endif
-		    );
+    );
     if (result) {
       p1.force() += result.value();
       p2.force() -= result.value();
@@ -418,7 +415,7 @@ ESPRESSO_ATTR_ALWAYS_INLINE
 inline std::optional<
     std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
-			     Utils::Vector3d const &vec1,
+                             Utils::Vector3d const &vec1,
                              Utils::Vector3d const &vec2) {
   if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
     return iap->forces(vec1, vec2);
@@ -449,8 +446,7 @@ inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
   }
   auto const vec1 = box_geo.get_mi_vector(p2.pos(), p1.pos());
   auto const vec2 = box_geo.get_mi_vector(p3.pos(), p1.pos());
-  auto const result =
-      calc_bonded_three_body_force(iaparams, vec1, vec2);
+  auto const result = calc_bonded_three_body_force(iaparams, vec1, vec2);
   if (result) {
     auto const &forces = result.value();
 

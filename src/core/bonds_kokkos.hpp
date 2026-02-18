@@ -101,12 +101,11 @@ struct BondsKernel {
       if (bond_breakage.check_and_handle_breakage(
               aosoa.id(i), {{aosoa.id(j), std::nullopt}}, bond_id, dx.norm())) {
         break;
-      }
-      else if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
+      } else if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
         auto const res = iap->forces(aosoa.mass(i), aosoa.mass(j),
-                                        aosoa.get_vector_at(aosoa.velocity, i),
-                                        aosoa.get_vector_at(aosoa.velocity, j),
-                                        aosoa.id(i), aosoa.id(j), dx);
+                                     aosoa.get_vector_at(aosoa.velocity, i),
+                                     aosoa.get_vector_at(aosoa.velocity, j),
+                                     aosoa.id(i), aosoa.id(j), dx);
         if (res) {
           auto const &forces = res.value();
 
@@ -121,13 +120,14 @@ struct BondsKernel {
           bond_broken_error(s);
         }
         break;
-      }
-      else {
-	result = calc_bond_pair_force(iaparams, dx
+      } else {
+        result = calc_bond_pair_force(iaparams, dx
 #ifdef ESPRESSO_ELECTROSTATICS
-			, aosoa.charge(i) * aosoa.charge(j), coulomb_kernel
+                                      ,
+                                      aosoa.charge(i) * aosoa.charge(j),
+                                      coulomb_kernel
 #endif
-			);
+        );
       }
 
       if (result) {
@@ -167,13 +167,10 @@ struct BondsKernel {
               aosoa.id(i), {{aosoa.id(j), aosoa.id(k)}}, bond_id,
               box_geo.get_mi_vector(pos2, pos3).norm())) {
         break;
-      }
-      else if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
+      } else if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
         break;
-      }
-      else {
-	result =
-	    calc_bonded_three_body_force(iaparams, vec1, vec2);
+      } else {
+        result = calc_bonded_three_body_force(iaparams, vec1, vec2);
       }
 
       if (result) {
@@ -220,15 +217,14 @@ struct BondsKernel {
         auto const vel3 = aosoa.get_vector_at(aosoa.velocity, k);
 
         result = iap->calc_forces(fp2, fp1, fp3, fp4, vel2, vel3);
-      }
-      else if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
+      } else if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
         result = iap->calc_forces(box_geo, pos1, pos2, pos3, pos4);
-      }
-      else if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
+      } else if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
         result = iap->forces(v12, v23, v34);
       }
 #ifdef ESPRESSO_TABULATED
-      else if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
+      else if (auto const *iap =
+                   std::get_if<TabulatedDihedralBond>(&iaparams)) {
         result = iap->forces(v12, v23, v34);
       }
 #endif

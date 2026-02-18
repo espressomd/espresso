@@ -612,9 +612,10 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       if (n == 1u) {
         calc_bond_pair_force(none, {}
 #ifdef ESPRESSO_ELECTROSTATICS
-			, pl[0].q() * pl[1].q(), nullptr
+                             ,
+                             pl[0].q() * pl[1].q(), nullptr
 #endif
-			);
+        );
       } else if (n == 2u) {
         auto const vec1 = box_geo.get_mi_vector(pl[1].pos(), pl[0].pos());
         auto const vec2 = box_geo.get_mi_vector(pl[2].pos(), pl[0].pos());
