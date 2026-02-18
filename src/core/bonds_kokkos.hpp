@@ -96,18 +96,19 @@ struct BondsKernel {
       auto const dx =
           box_geo.get_mi_vector(aosoa.get_vector_at(aosoa.position, i),
                                 aosoa.get_vector_at(aosoa.position, j));
+      std::optional<Utils::Vector3d> result;
       // Consider for bond breakage
       if (bond_breakage.check_and_handle_breakage(
               aosoa.id(i), {{aosoa.id(j), std::nullopt}}, bond_id, dx.norm())) {
         break;
       }
-      if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
-        auto const result = iap->forces(aosoa.mass(i), aosoa.mass(j),
+      else if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
+        auto const res = iap->forces(aosoa.mass(i), aosoa.mass(j),
                                         aosoa.get_vector_at(aosoa.velocity, i),
                                         aosoa.get_vector_at(aosoa.velocity, j),
                                         aosoa.id(i), aosoa.id(j), dx);
-        if (result) {
-          auto const &forces = result.value();
+        if (res) {
+          auto const &forces = res.value();
 
           local_force(i, thread_id, 0) += std::get<0>(forces)[0];
           local_force(i, thread_id, 1) += std::get<0>(forces)[1];
@@ -121,42 +122,13 @@ struct BondsKernel {
         }
         break;
       }
-
-      std::optional<Utils::Vector3d> result;
-
-      if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
-        result = iap->force(dx);
-      }
-      if (auto const *iap = std::get_if<HarmonicBond>(&iaparams)) {
-        result = iap->force(dx);
-      }
-      if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
-        result = iap->force(dx);
-      }
+      else {
+	result = calc_bond_pair_force(iaparams, dx
 #ifdef ESPRESSO_ELECTROSTATICS
-      if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
-        result = iap->force(aosoa.charge(i) * aosoa.charge(j), dx);
-      }
-      if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
-        result = iap->force(dx, *coulomb_kernel);
-      }
+			, aosoa.charge(i) * aosoa.charge(j), coulomb_kernel
 #endif
-      if (std::get_if<VirtualBond>(&iaparams)
-#ifdef ESPRESSO_BOND_CONSTRAINT
-          or std::get_if<RigidBond>(&iaparams)
-#endif
-      ) {
-        break;
-        // result = Utils::Vector3d{};
+			);
       }
-#ifdef ESPRESSO_TABULATED
-      if (auto const *iap = std::get_if<TabulatedDistanceBond>(&iaparams)) {
-        result = iap->force(dx);
-      }
-#endif
-      // else {
-      //   throw BondUnknownTypeError();
-      // }
 
       if (result) {
         auto const f = result.value();
@@ -185,40 +157,24 @@ struct BondsKernel {
       auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
       auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
       auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
+      auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
+      auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
+      std::optional<
+          std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
+          result;
       // Consider for bond breakage
       if (bond_breakage.check_and_handle_breakage(
               aosoa.id(i), {{aosoa.id(j), aosoa.id(k)}}, bond_id,
               box_geo.get_mi_vector(pos2, pos3).norm())) {
         break;
       }
-      if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
+      else if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
         break;
       }
-      std::optional<
-          std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-          result;
-      auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
-      auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
-      if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
-        result = iap->forces(vec1, vec2);
+      else {
+	result =
+	    calc_bonded_three_body_force(iaparams, vec1, vec2);
       }
-      if (auto const *iap = std::get_if<AngleCosineBond>(&iaparams)) {
-        result = iap->forces(vec1, vec2);
-      }
-      if (auto const *iap = std::get_if<AngleCossquareBond>(&iaparams)) {
-        result = iap->forces(vec1, vec2);
-      }
-#ifdef ESPRESSO_TABULATED
-      if (auto const *iap = std::get_if<TabulatedAngleBond>(&iaparams)) {
-        result = iap->forces(vec1, vec2);
-      }
-#endif
-      if (auto const *iap = std::get_if<IBMTriel>(&iaparams)) {
-        result = iap->calc_forces(vec1, vec2);
-      }
-      // else {
-      //   throw BondUnknownTypeError();
-      // }
 
       if (result) {
         auto const &forces = result.value();
@@ -265,14 +221,14 @@ struct BondsKernel {
 
         result = iap->calc_forces(fp2, fp1, fp3, fp4, vel2, vel3);
       }
-      if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
+      else if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
         result = iap->calc_forces(box_geo, pos1, pos2, pos3, pos4);
       }
-      if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
+      else if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
         result = iap->forces(v12, v23, v34);
       }
 #ifdef ESPRESSO_TABULATED
-      if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
+      else if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
         result = iap->forces(v12, v23, v34);
       }
 #endif

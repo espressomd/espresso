@@ -107,7 +107,11 @@ calc_bonded_virial_pressure_tensor(
     Particle const &p2, BoxGeometry const &box_geo,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
-  auto const pair_force = calc_bond_pair_force(iaparams, p1, p2, dx, kernel);
+  auto const pair_force = calc_bond_pair_force(iaparams, dx
+#ifdef ESPRESSO_ELECTROSTATICS
+		  , p1.q() * p2.q(), kernel
+#endif
+		  );
   std::optional<Utils::Matrix<double, 3, 3>> pressure{std::nullopt};
   if (pair_force) {
     pressure = Utils::tensor_product(*pair_force, dx);
@@ -130,7 +134,7 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
     auto const dx31 = box_geo.get_mi_vector(p3.pos(), p1.pos());
 
     auto const result =
-        calc_bonded_three_body_force(iaparams, box_geo, p1, p2, p3);
+        calc_bonded_three_body_force(iaparams, dx21, dx31);
     if (result) {
       Utils::Vector3d force2, force3;
       std::tie(std::ignore, force2, force3) = result.value();

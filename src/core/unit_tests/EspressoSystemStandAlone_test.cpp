@@ -610,9 +610,15 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       auto const &pl = plist; // alias to improve code coverage
       auto const none = NoneBond{};
       if (n == 1u) {
-        calc_bond_pair_force(none, pl[0], pl[1], {}, nullptr);
+        calc_bond_pair_force(none, {}
+#ifdef ESPRESSO_ELECTROSTATICS
+			, pl[0].q() * pl[1].q(), nullptr
+#endif
+			);
       } else if (n == 2u) {
-        calc_bonded_three_body_force(none, box_geo, pl[0], pl[1], pl[2]);
+        auto const vec1 = box_geo.get_mi_vector(pl[1].pos(), pl[0].pos());
+        auto const vec2 = box_geo.get_mi_vector(pl[2].pos(), pl[0].pos());
+        calc_bonded_three_body_force(none, vec1, vec2);
       } else if (n == 3u) {
         calc_bonded_four_body_force(none, box_geo, pl[0], pl[1], pl[2], pl[3]);
       }
