@@ -621,7 +621,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
         auto const vec2 = box_geo.get_mi_vector(pl[2].pos(), pl[0].pos());
         calc_bonded_three_body_force(none, vec1, vec2);
       } else if (n == 3u) {
-        calc_bonded_four_body_force(none, box_geo, pl[0].pos(), pl[1].pos(), pl[2].pos(), pl[3].pos(), pl[0].v(), pl[2].v(), pl[0].image_box());
+        calc_bonded_four_body_force(none, box_geo, pl[0].pos(), pl[1].pos(),
+                                    pl[2].pos(), pl[3].pos(), pl[0].v(),
+                                    pl[2].v(), pl[0].image_box());
       }
     };
     static_cast<void>(energy_kernel(0u));

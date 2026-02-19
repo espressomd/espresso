@@ -463,16 +463,13 @@ inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
 ESPRESSO_ATTR_ALWAYS_INLINE
 #endif
 inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
-				Utils::Vector3d, Utils::Vector3d>>
-calc_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
-			    BoxGeometry const &box_geo,
-			    Utils::Vector3d const &pos1,
-			    Utils::Vector3d const &pos2,
-			    Utils::Vector3d const &pos3,
-			    Utils::Vector3d const &pos4,
-			    Utils::Vector3d const &vel1,
-			    Utils::Vector3d const &vel3,
-			    Utils::Vector3i const &image1) {
+                                Utils::Vector3d, Utils::Vector3d>>
+calc_bonded_four_body_force(
+    Bonded_IA_Parameters const &iaparams, BoxGeometry const &box_geo,
+    Utils::Vector3d const &pos1, Utils::Vector3d const &pos2,
+    Utils::Vector3d const &pos3, Utils::Vector3d const &pos4,
+    Utils::Vector3d const &vel1, Utils::Vector3d const &vel3,
+    Utils::Vector3i const &image1) {
   if (auto const *iap = std::get_if<OifLocalForcesBond>(&iaparams)) {
     // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
     auto const fp2 = box_geo.unfolded_position(pos1, image1);
@@ -510,8 +507,8 @@ inline bool add_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
   auto const vel1 = p1.v();
   auto const vel3 = p3.v();
   auto const image1 = p1.image_box();
-  auto const result =
-      calc_bonded_four_body_force(iaparams, box_geo, pos1, pos2, pos3, pos4, vel1, vel3, image1);
+  auto const result = calc_bonded_four_body_force(
+      iaparams, box_geo, pos1, pos2, pos3, pos4, vel1, vel3, image1);
   if (result) {
     auto const &forces = result.value();
 

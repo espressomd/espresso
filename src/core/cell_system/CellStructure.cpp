@@ -228,7 +228,7 @@ void CellStructure::set_index_map() {
 
   // During looking up particle pointer, bond_list is also constructed.
   m_global_bond_numbers = boost::mpi::all_reduce(
-    ::comm_cart, m_local_bond_numbers, std::plus<int>());
+      ::comm_cart, m_local_bond_numbers, std::plus<int>());
   // Because the core that registers bonds differs from the one uses them,
   // we intentionally accept a larger memory footprint and allocat each core's
   // bond_list with the total number of bonds.
@@ -244,7 +244,7 @@ void CellStructure::set_index_map() {
   auto &bond_list = get_bond_list_kokkos();
   auto &bond_ids = get_bond_id_kokkos();
   reset_local_bond_numbers();
-  int count = 0; 
+  int count = 0;
   enumerate_local_particles(*this, [this, &unique_particles, &max_ids,
                                     &bond_list, &bond_ids,
                                     &count](std::size_t index, Particle &p) {

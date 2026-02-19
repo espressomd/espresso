@@ -81,9 +81,9 @@ struct BondsKernel {
     auto const i = id_to_index(partners(0));
 
     auto const &iaparams = *bonded_ias.at(bond_id);
-    //TODO:
-    //omp_get_thread_num() is only available for openMP backend.
-    //It should be modified when other kokkos backends is used.
+    // TODO:
+    // omp_get_thread_num() is only available for openMP backend.
+    // It should be modified when other kokkos backends is used.
     auto const thread_id = omp_get_thread_num();
 
     switch (number_of_partners(iaparams)) {
@@ -202,7 +202,8 @@ struct BondsKernel {
 
       std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                Utils::Vector3d, Utils::Vector3d>>
-          result = calc_bonded_four_body_force(iaparams, box_geo, pos1, pos2, pos3, pos4, vel1, vel3, image1);
+          result = calc_bonded_four_body_force(iaparams, box_geo, pos1, pos2,
+                                               pos3, pos4, vel1, vel3, image1);
 
       if (result) {
         auto const &forces = result.value();
@@ -225,7 +226,8 @@ struct BondsKernel {
       }
       break;
     }
-    // no default: bond_list construction only includes 1-, 2-, and 3-partner bonds
+      // no default: bond_list construction only includes 1-, 2-, and 3-partner
+      // bonds
     }
   }
 };
