@@ -38,12 +38,6 @@
 #include <variant>
 #include <vector>
 
-#if defined(__GNUG__) or defined(__clang__)
-#define ESPRESSO_ATTR_ALWAYS_INLINE [[gnu::always_inline]]
-#else
-#define ESPRESSO_ATTR_ALWAYS_INLINE
-#endif
-
 struct BondsKernel {
   BondedInteractionsMap const &bonded_ias;
   BondBreakage::BondBreakage &bond_breakage;
@@ -87,6 +81,9 @@ struct BondsKernel {
     auto const i = id_to_index(partners(0));
 
     auto const &iaparams = *bonded_ias.at(bond_id);
+    //TODO:
+    //omp_get_thread_num() is only available for openMP backend.
+    //It should be modified when other kokkos backends is used.
     auto const thread_id = omp_get_thread_num();
 
     switch (number_of_partners(iaparams)) {
@@ -199,38 +196,13 @@ struct BondsKernel {
       auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
       auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
       auto const pos4 = aosoa.get_vector_at(aosoa.position, m);
-      // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
-      auto const v12 = box_geo.get_mi_vector(pos1, pos2);
-      auto const v23 = box_geo.get_mi_vector(pos3, pos1);
-      auto const v34 = box_geo.get_mi_vector(pos4, pos3);
+      auto const vel1 = aosoa.get_vector_at(aosoa.velocity, i);
+      auto const vel3 = aosoa.get_vector_at(aosoa.velocity, k);
+      auto const image1 = aosoa.get_vector_at(aosoa.image, i);
 
       std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                Utils::Vector3d, Utils::Vector3d>>
-          result;
-      if (auto const *iap = std::get_if<OifLocalForcesBond>(&iaparams)) {
-        auto const fp2 = box_geo.unfolded_position(
-            pos1, aosoa.get_vector_at(aosoa.image, i));
-        auto const fp1 = fp2 + box_geo.get_mi_vector(pos2, fp2);
-        auto const fp3 = fp2 + box_geo.get_mi_vector(pos3, fp2);
-        auto const fp4 = fp2 + box_geo.get_mi_vector(pos4, fp2);
-        auto const vel2 = aosoa.get_vector_at(aosoa.velocity, i);
-        auto const vel3 = aosoa.get_vector_at(aosoa.velocity, k);
-
-        result = iap->calc_forces(fp2, fp1, fp3, fp4, vel2, vel3);
-      } else if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
-        result = iap->calc_forces(box_geo, pos1, pos2, pos3, pos4);
-      } else if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
-        result = iap->forces(v12, v23, v34);
-      }
-#ifdef ESPRESSO_TABULATED
-      else if (auto const *iap =
-                   std::get_if<TabulatedDihedralBond>(&iaparams)) {
-        result = iap->forces(v12, v23, v34);
-      }
-#endif
-      // else {
-      //   throw BondUnknownTypeError();
-      // }
+          result = calc_bonded_four_body_force(iaparams, box_geo, pos1, pos2, pos3, pos4, vel1, vel3, image1);
 
       if (result) {
         auto const &forces = result.value();
@@ -253,10 +225,7 @@ struct BondsKernel {
       }
       break;
     }
-      // default: {
-      //   std::span<int> s(partners.data(), partners.extent(0));
-      //   bond_broken_error(s);
-      // }
+    // no default: bond_list construction only includes 1-, 2-, and 3-partner bonds
     }
   }
 };

@@ -459,22 +459,35 @@ inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
   return true;
 }
 
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+ESPRESSO_ATTR_ALWAYS_INLINE
+#endif
 inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
-                                Utils::Vector3d, Utils::Vector3d>>
+				Utils::Vector3d, Utils::Vector3d>>
 calc_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
-                            BoxGeometry const &box_geo, Particle const &p1,
-                            Particle const &p2, Particle const &p3,
-                            Particle const &p4) {
+			    BoxGeometry const &box_geo,
+			    Utils::Vector3d const &pos1,
+			    Utils::Vector3d const &pos2,
+			    Utils::Vector3d const &pos3,
+			    Utils::Vector3d const &pos4,
+			    Utils::Vector3d const &vel1,
+			    Utils::Vector3d const &vel3,
+			    Utils::Vector3i const &image1) {
   if (auto const *iap = std::get_if<OifLocalForcesBond>(&iaparams)) {
-    return iap->calc_forces(box_geo, p1, p2, p3, p4);
+    // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
+    auto const fp2 = box_geo.unfolded_position(pos1, image1);
+    auto const fp1 = fp2 + box_geo.get_mi_vector(pos2, fp2);
+    auto const fp3 = fp2 + box_geo.get_mi_vector(pos3, fp2);
+    auto const fp4 = fp2 + box_geo.get_mi_vector(pos4, fp2);
+    return iap->calc_forces(fp2, fp1, fp3, fp4, vel1, vel3);
   }
   if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
-    return iap->calc_forces(box_geo, p1, p2, p3, p4);
+    return iap->calc_forces(box_geo, pos1, pos2, pos3, pos4);
   }
   // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
-  auto const v12 = box_geo.get_mi_vector(p1.pos(), p2.pos());
-  auto const v23 = box_geo.get_mi_vector(p3.pos(), p1.pos());
-  auto const v34 = box_geo.get_mi_vector(p4.pos(), p3.pos());
+  auto const v12 = box_geo.get_mi_vector(pos1, pos2);
+  auto const v23 = box_geo.get_mi_vector(pos3, pos1);
+  auto const v34 = box_geo.get_mi_vector(pos4, pos3);
   if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
     return iap->forces(v12, v23, v34);
   }
@@ -490,8 +503,15 @@ inline bool add_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
                                        BoxGeometry const &box_geo, Particle &p1,
                                        Particle &p2, Particle &p3,
                                        Particle &p4) {
+  auto const pos1 = p1.pos();
+  auto const pos2 = p2.pos();
+  auto const pos3 = p3.pos();
+  auto const pos4 = p4.pos();
+  auto const vel1 = p1.v();
+  auto const vel3 = p3.v();
+  auto const image1 = p1.image_box();
   auto const result =
-      calc_bonded_four_body_force(iaparams, box_geo, p1, p2, p3, p4);
+      calc_bonded_four_body_force(iaparams, box_geo, pos1, pos2, pos3, pos4, vel1, vel3, image1);
   if (result) {
     auto const &forces = result.value();
 

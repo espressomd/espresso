@@ -42,7 +42,7 @@ struct CellStructure::AoSoA_pack {
   using DipmViewType = Kokkos::View<double *, Kokkos::HostSpace>;
   using IdViewType = Kokkos::View<int *, Kokkos::HostSpace>;
   using TypeViewType = Kokkos::View<int *, Kokkos::HostSpace>;
-  using MassViewType = Kokkos::View<int *, Kokkos::HostSpace>;
+  using MassViewType = Kokkos::View<double *, Kokkos::HostSpace>;
   using IdToIndexViewType = Kokkos::View<int *, Kokkos::HostSpace>;
   using FlagsViewType = Kokkos::View<uint8_t *, Kokkos::HostSpace>;
 
