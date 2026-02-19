@@ -1,14 +1,15 @@
 # Tutorial: raspberry electrophoresis
 
+Extended objects in a Lattice-Boltzmann fluid, raspberry particles.
+
 ## Physics learning objectives
 
-After the tutorial, students should be able to
+After the tutorial, students should be able to explain
 
-* explain
-  * the basics of electrophoresis to a 2nd year physics student
-  * the term hydrodynamic radius
-  * the purpose of the raspberry model (why you cannot use a single large particle instead)
-  * how the ions are modeled
+* the basics of electrophoresis to a 2nd year physics student
+* the term hydrodynamic radius
+* the purpose of the raspberry model (why you cannot use a single large particle instead)
+* how the ions are modeled
 
 ## ESPResSo learning objectives
 

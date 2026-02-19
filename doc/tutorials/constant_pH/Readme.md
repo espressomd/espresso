@@ -1,4 +1,6 @@
-# Tutorial: constant-pH method
+# Tutorial: constant pH method
+
+Modelling an acid dissociation curve using the constant pH method.
 
 ## Physics learning objectives
 

@@ -1,5 +1,7 @@
 # Tutorial: Boltzmann inversion
 
+Systematic coarse-graining based on the Boltzmann inversion method.
+
 ## Physics learning objectives
 
 * Develop a simple coarse-grained model for charged colloidal particles with explicit counterions and salt using the method of Boltzmann inversion.

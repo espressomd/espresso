@@ -137,6 +137,9 @@ p3m_params = {"prefactor": args.prefactor, "accuracy": 1e-3, "timings": 15,
               "tune_limits": [12, 160], "gpu": args.gpu}
 p3m = espressomd.electrostatics.P3M(**p3m_params)
 print("Quick equilibration")
+system.time_step = system.time_step / 10.
+system.integrator.run(100)
+system.time_step = system.time_step * 10.
 system.integrator.run(min(3 * measurement_steps, 1000))
 print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
     min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100,

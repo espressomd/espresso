@@ -62,10 +62,7 @@ system.part.add(pos=np.random.random((n_part, 3)) * system.box_l)
 
 print("ASE Lennard-Jones calculator setup")
 
-# Mapping of ESPResSo types to ASE types
-type_mapping = {0: 0}
-ase = espressomd.plugins.ase.ASEInterface(
-    system, type_mapping, system.part.all())
+ase = espressomd.plugins.ase.ASEInterface(system, system.part.all())
 
 # ASE calculator tor provide Lennard-Jones forces
 lj = LennardJones(sigma=lj_sig, epsilon=lj_eps, rc=lj_cut, smooth=False)

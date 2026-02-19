@@ -31,7 +31,7 @@ parser.add_argument("--particles_per_core", metavar="N", action="store",
 parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     type=float, default=0.1, required=False,
                     help="Fraction of the simulation box volume occupied by "
-                    "particles (range: [0.01-0.74], default: 0.50)")
+                    "particles (range: [0.01-0.74], default: 0.10)")
 parser.add_argument("--dipole_moment", metavar="FRAC", action="store",
                     type=float, default=2**0.5, required=False,
                     help="Magnitude of the dipole moment (same for all particles)")
@@ -55,7 +55,7 @@ if not args.visualizer:
     assert measurement_steps >= 100, \
         f"{measurement_steps} steps per tick are too short"
 
-required_features = ["LENNARD_JONES"]
+required_features = ["LENNARD_JONES", "DP3M"]
 espressomd.assert_features(required_features)
 
 # System
@@ -110,8 +110,8 @@ system.integrator.set_vv()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # tuning and equilibration
-min_skin = 0.2
-max_skin = 1.0
+min_skin = 0.1
+max_skin = 0.6
 dp3m_params = {'prefactor': 1, 'accuracy': 1e-4}
 print("Equilibration")
 system.integrator.run(min(5 * measurement_steps, 60000))

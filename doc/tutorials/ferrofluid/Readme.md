@@ -1,5 +1,7 @@
 # Tutorial: ferrofluids
 
+Modelling of a monolayer ferrofluid system.
+
 ## General Remarks
 
 Try to put the focus on the first tutorial.
@@ -22,14 +24,14 @@ The third tutorial deals mainly with physical concepts, the only new ESPResSo-sp
 * Part 1
    - How to setup P3M for dipolar interactions
    - How to set up randomly distributed dipole moments without bias:
-     - Randomly picking Cartesian vectors with $x, y, z \in [-1,1]$ would introduce bias
-     - Randomly picking angles ($\phi \in [0,2\pi]$, $\theta \in [0,\pi]$) introduces bias
-     - Correct way shown in solution (accounts for Jacobian)
+      - Randomly picking Cartesian vectors with $x, y, z \in [-1,1]$ would introduce bias
+      - Randomly picking angles ($\phi \in [0,2\pi]$, $\theta \in [0,\pi]$) introduces bias
+      - Correct way shown in solution (accounts for Jacobian)
    - Basics of how to perform cluster analysis
    - If more time available or if asked: What changes with different lambdas
-     - This is not documented in the tutorial
-     - For a visual understanding of the meaning of $\lambda$, re-run the tutorial with a different value, e.g. $\lambda \in \{0.5, 7\}$
-     - Discuss the resulting video
+      - This is not documented in the tutorial
+      - For a visual understanding of the meaning of $\lambda$, re-run the tutorial with a different value, e.g. $\lambda \in \{0.5, 7\}$
+      - Discuss the resulting video
 * Part 2
    - How to setup an external field
    - How to sample magnetization curves on a quasi-2D system

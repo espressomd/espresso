@@ -134,6 +134,9 @@ set_default_value with_stokesian_dynamics false
 set_default_value test_timeout 500
 set_default_value hide_gpu false
 
+# accumulate CMake params in a Bash array to preserve whitespace characters
+declare -a cmake_param_list
+
 if [ "${make_check_unit_tests}" = true ] || [ "${make_check_python}" = true ] || [ "${make_check_tutorials}" = true ] || [ "${make_check_samples}" = true ] || [ "${make_check_benchmarks}" = true ]; then
     run_checks=true
 else
@@ -144,44 +147,43 @@ if [ "${with_coverage}" = true ]; then
     build_type="Coverage"
 fi
 
+cmake_param_list+=(
+  ${cmake_params}
+  -D CMAKE_BUILD_TYPE=${build_type}
+  -D CMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests
+  -D ESPRESSO_INSIDE_DOCKER:BOOL=ON
+  -D ESPRESSO_WARNINGS_ARE_ERRORS:BOOL=ON
+  -D ESPRESSO_CTEST_ARGS:STRING="-j${check_procs}"
+  -D ESPRESSO_TEST_TIMEOUT:STRING=${test_timeout}
+  -D ESPRESSO_BUILD_BENCHMARKS:BOOL=${make_check_benchmarks}
+  -D ESPRESSO_BUILD_WITH_CCACHE:BOOL=${with_ccache}
+  -D ESPRESSO_BUILD_WITH_CALIPER:BOOL=${with_caliper}
+  -D ESPRESSO_BUILD_WITH_FPE:BOOL=${with_fpe}
+  -D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM:BOOL=${with_shared_memory_parallelism}
+  -D ESPRESSO_BUILD_WITH_HDF5:BOOL=${with_hdf5}
+  -D ESPRESSO_BUILD_WITH_FFTW:BOOL=${with_fftw}
+  -D ESPRESSO_BUILD_WITH_GSL:BOOL=${with_gsl}
+  -D ESPRESSO_BUILD_WITH_SCAFACOS:BOOL=${with_scafacos}
+  -D ESPRESSO_BUILD_WITH_NLOPT:BOOL=${with_nlopt}
+  -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS:BOOL=${with_stokesian_dynamics}
+  -D ESPRESSO_BUILD_WITH_WALBERLA:BOOL=${with_walberla}
+  -D ESPRESSO_BUILD_WITH_WALBERLA_AVX:BOOL=${with_walberla_avx}
+  -D ESPRESSO_BUILD_WITH_COVERAGE:BOOL=${with_coverage}
+  -D ESPRESSO_BUILD_WITH_COVERAGE_PYTHON:BOOL=${with_coverage_python}
+  -D ESPRESSO_BUILD_WITH_ASAN:BOOL=${with_asan}
+  -D ESPRESSO_BUILD_WITH_UBSAN:BOOL=${with_ubsan}
+  -D ESPRESSO_BUILD_WITH_CLANG_TIDY:BOOL=${with_static_analysis}
+  -D ESPRESSO_BUILD_WITH_CUDA:BOOL=${with_cuda}
+)
+
 if [ "${with_fast_math}" = true ]; then
-    cmake_param_protected="-DCMAKE_CXX_FLAGS=-ffast-math"
+  cmake_param_list+=(-D CMAKE_CXX_FLAGS=-ffast-math)
 fi
-
-cmake_params="-D CMAKE_BUILD_TYPE=${build_type} -D ESPRESSO_WARNINGS_ARE_ERRORS=ON ${cmake_params}"
-cmake_params="${cmake_params} -D CMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests -D ESPRESSO_INSIDE_DOCKER=ON"
-cmake_params="${cmake_params} -D ESPRESSO_CTEST_ARGS:STRING=-j${check_procs} -D ESPRESSO_TEST_TIMEOUT=${test_timeout}"
-
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_BENCHMARKS=${make_check_benchmarks}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CCACHE=${with_ccache}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CALIPER=${with_caliper}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FPE=${with_fpe}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM=${with_shared_memory_parallelism}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_HDF5=${with_hdf5}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FFTW=${with_fftw}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_GSL=${with_gsl}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SCAFACOS=${with_scafacos}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_NLOPT=${with_nlopt}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=${with_stokesian_dynamics}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA=${with_walberla}"
-
-if [ "${with_walberla}" = true ]; then
-  if [ "${with_walberla_avx}" = true ]; then
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA_AVX=ON"
-  fi
-fi
-
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_COVERAGE=${with_coverage}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_COVERAGE_PYTHON=${with_coverage_python}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_ASAN=${with_asan}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_UBSAN=${with_ubsan}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CLANG_TIDY=${with_static_analysis}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CUDA=${with_cuda}"
 
 if [ "${with_cuda}" = true ]; then
-    cmake_params="${cmake_params} -D CUDAToolkit_ROOT=/usr/lib/cuda"
+    cmake_param_list+=(-D CUDAToolkit_ROOT=/usr/lib/cuda)
     if [ "${CUDACXX}" = "" ] && [ "${CXX}" != "" ]; then
-        cmake_params="${cmake_params} -D CMAKE_CUDA_FLAGS='--compiler-bindir=$(which "${CXX}")'"
+        cmake_param_list+=(-D CMAKE_CUDA_HOST_COMPILER="${CXX}")
     fi
 fi
 
@@ -201,6 +203,7 @@ echo ""
 
 builddir="${srcdir}/build"
 
+echo "variables:"
 outp srcdir builddir \
     make_check_unit_tests make_check_python make_check_tutorials make_check_samples make_check_benchmarks \
     cmake_params \
@@ -254,11 +257,21 @@ else
     fi
 fi
 
-if [ -z "${cmake_param_protected}" ]; then
-  cmake -G Ninja "${srcdir}" ${cmake_params} || exit 1
-else
-  cmake -G Ninja "${srcdir}" ${cmake_params} "${cmake_param_protected}" || exit 1
-fi
+# print cmake command, one parameter per line (line length is limited to 1024 chars on macOS)
+echo "cmake -G Ninja \\"
+for arg in "${cmake_param_list[@]}"; do
+  if [[ "${arg}" = *" "* ]]; then
+    echo -n " \"${arg}\""
+  else
+    echo -n " ${arg}"
+  fi
+  if [ ! "${arg}" = "-D" ]; then
+    echo " \\"
+  fi
+done
+echo "  ${srcdir}"
+
+cmake -G Ninja "${srcdir}" "${cmake_param_list[@]}" || exit 1
 end "CONFIGURE"
 
 # BUILD
@@ -353,6 +366,7 @@ fi
 if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     start "COVERAGE"
     cd "${builddir}"
+    rm -f _deps/highfive-src/.github/workflows/coverage.yml
 
     # import codecov key
     gpg --import "${CODECOV_PUBLIC_KEY}"
@@ -372,6 +386,7 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
         echo "Running lcov and gcov..."
         codecov_opts="${codecov_opts} --gcov"
         "${srcdir}/maintainer/CI/run_lcov.sh" coverage.info
+        rm coverage.info
     fi
     if [ "${with_coverage_python}" = true ]; then
         echo "Running python3-coverage..."

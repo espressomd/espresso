@@ -1,5 +1,7 @@
 # Tutorial: Charged rod
 
+Modelling of ion condensation around a charged rod.
+
 ## Physics learning objectives
 
 * The physical system to be investigated is a polyelectrolyte gel: A polymer that is linked into a gel and releases ions into solution

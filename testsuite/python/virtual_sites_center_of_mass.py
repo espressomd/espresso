@@ -88,6 +88,7 @@ class VirtualSitesCOM(ut.TestCase):
         self.system.part.clear()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
+        self.system.bonded_inter.clear()
 
     def test_vs_initialization(self):
         """
@@ -120,8 +121,8 @@ class VirtualSitesCOM(ut.TestCase):
             molecule_ids, n_monomers, monomer_types)
 
         self.system.integrator.set_steepest_descent(
-            f_max=10, gamma=50.0, max_displacement=0.2)
-        self.system.integrator.run(1)
+            f_max=10., gamma=1., max_displacement=0.2)
+        self.system.integrator.run(100)
 
         # Check position of virtual sites after a steepest descent integration
         for mol_id, vs_id, monomer_type in zip(
@@ -140,9 +141,10 @@ class VirtualSitesCOM(ut.TestCase):
                     expected_vs_mass += p.mass
             self.assertEqual(vs_mass, expected_vs_mass)
 
+    @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_particle_forces(self):
         """
-        Test force on molecule particles when the vs undergoes given force 
+        Test force on molecule particles when the vs undergoes external force.
         """
 
         molecule_id = [1]
@@ -155,8 +157,8 @@ class VirtualSitesCOM(ut.TestCase):
             molecule_id, n_monomers, monomer_types)
 
         self.system.integrator.set_steepest_descent(
-            f_max=10, gamma=50.0, max_displacement=0.2)
-        self.system.integrator.run(1000)
+            f_max=10., gamma=1., max_displacement=0.2)
+        self.system.integrator.run(100)
 
         vs_part = self.system.part.by_id(mid_for_vs[molecule_id[0]])
         vs_part.ext_force = applied_force

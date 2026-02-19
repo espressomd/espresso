@@ -29,57 +29,51 @@ if typing.TYPE_CHECKING:
 class ASEInterface:
     """
     Interface for ASE :cite:`hjorthlarsen17a` with calculator support.
+
+    Parameters
+    ----------
+    system : :obj:`espressomd.system.System`
+        The ESPResSo system object.
+    particle_slice : :obj:`espressomd.particle_data.ParticleSlice`
+        The particle slice to work on.
+    export_charges : :obj:`bool`, optional
+        Whether to make particle charges available to ASE.
+    export_masses : :obj:`bool`, optional
+        Whether to make particle masses available to ASE.
+    export_momenta : :obj:`bool`, optional
+        Whether to make particle momenta available to ASE.
+    export_forces : :obj:`bool`, optional
+        Whether to make particle forces available to ASE.
+    assume_constant_charges : :obj:`bool`, optional
+        Assume that the particles' charges won't change while this instance
+        is valid (faster update).
+    assume_constant_masses : :obj:`bool`, optional
+        Assume that the particles' masses won't change while this instance
+        is valid (faster update).
+    assume_constant_types : :obj:`bool`, optional
+        Assume that the particles' types won't change while this instance
+        is valid (faster update).
+    use_folded_positions : :obj:`bool`, optional
+        If True, use folded positions (particles.pos_folded) which are always
+        within the simulation box. If False, use unfolded positions (particles.pos).
+
     """
 
-    def __init__(self, system: "System", type_mapping: typing.Optional[dict],
-                 particle_slice: "ParticleSlice",
+    def __init__(self, system: "System", particle_slice: "ParticleSlice",
                  export_charges: bool = False, export_masses: bool = False,
-                 export_momenta: bool = False,
+                 export_momenta: bool = False, export_forces: bool = False,
                  assume_constant_charges: bool = False,
                  assume_constant_masses: bool = False,
                  assume_constant_types: bool = False,
                  use_folded_positions: bool = True):
-        """
-        Initialize ASE interface.
 
-        Parameters
-        ----------
-        system : :obj:`espressomd.system.System`
-            The ESPResSo system object.
-        type_mapping : :obj:`dict` or ``None``
-            Mapping of ESPResSo particle types to ASE symbols.
-            E.g. ``{0: "H", 1: "O"}``. If ``None``, no symbols are set on the
-            ASE atoms object (useful when symbols will be set later or are
-            not needed).
-        particle_slice : :obj:`espressomd.particle_data.ParticleSlice`
-            The particle slice to work on.
-        export_charges : :obj:`bool`, optional
-            Whether to make particle charges available to ASE.
-        export_masses : :obj:`bool`, optional
-            Whether to make particle masses available to ASE.
-        export_momenta : :obj:`bool`, optional
-            Whether to make particle momenta available to ASE.
-        assume_constant_charges : :obj:`bool`, optional
-            Assume that the particles' charges won't change while this instance
-            is valid (faster update).
-        assume_constant_masses : :obj:`bool`, optional
-            Assume that the particles' masses won't change while this instance
-            is valid (faster update).
-        assume_constant_types : :obj:`bool`, optional
-            Assume that the particles' types won't change while this instance
-            is valid (faster update).
-        use_folded_positions : :obj:`bool`, optional
-            If True, use folded positions (particles.pos_folded) which are always
-            within the simulation box. If False, use unfolded positions (particles.pos).
-        """
         espressomd.assert_features(["EXTERNAL_FORCES"])
-
-        self.type_mapping = type_mapping
         self._system = system
         self.particle_slice = particle_slice
         self.export_charges = export_charges
         self.export_masses = export_masses
         self.export_momenta = export_momenta
+        self.export_forces = export_forces
         self.assume_constant_charges = assume_constant_charges
         self.assume_constant_masses = assume_constant_masses
         self.assume_constant_types = assume_constant_types
@@ -100,32 +94,18 @@ class ASEInterface:
 
         New ASE atom objects are created from the current particle slice
         with positions, types, periodicity and box dimensions.
-        If export flags are set, charges, masses, and/or momenta are also
-        initialized.
-        If type_mapping is ``None``, atoms are created without symbols.
+        If export flags are set, charges, masses, momenta and/or forces 
+        are also initialized.
         """
         pos_attr = "pos_folded" if self.use_folded_positions else "pos"
         particles = self.particle_slice
         positions = np.copy(getattr(particles, pos_attr))
         types = np.copy(particles.type)
 
-        # Prepare symbols if type mapping is provided
-        if self.type_mapping is not None:
-            # Check that all types are in the type mapping
-            unknown_types = set(types) - set(self.type_mapping)
-            if unknown_types:
-                raise RuntimeError(
-                    f"Particle types '{unknown_types}' haven't been registered in the ASE type map"  # nopep8
-                )
-            symbols = [self.type_mapping[t] for t in types]
-        else:
-            # No type mapping provided, don't set symbols
-            symbols = None
-
         # Create new atoms object
         self.atoms = ase.Atoms(
             positions=positions,
-            symbols=symbols,
+            numbers=types,
             pbc=np.copy(self._system.periodicity),
             cell=np.copy(self._system.box_l),
         )
@@ -145,6 +125,13 @@ class ASEInterface:
             momenta = np.copy(particles.v) * \
                 np.copy(particles.mass)[:, np.newaxis]
             self.atoms.set_momenta(momenta)
+
+        # Initialize forces if requested (always set on reset)
+        if self.export_forces:
+            self.atoms.arrays["forces"] = np.copy(particles.f)
+
+        if not self.assume_constant_types:
+            self.atoms.numbers = np.copy(particles.type)
 
     def set_slice(self, particles):
         """
@@ -185,6 +172,13 @@ class ASEInterface:
             momenta = np.copy(particles.v) * \
                 np.copy(particles.mass)[:, np.newaxis]
             self.atoms.set_momenta(momenta)
+
+        if self.export_forces:
+            forces = np.copy(particles.f)
+            self.atoms.arrays["forces"] = forces
+
+        if not self.assume_constant_types:
+            self.atoms.numbers = np.copy(particles.type)
 
     def integrate(self, steps: int, calculator) -> int:
         """

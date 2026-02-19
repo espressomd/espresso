@@ -19,17 +19,22 @@
 
 import unittest as ut
 import unittest_decorators as utx
+import unittest.mock
 import espressomd
-import espressomd.plugins.ase
 import numpy as np
-from ase.calculators.calculator import Calculator
+import contextlib
 
+Calculator = unittest.mock.MagicMock()
+with contextlib.suppress(ImportError):
+    import espressomd.plugins.ase
+    from ase.calculators.calculator import Calculator
 
 # Global system instance shared between test classes
 system = espressomd.System(box_l=[20., 20., 20.])
 
 
 @utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "MASS", "ELECTROSTATICS"])
+@utx.skipIfMissingModules("ase.calculators")
 class ASEInterfaceTest(ut.TestCase):
     """test suite for the ASE interface focusing on update_ase() method."""
 
@@ -46,8 +51,6 @@ class ASEInterfaceTest(ut.TestCase):
         system.part.add(
             pos=[7., 8., 9.], q=2.0, mass=3.0, v=[0.7, 0.8, 0.9], type=0)
 
-        self.type_mapping = {0: "H", 1: "O"}
-
     def tearDown(self):
         """Clean up after each test."""
         system.part.clear()
@@ -56,7 +59,6 @@ class ASEInterfaceTest(ut.TestCase):
         """Test basic ASE interface creation without optional exports."""
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all()
         )
 
@@ -65,12 +67,12 @@ class ASEInterfaceTest(ut.TestCase):
         self.assertEqual(ase_interface.export_charges, False)
         self.assertEqual(ase_interface.export_masses, False)
         self.assertEqual(ase_interface.export_momenta, False)
+        self.assertEqual(ase_interface.export_forces, False)
 
         # Verify atoms object has correct basic properties
         atoms = ase_interface.atoms
         self.assertEqual(len(atoms), 3)
-        np.testing.assert_array_equal(
-            atoms.get_chemical_symbols(), ["H", "O", "H"])
+        np.testing.assert_array_equal(atoms.numbers, [0, 1, 0])
         np.testing.assert_allclose(
             atoms.positions, [[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]])
 
@@ -78,7 +80,6 @@ class ASEInterfaceTest(ut.TestCase):
         """Test ASE interface creation with charge export enabled."""
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             export_charges=True
         )
@@ -93,7 +94,6 @@ class ASEInterfaceTest(ut.TestCase):
         """Test ASE interface creation with mass export enabled."""
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             export_masses=True
         )
@@ -107,7 +107,6 @@ class ASEInterfaceTest(ut.TestCase):
         """Test ASE interface creation with momentum export enabled."""
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             export_momenta=True
         )
@@ -120,21 +119,43 @@ class ASEInterfaceTest(ut.TestCase):
                                     [0.7 * 3.0, 0.8 * 3.0, 0.9 * 3.0]])
         np.testing.assert_allclose(atoms.get_momenta(), expected_momenta)
 
+    def test_ase_interface_instantiation_with_forces(self):
+        """Test ASE interface creation with force export enabled."""
+        # Set some forces on ESPResSo particles
+        system.part.by_id(0).f = [0.1, 0.2, 0.3]
+        system.part.by_id(1).f = [0.4, 0.5, 0.6]
+        system.part.by_id(2).f = [0.7, 0.8, 0.9]
+
+        ase_interface = espressomd.plugins.ase.ASEInterface(
+            system=system,
+            particle_slice=system.part.all(),
+            export_forces=True
+        )
+
+        self.assertEqual(ase_interface.export_forces, True)
+        # Verify forces are set in ASE atoms
+        atoms = ase_interface.atoms
+        expected_forces = np.array([[0.1, 0.2, 0.3],
+                                    [0.4, 0.5, 0.6],
+                                    [0.7, 0.8, 0.9]])
+        np.testing.assert_allclose(atoms.arrays["forces"], expected_forces)
+
     def test_ase_interface_instantiation_all_exports(self):
         """Test ASE interface creation with all exports enabled."""
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             export_charges=True,
             export_masses=True,
-            export_momenta=True
+            export_momenta=True,
+            export_forces=True
         )
 
         # Check all export flags
         self.assertEqual(ase_interface.export_charges, True)
         self.assertEqual(ase_interface.export_masses, True)
         self.assertEqual(ase_interface.export_momenta, True)
+        self.assertEqual(ase_interface.export_forces, True)
 
         # Verify all properties are set
         atoms = ase_interface.atoms
@@ -144,39 +165,15 @@ class ASEInterfaceTest(ut.TestCase):
         expected_momenta = np.array(
             [[0.2, 0.4, 0.6], [0.6, 0.75, 0.9], [2.1, 2.4, 2.7]])
         np.testing.assert_allclose(atoms.get_momenta(), expected_momenta)
-
-    def test_ase_interface_none_type_mapping(self):
-        """Test ASE interface creation with type_mapping=None."""
-        ase_interface = espressomd.plugins.ase.ASEInterface(
-            system=system,
-            type_mapping=None,
-            particle_slice=system.part.all()
-        )
-
-        # Check that interface is properly initialized
-        self.assertIsNotNone(ase_interface.atoms)
-        self.assertIsNone(ase_interface.type_mapping)
-
-        # Verify atoms object has correct basic properties
-        atoms = ase_interface.atoms
-        self.assertEqual(len(atoms), 3)
-
-        # When type_mapping is None, symbols should not be set (or be None/empty)
-        # ASE may use placeholder symbols like 'X' or None
-        # Just verify positions are correct
-        np.testing.assert_allclose(
-            atoms.positions, [[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]])
-
-        # Verify we can still update positions
-        system.part.by_id(0).pos = [10., 11., 12.]
-        ase_interface.update_ase()
-        np.testing.assert_allclose(atoms.positions[0], [10., 11., 12.])
+        expected_forces = np.array([[0., 0., 0.],
+                                    [0., 0., 0.],
+                                    [0., 0., 0.]])
+        np.testing.assert_allclose(atoms.arrays["forces"], expected_forces)
 
     def test_update_ase_basic_no_exports(self):
-        """Test update_ase() with no exports enabled - only positions should update."""
+        """Test update_ase() with no exports enabled - positions and types should update."""
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all()
         )
 
@@ -185,6 +182,11 @@ class ASEInterfaceTest(ut.TestCase):
         system.part.by_id(1).pos = [13., 14., 15.]
         system.part.by_id(2).pos = [16., 17., 18.]
 
+        # Change particle types
+        system.part.by_id(0).type = 1
+        system.part.by_id(1).type = 0
+        system.part.by_id(2).type = 1
+
         # Update ASE
         ase_interface.update_ase()
 
@@ -192,12 +194,14 @@ class ASEInterfaceTest(ut.TestCase):
         atoms = ase_interface.atoms
         expected_positions = system.part.all().pos
         np.testing.assert_allclose(atoms.positions, expected_positions)
+        # Check that types are updated
+        expected_types = system.part.all().type
+        np.testing.assert_array_equal(atoms.numbers, expected_types)
 
     def test_update_ase_charges_not_constant(self):
         """Test update_ase() with charges enabled and not assumed constant."""
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             export_charges=True,
             assume_constant_charges=False
@@ -218,7 +222,6 @@ class ASEInterfaceTest(ut.TestCase):
         """Test update_ase() with charges enabled but assumed constant."""
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             export_charges=True,
             assume_constant_charges=True
@@ -243,7 +246,6 @@ class ASEInterfaceTest(ut.TestCase):
         """Test update_ase() with masses enabled and not assumed constant."""
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             export_masses=True,
             assume_constant_masses=False
@@ -264,7 +266,6 @@ class ASEInterfaceTest(ut.TestCase):
         """Test update_ase() with masses enabled but assumed constant."""
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             export_masses=True,
             assume_constant_masses=True
@@ -288,7 +289,6 @@ class ASEInterfaceTest(ut.TestCase):
         """Test update_ase() with momenta enabled - should always update (no skip option)."""
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             export_momenta=True
         )
@@ -308,11 +308,58 @@ class ASEInterfaceTest(ut.TestCase):
                                     [3.0 * 3.0, 3.1 * 3.0, 3.2 * 3.0]])
         np.testing.assert_allclose(atoms.get_momenta(), expected_momenta)
 
+    def test_update_ase_types_assumed_constant(self):
+        """Test update_ase() with types assumed constant."""
+        ase_interface = espressomd.plugins.ase.ASEInterface(
+            system=system,
+            particle_slice=system.part.all(),
+            assume_constant_types=True
+        )
+
+        # Store original types
+        original_types = ase_interface.atoms.numbers.copy()
+
+        # Change particle types
+        system.part.by_id(0).type = 1
+        system.part.by_id(1).type = 0
+        system.part.by_id(2).type = 1
+
+        # Update ASE (types should NOT be updated due to
+        # assume_constant_types)
+        ase_interface.update_ase()
+
+        # Check that types are NOT updated (should still be original)
+        atoms = ase_interface.atoms
+        np.testing.assert_array_equal(atoms.numbers, original_types)
+
+    def test_update_ase_forces(self):
+        """Test update_ase() with forces enabled."""
+        # Set some forces on ESPResSo particles
+        ase_interface = espressomd.plugins.ase.ASEInterface(
+            system=system,
+            particle_slice=system.part.all(),
+            export_forces=True
+        )
+
+        # Change particle forces
+        system.part.by_id(0).f = [1.1, 1.2, 1.3]
+        system.part.by_id(1).f = [2.1, 2.2, 2.3]
+        system.part.by_id(2).f = [3.1, 3.2, 3.3]
+
+        # Update ASE
+        ase_interface.update_ase()
+
+        # Check that forces are updated in ASE atoms
+        atoms = ase_interface.atoms
+        expected_forces = np.array([[1.1, 1.2, 1.3],
+                                    [2.1, 2.2, 2.3],
+                                    [3.1, 3.2, 3.3]])
+        np.testing.assert_allclose(atoms.arrays["forces"], expected_forces)
+
     def test_error_handling_no_atoms(self):
         """Test that update_ase() raises error when atoms is None."""
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all()
         )
 
@@ -332,7 +379,6 @@ class ASEInterfaceTest(ut.TestCase):
         # default to True)
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all()
         )
 
@@ -358,7 +404,6 @@ class ASEInterfaceTest(ut.TestCase):
         # Create interface with folded positions explicitly set
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             use_folded_positions=True
         )
@@ -382,7 +427,6 @@ class ASEInterfaceTest(ut.TestCase):
         # Create interface with unfolded positions
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             use_folded_positions=False
         )
@@ -402,7 +446,6 @@ class ASEInterfaceTest(ut.TestCase):
         # Create interface with folded positions
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             use_folded_positions=True
         )
@@ -453,12 +496,13 @@ class FixedForceCalculator(Calculator):
         if "energy" in properties:
             self.results["energy"] = self.energy_value
 
-    def get_forces(self, atoms):
+    def get_forces(self, atoms):  # pylint: disable=unused-argument
         """Get forces directly."""
         return self.forces_array.copy()
 
 
 @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
+@utx.skipIfMissingModules("ase.calculators")
 class ASEIntegrationTest(ut.TestCase):
     """Test suite for ASE interface integration functionality."""
 
@@ -471,8 +515,6 @@ class ASEIntegrationTest(ut.TestCase):
         system.part.add(pos=[5., 5., 5.], mass=1.0, v=[0., 0., 0.], type=0)
         system.part.add(pos=[10., 10., 10.], mass=2.0, v=[0., 0., 0.], type=1)
         system.part.add(pos=[15., 15., 15.], mass=0.5, v=[0., 0., 0.], type=0)
-
-        self.type_mapping = {0: "H", 1: "O"}
 
         # Set up velocity verlet integrator
         system.integrator.set_vv()
@@ -489,7 +531,6 @@ class ASEIntegrationTest(ut.TestCase):
         system.integrator.set_vv()
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             export_masses=True
         )
@@ -554,7 +595,6 @@ class ASEIntegrationTest(ut.TestCase):
         system.integrator.set_vv()
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all(),
             export_masses=True
         )
@@ -653,7 +693,6 @@ class ASEIntegrationTest(ut.TestCase):
         # Create ASE interface
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all()
         )
 
@@ -717,7 +756,6 @@ class ASEIntegrationTest(ut.TestCase):
         # Create ASE interface
         ase_interface = espressomd.plugins.ase.ASEInterface(
             system=system,
-            type_mapping=self.type_mapping,
             particle_slice=system.part.all()
         )
 

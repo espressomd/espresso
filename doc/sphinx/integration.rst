@@ -35,7 +35,7 @@ Velocity Verlet algorithm
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The velocity Verlet integrator is active by default.
-If you used a different integrator and want to switch back, use 
+If you used a different integrator and want to switch back, use
 :meth:`system.integrator.set_vv() <espressomd.integrate.IntegratorHandle.set_vv>`.
 
 The Velocity Verlet algorithm is used for equations of motion of the general form
@@ -75,22 +75,25 @@ Read, e.g., :math:`\vec{x}` as the position of all particles.
 
 Note that this implementation of the velocity Verlet algorithm reuses
 forces in step 1. That is, they are computed once in step 3,
-but used twice, in step 4 and in step 1 of the next iteration. 
-The first time the integrator is called, there are no forces present yet. 
+but used twice, in step 4 and in step 1 of the next iteration.
+The first time the integrator is called, there are no forces present yet.
 Therefore, |es| has
 to compute them before the first time step. That has two consequences:
-first, if thermostats are active, random forces are computed twice during 
+first, if thermostats are active, random forces are computed twice during
 the first time step, resulting in a narrower distribution of the random forces.
 Second,
 coupling forces of, e.g., the lattice-Boltzmann fluid cannot be computed
 and are therefore lacking in the first half time step. In order to
 minimize these effects, |es| has a quite conservative heuristics to decide
-whether a change makes it necessary to recompute forces before the first time step. 
-Therefore, calling 
-:meth:`espressomd.integrate.Integrator.run` 100 times with ``steps=1`` is equivalent to calling it once with ``steps=100``.
+whether a change makes it necessary to recompute forces before the first time step.
+Therefore, calling :meth:`espressomd.integrate.Integrator.run` 100 times
+with ``steps=1`` is equivalent to calling it once with ``steps=100``.
 
-When resuming a simulation, you can either use the forces that are stored on the particles by using the additional parameter ``reuse_forces = True``, or recalculate the forces again from the current configuration ``reuse_forces = False``.
-Setting ``reuse_forces = True`` is useful when restarting a simulation from a checkpoint to obtain exactlty the same result as if the integration had continued without interruption.
+When resuming a simulation, you can either use the forces that are stored
+on the particles by using the additional parameter ``reuse_forces = True``,
+or recalculate the forces again from the current configuration ``reuse_forces = False``.
+Setting ``reuse_forces = True`` is useful when restarting a simulation from a checkpoint
+to obtain exactly the same result as if the integration had continued without interruption.
 You can also use ``recalc_forces = True`` to recalculate forces even if they are already correctly computed.
 
 .. _Isotropic NpT integrator:
@@ -121,7 +124,7 @@ with parameters:
 * ``gamma0``: Friction coefficient of the bath
 * ``gammav``: Artificial friction coefficient for the volume fluctuations.
 
-The physical meaning of these parameters and the equations of motion are described below. 
+The physical meaning of these parameters and the equations of motion are described below.
 We recommend reading :ref:`Langevin thermostat` before continuing.
 
 The relaxation towards a desired pressure :math:`P` (parameter ``ext_pressure``)
@@ -137,7 +140,7 @@ associated with the volume is postulated. This results in a "force" on the box s
 
 where
 
-.. math:: \mathcal{P} = \frac{1}{Vd} \sum_{i,j} \vec{f}_{ij}\vec{x}_{ij} + \frac{1}{Vd} \sum_i m_i v_i^2 , 
+.. math:: \mathcal{P} = \frac{1}{Vd} \sum_{i,j} \vec{f}_{ij}\vec{x}_{ij} + \frac{1}{Vd} \sum_i m_i v_i^2,
 
 is the instantaneous pressure, with :math:`d` the dimension
 of the system (number of flags set by ``direction``), :math:`\vec{f}_{ij}` the
@@ -319,8 +322,8 @@ A code snippet could look like::
 
     max_steps = 20 # maximal number of steps
     system.integrator.set_steepest_descent(
-        f_max=0, gamma=0.1, max_displacement=0.1)
-    system.integrator.run(max_steps)   
+        f_max=0., gamma=0.1, max_displacement=0.1)
+    system.integrator.run(max_steps)
     system.integrator.set_vv()  # to switch back to velocity Verlet
 
 The 'equation of motion' in discretised form reads
@@ -335,7 +338,7 @@ This feature is used to propagate each particle by a small distance parallel to 
 When only conservative forces for which a potential exists are in use, this is equivalent to a steepest descent energy minimization.
 A common application is removing overlap between randomly placed particles.
 Please note that the behavior is undefined if a thermostat is activated,
-in which case the integrator will generate an error. 
+in which case the integrator will generate an error.
 
 Steepest descent is applied
 while the maximal force/torque is bigger than ``f_max``, or for at most ``max_steps`` times. The energy
@@ -357,12 +360,11 @@ The ``f_max`` parameter can be set to zero to prevent the integrator from
 halting when a specific force/torque is reached. The integration can then
 be carried out in a loop with a custom convergence criterion::
 
-    min_dist_target = 1 # minimum distance that all particles should have
-    
-    system.integrator.set_steepest_descent(f_max=0, gamma=10,
+    min_dist_target = 1. # minimum distance that all particles should have
+    system.integrator.set_steepest_descent(f_max=0., gamma=10.,
                                            max_displacement= 0.01)
     # gradient descent until particles are separated by at least min_dist_target
-    min_dist = 0.0
+    min_dist = 0.
     while min_dist < min_dist_target:
         min_dist = system.analysis.min_dist()
         system.integrator.run(10)
@@ -389,7 +391,7 @@ The correct forces need to be re-calculated after running the integration::
     p1 = system.part.add(pos=[0, 0, 0], type=1)
     p2 = system.part.add(pos=[0, 0, 0.1], type=1)
     p2.vs_auto_relate_to(p1)
-    system.integrator.set_steepest_descent(f_max=800, gamma=1.0, max_displacement=0.01)
+    system.integrator.set_steepest_descent(f_max=800., gamma=1., max_displacement=0.01)
     while convergence_criterion(system.part.all().f):
         system.integrator.run(10)
         system.integrator.run(0, recalc_forces=True)  # re-calculate forces from virtual sites
@@ -398,7 +400,7 @@ The correct forces need to be re-calculated after running the integration::
 The algorithm can also be used for energy minimization::
 
     # minimize until energy difference < 5% or energy < 1e-3
-    system.integrator.set_steepest_descent(f_max=0, gamma=1.0, max_displacement=0.01)
+    system.integrator.set_steepest_descent(f_max=0., gamma=1., max_displacement=0.01)
     relative_energy_change = float('inf')
     relative_energy_change_threshold = 0.05
     energy_threshold = 1e-3
@@ -441,7 +443,7 @@ The particle trajectories are governed by
 
 .. math:: \dot{\vec{x}}_i(t) = \gamma^{-1} \vec{F}_i(\{\vec{x}_j\}, \{\vec{v}_j\}, t) + \sqrt{2 k_B T \gamma^{-1}} \vec{\eta}_i(t),
 
-where :math:`\vec{F}_i` are all deterministic forces from interactions and :math:`\vec{\eta}_i` 
+where :math:`\vec{F}_i` are all deterministic forces from interactions and :math:`\vec{\eta}_i`
 are random forces with zero mean and unit variance.
 This equation of motion follows from Langevin's equation of motion (see :ref:`Langevin thermostat`)
 by setting the mass of the particle to zero.
@@ -452,7 +454,7 @@ and reads
 .. math:: \vec{x}(t+ dt) = \gamma^{-1} \vec{F}(\vec{x}(t), \vec{v}(t), t) dt + \sqrt{2 k_B T \gamma^{-1} dt} \vec{\eta}_*(t)
 
 where :math:`\vec{\eta_*}` are pseudo-random numbers with zero mean and unit variance (particle indices are omitted for clarity).
-Velocities are obtained directly from 
+Velocities are obtained directly from
 
 .. math:: \vec{v}(t) = \gamma^{-1} \vec{F} + \sqrt{2 k_B T \gamma^{-1} dt^{-1}} \vec{\eta}_{*}(t)
 
@@ -460,7 +462,7 @@ Be aware that the velocity contains random terms and is therefore not continuous
 
 Rotational motion is implemented analogously.
 Note: the rotational Brownian dynamics implementation is only compatible with particles which have
-the isotropic moment of inertia tensor. 
+the isotropic moment of inertia tensor.
 Otherwise, the viscous terminal angular velocity
 is not defined, i.e., it has no constant direction.
 
@@ -549,7 +551,7 @@ subsections.
 
 You may combine different thermostats by turning them on sequentially.
 Not all combinations of thermostats are sensible, though, and some
-thermostats only work with specific integrators. 
+thermostats only work with specific integrators.
 The list of possible combinations of integrators and thermostats is hardcoded and automatically
 checked against at the start of integration.
 Note that there is only one temperature for all thermostats.
@@ -595,15 +597,14 @@ The friction term accounts for dissipation in a surrounding fluid whereas
 the random force  mimics collisions of the particle with solvent molecules
 at temperature :math:`T` and satisfies
 
-.. math:: <\vec{\eta}(t)> = \vec{0} , <\eta^\alpha_i(t)\eta^\beta_j(t')> = \delta_{\alpha\beta} \delta_{ij}\delta(t-t')
+.. math:: \left\langle\vec{\eta}(t)\right\rangle = \vec{0} , \left\langle\eta^\alpha_i(t)\eta^\beta_j(t')\right\rangle = \delta_{\alpha\beta} \delta_{ij}\delta(t-t')
 
-(:math:`<\cdot>` denotes the ensemble average and :math:`\alpha,\beta` are spatial coordinates).
+(:math:`\langle\cdot\rangle` denotes the ensemble average and :math:`\alpha,\beta` are spatial coordinates).
 
 In the |es| implementation of the Langevin thermostat,
 the additional terms only enter in the force calculation.
 The general form of the equation of motion is still the same as
-for Newton's equations, therefore the velocity Verlet integrator is 
-used.
+for Newton's equations, therefore the velocity Verlet integrator is used.
 The accuracy of the velocity Verlet integrator is reduced by
 one order in :math:`dt` because forces are now velocity-dependent.
 
@@ -611,7 +612,7 @@ The random process :math:`\vec{\eta}(t)` is discretized by drawing an uncorrelat
 :math:`\vec{\eta_*}` for each particle.
 The distribution of :math:`{\vec{\eta}_*}` is uniform and satisfies
 
-.. math:: <\vec{\eta}_*> = \vec{0} ,\, <\eta_*^\alpha \eta_*^\beta> =  \frac{\delta_{\alpha,\beta}}{dt},
+.. math:: \left\langle\vec{\eta}_*\right\rangle = \vec{0} ,\, \left\langle\eta_*^\alpha \eta_*^\beta\right\rangle =  \frac{\delta_{\alpha,\beta}}{dt},
 
 approximating the delta-correlation of the continuous equation.
 
@@ -717,7 +718,7 @@ The :ref:`Lattice-Boltzmann` thermostat acts similar to the :ref:`Langevin therm
 .. math::  m_i \dot{\vec{v}}_i(t) = \vec{f}_i(\{\vec{x}_j\},\vec{v}_i,t) - \gamma (\vec{v}_i(t)-\vec{u}(\vec{x}_i(t),t)) + \sqrt{2\gamma k_B T} \vec{\eta}_i(t).
 
 where :math:`\vec{u}(\vec{x},t)` is the fluid velocity at position :math:`\vec{x}` and time :math:`t`.
-Different from the Langevin thermostat, here, the friction is calculated with respect to a moving fluid. 
+Different from the Langevin thermostat, here, the friction is calculated with respect to a moving fluid.
 
 An LB fluid must be used to provide the fluid velocity, while also including hydrodynamic interactions between particles.
 The LB thermostat expects an instance of :class:`espressomd.lb.LBFluid`.
@@ -750,7 +751,7 @@ according to the given temperature and the relaxation parameters. All
 fluctuations can be switched off by setting the temperature to zero.
 The deterministic part of the hydrodynamic interaction is then still active.
 
-If the LB thermostat is active, no other thermostatting mechanism is necessary. 
+If the LB thermostat is active, no other thermostatting mechanism is necessary.
 Please switch off any other thermostat before starting the LB
 thermostatting mechanism.
 

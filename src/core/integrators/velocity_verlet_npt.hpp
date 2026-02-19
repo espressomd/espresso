@@ -45,34 +45,41 @@ struct PropagationPredicateNPT {
 
 using ParticleRangeNPT = ParticleRangeFiltered<PropagationPredicateNPT>;
 
-/** Special propagator for NpT isotropic for Andersen method.
- *  Propagate the velocities and positions. Integration steps before force
- *  calculation of the Velocity Verlet integrator:
- *  \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t \cdot F(t)/m \f]
- *  \f[ x(t+\Delta t) = x(t) + \Delta t \cdot v(t+0.5 \Delta t) \f]
+/**
+ * @brief Special propagator for velocity Verlet NpT with the Andersen method.
+ * Propagate the velocities and positions. Integration steps before force
+ * calculation of the Velocity Verlet integrator:
+ * \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t \cdot F(t)/m \f]
+ * \f[ x(t+\Delta t) = x(t) + \Delta t \cdot v(t+0.5 \Delta t) \f]
  *
- *  Propagate pressure, box_length (2 times) and positions, rescale
- *  positions and velocities and check Verlet list criterion (only NpT).
+ * Propagate pressure, box_length (2 times) and positions, rescale
+ * positions and velocities and check Verlet list criterion (only NpT).
  */
 void velocity_verlet_npt_Andersen_step_1(ParticleRangeNPT const &particles,
                                          IsotropicNptThermostat const &npt_iso,
                                          double time_step,
                                          System::System &system);
-/** Special propagator for NpT isotropic for MTK approach. */
+/**
+ * @brief Special propagator for velocity Verlet NpT with the Andersen method.
+ */
 void velocity_verlet_npt_MTK_step_1(ParticleRangeNPT const &particles,
                                     IsotropicNptThermostat const &npt_iso,
                                     double time_step, System::System &system);
 
-/** Final integration step of the Velocity Verlet+NpT integrator for Andersen
- * method. Finalize instantaneous pressure calculation:
- *  \f[ v(t+\Delta t) = v(t+0.5 \Delta t)
+/**
+ * @brief Final integration step of the velocity Verlet NpT integrator
+ * with the Andersen method.
+ * Finalize instantaneous pressure calculation:
+ * \f[ v(t+\Delta t) = v(t+0.5 \Delta t)
  *      + 0.5 \Delta t \cdot F(t+\Delta t)/m \f]
  */
 void velocity_verlet_npt_Andersen_step_2(ParticleRangeNPT const &particles,
                                          double time_step,
                                          System::System &system);
-/** Final integration step of the Velocity Verlet+NpT integrator for Andersen
- * method. */
+/**
+ * @brief Final integration step of the velocity Verlet NpT integrator
+ * with the MTK method.
+ */
 void velocity_verlet_npt_MTK_step_2(ParticleRangeNPT const &particles,
                                     double time_step, System::System &system);
 

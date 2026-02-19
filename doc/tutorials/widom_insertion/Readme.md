@@ -1,5 +1,7 @@
 # Tutorial: Widom particle insertion method
 
+Measuring the excess chemical potential of a salt solution using the Widom particle insertion method.
+
 ## Physics learning objectives
 
 After the tutorial, students should be able to explain:

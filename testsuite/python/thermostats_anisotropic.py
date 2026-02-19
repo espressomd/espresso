@@ -24,7 +24,7 @@ import numpy as np
 
 
 @utx.skipIfMissingFeatures(["PARTICLE_ANISOTROPY", "MASS", "EXTERNAL_FORCES"])
-class ThermostatsCommon(ut.TestCase):
+class Test(ut.TestCase):
     system = espressomd.System(box_l=3 * [10.])
     system.cell_system.skin = 0.4
     system.time_step = 0.01

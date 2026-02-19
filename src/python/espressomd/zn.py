@@ -27,6 +27,7 @@ import espressomd
 import secrets
 import time
 import urllib.parse
+import requests
 import typing
 import scipy.spatial.transform
 
@@ -120,10 +121,9 @@ class LBField:
     def __call__(self):
         origins = self._build_grid()
         velocities = self._get_velocities()
-        velocities = origins + velocities
         vector_field = np.stack([origins, velocities], axis=1)
 
-        return vector_field.tolist()
+        return vector_field
 
 
 class VectorField:
@@ -145,14 +145,10 @@ class VectorField:
     arrow_config : :obj:`dict`, optional
         Configuration for the arrows, by default ``None`` and then uses the default configuration:
 
-        'colormap': [[-0.5, 0.9, 0.5], [-0.0, 0.9, 0.5]]
+        'colormap': [[0.5, 0.9, 0.5], [0.0, 0.9, 0.5]]
             HSL colormap for the arrows, where the first value is the minimum value and the second value is the maximum value.
         'normalize': True
             Normalize the colormap to the maximum value each frame
-        'colorrange': [0, 1]
-            Range of the colormap, only used if normalize is False
-        'scale_vector_thickness': True
-            Scale the thickness of the arrows with the velocity
         'opacity': 1.0
             Opacity of the arrows
     """
@@ -177,7 +173,7 @@ class VectorField:
         vectors = self.scale * vectors
         vector_field = np.stack([origins, vectors], axis=1)
 
-        return vector_field.tolist()
+        return vector_field
 
 
 class Visualizer():
@@ -221,6 +217,7 @@ class Visualizer():
                  colors: dict = None,
                  radii: dict = None,
                  bonds: bool = False,
+                 forces: bool = False,
                  jupyter: bool = True,
                  vector_field: typing.Union[VectorField, LBField] = None,
                  ):
@@ -231,6 +228,7 @@ class Visualizer():
             "colors": colors,
             "radii": radii,
             "bonds": bonds,
+            "forces": forces,
             "vector_field": vector_field,
         }
 
@@ -244,18 +242,32 @@ class Visualizer():
         # A server is started in a subprocess, and we have to wait for it
         if self.SERVER_PORT is None:
             print("Starting ZnDraw server, this may take a few seconds")
-            self.port = port
-            self._start_server()
-            time.sleep(10)
+            Visualizer.SERVER_PORT = port
+            self.server = subprocess.Popen(
+                ["zndraw", "--no-browser", f"--port={self.SERVER_PORT}"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL)
+
+        # Check that the server is up
+        request_deadline = time.monotonic() + 30
+        while time.monotonic() < request_deadline:
+            try:
+                r = requests.get(
+                    f"{self.url}:{self.SERVER_PORT}/health", timeout=1)
+                if r.status_code == 200:
+                    break
+            except requests.RequestException:
+                pass
+            time.sleep(0.5)
+        else:
+            raise RuntimeError(
+                "ZnDraw server did not start within the expected time")
 
         self._start_zndraw()
-        time.sleep(2)
 
         if vector_field is not None:
-            self.arrow_config = {'colormap': [[-0.5, 0.9, 0.5], [-0.0, 0.9, 0.5]],
+            self.arrow_config = {'colormap': [[0.5, 0.9, 0.5], [0.0, 0.9, 0.5]],
                                  'normalize': True,
-                                 'colorrange': [0, 1],
-                                 'scale_vector_thickness': True,
                                  'opacity': 1.0}
 
             if vector_field.arrow_config is not None:
@@ -270,16 +282,15 @@ class Visualizer():
             raise NotImplementedError(
                 "Only Jupyter notebook is supported at the moment")
 
-    def _start_server(self):
-        """
-        Start the ZnDraw server through a subprocess
-        """
-        Visualizer.SERVER_PORT = self.port
-
-        self.server = subprocess.Popen(["zndraw", "--no-browser", f"--port={self.port}"],
-                                       stdout=subprocess.DEVNULL,
-                                       stderr=subprocess.DEVNULL
-                                       )
+        # Wait until the session is ready
+        request_deadline = time.monotonic() + 30
+        while time.monotonic() < request_deadline:
+            if len(self.zndraw.sessions) > 0:
+                break
+            time.sleep(0.5)
+        else:
+            raise RuntimeError(
+                "ZnDraw session did not start within the expected time")
 
     def _start_zndraw(self):
         """
@@ -307,8 +318,10 @@ class Visualizer():
         all_types = particles.type
         self.system.visualizer_params = self.params
         ase_interf = ase.ASEInterface(
-            self.system, None, self.system.part.all(),
-            use_folded_positions=self.params["folded"])
+            system=self.system,
+            particle_slice=self.system.part.all(),
+            use_folded_positions=self.params["folded"],
+            export_forces=self.params["forces"])
         data = ase_interf.atoms
         if self.params["colors"] is not None:
             data.arrays["colors"] = [self.params["colors"].get(
@@ -337,8 +350,65 @@ class Visualizer():
             if self.params["folded"]:
                 # add ghost particles and bonds for PBC crossing bonds
                 bonds = self._handle_pbc_bonds(bonds=bonds, ase_data=data)
-            # data.info["connectivity"] = bonds  # from zndraw version 0.5.12
-            data.connectivity = bonds
+            data.info["connectivity"] = bonds
+
+        if self.frame_count == 0:
+            x, y, z = self.system.box_l / 2
+            z_dist = max([1.5 * y, 1.5 * x, 1.5 * z])
+
+            self.zndraw.geometries["camera"] = zndraw.geometries.Camera(
+                position=(x, y, z_dist),
+                target=(x, y, z),
+            )
+
+            # activate the camera
+            for key in self.zndraw.sessions.keys():
+                self.zndraw.api.set_active_camera(key, "camera")
+
+            if self.params["forces"]:
+                self.zndraw.geometries["force_arrows"] = zndraw.geometries.Arrow(
+                    position="arrays.positions",
+                    direction="arrays.forces",
+                    color=["gray"] if self.params["colors"] else "arrays.colors",
+                    radius=4 *
+                    max(self.params["radii"].values()
+                        ) if self.params["radii"] else 1.0,
+                    opacity=0.8,
+                    hovering=zndraw.geometries.InteractionSettings(
+                        enabled=False),
+                    selecting=zndraw.geometries.InteractionSettings(
+                        enabled=False),
+                )
+
+        if self.params["vector_field"] is not None:
+            field_data = self.params["vector_field"]()
+            data.info["vector_positions"] = field_data[:, 0]
+            vector_directions = np.copy(field_data[:, 1])
+            magnitudes = np.linalg.norm(
+                vector_directions, axis=1, keepdims=True)
+            if self.arrow_config['normalize']:
+                mask = magnitudes.flatten() > 0.
+                vector_directions[mask] /= magnitudes[mask]
+            data.info["vector_directions"] = vector_directions
+
+            colormap = np.array(self.arrow_config['colormap'])
+            max_magnitude = np.max(magnitudes)
+            min_magnitude = np.min(magnitudes)
+            vector_color = colormap[0] + (magnitudes - min_magnitude) / (
+                max_magnitude - min_magnitude) * (colormap[1] - colormap[0])
+            vector_color = _convert_array_to_color(vector_color)
+            data.info["vector_color"] = vector_color
+
+            for key, value in self.arrow_config.items():
+                data.info[key] = value
+            if "vector_field" not in self.zndraw.geometries.keys():
+                shape_options = {"hovering": zndraw.geometries.InteractionSettings(enabled=False),
+                                 "selecting": zndraw.geometries.InteractionSettings(enabled=False)}
+                self.zndraw.geometries["vector_field"] = zndraw.geometries.Arrow(
+                    position="info.vector_positions",
+                    direction="info.vector_directions",
+                    color="info.vector_color",
+                    **shape_options)
 
         # Catch when the server is initializing an empty frame
         # len(self.zndraw) is a expensive socket call, so we try to avoid it
@@ -346,19 +416,6 @@ class Visualizer():
             self.zndraw.append(data)
         else:
             self.zndraw[0] = data
-
-        if self.frame_count == 0:
-            x, y, z = self.system.box_l / 2
-            z_dist = max([1.5 * y, 1.5 * x, 1.5 * z])
-
-            self.zndraw.camera = {
-                'position': [x, y, z_dist],
-                'target': [x, y, z]
-            }
-
-            if self.params["vector_field"] is not None:
-                for key, value in self.arrow_config.items():
-                    setattr(self.zndraw.config.arrows, key, value)
 
         self.frame_count += 1
 
@@ -504,6 +561,8 @@ class Visualizer():
         ase_data.arrays['radii'] = np.hstack(
             [ase_data.arrays['radii'], [1e-6 * min_radii] * len(ghost_positions)])
         ase_data.arrays['numbers'] = np.hstack([numbers, ghost_numbers])
+        ase_data.arrays['forces'] = np.vstack(
+            [ase_data.arrays['forces'], np.zeros((len(ghost_positions), 3))])
 
         bonds.extend(bonds_to_add)
         return bonds
@@ -600,3 +659,18 @@ def _corners_to_shape_geometry(corners, sort=True):
     euler_angles[2] *= -1
 
     return sorted_vertices, euler_angles
+
+
+def _convert_array_to_color(array):
+    """
+    Converts a (n,3) array to a list of color strings.
+    """
+    if array.shape[-1] != 3:
+        raise NotImplementedError(
+            f"The color array should be 3 dimensional")
+    hex_array = array * 255
+    hex_array = np.clip(hex_array, 0, 255)
+    hex_array = hex_array.astype(np.uint8)
+    hex_array = hex_array.reshape((-1, hex_array.shape[-1]))
+    hex_strings = [f"#{r:02X}{g:02X}{b:02X}" for r, g, b in hex_array]
+    return hex_strings

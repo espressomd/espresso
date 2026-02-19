@@ -388,14 +388,15 @@ def check_non_bonded_loop_trace(ut_obj, system, cutoff=None):
     cs_pairs = system.cell_system.non_bonded_loop_trace()
     # format [id1, id2, pos1, pos2, vec2, mpi_node]
 
-    distance_vec = system.distance_vec
     if cutoff is None:
         cutoff = system.cell_system.max_cut_nonbonded
 
     # Distance for all pairs of particles obtained by Python
+    pos_folded = {p.id: p.pos_folded for p in system.part.all()}
     py_distances = {}
-    for p1, p2 in system.part.pairs():
-        py_distances[p1.id, p2.id] = np.copy(distance_vec(p1, p2))
+    for pid1, pid2 in itertools.combinations(system.part.all().id, 2):
+        vec = system.distance_vec(pos_folded[pid1], pos_folded[pid2])
+        py_distances[(pid1, pid2)] = np.copy(vec)
 
     # Go through pairs found by the non-bonded loop and check distance
     for p in cs_pairs:
