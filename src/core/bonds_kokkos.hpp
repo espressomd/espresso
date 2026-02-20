@@ -86,7 +86,7 @@ struct BondsKernel {
     auto const thread_id = omp_get_thread_num();
 
     switch (number_of_partners(iaparams)) {
-    //case 0: zero-partner bonds are implicitly skipped
+    // case 0: zero-partner bonds are implicitly skipped
     case 1: {
       auto const j = id_to_index(partners(1));
       auto const dx =
