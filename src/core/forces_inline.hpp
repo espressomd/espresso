@@ -343,29 +343,32 @@ inline std::optional<Utils::Vector3d> calc_bond_pair_force(
 ) {
   if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
     return iap->force(dx);
-  } else if (auto const *iap = std::get_if<HarmonicBond>(&iaparams)) {
+  }
+  if (auto const *iap = std::get_if<HarmonicBond>(&iaparams)) {
     return iap->force(dx);
-  } else if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
+  }
+  if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
     return iap->force(dx);
   }
 #ifdef ESPRESSO_ELECTROSTATICS
-  else if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
+  if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
     return iap->force(q1q2, dx);
-  } else if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
+  }
+  if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
     return iap->force(dx, *kernel);
   }
 #endif
 #ifdef ESPRESSO_BOND_CONSTRAINT
-  else if (std::get_if<RigidBond>(&iaparams)) {
+  if (std::get_if<RigidBond>(&iaparams)) {
     return Utils::Vector3d{};
   }
 #endif
 #ifdef ESPRESSO_TABULATED
-  else if (auto const *iap = std::get_if<TabulatedDistanceBond>(&iaparams)) {
+  if (auto const *iap = std::get_if<TabulatedDistanceBond>(&iaparams)) {
     return iap->force(dx);
   }
 #endif
-  else if (std::get_if<VirtualBond>(&iaparams)) {
+  if (std::get_if<VirtualBond>(&iaparams)) {
     return Utils::Vector3d{};
   }
   throw BondUnknownTypeError();

@@ -81,9 +81,8 @@ struct BondsKernel {
     auto const i = id_to_index(partners(0));
 
     auto const &iaparams = *bonded_ias.at(bond_id);
-    // TODO:
-    // omp_get_thread_num() is only available for openMP backend.
-    // It should be modified when other kokkos backends is used.
+    // TODO: omp_get_thread_num() is only available for the OpenMP backend.
+    // This should be updated when using other Kokkos backends.
     auto const thread_id = omp_get_thread_num();
 
     switch (number_of_partners(iaparams)) {
@@ -98,7 +97,8 @@ struct BondsKernel {
       if (bond_breakage.check_and_handle_breakage(
               aosoa.id(i), {{aosoa.id(j), std::nullopt}}, bond_id, dx.norm())) {
         break;
-      } else if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
+      }
+      if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
         auto const res = iap->forces(aosoa.mass(i), aosoa.mass(j),
                                      aosoa.get_vector_at(aosoa.velocity, i),
                                      aosoa.get_vector_at(aosoa.velocity, j),
@@ -117,15 +117,15 @@ struct BondsKernel {
           bond_broken_error(s);
         }
         break;
-      } else {
-        result = calc_bond_pair_force(iaparams, dx
+      }
+
+      result = calc_bond_pair_force(iaparams, dx
 #ifdef ESPRESSO_ELECTROSTATICS
                                       ,
                                       aosoa.charge(i) * aosoa.charge(j),
                                       coulomb_kernel
 #endif
         );
-      }
 
       if (result) {
         auto const f = result.value();
@@ -164,11 +164,12 @@ struct BondsKernel {
               aosoa.id(i), {{aosoa.id(j), aosoa.id(k)}}, bond_id,
               box_geo.get_mi_vector(pos2, pos3).norm())) {
         break;
-      } else if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
-        break;
-      } else {
-        result = calc_bonded_three_body_force(iaparams, vec1, vec2);
       }
+      if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
+        break;
+      }
+
+      result = calc_bonded_three_body_force(iaparams, vec1, vec2);
 
       if (result) {
         auto const &forces = result.value();
