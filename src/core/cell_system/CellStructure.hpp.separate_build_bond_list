@@ -473,6 +473,9 @@ public:
   std::size_t get_num_local_particles_cached() const {
     return m_num_local_particles_cached;
   }
+private:
+  void build_bond_list_kokkos(Particle &p, int &count);
+public:
   int get_local_bond_numbers() const { return m_local_bond_numbers; }
   void add_local_bond_numbers() { m_local_bond_numbers += 1; }
   void reset_local_bond_numbers() { m_local_bond_numbers = 0; }

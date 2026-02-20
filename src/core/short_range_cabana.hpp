@@ -282,7 +282,6 @@ void cabana_short_range(auto const &bonds_kernel, auto const &forces_kernel,
           "for_each_local_bonds", cell_structure.get_local_bond_numbers(),
           bonds_kernel);
     }
-    // cell_structure.bond_loop(bond_kernel);
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_END("cabana_bond_loop");
 #endif

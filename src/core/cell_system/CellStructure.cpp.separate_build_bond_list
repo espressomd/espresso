@@ -54,7 +54,6 @@
 #include <Cabana_Core.hpp>
 #include <Cabana_NeighborList.hpp>
 #include <Kokkos_Core.hpp>
-#include <execution>
 #include <omp.h>
 #endif
 
@@ -213,6 +212,30 @@ void CellStructure::reset_local_properties() {
   Kokkos::deep_copy(get_aosoa().flags, uint8_t{0});
 }
 
+ESPRESSO_ATTR_ALWAYS_INLINE
+inline void CellStructure::build_bond_list_kokkos(Particle &p, int &count) {
+  auto &bond_list = get_bond_list_kokkos();
+  auto &bond_ids = get_bond_id_kokkos();
+  for (const BondView bond : p.bonds()) {
+    auto const partner_ids = bond.partner_ids();
+    try {
+      auto partners_source = resolve_bond_partners(partner_ids);
+      auto const n_partners = partners_source.size();
+      if (n_partners >= 1u and n_partners <= 3u) {
+	auto index = Kokkos::atomic_fetch_add(&count, 1);
+	bond_list(index, 0) = p.id();
+	for (std::size_t k = 0; k < n_partners; ++k)
+	  bond_list(index, k + 1) = partners_source[k]->id();
+	for (auto k = n_partners + 1; k < 4u; ++k)
+	  bond_list(index, k) = -1;
+	bond_ids(index) = bond.bond_id();
+      }
+    } catch (const BondResolutionError &) {
+      bond_broken_error(p.id(), partner_ids);
+    }
+  }
+}
+
 void CellStructure::set_index_map() {
 #ifdef ESPRESSO_CALIPER
   CALI_CXX_MARK_FUNCTION;
@@ -236,56 +259,21 @@ void CellStructure::set_index_map() {
     Kokkos::realloc(get_bond_id_kokkos(), m_global_bond_numbers);
   } else {
     m_bond_list_kokkos =
-        std::make_unique<BondlistType>("bond_list", m_global_bond_numbers);
+        std::make_unique<BondlistType>(Kokkos::ViewAllocateWithoutInitializing("bond_list"), m_global_bond_numbers);
     m_bond_id_kokkos =
-        std::make_unique<BondIDType>("bond_id", m_global_bond_numbers);
+        std::make_unique<BondIDType>(Kokkos::ViewAllocateWithoutInitializing("bond_id"), m_global_bond_numbers);
   }
-  auto &bond_list = get_bond_list_kokkos();
-  auto &bond_ids = get_bond_id_kokkos();
   reset_local_bond_numbers();
-  // Note that "int count" is only worked for the host backend.
-  int count = 0;
+  Kokkos::View<int, Kokkos::HostSpace> count("bond_count");
   enumerate_local_particles(*this, [this, &unique_particles, &max_ids,
-                                    &bond_list, &bond_ids,
                                     &count](std::size_t index, Particle &p) {
     unique_particles[index] = &p;
     const int thread_num = omp_get_thread_num();
     max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
-    for (const BondView bond : p.bonds()) {
-      auto const partner_ids = bond.partner_ids();
-      try {
-        auto partners_source = resolve_bond_partners(partner_ids);
-        auto const partners =
-            std::span(partners_source.data(), partners_source.size());
-        if (partners.size() == 1u) { // pair bonds
-          auto index = Kokkos::atomic_fetch_add(&count, 1);
-          bond_list(index, 0) = p.id();
-          bond_list(index, 1) = partners[0]->id();
-          bond_list(index, 2) = -1;
-          bond_list(index, 3) = -1;
-          bond_ids(index) = bond.bond_id();
-        } else if (partners.size() == 2u) { // angle bond
-          auto index = Kokkos::atomic_fetch_add(&count, 1);
-          bond_list(index, 0) = p.id();
-          bond_list(index, 1) = partners[0]->id();
-          bond_list(index, 2) = partners[1]->id();
-          bond_list(index, 3) = -1;
-          bond_ids(index) = bond.bond_id();
-        } else if (partners.size() == 3u) { // dihedral bond
-          auto index = Kokkos::atomic_fetch_add(&count, 1);
-          bond_list(index, 0) = p.id();
-          bond_list(index, 1) = partners[0]->id();
-          bond_list(index, 2) = partners[1]->id();
-          bond_list(index, 3) = partners[2]->id();
-          bond_ids(index) = bond.bond_id();
-        }
-      } catch (const BondResolutionError &) {
-        bond_broken_error(p.id(), partner_ids);
-      }
-    }
+    build_bond_list_kokkos(p, count());
   });
   Kokkos::fence();
-  set_local_bond_numbers(count);
+  set_local_bond_numbers(count());
   int max_id = *(std::max_element(max_ids.begin(), max_ids.end()));
   for (auto &p : ghost_particles()) {
     auto const *local_particle = get_local_particle(p.id());
