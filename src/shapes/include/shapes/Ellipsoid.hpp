@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SHAPES_ELLIPSOID_HPP
-#define SHAPES_ELLIPSOID_HPP
+#pragma once
 
 #include "Shape.hpp"
 
@@ -60,5 +59,3 @@ private:
   double m_direction;
 };
 } // namespace Shapes
-
-#endif

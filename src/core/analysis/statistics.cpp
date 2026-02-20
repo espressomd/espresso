@@ -30,8 +30,6 @@
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "errorhandling.hpp"
-#include "npt.hpp"
 #include "particle_reduction.hpp"
 #include "system/System.hpp"
 
@@ -49,7 +47,6 @@
 #include <functional>
 #include <limits>
 #include <numbers>
-#include <stdexcept>
 #include <tuple>
 #include <utility>
 #include <vector>

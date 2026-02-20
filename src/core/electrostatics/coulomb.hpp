@@ -35,8 +35,6 @@
 #include "electrostatics/reaction_field.hpp"
 #include "electrostatics/scafacos.hpp"
 
-#include <cstddef>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <type_traits>

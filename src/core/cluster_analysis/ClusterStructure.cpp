@@ -34,16 +34,10 @@
 
 namespace ClusterAnalysis {
 
-ClusterStructure::ClusterStructure() { clear(); }
-
 void ClusterStructure::clear() {
   clusters.clear();
   cluster_id.clear();
   m_cluster_identities.clear();
-}
-
-inline bool ClusterStructure::part_of_cluster(const Particle &p) {
-  return cluster_id.find(p.id()) != cluster_id.end();
 }
 
 // Analyze the cluster structure of the given particles
@@ -56,10 +50,9 @@ void ClusterStructure::run_for_all_pairs() {
   auto const box_geo_handle = get_box_geo();
   auto const &box_geo = *box_geo_handle;
   PartCfg partCfg{box_geo};
-  Utils::for_each_pair(partCfg.begin(), partCfg.end(),
-                       [this](const Particle &p1, const Particle &p2) {
-                         this->add_pair(p1, p2);
-                       });
+  Utils::for_each_pair(partCfg, [this](Particle const &p1, Particle const &p2) {
+    this->add_pair(p1, p2);
+  });
   merge_clusters();
 }
 
@@ -134,68 +127,57 @@ void ClusterStructure::add_pair(const Particle &p1, const Particle &p2) {
 }
 
 void ClusterStructure::merge_clusters() {
-  // Relabel particles according to the cluster identities map
-  // Also create empty cluster objects for the final cluster id
+  // Relabel particles according to the cluster identities map.
+  // Also create empty cluster objects for the final cluster id.
 
   // Collect needed changes in a separate map, as doing the changes on the fly
-  // would screw up the iterators
-  std::vector<std::pair<int, int>> to_be_changed;
+  // would invalidate iterators
+  std::vector<std::pair<int, int>> pending_changes;
 
-  for (auto it : cluster_id) {
-    // particle id is in it.first and cluster id in it.second
-    // We change the cluster id according to the cluster identities
-    // map
-    const int cid = find_id_for(it.second);
+  for (auto const &[pid, cid] : cluster_id) {
+    // We change the cluster id according to the cluster identities map
+    auto const merged_cid = find_id_for(cid);
     // We note the list of changes here, so we don't modify the map
     // while iterating
-    to_be_changed.emplace_back(it.first, cid);
-    // Empty cluster object
-    if (clusters.find(cid) == clusters.end()) {
-      clusters[cid] = std::make_shared<Cluster>(m_box_geo);
+    pending_changes.emplace_back(pid, merged_cid);
+    // Initialize new cluster objects
+    if (not clusters.contains(merged_cid)) {
+      clusters[merged_cid] = std::make_shared<Cluster>(m_box_geo);
     }
   }
 
-  // Now act on the changes marke in above iteration
-  for (auto it : to_be_changed) {
-    cluster_id[it.first] = it.second;
+  // Now act on the changes marked in above iteration
+  for (auto &[pid, merged_cid] : pending_changes) {
+    cluster_id[pid] = merged_cid;
   }
 
   // Now fill the cluster objects with particle ids
   // Iterate over particles, fill in the cluster map
   // to each cluster particle the corresponding cluster id
-  for (auto it : cluster_id) {
-    // If this is the first particle in this cluster, instance a new cluster
-    // object
-    if (clusters.find(it.second) == clusters.end()) {
-      clusters[it.second] = std::make_shared<Cluster>(m_box_geo);
-    }
-    clusters[it.second]->particles.push_back(it.first);
+  for (auto const &[pid, cid] : cluster_id) {
+    clusters[cid]->particles.emplace_back(pid);
   }
 
-  // Sort particles ids in the clusters
-  for (const auto &c : clusters) {
-    std::ranges::sort(c.second->particles);
+  // Sort particle ids in the clusters
+  for (auto const &cluster : clusters | std::views::values) {
+    std::ranges::sort(cluster->particles);
   }
 }
 
-int ClusterStructure::find_id_for(int x) {
-  int tmp = x;
-  while (m_cluster_identities.find(tmp) != m_cluster_identities.end()) {
-    tmp = m_cluster_identities[tmp];
+int ClusterStructure::find_id_for(int x) const {
+  auto cid = x;
+  while (m_cluster_identities.contains(cid)) {
+    cid = m_cluster_identities.at(cid);
   }
-  return tmp;
+  return cid;
 }
 
 int ClusterStructure::get_next_free_cluster_id() {
-  // iterate over cluster_id'
-  int max_seen_cluster = 0;
-  for (auto it : cluster_id) {
-    int cid = it.second;
-    if (max_seen_cluster < cid) {
-      max_seen_cluster = cid;
-    }
+  int max_id = 0;
+  if (not cluster_id.empty()) {
+    max_id = *std::ranges::max_element(cluster_id | std::views::values);
   }
-  return max_seen_cluster + 1;
+  return max_id + 1;
 }
 
 void ClusterStructure::sanity_checks() const {

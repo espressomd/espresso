@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef REACTION_METHODS_UTILS_HPP
-#define REACTION_METHODS_UTILS_HPP
+
+#pragma once
 
 #include "reaction_methods/SingleReaction.hpp"
 
@@ -48,10 +48,9 @@ double calculate_factorial_expression_cpH(
     std::unordered_map<int, int> const &particle_numbers);
 
 /**
- * Calculates the logaritm of factorial expression which occurs in the reaction
+ * Calculates the logarithm of factorial expression which occurs in the reaction
  * ensemble acceptance probability
  */
 double ln_factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
 
 } // namespace ReactionMethods
-#endif

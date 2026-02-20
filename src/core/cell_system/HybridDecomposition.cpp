@@ -26,6 +26,7 @@
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
+#include "ParticleList.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/sendrecv.hpp>

@@ -29,22 +29,19 @@
 #include "actor/visitors.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/demangle.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/sum_kahan.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
-#include <boost/mpi/collectives/gather.hpp>
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
-#include <cstdio>
 #include <iomanip>
 #include <limits>
 #include <memory>
@@ -250,20 +247,15 @@ static auto calc_charge_excess_ratio(std::vector<double> const &charges) {
 void check_charge_neutrality(System::System const &system,
                              double relative_tolerance) {
   // collect non-zero particle charges from all nodes
-  std::vector<double> local_charges;
+  std::vector<double> charges;
   for (auto const &p : system.cell_structure->local_particles()) {
-    local_charges.push_back(p.q());
+    charges.emplace_back(p.q());
   }
-  std::vector<std::vector<double>> node_charges;
-  boost::mpi::gather(comm_cart, local_charges, node_charges, 0);
+  Utils::Mpi::gather_buffer(charges, comm_cart);
 
   // run Kahan sum on charges
   auto excess_ratio = 0.;
   if (this_node == 0) {
-    auto charges = std::move(local_charges);
-    for (auto it = ++node_charges.begin(); it != node_charges.end(); ++it) {
-      charges.insert(charges.end(), it->begin(), it->end());
-    }
     excess_ratio = calc_charge_excess_ratio(charges);
   }
   boost::mpi::broadcast(comm_cart, excess_ratio, 0);

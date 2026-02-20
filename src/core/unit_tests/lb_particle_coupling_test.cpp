@@ -568,8 +568,11 @@ bool test_lb_domain_mismatch_local() {
       lb_instance->sanity_checks(*espresso::system);
     } catch (std::runtime_error const &err) {
       auto const what_ref = std::string("waLBerla and ESPResSo disagree "
-                                        "about domain decomposition.");
-      return err.what() == what_ref;
+                                        "about domain decomposition\nMPI "
+                                        "rank 0: left ESPResSo: [0, 0, 0], "
+                                        "left waLBerla: [0, 0, 0]");
+      std::string const error_msg = err.what();
+      return error_msg.starts_with(what_ref);
     }
   }
   return false;
@@ -600,14 +603,8 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
         ErrorHandling::mpi_gather_runtime_errors_all(world.rank() == 0);
     if (world.rank() == 0) {
       BOOST_TEST_REQUIRE(has_thrown_correct_exception);
-      BOOST_REQUIRE_EQUAL(n_errors, 1);
-      BOOST_REQUIRE_EQUAL(error_queue.size(), 1);
-      auto const what_ref = std::string("MPI rank 0: left ESPResSo: [0, 0, 0], "
-                                        "left waLBerla: [0, 0, 0]");
-      for (auto const &error : error_queue) {
-        auto const error_what = error.what().substr(1, what_ref.size());
-        BOOST_CHECK_EQUAL(error_what, what_ref);
-      }
+      BOOST_REQUIRE_EQUAL(n_errors, 0);
+      BOOST_REQUIRE_EQUAL(error_queue.size(), 0);
     } else {
       BOOST_TEST_REQUIRE(not has_thrown_correct_exception);
     }

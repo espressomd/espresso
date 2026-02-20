@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_CONSTRAINTS_DETAIL_VISCOUS_HPP
-#define CORE_CONSTRAINTS_DETAIL_VISCOUS_HPP
+
+#pragma once
 
 #include <utils/Vector.hpp>
 
@@ -41,5 +41,3 @@ public:
 };
 } // namespace Coupling
 } // namespace FieldCoupling
-
-#endif

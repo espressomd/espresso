@@ -23,7 +23,6 @@
 #include "lees_edwards/LeesEdwardsBC.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/math/sgn.hpp>
 
 #include <bitset>
 #include <cassert>
@@ -176,6 +175,7 @@ public:
    * @param box_l Length that should be set.
    */
   void set_length(Utils::Vector3d const &box_l) {
+    assert(box_l > Utils::Vector3d::broadcast(0.));
     m_length = box_l;
     m_length_inv = {1. / box_l[0], 1. / box_l[1], 1. / box_l[2]};
     m_length_half = 0.5 * box_l;
@@ -213,9 +213,8 @@ public:
    *         periodic images, i.e. <tt>a - b</tt>.
    */
   template <typename T>
-  ESPRESSO_ATTR_ALWAYS_INLINE inline Utils::Vector<T, 3>
-  get_mi_vector(const Utils::Vector<T, 3> &a,
-                const Utils::Vector<T, 3> &b) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline Utils::Vector3<T>
+  get_mi_vector(Utils::Vector3<T> const &a, Utils::Vector3<T> const &b) const {
     if (type() == BoxType::LEES_EDWARDS) {
       auto const shear_plane_normal = lees_edwards_bc().shear_plane_normal;
       auto a_tmp = a;
@@ -228,8 +227,8 @@ public:
                                         m_length_inv, m_periodic);
     }
     assert(type() == BoxType::CUBOID);
-    return {get_mi_coord(a[0], b[0], 0), get_mi_coord(a[1], b[1], 1),
-            get_mi_coord(a[2], b[2], 2)};
+    return {get_mi_coord(a[0], b[0], 0u), get_mi_coord(a[1], b[1], 1u),
+            get_mi_coord(a[2], b[2], 2u)};
   }
 
   /**
@@ -247,13 +246,13 @@ public:
    *         periodic images, i.e. <tt>a - b</tt>.
    */
   template <typename T>
-  ESPRESSO_ATTR_ALWAYS_INLINE inline Utils::Vector<T, 3>
+  ESPRESSO_ATTR_ALWAYS_INLINE inline Utils::Vector3<T>
   get_mi_vector(T const &a0, T const &a1, T const &a2, T const &b0, T const &b1,
                 T const &b2) const {
     if (type() == BoxType::LEES_EDWARDS) {
       auto const shear_plane_normal = lees_edwards_bc().shear_plane_normal;
-      auto a_tmp = Utils::Vector<T, 3>{a0, a1, a2};
-      auto b_tmp = Utils::Vector<T, 3>{b0, b1, b2};
+      auto a_tmp = Utils::Vector3<T>{a0, a1, a2};
+      auto b_tmp = Utils::Vector3<T>{b0, b1, b2};
       a_tmp[shear_plane_normal] = Algorithm::periodic_fold(
           a_tmp[shear_plane_normal], m_length[shear_plane_normal]);
       b_tmp[shear_plane_normal] = Algorithm::periodic_fold(
@@ -262,8 +261,8 @@ public:
                                         m_length_inv, m_periodic);
     }
     assert(type() == BoxType::CUBOID);
-    return {get_mi_coord(a0, b0, 0), get_mi_coord(a1, b1, 1),
-            get_mi_coord(a2, b2, 2)};
+    return {get_mi_coord(a0, b0, 0u), get_mi_coord(a1, b1, 1u),
+            get_mi_coord(a2, b2, 2u)};
   }
 
   BoxType type() const { return m_type; }
@@ -293,8 +292,8 @@ public:
       auto const shear_plane_normal = le.shear_plane_normal;
       auto const shear_direction = le.shear_direction;
       auto const dy = x[shear_plane_normal] - y[shear_plane_normal];
-      if (fabs(dy) > length_half()[shear_plane_normal]) {
-        ret[shear_direction] -= Utils::sgn(dy) * le.shear_velocity;
+      if (std::fabs(dy) > length_half()[shear_plane_normal]) {
+        ret[shear_direction] -= std::copysign(le.shear_velocity, dy);
       }
     }
     return ret;
@@ -329,7 +328,7 @@ public:
    */
   auto folded_position(Utils::Vector3d const &pos) const {
     auto pos_folded = pos;
-    for (unsigned int i = 0u; i < 3u; i++) {
+    for (auto i = 0u; i < 3u; i++) {
       if (m_periodic[i]) {
         pos_folded[i] = Algorithm::periodic_fold(pos[i], m_length[i]);
       }

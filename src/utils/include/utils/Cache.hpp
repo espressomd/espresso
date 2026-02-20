@@ -94,7 +94,7 @@ public:
   void invalidate() { m_cache.clear(); }
 
   /** @brief Query if k is contained in the cache. */
-  bool has(Key const &k) const { return m_cache.find(k) != m_cache.end(); }
+  bool has(Key const &k) const { return m_cache.contains(k); }
 
   /** @brief Number of elements currently cached. */
   size_type size() const { return m_cache.size(); }

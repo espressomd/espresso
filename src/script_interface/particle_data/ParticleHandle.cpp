@@ -182,7 +182,7 @@ void ParticleHandle::set_particle_property(T &(Particle::*setter)(),
 ParticleHandle::ParticleHandle() {
   /* Warning: the order of particle property setters matters! Some properties
    * override each other, e.g. quat/director/dip or dip/dipm.
-   * This is revelant during checkpointing: all particle properties are set at
+   * This is relevant during checkpointing: all particle properties are set at
    * once, in the order specified in the following call to `add_parameters()`.
    */
   add_parameters({

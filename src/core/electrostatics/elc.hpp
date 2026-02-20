@@ -45,10 +45,11 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <cstddef>
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <variant>
 

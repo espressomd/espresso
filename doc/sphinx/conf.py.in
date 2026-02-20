@@ -41,6 +41,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinxcontrib.bibtex',
     'sphinx_toggleprompt',
+    'sphinx_tabs.tabs',
     'sphinx.ext.napoleon'
 ]
 

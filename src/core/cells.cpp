@@ -44,7 +44,6 @@
 #include <boost/serialization/set.hpp>
 
 #include <algorithm>
-#include <functional>
 #include <optional>
 #include <stdexcept>
 #include <utility>

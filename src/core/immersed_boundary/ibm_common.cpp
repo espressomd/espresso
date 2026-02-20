@@ -19,6 +19,7 @@
 
 #include "ibm_common.hpp"
 
+#include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "system/System.hpp"

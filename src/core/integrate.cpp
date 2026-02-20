@@ -78,6 +78,7 @@
 #include <csignal>
 #include <functional>
 #include <limits>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -193,6 +194,7 @@ void System::System::update_used_propagations() {
   used_propagations = boost::mpi::all_reduce(::comm_cart, used_propagations,
                                              std::bit_or<int>());
   propagation->used_propagations = used_propagations;
+  propagation->recalc_used_propagations = false;
 }
 
 void System::System::integrator_sanity_checks() const {
@@ -266,6 +268,38 @@ void System::System::integrator_sanity_checks() const {
   }
 #endif // ESPRESSO_ROTATION
 
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+#ifdef ESPRESSO_EXTERNAL_FORCES
+  if (propagation->used_propagations &
+      PropagationMode::TRANS_VS_CENTER_OF_MASS) {
+    for (auto const &p : cell_structure->local_particles()) {
+      using namespace PropagationMode;
+      if ((p.propagation() & TRANS_VS_CENTER_OF_MASS) and
+          p.has_fixed_coordinates()) {
+        runtimeErrorMsg() << "VS COM particles cannot be fixed in space";
+        break;
+      }
+    }
+  }
+#endif // ESPRESSO_EXTERNAL_FORCES
+#ifdef ESPRESSO_BOND_CONSTRAINT
+  if (bonded_ias->get_n_rigid_bonds()) {
+    using namespace PropagationMode;
+    for (auto const &p : cell_structure->local_particles()) {
+      if (p.propagation() & TRANS_VS_CENTER_OF_MASS) {
+        for (auto const bond : p.bonds()) {
+          if (std::holds_alternative<RigidBond>(
+                  *bonded_ias->at(bond.bond_id()))) {
+            runtimeErrorMsg() << "VS COM particles cannot use rigid bonds";
+            break;
+          }
+        }
+      }
+    }
+  }
+#endif // ESPRESSO_BOND_CONSTRAINT
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
   if ((thermo_switch & THERMO_LANGEVIN) == 0) {
     for (auto const &p : cell_structure->local_particles()) {
@@ -310,15 +344,16 @@ void walberla_agrid_sanity_checks(std::string method,
   auto const tol = agrid / 1E6;
   if ((lattice_left - geo_left).norm2() > tol or
       (lattice_right - geo_right).norm2() > tol) {
-    runtimeErrorMsg() << "\nMPI rank " << ::this_node << ": "
-                      << "left ESPResSo: [" << geo_left << "], "
-                      << "left waLBerla: [" << lattice_left << "]"
-                      << "\nMPI rank " << ::this_node << ": "
-                      << "right ESPResSo: [" << geo_right << "], "
-                      << "right waLBerla: [" << lattice_right << "]"
-                      << "\nfor method: " << method;
-    throw std::runtime_error(
-        "waLBerla and ESPResSo disagree about domain decomposition.");
+    std::stringstream error_msg;
+    error_msg << "waLBerla and ESPResSo disagree about domain decomposition"
+              << "\nMPI rank " << ::this_node << ": "
+              << "left ESPResSo: [" << geo_left << "], "
+              << "left waLBerla: [" << lattice_left << "]"
+              << "\nMPI rank " << ::this_node << ": "
+              << "right ESPResSo: [" << geo_right << "], "
+              << "right waLBerla: [" << lattice_right << "]"
+              << "\nfor method: " << method;
+    throw std::runtime_error(error_msg.str());
   }
 }
 #endif // ESPRESSO_WALBERLA

@@ -19,10 +19,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SRC_SHAPES_SPHEROCYLINDER_HPP
-#define SRC_SHAPES_SPHEROCYLINDER_HPP
+#pragma once
 
 #include "Shape.hpp"
+
 #include <utils/Vector.hpp>
 
 namespace Shapes {
@@ -98,5 +98,3 @@ public:
                       Utils::Vector3d &vec) const override;
 };
 } // namespace Shapes
-
-#endif

@@ -19,7 +19,13 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <config/config.hpp>
+
 #include "p3m/field_layout_helpers.hpp"
+
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+#include <Kokkos_Core.hpp>
+#endif
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
@@ -28,6 +34,16 @@
 #include <cstddef>
 #include <span>
 #include <vector>
+
+struct GlobalConfig {
+#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  GlobalConfig() { Kokkos::initialize(); }
+  ~GlobalConfig() { Kokkos::finalize(); }
+#endif
+};
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_AUTO_TEST_SUITE(suite)
 
 template <Utils::MemoryOrder MemOrderReal, Utils::MemoryOrder MemOrderFourier>
 void check_add_remove_halo() {
@@ -130,3 +146,5 @@ BOOST_AUTO_TEST_CASE(add_remove_halo_row_col) {
   check_add_remove_halo<Utils::MemoryOrder::ROW_MAJOR,
                         Utils::MemoryOrder::COLUMN_MAJOR>();
 }
+
+BOOST_AUTO_TEST_SUITE_END()

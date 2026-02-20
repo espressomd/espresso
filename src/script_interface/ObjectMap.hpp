@@ -185,7 +185,8 @@ protected:
     }
 
     if (method == "contains") {
-      return m_elements.find(get_key(parameters.at("key"))) != m_elements.end();
+      auto const key = get_key(parameters.at("key"));
+      return m_elements.contains(key);
     }
 
     return Base::do_call_method(method, parameters);

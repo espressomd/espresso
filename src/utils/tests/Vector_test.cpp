@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE Vector test
+#define BOOST_TEST_MODULE "Vector test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -223,6 +223,14 @@ BOOST_AUTO_TEST_CASE(broadcast) {
   for (auto const &e : fives) {
     BOOST_CHECK(5 == e);
   }
+}
+
+BOOST_AUTO_TEST_CASE(broadcast_constexpr) {
+  constexpr auto a = Vector<int, 3>::broadcast(5);
+  static_assert(a[0] == 5);
+  static_assert(a[1] == 5);
+  static_assert(a[2] == 5);
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(swap) {

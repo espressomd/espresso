@@ -40,12 +40,12 @@
 #include <caliper/cali.h>
 #endif
 
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <initializer_list>
 #include <limits>
 #include <ranges>
-#include <stdexcept>
 #include <vector>
 
 static Thermostat::GammaType lb_handle_particle_anisotropy(Particle const &p,

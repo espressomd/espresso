@@ -31,8 +31,8 @@
 #include "errorhandling.hpp"
 #include "system/System.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/cartesian_product.hpp>
-#include <utils/math/sqr.hpp>
 #include <utils/mpi/iall_gatherv.hpp>
 
 #include <boost/mpi/collectives.hpp>

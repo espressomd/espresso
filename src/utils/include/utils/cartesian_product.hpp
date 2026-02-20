@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_CARTESIAN_PRODUCT_HPP
-#define UTILS_CARTESIAN_PRODUCT_HPP
+
+#pragma once
 
 #include <iterator>
 #include <utility>
@@ -45,7 +45,7 @@ struct cart_prod_impl<Body, Head, Tail...> {
 } // namespace detail
 
 /**
- * @brief Call op with each element of the cartesian product set of rng.
+ * @brief Call @p op with each element of the Cartesian product set of @p rng.
  *
  * @param op Operation to call for each element of the product set.
  * @param rng Ranges to form the product over
@@ -55,5 +55,3 @@ void cartesian_product(const Body &op, const ForwardRange &...rng) {
   detail::cart_prod_impl<Body, ForwardRange...>{}(rng..., op);
 }
 } // namespace Utils
-
-#endif

@@ -53,11 +53,6 @@ static FUNC_PREFIX void fixedflux_single_precision_boundary_FixedFlux_single_pre
     const int32_t y = *((int32_t *)(&_data_indexVector[28 * ctr_0 + 4]));
     const int32_t z = *((int32_t *)(&_data_indexVector[28 * ctr_0 + 8]));
 
-    const int32_t cx[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1, 1, -1, 1, -1, 1, -1, 1, -1};
-    const int32_t cy[] = {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0, 1, 1, -1, -1, 1, 1, -1, -1};
-    const int32_t cz[] = {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1};
-    const int32_t invdir[] = {0, 2, 1, 4, 3, 6, 5, 10, 9, 8, 7, 16, 15, 18, 17, 12, 11, 14, 13, 26, 25, 24, 23, 22, 21, 20, 19};
-
     const int32_t dir = *((int32_t *)(&_data_indexVector[28 * ctr_0 + 12]));
     if (((dir) == (26))) {
       _data_flux[_stride_flux_0 * x + _stride_flux_1 * y + _stride_flux_2 * z + 9 * _stride_flux_3] = -0.1111111111111111f * *((float *)(&_data_indexVector[28 * ctr_0 + 16])) - 0.1111111111111111f * *((float *)(&_data_indexVector[28 * ctr_0 + 20])) - 0.1111111111111111f * *((float *)(&_data_indexVector[28 * ctr_0 + 24]));

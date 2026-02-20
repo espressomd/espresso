@@ -21,7 +21,6 @@
 
 #include <config/config.hpp>
 
-#include "GpuParticleData.hpp"
 #include "ResourceCleanup.hpp"
 
 #include "electrostatics/solver.hpp"
@@ -35,6 +34,8 @@
 #include <utils/Vector.hpp>
 
 #include <memory>
+#include <optional>
+#include <vector>
 
 class BoxGeometry;
 class LocalBox;
@@ -69,6 +70,9 @@ struct SteepestDescent;
 struct StokesianDynamics;
 struct NptIsoParameters;
 struct InstantaneousPressure;
+#ifdef ESPRESSO_CUDA
+class GpuParticleData;
+#endif
 
 namespace System {
 
@@ -89,7 +93,7 @@ public:
   static std::shared_ptr<System> create();
 
 #ifdef ESPRESSO_CUDA
-  GpuParticleData gpu;
+  std::shared_ptr<GpuParticleData> gpu;
 #endif
   ResourceCleanup cleanup_queue;
 
@@ -216,7 +220,7 @@ public:
    *  @param reuse_forces  Decide when to re-calculate forces
    *
    *  @details This function calls two hooks for propagation kernels such as
-   *  velocity verlet, velocity verlet + npt box changes, and steepest_descent.
+   *  velocity Verlet, velocity Verlet + NpT, or steepest descent.
    *  One hook is called before and one after the force calculation.
    *  It is up to the propagation kernels to increment the simulation time.
    *

@@ -29,7 +29,7 @@ import pystencils as ps
 
 
 def remove_intermediate_variable(code, name):
-    re_pat = re.compile(f"const (float|double) {name} = .*?;\n")
+    re_pat = re.compile(rf"\n *const (float|double|u?int(?:(?:8|16|32|64)?_t)?) {name}(?: *\[\d*\])? = .*?;(?=\n)")  # nopep8
     assert re_pat.search(code) is not None, \
         f"pattern '{re_pat}' not found in '''\n{code}\n'''"
     return re_pat.sub("", code)

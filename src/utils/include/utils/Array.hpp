@@ -42,7 +42,7 @@ namespace Utils {
 namespace detail {
 
 template <typename T, std::size_t N> struct Storage {
-  T m_data[N];
+  T m_data[N] = {};
 
 private:
   friend boost::serialization::access;
@@ -171,15 +171,6 @@ template <typename T, std::size_t N> struct Array {
     for (size_type i = 0; i != size(); ++i) {
       m_storage.m_data[i] = value;
     }
-  }
-
-  DEVICE_QUALIFIER static constexpr Array<T, N>
-  broadcast(const value_type &value) {
-    Array<T, N> ret{};
-    for (size_type i = 0; i != N; ++i) {
-      ret[i] = value;
-    }
-    return ret;
   }
 
   static constexpr detail::ArrayFormatter formatter(char const *sep = " ") {

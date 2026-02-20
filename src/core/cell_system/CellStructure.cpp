@@ -33,6 +33,7 @@
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "custom_verlet_list.hpp"
+#include "ghosts.hpp"
 #include "integrators/Propagation.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "particle_enumeration.hpp"
@@ -71,6 +72,7 @@
 #include <set>
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>

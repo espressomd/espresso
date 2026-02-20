@@ -26,6 +26,7 @@
 #include "FFTBuffersLegacy.hpp"
 
 #include "communication.hpp"
+#include "p3m/common.hpp"
 
 #include <array>
 #include <span>

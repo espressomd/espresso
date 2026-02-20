@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import sys
 import numpy as np
 from .utils cimport mpi_gather_runtime_errors, ErrorLevel
 
@@ -210,7 +211,7 @@ def handle_errors(note):
     errors = mpi_gather_runtime_errors()
     # print all errors and warnings
     for err in errors:
-        err.print()
+        print(to_str(err.format()), file=sys.stderr)
 
     # raise an exception with the first error
     for err in errors:

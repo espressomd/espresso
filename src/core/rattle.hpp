@@ -27,11 +27,12 @@
  *  For more information see \ref rattle.cpp.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_BOND_CONSTRAINT
 
 #include "BoxGeometry.hpp"
+#include "ParticleRange.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
 

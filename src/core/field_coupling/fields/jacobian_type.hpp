@@ -16,19 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_FIELD_COUPLING_GRADIENT_TYPE_HPP
-#define CORE_FIELD_COUPLING_GRADIENT_TYPE_HPP
+
+#pragma once
 
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
 
+#include <concepts>
 #include <cstddef>
 
 namespace FieldCoupling {
 namespace Fields {
 namespace detail {
 template <class T, std::size_t codim> struct jacobian_type_impl {
-  using type = Utils::Matrix<double, codim, 3>;
+  using type = Utils::Matrix<T, codim, 3>;
 };
 
 template <class T> struct jacobian_type_impl<T, 1> {
@@ -36,16 +37,14 @@ template <class T> struct jacobian_type_impl<T, 1> {
 };
 
 /**
- * @brief Deduce type for jacobian from codim.
+ * @brief Deduce type for Jacobian from codim.
  *
- * Small helper that returns Vector3d if codim = 1,
- * and Utils::Vector<codim, Utils::Vector<3, T>> otherwise to avoid
- * using Vectors of size one, where scalars would do.
+ * Small helper that returns `Utils::Vector3<T>` if codim = 1,
+ * and `Utils::Matrix<T, codim, 3>` otherwise to avoid
+ * using vectors of size one, where scalars would do.
  */
-template <class T, std::size_t codim>
+template <std::floating_point T, std::size_t codim>
 using jacobian_type = typename jacobian_type_impl<T, codim>::type;
 } // namespace detail
 } // namespace Fields
 } // namespace FieldCoupling
-
-#endif

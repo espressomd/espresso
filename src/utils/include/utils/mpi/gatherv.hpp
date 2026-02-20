@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_MPI_GATHERV_HPP
-#define UTILS_MPI_GATHERV_HPP
+
+#pragma once
 
 #include <boost/mpi/communicator.hpp>
 #include <boost/mpi/datatype.hpp>
@@ -123,4 +123,3 @@ void gatherv(const boost::mpi::communicator &comm, const T *in_values,
 
 } // namespace Mpi
 } // namespace Utils
-#endif

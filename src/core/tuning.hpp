@@ -27,7 +27,7 @@
 #include <string>
 
 class TuningFailed : public std::runtime_error {
-  std::string get_first_error() const;
+  static std::string get_first_error();
 
 public:
   TuningFailed() : std::runtime_error{get_first_error()} {}

@@ -26,7 +26,6 @@
 
 #include <config/config.hpp>
 
-#include "angle_common.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -46,17 +45,16 @@
 #include "thermalized_bond.hpp"
 
 #include "BondList.hpp"
-#include "TabulatedPotential.hpp"
+#include "Particle.hpp"
 #include "system/Leaf.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <memory>
 #include <optional>
-#include <stdexcept>
 #include <unordered_map>
 #include <variant>
-#include <vector>
 
 /** Interaction type for unused bonded interaction slots */
 struct NoneBond {
@@ -129,7 +127,7 @@ public:
   }
   virtual void activate_bond(mapped_type const &ptr);
   virtual void deactivate_bond(mapped_type const &ptr);
-  mapped_type at(key_type const &key) const { return m_params.at(key); }
+  mapped_type const &at(key_type const &key) const { return m_params.at(key); }
   bool contains(key_type const &key) const { return m_params.contains(key); }
   bool empty() const { return m_params.empty(); }
   auto size() const { return m_params.size(); }

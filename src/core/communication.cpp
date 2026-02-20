@@ -51,7 +51,6 @@
 
 #include <cassert>
 #include <cstdlib>
-#include <cstring>
 #include <memory>
 #include <optional>
 #include <string>

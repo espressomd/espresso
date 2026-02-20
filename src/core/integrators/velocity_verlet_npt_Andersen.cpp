@@ -69,8 +69,21 @@ velocity_verlet_npt_finalize_p_inst(NptIsoParameters &nptiso,
   }
 }
 
+static void handle_negative_volume(auto &nptiso, auto const &box_geo,
+                                   double time_step) {
+  if (nptiso.volume < 0.) {
+    runtimeErrorMsg() << "your choice of piston=" << nptiso.piston
+                      << ", time_step=" << time_step
+                      << ", p_epsilon=" << nptiso.p_epsilon
+                      << " just caused the volume to become negative."
+                      << " The system is now in an indeterminate state."
+                      << " Restart the simulation with a smaller time_step.";
+    nptiso.volume = box_geo.volume();
+  }
+}
+
 /**
- * @brief propagete positions and the volume and add thermal fluctuation.
+ * @brief propagate positions and the volume and add thermal fluctuation.
  * A and V are the position and volume propagators for half-time step.
  * O is the propagator corresponding to Ornstein-Uhlenbeck process
  * representing the stochastic thermostat.
@@ -101,19 +114,11 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
    */
   if (::this_node == 0) {
     nptiso.volume += nptiso.inv_piston * nptiso.p_epsilon * 0.5 * time_step;
+    handle_negative_volume(nptiso, box_geo, time_step);
     // L(t)**2 / L(t+0.5*dt)**2, where the numerator follows time in position,
     // and the denominator follows time in velocity
     scal[2] = Utils::sqr(box_geo.length()[nptiso.non_const_dim]) /
               std::pow(nptiso.volume, 2.0 / nptiso.dimension);
-    if (nptiso.volume < 0.0) {
-      runtimeErrorMsg()
-          << "your choice of piston= " << nptiso.piston << ", dt= " << time_step
-          << ", p_epsilon= " << nptiso.p_epsilon
-          << " just caused the volume to become negative, decrease dt";
-      nptiso.volume = box_geo.volume();
-      scal[2] = 1;
-    }
-
     L_halfdt = std::pow(nptiso.volume, 1.0 / nptiso.dimension);
 
     // L(t+0.5*dt) / L(t)
@@ -152,6 +157,7 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
   if (::this_node == 0) {
     nptiso.p_epsilon = propagate_thermV_nptiso(npt_iso, nptiso.p_epsilon);
     nptiso.volume += nptiso.inv_piston * nptiso.p_epsilon * 0.5 * time_step;
+    handle_negative_volume(nptiso, box_geo, time_step);
     L_dt = std::pow(nptiso.volume, 1.0 / nptiso.dimension);
 
     scal[2] = 1.0;

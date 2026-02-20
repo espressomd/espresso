@@ -24,8 +24,6 @@
 #include "cell_system/CellStructure.hpp"
 #include "system/Leaf.hpp"
 
-#include <cassert>
-#include <cstddef>
 #include <vector>
 
 struct IBMVolCons;

@@ -16,15 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_EXTERNAL_FIELD_FIELDS_INTERPOLATED_HPP
-#define CORE_EXTERNAL_FIELD_FIELDS_INTERPOLATED_HPP
 
-#include "utils/interpolation/bspline_3d.hpp"
-#include "utils/interpolation/bspline_3d_gradient.hpp"
-#include <utils/math/tensor_product.hpp>
+#pragma once
 
 #include "jacobian_type.hpp"
+
 #include <utils/Vector.hpp>
+#include <utils/interpolation/bspline_3d.hpp>
+#include <utils/interpolation/bspline_3d_gradient.hpp>
+#include <utils/math/tensor_product.hpp>
 
 /* Turn off range checks if release build. */
 #if defined(NDEBUG) && !defined(BOOST_DISABLE_ASSERTS)
@@ -124,7 +124,7 @@ public:
   }
 
   /*
-   * @brief Evaluate f at pos with the jacobian field value as argument.
+   * @brief Evaluate f at pos with the Jacobian field value as argument.
    */
   jacobian_type jacobian(const Utils::Vector3d &pos, double = {}) const {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
@@ -143,5 +143,3 @@ public:
 };
 } // namespace Fields
 } // namespace FieldCoupling
-
-#endif

@@ -44,6 +44,7 @@ namespace ScriptInterface::walberla {
 
 class EKSpeciesNode : public AutoParameters<EKSpeciesNode, LatticeIndices> {
   std::shared_ptr<::EKinWalberlaBase> m_ek_species;
+  std::shared_ptr<EKSpecies> m_ek_sip;
   std::optional<ResourceObserver> m_mpi_cart_comm_observer;
   Utils::Vector3i m_index;
   Utils::Vector3i m_grid_size;
@@ -57,13 +58,12 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    auto const ek_sip =
-        get_value<std::shared_ptr<EKSpecies>>(params, "parent_sip");
-    m_ek_species = ek_sip->get_ekinstance();
-    m_mpi_cart_comm_observer = ek_sip->get_mpi_cart_comm_observer();
+    m_ek_sip = get_value<std::shared_ptr<EKSpecies>>(params, "parent_sip");
+    m_ek_species = m_ek_sip->get_ekinstance();
+    m_mpi_cart_comm_observer = m_ek_sip->get_mpi_cart_comm_observer();
     assert(m_ek_species);
-    m_conv_dens = ek_sip->get_conversion_factor_density();
-    m_conv_flux = ek_sip->get_conversion_factor_flux();
+    m_conv_dens = m_ek_sip->get_conversion_factor_density();
+    m_conv_flux = m_ek_sip->get_conversion_factor_flux();
     m_grid_size = m_ek_species->get_lattice().get_grid_dimensions();
     m_index = get_mapped_index(get_value<Utils::Vector3i>(params, "index"),
                                m_grid_size);

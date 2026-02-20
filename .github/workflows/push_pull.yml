@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   macos:
-    runs-on: macos-15
+    runs-on: macos-26
     if: ${{ github.repository == 'espressomd/espresso' }}
     steps:
       - name: Checkout
@@ -24,19 +24,13 @@ jobs:
       - name: Install dependencies
         run: |
          echo '' > Brewfile
-         for dep in boost boost-mpi fftw gsl ccache ninja; do echo "brew \"${dep}\"" >> Brewfile; done
+         for dep in boost boost-mpi libomp fftw gsl ccache ninja; do echo "brew \"${dep}\"" >> Brewfile; done
          brew bundle check >/dev/null 2>&1 || brew bundle --verbose --no-upgrade
          # set up Xcode compiler
          echo "::group::List available Xcode compilers"
          ls /Applications | grep Xcode
          echo "::endgroup::"
-         sudo xcode-select -switch /Applications/Xcode_16.4.app
-         echo "::group::Install OpenMP (https://mac.r-project.org/openmp/)"
-         curl -s -o ${{ runner.temp }}/openmp.tar.gz https://mac.r-project.org/openmp/openmp-19.1.0-darwin20-Release.tar.gz
-         sudo tar fvxz ${{ runner.temp }}/openmp.tar.gz -C /
-         rm ${{ runner.temp }}/openmp.tar.gz
-         codesign -d -vv /usr/local/lib/libomp.dylib
-         echo "::endgroup::"
+         sudo xcode-select -switch /Applications/Xcode_26.2.0.app
          # Python dependencies
          python -m venv venv
          . venv/bin/activate
@@ -54,12 +48,12 @@ jobs:
           with_gsl: 'true'
           with_walberla: 'true'
           with_walberla_avx: 'false'
-          with_shared_memory_parallelism: 'false'
+          with_shared_memory_parallelism: 'true'
 
   debian:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/espressomd/docker/debian:3388b293a5e8a9b613b1bfa4220e54dfb4bff245-base-layer
+      image: ghcr.io/espressomd/docker/debian:4d3e236db5ae334ddcc9c3c82aae7637faa5dabc-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
@@ -101,7 +95,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.repository == 'espressomd/espresso' }}
     container:
-      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:3388b293a5e8a9b613b1bfa4220e54dfb4bff245-base-layer
+      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:4d3e236db5ae334ddcc9c3c82aae7637faa5dabc-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
@@ -143,7 +137,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.repository == 'espressomd/espresso' }}
     container:
-      image: ghcr.io/espressomd/docker/fedora:3388b293a5e8a9b613b1bfa4220e54dfb4bff245-base-layer
+      image: ghcr.io/espressomd/docker/fedora:4d3e236db5ae334ddcc9c3c82aae7637faa5dabc-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}

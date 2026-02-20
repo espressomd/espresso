@@ -38,13 +38,12 @@
 #include <utils/serialization/pack.hpp>
 
 #include <cassert>
-#include <stdexcept>
 #include <string>
 #include <utility>
 
 namespace ScriptInterface {
-void GlobalContext::make_handle(ObjectId id, const std::string &name,
-                                const PackedMap &parameters) {
+void GlobalContext::make_handle(ObjectId id, std::string const &name,
+                                PackedMap const &parameters) {
   try {
     ObjectRef so = m_node_local_context->make_shared(
         name, unpack(parameters, m_local_objects));
@@ -54,8 +53,8 @@ void GlobalContext::make_handle(ObjectId id, const std::string &name,
   }
 }
 
-void GlobalContext::remote_make_handle(ObjectId id, const std::string &name,
-                                       const VariantMap &parameters) {
+void GlobalContext::remote_make_handle(ObjectId id, std::string const &name,
+                                       VariantMap const &parameters) {
   cb_make_handle(id, name, pack(parameters));
 }
 
@@ -67,7 +66,7 @@ void GlobalContext::set_parameter(ObjectId id, std::string const &name,
   }
 }
 
-void GlobalContext::notify_set_parameter(const ObjectHandle *o,
+void GlobalContext::notify_set_parameter(ObjectHandle const *o,
                                          std::string const &name,
                                          Variant const &value) {
   cb_set_parameter(ObjectId(o), name, pack(value));
@@ -90,7 +89,7 @@ void GlobalContext::notify_call_method(const ObjectHandle *o,
 
 std::shared_ptr<ObjectHandle>
 GlobalContext::make_shared(std::string const &name,
-                           const VariantMap &parameters) {
+                           VariantMap const &parameters) {
   assert(is_head_node());
   auto sp = m_node_local_context->factory().make(name);
   set_context(sp.get());
@@ -104,18 +103,23 @@ GlobalContext::make_shared(std::string const &name,
           /* Custom deleter, we keep the corresponding global context,
            * as well as the original deleter for the object. */
           [global_context = this, deleter = sp.get_deleter()](ObjectHandle *o) {
-            /* Tell the other nodes before invoking the destructor, this is
-             * required
-             * to have synchronous destructors, which is needed by some client
-             * code. */
-            global_context->cb_delete_handle(ObjectId(o));
+            /* Notify worker nodes before invoking the deleter. This is
+             * required by synchronous deleters used by some client code.
+             * Since a deleter cannot throw, exceptions thrown by Boost and
+             * MpiCallbacks must be silenced (such code paths arise when
+             * undefined behavior is invoked).
+             */
+            try {
+              global_context->cb_delete_handle(ObjectId(o));
+            } catch (...) { // NOLINT(bugprone-empty-catch)
+            }
 
             /* Locally destroy the object. */
             deleter(o);
           }};
 }
 
-std::string_view GlobalContext::name(const ObjectHandle *o) const {
+std::string_view GlobalContext::name(ObjectHandle const *o) const {
   assert(o);
 
   return m_node_local_context->factory().type_name(*o);

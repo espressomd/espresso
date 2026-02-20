@@ -57,6 +57,9 @@ class Test:
         self.system.cell_system.set_regular_decomposition(
             use_verlet_lists=True)
         self.system.periodicity = [True, True, True]
+        # add a neutral particle before the two charges to make sure neutral
+        # particles aren't skipped in the multithreaded charge assignment loop
+        self.system.part.add(pos=self.system.box_l / 2., q=0.)
         self.system.part.add(pos=self.system.box_l / 2., q=self.q[0])
         self.system.part.add(pos=self.system.box_l / 2. + [0, 0, self.distance],
                              q=-self.q[0])
@@ -85,7 +88,7 @@ class Test:
                                    rtol=self.rtol)
 
     def scan(self):
-        p1, p2 = self.system.part.all()
+        _, p1, p2 = self.system.part.all()
         elc_forces = np.empty((len(self.q), len(self.zPos)))
         elc_energy = np.empty(elc_forces.shape)
         for chargeIndex, charge in enumerate(self.q):

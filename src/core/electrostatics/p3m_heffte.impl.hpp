@@ -1182,7 +1182,7 @@ void CoulombP3MHeffte<FloatType, Architecture,
     }
 #endif
     if (this_node == 0) {
-      auto &gpu = get_system().gpu;
+      auto &gpu = *get_system().gpu;
       p3m_gpu_add_farfield_force(*m_gpu_data, gpu, prefactor,
                                  gpu.n_particles());
     }
@@ -1203,14 +1203,14 @@ void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::init_gpu_kernels() {
       init_cpu_kernels();
     }
     p3m_gpu_init(m_gpu_data, p3m.params.cao, p3m.params.mesh, p3m.params.alpha,
-                 system.box_geo->length(), system.gpu.n_particles());
+                 system.box_geo->length(), system.gpu->n_particles());
   }
 }
 
 template <typename FloatType, Arch Architecture, class FFTConfig>
 void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::request_gpu() const {
   if constexpr (Architecture == Arch::CUDA) {
-    auto &gpu_particle_data = get_system().gpu;
+    auto &gpu_particle_data = *get_system().gpu;
     gpu_particle_data.enable_property(GpuParticleData::prop::force);
     gpu_particle_data.enable_property(GpuParticleData::prop::q);
     gpu_particle_data.enable_property(GpuParticleData::prop::pos);

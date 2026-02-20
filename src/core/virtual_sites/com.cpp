@@ -57,6 +57,7 @@
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <functional>
 #include <optional>

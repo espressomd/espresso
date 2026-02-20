@@ -36,10 +36,9 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <functional>
 #include <string>
 
-std::string TuningFailed::get_first_error() const {
+std::string TuningFailed::get_first_error() {
   using namespace ErrorHandling;
   auto const queued_warnings = mpi_gather_runtime_errors_all(this_node == 0);
   auto message = std::string("tuning failed: an exception was thrown while "

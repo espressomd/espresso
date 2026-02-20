@@ -699,7 +699,9 @@ public:
   get_slice_density(Utils::Vector3i const &lower_corner,
                     Utils::Vector3i const &upper_corner) const override {
     std::vector<double> out;
-    uint_t values_size = 0;
+#ifndef NDEBUG
+    uint_t values_size = 0u;
+#endif
     auto const &lattice = get_lattice();
     if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
       out = std::vector<double>(ci->numCells());
@@ -711,7 +713,9 @@ public:
               block.template getData<DensityField>(m_density_field_id);
           auto const values = ek::accessor::Scalar::get(density_field, *bci);
           assert(values.size() == bci->numCells());
+#ifndef NDEBUG
           values_size += bci->numCells();
+#endif
           auto kernel = [&values, &out](unsigned const block_index,
                                         unsigned const local_index,
                                         Utils::Vector3i const &) {
@@ -771,7 +775,9 @@ public:
   get_slice_flux_vector(Utils::Vector3i const &lower_corner,
                         Utils::Vector3i const &upper_corner) const override {
     std::vector<double> out;
+#ifndef NDEBUG
     uint_t values_size = 0;
+#endif
     auto const &lattice = get_lattice();
     if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
       out = std::vector<double>(3u * ci->numCells());
@@ -783,7 +789,9 @@ public:
               block.template getData<FluxField>(m_flux_field_id);
           auto const values = ek::accessor::Flux::get_vector(flux_field, *bci);
           assert(values.size() == 3u * bci->numCells());
+#ifndef NDEBUG
           values_size += 3u * bci->numCells();
+#endif
 
           auto kernel = [&values, &out, this](unsigned const block_index,
                                               unsigned const local_index,

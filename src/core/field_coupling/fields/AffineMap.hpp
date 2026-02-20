@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_EXTERNAL_FIELD_FIELDS_AFFINE_MAP_HPP
-#define CORE_EXTERNAL_FIELD_FIELDS_AFFINE_MAP_HPP
+
+#pragma once
 
 #include "jacobian_type.hpp"
 #include <utils/Vector.hpp>
@@ -60,5 +60,3 @@ public:
 };
 } // namespace Fields
 } // namespace FieldCoupling
-
-#endif

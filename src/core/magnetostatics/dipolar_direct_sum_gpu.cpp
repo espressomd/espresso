@@ -38,7 +38,7 @@ static void get_simulation_box(BoxGeometry const &box_geo, float *box,
 }
 
 void DipolarDirectSum::on_activation_gpu() const {
-  auto &gpu_particle_data = get_system().gpu;
+  auto &gpu_particle_data = *get_system().gpu;
   gpu_particle_data.enable_property(GpuParticleData::prop::force);
   gpu_particle_data.enable_property(GpuParticleData::prop::torque);
   gpu_particle_data.enable_property(GpuParticleData::prop::pos);
@@ -50,7 +50,7 @@ void DipolarDirectSum::on_activation_gpu() const {
 
 void DipolarDirectSum::add_long_range_forces_gpu() const {
   auto &system = get_system();
-  auto &gpu = system.gpu;
+  auto &gpu = *system.gpu;
   gpu.update();
   if (this_node != 0) {
     return;
@@ -75,7 +75,7 @@ void DipolarDirectSum::add_long_range_forces_gpu() const {
 
 void DipolarDirectSum::long_range_energy_gpu() const {
   auto &system = get_system();
-  auto &gpu = system.gpu;
+  auto &gpu = *system.gpu;
   gpu.update();
   if (this_node != 0) {
     return;

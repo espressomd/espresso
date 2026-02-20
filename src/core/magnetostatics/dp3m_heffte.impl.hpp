@@ -68,10 +68,12 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <functional>
 #include <iterator>
+#include <memory>
 #include <numbers>
 #include <optional>
 #include <span>

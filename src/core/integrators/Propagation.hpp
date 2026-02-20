@@ -32,6 +32,7 @@ public:
   int ek_skipped_md_steps = 0;
   /** If true, forces will be recalculated before the next integration. */
   bool recalc_forces = true;
+  bool recalc_used_propagations = true;
 
   void update_default_propagation(int thermo_switch);
 
@@ -45,5 +46,6 @@ public:
   void set_integ_switch(int value) {
     integ_switch = value;
     recalc_forces = true;
+    recalc_used_propagations = true;
   }
 };

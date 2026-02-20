@@ -18,8 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef UTILS_MPI_GATHER_BUFFER_HPP
-#define UTILS_MPI_GATHER_BUFFER_HPP
+#pragma once
 
 #include "detail/size_and_offset.hpp"
 #include "gatherv.hpp"
@@ -56,8 +55,8 @@ void gather_buffer(std::vector<T, Allocator> &buffer,
   auto const n_elem = static_cast<int>(buffer.size());
 
   if (comm.rank() == root) {
-    static std::vector<int> sizes;
-    static std::vector<int> displ;
+    std::vector<int> sizes;
+    std::vector<int> displ;
 
     auto const tot_size =
         detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
@@ -85,5 +84,3 @@ void gather_buffer(std::vector<T, Allocator> &buffer,
 }
 } // namespace Mpi
 } // namespace Utils
-
-#endif

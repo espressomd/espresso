@@ -43,6 +43,7 @@
 #include <cassert>
 #include <cstddef>
 #include <functional>
+#include <span>
 #include <sstream>
 #include <vector>
 
@@ -76,55 +77,45 @@ template <template <typename> class Container> auto make_container() {
   return Container<Testing::T>{};
 }
 
-/** Initialize an array with reference values. */
-template <template <typename, std::size_t...> class A, typename T,
-          std::size_t... N>
-void constexpr init_container(A<T, N...> &array) {
-  for (std::size_t i = 0; i < Testing::N; ++i) {
-    array[i] = Testing::values[i];
+/** Initialize an array with reference data. */
+template <template <class, std::size_t...> class A, class T, std::size_t... N>
+void init_container(A<T, N...> &container) {
+  std::span<T> array;
+  if constexpr (std::is_same_v<A<T, N...>,
+                               Utils::detail::Storage<T, Testing::N>>) {
+    array = {&container.m_data[0], Testing::N};
+  } else {
+    if constexpr (std::is_same_v<A<T, N...>, Utils::compact_vector<T>>) {
+      container.resize(Testing::N);
+    }
+    array = {&container[0], Testing::N};
   }
-}
-
-template <typename T, std::size_t N>
-void constexpr init_container(Utils::detail::Storage<T, N> &array) {
-  for (std::size_t i = 0; i < Testing::N; ++i) {
-    array.m_data[i] = Testing::values[i];
-  }
-}
-
-template <typename T>
-void constexpr init_container(Utils::compact_vector<T> &array) {
-  array.resize(Testing::N);
   for (std::size_t i = 0; i < Testing::N; ++i) {
     array[i] = Testing::values[i];
   }
 }
 
 /** Convert an array to a container type that provides method @c operator[] */
-template <template <typename, std::size_t...> class A, typename T,
-          std::size_t... N>
-auto constexpr testable_container(A<T, N...> const &array) {
-  return array;
-}
-
-template <typename T, std::size_t N>
-auto constexpr testable_container(Utils::detail::Storage<T, N> const &s) {
-  return Utils::Array<T, N>{s};
-}
-
-template <typename T>
-auto constexpr testable_container(Utils::Quaternion<T> const &s) {
-  return s.m_data;
-}
-
-template <typename T>
-auto constexpr testable_container(Utils::compact_vector<T> const &s) {
-  assert(s.size() == Testing::N);
-  Utils::Array<T, Testing::N> out{};
-  for (std::size_t i = 0; i < Testing::N; ++i) {
-    out[i] = s[i];
+template <template <class, std::size_t...> class A, class T, std::size_t... N>
+auto testable_container(A<T, N...> const &array) {
+  if constexpr (sizeof...(N) == 0ul) {
+    if constexpr (std::is_same_v<A<T>, Utils::Quaternion<T>>) {
+      return array.m_data;
+    } else if constexpr (std::is_same_v<A<T>, Utils::compact_vector<T>>) {
+      assert(array.size() == Testing::N);
+      Utils::Array<T, Testing::N> out{};
+      for (std::size_t i = 0; i < Testing::N; ++i) {
+        out[i] = array[i];
+      }
+      return out;
+    }
+  } else {
+    if constexpr (std::is_same_v<A<T, N...>, Utils::detail::Storage<T, N...>>) {
+      return Utils::Array<T, N...>{array};
+    } else {
+      return array;
+    }
   }
-  return out;
 }
 
 /** Convert a string buffer to a string vector. */

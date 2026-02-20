@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu:3388b293a5e8a9b613b1bfa4220e54dfb4bff245
+image: ghcr.io/espressomd/docker/ubuntu:4d3e236db5ae334ddcc9c3c82aae7637faa5dabc
 
 stages:
   - prepare
@@ -16,11 +16,11 @@ stages:
 
 .notification_job_template: &notification_job_definition
   <<: *global_job_definition
-  image: ghcr.io/espressomd/docker/alpine:3388b293a5e8a9b613b1bfa4220e54dfb4bff245
+  image: ghcr.io/espressomd/docker/alpine:4d3e236db5ae334ddcc9c3c82aae7637faa5dabc
   variables:
     GET_SOURCES_ATTEMPTS: 3
   dependencies: []
-  timeout: 40m
+  timeout: 20m
   interruptible: false
   tags:
     - espresso
@@ -98,7 +98,7 @@ maxset:
      with_nlopt: 'true'
      with_caliper: 'true'
      check_skip_long: 'true'
-     cmake_params: '-D CMAKE_CXX_STANDARD=23 -D CMAKE_CXX_EXTENSIONS=OFF -D ESPRESSO_TEST_NP=8'
+     cmake_params: '-D CMAKE_CXX_STANDARD=23 -D CMAKE_CXX_EXTENSIONS=OFF -D ESPRESSO_TEST_NP=8 -D ESPRESSO_TEST_NT=8'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:

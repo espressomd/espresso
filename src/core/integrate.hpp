@@ -27,7 +27,7 @@
  *  Implementation in \ref integrate.cpp.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "PropagationMode.hpp"
 

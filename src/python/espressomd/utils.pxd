@@ -38,7 +38,6 @@ cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling::Run
 cdef extern from "error_handling/RuntimeError.hpp":
     cdef cppclass CoreRuntimeError "ErrorHandling::RuntimeError":
         string format()
-        void print()
         ErrorLevel level()
 
 cdef extern from "errorhandling.hpp" namespace "ErrorHandling":

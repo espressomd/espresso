@@ -42,13 +42,15 @@
 #endif
 
 #include <algorithm>
+#include <array>
+#include <cassert>
 #include <complex>
 #include <cstddef>
 #include <memory>
-#include <optional>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 template <typename FloatType, class FFTConfig> class P3MFFT;
 

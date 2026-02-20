@@ -34,7 +34,6 @@ espresso_unit_test(SRC histogram_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC accumulator_test.cpp DEPENDS espresso::utils
                    Boost::serialization)
 espresso_unit_test(SRC int_pow_test.cpp DEPENDS espresso::utils)
-espresso_unit_test(SRC sgn_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC AS_erfc_part_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC permute_ifield_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC vec_rotate_test.cpp DEPENDS espresso::utils)

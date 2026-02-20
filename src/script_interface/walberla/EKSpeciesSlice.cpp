@@ -93,16 +93,7 @@ Variant EKSpeciesSlice::do_call_method(std::string const &name,
                 1. / m_conv_flux);
   }
   if (name == "set_flux_at_boundary") {
-    context()->parallel_try_catch([&]() {
-      if (get_lattice().get_ghost_layers() < 2) {
-        if (context()->get_comm().size() > 1) {
-          throw std::runtime_error("The number of ghostlayers should be > 1 "
-                                   "when using flux boundaries and mpi.");
-        }
-        runtimeWarningMsg() << "The number of ghostlayers should be > 1 when "
-                               "using flux boundaries and mpi.";
-      }
-    });
+    m_ek_sip->flux_boundary_ghost_layer_size_sanity_check();
     return call(&LatticeModel::set_slice_flux_boundary, {1}, m_conv_flux);
   }
   if (name == "get_density_at_boundary") {

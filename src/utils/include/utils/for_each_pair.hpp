@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_UTILS_FOR_EACH_PAIR_HPP
-#define CORE_UTILS_FOR_EACH_PAIR_HPP
+#pragma once
 
+#include <algorithm>
 #include <iterator>
 
 namespace Utils {
@@ -34,10 +34,8 @@ namespace Utils {
 template <typename ForwardIterator, typename BinaryOp>
 void for_each_pair(ForwardIterator first, ForwardIterator last, BinaryOp op) {
   while (first != last) {
-    for (auto it = std::next(first); it != last; ++it) {
-      op(*first, *it);
-    }
-
+    auto next = std::next(first);
+    std::for_each(next, last, [&](auto const &nth) { op(*first, nth); });
     ++first;
   }
 }
@@ -63,10 +61,7 @@ void for_each_cartesian_pair(ForwardIterator first1, ForwardIterator last1,
                              ForwardIterator first2, ForwardIterator last2,
                              BinaryOp op) {
   while (first1 != last1) {
-    for (auto it = first2; it != last2; ++it) {
-      op(*first1, *it);
-    }
-
+    std::for_each(first2, last2, [&](auto const &nth) { op(*first1, nth); });
     ++first1;
   }
 }
@@ -94,12 +89,11 @@ void for_each_cartesian_pair_if(ForwardIterator first1, ForwardIterator last1,
                                 ForwardIterator first2, ForwardIterator last2,
                                 BinaryOp op, BinaryCmp cmp) {
   while (first1 != last1) {
-    for (auto it = first2; it != last2; ++it) {
-      if (cmp(*first1, *it)) {
-        op(*first1, *it);
+    std::for_each(first2, last2, [&](auto const &nth) {
+      if (cmp(*first1, nth)) {
+        op(*first1, nth);
       }
-    }
-
+    });
     ++first1;
   }
 }
@@ -115,4 +109,3 @@ void for_each_cartesian_pair_if(ForwardRange &&rng1, ForwardRange &&rng2,
                              std::forward<BinaryCmp>(cmp));
 }
 } // namespace Utils
-#endif

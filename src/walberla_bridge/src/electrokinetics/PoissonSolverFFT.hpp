@@ -350,7 +350,9 @@ public:
   get_slice_potential(Utils::Vector3i const &lower_corner,
                       Utils::Vector3i const &upper_corner) const override {
     std::vector<double> out;
+#ifndef NDEBUG
     uint_t values_size{0u};
+#endif
     auto const &lattice = get_lattice();
     if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
       out = std::vector<double>(ci->numCells());
@@ -362,7 +364,9 @@ public:
               m_potential_field_with_ghosts_id);
           auto const values = ek::accessor::Scalar::get(potential_field, *bci);
           assert(values.size() == bci->numCells());
+#ifndef NDEBUG
           values_size += bci->numCells();
+#endif
           auto kernel = [&values, &out](unsigned const block_index,
                                         unsigned const local_index,
                                         Utils::Vector3i const &) {

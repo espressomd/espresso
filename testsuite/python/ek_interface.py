@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys
 import numpy as np
 import itertools
 import unittest as ut
@@ -247,16 +246,16 @@ class EKTest:
             **self.ek_params,
             **self.ek_species_params)
         if np.max(self.system.cell_system.node_grid) > 1:
-            with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and mpi."):
+            with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and MPI"):
                 ek_small_gl_species[0, 0, 0].flux_boundary = espressomd.electrokinetics.FluxBoundary([
                     1., 2., 3.])
-            with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and mpi."):
+            with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and MPI"):
                 ek_small_gl_species[:, :, 0].flux_boundary = espressomd.electrokinetics.FluxBoundary([
                     1., 2., 3.])
             wall_shape = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
-            with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and mpi."):
-                ek_small_gl_species.add_boundary_from_shape(shape=wall_shape, value=[
-                                                            1., 2., 3.], boundary_type=espressomd.electrokinetics.FluxBoundary)
+            with self.assertRaisesRegex(RuntimeError, "The number of ghostlayers should be > 1 when using flux boundaries and MPI"):
+                ek_small_gl_species.add_boundary_from_shape(
+                    shape=wall_shape, value=[1., 2., 3.], boundary_type=espressomd.electrokinetics.FluxBoundary)
 
     def test_ek_solver_exceptions(self):
         ek_solver = self.system.ekcontainer.solver
@@ -479,9 +478,6 @@ class EKTest:
         self.system.ekcontainer.add(ek_species)
         self.system.integrator.run(1)
 
-        print("\nTesting EK runtime error messages:", file=sys.stderr)
-        sys.stderr.flush()
-
         # check exceptions without LB force field
         with self.assertRaisesRegex(Exception, "friction coupling enabled but no force field accessible"):
             ek_species.friction_coupling = True
@@ -507,9 +503,6 @@ class EKTest:
                 tau=2. * self.params["tau"], **self.lb_params)
             self.system.lb = lb
             self.system.integrator.run(1)
-
-        print("End of EK runtime error messages", file=sys.stderr)
-        sys.stderr.flush()
 
         # reset global variable fluid_step
         self.system.ekcontainer.clear()

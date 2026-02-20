@@ -73,8 +73,9 @@ def check_myconfig(compiler, feature_file, cmakedefine_file,
     try:
         Defines = defines.Defines
         external_features = Defines(compiler).defines(cmake_config)
+        escaped_whitespace = r"\ "
         external_defs = [
-            f'-DESPRESSO_{s.replace(" ", r"\ ")}' for s in external_features]
+            f'-DESPRESSO_{s.replace(" ", escaped_whitespace)}' for s in external_features]
         # gracefully handle file system latency by waiting on file creation
         wait_time = 0.01
         for _ in range(8):

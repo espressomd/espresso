@@ -16,17 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_CONSTRAINTS_DETAIL_MASS_HPP
-#define CORE_CONSTRAINTS_DETAIL_MASS_HPP
+
+#pragma once
 
 namespace FieldCoupling {
 namespace Coupling {
 class Mass {
 public:
-  static constexpr const bool is_linear = true;
+  static constexpr bool is_linear = true;
 
   template <typename T, typename Particle>
-  T operator()(const Particle &p, const T &x) const {
+  T operator()(Particle const &p, T const &x) const {
     if (not p.is_virtual()) {
       return p.mass() * x;
     }
@@ -35,5 +35,3 @@ public:
 };
 } // namespace Coupling
 } // namespace FieldCoupling
-
-#endif

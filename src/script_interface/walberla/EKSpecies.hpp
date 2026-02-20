@@ -173,6 +173,16 @@ public:
     };
   }
 
+  void flux_boundary_ghost_layer_size_sanity_check() const {
+    context()->parallel_try_catch([&]() {
+      if (get_lattice()->lattice()->get_ghost_layers() < 2 and
+          context()->get_comm().size() > 1) {
+        throw std::runtime_error("The number of ghostlayers should be > 1 "
+                                 "when using flux boundaries and MPI");
+      }
+    });
+  }
+
 protected:
   void make_instance(VariantMap const &params) override;
 

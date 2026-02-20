@@ -38,8 +38,7 @@ LatticeModel::create_vtk(int delta_N, int initial_count, int flag_observables,
 
   // VTKOutput object must be unique
   auto const vtk_uid = base_folder + "/" + identifier;
-  if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end() or
-      m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
+  if (m_vtk_auto.contains(vtk_uid) or m_vtk_manual.contains(vtk_uid)) {
     throw vtk_runtime_error(vtk_uid, "already exists");
   }
 
@@ -66,10 +65,10 @@ LatticeModel::create_vtk(int delta_N, int initial_count, int flag_observables,
 }
 
 void LatticeModel::write_vtk(std::string const &vtk_uid) {
-  if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
+  if (m_vtk_auto.contains(vtk_uid)) {
     throw vtk_runtime_error(vtk_uid, "is an automatic observable");
   }
-  if (m_vtk_manual.find(vtk_uid) == m_vtk_manual.end()) {
+  if (not m_vtk_manual.contains(vtk_uid)) {
     throw vtk_runtime_error(vtk_uid, "doesn't exist");
   }
   auto &vtk_handle = m_vtk_manual[vtk_uid];
@@ -78,10 +77,10 @@ void LatticeModel::write_vtk(std::string const &vtk_uid) {
 }
 
 void LatticeModel::switch_vtk(std::string const &vtk_uid, bool status) {
-  if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
+  if (m_vtk_manual.contains(vtk_uid)) {
     throw vtk_runtime_error(vtk_uid, "is a manual observable");
   }
-  if (m_vtk_auto.find(vtk_uid) == m_vtk_auto.end()) {
+  if (not m_vtk_auto.contains(vtk_uid)) {
     throw vtk_runtime_error(vtk_uid, "doesn't exist");
   }
   m_vtk_auto[vtk_uid]->enabled = status;

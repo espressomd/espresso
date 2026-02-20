@@ -160,7 +160,7 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
         p1 = self.system.part.add(pos=[0., 0., 0.])
         p2 = self.system.part.add(pos=[0., 0., bond.r_cut * 1.01])
         p1.bonds = ((bond, p2),)
-        with self.assertRaisesRegex(Exception, r"while calling method integrate\(\)"):
+        with self.assertRaisesRegex(Exception, "bond broken between particles"):
             self.system.integrator.run(steps=0, recalc_forces=True)
 
 

@@ -55,7 +55,6 @@ struct RuntimeError {
   int line() const { return m_line; }
   /** Get a string representation */
   std::string format() const;
-  void print() const;
 
 private:
   /** Boost serialization */

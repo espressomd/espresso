@@ -38,6 +38,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <stdexcept>
 
 void System::System::synchronize_npt_state() {

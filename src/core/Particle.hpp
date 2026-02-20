@@ -72,7 +72,7 @@ struct ThermalStonerWohlfarthParameters {
   /** angle between the director and dipole moment of a Stoner-Wohlfarth
    * particle */
   double phi0 = 0.;
-  /** saturation magnetisation of a polarisable particle */
+  /** saturation magnetisation of a polarizable particle */
   double sat_mag = 0.;
   /**
    * @brief Inverse anisotropy field in reduced units.

@@ -43,6 +43,7 @@
 #include "rotation.hpp"
 #include "short_range_cabana.hpp"
 #include "short_range_loop.hpp"
+#include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
 #include "thermostats/langevin_inline.hpp"
@@ -62,6 +63,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <memory>
 #include <span>
 #include <variant>
@@ -279,7 +281,7 @@ void System::System::calculate_forces() {
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_BEGIN("copy_particles_to_GPU");
 #endif
-    gpu.update();
+    gpu->update();
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_END("copy_particles_to_GPU");
 #endif
@@ -446,10 +448,10 @@ void System::System::calculate_forces() {
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_BEGIN("copy_forces_from_GPU");
 #endif
-    gpu.copy_forces_to_host(particles, this_node);
+    gpu->copy_forces_to_host(particles, this_node);
 
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-    gpu.copy_dip_fld_to_host(particles, this_node);
+    gpu->copy_dip_fld_to_host(particles, this_node);
 #endif
 
 #ifdef ESPRESSO_CALIPER

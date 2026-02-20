@@ -41,10 +41,11 @@
 #include <omp.h>
 #endif
 
+#include <array>
+#include <cassert>
 #include <complex>
 #include <cstddef>
 #include <memory>
-#include <optional>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>

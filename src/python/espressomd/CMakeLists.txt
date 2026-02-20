@@ -57,9 +57,12 @@ add_library(espresso::pyx_flags ALIAS espresso_pyx_flags)
 target_compile_options(
   espresso_pyx_flags
   INTERFACE
-    $<$<NOT:$<CXX_COMPILER_ID:IntelLLVM>>:-Wno-pedantic>
+    $<$<NOT:$<CXX_COMPILER_ID:IntelLLVM,NVHPC>>:-Wno-pedantic>
     $<$<NOT:$<CXX_COMPILER_ID:IntelLLVM>>:-Wno-cast-qual>
     $<$<NOT:$<CXX_COMPILER_ID:IntelLLVM>>:-Wno-deprecated-declarations>
+    $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-Wno-unused-macros>
+    $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-Wno-missing-field-initializers>
+    $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-Wno-format-nonliteral>
     $<$<CXX_COMPILER_ID:IntelLLVM>:-diag-disable=1224>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-cpp>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-volatile>
@@ -72,10 +75,9 @@ target_compile_options(
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-\#warnings>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-deprecated-volatile>
     $<$<CXX_COMPILER_ID:GNU,Clang>:-Wno-format-signedness>
+    $<$<CXX_COMPILER_ID:NVHPC>:--diag_suppress=set_but_not_used>
+    $<$<CXX_COMPILER_ID:NVHPC>:--diag_suppress=identifier_not_keyword>
     -Wno-cast-align
-    -Wno-missing-field-initializers
-    -Wno-format-nonliteral
-    -Wno-unused-macros
     -Wno-unused-variable)
 
 # Configure, compile and install Cython files

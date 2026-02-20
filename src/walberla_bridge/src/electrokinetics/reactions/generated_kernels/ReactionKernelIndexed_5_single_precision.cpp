@@ -53,11 +53,6 @@ static FUNC_PREFIX void reactionkernelindexed_5_single_precision_boundary_Reacti
     const int32_t y = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 4]));
     const int32_t z = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 8]));
 
-    const int32_t cx[] = {0};
-    const int32_t cy[] = {0};
-    const int32_t cz[] = {0};
-    const int32_t invdir[] = {0};
-
     const float local_rho_0 = _data_rho_0[_stride_rho_0_0 * x + _stride_rho_0_1 * y + _stride_rho_0_2 * z];
     const float local_rho_1 = _data_rho_1[_stride_rho_1_0 * x + _stride_rho_1_1 * y + _stride_rho_1_2 * z];
     const float local_rho_2 = _data_rho_2[_stride_rho_2_0 * x + _stride_rho_2_1 * y + _stride_rho_2_2 * z];

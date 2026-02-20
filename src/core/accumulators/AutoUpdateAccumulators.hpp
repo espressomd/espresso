@@ -23,6 +23,8 @@
 
 #include "system/Leaf.hpp"
 
+#include <vector>
+
 namespace Accumulators {
 
 class AutoUpdateAccumulators : public System::Leaf<AutoUpdateAccumulators> {

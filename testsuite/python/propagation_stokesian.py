@@ -86,8 +86,8 @@ class StokesianThermostat(ut.TestCase):
         self.assertTrue(np.all(np.not_equal(force1, [0, 0, 0])))
 
         # Same seed should not give the same force with different counter state
-        # force1: brownian.rng_counter() = 1, brownian.rng_seed() = 41
-        # force2: brownian.rng_counter() = 2, brownian.rng_seed() = 41
+        # force1: stokesian.rng_counter() = 1, stokesian.rng_seed() = 41
+        # force2: stokesian.rng_counter() = 2, stokesian.rng_seed() = 41
         p = reset_particle()
         system.thermostat.set_stokesian(kT=kT, seed=41)
         system.integrator.run(1)
@@ -97,8 +97,8 @@ class StokesianThermostat(ut.TestCase):
         self.assertTrue(np.all(np.not_equal(force2, force1)))
 
         # Seed offset should not give the same force with a lag
-        # force3: brownian.rng_counter() = 3, brownian.rng_seed() = 42
-        # force4: brownian.rng_counter() = 4, brownian.rng_seed() = 41
+        # force3: stokesian.rng_counter() = 3, stokesian.rng_seed() = 42
+        # force4: stokesian.rng_counter() = 4, stokesian.rng_seed() = 41
         p = reset_particle()
         system.thermostat.set_stokesian(kT=kT, seed=42)
         system.integrator.run(1)

@@ -34,8 +34,9 @@
 #include <utils/mpi/sendrecv.hpp>
 
 #include <boost/container/flat_set.hpp>
-#include <boost/mpi/collectives.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/mpi/request.hpp>
 #include <boost/range/algorithm/reverse.hpp>
 #include <boost/range/numeric.hpp>
 

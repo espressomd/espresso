@@ -53,12 +53,6 @@ static FUNC_PREFIX void dirichlet_double_precision_boundary_Dirichlet_double_pre
     const int32_t y = *((int32_t *)(&_data_indexVector[24 * ctr_0 + 4]));
     const int32_t z = *((int32_t *)(&_data_indexVector[24 * ctr_0 + 8]));
 
-    const int32_t cx[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1, 1, -1, 1, -1, 1, -1, 1, -1};
-    const int32_t cy[] = {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0, 1, 1, -1, -1, 1, 1, -1, -1};
-    const int32_t cz[] = {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1};
-    const int32_t invdir[] = {0, 2, 1, 4, 3, 6, 5, 10, 9, 8, 7, 16, 15, 18, 17, 12, 11, 14, 13, 26, 25, 24, 23, 22, 21, 20, 19};
-
-    const int32_t dir = *((int32_t *)(&_data_indexVector[24 * ctr_0 + 12]));
     _data_field[_stride_field_0 * x + _stride_field_1 * y + _stride_field_2 * z] = *((double *)(&_data_indexVector[24 * ctr_0 + 16]));
   }
 }

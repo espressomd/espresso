@@ -16,14 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SCRIPT_INTERFACE_PARALLEL_EXCEPTION_HANDLER_HPP
-#define ESPRESSO_SCRIPT_INTERFACE_PARALLEL_EXCEPTION_HANDLER_HPP
+
+#pragma once
 
 #include "core/errorhandling.hpp"
 
 #include <boost/mpi/communicator.hpp>
 
-#include <stdexcept>
+#include <exception>
 #include <string>
 #include <utility>
 
@@ -85,5 +85,3 @@ private:
   boost::mpi::communicator m_comm;
 };
 } // namespace ScriptInterface
-
-#endif

@@ -94,6 +94,12 @@ target_compile_options(
   espresso_walberla_compiler_flags
   INTERFACE
   $<$<COMPILE_LANG_AND_ID:CXX,CrayClang,IntelLLVM>:-Wno-reorder-ctor>
+  $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=code_is_unreachable>
+  $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=integer_sign_change>
+  $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=conversion_function_not_usable>
+  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CXX_COMPILER_ID:NVHPC>>:-Xcompiler=--diag_suppress=code_is_unreachable>
+  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CXX_COMPILER_ID:NVHPC>>:-Xcompiler=--diag_suppress=integer_sign_change>
+  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CXX_COMPILER_ID:NVHPC>>:-Xcompiler=--diag_suppress=conversion_function_not_usable>
 )
 target_compile_options(
   espresso_walberla_codegen_compiler_flags
@@ -101,11 +107,12 @@ target_compile_options(
   $<$<COMPILE_LANGUAGE:CXX>:-Wno-cast-align>
   $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-shadow=compatible-local>
   $<$<COMPILE_LANG_AND_ID:CXX,CrayClang,IntelLLVM>:-Wno-reorder-ctor>
+  $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-implicit-int-float-conversion>
   # silence diagnostics from MPI vendors
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM,AppleClang>>:-Wno-cast-function-type-mismatch>
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>>:-Wno-cast-function-type-mismatch>
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CXX,GNU>>:-Wno-cast-function-type>
-  $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>>:-Xcompiler=-Wno-cast-function-type>
+  $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<NOT:$<CXX_COMPILER_ID:NVHPC>>>:-Xcompiler=-Wno-cast-function-type>
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},MPICH>,$<COMPILE_LANGUAGE:CXX>>:-Wno-cast-qual>
 )
 # cmake-format: on
@@ -141,12 +148,14 @@ target_link_libraries(
 
 function(espresso_set_walberla_codegen_kernel_source_properties source_file)
   # disable sanitizers on kernels due to excessive runtime and VRAM usage
+  set(FLAGS "$<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-fno-sanitize=undefined>")
+  # enable debug-preserving optimizations on supported toolchains
+  set(FLAGS
+      "${FLAGS} $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Xptxas=-O0 -Xcompiler=>$<IF:$<CXX_COMPILER_ID:NVHPC>,-O0,-Og>>"
+  )
   set_source_files_properties(
     ${source_file} TARGET_DIRECTORY espresso_walberla_codegen
-    PROPERTIES
-      COMPILE_FLAGS
-      "-fno-sanitize=undefined $<$<CONFIG:Debug>:$<IF:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,-Xptxas=-O0 -Xcompiler=-Og,-Og>>"
-  )
+    PROPERTIES COMPILE_FLAGS "${FLAGS}")
 endfunction()
 
 if(WALBERLA_BUILD_WITH_CUDA)

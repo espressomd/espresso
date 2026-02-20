@@ -75,11 +75,6 @@ static FUNC_PREFIX __launch_bounds__(256) void reactionkernelindexed_3_single_pr
     uint8_t *RESTRICT _data_indexVector_18 = _data_indexVector + 8;
     const int32_t z = *((int32_t *)(&_data_indexVector_18[12 * blockDim.x * blockIdx.x + 12 * threadIdx.x]));
 
-    const int32_t cx[] = {0};
-    const int32_t cy[] = {0};
-    const int32_t cz[] = {0};
-    const int32_t invdir[] = {0};
-
     float *RESTRICT _data_rho_0_10_20 = _data_rho_0 + _stride_rho_0_1 * y + _stride_rho_0_2 * z;
     const float local_rho_0 = _data_rho_0_10_20[_stride_rho_0_0 * x];
     float *RESTRICT _data_rho_1_10_20 = _data_rho_1 + _stride_rho_1_1 * y + _stride_rho_1_2 * z;

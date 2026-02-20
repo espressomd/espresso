@@ -114,7 +114,7 @@ velocity_verlet_npt_propagate_pos_MTK(NptIsoParameters &nptiso,
 }
 
 /**
- * @brief propagete positions and the volume and add thermal fluctuation.
+ * @brief propagate positions and the volume and add thermal fluctuation.
  * A and V are the position and volume propagators for half-time step.
  * O is the propagator corresponding to Ornstein-Uhlenbeck process
  * representing the stochastic thermostat.
@@ -150,12 +150,12 @@ static void velocity_verlet_npt_propagate_AVOVA_MTK(
     }
   }
 
-  /* 1st propagatation Volume with dt/2
+  /* 1st propagation: volume with dt/2
    * @f$ V(t+0.5*dt) = \exp(0.5 * dt * 3 * p_{\epsilon} / W) * V(t) @f$,
    * stochastic reservoirs for conjugate momentum for V
    * @f$ p_{\epsilon} = p_{epsilon}(t) \exp(- \gamma_V dt / W)
    *                    + \sqrt{k_B T (1 - \exp(-2 \gamma_V dt / W)}N(0,1) @f$,
-   * 2nd propagatation Volume with dt/2
+   * 2nd propagation: volume with dt/2
    * @f$ V(t+dt) = \exp(0.5 * dt * 3 * p_{\epsilon} / W) * V(t+0.5*dt) @f$,
    */
   if (::this_node == 0) {

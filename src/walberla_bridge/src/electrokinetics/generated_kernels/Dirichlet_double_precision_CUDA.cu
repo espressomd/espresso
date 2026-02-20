@@ -83,11 +83,6 @@ static FUNC_PREFIX __launch_bounds__(256) void dirichlet_double_precision_cuda_b
     uint8_t *RESTRICT _data_indexVector_18 = _data_indexVector + 8;
     const int32_t z = *((int32_t *)(&_data_indexVector_18[24 * blockDim.x * blockIdx.x + 24 * threadIdx.x]));
 
-    const int32_t cx[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1, 1, -1, 1, -1, 1, -1, 1, -1};
-    const int32_t cy[] = {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0, 1, 1, -1, -1, 1, 1, -1, -1};
-    const int32_t cz[] = {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1};
-    const int32_t invdir[] = {0, 2, 1, 4, 3, 6, 5, 10, 9, 8, 7, 16, 15, 18, 17, 12, 11, 14, 13, 26, 25, 24, 23, 22, 21, 20, 19};
-
     double *RESTRICT _data_field_10_20 = _data_field + _stride_field_1 * y + _stride_field_2 * z;
     uint8_t *RESTRICT _data_indexVector_116 = _data_indexVector + 16;
     _data_field_10_20[_stride_field_0 * x] = *((double *)(&_data_indexVector_116[24 * blockDim.x * blockIdx.x + 24 * threadIdx.x]));

@@ -35,8 +35,10 @@
 
 #include <boost/mpi/communicator.hpp>
 
+#include <cstddef>
 #include <optional>
 #include <span>
+#include <utility>
 #include <vector>
 
 /**

@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_MPI_CART_COMM_HPP
-#define UTILS_MPI_CART_COMM_HPP
+
+#pragma once
 
 #include <utils/Vector.hpp>
 
@@ -33,7 +33,7 @@ namespace Utils {
 namespace Mpi {
 
 /**
- * @brief Wrapper around MPI_Dims_create.
+ * @brief Wrapper around @c MPI_Dims_create.
  *
  * @tparam dim Number of dimensions
  */
@@ -46,7 +46,7 @@ template <std::size_t dim> Vector<int, dim> dims_create(int nodes) {
 }
 
 /**
- * @brief Wrapper around MPI_Cart_create.
+ * @brief Wrapper around @c MPI_Cart_create.
  *
  * @tparam dim Number of dimensions
  */
@@ -64,7 +64,7 @@ boost::mpi::communicator cart_create(
 }
 
 /**
- * @brief Wrapper around MPI_Cart_coords.
+ * @brief Wrapper around @c MPI_Cart_coords.
  *
  * @tparam dims Number of dimensions
  */
@@ -76,7 +76,7 @@ Vector3i cart_coords(boost::mpi::communicator const &comm, int rank) {
 }
 
 /**
- * @brief Wrapper around MPI_Cart_rank.
+ * @brief Wrapper around @c MPI_Cart_rank.
  *
  * @tparam dims Number of dimensions
  */
@@ -89,7 +89,7 @@ int cart_rank(boost::mpi::communicator const &comm,
 }
 
 /**
- * @brief Wrapper around MPI_Cart_shift.
+ * @brief Wrapper around @c MPI_Cart_shift.
  *
  * @return pair of source and destination rank.
  */
@@ -125,10 +125,9 @@ cart_neighbors(const boost::mpi::communicator &comm) {
 }
 
 /**
- * @brief Information about a cartesian communicator.
+ * @brief Information about a Cartesian communicator.
  *
- * Members correspond to the output arguments of
- * MPI_Cart_get.
+ * Members correspond to the output arguments of @c MPI_Cart_get.
  *
  * @tparam dim Number of dimensions.
  */
@@ -139,10 +138,10 @@ template <std::size_t dim> struct CartInfo {
 };
 
 /**
- * @brief Wrapper around MPI_Cart_get.
+ * @brief Wrapper around @c MPI_Cart_get.
  *
  * @tparam dim Number of dimensions.
- * @param comm Communicator with cartesian topology.
+ * @param comm Communicator with Cartesian topology.
  *
  * @return Struct with information about the communicator.
  */
@@ -158,5 +157,3 @@ CartInfo<dim> cart_get(const boost::mpi::communicator &comm) {
 
 } // namespace Mpi
 } // namespace Utils
-
-#endif

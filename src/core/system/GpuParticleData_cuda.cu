@@ -24,7 +24,6 @@
 #include <config/config.hpp>
 
 #include "GpuParticleData.hpp"
-#include "ResourceCleanup.hpp"
 #include "System.hpp"
 
 #include "ParticleRange.hpp"
@@ -67,6 +66,7 @@ template <class SpanLike> std::size_t byte_size(SpanLike const &v) {
  * Behaves as-if @c vec.resize(n) was called.
  * This is fixed in Thrust 1.11, shipped in CUDA 11.3
  * (https://github.com/NVIDIA/thrust/commit/1c4f25d9).
+ * But Clang 20's UBSAN still triggers a runtime error as of CUDA 12.0
  *
  * @tparam T Type contained in the vector.
  * @param vec Vector to resize.
@@ -88,10 +88,6 @@ template <typename T> void free_device_vector(thrust::device_vector<T> &vec) {
 
 /** @brief Host and device containers for particle data. */
 class GpuParticleData::Storage {
-  void free_device_memory();
-  using DeviceMemory = ResourceCleanup::Attorney<&Storage::free_device_memory>;
-  friend DeviceMemory;
-
 public:
   /** @brief Which particle properties are needed by GPU methods. */
   GpuParticleData::prop::bitset m_need;
@@ -117,13 +113,7 @@ public:
   float *particle_q_device = nullptr;
 #endif
 
-  static auto make_shared(ResourceCleanup &cleanup_queue) {
-    auto obj = std::make_shared<GpuParticleData::Storage>();
-    cleanup_queue.push<DeviceMemory>(obj);
-    return obj;
-  }
-
-  ~Storage() { free_device_memory(); }
+  ~Storage();
   void realloc_device_memory();
   void split_particle_struct();
   void copy_particles_to_device();
@@ -170,9 +160,17 @@ public:
 #endif
 };
 
+// default ctor/dtor definitions must appear out-of-line due to the
+// forward-declaration of the Storage class
+GpuParticleData::GpuParticleData() = default;
+GpuParticleData::~GpuParticleData() = default;
+
 void GpuParticleData::initialize() {
-  m_data = GpuParticleData::Storage::make_shared(get_system().cleanup_queue);
+  m_data = std::make_unique<GpuParticleData::Storage>();
+  get_system().cleanup_queue.push<DeviceMemory>(shared_from_this());
 }
+
+void GpuParticleData::deinitialize() noexcept { m_data.reset(); }
 
 std::size_t GpuParticleData::n_particles() const {
   return m_data->particle_data_device.size();
@@ -479,21 +477,13 @@ void GpuParticleData::Storage::realloc_device_memory() {
   current_size = new_size;
 }
 
-void GpuParticleData::Storage::free_device_memory() {
-  auto const free_device_pointer = [](auto *&ptr) {
+GpuParticleData::Storage::~Storage() {
+  auto const free_device_pointer = [](auto *&ptr) noexcept {
     if (ptr != nullptr) {
-      cuda_safe_mem(cudaFree(reinterpret_cast<void *>(ptr)));
+      cudaFree(reinterpret_cast<void *>(ptr));
       ptr = nullptr;
     }
   };
-  free_device_vector(particle_data_device);
-  free_device_vector(particle_forces_device);
-#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  free_device_vector(particle_dip_fld_device);
-#endif
-#ifdef ESPRESSO_ROTATION
-  free_device_vector(particle_torques_device);
-#endif
   free_device_pointer(particle_pos_device);
 #ifdef ESPRESSO_DIPOLES
   free_device_pointer(particle_dip_device);

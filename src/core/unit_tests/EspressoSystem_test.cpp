@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE System test
+#define BOOST_TEST_MODULE "System test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -72,7 +72,7 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
   auto system = ::System::System::create();
   System::set_system(system);
   system->set_cell_structure_topology(CellStructureType::REGULAR);
-  auto &gpu = system->gpu;
+  auto &gpu = *system->gpu;
 
   // check uninitialized device pointers
   BOOST_CHECK_EQUAL(gpu.get_energy_device(), nullptr);

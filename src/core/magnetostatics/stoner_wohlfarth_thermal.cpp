@@ -40,8 +40,8 @@
 
 #include <cassert>
 #include <cmath>
+#include <memory>
 #include <numbers>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -138,7 +138,7 @@ static double get_phi_at_energy_min(double theta, double h, double phi0,
     if (noise < p12) {
       opt.set_min_objective(phi_objective, &params);
       phi[0] = std::fmod(phi_min1 + pi + eps_phi, two_pi);
-      /*try to find another minimimum from the other side*/
+      // try to find another minimum from the other side
       auto min2 = 0.;
       opt.optimize(phi, min2);
       auto const phi_min2 = std::fmod(phi[0], two_pi);

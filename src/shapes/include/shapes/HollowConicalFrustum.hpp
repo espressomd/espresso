@@ -17,14 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SHAPES_CONICAL_FRUSTUM_HPP
-#define SHAPES_CONICAL_FRUSTUM_HPP
+#pragma once
 
 #include "Shape.hpp"
-#include "utils/math/cylindrical_transformation_parameters.hpp"
-#include <utils/Vector.hpp>
 
-#include <list>
+#include <utils/Vector.hpp>
+#include <utils/math/cylindrical_transformation_parameters.hpp>
+
 #include <memory>
 #include <utility>
 
@@ -102,5 +101,3 @@ private:
       m_cyl_transform_params;
 };
 } // namespace Shapes
-
-#endif

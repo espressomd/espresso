@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SRC_SHAPES_SLITPORE_HPP
-#define SRC_SHAPES_SLITPORE_HPP
+#pragma once
 
 #include "Shape.hpp"
 
@@ -56,5 +55,3 @@ private:
   double m_dividing_plane;
 };
 } // namespace Shapes
-
-#endif

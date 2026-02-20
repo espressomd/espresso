@@ -25,15 +25,16 @@
  *  Implementation in \ref thermostat.cpp.
  */
 
+#include <config/config.hpp>
+
 #include "Particle.hpp"
 #include "PropagationMode.hpp"
 #include "rotation.hpp"
 #include "system/Leaf.hpp"
 
-#include "config/config.hpp"
-
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
+#include <utils/matrix.hpp>
 
 #include <cassert>
 #include <cmath>
@@ -210,7 +211,7 @@ public:
      */
     sigma_pos = sigma(kT, gamma);
 #ifdef ESPRESSO_ROTATION
-    /** Note: the BD thermostat assigns the brownian viscous parameters as well.
+    /** Note: the BD thermostat assigns the Brownian viscous parameters as well.
      *  They correspond to the friction tensor Z from the eq. (14.31) of
      *  @cite schlick10a.
      */
@@ -220,7 +221,7 @@ public:
   }
   /** Calculate the noise prefactor.
    *  Evaluates the quantity @f$ \sqrt{2 k_B T / \gamma} / \sigma_\eta @f$
-   *  with @f$ \sigma_\eta @f$ the standard deviation of the random gaussian
+   *  with @f$ \sigma_\eta @f$ the standard deviation of the random Gaussian
    *  process @f$ \eta(t) @f$.
    */
   static GammaType sigma(double kT, GammaType const &gamma) {
@@ -229,7 +230,7 @@ public:
   }
   /** Calculate the noise prefactor.
    *  Evaluates the quantity @f$ \sqrt{k_B T} / \sigma_\eta @f$
-   *  with @f$ \sigma_\eta @f$ the standard deviation of the random gaussian
+   *  with @f$ \sigma_\eta @f$ the standard deviation of the random Gaussian
    *  process @f$ \eta(t) @f$.
    */
   static double sigma(double kT) {

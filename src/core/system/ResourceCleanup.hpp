@@ -75,7 +75,12 @@ public:
    * class MyClass {
    * private:
    *   thrust::device_ptr<float> data_dev;
-   *   void free_device_memory() { thrust::device_free(data_dev); }
+   *   void free_device_memory() noexcept {
+   *     if (data_dev) {
+   *       thrust::device_free(data_dev);
+   *       data_dev = nullptr;
+   *     }
+   *   }
    *   using Cleanup = ResourceCleanup::Attorney<&MyClass::free_device_memory>;
    *   friend Cleanup;
    *
@@ -105,18 +110,27 @@ public:
    */
   template <auto deallocator> class Attorney {
     struct detail {
-      template <class C> struct get_class_from_member_function_pointer;
+      template <class C> struct get_class_from_method;
       template <class C, class Ret, class... Args>
-      struct get_class_from_member_function_pointer<Ret (C::*)(Args...)> {
+      struct get_class_from_method<Ret (C::*)(Args...)> {
+#if defined(__NVCC__) or defined(__NVCOMPILER) or                              \
+    defined(__GNUC__) and __GNUC__ < 13
+        using type = C;
+#else
+        static_assert(false,
+                      "deallocator must have signature void(S::*)() noexcept");
+#endif
+      };
+      template <class C, class Ret, class... Args>
+      struct get_class_from_method<Ret (C::*)(Args...) noexcept> {
         using type = C;
       };
     };
     using Deallocator = decltype(deallocator);
     static_assert(std::is_member_function_pointer_v<Deallocator>);
-    using Container = detail::template get_class_from_member_function_pointer<
-        Deallocator>::type;
+    using Container = detail::template get_class_from_method<Deallocator>::type;
     static_assert(std::is_invocable_v<Deallocator, Container>,
-                  "deallocator must have signature void(S::*)()");
+                  "deallocator must have signature void(S::*)() noexcept");
     static_assert(
         std::is_same_v<std::invoke_result_t<Deallocator, Container>, void>,
         "deallocator must return void");

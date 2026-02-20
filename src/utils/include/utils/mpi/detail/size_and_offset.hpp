@@ -18,19 +18,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef UTILS_MPI_DETAIL_SIZE_AND_OFFSET_HPP
-#define UTILS_MPI_DETAIL_SIZE_AND_OFFSET_HPP
+#pragma once
 
 #include <algorithm>
+#include <cstddef>
 #include <numeric>
 #include <vector>
 
-#include <boost/mpi/collectives.hpp>
+#include <boost/mpi/collectives/gather.hpp>
 #include <boost/mpi/communicator.hpp>
 
-namespace Utils {
-namespace Mpi {
-namespace detail {
+namespace Utils::Mpi::detail {
 
 template <typename T>
 int size_and_offset(std::vector<int> &sizes, std::vector<int> &displ,
@@ -46,7 +44,7 @@ int size_and_offset(std::vector<int> &sizes, std::vector<int> &displ,
   auto const total_size = std::accumulate(sizes.begin(), sizes.end(), 0);
 
   int offset = 0;
-  for (unsigned int i = 0; i < sizes.size(); i++) {
+  for (std::size_t i = 0; i < sizes.size(); i++) {
     displ[i] = offset;
     offset += sizes[i];
   }
@@ -60,8 +58,4 @@ inline void size_and_offset(int n_elem, const boost::mpi::communicator &comm,
   boost::mpi::gather(comm, n_elem, root);
 }
 
-} // namespace detail
-} // namespace Mpi
-} // namespace Utils
-
-#endif
+} // namespace Utils::Mpi::detail

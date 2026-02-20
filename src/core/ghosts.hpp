@@ -26,7 +26,7 @@
  *
  *  In this file you find everything concerning the exchange of
  *  particle data (particles, ghosts, positions and forces) for short
- *  range interactions between the spacial domains of neighbouring
+ *  range interactions between the spatial domains of neighboring
  *  nodes.
  *
  *  <h2> How does this work </h2>

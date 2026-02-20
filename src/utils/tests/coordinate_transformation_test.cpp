@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_with_axis_and_orientation_test) {
       transform_coordinate_cylinder_to_cartesian(cylinder_coord, e_y, e_x);
   auto const transformed_z =
       transform_coordinate_cylinder_to_cartesian(cylinder_coord, e_z, e_x);
-  // We transform from cylinder to cartesian and have to rotate back. See test
+  // We transform from cylinder to Cartesian and have to rotate back. See test
   // cartesian_to_cylinder_test.
   auto const expected_x = vec_rotate(
       e_y, std::numbers::pi / 2.0,

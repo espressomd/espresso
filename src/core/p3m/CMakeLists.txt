@@ -28,7 +28,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
   target_compile_options(
     espresso_p3m_compiler_flags
     INTERFACE
-      $<$<COMPILE_LANGUAGE:CXX>:-Wno-float-conversion>
+      $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wno-float-conversion>
       $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-implicit-float-conversion>
   )
   target_link_libraries(

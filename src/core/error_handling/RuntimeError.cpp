@@ -48,6 +48,5 @@ std::string RuntimeError::format() const {
 
   return ostr.str();
 }
-void RuntimeError::print() const { std::cerr << format() << std::endl; }
 
 } // namespace ErrorHandling

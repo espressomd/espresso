@@ -83,11 +83,6 @@ static FUNC_PREFIX __launch_bounds__(256) void fixedflux_single_precision_cuda_b
     uint8_t *RESTRICT _data_indexVector_18 = _data_indexVector + 8;
     const int32_t z = *((int32_t *)(&_data_indexVector_18[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]));
 
-    const int32_t cx[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1, 1, -1, 1, -1, 1, -1, 1, -1};
-    const int32_t cy[] = {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0, 1, 1, -1, -1, 1, 1, -1, -1};
-    const int32_t cz[] = {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1};
-    const int32_t invdir[] = {0, 2, 1, 4, 3, 6, 5, 10, 9, 8, 7, 16, 15, 18, 17, 12, 11, 14, 13, 26, 25, 24, 23, 22, 21, 20, 19};
-
     uint8_t *RESTRICT _data_indexVector_112 = _data_indexVector + 12;
     const int32_t dir = *((int32_t *)(&_data_indexVector_112[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]));
     if (((dir) == (26))) {

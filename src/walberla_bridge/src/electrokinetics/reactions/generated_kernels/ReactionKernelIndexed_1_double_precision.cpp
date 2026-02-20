@@ -53,11 +53,6 @@ static FUNC_PREFIX void reactionkernelindexed_1_double_precision_boundary_Reacti
     const int32_t y = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 4]));
     const int32_t z = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 8]));
 
-    const int32_t cx[] = {0};
-    const int32_t cy[] = {0};
-    const int32_t cz[] = {0};
-    const int32_t invdir[] = {0};
-
     const double local_rho_0 = _data_rho_0[_stride_rho_0_0 * x + _stride_rho_0_1 * y + _stride_rho_0_2 * z];
     const double rate_factor = pow(local_rho_0, order_0) * rate_coefficient;
     _data_rho_0[_stride_rho_0_0 * x + _stride_rho_0_1 * y + _stride_rho_0_2 * z] = local_rho_0 + rate_factor * stoech_0;

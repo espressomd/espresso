@@ -19,11 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef UTILS_FACTORY_HPP
-#define UTILS_FACTORY_HPP
+#pragma once
 
 #include <cassert>
-#include <exception>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -36,13 +34,13 @@ namespace Utils {
  * @brief Factory template.
  *
  * Can be used to construct registered instances of classes derived
- * from the base type (`T`) by name.
- * One registry per base type (`T`). To get a new one,
- * use new type ( `struct NewT : public T {};` ).
+ * from the base type (`Base`) by name.
+ * Only one registry per base type (`Base`). To get a new one,
+ * use a new type ( `struct Derived : public Base {};` ).
  * To add a new type it has to be given a name an a function of type
- * `%Factory<T>::%builder_type` to create an instance has to be provided.
+ * `%Factory<Base>::%builder_type` to create an instance has to be provided.
  * The class contains a default implementation for the creation
- * function (`%Factory<T>::%builder<Derived>`) which just calls
+ * function (`%Factory<Base>::%builder<Derived>`) which just calls
  * new to create an instance. A user provided function could
  * be used to use a non-default constructor, or to allocate memory
  * for the instance in a specific way, e.g. by placing all new instances
@@ -72,13 +70,10 @@ namespace Utils {
  *     assert(dynamic_cast<C *>(c.get())->m_c == 5);
  * @endcode
  */
-template <
-    /** The base type of the instances created by this factory */
-    class T>
-class Factory {
+template <class Base> class Factory {
 public:
   /** The returned pointer type */
-  using pointer_type = std::unique_ptr<T>;
+  using pointer_type = std::unique_ptr<Base>;
   /** Type of the constructor functions */
   using builder_type = pointer_type (*)();
 
@@ -86,7 +81,7 @@ public:
   /**
    * @brief Construct an instance by name.
    */
-  pointer_type make(const std::string &name) const {
+  pointer_type make(std::string const &name) const {
     try {
       auto builder = m_map.at(name);
       return assert(builder), builder();
@@ -101,16 +96,19 @@ public:
    * @param name Given name to check.
    * @return Whether we know how to make a `name`.
    */
-  bool has_builder(const std::string &name) const {
-    return not(m_map.find(name) == m_map.end());
+  bool has_builder(std::string const &name) const {
+    return m_map.contains(name);
   }
 
   /**
    * @brief Register a new type with the default construction function.
    *
-   * @param name Given name for the type, has to be unique in this Factory<T>.
+   * @param name Given name for the type, must be unique.
    */
-  template <typename Derived> void register_new(const std::string &name) {
+  template <typename Derived> void register_new(std::string const &name) {
+    if (m_map.contains(name)) {
+      throw std::runtime_error("Name '" + name + "' was already registered.");
+    }
     m_map[name] = []() { return pointer_type(new Derived()); };
     m_type_map[typeid(Derived)] = name;
   }
@@ -127,9 +125,9 @@ public:
    * @param o Object whose type is to be considered.
    * @throw  std::out_of_range If the type is not registered.
    *
-   * @return Name by which T can be made.
+   * @return Name by which `Base` can be made.
    */
-  const std::string &type_name(T const &o) const {
+  auto const &type_name(Base const &o) const {
     return m_type_map.at(typeid(o));
   }
 
@@ -140,5 +138,3 @@ private:
   std::unordered_map<std::type_index, std::string> m_type_map;
 };
 } /* namespace Utils */
-
-#endif

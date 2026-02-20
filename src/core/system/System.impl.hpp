@@ -25,6 +25,7 @@
 #include "ek/Implementation.hpp"
 #include "lb/Implementation.hpp"
 
+#include "GpuParticleData.hpp"
 #include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"

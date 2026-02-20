@@ -27,16 +27,14 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
-#include "dpd.hpp"
 #include "errorhandling.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
 
-#include <variant>
-
 #include <ranges>
+#include <variant>
 
 void Thermostat::Thermostat::recalc_prefactors(double time_step) {
   if (thermalized_bond) {

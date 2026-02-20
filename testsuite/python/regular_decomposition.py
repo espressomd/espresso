@@ -180,12 +180,12 @@ class RegularDecomposition(ut.TestCase):
             # pair loop
             p1 = particles[pair[0]]
             p2 = particles[pair[1]]
-            # if not accross periodic boundary: particles must be in cells
+            # if not across periodic boundary: particles must be in cells
             # sharing at least one corner
             d_abs = np.abs(p1.pos - p2.pos)
             if d_abs[fc_normal_coord] < system.box_l[fc_normal_coord] / 2:
                 self.assertLess(dist_sq_matrix[pair], two_cells_3d**2)
-            # If across a fully connected boundary, substract the distance
+            # If across a fully connected boundary, subtract the distance
             # in the fully connected direction (all are valid)
             d = vec_matrix[pair]
             d_trans = d - d * fc_dir

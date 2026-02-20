@@ -37,8 +37,16 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/multi_array.hpp>
 
+#if defined(__GNUC__) or defined(__GNUG__)
+// ignore false positive: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=119388
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
 #include <highfive/boost.hpp>
 #include <highfive/highfive.hpp>
+#if defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic pop
+#endif
 
 #include <mpi.h>
 

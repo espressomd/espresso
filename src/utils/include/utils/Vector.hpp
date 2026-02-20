@@ -56,7 +56,6 @@ public:
   using Base::operator[];
   using Base::back;
   using Base::begin;
-  using Base::broadcast;
   using Base::cbegin;
   using Base::cend;
   using Base::data;

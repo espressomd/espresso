@@ -83,7 +83,7 @@ using recursive_variant_add_containers =
 template <class... Ts>
 struct recursive_variant : recursive_variant_add_containers<Ts...> {
   using BaseClass = recursive_variant_add_containers<Ts...>;
-  using BaseClass::BaseClass;
+  using BaseClass::BaseClass; // NOLINT(modernize-use-equals-default)
 
   /** @brief Is a given type part of this variant's type list. */
   template <class T> using has_type = std::disjunction<std::is_same<T, Ts>...>;

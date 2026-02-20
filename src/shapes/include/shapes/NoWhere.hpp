@@ -19,10 +19,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SHAPES_NOWHERE_HPP
-#define SHAPES_NOWHERE_HPP
+#pragma once
 
 #include "Shape.hpp"
+
+#include <utils/Vector.hpp>
 
 #include <limits>
 
@@ -42,5 +43,3 @@ public:
 };
 
 } /* namespace Shapes */
-
-#endif

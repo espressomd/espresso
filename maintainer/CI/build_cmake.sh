@@ -187,6 +187,23 @@ if [ "${with_cuda}" = true ]; then
     fi
 fi
 
+if [[ "${OSTYPE}" == "darwin"* ]]; then
+  # detect libomp on macOS (see https://gitlab.kitware.com/cmake/cmake/-/issues/24097)
+  cmake_param_list+=(
+    -D OpenMP_C_FLAG="-Xclang -fopenmp"
+    -D OpenMP_CXX_FLAG="-Xclang -fopenmp"
+    -D OpenMP_C_LIB_NAMES=libomp
+    -D OpenMP_CXX_LIB_NAMES=libomp
+    -D OpenMP_C_INCLUDE_DIR=/opt/homebrew/opt/libomp/include
+    -D OpenMP_CXX_INCLUDE_DIR=/opt/homebrew/opt/libomp/include
+    -D OpenMP_libomp_LIBRARY=/opt/homebrew/opt/libomp/lib/libomp.dylib
+  )
+  # skip libomp runtime checks on macOS (GitHub runner image contains multiple versions of libomp)
+  export KMP_DUPLICATE_LIB_OK=TRUE
+  # use 1 thread by default in the Python testsuite
+  sed -i "" "s/set(TEST_NUM_THREADS 2)/set(TEST_NUM_THREADS 1)/" testsuite/python/CMakeLists.txt
+fi
+
 # show system characteristics
 if test -x "$(command -v nvidia-smi)"; then
   nvidia-smi || echo "nvidia-smi returned an error"
@@ -236,6 +253,8 @@ if [ -f "/etc/os-release" ]; then
                                 --admindir "${HOME}/.local/var/lib/alternatives" \
                                 --install "${HOME}/.local/bin/gcov" "gcov" "${custom_gcov}" 10
         fi
+        export OMPI_MCA_mpi_abort_print_stack=enabled
+        export OMPI_MCA_hwloc_base_binding_policy=none
     fi
 fi
 
@@ -386,7 +405,6 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
         echo "Running lcov and gcov..."
         codecov_opts="${codecov_opts} --gcov"
         "${srcdir}/maintainer/CI/run_lcov.sh" coverage.info
-        rm coverage.info
     fi
     if [ "${with_coverage_python}" = true ]; then
         echo "Running python3-coverage..."

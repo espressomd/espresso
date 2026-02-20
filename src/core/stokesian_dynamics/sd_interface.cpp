@@ -120,8 +120,9 @@ void StokesianDynamics::propagate_vel_pos(
   std::vector<SD_particle_data> parts_buffer{};
   parts_buffer.reserve(particles.size());
 
-  std::ranges::transform(particles, std::back_inserter(parts_buffer),
-                         [](auto const &p) { return SD_particle_data(p); });
+  for (auto const &p : particles) {
+    parts_buffer.emplace_back(p);
+  }
   Utils::Mpi::gather_buffer(parts_buffer, ::comm_cart, 0);
 
   /* Buffer that holds local particle data, and all particles on the head

@@ -19,10 +19,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SHAPES_WALL_HPP
-#define SHAPES_WALL_HPP
+#pragma once
 
 #include "Shape.hpp"
+
 #include <utils/Vector.hpp>
 
 namespace Shapes {
@@ -53,5 +53,3 @@ private:
 };
 
 } /* namespace Shapes */
-
-#endif

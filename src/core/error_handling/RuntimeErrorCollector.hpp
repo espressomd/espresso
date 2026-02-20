@@ -24,7 +24,6 @@
 #include <boost/mpi/communicator.hpp>
 
 #include <mutex>
-#include <sstream>
 #include <string>
 #include <vector>
 

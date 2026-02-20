@@ -24,9 +24,7 @@
 #include "utils.hpp"
 
 #include <cassert>
-#include <cmath>
 #include <memory>
-#include <optional>
 
 namespace EK {
 

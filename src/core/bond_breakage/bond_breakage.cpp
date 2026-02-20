@@ -31,17 +31,17 @@
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <memory>
 #include <mutex>
+#include <span>
 #include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
 
 namespace BondBreakage {
-// std::mutex queue_mtx;
-
 // Variant holding any of the actions
 using Action = std::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
 

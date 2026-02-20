@@ -54,9 +54,6 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "errorhandling.hpp"
-#include "system/System.hpp"
-
-#include <utils/Vector.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -73,6 +70,7 @@
 #include <cstdio>
 #include <cstring>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <sys/stat.h>
 #include <tuple>

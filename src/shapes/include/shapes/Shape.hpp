@@ -19,10 +19,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SHAPES_SHAPE_HPP
-#define SHAPES_SHAPE_HPP
+#pragma once
 
 #include <utils/Vector.hpp>
+
+#include <vector>
 
 namespace Shapes {
 
@@ -65,5 +66,3 @@ public:
 };
 
 } /* namespace Shapes */
-
-#endif

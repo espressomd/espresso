@@ -25,8 +25,10 @@
 
 #include <cassert>
 #include <cstddef>
+#include <initializer_list>
 #include <set>
 #include <unordered_map>
+#include <utility>
 
 namespace Utils {
 
@@ -63,9 +65,9 @@ public:
     }
 
     /* Refill the index set */
-    for (index_type it(0); m_free_indices.size() < 2; ++it) {
-      if (m_container.find(it) == m_container.end()) {
-        m_free_indices.insert(it);
+    for (index_type index{}; m_free_indices.size() < 2ul; ++index) {
+      if (not m_container.contains(index)) {
+        m_free_indices.insert(index);
       }
     }
   }
@@ -77,15 +79,15 @@ public:
    *
    * @param c The object to add.
    */
-  index_type add(const T &c) {
-    const index_type ind = get_index();
+  index_type add(T const &c) {
+    auto const ind = get_index();
     m_container[ind] = c;
     return ind;
   }
 
   /** @overload */
   index_type add(T &&c) {
-    const index_type ind = get_index();
+    auto const ind = get_index();
     m_container[ind] = std::move(c);
     return ind;
   }
@@ -100,7 +102,7 @@ public:
    */
   void remove(index_type i) {
     /* Check that the object actually exists */
-    assert(m_container.find(i) != m_container.end());
+    assert(m_container.contains(i));
 
     m_container.erase(i);
     m_free_indices.insert(i);
@@ -182,14 +184,14 @@ private:
     /* Get lowest free index */
     /* If we don't have a free index, sth went wrong. */
     assert(!m_free_indices.empty());
-    const index_type index = *m_free_indices.begin();
+    auto const index = *m_free_indices.begin();
     /* and remove it from the list */
     m_free_indices.erase(index);
 
-    /* If there is only on left, it is the highest ever seen, so we can safely
+    /* If there is only one left, it is the highest ever seen, so we can safely
      * add +1 */
-    if (m_free_indices.size() == 1) {
-      m_free_indices.insert(*(--m_free_indices.end()) + 1);
+    if (m_free_indices.size() == 1ul) {
+      m_free_indices.insert(*(--m_free_indices.end()) + index_type{1});
     }
 
     return index;

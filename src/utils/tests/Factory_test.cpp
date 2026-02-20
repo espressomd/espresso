@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE Factory test
+#define BOOST_TEST_MODULE "Factory test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -32,6 +32,7 @@ struct TestClass {
 };
 
 struct DerivedTestClass : public TestClass {
+  ~DerivedTestClass() override = default;
   void method() override {}
 };
 
@@ -59,4 +60,8 @@ BOOST_AUTO_TEST_CASE(make) {
   // Make an unknown object
   BOOST_CHECK(not factory.has_builder("unknown"));
   BOOST_CHECK_THROW(factory.make("unknown"), std::domain_error);
+
+  // Register two types with the same name
+  BOOST_CHECK_THROW(factory.register_new<DerivedTestClass>(derived_class_name),
+                    std::runtime_error);
 }

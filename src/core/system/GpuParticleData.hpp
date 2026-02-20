@@ -24,6 +24,7 @@
 #ifdef ESPRESSO_CUDA
 
 #include "ParticleRange.hpp"
+#include "ResourceCleanup.hpp"
 #include "cuda/CudaHostAllocator.hpp"
 #include "system/Leaf.hpp"
 
@@ -48,7 +49,8 @@
  * memory is allocated and populated at every time step, even when the GPU
  * method that originally requested the data is disabled.
  */
-class GpuParticleData : public System::Leaf<GpuParticleData> {
+class GpuParticleData : public System::Leaf<GpuParticleData>,
+                        public std::enable_shared_from_this<GpuParticleData> {
 public:
   /** @brief Particle properties that need to be communicated to the GPU. */
   struct prop {
@@ -81,6 +83,12 @@ public:
 private:
   // forward declare
   class Storage;
+  std::unique_ptr<Storage> m_data;
+  void deinitialize() noexcept;
+  using DeviceMemory =
+      ResourceCleanup::Attorney<&GpuParticleData::deinitialize>;
+  friend DeviceMemory;
+
   /** @brief Whether a device was found and data structures were allocated. */
   bool m_communication_enabled = false;
   /** @brief Whether to convert particle properties from AoS to SoA. */
@@ -88,7 +96,6 @@ private:
   /** @brief Whether particle transfer to the GPU was requested. */
   bool m_need_particles_update = false;
   /** @brief Host and device containers. */
-  std::shared_ptr<Storage> m_data;
 
   bool has_compatible_device_impl() const;
   void gpu_init_particle_comm();
@@ -108,8 +115,8 @@ private:
 #endif
 
 public:
-  GpuParticleData() = default;
-  ~GpuParticleData() = default;
+  GpuParticleData();
+  ~GpuParticleData();
 
   void update() {
     if (m_need_particles_update and m_communication_enabled) {

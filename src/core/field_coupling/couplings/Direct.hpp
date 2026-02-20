@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef EXTERNAL_FIELD_COUPLING_DIRECT_HPP
-#define EXTERNAL_FIELD_COUPLING_DIRECT_HPP
+
+#pragma once
 
 #include <utility>
 
@@ -27,11 +27,9 @@ class Direct {
 public:
   static constexpr bool is_linear = true;
   template <typename T, typename Particle>
-  T &&operator()(const Particle &, T &&x) const {
+  T &&operator()(Particle const &, T &&x) const {
     return std::forward<T>(x);
   }
 };
 } // namespace Coupling
 } // namespace FieldCoupling
-
-#endif

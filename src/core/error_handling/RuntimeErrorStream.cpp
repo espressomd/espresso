@@ -18,6 +18,7 @@
  */
 
 #include "error_handling/RuntimeErrorStream.hpp"
+#include "error_handling/RuntimeError.hpp"
 #include "error_handling/RuntimeErrorCollector.hpp"
 
 #include <string>

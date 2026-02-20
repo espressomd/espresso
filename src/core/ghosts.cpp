@@ -50,6 +50,7 @@
 #include <cstddef>
 #include <functional>
 #include <iterator>
+#include <limits>
 #include <span>
 #include <vector>
 

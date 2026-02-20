@@ -23,6 +23,7 @@
 
 #include <utils/Vector.hpp>
 
+#include <cmath>
 #include <functional>
 
 namespace Shapes {

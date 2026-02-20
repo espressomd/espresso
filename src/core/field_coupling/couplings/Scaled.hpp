@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_CONSTRAINTS_DETAIL_SCALED_HPP
-#define CORE_CONSTRAINTS_DETAIL_SCALED_HPP
+
+#pragma once
 
 #include <unordered_map>
 
@@ -36,27 +36,23 @@ public:
 
   double &default_scale() { return m_default; }
   double const &default_scale() const { return m_default; }
-  std::unordered_map<int, double> &particle_scales() { return m_scales; }
-  std::unordered_map<int, double> const &particle_scales() const {
-    return m_scales;
-  }
+  auto &particle_scales() { return m_scales; }
+  auto const &particle_scales() const { return m_scales; }
 
 private:
   template <typename Particle> double scale(Particle const &p) const {
-    auto const &val = m_scales.find(p.id());
-    if (val != m_scales.end())
-      return val->second;
-
+    auto const it = m_scales.find(p.id());
+    if (it != m_scales.end()) {
+      return it->second;
+    }
     return m_default;
   }
 
 public:
   template <typename T, typename Particle>
-  T operator()(const Particle &p, const T &x) const {
+  T operator()(Particle const &p, T const &x) const {
     return scale(p) * x;
   }
 };
 } // namespace Coupling
 } // namespace FieldCoupling
-
-#endif

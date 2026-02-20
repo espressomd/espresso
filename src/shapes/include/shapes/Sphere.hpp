@@ -19,10 +19,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SRC_SHAPES_SPHERE_HPP
-#define SRC_SHAPES_SPHERE_HPP
+#pragma once
 
 #include "Shape.hpp"
+
 #include <utils/Vector.hpp>
 
 namespace Shapes {
@@ -43,5 +43,3 @@ private:
   double m_direction;
 };
 } // namespace Shapes
-
-#endif

@@ -44,7 +44,7 @@
 
 #include <cmath>
 #include <cstddef>
-#include <functional>
+#include <limits>
 #include <memory>
 #include <numbers>
 #include <optional>
