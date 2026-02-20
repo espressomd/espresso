@@ -119,13 +119,13 @@ struct BondsKernel {
         break;
       }
 
-      result = calc_bond_pair_force(iaparams, dx
+      result =
+          calc_bond_pair_force(iaparams, dx
 #ifdef ESPRESSO_ELECTROSTATICS
-                                      ,
-                                      aosoa.charge(i) * aosoa.charge(j),
-                                      coulomb_kernel
+                               ,
+                               aosoa.charge(i) * aosoa.charge(j), coulomb_kernel
 #endif
-        );
+          );
 
       if (result) {
         auto const f = result.value();
