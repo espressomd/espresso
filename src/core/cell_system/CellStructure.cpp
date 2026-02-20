@@ -229,7 +229,7 @@ void CellStructure::set_index_map() {
   m_global_bond_numbers = boost::mpi::all_reduce(
       ::comm_cart, m_local_bond_numbers, std::plus<int>());
   // Because the core that registers bonds differs from the one uses them,
-  // we intentionally accept a larger memory footprint and allocat each core's
+  // we intentionally accept a larger memory footprint and allocate each core's
   // bond_list with the total number of bonds.
   if (m_bond_list_kokkos) {
     Kokkos::realloc(get_bond_list_kokkos(), m_global_bond_numbers);
@@ -258,26 +258,26 @@ void CellStructure::set_index_map() {
         auto const partners =
             std::span(partners_source.data(), partners_source.size());
         if (partners.size() == 1u) { // pair bonds
-          auto index = Kokkos::atomic_fetch_add(&count, 1);
-          bond_list(index, 0) = p.id();
-          bond_list(index, 1) = partners[0]->id();
-          bond_list(index, 2) = -1;
-          bond_list(index, 3) = -1;
-          bond_ids(index) = bond.bond_id();
+          auto b_index = Kokkos::atomic_fetch_add(&count, 1);
+          bond_list(b_index, 0) = p.id();
+          bond_list(b_index, 1) = partners[0]->id();
+          bond_list(b_index, 2) = -1;
+          bond_list(b_index, 3) = -1;
+          bond_ids(b_index) = bond.bond_id();
         } else if (partners.size() == 2u) { // angle bond
-          auto index = Kokkos::atomic_fetch_add(&count, 1);
-          bond_list(index, 0) = p.id();
-          bond_list(index, 1) = partners[0]->id();
-          bond_list(index, 2) = partners[1]->id();
-          bond_list(index, 3) = -1;
-          bond_ids(index) = bond.bond_id();
+          auto b_index = Kokkos::atomic_fetch_add(&count, 1);
+          bond_list(b_index, 0) = p.id();
+          bond_list(b_index, 1) = partners[0]->id();
+          bond_list(b_index, 2) = partners[1]->id();
+          bond_list(b_index, 3) = -1;
+          bond_ids(b_index) = bond.bond_id();
         } else if (partners.size() == 3u) { // dihedral bond
-          auto index = Kokkos::atomic_fetch_add(&count, 1);
-          bond_list(index, 0) = p.id();
-          bond_list(index, 1) = partners[0]->id();
-          bond_list(index, 2) = partners[1]->id();
-          bond_list(index, 3) = partners[2]->id();
-          bond_ids(index) = bond.bond_id();
+          auto b_index = Kokkos::atomic_fetch_add(&count, 1);
+          bond_list(b_index, 0) = p.id();
+          bond_list(b_index, 1) = partners[0]->id();
+          bond_list(b_index, 2) = partners[1]->id();
+          bond_list(b_index, 3) = partners[2]->id();
+          bond_ids(b_index) = bond.bond_id();
         }
       } catch (const BondResolutionError &) {
         bond_broken_error(p.id(), partner_ids);
