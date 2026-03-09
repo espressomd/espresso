@@ -205,7 +205,6 @@ private:
   int m_cached_max_local_particle_id = 0;
   std::size_t m_num_local_particles_cached = 0;
   int m_max_id = 0;
-  int m_global_bond_numbers = 0;
   int m_local_bond_numbers = 0;
   std::unique_ptr<Kokkos::View<int *>> m_id_to_index;
   std::unique_ptr<ForceType> m_local_force;
@@ -786,6 +785,13 @@ public:
   [[nodiscard]] auto is_verlet_list_cabana_rebuild_needed() const {
     return m_rebuild_verlet_list_cabana;
   }
+
+  /**
+   * @brief Update bond storage(m_bond_list_kokkos and m_bond_id_kokkos).
+   * @param count     Index for bond storage.
+   * @param p         Particle pointer.
+   */
+  void update_bond_storage(int &count, Particle const &p);
 
   /**
    * @brief Reset local properties of the Verlet list.

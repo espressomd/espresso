@@ -157,7 +157,7 @@ static void reinit_dip_fld(CellStructure const &cell_structure) {
 static BondsKernel create_kokkos_bonds_kernel(System::System const &system,
                                               auto const &coulomb_kernel) {
 
-  auto const &id_to_index = system.cell_structure->get_id_to_index();
+  //auto const &id_to_index = system.cell_structure->get_id_to_index();
   auto const &local_force = system.cell_structure->get_local_force();
 #ifdef ESPRESSO_NPT
   auto const &local_virial = system.cell_structure->get_local_virial();
@@ -171,7 +171,7 @@ static BondsKernel create_kokkos_bonds_kernel(System::System const &system,
                             *system.bond_breakage,
                             get_ptr(coulomb_kernel),
                             *system.box_geo,
-                            id_to_index,
+                            //id_to_index,
                             local_force,
 #ifdef ESPRESSO_NPT
                             local_virial,

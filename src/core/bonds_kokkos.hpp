@@ -43,7 +43,6 @@ struct BondsKernel {
   BondBreakage::BondBreakage &bond_breakage;
   Coulomb::ShortRangeForceKernel::kernel_type const *const coulomb_kernel;
   BoxGeometry const &box_geo;
-  Kokkos::View<int *> const &id_to_index;
   CellStructure::ForceType const &local_force;
 #ifdef ESPRESSO_NPT
   CellStructure::VirialType const &local_virial;
@@ -51,12 +50,13 @@ struct BondsKernel {
   CellStructure::BondlistType const &bond_list;
   CellStructure::BondIDType const &bond_ids;
   CellStructure::AoSoA_pack const &aosoa;
+  bool const has_breakage_specs;
 
   BondsKernel(
       BondedInteractionsMap const &bonded_ias_,
       BondBreakage::BondBreakage &bond_breakage_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel_,
-      BoxGeometry const &box_geo_, Kokkos::View<int *> const &id_to_index_,
+      BoxGeometry const &box_geo_,
       CellStructure::ForceType const &local_force_,
 #ifdef ESPRESSO_NPT
       CellStructure::VirialType const &local_virial_,
@@ -66,11 +66,12 @@ struct BondsKernel {
       CellStructure::AoSoA_pack const &aosoa_)
       : bonded_ias(bonded_ias_), bond_breakage(bond_breakage_),
         coulomb_kernel(coulomb_kernel_), box_geo(box_geo_),
-        id_to_index(id_to_index_), local_force(local_force_),
+	local_force(local_force_),
 #ifdef ESPRESSO_NPT
         local_virial(local_virial_),
 #endif
-        bond_list(bond_list_), bond_ids(bond_ids_), aosoa(aosoa_) {
+        bond_list(bond_list_), bond_ids(bond_ids_), aosoa(aosoa_),
+    	has_breakage_specs(!bond_breakage.breakage_specs.empty()) {
   }
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
@@ -78,7 +79,7 @@ struct BondsKernel {
     auto const &partners = Kokkos::subview(bond_list, idx, Kokkos::ALL);
     auto const &bond_id = bond_ids(idx);
 
-    auto const i = id_to_index(partners(0));
+    auto const i = partners(0);
 
     auto const &iaparams = *bonded_ias.at(bond_id);
     // TODO: omp_get_thread_num() is only available for the OpenMP backend.
@@ -88,13 +89,13 @@ struct BondsKernel {
     switch (number_of_partners(iaparams)) {
     // case 0: zero-partner bonds are implicitly skipped
     case 1: {
-      auto const j = id_to_index(partners(1));
+      auto const j = partners(1);
       auto const dx =
           box_geo.get_mi_vector(aosoa.get_vector_at(aosoa.position, i),
                                 aosoa.get_vector_at(aosoa.position, j));
       std::optional<Utils::Vector3d> result;
       // Consider for bond breakage
-      if (bond_breakage.check_and_handle_breakage(
+      if (has_breakage_specs && bond_breakage.check_and_handle_breakage(
               aosoa.id(i), {{aosoa.id(j), std::nullopt}}, bond_id, dx.norm())) {
         break;
       }
@@ -113,8 +114,8 @@ struct BondsKernel {
           local_force(j, thread_id, 1) += std::get<1>(forces)[1];
           local_force(j, thread_id, 2) += std::get<1>(forces)[2];
         } else {
-          std::span<int> s(partners.data(), partners.extent(0));
-          bond_broken_error(s);
+	  auto partner_id = aosoa.id(j);
+      	  bond_broken_error(aosoa.id(i), {&partner_id, 1});
         }
         break;
       }
@@ -142,15 +143,15 @@ struct BondsKernel {
         local_virial(thread_id, 2) += virial[2];
 #endif
       } else {
-        std::span<int> s(partners.data(), partners.extent(0));
-        bond_broken_error(s);
+	auto partner_id = aosoa.id(j);
+      	bond_broken_error(aosoa.id(i), {&partner_id, 1});
       }
       break;
     }
 
     case 2: {
-      auto const j = id_to_index(partners(1));
-      auto const k = id_to_index(partners(2));
+      auto const j = partners(1);
+      auto const k = partners(2);
       auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
       auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
       auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
@@ -160,7 +161,8 @@ struct BondsKernel {
           std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
           result;
       // Consider for bond breakage
-      if (bond_breakage.check_and_handle_breakage(
+      //if (bond_breakage.check_and_handle_breakage(
+      if (has_breakage_specs && bond_breakage.check_and_handle_breakage(
               aosoa.id(i), {{aosoa.id(j), aosoa.id(k)}}, bond_id,
               box_geo.get_mi_vector(pos2, pos3).norm())) {
         break;
@@ -184,15 +186,17 @@ struct BondsKernel {
         local_force(k, thread_id, 1) += std::get<2>(forces)[1];
         local_force(k, thread_id, 2) += std::get<2>(forces)[2];
       } else {
-        std::span<int> s(partners.data(), partners.extent(0));
-        bond_broken_error(s);
+        //std::span<int> s(partners.data(), partners.extent(0));
+        //bond_broken_error(s);
+	std::array<int, 2> pids = {aosoa.id(j), aosoa.id(k)};
+	bond_broken_error(aosoa.id(i), {pids.data(), 2});
       }
       break;
     }
     case 3: {
-      auto const j = id_to_index(partners(1));
-      auto const k = id_to_index(partners(2));
-      auto const m = id_to_index(partners(3));
+      auto const j = partners(1);
+      auto const k = partners(2);
+      auto const m = partners(3);
       auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
       auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
       auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
@@ -222,8 +226,10 @@ struct BondsKernel {
         local_force(m, thread_id, 1) += std::get<3>(forces)[1];
         local_force(m, thread_id, 2) += std::get<3>(forces)[2];
       } else {
-        std::span<int> s(partners.data(), partners.extent(0));
-        bond_broken_error(s);
+        //std::span<int> s(partners.data(), partners.extent(0));
+        //bond_broken_error(s);
+	std::array<int, 3> pids = {aosoa.id(j), aosoa.id(k), aosoa.id(m)};
+	bond_broken_error(aosoa.id(i), {pids.data(), 3});	
       }
       break;
     }

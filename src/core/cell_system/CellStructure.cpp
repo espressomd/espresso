@@ -102,7 +102,6 @@ void CellStructure::clear_local_properties() {
   m_rebuild_verlet_list_cabana = true;
 }
 void CellStructure::clear_bond_properties() {
-  m_global_bond_numbers = 0;
   m_local_bond_numbers = 0;
 #ifdef ESPRESSO_COLLISION_DETECTION
   m_new_bond_list.clear();
@@ -215,6 +214,43 @@ void CellStructure::reset_local_properties() {
   Kokkos::deep_copy(get_aosoa().flags, uint8_t{0});
 }
 
+void CellStructure::update_bond_storage(int &count, Particle const &p) {
+  auto &bond_list = get_bond_list_kokkos();
+  auto &bond_ids = get_bond_id_kokkos();
+  for (const BondView bond : p.bonds()) {
+    auto const partner_ids = bond.partner_ids();
+    try {
+      auto partners_source = resolve_bond_partners(partner_ids);
+      auto const partners =
+	  std::span(partners_source.data(), partners_source.size());
+      if (partners.size() == 1u) { // pair bonds
+	auto b_index = Kokkos::atomic_fetch_add(&count, 1);
+	bond_list(b_index, 0) = p.id();
+	bond_list(b_index, 1) = partners[0]->id();
+	bond_list(b_index, 2) = -1;
+	bond_list(b_index, 3) = -1;
+	bond_ids(b_index) = bond.bond_id();
+      } else if (partners.size() == 2u) { // angle bond
+	auto b_index = Kokkos::atomic_fetch_add(&count, 1);
+	bond_list(b_index, 0) = p.id();
+	bond_list(b_index, 1) = partners[0]->id();
+	bond_list(b_index, 2) = partners[1]->id();
+	bond_list(b_index, 3) = -1;
+	bond_ids(b_index) = bond.bond_id();
+      } else if (partners.size() == 3u) { // dihedral bond
+	auto b_index = Kokkos::atomic_fetch_add(&count, 1);
+	bond_list(b_index, 0) = p.id();
+	bond_list(b_index, 1) = partners[0]->id();
+	bond_list(b_index, 2) = partners[1]->id();
+	bond_list(b_index, 3) = partners[2]->id();
+	bond_ids(b_index) = bond.bond_id();
+      }
+    } catch (const BondResolutionError &) {
+      bond_broken_error(p.id(), partner_ids);
+    }
+  }
+}
+
 void CellStructure::set_index_map() {
 #ifdef ESPRESSO_CALIPER
   CALI_CXX_MARK_FUNCTION;
@@ -227,67 +263,33 @@ void CellStructure::set_index_map() {
   int n_threads = execution_space().concurrency();
   std::vector<int> max_ids(n_threads);
 
-  // During looking up particle pointer, bond_list is also constructed.
-  m_global_bond_numbers = boost::mpi::all_reduce(
-      ::comm_cart, m_local_bond_numbers, std::plus<int>());
-  // Because the core that registers bonds differs from the one uses them,
-  // we intentionally accept a larger memory footprint and allocate each core's
-  // bond_list with the total number of bonds.
-  if (m_bond_list_kokkos) {
-    Kokkos::realloc(get_bond_list_kokkos(), m_global_bond_numbers);
-    Kokkos::realloc(get_bond_id_kokkos(), m_global_bond_numbers);
-  } else {
-    m_bond_list_kokkos =
-        std::make_unique<BondlistType>("bond_list", m_global_bond_numbers);
-    m_bond_id_kokkos =
-        std::make_unique<BondIDType>("bond_id", m_global_bond_numbers);
-  }
-  auto &bond_list = get_bond_list_kokkos();
-  auto &bond_ids = get_bond_id_kokkos();
   reset_local_bond_numbers();
-  // Note that "int count" is only worked for the host backend.
-  int count = 0;
+  std::vector<int> counts(n_threads, 0);
+
   enumerate_local_particles(*this, [this, &unique_particles, &max_ids,
-                                    &bond_list, &bond_ids,
-                                    &count](std::size_t index, Particle &p) {
+                                    //&bond_list, &bond_ids,
+                                    &counts](std::size_t index, Particle &p) {
     unique_particles[index] = &p;
     const int thread_num = omp_get_thread_num();
     max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
     for (const BondView bond : p.bonds()) {
-      auto const partner_ids = bond.partner_ids();
-      try {
-        auto partners_source = resolve_bond_partners(partner_ids);
-        auto const partners =
-            std::span(partners_source.data(), partners_source.size());
-        if (partners.size() == 1u) { // pair bonds
-          auto b_index = Kokkos::atomic_fetch_add(&count, 1);
-          bond_list(b_index, 0) = p.id();
-          bond_list(b_index, 1) = partners[0]->id();
-          bond_list(b_index, 2) = -1;
-          bond_list(b_index, 3) = -1;
-          bond_ids(b_index) = bond.bond_id();
-        } else if (partners.size() == 2u) { // angle bond
-          auto b_index = Kokkos::atomic_fetch_add(&count, 1);
-          bond_list(b_index, 0) = p.id();
-          bond_list(b_index, 1) = partners[0]->id();
-          bond_list(b_index, 2) = partners[1]->id();
-          bond_list(b_index, 3) = -1;
-          bond_ids(b_index) = bond.bond_id();
-        } else if (partners.size() == 3u) { // dihedral bond
-          auto b_index = Kokkos::atomic_fetch_add(&count, 1);
-          bond_list(b_index, 0) = p.id();
-          bond_list(b_index, 1) = partners[0]->id();
-          bond_list(b_index, 2) = partners[1]->id();
-          bond_list(b_index, 3) = partners[2]->id();
-          bond_ids(b_index) = bond.bond_id();
-        }
-      } catch (const BondResolutionError &) {
-        bond_broken_error(p.id(), partner_ids);
+      if (not bond.partner_ids().empty()) {
+        counts[thread_num] += 1;
       }
     }
   });
   Kokkos::fence();
+  int count = std::reduce(std::begin(counts), std::end(counts));
   set_local_bond_numbers(count);
+  if (m_bond_list_kokkos) {
+    Kokkos::realloc(get_bond_list_kokkos(), m_local_bond_numbers);
+    Kokkos::realloc(get_bond_id_kokkos(), m_local_bond_numbers);
+  } else {
+    m_bond_list_kokkos =
+        std::make_unique<BondlistType>("bond_list", m_local_bond_numbers);
+    m_bond_id_kokkos =
+        std::make_unique<BondIDType>("bond_id", m_local_bond_numbers);
+  }
   int max_id = *(std::max_element(max_ids.begin(), max_ids.end()));
   for (auto &p : ghost_particles()) {
     auto const *local_particle = get_local_particle(p.id());
@@ -324,7 +326,7 @@ void CellStructure::rebuild_bond_list() {
     auto old_local_bond_numbers = m_local_bond_numbers - m_new_bond_id.size();
     auto new_local_bond_numbers = m_local_bond_numbers;
 
-    if (new_local_bond_numbers > m_global_bond_numbers) {
+    if (new_local_bond_numbers > old_local_bond_numbers) {
       auto rebuild_bond_list = std::make_unique<BondlistType>(
           Kokkos::ViewAllocateWithoutInitializing("bond_list_rebuild"),
           new_local_bond_numbers);

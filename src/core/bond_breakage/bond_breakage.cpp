@@ -34,7 +34,6 @@
 #include <algorithm>
 #include <cassert>
 #include <memory>
-#include <mutex>
 #include <span>
 #include <unordered_set>
 #include <utility>

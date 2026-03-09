@@ -30,9 +30,6 @@ bool add_bond(System::System &system, int bond_id,
     // Thus the bond views' partner list only contains the other particle id.
     BondView bond(bond_id, {particle_ids.data() + 1, particle_ids.size() - 1});
     p->bonds().insert(bond);
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-    system.cell_structure->add_new_bond(bond_id, particle_ids);
-#endif
     return true;
   }
   return false;
