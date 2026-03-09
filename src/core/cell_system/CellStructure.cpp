@@ -222,28 +222,28 @@ void CellStructure::update_bond_storage(int &count, Particle const &p) {
     try {
       auto partners_source = resolve_bond_partners(partner_ids);
       auto const partners =
-	  std::span(partners_source.data(), partners_source.size());
+          std::span(partners_source.data(), partners_source.size());
       if (partners.size() == 1u) { // pair bonds
-	auto b_index = Kokkos::atomic_fetch_add(&count, 1);
-	bond_list(b_index, 0) = p.id();
-	bond_list(b_index, 1) = partners[0]->id();
-	bond_list(b_index, 2) = -1;
-	bond_list(b_index, 3) = -1;
-	bond_ids(b_index) = bond.bond_id();
+        auto b_index = Kokkos::atomic_fetch_add(&count, 1);
+        bond_list(b_index, 0) = p.id();
+        bond_list(b_index, 1) = partners[0]->id();
+        bond_list(b_index, 2) = -1;
+        bond_list(b_index, 3) = -1;
+        bond_ids(b_index) = bond.bond_id();
       } else if (partners.size() == 2u) { // angle bond
-	auto b_index = Kokkos::atomic_fetch_add(&count, 1);
-	bond_list(b_index, 0) = p.id();
-	bond_list(b_index, 1) = partners[0]->id();
-	bond_list(b_index, 2) = partners[1]->id();
-	bond_list(b_index, 3) = -1;
-	bond_ids(b_index) = bond.bond_id();
+        auto b_index = Kokkos::atomic_fetch_add(&count, 1);
+        bond_list(b_index, 0) = p.id();
+        bond_list(b_index, 1) = partners[0]->id();
+        bond_list(b_index, 2) = partners[1]->id();
+        bond_list(b_index, 3) = -1;
+        bond_ids(b_index) = bond.bond_id();
       } else if (partners.size() == 3u) { // dihedral bond
-	auto b_index = Kokkos::atomic_fetch_add(&count, 1);
-	bond_list(b_index, 0) = p.id();
-	bond_list(b_index, 1) = partners[0]->id();
-	bond_list(b_index, 2) = partners[1]->id();
-	bond_list(b_index, 3) = partners[2]->id();
-	bond_ids(b_index) = bond.bond_id();
+        auto b_index = Kokkos::atomic_fetch_add(&count, 1);
+        bond_list(b_index, 0) = p.id();
+        bond_list(b_index, 1) = partners[0]->id();
+        bond_list(b_index, 2) = partners[1]->id();
+        bond_list(b_index, 3) = partners[2]->id();
+        bond_ids(b_index) = bond.bond_id();
       }
     } catch (const BondResolutionError &) {
       bond_broken_error(p.id(), partner_ids);
@@ -266,7 +266,7 @@ void CellStructure::set_index_map() {
   reset_local_bond_numbers();
   std::vector<int> counts(n_threads, 0);
 
-  enumerate_local_particles(*this, [this, &unique_particles, &max_ids,
+  enumerate_local_particles(*this, [&unique_particles, &max_ids,
                                     //&bond_list, &bond_ids,
                                     &counts](std::size_t index, Particle &p) {
     unique_particles[index] = &p;

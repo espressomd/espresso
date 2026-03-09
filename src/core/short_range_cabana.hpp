@@ -184,25 +184,28 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
     int count = 0;
     kokkos_parallel_range_for<policy_type>(
         "AoSoA write", std::size_t{0}, n_part,
-        [&unique_particles, &aosoa, &id_to_index, &cell_structure, &count](int const index) {
+        [&unique_particles, &aosoa, &id_to_index, &cell_structure,
+         &count](int const index) {
           auto const &p = *unique_particles.at(index);
           commit_particle(p, index, aosoa, true);
           id_to_index(p.id()) = index;
-    	  if (not p.is_ghost()) {
-    	    cell_structure.update_bond_storage(count, p);
-	  }
+          if (not p.is_ghost()) {
+            cell_structure.update_bond_storage(count, p);
+          }
         });
     Kokkos::fence();
-    CellStructure::BondlistType &bond_list = cell_structure.get_bond_list_kokkos();
+    CellStructure::BondlistType &bond_list =
+        cell_structure.get_bond_list_kokkos();
     // After set_index_map() finishes and id_to_index is ready:
-    Kokkos::parallel_for("resolve_bond_indices", cell_structure.get_local_bond_numbers(),
-	[&bond_list, &id_to_index](int idx) {
-	    for (int col = 0; col < 4; ++col) {
-		if (bond_list(idx, col) != -1) {
-		    bond_list(idx, col) = id_to_index(bond_list(idx, col));
-		}
-	    }
-	});
+    Kokkos::parallel_for(
+        "resolve_bond_indices", cell_structure.get_local_bond_numbers(),
+        [&bond_list, &id_to_index](int idx) {
+          for (int col = 0; col < 4; ++col) {
+            if (bond_list(idx, col) != -1) {
+              bond_list(idx, col) = id_to_index(bond_list(idx, col));
+            }
+          }
+        });
     Kokkos::fence();
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_END("AoSoA commit full");
@@ -251,10 +254,9 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_BEGIN("AoSoA commit partial");
 #endif
-    int count = 0;
     kokkos_parallel_range_for<policy_type>(
         "AoSoA write", std::size_t{0}, n_part,
-        [&unique_particles, &aosoa, &cell_structure, &count](int const index) {
+        [&unique_particles, &aosoa](int const index) {
           auto const &p = *unique_particles.at(index);
           commit_particle(p, index, aosoa, false);
         });
