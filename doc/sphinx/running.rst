@@ -204,7 +204,7 @@ The codepace can be accessed from the terminal via the `GitHub CLI ssh command
 <https://cli.github.com/manual/gh_codespace_ssh>`__
 or from a web browser (default), which uses the VS Code IDE.
 Instructions to build |es| and execute the tutorials are available
-in file :file:`.devcontainer/Readme.md`.
+in file `.devcontainer/Readme.md <https://github.com/espressomd/espresso/blob/python/.devcontainer/Readme.md>`__.
 
 
 .. _Parallel computing:

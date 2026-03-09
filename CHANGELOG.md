@@ -14,25 +14,26 @@ or [Savannah](https://savannah.nongnu.org/projects/espressomd) until release 3.3
 
 ## [5.0.0] - 2026-02-26
 
-This is a major release. New features were added, deprecated features were removed.
+This is a major release. New features were added and deprecated features were removed.
 The API has changed, and some of these changes are silent, i.e. warnings aren't
 necessarily emitted when running a script designed for ESPResSo 4.x that relies
-on features that have significantly changed in in ESPResSo 5.0.
+on features that have significantly changed in ESPResSo 5.0.
 
 Highlights of the release include:
 
-* rewrite of lattice-Boltzmann and electrokinetic using solvers backed
+* rewrite of lattice-Boltzmann and electrokinetics using solvers backed
   by the waLBerla framework. For LB, this includes enhanced capabilities
   including vectorization support on the CPU and multi-GPU support,
   per-cell boundary conditions to build arbitrary geometries,
   per-particle friction coefficients, and Lees-Edwards boundary conditions.
 * faster writing of simulation trajectories using the H5MD file format,
   particularly in parallel simulations.
-* per-particle selection of equation of motion.
-* the thermalized Stoner-Wolfarth model for magnetodynamics, and the
+* per-particle selection of equations of motion.
+* the thermalized Stoner–Wohlfarth model for magnetodynamics, and the
   ability to obtain local magnetic fields at the particles' positions.
-* virtual sites tracking the center of mass of a group of particles.
-* initial support for shared-memory paralellism for some scenarios.
+* virtual sites tracking the center of mass of a group of particles
+  for umbrella sampling.
+* initial support for shared-memory parallelism for some scenarios.
 * several new tutorials, e.g., on the sedimentation of particles in a
   fluid, the Boltzmann inversion technique, electrode modelling,
   and machine-learned inter-atomic potentials.

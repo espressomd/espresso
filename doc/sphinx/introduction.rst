@@ -632,7 +632,8 @@ Please cite both :cite:t:`weeber24a` and :cite:t:`weik19a`
 for |es| 4.0 and later, or both :cite:t:`arnold13a` and :cite:t:`limbach06a`
 (BibTeX keys ``arnold13a`` and ``limbach06a`` in :file:`doc/bibliography.bib`)
 for |es| 2.0 to 3.3.
-Starting with ESPResSo 5.0, please also cite the exact release published on Zenodo.
+Starting with |es| 5.0, please also cite the exact release published in
+the `Zenodo dataset "ESPResSo" <https://doi.org/10.5281/zenodo.18791182>`_.
 
 To find the version number, use the following command:
 
@@ -648,11 +649,13 @@ publications, using the BibTeX entries indicated in this user guide.
 
 A complete citation would look like this:
 
-    Simulations were carried out with ESPResSo 5.0.0[23,24] using the ICC\*
+    Simulations were carried out with ESPResSo 5.0.0[22,23,24] using the ICC\*
     algorithm[25].
 
     | ____________
 
+    | [22] J.-N. Grad, F. Weik, A. Reinauer, *et al.* ESPResSo, version 5.0.0.
+      Zenodo, Feb 2026. doi:\ `10.5281/zenodo.18791183 <https://doi.org/10.5281/zenodo.18791183>`_.
     | [23] R. Weeber, J.-N. Grad, D. Beyer *et al.* ESPResSo, a versatile
       open-source software package for simulating soft matter systems.
       In M. Yáñez and R. J. Boyd, eds, *Comprehensive Computational Chemistry*,
