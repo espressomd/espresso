@@ -39,7 +39,7 @@
 #include <vector>
 
 struct BondsKernelData {
-  BondedInteractionsMap const &bonded_ias;                                                                                                         
+  BondedInteractionsMap const &bonded_ias;
   BondBreakage::BondBreakage &bond_breakage;
   BoxGeometry const &box_geo;
   CellStructure::ForceType const &local_force;
@@ -61,20 +61,19 @@ struct PairBondsKernel {
       CellStructure::PairBondlistType const &bond_list_,
       CellStructure::PairBondIDType const &bond_ids_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel_)
-      : data(data_), bond_list(bond_list_), bond_ids(bond_ids_), 
-        coulomb_kernel(coulomb_kernel_) {
-  }
+      : data(data_), bond_list(bond_list_), bond_ids(bond_ids_),
+        coulomb_kernel(coulomb_kernel_) {}
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
   operator()(std::size_t idx) const {
-    auto const &bonded_ias = data.bonded_ias;                                                                                                        
+    auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
     auto const &local_force = data.local_force;
     auto const &aosoa = data.aosoa;
     auto &bond_breakage = data.bond_breakage;
-  #ifdef ESPRESSO_NPT
+#ifdef ESPRESSO_NPT
     auto const &local_virial = data.local_virial;
-  #endif
+#endif
     auto const has_breakage_specs = data.has_breakage_specs;
 
     auto const &partners = Kokkos::subview(bond_list, idx, Kokkos::ALL);
@@ -89,45 +88,44 @@ struct PairBondsKernel {
 
     auto const j = partners(1);
     auto const dx =
-	box_geo.get_mi_vector(aosoa.get_vector_at(aosoa.position, i),
-			      aosoa.get_vector_at(aosoa.position, j));
+        box_geo.get_mi_vector(aosoa.get_vector_at(aosoa.position, i),
+                              aosoa.get_vector_at(aosoa.position, j));
     std::optional<Utils::Vector3d> result;
     // Consider for bond breakage
     if (has_breakage_specs &&
-	bond_breakage.check_and_handle_breakage(
-	    aosoa.id(i), {{aosoa.id(j), std::nullopt}}, bond_id, dx.norm())) {
+        bond_breakage.check_and_handle_breakage(
+            aosoa.id(i), {{aosoa.id(j), std::nullopt}}, bond_id, dx.norm())) {
       return;
     }
 #ifdef ESPRESSO_MASS
     if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
-      auto const res = iap->forces(aosoa.mass(i), aosoa.mass(j),
-				   aosoa.get_vector_at(aosoa.velocity, i),
-				   aosoa.get_vector_at(aosoa.velocity, j),
-				   aosoa.id(i), aosoa.id(j), dx);
+      auto const res = iap->forces(
+          aosoa.mass(i), aosoa.mass(j), aosoa.get_vector_at(aosoa.velocity, i),
+          aosoa.get_vector_at(aosoa.velocity, j), aosoa.id(i), aosoa.id(j), dx);
       if (res) {
-	auto const &forces = res.value();
+        auto const &forces = res.value();
 
-	local_force(i, thread_id, 0) += std::get<0>(forces)[0];
-	local_force(i, thread_id, 1) += std::get<0>(forces)[1];
-	local_force(i, thread_id, 2) += std::get<0>(forces)[2];
-	local_force(j, thread_id, 0) += std::get<1>(forces)[0];
-	local_force(j, thread_id, 1) += std::get<1>(forces)[1];
-	local_force(j, thread_id, 2) += std::get<1>(forces)[2];
+        local_force(i, thread_id, 0) += std::get<0>(forces)[0];
+        local_force(i, thread_id, 1) += std::get<0>(forces)[1];
+        local_force(i, thread_id, 2) += std::get<0>(forces)[2];
+        local_force(j, thread_id, 0) += std::get<1>(forces)[0];
+        local_force(j, thread_id, 1) += std::get<1>(forces)[1];
+        local_force(j, thread_id, 2) += std::get<1>(forces)[2];
       } else {
-	auto partner_id = aosoa.id(j);
-	bond_broken_error(aosoa.id(i), {&partner_id, 1});
+        auto partner_id = aosoa.id(j);
+        bond_broken_error(aosoa.id(i), {&partner_id, 1});
       }
       return;
     }
-#endif //ESPRESSO_MASS
+#endif // ESPRESSO_MASS
 
     result =
-	calc_bond_pair_force(iaparams, dx
+        calc_bond_pair_force(iaparams, dx
 #ifdef ESPRESSO_ELECTROSTATICS
-			     ,
-			     aosoa.charge(i) * aosoa.charge(j), coulomb_kernel
+                             ,
+                             aosoa.charge(i) * aosoa.charge(j), coulomb_kernel
 #endif
-	);
+        );
 
     if (result) {
       auto const f = result.value();
@@ -155,16 +153,14 @@ struct AngleBondsKernel {
   CellStructure::AngleBondlistType const &bond_list;
   CellStructure::AngleBondIDType const &bond_ids;
 
-  AngleBondsKernel(
-      BondsKernelData const &data_,
-      CellStructure::AngleBondlistType const &bond_list_,
-      CellStructure::AngleBondIDType const &bond_ids_)
-      : data(data_), bond_list(bond_list_), bond_ids(bond_ids_) {
-  }
+  AngleBondsKernel(BondsKernelData const &data_,
+                   CellStructure::AngleBondlistType const &bond_list_,
+                   CellStructure::AngleBondIDType const &bond_ids_)
+      : data(data_), bond_list(bond_list_), bond_ids(bond_ids_) {}
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
   operator()(std::size_t idx) const {
-    auto const &bonded_ias = data.bonded_ias;                                                                                                        
+    auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
     auto const &local_force = data.local_force;
     auto const &aosoa = data.aosoa;
@@ -188,14 +184,13 @@ struct AngleBondsKernel {
     auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
     auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
     auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
-    std::optional<
-	std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-	result;
+    std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
+        result;
     // Consider for bond breakage
     if (has_breakage_specs &&
-	bond_breakage.check_and_handle_breakage(
-	    aosoa.id(i), {{aosoa.id(j), aosoa.id(k)}}, bond_id,
-	    box_geo.get_mi_vector(pos2, pos3).norm())) {
+        bond_breakage.check_and_handle_breakage(
+            aosoa.id(i), {{aosoa.id(j), aosoa.id(k)}}, bond_id,
+            box_geo.get_mi_vector(pos2, pos3).norm())) {
       return;
     }
     if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
@@ -228,16 +223,14 @@ struct DihedralBondsKernel {
   CellStructure::DihedralBondlistType const &bond_list;
   CellStructure::DihedralBondIDType const &bond_ids;
 
-  DihedralBondsKernel(
-      BondsKernelData const &data_,
-      CellStructure::DihedralBondlistType const &bond_list_,
-      CellStructure::DihedralBondIDType const &bond_ids_)
-      : data(data_), bond_list(bond_list_), bond_ids(bond_ids_) {
-  }
+  DihedralBondsKernel(BondsKernelData const &data_,
+                      CellStructure::DihedralBondlistType const &bond_list_,
+                      CellStructure::DihedralBondIDType const &bond_ids_)
+      : data(data_), bond_list(bond_list_), bond_ids(bond_ids_) {}
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
   operator()(std::size_t idx) const {
-    auto const &bonded_ias = data.bonded_ias;                                                                                                        
+    auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
     auto const &local_force = data.local_force;
     auto const &aosoa = data.aosoa;
@@ -263,10 +256,10 @@ struct DihedralBondsKernel {
     auto const vel3 = aosoa.get_vector_at(aosoa.velocity, k);
     auto const image1 = aosoa.get_vector_at(aosoa.image, i);
 
-    std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
-			     Utils::Vector3d, Utils::Vector3d>>
-	result = calc_bonded_four_body_force(iaparams, box_geo, pos1, pos2,
-					     pos3, pos4, vel1, vel3, image1);
+    std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
+                             Utils::Vector3d>>
+        result = calc_bonded_four_body_force(iaparams, box_geo, pos1, pos2,
+                                             pos3, pos4, vel1, vel3, image1);
 
     if (result) {
       auto const &forces = result.value();

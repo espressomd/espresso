@@ -487,19 +487,24 @@ public:
   }
   int get_local_bond_numbers() const { return m_local_bond_numbers; }
   int get_local_pair_bond_numbers() const { return m_local_pair_bond_numbers; }
-  int get_local_angle_bond_numbers() const { return m_local_angle_bond_numbers; }
-  int get_local_dihedral_bond_numbers() const { return m_local_dihedral_bond_numbers; }
-  //void add_local_bond_numbers() {
-  //  m_local_bond_numbers += 1;
-  //  m_local_pair_bond_numbers += 1;
-  //}
+  int get_local_angle_bond_numbers() const {
+    return m_local_angle_bond_numbers;
+  }
+  int get_local_dihedral_bond_numbers() const {
+    return m_local_dihedral_bond_numbers;
+  }
+  // void add_local_bond_numbers() {
+  //   m_local_bond_numbers += 1;
+  //   m_local_pair_bond_numbers += 1;
+  // }
   void reset_local_bond_numbers() {
     m_local_bond_numbers = 0;
     m_local_pair_bond_numbers = 0;
     m_local_angle_bond_numbers = 0;
     m_local_dihedral_bond_numbers = 0;
   }
-  void set_local_bond_numbers(int value, int pair_value, int angle_value, int dihedral_value) {
+  void set_local_bond_numbers(int value, int pair_value, int angle_value,
+                              int dihedral_value) {
     m_local_bond_numbers = value;
     m_local_pair_bond_numbers = pair_value;
     m_local_angle_bond_numbers = angle_value;
@@ -512,7 +517,9 @@ public:
     m_new_angle_bond_list.clear();
     m_new_angle_bond_id.clear();
   }
-  void add_new_bond(int bond_id, std::vector<int> const &particle_ids, std::vector<int> &new_bond_list, std::vector<int> &new_bond_id) {
+  void add_new_bond(int bond_id, std::vector<int> const &particle_ids,
+                    std::vector<int> &new_bond_list,
+                    std::vector<int> &new_bond_id) {
     new_bond_list.reserve(new_bond_list.size() + particle_ids.size());
     new_bond_list.insert(new_bond_list.end(), particle_ids.begin(),
                          particle_ids.end());
@@ -520,22 +527,23 @@ public:
   }
   void add_new_bond(int bond_id, std::vector<int> const &particle_ids) {
     if (particle_ids.size() == 2) {
-      add_new_bond(bond_id, particle_ids, m_new_pair_bond_list, m_new_pair_bond_id);
+      add_new_bond(bond_id, particle_ids, m_new_pair_bond_list,
+                   m_new_pair_bond_id);
       m_local_pair_bond_numbers++;
     } else if (particle_ids.size() == 3) {
-      add_new_bond(bond_id, particle_ids, m_new_angle_bond_list, m_new_angle_bond_id);
+      add_new_bond(bond_id, particle_ids, m_new_angle_bond_list,
+                   m_new_angle_bond_id);
       m_local_angle_bond_numbers++;
     }
   }
   template <typename BondListT, typename BondIDT>
-  static void rebuild_bond_list_impl(
-      std::vector<int> const &new_bond_list,
-      std::vector<int> const &new_bond_ids,
-      std::unique_ptr<BondListT> &bond_list,
-      std::unique_ptr<BondIDT> &bond_ids,
-      int total_bond_count);
+  static void rebuild_bond_list_impl(std::vector<int> const &new_bond_list,
+                                     std::vector<int> const &new_bond_ids,
+                                     std::unique_ptr<BondListT> &bond_list,
+                                     std::unique_ptr<BondIDT> &bond_ids,
+                                     int total_bond_count);
   void rebuild_bond_list();
-#endif //ESPRESSO_COLLISION_DETECTION
+#endif // ESPRESSO_COLLISION_DETECTION
 #endif
 
   /**
@@ -825,8 +833,12 @@ public:
   auto &get_pair_bond_id_kokkos() const { return *m_pair_bond_id_kokkos; }
   auto &get_angle_bond_list_kokkos() const { return *m_angle_bond_list_kokkos; }
   auto &get_angle_bond_id_kokkos() const { return *m_angle_bond_id_kokkos; }
-  auto &get_dihedral_bond_list_kokkos() const { return *m_dihedral_bond_list_kokkos; }
-  auto &get_dihedral_bond_id_kokkos() const { return *m_dihedral_bond_id_kokkos; }
+  auto &get_dihedral_bond_list_kokkos() const {
+    return *m_dihedral_bond_list_kokkos;
+  }
+  auto &get_dihedral_bond_id_kokkos() const {
+    return *m_dihedral_bond_id_kokkos;
+  }
   void clear_local_properties();
   void clear_bond_properties();
 
@@ -842,7 +854,8 @@ public:
    * @param dihedral_count  Index for dihedral bond storage.
    * @param p               Particle pointer.
    */
-  void update_bond_storage(int &count, int &pair_count, int &angle_count, int &dihedral_count, Particle const &p);
+  void update_bond_storage(int &count, int &pair_count, int &angle_count,
+                           int &dihedral_count, Particle const &p);
 
   /**
    * @brief Reset local properties of the Verlet list.

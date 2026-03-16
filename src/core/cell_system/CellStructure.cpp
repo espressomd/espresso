@@ -222,7 +222,9 @@ void CellStructure::reset_local_properties() {
   Kokkos::deep_copy(get_aosoa().flags, uint8_t{0});
 }
 
-void CellStructure::update_bond_storage(int &count, int &pair_count, int &angle_count, int &dihedral_count, Particle const &p) {
+void CellStructure::update_bond_storage(int &count, int &pair_count,
+                                        int &angle_count, int &dihedral_count,
+                                        Particle const &p) {
   auto &pair_list = get_pair_bond_list_kokkos();
   auto &pair_ids = get_pair_bond_id_kokkos();
   auto &angle_list = get_angle_bond_list_kokkos();
@@ -278,52 +280,56 @@ void CellStructure::set_index_map() {
   std::vector<int> angle_counts(n_threads, 0);
   std::vector<int> dihedral_counts(n_threads, 0);
 
-  enumerate_local_particles(*this, [&unique_particles, &max_ids,
-                                    &counts, &pair_counts, &angle_counts, &dihedral_counts]
-				    (std::size_t index, Particle &p) {
-    unique_particles[index] = &p;
-    const int thread_num = omp_get_thread_num();
-    max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
-    for (const BondView bond : p.bonds()) {
-      if (not bond.partner_ids().empty()) {
-        counts[thread_num] += 1;
-    	auto const partner_ids = bond.partner_ids();
-	if (partner_ids.size() == 1u) {
-          pair_counts[thread_num] += 1;
-	} else if (partner_ids.size() == 2u) {
-          angle_counts[thread_num] += 1;
-	} else if (partner_ids.size() == 3u) {
-          dihedral_counts[thread_num] += 1;
-	}
-      }
-    }
-  });
+  enumerate_local_particles(
+      *this, [&unique_particles, &max_ids, &counts, &pair_counts, &angle_counts,
+              &dihedral_counts](std::size_t index, Particle &p) {
+        unique_particles[index] = &p;
+        const int thread_num = omp_get_thread_num();
+        max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
+        for (const BondView bond : p.bonds()) {
+          if (not bond.partner_ids().empty()) {
+            counts[thread_num] += 1;
+            auto const partner_ids = bond.partner_ids();
+            if (partner_ids.size() == 1u) {
+              pair_counts[thread_num] += 1;
+            } else if (partner_ids.size() == 2u) {
+              angle_counts[thread_num] += 1;
+            } else if (partner_ids.size() == 3u) {
+              dihedral_counts[thread_num] += 1;
+            }
+          }
+        }
+      });
   Kokkos::fence();
   int count = std::reduce(std::begin(counts), std::end(counts));
   int pair_count = std::reduce(std::begin(pair_counts), std::end(pair_counts));
-  int angle_count = std::reduce(std::begin(angle_counts), std::end(angle_counts));
-  int dihedral_count = std::reduce(std::begin(dihedral_counts), std::end(dihedral_counts));
+  int angle_count =
+      std::reduce(std::begin(angle_counts), std::end(angle_counts));
+  int dihedral_count =
+      std::reduce(std::begin(dihedral_counts), std::end(dihedral_counts));
   set_local_bond_numbers(count, pair_count, angle_count, dihedral_count);
   if (m_pair_bond_list_kokkos) {
     Kokkos::realloc(get_pair_bond_list_kokkos(), m_local_pair_bond_numbers);
     Kokkos::realloc(get_pair_bond_id_kokkos(), m_local_pair_bond_numbers);
     Kokkos::realloc(get_angle_bond_list_kokkos(), m_local_angle_bond_numbers);
     Kokkos::realloc(get_angle_bond_id_kokkos(), m_local_angle_bond_numbers);
-    Kokkos::realloc(get_dihedral_bond_list_kokkos(), m_local_dihedral_bond_numbers);
-    Kokkos::realloc(get_dihedral_bond_id_kokkos(), m_local_dihedral_bond_numbers);
+    Kokkos::realloc(get_dihedral_bond_list_kokkos(),
+                    m_local_dihedral_bond_numbers);
+    Kokkos::realloc(get_dihedral_bond_id_kokkos(),
+                    m_local_dihedral_bond_numbers);
   } else {
-    m_pair_bond_list_kokkos =
-        std::make_unique<PairBondlistType>("pair_bond_list", m_local_pair_bond_numbers);
-    m_pair_bond_id_kokkos =
-        std::make_unique<PairBondIDType>("pair_bond_id", m_local_pair_bond_numbers);
-    m_angle_bond_list_kokkos =
-        std::make_unique<AngleBondlistType>("angle_bond_list", m_local_angle_bond_numbers);
-    m_angle_bond_id_kokkos =
-        std::make_unique<AngleBondIDType>("angle_bond_id", m_local_angle_bond_numbers);
-    m_dihedral_bond_list_kokkos =
-        std::make_unique<DihedralBondlistType>("dihedral_bond_list", m_local_dihedral_bond_numbers);
-    m_dihedral_bond_id_kokkos =
-        std::make_unique<DihedralBondIDType>("dihedral_bond_id", m_local_dihedral_bond_numbers);
+    m_pair_bond_list_kokkos = std::make_unique<PairBondlistType>(
+        "pair_bond_list", m_local_pair_bond_numbers);
+    m_pair_bond_id_kokkos = std::make_unique<PairBondIDType>(
+        "pair_bond_id", m_local_pair_bond_numbers);
+    m_angle_bond_list_kokkos = std::make_unique<AngleBondlistType>(
+        "angle_bond_list", m_local_angle_bond_numbers);
+    m_angle_bond_id_kokkos = std::make_unique<AngleBondIDType>(
+        "angle_bond_id", m_local_angle_bond_numbers);
+    m_dihedral_bond_list_kokkos = std::make_unique<DihedralBondlistType>(
+        "dihedral_bond_list", m_local_dihedral_bond_numbers);
+    m_dihedral_bond_id_kokkos = std::make_unique<DihedralBondIDType>(
+        "dihedral_bond_id", m_local_dihedral_bond_numbers);
   }
   int max_id = *(std::max_element(max_ids.begin(), max_ids.end()));
   for (auto &p : ghost_particles()) {
@@ -349,28 +355,23 @@ void CellStructure::set_index_map() {
 #ifdef ESPRESSO_COLLISION_DETECTION
 template <typename BondListT, typename BondIDT>
 void CellStructure::rebuild_bond_list_impl(
-    std::vector<int> const &new_bond_list,
-    std::vector<int> const &new_bond_ids,
-    std::unique_ptr<BondListT> &bond_list,
-    std::unique_ptr<BondIDT> &bond_ids,
+    std::vector<int> const &new_bond_list, std::vector<int> const &new_bond_ids,
+    std::unique_ptr<BondListT> &bond_list, std::unique_ptr<BondIDT> &bond_ids,
     int total_bond_count) {
 
   if (new_bond_list.empty())
     return;
 
   // Number of columns is deduced from the View type
-  constexpr int NCols = BondListT::rank == 2
-			    ? static_cast<int>(BondListT::static_extent(1))
-			    : 1;
+  constexpr int NCols =
+      BondListT::rank == 2 ? static_cast<int>(BondListT::static_extent(1)) : 1;
 
-  auto new_data_view =
-      Kokkos::View<const int *, Kokkos::HostSpace,
-		   Kokkos::MemoryTraits<Kokkos::Unmanaged>>(
-	  new_bond_list.data(), new_bond_list.size());
-  auto new_id_view =
-      Kokkos::View<const int *, Kokkos::HostSpace,
-		   Kokkos::MemoryTraits<Kokkos::Unmanaged>>(
-	  new_bond_ids.data(), new_bond_ids.size());
+  auto new_data_view = Kokkos::View<const int *, Kokkos::HostSpace,
+                                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>(
+      new_bond_list.data(), new_bond_list.size());
+  auto new_id_view = Kokkos::View<const int *, Kokkos::HostSpace,
+                                  Kokkos::MemoryTraits<Kokkos::Unmanaged>>(
+      new_bond_ids.data(), new_bond_ids.size());
 
   auto old_count = total_bond_count - static_cast<int>(new_bond_ids.size());
   auto new_count = total_bond_count;
@@ -378,65 +379,60 @@ void CellStructure::rebuild_bond_list_impl(
   if (new_count > old_count) {
     // Need to grow — allocate new views, copy old data, then append
     auto rebuilt_list = std::make_unique<BondListT>(
-	Kokkos::ViewAllocateWithoutInitializing("bond_list_rebuild"),
-	new_count);
+        Kokkos::ViewAllocateWithoutInitializing("bond_list_rebuild"),
+        new_count);
     auto rebuilt_ids = std::make_unique<BondIDT>(
-	Kokkos::ViewAllocateWithoutInitializing("bond_id_rebuild"),
-	new_count);
+        Kokkos::ViewAllocateWithoutInitializing("bond_id_rebuild"), new_count);
 
     // Copy existing data
+    Kokkos::deep_copy(Kokkos::subview(*rebuilt_list,
+                                      std::make_pair(0, old_count),
+                                      Kokkos::ALL()),
+                      Kokkos::subview(*bond_list, std::make_pair(0, old_count),
+                                      Kokkos::ALL()));
     Kokkos::deep_copy(
-	Kokkos::subview(*rebuilt_list,
-			std::make_pair(0, old_count), Kokkos::ALL()),
-	Kokkos::subview(*bond_list,
-			std::make_pair(0, old_count), Kokkos::ALL()));
-    Kokkos::deep_copy(
-	Kokkos::subview(*rebuilt_ids, std::make_pair(0, old_count)),
-	Kokkos::subview(*bond_ids, std::make_pair(0, old_count)));
+        Kokkos::subview(*rebuilt_ids, std::make_pair(0, old_count)),
+        Kokkos::subview(*bond_ids, std::make_pair(0, old_count)));
 
     // Append new bond data
     Kokkos::parallel_for(
-	"copy_bondlist", new_bond_list.size(),
-	[&bond_view = *rebuilt_list, old_count,
-	 &new_data_view](auto flat_idx) {
-	  auto bond_idx = old_count + static_cast<int>(flat_idx / NCols);
-	  auto col_idx = static_cast<int>(flat_idx % NCols);
-	  bond_view(bond_idx, col_idx) = new_data_view(flat_idx);
-	});
+        "copy_bondlist", new_bond_list.size(),
+        [&bond_view = *rebuilt_list, old_count, &new_data_view](auto flat_idx) {
+          auto bond_idx = old_count + static_cast<int>(flat_idx / NCols);
+          auto col_idx = static_cast<int>(flat_idx % NCols);
+          bond_view(bond_idx, col_idx) = new_data_view(flat_idx);
+        });
 
     // Append new bond IDs
     Kokkos::deep_copy(
-	Kokkos::subview(*rebuilt_ids,
-			std::make_pair(old_count, new_count)),
-	new_id_view);
+        Kokkos::subview(*rebuilt_ids, std::make_pair(old_count, new_count)),
+        new_id_view);
 
     bond_list = std::move(rebuilt_list);
     bond_ids = std::move(rebuilt_ids);
   } else {
     // Enough space — just overwrite in place
     Kokkos::parallel_for(
-	"copy_bondlist", new_bond_list.size(),
-	[&bond_view = *bond_list, old_count,
-	 &new_data_view](auto flat_idx) {
-	  auto bond_idx = old_count + static_cast<int>(flat_idx / NCols);
-	  auto col_idx = static_cast<int>(flat_idx % NCols);
-	  bond_view(bond_idx, col_idx) = new_data_view(flat_idx);
-	});
+        "copy_bondlist", new_bond_list.size(),
+        [&bond_view = *bond_list, old_count, &new_data_view](auto flat_idx) {
+          auto bond_idx = old_count + static_cast<int>(flat_idx / NCols);
+          auto col_idx = static_cast<int>(flat_idx % NCols);
+          bond_view(bond_idx, col_idx) = new_data_view(flat_idx);
+        });
 
     Kokkos::deep_copy(
-	Kokkos::subview(*bond_ids,
-			std::make_pair(old_count, new_count)),
-	new_id_view);
+        Kokkos::subview(*bond_ids, std::make_pair(old_count, new_count)),
+        new_id_view);
   }
 }
 
 void CellStructure::rebuild_bond_list() {
   rebuild_bond_list_impl(m_new_pair_bond_list, m_new_pair_bond_id,
-			 m_pair_bond_list_kokkos, m_pair_bond_id_kokkos,
-			 m_local_pair_bond_numbers);
+                         m_pair_bond_list_kokkos, m_pair_bond_id_kokkos,
+                         m_local_pair_bond_numbers);
   rebuild_bond_list_impl(m_new_angle_bond_list, m_new_angle_bond_id,
-			 m_angle_bond_list_kokkos, m_angle_bond_id_kokkos,
-			 m_local_angle_bond_numbers);
+                         m_angle_bond_list_kokkos, m_angle_bond_id_kokkos,
+                         m_local_angle_bond_numbers);
   clear_new_bonds();
 }
 #endif // ESPRESSO_COLLISION_DETECTION
