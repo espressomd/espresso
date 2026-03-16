@@ -847,14 +847,13 @@ public:
   }
 
   /**
-   * @brief Update bond storage(m_bond_list_kokkos and m_bond_id_kokkos).
-   * @param count           Index for bond storage.
+   * @brief Update bond storage(m_*_bond_list_kokkos and m_*_bond_id_kokkos).
    * @param pair_count      Index for pair bond storage.
-   * @param angele_count    Index for anggle bond storage.
+   * @param angle_count    Index for anggle bond storage.
    * @param dihedral_count  Index for dihedral bond storage.
    * @param p               Particle pointer.
    */
-  void update_bond_storage(int &count, int &pair_count, int &angle_count,
+  void update_bond_storage(int &pair_count, int &angle_count,
                            int &dihedral_count, Particle const &p);
 
   /**
