@@ -185,7 +185,6 @@ public:
   using AngleBondIDType = Kokkos::View<int *, Kokkos::LayoutRight>;
   using DihedralBondlistType = Kokkos::View<int *[4], Kokkos::LayoutRight>;
   using DihedralBondIDType = Kokkos::View<int *, Kokkos::LayoutRight>;
-  using BondCounter = Kokkos::View<int>;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 private:
@@ -850,8 +849,8 @@ public:
    * @param dihedral_count  Index for dihedral bond storage.
    * @param p               Particle pointer.
    */
-  void update_bond_storage(BondCounter pair_count, BondCounter angle_count,
-                           BondCounter dihedral_count, Particle const &p);
+  void update_bond_storage(int &pair_count, int &angle_count,
+                           int &dihedral_count, Particle const &p);
 
   /**
    * @brief Reset local properties of the Verlet list.

@@ -181,13 +181,13 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_BEGIN("AoSoA commit full");
 #endif
-    CellStructure::BondCounter pair_count("pair_count");
-    CellStructure::BondCounter angle_count("angle_count");
-    CellStructure::BondCounter dihedral_count("dihedral_count");
+    int pair_count = 0;
+    int angle_count = 0;
+    int dihedral_count = 0;
     kokkos_parallel_range_for<policy_type>(
         "AoSoA write", std::size_t{0}, n_part,
-        [&unique_particles, &aosoa, &id_to_index, &cell_structure, pair_count,
-         angle_count, dihedral_count](int const index) {
+        [&unique_particles, &aosoa, &id_to_index, &cell_structure, &pair_count,
+         &angle_count, &dihedral_count](int const index) {
           auto const &p = *unique_particles.at(index);
           commit_particle(p, index, aosoa, true);
           id_to_index(p.id()) = index;
