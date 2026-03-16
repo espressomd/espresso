@@ -55,7 +55,6 @@
 #include <Cabana_Core.hpp>
 #include <Cabana_NeighborList.hpp>
 #include <Kokkos_Core.hpp>
-#include <execution>
 #include <omp.h>
 #endif
 
@@ -222,8 +221,9 @@ void CellStructure::reset_local_properties() {
   Kokkos::deep_copy(get_aosoa().flags, uint8_t{0});
 }
 
-void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
-                                        int &dihedral_count,
+void CellStructure::update_bond_storage(BondCounter pair_count,
+				        BondCounter angle_count,
+                                        BondCounter dihedral_count,
                                         Particle const &p) {
   auto &pair_list = get_pair_bond_list_kokkos();
   auto &pair_ids = get_pair_bond_id_kokkos();
@@ -238,18 +238,18 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
       auto const partners =
           std::span(partners_source.data(), partners_source.size());
       if (partners.size() == 1u) { // pair bonds
-        auto p_index = Kokkos::atomic_fetch_add(&pair_count, 1);
+        auto p_index = Kokkos::atomic_fetch_add(&pair_count(), 1);
         pair_list(p_index, 0) = p.id();
         pair_list(p_index, 1) = partners[0]->id();
         pair_ids(p_index) = bond.bond_id();
       } else if (partners.size() == 2u) { // angle bond
-        auto a_index = Kokkos::atomic_fetch_add(&angle_count, 1);
+        auto a_index = Kokkos::atomic_fetch_add(&angle_count(), 1);
         angle_list(a_index, 0) = p.id();
         angle_list(a_index, 1) = partners[0]->id();
         angle_list(a_index, 2) = partners[1]->id();
         angle_ids(a_index) = bond.bond_id();
       } else if (partners.size() == 3u) { // dihedral bond
-        auto d_index = Kokkos::atomic_fetch_add(&dihedral_count, 1);
+        auto d_index = Kokkos::atomic_fetch_add(&dihedral_count(), 1);
         dihedral_list(d_index, 0) = p.id();
         dihedral_list(d_index, 1) = partners[0]->id();
         dihedral_list(d_index, 2) = partners[1]->id();
