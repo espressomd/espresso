@@ -363,7 +363,7 @@ void CellStructure::rebuild_bond_list_impl(
     return;
 
   // Number of columns is deduced from the View type
-  constexpr int NCols =
+  [[maybe_unused]] constexpr int NCols =
       BondListT::rank == 2 ? static_cast<int>(BondListT::static_extent(1)) : 1;
 
   auto new_data_view = Kokkos::View<const int *, Kokkos::HostSpace,
