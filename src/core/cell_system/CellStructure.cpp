@@ -222,8 +222,8 @@ void CellStructure::reset_local_properties() {
   Kokkos::deep_copy(get_aosoa().flags, uint8_t{0});
 }
 
-void CellStructure::update_bond_storage(int &pair_count,
-                                        int &angle_count, int &dihedral_count,
+void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
+                                        int &dihedral_count,
                                         Particle const &p) {
   auto &pair_list = get_pair_bond_list_kokkos();
   auto &pair_ids = get_pair_bond_id_kokkos();
