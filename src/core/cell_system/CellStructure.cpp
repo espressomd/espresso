@@ -222,7 +222,7 @@ void CellStructure::reset_local_properties() {
 }
 
 void CellStructure::update_bond_storage(BondCounter pair_count,
-				        BondCounter angle_count,
+                                        BondCounter angle_count,
                                         BondCounter dihedral_count,
                                         Particle const &p) {
   auto &pair_list = get_pair_bond_list_kokkos();
