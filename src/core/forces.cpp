@@ -154,27 +154,20 @@ static void reinit_dip_fld(CellStructure const &cell_structure) {
 #endif
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-static BondsKernel create_kokkos_bonds_kernel(System::System const &system,
-                                              auto const &coulomb_kernel) {
+static BondsKernelData create_kokkos_bonds_kernel_data(System::System const &system) {
 
-  // auto const &id_to_index = system.cell_structure->get_id_to_index();
   auto const &local_force = system.cell_structure->get_local_force();
 #ifdef ESPRESSO_NPT
   auto const &local_virial = system.cell_structure->get_local_virial();
 #endif
-  CellStructure::BondlistType const &bond_list =
-      system.cell_structure->get_bond_list_kokkos();
-  CellStructure::BondIDType const &bond_ids =
-      system.cell_structure->get_bond_id_kokkos();
   auto const &aosoa = system.cell_structure->get_aosoa();
-  return /* BondsKernel */ {*system.bonded_ias, *system.bond_breakage,
-                            get_ptr(coulomb_kernel), *system.box_geo,
-                            // id_to_index,
-                            local_force,
+  return /* BondsKernelData */ {*system.bonded_ias, *system.bond_breakage,
+                                *system.box_geo,
+                                local_force,
 #ifdef ESPRESSO_NPT
-                            local_virial,
+                                local_virial,
 #endif
-                            bond_list, bond_ids, aosoa};
+                                aosoa, !system.bond_breakage->breakage_specs.empty()};
 }
 
 static ForcesKernel create_cabana_neighbor_kernel(
@@ -344,13 +337,27 @@ void System::System::calculate_forces() {
 #ifdef ESPRESSO_CALIPER
   CALI_MARK_BEGIN("cabana_short_range");
 #endif
-  auto bonds_kernel = create_kokkos_bonds_kernel(*this, coulomb_kernel);
+  auto bonds_kernel_data = create_kokkos_bonds_kernel_data(*this);
+  auto pair_bonds_kernel = PairBondsKernel{
+      bonds_kernel_data,
+      cell_structure->get_pair_bond_list_kokkos(),
+      cell_structure->get_pair_bond_id_kokkos(),
+      get_ptr(coulomb_kernel)};
+  auto angle_bonds_kernel = AngleBondsKernel{
+      bonds_kernel_data,
+      cell_structure->get_angle_bond_list_kokkos(),
+      cell_structure->get_angle_bond_id_kokkos()};
+  auto dihedral_bonds_kernel = DihedralBondsKernel{
+      bonds_kernel_data,
+      cell_structure->get_dihedral_bond_list_kokkos(),
+      cell_structure->get_dihedral_bond_id_kokkos()};
 
   auto first_neighbor_kernel =
       create_cabana_neighbor_kernel(*this, virial, elc_kernel, coulomb_kernel,
                                     dipoles_kernel, coulomb_u_kernel);
 
-  cabana_short_range(bonds_kernel, first_neighbor_kernel, *cell_structure,
+  cabana_short_range(pair_bonds_kernel, angle_bonds_kernel, dihedral_bonds_kernel,
+		     first_neighbor_kernel, *cell_structure,
                      get_interaction_range(), bonded_ias->maximal_cutoff(),
                      verlet_criterion, propagation->integ_switch);
 

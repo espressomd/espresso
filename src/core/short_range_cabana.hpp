@@ -182,28 +182,48 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
     CALI_MARK_BEGIN("AoSoA commit full");
 #endif
     int count = 0;
+    int pair_count = 0;
+    int angle_count = 0;
+    int dihedral_count = 0;
     kokkos_parallel_range_for<policy_type>(
         "AoSoA write", std::size_t{0}, n_part,
         [&unique_particles, &aosoa, &id_to_index, &cell_structure,
-         &count](int const index) {
+         &count, &pair_count, &angle_count, &dihedral_count](int const index) {
           auto const &p = *unique_particles.at(index);
           commit_particle(p, index, aosoa, true);
           id_to_index(p.id()) = index;
           if (not p.is_ghost()) {
-            cell_structure.update_bond_storage(count, p);
+            cell_structure.update_bond_storage(count, pair_count, angle_count, dihedral_count, p);
           }
         });
     Kokkos::fence();
-    CellStructure::BondlistType &bond_list =
-        cell_structure.get_bond_list_kokkos();
-    // After set_index_map() finishes and id_to_index is ready:
+    CellStructure::PairBondlistType &pair_bond_list =
+        cell_structure.get_pair_bond_list_kokkos();
     Kokkos::parallel_for(
-        "resolve_bond_indices", cell_structure.get_local_bond_numbers(),
-        [&bond_list, &id_to_index](int idx) {
+        "resolve_pair_bond_indices", cell_structure.get_local_pair_bond_numbers(),
+        [&pair_bond_list, &id_to_index](int idx) {
+          for (int col = 0; col < 2; ++col) {
+            pair_bond_list(idx, col) = id_to_index(pair_bond_list(idx, col));
+          }
+        });
+    Kokkos::fence();
+    CellStructure::AngleBondlistType &angle_bond_list =
+        cell_structure.get_angle_bond_list_kokkos();
+    Kokkos::parallel_for(
+        "resolve_angle_bond_indices", cell_structure.get_local_angle_bond_numbers(),
+        [&angle_bond_list, &id_to_index](int idx) {
+          for (int col = 0; col < 3; ++col) {
+            angle_bond_list(idx, col) = id_to_index(angle_bond_list(idx, col));
+          }
+        });
+    Kokkos::fence();
+    CellStructure::DihedralBondlistType &dihedral_bond_list =
+        cell_structure.get_dihedral_bond_list_kokkos();
+    Kokkos::parallel_for(
+        "resolve_dihedral_bond_indices", cell_structure.get_local_dihedral_bond_numbers(),
+        [&dihedral_bond_list, &id_to_index](int idx) {
           for (int col = 0; col < 4; ++col) {
-            if (bond_list(idx, col) != -1) {
-              bond_list(idx, col) = id_to_index(bond_list(idx, col));
-            }
+            dihedral_bond_list(idx, col) = id_to_index(dihedral_bond_list(idx, col));
           }
         });
     Kokkos::fence();
@@ -284,7 +304,10 @@ update_aosoa_charges(CellStructure &cell_structure) {
 }
 #endif
 
-void cabana_short_range(auto const &bonds_kernel, auto const &forces_kernel,
+void cabana_short_range(auto const &pair_bonds_kernel,
+		        auto const &angle_bonds_kernel,
+		        auto const &dihedral_bonds_kernel,
+			auto const &forces_kernel,
                         CellStructure &cell_structure, double pair_cutoff,
                         double bond_cutoff, auto const &verlet_criterion,
                         auto const integ_switch) {
@@ -295,10 +318,20 @@ void cabana_short_range(auto const &bonds_kernel, auto const &forces_kernel,
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_BEGIN("cabana_bond_loop");
 #endif
-    if (cell_structure.get_local_bond_numbers() > 0) {
+    if (cell_structure.get_local_pair_bond_numbers() > 0) {
       Kokkos::parallel_for( // loop over bonds
-          "for_each_local_bonds", cell_structure.get_local_bond_numbers(),
-          bonds_kernel);
+          "for_each_local_pair_bonds", cell_structure.get_local_pair_bond_numbers(),
+          pair_bonds_kernel);
+    }
+    if (cell_structure.get_local_angle_bond_numbers() > 0) {
+      Kokkos::parallel_for( // loop over bonds
+          "for_each_local_angle_bonds", cell_structure.get_local_angle_bond_numbers(),
+          angle_bonds_kernel);
+    }
+    if (cell_structure.get_local_dihedral_bond_numbers() > 0) {
+      Kokkos::parallel_for( // loop over bonds
+          "for_each_local_dihedral_bonds", cell_structure.get_local_dihedral_bond_numbers(),
+          dihedral_bonds_kernel);
     }
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_END("cabana_bond_loop");

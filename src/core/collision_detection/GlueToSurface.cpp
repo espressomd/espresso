@@ -167,7 +167,7 @@ void GlueToSurface::handle_collisions(
       const int bondG[] = {pid2};
       get_part(cell_structure, pid1).bonds().insert({bond_centers, bondG});
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-      cell_structure.add_new_bond(bond_centers, {pid1, pid2, -1, -1});
+      cell_structure.add_new_bond(bond_centers, {pid1, pid2});
 #endif
     }
 
@@ -196,7 +196,7 @@ void GlueToSurface::handle_collisions(
     int const bondG[] = {current_vs_pid - 1};
     get_part(cell_structure, p->id()).bonds().insert({bond_vs, bondG});
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-    cell_structure.add_new_bond(bond_vs, {p->id(), current_vs_pid - 1, -1, -1});
+    cell_structure.add_new_bond(bond_vs, {p->id(), current_vs_pid - 1});
 #endif
   } // Loop over all collisions in the queue
 

@@ -179,8 +179,12 @@ public:
   using ListType =
       CustomVerletList<Kokkos::HostSpace, ListAlgorithm, Cabana::VerletLayout2D,
                        Cabana::TeamVectorOpTag>;
-  using BondlistType = Kokkos::View<int *[4], Kokkos::LayoutRight>;
-  using BondIDType = Kokkos::View<int *, Kokkos::LayoutRight>;
+  using PairBondlistType = Kokkos::View<int *[2], Kokkos::LayoutRight>;
+  using PairBondIDType = Kokkos::View<int *, Kokkos::LayoutRight>;
+  using AngleBondlistType = Kokkos::View<int *[3], Kokkos::LayoutRight>;
+  using AngleBondIDType = Kokkos::View<int *, Kokkos::LayoutRight>;
+  using DihedralBondlistType = Kokkos::View<int *[4], Kokkos::LayoutRight>;
+  using DihedralBondIDType = Kokkos::View<int *, Kokkos::LayoutRight>;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 private:
@@ -206,6 +210,9 @@ private:
   std::size_t m_num_local_particles_cached = 0;
   int m_max_id = 0;
   int m_local_bond_numbers = 0;
+  int m_local_pair_bond_numbers = 0;
+  int m_local_angle_bond_numbers = 0;
+  int m_local_dihedral_bond_numbers = 0;
   std::unique_ptr<Kokkos::View<int *>> m_id_to_index;
   std::unique_ptr<ForceType> m_local_force;
 #ifdef ESPRESSO_ROTATION
@@ -215,11 +222,17 @@ private:
   std::unique_ptr<VirialType> m_local_virial;
 #endif
   std::unique_ptr<ListType> m_verlet_list_cabana;
-  std::unique_ptr<BondlistType> m_bond_list_kokkos;
-  std::unique_ptr<BondIDType> m_bond_id_kokkos;
+  std::unique_ptr<PairBondlistType> m_pair_bond_list_kokkos;
+  std::unique_ptr<PairBondIDType> m_pair_bond_id_kokkos;
+  std::unique_ptr<AngleBondlistType> m_angle_bond_list_kokkos;
+  std::unique_ptr<AngleBondIDType> m_angle_bond_id_kokkos;
+  std::unique_ptr<DihedralBondlistType> m_dihedral_bond_list_kokkos;
+  std::unique_ptr<DihedralBondIDType> m_dihedral_bond_id_kokkos;
 #ifdef ESPRESSO_COLLISION_DETECTION
-  std::vector<int> m_new_bond_list;
-  std::vector<int> m_new_bond_id;
+  std::vector<int> m_new_pair_bond_list;
+  std::vector<int> m_new_pair_bond_id;
+  std::vector<int> m_new_angle_bond_list;
+  std::vector<int> m_new_angle_bond_id;
 #endif
   /** particle properties using individual Kokkos Views */
   std::unique_ptr<AoSoA_pack> m_aosoa;
@@ -473,25 +486,56 @@ public:
     return m_num_local_particles_cached;
   }
   int get_local_bond_numbers() const { return m_local_bond_numbers; }
-  void add_local_bond_numbers() { m_local_bond_numbers += 1; }
-  void reset_local_bond_numbers() { m_local_bond_numbers = 0; }
-  void set_local_bond_numbers(int value) { m_local_bond_numbers = value; }
+  int get_local_pair_bond_numbers() const { return m_local_pair_bond_numbers; }
+  int get_local_angle_bond_numbers() const { return m_local_angle_bond_numbers; }
+  int get_local_dihedral_bond_numbers() const { return m_local_dihedral_bond_numbers; }
+  //void add_local_bond_numbers() {
+  //  m_local_bond_numbers += 1;
+  //  m_local_pair_bond_numbers += 1;
+  //}
+  void reset_local_bond_numbers() {
+    m_local_bond_numbers = 0;
+    m_local_pair_bond_numbers = 0;
+    m_local_angle_bond_numbers = 0;
+    m_local_dihedral_bond_numbers = 0;
+  }
+  void set_local_bond_numbers(int value, int pair_value, int angle_value, int dihedral_value) {
+    m_local_bond_numbers = value;
+    m_local_pair_bond_numbers = pair_value;
+    m_local_angle_bond_numbers = angle_value;
+    m_local_dihedral_bond_numbers = dihedral_value;
+  }
 #ifdef ESPRESSO_COLLISION_DETECTION
   void clear_new_bonds() {
-    m_new_bond_list.clear();
-    m_new_bond_id.clear();
+    m_new_pair_bond_list.clear();
+    m_new_pair_bond_id.clear();
+    m_new_angle_bond_list.clear();
+    m_new_angle_bond_id.clear();
   }
-#endif
+  void add_new_bond(int bond_id, std::vector<int> const &particle_ids, std::vector<int> &new_bond_list, std::vector<int> &new_bond_id) {
+    new_bond_list.reserve(new_bond_list.size() + particle_ids.size());
+    new_bond_list.insert(new_bond_list.end(), particle_ids.begin(),
+                         particle_ids.end());
+    new_bond_id.emplace_back(bond_id);
+  }
   void add_new_bond(int bond_id, std::vector<int> const &particle_ids) {
-#ifdef ESPRESSO_COLLISION_DETECTION
-    m_new_bond_list.reserve(m_new_bond_list.size() + 4);
-    m_new_bond_list.insert(m_new_bond_list.end(), particle_ids.begin(),
-                           particle_ids.end());
-    m_new_bond_id.emplace_back(bond_id);
-#endif
-    add_local_bond_numbers();
+    if (particle_ids.size() == 2) {
+      add_new_bond(bond_id, particle_ids, m_new_pair_bond_list, m_new_pair_bond_id);
+      m_local_pair_bond_numbers++;
+    } else if (particle_ids.size() == 3) {
+      add_new_bond(bond_id, particle_ids, m_new_angle_bond_list, m_new_angle_bond_id);
+      m_local_angle_bond_numbers++;
+    }
   }
+  template <typename BondListT, typename BondIDT>
+  static void rebuild_bond_list_impl(
+      std::vector<int> const &new_bond_list,
+      std::vector<int> const &new_bond_ids,
+      std::unique_ptr<BondListT> &bond_list,
+      std::unique_ptr<BondIDT> &bond_ids,
+      int total_bond_count);
   void rebuild_bond_list();
+#endif //ESPRESSO_COLLISION_DETECTION
 #endif
 
   /**
@@ -777,8 +821,12 @@ public:
   auto &get_aosoa() { return *m_aosoa; }
   auto const &get_unique_particles() const { return m_unique_particles; }
   auto const &get_verlet_list_cabana() const { return *m_verlet_list_cabana; }
-  auto &get_bond_list_kokkos() const { return *m_bond_list_kokkos; }
-  auto &get_bond_id_kokkos() const { return *m_bond_id_kokkos; }
+  auto &get_pair_bond_list_kokkos() const { return *m_pair_bond_list_kokkos; }
+  auto &get_pair_bond_id_kokkos() const { return *m_pair_bond_id_kokkos; }
+  auto &get_angle_bond_list_kokkos() const { return *m_angle_bond_list_kokkos; }
+  auto &get_angle_bond_id_kokkos() const { return *m_angle_bond_id_kokkos; }
+  auto &get_dihedral_bond_list_kokkos() const { return *m_dihedral_bond_list_kokkos; }
+  auto &get_dihedral_bond_id_kokkos() const { return *m_dihedral_bond_id_kokkos; }
   void clear_local_properties();
   void clear_bond_properties();
 
@@ -788,10 +836,13 @@ public:
 
   /**
    * @brief Update bond storage(m_bond_list_kokkos and m_bond_id_kokkos).
-   * @param count     Index for bond storage.
-   * @param p         Particle pointer.
+   * @param count           Index for bond storage.
+   * @param pair_count      Index for pair bond storage.
+   * @param angele_count    Index for anggle bond storage.
+   * @param dihedral_count  Index for dihedral bond storage.
+   * @param p               Particle pointer.
    */
-  void update_bond_storage(int &count, Particle const &p);
+  void update_bond_storage(int &count, int &pair_count, int &angle_count, int &dihedral_count, Particle const &p);
 
   /**
    * @brief Reset local properties of the Verlet list.
