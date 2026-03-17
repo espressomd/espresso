@@ -496,7 +496,8 @@ public:
     m_local_angle_bond_numbers = 0;
     m_local_dihedral_bond_numbers = 0;
   }
-  void set_local_bond_numbers(int pair_value, int angle_value, int dihedral_value) {
+  void set_local_bond_numbers(int pair_value, int angle_value,
+                              int dihedral_value) {
     m_local_pair_bond_numbers = pair_value;
     m_local_angle_bond_numbers = angle_value;
     m_local_dihedral_bond_numbers = dihedral_value;
