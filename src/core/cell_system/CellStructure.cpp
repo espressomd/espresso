@@ -274,20 +274,18 @@ void CellStructure::set_index_map() {
   std::vector<int> max_ids(n_threads);
 
   reset_local_bond_numbers();
-  std::vector<int> counts(n_threads, 0);
   std::vector<int> pair_counts(n_threads, 0);
   std::vector<int> angle_counts(n_threads, 0);
   std::vector<int> dihedral_counts(n_threads, 0);
 
   enumerate_local_particles(
-      *this, [&unique_particles, &max_ids, &counts, &pair_counts, &angle_counts,
+      *this, [&unique_particles, &max_ids, &pair_counts, &angle_counts,
               &dihedral_counts](std::size_t index, Particle &p) {
         unique_particles[index] = &p;
         const int thread_num = omp_get_thread_num();
         max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
         for (const BondView bond : p.bonds()) {
           if (not bond.partner_ids().empty()) {
-            counts[thread_num] += 1;
             auto const partner_ids = bond.partner_ids();
             if (partner_ids.size() == 1u) {
               pair_counts[thread_num] += 1;
@@ -300,13 +298,12 @@ void CellStructure::set_index_map() {
         }
       });
   Kokkos::fence();
-  int count = std::reduce(std::begin(counts), std::end(counts));
   int pair_count = std::reduce(std::begin(pair_counts), std::end(pair_counts));
   int angle_count =
       std::reduce(std::begin(angle_counts), std::end(angle_counts));
   int dihedral_count =
       std::reduce(std::begin(dihedral_counts), std::end(dihedral_counts));
-  set_local_bond_numbers(count, pair_count, angle_count, dihedral_count);
+  set_local_bond_numbers(pair_count, angle_count, dihedral_count);
   if (m_pair_bond_list_kokkos) {
     Kokkos::realloc(get_pair_bond_list_kokkos(), m_local_pair_bond_numbers);
     Kokkos::realloc(get_pair_bond_id_kokkos(), m_local_pair_bond_numbers);

@@ -209,7 +209,6 @@ private:
   int m_cached_max_local_particle_id = 0;
   std::size_t m_num_local_particles_cached = 0;
   int m_max_id = 0;
-  int m_local_bond_numbers = 0;
   int m_local_pair_bond_numbers = 0;
   int m_local_angle_bond_numbers = 0;
   int m_local_dihedral_bond_numbers = 0;
@@ -485,7 +484,6 @@ public:
   std::size_t get_num_local_particles_cached() const {
     return m_num_local_particles_cached;
   }
-  int get_local_bond_numbers() const { return m_local_bond_numbers; }
   int get_local_pair_bond_numbers() const { return m_local_pair_bond_numbers; }
   int get_local_angle_bond_numbers() const {
     return m_local_angle_bond_numbers;
@@ -494,14 +492,11 @@ public:
     return m_local_dihedral_bond_numbers;
   }
   void reset_local_bond_numbers() {
-    m_local_bond_numbers = 0;
     m_local_pair_bond_numbers = 0;
     m_local_angle_bond_numbers = 0;
     m_local_dihedral_bond_numbers = 0;
   }
-  void set_local_bond_numbers(int value, int pair_value, int angle_value,
-                              int dihedral_value) {
-    m_local_bond_numbers = value;
+  void set_local_bond_numbers(int pair_value, int angle_value, int dihedral_value) {
     m_local_pair_bond_numbers = pair_value;
     m_local_angle_bond_numbers = angle_value;
     m_local_dihedral_bond_numbers = dihedral_value;
