@@ -37,7 +37,7 @@ void bond_broken_error(int id, std::span<const int> partner_ids) {
 void bond_broken_error(std::span<const int> partner_ids) {
   auto error_msg = runtimeErrorMsg();
 
-  error_msg << "bond broken between particles ";
+  error_msg << "nullptr detected in partner_ids ";
   bool first = true;
   for (auto partner_id : partner_ids) {
     if (partner_id == -1)

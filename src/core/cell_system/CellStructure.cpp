@@ -256,7 +256,7 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
         dihedral_ids(d_index) = bond.bond_id();
       }
     } catch (const BondResolutionError &) {
-      bond_broken_error(p.id(), partner_ids);
+      bond_broken_error(partner_ids);
     }
   }
 }
@@ -406,7 +406,7 @@ void CellStructure::rebuild_bond_list_impl(
 
     bond_list = std::move(rebuilt_list);
     bond_ids = std::move(rebuilt_ids);
-  } else {
+  } else { // This else branch is unreachable given the present counting logic. 
     // Enough space — just overwrite in place
     Kokkos::parallel_for(
         "copy_bondlist", new_bond_list.size(),
@@ -429,6 +429,9 @@ void CellStructure::rebuild_bond_list() {
   rebuild_bond_list_impl(m_new_angle_bond_list, m_new_angle_bond_id,
                          m_angle_bond_list_kokkos, m_angle_bond_id_kokkos,
                          m_local_angle_bond_numbers);
+  rebuild_bond_list_impl(m_new_dihedral_bond_list, m_new_dihedral_bond_id,
+                         m_dihedral_bond_list_kokkos, m_dihedral_bond_id_kokkos,
+                         m_local_dihedral_bond_numbers);
   clear_new_bonds();
 }
 #endif // ESPRESSO_COLLISION_DETECTION

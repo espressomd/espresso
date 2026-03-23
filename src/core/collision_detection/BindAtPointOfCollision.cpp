@@ -164,27 +164,30 @@ void BindAtPointOfCollision::handle_collisions(
       // Create bond between the virtual particles
       const int bondG[] = {current_vs_pid - 2};
       // Only add bond if vs was created on this node
-      if (auto p = cell_structure.get_local_particle(current_vs_pid - 1))
+      if (auto p = cell_structure.get_local_particle(current_vs_pid - 1)) {
         p->bonds().insert({bond_vs, bondG});
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-      cell_structure.add_new_bond(bond_vs,
+        cell_structure.add_new_bond(bond_vs,
                                   {current_vs_pid - 1, current_vs_pid - 2});
 #endif
+      }
     }
     if (n_partners == 2) {
       // Create 1st bond between the virtual particles
       const int bondG[] = {pid1, pid2};
       // Only add bond if vs was created on this node
-      if (auto p = cell_structure.get_local_particle(current_vs_pid - 1))
+      if (auto p = cell_structure.get_local_particle(current_vs_pid - 1)) {
         p->bonds().insert({bond_vs, bondG});
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-      cell_structure.add_new_bond(bond_vs, {current_vs_pid - 1, pid1, pid2});
+        cell_structure.add_new_bond(bond_vs, {current_vs_pid - 1, pid1, pid2});
 #endif
-      if (auto p = cell_structure.get_local_particle(current_vs_pid - 2))
+      }
+      if (auto p = cell_structure.get_local_particle(current_vs_pid - 2)) {
         p->bonds().insert({bond_vs, bondG});
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-      cell_structure.add_new_bond(bond_vs, {current_vs_pid - 2, pid1, pid2});
+        cell_structure.add_new_bond(bond_vs, {current_vs_pid - 2, pid1, pid2});
 #endif
+      }
     }
   } // Loop over all collisions in the queue
 

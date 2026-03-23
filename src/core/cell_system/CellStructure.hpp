@@ -232,6 +232,8 @@ private:
   std::vector<int> m_new_pair_bond_id;
   std::vector<int> m_new_angle_bond_list;
   std::vector<int> m_new_angle_bond_id;
+  std::vector<int> m_new_dihedral_bond_list;
+  std::vector<int> m_new_dihedral_bond_id;
 #endif
   /** particle properties using individual Kokkos Views */
   std::unique_ptr<AoSoA_pack> m_aosoa;
@@ -508,6 +510,8 @@ public:
     m_new_pair_bond_id.clear();
     m_new_angle_bond_list.clear();
     m_new_angle_bond_id.clear();
+    m_new_dihedral_bond_list.clear();
+    m_new_dihedral_bond_id.clear();
   }
   void add_new_bond(int bond_id, std::vector<int> const &particle_ids,
                     std::vector<int> &new_bond_list,
@@ -526,6 +530,10 @@ public:
       add_new_bond(bond_id, particle_ids, m_new_angle_bond_list,
                    m_new_angle_bond_id);
       m_local_angle_bond_numbers++;
+    } else if (particle_ids.size() == 4) {
+      add_new_bond(bond_id, particle_ids, m_new_angle_bond_list,
+                   m_new_dihedral_bond_id);
+      m_local_dihedral_bond_numbers++;
     }
   }
   template <typename BondListT, typename BondIDT>

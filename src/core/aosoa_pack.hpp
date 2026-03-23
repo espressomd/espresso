@@ -43,7 +43,6 @@ struct CellStructure::AoSoA_pack {
   using IdViewType = Kokkos::View<int *, Kokkos::HostSpace>;
   using TypeViewType = Kokkos::View<int *, Kokkos::HostSpace>;
   using MassViewType = Kokkos::View<double *, Kokkos::HostSpace>;
-  using IdToIndexViewType = Kokkos::View<int *, Kokkos::HostSpace>;
   using FlagsViewType = Kokkos::View<uint8_t *, Kokkos::HostSpace>;
 
   PositionViewType position;
@@ -55,7 +54,6 @@ struct CellStructure::AoSoA_pack {
   IdViewType id;
   TypeViewType type;
   MassViewType mass;
-  IdToIndexViewType id_to_index;
   FlagsViewType flags;
 
   AoSoA_pack() = default;

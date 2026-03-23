@@ -42,9 +42,9 @@ struct BondsKernelData {
   BondedInteractionsMap const &bonded_ias;
   BondBreakage::BondBreakage &bond_breakage;
   BoxGeometry const &box_geo;
-  CellStructure::ForceType const &local_force;
+  CellStructure::ForceType &local_force;
 #ifdef ESPRESSO_NPT
-  CellStructure::VirialType const &local_virial;
+  CellStructure::VirialType &local_virial;
 #endif
   CellStructure::AoSoA_pack const &aosoa;
   bool const has_breakage_specs;
@@ -68,11 +68,11 @@ struct PairBondsKernel {
   operator()(std::size_t idx) const {
     auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
-    auto const &local_force = data.local_force;
+    auto &local_force = data.local_force;
     auto const &aosoa = data.aosoa;
     auto &bond_breakage = data.bond_breakage;
 #ifdef ESPRESSO_NPT
-    auto const &local_virial = data.local_virial;
+    auto &local_virial = data.local_virial;
 #endif
     auto const has_breakage_specs = data.has_breakage_specs;
 
@@ -97,10 +97,15 @@ struct PairBondsKernel {
             aosoa.id(i), {{aosoa.id(j), std::nullopt}}, bond_id, dx.norm())) {
       return;
     }
-#ifdef ESPRESSO_MASS
+
     if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
       auto const res = iap->forces(
-          aosoa.mass(i), aosoa.mass(j), aosoa.get_vector_at(aosoa.velocity, i),
+#ifdef ESPRESSO_MASS
+          aosoa.mass(i), aosoa.mass(j),
+#else
+	  1.0, 1.0,
+#endif
+	  aosoa.get_vector_at(aosoa.velocity, i),
           aosoa.get_vector_at(aosoa.velocity, j), aosoa.id(i), aosoa.id(j), dx);
       if (res) {
         auto const &forces = res.value();
@@ -117,7 +122,6 @@ struct PairBondsKernel {
       }
       return;
     }
-#endif // ESPRESSO_MASS
 
     result =
         calc_bond_pair_force(iaparams, dx

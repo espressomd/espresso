@@ -151,10 +151,10 @@ link_cell_kokkos(std::span<Cell *const> cells, BoxGeometry const &box_geo,
     }
   };
 
-  Kokkos::parallel_for("inter", cells.size(), intra_kernel);
+  Kokkos::parallel_for("intra", cells.size(), intra_kernel);
   Kokkos::fence();
 
-  Kokkos::parallel_for("intra", cells.size(), inter_kernel);
+  Kokkos::parallel_for("inter", cells.size(), inter_kernel);
   Kokkos::fence();
 }
 
@@ -323,17 +323,20 @@ void cabana_short_range(auto const &pair_bonds_kernel,
       Kokkos::parallel_for( // loop over bonds
           "for_each_local_pair_bonds",
           cell_structure.get_local_pair_bond_numbers(), pair_bonds_kernel);
+      Kokkos::fence();
     }
     if (cell_structure.get_local_angle_bond_numbers() > 0) {
       Kokkos::parallel_for( // loop over bonds
           "for_each_local_angle_bonds",
           cell_structure.get_local_angle_bond_numbers(), angle_bonds_kernel);
+      Kokkos::fence();
     }
     if (cell_structure.get_local_dihedral_bond_numbers() > 0) {
       Kokkos::parallel_for( // loop over bonds
           "for_each_local_dihedral_bonds",
           cell_structure.get_local_dihedral_bond_numbers(),
           dihedral_bonds_kernel);
+      Kokkos::fence();
     }
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_END("cabana_bond_loop");

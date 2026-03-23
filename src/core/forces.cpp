@@ -157,9 +157,9 @@ static void reinit_dip_fld(CellStructure const &cell_structure) {
 static BondsKernelData
 create_kokkos_bonds_kernel_data(System::System const &system) {
 
-  auto const &local_force = system.cell_structure->get_local_force();
+  auto &local_force = system.cell_structure->get_local_force();
 #ifdef ESPRESSO_NPT
-  auto const &local_virial = system.cell_structure->get_local_virial();
+  auto &local_virial = system.cell_structure->get_local_virial();
 #endif
   auto const &aosoa = system.cell_structure->get_aosoa();
   return /* BondsKernelData */ {*system.bonded_ias,
