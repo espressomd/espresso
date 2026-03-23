@@ -406,7 +406,7 @@ void CellStructure::rebuild_bond_list_impl(
 
     bond_list = std::move(rebuilt_list);
     bond_ids = std::move(rebuilt_ids);
-  } else { // This else branch is unreachable given the present counting logic. 
+  } else { // This else branch is unreachable given the present counting logic.
     // Enough space — just overwrite in place
     Kokkos::parallel_for(
         "copy_bondlist", new_bond_list.size(),

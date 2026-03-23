@@ -103,9 +103,9 @@ struct PairBondsKernel {
 #ifdef ESPRESSO_MASS
           aosoa.mass(i), aosoa.mass(j),
 #else
-	  1.0, 1.0,
+          1.0, 1.0,
 #endif
-	  aosoa.get_vector_at(aosoa.velocity, i),
+          aosoa.get_vector_at(aosoa.velocity, i),
           aosoa.get_vector_at(aosoa.velocity, j), aosoa.id(i), aosoa.id(j), dx);
       if (res) {
         auto const &forces = res.value();

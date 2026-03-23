@@ -168,7 +168,7 @@ void BindAtPointOfCollision::handle_collisions(
         p->bonds().insert({bond_vs, bondG});
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
         cell_structure.add_new_bond(bond_vs,
-                                  {current_vs_pid - 1, current_vs_pid - 2});
+                                    {current_vs_pid - 1, current_vs_pid - 2});
 #endif
       }
     }
