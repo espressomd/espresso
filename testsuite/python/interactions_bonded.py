@@ -94,6 +94,8 @@ class InteractionsBondedTest(ut.TestCase):
     def tearDown(self):
         if espressomd.has_features(["ELECTROSTATICS"]):
             self.system.electrostatics.clear()
+        if espressomd.has_features(['LENNARD_JONES']):
+            self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
         self.system.part.clear()
         self.system.bonded_inter.clear()
 
@@ -309,6 +311,28 @@ class InteractionsBondedTest(ut.TestCase):
                 system.integrator.run(0, recalc_forces=True)
             p3.delete_all_bonds()
 
+
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] < 2,
+               "Skipping test: only runs for n_nodes >= 2")
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    def test_bond_resolution_error(self):
+        system = self.system
+        system.part.clear()
+
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+                        epsilon=1.0, sigma=1.0, cutoff=1.0, shift="auto")
+
+        hb = espressomd.interactions.HarmonicBond(k=1.0, r_0=1.0, r_cut=0.0)
+        system.bonded_inter.add(hb)
+
+        system.part.add(id=0, pos=[2.5, 5.0, 5.0])
+        system.part.add(id=1, pos=[7.5, 5.0, 5.0])
+        system.part.by_id(0).add_bond((hb, 1))
+
+        # Expect bond resolution error
+        error_msg = "ERROR: nullptr detected in partner_ids {}"
+        with self.assertRaisesRegex(Exception, error_msg.format(1)):
+            system.integrator.run(0)
 
 if __name__ == '__main__':
     ut.main()
