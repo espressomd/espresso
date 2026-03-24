@@ -358,7 +358,6 @@ void CellStructure::rebuild_bond_list_impl(
   if (new_bond_list.empty())
     return;
 
-
   auto new_data_view = Kokkos::View<const int *, Kokkos::HostSpace,
                                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>(
       new_bond_list.data(), new_bond_list.size());
@@ -391,9 +390,11 @@ void CellStructure::rebuild_bond_list_impl(
     Kokkos::parallel_for(
         "copy_bondlist", new_bond_list.size(),
         [&bond_view = *rebuilt_list, old_count, &new_data_view](auto flat_idx) {
-	  // Number of columns is deduced from the View type
-	  constexpr int NCols =
-	      BondListT::rank == 2 ? static_cast<int>(BondListT::static_extent(1)) : 1;
+          // Number of columns is deduced from the View type
+          constexpr int NCols =
+              BondListT::rank == 2
+                  ? static_cast<int>(BondListT::static_extent(1))
+                  : 1;
           auto bond_idx = old_count + static_cast<int>(flat_idx / NCols);
           auto col_idx = static_cast<int>(flat_idx % NCols);
           bond_view(bond_idx, col_idx) = new_data_view(flat_idx);
@@ -411,9 +412,11 @@ void CellStructure::rebuild_bond_list_impl(
     Kokkos::parallel_for(
         "copy_bondlist", new_bond_list.size(),
         [&bond_view = *bond_list, old_count, &new_data_view](auto flat_idx) {
-	  // Number of columns is deduced from the View type
-	  constexpr int NCols =
-	      BondListT::rank == 2 ? static_cast<int>(BondListT::static_extent(1)) : 1;
+          // Number of columns is deduced from the View type
+          constexpr int NCols =
+              BondListT::rank == 2
+                  ? static_cast<int>(BondListT::static_extent(1))
+                  : 1;
           auto bond_idx = old_count + static_cast<int>(flat_idx / NCols);
           auto col_idx = static_cast<int>(flat_idx % NCols);
           bond_view(bond_idx, col_idx) = new_data_view(flat_idx);
