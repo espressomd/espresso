@@ -256,7 +256,7 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
         dihedral_ids(d_index) = bond.bond_id();
       }
     } catch (const BondResolutionError &) {
-      bond_broken_error(partner_ids);
+      bond_resolution_error(partner_ids);
     }
   }
 }

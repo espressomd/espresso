@@ -26,7 +26,7 @@
 
 void bond_broken_error(int id, std::span<const int> partner_ids);
 
-void bond_broken_error(std::span<const int> partner_ids);
+void bond_resolution_error(std::span<const int> partner_ids);
 
 /**
  * Exception indicating that a particle id

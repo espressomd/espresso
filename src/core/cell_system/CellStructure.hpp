@@ -722,7 +722,7 @@ private:
           bond_broken_error(p.id(), partner_ids);
         }
       } catch (const BondResolutionError &) {
-        bond_broken_error(p.id(), partner_ids);
+        bond_resolution_error(partner_ids);
       }
     }
   }
