@@ -513,10 +513,12 @@ public:
     m_new_dihedral_bond_list.clear();
     m_new_dihedral_bond_id.clear();
   }
+
 private:
   void add_new_bond(int bond_id, std::vector<int> const &particle_ids,
-		    std::vector<int> &new_bond_list,
-		    std::vector<int> &new_bond_id);
+                    std::vector<int> &new_bond_list,
+                    std::vector<int> &new_bond_id);
+
 public:
   void add_new_bond(int bond_id, std::vector<int> const &particle_ids) {
     if (particle_ids.size() == 2) {
