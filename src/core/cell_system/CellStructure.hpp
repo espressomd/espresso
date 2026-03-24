@@ -531,7 +531,7 @@ public:
                    m_new_angle_bond_id);
       m_local_angle_bond_numbers++;
     } else if (particle_ids.size() == 4) {
-      add_new_bond(bond_id, particle_ids, m_new_angle_bond_list,
+      add_new_bond(bond_id, particle_ids, m_new_dihedral_bond_list,
                    m_new_dihedral_bond_id);
       m_local_dihedral_bond_numbers++;
     }
