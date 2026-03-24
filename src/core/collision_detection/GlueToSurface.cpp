@@ -166,9 +166,6 @@ void GlueToSurface::handle_collisions(
     if (!p1->is_ghost()) {
       const int bondG[] = {pid2};
       get_part(cell_structure, pid1).bonds().insert({bond_centers, bondG});
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-      cell_structure.add_new_bond(bond_centers, {pid1, pid2});
-#endif
     }
 
     // Change type of particle being attached, to make it inert
@@ -195,9 +192,6 @@ void GlueToSurface::handle_collisions(
     auto const p = (p1->type() == part_type_after_glueing) ? p1 : p2;
     int const bondG[] = {current_vs_pid - 1};
     get_part(cell_structure, p->id()).bonds().insert({bond_vs, bondG});
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-    cell_structure.add_new_bond(bond_vs, {p->id(), current_vs_pid - 1});
-#endif
   } // Loop over all collisions in the queue
 
 #ifdef ESPRESSO_ADDITIONAL_CHECKS

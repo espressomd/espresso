@@ -349,6 +349,16 @@ void CellStructure::set_index_map() {
 }
 
 #ifdef ESPRESSO_COLLISION_DETECTION
+void CellStructure::add_new_bond(int bond_id, std::vector<int> const &particle_ids,
+		    std::vector<int> &new_bond_list,
+		    std::vector<int> &new_bond_id) {
+  new_bond_list.reserve(new_bond_list.size() + particle_ids.size());
+  auto &id_to_index = get_id_to_index();
+  for (auto pid : particle_ids) {
+    new_bond_list.emplace_back(id_to_index(pid));
+  }
+  new_bond_id.emplace_back(bond_id);
+}
 template <typename BondListT, typename BondIDT>
 void CellStructure::rebuild_bond_list_impl(
     std::vector<int> const &new_bond_list, std::vector<int> const &new_bond_ids,
@@ -368,64 +378,44 @@ void CellStructure::rebuild_bond_list_impl(
   auto old_count = total_bond_count - static_cast<int>(new_bond_ids.size());
   auto new_count = total_bond_count;
 
-  if (new_count > old_count) {
-    // Need to grow — allocate new views, copy old data, then append
-    auto rebuilt_list = std::make_unique<BondListT>(
-        Kokkos::ViewAllocateWithoutInitializing("bond_list_rebuild"),
-        new_count);
-    auto rebuilt_ids = std::make_unique<BondIDT>(
-        Kokkos::ViewAllocateWithoutInitializing("bond_id_rebuild"), new_count);
+  // Need to grow — allocate new views, copy old data, then append
+  auto rebuilt_list = std::make_unique<BondListT>(
+      Kokkos::ViewAllocateWithoutInitializing("bond_list_rebuild"),
+      new_count);
+  auto rebuilt_ids = std::make_unique<BondIDT>(
+      Kokkos::ViewAllocateWithoutInitializing("bond_id_rebuild"), new_count);
 
-    // Copy existing data
-    Kokkos::deep_copy(Kokkos::subview(*rebuilt_list,
-                                      std::make_pair(0, old_count),
-                                      Kokkos::ALL()),
-                      Kokkos::subview(*bond_list, std::make_pair(0, old_count),
-                                      Kokkos::ALL()));
-    Kokkos::deep_copy(
-        Kokkos::subview(*rebuilt_ids, std::make_pair(0, old_count)),
-        Kokkos::subview(*bond_ids, std::make_pair(0, old_count)));
+  // Copy existing data
+  Kokkos::deep_copy(Kokkos::subview(*rebuilt_list,
+				    std::make_pair(0, old_count),
+				    Kokkos::ALL()),
+		    Kokkos::subview(*bond_list, std::make_pair(0, old_count),
+				    Kokkos::ALL()));
+  Kokkos::deep_copy(
+      Kokkos::subview(*rebuilt_ids, std::make_pair(0, old_count)),
+      Kokkos::subview(*bond_ids, std::make_pair(0, old_count)));
 
-    // Append new bond data
-    Kokkos::parallel_for(
-        "copy_bondlist", new_bond_list.size(),
-        [&bond_view = *rebuilt_list, old_count, &new_data_view](auto flat_idx) {
-          // Number of columns is deduced from the View type
-          constexpr int NCols =
-              BondListT::rank == 2
-                  ? static_cast<int>(BondListT::static_extent(1))
-                  : 1;
-          auto bond_idx = old_count + static_cast<int>(flat_idx / NCols);
-          auto col_idx = static_cast<int>(flat_idx % NCols);
-          bond_view(bond_idx, col_idx) = new_data_view(flat_idx);
-        });
+  // Append new bond data
+  Kokkos::parallel_for(
+      "copy_bondlist", new_bond_list.size(),
+      [&bond_view = *rebuilt_list, old_count, &new_data_view](auto flat_idx) {
+	// Number of columns is deduced from the View type
+	constexpr int NCols =
+	    BondListT::rank == 2
+		? static_cast<int>(BondListT::static_extent(1))
+		: 1;
+	auto bond_idx = old_count + static_cast<int>(flat_idx / NCols);
+	auto col_idx = static_cast<int>(flat_idx % NCols);
+	bond_view(bond_idx, col_idx) = new_data_view(flat_idx);
+      });
 
-    // Append new bond IDs
-    Kokkos::deep_copy(
-        Kokkos::subview(*rebuilt_ids, std::make_pair(old_count, new_count)),
-        new_id_view);
+  // Append new bond IDs
+  Kokkos::deep_copy(
+      Kokkos::subview(*rebuilt_ids, std::make_pair(old_count, new_count)),
+      new_id_view);
 
-    bond_list = std::move(rebuilt_list);
-    bond_ids = std::move(rebuilt_ids);
-  } else { // This else branch is unreachable given the present counting logic.
-    // Enough space — just overwrite in place
-    Kokkos::parallel_for(
-        "copy_bondlist", new_bond_list.size(),
-        [&bond_view = *bond_list, old_count, &new_data_view](auto flat_idx) {
-          // Number of columns is deduced from the View type
-          constexpr int NCols =
-              BondListT::rank == 2
-                  ? static_cast<int>(BondListT::static_extent(1))
-                  : 1;
-          auto bond_idx = old_count + static_cast<int>(flat_idx / NCols);
-          auto col_idx = static_cast<int>(flat_idx % NCols);
-          bond_view(bond_idx, col_idx) = new_data_view(flat_idx);
-        });
-
-    Kokkos::deep_copy(
-        Kokkos::subview(*bond_ids, std::make_pair(old_count, new_count)),
-        new_id_view);
-  }
+  bond_list = std::move(rebuilt_list);
+  bond_ids = std::move(rebuilt_ids);
 }
 
 void CellStructure::rebuild_bond_list() {

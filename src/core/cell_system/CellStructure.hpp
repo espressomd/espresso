@@ -513,14 +513,11 @@ public:
     m_new_dihedral_bond_list.clear();
     m_new_dihedral_bond_id.clear();
   }
+private:
   void add_new_bond(int bond_id, std::vector<int> const &particle_ids,
-                    std::vector<int> &new_bond_list,
-                    std::vector<int> &new_bond_id) {
-    new_bond_list.reserve(new_bond_list.size() + particle_ids.size());
-    new_bond_list.insert(new_bond_list.end(), particle_ids.begin(),
-                         particle_ids.end());
-    new_bond_id.emplace_back(bond_id);
-  }
+		    std::vector<int> &new_bond_list,
+		    std::vector<int> &new_bond_id);
+public:
   void add_new_bond(int bond_id, std::vector<int> const &particle_ids) {
     if (particle_ids.size() == 2) {
       add_new_bond(bond_id, particle_ids, m_new_pair_bond_list,
