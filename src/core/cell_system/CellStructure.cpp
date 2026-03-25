@@ -363,10 +363,11 @@ void CellStructure::add_new_bond(int bond_id,
   new_bond_id.emplace_back(bond_id);
 }
 template <typename BondListT, typename BondIDT>
-void CellStructure::rebuild_bond_list_impl(
-    std::vector<int> const &new_bond_list, std::vector<int> const &new_bond_ids,
-    std::unique_ptr<BondListT> &bond_list, std::unique_ptr<BondIDT> &bond_ids,
-    int total_bond_count) {
+void rebuild_bond_list_impl(std::vector<int> const &new_bond_list,
+                            std::vector<int> const &new_bond_ids,
+                            std::unique_ptr<BondListT> &bond_list,
+                            std::unique_ptr<BondIDT> &bond_ids,
+                            int total_bond_count) {
 
   if (new_bond_list.empty())
     return;
