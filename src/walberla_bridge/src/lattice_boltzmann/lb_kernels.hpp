@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -49,9 +49,8 @@
 namespace walberla {
 namespace detail {
 
-using lbmpy::Arch;
-
-template <typename FT = double, Arch AT = Arch::CPU> struct KernelTrait {
+template <typename FT = double, lbmpy::Arch AT = lbmpy::Arch::CPU>
+struct KernelTrait {
 #ifdef __AVX2__
   using StreamCollisionModelThermalized =
       pystencils::StreamCollideSweepThermalizedDoublePrecisionAVX;
@@ -67,9 +66,10 @@ template <typename FT = double, Arch AT = Arch::CPU> struct KernelTrait {
   using UpdateVelFromPDF = pystencils::UpdateVelFromPDFDoublePrecision;
   using PackInfoPdf = pystencils::PackInfoPdfDoublePrecision;
   using PackInfoVec = pystencils::PackInfoVecDoublePrecision;
+  using DynamicUBB = lbm::DynamicUBBDoublePrecision;
 };
 
-template <> struct KernelTrait<float, Arch::CPU> {
+template <> struct KernelTrait<float, lbmpy::Arch::CPU> {
 #ifdef __AVX2__
   using StreamCollisionModelThermalized =
       pystencils::StreamCollideSweepThermalizedSinglePrecisionAVX;
@@ -85,14 +85,6 @@ template <> struct KernelTrait<float, Arch::CPU> {
   using UpdateVelFromPDF = pystencils::UpdateVelFromPDFSinglePrecision;
   using PackInfoPdf = pystencils::PackInfoPdfSinglePrecision;
   using PackInfoVec = pystencils::PackInfoVecSinglePrecision;
-};
-
-template <typename FT = double, Arch AT = Arch::CPU>
-struct BoundaryHandlingTrait {
-  using DynamicUBB = lbm::DynamicUBBDoublePrecision;
-};
-
-template <> struct BoundaryHandlingTrait<float, Arch::CPU> {
   using DynamicUBB = lbm::DynamicUBBSinglePrecision;
 };
 

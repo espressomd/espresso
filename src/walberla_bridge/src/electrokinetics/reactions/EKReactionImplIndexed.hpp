@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -33,6 +33,7 @@
 #include <field/AddToStorage.h>
 #include <field/FlagField.h>
 #include <field/FlagUID.h>
+#include <waLBerlaDefinitions.h>
 
 #include <utils/Vector.hpp>
 
@@ -58,7 +59,7 @@ public:
   FlagUID const Boundary_flag{"boundary"};
 
   using FlagField = field::FlagField<uint8_t>;
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
   using IndexVectors =
       std::conditional<Architecture == lbmpy::Arch::CPU,
                        detail::ReactionKernelIndexedSelector::KernelTrait<>::
@@ -130,7 +131,7 @@ public:
       kernel = detail::ReactionKernelIndexedSelector::get_kernel(
           get_reactants(), get_coefficient(), m_indexvector_id);
     } else {
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
       kernel = detail::ReactionKernelIndexedSelector::get_kernel_gpu(
           get_reactants(), get_coefficient(), m_indexvector_id);
 #endif

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -430,6 +430,7 @@ class DPDThermostat(ut.TestCase):
             np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)
             np.testing.assert_array_almost_equal(np.copy(pressure), -stress)
 
+    @utx.skipIfMissingFeatures("MASS")
     def test_momentum_conservation(self):
         r_cut = 1.0
         gamma = 5.

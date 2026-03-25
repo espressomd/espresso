@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -209,6 +209,149 @@ class RegularDecomposition(ut.TestCase):
 
         # check that all required pairs have been seen
         self.assertEqual(must_find, set([]))
+
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    def test_fully_connected_boundary_two_particles(self):
+        """Place two particles on opposite sides of the fully connected
+        normal direction (z) with random positions along the fully connected
+        direction (y) and x=0. Check that the pair is always discovered
+        by the non-bonded loop trace."""
+        system = self.system
+        system.part.clear()
+        if system.cell_system.node_grid[1] != 1:
+            ng = system.cell_system.node_grid
+            system.cell_system.node_grid = [ng[0], 1, ng[2] * ng[1]]
+
+        # Use an asymmetric box: box_l[y] > box_l[z] so that there are
+        # more cells along the fully connected direction (y) than along
+        # the boundary normal (z).
+        system.box_l = [50.0, 50.0, 30.0]
+        system.cell_system.set_regular_decomposition(
+            fully_connected_boundary=dict(direction="y", boundary="z"))
+
+        skin = 0.4
+        system.cell_system.skin = skin
+        cutoff = 2 * skin + 0.01
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            sigma=1, epsilon=1, cutoff=cutoff, shift="auto")
+
+        rng = np.random.RandomState(seed=1234)
+
+        for i in range(1000):
+            system.part.clear()
+            # Random y positions (fully connected direction)
+            y1 = rng.uniform(0, system.box_l[1])
+            y2 = rng.uniform(0, system.box_l[1])
+            # Opposite sides of z (fully connected normal direction)
+            z1 = rng.uniform(0, skin)
+            z2 = rng.uniform(system.box_l[2] - skin, system.box_l[2])
+            # x = 0 (3rd direction)
+            system.part.add(id=0, pos=[0, y1, z1])
+            system.part.add(id=1, pos=[0, y2, z2])
+
+            cs_pairs = system.cell_system.non_bonded_loop_trace()
+            found = set()
+            for id1, id2, *_rest in cs_pairs:
+                found.add(tuple(sorted((id1, id2))))
+            self.assertIn(
+                (0, 1), found,
+                msg=f"Pair not found for positions {[0, y1, z1]} "
+                f"and {[0, y2, z2]} (iteration {i})")
+
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    def test_fully_connected_boundary_at_boundary(self):
+        """Place two particles on opposite sides of the fully connected
+        normal direction (y) with random positions along the fully connected
+        direction (z) and x=0. Uses direction='z', boundary='y' so that
+        the linear index ordering exposes the at_boundary check bug:
+        at_boundary uses global_size[coord] (a ghost index) instead of
+        global_size[coord]-1 (the last real cell), so only the lower
+        boundary gets fully connected neighbors.
+
+        The column-major linear index x + sx*(y + sy*z) gives z the
+        highest weight. When the y=0 particle has lower z, it has the
+        lower linear index and discovers the pair via its red (higher
+        index) neighbors where FC is active. When the y=box_l particle
+        has the lower z, the pair must be discovered from the y=box_l
+        side, which requires the upper boundary to also have FC."""
+        system = self.system
+        system.part.clear()
+        system.box_l = [50.0, 50.0, 50.0]
+        if system.cell_system.node_grid[2] != 1:
+            ng = system.cell_system.node_grid
+            system.cell_system.node_grid = [ng[0] * ng[2], ng[1], 1]
+
+        system.cell_system.set_regular_decomposition(
+            fully_connected_boundary=dict(direction="z", boundary="y"))
+
+        skin = 0.4
+        system.cell_system.skin = skin
+        cutoff = 2 * skin + 0.01
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            sigma=1, epsilon=1, cutoff=cutoff, shift="auto")
+
+        def get_pairs():
+            cs_pairs = system.cell_system.non_bonded_loop_trace()
+            found = set()
+            for id1, id2, *_rest in cs_pairs:
+                found.add(tuple(sorted((id1, id2))))
+            return found
+
+        rng = np.random.RandomState(seed=1234)
+
+        for i in range(1000):
+            z1 = rng.uniform(0, system.box_l[2])
+            z2 = rng.uniform(0, system.box_l[2])
+            y_bot = rng.uniform(0, skin)
+            y_top = rng.uniform(system.box_l[1] - skin, system.box_l[1])
+            z_lo, z_hi = min(z1, z2), max(z1, z2)
+
+            # Check bottom boundary FC: y=0 particle at lower z gives it
+            # the lower linear index, so the pair is discovered from the
+            # y=0 (bottom) cell's red neighbor list.
+            system.part.clear()
+            system.part.add(id=0, pos=[0, y_bot, z_lo])
+            system.part.add(id=1, pos=[0, y_top, z_hi])
+            self.assertIn(
+                (0, 1), get_pairs(),
+                msg=f"Bottom boundary: pair not found for "
+                f"{[0, y_bot, z_lo]} and {[0, y_top, z_hi]} "
+                f"(iteration {i})")
+
+            # Check top boundary FC: y=box_l particle at lower z gives it
+            # the lower linear index, so the pair is discovered from the
+            # y=box_l (top) cell's red neighbor list.
+            system.part.clear()
+            system.part.add(id=0, pos=[0, y_bot, z_hi])
+            system.part.add(id=1, pos=[0, y_top, z_lo])
+            self.assertIn(
+                (0, 1), get_pairs(),
+                msg=f"Top boundary: pair not found for "
+                f"{[0, y_bot, z_hi]} and {[0, y_top, z_lo]} "
+                f"(iteration {i})")
+
+    def test_fully_connected_boundary_periodicity_check(self):
+        """Check that setting up a fully connected boundary raises an error
+        when the boundary normal direction is non-periodic."""
+        system = self.system
+        system.part.clear()
+        old_periodicity = list(system.periodicity)
+        # Ensure node_grid is compatible with fc direction="y"
+        # (y must have 1 rank) so the node_grid check passes first
+        if system.cell_system.node_grid[1] != 1:
+            ng = system.cell_system.node_grid
+            system.cell_system.node_grid = [ng[0], 1, ng[1] * ng[2]]
+        try:
+            system.periodicity = [True, True, False]
+            with self.assertRaisesRegex(
+                    RuntimeError,
+                    "fully connected boundary requires periodicity"):
+                system.cell_system.set_regular_decomposition(
+                    fully_connected_boundary=dict(
+                        direction="y", boundary="z"))
+        finally:
+            system.periodicity = old_periodicity
+            system.cell_system.set_regular_decomposition()
 
 
 if __name__ == "__main__":

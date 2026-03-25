@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 The ESPResSo project
+# Copyright (C) 2019-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -27,4 +27,4 @@ scripts_test(FILE test_check_myconfig.py)
 add_custom_target(
   check_scripts JOB_POOL console
   COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
-          -j${ESPRESSO_TEST_NP} ${ESPRESSO_CTEST_ARGS} --output-on-failure)
+          ${ESPRESSO_CTEST_ARGS} --output-on-failure)

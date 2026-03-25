@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2024 The ESPResSo project
+# Copyright (C) 2016-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -44,7 +44,10 @@ function(espresso_unit_test_executable)
   set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
   target_link_libraries(
     ${TEST_NAME} PRIVATE Boost::unit_test_framework espresso::config
-    espresso::compiler_flags espresso::tests::compiler_flags ${TEST_DEPENDS})
+    espresso::compiler_flags espresso::tests::compiler_flags
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>
+    ${TEST_DEPENDS})
   target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
   if(ESPRESSO_BUILD_WITH_CUDA)
     espresso_add_cuda_rpaths(${TEST_NAME}) # for GPU-aware MPI vendors

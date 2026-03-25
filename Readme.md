@@ -110,7 +110,7 @@ publications, as indicated in the documentation. For detailed instructions, see
 
 ## License
 
-Copyright (C) 2010-2025 The ESPResSo project
+Copyright (C) 2010-2026 The ESPResSo project
 
 Copyright (C) 2002-2010 Max-Planck-Institute for Polymer Research, Theory Group
 

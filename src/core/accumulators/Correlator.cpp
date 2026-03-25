@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -40,10 +40,6 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-
-namespace {
-int min(int i, unsigned int j) { return std::min(i, static_cast<int>(j)); }
-} // namespace
 
 namespace Accumulators {
 /** Compress computing arithmetic mean: A_compressed=(A1+A2)/2 */
@@ -391,10 +387,11 @@ void Correlator::update(boost::mpi::communicator const &comm) {
   }
 
   using index_type = decltype(result)::index;
+  auto const tau = static_cast<long>(m_tau_lin);
   // Now update the lowest level correlation estimates
-  for (long j = 0; j < min(m_tau_lin + 1, n_vals[0]); j++) {
+  for (long j = 0l; j < std::min(tau + 1l, n_vals[0]); j++) {
     auto const index_new = newest[0];
-    auto const index_old = (newest[0] - j + m_tau_lin + 1) % (m_tau_lin + 1);
+    auto const index_old = (newest[0] - j + tau + 1l) % (tau + 1l);
     auto const temp =
         (corr_operation)(A[0][index_old], B[0][index_new], m_correlation_args);
     assert(temp.size() == m_dim_corr);
@@ -406,12 +403,12 @@ void Correlator::update(boost::mpi::communicator const &comm) {
   }
   // Now for the higher ones
   for (int i = 1; i < highest_level_to_compress + 2; i++) {
-    for (long j = (m_tau_lin + 1) / 2 + 1; j < min(m_tau_lin + 1, n_vals[i]);
+    for (long j = (tau + 1l) / 2l + 1l; j < std::min(tau + 1l, n_vals[i]);
          j++) {
       auto const index_new = newest[i];
-      auto const index_old = (newest[i] - j + m_tau_lin + 1) % (m_tau_lin + 1);
+      auto const index_old = (newest[i] - j + tau + 1l) % (tau + 1l);
       auto const index_res =
-          m_tau_lin + (i - 1) * m_tau_lin / 2 + (j - m_tau_lin / 2 + 1) - 1;
+          tau + static_cast<long>(i - 1) * tau / 2l + (j - tau / 2l + 1l) - 1l;
       auto const temp = (corr_operation)(A[i][index_old], B[i][index_new],
                                          m_correlation_args);
       assert(temp.size() == m_dim_corr);
@@ -484,15 +481,15 @@ int Correlator::finalize(boost::mpi::communicator const &comm) {
       }
       newest[ll] = (newest[ll] + 1) % (m_tau_lin + 1);
 
+      auto const tau = static_cast<long>(m_tau_lin);
       // We only need to update correlation estimates for the higher levels
       for (int i = ll + 1; i < highest_level_to_compress + 2; i++) {
-        for (long j = (m_tau_lin + 1) / 2 + 1;
-             j < min(m_tau_lin + 1, n_vals[i]); j++) {
+        for (long j = (tau + 1l) / 2l + 1l; j < std::min(tau + 1l, n_vals[i]);
+             j++) {
           auto const index_new = newest[i];
-          auto const index_old =
-              (newest[i] - j + m_tau_lin + 1) % (m_tau_lin + 1);
-          auto const index_res =
-              m_tau_lin + (i - 1) * m_tau_lin / 2 + (j - m_tau_lin / 2 + 1) - 1;
+          auto const index_old = (newest[i] - j + tau + 1l) % (tau + 1l);
+          auto const index_res = tau + static_cast<long>(i - 1) * tau / 2l +
+                                 (j - tau / 2l + 1l) - 1l;
 
           auto const temp = (corr_operation)(A[i][index_old], B[i][index_new],
                                              m_correlation_args);

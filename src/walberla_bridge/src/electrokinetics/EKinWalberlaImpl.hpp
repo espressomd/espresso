@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -28,7 +28,8 @@
 #include <field/vtk/FlagFieldCellFilter.h>
 #include <field/vtk/VTKWriter.h>
 #include <stencil/D3Q27.h>
-#if defined(__CUDACC__)
+#include <waLBerlaDefinitions.h>
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
 #include <gpu/AddGPUFieldToStorage.h>
 #include <gpu/HostFieldAllocator.h>
 #include <gpu/communication/MemcpyPackInfo.h>
@@ -40,7 +41,7 @@
 #include "../utils/boundary.hpp"
 #include "../utils/types_conversion.hpp"
 #include "ek_kernels.hpp"
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
 #include "ek_kernels.cuh"
 #endif
 
@@ -69,6 +70,10 @@ namespace walberla {
 template <std::size_t FluxCount = 13, typename FloatType = double,
           lbmpy::Arch Architecture = lbmpy::Arch::CPU>
 class EKinWalberlaImpl : public EKinWalberlaBase {
+#if not defined(WALBERLA_BUILD_WITH_CUDA)
+  static_assert(Architecture != lbmpy::Arch::GPU,
+                "waLBerla was compiled without CUDA support");
+#endif
   using ContinuityKernel =
       typename detail::KernelTrait<FloatType, Architecture>::ContinuityKernel;
   using DiffusiveFluxKernelUnthermalized =
@@ -126,7 +131,7 @@ protected:
         blockforest::communication::UniformBufferedScheme<Stencil>;
   };
   using FlagField = walberla::FlagField<walberla::uint8_t>;
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
   template <typename FT> struct FieldTrait<FT, lbmpy::Arch::GPU> {
   private:
     static auto constexpr AT = lbmpy::Arch::GPU;
@@ -173,7 +178,7 @@ public:
   using DensityField =
       typename FieldTrait<FloatType, Architecture>::DensityField;
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
   using DensityFieldCpu = FieldTrait<FloatType, lbmpy::Arch::CPU>::DensityField;
   using FluxFieldCpu = FieldTrait<FloatType, lbmpy::Arch::CPU>::FluxField;
 #endif
@@ -208,7 +213,7 @@ protected:
   BlockDataID m_flag_field_density_id;
   BlockDataID m_flag_field_flux_id;
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
   std::optional<BlockDataID> m_density_cpu_field_id;
   std::optional<BlockDataID> m_flux_cpu_field_id;
 #endif
@@ -229,7 +234,7 @@ protected:
       m_diffusive_flux_electrostatic;
   std::unique_ptr<ContinuityKernel> m_continuity;
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
   std::shared_ptr<gpu::HostFieldAllocator<FloatType>> m_host_field_allocator;
 #endif
 
@@ -256,7 +261,7 @@ protected:
       return field::addToStorage<Field>(blocks, tag, FloatType{value},
                                         field::fzyx, n_ghost_layers);
     }
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
     else {
       auto field_id = gpu::addGPUFieldToStorage<GPUField>(
           blocks, tag, Field::F_SIZE, field::fzyx, n_ghost_layers);
@@ -329,7 +334,7 @@ public:
     m_continuity =
         std::make_unique<ContinuityKernel>(m_flux_field_id, m_density_field_id);
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
     m_host_field_allocator =
         std::make_shared<gpu::HostFieldAllocator<FloatType>>();
 #endif
@@ -1129,7 +1134,7 @@ protected:
     FloatType const m_conversion;
   };
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
   template <typename OutputType = float>
   class DensityVTKWriter : public VTKWriter<DensityFieldCpu, 1u, OutputType> {
   public:
@@ -1163,7 +1168,7 @@ protected:
   };
 #endif
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
   template <typename OutputType = float>
   class FluxVTKWriter : public VTKWriter<FluxFieldCpu, 3u, OutputType> {
   public:
@@ -1203,7 +1208,7 @@ public:
   void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
                                   LatticeModel::units_map const &units,
                                   int flag_observables) override {
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
     auto const allocate_cpu_field_if_empty =
         [&]<typename Field>(auto const &blocks, std::string name,
                             std::optional<BlockDataID> &cpu_field) {
@@ -1216,7 +1221,7 @@ public:
 #endif
     if (flag_observables & static_cast<int>(EKOutputVTK::density)) {
       auto const unit_conversion = FloatType_c(units.at("density"));
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
       if constexpr (Architecture == lbmpy::Arch::GPU) {
         auto const &blocks = m_lattice->get_blocks();
         allocate_cpu_field_if_empty.template operator()<DensityFieldCpu>(
@@ -1230,13 +1235,13 @@ public:
 #endif
         vtk_obj.addCellDataWriter(make_shared<DensityVTKWriter<float>>(
             m_density_field_id, "density", unit_conversion));
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
       }
 #endif
     }
     if (flag_observables & static_cast<int>(EKOutputVTK::flux)) {
       auto const unit_conversion = FloatType_c(units.at("flux"));
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
       if constexpr (Architecture == lbmpy::Arch::GPU) {
         auto const &blocks = m_lattice->get_blocks();
         allocate_cpu_field_if_empty.template operator()<FluxFieldCpu>(
@@ -1249,7 +1254,7 @@ public:
 #endif
         vtk_obj.addCellDataWriter(make_shared<FluxVTKWriter<float>>(
             m_flux_field_id, "flux", unit_conversion));
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
       }
 #endif
     }

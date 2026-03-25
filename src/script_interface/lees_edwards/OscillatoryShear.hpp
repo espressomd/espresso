@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -37,11 +37,13 @@ public:
   OscillatoryShear()
       : m_protocol{
             std::make_shared<::LeesEdwards::ActiveProtocol>(CoreClass())} {
-    add_parameters({{"initial_pos_offset",
-                     std::get<CoreClass>(*m_protocol).m_initial_pos_offset},
-                    {"amplitude", std::get<CoreClass>(*m_protocol).m_amplitude},
-                    {"omega", std::get<CoreClass>(*m_protocol).m_omega},
-                    {"time_0", std::get<CoreClass>(*m_protocol).m_time_0}});
+    add_parameters(
+        {{"initial_pos_offset",
+          std::get<CoreClass>(*m_protocol).m_initial_pos_offset},
+         {"amplitude", std::get<CoreClass>(*m_protocol).m_amplitude},
+         {"omega", std::get<CoreClass>(*m_protocol).m_omega},
+         {"time_0", std::get<CoreClass>(*m_protocol).m_time_0},
+         {"decay_rate", std::get<CoreClass>(*m_protocol).m_decay_rate}});
   }
   std::shared_ptr<::LeesEdwards::ActiveProtocol> protocol() override {
     return m_protocol;

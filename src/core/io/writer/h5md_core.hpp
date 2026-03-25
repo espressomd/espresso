@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -234,8 +234,7 @@ private:
   boost::mpi::communicator m_comm;
   unsigned int m_fields;
   std::unique_ptr<HighFive::File> m_h5md_file;
-  std::unique_ptr<std::unordered_map<std::string, HighFive::DataSet>>
-      m_datasets;
+  std::unordered_map<std::string, HighFive::DataSet> m_datasets;
   Specification m_h5md_specification;
 };
 

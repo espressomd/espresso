@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 The ESPResSo project
+# Copyright (C) 2022-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,12 +22,12 @@ add_subdirectory(reactions)
 
 target_sources(espresso_walberla PRIVATE ek_walberla_init.cpp)
 target_sources(espresso_walberla PRIVATE ek_poisson_none_init.cpp)
-if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+if(ESPRESSO_BUILD_WITH_CUDA)
   target_sources(espresso_walberla PRIVATE ek_walberla_init.cu)
 endif()
 if(ESPRESSO_BUILD_WITH_FFTW)
   target_sources(espresso_walberla PRIVATE ek_poisson_fft_init.cpp)
-  if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+  if(ESPRESSO_BUILD_WITH_CUDA)
     target_sources(espresso_walberla PRIVATE ek_poisson_fft_init_cuda.cu)
   endif()
 endif()

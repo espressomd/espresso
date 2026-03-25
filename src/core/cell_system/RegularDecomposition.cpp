@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -407,7 +407,7 @@ void RegularDecomposition::init_cell_interactions() {
 
   // is a cell at the system boundary in the given coord
   auto const at_boundary = [&global_size](int coord, Utils::Vector3i cell_idx) {
-    return (cell_idx[coord] == 0 or cell_idx[coord] == global_size[coord]);
+    return (cell_idx[coord] == 0 or cell_idx[coord] == global_size[coord] - 1);
   };
 
   // For the fully connected feature (cells that don't share at least a corner)
@@ -459,6 +459,11 @@ void RegularDecomposition::init_cell_interactions() {
       throw std::runtime_error(
           "The MPI nodegrid must be 1 in the fully connected direction.");
     }
+    if (not m_box.periodic(fc_normal)) {
+      throw std::runtime_error(
+          "The fully connected boundary requires periodicity in the "
+          "boundary normal direction.");
+    }
   }
 
   /* We only consider local cells (e.g. not halo cells), which
@@ -485,7 +490,7 @@ void RegularDecomposition::init_cell_interactions() {
           // Fully connected is only needed at the box surface
           if (at_boundary(fc_boundary, {m, n, o})) {
             lower_index[fc_direction] = -1;
-            upper_index[fc_direction] = global_size[fc_boundary];
+            upper_index[fc_direction] = global_size[fc_direction];
           }
         }
 

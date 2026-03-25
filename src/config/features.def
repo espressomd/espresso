@@ -1,34 +1,19 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
-# This file is part of ESPResSo.
-#
-# ESPResSo is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# ESPResSo is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved. This file is offered as-is,
+# without any warranty.
 #
 
 # Feature definitions
 #
 # The definitions are used for
-# * generation of src/config-features.hpp, which checks the sanity of
+# * generation of config-features.hpp, which checks the sanity of
 #   the various features and their combinations
 # * generation of myconfig-sample.hpp
-#
-# Copying and distribution of this file, with or without modification,
-# are permitted in any medium without royalty provided the copyright
-# notice and this notice are preserved.  This file is offered as-is,
-# without any warranty.
 #
 # Lines commented with '/* ... */' or '//' are copied to myconfig-sample.hpp
 # Lines commented with '#' are ignored
@@ -66,9 +51,8 @@ THERMAL_STONER_WOHLFARTH        implies VIRTUAL_SITES_RELATIVE, DIPOLE_FIELD_TRA
 
 /* Virtual sites features */
 VIRTUAL_SITES
-VIRTUAL_SITES_RELATIVE          implies VIRTUAL_SITES
-VIRTUAL_SITES_RELATIVE          implies ROTATION
-VIRTUAL_SITES_CENTER_OF_MASS    implies VIRTUAL_SITES
+VIRTUAL_SITES_RELATIVE          implies VIRTUAL_SITES, ROTATION
+VIRTUAL_SITES_CENTER_OF_MASS    implies VIRTUAL_SITES, MASS
 VIRTUAL_SITES_INERTIALESS_TRACERS implies VIRTUAL_SITES
 
 /* DPD features */

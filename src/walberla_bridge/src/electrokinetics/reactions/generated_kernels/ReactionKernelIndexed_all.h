@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <waLBerlaDefinitions.h>
+
 #include "ReactionKernelIndexed_1_double_precision.h"
 #include "ReactionKernelIndexed_1_single_precision.h"
 
@@ -38,7 +40,7 @@
 #include "ReactionKernelIndexed_5_double_precision.h"
 #include "ReactionKernelIndexed_5_single_precision.h"
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
 
 #include "ReactionKernelIndexed_1_double_precision_CUDA.h"
 #include "ReactionKernelIndexed_1_single_precision_CUDA.h"
@@ -180,7 +182,7 @@ auto get_kernel(const std::vector<std::shared_ptr<Reactant>> &reactants,
   return get_kernel_impl<float>(reactants, args...);
 }
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
 
 template <typename FloatType = double, std::size_t N = 1>
 struct KernelTraitGPU {

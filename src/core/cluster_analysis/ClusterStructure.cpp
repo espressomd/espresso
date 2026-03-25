@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -44,7 +44,6 @@ void ClusterStructure::clear() {
 void ClusterStructure::run_for_all_pairs() {
   // clear data structs
   clear();
-  sanity_checks();
 
   // Iterate over pairs
   auto const box_geo_handle = get_box_geo();
@@ -58,7 +57,6 @@ void ClusterStructure::run_for_all_pairs() {
 
 void ClusterStructure::run_for_bonded_particles() {
   clear();
-  sanity_checks();
   auto const box_geo_handle = get_box_geo();
   auto const &box_geo = *box_geo_handle;
   PartCfg partCfg{box_geo};
@@ -178,13 +176,6 @@ int ClusterStructure::get_next_free_cluster_id() {
     max_id = *std::ranges::max_element(cluster_id | std::views::values);
   }
   return max_id + 1;
-}
-
-void ClusterStructure::sanity_checks() const {
-  if (get_box_geo()->type() != BoxType::CUBOID) {
-    throw std::runtime_error(
-        "Cluster analysis is not compatible with non-cuboid box types");
-  }
 }
 
 } // namespace ClusterAnalysis

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 The ESPResSo project
+ * Copyright (C) 2020-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -25,7 +25,6 @@
 #include <core/math/Vector3.h>
 
 #include <utils/Vector.hpp>
-#include <utils/interpolation/bspline_3d.hpp>
 
 #include <type_traits>
 
@@ -70,13 +69,6 @@ template <typename T> auto to_vector9d(Matrix3<T> const &m) noexcept {
       double_c(m[0]), double_c(m[1]), double_c(m[2]), double_c(m[3]),
       double_c(m[4]), double_c(m[5]), double_c(m[6]), double_c(m[7]),
       double_c(m[8])}};
-}
-
-template <typename Function>
-void interpolate_bspline_at_pos(Utils::Vector3d const &pos, Function const &f) {
-  Utils::Interpolation::bspline_3d<2>(
-      pos, f, Utils::Vector3d::broadcast(1.), // grid spacing
-      Utils::Vector3d::broadcast(.5));        // offset
 }
 
 } // namespace walberla

@@ -612,6 +612,16 @@ version number; even though package repositories outside of the Python ecosystem
 sometimes customize version numbers with extra metadata to label development commits,
 such as in ``1.1.5-dev`` or ``1.1.5.git8b603b12``, |es| doesn't offer a mechanism for it.
 
+No guarantees are made regarding the bitwise reproducibility of simulation trajectories.
+Although thermostats are based on fully deterministic random number generators,
+many parts of the simulation engine leverage dynamic task scheduling and unsorted
+containers to improve performance, making the order of operations non-deterministic.
+This can introduce very small round-off errors in floating-point operations,
+leading eventually to diverging trajectories. This issue isn't specific to |es|
+and can be found in other molecular dynamics engines :cite:`craven25a`.
+In addition, some tuning algorithms propagate the system during the benchmark loops,
+which can cause significant deviations in the trajectories in a couple of time steps.
+
 .. _How to cite ESPResSo:
 
 How to cite |es|
@@ -622,6 +632,8 @@ Please cite both :cite:t:`weeber24a` and :cite:t:`weik19a`
 for |es| 4.0 and later, or both :cite:t:`arnold13a` and :cite:t:`limbach06a`
 (BibTeX keys ``arnold13a`` and ``limbach06a`` in :file:`doc/bibliography.bib`)
 for |es| 2.0 to 3.3.
+Starting with |es| 5.0, please also cite the exact release published in
+the `Zenodo dataset "ESPResSo" <https://doi.org/10.5281/zenodo.18791182>`_.
 
 To find the version number, use the following command:
 
@@ -637,11 +649,13 @@ publications, using the BibTeX entries indicated in this user guide.
 
 A complete citation would look like this:
 
-    Simulations were carried out with ESPResSo 4.2.2[23,24] using the ICC\*
+    Simulations were carried out with ESPResSo 5.0.0[22,23,24] using the ICC\*
     algorithm[25].
 
     | ____________
 
+    | [22] J.-N. Grad, F. Weik, A. Reinauer, *et al.* ESPResSo, version 5.0.0.
+      Zenodo, Feb 2026. doi:\ `10.5281/zenodo.18791183 <https://doi.org/10.5281/zenodo.18791183>`_.
     | [23] R. Weeber, J.-N. Grad, D. Beyer *et al.* ESPResSo, a versatile
       open-source software package for simulating soft matter systems.
       In M. Yáñez and R. J. Boyd, eds, *Comprehensive Computational Chemistry*,

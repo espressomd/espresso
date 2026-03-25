@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  * Copyright (C) 2020-2025 The waLBerla project
  *
  * This file is part of ESPResSo.

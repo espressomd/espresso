@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2025 The ESPResSo project
+# Copyright (C) 2009-2026 The ESPResSo project
 # Copyright (C) 2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -21,6 +21,10 @@
 
 cmake_minimum_required(VERSION 3.27.6)
 cmake_policy(VERSION 3.27.6)
+if(POLICY CMP0167)
+  # use BoostConfig.cmake shipped with Boost 1.70+ instead of the one in CMake
+  cmake_policy(SET CMP0167 NEW)
+endif()
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 # CMake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -434,7 +438,6 @@ target_compile_options(
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-cast-function-type>
     $<$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>:-diag-disable=592>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-global-constructors>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU>,$<STREQUAL:${CMAKE_SYSTEM_PROCESSOR},arm>>:-Wno-psabi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>>:-Wno-format-nonliteral>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>>:-Wno-float-conversion>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-int-float-conversion>
@@ -450,6 +453,8 @@ target_compile_options(
     $<$<AND:$<VERSION_LESS:${ESPRESSO_MINIMAL_CXX_STANDARD},23>,$<COMPILE_LANG_AND_ID:CXX,NVHPC>>:--diag_suppress=bad_pp_directive_keyword>
     $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=code_is_unreachable>
     $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=loop_not_reachable>
+    # disable GCC's C++17 processor-specific ABI warning (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=94383)
+    $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU>,$<IN_LIST:${CMAKE_SYSTEM_PROCESSOR},arm;arm64;aarch64;aarch64_be;powerpc64le>>:-Wno-psabi>
     # warnings are errors
     $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<COMPILE_LANGUAGE:CXX>>:-Werror>
     $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>>:--Werror=all-warnings>
@@ -536,9 +541,8 @@ if(ESPRESSO_BUILD_WITH_ASAN)
       $<$<COMPILE_LANGUAGE:CXX,CUDA>:$<$<NOT:$<CONFIG:Debug>>:${ESPRESSO_XCOMPILER}-O1>>
       $<$<COMPILE_LANGUAGE:CXX>:-fno-omit-frame-pointer>)
   target_link_libraries(
-    espresso_compiler_flags
-    INTERFACE -fsanitize=address -g
-              $<$<NOT:$<CONFIG:Debug>>:${ESPRESSO_XCOMPILER}-O1>)
+    espresso_compiler_flags INTERFACE -fsanitize=address -g
+                                      $<$<NOT:$<CONFIG:Debug>>:-O1>)
 endif()
 if(ESPRESSO_BUILD_WITH_MSAN)
   target_compile_options(
@@ -630,7 +634,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     if(ESPRESSO_BUILD_WITH_CUDA)
       set(Heffte_ENABLE_CUDA ON CACHE BOOL "")
     endif()
-    set(BUILD_SHARED_LIBS ON)
+    set(BUILD_SHARED_LIBS OFF)
     FetchContent_MakeAvailable(heffte)
     set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
     foreach(HEFFTE_MODULE IN ITEMS FFTW CUDA)
@@ -724,14 +728,19 @@ if(ESPRESSO_BUILD_WITH_HDF5)
   target_link_libraries(hdf5 INTERFACE $<BUILD_INTERFACE:${HDF5_LIBRARIES}>)
   target_include_directories(hdf5
                              INTERFACE $<BUILD_INTERFACE:${HDF5_INCLUDE_DIRS}>)
-  # cmake-format: off
-  FetchContent_Declare(
-    HighFive
-    GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
-    GIT_TAG        v3.3.0
-  )
-  # cmake-format: on
-  FetchContent_MakeAvailable(HighFive)
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/HighFive-src)
+    find_package(HighFive 3.0.0 QUIET)
+  endif()
+  if(NOT DEFINED HighFive_FOUND OR NOT ${HighFive_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      HighFive
+      GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
+      GIT_TAG        v3.3.0
+    )
+    # cmake-format: on
+    FetchContent_MakeAvailable(HighFive)
+  endif()
 endif()
 
 if(ESPRESSO_BUILD_WITH_SCAFACOS)
@@ -869,11 +878,6 @@ endif()
 # Boost
 #
 
-if(POLICY CMP0167)
-  # use BoostConfig.cmake shipped with Boost 1.70+ instead of the one in CMake
-  cmake_policy(SET CMP0167 NEW)
-endif()
-
 list(APPEND ESPRESSO_BOOST_COMPONENTS mpi serialization)
 
 if(ESPRESSO_BUILD_TESTS)
@@ -939,51 +943,71 @@ endif()
 #
 
 if(ESPRESSO_BUILD_WITH_WALBERLA)
-  # cmake-format: off
-  FetchContent_Declare(
-    walberla
-    GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        3247aa73 # v7.2 with patches
-  )
-  # cmake-format: on
-  string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
-                       "${walberla_SOURCE_DIR}")
-  set(WALBERLA_BUILD_TESTS off CACHE BOOL "")
-  set(WALBERLA_BUILD_TOOLS off CACHE BOOL "")
-  set(WALBERLA_BUILD_LEGACY_LBM off CACHE BOOL "")
-  set(WALBERLA_BUILD_BENCHMARKS off CACHE BOOL "")
-  set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
-  set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
-  set(WALBERLA_BUILD_EXAMPLES off CACHE BOOL "")
-  set(WALBERLA_BUILD_DOC off CACHE BOOL "")
-  set(WALBERLA_BUILD_WITH_PYTHON off CACHE BOOL "")
-  set(WALBERLA_LOGLEVEL "WARNING" CACHE STRING "")
-  if(ESPRESSO_BUILD_WITH_CUDA)
-    set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
-    if(NOT ESPRESSO_CUDA_COMPILER STREQUAL "clang")
-      if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-        message(FATAL_ERROR "variable CMAKE_CUDA_ARCHITECTURES is undefined")
-      endif()
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/walberla-src)
+    find_package(waLBerla 7.2 QUIET)
+    if(waLBerla_FOUND AND NOT TARGET walberla::core AND DEFINED
+                                                        walberla_SOURCE_DIR)
+      add_subdirectory(${walberla_SOURCE_DIR} ${walberla_BINARY_DIR}
+                       EXCLUDE_FROM_ALL)
     endif()
   endif()
-  set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
-  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-    set(WALBERLA_BUILD_WITH_OPENMP on CACHE BOOL "")
+  if(NOT DEFINED waLBerla_FOUND OR NOT ${waLBerla_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      walberla
+      GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
+      GIT_TAG        3247aa73 # v7.2 with patches
+    )
+    # cmake-format: on
+    string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
+                         "${walberla_SOURCE_DIR}")
+    set(WALBERLA_BUILD_TESTS off CACHE BOOL "")
+    set(WALBERLA_BUILD_TOOLS off CACHE BOOL "")
+    set(WALBERLA_BUILD_LEGACY_LBM off CACHE BOOL "")
+    set(WALBERLA_BUILD_BENCHMARKS off CACHE BOOL "")
+    set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
+    set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
+    set(WALBERLA_BUILD_EXAMPLES off CACHE BOOL "")
+    set(WALBERLA_BUILD_DOC off CACHE BOOL "")
+    set(WALBERLA_BUILD_WITH_PYTHON off CACHE BOOL "")
+    set(WALBERLA_LOGLEVEL "WARNING" CACHE STRING "")
+    if(ESPRESSO_BUILD_WITH_CUDA)
+      set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
+      if(NOT ESPRESSO_CUDA_COMPILER STREQUAL "clang")
+        if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+          message(FATAL_ERROR "variable CMAKE_CUDA_ARCHITECTURES is undefined")
+        endif()
+      endif()
+    endif()
+    set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
+    if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+      set(WALBERLA_BUILD_WITH_OPENMP on CACHE BOOL "")
+    endif()
+    set(WALBERLA_BUILD_WITH_FASTMATH off CACHE BOOL "")
+    set(BUILD_SHARED_LIBS OFF)
+    FetchContent_MakeAvailable(walberla)
+    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+    set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
+    add_library(espresso_walberla_sqlite_compiler_flags INTERFACE)
+    target_compile_options(
+      espresso_walberla_sqlite_compiler_flags
+      INTERFACE
+        $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wno-discarded-qualifiers>
+        $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wno-misleading-indentation>
+        $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Wno-misleading-indentation>
+        -Wno-unused-but-set-variable)
+    target_link_libraries(walberla_sqlite
+                          PRIVATE espresso_walberla_sqlite_compiler_flags)
   endif()
-  set(WALBERLA_BUILD_WITH_FASTMATH off CACHE BOOL "")
-  set(BUILD_SHARED_LIBS OFF)
-  FetchContent_MakeAvailable(walberla)
-  set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
-  set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
-  set(WALBERLA_LIBS
-      walberla::core walberla::domain_decomposition walberla::blockforest
-      walberla::communication walberla::field walberla::stencil walberla::vtk)
-  if(WALBERLA_BUILD_WITH_FFTW)
-    list(APPEND WALBERLA_LIBS walberla::fft)
-  endif()
-  if(WALBERLA_BUILD_WITH_CUDA)
-    list(APPEND WALBERLA_LIBS walberla::gpu)
-  endif()
+  add_library(espresso_walberla_deps INTERFACE)
+  add_library(espresso::walberla_deps ALIAS espresso_walberla_deps)
+  target_link_libraries(
+    espresso_walberla_deps
+    INTERFACE walberla::core walberla::domain_decomposition
+              walberla::blockforest walberla::communication walberla::field
+              walberla::stencil walberla::vtk
+              $<$<BOOL:${WALBERLA_BUILD_WITH_FFTW}>:walberla::fft>
+              $<$<BOOL:${WALBERLA_BUILD_WITH_CUDA}>:walberla::gpu>)
   if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
     function(espresso_avx_flags_callback COMPILER_AVX2_FLAG)
       target_compile_options(
@@ -993,16 +1017,6 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     endfunction()
     espresso_enable_avx2_support(espresso_avx_flags_callback)
   endif()
-  add_library(espresso_walberla_sqlite_compiler_flags INTERFACE)
-  target_compile_options(
-    espresso_walberla_sqlite_compiler_flags
-    INTERFACE
-      $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wno-discarded-qualifiers>
-      $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wno-misleading-indentation>
-      $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Wno-misleading-indentation>
-      -Wno-unused-but-set-variable)
-  target_link_libraries(walberla_sqlite
-                        PRIVATE espresso_walberla_sqlite_compiler_flags)
 endif()
 
 if(ESPRESSO_BUILD_WITH_CALIPER)
@@ -1015,8 +1029,8 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
   # cmake-format: on
   set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
   set(CALIPER_WITH_MPI on CACHE BOOL "")
-  set(CALIPER_WITH_NVTX off CACHE BOOL "")
-  set(CALIPER_WITH_CUPTI off CACHE BOOL "")
+  set(CALIPER_WITH_NVTX ${ESPRESSO_BUILD_WITH_CUDA} CACHE BOOL "")
+  set(CALIPER_WITH_CUPTI ${ESPRESSO_BUILD_WITH_CUDA} CACHE BOOL "")
   set(CALIPER_INSTALL_CONFIG off CACHE BOOL "")
   set(CALIPER_INSTALL_HEADERS off CACHE BOOL "")
   set(BUILD_SHARED_LIBS ON)

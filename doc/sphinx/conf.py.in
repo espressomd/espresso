@@ -61,8 +61,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ESPResSo'
-copyright = '2018-2025, The ESPResSo project'
-author = 'C. Holm, F. Weik, R. Weeber'
+copyright = '2018-2026, The ESPResSo project'
+author = 'C. Holm, F. Weik, J.-N. Grad, R. Weeber'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -207,7 +207,7 @@ html_show_sourcelink = False
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 html_show_sphinx = False
 
-# If true, "(C) Copyright (C) 2022 The ESPResSo project" is shown
+# If true, "(C) Copyright (C) 2022-2026 The ESPResSo project" is shown
 # in the HTML footer. Default is True.
 html_show_copyright = True
 

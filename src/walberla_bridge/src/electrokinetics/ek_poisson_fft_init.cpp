@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -23,13 +23,23 @@
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 
+#include <waLBerlaDefinitions.h>
+
+#if __has_include(<heffte.h>)
+#define HAS_HEFFTE
+#endif
+
 #include <memory>
+#include <stdexcept>
 
 namespace walberla {
 
 std::shared_ptr<walberla::PoissonSolver>
 new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,
                    double permittivity, bool single_precision) {
+#if not defined(WALBERLA_BUILD_WITH_FFT) and not defined(HAS_HEFFTE)
+  throw std::runtime_error("software was compiled without FFT support");
+#else
   if (single_precision) {
     return std::make_shared<
         walberla::PoissonSolverFFT<float, lbmpy::Arch::CPU>>(lattice,
@@ -37,6 +47,7 @@ new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,
   }
   return std::make_shared<walberla::PoissonSolverFFT<double, lbmpy::Arch::CPU>>(
       lattice, permittivity);
+#endif
 }
 
 } // namespace walberla

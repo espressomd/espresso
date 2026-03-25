@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -27,6 +27,7 @@
 #include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>
 
 #include <blockforest/StructuredBlockForest.h>
+#include <waLBerlaDefinitions.h>
 
 namespace walberla {
 
@@ -51,7 +52,7 @@ public:
       kernel = detail::ReactionKernelBulkSelector::get_kernel(
           get_reactants(), get_coefficient());
     } else {
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
       kernel = detail::ReactionKernelBulkSelector::get_kernel_gpu(
           get_reactants(), get_coefficient());
 #endif

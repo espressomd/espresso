@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -87,7 +87,6 @@ private:
   inline int find_id_for(int x) const;
   /** @brief Get next free cluster id */
   inline int get_next_free_cluster_id();
-  void sanity_checks() const;
   auto get_box_geo() const {
     auto ptr = m_box_geo.lock();
     assert(ptr);

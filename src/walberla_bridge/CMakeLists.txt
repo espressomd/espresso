@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 The ESPResSo project
+# Copyright (C) 2020-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -59,7 +59,7 @@ unset(SKIP_CLANG_TIDY_CHECKS)
 function(espresso_configure_walberla_target)
   set(TARGET_NAME ${ARGV0})
   espresso_set_common_target_properties(${TARGET_NAME})
-  target_link_libraries(${TARGET_NAME} PRIVATE ${WALBERLA_LIBS})
+  target_link_libraries(${TARGET_NAME} PRIVATE espresso::walberla_deps)
   target_include_directories(
     ${TARGET_NAME} PUBLIC include PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                           ${walberla_BINARY_DIR}/src)

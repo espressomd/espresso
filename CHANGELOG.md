@@ -12,23 +12,328 @@ or [Savannah](https://savannah.nongnu.org/projects/espressomd) until release 3.3
 
 ## [Unreleased]
 
-This is a major release. New features were added, deprecated features were removed.
+## [5.0.0] - 2026-02-26
+
+This is a major release. New features were added and deprecated features were removed.
 The API has changed, and some of these changes are silent, i.e. warnings aren't
 necessarily emitted when running a script designed for ESPResSo 4.x that relies
-on features that have significantly changed in in ESPResSo 5.0.
+on features that have significantly changed in ESPResSo 5.0.
 
 Highlights of the release include:
 
-* rewrite of lattice-Boltzmann and electrokinetic using solvers backed by the waLBerla framework.
-  For LB, this includes enhanced capabilities including vectorization support on the CPU and multi-GPU support,
-  per-cell boundary conditions to build arbitrary geometries, per-particle friction coefficients, and Lees-Edwards boundary conditions.
-* faster writing of simulation trajectories using the H5MD file format, particularly in parallel simulations
-* per-particle selection of equation of motion
-* the thermalized Stoner-Wolfarth model for magnetodynamics, and the ability to obtain local magnetic fields at the particles' positions
+* rewrite of lattice-Boltzmann and electrokinetics using solvers backed
+  by the waLBerla framework. For LB, this includes enhanced capabilities
+  including vectorization support on the CPU and multi-GPU support,
+  per-cell boundary conditions to build arbitrary geometries,
+  per-particle friction coefficients, and Lees-Edwards boundary conditions.
+* faster writing of simulation trajectories using the H5MD file format,
+  particularly in parallel simulations.
+* per-particle selection of equations of motion.
+* the thermalized Stoner–Wohlfarth model for magnetodynamics, and the
+  ability to obtain local magnetic fields at the particles' positions.
 * virtual sites tracking the center of mass of a group of particles
-* initial support for shared-memory paralellism for some scenarios
-* several new tutorials, e.g., on the sedimentation of particles in a fluid,
-  the Boltzmann inversion technique, electrode modelling, and machine-learned interatomic potentials.
+  for umbrella sampling.
+* initial support for shared-memory parallelism for some scenarios.
+* several new tutorials, e.g., on the sedimentation of particles in a
+  fluid, the Boltzmann inversion technique, electrode modelling,
+  and machine-learned inter-atomic potentials.
+
+### Added functionality
+
+* The original LB and EK methods have been completely replaced with
+  equivalent implementations based on the high-performance waLBerla
+  library (#4726, #5101). This is a major API change that requires
+  adapting all LB and EK scripts to use the new classes and arguments.
+* LB now support Lees-Edwards boundary conditions (#4977).
+* LB and EK methods now support setting boundary slip velocities on
+  individual nodes (#4252).
+* LB now supports per-particle gamma (#4743). Only works for isotropic
+  particles.
+* Thermostats and integrators have been redesigned as unified
+  *propagators* (#4820, #4603). Multiple combinations of thermostats
+  and integrators are now supported to solve multiphysics problems.
+  While the Python interface remains mostly unchanged, internally
+  the user-selected integrator is now the "main" integrator.
+  Alternative integration schemes can then be enabled on a per-particle
+  basis using the new `propagation` flag. An important consequence is
+  that all virtual site types can now be enabled in the same simulation.
+* Magnetodynamics support was introduced with the thermal
+  Stoner–Wohlfarth model (#5188). This is achieved through a virtual
+  site that decouples the particle dipole from the particle quaternion.
+* A new virtual site implementation was introduced to exert forces
+  on molecules through their center of mass, for example to implement
+  umbrella sampling (#5199).
+* The OpenGL visualizer now uses different colors for arrows
+  representing fluid velocities and slip velocities (#4252).
+* ESPResSo now supports the ZnDraw visualizer (#4967, #5115, #5217).
+* ESPResSo now has Atomic Simulation Environment (ASE) bindings (#4912),
+  including calculators (#5162). One application is interfacing ESPResSo
+  with machine-learned potentials.
+* The `magnetostatics.DipolarDirectSumCpu()` feature now works in a
+  MPI-parallel simulation (#4559).
+* The `magnetostatics.DipolarDirectSumCpu()` feature now supports
+  replicas via the new optional argument `n_replicas` (#4559).
+* The `magnetostatics.DipolarDirectSumGpu()` feature now supports
+  replicas via the new optional argument `n_replicas` (#5094).
+* The `magnetostatics.DipolarDirectSumCpu()` and
+  `magnetostatics.DipolarDirectSumGpu()` features can now calculate
+  the total dipole field experienced by each particle (#4626, #5094).
+  Requires feature `DIPOLE_FIELD_TRACKING`.
+* Particle-based observables `ParticleDirectors()` and
+  `ParticleDipoleFields()` were added (#4627, #4626).
+* Particle bond energies can be calculated with
+  `system.analysis.particle_bond_energy()`
+  for a given bond and particle (#5040).
+* Particle neighbor lists can be extracted with
+  `system.analysis.particle_neighbor_pids()` (#4662).
+  This feature will help prototyping simulations that interface
+  with machine-learned potentials, which take a list of particle
+  positions as input and output the force on the central particle.
+* Observable `PairwiseDistances` and accumulator `ContactTime` were
+  introduced to track the contact time, i.e. number of consecutive time
+  steps during which two particles are closer than a cutoff value (#5032).
+* The bond breakage feature now supports angle bonds (#4716).
+* Tabulated interaction `TabulatedNonBonded` got a new method
+  `set_analytical()` to automatically set the energy and force
+  from the analytical expression of the potential using SymPy (#5019).
+* Instrumentation tools Caliper, CUDA-GDB and kernprof are now natively
+  supported (#4747).
+* Instrumentation feature FPE (floating-point exceptions) is now
+  natively supported on x86 and Armv8 architectures (#5020).
+
+### Changed requirements
+
+* The project now requires C++20 and CUDA 12 (#3918, #4612, #4931).
+* The build system now supports the Intel oneAPI C++ Compiler (#4532),
+  the Cray Clang compiler (#5201), and the NVIDIA HPC SDK (#5257).
+* The waLBerla library is now a dependency for all LB and EK methods
+  (#2701, #4726). If not found, it is built from sources automatically.
+* The heFFTe library is now a dependency for Coulomb P3M (#5063) and the
+  EK FFT solver (#5101). If not found, it is built from sources automatically.
+* The Kokkos and Cabana libraries are now dependencies for shared-memory
+  parallelism (#5074). If not found, they are built from sources automatically.
+* The OpenMP component of the FFTW3 library are now dependencies for
+  shared-memory parallelism (#5086). This component is sometimes
+  packaged separately from the MPI FFTW3 library on HPC clusters.
+* The HighFive library is now a dependency for hdf5 file I/O (#5087).
+  It is built from sources automatically. The h5xx library is no longer a dependency.
+* The GNU GSL library is now a dependency for MMM1D (#5201).
+* The minimal version of all dependencies was increased (#4532, #4612,
+  #4717, #4931, #5093, #5201, #5223): CMake >= 3.27.6, Python >= 3.11,
+  Cython >= 3.0.4, Boost >= 1.83, CUDA >= 12.0, OpenMPI >= 4.0,
+  MPICH >= 3.4.1, GCC >= 12.2, Clang >= 18.1, AppleClang >= 17.0,
+  CrayClang >= 17.0, Intel oneAPI C++ Compiler >= 2023.1, and Python
+  packages versions are pinned on versions available in the Ubuntu 22.04
+  repository. CUDA 12.6 and later versions are now supported (#5129).
+
+### Feature configuration at compile time
+
+* All project-specific CMake options have been renamed (#4612). This
+  change was required to avoid name collisions with external projects.
+  Please refer to the user guide chapter on installing ESPResSo to find
+  out the new option names. Using the old option names will generate
+  warnings, but CMake will carry on and use default values instead
+  of the values you provided. Please don't ignore these warnings when
+  adapting your build scripts.
+* The CMake option `ESPRESSO_CUDA_COMPILER` was removed in favor of the
+  environment variable `CUDACXX` (#4642).
+* A config file is now available to build the project automatically
+  in Codespaces (#5201, #4531).
+* An `AGENT.md` is now available to guide agentic coding tools (#5220).
+
+### Improved documentation
+
+* A Widom insertion tutorial was added (#4546)
+* A lattice-Boltzmann sedimentation tutorial was added (#4570)
+* A machine-learned potentials tutorial was added (#4982).
+* An atomistic water simulation tutorial was added (#5174).
+* An electrodes tutorial with ICC/ELC/ELC-IC was added (#4784).
+* A Boltzmann inversion tutorial was added (#5187).
+* A Grand Canonical Monte Carlo tutorial was added (#4670).
+* The electrokinetics tutorial was completely rewritten and now features
+  chemical reactions (#4782).
+* All tutorials were re-designed for JupyterLab (#4830). Reliance on
+  Jupyter extensions and plugins has been significantly reduced in an
+  effort to improve compatibility with other Jupyter backends.
+  In particular, VS Code Jupyter is still actively supported.
+  Jupyter Notebook (Classic Notebook) should still be compatible,
+  although it is not actively tested. IPython is no longer supported.
+* Most tutorials adopted ZnDraw as the visualization backend (#4976, #4975).
+* A high-throughput computing sample based on the Dask scheduler was added (#4781).
+* All supported debuggers and profilers are now documented: Caliper,
+  Valgrind, GDB, CUDA-GDB, kernprof, perf, UBSAN, ASAN (#4747).
+* Installation instructions were improved with better sectioning (#5062).
+* The CUDA 12 circular dependency in Ubuntu 24.04 packages is documented (#4642).
+
+### Interface changes
+
+* The original LB classes `LBFluid` and `LBFluidGPU` were removed in
+  favor of a unified `LBFluid` class for both CPU and GPU (#2701, #4726, #5230).
+  Their arguments have also changed, e.g. `dens` became `density` and
+  `visc` became `viscosity`. The `pressure_tensor_neq` property was removed.
+* The original EK class `Electrokinetics` was removed in favor of a unified
+  `EKSpecies` class for both CPU and GPU (#2701, #4726, #5101, #5230).
+* Self-propelled particles (swimmers) have been completely re-implemented (#4745).
+  The propulsion mechanism can now only be set up with a force. When coupling
+  to a LB fluid, a real particle and a virtual site are used to create the dipole.
+* The long-range actors API was completely redesigned (#4749).
+* CPU and GPU algorithms now have a unified Python class (#5230). Pass
+  optional argument `gpu=True` to the constructor to select the GPU backend.
+  For example, class `espressomd.electrostatics.P3MGPU` was removed in
+  favor of `espressomd.electrostatics.P3M`, which now manages both the
+  CPU and GPU backends. Likewise, `DipolarDirectSum` replaces both
+  `DipolarDirectSumCpu` and `DipolarDirectSumGpu`.
+* The virtual sites API was completely redesigned (#4820, #4603).
+* The collision detection API was completely redesigned (#4987).
+* The Galilei transform API was completely redesigned (#4816).
+* Class attributes expecting 3 boolean values no longer accept integer
+  values (#4541). It is no longer possible to set properties
+  `system.periodicity`, `particle.fix` and `particle.rotation`
+  with e.g. `[1, 1, 1]` or `[0, 0, 1]`.
+* `reaction_methods.ReactionAlgorithm.reaction()` now takes `steps`
+  instead of `reaction_steps` as argument for consistency with the
+  MD integrator (#4666)
+* `io.mpiio.Mpiio()` now takes a `system` as argument (#4950).
+* `analysis.pressure()` and `analysis.pressure_tensor()` now take the
+  DPD stress tensor into account into the total pressure, and got an
+  additional member `dpd` (#5045).
+* `analysis.energy()`, `analysis.pressure()` and `analysis.pressure_tensor()`
+  got additional members `kinetic_lin` and `kinetic_rot` to separate
+  linear and angular kinetic energy/pressure (#5043).
+* `cluster_analysis.ClusterStructure()` now takes a `system` as
+  argument (#4950).
+* `interactions.ThermalizedBond()` parameter `seed` was moved to
+  `system.thermostat.set_thermalized_bond()` (#4845). This change better
+  reflects the fact there is only one global seed for all thermalized
+  bonds; until now this global seed was overwritten by any newly created
+  thermalized bond, whether it was added to the system or not.
+* All P3M algorithms now accept an extra argument `tune_limits` to
+  constrain the range of mesh values exploring during mesh size tuning (#5017).
+* The `check_complex_residuals` optional argument of the P3M algorithm
+  was removed (#5189).
+* Python objects of type `pathlib.Path` can now be passed to functions
+  that expect file paths (#5128).
+* Bonds breakage can now be triggered manually (#4995). This is meant
+  to be used in Lees-Edwards simulations with a time-dependent shear,
+  since bonds extending across the shear boundary can increase in length
+  without a change in particle positions when the simulation time increases.
+* `Analysis.particle_energy()` was renamed to `Analysis.particle_non_bonded_energy()`
+  to better reflect the calculated quantity, since kinetic, bonded, electrostatic
+  and magnetostatic contributions are not part of this energy (#5226).
+
+### Removed functionality
+
+* The `lb.LBBoundaries()` framework was removed (#4381). Shapes can
+  now be passed directly to LB and EK objects.
+* The `magnetostatics.DipolarDirectSumWithReplicaCpu()` method was
+  removed, since the `magnetostatics.DipolarDirectSumCpu()` method
+  now supports replicas (#4559).
+* The `electrostatics.MMM1DGPU()` feature was removed (#4928).
+* The `magnetostatics.DipolarBarnesHutGpu()` feature was removed (#4928).
+* The MDAnalysis bindings were removed (#4535)
+* The `bind_three_particles` collision mode was removed (#4823).
+* LB populations are no longer accessible from the Python interface (#5075).
+
+### Improved testing
+
+* The Armv8 architecture is now tested in CI (#5020).
+
+### Performance enhancements
+
+* LB now supports multi-GPU acceleration (#5007).
+* Observables are now fully MPI-parallel and show better performance
+  than equivalent operations by hdf5 or MPI-IO writing on a SSD (#4748).
+* Reaction methods are now fully MPI-parallel and now only invalidate
+  the system state after a batch of particle changes have been applied (#4666).
+* Performance of particle property getters and setters has improved, in
+  particular vector quantities such as force and velocity are 25 times
+  faster to read from and 3 to 4 times faster to write to (#5209, #5124, #5069).
+* The `RegularDecomposition` cell system no longers uses a ghost layer
+  when the simulation has only 1 MPI rank (and any number of OpenMP threads),
+  which improves performance of a Lennard-Jones simulation by 11% for 1 thread (#5157).
+* Shared-memory parallelism (OpenMP) is now supported in short-range force
+  calculation (#4754, #5097), Coulomb and Dipolar P3M (#5086, #5189),
+  LB and EK (#5083).
+
+### Bug fixes
+
+* UTF-8 strings are now supported in all features (#5128).
+* Updating an active non-bonded interactions via e.g.
+  `system.non_bonded_inter[0, 0].lennard_jones.set_params()`
+  now uses the default arguments when optional arguments are missing
+  and raises an error when required arguments are missing (#4558).
+  In previous ESPResSo versions, missing optional and required arguments
+  would be recycled from the previous state of the non-bonded interaction (#4569).
+* Thermalized LB simulations are now fully decorrelated (#4845, #4848).
+  In previous ESPResSo versions, the LB thermostat `seed` argument was
+  actually used as the RNG counter, thus ensemble runs would produce
+  almost the same trajectory.
+* Particle coordinates are now properly folded in the histogram and RDF
+  classes to avoid off-by-one errors (#5109).
+* The `particle_data.ParticleHandle()` and `io.writer.h5md.H5md()` writer
+  now use properly folded particle coordinates (#4940, #4944). In previous
+  ESPResSo versions, cached coordinates would be used, which could be
+  out-of-date when large Verlet list skin values were used.
+* Lees-Edwards now applies the offset in the correct direction and no
+  longer requires the user to provide a `shear_velocity` multiplied by
+  -1 (#5081).
+* Lees-Edwards boundary conditions now support the regular decomposition
+  cell system via the new `fully_connected_boundary` argument (#4958).
+* The isotropic NpT algorithm was completely rewritten and now supports
+  two barostats: Andersen (#5053) or MTK (#5077).
+* It is no longer possible to change the reaction constant of an existing
+  reaction with a `gamma` value less or equal to 0 (#4666).
+* When setting up a reaction method with two or more reactions, a runtime
+  error is raised if a reaction accidentally overwrites the default
+  charge of a specific type with a different value (#4666).
+* It is no longer possible to add an angle bond or dihedral bond with a
+  list partner particle ids containing duplicate entries, since the angle
+  would be undefined (#5012).
+* Adding the same object twice in an `ObjectList` now raises a runtime
+  error; removing an unknown object from an `ObjectList` now raises a
+  runtime error (#4779). In previous ESPResSo versions, adding the
+  same object twice in a list could have unintended side-effects.
+* The `SimplePore` distance function was corrected and no longer
+  generates `NaN` values (#5016).
+* The FENE bond now breaks when compressed beyond its stretching limit (#5195).
+* Coulomb and Dipolar P3M algorithms no longer emit warnings nor trigger
+  assertions when particles are close to the box boundaries, when running
+  simulations on a CPU that supports extended precision floating-point
+  numbers (#5136).
+* OpenMPI 5.0 now longer triggers random PRRTE errors at system exit (#5093).
+* Default-constructed `Utils::Vector` and `Utils::Array` objects are now
+  properly zero-initialized (#5257). In previous releases, the default
+  constructor could accidentally leave the underlying data uninitialized
+  when using the NVHPC compiler toolchain and building at the -O2 or -O3
+  optimization level (#5263).
+* Thole corrections are no longer part of the energy calculated by
+  `Analysis.particle_non_bonded_energy()` (#5226)
+
+### Under the hood changes
+
+* Most Cython files have been converted to Python files (#4541, #4713).
+* Cython 3 is now supported (#4845).
+* Sources of NaN, float overflow, and most float underflow were addressed (#5020).
+* GPU algorithms no longer leak device memory (#4741, #4764).
+* CPU implementations of the P3M algorithm no longer leak memory (#4947).
+* The CPU implementation of the P3M Coulomb algorithm was entirely
+  rewritten using the heFFTe library (#5063). The method is now easier
+  to modify and extend, supports shared-memory parallelism (#5086, #5189),
+  and uses real-to-complex transforms (#5204).
+* Project-specific compiler diagnostics are no longer propagated to
+  external projects like waLBerla (#4642).
+* The build system now relies on CMake's native CUDA support (#4642).
+* The build system now installs the `object-in-fluid` Python module
+  when `espressomd` is installed (#4931).
+* The script interface was massively simplified (#4816).
+* Most global variables were removed (#4741, #4783, #4816, #4845, #4950).
+* The ESPResSo repository can now be cloned without git flag `--recursive` (#5031).
+  ESPResSo developers are now expected to integrate new third-party libraries using
+  the CMake `FetchContent` mechanism instead of git submodules.
+* The build system now properly handles linking of ESPResSo against
+  static and shared libraries, sets the correct runpaths, and avoids
+  cyclic dependencies during the linking stage (#5221, #5173). These
+  changes are most relevant to cluster admins and package maintainers.
 
 ## [4.2.2] - 2024-05-22
 
@@ -1939,7 +2244,8 @@ The following functionality is removed permanently:
 
 For older ESPResSo releases, see [`old/RELEASE_NOTES@bb2cd93`](https://github.com/espressomd/espresso/blob/bb2cd93/old/RELEASE_NOTES).
 
-[Unreleased]: https://github.com/espressomd/espresso/compare/4.2.2...HEAD
+[Unreleased]: https://github.com/espressomd/espresso/compare/5.0.0...HEAD
+[5.0.0]: https://github.com/espressomd/espresso/compare/4.2.2...5.0.0
 [4.2.2]: https://github.com/espressomd/espresso/compare/4.2.1...4.2.2
 [4.2.1]: https://github.com/espressomd/espresso/compare/4.2.0...4.2.1
 [4.2.0]: https://github.com/espressomd/espresso/compare/4.1.4...4.2.0
@@ -1960,4 +2266,3 @@ For older ESPResSo releases, see [`old/RELEASE_NOTES@bb2cd93`](https://github.co
 [3.0.2]: https://github.com/espressomd/espresso/compare/3.0.1...3.0.2
 [3.0.1]: https://github.com/espressomd/espresso/compare/3.0.0...3.0.1
 [3.0.0]: https://github.com/espressomd/espresso/compare/2.2.0b...3.0.0
-

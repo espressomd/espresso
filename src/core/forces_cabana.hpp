@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The ESPResSo project
+ * Copyright (C) 2025-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -110,14 +110,12 @@ struct ForcesKernel {
   }
 
   // Helper functions to check if specific algorithms are active
+#ifdef ESPRESSO_GAY_BERNE
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
   gay_berne_active(double dist, IA_parameters const &ia_params) const {
-#ifdef ESPRESSO_GAY_BERNE
     return dist < ia_params.gay_berne.cut;
-#else
-    return false;
-#endif
   }
+#endif
 
 #ifdef ESPRESSO_NPT
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool npt_active() const {
@@ -160,13 +158,22 @@ struct ForcesKernel {
 
     // Determine which data needs to be loaded based on active algorithms
 #if defined(ESPRESSO_DIPOLES) or defined(ESPRESSO_GAY_BERNE)
-    bool const need_directors =
-        gay_berne_active(dist, ia_params) or dipoles_active();
+    auto need_directors = false;
+#if defined(ESPRESSO_GAY_BERNE)
+    need_directors |= gay_berne_active(dist, ia_params);
+#endif
+#if defined(ESPRESSO_DIPOLES)
+    need_directors |= dipoles_active();
+#endif
 #endif
 #if defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_THOLE)
-    bool const need_particle_pointers = aosoa.has_exclusion(i) or
-                                        aosoa.has_exclusion(j) or
-                                        thole_active(ia_params);
+    auto need_particle_pointers = false;
+#if defined(ESPRESSO_EXCLUSIONS)
+    need_particle_pointers |= aosoa.has_exclusion(i) or aosoa.has_exclusion(j);
+#endif
+#if defined(ESPRESSO_THOLE)
+    need_particle_pointers |= thole_active(ia_params);
+#endif
     Particle const *p1_ptr = nullptr;
     Particle const *p2_ptr = nullptr;
     if (need_particle_pointers) {

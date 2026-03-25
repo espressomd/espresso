@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 #
-# Copyright (C) 2018-2022 The ESPResSo project
+# Copyright (C) 2018-2026 The ESPResSo project
 # Copyright (C) 2012,2013,2014 Olaf Lenz
 #
 # This file is part of ESPResSo.
