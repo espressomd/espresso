@@ -822,14 +822,14 @@ public:
   auto &get_aosoa() { return *m_aosoa; }
   auto const &get_unique_particles() const { return m_unique_particles; }
   auto const &get_verlet_list_cabana() const { return *m_verlet_list_cabana; }
-  auto &get_pair_bond_list_kokkos() const { return *m_pair_bond_list_kokkos; }
-  auto &get_pair_bond_id_kokkos() const { return *m_pair_bond_id_kokkos; }
-  auto &get_angle_bond_list_kokkos() const { return *m_angle_bond_list_kokkos; }
-  auto &get_angle_bond_id_kokkos() const { return *m_angle_bond_id_kokkos; }
-  auto &get_dihedral_bond_list_kokkos() const {
+  auto &get_pair_bond_list_kokkos() { return *m_pair_bond_list_kokkos; }
+  auto &get_pair_bond_id_kokkos() { return *m_pair_bond_id_kokkos; }
+  auto &get_angle_bond_list_kokkos() { return *m_angle_bond_list_kokkos; }
+  auto &get_angle_bond_id_kokkos() { return *m_angle_bond_id_kokkos; }
+  auto &get_dihedral_bond_list_kokkos() {
     return *m_dihedral_bond_list_kokkos;
   }
-  auto &get_dihedral_bond_id_kokkos() const {
+  auto &get_dihedral_bond_id_kokkos() {
     return *m_dihedral_bond_id_kokkos;
   }
   void clear_local_properties();
