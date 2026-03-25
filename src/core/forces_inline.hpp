@@ -336,8 +336,8 @@ ESPRESSO_ATTR_ALWAYS_INLINE
 #endif
 inline std::optional<Utils::Vector3d> calc_bond_pair_force(
     Bonded_IA_Parameters const &iaparams, Utils::Vector3d const &dx,
-    double const q1q2, Coulomb::ShortRangeForceKernel::kernel_type const *kernel
-) {
+    double const q1q2,
+    Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
     return iap->force(dx);
   }
@@ -392,7 +392,7 @@ inline bool add_bonded_two_body_force(
 #ifdef ESPRESSO_ELECTROSTATICS
                                        p1.q() * p2.q(), kernel
 #else
-				       0.0, nullptr
+                                       0.0, nullptr
 #endif
     );
     if (result) {

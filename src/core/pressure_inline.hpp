@@ -111,7 +111,7 @@ calc_bonded_virial_pressure_tensor(
 #ifdef ESPRESSO_ELECTROSTATICS
                                                p1.q() * p2.q(), kernel
 #else
-					       0.0, nullptr
+                                               0.0, nullptr
 #endif
   );
   std::optional<Utils::Matrix<double, 3, 3>> pressure{std::nullopt};

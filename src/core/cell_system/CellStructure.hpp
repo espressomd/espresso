@@ -826,12 +826,8 @@ public:
   auto &get_pair_bond_id_kokkos() { return *m_pair_bond_id_kokkos; }
   auto &get_angle_bond_list_kokkos() { return *m_angle_bond_list_kokkos; }
   auto &get_angle_bond_id_kokkos() { return *m_angle_bond_id_kokkos; }
-  auto &get_dihedral_bond_list_kokkos() {
-    return *m_dihedral_bond_list_kokkos;
-  }
-  auto &get_dihedral_bond_id_kokkos() {
-    return *m_dihedral_bond_id_kokkos;
-  }
+  auto &get_dihedral_bond_list_kokkos() { return *m_dihedral_bond_list_kokkos; }
+  auto &get_dihedral_bond_id_kokkos() { return *m_dihedral_bond_id_kokkos; }
   void clear_local_properties();
   void clear_bond_properties();
 

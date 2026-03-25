@@ -55,8 +55,7 @@ struct PairBondsKernel {
   Coulomb::ShortRangeForceKernel::kernel_type const *const coulomb_kernel;
 
   PairBondsKernel(
-      BondsKernelData data_,
-      CellStructure::PairBondlistType bond_list_,
+      BondsKernelData data_, CellStructure::PairBondlistType bond_list_,
       CellStructure::PairBondIDType bond_ids_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel_)
       : data(data_), bond_list(bond_list_), bond_ids(bond_ids_),
@@ -123,7 +122,7 @@ struct PairBondsKernel {
 #ifdef ESPRESSO_ELECTROSTATICS
                              aosoa.charge(i) * aosoa.charge(j), coulomb_kernel
 #else
-			     0.0, nullptr
+                             0.0, nullptr
 #endif
         );
 
