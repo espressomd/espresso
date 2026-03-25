@@ -33,10 +33,8 @@
 #include <omp.h>
 
 #include <cstddef>
-#include <memory>
 #include <optional>
 #include <variant>
-#include <vector>
 
 struct BondsKernelData {
   BondedInteractionsMap const &bonded_ias;
@@ -76,8 +74,8 @@ struct PairBondsKernel {
 #endif
     auto const has_breakage_specs = data.has_breakage_specs;
 
-    auto const &partners = Kokkos::subview(bond_list, idx, Kokkos::ALL);
-    auto const &bond_id = bond_ids(idx);
+    auto const partners = Kokkos::subview(bond_list, idx, Kokkos::ALL);
+    auto const bond_id = bond_ids(idx);
 
     auto const i = partners(0);
 
@@ -90,8 +88,8 @@ struct PairBondsKernel {
     auto const dx =
         box_geo.get_mi_vector(aosoa.get_vector_at(aosoa.position, i),
                               aosoa.get_vector_at(aosoa.position, j));
-    std::optional<Utils::Vector3d> result;
-    // Consider for bond breakage
+    // std::optional<Utils::Vector3d> result;
+    //  Consider for bond breakage
     if (has_breakage_specs &&
         bond_breakage.check_and_handle_breakage(
             aosoa.id(i), {{aosoa.id(j), std::nullopt}}, bond_id, dx.norm())) {
@@ -99,7 +97,7 @@ struct PairBondsKernel {
     }
 
     if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
-      auto const res = iap->forces(
+      auto const result = iap->forces(
 #ifdef ESPRESSO_MASS
           aosoa.mass(i), aosoa.mass(j),
 #else
@@ -107,8 +105,8 @@ struct PairBondsKernel {
 #endif
           aosoa.get_vector_at(aosoa.velocity, i),
           aosoa.get_vector_at(aosoa.velocity, j), aosoa.id(i), aosoa.id(j), dx);
-      if (res) {
-        auto const &forces = res.value();
+      if (result) {
+        auto const &forces = result.value();
 
         local_force(i, thread_id, 0) += std::get<0>(forces)[0];
         local_force(i, thread_id, 1) += std::get<0>(forces)[1];
@@ -123,7 +121,7 @@ struct PairBondsKernel {
       return;
     }
 
-    result =
+    auto const result =
         calc_bond_pair_force(iaparams, dx
 #ifdef ESPRESSO_ELECTROSTATICS
                              ,
@@ -140,7 +138,7 @@ struct PairBondsKernel {
       local_force(j, thread_id, 1) -= f[1];
       local_force(j, thread_id, 2) -= f[2];
 #ifdef ESPRESSO_NPT
-      auto virial = hadamard_product(result.value(), dx);
+      auto virial = hadamard_product(f, dx);
       local_virial(thread_id, 0) += virial[0];
       local_virial(thread_id, 1) += virial[1];
       local_virial(thread_id, 2) += virial[2];
@@ -166,13 +164,13 @@ struct AngleBondsKernel {
   operator()(std::size_t idx) const {
     auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
-    auto const &local_force = data.local_force;
+    auto &local_force = data.local_force;
     auto const &aosoa = data.aosoa;
     auto &bond_breakage = data.bond_breakage;
     auto const has_breakage_specs = data.has_breakage_specs;
 
-    auto const &partners = Kokkos::subview(bond_list, idx, Kokkos::ALL);
-    auto const &bond_id = bond_ids(idx);
+    auto const partners = Kokkos::subview(bond_list, idx, Kokkos::ALL);
+    auto const bond_id = bond_ids(idx);
 
     auto const i = partners(0);
 
@@ -188,9 +186,10 @@ struct AngleBondsKernel {
     auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
     auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
     auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
-    std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-        result;
-    // Consider for bond breakage
+    // std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
+    // Utils::Vector3d>>
+    //     result;
+    //  Consider for bond breakage
     if (has_breakage_specs &&
         bond_breakage.check_and_handle_breakage(
             aosoa.id(i), {{aosoa.id(j), aosoa.id(k)}}, bond_id,
@@ -201,7 +200,7 @@ struct AngleBondsKernel {
       return;
     }
 
-    result = calc_bonded_three_body_force(iaparams, vec1, vec2);
+    auto const result = calc_bonded_three_body_force(iaparams, vec1, vec2);
 
     if (result) {
       auto const &forces = result.value();
@@ -236,11 +235,11 @@ struct DihedralBondsKernel {
   operator()(std::size_t idx) const {
     auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
-    auto const &local_force = data.local_force;
+    auto &local_force = data.local_force;
     auto const &aosoa = data.aosoa;
 
-    auto const &partners = Kokkos::subview(bond_list, idx, Kokkos::ALL);
-    auto const &bond_id = bond_ids(idx);
+    auto const partners = Kokkos::subview(bond_list, idx, Kokkos::ALL);
+    auto const bond_id = bond_ids(idx);
 
     auto const i = partners(0);
 
@@ -260,10 +259,11 @@ struct DihedralBondsKernel {
     auto const vel3 = aosoa.get_vector_at(aosoa.velocity, k);
     auto const image1 = aosoa.get_vector_at(aosoa.image, i);
 
-    std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
-                             Utils::Vector3d>>
-        result = calc_bonded_four_body_force(iaparams, box_geo, pos1, pos2,
-                                             pos3, pos4, vel1, vel3, image1);
+    // std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
+    // Utils::Vector3d,
+    //                          Utils::Vector3d>>
+    auto const result = calc_bonded_four_body_force(
+        iaparams, box_geo, pos1, pos2, pos3, pos4, vel1, vel3, image1);
 
     if (result) {
       auto const &forces = result.value();
