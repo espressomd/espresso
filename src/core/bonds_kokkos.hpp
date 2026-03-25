@@ -88,8 +88,8 @@ struct PairBondsKernel {
     auto const dx =
         box_geo.get_mi_vector(aosoa.get_vector_at(aosoa.position, i),
                               aosoa.get_vector_at(aosoa.position, j));
-    //std::optional<Utils::Vector3d> result;
-    // Consider for bond breakage
+    // std::optional<Utils::Vector3d> result;
+    //  Consider for bond breakage
     if (has_breakage_specs &&
         bond_breakage.check_and_handle_breakage(
             aosoa.id(i), {{aosoa.id(j), std::nullopt}}, bond_id, dx.norm())) {
@@ -186,9 +186,10 @@ struct AngleBondsKernel {
     auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
     auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
     auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
-    //std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-    //    result;
-    // Consider for bond breakage
+    // std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
+    // Utils::Vector3d>>
+    //     result;
+    //  Consider for bond breakage
     if (has_breakage_specs &&
         bond_breakage.check_and_handle_breakage(
             aosoa.id(i), {{aosoa.id(j), aosoa.id(k)}}, bond_id,
@@ -258,10 +259,11 @@ struct DihedralBondsKernel {
     auto const vel3 = aosoa.get_vector_at(aosoa.velocity, k);
     auto const image1 = aosoa.get_vector_at(aosoa.image, i);
 
-    //std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
-    //                         Utils::Vector3d>>
-    auto const result = calc_bonded_four_body_force(iaparams, box_geo, pos1, pos2,
-                                             pos3, pos4, vel1, vel3, image1);
+    // std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
+    // Utils::Vector3d,
+    //                          Utils::Vector3d>>
+    auto const result = calc_bonded_four_body_force(
+        iaparams, box_geo, pos1, pos2, pos3, pos4, vel1, vel3, image1);
 
     if (result) {
       auto const &forces = result.value();
