@@ -113,6 +113,8 @@ void CellStructure::clear_bond_properties() {
   m_new_pair_bond_id.clear();
   m_new_angle_bond_list.clear();
   m_new_angle_bond_id.clear();
+  m_new_dihedral_bond_list.clear();
+  m_new_dihedral_bond_id.clear();
 #endif
 }
 
@@ -407,9 +409,11 @@ void CellStructure::rebuild_bond_list_impl(
       });
 
   // Append new bond IDs
-  Kokkos::deep_copy(
-      Kokkos::subview(*rebuilt_ids, std::make_pair(old_count, new_count)),
-      new_id_view);
+  Kokkos::parallel_for(
+      "copy_bond_ids", new_bond_ids.size(),
+      [&id_view = *rebuilt_ids, old_count, &new_id_view](auto idx) {
+        id_view(old_count + static_cast<int>(idx)) = new_id_view(idx);
+      });
 
   bond_list = std::move(rebuilt_list);
   bond_ids = std::move(rebuilt_ids);
