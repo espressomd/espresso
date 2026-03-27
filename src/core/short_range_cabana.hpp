@@ -199,8 +199,7 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
     Kokkos::fence();
     auto &bs = cell_structure.bond_state();
     auto &pair_bond_list = bs.pair_list;
-    Kokkos::parallel_for("resolve_pair_bond_indices",
-                         pair_count,
+    Kokkos::parallel_for("resolve_pair_bond_indices", pair_count,
                          [&pair_bond_list, &id_to_index](int idx) {
                            for (int col = 0; col < 2; ++col) {
                              pair_bond_list(idx, col) =
@@ -208,8 +207,7 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
                            }
                          });
     auto &angle_bond_list = bs.angle_list;
-    Kokkos::parallel_for("resolve_angle_bond_indices",
-                         angle_count,
+    Kokkos::parallel_for("resolve_angle_bond_indices", angle_count,
                          [&angle_bond_list, &id_to_index](int idx) {
                            for (int col = 0; col < 3; ++col) {
                              angle_bond_list(idx, col) =
@@ -217,8 +215,7 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
                            }
                          });
     auto &dihedral_bond_list = bs.dihedral_list;
-    Kokkos::parallel_for("resolve_dihedral_bond_indices",
-                         dihedral_count,
+    Kokkos::parallel_for("resolve_dihedral_bond_indices", dihedral_count,
                          [&dihedral_bond_list, &id_to_index](int idx) {
                            for (int col = 0; col < 4; ++col) {
                              dihedral_bond_list(idx, col) =
@@ -319,7 +316,8 @@ void cabana_short_range(auto const &pair_bonds_kernel,
 #endif
     auto const n_pair_bonds = cell_structure.get_local_pair_bond_numbers();
     auto const n_angle_bonds = cell_structure.get_local_angle_bond_numbers();
-    auto const n_dihedral_bonds = cell_structure.get_local_dihedral_bond_numbers();
+    auto const n_dihedral_bonds =
+        cell_structure.get_local_dihedral_bond_numbers();
     if (n_pair_bonds > 0) {
       Kokkos::parallel_for( // loop over bonds
           "for_each_local_pair_bonds", n_pair_bonds, pair_bonds_kernel);
@@ -332,8 +330,8 @@ void cabana_short_range(auto const &pair_bonds_kernel,
     }
     if (n_dihedral_bonds > 0) {
       Kokkos::parallel_for( // loop over bonds
-          "for_each_local_dihedral_bonds",
-          n_dihedral_bonds, dihedral_bonds_kernel);
+          "for_each_local_dihedral_bonds", n_dihedral_bonds,
+          dihedral_bonds_kernel);
       Kokkos::fence();
     }
 #ifdef ESPRESSO_CALIPER

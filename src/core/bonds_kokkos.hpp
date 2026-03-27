@@ -24,8 +24,8 @@
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 #include "aosoa_pack.hpp"
-#include "forces_inline.hpp"
 #include "cell_system/LocalBondState.hpp"
+#include "forces_inline.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -59,8 +59,8 @@ struct PairBondsKernel {
       BondsKernelData data_, LocalBondState::PairBondlistType bond_list_,
       LocalBondState::PairBondIDType bond_ids_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel_)
-      : data(data_), bond_list(std::move(bond_list_)), bond_ids(std::move(bond_ids_)),
-        coulomb_kernel(coulomb_kernel_) {}
+      : data(data_), bond_list(std::move(bond_list_)),
+        bond_ids(std::move(bond_ids_)), coulomb_kernel(coulomb_kernel_) {}
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
   operator()(std::size_t idx) const {
@@ -156,7 +156,8 @@ struct AngleBondsKernel {
   AngleBondsKernel(BondsKernelData data_,
                    LocalBondState::AngleBondlistType bond_list_,
                    LocalBondState::AngleBondIDType bond_ids_)
-      : data(data_), bond_list(std::move(bond_list_)), bond_ids(std::move(bond_ids_)) {}
+      : data(data_), bond_list(std::move(bond_list_)),
+        bond_ids(std::move(bond_ids_)) {}
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
   operator()(std::size_t idx) const {
@@ -223,7 +224,8 @@ struct DihedralBondsKernel {
   DihedralBondsKernel(BondsKernelData data_,
                       LocalBondState::DihedralBondlistType bond_list_,
                       LocalBondState::DihedralBondIDType bond_ids_)
-      : data(data_), bond_list(std::move(bond_list_)), bond_ids(std::move(bond_ids_)) {}
+      : data(data_), bond_list(std::move(bond_list_)),
+        bond_ids(std::move(bond_ids_)) {}
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
   operator()(std::size_t idx) const {

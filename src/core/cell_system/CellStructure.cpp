@@ -100,9 +100,7 @@ void CellStructure::clear_local_properties() {
   m_bond_state->clear();
   m_rebuild_verlet_list_cabana = true;
 }
-void CellStructure::clear_bond_properties() {
-  m_bond_state->reset();
-}
+void CellStructure::clear_bond_properties() { m_bond_state->reset(); }
 
 void CellStructure::set_kokkos_handle(std::shared_ptr<KokkosHandle> handle) {
   m_kokkos_handle = std::move(handle);
@@ -432,24 +430,18 @@ int CellStructure::get_local_angle_bond_numbers() const {
 int CellStructure::get_local_dihedral_bond_numbers() const {
   return m_bond_state->dihedral_count;
 }
-void CellStructure::reset_local_bond_numbers() {
-  m_bond_state->reset_counts();
-}
+void CellStructure::reset_local_bond_numbers() { m_bond_state->reset_counts(); }
 void CellStructure::set_local_bond_numbers(int pair_value, int angle_value,
-					   int dihedral_value) {
+                                           int dihedral_value) {
   m_bond_state->set_counts(pair_value, angle_value, dihedral_value);
 }
 #ifdef ESPRESSO_COLLISION_DETECTION
-void CellStructure::clear_new_bonds() {
-  m_bond_state->clear_new_bonds();
-}
+void CellStructure::clear_new_bonds() { m_bond_state->clear_new_bonds(); }
 void CellStructure::add_new_bond(int bond_id,
-				 std::vector<int> const &particle_ids) {
+                                 std::vector<int> const &particle_ids) {
   m_bond_state->add_new_bond(bond_id, particle_ids, get_id_to_index());
 }
-void CellStructure::rebuild_bond_list() {
-  m_bond_state->rebuild();
-}
+void CellStructure::rebuild_bond_list() { m_bond_state->rebuild(); }
 #endif // ESPRESSO_COLLISION_DETECTION
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 

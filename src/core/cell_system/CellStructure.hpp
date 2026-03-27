@@ -80,7 +80,7 @@ class AoSoA;
 struct KokkosHandle;
 template <class MemorySpace, class ListAlgorithm, class Layout, class BuildTag>
 class CustomVerletList;
-struct LocalBondState;                                                                                                                         
+struct LocalBondState;
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 template <typename Callable>
