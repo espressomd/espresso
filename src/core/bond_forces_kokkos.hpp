@@ -136,7 +136,7 @@ struct PairBondsKernel {
       local_force(j, thread_id, 1) -= f[1];
       local_force(j, thread_id, 2) -= f[2];
 #ifdef ESPRESSO_NPT
-      auto virial = hadamard_product(f, dx);
+      auto const virial = hadamard_product(f, dx);
       local_virial(thread_id, 0) += virial[0];
       local_virial(thread_id, 1) += virial[1];
       local_virial(thread_id, 2) += virial[2];

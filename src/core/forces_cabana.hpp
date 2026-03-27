@@ -147,7 +147,7 @@ struct ForcesKernel {
     auto const d = box_geo.get_mi_vector(pos1, pos2);
     auto const dist = d.norm();
 
-    // Early exit if distance > maximal clobal cutoff
+    // Early exit if distance > maximal global cutoff
     if (dist > system_max_cutoff)
       return;
 

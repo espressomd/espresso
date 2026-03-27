@@ -4,8 +4,6 @@
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 #include <Kokkos_Core.hpp>
-#include <memory>
-#include <vector>
 
 struct LocalBondState {
   using PairBondlistType = Kokkos::View<int *[2], Kokkos::LayoutRight>;

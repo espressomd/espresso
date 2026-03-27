@@ -26,7 +26,7 @@
 #include "cell_system/CellStructure.hpp"
 
 #include "aosoa_pack.hpp"
-#include "bonds_kokkos.hpp"
+#include "bond_forces_kokkos.hpp"
 #include "custom_verlet_list.hpp"
 #include "forces_cabana.hpp"
 
