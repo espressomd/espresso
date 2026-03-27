@@ -340,16 +340,14 @@ void System::System::calculate_forces() {
 #ifdef ESPRESSO_CALIPER
   CALI_MARK_BEGIN("cabana_short_range");
 #endif
+  auto &bs = cell_structure->bond_state();
   auto bonds_kernel_data = create_kokkos_bonds_kernel_data(*this);
   auto pair_bonds_kernel = PairBondsKernel{
-      bonds_kernel_data, cell_structure->get_pair_bond_list_kokkos(),
-      cell_structure->get_pair_bond_id_kokkos(), get_ptr(coulomb_kernel)};
+      bonds_kernel_data, bs.pair_list, bs.pair_ids, get_ptr(coulomb_kernel)};
   auto angle_bonds_kernel = AngleBondsKernel{
-      bonds_kernel_data, cell_structure->get_angle_bond_list_kokkos(),
-      cell_structure->get_angle_bond_id_kokkos()};
+      bonds_kernel_data, bs.angle_list, bs.angle_ids};
   auto dihedral_bonds_kernel = DihedralBondsKernel{
-      bonds_kernel_data, cell_structure->get_dihedral_bond_list_kokkos(),
-      cell_structure->get_dihedral_bond_id_kokkos()};
+      bonds_kernel_data, bs.dihedral_list, bs.dihedral_ids};
 
   auto first_neighbor_kernel =
       create_cabana_neighbor_kernel(*this, virial, elc_kernel, coulomb_kernel,

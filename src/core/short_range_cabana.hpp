@@ -197,30 +197,28 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
           }
         });
     Kokkos::fence();
-    CellStructure::PairBondlistType &pair_bond_list =
-        cell_structure.get_pair_bond_list_kokkos();
+    auto &bs = cell_structure.bond_state();
+    auto &pair_bond_list = bs.pair_list;
     Kokkos::parallel_for("resolve_pair_bond_indices",
-                         cell_structure.get_local_pair_bond_numbers(),
+                         pair_count,
                          [&pair_bond_list, &id_to_index](int idx) {
                            for (int col = 0; col < 2; ++col) {
                              pair_bond_list(idx, col) =
                                  id_to_index(pair_bond_list(idx, col));
                            }
                          });
-    CellStructure::AngleBondlistType &angle_bond_list =
-        cell_structure.get_angle_bond_list_kokkos();
+    auto &angle_bond_list = bs.angle_list;
     Kokkos::parallel_for("resolve_angle_bond_indices",
-                         cell_structure.get_local_angle_bond_numbers(),
+                         angle_count,
                          [&angle_bond_list, &id_to_index](int idx) {
                            for (int col = 0; col < 3; ++col) {
                              angle_bond_list(idx, col) =
                                  id_to_index(angle_bond_list(idx, col));
                            }
                          });
-    CellStructure::DihedralBondlistType &dihedral_bond_list =
-        cell_structure.get_dihedral_bond_list_kokkos();
+    auto &dihedral_bond_list = bs.dihedral_list;
     Kokkos::parallel_for("resolve_dihedral_bond_indices",
-                         cell_structure.get_local_dihedral_bond_numbers(),
+                         dihedral_count,
                          [&dihedral_bond_list, &id_to_index](int idx) {
                            for (int col = 0; col < 4; ++col) {
                              dihedral_bond_list(idx, col) =
@@ -319,23 +317,23 @@ void cabana_short_range(auto const &pair_bonds_kernel,
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_BEGIN("cabana_bond_loop");
 #endif
-    if (cell_structure.get_local_pair_bond_numbers() > 0) {
+    auto const n_pair_bonds = cell_structure.get_local_pair_bond_numbers();
+    auto const n_angle_bonds = cell_structure.get_local_angle_bond_numbers();
+    auto const n_dihedral_bonds = cell_structure.get_local_dihedral_bond_numbers();
+    if (n_pair_bonds > 0) {
       Kokkos::parallel_for( // loop over bonds
-          "for_each_local_pair_bonds",
-          cell_structure.get_local_pair_bond_numbers(), pair_bonds_kernel);
+          "for_each_local_pair_bonds", n_pair_bonds, pair_bonds_kernel);
       Kokkos::fence();
     }
-    if (cell_structure.get_local_angle_bond_numbers() > 0) {
+    if (n_angle_bonds > 0) {
       Kokkos::parallel_for( // loop over bonds
-          "for_each_local_angle_bonds",
-          cell_structure.get_local_angle_bond_numbers(), angle_bonds_kernel);
+          "for_each_local_angle_bonds", n_angle_bonds, angle_bonds_kernel);
       Kokkos::fence();
     }
-    if (cell_structure.get_local_dihedral_bond_numbers() > 0) {
+    if (n_dihedral_bonds > 0) {
       Kokkos::parallel_for( // loop over bonds
           "for_each_local_dihedral_bonds",
-          cell_structure.get_local_dihedral_bond_numbers(),
-          dihedral_bonds_kernel);
+          n_dihedral_bonds, dihedral_bonds_kernel);
       Kokkos::fence();
     }
 #ifdef ESPRESSO_CALIPER

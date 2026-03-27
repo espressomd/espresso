@@ -25,6 +25,7 @@
 
 #include "aosoa_pack.hpp"
 #include "forces_inline.hpp"
+#include "cell_system/LocalBondState.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -50,15 +51,15 @@ struct BondsKernelData {
 
 struct PairBondsKernel {
   BondsKernelData data;
-  CellStructure::PairBondlistType bond_list;
-  CellStructure::PairBondIDType bond_ids;
+  LocalBondState::PairBondlistType bond_list;
+  LocalBondState::PairBondIDType bond_ids;
   Coulomb::ShortRangeForceKernel::kernel_type const *const coulomb_kernel;
 
   PairBondsKernel(
-      BondsKernelData data_, CellStructure::PairBondlistType bond_list_,
-      CellStructure::PairBondIDType bond_ids_,
+      BondsKernelData data_, LocalBondState::PairBondlistType bond_list_,
+      LocalBondState::PairBondIDType bond_ids_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel_)
-      : data(data_), bond_list(bond_list_), bond_ids(bond_ids_),
+      : data(data_), bond_list(std::move(bond_list_)), bond_ids(std::move(bond_ids_)),
         coulomb_kernel(coulomb_kernel_) {}
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
@@ -149,13 +150,13 @@ struct PairBondsKernel {
 
 struct AngleBondsKernel {
   BondsKernelData data;
-  CellStructure::AngleBondlistType bond_list;
-  CellStructure::AngleBondIDType bond_ids;
+  LocalBondState::AngleBondlistType bond_list;
+  LocalBondState::AngleBondIDType bond_ids;
 
   AngleBondsKernel(BondsKernelData data_,
-                   CellStructure::AngleBondlistType bond_list_,
-                   CellStructure::AngleBondIDType bond_ids_)
-      : data(data_), bond_list(bond_list_), bond_ids(bond_ids_) {}
+                   LocalBondState::AngleBondlistType bond_list_,
+                   LocalBondState::AngleBondIDType bond_ids_)
+      : data(data_), bond_list(std::move(bond_list_)), bond_ids(std::move(bond_ids_)) {}
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
   operator()(std::size_t idx) const {
@@ -216,13 +217,13 @@ struct AngleBondsKernel {
 
 struct DihedralBondsKernel {
   BondsKernelData data;
-  CellStructure::DihedralBondlistType bond_list;
-  CellStructure::DihedralBondIDType bond_ids;
+  LocalBondState::DihedralBondlistType bond_list;
+  LocalBondState::DihedralBondIDType bond_ids;
 
   DihedralBondsKernel(BondsKernelData data_,
-                      CellStructure::DihedralBondlistType bond_list_,
-                      CellStructure::DihedralBondIDType bond_ids_)
-      : data(data_), bond_list(bond_list_), bond_ids(bond_ids_) {}
+                      LocalBondState::DihedralBondlistType bond_list_,
+                      LocalBondState::DihedralBondIDType bond_ids_)
+      : data(data_), bond_list(std::move(bond_list_)), bond_ids(std::move(bond_ids_)) {}
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
   operator()(std::size_t idx) const {
