@@ -468,7 +468,6 @@ public:
   int get_local_pair_bond_numbers() const;
   int get_local_angle_bond_numbers() const;
   int get_local_dihedral_bond_numbers() const;
-  void reset_local_bond_numbers();
   void set_local_bond_numbers(int p, int a, int d);
 #ifdef ESPRESSO_COLLISION_DETECTION
   void clear_new_bonds();
