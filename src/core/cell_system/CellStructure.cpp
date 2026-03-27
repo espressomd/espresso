@@ -430,8 +430,9 @@ int CellStructure::get_local_angle_bond_numbers() const {
 int CellStructure::get_local_dihedral_bond_numbers() const {
   return m_bond_state->dihedral_count;
 }
-inline void CellStructure::set_local_bond_numbers(int pair_value, int angle_value,
-                                           int dihedral_value) {
+inline void CellStructure::set_local_bond_numbers(int pair_value,
+                                                  int angle_value,
+                                                  int dihedral_value) {
   m_bond_state->set_counts(pair_value, angle_value, dihedral_value);
 }
 #ifdef ESPRESSO_COLLISION_DETECTION
