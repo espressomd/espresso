@@ -23,19 +23,34 @@
 
 void LocalBondState::allocate() {
   if (pair_list.is_allocated()) {
-    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), pair_list, pair_count);
-    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), pair_ids, pair_count);
-    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), angle_list, angle_count);
-    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), angle_ids, angle_count);
-    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), dihedral_list, dihedral_count);
-    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), dihedral_ids, dihedral_count);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), pair_list,
+                    pair_count);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), pair_ids,
+                    pair_count);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), angle_list,
+                    angle_count);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), angle_ids,
+                    angle_count);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing),
+                    dihedral_list, dihedral_count);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing),
+                    dihedral_ids, dihedral_count);
   } else {
-    pair_list = PairBondlistType(Kokkos::ViewAllocateWithoutInitializing("pair_bond_list"), pair_count);
-    pair_ids = PairBondIDType(Kokkos::ViewAllocateWithoutInitializing("pair_bond_id"), pair_count);
-    angle_list = AngleBondlistType(Kokkos::ViewAllocateWithoutInitializing("angle_bond_list"), angle_count);
-    angle_ids = AngleBondIDType(Kokkos::ViewAllocateWithoutInitializing("angle_bond_id"), angle_count);
-    dihedral_list = DihedralBondlistType(Kokkos::ViewAllocateWithoutInitializing("dihedral_bond_list"), dihedral_count);
-    dihedral_ids = DihedralBondIDType(Kokkos::ViewAllocateWithoutInitializing("dihedral_bond_id"), dihedral_count);
+    pair_list = PairBondlistType(
+        Kokkos::ViewAllocateWithoutInitializing("pair_bond_list"), pair_count);
+    pair_ids = PairBondIDType(
+        Kokkos::ViewAllocateWithoutInitializing("pair_bond_id"), pair_count);
+    angle_list = AngleBondlistType(
+        Kokkos::ViewAllocateWithoutInitializing("angle_bond_list"),
+        angle_count);
+    angle_ids = AngleBondIDType(
+        Kokkos::ViewAllocateWithoutInitializing("angle_bond_id"), angle_count);
+    dihedral_list = DihedralBondlistType(
+        Kokkos::ViewAllocateWithoutInitializing("dihedral_bond_list"),
+        dihedral_count);
+    dihedral_ids = DihedralBondIDType(
+        Kokkos::ViewAllocateWithoutInitializing("dihedral_bond_id"),
+        dihedral_count);
   }
 }
 
