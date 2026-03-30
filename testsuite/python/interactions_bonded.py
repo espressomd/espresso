@@ -329,7 +329,7 @@ class InteractionsBondedTest(ut.TestCase):
         system.part.by_id(0).add_bond((hb, 1))
 
         # Expect bond resolution error
-        error_msg = "ERROR: nullptr detected in partner_ids {}"
+        error_msg = "ERROR: bond partner not found on local node: {}"
         with self.assertRaisesRegex(Exception, error_msg.format(1)):
             system.integrator.run(0)
 

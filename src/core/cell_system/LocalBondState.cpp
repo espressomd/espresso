@@ -1,22 +1,41 @@
+/*
+ * Copyright (C) 2026 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "LocalBondState.hpp"
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 void LocalBondState::allocate() {
   if (pair_list.is_allocated()) {
-    Kokkos::realloc(pair_list, pair_count);
-    Kokkos::realloc(pair_ids, pair_count);
-    Kokkos::realloc(angle_list, angle_count);
-    Kokkos::realloc(angle_ids, angle_count);
-    Kokkos::realloc(dihedral_list, dihedral_count);
-    Kokkos::realloc(dihedral_ids, dihedral_count);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), pair_list, pair_count);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), pair_ids, pair_count);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), angle_list, angle_count);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), angle_ids, angle_count);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), dihedral_list, dihedral_count);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), dihedral_ids, dihedral_count);
   } else {
-    pair_list = PairBondlistType("pair_bond_list", pair_count);
-    pair_ids = PairBondIDType("pair_bond_id", pair_count);
-    angle_list = AngleBondlistType("angle_bond_list", angle_count);
-    angle_ids = AngleBondIDType("angle_bond_id", angle_count);
-    dihedral_list = DihedralBondlistType("dihedral_bond_list", dihedral_count);
-    dihedral_ids = DihedralBondIDType("dihedral_bond_id", dihedral_count);
+    pair_list = PairBondlistType(Kokkos::ViewAllocateWithoutInitializing("pair_bond_list"), pair_count);
+    pair_ids = PairBondIDType(Kokkos::ViewAllocateWithoutInitializing("pair_bond_id"), pair_count);
+    angle_list = AngleBondlistType(Kokkos::ViewAllocateWithoutInitializing("angle_bond_list"), angle_count);
+    angle_ids = AngleBondIDType(Kokkos::ViewAllocateWithoutInitializing("angle_bond_id"), angle_count);
+    dihedral_list = DihedralBondlistType(Kokkos::ViewAllocateWithoutInitializing("dihedral_bond_list"), dihedral_count);
+    dihedral_ids = DihedralBondIDType(Kokkos::ViewAllocateWithoutInitializing("dihedral_bond_id"), dihedral_count);
   }
 }
 

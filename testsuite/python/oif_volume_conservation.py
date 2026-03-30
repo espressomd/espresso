@@ -47,6 +47,8 @@ class Test(ut.TestCase):
             triangles_file=str(
                 tests_common.data_path("sphere393triangles.dat")),
             system=self.system, **kwargs, kb=1.0, kal=1.0, kag=0.1, kv=0.1, kvisc=2e-10,
+            # kvisc must be non-zero to exercise the viscosity code path
+            # in OifLocalForcesBond::calc_forces
             check_orientation=False, resize=(3.0, 3.0, 3.0))
 
     def check_relaxation(self, **kwargs):
