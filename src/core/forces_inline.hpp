@@ -532,15 +532,17 @@ add_bonded_force(Particle &p1, int bond_id, std::span<Particle *> partners,
                  [[maybe_unused]] Utils::Vector3d *const virial,
                  Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
 
+  auto const n_partners = static_cast<int>(partners.size());
+
   // Consider for bond breakage
-  if (partners.size() == 1u) { // pair bonds
+  if (n_partners == 1) { // pair bonds
     auto d = box_geo.get_mi_vector(p1.pos(), partners[0]->pos()).norm();
     if (bond_breakage.check_and_handle_breakage(
             p1.id(), {{partners[0]->id(), std::nullopt}}, bond_id, d)) {
       return false;
     }
   }
-  if (partners.size() == 2u) { // angle bond
+  if (n_partners == 2) { // angle bond
     auto d =
         box_geo.get_mi_vector(partners[0]->pos(), partners[1]->pos()).norm();
     if (bond_breakage.check_and_handle_breakage(
@@ -551,7 +553,7 @@ add_bonded_force(Particle &p1, int bond_id, std::span<Particle *> partners,
 
   auto const &iaparams = *bonded_ia_params.at(bond_id);
 
-  switch (number_of_partners(iaparams)) {
+  switch (n_partners) {
   case 0:
     return false;
   case 1:
@@ -564,6 +566,6 @@ add_bonded_force(Particle &p1, int bond_id, std::span<Particle *> partners,
     return add_bonded_four_body_force(iaparams, box_geo, p1, *partners[0],
                                       *partners[1], *partners[2]);
   default:
-    throw BondInvalidSizeError{number_of_partners(iaparams)};
+    throw BondInvalidSizeError{n_partners};
   }
 }

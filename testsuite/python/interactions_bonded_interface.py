@@ -23,7 +23,9 @@ import tests_common
 import espressomd
 import espressomd.interactions
 import espressomd.code_features
+import espressomd.script_interface
 import numpy as np
+import pickle
 
 
 class BondedInteractions(ut.TestCase):
@@ -113,16 +115,26 @@ class BondedInteractions(ut.TestCase):
                 f"differ for bond id {bondId}: {outParamsRef} vs. {outParams}")
             with self.assertRaisesRegex(RuntimeError, "Bond parameters are immutable"):
                 outBond.params = {}
-            old_params = outBond.params.copy()
-            for key in (outBond.params.keys() | old_params.keys()):
-                if isinstance(old_params[key], str):
-                    self.assertEqual(outBond.params[key], old_params[key])
-                else:
-                    np.testing.assert_allclose(
-                        outBond.params[key], old_params[key], atol=1e-10)
+
+            def compare(bond, params):
+                for key in (bond.params.keys() | params.keys()):
+                    if isinstance(params[key], str):
+                        self.assertEqual(bond.params[key], params[key])
+                    else:
+                        np.testing.assert_allclose(
+                            bond.params[key], params[key], atol=1e-10)
+
+            compare(outBond, outBond.params.copy())
 
             # check no-op
             self.assertIsNone(outBond.call_method('unknown'))
+
+            # Check pickling
+            old_params = bond.params.copy()
+            SIH = espressomd.script_interface.ScriptInterfaceHelper
+            bond.__reduce__ = lambda: SIH.__reduce__(bond)
+            bond_unpickled = pickle.loads(pickle.dumps(bond))
+            compare(bond_unpickled, old_params)
 
         return func
 

@@ -467,21 +467,21 @@ class ASEInterfaceTest(ut.TestCase):
 
 
 class FixedForceCalculator(Calculator):
-    """ASE calculator that returns fixed forces for testing."""
+    """
+    ASE calculator that returns fixed forces for testing.
+
+    Parameters
+    ----------
+    forces_array : np.ndarray
+        Array of forces with shape (n_atoms, 3)
+    energy : float, optional
+        Total energy value to return
+
+    """
 
     implemented_properties = ["energy", "forces"]
 
     def __init__(self, forces_array, energy=0.0):
-        """
-        Initialize with fixed forces array and optional energy.
-
-        Parameters
-        ----------
-        forces_array : np.ndarray
-            Array of forces with shape (n_atoms, 3)
-        energy : float, optional
-            Total energy value to return
-        """
         Calculator.__init__(self)
         self.forces_array = np.array(forces_array)
         self.energy_value = energy
@@ -523,6 +523,19 @@ class ASEIntegrationTest(ut.TestCase):
         """Clean up after each test."""
         system.part.clear()
         system.integrator.set_vv()
+
+    def test_00_subclass(self):
+        """Check the minimal interface is fully implemented."""
+        ref_energy = -1.5
+        ref_forces = np.array([
+            [2., 3., 4.],
+            [-4., 5., 6.],
+        ])
+        calculator = FixedForceCalculator(ref_forces, ref_energy)
+        calculator.calculate(properties=("forces", "energy"))
+        np.testing.assert_allclose(calculator.get_forces(None), ref_forces)
+        np.testing.assert_allclose(calculator.results["forces"], ref_forces)
+        np.testing.assert_allclose(calculator.results["energy"], ref_energy)
 
     def test_newton_second_law_integration(self):
         """Test 5-step integration to verify Newton's second law."""

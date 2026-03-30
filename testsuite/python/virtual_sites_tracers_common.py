@@ -37,6 +37,7 @@ class VirtualSitesTracersCommon:
     system.cell_system.skin = 0.1
 
     def setUp(self):
+        self.system.cell_system.skin = 0.1
         self.system.box_l = (self.box_lw, self.box_lw, self.box_height)
 
     def tearDown(self):
@@ -154,6 +155,28 @@ class VirtualSitesTracersCommon:
 
             system.lb = None
             system.part.clear()
+
+    def test_verlet_list_update(self):
+        """
+        Make a tracer move more than 1 Verlet list skin per time step.
+        """
+        self.set_lb()
+        system = self.system
+        tau = system.time_step
+        skin = self.agrid / 10.
+        skin_per_tau_md_units = skin / tau
+        skin_per_tau_lb_units = skin_per_tau_md_units * 3.
+        system.cell_system.skin = skin
+        self.lbf[:, :, :].velocity = [2. * skin_per_tau_lb_units, 0., 0.]
+        p = system.part.add(
+            # place away from the box origin to stay outside the halo region
+            pos=3 * [self.agrid],
+            propagation=espressomd.propagation.Propagation.TRANS_LB_TRACER)
+        system.integrator.run(1)
+        ref_pos = [self.agrid + 2. * skin, self.agrid, self.agrid]
+        ref_vel = [2. * skin_per_tau_md_units, 0., 0.]
+        np.testing.assert_array_almost_equal(np.copy(p.pos), ref_pos)
+        np.testing.assert_array_almost_equal(np.copy(p.v), ref_vel)
 
     def test_zz_exceptions_without_lb(self):
         """

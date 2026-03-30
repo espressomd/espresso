@@ -45,7 +45,7 @@ inline constexpr auto dihe_tiny_sin_value{1e-10};
 
 /** Parameters for four-body angular potential (dihedral-angle potentials). */
 struct DihedralBond {
-  double mult;
+  int mult;
   double bend;
   double phase;
 
@@ -116,11 +116,11 @@ inline bool calc_dihedral_angle(Utils::Vector3d const &a,
 
   cosphi = aXb * bXc;
 
-  if (fabs(fabs(cosphi) - 1.) < dihe_tiny_sin_value)
+  if (std::fabs(std::fabs(cosphi) - 1.) < dihe_tiny_sin_value)
     cosphi = std::round(cosphi);
 
   /* Calculate dihedral angle */
-  phi = acos(cosphi);
+  phi = std::acos(cosphi);
   if ((aXb * c) < 0.)
     phi = 2. * std::numbers::pi - phi;
   return false;
@@ -162,14 +162,16 @@ DihedralBond::forces(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
   auto const v12Xf1 = vector_product(v12, f1);
 
   /* calculate force magnitude */
-  auto fac = -bend * mult;
+  auto const mult_ = static_cast<double>(mult);
+  auto const mphi = mult_ * phi - phase;
+  auto fac = -bend * mult_;
 
   if (fabs(sin(phi)) < dihe_tiny_sin_value) {
     /* comes from taking the first term of the MacLaurin expansion of
      * sin(n * phi - phi0) and sin(phi) and then making the division */
-    sin_mphi_over_sin_phi = mult * cos(mult * phi - phase) / cos_phi;
+    sin_mphi_over_sin_phi = mult_ * std::cos(mphi) / cos_phi;
   } else {
-    sin_mphi_over_sin_phi = sin(mult * phi - phase) / sin(phi);
+    sin_mphi_over_sin_phi = std::sin(mphi) / std::sin(phi);
   }
 
   fac *= sin_mphi_over_sin_phi;
@@ -205,5 +207,6 @@ DihedralBond::energy(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
     return {};
   }
 
-  return bend * (1. - cos(mult * phi - phase));
+  auto const mphi = static_cast<double>(mult) * phi - phase;
+  return bend * (1. - std::cos(mphi));
 }

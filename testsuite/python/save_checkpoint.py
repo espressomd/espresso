@@ -57,6 +57,8 @@ system.force_cap = 1e8
 system.min_global_cut = 2.0
 system.max_oif_objects = 5
 n_nodes = system.cell_system.get_state()["n_nodes"]
+if 'INT.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
+    system.periodicity = [False, False, False]
 
 # create checkpoint folder
 config.cleanup_old_checkpoint()
@@ -131,9 +133,6 @@ if espressomd.has_features('DIPOLES'):
     p1.dip = (1.3, 2.1, -6)
     p2.dip = (7.3, 6.1, -4)
 
-if espressomd.has_features('EXCLUSIONS'):
-    system.part.add(id=2, pos=[2.0, 2.0, 2.0], exclusions=[0, 1])
-
 # place particles at the interface between 2 MPI nodes
 p3 = system.part.add(id=3, pos=system.box_l / 2.0 - 1.0, type=1)
 p4 = system.part.add(id=4, pos=system.box_l / 2.0 + 1.0, type=1)
@@ -201,17 +200,18 @@ system.constraints.add(
     espressomd.constraints.HomogeneousMagneticField(H=[1., 2., 3.]))
 system.constraints.add(
     espressomd.constraints.HomogeneousFlowField(u=[1., 2., 3.], gamma=2.3))
-pot_field_data = espressomd.constraints.ElectricPotential.field_from_fn(
-    system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
-checkpoint.register("pot_field_data")
-system.constraints.add(espressomd.constraints.PotentialField(
-    field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
-    particle_scales={5: 6.0}))
-vec_field_data = espressomd.constraints.ForceField.field_from_fn(
-    system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
-checkpoint.register("vec_field_data")
-system.constraints.add(espressomd.constraints.ForceField(
-    field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4))
+if np.prod(system.periodicity):
+    pot_field_data = espressomd.constraints.ElectricPotential.field_from_fn(
+        system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
+    checkpoint.register("pot_field_data")
+    system.constraints.add(espressomd.constraints.PotentialField(
+        field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
+        particle_scales={5: 6.0}))
+    vec_field_data = espressomd.constraints.ForceField.field_from_fn(
+        system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
+    checkpoint.register("vec_field_data")
+    system.constraints.add(espressomd.constraints.ForceField(
+        field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4))
 union = espressomd.shapes.Union()
 union.add([espressomd.shapes.Wall(normal=[1., 0., 0.], dist=0.5),
            espressomd.shapes.Wall(normal=[0., 1., 0.], dist=1.5)])
@@ -231,7 +231,6 @@ if 'LB' not in modes:
     elif 'THERM.DPD' in modes and espressomd.has_features('DPD'):
         system.thermostat.set_dpd(kT=1.0, seed=42)
     elif 'THERM.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
-        system.periodicity = [False, False, False]
         system.thermostat.set_stokesian(kT=1.0, seed=42)
     # set integrator
     if 'INT.NPT' in modes and espressomd.has_features('NPT'):
@@ -245,7 +244,6 @@ if 'LB' not in modes:
     elif 'INT.BD' in modes:
         system.integrator.set_brownian_dynamics()
     elif 'INT.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
-        system.periodicity = [False, False, False]
         system.integrator.set_stokesian_dynamics(
             approximation_method='ft', viscosity=0.5, radii={0: 1.5},
             pair_mobility=False, self_mobility=True)
@@ -277,14 +275,22 @@ harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
 strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
 system.bonded_inter.add(strong_harmonic_bond)
+angle_bond = espressomd.interactions.AngleCosine(bend=5e-6, phi0=3.2)
+system.bonded_inter.add(angle_bond)
+dihe_bond = espressomd.interactions.Dihedral(mult=3, bend=7e-6, phase=4.)
+system.bonded_inter.add(dihe_bond)
+p7 = system.part.add(id=2, pos=[2.0, 2.0, 2.1])
+p8 = system.part.add(id=8, pos=[2.0] * 3 + system.box_l)
 p2.add_bond((harmonic_bond, p1))
+p2.add_bond((angle_bond, p1, p7))
+p2.add_bond((dihe_bond, p1, p7, p8))
 if 'THERM.LB' in modes or 'THERM.LANGEVIN' in modes:
     # create Drude particles
     system.thermostat.set_thermalized_bond(seed=3)
     system.thermostat.thermalized_bond.call_method(
         "override_philox_counter", counter=5)
     therm_params = dict(temp_com=0.1, temp_distance=0.2, gamma_com=0.3,
-                        gamma_distance=0.5, r_cut=2.)
+                        gamma_distance=0.5, r_cut=1.8)
     therm_bond1 = espressomd.interactions.ThermalizedBond(**therm_params)
     therm_bond2 = espressomd.interactions.ThermalizedBond(**therm_params)
     system.bonded_inter.add(therm_bond1)
@@ -458,9 +464,10 @@ if lbf_class:
 
 
 # set various properties
-p8 = system.part.add(id=8, pos=[2.0] * 3 + system.box_l)
 p8.lees_edwards_offset = 0.2
 p4.v = [-1., 2., -4.]
+if espressomd.has_features('EXCLUSIONS'):
+    p7.exclusions = [0, 1]
 if espressomd.has_features('MASS'):
     p3.mass = 1.5
 if espressomd.has_features('ROTATION'):

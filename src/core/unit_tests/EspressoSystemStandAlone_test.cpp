@@ -76,6 +76,7 @@ namespace utf = boost::unit_test;
 #include <limits>
 #include <memory>
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
@@ -630,6 +631,11 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     BOOST_CHECK_THROW(force_kernel(1u), BondUnknownTypeError);
     BOOST_CHECK_THROW(force_kernel(2u), BondUnknownTypeError);
     BOOST_CHECK_THROW(force_kernel(3u), BondUnknownTypeError);
+    BOOST_CHECK_THROW(add_bonded_force(plist[0], 0, {plist_ptr.begin(), 5ul},
+                                       *system.bonded_ias,
+                                       *system.bond_breakage, *system.box_geo,
+                                       nullptr, nullptr),
+                      BondInvalidSizeError);
 #ifdef ESPRESSO_CUDA
     BOOST_CHECK_THROW(
         invoke_skip_cuda_exceptions([]() { throw std::runtime_error(""); }),

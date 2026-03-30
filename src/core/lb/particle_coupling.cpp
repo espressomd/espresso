@@ -24,7 +24,6 @@
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "config/config.hpp"
 #include "errorhandling.hpp"
 #include "lb/particle_coupling.hpp"
 #include "random.hpp"
