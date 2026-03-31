@@ -147,11 +147,17 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
           blocks, "pdfs_cpu", m_pdf_cpu_field_id);
       vtk_obj.addBeforeFunction(gpu::fieldCpyFunctor<PdfFieldCpu, PdfField>(
           blocks, *m_pdf_cpu_field_id, m_pdf_field_id));
+      vtk_obj.addCellDataWriter(
+          std::make_shared<DensityVTKWriter<FloatType, PdfFieldCpu, float>>(
+              *m_pdf_cpu_field_id, "density", unit_conversion));
+    } else {
+#endif
+      vtk_obj.addCellDataWriter(
+          std::make_shared<DensityVTKWriter<FloatType, PdfField, float>>(
+              m_pdf_field_id, "density", unit_conversion));
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
     }
 #endif
-    vtk_obj.addCellDataWriter(
-        std::make_shared<DensityVTKWriter<FloatType, PdfField, float>>(
-            m_pdf_field_id, "density", unit_conversion));
   }
   if (flag_observables & static_cast<int>(OutputVTK::velocity_vector)) {
     auto const unit_conversion = FloatType_c(units.at("velocity"));
@@ -163,11 +169,17 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
       vtk_obj.addBeforeFunction(
           gpu::fieldCpyFunctor<VectorFieldCpu, VectorField>(
               blocks, *m_vel_cpu_field_id, m_velocity_field_id));
+      vtk_obj.addCellDataWriter(
+          std::make_shared<VelocityVTKWriter<FloatType, VectorFieldCpu, float>>(
+              *m_vel_cpu_field_id, "velocity_vector", unit_conversion));
+    } else {
+#endif
+      vtk_obj.addCellDataWriter(
+          std::make_shared<VelocityVTKWriter<FloatType, VectorField, float>>(
+              m_velocity_field_id, "velocity_vector", unit_conversion));
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
     }
 #endif
-    vtk_obj.addCellDataWriter(
-        std::make_shared<VelocityVTKWriter<FloatType, VectorField, float>>(
-            m_velocity_field_id, "velocity_vector", unit_conversion));
   }
   if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
     auto const unit_conversion =
@@ -179,12 +191,19 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
           blocks, "pdfs_cpu", m_pdf_cpu_field_id);
       vtk_obj.addBeforeFunction(gpu::fieldCpyFunctor<PdfFieldCpu, PdfField>(
           blocks, *m_pdf_cpu_field_id, m_pdf_field_id));
+      vtk_obj.addCellDataWriter(
+          std::make_shared<PressureTensorVTKWriter<FloatType, PdfFieldCpu, float>>(
+              *m_pdf_cpu_field_id, "pressure_tensor", unit_conversion,
+              pressure_tensor_correction_factor()));
+    } else {
+#endif
+      vtk_obj.addCellDataWriter(
+          std::make_shared<PressureTensorVTKWriter<FloatType, PdfField, float>>(
+              m_pdf_field_id, "pressure_tensor", unit_conversion,
+              pressure_tensor_correction_factor()));
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
     }
 #endif
-    vtk_obj.addCellDataWriter(
-        std::make_shared<PressureTensorVTKWriter<FloatType, PdfField, float>>(
-            m_pdf_field_id, "pressure_tensor", unit_conversion,
-            pressure_tensor_correction_factor()));
   }
 }
 
