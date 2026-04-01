@@ -31,6 +31,7 @@ namespace utf = boost::unit_test;
 #include "PropagationMode.hpp"
 #include "accumulators/TimeSeries.hpp"
 #include "actor/registration.hpp"
+#include "bond_error.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
@@ -42,6 +43,7 @@ namespace utf = boost::unit_test;
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/p3m.hpp"
 #include "energy_inline.hpp"
+#include "errorhandling.hpp"
 #include "forces_inline.hpp"
 #include "galilei/Galilei.hpp"
 #include "integrate.hpp"
@@ -90,6 +92,7 @@ static std::shared_ptr<System::System> system;
 
 struct GlobalConfig : public EspressoCoreGlobalConfig {
   GlobalConfig() {
+    ErrorHandling::init_error_handling(comm_cart);
     espresso::system = System::System::create();
     espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
     ::System::set_system(espresso::system);
@@ -97,6 +100,7 @@ struct GlobalConfig : public EspressoCoreGlobalConfig {
   ~GlobalConfig() {
     espresso::system.reset();
     ::System::reset_system();
+    ErrorHandling::deinit_error_handling();
   }
 };
 
@@ -585,6 +589,41 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     BOOST_CHECK_THROW(CollisionDetection::get_part(*system.cell_structure, 777),
                       std::runtime_error);
 #endif
+    {
+      auto const is_head_node = comm.rank() == 0;
+      std::array<int, 3> partner_ids{{3, 2, 1}};
+      if (is_head_node) {
+        bond_broken_error(0, partner_ids);
+      }
+      auto const messages =
+          ErrorHandling::mpi_gather_runtime_errors_all(is_head_node);
+      flush_runtime_errors_local();
+      if (is_head_node) {
+        BOOST_REQUIRE_EQUAL(messages.size(), 1ul);
+        BOOST_CHECK_EQUAL(messages.front().what(),
+                          "bond broken between particles 0, 3, 2, 1");
+      } else {
+        BOOST_REQUIRE(messages.empty());
+      }
+    }
+    {
+      auto const is_head_node = comm.rank() == 0;
+      std::array<int, 3> partner_ids{{3, -1, 1}};
+      if (is_head_node) {
+        bond_resolution_error(partner_ids);
+      }
+      auto const messages =
+          ErrorHandling::mpi_gather_runtime_errors_all(is_head_node);
+      flush_runtime_errors_local();
+      if (is_head_node) {
+        BOOST_REQUIRE_EQUAL(messages.size(), 1ul);
+        BOOST_CHECK_EQUAL(
+            messages.front().what(),
+            "bond partner not found on local node, could only find: 3, 1");
+      } else {
+        BOOST_REQUIRE(messages.empty());
+      }
+    }
   }
 
   // check exceptions

@@ -312,7 +312,7 @@ class InteractionsBondedTest(ut.TestCase):
             p3.delete_all_bonds()
 
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] < 2,
-               "Skipping test: only runs for n_nodes >= 2")
+               "only runs for 2 or more MPI ranks")
     @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_bond_resolution_error(self):
         system = self.system
@@ -329,7 +329,7 @@ class InteractionsBondedTest(ut.TestCase):
         system.part.by_id(0).add_bond((hb, 1))
 
         # Expect bond resolution error
-        error_msg = "ERROR: bond partner not found on local node: {}"
+        error_msg = "ERROR: bond partner not found on local node, could only find: {}"
         with self.assertRaisesRegex(Exception, error_msg.format(1)):
             system.integrator.run(0)
 
