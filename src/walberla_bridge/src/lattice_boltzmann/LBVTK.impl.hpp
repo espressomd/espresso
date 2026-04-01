@@ -25,6 +25,8 @@
  * @ref walberla::LBWalberlaImpl.
  */
 
+#include <field/iterators/IteratorMacros.h>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -94,32 +96,71 @@ protected:
   }
 };
 
-template <typename FloatType, typename PdfField, typename OutputType = float>
+template <typename FloatType, typename TensorField, typename OutputType = float>
 class PressureTensorVTKWriter
-    : public VTKWriter<FloatType, PdfField, 9u, OutputType> {
+    : public VTKWriter<FloatType, TensorField, 9u, OutputType> {
 public:
-  using Base = VTKWriter<FloatType, PdfField, 9u, OutputType>;
+  using Base = VTKWriter<FloatType, TensorField, 9u, OutputType>;
   using Base::Base;
   using Base::evaluate;
-
-  PressureTensorVTKWriter(ConstBlockDataID const &block_id,
-                          std::string const &id, FloatType unit_conversion,
-                          FloatType off_diag_factor)
-      : Base(block_id, id, unit_conversion),
-        m_off_diag_factor(off_diag_factor) {}
 
 protected:
   OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
                       cell_idx_t const z, cell_idx_t const f) override {
     WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
-    auto const pressure =
-        lbm::accessor::PressureTensor::get(this->m_field, 1., {x, y, z});
-    auto const revert_factor =
-        (f == 0 or f == 4 or f == 8) ? FloatType{1} : m_off_diag_factor;
-    return numeric_cast<OutputType>(this->m_conversion * revert_factor *
-                                    pressure[uint_c(f)]);
+    return numeric_cast<OutputType>(
+        this->m_field->get(x, y, z, uint_c(f)));
   }
-  FloatType const m_off_diag_factor;
+};
+
+/**
+ * @brief Functor that pre-computes the pressure tensor from the PDF field
+ * into a dedicated tensor field. Runs as a VTK "before function" so that
+ * the computation is parallelized over blocks (MPI) and cells (OpenMP/CUDA)
+ * instead of being done cell-by-cell in the VTK writer.
+ */
+template <typename FloatType, typename PdfField>
+class PressureTensorFieldCompute {
+public:
+  using TensorField = field::GhostLayerField<FloatType, uint_t{9u}>;
+
+  PressureTensorFieldCompute(std::shared_ptr<StructuredBlockStorage> blocks,
+                             ConstBlockDataID pdf_field_id,
+                             BlockDataID tensor_field_id,
+                             FloatType unit_conversion,
+                             FloatType off_diag_factor)
+      : m_blocks(std::move(blocks)), m_pdf_field_id(pdf_field_id),
+        m_tensor_field_id(tensor_field_id), m_conversion(unit_conversion),
+        m_off_diag_factor(off_diag_factor) {}
+
+  void operator()() {
+    for (auto &block : *m_blocks) {
+      auto const *pdf_field =
+          block.template getData<PdfField>(m_pdf_field_id);
+      auto *tensor_field =
+          block.template getData<TensorField>(m_tensor_field_id);
+      WALBERLA_ASSERT_NOT_NULLPTR(pdf_field);
+      WALBERLA_ASSERT_NOT_NULLPTR(tensor_field);
+      WALBERLA_FOR_ALL_CELLS_XYZ(tensor_field, {
+        auto const pressure =
+            lbm::accessor::PressureTensor::get(pdf_field, 1., {x, y, z});
+        for (uint_t f = 0u; f < 9u; ++f) {
+          auto const revert_factor = (f == 0u or f == 4u or f == 8u)
+                                         ? FloatType{1}
+                                         : m_off_diag_factor;
+          tensor_field->get(x, y, z, f) =
+              m_conversion * revert_factor * pressure[f];
+        }
+      }) // WALBERLA_FOR_ALL_CELLS_XYZ
+    }
+  }
+
+private:
+  std::shared_ptr<StructuredBlockStorage> m_blocks;
+  ConstBlockDataID m_pdf_field_id;
+  BlockDataID m_tensor_field_id;
+  FloatType m_conversion;
+  FloatType m_off_diag_factor;
 };
 
 template <typename FloatType, lbmpy::Arch Architecture>
@@ -184,26 +225,36 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
   if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
     auto const unit_conversion =
         FloatType_c(zero_centered_to_md(units.at("pressure")));
+    auto const &blocks = m_lattice->get_blocks();
+    using TensorFieldCpu = field::GhostLayerField<FloatType, uint_t{9u}>;
+    if (not m_pressure_tensor_field_id) {
+      m_pressure_tensor_field_id = field::addToStorage<TensorFieldCpu>(
+          blocks, "pressure_tensor_vtk", FloatType{0}, field::fzyx,
+          m_lattice->get_ghost_layers());
+    }
 #if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
-      auto const &blocks = m_lattice->get_blocks();
       allocate_cpu_field_if_empty.template operator()<PdfFieldCpu>(
           blocks, "pdfs_cpu", m_pdf_cpu_field_id);
       vtk_obj.addBeforeFunction(gpu::fieldCpyFunctor<PdfFieldCpu, PdfField>(
           blocks, *m_pdf_cpu_field_id, m_pdf_field_id));
-      vtk_obj.addCellDataWriter(
-          std::make_shared<PressureTensorVTKWriter<FloatType, PdfFieldCpu, float>>(
-              *m_pdf_cpu_field_id, "pressure_tensor", unit_conversion,
-              pressure_tensor_correction_factor()));
+      vtk_obj.addBeforeFunction(
+          PressureTensorFieldCompute<FloatType, PdfFieldCpu>(
+              blocks, *m_pdf_cpu_field_id, *m_pressure_tensor_field_id,
+              unit_conversion, pressure_tensor_correction_factor()));
     } else {
 #endif
-      vtk_obj.addCellDataWriter(
-          std::make_shared<PressureTensorVTKWriter<FloatType, PdfField, float>>(
-              m_pdf_field_id, "pressure_tensor", unit_conversion,
-              pressure_tensor_correction_factor()));
+      vtk_obj.addBeforeFunction(
+          PressureTensorFieldCompute<FloatType, PdfField>(
+              blocks, m_pdf_field_id, *m_pressure_tensor_field_id,
+              unit_conversion, pressure_tensor_correction_factor()));
 #if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
     }
 #endif
+    vtk_obj.addCellDataWriter(
+        std::make_shared<PressureTensorVTKWriter<FloatType, TensorFieldCpu, float>>(
+            *m_pressure_tensor_field_id, "pressure_tensor",
+            FloatType{1}));
   }
 }
 

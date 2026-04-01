@@ -110,10 +110,12 @@ protected:
   // "underlying" field types (`GPUField` has no f-size info at compile time)
   using _PdfField = FieldTrait<FloatType, Stencil>::PdfField;
   using _VectorField = FieldTrait<FloatType, Stencil>::VectorField;
+  using _TensorField = FieldTrait<FloatType, Stencil>::TensorField;
 
 public:
   using PdfField = FieldTrait<FloatType, Stencil, Architecture>::PdfField;
   using VectorField = FieldTrait<FloatType, Stencil, Architecture>::VectorField;
+  using TensorField = FieldTrait<FloatType, Stencil, Architecture>::TensorField;
   using FlagField = BoundaryModel::FlagField;
 #if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
   using GPUField = gpu::GPUField<FloatType>;
@@ -121,6 +123,8 @@ public:
       FieldTrait<FloatType, Stencil, lbmpy::Arch::CPU>::PdfField;
   using VectorFieldCpu =
       FieldTrait<FloatType, Stencil, lbmpy::Arch::CPU>::VectorField;
+  using TensorFieldCpu =
+      FieldTrait<FloatType, Stencil, lbmpy::Arch::CPU>::TensorField;
 #endif
 
   struct GhostComm {
@@ -183,9 +187,11 @@ protected:
   BlockDataID m_velocity_field_id;
   BlockDataID m_vel_tmp_field_id;
 
+  std::optional<BlockDataID> m_pressure_tensor_field_id;
 #if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
   std::optional<BlockDataID> m_pdf_cpu_field_id;
   std::optional<BlockDataID> m_vel_cpu_field_id;
+  std::optional<BlockDataID> m_pressure_tensor_cpu_field_id;
 #endif
 
   /** Flag for boundary cells. */
