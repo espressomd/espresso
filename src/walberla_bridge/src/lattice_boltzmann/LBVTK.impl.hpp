@@ -164,6 +164,44 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
             uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
       }
     };
+    auto const populate_boundary_velocities =
+        [this]<typename VelField>(BlockDataID vel_id) {
+          return [this, vel_id]() {
+            auto const &blocks = m_lattice->get_blocks();
+            for (auto &block : *blocks) {
+              auto const offset =
+                  m_lattice->get_block_corner(block, true);
+              auto *vel_field =
+                  block.template getData<VelField>(vel_id);
+              auto const *flag_field =
+                  block.template getData<FlagField>(m_flag_field_id);
+              auto const boundary_flag =
+                  flag_field->getFlag(Boundary_flag);
+              for (cell_idx_t z = 0; z < cell_idx_c(flag_field->zSize());
+                   ++z) {
+                for (cell_idx_t y = 0;
+                     y < cell_idx_c(flag_field->ySize()); ++y) {
+                  for (cell_idx_t x = 0;
+                       x < cell_idx_c(flag_field->xSize()); ++x) {
+                    if (flag_field->isFlagSet(x, y, z, boundary_flag)) {
+                      Cell global{offset[0] + x, offset[1] + y,
+                                  offset[2] + z};
+                      auto const &vel =
+                          m_boundary->get_node_value_at_boundary(global);
+                      lbm::accessor::Vector::set(vel_field, vel,
+                                                 Cell{x, y, z});
+                    }
+                  }
+                }
+              }
+            }
+          };
+        };
+    if (m_has_boundaries) {
+      vtk_obj.addBeforeFunction(
+          populate_boundary_velocities
+              .template operator()<VectorFieldCpu>(*m_vel_cpu_field_id));
+    }
     vtk_obj.addBeforeFunction(std::move(before_function));
     vtk_obj.addCellDataWriter(velocity_writer);
   }
