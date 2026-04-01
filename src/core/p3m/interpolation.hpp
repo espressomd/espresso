@@ -257,8 +257,8 @@ public:
  */
 template <int cao, Utils::MemoryOrder memory_order>
 InterpolationWeights<cao>
-p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
-                                    const Utils::Vector3d &ai,
+p3m_calculate_interpolation_weights(std::span<const double, 3> position,
+                                    Utils::Vector3d const &ai,
                                     P3MLocalMesh const &local_mesh) {
   /** position shift for calc. of first assignment mesh point. */
   auto const pos_shift = std::floor((cao - 1) / 2.0) - (cao % 2) / 2.0;

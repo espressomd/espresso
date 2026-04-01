@@ -356,7 +356,7 @@ template <int cao> struct AssignCharge {
                   p3m_interpolation_cache &inter_weights) {
     auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
     auto const weights = p3m_calculate_interpolation_weights<cao, memory_order>(
-        real_pos, p3m.params.ai, p3m.local_mesh);
+        real_pos.as_span(), p3m.params.ai, p3m.local_mesh);
     inter_weights.store(weights);
     this->operator()(p3m, q, weights);
   }
@@ -364,7 +364,7 @@ template <int cao> struct AssignCharge {
   void operator()(auto &p3m, double q, Utils::Vector3d const &real_pos) {
     auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
     auto const weights = p3m_calculate_interpolation_weights<cao, memory_order>(
-        real_pos, p3m.params.ai, p3m.local_mesh);
+        real_pos.as_span(), p3m.params.ai, p3m.local_mesh);
     this->operator()(p3m, q, weights);
   }
 
@@ -379,7 +379,7 @@ template <int cao> struct AssignCharge {
     kokkos_parallel_range_for(
         "InterpolateCharges", std::size_t{0u}, n_part, [&](auto p_index) {
           auto const tid = omp_get_thread_num();
-          auto const pos = aosoa.get_vector_at(aosoa.position, p_index);
+          auto const pos = aosoa.get_span_at(aosoa.position, p_index);
           auto const q = aosoa.charge(p_index);
           auto const weights =
               p3m_calculate_interpolation_weights<cao, memory_order>(

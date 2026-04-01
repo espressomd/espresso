@@ -27,7 +27,10 @@
 
 #include <Kokkos_Core.hpp>
 
+#include <omp.h>
+
 #include <cstdint>
+#include <span>
 
 struct CellStructure::AoSoA_pack {
   using PositionViewType =
@@ -104,36 +107,42 @@ struct CellStructure::AoSoA_pack {
     }
   }
 
-  template <typename array_layout>
-  Utils::Vector3d get_vector_at(
-      Kokkos::View<double *[3], array_layout, Kokkos::HostSpace> const &view,
+  template <typename array_layout, typename T, std::size_t N>
+  std::span<T, N>
+  get_span_at(Kokkos::View<T *[N], array_layout, Kokkos::HostSpace> const &view,
+              std::size_t i) const {
+    return std::span<T, N>(const_cast<T *>(&view(i, 0)), N);
+  }
+
+  template <typename array_layout, typename T, std::size_t N>
+  Utils::Vector<T, N> get_vector_at(
+      Kokkos::View<T *[N], array_layout, Kokkos::HostSpace> const &view,
       std::size_t i) const {
-    return {view(i, 0), view(i, 1), view(i, 2)};
+    Utils::Vector<T, N> result;
+    auto const data = result.data();
+#if (defined(__GNUC__) or defined(__GNUG__)) && !defined(__clang__)
+#pragma GCC unroll 8
+#else
+#pragma omp unroll
+#endif
+    for (std::size_t j = 0ul; j < N; j += 1ul) {
+      data[j] = view(i, j);
+    }
+    return result;
   }
 
-  template <typename array_layout>
-  Utils::Vector3i get_vector_at(
-      Kokkos::View<int *[3], array_layout, Kokkos::HostSpace> const &view,
-      std::size_t i) const {
-    return {view(i, 0), view(i, 1), view(i, 2)};
-  }
-
-  template <typename array_layout>
-  void set_vector_at(
-      Kokkos::View<double *[3], array_layout, Kokkos::HostSpace> &view,
-      std::size_t i, Utils::Vector3d const &value) {
-    view(i, 0) = value[0];
-    view(i, 1) = value[1];
-    view(i, 2) = value[2];
-  }
-
-  template <typename array_layout>
+  template <typename array_layout, typename T, std::size_t N>
   void
-  set_vector_at(Kokkos::View<int *[3], array_layout, Kokkos::HostSpace> &view,
-                std::size_t i, Utils::Vector3i const &value) {
-    view(i, 0) = value[0];
-    view(i, 1) = value[1];
-    view(i, 2) = value[2];
+  set_vector_at(Kokkos::View<T *[N], array_layout, Kokkos::HostSpace> &view,
+                std::size_t i, Utils::Vector<T, N> const &value) {
+#if (defined(__GNUC__) or defined(__GNUG__)) && !defined(__clang__)
+#pragma GCC unroll 8
+#else
+#pragma omp unroll
+#endif
+    for (std::size_t j = 0ul; j < N; j += 1ul) {
+      view(i, j) = value[j];
+    }
   }
 
   void set_has_exclusion(std::size_t i, bool value) {

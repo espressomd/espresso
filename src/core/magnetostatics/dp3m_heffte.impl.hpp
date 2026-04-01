@@ -193,7 +193,7 @@ template <int cao> struct AssignDipole {
     kokkos_parallel_range_for(
         "InterpolateDipoles", std::size_t{0u}, n_part, [&](auto p_index) {
           auto const tid = omp_get_thread_num();
-          auto const p_pos = aosoa.get_vector_at(aosoa.position, p_index);
+          auto const p_pos = aosoa.get_span_at(aosoa.position, p_index);
           auto const dip = unique_particles.at(p_index)->calc_dip();
           auto const weights =
               p3m_calculate_interpolation_weights<cao, memory_order>(
@@ -233,7 +233,7 @@ template <int cao> struct AssignDipole {
     using value_type = DipolarP3MState::value_type;
     auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
     auto const weights = p3m_calculate_interpolation_weights<cao, memory_order>(
-        real_pos, dp3m.params.ai, dp3m.local_mesh);
+        real_pos.as_span(), dp3m.params.ai, dp3m.local_mesh);
     p3m_interpolate<cao>(
         dp3m.local_mesh, weights, [&dip, &dp3m](int ind, double w) {
           dp3m.mesh.rs_fields[0u][ind] += value_type(w * dip[0u]);
