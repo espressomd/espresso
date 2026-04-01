@@ -18,6 +18,7 @@
  */
 
 #pragma once
+
 #include <config/config.hpp>
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
@@ -64,13 +65,13 @@ struct LocalBondState {
     dihedral_count = d;
   }
 
-  /// Allocate or reallocate all Kokkos Views to current counts.
+  /** Allocate or reallocate all Kokkos Views to current counts. */
   void allocate();
 
-  /// Full clear — deallocates Views
+  /** Deallocates Views */
   void clear();
 
-  /// Light reset — only reset counts + collision vectors
+  /** Reset counts + collision vectors */
   void reset();
 
 #ifdef ESPRESSO_COLLISION_DETECTION

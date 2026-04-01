@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <cassert>
 #include <memory>
+#include <mutex>
 #include <span>
 #include <unordered_set>
 #include <utility>
@@ -41,6 +42,7 @@
 #include <vector>
 
 namespace BondBreakage {
+
 // Variant holding any of the actions
 using Action = std::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
 

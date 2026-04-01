@@ -217,12 +217,10 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
   auto &angle_ids = m_bond_state->angle_ids;
   auto &dihedral_list = m_bond_state->dihedral_list;
   auto &dihedral_ids = m_bond_state->dihedral_ids;
-  for (const BondView bond : p.bonds()) {
+  for (auto const bond : p.bonds()) {
     auto const partner_ids = bond.partner_ids();
     try {
-      auto partners_source = resolve_bond_partners(partner_ids);
-      auto const partners =
-          std::span(partners_source.data(), partners_source.size());
+      auto const partners = resolve_bond_partners(partner_ids);
       if (partners.size() == 1u) { // pair bonds
         auto p_index = Kokkos::atomic_fetch_add(&pair_count, 1);
         pair_list(p_index, 0) = p.id();
@@ -242,7 +240,7 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
         dihedral_list(d_index, 3) = partners[2]->id();
         dihedral_ids(d_index) = bond.bond_id();
       }
-    } catch (const BondResolutionError &) {
+    } catch (BondResolutionError const &) {
       bond_resolution_error(partner_ids);
     }
   }
@@ -269,9 +267,9 @@ void CellStructure::set_index_map() {
       *this, [&unique_particles, &max_ids, &pair_counts, &angle_counts,
               &dihedral_counts](std::size_t index, Particle &p) {
         unique_particles[index] = &p;
-        const int thread_num = omp_get_thread_num();
+        auto const thread_num = omp_get_thread_num();
         max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
-        for (const BondView bond : p.bonds()) {
+        for (auto const bond : p.bonds()) {
           if (not bond.partner_ids().empty()) {
             auto const partner_ids = bond.partner_ids();
             if (partner_ids.size() == 1u) {

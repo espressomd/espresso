@@ -42,13 +42,7 @@
 inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
 ThermalizedBond::forces(Particle const &p1, Particle const &p2,
                         Utils::Vector3d const &dx) const {
-  auto const mass1 = p1.mass();
-  auto const mass2 = p2.mass();
-  auto const vel1 = p1.v();
-  auto const vel2 = p2.v();
-  auto const id1 = p1.id();
-  auto const id2 = p2.id();
-  return forces(mass1, mass2, vel1, vel2, id1, id2, dx);
+  return forces(p1.mass(), p2.mass(), p1.v(), p2.v(), p1.id(), p2.id(), dx);
 }
 
 inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>

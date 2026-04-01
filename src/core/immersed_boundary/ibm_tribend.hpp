@@ -72,7 +72,7 @@ struct IBMTribend {
    *  @param[in] pos2            The position of particle 2.
    *  @param[in] pos3            The position of particle 3.
    *  @param[in] pos4            The position of particle 4.
-   *  @return forces on @p p1, @p p2, @p p3, @p p4
+   *  @return Forces on particles 1, 2, 3, 4, in that order.
    */
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
   calc_forces(BoxGeometry const &box_geo, Utils::Vector3d const &pos1,

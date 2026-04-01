@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <config/config.hpp>
+
 #include "LocalBondState.hpp"
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
@@ -88,20 +90,20 @@ void LocalBondState::clear_new_bonds() {
 void LocalBondState::add_new_bond(int bond_id,
                                   std::vector<int> const &particle_ids,
                                   Kokkos::View<int *> const &id_to_index) {
-  if (particle_ids.size() == 2) {
-    new_pair_list.reserve(new_pair_list.size() + 2);
+  if (particle_ids.size() == 2u) {
+    new_pair_list.reserve(new_pair_list.size() + 2u);
     for (auto pid : particle_ids)
       new_pair_list.emplace_back(id_to_index(pid));
     new_pair_ids.emplace_back(bond_id);
     pair_count++;
-  } else if (particle_ids.size() == 3) {
-    new_angle_list.reserve(new_angle_list.size() + 3);
+  } else if (particle_ids.size() == 3u) {
+    new_angle_list.reserve(new_angle_list.size() + 3u);
     for (auto pid : particle_ids)
       new_angle_list.emplace_back(id_to_index(pid));
     new_angle_ids.emplace_back(bond_id);
     angle_count++;
-  } else if (particle_ids.size() == 4) {
-    new_dihedral_list.reserve(new_dihedral_list.size() + 4);
+  } else if (particle_ids.size() == 4u) {
+    new_dihedral_list.reserve(new_dihedral_list.size() + 4u);
     for (auto pid : particle_ids)
       new_dihedral_list.emplace_back(id_to_index(pid));
     new_dihedral_ids.emplace_back(bond_id);
