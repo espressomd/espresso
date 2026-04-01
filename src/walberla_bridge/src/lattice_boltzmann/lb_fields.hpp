@@ -32,7 +32,6 @@ template <typename FT, class PdfStencil, lbmpy::Arch AT = lbmpy::Arch::CPU>
 struct FieldTrait {
   using PdfField = field::GhostLayerField<FT, PdfStencil::Size>;
   using VectorField = field::GhostLayerField<FT, uint_t{3u}>;
-  using TensorField = field::GhostLayerField<FT, uint_t{9u}>;
   template <class Field> using PackInfo = field::communication::PackInfo<Field>;
   using PackInfoStreamingPdf = detail::KernelTrait<FT, AT>::PackInfoPdf;
   using PackInfoStreamingVec = detail::KernelTrait<FT, AT>::PackInfoVec;

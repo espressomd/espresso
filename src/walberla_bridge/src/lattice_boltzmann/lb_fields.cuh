@@ -48,7 +48,6 @@ public:
   };
   using PdfField = gpu::GPUField<FT>;
   using VectorField = gpu::GPUField<FT>;
-  using TensorField = gpu::GPUField<FT>;
   template <class Field> using PackInfo = MemcpyPackInfo<Field>;
   using PackInfoStreamingPdf = detail::KernelTrait<FT, AT>::PackInfoPdf;
   using PackInfoStreamingVec = detail::KernelTrait<FT, AT>::PackInfoVec;
