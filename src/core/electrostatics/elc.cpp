@@ -961,22 +961,23 @@ double ElectrostaticLayerCorrection::tune_far_cut() const {
   auto const box_l_y_inv = box_geo.length_inv()[1];
   auto const min_inv_boxl = std::min(box_l_x_inv, box_l_y_inv);
   auto const box_l_z = box_geo.length()[2];
+  auto const h = elc.box_h;
   // adjust lz according to dielectric layer method
-  auto const lz =
-      (elc.dielectric_contrast_on) ? elc.box_h + elc.space_layer : box_l_z;
+  auto const lz = (elc.dielectric_contrast_on) ? h + elc.space_layer : box_l_z;
 
   auto tuned_far_cut = min_inv_boxl;
   double err;
   do {
+    // following equation 18 in arnold02d
     auto const pref = 2. * std::numbers::pi * tuned_far_cut;
     auto const sum = pref + 2. * (box_l_x_inv + box_l_y_inv);
-    auto const den = -expm1(-pref * lz);
-    auto const num1 = exp(pref * (elc.box_h - lz));
-    auto const num2 = exp(-pref * (elc.box_h + lz));
+    auto const den = expm1(pref * lz);
+    auto const num1 = exp(pref * h);
+    auto const num2 = 1. / num1; // exp(-pref * h);
 
     err = 0.5 / den *
-          (num1 * (sum + 1. / (lz - elc.box_h)) / (lz - elc.box_h) +
-           num2 * (sum + 1. / (lz + elc.box_h)) / (lz + elc.box_h));
+          (num1 / (lz - h) * (sum + 1. / (lz - h)) +
+           num2 / (lz + h) * (sum + 1. / (lz + h)));
 
     tuned_far_cut += min_inv_boxl;
   } while (err > elc.maxPWerror and tuned_far_cut < maximal_far_cut);
