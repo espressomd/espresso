@@ -177,23 +177,16 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
                   block.template getData<FlagField>(m_flag_field_id);
               auto const boundary_flag =
                   flag_field->getFlag(Boundary_flag);
-              for (cell_idx_t z = 0; z < cell_idx_c(flag_field->zSize());
-                   ++z) {
-                for (cell_idx_t y = 0;
-                     y < cell_idx_c(flag_field->ySize()); ++y) {
-                  for (cell_idx_t x = 0;
-                       x < cell_idx_c(flag_field->xSize()); ++x) {
-                    if (flag_field->isFlagSet(x, y, z, boundary_flag)) {
-                      Cell global{offset[0] + x, offset[1] + y,
-                                  offset[2] + z};
-                      auto const &vel =
-                          m_boundary->get_node_value_at_boundary(global);
-                      lbm::accessor::Vector::set(vel_field, vel,
-                                                 Cell{x, y, z});
-                    }
-                  }
+              WALBERLA_FOR_ALL_CELLS_XYZ(flag_field, {
+                if (flag_field->isFlagSet(x, y, z, boundary_flag)) {
+                  Cell const global(offset[0] + x, offset[1] + y,
+                                    offset[2] + z);
+                  auto const &vel =
+                      m_boundary->get_node_value_at_boundary(global);
+                  Cell const local(x, y, z);
+                  lbm::accessor::Vector::set(vel_field, vel, local);
                 }
-              }
+              }) // WALBERLA_FOR_ALL_CELLS_XYZ
             }
           };
         };

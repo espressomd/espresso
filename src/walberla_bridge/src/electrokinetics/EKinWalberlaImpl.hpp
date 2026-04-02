@@ -21,6 +21,7 @@
 
 #include <blockforest/communication/UniformBufferedScheme.h>
 #include <field/AddToStorage.h>
+#include <field/iterators/IteratorMacros.h>
 #include <field/FlagField.h>
 #include <field/FlagUID.h>
 #include <field/GhostLayerField.h>
@@ -1176,6 +1177,35 @@ public:
               uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
         }
       };
+      auto const populate_boundary_densities =
+          [this]<typename DensField>(BlockDataID dens_id) {
+            return [this, dens_id]() {
+              auto const &blocks = m_lattice->get_blocks();
+              for (auto &block : *blocks) {
+                auto const offset =
+                    m_lattice->get_block_corner(block, true);
+                auto *dens_field =
+                    block.template getData<DensField>(dens_id);
+                auto const *flag_field =
+                    block.template getData<FlagField>(m_flag_field_density_id);
+                auto const boundary_flag =
+                    flag_field->getFlag(Boundary_flag);
+                WALBERLA_FOR_ALL_CELLS_XYZ(flag_field, {
+                  if (flag_field->isFlagSet(x, y, z, boundary_flag)) {
+                    Cell const global(offset[0] + x, offset[1] + y,
+                                      offset[2] + z);
+                    auto const density =
+                        m_boundary_density->get_node_value_at_boundary(global);
+                    Cell const local(x, y, z);
+                    ek::accessor::Scalar::set(dens_field, density, local);
+                  }
+                }) // WALBERLA_FOR_ALL_CELLS_XYZ
+              }
+            };
+          };
+      vtk_obj.addBeforeFunction(
+            populate_boundary_densities
+                .template operator()<_DensityField>(m_density_field_id));
       vtk_obj.addBeforeFunction(std::move(before_function));
       vtk_obj.addCellDataWriter(density_writer);
     }
