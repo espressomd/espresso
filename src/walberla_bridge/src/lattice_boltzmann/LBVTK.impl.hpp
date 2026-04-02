@@ -108,8 +108,7 @@ protected:
   OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
                       cell_idx_t const z, cell_idx_t const f) override {
     WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
-    return numeric_cast<OutputType>(
-        this->m_field->get(x, y, z, uint_c(f)));
+    return numeric_cast<OutputType>(this->m_field->get(x, y, z, uint_c(f)));
   }
 };
 
@@ -198,21 +197,20 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
             auto const offset = lattice.get_block_corner(block, true);
             WALBERLA_FOR_ALL_CELLS_XYZ(tensor_field, {
               auto const global_index = Utils::get_linear_index(
-                  offset[0] + x, offset[1] + y, offset[2] + z,
-                  grid_size, Utils::MemoryOrder::ROW_MAJOR);
+                  offset[0] + x, offset[1] + y, offset[2] + z, grid_size,
+                  Utils::MemoryOrder::ROW_MAJOR);
               for (uint_t f = 0u; f < 9u; ++f) {
-                tensor_field->get(x, y, z, f) =
-                    static_cast<FloatType>(
-                        unit_conversion *
-                        values[9u * static_cast<uint_t>(global_index) + f]);
+                tensor_field->get(x, y, z, f) = static_cast<FloatType>(
+                    unit_conversion *
+                    values[9u * static_cast<uint_t>(global_index) + f]);
               }
             }) // WALBERLA_FOR_ALL_CELLS_XYZ
           }
         });
     vtk_obj.addCellDataWriter(
-        std::make_shared<PressureTensorVTKWriter<FloatType, TensorFieldCpu, float>>(
-            *m_pressure_tensor_field_id, "pressure_tensor",
-            FloatType{1}));
+        std::make_shared<
+            PressureTensorVTKWriter<FloatType, TensorFieldCpu, float>>(
+            *m_pressure_tensor_field_id, "pressure_tensor", FloatType{1}));
   }
 }
 
