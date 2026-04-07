@@ -181,32 +181,34 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
           m_lattice->get_ghost_layers());
     }
     auto const tensor_field_id = *m_pressure_tensor_field_id;
-    vtk_obj.addBeforeFunction(
-        [this, blocks, tensor_field_id, unit_conversion]() {
-          auto const &lattice = get_lattice();
-          auto const &grid_size = lattice.get_grid_dimensions();
-
-          auto values = get_slice_pressure_tensor(
-              {0, 0, 0}, {grid_size[0], grid_size[1], grid_size[2]});
-
-          // Copy into the per-block tensor field using global coordinates
-          // to index into the flat vector (row-major order).
-          for (auto &block : *blocks) {
-            auto *tensor_field =
-                block.template getData<TensorFieldCpu>(tensor_field_id);
-            auto const offset = lattice.get_block_corner(block, true);
-            WALBERLA_FOR_ALL_CELLS_XYZ(tensor_field, {
-              auto const global_index = Utils::get_linear_index(
-                  offset[0] + x, offset[1] + y, offset[2] + z, grid_size,
-                  Utils::MemoryOrder::ROW_MAJOR);
+    vtk_obj.addBeforeFunction([this, blocks, tensor_field_id,
+                               unit_conversion]() {
+      for (auto &block : *blocks) {
+        auto *pdf_field = block.template getData<PdfField>(m_pdf_field_id);
+        auto *tensor_field =
+            block.template getData<TensorFieldCpu>(tensor_field_id);
+        auto const bci = pdf_field->xyzSize();
+        auto values =
+            lbm::accessor::PressureTensor::get(pdf_field, m_density, bci);
+        // Iteration order must match the linearization used by
+        // lbm::accessor::PressureTensor::get for this CellInterval
+        // (x outer, z inner -- same as copy_block_buffer).
+        unsigned block_index = 0u;
+        for (auto x = bci.xMin(); x <= bci.xMax(); ++x) {
+          for (auto y = bci.yMin(); y <= bci.yMax(); ++y) {
+            for (auto z = bci.zMin(); z <= bci.zMax(); ++z) {
+              pressure_tensor_correction(
+                  std::span<FloatType, 9ul>(&values[9u * block_index], 9ul));
               for (uint_t f = 0u; f < 9u; ++f) {
                 tensor_field->get(x, y, z, f) = static_cast<FloatType>(
-                    unit_conversion *
-                    values[9u * static_cast<uint_t>(global_index) + f]);
+                    unit_conversion * values[9u * block_index + f]);
               }
-            }) // WALBERLA_FOR_ALL_CELLS_XYZ
+              ++block_index;
+            }
           }
-        });
+        }
+      }
+    });
     vtk_obj.addCellDataWriter(
         std::make_shared<
             PressureTensorVTKWriter<FloatType, TensorFieldCpu, float>>(
