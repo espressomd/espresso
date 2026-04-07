@@ -123,6 +123,39 @@ protected:
   }
 };
 
+template <typename FlagField_T, typename OutputType = float>
+class BoundaryVTKWriter : public vtk::BlockCellDataWriter<OutputType, 1u> {
+public:
+  using Base = vtk::BlockCellDataWriter<OutputType, 1u>;
+  using Base::evaluate;
+  BoundaryVTKWriter(ConstBlockDataID const &flag_field_id,
+                    std::string const &id, FlagUID const &boundary_flag)
+      : vtk::BlockCellDataWriter<OutputType, 1u>(id),
+        m_flag_field_id(flag_field_id), m_flag_field(nullptr),
+        m_boundary_flag(boundary_flag) {}
+
+protected:
+  void configure() override {
+    WALBERLA_ASSERT_NOT_NULLPTR(this->block_);
+    m_flag_field =
+        this->block_->template getData<FlagField_T>(m_flag_field_id);
+    m_boundary_flag_value = m_flag_field->getFlag(m_boundary_flag);
+  }
+
+  OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
+                      cell_idx_t const z, cell_idx_t const) override {
+    WALBERLA_ASSERT_NOT_NULLPTR(m_flag_field);
+    return m_flag_field->isFlagSet(x, y, z, m_boundary_flag_value)
+               ? OutputType{1}
+               : OutputType{0};
+  }
+
+  ConstBlockDataID const m_flag_field_id;
+  FlagField_T const *m_flag_field;
+  FlagUID const m_boundary_flag;
+  typename FlagField_T::flag_t m_boundary_flag_value;
+};
+
 template <typename FloatType, lbmpy::Arch Architecture>
 void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
     walberla::vtk::VTKOutput &vtk_obj, LatticeModel::units_map const &units,
@@ -222,6 +255,11 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
     };
     vtk_obj.addBeforeFunction(std::move(before_function));
     vtk_obj.addCellDataWriter(pressure_writer);
+  }
+  if (flag_observables & static_cast<int>(OutputVTK::boundary)) {
+    vtk_obj.addCellDataWriter(
+        std::make_shared<BoundaryVTKWriter<FlagField, float>>(
+            m_flag_field_id, "boundary", Boundary_flag));
   }
 }
 

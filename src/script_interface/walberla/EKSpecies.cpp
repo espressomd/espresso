@@ -51,6 +51,7 @@ namespace ScriptInterface::walberla {
 std::unordered_map<std::string, int> const EKVTKHandle::obs_map = {
     {"density", static_cast<int>(EKOutputVTK::density)},
     {"flux", static_cast<int>(EKOutputVTK::flux)},
+    {"boundary", static_cast<int>(EKOutputVTK::boundary)},
 };
 
 Variant EKSpecies::do_call_method(std::string const &method,

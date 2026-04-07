@@ -643,7 +643,7 @@ class VTKOutput(VTKOutputBase):
     ----------
     identifier : :obj:`str`
         Name of the VTK writer.
-    observables : :obj:`list`, {'density', 'velocity_vector', 'pressure_tensor'}
+    observables : :obj:`list`, {'density', 'velocity_vector', 'pressure_tensor', 'boundary'}
         List of observables to write to the VTK files.
     delta_N : :obj:`int`
         Write frequency. If this value is 0 (default), the object is a
