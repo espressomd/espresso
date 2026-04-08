@@ -120,7 +120,8 @@ class TestVTK:
 
 class TestLBVTK(TestVTK):
 
-    valid_obs = ["density", "velocity_vector", "pressure_tensor"]
+    valid_obs = ["density", "velocity_vector", "pressure_tensor", "boundary"]
+    write_obs = ["density", "velocity_vector", "pressure_tensor"]
 
     def make_actor(self):
         return self.lb_class(
@@ -161,13 +162,15 @@ class TestLBVTK(TestVTK):
             root = pathlib.Path(tmp_directory)
             label_vtk_last_frame = f"test_vtk_{self.vtk_id}_last_frame"
             label_vtk_continuous = f"test_vtk_{self.vtk_id}_continuous"
+            label_vtk_with_boundaries = f"test_vtk_{self.vtk_id}_with_boundaries"
             path_vtk_last_frame = root / label_vtk_last_frame / "simulation_step_0.vtu"
             path_vtk_continuous = [
                 root / label_vtk_continuous / f"simulation_step_{i}.vtu" for i in range(n_steps)]
+            path_vtk_with_boundaries = root / label_vtk_with_boundaries / "simulation_step_0.vtu"
             filepaths = [path_vtk_last_frame] + path_vtk_continuous
 
             # write VTK files
-            vtk_obs = list(self.valid_obs)
+            vtk_obs = list(self.write_obs)
             vtk_obj = self.vtk_class(
                 identifier=label_vtk_continuous, delta_N=1, observables=vtk_obs,
                 base_folder=root)
@@ -180,6 +183,14 @@ class TestLBVTK(TestVTK):
                 base_folder=root)
             actor.add_vtk_writer(vtk=vtk_obj)
             vtk_obj.write()
+            # also write a snapshot that includes boundary cells and the
+            # ``boundary`` mask observable
+            vtk_obj_b = self.vtk_class(
+                identifier=label_vtk_with_boundaries, delta_N=0,
+                observables=vtk_obs + ["boundary"], base_folder=root,
+                include_boundaries=True, force_pvtu=True)
+            actor.add_vtk_writer(vtk=vtk_obj_b)
+            vtk_obj_b.write()
             self.assertEqual(sorted(vtk_obj.observables), sorted(vtk_obs))
             self.assertEqual(vtk_obj.valid_observables(), set(self.valid_obs))
 
@@ -241,13 +252,32 @@ class TestLBVTK(TestVTK):
                 np.testing.assert_allclose(
                     vtk_pressure, lb_pressure, rtol=1e-6, atol=0.)
 
+            # check the include_boundaries snapshot: full lattice shape and
+            # correct boundary mask in the two outer slabs
+            full_shape = tuple(actor.shape)
+            grids_b = vtk_reader.parse(path_vtk_with_boundaries)
+            self.assertEqual(grids_b[label_density].shape, full_shape)
+            self.assertEqual(grids_b["boundary"].shape, full_shape)
+            expected_mask = np.zeros(full_shape, dtype=np.float32)
+            expected_mask[:2, :, :] = 1.
+            expected_mask[-2:, :, :] = 1.
+            np.testing.assert_array_equal(grids_b["boundary"], expected_mask)
+            np.testing.assert_array_equal(
+                np.asarray(actor[:, :, :].is_boundary, dtype=np.float32),
+                expected_mask)
+            # the fluid region of the include_boundaries output matches the
+            # filtered output
+            np.testing.assert_allclose(
+                grids_b[label_density][2:-2, :, :], lb_density,
+                rtol=1e-7, atol=0.)
+
     @utx.skipIfMissingModules("espressomd.io.vtk")
     def test_utf8_support(self):
         """Check UTF-8 support in filepaths and VTK identifiers."""
         with tempfile.TemporaryDirectory() as tmp_directory:
             root = pathlib.Path(tmp_directory) / "gemäß"
             label = "çåš"
-            vtk_obs = list(self.valid_obs)
+            vtk_obs = list(self.write_obs)
             vtk_obj = self.vtk_class(
                 identifier=label, delta_N=0, observables=vtk_obs, base_folder=root)
             self.lbf.add_vtk_writer(vtk=vtk_obj)
@@ -260,7 +290,8 @@ class TestLBVTK(TestVTK):
 
 class TestEKVTK(TestVTK):
 
-    valid_obs = ["density", "flux"]
+    valid_obs = ["density", "flux", "boundary"]
+    write_obs = ["density", "flux"]
     valid_obs_poisson = ["potential"]
 
     def make_actor(self):
@@ -313,7 +344,7 @@ class TestEKVTK(TestVTK):
             filepaths = [path_vtk_last_frame] + path_vtk_continuous
 
             # write VTK files
-            vtk_obs = list(self.valid_obs)
+            vtk_obs = list(self.write_obs)
             vtk_obj = self.vtk_class(
                 identifier=label_vtk_continuous, delta_N=1, observables=vtk_obs,
                 base_folder=root)
@@ -351,6 +382,17 @@ class TestEKVTK(TestVTK):
             vtk_obj.write()
             self.assertEqual(sorted(vtk_obj.observables), sorted(vtk_obs))
             self.assertEqual(vtk_obj.valid_observables(), set(self.valid_obs))
+
+            # also write a snapshot that includes boundary cells and the
+            # ``boundary`` mask observable
+            label_vtk_with_boundaries = f"test_vtk_{self.vtk_id}_with_boundaries"
+            path_vtk_with_boundaries = root / label_vtk_with_boundaries / "simulation_step_0.vtu"
+            vtk_obj_b = self.vtk_class(
+                identifier=label_vtk_with_boundaries, delta_N=0,
+                observables=vtk_obs + ["boundary"], base_folder=root,
+                include_boundaries=True, force_pvtu=True)
+            actor.add_vtk_writer(vtk=vtk_obj_b)
+            vtk_obj_b.write()
 
             vtk_obj_poisson = self.vtk_poisson_class(
                 identifier=label_vtk_poisson_last_frame, force_pvtu=False,
@@ -420,7 +462,20 @@ class TestEKVTK(TestVTK):
                 np.testing.assert_allclose(
                     vtk_potential, ek_potential, rtol=5e-7)
 
-        self.assertEqual(len(actor.vtk_writers), 2)
+            # check the include_boundaries snapshot: full lattice shape and
+            # correct boundary mask in the two outer slabs
+            full_shape = tuple(self.lattice.shape)
+            grids_b = vtk_reader.parse(path_vtk_with_boundaries)
+            self.assertEqual(grids_b[label_density].shape, full_shape)
+            self.assertEqual(grids_b["boundary"].shape, full_shape)
+            expected_mask = np.zeros(full_shape, dtype=np.float32)
+            expected_mask[:2, :, :] = 1.
+            expected_mask[-2:, :, :] = 1.
+            np.testing.assert_array_equal(grids_b["boundary"], expected_mask)
+            np.testing.assert_allclose(
+                grids_b[label_density][2:-2, :, :], ek_density, rtol=5e-7)
+
+        self.assertEqual(len(actor.vtk_writers), 3)
         actor.clear_vtk_writers()
         self.assertEqual(len(actor.vtk_writers), 0)
 
