@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2026 The ESPResSo project
+ * Copyright (C) 2025-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,25 +17,43 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if defined(__NVCC__)
+#define RESTRICT __restrict__
+#if defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#pragma nv_diagnostic push
+#pragma nv_diag_suppress 554 // no implicit or explicit cast
+#else
+#pragma push
+#pragma diag_suppress 554 // no implicit or explicit cast
+#endif
+#endif
+
 #include "PoissonSolverNone.hpp"
 
 #include <walberla_bridge/Architecture.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 
+#include <waLBerlaDefinitions.h>
+
 #include <memory>
+#include <stdexcept>
 
 namespace walberla {
 
 std::shared_ptr<walberla::PoissonSolver>
-new_ek_poisson_none(std::shared_ptr<LatticeWalberla> const &lattice,
-                    bool single_precision) {
+new_ek_poisson_none_cuda(std::shared_ptr<LatticeWalberla> const &lattice,
+                         bool single_precision) {
+#if not defined(WALBERLA_BUILD_WITH_CUDA)
+  throw std::runtime_error("waLBerla was compiled without CUDA support");
+#else
   if (single_precision) {
     return std::make_shared<
-        walberla::PoissonSolverNone<float, lbmpy::Arch::CPU>>(lattice);
+        walberla::PoissonSolverNone<float, lbmpy::Arch::GPU>>(lattice);
   }
   return std::make_shared<
-      walberla::PoissonSolverNone<double, lbmpy::Arch::CPU>>(lattice);
+      walberla::PoissonSolverNone<double, lbmpy::Arch::GPU>>(lattice);
+#endif
 }
 
 } // namespace walberla

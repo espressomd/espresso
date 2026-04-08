@@ -30,6 +30,7 @@
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
+#include <script_interface/code_info/CodeInfo.hpp>
 
 #include <memory>
 
@@ -38,21 +39,35 @@ namespace ScriptInterface::walberla {
 class EKNone : public EKPoissonSolver {
   std::shared_ptr<::walberla::PoissonSolver> m_instance;
   std::shared_ptr<LatticeWalberla> m_lattice;
+  bool m_gpu;
   bool m_single_precision;
 
+protected:
+  void make_instance(VariantMap const &args) override {
+
+    auto *make_new_instance = &::walberla::new_ek_poisson_none;
+    if (m_gpu) {
+      std::vector<std::string> required_features;
+      required_features.emplace_back("CUDA");
+      CodeInfo::check_features(required_features);
+#ifdef ESPRESSO_CUDA
+      make_new_instance = &::walberla::new_ek_poisson_none_cuda;
+#endif
+    }
+    m_instance = make_new_instance(m_lattice->lattice(), m_single_precision);
+  }
+
 public:
-  void make_instance(VariantMap const &) override {}
-
   void do_construct(VariantMap const &args) override {
-    m_single_precision = get_value_or<bool>(args, "single_precision", false);
-    m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
+    m_gpu = get_value_or<bool>(args, "gpu", false);
+    m_single_precision = get_value_or<bool>(args, "single_precision", m_gpu);
+    m_lattice = get_value<decltype(m_lattice)>(args, "lattice");
 
-    m_instance = ::walberla::new_ek_poisson_none(m_lattice->lattice(),
-                                                 m_single_precision);
-
+    make_instance(args);
     add_parameters({
         {"single_precision", AutoParameter::read_only,
          [this]() { return m_single_precision; }},
+        {"gpu", AutoParameter::read_only, [this]() { return m_gpu; }},
         {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
     });
   }

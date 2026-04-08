@@ -71,6 +71,10 @@ new_ek_poisson_none(std::shared_ptr<LatticeWalberla> const &lattice,
                     bool single_precision);
 
 std::shared_ptr<walberla::PoissonSolver>
+new_ek_poisson_none_cuda(std::shared_ptr<LatticeWalberla> const &lattice,
+                         bool single_precision);
+
+std::shared_ptr<walberla::PoissonSolver>
 new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,
                    double permittivity, bool single_precision);
 
