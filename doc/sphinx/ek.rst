@@ -381,11 +381,15 @@ One can set (or update) the boundary conditions of individual nodes::
         solver=ek_solver, tau=ek_species.tau)
     system.ekcontainer.add(ek_species)
     # set node fixed density boundary conditions
-    ek_species[0, 0, 0].boundary = espressomd.electrokinetics.DensityBoundary(1.)
+    ek_species[0, 0, 0].density_boundary = espressomd.electrokinetics.DensityBoundary(1.)
     # update node fixed density boundary conditions
-    ek_species[0, 0, 0].boundary = espressomd.electrokinetics.DensityBoundary(2.)
+    ek_species[0, 0, 0].density_boundary = espressomd.electrokinetics.DensityBoundary(2.)
     # remove node boundary conditions
-    ek_species[0, 0, 0].boundary = None
+    ek_species[0, 0, 0].density_boundary = None
+    # set node no-flux boundary condition
+    ek_species[0, 0, 0].flux_boundary = espressomd.electrokinetics.FluxBoundary([0., 0., 0.])
+    # remove node flux boundary condition
+    ek_species[0, 0, 0].flux_boundary = None
 
 .. _Shape-based EK boundary conditions:
 
