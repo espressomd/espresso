@@ -105,16 +105,16 @@ static FUNC_PREFIX void diffusivefluxkernelwithelectrostatic_single_precision_di
 
 void DiffusiveFluxKernelWithElectrostatic_single_precision::run(IBlock *block) {
 
+  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
   auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
   auto phi = block->getData<field::GhostLayerField<float, 1>>(phiID);
-  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
-  auto &kT = this->kT_;
-  auto &f_ext_0 = this->f_ext_0_;
-  auto &f_ext_2 = this->f_ext_2_;
   auto &f_ext_1 = this->f_ext_1_;
-  auto &z = this->z_;
+  auto &f_ext_2 = this->f_ext_2_;
   auto &D = this->D_;
+  auto &f_ext_0 = this->f_ext_0_;
+  auto &kT = this->kT_;
+  auto &z = this->z_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()))
   float *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(phi->nrOfGhostLayers()))
@@ -150,16 +150,16 @@ void DiffusiveFluxKernelWithElectrostatic_single_precision::runOnCellInterval(co
   if (ci.empty())
     return;
 
+  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
   auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
   auto phi = block->getData<field::GhostLayerField<float, 1>>(phiID);
-  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
-  auto &kT = this->kT_;
-  auto &f_ext_0 = this->f_ext_0_;
-  auto &f_ext_2 = this->f_ext_2_;
   auto &f_ext_1 = this->f_ext_1_;
-  auto &z = this->z_;
+  auto &f_ext_2 = this->f_ext_2_;
   auto &D = this->D_;
+  auto &f_ext_0 = this->f_ext_0_;
+  auto &kT = this->kT_;
+  auto &z = this->z_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(j->nrOfGhostLayers()))

@@ -48,16 +48,24 @@ namespace pystencils {
 // NOLINTBEGIN(readability-non-const-parameter*)
 namespace internal_1955c52e82759b23ee69574de97d7a03 {
 static FUNC_PREFIX void reactionkernelindexed_2_double_precision_boundary_ReactionKernelIndexed_2_double_precision(uint8_t *RESTRICT const _data_indexVector, double *RESTRICT _data_rho_0, double *RESTRICT _data_rho_1, int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1, int64_t const _stride_rho_0_2, int64_t const _stride_rho_1_0, int64_t const _stride_rho_1_1, int64_t const _stride_rho_1_2, int32_t indexVectorSize, double order_0, double order_1, double rate_coefficient, double stoech_0, double stoech_1) {
-  for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
-    const int32_t x = *((int32_t *)(&_data_indexVector[12 * ctr_0]));
-    const int32_t y = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 4]));
-    const int32_t z = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 8]));
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+  {
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+    for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
+      const int32_t x = *((int32_t *)(&_data_indexVector[12 * ctr_0]));
+      const int32_t y = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 4]));
+      const int32_t z = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 8]));
 
-    const double local_rho_0 = _data_rho_0[_stride_rho_0_0 * x + _stride_rho_0_1 * y + _stride_rho_0_2 * z];
-    const double local_rho_1 = _data_rho_1[_stride_rho_1_0 * x + _stride_rho_1_1 * y + _stride_rho_1_2 * z];
-    const double rate_factor = pow(local_rho_0, order_0) * pow(local_rho_1, order_1) * rate_coefficient;
-    _data_rho_0[_stride_rho_0_0 * x + _stride_rho_0_1 * y + _stride_rho_0_2 * z] = local_rho_0 + rate_factor * stoech_0;
-    _data_rho_1[_stride_rho_1_0 * x + _stride_rho_1_1 * y + _stride_rho_1_2 * z] = local_rho_1 + rate_factor * stoech_1;
+      const double local_rho_0 = _data_rho_0[_stride_rho_0_0 * x + _stride_rho_0_1 * y + _stride_rho_0_2 * z];
+      const double local_rho_1 = _data_rho_1[_stride_rho_1_0 * x + _stride_rho_1_1 * y + _stride_rho_1_2 * z];
+      const double rate_factor = pow(local_rho_0, order_0) * pow(local_rho_1, order_1) * rate_coefficient;
+      _data_rho_0[_stride_rho_0_0 * x + _stride_rho_0_1 * y + _stride_rho_0_2 * z] = local_rho_0 + rate_factor * stoech_0;
+      _data_rho_1[_stride_rho_1_0 * x + _stride_rho_1_1 * y + _stride_rho_1_2 * z] = local_rho_1 + rate_factor * stoech_1;
+    }
   }
 }
 } // namespace internal_1955c52e82759b23ee69574de97d7a03
@@ -84,11 +92,11 @@ void ReactionKernelIndexed_2_double_precision::run_impl(IBlock *block, IndexVect
   auto rho_0 = block->getData<field::GhostLayerField<double, 1>>(rho_0ID);
   auto rho_1 = block->getData<field::GhostLayerField<double, 1>>(rho_1ID);
 
+  auto &rate_coefficient = rate_coefficient_;
   auto &stoech_1 = stoech_1_;
   auto &order_1 = order_1_;
-  auto &rate_coefficient = rate_coefficient_;
-  auto &stoech_0 = stoech_0_;
   auto &order_0 = order_0_;
+  auto &stoech_0 = stoech_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   double *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()))

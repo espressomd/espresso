@@ -49,9 +49,13 @@ namespace pystencils {
 
 namespace internal_13067439141d91943f586adb1c937d5b {
 static FUNC_PREFIX void diffusivefluxkernelthermalized_single_precision_diffusivefluxkernelthermalized_single_precision(float D, float *RESTRICT const _data_j, float *RESTRICT const _data_rho, int64_t const _size_j_0, int64_t const _size_j_1, int64_t const _size_j_2, int64_t const _stride_j_0, int64_t const _stride_j_1, int64_t const _stride_j_2, int64_t const _stride_j_3, int64_t const _stride_rho_0, int64_t const _stride_rho_1, int64_t const _stride_rho_2, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, uint32_t field_size_0, uint32_t field_size_1, uint32_t field_size_2, uint32_t seed, uint32_t time_step) {
+#ifdef _OPENMP
 #pragma omp parallel
+#endif
   {
+#ifdef _OPENMP
 #pragma omp for schedule(static)
+#endif
     for (int64_t ctr_2 = 0; ctr_2 < _size_j_2; ctr_2 += 1) {
       for (int64_t ctr_1 = 0; ctr_1 < _size_j_1; ctr_1 += 1) {
         for (int64_t ctr_0 = 1; ctr_0 < _size_j_0; ctr_0 += 1) {
@@ -430,18 +434,18 @@ void DiffusiveFluxKernelThermalized_single_precision::run(IBlock *block) {
   if (!this->configured_)
     WALBERLA_ABORT("This Sweep contains a configure function that needs to be called manually")
 
-  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
+  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
 
-  auto &time_step = this->time_step_;
-  auto &D = this->D_;
-  auto &block_offset_0 = this->block_offset_0_;
-  auto &block_offset_1 = this->block_offset_1_;
-  auto &seed = this->seed_;
-  auto &field_size_2 = this->field_size_2_;
   auto &field_size_1 = this->field_size_1_;
+  auto &seed = this->seed_;
   auto &field_size_0 = this->field_size_0_;
+  auto &field_size_2 = this->field_size_2_;
   auto &block_offset_2 = this->block_offset_2_;
+  auto &block_offset_1 = this->block_offset_1_;
+  auto &D = this->D_;
+  auto &time_step = this->time_step_;
+  auto &block_offset_0 = this->block_offset_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()))
   float *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(rho->nrOfGhostLayers()))
@@ -474,18 +478,18 @@ void DiffusiveFluxKernelThermalized_single_precision::runOnCellInterval(const sh
   if (ci.empty())
     return;
 
-  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
+  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
 
-  auto &time_step = this->time_step_;
-  auto &D = this->D_;
-  auto &block_offset_0 = this->block_offset_0_;
-  auto &block_offset_1 = this->block_offset_1_;
-  auto &seed = this->seed_;
-  auto &field_size_2 = this->field_size_2_;
   auto &field_size_1 = this->field_size_1_;
+  auto &seed = this->seed_;
   auto &field_size_0 = this->field_size_0_;
+  auto &field_size_2 = this->field_size_2_;
   auto &block_offset_2 = this->block_offset_2_;
+  auto &block_offset_1 = this->block_offset_1_;
+  auto &D = this->D_;
+  auto &time_step = this->time_step_;
+  auto &block_offset_0 = this->block_offset_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(j->nrOfGhostLayers()))

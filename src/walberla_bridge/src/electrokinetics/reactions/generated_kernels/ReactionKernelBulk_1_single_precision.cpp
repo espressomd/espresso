@@ -47,12 +47,20 @@ namespace pystencils {
 
 namespace internal_2510542a202e1c11a0d58a7e565459bb {
 static FUNC_PREFIX void reactionkernelbulk_1_single_precision_reactionkernelbulk_1_single_precision(float *RESTRICT _data_rho_0, int64_t const _size_rho_0_0, int64_t const _size_rho_0_1, int64_t const _size_rho_0_2, int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1, int64_t const _stride_rho_0_2, float order_0, float rate_coefficient, float stoech_0) {
-  for (int64_t ctr_2 = 0; ctr_2 < _size_rho_0_2; ctr_2 += 1) {
-    for (int64_t ctr_1 = 0; ctr_1 < _size_rho_0_1; ctr_1 += 1) {
-      for (int64_t ctr_0 = 0; ctr_0 < _size_rho_0_0; ctr_0 += 1) {
-        const float local_rho_0 = _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2];
-        const float rate_factor = rate_coefficient * powf(local_rho_0, order_0);
-        _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2] = local_rho_0 + rate_factor * stoech_0;
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+  {
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+    for (int64_t ctr_2 = 0; ctr_2 < _size_rho_0_2; ctr_2 += 1) {
+      for (int64_t ctr_1 = 0; ctr_1 < _size_rho_0_1; ctr_1 += 1) {
+        for (int64_t ctr_0 = 0; ctr_0 < _size_rho_0_0; ctr_0 += 1) {
+          const float local_rho_0 = _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2];
+          const float rate_factor = rate_coefficient * powf(local_rho_0, order_0);
+          _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2] = local_rho_0 + rate_factor * stoech_0;
+        }
       }
     }
   }
@@ -64,8 +72,8 @@ void ReactionKernelBulk_1_single_precision::run(IBlock *block) {
   auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
 
   auto &stoech_0 = this->stoech_0_;
-  auto &rate_coefficient = this->rate_coefficient_;
   auto &order_0 = this->order_0_;
+  auto &rate_coefficient = this->rate_coefficient_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   float *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(rho_0->xSizeWithGhostLayer(), int64_t(int64_c(rho_0->xSize()) + 0))
@@ -93,8 +101,8 @@ void ReactionKernelBulk_1_single_precision::runOnCellInterval(const shared_ptr<S
   auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
 
   auto &stoech_0 = this->stoech_0_;
-  auto &rate_coefficient = this->rate_coefficient_;
   auto &order_0 = this->order_0_;
+  auto &rate_coefficient = this->rate_coefficient_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(rho_0->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(rho_0->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(rho_0->nrOfGhostLayers()))

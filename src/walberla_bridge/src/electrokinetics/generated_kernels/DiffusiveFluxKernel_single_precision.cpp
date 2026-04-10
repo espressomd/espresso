@@ -47,9 +47,13 @@ namespace pystencils {
 
 namespace internal_2fab63cfdbacde4ac630f257442231a8 {
 static FUNC_PREFIX void diffusivefluxkernel_single_precision_diffusivefluxkernel_single_precision(float D, float *RESTRICT const _data_j, float *RESTRICT const _data_rho, int64_t const _size_j_0, int64_t const _size_j_1, int64_t const _size_j_2, int64_t const _stride_j_0, int64_t const _stride_j_1, int64_t const _stride_j_2, int64_t const _stride_j_3, int64_t const _stride_rho_0, int64_t const _stride_rho_1, int64_t const _stride_rho_2) {
+#ifdef _OPENMP
 #pragma omp parallel
+#endif
   {
+#ifdef _OPENMP
 #pragma omp for schedule(static)
+#endif
     for (int64_t ctr_2 = 0; ctr_2 < _size_j_2; ctr_2 += 1) {
       for (int64_t ctr_1 = 0; ctr_1 < _size_j_1; ctr_1 += 1) {
         for (int64_t ctr_0 = 1; ctr_0 < _size_j_0; ctr_0 += 1) {
@@ -101,8 +105,8 @@ static FUNC_PREFIX void diffusivefluxkernel_single_precision_diffusivefluxkernel
 
 void DiffusiveFluxKernel_single_precision::run(IBlock *block) {
 
-  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
+  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
 
   auto &D = this->D_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()))
@@ -135,8 +139,8 @@ void DiffusiveFluxKernel_single_precision::runOnCellInterval(const shared_ptr<St
   if (ci.empty())
     return;
 
-  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
+  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
 
   auto &D = this->D_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()))

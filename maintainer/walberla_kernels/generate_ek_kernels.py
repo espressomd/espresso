@@ -216,6 +216,8 @@ else:
 
 with code_generation_context.CodeGeneration() as ctx:
     ctx.double_accuracy = double_precision
+    if target == ps.Target.CPU:
+        ctx.openmp = True
     if target == ps.Target.GPU:
         ctx.gpu = True
         ctx.cuda = True
@@ -235,14 +237,16 @@ with code_generation_context.CodeGeneration() as ctx:
     if "diffusion" in args.kernels:
         for midfix, fluctuation in (("", False), ("Thermalized", True)):
             cpu_vectorize_info["cpu_prepend_opt_remove_conditionals"] = False
+            class_name = f"DiffusiveFluxKernel{midfix}_{precision_suffix}{processor_suffix}"  # nopep8
             pystencils_walberla.generate_sweep(
-                ctx,
-                f"DiffusiveFluxKernel{midfix}_{precision_suffix}{processor_suffix}",  # nopep8
+                ctx, class_name,
                 ek.flux(include_vof=False, include_fluctuations=fluctuation,
                         rng_node=precision_rng),
                 staggered=True,
                 block_offset=block_offsets if fluctuation else None,
                 **params)
+            ctx.patch_file(class_name, get_ext_source(
+                processor_suffix), patch_openmp_kernels)
             cpu_vectorize_info["cpu_prepend_opt_remove_conditionals"] = False
             class_name = f"DiffusiveFluxKernelWithElectrostatic{midfix}_{precision_suffix}{processor_suffix}"  # nopep8
             pystencils_walberla.generate_sweep(
@@ -376,6 +380,8 @@ with code_generation_context.CodeGeneration() as ctx:
                 class_name=class_name,
                 target=target,
                 assignments=assignments)
+            ctx.patch_file(class_name, get_ext_source(
+                processor_suffix), patch_openmp_kernels)
 
             class_name = f"ReactionKernelIndexed_{i}_{precision_suffix}{processor_suffix}"  # nopep8
             custom_additional_extensions.generate_boundary(

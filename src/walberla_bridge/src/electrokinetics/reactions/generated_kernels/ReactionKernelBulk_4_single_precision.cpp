@@ -47,18 +47,26 @@ namespace pystencils {
 
 namespace internal_716e8e56e191f2f523734cd5e32cecbb {
 static FUNC_PREFIX void reactionkernelbulk_4_single_precision_reactionkernelbulk_4_single_precision(float *RESTRICT _data_rho_0, float *RESTRICT _data_rho_1, float *RESTRICT _data_rho_2, float *RESTRICT _data_rho_3, int64_t const _size_rho_0_0, int64_t const _size_rho_0_1, int64_t const _size_rho_0_2, int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1, int64_t const _stride_rho_0_2, int64_t const _stride_rho_1_0, int64_t const _stride_rho_1_1, int64_t const _stride_rho_1_2, int64_t const _stride_rho_2_0, int64_t const _stride_rho_2_1, int64_t const _stride_rho_2_2, int64_t const _stride_rho_3_0, int64_t const _stride_rho_3_1, int64_t const _stride_rho_3_2, float order_0, float order_1, float order_2, float order_3, float rate_coefficient, float stoech_0, float stoech_1, float stoech_2, float stoech_3) {
-  for (int64_t ctr_2 = 0; ctr_2 < _size_rho_0_2; ctr_2 += 1) {
-    for (int64_t ctr_1 = 0; ctr_1 < _size_rho_0_1; ctr_1 += 1) {
-      for (int64_t ctr_0 = 0; ctr_0 < _size_rho_0_0; ctr_0 += 1) {
-        const float local_rho_0 = _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2];
-        const float local_rho_1 = _data_rho_1[_stride_rho_1_0 * ctr_0 + _stride_rho_1_1 * ctr_1 + _stride_rho_1_2 * ctr_2];
-        const float local_rho_2 = _data_rho_2[_stride_rho_2_0 * ctr_0 + _stride_rho_2_1 * ctr_1 + _stride_rho_2_2 * ctr_2];
-        const float local_rho_3 = _data_rho_3[_stride_rho_3_0 * ctr_0 + _stride_rho_3_1 * ctr_1 + _stride_rho_3_2 * ctr_2];
-        const float rate_factor = rate_coefficient * powf(local_rho_0, order_0) * powf(local_rho_1, order_1) * powf(local_rho_2, order_2) * powf(local_rho_3, order_3);
-        _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2] = local_rho_0 + rate_factor * stoech_0;
-        _data_rho_1[_stride_rho_1_0 * ctr_0 + _stride_rho_1_1 * ctr_1 + _stride_rho_1_2 * ctr_2] = local_rho_1 + rate_factor * stoech_1;
-        _data_rho_2[_stride_rho_2_0 * ctr_0 + _stride_rho_2_1 * ctr_1 + _stride_rho_2_2 * ctr_2] = local_rho_2 + rate_factor * stoech_2;
-        _data_rho_3[_stride_rho_3_0 * ctr_0 + _stride_rho_3_1 * ctr_1 + _stride_rho_3_2 * ctr_2] = local_rho_3 + rate_factor * stoech_3;
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+  {
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+    for (int64_t ctr_2 = 0; ctr_2 < _size_rho_0_2; ctr_2 += 1) {
+      for (int64_t ctr_1 = 0; ctr_1 < _size_rho_0_1; ctr_1 += 1) {
+        for (int64_t ctr_0 = 0; ctr_0 < _size_rho_0_0; ctr_0 += 1) {
+          const float local_rho_0 = _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2];
+          const float local_rho_1 = _data_rho_1[_stride_rho_1_0 * ctr_0 + _stride_rho_1_1 * ctr_1 + _stride_rho_1_2 * ctr_2];
+          const float local_rho_2 = _data_rho_2[_stride_rho_2_0 * ctr_0 + _stride_rho_2_1 * ctr_1 + _stride_rho_2_2 * ctr_2];
+          const float local_rho_3 = _data_rho_3[_stride_rho_3_0 * ctr_0 + _stride_rho_3_1 * ctr_1 + _stride_rho_3_2 * ctr_2];
+          const float rate_factor = rate_coefficient * powf(local_rho_0, order_0) * powf(local_rho_1, order_1) * powf(local_rho_2, order_2) * powf(local_rho_3, order_3);
+          _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2] = local_rho_0 + rate_factor * stoech_0;
+          _data_rho_1[_stride_rho_1_0 * ctr_0 + _stride_rho_1_1 * ctr_1 + _stride_rho_1_2 * ctr_2] = local_rho_1 + rate_factor * stoech_1;
+          _data_rho_2[_stride_rho_2_0 * ctr_0 + _stride_rho_2_1 * ctr_1 + _stride_rho_2_2 * ctr_2] = local_rho_2 + rate_factor * stoech_2;
+          _data_rho_3[_stride_rho_3_0 * ctr_0 + _stride_rho_3_1 * ctr_1 + _stride_rho_3_2 * ctr_2] = local_rho_3 + rate_factor * stoech_3;
+        }
       }
     }
   }
@@ -72,15 +80,15 @@ void ReactionKernelBulk_4_single_precision::run(IBlock *block) {
   auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
   auto rho_2 = block->getData<field::GhostLayerField<float, 1>>(rho_2ID);
 
-  auto &rate_coefficient = this->rate_coefficient_;
-  auto &stoech_2 = this->stoech_2_;
-  auto &order_3 = this->order_3_;
   auto &stoech_0 = this->stoech_0_;
-  auto &stoech_1 = this->stoech_1_;
+  auto &order_3 = this->order_3_;
+  auto &stoech_2 = this->stoech_2_;
+  auto &stoech_3 = this->stoech_3_;
+  auto &rate_coefficient = this->rate_coefficient_;
   auto &order_2 = this->order_2_;
   auto &order_0 = this->order_0_;
   auto &order_1 = this->order_1_;
-  auto &stoech_3 = this->stoech_3_;
+  auto &stoech_1 = this->stoech_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   float *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()))
@@ -125,15 +133,15 @@ void ReactionKernelBulk_4_single_precision::runOnCellInterval(const shared_ptr<S
   auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
   auto rho_2 = block->getData<field::GhostLayerField<float, 1>>(rho_2ID);
 
-  auto &rate_coefficient = this->rate_coefficient_;
-  auto &stoech_2 = this->stoech_2_;
-  auto &order_3 = this->order_3_;
   auto &stoech_0 = this->stoech_0_;
-  auto &stoech_1 = this->stoech_1_;
+  auto &order_3 = this->order_3_;
+  auto &stoech_2 = this->stoech_2_;
+  auto &stoech_3 = this->stoech_3_;
+  auto &rate_coefficient = this->rate_coefficient_;
   auto &order_2 = this->order_2_;
   auto &order_0 = this->order_0_;
   auto &order_1 = this->order_1_;
-  auto &stoech_3 = this->stoech_3_;
+  auto &stoech_1 = this->stoech_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(rho_0->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(rho_0->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(rho_0->nrOfGhostLayers()))

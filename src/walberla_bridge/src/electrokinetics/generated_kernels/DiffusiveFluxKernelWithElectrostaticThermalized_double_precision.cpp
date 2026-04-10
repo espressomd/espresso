@@ -486,24 +486,24 @@ void DiffusiveFluxKernelWithElectrostaticThermalized_double_precision::run(IBloc
   if (!this->configured_)
     WALBERLA_ABORT("This Sweep contains a configure function that needs to be called manually")
 
-  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
   auto phi = block->getData<field::GhostLayerField<double, 1>>(phiID);
+  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
 
+  auto &block_offset_0 = this->block_offset_0_;
+  auto &seed = this->seed_;
+  auto &f_ext_0 = this->f_ext_0_;
   auto &block_offset_1 = this->block_offset_1_;
   auto &field_size_0 = this->field_size_0_;
-  auto &field_size_1 = this->field_size_1_;
   auto &kT = this->kT_;
-  auto &time_step = this->time_step_;
-  auto &f_ext_2 = this->f_ext_2_;
-  auto &field_size_2 = this->field_size_2_;
-  auto &f_ext_0 = this->f_ext_0_;
-  auto &z = this->z_;
-  auto &seed = this->seed_;
-  auto &block_offset_0 = this->block_offset_0_;
-  auto &D = this->D_;
   auto &f_ext_1 = this->f_ext_1_;
+  auto &D = this->D_;
+  auto &f_ext_2 = this->f_ext_2_;
   auto &block_offset_2 = this->block_offset_2_;
+  auto &time_step = this->time_step_;
+  auto &field_size_2 = this->field_size_2_;
+  auto &z = this->z_;
+  auto &field_size_1 = this->field_size_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()))
   double *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(phi->nrOfGhostLayers()))
@@ -541,24 +541,24 @@ void DiffusiveFluxKernelWithElectrostaticThermalized_double_precision::runOnCell
   if (ci.empty())
     return;
 
-  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
   auto phi = block->getData<field::GhostLayerField<double, 1>>(phiID);
+  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
 
+  auto &block_offset_0 = this->block_offset_0_;
+  auto &seed = this->seed_;
+  auto &f_ext_0 = this->f_ext_0_;
   auto &block_offset_1 = this->block_offset_1_;
   auto &field_size_0 = this->field_size_0_;
-  auto &field_size_1 = this->field_size_1_;
   auto &kT = this->kT_;
-  auto &time_step = this->time_step_;
-  auto &f_ext_2 = this->f_ext_2_;
-  auto &field_size_2 = this->field_size_2_;
-  auto &f_ext_0 = this->f_ext_0_;
-  auto &z = this->z_;
-  auto &seed = this->seed_;
-  auto &block_offset_0 = this->block_offset_0_;
-  auto &D = this->D_;
   auto &f_ext_1 = this->f_ext_1_;
+  auto &D = this->D_;
+  auto &f_ext_2 = this->f_ext_2_;
   auto &block_offset_2 = this->block_offset_2_;
+  auto &time_step = this->time_step_;
+  auto &field_size_2 = this->field_size_2_;
+  auto &z = this->z_;
+  auto &field_size_1 = this->field_size_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(j->nrOfGhostLayers()))

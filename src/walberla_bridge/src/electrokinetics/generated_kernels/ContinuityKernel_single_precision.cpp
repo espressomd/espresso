@@ -67,8 +67,8 @@ static FUNC_PREFIX void continuitykernel_single_precision_continuitykernel_singl
 
 void ContinuityKernel_single_precision::run(IBlock *block) {
 
-  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
+  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()))
   float *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
@@ -100,8 +100,8 @@ void ContinuityKernel_single_precision::runOnCellInterval(const shared_ptr<Struc
   if (ci.empty())
     return;
 
-  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
+  auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()))

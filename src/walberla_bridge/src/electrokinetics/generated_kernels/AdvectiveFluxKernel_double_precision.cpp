@@ -105,9 +105,9 @@ static FUNC_PREFIX void advectivefluxkernel_double_precision_advectivefluxkernel
 
 void AdvectiveFluxKernel_double_precision::run(IBlock *block) {
 
-  auto u = block->getData<field::GhostLayerField<double, 3>>(uID);
-  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
+  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
+  auto u = block->getData<field::GhostLayerField<double, 3>>(uID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()))
   double *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
@@ -145,9 +145,9 @@ void AdvectiveFluxKernel_double_precision::runOnCellInterval(const shared_ptr<St
   if (ci.empty())
     return;
 
-  auto u = block->getData<field::GhostLayerField<double, 3>>(uID);
-  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
   auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
+  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
+  auto u = block->getData<field::GhostLayerField<double, 3>>(uID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()))
