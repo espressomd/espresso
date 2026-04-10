@@ -76,8 +76,8 @@ inline std::optional<Utils::Vector3d> BondedCoulombSR::force(
 }
 
 /** Compute the short-range bonded Coulomb pair energy.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
+ *  @param[in]  pos1      The posistion of first particle.
+ *  @param[in]  pos2      The position of second particle.
  *  @param[in]  dx        Distance between the particles.
  *  @param[in]  kernel    Coulomb energy kernel.
  */
