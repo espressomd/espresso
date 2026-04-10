@@ -51,12 +51,13 @@ integrate
     integrator_step_2
 calc_energies
   {update_cabana}
-  short_range_loop
+  {short_range_energy}
 """.format(
     update_cabana='update_cabana_state' if HAS_CABANA else '',
     short_range='cabana_short_range' if HAS_CABANA else 'serial_short_range',
     gpu_to='copy_particles_to_GPU',
-    gpu_from='copy_forces_from_GPU'
+    gpu_from='copy_forces_from_GPU',
+    short_range_energy='cabana_pair_loop' if HAS_CABANA else 'short_range_loop'
 )
 
 

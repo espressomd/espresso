@@ -62,24 +62,8 @@
 #include <string>
 #include <variant>
 
-/** Calculate non-bonded energies between a pair of particles.
- *  @param p1         particle 1.
- *  @param p2         particle 2.
- *  @param ia_params  the interaction parameters between the two particles
- *  @param d          vector between p1 and p2.
- *  @param dist       distance between p1 and p2.
- *  @param bonded_ias       bonded interaction kernels.
- *  @param coulomb          Electrostatics solver.
- *  @param coulomb_kernel   Coulomb energy kernel.
- *  @return the short-range interaction energy between the two particles
- */
-inline double calc_non_bonded_pair_energy(
-    Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
-    Utils::Vector3d const &d, double const dist,
-    [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
-    [[maybe_unused]] Coulomb::Solver const &coulomb,
-    [[maybe_unused]] Coulomb::ShortRangeEnergyKernel::kernel_type const
-        *coulomb_kernel) {
+inline double calc_central_radial_energy(IA_parameters const &ia_params,
+					 double const dist) {
 
   double ret = 0.;
 
@@ -143,12 +127,6 @@ inline double calc_non_bonded_pair_energy(
   ret += ljcos2_pair_energy(ia_params, dist);
 #endif
 
-#ifdef ESPRESSO_THOLE
-  /* Thole damping */
-  ret += thole_pair_energy(p1, p2, ia_params, d, dist, bonded_ias, coulomb,
-                           coulomb_kernel);
-#endif
-
 #ifdef ESPRESSO_TABULATED
   /* tabulated */
   ret += tabulated_pair_energy(ia_params, dist);
@@ -157,6 +135,38 @@ inline double calc_non_bonded_pair_energy(
 #ifdef ESPRESSO_LJCOS
   /* Lennard-Jones cosine */
   ret += ljcos_pair_energy(ia_params, dist);
+#endif
+
+  return ret;
+}
+
+/** Calculate non-bonded energies between a pair of particles.
+ *  @param p1         particle 1.
+ *  @param p2         particle 2.
+ *  @param ia_params  the interaction parameters between the two particles
+ *  @param d          vector between p1 and p2.
+ *  @param dist       distance between p1 and p2.
+ *  @param bonded_ias       bonded interaction kernels.
+ *  @param coulomb          Electrostatics solver.
+ *  @param coulomb_kernel   Coulomb energy kernel.
+ *  @return the short-range interaction energy between the two particles
+ */
+inline double calc_non_bonded_pair_energy(
+    Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
+    Utils::Vector3d const &d, double const dist,
+    [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
+    [[maybe_unused]] Coulomb::Solver const &coulomb,
+    [[maybe_unused]] Coulomb::ShortRangeEnergyKernel::kernel_type const
+        *coulomb_kernel) {
+
+  double ret = 0.;
+
+  ret += calc_central_radial_energy(ia_params, dist);
+
+#ifdef ESPRESSO_THOLE
+  /* Thole damping */
+  ret += thole_pair_energy(p1, p2, ia_params, d, dist, bonded_ias, coulomb,
+                           coulomb_kernel);
 #endif
 
 #ifdef ESPRESSO_GAY_BERNE
@@ -207,8 +217,11 @@ inline void add_non_bonded_pair_energy(
 #endif
 
 #ifdef ESPRESSO_DIPOLES
-  if (!obs_energy.dipolar.empty() and dipoles_kernel != nullptr)
-    obs_energy.dipolar[0] += (*dipoles_kernel)(p1, p2, d, dist, dist2);
+  if (!obs_energy.dipolar.empty() and dipoles_kernel != nullptr) {
+    if (p1.dipm() != 0. and p2.dipm() != 0.) {
+      obs_energy.dipolar[0] += (*dipoles_kernel)(p1.calc_dip(), p2.calc_dip(), d, dist, dist2);
+    }
+  }
 #endif
 }
 
@@ -238,7 +251,7 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
       return iap->energy(p1.q() * p2->q(), dx);
     }
     if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
-      return iap->energy(p1, *p2, dx, *kernel);
+      return iap->energy(p1.pos(), p2->pos(), dx, *kernel);
     }
 #endif
 #ifdef ESPRESSO_BOND_CONSTRAINT
