@@ -53,7 +53,8 @@ struct BondedCoulombSR {
         std::function<Utils::Vector3d(double, Utils::Vector3d const &,
                                       double)> const &kernel) const;
   std::optional<double>
-  energy(Utils::Vector3d const &pos1, Utils::Vector3d const &pos2, Utils::Vector3d const &dx,
+  energy(Utils::Vector3d const &pos1, Utils::Vector3d const &pos2,
+         Utils::Vector3d const &dx,
          std::function<double(Utils::Vector3d const &, Utils::Vector3d const &,
                               double, Utils::Vector3d const &, double)> const
              &kernel) const;
@@ -81,7 +82,8 @@ inline std::optional<Utils::Vector3d> BondedCoulombSR::force(
  *  @param[in]  kernel    Coulomb energy kernel.
  */
 inline std::optional<double> BondedCoulombSR::energy(
-    Utils::Vector3d const &pos1, Utils::Vector3d const &pos2, Utils::Vector3d const &dx,
+    Utils::Vector3d const &pos1, Utils::Vector3d const &pos2,
+    Utils::Vector3d const &dx,
     std::function<double(Utils::Vector3d const &, Utils::Vector3d const &,
                          double, Utils::Vector3d const &, double)> const
         &kernel) const {

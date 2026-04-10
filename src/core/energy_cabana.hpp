@@ -2,7 +2,7 @@
  * Copyright (C) 2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
- *  
+ *
  * ESPResSo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -45,24 +45,23 @@
 #endif
 
 struct EnergyBinLayout {
-  std::size_t n_bonded; // initialized by bonded_ias->get_next_key()
-  std::size_t n_types;  // max_seen_particle_type                                                                                         
-  std::size_t off_bonded   = 0; // [0, n_bonded)
+  std::size_t n_bonded;       // initialized by bonded_ias->get_next_key()
+  std::size_t n_types;        // max_seen_particle_type
+  std::size_t off_bonded = 0; // [0, n_bonded)
   std::size_t off_nb_inter;
   std::size_t off_nb_intra;
   std::size_t off_coulomb;
   std::size_t off_dipolar;
   std::size_t total;
 
-  EnergyBinLayout(  
-    std::size_t n_bonded_, std::size_t n_types_):
-    n_bonded(n_bonded_), n_types(n_types_) {
-      auto const n_nb = n_types * (n_types + 1) / 2;
-      off_nb_inter = off_bonded + n_bonded; // [.., + n_types*n_types)
-      off_nb_intra = off_nb_inter + n_nb;
-      off_coulomb  = off_nb_intra + n_nb;
-      off_dipolar  = off_coulomb + 1;
-      total        = off_dipolar + 1;
+  EnergyBinLayout(std::size_t n_bonded_, std::size_t n_types_)
+      : n_bonded(n_bonded_), n_types(n_types_) {
+    auto const n_nb = n_types * (n_types + 1) / 2;
+    off_nb_inter = off_bonded + n_bonded; // [.., + n_types*n_types)
+    off_nb_intra = off_nb_inter + n_nb;
+    off_coulomb = off_nb_intra + n_nb;
+    off_dipolar = off_coulomb + 1;
+    total = off_dipolar + 1;
   }
 
   KOKKOS_INLINE_FUNCTION
@@ -71,7 +70,7 @@ struct EnergyBinLayout {
     auto const lo = (t1 > t2) ? t2 : t1;
     return off_nb_inter + std::size_t(hi * (hi + 1) / 2 + lo);
   }
-                                          
+
   KOKKOS_INLINE_FUNCTION
   std::size_t nb_intra_idx(int t1, int t2) const {
     auto const hi = (t1 > t2) ? t1 : t2;
@@ -79,9 +78,11 @@ struct EnergyBinLayout {
     return off_nb_intra + std::size_t(hi * (hi + 1) / 2 + lo);
   }
 
-  KOKKOS_INLINE_FUNCTION std::size_t dipolar_idx() const { return off_dipolar; }                                                                   
-  KOKKOS_INLINE_FUNCTION std::size_t coulomb_idx() const { return off_coulomb; }                                                                   
-  KOKKOS_INLINE_FUNCTION std::size_t bonded_idx(int b) const { return off_bonded + b; }                                                            
+  KOKKOS_INLINE_FUNCTION std::size_t dipolar_idx() const { return off_dipolar; }
+  KOKKOS_INLINE_FUNCTION std::size_t coulomb_idx() const { return off_coulomb; }
+  KOKKOS_INLINE_FUNCTION std::size_t bonded_idx(int b) const {
+    return off_bonded + b;
+  }
 };
 
 struct EnergyKernel {
@@ -92,7 +93,7 @@ struct EnergyKernel {
   Dipoles::ShortRangeEnergyKernel::kernel_type const *dipoles_u_kernel;
   BoxGeometry const &box_geo;
   std::vector<Particle *> const &unique_particles;
-  Kokkos::View<double**, Kokkos::LayoutRight> local_energy;
+  Kokkos::View<double **, Kokkos::LayoutRight> local_energy;
   EnergyBinLayout layout;
   CellStructure::AoSoA_pack const &aosoa;
   Kokkos::View<int *> mol_id_view;
@@ -106,17 +107,15 @@ struct EnergyKernel {
       Dipoles::ShortRangeEnergyKernel::kernel_type const *dipoles_u_kernel_,
       BoxGeometry const &box_geo_,
       std::vector<Particle *> const &unique_particles_,
-      Kokkos::View<double**, Kokkos::LayoutRight> const &local_energy_,
-      EnergyBinLayout layout_,
-      CellStructure::AoSoA_pack const &aosoa_,
+      Kokkos::View<double **, Kokkos::LayoutRight> const &local_energy_,
+      EnergyBinLayout layout_, CellStructure::AoSoA_pack const &aosoa_,
       Kokkos::View<int *> mol_id_view_, double system_max_cutoff_)
       : bonded_ias(bonded_ias_), nonbonded_ias(nonbonded_ias_),
-	coulomb(coulomb_), coulomb_u_kernel(coulomb_u_kernel_),
-	dipoles_u_kernel(dipoles_u_kernel_), box_geo(box_geo_),
-	unique_particles(unique_particles_), local_energy(local_energy_),
-	layout(layout_), aosoa(aosoa_), mol_id_view(std::move(mol_id_view_)), system_max_cutoff(system_max_cutoff_)
-	{
-  }
+        coulomb(coulomb_), coulomb_u_kernel(coulomb_u_kernel_),
+        dipoles_u_kernel(dipoles_u_kernel_), box_geo(box_geo_),
+        unique_particles(unique_particles_), local_energy(local_energy_),
+        layout(layout_), aosoa(aosoa_), mol_id_view(std::move(mol_id_view_)),
+        system_max_cutoff(system_max_cutoff_) {}
 
   // Helper functions to check if specific algorithms are active
 #ifdef ESPRESSO_GAY_BERNE
@@ -145,9 +144,10 @@ struct EnergyKernel {
   void operator()(std::size_t i, std::size_t j) const {
     auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
     auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-    auto const d    = box_geo.get_mi_vector(pos1, pos2);
+    auto const d = box_geo.get_mi_vector(pos1, pos2);
     auto const dist = d.norm();
-    if (dist > system_max_cutoff) return;
+    if (dist > system_max_cutoff)
+      return;
 
     auto const t1 = aosoa.type(i);
     auto const t2 = aosoa.type(j);
@@ -195,65 +195,68 @@ struct EnergyKernel {
 #ifdef ESPRESSO_EXCLUSIONS
       bool skip = false;
       if (aosoa.has_exclusion(i) or aosoa.has_exclusion(j))
-	skip = not do_nonbonded(*unique_particles[i], *unique_particles[j]);
+        skip = not do_nonbonded(*unique_particles[i], *unique_particles[j]);
       if (not skip)
 #endif
       {
-	e_nb += calc_central_radial_energy(ia_params, dist);
+        e_nb += calc_central_radial_energy(ia_params, dist);
 
         // Only call Thole force kernel if active
 #ifdef ESPRESSO_THOLE
         if (thole_active(ia_params)) {
-  	  e_nb += thole_pair_energy(*p1_ptr, *p2_ptr, ia_params, d, dist, bonded_ias, coulomb, coulomb_u_kernel);
+          e_nb += thole_pair_energy(*p1_ptr, *p2_ptr, ia_params, d, dist,
+                                    bonded_ias, coulomb, coulomb_u_kernel);
         }
 #endif
         // Only call Gay-Berne force kernel if active
 #ifdef ESPRESSO_GAY_BERNE
         if (gay_berne_active(dist, ia_params)) {
-  	  e_nb += gb_pair_energy(dir1, dir2, ia_params, d, dist);
+          e_nb += gb_pair_energy(dir1, dir2, ia_params, d, dist);
         }
 #endif
       }
     }
-    // pick inter vs intra bin like Observable_stat::non_bonded_contribution does
+    // pick inter vs intra bin like Observable_stat::non_bonded_contribution
+    // does
     auto const bin = (mol_id_view(i) == mol_id_view(j))
-      ? layout.nb_intra_idx(t1, t2)
-      : layout.nb_inter_idx(t1, t2);
+                         ? layout.nb_intra_idx(t1, t2)
+                         : layout.nb_inter_idx(t1, t2);
     local_energy(tid, bin) += e_nb;
 
 #ifdef ESPRESSO_ELECTROSTATICS
     if (coulomb_u_kernel != nullptr) {
       auto const q1 = aosoa.charge(i), q2 = aosoa.charge(j);
       if (q1 != 0. and q2 != 0.) {
-	double const e_c = (*coulomb_u_kernel)(pos1, pos2, q1 * q2, d, dist);
-	local_energy(tid, layout.coulomb_idx()) += e_c;
+        double const e_c = (*coulomb_u_kernel)(pos1, pos2, q1 * q2, d, dist);
+        local_energy(tid, layout.coulomb_idx()) += e_c;
       }
     }
 #endif
 
 #ifdef ESPRESSO_DIPOLES
-  if (dipoles_u_kernel != nullptr) {
-    if (aosoa.dipm(i) != 0. and aosoa.dipm(j) != 0.) {
-      double const e_d = (*dipoles_u_kernel)(aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2, d, dist, dist * dist);
-      local_energy(tid, layout.dipolar_idx()) += e_d;
+    if (dipoles_u_kernel != nullptr) {
+      if (aosoa.dipm(i) != 0. and aosoa.dipm(j) != 0.) {
+        double const e_d = (*dipoles_u_kernel)(
+            aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2, d, dist, dist * dist);
+        local_energy(tid, layout.dipolar_idx()) += e_d;
+      }
     }
-  }
 #endif
   }
 };
 
 static void reduce_cabana_energy(
-    Kokkos::View<double**, Kokkos::LayoutRight> const &local_energy,
-    EnergyBinLayout const &layout,
-    Observable_stat &obs,
-    BondedInteractionsMap const &bonded_ias,
-    int n_types) {
+    Kokkos::View<double **, Kokkos::LayoutRight> const &local_energy,
+    EnergyBinLayout const &layout, Observable_stat &obs,
+    BondedInteractionsMap const &bonded_ias, int n_types) {
   auto const nthreads = local_energy.extent(0);
-  auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, local_energy);
+  auto host =
+      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, local_energy);
 
   auto sum_bin = [&](std::size_t bin) {
     double s = 0.;
-    for (int t = 0; t < nthreads; ++t) s += host(t, bin);
+    for (int t = 0; t < nthreads; ++t)
+      s += host(t, bin);
     return s;
   };
 

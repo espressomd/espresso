@@ -63,7 +63,7 @@
 #include <variant>
 
 inline double calc_central_radial_energy(IA_parameters const &ia_params,
-					 double const dist) {
+                                         double const dist) {
 
   double ret = 0.;
 
@@ -219,7 +219,8 @@ inline void add_non_bonded_pair_energy(
 #ifdef ESPRESSO_DIPOLES
   if (!obs_energy.dipolar.empty() and dipoles_kernel != nullptr) {
     if (p1.dipm() != 0. and p2.dipm() != 0.) {
-      obs_energy.dipolar[0] += (*dipoles_kernel)(p1.calc_dip(), p2.calc_dip(), d, dist, dist2);
+      obs_energy.dipolar[0] +=
+          (*dipoles_kernel)(p1.calc_dip(), p2.calc_dip(), d, dist, dist2);
     }
   }
 #endif

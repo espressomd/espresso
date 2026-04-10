@@ -130,7 +130,7 @@ inline ParticleForce gb_pair_force(Utils::Vector3d const &ui,
 
 /** Calculate Gay-Berne energy */
 inline double gb_pair_energy(Utils::Vector3d const &ui,
-			     Utils::Vector3d const &uj,
+                             Utils::Vector3d const &uj,
                              IA_parameters const &ia_params,
                              Utils::Vector3d const &d, double dist) {
   using Utils::int_pow;

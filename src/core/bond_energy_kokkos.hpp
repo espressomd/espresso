@@ -42,7 +42,7 @@ struct BondsEnergyKernelData {
   BondedInteractionsMap const &bonded_ias;
   BoxGeometry const &box_geo;
   Kokkos::View<double **, Kokkos::LayoutRight> local_energy;
-  EnergyBinLayout layout;  
+  EnergyBinLayout layout;
   CellStructure::AoSoA_pack const &aosoa;
 };
 
@@ -164,7 +164,7 @@ struct AngleBondsEnergyKernel {
     auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
     auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
 
-    std::optional<double> energy; 
+    std::optional<double> energy;
 
     if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
       energy = iap->energy(vec1, vec2);
@@ -232,7 +232,7 @@ struct DihedralBondsEnergyKernel {
     auto const v23 = box_geo.get_mi_vector(pos3, pos1);
     auto const v34 = box_geo.get_mi_vector(pos4, pos3);
 
-    std::optional<double> energy; 
+    std::optional<double> energy;
 
     if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
       energy = iap->energy(v12, v23, v34);
