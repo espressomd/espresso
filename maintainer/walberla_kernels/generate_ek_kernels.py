@@ -59,6 +59,13 @@ precision_rng = pystencils_espresso.precision_rng_modulo[double_precision]
 np2cpp_t = pystencils_espresso.numpy_types_to_cpp_types
 
 
+def patch_openmp_kernels(content):
+    # surrounds omp pragmas with ifdefs
+    content = re.sub("^( *#pragma omp .*)$",
+                     r"#ifdef _OPENMP\n\1\n#endif", content, flags=re.MULTILINE)
+    return content
+
+
 def patch_unused_direction_arrays_kernel(content, variables):
     for name in variables:
         content = walberla_ek_generation.remove_intermediate_variable(
@@ -197,6 +204,7 @@ if args.gpu:
 else:
     params = {
         "target": target,
+        "cpu_openmp": True,
         "cpu_vectorize_info": {
             "assume_inner_stride_one": False,
         },
@@ -245,6 +253,8 @@ with code_generation_context.CodeGeneration() as ctx:
                 block_offset=block_offsets if fluctuation else None,
                 **params)
             ctx.patch_file(class_name, "h", patch_diffusive_flux_elec_kernel)
+            ctx.patch_file(class_name, get_ext_source(
+                processor_suffix), patch_openmp_kernels)
 
     if "advection" in args.kernels:
         def patch_advection_kernel(content, target_suffix):
@@ -268,19 +278,28 @@ with code_generation_context.CodeGeneration() as ctx:
             **params)
         ctx.patch_file(class_name, get_ext_source(processor_suffix),
                        patch_advection_kernel, processor_suffix)
+        ctx.patch_file(class_name, get_ext_source(
+            processor_suffix), patch_openmp_kernels)
 
     if "continuity" in args.kernels:
+        class_name = f"ContinuityKernel_{precision_suffix}{processor_suffix}"
         pystencils_walberla.generate_sweep(
             ctx,
-            f"ContinuityKernel_{precision_suffix}{processor_suffix}",
+            class_name,
             ek.continuity(),
             **params)
+        ctx.patch_file(class_name, get_ext_source(
+            processor_suffix), patch_openmp_kernels)
     if "friction_coupling" in args.kernels:
+        class_name = f"FrictionCouplingKernel_{
+            precision_suffix}{processor_suffix}"
         pystencils_walberla.generate_sweep(
             ctx,
-            f"FrictionCouplingKernel_{precision_suffix}{processor_suffix}",
+            class_name,
             ek.friction_coupling(),
             **params)
+        ctx.patch_file(class_name, get_ext_source(
+            processor_suffix), patch_openmp_kernels)
 
     if "boundary" in args.kernels:
         # pylint: disable=unused-argument
@@ -344,6 +363,8 @@ with code_generation_context.CodeGeneration() as ctx:
                        patch_boundary_kernel, processor_suffix)
         ctx.patch_file(class_name, get_ext_source(processor_suffix),
                        patch_dirichlet_boundary_kernel, processor_suffix)
+        ctx.patch_file(class_name, get_ext_source(
+            processor_suffix), patch_openmp_kernels)
 
     if "reactions" in args.kernels:
         # ek reactions
@@ -370,6 +391,8 @@ with code_generation_context.CodeGeneration() as ctx:
                 template_file="templates/Boundary.tmpl.h")
             ctx.patch_file(class_name, file_suffix,
                            patch_reaction_indexed_kernel, processor_suffix)
+            ctx.patch_file(class_name, get_ext_source(
+                processor_suffix), patch_openmp_kernels)
 
         # ek reactions helper functions
         custom_additional_extensions.generate_kernel_selector(
