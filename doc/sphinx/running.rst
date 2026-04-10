@@ -877,9 +877,13 @@ of an abnormal floating-point operation. This is achieved by sending a signal
 that can be caught in GDB to allow inspection of the failing code.
 
 When FPE instrumentation is enabled, most script interface calls will be
-monitored for abnormal mathematical operations. One can select which subset
-of CPU exceptions will trap by explicitly providing a bitmask to the FPE
-handler constructor, like so:
+monitored for abnormal mathematical operations.
+Some |es| features have to call third-party libraries that are known
+to occasionally raise CPU flags; to handle these exceptional cases,
+|es| will temporarily disable any active FPE monitoring during calls
+to the affected libraries.
+One can select which subset of CPU exceptions will trap by explicitly
+providing a bitmask to the FPE handler constructor, like so:
 
 .. code-block:: c++
 

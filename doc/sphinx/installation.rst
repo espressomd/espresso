@@ -1029,19 +1029,27 @@ The build type is controlled by ``-D CMAKE_BUILD_TYPE=<type>`` where
 * ``Debug``: for debugging in GDB
 * ``Coverage``: for code coverage
 
+In addition, third-party libraries may provide additional options that control performance.
+For example, ``-D Kokkos_ARCH_NATIVE=ON`` enables microarchitecture-specific optimizations,
+such as ``-march=native -mtune=native`` on x86 or ``-mcpu=native`` on ARM,
+in both the Kokkos library and |es|.
+These optimization flags are suitable for homogeneous computing environments,
+e.g. HPC clusters, but not for environments with heterogeneous computing resources,
+since different hardware may not share the same instruction set.
+
 Cluster users and HPC developers may be interested in manually editing the
-``espresso_cpp_flags`` target in the top-level ``CMakeLists.txt`` file for
+``espresso_compiler_flags`` target in the top-level ``CMakeLists.txt`` file for
 finer control over compiler flags. The variable declaration is followed
 by a series of conditionals to enable or disable compiler-specific flags.
 Compiler flags passed to CMake via the ``-D CMAKE_CXX_FLAGS`` option
 (such as ``cmake . -D CMAKE_CXX_FLAGS="-ffast-math -fno-finite-math-only"``)
-will appear in the compiler command before the flags in ``espresso_cpp_flags``,
+will appear in the compiler command before the flags in ``espresso_compiler_flags``,
 and will therefore have lower precedence.
 
 Be aware that fast-math mode can break |es|. It is incompatible with the
 ``ADDITIONAL_CHECKS`` feature due to the loss of precision in the LB code
 on CPU. The Clang 10 compiler breaks field couplings with ``-ffast-math``.
-The Intel compiler enables the ``-fp-model fast=1`` flag by default;
+The IntelLLVM compiler enables the ``-fp-model fast=1`` flag by default;
 it can be disabled by adding the ``-fp-model=strict`` flag.
 
 |es| currently doesn't fully support link-time optimization (LTO).

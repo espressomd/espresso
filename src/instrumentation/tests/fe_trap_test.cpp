@@ -100,6 +100,7 @@ BOOST_AUTO_TEST_CASE(trap_by_signal) {
   {
     auto const trap = fe_trap::make_unique_scoped();
     BOOST_REQUIRE(trap.is_unique());
+    BOOST_REQUIRE(trap.is_active());
     value = 0.;
     while (sigsetjmp(::jmp_env, 1) == 0) {
       // LCOV_EXCL_START
@@ -117,6 +118,7 @@ BOOST_AUTO_TEST_CASE(trap_by_signal) {
   {
     auto const trap = fe_trap::make_shared_scoped();
     BOOST_REQUIRE(not trap.is_unique());
+    BOOST_REQUIRE(trap.is_active());
     value = 0.;
     while (sigsetjmp(::jmp_env, 1) == 0) {
       // LCOV_EXCL_START
@@ -136,6 +138,8 @@ BOOST_AUTO_TEST_CASE(trap_by_signal) {
     {
       auto const trap2 = fe_trap::make_shared_scoped(FE_UNDERFLOW);
       BOOST_REQUIRE_EQUAL(trap1.get_flags(), trap2.get_flags());
+      BOOST_REQUIRE(trap1 == trap2);
+      BOOST_REQUIRE(&trap1.get_trap() == &trap2.get_trap());
       value = 0.;
       while (sigsetjmp(::jmp_env, 1) == 0) {
         // LCOV_EXCL_START
@@ -150,6 +154,62 @@ BOOST_AUTO_TEST_CASE(trap_by_signal) {
       ::last_signal_status = 0;
       ::last_signal_code = 0;
     }
+  }
+
+  // check trap deactivation
+  {
+    {
+      // if no global trap exists, then no global pause exists
+      auto const trap_pause = fe_trap::make_shared_pause_scoped();
+      BOOST_REQUIRE(not trap_pause);
+    }
+    auto trap = fe_trap::make_unique_scoped();
+    BOOST_REQUIRE(trap.is_unique());
+    BOOST_REQUIRE(trap.is_active());
+    {
+      // temporarily deactivate trap
+      auto trap_pause = fe_trap::make_shared_pause_scoped();
+      BOOST_REQUIRE(trap_pause);
+      BOOST_REQUIRE(not trap.is_active());
+      // without instrumentation, abnormal operations are allowed
+      value = 1. / bad_denominator;
+      value = std::exp(bad_exponent);
+      // there is only one global trap, which manages a shared pause handle
+      auto shared_trap_pause = fe_trap::make_shared_pause_scoped();
+      BOOST_REQUIRE(shared_trap_pause);
+      BOOST_REQUIRE(shared_trap_pause.get() == trap_pause.get());
+    }
+    BOOST_REQUIRE(trap.is_active());
+    {
+      // manually deactivate trap
+      trap.get_trap().deactivate();
+      BOOST_REQUIRE(not trap.is_active());
+      // without instrumentation, abnormal operations are allowed
+      value = 1. / bad_denominator;
+      value = std::exp(bad_exponent);
+      // deactivating twice is safe (no-op)
+      trap.get_trap().deactivate();
+      BOOST_REQUIRE(!trap.is_active());
+      // manually reactivate trap
+      trap.get_trap().activate();
+      BOOST_REQUIRE(trap.is_active());
+      // reactivating twice is safe (no-op)
+      trap.get_trap().activate();
+      BOOST_REQUIRE(trap.is_active());
+    }
+    value = 0.;
+    while (sigsetjmp(::jmp_env, 1) == 0) {
+      // LCOV_EXCL_START
+      value = 2.;
+      value = 0. / bad_denominator;
+      // LCOV_EXCL_STOP
+    }
+    BOOST_CHECK_EQUAL(::last_signal_status, SIGFPE);
+    BOOST_CHECK_EQUAL(::last_signal_code, FPE_FLTINV);
+    BOOST_REQUIRE(not std::isnan(value));
+    BOOST_REQUIRE_EQUAL(value, 2.);
+    ::last_signal_status = 0;
+    ::last_signal_code = 0;
   }
 
   // reset default signal handler

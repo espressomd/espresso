@@ -23,7 +23,7 @@ import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/grand_canonical_monte_carlo/grand_canonical_monte_carlo.py",
-    p3m_params={"mesh": 10, "cao": 6, "r_cut": 8.22})
+    p3m_params={"mesh": 20, "cao": 4, "r_cut": 5.05})
 
 
 @skipIfMissingFeatures

@@ -84,6 +84,7 @@ THOLE                           requires ELECTROSTATICS
 SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS
+SCAFACOS                        requires not FPE
 
 /* Debugging */
 ADDITIONAL_CHECKS

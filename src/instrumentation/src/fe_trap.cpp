@@ -39,10 +39,12 @@
 
 fe_trap::global_state_params fe_trap::global_state{{}, {}};
 
-fe_trap::fe_trap(std::optional<int> excepts, bool unique) {
+void fe_trap::activate() {
+  if (m_active) {
+    return;
+  }
 #if defined(ESPRESSO_FPE_USING_GLIBC_X86_64)
   {
-    m_flags = parse_excepts(excepts);
     [[maybe_unused]] auto const status = feenableexcept(m_flags);
     // note: status should be 0 since we use the singleton pattern
     assert(status == 0);
@@ -50,7 +52,6 @@ fe_trap::fe_trap(std::optional<int> excepts, bool unique) {
 #elif defined(ESPRESSO_FPE_USING_APPLE_ARM_64)
   {
     using fpcr_t = decltype(std::fenv_t::__fpcr);
-    m_flags = parse_excepts(excepts);
     std::fenv_t env;
     {
       [[maybe_unused]] auto const status = std::fegetenv(&env);
@@ -65,10 +66,13 @@ fe_trap::fe_trap(std::optional<int> excepts, bool unique) {
 #else
 #error "FE not supported"
 #endif
-  m_unique = unique;
+  m_active = true;
 }
 
-fe_trap::~fe_trap() {
+void fe_trap::deactivate() {
+  if (not m_active) {
+    return;
+  }
 #if defined(ESPRESSO_FPE_USING_GLIBC_X86_64)
   {
     [[maybe_unused]] auto const status = fedisableexcept(m_flags);
@@ -94,6 +98,7 @@ fe_trap::~fe_trap() {
 #else
 #error "FE not supported"
 #endif
+  m_active = false;
 }
 
 int fe_trap::parse_excepts(std::optional<int> excepts) {
@@ -134,6 +139,19 @@ fe_trap::make_shared_scoped(std::optional<int> excepts) {
   auto watched = std::shared_ptr<fe_trap>(raw_ptr, deleter{});
   fe_trap::global_state.observer = watched;
   return fe_trap::scoped_instance(watched);
+}
+
+std::shared_ptr<fe_trap::scoped_pause> fe_trap::make_shared_pause_scoped() {
+  std::lock_guard<std::mutex> lock(fe_trap::global_state.mutex);
+  if (auto watched = fe_trap::global_state.observer.lock()) {
+    if (auto pause = watched->m_pause.lock()) {
+      return pause;
+    }
+    auto pause = std::make_shared<scoped_pause>(watched);
+    watched->m_pause = pause;
+    return pause;
+  }
+  return {};
 }
 
 #endif // ESPRESSO_FPE
