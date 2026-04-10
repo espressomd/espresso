@@ -78,6 +78,9 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
   auto const dipoles_kernel = dipoles.pair_energy_kernel();
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+#ifdef ESPRESSO_CALIPER
+  CALI_MARK_BEGIN("cabana_short_range");
+#endif
   VerletCriterion<> const verlet_criterion{*this,
                                            cell_structure->get_verlet_skin(),
                                            get_interaction_range(),
@@ -135,6 +138,10 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
 
   reduce_cabana_energy(local_energy, layout, obs_energy, *bonded_ias,
                        nonbonded_ias->get_max_seen_particle_type() + 1);
+#ifdef ESPRESSO_CALIPER
+  CALI_MARK_END("cabana_short_range");
+#endif
+
 #else
   short_range_loop(
       [this, coulomb_kernel_ptr = get_ptr(coulomb_kernel), &obs_energy](

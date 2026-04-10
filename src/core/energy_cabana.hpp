@@ -57,7 +57,7 @@ struct EnergyBinLayout {
   EnergyBinLayout(std::size_t n_bonded_, std::size_t n_types_)
       : n_bonded(n_bonded_), n_types(n_types_) {
     auto const n_nb = n_types * (n_types + 1) / 2;
-    off_nb_inter = off_bonded + n_bonded; // [.., + n_types*n_types)
+    off_nb_inter = off_bonded + n_bonded;
     off_nb_intra = off_nb_inter + n_nb;
     off_coulomb = off_nb_intra + n_nb;
     off_dipolar = off_coulomb + 1;
