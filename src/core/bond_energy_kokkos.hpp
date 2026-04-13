@@ -27,6 +27,7 @@
 #include "bond_error.hpp"
 #include "cell_system/LocalBondState.hpp"
 #include "energy_cabana.hpp"
+#include "energy_inline.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -76,49 +77,18 @@ struct PairBondsEnergyKernel {
     auto const j = bond_list(idx, 1);
     auto const &iaparams = *bonded_ias.at(bond_id);
 
-    auto const dx =
-        box_geo.get_mi_vector(aosoa.get_vector_at(aosoa.position, i),
-                              aosoa.get_vector_at(aosoa.position, j));
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+    auto const dx = box_geo.get_mi_vector(pos1, pos2);
 
-    std::optional<double> energy;
-
-    if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
-      energy = iap->energy(dx);
-    }
-    if (auto const *iap = std::get_if<HarmonicBond>(&iaparams)) {
-      energy = iap->energy(dx);
-    }
-    if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
-      energy = iap->energy(dx);
+    std::optional<double> energy = calc_pair_bonded_energy(iaparams, dx,
+				     pos1, pos2,
 #ifdef ESPRESSO_ELECTROSTATICS
-    }
-    if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
-      energy = iap->energy(aosoa.charge(i) * aosoa.charge(j), dx);
-    }
-    if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
-      if (coulomb_u_kernel != nullptr) {
-        energy = iap->energy(aosoa.get_vector_at(aosoa.position, i),
-                             aosoa.get_vector_at(aosoa.position, j), dx,
-                             *coulomb_u_kernel);
-      }
+		    		     aosoa.charge(i) * aosoa.charge(j), coulomb_u_kernel
+#else
+				     0.0, nullptr
 #endif
-#ifdef ESPRESSO_BOND_CONSTRAINT
-    }
-    if (std::get_if<RigidBond>(&iaparams)) {
-      energy = 0.;
-#endif
-#ifdef ESPRESSO_TABULATED
-    }
-    if (auto const *iap = std::get_if<TabulatedDistanceBond>(&iaparams)) {
-      energy = iap->energy(dx);
-#endif
-    }
-    if (std::get_if<VirtualBond>(&iaparams)) {
-      energy = 0.;
-    }
-    if (std::get_if<ThermalizedBond>(&iaparams)) {
-      energy = 0.;
-    }
+				     );
 
     if (energy) {
       local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();
@@ -164,26 +134,7 @@ struct AngleBondsEnergyKernel {
     auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
     auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
 
-    std::optional<double> energy;
-
-    if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
-      energy = iap->energy(vec1, vec2);
-    }
-    if (auto const *iap = std::get_if<AngleCosineBond>(&iaparams)) {
-      energy = iap->energy(vec1, vec2);
-    }
-    if (auto const *iap = std::get_if<AngleCossquareBond>(&iaparams)) {
-      energy = iap->energy(vec1, vec2);
-    }
-    if (auto const *iap = std::get_if<TabulatedAngleBond>(&iaparams)) {
-      energy = iap->energy(vec1, vec2);
-    }
-    if (std::get_if<IBMTriel>(&iaparams)) {
-      runtimeWarningMsg() << "Unsupported bond type " +
-                                 std::to_string(iaparams.index()) +
-                                 " in energy calculation.";
-      energy = 0.;
-    }
+    std::optional<double> energy = calc_angle_bonded_energy(iaparams, vec1, vec2);
 
     if (energy) {
       local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();
@@ -232,20 +183,7 @@ struct DihedralBondsEnergyKernel {
     auto const v23 = box_geo.get_mi_vector(pos3, pos1);
     auto const v34 = box_geo.get_mi_vector(pos4, pos3);
 
-    std::optional<double> energy;
-
-    if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
-      energy = iap->energy(v12, v23, v34);
-    }
-    if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
-      energy = iap->energy(v12, v23, v34);
-    }
-    if (std::get_if<IBMTribend>(&iaparams)) {
-      runtimeWarningMsg() << "Unsupported bond type " +
-                                 std::to_string(iaparams.index()) +
-                                 " in energy calculation.";
-      energy = 0.;
-    }
+    std::optional<double> energy = calc_dihedral_bonded_energy(iaparams, v12, v23, v34);
 
     if (energy) {
       local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();

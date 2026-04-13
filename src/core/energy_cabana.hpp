@@ -25,6 +25,7 @@
 
 #include "aosoa_pack.hpp"
 #include "energy_inline.hpp"
+#include "short_range_cabana_helpers.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -37,12 +38,6 @@
 #include <optional>
 #include <variant>
 #include <vector>
-
-#if defined(__GNUG__) or defined(__clang__)
-#define ESPRESSO_ATTR_ALWAYS_INLINE [[gnu::always_inline]]
-#else
-#define ESPRESSO_ATTR_ALWAYS_INLINE
-#endif
 
 struct EnergyBinLayout {
   std::size_t n_bonded;       // initialized by bonded_ias->get_next_key()
@@ -66,16 +61,19 @@ struct EnergyBinLayout {
 
   KOKKOS_INLINE_FUNCTION
   std::size_t nb_inter_idx(int t1, int t2) const {
-    auto const hi = (t1 > t2) ? t1 : t2;
-    auto const lo = (t1 > t2) ? t2 : t1;
-    return off_nb_inter + std::size_t(hi * (hi + 1) / 2 + lo);
+    //auto const hi = (t1 > t2) ? t1 : t2;
+    //auto const lo = (t1 > t2) ? t2 : t1;
+    //return off_nb_inter + Utils::lower_triangular(hi, lo);
+    //return off_nb_inter + std::size_t(hi * (hi + 1) / 2 + lo);
+    return off_nb_inter + Utils::lower_triangular(std::max(t1, t2), std::min(t1, t2));
   }
 
   KOKKOS_INLINE_FUNCTION
   std::size_t nb_intra_idx(int t1, int t2) const {
-    auto const hi = (t1 > t2) ? t1 : t2;
-    auto const lo = (t1 > t2) ? t2 : t1;
-    return off_nb_intra + std::size_t(hi * (hi + 1) / 2 + lo);
+    //auto const hi = (t1 > t2) ? t1 : t2;
+    //auto const lo = (t1 > t2) ? t2 : t1;
+    //return off_nb_intra + std::size_t(hi * (hi + 1) / 2 + lo);
+    return off_nb_intra + Utils::lower_triangular(std::max(t1, t2), std::min(t1, t2));
   }
 
   KOKKOS_INLINE_FUNCTION std::size_t dipolar_idx() const { return off_dipolar; }
@@ -117,29 +115,6 @@ struct EnergyKernel {
         layout(layout_), aosoa(aosoa_), mol_id_view(std::move(mol_id_view_)),
         system_max_cutoff(system_max_cutoff_) {}
 
-  // Helper functions to check if specific algorithms are active
-#ifdef ESPRESSO_GAY_BERNE
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
-  gay_berne_active(double dist, IA_parameters const &ia_params) const {
-    return dist < ia_params.gay_berne.cut;
-  }
-#endif
-
-#ifdef ESPRESSO_THOLE
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
-  thole_active(IA_parameters const &ia_params) const {
-    return (ia_params.thole.scaling_coeff != 0. and
-            ia_params.thole.q1q2 != 0. and coulomb_u_kernel != nullptr);
-  }
-#endif
-
-#ifdef ESPRESSO_DIPOLES
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
-  dipoles_active() const {
-    return dipoles_u_kernel != nullptr;
-  }
-#endif
-
   KOKKOS_INLINE_FUNCTION
   void operator()(std::size_t i, std::size_t j) const {
     auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
@@ -154,26 +129,17 @@ struct EnergyKernel {
     auto const &ia_params = nonbonded_ias.get_ia_param(t1, t2);
 
     // Determine which data needs to be loaded based on active algorithms
-#if defined(ESPRESSO_DIPOLES) or defined(ESPRESSO_GAY_BERNE)
-    auto need_directors = false;
-#if defined(ESPRESSO_GAY_BERNE)
-    need_directors |= gay_berne_active(dist, ia_params);
+#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES) or defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_THOLE)
+    auto const flag = compute_pair_data_flags(dist, ia_params,
+                        coulomb_u_kernel != nullptr,
+			dipoles_u_kernel != nullptr,
+                        aosoa, i, j);
 #endif
-#if defined(ESPRESSO_DIPOLES)
-    need_directors |= dipoles_active();
-#endif
-#endif
+
 #if defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_THOLE)
-    auto need_particle_pointers = false;
-#if defined(ESPRESSO_EXCLUSIONS)
-    need_particle_pointers |= aosoa.has_exclusion(i) or aosoa.has_exclusion(j);
-#endif
-#if defined(ESPRESSO_THOLE)
-    need_particle_pointers |= thole_active(ia_params);
-#endif
     Particle const *p1_ptr = nullptr;
     Particle const *p2_ptr = nullptr;
-    if (need_particle_pointers) {
+    if (flag.need_particle_pointers) {
       p1_ptr = unique_particles.at(i);
       p2_ptr = unique_particles.at(j);
     }
@@ -182,7 +148,7 @@ struct EnergyKernel {
     // Load directors only if needed
 #if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
     Utils::Vector3d dir1{}, dir2{};
-    if (need_directors) {
+    if (flag.need_directors) {
       dir1 = aosoa.get_vector_at(aosoa.director, i);
       dir2 = aosoa.get_vector_at(aosoa.director, j);
     }
@@ -203,7 +169,7 @@ struct EnergyKernel {
 
         // Only call Thole force kernel if active
 #ifdef ESPRESSO_THOLE
-        if (thole_active(ia_params)) {
+        if (thole_active(ia_params, coulomb_u_kernel != nullptr)) {
           e_nb += thole_pair_energy(*p1_ptr, *p2_ptr, ia_params, d, dist,
                                     bonded_ias, coulomb, coulomb_u_kernel);
         }
@@ -274,7 +240,7 @@ static void reduce_cabana_energy(
           sum_bin(layout.nb_intra_idx(t1, t2));
 
   obs.coulomb[0] += sum_bin(layout.coulomb_idx());
-  obs.dipolar[0] += sum_bin(layout.off_dipolar);
+  obs.dipolar[0] += sum_bin(layout.dipolar_idx());
 }
 
 #endif

@@ -227,6 +227,86 @@ inline void add_non_bonded_pair_energy(
 }
 
 inline std::optional<double>
+calc_pair_bonded_energy(Bonded_IA_Parameters const &iaparams, auto const dx,
+		        auto const pos1, auto const pos2, double q1q2,
+                        Coulomb::ShortRangeEnergyKernel::kernel_type const *kernel) {
+
+  if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
+    return iap->energy(dx);
+  }
+  if (auto const *iap = std::get_if<HarmonicBond>(&iaparams)) {
+    return iap->energy(dx);
+  }
+  if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
+    return iap->energy(dx);
+  }
+#ifdef ESPRESSO_ELECTROSTATICS
+  if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
+    return iap->energy(q1q2, dx);
+  }
+  if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
+    return iap->energy(pos1, pos2, dx, *kernel);
+  }
+#endif
+#ifdef ESPRESSO_BOND_CONSTRAINT
+  if (std::get_if<RigidBond>(&iaparams)) {
+    return {0.};
+  }
+#endif
+#ifdef ESPRESSO_TABULATED
+  if (auto const *iap = std::get_if<TabulatedDistanceBond>(&iaparams)) {
+    return iap->energy(dx);
+  }
+#endif
+  if (std::get_if<VirtualBond>(&iaparams)) {
+    return {0.};
+  }
+  throw BondUnknownTypeError();
+}
+
+inline std::optional<double>
+calc_angle_bonded_energy(Bonded_IA_Parameters const &iaparams,
+		         auto const vec1, auto const vec2) {
+  if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
+    return iap->energy(vec1, vec2);
+  }
+  if (auto const *iap = std::get_if<AngleCosineBond>(&iaparams)) {
+    return iap->energy(vec1, vec2);
+  }
+  if (auto const *iap = std::get_if<AngleCossquareBond>(&iaparams)) {
+    return iap->energy(vec1, vec2);
+  }
+  if (auto const *iap = std::get_if<TabulatedAngleBond>(&iaparams)) {
+    return iap->energy(vec1, vec2);
+  }
+  if (std::get_if<IBMTriel>(&iaparams)) {
+    runtimeWarningMsg() << "Unsupported bond type " +
+			       std::to_string(iaparams.index()) +
+			       " in energy calculation.";
+    return 0.;
+  }
+  throw BondUnknownTypeError();
+}
+
+inline std::optional<double>
+calc_dihedral_bonded_energy(Bonded_IA_Parameters const &iaparams,
+		            auto const v12, auto const v23, auto const v34) {
+  if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
+    return iap->energy(v12, v23, v34);
+  }
+  if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
+    return iap->energy(v12, v23, v34);
+  }
+  if (std::get_if<IBMTribend>(&iaparams)) {
+    runtimeWarningMsg() << "Unsupported bond type " +
+			       std::to_string(iaparams.index()) +
+			       " in energy calculation.";
+    return 0.;
+  }
+  throw BondUnknownTypeError();
+}
+
+inline std::optional<double>
 calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
                    std::span<Particle *> partners, BoxGeometry const &box_geo,
                    Coulomb::ShortRangeEnergyKernel::kernel_type const *kernel) {
@@ -238,79 +318,26 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
 
   if (n_partners == 1) {
     auto const dx = box_geo.get_mi_vector(p1.pos(), p2->pos());
-    if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
-      return iap->energy(dx);
-    }
-    if (auto const *iap = std::get_if<HarmonicBond>(&iaparams)) {
-      return iap->energy(dx);
-    }
-    if (auto const *iap = std::get_if<QuarticBond>(&iaparams)) {
-      return iap->energy(dx);
-    }
+    return calc_pair_bonded_energy(iaparams, dx,
+				   p1.pos(), p2->pos(),
 #ifdef ESPRESSO_ELECTROSTATICS
-    if (auto const *iap = std::get_if<BondedCoulomb>(&iaparams)) {
-      return iap->energy(p1.q() * p2->q(), dx);
-    }
-    if (auto const *iap = std::get_if<BondedCoulombSR>(&iaparams)) {
-      return iap->energy(p1.pos(), p2->pos(), dx, *kernel);
-    }
+		    		   p1.q() * p2->q(), kernel
+#else
+				   0.0, nullptr
 #endif
-#ifdef ESPRESSO_BOND_CONSTRAINT
-    if (std::get_if<RigidBond>(&iaparams)) {
-      return {0.};
-    }
-#endif
-#ifdef ESPRESSO_TABULATED
-    if (auto const *iap = std::get_if<TabulatedDistanceBond>(&iaparams)) {
-      return iap->energy(dx);
-    }
-#endif
-    if (std::get_if<VirtualBond>(&iaparams)) {
-      return {0.};
-    }
-    throw BondUnknownTypeError();
+				   );
   } // 1 partner
   if (n_partners == 2) {
     auto const vec1 = box_geo.get_mi_vector(p2->pos(), p1.pos());
     auto const vec2 = box_geo.get_mi_vector(p3->pos(), p1.pos());
-    if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
-      return iap->energy(vec1, vec2);
-    }
-    if (auto const *iap = std::get_if<AngleCosineBond>(&iaparams)) {
-      return iap->energy(vec1, vec2);
-    }
-    if (auto const *iap = std::get_if<AngleCossquareBond>(&iaparams)) {
-      return iap->energy(vec1, vec2);
-    }
-    if (auto const *iap = std::get_if<TabulatedAngleBond>(&iaparams)) {
-      return iap->energy(vec1, vec2);
-    }
-    if (std::get_if<IBMTriel>(&iaparams)) {
-      runtimeWarningMsg() << "Unsupported bond type " +
-                                 std::to_string(iaparams.index()) +
-                                 " in energy calculation.";
-      return 0.;
-    }
-    throw BondUnknownTypeError();
+    return calc_angle_bonded_energy(iaparams, vec1, vec2);
   } // 2 partners
   if (n_partners == 3) {
     // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
     auto const v12 = box_geo.get_mi_vector(p1.pos(), p2->pos());
     auto const v23 = box_geo.get_mi_vector(p3->pos(), p1.pos());
     auto const v34 = box_geo.get_mi_vector(p4->pos(), p3->pos());
-    if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
-      return iap->energy(v12, v23, v34);
-    }
-    if (auto const *iap = std::get_if<TabulatedDihedralBond>(&iaparams)) {
-      return iap->energy(v12, v23, v34);
-    }
-    if (std::get_if<IBMTribend>(&iaparams)) {
-      runtimeWarningMsg() << "Unsupported bond type " +
-                                 std::to_string(iaparams.index()) +
-                                 " in energy calculation.";
-      return 0.;
-    }
-    throw BondUnknownTypeError();
+    return calc_dihedral_bonded_energy(iaparams, v12, v23, v34);
   } // 3 partners
   if (n_partners == 0) {
     return 0.;

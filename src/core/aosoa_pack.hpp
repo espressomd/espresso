@@ -32,6 +32,12 @@
 #include <cstdint>
 #include <span>
 
+#if defined(__GNUG__) or defined(__clang__)
+#define ESPRESSO_ATTR_ALWAYS_INLINE [[gnu::always_inline]]
+#else
+#define ESPRESSO_ATTR_ALWAYS_INLINE
+#endif
+
 struct CellStructure::AoSoA_pack {
   using PositionViewType =
       Kokkos::View<double *[3], Kokkos::LayoutRight, Kokkos::HostSpace>;
