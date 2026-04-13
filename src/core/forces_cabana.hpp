@@ -106,9 +106,9 @@ struct ForcesKernel {
 
 // Helper functions to check if NPT algorithms are active
 #ifdef ESPRESSO_NPT
-ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool npt_active() const {
-  return global_virial != nullptr;
-}
+  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool npt_active() const {
+    return global_virial != nullptr;
+  }
 #endif
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
@@ -130,11 +130,11 @@ ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool npt_active() const {
     ParticleForce pf{};
 
     // Determine which data needs to be loaded based on active algorithms
-#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES) or defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_THOLE)
-    auto const flag = compute_pair_data_flags(dist, ia_params,
-                        coulomb_kernel != nullptr,
-			dipoles_kernel != nullptr,
-                        aosoa, i, j);
+#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES) or                \
+    defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_THOLE)
+    auto const flag =
+        compute_pair_data_flags(dist, ia_params, coulomb_kernel != nullptr,
+                                dipoles_kernel != nullptr, aosoa, i, j);
 #endif
 
 #if defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_THOLE)

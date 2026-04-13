@@ -81,14 +81,14 @@ struct PairBondsEnergyKernel {
     auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
     auto const dx = box_geo.get_mi_vector(pos1, pos2);
 
-    std::optional<double> energy = calc_pair_bonded_energy(iaparams, dx,
-				     pos1, pos2,
+    std::optional<double> energy = calc_pair_bonded_energy(
+        iaparams, dx, pos1, pos2,
 #ifdef ESPRESSO_ELECTROSTATICS
-		    		     aosoa.charge(i) * aosoa.charge(j), coulomb_u_kernel
+        aosoa.charge(i) * aosoa.charge(j), coulomb_u_kernel
 #else
-				     0.0, nullptr
+        0.0, nullptr
 #endif
-				     );
+    );
 
     if (energy) {
       local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();
@@ -134,7 +134,8 @@ struct AngleBondsEnergyKernel {
     auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
     auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
 
-    std::optional<double> energy = calc_angle_bonded_energy(iaparams, vec1, vec2);
+    std::optional<double> energy =
+        calc_angle_bonded_energy(iaparams, vec1, vec2);
 
     if (energy) {
       local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();
@@ -183,7 +184,8 @@ struct DihedralBondsEnergyKernel {
     auto const v23 = box_geo.get_mi_vector(pos3, pos1);
     auto const v34 = box_geo.get_mi_vector(pos4, pos3);
 
-    std::optional<double> energy = calc_dihedral_bonded_energy(iaparams, v12, v23, v34);
+    std::optional<double> energy =
+        calc_dihedral_bonded_energy(iaparams, v12, v23, v34);
 
     if (energy) {
       local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();

@@ -226,10 +226,10 @@ inline void add_non_bonded_pair_energy(
 #endif
 }
 
-inline std::optional<double>
-calc_pair_bonded_energy(Bonded_IA_Parameters const &iaparams, auto const dx,
-		        auto const pos1, auto const pos2, double q1q2,
-                        Coulomb::ShortRangeEnergyKernel::kernel_type const *kernel) {
+inline std::optional<double> calc_pair_bonded_energy(
+    Bonded_IA_Parameters const &iaparams, auto const dx, auto const pos1,
+    auto const pos2, double q1q2,
+    Coulomb::ShortRangeEnergyKernel::kernel_type const *kernel) {
 
   if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
     return iap->energy(dx);
@@ -265,8 +265,8 @@ calc_pair_bonded_energy(Bonded_IA_Parameters const &iaparams, auto const dx,
 }
 
 inline std::optional<double>
-calc_angle_bonded_energy(Bonded_IA_Parameters const &iaparams,
-		         auto const vec1, auto const vec2) {
+calc_angle_bonded_energy(Bonded_IA_Parameters const &iaparams, auto const vec1,
+                         auto const vec2) {
   if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
     return iap->energy(vec1, vec2);
   }
@@ -281,8 +281,8 @@ calc_angle_bonded_energy(Bonded_IA_Parameters const &iaparams,
   }
   if (std::get_if<IBMTriel>(&iaparams)) {
     runtimeWarningMsg() << "Unsupported bond type " +
-			       std::to_string(iaparams.index()) +
-			       " in energy calculation.";
+                               std::to_string(iaparams.index()) +
+                               " in energy calculation.";
     return 0.;
   }
   throw BondUnknownTypeError();
@@ -290,7 +290,7 @@ calc_angle_bonded_energy(Bonded_IA_Parameters const &iaparams,
 
 inline std::optional<double>
 calc_dihedral_bonded_energy(Bonded_IA_Parameters const &iaparams,
-		            auto const v12, auto const v23, auto const v34) {
+                            auto const v12, auto const v23, auto const v34) {
   if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
     return iap->energy(v12, v23, v34);
   }
@@ -299,8 +299,8 @@ calc_dihedral_bonded_energy(Bonded_IA_Parameters const &iaparams,
   }
   if (std::get_if<IBMTribend>(&iaparams)) {
     runtimeWarningMsg() << "Unsupported bond type " +
-			       std::to_string(iaparams.index()) +
-			       " in energy calculation.";
+                               std::to_string(iaparams.index()) +
+                               " in energy calculation.";
     return 0.;
   }
   throw BondUnknownTypeError();
@@ -318,14 +318,13 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
 
   if (n_partners == 1) {
     auto const dx = box_geo.get_mi_vector(p1.pos(), p2->pos());
-    return calc_pair_bonded_energy(iaparams, dx,
-				   p1.pos(), p2->pos(),
+    return calc_pair_bonded_energy(iaparams, dx, p1.pos(), p2->pos(),
 #ifdef ESPRESSO_ELECTROSTATICS
-		    		   p1.q() * p2->q(), kernel
+                                   p1.q() * p2->q(), kernel
 #else
-				   0.0, nullptr
+                                   0.0, nullptr
 #endif
-				   );
+    );
   } // 1 partner
   if (n_partners == 2) {
     auto const vec1 = box_geo.get_mi_vector(p2->pos(), p1.pos());

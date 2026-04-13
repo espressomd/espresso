@@ -61,19 +61,14 @@ struct EnergyBinLayout {
 
   KOKKOS_INLINE_FUNCTION
   std::size_t nb_inter_idx(int t1, int t2) const {
-    //auto const hi = (t1 > t2) ? t1 : t2;
-    //auto const lo = (t1 > t2) ? t2 : t1;
-    //return off_nb_inter + Utils::lower_triangular(hi, lo);
-    //return off_nb_inter + std::size_t(hi * (hi + 1) / 2 + lo);
-    return off_nb_inter + Utils::lower_triangular(std::max(t1, t2), std::min(t1, t2));
+    return off_nb_inter +
+           Utils::lower_triangular(std::max(t1, t2), std::min(t1, t2));
   }
 
   KOKKOS_INLINE_FUNCTION
   std::size_t nb_intra_idx(int t1, int t2) const {
-    //auto const hi = (t1 > t2) ? t1 : t2;
-    //auto const lo = (t1 > t2) ? t2 : t1;
-    //return off_nb_intra + std::size_t(hi * (hi + 1) / 2 + lo);
-    return off_nb_intra + Utils::lower_triangular(std::max(t1, t2), std::min(t1, t2));
+    return off_nb_intra +
+           Utils::lower_triangular(std::max(t1, t2), std::min(t1, t2));
   }
 
   KOKKOS_INLINE_FUNCTION std::size_t dipolar_idx() const { return off_dipolar; }
@@ -129,11 +124,11 @@ struct EnergyKernel {
     auto const &ia_params = nonbonded_ias.get_ia_param(t1, t2);
 
     // Determine which data needs to be loaded based on active algorithms
-#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES) or defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_THOLE)
-    auto const flag = compute_pair_data_flags(dist, ia_params,
-                        coulomb_u_kernel != nullptr,
-			dipoles_u_kernel != nullptr,
-                        aosoa, i, j);
+#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES) or                \
+    defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_THOLE)
+    auto const flag =
+        compute_pair_data_flags(dist, ia_params, coulomb_u_kernel != nullptr,
+                                dipoles_u_kernel != nullptr, aosoa, i, j);
 #endif
 
 #if defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_THOLE)
@@ -167,14 +162,14 @@ struct EnergyKernel {
       {
         e_nb += calc_central_radial_energy(ia_params, dist);
 
-        // Only call Thole force kernel if active
+        // Only call Thole energy kernel if active
 #ifdef ESPRESSO_THOLE
         if (thole_active(ia_params, coulomb_u_kernel != nullptr)) {
           e_nb += thole_pair_energy(*p1_ptr, *p2_ptr, ia_params, d, dist,
                                     bonded_ias, coulomb, coulomb_u_kernel);
         }
 #endif
-        // Only call Gay-Berne force kernel if active
+        // Only call Gay-Berne energy kernel if active
 #ifdef ESPRESSO_GAY_BERNE
         if (gay_berne_active(dist, ia_params)) {
           e_nb += gb_pair_energy(dir1, dir2, ia_params, d, dist);
