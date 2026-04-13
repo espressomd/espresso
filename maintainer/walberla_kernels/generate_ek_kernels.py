@@ -348,6 +348,8 @@ with code_generation_context.CodeGeneration() as ctx:
                        patch_boundary_header, processor_suffix)
         ctx.patch_file(class_name, get_ext_source(processor_suffix),
                        patch_boundary_kernel, processor_suffix)
+        ctx.patch_file(class_name, get_ext_source(
+            processor_suffix), patch_openmp_kernels)
 
         # generate dynamic fixed density
         class_name = f"Dirichlet_{precision_suffix}{processor_suffix}"
