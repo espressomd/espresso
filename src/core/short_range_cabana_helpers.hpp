@@ -32,23 +32,22 @@
 
 // Helper functions to check if specific algorithms are active
 #ifdef ESPRESSO_GAY_BERNE
-KOKKOS_INLINE_FUNCTION bool
-gay_berne_active(double dist, IA_parameters const &ia_params) {                                                                                    
+KOKKOS_INLINE_FUNCTION bool gay_berne_active(double dist,
+                                             IA_parameters const &ia_params) {
   return dist < ia_params.gay_berne.cut;
-}                                                                                                                                                  
-#endif          
-																		   
+}
+#endif
+
 #ifdef ESPRESSO_THOLE
-KOKKOS_INLINE_FUNCTION bool
-thole_active(IA_parameters const &ia_params, bool has_coulomb_kernel) {
-  return (ia_params.thole.scaling_coeff != 0. and                                                                                                  
-	  ia_params.thole.q1q2 != 0. and has_coulomb_kernel);                                                                                      
-}                                                                                                                                                  
-#endif                                                                                                                                             
-		
-#ifdef ESPRESSO_DIPOLES                                                                                                                            
-KOKKOS_INLINE_FUNCTION bool
-dipoles_active(bool has_dipoles_kernel) {
+KOKKOS_INLINE_FUNCTION bool thole_active(IA_parameters const &ia_params,
+                                         bool has_coulomb_kernel) {
+  return (ia_params.thole.scaling_coeff != 0. and ia_params.thole.q1q2 != 0. and
+          has_coulomb_kernel);
+}
+#endif
+
+#ifdef ESPRESSO_DIPOLES
+KOKKOS_INLINE_FUNCTION bool dipoles_active(bool has_dipoles_kernel) {
   return has_dipoles_kernel;
 }
 #endif
@@ -58,14 +57,12 @@ struct PairDataFlags {
   bool need_particle_pointers = false;
 };
 
-KOKKOS_INLINE_FUNCTION PairDataFlags
-compute_pair_data_flags([[maybe_unused]] double dist,
-			[[maybe_unused]] IA_parameters const &ia_params,
-			[[maybe_unused]] bool has_coulomb,
-			[[maybe_unused]] bool has_dipoles,
-			[[maybe_unused]] auto const &aosoa,
-			[[maybe_unused]] std::size_t i,
-			[[maybe_unused]] std::size_t j) {
+KOKKOS_INLINE_FUNCTION PairDataFlags compute_pair_data_flags(
+    [[maybe_unused]] double dist,
+    [[maybe_unused]] IA_parameters const &ia_params,
+    [[maybe_unused]] bool has_coulomb, [[maybe_unused]] bool has_dipoles,
+    [[maybe_unused]] auto const &aosoa, [[maybe_unused]] std::size_t i,
+    [[maybe_unused]] std::size_t j) {
   PairDataFlags flags;
 #ifdef ESPRESSO_GAY_BERNE
   flags.need_directors |= gay_berne_active(dist, ia_params);
@@ -74,7 +71,8 @@ compute_pair_data_flags([[maybe_unused]] double dist,
   flags.need_directors |= has_dipoles;
 #endif
 #ifdef ESPRESSO_EXCLUSIONS
-  flags.need_particle_pointers |= aosoa.has_exclusion(i) or aosoa.has_exclusion(j);
+  flags.need_particle_pointers |=
+      aosoa.has_exclusion(i) or aosoa.has_exclusion(j);
 #endif
 #ifdef ESPRESSO_THOLE
   flags.need_particle_pointers |= thole_active(ia_params, has_coulomb);
