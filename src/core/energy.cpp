@@ -86,7 +86,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
                                            get_interaction_range(),
                                            coulomb.cutoff(),
                                            dipoles.cutoff(),
-                                           -1.0};
+                                           inactive_cutoff};
   update_cabana_state(*cell_structure, verlet_criterion,
                       get_interaction_range(), propagation->integ_switch);
 
