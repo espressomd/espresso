@@ -62,6 +62,7 @@ public:
     m_gpu = get_value_or<bool>(args, "gpu", false);
     m_single_precision = get_value_or<bool>(args, "single_precision", m_gpu);
     m_lattice = get_value<decltype(m_lattice)>(args, "lattice");
+    m_conv_potential = 1.;
 
     make_instance(args);
     add_parameters({

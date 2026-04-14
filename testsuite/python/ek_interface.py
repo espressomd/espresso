@@ -178,7 +178,7 @@ class EKTest:
     def test_ek_fft_solver(self):
         ek_solver = self.ek_solver_class(
             lattice=self.lattice, permittivity=0.01,
-            **self.ek_params)
+            tau=self.params["tau"], **self.ek_params)
         self.assertEqual(ek_solver.lattice, self.lattice)
         self.assertEqual(
             ek_solver.single_precision,
@@ -186,6 +186,8 @@ class EKTest:
         self.assertAlmostEqual(ek_solver.permittivity, 0.01, delta=self.atol)
         ek_solver.permittivity = 0.05
         self.assertAlmostEqual(ek_solver.permittivity, 0.05, delta=self.atol)
+        self.assertAlmostEqual(
+            ek_solver.tau, self.params["tau"], delta=self.atol)
 
         self.system.ekcontainer.solver = ek_solver
         self.assertIsInstance(self.system.ekcontainer.solver,
@@ -287,16 +289,16 @@ class EKTest:
 
         if espressomd.has_features("WALBERLA_FFT"):
             ek_solver = self.ek_solver_class(
-                lattice=self.lattice, permittivity=0.01, **self.ek_params)
+                lattice=self.lattice, permittivity=0.01, tau=self.params["tau"], **self.ek_params)
             with self.assertRaisesRegex(NotImplementedError, "Cannot serialize EK Poisson solver node objects"):
                 ek_solver[0, 0, 0].__reduce__()
             with self.assertRaisesRegex(NotImplementedError, "Cannot serialize EK Poisson solver slice objects"):
                 ek_solver[0:1, 0:1, 0:1].__reduce__()
 
             solver_sp = self.ek_solver_class(
-                lattice=self.lattice, permittivity=0.1, single_precision=True)
+                lattice=self.lattice, permittivity=0.1, tau=self.params["tau"], single_precision=True)
             solver_dp = self.ek_solver_class(
-                lattice=self.lattice, permittivity=0.1, single_precision=False)
+                lattice=self.lattice, permittivity=0.1, tau=self.params["tau"], single_precision=False)
             species_sp = self.make_default_ek_species(single_precision=True)
             species_dp = self.make_default_ek_species(single_precision=False)
             self.system.ekcontainer.clear()
@@ -426,7 +428,8 @@ class EKTest:
             friction_coupling=False, advection=False, ext_efield=[0., 0., 0.],
             tau=self.params["tau"], **self.ek_params)
         ek_solver = self.ek_solver_class(
-            lattice=lattice, permittivity=0.3, **self.ek_params)
+            lattice=lattice, permittivity=0.3, tau=self.params["tau"],
+            **self.ek_params)
         self.assertTrue(ek_species.friction_coupling)
         self.assertTrue(ek_species.advection)
         self.assertFalse(ek_wallcharge.friction_coupling)

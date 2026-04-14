@@ -47,6 +47,7 @@ class EKPoissonSolverSlice : public LatticeSlice<EKFieldSerializer> {
   using LatticeModel = ::walberla::PoissonSolver;
   std::shared_ptr<LatticeModel> m_ek_poisson_solver;
   std::shared_ptr<EKPoissonSolver> m_ek_solver_sip;
+  double m_conv_potential;
   std::unordered_map<std::string, std::vector<int>> m_shape_val;
 
 public:
@@ -55,6 +56,7 @@ public:
         get_value<std::shared_ptr<EKPoissonSolver>>(params, "parent_sip");
     m_ek_poisson_solver = m_ek_solver_sip->get_instance();
     assert(m_ek_poisson_solver);
+    m_conv_potential = m_ek_solver_sip->get_conversion_factor_potential();
     m_shape = get_value<std::vector<int>>(params, "shape");
     m_slice_lower_corner =
         get_value<Utils::Vector3i>(params, "slice_lower_corner");

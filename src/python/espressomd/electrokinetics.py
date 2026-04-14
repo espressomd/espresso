@@ -45,6 +45,8 @@ class EKFFT(ScriptInterfaceHelper):
         Lattice object.
     permittivity : :obj:`float`
         permittivity of the fluid :math:`\\epsilon_0 \\epsilon_{\\mathrm{r}}`.
+    tau: : :obj:`float`
+        EK time step, must be an integer multiple of the MD time step.
     gpu : :obj:`bool`, optional
         Use GPU implementation.
     single_precision : :obj:`bool`, optional

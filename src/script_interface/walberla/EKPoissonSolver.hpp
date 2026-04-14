@@ -46,14 +46,21 @@ class EKPoissonVTKHandle : public VTKHandleBase<::walberla::PoissonSolver> {
 
 class EKPoissonSolver
     : public LatticeModel<::walberla::PoissonSolver, EKPoissonVTKHandle> {
+protected:
+  double m_conv_potential;
+
 public:
   virtual std::shared_ptr<::walberla::PoissonSolver>
   get_instance() const noexcept = 0;
 
+  [[nodiscard]] auto get_conversion_factor_potential() const noexcept {
+    return m_conv_potential;
+  }
+
   ::LatticeModel::units_map
   get_lattice_to_md_units_conversion() const override {
     return {
-        {"potential", 1.},
+        {"potential", 1. / m_conv_potential},
     };
   }
 };

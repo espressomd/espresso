@@ -282,7 +282,7 @@ class TestEKVTK(TestVTK):
 
     def add_actor(self):
         self.solver = self.ek_solver(
-            lattice=self.lattice, permittivity=0.1, **self.ek_params)
+            lattice=self.lattice, permittivity=0.1, tau=0.1, **self.ek_params)
         self.species = self.make_actor()
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=0.1, solver=self.solver)

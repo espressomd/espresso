@@ -51,6 +51,7 @@ class EKFFT : public EKPoissonSolver {
 protected:
   std::unique_ptr<ResourceManager> m_resources_lock;
   std::shared_ptr<LatticeWalberla> m_lattice;
+  double m_tau;
   double m_conv_permittivity;
   bool m_gpu;
   bool m_single_precision;
@@ -59,7 +60,10 @@ protected:
   void make_instance(VariantMap const &args) override {
     // unit conversions
     auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
-    m_conv_permittivity = Utils::int_pow<2>(agrid);
+    auto const tau = get_value<double>(args, "tau");
+    m_tau = tau;
+    m_conv_permittivity = Utils::int_pow<3>(agrid) / Utils::int_pow<2>(tau);
+    m_conv_potential = Utils::int_pow<2>(tau) / Utils::int_pow<2>(agrid);
     auto const permittivity =
         get_value<double>(args, "permittivity") * m_conv_permittivity;
     auto *make_new_instance = &::walberla::new_ek_poisson_fft;
@@ -105,6 +109,7 @@ public:
 
   EKFFT() {
     add_parameters({
+        {"tau", AutoParameter::read_only, [this]() { return m_tau; }},
         {"permittivity",
          [this](Variant const &v) {
            m_instance->set_permittivity(get_value<double>(v) *
