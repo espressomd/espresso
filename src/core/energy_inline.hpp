@@ -227,8 +227,8 @@ inline void add_non_bonded_pair_energy(
 }
 
 inline std::optional<double> calc_pair_bonded_energy(
-    Bonded_IA_Parameters const &iaparams, auto const dx, auto const pos1,
-    auto const pos2, double q1q2,
+    Bonded_IA_Parameters const &iaparams, Utils::Vector3d const &dx,
+    Utils::Vector3d const &pos1, Utils::Vector3d const &pos2, double q1q2,
     Coulomb::ShortRangeEnergyKernel::kernel_type const *kernel) {
 
   if (auto const *iap = std::get_if<FeneBond>(&iaparams)) {
@@ -265,8 +265,9 @@ inline std::optional<double> calc_pair_bonded_energy(
 }
 
 inline std::optional<double>
-calc_angle_bonded_energy(Bonded_IA_Parameters const &iaparams, auto const vec1,
-                         auto const vec2) {
+calc_angle_bonded_energy(Bonded_IA_Parameters const &iaparams,
+                         Utils::Vector3d const &vec1,
+                         Utils::Vector3d const &vec2) {
   if (auto const *iap = std::get_if<AngleHarmonicBond>(&iaparams)) {
     return iap->energy(vec1, vec2);
   }
@@ -288,9 +289,9 @@ calc_angle_bonded_energy(Bonded_IA_Parameters const &iaparams, auto const vec1,
   throw BondUnknownTypeError();
 }
 
-inline std::optional<double>
-calc_dihedral_bonded_energy(Bonded_IA_Parameters const &iaparams,
-                            auto const v12, auto const v23, auto const v34) {
+inline std::optional<double> calc_dihedral_bonded_energy(
+    Bonded_IA_Parameters const &iaparams, Utils::Vector3d const &v12,
+    Utils::Vector3d const &v23, Utils::Vector3d const &v34) {
   if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
     return iap->energy(v12, v23, v34);
   }
