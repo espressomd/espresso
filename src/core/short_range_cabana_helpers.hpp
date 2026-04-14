@@ -21,8 +21,6 @@
 
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-
 #include "aosoa_pack.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
@@ -71,5 +69,3 @@ KOKKOS_INLINE_FUNCTION PairDataFlags compute_pair_data_flags(
 #endif
   return flags;
 }
-
-#endif

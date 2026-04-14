@@ -21,8 +21,6 @@
 
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-
 #include "aosoa_pack.hpp"
 #include "energy_inline.hpp"
 #include "short_range_cabana_helpers.hpp"
@@ -237,5 +235,3 @@ static void reduce_cabana_energy(
   obs.coulomb[0] += sum_bin(layout.coulomb_idx());
   obs.dipolar[0] += sum_bin(layout.dipolar_idx());
 }
-
-#endif

@@ -77,7 +77,6 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
   auto const coulomb_kernel = coulomb.pair_energy_kernel();
   auto const dipoles_kernel = dipoles.pair_energy_kernel();
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #ifdef ESPRESSO_CALIPER
   CALI_MARK_BEGIN("cabana_short_range");
 #endif
@@ -141,31 +140,6 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
 #ifdef ESPRESSO_CALIPER
   CALI_MARK_END("cabana_short_range");
 #endif
-
-#else
-  short_range_loop(
-      [this, coulomb_kernel_ptr = get_ptr(coulomb_kernel), &obs_energy](
-          Particle const &p1, int bond_id, std::span<Particle *> partners) {
-        auto const &iaparams = *bonded_ias->at(bond_id);
-        auto const result = calc_bonded_energy(iaparams, p1, partners, *box_geo,
-                                               coulomb_kernel_ptr);
-        if (result) {
-          obs_energy.bonded_contribution(bond_id)[0] += result.value();
-          return false;
-        }
-        return true;
-      },
-      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
-       dipoles_kernel_ptr = get_ptr(dipoles_kernel), this,
-       &obs_energy](Particle const &p1, Particle const &p2, Distance const &d) {
-        auto const &ia_params =
-            nonbonded_ias->get_ia_param(p1.type(), p2.type());
-        add_non_bonded_pair_energy(
-            p1, p2, d.vec21, sqrt(d.dist2), d.dist2, ia_params, *bonded_ias,
-            coulomb, coulomb_kernel_ptr, dipoles_kernel_ptr, obs_energy);
-      },
-      *cell_structure, maximal_cutoff(), bonded_ias->maximal_cutoff());
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 #ifdef ESPRESSO_ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
