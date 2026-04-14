@@ -47,13 +47,9 @@ namespace pystencils {
 
 namespace internal_5c5e903f8ea7925cf790d7c2318b2c56 {
 static FUNC_PREFIX void continuitykernel_double_precision_continuitykernel_double_precision(double *RESTRICT const _data_j, double *RESTRICT _data_rho, int64_t const _size_j_0, int64_t const _size_j_1, int64_t const _size_j_2, int64_t const _stride_j_0, int64_t const _stride_j_1, int64_t const _stride_j_2, int64_t const _stride_j_3, int64_t const _stride_rho_0, int64_t const _stride_rho_1, int64_t const _stride_rho_2) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 1; ctr_2 < _size_j_2 - 1; ctr_2 += 1) {
       for (int64_t ctr_1 = 1; ctr_1 < _size_j_1 - 1; ctr_1 += 1) {
         for (int64_t ctr_0 = 1; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {

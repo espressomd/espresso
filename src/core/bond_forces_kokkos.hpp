@@ -21,8 +21,6 @@
 
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-
 #include "aosoa_pack.hpp"
 #include "cell_system/LocalBondState.hpp"
 #include "forces_inline.hpp"
@@ -277,5 +275,3 @@ struct DihedralBondsKernel {
     }
   }
 };
-
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

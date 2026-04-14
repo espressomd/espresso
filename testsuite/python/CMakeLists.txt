@@ -123,10 +123,7 @@ function(python_test)
   endif()
   list(APPEND TEST_LABELS "python_test")
 
-  set(TEST_NUM_CORES ${TEST_NUM_PROC})
-  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-    math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
-  endif()
+  math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
 
   # cmake-format: off
   set_tests_properties(

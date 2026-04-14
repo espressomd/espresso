@@ -125,13 +125,6 @@ def get_ext_source(target_suffix):
     return {"CUDA": "cu"}.get(target_suffix, "cpp")
 
 
-def patch_openmp_kernels(content):
-    # surrounds omp pragmas with ifdefs
-    content = re.sub("^( *#pragma omp .*)$",
-                     r"#ifdef _OPENMP\n\1\n#endif", content, flags=re.MULTILINE)
-    return content
-
-
 def generate_init_kernels(ctx, method):
     precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
     for params, target_suffix in paramlist(parameters, (default_key,)):
@@ -141,8 +134,6 @@ def generate_init_kernels(ctx, method):
             stem,
             pystencils_espresso.generate_setters(method, data_type),
             **params)
-        ctx.patch_file(stem, get_ext_source(target_suffix),
-                       patch_openmp_kernels)
 
 
 def generate_stream_collide_kernels(ctx, method, data_type, fields):
@@ -180,8 +171,6 @@ def generate_stream_collide_kernels(ctx, method, data_type, fields):
             params,
             block_offset=block_offsets,
         )
-        ctx.patch_file(stem, get_ext_source(target_suffix),
-                       patch_openmp_kernels)
     # Unthermalized Lees-Edwards Stream-Collide Kernels
     shear_dir_normal = 1  # y-axis
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
@@ -205,8 +194,6 @@ def generate_stream_collide_kernels(ctx, method, data_type, fields):
             optimization,
             params
         )
-        ctx.patch_file(stem, get_ext_source(target_suffix),
-                       patch_openmp_kernels)
 
 
 def generate_vel_update_kernels(ctx, method, fields):
@@ -221,8 +208,6 @@ def generate_vel_update_kernels(ctx, method, fields):
             stem,
             assignments,
             **params)
-        ctx.patch_file(stem, get_ext_source(target_suffix),
-                       patch_openmp_kernels)
 
 
 def generate_accessors_kernels(ctx, method):
@@ -327,8 +312,6 @@ def generate_boundary_kernels(ctx, method, data_type):
                        patch_boundary_header, target_suffix)
         ctx.patch_file(class_name, get_ext_source(target_suffix),
                        patch_boundary_kernel, target_suffix)
-        ctx.patch_file(class_name, get_ext_source(target_suffix),
-                       patch_openmp_kernels)
 
 
 with code_generation_context.CodeGeneration() as ctx:

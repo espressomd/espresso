@@ -47,13 +47,9 @@ namespace pystencils {
 
 namespace internal_5255e1c780a944d646f270232511968b {
 static FUNC_PREFIX void advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(double *RESTRICT const _data_j, double *RESTRICT const _data_rho, double *RESTRICT const _data_u, int64_t const _size_j_0, int64_t const _size_j_1, int64_t const _size_j_2, int64_t const _stride_j_0, int64_t const _stride_j_1, int64_t const _stride_j_2, int64_t const _stride_j_3, int64_t const _stride_rho_0, int64_t const _stride_rho_1, int64_t const _stride_rho_2, int64_t const _stride_u_0, int64_t const _stride_u_1, int64_t const _stride_u_2, int64_t const _stride_u_3) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 0; ctr_2 < _size_j_2; ctr_2 += 1) {
       for (int64_t ctr_1 = 0; ctr_1 < _size_j_1; ctr_1 += 1) {
         for (int64_t ctr_0 = 1; ctr_0 < _size_j_0; ctr_0 += 1) {

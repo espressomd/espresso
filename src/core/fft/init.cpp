@@ -19,19 +19,16 @@
 
 #include "init.hpp"
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include <cassert>
 
 #include <fftw3.h>
 
-#ifdef _OPENMP
 #include <omp.h>
-#endif
 
 #ifdef ESPRESSO_FFTW
 void fft_on_program_start() {
-#ifdef _OPENMP
   int omp_num_threads = 1;
 #pragma omp parallel
   {
@@ -41,6 +38,5 @@ void fft_on_program_start() {
   [[maybe_unused]] auto const init_status_success = fftw_init_threads();
   assert(init_status_success);
   fftw_plan_with_nthreads(omp_num_threads);
-#endif // _OPENMP
 }
 #endif // ESPRESSO_FFTW

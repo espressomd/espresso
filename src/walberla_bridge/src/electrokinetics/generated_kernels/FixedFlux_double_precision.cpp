@@ -48,13 +48,9 @@ namespace pystencils {
 // NOLINTBEGIN(readability-non-const-parameter*)
 namespace internal_bdec58bfeb737088cd218660bd069d85 {
 static FUNC_PREFIX void fixedflux_double_precision_boundary_FixedFlux_double_precision(double *RESTRICT const _data_flux, uint8_t *RESTRICT const _data_indexVector, int64_t const _stride_flux_0, int64_t const _stride_flux_1, int64_t const _stride_flux_2, int64_t const _stride_flux_3, int32_t indexVectorSize) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
       const int32_t x = *((int32_t *)(&_data_indexVector[40 * ctr_0]));
       const int32_t y = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 4]));

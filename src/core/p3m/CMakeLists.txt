@@ -33,19 +33,19 @@ if(ESPRESSO_BUILD_WITH_FFTW)
   )
   target_link_libraries(
     espresso_p3m
-    PRIVATE
-      espresso::compiler_flags
-      espresso::p3m::compiler_flags
-      espresso::instrumentation
-      espresso::utils
-      espresso::config
-      Random123
-      Boost::mpi
-      MPI::MPI_CXX
-      Heffte::Heffte
-      $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
-      $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>
-      $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Cabana::Core>)
+    PRIVATE espresso::compiler_flags
+            espresso::p3m::compiler_flags
+            espresso::instrumentation
+            espresso::utils
+            espresso::config
+            Random123
+            Boost::mpi
+            MPI::MPI_CXX
+            Heffte::Heffte
+            OpenMP::OpenMP_CXX
+            $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
+            Kokkos::kokkos
+            Cabana::Core)
   set_target_properties(espresso_p3m PROPERTIES POSITION_INDEPENDENT_CODE ON)
   target_link_libraries(espresso_core PRIVATE espresso_p3m)
   target_sources(

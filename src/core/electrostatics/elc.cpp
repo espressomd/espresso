@@ -39,9 +39,7 @@
 
 #include <utils/math/sqr.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
-#endif
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/range/combine.hpp>
@@ -1129,12 +1127,8 @@ void charge_assign(elc_data const &elc, CoulombP3M &solver,
   solver.prepare_fft_mesh(protocol == ChargeProtocol::BOTH or
                           protocol == ChargeProtocol::IMAGE);
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   // multi-threading -> cache sizes must be equal to the number of particles
   auto constexpr include_neutral_particles = true;
-#else
-  auto constexpr include_neutral_particles = false;
-#endif
 
   for (auto zipped : p_q_pos_range) {
     auto const p_q = boost::get<0>(zipped);

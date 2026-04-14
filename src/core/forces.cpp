@@ -57,9 +57,7 @@
 #include <caliper/cali.h>
 #endif
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Cabana_Core.hpp>
-#endif
 
 #include <cassert>
 #include <cmath>
@@ -125,9 +123,7 @@ static void init_forces_and_thermostat(System::System const &system) {
 #endif
     }
   });
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   cell_structure.reset_local_force();
-#endif
 
   // Initialize ghost forces (unchanged)
   cell_structure.ghosts_reset_forces();
@@ -153,7 +149,6 @@ static void reinit_dip_fld(CellStructure const &cell_structure) {
 }
 #endif
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 static BondsKernelData
 create_kokkos_bonds_kernel_data(System::System const &system) {
 
@@ -262,7 +257,6 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
   }
 #endif
 }
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 void System::System::calculate_forces() {
 #ifdef ESPRESSO_CALIPER
@@ -313,10 +307,9 @@ void System::System::calculate_forces() {
                                            coulomb.cutoff(),
                                            dipoles.cutoff(),
                                            collision_detection_cutoff};
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+
   update_cabana_state(*cell_structure, verlet_criterion,
                       get_interaction_range(), propagation->integ_switch);
-#endif
 #ifdef ESPRESSO_ELECTROSTATICS
   if (coulomb.impl->extension) {
     update_icc_particles();
@@ -336,7 +329,6 @@ void System::System::calculate_forces() {
   CALI_MARK_END("calc_long_range_forces");
 #endif
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #ifdef ESPRESSO_CALIPER
   CALI_MARK_BEGIN("cabana_short_range");
 #endif
@@ -376,56 +368,6 @@ void System::System::calculate_forces() {
 #ifdef ESPRESSO_CALIPER
   CALI_MARK_END("cabana_short_range");
 #endif
-
-#else // ESPRESSO_SHARED_MEMORY_PARALLELISM
-
-#ifdef ESPRESSO_CALIPER
-  CALI_MARK_BEGIN("serial_short_range");
-#endif
-  auto bond_kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
-                      &bonded_ias = *bonded_ias,
-                      &bond_breakage = *bond_breakage, virial,
-                      &box_geo = *box_geo](Particle &p1, int bond_id,
-                                           std::span<Particle *> partners) {
-    return add_bonded_force(p1, bond_id, partners, bonded_ias, bond_breakage,
-                            box_geo, virial, coulomb_kernel_ptr);
-  };
-
-  auto pair_kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
-                      dipoles_kernel_ptr = get_ptr(dipoles_kernel),
-                      elc_kernel_ptr = get_ptr(elc_kernel),
-                      coulomb_u_kernel_ptr = get_ptr(coulomb_u_kernel),
-                      &nonbonded_ias = *nonbonded_ias,
-                      &thermostat = *thermostat, &bonded_ias = *bonded_ias,
-                      virial,
-#ifdef ESPRESSO_COLLISION_DETECTION
-                      &collision_detection = *collision_detection,
-#endif
-                      &box_geo = *box_geo,
-                      system_max_cutoff2 = Utils::sqr(maximal_cutoff())](
-                         Particle &p1, Particle &p2, Distance const &d) {
-    if (d.dist2 > system_max_cutoff2)
-      return;
-    auto const &ia_params = nonbonded_ias.get_ia_param(p1.type(), p2.type());
-    add_non_bonded_pair_force(
-        p1, p2, d.vec21, sqrt(d.dist2), d.dist2, p1.q() * p2.q(), ia_params,
-        thermostat, box_geo, bonded_ias, virial, coulomb_kernel_ptr,
-        dipoles_kernel_ptr, elc_kernel_ptr, coulomb_u_kernel_ptr);
-#ifdef ESPRESSO_COLLISION_DETECTION
-    if (not collision_detection.is_off()) {
-      collision_detection.detect_collision(p1, p2, d.dist2);
-    }
-#endif
-  };
-
-  short_range_loop(bond_kernel, pair_kernel, *cell_structure, maximal_cutoff(),
-                   bonded_ias->maximal_cutoff(), verlet_criterion);
-
-#ifdef ESPRESSO_CALIPER
-  CALI_MARK_END("serial_short_range");
-#endif
-
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
   constraints->add_forces(particles, get_sim_time());
   oif_global->calculate_forces();

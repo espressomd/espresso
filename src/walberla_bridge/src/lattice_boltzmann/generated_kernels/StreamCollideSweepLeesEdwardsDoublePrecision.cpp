@@ -47,9 +47,7 @@ namespace pystencils {
 
 namespace internal_1215ae06312aaf63d726636be94fdda3 {
 static FUNC_PREFIX void streamcollidesweepleesedwardsdoubleprecision_streamcollidesweepleesedwardsdoubleprecision(double *RESTRICT const _data_force, double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_0, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_0, int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2, int64_t const _stride_pdfs_tmp_3, int64_t lebc_bot_index, int64_t lebc_top_index, double omega_bulk, double omega_even, double omega_odd, double omega_shear, double v_s) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
     const double xi_20 = omega_bulk * 0.5;
     const double xi_47 = omega_shear * 0.041666666666666664;
@@ -62,9 +60,7 @@ static FUNC_PREFIX void streamcollidesweepleesedwardsdoubleprecision_streamcolli
     const double xi_175 = omega_odd * 0.125;
     const double rr_0 = 0.0;
     const double xi_45 = rr_0 * 0.041666666666666664;
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 1; ctr_2 < _size_force_2 - 1; ctr_2 += 1) {
       for (int64_t ctr_1 = 1; ctr_1 < _size_force_1 - 1; ctr_1 += 1) {
         for (int64_t ctr_0 = 1; ctr_0 < _size_force_0 - 1; ctr_0 += 1) {

@@ -49,13 +49,9 @@ namespace pystencils {
 
 namespace internal_9f3cf46adc24d4ebfb8e08168d5e7562 {
 static FUNC_PREFIX void updatevelfrompdfsingleprecisionavx_updatevelfrompdfsingleprecisionavx(float *RESTRICT const _data_force, float *RESTRICT const _data_pdfs, float *RESTRICT _data_velocity, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int64_t const _stride_velocity_1, int64_t const _stride_velocity_2, int64_t const _stride_velocity_3) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 1; ctr_2 < _size_force_2 - 1; ctr_2 += 1) {
       for (int64_t ctr_1 = 1; ctr_1 < _size_force_1 - 1; ctr_1 += 1) {
         {

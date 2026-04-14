@@ -116,7 +116,6 @@ struct elc_data {
   /** The space that is finally left. */
   double space_box;
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   /// pairwise contributions from lower and upper layers
   void dielectric_layers_contribution(BoxGeometry const &box_geo,
                                       std::size_t p1, std::size_t p2,
@@ -140,7 +139,6 @@ struct elc_data {
       kernel(q_eff, d);
     }
   }
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
   /// pairwise contributions from lower and upper layers
   void dielectric_layers_contribution(BoxGeometry const &box_geo,
@@ -281,7 +279,6 @@ struct ElectrostaticLayerCorrection
         base_solver);
   }
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   /** @brief Calculate short-range pair energy correction. */
   double pair_energy_correction(std::size_t p1, std::size_t p2, auto &aosoa,
                                 double q1q2) const {
@@ -307,7 +304,6 @@ struct ElectrostaticLayerCorrection
     }
     return energy;
   }
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
   /** @brief Calculate short-range pair energy correction. */
   double pair_energy_correction(Utils::Vector3d const &pos1,

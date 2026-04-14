@@ -48,13 +48,9 @@ namespace pystencils {
 // NOLINTBEGIN(readability-non-const-parameter*)
 namespace internal_6780d252234f1c174ca455eaed762815 {
 static FUNC_PREFIX void reactionkernelindexed_1_single_precision_boundary_ReactionKernelIndexed_1_single_precision(uint8_t *RESTRICT const _data_indexVector, float *RESTRICT _data_rho_0, int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1, int64_t const _stride_rho_0_2, int32_t indexVectorSize, float order_0, float rate_coefficient, float stoech_0) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
       const int32_t x = *((int32_t *)(&_data_indexVector[12 * ctr_0]));
       const int32_t y = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 4]));

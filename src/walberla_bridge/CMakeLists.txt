@@ -126,27 +126,20 @@ espresso_configure_walberla_target(espresso_walberla)
 espresso_configure_walberla_target(espresso_walberla_codegen)
 
 target_link_libraries(
-  espresso_walberla
-  PUBLIC MPI::MPI_CXX espresso::utils
-  PRIVATE
-    espresso::compiler_flags
-    espresso::walberla::compiler_flags
-    espresso::walberla_codegen
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>>:OpenMP::OpenMP_CUDA>
-)
+  espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils
+  PRIVATE espresso::compiler_flags espresso::walberla::compiler_flags
+          espresso::walberla_codegen
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
+          OpenMP::OpenMP_CXX)
 target_link_libraries(
   espresso_walberla_codegen
-  PRIVATE
-    espresso::compiler_flags
-    espresso::walberla::compiler_flags
-    espresso::walberla_codegen::compiler_flags
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>>:OpenMP::OpenMP_CUDA>
-)
+  PRIVATE espresso::compiler_flags espresso::walberla::compiler_flags
+          espresso::walberla_codegen::compiler_flags
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
+          OpenMP::OpenMP_CXX)
 
 function(espresso_set_walberla_codegen_kernel_source_properties source_file)
   # disable sanitizers on kernels due to excessive runtime and VRAM usage

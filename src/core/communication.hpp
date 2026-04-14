@@ -59,10 +59,8 @@
 extern int this_node;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 struct KokkosHandle;
 extern std::shared_ptr<KokkosHandle> kokkos_handle;
-#endif
 
 class CommunicationEnvironment {
   std::shared_ptr<boost::mpi::environment> m_mpi_env;

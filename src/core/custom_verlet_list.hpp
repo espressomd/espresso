@@ -21,8 +21,6 @@
 
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-
 #include <Cabana_VerletList.hpp>
 
 #include <algorithm>
@@ -224,5 +222,3 @@ public:
     return list.neighbors(particle_index, count);
   }
 };
-
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

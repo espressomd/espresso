@@ -791,9 +791,6 @@ using a CMake flag (see :ref:`Options and Variables`).
 - ``STOKESIAN_DYNAMICS``: enable the Stokesian Dynamics propagator
   (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.
 
-- ``SHARED_MEMORY_PARALLELISM``: enable shared-memory parallelism
-  (OpenMP, Kokkos, Cabana)
-
 - ``CALIPER``, ``VALGRIND``, ``FPE``: enable various instrumentation tools
   (see :ref:`Instrumentation`)
 
@@ -957,7 +954,6 @@ The following options control features from external libraries:
 * ``ESPRESSO_BUILD_WITH_SCAFACOS``: Build with ScaFaCoS support.
 * ``ESPRESSO_BUILD_WITH_GSL``: Build with GSL support.
 * ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
-* ``ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM``: Build with shared-memory parallelism support (OpenMP, Cabana, Kokkos, etc.)
 * ``ESPRESSO_BUILD_WITH_WALBERLA``: Build with waLBerla support.
 * ``ESPRESSO_BUILD_WITH_WALBERLA_AVX``: Build waLBerla with AVX kernels instead of regular kernels.
 * ``ESPRESSO_BUILD_WITH_PYTHON``: Build with the Python interface.

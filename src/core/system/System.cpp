@@ -73,9 +73,7 @@ System::System(Private) {
   box_geo = std::make_shared<BoxGeometry>();
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   cell_structure->set_kokkos_handle(::kokkos_handle);
-#endif
 #ifdef ESPRESSO_CUDA
   gpu = std::make_shared<GpuParticleData>();
 #endif
@@ -358,9 +356,7 @@ void System::on_particle_change() {
 
   /* the particle information is no longer valid */
   invalidate_fetch_cache();
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   cell_structure->clear_local_properties();
-#endif
 }
 
 void System::on_particle_charge_change() {
@@ -392,9 +388,7 @@ void System::update_dependent_particles() {
 
 #ifdef ESPRESSO_ELECTROSTATICS
   if (has_icc_enabled()) {
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     rebuild_aosoa();
-#endif
     update_icc_particles();
   }
 #endif
@@ -420,12 +414,9 @@ void System::on_observable_calc() {
 #endif
 
   clear_particle_node();
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   rebuild_aosoa();
-#endif
 }
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 void System::rebuild_aosoa() {
 #ifdef ESPRESSO_COLLISION_DETECTION
   auto const collision_detection_cutoff = collision_detection->cutoff();
@@ -443,7 +434,6 @@ void System::rebuild_aosoa() {
   update_cabana_state(*cell_structure, verlet_criterion,
                       get_interaction_range(), propagation->integ_switch);
 }
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 void System::on_lees_edwards_change() { lb.on_lees_edwards_change(); }
 
@@ -520,9 +510,7 @@ void System::on_integration_start() {
   }
 
   invalidate_fetch_cache();
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   cell_structure->clear_local_properties();
-#endif
 
 #ifdef ESPRESSO_ADDITIONAL_CHECKS
   if (!Utils::Mpi::all_compare(::comm_cart, cell_structure->use_verlet_list)) {

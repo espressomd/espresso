@@ -21,8 +21,6 @@
 
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-
 #include "aosoa_pack.hpp"
 #include "forces_inline.hpp"
 #include "short_range_cabana_helpers.hpp"
@@ -288,5 +286,3 @@ struct ForcesKernel {
 #endif
   }
 };
-
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

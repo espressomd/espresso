@@ -116,16 +116,14 @@ foreach(cython_file ${cython_SRC})
       ${target} PROPERTIES SUFFIX ".so" LINK_FLAGS "-undefined dynamic_lookup")
   endif()
   set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
-  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL CrayClang AND target STREQUAL
-                                                    espressomd__init
-       AND DEFINED OpenMP_craymp_LIBRARY AND EXISTS ${OpenMP_craymp_LIBRARY})
-      # the Cray OpenMP library must be loaded before dependent Cray libraries,
-      # including those imported from target OpenMP::OpenMP_CXX, so as to avoid
-      # "ImportError: cannot allocate memory in static TLS block"
-      target_link_libraries(${target} PRIVATE ${OpenMP_craymp_LIBRARY}
-                                              OpenMP::OpenMP_CXX)
-    endif()
+  if(CMAKE_CXX_COMPILER_ID STREQUAL CrayClang AND target STREQUAL
+                                                  espressomd__init
+     AND DEFINED OpenMP_craymp_LIBRARY AND EXISTS ${OpenMP_craymp_LIBRARY})
+    # the Cray OpenMP library must be loaded before dependent Cray libraries,
+    # including those imported from target OpenMP::OpenMP_CXX, so as to avoid
+    # "ImportError: cannot allocate memory in static TLS block"
+    target_link_libraries(${target} PRIVATE ${OpenMP_craymp_LIBRARY}
+                                            OpenMP::OpenMP_CXX)
   endif()
   target_link_libraries(${target} PRIVATE espresso::config espresso::core
                                           espresso::script_interface)

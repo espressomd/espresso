@@ -49,13 +49,9 @@ namespace pystencils {
 
 namespace internal_e04f3d5b3f93f09e4de6aba968e70d10 {
 static FUNC_PREFIX void diffusivefluxkernelwithelectrostaticthermalized_single_precision_diffusivefluxkernelwithelectrostaticthermalized_single_precision(float D, float *RESTRICT const _data_j, float *RESTRICT const _data_phi, float *RESTRICT const _data_rho, int64_t const _size_j_0, int64_t const _size_j_1, int64_t const _size_j_2, int64_t const _stride_j_0, int64_t const _stride_j_1, int64_t const _stride_j_2, int64_t const _stride_j_3, int64_t const _stride_phi_0, int64_t const _stride_phi_1, int64_t const _stride_phi_2, int64_t const _stride_rho_0, int64_t const _stride_rho_1, int64_t const _stride_rho_2, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, float f_ext_0, float f_ext_1, float f_ext_2, uint32_t field_size_0, uint32_t field_size_1, uint32_t field_size_2, float kT, uint32_t seed, uint32_t time_step, float z) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 0; ctr_2 < _size_j_2; ctr_2 += 1) {
       for (int64_t ctr_1 = 0; ctr_1 < _size_j_1; ctr_1 += 1) {
         for (int64_t ctr_0 = 1; ctr_0 < _size_j_0; ctr_0 += 1) {

@@ -21,8 +21,6 @@
 
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-
 #include "cell_system/CellStructure.hpp"
 
 #include <Kokkos_Core.hpp>
@@ -157,5 +155,3 @@ struct CellStructure::AoSoA_pack {
 
   bool has_exclusion(std::size_t i) const { return flags(i) == uint8_t{1}; }
 };
-
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

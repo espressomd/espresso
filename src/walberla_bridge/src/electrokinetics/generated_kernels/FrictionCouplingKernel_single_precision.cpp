@@ -47,13 +47,9 @@ namespace pystencils {
 
 namespace internal_910e9429dc8b77dbed969a16d3f227fb {
 static FUNC_PREFIX void frictioncouplingkernel_single_precision_frictioncouplingkernel_single_precision(float D, float *RESTRICT _data_f, float *RESTRICT const _data_j, int64_t const _size_f_0, int64_t const _size_f_1, int64_t const _size_f_2, int64_t const _stride_f_0, int64_t const _stride_f_1, int64_t const _stride_f_2, int64_t const _stride_f_3, int64_t const _stride_j_0, int64_t const _stride_j_1, int64_t const _stride_j_2, int64_t const _stride_j_3, float kT, float rho_lb) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 1; ctr_2 < _size_f_2 - 1; ctr_2 += 1) {
       for (int64_t ctr_1 = 1; ctr_1 < _size_f_1 - 1; ctr_1 += 1) {
         for (int64_t ctr_0 = 1; ctr_0 < _size_f_0 - 1; ctr_0 += 1) {

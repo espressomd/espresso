@@ -551,7 +551,6 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
 
   // check bond counting
   {
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     auto &cs = *system.cell_structure;
     auto init_n_pairs = 0;
     auto init_n_angles = 0;
@@ -584,7 +583,6 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     BOOST_CHECK_EQUAL(cs.get_local_angle_bond_numbers(), init_n_angles);
     BOOST_CHECK_EQUAL(cs.get_local_dihedral_bond_numbers(), init_n_dihes);
 #endif // ESPRESSO_COLLISION_DETECTION
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
   }
 
   // check exceptions from sanity checks
@@ -712,11 +710,6 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     BOOST_CHECK_THROW(force_kernel(1u), BondUnknownTypeError);
     BOOST_CHECK_THROW(force_kernel(2u), BondUnknownTypeError);
     BOOST_CHECK_THROW(force_kernel(3u), BondUnknownTypeError);
-    BOOST_CHECK_THROW(add_bonded_force(plist[0], 0, {plist_ptr.begin(), 5ul},
-                                       *system.bonded_ias,
-                                       *system.bond_breakage, *system.box_geo,
-                                       nullptr, nullptr),
-                      BondInvalidSizeError);
 #ifdef ESPRESSO_CUDA
     BOOST_CHECK_THROW(
         invoke_skip_cuda_exceptions([]() { throw std::runtime_error(""); }),

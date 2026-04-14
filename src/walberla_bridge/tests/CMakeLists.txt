@@ -35,8 +35,8 @@ function(ESPRESSO_ADD_TEST)
     DEPENDS
     ${TEST_DEPENDS}
     $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>>:OpenMP::OpenMP_CUDA>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
+    OpenMP::OpenMP_CXX
     espresso::walberla
     espresso::walberla_deps
     espresso::compiler_flags

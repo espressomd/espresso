@@ -47,9 +47,7 @@ namespace pystencils {
 
 namespace internal_a263151a09bd9903959d48e17aef88f9 {
 static FUNC_PREFIX void streamcollidesweepleesedwardssingleprecision_streamcollidesweepleesedwardssingleprecision(float *RESTRICT const _data_force, float *RESTRICT const _data_pdfs, float *RESTRICT _data_pdfs_tmp, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_0, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_0, int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2, int64_t const _stride_pdfs_tmp_3, int64_t lebc_bot_index, int64_t lebc_top_index, float omega_bulk, float omega_even, float omega_odd, float omega_shear, float v_s) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
     const float xi_20 = omega_bulk * 0.5f;
     const float xi_47 = omega_shear * 0.041666666666666664f;
@@ -62,9 +60,7 @@ static FUNC_PREFIX void streamcollidesweepleesedwardssingleprecision_streamcolli
     const float xi_175 = omega_odd * 0.125f;
     const float rr_0 = 0.0f;
     const float xi_45 = rr_0 * 0.041666666666666664f;
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 1; ctr_2 < _size_force_2 - 1; ctr_2 += 1) {
       for (int64_t ctr_1 = 1; ctr_1 < _size_force_1 - 1; ctr_1 += 1) {
         for (int64_t ctr_0 = 1; ctr_0 < _size_force_0 - 1; ctr_0 += 1) {

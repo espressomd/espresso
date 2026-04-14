@@ -25,29 +25,28 @@ import pathlib
 import sys
 import os
 
-HAS_CABANA = espressomd.has_features(["SHARED_MEMORY_PARALLELISM"])
 
 EXPECTED_LABELS = """
 integrate
-  {update_cabana}
+  update_cabana_state
   Initial Force Calculation
     calculate_forces
-      {gpu_to}
-      {update_cabana}
+      copy_particles_to_GPU
+      update_cabana_state
       init_forces_and_thermostat
       calc_long_range_forces
-      {short_range}
-      {gpu_from}
+      cabana_short_range
+      copy_forces_from_GPU
   Integration loop
     integrator_step_1
     resort_particles_if_needed
     calculate_forces
-      {gpu_to}
-      {update_cabana}
+      copy_particles_to_GPU
+      update_cabana_state
       init_forces_and_thermostat
       calc_long_range_forces
-      {short_range}
-      {gpu_from}
+      cabana_short_range
+      copy_forces_from_GPU
     integrator_step_2
 calc_energies
   {update_cabana}

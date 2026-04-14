@@ -173,7 +173,7 @@ public:
   /**
    * @brief Generate a shared handle to temporarily disable any currently
    * active exception trap for the lifetime of the current scope.
-   * If exception trap is currently active, return a null pointer.
+   * If no exception trap is currently active, return a null pointer.
    */
   static std::shared_ptr<scoped_pause> make_shared_pause_scoped();
 

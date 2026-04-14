@@ -111,8 +111,6 @@ option(ESPRESSO_BUILD_WITH_WALBERLA "Build with waLBerla support" ON)
 option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
        "Build waLBerla kernels with AVX2 vectorization"
        ${ESPRESSO_BUILD_WITH_WALBERLA_AVX_DEFAULT})
-option(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM
-       "Build with shared memory parallelism support" OFF)
 option(ESPRESSO_BUILD_BENCHMARKS "Enable benchmarks" OFF)
 option(ESPRESSO_BUILD_WITH_VALGRIND "Build with Valgrind instrumentation" OFF)
 option(ESPRESSO_BUILD_WITH_CALIPER "Build with Caliper instrumentation" OFF)
@@ -441,13 +439,6 @@ target_compile_options(
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-cast-function-type>
     $<$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>:-diag-disable=592>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-global-constructors>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>>:-Wno-format-nonliteral>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>>:-Wno-float-conversion>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-int-float-conversion>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-float-conversion>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-tautological-constant-compare>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM,GNU>>:-Wno-ctad-maybe-unsupported>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-cast-qual>
@@ -632,11 +623,18 @@ endif()
 # Libraries
 #
 
+set(ESPRESSO_OPENMP_COMPONENTS CXX)
+if(ESPRESSO_BUILD_WITH_CUDA)
+  list(APPEND ESPRESSO_OPENMP_COMPONENTS CUDA)
+endif()
+# ESPResSo and Kokkos require some of the new features from OpenMP 5.0, but a
+# version check cannot be enforced here, since GCC versions 12 to 15 report 4.5
+# support for the CXX component, and NVHPC versions <= 26.3 report 4.5 support
+# for the CUDA component
+find_package(OpenMP REQUIRED COMPONENTS ${ESPRESSO_OPENMP_COMPONENTS})
+
 if(ESPRESSO_BUILD_WITH_FFTW)
-  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-    list(APPEND FFTW3_COMPONENTS omp)
-  endif()
-  find_package(fftw3 REQUIRED COMPONENTS ${FFTW3_COMPONENTS})
+  find_package(fftw3 REQUIRED COMPONENTS omp)
 
   if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/heffte-src)
     find_package(Heffte 2.4.1 QUIET)
@@ -669,79 +667,67 @@ if(ESPRESSO_BUILD_WITH_FFTW)
   endif()
 endif()
 
-if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-  set(ESPRESSO_OPENMP_COMPONENTS CXX)
-  if(ESPRESSO_BUILD_WITH_CUDA)
-    list(APPEND ESPRESSO_OPENMP_COMPONENTS CUDA)
-  endif()
-  # ESPResSo and Kokkos require some of the new features from OpenMP 5.0, but a
-  # version check cannot be enforced here, since GCC versions 12 to 15 report
-  # 4.5 support for the CXX component, and NVHPC versions <= 26.3 report 4.5
-  # support for the CUDA component
-  find_package(OpenMP REQUIRED COMPONENTS ${ESPRESSO_OPENMP_COMPONENTS})
+if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
+  find_package(Kokkos 4.6 QUIET)
+endif()
+if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
+  # cmake-format: off
+  FetchContent_Declare(
+    kokkos
+    GIT_REPOSITORY https://github.com/kokkos/kokkos.git
+    GIT_TAG        5.0.2
+    OVERRIDE_FIND_PACKAGE
+  )
+  # cmake-format: on
+  set(BUILD_SHARED_LIBS ON)
+  set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
+  set(Kokkos_ENABLE_SERIAL ON CACHE BOOL "")
+  set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "")
+  set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
+  set(Kokkos_ENABLE_COMPLEX_ALIGN ON CACHE BOOL "")
+  set(Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION ON CACHE BOOL "")
+  set(Kokkos_ENABLE_HWLOC ON CACHE BOOL "")
+  set(Kokkos_ENABLE_DEPRECATED_CODE_5 OFF CACHE BOOL "")
+  FetchContent_MakeAvailable(kokkos)
+  set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+  set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
+  install(TARGETS kokkos LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+  # install all kokkos shared objects
+  get_target_property(ESPRESSO_KOKKOS_LIBS kokkos INTERFACE_LINK_LIBRARIES)
+  foreach(target_name IN LISTS ESPRESSO_KOKKOS_LIBS)
+    get_target_property(target_type ${target_name} TYPE)
+    if(${target_type} STREQUAL "SHARED_LIBRARY" AND ${target_name} MATCHES
+                                                    "^kokkos[a-zA-Z0-9_]+$")
+      install(TARGETS ${target_name}
+              LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+    endif()
+  endforeach()
+  # mark kokkos headers as system headers to disable compiler diagnostics
+  set_property(
+    TARGET kokkos APPEND
+    PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+             $<TARGET_PROPERTY:kokkos,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
 
-  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
-    find_package(Kokkos 4.6 QUIET)
-  endif()
-  if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
-    # cmake-format: off
-    FetchContent_Declare(
-      kokkos
-      GIT_REPOSITORY https://github.com/kokkos/kokkos.git
-      GIT_TAG        5.0.2
-      OVERRIDE_FIND_PACKAGE
-    )
-    # cmake-format: on
-    set(BUILD_SHARED_LIBS ON)
-    set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
-    set(Kokkos_ENABLE_SERIAL ON CACHE BOOL "")
-    set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "")
-    set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
-    set(Kokkos_ENABLE_COMPLEX_ALIGN ON CACHE BOOL "")
-    set(Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION ON CACHE BOOL "")
-    set(Kokkos_ENABLE_HWLOC ON CACHE BOOL "")
-    set(Kokkos_ENABLE_DEPRECATED_CODE_5 OFF CACHE BOOL "")
-    FetchContent_MakeAvailable(kokkos)
-    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
-    set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
-    install(TARGETS kokkos LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
-    # install all kokkos shared objects
-    get_target_property(ESPRESSO_KOKKOS_LIBS kokkos INTERFACE_LINK_LIBRARIES)
-    foreach(target_name IN LISTS ESPRESSO_KOKKOS_LIBS)
-      get_target_property(target_type ${target_name} TYPE)
-      if(${target_type} STREQUAL "SHARED_LIBRARY" AND ${target_name} MATCHES
-                                                      "^kokkos[a-zA-Z0-9_]+$")
-        install(TARGETS ${target_name}
-                LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
-      endif()
-    endforeach()
-    # mark kokkos headers as system headers to disable compiler diagnostics
-    set_property(
-      TARGET kokkos APPEND
-      PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
-               $<TARGET_PROPERTY:kokkos,INTERFACE_INCLUDE_DIRECTORIES>)
-  endif()
-
-  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/cabana-src)
-    find_package(Cabana 0.7.0 QUIET)
-  endif()
-  if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
-    # cmake-format: off
-    FetchContent_Declare(
-      cabana
-      GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
-      GIT_TAG        e76c1a1 # 0.7.0 with patches
-      PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cabana.patch
-    )
-    # cmake-format: on
-    set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
-    FetchContent_MakeAvailable(cabana)
-    # mark Cabana headers as system headers to disable compiler diagnostics
-    set_property(
-      TARGET Core APPEND
-      PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
-               $<TARGET_PROPERTY:Core,INTERFACE_INCLUDE_DIRECTORIES>)
-  endif()
+if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/cabana-src)
+  find_package(Cabana 0.7.0 QUIET)
+endif()
+if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
+  # cmake-format: off
+  FetchContent_Declare(
+    cabana
+    GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
+    GIT_TAG        e76c1a1 # 0.7.0 with patches
+    PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cabana.patch
+  )
+  # cmake-format: on
+  set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
+  FetchContent_MakeAvailable(cabana)
+  # mark Cabana headers as system headers to disable compiler diagnostics
+  set_property(
+    TARGET Core APPEND
+    PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+             $<TARGET_PROPERTY:Core,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
 
 # We need the parallel hdf5 version!
@@ -1017,9 +1003,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
       endif()
     endif()
     set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
-    if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-      set(WALBERLA_BUILD_WITH_OPENMP on CACHE BOOL "")
-    endif()
+    set(WALBERLA_BUILD_WITH_OPENMP on CACHE BOOL "")
     set(WALBERLA_BUILD_WITH_FASTMATH off CACHE BOOL "")
     set(BUILD_SHARED_LIBS OFF)
     FetchContent_MakeAvailable(walberla)

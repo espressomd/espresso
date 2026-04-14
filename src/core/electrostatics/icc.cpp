@@ -48,10 +48,8 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
 #include <omp.h>
-#endif
 
 #include <algorithm>
 #include <cmath>
@@ -77,9 +75,7 @@ static void force_calc_icc(
   auto const reset_kernel = [](Particle &p) { p.force_and_torque() = {}; };
   cell_structure.for_each_local_particle(reset_kernel);
   cell_structure.for_each_ghost_particle(reset_kernel);
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   cell_structure.reset_local_force();
-#endif
 
   // calc ICC forces
   cell_structure.non_bonded_loop(
@@ -120,11 +116,9 @@ void ICCStar::iteration() {
   auto const elc_kernel = coulomb.pair_force_elc_kernel();
   icc_cfg.citeration = 0;
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   using execution_space = Kokkos::DefaultExecutionSpace;
   auto const &unique_particles = cell_structure.get_unique_particles();
   auto const &local_force = cell_structure.get_local_force();
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
   auto global_max_rel_diff = 0.;
 
@@ -135,7 +129,6 @@ void ICCStar::iteration() {
     force_calc_icc(cell_structure, kernel, elc_kernel);
     system.coulomb.calc_long_range_force();
     cell_structure.ghosts_reduce_forces();
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     // force reduction
     int num_threads = execution_space().concurrency();
     kokkos_parallel_range_for<Kokkos::RangePolicy<execution_space>>(
@@ -149,7 +142,6 @@ void ICCStar::iteration() {
           }
         });
     Kokkos::fence();
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
     auto max_rel_diff = 0.;
 
@@ -217,10 +209,8 @@ void ICCStar::iteration() {
 
     /* Update charges on ghosts. */
     cell_structure.ghosts_update(Cells::DATA_PART_PROPERTIES);
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     // refresh local properties
     update_aosoa_charges(cell_structure);
-#endif
 
     icc_cfg.citeration++;
 

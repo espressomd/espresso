@@ -48,7 +48,6 @@ jobs:
           with_gsl: 'true'
           with_walberla: 'true'
           with_walberla_avx: 'false'
-          with_shared_memory_parallelism: 'true'
 
   debian:
     runs-on: ubuntu-latest
@@ -85,7 +84,6 @@ jobs:
           with_gsl: 'false'
           with_scafacos: 'false'
           with_stokesian_dynamics: 'false'
-          with_shared_memory_parallelism: 'false'
           make_check_unit_tests: 'true'
           make_check_python: 'false'
           OMPI_ALLOW_RUN_AS_ROOT: 1
@@ -127,9 +125,9 @@ jobs:
           with_gsl: 'false'
           with_scafacos: 'false'
           with_stokesian_dynamics: 'false'
-          with_shared_memory_parallelism: 'false'
           make_check_unit_tests: 'false'
           make_check_python: 'false'
+          cmake_params: '-D ESPRESSO_TEST_NT=1'
           OMPI_ALLOW_RUN_AS_ROOT: 1
           OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
 
@@ -167,10 +165,9 @@ jobs:
           with_hdf5: 'true'
           with_fftw: 'true'
           with_fpe: 'true'
-          with_gsl: 'false'
+          with_gsl: 'true'
           with_scafacos: 'false'
           with_walberla: 'true'
           with_walberla_avx: 'false'
           with_stokesian_dynamics: 'true'
-          with_shared_memory_parallelism: 'false'
-          cmake_params: '-D CMAKE_CXX_STANDARD=23 -D CMAKE_INCLUDE_PATH=/usr/include/mpich-x86_64 -D CMAKE_PREFIX_PATH=/usr/lib64/mpich/lib/'
+          cmake_params: '-D CMAKE_CXX_STANDARD=23 -D CMAKE_INCLUDE_PATH=/usr/include/mpich-x86_64 -D CMAKE_PREFIX_PATH=/usr/lib64/mpich/lib/ -D ESPRESSO_TEST_NT=1'

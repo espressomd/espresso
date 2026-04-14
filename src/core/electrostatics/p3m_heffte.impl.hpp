@@ -77,10 +77,8 @@
 #include <boost/range/combine.hpp>
 #include <boost/range/numeric.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
 #include <omp.h>
-#endif
 
 #include <algorithm>
 #include <array>
@@ -368,7 +366,6 @@ template <int cao> struct AssignCharge {
     this->operator()(p3m, q, weights);
   }
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   void operator()(auto &p3m, auto &cell_structure) {
     using CoulombP3MState = std::remove_reference_t<decltype(p3m)>;
     using value_type = CoulombP3MState::value_type;
@@ -405,17 +402,6 @@ template <int cao> struct AssignCharge {
                          });
     Kokkos::fence();
   }
-#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
-  void operator()(auto &p3m, auto const &p_q_pos_range) {
-    for (auto zipped : p_q_pos_range) {
-      auto const p_q = boost::get<0>(zipped);
-      if (p_q != 0.0) {
-        auto const &p_pos = boost::get<1>(zipped);
-        this->operator()(p3m, p_q, p_pos, p3m.inter_weights);
-      }
-    }
-  }
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 };
 } // namespace
 
@@ -423,18 +409,8 @@ template <typename FloatType, Arch Architecture, class FFTConfig>
 void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::charge_assign() {
   prepare_fft_mesh(true);
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   Utils::integral_parameter<int, AssignCharge, p3m_min_cao, p3m_max_cao>(
       p3m.params.cao, p3m, *get_system().cell_structure);
-#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
-  auto const &system = get_system();
-  auto const particles = system.cell_structure->local_particles();
-  auto p_q_range = ParticlePropertyRange::charge_range(particles);
-  auto p_pos_range = ParticlePropertyRange::pos_range(particles);
-
-  Utils::integral_parameter<int, AssignCharge, p3m_min_cao, p3m_max_cao>(
-      p3m.params.cao, p3m, boost::combine(p_q_range, p_pos_range));
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 }
 
 template <typename FloatType, Arch Architecture, class FFTConfig>
@@ -452,12 +428,7 @@ void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::assign_charge(
 namespace {
 template <int cao> struct AssignForces {
   void operator()(auto &p3m, auto force_prefac,
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-                  CellStructure &cell_structure
-#else
-                  auto const &p_q_force_range
-#endif
-  ) const {
+                  CellStructure &cell_structure) const {
 
     assert(cao == p3m.inter_weights.cao());
 
@@ -472,17 +443,12 @@ template <int cao> struct AssignForces {
                         force[2u] += w * double(p3m.rs_E_fields[2u][ind]);
                       });
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
       auto const thread_id = omp_get_thread_num();
       p_force(p_index, thread_id, 0) -= pref * force[0];
       p_force(p_index, thread_id, 1) -= pref * force[1];
       p_force(p_index, thread_id, 2) -= pref * force[2];
-#else
-      p_force -= pref * force;
-#endif
     };
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     auto const n_part = cell_structure.count_local_particles();
     auto const &aosoa = cell_structure.get_aosoa();
     auto &local_force = cell_structure.get_local_force();
@@ -492,24 +458,10 @@ template <int cao> struct AssignForces {
             kernel(pref, local_force, p_index);
           }
         });
-#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
-    /* charged particle counter */
-    std::size_t p_index{0ul};
-
-    for (auto zipped : p_q_force_range) {
-      auto p_q = boost::get<0>(zipped);
-      if (p_q != 0.) {
-        auto &p_force = boost::get<1>(zipped);
-        kernel(p_q * force_prefac, p_force, p_index);
-        ++p_index;
-      }
-    }
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
   }
 };
 } // namespace
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 inline auto calc_dipole_moment(boost::mpi::communicator const &comm,
                                auto const &cs, auto const &box_geo) {
   auto const local_dip = reduce_over_local_particles<Utils::Vector3d>(
@@ -520,19 +472,6 @@ inline auto calc_dipole_moment(boost::mpi::communicator const &comm,
       [](Utils::Vector3d &a, Utils::Vector3d const &b) { a = a + b; });
   return boost::mpi::all_reduce(comm, local_dip, std::plus<>());
 }
-#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
-inline auto calc_dipole_moment(boost::mpi::communicator const &comm,
-                               auto const &p_q_unfolded_pos_range) {
-  auto const local_dip =
-      boost::accumulate(p_q_unfolded_pos_range, Utils::Vector3d{},
-                        [](Utils::Vector3d const &dip, auto const &q_pos) {
-                          auto const p_q = boost::get<0>(q_pos);
-                          auto const &p_unfolded_pos = boost::get<1>(q_pos);
-                          return dip + p_q * p_unfolded_pos;
-                        });
-  return boost::mpi::all_reduce(comm, local_dip, std::plus<>());
-}
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 template <typename FloatType, Arch Architecture, class FFTConfig>
 void CoulombP3MHeffte<FloatType, Architecture,
@@ -709,27 +648,13 @@ double CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
 
   kernel_ks_charge_density();
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   auto const &local_force = cell_structure.get_local_force();
   auto const &aosoa = cell_structure.get_aosoa();
-#else
-  auto const particles = cell_structure.local_particles();
-  auto p_q_range = ParticlePropertyRange::charge_range(particles);
-  auto p_force_range = ParticlePropertyRange::force_range(particles);
-  auto p_unfolded_pos_range =
-      ParticlePropertyRange::unfolded_pos_range(particles, box_geo);
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
   // The dipole moment is only needed if we don't have metallic boundaries
   auto const box_dipole = (p3m.params.epsilon != P3M_EPSILON_METALLIC)
                               ? std::make_optional(calc_dipole_moment(
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
                                     comm_cart, cell_structure, box_geo))
-#else
-                                    comm_cart,
-                                    boost::combine(p_q_range,
-                                                   p_unfolded_pos_range)))
-#endif
                               : std::nullopt;
   auto const volume = box_geo.volume();
   auto const pref =
@@ -742,11 +667,7 @@ double CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
 
     // assign particle forces
     auto const force_prefac = prefactor / volume;
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     auto &particle_data = cell_structure;
-#else
-    auto const particle_data = boost::combine(p_q_range, p_force_range);
-#endif
     Utils::integral_parameter<int, AssignForces, p3m_min_cao, p3m_max_cao>(
         p3m.params.cao, p3m, force_prefac, particle_data);
 
@@ -754,7 +675,6 @@ double CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
     // Eq. (3.19) @cite deserno00b
     if (box_dipole) {
       auto const dm = prefactor * pref * box_dipole.value();
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
       auto const n_part = cell_structure.count_local_particles();
       kokkos_parallel_range_for(
           "AssignForcesBoxDipole", std::size_t{0u}, n_part,
@@ -765,13 +685,6 @@ double CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
             local_force(p_index, thread_id, 1) -= q * dm[1];
             local_force(p_index, thread_id, 2) -= q * dm[2];
           });
-#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
-      for (auto zipped : boost::combine(p_q_range, p_force_range)) {
-        auto p_q = boost::get<0>(zipped);
-        auto &p_force = boost::get<1>(zipped);
-        p_force -= p_q * dm;
-      }
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
     }
   }
 

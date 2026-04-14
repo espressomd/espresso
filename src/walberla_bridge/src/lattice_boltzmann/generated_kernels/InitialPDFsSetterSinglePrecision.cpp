@@ -47,15 +47,11 @@ namespace pystencils {
 
 namespace internal_b8085d63d6b7e842485134abbac511e8 {
 static FUNC_PREFIX void initialpdfssettersingleprecision_initialpdfssettersingleprecision(float *RESTRICT const _data_force, float *RESTRICT _data_pdfs, float *RESTRICT const _data_velocity, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_0, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int64_t const _stride_velocity_0, int64_t const _stride_velocity_1, int64_t const _stride_velocity_2, int64_t const _stride_velocity_3, float rho_0) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
     const float rho = rho_0;
     const float delta_rho = rho - 1.0f;
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 0; ctr_2 < _size_force_2; ctr_2 += 1) {
       for (int64_t ctr_1 = 0; ctr_1 < _size_force_1; ctr_1 += 1) {
         for (int64_t ctr_0 = 0; ctr_0 < _size_force_0; ctr_0 += 1) {

@@ -47,7 +47,7 @@ style:
     - cd build
     - cp ../style.patch .
     - cp ../maintainer/configs/maxset.hpp myconfig.hpp
-    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_FFTW=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON -D ESPRESSO_BUILD_WITH_CALIPER=ON -D ESPRESSO_BUILD_WITH_FPE=ON -D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM=ON -D ESPRESSO_BUILD_WITH_NLOPT=ON
+    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_FFTW=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON -D ESPRESSO_BUILD_WITH_CALIPER=ON -D ESPRESSO_BUILD_WITH_FPE=ON -D ESPRESSO_BUILD_WITH_NLOPT=ON
     - sh ../maintainer/CI/dox_warnings.sh
   tags:
     - espresso
@@ -146,7 +146,6 @@ clang-sanitizer:
      with_scafacos: 'true'
      with_walberla: 'true'
      with_stokesian_dynamics: 'true'
-     with_shared_memory_parallelism: 'true'
      with_nlopt: 'true'
      with_coverage: 'false'
      with_coverage_python: 'false'
@@ -193,7 +192,6 @@ cuda12-coverage:
      with_scafacos: 'true'
      with_walberla: 'true'
      with_stokesian_dynamics: 'true'
-     with_shared_memory_parallelism: 'true'
      with_nlopt: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
@@ -221,7 +219,6 @@ cuda12-maxset:
      with_walberla: 'true'
      with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
-     with_shared_memory_parallelism: 'true'
      with_nlopt: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
@@ -367,7 +364,6 @@ installation:
      with_walberla: 'true'
      with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
-     with_shared_memory_parallelism: 'true'
      with_nlopt: 'true'
      srcdir: '${CI_PROJECT_DIR}'
      build_type: 'Release'

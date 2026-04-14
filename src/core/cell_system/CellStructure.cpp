@@ -52,12 +52,10 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Cabana_Core.hpp>
 #include <Cabana_NeighborList.hpp>
 #include <Kokkos_Core.hpp>
 #include <omp.h>
-#endif
 
 #include <algorithm>
 #include <cassert>
@@ -78,14 +76,11 @@
 #include <vector>
 
 CellStructure::~CellStructure() {
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   clear_local_properties();
   // Kokkos handle can only be freed after all Cabana containers have been freed
   m_kokkos_handle.reset();
-#endif
 }
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 void CellStructure::clear_local_properties() {
   m_local_force.reset();
 #ifdef ESPRESSO_ROTATION
@@ -312,8 +307,6 @@ void CellStructure::set_index_map() {
   m_num_local_particles_cached = unique_particles.size();
 }
 
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
-
 CellStructure::CellStructure(BoxGeometry const &box)
     : m_decomposition{std::make_unique<AtomDecomposition>(box)} {}
 
@@ -418,7 +411,6 @@ int CellStructure::get_max_local_particle_id() const {
   return (it != m_particle_index.rend()) ? (*it)->id() : -1;
 }
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 int CellStructure::get_local_pair_bond_numbers() const {
   return m_bond_state->pair_count;
 }
@@ -440,7 +432,6 @@ void CellStructure::add_new_bond(int bond_id,
 }
 void CellStructure::rebuild_bond_list() { m_bond_state->rebuild(); }
 #endif // ESPRESSO_COLLISION_DETECTION
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 void CellStructure::remove_all_particles() {
   for (auto cell : decomposition().local_cells()) {
@@ -448,9 +439,7 @@ void CellStructure::remove_all_particles() {
   }
 
   m_particle_index.clear();
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   clear_bond_properties();
-#endif
 }
 
 /* Map the data parts flags from cells to those used internally
@@ -617,7 +606,6 @@ void CellStructure::update_ghosts_and_resort_particle(unsigned data_parts) {
   }
 }
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 void CellStructure::parallel_for_each_particle_impl(
     std::span<Cell *const> cells, ParticleUnaryOp &f) const {
   if (cells.size() > 1) {
@@ -633,7 +621,6 @@ void CellStructure::parallel_for_each_particle_impl(
         [&](auto part_idx) { f(*(particles.begin() + part_idx)); });
   }
 }
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 bool CellStructure::check_resort_required(
     Utils::Vector3d const &additional_offset) const {

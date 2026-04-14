@@ -49,13 +49,9 @@ namespace pystencils {
 
 namespace internal_0f4fef9c62f0d4e3c1700727b32f958f {
 static FUNC_PREFIX void diffusivefluxkernelthermalized_double_precision_diffusivefluxkernelthermalized_double_precision(double D, double *RESTRICT const _data_j, double *RESTRICT const _data_rho, int64_t const _size_j_0, int64_t const _size_j_1, int64_t const _size_j_2, int64_t const _stride_j_0, int64_t const _stride_j_1, int64_t const _stride_j_2, int64_t const _stride_j_3, int64_t const _stride_rho_0, int64_t const _stride_rho_1, int64_t const _stride_rho_2, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, uint32_t field_size_0, uint32_t field_size_1, uint32_t field_size_2, uint32_t seed, uint32_t time_step) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 0; ctr_2 < _size_j_2; ctr_2 += 1) {
       for (int64_t ctr_1 = 0; ctr_1 < _size_j_1; ctr_1 += 1) {
         for (int64_t ctr_0 = 1; ctr_0 < _size_j_0; ctr_0 += 1) {

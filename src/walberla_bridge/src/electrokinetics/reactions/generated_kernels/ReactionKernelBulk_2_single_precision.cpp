@@ -47,13 +47,9 @@ namespace pystencils {
 
 namespace internal_6de92b64acc501777cd14903620af26b {
 static FUNC_PREFIX void reactionkernelbulk_2_single_precision_reactionkernelbulk_2_single_precision(float *RESTRICT _data_rho_0, float *RESTRICT _data_rho_1, int64_t const _size_rho_0_0, int64_t const _size_rho_0_1, int64_t const _size_rho_0_2, int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1, int64_t const _stride_rho_0_2, int64_t const _stride_rho_1_0, int64_t const _stride_rho_1_1, int64_t const _stride_rho_1_2, float order_0, float order_1, float rate_coefficient, float stoech_0, float stoech_1) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 0; ctr_2 < _size_rho_0_2; ctr_2 += 1) {
       for (int64_t ctr_1 = 0; ctr_1 < _size_rho_0_1; ctr_1 += 1) {
         for (int64_t ctr_0 = 0; ctr_0 < _size_rho_0_0; ctr_0 += 1) {

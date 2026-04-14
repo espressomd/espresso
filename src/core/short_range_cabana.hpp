@@ -21,8 +21,6 @@
 
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-
 #include "cell_system/CellStructure.hpp"
 
 #include "aosoa_pack.hpp"
@@ -375,5 +373,3 @@ void cabana_short_range(auto const &pair_bonds_kernel,
 #endif
   }
 }
-
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

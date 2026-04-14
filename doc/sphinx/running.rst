@@ -262,9 +262,8 @@ extra arguments are passed to the ``mpiexec`` program.
 On cluster computers, it might be necessary to load the MPI library with
 ``module load openmpi`` or similar.
 
-On modern NUMA architectures, |es| can leverage shared-memory parallelism
-(SMP) using the `OpenMP <https://www.openmp.org>`__ programming model.
-This is enabled via the CMake option ``-D SHARED_MEMORY_PARALLELISM=ON``.
+|es| leverages shared-memory parallelism (SMP) using
+the `OpenMP <https://www.openmp.org>`__ programming model.
 To run a simulation with 4 OpenMP threads, use the following syntax:
 
 .. code-block:: bash

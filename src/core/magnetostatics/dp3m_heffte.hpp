@@ -36,10 +36,8 @@
 
 #include <utils/Vector.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
 #include <omp.h>
-#endif
 
 #include <array>
 #include <cassert>
@@ -137,7 +135,6 @@ struct DipolarP3MState : public P3MStateCommon<FloatType> {
   void resize_heffte_buffers();
 #endif // ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   Kokkos::View<FloatType ***, Kokkos::LayoutRight, Kokkos::HostSpace>
       rs_fields_kokkos;
 
@@ -151,7 +148,6 @@ struct DipolarP3MState : public P3MStateCommon<FloatType> {
     rs_fields_kokkos = decltype(rs_fields_kokkos)(
         "DipolarP3MState::rs_fields_kokkos", 0, 0, 0);
   }
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 };
 
 template <typename FloatType, Arch Architecture, class FFTConfig>
@@ -167,10 +163,8 @@ struct DipolarP3MHeffte : public DipolarP3M {
   DipolarP3MStateClass &dp3m;
 
 private:
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   // kokkos handle must outlive kokkos data structures from other class members
   std::shared_ptr<KokkosHandle> m_kokkos_handle;
-#endif
   /** @brief Dipolar P3M meshes and FFT algorithm. */
   std::unique_ptr<DipolarP3MStateClass> dp3m_impl;
   TuningParameters tuning;
@@ -180,10 +174,8 @@ public:
   DipolarP3MHeffte(std::unique_ptr<DipolarP3MStateClass> &&dp3m_state,
                    TuningParameters tuning_params, double prefactor)
       : DipolarP3M(dp3m_state->params), dp3m{*dp3m_state},
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-        m_kokkos_handle{::kokkos_handle},
-#endif
-        dp3m_impl{std::move(dp3m_state)}, tuning{std::move(tuning_params)} {
+        m_kokkos_handle{::kokkos_handle}, dp3m_impl{std::move(dp3m_state)},
+        tuning{std::move(tuning_params)} {
 
     if (tuning.timings <= 0) {
       throw std::domain_error("Parameter 'timings' must be > 0");
@@ -194,9 +186,7 @@ public:
     m_is_tuned = not dp3m.params.tuning;
     dp3m.params.tuning = false;
     set_prefactor(prefactor);
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     dp3m.init_labels();
-#endif
   }
 
   void init() override {
@@ -233,13 +223,11 @@ public:
 private:
   void prepare_fft_mesh() {
     dp3m.inter_weights.reset(dp3m.params.cao);
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     using execution_space = Kokkos::DefaultExecutionSpace;
     auto const num_threads = execution_space().concurrency();
     Kokkos::realloc(Kokkos::WithoutInitializing, dp3m.rs_fields_kokkos,
                     num_threads, 3, dp3m.local_mesh.size);
     Kokkos::deep_copy(dp3m.rs_fields_kokkos, FloatType{0});
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
     for (auto &rs_mesh_field : dp3m.mesh.rs_fields) {
       std::ranges::fill(rs_mesh_field, FloatType{0});
     }

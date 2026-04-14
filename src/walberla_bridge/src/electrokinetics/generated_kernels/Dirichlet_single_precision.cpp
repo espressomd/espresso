@@ -48,13 +48,9 @@ namespace pystencils {
 // NOLINTBEGIN(readability-non-const-parameter*)
 namespace internal_43f4eae176e72ad2d9db0f0468064c30 {
 static FUNC_PREFIX void dirichlet_single_precision_boundary_Dirichlet_single_precision(float *RESTRICT _data_field, uint8_t *RESTRICT const _data_indexVector, int64_t const _stride_field_0, int64_t const _stride_field_1, int64_t const _stride_field_2, int32_t indexVectorSize) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
       const int32_t x = *((int32_t *)(&_data_indexVector[20 * ctr_0]));
       const int32_t y = *((int32_t *)(&_data_indexVector[20 * ctr_0 + 4]));
