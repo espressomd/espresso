@@ -154,7 +154,7 @@ struct EnergyKernel {
 #ifdef ESPRESSO_EXCLUSIONS
       bool skip = false;
       if (aosoa.has_exclusion(i) or aosoa.has_exclusion(j))
-        skip = not do_nonbonded(*unique_particles[i], *unique_particles[j]);
+        skip = not do_nonbonded(*p1_ptr, *p2_ptr);
       if (not skip)
 #endif
       {
