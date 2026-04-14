@@ -95,6 +95,8 @@ class CellSystem(ut.TestCase):
         self.check_node_grid()
 
     @utx.skipIfMissingFeatures(["WCA", "SHARED_MEMORY_PARALLELISM"])
+    @ut.skipIf(espressomd.has_features("FPE"),
+               "cannot run with FPE instrumentation")
     def test_verlet_list_overflow(self):
         system = self.system
         system.part.clear()

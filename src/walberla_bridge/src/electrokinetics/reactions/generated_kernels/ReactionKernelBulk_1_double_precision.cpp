@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 007e77e077ad9d22b5eed6f3d3118240993e553c
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 3247aa7395049ca5bfb69d34d55e45db19fa439c
 
 #include <cmath>
 
@@ -47,12 +47,20 @@ namespace pystencils {
 
 namespace internal_a94c3c474646ee6905a4b90e8ccc47e6 {
 static FUNC_PREFIX void reactionkernelbulk_1_double_precision_reactionkernelbulk_1_double_precision(double *RESTRICT _data_rho_0, int64_t const _size_rho_0_0, int64_t const _size_rho_0_1, int64_t const _size_rho_0_2, int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1, int64_t const _stride_rho_0_2, double order_0, double rate_coefficient, double stoech_0) {
-  for (int64_t ctr_2 = 0; ctr_2 < _size_rho_0_2; ctr_2 += 1) {
-    for (int64_t ctr_1 = 0; ctr_1 < _size_rho_0_1; ctr_1 += 1) {
-      for (int64_t ctr_0 = 0; ctr_0 < _size_rho_0_0; ctr_0 += 1) {
-        const double local_rho_0 = _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2];
-        const double rate_factor = pow(local_rho_0, order_0) * rate_coefficient;
-        _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2] = local_rho_0 + rate_factor * stoech_0;
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+  {
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+    for (int64_t ctr_2 = 0; ctr_2 < _size_rho_0_2; ctr_2 += 1) {
+      for (int64_t ctr_1 = 0; ctr_1 < _size_rho_0_1; ctr_1 += 1) {
+        for (int64_t ctr_0 = 0; ctr_0 < _size_rho_0_0; ctr_0 += 1) {
+          const double local_rho_0 = _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2];
+          const double rate_factor = pow(local_rho_0, order_0) * rate_coefficient;
+          _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2] = local_rho_0 + rate_factor * stoech_0;
+        }
       }
     }
   }

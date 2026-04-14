@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 007e77e077ad9d22b5eed6f3d3118240993e553c
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 3247aa7395049ca5bfb69d34d55e45db19fa439c
 
 #include "Dirichlet_double_precision.h"
 #include "core/DataTypes.h"
@@ -48,12 +48,20 @@ namespace pystencils {
 // NOLINTBEGIN(readability-non-const-parameter*)
 namespace internal_74da74b67a122b7887d3d21c7ea5f414 {
 static FUNC_PREFIX void dirichlet_double_precision_boundary_Dirichlet_double_precision(double *RESTRICT _data_field, uint8_t *RESTRICT const _data_indexVector, int64_t const _stride_field_0, int64_t const _stride_field_1, int64_t const _stride_field_2, int32_t indexVectorSize) {
-  for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
-    const int32_t x = *((int32_t *)(&_data_indexVector[24 * ctr_0]));
-    const int32_t y = *((int32_t *)(&_data_indexVector[24 * ctr_0 + 4]));
-    const int32_t z = *((int32_t *)(&_data_indexVector[24 * ctr_0 + 8]));
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+  {
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+    for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
+      const int32_t x = *((int32_t *)(&_data_indexVector[24 * ctr_0]));
+      const int32_t y = *((int32_t *)(&_data_indexVector[24 * ctr_0 + 4]));
+      const int32_t z = *((int32_t *)(&_data_indexVector[24 * ctr_0 + 8]));
 
-    _data_field[_stride_field_0 * x + _stride_field_1 * y + _stride_field_2 * z] = *((double *)(&_data_indexVector[24 * ctr_0 + 16]));
+      _data_field[_stride_field_0 * x + _stride_field_1 * y + _stride_field_2 * z] = *((double *)(&_data_indexVector[24 * ctr_0 + 16]));
+    }
   }
 }
 } // namespace internal_74da74b67a122b7887d3d21c7ea5f414

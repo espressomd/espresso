@@ -36,6 +36,7 @@
  * the duration of a scoped block. Exception traps are set when the object
  * is created; when getting out-of-scope, either normally or during stack
  * unwinding, the exception traps are automatically reset.
+ * This idiom is called "scope-based resource management".
  *
  * Please note "exception" and "exception handling" have a specific meaning
  * in this context and are completely unrelated to C++ exceptions.
@@ -91,6 +92,7 @@ class fe_trap {
   };
   static global_state_params global_state;
 
+  /** @brief Scope-based handle to manage an exception trap lifetime. */
   struct scoped_instance {
     explicit scoped_instance(std::shared_ptr<fe_trap> ptr)
         : m_resource{std::move(ptr)} {}
@@ -99,10 +101,27 @@ class fe_trap {
     scoped_instance &operator=(scoped_instance const &) = delete;
     scoped_instance &operator=(scoped_instance &&) noexcept = default;
     bool is_unique() const { return m_resource->is_unique(); }
+    bool is_active() const { return m_resource->is_active(); }
     int get_flags() const { return m_resource->get_flags(); }
+    auto &get_trap() { return *m_resource; }
+    auto const &get_trap() const { return *m_resource; }
+    bool operator==(scoped_instance const &) const = default;
 
   private:
     std::shared_ptr<fe_trap> m_resource;
+  };
+
+  /** @brief Scope-based handle to temporarily disable an exception trap. */
+  struct scoped_pause {
+    std::weak_ptr<fe_trap> m_resource;
+    explicit scoped_pause(std::shared_ptr<fe_trap> ptr) : m_resource{ptr} {
+      ptr->deactivate();
+    }
+    ~scoped_pause() {
+      if (auto const ptr = m_resource.lock()) {
+        ptr->activate();
+      }
+    }
   };
 
   struct deleter {
@@ -112,9 +131,15 @@ class fe_trap {
 
   int m_flags;
   bool m_unique;
+  bool m_active; // this flag is not strictly equivalent to `not m_pause`
+  std::weak_ptr<scoped_pause> m_pause;
 
-  fe_trap(std::optional<int> excepts, bool unique);
-  ~fe_trap();
+  fe_trap(std::optional<int> excepts, bool unique)
+      : m_flags{parse_excepts(excepts)}, m_unique{unique}, m_active{false},
+        m_pause{} {
+    activate();
+  }
+  ~fe_trap() { deactivate(); }
 
   static int parse_excepts(std::optional<int> excepts);
 
@@ -127,6 +152,8 @@ public:
   int get_flags() const { return m_flags; }
   /** @brief Check if this handle is a unique handle. */
   bool is_unique() const { return m_unique; }
+  /** @brief Check if this handle has a currrently active trap. */
+  bool is_active() const { return m_active; }
 
   /**
    * @brief Generate a unique trap with the lifetime of the current scope.
@@ -142,6 +169,25 @@ public:
    */
   static scoped_instance
   make_shared_scoped(std::optional<int> excepts = std::nullopt);
+
+  /**
+   * @brief Generate a shared handle to temporarily disable any currently
+   * active exception trap for the lifetime of the current scope.
+   * If exception trap is currently active, return a null pointer.
+   */
+  static std::shared_ptr<scoped_pause> make_shared_pause_scoped();
+
+  /** @brief Manually activate the exception trap. */
+  void activate();
+
+  /**
+   * @brief Manually deactivate the exception trap.
+   * Useful when calling a third-party library that is known to send signals.
+   * This should only be used in exceptional cases
+   * (@ref make_shared_pause_scoped provides a scope-based alternative).
+   * Call @ref activate() to re-activate the exception trap.
+   */
+  void deactivate();
 };
 
 #endif // ESPRESSO_FPE

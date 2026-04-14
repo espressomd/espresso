@@ -330,6 +330,28 @@ public:
     }
 #endif
     reset_charge_field();
+#if not defined(__CUDACC__)
+    if constexpr (Architecture == lbmpy::Arch::CPU) {
+      // make FFT plan
+      heffte->fft->forward(m_potential.data(), m_potential_fourier.data(),
+                           heffte->buffer->data());
+    }
+#endif
+#if defined(__CUDACC__)
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      for (auto &block : *get_lattice().get_blocks()) {
+        auto potential =
+            block.template getData<PotentialField>(m_potential_field_id);
+        auto fourier =
+            block.template getData<PotentialFourier>(m_potential_fourier_id);
+        FloatType *_data_potential = potential->dataAt(0, 0, 0, 0);
+        ComplexType *_data_fourier = fourier->dataAt(0, 0, 0, 0);
+        // make FFT plan
+        heffte->fft->forward(_data_potential, _data_fourier,
+                             heffte->buffer->data());
+      }
+    }
+#endif
   }
 
   [[nodiscard]] std::optional<double>

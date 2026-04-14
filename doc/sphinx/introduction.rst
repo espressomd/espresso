@@ -319,7 +319,8 @@ The following tutorials are available:
 * :file:`active_matter`: Modelling of self-propelling particles.
 * :file:`electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
 * :file:`constant_pH`: Modelling the titration of a weak acid using the constant pH method
-* :file:`widom_insertion`: Measuring the excess chemical potential of a salt solution using the Widom particle insertion method
+* :file:`widom_insertion`: Measuring the excess chemical potential of a salt solution using the Widom particle insertion method :cite:`widom63a`
+* :file:`grand_canonical_monte_carlo`: Simulating in the Grand-canonical ensemble with the Grand-canonical Monte Carlo method (GCMC) :cite:`landsgesell20b`
 * :file:`mlip`: Atomistic simulations using machine-learned interatomic potentials and the MACE-MP-0 model :cite:`batatia22a,batatia25a`
 * :file:`mlip-water`: Modelling water using the TIP4P model :cite:`abascal05a` and machine-learning interatomic potentials with Apax :cite:`schafer25a`
 
