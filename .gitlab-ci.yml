@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu:4d3e236db5ae334ddcc9c3c82aae7637faa5dabc
+image: ghcr.io/espressomd/docker/ubuntu:ab5bc64f5c3cc7330952f8b3bf321270ca53960c
 
 stages:
   - prepare
@@ -16,7 +16,7 @@ stages:
 
 .notification_job_template: &notification_job_definition
   <<: *global_job_definition
-  image: ghcr.io/espressomd/docker/alpine:4d3e236db5ae334ddcc9c3c82aae7637faa5dabc
+  image: ghcr.io/espressomd/docker/alpine:ab5bc64f5c3cc7330952f8b3bf321270ca53960c
   variables:
     GET_SOURCES_ATTEMPTS: 3
   dependencies: []
