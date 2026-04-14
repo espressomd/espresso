@@ -216,7 +216,7 @@ static void reduce_cabana_energy(
 
   auto sum_bin = [&](std::size_t bin) {
     double s = 0.;
-    for (int t = 0; t < nthreads; ++t)
+    for (std::size_t t = 0; t < nthreads; ++t)
       s += host(t, bin);
     return s;
   };

@@ -23,8 +23,6 @@
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
-#include <config/config.hpp>
-
 #include "aosoa_pack.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
@@ -43,12 +41,6 @@ KOKKOS_INLINE_FUNCTION bool thole_active(IA_parameters const &ia_params,
                                          bool has_coulomb_kernel) {
   return (ia_params.thole.scaling_coeff != 0. and ia_params.thole.q1q2 != 0. and
           has_coulomb_kernel);
-}
-#endif
-
-#ifdef ESPRESSO_DIPOLES
-KOKKOS_INLINE_FUNCTION bool dipoles_active(bool has_dipoles_kernel) {
-  return has_dipoles_kernel;
 }
 #endif
 
