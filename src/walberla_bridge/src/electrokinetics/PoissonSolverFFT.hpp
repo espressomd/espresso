@@ -47,7 +47,6 @@
 #include <gpu/FieldAccessor.h>
 #include <gpu/FieldIndexing.h>
 #include <gpu/GPUField.h>
-#include <gpu/HostFieldAllocator.h>
 #include <gpu/Kernel.h>
 #include <gpu/communication/MemcpyPackInfo.h>
 #include <gpu/communication/UniformGPUScheme.h>
@@ -108,7 +107,6 @@ protected:
   template <typename FT, lbmpy::Arch AT = lbmpy::Arch::CPU> struct FieldTrait {
     using ComplexType = std::complex<FloatType>;
     using PotentialField = field::GhostLayerField<FT, 1u>;
-    using PotentialFieldVTK = field::GhostLayerField<FT, 1u>;
     template <class Field>
     using PackInfo = field::communication::PackInfo<Field>;
     template <class Stencil>
@@ -121,7 +119,6 @@ protected:
     using ComplexType = std::conditional_t<std::is_same_v<FloatType, float>,
                                            cufftComplex, cufftDoubleComplex>;
     using PotentialField = gpu::GPUField<FT>;
-    using PotentialFieldVTK = field::GhostLayerField<FT, 1u>;
     template <class Field>
     using PackInfo = gpu::communication::MemcpyPackInfo<Field>;
     template <class Stencil>
@@ -132,8 +129,6 @@ protected:
 public:
   using ComplexType = FieldTrait<FloatType, Architecture>::ComplexType;
   using PotentialField = FieldTrait<FloatType, Architecture>::PotentialField;
-  using PotentialFieldVTK =
-      FieldTrait<FloatType, Architecture>::PotentialFieldVTK;
   using FullCommunicator =
       FieldTrait<FloatType,
                  Architecture>::template FullCommunicator<stencil::D3Q27>;
@@ -184,9 +179,6 @@ private:
   std::shared_ptr<FullCommunicator> m_full_communication;
 
 #if defined(__CUDACC__)
-  std::optional<BlockDataID> m_potential_cpu_field_id;
-  std::shared_ptr<gpu::HostFieldAllocator<FloatType>> m_host_field_allocator;
-
   using GreenFunctionField = gpu::GPUField<FloatType>;
   using PotentialFourier = gpu::GPUField<ComplexType>;
 
@@ -269,8 +261,6 @@ public:
           gpu::FieldIndexing<FloatType>::xyz(*potential));
     }
 
-    m_host_field_allocator =
-        std::make_shared<gpu::HostFieldAllocator<FloatType>>();
 #else  // __CUDACC__
     m_potential_field_with_ghosts_id = field::addToStorage<PotentialField>(
         blocks, "potential field with ghosts", 0., field::fzyx,
@@ -505,40 +495,48 @@ protected:
   }
 
 protected:
-  template <typename Field_T, uint_t F_SIZE_ARG, typename OutputType>
+  template <typename VecType, uint_t F_SIZE_ARG, typename OutputType>
   class VTKWriter : public vtk::BlockCellDataWriter<OutputType, F_SIZE_ARG> {
   public:
     VTKWriter(ConstBlockDataID const &block_id, std::string const &id,
               FloatType unit_conversion)
         : vtk::BlockCellDataWriter<OutputType, F_SIZE_ARG>(id),
-          m_block_id(block_id), m_field(nullptr),
-          m_conversion(unit_conversion) {}
+          m_conversion(unit_conversion), m_content{} {}
 
   protected:
-    void configure() override {
-      WALBERLA_ASSERT_NOT_NULLPTR(this->block_);
-      m_field = this->block_->template getData<Field_T>(m_block_id);
+    void configure() override { WALBERLA_ASSERT_NOT_NULLPTR(this->block_); }
+
+    std::size_t get_first_index(cell_idx_t const x, cell_idx_t const y,
+                                cell_idx_t const z) {
+      return (static_cast<std::size_t>(x) * m_dims[2] * m_dims[1] +
+              static_cast<std::size_t>(y) * m_dims[2] +
+              static_cast<std::size_t>(z)) *
+             F_SIZE_ARG;
     }
 
-    ConstBlockDataID const m_block_id;
-    Field_T const *m_field;
-    FloatType const m_conversion;
+    FloatType m_conversion;
+    VecType m_content;
+    Vector3<uint_t> m_dims;
+
+  public:
+    void set_content(VecType content) { m_content = content; }
+
+    void set_dims(Vector3<uint_t> dims) { m_dims = dims; }
   };
 
   template <typename OutputType = float>
   class PotentialVTKWriter
-      : public VTKWriter<PotentialFieldVTK, 1u, OutputType> {
+      : public VTKWriter<std::vector<FloatType>, 1u, OutputType> {
   public:
-    using Base = VTKWriter<PotentialFieldVTK, 1u, OutputType>;
+    using Base = VTKWriter<std::vector<FloatType>, 1u, OutputType>;
     using Base::Base;
     using Base::evaluate;
 
   protected:
     OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
                         cell_idx_t const z, cell_idx_t const) override {
-      WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
-      auto const potential =
-          walberla::ek::accessor::Scalar::get(this->m_field, {x, y, z});
+      WALBERLA_ASSERT(!this->m_content.empty());
+      auto const potential = this->m_content[this->get_first_index(x, y, z)];
       return numeric_cast<OutputType>(this->m_conversion * potential);
     }
   };
@@ -547,36 +545,23 @@ public:
   void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
                                   LatticeModel::units_map const &units,
                                   int flag_observables) override {
-#if defined(__CUDACC__)
-    auto const allocate_cpu_field_if_empty =
-        [&]<typename Field>(auto const &blocks, std::string name,
-                            std::optional<BlockDataID> &cpu_field) {
-          if (not cpu_field) {
-            cpu_field = field::addToStorage<Field>(
-                blocks, name, FloatType{0}, field::fzyx,
-                get_lattice().get_ghost_layers(), m_host_field_allocator);
-          }
-        };
-#endif
     if (flag_observables & static_cast<int>(EKPoissonOutputVTK::potential)) {
       auto const unit_conversion = FloatType_c(units.at("potential"));
-#if defined(__CUDACC__)
-      if constexpr (Architecture == lbmpy::Arch::GPU) {
-        auto const &blocks = get_lattice().get_blocks();
-        allocate_cpu_field_if_empty.template operator()<PotentialFieldVTK>(
-            blocks, "potential_cpu", m_potential_cpu_field_id);
-        vtk_obj.addBeforeFunction(
-            gpu::fieldCpyFunctor<PotentialFieldVTK, PotentialField>(
-                blocks, *m_potential_cpu_field_id,
-                m_potential_field_with_ghosts_id));
-        vtk_obj.addCellDataWriter(make_shared<PotentialVTKWriter<float>>(
-            *m_potential_cpu_field_id, "potential", unit_conversion));
-      }
-#endif
-      if constexpr (Architecture == lbmpy::Arch::CPU) {
-        vtk_obj.addCellDataWriter(make_shared<PotentialVTKWriter<float>>(
-            m_potential_field_with_ghosts_id, "potential", unit_conversion));
-      }
+      auto const &blocks = get_lattice().get_blocks();
+      auto potential_writer = make_shared<PotentialVTKWriter<float>>(
+          m_potential_field_with_ghosts_id, "potential", unit_conversion);
+      vtk_obj.addBeforeFunction([this, blocks, potential_writer]() {
+        for (auto &block : *blocks) {
+          auto *potential_field = block.template getData<PotentialField>(
+              m_potential_field_with_ghosts_id);
+          auto const bci = potential_field->xyzSize();
+          potential_writer->set_content(
+              walberla::ek::accessor::Scalar::get(potential_field, bci));
+          potential_writer->set_dims(Vector3<uint_t>(
+              uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
+        }
+      });
+      vtk_obj.addCellDataWriter(potential_writer);
     }
   }
 

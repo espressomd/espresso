@@ -117,10 +117,6 @@ public:
   using FlagField = BoundaryModel::FlagField;
 #if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
   using GPUField = gpu::GPUField<FloatType>;
-  using PdfFieldCpu =
-      FieldTrait<FloatType, Stencil, lbmpy::Arch::CPU>::PdfField;
-  using VectorFieldCpu =
-      FieldTrait<FloatType, Stencil, lbmpy::Arch::CPU>::VectorField;
 #endif
 
   struct GhostComm {

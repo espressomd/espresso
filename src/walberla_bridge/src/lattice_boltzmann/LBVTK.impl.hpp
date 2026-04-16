@@ -128,8 +128,8 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
     walberla::vtk::VTKOutput &vtk_obj, LatticeModel::units_map const &units,
     int flag_observables) {
   if (flag_observables & static_cast<int>(OutputVTK::density)) {
-    auto const unit_conversion =
-        FloatType_c(zero_centered_to_md(units.at("density")));
+    auto const unit_conversion = FloatType_c(units.at("density"));
+    // FloatType_c(zero_centered_to_md(units.at("density")));
     auto const &blocks = m_lattice->get_blocks();
     auto density_writer = std::make_shared<DensityVTKWriter<FloatType, float>>(
         m_pdf_field_id, "density", unit_conversion);
@@ -165,16 +165,22 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
     vtk_obj.addCellDataWriter(velocity_writer);
   }
   if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
+    auto const unit_conversion = FloatType_c(units.at("pressure"));
     auto const &blocks = m_lattice->get_blocks();
     auto pressure_writer =
         std::make_shared<PressureTensorVTKWriter<FloatType, float>>(
-            m_pdf_field_id, "pressure_tensor", FloatType{1});
+            m_pdf_field_id, "pressure_tensor", unit_conversion);
     vtk_obj.addBeforeFunction([this, blocks, pressure_writer]() {
       for (auto &block : *blocks) {
         auto *pdf_field = block.template getData<PdfField>(m_pdf_field_id);
         auto const bci = pdf_field->xyzSize();
-        pressure_writer->set_content(
-            lbm::accessor::PressureTensor::get(pdf_field, m_density, bci));
+        auto values =
+            lbm::accessor::PressureTensor::get(pdf_field, m_density, bci);
+        for (std::size_t n = 0u; n < values.size(); n += 9u) {
+          pressure_tensor_correction(
+              std::span<FloatType, 9ul>(&values[n], 9ul));
+        }
+        pressure_writer->set_content(std::move(values));
         pressure_writer->set_dims(Vector3<uint_t>(
             uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
       }
