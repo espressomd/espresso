@@ -53,7 +53,8 @@ Python modules
 .. toctree::
     :maxdepth: 1
 
-    modules.rst
+    espressomd/modules.rst
+    object_in_fluid/modules.rst
 
 Indices and tables
 ------------------

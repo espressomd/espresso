@@ -60,7 +60,7 @@ struct OifLocalForcesBond {
   double A02;
   /** Stretching coefficient of a triangle surface */
   double kal;
-  /** Viscous coefficient of the triangle vertices */
+  /** Viscous damping coefficient of triangle edges */
   double kvisc;
 
   double cutoff() const { return 0.; }
@@ -81,45 +81,16 @@ struct OifLocalForcesBond {
   }
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-  calc_forces(BoxGeometry const &box_geo, Particle const &p2,
-              Particle const &p1, Particle const &p3, Particle const &p4) const;
-
-  std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-  calc_forces(Utils::Vector3d fp2, Utils::Vector3d fp1, Utils::Vector3d fp3,
-              Utils::Vector3d fp4, Utils::Vector3d vel2,
-              Utils::Vector3d vel3) const;
+  calc_forces(Utils::Vector3d const &fp2, Utils::Vector3d const &fp1,
+              Utils::Vector3d const &fp3, Utils::Vector3d const &fp4,
+              Utils::Vector3d const &vel2, Utils::Vector3d const &vel3) const;
 };
 
 /** Compute the OIF local forces.
  *  See @cite dupin07a, @cite jancigova16a.
- *  @param box_geo      Box geometry.
- *  @param p2           Particle of triangle 1.
- *  @param p1 , p3      Particles common to triangle 1 and triangle 2.
- *  @param p4           Particle of triangle 2.
- *  @return forces on @p p1, @p p2, @p p3, @p p4
- */
-inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
-                  Utils::Vector3d>
-OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
-                                Particle const &p1, Particle const &p3,
-                                Particle const &p4) const {
-
-  // first-fold-then-the-same approach
-  auto const fp2 = box_geo.unfolded_position(p2.pos(), p2.image_box());
-  auto const fp1 = fp2 + box_geo.get_mi_vector(p1.pos(), fp2);
-  auto const fp3 = fp2 + box_geo.get_mi_vector(p3.pos(), fp2);
-  auto const fp4 = fp2 + box_geo.get_mi_vector(p4.pos(), fp2);
-  auto const vel2 = p2.v();
-  auto const vel3 = p3.v();
-
-  return calc_forces(fp2, fp1, fp3, fp4, vel2, vel3);
-}
-
-/** Compute the OIF local forces.
- *  See @cite dupin07a, @cite jancigova16a.
- *  @param fp2           Unfolded position of particle of triangle 1.
- *  @param fp1 , fp3     Unfolded position of particles common to triangle 1 and
- * triangle 2.
+ *  @param fp1           Unfolded position of particle of triangle 1.
+ *  @param fp2 , fp3     Unfolded position of particles common to triangle 1 and
+ *  triangle 2.
  *  @param fp4           Unfolded position of particle of triangle 2.
  *  @param vel2          The velocity of particle of triangle 1.
  *  @param vel3          The velocity of particle of triangle 2.
@@ -127,12 +98,12 @@ OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                   Utils::Vector3d>
-OifLocalForcesBond::calc_forces(Utils::Vector3d const fp2,
-                                Utils::Vector3d const fp1,
-                                Utils::Vector3d const fp3,
-                                Utils::Vector3d const fp4,
-                                Utils::Vector3d const vel2,
-                                Utils::Vector3d const vel3) const {
+OifLocalForcesBond::calc_forces(Utils::Vector3d const &fp2,
+                                Utils::Vector3d const &fp1,
+                                Utils::Vector3d const &fp3,
+                                Utils::Vector3d const &fp4,
+                                Utils::Vector3d const &vel2,
+                                Utils::Vector3d const &vel3) const {
   Utils::Vector3d force1{}, force2{}, force3{}, force4{};
 
   // surface strain constraint
@@ -160,36 +131,11 @@ OifLocalForcesBond::calc_forces(Utils::Vector3d const fp2,
   }
 
   // viscous force
-  if (kvisc > tiny_oif_elasticity_coefficient) { // to be implemented....
+  if (kvisc > tiny_oif_elasticity_coefficient) {
     auto const dx = fp2 - fp3;
-    auto const len2 = dx.norm2();
+    auto const len_sq = dx.norm2();
     auto const v_ij = vel3 - vel2;
-
-    // Variant A
-    // Here the force is in the direction of relative velocity btw points
-
-    // Code:
-    // force2 += kvisc * v;
-    // force3 -= kvisc * v;
-
-    // Variant B
-    // Here the force is the projection of relative velocity btw points onto
-    // line btw the points
-
-    // denote p vector between p2 and p3
-    // denote v the velocity difference between the points p2 and p3
-    // denote alpha the angle between p and v
-    // denote x the projected v onto p
-    // cos alpha = |x|/|v|
-    // cos alpha = (v,p)/(|v||p|)
-    // together we get |x|=(v,p)/|p|
-    // also, x is along p, so x = |x|.p/|p|
-    // so x = p/|p| . (v,p)/|p|
-    // altogether x = p . (v,p)/(|p|)^2
-    // |p|^2 is stored in len2
-
-    // Code:
-    auto const fac = kvisc * (dx * v_ij) / len2;
+    auto const fac = kvisc * (dx * v_ij) / len_sq;
     auto const f = fac * dx;
     force2 += f;
     force3 -= f;

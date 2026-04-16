@@ -53,4 +53,5 @@ ignore:
   - "src/walberla_bridge/**/generated_kernels/*"
   - "src/walberla_bridge/myintrin.h"
   - "src/walberla_bridge/philox_rand.h"
+  - "src/python/object_in_fluid"
   - "build/_deps/**"

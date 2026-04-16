@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 import numpy as np
 import math
 
@@ -96,7 +98,8 @@ def area_triangle(a, b, c):
 
 def angle_btw_triangles(P1, P2, P3, P4):
     """
-    Returns the size of an angle between triangles given by points P2, P1, P3 and P2, P3, P4.
+    Returns the size of an angle between triangles given by points
+    P2, P1, P3 and P2, P3, P4 that share a common edge P2, P3.
 
     Parameters
     ----------
@@ -145,14 +148,13 @@ def discard_epsilon(x):
 
 def oif_neo_hookean_nonlin(lambd):
     """
-    Defines NeoHookean nonlinearity.
+    Defines neo-Hookean non-linear factor (equation 19 in :cite:`dupin07a`).
 
     Parameters
     ----------
     lambd : :obj:`float`
           real number
     """
-    # Defined by (19) from Dupin2007
     res = (pow(lambd, 0.5) + pow(lambd, -2.5)) / (lambd + pow(lambd, -3.))
     return res
 
@@ -383,11 +385,11 @@ def oif_calc_volume_force(kv, pA, pB, pC, V0, V):
 
 def output_vtk_rhomboid(rhom_shape, out_file):
     """
-    Outputs the VTK files for visualisation of a rhomboid in e.g. Paraview.
+    Outputs the VTK files for visualisation of a rhomboid in e.g. ParaView.
 
     Parameters
     ----------
-    rhom_shape : :obj:`shape`
+    rhom_shape : :obj:`espressomd.shapes.Rhomboid`
           rhomboid shape
     out_file : :obj:`str`
           filename for the output
@@ -437,11 +439,11 @@ def output_vtk_rhomboid(rhom_shape, out_file):
 
 def output_vtk_cylinder(cyl_shape, n, out_file):
     """
-    Outputs the VTK files for visualisation of a cylinder in e.g. Paraview.
+    Outputs the VTK files for visualisation of a cylinder in e.g. ParaView.
 
     Parameters
     ----------
-    cyl_shape : :obj:`shape`
+    cyl_shape : :obj:`espressomd.shapes.Cylinder`
           cylindrical shape
     n : :obj:`int`
           number of discretization sections
@@ -519,7 +521,7 @@ def output_vtk_cylinder(cyl_shape, n, out_file):
 
 def output_vtk_lines(lines, out_file):
     """
-    Outputs the VTK files for visualisation of lines in e.g. Paraview.
+    Outputs the VTK files for visualisation of lines in e.g. ParaView.
 
     Parameters
     ----------
@@ -558,7 +560,7 @@ def output_vtk_lines(lines, out_file):
 def output_vtk_pore(axis, length, outer_rad_left, outer_rad_right,  # pylint: disable=unused-argument
                     pos, rad_left, rad_right, smoothing_radius, m, out_file):
     """
-    Outputs the VTK files for visualisation of a pore in e.g. Paraview.
+    Outputs the VTK files for visualisation of a pore in e.g. ParaView.
 
     Parameters
     ----------

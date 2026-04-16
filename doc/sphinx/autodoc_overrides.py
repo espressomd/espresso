@@ -34,4 +34,4 @@ def update_espressomd(content):
     return content
 
 
-update_file("espressomd.rst", update_espressomd)
+update_file("espressomd/espressomd.rst", update_espressomd)
