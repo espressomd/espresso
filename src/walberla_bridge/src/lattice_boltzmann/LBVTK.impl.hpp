@@ -129,12 +129,11 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
     int flag_observables) {
   if (flag_observables & static_cast<int>(OutputVTK::density)) {
     auto const unit_conversion = FloatType_c(units.at("density"));
-    // FloatType_c(zero_centered_to_md(units.at("density")));
-    auto const &blocks = m_lattice->get_blocks();
+    auto const blocks = m_lattice->get_blocks();
     WALBERLA_ASSERT_NOT_NULLPTR(blocks);
     auto density_writer = std::make_shared<DensityVTKWriter<FloatType, float>>(
         m_pdf_field_id, "density", unit_conversion);
-    vtk_obj.addBeforeFunction([this, blocks, density_writer]() {
+    auto before_function = [this, blocks, density_writer]() {
       for (auto &block : *blocks) {
         auto *pdf_field = block.template getData<PdfField>(m_pdf_field_id);
         auto const bci = pdf_field->xyzSize();
@@ -143,17 +142,18 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
         density_writer->set_dims(Vector3<uint_t>(
             uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
       }
-    });
+    };
+    vtk_obj.addBeforeFunction(std::move(before_function));
     vtk_obj.addCellDataWriter(density_writer);
   }
   if (flag_observables & static_cast<int>(OutputVTK::velocity_vector)) {
     auto const unit_conversion = FloatType_c(units.at("velocity"));
-    auto const &blocks = m_lattice->get_blocks();
+    auto const blocks = m_lattice->get_blocks();
     WALBERLA_ASSERT_NOT_NULLPTR(blocks);
     auto velocity_writer =
         std::make_shared<VelocityVTKWriter<FloatType, float>>(
             m_pdf_field_id, "velocity_vector", unit_conversion);
-    vtk_obj.addBeforeFunction([this, blocks, velocity_writer]() {
+    auto before_function = [this, blocks, velocity_writer]() {
       for (auto &block : *blocks) {
         auto *velocity_field =
             block.template getData<VectorField>(m_velocity_field_id);
@@ -163,17 +163,18 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
         velocity_writer->set_dims(Vector3<uint_t>(
             uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
       }
-    });
+    };
+    vtk_obj.addBeforeFunction(std::move(before_function));
     vtk_obj.addCellDataWriter(velocity_writer);
   }
   if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
     auto const unit_conversion = FloatType_c(units.at("pressure"));
-    auto const &blocks = m_lattice->get_blocks();
+    auto const blocks = m_lattice->get_blocks();
     WALBERLA_ASSERT_NOT_NULLPTR(blocks);
     auto pressure_writer =
         std::make_shared<PressureTensorVTKWriter<FloatType, float>>(
             m_pdf_field_id, "pressure_tensor", unit_conversion);
-    vtk_obj.addBeforeFunction([this, blocks, pressure_writer]() {
+    auto before_function = [this, blocks, pressure_writer]() {
       for (auto &block : *blocks) {
         auto *pdf_field = block.template getData<PdfField>(m_pdf_field_id);
         auto const bci = pdf_field->xyzSize();
@@ -187,7 +188,8 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
         pressure_writer->set_dims(Vector3<uint_t>(
             uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
       }
-    });
+    };
+    vtk_obj.addBeforeFunction(std::move(before_function));
     vtk_obj.addCellDataWriter(pressure_writer);
   }
 }

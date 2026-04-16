@@ -1163,11 +1163,11 @@ public:
                                   int flag_observables) override {
     if (flag_observables & static_cast<int>(EKOutputVTK::density)) {
       auto const unit_conversion = FloatType_c(units.at("density"));
-      auto const &blocks = m_lattice->get_blocks();
+      auto const blocks = m_lattice->get_blocks();
       WALBERLA_ASSERT_NOT_NULLPTR(blocks);
       auto density_writer = make_shared<DensityVTKWriter<float>>(
           m_density_field_id, "density", unit_conversion);
-      vtk_obj.addBeforeFunction([this, blocks, density_writer]() {
+      auto before_function = [this, blocks, density_writer]() {
         for (auto &block : *blocks) {
           auto *density_field =
               block.template getData<DensityField>(m_density_field_id);
@@ -1177,16 +1177,17 @@ public:
           density_writer->set_dims(Vector3<uint_t>(
               uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
         }
-      });
+      };
+      vtk_obj.addBeforeFunction(std::move(before_function));
       vtk_obj.addCellDataWriter(density_writer);
     }
     if (flag_observables & static_cast<int>(EKOutputVTK::flux)) {
       auto const unit_conversion = FloatType_c(units.at("flux"));
-      auto const &blocks = m_lattice->get_blocks();
+      auto const blocks = m_lattice->get_blocks();
       WALBERLA_ASSERT_NOT_NULLPTR(blocks);
       auto flux_writer = make_shared<FluxVTKWriter<float>>(
           m_flux_field_id, "flux", unit_conversion);
-      vtk_obj.addBeforeFunction([this, blocks, flux_writer]() {
+      auto before_function = [this, blocks, flux_writer]() {
         for (auto &block : *blocks) {
           auto *flux_field = block.template getData<FluxField>(m_flux_field_id);
           auto const bci = flux_field->xyzSize();
@@ -1212,7 +1213,8 @@ public:
           flux_writer->set_dims(Vector3<uint_t>(
               uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
         }
-      });
+      };
+      vtk_obj.addBeforeFunction(std::move(before_function));
       vtk_obj.addCellDataWriter(flux_writer);
     }
   }
