@@ -415,8 +415,8 @@ Specification of immersed objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
-    cell_type = OifCellType(nodesfile="input/rbc374nodes.dat",
-        trianglesfile="input/rbc374triangles.dat", system=system,
+    cell_type = OifCellType(nodes_file="input/rbc374nodes.dat",
+        triangles_file="input/rbc374triangles.dat", system=system,
         ks=0.02, kb=0.016, kal=0.02, kag=0.9, kv=0.5, resize=[2.0, 2.0, 2.0])
 
 We do not create elastic objects directly but rather each one has to
@@ -659,7 +659,7 @@ or data files for further processing and analysis.
 Visualization in ParaView
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For visualization we suggest the free software ParaView [5]_. All .vtk
+For visualization we suggest the free software ParaView [5]_. All VTK
 files (boundaries, fluid, objects at all time steps) can be loaded at
 the same time. The loading is a two step process, because only after
 pressing the Apply button, are the files actually imported. Using the
@@ -684,8 +684,7 @@ would cause "particle out of range" error and crash the simulation.
 File format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-ParaView (download at https://www.paraview.org) accepts .vtk files. For
-our cells we use the following format:
+ParaView reads VTK files. For our cells we use the following format:
 
 .. code-block:: none
 
@@ -821,10 +820,9 @@ following example) appear in a drop-down menu in ParaView.
 Vector data for objects .vtk file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-| If we want to observe some vector data (e.g. outward normal,
-  fig. [fig:vectordata]) at points of the saved objects, we can use the
-  following structure of the .vtk file, where the vector at one point is
-  [v1, v2, v3]:
+If we want to observe some vector data (e.g. outward normal, see image below)
+at points of the saved objects, we can use the following structure of the .vtk
+file, where the vector at one point is [v1, v2, v3]:
 
 .. code-block:: none
 
@@ -835,13 +833,15 @@ Vector data for objects .vtk file
     ...
     v1-at-p391 v2-at-p391 v3-at-p392
 
+.. _fig_oifvectordata:
+
 .. figure:: figures/oifvectordata.png
    :width: 6.00000cm
 
    Example of vector data stored in points of the object
 
-| More info on .vtk files and possible options:
-| https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf
+More info on .vtk files and possible options:
+https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf
 
 
 
@@ -870,376 +870,53 @@ Automatic loading
 Available Object-in-fluid (OIF) classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-| Here we describe the currently available OIF classes and commands.
-  Note that there are more still being added. We would be pleased to
-  hear from you about any suggestions on further functionality.
-
-| Notation: ``keywords``, *parameter values*, **vectors**
-| The keywords do not have to be in a specific order.
-
 class OifCellType
 ^^^^^^^^^^^^^^^^^
 
-For those familiar with earlier version of object-in-fluid framework,
-this class corresponds to the oif_emplate in tcl. It contains a "recipe"
-for creating cells of the same type. These cells can then be placed at
-different locations with different orientation, but their elasticity and
-size is determined by the CellType. There are no actual particles
-created at this stage. Also, while the interactions are defined, no
-bonds are created here.
+:class:`object_in_fluid.oif_classes.OifCellType`
+
+Template to create elastic objects ("cells") from a mesh file.
+These cells can lated be placed at different locations and with different
+orientations, but their elasticity and size are determined by the template.
+Bonds are created and added to the system.
+There are no actual particles created at this stage.
 
 ::
 
-    OifCellType.print_info()
-    OifCellType.mesh.output_mesh_triangles(filename)
-
-| ``nodesfile=``\ *nodes.dat* - input file. Each line contains three
-  real numbers. These are the *x, y, z* coordinates of individual
-  surface mesh nodes of the objects centered at [0,0,0] and normalized
-  so that the "radius" of the object is 1.
-
-| ``trianglesfile=``\ *triangles.dat* - input file. Each line contains
-  three integers. These are the ID numbers of the mesh nodes as they
-  appear in *nodes.dat*. Note that the first node has ID 0.
-
-| ``system=``\ *system* Particles of cells created using this
-  template will be added to this system. Note that there can be only one
-  system per simulation.
-
-| ``ks=``\ *value* - elastic modulus for stretching forces.
-
-| ``kslin=`` *value* - elastic modulus for linear stretching forces.
-
-| ``kb=`` *value* - elastic modulus for bending forces.
-
-| ``kal=`` *value* - elastic modulus for local area forces.
-
-| The switches ``ks``, ``kb`` and ``kal`` set elastic parameters for
-  local interactions: ``ks`` for edge stiffness, ``kb`` for angle
-  preservation stiffness and ``kal`` for triangle area preservation
-  stiffness. Currently, the stiffness is implemented to be uniform over
-  the whole object, but with some tweaking, it is possible to have
-  non-uniform local interactions.
-
-| Note, the difference between stretching (``ks``) and linear stretching
-  (``kslin``) - these two options cannot be used simultaneously:
-
-| Linear stretching behaves like linear spring, where the stretching
-  force is calculated as :math:`\mathbf{F}_s=k_s*\Delta L`, where
-  :math:`\Delta L` is the prolongation of the given edge. By default,
-  the stretching is non-linear (neo-Hookian).
-
-| ``kvisc=``\ *value* - elastic modulus for viscosity of the membrane.
-  Viscosity slows down the reaction of the membrane.
-
-| ``kag=``\ *value* - elastic modulus for global area forces
-
-| ``kv=``\ *value* - elastic modulus for volume forces
-
-| Note: At least one of the elastic moduli should be set.
-
-| ``resize=``\ (*x, y, z*) - coefficients, by which the coordinates
-  stored in *nodesfile* will be stretched in the *x, y, z*
-  direction. The default value is (1.0, 1.0, 1.0).
-
-| ``mirror=``\ (*x, y, z*) - whether the respective coordinates should
-  be flipped around 0. Arguments *x, y, z* must be either 0 or 1.
-  The reflection of only one coordinate is allowed so at most one
-  argument is set to 1, others are 0. For example ``mirror=``\ (0, 1, 0)
-  results in flipping the coordinates (*x, y, z*) to (*x, -y, z*). The
-  default value is (0, 0, 0).
-
-| ``normal`` - by default set to *False*, however without this
-  option enabled, the membrane collision (and thus cell-cell
-  interactions) will not work.
-
-| ``check_orientation`` - by default set to *True*. This options
-  performs a check, whether the supplied *trianglesfile* contains
-  triangles with correct orientation. If not, it corrects the
-  orientation and created cells with corrected triangles. It is useful
-  for new or unknown meshes, but not necessary for meshes that have
-  already been tried out. Since it can take a few minutes for larger
-  meshes (with thousands of nodes), it can be set to *False*. In
-  that case, the check is skipped when creating the ``CellType`` and a
-  warning is displayed.
-
-| The order of indices in *triangles.dat* is important. Normally, each
-  triangle ABC should be oriented in such a way, that the normal vector
-  computed as vector product ABxAC must point inside the object. For
-  example, a sphere (or any other sufficiently convex object) contains
-  such triangles that the normals of these triangles point towards the
-  center of the sphere (almost).
-
-| The check runs over all triangles, makes sure that they have the
-  correct orientation and then calculates the volume of the object. If
-  the result is negative, it flips the orientation of all triangles.
-
-| Note, this method tells the user about the correction it makes. If
-  there is any, it might be useful to save the corrected triangulation
-  for future simulations using the method
-  ``CellType.mesh.OutputMeshTriangles``\ (*filename*), so that the
-  check does not have to be used repeatedly.
-
-| ``CellType.mesh.output_mesh_triangles``\ (*filename*) - this is
-  useful after checking orientation, if any of the triangles where
-  corrected. This method saves the current triangles into a file that
-  can be used as input in the next simulations.
-
-| ``CellType.print_info()`` - prints the information about the template.
+    cell = oif.OifCellType(
+        nodes_file="sphere393nodes.dat",
+        triangles_file="sphere393triangles.dat",
+        system=system, kb=1.0, kal=1.0, kag=0.1, kv=0.1,
+        check_orientation=False, resize=(3.0, 3.0, 3.0))
+    cell.print_info()
+    cell.mesh.output_mesh_triangles("new_sphere393triangles.dat")
 
 
 class OifCell
 ^^^^^^^^^^^^^^^
-::
 
-    OifCell.set_origin([x, y, z])
-    OifCell.get_origin()
-    OifCell.get_origin_folded()
-    OifCell.get_approx_origin()
-    OifCell.get_velocity()
-    OifCell.set_velocity([x, y, z])
-    OifCell.pos_bounds()
-    OifCell.surface()
-    OifCell.volume()
-    OifCell.diameter()
-    OifCell.get_n_nodes()
-    OifCell.set_force([x, y, z])
-    OifCell.kill_motion()
-    OifCell.unkill_motion()
-    OifCell.output_vtk_pos(filename.vtk)
-    OifCell.output_vtk_pos_folded(filename.vtk)
-    OifCell.append_point_data_to_vtk(filename.vtk, dataname, data, firstAppend)
-    OifCell.output_raw_data(filename, rawdata)
-    OifCell.output_mesh_points(filename)
-    OifCell.set_mesh_points(filename)
-    OifCell.elastic_forces(elasticforces, fmetric, vtkfile, rawdatafile)
-    OifCell.print_info()
+:class:`object_in_fluid.oif_classes.OifCell`
 
-| ``cell_type`` - object will be created using nodes, triangle
-  incidences, elasticity parameters and initial stretching saved in this
-  cellType.
-
-| ``part_type``\ =\ *type* - must start at 0 for the first cell and
-  increase consecutively for different cells. Volume calculation of
-  individual objects and interactions between objects are set up using
-  these types.
-
-| ``origin``\ =(\ *x, y, z*) - center of the object will be at this
-  point.
-
-| ``rotate``\ =(\ *x, y, z*) - angles in radians, by which the object
-  will be rotated about the *x, y, z* axis. Default value is (0.0,
-  0.0, 0.0). Value (:math:`\pi/2, 0.0, 0.0`) means that the object will
-  be rotated by :math:`\pi/2` radians clockwise around the *x*
-  axis when looking in the positive direction of the axis.
-
-| ``mass``\ =\ *m* - mass of one particle. Default value is 1.0.
-
-| ``OifCell.set_origin``\ (**o**) - moves the object such that the origin
-  has coordinates **o**\ =(\ *x, y, z*).
-
-| ``OifCell.get_origin()`` - outputs the location of the center of the
-  object.
-
-| ``OifCell.get_origin_folded()`` - outputs the location of the center of
-  the object. For periodical movements the coordinates are folded
-  (always within the computational box).
-
-| ``OifCell.get_approx_origin()`` - outputs the approximate location of
-  the center of the object. It is computed as average of 6 mesh points
-  that have extremal *x, y* and *z* coordinates at the time
-  of object loading.
-
-| ``OifCell.get_velocity()`` - outputs the average velocity of the
-  object. Runs over all mesh points and outputs their average velocity.
-
-| ``OifCell.set_velocity``\ (**v**) - sets the velocities of all mesh
-  points to **v**\ =(\ :math:`v_x`, :math:`v_y`, :math:`v_z`).
-
-| ``OifCell.pos_bounds()`` - computes six extremal coordinates of the
-  object. More precisely, runs through the all mesh points and returns
-  the minimal and maximal :math:`x`-coordinate, :math:`y`-coordinate and
-  :math:`z`-coordinate in the order (:math:`x_{max}`, :math:`x_{min}`,
-  :math:`y_{max}`, :math:`y_{min}`, :math:`z_{max}`, :math:`z_{min}`).
-
-| ``OifCell.surface()`` - outputs the surface of the object.
-
-| ``OifCell.volume()`` - outputs the volume of the object.
-
-| ``OifCell.diameter()`` - outputs the largest diameter of the object.
-
-| ``OifCell.get_n_nodes()`` - returns the number of mesh nodes.
-
-| ``OifCell.set_force``\ (**f**) - sets the external force vector
-  **f**\ =(\ :math:`f_x`, :math:`f_y`, :math:`f_z`) to all mesh nodes of
-  the object. Setting is done using command ``p.set_force``\ (**f**).
-  Note, that this command sets the external force in each integration
-  step. So if you want to use the external force only in one iteration,
-  you need to set zero external force in the following integration step.
-
-| ``OifCell.kill_motion()`` - stops all the particles in the object
-  (analogue to the command ``p.kill_motion()``).
-
-| ``OifCell.unkill_motion()`` - enables the movement of all the particles
-  in the object (analogue to the command ``p.unkill_motion()``).
-
-| ``OifCell.output_vtk_pos``\ (*filename.vtk*) - outputs the mesh of the
-  object to the desired *filename.vtk*. ParaView can directly visualize
-  this file.
-
-| ``OifCell.output_vtk_pos_folded``\ (*filename.vtk*) - outputs the mesh of
-  the object to the desired *filename.vtk*. ParaView can directly
-  visualize this file. For periodical movements the coordinates are
-  folded (always within the computational box).
-
-| ``OifCell.append_point_data_to_vtk``\ (*filename.vtk*, *dataname*,
-  **data**, *firstAppend*) - outputs the specified scalar **data** to an
-  existing *filename.vtk*. This is useful for ParaView
-  visualisation of local velocity magnitudes, magnitudes of forces, etc.
-  in the meshnodes and can be shown in ParaView by selecting the
-  *dataname* in the *Properties* toolbar. It is possible to
-  consecutively write multiple datasets into one *filename.vtk*.
-  For the first one, the *firstAppend* parameter is set to
-  *True*, for the following datasets, it needs to be set to
-  *False*. This is to ensure the proper structure of the output
-  file.
-
-| ``OifCell.output_raw_data``\ (*filename*, **rawdata**) - outputs the
-  vector **rawdata** about the object into the *filename*.
-
-| ``OifCell.output_mesh_points``\ (*filename*) - outputs the positions of
-  the mesh nodes to *filename*. In fact, this command creates a new
-  *nodes.dat* file that can be used by the method
-  ``OifCell.set_mesh_points``\ (*nodes.dat*). The center of the object is
-  located at point (0.0, 0.0, 0.0). This command is aimed to store the
-  deformed shape in order to be loaded later.
-
-| ``OifCell.set_mesh_points``\ (*filename*) - deforms the object in such a
-  way that its origin stays unchanged, however the relative positions of
-  the mesh points are taken from file *filename*. The *filename* should
-  contain the coordinates of the mesh points with the origin location at
-  (0.0, 0.0, 0.0). The procedure also checks whether number of lines in
-  the *filename* is the same as the corresponding value from
-  ``OifCell.get_n_nodes()``.
-
-| ``OifCell.elastic_forces``\ (**elasticforces**, **fmetric**, *vtkfile*,
-  *rawdatafile*) - this method can be used in two different ways. One is
-  to compute the elastic forces locally for each mesh node and the other
-  is to compute the f-metric, which is an approximation of elastic
-  energy.
-
-| To compute the elastic forces, use the vector
-  **elasticforces**. It is a sextuple of zeros and ones,
-  e.g. **elasticforces** = (1,0,0,1,0,0), where the ones
-  denote the elastic forces to be computed. The order is (stretching,
-  bending, local area, global area, volume, total). The output can be
-  saved in two different ways: either by setting
-  *vtkfile = filename.vtk*, which saves a .vtk file that can be
-  visualized using ParaView. If more than one elastic force was
-  selected, they can be chosen in the Properties window in ParaView. The
-  other type of output is *rawdatafile=filename.dat*, which will
-  save a datafile with the selected type of elastic force - one force
-  per row, where each row corresponds to a single mesh node. Note that
-  only one type of elastic force can be written this way at a time.
-  Thus, if you need output for several elastic forces, this method
-  should be called several times.
-
-| To compute the f-metric, use the vector **fmetric**. It
-  is again a sextuple of zeros and ones, e.g.
-  **fmetric** = (1,1,0,0,0,0), where the ones denote the
-  elastic forces to be computed. The order is (stretching, bending,
-  local area, global area, volume, total). The output is again a vector
-  with six elements, each corresponding to the requested f-metric/“naive
-  energy” computed as a sum of magnitudes of respective elastic forces
-  over all nodes of the object.
-
-| ``OifCell.print_info()`` - prints the information about the elastic
-  object.
+Handle to an elastic object ("cell").
+Takes a :class:`~object_in_fluid.oif_classes.OifCellType` template as argument.
+When instantiated, particles will be added to the |es| system to build the cell.
 
 
 Short utility procedures
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-| ``get_n_triangle``\ (**a, b, c**) - returns the normal **n**
-  to the triangle given by points (**a, b, c**).
-
-| ``norm``\ (**v**) - returns the norm of the vector **v**.
-
-| ``distance``\ (**a, b**) - returns the distance between
-  points **a** and **b**.
-
-| ``area_triangle``\ (**a, b, c**) - returns the area of the
-  given triangle (**a, b, c**).
-
-| ``angle_btw_triangles``\ (:math:`\mathbf{p}_1`, :math:`\mathbf{p}_2`,
-  :math:`\mathbf{p}_3`, :math:`\mathbf{p}_4` - returns the angle
-  :math:`\phi` between two triangles: (:math:`\mathbf{p}_1`,
-  :math:`\mathbf{p}_2`, :math:`\mathbf{p}_3`) and (:math:`\mathbf{p}_3`,
-  :math:`\mathbf{p}_2`, :math:`\mathbf{p}_4`) that have a common edge
-  (:math:`\mathbf{p}_2`, :math:`\mathbf{p}_3`).
-
-| ``discard_epsilon``\ (*x*) - needed for rotation; discards very
-  small numbers *x*.
-
-| ``oif_neo_hookean_nonlin``\ (:math:`\lambda`) - nonlinearity for neo-Hookean stretching
-
-| ``calc_stretching_force``\ (:math:`k_s,\ \mathbf{p}_A,\ \mathbf{p}_B`, *dist0*, *dist*)
-  - computes the nonlinear stretching force with given :math:`k_s` for
-  points :math:`\mathbf{p}_A` and :math:`\mathbf{p}_B` given by their
-  coordinates, whose initial distance was *dist0* and current distance
-  is *dist*.
-
-| ``calc_linear_stretching_force``\ (:math:`k_s,\ \mathbf{p}_A,\ \mathbf{p}_B`, *dist0*, *dist*)
-  - computes the linear stretching force with given :math:`k_s` for
-  points :math:`\mathbf{p}_A` and :math:`\mathbf{p}_B` given by their
-  coordinates, whose initial distance was *dist0* and current distance
-  is *dist*.
-
-| ``calc_bending_force``\ (:math:`k_b,\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ \mathbf{p}_D,\ \phi_0,\ \phi`)
-  - computes the bending force with given :math:`k_b` for points
-  :math:`\mathbf{p}_A`, :math:`\mathbf{p}_B`, :math:`\mathbf{p}_C` and
-  :math:`\mathbf{p}_D` (:math:`\triangle_1`\ =BAC;
-  :math:`\triangle_2`\ =BCD) given by their coordinates; the initial
-  angle for these two triangles was :math:`\phi_0`, the current angle is
-  :math:`\phi`.
-
-| ``calc_local_area_force``\ (:math:`k_{al},\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ A_0,\ A`)
-  - computes the local area force with given :math:`k_{al}` for points
-  :math:`\mathbf{p}_A`, :math:`\mathbf{p}_B` and :math:`\mathbf{p}_C`
-  given by their coordinates; the initial area of triangle ABC was
-  :math:`A_0`, the current area is :math:`A`.
-
-| ``calc_global_area_force``\ (:math:`k_{ag},\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ A_{g0},\ A_g`)
-  - computes the global area force with given :math:`k_{ag}` for points
-  :math:`\mathbf{p}_A`, :math:`\mathbf{p}_B` and :math:`\mathbf{p}_C`
-  given by their coordinates; the initial surface area of the object was
-  :math:`A_{g0}`, the current surface area of the object is :math:`A_g`.
-
-| ``calc_volume_force``\ (:math:`k_v,\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ V_0,\ V`)
-  - computes the volume force with given :math:`k_v` for points
-  :math:`\mathbf{p}_A`, :math:`\mathbf{p}_B` and :math:`\mathbf{p}_C`
-  given by their coordinates; the initial volume of the object was
-  :math:`V_0`, the current volume of the object is :math:`V`.
-
-| ``output_vtk_rhomboid``\ (**corner**, **a**, **b**, **c**, *outFile.vtk*)
-  - outputs rhomboid boundary for later visualisation in ParaView.
-
-| ``output_vtk_cylinder``\ (**center**, **normal**, *L*, *r*, *n*, *outFile.vtk*)
-  - outputs cylinder boundary for later visualisation in ParaView.
-
-| ``output_vtk_lines``\ (*lines*, *outFile.vtk*) - outputs a set of
-  line segments for later visualisation in ParaView.
+See functions in :mod:`object_in_fluid.oif_utils`
 
 
 Description of helper classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Awareness of these classes is not necessary for a user of OIF module,
+Awareness of these classes is not necessary for a user of the OIF module,
 but is essential for developers who wish to modify it because it shows
 how the object data are stored.
 
-classes ``FixedPoint`` and ``PartPoint``
-
+classes :class:`~object_in_fluid.oif_classes.FixedPoint` and
+:class:`~object_in_fluid.oif_classes.PartPoint`
 
 Class PartPoint represents a particle. These particles are then used as
 building blocks for edges, angles, triangles and ultimately the whole
@@ -1250,8 +927,10 @@ particle. The FixedPoints of one OifCellType form a mesh that is
 centered around origin. Only after it is stretched and shifted to the
 object origin are the PartPoints of the given object created.
 
-classes ``Edge``, ``Angle``, ``Triangle``, ``ThreeNeighbors``
-
+classes :class:`~object_in_fluid.oif_classes.Edge`,
+:class:`~object_in_fluid.oif_classes.Angle`,
+:class:`~object_in_fluid.oif_classes.Triangle`,
+:class:`~object_in_fluid.oif_classes.ThreeNeighbors`
 
 These classes represent the building blocks of a mesh. They are used to
 compute the elastic interactions: Edge is for stretching, Angle for
@@ -1259,8 +938,7 @@ bending, Triangle for local and global area and volume and ThreeNeigbors
 for calculation of outward normal vector needed for cell-cell
 interaction.
 
-class ``Mesh``
-
+class :class:`~object_in_fluid.oif_classes.Mesh`
 
 This class holds all the information about the geometry of the object,
 including nodes, edges, angles, triangles and neighboring points. The
@@ -1268,9 +946,6 @@ mesh of OifCellType is copied every time a new object (i.e. OifCell) of
 this type is created. This saves computational time, since the data for
 elastic interactions of the given object do not need to be recalculated
 every time.
-
-.. [5]
-   https://www.paraview.org/
 
 .. _Particle polarizability with thermalized cold Drude oscillators:
 
@@ -1392,7 +1067,7 @@ particles. It has to be called only once. In a molecule with :math:`N` polarizab
 sites, :math:`N \cdot (N-1)` bond types are needed to cover all the combinations.
 Parameters are:
 
-* ``<system>``: The :class:`espressomd.System() <espressomd.system.System>`.
+* ``<system>``: The :class:`espressomd.System <espressomd.system.System>`.
 * ``<molecule drude types>``: List of the Drude types within the molecule.
 * ``<molecule core types>``: List of the core types within the molecule that have partial charges.
 * ``<molecule core partial charges>``: List of the partial charges on the cores.
@@ -1419,3 +1094,8 @@ bonded particles.
     Often used in conjunction with Drude oscillators is the :ref:`Thole correction`
     to damp dipole-dipole interactions on short distances. It is available in |es|
     as a non-bonded interaction.
+
+____
+
+.. [5]
+   https://www.paraview.org/

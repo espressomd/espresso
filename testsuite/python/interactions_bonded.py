@@ -192,9 +192,6 @@ class InteractionsBondedTest(ut.TestCase):
             test_breakage=False)
 
     def test_quartic(self):
-        """Tests the Quartic bonded interaction by comparing the potential and
-           force against the analytic values"""
-
         k0 = 2.
         k1 = 5.
         q_r = 0.5
