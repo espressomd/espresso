@@ -177,55 +177,6 @@ inline double calc_non_bonded_pair_energy(
   return ret;
 }
 
-/** Add non-bonded and short-range Coulomb energies between a pair of particles
- *  to the energy observable.
- *  @param[in] p1        particle 1.
- *  @param[in] p2        particle 2.
- *  @param[in] d         vector between p1 and p2.
- *  @param[in] dist      distance between p1 and p2.
- *  @param[in] dist2     distance squared between p1 and p2.
- *  @param[in] ia_params        non-bonded interaction kernels.
- *  @param[in] bonded_ias       bonded interaction kernels.
- *  @param[in] coulomb          Electrostatics solver.
- *  @param[in] coulomb_kernel   Coulomb energy kernel.
- *  @param[in] dipoles_kernel   Dipolar energy kernel.
- *  @param[in,out] obs_energy   energy observable.
- */
-inline void add_non_bonded_pair_energy(
-    Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
-    double const dist, double const dist2, IA_parameters const &ia_params,
-    [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
-    [[maybe_unused]] Coulomb::Solver const &coulomb,
-    Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_kernel,
-    Dipoles::ShortRangeEnergyKernel::kernel_type const *dipoles_kernel,
-    Observable_stat &obs_energy) {
-
-#ifdef ESPRESSO_EXCLUSIONS
-  if (do_nonbonded(p1, p2))
-#endif
-    obs_energy.add_non_bonded_contribution(
-        p1.type(), p2.type(), p1.mol_id(), p2.mol_id(),
-        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, bonded_ias,
-                                    coulomb, coulomb_kernel));
-
-#ifdef ESPRESSO_ELECTROSTATICS
-  if (!obs_energy.coulomb.empty() and coulomb_kernel != nullptr) {
-    auto const q1q2 = p1.q() * p2.q();
-    obs_energy.coulomb[0] +=
-        (*coulomb_kernel)(p1.pos(), p2.pos(), q1q2, d, dist);
-  }
-#endif
-
-#ifdef ESPRESSO_DIPOLES
-  if (!obs_energy.dipolar.empty() and dipoles_kernel != nullptr) {
-    if (p1.dipm() != 0. and p2.dipm() != 0.) {
-      obs_energy.dipolar[0] +=
-          (*dipoles_kernel)(p1.calc_dip(), p2.calc_dip(), d, dist, dist2);
-    }
-  }
-#endif
-}
-
 inline std::optional<double> calc_pair_bonded_energy(
     Bonded_IA_Parameters const &iaparams, Utils::Vector3d const &dx,
     Utils::Vector3d const &pos1, Utils::Vector3d const &pos2, double q1q2,
