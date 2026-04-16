@@ -762,8 +762,9 @@ class OifCellType:
     where :math:`\\mathbf{d_{ij}}` is the prolongation of the given edge.
     By default, the stretching is non-linear (neo-Hookean).
     The optional viscous damping (``kvisc``) is meant to reduce oscillations
-    in the stretching force. This corresponds to the case
-    :math:`\\gamma^T = \\gamma^C` in equation 8 of :cite:`fedosov10a`.
+    in the stretching force. This corresponds to the case :math:`\\gamma^T = 0`
+    and :math:`\\gamma^C = k_{\\mathrm{visc}}` in equation 8 of :cite:`fedosov10a`
+    (which uses the :math:`\\times` symbol for the dot product).
 
     Parameters
     ----------

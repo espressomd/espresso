@@ -82,13 +82,13 @@ if(SPHINX_FOUND)
   add_custom_target(
     sphinx
     ${Python_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/samples.py"
-    COMMAND ${SPHINX_API_DOC_EXE} -f -o ${CMAKE_CURRENT_BINARY_DIR}/espressomd
-            ${SPHINX_PYTHON_DIR}/espressomd
+    COMMAND ${SPHINX_API_DOC_EXE} -f -o ${CMAKE_CURRENT_BINARY_DIR}
+            ${SPHINX_PYTHON_DIR}
     COMMAND
-      ${SPHINX_API_DOC_EXE} -f -o ${CMAKE_CURRENT_BINARY_DIR}/object_in_fluid
-      ${SPHINX_PYTHON_DIR}/object_in_fluid
-    COMMAND ${Python_EXECUTABLE}
-            "${CMAKE_CURRENT_SOURCE_DIR}/autodoc_overrides.py"
+      ${CMAKE_COMMAND} -DFILEPATH=espressomd.rst
+      -DSUBMODULE=espressomd.propagation -P
+      ${CMAKE_CURRENT_SOURCE_DIR}/autodoc_overrides.cmake
+    COMMAND ${CMAKE_COMMAND} -E rm ${CMAKE_CURRENT_BINARY_DIR}/modules.rst
     COMMAND
       ${CMAKE_BINARY_DIR}/pypresso -m sphinx -q -W -b html -c
       "${CMAKE_CURRENT_BINARY_DIR}" -d "${SPHINX_CACHE_DIR}"
