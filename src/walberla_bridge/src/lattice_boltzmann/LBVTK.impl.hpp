@@ -130,7 +130,8 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
   if (flag_observables & static_cast<int>(OutputVTK::density)) {
     auto const unit_conversion = FloatType_c(units.at("density"));
     // FloatType_c(zero_centered_to_md(units.at("density")));
-    auto const blocks = m_lattice->get_blocks();
+    auto const &blocks = m_lattice->get_blocks();
+    WALBERLA_ASSERT_NOT_NULLPTR(blocks);
     auto density_writer = std::make_shared<DensityVTKWriter<FloatType, float>>(
         m_pdf_field_id, "density", unit_conversion);
     vtk_obj.addBeforeFunction([this, blocks, density_writer]() {
@@ -147,7 +148,8 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
   }
   if (flag_observables & static_cast<int>(OutputVTK::velocity_vector)) {
     auto const unit_conversion = FloatType_c(units.at("velocity"));
-    auto const blocks = m_lattice->get_blocks();
+    auto const &blocks = m_lattice->get_blocks();
+    WALBERLA_ASSERT_NOT_NULLPTR(blocks);
     auto velocity_writer =
         std::make_shared<VelocityVTKWriter<FloatType, float>>(
             m_pdf_field_id, "velocity_vector", unit_conversion);
@@ -166,7 +168,8 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
   }
   if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
     auto const unit_conversion = FloatType_c(units.at("pressure"));
-    auto const blocks = m_lattice->get_blocks();
+    auto const &blocks = m_lattice->get_blocks();
+    WALBERLA_ASSERT_NOT_NULLPTR(blocks);
     auto pressure_writer =
         std::make_shared<PressureTensorVTKWriter<FloatType, float>>(
             m_pdf_field_id, "pressure_tensor", unit_conversion);
