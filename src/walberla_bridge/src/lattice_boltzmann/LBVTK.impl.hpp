@@ -67,7 +67,7 @@ protected:
   Vector3<uint_t> m_dims;
 
 public:
-  void set_content(VecType content) { m_content = content; }
+  void set_content(VecType content) { m_content = std::move(content); }
 
   void set_dims(Vector3<uint_t> dims) { m_dims = dims; }
 };
