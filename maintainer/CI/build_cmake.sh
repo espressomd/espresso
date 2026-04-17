@@ -107,7 +107,6 @@ set_default_value with_asan false
 set_default_value with_static_analysis false
 set_default_value with_caliper false
 set_default_value with_fpe false
-set_default_value with_shared_memory_parallelism false
 set_default_value myconfig "default"
 set_default_value build_procs ${default_build_procs}
 set_default_value check_procs ${default_check_procs}
@@ -159,7 +158,6 @@ cmake_param_list+=(
   -D ESPRESSO_BUILD_WITH_CCACHE:BOOL=${with_ccache}
   -D ESPRESSO_BUILD_WITH_CALIPER:BOOL=${with_caliper}
   -D ESPRESSO_BUILD_WITH_FPE:BOOL=${with_fpe}
-  -D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM:BOOL=${with_shared_memory_parallelism}
   -D ESPRESSO_BUILD_WITH_HDF5:BOOL=${with_hdf5}
   -D ESPRESSO_BUILD_WITH_FFTW:BOOL=${with_fftw}
   -D ESPRESSO_BUILD_WITH_GSL:BOOL=${with_gsl}

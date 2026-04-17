@@ -67,7 +67,7 @@ struct Solver {
       double, Utils::Vector3d const &, Utils::Vector3d const &,
       Utils::Vector3d const &, double, double)>;
   using ShortRangeEnergyKernel =
-      std::function<double(Particle const &, Particle const &,
+      std::function<double(Utils::Vector3d const &, Utils::Vector3d const &,
                            Utils::Vector3d const &, double, double)>;
 
   inline std::optional<ShortRangeForceKernel> pair_force_kernel() const;

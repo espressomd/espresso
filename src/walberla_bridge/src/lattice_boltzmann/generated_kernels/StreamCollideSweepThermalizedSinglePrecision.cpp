@@ -49,9 +49,7 @@ namespace pystencils {
 
 namespace internal_117eb60e8d249794b47e39bf52c9e4fe {
 static FUNC_PREFIX void streamcollidesweepthermalizedsingleprecision_streamcollidesweepthermalizedsingleprecision(float *RESTRICT const _data_force, float *RESTRICT const _data_pdfs, float *RESTRICT _data_pdfs_tmp, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_0, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_0, int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2, int64_t const _stride_pdfs_tmp_3, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, float kT, float omega_bulk, float omega_even, float omega_odd, float omega_shear, uint32_t seed, uint32_t time_step) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
     const float xi_20 = omega_bulk * 0.5f;
     const float xi_47 = omega_shear * 0.041666666666666664f;
@@ -69,9 +67,7 @@ static FUNC_PREFIX void streamcollidesweepthermalizedsingleprecision_streamcolli
     const float xi_226 = omega_odd * 0.125f;
     const float rr_0 = 0.0f;
     const float xi_45 = rr_0 * 0.041666666666666664f;
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 1; ctr_2 < _size_force_2 - 1; ctr_2 += 1) {
       for (int64_t ctr_1 = 1; ctr_1 < _size_force_1 - 1; ctr_1 += 1) {
         for (int64_t ctr_0 = 1; ctr_0 < _size_force_0 - 1; ctr_0 += 1) {

@@ -17,8 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "bond_breakage/bond_breakage.hpp"
+#include <config/config.hpp>
+
 #include "bond_breakage/actions.hpp"
+#include "bond_breakage/bond_breakage.hpp"
 
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
@@ -54,9 +56,7 @@ void BondBreakage::queue_breakage(int particle_id,
                                   BondPartners const &bond_partners,
                                   int bond_type) {
   {
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     std::lock_guard<std::mutex> lock(queue_mtx);
-#endif
     m_queue.emplace_back(QueueEntry{particle_id, bond_partners, bond_type});
   }
 }

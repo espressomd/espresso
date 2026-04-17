@@ -123,10 +123,7 @@ function(python_test)
   endif()
   list(APPEND TEST_LABELS "python_test")
 
-  set(TEST_NUM_CORES ${TEST_NUM_PROC})
-  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-    math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
-  endif()
+  math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
 
   # cmake-format: off
   set_tests_properties(
@@ -362,6 +359,7 @@ python_test(FILE lb_interpolation.py MAX_NUM_PROC 4 GPU_SLOTS 0)
 python_test(FILE lb_interpolation.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
 python_test(FILE analyze_gyration_tensor.py MAX_NUM_PROC 2)
 python_test(FILE oif_volume_conservation.py MAX_NUM_PROC 2)
+python_test(FILE oif_local_forces.py MAX_NUM_PROC 1)
 python_test(FILE simple_pore.py MAX_NUM_PROC 1)
 python_test(FILE field_test.py MAX_NUM_PROC 1)
 python_test(FILE lb_boundary.py MAX_NUM_PROC 2 GPU_SLOTS 1)

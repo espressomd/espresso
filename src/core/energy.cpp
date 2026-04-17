@@ -24,10 +24,15 @@
 #include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
+#include "bond_energy_kokkos.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "constraints/Constraints.hpp"
+#include "energy_cabana.hpp"
 #include "energy_inline.hpp"
+#include "integrators/Propagation.hpp"
+#include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "short_range_cabana.hpp"
 #include "short_range_loop.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
@@ -72,28 +77,69 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
   auto const coulomb_kernel = coulomb.pair_energy_kernel();
   auto const dipoles_kernel = dipoles.pair_energy_kernel();
 
-  short_range_loop(
-      [this, coulomb_kernel_ptr = get_ptr(coulomb_kernel), &obs_energy](
-          Particle const &p1, int bond_id, std::span<Particle *> partners) {
-        auto const &iaparams = *bonded_ias->at(bond_id);
-        auto const result = calc_bonded_energy(iaparams, p1, partners, *box_geo,
-                                               coulomb_kernel_ptr);
-        if (result) {
-          obs_energy.bonded_contribution(bond_id)[0] += result.value();
-          return false;
-        }
-        return true;
-      },
-      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
-       dipoles_kernel_ptr = get_ptr(dipoles_kernel), this,
-       &obs_energy](Particle const &p1, Particle const &p2, Distance const &d) {
-        auto const &ia_params =
-            nonbonded_ias->get_ia_param(p1.type(), p2.type());
-        add_non_bonded_pair_energy(
-            p1, p2, d.vec21, sqrt(d.dist2), d.dist2, ia_params, *bonded_ias,
-            coulomb, coulomb_kernel_ptr, dipoles_kernel_ptr, obs_energy);
-      },
-      *cell_structure, maximal_cutoff(), bonded_ias->maximal_cutoff());
+#ifdef ESPRESSO_CALIPER
+  CALI_MARK_BEGIN("cabana_short_range");
+#endif
+  VerletCriterion<> const verlet_criterion{*this,
+                                           cell_structure->get_verlet_skin(),
+                                           get_interaction_range(),
+                                           coulomb.cutoff(),
+                                           dipoles.cutoff(),
+                                           inactive_cutoff};
+  update_cabana_state(*cell_structure, verlet_criterion,
+                      get_interaction_range(), propagation->integ_switch);
+
+  EnergyBinLayout layout{
+      static_cast<std::size_t>(bonded_ias->get_next_key()),
+      std::size_t(nonbonded_ias->get_max_seen_particle_type() + 1)};
+
+  using exec = Kokkos::DefaultExecutionSpace;
+  Kokkos::View<double **, Kokkos::LayoutRight> local_energy(
+      "local_energy", exec().concurrency(), layout.total);
+  auto const &unique_particles = cell_structure->get_unique_particles();
+  auto const n_particles = static_cast<int>(unique_particles.size());
+  Kokkos::View<int *> mol_id_view("mol_id", n_particles);
+  auto mol_id_host = Kokkos::create_mirror_view(mol_id_view);
+  for (int i = 0; i < n_particles; ++i) {
+    mol_id_host(i) = unique_particles[i]->mol_id();
+  }
+  Kokkos::deep_copy(mol_id_view, mol_id_host);
+
+  // Non Bonded energies
+  EnergyKernel pair_e_kernel{*bonded_ias,
+                             *nonbonded_ias,
+                             coulomb,
+                             get_ptr(coulomb_kernel),
+                             get_ptr(dipoles_kernel),
+                             *box_geo,
+                             cell_structure->get_unique_particles(),
+                             local_energy,
+                             layout,
+                             cell_structure->get_aosoa(),
+                             mol_id_view,
+                             maximal_cutoff()};
+
+  // Bonded energies: write a BondsEnergyKernelData + *BondsEnergyKernel
+  auto &bs = cell_structure->bond_state();
+  BondsEnergyKernelData bonds_e_data{*bonded_ias, *box_geo, local_energy,
+                                     layout, cell_structure->get_aosoa()};
+  PairBondsEnergyKernel pair_be_kernel{bonds_e_data, bs.pair_list, bs.pair_ids,
+                                       get_ptr(coulomb_kernel)};
+  AngleBondsEnergyKernel angle_be_kernel{bonds_e_data, bs.angle_list,
+                                         bs.angle_ids};
+  DihedralBondsEnergyKernel dih_be_kernel{bonds_e_data, bs.dihedral_list,
+                                          bs.dihedral_ids};
+
+  cabana_short_range(pair_be_kernel, angle_be_kernel, dih_be_kernel,
+                     pair_e_kernel, *cell_structure, get_interaction_range(),
+                     bonded_ias->maximal_cutoff(), verlet_criterion,
+                     propagation->integ_switch);
+
+  reduce_cabana_energy(local_energy, layout, obs_energy, *bonded_ias,
+                       nonbonded_ias->get_max_seen_particle_type() + 1);
+#ifdef ESPRESSO_CALIPER
+  CALI_MARK_END("cabana_short_range");
+#endif
 
 #ifdef ESPRESSO_ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */

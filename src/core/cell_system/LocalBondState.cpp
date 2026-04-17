@@ -21,8 +21,6 @@
 
 #include "LocalBondState.hpp"
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-
 void LocalBondState::allocate() {
   if (pair_list.is_allocated()) {
     Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), pair_list,
@@ -175,4 +173,3 @@ void LocalBondState::rebuild() {
   clear_new_bonds();
 }
 #endif // ESPRESSO_COLLISION_DETECTION
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

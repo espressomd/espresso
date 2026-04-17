@@ -23,9 +23,7 @@
 
 #include <utils/index.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
-#endif
 
 #include <concepts>
 #include <cstddef>
@@ -123,14 +121,12 @@ void for_each_3d_order(detail::IndexVectorConcept auto &&start,
   }
 }
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 /** @brief Mapping between ESPResSo and Kokkos tags for memory order */
 template <Utils::MemoryOrder Order>
 using LayoutIterate = std::conditional_t<
     Order == Utils::MemoryOrder::COLUMN_MAJOR,
     std::integral_constant<Kokkos::Iterate, Kokkos::Iterate::Left>,
     std::integral_constant<Kokkos::Iterate, Kokkos::Iterate::Right>>;
-#endif
 
 /**
  * @brief Run a kernel(index_3d, linear_index) over the given 3d range with
@@ -139,7 +135,6 @@ using LayoutIterate = std::conditional_t<
 template <Utils::MemoryOrder memory_order, class Kernel>
 void for_each_3d_lin(detail::IndexVectorConcept auto &&start,
                      detail::IndexVectorConcept auto &&stop, Kernel &&kernel) {
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   if (Kokkos::num_threads() > 1) {
     auto const size = stop - start;
     constexpr Kokkos::Iterate iter = LayoutIterate<memory_order>::value;
@@ -153,7 +148,6 @@ void for_each_3d_lin(detail::IndexVectorConcept auto &&start,
         });
     return;
   }
-#endif
 
   int linear_loop_index = 0u;
   if constexpr (memory_order == Utils::MemoryOrder::ROW_MAJOR) {

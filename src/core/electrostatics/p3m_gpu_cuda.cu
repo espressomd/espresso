@@ -56,6 +56,8 @@
 #include "p3m/math.hpp"
 #include "system/System.hpp"
 
+#include <instrumentation/fe_trap.hpp>
+
 #include <utils/math/bspline.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
@@ -613,11 +615,20 @@ void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &data, int cao,
     cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.G_hat),
                              cmesh_size * sizeof(REAL_TYPE)));
 
-    if (cufftPlan3d(&(data->p3m_fft.forw_plan), mesh[0], mesh[1], mesh[2],
-                    FFT_PLAN_FORW_FLAG) != CUFFT_SUCCESS or
-        cufftPlan3d(&(data->p3m_fft.back_plan), mesh[0], mesh[1], mesh[2],
-                    FFT_PLAN_BACK_FLAG) != CUFFT_SUCCESS) {
-      throw std::runtime_error("Unable to create fft plan");
+    {
+#ifdef ESPRESSO_FPE
+      // cuFFT builds device kernels using CUDA-JIT
+      // (https://docs.nvidia.com/cuda/archive/13.1.1/cufft/#plan-initialization-time)
+      // please note this operation is not guaranteed to succeed for all
+      // mesh sizes, and in rare cases, it can send the SIGFPE signal
+      auto const trap_pause = fe_trap::make_shared_pause_scoped();
+#endif
+      if (cufftPlan3d(&(data->p3m_fft.forw_plan), mesh[0], mesh[1], mesh[2],
+                      FFT_PLAN_FORW_FLAG) != CUFFT_SUCCESS or
+          cufftPlan3d(&(data->p3m_fft.back_plan), mesh[0], mesh[1], mesh[2],
+                      FFT_PLAN_BACK_FLAG) != CUFFT_SUCCESS) {
+        throw std::runtime_error("Unable to create fft plan");
+      }
     }
   }
 

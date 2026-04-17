@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <config/config.hpp>
+
 #include "system/System.hpp"
 
 #include <boost/serialization/access.hpp>
@@ -106,9 +108,7 @@ public:
   }
 
 private:
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   std::mutex queue_mtx;
-#endif
 
   void process_queue_impl(System::System &system);
 

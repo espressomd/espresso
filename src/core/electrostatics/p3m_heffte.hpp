@@ -36,10 +36,8 @@
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
 #include <omp.h>
-#endif
 
 #include <algorithm>
 #include <array>
@@ -86,7 +84,6 @@ struct CoulombP3MState : public P3MStateCommon<FloatType> {
   std::array<std::vector<FloatType>, 3> rs_E_fields_no_halo;
   p3m_send_mesh<FloatType> halo_comm;
   std::shared_ptr<P3MFFT<FloatType, FFTConfig>> fft;
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   Kokkos::View<FloatType **, Kokkos::LayoutRight, Kokkos::HostSpace>
       rs_charge_density_kokkos;
 
@@ -95,7 +92,6 @@ struct CoulombP3MState : public P3MStateCommon<FloatType> {
     rs_charge_density_kokkos = decltype(rs_charge_density_kokkos)(
         "CoulombP3MState::rs_charge_density_kokkos", 0, 0);
   }
-#endif
 };
 
 #ifdef ESPRESSO_CUDA
@@ -111,10 +107,8 @@ struct CoulombP3MHeffte : public CoulombP3M {
   CoulombP3MStateClass &p3m;
 
 private:
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   // kokkos handle must outlive kokkos data structures from other class members
   std::shared_ptr<KokkosHandle> m_kokkos_handle;
-#endif
   std::unique_ptr<CoulombP3MStateClass> p3m_state_ptr;
   TuningParameters tuning;
   bool m_is_tuned;
@@ -131,10 +125,8 @@ public:
   CoulombP3MHeffte(std::unique_ptr<CoulombP3MStateClass> &&p3m_state,
                    TuningParameters tuning_params, double prefactor)
       : CoulombP3M(p3m_state->params), p3m{*p3m_state},
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-        m_kokkos_handle{::kokkos_handle},
-#endif
-        p3m_state_ptr{std::move(p3m_state)}, tuning{std::move(tuning_params)} {
+        m_kokkos_handle{::kokkos_handle}, p3m_state_ptr{std::move(p3m_state)},
+        tuning{std::move(tuning_params)} {
 
     if (tuning.timings <= 0) {
       throw std::domain_error("Parameter 'timings' must be > 0");
@@ -142,9 +134,7 @@ public:
     m_is_tuned = not p3m.params.tuning;
     p3m.params.tuning = false;
     set_prefactor(prefactor);
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     p3m.init_labels();
-#endif
   }
 
   void init() override {
@@ -217,13 +207,11 @@ public:
       p3m.inter_weights.reset(p3m.params.cao);
     }
     p3m.rs_charge_density.resize(p3m.local_mesh.size);
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     using execution_space = Kokkos::DefaultExecutionSpace;
     auto const num_threads = execution_space().concurrency();
     Kokkos::realloc(Kokkos::WithoutInitializing, p3m.rs_charge_density_kokkos,
                     num_threads, p3m.local_mesh.size);
     Kokkos::deep_copy(p3m.rs_charge_density_kokkos, FloatType{0});
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
     std::ranges::fill(p3m.rs_charge_density, FloatType{0});
   }
 

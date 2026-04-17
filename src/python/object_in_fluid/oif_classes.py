@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 import numpy as np
 import espressomd
 from espressomd.interactions import OifLocalForces, OifGlobalForces
@@ -195,7 +197,7 @@ class Mesh:
             particle_type=-1, particle_mass=1.0, normal=False, check_orientation=True):
         if (system is None) or (not isinstance(system, espressomd.System)):
             raise Exception(
-                "Mesh: No system provided or wrong type given. Quitting.")
+                "Mesh: No system provided or wrong type given.")
 
         self.system = system
         self.normal = normal
@@ -403,7 +405,7 @@ class Mesh:
                         tmp_vector = neighbor.get_pos() - p_coords
                         tmp_length = norm(tmp_vector)
                         if tmp_length < small_epsilon:
-                            raise Exception("Mesh: Degenerate edge. Quitting.")
+                            raise Exception("Mesh: Degenerate edge.")
                         tmp_vector /= tmp_length
                         tmp_vectors_to_neighbors.append(tmp_vector)
                     # check all triplets of neighbors and select the one that is best spatially distributed
@@ -458,6 +460,9 @@ class Mesh:
 
     def copy(self, origin=None, particle_type=-1, particle_mass=1.0,
              rotate=None):
+        """
+        Create particles in the system.
+        """
         mesh = Mesh(system=self.system)
         mesh.ids_extremal_points = self.ids_extremal_points
 
@@ -487,9 +492,9 @@ class Mesh:
                 tmp_pos += np.array(origin)
             # to remember the global id of the ESPResSo particle
             new_part_id = len(self.system.part)
-            self.system.part.add(
-                pos=tmp_pos, type=particle_type, mass=particle_mass, mol_id=particle_type)
-            new_part = self.system.part.by_id(new_part_id)
+            new_part = self.system.part.add(
+                pos=tmp_pos, type=particle_type, mass=particle_mass,
+                mol_id=particle_type, id=new_part_id)
             new_part_point = PartPoint(new_part, len(mesh.points), new_part_id)
             mesh.points.append(new_part_point)
         for edge in self.edges:
@@ -674,21 +679,36 @@ class Mesh:
         return volume
 
     def get_n_nodes(self):
+        """
+        Get the number of mesh points.
+        """
         return len(self.points)
 
     def get_n_triangles(self):
+        """
+        Get the number of triangles.
+        """
         return len(self.triangles)
 
     def get_n_edges(self):
+        """
+        Get the number of edges.
+        """
         return len(self.edges)
 
     def output_mesh_triangles(self, triangles_file=None):
+        """
+        Write the current triangles into a file that
+        can be used as input in the next simulations.
+        This is useful after checking orientation,
+        if any of the triangles were corrected.
+        """
         # this is useful after the mesh correction
         # output of mesh nodes can be done from OifCell (this is because their
         # position may change)
         if triangles_file is None:
             raise Exception(
-                "OifMesh: No file_name provided for triangles. Quitting.")
+                "OifMesh: No file_name provided for triangles.")
         output_file = open(triangles_file, "w")
         for t in self.triangles:
             output_file.write(
@@ -699,14 +719,14 @@ class Mesh:
     def mirror(self, mirror_x=0, mirror_y=0, mirror_z=0, out_file_name=""):
         if out_file_name == "":
             raise Exception(
-                "Cell.Mirror: output meshnodes file for new mesh is missing. Quitting.")
+                "Cell.Mirror: output meshnodes file for new mesh is missing.")
         if mirror_x not in (0, 1) or mirror_y not in (
                 0, 1) or mirror_z not in (0, 1):
             raise Exception(
-                "Mesh.Mirror: for mirroring only values 0 or 1 are accepted. 1 indicates that the corresponding coordinate will be flipped.  Exiting.")
+                "Mesh.Mirror: for mirroring only values 0 or 1 are accepted. 1 indicates that the corresponding coordinate will be flipped.")
         if mirror_x + mirror_y + mirror_z > 1:
             raise Exception(
-                "Mesh.Mirror: flipping allowed only for one axis. Exiting.")
+                "Mesh.Mirror: flipping allowed only for one axis.")
         if mirror_x + mirror_y + mirror_z == 1:
             out_file = open(out_file_name, "w")
             for p in self.points:
@@ -723,10 +743,88 @@ class Mesh:
         return 0
 
 
-class OifCellType:  # analogous to oif_template
-
+class OifCellType:
     """
-    Represents a template for creating elastic objects.
+    Template to create elastic objects ("cells") from a mesh file.
+
+    The switches ``ks``, ``kb`` and ``kal`` set elastic parameters for
+    local interactions: ``ks`` for edge stiffness, ``kb`` for angle
+    preservation stiffness and ``kal`` for triangle area preservation
+    stiffness. Currently, the stiffness is implemented to be uniform over
+    the whole object, but with some tweaking, it is possible to have
+    non-uniform local interactions.
+    At least one of the elastic moduli should be set.
+
+    Note the difference between stretching (``ks``) and linear stretching
+    (``kslin``): these two options cannot be used simultaneously.
+    Linear stretching behaves like linear spring, where the stretching
+    force is calculated as :math:`\\mathbf{f_{ij}} = k_s \\mathbf{d_{ij}}`,
+    where :math:`\\mathbf{d_{ij}}` is the prolongation of the given edge.
+    By default, the stretching is non-linear (neo-Hookean).
+    The optional viscous damping (``kvisc``) is meant to reduce oscillations
+    in the stretching force. This corresponds to the case :math:`\\gamma^T = 0`
+    and :math:`\\gamma^C = k_{\\mathrm{visc}}` in equation 8 of :cite:`fedosov10a`
+    (which uses the :math:`\\times` symbol for the dot product).
+
+    Parameters
+    ----------
+    nodes_file : :obj:`str`
+        Path to the mesh data file. Each line contains three real numbers.
+        These are the *x, y, z* coordinates of individual surface mesh nodes
+        of the objects centered at [0,0,0] and normalized
+        so that the "radius" of the object is 1.
+    triangles_file : :obj:`str`
+        Path to the triangles data file. Each line contains three integers
+        representing the 0-indexed line number of the mesh nodes
+        in ``nodes_file`` that form a triangle.
+    system : :obj:`espressomd.system.System`
+        System in which particles will be created.
+    ks : :obj:`float`
+        Elastic modulus for stretching forces.
+    kslin : :obj:`float`
+        Elastic modulus for linear stretching forces.
+    kb : :obj:`float`
+        Elastic modulus for bending forces.
+    kal : :obj:`float`
+        Elastic modulus for local area forces.
+    kvisc : :obj:`float`
+        Viscous damping for stretching forces.
+    kag : :obj:`float`
+        Elastic modulus for global area forces.
+    kv : :obj:`float`
+        Elastic modulus for volume forces.
+    resize : (3,) array_like of :obj:`float`
+        Scaling factor by which the coordinates stored in ``nodes_file``
+        will be stretched in the *x, y, z* directions.
+    normal : :obj:`bool`
+        If ``True``, create list of neighbors to allow membrane collisions,
+        and thus cell-cell interactions.
+    check_orientation : :obj:`bool`
+        If ``True``, check whether ``triangles_file`` contains triangles
+        with correct orientation. If not, it corrects the orientation
+        and created cells with corrected triangles.
+        It is useful for new or unknown meshes, but not necessary for meshes
+        that have already been tried out. Since it can take a few minutes for
+        larger meshes (with thousands of nodes), it can be set to ``False``.
+        In that case, the check is skipped when creating the ``CellType`` and
+        a warning is displayed.
+
+        The order of indices in ``triangles_file`` is important. Normally, each
+        triangle ABC should be oriented in such a way, that the normal vector
+        computed as vector product ABxAC must point inside the object.
+        For example, a sphere (or any other sufficiently convex object) contains
+        such triangles that the normals of these triangles point towards the
+        center of the sphere (almost).
+
+        The check runs over all triangles, makes sure that they have the
+        correct orientation and then calculates the volume of the object. If
+        the result is negative, it flips the orientation of all triangles.
+
+        Note, this method tells the user about the correction it makes.
+        If there is any, it might be useful to save the corrected triangulation
+        for future simulations using the method
+        :meth:`Mesh.output_mesh_triangles`, so that the
+        check does not have to be used repeatedly.
 
     """
 
@@ -735,10 +833,10 @@ class OifCellType:  # analogous to oif_template
             kb=0.0, kal=0.0, kag=0.0, kv=0.0, kvisc=0.0, normal=False, check_orientation=True):
         if (system is None) or (not isinstance(system, espressomd.System)):
             raise Exception(
-                "OifCellType: No system provided or wrong type. Quitting.")
+                "OifCellType: No system provided or wrong type")
         if (nodes_file == "") or (triangles_file == ""):
             raise Exception(
-                "OifCellType: One of nodesfile or trianglesfile is missing. Quitting.")
+                "OifCellType: Either nodes_file or triangles_file is missing")
         if not (isinstance(nodes_file, str)
                 and isinstance(triangles_file, str)):
             raise TypeError("OifCellType: Filenames must be strings.")
@@ -755,7 +853,7 @@ class OifCellType:  # analogous to oif_template
             raise TypeError("OifCellType: check_orientation must be bool.")
         if (ks != 0.0) and (kslin != 0.0):
             raise Exception(
-                "OifCellType: Cannot use linear and nonlinear stretching at the same time. Quitting.")
+                "OifCellType: Cannot use linear and nonlinear stretching at the same time.")
         self.system = system
         self.mesh = Mesh(
             nodes_file=nodes_file, triangles_file=triangles_file, system=system, resize=resize,
@@ -793,6 +891,9 @@ class OifCellType:  # analogous to oif_template
             self.system.bonded_inter.add(self.global_force_interaction)
 
     def print_info(self):
+        """
+        Print information about this template.
+        """
         print("\nThe following OifCellType was created: ")
         print("\t nodes_file: " + self.mesh.nodes_file)
         print("\t triangles_file: " + self.mesh.triangles_file)
@@ -812,9 +913,29 @@ class OifCellType:  # analogous to oif_template
 
 
 class OifCell:
-
     """
-    Represents a concrete elastic object.
+    Represent a concrete elastic object ("cell").
+
+    Parameters
+    ----------
+    cell_type : :obj:`OifCellType`
+        Template containing mesh nodes, triangle incidences,
+        elasticity parameters and bond parameters, and a system,
+        into which particles and bonds will be instantiated.
+    particle_type : :obj:`int`
+        Must start at 0 for the first cell and monotonically increase for
+        subsequent cells. Volume calculation of individual objects and
+        interactions between objects are set up using these types.
+    origin : (3,) array_like of :obj:`float`
+        Center of the cell object.
+    particle_mass : :obj:`float`
+        Mass of each particle forming the cell.
+    rotate : (3,) array_like of :obj:`float`
+        angles in radians, by which the cell will be rotated about the
+        *x, y, z* axis. Default value is (0.0, 0.0, 0.0).
+        Value (:math:`\\pi/2, 0.0, 0.0`) means that the object will
+        be rotated by :math:`\\pi/2` radians clockwise around the *x*
+        axis when looking in the positive direction of the axis.
 
     """
 
@@ -822,13 +943,13 @@ class OifCell:
                  particle_mass=1.0, rotate=None):
         if (cell_type is None) or (not isinstance(cell_type, OifCellType)):
             raise Exception(
-                "OifCell: No cellType provided or wrong type. Quitting.")
+                "OifCell: No cellType provided or wrong type.")
         if (origin is None) or \
                 (not ((len(origin) == 3) and isinstance(origin[0], float) and isinstance(origin[1], float) and isinstance(origin[2], float))):
             raise TypeError("Origin must be tuple.")
         if (particle_type is None) or (not isinstance(particle_type, int)):
             raise Exception(
-                "OifCell: No particle_type specified or wrong type. Quitting.")
+                "OifCell: No particle_type specified or wrong type.")
         if not isinstance(particle_mass, float):
             raise Exception("OifCell: particle mass must be float.")
         if (rotate is not None) and not ((len(rotate) == 3) and isinstance(
@@ -872,38 +993,65 @@ class OifCell:
                      triangle.C.part_id))
 
     def get_origin(self):
+        """
+        Get the cell center in unfolded coordinates.
+        """
         center = np.array([0.0, 0.0, 0.0])
         for p in self.mesh.points:
             center += p.get_pos()
         return center / len(self.mesh.points)
 
     def set_origin(self, new_origin=(0.0, 0.0, 0.0)):
+        """
+        Set the cell center.
+        """
         old_origin = self.get_origin()
         for p in self.mesh.points:
             new_position = p.get_pos() - old_origin + new_origin
             p.set_pos(new_position)
 
     def get_approx_origin(self):
+        """
+        Get the approximate location of the cell center.
+        It is computed as average of 6 mesh points that have extremal *x*,
+        *y* and *z* coordinates at the time of object loading.
+        """
         approx_center = np.array([0.0, 0.0, 0.0])
-        for id in self.mesh.ids_extremal_points:
-            approx_center += self.mesh.points[id].get_pos()
+        for pid in self.mesh.ids_extremal_points:
+            approx_center += self.mesh.points[pid].get_pos()
         return approx_center / len(self.mesh.ids_extremal_points)
 
     def get_origin_folded(self):
+        """
+        Get the cell center in folded coordinates.
+        """
         origin = self.get_origin()
         return np.mod(origin, self.cell_type.system.box_l)
 
     def get_velocity(self):
+        """
+        Get the average velocity of the cell mesh points.
+        """
         velocity = np.array([0.0, 0.0, 0.0])
         for p in self.mesh.points:
             velocity += p.get_vel()
         return velocity / len(self.mesh.points)
 
     def set_velocity(self, new_velocity=(0.0, 0.0, 0.0)):
+        """
+        Set the velocity of all cell mesh points.
+        """
         for p in self.mesh.points:
             p.set_vel(new_velocity)
 
     def pos_bounds(self):
+        """
+        Compute six extremal coordinates of the cell.
+        More precisely, run through all mesh points and return
+        the minimal and maximal :math:`x`-coordinate, :math:`y`-coordinate and
+        :math:`z`-coordinate in the order (:math:`x_{max}`, :math:`x_{min}`,
+        :math:`y_{max}`, :math:`y_{min}`, :math:`z_{max}`, :math:`z_{min}`).
+        """
         x_min = large_number
         x_max = -large_number
         y_min = large_number
@@ -927,9 +1075,15 @@ class OifCell:
         return [x_min, x_max, y_min, y_max, z_min, z_max]
 
     def surface(self):
+        """
+        Get the cell surface.
+        """
         return self.mesh.surface()
 
     def volume(self):
+        """
+        Get the cell volume.
+        """
         return self.mesh.volume()
 
     def diameter(self):
@@ -947,26 +1101,28 @@ class OifCell:
         return np.sqrt(max_dist_sq)
 
     def get_n_nodes(self):
+        """
+        Get the number of mesh points.
+        """
         return self.mesh.get_n_nodes()
 
     def set_force(self, new_force=(0.0, 0.0, 0.0)):
+        """
+        Set an external force to all mesh points.
+        Note, that this command sets the external force in each integration
+        step. So if you want to use the external force only in one iteration,
+        you need to set zero external force in the following integration step.
+        """
         for p in self.mesh.points:
             p.set_force(new_force)
 
-    # this is not implemented
-    # def kill_motion(self):
-    #    for p in self.mesh.points:
-    #        p.kill_motion()
-
-    # this is not implemented
-    # def unkill_motion(self):
-    #    for p in self.mesh.points:
-    #        p.unkill_motion()
-
     def output_vtk_pos(self, file_name=None):
+        """
+        Write the mesh information to a VTK file in unfolded coordinates.
+        ParaView can directly visualize this file.
+        """
         if file_name is None:
-            raise Exception(
-                "OifCell: No file_name provided for vtk output. Quitting")
+            raise Exception("OifCell: No file_name provided for vtk output.")
         n_points = len(self.mesh.points)
         n_triangles = len(self.mesh.triangles)
         output_file = open(file_name, "w")
@@ -987,9 +1143,13 @@ class OifCell:
         output_file.close()
 
     def output_vtk_pos_folded(self, file_name=None):
+        """
+        Write the mesh information to a VTK file in folded coordinates.
+        ParaView can directly visualize this file.
+        """
         if file_name is None:
             raise Exception(
-                "OifCell: No file_name provided for vtk output. Quitting.")
+                "OifCell: No file_name provided for vtk output.")
         n_points = len(self.mesh.points)
         n_triangles = len(self.mesh.triangles)
 
@@ -1021,22 +1181,32 @@ class OifCell:
 
     def append_point_data_to_vtk(self, file_name=None, data_name=None,
                                  data=None, first_append=None):
+        """
+        Append the specified scalar ``data`` to a VTK file.
+        This is useful for ParaView visualisation of local velocity magnitudes,
+        magnitudes of forces, ..., in the meshnodes and can be shown in
+        ParaView by selecting the ``data_name`` in the *Properties* toolbar.
+        It is possible to consecutively write multiple datasets;
+        for the first one, the ``first_append`` parameter is set to ``True``,
+        for the following datasets, it needs to be set to ``False``.
+        This is to ensure the proper structure of the output file.
+        """
         if file_name is None:
             raise Exception(
-                "OifCell: append_point_data_to_vtk: No file_name provided. Quitting.")
+                "OifCell: append_point_data_to_vtk: No file_name provided.")
         if data is None:
             raise Exception(
-                "OifCell: append_point_data_to_vtk: No data provided. Quitting.")
+                "OifCell: append_point_data_to_vtk: No data provided.")
         if data_name is None:
             raise Exception(
-                "OifCell: append_point_data_to_vtk: No data_name provided. Quitting.")
+                "OifCell: append_point_data_to_vtk: No data_name provided.")
         if first_append is None:
             raise Exception("OifCell: append_point_data_to_vtk: Need to know whether this is the first data list to be "
-                            "appended for this file. Quitting.")
+                            "appended for this file.")
         n_points = self.get_n_nodes()
         if len(data) != n_points:
             raise Exception(
-                "OifCell: append_point_data_to_vtk: Number of data points does not match number of mesh points. Quitting.")
+                "OifCell: append_point_data_to_vtk: Number of data points does not match number of mesh points.")
         output_file = open(file_name, "a")
         if first_append is True:
             output_file.write("POINT_DATA " + str(n_points) + "\n")
@@ -1047,25 +1217,36 @@ class OifCell:
         output_file.close()
 
     def output_raw_data(self, file_name=None, data=None):
+        """
+        Write the vector or matrix ``rawdata`` to a white-space delimited
+        text file. The rows are ordered by the mesh points indices.
+        """
         if file_name is None:
             raise Exception(
-                "OifCell: output_raw_data: No file_name provided. Quitting.")
+                "OifCell: output_raw_data: No file_name provided.")
         if data is None:
             raise Exception(
-                "OifCell: output_raw_data: No data provided. Quitting.")
+                "OifCell: output_raw_data: No data provided.")
         n_points = self.get_n_nodes()
         if len(data) != n_points:
             raise Exception(
-                "OifCell: output_raw_data: Number of data points does not match number of mesh points. Quitting.")
+                "OifCell: output_raw_data: Number of data points does not match number of mesh points.")
         output_file = open(file_name, "w")
         for p in self.mesh.points:
             output_file.write(" ".join(map(str, data[p.id])) + "\n")
         output_file.close()
 
     def output_mesh_points(self, file_name=None):
+        """
+        Write the positions of the mesh points to a white-space delimited
+        text file. This file can later be read by :meth:`set_mesh_points`.
+        The center of the object is located at (0.0, 0.0, 0.0).
+        This method is meant to store a deformed shape in order
+        to be loaded later as a new shape template.
+        """
         if file_name is None:
             raise Exception(
-                "OifCell: No file_name provided for mesh nodes output. Quitting.")
+                "OifCell: No file_name provided for mesh nodes output.")
         output_file = open(file_name, "w")
         center = self.get_origin()
         for p in self.mesh.points:
@@ -1075,9 +1256,15 @@ class OifCell:
         output_file.close()
 
     def set_mesh_points(self, file_name=None):
+        """
+        Read a file containing a list of mesh point coordinates to deform
+        the current cell. The current origin stays unchanged. The file should
+        contain the coordinates of the mesh points with the origin location at
+        (0.0, 0.0, 0.0). It can be generated by :meth:`output_mesh_points`.
+        """
         if file_name is None:
             raise Exception(
-                "OifCell: No file_name provided for set_mesh_points. Quitting.")
+                "OifCell: No file_name provided for set_mesh_points.")
         center = self.get_origin()
         n_points = self.get_n_nodes()
 
@@ -1089,7 +1276,7 @@ class OifCell:
         # here we have list of lines with triplets of strings
         if len(nodes_coord) != n_points:
             raise Exception("OifCell: Mesh nodes not set to new positions: "
-                            "number of lines in the file does not equal number of Cell nodes. Quitting.")
+                            "number of lines in the file does not equal number of Cell nodes.")
         else:
             i = 0
             for line in nodes_coord:  # extracts coordinates from the string line
@@ -1099,6 +1286,9 @@ class OifCell:
                 i += 1
 
     def print_info(self):
+        """
+        Print information about the cell.
+        """
         print("\nThe following OifCell was created: ")
         print("\t particle_mass: " + custom_str(self.particle_mass))
         print("\t particle_type: " + str(self.particle_type))
@@ -1109,6 +1299,34 @@ class OifCell:
     def elastic_forces(
             self, el_forces=(0, 0, 0, 0, 0, 0), f_metric=(0, 0, 0, 0, 0, 0), vtk_file=None,
             raw_data_file=None):
+        """
+        This method can be used in two different ways. One is to compute
+        the elastic forces locally for each mesh point, and the other is to
+        compute the f-metric, which is an approximation of elastic energy.
+
+        To compute the elastic forces, use the vector ``el_forces``.
+        It is a sextuple of zeros and ones, e.g. ``el_forces = (1,0,0,1,0,0)``,
+        where the ones denote the elastic forces to be computed. The order
+        is (stretching, bending, local area, global area, volume, total).
+        The output can be saved in two different ways: either by setting
+        ``vtk_file = filename.vtk``, which saves a VTK file that can be
+        visualized using ParaView. If more than one elastic force was
+        selected, they can be chosen in the Properties window in ParaView.
+        The other type of output is ``raw_data_file*=filename.dat``, which will
+        save a datafile with the selected type of elastic force - one force
+        per row, where each row corresponds to a single mesh node. Note that
+        only one type of elastic force can be written this way at a time.
+        Thus, if you need output for several elastic forces, this method
+        should be called several times.
+
+        To compute the f-metric, use the vector ``f_metric``. It is also
+        a sextuple of zeros and ones, e.g. ``f_metric = (1,1,0,0,0,0)``,
+        where the ones denote the elastic forces to be computed. The order
+        is (stretching, bending, local area, global area, volume, total).
+        The output is also a vector with six elements, each corresponding
+        to the requested f-metric/"naive energy" computed as a
+        sum of magnitudes of respective elastic forces over all mesh points.
+        """
         # the order of parameters in elastic_forces and in f_metric is as follows (ks, kb, kal, kag, kv, total)
         # vtk_file means that a vtk file for visualisation of elastic forces will be written
         # raw_data_file means that just the elastic forces will be written into

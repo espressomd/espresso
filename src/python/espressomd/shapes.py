@@ -99,7 +99,7 @@ class Rhomboid(Shape, ScriptInterfaceHelper):
 class Slitpore(Shape, ScriptInterfaceHelper):
     """
 
-    .. figure:: figures/slitpore.png
+    .. figure:: /figures/slitpore.png
        :alt: Schematic for the Slitpore shape with labeled geometrical parameters.
        :align: center
        :height: 8.00000cm
@@ -252,7 +252,7 @@ class HollowConicalFrustum(Shape, ScriptInterfaceHelper):
         Must be between ``0`` and ``2 pi``. Defaults to 0.
 
 
-    .. image:: figures/conical_frustum.png
+    .. image:: /figures/conical_frustum.png
     """
     _so_name = "Shapes::HollowConicalFrustum"
 

@@ -23,9 +23,7 @@
 
 #include "p3m/field_layout_helpers.hpp"
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
-#endif
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
@@ -36,10 +34,8 @@
 #include <vector>
 
 struct GlobalConfig {
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   GlobalConfig() { Kokkos::initialize(); }
   ~GlobalConfig() { Kokkos::finalize(); }
-#endif
 };
 
 BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);

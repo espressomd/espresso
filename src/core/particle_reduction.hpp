@@ -24,9 +24,7 @@
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
-#endif
 
 #include <concepts>
 #include <functional>
@@ -42,8 +40,6 @@ using AddPartialResultKernel =
 /** @brief Join two partial reduction results */
 template <typename ResultType>
 using ReductionOp = std::function<void(ResultType &, ResultType const &)>;
-
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 /** @brief Custom reduction in the form required by Kokkos */
 template <typename ResultType, typename Kernel> class KokkosReducer {
@@ -62,7 +58,7 @@ public:
   KokkosReducer(Kernel kernel, ReductionOp<ResultType> reduction_op)
       : reduction_op(std::move(reduction_op)), kernel(std::move(kernel)) {}
   KokkosReducer(KokkosReducer const &other)
-      : reduction_op(other.reduction_op), kernel(other.kernel) {};
+      : reduction_op(other.reduction_op), kernel(other.kernel) {}
 
   KOKKOS_INLINE_FUNCTION void operator()(std::integral auto const i,
                                          value_type &update) const {
@@ -84,8 +80,6 @@ make_kokkos_reducer(Kernel k, ReductionOp<ResultType> reduce_op) {
   return KokkosReducer<ResultType, Kernel>(k, reduce_op);
 }
 
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
-
 } // namespace Reduction
 
 /** @brief performs a reduction over all particles
@@ -105,7 +99,6 @@ ResultType reduce_over_local_particles(
 
   ResultType result{};
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   auto const &cells = cs.decomposition().local_cells();
   if (cells.size() > 1) { // parallel loop over cells
     auto reducer = Reduction::make_kokkos_reducer<ResultType>(
@@ -129,10 +122,4 @@ ResultType reduce_over_local_particles(
   Kokkos::parallel_reduce( // loop over particles
       "reduce_on_local_particle", particles.size(), reducer, result);
   return result;
-#else // ESPRESSO_SHARED_MEMORY_PARALLELISM
-  for (auto const &p : cs.local_particles()) {
-    add_partial(result, p);
-  }
-  return result;
-#endif
 }

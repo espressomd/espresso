@@ -37,6 +37,8 @@
 #include <script_interface/auto_parameters/AutoParameters.hpp>
 #include <script_interface/code_info/CodeInfo.hpp>
 
+#include <instrumentation/fe_trap.hpp>
+
 #include <utils/math/int_pow.hpp>
 
 #include <memory>
@@ -71,8 +73,18 @@ protected:
     }
     m_instance = make_new_instance(m_lattice->lattice(), permittivity,
                                    m_single_precision);
-    m_instance->setup_fft(m_gpu and
-                          ::communication_environment->is_mpi_gpu_aware());
+    {
+#ifdef ESPRESSO_FPE
+      // cuFFT builds device kernels using CUDA-JIT
+      // (https://docs.nvidia.com/cuda/archive/13.1.1/cufft/#plan-initialization-time)
+      // please note this operation is not guaranteed to succeed for all
+      // mesh sizes, and in rare cases, it can send the SIGFPE signal
+      auto const trap_pause = fe_trap::make_shared_pause_scoped();
+#endif
+      auto const use_gpu_aware =
+          m_gpu and ::communication_environment->is_mpi_gpu_aware();
+      m_instance->setup_fft(use_gpu_aware);
+    }
   }
 
 public:

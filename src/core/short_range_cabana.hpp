@@ -21,8 +21,6 @@
 
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-
 #include "cell_system/CellStructure.hpp"
 
 #include "aosoa_pack.hpp"
@@ -303,7 +301,7 @@ update_aosoa_charges(CellStructure &cell_structure) {
 void cabana_short_range(auto const &pair_bonds_kernel,
                         auto const &angle_bonds_kernel,
                         auto const &dihedral_bonds_kernel,
-                        auto const &forces_kernel,
+                        auto const &nonbonded_kernel,
                         CellStructure &cell_structure, double pair_cutoff,
                         double bond_cutoff, auto const &verlet_criterion,
                         auto const integ_switch) {
@@ -349,7 +347,7 @@ void cabana_short_range(auto const &pair_bonds_kernel,
       auto const &verlet_list = cell_structure.get_verlet_list_cabana();
       Kokkos::RangePolicy<execution_space> policy(
           std::size_t{0}, cell_structure.get_unique_particles().size());
-      Cabana::neighbor_parallel_for(policy, forces_kernel, verlet_list,
+      Cabana::neighbor_parallel_for(policy, nonbonded_kernel, verlet_list,
                                     Cabana::FirstNeighborsTag(),
                                     Cabana::SerialOpTag());
     } else {
@@ -361,11 +359,11 @@ void cabana_short_range(auto const &pair_bonds_kernel,
                 cell_structure.get_cached_max_local_particle_id(),
                 [&](const int i, const int j) {
                   // intra cell loop
-                  forces_kernel(i, j);
+                  nonbonded_kernel(i, j);
                 },
                 [&](const int i, const int j) {
                   // inter cell loop
-                  forces_kernel(i, j);
+                  nonbonded_kernel(i, j);
                 });
           });
     }
@@ -375,5 +373,3 @@ void cabana_short_range(auto const &pair_bonds_kernel,
 #endif
   }
 }
-
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

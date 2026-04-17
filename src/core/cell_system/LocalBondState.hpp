@@ -21,9 +21,8 @@
 
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-
 #include <Kokkos_Core.hpp>
+
 #include <vector>
 
 struct LocalBondState {
@@ -81,5 +80,3 @@ struct LocalBondState {
   void rebuild();
 #endif
 };
-
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

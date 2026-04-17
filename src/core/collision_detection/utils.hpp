@@ -94,9 +94,7 @@ inline void add_bind_centers(std::vector<CollisionPair> &collision_queue,
     // Once we change bond storage, some syncing has to be done.
     assert(use_one_sided_bond_storage);
     ::add_bond(system, bond_id, {c.first, c.second});
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     system.cell_structure->add_new_bond(bond_id, {c.first, c.second});
-#endif
   }
 }
 

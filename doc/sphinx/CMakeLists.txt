@@ -17,11 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-find_package(Sphinx 3.4.3)
+find_package(Sphinx 7.2.6)
 if(SPHINX_FOUND)
   # configured documentation tools and intermediate build results
   set(BINARY_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/_build")
-  set(SPHINX_PYTHON_DIR "${CMAKE_SOURCE_DIR}/src/python/espressomd")
+  set(SPHINX_PYTHON_DIR "${CMAKE_SOURCE_DIR}/src/python")
   # Sphinx cache with pickled ReST documents
   set(SPHINX_CACHE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_doctrees")
 
@@ -84,8 +84,11 @@ if(SPHINX_FOUND)
     ${Python_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/samples.py"
     COMMAND ${SPHINX_API_DOC_EXE} -f -o ${CMAKE_CURRENT_BINARY_DIR}
             ${SPHINX_PYTHON_DIR}
-    COMMAND ${Python_EXECUTABLE}
-            "${CMAKE_CURRENT_SOURCE_DIR}/autodoc_overrides.py"
+    COMMAND
+      ${CMAKE_COMMAND} -DFILEPATH=espressomd.rst
+      -DSUBMODULE=espressomd.propagation -P
+      ${CMAKE_CURRENT_SOURCE_DIR}/autodoc_overrides.cmake
+    COMMAND ${CMAKE_COMMAND} -E rm ${CMAKE_CURRENT_BINARY_DIR}/modules.rst
     COMMAND
       ${CMAKE_BINARY_DIR}/pypresso -m sphinx -q -W -b html -c
       "${CMAKE_CURRENT_BINARY_DIR}" -d "${SPHINX_CACHE_DIR}"

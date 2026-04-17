@@ -76,17 +76,13 @@ install(TARGETS espresso_core
 
 target_link_libraries(
   espresso_core
-  PRIVATE
-    espresso::config
-    espresso::utils::mpi
-    espresso::shapes
-    espresso::compiler_flags
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Cabana::Core>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_NLOPT}>:nlopt>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_GSL}>:GSL::gsl>
+  PRIVATE espresso::config espresso::utils::mpi espresso::shapes
+          espresso::compiler_flags OpenMP::OpenMP_CXX
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
+          Kokkos::kokkos Cabana::Core
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_NLOPT}>:nlopt>
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_GSL}>:GSL::gsl>
   PUBLIC espresso::utils MPI::MPI_CXX Random123 espresso::particle_observables
          Boost::serialization Boost::mpi espresso::instrumentation)
 

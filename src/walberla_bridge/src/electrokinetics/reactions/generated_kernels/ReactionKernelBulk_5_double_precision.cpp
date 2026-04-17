@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 007e77e077ad9d22b5eed6f3d3118240993e553c
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 3247aa7395049ca5bfb69d34d55e45db19fa439c
 
 #include <cmath>
 
@@ -47,20 +47,24 @@ namespace pystencils {
 
 namespace internal_5119d69793e3096feaaca816d627c080 {
 static FUNC_PREFIX void reactionkernelbulk_5_double_precision_reactionkernelbulk_5_double_precision(double *RESTRICT _data_rho_0, double *RESTRICT _data_rho_1, double *RESTRICT _data_rho_2, double *RESTRICT _data_rho_3, double *RESTRICT _data_rho_4, int64_t const _size_rho_0_0, int64_t const _size_rho_0_1, int64_t const _size_rho_0_2, int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1, int64_t const _stride_rho_0_2, int64_t const _stride_rho_1_0, int64_t const _stride_rho_1_1, int64_t const _stride_rho_1_2, int64_t const _stride_rho_2_0, int64_t const _stride_rho_2_1, int64_t const _stride_rho_2_2, int64_t const _stride_rho_3_0, int64_t const _stride_rho_3_1, int64_t const _stride_rho_3_2, int64_t const _stride_rho_4_0, int64_t const _stride_rho_4_1, int64_t const _stride_rho_4_2, double order_0, double order_1, double order_2, double order_3, double order_4, double rate_coefficient, double stoech_0, double stoech_1, double stoech_2, double stoech_3, double stoech_4) {
-  for (int64_t ctr_2 = 0; ctr_2 < _size_rho_0_2; ctr_2 += 1) {
-    for (int64_t ctr_1 = 0; ctr_1 < _size_rho_0_1; ctr_1 += 1) {
-      for (int64_t ctr_0 = 0; ctr_0 < _size_rho_0_0; ctr_0 += 1) {
-        const double local_rho_0 = _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2];
-        const double local_rho_1 = _data_rho_1[_stride_rho_1_0 * ctr_0 + _stride_rho_1_1 * ctr_1 + _stride_rho_1_2 * ctr_2];
-        const double local_rho_2 = _data_rho_2[_stride_rho_2_0 * ctr_0 + _stride_rho_2_1 * ctr_1 + _stride_rho_2_2 * ctr_2];
-        const double local_rho_3 = _data_rho_3[_stride_rho_3_0 * ctr_0 + _stride_rho_3_1 * ctr_1 + _stride_rho_3_2 * ctr_2];
-        const double local_rho_4 = _data_rho_4[_stride_rho_4_0 * ctr_0 + _stride_rho_4_1 * ctr_1 + _stride_rho_4_2 * ctr_2];
-        const double rate_factor = pow(local_rho_0, order_0) * pow(local_rho_1, order_1) * pow(local_rho_2, order_2) * pow(local_rho_3, order_3) * pow(local_rho_4, order_4) * rate_coefficient;
-        _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2] = local_rho_0 + rate_factor * stoech_0;
-        _data_rho_1[_stride_rho_1_0 * ctr_0 + _stride_rho_1_1 * ctr_1 + _stride_rho_1_2 * ctr_2] = local_rho_1 + rate_factor * stoech_1;
-        _data_rho_2[_stride_rho_2_0 * ctr_0 + _stride_rho_2_1 * ctr_1 + _stride_rho_2_2 * ctr_2] = local_rho_2 + rate_factor * stoech_2;
-        _data_rho_3[_stride_rho_3_0 * ctr_0 + _stride_rho_3_1 * ctr_1 + _stride_rho_3_2 * ctr_2] = local_rho_3 + rate_factor * stoech_3;
-        _data_rho_4[_stride_rho_4_0 * ctr_0 + _stride_rho_4_1 * ctr_1 + _stride_rho_4_2 * ctr_2] = local_rho_4 + rate_factor * stoech_4;
+#pragma omp parallel
+  {
+#pragma omp for schedule(static)
+    for (int64_t ctr_2 = 0; ctr_2 < _size_rho_0_2; ctr_2 += 1) {
+      for (int64_t ctr_1 = 0; ctr_1 < _size_rho_0_1; ctr_1 += 1) {
+        for (int64_t ctr_0 = 0; ctr_0 < _size_rho_0_0; ctr_0 += 1) {
+          const double local_rho_0 = _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2];
+          const double local_rho_1 = _data_rho_1[_stride_rho_1_0 * ctr_0 + _stride_rho_1_1 * ctr_1 + _stride_rho_1_2 * ctr_2];
+          const double local_rho_2 = _data_rho_2[_stride_rho_2_0 * ctr_0 + _stride_rho_2_1 * ctr_1 + _stride_rho_2_2 * ctr_2];
+          const double local_rho_3 = _data_rho_3[_stride_rho_3_0 * ctr_0 + _stride_rho_3_1 * ctr_1 + _stride_rho_3_2 * ctr_2];
+          const double local_rho_4 = _data_rho_4[_stride_rho_4_0 * ctr_0 + _stride_rho_4_1 * ctr_1 + _stride_rho_4_2 * ctr_2];
+          const double rate_factor = pow(local_rho_0, order_0) * pow(local_rho_1, order_1) * pow(local_rho_2, order_2) * pow(local_rho_3, order_3) * pow(local_rho_4, order_4) * rate_coefficient;
+          _data_rho_0[_stride_rho_0_0 * ctr_0 + _stride_rho_0_1 * ctr_1 + _stride_rho_0_2 * ctr_2] = local_rho_0 + rate_factor * stoech_0;
+          _data_rho_1[_stride_rho_1_0 * ctr_0 + _stride_rho_1_1 * ctr_1 + _stride_rho_1_2 * ctr_2] = local_rho_1 + rate_factor * stoech_1;
+          _data_rho_2[_stride_rho_2_0 * ctr_0 + _stride_rho_2_1 * ctr_1 + _stride_rho_2_2 * ctr_2] = local_rho_2 + rate_factor * stoech_2;
+          _data_rho_3[_stride_rho_3_0 * ctr_0 + _stride_rho_3_1 * ctr_1 + _stride_rho_3_2 * ctr_2] = local_rho_3 + rate_factor * stoech_3;
+          _data_rho_4[_stride_rho_4_0 * ctr_0 + _stride_rho_4_1 * ctr_1 + _stride_rho_4_2 * ctr_2] = local_rho_4 + rate_factor * stoech_4;
+        }
       }
     }
   }

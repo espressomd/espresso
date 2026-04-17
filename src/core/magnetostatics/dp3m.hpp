@@ -190,15 +190,12 @@ public:
   }
 
   /** Calculate real-space contribution of dipolar pair energy. */
-  inline double pair_energy(Particle const &p1, Particle const &p2,
+  inline double pair_energy(Utils::Vector3d const &dip1,
+                            Utils::Vector3d const &dip2,
                             Utils::Vector3d const &d, double dist,
                             double dist2) const {
-    if (p1.dipm() == 0. or p2.dipm() == 0. or dist >= dp3m_params.r_cut or
-        dist <= 0.)
+    if (dist >= dp3m_params.r_cut or dist <= 0.)
       return {};
-
-    auto const dip1 = p1.calc_dip();
-    auto const dip2 = p2.calc_dip();
 
     auto const alpsq = dp3m_params.alpha * dp3m_params.alpha;
     auto const adist = dp3m_params.alpha * dist;

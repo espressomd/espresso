@@ -197,6 +197,7 @@ if args.gpu:
 else:
     params = {
         "target": target,
+        "cpu_openmp": True,
         "cpu_vectorize_info": {
             "assume_inner_stride_one": False,
         },
@@ -208,6 +209,8 @@ else:
 
 with code_generation_context.CodeGeneration() as ctx:
     ctx.double_accuracy = double_precision
+    if target == ps.Target.CPU:
+        ctx.openmp = True
     if target == ps.Target.GPU:
         ctx.gpu = True
         ctx.cuda = True
@@ -227,9 +230,9 @@ with code_generation_context.CodeGeneration() as ctx:
     if "diffusion" in args.kernels:
         for midfix, fluctuation in (("", False), ("Thermalized", True)):
             cpu_vectorize_info["cpu_prepend_opt_remove_conditionals"] = False
+            class_name = f"DiffusiveFluxKernel{midfix}_{precision_suffix}{processor_suffix}"  # nopep8
             pystencils_walberla.generate_sweep(
-                ctx,
-                f"DiffusiveFluxKernel{midfix}_{precision_suffix}{processor_suffix}",  # nopep8
+                ctx, class_name,
                 ek.flux(include_vof=False, include_fluctuations=fluctuation,
                         rng_node=precision_rng),
                 staggered=True,
@@ -270,15 +273,17 @@ with code_generation_context.CodeGeneration() as ctx:
                        patch_advection_kernel, processor_suffix)
 
     if "continuity" in args.kernels:
+        class_name = f"ContinuityKernel_{precision_suffix}{processor_suffix}"
         pystencils_walberla.generate_sweep(
             ctx,
-            f"ContinuityKernel_{precision_suffix}{processor_suffix}",
+            class_name,
             ek.continuity(),
             **params)
     if "friction_coupling" in args.kernels:
+        class_name = f"FrictionCouplingKernel_{precision_suffix}{processor_suffix}"  # nopep8
         pystencils_walberla.generate_sweep(
             ctx,
-            f"FrictionCouplingKernel_{precision_suffix}{processor_suffix}",
+            class_name,
             ek.friction_coupling(),
             **params)
 

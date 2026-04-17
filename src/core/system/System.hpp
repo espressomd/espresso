@@ -137,9 +137,7 @@ public:
 
   /** @brief Rebuild cell lists. Use e.g. after a skin change. */
   void rebuild_cell_structure();
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   void rebuild_aosoa();
-#endif
 
   /** @brief Calculate the maximal cutoff of all interactions. */
   double maximal_cutoff() const;

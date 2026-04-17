@@ -17,21 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-def update_file(filepath, function):
-    with open(filepath, "r+") as f:
-        content = function(f.read())
-        f.seek(0)
-        f.truncate()
-        f.write(content)
-
-
-def update_espressomd(content):
-    token = ".. automodule:: espressomd.propagation"
-    assert token in content
-    assert content.count(token) == 1
-    content = content.replace(token, token + "\n   :member-order: bysource", 1)
-    return content
-
-
-update_file("espressomd.rst", update_espressomd)
+file(READ ${FILEPATH} CONTENT)
+set(TOKEN ".. automodule:: ${SUBMODULE}")
+string(FIND "${CONTENT}" "${TOKEN}" POSITION)
+if(POSITION EQUAL -1)
+  message(FATAL_ERROR "Cannot find string ${TOKEN}")
+endif()
+string(REGEX REPLACE "${TOKEN}" "${TOKEN}\n   :member-order: bysource" CONTENT "${CONTENT}")
+file(WRITE ${FILEPATH} "${CONTENT}")

@@ -74,9 +74,7 @@ public:
 
   void communicateLocal(IBlock const *sender, IBlock *receiver,
                         stencil::Direction dir) override {
-#ifdef _OPENMP
 #pragma omp critical
-#endif
     {
       mpi::SendBuffer sBuffer;
       packDataImpl(sender, dir, sBuffer);
