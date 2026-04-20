@@ -748,7 +748,7 @@ if(ESPRESSO_BUILD_WITH_HDF5)
     endif()
   endif()
   if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/HighFive-src)
-    find_package(HighFive 3.0.0 QUIET)
+    find_package(HighFive 3.3.0 QUIET)
   endif()
   if(NOT DEFINED HighFive_FOUND OR NOT ${HighFive_FOUND})
     # cmake-format: off
