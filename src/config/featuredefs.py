@@ -22,19 +22,19 @@
 This module parses the feature definition file :file:`features.def`.
 """
 import fileinput
+import graphlib
+import io
 import re
 
 
-class SyntaxError(Exception):
+class DefinitionError(Exception):
 
-    def __init__(self, message, instead):
+    def __init__(self, message, context):
         self.message = message
-        self.filename = fileinput.filename()
-        self.lineno = fileinput.filelineno()
-        self.instead = instead
+        self.filename, self.lineno, self.instead = context
 
     def __str__(self):
-        return f"self.filename: {self.lineno:>2}: {self.message} in the following line:\n{self.instead}"  # nopep8
+        return f"{self.filename}: {self.lineno:>2}: {self.message} in the following line:\n{self.instead}"  # nopep8
 
 
 def toCPPExpr(expr):
@@ -61,8 +61,17 @@ class defs:
         # list of external features
         externals = set()
 
-        for line in fileinput.input(filename):
+        buffer = None
+        if isinstance(filename, io.StringIO):
+            buffer = filename
+            filename = "<io.StringIO>"
+        else:
+            buffer = fileinput.input(filename)
+
+        for lineno, line in enumerate(buffer):
             line = line.strip()
+            context = (filename, lineno, line)
+
             # Ignore empty and comment lines
             if not line or line.startswith(('#', '//', '/*')):
                 assert not line.startswith('/*') or line.endswith('*/')
@@ -86,48 +95,50 @@ class defs:
                 # derived
                 if keyword == 'equals':
                     if rest is None:
-                        raise SyntaxError("<feature> equals <expr>", line)
+                        raise DefinitionError(
+                            "<feature> equals <expr>", context)
                     if feature in derived:
-                        raise SyntaxError(
-                            "Derived feature is already defined above:", line)
+                        raise DefinitionError(
+                            "Derived feature is already defined above:", context)
                     if feature in externals:
-                        raise SyntaxError(
-                            "Derived feature is already defined as external above:", line)
+                        raise DefinitionError(
+                            "Derived feature is already defined as external above:", context)
                     derived.add(feature)
                     derivations.append((feature, rest, toCPPExpr(rest)))
 
                 # externals
                 elif keyword == 'external':
                     if rest is not None:
-                        raise SyntaxError("<feature> external", line)
+                        raise DefinitionError("<feature> external", context)
                     if feature in derived:
-                        raise SyntaxError(
-                            "External feature is already defined as derived above:", line)
+                        raise DefinitionError(
+                            "External feature is already defined as derived above:", context)
                     implied = set(map((lambda x_y: x_y[1]), implications))
                     if feature in implied:
-                        raise SyntaxError(
-                            "External feature is implied above:", line)
+                        raise DefinitionError(
+                            "External feature is implied above:", context)
                     externals.add(feature)
 
                 # implications
                 elif keyword == 'implies':
                     if rest is None:
-                        raise SyntaxError(
-                            "<feature> implies [<feature>...]", line)
+                        raise DefinitionError(
+                            "<feature> implies [<feature>...]", context)
                     tokens = rest.split()
                     for implied in tokens:
                         if implied.endswith(','):
                             implied = implied[:-1]
                         if implied in externals:
-                            raise SyntaxError(
-                                "Implied feature %s is already defined as external above:" % feature, line)
+                            raise DefinitionError(
+                                f"Implied feature {implied} is already defined as external above:", context)
 
                         implications.append((feature, implied))
 
                 # requires
                 elif keyword == 'requires':
                     if rest is None:
-                        raise SyntaxError("<feature> requires <expr>", line)
+                        raise DefinitionError(
+                            "<feature> requires <expr>", context)
                     requirements.append((feature, rest, toCPPExpr(rest)))
 
         # allfeatures minus externals and derived
@@ -141,31 +152,37 @@ class defs:
         self.derived = derived
         self.derivations = derivations
         self.externals = externals
+        self.implications_topologically_ordered = self.process_implications()
 
-    def check_validity(self, activated):
-        """Check whether a set of features is valid.
-        Returns None if it is not and the set of features including implied features if it is.
+    def process_implications(self):
         """
-        newset = activated.copy()
+        Detect transitive chains in the graph of implication rules.
+        Topological ordering is used to guarantee that any feature ``D`` is
+        defined before any dependent rule ``D -> E`` is evaluated, such that
+        a chain ``C -> D -> E`` works correctly when the preprocessor reads
+        the feature config file from top to bottom. When multiple rules
+        independently imply the same feature, they can be folded with syntax
+        ``#if defined(A) or defined(B)`` to reduce the config file size.
+        """
+        graph = {}
+        for feature, implied_feature in self.implications:
+            graph.setdefault(feature, set())
+            graph.setdefault(implied_feature, set()).add(feature)
 
-        # handle implications
-        for feature, implied in self.implications:
-            if feature in newset and implied not in newset:
-                newset.add(implied)
-
-        # handle requirements
-        featurevars = dict()
-        derived = list(map((lambda x_y_z: x_y_z[0]), self.derivations))
-        allfeatures = self.features.union(derived, self.externals)
-        for feature in allfeatures:
-            featurevars[feature] = feature in newset
-
-        for feature, expr, _ in self.requirements:
-            if feature in newset:
-                if not eval(expr, featurevars):
-                    return None
-
-        return newset
+        ts = graphlib.TopologicalSorter(graph)
+        ts.prepare()
+        rounds = []
+        while ts.is_active():
+            rules = {}
+            # process rules that can be independently satisfied in this round
+            for node in sorted(ts.get_ready()):
+                for feature, implied_feature in self.implications:
+                    if feature == node:
+                        rules.setdefault(implied_feature, set()).add(feature)
+                ts.done(node)
+            if rules:
+                rounds.append(rules)
+        return rounds
 
 
 class cmakedefs:

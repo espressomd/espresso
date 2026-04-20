@@ -23,6 +23,7 @@ endfunction(SCRIPTS_TEST)
 
 scripts_test(FILE test_notebook_links.py)
 scripts_test(FILE test_check_myconfig.py)
+scripts_test(FILE test_featuredefs.py)
 
 add_custom_target(
   check_scripts JOB_POOL console

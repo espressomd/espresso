@@ -104,17 +104,17 @@ hfile.write("""\
 /* Handle implications */
 /***********************/
 """)
-implication_template = string.Template("""
-// $feature implies $implied
-#if defined(ESPRESSO_$feature) && !defined(ESPRESSO_$implied)
-#define ESPRESSO_$implied
-#endif
-""")
-for feature, implied in sorted(defs.implications):
-    hfile.write(implication_template.substitute(
-        feature=feature, implied=implied))
-
-hfile.write("\n")
+for rules in defs.implications_topologically_ordered:
+    for implied in sorted(rules.keys()):
+        implying = sorted(rules[implied])
+        condition = " || ".join(f"defined(ESPRESSO_{s})" for s in implying)
+        if len(implying) > 1:
+            condition = f"({condition})"
+        hfile.write(
+            f"#if !defined(ESPRESSO_{implied}) && {condition}\n"
+            f"#define ESPRESSO_{implied}\n"
+            f"#endif\n\n"
+        )
 
 # output warnings if internal features are set manually
 hfile.write("""\
@@ -133,6 +133,7 @@ derivation_template = string.Template("""
 for feature, expr, cppexpr in sorted(defs.derivations):
     hfile.write(derivation_template.substitute(
         feature=feature, cppexpr=cppexpr, expr=expr))
+hfile.write("\n")
 
 # generate compiler errors when incompatible features are selected
 hfile.write("""\
