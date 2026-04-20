@@ -26,11 +26,10 @@ import espressomd.electrokinetics
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKEOF:
-    BOX_L = [15., 18., 21.]
-    AGRID = 1.5
-    DIFFUSION_COEFFICIENT = 0.0
-    TAU = 1.6
+class EKPotential:
+    BOX_L = [22.92, 28.65, 31.515]
+    AGRID = 2.865
+    TAU = 5.943635
 
     system = espressomd.System(box_l=BOX_L)
     system.time_step = TAU
@@ -44,30 +43,31 @@ class EKEOF:
         Testing electrostatic potential of the EK
         """
 
-        eps0 = 0.015
-        epsR = 18.5
-        kT = 2.
+        eps0 = 0.09135
+        epsR = 8.0
+        kT = 3.15379
         valency = 1.1
+        density = 0.123
 
-        density = 0.0
         external_electric_field = np.asarray([0.0, 0.0, 0.0])
 
-        lattice = self.ek_lattice_class(n_ghost_layers=1, agrid=self.AGRID)
+        lattice = espressomd.electrokinetics.Lattice(
+            n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies_pos = self.ek_species_class(
-            lattice=lattice, density=density, kT=kT, valency=valency,
-            diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
+        ekspecies_pos = espressomd.electrokinetics.EKSpecies(
+            lattice=lattice, density=0.0, kT=kT, valency=valency,
+            diffusion=0.0, friction_coupling=False,
             advection=False, ext_efield=external_electric_field,
-            tau=self.TAU, **self.ek_params)
+            tau=self.TAU, **self.lattice_params)
 
-        ekspecies_neg = self.ek_species_class(
-            lattice=lattice, density=density, kT=kT, valency=-valency,
-            diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
+        ekspecies_neg = espressomd.electrokinetics.EKSpecies(
+            lattice=lattice, density=0.0, kT=kT, valency=-valency,
+            diffusion=0.0, friction_coupling=False,
             advection=False, ext_efield=external_electric_field,
-            tau=self.TAU, **self.ek_params)
+            tau=self.TAU, **self.lattice_params)
 
-        eksolver = self.ek_solver_class(
-            lattice=lattice, permittivity=eps0 * epsR, **self.ek_params)
+        eksolver = espressomd.electrokinetics.EKFFT(
+            lattice=lattice, permittivity=eps0 * epsR, tau=self.TAU, **self.lattice_params)
 
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)
@@ -88,77 +88,51 @@ class EKEOF:
             ekspecies_pos[:, :, :].density = 0.0
             ekspecies_neg[:, :, :].density = 0.0
 
-            ekspecies_pos[get_slice(0, dir)].density = 1.0
-            ekspecies_neg[get_slice(-1, dir)].density = 1.0
+            ekspecies_pos[get_slice(0, dir)].density = density
+            ekspecies_neg[get_slice(-1, dir)].density = density
 
             self.system.integrator.run(1)
 
-            pot_min = eksolver[0, 0, 0].potential  # fixing the offset
-            self.assertTrue(np.isfinite(pot_min), msg="Potential grid is NaN")
+            efield = - valency * density * self.AGRID**2 / \
+                eps0 / epsR / self.BOX_L[dir]
 
-            # We divide by BOX_L, because over the PBC the surfaces are
-            # one unit apart, which defines the voltage
-            ref_voltage = self.AGRID * valency * \
-                (self.BOX_L[dir] - self.AGRID) / eps0 / epsR / self.BOX_L[dir]
-            width = int(self.BOX_L[dir] / self.AGRID)
-            slope = -ref_voltage / (width - 1)
+            potential_simulation = np.copy(eksolver[:, :, :].potential)
+            efield_simulation = np.gradient(
+                potential_simulation, self.AGRID, axis=dir)
 
-            for d in range(width):
-                ref_value = d * slope + pot_min
-                potential = np.copy(
-                    eksolver[get_slice(d, dir)].potential).flatten()
+            atol = 1e-7 if self.lattice_params["single_precision"] else 2e-16
+
+            np.testing.assert_allclose(
+                efield_simulation, efield, rtol=0.0, atol=atol)
+
+            in_plane_field = np.delete(np.arange(3), dir)
+            for in_plane_dir in in_plane_field:
+                efield_in_plane = np.gradient(
+                    potential_simulation, self.AGRID, axis=in_plane_dir)
                 np.testing.assert_allclose(
-                    potential, ref_value, rtol=self.rtol)
+                    efield_in_plane, 0.0, rtol=0.0, atol=atol)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKTestWalberla(EKEOF, ut.TestCase):
-
-    """Test for the waLBerla implementation of the EK in double-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.Lattice
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
-    ek_params = {"single_precision": False, "gpu": False}
-    rtol = 5e-12
+class EKTestWalberla(EKPotential, ut.TestCase):
+    lattice_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKTestWalberlaSinglePrecision(EKEOF, ut.TestCase):
-
-    """Test for the waLBerla implementation of the EK in single-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.Lattice
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
-    ek_params = {"single_precision": True, "gpu": False}
-    rtol = 1e-5
+class EKTestWalberlaSinglePrecision(EKPotential, ut.TestCase):
+    lattice_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
-class EKTestWalberlaGPU(EKEOF, ut.TestCase):
-
-    """Test for the waLBerla implementation of the EK in double-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.Lattice
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
-    ek_params = {"single_precision": False, "gpu": True}
-    rtol = 5e-12
+class EKTestWalberlaGPU(EKPotential, ut.TestCase):
+    lattice_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
-class EKTestWalberlaSinglePrecisionGPU(EKEOF, ut.TestCase):
-
-    """Test for the waLBerla implementation of the EK in single-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.Lattice
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
-    ek_params = {"single_precision": True, "gpu": True}
-    rtol = 1e-5
+class EKTestWalberlaSinglePrecisionGPU(EKPotential, ut.TestCase):
+    lattice_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

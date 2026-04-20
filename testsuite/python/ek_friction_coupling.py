@@ -123,31 +123,23 @@ class FrictionCoupling:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKTestWalberlaDoublePrecisionCPU(FrictionCoupling, ut.TestCase):
-    """Test for the Walberla implementation of the EK in double-precision."""
-
     lattice_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKTestWalberlaSinglePrecisionCPU(FrictionCoupling, ut.TestCase):
-    """Test for the Walberla implementation of the EK in single-precision."""
-
     lattice_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKTestWalberlaDoublePrecisionGPU(FrictionCoupling, ut.TestCase):
-    """Test for the Walberla implementation of the EK in double-precision."""
-
     lattice_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKTestWalberlaSinglePrecisionGPU(FrictionCoupling, ut.TestCase):
-    """Test for the Walberla implementation of the EK in single-precision."""
-
     lattice_params = {"single_precision": True, "gpu": True}
 
 
