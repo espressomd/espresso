@@ -58,7 +58,7 @@ QUALIFIERS __m128 _my_cvtepu32_ps(const __m128i v) {
 
 #if defined(__SSE4_1__) || (defined(_MSC_VER) && !defined(_M_ARM64))
 #if !defined(__AVX512VL__) && !defined(__AVX10_1__) && defined(__GNUC__) &&    \
-    __GNUC__ >= 5 && !defined(__clang__)
+    __GNUC__ >= 5 && !defined(__clang__) && !defined(__NVCOMPILER)
 __attribute__((optimize("no-associative-math")))
 #endif
 QUALIFIERS __m128d
@@ -112,7 +112,7 @@ QUALIFIERS __m256 _my256_cvtepu32_ps(const __m256i v) {
 }
 
 #if !defined(__AVX512VL__) && !defined(__AVX10_1__) && defined(__GNUC__) &&    \
-    __GNUC__ >= 5 && !defined(__clang__)
+    __GNUC__ >= 5 && !defined(__clang__) && !defined(__NVCOMPILER)
 __attribute__((optimize("no-associative-math")))
 #endif
 QUALIFIERS __m256d

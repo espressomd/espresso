@@ -26,18 +26,18 @@
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL CMAKE_CUDA_COMPILER_ID)
   message(
     FATAL_ERROR
-      "To compile CUDA code with ${CMAKE_CUDA_COMPILER_ID}, the C++ compiler must be ${CMAKE_CUDA_COMPILER_ID}, not ${CMAKE_CXX_COMPILER_ID}."
+      "To compile CUDA code with ${CMAKE_CUDA_COMPILER_ID}, the C++ compiler "
+      "must be ${CMAKE_CUDA_COMPILER_ID}, not ${CMAKE_CXX_COMPILER_ID}."
   )
 endif()
 
-function(espresso_detect_clang_cuda_path)
+block(PROPAGATE ESPRESSO_CLANG_VERBOSE_OUTPUT)
   separate_arguments(ESPRESSO_CMAKE_CUDA_FLAGS_LIST NATIVE_COMMAND "${CMAKE_CUDA_FLAGS}")
   execute_process(COMMAND ${CMAKE_CUDA_COMPILER} ${ESPRESSO_CMAKE_CUDA_FLAGS_LIST} ${ARGV} --verbose
                   ERROR_VARIABLE ESPRESSO_CLANG_VERBOSE_OUTPUT)
   set(ESPRESSO_CLANG_VERBOSE_OUTPUT ${ESPRESSO_CLANG_VERBOSE_OUTPUT} PARENT_SCOPE)
-endfunction()
+endblock()
 
-espresso_detect_clang_cuda_path()
 if(NOT ESPRESSO_CLANG_VERBOSE_OUTPUT MATCHES "Found CUDA installation")
   unset(ESPRESSO_CLANG_HINT_CUDA_PATHS)
   if(NOT CMAKE_CUDA_FLAGS MATCHES "--cuda-path")
@@ -78,7 +78,10 @@ if(NOT CMAKE_CUDA_FLAGS MATCHES "-Wno-unknown-cuda-version")
     message(FATAL_ERROR "${CMAKE_CUDA_COMPILER_ID} could not detect the version of the CUDA toolkit library; ${ESPRESSO_CUDA_TOOLKIT_UNKNOWN_WARN}")
   endif()
 endif()
-message(STATUS "Found CUDA toolkit installation: ${ESPRESSO_CLANG_DETECTED_CUDA_DIR} (recognized by ${CMAKE_CUDA_COMPILER_ID} as CUDA ${ESPRESSO_CLANG_DETECTED_CUDA_VERSION})")
+message(
+  STATUS
+    "Found CUDA toolkit installation: ${ESPRESSO_CLANG_DETECTED_CUDA_DIR} "
+    "(identified by ${CMAKE_CUDA_COMPILER_ID} as CUDA ${ESPRESSO_CLANG_DETECTED_CUDA_VERSION})")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(

@@ -97,9 +97,9 @@ target_compile_options(
   $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=code_is_unreachable>
   $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=integer_sign_change>
   $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=conversion_function_not_usable>
-  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CXX_COMPILER_ID:NVHPC>>:-Xcompiler=--diag_suppress=code_is_unreachable>
-  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CXX_COMPILER_ID:NVHPC>>:-Xcompiler=--diag_suppress=integer_sign_change>
-  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CXX_COMPILER_ID:NVHPC>>:-Xcompiler=--diag_suppress=conversion_function_not_usable>
+  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=code_is_unreachable>
+  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=integer_sign_change>
+  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=conversion_function_not_usable>
 )
 target_compile_options(
   espresso_walberla_codegen_compiler_flags
