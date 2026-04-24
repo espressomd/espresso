@@ -139,8 +139,8 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
         auto const bci = pdf_field->xyzSize();
         density_writer->set_content(
             lbm::accessor::Density::get(pdf_field, m_density, bci));
-        density_writer->set_dims(Vector3<uint_t>(
-            uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
+        density_writer->set_dims(
+            Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
       }
     };
     vtk_obj.addBeforeFunction(std::move(before_function));
@@ -160,8 +160,8 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
         auto const bci = velocity_field->xyzSize();
         velocity_writer->set_content(
             lbm::accessor::Vector::get(velocity_field, bci));
-        velocity_writer->set_dims(Vector3<uint_t>(
-            uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
+        velocity_writer->set_dims(
+            Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
       }
     };
     vtk_obj.addBeforeFunction(std::move(before_function));
@@ -185,8 +185,8 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
               std::span<FloatType, 9ul>(&values[n], 9ul));
         }
         pressure_writer->set_content(std::move(values));
-        pressure_writer->set_dims(Vector3<uint_t>(
-            uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
+        pressure_writer->set_dims(
+            Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
       }
     };
     vtk_obj.addBeforeFunction(std::move(before_function));

@@ -178,12 +178,6 @@ protected:
   BlockDataID m_velocity_field_id;
   BlockDataID m_vel_tmp_field_id;
 
-  std::optional<BlockDataID> m_pressure_tensor_field_id;
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
-  std::optional<BlockDataID> m_pdf_cpu_field_id;
-  std::optional<BlockDataID> m_vel_cpu_field_id;
-#endif
-
   /** Flag for boundary cells. */
   FlagUID const Boundary_flag{"boundary"};
   bool m_has_boundaries{false};

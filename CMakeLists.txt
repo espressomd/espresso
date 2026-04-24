@@ -20,7 +20,7 @@
 #
 
 cmake_minimum_required(VERSION 3.27.6)
-if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM AND ESPRESSO_BUILD_WITH_CUDA)
+if(ESPRESSO_BUILD_WITH_CUDA)
   cmake_minimum_required(VERSION 3.31.0)
 endif()
 cmake_policy(VERSION 3.27.6)
