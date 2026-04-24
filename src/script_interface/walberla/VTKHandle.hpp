@@ -216,10 +216,9 @@ public:
     m_units = units;
     m_field = field;
     auto instance = get_field_instance();
-    m_vtk_handle =
-        instance->create_vtk(m_delta_N, execution_count, m_obs_flag, m_units,
-                             m_identifier, base_folder, m_prefix, m_force_pvtu,
-                             m_include_boundaries);
+    m_vtk_handle = instance->create_vtk(
+        m_delta_N, execution_count, m_obs_flag, m_units, m_identifier,
+        base_folder, m_prefix, m_force_pvtu, m_include_boundaries);
     if (m_delta_N and not is_enabled) {
       instance->switch_vtk(get_vtk_uid(), false);
     }

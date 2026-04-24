@@ -162,11 +162,13 @@ class TestLBVTK(TestVTK):
             root = pathlib.Path(tmp_directory)
             label_vtk_last_frame = f"test_vtk_{self.vtk_id}_last_frame"
             label_vtk_continuous = f"test_vtk_{self.vtk_id}_continuous"
-            label_vtk_with_boundaries = f"test_vtk_{self.vtk_id}_with_boundaries"
+            label_vtk_with_boundaries = f"test_vtk_{
+                self.vtk_id}_with_boundaries"
             path_vtk_last_frame = root / label_vtk_last_frame / "simulation_step_0.vtu"
             path_vtk_continuous = [
                 root / label_vtk_continuous / f"simulation_step_{i}.vtu" for i in range(n_steps)]
-            path_vtk_with_boundaries = root / label_vtk_with_boundaries / "simulation_step_0.vtu"
+            path_vtk_with_boundaries = root / \
+                label_vtk_with_boundaries / "simulation_step_0.vtu"
             filepaths = [path_vtk_last_frame] + path_vtk_continuous
 
             # write VTK files
@@ -385,8 +387,10 @@ class TestEKVTK(TestVTK):
 
             # also write a snapshot that includes boundary cells and the
             # ``boundary`` mask observable
-            label_vtk_with_boundaries = f"test_vtk_{self.vtk_id}_with_boundaries"
-            path_vtk_with_boundaries = root / label_vtk_with_boundaries / "simulation_step_0.vtu"
+            label_vtk_with_boundaries = f"test_vtk_{
+                self.vtk_id}_with_boundaries"
+            path_vtk_with_boundaries = root / \
+                label_vtk_with_boundaries / "simulation_step_0.vtu"
             vtk_obj_b = self.vtk_class(
                 identifier=label_vtk_with_boundaries, delta_N=0,
                 observables=vtk_obs + ["boundary"], base_folder=root,
