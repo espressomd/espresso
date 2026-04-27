@@ -167,12 +167,18 @@ Here is a minimal working example::
         solver=ek_solver, tau=system.time_step)
 
 where ``system.ekcontainer`` is the EK system, ``ek_solver`` is the Poisson
-solver (here ``EKNone`` doesn't actually solve the electrostatic field, but
-instead imposes a zero field), and ``lattice`` contains the grid parameters.
+solver (here ``EKNone`` doesn't solve Poisson's equation but stores a
+user-controlled potential field initialized to zero), and ``lattice`` contains
+the grid parameters.
 In this setup, the EK system doesn't contain any species. The following
 sections will show how to add species that can diffuse, advect, react and/or
 electrostatically interact. An EK system can be set up at the same time as a
 LB system.
+
+The ``EKNone`` potential field can be modified node-wise or slice-wise::
+
+    ek_solver[0, 0, 0].potential = 0.1
+    ek_solver[1:3, :, :].potential = 0.0
 
 To detach an EK system, use the following syntax::
 

@@ -48,7 +48,16 @@ Variant EKPoissonSolverNode::do_call_method(std::string const &name,
   }
   if (name == "get_potential") {
     auto const result = m_ek_poisson_solver->get_node_potential(m_index);
-    return Utils::Mpi::reduce_optional(context()->get_comm(), result);
+    return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
+           m_conv_potential;
+  }
+  if (name == "set_potential") {
+    auto const potential = get_value<double>(params, "value");
+    context()->parallel_try_catch([&]() {
+      m_ek_poisson_solver->set_node_potential(m_index,
+                                              potential * m_conv_potential);
+    });
+    return {};
   }
 
   return {};

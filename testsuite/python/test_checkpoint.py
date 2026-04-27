@@ -193,6 +193,7 @@ class CheckpointTest(ut.TestCase):
 
             self.assertEqual(len(system.ekcontainer), 1)
             ek_species = system.ekcontainer[0]
+            ek_solver = system.ekcontainer.solver
             self.assertAlmostEqual(system.ekcontainer.tau, system.time_step,
                                    delta=1e-7)
             self.assertIsInstance(system.ekcontainer.solver,
@@ -218,6 +219,26 @@ class CheckpointTest(ut.TestCase):
 
             ek_species.load_checkpoint(cpt_path.format(""), cpt_mode)
 
+            cpt_path = str(self.checkpoint.root / "ek_none") + "{}.cpt"
+            with self.assertRaisesRegex(RuntimeError, 'EOF found'):
+                ek_solver.load_checkpoint(
+                    cpt_path.format("-missing-data"), cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, 'extra data found, expected EOF'):
+                ek_solver.load_checkpoint(
+                    cpt_path.format("-extra-data"), cpt_mode)
+            if cpt_mode == 0:
+                with self.assertRaisesRegex(RuntimeError, 'incorrectly formatted data'):
+                    ek_solver.load_checkpoint(
+                        cpt_path.format("-wrong-format"), cpt_mode)
+                with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+                    ek_solver.load_checkpoint(
+                        cpt_path.format("-wrong-boxdim"), cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+                ek_solver.load_checkpoint(
+                    cpt_path.format("-unknown"), cpt_mode)
+
+            ek_solver.load_checkpoint(cpt_path.format(""), cpt_mode)
+
             precision = 8 if "LB.WALBERLA" in modes else 5
             m = np.pi / 12
             nx = ek_species.lattice.shape[0]
@@ -232,6 +253,9 @@ class CheckpointTest(ut.TestCase):
                         np.testing.assert_almost_equal(
                             np.copy(ek_species[i, j, k].density),
                             grid_3D[i, j, k], decimal=precision)
+                        np.testing.assert_almost_equal(
+                            np.copy(ek_solver[i, j, k].potential),
+                            0.25 * grid_3D[i, j, k], decimal=precision)
 
             state = ek_species.get_params()
             reference = {

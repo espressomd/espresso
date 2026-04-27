@@ -44,6 +44,7 @@ class EKPoissonSolverNode
   std::shared_ptr<::walberla::PoissonSolver> m_ek_poisson_solver;
   Utils::Vector3i m_index;
   Utils::Vector3i m_grid_size;
+  double m_conv_potential;
 
 public:
   EKPoissonSolverNode() {
@@ -56,6 +57,7 @@ public:
         get_value<std::shared_ptr<EKPoissonSolver>>(params, "parent_sip");
     m_ek_poisson_solver = ek_sip->get_instance();
     assert(m_ek_poisson_solver);
+    m_conv_potential = ek_sip->get_conversion_factor_potential();
     m_grid_size = m_ek_poisson_solver->get_lattice().get_grid_dimensions();
     m_index = get_mapped_index(get_value<Utils::Vector3i>(params, "index"),
                                m_grid_size);

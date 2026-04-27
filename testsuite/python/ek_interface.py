@@ -19,6 +19,8 @@
 
 import numpy as np
 import itertools
+import pathlib
+import tempfile
 import unittest as ut
 import unittest_decorators as utx
 
@@ -211,6 +213,12 @@ class EKTest:
         self.assertEqual(ek_slice.call_method("get_ek_solver_sip"), ek_solver)
         with self.assertRaisesRegex(ValueError, "Unknown Poisson solver property 'unknown'"):
             ek_slice.call_method("get_value_shape", name="unknown")
+        with self.assertRaisesRegex(
+                RuntimeError, "Setting potential is not supported by EKFFT"):
+            ek_node.potential = 0.1
+        with self.assertRaisesRegex(
+                RuntimeError, "Setting potential is not supported by EKFFT"):
+            ek_slice.potential = 0.1
 
     def test_ek_none_solver(self):
         ek_solver = espressomd.electrokinetics.EKNone(
@@ -223,6 +231,31 @@ class EKTest:
         self.assertIsInstance(self.system.ekcontainer.solver,
                               espressomd.electrokinetics.EKNone)
         self.assertEqual(self.system.ekcontainer.solver, ek_solver)
+
+        np.testing.assert_allclose(
+            np.copy(ek_solver[:, :, :].potential), 0., atol=self.atol)
+        self.assertAlmostEqual(
+            np.copy(ek_solver[0, 0, 0].potential), 0., delta=self.atol)
+
+        ek_solver[0, 0, 0].potential = 0.123
+        self.assertAlmostEqual(
+            np.copy(ek_solver[0, 0, 0].potential), 0.123, delta=self.atol)
+        ek_solver[1:3, 2:4, 3:5].potential = -0.5
+        np.testing.assert_allclose(
+            np.copy(ek_solver[1:3, 2:4, 3:5].potential), -0.5, atol=self.atol)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            checkpoint = pathlib.Path(tmpdir) / "eknone.cpt"
+            ek_solver.save_checkpoint(path=checkpoint, binary=True)
+            ek_solver[:, :, :].potential = 0.0
+            np.testing.assert_allclose(
+                np.copy(ek_solver[:, :, :].potential), 0., atol=self.atol)
+            ek_solver.load_checkpoint(path=checkpoint, binary=True)
+            self.assertAlmostEqual(
+                np.copy(ek_solver[0, 0, 0].potential), 0.123, delta=self.atol)
+            np.testing.assert_allclose(
+                np.copy(ek_solver[1:3, 2:4, 3:5].potential), -0.5,
+                atol=self.atol)
 
     def test_ek_species_exceptions(self):
         ek_species = self.make_default_ek_species()

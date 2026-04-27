@@ -51,6 +51,7 @@
 #include <initializer_list>
 #include <memory>
 #include <numbers>
+#include <ranges>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
@@ -190,8 +191,24 @@ template <lbmpy::Arch Architecture> struct FixtureNone {
     auto const &[lc, uc] = params.lattice->get_local_grid_range();
     auto const dim = uc - lc;
     auto const potential = ek_solver.get_slice_potential(lc, uc);
-    BOOST_CHECK_EQUAL(potential.size(),
-                      std::size_t(dim[0] * dim[1] * dim[2]));
+    BOOST_CHECK_EQUAL(potential.size(), std::size_t(dim[0] * dim[1] * dim[2]));
+    BOOST_CHECK(std::ranges::all_of(potential,
+                                    [](double value) { return value == 0.; }));
+
+    auto const node = lc;
+    auto const node_potential_ref = 0.125;
+    BOOST_CHECK(ek_solver.set_node_potential(node, node_potential_ref));
+    auto const node_potential = ek_solver.get_node_potential(node);
+    BOOST_REQUIRE(node_potential);
+    BOOST_CHECK_SMALL(*node_potential - node_potential_ref, 1e-12);
+
+    auto const slice_lc = lc;
+    auto const slice_uc = lc + Vector3i{2, 1, 1};
+    std::vector<double> node_values = {0.5, -0.75};
+    ek_solver.set_slice_potential(slice_lc, slice_uc, node_values);
+    auto const potentials = ek_solver.get_slice_potential(slice_lc, slice_uc);
+    BOOST_CHECK_EQUAL_COLLECTIONS(potentials.begin(), potentials.end(),
+                                  node_values.begin(), node_values.end());
   }
 };
 

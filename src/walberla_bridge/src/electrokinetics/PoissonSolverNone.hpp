@@ -147,6 +147,19 @@ public:
         walberla::ek::accessor::Scalar::get(potential_field, bc->cell))};
   }
 
+  bool set_node_potential(Utils::Vector3i const &node,
+                          double potential) override {
+    auto bc = get_block_and_cell(get_lattice(), node, false);
+    if (!bc) {
+      return false;
+    }
+    auto potential_field =
+        bc->block->template getData<PotentialField>(m_potential_field_id);
+    ek::accessor::Scalar::set(potential_field, FloatType_c(potential),
+                              bc->cell);
+    return true;
+  }
+
   [[nodiscard]] std::vector<double>
   get_slice_potential(Utils::Vector3i const &lower_corner,
                       Utils::Vector3i const &upper_corner) const override {
@@ -181,6 +194,35 @@ public:
     }
     return out;
   }
+
+  void set_slice_potential(Utils::Vector3i const &lower_corner,
+                           Utils::Vector3i const &upper_corner,
+                           std::vector<double> const &potential) override {
+    auto const &lattice = get_lattice();
+    if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
+      assert(potential.size() == ci->numCells());
+      for (auto &block : *lattice.get_blocks()) {
+        auto const block_offset = lattice.get_block_corner(block, true);
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
+          auto potential_field =
+              block.template getData<PotentialField>(m_potential_field_id);
+          std::vector<FloatType> values(bci->numCells());
+
+          auto kernel = [&values, &potential](unsigned const block_index,
+                                              unsigned const local_index,
+                                              Utils::Vector3i const &) {
+            values[block_index] =
+                numeric_cast<FloatType>(potential[local_index]);
+          };
+
+          copy_block_buffer(*bci, *ci, block_offset, lower_corner, kernel);
+          ek::accessor::Scalar::set(potential_field, values, *bci);
+        }
+      }
+    }
+  }
+  void ghost_communication() override {}
 
   void solve() override {}
 
