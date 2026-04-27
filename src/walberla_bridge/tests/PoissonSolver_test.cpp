@@ -154,22 +154,51 @@ template <typename FloatType, lbmpy::Arch Architecture> struct Fixture {
   }
 };
 
+template <lbmpy::Arch Architecture> struct FixtureNone {
+  void runTest() {
+    auto ek_solver =
+        walberla::PoissonSolverNone<double, Architecture>(params.lattice);
+    ek_solver.setup_fft(false);
+    BOOST_CHECK(ek_solver.is_double_precision());
+    BOOST_CHECK_EQUAL(ek_solver.is_gpu(), Architecture == lbmpy::Arch::GPU);
+    // no-op
+    ek_solver.add_charge_to_field(std::size_t{}, 0.);
+    ek_solver.reset_charge_field();
+    ek_solver.solve();
+    // invalid coordinates return empty values instead of throwing
+    BOOST_CHECK(not ek_solver.get_node_potential({9999, 9999, 9999}, true));
+    BOOST_CHECK(
+        ek_solver.get_slice_potential({9999, 9999, 9999}, {10000, 10000, 10000})
+            .empty());
+
+    for (auto const &node : all_nodes_incl_ghosts(*params.lattice)) {
+      if (params.lattice->node_in_local_halo(node)) {
+        if (params.lattice->node_in_local_domain(node)) {
+          auto const found = ek_solver.get_node_potential(node, false);
+          BOOST_REQUIRE(found);
+        } else {
+          auto const found = ek_solver.get_node_potential(node, false);
+          BOOST_REQUIRE(not found);
+          auto const found_in_halo = ek_solver.get_node_potential(node, true);
+          BOOST_REQUIRE(found_in_halo);
+        }
+      } else {
+        auto const found = ek_solver.get_node_potential(node, true);
+        BOOST_REQUIRE(not found);
+      }
+    }
+    auto const &[lc, uc] = params.lattice->get_local_grid_range();
+    auto const dim = uc - lc;
+    auto const potential = ek_solver.get_slice_potential(lc, uc);
+    BOOST_CHECK_EQUAL(potential.size(),
+                      std::size_t(dim[0] * dim[1] * dim[2]));
+  }
+};
+
 BOOST_AUTO_TEST_SUITE(suite)
 
 BOOST_AUTO_TEST_CASE(ek_poisson_solver_none) {
-  auto ek_solver = walberla::PoissonSolverNone<double>(params.lattice);
-  ek_solver.setup_fft(false);
-  BOOST_CHECK(ek_solver.is_double_precision());
-  BOOST_CHECK(not ek_solver.is_gpu());
-  // no-op
-  ek_solver.add_charge_to_field(std::size_t{}, 0.);
-  ek_solver.reset_charge_field();
-  ek_solver.solve();
-  // exceptions
-  BOOST_CHECK_THROW(ek_solver.get_node_potential({0, 0, 0}, true),
-                    std::runtime_error);
-  BOOST_CHECK_THROW(ek_solver.get_slice_potential({0, 0, 0}, {1, 1, 1}),
-                    std::runtime_error);
+  FixtureNone<lbmpy::Arch::CPU>().runTest();
 }
 
 using test_types = boost::mpl::list<float, double>;
@@ -189,6 +218,12 @@ using test_types = boost::mpl::list<float, double>;
 BOOST_AUTO_TEST_CASE_TEMPLATE(ek_poisson_solver_fft_cuda, FT, test_types) {
 #if defined(HAS_HEFFTE) and defined(WALBERLA_BUILD_WITH_CUDA)
   Fixture<FT, lbmpy::Arch::GPU>().runTest();
+#endif
+}
+
+BOOST_AUTO_TEST_CASE(ek_poisson_solver_none_cuda) {
+#if defined(WALBERLA_BUILD_WITH_CUDA)
+  FixtureNone<lbmpy::Arch::GPU>().runTest();
 #endif
 }
 
