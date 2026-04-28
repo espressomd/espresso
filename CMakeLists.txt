@@ -20,7 +20,7 @@
 #
 
 cmake_minimum_required(VERSION 3.27.6)
-if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM AND ESPRESSO_BUILD_WITH_CUDA)
+if(ESPRESSO_BUILD_WITH_CUDA)
   cmake_minimum_required(VERSION 3.31.0)
 endif()
 cmake_policy(VERSION 3.27.6)
@@ -273,7 +273,11 @@ if(ESPRESSO_BUILD_WITH_CUDA)
   include(CheckLanguage)
   enable_language(CUDA)
   check_language(CUDA)
-  find_package(CUDAToolkit ${ESPRESSO_MINIMAL_CUDA_VERSION} REQUIRED)
+  if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVHPC")
+    find_package(CUDAToolkit REQUIRED)
+  else()
+    find_package(CUDAToolkit ${ESPRESSO_MINIMAL_CUDA_VERSION} REQUIRED)
+  endif()
   if(NOT DEFINED ESPRESSO_CMAKE_CUDA_ARCHITECTURES)
     if("$ENV{CUDAARCHS}" STREQUAL "")
       # 1. sm_61: GTX-1000 series (Pascal)
@@ -314,6 +318,22 @@ if(ESPRESSO_BUILD_WITH_CUDA)
           "Cannot enable code coverage with Clang as the CUDA compiler")
     endif()
     find_package(CUDACompilerClang 18.1.0 REQUIRED)
+  elseif(CMAKE_CUDA_COMPILER_ID STREQUAL "NVHPC")
+    if(ESPRESSO_BUILD_WITH_COVERAGE)
+      message(
+        FATAL_ERROR
+          "Cannot enable code coverage with nvc++ as the CUDA compiler")
+    endif()
+    find_package(CUDACompilerNVHPC 25.5 REQUIRED)
+    if(${ESPRESSO_NVHPC_DETECTED_CUDA_VERSION} VERSION_LESS
+       ${ESPRESSO_MINIMAL_CUDA_VERSION})
+      message(
+        FATAL_ERROR
+          "Minimal CUDA version is ${ESPRESSO_MINIMAL_CUDA_VERSION}, but nvc++ "
+          "reported ${ESPRESSO_NVHPC_DETECTED_CUDA_VERSION}; if your HPC SDK "
+          "ships multiple CUDA toolkits, try hinting the most recent one with "
+          "'-D CUDAToolkit_NVCC_EXECUTABLE=\${NVHPC_ROOT}/compilers/bin/nvcc'")
+    endif()
   else()
     message(FATAL_ERROR "Unknown CUDA compiler '${CMAKE_CUDA_COMPILER_ID}'")
   endif()
@@ -434,7 +454,7 @@ target_compile_options(
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-unused-parameter>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wno-array-bounds>
     $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-array-bounds>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CXX_COMPILER_ID:GNU,Clang,CrayClang,AppleClang,IntelLLVM>>:-Xcompiler=-Wno-array-bounds>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<IN_LIST:${CUDA_HOST_COMPILER_ID},GNU;Clang;CrayClang;AppleClang;IntelLLVM>>:-Xcompiler=-Wno-array-bounds>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-restrict>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-cast-function-type>
     $<$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>:-diag-disable=592>

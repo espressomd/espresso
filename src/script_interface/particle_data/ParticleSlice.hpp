@@ -61,10 +61,11 @@ void set_from_vector_like(
     std::shared_ptr<Interactions::BondedInteractions> bonded_ias) {
 
   if constexpr (traits::is_vector_like<Container>::value) {
-    auto so = std::dynamic_pointer_cast<ParticleModifier>(context->make_shared(
-        "Particles::ParticleModifier", {{"id", -1},
-                                        {"__cell_structure", cell_structure},
-                                        {"__bonded_ias", bonded_ias}}));
+    VariantMap const obj_params{{"id", -1},
+                                {"__cell_structure", cell_structure},
+                                {"__bonded_ias", bonded_ias}};
+    auto so = std::dynamic_pointer_cast<ParticleModifier>(
+        context->make_shared("Particles::ParticleModifier", obj_params));
     for (std::size_t i = 0; i < pids.size(); ++i) {
       so->set_pid(pids[i]);
       so->do_set_parameter(param_name, values[i]);

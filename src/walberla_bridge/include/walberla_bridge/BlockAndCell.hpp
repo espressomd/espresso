@@ -102,7 +102,7 @@ inline std::optional<BlockAndCell>
 get_block_and_cell(::LatticeWalberla const &lattice,
                    signed_integral_vector auto const &node,
                    bool consider_ghost_layers) {
-  auto const &blocks = lattice.get_blocks();
+  auto const blocks = lattice.get_blocks();
   auto n_ghost_layers = 0u;
   if (consider_ghost_layers) {
     n_ghost_layers = lattice.get_ghost_layers();

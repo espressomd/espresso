@@ -242,12 +242,8 @@ protected:
   auto add_to_storage(std::string const tag, FloatType value) {
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
-    if constexpr (Architecture == lbmpy::Arch::CPU) {
-      return field::addToStorage<Field>(blocks, tag, FloatType{value},
-                                        field::fzyx, n_ghost_layers);
-    }
 #if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
-    else {
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
       auto field_id = gpu::addGPUFieldToStorage<GPUField>(
           blocks, tag, Field::F_SIZE, field::fzyx, n_ghost_layers);
       if constexpr (std::is_same_v<Field, _DensityField>) {
@@ -265,6 +261,8 @@ protected:
       return field_id;
     }
 #endif
+    return field::addToStorage<Field>(blocks, tag, FloatType{value},
+                                      field::fzyx, n_ghost_layers);
   }
 
   void
@@ -1174,8 +1172,8 @@ public:
           auto const bci = density_field->xyzSize();
           density_writer->set_content(
               ek::accessor::Scalar::get(density_field, bci));
-          density_writer->set_dims(Vector3<uint_t>(
-              uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
+          density_writer->set_dims(
+              Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
         }
       };
       vtk_obj.addBeforeFunction(std::move(before_function));
@@ -1210,8 +1208,8 @@ public:
             }
           }
           flux_writer->set_content(std::move(values));
-          flux_writer->set_dims(Vector3<uint_t>(
-              uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
+          flux_writer->set_dims(
+              Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
         }
       };
       vtk_obj.addBeforeFunction(std::move(before_function));
