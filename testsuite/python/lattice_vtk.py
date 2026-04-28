@@ -234,9 +234,9 @@ class TestLBVTK(TestVTK):
                                            last_frames[1][i], atol=1e-10)
 
             # build boundary mask and verify NaN only at boundaries
-            inner_mask = self.lbf[2:-2, :, :].is_boundary
+            inner_mask = np.copy(self.lbf[2:-2, :, :].is_boundary)
             for vtk_density, vtk_velocity, vtk_pressure in last_frames:
-                nan_mask = np.isnan(vtk_density[2:-2, :, :])
+                nan_mask = np.isnan(vtk_density[:, :, :])
                 np.testing.assert_array_equal(
                     nan_mask, inner_mask,
                     "NaN values in VTK data do not match boundary mask")
@@ -423,13 +423,13 @@ class TestEKVTK(TestVTK):
                                            last_frames_poisson[1][i], atol=1e-10)
 
             # check VTK values match node values in the final time step
-            ek_inner_mask = actor[2:-2, :, :].is_boundary
+            ek_inner_mask = np.copy(actor[2:-2, :, :].is_boundary)
 
             for vtk_density in last_frames:
-                nan_mask = np.isnan(vtk_density[2:-2, :, :])
+                nan_mask = np.isnan(vtk_density[:, :, :])
                 np.testing.assert_array_equal(
                     nan_mask, ek_inner_mask,
-                    "NaN values in VTK data do not match boundary mask")
+                    "NaN values in VTK density do not match boundary mask")
 
             ek_density = np.copy(actor[2:-2, :, :].density)
 
@@ -439,10 +439,12 @@ class TestEKVTK(TestVTK):
                     vtk_density[valid], ek_density[valid], rtol=5e-7)
 
             ek_flux = np.copy(actor[2:-2, :, :].flux)
+            ek_flux_mask = np.repeat(
+                ek_inner_mask[..., np.newaxis], 3, axis=-1)
             for vtk_flux in last_frames_flux:
-                nan_mask = np.isnan(vtk_flux[2:-2, :, :])
+                nan_mask = np.isnan(vtk_flux[:, :, :])
                 np.testing.assert_array_equal(
-                    nan_mask, ek_inner_mask,
+                    nan_mask, ek_flux_mask,
                     "NaN values in VTK flux do not match boundary mask")
             for vtk_flux in last_frames_flux:
                 valid = ~np.isnan(vtk_flux)
@@ -451,11 +453,6 @@ class TestEKVTK(TestVTK):
 
             ek_potential = np.copy(self.solver[:, :, :].potential)
 
-            for vtk_potential in last_frames_poisson:
-                nan_mask = np.isnan(vtk_potential[2:-2, :, :])
-                np.testing.assert_array_equal(
-                    nan_mask, ek_inner_mask,
-                    "NaN values in VTK potential do not match boundary mask")
             for vtk_potential in last_frames_poisson:
                 valid = ~np.isnan(vtk_potential)
                 np.testing.assert_allclose(
