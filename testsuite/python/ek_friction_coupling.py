@@ -107,18 +107,17 @@ class FrictionCoupling:
 
         self.system.integrator.run(self.TIMESTEPS)
 
-        velocity_simulation = lb_fluid[:, 1, 1].velocity
+        velocity_simulation = np.copy(lb_fluid[1:-1, 1, 1].velocity)[:, 2]
         z = (np.arange(self.BOX_L[0] / self.AGRID) +
              0.5) * self.AGRID - self.BOX_L[0] / 2
         # remove the boundary layers
         z = z[1:-1]
-        velocity_simulation = velocity_simulation[1:-1, 2]
         velocity_analytic = poiseuille_flow(
             z, self.BOX_L[0] - 2 * self.AGRID, external_electric_field[2] * valency * density, visc * fluid_density)
 
         atol = 5e-9 if self.lattice_params["single_precision"] else 8e-16
         np.testing.assert_allclose(
-            velocity_simulation, velocity_analytic, atol=atol)
+            velocity_simulation, velocity_analytic, atol=atol, rtol=0.0)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])

@@ -44,7 +44,7 @@ class EKExternalElectricField:
 
     def test_external_electric_field(self):
         """
-        Testing the flux cause by an external electric field.
+        Testing the flux caused by an external electric field.
         """
 
         kT = 3.64
@@ -84,8 +84,8 @@ class EKExternalElectricField:
             ekspecies_neg.ext_efield = external_electric_field
             self.system.integrator.run(self.TIMESTEPS)
 
-            flux_pos = np.mean(ekspecies_pos[:, :, :].flux, (0, 1, 2))
-            flux_neg = np.mean(ekspecies_neg[:, :, :].flux, (0, 1, 2))
+            flux_pos = np.mean(np.copy(ekspecies_pos[:, :, :].flux), (0, 1, 2))
+            flux_neg = np.mean(np.copy(ekspecies_neg[:, :, :].flux), (0, 1, 2))
             ref_flux = valency * density * \
                 self.DIFFUSION_COEFFICIENT / kT * external_electric_field
             np.testing.assert_allclose(flux_pos, ref_flux, rtol=0.0, atol=atol)
