@@ -56,7 +56,7 @@ class EKTest:
         self.lattice = self.ek_lattice_class(
             n_ghost_layers=2, agrid=self.params["agrid"])
         ek_solver = espressomd.electrokinetics.EKNone(
-            lattice=self.lattice, **self.ek_params)
+            lattice=self.lattice, tau=self.params["tau"], **self.ek_params)
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.system.time_step, solver=ek_solver)
 
@@ -222,10 +222,12 @@ class EKTest:
 
     def test_ek_none_solver(self):
         ek_solver = espressomd.electrokinetics.EKNone(
-            lattice=self.lattice, **self.ek_params)
+            lattice=self.lattice, tau=self.params["tau"], **self.ek_params)
         self.assertEqual(
             ek_solver.single_precision,
             self.ek_params["single_precision"])
+        self.assertAlmostEqual(
+            ek_solver.tau, self.params["tau"], delta=self.atol)
 
         self.system.ekcontainer.solver = ek_solver
         self.assertIsInstance(self.system.ekcontainer.solver,
@@ -299,7 +301,8 @@ class EKTest:
         incompatible_lattice = self.ek_lattice_class(
             n_ghost_layers=3, agrid=self.params["agrid"])
         incompatible_ek_solver = espressomd.electrokinetics.EKNone(
-            lattice=incompatible_lattice, **self.ek_params)
+            lattice=incompatible_lattice, tau=self.params["tau"],
+            **self.ek_params)
         incompatible_ek_species = self.ek_species_class(
             lattice=incompatible_lattice, **self.ek_params,
             **self.ek_species_params)
@@ -318,7 +321,8 @@ class EKTest:
             blocks_per_mpi_rank=[2, 1, 1])
         with self.assertRaisesRegex(NotImplementedError, "Using more than one block per MPI rank is not supported for EKNone"):
             espressomd.electrokinetics.EKNone(
-                lattice=incompatible_lattice, **self.ek_params)
+                lattice=incompatible_lattice, tau=self.params["tau"],
+                **self.ek_params)
 
         if espressomd.has_features("WALBERLA_FFT"):
             ek_solver = self.ek_solver_class(
@@ -337,10 +341,10 @@ class EKTest:
             self.system.ekcontainer.clear()
             # EKNone has no effect and its floating-point precision is ignored
             solver_none_sp = espressomd.electrokinetics.EKNone(
-                lattice=self.lattice, single_precision=True,
+                lattice=self.lattice, tau=self.params["tau"], single_precision=True,
                 gpu=self.ek_params["gpu"])
             solver_none_dp = espressomd.electrokinetics.EKNone(
-                lattice=self.lattice, single_precision=True,
+                lattice=self.lattice, tau=self.params["tau"], single_precision=True,
                 gpu=self.ek_params["gpu"])
             self.system.ekcontainer.solver = solver_none_sp
             self.system.ekcontainer.add(species_dp)  # mismatch allowed
@@ -431,7 +435,7 @@ class EKTest:
         lattice = espressomd.electrokinetics.Lattice(
             n_ghost_layers=1, agrid=1.)
         ek_solver = espressomd.electrokinetics.EKNone(
-            lattice=lattice, **self.ek_params)
+            lattice=lattice, tau=self.params["tau"], **self.ek_params)
         ek_species = self.ek_species_class(
             lattice=lattice, density=20., valency=0., advection=False,
             diffusion=0.01, friction_coupling=False, thermalized=True, seed=42,
@@ -594,7 +598,7 @@ class EKTest:
         self.system.ekcontainer.solver = None
         with self.assertRaisesRegex(RuntimeError, "Parameter 'solver' is read-only"):
             self.system.ekcontainer.solver = espressomd.electrokinetics.EKNone(
-                lattice=self.lattice, **self.ek_params)
+                lattice=self.lattice, tau=self.params["tau"], **self.ek_params)
         self.assertIsNone(self.system.ekcontainer.solver)
 
     def test_rollback(self):
@@ -608,9 +612,9 @@ class EKTest:
             lattice2 = espressomd.electrokinetics.Lattice(
                 n_ghost_layers=2, agrid=1., box_l=wrong_box_l)
             solver_valid = espressomd.electrokinetics.EKNone(
-                lattice=lattice1, **self.ek_params)
+                lattice=lattice1, tau=self.params["tau"], **self.ek_params)
             solver_wrong = espressomd.electrokinetics.EKNone(
-                lattice=lattice2, **self.ek_params)
+                lattice=lattice2, tau=self.params["tau"], **self.ek_params)
             self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
                 tau=self.system.time_step, solver=solver_valid)
             with self.assertRaisesRegex(RuntimeError, "waLBerla and ESPResSo disagree about domain decomposition"):
@@ -623,7 +627,7 @@ class EKTest:
         node_grid = np.copy(self.system.cell_system.node_grid)
         # create a species, slice and node for the current MPI topology
         ek_solver = espressomd.electrokinetics.EKNone(
-            lattice=self.lattice, **self.ek_params)
+            lattice=self.lattice, tau=self.params["tau"], **self.ek_params)
         ek_species = self.make_default_ek_species()
         ek_node = ek_species[0, 0, 0]
         ek_slice = ek_species[0:5, 0:5, 0:5]
@@ -638,7 +642,7 @@ class EKTest:
         self.system.cell_system.node_grid = node_grid
         # create a new species
         ek_solver_new = espressomd.electrokinetics.EKNone(
-            lattice=self.lattice, **self.ek_params)
+            lattice=self.lattice, tau=self.params["tau"], **self.ek_params)
         ek_species_new = self.make_default_ek_species()
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.system.time_step, solver=ek_solver_new)

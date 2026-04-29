@@ -108,6 +108,8 @@ class EKNone(ScriptInterfaceHelper, espressomd.detail.walberla.LatticeModel):
     ----------
     lattice : :obj:`espressomd.lb.Lattice <espressomd.detail.walberla.Lattice>`
         Lattice object.
+    tau : :obj:`float`
+        EK time step, must be an integer multiple of the MD time step.
     single_precision : :obj:`bool`, optional
         Use single-precision floating-point arithmetic.
 

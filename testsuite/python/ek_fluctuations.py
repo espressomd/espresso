@@ -52,7 +52,8 @@ class EKTest:
             diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
             tau=self.TAU, thermalized=True, seed=42, **self.lattice_params)
 
-        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
+        eksolver = espressomd.electrokinetics.EKNone(
+            lattice=lattice, tau=self.TAU)
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)
         self.system.ekcontainer.add(species)

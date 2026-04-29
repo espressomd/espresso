@@ -162,7 +162,7 @@ Here is a minimal working example::
     system.cell_system.skin = 1.0
 
     lattice = espressomd.electrokinetics.Lattice(agrid=0.5, n_ghost_layers=1)
-    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice, tau=system.time_step)
     system.ekcontainer = espressomd.electrokinetics.EKContainer(
         solver=ek_solver, tau=system.time_step)
 
@@ -318,7 +318,7 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
     system.time_step = 0.1
 
     lattice = espressomd.electrokinetics.Lattice(agrid=1., n_ghost_layers=1)
-    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice, tau=system.time_step)
     ek_species = espressomd.electrokinetics.EKSpecies(
         lattice=lattice, density=1., kT=1., diffusion=0.1, valency=0.,
         advection=False, friction_coupling=False, tau=system.time_step)
@@ -379,7 +379,7 @@ One can set (or update) the boundary conditions of individual nodes::
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     lattice = espressomd.electrokinetics.Lattice(agrid=0.5, n_ghost_layers=1)
-    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice, tau=system.time_step)
     ek_species = espressomd.electrokinetics.EKSpecies(
         kT=1.5, lattice=lattice, density=0.85, valency=0., diffusion=0.1,
         advection=False, friction_coupling=False, tau=system.time_step)
@@ -411,7 +411,7 @@ Adding a shape-based boundary is straightforward::
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     lattice = espressomd.electrokinetics.Lattice(agrid=0.5, n_ghost_layers=1)
-    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice, tau=system.time_step)
     ek_species = espressomd.electrokinetics.EKSpecies(
         kT=1.5, lattice=lattice, density=0.85, valency=0.0, diffusion=0.1,
         advection=False, friction_coupling=False, tau=system.time_step)

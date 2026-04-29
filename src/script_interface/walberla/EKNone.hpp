@@ -90,10 +90,13 @@ public:
     m_gpu = get_value_or<bool>(args, "gpu", false);
     m_single_precision = get_value_or<bool>(args, "single_precision", m_gpu);
     m_lattice = get_value<decltype(m_lattice)>(args, "lattice");
-    m_conv_potential = 1.;
+    auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
+    m_tau = get_value<double>(args, "tau");
+    set_potential_conversion(agrid, m_tau);
 
     make_instance(args);
     add_parameters({
+        {"tau", AutoParameter::read_only, [this]() { return m_tau; }},
         {"single_precision", AutoParameter::read_only,
          [this]() { return m_single_precision; }},
         {"gpu", AutoParameter::read_only, [this]() { return m_gpu; }},

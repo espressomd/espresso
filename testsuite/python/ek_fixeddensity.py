@@ -57,7 +57,8 @@ class EKTest:
             valency=0.0, advection=False, friction_coupling=False,
             tau=self.TAU, **self.lattice_params)
 
-        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
+        eksolver = espressomd.electrokinetics.EKNone(
+            lattice=lattice, tau=self.TAU)
 
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)

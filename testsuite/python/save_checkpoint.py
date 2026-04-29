@@ -100,7 +100,8 @@ if lbf_class:
     lbf.add_boundary_from_shape(wall2, (0, 0, 0))
 
     if not le_active:
-        ek_solver = espressomd.electrokinetics.EKNone(lattice=lb_lattice)
+        ek_solver = espressomd.electrokinetics.EKNone(
+            lattice=lb_lattice, tau=system.time_step)
         ek_species = espressomd.electrokinetics.EKSpecies(
             lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
             advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],

@@ -24,12 +24,15 @@
 #ifdef ESPRESSO_WALBERLA
 
 #include "LatticeModel.hpp"
+#include "LatticeWalberla.hpp"
 #include "VTKHandle.hpp"
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
 
 #include <walberla_bridge/electrokinetics/PoissonSolver.hpp>
+
+#include <utils/math/int_pow.hpp>
 
 #include <memory>
 #include <unordered_map>
@@ -47,7 +50,12 @@ class EKPoissonVTKHandle : public VTKHandleBase<::walberla::PoissonSolver> {
 class EKPoissonSolver
     : public LatticeModel<::walberla::PoissonSolver, EKPoissonVTKHandle> {
 protected:
+  double m_tau;
   double m_conv_potential;
+
+  void set_potential_conversion(double agrid, double tau) {
+    m_conv_potential = Utils::int_pow<2>(tau) / Utils::int_pow<2>(agrid);
+  }
 
 public:
   virtual std::shared_ptr<::walberla::PoissonSolver>
