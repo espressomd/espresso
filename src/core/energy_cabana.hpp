@@ -88,7 +88,7 @@ struct EnergyKernel {
   EnergyBinLayout layout;
   CellStructure::AoSoA_pack const &aosoa;
   Kokkos::View<int *> mol_id_view;
-  double system_max_cutoff;
+  double system_max_cutoff_sq;
 
   EnergyKernel(
       BondedInteractionsMap const &bonded_ias_,
@@ -106,44 +106,38 @@ struct EnergyKernel {
         dipoles_u_kernel(dipoles_u_kernel_), box_geo(box_geo_),
         unique_particles(unique_particles_), local_energy(local_energy_),
         layout(layout_), aosoa(aosoa_), mol_id_view(std::move(mol_id_view_)),
-        system_max_cutoff(system_max_cutoff_) {}
+        system_max_cutoff_sq(system_max_cutoff_ * system_max_cutoff_) {}
 
   KOKKOS_INLINE_FUNCTION
   void operator()(std::size_t i, std::size_t j) const {
-    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-    auto const d = box_geo.get_mi_vector(pos1, pos2);
-    auto const dist = d.norm();
-    if (dist > system_max_cutoff)
+    auto const d = box_geo.get_mi_vector(
+        aosoa.position(i, 0), aosoa.position(i, 1), aosoa.position(i, 2),
+        aosoa.position(j, 0), aosoa.position(j, 1), aosoa.position(j, 2));
+    auto const dist_sq = d.norm2();
+    if (dist_sq > system_max_cutoff_sq)
       return;
+    auto const dist = std::sqrt(dist_sq);
 
     auto const t1 = aosoa.type(i);
     auto const t2 = aosoa.type(j);
     auto const &ia_params = nonbonded_ias.get_ia_param(t1, t2);
 
     // Determine which data needs to be loaded based on active algorithms
-#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES) or                \
-    defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_THOLE)
-    auto const flag =
-        compute_pair_data_flags(dist, ia_params, coulomb_u_kernel != nullptr,
-                                dipoles_u_kernel != nullptr, aosoa, i, j);
+#if defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_THOLE)
+    bool need_particle_pointers = false;
+#ifdef ESPRESSO_EXCLUSIONS
+    need_particle_pointers |= aosoa.has_exclusion(i) or aosoa.has_exclusion(j);
+#endif
+#ifdef ESPRESSO_THOLE
+    need_particle_pointers |=
+        thole_active(ia_params, coulomb_u_kernel != nullptr);
 #endif
 
-#if defined(ESPRESSO_EXCLUSIONS) or defined(ESPRESSO_THOLE)
     Particle const *p1_ptr = nullptr;
     Particle const *p2_ptr = nullptr;
-    if (flag.need_particle_pointers) {
+    if (need_particle_pointers) {
       p1_ptr = unique_particles.at(i);
       p2_ptr = unique_particles.at(j);
-    }
-#endif
-
-    // Load directors only if needed
-#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
-    Utils::Vector3d dir1{}, dir2{};
-    if (flag.need_directors) {
-      dir1 = aosoa.get_vector_at(aosoa.director, i);
-      dir2 = aosoa.get_vector_at(aosoa.director, j);
     }
 #endif
 
@@ -170,6 +164,8 @@ struct EnergyKernel {
         // Only call Gay-Berne energy kernel if active
 #ifdef ESPRESSO_GAY_BERNE
         if (gay_berne_active(dist, ia_params)) {
+          auto const dir1 = aosoa.get_vector_at(aosoa.director, i);
+          auto const dir2 = aosoa.get_vector_at(aosoa.director, j);
           e_nb += gb_pair_energy(dir1, dir2, ia_params, d, dist);
         }
 #endif
@@ -186,6 +182,8 @@ struct EnergyKernel {
     if (coulomb_u_kernel != nullptr) {
       auto const q1 = aosoa.charge(i), q2 = aosoa.charge(j);
       if (q1 != 0. and q2 != 0.) {
+        auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
+        auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
         double const e_c = (*coulomb_u_kernel)(pos1, pos2, q1 * q2, d, dist);
         local_energy(tid, layout.coulomb_idx()) += e_c;
       }
@@ -195,8 +193,10 @@ struct EnergyKernel {
 #ifdef ESPRESSO_DIPOLES
     if (dipoles_u_kernel != nullptr) {
       if (aosoa.dipm(i) != 0. and aosoa.dipm(j) != 0.) {
+        auto const dir1 = aosoa.get_vector_at(aosoa.director, i);
+        auto const dir2 = aosoa.get_vector_at(aosoa.director, j);
         double const e_d = (*dipoles_u_kernel)(
-            aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2, d, dist, dist * dist);
+            aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2, d, dist, dist_sq);
         local_energy(tid, layout.dipolar_idx()) += e_d;
       }
     }

@@ -94,14 +94,12 @@ link_cell_kokkos(std::span<Cell *const> cells, BoxGeometry const &box_geo,
                  Kokkos::View<int *> const &id_to_index, int const max_id,
                  auto const &intra_operator, auto const &inter_operator) {
 
-  auto const distance_function = detail::MinimalImageDistance{box_geo};
-
   // implementation detail: max_id refers to the max local particle id,
   // but ghost particles from other ranks may have larger particle ids;
   // -1 is used as a sentinel value for particle ids from other threads
 
-  auto intra_kernel = [&cells, &distance_function, &verlet_criterion,
-                       &id_to_index, &intra_operator, max_id](const int i) {
+  auto intra_kernel = [&cells, &box_geo, &verlet_criterion, &id_to_index,
+                       &intra_operator, max_id](const int i) {
     auto &local_particles = cells[i]->particles();
     for (auto it = local_particles.begin(); it != local_particles.end(); ++it) {
       auto const &p1 = *it;
@@ -111,7 +109,8 @@ link_cell_kokkos(std::span<Cell *const> cells, BoxGeometry const &box_geo,
           // pairs in this cell
           for (auto jt = std::next(it); jt != local_particles.end(); ++jt) {
             if ((*jt).id() <= max_id) {
-              if (verlet_criterion(p1, *jt, distance_function(p1, *jt))) {
+              if (verlet_criterion(p1, *jt,
+                                   box_geo.get_mi_dist2(p1.pos(), jt->pos()))) {
                 auto const jj = id_to_index((*jt).id());
                 if (jj >= 0) {
                   intra_operator(ii, jj);
@@ -124,8 +123,8 @@ link_cell_kokkos(std::span<Cell *const> cells, BoxGeometry const &box_geo,
     }
   };
 
-  auto inter_kernel = [&cells, &distance_function, &verlet_criterion,
-                       &id_to_index, &inter_operator, max_id](const int i) {
+  auto inter_kernel = [&cells, &box_geo, &verlet_criterion, &id_to_index,
+                       &inter_operator, max_id](const int i) {
     auto &local_particles = cells[i]->particles();
     for (auto const &p1 : local_particles) {
       if (p1.id() <= max_id) {
@@ -135,7 +134,8 @@ link_cell_kokkos(std::span<Cell *const> cells, BoxGeometry const &box_geo,
           for (auto &neighbor : cells[i]->neighbors().red()) {
             for (auto const &p2 : neighbor->particles()) {
               if (p2.id() <= max_id) {
-                if (verlet_criterion(p1, p2, distance_function(p1, p2))) {
+                if (verlet_criterion(
+                        p1, p2, box_geo.get_mi_dist2(p1.pos(), p2.pos()))) {
                   auto const jj = id_to_index(p2.id());
                   if (jj >= 0) {
                     inter_operator(ii, jj);

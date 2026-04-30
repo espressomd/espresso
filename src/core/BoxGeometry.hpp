@@ -232,6 +232,32 @@ public:
   }
 
   /**
+   * @brief Get the squared minimum-image distance between two coordinates.
+   *
+   * Equivalent to <tt>get_mi_vector(a, b).norm2()</tt>, but for cuboid
+   * boxes avoids constructing the intermediate vector.
+   *
+   * @tparam T Floating point type.
+   *
+   * @param a Coordinate of the terminal point.
+   * @param b Coordinate of the initial point.
+   * @return Squared shortest distance from @p b to @p a across periodic
+   *         images.
+   */
+  template <typename T>
+  ESPRESSO_ATTR_ALWAYS_INLINE inline T
+  get_mi_dist2(Utils::Vector3<T> const &a, Utils::Vector3<T> const &b) const {
+    if (type() == BoxType::LEES_EDWARDS) {
+      return get_mi_vector(a, b).norm2();
+    }
+    assert(type() == BoxType::CUBOID);
+    auto const d0 = get_mi_coord(a[0], b[0], 0u);
+    auto const d1 = get_mi_coord(a[1], b[1], 1u);
+    auto const d2 = get_mi_coord(a[2], b[2], 2u);
+    return d0 * d0 + d1 * d1 + d2 * d2;
+  }
+
+  /**
    * @brief Get the minimum-image vector between two coordinates.
    *
    * @tparam T Floating point type.

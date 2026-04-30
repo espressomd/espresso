@@ -606,22 +606,6 @@ void CellStructure::update_ghosts_and_resort_particle(unsigned data_parts) {
   }
 }
 
-void CellStructure::parallel_for_each_particle_impl(
-    std::span<Cell *const> cells, ParticleUnaryOp &f) const {
-  if (cells.size() > 1) {
-    Kokkos::parallel_for( // loop over cells
-        "for_each_local_particle", cells.size(), [&](auto cell_idx) {
-          for (auto &p : cells[cell_idx]->particles())
-            f(p);
-        });
-  } else if (cells.size() == 1) {
-    auto &particles = cells.front()->particles();
-    Kokkos::parallel_for( // loop over particles
-        "for_each_local_particle", particles.size(),
-        [&](auto part_idx) { f(*(particles.begin() + part_idx)); });
-  }
-}
-
 bool CellStructure::check_resort_required(
     Utils::Vector3d const &additional_offset) const {
   auto const lim = Utils::sqr(m_verlet_skin / 2.) - additional_offset.norm2();

@@ -42,6 +42,7 @@
 #include "Particle.hpp"
 #include "PropagationMode.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "cell_system/for_each_particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 

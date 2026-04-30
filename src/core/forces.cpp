@@ -26,6 +26,7 @@
 #include "PropagationMode.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "cell_system/for_each_particle.hpp"
 #include "cells.hpp"
 #include "collision_detection/CollisionDetection.hpp"
 #include "communication.hpp"

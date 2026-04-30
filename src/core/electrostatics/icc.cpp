@@ -36,6 +36,7 @@
 #include "PropagationMode.hpp"
 #include "actor/visitors.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "cell_system/for_each_particle.hpp"
 #include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/coulomb_inline.hpp"

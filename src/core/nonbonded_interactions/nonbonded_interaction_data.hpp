@@ -272,6 +272,40 @@ struct DPD_Parameters {
   double max_cutoff() const { return std::max(radial.cutoff, trans.cutoff); }
 };
 
+/** @brief Bit positions in IA_parameters::active_pair_mask.
+ *
+ *  Each enumerator corresponds to one short-range pair potential
+ *  (central-radial, orientation-dependent, or thermostat-coupled)
+ *  configurable per type pair. A bit is set iff the potential's own
+ *  cutoff / activation guard could possibly fire for this type pair
+ *  (i.e. it is not in its default/inactive state). Populated
+ *  exclusively by InteractionsNonBonded::recalc_maximal_cutoffs() —
+ *  never set elsewhere, so it cannot drift from max_cut.
+ */
+enum class PairPotential : unsigned {
+  LennardJones = 0,
+  WCA,
+  LennardJonesGeneric,
+  SmoothStep,
+  Hertzian,
+  Gaussian,
+  BMHTF,
+  Buckingham,
+  Morse,
+  SoftSphere,
+  Hat,
+  LJCos,
+  LJCos2,
+  Tabulated,
+  GayBerne,
+  DPD,
+};
+
+/** @brief Bitmask for a pair potential. */
+constexpr unsigned pair_potential_bit(PairPotential p) {
+  return 1u << static_cast<unsigned>(p);
+}
+
 /** @brief Parameters for non-bonded interactions. */
 struct IA_parameters {
   /** maximal cutoff for this pair of particle types. This contains
@@ -279,6 +313,11 @@ struct IA_parameters {
    *  cutoffs from global interactions like electrostatics.
    */
   double max_cut = inactive_cutoff;
+
+  /** Bitmask of pair potentials active for this type pair.
+   *  See PairPotential. Derived, do not set directly.
+   */
+  unsigned active_pair_mask = 0u;
 
 #ifdef ESPRESSO_LENNARD_JONES
   LJ_Parameters lj;

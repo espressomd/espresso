@@ -66,10 +66,7 @@ public:
         m_collision_cut2(eff_cutoff_sqr(collision_detection_cutoff)),
         get_nonbonded_cutoff(system) {}
 
-  template <typename Distance>
-  bool operator()(const Particle &p1, const Particle &p2,
-                  Distance const &dist) const {
-    auto const &dist2 = dist.dist2;
+  bool operator()(const Particle &p1, const Particle &p2, double dist2) const {
     if (dist2 > m_eff_max_cut2)
       return false;
 

@@ -21,6 +21,7 @@
 
 #include <config/config.hpp>
 
+#include "PropagationMode.hpp"
 #include "aosoa_pack.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
@@ -28,9 +29,26 @@
 
 // Helper functions to check if specific algorithms are active
 #ifdef ESPRESSO_GAY_BERNE
-KOKKOS_INLINE_FUNCTION bool gay_berne_active(double dist,
-                                             IA_parameters const &ia_params) {
-  return dist < ia_params.gay_berne.cut;
+// Configured-for-type-pair: mask bit set iff gay_berne has a real cutoff.
+// In-range check is deferred to where it matters.
+ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
+gay_berne_configured(IA_parameters const &ia_params) {
+  return (ia_params.active_pair_mask &
+          pair_potential_bit(PairPotential::GayBerne)) != 0u;
+}
+ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
+gay_berne_active(double dist, IA_parameters const &ia_params) {
+  return gay_berne_configured(ia_params) and dist < ia_params.gay_berne.cut;
+}
+#endif
+
+#ifdef ESPRESSO_DPD
+// True iff the DPD thermostat is on AND this type pair has DPD configured.
+ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
+dpd_active(IA_parameters const &ia_params, int thermo_switch) {
+  return (thermo_switch & THERMO_DPD) and
+         ((ia_params.active_pair_mask &
+           pair_potential_bit(PairPotential::DPD)) != 0u);
 }
 #endif
 
@@ -41,31 +59,3 @@ KOKKOS_INLINE_FUNCTION bool thole_active(IA_parameters const &ia_params,
           has_coulomb_kernel);
 }
 #endif
-
-struct PairDataFlags {
-  bool need_directors = false;
-  bool need_particle_pointers = false;
-};
-
-KOKKOS_INLINE_FUNCTION PairDataFlags compute_pair_data_flags(
-    [[maybe_unused]] double dist,
-    [[maybe_unused]] IA_parameters const &ia_params,
-    [[maybe_unused]] bool has_coulomb, [[maybe_unused]] bool has_dipoles,
-    [[maybe_unused]] auto const &aosoa, [[maybe_unused]] std::size_t i,
-    [[maybe_unused]] std::size_t j) {
-  PairDataFlags flags;
-#ifdef ESPRESSO_GAY_BERNE
-  flags.need_directors |= gay_berne_active(dist, ia_params);
-#endif
-#ifdef ESPRESSO_DIPOLES
-  flags.need_directors |= has_dipoles;
-#endif
-#ifdef ESPRESSO_EXCLUSIONS
-  flags.need_particle_pointers |=
-      aosoa.has_exclusion(i) or aosoa.has_exclusion(j);
-#endif
-#ifdef ESPRESSO_THOLE
-  flags.need_particle_pointers |= thole_active(ia_params, has_coulomb);
-#endif
-  return flags;
-}

@@ -21,6 +21,7 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
+import tests_common
 
 
 @utx.skipIfMissingFeatures(["PARTICLE_ANISOTROPY", "MASS", "EXTERNAL_FORCES"])
@@ -97,6 +98,28 @@ class Test(ut.TestCase):
         self.setup_brownian(0.)
         self.system.integrator.run(10)
         self.check_friction(partcl)
+
+    def test_friction_langevin_single_step(self):
+        """Single-step force check for the anisotropic Langevin fast path.
+
+        Verifies that the friction force is computed correctly
+        for a particle with a non-trivial orientation quaternion.
+        """
+        v0 = np.array([1.2, -0.7, 0.5])
+        partcl = self.setup_partcl(np.zeros(3))
+        partcl.v = v0
+
+        self.setup_langevin(kT=0.)
+        self.system.integrator.run(0, recalc_forces=True)
+
+        # rotation_matrix_quat returns A where A @ v_space = v_body
+        # and A.T @ v_body = v_space (body-to-space)
+        A = tests_common.rotation_matrix_quat(partcl)
+        gamma = np.array([self.gamma_ortho, self.gamma_ortho,
+                          self.gamma_parallel])
+        v_body = A @ v0
+        f_expected = A.T @ (-gamma * v_body)
+        np.testing.assert_allclose(np.copy(partcl.f), f_expected, atol=1e-12)
 
     def check_temperature(self, partcl):
         vels = []

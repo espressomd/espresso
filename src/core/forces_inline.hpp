@@ -78,62 +78,65 @@ inline Utils::Vector3d calc_central_radial_force(IA_parameters const &ia_params,
                                                  Utils::Vector3d const &d,
                                                  double const dist) {
 
+  auto const mask = ia_params.active_pair_mask;
+  static_cast<void>(mask);
+
   auto force_factor = 0.;
-/* Lennard-Jones */
 #ifdef ESPRESSO_LENNARD_JONES
-  force_factor += lj_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::LennardJones))
+    force_factor += lj_pair_force_factor(ia_params, dist);
 #endif
-/* WCA */
 #ifdef ESPRESSO_WCA
-  force_factor += wca_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::WCA))
+    force_factor += wca_pair_force_factor(ia_params, dist);
 #endif
-/* Lennard-Jones generic */
 #ifdef ESPRESSO_LENNARD_JONES_GENERIC
-  force_factor += ljgen_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::LennardJonesGeneric))
+    force_factor += ljgen_pair_force_factor(ia_params, dist);
 #endif
-/* smooth step */
 #ifdef ESPRESSO_SMOOTH_STEP
-  force_factor += SmSt_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::SmoothStep))
+    force_factor += SmSt_pair_force_factor(ia_params, dist);
 #endif
-/* Hertzian force */
 #ifdef ESPRESSO_HERTZIAN
-  force_factor += hertzian_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::Hertzian))
+    force_factor += hertzian_pair_force_factor(ia_params, dist);
 #endif
-/* Gaussian force */
 #ifdef ESPRESSO_GAUSSIAN
-  force_factor += gaussian_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::Gaussian))
+    force_factor += gaussian_pair_force_factor(ia_params, dist);
 #endif
-/* BMHTF NaCl */
 #ifdef ESPRESSO_BMHTF_NACL
-  force_factor += BMHTF_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::BMHTF))
+    force_factor += BMHTF_pair_force_factor(ia_params, dist);
 #endif
-/* Buckingham*/
 #ifdef ESPRESSO_BUCKINGHAM
-  force_factor += buck_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::Buckingham))
+    force_factor += buck_pair_force_factor(ia_params, dist);
 #endif
-/* Morse*/
 #ifdef ESPRESSO_MORSE
-  force_factor += morse_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::Morse))
+    force_factor += morse_pair_force_factor(ia_params, dist);
 #endif
-/*soft-sphere potential*/
 #ifdef ESPRESSO_SOFT_SPHERE
-  force_factor += soft_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::SoftSphere))
+    force_factor += soft_pair_force_factor(ia_params, dist);
 #endif
-/*hat potential*/
 #ifdef ESPRESSO_HAT
-  force_factor += hat_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::Hat))
+    force_factor += hat_pair_force_factor(ia_params, dist);
 #endif
-/* Lennard-Jones cosine */
 #ifdef ESPRESSO_LJCOS
-  force_factor += ljcos_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::LJCos))
+    force_factor += ljcos_pair_force_factor(ia_params, dist);
 #endif
-/* Lennard-Jones cosine */
 #ifdef ESPRESSO_LJCOS2
-  force_factor += ljcos2_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::LJCos2))
+    force_factor += ljcos2_pair_force_factor(ia_params, dist);
 #endif
-/* tabulated */
 #ifdef ESPRESSO_TABULATED
-  force_factor += tabulated_pair_force_factor(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::Tabulated))
+    force_factor += tabulated_pair_force_factor(ia_params, dist);
 #endif
   return force_factor * d;
 }

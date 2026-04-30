@@ -46,7 +46,6 @@
 #include <cassert>
 #include <concepts>
 #include <cstddef>
-#include <functional>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -85,8 +84,6 @@ template <typename Callable>
 concept ParticleCallback = requires(Callable c, Particle &p) {
   { c(p) } -> std::same_as<void>;
 };
-
-using ParticleUnaryOp = std::function<void(Particle &)>;
 
 namespace Cells {
 enum Resort : unsigned {
@@ -356,8 +353,8 @@ public:
    * @brief Run a kernel on all local particles.
    * The kernel is assumed to be thread-safe.
    */
-  void for_each_local_particle(ParticleUnaryOp &&f,
-                               bool parallel = true) const {
+  template <typename Callable>
+  void for_each_local_particle(Callable &&f, bool parallel = true) const {
     if (parallel and use_parallel_for_each_local_particle()) {
       parallel_for_each_particle_impl(decomposition().local_cells(), f);
       return;
@@ -371,7 +368,8 @@ public:
    * @brief Run a kernel on all ghost particles.
    * The kernel is assumed to be thread-safe.
    */
-  void for_each_ghost_particle(ParticleUnaryOp &&f) const {
+  template <typename Callable>
+  void for_each_ghost_particle(Callable &&f) const {
     for (auto &p : ghost_particles()) {
       f(p);
     }
@@ -391,8 +389,9 @@ private:
     return decomposition().particle_to_cell(p);
   }
 
-  void parallel_for_each_particle_impl(std::span<Cell *const> cells,
-                                       ParticleUnaryOp &f) const;
+  template <typename Callable>
+  inline void parallel_for_each_particle_impl(std::span<Cell *const> cells,
+                                              Callable &f) const;
 
 public:
   /**
@@ -809,7 +808,7 @@ private:
       m_verlet_list.clear();
 
       link_cell([&](Particle &p1, Particle &p2, Distance const &d) {
-        if (verlet_criterion(p1, p2, d)) {
+        if (verlet_criterion(p1, p2, d.dist2)) {
           m_verlet_list.emplace_back(&p1, &p2);
           pair_kernel(p1, p2, d);
         }
