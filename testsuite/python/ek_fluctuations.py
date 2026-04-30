@@ -22,7 +22,7 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.electrokinetics
 import numpy as np
-from itertools import product
+import itertools
 
 
 class EKTest:
@@ -90,7 +90,7 @@ class EKTest:
 
         # Positive half of the D3Q27 neighbor set used by the staggered EK flux.
         directions = np.array(
-            [offset for offset in product(
+            [offset for offset in itertools.product(
                 (-1, 0, 1), repeat=3) if offset > (0, 0, 0)],
             dtype=int
         )

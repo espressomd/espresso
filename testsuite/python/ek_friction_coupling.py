@@ -63,7 +63,9 @@ class FrictionCoupling:
 
     def test_friction_coupling(self):
         """
-        Use the species as an homogenous external force on the fluid to check the friction coupling against the analytical solution for the planar Poiseuille flow.
+        Use the species as an homogeneous external force on the fluid to check
+        the friction coupling against the analytical solution for the planar
+        Poiseuille flow.
         """
         kT = 9.8765
         diffusion_coefficient = 0.68

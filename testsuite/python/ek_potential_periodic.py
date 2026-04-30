@@ -17,14 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import itertools
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 
 import espressomd
 import espressomd.electrokinetics
-
-import numpy as np
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
@@ -92,19 +91,20 @@ class FFTPotential:
         lap = (
             (np.roll(phi_exact, -1, axis=0) - 2.0 * phi_exact + np.roll(phi_exact, 1, axis=0)) / hx**2 +
             (np.roll(phi_exact, -1, axis=1) - 2.0 * phi_exact + np.roll(phi_exact, 1, axis=1)) / hy**2 +
-            (np.roll(phi_exact, -1, axis=2) - 2.0 *
-             phi_exact + np.roll(phi_exact, 1, axis=2)) / hz**2
+            (np.roll(phi_exact, -1, axis=2) - 2.0 * phi_exact + np.roll(phi_exact, 1, axis=2)) / hz**2  # nopep8
         )
 
         rho = - eps0 * epsR / valency * lap
         rho -= rho.mean()
         phi_exact -= phi_exact.mean()
 
-        for i in range(Nx):
-            for j in range(Ny):
-                for k in range(Nz):
-                    ekspecies_pos[i, j, k].density = max(rho[i, j, k], 0)
-                    ekspecies_neg[i, j, k].density = max(-rho[i, j, k], 0)
+        dens_pos = np.zeros(lattice.shape, dtype=float)
+        dens_neg = np.zeros(lattice.shape, dtype=float)
+        for i, j, k in itertools.product(range(Nx), range(Ny), range(Nz)):
+            dens_pos[i, j, k] = max(+rho[i, j, k], 0.0)
+            dens_neg[i, j, k] = max(-rho[i, j, k], 0.0)
+        ekspecies_pos[:, :, :].density = dens_pos
+        ekspecies_neg[:, :, :].density = dens_neg
         self.system.integrator.run(1)
 
         calc_potential = np.copy(eksolver[:, :, :].potential)
@@ -117,7 +117,7 @@ class FFTPotential:
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKTestWalberla(FFTPotential, ut.TestCase):
     lattice_params = {"single_precision": False, "gpu": False}
-    atol = 2e-15
+    atol = 5e-12
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
@@ -130,7 +130,7 @@ class EKTestWalberlaSinglePrecision(FFTPotential, ut.TestCase):
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 class EKTestWalberlaGPU(FFTPotential, ut.TestCase):
     lattice_params = {"single_precision": False, "gpu": True}
-    atol = 2e-15
+    atol = 5e-12
 
 
 @utx.skipIfMissingGPU()

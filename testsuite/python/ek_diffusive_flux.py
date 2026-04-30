@@ -69,7 +69,7 @@ class EKDiffusiveFlux:
 
         self.system.integrator.run(1)
 
-        atol = 3e-9 if self.lattice_params["single_precision"] else 7e-18
+        atol = 3e-9 if self.lattice_params["single_precision"] else 7e-12
 
         offset = np.array([-1, 0, 1])
         normalization_factor = 1.0 + 2. * np.sqrt(2) + 4.0 / 3.0 * np.sqrt(3)

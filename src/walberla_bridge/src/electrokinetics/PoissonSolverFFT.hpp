@@ -358,8 +358,7 @@ public:
         walberla::ek::accessor::Scalar::get(potential_field, bc->cell))};
   }
 
-  bool set_node_potential(Utils::Vector3i const &node,
-                          double potential) override {
+  bool set_node_potential(Utils::Vector3i const &, double) override {
     throw std::runtime_error("Setting potential is not supported by EKFFT");
   }
 
@@ -398,9 +397,8 @@ public:
     return out;
   }
 
-  void set_slice_potential(Utils::Vector3i const &lower_corner,
-                           Utils::Vector3i const &upper_corner,
-                           std::vector<double> const &potential) override {
+  void set_slice_potential(Utils::Vector3i const &, Utils::Vector3i const &,
+                           std::vector<double> const &) override {
     throw std::runtime_error("Setting potential is not supported by EKFFT");
   }
 

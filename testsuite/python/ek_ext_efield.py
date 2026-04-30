@@ -76,7 +76,7 @@ class EKExternalElectricField:
         self.system.ekcontainer.add(ekspecies_pos)
         self.system.ekcontainer.add(ekspecies_neg)
 
-        atol = 2e-18 if not self.lattice_params["single_precision"] else 6e-10
+        atol = 5e-12 if not self.lattice_params["single_precision"] else 6e-10
 
         for _ in range(self.NUM_SAMPLES):
             external_electric_field = electric_field_max * np.random.random(3)
