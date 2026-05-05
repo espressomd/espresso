@@ -71,9 +71,6 @@ namespace Cabana {
 class HalfNeighborTag;
 struct VerletLayout2D;
 class TeamVectorOpTag;
-template <typename... Types> struct MemberTypes;
-template <class DataType, class MemorySpace, int, class MemoryTraits>
-class AoSoA;
 } // namespace Cabana
 struct KokkosHandle;
 template <class MemorySpace, class ListAlgorithm, class Layout, class BuildTag>
