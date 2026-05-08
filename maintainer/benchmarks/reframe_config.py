@@ -92,12 +92,14 @@ site_configuration = {
                               '%(check_num_tasks)s,'
                               '%(check_num_tasks_per_core)s,'
                               '%(check_num_tasks_per_node)s,'
-                              '%(check_perfvalues)s',
+                              '%(check_perfvalues)s,'
+                              '%(check_perf_var)s',
                     'format_perfvars': ('%(check_perf_value)s,'
                                         '%(check_perf_unit)s,'),
                     'append': True
                 }
-            ]
+            ],
+            'perflog_multiline': True
         }
     ]
 }

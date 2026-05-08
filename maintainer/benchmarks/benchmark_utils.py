@@ -38,10 +38,6 @@ BENCHMARKS = [
 CORES_LIST = [1, 2, 4, 8, 12]
 
 
-def generate_build_parameters():
-    "Generate all build parameter configurations."
-
-
 def generate_test_parameters():
     """Generates all test parameter configurations."""
     params = []

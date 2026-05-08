@@ -1,10 +1,28 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# Copyright (C) 2018-2026 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 # Usage function
 usage() {
-    echo "Usage: $0 -p <prefix> -n <test_names> [-l] [--dry-run]"
+    echo "Usage: $0 -p <prefix> [-n <test_names>] [-l] [--dry-run]"
     echo "  -p PREFIX       : Installation prefix for ReFrame benchmarks"
-    echo "  -n TESTS        : Test case filter(s) for ReFrame (-n option)"
+    echo "  -n TESTS        : Optional test case filter(s) for ReFrame (-n option)"
     echo "  -l              : List available test cases (overrides -r/--dry-run)"
     echo "  --dry-run       : Optional flag to perform a dry run"
     exit 1
@@ -41,7 +59,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Check required arguments
-if [ -z "$PREFIX" ] || ([ -z "$TESTS" ] && [ "$LIST_MODE" = false ]); then
+if [ -z "$PREFIX" ]; then
     usage
 fi
 
@@ -54,11 +72,20 @@ else
     RUN_OPTION="-r"
 fi
 
+# Build optional -n argument
+N_OPTION=""
+if [ -n "$TESTS" ]; then
+    N_OPTION="-n $TESTS"
+fi
+
+# Save sqlite storage database to prefix directory 
+export RFM_SQLITE_DB_FILE="${PREFIX}/results.db"
+
 # Run ReFrame
 reframe -C reframe_config.py \
         -c espresso_benchmarks.py \
         --prefix "$PREFIX" \
         --exec-policy serial \
-        -n "$TESTS" \
+        $N_OPTION \
         --performance-report \
         $RUN_OPTION

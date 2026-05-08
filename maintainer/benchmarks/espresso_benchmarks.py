@@ -47,10 +47,10 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
 
     @run_after("init")
     def set_build_attributes(self):
-        config_name = self.build_params["config"]  # type: ignore
+        self.config_name = self.build_params["config"]  # type: ignore
         self.build_system.builddir = "build"  # type: ignore
 
-        self.descr = f"Build Espresso ({config_name})"
+        self.descr = f"Build Espresso ({self.config_name})"
 
     @run_after("setup")
     def set_resources(self):
@@ -60,12 +60,11 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
     def skip_unsupported_local_configs(self):
         if self.is_local():
             supported_configs = ("maxset")
-            if self.build_params["config"] not in supported_configs:  # type: ignore
+            if self.config_name not in supported_configs:
                 self.skip(
                     f"Local execution only supports {
                         supported_configs} configs "
-                    # type: ignore
-                    f"(tried to use {self.build_params["config"]})"
+                    f"(tried to use {self.config_name})"
                 )
 
     @run_before("compile")
