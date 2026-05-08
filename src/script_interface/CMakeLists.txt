@@ -58,12 +58,9 @@ install(TARGETS espresso_script_interface
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 target_link_libraries(
-  espresso_script_interface
-  PRIVATE espresso::config espresso::core espresso::instrumentation
-          OpenMP::OpenMP_CXX
-          $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
-          Kokkos::kokkos Cabana::Core PUBLIC espresso::utils MPI::MPI_CXX
-                                             Boost::mpi espresso::shapes
+  espresso_script_interface PRIVATE espresso::config espresso::core
+                                    espresso::instrumentation
+  PUBLIC espresso::utils MPI::MPI_CXX Boost::mpi espresso::shapes
   PRIVATE espresso::compiler_flags)
 
 set_source_files_properties(

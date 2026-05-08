@@ -149,12 +149,12 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
 #endif
   if (m_local_force) { // local properties are reallocated
     Kokkos::realloc(get_local_force(), num_part);
-    // underlying View extent changed → scratch buffers must be rebuilt
+    // underlying View extent changed -> scratch buffers must be rebuilt
     m_scatter_force.emplace(
         Kokkos::Experimental::create_scatter_view(get_local_force()));
 #ifdef ESPRESSO_ROTATION
     Kokkos::realloc(get_local_torque(), num_part);
-    // underlying View extent changed → scratch buffers must be rebuilt
+    // underlying View extent changed -> scratch buffers must be rebuilt
     m_scatter_torque.emplace(
         Kokkos::Experimental::create_scatter_view(get_local_torque()));
 #endif
