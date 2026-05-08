@@ -18,29 +18,21 @@
 #
 
 
-CONFIGS = [{"config": "maxset", "mpi": True}, {"config": "default", "mpi": True}, {"config": "empty", "mpi": True}]
+CONFIGS = [{"config": "maxset", "mpi": True}, {
+    "config": "default", "mpi": True}, {"config": "empty", "mpi": True}]
 
 # Defintion of all individual benchmark tests
 BENCHMARKS = [
-    {"file": "lj.py", "args": ["--particles_per_core=1000", "--volume_fraction=0.50"]},
-    {"file": "lj.py", "args": ["--particles_per_core=1000", "--volume_fraction=0.02"]},
-    {"file": "lj.py", "args": ["--particles_per_core=10000", "--volume_fraction=0.50"]},
-    {"file": "lj.py", "args": ["--particles_per_core=10000", "--volume_fraction=0.02"]},
-    {"file": "mc_acid_base_reservoir.py", "args": ["--particles_per_core=500"]},
-    {"file": "lj.py", "args": ["--particles_per_core=1000", "--volume_fraction=0.10", "--bonds"]},
-    {"file": "lj.py", "args": ["--particles_per_core=10000", "--volume_fraction=0.10", "--bonds"]},
-    {"file": "p3m.py", "args": ["--particles_per_core=1000", "--volume_fraction=0.25", "--prefactor=4"]},
-    {"file": "p3m.py", "args": ["--particles_per_core=10000", "--volume_fraction=0.25", "--prefactor=4"]},
+    {"file": "lj.py", "args": [
+        "--particles_per_core=1000", "--volume_fraction=0.50"]},
+    {"file": "mc_acid_base_reservoir.py",
+        "args": ["--particles_per_core=500"]},
+    {"file": "p3m.py", "args": [
+        "--particles_per_core=1000", "--volume_fraction=0.25", "--prefactor=4"]},
     {"file": "ferrofluid.py", "args": ["--particles_per_core=400"]},
-    {"file": "lb.py", "args": ["--particles_per_core=125", "--volume_fraction=0.03", "--lb_sites_per_particle=28"]},
-    {"file": "lb.py", "args": ["--box_l=32", "--particles_per_core=0", "--single_precision"]},
+    {"file": "lb.py", "args": ["--particles_per_core=125",
+                               "--volume_fraction=0.03", "--lb_sites_per_particle=28"]},
     {"file": "lb.py", "args": ["--box_l=32", "--particles_per_core=0"]},
-    {"file": "lb.py", "args": ["--box_l=64", "--particles_per_core=0", "--single_precision"]},
-    {"file": "lb.py", "args": ["--box_l=64", "--particles_per_core=0"]},
-    {"file": "lb.py", "args": ["--box_l=128", "--particles_per_core=0", "--single_precision"]},
-    {"file": "lb.py", "args": ["--box_l=128", "--particles_per_core=0"]},
-    {"file": "lb.py", "args": ["--box_l=196", "--particles_per_core=0", "--single_precision"]},
-    {"file": "lb.py", "args": ["--box_l=196", "--particles_per_core=0"]},
 ]
 
 CORES_LIST = [1, 2, 4, 8, 12]

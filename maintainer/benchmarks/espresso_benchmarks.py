@@ -57,6 +57,17 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
         if not self.is_local():
             self.build_job.num_cpus_per_task = 64  # type: ignore
 
+    def skip_unsupported_local_configs(self):
+        if self.is_local():
+            supported_configs = ("maxset")
+            if self.build_params["config"] not in supported_configs:  # type: ignore
+                self.skip(
+                    f"Local execution only supports {
+                        supported_configs} configs "
+                    # type: ignore
+                    f"(tried to use {self.build_params["config"]})"
+                )
+
     @run_before("compile")
     def set_build_instructions(self):
         config_name = self.build_params["config"]  # type: ignore
@@ -70,7 +81,8 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
             f'cp {config_dir / "empty.hpp"} .',
             f'cp {config_dir / "default.hpp"} .',
             f'cp {config_dir / "maxset.hpp"} .',
-            rf'sed -i "1 i\\#define ELECTROSTATICS\\n#define LENNARD_JONES\\n#define MASS\\n" {config_name}.hpp',
+            rf'sed -i "1 i\\#define ELECTROSTATICS\\n#define LENNARD_JONES\\n#define MASS\\n" {
+                config_name}.hpp',
             rf'sed -ri "/#define\s+ADDITIONAL_CHECKS/d" {config_name}.hpp',
             rf"cp {config_name}.hpp myconfig.hpp",
         ]
@@ -81,7 +93,8 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
                 r"python3 -m venv .reframe_venv",
                 r"source .reframe_venv/bin/activate",
                 r"pip install --upgrade pip",
-                rf"pip install -c {(Path(__file__).parents[2] / 'requirements.txt').resolve()} numpy scipy setuptools cython==3.0.8",
+                rf"pip install -c {(Path(__file__).parents[2] / 'requirements.txt').resolve(
+                )} numpy scipy setuptools cython==3.0.8",
             ]
 
             self.build_system.max_concurrency = 64  # type: ignore
@@ -104,8 +117,10 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
                 f"-D CMAKE_C_COMPILER=gcc-{GCC_VER}",
                 f"-D CMAKE_CUDA_COMPILER=/usr/local/cuda-{CUDA_VER}/bin/nvcc",
                 f"-D CUDAToolkit_ROOT=/usr/local/cuda-{CUDA_VER}",
-                f"-D CMAKE_CUDA_FLAGS='--compiler-bindir=/usr/bin/g++-{GCC_VER}'",
+                f"-D CMAKE_CUDA_FLAGS='--compiler-bindir=/usr/bin/g++-{
+                    GCC_VER}'",
             ]
+            self.skip_unsupported_local_configs()
 
     @sanity_function
     def assert_sanity(self):
@@ -130,7 +145,8 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
         mpi_enabled = self.build_params["mpi"]  # type: ignore
         self.script_filename, self.script_args, self.num_cores = self.test_case  # type: ignore
 
-        self.variants = BuildEspresso.get_variant_nums(build_params=self.build_params)
+        self.variants = BuildEspresso.get_variant_nums(
+            build_params=self.build_params)
         assert (
             len(self.variants) == 1
         ), "Benchmark test should depend on exactly one build test."
@@ -147,17 +163,31 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
         args_str = "_".join(
             [a.replace("--", "").replace("=", "_") for a in self.script_args]
         )
-        self.descr = f"ESPRESSO_{self.script_filename.replace('.py', '')}_{args_str}_cores_{self.num_cores}"
+        self.descr = f"ESPRESSO_{self.script_filename.replace('.py', '')}_{
+            args_str}_cores_{self.num_cores}"
+
+    @run_before('run')
+    def skip_unsupported_local_configs(self):
+        if self.is_local():
+            supported_cores = (1, 4)
+            if self.num_cores not in supported_cores:
+                self.skip(
+                    f"Local execution only supports {supported_cores} cores "
+                    f"(tried to use {self.num_cores})"
+                )
 
     @run_before("run")
     def prepare_execution(self):
-        build_target = self.getdep(BuildEspresso.variant_name(self.variants[0]))
+        build_target = self.getdep(
+            BuildEspresso.variant_name(self.variants[0]))
         build_dir = f"{build_target.stagedir}/build"
-        script_path = f"{build_dir}/maintainer/benchmarks/{self.script_filename}"
+        script_path = f"{
+            build_dir}/maintainer/benchmarks/{self.script_filename}"
         self.benchmark_file_path = f"{self.stagedir}/benchmarks.csv"
 
         if self.current_system.name == "local":
-            self.executable = f"mpiexec -n {self.num_cores} {build_dir}/pypresso"
+            self.executable = f"mpiexec -n {
+                self.num_cores} {build_dir}/pypresso"
         else:
             self.executable = f"{build_dir}/pypresso"
 
@@ -208,15 +238,13 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
 
         for row in rows:
             label = row["label"]
+            logging_label = label if label == "" else label + "_"
 
-            if label != "":
-                label += "_"
-
-            perf_vars[f"{label}mean"] = sn.make_performance_function(
+            perf_vars[f"{logging_label}mean"] = sn.make_performance_function(
                 self._make_perf_extractor(label, "mean"), "s"
             )
 
-            perf_vars[f"{label}ci"] = sn.make_performance_function(
+            perf_vars[f"{logging_label}ci"] = sn.make_performance_function(
                 self._make_perf_extractor(label, "ci"), "s"
             )
 

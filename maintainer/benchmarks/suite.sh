@@ -1,84 +1,64 @@
-#!/usr/bin/env bash
-#
-# Copyright (C) 2018-2026 The ESPResSo project
-#
-# This file is part of ESPResSo.
-#
-# ESPResSo is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# ESPResSo is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+#!/bin/bash
 
-# list of commits to benchmark
-commits="HEAD"
-
-# list of directories to checkout
-directories="../src ../libs"
-
-cleanup() {
-  # empty for now, will be redefined later in the script
-  :
+# Usage function
+usage() {
+    echo "Usage: $0 -p <prefix> -n <test_names> [-l] [--dry-run]"
+    echo "  -p PREFIX       : Installation prefix for ReFrame benchmarks"
+    echo "  -n TESTS        : Test case filter(s) for ReFrame (-n option)"
+    echo "  -l              : List available test cases (overrides -r/--dry-run)"
+    echo "  --dry-run       : Optional flag to perform a dry run"
+    exit 1
 }
 
-abort() {
-  echo "An error occurred in suite.sh, exiting now" >&2
-  echo "Command that failed: ${BASH_COMMAND}" >&2
-  cleanup
-  exit 1
-}
+# Defaults
+DRY_RUN=false
+LIST_MODE=false
 
-trap abort EXIT
-set -e
-
-# move to top-level directory
-cd "$(git rev-parse --show-toplevel)"
-build_dir="$(realpath build-benchmarks)"
-
-# move to build directory
-if [ -d "${build_dir}" ]; then
-  rm -rf "${build_dir}"
-fi
-mkdir "${build_dir}"
-cd "${build_dir}"
-
-# check for unstaged changes
-if [ -n "$(git status --porcelain -- ${directories})" ]; then
-  echo "fatal: you have unstaged changes, please commit or stash them:"
-  git status --porcelain -- ${directories}
-  exit 1
-fi
-
-cleanup() {
-  # restore files in source directory
-  git checkout HEAD -- ${directories}
-}
-
-# prepare output files
-rm -f benchmarks.log
-cat > benchmarks_suite.csv << EOF
-"commit","config","script","arguments","cores","mean","ci","nsteps","duration","label"
-EOF
-
-# run benchmarks
-for commit in ${commits}; do
-  echo "### commit ${commit}" >> benchmarks.log
-  git checkout ${commit} -- ${directories}
-  rm -rf _deps # commits might rely on a different version of dependencies
-  bash ../maintainer/benchmarks/runner.sh
-  sed -ri "s/^/\"${commit}\",/" benchmarks.csv
-  tail -n +2 benchmarks.csv >> benchmarks_suite.csv
+# Parse command-line arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -p)
+            PREFIX="$2"
+            shift 2
+            ;;
+        -n)
+            TESTS="$2"
+            shift 2
+            ;;
+        -l)
+            LIST_MODE=true
+            shift
+            ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            usage
+            ;;
+    esac
 done
 
-rm benchmarks.csv
+# Check required arguments
+if [ -z "$PREFIX" ] || ([ -z "$TESTS" ] && [ "$LIST_MODE" = false ]); then
+    usage
+fi
 
-trap : EXIT
-cleanup
+# Determine final ReFrame action
+if [ "$LIST_MODE" = true ]; then
+    RUN_OPTION="-l"
+elif [ "$DRY_RUN" = true ]; then
+    RUN_OPTION="--dry-run"
+else
+    RUN_OPTION="-r"
+fi
+
+# Run ReFrame
+reframe -C reframe_config.py \
+        -c espresso_benchmarks.py \
+        --prefix "$PREFIX" \
+        --exec-policy serial \
+        -n "$TESTS" \
+        --performance-report \
+        $RUN_OPTION
