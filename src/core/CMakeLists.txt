@@ -76,8 +76,8 @@ install(TARGETS espresso_core
 
 target_link_libraries(
   espresso_core
-  PUBLIC  Cabana::Core Kokkos::kokkos OpenMP::OpenMP_CXX
-          $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
+  PUBLIC Cabana::Core Kokkos::kokkos OpenMP::OpenMP_CXX
+         $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
   PRIVATE espresso::config espresso::utils::mpi espresso::shapes
           espresso::compiler_flags
           $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>
