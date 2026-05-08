@@ -30,23 +30,17 @@
 #include <Kokkos_Core.hpp>
 #include <Kokkos_ScatterView.hpp>
 
-#include <omp.h>
-
 #include <cstddef>
 #include <optional>
 #include <variant>
 
 struct BondsKernelData {
-  using ScatterForce =
-      Kokkos::Experimental::ScatterView<double *[3], Kokkos::LayoutRight>;
-  using ScatterVirial =
-      Kokkos::Experimental::ScatterView<double[3], Kokkos::LayoutRight>;
   BondedInteractionsMap const &bonded_ias;
   BondBreakage::BondBreakage &bond_breakage;
   BoxGeometry const &box_geo;
-  ScatterForce local_force;
+  CellStructure::ScatterForce local_force;
 #ifdef ESPRESSO_NPT
-  ScatterVirial local_virial;
+  CellStructure::ScatterVirial local_virial;
 #endif
   CellStructure::AoSoA_pack const &aosoa;
   bool const has_breakage_specs;

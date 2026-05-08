@@ -192,7 +192,7 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
 #endif
 }
 
-void CellStructure::reset_local_force() {
+void CellStructure::reset_local_force_and_torque() {
 #ifdef ESPRESSO_CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif

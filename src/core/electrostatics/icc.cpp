@@ -51,7 +51,6 @@
 
 #include <Kokkos_Core.hpp>
 #include <Kokkos_ScatterView.hpp>
-#include <omp.h>
 
 #include <algorithm>
 #include <cmath>
@@ -77,7 +76,7 @@ static void force_calc_icc(
   auto const reset_kernel = [](Particle &p) { p.force_and_torque() = {}; };
   cell_structure.for_each_local_particle(reset_kernel);
   cell_structure.for_each_ghost_particle(reset_kernel);
-  cell_structure.reset_local_force();
+  cell_structure.reset_local_force_and_torque();
 
   // calc ICC forces
   cell_structure.non_bonded_loop(

@@ -79,7 +79,6 @@
 
 #include <Kokkos_Core.hpp>
 #include <Kokkos_ScatterView.hpp>
-#include <omp.h>
 
 #include <algorithm>
 #include <array>

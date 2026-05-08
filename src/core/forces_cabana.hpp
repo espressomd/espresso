@@ -30,8 +30,6 @@
 #include <Cabana_Core.hpp>
 #include <Kokkos_ScatterView.hpp>
 
-#include <omp.h>
-
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -39,10 +37,6 @@
 #include <vector>
 
 struct ForcesKernel {
-  using ScatterForce =
-      Kokkos::Experimental::ScatterView<double *[3], Kokkos::LayoutRight>;
-  using ScatterVirial =
-      Kokkos::Experimental::ScatterView<double[3], Kokkos::LayoutRight>;
   BondedInteractionsMap const &bonded_ias;
   InteractionsNonBonded const &nonbonded_ias;
   Coulomb::ShortRangeForceKernel::kernel_type const *const coulomb_kernel;
@@ -52,13 +46,13 @@ struct ForcesKernel {
   Thermostat::Thermostat const &thermostat;
   BoxGeometry const &box_geo;
   std::vector<Particle *> const &unique_particles;
-  ScatterForce local_force;
+  CellStructure::ScatterForce local_force;
 #ifdef ESPRESSO_ROTATION
-  ScatterForce local_torque;
+  CellStructure::ScatterForce local_torque;
 #endif
 #ifdef ESPRESSO_NPT
   Utils::Vector3d *const global_virial;
-  ScatterVirial local_virial;
+  CellStructure::ScatterVirial local_virial;
 #endif
   CellStructure::AoSoA_pack const &aosoa;
 #ifdef ESPRESSO_P3M
@@ -76,12 +70,13 @@ struct ForcesKernel {
       Coulomb::Solver const &coulomb_,
       Thermostat::Thermostat const &thermostat_, BoxGeometry const &box_geo_,
       std::vector<Particle *> const &unique_particles_,
-      ScatterForce local_force_,
+      CellStructure::ScatterForce local_force_,
 #ifdef ESPRESSO_ROTATION
-      ScatterForce local_torque_,
+      CellStructure::ScatterForce local_torque_,
 #endif
 #ifdef ESPRESSO_NPT
-      Utils::Vector3d *const global_virial_, ScatterVirial local_virial_,
+      Utils::Vector3d *const global_virial_,
+      CellStructure::ScatterVirial local_virial_,
 #endif
       CellStructure::AoSoA_pack const &aosoa_, double system_max_cutoff_)
       : bonded_ias(bonded_ias_), nonbonded_ias(nonbonded_ias_),

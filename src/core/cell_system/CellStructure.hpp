@@ -723,7 +723,7 @@ public:
   void set_kokkos_handle(std::shared_ptr<KokkosHandle> handle);
   void rebuild_local_properties(double pair_cutoff);
   void reset_local_properties();
-  void reset_local_force();
+  void reset_local_force_and_torque();
 
   auto &get_id_to_index() { return *m_id_to_index; }
   auto &get_local_force() { return *m_local_force; }
