@@ -153,11 +153,9 @@ class TestLBVTK(TestVTK):
             espressomd.shapes.Wall(normal=[1, 0, 0], dist=dist))
         actor.add_boundary_from_shape(
             espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-(self.system.box_l[0] - dist)))
-
-        actor.add_boundary_from_shape(
-            espressomd.shapes.Sphere(center=[self.system.box_l[0] // 2,
-                                             self.system.box_l[1] // 2,
-                                             self.system.box_l[2] // 2], radius=2))
+        sphere = espressomd.shapes.Sphere(
+            center=self.system.box_l // 2, radius=2.)
+        actor.add_boundary_from_shape(sphere)
 
         n_steps = 4 if self.lb_params["gpu"] else 10
         shape = tuple(actor.shape)
@@ -282,6 +280,8 @@ class TestLBVTK(TestVTK):
                 expected_mask = np.zeros(full_shape, dtype=np.float32)
                 expected_mask[:2, :, :] = 1.
                 expected_mask[-2:, :, :] = 1.
+                expected_mask[self.lattice.get_shape_bitmask(
+                    shape=sphere)] = 1.
                 np.testing.assert_array_equal(
                     grids_b["boundary"], expected_mask)
                 np.testing.assert_array_equal(
@@ -368,14 +368,10 @@ class TestEKVTK(TestVTK):
             shape=espressomd.shapes.Wall(
                 normal=[-1, 0, 0], dist=-(self.system.box_l[0] - dist)),
             value=0.0, boundary_type=espressomd.electrokinetics.DensityBoundary)
-
+        sphere = espressomd.shapes.Sphere(
+            center=self.system.box_l // 2, radius=2.)
         actor.add_boundary_from_shape(
-            shape=espressomd.shapes.Sphere(
-                center=[self.system.box_l[0] // 2,
-                        self.system.box_l[1] // 2,
-                        self.system.box_l[2] // 2],
-                radius=2),
-            value=0.0, boundary_type=espressomd.electrokinetics.DensityBoundary)
+            shape=sphere, value=0.0, boundary_type=espressomd.electrokinetics.DensityBoundary)
 
         n_steps = 100
         shape = tuple(self.lattice.shape)
@@ -543,6 +539,8 @@ class TestEKVTK(TestVTK):
                 expected_mask = np.zeros(full_shape, dtype=np.float32)
                 expected_mask[:2, :, :] = 1.
                 expected_mask[-2:, :, :] = 1.
+                expected_mask[self.lattice.get_shape_bitmask(
+                    shape=sphere)] = 1.
                 np.testing.assert_array_equal(
                     grids_b["boundary"], expected_mask)
                 np.testing.assert_allclose(
