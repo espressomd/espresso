@@ -168,8 +168,7 @@ class TestLBVTK(TestVTK):
             root = pathlib.Path(tmp_directory)
             label_vtk_last_frame = f"test_vtk_{self.vtk_id}_last_frame"
             label_vtk_continuous = f"test_vtk_{self.vtk_id}_continuous"
-            label_vtk_with_boundaries = f"test_vtk_{
-                self.vtk_id}_with_boundaries"
+            label_vtk_with_boundaries = f"test_vtk_{self.vtk_id}_with_boundaries"  # nopep8
             path_vtk_last_frame = root / label_vtk_last_frame / "simulation_step_0.vtu"
             path_vtk_continuous = [
                 root / label_vtk_continuous / f"simulation_step_{i}.vtu" for i in range(n_steps)]
@@ -418,8 +417,7 @@ class TestEKVTK(TestVTK):
             if self.include_boundaries:
                 # also write a snapshot that includes boundary cells and the
                 # ``boundary`` mask observable
-                label_vtk_with_boundaries = f"test_vtk_{
-                    self.vtk_id}_with_boundaries"
+                label_vtk_with_boundaries = f"test_vtk_{self.vtk_id}_with_boundaries"  # nopep8
                 path_vtk_with_boundaries = root / \
                     label_vtk_with_boundaries / "simulation_step_0.vtu"
                 vtk_obj_b = self.vtk_class(
