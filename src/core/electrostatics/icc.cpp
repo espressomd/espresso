@@ -36,6 +36,7 @@
 #include "PropagationMode.hpp"
 #include "actor/visitors.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "cell_system/for_each_particle.hpp"
 #include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/coulomb_inline.hpp"
@@ -49,7 +50,7 @@
 #include <boost/mpi/operations.hpp>
 
 #include <Kokkos_Core.hpp>
-#include <omp.h>
+#include <Kokkos_ScatterView.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -75,7 +76,7 @@ static void force_calc_icc(
   auto const reset_kernel = [](Particle &p) { p.force_and_torque() = {}; };
   cell_structure.for_each_local_particle(reset_kernel);
   cell_structure.for_each_ghost_particle(reset_kernel);
-  cell_structure.reset_local_force();
+  cell_structure.reset_local_force_and_torque();
 
   // calc ICC forces
   cell_structure.non_bonded_loop(
@@ -118,7 +119,8 @@ void ICCStar::iteration() {
 
   using execution_space = Kokkos::DefaultExecutionSpace;
   auto const &unique_particles = cell_structure.get_unique_particles();
-  auto const &local_force = cell_structure.get_local_force();
+  auto &local_force = cell_structure.get_local_force();
+  auto scatter_force = system.cell_structure->get_scatter_force();
 
   auto global_max_rel_diff = 0.;
 
@@ -130,16 +132,14 @@ void ICCStar::iteration() {
     system.coulomb.calc_long_range_force();
     cell_structure.ghosts_reduce_forces();
     // force reduction
-    int num_threads = execution_space().concurrency();
+    Kokkos::Experimental::contribute(local_force, scatter_force);
     kokkos_parallel_range_for<Kokkos::RangePolicy<execution_space>>(
         "reduction", std::size_t{0}, unique_particles.size(),
-        [&local_force, &unique_particles, num_threads](std::size_t const i) {
+        [&local_force, &unique_particles](std::size_t const i) {
           auto &force = unique_particles.at(i)->force();
-          for (int tid = 0; tid < num_threads; ++tid) {
-            force[0] += local_force(i, tid, 0);
-            force[1] += local_force(i, tid, 1);
-            force[2] += local_force(i, tid, 2);
-          }
+          force[0] += local_force(i, 0);
+          force[1] += local_force(i, 1);
+          force[2] += local_force(i, 2);
         });
     Kokkos::fence();
 

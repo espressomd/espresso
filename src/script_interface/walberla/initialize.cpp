@@ -80,13 +80,11 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<EKReactions>("walberla::EKReactions");
 }
 
-#ifdef ESPRESSO_WALBERLA_FFT
 std::unordered_map<std::string, int> const EKPoissonVTKHandle::obs_map = {
+#ifdef ESPRESSO_WALBERLA_FFT
     {"potential", static_cast<int>(EKPoissonOutputVTK::potential)},
-};
-#else
-std::unordered_map<std::string, int> const EKPoissonVTKHandle::obs_map = {};
 #endif
+};
 
 } // namespace ScriptInterface::walberla
 

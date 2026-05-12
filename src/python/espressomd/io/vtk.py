@@ -50,105 +50,6 @@ class VTKReader:
                         return token.split(b'"')[1].decode()
             raise RuntimeError(f"File {filepath} is not a compliant XML file")
 
-    @staticmethod
-    def get_array_names(reader, type_name):
-        array_names = set()
-        if type_name == UNSTRUCTURED_GRID_TYPE:
-            n_ghost_layers = reader.GetUpdateGhostLevel()
-            n_pieces = reader.GetNumberOfPieces()
-            for piece_index in range(n_pieces):
-                reader.UpdatePiece(piece_index, n_pieces, n_ghost_layers)
-                piece = reader.GetOutput()
-                cell = piece.GetCellData()
-                for i in range(cell.GetNumberOfArrays()):
-                    array_names.add(cell.GetArrayName(i))
-        elif type_name == IMAGE_DATA_TYPE:
-            n_cells = reader.GetNumberOfCellArrays()
-            for i in range(n_cells):
-                array_names.add(reader.GetCellArrayName(i))
-        return array_names
-
-    @classmethod
-    def get_piece_topology(
-            cls, piece, array, bounding_box_lower, bounding_box_upper):
-        bounds = np.array(piece.GetBounds())
-        box_l = bounds[1::2] - bounds[0:-1:2]
-        n_grid_points = array.GetNumberOfTuples()
-        shape_float = box_l / np.min(box_l)
-        shape_float *= np.cbrt(n_grid_points / np.prod(shape_float))
-        shape_int = np.around(shape_float).astype(int)
-        assert np.linalg.norm(shape_int - shape_float) < cls.error_tolerance and np.prod(
-            shape_int) == n_grid_points, "only cubic grids are supported"
-        agrid = np.mean(box_l / shape_float)
-        shape = tuple(shape_int.tolist())
-        lower_corner = []
-        for i in range(3):
-            start = int(np.around(bounds[i * 2]))
-            stop = start + shape[i]
-            bounding_box_lower[i] = min(bounding_box_lower[i], start)
-            bounding_box_upper[i] = max(bounding_box_upper[i], stop)
-            lower_corner.append(start)
-        return agrid, shape, lower_corner
-
-    @classmethod
-    def reconstruct_array(cls, reader, array_name):
-        n_pieces = reader.GetNumberOfPieces()
-        n_ghost_layers = reader.GetUpdateGhostLevel()
-        # get bounding box
-        info = []
-        agrids = []
-        bounding_box_lower = 3 * [float("inf")]
-        bounding_box_upper = 3 * [-float("inf")]
-        for piece_index in range(n_pieces):
-            reader.UpdatePiece(piece_index, n_pieces, n_ghost_layers)
-            piece = reader.GetOutput()
-            cell = piece.GetCellData()
-            array = cell.GetArray(array_name)
-            if array is not None:
-                agrid, shape, lower_corner = cls.get_piece_topology(
-                    piece, array, bounding_box_lower, bounding_box_upper)
-                agrids.append(agrid)
-                info.append([piece_index, shape, lower_corner])
-
-        if not info:
-            return None
-
-        # get array type and size
-        assert float("inf") not in bounding_box_lower
-        assert -float("inf") not in bounding_box_upper
-        if np.std(agrids) / np.mean(agrids) > cls.error_tolerance:
-            raise NotImplementedError(
-                f"VTK non-uniform grids are not supported (got agrid = {agrids} when parsing array '{array_name}')")
-        data_dims = np.array(bounding_box_upper) - np.array(bounding_box_lower)
-        piece_index = info[0][0]
-        reader.UpdatePiece(piece_index, n_pieces, n_ghost_layers)
-        array = reader.GetOutput().GetCellData().GetArray(array_name)
-        vector_length = array.GetNumberOfComponents()
-        val_dims = [] if vector_length == 1 else [vector_length]
-        data_type = array.GetDataTypeAsString()
-        if data_type == "float":
-            dtype = float
-        elif data_type == "int":
-            dtype = int
-        else:
-            raise NotImplementedError(
-                f"Unknown VTK data type '{data_type}' (when parsing array '{array_name}')")
-
-        # get data
-        data = np.empty(data_dims.tolist() + val_dims, dtype=dtype)
-        for piece_index, shape, lower_corner in info:
-            reader.UpdatePiece(piece_index, n_pieces, n_ghost_layers)
-            array = reader.GetOutput().GetCellData().GetArray(array_name)
-            subset = []
-            for i in range(3):
-                start = lower_corner[i] - bounding_box_lower[i]
-                stop = start + shape[i]
-                subset.append(slice(start, stop))
-            data[tuple(subset)] = vtk.util.numpy_support.vtk_to_numpy(
-                array).reshape(list(shape) + val_dims, order='F')
-
-        return data
-
     def parse(self, filepath):
         type_name = self.get_file_format(filepath)
         if type_name not in self.type_map.keys():
@@ -158,15 +59,48 @@ class VTKReader:
         reader = self.type_map[type_name]
         reader.SetFileName(str(filepath))
         reader.Update()
+        grid = reader.GetOutput()
+        result = {}
 
-        arrays = {}
-        array_names = self.get_array_names(reader, type_name)
-        for array_name in sorted(array_names):
+        for i in range(grid.GetCellData().GetNumberOfArrays()):
+            arr = grid.GetCellData().GetArray(i)
+            data = vtk.util.numpy_support.vtk_to_numpy(arr)
+            n_comp = arr.GetNumberOfComponents()
+
             if type_name == UNSTRUCTURED_GRID_TYPE:
-                arrays[array_name] = self.reconstruct_array(reader, array_name)
+                positions = {}
+                for j in range(grid.GetNumberOfCells()):
+                    cell = grid.GetCell(j)
+                    bounds = cell.GetBounds()
+                    key = (round(bounds[0]), round(
+                        bounds[2]), round(bounds[4]))
+                    positions[key] = j
+
+                if not positions:
+                    continue
+
+                xs = [p[0] for p in positions]
+                ys = [p[1] for p in positions]
+                zs = [p[2] for p in positions]
+                x0, x1 = min(xs), max(xs)
+                y0, y1 = min(ys), max(ys)
+                z0, z1 = min(zs), max(zs)
+                nx, ny, nz = x1 - x0 + 1, y1 - y0 + 1, z1 - z0 + 1
+
+                grid_shape = (nx, ny, nz)
+                if n_comp > 1:
+                    grid_shape = grid_shape + (n_comp,)
+                    data = data.reshape(data.shape[0], n_comp)
+
+                arr_out = np.full(grid_shape, np.nan, dtype=data.dtype)
+                for (x, y, z), cid in positions.items():
+                    arr_out[x - x0, y - y0, z - z0] = data[cid]
             elif type_name == IMAGE_DATA_TYPE:
-                array = reader.GetOutput().GetCellData().GetArray(array_name)
-                shape = reader.GetOutput().GetDimensions() - np.copy([1, 1, 1])
-                arrays[array_name] = vtk.util.numpy_support.vtk_to_numpy(
-                    array).reshape(shape, order='F')
-        return arrays
+                dims = grid.GetDimensions()
+                shape = (dims[0] - 1, dims[1] - 1, dims[2] - 1)
+                if n_comp > 1:
+                    shape = shape + (n_comp,)
+                arr_out = data.reshape(shape, order="F")
+
+            result[arr.GetName()] = arr_out
+        return result

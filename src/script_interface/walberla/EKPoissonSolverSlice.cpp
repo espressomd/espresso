@@ -76,7 +76,13 @@ Variant EKPoissonSolverSlice::do_call_method(std::string const &name,
   };
 
   if (name == "get_potential") {
-    return call(&LatticeModel::get_slice_potential, {1});
+    return call(&LatticeModel::get_slice_potential, {1}, 1. / m_conv_potential);
+  }
+  if (name == "set_potential") {
+    context()->parallel_try_catch([&]() {
+      call(&LatticeModel::set_slice_potential, {1}, m_conv_potential);
+    });
+    return {};
   }
 
   return {};

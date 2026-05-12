@@ -100,7 +100,8 @@ if lbf_class:
     lbf.add_boundary_from_shape(wall2, (0, 0, 0))
 
     if not le_active:
-        ek_solver = espressomd.electrokinetics.EKNone(lattice=lb_lattice)
+        ek_solver = espressomd.electrokinetics.EKNone(
+            lattice=lb_lattice, tau=system.time_step)
         ek_species = espressomd.electrokinetics.EKSpecies(
             lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
             advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
@@ -425,8 +426,11 @@ if lbf_class:
     if not le_active:
         # save EK checkpoint file
         ek_species[:, :, :].density = grid_3D
+        ek_solver[:, :, :].potential = 0.25 * grid_3D
         ek_cpt_path = checkpoint.root / "ek.cpt"
         ek_species.save_checkpoint(str(ek_cpt_path), lbf_cpt_mode)
+        ek_none_cpt_path = checkpoint.root / "ek_none.cpt"
+        ek_solver.save_checkpoint(str(ek_none_cpt_path), lbf_cpt_mode)
     # setup VTK folder
     vtk_suffix = config.test_name
     vtk_root = pathlib.Path("vtk_out")
@@ -534,6 +538,9 @@ class TestCheckpoint(ut.TestCase):
         if lbf_class:
             self.assertTrue(lbf_cpt_path.is_file(),
                             "LB checkpoint file not created")
+            if not le_active:
+                self.assertTrue(ek_none_cpt_path.is_file(),
+                                "EKNone checkpoint file not created")
 
         # only objects at global scope can be checkpointed
         with self.assertRaisesRegex(KeyError, "The given object 'local_obj' was not found in the current scope"):
@@ -626,6 +633,31 @@ class TestCheckpoint(ut.TestCase):
             with open(cpt_path.format("-wrong-format"), "wb") as f:
                 f.write(boxsize + b"\n" + b"\ntext string\n" + data)
             # write checkpoint file with different box dimensions
+            with open(cpt_path.format("-wrong-boxdim"), "wb") as f:
+                f.write(b"2" + boxsize + b"\n" + data)
+
+        with self.assertRaisesRegex(RuntimeError, "could not open file"):
+            invalid_path = ek_cpt_root / "unknown_dir" / "ek_none.cpt"
+            ek_solver.save_checkpoint(invalid_path, lbf_cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, "unit test error"):
+            ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", -1)
+        with self.assertRaisesRegex(RuntimeError, "could not write to"):
+            ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", -2)
+        with self.assertRaisesRegex(ValueError, "Unknown mode -3"):
+            ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", -3)
+        with self.assertRaisesRegex(ValueError, "Unknown mode 2"):
+            ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", 2)
+
+        ek_none_cpt_data = ek_none_cpt_path.read_bytes()
+        cpt_path = str(checkpoint.root / "ek_none") + "{}.cpt"
+        with open(cpt_path.format("-missing-data"), "wb") as f:
+            f.write(ek_none_cpt_data[:len(ek_none_cpt_data) // 2])
+        with open(cpt_path.format("-extra-data"), "wb") as f:
+            f.write(ek_none_cpt_data + ek_none_cpt_data[-8:])
+        if lbf_cpt_mode == 0:
+            boxsize, data = ek_none_cpt_data.split(b"\n", 1)
+            with open(cpt_path.format("-wrong-format"), "wb") as f:
+                f.write(boxsize + b"\n" + b"\ntext string\n" + data)
             with open(cpt_path.format("-wrong-boxdim"), "wb") as f:
                 f.write(b"2" + boxsize + b"\n" + data)
 

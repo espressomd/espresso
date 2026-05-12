@@ -65,76 +65,77 @@
 inline double calc_central_radial_energy(IA_parameters const &ia_params,
                                          double const dist) {
 
+  [[maybe_unused]] auto const mask = ia_params.active_pair_mask;
   double ret = 0.;
 
 #ifdef ESPRESSO_LENNARD_JONES
-  /* Lennard-Jones */
-  ret += lj_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::LennardJones))
+    ret += lj_pair_energy(ia_params, dist);
 #endif
 
 #ifdef ESPRESSO_WCA
-  /* WCA */
-  ret += wca_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::WCA))
+    ret += wca_pair_energy(ia_params, dist);
 #endif
 
 #ifdef ESPRESSO_LENNARD_JONES_GENERIC
-  /* Generic Lennard-Jones */
-  ret += ljgen_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::LennardJonesGeneric))
+    ret += ljgen_pair_energy(ia_params, dist);
 #endif
 
 #ifdef ESPRESSO_SMOOTH_STEP
-  /* smooth step */
-  ret += SmSt_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::SmoothStep))
+    ret += SmSt_pair_energy(ia_params, dist);
 #endif
 
 #ifdef ESPRESSO_HERTZIAN
-  /* Hertzian potential */
-  ret += hertzian_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::Hertzian))
+    ret += hertzian_pair_energy(ia_params, dist);
 #endif
 
 #ifdef ESPRESSO_GAUSSIAN
-  /* Gaussian potential */
-  ret += gaussian_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::Gaussian))
+    ret += gaussian_pair_energy(ia_params, dist);
 #endif
 
 #ifdef ESPRESSO_BMHTF_NACL
-  /* BMHTF NaCl */
-  ret += BMHTF_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::BMHTF))
+    ret += BMHTF_pair_energy(ia_params, dist);
 #endif
 
 #ifdef ESPRESSO_MORSE
-  /* Morse */
-  ret += morse_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::Morse))
+    ret += morse_pair_energy(ia_params, dist);
 #endif
 
 #ifdef ESPRESSO_BUCKINGHAM
-  /* Buckingham */
-  ret += buck_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::Buckingham))
+    ret += buck_pair_energy(ia_params, dist);
 #endif
 
 #ifdef ESPRESSO_SOFT_SPHERE
-  /* soft-sphere */
-  ret += soft_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::SoftSphere))
+    ret += soft_pair_energy(ia_params, dist);
 #endif
 
 #ifdef ESPRESSO_HAT
-  /* hat */
-  ret += hat_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::Hat))
+    ret += hat_pair_energy(ia_params, dist);
 #endif
 
 #ifdef ESPRESSO_LJCOS2
-  /* Lennard-Jones */
-  ret += ljcos2_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::LJCos2))
+    ret += ljcos2_pair_energy(ia_params, dist);
 #endif
 
 #ifdef ESPRESSO_TABULATED
-  /* tabulated */
-  ret += tabulated_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::Tabulated))
+    ret += tabulated_pair_energy(ia_params, dist);
 #endif
 
 #ifdef ESPRESSO_LJCOS
-  /* Lennard-Jones cosine */
-  ret += ljcos_pair_energy(ia_params, dist);
+  if (mask & pair_potential_bit(PairPotential::LJCos))
+    ret += ljcos_pair_energy(ia_params, dist);
 #endif
 
   return ret;

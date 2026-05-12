@@ -1220,8 +1220,8 @@ public:
           auto const bci = density_field->xyzSize();
           density_writer->set_content(
               ek::accessor::Scalar::get(density_field, bci));
-          density_writer->set_dims(Vector3<uint_t>(
-              uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
+          density_writer->set_dims(
+              Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
         }
       };
 
@@ -1257,8 +1257,8 @@ public:
             }
           }
           flux_writer->set_content(std::move(values));
-          flux_writer->set_dims(Vector3<uint_t>(
-              uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
+          flux_writer->set_dims(
+              Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
         }
       };
       vtk_obj.addBeforeFunction(std::move(before_function));

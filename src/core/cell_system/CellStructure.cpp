@@ -33,7 +33,6 @@
 #include "aosoa_pack.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
-#include "custom_verlet_list.hpp"
 #include "ghosts.hpp"
 #include "integrators/Propagation.hpp"
 #include "lees_edwards/lees_edwards.hpp"
@@ -52,9 +51,6 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 
-#include <Cabana_Core.hpp>
-#include <Cabana_NeighborList.hpp>
-#include <Kokkos_Core.hpp>
 #include <omp.h>
 
 #include <algorithm>
@@ -82,11 +78,14 @@ CellStructure::~CellStructure() {
 }
 
 void CellStructure::clear_local_properties() {
+  m_scatter_force.reset();
   m_local_force.reset();
 #ifdef ESPRESSO_ROTATION
+  m_scatter_torque.reset();
   m_local_torque.reset();
 #endif
 #ifdef ESPRESSO_NPT
+  m_scatter_virial.reset();
   m_local_virial.reset();
 #endif
   m_id_to_index.reset();
@@ -137,8 +136,6 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
   CALI_CXX_MARK_FUNCTION;
 #endif
   assert(m_kokkos_handle);
-  using execution_space = Kokkos::DefaultExecutionSpace;
-  auto const num_threads = execution_space().concurrency();
   auto const num_part = get_unique_particles().size();
   auto const &system = get_system();
   auto const local_box_volume = system.local_geo->volume();
@@ -151,9 +148,15 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
   }
 #endif
   if (m_local_force) { // local properties are reallocated
-    Kokkos::realloc(get_local_force(), num_part, num_threads);
+    Kokkos::realloc(get_local_force(), num_part);
+    // underlying View extent changed -> scratch buffers must be rebuilt
+    m_scatter_force.emplace(
+        Kokkos::Experimental::create_scatter_view(get_local_force()));
 #ifdef ESPRESSO_ROTATION
-    Kokkos::realloc(get_local_torque(), num_part, num_threads);
+    Kokkos::realloc(get_local_torque(), num_part);
+    // underlying View extent changed -> scratch buffers must be rebuilt
+    m_scatter_torque.emplace(
+        Kokkos::Experimental::create_scatter_view(get_local_torque()));
 #endif
     Kokkos::realloc(get_id_to_index(), get_cached_max_local_particle_id() + 1);
     Kokkos::deep_copy(get_id_to_index(), -1);
@@ -162,11 +165,13 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
     Kokkos::deep_copy(m_aosoa->flags, uint8_t{0});
     m_verlet_list_cabana->reallocData(num_part, max_counts);
   } else { // local properties are initialized
-    m_local_force =
-        std::make_unique<ForceType>("local_force", num_part, num_threads);
+    m_local_force = std::make_unique<ForceType>("local_force", num_part);
+    m_scatter_force.emplace(
+        Kokkos::Experimental::create_scatter_view(*m_local_force));
 #ifdef ESPRESSO_ROTATION
-    m_local_torque =
-        std::make_unique<ForceType>("local_torque", num_part, num_threads);
+    m_local_torque = std::make_unique<ForceType>("local_torque", num_part);
+    m_scatter_torque.emplace(
+        Kokkos::Experimental::create_scatter_view(*m_local_torque));
 #endif
     m_id_to_index = std::make_unique<Kokkos::View<int *>>(
         Kokkos::ViewAllocateWithoutInitializing("id_to_index"),
@@ -181,24 +186,34 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
         std::make_unique<ListType>(0ul, num_part, max_counts);
   }
 #ifdef ESPRESSO_NPT
-  m_local_virial = std::make_unique<VirialType>("local_virial", num_threads);
+  m_local_virial = std::make_unique<VirialType>("local_virial");
+  m_scatter_virial.emplace(
+      Kokkos::Experimental::create_scatter_view(*m_local_virial));
 #endif
 }
 
-void CellStructure::reset_local_force() {
+void CellStructure::reset_local_force_and_torque() {
 #ifdef ESPRESSO_CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
   Kokkos::deep_copy(get_local_force(), 0.);
+  m_scatter_force->reset();
+#ifdef ESPRESSO_ROTATION
+  Kokkos::deep_copy(get_local_torque(), 0.);
+  m_scatter_torque->reset();
+#endif
 }
 
 void CellStructure::reset_local_properties() {
   Kokkos::deep_copy(get_local_force(), 0.);
+  m_scatter_force->reset();
 #ifdef ESPRESSO_ROTATION
   Kokkos::deep_copy(get_local_torque(), 0.);
+  m_scatter_torque->reset();
 #endif
 #ifdef ESPRESSO_NPT
   Kokkos::deep_copy(get_local_virial(), 0.);
+  m_scatter_virial->reset();
 #endif
   Kokkos::deep_copy(get_aosoa().flags, uint8_t{0});
 }
@@ -603,22 +618,6 @@ void CellStructure::update_ghosts_and_resort_particle(unsigned data_parts) {
   } else {
     /* Communication step: ghost information */
     ghosts_update(data_parts & ~resort_only_parts);
-  }
-}
-
-void CellStructure::parallel_for_each_particle_impl(
-    std::span<Cell *const> cells, ParticleUnaryOp &f) const {
-  if (cells.size() > 1) {
-    Kokkos::parallel_for( // loop over cells
-        "for_each_local_particle", cells.size(), [&](auto cell_idx) {
-          for (auto &p : cells[cell_idx]->particles())
-            f(p);
-        });
-  } else if (cells.size() == 1) {
-    auto &particles = cells.front()->particles();
-    Kokkos::parallel_for( // loop over particles
-        "for_each_local_particle", particles.size(),
-        [&](auto part_idx) { f(*(particles.begin() + part_idx)); });
   }
 }
 

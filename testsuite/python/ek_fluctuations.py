@@ -22,15 +22,15 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.electrokinetics
 import numpy as np
-import math
+import itertools
 
 
 class EKTest:
-    BOX_L = 8
-    TAU = 0.1
+    TAU = 1.123
     DENSITY = 27.0
-    DIFFUSION_COEFFICIENT = 0.01
-    AGRID = 1.0
+    DIFFUSION_COEFFICIENT = 0.678
+    AGRID = 2.865
+    BOX_L = 8 * AGRID
 
     system = espressomd.System(box_l=[BOX_L, BOX_L, BOX_L])
     system.time_step = TAU
@@ -40,85 +40,109 @@ class EKTest:
         self.system.ekcontainer.clear()
 
     def test_fluctuation(self):
-        decimal_precision = 2 if self.ek_params["single_precision"] else 10
+        decimal_precision = 1 if self.lattice_params["single_precision"] else 9
 
         lattice = espressomd.electrokinetics.Lattice(
             n_ghost_layers=1, agrid=self.AGRID)
 
-        target_density = self.DENSITY * self.system.volume()
+        target_particlenum = self.DENSITY * self.system.volume()
 
-        species = self.ek_species_class(
+        species = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=self.DENSITY, valency=0.0, advection=False,
             diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
-            tau=self.TAU, thermalized=True, seed=42, **self.ek_params)
+            tau=self.TAU, thermalized=True, seed=42, **self.lattice_params)
 
-        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
-
+        eksolver = espressomd.electrokinetics.EKNone(
+            lattice=lattice, tau=self.TAU)
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)
         self.system.ekcontainer.add(species)
 
         self.system.integrator.run(100)
 
-        # Set integration and binning parameters
         n_min = 10.0
         n_max = 44.0
         bin_size = 0.25
-        x_range = np.linspace(n_min, n_max, int((n_max - n_min) / bin_size))
+        x_range = np.linspace(
+            n_min + 0.5 * bin_size, n_max - 0.5 * bin_size,
+            int((n_max - n_min) / bin_size))
         sample_steps = 150
-        integration_steps = 100
+        integration_steps = 75
 
         bins = int((n_max - n_min) / bin_size)
         hist, _ = np.histogram(
             [], bins=bins, range=(n_min, n_max), density=False)
 
-        # Integrate
+        cell_volume = self.AGRID**3
+
         for _ in range(sample_steps):
             self.system.integrator.run(integration_steps)
 
-            density = species[:, :, :].density
+            local_density = species[:, :, :].density
 
             np.testing.assert_almost_equal(
-                np.sum(density), target_density, decimal=decimal_precision)
+                np.sum(local_density * cell_volume), target_particlenum, decimal=decimal_precision)
 
-            hist += np.histogram(density, bins=bins,
+            hist += np.histogram(local_density, bins=bins,
                                  range=(n_min, n_max), density=False)[0]
 
         hist = hist / np.sum(hist) / bin_size
 
-        analytic_distribution = 1.0 / np.sqrt(2.0 * math.pi * x_range) * np.power(
-            self.DENSITY / x_range, x_range) * np.exp(x_range - self.DENSITY)
+        # Positive half of the D3Q27 neighbor set used by the staggered EK flux.
+        directions = np.array(
+            [offset for offset in itertools.product(
+                (-1, 0, 1), repeat=3) if offset > (0, 0, 0)],
+            dtype=int
+        )
+        A0 = sum([np.linalg.norm(offset) for offset in directions]) / 3.0
+        weights = 1 / \
+            (A0 * np.array([np.linalg.norm(offset) for offset in directions]))
 
-        max_diff = np.max(np.abs(analytic_distribution - hist))
-        self.assertLess(max_diff, 5.0e-03,
-                        f"Density distribution accuracy not achieved, allowed "
-                        f"deviation: 5.0e-03, measured: {max_diff}")
+        # get all fourier-vectors of the lattice, excluding the zero mode
+        k_values = np.indices(lattice.shape).reshape(3, -1).T
+        k_vectors = 2.0 * np.pi * k_values / lattice.shape
+        k_vectors = k_vectors[np.any(k_values != 0, axis=1)]
+
+        diffusion_lattice = self.DIFFUSION_COEFFICIENT * self.TAU / self.AGRID**2
+        # eigen-value contribution per timestep of the discrete diffusion operator
+        lambdas = -2.0 * diffusion_lattice * np.sum(
+            weights[None, :] * (1.0 - np.cos(k_vectors @ directions.T)),
+            axis=1
+        )
+        # explicit Euler causes amplification of the poisson-distributed noise
+        # take average over amplification of all modes
+        amplification = np.mean(1.0 / (1.0 + 0.5 * lambdas))
+        effective_scale = cell_volume / amplification
+
+        mean_particles = self.DENSITY * effective_scale
+        particles_per_cell = x_range * effective_scale
+        analytic_distribution = effective_scale * 1 / np.sqrt(2.0 * np.pi * particles_per_cell) * np.power(
+            mean_particles / particles_per_cell, particles_per_cell) * np.exp(particles_per_cell - mean_particles)
+
+        np.testing.assert_allclose(
+            hist, analytic_distribution, rtol=0, atol=0.008)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKFluctuationsDoublePrecisionCPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": False, "gpu": False}
+    lattice_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKFluctuationsSinglePrecisionCPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": True, "gpu": False}
+    lattice_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKFluctuationsDoublePrecisionGPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": False, "gpu": True}
+    lattice_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKFluctuationsSinglePrecisionGPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": True, "gpu": True}
+    lattice_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

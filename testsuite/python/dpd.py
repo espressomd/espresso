@@ -249,6 +249,60 @@ class DPDThermostat(ut.TestCase):
             np.copy(p0.f), omega * gamma * v, rtol=0, atol=1e-11)
         np.testing.assert_array_equal(np.copy(p0.f), -np.copy(p1.f))
 
+    def test_quadratic_weight_function(self):
+        system = self.system
+        kT = 0.
+        gamma = 1.42
+        system.thermostat.set_dpd(kT=kT, seed=42)
+        system.non_bonded_inter[0, 0].dpd.set_params(
+            weight_function=1, gamma=gamma, k=2, r_cut=1.2,
+            trans_weight_function=1, trans_gamma=gamma, trans_r_cut=1.4)
+
+        def calc_omega(dist, r_cut):
+            return 1. - (dist / r_cut)**2
+
+        p0 = system.part.add(pos=[5, 5, 5], type=0, v=[0, 0, 0])
+        v = np.array([.5, .8, .3])
+        p1 = system.part.add(pos=[3, 5, 5], type=0, v=v)
+
+        system.integrator.run(0)
+
+        # Outside of both cutoffs, forces should be 0
+        for f in system.part.all().f:
+            np.testing.assert_array_equal(np.copy(f), [0., 0., 0.])
+
+        # Only trans
+        p1.pos = [5. - 1.3, 5, 5]
+
+        system.integrator.run(0)
+
+        # Only trans, so x component should be zero
+        self.assertLess(abs(p0.f[0]), 1e-14)
+        omega = calc_omega(1.3, 1.4)**2
+        np.testing.assert_allclose(
+            np.copy(p0.f[1:2]), omega * gamma * v[1:2], rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(np.copy(p0.f), -np.copy(p1.f))
+
+        # Trans and parallel
+        p1.pos = [5. - 1.1, 5, 5]
+
+        system.integrator.run(0)
+
+        omega = np.array([calc_omega(1.1, x)**2 for x in [1.2, 1.4, 1.4]])
+        np.testing.assert_allclose(
+            np.copy(p0.f), omega * gamma * v, rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(np.copy(p0.f), -np.copy(p1.f))
+
+        # Trans and parallel 2nd point
+        p1.pos = [5. - 0.5, 5, 5]
+
+        system.integrator.run(0)
+
+        omega = np.array([calc_omega(0.5, x)**2 for x in [1.2, 1.4, 1.4]])
+        np.testing.assert_allclose(
+            np.copy(p0.f), omega * gamma * v, rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(np.copy(p0.f), -np.copy(p1.f))
+
     def test_parabolic_weight_function(self):
         system = self.system
         kT = 0.

@@ -22,21 +22,20 @@ import unittest as ut
 import unittest_decorators as utx
 
 import espressomd
-import espressomd.shapes
 import espressomd.electrokinetics
 
 
 class EKTest:
-    BOX_L = 2.5
-    AGRID = 0.5
+    BOX_L = [14.325, 14.325, 14.325]
+    AGRID = 2.865
     DENSITY = 1
-    DIFFUSION_COEFFICIENT = 0.1
+    DIFFUSION_COEFFICIENT = 0.4
     TIMESTEPS = 40
-    TAU = 0.25
+    TAU = 0.815
 
     INFLOW_FLUX = 0.1
 
-    system = espressomd.System(box_l=[BOX_L, BOX_L, BOX_L])
+    system = espressomd.System(box_l=BOX_L)
     system.time_step = TAU
     system.cell_system.skin = 0.4
 
@@ -48,17 +47,18 @@ class EKTest:
         Testing the EK fixed flux boundaries to test the fixed inflow into a non-periodic box.
         """
 
-        decimal_precision = 5 if self.ek_params["single_precision"] else 7
+        decimal_precision = 5 if self.lattice_params["single_precision"] else 7
 
         lattice = espressomd.electrokinetics.Lattice(
             n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = self.ek_species_class(
+        ekspecies = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             valency=0.0, advection=False, friction_coupling=False,
-            tau=self.TAU, **self.ek_params)
+            tau=self.TAU, **self.lattice_params)
 
-        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
+        eksolver = espressomd.electrokinetics.EKNone(
+            lattice=lattice, tau=self.TAU)
 
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)
@@ -110,28 +110,24 @@ class EKTest:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKFixedFluxDoublePrecisionCPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": False, "gpu": False}
+    lattice_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKFixedFluxSinglePrecisionCPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": True, "gpu": False}
+    lattice_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKFixedFluxDoublePrecisionGPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": False, "gpu": True}
+    lattice_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKFixedFluxSinglePrecisionGPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": True, "gpu": True}
+    lattice_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

@@ -162,17 +162,23 @@ Here is a minimal working example::
     system.cell_system.skin = 1.0
 
     lattice = espressomd.electrokinetics.Lattice(agrid=0.5, n_ghost_layers=1)
-    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice, tau=system.time_step)
     system.ekcontainer = espressomd.electrokinetics.EKContainer(
         solver=ek_solver, tau=system.time_step)
 
 where ``system.ekcontainer`` is the EK system, ``ek_solver`` is the Poisson
-solver (here ``EKNone`` doesn't actually solve the electrostatic field, but
-instead imposes a zero field), and ``lattice`` contains the grid parameters.
+solver (here ``EKNone`` doesn't solve Poisson's equation but stores a
+user-controlled potential field initialized to zero), and ``lattice`` contains
+the grid parameters.
 In this setup, the EK system doesn't contain any species. The following
 sections will show how to add species that can diffuse, advect, react and/or
 electrostatically interact. An EK system can be set up at the same time as a
 LB system.
+
+The ``EKNone`` potential field can be modified node-wise or slice-wise::
+
+    ek_solver[0, 0, 0].potential = 0.1
+    ek_solver[1:3, :, :].potential = 0.0
 
 To detach an EK system, use the following syntax::
 
@@ -312,7 +318,7 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
     system.time_step = 0.1
 
     lattice = espressomd.electrokinetics.Lattice(agrid=1., n_ghost_layers=1)
-    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice, tau=system.time_step)
     ek_species = espressomd.electrokinetics.EKSpecies(
         lattice=lattice, density=1., kT=1., diffusion=0.1, valency=0.,
         advection=False, friction_coupling=False, tau=system.time_step)
@@ -373,7 +379,7 @@ One can set (or update) the boundary conditions of individual nodes::
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     lattice = espressomd.electrokinetics.Lattice(agrid=0.5, n_ghost_layers=1)
-    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice, tau=system.time_step)
     ek_species = espressomd.electrokinetics.EKSpecies(
         kT=1.5, lattice=lattice, density=0.85, valency=0., diffusion=0.1,
         advection=False, friction_coupling=False, tau=system.time_step)
@@ -381,11 +387,15 @@ One can set (or update) the boundary conditions of individual nodes::
         solver=ek_solver, tau=ek_species.tau)
     system.ekcontainer.add(ek_species)
     # set node fixed density boundary conditions
-    ek_species[0, 0, 0].boundary = espressomd.electrokinetics.DensityBoundary(1.)
+    ek_species[0, 0, 0].density_boundary = espressomd.electrokinetics.DensityBoundary(1.)
     # update node fixed density boundary conditions
-    ek_species[0, 0, 0].boundary = espressomd.electrokinetics.DensityBoundary(2.)
+    ek_species[0, 0, 0].density_boundary = espressomd.electrokinetics.DensityBoundary(2.)
     # remove node boundary conditions
-    ek_species[0, 0, 0].boundary = None
+    ek_species[0, 0, 0].density_boundary = None
+    # set node no-flux boundary condition
+    ek_species[0, 0, 0].flux_boundary = espressomd.electrokinetics.FluxBoundary([0., 0., 0.])
+    # remove node flux boundary condition
+    ek_species[0, 0, 0].flux_boundary = None
 
 .. _Shape-based EK boundary conditions:
 
@@ -401,7 +411,7 @@ Adding a shape-based boundary is straightforward::
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     lattice = espressomd.electrokinetics.Lattice(agrid=0.5, n_ghost_layers=1)
-    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice, tau=system.time_step)
     ek_species = espressomd.electrokinetics.EKSpecies(
         kT=1.5, lattice=lattice, density=0.85, valency=0.0, diffusion=0.1,
         advection=False, friction_coupling=False, tau=system.time_step)

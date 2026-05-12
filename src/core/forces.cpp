@@ -26,6 +26,7 @@
 #include "PropagationMode.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "cell_system/for_each_particle.hpp"
 #include "cells.hpp"
 #include "collision_detection/CollisionDetection.hpp"
 #include "communication.hpp"
@@ -123,7 +124,7 @@ static void init_forces_and_thermostat(System::System const &system) {
 #endif
     }
   });
-  cell_structure.reset_local_force();
+  cell_structure.reset_local_force_and_torque();
 
   // Initialize ghost forces (unchanged)
   cell_structure.ghosts_reset_forces();
@@ -151,18 +152,17 @@ static void reinit_dip_fld(CellStructure const &cell_structure) {
 
 static BondsKernelData
 create_kokkos_bonds_kernel_data(System::System const &system) {
-
-  auto &local_force = system.cell_structure->get_local_force();
+  auto scatter_force = system.cell_structure->get_scatter_force();
 #ifdef ESPRESSO_NPT
-  auto &local_virial = system.cell_structure->get_local_virial();
+  auto scatter_virial = system.cell_structure->get_scatter_virial();
 #endif
   auto const &aosoa = system.cell_structure->get_aosoa();
   return /* BondsKernelData */ {*system.bonded_ias,
                                 *system.bond_breakage,
                                 *system.box_geo,
-                                local_force,
+                                scatter_force,
 #ifdef ESPRESSO_NPT
-                                local_virial,
+                                scatter_virial,
 #endif
                                 aosoa,
                                 !system.bond_breakage->breakage_specs.empty()};
@@ -174,12 +174,13 @@ static ForcesKernel create_cabana_neighbor_kernel(
     auto const &dipoles_kernel, auto const &coulomb_u_kernel) {
 
   auto const &unique_particles = system.cell_structure->get_unique_particles();
-  auto const &local_force = system.cell_structure->get_local_force();
+
+  auto scatter_force = system.cell_structure->get_scatter_force();
 #ifdef ESPRESSO_ROTATION
-  auto const &local_torque = system.cell_structure->get_local_torque();
+  auto scatter_torque = system.cell_structure->get_scatter_torque();
 #endif
 #ifdef ESPRESSO_NPT
-  auto const &local_virial = system.cell_structure->get_local_virial();
+  auto scatter_virial = system.cell_structure->get_scatter_virial();
 #endif
   auto const &aosoa = system.cell_structure->get_aosoa();
 
@@ -193,13 +194,13 @@ static ForcesKernel create_cabana_neighbor_kernel(
                              *system.thermostat,
                              *system.box_geo,
                              unique_particles,
-                             local_force,
+                             scatter_force,
 #ifdef ESPRESSO_ROTATION
-                             local_torque,
+                             scatter_torque,
 #endif
 #ifdef ESPRESSO_NPT
                              virial,
-                             local_virial,
+                             scatter_virial,
 #endif
                              aosoa,
                              system.maximal_cutoff()};
@@ -207,17 +208,23 @@ static ForcesKernel create_cabana_neighbor_kernel(
 
 static void reduce_cabana_forces_and_torques(System::System const &system,
                                              Utils::Vector3d *virial) {
+
   auto const &unique_particles = system.cell_structure->get_unique_particles();
-  auto const &local_force = system.cell_structure->get_local_force();
+  auto &local_force = system.cell_structure->get_local_force();
+  auto scatter_force = system.cell_structure->get_scatter_force();
+  Kokkos::Experimental::contribute(local_force, scatter_force);
 #ifdef ESPRESSO_ROTATION
-  auto const &local_torque = system.cell_structure->get_local_torque();
+  auto &local_torque = system.cell_structure->get_local_torque();
+  auto scatter_torque = system.cell_structure->get_scatter_torque();
+  Kokkos::Experimental::contribute(local_torque, scatter_torque);
 #endif
 #ifdef ESPRESSO_NPT
-  auto const &local_virial = system.cell_structure->get_local_virial();
+  auto &local_virial = system.cell_structure->get_local_virial();
+  auto scatter_virial = system.cell_structure->get_scatter_virial();
+  Kokkos::Experimental::contribute(local_virial, scatter_virial);
 #endif
 
   using execution_space = Kokkos::DefaultExecutionSpace;
-  int num_threads = execution_space().concurrency();
   Kokkos::RangePolicy<execution_space> policy(std::size_t{0},
                                               unique_particles.size());
   Kokkos::parallel_for("reduction", policy,
@@ -225,21 +232,19 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
 #ifdef ESPRESSO_ROTATION
                         &local_torque,
 #endif
-                        &unique_particles, num_threads](std::size_t const i) {
+                        &unique_particles](std::size_t const i) {
                          Utils::Vector3d force{};
 #ifdef ESPRESSO_ROTATION
                          Utils::Vector3d torque{};
 #endif
-                         for (int tid = 0; tid < num_threads; ++tid) {
-                           force[0] += local_force(i, tid, 0);
-                           force[1] += local_force(i, tid, 1);
-                           force[2] += local_force(i, tid, 2);
+                         force[0] += local_force(i, 0);
+                         force[1] += local_force(i, 1);
+                         force[2] += local_force(i, 2);
 #ifdef ESPRESSO_ROTATION
-                           torque[0] += local_torque(i, tid, 0);
-                           torque[1] += local_torque(i, tid, 1);
-                           torque[2] += local_torque(i, tid, 2);
+                         torque[0] += local_torque(i, 0);
+                         torque[1] += local_torque(i, 1);
+                         torque[2] += local_torque(i, 2);
 #endif
-                         }
                          unique_particles.at(i)->force() += force;
 #ifdef ESPRESSO_ROTATION
                          unique_particles.at(i)->torque() += torque;
@@ -249,11 +254,9 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
 
 #ifdef ESPRESSO_NPT
   if (virial) {
-    for (int tid = 0; tid < num_threads; ++tid) {
-      (*virial)[0] += local_virial(tid, 0);
-      (*virial)[1] += local_virial(tid, 1);
-      (*virial)[2] += local_virial(tid, 2);
-    }
+    (*virial)[0] += local_virial(0);
+    (*virial)[1] += local_virial(1);
+    (*virial)[2] += local_virial(2);
   }
 #endif
 }

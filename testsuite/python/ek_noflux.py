@@ -27,15 +27,16 @@ import espressomd.electrokinetics
 
 
 class EKTest:
-    BOX_L = 16.
-    AGRID = 1.0
+    AGRID = 2.865
+    BOX_L = 16. * AGRID
     DENSITY = 1
     DIFFUSION_COEFFICIENT = 0.1
     TIME = 50
     RADIUS = 5.
 
     system = espressomd.System(box_l=[BOX_L, BOX_L, BOX_L])
-    system.time_step = 1.0
+    TAU = 1.85
+    system.time_step = TAU
     system.cell_system.skin = 0.4
 
     def tearDown(self):
@@ -46,23 +47,24 @@ class EKTest:
         Testing the EK noflux boundaries to not leak density outside of a sphere.
         """
 
-        decimal_precision = 7 if self.ek_params["single_precision"] else 10
+        decimal_precision = 7 if self.lattice_params["single_precision"] else 10
 
         lattice = espressomd.electrokinetics.Lattice(
             n_ghost_layers=2, agrid=self.AGRID)
 
-        ekspecies = self.ek_species_class(
+        ekspecies = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             valency=0.0, advection=False, friction_coupling=False,
-            tau=1.0, **self.ek_params)
+            tau=self.TAU, **self.lattice_params)
 
-        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
+        eksolver = espressomd.electrokinetics.EKNone(
+            lattice=lattice, tau=self.TAU)
 
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
-            tau=1., solver=eksolver)
+            tau=self.TAU, solver=eksolver)
         self.system.ekcontainer.add(ekspecies)
 
-        center = np.asarray(self.system.box_l / 2, dtype=int)
+        center = np.asarray(lattice.shape / 2, dtype=int)
 
         ekspecies[center[0], center[1], center[2]].density = self.DENSITY
 
@@ -73,10 +75,11 @@ class EKTest:
         ekspecies.add_boundary_from_shape(
             sphere, [0, 0, 0], espressomd.electrokinetics.FluxBoundary)
 
-        positions = np.empty((*self.system.box_l.astype(int), 3))
+        positions = np.empty((*lattice.shape, 3))
         positions[..., 2], positions[..., 1], positions[..., 0] = np.meshgrid(
-            *map(lambda x: np.arange(0, x) - x / 2, self.system.box_l))
+            *map(lambda x: np.arange(0, x) - x / 2, lattice.shape))
         positions += 0.5
+        positions *= self.AGRID
 
         self.system.integrator.run(self.TIME)
 
@@ -97,28 +100,24 @@ class EKTest:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKNoFluxDoublePrecisionCPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": False, "gpu": False}
+    lattice_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKNoFluxSinglePrecisionCPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": True, "gpu": False}
+    lattice_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKNoFluxDoublePrecisionGPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": False, "gpu": True}
+    lattice_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKNoFluxSinglePrecisionGPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": True, "gpu": True}
+    lattice_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

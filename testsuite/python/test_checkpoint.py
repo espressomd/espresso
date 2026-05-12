@@ -24,6 +24,7 @@ import unittest_generator as utg
 import numpy as np
 import contextlib
 import pathlib
+import time
 import sys
 
 import espressomd
@@ -193,6 +194,7 @@ class CheckpointTest(ut.TestCase):
 
             self.assertEqual(len(system.ekcontainer), 1)
             ek_species = system.ekcontainer[0]
+            ek_solver = system.ekcontainer.solver
             self.assertAlmostEqual(system.ekcontainer.tau, system.time_step,
                                    delta=1e-7)
             self.assertIsInstance(system.ekcontainer.solver,
@@ -218,6 +220,26 @@ class CheckpointTest(ut.TestCase):
 
             ek_species.load_checkpoint(cpt_path.format(""), cpt_mode)
 
+            cpt_path = str(self.checkpoint.root / "ek_none") + "{}.cpt"
+            with self.assertRaisesRegex(RuntimeError, 'EOF found'):
+                ek_solver.load_checkpoint(
+                    cpt_path.format("-missing-data"), cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, 'extra data found, expected EOF'):
+                ek_solver.load_checkpoint(
+                    cpt_path.format("-extra-data"), cpt_mode)
+            if cpt_mode == 0:
+                with self.assertRaisesRegex(RuntimeError, 'incorrectly formatted data'):
+                    ek_solver.load_checkpoint(
+                        cpt_path.format("-wrong-format"), cpt_mode)
+                with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+                    ek_solver.load_checkpoint(
+                        cpt_path.format("-wrong-boxdim"), cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+                ek_solver.load_checkpoint(
+                    cpt_path.format("-unknown"), cpt_mode)
+
+            ek_solver.load_checkpoint(cpt_path.format(""), cpt_mode)
+
             precision = 8 if "LB.WALBERLA" in modes else 5
             m = np.pi / 12
             nx = ek_species.lattice.shape[0]
@@ -226,12 +248,10 @@ class CheckpointTest(ut.TestCase):
             grid_3D = np.fromfunction(
                 lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
                 (nx, ny, nz), dtype=float)
-            for i in range(nx):
-                for j in range(ny):
-                    for k in range(nz):
-                        np.testing.assert_almost_equal(
-                            np.copy(ek_species[i, j, k].density),
-                            grid_3D[i, j, k], decimal=precision)
+            np.testing.assert_almost_equal(
+                np.copy(ek_species[:, :, :].density), grid_3D, decimal=precision)
+            np.testing.assert_almost_equal(
+                np.copy(ek_solver[:, :, :].potential), grid_3D / 4., decimal=precision)
 
             state = ek_species.get_params()
             reference = {
@@ -247,7 +267,7 @@ class CheckpointTest(ut.TestCase):
                 self.assertIn(key, state)
                 np.testing.assert_allclose(np.copy(state[key]), reference[key],
                                            atol=1E-7, err_msg=f"{key} differs")
-            # self.assertFalse(ek_species.is_active)
+            self.assertTrue(system.ekcontainer.is_active)
             self.assertFalse(ek_species.single_precision)
 
             def generator(value, shape):
@@ -270,7 +290,6 @@ class CheckpointTest(ut.TestCase):
                 slice2 = ek_species[-1, :, :]
                 slice3 = ek_species[1:-1, :, :]
                 # check boundary flag
-
                 np.testing.assert_equal(np.copy(slice1.is_boundary), True)
                 np.testing.assert_equal(np.copy(slice2.is_boundary), True)
                 np.testing.assert_equal(np.copy(slice3.is_boundary), False)
@@ -325,6 +344,7 @@ class CheckpointTest(ut.TestCase):
         new_density = 1.5 * old_density
         lbf[0, 0, 0].density = new_density
         vtk_manual.write()
+        time.sleep(0.1)  # small delay for file system write latency
         lbf[0, 0, 0].density = old_density
         self.assertTrue((vtk_root / filename.format(0)).exists())
         self.assertTrue((vtk_root / filename.format(1)).exists())
@@ -376,6 +396,7 @@ class CheckpointTest(ut.TestCase):
             new_density = 1.5 * old_density
             ek_species[0, 0, 0].density = new_density
             vtk_manual.write()
+            time.sleep(0.1)  # small delay for file system write latency
             ek_species[0, 0, 0].density = old_density
             self.assertTrue((vtk_root / filename.format(0)).exists())
             self.assertTrue((vtk_root / filename.format(1)).exists())

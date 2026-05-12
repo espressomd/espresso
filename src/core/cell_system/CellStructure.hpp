@@ -33,6 +33,7 @@
 #include "cell_system/Cell.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "config/config.hpp"
+#include "custom_verlet_list.hpp"
 #include "ghosts.hpp"
 #include "system/Leaf.hpp"
 
@@ -42,11 +43,15 @@
 #include <boost/iterator/indirect_iterator.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
+#include <Cabana_Core.hpp>
+#include <Cabana_NeighborList.hpp>
+#include <Kokkos_Core.hpp>
+#include <Kokkos_ScatterView.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
-#include <functional>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -62,31 +67,13 @@
 #endif
 
 // forward declarations
-namespace Kokkos {
-template <class DataType, class... Properties> class View;
-class HostSpace;
-struct LayoutRight;
-template <unsigned T> struct MemoryTraits;
-} // namespace Kokkos
-namespace Cabana {
-class HalfNeighborTag;
-struct VerletLayout2D;
-class TeamVectorOpTag;
-template <typename... Types> struct MemberTypes;
-template <class DataType, class MemorySpace, int, class MemoryTraits>
-class AoSoA;
-} // namespace Cabana
 struct KokkosHandle;
-template <class MemorySpace, class ListAlgorithm, class Layout, class BuildTag>
-class CustomVerletList;
 struct LocalBondState;
 
 template <typename Callable>
 concept ParticleCallback = requires(Callable c, Particle &p) {
   { c(p) } -> std::same_as<void>;
 };
-
-using ParticleUnaryOp = std::function<void(Particle &)>;
 
 namespace Cells {
 enum Resort : unsigned {
@@ -170,8 +157,12 @@ class CellStructure : public System::Leaf<CellStructure> {
 public:
   static constexpr auto vector_length = 1;
   struct AoSoA_pack;
-  using ForceType = Kokkos::View<double **[3], Kokkos::LayoutRight>;
-  using VirialType = Kokkos::View<double *[3], Kokkos::LayoutRight>;
+  using ForceType = Kokkos::View<double *[3], Kokkos::LayoutRight>;
+  using VirialType = Kokkos::View<double[3], Kokkos::LayoutRight>;
+  using ScatterForce =
+      Kokkos::Experimental::ScatterView<double *[3], Kokkos::LayoutRight>;
+  using ScatterVirial =
+      Kokkos::Experimental::ScatterView<double[3], Kokkos::LayoutRight>;
   using memory_space = Kokkos::HostSpace;
   using ListAlgorithm = Cabana::HalfNeighborTag;
   using ListType =
@@ -201,11 +192,14 @@ private:
   int m_max_id = 0;
   std::unique_ptr<Kokkos::View<int *>> m_id_to_index;
   std::unique_ptr<ForceType> m_local_force;
+  std::optional<ScatterForce> m_scatter_force;
 #ifdef ESPRESSO_ROTATION
   std::unique_ptr<ForceType> m_local_torque;
+  std::optional<ScatterForce> m_scatter_torque;
 #endif
 #ifdef ESPRESSO_NPT
   std::unique_ptr<VirialType> m_local_virial;
+  std::optional<ScatterVirial> m_scatter_virial;
 #endif
   std::unique_ptr<LocalBondState> m_bond_state;
   std::unique_ptr<ListType> m_verlet_list_cabana;
@@ -356,8 +350,8 @@ public:
    * @brief Run a kernel on all local particles.
    * The kernel is assumed to be thread-safe.
    */
-  void for_each_local_particle(ParticleUnaryOp &&f,
-                               bool parallel = true) const {
+  template <typename Callable>
+  void for_each_local_particle(Callable &&f, bool parallel = true) const {
     if (parallel and use_parallel_for_each_local_particle()) {
       parallel_for_each_particle_impl(decomposition().local_cells(), f);
       return;
@@ -371,7 +365,8 @@ public:
    * @brief Run a kernel on all ghost particles.
    * The kernel is assumed to be thread-safe.
    */
-  void for_each_ghost_particle(ParticleUnaryOp &&f) const {
+  template <typename Callable>
+  void for_each_ghost_particle(Callable &&f) const {
     for (auto &p : ghost_particles()) {
       f(p);
     }
@@ -391,8 +386,9 @@ private:
     return decomposition().particle_to_cell(p);
   }
 
-  void parallel_for_each_particle_impl(std::span<Cell *const> cells,
-                                       ParticleUnaryOp &f) const;
+  template <typename Callable>
+  inline void parallel_for_each_particle_impl(std::span<Cell *const> cells,
+                                              Callable &f) const;
 
 public:
   /**
@@ -622,7 +618,7 @@ private:
    *                should indicate if the bond was broken.
    */
   template <class Handler>
-  void execute_bond_handler(Particle &p, Handler handler) {
+  void execute_bond_handler(Particle &p, Handler const &handler) {
     for (const BondView bond : p.bonds()) {
       auto const partner_ids = bond.partner_ids();
 
@@ -633,7 +629,7 @@ private:
         if (bond_broken) {
           bond_broken_error(p.id(), partner_ids);
         }
-      } catch (const BondResolutionError &) {
+      } catch (BondResolutionError const &) {
         bond_resolution_error(partner_ids);
       }
     }
@@ -727,16 +723,20 @@ public:
   void set_kokkos_handle(std::shared_ptr<KokkosHandle> handle);
   void rebuild_local_properties(double pair_cutoff);
   void reset_local_properties();
-  void reset_local_force();
+  void reset_local_force_and_torque();
 
   auto &get_id_to_index() { return *m_id_to_index; }
   auto &get_local_force() { return *m_local_force; }
+  auto get_scatter_force() { return *m_scatter_force; }
 #ifdef ESPRESSO_ROTATION
   auto &get_local_torque() { return *m_local_torque; }
+  auto get_scatter_torque() { return *m_scatter_torque; }
 #endif
 #ifdef ESPRESSO_NPT
   auto &get_local_virial() { return *m_local_virial; }
+  auto get_scatter_virial() { return *m_scatter_virial; }
 #endif
+
   auto &get_aosoa() { return *m_aosoa; }
   auto const &get_unique_particles() const { return m_unique_particles; }
   auto const &get_verlet_list_cabana() const { return *m_verlet_list_cabana; }
@@ -809,7 +809,7 @@ private:
       m_verlet_list.clear();
 
       link_cell([&](Particle &p1, Particle &p2, Distance const &d) {
-        if (verlet_criterion(p1, p2, d)) {
+        if (verlet_criterion(p1, p2, d.dist2)) {
           m_verlet_list.emplace_back(&p1, &p2);
           pair_kernel(p1, p2, d);
         }

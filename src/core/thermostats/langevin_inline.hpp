@@ -51,11 +51,24 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
   auto const pref_noise = langevin.pref_noise;
 #endif // ESPRESSO_THERMOSTAT_PER_PARTICLE
 
-  auto const friction_op = handle_particle_anisotropy(p, pref_friction);
-  auto const noise_op = handle_particle_anisotropy(p, pref_noise);
-  return friction_op * p.v() +
-         noise_op * Random::noise_uniform<RNGSalt::LANGEVIN>(
-                        langevin.rng_counter(), langevin.rng_seed(), p.id());
+  auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN>(
+      langevin.rng_counter(), langevin.rng_seed(), p.id());
+#ifdef ESPRESSO_PARTICLE_ANISOTROPY
+  auto const aniso_flag = (pref_friction[0] != pref_friction[1]) ||
+                          (pref_friction[1] != pref_friction[2]);
+  if (aniso_flag) {
+    // Apply (O * diag(g) * O^T) * v as O * (g ⊙ (O^T * v)) using a single
+    // rotation matrix shared between the friction and noise terms.
+    auto const O = rotation_matrix(p.quat());
+    auto const Ot = O.transposed();
+    auto const v_body = Ot * p.v();
+    auto const noise_body = Ot * noise;
+    return O * (hadamard_product(pref_friction, v_body) +
+                hadamard_product(pref_noise, noise_body));
+  }
+#endif
+  return hadamard_product(pref_friction, p.v()) +
+         hadamard_product(pref_noise, noise);
 }
 
 #ifdef ESPRESSO_ROTATION

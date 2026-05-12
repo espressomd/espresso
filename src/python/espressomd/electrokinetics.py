@@ -45,6 +45,8 @@ class EKFFT(ScriptInterfaceHelper):
         Lattice object.
     permittivity : :obj:`float`
         permittivity of the fluid :math:`\\epsilon_0 \\epsilon_{\\mathrm{r}}`.
+    tau: : :obj:`float`
+        EK time step, must be an integer multiple of the MD time step.
     gpu : :obj:`bool`, optional
         Use GPU implementation.
     single_precision : :obj:`bool`, optional
@@ -96,17 +98,42 @@ class EKFFT(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class EKNone(ScriptInterfaceHelper):
+class EKNone(ScriptInterfaceHelper, espressomd.detail.walberla.LatticeModel):
     """
     The default Poisson solver.
-    Imposes a null electrostatic potential everywhere.
+    Imposes a user-controlled electrostatic potential field.
+    The potential is initialized to 0 on all lattice nodes.
 
     Parameters
     ----------
     lattice : :obj:`espressomd.lb.Lattice <espressomd.detail.walberla.Lattice>`
         Lattice object.
+    tau : :obj:`float`
+        EK time step, must be an integer multiple of the MD time step.
     single_precision : :obj:`bool`, optional
         Use single-precision floating-point arithmetic.
+
+    Methods
+    -------
+    save_checkpoint()
+        Write the electrostatic potential field to a file.
+
+        Parameters
+        ----------
+        path : :obj:`str` or :obj:`pathlib.Path`
+            Destination file path.
+        binary : :obj:`bool`
+            Whether to write in binary or ASCII mode.
+
+    load_checkpoint()
+        Load the electrostatic potential field from a file.
+
+        Parameters
+        ----------
+        path : :obj:`str` or :obj:`pathlib.Path`
+            File path to read from.
+        binary : :obj:`bool`
+            Whether to read in binary or ASCII mode.
     """
     _so_name = "walberla::EKNone"
     _so_features = ("WALBERLA",)
@@ -115,6 +142,19 @@ class EKNone(ScriptInterfaceHelper):
     def __init__(self, *args, **kwargs):
         _check_lattice_blocks(self.__class__.__name__, kwargs)
         super().__init__(*args, **kwargs)
+
+    def __getitem__(self, key):
+        if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
+            if any(isinstance(item, slice) for item in key):
+                return EKPoissonSolverSlice(
+                    parent_sip=self, slice_range=key)
+            else:
+                return EKPoissonSolverNode(
+                    parent_sip=self, index=np.array(key))
+
+        raise TypeError(
+            f"{key} is not a valid index. Should be a point on the "
+            "nodegrid e.g. ek[0,0,0], or a slice, e.g. ek[:,0,0]")
 
 
 @script_interface_register
@@ -158,6 +198,10 @@ class EKPoissonSolverNode(ScriptInterfaceHelper):
     @property
     def potential(self):
         return self.call_method("get_potential")
+
+    @potential.setter
+    def potential(self, value):
+        self.call_method("set_potential", value=value)
 
 
 @script_interface_register
@@ -225,6 +269,10 @@ class EKPoissonSolverSlice(ScriptInterfaceHelper):
     @property
     def potential(self):
         return self._getter("potential",)
+
+    @potential.setter
+    def potential(self, values):
+        self._setter("potential", values)
 
 
 @script_interface_register

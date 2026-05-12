@@ -42,7 +42,7 @@ std::shared_ptr<VTKHandle> LatticeModel::create_vtk(
   }
 
   // instantiate VTKOutput object
-  auto const &blocks = get_lattice().get_blocks();
+  auto const blocks = get_lattice().get_blocks();
   auto const write_freq = (delta_N) ? static_cast<unsigned int>(delta_N) : 1u;
   auto vtk_obj = walberla::vtk::createVTKOutput_BlockData(
       blocks, identifier, uint_c(write_freq), uint_c(0), force_pvtu,

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2026 The ESPResSo project
+# Copyright (C) 2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import itertools
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
@@ -26,8 +27,8 @@ import espressomd.electrokinetics
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKPotential:
-    BOX_L = [22.92, 28.65, 31.515]
+class FFTPotential:
+    BOX_L = [22.92, 28.65, 34.38]
     AGRID = 2.865
     TAU = 5.943635
 
@@ -39,15 +40,11 @@ class EKPotential:
         self.system.ekcontainer = None
 
     def test_potential(self):
-        """
-        Testing electrostatic potential of the EK
-        """
-
         eps0 = 0.09135
         epsR = 8.0
         kT = 3.15379
-        valency = 1.1
-        density = 0.123
+        valency = 1.9
+        rho0 = 1.3
 
         external_electric_field = np.asarray([0.0, 0.0, 0.0])
 
@@ -74,65 +71,73 @@ class EKPotential:
         self.system.ekcontainer.add(ekspecies_pos)
         self.system.ekcontainer.add(ekspecies_neg)
 
-        # Simple linear potential test
-        def get_slice(value, dir):
-            match dir:
-                case 0:
-                    return (value, slice(None), slice(None))
-                case 1:
-                    return (slice(None), value, slice(None))
-                case 2:
-                    return (slice(None), slice(None), value)
+        Nx, Ny, Nz = lattice.shape
+        Lx, Ly, Lz = self.system.box_l
+        nx, ny, nz = (1, 2, 4)
 
-        for dir in range(3):
-            ekspecies_pos[:, :, :].density = 0.0
-            ekspecies_neg[:, :, :].density = 0.0
+        hx = Lx / Nx
+        hy = Ly / Ny
+        hz = Lz / Nz
 
-            ekspecies_pos[get_slice(0, dir)].density = density
-            ekspecies_neg[get_slice(-1, dir)].density = density
+        i = np.arange(Nx, dtype=float)
+        j = np.arange(Ny, dtype=float)
+        k = np.arange(Nz, dtype=float)
 
-            self.system.integrator.run(1)
+        I, J, K = np.meshgrid(i, j, k, indexing="ij")
+        phase = 2.0 * np.pi * (nx * I / Nx + ny * J / Ny + nz * K / Nz)
 
-            efield = - valency * density * self.AGRID**2 / \
-                eps0 / epsR / self.BOX_L[dir]
+        phi_exact = rho0 * np.cos(phase)
 
-            potential_simulation = np.copy(eksolver[:, :, :].potential)
-            efield_simulation = np.gradient(
-                potential_simulation, self.AGRID, axis=dir)
+        lap = (
+            (np.roll(phi_exact, -1, axis=0) - 2.0 * phi_exact + np.roll(phi_exact, 1, axis=0)) / hx**2 +
+            (np.roll(phi_exact, -1, axis=1) - 2.0 * phi_exact + np.roll(phi_exact, 1, axis=1)) / hy**2 +
+            (np.roll(phi_exact, -1, axis=2) - 2.0 * phi_exact + np.roll(phi_exact, 1, axis=2)) / hz**2  # nopep8
+        )
 
-            atol = 1e-7 if self.lattice_params["single_precision"] else 2e-16
+        rho = - eps0 * epsR / valency * lap
+        rho -= rho.mean()
+        phi_exact -= phi_exact.mean()
 
-            np.testing.assert_allclose(
-                efield_simulation, efield, rtol=0.0, atol=atol)
+        dens_pos = np.zeros(lattice.shape, dtype=float)
+        dens_neg = np.zeros(lattice.shape, dtype=float)
+        for i, j, k in itertools.product(range(Nx), range(Ny), range(Nz)):
+            dens_pos[i, j, k] = max(+rho[i, j, k], 0.0)
+            dens_neg[i, j, k] = max(-rho[i, j, k], 0.0)
+        ekspecies_pos[:, :, :].density = dens_pos
+        ekspecies_neg[:, :, :].density = dens_neg
+        self.system.integrator.run(1)
 
-            in_plane_field = np.delete(np.arange(3), dir)
-            for in_plane_dir in in_plane_field:
-                efield_in_plane = np.gradient(
-                    potential_simulation, self.AGRID, axis=in_plane_dir)
-                np.testing.assert_allclose(
-                    efield_in_plane, 0.0, rtol=0.0, atol=atol)
+        calc_potential = np.copy(eksolver[:, :, :].potential)
+        calc_potential -= calc_potential.mean()
+
+        np.testing.assert_allclose(
+            calc_potential, phi_exact, rtol=0.0, atol=self.atol)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKTestWalberla(EKPotential, ut.TestCase):
+class EKTestWalberla(FFTPotential, ut.TestCase):
     lattice_params = {"single_precision": False, "gpu": False}
+    atol = 5e-12
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKTestWalberlaSinglePrecision(EKPotential, ut.TestCase):
+class EKTestWalberlaSinglePrecision(FFTPotential, ut.TestCase):
     lattice_params = {"single_precision": True, "gpu": False}
+    atol = 5e-7
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
-class EKTestWalberlaGPU(EKPotential, ut.TestCase):
+class EKTestWalberlaGPU(FFTPotential, ut.TestCase):
     lattice_params = {"single_precision": False, "gpu": True}
+    atol = 5e-12
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
-class EKTestWalberlaSinglePrecisionGPU(EKPotential, ut.TestCase):
+class EKTestWalberlaSinglePrecisionGPU(FFTPotential, ut.TestCase):
     lattice_params = {"single_precision": True, "gpu": True}
+    atol = 4e-7
 
 
 if __name__ == "__main__":

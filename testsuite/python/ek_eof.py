@@ -30,12 +30,11 @@ import espressomd.electrokinetics
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKEOF:
-    BOX_L = [45., 9., 9.]
-    AGRID = 1.5
-    DENSITY = 1
-    DIFFUSION_COEFFICIENT = 0.25
-    TIMESTEPS = 5000
-    TAU = 1.6
+    BOX_L = [71.625, 5.73, 5.73]
+    AGRID = 2.865
+    DIFFUSION_COEFFICIENT = 0.68
+    TIMESTEPS = 500
+    TAU = 5.483
 
     system = espressomd.System(box_l=BOX_L)
     system.time_step = TAU
@@ -50,47 +49,50 @@ class EKEOF:
         Testing EK for the electroosmotic flow
         """
 
-        eps0 = 0.015
-        epsR = 18.5
-        kT = 2.
-        offset = self.AGRID
-        d = self.system.box_l[0] - 2 * offset
-        valency = 1.1
+        eps0 = 0.0468
+        epsR = 9.0
+        kT = 9.8765
+        offset_index = 1
+        offset_distance = offset_index * self.AGRID
+        distance = self.system.box_l[0] - 2 * offset_distance
+        valency = 0.765
         external_electric_field = np.asarray([0.0, 0.001, 0.0])
 
-        visc = 1. / 6.
+        visc = 3.8
         eta = 1.0 * visc
 
-        density = 0.0006
+        density = 0.006
 
-        lattice = self.ek_lattice_class(n_ghost_layers=2, agrid=self.AGRID)
+        lattice = espressomd.electrokinetics.Lattice(
+            n_ghost_layers=2, agrid=self.AGRID)
 
-        ekspecies = self.ek_species_class(
+        ekspecies = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=density, kT=kT, valency=valency,
             diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=True,
             advection=True, ext_efield=external_electric_field,
-            tau=self.TAU, **self.ek_params)
-        ekwallcharge = self.ek_species_class(
+            tau=self.TAU, **self.lattice_params)
+        ekwallcharge = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, kT=kT, diffusion=0.0, tau=self.TAU,
-            valency=-valency, friction_coupling=False, advection=False,
-            **self.ek_params)
+            valency=-1.0, friction_coupling=False, advection=False,
+            **self.lattice_params)
 
-        eksolver = self.ek_solver_class(
-            lattice=lattice, permittivity=eps0 * epsR, **self.ek_params)
+        eksolver = espressomd.electrokinetics.EKFFT(
+            lattice=lattice, tau=self.TAU, permittivity=eps0 * epsR, **self.lattice_params)
 
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)
         self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.add(ekwallcharge)
 
-        lb_fluid = self.lb_class(
+        lb_fluid = espressomd.lb.LBFluid(
             lattice=lattice, density=1.0, kinematic_viscosity=visc,
-            tau=self.TAU, **self.lb_params)
+            tau=self.TAU, **self.lattice_params)
         self.system.lb = lb_fluid
 
-        wall_bot = espressomd.shapes.Wall(normal=[1, 0, 0], dist=offset)
+        wall_bot = espressomd.shapes.Wall(
+            normal=[1, 0, 0], dist=offset_distance)
         wall_top = espressomd.shapes.Wall(
-            normal=[-1, 0, 0], dist=-self.BOX_L[0] + offset)
+            normal=[-1, 0, 0], dist=-self.BOX_L[0] + offset_distance)
         for obj in (wall_bot, wall_top):
             ekspecies.add_boundary_from_shape(
                 obj, [0.0, 0.0, 0.0], espressomd.electrokinetics.FluxBoundary)
@@ -98,11 +100,14 @@ class EKEOF:
                 obj, 0.0, espressomd.electrokinetics.DensityBoundary)
             lb_fluid.add_boundary_from_shape(obj, [0.0, 0.0, 0.0])
 
-        ekspecies[0, :, :].density = 0.0
-        ekspecies[-1, :, :].density = 0.0
+        ekspecies[:offset_index, :, :].density = 0.0
+        ekspecies[-offset_index:, :, :].density = 0.0
 
-        density_wall = density * d / 2
-        sigma = -valency * density_wall
+        # distribute the remaining charge on the walls
+        density_wall = valency * density * \
+            (lattice.shape[0] - 2 * offset_index) / 2
+        # actual charge per area for the analytic solution
+        sigma = -density_wall * self.AGRID
 
         ekwallcharge[0, :, :].density = density_wall
         ekwallcharge[-1, :, :].density = density_wall
@@ -118,12 +123,12 @@ class EKEOF:
             lambda x: transcendental_equation(
                 x=x,
                 valency=valency,
-                distance=d,
+                distance=distance,
                 kT=kT,
                 sigma=sigma,
                 eps0=eps0,
                 epsR=epsR),
-            0.1)
+            np.pi * kT / (2 * distance * np.abs(valency)))
 
         def calc_analytic_density(
                 x, integration_constant, valency, kT, eps0, epsR):
@@ -149,82 +154,51 @@ class EKEOF:
             eps0=eps0,
             epsR=epsR)
         analytic_density[np.logical_or(
-            x_sim < -self.system.box_l[0] / 2 + offset,
-            x_sim > self.system.box_l[0] / 2 - offset)] = 0.
+            x_sim < -self.system.box_l[0] / 2 + offset_distance,
+            x_sim > self.system.box_l[0] / 2 - offset_distance)] = 0.
         np.testing.assert_allclose(
-            np.copy(simulated_density), analytic_density, rtol=2e-2)
+            np.copy(simulated_density), analytic_density, atol=4e-6, rtol=0)
 
         analytic_velocity = calc_analytic_velocity(
             x=x_sim,
             integration_constant=integration_constant,
             valency=valency,
-            distance=d,
+            distance=distance,
             kT=kT,
             eps0=eps0,
             epsR=epsR,
             eta=eta,
             external_electric_field=external_electric_field)
         analytic_velocity[np.logical_or(
-            x_sim < -self.system.box_l[0] / 2 + offset,
-            x_sim > self.system.box_l[0] / 2 - offset)] = 0.
+            x_sim < -self.system.box_l[0] / 2 + offset_distance,
+            x_sim > self.system.box_l[0] / 2 - offset_distance)] = 0.
         np.testing.assert_allclose(
             np.copy(simulated_velocity),
             analytic_velocity,
-            rtol=2e-2)
+            atol=2e-6,
+            rtol=0)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKTestWalberlaDoublePrecisionCPU(EKEOF, ut.TestCase):
-
-    """Test for the Walberla implementation of the EK in double-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.Lattice
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
-    lb_class = espressomd.lb.LBFluid
-    lb_params = {"single_precision": False, "gpu": False}
-    ek_params = {"single_precision": False, "gpu": False}
+    lattice_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKTestWalberlaSinglePrecisionCPU(EKEOF, ut.TestCase):
-
-    """Test for the Walberla implementation of the EK in single-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.Lattice
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
-    lb_class = espressomd.lb.LBFluid
-    lb_params = {"single_precision": True, "gpu": False}
-    ek_params = {"single_precision": True, "gpu": False}
+    lattice_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 class EKTestWalberlaDoublePrecisionGPU(EKEOF, ut.TestCase):
-
-    """Test for the Walberla implementation of the EK in double-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.Lattice
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
-    lb_class = espressomd.lb.LBFluid
-    lb_params = {"single_precision": False, "gpu": True}
-    ek_params = {"single_precision": False, "gpu": True}
+    lattice_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 class EKTestWalberlaSinglePrecisionGPU(EKEOF, ut.TestCase):
-
-    """Test for the Walberla implementation of the EK in single-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.Lattice
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_solver_class = espressomd.electrokinetics.EKFFT
-    lb_class = espressomd.lb.LBFluid
-    lb_params = {"single_precision": True, "gpu": True}
-    ek_params = {"single_precision": True, "gpu": True}
+    lattice_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

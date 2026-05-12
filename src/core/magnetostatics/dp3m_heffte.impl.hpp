@@ -62,7 +62,7 @@
 #include <boost/mpi/collectives/reduce.hpp>
 
 #include <Kokkos_Core.hpp>
-#include <omp.h>
+#include <Kokkos_ScatterView.hpp>
 
 #include <algorithm>
 #include <array>
@@ -252,20 +252,20 @@ template <int cao> struct AssignTorques {
                       });
 
       auto const torque = vector_product(pref, E);
-      auto const thread_id = omp_get_thread_num();
-      p_torque(p_index, thread_id, 0) -= torque[0];
-      p_torque(p_index, thread_id, 1) -= torque[1];
-      p_torque(p_index, thread_id, 2) -= torque[2];
+      auto access = p_torque.access();
+      access(p_index, 0) -= torque[0];
+      access(p_index, 1) -= torque[1];
+      access(p_index, 2) -= torque[2];
     };
 
     auto const n_part = dp3m.inter_weights.size();
     auto const &unique_particles = cell_structure.get_unique_particles();
-    auto &local_torque = cell_structure.get_local_torque();
+    auto scatter_torque = cell_structure.get_scatter_torque();
     kokkos_parallel_range_for(
         "AssignTorques", std::size_t{0u}, n_part, [&](std::size_t p_index) {
           auto const &p = *unique_particles.at(p_index);
           if (p.dipm() != 0.) {
-            kernel(p.calc_dip() * prefac, local_torque, p_index);
+            kernel(p.calc_dip() * prefac, scatter_torque, p_index);
           }
         });
   }
@@ -289,18 +289,18 @@ template <int cao> struct AssignForcesDip {
         E[2u] += w * double(dp3m.mesh.rs_fields[2u][ind]);
       });
 
-      auto const thread_id = omp_get_thread_num();
-      p_force(p_index, thread_id, d_rs) += pref * E;
+      auto access = p_force.access();
+      access(p_index, d_rs) += pref * E;
     };
 
     auto const n_part = dp3m.inter_weights.size();
     auto const &unique_particles = cell_structure.get_unique_particles();
-    auto &local_force = cell_structure.get_local_force();
+    auto scatter_force = cell_structure.get_scatter_force();
     kokkos_parallel_range_for(
         "AssignForcesDip", std::size_t{0u}, n_part, [&](std::size_t p_index) {
           auto const &p = *unique_particles.at(p_index);
           if (p.dipm() != 0.) {
-            kernel(p.calc_dip() * prefac, local_force, p_index);
+            kernel(p.calc_dip() * prefac, scatter_force, p_index);
           }
         });
   }

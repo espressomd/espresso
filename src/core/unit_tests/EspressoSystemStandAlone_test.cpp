@@ -609,7 +609,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
 
   // check propagator exceptions
   {
-    auto &propagation = *espresso::system->propagation;
+    auto &propagation = *system.propagation;
     auto const old_integ_switch = propagation.integ_switch;
     auto const old_default_propagation = propagation.default_propagation;
     propagation.integ_switch = -1;
@@ -621,16 +621,17 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
 
   // check bond exceptions
   {
+    auto const is_head_node = rank == 0;
+    auto &cell_structure = *system.cell_structure;
     BOOST_CHECK_THROW(throw BondResolutionError(), std::exception);
     BOOST_CHECK_THROW(throw BondUnknownTypeError(), std::exception);
     BOOST_CHECK_THROW(throw BondInvalidSizeError(2), std::exception);
     BOOST_CHECK_EQUAL(BondInvalidSizeError(2).size, 2);
 #ifdef ESPRESSO_COLLISION_DETECTION
-    BOOST_CHECK_THROW(CollisionDetection::get_part(*system.cell_structure, 777),
+    BOOST_CHECK_THROW(CollisionDetection::get_part(cell_structure, 777),
                       std::runtime_error);
 #endif
     {
-      auto const is_head_node = comm.rank() == 0;
       std::array<int, 3> partner_ids{{3, 2, 1}};
       if (is_head_node) {
         bond_broken_error(0, partner_ids);
@@ -647,7 +648,6 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       }
     }
     {
-      auto const is_head_node = comm.rank() == 0;
       std::array<int, 3> partner_ids{{3, -1, 1}};
       if (is_head_node) {
         bond_resolution_error(partner_ids);
@@ -663,6 +663,29 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       } else {
         BOOST_REQUIRE(messages.empty());
       }
+    }
+    if (n_nodes == 1) {
+      auto const report_broken_bond_pid1_pid2 =
+          [](Particle &p, int bond_id, std::span<Particle *> bond_partners) {
+            return p.id() == pid2 and bond_id == 0 and
+                   bond_partners.front()->id() == pid1;
+          };
+      auto const report_no_broken_bonds =
+          [](Particle &, int, std::span<Particle *>) { return false; };
+      cell_structure.bond_loop(report_broken_bond_pid1_pid2);
+      insert_particle_bond(pid3, 0, {99, 101});
+      cell_structure.bond_loop(report_no_broken_bonds);
+      cell_structure.get_local_particle(pid3)->bonds().clear();
+      system.on_particle_change();
+      auto const messages =
+          ErrorHandling::mpi_gather_runtime_errors_all(is_head_node);
+      flush_runtime_errors_local();
+      BOOST_REQUIRE_EQUAL(messages.size(), 2ul);
+      BOOST_CHECK_EQUAL(messages[0].what(),
+                        "bond broken between particles 2, 9");
+      BOOST_CHECK_EQUAL(
+          messages[1].what(),
+          "bond partner not found on local node, could only find: 99, 101");
     }
   }
 
