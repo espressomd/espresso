@@ -296,5 +296,4 @@ calc_bonded_four_body_force(
     return iap->calc_forces(box_geo, pos1, pos2, pos3, pos4);
   }
   return calc_bonded_dihedral_force(iaparams, box_geo, pos1, pos2, pos3, pos4);
-  //throw BondUnknownTypeError();
 }

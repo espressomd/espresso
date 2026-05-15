@@ -122,9 +122,10 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
       bonds_p_data, bs.pair_list, bs.pair_ids, get_ptr(coulomb_force_kernel)};
   AngleBondsPressureKernel angle_bp_kernel{bonds_p_data, bs.angle_list,
                                            bs.angle_ids};
-  NullDihedralPressureKernel null_dih_kernel{};
+  DihedralBondsPressureKernel dih_bp_kernel{bonds_p_data, bs.dihedral_list,
+                                         bs.dihedral_ids};
 
-  cabana_short_range(pair_bp_kernel, angle_bp_kernel, null_dih_kernel,
+  cabana_short_range(pair_bp_kernel, angle_bp_kernel, dih_bp_kernel,
                      pair_p_kernel, *cell_structure, get_interaction_range(),
                      bonded_ias->maximal_cutoff(), verlet_criterion,
                      propagation->integ_switch);

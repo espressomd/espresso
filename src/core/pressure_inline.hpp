@@ -114,19 +114,21 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
 
 inline std::optional<Utils::Matrix<double, 3, 3>>
 calc_bonded_four_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
-                                       Particle const &p1, Particle const &p2,
-                                       Particle const &p3, Particle const &p4,
+                                       Utils::Vector3d const &pos1,
+                                       Utils::Vector3d const &pos2,
+                                       Utils::Vector3d const &pos3,
+                                       Utils::Vector3d const &pos4,
                                        BoxGeometry const &box_geo) {
   if (std::holds_alternative<DihedralBond>(iaparams)
 #ifdef ESPRESSO_TABULATED
       or std::holds_alternative<TabulatedDihedralBond>(iaparams)
 #endif
      ) {
-    auto const v12 = box_geo.get_mi_vector(p1.pos(), p2.pos());
-    auto const v23 = box_geo.get_mi_vector(p3.pos(), p1.pos());
-    auto const v34 = box_geo.get_mi_vector(p4.pos(), p3.pos());
+    auto const v12 = box_geo.get_mi_vector(pos1, pos2);
+    auto const v23 = box_geo.get_mi_vector(pos3, pos1);
+    auto const v34 = box_geo.get_mi_vector(pos4, pos3);
 
-    auto const result = calc_bonded_dihedral_force(iaparams, box_geo, p1.pos(), p2.pos(), p3.pos(), p4.pos());
+    auto const result = calc_bonded_dihedral_force(iaparams, box_geo, pos1, pos2, pos3, pos4);
 
     if (result) {
       Utils::Vector3d force2, force3, force4;
@@ -145,18 +147,3 @@ calc_bonded_four_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
 
   return {};
 }
-
-/** Calculate kinetic pressure (aka energy) for one particle.
- *  @param[in]   p1            particle for which to calculate pressure
- *  @param[out]  obs_pressure  pressure observable
- */
-//inline void add_kinetic_virials(Particle const &p1,
-//                                Observable_stat &obs_pressure) {
-//  if (p1.is_virtual())
-//    return;
-
-  /* kinetic pressure */
-//  for (std::size_t k = 0u; k < 3u; k++)
-//    for (std::size_t l = 0u; l < 3u; l++)
-//      obs_pressure.kinetic_lin[k * 3u + l] += p1.v()[k] * p1.v()[l] * p1.mass();
-//}

@@ -152,6 +152,54 @@ struct AngleBondsPressureKernel {
   }
 };
 
-struct NullDihedralPressureKernel {
-  KOKKOS_INLINE_FUNCTION void operator()(std::size_t) const {}
+struct DihedralBondsPressureKernel {
+  BondsPressureKernelData data;
+  LocalBondState::DihedralBondlistType bond_list;
+  LocalBondState::DihedralBondIDType bond_ids;
+
+  DihedralBondsPressureKernel(BondsPressureKernelData data_,
+                              LocalBondState::DihedralBondlistType bond_list_,
+                              LocalBondState::DihedralBondIDType bond_ids_)
+      : data(std::move(data_)), bond_list(std::move(bond_list_)),
+        bond_ids(std::move(bond_ids_)) {}
+
+  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
+  operator()(std::size_t idx) const {
+    auto const &bonded_ias = data.bonded_ias;
+    auto const &box_geo = data.box_geo;
+    auto &local_pressure = data.local_pressure;
+    auto const &layout = data.layout;
+    auto const &aosoa = data.aosoa;
+    auto const bond_id = bond_ids(idx);
+
+    // TODO: omp_get_thread_num() is only available for the OpenMP backend.
+    // This should be updated when using other Kokkos backends.
+    auto const thread_id = omp_get_thread_num();
+
+    auto const i = bond_list(idx, 0);
+    auto const j = bond_list(idx, 1);
+    auto const k = bond_list(idx, 2);
+    auto const m = bond_list(idx, 3);
+    auto const &iaparams = *bonded_ias.at(bond_id);
+
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+    auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
+    auto const pos4 = aosoa.get_vector_at(aosoa.position, m);
+
+    std::optional<Utils::Matrix<double, 3, 3>> pressure =
+        calc_bonded_four_body_pressure_tensor(iaparams, pos1, pos2, pos3,
+                                              pos4, box_geo);
+
+    if (pressure) {
+      auto const flat = Utils::flatten(*pressure);
+      for (std::size_t k3 = 0; k3 < 9; ++k3)
+        local_pressure(thread_id,
+                       layout.tensor_offset(layout.bonded_idx(bond_id), k3)) +=
+            flat[k3];
+    } else {
+      std::array<int, 3> pids = {aosoa.id(j), aosoa.id(k), aosoa.id(m)};
+      bond_broken_error(aosoa.id(i), {pids.data(), 3});
+    }
+  }
 };
