@@ -643,7 +643,7 @@ class VTKOutput(VTKOutputBase):
     ----------
     identifier : :obj:`str`
         Name of the VTK writer.
-    observables : :obj:`list`, {'density', 'velocity_vector', 'pressure_tensor'}
+    observables : :obj:`list`, {'density', 'velocity_vector', 'pressure_tensor', 'boundary'}
         List of observables to write to the VTK files.
     delta_N : :obj:`int`
         Write frequency. If this value is 0 (default), the object is a
@@ -658,6 +658,10 @@ class VTKOutput(VTKOutputBase):
         Force parallel unstructured grid format (file extension: ``.vtu``).
         If ``False``, uses parallel structured grid format if possible
         (file extension: ``.vti``).
+    include_boundaries : :obj:`bool` (optional), default is ``False``
+        If ``True``, include boundary cells in the VTK output.
+        Boundary cells will show the velocity defined by the boundary
+        condition. If ``False``, boundary cells are excluded.
 
     """
     _so_name = "walberla::LBVTKHandle"

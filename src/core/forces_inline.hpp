@@ -155,6 +155,20 @@ inline ParticleForce calc_non_central_force(Particle const &p1,
   return pf;
 }
 
+// Director-based overload for use in Cabana pressure kernel.
+// Returns only the force vector (not torque) — sufficient for the virial.
+inline Utils::Vector3d calc_non_central_force(Utils::Vector3d const &dir1,
+                                              Utils::Vector3d const &dir2,
+                                              IA_parameters const &ia_params,
+                                              Utils::Vector3d const &d,
+                                              double const dist) {
+  Utils::Vector3d f{};
+#ifdef ESPRESSO_GAY_BERNE
+  f += gb_pair_force(dir1, dir2, ia_params, d, dist).f;
+#endif
+  return f;
+}
+
 inline ParticleForce calc_opposing_force(ParticleForce const &pf,
                                          Utils::Vector3d const &d) {
   ParticleForce out{-pf.f};

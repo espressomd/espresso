@@ -119,8 +119,15 @@ class TestVTK:
 
 
 class TestLBVTK(TestVTK):
+    include_boundaries = True
 
-    valid_obs = ["density", "velocity_vector", "pressure_tensor"]
+    valid_obs = ["density", "velocity_vector", "pressure_tensor", "boundary"]
+
+    def write_obs(self):
+        obs = ["density", "velocity_vector", "pressure_tensor"]
+        if self.include_boundaries:
+            obs.append("boundary")
+        return obs
 
     def make_actor(self):
         return self.lb_class(
@@ -146,11 +153,9 @@ class TestLBVTK(TestVTK):
             espressomd.shapes.Wall(normal=[1, 0, 0], dist=dist))
         actor.add_boundary_from_shape(
             espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-(self.system.box_l[0] - dist)))
-
-        actor.add_boundary_from_shape(
-            espressomd.shapes.Sphere(center=[self.system.box_l[0] // 2,
-                                             self.system.box_l[1] // 2,
-                                             self.system.box_l[2] // 2], radius=2))
+        sphere = espressomd.shapes.Sphere(
+            center=self.system.box_l // 2, radius=2.)
+        actor.add_boundary_from_shape(sphere)
 
         n_steps = 4 if self.lb_params["gpu"] else 10
         shape = tuple(actor.shape)
@@ -166,13 +171,16 @@ class TestLBVTK(TestVTK):
             root = pathlib.Path(tmp_directory)
             label_vtk_last_frame = f"test_vtk_{self.vtk_id}_last_frame"
             label_vtk_continuous = f"test_vtk_{self.vtk_id}_continuous"
+            label_vtk_with_boundaries = f"test_vtk_{self.vtk_id}_with_boundaries"  # nopep8
             path_vtk_last_frame = root / label_vtk_last_frame / "simulation_step_0.vtu"
             path_vtk_continuous = [
                 root / label_vtk_continuous / f"simulation_step_{i}.vtu" for i in range(n_steps)]
+            path_vtk_with_boundaries = root / \
+                label_vtk_with_boundaries / "simulation_step_0.vtu"
             filepaths = [path_vtk_last_frame] + path_vtk_continuous
 
             # write VTK files
-            vtk_obs = list(self.valid_obs)
+            vtk_obs = self.write_obs()
             vtk_obj = self.vtk_class(
                 identifier=label_vtk_continuous, delta_N=1, observables=vtk_obs,
                 base_folder=root)
@@ -185,6 +193,15 @@ class TestLBVTK(TestVTK):
                 base_folder=root)
             actor.add_vtk_writer(vtk=vtk_obj)
             vtk_obj.write()
+            if self.include_boundaries:
+                # also write a snapshot that includes boundary cells and the
+                # ``boundary`` mask observable
+                vtk_obj_b = self.vtk_class(
+                    identifier=label_vtk_with_boundaries, delta_N=0,
+                    observables=self.write_obs(), base_folder=root,
+                    include_boundaries=True, force_pvtu=True)
+                actor.add_vtk_writer(vtk=vtk_obj_b)
+                vtk_obj_b.write()
             self.assertEqual(sorted(vtk_obj.observables), sorted(vtk_obs))
             self.assertEqual(vtk_obj.valid_observables(), set(self.valid_obs))
 
@@ -253,13 +270,51 @@ class TestLBVTK(TestVTK):
                 np.testing.assert_allclose(
                     vtk_pressure[valid], lb_pressure[valid], rtol=1e-6, atol=0.)
 
+            if self.include_boundaries:
+                # check the include_boundaries snapshot: full lattice shape and
+                # correct boundary mask in the two outer slabs
+                full_shape = tuple(actor.shape)
+                grids_b = vtk_reader.parse(path_vtk_with_boundaries)
+                self.assertEqual(grids_b[label_density].shape, full_shape)
+                self.assertEqual(grids_b["boundary"].shape, full_shape)
+                expected_mask = np.zeros(full_shape, dtype=np.float32)
+                expected_mask[:2, :, :] = 1.
+                expected_mask[-2:, :, :] = 1.
+                expected_mask[self.lattice.get_shape_bitmask(
+                    shape=sphere)] = 1.
+                np.testing.assert_array_equal(
+                    grids_b["boundary"], expected_mask)
+                np.testing.assert_array_equal(
+                    np.asarray(actor[:, :, :].is_boundary, dtype=np.float32),
+                    expected_mask)
+                # the fluid region of the include_boundaries output matches the
+                # filtered output
+                np.testing.assert_allclose(
+                    grids_b[label_density][2:-2, :, :], lb_density,
+                    rtol=1e-7, atol=0.)
+                # check that boundary cell values are written correctly
+                # density and velocity in boundary region are available via
+                # the boundary mask; the interior data matches the filtered output
+                flat_boundary_mask = np.asarray(
+                    grids_b["boundary"]).ravel().astype(bool)
+                np.testing.assert_allclose(
+                    grids_b[label_density].ravel()[flat_boundary_mask],
+                    np.copy(self.actor[:, :, :].density).ravel()[
+                        flat_boundary_mask],
+                    rtol=1e-7, atol=0.)
+                np.testing.assert_allclose(
+                    grids_b[label_velocity].reshape(-1, 3)[flat_boundary_mask],
+                    np.copy(
+                        self.actor[:, :, :].velocity).reshape(-1, 3)[flat_boundary_mask],
+                    rtol=1e-7, atol=0.)
+
     @utx.skipIfMissingModules("espressomd.io.vtk")
     def test_utf8_support(self):
         """Check UTF-8 support in filepaths and VTK identifiers."""
         with tempfile.TemporaryDirectory() as tmp_directory:
             root = pathlib.Path(tmp_directory) / "gemäß"
             label = "çåš"
-            vtk_obs = list(self.valid_obs)
+            vtk_obs = self.write_obs()
             vtk_obj = self.vtk_class(
                 identifier=label, delta_N=0, observables=vtk_obs, base_folder=root)
             self.lbf.add_vtk_writer(vtk=vtk_obj)
@@ -271,9 +326,16 @@ class TestLBVTK(TestVTK):
 
 
 class TestEKVTK(TestVTK):
+    include_boundaries = True
 
-    valid_obs = ["density", "flux"]
+    valid_obs = ["density", "flux", "boundary"]
     valid_obs_poisson = ["potential"]
+
+    def write_obs(self):
+        obs = ["density", "flux"]
+        if self.include_boundaries:
+            obs.append("boundary")
+        return obs
 
     def make_actor(self):
         return self.ek_class(
@@ -306,14 +368,10 @@ class TestEKVTK(TestVTK):
             shape=espressomd.shapes.Wall(
                 normal=[-1, 0, 0], dist=-(self.system.box_l[0] - dist)),
             value=0.0, boundary_type=espressomd.electrokinetics.DensityBoundary)
-
+        sphere = espressomd.shapes.Sphere(
+            center=self.system.box_l // 2, radius=2.)
         actor.add_boundary_from_shape(
-            shape=espressomd.shapes.Sphere(
-                center=[self.system.box_l[0] // 2,
-                        self.system.box_l[1] // 2,
-                        self.system.box_l[2] // 2],
-                radius=2),
-            value=0.0, boundary_type=espressomd.electrokinetics.DensityBoundary)
+            shape=sphere, value=0.0, boundary_type=espressomd.electrokinetics.DensityBoundary)
 
         n_steps = 100
         shape = tuple(self.lattice.shape)
@@ -333,7 +391,7 @@ class TestEKVTK(TestVTK):
             filepaths = [path_vtk_last_frame] + path_vtk_continuous
 
             # write VTK files
-            vtk_obs = list(self.valid_obs)
+            vtk_obs = self.write_obs()
             vtk_obj = self.vtk_class(
                 identifier=label_vtk_continuous, delta_N=1, observables=vtk_obs,
                 base_folder=root)
@@ -371,6 +429,19 @@ class TestEKVTK(TestVTK):
             vtk_obj.write()
             self.assertEqual(sorted(vtk_obj.observables), sorted(vtk_obs))
             self.assertEqual(vtk_obj.valid_observables(), set(self.valid_obs))
+
+            if self.include_boundaries:
+                # also write a snapshot that includes boundary cells and the
+                # ``boundary`` mask observable
+                label_vtk_with_boundaries = f"test_vtk_{self.vtk_id}_with_boundaries"  # nopep8
+                path_vtk_with_boundaries = root / \
+                    label_vtk_with_boundaries / "simulation_step_0.vtu"
+                vtk_obj_b = self.vtk_class(
+                    identifier=label_vtk_with_boundaries, delta_N=0,
+                    observables=self.write_obs(), base_folder=root,
+                    include_boundaries=True, force_pvtu=True)
+                actor.add_vtk_writer(vtk=vtk_obj_b)
+                vtk_obj_b.write()
 
             vtk_obj_poisson = self.vtk_poisson_class(
                 identifier=label_vtk_poisson_last_frame, force_pvtu=False,
@@ -458,7 +529,37 @@ class TestEKVTK(TestVTK):
                 np.testing.assert_allclose(
                     vtk_potential[valid], ek_potential[valid], rtol=5e-7)
 
-        self.assertEqual(len(actor.vtk_writers), 2)
+            if self.include_boundaries:
+                # check the include_boundaries snapshot: full lattice shape and
+                # correct boundary mask in the two outer slabs
+                full_shape = tuple(self.lattice.shape)
+                grids_b = vtk_reader.parse(path_vtk_with_boundaries)
+                self.assertEqual(grids_b[label_density].shape, full_shape)
+                self.assertEqual(grids_b["boundary"].shape, full_shape)
+                expected_mask = np.zeros(full_shape, dtype=np.float32)
+                expected_mask[:2, :, :] = 1.
+                expected_mask[-2:, :, :] = 1.
+                expected_mask[self.lattice.get_shape_bitmask(
+                    shape=sphere)] = 1.
+                np.testing.assert_array_equal(
+                    grids_b["boundary"], expected_mask)
+                np.testing.assert_allclose(
+                    grids_b[label_density][2:-2, :, :], ek_density, rtol=5e-7)
+                # check that boundary cell values are written correctly
+                boundary_mask = actor[:, :, :].is_boundary
+                vtk_boundary_density = grids_b[label_density]
+                vtk_boundary_flux = grids_b[label_flux]
+                np.testing.assert_allclose(
+                    vtk_boundary_density[boundary_mask],
+                    np.copy(self.species[:, :, :].density)[boundary_mask],
+                    rtol=5e-7)
+                np.testing.assert_allclose(
+                    vtk_boundary_flux[boundary_mask],
+                    np.copy(self.species[:, :, :].flux)[boundary_mask],
+                    rtol=5e-7)
+
+        expected_writers = 3 if self.include_boundaries else 2
+        self.assertEqual(len(actor.vtk_writers), expected_writers)
         actor.clear_vtk_writers()
         self.assertEqual(len(actor.vtk_writers), 0)
 
@@ -545,6 +646,98 @@ class EKWalberlaVTKSinglePrecisionGPU(TestEKVTK, ut.TestCase):
     ek_solver = espressomd.electrokinetics.EKFFT
     ek_params = {"single_precision": True, "gpu": True}
     vtk_id = "ek_single_precision_gpu"
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBWalberlaVTKDoublePrecisionCPU_NoBoundaries(TestLBVTK, ut.TestCase):
+    vtk_class = espressomd.lb.VTKOutput
+    lattice_class = espressomd.lb.Lattice
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
+    vtk_id = "lb_double_precision_cpu_no_boundaries"
+    include_boundaries = False
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBWalberlaVTKDoublePrecisionGPU_NoBoundaries(TestLBVTK, ut.TestCase):
+    vtk_class = espressomd.lb.VTKOutput
+    lattice_class = espressomd.lb.Lattice
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
+    vtk_id = "lb_double_precision_gpu_no_boundaries"
+    include_boundaries = False
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBWalberlaVTKSinglePrecisionCPU_NoBoundaries(TestLBVTK, ut.TestCase):
+    vtk_class = espressomd.lb.VTKOutput
+    lattice_class = espressomd.lb.Lattice
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
+    vtk_id = "lb_single_precision_cpu_no_boundaries"
+    include_boundaries = False
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBWalberlaVTKSinglePrecisionGPU_NoBoundaries(TestLBVTK, ut.TestCase):
+    vtk_class = espressomd.lb.VTKOutput
+    lattice_class = espressomd.lb.Lattice
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
+    vtk_id = "lb_single_precision_gpu_no_boundaries"
+    include_boundaries = False
+
+
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
+class EKWalberlaVTKDoublePrecisionCPU_NoBoundaries(TestEKVTK, ut.TestCase):
+    vtk_class = espressomd.electrokinetics.VTKOutput
+    vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
+    lattice_class = espressomd.electrokinetics.Lattice
+    ek_class = espressomd.electrokinetics.EKSpecies
+    ek_solver = espressomd.electrokinetics.EKFFT
+    ek_params = {"single_precision": False, "gpu": False}
+    vtk_id = "ek_double_precision_cpu_no_boundaries"
+    include_boundaries = False
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
+class EKWalberlaVTKDoublePrecisionGPU_NoBoundaries(TestEKVTK, ut.TestCase):
+    vtk_class = espressomd.electrokinetics.VTKOutput
+    vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
+    lattice_class = espressomd.electrokinetics.Lattice
+    ek_class = espressomd.electrokinetics.EKSpecies
+    ek_solver = espressomd.electrokinetics.EKFFT
+    ek_params = {"single_precision": False, "gpu": True}
+    vtk_id = "ek_double_precision_gpu_no_boundaries"
+    include_boundaries = False
+
+
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
+class EKWalberlaVTKSinglePrecisionCPU_NoBoundaries(TestEKVTK, ut.TestCase):
+    vtk_class = espressomd.electrokinetics.VTKOutput
+    vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
+    lattice_class = espressomd.electrokinetics.Lattice
+    ek_class = espressomd.electrokinetics.EKSpecies
+    ek_solver = espressomd.electrokinetics.EKFFT
+    ek_params = {"single_precision": True, "gpu": False}
+    vtk_id = "ek_single_precision_cpu_no_boundaries"
+    include_boundaries = False
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
+class EKWalberlaVTKSinglePrecisionGPU_NoBoundaries(TestEKVTK, ut.TestCase):
+    vtk_class = espressomd.electrokinetics.VTKOutput
+    vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
+    lattice_class = espressomd.electrokinetics.Lattice
+    ek_class = espressomd.electrokinetics.EKSpecies
+    ek_solver = espressomd.electrokinetics.EKFFT
+    ek_params = {"single_precision": True, "gpu": True}
+    vtk_id = "ek_single_precision_gpu_no_boundaries"
+    include_boundaries = False
 
 
 if __name__ == "__main__":
