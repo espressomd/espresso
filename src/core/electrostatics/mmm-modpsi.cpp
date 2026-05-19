@@ -94,7 +94,7 @@ static void preparePolygammaOdd(int n, double binom,
 }
 
 void CoulombMMM1D::create_mod_psi_up_to(int new_n) {
-  auto const old_n = static_cast<int>(modPsi.size() >> 1);
+  auto const old_n = static_cast<int>(modPsi.size() / 2ul);
   if (new_n > old_n) {
     modPsi.resize(2 * new_n);
 

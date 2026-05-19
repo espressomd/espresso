@@ -84,7 +84,10 @@ IBMTriel::calc_forces(Utils::Vector3d const &vec1,
 
   // Check for sanity
   if ((lp - lp0 > maxDist) || (l - l0 > maxDist)) {
-    return {};
+    return std::nullopt;
+  }
+  if (lp == 0.0 || l == 0.0) {
+    return std::nullopt;
   }
 
   // angles between these vectors; calculated directly via the products

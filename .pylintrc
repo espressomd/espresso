@@ -333,7 +333,6 @@ enable=dangerous-default-value, # W0102
        unused-argument, # W0613
        unused-wildcard-import, # W0614
        deprecated-method, # W1505
-       cyclic-import, # R0401
        trailing-comma-tuple, # R1707
        bad-classmethod-argument, # C0202
        undefined-variable, # E0602

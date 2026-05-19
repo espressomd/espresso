@@ -706,6 +706,11 @@ public:
       get_system().on_temperature_change();
       return {};
     }
+    if (context()->is_head_node()) {
+      throw std::runtime_error(
+          "Unknown method " + name +
+          "(). Hint: a feature is probably not compiled in.");
+    }
     return {};
   }
 

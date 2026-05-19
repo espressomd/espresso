@@ -37,8 +37,6 @@
 #include <cmath>
 #include <functional>
 
-static constexpr Utils::Vector3i nptgeom_dir{{1, 2, 4}};
-
 /**
  * @brief Scale and communicate instantaneous NpT pressure and
  * propagate the conjugate momentum for volume.
@@ -209,7 +207,7 @@ velocity_verlet_npt_propagate_vel_MTK(NptIsoParameters const &nptiso,
   for (auto &p : particles) {
     for (auto j = 0u; j < 3u; ++j) {
       if (!p.is_fixed_along(j)) {
-        if (nptiso.geometry & ::nptgeom_dir[j]) {
+        if (nptiso.geometry & NptIsoParameters::nptgeom_dir[j]) {
           p.v()[j] *= propagater;
           npt_inst_pressure.p_vel[j] += Utils::sqr(p.v()[j]) * p.mass();
         }

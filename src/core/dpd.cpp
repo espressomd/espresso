@@ -72,14 +72,12 @@ void InteractionsNonBonded::dpd_init(double kT, double time_step) {
   }
 }
 
-Utils::Vector3d
-dpd_pair_force(Utils::Vector3d const &p1_position,
-               Utils::Vector3d const &p1_velocity, int const &p1_id,
-               Utils::Vector3d const &p2_position,
-               Utils::Vector3d const &p2_velocity, int const &p2_id,
-               DPDThermostat const &dpd, BoxGeometry const &box_geo,
-               IA_parameters const &ia_params, Utils::Vector3d const &d,
-               double dist, double dist2) {
+Utils::Vector3d dpd_pair_force(
+    Utils::Vector3d const &p1_position, Utils::Vector3d const &p1_velocity,
+    int p1_id, Utils::Vector3d const &p2_position,
+    Utils::Vector3d const &p2_velocity, int p2_id, DPDThermostat const &dpd,
+    BoxGeometry const &box_geo, IA_parameters const &ia_params,
+    Utils::Vector3d const &d, double dist, double dist2) {
   if (ia_params.dpd.radial.cutoff <= 0.0 && ia_params.dpd.trans.cutoff <= 0.0) {
     return {};
   }
