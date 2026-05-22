@@ -258,13 +258,9 @@ ESPRESSO_ATTR_ALWAYS_INLINE
 inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                 Utils::Vector3d, Utils::Vector3d>>
 calc_bonded_dihedral_force(
-    Bonded_IA_Parameters const &iaparams, BoxGeometry const &box_geo,
-    Utils::Vector3d const &pos1, Utils::Vector3d const &pos2,
-    Utils::Vector3d const &pos3, Utils::Vector3d const &pos4) {
-  // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
-  auto const v12 = box_geo.get_mi_vector(pos1, pos2);
-  auto const v23 = box_geo.get_mi_vector(pos3, pos1);
-  auto const v34 = box_geo.get_mi_vector(pos4, pos3);
+    Bonded_IA_Parameters const &iaparams,
+    Utils::Vector3d const &v12, Utils::Vector3d const &v23,
+    Utils::Vector3d const &v34) {
   if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
     return iap->forces(v12, v23, v34);
   }
@@ -295,5 +291,9 @@ calc_bonded_four_body_force(
   if (auto const *iap = std::get_if<IBMTribend>(&iaparams)) {
     return iap->calc_forces(box_geo, pos1, pos2, pos3, pos4);
   }
-  return calc_bonded_dihedral_force(iaparams, box_geo, pos1, pos2, pos3, pos4);
+  // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
+  auto const v12 = box_geo.get_mi_vector(pos1, pos2);
+  auto const v23 = box_geo.get_mi_vector(pos3, pos1);
+  auto const v34 = box_geo.get_mi_vector(pos4, pos3);
+  return calc_bonded_dihedral_force(iaparams, v12, v23, v34);
 }

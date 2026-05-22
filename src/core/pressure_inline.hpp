@@ -128,15 +128,15 @@ calc_bonded_four_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
     auto const v23 = box_geo.get_mi_vector(pos3, pos1);
     auto const v34 = box_geo.get_mi_vector(pos4, pos3);
 
-    auto const result = calc_bonded_dihedral_force(iaparams, box_geo, pos1, pos2, pos3, pos4);
+    auto const result = calc_bonded_dihedral_force(iaparams, v12, v23, v34);
 
     if (result) {
       Utils::Vector3d force2, force3, force4;
       std::tie(std::ignore, force2, force3, force4) = result.value();
 
-      return Utils::tensor_product(force2, v12) +
+      return -Utils::tensor_product(force2, v12) +
 	     Utils::tensor_product(force3, v23) +
-	     Utils::tensor_product(force4, v34);
+	     Utils::tensor_product(force4, v23 + v34);
     }
   } else {
     runtimeWarningMsg() << "Unsupported bond type " +
@@ -147,3 +147,4 @@ calc_bonded_four_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
 
   return {};
 }
+
