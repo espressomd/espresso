@@ -123,7 +123,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
   AngleBondsPressureKernel angle_bp_kernel{bonds_p_data, bs.angle_list,
                                            bs.angle_ids};
   DihedralBondsPressureKernel dih_bp_kernel{bonds_p_data, bs.dihedral_list,
-                                         bs.dihedral_ids};
+                                            bs.dihedral_ids};
 
   cabana_short_range(pair_bp_kernel, angle_bp_kernel, dih_bp_kernel,
                      pair_p_kernel, *cell_structure, get_interaction_range(),

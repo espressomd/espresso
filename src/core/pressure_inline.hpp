@@ -114,16 +114,16 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
 
 inline std::optional<Utils::Matrix<double, 3, 3>>
 calc_bonded_four_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
-                                       Utils::Vector3d const &pos1,
-                                       Utils::Vector3d const &pos2,
-                                       Utils::Vector3d const &pos3,
-                                       Utils::Vector3d const &pos4,
-                                       BoxGeometry const &box_geo) {
+                                      Utils::Vector3d const &pos1,
+                                      Utils::Vector3d const &pos2,
+                                      Utils::Vector3d const &pos3,
+                                      Utils::Vector3d const &pos4,
+                                      BoxGeometry const &box_geo) {
   if (std::holds_alternative<DihedralBond>(iaparams)
 #ifdef ESPRESSO_TABULATED
       or std::holds_alternative<TabulatedDihedralBond>(iaparams)
 #endif
-     ) {
+  ) {
     auto const v12 = box_geo.get_mi_vector(pos1, pos2);
     auto const v23 = box_geo.get_mi_vector(pos3, pos1);
     auto const v34 = box_geo.get_mi_vector(pos4, pos3);
@@ -135,8 +135,8 @@ calc_bonded_four_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
       std::tie(std::ignore, force2, force3, force4) = result.value();
 
       return -Utils::tensor_product(force2, v12) +
-	     Utils::tensor_product(force3, v23) +
-	     Utils::tensor_product(force4, v23 + v34);
+             Utils::tensor_product(force3, v23) +
+             Utils::tensor_product(force4, v23 + v34);
     }
   } else {
     runtimeWarningMsg() << "Unsupported bond type " +
@@ -147,4 +147,3 @@ calc_bonded_four_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
 
   return {};
 }
-

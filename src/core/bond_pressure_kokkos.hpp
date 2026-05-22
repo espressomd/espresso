@@ -188,8 +188,8 @@ struct DihedralBondsPressureKernel {
     auto const pos4 = aosoa.get_vector_at(aosoa.position, m);
 
     std::optional<Utils::Matrix<double, 3, 3>> pressure =
-        calc_bonded_four_body_pressure_tensor(iaparams, pos1, pos2, pos3,
-                                              pos4, box_geo);
+        calc_bonded_four_body_pressure_tensor(iaparams, pos1, pos2, pos3, pos4,
+                                              box_geo);
 
     if (pressure) {
       auto const flat = Utils::flatten(*pressure);

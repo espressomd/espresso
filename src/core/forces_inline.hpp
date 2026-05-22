@@ -257,10 +257,10 @@ calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
 ESPRESSO_ATTR_ALWAYS_INLINE
 inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                 Utils::Vector3d, Utils::Vector3d>>
-calc_bonded_dihedral_force(
-    Bonded_IA_Parameters const &iaparams,
-    Utils::Vector3d const &v12, Utils::Vector3d const &v23,
-    Utils::Vector3d const &v34) {
+calc_bonded_dihedral_force(Bonded_IA_Parameters const &iaparams,
+                           Utils::Vector3d const &v12,
+                           Utils::Vector3d const &v23,
+                           Utils::Vector3d const &v34) {
   if (auto const *iap = std::get_if<DihedralBond>(&iaparams)) {
     return iap->forces(v12, v23, v34);
   }
