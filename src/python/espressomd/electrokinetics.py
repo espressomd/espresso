@@ -159,6 +159,7 @@ class EKNone(ScriptInterfaceHelper, espressomd.detail.walberla.LatticeModel):
 
 @script_interface_register
 class EKPoissonSolverNode(ScriptInterfaceHelper):
+    """Node of an EK Poisson grid."""
     _so_name = "walberla::EKPoissonSolverNode"
     _so_creation_policy = "GLOBAL"
 
@@ -206,6 +207,7 @@ class EKPoissonSolverNode(ScriptInterfaceHelper):
 
 @script_interface_register
 class EKPoissonSolverSlice(ScriptInterfaceHelper):
+    """Slice of an EK Poisson grid."""
     _so_name = "walberla::EKPoissonSolverSlice"
     _so_creation_policy = "GLOBAL"
 
@@ -508,6 +510,11 @@ class FluxBoundary:
     Hold flux information for the flux boundary
     condition at a single node.
 
+    Parameters
+    ----------
+    flux : (3,) array_like of :obj:`float`
+        Imposed flux.
+
     """
 
     def __init__(self, flux):
@@ -521,6 +528,11 @@ class DensityBoundary:
     Hold density information for the density boundary
     condition at a single node.
 
+    Parameters
+    ----------
+    density : :obj:`float`
+        Imposed density.
+
     """
 
     def __init__(self, density):
@@ -531,6 +543,7 @@ class DensityBoundary:
 
 @script_interface_register
 class EKSpeciesNode(ScriptInterfaceHelper):
+    """Node of an EK species grid."""
     _so_name = "walberla::EKSpeciesNode"
     _so_creation_policy = "GLOBAL"
 
@@ -658,6 +671,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
 
 @script_interface_register
 class EKSpeciesSlice(ScriptInterfaceHelper):
+    """Slice of an EK species grid."""
     _so_name = "walberla::EKSpeciesSlice"
     _so_creation_policy = "GLOBAL"
 

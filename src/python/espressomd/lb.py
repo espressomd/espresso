@@ -30,14 +30,33 @@ import espressomd.code_features
 
 @script_interface_register
 class Container(ScriptInterfaceHelper):
+    """
+    Container object holding the lattice-Boltzmann method.
+
+    Parameters
+    ----------
+    solver : :obj:`~espressomd.lb.LBFluid`
+        Solver for the lattice-Boltzmann method.
+
+    Methods
+    -------
+    clear()
+        Remove the LB solver.
+
+    """
     _so_name = "LB::Container"
     _so_bind_methods = ("clear",)
 
 
 class VelocityBounceBack:
     """
-    Hold velocity information for the velocity bounce back boundary
+    Hold velocity information for the velocity bounce-back boundary
     condition at a single node.
+
+    Parameters
+    ----------
+    velocity : (3,) array_like of :obj:`float`
+        Bounce-back velocity.
 
     """
 
@@ -326,6 +345,7 @@ class LBFluid(ScriptInterfaceHelper, espressomd.detail.walberla.LatticeModel):
 
 @script_interface_register
 class LBFluidNode(ScriptInterfaceHelper):
+    """Node of a LB grid."""
     _so_name = "walberla::LBFluidNode"
     _so_creation_policy = "GLOBAL"
 
@@ -456,6 +476,8 @@ class LBFluidNode(ScriptInterfaceHelper):
 
 @script_interface_register
 class LBFluidSlice(ScriptInterfaceHelper):
+    """Slice of a LB grid."""
+
     _so_name = "walberla::LBFluidSlice"
     _so_creation_policy = "GLOBAL"
 

@@ -93,6 +93,8 @@ class Thermostat(ScriptInterfaceHelper):
     set_npt()
         Set the NPT thermostat.
 
+        This thermostat requires the feature ``NPT``.
+
         Parameters
         ----------
         kT : :obj:`float`
@@ -107,8 +109,9 @@ class Thermostat(ScriptInterfaceHelper):
             Must be positive.
 
     set_dpd()
-        Set the DPD thermostat with required parameters 'kT'.
-        This also activates the DPD interactions.
+        Set the DPD thermostat.
+
+        This thermostat requires the feature ``DPD``.
 
         Parameters
         ----------
@@ -120,7 +123,7 @@ class Thermostat(ScriptInterfaceHelper):
             Must be positive.
 
     set_stokesian()
-        Set the SD thermostat with required parameters.
+        Set the thermostat for Stokesian Dynamics.
 
         This thermostat requires the feature ``STOKESIAN_DYNAMICS``.
 
@@ -128,6 +131,17 @@ class Thermostat(ScriptInterfaceHelper):
         ----------
         kT : :obj:`float`, optional
             Temperature.
+        seed : :obj:`int`, optional
+            Seed for the random number generator.
+
+    set_thermalized_bond()
+        Set the thermostat for thermalized bonds.
+
+        Only the seed is required. The thermal energy and friction coefficient
+        are determined by the thermalized bonds.
+
+        Parameters
+        ----------
         seed : :obj:`int`, optional
             Seed for the random number generator.
 

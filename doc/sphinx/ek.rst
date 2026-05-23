@@ -265,6 +265,7 @@ VTK output
 The waLBerla library implements a globally-accessible VTK registry.
 A VTK stream can be attached to an EK actor to periodically write
 one or multiple fluid field data into a single file using
+:class:`~espressomd.electrokinetics.VTKPoissonOutput` or
 :class:`~espressomd.electrokinetics.VTKOutput`::
 
     vtk_obs = ["density"]
@@ -283,7 +284,8 @@ one or multiple fluid field data into a single file using
     ek_species.add_vtk_writer(vtk=ek_vtk_on_demand)
     ek_vtk_on_demand.write()
 
-Currently only supports the species density.
+Supported observables include the species density, species flux,
+species boundaries, and the electrostatic potential.
 By default, the properties of the current state
 of the species are written to disk on demand. To add a stream that writes
 to disk continuously, use the optional argument ``delta_N`` to indicate
@@ -361,7 +363,9 @@ To enforce unstructured grid format, pass parameter ``force_pvtu=True``.
 Setting up boundary conditions
 ------------------------------
 
-It is possible to impose a fixed density and a fixed flux on EK species.
+It is possible to impose a fixed density and a fixed flux on EK species
+via :class:`~espressomd.electrokinetics.DensityBoundary` and
+:class:`~espressomd.electrokinetics.FluxBoundary`.
 
 Under the hood, a boundary field is added to the blockforest, which contains
 pre-calculated information for the streaming operations.
@@ -431,6 +435,175 @@ dimension has size 3 for the flux).
 
 For a complete description of all available shapes, refer to
 :mod:`espressomd.shapes`.
+
+.. _Setting up EK bulk reactions:
+
+Setting up EK bulk reactions
+----------------------------
+
+To set up reactive species on the entire domain::
+
+    import espressomd
+    import espressomd.electrokinetics
+    import numpy as np
+
+    BOX_L = 11.
+    AGRID = 1.1
+    INITIAL_DENSITY = 1.0
+    DIFFUSION_COEFFICIENT = 0.1
+    TAU = 1.9
+
+    system = espressomd.System(box_l=[BOX_L, BOX_L, BOX_L])
+    system.time_step = TAU
+    system.cell_system.skin = 0.4
+
+    lattice = espressomd.electrokinetics.Lattice(n_ghost_layers=1, agrid=AGRID)
+    eksolver = espressomd.electrokinetics.EKNone(lattice=lattice, tau=TAU)
+    system.ekcontainer = espressomd.electrokinetics.EKContainer(
+        tau=TAU, solver=eksolver)
+
+    reaction_rate = 1e-5
+    educt_coeffs = [2.0, 1.0, 1.2, 2.2]
+    product_coeffs = [1.5]
+    reactants = []
+    for educt_coeff in educt_coeffs:
+        ek_species_educt = espressomd.electrokinetics.EKSpecies(
+            lattice=lattice, density=educt_coeff * INITIAL_DENSITY,
+            diffusion=DIFFUSION_COEFFICIENT, valency=0.0,
+            advection=False, friction_coupling=False, tau=TAU)
+        system.ekcontainer.add(ek_species_educt)
+        reactants.append(
+            espressomd.electrokinetics.EKReactant(
+                ekspecies=ek_species_educt,
+                stoech_coeff=-educt_coeff,
+                order=educt_coeff))
+
+    for product_coeff in product_coeffs:
+        ek_species_product = espressomd.electrokinetics.EKSpecies(
+            lattice=lattice, density=0.0, diffusion=DIFFUSION_COEFFICIENT,
+            valency=0.0, advection=False, friction_coupling=False, tau=TAU)
+        system.ekcontainer.add(ek_species_product)
+        reactants.append(
+            espressomd.electrokinetics.EKReactant(
+                ekspecies=ek_species_product,
+                stoech_coeff=product_coeff,
+                order=0.0))
+
+    reaction = espressomd.electrokinetics.EKBulkReaction(
+        reactants=reactants, coefficient=reaction_rate, lattice=lattice, tau=TAU)
+    system.ekcontainer.reactions.add(reaction)
+
+    system.integrator.run(100)
+    order = sum(educt_coeffs)
+    time = system.time + 0.5 * system.time_step
+    expected = product_coeff * (
+        INITIAL_DENSITY - (
+            INITIAL_DENSITY ** (1 - order) + (order - 1) * reaction_rate * \
+                np.prod([c**c for c in educt_coeffs]) * time)**(1 / (1 - order)))
+    print(f"simulated={ek_species_product[0, 0, 0].density:.4f}")
+    print(f"{expected=:.4f}")
+
+.. _Setting up EK indexed reactions:
+
+Setting up EK indexed reactions
+-------------------------------
+
+To set up reactive species on specific lattice sites, e.g. to model surface-reactions::
+
+    import espressomd
+    import espressomd.electrokinetics
+    import numpy as np
+
+    AGRID = 1.22
+    BOX_L = np.asarray([22., 2., 2.]) * AGRID
+    PADDING = 1
+    WIDTH = BOX_L[0] - 2 * PADDING * AGRID
+    INITIAL_DENSITIES = [1.7, 1.3]
+    DIFFUSION_COEFFICIENTS = np.array([0.4, 0.2])
+    REACTION_RATES = np.array([5e-3, 8e-3])
+    TAU = 1.8
+
+    system = espressomd.System(box_l=BOX_L)
+    system.time_step = TAU
+    system.cell_system.skin = 0.4
+
+    def analytic_density_profiles(
+            width, reaction_rates, diffusion_coefficients, initial_densities, agrid):
+        actual_width = width - agrid
+        inverse_diffusion = np.sum(1. / diffusion_coefficients)
+        inverse_rate = np.sum(1. / reaction_rates)
+        inverse_factor = inverse_rate + inverse_diffusion * actual_width / 2.
+        total_densities = np.sum(initial_densities)
+        slopes = total_densities / (diffusion_coefficients * inverse_factor)
+        midvalues = total_densities / \
+            (reaction_rates * inverse_factor) + slopes * actual_width / 2.
+
+        x = np.linspace(-1., 1., int(width / agrid)) * actual_width / 2.
+        values_a = slopes[0] * x + midvalues[0]
+        values_b = -slopes[1] * x + midvalues[1]
+        return values_a, values_b
+
+    lattice = espressomd.electrokinetics.Lattice(n_ghost_layers=1, agrid=AGRID)
+    eksolver = espressomd.electrokinetics.EKNone(lattice=lattice, tau=TAU)
+    system.ekcontainer = espressomd.electrokinetics.EKContainer(tau=TAU, solver=eksolver)
+
+    species_A = espressomd.electrokinetics.EKSpecies(
+        lattice=lattice, density=INITIAL_DENSITIES[0], friction_coupling=False,
+        diffusion=DIFFUSION_COEFFICIENTS[0], valency=0., advection=False, tau=TAU)
+    system.ekcontainer.add(species_A)
+
+    species_B = espressomd.electrokinetics.EKSpecies(
+        lattice=lattice, density=INITIAL_DENSITIES[1], friction_coupling=False,
+        diffusion=DIFFUSION_COEFFICIENTS[1], valency=0., advection=False, tau=TAU)
+    system.ekcontainer.add(species_B)
+
+    # set reactants on two opposite planes of the simulation box
+    reactants_left = [
+        espressomd.electrokinetics.EKReactant(
+            ekspecies=species_A, stoech_coeff=-1., order=1.),
+        espressomd.electrokinetics.EKReactant(
+            ekspecies=species_B, stoech_coeff=+1., order=0.),
+    ]
+    reaction_left = espressomd.electrokinetics.EKIndexedReaction(
+        reactants=reactants_left, coefficient=REACTION_RATES[0],
+        lattice=lattice, tau=TAU)
+    reaction_left[1, :, :] = True
+
+    reactants_right = [
+        espressomd.electrokinetics.EKReactant(
+            ekspecies=species_A, stoech_coeff=+1., order=0.),
+        espressomd.electrokinetics.EKReactant(
+            ekspecies=species_B, stoech_coeff=-1., order=1.),
+    ]
+    reaction_right = espressomd.electrokinetics.EKIndexedReaction(
+        reactants=reactants_right, coefficient=REACTION_RATES[1],
+        lattice=lattice, tau=TAU)
+    reaction_right[-2, :, :] = True
+
+    system.ekcontainer.reactions.add(reaction_left)
+    system.ekcontainer.reactions.add(reaction_right)
+
+    # set boundaries to prevent species mixing through the periodic boundary
+    wall_left = espressomd.shapes.Wall(normal=[1, 0, 0], dist=PADDING * AGRID)
+    wall_right = espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-BOX_L[0] + PADDING * AGRID)
+    for obj in (wall_left, wall_right):
+        species_A.add_boundary_from_shape(
+            obj, [0., 0., 0.], espressomd.electrokinetics.FluxBoundary)
+        species_B.add_boundary_from_shape(
+            obj, [0., 0., 0.], espressomd.electrokinetics.FluxBoundary)
+
+    # long simulation since diffusion is a slow process
+    system.integrator.run(6000)
+
+    density_profile = np.zeros((2, int(WIDTH / AGRID)))
+    for x in range(int(WIDTH / AGRID)):
+        density_profile[0, x] = np.mean(species_A[x + PADDING, :, :].density)
+        density_profile[1, x] = np.mean(species_B[x + PADDING, :, :].density)
+    analytic_density_profile = analytic_density_profiles(
+        WIDTH, REACTION_RATES, DIFFUSION_COEFFICIENTS, INITIAL_DENSITIES, AGRID)
+
+    np.testing.assert_allclose(
+        density_profile, analytic_density_profile, rtol=REACTION_RATES[0], atol=0.)
 
 .. _Prototyping new EK methods:
 

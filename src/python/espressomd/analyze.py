@@ -448,11 +448,17 @@ class Analysis(ScriptInterfaceHelper):
         return self._generate_summary(observable, 9, False)
 
     def get_instantaneous_pressure(self):
+        """
+        Get the instantaneous pressure.
+        """
         assert_features("NPT")
         observable = self.call_method("get_instantaneous_pressure")
         return observable
 
     def get_instantaneous_pressure_virial(self):
+        """
+        Get the instantaneous virial pressure.
+        """
         assert_features("NPT")
         observable = self.call_method("get_instantaneous_pressure_virial")
         return observable
@@ -546,6 +552,16 @@ class Analysis(ScriptInterfaceHelper):
                                 bond_id=interaction._bond_id, partners=partners)
 
     def dpd_stress(self):
+        """
+        Calculate the total viscous stress contribution of the DPD interaction.
+        It contains only the dissipative contributions, without noise:
+        :math:`\\sigma^{\\nu\\mu} = V^{-1}\\sum_i \\sum_{j < i}
+        r_{i,j}^{\\nu} (- \\gamma_{i,j} v_{i,j})^{\\mu}`
+        where :math:`\\gamma_{i,j}` is the (in general tensor-valued) DPD
+        friction coefficient for particles i and j, :math:`v_{i,j}`,
+        :math:`r_{i,j}` are their relative velocity and distance,
+        and :math:`V` is the box volume.
+        """
         assert_features("DPD")
         return np.reshape(self.call_method("dpd_stress"), (3, 3))
 

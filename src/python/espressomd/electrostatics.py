@@ -23,6 +23,20 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 @script_interface_register
 class Container(ScriptInterfaceHelper):
+    """
+    Container object holding the electrostatics solver.
+
+    Parameters
+    ----------
+    solver : :obj:`ElectrostaticInteraction`
+        Electrostatics solver.
+
+    Methods
+    -------
+    clear()
+        Remove the electrostatics solver.
+
+    """
     _so_name = "Coulomb::Container"
     _so_features = ("ELECTROSTATICS",)
     _so_bind_methods = ("clear",)

@@ -437,5 +437,7 @@ for an accuracy of :math:`10^{-3}`::
     system.electrostatics.solver = scafacos
 
 For details of the various methods and their parameters please refer to
-the ScaFaCoS manual. To use this feature, ScaFaCoS has to be built as a
-shared library.
+the ScaFaCoS manual. Methods include, but are not limited to, P2NFFT,
+MMM2D (see :ref:`MMM2D theory` for details), fast multipole method (FMM),
+Ewald, and Maxwell Equations Molecular Dynamics (MEMD).
+To use this feature, ScaFaCoS has to be built as a shared library.

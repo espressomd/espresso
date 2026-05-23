@@ -6,11 +6,13 @@ Analysis
 |es| provides two concepts of system analysis:
 
 - :ref:`Direct analysis routines`: The :mod:`espressomd.analyze` module provides
-  online-calculation of specialized local and global observables with
-  calculation and data accumulation performed in the core.
+  methods to calculate specialized local and global observables.
 - :ref:`Observables framework`: This provides a more flexible concept of
-  in-core analysis, where a certain observable (:ref:`Available observables`),
-  a rule for data accumulation (:ref:`Accumulators`) and/or correlation (:ref:`Correlations`) can be defined.
+  on-the-fly trajectory analysis, where an observable (:ref:`Available observables`)
+  and a rule for data accumulation (:ref:`Accumulators`)
+  or correlation (:ref:`Correlations`) can be attached to the system
+  as a callback function to record system properties
+  as a time series, an average, or a correlation.
 
 
 .. _Direct analysis routines:
@@ -637,7 +639,6 @@ are of the form
 
    C(\tau) = \left<A\left(t\right) \otimes B\left(t+\tau\right)\right>
 
-
 where :math:`t` is time, :math:`\tau` is the lag time (time difference)
 between the measurements of (vector) observables :math:`A` and
 :math:`B`, and :math:`\otimes` is an operator which produces the vector
@@ -704,7 +705,6 @@ Note that in this example, the operation :literal:`square_distance_componentwise
 is used, which is not a correlation function in the mathematical sense. Other
 available operations include actual correlation functions, as described
 in the source documentation of :class:`espressomd.accumulators.Correlator`.
-
 
 .. _Details of the multiple tau correlation algorithm:
 
@@ -801,11 +801,22 @@ be safely used or not, depends on the properties of the difference
    \label{eq:difference}
 
 For example in the case of velocity autocorrelation function, the
-above-mentioned difference has a small value and a random sign,  
+above-mentioned difference has a small value and a random sign, and as such
 different contributions cancel each other. On the other hand, in the of
 the case of mean square displacement the difference is always positive,
 resulting in a non-negligible systematic error. A more general
 discussion is presented in Ref. :cite:`ramirez10a`.
+
+.. _Custom correlations:
+
+Custom correlations
+^^^^^^^^^^^^^^^^^^^
+
+To carry out a correlation on a property that cannot be tracked by an observable,
+store its time series in an array and use the free function
+:func:`espressomd.analyze.autocorrelation`.
+It supports scalars and vector-valued quantities, and leverages the FFT
+(with zero padding) for a fast evaluation of the correlation.
 
 Cluster analysis
 ----------------
@@ -820,7 +831,7 @@ simulations, but the analysis is carried out on the head node, only.
 
 
 Whether or not two particles are neighbors is defined by a pair criterion.
-The available criteria can be found in :mod:`espressomd.pair_criteria`.
+The available pair criteria can be found in :mod:`espressomd.pair_criteria`.
 For example, a distance criterion which will consider particles as neighbors
 if they are closer than 0.11 is created as follows::
 
@@ -829,7 +840,7 @@ if they are closer than 0.11 is created as follows::
 
 To obtain the cluster structure of a system, an instance of
 :class:`espressomd.cluster_analysis.ClusterStructure` has to be created.
-To to create a cluster structure with above criterion::
+To create a cluster structure with the criterion defined above::
 
     import espressomd.cluster_analysis
     cs = espressomd.cluster_analysis.ClusterStructure(distance_criterion=dc, system=system)

@@ -170,7 +170,7 @@ Highlights of the release include:
 * The original LB classes `LBFluid` and `LBFluidGPU` were removed in
   favor of a unified `LBFluid` class for both CPU and GPU (#2701, #4726, #5230).
   Their arguments have also changed, e.g. `dens` became `density` and
-  `visc` became `viscosity`. The `pressure_tensor_neq` property was removed.
+  `visc` became `viscosity`.
 * The original EK class `Electrokinetics` was removed in favor of a unified
   `EKSpecies` class for both CPU and GPU (#2701, #4726, #5101, #5230).
 * Self-propelled particles (swimmers) have been completely re-implemented (#4745).
