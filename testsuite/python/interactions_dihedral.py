@@ -117,6 +117,9 @@ class InteractionsBondedTest(ut.TestCase):
         np.testing.assert_allclose(p_tensor_sim,
                                    p_tensor_ref,
                                    atol=tol)
+        np.testing.assert_allclose(self.system.analysis.pressure()["bonded"],
+                                   0.0,
+                                   atol=tol)
         # consistency: trace / 3 == scalar pressure
         np.testing.assert_allclose(np.trace(p_tensor_sim) / 3.,
                                    self.system.analysis.pressure()["bonded"],
