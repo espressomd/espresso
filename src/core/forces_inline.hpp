@@ -271,6 +271,7 @@ calc_bonded_dihedral_force(Bonded_IA_Parameters const &iaparams,
 #endif
   throw BondUnknownTypeError();
 }
+
 ESPRESSO_ATTR_ALWAYS_INLINE
 inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                 Utils::Vector3d, Utils::Vector3d>>
