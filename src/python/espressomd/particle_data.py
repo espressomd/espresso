@@ -586,6 +586,7 @@ class ParticleHandle(ScriptInterfaceHelper):
             equations of motion and Langevin's equations of rotation.
 
         """
+        assert_features("VIRTUAL_SITES_RELATIVE")
         if isinstance(rel_to, ParticleHandle):
             rel_to = rel_to.id
         else:
@@ -616,7 +617,7 @@ class ParticleHandle(ScriptInterfaceHelper):
             Molecule to relate to (either molecule id or particle object from that molecule).
 
         """
-
+        assert_features("VIRTUAL_SITES_CENTER_OF_MASS")
         if isinstance(rel_to, ParticleHandle):
             rel_to = rel_to.mol_id
         else:
@@ -1165,11 +1166,16 @@ class ParticleList(ScriptInterfaceHelper):
             bonds = p_dict.pop("bonds")
             if nesting_level(bonds) == 1:
                 bonds = [bonds]
+        exclusions = None
+        if "exclusions" in p_dict:
+            exclusions = p_dict.pop("exclusions")
         p = self.call_method("add_particle", **p_dict)
         for bond in bonds:
             if len(bond):
                 bond = p.normalize_and_check_bond_or_throw_exception(bond)
                 p.add_verified_bond(bond)
+        if exclusions is not None:
+            p.exclusions = exclusions
         return p
 
     def _place_new_particles(self, p_list_dict):

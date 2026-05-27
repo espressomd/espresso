@@ -883,6 +883,13 @@ void ParticleHandle::do_construct(VariantMap const &params) {
           do_set_parameter(name, params.at(name));
         }
       }
+      for (auto const &name : params | std::views::keys) {
+        if (not has_parameter(name) and not name.starts_with('_')) {
+          throw std::invalid_argument(
+              "Unknown parameter '" + std::string{name} +
+              "' for particle. Hint: A feature might be missing!");
+        }
+      }
       if (not params.contains("type")) {
         do_set_parameter("type", 0);
       }
