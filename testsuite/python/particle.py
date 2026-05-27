@@ -601,6 +601,7 @@ class ParticleProperties(ut.TestCase):
 
     def test_particle_list(self):
         self.assertEqual(str(self.system.part), "ParticleList([17])")
+        self.assertIsNone(self.system.part.call_method("unknown"))
 
     def test_particle_slice(self):
         """Tests operations on slices of particles"""
