@@ -279,6 +279,11 @@ class ParticleProperties(ut.TestCase):
         p1.update({"exclusions": []})
         self.assertTrue(p1.exclusions.size == 0)
 
+        p3 = self.system.part.add(pos=(0, 0, 0), exclusions=pid1)
+        p4 = self.system.part.add(pos=(0, 0, 0), exclusions=[pid1])
+        self.assertEqual(p3.exclusions, [p1.id])
+        self.assertEqual(p4.exclusions, [p1.id])
+
     @utx.skipIfMissingFeatures(["ROTATION"])
     def test_contradicting_properties_quat(self):
         invalid_combinations = [

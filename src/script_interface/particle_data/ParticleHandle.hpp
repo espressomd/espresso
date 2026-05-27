@@ -157,6 +157,7 @@ class ParticleHandle : public AutoParameters<ParticleHandle> {
 
   template <class F> void set_particle_property(F const &fun) const;
 
+  void set_exclusions(Variant const &value);
   std::size_t setup_hidden_args(VariantMap const &params);
 
 public:

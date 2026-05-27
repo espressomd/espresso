@@ -1166,16 +1166,11 @@ class ParticleList(ScriptInterfaceHelper):
             bonds = p_dict.pop("bonds")
             if nesting_level(bonds) == 1:
                 bonds = [bonds]
-        exclusions = None
-        if "exclusions" in p_dict:
-            exclusions = p_dict.pop("exclusions")
         p = self.call_method("add_particle", **p_dict)
         for bond in bonds:
             if len(bond):
                 bond = p.normalize_and_check_bond_or_throw_exception(bond)
                 p.add_verified_bond(bond)
-        if exclusions is not None:
-            p.exclusions = exclusions
         return p
 
     def _place_new_particles(self, p_list_dict):
