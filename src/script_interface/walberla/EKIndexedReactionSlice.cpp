@@ -47,8 +47,8 @@ Variant EKIndexedReactionSlice::do_call_method(std::string const &name,
     auto const attr = get_value<std::string>(params, "name");
     if (not m_shape_val.contains(attr)) {
       context()->parallel_try_catch([&]() {
-        throw std::runtime_error("Unknown EK indexed reaction property '" +
-                                 attr + "'");
+        std::string const class_prop{"EK indexed reaction property"};
+        throw std::runtime_error("Unknown " + class_prop + " '" + attr + "'");
       });
     }
     return m_shape_val.at(attr);

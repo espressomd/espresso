@@ -83,7 +83,6 @@ public:
   [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
 
 protected:
-  void integrate_vtk_writers() override {}
   void register_vtk_field_filters(walberla::vtk::VTKOutput &) override {}
 };
 

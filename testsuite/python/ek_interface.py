@@ -233,6 +233,7 @@ class EKTest:
         self.assertIsInstance(self.system.ekcontainer.solver,
                               espressomd.electrokinetics.EKNone)
         self.assertEqual(self.system.ekcontainer.solver, ek_solver)
+        self.assertIsNone(ek_solver.call_method("unknown"))
 
         np.testing.assert_allclose(
             np.copy(ek_solver[:, :, :].potential), 0., atol=self.atol)
@@ -487,6 +488,15 @@ class EKTest:
         ek_reaction[3:5, :, :] = values
         np.testing.assert_array_equal(
             ek_reaction[3:5, :, :].is_boundary, values)
+
+        # getters
+        ek_slice = ek_reaction[0:2, -4:-1, 1:2]
+        np.testing.assert_array_equal(
+            np.copy(ek_slice.call_method("get_slice_size")), [2, 3, 1])
+        np.testing.assert_array_equal(
+            np.copy(ek_slice.call_method("get_slice_ranges")),
+            [[0, 8, 1], [2, 11, 2]])
+        self.assertEqual(ek_slice.call_method("get_reaction_sip"), ek_reaction)
 
         # wrong shape raises ValueError
         with self.assertRaisesRegex(ValueError,

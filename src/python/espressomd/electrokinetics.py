@@ -51,6 +51,9 @@ class EKFFT(ScriptInterfaceHelper):
         Use GPU implementation.
     single_precision : :obj:`bool`, optional
         Use single-precision floating-point arithmetic.
+
+    Methods
+    -------
     add_vtk_writer()
         Attach a VTK writer.
 
@@ -134,10 +137,34 @@ class EKNone(ScriptInterfaceHelper, espressomd.detail.walberla.LatticeModel):
             File path to read from.
         binary : :obj:`bool`
             Whether to read in binary or ASCII mode.
+
+    add_vtk_writer()
+        Attach a VTK writer.
+
+        Parameters
+        ----------
+        vtk : :class:`espressomd.electrokinetics.VTKOutput`
+            VTK writer.
+
+    remove_vtk_writer()
+        Detach a VTK writer.
+
+        Parameters
+        ----------
+        vtk : :class:`espressomd.electrokinetics.VTKOutput`
+            VTK writer.
+
+    clear_vtk_writers()
+        Detach all VTK writers.
     """
     _so_name = "walberla::EKNone"
     _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
+    _so_bind_methods = (
+        "add_vtk_writer",
+        "remove_vtk_writer",
+        "clear_vtk_writers",
+    )
 
     def __init__(self, *args, **kwargs):
         _check_lattice_blocks(self.__class__.__name__, kwargs)

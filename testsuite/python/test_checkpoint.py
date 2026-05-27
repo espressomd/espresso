@@ -188,6 +188,14 @@ class CheckpointTest(ut.TestCase):
     def test_ek_species(self):
         lbf = system.lb
         n_ghost_layers = lbf.lattice.get_params()["n_ghost_layers"]
+        ek_solver_class = espressomd.electrokinetics.EKNone
+        ek_solver_params_reference = {
+            "tau": system.time_step, "single_precision": False, "gpu": False}
+        if "LB.GPU" in modes:
+            ek_solver_params_reference["gpu"] = True
+        if espressomd.has_features("WALBERLA_FFT") and "LB.ASCII" in modes:
+            ek_solver_class = espressomd.electrokinetics.EKFFT
+            ek_solver_params_reference["permittivity"] = 0.1
         if n_ghost_layers > 1:
             cpt_mode = 0 if 'LB.ASCII' in modes else 1
             cpt_path = str(self.checkpoint.root / "ek") + "{}.cpt"
@@ -197,8 +205,13 @@ class CheckpointTest(ut.TestCase):
             ek_solver = system.ekcontainer.solver
             self.assertAlmostEqual(system.ekcontainer.tau, system.time_step,
                                    delta=1e-7)
-            self.assertIsInstance(system.ekcontainer.solver,
-                                  espressomd.electrokinetics.EKNone)
+            self.assertIsInstance(ek_solver, ek_solver_class)
+            ek_solver_params = ek_solver.get_params()
+            for key in ek_solver_params_reference:
+                self.assertIn(key, ek_solver_params)
+                np.testing.assert_allclose(np.copy(ek_solver_params[key]),
+                                           ek_solver_params_reference[key],
+                                           atol=1E-7, err_msg=f"{key} differs")
 
             # check exception mechanism with corrupted LB checkpoint files
             with self.assertRaisesRegex(RuntimeError, 'EOF found'):
@@ -220,25 +233,26 @@ class CheckpointTest(ut.TestCase):
 
             ek_species.load_checkpoint(cpt_path.format(""), cpt_mode)
 
-            cpt_path = str(self.checkpoint.root / "ek_none") + "{}.cpt"
-            with self.assertRaisesRegex(RuntimeError, 'EOF found'):
-                ek_solver.load_checkpoint(
-                    cpt_path.format("-missing-data"), cpt_mode)
-            with self.assertRaisesRegex(RuntimeError, 'extra data found, expected EOF'):
-                ek_solver.load_checkpoint(
-                    cpt_path.format("-extra-data"), cpt_mode)
-            if cpt_mode == 0:
-                with self.assertRaisesRegex(RuntimeError, 'incorrectly formatted data'):
+            if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
+                cpt_path = str(self.checkpoint.root / "ek_none") + "{}.cpt"
+                with self.assertRaisesRegex(RuntimeError, 'EOF found'):
                     ek_solver.load_checkpoint(
-                        cpt_path.format("-wrong-format"), cpt_mode)
-                with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+                        cpt_path.format("-missing-data"), cpt_mode)
+                with self.assertRaisesRegex(RuntimeError, 'extra data found, expected EOF'):
                     ek_solver.load_checkpoint(
-                        cpt_path.format("-wrong-boxdim"), cpt_mode)
-            with self.assertRaisesRegex(RuntimeError, 'could not open file'):
-                ek_solver.load_checkpoint(
-                    cpt_path.format("-unknown"), cpt_mode)
+                        cpt_path.format("-extra-data"), cpt_mode)
+                if cpt_mode == 0:
+                    with self.assertRaisesRegex(RuntimeError, 'incorrectly formatted data'):
+                        ek_solver.load_checkpoint(
+                            cpt_path.format("-wrong-format"), cpt_mode)
+                    with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+                        ek_solver.load_checkpoint(
+                            cpt_path.format("-wrong-boxdim"), cpt_mode)
+                with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+                    ek_solver.load_checkpoint(
+                        cpt_path.format("-unknown"), cpt_mode)
 
-            ek_solver.load_checkpoint(cpt_path.format(""), cpt_mode)
+                ek_solver.load_checkpoint(cpt_path.format(""), cpt_mode)
 
             precision = 8 if "LB.WALBERLA" in modes else 5
             m = np.pi / 12
@@ -250,8 +264,9 @@ class CheckpointTest(ut.TestCase):
                 (nx, ny, nz), dtype=float)
             np.testing.assert_almost_equal(
                 np.copy(ek_species[:, :, :].density), grid_3D, decimal=precision)
-            np.testing.assert_almost_equal(
-                np.copy(ek_solver[:, :, :].potential), grid_3D / 4., decimal=precision)
+            if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
+                np.testing.assert_almost_equal(
+                    np.copy(ek_solver[:, :, :].potential), grid_3D / 4., decimal=precision)
 
             state = ek_species.get_params()
             reference = {
@@ -360,13 +375,13 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["WALBERLA"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK mode.")
-    def test_ek_vtk(self):
+    def test_ek_species_vtk(self):
         lbf = system.lb
         n_ghost_layers = lbf.lattice.get_params()["n_ghost_layers"]
         if n_ghost_layers > 1:
             ek_species = system.ekcontainer[0]
             vtk_suffix = config.test_name
-            key_auto = f"vtk_out/auto_ek_{vtk_suffix}"
+            key_auto = f"vtk_out/auto_ek_species_{vtk_suffix}"
             vtk_auto = ek_species.vtk_writers[0]
             self.assertIsInstance(
                 vtk_auto, espressomd.electrokinetics.VTKOutput)
@@ -376,7 +391,7 @@ class CheckpointTest(ut.TestCase):
             self.assertEqual(set(vtk_auto.observables), {"density"})
             self.assertIn(
                 f"write to '{key_auto}' every 1 EK steps (disabled)>", repr(vtk_auto))
-            key_manual = f"vtk_out/manual_ek_{vtk_suffix}"
+            key_manual = f"vtk_out/manual_ek_species_{vtk_suffix}"
             vtk_manual = ek_species.vtk_writers[1]
             self.assertIsInstance(
                 vtk_manual, espressomd.electrokinetics.VTKOutput)
@@ -386,7 +401,8 @@ class CheckpointTest(ut.TestCase):
             self.assertIn(
                 f"write to '{key_manual}' on demand>", repr(vtk_manual))
             # check file numbering when resuming VTK write operations
-            vtk_root = pathlib.Path("vtk_out") / f"manual_ek_{vtk_suffix}"
+            vtk_root = pathlib.Path("vtk_out") / \
+                f"manual_ek_species_{vtk_suffix}"
             filename = "simulation_step_{}.vtu"
             self.assertTrue((vtk_root / filename.format(0)).exists())
             self.assertFalse((vtk_root / filename.format(1)).exists())
@@ -409,6 +425,62 @@ class CheckpointTest(ut.TestCase):
                     ek_density[0, 0, 0], new_density, delta=1e-5)
             (vtk_root / filename.format(1)).unlink(missing_ok=True)
             (vtk_root / filename.format(2)).unlink(missing_ok=True)
+
+    @utx.skipIfMissingFeatures(["WALBERLA"])
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK mode.")
+    def test_ek_solver_vtk(self):
+        lbf = system.lb
+        n_ghost_layers = lbf.lattice.get_params()["n_ghost_layers"]
+        if n_ghost_layers > 1:
+            ek_solver = system.ekcontainer.solver
+            vtk_suffix = config.test_name
+            key_auto = f"vtk_out/auto_ek_poisson_{vtk_suffix}"
+            vtk_auto = ek_solver.vtk_writers[0]
+            self.assertIsInstance(
+                vtk_auto, espressomd.electrokinetics.VTKPoissonOutput)
+            self.assertEqual(vtk_auto.vtk_uid, key_auto)
+            self.assertEqual(vtk_auto.delta_N, 1)
+            self.assertTrue(vtk_auto.force_pvtu)
+            self.assertFalse(vtk_auto.enabled)
+            self.assertEqual(set(vtk_auto.observables), {"potential"})
+            self.assertIn(
+                f"write to '{key_auto}' every 1 EK steps (disabled)>", repr(vtk_auto))
+            key_manual = f"vtk_out/manual_ek_poisson_{vtk_suffix}"
+            vtk_manual = ek_solver.vtk_writers[1]
+            self.assertIsInstance(
+                vtk_manual, espressomd.electrokinetics.VTKPoissonOutput)
+            self.assertEqual(vtk_manual.vtk_uid, key_manual)
+            self.assertEqual(vtk_manual.delta_N, 0)
+            self.assertTrue(vtk_auto.force_pvtu)
+            self.assertEqual(set(vtk_manual.observables), {"potential"})
+            self.assertIn(
+                f"write to '{key_manual}' on demand>", repr(vtk_manual))
+            # check file numbering when resuming VTK write operations
+            vtk_root = pathlib.Path("vtk_out") / \
+                f"manual_ek_poisson_{vtk_suffix}"
+            filename = "simulation_step_{}.vtu"
+            self.assertTrue((vtk_root / filename.format(0)).exists())
+            self.assertFalse((vtk_root / filename.format(1)).exists())
+            self.assertFalse((vtk_root / filename.format(2)).exists())
+            # check VTK objects are still synchronized with their EK objects
+            if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
+                old_potential = ek_solver[0, 0, 0].potential
+                new_potential = 1.5 * old_potential
+                ek_solver[0, 0, 0].potential = new_potential
+                vtk_manual.write()
+                time.sleep(0.1)  # small delay for file system write latency
+                ek_solver[0, 0, 0].potential = old_potential
+                self.assertTrue((vtk_root / filename.format(0)).exists())
+                self.assertTrue((vtk_root / filename.format(1)).exists())
+                self.assertFalse((vtk_root / filename.format(2)).exists())
+                if "espressomd.io.vtk" in sys.modules:
+                    vtk_reader = espressomd.io.vtk.VTKReader()
+                    vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
+                    ek_potential = vtk_data["potential"]
+                    self.assertAlmostEqual(
+                        ek_potential[0, 0, 0], new_potential, delta=1e-5)
+                (vtk_root / filename.format(1)).unlink(missing_ok=True)
+                (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
     def test_system_variables(self):
         cell_system_params = system.cell_system.get_state()
