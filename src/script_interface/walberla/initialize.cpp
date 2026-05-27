@@ -37,6 +37,7 @@
 #include "EKSpeciesNode.hpp"
 #include "EKSpeciesSlice.hpp"
 
+#include "EKIndexedReactionSlice.hpp"
 #include "EKReactant.hpp"
 #include "EKReaction.hpp"
 #include "EKReactions.hpp"
@@ -77,6 +78,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<EKReactant>("walberla::EKReactant");
   om->register_new<EKBulkReaction>("walberla::EKBulkReaction");
   om->register_new<EKIndexedReaction>("walberla::EKIndexedReaction");
+  om->register_new<EKIndexedReactionSlice>("walberla::EKIndexedReactionSlice");
   om->register_new<EKReactions>("walberla::EKReactions");
 }
 

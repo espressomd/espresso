@@ -932,6 +932,73 @@ class EKBulkReaction(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
 
+@script_interface_register
+class EKIndexedReactionSlice(ScriptInterfaceHelper):
+    """Slice of an EK indexed reaction."""
+    _so_name = "walberla::EKIndexedReactionSlice"
+    _so_creation_policy = "GLOBAL"
+
+    def required_keys(self):
+        return {"parent_sip", "slice_range"}
+
+    def validate_params(self, params):
+        utils.check_required_keys(self.required_keys(), params.keys())
+
+    def __init__(self, *args, **kwargs):
+        if "sip" in kwargs:
+            super().__init__(**kwargs)
+        else:
+            self.validate_params(kwargs)
+            slice_range = kwargs.pop("slice_range")
+            grid_size = kwargs["parent_sip"].shape
+            extra_kwargs = espressomd.detail.walberla.get_slice_bounding_box(
+                slice_range, grid_size)
+            super().__init__(*args, **kwargs, **extra_kwargs)
+
+    def __reduce__(self):
+        raise NotImplementedError(
+            "Cannot serialize EK indexed reaction slice objects")
+
+    def _getter(self, attr):
+        value_grid, shape = self.call_method(f"get_{attr}")
+        return utils.array_locked(
+            np.reshape(value_grid, shape).astype(bool))
+
+    def _setter(self, attr, values):
+        dimensions = self.call_method("get_slice_size")
+        if 0 in dimensions:
+            raise AttributeError(
+                f"Cannot set properties of an empty '{self.__class__.__name__}' object")
+
+        values = np.copy(values)
+        value_shape = tuple(self.call_method("get_value_shape", name=attr))
+        target_shape = (*dimensions, *value_shape)
+
+        # broadcast if only one element was provided
+        if values.shape == value_shape or values.shape == () and value_shape == (1,):
+            values = np.full(target_shape, values)
+
+        def shape_squeeze(shape):
+            return tuple(x for x in shape if x != 1)
+
+        if shape_squeeze(values.shape) != shape_squeeze(target_shape):
+            target_shape = tuple([int(x) for x in target_shape])
+            raise ValueError(
+                f"Input-dimensions of '{attr}' array {values.shape} does not "
+                f"match slice dimensions {target_shape}")
+
+        self.call_method(f"set_{attr}",
+                         values=array_variant(values.flatten().astype(int)))
+
+    @property
+    def is_boundary(self):
+        return self._getter("is_boundary")
+
+    @is_boundary.setter
+    def is_boundary(self, values):
+        self._setter("is_boundary", values)
+
+
 class EKIndexedReaction(ScriptInterfaceHelper):
     """
     Reaction type that is applied only on specific cells in the domain.
@@ -961,19 +1028,7 @@ class EKIndexedReaction(ScriptInterfaceHelper):
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
             if any(isinstance(typ, slice) for typ in key):
-                shape = self.shape
-
-                indices = [np.atleast_1d(np.arange(shape[i])[key[i]])
-                           for i in range(3)]
-                dimensions = [ind.size for ind in indices]
-
-                value_grid = np.zeros((*dimensions,), dtype=bool)
-                indices = itertools.product(*map(enumerate, indices))
-                for (i, x), (j, y), (k, z) in indices:
-                    value_grid[i, j, k] = self.call_method(
-                        "get_node_is_boundary", node=(x, y, z))
-
-                return utils.array_locked(value_grid)
+                return EKIndexedReactionSlice(parent_sip=self, slice_range=key)
             else:
                 return self.call_method("get_node_is_boundary", node=key)
         raise TypeError(
@@ -982,25 +1037,8 @@ class EKIndexedReaction(ScriptInterfaceHelper):
     def __setitem__(self, key, values):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
             if any(isinstance(typ, slice) for typ in key):
-                shape = self.shape
-
-                indices = [np.atleast_1d(np.arange(shape[i])[key[i]])
-                           for i in range(3)]
-                dimensions = tuple(ind.size for ind in indices)
-
-                values = np.copy(values)
-
-                # broadcast if only one element was provided
-                if values.shape == ():
-                    values = np.full(dimensions, values)
-                if values.shape != dimensions:
-                    raise ValueError(
-                        f"Input-dimensions of array {values.shape} does not match slice dimensions {dimensions}.")
-
-                indices = itertools.product(*map(enumerate, indices))
-                for (i, x), (j, y), (k, z) in indices:
-                    self.call_method("set_node_is_boundary", node=(
-                        x, y, z), is_boundary=bool(values[i, j, k]))
+                EKIndexedReactionSlice(
+                    parent_sip=self, slice_range=key).is_boundary = values
             else:
                 return self.call_method(
                     "set_node_is_boundary", node=key, is_boundary=values)

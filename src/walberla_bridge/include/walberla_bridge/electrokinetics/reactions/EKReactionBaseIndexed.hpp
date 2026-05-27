@@ -24,6 +24,7 @@
 #include <utils/Vector.hpp>
 
 #include <optional>
+#include <vector>
 
 namespace walberla {
 
@@ -35,6 +36,13 @@ public:
                                     bool is_boundary) = 0;
   virtual std::optional<bool>
   get_node_is_boundary(Utils::Vector3i const &node) = 0;
+  [[nodiscard]] virtual std::vector<int>
+  get_slice_is_boundary(Utils::Vector3i const &lower_corner,
+                        Utils::Vector3i const &upper_corner) const = 0;
+  virtual void set_slice_is_boundary(Utils::Vector3i const &lower_corner,
+                                     Utils::Vector3i const &upper_corner,
+                                     std::vector<int> const &is_boundary) = 0;
+  virtual void ghost_communication() = 0;
 };
 
 } // namespace walberla
