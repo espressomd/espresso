@@ -419,7 +419,8 @@ class EKTest:
         self.assertAlmostEqual(ek_reaction.coefficient, 1.5, delta=self.atol)
         ek_reaction.coefficient = 0.5
         self.assertAlmostEqual(ek_reaction.coefficient, 0.5, delta=self.atol)
-        # boundaries
+
+        # -- node interface --
         self.assertFalse(ek_reaction[1, 1, 1])
         ek_reaction[1, 1, 1] = True
         self.assertTrue(ek_reaction[1, 1, 1])
@@ -427,6 +428,85 @@ class EKTest:
         self.assertFalse(ek_reaction[1, 1, 1])
         ek_reaction.add_node_to_index([1, 1, 1])
         self.assertTrue(ek_reaction[1, 1, 1])
+
+        # multiple independent nodes can be set/cleared independently
+        ek_reaction[2, 3, 4] = True
+        self.assertTrue(ek_reaction[1, 1, 1])
+        self.assertTrue(ek_reaction[2, 3, 4])
+        self.assertFalse(ek_reaction[0, 0, 0])
+        ek_reaction[1, 1, 1] = False
+        self.assertFalse(ek_reaction[1, 1, 1])
+        self.assertTrue(ek_reaction[2, 3, 4])
+
+        # bad key type and bad key length both raise TypeError
+        with self.assertRaisesRegex(TypeError, "is not a valid index"):
+            ek_reaction["bad"]
+        with self.assertRaisesRegex(TypeError, "is not a valid index"):
+            ek_reaction[0, 1]
+
+        # -- slice interface --
+        nx, ny, nz = ek_reaction.shape
+
+        # initial state: all nodes are out of the reaction index
+        is_boundary = ek_reaction[:, :, :].is_boundary
+        self.assertEqual(is_boundary.shape, (nx, ny, nz))
+        self.assertEqual(is_boundary.dtype, bool)
+        # a node set via the node interface shows up in a slice read
+        np.testing.assert_array_equal(is_boundary[2, 3, 4], True)
+        # clear it and verify the full grid is False
+        ek_reaction[:, :, :] = False
+        np.testing.assert_array_equal(ek_reaction[:, :, :].is_boundary, False)
+
+        # returned array is locked (non-writable)
+        locked = ek_reaction[:, :, :].is_boundary
+        with self.assertRaisesRegex(ValueError,
+                                    "ESPResSo array properties return non-writable arrays"):
+            locked[0, 0, 0] = True
+
+        # set a 2D sub-slice (integer dim collapses from the shape) and read back
+        ek_reaction[1, :, :] = True
+        result = ek_reaction[1, :, :].is_boundary
+        self.assertEqual(result.shape, (ny, nz))
+        np.testing.assert_array_equal(result, True)
+        # cells outside the written slice remain False
+        np.testing.assert_array_equal(ek_reaction[0, :, :].is_boundary, False)
+        np.testing.assert_array_equal(ek_reaction[2:, :, :].is_boundary, False)
+
+        # reset, then broadcast a scalar to a 3D slice
+        ek_reaction[:, :, :] = False
+        ek_reaction[3:5, :, :] = True
+        result = ek_reaction[3:5, :, :].is_boundary
+        self.assertEqual(result.shape, (2, ny, nz))
+        np.testing.assert_array_equal(result, True)
+
+        # write a shaped bool array and read it back (round-trip)
+        ek_reaction[:, :, :] = False
+        values = np.zeros((2, ny, nz), dtype=bool)
+        values[0, 0, 1] = True
+        values[1, ny - 1, 0] = True
+        ek_reaction[3:5, :, :] = values
+        np.testing.assert_array_equal(
+            ek_reaction[3:5, :, :].is_boundary, values)
+
+        # wrong shape raises ValueError
+        with self.assertRaisesRegex(ValueError,
+                                    "Input-dimensions of 'is_boundary' array"):
+            ek_reaction[1, :, :] = np.zeros((ny + 1, nz), dtype=bool)
+
+        # empty (out-of-bounds) slice: getter returns an empty array
+        empty_slice = ek_reaction[nx:nx + 5, :, :]
+        self.assertEqual(empty_slice.is_boundary.shape[0], 0)
+
+        # empty slice setter raises AttributeError
+        with self.assertRaisesRegex(
+                AttributeError,
+                "Cannot set properties of an empty 'EKIndexedReactionSlice' object"):
+            empty_slice.is_boundary = True
+
+        # unknown property name raises RuntimeError
+        with self.assertRaisesRegex(RuntimeError,
+                                    "Unknown EK indexed reaction property 'unknown'"):
+            ek_reaction[:, :, :].call_method("get_value_shape", name="unknown")
 
     def test_ek_fluctuations(self):
         """
