@@ -89,7 +89,7 @@ public:
         get_value<Utils::Vector3i>(params, "slice_lower_corner");
     m_slice_upper_corner =
         get_value<Utils::Vector3i>(params, "slice_upper_corner");
-    m_shape_val["is_boundary"] = {1};
+    m_shape_val["is_boundary"] = std::vector<int>(1, 1);
   }
 
   Variant do_call_method(std::string const &name,
