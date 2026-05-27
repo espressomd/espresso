@@ -435,6 +435,9 @@ class ParticleProperties(ut.TestCase):
 
         check("MASS", "mass", [1.1, 0., -1.], 1.)
         check("ELECTROSTATICS", "q", [1., -1.], 0.)
+        with self.assertRaisesRegex(ValueError, "Unknown parameter 'color' for particle. Hint: a feature is probably not compiled in"):
+            self.system.part.add(pos=[0., 0., 0.], color="red")
+        self.assertEqual(len(self.system.part), 1)
 
     def test_parallel_property_setters(self):
         system = self.system

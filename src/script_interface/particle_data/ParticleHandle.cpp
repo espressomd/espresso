@@ -55,6 +55,7 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -885,9 +886,9 @@ void ParticleHandle::do_construct(VariantMap const &params) {
       }
       for (auto const &name : params | std::views::keys) {
         if (not has_parameter(name) and not name.starts_with('_')) {
-          throw std::invalid_argument(
-              "Unknown parameter '" + std::string{name} +
-              "' for particle. Hint: A feature might be missing!");
+          auto error_msg = "Unknown parameter '" + name + "' for particle.";
+          std::string hint = "Hint: a feature is probably not compiled in.";
+          throw std::invalid_argument(error_msg + " " + hint);
         }
       }
       if (not params.contains("type")) {
