@@ -96,6 +96,10 @@ class EKTest:
             self.assertIsNone(flux)
         np.testing.assert_array_almost_equal(
             ek_flux_slice, np.vstack([flux_ref.flux, np.zeros((8, 3))]))
+        np.testing.assert_array_almost_equal(
+            np.copy(ek_species[1, 1, 0].flux), flux_ref.flux)
+        np.testing.assert_array_almost_equal(
+            np.copy(ek_species[1, 2, 0].flux), np.zeros((3,)))
 
         # density boundary on slice
         output_boundary_shape = ek_species[0:-1, 1:, 1:].density_boundary.shape
