@@ -101,10 +101,10 @@ if lbf_class:
 
     if not le_active:
         ek_solver_class = espressomd.electrokinetics.EKNone
-        ek_solver_params = {
-            "tau": system.time_step, "single_precision": False, "gpu": False}
+        ek_params = {"single_precision": False, "gpu": False}
         if "LB.GPU" in modes:
-            ek_solver_params["gpu"] = True
+            ek_params["gpu"] = True
+        ek_solver_params = {"tau": system.time_step, **ek_params}
         if espressomd.has_features("WALBERLA_FFT") and cpt_mode == 1:
             ek_solver_class = espressomd.electrokinetics.EKFFT
             ek_solver_params["permittivity"] = 0.1
@@ -112,7 +112,7 @@ if lbf_class:
         ek_species = espressomd.electrokinetics.EKSpecies(
             lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
             advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
-            single_precision=False, tau=system.time_step)
+            tau=system.time_step, **ek_params)
         ekcontainer = espressomd.electrokinetics.EKContainer(
             solver=ek_solver, tau=ek_species.tau)
         ekcontainer.add(ek_species)

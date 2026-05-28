@@ -198,7 +198,7 @@ class CheckpointTest(ut.TestCase):
             ek_solver_class = espressomd.electrokinetics.EKFFT
             ek_solver_params_reference["permittivity"] = 0.1
         if n_ghost_layers > 1:
-            cpt_mode = 0 if 'LB.ASCII' in modes else 1
+            cpt_mode = 0 if "LB.ASCII" in modes else 1
             cpt_path = str(self.checkpoint.root / "ek") + "{}.cpt"
 
             self.assertEqual(len(system.ekcontainer), 1)

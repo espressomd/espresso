@@ -238,6 +238,23 @@ The CPU implementation of the EK has an extra flag ``single_precision`` to
 use single-precision floating point values. These are approximately 10%
 faster than double-precision, at the cost of a small loss in precision.
 
+To enable GPU acceleration, pass argument ``gpu=True`` to EK species and EK solvers.
+Please note that the GPU implementation uses single-precision floating point operations by default.
+This decreases the accuracy of calculations compared to the CPU implementation,
+which uses double-precision floating point operations by default.
+On GPUs that support double-precision floating point operations,
+argument ``single_precision=False`` can be added to improve precision.
+
+Multi-GPU support is activated by invoking the following expression before the creation
+of the first EK GPU instance::
+
+    system.cuda_init_handle.call_method("set_device_id_per_rank")
+
+The EK solver and all EK species in the same EK container need to use consistent
+floating-point precision and CPU/GPU kernels.
+
+For further information on CUDA support see section :ref:`CUDA acceleration`.
+
 .. _Checkpointing EK:
 
 Checkpointing

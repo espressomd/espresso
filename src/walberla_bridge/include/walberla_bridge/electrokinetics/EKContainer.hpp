@@ -55,6 +55,10 @@ private:
       throw std::runtime_error("EKSpecies lattice incompatible with existing "
                                "Poisson solver lattice");
     }
+    if (new_ek_species->is_gpu() != m_poisson_solver->is_gpu()) {
+      throw std::runtime_error("The EK species and the EK solver need to all "
+                               "be on either the CPU or GPU");
+    }
   }
 
   void sanity_checks(
@@ -65,6 +69,10 @@ private:
                             old_ek_species->get_lattice())) {
         throw std::runtime_error("Poisson solver lattice incompatible with "
                                  "existing EKSpecies lattice");
+      }
+      if (new_ek_solver->is_gpu() != old_ek_species->is_gpu()) {
+        throw std::runtime_error("The EK species and the EK solver need to all "
+                                 "be on either the CPU or GPU");
       }
     }
   }
@@ -80,13 +88,6 @@ public:
   void add(std::shared_ptr<EKSpecies> const &ek_species) {
     assert(not contains(ek_species));
     sanity_checks(ek_species);
-    if (!m_ekcontainer.empty()) {
-      if (ek_species->is_gpu() != m_is_gpu) {
-        throw std::runtime_error(
-            "All EK Species need to be on de same device.");
-      }
-    }
-    m_is_gpu = ek_species->is_gpu();
     m_ekcontainer.emplace_back(ek_species);
   }
 
@@ -108,7 +109,9 @@ public:
     m_poisson_solver = solver;
   }
 
-  [[nodiscard]] bool is_gpu() const noexcept { return m_is_gpu; }
+  [[nodiscard]] bool is_gpu() const noexcept {
+    return m_poisson_solver->is_gpu();
+  }
 
   [[nodiscard]] double get_tau() const noexcept { return m_tau; }
 

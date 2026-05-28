@@ -66,7 +66,7 @@ class EKTest:
             n_ghost_layers=1, agrid=self.AGRID)
 
         eksolver = espressomd.electrokinetics.EKNone(
-            lattice=lattice, tau=self.TAU)
+            lattice=lattice, tau=self.TAU, **self.ek_params)
 
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)
@@ -75,14 +75,14 @@ class EKTest:
             lattice=lattice, density=self.INITIAL_DENSITIES[0],
             diffusion=self.DIFFUSION_COEFFICIENTS[0], valency=0.0,
             advection=False, friction_coupling=False,
-            tau=self.TAU, **self.lattice_params)
+            tau=self.TAU, **self.ek_params)
         self.system.ekcontainer.add(species_A)
 
         species_B = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=self.INITIAL_DENSITIES[1],
             diffusion=self.DIFFUSION_COEFFICIENTS[1], valency=0.0,
             advection=False, friction_coupling=False,
-            tau=self.TAU, **self.lattice_params)
+            tau=self.TAU, **self.ek_params)
         self.system.ekcontainer.add(species_B)
 
         coeffs_left = [-1.0, 1.0]
@@ -161,24 +161,24 @@ class EKTest:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKReactionDoublePrecisionCPU(EKTest, ut.TestCase):
-    lattice_params = {"single_precision": False, "gpu": False}
+    ek_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKReactionSinglePrecisionCPU(EKTest, ut.TestCase):
-    lattice_params = {"single_precision": True, "gpu": False}
+    ek_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKReactionDoublePrecisionGPU(EKTest, ut.TestCase):
-    lattice_params = {"single_precision": False, "gpu": True}
+    ek_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKReactionSinglePrecisionGPU(EKTest, ut.TestCase):
-    lattice_params = {"single_precision": True, "gpu": True}
+    ek_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

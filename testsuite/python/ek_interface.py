@@ -221,6 +221,9 @@ class EKTest:
             ek_slice.potential = 0.1
 
     def test_ek_none_solver(self):
+        is_gpu = self.ek_params["gpu"]
+        self.assertEqual(self.system.ekcontainer.gpu, is_gpu)
+        self.assertEqual(self.system.ekcontainer.solver.gpu, is_gpu)
         ek_solver = espressomd.electrokinetics.EKNone(
             lattice=self.lattice, tau=self.params["tau"], **self.ek_params)
         self.assertEqual(
@@ -295,6 +298,41 @@ class EKTest:
                 ek_small_gl_species.add_boundary_from_shape(
                     shape=wall_shape, value=[1., 2., 3.], boundary_type=espressomd.electrokinetics.FluxBoundary)
 
+        self.system.ekcontainer.add(ek_species)
+        with self.assertRaisesRegex(RuntimeError, "This object is already present in the list"):
+            self.system.ekcontainer.add(ek_species)
+        self.system.ekcontainer.remove(ek_species)
+        with self.assertRaisesRegex(RuntimeError, "This object is absent from the list"):
+            self.system.ekcontainer.remove(ek_species)
+
+        if espressomd.has_features("CUDA"):
+            self.system.ekcontainer.clear()
+            # cannot add a CPU species if the solver is on the GPU
+            ek_species_incompatible = self.make_default_ek_species(
+                gpu=not self.ek_params["gpu"])
+            with self.assertRaisesRegex(RuntimeError, "The EK species and the EK solver need to all be on either the CPU or GPU"):
+                self.system.ekcontainer.add(ek_species_incompatible)
+            self.assertEqual(len(self.system.ekcontainer), 0)
+            # cannot replace a CPU solver by a GPU solver if there is at least
+            # one species in the container
+            self.system.ekcontainer.add(self.make_default_ek_species())
+            ek_solver_incompatible = espressomd.electrokinetics.EKNone(
+                lattice=self.lattice, tau=self.params["tau"],
+                single_precision=self.ek_params["single_precision"],
+                gpu=not self.ek_params["gpu"])
+            old_ek_solver = self.system.ekcontainer.solver
+            with self.assertRaisesRegex(RuntimeError, "The EK species and the EK solver need to all be on either the CPU or GPU"):
+                self.system.ekcontainer.solver = ek_solver_incompatible
+            self.assertEqual(self.system.ekcontainer.solver, old_ek_solver)
+            # if no species are present, a GPU container can become a CPU one
+            self.system.ekcontainer.clear()
+            self.system.ekcontainer.solver = ek_solver_incompatible
+            self.system.ekcontainer.add(ek_species_incompatible)
+            self.assertEqual(
+                self.system.ekcontainer.solver,
+                ek_solver_incompatible)
+            self.assertEqual(len(self.system.ekcontainer), 1)
+
     def test_ek_solver_exceptions(self):
         ek_solver = self.system.ekcontainer.solver
         ek_species = self.make_default_ek_species()
@@ -324,6 +362,10 @@ class EKTest:
             espressomd.electrokinetics.EKNone(
                 lattice=incompatible_lattice, tau=self.params["tau"],
                 **self.ek_params)
+        with self.assertRaisesRegex(ValueError, "EK solver is of the wrong type"):
+            self.system.ekcontainer.solver = ek_species
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'solver' is required; use EKNone if all species are electrically neutral"):
+            espressomd.electrokinetics.EKContainer(tau=1.)
 
         if espressomd.has_features("WALBERLA_FFT"):
             ek_solver = self.ek_solver_class(

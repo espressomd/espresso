@@ -47,7 +47,7 @@ class EKTest:
         Testing the EK fixed flux boundaries to test the fixed inflow into a non-periodic box.
         """
 
-        decimal_precision = 5 if self.lattice_params["single_precision"] else 7
+        decimal_precision = 5 if self.ek_params["single_precision"] else 7
 
         lattice = espressomd.electrokinetics.Lattice(
             n_ghost_layers=1, agrid=self.AGRID)
@@ -55,10 +55,10 @@ class EKTest:
         ekspecies = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             valency=0.0, advection=False, friction_coupling=False,
-            tau=self.TAU, **self.lattice_params)
+            tau=self.TAU, **self.ek_params)
 
         eksolver = espressomd.electrokinetics.EKNone(
-            lattice=lattice, tau=self.TAU)
+            lattice=lattice, tau=self.TAU, **self.ek_params)
 
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)
@@ -110,24 +110,24 @@ class EKTest:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKFixedFluxDoublePrecisionCPU(EKTest, ut.TestCase):
-    lattice_params = {"single_precision": False, "gpu": False}
+    ek_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKFixedFluxSinglePrecisionCPU(EKTest, ut.TestCase):
-    lattice_params = {"single_precision": True, "gpu": False}
+    ek_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKFixedFluxDoublePrecisionGPU(EKTest, ut.TestCase):
-    lattice_params = {"single_precision": False, "gpu": True}
+    ek_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKFixedFluxSinglePrecisionGPU(EKTest, ut.TestCase):
-    lattice_params = {"single_precision": True, "gpu": True}
+    ek_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

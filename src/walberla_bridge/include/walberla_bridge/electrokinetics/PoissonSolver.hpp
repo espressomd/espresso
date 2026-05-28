@@ -73,10 +73,6 @@ public:
                                    std::vector<double> const &potential) = 0;
   virtual void ghost_communication() = 0;
 
-  void register_vtk_field_writers(walberla::vtk::VTKOutput &,
-                                  LatticeModel::units_map const &,
-                                  int) override {}
-
   virtual void setup_fft(bool use_gpu_aware) = 0;
 
   [[nodiscard]] virtual bool is_gpu() const noexcept = 0;
