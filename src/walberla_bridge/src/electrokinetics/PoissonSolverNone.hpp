@@ -112,9 +112,13 @@ public:
     m_potential_field_id = gpu::addGPUFieldToStorage<PotentialField>(
         blocks, "potential field", 1u, field::fzyx,
         get_lattice().get_ghost_layers());
+    for (auto &block : *blocks) {
+      auto field = block.template getData<PotentialField>(m_potential_field_id);
+      ek::accessor::Scalar::initialize(field, FloatType{0});
+    }
 #else  // __CUDACC__
     m_potential_field_id = field::addToStorage<PotentialField>(
-        blocks, "potential field", 0., field::fzyx,
+        blocks, "potential field", FloatType{0}, field::fzyx,
         get_lattice().get_ghost_layers());
 #endif // __CUDACC__
   }
