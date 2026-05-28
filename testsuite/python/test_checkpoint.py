@@ -263,8 +263,15 @@ class CheckpointTest(ut.TestCase):
             grid_3D = np.fromfunction(
                 lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
                 (nx, ny, nz), dtype=float)
+            ref_density = np.copy(grid_3D)
+            ref_density[0, :, :] = 1.
+            ref_density[-1, :, :] = 2.
             np.testing.assert_almost_equal(
-                np.copy(ek_species[:, :, :].density), grid_3D, decimal=precision)
+                np.copy(ek_species[:, :, :].density), ref_density, decimal=precision)
+            np.testing.assert_almost_equal(
+                np.copy(ek_species[0, :, :].flux), [1., 2., 3.], decimal=precision)
+            np.testing.assert_almost_equal(
+                np.copy(ek_species[-1, :, :].flux), [4., 5., 6.], decimal=precision)
             if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
                 np.testing.assert_almost_equal(
                     np.copy(ek_solver[:, :, :].potential), grid_3D / 4., decimal=precision)

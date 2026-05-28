@@ -669,6 +669,10 @@ public:
   [[nodiscard]] std::optional<double>
   get_node_density(Utils::Vector3i const &node,
                    bool consider_ghosts = false) const override {
+    if (m_boundary_density->node_is_boundary(node)) {
+      return m_boundary_density->get_node_value_at_boundary(node);
+    }
+
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
 
     if (!bc)
@@ -700,10 +704,15 @@ public:
 #ifndef NDEBUG
           values_size += bci->numCells();
 #endif
-          auto kernel = [&values, &out](unsigned const block_index,
-                                        unsigned const local_index,
-                                        Utils::Vector3i const &) {
-            out[local_index] = double_c(values[block_index]);
+          auto kernel = [this, &values, &out](unsigned const block_index,
+                                              unsigned const local_index,
+                                              Utils::Vector3i const &node) {
+            if (m_boundary_density->node_is_boundary(node)) {
+              out[local_index] =
+                  m_boundary_density->get_node_value_at_boundary(node);
+            } else {
+              out[local_index] = double_c(values[block_index]);
+            }
           };
 
           copy_block_buffer(*bci, *ci, block_offset, lower_corner, kernel);
@@ -745,6 +754,10 @@ public:
   [[nodiscard]] std::optional<Utils::Vector3d>
   get_node_flux_vector(Utils::Vector3i const &node,
                        bool consider_ghosts = false) const override {
+    if (m_boundary_flux->node_is_boundary(node)) {
+      return to_vector3d(m_boundary_flux->get_node_value_at_boundary(node));
+    }
+
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
 
     if (!bc)

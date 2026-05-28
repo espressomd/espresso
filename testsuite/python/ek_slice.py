@@ -117,11 +117,18 @@ class EKTest:
         dens_ref = espressomd.electrokinetics.DensityBoundary(1e-6)
         ek_species[2:3, 1:, 0].density_boundary = dens_ref
         ek_species[2:3, 2:, 0].density_boundary = None
+        ek_density_slice = np.copy(ek_species[2, 1:, 0].density)
         for dens in ek_species[2:3, 1, 0].density_boundary.flatten():
             np.testing.assert_array_almost_equal(
                 dens.density, dens_ref.density)
         for dens in ek_species[2:3, 2:, 0:2].density_boundary.flatten():
             self.assertIsNone(dens)
+        np.testing.assert_array_almost_equal(
+            ek_density_slice, [dens_ref.density] + 8 * [2.])
+        np.testing.assert_array_almost_equal(
+            np.copy(ek_species[2, 1, 0].density), dens_ref.density)
+        np.testing.assert_array_almost_equal(
+            np.copy(ek_species[2, 2, 0].density), 2.)
 
         # is_boundary on slice
         output_boundary_shape = ek_species[1:, 1:, 1:].is_boundary.shape
