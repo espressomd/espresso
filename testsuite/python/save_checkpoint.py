@@ -102,7 +102,7 @@ if lbf_class:
     if not le_active:
         ek_solver_class = espressomd.electrokinetics.EKNone
         ek_params = {"single_precision": False, "gpu": False}
-        if "LB.GPU" in modes:
+        if "LB.GPU" in modes and espressomd.gpu_available():
             ek_params["gpu"] = True
         ek_solver_params = {"tau": system.time_step, **ek_params}
         if espressomd.has_features("WALBERLA_FFT") and cpt_mode == 1:

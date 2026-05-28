@@ -192,7 +192,7 @@ class CheckpointTest(ut.TestCase):
         ek_solver_class = espressomd.electrokinetics.EKNone
         ek_solver_params_reference = {
             "tau": system.time_step, "single_precision": False, "gpu": False}
-        if "LB.GPU" in modes:
+        if "LB.GPU" in modes and espressomd.gpu_available():
             ek_solver_params_reference["gpu"] = True
         if espressomd.has_features("WALBERLA_FFT") and cpt_mode == 1:
             ek_solver_class = espressomd.electrokinetics.EKFFT
