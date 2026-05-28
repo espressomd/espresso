@@ -464,7 +464,7 @@ class EKTest:
                                     "ESPResSo array properties return non-writable arrays"):
             locked[0, 0, 0] = True
 
-        # set a 2D sub-slice (integer dim collapses from the shape) and read back
+        # set a 2D slice (integer dim collapses from the shape) and read back
         ek_reaction[1, :, :] = True
         result = ek_reaction[1, :, :].is_boundary
         self.assertEqual(result.shape, (ny, nz))
@@ -570,6 +570,7 @@ class EKTest:
 
     def test_grid_index(self):
         ek_species = self.make_default_ek_species()
+        ek_solver = self.system.ekcontainer.solver
         ek_reactant = espressomd.electrokinetics.EKReactant(
             ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
         ek_reaction = espressomd.electrokinetics.EKIndexedReaction(
@@ -584,6 +585,7 @@ class EKTest:
             self.assertTrue(ek_reaction[0, 0, 0])
             self.assertEqual(ek_reaction[tuple(n)], ek_reaction[0, 0, 0])
             self.assertEqual(ek_species[tuple(n)], ek_species[0, 0, 0])
+            self.assertEqual(ek_solver[tuple(n)], ek_solver[0, 0, 0])
             for offset in (int_shape[i] + 1, -(int_shape[i] + 1)):
                 n = [0, 0, 0]
                 n[i] += offset
@@ -592,18 +594,21 @@ class EKTest:
                     ek_reaction[tuple(n)]
                 with self.assertRaisesRegex(IndexError, err_msg):
                     ek_species[tuple(n)]
+                with self.assertRaisesRegex(IndexError, err_msg):
+                    ek_solver[tuple(n)]
         # node index
-        node = ek_species[1, 2, 3]
-        with self.assertRaisesRegex(RuntimeError, "Parameter 'index' is read-only"):
-            node.index = [2, 4, 6]
-        np.testing.assert_array_equal(node.index, [1, 2, 3])
-        retval = node.call_method("override_index", index=[2, 4, 6])
-        self.assertEqual(retval, 0)
-        np.testing.assert_array_equal(node.index, [2, 4, 6])
-        retval = node.call_method("override_index", index=[0, 0, shape[2]])
-        self.assertEqual(retval, 1)
-        np.testing.assert_array_equal(node.index, [2, 4, 6])
-        np.testing.assert_array_equal(ek_species[-1, -1, -1].index, shape - 1)
+        for ek_obj in [ek_species, ek_solver]:
+            node = ek_obj[1, 2, 3]
+            with self.assertRaisesRegex(RuntimeError, "Parameter 'index' is read-only"):
+                node.index = [2, 4, 6]
+            np.testing.assert_array_equal(node.index, [1, 2, 3])
+            retval = node.call_method("override_index", index=[2, 4, 6])
+            self.assertEqual(retval, 0)
+            np.testing.assert_array_equal(node.index, [2, 4, 6])
+            retval = node.call_method("override_index", index=[0, 0, shape[2]])
+            self.assertEqual(retval, 1)
+            np.testing.assert_array_equal(node.index, [2, 4, 6])
+            np.testing.assert_array_equal(ek_obj[-1, -1, -1].index, shape - 1)
 
     def test_runtime_exceptions(self):
         # set up a valid species

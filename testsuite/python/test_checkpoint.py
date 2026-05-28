@@ -187,13 +187,14 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK mode.")
     def test_ek_species(self):
         lbf = system.lb
+        cpt_mode = 0 if "LB.ASCII" in modes else 1
         n_ghost_layers = lbf.lattice.get_params()["n_ghost_layers"]
         ek_solver_class = espressomd.electrokinetics.EKNone
         ek_solver_params_reference = {
             "tau": system.time_step, "single_precision": False, "gpu": False}
         if "LB.GPU" in modes:
             ek_solver_params_reference["gpu"] = True
-        if espressomd.has_features("WALBERLA_FFT") and "LB.ASCII" in modes:
+        if espressomd.has_features("WALBERLA_FFT") and cpt_mode == 1:
             ek_solver_class = espressomd.electrokinetics.EKFFT
             ek_solver_params_reference["permittivity"] = 0.1
         if n_ghost_layers > 1:
@@ -355,12 +356,12 @@ class CheckpointTest(ut.TestCase):
         self.assertFalse((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())
         # check VTK objects are still synchronized with their LB objects
-        old_density = lbf[0, 0, 0].density
+        old_density = np.copy(lbf[:, :, :].density)
         new_density = 1.5 * old_density
-        lbf[0, 0, 0].density = new_density
+        lbf[:, :, :].density = new_density
         vtk_manual.write()
         time.sleep(0.1)  # small delay for file system write latency
-        lbf[0, 0, 0].density = old_density
+        lbf[:, :, :].density = old_density
         self.assertTrue((vtk_root / filename.format(0)).exists())
         self.assertTrue((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())
@@ -368,8 +369,8 @@ class CheckpointTest(ut.TestCase):
             vtk_reader = espressomd.io.vtk.VTKReader()
             vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
             lb_density = vtk_data["density"]
-            self.assertAlmostEqual(
-                lb_density[0, 0, 0], new_density, delta=1e-4)
+            np.testing.assert_allclose(
+                lb_density[:, :, :], new_density, atol=1e-4, rtol=0.)
         (vtk_root / filename.format(1)).unlink(missing_ok=True)
         (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
@@ -408,12 +409,12 @@ class CheckpointTest(ut.TestCase):
             self.assertFalse((vtk_root / filename.format(1)).exists())
             self.assertFalse((vtk_root / filename.format(2)).exists())
             # check VTK objects are still synchronized with their EK objects
-            old_density = ek_species[0, 0, 0].density
+            old_density = np.copy(ek_species[:, :, :].density)
             new_density = 1.5 * old_density
-            ek_species[0, 0, 0].density = new_density
+            ek_species[:, :, :].density = new_density
             vtk_manual.write()
             time.sleep(0.1)  # small delay for file system write latency
-            ek_species[0, 0, 0].density = old_density
+            ek_species[:, :, :].density = old_density
             self.assertTrue((vtk_root / filename.format(0)).exists())
             self.assertTrue((vtk_root / filename.format(1)).exists())
             self.assertFalse((vtk_root / filename.format(2)).exists())
@@ -421,8 +422,8 @@ class CheckpointTest(ut.TestCase):
                 vtk_reader = espressomd.io.vtk.VTKReader()
                 vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
                 ek_density = vtk_data["density"]
-                self.assertAlmostEqual(
-                    ek_density[0, 0, 0], new_density, delta=1e-5)
+                np.testing.assert_allclose(
+                    ek_density[:, :, :], new_density, atol=1e-5, rtol=0.)
             (vtk_root / filename.format(1)).unlink(missing_ok=True)
             (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
@@ -464,12 +465,12 @@ class CheckpointTest(ut.TestCase):
             self.assertFalse((vtk_root / filename.format(2)).exists())
             # check VTK objects are still synchronized with their EK objects
             if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
-                old_potential = ek_solver[0, 0, 0].potential
+                old_potential = np.copy(ek_solver[:, :, :].potential)
                 new_potential = 1.5 * old_potential
-                ek_solver[0, 0, 0].potential = new_potential
+                ek_solver[:, :, :].potential = new_potential
                 vtk_manual.write()
                 time.sleep(0.1)  # small delay for file system write latency
-                ek_solver[0, 0, 0].potential = old_potential
+                ek_solver[:, :, :].potential = old_potential
                 self.assertTrue((vtk_root / filename.format(0)).exists())
                 self.assertTrue((vtk_root / filename.format(1)).exists())
                 self.assertFalse((vtk_root / filename.format(2)).exists())
@@ -477,8 +478,8 @@ class CheckpointTest(ut.TestCase):
                     vtk_reader = espressomd.io.vtk.VTKReader()
                     vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
                     ek_potential = vtk_data["potential"]
-                    self.assertAlmostEqual(
-                        ek_potential[0, 0, 0], new_potential, delta=1e-5)
+                    np.testing.assert_allclose(
+                        ek_potential[:, :, :], new_potential, atol=1e-5, rtol=0.)
                 (vtk_root / filename.format(1)).unlink(missing_ok=True)
                 (vtk_root / filename.format(2)).unlink(missing_ok=True)
 

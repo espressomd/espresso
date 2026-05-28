@@ -41,7 +41,7 @@ class TestVTK:
     system.cell_system.skin = 0.4
 
     def setUp(self):
-        self.lattice = self.lattice_class(n_ghost_layers=1, agrid=0.5)
+        self.lattice = self.lattice_class(n_ghost_layers=2, agrid=0.5)
         self.actor = self.add_actor()
 
     def tearDown(self):
@@ -293,8 +293,8 @@ class TestLBVTK(TestVTK):
                     grids_b[label_density][2:-2, :, :], lb_density,
                     rtol=1e-7, atol=0.)
                 # check that boundary cell values are written correctly
-                # density and velocity in boundary region are available via
-                # the boundary mask; the interior data matches the filtered output
+                # density and velocity in boundary region are available via the
+                # boundary mask; the interior data matches the filtered output
                 flat_boundary_mask = np.asarray(
                     grids_b["boundary"]).ravel().astype(bool)
                 np.testing.assert_allclose(
@@ -372,6 +372,14 @@ class TestEKVTK(TestVTK):
             center=self.system.box_l // 2, radius=2.)
         actor.add_boundary_from_shape(
             shape=sphere, value=0.0, boundary_type=espressomd.electrokinetics.DensityBoundary)
+        actor[2, 0, 0].flux_boundary = espressomd.electrokinetics.FluxBoundary(
+            [0.01, -0.01, 0.02])
+        if isinstance(self.solver, espressomd.electrokinetics.EKNone):
+            kx, ky, kz = np.pi / self.lattice.shape
+            self.solver[:, :, :].potential = np.fromfunction(
+                lambda i, j, k: np.cos(i * kx) *
+                np.cos(j * ky) * np.cos(k * kz),
+                self.lattice.shape, dtype=float)
 
         n_steps = 100
         shape = tuple(self.lattice.shape)
@@ -646,6 +654,29 @@ class EKWalberlaVTKSinglePrecisionGPU(TestEKVTK, ut.TestCase):
     ek_solver = espressomd.electrokinetics.EKFFT
     ek_params = {"single_precision": True, "gpu": True}
     vtk_id = "ek_single_precision_gpu"
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKWalberlaVTKSinglePrecisionEKNoneCPU(TestEKVTK, ut.TestCase):
+    vtk_class = espressomd.electrokinetics.VTKOutput
+    vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
+    lattice_class = espressomd.electrokinetics.Lattice
+    ek_class = espressomd.electrokinetics.EKSpecies
+    ek_solver = espressomd.electrokinetics.EKNone
+    ek_params = {"single_precision": True, "gpu": False}
+    vtk_id = "ek_single_precision_eknone_cpu"
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKWalberlaVTKSinglePrecisionEKNoneGPU(TestEKVTK, ut.TestCase):
+    vtk_class = espressomd.electrokinetics.VTKOutput
+    vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
+    lattice_class = espressomd.electrokinetics.Lattice
+    ek_class = espressomd.electrokinetics.EKSpecies
+    ek_solver = espressomd.electrokinetics.EKNone
+    ek_params = {"single_precision": True, "gpu": True}
+    vtk_id = "ek_single_precision_eknone_gpu"
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])

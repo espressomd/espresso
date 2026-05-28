@@ -206,6 +206,7 @@ BOOST_DATA_TEST_CASE(node_flux_boundary, bdata::make(all_eks()), ek_generator) {
       BOOST_CHECK(!ek->set_node_flux_boundary(node, flux));
       ek->ghost_communication();
       BOOST_CHECK(!ek->get_node_flux_at_boundary(node));
+      BOOST_CHECK(!ek->get_node_flux_vector(node));
       BOOST_CHECK(!ek->remove_node_from_flux_boundary(node));
       ek->ghost_communication();
       BOOST_CHECK(!ek->get_node_is_flux_boundary(node));

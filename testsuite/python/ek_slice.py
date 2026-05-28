@@ -88,11 +88,14 @@ class EKTest:
         flux_ref = espressomd.electrokinetics.FluxBoundary([1e-6, 2e-6, 3e-6])
         ek_species[1:2, 1:, 0].flux_boundary = flux_ref
         ek_species[1:2, 2:, 0].flux_boundary = None
+        ek_flux_slice = np.copy(ek_species[1, 1:, 0].flux)
         for flux in ek_species[1:2, 1, 0].flux_boundary.flatten():
             np.testing.assert_array_almost_equal(
                 flux.flux, flux_ref.flux)
         for flux in ek_species[1:2, 2:, 0:2].flux_boundary.flatten():
             self.assertIsNone(flux)
+        np.testing.assert_array_almost_equal(
+            ek_flux_slice, np.vstack([flux_ref.flux, np.zeros((8, 3))]))
 
         # density boundary on slice
         output_boundary_shape = ek_species[0:-1, 1:, 1:].density_boundary.shape

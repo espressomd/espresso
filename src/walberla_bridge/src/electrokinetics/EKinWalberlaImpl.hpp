@@ -58,6 +58,7 @@
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -586,8 +587,7 @@ private:
 
 protected:
   void integrate_vtk_writers() override {
-    for (auto const &it : m_vtk_auto) {
-      auto &vtk_handle = it.second;
+    for (auto const &vtk_handle : m_vtk_auto | std::views::values) {
       if (vtk_handle->enabled) {
         vtk::writeFiles(vtk_handle->ptr)();
         vtk_handle->execution_count++;
@@ -1087,9 +1087,12 @@ public:
   }
 
   void register_vtk_field_filters(walberla::vtk::VTKOutput &vtk_obj) override {
-    field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_density_id);
-    fluid_filter.addFlag(Boundary_flag);
-    vtk_obj.addCellExclusionFilter(fluid_filter);
+    field::FlagFieldCellFilter<FlagField> dens_filter(m_flag_field_density_id);
+    field::FlagFieldCellFilter<FlagField> flux_filter(m_flag_field_flux_id);
+    dens_filter.addFlag(Boundary_flag);
+    flux_filter.addFlag(Boundary_flag);
+    vtk_obj.addCellExclusionFilter(dens_filter);
+    vtk_obj.addCellExclusionFilter(flux_filter);
   }
 
 protected:

@@ -78,6 +78,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -519,8 +520,7 @@ public:
 
 protected:
   void integrate_vtk_writers() override {
-    for (auto const &it : m_vtk_auto) {
-      auto &vtk_handle = it.second;
+    for (auto const &vtk_handle : m_vtk_auto | std::views::values) {
       if (vtk_handle->enabled) {
         vtk::writeFiles(vtk_handle->ptr)();
         vtk_handle->execution_count++;

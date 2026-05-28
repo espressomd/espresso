@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import itertools
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
@@ -73,20 +74,18 @@ class EKDiffusiveFlux:
 
         offset = np.array([-1, 0, 1])
         normalization_factor = 1.0 + 2. * np.sqrt(2) + 4.0 / 3.0 * np.sqrt(3)
-        for x in offset:
-            for y in offset:
-                for z in offset:
-                    direction = np.array([x, y, z])
-                    local_flux = np.array(ekspecies[direction + center].flux)
-                    dist = np.linalg.norm(direction)
-                    if dist > 0:
-                        ref_flux = direction / normalization_factor * \
-                            self.DIFFUSION_COEFFICIENT / dist / 2.0 / self.AGRID
-                        np.testing.assert_allclose(
-                            local_flux, ref_flux, rtol=0.0, atol=atol)
-                    else:
-                        np.testing.assert_allclose(
-                            local_flux, np.zeros(3), rtol=0.0, atol=2 * atol)
+        fluxes = np.copy(ekspecies[:, :, :].flux)
+        for direction in itertools.product(offset, repeat=3):
+            local_flux = fluxes[*(direction + center)]
+            dist = np.linalg.norm(direction)
+            if dist > 0:
+                ref_flux = direction / normalization_factor * \
+                    self.DIFFUSION_COEFFICIENT / dist / 2.0 / self.AGRID
+                np.testing.assert_allclose(
+                    local_flux, ref_flux, rtol=0.0, atol=atol)
+            else:
+                np.testing.assert_allclose(
+                    local_flux, np.zeros(3), rtol=0.0, atol=2 * atol)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
