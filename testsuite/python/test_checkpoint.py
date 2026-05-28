@@ -269,9 +269,11 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_almost_equal(
                 np.copy(ek_species[:, :, :].density), ref_density, decimal=precision)
             np.testing.assert_almost_equal(
-                np.copy(ek_species[0, :, :].flux), [1., 2., 3.], decimal=precision)
+                np.copy(ek_species[0, :, :].flux),
+                1e-3 * np.array([1., 2., 3.]), decimal=precision)
             np.testing.assert_almost_equal(
-                np.copy(ek_species[-1, :, :].flux), [4., 5., 6.], decimal=precision)
+                np.copy(ek_species[-1, :, :].flux),
+                1e-3 * np.array([4., 5., 6.]), decimal=precision)
             if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
                 np.testing.assert_almost_equal(
                     np.copy(ek_solver[:, :, :].potential), grid_3D / 4., decimal=precision)
