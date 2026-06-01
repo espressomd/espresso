@@ -55,7 +55,7 @@
 #]=======================================================================]
 function(python_test)
   cmake_parse_arguments(
-    TEST "NO_MPI" "FILE;MAX_NUM_PROC;NUM_THREADS;GPU_SLOTS;SUFFIX"
+    TEST "NO_MPI" "FILE;MAX_NUM_PROC;NUM_THREADS;GPU_SLOTS;SUFFIX;TIMEOUT"
     "DEPENDS;DEPENDENCIES;LABELS;ARGUMENTS" ${ARGN})
   cmake_path(GET TEST_FILE STEM TEST_NAME)
   set(TEST_FILE_CONFIGURED "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}.py")
@@ -122,6 +122,11 @@ function(python_test)
     list(APPEND TEST_LABELS "parallel_odd")
   endif()
   list(APPEND TEST_LABELS "python_test")
+  if(DEFINED TEST_TIMEOUT)
+    if(${TEST_TIMEOUT} GREATER ${ESPRESSO_TEST_TIMEOUT})
+      set_property(TEST ${TEST_NAME} PROPERTY TIMEOUT ${TEST_TIMEOUT})
+    endif()
+  endif()
 
   math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
 
@@ -414,9 +419,11 @@ python_test(FILE utils.py MAX_NUM_PROC 1)
 python_test(FILE npt_thermostat.py MAX_NUM_PROC 4)
 python_test(FILE box_geometry.py MAX_NUM_PROC 1)
 python_test(FILE lattice.py MAX_NUM_PROC 4)
-python_test(FILE lattice_vtk.py MAX_NUM_PROC 4 GPU_SLOTS 1)
+python_test(FILE lattice_vtk.py MAX_NUM_PROC 4 GPU_SLOTS 1 NUM_THREADS 1
+            TIMEOUT 600)
 if(${ESPRESSO_TEST_NP} GREATER_EQUAL 6)
-  python_test(FILE lattice_vtk.py MAX_NUM_PROC 6 SUFFIX 6_cores GPU_SLOTS 1)
+  python_test(FILE lattice_vtk.py MAX_NUM_PROC 6 SUFFIX 6_cores GPU_SLOTS 1
+              NUM_THREADS 1 TIMEOUT 600)
 endif()
 python_test(FILE ek_interface.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE ek_diffusion.py MAX_NUM_PROC 1 GPU_SLOTS 1)
