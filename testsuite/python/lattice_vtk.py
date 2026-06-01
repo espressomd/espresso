@@ -638,49 +638,49 @@ class EKWalberlaVTKSinglePrecisionEKNoneGPU(TestEKVTK, ut.TestCase):
     vtk_id = "ek_single_precision_gpu_eknone"
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
-class LBWalberlaVTKDoublePrecisionCPU_NoBoundaries(TestLBVTK, ut.TestCase):
-    vtk_class = espressomd.lb.VTKOutput
-    lattice_class = espressomd.lb.Lattice
-    lb_class = espressomd.lb.LBFluid
-    lb_params = {"single_precision": False, "gpu": False}
-    vtk_id = "lb_double_precision_cpu_no_boundaries"
-    include_boundaries = False
-
-
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
-class LBWalberlaVTKSinglePrecisionGPU_NoBoundaries(TestLBVTK, ut.TestCase):
+class LBWalberlaVTKDoublePrecisionGPU_NoBoundaries(TestLBVTK, ut.TestCase):
     vtk_class = espressomd.lb.VTKOutput
     lattice_class = espressomd.lb.Lattice
     lb_class = espressomd.lb.LBFluid
-    lb_params = {"single_precision": True, "gpu": True}
-    vtk_id = "lb_single_precision_gpu_no_boundaries"
+    lb_params = {"single_precision": False, "gpu": True}
+    vtk_id = "lb_double_precision_gpu_no_boundaries"
     include_boundaries = False
 
 
-@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKWalberlaVTKDoublePrecisionCPU_NoBoundaries(TestEKVTK, ut.TestCase):
-    vtk_class = espressomd.electrokinetics.VTKOutput
-    vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
-    lattice_class = espressomd.electrokinetics.Lattice
-    ek_class = espressomd.electrokinetics.EKSpecies
-    ek_solver = espressomd.electrokinetics.EKFFT
-    ek_params = {"single_precision": False, "gpu": False}
-    vtk_id = "ek_double_precision_cpu_no_boundaries"
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBWalberlaVTKSinglePrecisionCPU_NoBoundaries(TestLBVTK, ut.TestCase):
+    vtk_class = espressomd.lb.VTKOutput
+    lattice_class = espressomd.lb.Lattice
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
+    vtk_id = "lb_single_precision_cpu_no_boundaries"
     include_boundaries = False
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
-class EKWalberlaVTKSinglePrecisionGPU_NoBoundaries(TestEKVTK, ut.TestCase):
+class EKWalberlaVTKDoublePrecisionGPU_NoBoundaries(TestEKVTK, ut.TestCase):
     vtk_class = espressomd.electrokinetics.VTKOutput
     vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
     lattice_class = espressomd.electrokinetics.Lattice
     ek_class = espressomd.electrokinetics.EKSpecies
     ek_solver = espressomd.electrokinetics.EKFFT
-    ek_params = {"single_precision": True, "gpu": True}
-    vtk_id = "ek_single_precision_gpu_no_boundaries"
+    ek_params = {"single_precision": False, "gpu": True}
+    vtk_id = "ek_double_precision_gpu_no_boundaries"
+    include_boundaries = False
+
+
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
+class EKWalberlaVTKSinglePrecisionCPU_NoBoundaries(TestEKVTK, ut.TestCase):
+    vtk_class = espressomd.electrokinetics.VTKOutput
+    vtk_poisson_class = espressomd.electrokinetics.VTKPoissonOutput
+    lattice_class = espressomd.electrokinetics.Lattice
+    ek_class = espressomd.electrokinetics.EKSpecies
+    ek_solver = espressomd.electrokinetics.EKFFT
+    ek_params = {"single_precision": True, "gpu": False}
+    vtk_id = "ek_single_precision_cpu_no_boundaries"
     include_boundaries = False
 
 
