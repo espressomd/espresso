@@ -35,7 +35,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # project info
 project(
   ESPResSo
-  VERSION "5.0.0"
+  VERSION "5.0.1"
   LANGUAGES C CXX
   HOMEPAGE_URL "https://espressomd.org"
   DESCRIPTION

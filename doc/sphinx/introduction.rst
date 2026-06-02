@@ -648,13 +648,13 @@ publications, using the BibTeX entries indicated in this user guide.
 
 A complete citation would look like this:
 
-    Simulations were carried out with ESPResSo 5.0.0[22,23,24] using the ICC\*
+    Simulations were carried out with ESPResSo 5.0.1[22,23,24] using the ICC\*
     algorithm[25].
 
     | ____________
 
-    | [22] J.-N. Grad, F. Weik, A. Reinauer, *et al.* ESPResSo, version 5.0.0.
-      Zenodo, Feb 2026. doi:\ `10.5281/zenodo.18791183 <https://doi.org/10.5281/zenodo.18791183>`_.
+    | [22] J.-N. Grad, F. Weik, A. Reinauer, *et al.* ESPResSo, version 5.0.1.
+      Zenodo, Feb 2026. doi:\ `10.5281/zenodo.20450775 <https://doi.org/10.5281/zenodo.20450775>`_.
     | [23] R. Weeber, J.-N. Grad, D. Beyer *et al.* ESPResSo, a versatile
       open-source software package for simulating soft matter systems.
       In M. Yáñez and R. J. Boyd, eds, *Comprehensive Computational Chemistry*,
