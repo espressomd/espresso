@@ -107,6 +107,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
                                get_ptr(coulomb_force_kernel),
                                get_ptr(coulomb_pressure_kernel),
                                *box_geo,
+                               *thermostat->dpd,
                                cell_structure->get_unique_particles(),
                                local_pressure,
                                layout,

@@ -104,20 +104,25 @@ static auto dpd_viscous_stress_local(System::System &system) {
   auto const &box_geo = *system.box_geo;
   auto const &nonbonded_ias = *system.nonbonded_ias;
   auto &cell_structure = *system.cell_structure;
+  auto &dpd = *system.thermostat->dpd;
   system.on_observable_calc();
 
   Utils::Matrix<double, 3, 3> stress{};
-  cell_structure.non_bonded_loop([&stress, &box_geo, &nonbonded_ias](
-                                     Particle const &p1, Particle const &p2,
-                                     Distance const &d) {
+  cell_structure.non_bonded_loop([&stress, &box_geo, &nonbonded_ias,
+                                  &dpd](Particle const &p1, Particle const &p2,
+                                        Distance const &d) {
     auto const v21 =
         box_geo.velocity_difference(p1.pos(), p2.pos(), p1.v(), p2.v());
 
     auto const &ia_params = nonbonded_ias.get_ia_param(p1.type(), p2.type());
+    auto const noise_vec =
+        (ia_params.dpd.radial.pref > 0.0 || ia_params.dpd.trans.pref > 0.0)
+            ? dpd_noise(dpd, p1.id(), p2.id())
+            : Utils::Vector3d{};
     auto const dist = std::sqrt(d.dist2);
 
-    auto const f_r = dpd_pair_force(ia_params.dpd.radial, v21, dist, {});
-    auto const f_t = dpd_pair_force(ia_params.dpd.trans, v21, dist, {});
+    auto const f_r = dpd_pair_force(ia_params.dpd.radial, v21, dist, noise_vec);
+    auto const f_t = dpd_pair_force(ia_params.dpd.trans, v21, dist, noise_vec);
 
     /* Projection operator to radial direction */
     auto const P = tensor_product(d.vec21 / d.dist2, d.vec21);
