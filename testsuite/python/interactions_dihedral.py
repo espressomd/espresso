@@ -129,7 +129,7 @@ class InteractionsBondedTest(ut.TestCase):
     def check_pressure_tensor(self, tol=1e-12):
         p0, p1, p2, p3 = self.system.part.all()
         # p1 is the bond owner (reference particle)
-        # P_ij = 1/V * Σ F_{1,k}_i * r_{1,k}_j
+        # P_ij = 1/V * sum F_{1,k}_i * r_{1,k}_j
         p_tensor_ref = (
             np.outer(np.copy(p0.f), self.system.distance_vec(p1, p0))
             + np.outer(np.copy(p2.f), self.system.distance_vec(p1, p2))
@@ -146,8 +146,8 @@ class InteractionsBondedTest(ut.TestCase):
         np.testing.assert_allclose(np.trace(p_tensor_sim) / 3.,
                                    self.system.analysis.pressure()["bonded"],
                                    atol=tol)
-        # symmetry: dihedral angle is rotationally invariant, so sum_i r_i x F_i = 0,
-        # which implies p_ab = p_ba
+        # symmetry: dihedral angle is rotationally invariant, so
+        # sum_i r_i x F_i = 0, which implies p_ab = p_ba
         np.testing.assert_allclose(p_tensor_sim,
                                    p_tensor_sim.T,
                                    atol=tol)
