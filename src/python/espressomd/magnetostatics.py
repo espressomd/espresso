@@ -23,6 +23,20 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 @script_interface_register
 class Container(ScriptInterfaceHelper):
+    """
+    Container object holding the magnetostatics solver.
+
+    Parameters
+    ----------
+    solver : :obj:`MagnetostaticInteraction`
+        Magnetostatics solver.
+
+    Methods
+    -------
+    clear()
+        Remove the magnetostatics solver.
+
+    """
     _so_name = "Dipoles::Container"
     _so_features = ("DIPOLES",)
     _so_bind_methods = ("clear",)

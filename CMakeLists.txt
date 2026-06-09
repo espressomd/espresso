@@ -35,7 +35,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # project info
 project(
   ESPResSo
-  VERSION "5.0.0"
+  VERSION "5.0.1"
   LANGUAGES C CXX
   HOMEPAGE_URL "https://espressomd.org"
   DESCRIPTION
@@ -644,7 +644,9 @@ endif()
 #
 
 set(ESPRESSO_OPENMP_COMPONENTS CXX)
-if(ESPRESSO_BUILD_WITH_CUDA)
+if(ESPRESSO_BUILD_WITH_CUDA AND NOT CMAKE_CUDA_COMPILER_ID STREQUAL NVHPC)
+  # FindOpenMP doesn't fully support NVHPC+CUDA as of CMake 4.3, see ticket:
+  # https://gitlab.kitware.com/cmake/cmake/-/work_items/23003
   list(APPEND ESPRESSO_OPENMP_COMPONENTS CUDA)
 endif()
 # ESPResSo and Kokkos require some of the new features from OpenMP 5.0, but a

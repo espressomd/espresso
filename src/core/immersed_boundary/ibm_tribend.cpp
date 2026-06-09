@@ -54,7 +54,7 @@ IBMTribend::calc_forces(BoxGeometry const &box_geo, Utils::Vector3d const &pos1,
   n2 /= Aj;
 
   // Get the prefactor for the force term
-  auto const sc = std::min(1.0, n1 * n2);
+  auto const sc = std::clamp(n1 * n2, -1., 1.);
 
   // Get theta as angle between normals
   auto const direc = vector_product(n1, n2);
@@ -108,7 +108,7 @@ void IBMTribend::initialize(BoxGeometry const &box_geo,
     auto const n2 = n2l / n2l.norm();
 
     // calculate theta0 by taking the acos of the scalar n1*n2
-    auto const sc = std::min(1., n1 * n2);
+    auto const sc = std::clamp(n1 * n2, -1., 1.);
 
     theta0 = std::acos(sc);
 

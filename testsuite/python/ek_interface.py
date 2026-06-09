@@ -221,6 +221,9 @@ class EKTest:
             ek_slice.potential = 0.1
 
     def test_ek_none_solver(self):
+        is_gpu = self.ek_params["gpu"]
+        self.assertEqual(self.system.ekcontainer.gpu, is_gpu)
+        self.assertEqual(self.system.ekcontainer.solver.gpu, is_gpu)
         ek_solver = espressomd.electrokinetics.EKNone(
             lattice=self.lattice, tau=self.params["tau"], **self.ek_params)
         self.assertEqual(
@@ -233,6 +236,7 @@ class EKTest:
         self.assertIsInstance(self.system.ekcontainer.solver,
                               espressomd.electrokinetics.EKNone)
         self.assertEqual(self.system.ekcontainer.solver, ek_solver)
+        self.assertIsNone(ek_solver.call_method("unknown"))
 
         np.testing.assert_allclose(
             np.copy(ek_solver[:, :, :].potential), 0., atol=self.atol)
@@ -294,6 +298,41 @@ class EKTest:
                 ek_small_gl_species.add_boundary_from_shape(
                     shape=wall_shape, value=[1., 2., 3.], boundary_type=espressomd.electrokinetics.FluxBoundary)
 
+        self.system.ekcontainer.add(ek_species)
+        with self.assertRaisesRegex(RuntimeError, "This object is already present in the list"):
+            self.system.ekcontainer.add(ek_species)
+        self.system.ekcontainer.remove(ek_species)
+        with self.assertRaisesRegex(RuntimeError, "This object is absent from the list"):
+            self.system.ekcontainer.remove(ek_species)
+
+    @utx.skipIfMissingGPU()
+    def test_ek_container_exceptions(self):
+        # cannot add a CPU species if the solver is on the GPU
+        ek_species_incompatible = self.make_default_ek_species(
+            gpu=not self.ek_params["gpu"])
+        with self.assertRaisesRegex(RuntimeError, "The EK species and the EK solver need to all be on either the CPU or GPU"):
+            self.system.ekcontainer.add(ek_species_incompatible)
+        self.assertEqual(len(self.system.ekcontainer), 0)
+        # cannot replace a CPU solver by a GPU solver if there is at least
+        # one species in the container
+        self.system.ekcontainer.add(self.make_default_ek_species())
+        ek_solver_incompatible = espressomd.electrokinetics.EKNone(
+            lattice=self.lattice, tau=self.params["tau"],
+            single_precision=self.ek_params["single_precision"],
+            gpu=not self.ek_params["gpu"])
+        old_ek_solver = self.system.ekcontainer.solver
+        with self.assertRaisesRegex(RuntimeError, "The EK species and the EK solver need to all be on either the CPU or GPU"):
+            self.system.ekcontainer.solver = ek_solver_incompatible
+        self.assertEqual(self.system.ekcontainer.solver, old_ek_solver)
+        # if no species are present, a GPU container can become a CPU one
+        self.system.ekcontainer.clear()
+        self.system.ekcontainer.solver = ek_solver_incompatible
+        self.system.ekcontainer.add(ek_species_incompatible)
+        self.assertEqual(
+            self.system.ekcontainer.solver,
+            ek_solver_incompatible)
+        self.assertEqual(len(self.system.ekcontainer), 1)
+
     def test_ek_solver_exceptions(self):
         ek_solver = self.system.ekcontainer.solver
         ek_species = self.make_default_ek_species()
@@ -323,6 +362,10 @@ class EKTest:
             espressomd.electrokinetics.EKNone(
                 lattice=incompatible_lattice, tau=self.params["tau"],
                 **self.ek_params)
+        with self.assertRaisesRegex(ValueError, "EK solver is of the wrong type"):
+            self.system.ekcontainer.solver = ek_species
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'solver' is required; use EKNone if all species are electrically neutral"):
+            espressomd.electrokinetics.EKContainer(tau=1.)
 
         if espressomd.has_features("WALBERLA_FFT"):
             ek_solver = self.ek_solver_class(
@@ -419,7 +462,8 @@ class EKTest:
         self.assertAlmostEqual(ek_reaction.coefficient, 1.5, delta=self.atol)
         ek_reaction.coefficient = 0.5
         self.assertAlmostEqual(ek_reaction.coefficient, 0.5, delta=self.atol)
-        # boundaries
+
+        # -- node interface --
         self.assertFalse(ek_reaction[1, 1, 1])
         ek_reaction[1, 1, 1] = True
         self.assertTrue(ek_reaction[1, 1, 1])
@@ -427,6 +471,94 @@ class EKTest:
         self.assertFalse(ek_reaction[1, 1, 1])
         ek_reaction.add_node_to_index([1, 1, 1])
         self.assertTrue(ek_reaction[1, 1, 1])
+
+        # multiple independent nodes can be set/cleared independently
+        ek_reaction[2, 3, 4] = True
+        self.assertTrue(ek_reaction[1, 1, 1])
+        self.assertTrue(ek_reaction[2, 3, 4])
+        self.assertFalse(ek_reaction[0, 0, 0])
+        ek_reaction[1, 1, 1] = False
+        self.assertFalse(ek_reaction[1, 1, 1])
+        self.assertTrue(ek_reaction[2, 3, 4])
+
+        # bad key type and bad key length both raise TypeError
+        with self.assertRaisesRegex(TypeError, "is not a valid index"):
+            ek_reaction["bad"]
+        with self.assertRaisesRegex(TypeError, "is not a valid index"):
+            ek_reaction[0, 1]
+
+        # -- slice interface --
+        nx, ny, nz = ek_reaction.shape
+
+        # initial state: all nodes are out of the reaction index
+        is_boundary = ek_reaction[:, :, :].is_boundary
+        self.assertEqual(is_boundary.shape, (nx, ny, nz))
+        self.assertEqual(is_boundary.dtype, bool)
+        # a node set via the node interface shows up in a slice read
+        np.testing.assert_array_equal(is_boundary[2, 3, 4], True)
+        # clear it and verify the full grid is False
+        ek_reaction[:, :, :] = False
+        np.testing.assert_array_equal(ek_reaction[:, :, :].is_boundary, False)
+
+        # returned array is locked (non-writable)
+        locked = ek_reaction[:, :, :].is_boundary
+        with self.assertRaisesRegex(ValueError,
+                                    "ESPResSo array properties return non-writable arrays"):
+            locked[0, 0, 0] = True
+
+        # set a 2D slice (integer dim collapses from the shape) and read back
+        ek_reaction[1, :, :] = True
+        result = ek_reaction[1, :, :].is_boundary
+        self.assertEqual(result.shape, (ny, nz))
+        np.testing.assert_array_equal(result, True)
+        # cells outside the written slice remain False
+        np.testing.assert_array_equal(ek_reaction[0, :, :].is_boundary, False)
+        np.testing.assert_array_equal(ek_reaction[2:, :, :].is_boundary, False)
+
+        # reset, then broadcast a scalar to a 3D slice
+        ek_reaction[:, :, :] = False
+        ek_reaction[3:5, :, :] = True
+        result = ek_reaction[3:5, :, :].is_boundary
+        self.assertEqual(result.shape, (2, ny, nz))
+        np.testing.assert_array_equal(result, True)
+
+        # write a shaped bool array and read it back (round-trip)
+        ek_reaction[:, :, :] = False
+        values = np.zeros((2, ny, nz), dtype=bool)
+        values[0, 0, 1] = True
+        values[1, ny - 1, 0] = True
+        ek_reaction[3:5, :, :] = values
+        np.testing.assert_array_equal(
+            ek_reaction[3:5, :, :].is_boundary, values)
+
+        # getters
+        ek_slice = ek_reaction[0:2, -4:-1, 1:2]
+        np.testing.assert_array_equal(
+            np.copy(ek_slice.call_method("get_slice_size")), [2, 3, 1])
+        np.testing.assert_array_equal(
+            np.copy(ek_slice.call_method("get_slice_ranges")),
+            [[0, 8, 1], [2, 11, 2]])
+        self.assertEqual(ek_slice.call_method("get_reaction_sip"), ek_reaction)
+
+        # wrong shape raises ValueError
+        with self.assertRaisesRegex(ValueError,
+                                    "Input-dimensions of 'is_boundary' array"):
+            ek_reaction[1, :, :] = np.zeros((ny + 1, nz), dtype=bool)
+
+        # empty (out-of-bounds) slice: getter returns an empty array
+        empty_slice = ek_reaction[nx:nx + 5, :, :]
+        self.assertEqual(empty_slice.is_boundary.shape[0], 0)
+
+        # empty slice setter raises AttributeError
+        with self.assertRaisesRegex(
+                AttributeError,
+                "Cannot set properties of an empty 'EKIndexedReactionSlice' object"):
+            empty_slice.is_boundary = True
+
+        # unknown property name raises RuntimeError
+        with self.assertRaisesRegex(RuntimeError,
+                                    "Unknown EK indexed reaction property 'unknown'"):
+            ek_reaction[:, :, :].call_method("get_value_shape", name="unknown")
 
     def test_ek_fluctuations(self):
         """
@@ -480,6 +612,7 @@ class EKTest:
 
     def test_grid_index(self):
         ek_species = self.make_default_ek_species()
+        ek_solver = self.system.ekcontainer.solver
         ek_reactant = espressomd.electrokinetics.EKReactant(
             ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
         ek_reaction = espressomd.electrokinetics.EKIndexedReaction(
@@ -494,6 +627,7 @@ class EKTest:
             self.assertTrue(ek_reaction[0, 0, 0])
             self.assertEqual(ek_reaction[tuple(n)], ek_reaction[0, 0, 0])
             self.assertEqual(ek_species[tuple(n)], ek_species[0, 0, 0])
+            self.assertEqual(ek_solver[tuple(n)], ek_solver[0, 0, 0])
             for offset in (int_shape[i] + 1, -(int_shape[i] + 1)):
                 n = [0, 0, 0]
                 n[i] += offset
@@ -502,18 +636,21 @@ class EKTest:
                     ek_reaction[tuple(n)]
                 with self.assertRaisesRegex(IndexError, err_msg):
                     ek_species[tuple(n)]
+                with self.assertRaisesRegex(IndexError, err_msg):
+                    ek_solver[tuple(n)]
         # node index
-        node = ek_species[1, 2, 3]
-        with self.assertRaisesRegex(RuntimeError, "Parameter 'index' is read-only"):
-            node.index = [2, 4, 6]
-        np.testing.assert_array_equal(node.index, [1, 2, 3])
-        retval = node.call_method("override_index", index=[2, 4, 6])
-        self.assertEqual(retval, 0)
-        np.testing.assert_array_equal(node.index, [2, 4, 6])
-        retval = node.call_method("override_index", index=[0, 0, shape[2]])
-        self.assertEqual(retval, 1)
-        np.testing.assert_array_equal(node.index, [2, 4, 6])
-        np.testing.assert_array_equal(ek_species[-1, -1, -1].index, shape - 1)
+        for ek_obj in [ek_species, ek_solver]:
+            node = ek_obj[1, 2, 3]
+            with self.assertRaisesRegex(RuntimeError, "Parameter 'index' is read-only"):
+                node.index = [2, 4, 6]
+            np.testing.assert_array_equal(node.index, [1, 2, 3])
+            retval = node.call_method("override_index", index=[2, 4, 6])
+            self.assertEqual(retval, 0)
+            np.testing.assert_array_equal(node.index, [2, 4, 6])
+            retval = node.call_method("override_index", index=[0, 0, shape[2]])
+            self.assertEqual(retval, 1)
+            np.testing.assert_array_equal(node.index, [2, 4, 6])
+            np.testing.assert_array_equal(ek_obj[-1, -1, -1].index, shape - 1)
 
     def test_runtime_exceptions(self):
         # set up a valid species

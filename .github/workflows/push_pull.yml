@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
       - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@v1.2.23
         with:
           key: macos
           save: ${{ github.ref == 'refs/heads/python' }}
@@ -61,7 +61,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
       - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@v1.2.23
         with:
           key: debian
           save: ${{ github.ref == 'refs/heads/python' || ( github.repository != 'espressomd/espresso' && ! startsWith(github.ref, 'refs/pull') ) }}
@@ -102,7 +102,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
       - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@v1.2.23
         with:
           key: ubuntu
           save: ${{ github.ref == 'refs/heads/python' }}
@@ -144,7 +144,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
       - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@v1.2.23
         with:
           key: fedora
           save: ${{ github.ref == 'refs/heads/python' || ( github.repository != 'espressomd/espresso' && ! startsWith(github.ref, 'refs/pull') ) }}

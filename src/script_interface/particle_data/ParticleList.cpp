@@ -180,14 +180,8 @@ Variant ParticleList::do_call_method(std::string const &name,
     VariantMap local_params = params;
     local_params["__cell_structure"] = m_cell_structure.lock();
     local_params["__bonded_ias"] = m_bonded_ias.lock();
-    auto so = std::dynamic_pointer_cast<ParticleHandle>(
+    return std::dynamic_pointer_cast<ParticleHandle>(
         context()->make_shared("Particles::ParticleHandle", local_params));
-#ifdef ESPRESSO_EXCLUSIONS
-    if (params.contains("exclusions")) {
-      so->call_method("set_exclusions", {{"p_ids", params.at("exclusions")}});
-    }
-#endif // ESPRESSO_EXCLUSIONS
-    return so;
   }
   return {};
 }

@@ -69,7 +69,9 @@ assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
 assert "box_l" not in args or args.particles_per_core == 0, \
     "Argument --box_l requires --particles_per_core=0"
 
-required_features = ["LENNARD_JONES", "WALBERLA"]
+required_features = ["WALBERLA"]
+if args.particles_per_core > 0:
+    required_features.append("LENNARD_JONES")
 if args.gpu:
     required_features.append("CUDA")
 espressomd.assert_features(required_features)
@@ -93,6 +95,8 @@ lj_cut = lj_sig * 2**(1. / 6.)  # cutoff distance
 n_proc = system.cell_system.get_state()["n_nodes"]
 n_part = n_proc * args.particles_per_core
 if n_part == 0:
+    if not hasattr(args, "box_l"):
+        args.box_l = [32]
     box_l = 3 * args.box_l if len(args.box_l) == 1 else args.box_l
     agrid = 1.
     lb_grid = box_l

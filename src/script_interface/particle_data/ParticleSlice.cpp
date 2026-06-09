@@ -106,7 +106,7 @@ set_particles_positions(std::vector<int> const &pids,
                         std::vector<Utils::Vector3d> const &positions) {
   for (std::size_t i = 0; i < pids.size(); ++i) {
     auto const pid = pids[i];
-    auto const pos = positions[i];
+    auto const &pos = positions[i];
     particle_checks(pid, pos);
     set_particle_pos(pid, pos);
   }

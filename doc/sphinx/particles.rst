@@ -427,7 +427,7 @@ To set up a COM virtual site:
        p1 = system.part.add(pos=[1., 2., 3.], mol_id=mol_id)
        p2 = system.part.add(pos=[6., 7., 8.], mol_id=mol_id)
 
-#. Place the COM virtual site -it can be at an arbitrary position-
+#. Place the COM virtual site (it can be at an arbitrary position)
    and relate it to the corresponding particles via the molecule ID ``mol_id``::
 
        vs_type = 1
@@ -463,7 +463,7 @@ Please note:
   that adding particles, virtual or non-virtual, without specifying ``mol_id`` results
   in the particles being initialized with the default value ``mol_id = 0``.
 - Applying forces to the COM virtual sites can be done explicitly via the
-  ``ext_force`` attribute of `~espressomd.particle_data.ParticleHandle`::
+  ``ext_force`` attribute of :class:`~espressomd.particle_data.ParticleHandle`::
 
        vs.ext_force = [100, 0, 0]
 
@@ -838,8 +838,8 @@ and follow the swimmer while updating its orientation accordingly.
 |es| provides a helper function :func:`~espressomd.swimmer_helpers.add_dipole_particle` to set
 up the virtual particle with the correct distance, relative position and orientation::
 
-    import espressomd.swimmer_helpers.add_dipole_particle as add_dip
-    dipole = add_dip(system, swimmer, 2., 0, mode="pusher")
+    import espressomd.swimmer_helpers
+    dipole = espressomd.swimmer_helpers.add_dipole_particle(system, swimmer, 2., 0, mode="pusher")
 
 It creates pushers with the propulsion behind the swimmer and pullers with the
 propulsion in front of the swimmer.

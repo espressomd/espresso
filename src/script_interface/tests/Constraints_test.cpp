@@ -133,9 +133,10 @@ BOOST_AUTO_TEST_CASE(potential_constraints) {
     // check constructor and getters
     ElectricPotential potential;
     auto const grid_spacing_ref = Utils::Vector3d{{1., 1., 1.}};
-    auto const field_shape_ref = Utils::Vector3i{{1, 2, 3}};
+    auto const field_shape_ref = Utils::Vector3i{{2, 2, 3}};
     auto const field_codim_ref = 1;
-    auto const field_data_ref = std::vector<double>{1., 2., 3., 4., 5., 6.};
+    auto field_data_ref = std::vector<double>(12);
+    std::iota(field_data_ref.begin(), field_data_ref.end(), 1.);
     potential.do_construct(
         {{"_field_shape", Variant{field_shape_ref}},
          {"_field_codim", Variant{field_codim_ref}},

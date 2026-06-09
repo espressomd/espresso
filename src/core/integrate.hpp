@@ -54,9 +54,9 @@
 /**@}*/
 
 #ifdef ESPRESSO_WALBERLA
-void walberla_tau_sanity_checks(std::string method, double tau,
+void walberla_tau_sanity_checks(std::string const &method, double tau,
                                 double time_step);
-void walberla_agrid_sanity_checks(std::string method,
+void walberla_agrid_sanity_checks(std::string const &method,
                                   Utils::Vector3d const &geo_left,
                                   Utils::Vector3d const &geo_right,
                                   Utils::Vector3d const &lattice_left,

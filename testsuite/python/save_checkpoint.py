@@ -89,7 +89,7 @@ if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
     lb_lattice_blocks_per_mpi = espressomd.lb.Lattice(
         **lb_lattice_kwargs)
 if lbf_class:
-    lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
+    cpt_mode = 0 if 'LB.ASCII' in modes else 1
     lbf = lbf_class(
         lattice=lb_lattice, kinematic_viscosity=1.3, density=1.5,
         tau=system.time_step, gpu='LB.GPU' in modes)
@@ -100,12 +100,19 @@ if lbf_class:
     lbf.add_boundary_from_shape(wall2, (0, 0, 0))
 
     if not le_active:
-        ek_solver = espressomd.electrokinetics.EKNone(
-            lattice=lb_lattice, tau=system.time_step)
+        ek_solver_class = espressomd.electrokinetics.EKNone
+        ek_params = {"single_precision": False, "gpu": False}
+        if "LB.GPU" in modes and espressomd.gpu_available():
+            ek_params["gpu"] = True
+        ek_solver_params = {"tau": system.time_step, **ek_params}
+        if espressomd.has_features("WALBERLA_FFT") and cpt_mode == 1:
+            ek_solver_class = espressomd.electrokinetics.EKFFT
+            ek_solver_params["permittivity"] = 0.1
+        ek_solver = ek_solver_class(lattice=lb_lattice, **ek_solver_params)
         ek_species = espressomd.electrokinetics.EKSpecies(
             lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
             advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
-            single_precision=False, tau=system.time_step)
+            tau=system.time_step, **ek_params)
         ekcontainer = espressomd.electrokinetics.EKContainer(
             solver=ek_solver, tau=ek_species.tau)
         ekcontainer.add(ek_species)
@@ -422,15 +429,17 @@ if lbf_class:
         'abc,d->abcd', grid_3D, np.arange(1, 4))
     # save LB checkpoint file
     lbf_cpt_path = checkpoint.root / "lb.cpt"
-    lbf.save_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
+    lbf.save_checkpoint(str(lbf_cpt_path), cpt_mode)
     if not le_active:
         # save EK checkpoint file
         ek_species[:, :, :].density = grid_3D
-        ek_solver[:, :, :].potential = 0.25 * grid_3D
+        if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
+            ek_solver[:, :, :].potential = 0.25 * grid_3D
         ek_cpt_path = checkpoint.root / "ek.cpt"
-        ek_species.save_checkpoint(str(ek_cpt_path), lbf_cpt_mode)
-        ek_none_cpt_path = checkpoint.root / "ek_none.cpt"
-        ek_solver.save_checkpoint(str(ek_none_cpt_path), lbf_cpt_mode)
+        ek_species.save_checkpoint(str(ek_cpt_path), cpt_mode)
+        if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
+            ek_none_cpt_path = checkpoint.root / "ek_none.cpt"
+            ek_solver.save_checkpoint(str(ek_none_cpt_path), cpt_mode)
     # setup VTK folder
     vtk_suffix = config.test_name
     vtk_root = pathlib.Path("vtk_out")
@@ -451,20 +460,34 @@ if lbf_class:
     lb_vtk_manual.write()
     if not le_active:
         # create EK VTK callbacks
-        ek_vtk_auto_id = f"auto_ek_{vtk_suffix}"
-        ek_vtk_manual_id = f"manual_ek_{vtk_suffix}"
-        config.recursive_unlink(vtk_root / ek_vtk_auto_id)
-        config.recursive_unlink(vtk_root / ek_vtk_manual_id)
-        ek_vtk_auto = espressomd.electrokinetics.VTKOutput(
-            identifier=ek_vtk_auto_id,
+        ek_vtk_species_auto_id = f"auto_ek_species_{vtk_suffix}"
+        ek_vtk_species_manual_id = f"manual_ek_species_{vtk_suffix}"
+        ek_vtk_poisson_auto_id = f"auto_ek_poisson_{vtk_suffix}"
+        ek_vtk_poisson_manual_id = f"manual_ek_poisson_{vtk_suffix}"
+        config.recursive_unlink(vtk_root / ek_vtk_species_auto_id)
+        config.recursive_unlink(vtk_root / ek_vtk_species_manual_id)
+        config.recursive_unlink(vtk_root / ek_vtk_poisson_auto_id)
+        config.recursive_unlink(vtk_root / ek_vtk_poisson_manual_id)
+        ek_vtk_species_auto = espressomd.electrokinetics.VTKOutput(
+            identifier=ek_vtk_species_auto_id,
             observables=('density',), delta_N=1, base_folder=str(vtk_root))
-        ek_species.add_vtk_writer(vtk=ek_vtk_auto)
-        ek_vtk_auto.disable()
-        ek_vtk_manual = espressomd.electrokinetics.VTKOutput(
-            identifier=ek_vtk_manual_id,
+        ek_species.add_vtk_writer(vtk=ek_vtk_species_auto)
+        ek_vtk_species_auto.disable()
+        ek_vtk_species_manual = espressomd.electrokinetics.VTKOutput(
+            identifier=ek_vtk_species_manual_id,
             observables=('density',), delta_N=0, base_folder=str(vtk_root))
-        ek_species.add_vtk_writer(vtk=ek_vtk_manual)
-        ek_vtk_manual.write()
+        ek_species.add_vtk_writer(vtk=ek_vtk_species_manual)
+        ek_vtk_species_manual.write()
+        ek_vtk_poisson_auto = espressomd.electrokinetics.VTKPoissonOutput(
+            identifier=ek_vtk_poisson_auto_id, force_pvtu=True,
+            observables=["potential"], delta_N=1, base_folder=str(vtk_root))
+        ek_solver.add_vtk_writer(vtk=ek_vtk_poisson_auto)
+        ek_vtk_poisson_auto.disable()
+        ek_vtk_poisson_manual = espressomd.electrokinetics.VTKPoissonOutput(
+            identifier=ek_vtk_poisson_manual_id, force_pvtu=True,
+            observables=["potential"], delta_N=0, base_folder=str(vtk_root))
+        ek_solver.add_vtk_writer(vtk=ek_vtk_poisson_manual)
+        ek_vtk_poisson_manual.write()
 
 
 # set various properties
@@ -538,7 +561,8 @@ class TestCheckpoint(ut.TestCase):
         if lbf_class:
             self.assertTrue(lbf_cpt_path.is_file(),
                             "LB checkpoint file not created")
-            if not le_active:
+            if not le_active and isinstance(
+                    ek_solver, espressomd.electrokinetics.EKNone):
                 self.assertTrue(ek_none_cpt_path.is_file(),
                                 "EKNone checkpoint file not created")
 
@@ -562,7 +586,7 @@ class TestCheckpoint(ut.TestCase):
         lbf_cpt_root = lbf_cpt_path.parent
         with self.assertRaisesRegex(RuntimeError, "could not open file"):
             invalid_path = lbf_cpt_root / "unknown_dir" / "lb.cpt"
-            lbf.save_checkpoint(invalid_path, lbf_cpt_mode)
+            lbf.save_checkpoint(invalid_path, cpt_mode)
         with self.assertRaisesRegex(RuntimeError, "unit test error"):
             lbf.save_checkpoint(lbf_cpt_root / "lb_err.cpt", -1)
         with self.assertRaisesRegex(RuntimeError, "could not write to"):
@@ -584,7 +608,7 @@ class TestCheckpoint(ut.TestCase):
         # write checkpoint file with extra data
         with open(cpt_path.format("-extra-data"), "wb") as f:
             f.write(lbf_cpt_data + lbf_cpt_data[-8:])
-        if lbf_cpt_mode == 0:
+        if cpt_mode == 0:
             boxsize, popsize, data = lbf_cpt_data.split(b"\n", 2)
             # write checkpoint file with incorrectly formatted data
             with open(cpt_path.format("-wrong-format"), "wb") as f:
@@ -608,7 +632,7 @@ class TestCheckpoint(ut.TestCase):
         ek_cpt_root = ek_cpt_path.parent
         with self.assertRaisesRegex(RuntimeError, "could not open file"):
             invalid_path = ek_cpt_root / "unknown_dir" / "ek.cpt"
-            ek_species.save_checkpoint(invalid_path, lbf_cpt_mode)
+            ek_species.save_checkpoint(invalid_path, cpt_mode)
         with self.assertRaisesRegex(RuntimeError, "unit test error"):
             ek_species.save_checkpoint(ek_cpt_root / "ek_err.cpt", -1)
         with self.assertRaisesRegex(RuntimeError, "could not write to"):
@@ -627,7 +651,7 @@ class TestCheckpoint(ut.TestCase):
         # write checkpoint file with extra data
         with open(cpt_path.format("-extra-data"), "wb") as f:
             f.write(ek_cpt_data + ek_cpt_data[-8:])
-        if lbf_cpt_mode == 0:
+        if cpt_mode == 0:
             boxsize, data = ek_cpt_data.split(b"\n", 1)
             # write checkpoint file with incorrectly formatted data
             with open(cpt_path.format("-wrong-format"), "wb") as f:
@@ -636,30 +660,31 @@ class TestCheckpoint(ut.TestCase):
             with open(cpt_path.format("-wrong-boxdim"), "wb") as f:
                 f.write(b"2" + boxsize + b"\n" + data)
 
-        with self.assertRaisesRegex(RuntimeError, "could not open file"):
-            invalid_path = ek_cpt_root / "unknown_dir" / "ek_none.cpt"
-            ek_solver.save_checkpoint(invalid_path, lbf_cpt_mode)
-        with self.assertRaisesRegex(RuntimeError, "unit test error"):
-            ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", -1)
-        with self.assertRaisesRegex(RuntimeError, "could not write to"):
-            ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", -2)
-        with self.assertRaisesRegex(ValueError, "Unknown mode -3"):
-            ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", -3)
-        with self.assertRaisesRegex(ValueError, "Unknown mode 2"):
-            ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", 2)
+        if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
+            with self.assertRaisesRegex(RuntimeError, "could not open file"):
+                invalid_path = ek_cpt_root / "unknown_dir" / "ek_none.cpt"
+                ek_solver.save_checkpoint(invalid_path, cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, "unit test error"):
+                ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", -1)
+            with self.assertRaisesRegex(RuntimeError, "could not write to"):
+                ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", -2)
+            with self.assertRaisesRegex(ValueError, "Unknown mode -3"):
+                ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", -3)
+            with self.assertRaisesRegex(ValueError, "Unknown mode 2"):
+                ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", 2)
 
-        ek_none_cpt_data = ek_none_cpt_path.read_bytes()
-        cpt_path = str(checkpoint.root / "ek_none") + "{}.cpt"
-        with open(cpt_path.format("-missing-data"), "wb") as f:
-            f.write(ek_none_cpt_data[:len(ek_none_cpt_data) // 2])
-        with open(cpt_path.format("-extra-data"), "wb") as f:
-            f.write(ek_none_cpt_data + ek_none_cpt_data[-8:])
-        if lbf_cpt_mode == 0:
-            boxsize, data = ek_none_cpt_data.split(b"\n", 1)
-            with open(cpt_path.format("-wrong-format"), "wb") as f:
-                f.write(boxsize + b"\n" + b"\ntext string\n" + data)
-            with open(cpt_path.format("-wrong-boxdim"), "wb") as f:
-                f.write(b"2" + boxsize + b"\n" + data)
+            ek_none_cpt_data = ek_none_cpt_path.read_bytes()
+            cpt_path = str(checkpoint.root / "ek_none") + "{}.cpt"
+            with open(cpt_path.format("-missing-data"), "wb") as f:
+                f.write(ek_none_cpt_data[:len(ek_none_cpt_data) // 2])
+            with open(cpt_path.format("-extra-data"), "wb") as f:
+                f.write(ek_none_cpt_data + ek_none_cpt_data[-8:])
+            if cpt_mode == 0:
+                boxsize, data = ek_none_cpt_data.split(b"\n", 1)
+                with open(cpt_path.format("-wrong-format"), "wb") as f:
+                    f.write(boxsize + b"\n" + b"\ntext string\n" + data)
+                with open(cpt_path.format("-wrong-boxdim"), "wb") as f:
+                    f.write(b"2" + boxsize + b"\n" + data)
 
     def test_generator_recursive_unlink(self):
         with tempfile.TemporaryDirectory() as tmp_directory:

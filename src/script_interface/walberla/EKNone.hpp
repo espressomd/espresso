@@ -48,8 +48,6 @@
 namespace ScriptInterface::walberla {
 
 class EKNone : public EKPoissonSolver {
-  std::shared_ptr<::walberla::PoissonSolver> m_instance;
-  std::shared_ptr<LatticeWalberla> m_lattice;
   bool m_gpu;
   bool m_single_precision;
 
@@ -90,11 +88,18 @@ public:
     m_gpu = get_value_or<bool>(args, "gpu", false);
     m_single_precision = get_value_or<bool>(args, "single_precision", m_gpu);
     m_lattice = get_value<decltype(m_lattice)>(args, "lattice");
+    m_vtk_writers =
+        get_value_or<decltype(m_vtk_writers)>(args, "vtk_writers", {});
     auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
     m_tau = get_value<double>(args, "tau");
     set_potential_conversion(agrid, m_tau);
-
     make_instance(args);
+    for (auto &vtk : m_vtk_writers) {
+      vtk->attach_to_lattice(m_instance, get_lattice_to_md_units_conversion());
+    }
+  }
+
+  EKNone() {
     add_parameters({
         {"tau", AutoParameter::read_only, [this]() { return m_tau; }},
         {"single_precision", AutoParameter::read_only,
@@ -103,6 +108,8 @@ public:
         {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
         {"shape", AutoParameter::read_only,
          [this]() { return m_instance->get_lattice().get_grid_dimensions(); }},
+        {"vtk_writers", AutoParameter::read_only,
+         [this]() { return serialize_vtk_writers(); }},
     });
   }
 

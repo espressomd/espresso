@@ -135,6 +135,29 @@ class IBM(ut.TestCase):
         # check not bonded particles. Positions should still be distorted
         np.testing.assert_allclose(np.copy(non_bound.pos), distorted_pos)
 
+    def test_triel_bond_breakage(self):
+        system = self.system
+
+        p1 = system.part.add(pos=[1, 4, 4])
+        p2 = system.part.add(pos=[1, 4, 5])
+        p3 = system.part.add(pos=[1, 5, 5])
+        all_partcls = system.part.all()
+
+        tri = espressomd.interactions.IBM_Triel(
+            ind1=p1.id, ind2=p2.id, ind3=p3.id, elasticLaw="Skalak", k1=15.,
+            k2=0., maxDist=1.)
+        system.bonded_inter.add(tri)
+        p1.add_bond((tri, p2, p3))
+        with self.assertRaisesRegex(Exception, "bond broken between particles 0, 1, 2"):
+            # stretch bonds too far
+            all_partcls.pos = all_partcls.pos + np.array((
+                (0., 0., 0.), system.box_l / 4., (0., 0., 0.)))
+            system.integrator.run(0, recalc_forces=True)
+        with self.assertRaisesRegex(Exception, "bond broken between particles 0, 1, 2"):
+            # collapse particles onto each other (angle is undefined)
+            all_partcls.pos = np.zeros((3, 3))
+            system.integrator.run(0, recalc_forces=True)
+
     def test_volcons(self):
         '''Check volume conservation forces on a simple mesh (cube).'''
         system = self.system

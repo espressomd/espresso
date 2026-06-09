@@ -200,6 +200,7 @@ Utils::Vector9d gyration_tensor(System::System const &system,
 
   Utils::Vector9d mat{};
   if (::comm_cart.rank() == 0) {
+    assert(not buf_pos.empty());
     auto const center =
         std::accumulate(buf_pos.begin(), buf_pos.end(), Utils::Vector3d{}) /
         static_cast<double>(buf_pos.size());

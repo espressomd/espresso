@@ -40,7 +40,7 @@ class EKTest:
         self.system.ekcontainer.clear()
 
     def test_fluctuation(self):
-        decimal_precision = 1 if self.lattice_params["single_precision"] else 9
+        decimal_precision = 1 if self.ek_params["single_precision"] else 9
 
         lattice = espressomd.electrokinetics.Lattice(
             n_ghost_layers=1, agrid=self.AGRID)
@@ -50,10 +50,10 @@ class EKTest:
         species = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=self.DENSITY, valency=0.0, advection=False,
             diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
-            tau=self.TAU, thermalized=True, seed=42, **self.lattice_params)
+            tau=self.TAU, thermalized=True, seed=42, **self.ek_params)
 
         eksolver = espressomd.electrokinetics.EKNone(
-            lattice=lattice, tau=self.TAU)
+            lattice=lattice, tau=self.TAU, **self.ek_params)
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)
         self.system.ekcontainer.add(species)
@@ -125,24 +125,24 @@ class EKTest:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKFluctuationsDoublePrecisionCPU(EKTest, ut.TestCase):
-    lattice_params = {"single_precision": False, "gpu": False}
+    ek_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKFluctuationsSinglePrecisionCPU(EKTest, ut.TestCase):
-    lattice_params = {"single_precision": True, "gpu": False}
+    ek_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKFluctuationsDoublePrecisionGPU(EKTest, ut.TestCase):
-    lattice_params = {"single_precision": False, "gpu": True}
+    ek_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class EKFluctuationsSinglePrecisionGPU(EKTest, ut.TestCase):
-    lattice_params = {"single_precision": True, "gpu": True}
+    ek_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

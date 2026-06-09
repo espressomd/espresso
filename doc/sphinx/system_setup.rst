@@ -409,10 +409,3 @@ large particles. Particles with other types will by default be put into the
 the maximum cutoff to consider for interactions within the
 :ref:`Regular decomposition`, i.e. the maximum interaction range among all
 small particle types. Set this via the ``cutoff_regular`` parameter.
-
-.. note::
-
-  The hybrid particle decomposition has been added to |es| only recently and
-  for now should be considered an experimental feature. If you notice some unexpected
-  behavior please let us know via github or the mailing list.
-

@@ -73,6 +73,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -112,14 +113,18 @@ public:
     m_potential_field_id = gpu::addGPUFieldToStorage<PotentialField>(
         blocks, "potential field", 1u, field::fzyx,
         get_lattice().get_ghost_layers());
+    for (auto &block : *blocks) {
+      auto field = block.template getData<PotentialField>(m_potential_field_id);
+      ek::accessor::Scalar::initialize(field, FloatType{0});
+    }
 #else  // __CUDACC__
     m_potential_field_id = field::addToStorage<PotentialField>(
-        blocks, "potential field", 0., field::fzyx,
+        blocks, "potential field", FloatType{0}, field::fzyx,
         get_lattice().get_ghost_layers());
 #endif // __CUDACC__
   }
 
-  void setup_fft(bool use_gpu_aware) override {}
+  void setup_fft(bool) override {}
 
   [[nodiscard]] bool is_gpu() const noexcept override {
     return Architecture == lbmpy::Arch::GPU;
@@ -224,10 +229,93 @@ public:
   }
   void ghost_communication() override {}
 
-  void solve() override {}
+  void solve() override { integrate_vtk_writers(); }
 
   void add_charge_to_field(std::size_t id, double valency) override {}
   void reset_charge_field() override {}
+
+protected:
+  void integrate_vtk_writers() override {
+    for (auto const &vtk_handle : m_vtk_auto | std::views::values) {
+      if (vtk_handle->enabled) {
+        vtk::writeFiles(vtk_handle->ptr)();
+        vtk_handle->execution_count++;
+      }
+    }
+  }
+
+protected:
+  template <typename VecType, uint_t F_SIZE_ARG, typename OutputType>
+  class VTKWriter : public vtk::BlockCellDataWriter<OutputType, F_SIZE_ARG> {
+  public:
+    VTKWriter(ConstBlockDataID const &block_id, std::string const &id,
+              FloatType unit_conversion)
+        : vtk::BlockCellDataWriter<OutputType, F_SIZE_ARG>(id),
+          m_conversion(unit_conversion), m_content{} {}
+
+  protected:
+    void configure() override { WALBERLA_ASSERT_NOT_NULLPTR(this->block_); }
+
+    std::size_t get_first_index(cell_idx_t const x, cell_idx_t const y,
+                                cell_idx_t const z) {
+      return (static_cast<std::size_t>(x) * m_dims[2] * m_dims[1] +
+              static_cast<std::size_t>(y) * m_dims[2] +
+              static_cast<std::size_t>(z)) *
+             F_SIZE_ARG;
+    }
+
+    FloatType m_conversion;
+    VecType m_content;
+    Vector3<uint_t> m_dims;
+
+  public:
+    void set_content(VecType content) { m_content = content; }
+
+    void set_dims(Vector3<uint_t> dims) { m_dims = dims; }
+  };
+
+  template <typename OutputType = float>
+  class PotentialVTKWriter
+      : public VTKWriter<std::vector<FloatType>, 1u, OutputType> {
+  public:
+    using Base = VTKWriter<std::vector<FloatType>, 1u, OutputType>;
+    using Base::Base;
+    using Base::evaluate;
+
+  protected:
+    OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
+                        cell_idx_t const z, cell_idx_t const) override {
+      WALBERLA_ASSERT(!this->m_content.empty());
+      auto const potential = this->m_content[this->get_first_index(x, y, z)];
+      return numeric_cast<OutputType>(this->m_conversion * potential);
+    }
+  };
+
+public:
+  void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
+                                  LatticeModel::units_map const &units,
+                                  int flag_observables) override {
+    if (flag_observables & static_cast<int>(EKPoissonOutputVTK::potential)) {
+      auto const unit_conversion = FloatType_c(units.at("potential"));
+      auto const blocks = get_lattice().get_blocks();
+      WALBERLA_ASSERT_NOT_NULLPTR(blocks);
+      auto potential_writer = make_shared<PotentialVTKWriter<float>>(
+          m_potential_field_id, "potential", unit_conversion);
+      auto before_function = [this, blocks, potential_writer]() {
+        for (auto &block : *blocks) {
+          auto *potential_field =
+              block.template getData<PotentialField>(m_potential_field_id);
+          auto const bci = potential_field->xyzSize();
+          potential_writer->set_content(
+              walberla::ek::accessor::Scalar::get(potential_field, bci));
+          potential_writer->set_dims(Vector3<uint_t>(
+              uint_c(bci.xSize()), uint_c(bci.ySize()), uint_c(bci.zSize())));
+        }
+      };
+      vtk_obj.addBeforeFunction(std::move(before_function));
+      vtk_obj.addCellDataWriter(potential_writer);
+    }
+  }
 };
 
 } // namespace walberla

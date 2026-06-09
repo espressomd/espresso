@@ -28,6 +28,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
             ${CMAKE_CURRENT_SOURCE_DIR}/EKSpeciesNode.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/EKSpeciesSlice.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/EKPoissonSolverNode.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/EKPoissonSolverSlice.cpp)
+            ${CMAKE_CURRENT_SOURCE_DIR}/EKPoissonSolverSlice.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/EKIndexedReactionSlice.cpp)
   target_link_libraries(espresso_script_interface PRIVATE espresso::walberla)
 endif(ESPRESSO_BUILD_WITH_WALBERLA)

@@ -58,6 +58,7 @@
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -586,8 +587,7 @@ private:
 
 protected:
   void integrate_vtk_writers() override {
-    for (auto const &it : m_vtk_auto) {
-      auto &vtk_handle = it.second;
+    for (auto const &vtk_handle : m_vtk_auto | std::views::values) {
       if (vtk_handle->enabled) {
         vtk::writeFiles(vtk_handle->ptr)();
         vtk_handle->execution_count++;
@@ -669,6 +669,10 @@ public:
   [[nodiscard]] std::optional<double>
   get_node_density(Utils::Vector3i const &node,
                    bool consider_ghosts = false) const override {
+    if (m_boundary_density->node_is_boundary(node)) {
+      return m_boundary_density->get_node_value_at_boundary(node);
+    }
+
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
 
     if (!bc)
@@ -700,10 +704,15 @@ public:
 #ifndef NDEBUG
           values_size += bci->numCells();
 #endif
-          auto kernel = [&values, &out](unsigned const block_index,
-                                        unsigned const local_index,
-                                        Utils::Vector3i const &) {
-            out[local_index] = double_c(values[block_index]);
+          auto kernel = [this, &values, &out](unsigned const block_index,
+                                              unsigned const local_index,
+                                              Utils::Vector3i const &node) {
+            if (m_boundary_density->node_is_boundary(node)) {
+              out[local_index] =
+                  m_boundary_density->get_node_value_at_boundary(node);
+            } else {
+              out[local_index] = double_c(values[block_index]);
+            }
           };
 
           copy_block_buffer(*bci, *ci, block_offset, lower_corner, kernel);
@@ -745,6 +754,10 @@ public:
   [[nodiscard]] std::optional<Utils::Vector3d>
   get_node_flux_vector(Utils::Vector3i const &node,
                        bool consider_ghosts = false) const override {
+    if (m_boundary_flux->node_is_boundary(node)) {
+      return to_vector3d(m_boundary_flux->get_node_value_at_boundary(node));
+    }
+
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
 
     if (!bc)
@@ -1087,9 +1100,12 @@ public:
   }
 
   void register_vtk_field_filters(walberla::vtk::VTKOutput &vtk_obj) override {
-    field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_density_id);
-    fluid_filter.addFlag(Boundary_flag);
-    vtk_obj.addCellExclusionFilter(fluid_filter);
+    field::FlagFieldCellFilter<FlagField> dens_filter(m_flag_field_density_id);
+    field::FlagFieldCellFilter<FlagField> flux_filter(m_flag_field_flux_id);
+    dens_filter.addFlag(Boundary_flag);
+    flux_filter.addFlag(Boundary_flag);
+    vtk_obj.addCellExclusionFilter(dens_filter);
+    vtk_obj.addCellExclusionFilter(flux_filter);
   }
 
 protected:

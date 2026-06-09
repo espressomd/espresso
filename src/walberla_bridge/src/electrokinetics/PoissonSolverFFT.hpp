@@ -78,6 +78,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -247,6 +248,9 @@ public:
       auto fourier =
           block.template getData<PotentialFourier>(m_potential_fourier_id);
 
+      ek::accessor::Scalar::initialize(potential, FloatType{0});
+      ek::accessor::Scalar::initialize(potential_ghosts, FloatType{0});
+
       kernel_greens =
           gpu::make_kernel(multiply_by_greens_function<FloatType, ComplexType>);
       kernel_greens.addFieldIndexingParam(
@@ -263,7 +267,7 @@ public:
 
 #else  // __CUDACC__
     m_potential_field_with_ghosts_id = field::addToStorage<PotentialField>(
-        blocks, "potential field with ghosts", 0., field::fzyx,
+        blocks, "potential field with ghosts", FloatType{0}, field::fzyx,
         get_lattice().get_ghost_layers());
 #endif // __CUDACC__
 
@@ -494,7 +498,7 @@ public:
         }
         for (int y = 0; y < dim[1]; y++) {
           for (int z = 0; z < dim[2]; z++) {
-            m_potential[pos_to_linear_index(x, y, z, dim)] = FloatType(0.0);
+            m_potential[pos_to_linear_index(x, y, z, dim)] = FloatType{0};
           }
         }
       }
@@ -506,7 +510,7 @@ public:
       for (auto &block : *get_lattice().get_blocks()) {
         auto field =
             block.template getData<PotentialField>(m_potential_field_id);
-        ek::accessor::Scalar::initialize(field, FloatType_c(0.));
+        ek::accessor::Scalar::initialize(field, FloatType{0});
       }
     }
 #endif
@@ -516,8 +520,7 @@ public:
 
 protected:
   void integrate_vtk_writers() override {
-    for (auto const &it : m_vtk_auto) {
-      auto &vtk_handle = it.second;
+    for (auto const &vtk_handle : m_vtk_auto | std::views::values) {
       if (vtk_handle->enabled) {
         vtk::writeFiles(vtk_handle->ptr)();
         vtk_handle->execution_count++;
