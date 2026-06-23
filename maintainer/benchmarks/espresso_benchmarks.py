@@ -59,7 +59,7 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
 
     def skip_unsupported_local_configs(self):
         if self.is_local():
-            supported_configs = ("maxset")
+            supported_configs = ["maxset"]
             if self.config_name not in supported_configs:
                 self.skip(
                     f"Local execution only supports {
@@ -105,7 +105,6 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
             "-D ESPRESSO_TEST_TIMEOUT=1200",
             "-D ESPRESSO_BUILD_WITH_CUDA=ON",
             f"-D ESPRESSO_CMAKE_CUDA_ARCHITECTURES='{CUDAARCHS}'",
-            "-D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM=ON",
             "-D ESPRESSO_BUILD_WITH_WALBERLA=ON",
             "-D ESPRESSO_BUILD_WITH_CCACHE=OFF",
         ]
@@ -142,37 +141,72 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
     @run_after("init")
     def setup_test(self):
         mpi_enabled = self.build_params["mpi"]  # type: ignore
-        self.script_filename, self.script_args, self.num_cores = self.test_case  # type: ignore
+        self.script_filename, self.script_args, self.num_mpi_ranks = self.test_case  # type: ignore
+        self.use_gpu = "--gpu" in self.script_args
 
         self.variants = BuildEspresso.get_variant_nums(
             build_params=self.build_params)
+
         assert (
             len(self.variants) == 1
         ), "Benchmark test should depend on exactly one build test."
         self.depends_on(BuildEspresso.variant_name(self.variants[0]))
 
         if not mpi_enabled:
-            self.num_cores = 1
+            self.num_mpi_ranks = 1
 
-        self.num_tasks = self.num_cores
-        self.num_tasks_per_node = self.num_cores
-        self.num_cpus_per_task = 64 // self.num_cores
-        self.num_gpus_per_node = 1
+        self.num_tasks = self.num_mpi_ranks
+        self.num_tasks_per_node = self.num_mpi_ranks
+        self.num_cpus_per_task = 1  # For MPI
+
+        if self.use_gpu:
+            self.num_gpus_per_node = self.num_mpi_ranks
+        else:
+            self.num_gpus_per_node = 0
 
         args_str = "_".join(
             [a.replace("--", "").replace("=", "_") for a in self.script_args]
         )
         self.descr = f"ESPRESSO_{self.script_filename.replace('.py', '')}_{
-            args_str}_cores_{self.num_cores}"
+            args_str}_cores_{self.num_mpi_ranks}"
 
-    @run_before('run')
+    @run_before("run")
+    def skip_unsupported_test_configs(self):
+        tests_to_valid_mpi_ranks_map = {
+            "lb.py": {"local": [1], "cluster": [1, 2]}}
+
+        for test_case, valid_mpi_ranks in tests_to_valid_mpi_ranks_map.items():
+            if self.script_filename == test_case:
+                if (
+                    self.is_local()
+                    and self.use_gpu
+                    and self.num_mpi_ranks not in valid_mpi_ranks["local"]
+                ):
+                    self.skip(
+                        f"Local execution of test case {
+                            self.script_filename} with argument '--gpu' only supports"
+                        f" {valid_mpi_ranks['local']} cores (tried to use {
+                            self.num_mpi_ranks})"
+                    )
+                elif (
+                    self.use_gpu
+                    and self.num_mpi_ranks not in valid_mpi_ranks["cluster"]
+                ):
+                    self.skip(
+                        f"Execution of test case {
+                            self.script_filename} with argument '--gpu' only supports"
+                        f" {valid_mpi_ranks['cluster']} cores (tried to use {
+                            self.num_mpi_ranks})"
+                    )
+
+    @run_before("run")
     def skip_unsupported_local_configs(self):
         if self.is_local():
             supported_cores = (1, 4)
-            if self.num_cores not in supported_cores:
+            if self.num_mpi_ranks not in supported_cores:
                 self.skip(
                     f"Local execution only supports {supported_cores} cores "
-                    f"(tried to use {self.num_cores})"
+                    f"(tried to use {self.num_mpi_ranks})"
                 )
 
     @run_before("run")
@@ -186,7 +220,7 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
 
         if self.current_system.name == "local":
             self.executable = f"mpiexec -n {
-                self.num_cores} {build_dir}/pypresso"
+                self.num_mpi_ranks} {build_dir}/pypresso"
         else:
             self.executable = f"{build_dir}/pypresso"
 

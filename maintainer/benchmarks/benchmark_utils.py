@@ -18,8 +18,11 @@
 #
 
 
-CONFIGS = [{"config": "maxset", "mpi": True}, {
-    "config": "default", "mpi": True}, {"config": "empty", "mpi": True}]
+CONFIGS = [
+    {"config": "maxset", "mpi": True},
+    {"config": "default", "mpi": True},
+    {"config": "empty", "mpi": True},
+]
 
 # Defintion of all individual benchmark tests
 BENCHMARKS = [
@@ -27,15 +30,29 @@ BENCHMARKS = [
         "--particles_per_core=1000", "--volume_fraction=0.50"]},
     {"file": "mc_acid_base_reservoir.py",
         "args": ["--particles_per_core=500"]},
-    {"file": "p3m.py", "args": [
-        "--particles_per_core=1000", "--volume_fraction=0.25", "--prefactor=4"]},
+    {
+        "file": "p3m.py",
+        "args": [
+            "--particles_per_core=1000",
+            "--volume_fraction=0.25",
+            "--prefactor=4",
+        ],
+    },
     {"file": "ferrofluid.py", "args": ["--particles_per_core=400"]},
-    {"file": "lb.py", "args": ["--particles_per_core=125",
-                               "--volume_fraction=0.03", "--lb_sites_per_particle=28"]},
+    {
+        "file": "lb.py",
+        "args": [
+            "--particles_per_core=125",
+            "--volume_fraction=0.03",
+            "--lb_sites_per_particle=28",
+        ],
+    },
     {"file": "lb.py", "args": ["--box_l=32", "--particles_per_core=0"]},
+    {"file": "lb.py", "args": ["--box_l=32",
+                               "--particles_per_core=0", "--gpu"]},
 ]
 
-CORES_LIST = [1, 2, 4, 8, 12]
+MPI_RANKS_LIST = [1, 2, 4, 8, 16]
 
 
 def generate_test_parameters():
@@ -43,8 +60,8 @@ def generate_test_parameters():
     params = []
     for benchmark in BENCHMARKS:
         # Replicate the CMake scaling logic
-        cores_list = CORES_LIST if benchmark.get('mpi', True) else [1]
+        cores_list = MPI_RANKS_LIST if benchmark.get("mpi", True) else [1]
         for cores in cores_list:
             # Reframe parameters must be hashable, so lists become tuples
-            params.append((benchmark['file'], (benchmark['args']), cores))
+            params.append((benchmark["file"], (benchmark["args"]), cores))
     return params
