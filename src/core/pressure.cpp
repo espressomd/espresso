@@ -166,12 +166,10 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
             //         = r12_post - (m1+m2)/m2 * accum1
             // This avoids reading accumulated_correction from ghost p2.
             auto const &accum = p1.rattle_params().accumulated_correction;
-            auto const r12 =
-                box_geo.get_mi_vector(p1.pos(), p2.pos()) -
-                ((p1.mass() + p2.mass()) / p2.mass()) * accum;
+            auto const r12 = box_geo.get_mi_vector(p1.pos(), p2.pos()) -
+                             ((p1.mass() + p2.mass()) / p2.mass()) * accum;
             auto const F_c = 2.0 * accum * p1.mass() / sq_dt;
-            auto const stress =
-                Utils::flatten(Utils::tensor_product(F_c, r12));
+            auto const stress = Utils::flatten(Utils::tensor_product(F_c, r12));
             auto dest = obs_pressure.bonded_contribution(bond_id);
             for (std::size_t k = 0; k < 9u; ++k)
               dest[k] += stress[k];

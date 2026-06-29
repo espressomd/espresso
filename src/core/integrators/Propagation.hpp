@@ -54,7 +54,6 @@ public:
    *  use RATTLE rigid bonds. */
   bool is_inertial() const {
     return integ_switch != INTEG_METHOD_STEEPEST_DESCENT &&
-           integ_switch != INTEG_METHOD_BD &&
-           integ_switch != INTEG_METHOD_SD;
+           integ_switch != INTEG_METHOD_BD && integ_switch != INTEG_METHOD_SD;
   }
 };

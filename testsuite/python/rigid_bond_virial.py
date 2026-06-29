@@ -22,6 +22,7 @@ import espressomd
 import espressomd.interactions
 import numpy as np
 
+
 @utx.skipIfMissingFeatures("BOND_CONSTRAINT")
 class RigidBondVirialTest(ut.TestCase):
 
@@ -58,9 +59,9 @@ class RigidBondVirialTest(ut.TestCase):
         v_p = np.trace(self.system.analysis.pressure_tensor()['bonded']) / 3.
         v_theory = -2.0 / (3. * V)
         self.assertAlmostEqual(v_p, v_theory, delta=0.01 * abs(v_theory))
-        v_xx = self.system.analysis.pressure_tensor()['bonded'][0,0]
-        v_yy = self.system.analysis.pressure_tensor()['bonded'][1,1]
-        v_zz = self.system.analysis.pressure_tensor()['bonded'][2,2]
+        v_xx = self.system.analysis.pressure_tensor()['bonded'][0, 0]
+        v_yy = self.system.analysis.pressure_tensor()['bonded'][1, 1]
+        v_zz = self.system.analysis.pressure_tensor()['bonded'][2, 2]
         self.assertAlmostEqual(v_xx, -2.0 / V, delta=0.01 * abs(2.0 / V))
         self.assertAlmostEqual(v_yy, 0.0, delta=1e-8)
         self.assertAlmostEqual(v_zz, 0.0, delta=1e-8)
@@ -77,7 +78,7 @@ class RigidBondVirialTest(ut.TestCase):
         m1 = 1.0
         m2 = 2.0
         d = 1.0
-        v = 1.0 # velocity
+        v = 1.0  # velocity
         V = self.system.volume()
 
         set_integrator()
@@ -92,7 +93,8 @@ class RigidBondVirialTest(ut.TestCase):
         v_p = np.trace(pt) / 3.
         self.assertAlmostEqual(v_p, v_theory, delta=0.01 * abs(v_theory))
         # Bond is along x: all virial goes into xx, none into yy or zz
-        self.assertAlmostEqual(pt[0, 0], 3. * v_theory, delta=0.01 * abs(3. * v_theory))
+        self.assertAlmostEqual(pt[0, 0], 3. * v_theory,
+                               delta=0.01 * abs(3. * v_theory))
         self.assertAlmostEqual(pt[1, 1], 0., delta=1e-8)
         self.assertAlmostEqual(pt[2, 2], 0., delta=1e-8)
 
@@ -102,7 +104,8 @@ class RigidBondVirialTest(ut.TestCase):
 
     def test_virial_unequal_masses_se(self):
         """SE: constraint virial with m1!=m2 matches centripetal theory."""
-        self._virial_unequal_masses(self.system.integrator.set_symplectic_euler)
+        self._virial_unequal_masses(
+            self.system.integrator.set_symplectic_euler)
 
     #  Langevin consistency: mean of (P_bond + P_kin) = kT/V,
     #  std matches analytic fluctuation formula.
@@ -115,7 +118,8 @@ class RigidBondVirialTest(ut.TestCase):
         self.system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
         set_integrator()
 
-        std_theory = ((6 * kT**2 + noise_prefactor * gamma * mass * kT / dt) / (9 * V**2))**0.5
+        std_theory = ((6 * kT**2 + noise_prefactor * gamma *
+                      mass * kT / dt) / (9 * V**2))**0.5
 
         self._make_dimer(v=0.0)
 
@@ -125,14 +129,17 @@ class RigidBondVirialTest(ut.TestCase):
         virial = []
         for _ in range(n_loop):
             self.system.integrator.run(n_steps)
-            v_p = np.trace(self.system.analysis.pressure_tensor()['bonded']) / 3.
-            v_k = np.trace(self.system.analysis.pressure_tensor()['kinetic']) / 3.
+            v_p = np.trace(
+                self.system.analysis.pressure_tensor()['bonded']) / 3.
+            v_k = np.trace(self.system.analysis.pressure_tensor()[
+                           'kinetic']) / 3.
             virial.append(v_p + v_k)
 
         rigid_p = np.mean(virial)
         rigid_std = np.std(virial)
-        self.assertAlmostEqual(rigid_p, 1. / V, delta=2.*std_theory/n_loop**0.5)
-        self.assertAlmostEqual(rigid_std, std_theory, delta=0.02*std_theory)
+        self.assertAlmostEqual(
+            rigid_p, 1. / V, delta=2. * std_theory / n_loop**0.5)
+        self.assertAlmostEqual(rigid_std, std_theory, delta=0.02 * std_theory)
 
     def test_virial_consistency_vv(self):
         """VV+Langevin: rigid bond virial satisfies equipartition and fluctuation formula."""
@@ -140,9 +147,9 @@ class RigidBondVirialTest(ut.TestCase):
 
     def test_virial_consistency_se(self):
         """SE+Langevin: rigid bond virial satisfies equipartition and fluctuation formula."""
-        self._virial_consistency(self.system.integrator.set_symplectic_euler, 4)
+        self._virial_consistency(
+            self.system.integrator.set_symplectic_euler, 4)
 
 
 if __name__ == "__main__":
     ut.main()
-

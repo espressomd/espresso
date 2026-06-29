@@ -290,7 +290,8 @@ class Test(ut.TestCase):
         p1 = system.part.add(pos=[1.5, 2.0, 2.0])
         p2 = system.part.add(pos=[2.5, 2.0, 2.0])
         p2.add_bond((bond, p1))
-        error_msg = self.msg + 'Rigid bonds \\(RATTLE\\) require an inertial integrator'
+        error_msg = self.msg + \
+            'Rigid bonds \\(RATTLE\\) require an inertial integrator'
 
         system.integrator.set_brownian_dynamics()
         system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=42)
