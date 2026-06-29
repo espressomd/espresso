@@ -162,6 +162,11 @@ void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo,
   auto particles = cs.local_particles();
   auto ghost_particles = cs.ghost_particles();
 
+  // Reset the accumulator for this timestep
+  boost::for_each(particles, [](Particle &p) {
+    p.rattle_params().accumulated_correction.fill(0.);
+  });
+
   int cnt;
   for (cnt = 0; cnt < shake_max_iterations; ++cnt) {
     init_correction_vector(particles, ghost_particles);
@@ -175,6 +180,11 @@ void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo,
       break;
 
     cs.ghosts_reduce_rattle_correction();
+
+    // Accumulate AFTER ghost reduction so cross-rank bonds are included
+    boost::for_each(particles, [](Particle &p) {
+      p.rattle_params().accumulated_correction += p.rattle_params().correction;
+    });
 
     apply_positional_correction(particles);
     cs.ghosts_update(Cells::DATA_PART_POSITION | Cells::DATA_PART_MOMENTUM);
