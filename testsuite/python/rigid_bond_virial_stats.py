@@ -40,8 +40,10 @@ class RigidBondVirialStatsTest(ut.TestCase):
     def _make_dimer(self):
         bond = espressomd.interactions.RigidBond(r=1.0, ptol=1e-4, vtol=1e-4)
         self.system.bonded_inter.add(bond)
-        p1 = self.system.part.add(pos=[4.5, 5.0, 5.0], v=[0., 0., 0.], mass=1.0)
-        p2 = self.system.part.add(pos=[5.5, 5.0, 5.0], v=[0., 0., 0.], mass=1.0)
+        p1 = self.system.part.add(pos=[4.5, 5.0, 5.0], v=[
+                                  0., 0., 0.], mass=1.0)
+        p2 = self.system.part.add(pos=[5.5, 5.0, 5.0], v=[
+                                  0., 0., 0.], mass=1.0)
         p2.add_bond((bond, p1))
         return p1, p2
 

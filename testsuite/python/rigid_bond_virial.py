@@ -107,5 +107,6 @@ class RigidBondVirialTest(ut.TestCase):
         self._virial_unequal_masses(
             self.system.integrator.set_symplectic_euler)
 
+
 if __name__ == "__main__":
     ut.main()
