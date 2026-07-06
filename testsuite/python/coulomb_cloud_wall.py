@@ -108,7 +108,7 @@ class CoulombCloudWall(ut.TestCase):
             prefactor=2.8,
             force_tol=1e-3,
             energy_tol=1e-3)
-    
+
     @utx.skipIfMissingFeatures(["SCAFACOS"])
     @utx.skipIfMissingScafacosMethod("p3m")
     def test_scafacos_p3m(self):

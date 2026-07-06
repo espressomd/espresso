@@ -34,7 +34,8 @@ class CoulombCloudWall(ut.TestCase):
 
     """
 
-    system = espressomd.System(box_l=[3.01361005233, 3.01361005233, 3.01361005233])
+    system = espressomd.System(
+        box_l=[3.01361005233, 3.01361005233, 3.01361005233])
     data = np.genfromtxt(tests_common.data_path(
         "coulomb_dna_water_15543.data"))
 
@@ -117,7 +118,7 @@ class CoulombCloudWall(ut.TestCase):
             force_tol=1e-3,
             energy_tol=1e-3)
         self.check_neutrality = False
-    
+
     """
     method_params={"p3m_cao": 7, "r_cut": 1.001, "tolerance_field": 1E-4})
     """
@@ -135,8 +136,6 @@ class CoulombCloudWall(ut.TestCase):
             force_tol=1e-3,
             energy_tol=1e-3)
         self.check_neutrality = False
-    
-
 
     def test_zz_deactivation(self):
         # Is the energy and force 0, if no methods active

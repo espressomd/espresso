@@ -34,12 +34,13 @@ class CoulombCloudWall(ut.TestCase):
 
     """
 
-    system = espressomd.System(box_l=[62.05966799605923, 62.05966799605923, 62.05966799605923])
+    system = espressomd.System(
+        box_l=[62.05966799605923, 62.05966799605923, 62.05966799605923])
     data = np.genfromtxt(tests_common.data_path(
         "coulomb_silica_melt_12960.data"))
 
     tolerance = 1E-3
-    
+
     p3m_params = {'r_cut': 1.001, 'accuracy': 1e-3,
                   'mesh': [64, 64, 64], 'cao': 7, 'alpha': 2.70746}
     """

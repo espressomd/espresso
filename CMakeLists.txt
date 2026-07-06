@@ -791,7 +791,7 @@ if(ESPRESSO_BUILD_WITH_SCAFACOS)
   pkg_check_modules(SCAFACOS scafacos REQUIRED)
 endif()
 
-if (ESPRESSO_BUILD_WITH_EXSCALICOS)
+if(ESPRESSO_BUILD_WITH_EXSCALICOS)
   find_package(Exscalicos REQUIRED)
 endif()
 

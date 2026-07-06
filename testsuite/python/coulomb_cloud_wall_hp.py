@@ -38,7 +38,6 @@ class CoulombCloudWall(ut.TestCase):
     data = np.genfromtxt(tests_common.data_path(
         "coulomb_cloud_wall_system_hp.data"))
 
-    
     tolerance = 1E-6
     """
     p3m_params = {'r_cut': 1.001, 'accuracy': 1e-7,
@@ -84,7 +83,7 @@ class CoulombCloudWall(ut.TestCase):
             **self.p3m_params, prefactor=3., tune=True)
         self.system.integrator.run(0)
         self.compare("p3m", prefactor=3., force_tol=2e-6, energy_tol=1e-6)
-    
+
     """
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_cpu_single_precision(self):
