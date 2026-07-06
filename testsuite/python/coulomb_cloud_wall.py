@@ -39,7 +39,7 @@ class CoulombCloudWall(ut.TestCase):
         "coulomb_cloud_wall_system.data"))
 
     tolerance = 1E-3
-    p3m_params = {'r_cut': 1.001, 'accuracy': 1e-3,
+    p3m_params = {'r_cut': 1.001, 'accuracy': 1e-4,
                   'mesh': [64, 64, 64], 'cao': 7, 'alpha': 2.70746}
 
     # Reference energy from P3M
@@ -101,10 +101,24 @@ class CoulombCloudWall(ut.TestCase):
         self.system.electrostatics.solver = espressomd.electrostatics.Scafacos(
             prefactor=2.8,
             method_name="p2nfft",
-            method_params={"p2nfft_r_cut": 1.001, "tolerance_field": 1E-4})
+            method_params={"p2nfft_r_cut": 1.001, "tolerance_field": 1E-5})
         self.system.integrator.run(0)
         self.compare(
             "scafacos_p2nfft",
+            prefactor=2.8,
+            force_tol=1e-3,
+            energy_tol=1e-3)
+    
+    @utx.skipIfMissingFeatures(["SCAFACOS"])
+    @utx.skipIfMissingScafacosMethod("p3m")
+    def test_scafacos_p3m(self):
+        self.system.electrostatics.solver = espressomd.electrostatics.Scafacos(
+            prefactor=2.8,
+            method_name="p3m",
+            method_params={"p3m_cao": 7, "tolerance_field": 1E-5})
+        self.system.integrator.run(0)
+        self.compare(
+            "scafacos_p3m",
             prefactor=2.8,
             force_tol=1e-3,
             energy_tol=1e-3)

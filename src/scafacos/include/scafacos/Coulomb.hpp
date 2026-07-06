@@ -60,6 +60,8 @@ struct Coulomb : public Scafacos {
     if (m_delegate_near_field) {
       fcs_float field;
       fcs_compute_near_field(m_handle, dist, &field);
+      // field = exObj.shortRangeField(dist);
+      field = 0.0;
       return field;
     }
 
@@ -71,6 +73,8 @@ struct Coulomb : public Scafacos {
     if (m_delegate_near_field) {
       fcs_float potential;
       fcs_compute_near_potential(m_handle, dist, &potential);
+      // potential = exObj.shortRangePotential(dist);
+      potential = 0.0;
       return potential;
     }
 

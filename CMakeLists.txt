@@ -104,6 +104,7 @@ option(ESPRESSO_BUILD_WITH_CUDA "Build with GPU support" OFF)
 option(ESPRESSO_BUILD_WITH_HDF5 "Build with HDF5 support" OFF)
 option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
 option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
+option(ESPRESSO_BUILD_WITH_EXSCALICOS "Build with ExScaLiCoS support" OFF)
 option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
        OFF)
 option(ESPRESSO_BUILD_WITH_NLOPT "Build with NLopt support" OFF)
@@ -690,7 +691,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
 endif()
 
 if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
-  find_package(Kokkos 4.6 QUIET)
+  find_package(Kokkos 4.6 REQUIRED)
 endif()
 if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   # cmake-format: off
@@ -733,7 +734,7 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
 endif()
 
 if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/cabana-src)
-  find_package(Cabana 0.7.0 QUIET)
+  find_package(Cabana 0.7.0)
 endif()
 if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
   # cmake-format: off
@@ -788,6 +789,10 @@ endif()
 if(ESPRESSO_BUILD_WITH_SCAFACOS)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(SCAFACOS scafacos REQUIRED)
+endif()
+
+if (ESPRESSO_BUILD_WITH_EXSCALICOS)
+  find_package(Exscalicos REQUIRED)
 endif()
 
 if(ESPRESSO_BUILD_WITH_GSL)
