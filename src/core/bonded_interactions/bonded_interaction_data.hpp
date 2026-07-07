@@ -48,6 +48,8 @@
 #include "Particle.hpp"
 #include "system/Leaf.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -55,6 +57,7 @@
 #include <optional>
 #include <unordered_map>
 #include <variant>
+#include <vector>
 
 /** Interaction type for unused bonded interaction slots */
 struct NoneBond {
@@ -144,6 +147,17 @@ public:
     assert(n_rigid_bonds >= 0);
     return n_rigid_bonds;
   }
+  /**
+   * @brief Per-bond-type RATTLE constraint virial.
+   *
+   * Accumulated bond-by-bond inside correct_position_shake() (indexed by
+   * bond id, same convention as Observable_stat::bonded_contribution()),
+   * where the pairwise correction/mass/bond-vector are all unambiguous,
+   * regardless of how many rigid bonds a particle participates in. Reset
+   * at the start of every SHAKE call; consumed by
+   * System::calculate_pressure().
+   */
+  std::vector<Utils::Vector9d> rigid_bond_virial;
 #endif
   std::optional<key_type> find_bond_id(mapped_type const &target_bond) const {
     for (auto const &[bond_id, bond] : m_params) {

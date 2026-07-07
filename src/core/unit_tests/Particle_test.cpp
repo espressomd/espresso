@@ -201,8 +201,6 @@ void check_particle_rattle(ParticleRattle const &out,
                            ParticleRattle const &ref) {
   BOOST_TEST(out.correction == ref.correction,
              boost::test_tools::per_element());
-  BOOST_TEST(out.accumulated_correction == ref.accumulated_correction,
-             boost::test_tools::per_element());
 }
 
 BOOST_AUTO_TEST_CASE(rattle_serialization) {
@@ -234,27 +232,6 @@ BOOST_AUTO_TEST_CASE(rattle_serialization) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(rattle_checkpoint_serialization) {
-  // accumulated_correction is transient; it must NOT survive a checkpoint
-  // round-trip so that restored simulations start each SHAKE call clean.
-  auto pr = ParticleRattle{{1., 2., 3.}, {4., 5., 6.}};
-
-  std::stringstream stream;
-  {
-    boost::archive::text_oarchive oa(stream);
-    oa << pr;
-  }
-
-  boost::archive::text_iarchive ia(stream);
-  ParticleRattle out;
-  ia >> out;
-
-  BOOST_TEST(out.correction == (Utils::Vector3d{1., 2., 3.}),
-             boost::test_tools::per_element());
-  BOOST_TEST(out.accumulated_correction == Utils::Vector3d{},
-             boost::test_tools::per_element());
-}
-
 BOOST_AUTO_TEST_CASE(rattle_constructors) {
   auto pr = ParticleRattle{{1, 2, 3}};
 
@@ -272,38 +249,6 @@ BOOST_AUTO_TEST_CASE(rattle_constructors) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(rattle_accumulated_correction) {
-  // default-initialized accumulated_correction must be zero
-  ParticleRattle pr{};
-  auto const zero = Utils::Vector3d{};
-  BOOST_TEST(pr.accumulated_correction == zero,
-             boost::test_tools::per_element());
-
-  // operator+ must add both fields independently
-  auto const corr_a = Utils::Vector3d{1., 0., 0.};
-  auto const accum_a = Utils::Vector3d{0., 1., 0.};
-  auto const corr_b = Utils::Vector3d{0., 0., 1.};
-  auto const accum_b = Utils::Vector3d{1., 0., 0.};
-  ParticleRattle a{corr_a, accum_a};
-  ParticleRattle b{corr_b, accum_b};
-
-  auto const expected_corr = corr_a + corr_b;    // {1,0,1}
-  auto const expected_accum = accum_a + accum_b; // {1,1,0}
-  ParticleRattle expected_sum{expected_corr, expected_accum};
-  check_particle_rattle(a + b, expected_sum);
-
-  // operator+= must add only correction, NOT accumulated_correction
-  // (ghost reduction must not bleed stale accumulated values into locals)
-  auto const dst_accum = Utils::Vector3d{5., 5., 5.};
-  ParticleRattle dst{Utils::Vector3d{2., 0., 0.}, dst_accum};
-  dst += b;
-  auto const expected_dst_corr = Utils::Vector3d{2., 0., 1.};
-  BOOST_TEST(dst.correction == expected_dst_corr,
-             boost::test_tools::per_element());
-  // accumulated_correction must be unchanged after +=
-  BOOST_TEST(dst.accumulated_correction == dst_accum,
-             boost::test_tools::per_element());
-}
 #endif // ESPRESSO_BOND_CONSTRAINT
 
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH

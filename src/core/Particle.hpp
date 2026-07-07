@@ -415,26 +415,18 @@ struct ParticleLocal {
 struct ParticleRattle {
   /** position/velocity correction */
   Utils::Vector3d correction = {0., 0., 0.};
-  /** total over all RATTLE iterations */
-  Utils::Vector3d accumulated_correction = {0., 0., 0.};
 
   friend ParticleRattle operator+(ParticleRattle const &lhs,
                                   ParticleRattle const &rhs) {
-    return {lhs.correction + rhs.correction,
-            lhs.accumulated_correction + rhs.accumulated_correction};
+    return {lhs.correction + rhs.correction};
   }
 
-  // Intentionally excludes accumulated_correction: ghost reduction must not
-  // overwrite the local particle's accumulated value with ghost data.
   ParticleRattle &operator+=(ParticleRattle const &rhs) {
-    correction += rhs.correction;
-    return *this;
+    return *this = *this + rhs;
   }
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar & correction;
-    // accumulated_correction is reset at the start of every SHAKE call;
-    // serializing it would waste checkpoint space with a transient value.
   }
 };
 #endif

@@ -50,7 +50,7 @@ class RigidBondVirialTest(ut.TestCase):
         return p1, p2
 
     #  Rotation test: after one step, constraint virial = F_centripetal·d
-    #  F_centripetal = m v²/r = 1·1/0.5 = 2,  W = -virial/(3V) = -2/(3V)               
+    #  F_centripetal = m v²/r = 1·1/0.5 = 2,  W = -virial/(3V) = -2/(3V)
     def _virial_in_rotation(self, set_integrator):
         V = self.system.volume()
         set_integrator()
@@ -106,6 +106,75 @@ class RigidBondVirialTest(ut.TestCase):
         """SE: constraint virial with m1!=m2 matches centripetal theory."""
         self._virial_unequal_masses(
             self.system.integrator.set_symplectic_euler)
+
+    def _make_chain(self, masses, bond_lengths, omega=1.0):
+        """
+        Build a rigid, collinear 3-particle chain 0-1-2 (two RigidBonds,
+        particle 1 shared by both) set up in rigid rotation about its
+        center of mass, so the net constraint force on each particle is
+        exactly the centripetal force F_i = -m_i * omega^2 * x_i.
+        """
+        l1, l2 = bond_lengths
+        x1 = 0.0
+        x0 = x1 - l1
+        x2 = x1 + l2
+        com = (masses[0] * x0 + masses[1] * x1 + masses[2] * x2) / sum(masses)
+        x = [x0 - com, x1 - com, x2 - com]
+
+        parts = []
+        for m, xi in zip(masses, x):
+            v = (0., omega * xi, 0.)
+            p = self.system.part.add(pos=[5. + xi, 5.0, 5.0], v=v, mass=m)
+            parts.append(p)
+
+        bond01 = espressomd.interactions.RigidBond(r=l1, ptol=1e-9, vtol=1e-9)
+        bond12 = espressomd.interactions.RigidBond(r=l2, ptol=1e-9, vtol=1e-9)
+        self.system.bonded_inter.add(bond01)
+        self.system.bonded_inter.add(bond12)
+        parts[1].add_bond((bond01, parts[0]))
+        parts[2].add_bond((bond12, parts[1]))
+        return parts, x
+
+    def _virial_chain(self, set_integrator, masses, bond_lengths, omega=1.0):
+        V = self.system.volume()
+        set_integrator()
+        _, x = self._make_chain(masses, bond_lengths, omega=omega)
+        self.system.integrator.run(1)
+
+        # Centripetal theory, generalized from the dimer case: each particle's
+        # net constraint force is F_i = -m_i*omega^2*x_i, so the constraint
+        # virial is W_xx = sum_i x_i * F_i (bond is along x: all virial is
+        # in xx, none in yy or zz).
+        w_xx = sum(-m * omega**2 * xi**2 for m, xi in zip(masses, x))
+        v_theory = w_xx / (3. * V)
+
+        pt = self.system.analysis.pressure_tensor()['bonded']
+        v_p = np.trace(pt) / 3.
+        self.assertAlmostEqual(v_p, v_theory, delta=0.01 * abs(v_theory))
+        self.assertAlmostEqual(pt[0, 0], w_xx / V,
+                               delta=0.01 * abs(w_xx / V))
+        self.assertAlmostEqual(pt[1, 1], 0., delta=1e-8)
+        self.assertAlmostEqual(pt[2, 2], 0., delta=1e-8)
+
+    def test_virial_chain_symmetric_vv(self):
+        """VV: constraint virial of a rotating rigid 3-particle chain (equal masses/bond lengths, shared middle bond) matches centripetal theory."""
+        self._virial_chain(self.system.integrator.set_vv,
+                           masses=[1.0, 1.0, 1.0], bond_lengths=(1.0, 1.0))
+
+    def test_virial_chain_symmetric_se(self):
+        """SE: constraint virial of a rotating rigid 3-particle chain (equal masses/bond lengths, shared middle bond) matches centripetal theory."""
+        self._virial_chain(self.system.integrator.set_symplectic_euler,
+                           masses=[1.0, 1.0, 1.0], bond_lengths=(1.0, 1.0))
+
+    def test_virial_chain_unequal_masses_vv(self):
+        """VV: constraint virial of a rigid 3-particle chain with unequal masses and bond lengths matches centripetal theory."""
+        self._virial_chain(self.system.integrator.set_vv,
+                           masses=[2.0, 1.0, 3.0], bond_lengths=(1.0, 1.5))
+
+    def test_virial_chain_unequal_masses_se(self):
+        """SE: constraint virial of a rigid 3-particle chain with unequal masses and bond lengths matches centripetal theory."""
+        self._virial_chain(self.system.integrator.set_symplectic_euler,
+                           masses=[2.0, 1.0, 3.0], bond_lengths=(1.0, 1.5))
 
 
 if __name__ == "__main__":
