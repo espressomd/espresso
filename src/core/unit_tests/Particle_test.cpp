@@ -248,7 +248,6 @@ BOOST_AUTO_TEST_CASE(rattle_constructors) {
     check_particle_rattle(out, pr);
   }
 }
-
 #endif // ESPRESSO_BOND_CONSTRAINT
 
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH

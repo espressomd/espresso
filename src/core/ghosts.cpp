@@ -354,9 +354,9 @@ add_rattle_correction_from_recv_buffer(CommBuf &recv_buffer,
   auto archiver = Utils::MemcpyIArchive{recv_buffer.make_span()};
   for (auto &part_list : ghost_comm.part_lists) {
     for (Particle &part : *part_list) {
-      Utils::Vector3d correction;
-      archiver >> correction;
-      part.rattle_correction() += correction;
+      ParticleRattle pr;
+      archiver >> pr;
+      part.rattle_params() += pr;
     }
   }
 }
