@@ -691,7 +691,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
 endif()
 
 if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
-  find_package(Kokkos 4.6 REQUIRED)
+  find_package(Kokkos 4.6 QUIET)
 endif()
 if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   # cmake-format: off
@@ -734,7 +734,7 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
 endif()
 
 if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/cabana-src)
-  find_package(Cabana 0.7.0)
+  find_package(Cabana 0.7.0 QUIET)
 endif()
 if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
   # cmake-format: off
@@ -743,6 +743,7 @@ if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
     GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
     GIT_TAG        e76c1a1 # 0.7.0 with patches
     PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cabana.patch
+    OVERRIDE_FIND_PACKAGE
   )
   # cmake-format: on
   set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
@@ -792,7 +793,29 @@ if(ESPRESSO_BUILD_WITH_SCAFACOS)
 endif()
 
 if(ESPRESSO_BUILD_WITH_EXSCALICOS)
-  find_package(Exscalicos REQUIRED)
+  if(NOT DEFINED Exscalicos_FOUND OR NOT ${Exscalicos_FOUND})
+    if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/exscalicos-src)
+      find_package(Exscalicos QUIET)
+    endif()
+    if(NOT DEFINED Exscalicos_FOUND OR NOT ${Exscalicos_FOUND})
+      # cmake-format: off
+      FetchContent_Declare(
+        exscalicos
+        GIT_REPOSITORY https://gitlab.jsc.fz-juelich.de/SLMS/kokkos/exscalicos.git
+        GIT_TAG        bcd2c238 # P3M version
+        PATCH_COMMAND  patch -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/exscalicos.patch
+      )
+      # cmake-format: on
+      set(EXSCALICOS_BUILD_TESTS off CACHE BOOL "")
+      set(EXSCALICOS_CUDA off CACHE BOOL "")
+      set(EXSCALICOS_HIP off CACHE BOOL "")
+      set(BUILD_SHARED_LIBS OFF)
+      FetchContent_MakeAvailable(exscalicos)
+      set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+      set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
+      add_library(Exscalicos::Exscalicos ALIAS Exscalicos)
+    endif()
+  endif()
 endif()
 
 if(ESPRESSO_BUILD_WITH_GSL)
