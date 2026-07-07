@@ -456,33 +456,84 @@ class DPDThermostat(ut.TestCase):
         partcls = system.part.add(pos=pos)
         system.integrator.run(10)
 
-        for kT in [0., 2.]:
-            system.thermostat.set_dpd(kT=kT, seed=3)
-            # run 1 integration step to get velocities
-            partcls.v = np.zeros((n_part, 3))
-            system.integrator.run(steps=1)
+        # test non-thermalized case
+        system.thermostat.set_dpd(kT=0, seed=3)
+        # run 1 integration step to get velocities
+        partcls.v = np.zeros((n_part, 3))
+        system.integrator.run(steps=1)
 
-            pairs = system.part.pairs()
+        pairs = system.part.pairs()
 
-            stress = np.zeros([3, 3])
+        stress = np.zeros([3, 3])
 
-            for pair in pairs:
-                dist = system.distance_vec(pair[0], pair[1])
-                if np.linalg.norm(dist) < r_cut:
-                    vel_diff = pair[1].v - pair[0].v
-                    stress += calc_stress(dist, vel_diff)
+        for pair in pairs:
+            dist = system.distance_vec(pair[0], pair[1])
+            if np.linalg.norm(dist) < r_cut:
+                vel_diff = pair[1].v - pair[0].v
+                stress += calc_stress(dist, vel_diff)
 
-            stress /= system.volume()
+        stress /= system.volume()
 
-            dpd_stress = system.analysis.dpd_stress()
+        dpd_stress = system.analysis.dpd_stress()
 
-            dpd_obs = espressomd.observables.DPDStress()
-            obs_stress = dpd_obs.calculate()
-            pressure = system.analysis.pressure_tensor()["dpd"]
+        dpd_obs = espressomd.observables.DPDStress()
+        obs_stress = dpd_obs.calculate()
+        pressure = system.analysis.pressure_tensor()["dpd"]
 
-            np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)
-            np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)
-            np.testing.assert_array_almost_equal(np.copy(pressure), -stress)
+        np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)
+        np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)
+        np.testing.assert_array_almost_equal(np.copy(pressure), -stress)
+
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
+    def test_dpd_stress_noise_statistics(self):
+        """Thermalized DPD stress: for a fixed pair with zero relative velocity
+        the stress is pure noise. Check its mean (=0) and per-component variance
+        against the analytic fluctuation-dissipation result. A generic off-axis
+        separation makes all 9 stress components nonzero and distinct.
+        """
+        system = self.system
+        kT, gamma_r, gamma_t, r_cut = 2.0, 1.5, 0.7, 1.5
+        dt = system.time_step
+
+        system.thermostat.set_dpd(kT=kT, seed=42)
+        system.non_bonded_inter[0, 0].dpd.set_params(
+            weight_function=0, gamma=gamma_r, r_cut=r_cut,
+            trans_weight_function=0, trans_gamma=gamma_t, trans_r_cut=r_cut)
+
+        # Both particles are fixed with zero velocity so v21 == 0 exactly and
+        # the geometry never changes; each run(1) only advances the RNG counter.
+        d = np.array([0.5, 0.7, 0.9])  # |d| = sqrt(1.55) ~ 1.245 < r_cut
+        pos0 = np.array([5., 5., 5.])
+        system.part.add(pos=pos0, v=[0., 0., 0.], fix=[True, True, True])
+        system.part.add(pos=pos0 + d, v=[0., 0., 0.], fix=[True, True, True])
+
+        # analytic mean (0) and variance of the single-pair noise stress:
+        #   stress_ij = d_i * (M @ noise)_j / V,   M = a*P + b*I
+        #   Var(stress_ij) = (d_i^2 / V^2) * s2 * ((A^2 - B^2)*dhat_j^2 + B^2)
+        # with omega = 1 (weight_function=0), A/B the radial/trans amplitudes,
+        # and noise components iid with variance s2 = 1/12.
+        V = system.volume()
+        s2 = 1. / 12.
+        A = np.sqrt(24. * kT * gamma_r / dt)  # radial amplitude (omega=1)
+        B = np.sqrt(24. * kT * gamma_t / dt)  # trans amplitude  (omega=1)
+        dhat = d / np.linalg.norm(d)
+        sum_Mjk2 = (A**2 - B**2) * dhat**2 + B**2  # length-3 over j
+        var_analytic = np.outer(d**2, sum_Mjk2) * \
+            (s2 / V**2)  # (3, 3), all > 0
+
+        N = 5000
+        samples = np.empty((N, 3, 3))
+        for n in range(N):
+            system.integrator.run(1)
+            samples[n] = system.analysis.dpd_stress()
+
+        mean = samples.mean(axis=0)
+        var = samples.var(axis=0)
+        # (1) all 9 means ~ 0  (~6 sigma of the sample mean)
+        atol_mean = 6. * np.sqrt(var_analytic / N)
+        np.testing.assert_array_less(np.abs(mean), atol_mean)
+        # (2) all 9 variances ~ analytic
+        np.testing.assert_allclose(var, var_analytic, rtol=0.05)
 
     @utx.skipIfMissingFeatures("MASS")
     def test_momentum_conservation(self):
