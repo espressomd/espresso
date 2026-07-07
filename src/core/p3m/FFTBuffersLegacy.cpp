@@ -28,11 +28,13 @@
 #include "communication.hpp"
 #include "p3m/common.hpp"
 
+#include <utils/device_qualifier.hpp>
+
 #include <array>
 #include <span>
 
 template <typename FloatType>
-FFTBuffersLegacy<FloatType>::~FFTBuffersLegacy() = default;
+HOST_ONLY_QUALIFIER FFTBuffersLegacy<FloatType>::~FFTBuffersLegacy() = default;
 
 template <typename FloatType>
 void FFTBuffersLegacy<FloatType>::update_mesh_views(

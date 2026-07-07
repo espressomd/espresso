@@ -35,6 +35,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     espresso_p3m
     PRIVATE espresso::compiler_flags
             espresso::p3m::compiler_flags
+            espresso::kokkos::compiler_flags
             espresso::instrumentation
             espresso::utils
             espresso::config
