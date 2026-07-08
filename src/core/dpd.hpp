@@ -83,4 +83,13 @@ Utils::Vector9d dpd_stress(System::System &system,
  */
 Utils::Vector9d dpd_pressure_local(System::System &system);
 
+/** Return a random uniform 3D vector with the Philox thermostat.
+ *  Random numbers depend on
+ *  1. dpd_rng_counter (initialized by seed) which is increased on integration
+ *  2. Salt (decorrelates different counters)
+ *  3. Two particle IDs (order-independent, decorrelates particles, gets rid of
+ *     seed-per-node)
+ */
+Utils::Vector3d dpd_noise(DPDThermostat const &dpd, int pid1, int pid2);
+
 #endif // ESPRESSO_DPD

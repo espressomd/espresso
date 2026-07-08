@@ -51,7 +51,7 @@
  *  3. Two particle IDs (order-independent, decorrelates particles, gets rid of
  *     seed-per-node)
  */
-static Utils::Vector3d dpd_noise(DPDThermostat const &dpd, int pid1, int pid2) {
+Utils::Vector3d dpd_noise(DPDThermostat const &dpd, int pid1, int pid2) {
   auto const pref = (pid1 < pid2) ? 1.0 : -1.0;
   return pref * Random::noise_uniform<RNGSalt::SALT_DPD>(
                     dpd.rng_counter(), dpd.rng_seed(),

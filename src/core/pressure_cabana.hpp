@@ -35,7 +35,6 @@
 
 #ifdef ESPRESSO_DPD
 #include "dpd.hpp"
-#include "random.hpp"
 #endif
 
 #include <utils/Vector.hpp>
@@ -48,16 +47,6 @@
 #include <cstddef>
 #include <span>
 #include <vector>
-
-#ifdef ESPRESSO_DPD // TODO: expose this function from dpd.hpp instead, and
-                    // remove it from dpd.cpp
-inline Utils::Vector3d dpd_noise(DPDThermostat const &dpd, int pid1, int pid2) {
-  auto const pref = (pid1 < pid2) ? 1.0 : -1.0;
-  return pref * Random::noise_uniform<RNGSalt::SALT_DPD>(
-                    dpd.rng_counter(), dpd.rng_seed(),
-                    (pid1 < pid2) ? pid2 : pid1, (pid1 < pid2) ? pid1 : pid2);
-}
-#endif
 
 struct PressureBinLayout {
   std::size_t n_bonded;
