@@ -22,6 +22,7 @@
  *  Implementation of nonbonded_interaction_data.hpp
  */
 
+
 #include <config/config.hpp>
 
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -87,6 +88,11 @@ recalc_maximal_cutoff(IA_parameters const &data,
 #ifdef ESPRESSO_GAUSSIAN
   consider(max_cut_current, mask, PairPotential::Gaussian,
            data.gaussian.max_cutoff());
+#endif
+
+#ifdef ESPRESSO_GAUSSIAN_ANISO
+  consider(max_cut_current, mask, PairPotential::GaussianAniso,
+           data.gaussian_aniso.max_cutoff());
 #endif
 
 #ifdef ESPRESSO_BMHTF_NACL

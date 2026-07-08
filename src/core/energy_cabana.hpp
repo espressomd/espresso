@@ -154,6 +154,13 @@ struct EnergyKernel {
       {
         e_nb += calc_central_radial_energy(ia_params, dist);
 
+        // Only call GAUSSIAN_ANISO energy kernel if active
+#ifdef ESPRESSO_GAUSSIAN_ANISO
+  if (ia_params.active_pair_mask &
+      pair_potential_bit(PairPotential::GaussianAniso)) {
+    e_nb += gaussian_aniso_pair_energy(ia_params, d);
+  }
+#endif
         // Only call Thole energy kernel if active
 #ifdef ESPRESSO_THOLE
         if (thole_active(ia_params, coulomb_u_kernel != nullptr)) {

@@ -545,6 +545,49 @@ caution when performing energy calculations. However, you can often
 choose the cutoff such that the energy difference at the cutoff is less
 than a desired accuracy, since the potential decays very rapidly.
 
+.. _Anisotropic Gaussian interaction:
+
+Anisotropic Gaussian interaction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+    Feature ``GAUSSIAN_ANISO`` required.
+
+The interface for the anisotropic Gaussian interaction is implemented in
+:class:`espressomd.interactions.GaussianAnisoInteraction`. The anisotropic
+Gaussian interaction parameters can be set via::
+
+    system.non_bonded_inter[type1, type2].gaussian_aniso.set_params(
+        eps=1.0, sig_x=0.1, sig_y=0.2, sig_z=0.3, cutoff=1.0)
+
+This defines an anisotropic Gaussian interaction between particles of the
+types ``type1`` and ``type2``. The potential is defined by
+
+.. math::
+
+   V(\Delta x, \Delta y, \Delta z) =
+     \begin{cases}
+       \epsilon \exp\left[
+       -\frac{1}{2}\left(
+       \frac{\Delta x^2}{\sigma_x^2}
+       + \frac{\Delta y^2}{\sigma_y^2}
+       + \frac{\Delta z^2}{\sigma_z^2}
+       \right)\right]
+       & r < r_\mathrm{cut}\\
+       0 & r \ge r_\mathrm{cut}
+     \end{cases}
+
+where :math:`r = \sqrt{\Delta x^2 + \Delta y^2 + \Delta z^2}`. The
+parameters :math:`\sigma_x`, :math:`\sigma_y` and :math:`\sigma_z` set the
+width of the Gaussian interaction along the Cartesian coordinate axes, while
+``cutoff`` defines a radial cutoff based on the particle separation distance.
+
+For :math:`\sigma_x = \sigma_y = \sigma_z`, this reduces to an isotropic
+three-dimensional Gaussian interaction with a radial cutoff. Currently, there
+is no shift implemented, which means that the potential is discontinuous at
+:math:`r=r_\mathrm{cut}`. Therefore use caution when performing energy
+calculations.
+
 .. _DPD interaction:
 
 DPD interaction

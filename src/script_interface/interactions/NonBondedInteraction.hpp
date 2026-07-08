@@ -399,6 +399,35 @@ private:
 };
 #endif // ESPRESSO_GAUSSIAN
 
+#ifdef ESPRESSO_GAUSSIAN_ANISO
+class InteractionGaussianAniso
+    : public InteractionPotentialInterface<::GaussianAniso_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::gaussian_aniso;
+  }
+
+public:
+  InteractionGaussianAniso() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::eps, "eps"),
+        make_autoparameter(&CoreInteraction::sig_x, "sig_x"),
+        make_autoparameter(&CoreInteraction::sig_y, "sig_y"),
+        make_autoparameter(&CoreInteraction::sig_z, "sig_z"),
+        make_autoparameter(&CoreInteraction::cut, "cutoff"),
+    });
+  }
+
+private:
+  void make_new_instance(VariantMap const &params) override {
+    m_handle =
+        make_shared_from_args<CoreInteraction, double, double, double, double,
+                              double>(
+            params, "eps", "sig_x", "sig_y", "sig_z", "cutoff");
+  }
+};
+#endif // ESPRESSO_GAUSSIAN_ANISO
+
 #ifdef ESPRESSO_BMHTF_NACL
 class InteractionBMHTF
     : public InteractionPotentialInterface<::BMHTF_Parameters> {
@@ -736,6 +765,9 @@ class NonBondedInteractionHandle
 #ifdef ESPRESSO_GAUSSIAN
   std::shared_ptr<InteractionGaussian> m_gaussian;
 #endif
+#ifdef ESPRESSO_GAUSSIAN_ANISO
+  std::shared_ptr<InteractionGaussianAniso> m_gaussian_aniso;
+#endif
 #ifdef ESPRESSO_BMHTF_NACL
   std::shared_ptr<InteractionBMHTF> m_bmhtf;
 #endif
@@ -854,6 +886,9 @@ private:
 #endif
 #ifdef ESPRESSO_GAUSSIAN
     fun(m_gaussian, "gaussian", "Interactions::InteractionGaussian");
+#endif
+#ifdef ESPRESSO_GAUSSIAN_ANISO
+    fun(m_gaussian_aniso, "gaussian_aniso", "Interactions::InteractionGaussianAniso");
 #endif
 #ifdef ESPRESSO_BMHTF_NACL
     fun(m_bmhtf, "bmhtf", "Interactions::InteractionBMHTF");

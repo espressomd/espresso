@@ -134,6 +134,21 @@ struct Gaussian_Parameters {
   double max_cutoff() const { return cut; }
 };
 
+struct GaussianAniso_Parameters {
+  double eps = 0.0;
+  double sig_x = 1.0;
+  double sig_y = 1.0;
+  double sig_z = 1.0;
+  double cut = inactive_cutoff;
+
+  GaussianAniso_Parameters() = default;
+
+  GaussianAniso_Parameters(double eps, double sig_x, double sig_y,
+                           double sig_z, double cutoff);
+
+  double max_cutoff() const { return cut; }
+};
+
 /** BMHTF NaCl potential */
 struct BMHTF_Parameters {
   double A = 0.0;
@@ -289,6 +304,7 @@ enum class PairPotential : unsigned {
   SmoothStep,
   Hertzian,
   Gaussian,
+  GaussianAniso,
   BMHTF,
   Buckingham,
   Morse,
@@ -341,6 +357,10 @@ struct IA_parameters {
 
 #ifdef ESPRESSO_GAUSSIAN
   Gaussian_Parameters gaussian;
+#endif
+
+#ifdef ESPRESSO_GAUSSIAN_ANISO
+  GaussianAniso_Parameters gaussian_aniso;
 #endif
 
 #ifdef ESPRESSO_BMHTF_NACL

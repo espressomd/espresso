@@ -77,6 +77,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef ESPRESSO_GAUSSIAN
   om->register_new<InteractionGaussian>("Interactions::InteractionGaussian");
 #endif
+#ifdef ESPRESSO_GAUSSIAN_ANISO
+  om->register_new<InteractionGaussianAniso>("Interactions::InteractionGaussianAniso");
+#endif
 #ifdef ESPRESSO_BMHTF_NACL
   om->register_new<InteractionBMHTF>("Interactions::InteractionBMHTF");
 #endif

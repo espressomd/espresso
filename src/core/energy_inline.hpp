@@ -33,6 +33,7 @@
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
+#include "nonbonded_interactions/gaussian_aniso.hpp"
 #include "nonbonded_interactions/gay_berne.hpp"
 #include "nonbonded_interactions/hat.hpp"
 #include "nonbonded_interactions/hertzian.hpp"
@@ -163,6 +164,12 @@ inline double calc_non_bonded_pair_energy(
   double ret = 0.;
 
   ret += calc_central_radial_energy(ia_params, dist);
+
+
+#ifdef ESPRESSO_GAUSSIAN_ANISO
+  if (ia_params.active_pair_mask & pair_potential_bit(PairPotential::GaussianAniso)) 
+      {ret += gaussian_aniso_pair_energy(ia_params, d);}
+#endif
 
 #ifdef ESPRESSO_THOLE
   /* Thole damping */
