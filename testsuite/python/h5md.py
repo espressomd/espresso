@@ -218,6 +218,34 @@ class H5mdTests(ut.TestCase):
             self.assertIsNone(cur.get('particles/atoms/box/edges/value'))
             self.assertIsNone(cur.get('connectivity/atoms/value'))
 
+    def test_selective_fields(self):
+        """
+        Each output field must have a distinct bit, so that requesting a
+        single field only creates that field's dataset and no other.
+        Regression test for charge/force sharing the same enum bit.
+        """
+        # request charge only: force dataset must be absent
+        temp_file = self.temp_path / 'charge_only.h5'
+        h5 = espressomd.io.writer.h5md.H5md(
+            file_path=temp_file, fields=['particle.charge'])
+        h5.write()
+        h5.flush()
+        h5.close()
+        with h5py.File(temp_file, 'r') as cur:
+            self.assertIsNotNone(cur.get('particles/atoms/charge/value'))
+            self.assertIsNone(cur.get('particles/atoms/force/value'))
+
+        # request force only: charge dataset must be absent
+        temp_file = self.temp_path / 'force_only.h5'
+        h5 = espressomd.io.writer.h5md.H5md(
+            file_path=temp_file, fields=['particle.force'])
+        h5.write()
+        h5.flush()
+        h5.close()
+        with h5py.File(temp_file, 'r') as cur:
+            self.assertIsNotNone(cur.get('particles/atoms/force/value'))
+            self.assertIsNone(cur.get('particles/atoms/charge/value'))
+
     def test_box(self):
         np.testing.assert_allclose(self.py_box, self.box_l)
 

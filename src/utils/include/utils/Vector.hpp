@@ -167,14 +167,22 @@ public:
   Vector &normalize() {
     auto const l = norm();
     if (l != T(0)) {
-      for (std::size_t i = 0u; i < N; ++i)
-        (*this)[i] /= l;
+      *this /= l;
     }
 
     return *this;
   }
 
-  Vector normalized() const { return (*this) / (*this).norm(); }
+  /*
+   * @brief Return a normalized copy of the vector.
+   *
+   * Normalize the vector by its length,
+   * if not zero, otherwise the vector is unchanged.
+   */
+  Vector normalized() const {
+    auto const l = norm();
+    return (l != T(0)) ? (*this) / l : *this;
+  }
 };
 
 template <class T> using Vector3 = Vector<T, 3>;

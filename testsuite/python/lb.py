@@ -134,6 +134,11 @@ class LBTest:
             lbf[0, 0, 0].velocity = [1, 2]
         with self.assertRaises(TypeError):
             lbf[0, 1].velocity = [1, 2, 3]
+        # check node population setter rejects wrong-length vectors
+        with self.assertRaises(RuntimeError):
+            lbf[0, 0, 0]._population = [1., 2.]
+        with self.assertRaises(RuntimeError):
+            lbf[0, 0, 0]._population = [1.] * 42
         # check node setters update cached velocities (with precision loss)
         lbnode = lbf[0, 0, 0]
         lbnode.last_applied_force = [0., 0., 0.]

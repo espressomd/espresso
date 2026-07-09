@@ -124,11 +124,11 @@ struct CellStructure::AoSoA_pack {
       std::size_t i) const {
     Utils::Vector<T, N> result;
     auto const data = result.data();
-#if !defined(__NVCOMPILER)
-#if (defined(__GNUC__) or defined(__GNUG__)) && !defined(__clang__)
-#pragma GCC unroll 8
-#else
+#if !defined(__NVCOMPILER) && !defined(__CUDACC__)
+#if defined(__clang__)
 #pragma omp unroll
+#elif defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC unroll 8
 #endif
 #endif
     for (std::size_t j = 0ul; j < N; j += 1ul) {
@@ -141,11 +141,11 @@ struct CellStructure::AoSoA_pack {
   void
   set_vector_at(Kokkos::View<T *[N], array_layout, Kokkos::HostSpace> &view,
                 std::size_t i, Utils::Vector<T, N> const &value) {
-#if !defined(__NVCOMPILER)
-#if (defined(__GNUC__) or defined(__GNUG__)) && !defined(__clang__)
-#pragma GCC unroll 8
-#else
+#if !defined(__NVCOMPILER) && !defined(__CUDACC__)
+#if defined(__clang__)
 #pragma omp unroll
+#elif defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC unroll 8
 #endif
 #endif
     for (std::size_t j = 0ul; j < N; j += 1ul) {

@@ -24,11 +24,13 @@ include(espresso_unit_test)
 espresso_unit_test(SRC RuntimeError_test.cpp DEPENDS Boost::serialization)
 espresso_unit_test(SRC RuntimeErrorCollector_test.cpp DEPENDS espresso::core
                    Boost::mpi MPI::MPI_CXX NUM_PROC 2)
+espresso_unit_test(SRC RuntimeErrorStream_test.cpp DEPENDS espresso::core
+                   Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 # create a test matrix for the stand-alone unit test
 espresso_unit_test_executable(
   NAME EspressoSystemStandAlone_test_matrix SRC
   EspressoSystemStandAlone_test.cpp DEPENDS espresso::core Boost::mpi
-  MPI::MPI_CXX)
+  MPI::MPI_CXX espresso::kokkos::compiler_flags)
 foreach(TEST_NUM_PROC 1 3 4)
   foreach(TEST_NUM_THREADS 1 2)
     if(${TEST_NUM_THREADS} LESS_EQUAL ${ESPRESSO_TEST_NT})
@@ -44,7 +46,7 @@ foreach(TEST_NUM_PROC 1 3 4)
   endforeach()
 endforeach()
 espresso_unit_test(SRC EspressoSystem_test.cpp DEPENDS espresso::core
-                   Boost::mpi NUM_PROC 2)
+                   Boost::mpi espresso::kokkos::compiler_flags NUM_PROC 2)
 espresso_unit_test(SRC ResourceCleanup_test.cpp DEPENDS espresso::core
                    Boost::mpi NUM_PROC 2)
 espresso_unit_test(SRC MpiCallbacks_test.cpp DEPENDS espresso::utils Boost::mpi
@@ -61,10 +63,12 @@ espresso_unit_test(SRC field_coupling_couplings_test.cpp DEPENDS
 espresso_unit_test(SRC field_coupling_fields_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC field_coupling_force_field_test.cpp DEPENDS
                    espresso::utils)
-espresso_unit_test(SRC field_layout_helpers_test.cpp DEPENDS espresso::utils
-                   espresso::core Kokkos::kokkos)
-espresso_unit_test(SRC particle_reduction_test.cpp DEPENDS espresso::utils
-                   espresso::core Boost::mpi Kokkos::kokkos)
+espresso_unit_test(
+  SRC field_layout_helpers_test.cpp DEPENDS espresso::utils espresso::core
+  Kokkos::kokkos espresso::kokkos::compiler_flags)
+espresso_unit_test(
+  SRC particle_reduction_test.cpp DEPENDS espresso::utils espresso::core
+  Boost::mpi Kokkos::kokkos espresso::kokkos::compiler_flags)
 espresso_unit_test(SRC periodic_fold_test.cpp)
 espresso_unit_test(SRC grid_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC lees_edwards_test.cpp DEPENDS espresso::core)
@@ -78,6 +82,7 @@ espresso_unit_test(SRC BondList_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC energy_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC bonded_interactions_map_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC bond_breakage_test.cpp DEPENDS espresso::core)
+espresso_unit_test(SRC fene_test.cpp DEPENDS espresso::core)
 if(ESPRESSO_BUILD_WITH_WALBERLA)
   espresso_unit_test(SRC lb_particle_coupling_test.cpp DEPENDS espresso::core
                      Boost::mpi MPI::MPI_CXX NUM_PROC 2)
@@ -93,11 +98,19 @@ endif()
 
 if(ESPRESSO_BUILD_WITH_FFTW)
   espresso_unit_test_executable(
-    NAME p3m_test_matrix SRC p3m_test.cpp DEPENDS espresso::core Boost::mpi
+    NAME
+    p3m_test_matrix
+    SRC
+    p3m_test.cpp
+    DEPENDS
+    espresso::core
+    Boost::mpi
     MPI::MPI_CXX
     $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:espresso::p3m::compiler_flags>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte> Cabana::Core
-    Kokkos::kokkos)
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>
+    Cabana::Core
+    Kokkos::kokkos
+    espresso::kokkos::compiler_flags)
   foreach(TEST_NUM_PROC 1 3 4)
     foreach(TEST_NUM_THREADS 1 2)
       if(${TEST_NUM_THREADS} LESS_EQUAL ${ESPRESSO_TEST_NT})
@@ -113,7 +126,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     endforeach()
   endforeach()
   espresso_unit_test(SRC fft_test.cpp DEPENDS espresso::utils espresso::core
-                     Kokkos::kokkos)
+                     Kokkos::kokkos espresso::kokkos::compiler_flags)
   espresso_unit_test(SRC math_test.cpp DEPENDS espresso::utils espresso::core)
 endif()
 

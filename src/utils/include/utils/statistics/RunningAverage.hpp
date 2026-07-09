@@ -56,7 +56,13 @@ public:
     m_max = std::max(m_max, s);
   }
 
-  void clear() { m_n = 0; }
+  void clear() {
+    m_n = 0;
+    m_old_avg = m_new_avg = 0;
+    m_old_var = m_new_var = 0;
+    m_min = std::numeric_limits<Scalar>::max();
+    m_max = -std::numeric_limits<Scalar>::max();
+  }
 
   int n() const { return m_n; }
 

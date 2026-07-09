@@ -97,7 +97,7 @@ inline std::optional<double> FeneBond::energy(Utils::Vector3d const &dx) const {
   double const dr = dx.norm() - r0;
 
   /* check bond stretching */
-  if (dr >= drmax) {
+  if (std::abs(dr) >= drmax) {
     return {};
   }
 

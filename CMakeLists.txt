@@ -209,6 +209,10 @@ set_property(
   TARGET espresso_compiler_flags APPEND
   PROPERTY INTERFACE_COMPILE_FEATURES cxx_std_${ESPRESSO_MINIMAL_CXX_STANDARD})
 
+add_library(espresso_kokkos_compiler_flags INTERFACE)
+add_library(espresso::kokkos::compiler_flags ALIAS
+            espresso_kokkos_compiler_flags)
+
 #
 # AVX2 support
 #
@@ -280,13 +284,20 @@ if(ESPRESSO_BUILD_WITH_CUDA)
   endif()
   if(NOT DEFINED ESPRESSO_CMAKE_CUDA_ARCHITECTURES)
     if("$ENV{CUDAARCHS}" STREQUAL "")
-      # 1. sm_61: GTX-1000 series (Pascal)
-      # 2. sm_75: RTX-2000 series (Turing)
-      # 3. sm_86: RTX-3000 series (Ampere)
-      # 4. sm_89: RTX-4000 series (Ada)
-      # 5. sm_90: H100 series (Hopper)
-      # 6. sm_120: RTX-5000 series (Blackwell)
+      # cmake-format: off
+      # sm_60: P100 series (Pascal)
+      # sm_61: GTX-1000 series (Pascal)
+      # sm_70: V100 series (Volta)
+      # sm_75: RTX-2000 series (Turing)
+      # sm_86: RTX-3000 series (Ampere)
+      # sm_89: RTX-4000 series (Ada)
+      # sm_90: H100 series (Hopper)
+      # sm_120: RTX-5000 series (Blackwell)
+      # cmake-format: on
       set(ESPRESSO_CUDA_ARCHITECTURES "75;86;89")
+      if(Kokkos_ENABLE_CUDA)
+        set(ESPRESSO_CUDA_ARCHITECTURES "86")
+      endif()
     else()
       set(ESPRESSO_CUDA_ARCHITECTURES "$ENV{CUDAARCHS}")
     endif()
@@ -294,6 +305,14 @@ if(ESPRESSO_BUILD_WITH_CUDA)
         CACHE INTERNAL "")
   endif()
   set(CMAKE_CUDA_ARCHITECTURES "${ESPRESSO_CMAKE_CUDA_ARCHITECTURES}")
+  list(LENGTH CMAKE_CUDA_ARCHITECTURES ESPRESSO_CMAKE_CUDA_ARCHITECTURES_LEN)
+  if(Kokkos_ENABLE_CUDA AND ESPRESSO_CMAKE_CUDA_ARCHITECTURES_LEN GREATER 1
+     AND NOT CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
+    message(
+      FATAL_ERROR
+        "Kokkos can only be built against a single CUDA architecture when using the nvcc_wrapper, got CMAKE_CUDA_ARCHITECTURES=${CMAKE_CUDA_ARCHITECTURES}"
+    )
+  endif()
   cmake_path(GET CUDA_cuda_driver_LIBRARY PARENT_PATH ESPRESSO_LIBCUDA_RPATH)
   cmake_path(GET CUDA_cudart_LIBRARY PARENT_PATH ESPRESSO_LIBCUDART_RPATH)
   macro(espresso_add_cuda_rpaths)
@@ -465,8 +484,8 @@ target_compile_options(
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>>:-Wno-old-style-cast>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANG_AND_ID:CXX,NVHPC>>:--diag_suppress=storage_class_not_first>
     $<$<AND:$<VERSION_LESS:${ESPRESSO_MINIMAL_CXX_STANDARD},23>,$<COMPILE_LANG_AND_ID:CXX,NVHPC>>:--diag_suppress=bad_pp_directive_keyword>
-    $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=code_is_unreachable>
-    $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=loop_not_reachable>
+    $<$<COMPILE_LANG_AND_ID:CXX,NVHPC,NVIDIA>:--diag_suppress=code_is_unreachable>
+    $<$<COMPILE_LANG_AND_ID:CXX,NVHPC,NVIDIA>:--diag_suppress=loop_not_reachable>
     # disable GCC's C++17 processor-specific ABI warning (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=94383)
     $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU>,$<IN_LIST:${CMAKE_SYSTEM_PROCESSOR},arm;arm64;aarch64;aarch64_be;powerpc64le>>:-Wno-psabi>
     # warnings are errors
@@ -701,10 +720,11 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
     OVERRIDE_FIND_PACKAGE
   )
   # cmake-format: on
-  set(BUILD_SHARED_LIBS ON)
+  set(BUILD_SHARED_LIBS OFF)
   set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
   set(Kokkos_ENABLE_SERIAL ON CACHE BOOL "")
   set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "")
+  set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE OFF CACHE BOOL "")
   set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
   set(Kokkos_ENABLE_COMPLEX_ALIGN ON CACHE BOOL "")
   set(Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION ON CACHE BOOL "")
@@ -725,6 +745,11 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
               LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
     endif()
   endforeach()
+  target_compile_options(
+    kokkoscore
+    PRIVATE
+      $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=initialization_not_reachable>
+  )
   # mark kokkos headers as system headers to disable compiler diagnostics
   set_property(
     TARGET kokkos APPEND
@@ -817,7 +842,7 @@ if(ESPRESSO_BUILD_WITH_NLOPT)
     FetchContent_Declare(
       nlopt
       GIT_REPOSITORY https://github.com/stevengj/nlopt.git
-      GIT_TAG        v2.10.0
+      GIT_TAG        v2.11.0
     )
     # cmake-format: on
     set(BUILD_SHARED_LIBS off)
@@ -831,6 +856,13 @@ if(ESPRESSO_BUILD_WITH_NLOPT)
     set(NLOPT_LUKSAN off CACHE BOOL "")
     FetchContent_MakeAvailable(nlopt)
     set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+    target_compile_options(
+      nlopt
+      PRIVATE
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=code_is_unreachable>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=integer_sign_change>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=deprecated_entity>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=mixed_enum_type>)
   endif()
 endif()
 
@@ -840,6 +872,12 @@ if(ESPRESSO_BUILD_WITH_VALGRIND)
   if(VALGRIND_FOUND)
     message(STATUS "Found valgrind: ${VALGRIND_INCLUDE_DIRS}")
   endif()
+endif()
+
+if(Kokkos_ENABLE_CUDA AND NOT CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+  # allow constexpr __host__ function calls in __device__ functions
+  target_compile_options(espresso_kokkos_compiler_flags
+                         INTERFACE -expt-relaxed-constexpr)
 endif()
 
 #
@@ -1038,6 +1076,12 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
         -Wno-unused-but-set-variable)
     target_link_libraries(walberla_sqlite
                           PRIVATE espresso_walberla_sqlite_compiler_flags)
+    target_compile_options(
+      sqlite3
+      PRIVATE
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=code_is_unreachable>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=cast_to_qualified_type>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=set_but_not_used>)
   endif()
   add_library(espresso_walberla_deps INTERFACE)
   add_library(espresso::walberla_deps ALIAS espresso_walberla_deps)
@@ -1113,7 +1157,7 @@ function(espresso_set_common_target_properties)
     if(ESPRESSO_BUILD_WITH_CUDA)
       if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
         set_target_properties(${TARGET_NAME}
-                              PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+                              PROPERTIES CUDA_SEPARABLE_COMPILATION OFF)
       elseif(CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
         set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE "CXX")
       endif()

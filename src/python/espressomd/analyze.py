@@ -111,7 +111,8 @@ class Analysis(ScriptInterfaceHelper):
         ----------
         p_type : :obj:`int`
             Particle :attr:`~espressomd.particle_data.ParticleHandle.type`
-            for which to calculate the center of mass.
+            for which to calculate the center of mass, or ``-1`` for all
+            particles.
 
         Returns
         -------

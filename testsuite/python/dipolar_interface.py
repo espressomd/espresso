@@ -128,6 +128,10 @@ class Test(ut.TestCase):
         MDLC = espressomd.magnetostatics.DLC
         dp3m_params = dict(prefactor=1., epsilon=0.1, accuracy=1e-6,
                            mesh=[49, 49, 49], cao=7, r_cut=4.5, alpha=0.9)
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'prefactor' is missing"):
+            espressomd.magnetostatics.DipolarP3M(
+                **{key: value for key, value in dp3m_params.items()
+                   if key != 'prefactor'})
         with self.assertRaisesRegex(ValueError, "Parameter 'prefactor' must be > 0"):
             espressomd.magnetostatics.DipolarP3M(
                 **{**dp3m_params, 'prefactor': -2.})

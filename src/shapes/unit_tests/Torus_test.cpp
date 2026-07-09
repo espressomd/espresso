@@ -16,20 +16,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_DEVICE_QUALIFIER_HPP
-#define UTILS_DEVICE_QUALIFIER_HPP
 
-#if defined(__CUDACC__)
-#define DEVICE_THROW(E)
-#define DEVICE_QUALIFIER __host__ __device__
-#define HOST_ONLY_QUALIFIER __host__
-#define DEVICE_ASSERT(A) void((A))
-#else
-#include <cassert>
-#define DEVICE_THROW(E) throw(E)
-#define DEVICE_QUALIFIER
-#define HOST_ONLY_QUALIFIER
-#define DEVICE_ASSERT(A) assert((A))
-#endif
+#define BOOST_TEST_MODULE torus test
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
-#endif // ESPRESSO_DEVICE_QUALIFIER_HPP
+#include <shapes/Torus.hpp>
+#include <utils/Vector.hpp>
+
+#include <cmath>
+
+BOOST_AUTO_TEST_CASE(torus_axis_no_nan) {
+  Shapes::Torus t;
+  t.m_center = {5., 5., 5.};
+  t.set_normal({0., 0., 1.});
+  t.set_radius(3.);
+  t.set_tube_radius(1.);
+  t.direction() = 1.0;
+
+  /* Point on the torus symmetry axis: r == 0 in torus frame */
+  Utils::Vector3d const pos{5., 5., 4.};
+  double dist{};
+  Utils::Vector3d vec{};
+
+  t.calculate_dist(pos, dist, vec);
+
+  BOOST_CHECK(std::isfinite(dist));
+  BOOST_CHECK(std::isfinite(vec[0]));
+  BOOST_CHECK(std::isfinite(vec[1]));
+  BOOST_CHECK(std::isfinite(vec[2]));
+}

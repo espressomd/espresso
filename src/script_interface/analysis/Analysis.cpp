@@ -167,13 +167,23 @@ Variant Analysis::do_call_method(std::string const &name,
   }
   if (name == "center_of_mass") {
     auto const p_type = get_value<int>(parameters, "p_type");
-    context()->parallel_try_catch([&]() { check_particle_type(p_type); });
-    auto const local = center_of_mass(get_system(), p_type);
-    return mpi_reduce_sum(context()->get_comm(), local).as_vector();
+    Variant result;
+    context()->parallel_try_catch([&]() {
+      // p_type == -1 is the sentinel for all (non-virtual) particles
+      if (p_type != -1) {
+        check_particle_type(p_type);
+      }
+      auto const local = center_of_mass(get_system(), p_type);
+      result = mpi_reduce_sum(context()->get_comm(), local).as_vector();
+    });
+    return result;
   }
   if (name == "angular_momentum") {
     auto const p_type = get_value<int>(parameters, "p_type");
-    context()->parallel_try_catch([&]() { check_particle_type(p_type); });
+    // p_type == -1 is the sentinel for all (non-virtual) particles
+    if (p_type != -1) {
+      context()->parallel_try_catch([&]() { check_particle_type(p_type); });
+    }
     auto const local = angular_momentum(get_system(), p_type);
     return mpi_reduce_sum(context()->get_comm(), local).as_vector();
   }
@@ -216,17 +226,25 @@ Variant Analysis::do_call_method(std::string const &name,
   }
   if (name == "gyration_tensor") {
     auto const p_types = get_value<std::vector<int>>(parameters, "p_types");
-    for (auto const p_type : p_types) {
-      context()->parallel_try_catch([&]() { check_particle_type(p_type); });
-    }
-    auto const mat = gyration_tensor(get_system(), p_types);
-    return std::vector<double>(mat.begin(), mat.end());
+    Variant result;
+    context()->parallel_try_catch([&]() {
+      for (auto const p_type : p_types) {
+        check_particle_type(p_type);
+      }
+      auto const mat = gyration_tensor(get_system(), p_types);
+      result = std::vector<double>(mat.begin(), mat.end());
+    });
+    return result;
   }
   if (name == "moment_of_inertia_matrix") {
     auto const p_type = get_value<int>(parameters, "p_type");
-    context()->parallel_try_catch([&]() { check_particle_type(p_type); });
-    auto const local = moment_of_inertia_matrix(get_system(), p_type);
-    return mpi_reduce_sum(context()->get_comm(), local).as_vector();
+    Variant result;
+    context()->parallel_try_catch([&]() {
+      check_particle_type(p_type);
+      auto const local = moment_of_inertia_matrix(get_system(), p_type);
+      result = mpi_reduce_sum(context()->get_comm(), local).as_vector();
+    });
+    return result;
   }
   if (name == "structure_factor") {
     auto const order = get_value<int>(parameters, "sf_order");

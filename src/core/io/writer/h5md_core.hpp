@@ -60,7 +60,7 @@ enum H5MDOutputFields : unsigned int {
   H5MD_OUT_VEL = 8u,
   H5MD_OUT_FORCE = 16u,
   H5MD_OUT_MASS = 32u,
-  H5MD_OUT_CHARGE = 16u,
+  H5MD_OUT_CHARGE = 64u,
   H5MD_OUT_BONDS = 128u,
   H5MD_OUT_BOX_L = 256u,
   H5MD_OUT_LE_OFF = 512u,
