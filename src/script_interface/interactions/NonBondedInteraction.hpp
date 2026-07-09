@@ -421,10 +421,9 @@ public:
 
 private:
   void make_new_instance(VariantMap const &params) override {
-    m_handle =
-        make_shared_from_args<CoreInteraction, double, double, double, double,
-                              double>(
-            params, "eps", "sig_x", "sig_y", "sig_z", "cutoff");
+    m_handle = make_shared_from_args<CoreInteraction, double, double, double,
+                                     double, double>(
+        params, "eps", "sig_x", "sig_y", "sig_z", "cutoff");
   }
 };
 #endif // ESPRESSO_GAUSSIAN_ANISO
@@ -889,7 +888,8 @@ private:
     fun(m_gaussian, "gaussian", "Interactions::InteractionGaussian");
 #endif
 #ifdef ESPRESSO_GAUSSIAN_ANISO
-    fun(m_gaussian_aniso, "gaussian_aniso", "Interactions::InteractionGaussianAniso");
+    fun(m_gaussian_aniso, "gaussian_aniso",
+        "Interactions::InteractionGaussianAniso");
 #endif
 #ifdef ESPRESSO_BMHTF_NACL
     fun(m_bmhtf, "bmhtf", "Interactions::InteractionBMHTF");

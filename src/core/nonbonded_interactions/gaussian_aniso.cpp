@@ -28,11 +28,9 @@
 
 #include <stdexcept>
 
-GaussianAniso_Parameters::GaussianAniso_Parameters(double eps,
-                                             double sig_x,
-                                             double sig_y,
-                                             double sig_z,
-                                             double cutoff)
+GaussianAniso_Parameters::GaussianAniso_Parameters(double eps, double sig_x,
+                                                   double sig_y, double sig_z,
+                                                   double cutoff)
     : eps{eps}, sig_x{sig_x}, sig_y{sig_y}, sig_z{sig_z}, cut{cutoff} {
   if (sig_x <= 0.) {
     throw std::domain_error("GaussianAniso parameter 'sig_x' has to be >= 0");
@@ -49,4 +47,3 @@ GaussianAniso_Parameters::GaussianAniso_Parameters(double eps,
 }
 
 #endif // ESPRESSO_GAUSSIAN_ANISO
-

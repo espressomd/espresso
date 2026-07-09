@@ -165,10 +165,11 @@ inline double calc_non_bonded_pair_energy(
 
   ret += calc_central_radial_energy(ia_params, dist);
 
-
 #ifdef ESPRESSO_GAUSSIAN_ANISO
-  if (ia_params.active_pair_mask & pair_potential_bit(PairPotential::GaussianAniso)) 
-      {ret += gaussian_aniso_pair_energy(ia_params, d);}
+  if (ia_params.active_pair_mask &
+      pair_potential_bit(PairPotential::GaussianAniso)) {
+    ret += gaussian_aniso_pair_energy(ia_params, d);
+  }
 #endif
 
 #ifdef ESPRESSO_THOLE

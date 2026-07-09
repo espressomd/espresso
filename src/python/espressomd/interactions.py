@@ -705,6 +705,7 @@ class GaussianInteraction(NonBondedInteraction):
         """
         return {}
 
+
 @script_interface_register
 class GaussianAnisoInteraction(NonBondedInteraction):
     """Anisotropic Gaussian interaction.
@@ -737,7 +738,8 @@ class GaussianAnisoInteraction(NonBondedInteraction):
 
         """
         return {}
-        
+
+
 @script_interface_register
 class TholeInteraction(NonBondedInteraction):
     """Thole interaction.

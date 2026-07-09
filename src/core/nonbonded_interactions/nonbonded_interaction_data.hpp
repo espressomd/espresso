@@ -143,8 +143,8 @@ struct GaussianAniso_Parameters {
 
   GaussianAniso_Parameters() = default;
 
-  GaussianAniso_Parameters(double eps, double sig_x, double sig_y,
-                           double sig_z, double cutoff);
+  GaussianAniso_Parameters(double eps, double sig_x, double sig_y, double sig_z,
+                           double cutoff);
 
   double max_cutoff() const { return cut; }
 };

@@ -10,7 +10,8 @@ import sys
 # sys.path.insert(0, "/home/abhinav/espresso_github/build/src/python")
 
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[1]   # /home/abku051h/espresso_int if script is in codes/
+# /home/abku051h/espresso_int if script is in codes/
+ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "build/src/python"))
 
 import numpy as np
@@ -56,7 +57,7 @@ system.non_bonded_inter[0, 0].gaussian_aniso.set_params(
     cutoff=cutoff,
 )
 
-    
+
 print("features:", espressomd.features())
 print("params:", system.non_bonded_inter[0, 0].gaussian_aniso.get_params())
 print("p0 type:", p0.type, "p1 type:", p1.type)
@@ -112,7 +113,8 @@ print(f"  f0 + f1 = {f0 + f1}")
 print()
 
 # Assertions
-np.testing.assert_allclose(measured_energy, expected_energy, rtol=1e-12, atol=1e-12)
+np.testing.assert_allclose(
+    measured_energy, expected_energy, rtol=1e-12, atol=1e-12)
 np.testing.assert_allclose(f0, expected_force_on_0, rtol=1e-12, atol=1e-12)
 np.testing.assert_allclose(f1, -expected_force_on_0, rtol=1e-12, atol=1e-12)
 np.testing.assert_allclose(f0 + f1, np.zeros(3), rtol=1e-12, atol=1e-12)

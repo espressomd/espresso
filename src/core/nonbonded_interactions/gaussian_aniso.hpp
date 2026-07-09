@@ -39,9 +39,9 @@
 
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/math/sqr.hpp>
-#include <utils/Vector.hpp>
 #include <cmath>
+#include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
 
 #ifdef ESPRESSO_GAUSSIAN_ANISO
 
@@ -61,31 +61,28 @@
  *    U_ij
  */
 inline double gaussian_aniso_pair_energy(IA_parameters const &ia_params,
-                                         Utils::Vector3d const &d)
-{
-    double dx = d[0];
-    double dy = d[1];
-    double dz = d[2];
+                                         Utils::Vector3d const &d) {
+  double dx = d[0];
+  double dy = d[1];
+  double dz = d[2];
 
-    auto const &p = ia_params.gaussian_aniso;
+  auto const &p = ia_params.gaussian_aniso;
 
-    const double r2 = Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz);
+  const double r2 = Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz);
 
-    if (r2 >= Utils::sqr(p.cut)) {
-        return 0.0;
-    }
+  if (r2 >= Utils::sqr(p.cut)) {
+    return 0.0;
+  }
 
-    const double sig_x2 = Utils::sqr(p.sig_x);
-    const double sig_y2 = Utils::sqr(p.sig_y);
-    const double sig_z2 = Utils::sqr(p.sig_z);
+  const double sig_x2 = Utils::sqr(p.sig_x);
+  const double sig_y2 = Utils::sqr(p.sig_y);
+  const double sig_z2 = Utils::sqr(p.sig_z);
 
-    const double A = 0.5 * (Utils::sqr(dx) / sig_x2
-                          + Utils::sqr(dy) / sig_y2
-                          + Utils::sqr(dz) / sig_z2);
+  const double A = 0.5 * (Utils::sqr(dx) / sig_x2 + Utils::sqr(dy) / sig_y2 +
+                          Utils::sqr(dz) / sig_z2);
 
-    return p.eps * std::exp(-A);
+  return p.eps * std::exp(-A);
 }
-
 
 /** Calculate anisotropic Gaussian force.
  *
@@ -99,8 +96,8 @@ inline double gaussian_aniso_pair_energy(IA_parameters const &ia_params,
  *  Output:
  *    Force vector on particle i due to particle j
  */
-inline Utils::Vector3d gaussian_aniso_pair_force(
-    IA_parameters const &ia_params, Utils::Vector3d const &d) {
+inline Utils::Vector3d gaussian_aniso_pair_force(IA_parameters const &ia_params,
+                                                 Utils::Vector3d const &d) {
   auto const &p = ia_params.gaussian_aniso;
 
   const double dx = d[0];
@@ -117,10 +114,9 @@ inline Utils::Vector3d gaussian_aniso_pair_force(
   const double sig_y2 = Utils::sqr(p.sig_y);
   const double sig_z2 = Utils::sqr(p.sig_z);
 
-  const double A = 0.5 * (Utils::sqr(dx) / sig_x2
-                        + Utils::sqr(dy) / sig_y2
-                        + Utils::sqr(dz) / sig_z2);
-                      
+  const double A = 0.5 * (Utils::sqr(dx) / sig_x2 + Utils::sqr(dy) / sig_y2 +
+                          Utils::sqr(dz) / sig_z2);
+
   const double U = p.eps * std::exp(-A);
 
   // F = -∇U
@@ -130,4 +126,3 @@ inline Utils::Vector3d gaussian_aniso_pair_force(
 
 #endif /* ifdef ESPRESSO_GAUSSIAN_ANISO */
 #endif /* GAUSSIAN_ANISO_H */
-

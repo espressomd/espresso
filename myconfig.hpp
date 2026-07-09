@@ -61,4 +61,3 @@
 
 /* Debugging */
 #define ADDITIONAL_CHECKS
-

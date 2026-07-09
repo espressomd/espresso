@@ -155,7 +155,7 @@ inline ParticleForce calc_non_central_force(Particle const &p1,
 #endif
 
 #ifdef ESPRESSO_GAUSSIAN_ANISO
-    pf.f += gaussian_aniso_pair_force(ia_params, d);
+  pf.f += gaussian_aniso_pair_force(ia_params, d);
 #endif
 
   return pf;
@@ -175,7 +175,7 @@ inline Utils::Vector3d calc_non_central_force(Utils::Vector3d const &dir1,
 #endif
 
 #ifdef ESPRESSO_GAUSSIAN_ANISO
-    f += gaussian_aniso_pair_force(ia_params, d);
+  f += gaussian_aniso_pair_force(ia_params, d);
 #endif
 
   return f;
