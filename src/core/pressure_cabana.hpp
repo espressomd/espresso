@@ -102,7 +102,7 @@ struct PressureKernel {
   Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_f_kernel;
   Coulomb::ShortRangePressureKernel::kernel_type const *coulomb_p_kernel;
   BoxGeometry const &box_geo;
-  DPDThermostat const &dpd;
+  DPDThermostat const *dpd;
   std::vector<Particle *> const &unique_particles;
   Kokkos::View<double **, Kokkos::LayoutRight> local_pressure;
   PressureBinLayout layout;
@@ -117,7 +117,7 @@ struct PressureKernel {
       Coulomb::Solver const &coulomb_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_f_kernel_,
       Coulomb::ShortRangePressureKernel::kernel_type const *coulomb_p_kernel_,
-      BoxGeometry const &box_geo_, DPDThermostat const &dpd_,
+      BoxGeometry const &box_geo_, DPDThermostat const *dpd_,
       std::vector<Particle *> const &unique_particles_,
       Kokkos::View<double **, Kokkos::LayoutRight> const &local_pressure_,
       PressureBinLayout layout_, CellStructure::AoSoA_pack const &aosoa_,
@@ -184,7 +184,7 @@ struct PressureKernel {
           auto const pid2 = aosoa.id(j);
           auto const noise_vec = (ia_params.dpd.radial.pref > 0.0 ||
                                   ia_params.dpd.trans.pref > 0.0)
-                                     ? dpd_noise(dpd, pid1, pid2)
+                                     ? dpd_noise(*dpd, pid1, pid2)
                                      : Utils::Vector3d{};
           auto const vel1 = aosoa.get_vector_at(aosoa.velocity, i);
           auto const vel2 = aosoa.get_vector_at(aosoa.velocity, j);
