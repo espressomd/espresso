@@ -102,7 +102,9 @@ struct PressureKernel {
   Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_f_kernel;
   Coulomb::ShortRangePressureKernel::kernel_type const *coulomb_p_kernel;
   BoxGeometry const &box_geo;
+#ifdef ESPRESSO_DPD
   DPDThermostat const *dpd;
+#endif
   std::vector<Particle *> const &unique_particles;
   Kokkos::View<double **, Kokkos::LayoutRight> local_pressure;
   PressureBinLayout layout;
@@ -117,7 +119,10 @@ struct PressureKernel {
       Coulomb::Solver const &coulomb_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_f_kernel_,
       Coulomb::ShortRangePressureKernel::kernel_type const *coulomb_p_kernel_,
-      BoxGeometry const &box_geo_, DPDThermostat const *dpd_,
+      BoxGeometry const &box_geo_,
+#ifdef ESPRESSO_DPD
+      DPDThermostat const *dpd_,
+#endif
       std::vector<Particle *> const &unique_particles_,
       Kokkos::View<double **, Kokkos::LayoutRight> const &local_pressure_,
       PressureBinLayout layout_, CellStructure::AoSoA_pack const &aosoa_,
@@ -125,10 +130,14 @@ struct PressureKernel {
       int thermo_switch_)
       : bonded_ias(bonded_ias_), nonbonded_ias(nonbonded_ias_),
         coulomb(coulomb_), coulomb_f_kernel(coulomb_f_kernel_),
-        coulomb_p_kernel(coulomb_p_kernel_), box_geo(box_geo_), dpd(dpd_),
+        coulomb_p_kernel(coulomb_p_kernel_), box_geo(box_geo_),
+#ifdef ESPRESSO_DPD
+        dpd(dpd_),
+#endif
         unique_particles(unique_particles_), local_pressure(local_pressure_),
         layout(layout_), aosoa(aosoa_), mol_id_view(std::move(mol_id_view_)),
-        system_max_cutoff(system_max_cutoff_), thermo_switch(thermo_switch_) {}
+        system_max_cutoff(system_max_cutoff_), thermo_switch(thermo_switch_) {
+  }
 
   KOKKOS_INLINE_FUNCTION
   void operator()(std::size_t i, std::size_t j) const {
