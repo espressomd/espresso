@@ -242,6 +242,27 @@ struct GayBerne_Parameters {
   double max_cutoff() const { return cut; }
 };
 
+/** Gay-Berne potential with independently adjustable radial width */
+struct GayBerneWidth_Parameters {
+  double eps = 0.0;
+  double sig = 0.0;
+  double wid = 0.0;
+  double cut = inactive_cutoff;
+  double k1 = 0.0;
+  double k2 = 0.0;
+  double mu = 0.0;
+  double nu = 0.0;
+  double chi1 = 0.0;
+  double chi2 = 0.0;
+
+  GayBerneWidth_Parameters() = default;
+
+  GayBerneWidth_Parameters(double eps, double sig, double wid, double cut,
+                           double k1, double k2, double mu, double nu);
+
+  double max_cutoff() const { return cut; }
+};
+
 /** Thole potential */
 struct Thole_Parameters {
   double scaling_coeff = 0.; // inactive cutoff is 0
@@ -298,6 +319,7 @@ enum class PairPotential : unsigned {
   LJCos2,
   Tabulated,
   GayBerne,
+  GayBerneWidth,
   DPD,
 };
 
@@ -373,6 +395,10 @@ struct IA_parameters {
 
 #ifdef ESPRESSO_GAY_BERNE
   GayBerne_Parameters gay_berne;
+#endif
+
+#ifdef ESPRESSO_GAY_BERNE_WIDTH
+  GayBerneWidth_Parameters gay_berne_width;
 #endif
 
 #ifdef ESPRESSO_TABULATED

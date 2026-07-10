@@ -567,6 +567,39 @@ private:
 };
 #endif // ESPRESSO_GAY_BERNE
 
+#ifdef ESPRESSO_GAY_BERNE_WIDTH
+class InteractionGayBerneWidth
+    : public InteractionPotentialInterface<::GayBerneWidth_Parameters> {
+protected:
+  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+    return &::IA_parameters::gay_berne_width;
+  }
+
+public:
+  InteractionGayBerneWidth() {
+    add_parameters({
+        make_autoparameter(&CoreInteraction::eps, "eps"),
+        make_autoparameter(&CoreInteraction::sig, "sig"),
+        make_autoparameter(&CoreInteraction::wid, "wid"),
+        make_autoparameter(&CoreInteraction::cut, "cut"),
+        make_autoparameter(&CoreInteraction::k1, "k1"),
+        make_autoparameter(&CoreInteraction::k2, "k2"),
+        make_autoparameter(&CoreInteraction::mu, "mu"),
+        make_autoparameter(&CoreInteraction::nu, "nu"),
+    });
+  }
+
+private:
+  std::string inactive_parameter() const override { return "cut"; }
+
+  void make_new_instance(VariantMap const &params) override {
+    m_handle = make_shared_from_args<CoreInteraction, double, double, double,
+                                     double, double, double, double, double>(
+        params, "eps", "sig", "wid", "cut", "k1", "k2", "mu", "nu");
+  }
+};
+#endif // ESPRESSO_GAY_BERNE_WIDTH
+
 #ifdef ESPRESSO_TABULATED
 class InteractionTabulated
     : public InteractionPotentialInterface<::TabulatedPotential> {
@@ -754,6 +787,9 @@ class NonBondedInteractionHandle
 #ifdef ESPRESSO_GAY_BERNE
   std::shared_ptr<InteractionGayBerne> m_gay_berne;
 #endif
+#ifdef ESPRESSO_GAY_BERNE_WIDTH
+  std::shared_ptr<InteractionGayBerneWidth> m_gay_berne_width;
+#endif
 #ifdef ESPRESSO_TABULATED
   std::shared_ptr<InteractionTabulated> m_tabulated;
 #endif
@@ -872,6 +908,10 @@ private:
 #endif
 #ifdef ESPRESSO_GAY_BERNE
     fun(m_gay_berne, "gay_berne", "Interactions::InteractionGayBerne");
+#endif
+#ifdef ESPRESSO_GAY_BERNE_WIDTH
+    fun(m_gay_berne_width, "gay_berne_width",
+        "Interactions::InteractionGayBerneWidth");
 #endif
 #ifdef ESPRESSO_TABULATED
     fun(m_tabulated, "tabulated", "Interactions::InteractionTabulated");
