@@ -208,7 +208,7 @@ struct PressureKernel {
           auto const f_d = P * (f_r - f_t) + f_t;
           auto const s = Utils::flatten(Utils::tensor_product(d, f_d));
           for (std::size_t k = 0; k < 9; ++k)
-            local_pressure(tid, layout.tensor_offset(layout.dpd_idx(), k)) -=
+            local_pressure(tid, layout.tensor_offset(layout.dpd_idx(), k)) +=
                 s[k];
         }
 #endif

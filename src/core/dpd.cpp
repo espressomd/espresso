@@ -100,15 +100,15 @@ Utils::Vector3d dpd_pair_force(
   return force;
 }
 
-static auto dpd_viscous_stress_local(System::System &system) {
+static auto dpd_pressure_local(System::System &system) {
   auto const &box_geo = *system.box_geo;
   auto const &nonbonded_ias = *system.nonbonded_ias;
   auto &cell_structure = *system.cell_structure;
   auto &dpd = *system.thermostat->dpd;
   system.on_observable_calc();
 
-  Utils::Matrix<double, 3, 3> stress{};
-  cell_structure.non_bonded_loop([&stress, &box_geo, &nonbonded_ias,
+  Utils::Matrix<double, 3, 3> pressure{};
+  cell_structure.non_bonded_loop([&pressure, &box_geo, &nonbonded_ias,
                                   &dpd](Particle const &p1, Particle const &p2,
                                         Distance const &d) {
     auto const v21 =
@@ -130,15 +130,10 @@ static auto dpd_viscous_stress_local(System::System &system) {
      * doing only one matrix-vector multiplication */
     auto const f = P * (f_r - f_t) + f_t;
 
-    stress += tensor_product(d.vec21, f);
+    pressure += tensor_product(d.vec21, f);
   });
 
-  return stress;
-}
-
-Utils::Vector9d dpd_pressure_local(System::System &system) {
-  auto const local_stress = dpd_viscous_stress_local(system);
-  return -Utils::flatten(local_stress);
+  return pressure;
 }
 
 /**
@@ -158,7 +153,7 @@ Utils::Vector9d dpd_pressure_local(System::System &system) {
  */
 Utils::Vector9d dpd_stress(System::System &system,
                            boost::mpi::communicator const &comm) {
-  auto const local_stress = dpd_viscous_stress_local(system);
+  auto const local_stress = -dpd_pressure_local(system);
   std::remove_const_t<decltype(local_stress)> global_stress{};
 
   boost::mpi::reduce(comm, local_stress, global_stress, std::plus<>(), 0);

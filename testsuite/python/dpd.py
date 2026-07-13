@@ -438,7 +438,7 @@ class DPDThermostat(ut.TestCase):
         def calc_stress(dist, vel_diff):
             force_pair = diss_force_1(dist, vel_diff) +\
                 diss_force_2(dist, vel_diff)
-            stress_pair = np.outer(dist, force_pair)
+            stress_pair = -np.outer(dist, force_pair)
             return stress_pair
 
         n_part = 200
@@ -453,14 +453,12 @@ class DPDThermostat(ut.TestCase):
             trans_weight_function=1, trans_gamma=gamma / 2.0, trans_r_cut=r_cut)
 
         pos = system.box_l * np.random.random((n_part, 3))
-        partcls = system.part.add(pos=pos)
+        vel = np.random.random((n_part, 3))
+        partcls = system.part.add(pos=pos, v=vel)
         system.integrator.run(10)
 
         # test non-thermalized case
         system.thermostat.set_dpd(kT=0, seed=3)
-        # run 1 integration step to get velocities
-        partcls.v = np.zeros((n_part, 3))
-        system.integrator.run(steps=1)
 
         pairs = system.part.pairs()
 
