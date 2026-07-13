@@ -478,8 +478,10 @@ class DPDThermostat(ut.TestCase):
         obs_pressure = dpd_obs.calculate()
         pressure = system.analysis.pressure_tensor()["dpd"]
 
-        np.testing.assert_array_almost_equal(np.copy(dpd_pressure), pressure_ref)
-        np.testing.assert_array_almost_equal(np.copy(obs_pressure), pressure_ref)
+        np.testing.assert_array_almost_equal(
+            np.copy(dpd_pressure), pressure_ref)
+        np.testing.assert_array_almost_equal(
+            np.copy(obs_pressure), pressure_ref)
         np.testing.assert_array_almost_equal(np.copy(pressure), pressure_ref)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
