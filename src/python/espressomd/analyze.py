@@ -552,19 +552,19 @@ class Analysis(ScriptInterfaceHelper):
         return self.call_method("particle_bond_energy", pid=particle.id,
                                 bond_id=interaction._bond_id, partners=partners)
 
-    def dpd_stress(self):
+    def dpd_pressure(self):
         """
-        Calculate the total viscous stress contribution of the DPD interaction.
-        It contains only the dissipative contributions, without noise:
-        :math:`\\sigma^{\\nu\\mu} = V^{-1}\\sum_i \\sum_{j < i}
-        r_{i,j}^{\\nu} (- \\gamma_{i,j} v_{i,j})^{\\mu}`
-        where :math:`\\gamma_{i,j}` is the (in general tensor-valued) DPD
-        friction coefficient for particles i and j, :math:`v_{i,j}`,
-        :math:`r_{i,j}` are their relative velocity and distance,
-        and :math:`V` is the box volume.
+        Calculate the DPD interaction contribution to the pressure tensor.
+        It contains the dissipative and random (noise) contributions:
+        :math:`P^{\\nu\\mu} = V^{-1}\\sum_i \\sum_{j < i}
+        r_{i,j}^{\\nu} F_{i,j}^{\\mu}`
+        where :math:`F_{i,j}` is the DPD force (dissipative plus noise)
+        exerted by particle j on particle i, :math:`r_{i,j}` is their
+        distance vector, and :math:`V` is the box volume. This equals the
+        ``"dpd"`` contribution of :meth:`pressure_tensor`.
         """
         assert_features("DPD")
-        return np.reshape(self.call_method("dpd_stress"), (3, 3))
+        return np.reshape(self.call_method("dpd_pressure"), (3, 3))
 
     def gyration_tensor(self, p_type=None):
         """

@@ -398,7 +398,7 @@ class DPDThermostat(ut.TestCase):
         np.testing.assert_array_almost_equal(np.copy(p3.f), 0.)
         system.constraints.remove(constraint)
 
-    def test_dpd_stress(self):
+    def test_dpd_pressure(self):
 
         def calc_omega(dist):
             return (1. / dist - 1. / r_cut) ** 2.0
@@ -435,11 +435,11 @@ class DPDThermostat(ut.TestCase):
 
             return f
 
-        def calc_stress(dist, vel_diff):
+        def calc_pressure(dist, vel_diff):
             force_pair = diss_force_1(dist, vel_diff) +\
                 diss_force_2(dist, vel_diff)
-            stress_pair = -np.outer(dist, force_pair)
-            return stress_pair
+            pressure_pair = np.outer(dist, force_pair)
+            return pressure_pair
 
         n_part = 200
         r_cut = 1.0
@@ -454,7 +454,7 @@ class DPDThermostat(ut.TestCase):
 
         pos = system.box_l * np.random.random((n_part, 3))
         vel = np.random.random((n_part, 3))
-        partcls = system.part.add(pos=pos, v=vel)
+        system.part.add(pos=pos, v=vel)
         system.integrator.run(10)
 
         # test non-thermalized case
@@ -462,32 +462,32 @@ class DPDThermostat(ut.TestCase):
 
         pairs = system.part.pairs()
 
-        stress = np.zeros([3, 3])
+        pressure_ref = np.zeros([3, 3])
 
         for pair in pairs:
             dist = system.distance_vec(pair[0], pair[1])
             if np.linalg.norm(dist) < r_cut:
                 vel_diff = pair[1].v - pair[0].v
-                stress += calc_stress(dist, vel_diff)
+                pressure_ref += calc_pressure(dist, vel_diff)
 
-        stress /= system.volume()
+        pressure_ref /= system.volume()
 
-        dpd_stress = system.analysis.dpd_stress()
+        dpd_pressure = system.analysis.dpd_pressure()
 
-        dpd_obs = espressomd.observables.DPDStress()
-        obs_stress = dpd_obs.calculate()
+        dpd_obs = espressomd.observables.DPDPressure()
+        obs_pressure = dpd_obs.calculate()
         pressure = system.analysis.pressure_tensor()["dpd"]
 
-        np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)
-        np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)
-        np.testing.assert_array_almost_equal(np.copy(pressure), -stress)
+        np.testing.assert_array_almost_equal(np.copy(dpd_pressure), pressure_ref)
+        np.testing.assert_array_almost_equal(np.copy(obs_pressure), pressure_ref)
+        np.testing.assert_array_almost_equal(np.copy(pressure), pressure_ref)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
-    def test_dpd_stress_noise_statistics(self):
-        """Thermalized DPD stress: for a fixed pair with zero relative velocity
-        the stress is pure noise. Check its mean (=0) and per-component variance
-        against the analytic fluctuation-dissipation result. A generic off-axis
-        separation makes all 9 stress components nonzero and distinct.
+    def test_dpd_pressure_noise_statistics(self):
+        """Thermalized DPD pressure: for a fixed pair with zero relative
+        velocity the pressure is pure noise. Check its mean (=0) and
+        per-component variance against the analytic fluctuation-dissipation
+        result.
         """
         system = self.system
         kT, gamma_r, gamma_t, r_cut = 2.0, 1.5, 0.7, 1.5
@@ -505,9 +505,9 @@ class DPDThermostat(ut.TestCase):
         system.part.add(pos=pos0, v=[0., 0., 0.], fix=[True, True, True])
         system.part.add(pos=pos0 + d, v=[0., 0., 0.], fix=[True, True, True])
 
-        # analytic mean (0) and variance of the single-pair noise stress:
-        #   stress_ij = d_i * (M @ noise)_j / V,   M = a*P + b*I
-        #   Var(stress_ij) = (d_i^2 / V^2) * s2 * ((A^2 - B^2)*dhat_j^2 + B^2)
+        # analytic mean (0) and variance of the single-pair noise pressure:
+        #   pressure_ij = d_i * (M @ noise)_j / V,   M = a*P + b*I
+        #   Var(pressure_ij) = (d_i^2 / V^2) * s2 * ((A^2 - B^2)*dhat_j^2 + B^2)
         # with omega = 1 (weight_function=0), A/B the radial/trans amplitudes,
         # and noise components iid with variance s2 = 1/12.
         V = system.volume()
@@ -523,7 +523,7 @@ class DPDThermostat(ut.TestCase):
         samples = np.empty((N, 3, 3))
         for n in range(N):
             system.integrator.run(1)
-            samples[n] = system.analysis.dpd_stress()
+            samples[n] = system.analysis.dpd_pressure()
 
         mean = samples.mean(axis=0)
         var = samples.var(axis=0)

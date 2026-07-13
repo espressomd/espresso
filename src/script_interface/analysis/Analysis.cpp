@@ -149,8 +149,8 @@ Variant Analysis::do_call_method(std::string const &name,
     return make_unordered_map_of_variants(dict);
   }
 #ifdef ESPRESSO_DPD
-  if (name == "dpd_stress") {
-    auto const result = dpd_stress(get_system(), context()->get_comm());
+  if (name == "dpd_pressure") {
+    auto const result = dpd_pressure(get_system(), context()->get_comm());
     return result.as_vector();
   }
 #endif // ESPRESSO_DPD

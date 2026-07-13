@@ -137,28 +137,28 @@ static auto dpd_pressure_local(System::System &system) {
 }
 
 /**
- * @brief Viscous stress tensor of the DPD interaction.
+ * @brief Pressure tensor contribution of the DPD interaction.
  *
- * This calculates the total viscous stress contribution of the
- * DPD interaction. It contains only the dissipative contributions
- * of the interaction without noise. It's calculated as the
- * sum over all pair virials as
+ * This calculates the total contribution of the DPD interaction to
+ * the pressure tensor, i.e. the dissipative and random (noise) forces.
+ * It's calculated as the sum over all pair virials as
  * \f[
- *    \sigma^{\nu\mu} = V^{-1}\sum_i \sum_{j < i} r_{i,j}^{\nu} (- \gamma_{i,j}
- * v_{i,j})^{\mu} \f] where \f$\gamma_{i,j}\f$ is the (in general tensor valued)
- * DPD friction coefficient for particles i and j, \f$v_{i,j}\f$, \f$r_{i,j}\f$
- * are their relative velocity and distance and \f$V\f$ is the box volume.
+ *    P^{\nu\mu} = V^{-1}\sum_i \sum_{j < i} r_{i,j}^{\nu} F_{i,j}^{\mu}
+ * \f]
+ * where \f$F_{i,j}\f$ is the DPD force (dissipative plus noise) exerted
+ * by particle j on particle i, \f$r_{i,j}\f$ is their distance vector
+ * and \f$V\f$ is the box volume.
  *
- * @return Stress tensor contribution.
+ * @return Pressure tensor contribution.
  */
-Utils::Vector9d dpd_stress(System::System &system,
-                           boost::mpi::communicator const &comm) {
-  auto const local_stress = -dpd_pressure_local(system);
-  std::remove_const_t<decltype(local_stress)> global_stress{};
+Utils::Vector9d dpd_pressure(System::System &system,
+                             boost::mpi::communicator const &comm) {
+  auto const local_pressure = dpd_pressure_local(system);
+  std::remove_const_t<decltype(local_pressure)> global_pressure{};
 
-  boost::mpi::reduce(comm, local_stress, global_stress, std::plus<>(), 0);
+  boost::mpi::reduce(comm, local_pressure, global_pressure, std::plus<>(), 0);
 
-  return Utils::flatten(global_stress) / system.box_geo->volume();
+  return Utils::flatten(global_pressure) / system.box_geo->volume();
 }
 
 #endif // ESPRESSO_DPD

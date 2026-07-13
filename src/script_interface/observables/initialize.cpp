@@ -151,7 +151,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   REGISTER_PAIRWISE_DISTANCES(PairwiseDistances);
 
 #ifdef ESPRESSO_DPD
-  REGISTER(DPDStress)
+  REGISTER(DPDPressure)
 #endif
   REGISTER(LBFluidPressureTensor);
   REGISTER_CYLPID_PROFILE_OBS(
