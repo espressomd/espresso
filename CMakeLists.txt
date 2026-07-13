@@ -1035,7 +1035,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     # cmake-format: off
     FetchContent_Declare(
       walberla
-      GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
+      GIT_REPOSITORY https://github.com/lssfau/walberla.git
       GIT_TAG        3247aa73 # v7.2 with patches
     )
     # cmake-format: on
@@ -1108,7 +1108,7 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
   FetchContent_Declare(
     caliper
     GIT_REPOSITORY https://github.com/LLNL/Caliper.git
-    GIT_TAG        v2.14.0
+    GIT_TAG        v2.15.0
   )
   # cmake-format: on
   set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
