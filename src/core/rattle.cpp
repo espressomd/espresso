@@ -115,13 +115,14 @@ static bool calculate_positional_correction(
     p2.rattle_params().correction -= pos_corr * p1.mass();
 
     // Constraint force implied by this bond alone during this iteration:
-    // the correction just applied to p1 is Δr1 = pos_corr*m2 = (1/2)*a1*dt²,
-    // so F1 = m1*a1 = 2*m1*Δr1/dt² = 2*m1*m2*pos_corr/dt². Division by dt²
-    // is deferred to System::calculate_pressure(), where the timestep is
-    // available. This uses r_ij_t, the bond vector at the start of the MD
-    // step (fixed across all SHAKE iterations of this step), so the
-    // contribution is exact for this bond alone, regardless of how many
-    // other rigid bonds p1 or p2 participate in.
+    // the correction just applied to p1 is
+    // @f$ \Delta r1 = pos_corr*m2 = (1/2)*a1*dt^2 @f$,
+    // so @f$ F1 = m1*a1 = 2*m1*\Delta r1/dt^2 = 2*m1*m2*pos_corr/dt^2 @f$.
+    // Division by dt^2 is deferred to @ref System::calculate_pressure(),
+    // where the timestep is available. This uses r_ij_t, the bond vector
+    // at the start of the MD step (fixed across all SHAKE iterations of this
+    // step), so the contribution is exact for this bond alone, regardless of
+    // how many other rigid bonds p1 or p2 participate in.
     rigid_bond_virial[static_cast<std::size_t>(bond_id)] += Utils::flatten(
         Utils::tensor_product(2.0 * p1.mass() * p2.mass() * pos_corr, r_ij_t));
 

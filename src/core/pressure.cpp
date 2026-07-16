@@ -168,7 +168,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
         dest[k] += stress[k];
     }
   }
-#endif
+#endif // ESPRESSO_BOND_CONSTRAINT
 
   obs_pressure.rescale(volume);
 

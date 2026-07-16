@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2026 The ESPResSo project
+# Copyright (C) 2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -23,7 +23,7 @@ import espressomd.interactions
 import numpy as np
 
 
-@utx.skipIfMissingFeatures("BOND_CONSTRAINT")
+@utx.skipIfMissingFeatures(["BOND_CONSTRAINT", "MASS"])
 class RigidBondVirialTest(ut.TestCase):
 
     system = espressomd.System(box_l=[10., 10., 10.])
@@ -49,19 +49,19 @@ class RigidBondVirialTest(ut.TestCase):
         p2.add_bond((bond, p1))
         return p1, p2
 
-    #  Rotation test: after one step, constraint virial = F_centripetal·d
-    #  F_centripetal = m v²/r = 1·1/0.5 = 2,  W = -virial/(3V) = -2/(3V)
+    # Rotation test: after one step, constraint virial = F_centripetal * d,
+    # F_centripetal = m v^2/r = 1*1/0.5 = 2, W = -virial/(3V) = -2/(3V)
     def _virial_in_rotation(self, set_integrator):
         V = self.system.volume()
         set_integrator()
         self._make_dimer()
         self.system.integrator.run(1)
-        v_p = np.trace(self.system.analysis.pressure_tensor()['bonded']) / 3.
+        v_p = np.trace(self.system.analysis.pressure_tensor()["bonded"]) / 3.
         v_theory = -2.0 / (3. * V)
         self.assertAlmostEqual(v_p, v_theory, delta=0.01 * abs(v_theory))
-        v_xx = self.system.analysis.pressure_tensor()['bonded'][0, 0]
-        v_yy = self.system.analysis.pressure_tensor()['bonded'][1, 1]
-        v_zz = self.system.analysis.pressure_tensor()['bonded'][2, 2]
+        v_xx = self.system.analysis.pressure_tensor()["bonded"][0, 0]
+        v_yy = self.system.analysis.pressure_tensor()["bonded"][1, 1]
+        v_zz = self.system.analysis.pressure_tensor()["bonded"][2, 2]
         self.assertAlmostEqual(v_xx, -2.0 / V, delta=0.01 * abs(2.0 / V))
         self.assertAlmostEqual(v_yy, 0.0, delta=1e-8)
         self.assertAlmostEqual(v_zz, 0.0, delta=1e-8)
@@ -89,7 +89,7 @@ class RigidBondVirialTest(ut.TestCase):
         omega = v * (m1 + m2) / (m2 * d)       # |v_rel| / d = 3/2
         v_theory = -mu * omega**2 * d**2 / (3. * V)   # = -1/(2V)
 
-        pt = self.system.analysis.pressure_tensor()['bonded']
+        pt = self.system.analysis.pressure_tensor()["bonded"]
         v_p = np.trace(pt) / 3.
         self.assertAlmostEqual(v_p, v_theory, delta=0.01 * abs(v_theory))
         # Bond is along x: all virial goes into xx, none into yy or zz
@@ -148,7 +148,7 @@ class RigidBondVirialTest(ut.TestCase):
         w_xx = sum(-m * omega**2 * xi**2 for m, xi in zip(masses, x))
         v_theory = w_xx / (3. * V)
 
-        pt = self.system.analysis.pressure_tensor()['bonded']
+        pt = self.system.analysis.pressure_tensor()["bonded"]
         v_p = np.trace(pt) / 3.
         self.assertAlmostEqual(v_p, v_theory, delta=0.01 * abs(v_theory))
         self.assertAlmostEqual(pt[0, 0], w_xx / V,
@@ -157,22 +157,36 @@ class RigidBondVirialTest(ut.TestCase):
         self.assertAlmostEqual(pt[2, 2], 0., delta=1e-8)
 
     def test_virial_chain_symmetric_vv(self):
-        """VV: constraint virial of a rotating rigid 3-particle chain (equal masses/bond lengths, shared middle bond) matches centripetal theory."""
+        """
+        VV: constraint virial of a rotating rigid 3-particle chain
+        (equal masses/bond lengths, shared middle bond) matches
+        centripetal theory.
+        """
         self._virial_chain(self.system.integrator.set_vv,
                            masses=[1.0, 1.0, 1.0], bond_lengths=(1.0, 1.0))
 
     def test_virial_chain_symmetric_se(self):
-        """SE: constraint virial of a rotating rigid 3-particle chain (equal masses/bond lengths, shared middle bond) matches centripetal theory."""
+        """
+        SE: constraint virial of a rotating rigid 3-particle chain
+        (equal masses/bond lengths, shared middle bond) matches
+        centripetal theory.
+        """
         self._virial_chain(self.system.integrator.set_symplectic_euler,
                            masses=[1.0, 1.0, 1.0], bond_lengths=(1.0, 1.0))
 
     def test_virial_chain_unequal_masses_vv(self):
-        """VV: constraint virial of a rigid 3-particle chain with unequal masses and bond lengths matches centripetal theory."""
+        """
+        VV: constraint virial of a rigid 3-particle chain with unequal masses
+        and bond lengths matches centripetal theory.
+        """
         self._virial_chain(self.system.integrator.set_vv,
                            masses=[2.0, 1.0, 3.0], bond_lengths=(1.0, 1.5))
 
     def test_virial_chain_unequal_masses_se(self):
-        """SE: constraint virial of a rigid 3-particle chain with unequal masses and bond lengths matches centripetal theory."""
+        """
+        SE: constraint virial of a rigid 3-particle chain with unequal masses
+        and bond lengths matches centripetal theory.
+        """
         self._virial_chain(self.system.integrator.set_symplectic_euler,
                            masses=[2.0, 1.0, 3.0], bond_lengths=(1.0, 1.5))
 

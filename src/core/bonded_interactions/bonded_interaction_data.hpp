@@ -150,15 +150,15 @@ public:
   /**
    * @brief Per-bond-type RATTLE constraint virial.
    *
-   * Accumulated bond-by-bond inside correct_position_shake() (indexed by
-   * bond id, same convention as Observable_stat::bonded_contribution()),
+   * Accumulated bond-by-bond inside @ref correct_position_shake() (indexed by
+   * bond id, same convention as @ref Observable_stat::bonded_contribution()),
    * where the pairwise correction/mass/bond-vector are all unambiguous,
-   * regardless of how many rigid bonds a particle participates in. Reset
-   * at the start of every SHAKE call; consumed by
-   * System::calculate_pressure().
+   * regardless of how many rigid bonds a particle participates in.
+   * Reset at the start of every SHAKE call; consumed by
+   * @ref System::System::calculate_pressure().
    */
   std::vector<Utils::Vector9d> rigid_bond_virial;
-#endif
+#endif // ESPRESSO_BOND_CONSTRAINT
   std::optional<key_type> find_bond_id(mapped_type const &target_bond) const {
     for (auto const &[bond_id, bond] : m_params) {
       if (bond == target_bond) {
