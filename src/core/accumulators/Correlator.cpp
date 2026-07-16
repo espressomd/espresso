@@ -308,6 +308,46 @@ void Correlator::initialize_buffers() {
   }
 }
 
+void Correlator::compress_kernel(long lowest_level, long highest_level) {
+  auto const tau = static_cast<long>(m_tau_lin);
+  for (long i = highest_level; i >= lowest_level; i--) {
+    // We increase the index indicating the newest on level i+1 by one (plus
+    // folding)
+    newest[i + 1l] = (newest[i + 1l] + 1l) % (tau + 1l);
+    n_vals[i + 1l] += 1l;
+
+    A[i + 1l][newest[i + 1l]] =
+        (*compressA)(A[i][(newest[i] + 1l) % (tau + 1l)],
+                     A[i][(newest[i] + 2l) % (tau + 1l)]);
+    B[i + 1l][newest[i + 1l]] =
+        (*compressB)(B[i][(newest[i] + 1l) % (tau + 1l)],
+                     B[i][(newest[i] + 2l) % (tau + 1l)]);
+  }
+  newest[lowest_level] = (newest[lowest_level] + 1l) % (tau + 1l);
+}
+
+void Correlator::correlate_kernel(long lowest_level, long highest_level) {
+  using index_type = decltype(result)::index;
+  auto const tau = static_cast<long>(m_tau_lin);
+  auto const half_tau = (tau + 1l) / 2l + 1l;
+  // We only need to update correlation estimates for the higher levels
+  for (long i = lowest_level + 1l; i < highest_level + 2l; i++) {
+    for (long j = half_tau; j < std::min(tau + 1l, n_vals[i]); j++) {
+      auto const index_new = newest[i];
+      auto const index_old = (newest[i] - j + tau + 1l) % (tau + 1l);
+      auto const index_res =
+          tau + (i - 1l) * tau / 2l + (j - tau / 2l + 1l) - 1l;
+      auto const temp = (corr_operation)(A[i][index_old], B[i][index_new],
+                                         m_correlation_args);
+      assert(temp.size() == m_dim_corr);
+      n_sweeps[index_res]++;
+      for (index_type k = 0; k < static_cast<index_type>(m_dim_corr); k++) {
+        result[index_res][k] += temp[k];
+      }
+    }
+  }
+}
+
 void Correlator::update(boost::mpi::communicator const &comm) {
   if (finalized) {
     throw std::runtime_error(
@@ -327,7 +367,7 @@ void Correlator::update(boost::mpi::communicator const &comm) {
   // We must now go through the hierarchy and make sure there is space for the
   // new datapoint. For every hierarchy level we have to decide if it is
   // necessary to move something
-  int highest_level_to_compress = -1;
+  long highest_level_to_compress = -1l;
 
   t++;
 
@@ -345,28 +385,15 @@ void Correlator::update(boost::mpi::communicator const &comm) {
       if (remainder != 0) {
         break;
       }
-      highest_level_to_compress += 1;
+      highest_level_to_compress++;
       i++;
     }
   }
 
   // Now we know we must make space on the levels 0..highest_level_to_compress
   // Now let's compress the data level by level.
+  compress_kernel(0l, highest_level_to_compress);
 
-  for (int i = highest_level_to_compress; i >= 0; i--) {
-    // We increase the index indicating the newest on level i+1 by one (plus
-    // folding)
-    newest[i + 1] = (newest[i + 1] + 1) % (m_tau_lin + 1);
-    n_vals[i + 1] += 1;
-    A[i + 1][newest[i + 1]] =
-        (*compressA)(A[i][(newest[i] + 1) % (m_tau_lin + 1)],
-                     A[i][(newest[i] + 2) % (m_tau_lin + 1)]);
-    B[i + 1][newest[i + 1]] =
-        (*compressB)(B[i][(newest[i] + 1) % (m_tau_lin + 1)],
-                     B[i][(newest[i] + 2) % (m_tau_lin + 1)]);
-  }
-
-  newest[0] = (newest[0] + 1) % (m_tau_lin + 1);
   n_vals[0]++;
 
   A[0][newest[0]] = A_obs->operator()(comm);
@@ -402,27 +429,10 @@ void Correlator::update(boost::mpi::communicator const &comm) {
     }
   }
   // Now for the higher ones
-  for (int i = 1; i < highest_level_to_compress + 2; i++) {
-    for (long j = (tau + 1l) / 2l + 1l; j < std::min(tau + 1l, n_vals[i]);
-         j++) {
-      auto const index_new = newest[i];
-      auto const index_old = (newest[i] - j + tau + 1l) % (tau + 1l);
-      auto const index_res =
-          tau + static_cast<long>(i - 1) * tau / 2l + (j - tau / 2l + 1l) - 1l;
-      auto const temp = (corr_operation)(A[i][index_old], B[i][index_new],
-                                         m_correlation_args);
-      assert(temp.size() == m_dim_corr);
-
-      n_sweeps[index_res]++;
-      for (index_type k = 0; k < static_cast<index_type>(m_dim_corr); k++) {
-        result[index_res][k] += temp[k];
-      }
-    }
-  }
+  correlate_kernel(0l, highest_level_to_compress);
 }
 
 int Correlator::finalize(boost::mpi::communicator const &comm) {
-  using index_type = decltype(result)::index;
   if (finalized) {
     throw std::runtime_error("Correlator::finalize() can only be called once.");
   }
@@ -438,71 +448,38 @@ int Correlator::finalize(boost::mpi::communicator const &comm) {
     return 0;
   }
 
-  for (int ll = 0; ll < m_hierarchy_depth - 1; ll++) {
+  auto const tau = static_cast<long>(m_tau_lin);
+  for (long ll = 0; ll < static_cast<long>(m_hierarchy_depth - 1); ll++) {
     long vals_ll; // number of values remaining in the lowest level
-    if (n_vals[ll] > m_tau_lin + 1)
-      vals_ll = m_tau_lin + n_vals[ll] % 2;
+    if (n_vals[ll] > tau + 1l)
+      vals_ll = tau + n_vals[ll] % 2l;
     else
       vals_ll = n_vals[ll];
 
     while (vals_ll) {
       // Check, if we will want to push the value from the lowest level
-      auto highest_level_to_compress = (vals_ll % 2) ? ll : -1;
+      auto highest_level_to_compress = (vals_ll % 2l) ? ll : -1l;
 
       // Let's find out how far we have to go back in the hierarchy to make
       // space for the new value
       {
-        auto const max_depth = m_hierarchy_depth - 1;
-        int i = ll + 1; // lowest level for which to check for compression
-        while (highest_level_to_compress > -1) {
-          if (i >= max_depth or n_vals[i] % 2 == 0 or n_vals[i] <= m_tau_lin) {
+        auto const max_depth = static_cast<long>(m_hierarchy_depth - 1);
+        long i = ll + 1l; // lowest level for which to check for compression
+        while (highest_level_to_compress > -1l) {
+          if (i >= max_depth or n_vals[i] % 2l == 0l or n_vals[i] <= tau) {
             break;
           }
-          highest_level_to_compress += 1;
+          highest_level_to_compress++;
           i++;
         }
       }
-      vals_ll -= 1;
+      vals_ll--;
 
       // Now we know we must make space on the levels
-      // 0..highest_level_to_compress
+      // ll..highest_level_to_compress
       // Now let's compress the data level by level.
-
-      for (int i = highest_level_to_compress; i >= ll; i--) {
-        // We increase the index indicating the newest on level i+1 by one (plus
-        // folding)
-        newest[i + 1] = (newest[i + 1] + 1) % (m_tau_lin + 1);
-        n_vals[i + 1] += 1;
-
-        A[i + 1][newest[i + 1]] =
-            (*compressA)(A[i][(newest[i] + 1) % (m_tau_lin + 1)],
-                         A[i][(newest[i] + 2) % (m_tau_lin + 1)]);
-        B[i + 1][newest[i + 1]] =
-            (*compressB)(B[i][(newest[i] + 1) % (m_tau_lin + 1)],
-                         B[i][(newest[i] + 2) % (m_tau_lin + 1)]);
-      }
-      newest[ll] = (newest[ll] + 1) % (m_tau_lin + 1);
-
-      auto const tau = static_cast<long>(m_tau_lin);
-      // We only need to update correlation estimates for the higher levels
-      for (int i = ll + 1; i < highest_level_to_compress + 2; i++) {
-        for (long j = (tau + 1l) / 2l + 1l; j < std::min(tau + 1l, n_vals[i]);
-             j++) {
-          auto const index_new = newest[i];
-          auto const index_old = (newest[i] - j + tau + 1l) % (tau + 1l);
-          auto const index_res = tau + static_cast<long>(i - 1) * tau / 2l +
-                                 (j - tau / 2l + 1l) - 1l;
-
-          auto const temp = (corr_operation)(A[i][index_old], B[i][index_new],
-                                             m_correlation_args);
-          assert(temp.size() == m_dim_corr);
-
-          n_sweeps[index_res]++;
-          for (index_type k = 0; k < static_cast<index_type>(m_dim_corr); k++) {
-            result[index_res][k] += temp[k];
-          }
-        }
-      }
+      compress_kernel(ll, highest_level_to_compress);
+      correlate_kernel(ll, highest_level_to_compress);
     }
   }
   return 0;

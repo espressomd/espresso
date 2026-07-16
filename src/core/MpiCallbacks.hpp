@@ -133,24 +133,27 @@ struct callback_void_t final : public callback_concept_t {
   }
 };
 
-template <class F, class R, class... Args> struct FunctorTypes {
-  using functor_type = F;
-  using return_type = R;
+/** @brief Type traits for a functor. */
+template <class T> struct FunctorTypes;
+
+/** @brief Type traits for an immutable lambda. */
+template <class Class, class Ret, class... Args>
+struct FunctorTypes<Ret (Class::*)(Args...) const> {
+  using functor_type = Class;
+  using return_type = Ret;
   using argument_types = std::tuple<Args...>;
 };
 
-template <class C, class R, class... Args>
-auto functor_types_impl(R (C::*)(Args...) const) {
-  return FunctorTypes<C, R, Args...>{};
-}
+template <class Class, class Ret, class... Args>
+using functor_types_from_args = FunctorTypes<Ret (Class::*)(Args...) const>;
 
 template <class F>
-using functor_types =
-    decltype(functor_types_impl(&std::remove_reference_t<F>::operator()));
+using functor_types_from_lambda =
+    FunctorTypes<decltype(&std::remove_reference_t<F>::operator())>;
 
-template <class CRef, class C, class R, class... Args>
-auto make_model_impl(CRef &&c, FunctorTypes<C, R, Args...>) {
-  return std::make_unique<callback_void_t<C, Args...>>(std::forward<CRef>(c));
+template <class F, class C, class R, class... Args>
+auto make_model_impl(F &&f, functor_types_from_args<C, R, Args...>) {
+  return std::make_unique<callback_void_t<C, Args...>>(std::forward<F>(f));
 }
 
 /**
@@ -160,7 +163,7 @@ auto make_model_impl(CRef &&c, FunctorTypes<C, R, Args...>) {
  * to exist and can not be overloaded.
  */
 template <typename F> auto make_model(F &&f) {
-  return make_model_impl(std::forward<F>(f), functor_types<F>{});
+  return make_model_impl(std::forward<F>(f), functor_types_from_lambda<F>{});
 }
 
 /**
@@ -190,8 +193,9 @@ public:
   template <class... Args> class CallbackHandle {
   public:
     template <typename F>
-      requires(std::is_same_v<typename detail::functor_types<F>::argument_types,
-                              std::tuple<Args...>>)
+      requires std::is_same_v<typename detail::functor_types_from_lambda<
+                                  F>::argument_types,
+                              std::tuple<Args...>>
     CallbackHandle(std::shared_ptr<MpiCallbacks> cb, F &&f)
         : m_id(cb->add(std::forward<F>(f))), m_cb(std::move(cb)) {}
 
@@ -216,8 +220,7 @@ public:
     auto operator()(ArgRef &&...args) const
         /* Enable if a hypothetical function with signature void(Args..)
          * could be called with the provided arguments. */
-      requires(std::is_void_v<decltype(std::declval<void (*)(Args...)>()(
-                   std::forward<ArgRef>(args)...))>)
+      requires std::is_invocable_r_v<void, void (*)(Args...), ArgRef &&...>
     {
       if (m_cb)
         m_cb->call(m_id, std::forward<ArgRef>(args)...);

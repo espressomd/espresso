@@ -27,6 +27,8 @@
 
 #include "common.hpp"
 
+#include <utils/device_qualifier.hpp>
+
 #include <array>
 #include <cassert>
 #include <memory>
@@ -105,7 +107,7 @@ protected:
 public:
   explicit FFTBuffers(P3MLocalMesh const &local_mesh)
       : local_mesh{local_mesh} {}
-  virtual ~FFTBuffers() = default;
+  virtual HOST_ONLY_QUALIFIER ~FFTBuffers() = default;
   /** @brief Initialize the meshes. */
   virtual void init_meshes(int ca_mesh_size) = 0;
   /** @brief Initialize the halo buffers. */

@@ -160,8 +160,8 @@ struct P3MParameters {
    * @ref P3MParameters::cao_cut "cao_cut".
    */
   void recalc_a_ai_cao_cut(Utils::Vector3d const &box_l) {
+    a = Utils::hadamard_division(box_l, mesh);
     ai = Utils::hadamard_division(mesh, box_l);
-    a = Utils::hadamard_division(Utils::Vector3d::broadcast(1.), ai);
     cao_cut = (static_cast<double>(cao) / 2.) * a;
   }
 
@@ -174,7 +174,19 @@ struct P3MParameters {
   }
 };
 
-/** @brief Properties of the local mesh. */
+/**
+ * @brief Properties of the local mesh and halo region.
+ * The thickness of the halo region depends on the following parameters:
+ * - The half-width of the charge-assignment stencil (cao_cut = cao/2*a).
+ *   A charge at position (0,0,0) is spread onto a cube of width cao, hence
+ *   the half-width must be padded on both sides of the local domain.
+ * - The Verlet list skin must be added extra, since particles are not resorted
+ *   at every time step, but rather when they moved more than one skin.
+ * - The ELC space layer is also needed when dielectric contrast is active,
+ *   since real charges within `space_layer` of the bottom wall induce image
+ *   charges outside the simulation box, hence the halo region is thicker
+ *   in the non-periodic direction.
+ */
 struct P3MLocalMesh {
   /** dimension (size) of local mesh including halo layers. */
   Utils::Vector3i dim;
