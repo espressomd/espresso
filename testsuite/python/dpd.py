@@ -486,10 +486,11 @@ class DPDThermostat(ut.TestCase):
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_dpd_stress_noise_statistics(self):
-        """Thermalized DPD stress: for a fixed pair with zero relative velocity
+        """
+        Thermalized DPD stress: for a fixed pair with zero relative velocity
         the stress is pure noise. Check its mean (=0) and per-component variance
         against the analytic fluctuation-dissipation result. A generic off-axis
-        separation makes all 9 stress components nonzero and distinct.
+        separation makes all 9 stress components non-zero and distinct.
         """
         system = self.system
         kT, gamma_r, gamma_t, r_cut = 2.0, 1.5, 0.7, 1.5
@@ -500,8 +501,8 @@ class DPDThermostat(ut.TestCase):
             weight_function=0, gamma=gamma_r, r_cut=r_cut,
             trans_weight_function=0, trans_gamma=gamma_t, trans_r_cut=r_cut)
 
-        # Both particles are fixed with zero velocity so v21 == 0 exactly and
-        # the geometry never changes; each run(1) only advances the RNG counter.
+        # both particles are fixed with zero velocity so v21 == 0 exactly and
+        # the geometry never changes; each run(1) only advances the RNG counter
         d = np.array([0.5, 0.7, 0.9])  # |d| = sqrt(1.55) ~ 1.245 < r_cut
         pos0 = np.array([5., 5., 5.])
         system.part.add(pos=pos0, v=[0., 0., 0.], fix=[True, True, True])
@@ -518,8 +519,7 @@ class DPDThermostat(ut.TestCase):
         B = np.sqrt(24. * kT * gamma_t / dt)  # trans amplitude  (omega=1)
         dhat = d / np.linalg.norm(d)
         sum_Mjk2 = (A**2 - B**2) * dhat**2 + B**2  # length-3 over j
-        var_analytic = np.outer(d**2, sum_Mjk2) * \
-            (s2 / V**2)  # (3, 3), all > 0
+        var_analytic = np.outer(d**2, sum_Mjk2) * (s2 / V**2)  # all > 0
 
         N = 5000
         samples = np.empty((N, 3, 3))
