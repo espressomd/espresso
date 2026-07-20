@@ -214,6 +214,18 @@ class AnalyzeChain(ut.TestCase):
                 method(chain_start=0, number_of_chains=0, chain_length=1)
             with self.assertRaisesRegex(ValueError, "needs at least 1 chain"):
                 method(chain_start=0, number_of_chains=-1, chain_length=1)
+        # the hydrodynamic radius is defined via a sum over distinct bead pairs;
+        # for a single-bead chain there are no pairs and R_H is undefined
+        # (0/0 = NaN), so it must be rejected
+        with self.assertRaisesRegex(ValueError, "undefined for chains shorter than 2 beads"):
+            analysis.calc_rh(chain_start=0, number_of_chains=num_poly,
+                             chain_length=1)
+        # single-bead chains are well-defined for the end-to-end distance and
+        # the radius of gyration (both are 0), so these must still succeed
+        for method in (analysis.calc_re, analysis.calc_rg):
+            result = method(chain_start=0, number_of_chains=num_poly,
+                            chain_length=1)
+            self.assertTrue(np.all(np.isfinite(result)))
         self.assertIsNone(analysis.call_method("unknown"))
         if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
             with self.assertRaisesRegex(RuntimeError, "Center of mass is not well-defined"):

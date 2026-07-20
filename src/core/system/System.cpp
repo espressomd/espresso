@@ -139,6 +139,11 @@ void set_system(std::shared_ptr<System> new_instance) {
 
 System &get_system() { return *instance; }
 
+bool is_same_system(System const *const system) {
+  assert(system != nullptr);
+  return system == instance.get();
+}
+
 void System::set_time_step(double value) {
   if (value <= 0.)
     throw std::domain_error("time_step must be > 0.");

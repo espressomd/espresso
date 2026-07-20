@@ -40,6 +40,7 @@
 #include "virtual_sites/relative.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
 #include <utils/matrix.hpp>
 
 #include <algorithm>
@@ -153,6 +154,24 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
                       obs_pressure.virtual_sites.begin());
   }
 #endif
+
+#ifdef ESPRESSO_BOND_CONSTRAINT
+  if (propagation->is_inertial() and bonded_ias->get_n_rigid_bonds() >= 1) {
+    // rigid_bond_virial was accumulated bond-by-bond inside
+    // correct_position_shake() during the last integration step, so it is
+    // already correct regardless of how many rigid bonds a particle
+    // participates in; only the deferred 1/dt^2 factor is applied here.
+    auto const sq_dt = Utils::sqr(get_time_step());
+    auto const &rigid_bond_virial = bonded_ias->rigid_bond_virial;
+    for (std::size_t bond_id = 0; bond_id < rigid_bond_virial.size();
+         ++bond_id) {
+      auto const stress = rigid_bond_virial[bond_id] / sq_dt;
+      auto dest = obs_pressure.bonded_contribution(static_cast<int>(bond_id));
+      for (std::size_t k = 0; k < 9u; ++k)
+        dest[k] += stress[k];
+    }
+  }
+#endif // ESPRESSO_BOND_CONSTRAINT
 
   obs_pressure.rescale(volume);
 

@@ -83,6 +83,7 @@ espresso_unit_test(SRC energy_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC bonded_interactions_map_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC bond_breakage_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC fene_test.cpp DEPENDS espresso::core)
+espresso_unit_test(SRC TabulatedPotential_test.cpp DEPENDS espresso::core)
 if(ESPRESSO_BUILD_WITH_WALBERLA)
   espresso_unit_test(SRC lb_particle_coupling_test.cpp DEPENDS espresso::core
                      Boost::mpi MPI::MPI_CXX NUM_PROC 2)
