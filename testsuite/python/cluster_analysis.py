@@ -200,6 +200,19 @@ class ClusterAnalysis(ut.TestCase):
             df = self.cs.clusters[cid].fractal_dimension(dr=0.001)
             self.assertAlmostEqual(df[0], 2, delta=0.08)
 
+    def test_fractal_dimension_requires_dr(self):
+        for x in np.arange(-0.2, 0.21, 0.01):
+            self.system.part.add(pos=(x, 1.1 * x, 1.2 * x))
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.13)
+        self.cs.pair_criterion = dc
+        self.cs.run_for_all_pairs()
+        self.assertEqual(len(self.cs.clusters), 1)
+        cluster = list(self.cs.clusters)[0][1]
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'dr' is missing"):
+            cluster.fractal_dimension()
+        with self.assertRaisesRegex(RuntimeError, "not convertible to 'double'"):
+            cluster.fractal_dimension(dr=None)
+
     def test_analysis_for_bonded_particles(self):
         self.set_two_clusters()
         # Run cluster analysis

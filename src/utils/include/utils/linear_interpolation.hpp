@@ -39,7 +39,10 @@ T linear_interpolation(Container const &table, T hi, T offset, T x) {
   auto const dx = dind - static_cast<T>(ind);
   auto const uind = static_cast<unsigned int>(ind);
 
-  /* linear interpolation between data points */
-  return table[uind] * (T{1} - dx) + table[uind + 1] * dx;
+  /* linear interpolation between data points; the upper point may be the last
+   * tabulated value (e.g. a single-point/constant table), in which case dx is
+   * zero and the second term must not perform an out-of-bounds read */
+  auto const upper = (uind + 1u < table.size()) ? table[uind + 1] : table[uind];
+  return table[uind] * (T{1} - dx) + upper * dx;
 }
 } // namespace Utils

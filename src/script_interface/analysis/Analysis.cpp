@@ -221,6 +221,12 @@ Variant Analysis::do_call_method(std::string const &name,
     auto const chain_length = get_value<int>(parameters, "chain_length");
     auto const n_chains = get_value<int>(parameters, "number_of_chains");
     check_topology(*system.cell_structure, chain_start, chain_length, n_chains);
+    context()->parallel_try_catch([&]() {
+      if (chain_length < 2) {
+        throw std::domain_error(
+            "Hydrodynamic radius is undefined for chains shorter than 2 beads");
+      }
+    });
     auto const result = calc_rh(system, chain_start, chain_length, n_chains);
     return std::vector<double>(result.begin(), result.end());
   }

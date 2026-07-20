@@ -32,13 +32,19 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 
+#include <utils/Vector.hpp>
+#include <utils/math/tensor_product.hpp>
+#include <utils/matrix.hpp>
+
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/range/algorithm.hpp>
 
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <span>
 #include <variant>
+#include <vector>
 
 /** Maximal number of iterations before the RATTLE algorithm bails out. */
 static constexpr auto shake_max_iterations = 1000;
@@ -85,11 +91,15 @@ static void init_correction_vector(const ParticleRange &particles,
  * @param box_geo Box geometry.
  * @param p1 First particle.
  * @param p2 Second particle.
+ * @param bond_id Bonded interaction id of this specific bond.
+ * @param rigid_bond_virial Per-bond-type RATTLE constraint virial
+ *                          accumulator, indexed by @p bond_id.
  * @return True if there was a correction.
  */
-static bool calculate_positional_correction(RigidBond const &ia_params,
-                                            BoxGeometry const &box_geo,
-                                            Particle &p1, Particle &p2) {
+static bool calculate_positional_correction(
+    RigidBond const &ia_params, BoxGeometry const &box_geo, Particle &p1,
+    Particle &p2, int bond_id,
+    std::vector<Utils::Vector9d> &rigid_bond_virial) {
   auto const r_ij = box_geo.get_mi_vector(p1.pos(), p2.pos());
   auto const r_ij2 = r_ij.norm2();
 
@@ -103,6 +113,18 @@ static bool calculate_positional_correction(RigidBond const &ia_params,
     auto const pos_corr = G * r_ij_t;
     p1.rattle_params().correction += pos_corr * p2.mass();
     p2.rattle_params().correction -= pos_corr * p1.mass();
+
+    // Constraint force implied by this bond alone during this iteration:
+    // the correction just applied to p1 is
+    // @f$ \Delta r1 = pos_corr*m2 = (1/2)*a1*dt^2 @f$,
+    // so @f$ F1 = m1*a1 = 2*m1*\Delta r1/dt^2 = 2*m1*m2*pos_corr/dt^2 @f$.
+    // Division by dt^2 is deferred to @ref System::calculate_pressure(),
+    // where the timestep is available. This uses r_ij_t, the bond vector
+    // at the start of the MD step (fixed across all SHAKE iterations of this
+    // step), so the contribution is exact for this bond alone, regardless of
+    // how many other rigid bonds p1 or p2 participate in.
+    rigid_bond_virial[static_cast<std::size_t>(bond_id)] += Utils::flatten(
+        Utils::tensor_product(2.0 * p1.mass() * p2.mass() * pos_corr, r_ij_t));
 
     return true;
   }
@@ -130,7 +152,7 @@ static bool compute_correction_vector(CellStructure &cs,
     auto const &iaparams = *bonded_ias.at(bond_id);
 
     if (auto const *bond = std::get_if<RigidBond>(&iaparams)) {
-      auto const corrected = kernel(*bond, box_geo, p1, *partners[0]);
+      auto const corrected = kernel(*bond, box_geo, p1, *partners[0], bond_id);
       if (corrected)
         correction = true;
     }
@@ -155,18 +177,28 @@ static void apply_positional_correction(const ParticleRange &particles) {
 }
 
 void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo,
-                            BondedInteractionsMap const &bonded_ias) {
+                            BondedInteractionsMap &bonded_ias) {
   unsigned const flag = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
   cs.update_ghosts_and_resort_particle(flag);
 
   auto particles = cs.local_particles();
   auto ghost_particles = cs.ghost_particles();
 
+  // Reset the per-bond-type constraint virial for this timestep
+  bonded_ias.rigid_bond_virial.assign(
+      static_cast<std::size_t>(bonded_ias.get_next_key()),
+      Utils::Vector9d::broadcast(0.));
+
   int cnt;
   for (cnt = 0; cnt < shake_max_iterations; ++cnt) {
     init_correction_vector(particles, ghost_particles);
     bool const repeat_ = compute_correction_vector(
-        cs, box_geo, bonded_ias, calculate_positional_correction);
+        cs, box_geo, bonded_ias,
+        [&bonded_ias](RigidBond const &bond, BoxGeometry const &box_geo_,
+                      Particle &p1, Particle &p2, int bond_id) {
+          return calculate_positional_correction(
+              bond, box_geo_, p1, p2, bond_id, bonded_ias.rigid_bond_virial);
+        });
     bool const repeat =
         boost::mpi::all_reduce(comm_cart, repeat_, std::logical_or<bool>());
 
@@ -237,7 +269,11 @@ void correct_velocity_shake(CellStructure &cs, BoxGeometry const &box_geo,
   for (cnt = 0; cnt < shake_max_iterations; ++cnt) {
     init_correction_vector(particles, ghost_particles);
     bool const repeat_ = compute_correction_vector(
-        cs, box_geo, bonded_ias, calculate_velocity_correction);
+        cs, box_geo, bonded_ias,
+        [](RigidBond const &bond, BoxGeometry const &box_geo_, Particle &p1,
+           Particle &p2, int /* bond_id */) {
+          return calculate_velocity_correction(bond, box_geo_, p1, p2);
+        });
     bool const repeat =
         boost::mpi::all_reduce(comm_cart, repeat_, std::logical_or<bool>());
 

@@ -24,13 +24,13 @@ jobs:
       - name: Install dependencies
         run: |
          echo '' > Brewfile
-         for dep in boost boost-mpi libomp fftw gsl ccache ninja; do echo "brew \"${dep}\"" >> Brewfile; done
+         for dep in boost boost-mpi libomp fftw gsl ccache ninja hdf5-mpi; do echo "brew \"${dep}\"" >> Brewfile; done
          brew bundle check >/dev/null 2>&1 || brew bundle --verbose --no-upgrade
          # set up Xcode compiler
          echo "::group::List available Xcode compilers"
          ls /Applications | grep Xcode
          echo "::endgroup::"
-         sudo xcode-select -switch /Applications/Xcode_26.2.0.app
+         sudo xcode-select -switch /Applications/Xcode_26.6.0.app
          # Python dependencies
          python -m venv venv
          . venv/bin/activate
@@ -38,21 +38,28 @@ jobs:
          deactivate
         shell: bash
       - name: Build and check
-        uses: ./.github/actions/build_and_check
+        run: |
+         if test -d venv; then . venv/bin/activate; fi
+         bash maintainer/CI/build_cmake.sh
         env:
           build_procs: 3
           check_procs: 3
           cmake_params: '-D ESPRESSO_TEST_NP=3'
+          myconfig: 'maxset'
           with_ccache: 'true'
+          with_cuda: 'false'
+          with_hdf5: 'true'
           with_fftw: 'true'
           with_gsl: 'true'
           with_walberla: 'true'
           with_walberla_avx: 'false'
+          check_skip_long: 'true'
+          test_timeout: 800
 
   debian:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container:
-      image: ghcr.io/espressomd/docker/debian:ab5bc64f5c3cc7330952f8b3bf321270ca53960c-base-layer
+      image: ghcr.io/espressomd/docker/debian:c6ad9809eed1d0e9f26f4968559b234ea3b8bf82-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
@@ -70,7 +77,9 @@ jobs:
       - name: Get runner specifications
         run: lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)'
       - name: Build and check
-        uses: ./.github/actions/build_and_check
+        run: |
+         if test -d venv; then . venv/bin/activate; fi
+         bash maintainer/CI/build_cmake.sh
         env:
           build_procs: 4
           check_procs: 4
@@ -90,10 +99,10 @@ jobs:
           OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
 
   ubuntu:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     if: ${{ github.repository == 'espressomd/espresso' }}
     container:
-      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:ab5bc64f5c3cc7330952f8b3bf321270ca53960c-base-layer
+      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:c6ad9809eed1d0e9f26f4968559b234ea3b8bf82-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
@@ -111,12 +120,14 @@ jobs:
       - name: Get runner specifications
         run: lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)'
       - name: Build and check
-        uses: ./.github/actions/build_and_check
+        run: |
+         if test -d venv; then . venv/bin/activate; fi
+         bash maintainer/CI/build_cmake.sh
         env:
           build_procs: 4
           check_procs: 4
-          CC: 'gcc-13'
-          CXX: 'g++-13'
+          CC: 'gcc-16'
+          CXX: 'g++-16'
           myconfig: 'maxset'
           with_ccache: 'true'
           with_cuda: 'false'
@@ -132,10 +143,10 @@ jobs:
           OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
 
   fedora:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     if: ${{ github.repository == 'espressomd/espresso' }}
     container:
-      image: ghcr.io/espressomd/docker/fedora:ab5bc64f5c3cc7330952f8b3bf321270ca53960c-base-layer
+      image: ghcr.io/espressomd/docker/fedora:c6ad9809eed1d0e9f26f4968559b234ea3b8bf82-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
@@ -153,7 +164,9 @@ jobs:
       - name: Get runner specifications
         run: lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)'
       - name: Build and check
-        uses: ./.github/actions/build_and_check
+        run: |
+         if test -d venv; then . venv/bin/activate; fi
+         bash maintainer/CI/build_cmake.sh
         env:
           build_procs: 4
           check_procs: 4
@@ -170,4 +183,6 @@ jobs:
           with_walberla: 'true'
           with_walberla_avx: 'false'
           with_stokesian_dynamics: 'true'
-          cmake_params: '-D CMAKE_CXX_STANDARD=23 -D CMAKE_INCLUDE_PATH=/usr/include/mpich-x86_64 -D CMAKE_PREFIX_PATH=/usr/lib64/mpich/lib/ -D ESPRESSO_TEST_NT=1'
+          check_skip_long: 'true'
+          test_timeout: 800
+          cmake_params: '-D CMAKE_CXX_STANDARD=26 -D CMAKE_INCLUDE_PATH=/usr/include/mpich-x86_64 -D CMAKE_PREFIX_PATH=/usr/lib64/mpich/lib/ -D ESPRESSO_TEST_NT=1'

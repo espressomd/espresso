@@ -377,5 +377,6 @@ private:
 System &get_system();
 void set_system(std::shared_ptr<System> new_instance);
 void reset_system();
+bool is_same_system(System const *system);
 
 } // namespace System

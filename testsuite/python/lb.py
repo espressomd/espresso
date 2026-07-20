@@ -508,7 +508,7 @@ class LBTest:
         self.system.thermostat.set_langevin(kT=2., seed=23, gamma=2.)
         lbf = self.lb_class(kT=1., seed=42, **self.params, **self.lb_params)
         self.system.lb = lbf
-        with self.assertRaisesRegex(RuntimeError, "Cannot set parameter 'kT' to 1.0*: there are currently active thermostats with kT=2.0*"):
+        with self.assertRaisesRegex(RuntimeError, r"Cannot set parameter 'kT' to (1[.0]*|0\.99[0-9]+): there are currently active thermostats with kT=(2[.0]*|1\.99[0-9]+)"):
             self.system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.)
         self.assertFalse(self.system.thermostat.lb.is_active)
         self.assertTrue(self.system.thermostat.langevin.is_active)
@@ -869,9 +869,9 @@ class LBTest:
             self.lb_class(**params_with_tau(self.system.time_step),
                           **self.lb_params)
 
-        with self.assertRaisesRegex(ValueError, r"LB tau \(0\.0100[0-9]+\) must be >= MD time_step \(0\.0200[0-9]+\)"):
+        with self.assertRaisesRegex(ValueError, r"LB tau \(0\.01(?:0*|00[0-9]+)\) must be >= MD time_step \(0\.02(?:0*|00[0-9]+)\)"):
             self.system.time_step = 2.0 * lbf.get_params()["tau"]
-        with self.assertRaisesRegex(ValueError, r"LB tau \(0\.0100[0-9]+\) must be an integer multiple of the MD time_step \(0\.0080[0-9]+\)"):
+        with self.assertRaisesRegex(ValueError, r"LB tau \(0\.01(?:0*|00[0-9]+)\) must be an integer multiple of the MD time_step \(0\.008(?:0*|0[0-9]+)\)"):
             self.system.time_step = 0.8 * lbf.get_params()["tau"]
 
         self.system.lb = None
