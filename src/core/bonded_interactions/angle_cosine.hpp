@@ -79,7 +79,7 @@ AngleCosineBond::forces(Utils::Vector3d const &vec1,
     return -bend * (sin_phi * cos_phi0 - cos_phi * sin_phi0) / sin_phi;
   };
 
-  return angle_generic_force(vec1, vec2, forceFactor, false);
+  return angle_generic_force(vec1, vec2, forceFactor, true);
 }
 
 /** Computes the three-body angle interaction energy.

@@ -80,6 +80,8 @@ espresso_unit_test(SRC thermostats_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC random_test.cpp DEPENDS espresso::utils Random123)
 espresso_unit_test(SRC BondList_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC energy_test.cpp DEPENDS espresso::core)
+espresso_unit_test(SRC angle_cosine_test.cpp DEPENDS espresso::core
+                   espresso::utils)
 espresso_unit_test(SRC bonded_interactions_map_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC bond_breakage_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC fene_test.cpp DEPENDS espresso::core)
