@@ -20,6 +20,7 @@
 from pathlib import Path
 from benchmark_utils import generate_test_parameters, CONFIGS
 import csv
+import subprocess
 import reframe as rfm
 import reframe.utility.sanity as sn
 from reframe.core.builtins import (
@@ -27,6 +28,7 @@ from reframe.core.builtins import (
     run_after,
     run_before,
     sanity_function,
+    variable,
 )
 
 
@@ -44,6 +46,9 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
 
     sourcesdir = "https://github.com/espressomd/espresso.git"
     build_system = "CMake"
+
+    # Commit hash of the ESPResSo checkout
+    espresso_commit = variable(str, value="unknown", loggable=True)
 
     @run_after("init")
     def set_build_attributes(self):
@@ -120,6 +125,20 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
             ]
             self.skip_unsupported_local_configs()
 
+    @run_after("compile")
+    def record_commit_hash(self):
+        """
+        Record the commit hash of the ESPResSo checkout that was compiled.
+        """
+        try:
+            self.espresso_commit = subprocess.check_output(
+                ["git", "-C", self.stagedir, "rev-parse", "HEAD"],
+                stderr=subprocess.DEVNULL,
+                text=True,
+            ).strip()
+        except (subprocess.CalledProcessError, OSError):
+            self.espresso_commit = "unknown"
+
     @sanity_function
     def assert_sanity(self):
         return sn.assert_found(r"Built target pypresso", self.stdout)
@@ -138,9 +157,19 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
     # This will set the slurm option --exlusive for scheduled jobs
     exclusive_access = True
 
+    # Commit hash of the benchmarked ESPResSo checkout
+    espresso_commit = variable(str, value="unknown", loggable=True)
+
+    # Name of the ESPResSo build configuration (maxset/default/empty). Different
+    # builds share the same commit, so this is what separates them in the log
+    # (and lets the plot script emit one SVG per build). Marked loggable so it is
+    # written into the perflog as %(check_build_config)s.
+    build_config = variable(str, value="unknown", loggable=True)
+
     @run_after("init")
     def setup_test(self):
         mpi_enabled = self.build_params["mpi"]  # type: ignore
+        self.build_config = self.build_params["config"]  # type: ignore
         self.script_filename, self.script_args, self.num_mpi_ranks = self.test_case  # type: ignore
         self.use_gpu = "--gpu" in self.script_args
 
@@ -213,6 +242,7 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
     def prepare_execution(self):
         build_target = self.getdep(
             BuildEspresso.variant_name(self.variants[0]))
+        self.espresso_commit = build_target.espresso_commit
         build_dir = f"{build_target.stagedir}/build"
         script_path = f"{
             build_dir}/maintainer/benchmarks/{self.script_filename}"

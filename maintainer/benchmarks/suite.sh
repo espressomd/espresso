@@ -22,7 +22,7 @@
 usage() {
     echo "Usage: $0 -p <prefix> [-n <test_names>] [-l] [--dry-run]"
     echo "  -p PREFIX       : Installation prefix for ReFrame benchmarks"
-    echo "  -n TESTS        : Optional test case filter(s) for ReFrame (-n option)"
+    echo "  -n TESTS        : Optional ReFrame test-name filter; repeatable (selects the union)"
     echo "  -l              : List available test cases (overrides -r/--dry-run)"
     echo "  --dry-run       : Optional flag to perform a dry run"
     exit 1
@@ -31,6 +31,8 @@ usage() {
 # Defaults
 DRY_RUN=false
 LIST_MODE=false
+# ReFrame -n filters; repeatable, selects the union.
+N_OPTS=()
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
@@ -40,7 +42,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         -n)
-            TESTS="$2"
+            N_OPTS+=(-n "$2")
             shift 2
             ;;
         -l)
@@ -72,20 +74,39 @@ else
     RUN_OPTION="-r"
 fi
 
-# Build optional -n argument
-N_OPTION=""
-if [ -n "$TESTS" ]; then
-    N_OPTION="-n $TESTS"
+# Ensure ReFrame is available (e.g. the virtual environment is activated)
+if ! command -v reframe >/dev/null 2>&1; then
+    echo "Error: 'reframe' not found. Activate the ReFrame virtual environment" \
+         "before running this script." >&2
+    exit 1
 fi
 
-# Save sqlite storage database to prefix directory 
+# Enable the results database and save it to the prefix directory
+export RFM_ENABLE_RESULTS_STORAGE=1
 export RFM_SQLITE_DB_FILE="${PREFIX}/results.db"
 
 # Run ReFrame
 reframe -C reframe_config.py \
         -c espresso_benchmarks.py \
         --prefix "$PREFIX" \
-        --exec-policy serial \
-        $N_OPTION \
+        "${N_OPTS[@]}" \
         --performance-report \
         $RUN_OPTION
+
+# Stop if ReFrame failed, so we do not plot from a missing/stale perflog.
+reframe_status=$?
+if [ "$reframe_status" -ne 0 ]; then
+    echo "ReFrame exited with status ${reframe_status}; skipping plot generation." >&2
+    exit "$reframe_status"
+fi
+
+# After a real run, render an SVG timeline of the benchmark performances.
+# Skipped for list (-l) and dry runs, which produce no timing data.
+if [ "$RUN_OPTION" = "-r" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    echo "Generating benchmark timeline"
+    python3 "${SCRIPT_DIR}/plot_benchmarks.py" \
+        --prefix "$PREFIX" \
+        -o "${PREFIX}/perflogs/local/default/EspressoBenchmark.svg" \
+        || echo "Warning: could not generate benchmark timeline plot"
+fi

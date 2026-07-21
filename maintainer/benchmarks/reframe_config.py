@@ -47,6 +47,7 @@ site_configuration = {
                     "scheduler": "local",
                     "launcher": "local",
                     "environs": ["local-env"],
+                    "max_jobs": 1,
                 }
             ],
         },
@@ -89,9 +90,11 @@ site_configuration = {
                     "%(check_num_tasks)s,"
                     "%(check_num_tasks_per_core)s,"
                     "%(check_num_tasks_per_node)s,"
-                    "%(check_perfvalues)s,"
-                    "%(check_perf_var)s",
-                    "format_perfvars": ("%(check_perf_value)s," "%(check_perf_unit)s,"),
+                    "%(check_perf_value)s,"
+                    "%(check_perf_unit)s,"
+                    "%(check_perf_var)s,"
+                    "%(check_espresso_commit)s,"
+                    "%(check_build_config)s",
                     "append": True,
                 }
             ],
