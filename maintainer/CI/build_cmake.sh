@@ -150,6 +150,7 @@ cmake_param_list+=(
   ${cmake_params}
   -D CMAKE_BUILD_TYPE=${build_type}
   -D CMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests
+  -D CMAKE_CXX_EXTENSIONS=OFF
   -D ESPRESSO_INSIDE_DOCKER:BOOL=ON
   -D ESPRESSO_WARNINGS_ARE_ERRORS:BOOL=ON
   -D ESPRESSO_CTEST_ARGS:STRING="-j${check_procs}"

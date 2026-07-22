@@ -494,7 +494,8 @@ target_compile_options(
     # zero, the conditional can be ignored (speculative execution) to get better
     # performance with SIMD types, and the invalid values are masked afterwards
     # (but the SIGFPE signal is still sent as a side effect)
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_FPE}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-ftrapping-math>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_FPE}>,$<COMPILE_LANG_AND_ID:CXX,GNU>>:-ftrapping-math>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_FPE}>,$<COMPILE_LANG_AND_ID:CXX,Clang>>:-Xarch_host -ftrapping-math>
     # configurations for NVCC
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Debug>>:-Xptxas=-O0,-g -Xcompiler=$<IF:$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>,-O0,-Og>,-g --device-debug>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Release>>:-Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG>
