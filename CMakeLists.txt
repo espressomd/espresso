@@ -1080,6 +1080,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     target_compile_options(
       sqlite3
       PRIVATE
+        $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wno-discarded-qualifiers>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=code_is_unreachable>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=cast_to_qualified_type>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=set_but_not_used>)
