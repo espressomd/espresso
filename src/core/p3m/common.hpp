@@ -326,6 +326,7 @@ std::array<std::vector<int>, 3> inline calc_p3m_mesh_shift(
   return ret;
 }
 
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 template <Utils::MemoryOrder RSpaceOrder = Utils::MemoryOrder::ROW_MAJOR,
           Utils::MemoryOrder KSpaceOrder = Utils::MemoryOrder::ROW_MAJOR,
           bool UseR2C = false, unsigned int R2CDir = 2u>
@@ -347,3 +348,4 @@ struct P3MFFTConfig {
   /** @brief Direction of the reduced dimension (if @c use_r2c is true). */
   static auto constexpr r2c_dir = R2CDir;
 };
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

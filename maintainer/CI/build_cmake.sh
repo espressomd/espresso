@@ -201,7 +201,7 @@ if [[ "${OSTYPE}" == "darwin"* ]]; then
   # skip libomp runtime checks on macOS (GitHub runner image contains multiple versions of libomp)
   export KMP_DUPLICATE_LIB_OK=TRUE
   # use 1 thread by default in the Python testsuite
-  sed -i "" "s/set(TEST_NUM_THREADS 2)/set(TEST_NUM_THREADS 1)/" testsuite/python/CMakeLists.txt
+  sed -i "" "s/set(TEST_NUM_THREADS 2)/set(TEST_NUM_THREADS 1)/" ${srcdir}/testsuite/python/CMakeLists.txt
 fi
 
 # show system characteristics
@@ -246,7 +246,7 @@ if [ -f "/etc/os-release" ]; then
         done
         module load mpi
         # Fedora's Kokkos is missing feature ENABLE_IMPL_VIEW_LEGACY
-        sed -i '/find_package(Kokkos/d' CMakeLists.txt
+        sed -i "/find_package(Kokkos/d" ${srcdir}/CMakeLists.txt
     elif grep -q 'NAME="Ubuntu"' /etc/os-release; then
         default_gcov="$(which "gcov")"
         custom_gcov="$(which "${GCOV:-gcov}")"
