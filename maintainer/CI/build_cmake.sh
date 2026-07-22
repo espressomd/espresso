@@ -180,6 +180,7 @@ fi
 
 if [ "${with_cuda}" = true ]; then
     cmake_param_list+=(-D CUDAToolkit_ROOT=/usr/lib/cuda)
+    cmake_param_list+=(-D Kokkos_CUDA_DIR=/usr/lib/cuda)
     if [ "${CUDACXX}" = "" ] && [ "${CXX}" != "" ]; then
         cmake_param_list+=(-D CMAKE_CUDA_HOST_COMPILER="${CXX}")
     fi
@@ -243,6 +244,8 @@ if [ -f "/etc/os-release" ]; then
             . "${f}"
         done
         module load mpi
+        # Fedora's Kokkos is missing feature ENABLE_IMPL_VIEW_LEGACY
+        sed -i '/find_package(Kokkos/d' CMakeLists.txt
     elif grep -q 'NAME="Ubuntu"' /etc/os-release; then
         default_gcov="$(which "gcov")"
         custom_gcov="$(which "${GCOV:-gcov}")"
