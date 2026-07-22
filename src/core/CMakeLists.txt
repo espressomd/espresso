@@ -142,4 +142,6 @@ set_property(
 )
 
 espresso_set_kokkos_properties_on_source_files(espresso_core)
-espresso_set_kokkos_properties_on_source_files(espresso_p3m)
+if(ESPRESSO_BUILD_WITH_FFTW)
+  espresso_set_kokkos_properties_on_source_files(espresso_p3m)
+endif()
