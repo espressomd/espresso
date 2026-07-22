@@ -23,6 +23,8 @@
 
 #include "cell_system/CellStructure.hpp"
 
+#include <utils/device_qualifier.hpp>
+
 #include <Kokkos_Core.hpp>
 
 #include <omp.h>
@@ -67,6 +69,7 @@ struct CellStructure::AoSoA_pack {
 
   AoSoA_pack(std::size_t num_particles) { resize(num_particles); }
 
+  HOST_ONLY_QUALIFIER
   void resize(std::size_t num_particles) {
     if (position.extent(0) == 0) {
       // First allocation
@@ -112,14 +115,14 @@ struct CellStructure::AoSoA_pack {
   }
 
   template <typename array_layout, typename T, std::size_t N>
-  std::span<T, N>
+  DEVICE_QUALIFIER std::span<T, N>
   get_span_at(Kokkos::View<T *[N], array_layout, Kokkos::HostSpace> const &view,
               std::size_t i) const {
     return std::span<T, N>(const_cast<T *>(&view(i, 0)), N);
   }
 
   template <typename array_layout, typename T, std::size_t N>
-  Utils::Vector<T, N> get_vector_at(
+  DEVICE_QUALIFIER Utils::Vector<T, N> get_vector_at(
       Kokkos::View<T *[N], array_layout, Kokkos::HostSpace> const &view,
       std::size_t i) const {
     Utils::Vector<T, N> result;
@@ -138,7 +141,7 @@ struct CellStructure::AoSoA_pack {
   }
 
   template <typename array_layout, typename T, std::size_t N>
-  void
+  DEVICE_QUALIFIER void
   set_vector_at(Kokkos::View<T *[N], array_layout, Kokkos::HostSpace> &view,
                 std::size_t i, Utils::Vector<T, N> const &value) {
 #if !defined(__NVCOMPILER) && !defined(__CUDACC__)
@@ -153,9 +156,11 @@ struct CellStructure::AoSoA_pack {
     }
   }
 
-  void set_has_exclusion(std::size_t i, bool value) {
+  DEVICE_QUALIFIER void set_has_exclusion(std::size_t i, bool value) {
     flags(i) = value ? uint8_t{1} : uint8_t{0};
   }
 
-  bool has_exclusion(std::size_t i) const { return flags(i) == uint8_t{1}; }
+  DEVICE_QUALIFIER bool has_exclusion(std::size_t i) const {
+    return flags(i) == uint8_t{1};
+  }
 };

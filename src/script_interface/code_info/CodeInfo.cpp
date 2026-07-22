@@ -68,6 +68,33 @@ Variant CodeInfo::do_call_method(std::string const &name, VariantMap const &) {
     return false;
 #endif
   }
+  if (name == "toolchain") {
+#define ESPRESSO_REGISTER_METADATA(name)                                       \
+  flat_map[#name] = serializer(ESPRESSO_##name);
+    VariantMap flat_map;
+    auto const serializer = [](std::string const value) {
+      Variant result = None{};
+      if (not value.empty()) {
+        result = value;
+      }
+      return result;
+    };
+    ESPRESSO_REGISTER_METADATA(CMAKE_C_COMPILER_ID)
+    ESPRESSO_REGISTER_METADATA(CMAKE_C_COMPILER_VERSION)
+    ESPRESSO_REGISTER_METADATA(CMAKE_CXX_COMPILER_ID)
+    ESPRESSO_REGISTER_METADATA(CMAKE_CXX_COMPILER_VERSION)
+    ESPRESSO_REGISTER_METADATA(CMAKE_CUDA_COMPILER_ID)
+    ESPRESSO_REGISTER_METADATA(CMAKE_CUDA_COMPILER_VERSION)
+    ESPRESSO_REGISTER_METADATA(CMAKE_CUDA_HOST_COMPILER_ID)
+    ESPRESSO_REGISTER_METADATA(CMAKE_CUDA_HOST_COMPILER_VERSION)
+    ESPRESSO_REGISTER_METADATA(OpenMP_VERSION)
+    ESPRESSO_REGISTER_METADATA(OpenMP_C_VERSION)
+    ESPRESSO_REGISTER_METADATA(OpenMP_CXX_VERSION)
+    ESPRESSO_REGISTER_METADATA(OpenMP_CUDA_VERSION)
+    ESPRESSO_REGISTER_METADATA(ESPRESSO_MPIEXEC_VENDOR)
+    ESPRESSO_REGISTER_METADATA(ESPRESSO_MPIEXEC_VERSION)
+    return flat_map;
+  }
   return {};
 }
 

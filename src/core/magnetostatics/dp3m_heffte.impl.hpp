@@ -164,9 +164,10 @@ void DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::init_cpu_kernels() {
   dp3m.update_mesh_views();
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
   dp3m.heffte.world_size = comm_cart.size();
-  dp3m.heffte.fft = std::make_shared<P3MFFT<FloatType, FFTConfig>>(
-      ::comm_cart, dp3m.params.mesh, dp3m.local_mesh.ld_no_halo,
-      dp3m.local_mesh.ur_no_halo, ::communicator.node_grid);
+  dp3m.heffte.fft =
+      std::make_shared<P3MFFT<FloatType, Architecture, FFTConfig>>(
+          nullptr, ::comm_cart, dp3m.params.mesh, dp3m.local_mesh.ld_no_halo,
+          dp3m.local_mesh.ur_no_halo, ::communicator.node_grid);
   dp3m.resize_heffte_buffers();
 #endif // ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
   dp3m.calc_differential_operator();
@@ -182,13 +183,13 @@ template <int cao> struct AssignDipole {
   void operator()(auto &dp3m, auto &cell_structure) {
     using DipolarP3MState = std::remove_reference_t<decltype(dp3m)>;
     using value_type = DipolarP3MState::value_type;
-    auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
     auto const &aosoa = cell_structure.get_aosoa();
     auto const &unique_particles = cell_structure.get_unique_particles();
     auto const n_part = cell_structure.count_local_particles();
     dp3m.inter_weights.zfill(n_part); // allocate buffer for parallel write
     kokkos_parallel_range_for(
         "InterpolateDipoles", std::size_t{0u}, n_part, [&](auto p_index) {
+          auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
           auto const tid = omp_get_thread_num();
           auto const p_pos = aosoa.get_span_at(aosoa.position, p_index);
           auto const dip = unique_particles.at(p_index)->calc_dip();
@@ -204,7 +205,7 @@ template <int cao> struct AssignDipole {
               });
         });
     Kokkos::fence();
-    using execution_space = Kokkos::DefaultExecutionSpace;
+    using execution_space = Kokkos::DefaultHostExecutionSpace;
     int num_threads = execution_space().concurrency();
     Kokkos::RangePolicy<execution_space> policy(std::size_t{0},
                                                 dp3m.local_mesh.size);

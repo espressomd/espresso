@@ -35,7 +35,6 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     espresso_p3m
     PRIVATE espresso::compiler_flags
             espresso::p3m::compiler_flags
-            espresso::kokkos::compiler_flags
             espresso::instrumentation
             espresso::utils
             espresso::config
@@ -52,4 +51,11 @@ if(ESPRESSO_BUILD_WITH_FFTW)
   target_sources(
     espresso_p3m PRIVATE common.cpp send_mesh.cpp TuningAlgorithm.cpp
                          FFTBackendLegacy.cpp FFTBuffersLegacy.cpp)
+  set_property(
+    SOURCE ../electrostatics/p3m_heffte.cpp ../magnetostatics/dp3m_heffte.cpp
+    APPEND
+    PROPERTY
+      COMPILE_OPTIONS
+      $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:--diag_suppress=code_is_unreachable>
+  )
 endif()

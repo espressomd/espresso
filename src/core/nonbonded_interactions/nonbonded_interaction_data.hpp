@@ -30,6 +30,7 @@
 #include "TabulatedPotential.hpp"
 #include "system/Leaf.hpp"
 
+#include <utils/device_qualifier.hpp>
 #include <utils/index.hpp>
 #include <utils/math/int_pow.hpp>
 
@@ -302,7 +303,7 @@ enum class PairPotential : unsigned {
 };
 
 /** @brief Bitmask for a pair potential. */
-constexpr unsigned pair_potential_bit(PairPotential p) {
+constexpr DEVICE_QUALIFIER unsigned pair_potential_bit(PairPotential p) {
   return 1u << static_cast<unsigned>(p);
 }
 

@@ -33,7 +33,7 @@ class Test(ut.TestCase):
     :ref:`Madelung magnetostatics` for more details.
     """
 
-    system = espressomd.System(box_l=[1., 1., 1.])
+    system = espressomd.System(box_l=[10., 10., 10.])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 

@@ -39,7 +39,8 @@
 #include <span>
 #include <utility>
 
-template <class KokkosRangePolicy = Kokkos::RangePolicy<>>
+template <class KokkosRangePolicy =
+              Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>>
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
 kokkos_parallel_range_for(auto const &name, auto start, auto end,
                           auto const &kernel) {
@@ -88,11 +89,11 @@ commit_particle(Particle const &p, auto const index,
 #endif
 }
 
-ESPRESSO_ATTR_ALWAYS_INLINE inline void
-link_cell_kokkos(std::span<Cell *const> cells, BoxGeometry const &box_geo,
-                 auto const &verlet_criterion,
-                 Kokkos::View<int *> const &id_to_index, int const max_id,
-                 auto const &intra_operator, auto const &inter_operator) {
+ESPRESSO_ATTR_ALWAYS_INLINE inline void link_cell_kokkos(
+    std::span<Cell *const> cells, BoxGeometry const &box_geo,
+    auto const &verlet_criterion,
+    Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> const &id_to_index,
+    int const max_id, auto const &intra_operator, auto const &inter_operator) {
 
   // implementation detail: max_id refers to the max local particle id,
   // but ghost particles from other ranks may have larger particle ids;
@@ -149,20 +150,26 @@ link_cell_kokkos(std::span<Cell *const> cells, BoxGeometry const &box_geo,
     }
   };
 
-  Kokkos::parallel_for("intra", cells.size(), intra_kernel);
+  Kokkos::parallel_for("intra",
+                       Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
+                           std::size_t{0}, cells.size()),
+                       intra_kernel);
   Kokkos::fence();
 
-  Kokkos::parallel_for("inter", cells.size(), inter_kernel);
+  Kokkos::parallel_for("inter",
+                       Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
+                           std::size_t{0}, cells.size()),
+                       inter_kernel);
   Kokkos::fence();
 }
 
+template <class execution_space = Kokkos::DefaultHostExecutionSpace>
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
 update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
                     double const pair_cutoff, auto const integ_switch) {
 #ifdef ESPRESSO_CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
-  using execution_space = Kokkos::DefaultExecutionSpace;
   using policy_type = Kokkos::RangePolicy<execution_space>;
   auto const rebuild = cell_structure.prepare_verlet_list_cabana(pair_cutoff);
   auto const &unique_particles = cell_structure.get_unique_particles();
@@ -197,7 +204,9 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
     Kokkos::fence();
     auto &bs = cell_structure.bond_state();
     auto &pair_bond_list = bs.pair_list;
-    Kokkos::parallel_for("resolve_pair_bond_indices", pair_count,
+    Kokkos::parallel_for("resolve_pair_bond_indices",
+                         Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
+                             std::size_t{0}, pair_count),
                          [&pair_bond_list, &id_to_index](int idx) {
                            for (int col = 0; col < 2; ++col) {
                              pair_bond_list(idx, col) =
@@ -205,7 +214,9 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
                            }
                          });
     auto &angle_bond_list = bs.angle_list;
-    Kokkos::parallel_for("resolve_angle_bond_indices", angle_count,
+    Kokkos::parallel_for("resolve_angle_bond_indices",
+                         Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
+                             std::size_t{0}, angle_count),
                          [&angle_bond_list, &id_to_index](int idx) {
                            for (int col = 0; col < 3; ++col) {
                              angle_bond_list(idx, col) =
@@ -213,7 +224,9 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
                            }
                          });
     auto &dihedral_bond_list = bs.dihedral_list;
-    Kokkos::parallel_for("resolve_dihedral_bond_indices", dihedral_count,
+    Kokkos::parallel_for("resolve_dihedral_bond_indices",
+                         Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
+                             std::size_t{0}, dihedral_count),
                          [&dihedral_bond_list, &id_to_index](int idx) {
                            for (int col = 0; col < 4; ++col) {
                              dihedral_bond_list(idx, col) =
@@ -282,9 +295,9 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
 }
 
 #ifdef ESPRESSO_ELECTROSTATICS
+template <class execution_space = Kokkos::DefaultHostExecutionSpace>
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
 update_aosoa_charges(CellStructure &cell_structure) {
-  using execution_space = Kokkos::DefaultExecutionSpace;
   using policy_type = Kokkos::RangePolicy<execution_space>;
   auto const &unique_particles = cell_structure.get_unique_particles();
   auto const n_part = unique_particles.size();
@@ -298,6 +311,7 @@ update_aosoa_charges(CellStructure &cell_structure) {
 }
 #endif
 
+template <class execution_space = Kokkos::DefaultHostExecutionSpace>
 void cabana_short_range(auto const &pair_bonds_kernel,
                         auto const &angle_bonds_kernel,
                         auto const &dihedral_bonds_kernel,
@@ -305,7 +319,6 @@ void cabana_short_range(auto const &pair_bonds_kernel,
                         CellStructure &cell_structure, double pair_cutoff,
                         double bond_cutoff, auto const &verlet_criterion,
                         auto const integ_switch) {
-  using execution_space = Kokkos::DefaultExecutionSpace;
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
   if (bond_cutoff >= 0.) {
@@ -318,17 +331,25 @@ void cabana_short_range(auto const &pair_bonds_kernel,
         cell_structure.get_local_dihedral_bond_numbers();
     if (n_pair_bonds > 0) {
       Kokkos::parallel_for( // loop over bonds
-          "for_each_local_pair_bonds", n_pair_bonds, pair_bonds_kernel);
+          "for_each_local_pair_bonds",
+          Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(std::size_t{0},
+                                                                 n_pair_bonds),
+          pair_bonds_kernel);
       Kokkos::fence();
     }
     if (n_angle_bonds > 0) {
       Kokkos::parallel_for( // loop over bonds
-          "for_each_local_angle_bonds", n_angle_bonds, angle_bonds_kernel);
+          "for_each_local_angle_bonds",
+          Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(std::size_t{0},
+                                                                 n_angle_bonds),
+          angle_bonds_kernel);
       Kokkos::fence();
     }
     if (n_dihedral_bonds > 0) {
       Kokkos::parallel_for( // loop over bonds
-          "for_each_local_dihedral_bonds", n_dihedral_bonds,
+          "for_each_local_dihedral_bonds",
+          Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
+              std::size_t{0}, n_dihedral_bonds),
           dihedral_bonds_kernel);
       Kokkos::fence();
     }

@@ -26,23 +26,25 @@
 #include <stdexcept>
 
 #include "Vector.hpp"
+#include "device_qualifier.hpp"
 
 namespace Utils {
 
 enum class MemoryOrder { COLUMN_MAJOR, ROW_MAJOR };
 
 template <MemoryOrder memory_order>
-inline int get_linear_index(int a, int b, int c, const Vector3i &adim) {
-  assert((a >= 0) && (a < adim[0]));
-  assert((b >= 0) && (b < adim[1]));
-  assert((c >= 0) && (c < adim[2]));
+DEVICE_QUALIFIER inline int get_linear_index(int a, int b, int c,
+                                             Vector3i const &adim) {
+  DEVICE_ASSERT((a >= 0) && (a < adim[0]));
+  DEVICE_ASSERT((b >= 0) && (b < adim[1]));
+  DEVICE_ASSERT((c >= 0) && (c < adim[2]));
   if constexpr (memory_order == MemoryOrder::COLUMN_MAJOR) {
     return a + adim[0] * (b + adim[1] * c);
   }
   return adim[1] * adim[2] * a + adim[2] * b + c;
 }
 
-/** get the linear index from the position (@p a,@p b,@p c) in a 3D grid
+/** Get the linear index from the position (@p a,@p b,@p c) in a 3D grid
  *  of dimensions @p adim.
  *
  * @return           The linear index
@@ -50,8 +52,8 @@ inline int get_linear_index(int a, int b, int c, const Vector3i &adim) {
  * @param adim       Dimensions of the underlying grid
  * @param memory_order Row- or column-major
  */
-inline int
-get_linear_index(int a, int b, int c, const Vector3i &adim,
+DEVICE_QUALIFIER inline int
+get_linear_index(int a, int b, int c, Vector3i const &adim,
                  MemoryOrder memory_order = MemoryOrder::COLUMN_MAJOR) {
   if (memory_order == MemoryOrder::COLUMN_MAJOR) {
     return get_linear_index<MemoryOrder::COLUMN_MAJOR>(a, b, c, adim);
@@ -59,14 +61,15 @@ get_linear_index(int a, int b, int c, const Vector3i &adim,
   return get_linear_index<MemoryOrder::ROW_MAJOR>(a, b, c, adim);
 }
 
-inline int
-get_linear_index(const Vector3i &ind, const Vector3i &adim,
+DEVICE_QUALIFIER inline int
+get_linear_index(Vector3i const &ind, Vector3i const &adim,
                  MemoryOrder memory_order = MemoryOrder::COLUMN_MAJOR) {
   return get_linear_index(ind[0], ind[1], ind[2], adim, memory_order);
 }
 
 template <MemoryOrder memory_order>
-inline int get_linear_index(const Vector3i &ind, const Vector3i &adim) {
+DEVICE_QUALIFIER inline int get_linear_index(Vector3i const &ind,
+                                             Vector3i const &adim) {
   return get_linear_index<memory_order>(ind[0], ind[1], ind[2], adim);
 }
 
@@ -80,11 +83,11 @@ inline int get_linear_index(const Vector3i &ind, const Vector3i &adim) {
  * @param j column index
  * @return linear index
  */
-template <class T> T lower_triangular(T i, T j) {
+template <class T> DEVICE_QUALIFIER T lower_triangular(T i, T j) {
   /* i is a valid row index */
-  assert(i >= 0);
+  DEVICE_ASSERT(i >= 0);
   /* j is in the lower triangle */
-  assert(j >= 0 and j <= i);
+  DEVICE_ASSERT(j >= 0 and j <= i);
   return (i * (i + 1)) / 2 + j;
 }
 

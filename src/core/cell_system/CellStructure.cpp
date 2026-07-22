@@ -173,10 +173,11 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
     m_scatter_torque.emplace(
         Kokkos::Experimental::create_scatter_view(*m_local_torque));
 #endif
-    m_id_to_index = std::make_unique<Kokkos::View<int *>>(
-        Kokkos::ViewAllocateWithoutInitializing("id_to_index"),
+    m_id_to_index = std::make_unique<Kokkos::View<int *, memory_space>>(
+        Kokkos::view_alloc(execution_space{}, Kokkos::WithoutInitializing,
+                           "id_to_index"),
         get_cached_max_local_particle_id() + 1);
-    Kokkos::deep_copy(get_id_to_index(), -1);
+    Kokkos::deep_copy(execution_space{}, get_id_to_index(), -1);
     // Create AoSoA_pack and initialize with resize
     m_aosoa = std::make_unique<AoSoA_pack>();
     m_aosoa->resize(num_part);
@@ -264,7 +265,7 @@ void CellStructure::set_index_map() {
   unique_particles.clear();
   unique_particles.resize(count_local_particles());
   std::unordered_set<int> registered_index{};
-  using execution_space = Kokkos::DefaultExecutionSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
   int n_threads = execution_space().concurrency();
   std::vector<int> max_ids(n_threads);
 
@@ -625,16 +626,13 @@ bool CellStructure::check_resort_required(
     Utils::Vector3d const &additional_offset) const {
   auto const lim = Utils::sqr(m_verlet_skin / 2.) - additional_offset.norm2();
 
-  Reduction::AddPartialResultKernel<bool> add_partial =
-      [lim](bool &result, Particle const &p) {
-        if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim) {
-          result = true;
-        }
-      };
-
-  Reduction::ReductionOp<bool> reduce_op = [](bool &acc, bool const &val) {
-    acc |= val;
+  auto add_partial = [lim](bool &result, Particle const &p) {
+    if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim) {
+      result = true;
+    }
   };
 
-  return reduce_over_local_particles(*this, add_partial, reduce_op);
+  auto reduce_op = [](bool &acc, bool const &val) { acc |= val; };
+
+  return reduce_over_local_particles<bool>(*this, add_partial, reduce_op);
 }

@@ -38,6 +38,7 @@
 #endif
 
 #include <utils/Vector.hpp>
+#include <utils/index.hpp>
 #include <utils/math/tensor_product.hpp>
 
 #include <Cabana_Core.hpp>
@@ -96,6 +97,7 @@ struct PressureBinLayout {
 };
 
 struct PressureKernel {
+  using execution_space = Kokkos::HostSpace;
   BondedInteractionsMap const &bonded_ias;
   InteractionsNonBonded const &nonbonded_ias;
   Coulomb::Solver const &coulomb;
@@ -106,10 +108,10 @@ struct PressureKernel {
   DPDThermostat const *dpd;
 #endif
   std::vector<Particle *> const &unique_particles;
-  Kokkos::View<double **, Kokkos::LayoutRight> local_pressure;
+  Kokkos::View<double **, Kokkos::LayoutRight, execution_space> local_pressure;
   PressureBinLayout layout;
   CellStructure::AoSoA_pack const &aosoa;
-  Kokkos::View<int *> mol_id_view;
+  Kokkos::View<int *, Kokkos::LayoutRight, execution_space> mol_id_view;
   double system_max_cutoff;
   int thermo_switch;
 
@@ -124,10 +126,11 @@ struct PressureKernel {
       DPDThermostat const *dpd_,
 #endif
       std::vector<Particle *> const &unique_particles_,
-      Kokkos::View<double **, Kokkos::LayoutRight> const &local_pressure_,
+      Kokkos::View<double **, Kokkos::LayoutRight, execution_space> const
+          &local_pressure_,
       PressureBinLayout layout_, CellStructure::AoSoA_pack const &aosoa_,
-      Kokkos::View<int *> mol_id_view_, double system_max_cutoff_,
-      int thermo_switch_)
+      Kokkos::View<int *, execution_space> mol_id_view_,
+      double system_max_cutoff_, int thermo_switch_)
       : bonded_ias(bonded_ias_), nonbonded_ias(nonbonded_ias_),
         coulomb(coulomb_), coulomb_f_kernel(coulomb_f_kernel_),
         coulomb_p_kernel(coulomb_p_kernel_), box_geo(box_geo_),
@@ -139,8 +142,8 @@ struct PressureKernel {
         system_max_cutoff(system_max_cutoff_), thermo_switch(thermo_switch_) {
   }
 
-  KOKKOS_INLINE_FUNCTION
-  void operator()(std::size_t i, std::size_t j) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t i,
+                                                     std::size_t j) const {
     auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
     auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
     auto const d = box_geo.get_mi_vector(pos1, pos2);
@@ -230,7 +233,8 @@ struct PressureKernel {
 };
 
 static void reduce_cabana_pressure(
-    Kokkos::View<double **, Kokkos::LayoutRight> const &local_pressure,
+    Kokkos::View<double **, Kokkos::LayoutRight, Kokkos::HostSpace> const
+        &local_pressure,
     PressureBinLayout const &layout, Observable_stat &obs,
     [[maybe_unused]] BondedInteractionsMap const &bonded_ias, int n_types) {
   auto const nthreads = local_pressure.extent(0);

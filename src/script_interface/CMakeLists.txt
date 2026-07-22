@@ -71,9 +71,11 @@ if(Kokkos_ENABLE_CUDA AND NOT CMAKE_CXX_COMPILER_ID STREQUAL Clang)
     ${CMAKE_CURRENT_SOURCE_DIR}/shapes/initialize.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/reaction_methods/initialize.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/reaction_methods/ReactionAlgorithm.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/particle_data/ParticleHandle.cpp
     PROPERTIES COMPILE_OPTIONS -expt-relaxed-constexpr)
 endif()
 
+espresso_set_kokkos_properties_on_source_files(espresso_script_interface)
 target_include_directories(espresso_script_interface
                            PUBLIC ${CMAKE_SOURCE_DIR}/src)
 if(ESPRESSO_BUILD_WITH_COVERAGE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

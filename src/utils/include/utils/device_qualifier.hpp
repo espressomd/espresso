@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_DEVICE_QUALIFIER_HPP
-#define UTILS_DEVICE_QUALIFIER_HPP
+
+#pragma once
 
 #if defined(__CUDACC__)
 #define DEVICE_THROW(E)
@@ -31,5 +31,3 @@
 #define HOST_ONLY_QUALIFIER
 #define DEVICE_ASSERT(A) assert((A))
 #endif
-
-#endif // ESPRESSO_DEVICE_QUALIFIER_HPP

@@ -26,6 +26,7 @@
 #if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 #include "common.hpp"
+#include "communication.hpp"
 
 #include <utils/device_qualifier.hpp>
 
@@ -38,12 +39,12 @@
 
 /** @brief State of the p3m methods, the part which applies to  both,
   electrostatic and dipolar p3m */
-
-template <typename FloatType> struct P3MStateCommon {
+template <typename FloatType, Arch Architecture = Arch::CPU>
+struct P3MStateCommon {
   using value_type = FloatType;
 
   explicit P3MStateCommon(P3MParameters &&parameters)
-      : params{std::move(parameters)} {}
+      : params{std::move(parameters)}, local_mesh{} {}
 
   /** @brief P3M base parameters. */
   P3MParameters params;

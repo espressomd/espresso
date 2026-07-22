@@ -52,6 +52,7 @@ function(espresso_unit_test_executable)
   if(ESPRESSO_BUILD_WITH_CUDA)
     espresso_add_cuda_rpaths(${TEST_NAME}) # for GPU-aware MPI vendors
   endif()
+  espresso_set_kokkos_properties_on_source_files(${TEST_NAME})
 endfunction()
 
 # register the executable of a unit test in the CTest suite

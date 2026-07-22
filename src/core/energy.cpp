@@ -93,17 +93,16 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
       static_cast<std::size_t>(bonded_ias->get_next_key()),
       std::size_t(nonbonded_ias->get_max_seen_particle_type() + 1)};
 
-  using exec = Kokkos::DefaultExecutionSpace;
-  Kokkos::View<double **, Kokkos::LayoutRight> local_energy(
-      "local_energy", exec().concurrency(), layout.total);
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+  Kokkos::View<double **, Kokkos::LayoutRight, execution_space> local_energy(
+      "local_energy", execution_space().concurrency(), layout.total);
   auto const &unique_particles = cell_structure->get_unique_particles();
-  auto const n_particles = static_cast<int>(unique_particles.size());
-  Kokkos::View<int *> mol_id_view("mol_id", n_particles);
-  auto mol_id_host = Kokkos::create_mirror_view(mol_id_view);
-  for (int i = 0; i < n_particles; ++i) {
-    mol_id_host(i) = unique_particles[i]->mol_id();
+  auto const n_particles = unique_particles.size();
+  Kokkos::View<int *, Kokkos::LayoutRight, execution_space> mol_id("mol_id",
+                                                                   n_particles);
+  for (std::size_t i = 0; i < n_particles; ++i) {
+    mol_id(i) = unique_particles[i]->mol_id();
   }
-  Kokkos::deep_copy(mol_id_view, mol_id_host);
 
   // Non Bonded energies
   EnergyKernel pair_e_kernel{*bonded_ias,
@@ -116,7 +115,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
                              local_energy,
                              layout,
                              cell_structure->get_aosoa(),
-                             mol_id_view,
+                             mol_id,
                              maximal_cutoff()};
 
   // Bonded energies: write a BondsEnergyKernelData + *BondsEnergyKernel

@@ -41,6 +41,7 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "aosoa_pack.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>

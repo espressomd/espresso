@@ -261,8 +261,9 @@ If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 12.
 
       .. code-block:: bash
 
-         CC=nvc CXX=nvc++ CUDACXX=nvcc cmake .. \
+         CC=nvc CXX=nvc++ CUDACXX=nvcc CUDAHOSTCXX=nvc++ cmake .. \
             -D ESPRESSO_BUILD_WITH_CUDA=ON \
+            -D CMAKE_CUDA_FLAGS="$(mpicc --showme:compile)" \
             -D CMAKE_CXX_FLAGS="--gcc-toolchain=gcc-12"
 
       with compiler dependencies:
@@ -335,8 +336,9 @@ If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13.
 
       .. code-block:: bash
 
-         CC=nvc CXX=nvc++ CUDACXX=nvcc cmake .. \
+         CC=nvc CXX=nvc++ CUDACXX=nvcc CUDAHOSTCXX=nvc++ cmake .. \
             -D ESPRESSO_BUILD_WITH_CUDA=ON \
+            -D CMAKE_CUDA_FLAGS="$(mpicc --showme:compile)" \
             -D CMAKE_CXX_FLAGS="--gcc-toolchain=gcc-13"
 
       with compiler dependencies:

@@ -53,7 +53,7 @@
 #define ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
 #endif
 
-template <typename FloatType, class FFTConfig> class P3MFFT;
+template <typename FloatType, Arch Architecture, class FFTConfig> class P3MFFT;
 
 /**
  * @brief Base class for the magnetostatics P3M algorithm.
@@ -129,7 +129,7 @@ struct DipolarP3MState : public P3MStateCommon<FloatType> {
     /** @brief Energy optimised influence function (k-space) */
     std::vector<FloatType> g_energy;
     p3m_send_mesh<FloatType> halo_comm;
-    std::shared_ptr<P3MFFT<FloatType, FFTConfig>> fft;
+    std::shared_ptr<P3MFFT<FloatType, Arch::CPU, FFTConfig>> fft;
     int world_size;
   } heffte;
   void resize_heffte_buffers();
@@ -223,7 +223,7 @@ public:
 private:
   void prepare_fft_mesh() {
     dp3m.inter_weights.reset(dp3m.params.cao);
-    using execution_space = Kokkos::DefaultExecutionSpace;
+    using execution_space = Kokkos::DefaultHostExecutionSpace;
     auto const num_threads = execution_space().concurrency();
     Kokkos::realloc(Kokkos::WithoutInitializing, dp3m.rs_fields_kokkos,
                     num_threads, 3, dp3m.local_mesh.size);

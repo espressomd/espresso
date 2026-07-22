@@ -50,6 +50,8 @@ inline auto constexpr P3M_EPSILON_METALLIC = 0.0;
 
 #include "LocalBox.hpp"
 
+#include <Kokkos_Core.hpp>
+
 #include <cstddef>
 #include <optional>
 #include <span>
@@ -328,6 +330,14 @@ template <Utils::MemoryOrder RSpaceOrder = Utils::MemoryOrder::ROW_MAJOR,
           Utils::MemoryOrder KSpaceOrder = Utils::MemoryOrder::ROW_MAJOR,
           bool UseR2C = false, unsigned int R2CDir = 2u>
 struct P3MFFTConfig {
+  /** @brief Data layout of the input real-space 3D matrix. */
+  using r_space_layout =
+      std::conditional_t<RSpaceOrder == Utils::MemoryOrder::ROW_MAJOR,
+                         Kokkos::LayoutRight, Kokkos::LayoutLeft>;
+  /** @brief Data layout of the output k-space 3D matrix. */
+  using k_space_layout =
+      std::conditional_t<KSpaceOrder == Utils::MemoryOrder::ROW_MAJOR,
+                         Kokkos::LayoutRight, Kokkos::LayoutLeft>;
   /** @brief Data layout of the input real-space 3D matrix. */
   static auto constexpr r_space_order = RSpaceOrder;
   /** @brief Data layout of the output k-space 3D matrix. */

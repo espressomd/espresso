@@ -23,14 +23,14 @@ include(espresso_unit_test)
 
 espresso_unit_test(SRC RuntimeError_test.cpp DEPENDS Boost::serialization)
 espresso_unit_test(SRC RuntimeErrorCollector_test.cpp DEPENDS espresso::core
-                   Boost::mpi MPI::MPI_CXX NUM_PROC 2)
+                   Kokkos::kokkos Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 espresso_unit_test(SRC RuntimeErrorStream_test.cpp DEPENDS espresso::core
-                   Boost::mpi MPI::MPI_CXX NUM_PROC 2)
+                   Kokkos::kokkos Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 # create a test matrix for the stand-alone unit test
 espresso_unit_test_executable(
   NAME EspressoSystemStandAlone_test_matrix SRC
-  EspressoSystemStandAlone_test.cpp DEPENDS espresso::core Boost::mpi
-  MPI::MPI_CXX espresso::kokkos::compiler_flags)
+  EspressoSystemStandAlone_test.cpp DEPENDS espresso::core Kokkos::kokkos
+  Boost::mpi MPI::MPI_CXX)
 foreach(TEST_NUM_PROC 1 3 4)
   foreach(TEST_NUM_THREADS 1 2)
     if(${TEST_NUM_THREADS} LESS_EQUAL ${ESPRESSO_TEST_NT})
@@ -46,9 +46,9 @@ foreach(TEST_NUM_PROC 1 3 4)
   endforeach()
 endforeach()
 espresso_unit_test(SRC EspressoSystem_test.cpp DEPENDS espresso::core
-                   Boost::mpi espresso::kokkos::compiler_flags NUM_PROC 2)
+                   Kokkos::kokkos Boost::mpi NUM_PROC 2)
 espresso_unit_test(SRC ResourceCleanup_test.cpp DEPENDS espresso::core
-                   Boost::mpi NUM_PROC 2)
+                   Kokkos::kokkos Boost::mpi NUM_PROC 2)
 espresso_unit_test(SRC MpiCallbacks_test.cpp DEPENDS espresso::utils Boost::mpi
                    MPI::MPI_CXX NUM_PROC 2)
 espresso_unit_test(SRC ParticleIterator_test.cpp DEPENDS espresso::utils)
@@ -57,38 +57,46 @@ espresso_unit_test(SRC Particle_test.cpp DEPENDS espresso::utils
                    Boost::serialization)
 espresso_unit_test(SRC Particle_serialization_test.cpp DEPENDS espresso::utils
                    Boost::serialization)
-espresso_unit_test(SRC rotation_test.cpp DEPENDS espresso::utils espresso::core)
+espresso_unit_test(SRC rotation_test.cpp DEPENDS espresso::utils espresso::core
+                   Kokkos::kokkos)
 espresso_unit_test(SRC field_coupling_couplings_test.cpp DEPENDS
                    espresso::utils)
 espresso_unit_test(SRC field_coupling_fields_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC field_coupling_force_field_test.cpp DEPENDS
                    espresso::utils)
-espresso_unit_test(
-  SRC field_layout_helpers_test.cpp DEPENDS espresso::utils espresso::core
-  Kokkos::kokkos espresso::kokkos::compiler_flags)
-espresso_unit_test(
-  SRC particle_reduction_test.cpp DEPENDS espresso::utils espresso::core
-  Boost::mpi Kokkos::kokkos espresso::kokkos::compiler_flags)
+espresso_unit_test(SRC field_layout_helpers_test.cpp DEPENDS espresso::utils
+                   espresso::core Kokkos::kokkos)
+espresso_unit_test(SRC particle_reduction_test.cpp DEPENDS espresso::utils
+                   espresso::core Kokkos::kokkos Boost::mpi)
 espresso_unit_test(SRC periodic_fold_test.cpp)
-espresso_unit_test(SRC grid_test.cpp DEPENDS espresso::core)
-espresso_unit_test(SRC lees_edwards_test.cpp DEPENDS espresso::core)
-espresso_unit_test(SRC BoxGeometry_test.cpp DEPENDS espresso::core)
-espresso_unit_test(SRC LocalBox_test.cpp DEPENDS espresso::core)
-espresso_unit_test(SRC Verlet_list_test.cpp DEPENDS espresso::core NUM_PROC 4)
-espresso_unit_test(SRC VerletCriterion_test.cpp DEPENDS espresso::core)
-espresso_unit_test(SRC thermostats_test.cpp DEPENDS espresso::core)
-espresso_unit_test(SRC random_test.cpp DEPENDS espresso::utils Random123)
-espresso_unit_test(SRC BondList_test.cpp DEPENDS espresso::core)
-espresso_unit_test(SRC energy_test.cpp DEPENDS espresso::core)
-espresso_unit_test(SRC bonded_interactions_map_test.cpp DEPENDS espresso::core)
-espresso_unit_test(SRC bond_breakage_test.cpp DEPENDS espresso::core)
-espresso_unit_test(SRC fene_test.cpp DEPENDS espresso::core)
-espresso_unit_test(SRC TabulatedPotential_test.cpp DEPENDS espresso::core)
+espresso_unit_test(SRC grid_test.cpp DEPENDS espresso::core Kokkos::kokkos)
+espresso_unit_test(SRC lees_edwards_test.cpp DEPENDS espresso::core
+                   Kokkos::kokkos)
+espresso_unit_test(SRC BoxGeometry_test.cpp DEPENDS espresso::core
+                   Kokkos::kokkos)
+espresso_unit_test(SRC LocalBox_test.cpp DEPENDS espresso::core Kokkos::kokkos)
+espresso_unit_test(SRC Verlet_list_test.cpp DEPENDS espresso::core
+                   Kokkos::kokkos NUM_PROC 4)
+espresso_unit_test(SRC VerletCriterion_test.cpp DEPENDS espresso::core
+                   Kokkos::kokkos)
+espresso_unit_test(SRC thermostats_test.cpp DEPENDS espresso::core
+                   Kokkos::kokkos)
+espresso_unit_test(SRC random_test.cpp DEPENDS espresso::utils Kokkos::kokkos
+                   Random123)
+espresso_unit_test(SRC BondList_test.cpp DEPENDS espresso::core Kokkos::kokkos)
+espresso_unit_test(SRC energy_test.cpp DEPENDS espresso::core Kokkos::kokkos)
+espresso_unit_test(SRC bonded_interactions_map_test.cpp DEPENDS espresso::core
+                   Kokkos::kokkos)
+espresso_unit_test(SRC bond_breakage_test.cpp DEPENDS espresso::core
+                   Kokkos::kokkos)
+espresso_unit_test(SRC fene_test.cpp DEPENDS espresso::core Kokkos::kokkos)
+espresso_unit_test(SRC TabulatedPotential_test.cpp DEPENDS espresso::core
+                   Kokkos::kokkos)
 if(ESPRESSO_BUILD_WITH_WALBERLA)
   espresso_unit_test(SRC lb_particle_coupling_test.cpp DEPENDS espresso::core
-                     Boost::mpi MPI::MPI_CXX NUM_PROC 2)
+                     Kokkos::kokkos Boost::mpi MPI::MPI_CXX NUM_PROC 2)
   espresso_unit_test(SRC ek_interface_test.cpp DEPENDS espresso::core
-                     Boost::mpi MPI::MPI_CXX NUM_PROC 2)
+                     Kokkos::kokkos Boost::mpi MPI::MPI_CXX NUM_PROC 2)
   target_link_libraries(
     lb_particle_coupling_test PRIVATE espresso::walberla
                                       espresso::walberla::compiler_flags)
@@ -99,19 +107,11 @@ endif()
 
 if(ESPRESSO_BUILD_WITH_FFTW)
   espresso_unit_test_executable(
-    NAME
-    p3m_test_matrix
-    SRC
-    p3m_test.cpp
-    DEPENDS
-    espresso::core
-    Boost::mpi
+    NAME p3m_test_matrix SRC p3m_test.cpp DEPENDS espresso::core Boost::mpi
     MPI::MPI_CXX
     $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:espresso::p3m::compiler_flags>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>
-    Cabana::Core
-    Kokkos::kokkos
-    espresso::kokkos::compiler_flags)
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte> Cabana::Core
+    Kokkos::kokkos)
   foreach(TEST_NUM_PROC 1 3 4)
     foreach(TEST_NUM_THREADS 1 2)
       if(${TEST_NUM_THREADS} LESS_EQUAL ${ESPRESSO_TEST_NT})
@@ -127,11 +127,39 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     endforeach()
   endforeach()
   espresso_unit_test(SRC fft_test.cpp DEPENDS espresso::utils espresso::core
-                     Kokkos::kokkos espresso::kokkos::compiler_flags)
-  espresso_unit_test(SRC math_test.cpp DEPENDS espresso::utils espresso::core)
+                     Kokkos::kokkos Kokkos::kokkos)
+  espresso_unit_test(SRC math_test.cpp DEPENDS espresso::utils espresso::core
+                     Kokkos::kokkos)
+  set_property(
+    SOURCE math_test.cpp APPEND
+    PROPERTY COMPILE_OPTIONS
+             $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--diag-suppress=20208>)
 endif()
 
 if(ESPRESSO_BUILD_WITH_CUDA)
   espresso_unit_test(SRC cuda_test.cu DEPENDS espresso::utils espresso::core
-                     CUDA::cudart)
+                     Kokkos::kokkos CUDA::cudart)
 endif()
+set_property(
+  SOURCE random_test.cpp thermostats_test.cpp
+  APPEND
+  PROPERTY
+    COMPILE_OPTIONS
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--diag-suppress=20014>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:--diag_suppress=declared_but_not_referenced>
+)
+set_property(
+  SOURCE EspressoSystemStandAlone_test.cpp
+  APPEND
+  PROPERTY
+    COMPILE_OPTIONS
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--diag-suppress=128>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:--diag_suppress=loop_not_reachable>
+)
+set_property(
+  SOURCE p3m_test.cpp
+  APPEND
+  PROPERTY
+    COMPILE_OPTIONS
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:--diag_suppress=code_is_unreachable>
+)

@@ -224,7 +224,7 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
   Kokkos::Experimental::contribute(local_virial, scatter_virial);
 #endif
 
-  using execution_space = Kokkos::DefaultExecutionSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
   Kokkos::RangePolicy<execution_space> policy(std::size_t{0},
                                               unique_particles.size());
   Kokkos::parallel_for("reduction", policy,

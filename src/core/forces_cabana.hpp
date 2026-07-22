@@ -108,8 +108,8 @@ struct ForcesKernel {
   }
 #endif
 
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
-  operator()(std::size_t i, std::size_t j) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t i,
+                                                     std::size_t j) const {
 
     // calc distance (component-wise, avoids constructing pos1/pos2 Vector3d
     // on the hot early-exit path; pos1/pos2 are built lazily below only
