@@ -101,6 +101,7 @@ struct PressureKernel {
   Coulomb::Solver const &coulomb;
   Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_f_kernel;
   Coulomb::ShortRangePressureKernel::kernel_type const *coulomb_p_kernel;
+  Dipoles::ShortRangePressureKernel::kernel_type const *dipoles_p_kernel;
   BoxGeometry const &box_geo;
   std::vector<Particle *> const &unique_particles;
   Kokkos::View<double **, Kokkos::LayoutRight> local_pressure;
@@ -116,6 +117,7 @@ struct PressureKernel {
       Coulomb::Solver const &coulomb_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_f_kernel_,
       Coulomb::ShortRangePressureKernel::kernel_type const *coulomb_p_kernel_,
+      Dipoles::ShortRangePressureKernel::kernel_type const *dipoles_p_kernel_,
       BoxGeometry const &box_geo_,
       std::vector<Particle *> const &unique_particles_,
       Kokkos::View<double **, Kokkos::LayoutRight> const &local_pressure_,
@@ -124,7 +126,8 @@ struct PressureKernel {
       int thermo_switch_)
       : bonded_ias(bonded_ias_), nonbonded_ias(nonbonded_ias_),
         coulomb(coulomb_), coulomb_f_kernel(coulomb_f_kernel_),
-        coulomb_p_kernel(coulomb_p_kernel_), box_geo(box_geo_),
+        coulomb_p_kernel(coulomb_p_kernel_),
+        dipoles_p_kernel(dipoles_p_kernel_), box_geo(box_geo_),
         unique_particles(unique_particles_), local_pressure(local_pressure_),
         layout(layout_), aosoa(aosoa_), mol_id_view(std::move(mol_id_view_)),
         system_max_cutoff(system_max_cutoff_), thermo_switch(thermo_switch_) {}
@@ -205,6 +208,22 @@ struct PressureKernel {
         for (std::size_t k = 0; k < 9; ++k)
           local_pressure(tid, layout.tensor_offset(layout.coulomb_idx(), k)) +=
               p_c[k];
+      }
+    }
+#endif
+
+#ifdef ESPRESSO_DIPOLES
+    if (dipoles_p_kernel != nullptr) {
+      auto const d1d2 = aosoa.dipm(i) * aosoa.dipm(j);
+      if (d1d2 != 0.) {
+        auto const dir1 = aosoa.get_vector_at(aosoa.director, i);
+        auto const dir2 = aosoa.get_vector_at(aosoa.director, j);
+        auto const dist2 = d.norm2();
+        auto const p_d = Utils::flatten((*dipoles_p_kernel)(
+            d1d2, aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2, d, dist, dist2));
+        for (std::size_t k = 0; k < 9; ++k)
+          local_pressure(tid, layout.tensor_offset(layout.dipolar_idx(), k)) +=
+              p_d[k];
       }
     }
 #endif

@@ -31,6 +31,8 @@
 #include "actor/visitors.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/math/tensor_product.hpp>
+#include <utils/matrix.hpp>
 
 #include <functional>
 #include <optional>
@@ -97,6 +99,40 @@ struct ShortRangeEnergyKernel {
 #endif // ESPRESSO_DIPOLES
 };
 
+struct ShortRangePressureKernel {
+
+  using kernel_type = Solver::ShortRangePressureKernel;
+  using result_type = std::optional<kernel_type>;
+
+#ifdef ESPRESSO_DIPOLES
+  template <typename T>
+  result_type operator()(std::shared_ptr<T> const &) const {
+    return {};
+  }
+
+#ifdef ESPRESSO_DP3M
+  result_type operator()(std::shared_ptr<DipolarP3M> const &ptr) const {
+    auto const &actor = *ptr;
+    return kernel_type{[&actor](double d1d2, Utils::Vector3d const &dip1,
+                                Utils::Vector3d const &dip2,
+                                Utils::Vector3d const &d, double dist,
+                                double dist2) {
+      // dipole-dipole force is not central (unlike Coulomb), so the
+      // separation-first convention used elsewhere in the pairwise
+      // pressure kernel (non-bonded, DPD) must be matched explicitly
+      return Utils::tensor_product(
+          d, actor.pair_force(d1d2, dip1, dip2, d, dist, dist2).f);
+    }};
+  }
+#endif // ESPRESSO_DP3M
+
+  result_type
+  operator()(std::shared_ptr<DipolarLayerCorrection> const &ptr) const {
+    return std::visit(*this, ptr->base_solver);
+  }
+#endif // ESPRESSO_DIPOLES
+};
+
 inline std::optional<Solver::ShortRangeForceKernel>
 Solver::pair_force_kernel() const {
 #ifdef ESPRESSO_DIPOLES
@@ -113,6 +149,17 @@ Solver::pair_energy_kernel() const {
 #ifdef ESPRESSO_DIPOLES
   if (auto &solver = impl->solver; solver.has_value()) {
     auto const visitor = Dipoles::ShortRangeEnergyKernel();
+    return std::visit(visitor, *solver);
+  }
+#endif // ESPRESSO_DIPOLES
+  return std::nullopt;
+}
+
+inline std::optional<Solver::ShortRangePressureKernel>
+Solver::pair_pressure_kernel() const {
+#ifdef ESPRESSO_DIPOLES
+  if (auto &solver = impl->solver; solver.has_value()) {
+    auto const visitor = Dipoles::ShortRangePressureKernel();
     return std::visit(visitor, *solver);
   }
 #endif // ESPRESSO_DIPOLES

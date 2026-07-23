@@ -551,7 +551,7 @@ void CoulombP3MHeffte<FloatType, Architecture,
 }
 
 /** @details Calculate the long range electrostatics part of the pressure
- *  tensor. This is part \f$\Pi_{\textrm{dir}, \alpha, \beta}\f$ eq. (2.6)
+ *  tensor. This is part \f$\Pi_{\textrm{rec}, \alpha, \beta}\f$ eq. (2.7)
  *  in @cite essmann95a. The part \f$\Pi_{\textrm{corr}, \alpha, \beta}\f$
  *  eq. (2.8) is not present here since M is the empty set in our simulations.
  */

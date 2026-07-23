@@ -212,6 +212,8 @@ public:
 
   double long_range_energy() override { return long_range_kernel(false, true); }
 
+  Utils::Vector9d long_range_pressure() override;
+
   void add_long_range_forces() override {
     if constexpr (Architecture == Arch::CPU) {
       long_range_kernel(true, false);

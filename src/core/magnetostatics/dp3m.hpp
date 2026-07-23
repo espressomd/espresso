@@ -125,6 +125,9 @@ public:
    */
   virtual void tune() = 0;
 
+  /** Compute the k-space part of the pressure tensor */
+  virtual Utils::Vector9d long_range_pressure() = 0;
+
   /** Compute the k-space part of energies. */
   virtual double long_range_energy() = 0;
 

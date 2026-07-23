@@ -75,6 +75,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
 
   auto const coulomb_force_kernel = coulomb.pair_force_kernel();
   auto const coulomb_pressure_kernel = coulomb.pair_pressure_kernel();
+  auto const dipoles_pressure_kernel = dipoles.pair_pressure_kernel();
 
   VerletCriterion<> const verlet_criterion{*this,
                                            cell_structure->get_verlet_skin(),
@@ -106,6 +107,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
                                coulomb,
                                get_ptr(coulomb_force_kernel),
                                get_ptr(coulomb_pressure_kernel),
+                               get_ptr(dipoles_pressure_kernel),
                                *box_geo,
                                cell_structure->get_unique_particles(),
                                local_pressure,
@@ -140,7 +142,8 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
 #endif
 #ifdef ESPRESSO_DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  dipoles.calc_pressure_long_range();
+  auto const dipoles_pressure = dipoles.calc_pressure_long_range();
+  std::ranges::copy(dipoles_pressure, obs_pressure.dipolar.begin() + 9u);
 #endif
 
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
