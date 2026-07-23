@@ -505,7 +505,7 @@ target_compile_options(
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:RelWithAssert>>:-Xptxas=-O3 -Xcompiler=-O3,-g>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<BOOL:${CMAKE_OSX_SYSROOT}>>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>
     # configurations for LLVM
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Debug>>:-g -Og --cuda-noopt-device-debug>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Debug>>:-g -Og>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Release>>:-O3 -DNDEBUG>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:MinSizeRel>>:-O2 -DNDEBUG>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:RelWithDebInfo>>:-O2 -Xarch_host -g -gline-tables-only -DNDEBUG>
