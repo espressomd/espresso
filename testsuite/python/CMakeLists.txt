@@ -104,6 +104,9 @@ function(python_test)
         ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
         ${TEST_FILE_CONFIGURED} --verbose ${TEST_ARGUMENTS}
         ${MPIEXEC_POSTFLAGS})
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL NVHPC)
+    # NVHPC doesn't support singleton mode
+    return()
   else()
     add_test(NAME ${TEST_NAME}
              COMMAND ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
