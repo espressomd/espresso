@@ -97,29 +97,19 @@ class pressureViaVolumeScaling:
 @utx.skipIfMissingFeatures(["DP3M", "LENNARD_JONES"])
 class VirialPressureConsistency(ut.TestCase):
 
-    """Test the consistency of the core implementation of the dipolar
-       long-range (k-space) virial pressure with an analytical relation
-       which allows for the calculation of the pressure as a volume
-       derivative of a function of the potential energy change on
-       infinitesimal volume changes. See :class:`pressureViaVolumeScaling`.
+    """Test the dipolar long-range (k-space) virial pressure against an
+       analytical volume-scaling estimate (see
+       :class:`pressureViaVolumeScaling`), and validate the full
+       pressure tensor.
 
-       An isotropic volume change alone cannot validate the full
-       (anisotropic) pressure TENSOR: it is blind to off-diagonal terms,
-       and any tensor with the right trace passes it even if that trace
-       is split incorrectly among xx/yy/zz (e.g. the old placeholder,
-       ``diag(E, E, E)/3``). A genuine strain-based finite difference for
-       the missing components is not available: DipolarP3M enforces a
-       cubic box at all times (not just for shear/triclinic strains --
-       even a single-axis anisotropic rescale is rejected, see
-       ``DipolarP3M: requires a cubic box`` in
-       ``dp3m_heffte.impl.hpp``), and ESPResSo has no triclinic/sheared
-       box support to fall back on. Instead,
-       :func:`test_dp3m_pressure_tensor_symmetries` validates the
-       off-diagonal terms and the diagonal split via two *exact*
-       tensor-transformation identities that only relabel coordinates
-       (no box deformation needed), together with an explicit check that
-       the tensor is not accidentally isotropic (which would let the old
-       placeholder pass both identities vacuously).
+       An isotropic volume change alone can't validate the anisotropic
+       pressure tensor: it's blind to off-diagonal terms, and passes
+       even if the trace is split incorrectly among xx/yy/zz (e.g. the
+       old ``diag(E, E, E) / 3`` placeholder). A strain-based check
+       isn't available either, since DipolarP3M enforces a cubic box.
+       :func:`test_dp3m_pressure_tensor_symmetries` covers this gap
+       instead, using exact coordinate-relabeling identities that need
+       no box deformation.
     """
     system = espressomd.System(box_l=[50, 50, 50])
 
