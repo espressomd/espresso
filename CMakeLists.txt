@@ -706,6 +706,7 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
     GIT_TAG        5.0.2
     PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/kokkos.patch
     OVERRIDE_FIND_PACKAGE
+    SYSTEM
   )
   # cmake-format: on
   set(BUILD_SHARED_LIBS OFF)
@@ -713,7 +714,7 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   set(Kokkos_ENABLE_SERIAL ON CACHE BOOL "")
   set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "")
   set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
-  if(${ESPRESSO_BUILD_WITH_CUDA}
+  if(${ESPRESSO_BUILD_WITH_CUDA} AND NOT ${ESPRESSO_BUILD_WITH_WALBERLA}
      AND (NOT CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA"
           OR CMAKE_CUDA_COMPILER_VERSION GREATER_EQUAL 12.2))
     set(Kokkos_ENABLE_CUDA ON CACHE BOOL "")
@@ -751,11 +752,6 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
     PRIVATE
       $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=initialization_not_reachable>
   )
-  # mark kokkos headers as system headers to disable compiler diagnostics
-  set_property(
-    TARGET kokkos APPEND
-    PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
-             $<TARGET_PROPERTY:kokkos,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
 
 if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/cabana-src)
@@ -768,21 +764,13 @@ if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
     GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
     GIT_TAG        0.8.0
     OVERRIDE_FIND_PACKAGE
+    SYSTEM
   )
   # cmake-format: on
   set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
-  if(${ESPRESSO_BUILD_WITH_CUDA}
-     AND (NOT CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA"
-          OR CMAKE_CUDA_COMPILER_VERSION GREATER_EQUAL 12.2))
-    set(Cabana_REQUIRE_CUDA ON CACHE BOOL "")
-  endif()
+  set(Cabana_REQUIRE_CUDA ${Kokkos_ENABLE_CUDA} CACHE BOOL "")
   set(Cabana_ENABLE_DOXYGEN OFF CACHE BOOL "")
   FetchContent_MakeAvailable(cabana)
-  # mark Cabana headers as system headers to disable compiler diagnostics
-  set_property(
-    TARGET Core APPEND
-    PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
-             $<TARGET_PROPERTY:Core,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
 
 # We need the parallel hdf5 version!
@@ -1038,6 +1026,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
       walberla
       GIT_REPOSITORY https://github.com/lssfau/walberla.git
       GIT_TAG        623a60c1 # v7.2 with patches
+      SYSTEM
     )
     # cmake-format: on
     string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
