@@ -315,12 +315,9 @@ void CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::init_cpu_kernels() {
   }
 
   p3m.local_mesh.calc_local_ca_mesh(p3m.params, local_geo, skin, elc_layer);
-  for (int d = 0; d < 3; ++d) {
-    p3m.ffts[d] = std::make_shared<P3MFFT<FloatType, Arch::CPU, FFTConfig>>(
-        nullptr, ::comm_cart, p3m.params.mesh, p3m.local_mesh.ld_no_halo,
-        p3m.local_mesh.ur_no_halo, ::communicator.node_grid);
-  }
-  p3m.fft = p3m.ffts[0];
+  p3m.fft = std::make_shared<P3MFFT<FloatType, Arch::CPU, FFTConfig>>(
+      nullptr, ::comm_cart, p3m.params.mesh, p3m.local_mesh.ld_no_halo,
+      p3m.local_mesh.ur_no_halo, ::communicator.node_grid);
   auto const rs_array_size =
       static_cast<std::size_t>(Utils::product(p3m.local_mesh.dim));
   auto const rs_array_size_no_halo =
