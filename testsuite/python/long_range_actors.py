@@ -162,6 +162,17 @@ class Test(ut.TestCase):
         np.testing.assert_allclose(pressure_tensor["dipolar"], 0., atol=1e-12)
         np.testing.assert_allclose(pressure_scalar["dipolar"], 0., atol=1e-12)
 
+    @utx.skipIfMissingFeatures(["DIPOLES"])
+    def test_dds_cpu_pressure(self):
+        self.add_magnetic_particles()
+        dds = espressomd.magnetostatics.DipolarDirectSum(prefactor=1.)
+        self.system.magnetostatics.solver = dds
+        pressure_tensor, pressure_scalar = self.check_obs_stats("dipolar")
+        # pressure is not implemented for DDS, even though the particles
+        # have a non-zero dipolar energy and force contribution
+        np.testing.assert_allclose(pressure_tensor["dipolar"], 0., atol=1e-12)
+        np.testing.assert_allclose(pressure_scalar["dipolar"], 0., atol=1e-12)
+
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_cpu_pressure(self):
         self.add_charged_particles()

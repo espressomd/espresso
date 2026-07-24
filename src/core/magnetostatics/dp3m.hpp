@@ -181,13 +181,11 @@ public:
     // Calculate real-space torques
     auto const torque = prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
 #ifdef ESPRESSO_NPT
-#if USE_ERFC_APPROXIMATION
-    auto const fac = prefactor * d1d2 * exp_adist2;
-#else
-    auto const fac = prefactor * d1d2;
-#endif
-    auto const energy = fac * (mimj * B_r - mir * mjr * C_r);
-    npt_add_virial_contribution(energy);
+    // trace of the pairwise virial tensor d (x) force; unlike the Coulomb
+    // case, the dipole-dipole force is not central, so the pair energy
+    // cannot be used as a substitute for the virial (see pair_pressure_kernel
+    // in dipoles_inline.hpp, which uses the same d * force convention)
+    npt_add_virial_contribution(d * force);
 #endif // ESPRESSO_NPT
     return ParticleForce{force, torque};
   }
@@ -254,7 +252,7 @@ protected:
 
 #ifdef ESPRESSO_NPT
   /** Update the NpT virial */
-  virtual void npt_add_virial_contribution(double energy) const = 0;
+  virtual void npt_add_virial_contribution(double virial) const = 0;
 #endif
 };
 

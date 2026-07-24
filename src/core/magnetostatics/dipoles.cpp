@@ -87,11 +87,6 @@ struct LongRangePressure {
   auto operator()(std::shared_ptr<DipolarP3M> const &actor) const {
     return actor->long_range_pressure();
   }
-  auto operator()(std::shared_ptr<DipolarLayerCorrection> const &actor) const {
-    // TODO: add DLC correction here; for now:
-    runtimeWarningMsg() << "DLC pressure not implemented.";
-    return Utils::Vector9d{};
-  }
 #endif
   template <typename T>
     requires(not traits::has_pressure<T>::value)

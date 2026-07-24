@@ -252,7 +252,7 @@ protected:
   void init_cpu_kernels();
   void scaleby_box_l() override;
 #ifdef ESPRESSO_NPT
-  void npt_add_virial_contribution(double energy) const override;
+  void npt_add_virial_contribution(double virial) const override;
 #endif
 };
 

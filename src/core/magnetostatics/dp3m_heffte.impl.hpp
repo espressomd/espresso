@@ -137,7 +137,8 @@ double DipolarP3MHeffte<FloatType, Architecture,
 
   double phi = 0.;
   boost::mpi::reduce(comm_cart, node_phi, phi, std::plus<>(), 0);
-  phi /= 3. * box_geo.length()[0] * Utils::int_pow<3>(dp3m.params.mesh[0]);
+  phi /= 3. * box_geo.length()[0] *
+        Utils::int_pow<3>(static_cast<double>(dp3m.params.mesh[0]));
   return phi * std::numbers::pi;
 }
 
@@ -541,7 +542,7 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
   }
 
   /* === k-space energy calculation  === */
-  if (energy_flag or npt_flag) {
+  if (energy_flag) {
     /*********************
        Dipolar energy
     **********************/
@@ -925,15 +926,21 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
   } /* if (force_flag) */
 
   if (dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    auto const surface_term =
-        calc_surface_term(force_flag, energy_flag or npt_flag);
+    auto const surface_term = calc_surface_term(force_flag, energy_flag);
     if (this_node == 0) {
       energy += surface_term;
     }
   }
 #ifdef ESPRESSO_NPT
   if (npt_flag) {
-    get_system().npt_add_virial_contribution(energy);
+    // reuse the validated reciprocal-space pressure tensor (same one used by
+    // the pressure observable) instead of an energy-proxy: unlike Coulomb,
+    // the dipolar structure factor is not simply homogeneous in k, so energy
+    // is not a valid substitute for the virial trace here (see
+    // long_range_pressure())
+    auto const pressure_tensor = long_range_pressure();
+    get_system().npt_add_virial_contribution(
+        pressure_tensor[0u] + pressure_tensor[4u] + pressure_tensor[8u]);
   }
 #endif
   if (not energy_flag) {
@@ -1454,9 +1461,9 @@ void DipolarP3MHeffte<FloatType, Architecture,
 #ifdef ESPRESSO_NPT
 template <typename FloatType, Arch Architecture, class FFTConfig>
 void DipolarP3MHeffte<FloatType, Architecture,
-                      FFTConfig>::npt_add_virial_contribution(double energy)
+                      FFTConfig>::npt_add_virial_contribution(double virial)
     const {
-  get_system().npt_add_virial_contribution(energy);
+  get_system().npt_add_virial_contribution(virial);
 }
 #endif // ESPRESSO_NPT
 
