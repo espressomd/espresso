@@ -99,7 +99,7 @@ static auto constraint_stress(Particle const &p_ref, Particle const &p_vs) {
   /* The constraint force is minus the force on the particle, make it force
    * free. The counter force is translated by the connection vector to the
    * real particle, hence the virial stress is */
-  return tensor_product(-p_vs.force(), connection_vector(p_ref, p_vs));
+  return tensor_product(connection_vector(p_ref, p_vs), -p_vs.force());
 }
 
 static bool is_vs_relative_trans(Particle const &p) {

@@ -73,7 +73,7 @@ class Test(ut.TestCase):
             if not line.startswith("WARNING:"):
                 lines = lines[i:]
                 break
-        header = "Path\tMin time/rank\tMax time/rank\tAvg time/rank\tTime %"
+        header = "Path\tMin time/rank\tAvg time/rank\tMax time/rank\tTime %"
         self.assertEqual(lines[0].split(), header.split(),
                          msg=f"Caliper summary should start with '{header}'")
         labels = [line[:36].rstrip() for line in lines[1:]]

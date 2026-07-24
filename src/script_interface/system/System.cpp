@@ -521,7 +521,7 @@ Variant System::do_call_method(std::string const &name,
   }
   if (name == "session_shutdown") {
     if (m_instance) {
-      if (&::System::get_system() == m_instance.get()) {
+      if (::System::is_same_system(m_instance.get())) {
         ::System::reset_system();
       }
       assert(m_instance.use_count() == 1l);

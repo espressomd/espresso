@@ -103,6 +103,9 @@ struct PressureKernel {
   Coulomb::ShortRangePressureKernel::kernel_type const *coulomb_p_kernel;
   Dipoles::ShortRangePressureKernel::kernel_type const *dipoles_p_kernel;
   BoxGeometry const &box_geo;
+#ifdef ESPRESSO_DPD
+  DPDThermostat const *dpd;
+#endif
   std::vector<Particle *> const &unique_particles;
   Kokkos::View<double **, Kokkos::LayoutRight> local_pressure;
   PressureBinLayout layout;
@@ -119,6 +122,9 @@ struct PressureKernel {
       Coulomb::ShortRangePressureKernel::kernel_type const *coulomb_p_kernel_,
       Dipoles::ShortRangePressureKernel::kernel_type const *dipoles_p_kernel_,
       BoxGeometry const &box_geo_,
+#ifdef ESPRESSO_DPD
+      DPDThermostat const *dpd_,
+#endif
       std::vector<Particle *> const &unique_particles_,
       Kokkos::View<double **, Kokkos::LayoutRight> const &local_pressure_,
       PressureBinLayout layout_, CellStructure::AoSoA_pack const &aosoa_,
@@ -128,9 +134,13 @@ struct PressureKernel {
         coulomb(coulomb_), coulomb_f_kernel(coulomb_f_kernel_),
         coulomb_p_kernel(coulomb_p_kernel_),
         dipoles_p_kernel(dipoles_p_kernel_), box_geo(box_geo_),
+#ifdef ESPRESSO_DPD
+        dpd(dpd_),
+#endif
         unique_particles(unique_particles_), local_pressure(local_pressure_),
         layout(layout_), aosoa(aosoa_), mol_id_view(std::move(mol_id_view_)),
-        system_max_cutoff(system_max_cutoff_), thermo_switch(thermo_switch_) {}
+        system_max_cutoff(system_max_cutoff_), thermo_switch(thermo_switch_) {
+  }
 
   KOKKOS_INLINE_FUNCTION
   void operator()(std::size_t i, std::size_t j) const {
@@ -182,18 +192,26 @@ struct PressureKernel {
 
 #ifdef ESPRESSO_DPD
         if (dpd_active(ia_params, thermo_switch)) {
+          auto const pid1 = aosoa.id(i);
+          auto const pid2 = aosoa.id(j);
+          auto const noise_vec = (ia_params.dpd.radial.pref > 0.0 ||
+                                  ia_params.dpd.trans.pref > 0.0)
+                                     ? dpd_noise(*dpd, pid1, pid2)
+                                     : Utils::Vector3d{};
           auto const vel1 = aosoa.get_vector_at(aosoa.velocity, i);
           auto const vel2 = aosoa.get_vector_at(aosoa.velocity, j);
           auto const v21 = box_geo.velocity_difference(pos1, pos2, vel1, vel2);
           auto const dist2 = d.norm2();
           // f_r/f_t: dissipative force from radial/transverse DPD channel
-          auto const f_r = dpd_pair_force(ia_params.dpd.radial, v21, dist, {});
-          auto const f_t = dpd_pair_force(ia_params.dpd.trans, v21, dist, {});
+          auto const f_r =
+              dpd_pair_force(ia_params.dpd.radial, v21, dist, noise_vec);
+          auto const f_t =
+              dpd_pair_force(ia_params.dpd.trans, v21, dist, noise_vec);
           auto const P = Utils::tensor_product(d / dist2, d);
           auto const f_d = P * (f_r - f_t) + f_t;
           auto const s = Utils::flatten(Utils::tensor_product(d, f_d));
           for (std::size_t k = 0; k < 9; ++k)
-            local_pressure(tid, layout.tensor_offset(layout.dpd_idx(), k)) -=
+            local_pressure(tid, layout.tensor_offset(layout.dpd_idx(), k)) +=
                 s[k];
         }
 #endif

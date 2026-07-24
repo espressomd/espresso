@@ -257,6 +257,15 @@ void System::System::integrator_sanity_checks() const {
     runtimeErrorMsg()
         << "Thermalized bonds require the thermalized_bond thermostat";
   }
+#ifdef ESPRESSO_BOND_CONSTRAINT
+  if (bonded_ias->get_n_rigid_bonds() >= 1) {
+    if (not propagation->is_inertial()) {
+      runtimeErrorMsg()
+          << "Rigid bonds (RATTLE) require an inertial integrator "
+             "(VV or symplectic Euler); BD and SD are not supported";
+    }
+  }
+#endif
 
 #ifdef ESPRESSO_ROTATION
   for (auto const &p : cell_structure->local_particles()) {

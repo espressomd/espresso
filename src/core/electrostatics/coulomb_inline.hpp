@@ -92,7 +92,7 @@ struct ShortRangePressureKernel {
     if constexpr (traits::has_pressure<T>::value) {
       return kernel_type{
           [&actor = *ptr](double q1q2, Utils::Vector3d const &d, double dist) {
-            return Utils::tensor_product(actor.pair_force(q1q2, d, dist), d);
+            return Utils::tensor_product(d, actor.pair_force(q1q2, d, dist));
           }};
     }
     return std::nullopt;

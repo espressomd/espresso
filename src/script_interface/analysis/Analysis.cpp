@@ -149,8 +149,8 @@ Variant Analysis::do_call_method(std::string const &name,
     return make_unordered_map_of_variants(dict);
   }
 #ifdef ESPRESSO_DPD
-  if (name == "dpd_stress") {
-    auto const result = dpd_stress(get_system(), context()->get_comm());
+  if (name == "dpd_pressure") {
+    auto const result = dpd_pressure(get_system(), context()->get_comm());
     return result.as_vector();
   }
 #endif // ESPRESSO_DPD
@@ -221,6 +221,12 @@ Variant Analysis::do_call_method(std::string const &name,
     auto const chain_length = get_value<int>(parameters, "chain_length");
     auto const n_chains = get_value<int>(parameters, "number_of_chains");
     check_topology(*system.cell_structure, chain_start, chain_length, n_chains);
+    context()->parallel_try_catch([&]() {
+      if (chain_length < 2) {
+        throw std::domain_error(
+            "Hydrodynamic radius is undefined for chains shorter than 2 beads");
+      }
+    });
     auto const result = calc_rh(system, chain_start, chain_length, n_chains);
     return std::vector<double>(result.begin(), result.end());
   }

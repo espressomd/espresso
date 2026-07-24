@@ -31,12 +31,12 @@
 
 namespace Observables {
 
-class DPDStress : public Observable {
+class DPDPressure : public Observable {
 public:
   std::vector<std::size_t> shape() const override { return {3, 3}; }
   std::vector<double>
   operator()(boost::mpi::communicator const &comm) const override {
-    return dpd_stress(System::get_system(), comm);
+    return dpd_pressure(System::get_system(), comm);
   }
 };
 
