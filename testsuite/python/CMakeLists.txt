@@ -419,7 +419,7 @@ if(${ESPRESSO_TEST_NP} GREATER_EQUAL 8)
 endif()
 python_test(FILE p3m_tuning_exceptions.py MAX_NUM_PROC 1 GPU_SLOTS 1)
 python_test(FILE utils.py MAX_NUM_PROC 1)
-python_test(FILE npt_thermostat.py MAX_NUM_PROC 4)
+python_test(FILE npt_thermostat.py MAX_NUM_PROC 2)
 python_test(FILE box_geometry.py MAX_NUM_PROC 1)
 python_test(FILE lattice.py MAX_NUM_PROC 4)
 python_test(FILE lattice_vtk.py MAX_NUM_PROC 4 GPU_SLOTS 1 NUM_THREADS 1
