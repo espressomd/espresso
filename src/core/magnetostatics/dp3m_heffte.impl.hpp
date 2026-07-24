@@ -138,7 +138,7 @@ double DipolarP3MHeffte<FloatType, Architecture,
   double phi = 0.;
   boost::mpi::reduce(comm_cart, node_phi, phi, std::plus<>(), 0);
   phi /= 3. * box_geo.length()[0] *
-        Utils::int_pow<3>(static_cast<double>(dp3m.params.mesh[0]));
+         Utils::int_pow<3>(static_cast<double>(dp3m.params.mesh[0]));
   return phi * std::numbers::pi;
 }
 
