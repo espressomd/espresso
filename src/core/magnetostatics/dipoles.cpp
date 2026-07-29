@@ -83,6 +83,9 @@ void Solver::on_cell_structure_change() {
 }
 
 struct LongRangePressure {
+  auto operator()(std::shared_ptr<DipolarDirectSum> const &actor) const {
+    return actor->long_range_pressure();
+  }
 #ifdef ESPRESSO_DP3M
   auto operator()(std::shared_ptr<DipolarP3M> const &actor) const {
     return actor->long_range_pressure();
