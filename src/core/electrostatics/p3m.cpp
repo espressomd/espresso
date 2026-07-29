@@ -23,7 +23,7 @@
 
 #ifdef ESPRESSO_P3M
 
-#include "electrostatics/p3m_heffte.impl.hpp"
+#include "electrostatics/p3m.impl.definitions.hpp"
 
 #include <memory>
 #include <utility>
@@ -32,21 +32,22 @@ template <typename FloatType, Arch Architecture>
 std::shared_ptr<CoulombP3M>
 new_coulomb_p3m_impl(P3MParameters &&p3m, TuningParameters const &tuning_params,
                      double prefactor) {
-  using DefaultFFTConfig = P3MFFTConfig<Utils::MemoryOrder::ROW_MAJOR,
-                                        Utils::MemoryOrder::ROW_MAJOR, true, 2>;
+  auto constexpr r_space_order = Utils::MemoryOrder::ROW_MAJOR;
+  auto constexpr k_space_order = Utils::MemoryOrder::ROW_MAJOR;
+  using FFTConfig = P3MFFTConfig<r_space_order, k_space_order, true, 2>;
   auto state_ptr =
-      std::make_unique<CoulombP3MState<FloatType, DefaultFFTConfig>>(
+      std::make_unique<CoulombP3MState<FloatType, Architecture, FFTConfig>>(
           std::move(p3m));
-  auto obj = std::make_shared<
-      CoulombP3MHeffte<FloatType, Architecture, DefaultFFTConfig>>(
-      std::move(state_ptr), tuning_params, prefactor);
+  auto obj =
+      std::make_shared<CoulombP3MImpl<FloatType, Architecture, FFTConfig>>(
+          std::move(state_ptr), tuning_params, prefactor);
   return obj;
 }
 
 std::shared_ptr<CoulombP3M>
-new_coulomb_p3m_heffte(P3MParameters &&p3m_params,
-                       TuningParameters const &tuning_params, double prefactor,
-                       bool single_precision, Arch arch) {
+new_coulomb_p3m(P3MParameters &&p3m_params,
+                TuningParameters const &tuning_params, double prefactor,
+                bool single_precision, Arch arch) {
   auto fptr = &new_coulomb_p3m_impl<float, Arch::CPU>;
   if (single_precision) {
     if (arch == Arch::CPU) {

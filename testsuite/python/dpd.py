@@ -582,6 +582,38 @@ class DPDThermostat(ut.TestCase):
             np.testing.assert_allclose(np.copy(p1.f), ref_force)
             np.testing.assert_allclose(np.copy(p1.f), -np.copy(p2.f))
 
+    @utx.skipIfMissingFeatures(["DPD", "EXCLUSIONS"])
+    def test_dpd_pressure_excludes_excluded_pairs(self):
+        """Excluded pairs must not contribute to the DPD virial pressure.
+        """
+        system = self.system
+
+        gamma = 2.0
+        r_cut = 2.0
+        kT = 0.0  # zero temperature: no stochastic noise, purely dissipative
+
+        system.thermostat.set_dpd(kT=kT, seed=99)
+        system.non_bonded_inter[0, 0].dpd.set_params(
+            weight_function=0, gamma=gamma, r_cut=r_cut,
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=r_cut)
+
+        # Place two particles well within the DPD cutoff and give them
+        # different velocities so the dissipative force is non-zero.
+        p0 = system.part.add(pos=[5.0, 5.0, 5.0], type=0, v=[0.5, 0.0, 0.0])
+        p1 = system.part.add(pos=[5.0 + 1.0, 5.0, 5.0], type=0,
+                             v=[-0.5, 0.0, 0.0])
+
+        p0.add_exclusion(p1.id)
+
+        system.integrator.run(5)
+
+        pressure_tensor = system.analysis.pressure_tensor()
+        dpd_pressure = pressure_tensor["dpd"]
+
+        # The DPD pressure tensor must be zero: excluded pairs contribute
+        # no DPD force, so they must also contribute no DPD virial.
+        self.assertEqual(np.linalg.norm(dpd_pressure), 0.0)
+
 
 if __name__ == "__main__":
     ut.main()

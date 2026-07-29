@@ -402,6 +402,40 @@ class H5mdTests(ut.TestCase):
         box_step = self.py_file['particles/atoms/box/edges/step'][1]
         self.assertEqual(box_step, step_ref)
 
+    def test_time_step_alignment(self):
+        """Test that time/step datasets have no phantom zero entry and align
+        with value datasets (regression test for off-by-one in initial extent).
+        """
+        n_steps = 3
+        temp_file = self.temp_path / 'time_alignment.h5'
+        h5 = espressomd.io.writer.h5md.H5md(file_path=temp_file)
+        time_at_write = []
+        step_at_write = []
+        for _ in range(n_steps):
+            self.system.integrator.run(1)
+            time_at_write.append(self.system.time)
+            step_at_write.append(
+                round(self.system.time / self.system.integrator.time_step))
+            h5.write()
+        h5.flush()
+        h5.close()
+
+        with h5py.File(temp_file, 'r') as f:
+            time_array = f['particles/atoms/id/time'][:]
+            step_array = f['particles/atoms/id/step'][:]
+
+        self.assertEqual(len(time_array), n_steps,
+                         "time dataset length must equal number of writes")
+        np.testing.assert_allclose(
+            time_array, time_at_write,
+            err_msg="time values must match simulation time at each write")
+
+        self.assertEqual(len(step_array), n_steps,
+                         "step dataset length must equal number of writes")
+        np.testing.assert_array_equal(
+            step_array, step_at_write,
+            err_msg="step values must match simulation step count at each write")
+
 
 if __name__ == "__main__":
     ut.main()

@@ -266,8 +266,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
                              5,
                              0.615,
                              1e-3};
-    auto solver = new_coulomb_p3m_heffte(std::move(p3m), tuning, prefactor,
-                                         false, Arch::CPU);
+    auto solver =
+        new_coulomb_p3m(std::move(p3m), tuning, prefactor, false, Arch::CPU);
     add_actor(comm, espresso::system, system.coulomb.impl->solver, solver,
               [&system]() { system.on_coulomb_change(); });
     BOOST_CHECK(not solver->is_gpu());

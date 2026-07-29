@@ -221,7 +221,7 @@ static std::vector<std::size_t> create_dims(hsize_t rank, hsize_t data_dim) {
     return {0ul, data_dim};
   }
   assert(rank == 1ul);
-  return {data_dim};
+  return {0ul};
 }
 
 static std::vector<std::size_t> create_maxdims(hsize_t rank, hsize_t data_dim,
@@ -592,14 +592,16 @@ void File::write(const ParticleRange &particles, double time, int step,
                                 detail::make_serializer(&Particle::id));
 
   {
-    HighFive::DataSet &dataset = datasets.at("/particles/atoms/id/value");
-    auto const extents = dataset.getSpace().getDimensions();
+    auto const time_ext =
+        datasets.at("/particles/atoms/id/time").getSpace().getDimensions()[0];
     write_dataset(std::vector<double>{time},
                   datasets.at("/particles/atoms/id/time"), Vector1s{1},
-                  Vector1s{extents[0]}, Vector1s{1});
+                  Vector1s{time_ext}, Vector1s{1});
+    auto const step_ext =
+        datasets.at("/particles/atoms/id/step").getSpace().getDimensions()[0];
     write_dataset(std::vector<int>{step},
                   datasets.at("/particles/atoms/id/step"), Vector1s{1},
-                  Vector1s{extents[0]}, Vector1s{1});
+                  Vector1s{step_ext}, Vector1s{1});
   }
 
   if (m_fields & H5MD_OUT_TYPE) {

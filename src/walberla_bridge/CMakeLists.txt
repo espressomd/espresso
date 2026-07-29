@@ -97,9 +97,9 @@ target_compile_options(
   $<$<COMPILE_LANG_AND_ID:CXX,NVHPC,NVIDIA>:--diag_suppress=code_is_unreachable>
   $<$<COMPILE_LANG_AND_ID:CXX,NVHPC,NVIDIA>:--diag_suppress=integer_sign_change>
   $<$<COMPILE_LANG_AND_ID:CXX,NVHPC,NVIDIA>:--diag_suppress=conversion_function_not_usable>
-  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=code_is_unreachable>
-  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=integer_sign_change>
-  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=conversion_function_not_usable>
+  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=code_is_unreachable>
+  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=integer_sign_change>
+  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=conversion_function_not_usable>
 )
 target_compile_options(
   espresso_walberla_codegen_compiler_flags
@@ -126,9 +126,11 @@ espresso_configure_walberla_target(espresso_walberla)
 espresso_configure_walberla_target(espresso_walberla_codegen)
 
 target_link_libraries(
-  espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils
+  espresso_walberla
+  PUBLIC MPI::MPI_CXX espresso::utils
   PRIVATE espresso::compiler_flags espresso::walberla::compiler_flags
           espresso::walberla_codegen
+          $<$<BOOL:${Kokkos_ENABLE_CUDA}>:Kokkos::kokkos>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
@@ -137,6 +139,7 @@ target_link_libraries(
   espresso_walberla_codegen
   PRIVATE espresso::compiler_flags espresso::walberla::compiler_flags
           espresso::walberla_codegen::compiler_flags
+          $<$<BOOL:${Kokkos_ENABLE_CUDA}>:Kokkos::kokkos>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
           OpenMP::OpenMP_CXX)
@@ -162,4 +165,8 @@ endif()
 add_subdirectory(src)
 if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(tests)
+endif()
+if(Kokkos_ENABLE_CUDA)
+  espresso_set_kokkos_properties_on_source_files(espresso_walberla)
+  espresso_set_kokkos_properties_on_source_files(espresso_walberla_codegen)
 endif()

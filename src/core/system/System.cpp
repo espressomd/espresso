@@ -41,6 +41,7 @@
 #include "npt.hpp"
 #include "particle_node.hpp"
 #include "short_range_cabana.hpp"
+#include "short_range_verlet.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites/com.hpp"
@@ -429,15 +430,7 @@ void System::rebuild_aosoa() {
   auto const collision_detection_cutoff = inactive_cutoff;
 #endif
 
-  VerletCriterion<> const verlet_criterion{*this,
-                                           cell_structure->get_verlet_skin(),
-                                           get_interaction_range(),
-                                           coulomb.cutoff(),
-                                           dipoles.cutoff(),
-                                           collision_detection_cutoff};
-
-  update_cabana_state(*cell_structure, verlet_criterion,
-                      get_interaction_range(), propagation->integ_switch);
+  update_verlet_state(*this, collision_detection_cutoff);
 }
 
 void System::on_lees_edwards_change() { lb.on_lees_edwards_change(); }

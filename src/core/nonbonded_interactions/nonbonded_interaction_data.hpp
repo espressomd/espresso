@@ -30,6 +30,7 @@
 #include "TabulatedPotential.hpp"
 #include "system/Leaf.hpp"
 
+#include <utils/device_qualifier.hpp>
 #include <utils/index.hpp>
 #include <utils/math/int_pow.hpp>
 
@@ -272,15 +273,16 @@ struct DPD_Parameters {
   double max_cutoff() const { return std::max(radial.cutoff, trans.cutoff); }
 };
 
-/** @brief Bit positions in IA_parameters::active_pair_mask.
+/**
+ * @brief Bit positions in IA_parameters::active_pair_mask.
  *
- *  Each enumerator corresponds to one short-range pair potential
- *  (central-radial, orientation-dependent, or thermostat-coupled)
- *  configurable per type pair. A bit is set iff the potential's own
- *  cutoff / activation guard could possibly fire for this type pair
- *  (i.e. it is not in its default/inactive state). Populated
- *  exclusively by InteractionsNonBonded::recalc_maximal_cutoffs() —
- *  never set elsewhere, so it cannot drift from max_cut.
+ * Each enumerator corresponds to one short-range pair potential
+ * (central-radial, orientation-dependent, or thermostat-coupled)
+ * configurable per type pair. A bit is set iff the potential's own
+ * cutoff / activation guard could possibly fire for this type pair
+ * (i.e. it is not in its default/inactive state). Populated
+ * exclusively by @ref InteractionsNonBonded::recalc_maximal_cutoffs();
+ * never set elsewhere, so it cannot drift from max_cut.
  */
 enum class PairPotential : unsigned {
   LennardJones = 0,
@@ -302,20 +304,22 @@ enum class PairPotential : unsigned {
 };
 
 /** @brief Bitmask for a pair potential. */
-constexpr unsigned pair_potential_bit(PairPotential p) {
+DEVICE_QUALIFIER constexpr unsigned pair_potential_bit(PairPotential p) {
   return 1u << static_cast<unsigned>(p);
 }
 
 /** @brief Parameters for non-bonded interactions. */
 struct IA_parameters {
-  /** maximal cutoff for this pair of particle types. This contains
-   *  contributions from the short-ranged interactions, plus any
-   *  cutoffs from global interactions like electrostatics.
+  /**
+   * @brief Maximal cutoff for this pair of particle types.
+   * This contains contributions from the short-ranged interactions, plus any
+   * cutoffs from global interactions like electrostatics.
    */
   double max_cut = inactive_cutoff;
 
-  /** Bitmask of pair potentials active for this type pair.
-   *  See PairPotential. Derived, do not set directly.
+  /**
+   * @brief Bitmask of pair potentials active for this type pair.
+   * See @ref PairPotential. Derived, do not set directly.
    */
   unsigned active_pair_mask = 0u;
 
@@ -393,6 +397,19 @@ class InteractionsNonBonded : public System::Leaf<InteractionsNonBonded> {
   std::vector<std::shared_ptr<IA_parameters>> m_nonbonded_ia_params{};
   /** @brief Maximal particle type seen so far. */
   int max_seen_particle_type = -1;
+  /**
+   * @brief OR'ing of @ref IA_parameters::active_pair_mask over all type pairs.
+   * Maintained by @ref recalc_maximal_cutoffs, like the per-pair masks.
+   */
+  unsigned m_combined_active_pair_mask = 0u;
+#ifdef ESPRESSO_THOLE
+  /**
+   * @brief Whether any type pair has Thole damping configured
+   * (non-zero scaling coefficient and charge product).
+   * Maintained by @ref recalc_maximal_cutoffs, like the per-pair masks.
+   */
+  bool m_any_thole_configured = false;
+#endif
 
   void realloc_ia_params(int type) {
     assert(type >= 0);
@@ -465,6 +482,14 @@ public:
   }
 
   auto get_max_seen_particle_type() const { return max_seen_particle_type; }
+
+  /** @brief Bitfield of currently active pair potentials. */
+  auto combined_active_pair_mask() const { return m_combined_active_pair_mask; }
+
+#ifdef ESPRESSO_THOLE
+  /** @brief Whether any type pair has Thole damping configured. */
+  auto any_thole_configured() const { return m_any_thole_configured; }
+#endif
 
   /** @brief Recalculate cutoff of each interaction struct. */
   void recalc_maximal_cutoffs();

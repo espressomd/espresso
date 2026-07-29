@@ -49,6 +49,7 @@
 #include "system/Leaf.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/device_qualifier.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -134,15 +135,18 @@ public:
   bool contains(key_type const &key) const { return m_params.contains(key); }
   bool empty() const { return m_params.empty(); }
   auto size() const { return m_params.size(); }
+  DEVICE_QUALIFIER
   auto get_next_key() const { return next_key; }
   auto get_zero_based_type(int bond_id) const {
     return contains(bond_id) ? static_cast<int>(at(bond_id)->index()) : 0;
   }
+  DEVICE_QUALIFIER
   auto get_n_thermalized_bonds() const {
     assert(n_thermalized_bonds >= 0);
     return n_thermalized_bonds;
   }
 #ifdef ESPRESSO_BOND_CONSTRAINT
+  DEVICE_QUALIFIER
   auto get_n_rigid_bonds() const {
     assert(n_rigid_bonds >= 0);
     return n_rigid_bonds;

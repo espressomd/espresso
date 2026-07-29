@@ -35,6 +35,10 @@ parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
 parser.add_argument("--prefactor", metavar="PREFACTOR", action="store",
                     type=float, default=1., required=False,
                     help="P3M prefactor (default: 4)")
+parser.add_argument("--mesh", metavar="MESH", action="store", type=int,
+                    default=0, required=False,
+                    help="Prescribe the (cubic) P3M mesh size instead of "
+                    "tuning it; 0 auto-tunes the mesh (default: 0)")
 parser.add_argument("--gpu", action=argparse.BooleanOptionalAction,
                     default=False, required=False, help="Use GPU implementation")
 group = parser.add_mutually_exclusive_group()
@@ -54,7 +58,7 @@ assert args.volume_fraction > 0, "volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
 if not args.visualizer:
-    assert measurement_steps >= 50, \
+    assert measurement_steps >= 20, \
         f"{measurement_steps} steps per tick are too short"
 
 required_features = ["P3M", "LENNARD_JONES"]
@@ -135,6 +139,11 @@ min_skin = 0.2
 max_skin = 1.6
 p3m_params = {"prefactor": args.prefactor, "accuracy": 1e-3, "timings": 15,
               "tune_limits": [12, 160], "gpu": args.gpu}
+if args.mesh > 0:
+    # Prescribe the mesh; the remaining parameters (cao, r_cut, alpha) are
+    # still tuned for it. The mesh tuning limits no longer apply.
+    p3m_params["mesh"] = 3 * [args.mesh]
+    del p3m_params["tune_limits"]
 p3m = espressomd.electrostatics.P3M(**p3m_params)
 print("Quick equilibration")
 system.time_step = system.time_step / 10.

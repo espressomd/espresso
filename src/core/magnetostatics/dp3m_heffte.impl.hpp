@@ -165,9 +165,10 @@ void DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::init_cpu_kernels() {
   dp3m.update_mesh_views();
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
   dp3m.heffte.world_size = comm_cart.size();
-  dp3m.heffte.fft = std::make_shared<P3MFFT<FloatType, FFTConfig>>(
-      ::comm_cart, dp3m.params.mesh, dp3m.local_mesh.ld_no_halo,
-      dp3m.local_mesh.ur_no_halo, ::communicator.node_grid);
+  dp3m.heffte.fft =
+      std::make_shared<P3MFFT<FloatType, Architecture, FFTConfig>>(
+          nullptr, ::comm_cart, dp3m.params.mesh, dp3m.local_mesh.ld_no_halo,
+          dp3m.local_mesh.ur_no_halo, ::communicator.node_grid);
   dp3m.resize_heffte_buffers();
 #endif // ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
   dp3m.calc_differential_operator();
@@ -183,13 +184,13 @@ template <int cao> struct AssignDipole {
   void operator()(auto &dp3m, auto &cell_structure) {
     using DipolarP3MState = std::remove_reference_t<decltype(dp3m)>;
     using value_type = DipolarP3MState::value_type;
-    auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
     auto const &aosoa = cell_structure.get_aosoa();
     auto const &unique_particles = cell_structure.get_unique_particles();
     auto const n_part = cell_structure.count_local_particles();
     dp3m.inter_weights.zfill(n_part); // allocate buffer for parallel write
     kokkos_parallel_range_for(
         "InterpolateDipoles", std::size_t{0u}, n_part, [&](auto p_index) {
+          auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
           auto const tid = omp_get_thread_num();
           auto const p_pos = aosoa.get_span_at(aosoa.position, p_index);
           auto const dip = unique_particles.at(p_index)->calc_dip();
@@ -205,7 +206,7 @@ template <int cao> struct AssignDipole {
               });
         });
     Kokkos::fence();
-    using execution_space = Kokkos::DefaultExecutionSpace;
+    using execution_space = Kokkos::DefaultHostExecutionSpace;
     int num_threads = execution_space().concurrency();
     Kokkos::RangePolicy<execution_space> policy(std::size_t{0},
                                                 dp3m.local_mesh.size);
@@ -494,14 +495,13 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
 
       for (auto dir : {0u, 1u, 2u}) {
         // get real-space dipoles density without ghost layers
-        auto rs_field_no_halo = extract_block<Utils::MemoryOrder::ROW_MAJOR,
-                                              FFTConfig::r_space_order>(
+        extract_block_into<Utils::MemoryOrder::ROW_MAJOR,
+                           FFTConfig::r_space_order>(
+            dp3m.rs_field_no_halo_kokkos.data(),
             dp3m.heffte.rs_dipole_density[dir], dp3m.local_mesh.dim,
             dp3m.local_mesh.n_halo_ld,
             dp3m.local_mesh.dim - dp3m.local_mesh.n_halo_ur);
         // re-order data in row-major
-        std::vector<FloatType> rs_field_no_halo_reorder;
-        rs_field_no_halo_reorder.resize(rs_field_no_halo.size());
         std::size_t index_row_major = 0u;
         for_each_3d_order<FFTConfig::k_space_order>(
             mesh_start, rs_local_size, local_index, [&]() {
@@ -509,11 +509,11 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
               auto const index = local_index[KZ] +
                                  rs_local_size[0] * local_index[KY] +
                                  Utils::sqr(rs_local_size[0]) * local_index[KX];
-              rs_field_no_halo_reorder[index_row_major] =
-                  rs_field_no_halo[index];
+              dp3m.rs_field_no_halo_reorder_kokkos(index_row_major) =
+                  dp3m.rs_field_no_halo_kokkos(index);
               ++index_row_major;
             });
-        dp3m.heffte.fft->forward(rs_field_no_halo_reorder.data(),
+        dp3m.heffte.fft->forward(dp3m.rs_field_no_halo_reorder_kokkos.data(),
                                  dp3m.heffte.ks_dipole_density[dir].data());
 #ifndef NDEBUG
         if (not dp3m.params.tuning) {
@@ -736,13 +736,14 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
               });
           dp3m.heffte.fft->backward(dp3m.heffte.ks_B_field_storage.data(),
                                     dp3m.heffte.rs_B_fields_no_halo[d].data());
-          // pad zeros around the B-field in real space for ghost layers
-          dp3m.heffte.rs_B_fields[d] =
-              pad_with_zeros_discard_imag<FFTConfig::r_space_order,
-                                          Utils::MemoryOrder::ROW_MAJOR>(
-                  std::span(dp3m.heffte.rs_B_fields_no_halo[d]),
-                  dp3m.local_mesh.dim_no_halo, dp3m.local_mesh.n_halo_ld,
-                  dp3m.local_mesh.n_halo_ur);
+          // pad zeros around the B-field in real space for ghost layers,
+          // writing straight into the persistent halo-sized buffer
+          pad_with_zeros_discard_imag_into<FFTConfig::r_space_order,
+                                           Utils::MemoryOrder::ROW_MAJOR>(
+              dp3m.heffte.rs_B_fields[d].data(),
+              std::span(dp3m.heffte.rs_B_fields_no_halo[d]),
+              dp3m.local_mesh.dim_no_halo, dp3m.local_mesh.n_halo_ld,
+              dp3m.local_mesh.n_halo_ur);
           // communicate ghost layers of the B-field in real space
           dp3m.heffte.halo_comm.spread_grid(::comm_cart,
                                             dp3m.heffte.rs_B_fields[d].data(),
@@ -893,13 +894,14 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
             dp3m.heffte.fft->backward(
                 dp3m.heffte.ks_dipole_density[dir].data(),
                 dp3m.heffte.rs_B_fields_no_halo[dir].data());
-            // pad zeros around the B-field in real space for ghost layers
-            dp3m.heffte.rs_B_fields[d] =
-                pad_with_zeros_discard_imag<FFTConfig::r_space_order,
-                                            Utils::MemoryOrder::ROW_MAJOR>(
-                    std::span(dp3m.heffte.rs_B_fields_no_halo[dir]),
-                    dp3m.local_mesh.dim_no_halo, dp3m.local_mesh.n_halo_ld,
-                    dp3m.local_mesh.n_halo_ur);
+            // pad zeros around the B-field in real space for ghost layers,
+            // writing straight into the persistent halo-sized buffer
+            pad_with_zeros_discard_imag_into<FFTConfig::r_space_order,
+                                             Utils::MemoryOrder::ROW_MAJOR>(
+                dp3m.heffte.rs_B_fields[d].data(),
+                std::span(dp3m.heffte.rs_B_fields_no_halo[dir]),
+                dp3m.local_mesh.dim_no_halo, dp3m.local_mesh.n_halo_ld,
+                dp3m.local_mesh.n_halo_ur);
           }
           // communicate ghost layers of the B-field in real space
           auto rs_fields =

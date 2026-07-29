@@ -52,7 +52,10 @@ inline void enumerate_local_particles(CellStructure const &cs,
                         });
 
     Kokkos::parallel_for(
-        "enumerate_local_particles", local_cells.size(), [&](auto cell_idx) {
+        "enumerate_local_particles",
+        Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
+            std::size_t{0}, local_cells.size()),
+        [&](auto cell_idx) {
           auto const base_offset = cell_offsets[cell_idx];
           auto &cell_particles = local_cells[cell_idx]->particles();
           auto const n_part = cell_particles.size();

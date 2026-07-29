@@ -26,7 +26,7 @@
 
 #include "actor/registration.hpp"
 #include "electrostatics/p3m.hpp"
-#include "electrostatics/p3m_heffte.impl.hpp"
+#include "electrostatics/p3m.impl.definitions.hpp"
 #include "magnetostatics/dp3m.hpp"
 #include "magnetostatics/dp3m_heffte.impl.hpp"
 #include "p3m/FFTBackendLegacy.hpp"
@@ -136,12 +136,11 @@ template <auto... Pack> void test_all_p3m_fft_configs() {
     // set up P3M
     auto const prefactor = 2.;
     auto tuning = TuningParameters{1, {std::nullopt, std::nullopt}, false};
-    auto solver =
-        std::make_shared<CoulombP3MHeffte<double, Hardware, FFTConfig>>(
-            std::make_unique<CoulombP3MState<double, FFTConfig>>(
-                P3MParameters{false, 0.0, 3.5, Utils::Vector3i::broadcast(12),
-                              Utils::Vector3d::broadcast(0.5), 5, 0.615, 1e-3}),
-            tuning, prefactor);
+    auto solver = std::make_shared<CoulombP3MImpl<double, Hardware, FFTConfig>>(
+        std::make_unique<CoulombP3MState<double, Hardware, FFTConfig>>(
+            P3MParameters{false, 0.0, 3.5, Utils::Vector3i::broadcast(12),
+                          Utils::Vector3d::broadcast(0.5), 5, 0.615, 1e-3}),
+        tuning, prefactor);
     add_actor(comm, espresso::system, system.coulomb.impl->solver, solver,
               [&system]() { system.on_coulomb_change(); });
     auto const obs_energy = system.calculate_energy();

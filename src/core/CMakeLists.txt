@@ -29,6 +29,7 @@ add_library(
   energy.cpp
   errorhandling.cpp
   forces.cpp
+  forces_init.cpp
   ghosts.cpp
   integrate.cpp
   npt.cpp
@@ -38,6 +39,7 @@ add_library(
   propagation.cpp
   rattle.cpp
   rotation.cpp
+  short_range_verlet.cpp
   Observable_stat.cpp
   thermostat.cpp
   tuning.cpp
@@ -71,6 +73,7 @@ if(ESPRESSO_BUILD_WITH_NLOPT)
   target_include_directories(espresso_core PRIVATE "${nlopt_SOURCE_DIR}/src")
 endif()
 
+espresso_set_kokkos_properties_on_source_files(espresso_core)
 install(TARGETS espresso_core
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
@@ -79,7 +82,7 @@ target_link_libraries(
   PUBLIC Cabana::Core Kokkos::kokkos OpenMP::OpenMP_CXX
          $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
   PRIVATE espresso::config espresso::utils::mpi espresso::shapes
-          espresso::compiler_flags espresso::kokkos::compiler_flags
+          espresso::compiler_flags
           $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_NLOPT}>:nlopt>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_GSL}>:GSL::gsl>
@@ -124,7 +127,23 @@ endif()
 
 if(ESPRESSO_BUILD_WITH_HDF5 AND ESPRESSO_BUILD_WITH_COVERAGE
    AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set_source_files_properties(
-    io/writer/h5md_core.cpp PROPERTIES COMPILE_OPTIONS -felide-constructors
-                                       DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  set_property(SOURCE io/writer/h5md_core.cpp APPEND
+               PROPERTY COMPILE_OPTIONS -felide-constructors)
+endif()
+# silence inconsistent host/device qualifiers in Boost accumulators and combine
+set_property(
+  SOURCE electrostatics/coulomb.cpp observables/RDF.cpp APPEND
+  PROPERTY COMPILE_OPTIONS
+           $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--diag-suppress=20014>)
+set_property(
+  SOURCE electrostatics/coulomb.cpp
+  APPEND
+  PROPERTY
+    COMPILE_OPTIONS
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:--diag_suppress=code_is_unreachable>
+)
+
+espresso_set_kokkos_properties_on_source_files(espresso_core)
+if(ESPRESSO_BUILD_WITH_FFTW)
+  espresso_set_kokkos_properties_on_source_files(espresso_p3m)
 endif()

@@ -36,6 +36,7 @@
 #include "pressure_cabana.hpp"
 #include "pressure_inline.hpp"
 #include "short_range_cabana.hpp"
+#include "short_range_verlet.hpp"
 #include "system/System.hpp"
 #include "virtual_sites/relative.hpp"
 
@@ -78,30 +79,32 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
   auto const coulomb_pressure_kernel = coulomb.pair_pressure_kernel();
   auto const dipoles_pressure_kernel = dipoles.pair_pressure_kernel();
 
-  VerletCriterion<> const verlet_criterion{*this,
-                                           cell_structure->get_verlet_skin(),
-                                           get_interaction_range(),
-                                           coulomb.cutoff(),
-                                           dipoles.cutoff(),
-                                           inactive_cutoff};
-  update_cabana_state(*cell_structure, verlet_criterion,
-                      get_interaction_range(), propagation->integ_switch);
+  // Factory instead of an eager criterion: construction fills an O(n_types^2)
+  // cutoff table, so it only runs on the link-cell fallback path.
+  auto const make_verlet_criterion = [&] {
+    return VerletCriterion<>{*this,
+                             cell_structure->get_verlet_skin(),
+                             get_interaction_range(),
+                             coulomb.cutoff(),
+                             dipoles.cutoff(),
+                             inactive_cutoff};
+  };
+  update_verlet_state(*this, inactive_cutoff);
 
   PressureBinLayout layout{
       static_cast<std::size_t>(bonded_ias->get_next_key()),
       std::size_t(nonbonded_ias->get_max_seen_particle_type() + 1)};
 
-  using exec = Kokkos::DefaultExecutionSpace;
-  Kokkos::View<double **, Kokkos::LayoutRight> local_pressure(
+  using exec = Kokkos::DefaultHostExecutionSpace;
+  Kokkos::View<double **, Kokkos::LayoutRight, exec> local_pressure(
       "local_pressure", exec().concurrency(), layout.total * 9);
 
   auto const &unique_particles = cell_structure->get_unique_particles();
-  auto const n_particles = static_cast<int>(unique_particles.size());
-  Kokkos::View<int *> mol_id_view("mol_id", n_particles);
-  auto mol_id_host = Kokkos::create_mirror_view(mol_id_view);
-  for (int i = 0; i < n_particles; ++i)
-    mol_id_host(i) = unique_particles[i]->mol_id();
-  Kokkos::deep_copy(mol_id_view, mol_id_host);
+  auto const n_particles = unique_particles.size();
+  Kokkos::View<int *, Kokkos::LayoutRight, exec> mol_id("mol_id", n_particles);
+  for (std::size_t i = 0; i < n_particles; ++i) {
+    mol_id(i) = unique_particles[i]->mol_id();
+  }
 
   PressureKernel pair_p_kernel{*bonded_ias,
                                *nonbonded_ias,
@@ -117,7 +120,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
                                local_pressure,
                                layout,
                                cell_structure->get_aosoa(),
-                               mol_id_view,
+                               mol_id,
                                maximal_cutoff(),
                                thermostat->thermo_switch};
 
@@ -133,7 +136,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
 
   cabana_short_range(pair_bp_kernel, angle_bp_kernel, dih_bp_kernel,
                      pair_p_kernel, *cell_structure, get_interaction_range(),
-                     bonded_ias->maximal_cutoff(), verlet_criterion,
+                     bonded_ias->maximal_cutoff(), make_verlet_criterion,
                      propagation->integ_switch);
 
   reduce_cabana_pressure(local_pressure, layout, obs_pressure, *bonded_ias,

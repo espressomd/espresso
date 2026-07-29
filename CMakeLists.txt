@@ -100,6 +100,8 @@ endif()
 option(ESPRESSO_BUILD_WITH_PYTHON "Build with Python bindings" ON)
 option(ESPRESSO_BUILD_WITH_GSL "Build with GSL support" OFF)
 option(ESPRESSO_BUILD_WITH_FFTW "Build with FFTW support" ON)
+option(ESPRESSO_BUILD_WITH_KOKKOS_FFT
+       "Use kokkos-fft for the single-rank P3M reciprocal-space FFT" ON)
 option(ESPRESSO_BUILD_WITH_CUDA "Build with GPU support" OFF)
 option(ESPRESSO_BUILD_WITH_HDF5 "Build with HDF5 support" OFF)
 option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
@@ -156,6 +158,7 @@ if(ESPRESSO_BUILD_WITH_CCACHE)
   find_program(CCACHE_PROGRAM ccache REQUIRED)
   if(CCACHE_PROGRAM)
     message(STATUS "Found ccache: ${CCACHE_PROGRAM}")
+    set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
     set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
     set(CMAKE_CUDA_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
   endif()
@@ -208,10 +211,6 @@ add_library(espresso::compiler_flags ALIAS espresso_compiler_flags)
 set_property(
   TARGET espresso_compiler_flags APPEND
   PROPERTY INTERFACE_COMPILE_FEATURES cxx_std_${ESPRESSO_MINIMAL_CXX_STANDARD})
-
-add_library(espresso_kokkos_compiler_flags INTERFACE)
-add_library(espresso::kokkos::compiler_flags ALIAS
-            espresso_kokkos_compiler_flags)
 
 #
 # AVX2 support
@@ -295,9 +294,6 @@ if(ESPRESSO_BUILD_WITH_CUDA)
       # sm_120: RTX-5000 series (Blackwell)
       # cmake-format: on
       set(ESPRESSO_CUDA_ARCHITECTURES "75;86;89")
-      if(Kokkos_ENABLE_CUDA)
-        set(ESPRESSO_CUDA_ARCHITECTURES "86")
-      endif()
     else()
       set(ESPRESSO_CUDA_ARCHITECTURES "$ENV{CUDAARCHS}")
     endif()
@@ -305,14 +301,6 @@ if(ESPRESSO_BUILD_WITH_CUDA)
         CACHE INTERNAL "")
   endif()
   set(CMAKE_CUDA_ARCHITECTURES "${ESPRESSO_CMAKE_CUDA_ARCHITECTURES}")
-  list(LENGTH CMAKE_CUDA_ARCHITECTURES ESPRESSO_CMAKE_CUDA_ARCHITECTURES_LEN)
-  if(Kokkos_ENABLE_CUDA AND ESPRESSO_CMAKE_CUDA_ARCHITECTURES_LEN GREATER 1
-     AND NOT CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
-    message(
-      FATAL_ERROR
-        "Kokkos can only be built against a single CUDA architecture when using the nvcc_wrapper, got CMAKE_CUDA_ARCHITECTURES=${CMAKE_CUDA_ARCHITECTURES}"
-    )
-  endif()
   cmake_path(GET CUDA_cuda_driver_LIBRARY PARENT_PATH ESPRESSO_LIBCUDA_RPATH)
   cmake_path(GET CUDA_cudart_LIBRARY PARENT_PATH ESPRESSO_LIBCUDART_RPATH)
   macro(espresso_add_cuda_rpaths)
@@ -473,7 +461,7 @@ target_compile_options(
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-unused-parameter>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wno-array-bounds>
     $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-array-bounds>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<IN_LIST:${CUDA_HOST_COMPILER_ID},GNU;Clang;CrayClang;AppleClang;IntelLLVM>>:-Xcompiler=-Wno-array-bounds>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<IN_LIST:${CMAKE_CUDA_HOST_COMPILER_ID},GNU;Clang;CrayClang;AppleClang;IntelLLVM>>:-Xcompiler=-Wno-array-bounds>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-restrict>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-cast-function-type>
     $<$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>:-diag-disable=592>
@@ -508,22 +496,23 @@ target_compile_options(
     # zero, the conditional can be ignored (speculative execution) to get better
     # performance with SIMD types, and the invalid values are masked afterwards
     # (but the SIGFPE signal is still sent as a side effect)
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_FPE}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-ftrapping-math>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_FPE}>,$<COMPILE_LANG_AND_ID:CXX,GNU>>:-ftrapping-math>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_FPE}>,$<COMPILE_LANG_AND_ID:CXX,Clang>>:-Xarch_host -ftrapping-math>
     # configurations for NVCC
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Debug>>:-g -G>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Debug>>:-Xptxas=-O0,-g -Xcompiler=$<IF:$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>,-O0,-Og>,-g --device-debug>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Release>>:-Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:MinSizeRel>>:-Xptxas=-O2 -Xcompiler=-Os -DNDEBUG>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:RelWithDebInfo>>:-Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Coverage>>:-Xptxas=-O3 -Xcompiler=-Og,-g>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:RelWithDebInfo>>:-Xptxas=-O2 -Xcompiler=-O2,-g --generate-line-info -DNDEBUG>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Coverage>>:-Xptxas=-O3 -Xcompiler=$<IF:$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>,-O0,-Og>,-g>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:RelWithAssert>>:-Xptxas=-O3 -Xcompiler=-O3,-g>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<BOOL:${CMAKE_OSX_SYSROOT}>>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>
     # configurations for LLVM
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Debug>>:-g>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Debug>>:-g -Og>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Release>>:-O3 -DNDEBUG>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:MinSizeRel>>:-O2 -DNDEBUG>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:RelWithDebInfo>>:-O2 -g -DNDEBUG>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Coverage>>:-Og -g>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:RelWithAssert>>:-O3 -g>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:RelWithDebInfo>>:-O2 -Xarch_host -g -gline-tables-only -DNDEBUG>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Coverage>>:-Og -Xarch_host -g>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:RelWithAssert>>:-O3 -Xarch_host -g>
 )
 # cmake-format: on
 
@@ -686,6 +675,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
       heffte
       GIT_REPOSITORY https://github.com/icl-utk-edu/heffte.git
       GIT_TAG        v2.4.1
+      PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/heffte.patch
       OVERRIDE_FIND_PACKAGE
     )
     # cmake-format: on
@@ -709,7 +699,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
 endif()
 
 if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
-  find_package(Kokkos 4.6 QUIET)
+  find_package(Kokkos 5.0.2 QUIET)
 endif()
 if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   # cmake-format: off
@@ -717,20 +707,34 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
     kokkos
     GIT_REPOSITORY https://github.com/kokkos/kokkos.git
     GIT_TAG        5.0.2
+    PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/kokkos.patch
     OVERRIDE_FIND_PACKAGE
+    SYSTEM
   )
   # cmake-format: on
   set(BUILD_SHARED_LIBS OFF)
   set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
   set(Kokkos_ENABLE_SERIAL ON CACHE BOOL "")
   set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "")
-  set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE OFF CACHE BOOL "")
   set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
+  if(${ESPRESSO_BUILD_WITH_CUDA} AND NOT ${ESPRESSO_BUILD_WITH_WALBERLA}
+     AND (NOT CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA"
+          OR CMAKE_CUDA_COMPILER_VERSION GREATER_EQUAL 12.2))
+    set(Kokkos_ENABLE_CUDA ON CACHE BOOL "")
+    set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE OFF CACHE BOOL "")
+    if(Kokkos_ENABLE_CUDA AND NOT CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+      set(Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE ON CACHE BOOL "")
+      set(Kokkos_ENABLE_CUDA_CONSTEXPR ON CACHE BOOL "")
+    else()
+      set(Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE OFF CACHE BOOL "")
+    endif()
+  endif()
   set(Kokkos_ENABLE_COMPLEX_ALIGN ON CACHE BOOL "")
   set(Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION ON CACHE BOOL "")
   set(Kokkos_ENABLE_HWLOC ON CACHE BOOL "")
   set(Kokkos_ENABLE_DEPRECATED_CODE_4 OFF CACHE BOOL "")
   set(Kokkos_ENABLE_DEPRECATED_CODE_5 OFF CACHE BOOL "")
+  set(Kokkos_ENABLE_BENCHMARKS OFF CACHE BOOL "")
   FetchContent_MakeAvailable(kokkos)
   set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
   set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
@@ -745,37 +749,53 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
               LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
     endif()
   endforeach()
+  include("${FETCHCONTENT_BASE_DIR}/kokkos-build/KokkosConfigCommon.cmake")
   target_compile_options(
     kokkoscore
     PRIVATE
       $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=initialization_not_reachable>
   )
-  # mark kokkos headers as system headers to disable compiler diagnostics
-  set_property(
-    TARGET kokkos APPEND
-    PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
-             $<TARGET_PROPERTY:kokkos,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
+
+# kokkos-fft: a local (single-process) FFT on top of the Kokkos target already
+# fetched above. Used as the single-rank P3M reciprocal-space backend. It is
+# only consumed by the P3M target, which is itself gated behind FFTW (and its
+# CPU backend is FFTW), so there is nothing to fetch when FFTW is disabled.
+if(ESPRESSO_BUILD_WITH_KOKKOS_FFT AND ESPRESSO_BUILD_WITH_FFTW)
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos_fft-src)
+    find_package(KokkosFFT 1.1 QUIET)
+  endif()
+  if(NOT DEFINED KokkosFFT_FOUND OR NOT ${KokkosFFT_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      kokkos_fft
+      GIT_REPOSITORY https://github.com/kokkos/kokkos-fft.git
+      GIT_TAG        v1.1.0
+      OVERRIDE_FIND_PACKAGE
+    )
+    # cmake-format: on
+    set(KokkosFFT_ENABLE_FFTW ON CACHE BOOL "")
+    FetchContent_MakeAvailable(kokkos_fft)
+  endif()
 endif()
 
 if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/cabana-src)
-  find_package(Cabana 0.7.0 QUIET)
+  find_package(Cabana 0.8.0 QUIET)
 endif()
 if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
   # cmake-format: off
   FetchContent_Declare(
     cabana
     GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
-    GIT_TAG        e76c1a1 # 0.7.0 with patches
-    PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cabana.patch
+    GIT_TAG        0.8.0
+    OVERRIDE_FIND_PACKAGE
+    SYSTEM
   )
   # cmake-format: on
   set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
+  set(Cabana_REQUIRE_CUDA ${Kokkos_ENABLE_CUDA} CACHE BOOL "")
+  set(Cabana_ENABLE_DOXYGEN OFF CACHE BOOL "")
   FetchContent_MakeAvailable(cabana)
-  # mark Cabana headers as system headers to disable compiler diagnostics
-  set_property(
-    TARGET Core APPEND
-    PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
-             $<TARGET_PROPERTY:Core,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
 
 # We need the parallel hdf5 version!
@@ -872,12 +892,6 @@ if(ESPRESSO_BUILD_WITH_VALGRIND)
   if(VALGRIND_FOUND)
     message(STATUS "Found valgrind: ${VALGRIND_INCLUDE_DIRS}")
   endif()
-endif()
-
-if(Kokkos_ENABLE_CUDA AND NOT CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-  # allow constexpr __host__ function calls in __device__ functions
-  target_compile_options(espresso_kokkos_compiler_flags
-                         INTERFACE -expt-relaxed-constexpr)
 endif()
 
 #
@@ -1036,7 +1050,8 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     FetchContent_Declare(
       walberla
       GIT_REPOSITORY https://github.com/lssfau/walberla.git
-      GIT_TAG        3247aa73 # v7.2 with patches
+      GIT_TAG        623a60c1 # v7.2 with patches
+      SYSTEM
     )
     # cmake-format: on
     string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
@@ -1079,6 +1094,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     target_compile_options(
       sqlite3
       PRIVATE
+        $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wno-discarded-qualifiers>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=code_is_unreachable>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=cast_to_qualified_type>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=set_but_not_used>)
@@ -1172,6 +1188,37 @@ function(espresso_set_common_target_properties)
           ${TARGET_NAME} BEFORE PUBLIC
           "$ENV{CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE}")
       endif()
+    endif()
+  endif()
+endfunction()
+
+function(espresso_set_kokkos_properties_on_source_files)
+  set(TARGET_NAME "${ARGV0}")
+  get_target_property(TARGET_TYPE ${TARGET_NAME} TYPE)
+  get_target_property(TARGET_DEPS ${TARGET_NAME} LINK_LIBRARIES)
+  if(NOT TARGET_TYPE STREQUAL "INTERFACE_LIBRARY"
+     AND Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE
+     AND ("Kokkos::kokkos" IN_LIST TARGET_DEPS OR "espresso::core" IN_LIST
+                                                  TARGET_DEPS
+          OR "espresso::p3m" IN_LIST TARGET_DEPS))
+    get_target_property(TARGET_SOURCE_DIR ${TARGET_NAME} SOURCE_DIR)
+    get_target_property(TARGET_SOURCES ${TARGET_NAME} SOURCES)
+    set(CPP_SOURCES "")
+    foreach(SOURCE IN LISTS TARGET_SOURCES)
+      if(SOURCE MATCHES "^\\$<")
+        message(
+          FATAL_ERROR
+            "target ${TARGET_NAME} contains generator expression '${SOURCE}'")
+      endif()
+      if(SOURCE MATCHES "\\.cpp$")
+        cmake_path(ABSOLUTE_PATH SOURCE BASE_DIRECTORY "${TARGET_SOURCE_DIR}"
+                   NORMALIZE)
+        list(APPEND CPP_SOURCES "${SOURCE}")
+      endif()
+    endforeach()
+    if(CPP_SOURCES)
+      set_source_files_properties(${CPP_SOURCES} TARGET_DIRECTORY ${TARGET_NAME}
+                                  PROPERTIES LANGUAGE CUDA)
     endif()
   endif()
 endfunction()

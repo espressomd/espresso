@@ -50,6 +50,8 @@ inline auto constexpr P3M_EPSILON_METALLIC = 0.0;
 
 #include "LocalBox.hpp"
 
+#include <Kokkos_Core.hpp>
+
 #include <cstddef>
 #include <optional>
 #include <span>
@@ -324,10 +326,19 @@ std::array<std::vector<int>, 3> inline calc_p3m_mesh_shift(
   return ret;
 }
 
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 template <Utils::MemoryOrder RSpaceOrder = Utils::MemoryOrder::ROW_MAJOR,
           Utils::MemoryOrder KSpaceOrder = Utils::MemoryOrder::ROW_MAJOR,
           bool UseR2C = false, unsigned int R2CDir = 2u>
 struct P3MFFTConfig {
+  /** @brief Data layout of the input real-space 3D matrix. */
+  using r_space_layout =
+      std::conditional_t<RSpaceOrder == Utils::MemoryOrder::ROW_MAJOR,
+                         Kokkos::LayoutRight, Kokkos::LayoutLeft>;
+  /** @brief Data layout of the output k-space 3D matrix. */
+  using k_space_layout =
+      std::conditional_t<KSpaceOrder == Utils::MemoryOrder::ROW_MAJOR,
+                         Kokkos::LayoutRight, Kokkos::LayoutLeft>;
   /** @brief Data layout of the input real-space 3D matrix. */
   static auto constexpr r_space_order = RSpaceOrder;
   /** @brief Data layout of the output k-space 3D matrix. */
@@ -337,3 +348,4 @@ struct P3MFFTConfig {
   /** @brief Direction of the reduced dimension (if @c use_r2c is true). */
   static auto constexpr r2c_dir = R2CDir;
 };
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
