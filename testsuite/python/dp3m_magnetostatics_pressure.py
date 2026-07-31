@@ -183,8 +183,7 @@ class VirialPressureConsistency(ut.TestCase):
             pressure_via_volume_scaling_total.measure_pressure_via_volume_scaling()
             pressure_via_volume_scaling_dipolar.measure_pressure_via_volume_scaling()
 
-        # full-system consistency check (same identity used for the
-        # existing Coulomb P3M pressure test)
+        # deviation should be below 5%
         pressure_virial_total = np.mean(pressures_via_virial["total"])
         abs_deviation_total = 100 * abs(
             pressure_virial_total /
@@ -192,16 +191,6 @@ class VirialPressureConsistency(ut.TestCase):
         np.testing.assert_array_less(abs_deviation_total, 5.0)
 
         # isolated check of the dipolar long-range pressure term alone.
-        # This contribution is tiny compared to the total pressure (of
-        # order 1e-5 in reduced units for this system, vs. an atol=5e-3
-        # used previously, which was roughly 300x looser than the
-        # quantity being checked and would not have caught a wrong or
-        # missing anisotropic term). Empirically the two estimators
-        # agree here to well under 1% (~0.07% in practice), so use a
-        # relative tolerance generous enough to absorb run-to-run
-        # statistical noise from the finite (25-sample) averaging,
-        # plus a small absolute floor in case the isolated term is
-        # ever close to zero for a different configuration.
         pressure_virial_dipolar = np.mean(pressures_via_virial["dipolar"])
         pressure_scaling_dipolar = pressure_via_volume_scaling_dipolar.get_result()
         np.testing.assert_allclose(
@@ -215,16 +204,6 @@ class VirialPressureConsistency(ut.TestCase):
         90 degree rotation about the z-axis, and a cyclic permutation of
         the axes. Both only relabel coordinates (no box deformation),
         which matters because DipolarP3M enforces a cubic box.
-
-        Together they tie every diagonal component to every other, and
-        every off-diagonal component to every other, so unlike the
-        isotropic trace check in :func:`test_dp3m_pressure`, this also
-        constrains the anisotropic split (the old ``diag(E, E, E) / 3``
-        placeholder would fail it). Since both are exact per-configuration
-        identities, not ensemble averages, the tolerance can be tight and
-        no trajectory sampling is needed. A tensor that is accidentally
-        isotropic would satisfy both vacuously, so this test also asserts
-        non-negligible anisotropic content.
 
         Checks the ``("dipolar", 1)`` k-space term in isolation: the
         ``("dipolar", 0)`` short-range term is not intrinsically
@@ -250,9 +229,11 @@ class VirialPressureConsistency(ut.TestCase):
 
         sigma = get_kspace_tensor()
 
-        # sanity check: the tensor must have genuine anisotropic content,
-        # otherwise the symmetry checks below hold vacuously (as they
-        # would for the old isotropic diag(E, E, E) / 3 placeholder)
+        # sanity check: the diagonal entries must not all be equal, and
+        # the off-diagonal entries must not all vanish -- otherwise the
+        # diagonal or off-diagonal half of the symmetry checks below
+        # would hold vacuously (as they would for the old isotropic
+        # diag(E, E, E) / 3 placeholder)
         scale = np.max(np.abs(sigma))
         diagonal_spread = np.std(np.diag(sigma))
         offdiagonal_scale = np.max(
