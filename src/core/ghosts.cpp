@@ -213,6 +213,18 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
     }
 #endif
   }
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  if (data_parts & GHOSTTRANS_DIPFLD) {
+    if (policy == ReductionPolicy::UPDATE and
+        direction == SerializationDirection::LOAD) {
+      Utils::Vector3d dip_fld;
+      ar & dip_fld;
+      p.dip_fld() += dip_fld;
+    } else {
+      ar & p.dip_fld();
+    }
+  }
+#endif
 #ifdef ESPRESSO_BOND_CONSTRAINT
   if (data_parts & GHOSTTRANS_RATTLE) {
     if (policy == ReductionPolicy::UPDATE and
@@ -374,6 +386,20 @@ static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
     }
   }
 }
+
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+static void add_dip_fld_from_recv_buffer(CommBuf &recv_buffer,
+                                         GhostCommunication const &ghost_comm) {
+  auto archiver = Utils::MemcpyIArchive{recv_buffer.make_span()};
+  for (auto &part_list : ghost_comm.part_lists) {
+    for (Particle &part : *part_list) {
+      Utils::Vector3d dip_fld;
+      archiver >> dip_fld;
+      part.dip_fld() += dip_fld;
+    }
+  }
+}
+#endif
 
 static void cell_cell_transfer(GhostCommunication const &ghost_comm,
                                BoxGeometry const &box_geo,
@@ -537,6 +563,10 @@ void ghost_communicator(GhostCommunicator const &gcr,
          * where the addition is integrated into the communication. */
         if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
           add_forces_from_recv_buffer(recv_buffer, ghost_comm);
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+        else if (data_parts == GHOSTTRANS_DIPFLD && comm_type != GHOST_RDCE)
+          add_dip_fld_from_recv_buffer(recv_buffer, ghost_comm);
+#endif
 #ifdef ESPRESSO_BOND_CONSTRAINT
         else if (data_parts == GHOSTTRANS_RATTLE && comm_type != GHOST_RDCE)
           add_rattle_correction_from_recv_buffer(recv_buffer, ghost_comm);
@@ -560,6 +590,10 @@ void ghost_communicator(GhostCommunicator const &gcr,
         /* as above */
         if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
           add_forces_from_recv_buffer(recv_buffer, *poststore_ghost_comm);
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+        else if (data_parts == GHOSTTRANS_DIPFLD && comm_type != GHOST_RDCE)
+          add_dip_fld_from_recv_buffer(recv_buffer, *poststore_ghost_comm);
+#endif
 #ifdef ESPRESSO_BOND_CONSTRAINT
         else if (data_parts == GHOSTTRANS_RATTLE && comm_type != GHOST_RDCE)
           add_rattle_correction_from_recv_buffer(recv_buffer,

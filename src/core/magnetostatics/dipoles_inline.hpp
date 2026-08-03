@@ -54,9 +54,17 @@ struct ShortRangeForceKernel {
     auto const &actor = *ptr;
     return kernel_type{[&actor](double d1d2, Utils::Vector3d const &dip1,
                                 Utils::Vector3d const &dip2,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                                Utils::Vector3d &dip_fld_p1,
+                                Utils::Vector3d &dip_fld_p2,
+#endif
                                 Utils::Vector3d const &d, double dist,
                                 double dist2) {
-      return actor.pair_force(d1d2, dip1, dip2, d, dist, dist2);
+      return actor.pair_force(d1d2, dip1, dip2,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                              dip_fld_p1, dip_fld_p2,
+#endif
+                              d, dist, dist2);
     }};
   }
 #endif // ESPRESSO_DP3M

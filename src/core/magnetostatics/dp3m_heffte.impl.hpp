@@ -242,8 +242,12 @@ template <int cao> struct AssignTorques {
 
     assert(cao == dp3m.inter_weights.cao());
 
-    auto const kernel = [d_rs, &dp3m](auto const &pref, auto &p_torque,
-                                      std::size_t p_index) {
+    auto const kernel = [d_rs, &dp3m, prefac](auto const &pref,
+                                               auto &p_torque,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                                               auto &p_dip_fld,
+#endif
+                                               std::size_t p_index) {
       auto const weights = dp3m.inter_weights.template load<cao>(p_index);
       Utils::Vector3d E{};
       p3m_interpolate(dp3m.local_mesh, weights,
@@ -257,16 +261,30 @@ template <int cao> struct AssignTorques {
       access(p_index, 0) -= torque[0];
       access(p_index, 1) -= torque[1];
       access(p_index, 2) -= torque[2];
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      auto const dip_fld = prefac * E;
+      auto access_dip_fld = p_dip_fld.access();
+      access_dip_fld(p_index, 0) -= dip_fld[0];
+      access_dip_fld(p_index, 1) -= dip_fld[1];
+      access_dip_fld(p_index, 2) -= dip_fld[2];
+#endif
     };
 
     auto const n_part = dp3m.inter_weights.size();
     auto const &unique_particles = cell_structure.get_unique_particles();
     auto scatter_torque = cell_structure.get_scatter_torque();
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    auto scatter_dip_fld = cell_structure.get_scatter_dip_fld();
+#endif
     kokkos_parallel_range_for(
         "AssignTorques", std::size_t{0u}, n_part, [&](std::size_t p_index) {
           auto const &p = *unique_particles.at(p_index);
           if (p.dipm() != 0.) {
-            kernel(p.calc_dip() * prefac, scatter_torque, p_index);
+            kernel(p.calc_dip() * prefac, scatter_torque,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                   scatter_dip_fld,
+#endif
+                   p_index);
           }
         });
   }
@@ -899,6 +917,9 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::calc_surface_term(
       torque[0u] -= pref * sumix[ip];
       torque[1u] -= pref * sumiy[ip];
       torque[2u] -= pref * sumiz[ip];
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      p.dip_fld() -= pref * box_dip;
+#endif
       ip++;
     }
   }
