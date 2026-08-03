@@ -209,8 +209,7 @@ struct P3MFFTHeffte final : public P3MFFTBackend<FloatType, FFTConfig> {
                Utils::Vector3i const &node_grid)
       : m_impl(nullptr, comm, global_mesh, rs_local_ld_index, rs_local_ur_index,
                node_grid),
-        m_input(
-            static_cast<std::size_t>(Utils::product(m_impl.rs_local_size()))) {}
+        m_input(static_cast<std::size_t>(Utils::product(rs_local_size()))) {}
 
   Utils::Vector3i ks_local_ld_index() const override {
     return m_impl.ks_local_ld_index();
