@@ -127,7 +127,6 @@ class Test(ut.TestCase):
                     np.copy(p.torque_lab), np.cross(p.dip, p.dip_fld),
                     rtol=1e-9, atol=1e-5)
 
-
     @utx.skipIfMissingFeatures(["DP3M"])
     def test_dp3m(self):
         self.system.periodicity = [True, True, True]
@@ -138,6 +137,7 @@ class Test(ut.TestCase):
         for p in self.system.part.all():
             np.testing.assert_allclose(
                 np.copy(p.torque_lab), np.cross(p.dip, p.dip_fld))
+
 
 if __name__ == "__main__":
     ut.main()

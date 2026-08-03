@@ -291,12 +291,12 @@ struct ForcesKernel {
         Utils::Vector3d dip_fld_i{};
         Utils::Vector3d dip_fld_j{};
 #endif
-        pf += (*dipoles_kernel)(d1d2, aosoa.dipm(i) * dir1,
-                                aosoa.dipm(j) * dir2,
+        pf +=
+            (*dipoles_kernel)(d1d2, aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2,
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-                                dip_fld_i, dip_fld_j,
+                              dip_fld_i, dip_fld_j,
 #endif
-                                d, dist, dist_sq);
+                              d, dist, dist_sq);
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
         auto access_dip_fld = local_dip_fld.access();
         access_dip_fld(i, 0) += dip_fld_i[0];
