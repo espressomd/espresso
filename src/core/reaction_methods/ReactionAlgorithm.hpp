@@ -249,7 +249,11 @@ private:
 
   int create_particle(int p_type);
   void hide_particle(int p_id, int p_type) const;
+
+protected:
   void check_exclusion_range(int p_id, int p_type);
+
+private:
   auto get_random_uniform_number() {
     return m_uniform_real_distribution(m_generator);
   }

@@ -54,7 +54,6 @@ class SingleReaction(ScriptInterfaceHelper):
 
 class ReactionAlgorithm(ScriptInterfaceHelper):
     """
-
     This class provides the base class for Reaction Algorithms like
     the Reaction Ensemble algorithm and the constant pH method.
     Initialize the reaction algorithm by setting the
@@ -181,7 +180,8 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         Parameters
         ----------
         reaction_id : :obj:`int`
-            Reaction id
+            Identifier of the reaction to modify.
+            Will *not* be multiplied by 2 internally!
 
     set_non_interacting_type()
         Sets the particle type for non-interacting particles.

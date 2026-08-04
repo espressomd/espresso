@@ -23,47 +23,19 @@ import numpy as np
 import scipy.optimize
 
 tutorial, skipIfMissingFeatures = iw.configure_and_import(
-    "@TUTORIALS_DIR@/electrokinetics/electrokinetics.py", TOTAL_FRAMES=0)
+    "@TUTORIALS_DIR@/electrokinetics/electrokinetics_part3_reactive_flow.py",
+    TOTAL_FRAMES=0)
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
 
-    def test_analytic_solutions(self):
-        # check advection-diffusion
-        mu_simulated = tutorial.positions_diagonal[np.argmax(
-            tutorial.values_diagonal)]
-        mu_analytic = tutorial.positions_analytic[np.argmax(
-            tutorial.values_analytic)]
-        tol = 2. * tutorial.AGRID
-        self.assertAlmostEqual(mu_simulated, mu_analytic, delta=tol)
-        # check electroosmotic flow
-        np.testing.assert_allclose(
-            np.copy(tutorial.density_eof),
-            tutorial.analytic_density_eof,
-            rtol=0.005)
-        np.testing.assert_allclose(
-            np.copy(tutorial.velocity_eof),
-            tutorial.analytic_velocity_eof,
-            rtol=0.05)
-        np.testing.assert_allclose(
-            np.copy(tutorial.pressure_tensor_eof),
-            tutorial.analytic_pressure_tensor_eof,
-            rtol=0.05)
-        # check pressure-driven flow
-        np.testing.assert_allclose(
-            np.copy(tutorial.density_pressure),
-            tutorial.analytic_density_eof,
-            rtol=0.005)
-        np.testing.assert_allclose(
-            np.copy(tutorial.velocity_pressure),
-            tutorial.analytic_velocity_pressure,
-            rtol=0.05)
-        np.testing.assert_allclose(
-            np.copy(tutorial.pressure_tensor_pressure),
-            tutorial.analytic_pressure_tensor_pressure,
-            rtol=0.05)
+    @classmethod
+    def setUpClass(cls):
+        # the animation was skipped (TOTAL_FRAMES=0), thus the flow field and
+        # the species densities still have to be evolved
+        tutorial.system.integrator.run(2000)
 
     def test_karman_vortex_street(self):
         """
@@ -94,7 +66,6 @@ class Tutorial(ut.TestCase):
         def cosine_kernel(x, magnitude, freq, phase):
             return magnitude * np.cos(x * freq + phase)
 
-        tutorial.system.integrator.run(2000)
         # check for finite values
         for species in (*tutorial.educt_species, *tutorial.product_species):
             assert np.all(np.isfinite(species[:, :, :].density))
@@ -118,6 +89,32 @@ class Tutorial(ut.TestCase):
         self.assertAlmostEqual(popt[1], ref_params[1], delta=0.02)
         self.assertAlmostEqual(popt[0], ref_params[0], delta=0.80)
         self.assertLess(rmsd / abs(popt[0]), 0.2)
+
+    def test_product_profile(self):
+        """
+        No product can form as long as the two educt streams are separated.
+        Further downstream, the vortex street mixes them and the product
+        density grows.
+        """
+        profile = tutorial.mean_density_profile(tutorial.product_species[0])
+        self.assertEqual(len(profile), tutorial.BOX_L[0])
+        # essentially no product upstream of the obstacles
+        self.assertLess(np.max(profile[:tutorial.BOX_L[0] // 10]),
+                        1e-3 * np.max(profile))
+        # the product density grows downstream
+        self.assertLess(np.mean(profile[20:40]), np.mean(profile[60:80]))
+
+    def test_reynolds_number(self):
+        """
+        The flow must be fast enough for the wake to become unsteady.
+        """
+        velocity_mean = np.nanmean(np.where(
+            tutorial.boundary_mask, np.nan,
+            tutorial.lbf[:, :, 0].velocity[..., 0]))
+        reynolds_number = velocity_mean * 2. * tutorial.OBSTACLE_RADIUS / \
+            tutorial.VISCOSITY_KINEMATIC
+        self.assertGreater(reynolds_number, 5.)
+        self.assertLess(reynolds_number, 50.)
 
 
 if __name__ == "__main__":

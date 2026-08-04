@@ -257,14 +257,14 @@ class ReactionMethods(ut.TestCase):
                                 **single_reaction_params)
 
         # check invalid reaction id exceptions
-        # (note: reactions id = 2 * reactions index)
+        # (note: reaction index = 2 * reaction id)
         self.assertEqual(len(method.reactions), 2)
         for i in [-2, -1, 1, 2, 3]:
             with self.assertRaisesRegex(IndexError, f"No reaction with id {i}"):
                 method.delete_reaction(reaction_id=i)
             with self.assertRaisesRegex(IndexError, f"No reaction with id {2 * i}"):
                 method.get_acceptance_rate_reaction(reaction_id=2 * i)
-        with self.assertRaisesRegex(ValueError, "Only forward reactions can be selected"):
+        with self.assertRaisesRegex(IndexError, "No reaction with id 1"):
             method.change_reaction_constant(reaction_id=1, gamma=1.)
 
         # check constraint exceptions
@@ -360,6 +360,51 @@ class ReactionMethods(ut.TestCase):
         with self.assertRaisesRegex(ValueError, r"Invalid excluded_radius value for type 2: radius -0\.1[0]*"):
             method.exclusion_radius_per_type = {2: -0.1}
         self.assertEqual(list(method.exclusion_radius_per_type.keys()), [1])
+
+    def test_change_constant_of_second_reaction(self):
+        """
+        Check reaction indexing. Some methods use the reaction index, while
+        others use reaction id (internally, reaction index = 2 * reaction id).
+        """
+        method = espressomd.reaction_methods.ReactionEnsemble(
+            kT=1., exclusion_range=1., seed=12)
+
+        gamma0 = 2.   # initial forward gamma of the 1st reaction
+        gamma1 = 5.   # initial forward gamma of the 2nd reaction
+
+        # 1st logical reaction -> m_reactions indices 0 (forward), 1 (backward)
+        method.add_reaction(
+            gamma=gamma0,
+            reactant_types=[0], reactant_coefficients=[1],
+            product_types=[1, 2], product_coefficients=[1, 1],
+            default_charges={0: 0, 1: 0, 2: 0})
+
+        # 2nd logical reaction -> m_reactions indices 2 (forward), 3 (backward)
+        method.add_reaction(
+            gamma=gamma1,
+            reactant_types=[3], reactant_coefficients=[1],
+            product_types=[4, 5], product_coefficients=[1, 1],
+            default_charges={3: 0, 4: 0, 5: 0})
+
+        reactions = method.get_status()["reactions"]
+        self.assertEqual(len(reactions), 4)
+        # sanity: the flat container is [F0, B0, F1, B1] as expected
+        self.assertAlmostEqual(reactions[0]["gamma"], gamma0, delta=1e-10)
+        self.assertAlmostEqual(reactions[2]["gamma"], gamma1, delta=1e-10)
+
+        # Per the documented convention, the SECOND added reaction is addressed
+        # with reaction_id=1.  This must succeed and update indices 2 and 3.
+        new_gamma = 17.
+        method.change_reaction_constant(reaction_id=1, gamma=new_gamma)
+
+        reactions = method.get_status()["reactions"]
+        # second reaction forward/backward updated ...
+        self.assertAlmostEqual(reactions[2]["gamma"], new_gamma, delta=1e-10)
+        self.assertAlmostEqual(
+            reactions[3]["gamma"], 1. / new_gamma, delta=1e-10)
+        # ... and the first reaction left untouched
+        self.assertAlmostEqual(reactions[0]["gamma"], gamma0, delta=1e-10)
+        self.assertAlmostEqual(reactions[1]["gamma"], 1. / gamma0, delta=1e-10)
 
 
 if __name__ == "__main__":

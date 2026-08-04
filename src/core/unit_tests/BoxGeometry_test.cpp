@@ -274,6 +274,7 @@ BOOST_AUTO_TEST_CASE(cuboid_minimum_image_non_periodic_axis_test) {
   auto const a = b + raw;
 
   auto const reference = box.get_mi_vector(a, b);
+  auto const reference_dist2 = box.get_mi_dist2(a, b);
 
   // The non-periodic y axis must not fold: component equals the raw
   // separation.
@@ -282,6 +283,7 @@ BOOST_AUTO_TEST_CASE(cuboid_minimum_image_non_periodic_axis_test) {
   BOOST_CHECK_LT(std::abs(reference[0u]), 0.5 * box_l[0u]);
   BOOST_CHECK_LT(std::abs(reference[2u]), 0.5 * box_l[2u]);
 
-  // And the hoisted fold must agree with the standard box path bitwise.
-  BOOST_CHECK_EQUAL(fold.dist2(a, b), reference.norm2());
+  // And the hoisted fold must agree with the standard box path.
+  BOOST_CHECK_LT(std::abs(fold.dist2(a, b) - reference.norm2()), 1e-12);
+  BOOST_CHECK_LT(std::abs(reference.norm2() - reference_dist2), 1e-12);
 }

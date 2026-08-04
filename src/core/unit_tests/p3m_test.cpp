@@ -35,6 +35,7 @@
 
 #include "EspressoCoreGlobalConfig.hpp"
 #include "Particle.hpp"
+#include "communication.hpp"
 #include "energy_inline.hpp"
 #include "integrate.hpp"
 #include "particle_node.hpp"
@@ -151,6 +152,23 @@ template <auto... Pack> void test_all_p3m_fft_configs() {
         auto const energy_k_space = obs_energy->coulomb[1];
         BOOST_CHECK_CLOSE(energy_k_space, energy_ref, 1e-6);
       }
+    }
+    // check FFT properties
+    auto const &fft = *solver->p3m.fft;
+    auto const ref_rs_local_size = 12 / ::communicator.node_grid;
+    BOOST_CHECK_EQUAL(fft.rs_local_size(), ref_rs_local_size);
+    if (::communicator.size <= 3) {
+      auto const node_index = ::communicator.calc_node_index();
+      auto ref_ks_local_size = 12 / ::communicator.node_grid;
+      if constexpr (FFTConfig::use_r2c) {
+        ref_ks_local_size[FFTConfig::r2c_dir] /= 2;
+        if (node_index[FFTConfig::r2c_dir] == 0) {
+          ref_ks_local_size[FFTConfig::r2c_dir] += 1;
+        }
+      }
+      BOOST_CHECK_EQUAL(fft.ks_local_size(), ref_ks_local_size);
+      BOOST_CHECK_EQUAL(fft.ks_local_ur_index() - fft.ks_local_ld_index(),
+                        ref_ks_local_size);
     }
     // deactivate actor
     solver->detach_system(espresso::system);
