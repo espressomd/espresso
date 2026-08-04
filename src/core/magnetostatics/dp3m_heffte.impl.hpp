@@ -329,24 +329,25 @@ void DipolarP3MState<FloatType, FFTConfig>::resize_heffte_buffers() {
 }
 #endif // ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
 
-/** @details Reciprocal-space virial for the dipolar Ewald/P3M sum, obtained
- *  via the same Nose-Klein strain-derivative method used for the Coulomb
- *  case (@cite essmann95a eq. (2.7), \f$\Pi_{\textrm{rec}, \alpha, \beta}\f$),
- *  applied to the dipolar structure
- *  factor \f$Q(\vec k) = \vec M(\vec k)\cdot\vec k\f$ with
- *  \f$\vec M(\vec k) = \sum_j \vec \mu_j \exp(i\vec k\cdot\vec r_j)\f$.
- *  Unlike the charge structure factor, \f$Q(\vec k)\f$ depends on
- *  \f$\vec k\f$ explicitly (not only through the phase factor), which
- *  produces an extra symmetric cross term
- *  \f$k_a\Re[M_b(\vec k)Q(\vec k)^*] + k_b\Re[M_a(\vec k)Q(\vec k)^*]\f$
- *  beyond the charge-case \f$k_a k_b\f$ envelope; this matches the
- *  dipole-dipole reciprocal-space pressure tensor eq. (46) in
- *  @cite aguado03a (their \f$\vec h\f$, \f$\kappa\f$ correspond to
- *  \f$\vec k\f$, \f$\alpha\f$ here). Unlike long_range_kernel(), this does
- *  not include the volume-dependent \c energy_correction term (the
- *  Madelung-self mesh-discretization correction added to the energy); its
- *  omitted contribution to the virial is expected to be of the same order
- *  as the mesh error already accepted by the P3M tuning target.
+/**
+ * @brief Reciprocal-space virial for the dipolar Ewald/P3M sum. Obtained
+ * via the same Nose-Klein strain-derivative method used for the Coulomb
+ * case (@cite essmann95a eq. (2.7), \f$\Pi_{\textrm{rec}, \alpha, \beta}\f$),
+ * applied to the dipolar structure
+ * factor \f$Q(\vec k) = \vec M(\vec k)\cdot\vec k\f$ with
+ * \f$\vec M(\vec k) = \sum_j \vec \mu_j \exp(i\vec k\cdot\vec r_j)\f$.
+ * Unlike the charge structure factor, \f$Q(\vec k)\f$ depends on
+ * \f$\vec k\f$ explicitly (not only through the phase factor), which
+ * produces an extra symmetric cross term
+ * \f$k_a\Re[M_b(\vec k)Q(\vec k)^*] + k_b\Re[M_a(\vec k)Q(\vec k)^*]\f$
+ * beyond the charge-case \f$k_a k_b\f$ envelope; this matches the
+ * dipole-dipole reciprocal-space pressure tensor eq. (46) in
+ * @cite aguado03a (their \f$\vec h\f$, \f$\kappa\f$ correspond to
+ * \f$\vec k\f$, \f$\alpha\f$ here). Unlike @ref long_range_kernel(), this does
+ * not include the volume-dependent @ref DipolarP3MState::energy_correction
+ * term (the Madelung-self mesh-discretization correction added to the energy);
+ * its omitted contribution to the virial is expected to be of the same order
+ * as the mesh error already accepted by the P3M tuning target.
  */
 template <typename FloatType, Arch Architecture, class FFTConfig>
 Utils::Vector9d
@@ -376,44 +377,40 @@ DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_pressure() {
       auto const shift = local_index + dp3m.mesh.start;
       auto const &d_op = dp3m.d_op[0u];
       auto const &mesh_dip = dp3m.mesh.rs_fields;
-      auto const d_op_x = d_op[shift[KX]];
-      auto const d_op_y = d_op[shift[KY]];
-      auto const d_op_z = d_op[shift[KZ]];
+      auto const d_op_x = static_cast<FloatType>(d_op[shift[KX]]);
+      auto const d_op_y = static_cast<FloatType>(d_op[shift[KY]]);
+      auto const d_op_z = static_cast<FloatType>(d_op[shift[KZ]]);
 
       // Re(M(k)) and Re(Q(k)) = Re(M(k)).n, same as the energy kernel's `re`
       auto const Mx_re = mesh_dip[0u][index];
       auto const My_re = mesh_dip[1u][index];
       auto const Mz_re = mesh_dip[2u][index];
-      auto const Q_re = Mx_re * FloatType(d_op_x) + My_re * FloatType(d_op_y) +
-                        Mz_re * FloatType(d_op_z);
+      auto const Q_re = Mx_re * d_op_x + My_re * d_op_y + Mz_re * d_op_z;
       ++index;
       // Im(M(k)) and Im(Q(k))
       auto const Mx_im = mesh_dip[0u][index];
       auto const My_im = mesh_dip[1u][index];
       auto const Mz_im = mesh_dip[2u][index];
-      auto const Q_im = Mx_im * FloatType(d_op_x) + My_im * FloatType(d_op_y) +
-                        Mz_im * FloatType(d_op_z);
+      auto const Q_im = Mx_im * d_op_x + My_im * d_op_y + Mz_im * d_op_z;
       ++index;
 
-      auto const g = *it_energy;
-      std::advance(it_energy, 1);
-
-      auto const kx = double(d_op_x) * wavevector;
-      auto const ky = double(d_op_y) * wavevector;
-      auto const kz = double(d_op_z) * wavevector;
+      auto const nx = static_cast<double>(d_op[shift[KX]]);
+      auto const ny = static_cast<double>(d_op[shift[KY]]);
+      auto const nz = static_cast<double>(d_op[shift[KZ]]);
+      auto const kx = nx * wavevector;
+      auto const ky = ny * wavevector;
+      auto const kz = nz * wavevector;
       auto const norm_sq = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
       if (norm_sq != 0.) {
+        auto const g = static_cast<double>(*it_energy);
         auto const cell_energy =
-            static_cast<double>(g * (Utils::sqr(Q_re) + Utils::sqr(Q_im)));
+            g * static_cast<double>(Utils::sqr(Q_re) + Utils::sqr(Q_im));
         auto const vterm = -2. * (1. / norm_sq + half_alpha_inv_sq);
 
         // g * Re(M_a(k) * Q(k)^*), a in {x, y, z}
-        auto const Rx = static_cast<double>(g * (Mx_re * Q_re + Mx_im * Q_im));
-        auto const Ry = static_cast<double>(g * (My_re * Q_re + My_im * Q_im));
-        auto const Rz = static_cast<double>(g * (Mz_re * Q_re + Mz_im * Q_im));
-        auto const nx = double(d_op_x);
-        auto const ny = double(d_op_y);
-        auto const nz = double(d_op_z);
+        auto const Rx = g * static_cast<double>(Mx_re * Q_re + Mx_im * Q_im);
+        auto const Ry = g * static_cast<double>(My_re * Q_re + My_im * Q_im);
+        auto const Rz = g * static_cast<double>(Mz_re * Q_re + Mz_im * Q_im);
 
         node_k_space_pressure_tensor[0u] +=
             cell_energy * (1. + vterm * kx * kx) + 2. * nx * Rx; /* xx */
@@ -428,6 +425,7 @@ DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_pressure() {
         node_k_space_pressure_tensor[8u] +=
             cell_energy * (1. + vterm * kz * kz) + 2. * nz * Rz; /* zz */
       }
+      std::advance(it_energy, 1);
     });
     node_k_space_pressure_tensor[3u] = node_k_space_pressure_tensor[1u];
     node_k_space_pressure_tensor[6u] = node_k_space_pressure_tensor[2u];

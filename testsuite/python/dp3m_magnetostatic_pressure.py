@@ -96,20 +96,20 @@ class pressureViaVolumeScaling:
 
 @utx.skipIfMissingFeatures(["DP3M", "LENNARD_JONES"])
 class VirialPressureConsistency(ut.TestCase):
+    """
+    Test the dipolar long-range (k-space) virial pressure against an
+    analytical volume-scaling estimate (see
+    :class:`pressureViaVolumeScaling`), and validate the full
+    pressure tensor.
 
-    """Test the dipolar long-range (k-space) virial pressure against an
-       analytical volume-scaling estimate (see
-       :class:`pressureViaVolumeScaling`), and validate the full
-       pressure tensor.
-
-       An isotropic volume change alone can't validate the anisotropic
-       pressure tensor: it's blind to off-diagonal terms, and passes
-       even if the trace is split incorrectly among xx/yy/zz (e.g. the
-       old ``diag(E, E, E) / 3`` placeholder). A strain-based check
-       isn't available either, since DipolarP3M enforces a cubic box.
-       :func:`test_dp3m_pressure_tensor_symmetries` covers this gap
-       instead, using exact coordinate-relabeling identities that need
-       no box deformation.
+    An isotropic volume change alone can't validate the anisotropic
+    pressure tensor: it's blind to off-diagonal terms, and passes
+    even if the trace is split incorrectly among xx/yy/zz (e.g. the
+    old ``diag(E, E, E) / 3`` placeholder). A strain-based check
+    isn't available either, since DipolarP3M enforces a cubic box.
+    :meth:`test_dp3m_pressure_tensor_symmetries` covers this gap
+    instead, using exact coordinate-relabeling identities that need
+    no box deformation.
     """
     system = espressomd.System(box_l=[50, 50, 50])
 
@@ -155,6 +155,10 @@ class VirialPressureConsistency(ut.TestCase):
                 break
         self.system.integrator.set_vv()
         self.system.thermostat.set_langevin(kT=self.kT, gamma=1.0, seed=42)
+        # reset thermostat state and pin skin value to improve reproducibility
+        self.system.thermostat.langevin.call_method(
+            "override_philox_counter", counter=0)
+        self.system.cell_system.skin = 1.4
 
     def tearDown(self):
         self.system.part.clear()
@@ -279,7 +283,7 @@ class VirialPressureConsistency(ut.TestCase):
         """
         Independent ground-truth check of the dipolar reciprocal-space
         pressure tensor. The rotation/permutation checks in
-        :func:`test_dp3m_pressure_tensor_symmetries` are necessary but
+        :meth:`test_dp3m_pressure_tensor_symmetries` are necessary but
         not sufficient: they verify the tensor transforms correctly
         under coordinate relabeling, but a wrong overall prefactor (a
         missing factor of 2, a sign error, a wrong convention for
@@ -317,7 +321,7 @@ class VirialPressureConsistency(ut.TestCase):
         sigma_p3m = self.system.analysis.pressure_tensor()[("dipolar", 1)]
 
         # brute-force continuum sum over wavevectors k = (2 pi / L) n;
-        # n_max is chosen generously large so that exp(-k^2/4alpha^2)
+        # n_max is chosen generously large so that exp(-k^2/(4 alpha^2))
         # has decayed to a negligible size well within the cutoff
         n_max = 40
         ns = np.arange(-n_max, n_max + 1)
