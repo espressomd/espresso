@@ -181,10 +181,10 @@ public:
     // Calculate real-space torques
     auto const torque = prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
     // NOTE: the NpT virial contribution of this pair force (d * force,
-    // the trace of the pairwise virial tensor d (x) force; unlike the
-    // Coulomb case, the dipole-dipole force is not central, so the pair
-    // energy cannot be used as a substitute for the virial) is accumulated
-    // by the caller (see ForcesKernel in forces_cabana.hpp), not here:
+    // the trace of the pairwise virial tensor d (x) force, computed
+    // explicitly rather than approximated from the pair energy -- see
+    // forces_cabana.hpp for why) is accumulated by the caller (see
+    // ForcesKernel in forces_cabana.hpp), not here:
     // pair_force() is invoked concurrently by many threads over all pairs
     // (both for force calculation and for the pressure observable via
     // pair_pressure_kernel() in dipoles_inline.hpp), so calling

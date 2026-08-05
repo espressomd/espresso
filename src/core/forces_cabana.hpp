@@ -233,10 +233,9 @@ struct ForcesKernel {
     /*********************************************************************/
     /* everything before this contributes to the virial pressure in NpT  */
     /* via d (x) pf.f; electrostatic and dipolar real-space contributions */
-    /* are computed afterwards and added in explicitly below, since      */
-    /* electrostatics uses an energy-based substitute for the (central)  */
-    /* pair force, while dipoles need the explicit d * force trace       */
-    /* because the dipole-dipole force is not central                   */
+    /* are added in explicitly below instead: Coulomb reuses the pair    */
+    /* energy as a virial proxy, dipoles compute d . F directly (see     */
+    /* rationale below)                                                 */
     /*********************************************************************/
 #ifdef ESPRESSO_NPT
     Utils::Vector3d virial{};
@@ -284,9 +283,12 @@ struct ForcesKernel {
             d1d2, aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2, d, dist, dist_sq);
 #ifdef ESPRESSO_NPT
         if (npt_active()) {
-          // trace of the pairwise virial tensor d (x) force; unlike the
-          // Coulomb case, the dipole-dipole force is not central, so the
-          // pair energy cannot be used as a substitute for the virial
+          // d . F = -n * U for a homogeneous potential of degree n
+          // (Euler's theorem, independent of centrality); n=-3 here vs
+          // n=-1 for Coulomb. Ewald screening makes that only
+          // approximate, and for dipoles the approximation measurably
+          // fails NpT pressure consistency (see test_pressure_with_dp3m),
+          // so d . F is computed explicitly here instead.
           virial[0] += d * dip_pf.f;
         }
 #endif // ESPRESSO_NPT

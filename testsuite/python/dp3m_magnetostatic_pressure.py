@@ -201,7 +201,7 @@ class VirialPressureConsistency(ut.TestCase):
             pressure_virial_dipolar, pressure_scaling_dipolar,
             rtol=0.1, atol=1e-6)
 
-    def test_dp3m_pressure_tensor_symmetries(self):
+    def test_dp3m_pressure_tensor_rotation(self):
         """
         Check that the k-space dipolar pressure tensor transforms as a
         genuine rank-2 tensor under two exact coordinate relabelings: a
@@ -209,11 +209,13 @@ class VirialPressureConsistency(ut.TestCase):
         the axes. Both only relabel coordinates (no box deformation),
         which matters because DipolarP3M enforces a cubic box.
 
-        Checks the ``("dipolar", 1)`` k-space term in isolation: the
-        ``("dipolar", 0)`` short-range term is not intrinsically
-        symmetric (the dipole-dipole force is not parallel to the
-        separation vector), so the combined ``"dipolar"`` tensor would
-        fail this check for reasons unrelated to the long-range term.
+        The k-space tensor is generally asymmetric (it carries the same
+        dipole-dipole torque signature that already makes the
+        ``("dipolar", 0)`` short-range term asymmetric), so the expected
+        rotated/permuted tensors are built with the general covariant
+        transformation law ``sigma' = R sigma R^T`` -- valid for any
+        rank-2 tensor, symmetric or not -- rather than a hand-simplified
+        formula that would silently assume ``sigma[i, j] == sigma[j, i]``.
         """
         self.system.magnetostatics.solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2., accuracy=1e-4, mesh=32, cao=6, r_cut=7.5, tune=True)
@@ -237,13 +239,18 @@ class VirialPressureConsistency(ut.TestCase):
         # the off-diagonal entries must not all vanish -- otherwise the
         # diagonal or off-diagonal half of the symmetry checks below
         # would hold vacuously (as they would for the old isotropic
-        # diag(E, E, E) / 3 placeholder)
+        # diag(E, E, E) / 3 placeholder). Also confirm the tensor is
+        # genuinely asymmetric, otherwise the general R sigma R^T check
+        # below would be indistinguishable from the old symmetric-only
+        # formula it replaces.
         scale = np.max(np.abs(sigma))
         diagonal_spread = np.std(np.diag(sigma))
         offdiagonal_scale = np.max(
             np.abs([sigma[0, 1], sigma[0, 2], sigma[1, 2]]))
+        antisymmetric_scale = np.max(np.abs(sigma - sigma.T))
         self.assertGreater(diagonal_spread, 1e-3 * scale)
         self.assertGreater(offdiagonal_scale, 1e-3 * scale)
+        self.assertGreater(antisymmetric_scale, 1e-3 * scale)
 
         # 90 degree rotation about the z-axis through the box center
         rot_pos = np.copy(pos)
@@ -255,11 +262,8 @@ class VirialPressureConsistency(ut.TestCase):
         set_configuration(rot_pos, rot_dip)
         sigma_rotated = get_kspace_tensor()
 
-        expected_rotated = np.array([
-            [sigma[1, 1], -sigma[0, 1], -sigma[1, 2]],
-            [-sigma[0, 1], sigma[0, 0], sigma[0, 2]],
-            [-sigma[1, 2], sigma[0, 2], sigma[2, 2]],
-        ])
+        R_rot = np.array([[0., -1., 0.], [1., 0., 0.], [0., 0., 1.]])
+        expected_rotated = R_rot @ sigma @ R_rot.T
         np.testing.assert_allclose(
             sigma_rotated, expected_rotated, atol=1e-9 * scale)
 
@@ -271,35 +275,32 @@ class VirialPressureConsistency(ut.TestCase):
         set_configuration(perm_pos, perm_dip)
         sigma_permuted = get_kspace_tensor()
 
-        expected_permuted = np.array([
-            [sigma[1, 1], sigma[1, 2], sigma[0, 1]],
-            [sigma[1, 2], sigma[2, 2], sigma[0, 2]],
-            [sigma[0, 1], sigma[0, 2], sigma[0, 0]],
-        ])
+        R_perm = np.array([[0., 1., 0.], [0., 0., 1.], [1., 0., 0.]])
+        expected_permuted = R_perm @ sigma @ R_perm.T
         np.testing.assert_allclose(
             sigma_permuted, expected_permuted, atol=1e-9 * scale)
 
     def test_dp3m_pressure_tensor_vs_continuum_ewald(self):
         """
-        Independent ground-truth check of the dipolar reciprocal-space
-        pressure tensor. The rotation/permutation checks in
-        :meth:`test_dp3m_pressure_tensor_symmetries` are necessary but
-        not sufficient: they verify the tensor transforms correctly
-        under coordinate relabeling, but a wrong overall prefactor (a
-        missing factor of 2, a sign error, a wrong convention for
-        alpha) applied uniformly to every component would still satisfy
-        them. This test instead computes the *exact* (continuum,
-        unmeshed) Ewald reciprocal-space dipole-dipole pressure tensor
-        directly in Python -- a brute-force sum over explicit
-        wavevectors, with no FFT, no mesh, and no reliance on
-        ESPResSo's own P3M code at all -- from eq. (46) in
-        :cite:`aguado03a`, and compares it against
-        ``DipolarP3MHeffte::long_range_pressure()``'s mesh-based result.
-        Their eq. (46) sums over the half-space ``h>0`` with prefactor
-        ``4*pi/V**2``; summing explicitly over all ``k != 0`` (i.e.
-        including both members of each +-k pair, as done here and in
-        the C++ implementation) is equivalent to their sum doubled,
-        hence the prefactor ``2*pi/V**2`` used below.
+        Validates the dipolar reciprocal-space pressure tensor against
+        an independent, from-scratch calculation: a direct sum over
+        explicit wavevectors in Python, with no FFT, no mesh, and no
+        shared code with P3M.
+
+        This complements :func:`test_dp3m_pressure_tensor_symmetries`,
+        which only checks that the tensor transforms correctly under
+        rotation -- a check that a uniformly wrong prefactor (e.g. a
+        missing factor of 2) would still pass. Comparing against an
+        independently derived formula catches that class of error.
+
+        The symmetric part of the reference matches eq. (46) of
+        :cite:`aguado03a` (up to a factor of 2, from summing here over
+        all ``k != 0`` instead of their half-space ``h>0``). That
+        paper only reports the symmetric form; the antisymmetric part
+        is derived here independently by differentiating the
+        reciprocal energy under a general strain (matching the
+        derivation in ``long_range_pressure()`` in
+        dp3m_heffte.impl.hpp).
         """
         # a tighter accuracy than the other tests in this module (which
         # use 1e-4) is requested here, letting mesh/cao auto-tune to a
@@ -343,19 +344,81 @@ class VirialPressureConsistency(ut.TestCase):
         vterm = -2. * (1. / k2 + 1. / (4. * alpha**2))
         cell_energy = np.abs(Q)**2
 
+        # full (generally asymmetric) tensor: Pi_ab = g * [(delta_ab +
+        # vterm * k_a * k_b) * cell_energy + 2 * k_a * Re(M_b(k) Q(k)^*)];
+        # its symmetrized form (average with the transpose) is eq. (46)
+        # in Aguado & Madden
         reference = np.zeros((3, 3))
         for a in range(3):
             for b in range(3):
                 diag = cell_energy if a == b else 0.
                 envelope = cell_energy * vterm * kvecs[:, a] * kvecs[:, b]
-                re_Ma_Qc = (M[:, a] * np.conj(Q)).real
                 re_Mb_Qc = (M[:, b] * np.conj(Q)).real
-                cross = kvecs[:, b] * re_Ma_Qc + kvecs[:, a] * re_Mb_Qc
+                cross = 2. * kvecs[:, a] * re_Mb_Qc
                 reference[a, b] = np.sum(g * (diag + envelope + cross))
         reference *= (2. * np.pi / volume**2) * prefactor
 
         scale = np.max(np.abs(reference))
         np.testing.assert_allclose(sigma_p3m, reference, atol=0.01 * scale)
+
+    def test_dp3m_pressure_tensor_vs_direct_sum(self):
+        """
+        Cross-checks the total dipolar pressure tensor against an
+        independent solver,
+        :class:`~espressomd.magnetostatics.DipolarDirectSum`,
+        exercising its C++ periodic-image summation end to end --
+        otherwise untested for the pressure tensor.
+
+        DP3M and DipolarDirectSum resolve the same conditionally
+        convergent periodic lattice sum in different ways: DP3M
+        assumes conducting ("tin-foil") boundary conditions, while
+        DirectSum sums a growing *cube* of periodic images with no
+        such correction. The two conventions differ by a term
+        proportional to the square of the net dipole moment (de
+        Leeuw, Perram & Smith, 1980), so this test uses opposite-dipole
+        pairs to make that moment exactly zero and remove the
+        ambiguity.
+
+        That does not fix the *antisymmetric* (torque-related) part
+        of the pressure tensor, though: it has its own
+        boundary-dependent term that isn't controlled by the net
+        dipole moment, so it is not compared here -- only the
+        symmetric part and the trace are.
+        """
+        system = self.system
+        system.part.clear()
+        system.thermostat.turn_off()
+
+        np.random.seed(seed=2)
+        n_pairs = 8
+        box_l = system.box_l[0]
+        pos = np.random.random((2 * n_pairs, 3)) * box_l
+        dip = np.random.normal(size=(n_pairs, 3))
+        dip = np.concatenate([dip, -dip])
+        system.part.add(pos=pos, dip=dip,
+                        rotation=(2 * n_pairs) * [(False, False, False)])
+
+        # by construction: pairs of opposite dipole moments
+        net_dipole_moment = np.sum(system.part.all().dip, axis=0)
+        np.testing.assert_allclose(net_dipole_moment, 0., atol=1e-9)
+
+        system.magnetostatics.solver = espressomd.magnetostatics.DipolarP3M(
+            prefactor=2., accuracy=1e-6, r_cut=7.5, tune=True)
+        system.integrator.run(0)
+        pressure_p3m = system.analysis.pressure_tensor()["dipolar"]
+
+        system.magnetostatics.solver = espressomd.magnetostatics.DipolarDirectSum(
+            prefactor=2., n_replicas=6)
+        system.integrator.run(0)
+        pressure_dds = system.analysis.pressure_tensor()["dipolar"]
+
+        sym_p3m = (pressure_p3m + pressure_p3m.T) / 2.
+        sym_dds = (pressure_dds + pressure_dds.T) / 2.
+        scale = np.max(np.abs(sym_p3m))
+
+        np.testing.assert_allclose(
+            np.trace(pressure_dds), np.trace(pressure_p3m), rtol=1e-2)
+        np.testing.assert_allclose(sym_dds, sym_p3m, atol=0.02 * scale)
 
 
 if __name__ == "__main__":
