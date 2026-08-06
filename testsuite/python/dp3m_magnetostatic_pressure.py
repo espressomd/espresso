@@ -107,7 +107,7 @@ class VirialPressureConsistency(ut.TestCase):
     even if the trace is split incorrectly among xx/yy/zz (e.g. the
     old ``diag(E, E, E) / 3`` placeholder). A strain-based check
     isn't available either, since DipolarP3M enforces a cubic box.
-    :meth:`test_dp3m_pressure_tensor_symmetries` covers this gap
+    :meth:`test_dp3m_pressure_tensor_rotation` covers this gap
     instead, using exact coordinate-relabeling identities that need
     no box deformation.
     """
@@ -209,13 +209,10 @@ class VirialPressureConsistency(ut.TestCase):
         the axes. Both only relabel coordinates (no box deformation),
         which matters because DipolarP3M enforces a cubic box.
 
-        The k-space tensor is generally asymmetric (it carries the same
-        dipole-dipole torque signature that already makes the
-        ``("dipolar", 0)`` short-range term asymmetric), so the expected
+        The k-space tensor is generally asymmetric, so the expected
         rotated/permuted tensors are built with the general covariant
-        transformation law ``sigma' = R sigma R^T`` -- valid for any
-        rank-2 tensor, symmetric or not -- rather than a hand-simplified
-        formula that would silently assume ``sigma[i, j] == sigma[j, i]``.
+        transformation law ``sigma' = R sigma R^T`` which is valid for
+        any rank-2 tensor.
         """
         self.system.magnetostatics.solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2., accuracy=1e-4, mesh=32, cao=6, r_cut=7.5, tune=True)
@@ -239,10 +236,7 @@ class VirialPressureConsistency(ut.TestCase):
         # the off-diagonal entries must not all vanish -- otherwise the
         # diagonal or off-diagonal half of the symmetry checks below
         # would hold vacuously (as they would for the old isotropic
-        # diag(E, E, E) / 3 placeholder). Also confirm the tensor is
-        # genuinely asymmetric, otherwise the general R sigma R^T check
-        # below would be indistinguishable from the old symmetric-only
-        # formula it replaces.
+        # diag(E, E, E) / 3 placeholder).
         scale = np.max(np.abs(sigma))
         diagonal_spread = np.std(np.diag(sigma))
         offdiagonal_scale = np.max(
@@ -287,7 +281,7 @@ class VirialPressureConsistency(ut.TestCase):
         explicit wavevectors in Python, with no FFT, no mesh, and no
         shared code with P3M.
 
-        This complements :func:`test_dp3m_pressure_tensor_symmetries`,
+        This complements :func:`test_dp3m_pressure_tensor_rotation`,
         which only checks that the tensor transforms correctly under
         rotation -- a check that a uniformly wrong prefactor (e.g. a
         missing factor of 2) would still pass. Comparing against an
@@ -345,16 +339,23 @@ class VirialPressureConsistency(ut.TestCase):
         cell_energy = np.abs(Q)**2
 
         # full (generally asymmetric) tensor: Pi_ab = g * [(delta_ab +
-        # vterm * k_a * k_b) * cell_energy + 2 * k_a * Re(M_b(k) Q(k)^*)];
+        # vterm * k_a * k_b) * cell_energy + 2 * k_b * Re(M_a(k) Q(k)^*)];
         # its symmetrized form (average with the transpose) is eq. (46)
-        # in Aguado & Madden
+        # in Aguado & Madden. Note the cross term's indices are swapped
+        # relative to the strain probe that produces it (probing
+        # epsilon_ab yields a term proportional to k_a Re[M_b Q*], which
+        # belongs at tensor position (b, a) -- see the class-level
+        # comment on long_range_pressure() in dp3m_heffte.impl.hpp for
+        # the derivation): a pair virial is conventionally r_a F_b, but
+        # differentiating the reciprocal energy under the strain probe
+        # H(eps) = L*I + eps*E_ab yields r_b F_a.
         reference = np.zeros((3, 3))
         for a in range(3):
             for b in range(3):
                 diag = cell_energy if a == b else 0.
                 envelope = cell_energy * vterm * kvecs[:, a] * kvecs[:, b]
-                re_Mb_Qc = (M[:, b] * np.conj(Q)).real
-                cross = 2. * kvecs[:, a] * re_Mb_Qc
+                re_Ma_Qc = (M[:, a] * np.conj(Q)).real
+                cross = 2. * kvecs[:, b] * re_Ma_Qc
                 reference[a, b] = np.sum(g * (diag + envelope + cross))
         reference *= (2. * np.pi / volume**2) * prefactor
 
@@ -379,11 +380,14 @@ class VirialPressureConsistency(ut.TestCase):
         pairs to make that moment exactly zero and remove the
         ambiguity.
 
-        That does not fix the *antisymmetric* (torque-related) part
-        of the pressure tensor, though: it has its own
-        boundary-dependent term that isn't controlled by the net
-        dipole moment, so it is not compared here -- only the
-        symmetric part and the trace are.
+        This also compares the *antisymmetric* (torque-related) part of
+        the pressure tensor. Unlike the symmetric part, it has no
+        boundary/shape ambiguity to begin with: the de Leeuw-Perram-Smith
+        term is an isotropic function of the net dipole moment alone (no
+        dependence on individual particle positions), so it can only ever
+        contribute to the trace, never to any off-diagonal component --
+        symmetric or antisymmetric. So DP3M and DirectSum must agree on
+        the antisymmetric part directly, independent of net dipole moment.
         """
         system = self.system
         system.part.clear()
@@ -414,11 +418,18 @@ class VirialPressureConsistency(ut.TestCase):
 
         sym_p3m = (pressure_p3m + pressure_p3m.T) / 2.
         sym_dds = (pressure_dds + pressure_dds.T) / 2.
+        antisym_p3m = (pressure_p3m - pressure_p3m.T) / 2.
+        antisym_dds = (pressure_dds - pressure_dds.T) / 2.
         scale = np.max(np.abs(sym_p3m))
+
+        # sanity check: the antisymmetric part must not vanish, otherwise
+        # the comparison below would hold vacuously
+        self.assertGreater(np.max(np.abs(antisym_p3m)), 1e-3 * scale)
 
         np.testing.assert_allclose(
             np.trace(pressure_dds), np.trace(pressure_p3m), rtol=1e-2)
         np.testing.assert_allclose(sym_dds, sym_p3m, atol=0.02 * scale)
+        np.testing.assert_allclose(antisym_dds, antisym_p3m, atol=0.02 * scale)
 
 
 if __name__ == "__main__":

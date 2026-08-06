@@ -337,30 +337,33 @@ void DipolarP3MState<FloatType, FFTConfig>::resize_heffte_buffers() {
  *  \f$\vec M(\vec k) = \sum_j \vec \mu_j \exp(i\vec k\cdot\vec r_j)\f$.
  *  Unlike the charge structure factor, \f$Q(\vec k)\f$ depends on
  *  \f$\vec k\f$ explicitly (not only through the phase factor), which
- *  produces an extra cross term
- *  \f$2 k_a\Re[M_b(\vec k)Q(\vec k)^*]\f$ beyond the charge-case
- *  \f$k_a k_b\f$ envelope. This cross term is generally asymmetric in
- *  \f$(a,b)\f$: its symmetric half,
- *  \f$k_a\Re[M_b Q^*] + k_b\Re[M_a Q^*]\f$, is the dipole-dipole
- *  reciprocal-space pressure tensor eq. (46) in @cite aguado03a (their
- *  \f$\vec h\f$, \f$\kappa\f$ correspond to \f$\vec k\f$, \f$\alpha\f$
- *  here), which only ever reports that symmetrized form. The remaining
- *  antisymmetric half, \f$k_a\Re[M_bQ^*] - k_b\Re[M_aQ^*]\f$, is not in
- *  that reference -- it is the reciprocal-space image of the same
+ *  produces an extra cross term beyond the charge-case \f$k_a k_b\f$
+ *  envelope. This cross term is generally asymmetric in \f$(a,b)\f$: its
+ *  symmetric half, \f$k_a\Re[M_b Q^*] + k_b\Re[M_a Q^*]\f$, is the
+ *  dipole-dipole reciprocal-space pressure tensor eq. (46) in
+ *  @cite aguado03a (their \f$\vec h\f$, \f$\kappa\f$ correspond to
+ *  \f$\vec k\f$, \f$\alpha\f$ here), which only ever reports that
+ *  symmetrized form. The remaining antisymmetric half is not in that
+ *  reference -- it is the reciprocal-space image of the same
  *  dipole-dipole torque that already makes the real-space virial
  *  asymmetric (see @ref DipolarDirectSum::long_range_pressure and
  *  DipolarP3M::pair_force in dp3m.hpp), derived here by differentiating
  *  the reciprocal energy directly (via the strain parametrization
  *  \f$H(\varepsilon)=LI+\varepsilon E_{ab}\f$) instead of presupposing a
- *  symmetric result; the antisymmetric part does not cancel between
- *  \f$\vec k\f$ and \f$-\vec k\f$ (both terms contribute with the same
- *  sign, since \f$Q(-\vec k)=Q(\vec k)^*\f$), so it survives the full
- *  lattice sum computed here and is included below alongside the
- *  symmetric part. Unlike long_range_kernel(), this does not include the
- *  volume-dependent \c energy_correction term (the Madelung-self
- *  mesh-discretization correction added to the energy); its omitted
- *  contribution to the virial is expected to be of the same order as the
- *  mesh error already accepted by the P3M tuning target.
+ *  symmetric result.
+ *
+ *  Care is needed with the index convention: probing the strain component
+ *  \f$\varepsilon_{ab}\f$ (i.e. \f$H(\varepsilon)=LI+\varepsilon E_{ab}\f$)
+ *  yields \f$-\partial U/\partial\varepsilon_{ab} = r_b F_a\f$ for a pair
+ *  separation \f$\vec r\f$ and force \f$\vec F\f$ -- the *transpose* of the
+ *  \f$r_a F_b\f$ (@ref Utils::tensor_product "d (x) f") convention used by
+ *  the real-space term and by @ref DipolarDirectSum::long_range_pressure.
+ *  Concretely, differentiating \f$Q(\vec k)=\vec k\cdot\vec M\f$ gives a
+ *  cross-term contribution to \f$-\partial U/\partial\varepsilon_{ab}\f$
+ *  proportional to \f$k_a\Re[M_bQ^*]\f$; to match the \f$r_aF_b\f$
+ *  convention, this must be stored as the \f$(b,a)\f$ tensor component,
+ *  i.e. \f$\Pi_{ab}\f$ gets cross term \f$2k_b\Re[M_aQ^*]\f$ (indices
+ *  swapped relative to the strain probe that produced it).
  */
 template <typename FloatType, Arch Architecture, class FFTConfig>
 Utils::Vector9d
@@ -426,30 +429,30 @@ DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_pressure() {
         auto const Rz = g * static_cast<double>(Mz_re * Q_re + Mz_im * Q_im);
 
         // Full (generally asymmetric) tensor: Pi_ab = cell_energy * (delta_ab
-        // + vterm * k_a * k_b) + 2 * k_a * R_b. The symmetric combination
-        // (R_a k_b + R_b k_a)/2 recovers the literature (Aguado & Madden,
-        // eq. 46) result; the leftover antisymmetric part, (R_b k_a - R_a
-        // k_b)/2, is the k-space image of the same dipolar-torque signature
-        // that already makes the real-space term asymmetric (see
-        // dipolar_direct_sum.cpp / dp3m.hpp) -- see the class-level comment
-        // above for the derivation. Off-diagonal components are therefore
-        // accumulated individually instead of being mirrored.
+        // + vterm * k_a * k_b) + 2 * k_b * R_a (note: indices of the cross
+        // term are swapped relative to the strain probe that produces it --
+        // see the class-level comment above for the derivation). The
+        // symmetric combination (R_a k_b + R_b k_a)/2 recovers the
+        // literature (Aguado & Madden, eq. 46) result; the leftover
+        // antisymmetric part is the k-space image of the same
+        // dipolar-torque signature that already makes the real-space term
+        // asymmetric (see dipolar_direct_sum.cpp / dp3m.hpp).
         node_k_space_pressure_tensor[0u] +=
             cell_energy * (1. + vterm * kx * kx) + 2. * nx * Rx; /* xx */
         node_k_space_pressure_tensor[1u] +=
-            cell_energy * vterm * kx * ky + 2. * nx * Ry; /* xy */
+            cell_energy * vterm * kx * ky + 2. * ny * Rx; /* xy */
         node_k_space_pressure_tensor[2u] +=
-            cell_energy * vterm * kx * kz + 2. * nx * Rz; /* xz */
+            cell_energy * vterm * kx * kz + 2. * nz * Rx; /* xz */
         node_k_space_pressure_tensor[3u] +=
-            cell_energy * vterm * ky * kx + 2. * ny * Rx; /* yx */
+            cell_energy * vterm * ky * kx + 2. * nx * Ry; /* yx */
         node_k_space_pressure_tensor[4u] +=
             cell_energy * (1. + vterm * ky * ky) + 2. * ny * Ry; /* yy */
         node_k_space_pressure_tensor[5u] +=
-            cell_energy * vterm * ky * kz + 2. * ny * Rz; /* yz */
+            cell_energy * vterm * ky * kz + 2. * nz * Ry; /* yz */
         node_k_space_pressure_tensor[6u] +=
-            cell_energy * vterm * kz * kx + 2. * nz * Rx; /* zx */
+            cell_energy * vterm * kz * kx + 2. * nx * Rz; /* zx */
         node_k_space_pressure_tensor[7u] +=
-            cell_energy * vterm * kz * ky + 2. * nz * Ry; /* zy */
+            cell_energy * vterm * kz * ky + 2. * ny * Rz; /* zy */
         node_k_space_pressure_tensor[8u] +=
             cell_energy * (1. + vterm * kz * kz) + 2. * nz * Rz; /* zz */
       }
