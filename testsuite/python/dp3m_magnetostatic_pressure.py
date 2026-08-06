@@ -276,7 +276,7 @@ class VirialPressureConsistency(ut.TestCase):
 
     def test_dp3m_pressure_tensor_vs_continuum_ewald(self):
         """
-        Validates the dipolar reciprocal-space pressure tensor against
+        Validate the dipolar reciprocal-space pressure tensor against
         an independent, from-scratch calculation: a direct sum over
         explicit wavevectors in Python, with no FFT, no mesh, and no
         shared code with P3M.
@@ -293,8 +293,7 @@ class VirialPressureConsistency(ut.TestCase):
         paper only reports the symmetric form; the antisymmetric part
         is derived here independently by differentiating the
         reciprocal energy under a general strain (matching the
-        derivation in ``long_range_pressure()`` in
-        dp3m_heffte.impl.hpp).
+        derivation in ``long_range_pressure()`` from DP3M).
         """
         # a tighter accuracy than the other tests in this module (which
         # use 1e-4) is requested here, letting mesh/cao auto-tune to a
@@ -345,7 +344,7 @@ class VirialPressureConsistency(ut.TestCase):
         # relative to the strain probe that produces it (probing
         # epsilon_ab yields a term proportional to k_a Re[M_b Q*], which
         # belongs at tensor position (b, a) -- see the class-level
-        # comment on long_range_pressure() in dp3m_heffte.impl.hpp for
+        # comment on ``long_range_pressure()`` in ``dp3m_heffte.impl.hpp`` for
         # the derivation): a pair virial is conventionally r_a F_b, but
         # differentiating the reciprocal energy under the strain probe
         # H(eps) = L*I + eps*E_ab yields r_b F_a.
@@ -364,7 +363,7 @@ class VirialPressureConsistency(ut.TestCase):
 
     def test_dp3m_pressure_tensor_vs_direct_sum(self):
         """
-        Cross-checks the total dipolar pressure tensor against an
+        Check the total dipolar pressure tensor against an
         independent solver,
         :class:`~espressomd.magnetostatics.DipolarDirectSum`,
         exercising its C++ periodic-image summation end to end --
