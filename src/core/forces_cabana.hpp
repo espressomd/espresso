@@ -408,7 +408,7 @@ template <bool HasCoulomb> struct SpecializedForcesKernel {
 #endif
 #endif
 
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void
   operator()(std::size_t const i) const {
     auto const n_neighbors = counts(i);
     if (n_neighbors == 0)
@@ -438,7 +438,9 @@ template <bool HasCoulomb> struct SpecializedForcesKernel {
     double dx0[tile_size], dx1[tile_size], dx2[tile_size], dsq[tile_size];
 
     for (int base = 0; base < n_neighbors; base += tile_size) {
-      auto const m = Kokkos::min(tile_size, n_neighbors - base);
+      // ``+tile_size`` creates a prvalue and avoids an ODR-use of a host-space
+      // variable from device code (Kokkos::min() takes arguments by const &T)
+      auto const m = Kokkos::min(+tile_size, n_neighbors - base);
 
       // Pass 1: scalar gather of the tile's neighbor positions.
       for (int t = 0; t < m; ++t) {
