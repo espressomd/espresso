@@ -547,7 +547,6 @@ def _unpickle_so_class(so_name, state):
         f"C++ class '{so_name}' is not associated to any Python class " \
         "(hint: the corresponding 'import espressomd.*' may be missing)"
     so = _python_class_by_so_name[so_name](sip=so_ptr)
-    so.define_bound_methods()
 
     return so
 
@@ -556,18 +555,51 @@ class ScriptInterfaceHelper(PScriptInterface):
     _so_name = None
     _so_features = ()
     _so_bind_methods = ()
+    _so_features_error = None
     _so_checkpointable = True
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, **kwargs):
-        cdef vector[string] features_vec
-        if self._so_features:
-            for feature in self._so_features:
-                features_vec.push_back(utils.to_bytes(feature))
-            check_features(features_vec)
+        if self._so_features_error:
+            raise RuntimeError(self._so_features_error)
         super().__init__(self._so_name, policy=self._so_creation_policy,
                          **kwargs)
-        self.define_bound_methods()
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        for method_name in cls._so_bind_methods:
+            cls._install_bound_method(method_name)
+
+        cdef vector[string] features_vec
+        if cls._so_features:
+            for feature in cls._so_features:
+                features_vec.push_back(feature.encode())
+            msg = utils.to_str(check_features_msg(features_vec))
+            if msg:
+                cls._so_features_error = msg
+
+    @classmethod
+    def _install_bound_method(cls, method_name):
+        """
+        Bind C++ methods declared in ``_so_bind_methods`` to the Python class.
+        This factory method compiles a code object whose ``co_name`` is the
+        method name. It would be easier to declare a local Python function,
+        but it would inherit the code object of the current scope, and code
+        profilers would make this factory method ``_install_bound_method``
+        appear in the traceback of every call to ``call_method``, which would
+        be confusing to new developers and AI coding agents. By binding a
+        distinct code object, the traceback features the correct method name.
+        """
+        assert method_name.isidentifier(), f"{method_name!r} isn't a suitable name for a function"  # nopep8
+        filename = f"<espressomd bound method: {cls.__qualname__}.{method_name}>"  # nopep8
+        src = (f"def {method_name}(self, **kwargs):\n"
+               f"    return self.call_method({method_name.encode()!r}, **kwargs)\n")
+        namespace = {}
+        exec(compile(src, filename, "exec"), namespace)
+        fn = namespace[method_name]
+        fn.__qualname__ = f"{cls.__qualname__}.{method_name}"
+        fn.__module__ = cls.__module__
+        setattr(cls, method_name, fn)
 
     def __reduce__(self):
         assert self._so_checkpointable, f"Class '{self.__class__.__name__}' doesn't support checkpointing"  # nopep8
@@ -597,17 +629,6 @@ class ScriptInterfaceHelper(PScriptInterface):
             raise RuntimeError(f"Parameter '{attr}' is read-only")
         else:
             super().__delattr__(attr)
-
-    def generate_caller(self, method_name):
-        def template_method(**kwargs):
-            res = self.call_method(method_name, **kwargs)
-            return res
-
-        return template_method
-
-    def define_bound_methods(self):
-        for method_name in self._so_bind_methods:
-            setattr(self, method_name, self.generate_caller(method_name))
 
 
 class ScriptObjectList(ScriptInterfaceHelper):
