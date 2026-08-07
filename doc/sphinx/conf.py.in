@@ -294,6 +294,7 @@ def _resolve_class(obj):
     return owner if isinstance(owner, type) else None
 
 
+# pylint: disable=unused-argument
 def skip_duplicate_bound_methods(app, what, name, obj, skip, options):
     """
     Let ``sphinx.ext.napoleon`` be the single source for documented bound methods.
