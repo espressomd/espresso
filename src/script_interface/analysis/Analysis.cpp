@@ -314,6 +314,10 @@ Variant Analysis::do_call_method(std::string const &name,
   if (name == "calculate_pressure_tensor") {
     return m_obs_stat->do_call_method("calculate_pressure_tensor", {});
   }
+  if (name == "_observable_stat_test_fallthrough") {
+    // this is only exposed for unit testing purposes
+    return m_obs_stat->do_call_method("unknown", {});
+  }
 #ifdef ESPRESSO_NPT
   if (name == "get_instantaneous_pressure") {
     return get_system().npt_inst_pressure->p_inst[0];

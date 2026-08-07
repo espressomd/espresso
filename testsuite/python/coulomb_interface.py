@@ -188,6 +188,9 @@ class Test(ut.TestCase):
         if espressomd.has_features(["CUDA"]) and espressomd.gpu_available():
             with self.assertRaisesRegex(ValueError, "P3M GPU only implemented in single-precision mode"):
                 P3M(single_precision=False, gpu=True, **p3m_params)
+        if not espressomd.has_features(["CUDA"]):
+            with self.assertRaisesRegex(RuntimeError, "Missing features CUDA"):
+                P3M(single_precision=True, gpu=True, **p3m_params)
         with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Coulomb::ElectrostaticLayerCorrection isn't supported by ELC"):
             ELC(gap_size=2., maxPWerror=1., actor=elc)
         with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Coulomb::DebyeHueckel isn't supported by ELC"):
