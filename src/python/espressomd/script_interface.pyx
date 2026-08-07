@@ -254,108 +254,127 @@ def fast_tiling(value, n):
 cdef Variant python_object_to_variant(value) except *:
     """Convert Python objects to C++ Variant objects."""
 
+    # The order is important, the object character should
+    # be preserved even if the PScriptInterface derived class
+    # is iterable
+    if value is None:
+        return Variant()
+    if isinstance(value, np.ndarray) and value.ndim == 0:
+        value = value.item()
+    if isinstance(value, (bool, np.bool_)):
+        return make_variant[cbool](value)
+    if isinstance(value, int):
+        return make_variant[int](value)
+    if isinstance(value, float):
+        return make_variant[double](value)
+    if isinstance(value, PScriptInterface):
+        return make_variant(( < PObjectRef > value.get_sip()).sip)
+    if isinstance(value, (str, bytes, np.bytes_)):
+        return make_variant[string](utils.to_bytes(value))
+    if isinstance(value, pathlib.Path):
+        return make_variant[path](path(str(value).encode()))
+    if isinstance(value, dict):
+        return _dict_object_to_variant(value)
+    if isinstance(value, np.ndarray):
+        return _numpy_object_to_variant(value)
+    return _python_object_to_variant_non_trivial_cases(value)
+
+
+cdef Variant _dict_object_to_variant(value) except *:
+    cdef unordered_map[int, Variant] map_int2var
+    cdef unordered_map[string, Variant] map_str2var
+    if all(map(lambda x: isinstance(x, (int, np.integer)), value.keys())):
+        for key, value in value.items():
+            map_int2var[int(key)] = python_object_to_variant(value)
+        return make_variant[unordered_map[int, Variant]](map_int2var)
+    if all(map(lambda x: isinstance(x, (str, bytes)), value.keys())):
+        for key, value in value.items():
+            key_bytes = utils.to_bytes(key)
+            map_str2var[key_bytes] = python_object_to_variant(value)
+        return make_variant[unordered_map[string, Variant]](map_str2var)
+    for k, v in value.items():
+        if not isinstance(k, (str, bytes, int, np.integer)):
+            raise TypeError(
+                f"No conversion from type "
+                f"'dict_item([({type(k).__name__}, {type(v).__name__})])'"
+                f" to 'Variant[std::unordered_map<int, Variant>]' or"
+                f" to 'Variant[std::unordered_map<std::string, Variant>]'")
+    raise AssertionError("dev note: a type is missing in the for loop above")
+
+
+cdef Variant _numpy_object_to_variant(value) except *:
     cdef vector[Variant] vec_variant
     cdef vector[int] vec_int
     cdef vector[double] vec_double
-    cdef unordered_map[int, Variant] map_int2var
-    cdef unordered_map[string, Variant] map_str2var
-    cdef PObjectRef oref
     cdef int[::1] view_int
     cdef int[:, ::1] view_int_2d
     cdef int * data_int
     cdef double[::1] view_double
     cdef double[:, ::1] view_double_2d
     cdef double * data_double
-    cdef path fs_path
     cdef size_t index
     cdef size_t nrows
+    cdef size_t bufsize
+
+    if isinstance(value, array_variant):
+        if value.dtype.kind == "i":
+            view_int = np.ascontiguousarray(value, dtype=np.int32)
+            data_int = &view_int[0]
+            vec_int.assign(data_int, data_int + len(view_int))
+            return make_variant[vector[int]](vec_int)
+        if value.dtype.kind == "f":
+            view_double = np.ascontiguousarray(value, dtype=np.float64)
+            data_double = &view_double[0]
+            vec_double.assign(data_double, data_double + len(view_double))
+            return make_variant[vector[double]](vec_double)
+    if value.ndim == 1:
+        if value.dtype.kind == "f":
+            vec_double.reserve(len(value))
+            for e in value:
+                vec_double.push_back(e)
+            return make_variant[vector[double]](vec_double)
+        if value.dtype.kind == "i":
+            vec_int.reserve(len(value))
+            for e in value:
+                vec_int.push_back(e)
+            return make_variant[vector[int]](vec_int)
+    if value.ndim == 2:
+        if value.dtype.kind == "i":
+            nrows = value.shape[0]
+            bufsize = value.shape[1]
+            vec_variant.reserve(nrows)
+            vec_int.reserve(bufsize)
+            view_int_2d = np.ascontiguousarray(value, dtype=np.int32)
+            for index in range(nrows):
+                data_int = &view_int_2d[index, 0]
+                vec_int.assign(data_int, data_int + bufsize)
+                vec_variant.emplace_back(
+                    make_variant[vector[int]](vec_int))
+            return make_variant[vector[Variant]](vec_variant)
+        if value.dtype.kind == "f":
+            nrows = value.shape[0]
+            bufsize = value.shape[1]
+            vec_variant.reserve(nrows)
+            vec_double.reserve(bufsize)
+            view_double_2d = np.ascontiguousarray(value, dtype=np.float64)
+            for index in range(nrows):
+                data_double = &view_double_2d[index, 0]
+                vec_double.assign(data_double, data_double + bufsize)
+                vec_variant.emplace_back(
+                    make_variant[vector[double]](vec_double))
+            return make_variant[vector[Variant]](vec_variant)
+
+    return _python_object_to_variant_non_trivial_cases(value)
+
+
+cdef Variant _python_object_to_variant_non_trivial_cases(value) except *:
+    cdef vector[Variant] vec_variant
+    cdef vector[int] vec_int
+    cdef vector[double] vec_double
     cdef size_t bufsize
     cdef Vector3d vector3d
     cdef Vector3i vector3i
 
-    if value is None:
-        return Variant()
-
-    if isinstance(value, np.ndarray) and value.ndim == 0:
-        value = value.item()
-
-    # The order is important, the object character should
-    # be preserved even if the PScriptInterface derived class
-    # is iterable.
-    if isinstance(value, PScriptInterface):
-        oref = value.get_sip()
-        return make_variant(oref.sip)
-    if isinstance(value, dict):
-        if all(map(lambda x: isinstance(x, (int, np.integer)), value.keys())):
-            for key, value in value.items():
-                map_int2var[int(key)] = python_object_to_variant(value)
-            return make_variant[unordered_map[int, Variant]](map_int2var)
-        if all(map(lambda x: isinstance(x, (str, bytes)), value.keys())):
-            for key, value in value.items():
-                key_bytes = utils.to_bytes(key)
-                map_str2var[key_bytes] = python_object_to_variant(value)
-            return make_variant[unordered_map[string, Variant]](map_str2var)
-        for k, v in value.items():
-            if not isinstance(k, (str, bytes, int, np.integer)):
-                raise TypeError(
-                    f"No conversion from type "
-                    f"'dict_item([({type(k).__name__}, {type(v).__name__})])'"
-                    f" to 'Variant[std::unordered_map<int, Variant>]' or"
-                    f" to 'Variant[std::unordered_map<std::string, Variant>]'")
-        assert False, "dev note: a type is missing in the for loop above"
-    if isinstance(value, (str, bytes)):
-        return make_variant[string](utils.to_bytes(value))
-    if isinstance(value, pathlib.Path):
-        fs_path.assign(utils.to_bytes(str(value)))
-        return make_variant[path](fs_path)
-    if isinstance(value, np.ndarray):
-        if isinstance(value, array_variant):
-            if np.issubdtype(value.dtype, np.signedinteger):
-                view_int = np.ascontiguousarray(value, dtype=np.int32)
-                data_int = &view_int[0]
-                vec_int.assign(data_int, data_int + len(view_int))
-                return make_variant[vector[int]](vec_int)
-            if np.issubdtype(value.dtype, np.floating):
-                view_double = np.ascontiguousarray(value, dtype=np.float64)
-                data_double = &view_double[0]
-                vec_double.assign(data_double, data_double + len(view_double))
-                return make_variant[vector[double]](vec_double)
-        if value.ndim == 1:
-            if np.issubdtype(value.dtype, np.floating):
-                vec_double.reserve(len(value))
-                for e in value:
-                    vec_double.push_back(e)
-                return make_variant[vector[double]](vec_double)
-            if np.issubdtype(value.dtype, np.signedinteger):
-                vec_int.reserve(len(value))
-                for e in value:
-                    vec_int.push_back(e)
-                return make_variant[vector[int]](vec_int)
-        if value.ndim == 2:
-            if np.issubdtype(value.dtype, np.signedinteger):
-                nrows = value.shape[0]
-                bufsize = value.shape[1]
-                vec_variant.reserve(nrows)
-                vec_int.reserve(bufsize)
-                view_int_2d = np.ascontiguousarray(value, dtype=np.int32)
-                for index in range(nrows):
-                    data_int = &view_int_2d[index, 0]
-                    vec_int.assign(data_int, data_int + bufsize)
-                    vec_variant.emplace_back(
-                        make_variant[vector[int]](vec_int))
-                return make_variant[vector[Variant]](vec_variant)
-            if np.issubdtype(value.dtype, np.floating):
-                nrows = value.shape[0]
-                bufsize = value.shape[1]
-                vec_variant.reserve(nrows)
-                vec_double.reserve(bufsize)
-                view_double_2d = np.ascontiguousarray(value, dtype=np.float64)
-                for index in range(nrows):
-                    data_double = &view_double_2d[index, 0]
-                    vec_double.assign(data_double, data_double + bufsize)
-                    vec_variant.emplace_back(
-                        make_variant[vector[double]](vec_double))
-                return make_variant[vector[Variant]](vec_variant)
     if hasattr(value, "__iter__"):
         bufsize = len(value)
         if bufsize == 0:
@@ -383,8 +402,6 @@ cdef Variant python_object_to_variant(value) except *:
         for e in value:
             vec_variant.emplace_back(python_object_to_variant(e))
         return make_variant[vector[Variant]](vec_variant)
-    if isinstance(value, (type(True), np.bool_)):
-        return make_variant[cbool](value)
     if np.issubdtype(np.dtype(type(value)), np.signedinteger):
         return make_variant[int](value)
     if np.issubdtype(np.dtype(type(value)), np.floating):
@@ -396,6 +413,30 @@ cdef Variant python_object_to_variant(value) except *:
 cdef variant_to_python_object(const Variant & value):
     """Convert C++ Variant objects to Python objects."""
 
+    # handle inexpensive types first
+    if is_none(value):
+        return None
+    if is_type[cbool](value):
+        return get_value[cbool](value)
+    if is_type[size_t](value):
+        return get_value[size_t](value)
+    if is_type[int](value):
+        return get_value[int](value)
+    if is_type[double](value):
+        return get_value[double](value)
+    if is_type[string](value):
+        return utils.to_str(get_value[string](value))
+    if is_type[path](value):
+        filepath = utils.to_str(get_value[path](value).generic_string())
+        return pathlib.Path(filepath)
+    if is_type[vector[int]](value):
+        return get_value[vector[int]](value)
+    if is_type[vector[double]](value):
+        return np.array(get_value[vector[double]](value))
+
+    return variant_to_python_object_non_trivial_cases(value)
+
+cdef variant_to_python_object_non_trivial_cases(const Variant & value):
     cdef vector[Variant] vec
     cdef unordered_map[int, Variant] map_int2var
     cdef unordered_map[string, Variant] map_str2var
@@ -410,35 +451,19 @@ cdef variant_to_python_object(const Variant & value):
     cdef cnp.ndarray[cnp.float64_t, ndim = 2] arrayNvec3d
     cdef size_t index
     cdef size_t nrows
-    if is_none(value):
-        return None
-    if is_type[cbool](value):
-        return get_value[cbool](value)
-    if is_type[int](value):
-        return get_value[int](value)
-    if is_type[double](value):
-        return get_value[double](value)
-    if is_type[string](value):
-        return utils.to_str(get_value[string](value))
-    if is_type[path](value):
-        filepath = utils.to_str(get_value[path](value).generic_string())
-        return pathlib.Path(filepath)
-    if is_type[vector[int]](value):
-        return get_value[vector[int]](value)
-    if is_type[vector[double]](value):
-        return np.array(get_value[vector[double]](value))
-    if is_type[Vector3b](value):
-        vec3b = get_value[Vector3b](value)
-        return utils.array_locked([vec3b[0], vec3b[1], vec3b[2]])
-    if is_type[Vector3i](value):
-        vec3i = get_value[Vector3i](value)
-        return utils.array_locked([vec3i[0], vec3i[1], vec3i[2]])
-    if is_type[Vector4d](value):
-        vec4d = get_value[Vector4d](value)
-        return utils.array_locked([vec4d[0], vec4d[1], vec4d[2], vec4d[3]])
+
     if is_type[Vector3d](value):
         vec3d = get_value[Vector3d](value)
         return utils.array_locked([vec3d[0], vec3d[1], vec3d[2]])
+    if is_type[Vector3i](value):
+        vec3i = get_value[Vector3i](value)
+        return utils.array_locked([vec3i[0], vec3i[1], vec3i[2]])
+    if is_type[Vector3b](value):
+        vec3b = get_value[Vector3b](value)
+        return utils.array_locked([vec3b[0], vec3b[1], vec3b[2]])
+    if is_type[Vector4d](value):
+        vec4d = get_value[Vector4d](value)
+        return utils.array_locked([vec4d[0], vec4d[1], vec4d[2], vec4d[3]])
     if is_type[Vector2d](value):
         vec2d = get_value[Vector2d](value)
         return utils.array_locked([vec2d[0], vec2d[1]])
@@ -508,9 +533,6 @@ cdef variant_to_python_object(const Variant & value):
                 pair_str2var.second)
 
         return res
-
-    if is_type[size_t](value):
-        return get_value[size_t](value)
 
     raise TypeError("Unknown type")
 
