@@ -643,15 +643,15 @@ class ScriptObjectList(ScriptInterfaceHelper):
     """
 
     def __getitem__(self, key):
-        return self.call_method("get_elements")[key]
+        return self.call_method(b"get_elements")[key]
 
     def __iter__(self):
-        elements = self.call_method("get_elements")
+        elements = self.call_method(b"get_elements")
         for e in elements:
             yield e
 
     def __len__(self):
-        return self.call_method("size")
+        return self.call_method(b"size")
 
 
 class ScriptObjectMap(ScriptInterfaceHelper):
@@ -677,22 +677,22 @@ class ScriptObjectMap(ScriptInterfaceHelper):
         Remove all elements.
 
         """
-        self.call_method("clear")
+        self.call_method(b"clear")
 
     def __len__(self):
-        return self.call_method("size")
+        return self.call_method(b"size")
 
     def __getitem__(self, key):
-        return self.call_method("get", key=key)
+        return self.call_method(b"get", key=key)
 
     def __setitem__(self, key, value):
-        self.call_method("insert", key=key, object=value)
+        self.call_method(b"insert", key=key, object=value)
 
     def __delitem__(self, key):
-        self.call_method("erase", key=key)
+        self.call_method(b"erase", key=key)
 
     def keys(self):
-        return self.call_method("keys")
+        return self.call_method(b"keys")
 
     def __iter__(self):
         for k in self.keys():
