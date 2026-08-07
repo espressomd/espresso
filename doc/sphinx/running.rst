@@ -1281,7 +1281,20 @@ To generate a nested graph that can be interacted with in a web browser:
 
 .. code-block:: bash
 
-    py-spy record -o profile.svg -- ./pypresso ../samples/p3m.py --cpu
+    OMP_NUM_THREADS=1 OMP_PROC_BIND=true OMP_PLACES=0 py-spy record \
+        -o profile.svg -- ./pypresso ../samples/p3m.py --cpu
+
+Use Ctrl+F in the web browser to highlight blocks matching a function name.
+Pass option ``--native`` to capture C++ function names; to get accurate traces
+with minimal overhead, build |es| with
+``-D CMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer" -D CMAKE_BUILD_TYPE=Release``.
+
+To record samples in a format that can be analyzed by AI agents, run::
+
+.. code-block:: bash
+
+    OMP_NUM_THREADS=1 OMP_PROC_BIND=true OMP_PLACES=0 py-spy record \
+        --native -f raw -o profile.folded -- ./pypresso ../samples/p3m.py --cpu
 
 ____
 

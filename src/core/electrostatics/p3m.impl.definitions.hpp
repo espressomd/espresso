@@ -58,6 +58,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "integrators/Propagation.hpp"
+#include "kokkos_helpers.hpp"
 #include "npt.hpp"
 #include "p3m/send_mesh.hpp"
 #include "particle_reduction.hpp"
@@ -386,10 +387,11 @@ template <int cao> struct AssignCharge {
   void operator()(auto &p3m, auto &cell_structure) {
     using CoulombP3MState = std::remove_reference_t<decltype(p3m)>;
     using value_type = CoulombP3MState::value_type;
+    using execution_space = Kokkos::DefaultHostExecutionSpace;
     auto const &aosoa = cell_structure.get_aosoa();
     auto const n_part = cell_structure.count_local_particles();
     p3m.inter_weights.zfill(n_part); // allocate buffer for parallel write
-    kokkos_parallel_range_for(
+    kokkos_parallel_range_for<execution_space>(
         "InterpolateCharges", std::size_t{0u}, n_part, [&](auto p_index) {
           auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
           auto const tid = omp_get_thread_num();
@@ -405,18 +407,16 @@ template <int cao> struct AssignCharge {
               });
         });
     Kokkos::fence();
-    using execution_space = Kokkos::DefaultHostExecutionSpace;
     int num_threads = execution_space().concurrency();
-    Kokkos::RangePolicy<execution_space> policy(std::size_t{0},
-                                                p3m.local_mesh.size);
-    Kokkos::parallel_for("ReduceInterpolatedCharges", policy,
-                         [&p3m, num_threads](std::size_t const i) {
-                           value_type acc{};
-                           for (int tid = 0; tid < num_threads; ++tid) {
-                             acc += p3m.rs_charge_density_kokkos(tid, i);
-                           }
-                           p3m.rs_charge_density.at(i) += acc;
-                         });
+    kokkos_parallel_range_for<execution_space>(
+        "ReduceInterpolatedCharges", std::size_t{0}, p3m.local_mesh.size,
+        [&p3m, num_threads](std::size_t const i) {
+          value_type acc{};
+          for (int tid = 0; tid < num_threads; ++tid) {
+            acc += p3m.rs_charge_density_kokkos(tid, i);
+          }
+          p3m.rs_charge_density.at(i) += acc;
+        });
     Kokkos::fence();
   }
 };
@@ -448,6 +448,7 @@ template <int cao> struct AssignForces {
                   CellStructure &cell_structure) const {
 
     assert(cao == p3m.inter_weights.cao());
+    using execution_space = Kokkos::DefaultHostExecutionSpace;
 
     auto const kernel = [&p3m](auto pref, auto &p_force, std::size_t p_index) {
       auto const weights = p3m.inter_weights.template load<cao>(p_index);
@@ -469,7 +470,7 @@ template <int cao> struct AssignForces {
     auto const n_part = cell_structure.count_local_particles();
     auto const &aosoa = cell_structure.get_aosoa();
     auto scatter_force = cell_structure.get_scatter_force();
-    kokkos_parallel_range_for(
+    kokkos_parallel_range_for<execution_space>(
         "AssignForces", std::size_t{0u}, n_part, [&](std::size_t p_index) {
           if (auto const pref = aosoa.charge(p_index) * force_prefac) {
             kernel(pref, scatter_force, p_index);
@@ -696,17 +697,18 @@ double CoulombP3MImpl<FloatType, Architecture, FFTConfig>::long_range_kernel(
     // add dipole forces
     // Eq. (3.19) @cite deserno00b
     if (box_dipole) {
+      using execution_space = Kokkos::DefaultHostExecutionSpace;
       auto const dm = prefactor * pref * box_dipole.value();
       auto const n_part = cell_structure.count_local_particles();
-      kokkos_parallel_range_for("AssignForcesBoxDipole", std::size_t{0u},
-                                n_part,
-                                [&aosoa, &scatter_force, dm](auto p_index) {
-                                  auto access = scatter_force.access();
-                                  auto const q = aosoa.charge(p_index);
-                                  access(p_index, 0) -= q * dm[0];
-                                  access(p_index, 1) -= q * dm[1];
-                                  access(p_index, 2) -= q * dm[2];
-                                });
+      kokkos_parallel_range_for<execution_space>(
+          "AssignForcesBoxDipole", std::size_t{0u}, n_part,
+          [&aosoa, &scatter_force, dm](auto p_index) {
+            auto access = scatter_force.access();
+            auto const q = aosoa.charge(p_index);
+            access(p_index, 0) -= q * dm[0];
+            access(p_index, 1) -= q * dm[1];
+            access(p_index, 2) -= q * dm[2];
+          });
     }
   }
 

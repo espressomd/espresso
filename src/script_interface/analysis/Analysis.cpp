@@ -137,8 +137,8 @@ Variant Analysis::do_call_method(std::string const &name,
     return Utils::Mpi::reduce_optional(context()->get_comm(), local);
   }
   if (name == "potential_energy") {
-    auto const obs = get_system().calculate_energy();
-    return obs->accumulate(-(obs->kinetic_lin[0] + obs->kinetic_rot[0]));
+    auto const &obs = get_system().calculate_energy();
+    return obs.accumulate(-(obs.kinetic_lin[0] + obs.kinetic_rot[0]));
   }
   if (name == "particle_neighbor_pids") {
     auto &system = get_system();
@@ -318,6 +318,10 @@ Variant Analysis::do_call_method(std::string const &name,
   }
   if (name == "calculate_pressure_tensor") {
     return m_obs_stat->do_call_method("calculate_pressure_tensor", {});
+  }
+  if (name == "_observable_stat_test_fallthrough") {
+    // this is only exposed for unit testing purposes
+    return m_obs_stat->do_call_method("unknown", {});
   }
 #ifdef ESPRESSO_NPT
   if (name == "get_instantaneous_pressure") {
