@@ -57,7 +57,7 @@ public:
    * @param level Severity filter.
    * @return Number of messages that match the filter.
    */
-  int count(RuntimeError::ErrorLevel level);
+  int count_local(RuntimeError::ErrorLevel level);
 
   /**
    * @brief Reset error messages.

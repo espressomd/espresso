@@ -25,6 +25,7 @@
 #include "BoxGeometry.hpp"
 #include "GpuParticleData.hpp"
 #include "LocalBox.hpp"
+#include "Observable_stat.hpp"
 #include "PropagationMode.hpp"
 #include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"

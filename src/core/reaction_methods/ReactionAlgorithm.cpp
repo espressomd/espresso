@@ -669,9 +669,9 @@ void ReactionAlgorithm::setup_bookkeeping_of_empty_pids() {
 
 double ReactionAlgorithm::calculate_potential_energy() const {
   auto &system = System::get_system();
-  auto const obs = system.calculate_energy();
-  auto const kinetic_energy = obs->kinetic_lin[0] + obs->kinetic_rot[0];
-  auto pot = obs->accumulate(-kinetic_energy);
+  auto const &obs = system.calculate_energy();
+  auto const kinetic_energy = obs.kinetic_lin[0] + obs.kinetic_rot[0];
+  auto pot = obs.accumulate(-kinetic_energy);
   boost::mpi::broadcast(m_comm, pot, 0);
   return pot;
 }

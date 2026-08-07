@@ -27,6 +27,7 @@ import pathlib
 from . import utils
 from .utils cimport Vector3b, Vector3i, Vector2d, Vector3d, Vector4d
 from .utils cimport path
+from .utils cimport mpi_poll_runtime_messages
 cimport cpython.object
 cnp.import_array()
 
@@ -104,7 +105,7 @@ cdef class PScriptInterface:
             self.set_sip(
                 _om.get().make_shared(
                     policy_,
-                    utils.to_bytes(name),
+                    name.encode(),
                     out_params))
             utils.handle_errors(f"Raised during instantiation of '{name}'")
 
@@ -153,7 +154,7 @@ cdef class PScriptInterface:
 
         Parameters
         ----------
-        method : :obj:`str`
+        method : :obj:`str` or :obj:`bytes`
             Name of the core method.
         handle_errors_message : :obj:`str`, optional
             Custom error message for runtime errors raised in a MPI context.
@@ -171,7 +172,9 @@ cdef class PScriptInterface:
 
         # the internal buffer of a cython bytestring object can be accessed as
         # a raw char pointer, but then the bytestring object must be kept alive
-        method_name_bytes_counted_reference = utils.to_bytes(method)
+        method_name_bytes_counted_reference = method
+        if not type(method) is bytes:
+            method_name_bytes_counted_reference = utils.to_bytes(method)
         cdef char * method_name_char = method_name_bytes_counted_reference
 
         if with_nogil:
@@ -180,9 +183,10 @@ cdef class PScriptInterface:
         else:
             result = handle.call_method(method_name_char, parameters)
         result_py = variant_to_python_object(result)
-        if handle_errors_message is None:
-            handle_errors_message = f"Raised while calling method {method}()"
-        utils.handle_errors(handle_errors_message)
+        if mpi_poll_runtime_messages():
+            if handle_errors_message is None:
+                handle_errors_message = f"Raised while calling method {method_name_bytes_counted_reference.decode()}()"  # nopep8
+            utils.handle_errors(handle_errors_message)
         return result_py
 
     def name(self):
@@ -219,10 +223,8 @@ cdef class PScriptInterface:
 
 
 class array_variant(np.ndarray):
-
     """
     Returns a numpy.ndarray that will be serialized as a ``std::vector``.
-
     """
 
     def __new__(cls, input_array):

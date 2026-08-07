@@ -29,6 +29,7 @@
 #include "cell_system/CellStructure.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "integrators/Propagation.hpp"
+#include "kokkos_helpers.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -48,18 +49,32 @@
 #include <cstddef>
 #include <memory>
 
+struct PressureObservable {
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+  std::unique_ptr<Observable_stat> observable;
+  Kokkos::View<double **, Kokkos::LayoutRight, execution_space> local;
+};
+
 namespace System {
-std::shared_ptr<Observable_stat> System::calculate_pressure() {
 
-  auto obs_pressure_ptr = std::make_shared<Observable_stat>(
-      9ul, static_cast<std::size_t>(bonded_ias->get_next_key()),
-      nonbonded_ias->get_max_seen_particle_type());
+Observable_stat const &System::calculate_pressure() {
 
-  if (long_range_interactions_sanity_checks()) {
-    return obs_pressure_ptr;
+  if (not m_obs_pressure) {
+    auto const n_threads = PressureObservable::execution_space{}.concurrency();
+    m_obs_pressure = std::make_shared<PressureObservable>();
+    m_obs_pressure->observable = std::make_unique<Observable_stat>(9ul, 0ul, 0);
+    m_obs_pressure->local =
+        decltype(m_obs_pressure->local)("local_pressure", n_threads, 9ul);
   }
 
-  auto &obs_pressure = *obs_pressure_ptr;
+  auto &local_pressure = m_obs_pressure->local;
+  auto &obs_pressure = *m_obs_pressure->observable;
+  obs_pressure.reset(static_cast<std::size_t>(bonded_ias->get_next_key()),
+                     nonbonded_ias->get_max_seen_particle_type());
+
+  if (long_range_interactions_sanity_checks()) {
+    return obs_pressure;
+  }
 
   on_observable_calc();
 
@@ -96,8 +111,11 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
       std::size_t(nonbonded_ias->get_max_seen_particle_type() + 1)};
 
   using exec = Kokkos::DefaultHostExecutionSpace;
-  Kokkos::View<double **, Kokkos::LayoutRight, exec> local_pressure(
-      "local_pressure", exec().concurrency(), layout.total * 9);
+  if (local_pressure.extent(1) != layout.total * 9ul) {
+    Kokkos::realloc(Kokkos::WithoutInitializing, local_pressure,
+                    exec{}.concurrency(), layout.total * 9ul);
+  }
+  kokkos_deep_copy(exec{}, local_pressure, 0.);
 
   auto const &unique_particles = cell_structure->get_unique_particles();
   auto const n_particles = unique_particles.size();
@@ -182,6 +200,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
   obs_pressure.rescale(volume);
 
   obs_pressure.mpi_reduce();
-  return obs_pressure_ptr;
+  return obs_pressure;
 }
+
 } // namespace System

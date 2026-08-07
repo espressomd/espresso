@@ -209,7 +209,6 @@ private:
   std::unique_ptr<ListType> m_verlet_list_cabana;
   /** particle properties using individual Kokkos Views */
   std::unique_ptr<AoSoA_pack> m_aosoa;
-  /** The local id-to-index for aosoa data */
   std::vector<Particle *> m_unique_particles;
   std::shared_ptr<KokkosHandle> m_kokkos_handle;
 

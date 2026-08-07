@@ -27,12 +27,14 @@
 
 #include "magnetostatics/dp3m.hpp"
 
-#include "communication.hpp"
 #include "p3m/FFTBackendLegacy.hpp"
 #include "p3m/FFTBuffersLegacy.hpp"
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
 #include "p3m/interpolation.hpp"
+
+#include "communication.hpp"
+#include "kokkos_helpers.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -239,7 +241,7 @@ private:
     auto const num_threads = execution_space().concurrency();
     Kokkos::realloc(Kokkos::WithoutInitializing, dp3m.rs_fields_kokkos,
                     num_threads, 3, dp3m.local_mesh.size);
-    Kokkos::deep_copy(dp3m.rs_fields_kokkos, FloatType{0});
+    kokkos_deep_copy(execution_space{}, dp3m.rs_fields_kokkos, FloatType{0});
     for (auto &rs_mesh_field : dp3m.mesh.rs_fields) {
       std::ranges::fill(rs_mesh_field, FloatType{0});
     }
