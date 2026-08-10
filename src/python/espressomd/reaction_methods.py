@@ -421,8 +421,9 @@ class ReactionAlgorithm:
                 self.params_boundaries["slab_start_z"]
             return float(np.prod(box_l))
         if self.constraint_type == "cylinder":
-            return 2. * np.pi * \
-                self.params_boundaries["radius"] * float(self.system.box_l[2])
+            radius = self.params_boundaries["radius"]
+            height = float(self.system.box_l[2])
+            return np.pi * radius**2 * height
         return self.system.volume()
 
     def get_acceptance_rate_configurational_moves(self):
@@ -875,10 +876,10 @@ class ReactionAlgorithm:
 
     def _setup_bookkeeping_of_empty_pids(self):
         particle_ids = self._system_part.all().id
-        available_pids = self.find_missing_pids(pids_list=particle_ids)
+        available_pids = self._find_missing_pids(pids_list=particle_ids)
         self.m_empty_p_ids_smaller_than_max_seen_particle = available_pids
 
-    def find_missing_pids(self, pids_list):
+    def _find_missing_pids(self, pids_list):
         """
         Finds the missing particles ids in `pids_list`.
         NOTE: ``pids_list`` must be a sorted list [0,1,3,5,7..]
