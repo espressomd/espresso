@@ -63,7 +63,6 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
     according the Maxwell-Boltzmann distribution. In this step the mass of the
     new particle is assumed to equal 1.
 
-
     Parameters
     ----------
     kT : :obj:`float`
@@ -242,8 +241,9 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
     change_reaction_constant()
         Changes the reaction constant of a given reaction
         (for both the forward and backward reactions).
-        The ``reaction_id`` which is assigned to a reaction
-        depends on the order in which :meth:`add_reaction` was called.
+        The ``reaction_id`` which is assigned to a reaction depends on the order
+        in which :meth:`~espressomd.reaction_methods.ReactionAlgorithm.add_reaction`
+        was called.
         The 0th reaction has ``reaction_id=0``, the next added
         reaction needs to be addressed with ``reaction_id=1``, etc.
 
