@@ -20,7 +20,11 @@
 #pragma once
 
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/cell_system/CellSystem.hpp"
+#include "script_interface/particle_data/ParticleHandle.hpp"
+#include "script_interface/system/System.hpp"
 
+#include <memory>
 #include <stdexcept>
 #include <string>
 
@@ -28,11 +32,17 @@ namespace ScriptInterface {
 namespace ReactionMethods {
 
 class ReactionAlgorithm : public AutoParameters<ReactionAlgorithm> {
+  std::shared_ptr<System::System> m_system;
+  std::shared_ptr<CellSystem::CellSystem> m_cell_system;
+
 public:
+  void do_construct(VariantMap const &params) override;
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override;
 
 protected:
+  std::shared_ptr<Particles::ParticleModifier> m_particle_modifier;
+
 private:
   std::string get_internal_state() const override {
     throw std::runtime_error("Reaction methods do not support checkpointing");

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The ESPResSo project
+ * Copyright (C) 2023-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -100,6 +100,15 @@ public:
         return m_obj->check_exclusion_range(pid, ptype);
       }
       return m_obj->check_exclusion_range(pid);
+    }
+    if (name == "check_exclusion_range_any") {
+      auto const pids = get_value<std::vector<int>>(params, "pids");
+      auto const ptype = get_value<int>(params, "ptype");
+      auto touched = false;
+      for (auto pid : pids) {
+        touched |= m_obj->check_exclusion_range(pid, ptype);
+      }
+      return touched;
     }
     return {};
   }

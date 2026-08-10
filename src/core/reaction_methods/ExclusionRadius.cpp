@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -184,10 +184,19 @@ bool ExclusionRadius::check_exclusion_range(int p_id, int p_type) {
 }
 
 bool ExclusionRadius::check_exclusion_range(int pid) {
-  int type_local = 0;
-  if (auto p = get_real_particle(m_comm, pid)) {
-    type_local = p->type();
+  auto const *p = get_real_particle(m_comm, pid);
+  assert(boost::mpi::all_reduce(m_comm, static_cast<int>(p != nullptr),
+                                std::plus<>()) == 1);
+  int type_local = -1;
+  if (m_comm.rank() == 0) {
+    if (p) {
+      type_local = p->type();
+    } else {
+      m_comm.recv(boost::mpi::any_source, 42, type_local);
+    }
+  } else if (p) {
+    m_comm.send(0, 42, p->type());
   }
-  auto const type = boost::mpi::all_reduce(m_comm, type_local, std::plus<>());
-  return check_exclusion_range(pid, type);
+  boost::mpi::broadcast(m_comm, type_local, 0);
+  return check_exclusion_range(pid, type_local);
 }

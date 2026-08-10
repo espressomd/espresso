@@ -266,7 +266,7 @@ def check_required_keys(required_keys, obtained_keys):
             f"{sorted(a)}, got {sorted(b)} (missing {sorted(a - b)})")
 
 
-def check_valid_keys(valid_keys, obtained_keys, strict=False):
+def check_valid_keys(valid_keys, obtained_keys):
     a = set(valid_keys)
     b = set(obtained_keys)
     if not b.issubset(a):

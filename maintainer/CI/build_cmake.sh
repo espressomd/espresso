@@ -365,6 +365,12 @@ if [ "${run_checks}" = true ]; then
         ninja -j${build_procs} check_benchmarks ${ninja_params} || exit 1
     fi
 
+    # maintainer scripts tests
+    ninja -j1 check_scripts || exit 1
+
+    # installation tests
+    ninja -j1 check_cmake_install ${ninja_params} || exit 1
+
     end "TEST"
 else
     start "TEST"

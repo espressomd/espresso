@@ -228,6 +228,7 @@ class ReactionMethods(ut.TestCase):
             delta=1e-10)
 
         # check particle deletion on a worker node
+        self.system.part.clear()
         p1, _, p3 = self.system.part.add(
             pos=3 * [(-1., -1., -1.)], type=[5, 2, 3])
         if isinstance(method, espressomd.reaction_methods.WidomInsertion):
@@ -246,9 +247,17 @@ class ReactionMethods(ut.TestCase):
         self.system.part.clear()
         self.assertEqual(count_by_type([5, 2, 3, 0]), [0, 0, 0, 0])
 
-        # check reaction deletion
-        method.delete_reaction(reaction_id=0)
-        self.assertEqual(len(method.reactions), 0)
+        # check particle hiding functions
+        self.system.part.clear()
+        p1, p2, p3 = self.system.part.add(pos=3 * [(0., 0., 0.)], type=3 * [5])
+        method._hide_particle(p1.id)
+        self.assertEqual(p1.type, method.non_interacting_type)
+        self.assertEqual(p2.type, 5)
+        self.assertEqual(p3.type, 5)
+        method._hide_particles(pids=[p2.id, p3.id], ptype=5)
+        self.assertEqual(p1.type, method.non_interacting_type)
+        self.assertEqual(p2.type, method.non_interacting_type)
+        self.assertEqual(p3.type, method.non_interacting_type)
 
     def test_reaction_interface(self):
         params = {'exclusion_range': 0.8,
@@ -283,9 +292,9 @@ class ReactionMethods(ut.TestCase):
         r_algo = espressomd.reaction_methods.ReactionEnsemble(
             seed=42, kT=1., exclusion_range=0., system=self.system)
         r_algo.exclusion.exclusion_range = 1.
-        self.assertFalse(r_algo.particle_inside_exclusion_range_touched)
+        self.assertFalse(r_algo.exclusion_range_touched)
         r_algo.displacement_mc_move(0, 2)
-        self.assertTrue(r_algo.particle_inside_exclusion_range_touched)
+        self.assertTrue(r_algo.exclusion_range_touched)
 
         self.assertEqual(len(r_algo.particle_changes["created"]), 0)
         self.assertEqual(len(r_algo.particle_changes["hidden"]), 0)
@@ -356,29 +365,29 @@ class ReactionMethods(ut.TestCase):
             seed=40, kT=1., exclusion_range=0., system=self.system)
 
         # cubic case
-        for _ in range(100):
-            pos = r_algo.get_random_position_in_box()
+        positions = r_algo.get_random_positions_in_box(100)
+        for pos in positions:
             self.assertTrue(np.all(pos <= box_l))
             self.assertTrue(np.all(pos >= origin))
 
         # slab case
-        start_z, end_z = 0.2, 0.6
+        start_z, end_z = (0.2, 0.6)
         slab_lower = np.array([0.0, 0.0, start_z])
         slab_upper = np.array([box_l[0], box_l[1], end_z])
         r_algo.set_wall_constraints_in_z_direction(start_z, end_z)
         slab_params = r_algo.get_wall_constraints_in_z_direction()
         self.assertAlmostEqual(slab_params[0], start_z, delta=1e-10)
         self.assertAlmostEqual(slab_params[1], end_z, delta=1e-10)
-        for _ in range(100):
-            pos = r_algo.get_random_position_in_box()
+        positions = r_algo.get_random_positions_in_box(100)
+        for pos in positions:
             self.assertTrue(np.all(pos <= slab_upper))
             self.assertTrue(np.all(pos >= slab_lower))
 
         # cylindrical case
-        cyl_x, cyl_y, radius = 0.2, 0.1, 0.2
+        cyl_x, cyl_y, radius = (0.2, 0.1, 0.2)
         r_algo.set_cylindrical_constraint_in_z_direction(cyl_x, cyl_y, radius)
-        for _ in range(400):
-            pos = r_algo.get_random_position_in_box()
+        positions = r_algo.get_random_positions_in_box(100)
+        for pos in positions:
             z = pos[2]
             r = np.linalg.norm([pos[0] - cyl_x, pos[1] - cyl_y])
             self.assertLessEqual(r, radius)
@@ -389,8 +398,8 @@ class ReactionMethods(ut.TestCase):
         type_A = 0
         type_B = 1
         self.system.box_l = [1., 1., 1.]
-        self.system.part.add(pos=[(0.5, 0.5, 0.5), (0.7, 0.7, 0.7)],
-                             type=[type_A, type_B])
+        _, p1 = self.system.part.add(pos=[(0.5, 0.5, 0.5), (0.7, 0.7, 0.7)],
+                                     type=[type_A, type_B])
         r_algo = espressomd.reaction_methods.ReactionEnsemble(
             seed=40, kT=1., exclusion_range=0., system=self.system)
 
@@ -398,26 +407,56 @@ class ReactionMethods(ut.TestCase):
         # radii of both particle types is larger than box length (radii take
         # precedence over the default exclusion range)
         r_algo.exclusion.exclusion_range = 0.
-        r_algo.exclusion.exclusion_radius_per_type = {type_A: 0.1, type_B: 1.}
-        r_algo.particle_inside_exclusion_range_touched = False
+        r_algo.exclusion.exclusion_radius_per_type = {type_A: 0.1, type_B: 2.}
+        r_algo.exclusion_range_touched = False
         r_algo.displacement_mc_move(type_B, 1)
-        self.assertTrue(r_algo.particle_inside_exclusion_range_touched)
+        self.assertTrue(r_algo.exclusion_range_touched)
+        # also check private implementations
+        r_algo.exclusion_range_touched = False
+        r_algo._check_exclusion_range(pid=p1.id, ptype=type_B)
+        self.assertTrue(r_algo.exclusion_range_touched)
+        r_algo.exclusion_range_touched = False
+        r_algo._check_exclusion_range(pid=1)
+        self.assertTrue(r_algo.exclusion_range_touched)
+        r_algo.exclusion_range_touched = False
+        r_algo._check_exclusion_range_any(pids=[1], ptype=type_B)
+        self.assertTrue(r_algo.exclusion_range_touched)
 
         # new positions will never be in the excluded range if the exclusion
-        # radius of the particle is 0
+        # radius of either particle is 0
         r_algo.exclusion.exclusion_range = 0.
-        r_algo.exclusion.exclusion_radius_per_type = {type_A: 0.1, type_B: 0.}
-        r_algo.particle_inside_exclusion_range_touched = False
+        r_algo.exclusion.exclusion_radius_per_type = {type_A: 0., type_B: 2.}
+        r_algo.exclusion_range_touched = False
         r_algo.displacement_mc_move(type_B, 1)
-        self.assertFalse(r_algo.particle_inside_exclusion_range_touched)
+        self.assertFalse(r_algo.exclusion_range_touched)
+        # also check private implementations
+        r_algo.exclusion_range_touched = False
+        r_algo._check_exclusion_range(pid=p1.id, ptype=type_B)
+        self.assertFalse(r_algo.exclusion_range_touched)
+        r_algo.exclusion_range_touched = False
+        r_algo._check_exclusion_range(pid=1)
+        self.assertFalse(r_algo.exclusion_range_touched)
+        r_algo.exclusion_range_touched = False
+        r_algo._check_exclusion_range_any(pids=[1], ptype=type_B)
+        self.assertFalse(r_algo.exclusion_range_touched)
 
         # new positions will never be accepted if the exclusion range is larger
         # than box length and particles don't define radii to override it
-        r_algo.exclusion.exclusion_range = 1.
+        r_algo.exclusion.exclusion_range = 2.
         r_algo.exclusion.exclusion_radius_per_type = {type_A: 0.}
-        r_algo.particle_inside_exclusion_range_touched = False
+        r_algo.exclusion_range_touched = False
         r_algo.displacement_mc_move(type_B, 1)
-        self.assertTrue(r_algo.particle_inside_exclusion_range_touched)
+        self.assertTrue(r_algo.exclusion_range_touched)
+        # also check private implementations
+        r_algo.exclusion_range_touched = False
+        r_algo._check_exclusion_range(pid=p1.id, ptype=type_B)
+        self.assertTrue(r_algo.exclusion_range_touched)
+        r_algo.exclusion_range_touched = False
+        r_algo._check_exclusion_range(pid=1)
+        self.assertTrue(r_algo.exclusion_range_touched)
+        r_algo.exclusion_range_touched = False
+        r_algo._check_exclusion_range_any(pids=[1], ptype=type_B)
+        self.assertTrue(r_algo.exclusion_range_touched)
 
     def test_exceptions(self):
         self.system.part.add(pos=3 * [(0., 0., 0.)], id=[0, 2, 4])
