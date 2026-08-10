@@ -42,7 +42,7 @@ class Cluster(ScriptInterfaceHelper):
     longest_distance()
         Longest distance between any combination of two particles in the cluster
 
-    fractal_dimension(dr)
+    fractal_dimension()
         Estimates the cluster's fractal dimension by fitting the number of
         particles :math:`n` in spheres of growing radius around the center of mass
         to :math:`c*r_g^d`, where :math:`r_g` is the radius of gyration of the

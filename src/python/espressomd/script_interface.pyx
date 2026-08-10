@@ -567,8 +567,9 @@ class ScriptInterfaceHelper(PScriptInterface):
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
+        cls.__doc__, docstrings = cls._extract_method_docstrings()
         for method_name in cls._so_bind_methods:
-            cls._install_bound_method(method_name)
+            cls._install_bound_method(method_name, docstrings.get(method_name))
 
         cdef vector[string] features_vec
         if cls._so_features:
@@ -579,7 +580,69 @@ class ScriptInterfaceHelper(PScriptInterface):
                 cls._so_features_error = msg
 
     @classmethod
-    def _install_bound_method(cls, method_name):
+    def _extract_method_docstrings(cls):
+        """
+        Extract the "Methods" section from the class docstring, and parse each
+        method definition. Those that match existing synthetic method names are
+        removed from the docstring and returned in a dictionary.
+        """
+        import inspect
+        import textwrap
+        cls_doc = cls.__doc__
+        if not cls_doc or "\n" not in cls_doc:
+            return (cls.__doc__, {})
+        cls_doc = inspect.cleandoc(cls_doc)
+        cls_doc_lines = cls_doc.split("\n")
+        sections = []
+        last = len(cls_doc_lines)
+        for lineno, line in reversed(list(enumerate(cls_doc_lines))):
+            if len(line) >= 3 and set(line.rstrip()) == {"-"}:
+                start = lineno - 1
+                section_title = cls_doc_lines[start].strip()
+                sections.insert(0, (section_title, start, last))
+                last = start
+        for section_title, start, end in sections:
+            if section_title != "Methods":
+                continue
+            split_blocks = ["\n".join(cls_doc_lines[:start]),
+                            "\n".join(cls_doc_lines[start:end]),
+                            "\n".join(cls_doc_lines[end:])]
+            break
+        else:
+            return (cls.__doc__, {})
+        method_section_lines = textwrap.dedent(split_blocks[1]).split("\n")
+        method_lines = method_section_lines[2:]
+        method_names = []
+        method_docstrings = []
+        for line in method_lines:
+            line = line.rstrip()
+            if not line.startswith(" ") and "(" in line:
+                method_name = line.split("(", 1)[0]
+                assert method_name.isidentifier(), f"{method_name!r} isn't a suitable name for a class method (in docstring of {cls})"  # nopep8
+                method_names.append(method_name)
+                method_docstrings.append([line])
+            elif method_docstrings:
+                method_docstrings[-1].append(line)
+            else:
+                assert line == "", f"malformed docstring in {cls}, cannot interpret {line!r}"  # nopep8
+        extra_methods = []
+        result = {}
+        for name, docstring in zip(method_names, method_docstrings):
+            if name in cls._so_bind_methods:
+                result[name] = "\n".join(docstring[1:]).rstrip()
+            else:
+                # preserve synthetic methods unrelated to the C++ interface
+                extra_methods.append("\n".join(docstring))
+        if extra_methods:
+            split_blocks[1] = "\n".join(
+                method_section_lines[:2] + extra_methods)
+        else:
+            split_blocks[1] = ""
+        cls_doc = textwrap.indent("\n".join(split_blocks), 4 * " ")
+        return (cls_doc, result)
+
+    @classmethod
+    def _install_bound_method(cls, method_name, docstring):
         """
         Bind C++ methods declared in ``_so_bind_methods`` to the Python class.
         This factory method compiles a code object whose ``co_name`` is the
@@ -599,6 +662,7 @@ class ScriptInterfaceHelper(PScriptInterface):
         fn = namespace[method_name]
         fn.__qualname__ = f"{cls.__qualname__}.{method_name}"
         fn.__module__ = cls.__module__
+        fn.__doc__ = docstring
         setattr(cls, method_name, fn)
 
     def __reduce__(self):

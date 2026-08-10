@@ -15,7 +15,6 @@
 # serve to show the default.
 
 import sys
-import importlib
 import docutils
 import sphinx.util.docutils
 
@@ -278,48 +277,10 @@ class SpdxRole(sphinx.util.docutils.SphinxRole):
 # https://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
 autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'vtk', 'zndraw', 'znsocket', 'znjson']
 
-
-def _resolve_class(obj):
-    """Return the class that owns a bound method ``obj``, or ``None``."""
-    module = getattr(obj, "__module__", None)
-    qualname = getattr(obj, "__qualname__", "")
-    if not module or "." not in qualname:
-        return None
-    try:
-        owner = importlib.import_module(module)
-        for part in qualname.split(".")[:-1]:
-            owner = getattr(owner, part)
-    except (ImportError, AttributeError):
-        return None
-    return owner if isinstance(owner, type) else None
-
-
-# pylint: disable=unused-argument
-def skip_duplicate_bound_methods(app, what, name, obj, skip, options):
-    """
-    Let ``sphinx.ext.napoleon`` be the single source for documented bound methods.
-
-    ``ScriptInterfaceHelper._install_bound_method`` synthesizes docstring-less
-    methods for the names in ``_so_bind_methods``. When such methods are also
-    listed in the class docstring's numpydoc "Methods" section, ``.. method::``
-    directives are emitted for them; documenting the (empty) members with
-    autodoc as well triggers a "duplicate object description" warning.
-    """
-    if skip:
-        return None
-    owner = _resolve_class(obj)
-    if owner is None:
-        return None
-    if name in getattr(owner, "_so_bind_methods", ()):
-        return True
-    return None
-
-
 def setup(app):
     app.add_css_file('blockquotes.css')
     app.add_css_file('custom.css')
     app.add_role('spdx', SpdxRole())
-    app.connect('autodoc-skip-member', skip_duplicate_bound_methods)
 
 
 # -- Options for Cython ---------------------------------------------------
