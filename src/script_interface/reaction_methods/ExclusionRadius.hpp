@@ -22,7 +22,7 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
-#include "core/reaction_methods/ExclusionRadius.hpp"
+#include "core/ExclusionRadius.hpp"
 
 #include <memory>
 #include <stdexcept>
