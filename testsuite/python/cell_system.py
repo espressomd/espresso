@@ -44,6 +44,10 @@ class CellSystem(ut.TestCase):
             tests_common.assert_params_match(self, params_in, params_out)
             params_out = self.system.cell_system.get_state()
             tests_common.assert_params_match(self, params_in, params_out)
+        state = self.system.cell_system.get_state()
+        self.assertIn("omp_num_threads", state)
+        self.assertIsInstance(state["omp_num_threads"], int)
+        self.assertGreaterEqual(state["omp_num_threads"], 1)
 
     def test_interface(self):
         self.system.cell_system.set_regular_decomposition()

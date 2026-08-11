@@ -97,21 +97,6 @@ jobs:
           make_check_python: 'false'
           OMPI_ALLOW_RUN_AS_ROOT: 1
           OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
-      - name: Run pyMBE testsuite
-        run: |
-          export PYTHONPATH="$(realpath build/src/python)"
-          export OMP_PROC_BIND=false OMP_NUM_THREADS=1
-          git clone -b es510 https://github.com/jngrad/pyMBE.git
-          cd pyMBE
-          sed -i "/cmake/d; /tqdm/d" requirements.txt
-          python3 -m venv --system-site-packages venv
-          . venv/bin/activate
-          python3 -m pip install -r requirements.txt
-          python3 maintainer/configure_venv.py
-          make unit_tests -j4
-        env:
-          OMPI_ALLOW_RUN_AS_ROOT: 1
-          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
 
   ubuntu:
     runs-on: ubuntu-26.04

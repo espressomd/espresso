@@ -27,13 +27,44 @@ import itertools
 TIME_STEP = 1e-100
 
 
-class ElcTest:
+class ELCTest:
     system = espressomd.System(box_l=[1.] * 3, time_step=TIME_STEP)
     system.cell_system.skin = 0.0
 
     def tearDown(self):
         self.system.part.clear()
         self.system.electrostatics.clear()
+
+    def test_exceptions(self):
+        p3m = espressomd.electrostatics.P3M(
+            prefactor=1.,
+            mesh=32,
+            cao=5,
+            accuracy=1e-3,
+            **self.p3m_params
+        )
+        # constant potential can only be requested with dielectric interfaces
+        with self.assertRaisesRegex(
+                ValueError,
+                "Parameter 'const_pot' requires a dielectric contrast"):
+            espressomd.electrostatics.ELC(
+                actor=p3m, gap_size=1., maxPWerror=1e-3, const_pot=True)
+        with self.assertRaisesRegex(
+                ValueError,
+                "Parameter 'const_pot' must be True when 'pot_diff' is non-zero"):
+            espressomd.electrostatics.ELC(
+                actor=p3m, gap_size=1., maxPWerror=1e-3, pot_diff=1.)
+
+
+@utx.skipIfMissingFeatures(["P3M"])
+class ELCTestCPU(ELCTest, ut.TestCase):
+    """
+    The tests below use a dielectric contrast, which is only supported
+    by the CPU variant.
+    """
+
+    p3m_params = {"gpu": False}
+    rtol = 1e-7
 
     def test_finite_potential_drop(self):
         system = self.system
@@ -139,19 +170,37 @@ class ElcTest:
         np.testing.assert_allclose(U_elc, U_expected, atol=0., rtol=1e-6)
 
 
-@utx.skipIfMissingFeatures(["P3M"])
-class ElcTestCPU(ElcTest, ut.TestCase):
-
-    p3m_params = {"gpu": False}
-    rtol = 1e-7
-
-
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["P3M"])
-class ElcTestGPU(ElcTest, ut.TestCase):
-
+class ELCTestGPU(ELCTest, ut.TestCase):
     p3m_params = {"gpu": True}
-    rtol = 4e-6
+    rtol = 1e-7
+    system = ELCTest.system
+
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.electrostatics.clear()
+
+    def test_dielectric_contrast_unsupported(self):
+        p3m = espressomd.electrostatics.P3M(
+            prefactor=1., mesh=32, cao=5, accuracy=1e-3, gpu=True)
+        for kwargs in ({"delta_mid_bot": -1., "delta_mid_top": -1.,
+                        "const_pot": True},
+                       {"delta_mid_bot": 0.5}):
+            with self.subTest(**kwargs):
+                with self.assertRaisesRegex(
+                        RuntimeError, "ELC with a dielectric contrast is not "
+                        "supported by the GPU variant of P3M"):
+                    espressomd.electrostatics.ELC(
+                        actor=p3m, gap_size=1., maxPWerror=1e-3, **kwargs)
+
+    def test_without_dielectric_contrast(self):
+        """Plain ELC (no dielectric contrast) is available on the GPU."""
+        p3m = espressomd.electrostatics.P3M(
+            prefactor=1., mesh=32, cao=5, accuracy=1e-3, gpu=True)
+        elc = espressomd.electrostatics.ELC(
+            actor=p3m, gap_size=1., maxPWerror=1e-3)
+        self.assertFalse(elc.const_pot)
 
 
 if __name__ == "__main__":

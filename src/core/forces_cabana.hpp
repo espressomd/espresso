@@ -231,9 +231,11 @@ struct ForcesKernel {
     } // not dist > ia_params.max_cut
 
     /*********************************************************************/
-    /* everything before this contributes to the virial pressure in NpT, */
-    /* but nothing afterwards, since the contribution to pressure from   */
-    /* electrostatic is calculated by energy                             */
+    /* everything before this contributes to the virial pressure in NpT  */
+    /* via d (x) pf.f; electrostatic and dipolar real-space contributions */
+    /* are added in explicitly below instead: Coulomb reuses the pair    */
+    /* energy as a virial proxy, dipoles compute d . F directly (see     */
+    /* rationale below)                                                 */
     /*********************************************************************/
 #ifdef ESPRESSO_NPT
     Utils::Vector3d virial{};
@@ -271,15 +273,26 @@ struct ForcesKernel {
     }
 #endif // ESPRESSO_ELECTROSTATICS
 
-    // Only call dipole force kernel if active
 #ifdef ESPRESSO_DIPOLES
     if (dipoles_kernel != nullptr) {
       auto const d1d2 = aosoa.dipm(i) * aosoa.dipm(j);
       if (d1d2 != 0.) {
         auto const dir1 = aosoa.get_vector_at(aosoa.director, i);
         auto const dir2 = aosoa.get_vector_at(aosoa.director, j);
-        pf += (*dipoles_kernel)(d1d2, aosoa.dipm(i) * dir1,
-                                aosoa.dipm(j) * dir2, d, dist, dist_sq);
+        auto const dip_pf = (*dipoles_kernel)(
+            d1d2, aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2, d, dist, dist_sq);
+#ifdef ESPRESSO_NPT
+        if (npt_active()) {
+          // d . F = -n * U for a homogeneous potential of degree n
+          // (Euler's theorem, independent of centrality); n=-3 here vs
+          // n=-1 for Coulomb. Ewald screening makes that only
+          // approximate, and for dipoles the approximation measurably
+          // fails NpT pressure consistency (see test_pressure_with_dp3m),
+          // so d . F is computed explicitly here instead.
+          virial[0] += d * dip_pf.f;
+        }
+#endif // ESPRESSO_NPT
+        pf += dip_pf;
       }
     }
 #endif // ESPRESSO_DIPOLES

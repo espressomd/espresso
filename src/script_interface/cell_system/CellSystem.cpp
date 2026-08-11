@@ -40,6 +40,8 @@
 
 #include <boost/mpi/collectives/gather.hpp>
 
+#include <omp.h>
+
 #include <algorithm>
 #include <cassert>
 #include <iterator>
@@ -200,6 +202,7 @@ Variant CellSystem::do_call_method(std::string const &name,
     }
     state["verlet_reuse"] = get_cell_structure().get_verlet_reuse();
     state["n_nodes"] = context()->get_comm().size();
+    state["omp_num_threads"] = omp_get_max_threads();
     return state;
   }
   if (name == "get_pairs") {

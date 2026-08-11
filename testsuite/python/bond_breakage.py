@@ -100,6 +100,14 @@ class BondBreakageTest(BondBreakageCommon, ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Inserting breakage spec without a bond type is not permitted"):
             self.system.bond_breakage.call_method("insert", object=spec2)
 
+        # all parameters are required: omitting one must raise at construction
+        # rather than silently defaulting breakage_length to 0.0 (which would
+        # queue every bond of that type for breakage on the first execute())
+        with self.assertRaisesRegex(Exception, "Parameter 'breakage_length' is missing"):
+            BreakageSpec(action_type="delete_bond")
+        with self.assertRaisesRegex(Exception, "Parameter 'action_type' is missing"):
+            BreakageSpec(breakage_length=1.0)
+
     def test_ignore(self):
         system = self.system
 

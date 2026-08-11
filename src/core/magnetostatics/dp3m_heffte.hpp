@@ -224,6 +224,8 @@ public:
 
   double long_range_energy() override { return long_range_kernel(false, true); }
 
+  Utils::Vector9d long_range_pressure() override;
+
   void add_long_range_forces() override {
     if constexpr (Architecture == Arch::CPU) {
       long_range_kernel(true, false);
@@ -268,7 +270,7 @@ protected:
   void init_cpu_kernels();
   void scaleby_box_l() override;
 #ifdef ESPRESSO_NPT
-  void npt_add_virial_contribution(double energy) const override;
+  void npt_add_virial_contribution(double virial) const override;
 #endif
 };
 

@@ -322,8 +322,8 @@ class ReactionAlgorithm:
             x coordinate of center of the cylinder.
         center_y : :obj:`float`
             y coordinate of center of the cylinder.
-        radius_of_cylinder : :obj:`float`
-            radius of the cylinder
+        radius : :obj:`float`
+            radius of the cylinder.
 
         """
         if center_x < 0. or center_x > self.system.box_l[0]:

@@ -125,6 +125,9 @@ public:
    */
   virtual void tune() = 0;
 
+  /** Compute the k-space part of the pressure tensor */
+  virtual Utils::Vector9d long_range_pressure() = 0;
+
   /** Compute the k-space part of energies. */
   virtual double long_range_energy() = 0;
 
@@ -177,15 +180,16 @@ public:
 
     // Calculate real-space torques
     auto const torque = prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
-#ifdef ESPRESSO_NPT
-#if USE_ERFC_APPROXIMATION
-    auto const fac = prefactor * d1d2 * exp_adist2;
-#else
-    auto const fac = prefactor * d1d2;
-#endif
-    auto const energy = fac * (mimj * B_r - mir * mjr * C_r);
-    npt_add_virial_contribution(energy);
-#endif // ESPRESSO_NPT
+    // NOTE: the NpT virial contribution of this pair force (d * force,
+    // the trace of the pairwise virial tensor d (x) force, computed
+    // explicitly rather than approximated from the pair energy -- see
+    // forces_cabana.hpp for why) is accumulated by the caller (see
+    // ForcesKernel in forces_cabana.hpp), not here:
+    // pair_force() is invoked concurrently by many threads over all pairs
+    // (both for force calculation and for the pressure observable via
+    // pair_pressure_kernel() in dipoles_inline.hpp), so calling
+    // npt_add_virial_contribution() from here would race on the shared
+    // NpT virial accumulator.
     return ParticleForce{force, torque};
   }
 
@@ -251,7 +255,7 @@ protected:
 
 #ifdef ESPRESSO_NPT
   /** Update the NpT virial */
-  virtual void npt_add_virial_contribution(double energy) const = 0;
+  virtual void npt_add_virial_contribution(double virial) const = 0;
 #endif
 };
 

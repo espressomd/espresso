@@ -389,26 +389,3 @@ is exposed in :meth:`ReactionAlgorithm.calculate_acceptance_probability()
 <espressomd.reaction_methods.ReactionAlgorithm.calculate_acceptance_probability>`.
 Reaction method classes override this function with their custom expression
 for the acceptance probability.
-
-Alternatively, the sample script :file:`samples/monte_carlo.py` provides
-a re-implementation of the core functionality of reaction methods in Python,
-with a focus on the :ref:`constant pH <Constant pH>` and
-:ref:`reaction ensemble <Reaction Ensemble>` methods.
-More specifically, the :class:`~espressomd.reaction_methods.SingleReaction`,
-:class:`~espressomd.reaction_methods.ReactionAlgorithm`,
-:class:`~espressomd.reaction_methods.ReactionEnsemble`, and
-:class:`~espressomd.reaction_methods.ConstantpHEnsemble`
-classes are rewritten in Python.
-
-The goal of this sample is to assist in the rapid prototyping of new Monte Carlo
-methods. In particular, the sampling and move generation schemes are expressed
-in Python, and can be leveraged by users without C++ programming experience.
-The sample is designed to run with the :ref:`kernprof` profiler attached:
-
-.. code-block:: bash
-
-    pypresso --kernprof monte_carlo.py --mode=core
-    pypresso --kernprof monte_carlo.py --mode=python
-
-These Python implementations are roughly four times slower
-than their corresponding core implementations.

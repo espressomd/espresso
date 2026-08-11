@@ -138,7 +138,8 @@ double DipolarP3MHeffte<FloatType, Architecture,
 
   double phi = 0.;
   boost::mpi::reduce(comm_cart, node_phi, phi, std::plus<>(), 0);
-  phi /= 3. * box_geo.length()[0] * Utils::int_pow<3>(dp3m.params.mesh[0]);
+  phi /= 3. * box_geo.length()[0] *
+         Utils::int_pow<3>(static_cast<double>(dp3m.params.mesh[0]));
   return phi * std::numbers::pi;
 }
 
@@ -330,6 +331,142 @@ void DipolarP3MState<FloatType, FFTConfig>::resize_heffte_buffers() {
 }
 #endif // ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
 
+/**
+ * @brief Reciprocal-space virial for the dipolar Ewald/P3M sum. Obtained
+ * via the same Nose-Klein strain-derivative method used for the Coulomb
+ * case (@cite essmann95a eq. (2.7), \f$\Pi_{\textrm{rec}, \alpha, \beta}\f$),
+ * applied to the dipolar structure
+ * factor \f$Q(\vec k) = \vec M(\vec k)\cdot\vec k\f$ with
+ * \f$\vec M(\vec k) = \sum_j \vec \mu_j \exp(i\vec k\cdot\vec r_j)\f$.
+ * Unlike the charge structure factor, \f$Q(\vec k)\f$ depends on
+ * \f$\vec k\f$ explicitly (not only through the phase factor), which
+ * produces an extra cross term beyond the charge-case \f$k_a k_b\f$
+ * envelope. This cross term is generally asymmetric in \f$(a,b)\f$: its
+ * symmetric half, \f$k_a\Re[M_b Q^*] + k_b\Re[M_a Q^*]\f$, is the
+ * dipole-dipole reciprocal-space pressure tensor eq. (46) in
+ * @cite aguado03a (their \f$\vec h\f$, \f$\kappa\f$ correspond to
+ * \f$\vec k\f$, \f$\alpha\f$ here), which only ever reports that
+ * symmetrized form. The remaining antisymmetric half is not in that
+ * reference -- it is the reciprocal-space image of the same
+ * dipole-dipole torque that already makes the real-space virial
+ * asymmetric (see @ref DipolarDirectSum::long_range_pressure and
+ * @ref DipolarP3M::pair_force), derived here by differentiating
+ * the reciprocal energy directly (via the strain parametrization
+ * \f$H(\varepsilon)=LI+\varepsilon E_{ab}\f$) instead of presupposing a
+ * symmetric result.
+ *
+ * Care is needed with the index convention: probing the strain component
+ * \f$\varepsilon_{ab}\f$ (i.e. \f$H(\varepsilon)=LI+\varepsilon E_{ab}\f$)
+ * yields \f$-\partial U/\partial\varepsilon_{ab} = r_b F_a\f$ for a pair
+ * separation \f$\vec r\f$ and force \f$\vec F\f$ -- the *transpose* of the
+ * \f$r_a F_b\f$ (@ref Utils::tensor_product "d (x) f") convention used by
+ * the real-space term and by @ref DipolarDirectSum::long_range_pressure.
+ * Concretely, differentiating \f$Q(\vec k)=\vec k\cdot\vec M\f$ gives a
+ * cross-term contribution to \f$-\partial U/\partial\varepsilon_{ab}\f$
+ * proportional to \f$k_a\Re[M_bQ^*]\f$; to match the \f$r_aF_b\f$
+ * convention, this must be stored as the \f$(b,a)\f$ tensor component,
+ * i.e. \f$\Pi_{ab}\f$ gets cross term \f$2k_b\Re[M_aQ^*]\f$ (indices
+ * swapped relative to the strain probe that produced it).
+ */
+template <typename FloatType, Arch Architecture, class FFTConfig>
+Utils::Vector9d
+DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_pressure() {
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const dipole_prefac = prefactor / Utils::product(dp3m.params.mesh);
+  Utils::Vector9d node_k_space_pressure_tensor{};
+
+  if (dp3m.sum_mu2 > 0.) {
+    dipole_assign();
+    dp3m.fft_buffers->perform_vector_halo_gather();
+    for (auto &rs_mesh : dp3m.fft_buffers->get_vector_mesh()) {
+      dp3m.fft->forward_fft(rs_mesh);
+    }
+    dp3m.update_mesh_views();
+
+    auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
+    auto local_index = Utils::Vector3i::broadcast(0);
+    auto const wavevector = 2. * std::numbers::pi * box_geo.length_inv()[0];
+    auto const half_alpha_inv_sq = Utils::sqr(1. / (2. * dp3m.params.alpha));
+
+    auto index = std::size_t(0u);
+    auto it_energy = dp3m.g_energy.begin();
+    for_each_3d(mesh_start, dp3m.mesh.size, local_index, [&]() {
+      auto constexpr KX = 2, KY = 0, KZ = 1;
+      auto const shift = local_index + dp3m.mesh.start;
+      auto const &d_op = dp3m.d_op[0u];
+      auto const &mesh_dip = dp3m.mesh.rs_fields;
+      auto const d_op_x = static_cast<FloatType>(d_op[shift[KX]]);
+      auto const d_op_y = static_cast<FloatType>(d_op[shift[KY]]);
+      auto const d_op_z = static_cast<FloatType>(d_op[shift[KZ]]);
+
+      // Re(M(k)) and Re(Q(k)) = Re(M(k)).n, same as the energy kernel's `re`
+      auto const Mx_re = mesh_dip[0u][index];
+      auto const My_re = mesh_dip[1u][index];
+      auto const Mz_re = mesh_dip[2u][index];
+      auto const Q_re = Mx_re * d_op_x + My_re * d_op_y + Mz_re * d_op_z;
+      ++index;
+      // Im(M(k)) and Im(Q(k))
+      auto const Mx_im = mesh_dip[0u][index];
+      auto const My_im = mesh_dip[1u][index];
+      auto const Mz_im = mesh_dip[2u][index];
+      auto const Q_im = Mx_im * d_op_x + My_im * d_op_y + Mz_im * d_op_z;
+      ++index;
+
+      auto const nx = static_cast<double>(d_op[shift[KX]]);
+      auto const ny = static_cast<double>(d_op[shift[KY]]);
+      auto const nz = static_cast<double>(d_op[shift[KZ]]);
+      auto const kx = nx * wavevector;
+      auto const ky = ny * wavevector;
+      auto const kz = nz * wavevector;
+      auto const norm_sq = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
+      if (norm_sq != 0.) {
+        auto const g = static_cast<double>(*it_energy);
+        auto const cell_energy =
+            g * static_cast<double>(Utils::sqr(Q_re) + Utils::sqr(Q_im));
+        auto const vterm = -2. * (1. / norm_sq + half_alpha_inv_sq);
+
+        // g * Re(M_a(k) * Q(k)^*), a in {x, y, z}
+        auto const Rx = g * static_cast<double>(Mx_re * Q_re + Mx_im * Q_im);
+        auto const Ry = g * static_cast<double>(My_re * Q_re + My_im * Q_im);
+        auto const Rz = g * static_cast<double>(Mz_re * Q_re + Mz_im * Q_im);
+
+        // Full (generally asymmetric) tensor: Pi_ab = cell_energy * (delta_ab
+        // + vterm * k_a * k_b) + 2 * k_b * R_a (note: indices of the cross
+        // term are swapped relative to the strain probe that produces it --
+        // see the class-level comment above for the derivation). The
+        // symmetric combination (R_a k_b + R_b k_a)/2 recovers the
+        // literature (Aguado & Madden, eq. 46) result; the leftover
+        // antisymmetric part is the k-space image of the same
+        // dipolar-torque signature that already makes the real-space term
+        // asymmetric (see dipolar_direct_sum.cpp / dp3m.hpp).
+        node_k_space_pressure_tensor[0u] +=
+            cell_energy * (1. + vterm * kx * kx) + 2. * nx * Rx; /* xx */
+        node_k_space_pressure_tensor[1u] +=
+            cell_energy * vterm * kx * ky + 2. * ny * Rx; /* xy */
+        node_k_space_pressure_tensor[2u] +=
+            cell_energy * vterm * kx * kz + 2. * nz * Rx; /* xz */
+        node_k_space_pressure_tensor[3u] +=
+            cell_energy * vterm * ky * kx + 2. * nx * Ry; /* yx */
+        node_k_space_pressure_tensor[4u] +=
+            cell_energy * (1. + vterm * ky * ky) + 2. * ny * Ry; /* yy */
+        node_k_space_pressure_tensor[5u] +=
+            cell_energy * vterm * ky * kz + 2. * nz * Ry; /* yz */
+        node_k_space_pressure_tensor[6u] +=
+            cell_energy * vterm * kz * kx + 2. * nx * Rz; /* zx */
+        node_k_space_pressure_tensor[7u] +=
+            cell_energy * vterm * kz * ky + 2. * ny * Rz; /* zy */
+        node_k_space_pressure_tensor[8u] +=
+            cell_energy * (1. + vterm * kz * kz) + 2. * nz * Rz; /* zz */
+      }
+      std::advance(it_energy, 1);
+    });
+  }
+
+  return node_k_space_pressure_tensor * dipole_prefac * std::numbers::pi *
+         box_geo.length_inv()[0];
+}
+
 template <typename FloatType, Arch Architecture, class FFTConfig>
 double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
     bool force_flag, bool energy_flag) {
@@ -434,7 +571,7 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
   }
 
   /* === k-space energy calculation  === */
-  if (energy_flag or npt_flag) {
+  if (energy_flag) {
     /*********************
        Dipolar energy
     **********************/
@@ -820,15 +957,21 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
   } /* if (force_flag) */
 
   if (dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    auto const surface_term =
-        calc_surface_term(force_flag, energy_flag or npt_flag);
+    auto const surface_term = calc_surface_term(force_flag, energy_flag);
     if (this_node == 0) {
       energy += surface_term;
     }
   }
 #ifdef ESPRESSO_NPT
   if (npt_flag) {
-    get_system().npt_add_virial_contribution(energy);
+    // reuse the validated reciprocal-space pressure tensor (same one used by
+    // the pressure observable) instead of an energy-proxy: unlike Coulomb,
+    // the dipolar structure factor is not simply homogeneous in k, so energy
+    // is not a valid substitute for the virial trace here (see
+    // long_range_pressure())
+    auto const pressure_tensor = long_range_pressure();
+    get_system().npt_add_virial_contribution(
+        pressure_tensor[0u] + pressure_tensor[4u] + pressure_tensor[8u]);
   }
 #endif
   if (not energy_flag) {
@@ -1349,9 +1492,9 @@ void DipolarP3MHeffte<FloatType, Architecture,
 #ifdef ESPRESSO_NPT
 template <typename FloatType, Arch Architecture, class FFTConfig>
 void DipolarP3MHeffte<FloatType, Architecture,
-                      FFTConfig>::npt_add_virial_contribution(double energy)
+                      FFTConfig>::npt_add_virial_contribution(double virial)
     const {
-  get_system().npt_add_virial_contribution(energy);
+  get_system().npt_add_virial_contribution(virial);
 }
 #endif // ESPRESSO_NPT
 
