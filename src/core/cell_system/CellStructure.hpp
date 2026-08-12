@@ -94,7 +94,10 @@ enum DataPart : unsigned {
 #ifdef ESPRESSO_BOND_CONSTRAINT
   DATA_PART_RATTLE = 32u, /**< Particle::rattle */
 #endif
-  DATA_PART_BONDS = 64u /**< Particle::bonds */
+  DATA_PART_BONDS = 64u, /**< Particle::bonds */
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  DATA_PART_DIPFLD = 128u, /**< Particle::dip_fld */
+#endif
 };
 } // namespace Cells
 
@@ -156,17 +159,21 @@ struct EuclidianDistance {
 class CellStructure : public System::Leaf<CellStructure> {
 public:
   static constexpr auto vector_length = 1;
-  struct AoSoA_pack;
-  using ForceType = Kokkos::View<double *[3], Kokkos::LayoutRight>;
-  using VirialType = Kokkos::View<double[3], Kokkos::LayoutRight>;
-  using ScatterForce =
-      Kokkos::Experimental::ScatterView<double *[3], Kokkos::LayoutRight>;
-  using ScatterVirial =
-      Kokkos::Experimental::ScatterView<double[3], Kokkos::LayoutRight>;
   using memory_space = Kokkos::HostSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+  struct AoSoA_pack;
+  using ForceType =
+      Kokkos::View<double *[3], Kokkos::LayoutRight, memory_space>;
+  using VirialType = Kokkos::View<double[3], Kokkos::LayoutRight, memory_space>;
+  using ScatterForce =
+      Kokkos::Experimental::ScatterView<double *[3], Kokkos::LayoutRight,
+                                        memory_space>;
+  using ScatterVirial =
+      Kokkos::Experimental::ScatterView<double[3], Kokkos::LayoutRight,
+                                        memory_space>;
   using ListAlgorithm = Cabana::HalfNeighborTag;
   using ListType =
-      CustomVerletList<Kokkos::HostSpace, ListAlgorithm, Cabana::VerletLayout2D,
+      CustomVerletList<memory_space, ListAlgorithm, Cabana::VerletLayout2D,
                        Cabana::TeamVectorOpTag>;
 
 private:
@@ -190,12 +197,16 @@ private:
   int m_cached_max_local_particle_id = 0;
   std::size_t m_num_local_particles_cached = 0;
   int m_max_id = 0;
-  std::unique_ptr<Kokkos::View<int *>> m_id_to_index;
+  std::unique_ptr<Kokkos::View<int *, memory_space>> m_id_to_index;
   std::unique_ptr<ForceType> m_local_force;
   std::optional<ScatterForce> m_scatter_force;
 #ifdef ESPRESSO_ROTATION
   std::unique_ptr<ForceType> m_local_torque;
   std::optional<ScatterForce> m_scatter_torque;
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  std::unique_ptr<ForceType> m_local_dip_fld;
+  std::optional<ScatterForce> m_scatter_dip_fld;
 #endif
 #ifdef ESPRESSO_NPT
   std::unique_ptr<VirialType> m_local_virial;
@@ -205,7 +216,6 @@ private:
   std::unique_ptr<ListType> m_verlet_list_cabana;
   /** particle properties using individual Kokkos Views */
   std::unique_ptr<AoSoA_pack> m_aosoa;
-  /** The local id-to-index for aosoa data */
   std::vector<Particle *> m_unique_particles;
   std::shared_ptr<KokkosHandle> m_kokkos_handle;
 
@@ -544,6 +554,16 @@ public:
    */
   void ghosts_reduce_forces();
 
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  /** Add dipole fields from ghost particles to real particles. */
+  void ghosts_reduce_dipole_field();
+
+  /** Set dipole fields on all ghosts to zero. */
+  void ghosts_reset_dipole_field() {
+    for_each_ghost_particle([](Particle &p) { p.dip_fld() = {}; });
+  }
+#endif
+
   /** Set forces and torques on all ghosts to zero. */
   void ghosts_reset_forces() {
     for_each_ghost_particle([](Particle &p) { p.force_and_torque() = {}; });
@@ -732,12 +752,17 @@ public:
   auto &get_local_torque() { return *m_local_torque; }
   auto get_scatter_torque() { return *m_scatter_torque; }
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  auto &get_local_dip_fld() { return *m_local_dip_fld; }
+  auto get_scatter_dip_fld() { return *m_scatter_dip_fld; }
+#endif
 #ifdef ESPRESSO_NPT
   auto &get_local_virial() { return *m_local_virial; }
   auto get_scatter_virial() { return *m_scatter_virial; }
 #endif
 
   auto &get_aosoa() { return *m_aosoa; }
+  auto const &get_aosoa() const { return *m_aosoa; }
   auto const &get_unique_particles() const { return m_unique_particles; }
   auto const &get_verlet_list_cabana() const { return *m_verlet_list_cabana; }
   auto &bond_state() { return *m_bond_state; }

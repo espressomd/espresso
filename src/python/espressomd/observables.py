@@ -829,10 +829,10 @@ class PressureTensor(Observable):
 
 
 @script_interface_register
-class DPDStress(Observable):
+class DPDPressure(Observable):
 
     """Calculates the non-equilibrium contribution of the DPD interaction
-    to the stress tensor.
+    to the pressure tensor.
 
     Parameters
     ----------
@@ -848,7 +848,7 @@ class DPDStress(Observable):
         (3, 3) :obj:`ndarray` of :obj:`float`
 
     """
-    _so_name = "Observables::DPDStress"
+    _so_name = "Observables::DPDPressure"
 
 
 @script_interface_register

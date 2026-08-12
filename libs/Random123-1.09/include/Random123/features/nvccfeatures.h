@@ -59,7 +59,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //for the device function
 #ifdef  __CUDA_ARCH__
 #ifndef R123_CUDA_DEVICE
-#define R123_CUDA_DEVICE __device__
+#define R123_CUDA_DEVICE __host__ __device__
 #endif
 
 #ifndef R123_USE_MULHILO64_CUDA_INTRIN

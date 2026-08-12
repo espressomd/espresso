@@ -117,7 +117,7 @@ void ICCStar::iteration() {
   auto const elc_kernel = coulomb.pair_force_elc_kernel();
   icc_cfg.citeration = 0;
 
-  using execution_space = Kokkos::DefaultExecutionSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
   auto const &unique_particles = cell_structure.get_unique_particles();
   auto &local_force = cell_structure.get_local_force();
   auto scatter_force = system.cell_structure->get_scatter_force();
@@ -133,7 +133,7 @@ void ICCStar::iteration() {
     cell_structure.ghosts_reduce_forces();
     // force reduction
     Kokkos::Experimental::contribute(local_force, scatter_force);
-    kokkos_parallel_range_for<Kokkos::RangePolicy<execution_space>>(
+    kokkos_parallel_range_for<execution_space>(
         "reduction", std::size_t{0}, unique_particles.size(),
         [&local_force, &unique_particles](std::size_t const i) {
           auto &force = unique_particles.at(i)->force();

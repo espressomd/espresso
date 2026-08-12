@@ -87,7 +87,7 @@ are required to be able to compile and use |es|:
     FFTW
         For some algorithms like |p3m|, |es| needs the FFTW library
         version 3 or later [5]_ for Fourier transforms, including header files.
-        |es| leverages heFFTe :cite:`ayala20a`.
+        |es| leverages heFFTe :cite:`ayala20a` and kokkos-fft :cite:`asahi25a`.
 
     CUDA
         For some algorithms like |p3m| and lattice-Boltzmann,
@@ -261,8 +261,9 @@ If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 12.
 
       .. code-block:: bash
 
-         CC=nvc CXX=nvc++ CUDACXX=nvcc cmake .. \
+         CC=nvc CXX=nvc++ CUDACXX=nvcc CUDAHOSTCXX=nvc++ cmake .. \
             -D ESPRESSO_BUILD_WITH_CUDA=ON \
+            -D CMAKE_CUDA_FLAGS="$(mpicc --showme:compile)" \
             -D CMAKE_CXX_FLAGS="--gcc-toolchain=gcc-12"
 
       with compiler dependencies:
@@ -335,8 +336,9 @@ If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13.
 
       .. code-block:: bash
 
-         CC=nvc CXX=nvc++ CUDACXX=nvcc cmake .. \
+         CC=nvc CXX=nvc++ CUDACXX=nvcc CUDAHOSTCXX=nvc++ cmake .. \
             -D ESPRESSO_BUILD_WITH_CUDA=ON \
+            -D CMAKE_CUDA_FLAGS="$(mpicc --showme:compile)" \
             -D CMAKE_CXX_FLAGS="--gcc-toolchain=gcc-13"
 
       with compiler dependencies:

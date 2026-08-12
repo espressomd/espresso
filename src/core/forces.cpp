@@ -32,6 +32,7 @@
 #include "communication.hpp"
 #include "constraints/Constraints.hpp"
 #include "electrostatics/icc.hpp"
+#include "forces_init.hpp"
 #include "forces_inline.hpp"
 #include "galilei/ComFixed.hpp"
 #include "immersed_boundary/ImmersedBoundaries.hpp"
@@ -44,10 +45,10 @@
 #include "rotation.hpp"
 #include "short_range_cabana.hpp"
 #include "short_range_loop.hpp"
+#include "short_range_verlet.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
-#include "thermostats/langevin_inline.hpp"
 #include "virtual_sites/com.hpp"
 #include "virtual_sites/relative.hpp"
 
@@ -66,69 +67,6 @@
 #include <memory>
 #include <span>
 #include <variant>
-
-/** External particle forces */
-static ParticleForce external_force(Particle const &p) {
-  ParticleForce f = {};
-
-#ifdef ESPRESSO_EXTERNAL_FORCES
-  f.f += p.ext_force();
-#ifdef ESPRESSO_ROTATION
-  f.torque += p.ext_torque();
-#endif
-#endif
-
-#ifdef ESPRESSO_ENGINE
-  // apply a swimming force in the direction of
-  // the particle's orientation axis
-  if (p.swimming().swimming and !p.swimming().is_engine_force_on_fluid) {
-    f.f += p.swimming().f_swim * p.calc_director();
-  }
-#endif
-
-  return f;
-}
-
-/** Combined force initialization and Langevin noise application */
-static void init_forces_and_thermostat(System::System const &system) {
-#ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_FUNCTION;
-#endif
-
-  auto &cell_structure = *system.cell_structure;
-  auto const &propagation = *system.propagation;
-  auto const &thermostat = *system.thermostat;
-  auto const kT = thermostat.kT;
-  auto const time_step = system.get_time_step();
-
-  // Check if Langevin thermostat is active
-  bool const langevin_active =
-      thermostat.langevin &&
-      (propagation.used_propagations &
-       (PropagationMode::TRANS_LANGEVIN | PropagationMode::ROT_LANGEVIN));
-
-  // Single pass over all local particles
-  cell_structure.for_each_local_particle([&](Particle &p) {
-    // Initialize force with external forces
-    p.force_and_torque() = external_force(p);
-
-    // Apply Langevin noise if thermostat is active
-    if (langevin_active) {
-      auto const &langevin = *thermostat.langevin;
-      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
-        p.force() += friction_thermo_langevin(langevin, p, time_step, kT);
-#ifdef ESPRESSO_ROTATION
-      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
-        p.torque() += convert_vector_body_to_space(
-            p, friction_thermo_langevin_rotation(langevin, p, time_step, kT));
-#endif
-    }
-  });
-  cell_structure.reset_local_force_and_torque();
-
-  // Initialize ghost forces (unchanged)
-  cell_structure.ghosts_reset_forces();
-}
 
 static void force_capping(CellStructure &cell_structure, double force_cap) {
   if (force_cap > 0.) {
@@ -179,6 +117,9 @@ static ForcesKernel create_cabana_neighbor_kernel(
 #ifdef ESPRESSO_ROTATION
   auto scatter_torque = system.cell_structure->get_scatter_torque();
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  auto scatter_dip_fld = system.cell_structure->get_scatter_dip_fld();
+#endif
 #ifdef ESPRESSO_NPT
   auto scatter_virial = system.cell_structure->get_scatter_virial();
 #endif
@@ -198,12 +139,132 @@ static ForcesKernel create_cabana_neighbor_kernel(
 #ifdef ESPRESSO_ROTATION
                              scatter_torque,
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                             scatter_dip_fld,
+#endif
 #ifdef ESPRESSO_NPT
                              virial,
                              scatter_virial,
 #endif
                              aosoa,
                              system.maximal_cutoff()};
+}
+
+// Single construction-and-launch site for SpecializedForcesKernel, shared by
+// the with- and without-coulomb branches of the dispatch below.
+template <bool HasCoulomb>
+static ShortRangeVerletPairLoop make_specialized_verlet_pair_loop(
+    InteractionsNonBonded const &nonbonded_ias,
+    CellStructure::AoSoA_pack const &aosoa,
+    CellStructure::ScatterForce scatter_force,
+    CuboidMinimumImage const &minimum_image, double const max_cutoff_sq
+#ifdef ESPRESSO_ELECTROSTATICS
+    ,
+    Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_ptr = nullptr
+#ifdef ESPRESSO_P3M
+    ,
+    CoulombP3M const *p3m = nullptr
+#endif
+#endif
+) {
+  return [=, &nonbonded_ias, &aosoa](CellStructure::ListType const &verlet_list,
+                                     std::size_t const n) {
+    SpecializedForcesKernel<HasCoulomb> const kernel{nonbonded_ias,
+                                                     aosoa,
+                                                     scatter_force,
+                                                     verlet_list.counts,
+                                                     verlet_list.neighbors,
+                                                     minimum_image,
+                                                     max_cutoff_sq
+#ifdef ESPRESSO_ELECTROSTATICS
+                                                     ,
+                                                     coulomb_ptr
+#ifdef ESPRESSO_P3M
+                                                     ,
+                                                     p3m
+#endif
+#endif
+    };
+    Kokkos::parallel_for("specialized_nonbonded_pairs",
+                         Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
+                             std::size_t{0}, n),
+                         kernel);
+  };
+}
+
+// Build the compile-time-specialized Verlet pair loop when the active feature
+// set is covered by SpecializedForcesKernel: cuboid box, no NPT virial, no
+// dipolar or ELC kernel, only allowlisted (central-radial) pair potentials, no
+// Thole pair, and no particle with an exclusion. Returns an empty
+// ShortRangeVerletPairLoop otherwise, leaving cabana_short_range on the
+// generic ForcesKernel path. The specialized kernel is bitwise-identical to
+// the generic one on these systems.
+static ShortRangeVerletPairLoop create_specialized_verlet_pair_loop(
+    System::System const &system,
+    [[maybe_unused]] Utils::Vector3d const *virial,
+    [[maybe_unused]] auto const &elc_kernel, auto const &coulomb_kernel,
+    [[maybe_unused]] auto const &dipoles_kernel) {
+  if (system.box_geo->type() != BoxType::CUBOID)
+    return {};
+#ifdef ESPRESSO_NPT
+  if (virial != nullptr)
+    return {};
+#endif
+#ifdef ESPRESSO_DIPOLES
+  if (get_ptr(dipoles_kernel) != nullptr)
+    return {};
+#endif
+#ifdef ESPRESSO_ELECTROSTATICS
+  if (get_ptr(elc_kernel) != nullptr)
+    return {};
+#endif
+  auto const &nonbonded_ias = *system.nonbonded_ias;
+  // Allowlist over the aggregated pair-potential mask (O(1), maintained by
+  // recalc_maximal_cutoffs). Any type pair with a potential the specialized
+  // kernel does not compute -- Gay-Berne, DPD (in which case the DPD
+  // thermostat could act on the pair), or any future addition -- falls back
+  // to the generic kernel by default.
+  if ((nonbonded_ias.combined_active_pair_mask() &
+       ~specialized_kernel_pair_mask) != 0u)
+    return {};
+#ifdef ESPRESSO_THOLE
+  // Thole damping is not in the pair-potential mask; check its own aggregate.
+  if (nonbonded_ias.any_thole_configured())
+    return {};
+#endif
+  auto &cell_structure = *system.cell_structure;
+  auto const &aosoa = cell_structure.get_aosoa();
+#ifdef ESPRESSO_EXCLUSIONS
+  // The specialized kernel has no exclusion handling. The commit sweep (run by
+  // update_verlet_state earlier in this same force call) accumulates whether
+  // any packed particle carries an exclusion, so this is an O(1) read of the
+  // same population the old per-particle sweep covered (local + ghosts).
+  if (aosoa.has_any_exclusion())
+    return {};
+#endif
+
+  auto scatter_force = cell_structure.get_scatter_force();
+  auto const minimum_image = system.box_geo->cuboid_minimum_image();
+  auto const max_cutoff_sq = Utils::sqr(system.maximal_cutoff());
+
+#ifdef ESPRESSO_ELECTROSTATICS
+  if (auto const *coulomb_ptr = get_ptr(coulomb_kernel);
+      coulomb_ptr != nullptr) {
+    return make_specialized_verlet_pair_loop<true>(
+        nonbonded_ias, aosoa, scatter_force, minimum_image, max_cutoff_sq,
+        coulomb_ptr
+#ifdef ESPRESSO_P3M
+        ,
+        get_toplevel_p3m_solver(system.coulomb)
+#endif
+    );
+  }
+#else
+  static_cast<void>(coulomb_kernel);
+#endif
+
+  return make_specialized_verlet_pair_loop<false>(
+      nonbonded_ias, aosoa, scatter_force, minimum_image, max_cutoff_sq);
 }
 
 static void reduce_cabana_forces_and_torques(System::System const &system,
@@ -218,13 +279,18 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
   auto scatter_torque = system.cell_structure->get_scatter_torque();
   Kokkos::Experimental::contribute(local_torque, scatter_torque);
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  auto &local_dip_fld = system.cell_structure->get_local_dip_fld();
+  auto scatter_dip_fld = system.cell_structure->get_scatter_dip_fld();
+  Kokkos::Experimental::contribute(local_dip_fld, scatter_dip_fld);
+#endif
 #ifdef ESPRESSO_NPT
   auto &local_virial = system.cell_structure->get_local_virial();
   auto scatter_virial = system.cell_structure->get_scatter_virial();
   Kokkos::Experimental::contribute(local_virial, scatter_virial);
 #endif
 
-  using execution_space = Kokkos::DefaultExecutionSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
   Kokkos::RangePolicy<execution_space> policy(std::size_t{0},
                                               unique_particles.size());
   Kokkos::parallel_for("reduction", policy,
@@ -232,10 +298,16 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
 #ifdef ESPRESSO_ROTATION
                         &local_torque,
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                        &local_dip_fld,
+#endif
                         &unique_particles](std::size_t const i) {
                          Utils::Vector3d force{};
 #ifdef ESPRESSO_ROTATION
                          Utils::Vector3d torque{};
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                         Utils::Vector3d dip_fld{};
 #endif
                          force[0] += local_force(i, 0);
                          force[1] += local_force(i, 1);
@@ -245,9 +317,17 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
                          torque[1] += local_torque(i, 1);
                          torque[2] += local_torque(i, 2);
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                         dip_fld[0] += local_dip_fld(i, 0);
+                         dip_fld[1] += local_dip_fld(i, 1);
+                         dip_fld[2] += local_dip_fld(i, 2);
+#endif
                          unique_particles.at(i)->force() += force;
 #ifdef ESPRESSO_ROTATION
                          unique_particles.at(i)->torque() += torque;
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                         unique_particles.at(i)->dip_fld() += dip_fld;
 #endif
                        });
   Kokkos::fence();
@@ -292,8 +372,9 @@ void System::System::calculate_forces() {
   }
 #endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  // reset dipole field
-  reinit_dip_fld(*cell_structure);
+  if (dipoles.impl->solver.has_value()) {
+    reinit_dip_fld(*cell_structure);
+  }
 #endif
 
   // Use combined function instead of two separate calls
@@ -304,15 +385,19 @@ void System::System::calculate_forces() {
   auto const coulomb_u_kernel = coulomb.pair_energy_kernel();
   auto *const virial = get_npt_virial();
 
-  VerletCriterion<> const verlet_criterion{*this,
-                                           cell_structure->get_verlet_skin(),
-                                           get_interaction_range(),
-                                           coulomb.cutoff(),
-                                           dipoles.cutoff(),
-                                           collision_detection_cutoff};
+  // Factory instead of an eager criterion: construction fills an O(n_types^2)
+  // cutoff table, so it only runs where a criterion is actually consumed (the
+  // link-cell fallback and the collision-detection loop below).
+  auto const make_verlet_criterion = [&] {
+    return VerletCriterion<>{*this,
+                             cell_structure->get_verlet_skin(),
+                             get_interaction_range(),
+                             coulomb.cutoff(),
+                             dipoles.cutoff(),
+                             collision_detection_cutoff};
+  };
 
-  update_cabana_state(*cell_structure, verlet_criterion,
-                      get_interaction_range(), propagation->integ_switch);
+  update_verlet_state(*this, collision_detection_cutoff);
 #ifdef ESPRESSO_ELECTROSTATICS
   if (coulomb.impl->extension) {
     update_icc_particles();
@@ -348,11 +433,14 @@ void System::System::calculate_forces() {
       create_cabana_neighbor_kernel(*this, virial, elc_kernel, coulomb_kernel,
                                     dipoles_kernel, coulomb_u_kernel);
 
+  auto const specialized_pair_loop = create_specialized_verlet_pair_loop(
+      *this, virial, elc_kernel, coulomb_kernel, dipoles_kernel);
+
   cabana_short_range(pair_bonds_kernel, angle_bonds_kernel,
                      dihedral_bonds_kernel, first_neighbor_kernel,
                      *cell_structure, get_interaction_range(),
-                     bonded_ias->maximal_cutoff(), verlet_criterion,
-                     propagation->integ_switch);
+                     bonded_ias->maximal_cutoff(), make_verlet_criterion,
+                     propagation->integ_switch, specialized_pair_loop);
 
   // Force and Torque reduction
   reduce_cabana_forces_and_torques(*this, virial);
@@ -364,6 +452,7 @@ void System::System::calculate_forces() {
     collision_detection.detect_collision(p1, p2, d.dist2);
   };
   if (not collision_detection->is_off()) {
+    auto const verlet_criterion = make_verlet_criterion();
     cell_structure->non_bonded_loop(collision_kernel, verlet_criterion);
   }
 #endif // ESPRESSO_COLLISION_DETECTION
@@ -422,6 +511,11 @@ void System::System::calculate_forces() {
 
   // Communication step: ghost forces
   cell_structure->ghosts_reduce_forces();
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  if (dipoles.impl->solver.has_value()) {
+    cell_structure->ghosts_reduce_dipole_field();
+  }
+#endif
 
   // should be pretty late, since it needs to zero out the total force
   comfixed->apply(particles);

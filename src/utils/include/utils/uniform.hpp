@@ -15,8 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef UTILS_UNIFORM_HPP
-#define UTILS_UNIFORM_HPP
+#pragma once
+
+#include "utils/device_qualifier.hpp"
 
 #include <cinttypes>
 #include <limits>
@@ -33,7 +34,7 @@ namespace Utils {
  * @param in Unsigned integer value
  * @return Mapped floating point value.
  */
-constexpr inline double uniform(uint64_t in) {
+constexpr DEVICE_QUALIFIER inline double uniform(uint64_t in) {
   auto constexpr const max = std::numeric_limits<uint64_t>::max();
   auto constexpr const fac = 1. / (static_cast<double>(max) + 1.);
 
@@ -41,5 +42,3 @@ constexpr inline double uniform(uint64_t in) {
 }
 
 } // namespace Utils
-
-#endif // ESPRESSO_UNIFORM_HPP

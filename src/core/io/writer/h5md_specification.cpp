@@ -41,59 +41,60 @@ Specification::Specification(unsigned int fields) {
   auto const add_time_series = [this](Dataset &&dataset, bool link = true) {
     auto const group = dataset.group;
     m_datasets.push_back(std::move(dataset));
-    m_datasets.push_back({group, "step", 1, H5T_NATIVE_INT, 1, link});
-    m_datasets.push_back({group, "time", 1, H5T_NATIVE_DOUBLE, 1, link});
+    m_datasets.push_back(Dataset{group, "step", 1, H5T_NATIVE_INT, 1, link});
+    m_datasets.push_back(Dataset{group, "time", 1, H5T_NATIVE_DOUBLE, 1, link});
   };
 
   if (fields & H5MD_OUT_BOX_L) {
-    add_time_series({"/particles/atoms/box/edges", "value", 2,
-                     H5T_NATIVE_DOUBLE, 3, false});
+    add_time_series(Dataset{"/particles/atoms/box/edges", "value", 2,
+                            H5T_NATIVE_DOUBLE, 3, false});
   }
   if (fields & H5MD_OUT_LE_OFF) {
-    add_time_series({"/particles/atoms/lees_edwards/offset", "value", 2,
-                     H5T_NATIVE_DOUBLE, 1, false});
+    add_time_series(Dataset{"/particles/atoms/lees_edwards/offset", "value", 2,
+                            H5T_NATIVE_DOUBLE, 1, false});
   }
   if (fields & H5MD_OUT_LE_DIR) {
-    add_time_series({"/particles/atoms/lees_edwards/direction", "value", 2,
-                     H5T_NATIVE_INT, 1, false});
+    add_time_series(Dataset{"/particles/atoms/lees_edwards/direction", "value",
+                            2, H5T_NATIVE_INT, 1, false});
   }
   if (fields & H5MD_OUT_LE_NORMAL) {
-    add_time_series({"/particles/atoms/lees_edwards/normal", "value", 2,
-                     H5T_NATIVE_INT, 1, false});
+    add_time_series(Dataset{"/particles/atoms/lees_edwards/normal", "value", 2,
+                            H5T_NATIVE_INT, 1, false});
   }
   if (fields & H5MD_OUT_MASS) {
-    add_time_series(
-        {"/particles/atoms/mass", "value", 2, H5T_NATIVE_DOUBLE, 1, false});
+    add_time_series(Dataset{"/particles/atoms/mass", "value", 2,
+                            H5T_NATIVE_DOUBLE, 1, false});
   }
   if (fields & H5MD_OUT_CHARGE) {
-    add_time_series(
-        {"/particles/atoms/charge", "value", 2, H5T_NATIVE_DOUBLE, 1, false});
+    add_time_series(Dataset{"/particles/atoms/charge", "value", 2,
+                            H5T_NATIVE_DOUBLE, 1, false});
   }
-  add_time_series({"/particles/atoms/id", "value", 2, H5T_NATIVE_INT, 1, false},
-                  false);
+  add_time_series(
+      Dataset{"/particles/atoms/id", "value", 2, H5T_NATIVE_INT, 1, false},
+      false);
   if (fields & H5MD_OUT_TYPE) {
-    add_time_series(
-        {"/particles/atoms/species", "value", 2, H5T_NATIVE_INT, 1, false});
+    add_time_series(Dataset{"/particles/atoms/species", "value", 2,
+                            H5T_NATIVE_INT, 1, false});
   }
   if (fields & H5MD_OUT_POS) {
-    add_time_series(
-        {"/particles/atoms/position", "value", 3, H5T_NATIVE_DOUBLE, 3, false});
+    add_time_series(Dataset{"/particles/atoms/position", "value", 3,
+                            H5T_NATIVE_DOUBLE, 3, false});
   }
   if (fields & H5MD_OUT_VEL) {
-    add_time_series(
-        {"/particles/atoms/velocity", "value", 3, H5T_NATIVE_DOUBLE, 3, false});
+    add_time_series(Dataset{"/particles/atoms/velocity", "value", 3,
+                            H5T_NATIVE_DOUBLE, 3, false});
   }
   if (fields & H5MD_OUT_FORCE) {
-    add_time_series(
-        {"/particles/atoms/force", "value", 3, H5T_NATIVE_DOUBLE, 3, false});
+    add_time_series(Dataset{"/particles/atoms/force", "value", 3,
+                            H5T_NATIVE_DOUBLE, 3, false});
   }
   if (fields & H5MD_OUT_IMG) {
-    add_time_series(
-        {"/particles/atoms/image", "value", 3, H5T_NATIVE_INT, 3, false});
+    add_time_series(Dataset{"/particles/atoms/image", "value", 3,
+                            H5T_NATIVE_INT, 3, false});
   }
   if (fields & H5MD_OUT_BONDS) {
     add_time_series(
-        {"/connectivity/atoms", "value", 3, H5T_NATIVE_INT, 2, false});
+        Dataset{"/connectivity/atoms", "value", 3, H5T_NATIVE_INT, 2, false});
   }
 }
 

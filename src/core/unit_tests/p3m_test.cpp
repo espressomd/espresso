@@ -26,7 +26,7 @@
 
 #include "actor/registration.hpp"
 #include "electrostatics/p3m.hpp"
-#include "electrostatics/p3m_heffte.impl.hpp"
+#include "electrostatics/p3m.impl.definitions.hpp"
 #include "magnetostatics/dp3m.hpp"
 #include "magnetostatics/dp3m_heffte.impl.hpp"
 #include "p3m/FFTBackendLegacy.hpp"
@@ -35,6 +35,7 @@
 
 #include "EspressoCoreGlobalConfig.hpp"
 #include "Particle.hpp"
+#include "communication.hpp"
 #include "energy_inline.hpp"
 #include "integrate.hpp"
 #include "particle_node.hpp"
@@ -136,22 +137,38 @@ template <auto... Pack> void test_all_p3m_fft_configs() {
     // set up P3M
     auto const prefactor = 2.;
     auto tuning = TuningParameters{1, {std::nullopt, std::nullopt}, false};
-    auto solver =
-        std::make_shared<CoulombP3MHeffte<double, Hardware, FFTConfig>>(
-            std::make_unique<CoulombP3MState<double, FFTConfig>>(
-                P3MParameters{false, 0.0, 3.5, Utils::Vector3i::broadcast(12),
-                              Utils::Vector3d::broadcast(0.5), 5, 0.615, 1e-3}),
-            tuning, prefactor);
+    auto solver = std::make_shared<CoulombP3MImpl<double, Hardware, FFTConfig>>(
+        std::make_unique<CoulombP3MState<double, Hardware, FFTConfig>>(
+            P3MParameters{false, 0.0, 3.5, Utils::Vector3i::broadcast(12),
+                          Utils::Vector3d::broadcast(0.5), 5, 0.615, 1e-3}),
+        tuning, prefactor);
     add_actor(comm, espresso::system, system.coulomb.impl->solver, solver,
               [&system]() { system.on_coulomb_change(); });
-    auto const obs_energy = system.calculate_energy();
+    auto const &obs_energy = system.calculate_energy();
     system.integrate(0, INTEG_REUSE_FORCES_NEVER);
     if (rank == 0) {
       BOOST_TEST_CONTEXT(Utils::demangle<FFTConfig>()) {
         auto constexpr energy_ref = -0.114744451;
-        auto const energy_k_space = obs_energy->coulomb[1];
+        auto const energy_k_space = obs_energy.coulomb[1];
         BOOST_CHECK_CLOSE(energy_k_space, energy_ref, 1e-6);
       }
+    }
+    // check FFT properties
+    auto const &fft = *solver->p3m.fft;
+    auto const ref_rs_local_size = 12 / ::communicator.node_grid;
+    BOOST_CHECK_EQUAL(fft.rs_local_size(), ref_rs_local_size);
+    if (::communicator.size <= 3) {
+      auto const node_index = ::communicator.calc_node_index();
+      auto ref_ks_local_size = 12 / ::communicator.node_grid;
+      if constexpr (FFTConfig::use_r2c) {
+        ref_ks_local_size[FFTConfig::r2c_dir] /= 2;
+        if (node_index[FFTConfig::r2c_dir] == 0) {
+          ref_ks_local_size[FFTConfig::r2c_dir] += 1;
+        }
+      }
+      BOOST_CHECK_EQUAL(fft.ks_local_size(), ref_ks_local_size);
+      BOOST_CHECK_EQUAL(fft.ks_local_ur_index() - fft.ks_local_ld_index(),
+                        ref_ks_local_size);
     }
     // deactivate actor
     solver->detach_system(espresso::system);
@@ -201,12 +218,12 @@ template <auto... Pack> void test_all_dp3m_fft_configs() {
     solver->dp3m.template make_fft_instance<FFTBackendLegacy<double>>();
     add_actor(comm, espresso::system, system.dipoles.impl->solver, solver,
               [&system]() { system.on_dipoles_change(); });
-    auto const obs_energy = system.calculate_energy();
+    auto const &obs_energy = system.calculate_energy();
     system.integrate(0, INTEG_REUSE_FORCES_NEVER);
     if (rank == 0) {
       BOOST_TEST_CONTEXT(Utils::demangle<FFTConfig>()) {
         auto constexpr energy_ref = -0.0052257342364;
-        auto const energy_k_space = obs_energy->dipolar[1];
+        auto const energy_k_space = obs_energy.dipolar[1];
         BOOST_CHECK_CLOSE(energy_k_space, energy_ref, 1e-6);
       }
     }

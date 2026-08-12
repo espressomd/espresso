@@ -1,0 +1,6 @@
+--- cmake/kokkos_arch.cmake
++++ cmake/kokkos_arch.cmake
+@@ -225,3 +225,2 @@
+   if(KOKKOS_ENABLE_DEBUG OR _UPPERCASE_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+-    global_append(KOKKOS_CUDA_OPTIONS -lineinfo)
+   endif()

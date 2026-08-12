@@ -30,10 +30,12 @@
 #include "energy_cabana.hpp"
 #include "energy_inline.hpp"
 #include "integrators/Propagation.hpp"
+#include "kokkos_helpers.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "short_range_cabana.hpp"
 #include "short_range_loop.hpp"
+#include "short_range_verlet.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
 
@@ -47,19 +49,33 @@
 #include <span>
 #include <vector>
 
+struct EnergyObservable {
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+  std::unique_ptr<Observable_stat> observable;
+  Kokkos::View<double **, Kokkos::LayoutRight, execution_space> local;
+};
+
 namespace System {
 
-std::shared_ptr<Observable_stat> System::calculate_energy() {
+Observable_stat const &System::calculate_energy() {
 
-  auto obs_energy_ptr = std::make_shared<Observable_stat>(
-      1ul, static_cast<std::size_t>(bonded_ias->get_next_key()),
-      nonbonded_ias->get_max_seen_particle_type());
-
-  if (long_range_interactions_sanity_checks()) {
-    return obs_energy_ptr;
+  if (not m_obs_energy) {
+    auto const n_threads = EnergyObservable::execution_space{}.concurrency();
+    m_obs_energy = std::make_shared<EnergyObservable>();
+    m_obs_energy->observable = std::make_unique<Observable_stat>(1ul, 0ul, 0);
+    m_obs_energy->local =
+        decltype(m_obs_energy->local)("local_energy", n_threads, 1ul);
   }
 
-  auto &obs_energy = *obs_energy_ptr;
+  auto &local_energy = m_obs_energy->local;
+  auto &obs_energy = *m_obs_energy->observable;
+  obs_energy.reset(static_cast<std::size_t>(bonded_ias->get_next_key()),
+                   nonbonded_ias->get_max_seen_particle_type());
+
+  if (long_range_interactions_sanity_checks()) {
+    return obs_energy;
+  }
+
 #if defined(ESPRESSO_CUDA) and                                                 \
     (defined(ESPRESSO_ELECTROSTATICS) or defined(ESPRESSO_DIPOLES))
   gpu->clear_energy_on_device();
@@ -80,30 +96,35 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
 #ifdef ESPRESSO_CALIPER
   CALI_MARK_BEGIN("cabana_short_range");
 #endif
-  VerletCriterion<> const verlet_criterion{*this,
-                                           cell_structure->get_verlet_skin(),
-                                           get_interaction_range(),
-                                           coulomb.cutoff(),
-                                           dipoles.cutoff(),
-                                           inactive_cutoff};
-  update_cabana_state(*cell_structure, verlet_criterion,
-                      get_interaction_range(), propagation->integ_switch);
+  // Factory instead of an eager criterion: construction fills an O(n_types^2)
+  // cutoff table, so it only runs on the link-cell fallback path.
+  auto const make_verlet_criterion = [&] {
+    return VerletCriterion<>{*this,
+                             cell_structure->get_verlet_skin(),
+                             get_interaction_range(),
+                             coulomb.cutoff(),
+                             dipoles.cutoff(),
+                             inactive_cutoff};
+  };
+  update_verlet_state(*this, inactive_cutoff);
 
   EnergyBinLayout layout{
       static_cast<std::size_t>(bonded_ias->get_next_key()),
       std::size_t(nonbonded_ias->get_max_seen_particle_type() + 1)};
 
-  using exec = Kokkos::DefaultExecutionSpace;
-  Kokkos::View<double **, Kokkos::LayoutRight> local_energy(
-      "local_energy", exec().concurrency(), layout.total);
-  auto const &unique_particles = cell_structure->get_unique_particles();
-  auto const n_particles = static_cast<int>(unique_particles.size());
-  Kokkos::View<int *> mol_id_view("mol_id", n_particles);
-  auto mol_id_host = Kokkos::create_mirror_view(mol_id_view);
-  for (int i = 0; i < n_particles; ++i) {
-    mol_id_host(i) = unique_particles[i]->mol_id();
+  using exec = Kokkos::DefaultHostExecutionSpace;
+  if (local_energy.extent(1) != layout.total) {
+    Kokkos::realloc(Kokkos::WithoutInitializing, local_energy,
+                    exec{}.concurrency(), layout.total);
   }
-  Kokkos::deep_copy(mol_id_view, mol_id_host);
+  kokkos_deep_copy(exec{}, local_energy, 0.);
+
+  auto const &unique_particles = cell_structure->get_unique_particles();
+  auto const n_particles = unique_particles.size();
+  Kokkos::View<int *, Kokkos::LayoutRight, exec> mol_id("mol_id", n_particles);
+  for (std::size_t i = 0; i < n_particles; ++i) {
+    mol_id(i) = unique_particles[i]->mol_id();
+  }
 
   // Non Bonded energies
   EnergyKernel pair_e_kernel{*bonded_ias,
@@ -116,7 +137,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
                              local_energy,
                              layout,
                              cell_structure->get_aosoa(),
-                             mol_id_view,
+                             mol_id,
                              maximal_cutoff()};
 
   // Bonded energies: write a BondsEnergyKernelData + *BondsEnergyKernel
@@ -132,7 +153,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
 
   cabana_short_range(pair_be_kernel, angle_be_kernel, dih_be_kernel,
                      pair_e_kernel, *cell_structure, get_interaction_range(),
-                     bonded_ias->maximal_cutoff(), verlet_criterion,
+                     bonded_ias->maximal_cutoff(), make_verlet_criterion,
                      propagation->integ_switch);
 
   reduce_cabana_energy(local_energy, layout, obs_energy, *bonded_ias,
@@ -163,7 +184,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
 #endif
 
   obs_energy.mpi_reduce();
-  return obs_energy_ptr;
+  return obs_energy;
   // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 

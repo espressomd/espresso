@@ -213,9 +213,6 @@ Variant ReactionAlgorithm::do_call_method(std::string const &name,
     auto const gamma = get_value<double>(params, "gamma");
     auto const reaction_id = get_value<int>(params, "reaction_id");
     context()->parallel_try_catch([&]() {
-      if (reaction_id % 2 == 1) {
-        throw std::invalid_argument("Only forward reactions can be selected");
-      }
       if (gamma <= 0.) {
         throw std::domain_error("gamma needs to be a strictly positive value");
       }

@@ -25,6 +25,7 @@
 #include "BoxGeometry.hpp"
 #include "GpuParticleData.hpp"
 #include "LocalBox.hpp"
+#include "Observable_stat.hpp"
 #include "PropagationMode.hpp"
 #include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
@@ -41,6 +42,7 @@
 #include "npt.hpp"
 #include "particle_node.hpp"
 #include "short_range_cabana.hpp"
+#include "short_range_verlet.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites/com.hpp"
@@ -138,6 +140,11 @@ void set_system(std::shared_ptr<System> new_instance) {
 }
 
 System &get_system() { return *instance; }
+
+bool is_same_system(System const *const system) {
+  assert(system != nullptr);
+  return system == instance.get();
+}
 
 void System::set_time_step(double value) {
   if (value <= 0.)
@@ -424,15 +431,7 @@ void System::rebuild_aosoa() {
   auto const collision_detection_cutoff = inactive_cutoff;
 #endif
 
-  VerletCriterion<> const verlet_criterion{*this,
-                                           cell_structure->get_verlet_skin(),
-                                           get_interaction_range(),
-                                           coulomb.cutoff(),
-                                           dipoles.cutoff(),
-                                           collision_detection_cutoff};
-
-  update_cabana_state(*cell_structure, verlet_criterion,
-                      get_interaction_range(), propagation->integ_switch);
+  update_verlet_state(*this, collision_detection_cutoff);
 }
 
 void System::on_lees_edwards_change() { lb.on_lees_edwards_change(); }

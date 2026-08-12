@@ -35,6 +35,7 @@
 #include "communication.hpp"
 #include "ghosts.hpp"
 #include "integrators/Propagation.hpp"
+#include "kokkos_helpers.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "particle_enumeration.hpp"
 #include "particle_reduction.hpp"
@@ -83,6 +84,10 @@ void CellStructure::clear_local_properties() {
 #ifdef ESPRESSO_ROTATION
   m_scatter_torque.reset();
   m_local_torque.reset();
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  m_scatter_dip_fld.reset();
+  m_local_dip_fld.reset();
 #endif
 #ifdef ESPRESSO_NPT
   m_scatter_virial.reset();
@@ -158,11 +163,17 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
     m_scatter_torque.emplace(
         Kokkos::Experimental::create_scatter_view(get_local_torque()));
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    Kokkos::realloc(get_local_dip_fld(), num_part);
+    // underlying View extent changed -> scratch buffers must be rebuilt
+    m_scatter_dip_fld.emplace(
+        Kokkos::Experimental::create_scatter_view(get_local_dip_fld()));
+#endif
     Kokkos::realloc(get_id_to_index(), get_cached_max_local_particle_id() + 1);
-    Kokkos::deep_copy(get_id_to_index(), -1);
+    kokkos_deep_copy(execution_space{}, get_id_to_index(), -1);
     // Resize particle views using AoSoA_pack's resize method
     m_aosoa->resize(num_part);
-    Kokkos::deep_copy(m_aosoa->flags, uint8_t{0});
+    kokkos_deep_copy(execution_space{}, m_aosoa->flags, uint8_t{0});
     m_verlet_list_cabana->reallocData(num_part, max_counts);
   } else { // local properties are initialized
     m_local_force = std::make_unique<ForceType>("local_force", num_part);
@@ -173,14 +184,20 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
     m_scatter_torque.emplace(
         Kokkos::Experimental::create_scatter_view(*m_local_torque));
 #endif
-    m_id_to_index = std::make_unique<Kokkos::View<int *>>(
-        Kokkos::ViewAllocateWithoutInitializing("id_to_index"),
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    m_local_dip_fld = std::make_unique<ForceType>("local_dip_fld", num_part);
+    m_scatter_dip_fld.emplace(
+        Kokkos::Experimental::create_scatter_view(*m_local_dip_fld));
+#endif
+    m_id_to_index = std::make_unique<Kokkos::View<int *, memory_space>>(
+        Kokkos::view_alloc(execution_space{}, Kokkos::WithoutInitializing,
+                           "id_to_index"),
         get_cached_max_local_particle_id() + 1);
-    Kokkos::deep_copy(get_id_to_index(), -1);
+    kokkos_deep_copy(execution_space{}, get_id_to_index(), -1);
     // Create AoSoA_pack and initialize with resize
     m_aosoa = std::make_unique<AoSoA_pack>();
     m_aosoa->resize(num_part);
-    Kokkos::deep_copy(m_aosoa->flags, uint8_t{0});
+    kokkos_deep_copy(execution_space{}, m_aosoa->flags, uint8_t{0});
 
     m_verlet_list_cabana =
         std::make_unique<ListType>(0ul, num_part, max_counts);
@@ -196,26 +213,34 @@ void CellStructure::reset_local_force_and_torque() {
 #ifdef ESPRESSO_CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
-  Kokkos::deep_copy(get_local_force(), 0.);
+  kokkos_deep_copy(execution_space{}, get_local_force(), 0.);
   m_scatter_force->reset();
 #ifdef ESPRESSO_ROTATION
-  Kokkos::deep_copy(get_local_torque(), 0.);
+  kokkos_deep_copy(execution_space{}, get_local_torque(), 0.);
   m_scatter_torque->reset();
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  kokkos_deep_copy(execution_space{}, get_local_dip_fld(), 0.);
+  m_scatter_dip_fld->reset();
 #endif
 }
 
 void CellStructure::reset_local_properties() {
-  Kokkos::deep_copy(get_local_force(), 0.);
+  kokkos_deep_copy(execution_space{}, get_local_force(), 0.);
   m_scatter_force->reset();
 #ifdef ESPRESSO_ROTATION
-  Kokkos::deep_copy(get_local_torque(), 0.);
+  kokkos_deep_copy(execution_space{}, get_local_torque(), 0.);
   m_scatter_torque->reset();
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  kokkos_deep_copy(execution_space{}, get_local_dip_fld(), 0.);
+  m_scatter_dip_fld->reset();
+#endif
 #ifdef ESPRESSO_NPT
-  Kokkos::deep_copy(get_local_virial(), 0.);
+  kokkos_deep_copy(execution_space{}, get_local_virial(), 0.);
   m_scatter_virial->reset();
 #endif
-  Kokkos::deep_copy(get_aosoa().flags, uint8_t{0});
+  kokkos_deep_copy(execution_space{}, get_aosoa().flags, uint8_t{0});
 }
 
 void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
@@ -264,7 +289,7 @@ void CellStructure::set_index_map() {
   unique_particles.clear();
   unique_particles.resize(count_local_particles());
   std::unordered_set<int> registered_index{};
-  using execution_space = Kokkos::DefaultExecutionSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
   int n_threads = execution_space().concurrency();
   std::vector<int> max_ids(n_threads);
 
@@ -471,6 +496,9 @@ unsigned map_data_parts(unsigned data_parts) {
 #ifdef ESPRESSO_BOND_CONSTRAINT
          | ((data_parts & DATA_PART_RATTLE) ? GHOSTTRANS_RATTLE : 0u)
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+         | ((data_parts & DATA_PART_DIPFLD) ? GHOSTTRANS_DIPFLD : 0u)
+#endif
          | ((data_parts & DATA_PART_BONDS) ? GHOSTTRANS_BONDS : 0u);
   /* clang-format on */
 }
@@ -487,6 +515,12 @@ void CellStructure::ghosts_reduce_forces() {
   ghost_communicator(decomposition().collect_ghost_force_comm(),
                      *get_system().box_geo, GHOSTTRANS_FORCE);
 }
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+void CellStructure::ghosts_reduce_dipole_field() {
+  ghost_communicator(decomposition().collect_ghost_force_comm(),
+                     *get_system().box_geo, GHOSTTRANS_DIPFLD);
+}
+#endif
 #ifdef ESPRESSO_BOND_CONSTRAINT
 void CellStructure::ghosts_reduce_rattle_correction() {
   ghost_communicator(decomposition().collect_ghost_force_comm(),
@@ -625,16 +659,13 @@ bool CellStructure::check_resort_required(
     Utils::Vector3d const &additional_offset) const {
   auto const lim = Utils::sqr(m_verlet_skin / 2.) - additional_offset.norm2();
 
-  Reduction::AddPartialResultKernel<bool> add_partial =
-      [lim](bool &result, Particle const &p) {
-        if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim) {
-          result = true;
-        }
-      };
-
-  Reduction::ReductionOp<bool> reduce_op = [](bool &acc, bool const &val) {
-    acc |= val;
+  auto add_partial = [lim](bool &result, Particle const &p) {
+    if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim) {
+      result = true;
+    }
   };
 
-  return reduce_over_local_particles(*this, add_partial, reduce_op);
+  auto reduce_op = [](bool &acc, bool const &val) { acc |= val; };
+
+  return reduce_over_local_particles<bool>(*this, add_partial, reduce_op);
 }

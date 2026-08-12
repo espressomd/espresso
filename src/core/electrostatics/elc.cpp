@@ -32,6 +32,7 @@
 #include "Particle.hpp"
 #include "ParticlePropertyIterator.hpp"
 #include "ParticleRange.hpp"
+#include "aosoa_pack.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -42,7 +43,6 @@
 #include <Kokkos_Core.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/range/combine.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -215,8 +215,10 @@ void ElectrostaticLayerCorrection::add_dipole_force() const {
   // collect moments
 
   gblcblk[0] = 0.; // sum q_i (z_i - L/2)
-  gblcblk[1] = 0.; // sum q_i z_i
+  gblcblk[1] = 0.; // sum q_i (z_i - box_h/2)
   gblcblk[2] = 0.; // sum q_i
+
+  auto const mid = 0.5 * elc.box_h;
 
   for (auto const &p : particles) {
     check_gap(p);
@@ -224,7 +226,7 @@ void ElectrostaticLayerCorrection::add_dipole_force() const {
     auto const z = p.pos()[2];
 
     gblcblk[0] += q * (z - shift);
-    gblcblk[1] += q * z;
+    gblcblk[1] += q * (z - mid);
     gblcblk[2] += q;
 
     if (elc.dielectric_contrast_on) {
@@ -329,7 +331,8 @@ double ElectrostaticLayerCorrection::dipole_energy() const {
   if (elc.dielectric_contrast_on) {
     if (elc.const_pot) {
       // zero potential difference contribution
-      energy += pref / elc.box_h * lz * Utils::sqr(gblcblk[6]);
+      energy -= 2. * pref / elc.box_h * lz * gblcblk[6] *
+                (gblcblk[6] - elc.box_h * gblcblk[0]);
       // external potential shift contribution
       energy -= 2. * elc.pot_diff / elc.box_h * gblcblk[6];
     }
@@ -339,7 +342,7 @@ double ElectrostaticLayerCorrection::dipole_energy() const {
        spanning the artificial boundary layers is aphysical. */
     energy +=
         pref * (-(gblcblk[1] * gblcblk[4] + gblcblk[0] * gblcblk[5]) -
-                (1. - 2. / 3.) * gblcblk[0] * gblcblk[1] * Utils::sqr(lz));
+                (.5 - 1. / 3.) * gblcblk[0] * gblcblk[1] * Utils::sqr(lz));
   }
 
   return this_node == 0 ? energy : 0.;
@@ -350,20 +353,20 @@ double ElectrostaticLayerCorrection::dipole_energy() const {
 struct ImageSum {
   double delta;
   double shift;
-  double lz;
+  double h;   // plate separation
   double dci; // delta complement inverse
 
-  ImageSum(double delta, double shift, double lz)
-      : delta{delta}, shift{shift}, lz{lz}, dci{1. / (1. - delta)} {}
+  ImageSum(double delta, double shift, double h)
+      : delta{delta}, shift{shift}, h{h}, dci{1. / (1. - delta)} {}
 
   /** @brief Image sum from the bottom layer. */
   double b(double q, double z) const {
-    return q * dci * (z - 2. * delta * lz * dci) - q * dci * shift;
+    return q * dci * (z - 2. * delta * h * dci) - q * dci * shift;
   }
 
   /** @brief Image sum from the top layer. */
   double t(double q, double z) const {
-    return q * dci * (z + 2. * delta * lz * dci) - q * dci * shift;
+    return q * dci * (z + 2. * delta * h * dci) - q * dci * shift;
   }
 };
 
@@ -378,7 +381,6 @@ double ElectrostaticLayerCorrection::z_energy() const {
   /* for non-neutral systems, this shift gives the background contribution
    * (rsp. for this shift, the DM of the background is zero) */
   auto const shift = box_geo.length_half()[2];
-  auto const lz = box_geo.length()[2];
 
   if (elc.dielectric_contrast_on) {
     if (elc.const_pot) {
@@ -406,7 +408,7 @@ double ElectrostaticLayerCorrection::z_energy() const {
       auto const fac_delta = delta / (1. - delta);
       clear_vec(gblcblk, size);
       auto const h = elc.box_h;
-      ImageSum const image_sum{delta, shift, lz};
+      ImageSum const image_sum{delta, shift, h};
       for (auto const &p : particles) {
         auto const z = p.pos()[2];
         auto const q = p.q();
@@ -985,38 +987,10 @@ double ElectrostaticLayerCorrection::tune_far_cut() const {
   return tuned_far_cut - min_inv_boxl;
 }
 
-static auto calc_total_charge(CellStructure const &cell_structure) {
-  auto local_q = 0.;
-  for (auto const &p : cell_structure.local_particles()) {
-    local_q += p.q();
-  }
-  return boost::mpi::all_reduce(comm_cart, local_q, std::plus<>());
-}
-
 void ElectrostaticLayerCorrection::sanity_checks_periodicity() const {
   auto const &box_geo = *get_system().box_geo;
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("ELC: requires periodicity (True, True, True)");
-  }
-}
-
-void ElectrostaticLayerCorrection::sanity_checks_dielectric_contrasts() const {
-  if (elc.dielectric_contrast_on) {
-    auto const &cell_structure = *get_system().cell_structure;
-    auto const precision_threshold = std::sqrt(round_error_prec);
-    auto const total_charge = std::abs(calc_total_charge(cell_structure));
-    if (total_charge >= precision_threshold) {
-      if (elc.const_pot) {
-        // Disable this line to make ELC work again with non-neutral systems
-        // and metallic boundaries
-        throw std::runtime_error("ELC does not currently support non-neutral "
-                                 "systems with a dielectric contrast.");
-      }
-      // ELC with non-neutral systems and no fully metallic boundaries
-      // does not work
-      throw std::runtime_error("ELC does not work for non-neutral systems and "
-                               "non-metallic dielectric contrast.");
-    }
   }
 }
 
@@ -1096,6 +1070,11 @@ elc_data::elc_data(double maxPWerror, double gap_size, double far_cut,
     throw std::invalid_argument(
         "Parameter 'const_pot' must be True when 'pot_diff' is non-zero");
   }
+  if (with_const_pot and not dielectric_contrast_on) {
+    throw std::invalid_argument(
+        "Parameter 'const_pot' requires a dielectric contrast; set "
+        "'delta_mid_top' and 'delta_mid_bot' (use -1 for metallic walls)");
+  }
   if (delta_top < -delta_range or delta_top > delta_range) {
     throw std::domain_error(
         "Parameter 'delta_mid_top' must be >= -1 and <= +1");
@@ -1117,27 +1096,39 @@ elc_data::elc_data(double maxPWerror, double gap_size, double far_cut,
 ElectrostaticLayerCorrection::ElectrostaticLayerCorrection(
     elc_data &&parameters, BaseSolver &&solver)
     : elc{parameters}, base_solver{solver} {
+  // The P3M-GPU ignores images charges, disabled for now
+  if (elc.dielectric_contrast_on) {
+    auto const on_gpu =
+        std::visit([](auto const &solver_ptr) { return solver_ptr->is_gpu(); },
+                   base_solver);
+    if (on_gpu) {
+      throw std::runtime_error(
+          "ELC with a dielectric contrast is not supported by the GPU "
+          "variant of P3M");
+    }
+  }
   adapt_solver();
 }
 
-template <ChargeProtocol protocol, typename combined_ranges>
-void charge_assign(elc_data const &elc, CoulombP3M &solver,
-                   combined_ranges const &p_q_pos_range) {
+template <ChargeProtocol protocol>
+void charge_assign(elc_data const &elc, CoulombP3M &solver, auto const &cs) {
 
   solver.prepare_fft_mesh(protocol == ChargeProtocol::BOTH or
                           protocol == ChargeProtocol::IMAGE);
 
   // multi-threading -> cache sizes must be equal to the number of particles
   auto constexpr include_neutral_particles = true;
+  auto const &aosoa = cs.get_aosoa();
+  auto const n_part = cs.count_local_particles();
 
-  for (auto zipped : p_q_pos_range) {
-    auto const p_q = boost::get<0>(zipped);
-    auto const &p_pos = boost::get<1>(zipped);
+  for (std::size_t p_index = 0; p_index < n_part; ++p_index) {
+    auto const p_q = aosoa.charge(p_index);
+    auto const p_pos = aosoa.get_span_at(aosoa.position, p_index);
     if (include_neutral_particles or p_q != 0.) {
       // assign real charges
       if (protocol == ChargeProtocol::BOTH or
           protocol == ChargeProtocol::REAL) {
-        solver.assign_charge(p_q, p_pos, false);
+        solver.assign_charge(p_q, {p_pos[0], p_pos[1], p_pos[2]}, false);
       }
       // assign image charges
       if (protocol == ChargeProtocol::BOTH or
@@ -1156,18 +1147,18 @@ void charge_assign(elc_data const &elc, CoulombP3M &solver,
   }
 }
 
-template <ChargeProtocol protocol, typename combined_range>
-void modify_p3m_sums(elc_data const &elc, CoulombP3M &solver,
-                     combined_range const &p_q_pos_range) {
+template <ChargeProtocol protocol>
+void modify_p3m_sums(elc_data const &elc, CoulombP3M &solver, auto const &cs) {
 
+  auto const &aosoa = cs.get_aosoa();
+  auto const n_part = cs.count_local_particles();
   auto local_n = std::size_t{0u};
   auto local_q2 = 0.0;
   auto local_q = 0.0;
-  for (auto zipped : p_q_pos_range) {
-    auto const p_q = boost::get<0>(zipped);
-    auto const &p_pos = boost::get<1>(zipped);
+  for (std::size_t p_index = 0; p_index < n_part; ++p_index) {
+    auto const p_q = aosoa.charge(p_index);
     if (p_q != 0.) {
-      auto const p_z = p_pos[2];
+      auto const p_z = aosoa.position(p_index, 2ul);
 
       if (protocol == ChargeProtocol::BOTH or
           protocol == ChargeProtocol::REAL) {
@@ -1207,12 +1198,9 @@ double ElectrostaticLayerCorrection::long_range_energy() const {
   auto const energy = std::visit(
       [this, &system](auto const &solver_ptr) {
         auto &solver = *solver_ptr;
-        auto const particles = system.cell_structure->local_particles();
+        auto const &cs = *system.cell_structure;
         auto const &box_geo = *system.box_geo;
-
-        auto p_q_range = ParticlePropertyRange::charge_range(particles);
-        auto p_pos_range = ParticlePropertyRange::pos_range(particles);
-        auto p_q_pos_range = boost::combine(p_q_range, p_pos_range);
+        auto const particles = cs.local_particles();
 
         // assign the original charges (they may not have been assigned yet)
         solver.charge_assign();
@@ -1227,17 +1215,17 @@ double ElectrostaticLayerCorrection::long_range_energy() const {
             0.5 * elc.dielectric_layers_self_energy(solver, box_geo, particles);
 
         // assign both original and image charges
-        charge_assign<ChargeProtocol::BOTH>(elc, solver, p_q_pos_range);
-        modify_p3m_sums<ChargeProtocol::BOTH>(elc, solver, p_q_pos_range);
+        charge_assign<ChargeProtocol::BOTH>(elc, solver, cs);
+        modify_p3m_sums<ChargeProtocol::BOTH>(elc, solver, cs);
         energy += 0.5 * solver.long_range_energy();
 
         // assign only the image charges now
-        charge_assign<ChargeProtocol::IMAGE>(elc, solver, p_q_pos_range);
-        modify_p3m_sums<ChargeProtocol::IMAGE>(elc, solver, p_q_pos_range);
+        charge_assign<ChargeProtocol::IMAGE>(elc, solver, cs);
+        modify_p3m_sums<ChargeProtocol::IMAGE>(elc, solver, cs);
         energy -= 0.5 * solver.long_range_energy();
 
         // restore modified sums
-        modify_p3m_sums<ChargeProtocol::REAL>(elc, solver, p_q_pos_range);
+        modify_p3m_sums<ChargeProtocol::REAL>(elc, solver, cs);
 
         return energy;
       },
@@ -1249,22 +1237,20 @@ void ElectrostaticLayerCorrection::add_long_range_forces() const {
   auto const &system = get_system();
   std::visit(
       [this, &system](auto const &solver_ptr) {
-        auto const particles = system.cell_structure->local_particles();
+        auto const &cs = *system.cell_structure;
         auto &solver = *solver_ptr;
-        auto p_q_range = ParticlePropertyRange::charge_range(particles);
-        auto p_pos_range = ParticlePropertyRange::pos_range(particles);
-        auto p_q_pos_range = boost::combine(p_q_range, p_pos_range);
         if (elc.dielectric_contrast_on) {
           auto const &box_geo = *system.box_geo;
-          modify_p3m_sums<ChargeProtocol::BOTH>(elc, solver, p_q_pos_range);
-          charge_assign<ChargeProtocol::BOTH>(elc, solver, p_q_pos_range);
+          auto const particles = cs.local_particles();
+          modify_p3m_sums<ChargeProtocol::BOTH>(elc, solver, cs);
+          charge_assign<ChargeProtocol::BOTH>(elc, solver, cs);
           elc.dielectric_layers_self_forces(solver, box_geo, particles);
         } else {
           solver.charge_assign();
         }
         solver.add_long_range_forces();
         if (elc.dielectric_contrast_on) {
-          modify_p3m_sums<ChargeProtocol::REAL>(elc, solver, p_q_pos_range);
+          modify_p3m_sums<ChargeProtocol::REAL>(elc, solver, cs);
         }
       },
       base_solver);

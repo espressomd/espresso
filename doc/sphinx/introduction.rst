@@ -605,6 +605,9 @@ guidelines:
 
 * No guarantees are made with respect to the C++ bindings in the simulation core.
 
+* No guarantees are made with regards to the API of maintainer scripts, samples,
+  and test cases, since they are intended for developers and are not installed with |es|
+
 These guidelines are meant to satisfy Semantic Versioning 2.0.0 [1]_ and :pep:`440`.
 Commits between releases are considered *development* and do not have a meaningful
 version number; even though package repositories outside of the Python ecosystem

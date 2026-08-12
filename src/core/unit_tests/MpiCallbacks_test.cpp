@@ -35,6 +35,8 @@
 #include <stdexcept>
 #include <string>
 
+namespace utf = boost::unit_test;
+
 static std::weak_ptr<boost::mpi::environment> mpi_env;
 static bool called = false;
 
@@ -49,6 +51,12 @@ struct GlobalConfig {
   }
   ~GlobalConfig() { m_mpi_env.reset(); }
 };
+
+// Decorator to skip tests when the number of MPI ranks is 1
+boost::test_tools::assertion_result has_2_or_more_mpi_ranks(utf::test_unit_id) {
+  boost::mpi::communicator world;
+  return world.size() >= 2;
+}
 
 BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
 BOOST_AUTO_TEST_SUITE(suite)
@@ -232,6 +240,7 @@ BOOST_AUTO_TEST_CASE(call_all) {
   BOOST_CHECK(called);
 }
 
+BOOST_TEST_DECORATOR(*utf::precondition(has_2_or_more_mpi_ranks))
 BOOST_AUTO_TEST_CASE(check_exceptions) {
   auto cb1 = []() {};
   auto cb2 = []() {};

@@ -138,7 +138,12 @@ enum : unsigned {
 #endif
   /// resize the receiver particle arrays to the size of the senders
   GHOSTTRANS_PARTNUM = 64u,
-  GHOSTTRANS_BONDS = 128u
+  /// transfer bonds data
+  GHOSTTRANS_BONDS = 128u,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  /** transfer dipole field tracking data */
+  GHOSTTRANS_DIPFLD = 256u,
+#endif
 };
 
 struct GhostCommunication {

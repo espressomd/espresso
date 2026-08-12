@@ -24,7 +24,7 @@ espresso_set_common_target_properties(espresso_scafacos)
 target_link_libraries(
   espresso_scafacos PUBLIC MPI::MPI_CXX
   PRIVATE ${SCAFACOS_LDFLAGS}
-          $<$<BOOL:${WALBERLA_BUILD_WITH_EXSCALICOS}>:Exscalicos::Exscalicos>
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_EXSCALICOS}>:Exscalicos::Exscalicos>
           espresso::compiler_flags)
 
 target_include_directories(

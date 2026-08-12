@@ -150,6 +150,7 @@ cmake_param_list+=(
   ${cmake_params}
   -D CMAKE_BUILD_TYPE=${build_type}
   -D CMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests
+  -D CMAKE_CXX_EXTENSIONS=OFF
   -D ESPRESSO_INSIDE_DOCKER:BOOL=ON
   -D ESPRESSO_WARNINGS_ARE_ERRORS:BOOL=ON
   -D ESPRESSO_CTEST_ARGS:STRING="-j${check_procs}"
@@ -180,6 +181,7 @@ fi
 
 if [ "${with_cuda}" = true ]; then
     cmake_param_list+=(-D CUDAToolkit_ROOT=/usr/lib/cuda)
+    cmake_param_list+=(-D Kokkos_CUDA_DIR=/usr/lib/cuda)
     if [ "${CUDACXX}" = "" ] && [ "${CXX}" != "" ]; then
         cmake_param_list+=(-D CMAKE_CUDA_HOST_COMPILER="${CXX}")
     fi
@@ -199,7 +201,7 @@ if [[ "${OSTYPE}" == "darwin"* ]]; then
   # skip libomp runtime checks on macOS (GitHub runner image contains multiple versions of libomp)
   export KMP_DUPLICATE_LIB_OK=TRUE
   # use 1 thread by default in the Python testsuite
-  sed -i "" "s/set(TEST_NUM_THREADS 2)/set(TEST_NUM_THREADS 1)/" testsuite/python/CMakeLists.txt
+  sed -i "" "s/set(TEST_NUM_THREADS 2)/set(TEST_NUM_THREADS 1)/" ${srcdir}/testsuite/python/CMakeLists.txt
 fi
 
 # show system characteristics
@@ -243,6 +245,8 @@ if [ -f "/etc/os-release" ]; then
             . "${f}"
         done
         module load mpi
+        # Fedora's Kokkos is missing feature ENABLE_IMPL_VIEW_LEGACY
+        sed -i "/find_package(Kokkos/d" ${srcdir}/CMakeLists.txt
     elif grep -q 'NAME="Ubuntu"' /etc/os-release; then
         default_gcov="$(which "gcov")"
         custom_gcov="$(which "${GCOV:-gcov}")"

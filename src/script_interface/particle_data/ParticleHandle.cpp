@@ -69,18 +69,18 @@ namespace ScriptInterface {
 namespace Particles {
 
 #ifdef ESPRESSO_ROTATION
-static auto constexpr contradicting_arguments_quat = std::to_array<
-    std::array<std::string_view, 3>>({
-    {"dip", "dipm",
-     "Setting 'dip' is sufficient as it defines the scalar dipole moment."},
-    {"quat", "director",
-     "Setting 'quat' is sufficient as it defines the director."},
-    {"dip", "quat",
-     "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."},
-    {"dip", "director",
-     "Setting 'dip' would overwrite 'director'. Set 'director' and "
-     "'dipm' instead."},
-});
+static std::array<std::array<std::string_view, 3>,
+                  4> constexpr contradicting_arguments_quat{{
+    {{"dip", "dipm",
+      "Setting 'dip' is sufficient as it defines the scalar dipole moment."}},
+    {{"quat", "director",
+      "Setting 'quat' is sufficient as it defines the director."}},
+    {{"dip", "quat",
+      "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."}},
+    {{"dip", "director",
+      "Setting 'dip' would overwrite 'director'. Set 'director' and "
+      "'dipm' instead."}},
+}};
 
 static void sanity_checks_rotation(VariantMap const &params) {
   // if we are not constructing a particle from a checkpoint file,
