@@ -56,7 +56,7 @@ def N2_loop(particle, slice_prop):
 class Test(ut.TestCase):
     """
     Check the total dipole field for a magnetic LJ fluid (500 particles,
-    density approx 0.002, mu^2=1, no PBC).
+    density approx 0.002, mu^2=1, with and without PBC).
     """
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     data = np.loadtxt(tests_common.data_path("lj_system.dat"))
@@ -130,8 +130,9 @@ class Test(ut.TestCase):
     @utx.skipIfMissingFeatures(["DP3M"])
     def test_dp3m(self):
         self.system.periodicity = [True, True, True]
+        # check the surface term (non-metallic epsilon) affects dipole fields
         solver = espressomd.magnetostatics.DipolarP3M(
-            prefactor=1., accuracy=1e-8, mesh=28, cao=7)
+            prefactor=1., accuracy=1e-8, mesh=28, cao=7, epsilon=1.)
         self.system.magnetostatics.solver = solver
         self.system.integrator.run(steps=1)
         for p in self.system.part.all():
