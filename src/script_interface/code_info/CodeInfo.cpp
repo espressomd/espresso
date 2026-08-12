@@ -98,21 +98,28 @@ Variant CodeInfo::do_call_method(std::string const &name, VariantMap const &) {
   return {};
 }
 
-void check_features(std::vector<std::string> const &features) {
+std::string check_features_msg(std::vector<std::string> const &features) {
   auto const allowed = get_feature_set(FEATURES_ALL, NUM_FEATURES_ALL);
   auto const compiled_features = get_feature_set(FEATURES, NUM_FEATURES);
   std::vector<std::string> missing_features{};
   for (auto const &feature : features) {
     if (not allowed.contains(feature)) {
-      throw std::runtime_error("Unknown feature '" + feature + "'");
+      return "Unknown feature '" + feature + "'";
     }
     if (not compiled_features.contains(feature)) {
       missing_features.emplace_back(feature);
     }
   }
   if (not missing_features.empty()) {
-    throw std::runtime_error("Missing features " +
-                             boost::algorithm::join(missing_features, ", "));
+    return "Missing features " + boost::algorithm::join(missing_features, ", ");
+  }
+  return "";
+}
+
+void check_features(std::vector<std::string> const &features) {
+  auto const error_msg = check_features_msg(features);
+  if (not error_msg.empty()) {
+    throw std::runtime_error(error_msg);
   }
 }
 

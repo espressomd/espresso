@@ -29,27 +29,30 @@ class _CodeInfo(ScriptInterfaceHelper):
     )
 
 
+_code_info_instance = _CodeInfo()
+
+
 def build_type():
     """
     Get the CMake build type of this build of ESPResSo.
     Can be e.g. Debug, Release, RelWithAssert, RelWithDebInfo, Coverage, etc.
     """
-    return _CodeInfo().build_type()
+    return _code_info_instance.build_type()
 
 
 def features():
     """Get the list of features available in this build of ESPResSo."""
-    return _CodeInfo().features()
+    return _code_info_instance.features()
 
 
 def all_features():
     """Get the list of all features that can be activated in ESPResSo."""
-    return _CodeInfo().all_features()
+    return _code_info_instance.all_features()
 
 
 def scafacos_methods():
     """Lists long-range methods available in the ScaFaCoS library."""
-    return _CodeInfo().scafacos_methods()
+    return _code_info_instance.scafacos_methods()
 
 
 def toolchain():
@@ -59,4 +62,4 @@ def toolchain():
     in time and can change when a custom ``FindPackage`` updates its API.
     Use this method only for debugging purposes.
     """
-    return _CodeInfo().toolchain()
+    return _code_info_instance.toolchain()

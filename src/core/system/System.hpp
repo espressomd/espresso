@@ -73,6 +73,8 @@ struct InstantaneousPressure;
 #ifdef ESPRESSO_CUDA
 class GpuParticleData;
 #endif
+struct EnergyObservable;
+struct PressureObservable;
 
 namespace System {
 
@@ -153,10 +155,10 @@ public:
   bool long_range_interactions_sanity_checks() const;
 
   /** @brief Calculate the total energy. */
-  std::shared_ptr<Observable_stat> calculate_energy();
+  Observable_stat const &calculate_energy();
 
   /** @brief Calculate the pressure from a virial expansion. */
-  std::shared_ptr<Observable_stat> calculate_pressure();
+  Observable_stat const &calculate_pressure();
 
 #ifdef ESPRESSO_NPT
   /** @brief Synchronize NpT state such as instantaneous and average pressure */
@@ -356,6 +358,8 @@ protected:
    * to be available on the same node (through ghosts).
    */
   double min_global_cut;
+  std::shared_ptr<EnergyObservable> m_obs_energy;
+  std::shared_ptr<PressureObservable> m_obs_pressure;
 
   void update_local_geo();
 #ifdef ESPRESSO_ELECTROSTATICS

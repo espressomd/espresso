@@ -144,12 +144,12 @@ template <auto... Pack> void test_all_p3m_fft_configs() {
         tuning, prefactor);
     add_actor(comm, espresso::system, system.coulomb.impl->solver, solver,
               [&system]() { system.on_coulomb_change(); });
-    auto const obs_energy = system.calculate_energy();
+    auto const &obs_energy = system.calculate_energy();
     system.integrate(0, INTEG_REUSE_FORCES_NEVER);
     if (rank == 0) {
       BOOST_TEST_CONTEXT(Utils::demangle<FFTConfig>()) {
         auto constexpr energy_ref = -0.114744451;
-        auto const energy_k_space = obs_energy->coulomb[1];
+        auto const energy_k_space = obs_energy.coulomb[1];
         BOOST_CHECK_CLOSE(energy_k_space, energy_ref, 1e-6);
       }
     }
@@ -218,12 +218,12 @@ template <auto... Pack> void test_all_dp3m_fft_configs() {
     solver->dp3m.template make_fft_instance<FFTBackendLegacy<double>>();
     add_actor(comm, espresso::system, system.dipoles.impl->solver, solver,
               [&system]() { system.on_dipoles_change(); });
-    auto const obs_energy = system.calculate_energy();
+    auto const &obs_energy = system.calculate_energy();
     system.integrate(0, INTEG_REUSE_FORCES_NEVER);
     if (rank == 0) {
       BOOST_TEST_CONTEXT(Utils::demangle<FFTConfig>()) {
         auto constexpr energy_ref = -0.0052257342364;
-        auto const energy_k_space = obs_energy->dipolar[1];
+        auto const energy_k_space = obs_energy.dipolar[1];
         BOOST_CHECK_CLOSE(energy_k_space, energy_ref, 1e-6);
       }
     }

@@ -24,6 +24,9 @@ endfunction(SCRIPTS_TEST)
 scripts_test(FILE test_notebook_links.py)
 scripts_test(FILE test_check_myconfig.py)
 scripts_test(FILE test_featuredefs.py)
+scripts_test(
+  FILE ${CMAKE_SOURCE_DIR}/maintainer/benchmarks/test_benchmarks_helpers.py
+  DEPENDENCIES ${CMAKE_SOURCE_DIR}/maintainer/benchmarks/benchmarks.py)
 
 add_custom_target(
   check_scripts JOB_POOL console

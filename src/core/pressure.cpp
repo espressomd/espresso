@@ -29,6 +29,7 @@
 #include "cell_system/CellStructure.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "integrators/Propagation.hpp"
+#include "kokkos_helpers.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -48,18 +49,32 @@
 #include <cstddef>
 #include <memory>
 
+struct PressureObservable {
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+  std::unique_ptr<Observable_stat> observable;
+  Kokkos::View<double **, Kokkos::LayoutRight, execution_space> local;
+};
+
 namespace System {
-std::shared_ptr<Observable_stat> System::calculate_pressure() {
 
-  auto obs_pressure_ptr = std::make_shared<Observable_stat>(
-      9ul, static_cast<std::size_t>(bonded_ias->get_next_key()),
-      nonbonded_ias->get_max_seen_particle_type());
+Observable_stat const &System::calculate_pressure() {
 
-  if (long_range_interactions_sanity_checks()) {
-    return obs_pressure_ptr;
+  if (not m_obs_pressure) {
+    auto const n_threads = PressureObservable::execution_space{}.concurrency();
+    m_obs_pressure = std::make_shared<PressureObservable>();
+    m_obs_pressure->observable = std::make_unique<Observable_stat>(9ul, 0ul, 0);
+    m_obs_pressure->local =
+        decltype(m_obs_pressure->local)("local_pressure", n_threads, 9ul);
   }
 
-  auto &obs_pressure = *obs_pressure_ptr;
+  auto &local_pressure = m_obs_pressure->local;
+  auto &obs_pressure = *m_obs_pressure->observable;
+  obs_pressure.reset(static_cast<std::size_t>(bonded_ias->get_next_key()),
+                     nonbonded_ias->get_max_seen_particle_type());
+
+  if (long_range_interactions_sanity_checks()) {
+    return obs_pressure;
+  }
 
   on_observable_calc();
 
@@ -77,6 +92,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
 
   auto const coulomb_force_kernel = coulomb.pair_force_kernel();
   auto const coulomb_pressure_kernel = coulomb.pair_pressure_kernel();
+  auto const dipoles_pressure_kernel = dipoles.pair_pressure_kernel();
 
   // Factory instead of an eager criterion: construction fills an O(n_types^2)
   // cutoff table, so it only runs on the link-cell fallback path.
@@ -95,8 +111,11 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
       std::size_t(nonbonded_ias->get_max_seen_particle_type() + 1)};
 
   using exec = Kokkos::DefaultHostExecutionSpace;
-  Kokkos::View<double **, Kokkos::LayoutRight, exec> local_pressure(
-      "local_pressure", exec().concurrency(), layout.total * 9);
+  if (local_pressure.extent(1) != layout.total * 9ul) {
+    Kokkos::realloc(Kokkos::WithoutInitializing, local_pressure,
+                    exec{}.concurrency(), layout.total * 9ul);
+  }
+  kokkos_deep_copy(exec{}, local_pressure, 0.);
 
   auto const &unique_particles = cell_structure->get_unique_particles();
   auto const n_particles = unique_particles.size();
@@ -110,6 +129,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
                                coulomb,
                                get_ptr(coulomb_force_kernel),
                                get_ptr(coulomb_pressure_kernel),
+                               get_ptr(dipoles_pressure_kernel),
                                *box_geo,
 #ifdef ESPRESSO_DPD
                                thermostat->dpd.get(),
@@ -147,7 +167,8 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
 #endif
 #ifdef ESPRESSO_DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  dipoles.calc_pressure_long_range();
+  auto const dipoles_pressure = dipoles.calc_pressure_long_range();
+  std::ranges::copy(dipoles_pressure, obs_pressure.dipolar.begin() + 9u);
 #endif
 
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
@@ -179,6 +200,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
   obs_pressure.rescale(volume);
 
   obs_pressure.mpi_reduce();
-  return obs_pressure_ptr;
+  return obs_pressure;
 }
+
 } // namespace System

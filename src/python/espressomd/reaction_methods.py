@@ -63,7 +63,6 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
     according the Maxwell-Boltzmann distribution. In this step the mass of the
     new particle is assumed to equal 1.
 
-
     Parameters
     ----------
     kT : :obj:`float`
@@ -99,8 +98,8 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
             x coordinate of center of the cylinder.
         center_y : :obj:`float`
             y coordinate of center of the cylinder.
-        radius_of_cylinder : :obj:`float`
-            radius of the cylinder
+        radius : :obj:`float`
+            radius of the cylinder.
 
     set_wall_constraints_in_z_direction()
         Restrict the sampling area to a slab in z-direction. Requires setting
@@ -242,8 +241,9 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
     change_reaction_constant()
         Changes the reaction constant of a given reaction
         (for both the forward and backward reactions).
-        The ``reaction_id`` which is assigned to a reaction
-        depends on the order in which :meth:`add_reaction` was called.
+        The ``reaction_id`` which is assigned to a reaction depends on the order
+        in which :meth:`~espressomd.reaction_methods.ReactionAlgorithm.add_reaction`
+        was called.
         The 0th reaction has ``reaction_id=0``, the next added
         reaction needs to be addressed with ``reaction_id=1``, etc.
 

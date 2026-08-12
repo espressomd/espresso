@@ -257,6 +257,7 @@ public:
     for (auto &[fp, handle] : static_callbacks()) {
       m_func_ptr_to_id[fp] = m_callback_map.add(handle.get());
     }
+    m_skip_worker_nodes = m_comm.size() == 1;
   }
 
   ~MpiCallbacks() {
@@ -380,6 +381,9 @@ public:
       /* enable only if fp can be called with the provided arguments */
     requires(std::is_void_v<decltype(fp(args...))>)
   {
+    if (m_skip_worker_nodes) {
+      return;
+    }
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
 
     call(id, std::forward<ArgRef>(args)...);
@@ -414,6 +418,7 @@ public:
    * so that the head node can issue call().
    */
   void loop() const {
+    assert(m_comm.rank() != 0);
     for (;;) {
       /* Communicate callback id and parameters */
       boost::mpi::packed_iarchive ia(m_comm);
@@ -473,6 +478,9 @@ private:
    * called by their pointer.
    */
   std::unordered_map<void (*)(), int> m_func_ptr_to_id;
+
+  /** Workers dispatch can be skipped when world size is 1. */
+  bool m_skip_worker_nodes;
 };
 
 template <class... Args>

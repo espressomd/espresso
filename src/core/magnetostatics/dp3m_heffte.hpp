@@ -27,12 +27,14 @@
 
 #include "magnetostatics/dp3m.hpp"
 
-#include "communication.hpp"
 #include "p3m/FFTBackendLegacy.hpp"
 #include "p3m/FFTBuffersLegacy.hpp"
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
 #include "p3m/interpolation.hpp"
+
+#include "communication.hpp"
+#include "kokkos_helpers.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -222,6 +224,8 @@ public:
 
   double long_range_energy() override { return long_range_kernel(false, true); }
 
+  Utils::Vector9d long_range_pressure() override;
+
   void add_long_range_forces() override {
     if constexpr (Architecture == Arch::CPU) {
       long_range_kernel(true, false);
@@ -237,7 +241,7 @@ private:
     auto const num_threads = execution_space().concurrency();
     Kokkos::realloc(Kokkos::WithoutInitializing, dp3m.rs_fields_kokkos,
                     num_threads, 3, dp3m.local_mesh.size);
-    Kokkos::deep_copy(dp3m.rs_fields_kokkos, FloatType{0});
+    kokkos_deep_copy(execution_space{}, dp3m.rs_fields_kokkos, FloatType{0});
     for (auto &rs_mesh_field : dp3m.mesh.rs_fields) {
       std::ranges::fill(rs_mesh_field, FloatType{0});
     }
@@ -266,7 +270,7 @@ protected:
   void init_cpu_kernels();
   void scaleby_box_l() override;
 #ifdef ESPRESSO_NPT
-  void npt_add_virial_contribution(double energy) const override;
+  void npt_add_virial_contribution(double virial) const override;
 #endif
 };
 

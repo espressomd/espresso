@@ -30,6 +30,7 @@
 #include "energy_cabana.hpp"
 #include "energy_inline.hpp"
 #include "integrators/Propagation.hpp"
+#include "kokkos_helpers.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "short_range_cabana.hpp"
@@ -48,19 +49,33 @@
 #include <span>
 #include <vector>
 
+struct EnergyObservable {
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+  std::unique_ptr<Observable_stat> observable;
+  Kokkos::View<double **, Kokkos::LayoutRight, execution_space> local;
+};
+
 namespace System {
 
-std::shared_ptr<Observable_stat> System::calculate_energy() {
+Observable_stat const &System::calculate_energy() {
 
-  auto obs_energy_ptr = std::make_shared<Observable_stat>(
-      1ul, static_cast<std::size_t>(bonded_ias->get_next_key()),
-      nonbonded_ias->get_max_seen_particle_type());
-
-  if (long_range_interactions_sanity_checks()) {
-    return obs_energy_ptr;
+  if (not m_obs_energy) {
+    auto const n_threads = EnergyObservable::execution_space{}.concurrency();
+    m_obs_energy = std::make_shared<EnergyObservable>();
+    m_obs_energy->observable = std::make_unique<Observable_stat>(1ul, 0ul, 0);
+    m_obs_energy->local =
+        decltype(m_obs_energy->local)("local_energy", n_threads, 1ul);
   }
 
-  auto &obs_energy = *obs_energy_ptr;
+  auto &local_energy = m_obs_energy->local;
+  auto &obs_energy = *m_obs_energy->observable;
+  obs_energy.reset(static_cast<std::size_t>(bonded_ias->get_next_key()),
+                   nonbonded_ias->get_max_seen_particle_type());
+
+  if (long_range_interactions_sanity_checks()) {
+    return obs_energy;
+  }
+
 #if defined(ESPRESSO_CUDA) and                                                 \
     (defined(ESPRESSO_ELECTROSTATICS) or defined(ESPRESSO_DIPOLES))
   gpu->clear_energy_on_device();
@@ -97,13 +112,16 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
       static_cast<std::size_t>(bonded_ias->get_next_key()),
       std::size_t(nonbonded_ias->get_max_seen_particle_type() + 1)};
 
-  using execution_space = Kokkos::DefaultHostExecutionSpace;
-  Kokkos::View<double **, Kokkos::LayoutRight, execution_space> local_energy(
-      "local_energy", execution_space().concurrency(), layout.total);
+  using exec = Kokkos::DefaultHostExecutionSpace;
+  if (local_energy.extent(1) != layout.total) {
+    Kokkos::realloc(Kokkos::WithoutInitializing, local_energy,
+                    exec{}.concurrency(), layout.total);
+  }
+  kokkos_deep_copy(exec{}, local_energy, 0.);
+
   auto const &unique_particles = cell_structure->get_unique_particles();
   auto const n_particles = unique_particles.size();
-  Kokkos::View<int *, Kokkos::LayoutRight, execution_space> mol_id("mol_id",
-                                                                   n_particles);
+  Kokkos::View<int *, Kokkos::LayoutRight, exec> mol_id("mol_id", n_particles);
   for (std::size_t i = 0; i < n_particles; ++i) {
     mol_id(i) = unique_particles[i]->mol_id();
   }
@@ -166,7 +184,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
 #endif
 
   obs_energy.mpi_reduce();
-  return obs_energy_ptr;
+  return obs_energy;
   // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 

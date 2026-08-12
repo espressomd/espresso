@@ -253,6 +253,64 @@ class Test(ut.TestCase):
         solver = espressomd.magnetostatics.DipolarDirectSum(prefactor=1.)
         self.check_min_image_convention(solver, rtol=1e-10)
 
+    def test_pressure_cpu(self):
+        """
+        Exact, per-configuration check of the dipolar pressure tensor
+        for the same two-particle open-boundary configuration used in
+        :func:`check_min_image_convention`, whose forces are known
+        analytically (``ref_min_img_forces``). With a single pair and
+        no periodic images, the virial is simply
+        ``outer(r1 - r2, f_on_1)``, so no statistical averaging is
+        needed and the tolerance can be tight.
+        """
+        system = self.system
+        system.periodicity = [False, False, False]
+        p1, p2 = system.part.add(
+            pos=[[0.1, 0., 0.], [0.3, 0., 0.]],
+            dip=[[0., 0., 1.], [0., 0.5, 0.5]],
+            rotation=2 * [(True, True, True)])
+        system.magnetostatics.solver = espressomd.magnetostatics.DipolarDirectSum(
+            prefactor=1.)
+        system.integrator.run(steps=0, recalc_forces=True)
+
+        volume = float(np.prod(system.box_l))
+        r12 = np.copy(p1.pos) - np.copy(p2.pos)
+        f1 = np.copy(p1.f)
+        ref_pressure_tensor = np.outer(r12, f1) / volume
+
+        pressure_tensor = system.analysis.pressure_tensor()
+        np.testing.assert_allclose(
+            pressure_tensor[("dipolar", 1)], ref_pressure_tensor,
+            atol=1e-10, rtol=1e-10)
+        # DipolarDirectSum bypasses the generic cell-list pairwise loop
+        # entirely, so the short-range slot must be exactly zero
+        np.testing.assert_allclose(
+            pressure_tensor[("dipolar", 0)], 0.)
+        np.testing.assert_allclose(
+            pressure_tensor["dipolar"], ref_pressure_tensor,
+            atol=1e-10, rtol=1e-10)
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures("CUDA")
+    def test_pressure_gpu_not_implemented(self):
+        """
+        The GPU variant has no stress-tensor kernel: requesting the
+        pressure must return a zero tensor (with a runtime warning
+        printed to stderr), rather than a wrong non-zero value.
+        """
+        system = self.system
+        system.periodicity = [False, False, False]
+        system.part.add(
+            pos=[[0.1, 0., 0.], [0.3, 0., 0.]],
+            dip=[[0., 0., 1.], [0., 0.5, 0.5]],
+            rotation=2 * [(True, True, True)])
+        system.magnetostatics.solver = espressomd.magnetostatics.DipolarDirectSum(
+            prefactor=1., gpu=True)
+        system.integrator.run(steps=0, recalc_forces=True)
+
+        pressure_tensor = system.analysis.pressure_tensor()
+        np.testing.assert_allclose(pressure_tensor[("dipolar", 1)], 0.)
+
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures("CUDA")
     def test_min_image_convention_gpu(self):

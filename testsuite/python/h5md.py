@@ -122,8 +122,6 @@ class H5mdTests(ut.TestCase):
         h5 = espressomd.io.writer.h5md.H5md(file_path=str(self.temp_file))
         h5.close()
 
-    # doesn't always work in parallel: https://github.com/h5py/h5py/issues/736
-    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_appending(self):
         import time
         # write one frame to the file
@@ -184,6 +182,21 @@ class H5mdTests(ut.TestCase):
         h5.close()
         with self.assertRaisesRegex(RuntimeError, "The given .h5 file does not match the specifications in 'fields'"):
             h5md.H5md(file_path=temp_file, fields='all')
+        # cannot operate on a closed file
+        temp_file = self.temp_path / 'closed.h5'
+        h5 = espressomd.io.writer.h5md.H5md(
+            file_path=temp_file, unit_system=h5_units)
+        h5.write()
+        h5.flush()
+        h5.close()
+        self.assertIn("all", h5.valid_fields())
+        self.assertIsNone(h5.call_method("unknown"))
+        with self.assertRaisesRegex(RuntimeError, "cannot call 'write' on a closed file"):
+            h5.write()
+        with self.assertRaisesRegex(RuntimeError, "cannot call 'flush' on a closed file"):
+            h5.flush()
+        with self.assertRaisesRegex(RuntimeError, "cannot call 'close' on a closed file"):
+            h5.close()
         # open a file with invalid specifications
         with self.assertRaisesRegex(ValueError, "Unknown field 'lb'"):
             h5md.H5md(file_path=temp_file, fields='lb')

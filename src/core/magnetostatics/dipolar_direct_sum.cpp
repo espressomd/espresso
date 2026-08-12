@@ -33,6 +33,7 @@
 
 #include <utils/Vector.hpp>
 #include <utils/cartesian_product.hpp>
+#include <utils/math/tensor_product.hpp>
 #include <utils/mpi/iall_gatherv.hpp>
 
 #include <boost/mpi/collectives.hpp>
@@ -372,6 +373,16 @@ void DipolarDirectSum::add_long_range_forces_cpu() const {
     (*p)->force() += prefactor * fi.f;
     (*p)->torque() += prefactor * fi.torque;
   }
+#ifdef ESPRESSO_NPT
+  // As with DipolarP3M, the energy is not a valid
+  // substitute for the virial trace for dipole-dipole interactions, so the
+  // pressure tensor (see long_range_pressure()) is reused instead.
+  if (system.has_npt_enabled()) {
+    auto const pressure_tensor = long_range_pressure();
+    get_system().npt_add_virial_contribution(
+        pressure_tensor[0u] + pressure_tensor[4u] + pressure_tensor[8u]);
+  }
+#endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   if (not m_is_gpu) {
     dipole_field_at_part_cpu();
@@ -413,6 +424,51 @@ double DipolarDirectSum::long_range_energy_cpu() const {
   }
 
   return prefactor * u;
+}
+
+/**
+ * @brief Calculate the dipolar pressure tensor.
+ *
+ * This employs a parallel N-square loop over all particle pairs.
+ * The dipole-dipole force is not central (unlike Coulomb), so the pair
+ * contribution to the virial only accounts for the force, not the torque,
+ * matching the convention used by @ref DipolarP3M.
+ */
+Utils::Vector9d DipolarDirectSum::long_range_pressure() const {
+  if (m_is_gpu) {
+    runtimeWarningMsg() << "Pressure calculation not implemented for "
+                           "DipolarDirectSum on GPU.";
+    return Utils::Vector9d{};
+  }
+
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const particles = system.cell_structure->local_particles();
+  auto [local_particles, all_posmom, reqs, offset] =
+      gather_particle_data(box_geo, particles);
+
+  /* Number of image boxes considered */
+  auto const ncut = get_n_cut(box_geo, n_replicas);
+  auto const with_replicas = (ncut.norm2() > 0);
+
+  /* Wait for the rest of the data to arrive */
+  boost::mpi::wait_all(reqs.begin(), reqs.end());
+
+  /* Range of particles we calculate the ia for on this node */
+  auto const local_posmom_begin = all_posmom.begin() + offset;
+  auto const local_posmom_end =
+      local_posmom_begin + static_cast<long>(local_particles.size());
+
+  Utils::Vector9d p{};
+  for (auto it = local_posmom_begin; it != local_posmom_end; ++it) {
+    p = image_sum(it, all_posmom.end(), it, with_replicas, ncut, box_geo, p,
+                  [it](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
+                    return Utils::flatten(
+                        Utils::tensor_product(rn, pair_force(rn, it->m, mj).f));
+                  });
+  }
+
+  return prefactor * p;
 }
 
 /**

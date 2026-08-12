@@ -28,6 +28,7 @@
 #include "electrostatics/p3m.hpp"
 
 #include "communication.hpp"
+#include "kokkos_helpers.hpp"
 #include "p3m/P3MFFTBackend.hpp"
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
@@ -219,7 +220,8 @@ public:
     auto const num_threads = execution_space().concurrency();
     Kokkos::realloc(Kokkos::WithoutInitializing, p3m.rs_charge_density_kokkos,
                     num_threads, p3m.local_mesh.size);
-    Kokkos::deep_copy(p3m.rs_charge_density_kokkos, FloatType{0});
+    kokkos_deep_copy(execution_space{}, p3m.rs_charge_density_kokkos,
+                     FloatType{0});
     std::ranges::fill(p3m.rs_charge_density, FloatType{0});
   }
 
