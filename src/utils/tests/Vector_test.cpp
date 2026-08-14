@@ -353,7 +353,7 @@ BOOST_AUTO_TEST_CASE(conversion) {
 
   // check span conversion
   {
-    auto const view = static_cast<std::span<double, 3>>(orig);
+    auto const view = static_cast<std::span<const double, 3>>(orig);
     BOOST_TEST(view.data() == orig.data());
     BOOST_TEST(view.size() == orig.size());
   }

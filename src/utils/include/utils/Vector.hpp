@@ -107,6 +107,8 @@ public:
     }
   }
 
+  explicit constexpr Vector(Array<T, N> const &array) noexcept : Base(array) {}
+
   constexpr Vector(std::initializer_list<T> v) : Base() {
     if (N != v.size()) {
       throw std::length_error(
@@ -141,11 +143,13 @@ public:
 
   operator std::vector<T>() const { return as_vector(); }
 
-  constexpr std::span<T, N> as_span() const {
-    return std::span<T, N>(const_cast<T *>(begin()), size());
+  constexpr std::span<const T, N> as_span() const noexcept {
+    return std::span<const T, N>(begin(), N);
   }
 
-  constexpr operator std::span<T, N>() const { return as_span(); }
+  constexpr operator std::span<const T, N>() const noexcept {
+    return as_span();
+  }
 
   template <class U> explicit operator Vector<U, N>() const {
     Vector<U, N> ret;
@@ -216,47 +220,27 @@ auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
 
   return ret;
 }
-
-template <std::size_t N, typename T, typename Op>
-constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
-  for (std::size_t i = 0u; i < N; ++i) {
-    if (not op(a[i], b[i])) {
-      return false;
-    }
-  }
-  return true;
-}
 } // namespace detail
 
-template <std::size_t N, typename T>
-constexpr bool operator<(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::less<T>());
-}
-
-template <std::size_t N, typename T>
-constexpr bool operator>(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::greater<T>());
-}
-
-template <std::size_t N, typename T>
-constexpr bool operator<=(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::less_equal<T>());
-}
-
-template <std::size_t N, typename T>
-constexpr bool operator>=(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::greater_equal<T>());
-}
-
-template <std::size_t N, typename T>
-constexpr bool operator==(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::equal_to<T>());
-}
-
-template <std::size_t N, typename T>
-constexpr bool operator!=(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return not(a == b);
-}
+#define ESPRESSO_VECTOR_COMPARISON(op)                                         \
+  template <std::size_t N, typename T>                                         \
+  constexpr bool                                                               \
+  operator op(Vector<T, N> const &a, Vector<T, N> const &b) noexcept(          \
+      noexcept(std::declval<T const &>() op std::declval<T const &>())) {      \
+    for (std::size_t i = 0u; i < N; ++i) {                                     \
+      if (not(a[i] op b[i])) {                                                 \
+        return false;                                                          \
+      }                                                                        \
+    }                                                                          \
+    return true;                                                               \
+  }
+// synthesize all operators, except a!=b which C++20 rewrites as !(a==b)
+ESPRESSO_VECTOR_COMPARISON(<)
+ESPRESSO_VECTOR_COMPARISON(>)
+ESPRESSO_VECTOR_COMPARISON(<=)
+ESPRESSO_VECTOR_COMPARISON(>=)
+ESPRESSO_VECTOR_COMPARISON(==)
+#undef ESPRESSO_VECTOR_COMPARISON
 
 template <std::size_t N, typename T, typename U>
 auto operator+(Vector<T, N> const &a, Vector<U, N> const &b) {
@@ -375,8 +359,10 @@ template <std::size_t N, typename T> auto sqrt(Vector<T, N> const &a) {
 
 template <class T>
 Vector<T, 3> vector_product(Vector<T, 3> const &a, Vector<T, 3> const &b) {
-  return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
-          a[0] * b[1] - a[1] * b[0]};
+  // use noexcept constructor to elide the exception logic
+  T v[3] = {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
+            a[0] * b[1] - a[1] * b[0]};
+  return Vector<T, 3>(v);
 }
 
 // Product of array elements.
