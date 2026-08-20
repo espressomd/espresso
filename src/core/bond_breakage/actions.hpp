@@ -23,6 +23,8 @@
 
 #include <array>
 #include <cstddef>
+#include <unordered_set>
+#include <variant>
 
 namespace BondBreakage {
 
@@ -91,3 +93,13 @@ template <> struct hash<BondBreakage::DeleteAllBonds> {
   }
 };
 } // namespace std
+
+namespace BondBreakage {
+
+// Variant holding any of the actions
+using Action = std::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
+
+// Set of actions
+using ActionSet = std::unordered_set<Action>;
+
+} // namespace BondBreakage

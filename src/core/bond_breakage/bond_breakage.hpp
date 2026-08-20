@@ -21,6 +21,7 @@
 
 #include <config/config.hpp>
 
+#include "bond_breakage/actions.hpp"
 #include "system/System.hpp"
 
 #include <boost/serialization/access.hpp>
@@ -31,6 +32,8 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
+
+class CellStructure;
 
 namespace BondBreakage {
 
@@ -66,6 +69,17 @@ struct QueueEntry {
 
 /** @brief Record bonds broken during a time step. */
 using Queue = std::vector<QueueEntry>;
+
+/**
+ * @brief Construct the set of delete actions for a single breakage queue entry.
+ *
+ * Each MPI rank receives the broadcast global queue and only builds actions
+ * for the particles it actually holds locally; referenced particles that are
+ * not resolvable on this rank (@ref CellStructure::get_local_particle returns
+ * @c nullptr) yield an empty action set. Exposed (non-static) for unit testing.
+ */
+ActionSet actions_for_breakage(CellStructure const &cell_structure,
+                               QueueEntry const &e, BreakageSpec const &spec);
 
 class BondBreakage {
   Queue m_queue;
