@@ -337,36 +337,58 @@ class Test(ut.TestCase):
     def check_inner_loop_consistency(self, solver, tol, **kwargs):
         system = self.system
         system.periodicity = [True, True, True]
-        p1 = system.part.add(pos=[0., 0., 0.], dip=[0., 0., 1.],
+        box_l = np.array(system.box_l)
+        node_grid = np.array(system.cell_system.node_grid)
+        # Pick an axis that is actually split across MPI ranks. At least one
+        # exists here because this test is skipped for a single node. Deriving
+        # the placement from the node grid (rather than hard-coding positions)
+        # keeps the pair split/co-located regardless of the rank count, so the
+        # test works for any node grid, e.g. [2,1,1], [2,2,1] or [2,2,2].
+        split_axis = int(np.nonzero(node_grid > 1)[0][0])
+        domain = box_l / node_grid
+        boundary = domain[split_axis]  # node boundary between index 0 and 1
+        # separation of the two dipoles along the split axis, identical in both
+        # configurations so they must yield identical energy/forces/torques
+        sep = min(0.2, boundary / 3.)
+        # both particles sit at the centre of the node-0 domain on every other
+        # axis, so only the split axis decides whether they share a node
+        base = domain / 2.
+        p1 = system.part.add(pos=base.tolist(), dip=[0., 0., 1.],
                              rotation=[True, True, True])
-        p2 = system.part.add(pos=[1., 0., 0.], dip=[0., 0., 1.],
+        p2 = system.part.add(pos=base.tolist(), dip=[0., 0., 1.],
                              rotation=[True, True, True])
         for n_replicas in [0, 1]:
             system.magnetostatics.clear()
             system.magnetostatics.solver = solver(
                 prefactor=1., n_replicas=n_replicas, **kwargs)
 
-            # intra-node calculation
-            p1.pos = [system.box_l[0] / 2. - 0.1, 0., 2.]
-            p2.pos = [system.box_l[0] / 2. + 0.1, 0., 0.]
+            # the interacting pair straddles a node boundary (different nodes)
+            pos1 = base.copy()
+            pos2 = base.copy()
+            pos1[split_axis] = boundary - sep / 2.
+            pos2[split_axis] = boundary + sep / 2.
+            p1.pos = pos1.tolist()
+            p2.pos = pos2.tolist()
             system.integrator.run(steps=0, recalc_forces=True)
             assert p1.node != p2.node
-            node_01_energy = system.analysis.energy()["dipolar"]
-            node_01_forces = np.copy(system.part.all().f)
-            node_01_torques = np.copy(system.part.all().torque_lab)
+            split_energy = system.analysis.energy()["dipolar"]
+            split_forces = np.copy(system.part.all().f)
+            split_torques = np.copy(system.part.all().torque_lab)
 
-            # inter-node calculation
-            p1.pos = [0.1, 0., 2.]
-            p2.pos = [0.3, 0., 0.]
+            # the pair sits inside a single node's domain (same node)
+            pos1[split_axis] = boundary / 2. - sep / 2.
+            pos2[split_axis] = boundary / 2. + sep / 2.
+            p1.pos = pos1.tolist()
+            p2.pos = pos2.tolist()
             system.integrator.run(steps=0, recalc_forces=True)
             assert p1.node == p2.node
-            node_00_energy = system.analysis.energy()["dipolar"]
-            node_00_forces = np.copy(system.part.all().f)
-            node_00_torques = np.copy(system.part.all().torque_lab)
+            same_energy = system.analysis.energy()["dipolar"]
+            same_forces = np.copy(system.part.all().f)
+            same_torques = np.copy(system.part.all().torque_lab)
 
-            np.testing.assert_allclose(node_01_energy, node_00_energy, **tol)
-            np.testing.assert_allclose(node_01_forces, node_00_forces, **tol)
-            np.testing.assert_allclose(node_01_torques, node_00_torques, **tol)
+            np.testing.assert_allclose(split_energy, same_energy, **tol)
+            np.testing.assert_allclose(split_forces, same_forces, **tol)
+            np.testing.assert_allclose(split_torques, same_torques, **tol)
 
 
 if __name__ == "__main__":

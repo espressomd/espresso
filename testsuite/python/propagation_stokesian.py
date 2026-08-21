@@ -139,6 +139,14 @@ class StokesianThermostat(ut.TestCase):
         with self.assertRaisesRegex(Exception, r"Stokesian Dynamics requires periodicity \(False, False, False\)"):
             self.system.periodicity = [False, True, False]
 
+        self.system.periodicity = [False, False, False]
+        with self.assertRaisesRegex(Exception, "Stokesian Dynamics: no radius defined for particle type 2"):
+            self.system.part.add(pos=[0, 0, 0], type=2)
+            self.system.thermostat.set_stokesian(kT=1., seed=42)
+            self.system.integrator.set_stokesian_dynamics(
+                viscosity=2., radii={})
+            self.system.integrator.run(0, recalc_forces=True)
+
     @utx.skipIfMissingFeatures(["MASS",
                                 "ROTATIONAL_INERTIA",
                                 "EXTERNAL_FORCES"])

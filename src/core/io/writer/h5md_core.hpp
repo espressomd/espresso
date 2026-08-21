@@ -170,6 +170,11 @@ public:
 
   /**
    * @brief Method to enforce flushing the buffer to disk.
+   * This pushes all buffers to the Virtual File Driver (VFD) layer.
+   * However, the file superblock, which contains the address space information
+   * (End of Allocation, EOA), won't be flushed. Therefore, the file won't
+   * necessarily be in a guaranteed consistent state for a read operation
+   * by another HDF5 parser. Only the @ref close() method can flush the EOA.
    */
   void flush();
 

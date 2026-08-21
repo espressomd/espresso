@@ -267,6 +267,15 @@ void System::System::integrator_sanity_checks() const {
   }
 #endif
 
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
+  if ((propagation->used_propagations & PropagationMode::TRANS_STOKESIAN) and
+      (propagation->default_propagation & PropagationMode::TRANS_STOKESIAN)) {
+    auto pred = PropagationPredicateStokesian(propagation->default_propagation);
+    stokesian_dynamics->sanity_checks(
+        cell_structure->local_particles().filter(pred));
+  }
+#endif // ESPRESSO_STOKESIAN_DYNAMICS
+
 #ifdef ESPRESSO_ROTATION
   for (auto const &p : cell_structure->local_particles()) {
     using namespace PropagationMode;

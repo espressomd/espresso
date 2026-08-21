@@ -94,7 +94,10 @@ enum DataPart : unsigned {
 #ifdef ESPRESSO_BOND_CONSTRAINT
   DATA_PART_RATTLE = 32u, /**< Particle::rattle */
 #endif
-  DATA_PART_BONDS = 64u /**< Particle::bonds */
+  DATA_PART_BONDS = 64u, /**< Particle::bonds */
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  DATA_PART_DIPFLD = 128u, /**< Particle::dip_fld */
+#endif
 };
 } // namespace Cells
 
@@ -200,6 +203,10 @@ private:
 #ifdef ESPRESSO_ROTATION
   std::unique_ptr<ForceType> m_local_torque;
   std::optional<ScatterForce> m_scatter_torque;
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  std::unique_ptr<ForceType> m_local_dip_fld;
+  std::optional<ScatterForce> m_scatter_dip_fld;
 #endif
 #ifdef ESPRESSO_NPT
   std::unique_ptr<VirialType> m_local_virial;
@@ -547,6 +554,16 @@ public:
    */
   void ghosts_reduce_forces();
 
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  /** Add dipole fields from ghost particles to real particles. */
+  void ghosts_reduce_dipole_field();
+
+  /** Set dipole fields on all ghosts to zero. */
+  void ghosts_reset_dipole_field() {
+    for_each_ghost_particle([](Particle &p) { p.dip_fld() = {}; });
+  }
+#endif
+
   /** Set forces and torques on all ghosts to zero. */
   void ghosts_reset_forces() {
     for_each_ghost_particle([](Particle &p) { p.force_and_torque() = {}; });
@@ -734,6 +751,10 @@ public:
 #ifdef ESPRESSO_ROTATION
   auto &get_local_torque() { return *m_local_torque; }
   auto get_scatter_torque() { return *m_scatter_torque; }
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  auto &get_local_dip_fld() { return *m_local_dip_fld; }
+  auto get_scatter_dip_fld() { return *m_scatter_dip_fld; }
 #endif
 #ifdef ESPRESSO_NPT
   auto &get_local_virial() { return *m_local_virial; }

@@ -54,12 +54,19 @@ struct ShortRangeForceKernel {
 #ifdef ESPRESSO_DP3M
   result_type operator()(std::shared_ptr<DipolarP3M> const &ptr) const {
     auto const &actor = *ptr;
-    return kernel_type{[&actor](double d1d2, Utils::Vector3d const &dip1,
-                                Utils::Vector3d const &dip2,
-                                Utils::Vector3d const &d, double dist,
-                                double dist2) {
-      return actor.pair_force(d1d2, dip1, dip2, d, dist, dist2);
-    }};
+    return kernel_type{
+        [&actor](double d1d2, Utils::Vector3d const &dip1,
+                 Utils::Vector3d const &dip2,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                 Utils::Vector3d &dip_fld_p1, Utils::Vector3d &dip_fld_p2,
+#endif
+                 Utils::Vector3d const &d, double dist, double dist2) {
+          return actor.pair_force(d1d2, dip1, dip2,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                                  dip_fld_p1, dip_fld_p2,
+#endif
+                                  d, dist, dist2);
+        }};
   }
 #endif // ESPRESSO_DP3M
 
@@ -112,17 +119,24 @@ struct ShortRangePressureKernel {
 
 #ifdef ESPRESSO_DP3M
   result_type operator()(std::shared_ptr<DipolarP3M> const &ptr) const {
-    auto const &actor = *ptr;
-    return kernel_type{[&actor](double d1d2, Utils::Vector3d const &dip1,
-                                Utils::Vector3d const &dip2,
-                                Utils::Vector3d const &d, double dist,
-                                double dist2) {
-      // dipole-dipole force is not central (unlike Coulomb), so the
-      // separation-first convention used elsewhere in the pairwise
-      // pressure kernel (non-bonded, DPD) must be matched explicitly
-      return Utils::tensor_product(
-          d, actor.pair_force(d1d2, dip1, dip2, d, dist, dist2).f);
-    }};
+    return kernel_type{
+        [&actor = std::as_const(*ptr)
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+             ,
+         dip_fld_p1 = Utils::Vector3d{}, dip_fld_p2 = Utils::Vector3d{}
+#endif
+    ](double d1d2, Utils::Vector3d const &dip1, Utils::Vector3d const &dip2,
+        Utils::Vector3d const &d, double dist, double dist2) mutable {
+          // dipole-dipole force is not central (unlike Coulomb), so the
+          // separation-first convention used elsewhere in the pairwise
+          // pressure kernel (non-bonded, DPD) must be matched explicitly
+          auto const pf = actor.pair_force(d1d2, dip1, dip2,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                                           dip_fld_p1, dip_fld_p2,
+#endif
+                                           d, dist, dist2);
+          return Utils::tensor_product(d, pf.f);
+        }};
   }
 #endif // ESPRESSO_DP3M
 

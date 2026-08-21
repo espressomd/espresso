@@ -139,6 +139,10 @@ public:
    */
   inline ParticleForce pair_force(double d1d2, Utils::Vector3d const &dip1,
                                   Utils::Vector3d const &dip2,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                                  Utils::Vector3d &dip_fld_p1,
+                                  Utils::Vector3d &dip_fld_p2,
+#endif
                                   Utils::Vector3d const &d, double dist,
                                   double dist2) const {
     if (d1d2 == 0. or dist >= dp3m_params.r_cut or dist <= 0.)
@@ -179,6 +183,10 @@ public:
     auto const mixr = vector_product(dip1, d);
 
     // Calculate real-space torques
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    dip_fld_p1 += prefactor * (-dip2 * B_r + d * (mjr * C_r));
+    dip_fld_p2 += prefactor * (-dip1 * B_r + d * (mir * C_r));
+#endif
     auto const torque = prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
     // NOTE: the NpT virial contribution of this pair force (d * force,
     // the trace of the pairwise virial tensor d (x) force, computed

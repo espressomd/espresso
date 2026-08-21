@@ -238,14 +238,18 @@ void DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::dipole_assign() {
 
 namespace {
 template <int cao> struct AssignTorques {
-  void operator()(auto &dp3m, double prefac, int d_rs,
+  void operator()(auto &dp3m, double pref, int d_rs,
                   CellStructure &cell_structure) const {
 
     assert(cao == dp3m.inter_weights.cao());
     using execution_space = Kokkos::DefaultHostExecutionSpace;
 
-    auto const kernel = [d_rs, &dp3m](auto const &pref, auto &p_torque,
-                                      std::size_t p_index) {
+    auto const kernel = [d_rs, pref, &dp3m](auto const &dip,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                                            auto &p_dip_fld,
+#endif
+                                            auto &p_torque,
+                                            std::size_t p_index) {
       auto const weights = dp3m.inter_weights.template load<cao>(p_index);
       Utils::Vector3d E{};
       p3m_interpolate(dp3m.local_mesh, weights,
@@ -254,35 +258,49 @@ template <int cao> struct AssignTorques {
                         E[d_rs] += w * double(dp3m.mesh.rs_scalar[ind]);
                       });
 
-      auto const torque = vector_product(pref, E);
+      auto const torque = pref * vector_product(dip, E);
       auto access = p_torque.access();
       access(p_index, 0) -= torque[0];
       access(p_index, 1) -= torque[1];
       access(p_index, 2) -= torque[2];
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      auto const dip_fld = pref * E;
+      auto access_dip_fld = p_dip_fld.access();
+      access_dip_fld(p_index, 0) -= dip_fld[0];
+      access_dip_fld(p_index, 1) -= dip_fld[1];
+      access_dip_fld(p_index, 2) -= dip_fld[2];
+#endif
     };
 
     auto const n_part = dp3m.inter_weights.size();
     auto const &unique_particles = cell_structure.get_unique_particles();
     auto scatter_torque = cell_structure.get_scatter_torque();
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    auto scatter_dip_fld = cell_structure.get_scatter_dip_fld();
+#endif
     kokkos_parallel_range_for<execution_space>(
         "AssignTorques", std::size_t{0u}, n_part, [&](std::size_t p_index) {
           auto const &p = *unique_particles.at(p_index);
           if (p.dipm() != 0.) {
-            kernel(p.calc_dip() * prefac, scatter_torque, p_index);
+            kernel(p.calc_dip(),
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                   scatter_dip_fld,
+#endif
+                   scatter_torque, p_index);
           }
         });
   }
 };
 
 template <int cao> struct AssignForcesDip {
-  void operator()(auto &dp3m, double prefac, int d_rs,
+  void operator()(auto &dp3m, double pref, int d_rs,
                   CellStructure &cell_structure) const {
 
     assert(cao == dp3m.inter_weights.cao());
     using execution_space = Kokkos::DefaultHostExecutionSpace;
 
-    auto const kernel = [d_rs, &dp3m](auto const &pref, auto &p_force,
-                                      std::size_t p_index) {
+    auto const kernel = [d_rs, pref, &dp3m](auto const &dip, auto &p_force,
+                                            std::size_t p_index) {
       auto const weights = dp3m.inter_weights.template load<cao>(p_index);
 
       Utils::Vector3d E{};
@@ -294,7 +312,7 @@ template <int cao> struct AssignForcesDip {
       });
 
       auto access = p_force.access();
-      access(p_index, d_rs) += pref * E;
+      access(p_index, d_rs) += pref * (dip * E);
     };
 
     auto const n_part = dp3m.inter_weights.size();
@@ -304,7 +322,7 @@ template <int cao> struct AssignForcesDip {
         "AssignForcesDip", std::size_t{0u}, n_part, [&](std::size_t p_index) {
           auto const &p = *unique_particles.at(p_index);
           if (p.dipm() != 0.) {
-            kernel(p.calc_dip() * prefac, scatter_force, p_index);
+            kernel(p.calc_dip(), scatter_force, p_index);
           }
         });
   }
@@ -475,11 +493,6 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const dipole_prefac = prefactor / Utils::product(dp3m.params.mesh);
-#ifdef ESPRESSO_NPT
-  auto const npt_flag = force_flag and system.has_npt_enabled();
-#else
-  auto constexpr npt_flag = false;
-#endif
 
   auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
   auto local_index = Utils::Vector3i::broadcast(0);
@@ -963,7 +976,7 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
     }
   }
 #ifdef ESPRESSO_NPT
-  if (npt_flag) {
+  if (force_flag and system.has_npt_enabled()) {
     // reuse the validated reciprocal-space pressure tensor (same one used by
     // the pressure observable) instead of an energy-proxy: unlike Coulomb,
     // the dipolar structure factor is not simply homogeneous in k, so energy
@@ -1044,6 +1057,9 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::calc_surface_term(
       torque[0u] -= pref * sumix[ip];
       torque[1u] -= pref * sumiy[ip];
       torque[2u] -= pref * sumiz[ip];
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      p.dip_fld() -= pref * box_dip;
+#endif
       ip++;
     }
   }

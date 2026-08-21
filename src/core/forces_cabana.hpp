@@ -91,6 +91,9 @@ struct ForcesKernel {
 #ifdef ESPRESSO_ROTATION
   CellStructure::ScatterForce local_torque;
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  CellStructure::ScatterForce local_dip_fld;
+#endif
 #ifdef ESPRESSO_NPT
   Utils::Vector3d *const global_virial;
   CellStructure::ScatterVirial local_virial;
@@ -115,6 +118,9 @@ struct ForcesKernel {
 #ifdef ESPRESSO_ROTATION
       CellStructure::ScatterForce local_torque_,
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      CellStructure::ScatterForce local_dip_fld_,
+#endif
 #ifdef ESPRESSO_NPT
       Utils::Vector3d *const global_virial_,
       CellStructure::ScatterVirial local_virial_,
@@ -128,6 +134,9 @@ struct ForcesKernel {
         local_force(std::move(local_force_)),
 #ifdef ESPRESSO_ROTATION
         local_torque(std::move(local_torque_)),
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+        local_dip_fld(std::move(local_dip_fld_)),
 #endif
 #ifdef ESPRESSO_NPT
         global_virial(global_virial_), local_virial(std::move(local_virial_)),
@@ -279,8 +288,25 @@ struct ForcesKernel {
       if (d1d2 != 0.) {
         auto const dir1 = aosoa.get_vector_at(aosoa.director, i);
         auto const dir2 = aosoa.get_vector_at(aosoa.director, j);
-        auto const dip_pf = (*dipoles_kernel)(
-            d1d2, aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2, d, dist, dist_sq);
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+        Utils::Vector3d dip_fld_i{};
+        Utils::Vector3d dip_fld_j{};
+#endif
+        auto const dip_pf =
+            (*dipoles_kernel)(d1d2, aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                              dip_fld_i, dip_fld_j,
+#endif
+                              d, dist, dist_sq);
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+        auto access_dip_fld = local_dip_fld.access();
+        access_dip_fld(i, 0) += dip_fld_i[0];
+        access_dip_fld(i, 1) += dip_fld_i[1];
+        access_dip_fld(i, 2) += dip_fld_i[2];
+        access_dip_fld(j, 0) += dip_fld_j[0];
+        access_dip_fld(j, 1) += dip_fld_j[1];
+        access_dip_fld(j, 2) += dip_fld_j[2];
+#endif
 #ifdef ESPRESSO_NPT
         if (npt_active()) {
           // d . F = -n * U for a homogeneous potential of degree n

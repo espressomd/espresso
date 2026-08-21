@@ -66,6 +66,9 @@ struct Solver {
 
   using ShortRangeForceKernel = std::function<ParticleForce(
       double, Utils::Vector3d const &, Utils::Vector3d const &,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      Utils::Vector3d &, Utils::Vector3d &,
+#endif
       Utils::Vector3d const &, double, double)>;
   using ShortRangeEnergyKernel =
       std::function<double(Utils::Vector3d const &, Utils::Vector3d const &,

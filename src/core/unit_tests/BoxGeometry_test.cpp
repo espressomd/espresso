@@ -100,7 +100,7 @@ std::vector<double> make_separations(double box_length) {
   std::vector<double> separations;
   separations.reserve(fractions.size());
   for (auto const fraction : fractions) {
-    separations.push_back(fraction * box_length);
+    separations.emplace_back(fraction * box_length);
   }
   return separations;
 }
@@ -132,9 +132,9 @@ std::vector<SweepPair> make_sweep_pairs(Utils::Vector3d const &box_l) {
     for (auto const dx : sep_x) {
       for (auto const dy : sep_y) {
         for (auto const dz : sep_z) {
-          auto const b = base;
+          auto const &b = base;
           auto const a = Utils::Vector3d{b[0u] + dx, b[1u] + dy, b[2u] + dz};
-          pairs.push_back(SweepPair{a, b});
+          pairs.emplace_back(a, b);
         }
       }
     }
@@ -213,42 +213,40 @@ BOOST_AUTO_TEST_CASE(cuboid_minimum_image_batch_test) {
   sy.reserve(pairs.size());
   sz.reserve(pairs.size());
   for (auto const &pair : pairs) {
-    sx.push_back(pair.a[0u]);
-    sy.push_back(pair.a[1u]);
-    sz.push_back(pair.a[2u]);
+    sx.emplace_back(pair.a[0u]);
+    sy.emplace_back(pair.a[1u]);
+    sz.emplace_back(pair.a[2u]);
   }
 
   auto const n = static_cast<int>(pairs.size());
-  std::vector<int> const tile_sizes = {1, 7, 8, 16, 15};
+  std::vector<std::size_t> const tile_sizes = {1ul, 7ul, 8ul, 16ul, 15ul};
 
   int offset = 0;
   std::size_t tile_index = 0u;
   while (offset < n) {
     auto const capacity = tile_sizes[tile_index % tile_sizes.size()];
     ++tile_index;
-    auto const m = std::min(capacity, n - offset); // last tile is partial
-    std::vector<double> dx0(static_cast<std::size_t>(capacity)),
-        dx1(static_cast<std::size_t>(capacity)),
-        dx2(static_cast<std::size_t>(capacity)),
-        dsq(static_cast<std::size_t>(capacity));
+    // last tile is partial
+    auto const m = std::min(static_cast<int>(capacity), n - offset);
+    std::vector<double> dx0(capacity), dx1(capacity), dx2(capacity),
+        dsq(capacity);
 
     fold.batch_vector_dist2(reference_point[0u], reference_point[1u],
                             reference_point[2u], m, sx.data() + offset,
                             sy.data() + offset, sz.data() + offset, dx0.data(),
                             dx1.data(), dx2.data(), dsq.data());
 
-    for (int t = 0; t < m; ++t) {
-      auto const idx =
-          static_cast<std::size_t>(offset) + static_cast<std::size_t>(t);
+    for (int t = 0; t < static_cast<std::size_t>(m); ++t) {
+      auto const idx = static_cast<std::size_t>(offset) + t;
       auto const neighbour = Utils::Vector3d{sx[idx], sy[idx], sz[idx]};
       // get_mi_vector is the scalar oracle: for cuboid boxes it runs the
       // same per-axis get_mi_coord_masked fold as the batch path.
       auto const single = box.get_mi_vector(reference_point, neighbour);
       auto const single_dist2 = fold.dist2(reference_point, neighbour);
-      BOOST_CHECK_EQUAL(dx0[static_cast<std::size_t>(t)], single[0u]);
-      BOOST_CHECK_EQUAL(dx1[static_cast<std::size_t>(t)], single[1u]);
-      BOOST_CHECK_EQUAL(dx2[static_cast<std::size_t>(t)], single[2u]);
-      BOOST_CHECK_EQUAL(dsq[static_cast<std::size_t>(t)], single_dist2);
+      BOOST_CHECK_EQUAL(dx0[t], single[0u]);
+      BOOST_CHECK_EQUAL(dx1[t], single[1u]);
+      BOOST_CHECK_EQUAL(dx2[t], single[2u]);
+      BOOST_CHECK_LT(std::abs(dsq[t] - single_dist2), 1e-12);
     }
 
     offset += m;

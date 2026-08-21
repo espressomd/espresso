@@ -269,11 +269,33 @@ Variant CellSystem::do_call_method(std::string const &name,
     return out;
   }
   if (name == "tune_skin") {
+    auto const min_skin = get_value<double>(params, "min_skin");
+    auto const max_skin = get_value<double>(params, "max_skin");
+    auto const tol = get_value<double>(params, "tol");
+    auto const int_steps = get_value<int>(params, "int_steps");
+    context()->parallel_try_catch([&]() {
+      if (tol <= 0.) {
+        // A non-positive tolerance makes the core bisection loop
+        // `while (fabs(a - b) > tol)` non-terminating by construction.
+        throw std::domain_error("Parameter 'tol' must be > 0");
+      }
+      if (int_steps <= 0) {
+        // A non-positive step count divides by zero in the per-step timing.
+        throw std::domain_error("Parameter 'int_steps' must be > 0");
+      }
+      if (min_skin < 0.) {
+        throw std::domain_error("Parameter 'min_skin' must be >= 0");
+      }
+      if (max_skin < 0.) {
+        throw std::domain_error("Parameter 'max_skin' must be >= 0");
+      }
+      if (max_skin < min_skin) {
+        throw std::domain_error("Parameter 'max_skin' must be >= 'min_skin'");
+      }
+    });
     auto &system = get_system();
     system.tune_verlet_skin(
-        get_value<double>(params, "min_skin"),
-        get_value<double>(params, "max_skin"), get_value<double>(params, "tol"),
-        get_value<int>(params, "int_steps"),
+        min_skin, max_skin, tol, int_steps,
         get_value_or<bool>(params, "adjust_max_skin", false));
     return get_cell_structure().get_verlet_skin();
   }

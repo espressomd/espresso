@@ -66,6 +66,7 @@ struct StokesianDynamics {
   void propagate_vel_pos(ParticleRangeStokesian const &particles,
                          StokesianThermostat const &stokesian, double time_step,
                          double kT) const;
+  void sanity_checks(ParticleRangeStokesian const &particles) const;
 
 private:
   /**

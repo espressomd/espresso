@@ -369,6 +369,12 @@ void File::create_file() {
 }
 
 void File::close() {
+  // release datasets first, since they reference the open file
+  m_datasets.clear();
+  // close the file in parallel (this also flushes the superblock)
+  m_h5md_file.reset();
+  // wait for all ranks to be successful before deleting the backup file
+  m_comm.barrier();
   if (m_comm.rank() == 0) {
     std::filesystem::remove(m_backup_path);
   }
@@ -719,8 +725,9 @@ File::File(std::filesystem::path file_path, std::filesystem::path script_path,
 }
 
 File::~File() {
-  m_datasets.clear();
-  m_h5md_file.reset();
+  if (m_h5md_file) {
+    close();
+  }
 }
 
 } /* namespace H5md */

@@ -117,6 +117,9 @@ static ForcesKernel create_cabana_neighbor_kernel(
 #ifdef ESPRESSO_ROTATION
   auto scatter_torque = system.cell_structure->get_scatter_torque();
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  auto scatter_dip_fld = system.cell_structure->get_scatter_dip_fld();
+#endif
 #ifdef ESPRESSO_NPT
   auto scatter_virial = system.cell_structure->get_scatter_virial();
 #endif
@@ -135,6 +138,9 @@ static ForcesKernel create_cabana_neighbor_kernel(
                              scatter_force,
 #ifdef ESPRESSO_ROTATION
                              scatter_torque,
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                             scatter_dip_fld,
 #endif
 #ifdef ESPRESSO_NPT
                              virial,
@@ -273,6 +279,11 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
   auto scatter_torque = system.cell_structure->get_scatter_torque();
   Kokkos::Experimental::contribute(local_torque, scatter_torque);
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  auto &local_dip_fld = system.cell_structure->get_local_dip_fld();
+  auto scatter_dip_fld = system.cell_structure->get_scatter_dip_fld();
+  Kokkos::Experimental::contribute(local_dip_fld, scatter_dip_fld);
+#endif
 #ifdef ESPRESSO_NPT
   auto &local_virial = system.cell_structure->get_local_virial();
   auto scatter_virial = system.cell_structure->get_scatter_virial();
@@ -287,10 +298,16 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
 #ifdef ESPRESSO_ROTATION
                         &local_torque,
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                        &local_dip_fld,
+#endif
                         &unique_particles](std::size_t const i) {
                          Utils::Vector3d force{};
 #ifdef ESPRESSO_ROTATION
                          Utils::Vector3d torque{};
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                         Utils::Vector3d dip_fld{};
 #endif
                          force[0] += local_force(i, 0);
                          force[1] += local_force(i, 1);
@@ -300,9 +317,17 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
                          torque[1] += local_torque(i, 1);
                          torque[2] += local_torque(i, 2);
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                         dip_fld[0] += local_dip_fld(i, 0);
+                         dip_fld[1] += local_dip_fld(i, 1);
+                         dip_fld[2] += local_dip_fld(i, 2);
+#endif
                          unique_particles.at(i)->force() += force;
 #ifdef ESPRESSO_ROTATION
                          unique_particles.at(i)->torque() += torque;
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                         unique_particles.at(i)->dip_fld() += dip_fld;
 #endif
                        });
   Kokkos::fence();
@@ -347,8 +372,9 @@ void System::System::calculate_forces() {
   }
 #endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  // reset dipole field
-  reinit_dip_fld(*cell_structure);
+  if (dipoles.impl->solver.has_value()) {
+    reinit_dip_fld(*cell_structure);
+  }
 #endif
 
   // Use combined function instead of two separate calls
@@ -485,6 +511,11 @@ void System::System::calculate_forces() {
 
   // Communication step: ghost forces
   cell_structure->ghosts_reduce_forces();
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  if (dipoles.impl->solver.has_value()) {
+    cell_structure->ghosts_reduce_dipole_field();
+  }
+#endif
 
   // should be pretty late, since it needs to zero out the total force
   comfixed->apply(particles);

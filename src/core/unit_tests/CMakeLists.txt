@@ -68,6 +68,8 @@ espresso_unit_test(SRC field_layout_helpers_test.cpp DEPENDS espresso::utils
                    espresso::core Kokkos::kokkos)
 espresso_unit_test(SRC particle_reduction_test.cpp DEPENDS espresso::utils
                    espresso::core Kokkos::kokkos Boost::mpi)
+espresso_unit_test(SRC dipolar_direct_sum_kernels_test.cpp DEPENDS
+                   espresso::core espresso::utils Kokkos::kokkos)
 espresso_unit_test(SRC periodic_fold_test.cpp)
 espresso_unit_test(SRC grid_test.cpp DEPENDS espresso::core Kokkos::kokkos)
 espresso_unit_test(SRC lees_edwards_test.cpp DEPENDS espresso::core
