@@ -104,9 +104,31 @@ fi
 # Skipped for list (-l) and dry runs, which produce no timing data.
 if [ "$RUN_OPTION" = "-r" ]; then
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    echo "Generating benchmark timeline"
-    python3 "${SCRIPT_DIR}/plot_benchmarks.py" \
-        --prefix "$PREFIX" \
-        -o "${PREFIX}/perflogs/local/default/EspressoBenchmark.svg" \
-        || echo "Warning: could not generate benchmark timeline plot"
+
+    # ReFrame writes the perflog to perflogs/<system>/<partition>/, naming those
+    # directories after the system it ran on -- "local/default" on a workstation,
+    # but e.g. "ant_cluster/debug" on a cluster -- so the path cannot be
+    # hardcoded. Locate it, and put the SVG pages next to the log they came from.
+    shopt -s nullglob
+    perflogs=("${PREFIX}"/perflogs/*/*/EspressoBenchmark.log)
+    shopt -u nullglob
+
+    if [ "${#perflogs[@]}" -eq 0 ]; then
+        echo "Warning: no perflog found under ${PREFIX}/perflogs;" \
+             "skipping benchmark timeline plot" >&2
+    else
+        if [ "${#perflogs[@]}" -gt 1 ]; then
+            echo "Warning: several perflogs found under ${PREFIX}/perflogs;" \
+                 "plotting the most recently modified one" >&2
+        fi
+        # Most recently modified first, so the run that just finished wins.
+        PERFLOG="$(ls -t "${perflogs[@]}" | head -n 1)"
+        PERFLOG_DIR="$(dirname "$PERFLOG")"
+        echo "Generating benchmark timeline from ${PERFLOG}"
+        python3 "${SCRIPT_DIR}/plot_benchmarks.py" \
+            --prefix "$PREFIX" \
+            --log "$PERFLOG" \
+            -o "${PERFLOG_DIR}/EspressoBenchmark.svg" \
+            || echo "Warning: could not generate benchmark timeline plot" >&2
+    fi
 fi

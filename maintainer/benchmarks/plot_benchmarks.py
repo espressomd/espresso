@@ -42,11 +42,17 @@ not-yet-full page is written as ``<start>_current.svg`` and overwritten on later
 runs until it reaches ``--max-points`` columns, at which point it is finalised
 under its span name and a new ``_current`` page begins.
 
-The ReFrame ``--prefix`` directory used for the benchmark run must be given; the
-perflog is read from ``<prefix>/perflogs/local/default/EspressoBenchmark.log``.
+The ReFrame ``--prefix`` directory used for the benchmark run must be given.
+The perflog lives at
+``<prefix>/perflogs/<system>/<partition>/EspressoBenchmark.log`` -- ReFrame's
+``filelog`` handler names those two directories after the system and partition
+it ran on, so they are ``local/default`` on a workstation but e.g.
+``ant_cluster/debug`` on a cluster. The path is therefore discovered rather
+than assumed; pass ``--log`` to select one explicitly when several are present.
 
 Usage:
     python3 plot_benchmarks.py --prefix PREFIX -o OUTPUT.svg [--max-points N]
+                               [--log PERFLOG]
 """
 
 import argparse
@@ -62,9 +68,49 @@ import matplotlib
 matplotlib.use("Agg")  # headless: no display needed
 import matplotlib.pyplot as plt  # noqa: E402
 
-# Relative path of the perflog below a ReFrame --prefix directory.
-DEFAULT_REL_LOG = Path("perflogs") / "local" / \
-    "default" / "EspressoBenchmark.log"
+# Basename of the perflog ReFrame's ``filelog`` handler writes (named after the
+# benchmark's check class) and the glob that locates it below a ``--prefix``.
+# The two wildcards are ReFrame's system and partition names.
+PERFLOG_NAME = "EspressoBenchmark.log"
+PERFLOG_GLOB = f"perflogs/*/*/{PERFLOG_NAME}"
+
+
+def find_perflog(prefix):
+    """Return every ``EspressoBenchmark.log`` below ``<prefix>/perflogs``.
+
+    ReFrame writes the perflog to ``perflogs/<system>/<partition>/``, so the
+    concrete directory depends on which system the suite ran on and cannot be
+    hardcoded. Results are sorted for a deterministic order.
+    """
+    return sorted(Path(prefix).glob(PERFLOG_GLOB))
+
+
+def resolve_perflog(prefix, explicit=None):
+    """Resolve the perflog to plot from ``prefix``, or ``explicit`` if given.
+
+    Returns ``(path, error)``; exactly one of the two is ``None``. An error is
+    reported when the explicit path is missing, when discovery finds nothing,
+    or when it finds several candidates (the caller must then pass ``--log``).
+    """
+    if explicit is not None:
+        path = Path(explicit)
+        if not path.is_file():
+            return None, f"Log file not found: {path}"
+        return path, None
+
+    candidates = find_perflog(prefix)
+    if not candidates:
+        return None, (
+            f"No perflog found under {Path(prefix) / 'perflogs'} "
+            f"(looked for {PERFLOG_GLOB}). Has the suite been run with "
+            f"--prefix {prefix}?"
+        )
+    if len(candidates) > 1:
+        listing = "\n  ".join(str(c) for c in candidates)
+        return None, (
+            "Several perflogs found; select one with --log:\n  " + listing
+        )
+    return candidates[0], None
 
 
 def parse_timestamp(value):
@@ -691,8 +737,15 @@ def main(argv=None):
     parser.add_argument(
         "--prefix",
         required=True,
-        help="ReFrame --prefix directory; the log is read from "
-        f"<prefix>/{DEFAULT_REL_LOG}.",
+        help="ReFrame --prefix directory; the perflog is discovered at "
+        f"<prefix>/{PERFLOG_GLOB} (the two wildcards are ReFrame's system "
+        "and partition names).",
+    )
+    parser.add_argument(
+        "--log",
+        default=None,
+        help="Explicit perflog path, bypassing discovery under --prefix. "
+        "Required only when several systems/partitions have been logged.",
     )
     parser.add_argument(
         "--max-points",
@@ -705,9 +758,9 @@ def main(argv=None):
     if args.max_points < 1:
         parser.error("--max-points must be >= 1")
 
-    log_path = Path(args.prefix) / DEFAULT_REL_LOG
-    if not log_path.is_file():
-        parser.error(f"Log file not found: {log_path}")
+    log_path, error = resolve_perflog(args.prefix, args.log)
+    if error is not None:
+        parser.error(error)
 
     try:
         store = read_records(log_path)
