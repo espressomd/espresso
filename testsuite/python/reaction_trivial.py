@@ -39,7 +39,7 @@ class Test(ut.TestCase):
         types = {"A": 0, "B": 1}
         system.box_l = np.ones(3) * np.cbrt(N0 / c0)
         RE = espressomd.reaction_methods.ReactionEnsemble(
-            seed=42, kT=1., exclusion_range=1., system=self.system,
+            seed=42, kT=1., exclusion_range=1., system=system,
             search_algorithm="parallel")
         RE.set_non_interacting_type(type=max(types.values()) + 1)
         system.part.add(
@@ -65,6 +65,10 @@ class Test(ut.TestCase):
             RE.reaction(steps=10)
             system.integrator.run(20)
             average_NA += system.number_of_particles(type=types["A"])
+            # check that bookkeeping was reset
+            self.assertFalse(RE._particle_changes["created"])
+            self.assertFalse(RE._particle_changes["changed"])
+            self.assertFalse(RE._particle_changes["hidden"])
         average_NA /= num_samples
 
         alpha = average_NA / float(N0)

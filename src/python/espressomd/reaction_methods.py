@@ -218,9 +218,9 @@ class ReactionAlgorithm:
         self.non_interacting_type = 100
         self.reactions = []
         self.default_charges = {}
-        self.m_empty_p_ids_smaller_than_max_seen_particle = []
-        self.initialize_particle_changes()
-        self.particle_numbers = {}
+        self._empty_p_ids_smaller_than_max_seen_particle = []
+        self._initialize_particle_changes()
+        self._particle_numbers = {}
         self._analysis = self.system.analysis
         self._system_part = self.system.part
 
@@ -477,7 +477,7 @@ class ReactionAlgorithm:
         """
         return self.non_interacting_type
 
-    def displacement_mc_move(self, ptype, n_particles):
+    def _displacement_mc_move(self, ptype, n_particles):
         # draw particle ids at random without replacement
         p_id = -1
         drawn_pids = [p_id]
@@ -488,7 +488,7 @@ class ReactionAlgorithm:
             drawn_pids.append(p_id)
             # write new position and new velocity
             p = self._system_part.by_id(p_id)
-            self.particle_changes["changed"].append(
+            self._particle_changes["changed"].append(
                 {"pid": p_id, "pos": p.pos, "v": p.v})
             new_pos = self.get_random_positions_in_box(1)[0]
             new_vel = self.rng.normal(size=3) * math.sqrt(self.kT / p.mass)
@@ -540,7 +540,7 @@ class ReactionAlgorithm:
             return False
 
         E_pot_old = self._analysis.potential_energy()
-        self.displacement_mc_move(type_mc, particle_number_to_be_changed)
+        self._displacement_mc_move(type_mc, particle_number_to_be_changed)
         E_pot_new = float("inf")
         if not self.exclusion_range_touched:
             E_pot_new = self._analysis.potential_energy()
@@ -565,7 +565,7 @@ class ReactionAlgorithm:
         if self.rng.random(1) < bf:
             # accept
             self.m_accepted_configurational_MC_moves += 1
-            self.initialize_particle_changes()
+            self._initialize_particle_changes()
             return True
 
         # reject: restore original particle properties
@@ -629,8 +629,8 @@ class ReactionAlgorithm:
         raise NotImplementedError(
             "Reaction methods do not support checkpointing")
 
-    def initialize_particle_changes(self):
-        self.particle_changes = {"created": [], "changed": [], "hidden": []}
+    def _initialize_particle_changes(self):
+        self._particle_changes = {"created": [], "changed": [], "hidden": []}
 
     def add_reaction(self, **kwargs):
         """
@@ -721,14 +721,14 @@ class ReactionAlgorithm:
             # change reactant particles to product particles
             size = min(reaction.reactant_coefficients[index],
                        reaction.product_coefficients[index])
-            if self.particle_numbers:
-                self.particle_numbers[r_type] -= size
-                self.particle_numbers[p_type] += size
+            if self._particle_numbers:
+                self._particle_numbers[r_type] -= size
+                self._particle_numbers[p_type] += size
             pids = self.get_random_pids(r_type, size)
             self._helper.call_method(
                 b"batch_update", pids=pids, properties={"type": p_type, "q": p_charge})
             for random_pid in pids:
-                self.particle_changes["changed"].append(
+                self._particle_changes["changed"].append(
                     {"pid": random_pid, "type": r_type, "q": r_charge})
 
             # measure stoichiometric excess
@@ -740,7 +740,7 @@ class ReactionAlgorithm:
                 pids = self._create_particles(delta_n, p_type)
                 self._check_exclusion_range_any(pids, p_type)
                 for pid in pids:
-                    self.particle_changes["created"].append(
+                    self._particle_changes["created"].append(
                         {"pid": pid, "type": p_type, "q": p_charge})
             elif delta_n < 0:
                 # hide reactant particles
@@ -748,7 +748,7 @@ class ReactionAlgorithm:
                 self._check_exclusion_range_any(pids, r_type)
                 self._hide_particles(pids, r_type)
                 for random_pid in pids:
-                    self.particle_changes["hidden"].append(
+                    self._particle_changes["hidden"].append(
                         {"pid": random_pid, "type": r_type, "q": r_charge})
 
         # create/hide particles with non-corresponding replacement types
@@ -762,7 +762,7 @@ class ReactionAlgorithm:
                 self._check_exclusion_range_any(pids, r_type)
                 self._hide_particles(pids, r_type)
                 for random_pid in pids:
-                    self.particle_changes["hidden"].append(
+                    self._particle_changes["hidden"].append(
                         {"pid": random_pid, "type": r_type, "q": r_charge})
             else:
                 p_type = reaction.product_types[index]
@@ -772,14 +772,14 @@ class ReactionAlgorithm:
                 pids = self._create_particles(delta_n, p_type)
                 self._check_exclusion_range_any(pids, p_type)
                 for pid in pids:
-                    self.particle_changes["created"].append(
+                    self._particle_changes["created"].append(
                         {"pid": pid, "type": p_type, "q": p_charge})
 
     def all_reactant_particles_exist(self, reaction):
         for r_type in reaction.reactant_types:
             r_index = reaction.reactant_types.index(r_type)
             r_coef = reaction.reactant_coefficients[r_index]
-            if self.particle_numbers[r_type] < r_coef:
+            if self._particle_numbers[r_type] < r_coef:
                 return False
         return True
 
@@ -796,72 +796,72 @@ class ReactionAlgorithm:
         old_max_seen_id = self.system.call_method(
             b"reaction_get_maximal_particle_id")
         if p_id == old_max_seen_id:
-            self.m_empty_p_ids_smaller_than_max_seen_particle = [
-                x for x in self.m_empty_p_ids_smaller_than_max_seen_particle if x < old_max_seen_id]
+            self._empty_p_ids_smaller_than_max_seen_particle = [
+                x for x in self._empty_p_ids_smaller_than_max_seen_particle if x < old_max_seen_id]
         elif p_id <= old_max_seen_id:
-            self.m_empty_p_ids_smaller_than_max_seen_particle.append(p_id)
+            self._empty_p_ids_smaller_than_max_seen_particle.append(p_id)
         elif precheck:
             raise RuntimeError(
                 "Particle id is greater than the max seen particle id")
 
     def _delete_created_particles(self):
         pids = []
-        for particle_info in self.particle_changes["created"]:
+        for particle_info in self._particle_changes["created"]:
             pids.append(particle_info["pid"])
-            if self.particle_numbers:
-                self.particle_numbers[particle_info["type"]] -= 1
+            if self._particle_numbers:
+                self._particle_numbers[particle_info["type"]] -= 1
             self._free_particle_id(particle_info["pid"])
         self._helper.call_method(b"delete_particles", pids=pids)
 
     def _delete_hidden_particles(self):
         pids = []
-        for particle_info in self.particle_changes["hidden"]:
+        for particle_info in self._particle_changes["hidden"]:
             pids.append(particle_info["pid"])
-            if self.particle_numbers:
-                self.particle_numbers[self.non_interacting_type] -= 1
+            if self._particle_numbers:
+                self._particle_numbers[self.non_interacting_type] -= 1
             self._free_particle_id(particle_info["pid"])
         self._helper.call_method(b"delete_particles", pids=pids)
 
     def _restore_system(self):
         # restore properties of changed and hidden particles
-        for particle_info in self.particle_changes["changed"] + \
-                self.particle_changes["hidden"]:
+        for particle_info in self._particle_changes["changed"] + \
+                self._particle_changes["hidden"]:
             pid = particle_info.pop("pid")
             ptype = self._helper.call_method(
                 b"single_update", pid=pid, properties=particle_info)
-            if self.particle_numbers:
-                self.particle_numbers[ptype] -= 1
-                self.particle_numbers[particle_info["type"]] += 1
+            if self._particle_numbers:
+                self._particle_numbers[ptype] -= 1
+                self._particle_numbers[particle_info["type"]] += 1
         # destroy created particles
         self._delete_created_particles()
-        self.initialize_particle_changes()
+        self._initialize_particle_changes()
 
     def _hide_particle(self, pid):
         ptype = self._helper.call_method(
             b"single_update", pid=pid,
             properties={"type": self.non_interacting_type, "q": 0.})
-        if self.particle_numbers:
-            self.particle_numbers[ptype] -= 1
-            self.particle_numbers[self.non_interacting_type] += 1
+        if self._particle_numbers:
+            self._particle_numbers[ptype] -= 1
+            self._particle_numbers[self.non_interacting_type] += 1
 
     def _hide_particles(self, pids, ptype):
         self._helper.call_method(
             b"batch_update", pids=pids,
             properties={"type": self.non_interacting_type, "q": 0.})
-        if self.particle_numbers:
-            self.particle_numbers[ptype] -= len(pids)
-            self.particle_numbers[self.non_interacting_type] += len(pids)
+        if self._particle_numbers:
+            self._particle_numbers[ptype] -= len(pids)
+            self._particle_numbers[self.non_interacting_type] += len(pids)
 
     def _create_particles(self, size, ptype):
         pids = []
         highest_particle_id = self._system_part.highest_particle_id
         for _ in range(size):
-            if len(self.m_empty_p_ids_smaller_than_max_seen_particle) == 0:
+            if len(self._empty_p_ids_smaller_than_max_seen_particle) == 0:
                 pid = highest_particle_id + 1
                 highest_particle_id = pid
             else:
-                pid = min(self.m_empty_p_ids_smaller_than_max_seen_particle)
-                self.m_empty_p_ids_smaller_than_max_seen_particle.remove(pid)
+                pid = min(self._empty_p_ids_smaller_than_max_seen_particle)
+                self._empty_p_ids_smaller_than_max_seen_particle.remove(pid)
                 highest_particle_id = max(highest_particle_id, pid)
             pids.append(pid)
         new_pos = self.get_random_positions_in_box(size)
@@ -870,14 +870,14 @@ class ReactionAlgorithm:
             self._system_part.add(
                 id=pids[i], type=ptype, q=self.default_charges[ptype],
                 pos=new_pos[i], v=new_v[i])
-        if self.particle_numbers:
-            self.particle_numbers[ptype] += size
+        if self._particle_numbers:
+            self._particle_numbers[ptype] += size
         return pids
 
     def _setup_bookkeeping_of_empty_pids(self):
         particle_ids = self._system_part.all().id
         available_pids = self._find_missing_pids(pids_list=particle_ids)
-        self.m_empty_p_ids_smaller_than_max_seen_particle = available_pids
+        self._empty_p_ids_smaller_than_max_seen_particle = available_pids
 
     def _find_missing_pids(self, pids_list):
         """
@@ -920,7 +920,7 @@ class ReactionAlgorithm:
 
     def _setup_cache(self):
         self._setup_bookkeeping_of_empty_pids()
-        self.particle_numbers = self.count_number_of_particles_per_type()
+        self._particle_numbers = self.count_number_of_particles_per_type()
 
     def reaction(self, steps=1):
         """
@@ -997,7 +997,7 @@ class ReactionAlgorithm:
 
             types = reaction.reactant_types + reaction.product_types
             old_particle_numbers = {
-                k: v for k, v in self.particle_numbers.items() if k in types}
+                k: v for k, v in self._particle_numbers.items() if k in types}
             self.make_reaction_attempt(reaction)
 
             if self.exclusion_range_touched:
@@ -1021,7 +1021,7 @@ class ReactionAlgorithm:
             # accept trial move
             self._delete_hidden_particles()
             reaction.accepted_moves += 1
-            self.initialize_particle_changes()
+            self._initialize_particle_changes()
             return E_pot_new
         except BaseException as err:
             tb = sys.exc_info()[2]

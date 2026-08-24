@@ -110,27 +110,27 @@ class ReactionMethods(ut.TestCase):
 
         # add reactions
         reaction_forward = {
-            'gamma': gamma,
-            'reactant_types': [5],
-            'reactant_coefficients': [1],
-            'product_types': [2, 3],
-            'product_coefficients': [1, 1],
-            'default_charges': {5: 0, 2: 0, 3: 0},
+            "gamma": gamma,
+            "reactant_types": [5],
+            "reactant_coefficients": [1],
+            "product_types": [2, 3],
+            "product_coefficients": [1, 1],
+            "default_charges": {5: 0, 2: 0, 3: 0},
         }
         reaction_backward = {
-            'gamma': 1. / gamma,
-            'reactant_types': reaction_forward['product_types'],
-            'reactant_coefficients': reaction_forward['product_coefficients'],
-            'product_types': reaction_forward['reactant_types'],
-            'product_coefficients': reaction_forward['reactant_coefficients'],
-            'default_charges': reaction_forward['default_charges'],
+            "gamma": 1. / gamma,
+            "reactant_types": reaction_forward["product_types"],
+            "reactant_coefficients": reaction_forward["product_coefficients"],
+            "product_types": reaction_forward["reactant_types"],
+            "product_coefficients": reaction_forward["reactant_coefficients"],
+            "default_charges": reaction_forward["default_charges"],
         }
 
         if isinstance(method, espressomd.reaction_methods.ConstantpHEnsemble):
-            method.add_reaction(gamma=reaction_forward['gamma'],
-                                reactant_types=reaction_forward['reactant_types'],
-                                product_types=reaction_forward['product_types'],
-                                default_charges=reaction_forward['default_charges'])
+            method.add_reaction(gamma=reaction_forward["gamma"],
+                                reactant_types=reaction_forward["reactant_types"],
+                                product_types=reaction_forward["product_types"],
+                                default_charges=reaction_forward["default_charges"])
         else:
             method.add_reaction(**reaction_forward)
         reaction_parameters = (reaction_forward, reaction_backward)
@@ -186,14 +186,14 @@ class ReactionMethods(ut.TestCase):
 
         # check status
         status = method.get_status()
-        self.assertEqual(status['kT'], kT)
-        self.assertEqual(status['exclusion_range'], exclusion_range)
+        self.assertEqual(status["kT"], kT)
+        self.assertEqual(status["exclusion_range"], exclusion_range)
         self.assertEqual(
-            status['exclusion_radius_per_type'],
+            status["exclusion_radius_per_type"],
             exclusion_radius_per_type)
-        self.assertEqual(len(status['reactions']), 2)
+        self.assertEqual(len(status["reactions"]), 2)
         for reaction_flat, params in zip(
-                status['reactions'], reaction_parameters):
+                status["reactions"], reaction_parameters):
             for key in reaction_flat:
                 if isinstance(params[key], float):
                     self.assertAlmostEqual(
@@ -213,18 +213,18 @@ class ReactionMethods(ut.TestCase):
 
         # check reactions after successful parameter change
         new_gamma = 634.
-        reaction_forward['gamma'] = new_gamma
-        reaction_backward['gamma'] = 1. / new_gamma
+        reaction_forward["gamma"] = new_gamma
+        reaction_backward["gamma"] = 1. / new_gamma
         method.change_reaction_constant(reaction_id=0, gamma=new_gamma)
         check_reaction_parameters(method.reactions, reaction_parameters)
         status = method.get_status()
         self.assertAlmostEqual(
-            status['reactions'][0]['gamma'],
-            reaction_forward['gamma'],
+            status["reactions"][0]["gamma"],
+            reaction_forward["gamma"],
             delta=1e-10)
         self.assertAlmostEqual(
-            status['reactions'][1]['gamma'],
-            reaction_backward['gamma'],
+            status["reactions"][1]["gamma"],
+            reaction_backward["gamma"],
             delta=1e-10)
 
         # check particle deletion on a worker node
@@ -260,8 +260,8 @@ class ReactionMethods(ut.TestCase):
         self.assertEqual(p3.type, method.non_interacting_type)
 
     def test_reaction_interface(self):
-        params = {'exclusion_range': 0.8,
-                  'exclusion_radius_per_type': {1: 0.1}}
+        params = {"exclusion_range": 0.8,
+                  "exclusion_radius_per_type": {1: 0.1}}
 
         with self.subTest(msg="reaction ensemble"):
             method = espressomd.reaction_methods.ReactionEnsemble(
@@ -293,12 +293,12 @@ class ReactionMethods(ut.TestCase):
             seed=42, kT=1., exclusion_range=0., system=self.system)
         r_algo.exclusion.exclusion_range = 1.
         self.assertFalse(r_algo.exclusion_range_touched)
-        r_algo.displacement_mc_move(0, 2)
+        r_algo._displacement_mc_move(0, 2)
         self.assertTrue(r_algo.exclusion_range_touched)
 
-        self.assertEqual(len(r_algo.particle_changes["created"]), 0)
-        self.assertEqual(len(r_algo.particle_changes["hidden"]), 0)
-        for change in r_algo.particle_changes["changed"]:
+        self.assertEqual(len(r_algo._particle_changes["created"]), 0)
+        self.assertEqual(len(r_algo._particle_changes["hidden"]), 0)
+        for change in r_algo._particle_changes["changed"]:
             pid = change["pid"]
             self.assertIn(pid, (0, 1))
             ref_old_pos = ref_pos[pid]
@@ -345,6 +345,10 @@ class ReactionMethods(ut.TestCase):
             ref_old_pos = ref_pos[pid]
             p = self.system.part.by_id(pid)
             np.testing.assert_allclose(np.copy(p.pos), ref_old_pos)
+        # check that bookkeeping was reset
+        self.assertFalse(r_algo._particle_changes["created"])
+        self.assertFalse(r_algo._particle_changes["changed"])
+        self.assertFalse(r_algo._particle_changes["hidden"])
 
         # force a MC move to be accepted by using a constant Hamiltonian
         r_algo.exclusion.exclusion_range = 0.
@@ -356,6 +360,10 @@ class ReactionMethods(ut.TestCase):
             distances[pid] = np.linalg.norm(ref_pos[pid] - p.pos)
         self.assertLessEqual(min(distances[0], distances[1]), 1e-10)
         self.assertGreaterEqual(max(distances[0], distances[1]), 0.1)
+        # check that bookkeeping was reset
+        self.assertFalse(r_algo._particle_changes["created"])
+        self.assertFalse(r_algo._particle_changes["changed"])
+        self.assertFalse(r_algo._particle_changes["hidden"])
 
     def test_constraints(self):
         box_l = np.array([0.5, 0.4, 0.7])
@@ -409,7 +417,7 @@ class ReactionMethods(ut.TestCase):
         r_algo.exclusion.exclusion_range = 0.
         r_algo.exclusion.exclusion_radius_per_type = {type_A: 0.1, type_B: 2.}
         r_algo.exclusion_range_touched = False
-        r_algo.displacement_mc_move(type_B, 1)
+        r_algo._displacement_mc_move(type_B, 1)
         self.assertTrue(r_algo.exclusion_range_touched)
         # also check private implementations
         r_algo.exclusion_range_touched = False
@@ -427,7 +435,7 @@ class ReactionMethods(ut.TestCase):
         r_algo.exclusion.exclusion_range = 0.
         r_algo.exclusion.exclusion_radius_per_type = {type_A: 0., type_B: 2.}
         r_algo.exclusion_range_touched = False
-        r_algo.displacement_mc_move(type_B, 1)
+        r_algo._displacement_mc_move(type_B, 1)
         self.assertFalse(r_algo.exclusion_range_touched)
         # also check private implementations
         r_algo.exclusion_range_touched = False
@@ -445,7 +453,7 @@ class ReactionMethods(ut.TestCase):
         r_algo.exclusion.exclusion_range = 2.
         r_algo.exclusion.exclusion_radius_per_type = {type_A: 0.}
         r_algo.exclusion_range_touched = False
-        r_algo.displacement_mc_move(type_B, 1)
+        r_algo._displacement_mc_move(type_B, 1)
         self.assertTrue(r_algo.exclusion_range_touched)
         # also check private implementations
         r_algo.exclusion_range_touched = False
@@ -461,14 +469,14 @@ class ReactionMethods(ut.TestCase):
     def test_exceptions(self):
         self.system.part.add(pos=3 * [(0., 0., 0.)], id=[0, 2, 4])
         single_reaction_params = {
-            'gamma': 1.,
-            'reactant_types': [4],
-            'reactant_coefficients': [1],
-            'product_types': [2, 3],
-            'product_coefficients': [1, 4],
+            "gamma": 1.,
+            "reactant_types": [4],
+            "reactant_coefficients": [1],
+            "product_types": [2, 3],
+            "product_coefficients": [1, 4],
         }
         reaction_params = {
-            'default_charges': {2: 0, 3: 0, 4: 0},
+            "default_charges": {2: 0, 3: 0, 4: 0},
             **single_reaction_params
         }
         widom = espressomd.reaction_methods.WidomInsertion(
@@ -480,18 +488,18 @@ class ReactionMethods(ut.TestCase):
         widom.add_reaction(**reaction_params)
 
         # check invalid reactions
-        err_msg = 'number of types and coefficients have to match'
-        with self.assertRaisesRegex(ValueError, f'reactants: {err_msg}'):
-            method.add_reaction(**{**reaction_params, 'reactant_types': []})
-        with self.assertRaisesRegex(ValueError, f'products: {err_msg}'):
-            method.add_reaction(**{**reaction_params, 'product_types': []})
-        with self.assertRaisesRegex(ValueError, 'gamma'):
-            method.add_reaction(**{**reaction_params, 'gamma': 0.})
-        with self.assertRaisesRegex(ValueError, 'gamma'):
-            method.add_reaction(**{**reaction_params, 'gamma': -2.})
+        err_msg = "number of types and coefficients have to match"
+        with self.assertRaisesRegex(ValueError, f"reactants: {err_msg}"):
+            method.add_reaction(**{**reaction_params, "reactant_types": []})
+        with self.assertRaisesRegex(ValueError, f"products: {err_msg}"):
+            method.add_reaction(**{**reaction_params, "product_types": []})
+        with self.assertRaisesRegex(ValueError, "gamma"):
+            method.add_reaction(**{**reaction_params, "gamma": 0.})
+        with self.assertRaisesRegex(ValueError, "gamma"):
+            method.add_reaction(**{**reaction_params, "gamma": -2.})
 
         # check charge conservation
-        err_msg = 'Reaction system is not charge neutral'
+        err_msg = "Reaction system is not charge neutral"
         with self.assertRaisesRegex(ValueError, err_msg):
             method.add_reaction(default_charges={2: 8, 3: 0, 4: -50},
                                 **single_reaction_params)
