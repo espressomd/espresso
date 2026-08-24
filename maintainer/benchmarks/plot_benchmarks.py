@@ -32,7 +32,7 @@ an error bar.
 The suite can be run with several ESPResSo builds (the ``build_config`` column,
 e.g. ``maxset``/``default``/``empty``); each build is plotted separately. Every
 build's timeline is paginated into pages of at most ``--max-points`` commit
-columns (default 30), and each page is written to its own SVG tagged with the
+columns (default 20), and each page is written to its own SVG tagged with the
 calendar span it covers:
 
     <stem>[_<build>]_<start>_<end>.svg     e.g. EspressoBenchmark_maxset_2026-03-10_2026-06-29.svg
@@ -390,15 +390,16 @@ def format_tick_label(column):
     commit = column["commit"]
     commit = commit[:9] if commit != "unknown" else commit
     if column["runs"] > 1:
-        return f"{commit}\n#{column['run'] + 1}"
-    return commit
+        return f"{commit} (#{column['run'] + 1})"
+    else:
+        return f"{commit} (#1)"
 
 
 # Marker size of plotted points.
 HIT_MARKERSIZE = 22
 
 # Default number of commit columns (x-axis positions) per SVG page.
-DEFAULT_MAX_POINTS = 30
+DEFAULT_MAX_POINTS = 20
 
 # Self-contained hover layer injected into the SVG: styling, an (initially
 # hidden) tooltip container, and vanilla JS that fills and positions it from the
@@ -603,7 +604,7 @@ def render_page(build, columns, plotted, unit, output_path, span_label=None):
 
     ax.set_yscale("log")
     ax.set_xlabel("ESPResSo commit (chronological)")
-    ax.set_ylabel(f"Mean execution time [{unit}]")
+    ax.set_ylabel(f"Mean execution time ({unit})")
     title = "ESPResSo benchmark performance timeline"
     if build and build != "unknown":
         title += f"  —  build: {build}"
