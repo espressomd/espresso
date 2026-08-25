@@ -23,6 +23,7 @@ import csv
 import subprocess
 import reframe as rfm
 import reframe.utility.sanity as sn
+import reframe.utility.typecheck as typ
 from reframe.core.builtins import (
     parameter,
     run_after,
@@ -30,6 +31,30 @@ from reframe.core.builtins import (
     sanity_function,
     variable,
 )
+
+
+# Feature flags declared by the ant_cluster partitions in reframe_config.py.
+# A test selects exactly one of them, so a case is never generated for both.
+DEBUG_PARTITION_FEATURE = "debug"
+COMPUTE_PARTITION_FEATURE = "compute"
+
+
+def partition_constraints(use_debug):
+    """``valid_systems`` entries selecting one ant_cluster partition.
+
+    ``suite.sh --debug`` sets ``use_debug_partition`` on every test (through
+    ReFrame's ``-S``), routing the ant_cluster cases to the debug partition;
+    otherwise they run on the production compute nodes. The bare ``local``
+    entry keeps workstation runs working: the local system declares neither
+    feature, so neither ``+debug`` nor ``+compute`` would match it.
+
+    Both classes must agree, because a benchmark depends on its build within
+    the same partition and environment.
+    """
+    feature = (
+        DEBUG_PARTITION_FEATURE if use_debug else COMPUTE_PARTITION_FEATURE
+    )
+    return [f"+{feature}", "local"]
 
 
 @rfm.simple_test
@@ -41,14 +66,27 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
     build_locally = False
     build_params = parameter(CONFIGS)
 
-    valid_systems = ["ant_cluster:debug", "local"]
+    # Overridden per run in select_partition(); the production compute nodes
+    # are the default so an unflagged run never lands on the debug queue.
+    valid_systems = ["+compute", "local"]
     valid_prog_environs = ["espresso-env", "local-env"]
+
+    # Route the ant_cluster cases to the debug partition instead of the
+    # production compute nodes. Set for every test by ``suite.sh --debug``
+    # via ReFrame's ``-S use_debug_partition=true``.
+    # typ.Bool (not plain bool) so that "-S use_debug_partition=false" parses
+    # as False; bool("false") would be True.
+    use_debug_partition = variable(typ.Bool, value=False)
 
     sourcesdir = "https://github.com/espressomd/espresso.git"
     build_system = "CMake"
 
     # Commit hash of the ESPResSo checkout
     espresso_commit = variable(str, value="unknown", loggable=True)
+
+    @run_after("init")
+    def select_partition(self):
+        self.valid_systems = partition_constraints(self.use_debug_partition)
 
     @run_after("init")
     def set_build_attributes(self):
@@ -151,8 +189,17 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
     build_params = parameter(CONFIGS)
     test_case = parameter(generate_test_parameters())
 
-    valid_systems = ["ant_cluster:debug", "local"]
+    # Overridden per run in select_partition(); must match BuildEspresso, since
+    # the dependency below resolves within one partition and environment.
+    valid_systems = ["+compute", "local"]
     valid_prog_environs = ["espresso-env", "local-env"]
+
+    # Route the ant_cluster cases to the debug partition instead of the
+    # production compute nodes. Set for every test by ``suite.sh --debug``
+    # via ReFrame's ``-S use_debug_partition=true``.
+    # typ.Bool (not plain bool) so that "-S use_debug_partition=false" parses
+    # as False; bool("false") would be True.
+    use_debug_partition = variable(typ.Bool, value=False)
 
     # This will set the slurm option --exlusive for scheduled jobs
     exclusive_access = True
@@ -165,6 +212,10 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
     # (and lets the plot script emit one SVG per build). Marked loggable so it is
     # written into the perflog as %(check_build_config)s.
     build_config = variable(str, value="unknown", loggable=True)
+
+    @run_after("init")
+    def select_partition(self):
+        self.valid_systems = partition_constraints(self.use_debug_partition)
 
     @run_after("init")
     def setup_test(self):

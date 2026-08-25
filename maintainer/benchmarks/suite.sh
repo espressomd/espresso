@@ -20,10 +20,12 @@
 
 # Usage function
 usage() {
-    echo "Usage: $0 -p <prefix> [-n <test_names>] [-l] [--dry-run]"
+    echo "Usage: $0 -p <prefix> [-n <test_names>] [-l] [--debug] [--dry-run]"
     echo "  -p PREFIX       : Installation prefix for ReFrame benchmarks"
     echo "  -n TESTS        : Optional ReFrame test-name filter; repeatable (selects the union)"
     echo "  -l              : List available test cases (overrides -r/--dry-run)"
+    echo "  --debug         : On the ant cluster, run on the debug partition"
+    echo "                    instead of the production compute nodes"
     echo "  --dry-run       : Optional flag to perform a dry run"
     exit 1
 }
@@ -31,6 +33,7 @@ usage() {
 # Defaults
 DRY_RUN=false
 LIST_MODE=false
+USE_DEBUG_PARTITION=false
 # ReFrame -n filters; repeatable, selects the union.
 N_OPTS=()
 
@@ -47,6 +50,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -l)
             LIST_MODE=true
+            shift
+            ;;
+        --debug)
+            USE_DEBUG_PARTITION=true
             shift
             ;;
         --dry-run)
@@ -85,11 +92,17 @@ fi
 export RFM_ENABLE_RESULTS_STORAGE=1
 export RFM_SQLITE_DB_FILE="${PREFIX}/results.db"
 
+# Select the ant_cluster partition. The tests turn this into a "+debug" or
+# "+compute" constraint on valid_systems; the local system matches neither
+# feature, so workstation runs are unaffected either way.
+S_OPTS=(-S "use_debug_partition=${USE_DEBUG_PARTITION}")
+
 # Run ReFrame
 reframe -C reframe_config.py \
         -c espresso_benchmarks.py \
         --prefix "$PREFIX" \
         "${N_OPTS[@]}" \
+        "${S_OPTS[@]}" \
         --performance-report \
         $RUN_OPTION
 
