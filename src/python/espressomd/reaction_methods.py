@@ -223,7 +223,7 @@ class ReactionAlgorithm:
         self._particle_numbers = {}
         self._analysis = self.system.analysis
         self._system_part = self.system.part
-        self._has_electrostatics_feature = espressomd.has_features.has_features(
+        self._has_electrostatics_feature = espressomd.code_features.has_features(
             "ELECTROSTATICS")
 
     def valid_keys(self):
