@@ -67,7 +67,7 @@ class Test(ut.TestCase):
             type=N0 * [types["A-"], types["H+"]])
 
         RE = espressomd.reaction_methods.ConstantpHEnsemble(
-            kT=1., exclusion_range=1., seed=44, constant_pH=pH,
+            kT=1., exclusion_range=1., seed=44, constant_pH=self.pH,
             system=system, search_algorithm="parallel")
         RE.set_non_interacting_type(type=max(types.values()) + 1)
         RE.add_reaction(
