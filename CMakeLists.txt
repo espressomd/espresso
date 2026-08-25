@@ -702,7 +702,7 @@ if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
   find_package(Kokkos 5.0.2 QUIET)
   if(${Kokkos_FOUND} AND ${ESPRESSO_BUILD_WITH_CUDA}
      AND DEFINED Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE
-     AND NOT ${Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE})
+     AND NOT Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE)
     message(
       AUTHOR_WARNING
         "The Kokkos dependency wasn't compiled with -DKokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE=ON \
