@@ -136,7 +136,7 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
                 r"source .reframe_venv/bin/activate",
                 r"pip install --upgrade pip",
                 rf"pip install -c {(Path(__file__).parents[2] / 'requirements.txt').resolve(
-                )} numpy scipy setuptools cython==3.0.8",
+                )} numpy scipy setuptools cython==3.0.8 pint",
             ]
 
             self.build_system.max_concurrency = 64  # type: ignore
