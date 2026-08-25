@@ -33,13 +33,7 @@ site_configuration = {
                     "time_limit": "0d0h20m0s",
                     "access": ["--partition=debug"],
                     "environs": ["espresso-env"],
-                    # Feature flag the tests select with "+debug"; it keeps
-                    # this partition and "compute" mutually exclusive, so a
-                    # test case is never generated for both.
                     "features": ["debug"],
-                    # Managed resource behind num_gpus_per_node. ReFrame only
-                    # requests it when that attribute is non-zero, so CPU-only
-                    # benchmarks get no --gres line at all.
                     "resources": [
                         {
                             "name": "_rfm_gpu",
@@ -105,6 +99,16 @@ site_configuration = {
     ],
     "logging": [
         {
+            "handlers": [
+                {
+                    "type": "file",
+                    "name": "${RFM_PREFIX}/reframe.log",
+                    "level": "info",
+                    "format": "[%(asctime)s] %(levelname)s: "
+                    "%(check_info)s: %(message)s",
+                    "append": False,
+                }
+            ],
             "handlers_perflog": [
                 {
                     "type": "filelog",

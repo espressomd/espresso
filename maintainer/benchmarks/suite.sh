@@ -72,6 +72,9 @@ if [ -z "$PREFIX" ]; then
     usage
 fi
 
+#  Create prefix directory if it does not exist yet
+mkdir -p "$PREFIX" || exit 1
+
 # Determine final ReFrame action
 if [ "$LIST_MODE" = true ]; then
     RUN_OPTION="-l"
@@ -91,6 +94,7 @@ fi
 # Enable the results database and save it to the prefix directory
 export RFM_ENABLE_RESULTS_STORAGE=1
 export RFM_SQLITE_DB_FILE="${PREFIX}/results.db"
+export RFM_PREFIX="$PREFIX"
 
 # Select the ant_cluster partition. The tests turn this into a "+debug" or
 # "+compute" constraint on valid_systems; the local system matches neither
