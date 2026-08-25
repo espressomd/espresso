@@ -21,7 +21,6 @@ import numpy as np
 import math
 import sys
 from .script_interface import ScriptInterfaceHelper, script_interface_register
-from .code_features import has_features
 from . import utils
 
 
@@ -192,6 +191,7 @@ class ReactionAlgorithm:
         _so_creation_policy = "GLOBAL"
 
     def __init__(self, **kwargs):
+        import espressomd.code_features
         if type(self) is ReactionAlgorithm:
             raise RuntimeError(
                 f"Base class '{self.__class__.__name__}' cannot be instantiated")
@@ -223,6 +223,8 @@ class ReactionAlgorithm:
         self._particle_numbers = {}
         self._analysis = self.system.analysis
         self._system_part = self.system.part
+        self._has_electrostatics_feature = espressomd.has_features.has_features(
+            "ELECTROSTATICS")
 
     def valid_keys(self):
         raise NotImplementedError("Derived classes must implement this method")
@@ -672,7 +674,12 @@ class ReactionAlgorithm:
         self.default_charges.update(default_charges)
         self.reactions.append(forward_reaction)
         self.reactions.append(backward_reaction)
-        self.check_reaction_method()
+        try:
+            self.check_reaction_method()
+        except BaseException:
+            # roll back reaction list
+            self.reactions = self.reactions[:-2]
+            raise
 
     def delete_reaction(self, reaction_id):
         """
@@ -693,15 +700,6 @@ class ReactionAlgorithm:
         index = self.get_reaction_index(reaction_id)
         del self.reactions[index + 1]
         del self.reactions[index + 0]
-
-    @classmethod
-    def _factorial_Ni0_by_factorial_Ni0_plus_nu_i(cls, nu_i, N_i0):
-        value = 1.
-        if nu_i > 0:
-            value /= math.factorial(N_i0 + nu_i) // math.factorial(N_i0)
-        elif nu_i < 0:
-            value *= math.factorial(N_i0) // math.factorial(N_i0 + nu_i)
-        return value
 
     def make_reaction_attempt(self, reaction):
         """
@@ -892,12 +890,18 @@ class ReactionAlgorithm:
             raise RuntimeError("Reaction system not initialized")
 
         # charges of all reactive types need to be known
-        if has_features("ELECTROSTATICS"):
+        if self._has_electrostatics_feature:
             for reaction in self.reactions:
                 for p_type in reaction.reactant_types:
                     if p_type not in self.default_charges:
                         raise RuntimeError(
                             f"Forgot to assign charge to type {p_type}")
+        else:
+            for reaction in self.reactions:
+                for p_type in reaction.reactant_types:
+                    if self.default_charges.get(p_type, 0.) != 0.:
+                        raise RuntimeError(
+                            f"Charge assigned to type {p_type} is non-zero, but ELECTROSTATICS is not compiled in")
 
     def _check_charge_neutrality(self, type2charge, reaction):
         charges = np.array(list(type2charge.values()))
@@ -1122,6 +1126,8 @@ class ConstantpHEnsemble(ReactionAlgorithm):
     """
 
     def __init__(self, **kwargs):
+        import espressomd.code_features
+        espressomd.code_features.assert_features(["ELECTROSTATICS"])
         super().__init__(**kwargs)
         self.constant_pH = kwargs["constant_pH"]
 

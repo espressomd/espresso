@@ -178,11 +178,13 @@ void DipolarDirectSum::add_long_range_forces_cpu() const {
    * capture by value in the Kokkos [=] lambdas. */
   auto const *pm = all_posmom.data();
 
-  using execution_space = Kokkos::DefaultExecutionSpace;
+  using memory_space = Kokkos::HostSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
   using ForceView =
       Kokkos::View<double *[3], Kokkos::LayoutRight, Kokkos::HostSpace>;
   using ScatterForce =
-      Kokkos::Experimental::ScatterView<double *[3], Kokkos::LayoutRight>;
+      Kokkos::Experimental::ScatterView<double *[3], Kokkos::LayoutRight,
+                                        memory_space>;
   ForceView local_force("dds_force", n_local);
   ForceView local_torque("dds_torque", n_local);
   ScatterForce scatter_force(local_force);
@@ -342,7 +344,7 @@ double DipolarDirectSum::long_range_energy_cpu() const {
    * capture by value in the Kokkos [=] lambdas. */
   auto const *pm = all_posmom.data();
 
-  using execution_space = Kokkos::DefaultExecutionSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
 
   /* Raw pointers so the Kokkos lambdas do not capture std::vector by value. */
   auto const *shifts_ptr = shifts.data();
@@ -445,7 +447,7 @@ Utils::Vector9d DipolarDirectSum::long_range_pressure() const {
    * capture by value in the Kokkos [=] lambdas. */
   auto const *pm = all_posmom.data();
 
-  using execution_space = Kokkos::DefaultExecutionSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
 
   /* Raw pointers so the Kokkos lambdas do not capture std::vector by value. */
   auto const *shifts_ptr = shifts.data();
@@ -567,7 +569,7 @@ void DipolarDirectSum::dipole_field_at_part_cpu() const {
    * outlives the fence. Safe to capture by value in the Kokkos [=] lambda. */
   auto const *pm = all_posmom.data();
 
-  using execution_space = Kokkos::DefaultExecutionSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
 
   /* Raw pointers so the Kokkos lambdas do not capture std::vector by value. */
   auto *local_particles_ptr = local_particles.data();

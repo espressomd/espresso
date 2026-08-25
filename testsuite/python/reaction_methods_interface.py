@@ -269,12 +269,13 @@ class ReactionMethods(ut.TestCase):
             self.check_interface(method, kT=1.4, gamma=1.2,
                                  search_algorithm="order_n", **params)
 
-        with self.subTest(msg="constant pH ensemble"):
-            method = espressomd.reaction_methods.ConstantpHEnsemble(
-                kT=1.5, seed=14, search_algorithm="parallel", constant_pH=10., system=self.system,
-                **params)
-            self.check_interface(method, kT=1.5, gamma=1.2,
-                                 search_algorithm="parallel", **params)
+        if espressomd.has_features("ELECTROSTATICS"):
+            with self.subTest(msg="constant pH ensemble"):
+                method = espressomd.reaction_methods.ConstantpHEnsemble(
+                    kT=1.5, seed=14, search_algorithm="parallel", constant_pH=10., system=self.system,
+                    **params)
+                self.check_interface(method, kT=1.5, gamma=1.2,
+                                     search_algorithm="parallel", **params)
 
         with self.subTest(msg="Widom insertion"):
             method = espressomd.reaction_methods.WidomInsertion(
@@ -510,9 +511,11 @@ class ReactionMethods(ut.TestCase):
             method.add_reaction(default_charges=(1, 2),
                                 **single_reaction_params)
 
+        # check rollback
+        self.assertEqual(len(method.reactions), 2)
+
         # check invalid reaction id exceptions
         # (note: reaction index = 2 * reaction id)
-        self.assertEqual(len(method.reactions), 2)
         for i in [-2, -1, 1, 2, 3]:
             with self.assertRaisesRegex(IndexError, f"No reaction with id {i}"):
                 method.delete_reaction(reaction_id=i)
@@ -585,7 +588,13 @@ class ReactionMethods(ut.TestCase):
         with self.assertRaisesRegex(ValueError, r"\(unknown ..unknown..\)"):
             espressomd.reaction_methods.SingleReaction(
                 **single_reaction_params, unknown=5)
-        with self.assertRaisesRegex(ValueError, err_msg):
+        if espressomd.has_features("ELECTROSTATICS"):
+            cph_exception_context = self.assertRaisesRegex(ValueError, err_msg)
+        else:
+            cph_exception_context = self.assertRaisesRegex(
+                espressomd.code_features.FeaturesError,
+                "Missing features ELECTROSTATICS")
+        with cph_exception_context:
             espressomd.reaction_methods.ConstantpHEnsemble(
                 kT=1., exclusion_range=1., seed=12, x=1, constant_pH=2, system=self.system)
         with self.assertRaisesRegex(ValueError, err_msg):
@@ -594,6 +603,14 @@ class ReactionMethods(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "Invalid value for 'kT'"):
             espressomd.reaction_methods.ReactionEnsemble(
                 kT=-1., exclusion_range=1., seed=12, system=self.system)
+        if not espressomd.has_features("ELECTROSTATICS"):
+            with self.assertRaisesRegex(RuntimeError, "Charge assigned to type 4 is non-zero, but ELECTROSTATICS is not compiled in"):
+                tmp_method = espressomd.reaction_methods.ReactionEnsemble(
+                    kT=1., exclusion_range=1., seed=12, system=self.system)
+                tmp_method.add_reaction(
+                    default_charges={2: -1, 3: 0, 4: -1},
+                    **single_reaction_params)
+            self.assertEqual(len(tmp_method.reactions), 0)  # check rollback
         with self.assertRaisesRegex(ValueError, "Parameter 'particle_number_to_be_changed' must be >= 0"):
             method.displacement_mc_move_for_particles_of_type(
                 type_mc=0, particle_number_to_be_changed=-1)

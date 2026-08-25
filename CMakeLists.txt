@@ -700,6 +700,14 @@ endif()
 
 if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
   find_package(Kokkos 5.0.2 QUIET)
+  if(${Kokkos_FOUND} AND ${ESPRESSO_BUILD_WITH_CUDA}
+     AND NOT ${Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE})
+    message(
+      AUTHOR_WARNING
+        "The Kokkos dependency wasn't compiled with -DKokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE=ON \
+         therefore CMake will build ESPResSo source files with a compiler launcher wrapper"
+    )
+  endif()
 endif()
 if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   # cmake-format: off
@@ -757,24 +765,21 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   )
 endif()
 
-# kokkos-fft: a local (single-process) FFT on top of the Kokkos target already
-# fetched above. Used as the single-rank P3M reciprocal-space backend. It is
-# only consumed by the P3M target, which is itself gated behind FFTW (and its
-# CPU backend is FFTW), so there is nothing to fetch when FFTW is disabled.
 if(ESPRESSO_BUILD_WITH_KOKKOS_FFT AND ESPRESSO_BUILD_WITH_FFTW)
   if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos_fft-src)
-    find_package(KokkosFFT 1.1 QUIET)
+    find_package(KokkosFFT 2.0 QUIET)
   endif()
   if(NOT DEFINED KokkosFFT_FOUND OR NOT ${KokkosFFT_FOUND})
     # cmake-format: off
     FetchContent_Declare(
       kokkos_fft
       GIT_REPOSITORY https://github.com/kokkos/kokkos-fft.git
-      GIT_TAG        v1.1.0
+      GIT_TAG        v2.0.0
       OVERRIDE_FIND_PACKAGE
     )
     # cmake-format: on
     set(KokkosFFT_ENABLE_FFTW ON CACHE BOOL "")
+    set(KokkosFFT_ENABLE_CUFFT ${ESPRESSO_BUILD_WITH_CUDA} CACHE BOOL "")
     FetchContent_MakeAvailable(kokkos_fft)
   endif()
 endif()

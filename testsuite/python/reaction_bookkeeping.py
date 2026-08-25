@@ -31,71 +31,67 @@ class ReactionMethodsBookkeepingTest(ut.TestCase):
     Test that two different instances of the reaction methods
     do not break the particle id bookkeeping.
     """
-    pH = 10.
-    pKa = 7.
-    exclusion_range = 1.
-    seed = 12345
-    kT = 1.
-    BOX_LENGTH = 100.
-    N_SALT = 10
-    N_acid = 10
-
-    types = {"H": 0, "Na": 1, "Cl": 2, "HA": 3, "A": 4}
-    charges = {"H": 1.0, "Na": 1.0, "Cl": -1.0, "HA": 0.0, "A": -1.0}
-
-    system = espressomd.System(box_l=[BOX_LENGTH, ] * 3)
-
-    cph = espressomd.reaction_methods.ConstantpHEnsemble(
-        system=system,
-        constant_pH=pH,
-        kT=kT,
-        exclusion_range=exclusion_range,
-        seed=seed)
-    widom = espressomd.reaction_methods.WidomInsertion(
-        system=system,
-        kT=kT,
-        seed=seed)
-
-    @classmethod
-    def setUpClass(cls):
-        cls.system.part.add(type=[cls.types["Na"]] * cls.N_SALT,
-                            pos=np.random.rand(cls.N_SALT, 3) * cls.BOX_LENGTH,
-                            q=[cls.charges["Na"]] * cls.N_SALT,
-                            id=list(range(20, 20 + cls.N_SALT)))
-        cls.system.part.add(type=[cls.types["Cl"]] * cls.N_SALT,
-                            pos=np.random.rand(cls.N_SALT, 3) * cls.BOX_LENGTH,
-                            q=[cls.charges["Cl"]] * cls.N_SALT)
-        cls.system.part.add(type=[cls.types["HA"]] * cls.N_acid,
-                            pos=np.random.rand(cls.N_acid, 3) * cls.BOX_LENGTH,
-                            q=[cls.charges["HA"]] * cls.N_acid)
-
-        cls.cph.add_reaction(
-            gamma=10**(-cls.pKa),
-            reactant_types=[cls.types["HA"]],
-            product_types=[cls.types["A"], cls.types["H"]],
-            default_charges={cls.types["HA"]: cls.charges["HA"],
-                             cls.types["A"]: cls.charges["A"],
-                             cls.types["H"]: cls.charges["H"]}
-        )
-
-        cls.widom.add_reaction(
-            reactant_types=[],
-            reactant_coefficients=[],
-            product_types=[cls.types["Na"], cls.types["Cl"]],
-            product_coefficients=[1, 1],
-            default_charges={cls.types["Na"]: cls.charges["Na"],
-                             cls.types["Cl"]: cls.charges["Cl"]}
-        )
 
     def test_reaction_bookeeping(self):
-        self.widom.calculate_particle_insertion_potential_energy(reaction_id=0)
-        self.cph.reaction(steps=100)
+        pH = 10.
+        pKa = 7.
+        exclusion_range = 1.
+        seed = 12345
+        kT = 1.
+        BOX_LENGTH = 100.
+        N_SALT = 10
+        N_acid = 10
+
+        types = {"H": 0, "Na": 1, "Cl": 2, "HA": 3, "A": 4}
+        charges = {"H": 1.0, "Na": 1.0, "Cl": -1.0, "HA": 0.0, "A": -1.0}
+        system = espressomd.System(box_l=[BOX_LENGTH, ] * 3)
+
+        cph = espressomd.reaction_methods.ConstantpHEnsemble(
+            system=system,
+            constant_pH=pH,
+            kT=kT,
+            exclusion_range=exclusion_range,
+            seed=seed)
+        widom = espressomd.reaction_methods.WidomInsertion(
+            system=system,
+            kT=kT,
+            seed=seed)
+        system.part.add(type=[types["Na"]] * N_SALT,
+                        pos=np.random.rand(N_SALT, 3) * BOX_LENGTH,
+                        q=[charges["Na"]] * N_SALT,
+                        id=list(range(20, 20 + N_SALT)))
+        system.part.add(type=[types["Cl"]] * N_SALT,
+                        pos=np.random.rand(N_SALT, 3) * BOX_LENGTH,
+                        q=[charges["Cl"]] * N_SALT)
+        system.part.add(type=[types["HA"]] * N_acid,
+                        pos=np.random.rand(N_acid, 3) * BOX_LENGTH,
+                        q=[charges["HA"]] * N_acid)
+
+        cph.add_reaction(
+            gamma=10**(-pKa),
+            reactant_types=[types["HA"]],
+            product_types=[types["A"], types["H"]],
+            default_charges={types["HA"]: charges["HA"],
+                             types["A"]: charges["A"],
+                             types["H"]: charges["H"]}
+        )
+
+        widom.add_reaction(
+            reactant_types=[],
+            reactant_coefficients=[],
+            product_types=[types["Na"], types["Cl"]],
+            product_coefficients=[1, 1],
+            default_charges={types["Na"]: charges["Na"],
+                             types["Cl"]: charges["Cl"]}
+        )
+
+        widom.calculate_particle_insertion_potential_energy(reaction_id=0)
+        cph.reaction(steps=100)
 
         # Measure the chemical potential
         for _ in range(50):
-            self.widom.calculate_particle_insertion_potential_energy(
-                reaction_id=0)
-            total_charge = sum(self.system.part.all().q)
+            widom.calculate_particle_insertion_potential_energy(reaction_id=0)
+            total_charge = sum(system.part.all().q)
             self.assertEqual(total_charge, 0.)
 
 

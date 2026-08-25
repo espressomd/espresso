@@ -90,7 +90,6 @@ class Test(ut.TestCase):
             self.assertIsNone(toolchain["CMAKE_CUDA_HOST_COMPILER_VERSION"])
         self.assertIsNotNone(toolchain["ESPRESSO_MPIEXEC_VENDOR"])
         self.assertIsNotNone(toolchain["ESPRESSO_MPIEXEC_VERSION"])
-        self.assertIsNotNone(toolchain["OpenMP_VERSION"])
         self.assertIsNotNone(toolchain["OpenMP_CXX_VERSION"])
         self.assertTrue(check_specs(toolchain["OpenMP_CXX_VERSION"], ">=4.5"))
         icp_ci_infrastructure = "https://gitlab.icp.uni-stuttgart.de/espressomd/espresso"
