@@ -220,6 +220,19 @@ struct ForcesKernel {
           pf += gb_pair_force(dir1, dir2, ia_params, d, dist);
         }
 #endif
+#ifdef ESPRESSO_DPD
+        if (thermostat.thermo_switch & THERMO_DPD) {
+          auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
+          auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+          auto const vel1 = aosoa.get_vector_at(aosoa.velocity, i);
+          auto const vel2 = aosoa.get_vector_at(aosoa.velocity, j);
+          auto const force = dpd_pair_force(
+              pos1, vel1, aosoa.id(i), pos2, vel2, aosoa.id(j), *thermostat.dpd,
+              box_geo, ia_params, d, dist, dist * dist);
+          pf += force;
+        }
+#endif // ESPRESSO_DPD
+
       } // not skip_non_bonded
     } // not dist > ia_params.max_cut
 
@@ -234,23 +247,6 @@ struct ForcesKernel {
       virial = hadamard_product(pf.f, d);
     }
 #endif // ESPRESSO_NPT
-
-    /***********************************************/
-    /* thermostat                                  */
-    /***********************************************/
-
-    /* The inter dpd force should not be part of the virial */
-#ifdef ESPRESSO_DPD
-    if (thermostat.thermo_switch & THERMO_DPD) {
-      auto const dist2 = dist * dist;
-      auto const vel1 = aosoa.get_vector_at(aosoa.velocity, i);
-      auto const vel2 = aosoa.get_vector_at(aosoa.velocity, j);
-      auto const force =
-          dpd_pair_force(pos1, vel1, aosoa.id(i), pos2, vel2, aosoa.id(j),
-                         *thermostat.dpd, box_geo, ia_params, d, dist, dist2);
-      pf += force;
-    }
-#endif // ESPRESSO_DPD
 
 #ifdef ESPRESSO_ELECTROSTATICS
     Utils::Vector3d f1_asym{};

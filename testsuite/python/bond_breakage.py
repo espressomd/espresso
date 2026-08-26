@@ -100,6 +100,14 @@ class BondBreakageTest(BondBreakageCommon, ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Inserting breakage spec without a bond type is not permitted"):
             self.system.bond_breakage.call_method("insert", object=spec2)
 
+        # all parameters are required: omitting one must raise at construction
+        # rather than silently defaulting breakage_length to 0.0 (which would
+        # queue every bond of that type for breakage on the first execute())
+        with self.assertRaisesRegex(Exception, "Parameter 'breakage_length' is missing"):
+            BreakageSpec(action_type="delete_bond")
+        with self.assertRaisesRegex(Exception, "Parameter 'action_type' is missing"):
+            BreakageSpec(breakage_length=1.0)
+
     def test_ignore(self):
         system = self.system
 
@@ -253,18 +261,15 @@ class NetworkBreakage(BondBreakageCommon, ut.TestCase):
         return bonds_count
 
     def setUp(self):
-
-        box_vol = self.system.box_l[0]**3.
         phi = 0.4
-
         r = 1.
-        solid_vol = phi * box_vol
+        solid_vol = phi * self.system.volume()
         part_vol = 4 / 3 * np.pi * r**3
         part_num = int(solid_vol / part_vol)
 
         np.random.seed(seed=678)
         for i in range(part_num):
-            pos = np.random.rand(3) * self.system.box_l[0]
+            pos = np.random.rand(3) * self.system.box_l
             self.system.part.add(pos=pos)
 
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -358,6 +363,44 @@ class NetworkBreakage(BondBreakageCommon, ut.TestCase):
         bonds_count = self.count_bonds(pairs)
 
         np.testing.assert_equal(bonds_dist, bonds_count)
+
+
+class BreakageAPI(BondBreakageCommon, ut.TestCase):
+
+    def setUp(self):
+        self.system.box_l = 3 * [20]
+        self.system.min_global_cut = 0.1
+        self.system.time_step = 0.01
+        self.system.cell_system.skin = 0.4
+
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.bonded_inter.clear()
+
+    def test_bond_deletion(self):
+        p1 = self.system.part.add(pos=[0., 0., 0.], v=[0., 0., 0.])
+        p2 = self.system.part.add(pos=[0., 0., 1.], v=[0., 0., 1.])
+        bond = espressomd.interactions.HarmonicBond(k=1., r_0=1., r_cut=1.2)
+        self.system.bonded_inter.add(bond)
+        p1.bonds = ((bond, p2))
+        self.system.bond_breakage[bond] = BreakageSpec(
+            breakage_length=1.1, action_type="delete_bond")
+        self.system.integrator.run(100)
+        assert np.linalg.norm(p2.pos - p1.pos) > bond.r_cut
+        self.assertEqual(len(p1.bonds), 0)
+
+    def test_none(self):
+        p1 = self.system.part.add(pos=[0., 0., 0.], v=[0., 0., 0.])
+        p2 = self.system.part.add(pos=[0., 0., 1.], v=[0., 0., 1.])
+        bond = espressomd.interactions.HarmonicBond(k=1., r_0=1., r_cut=1.2)
+        self.system.bonded_inter.add(bond)
+        p1.bonds = ((bond, p2))
+        self.system.bond_breakage[bond] = BreakageSpec(
+            breakage_length=1.1, action_type="none")
+        with self.assertRaisesRegex(Exception, "bond broken between particles 0, 1"):
+            self.system.integrator.run(100)
+        assert np.linalg.norm(p2.pos - p1.pos) > bond.r_cut
+        self.assertEqual(len(p1.bonds), 1)
 
 
 if __name__ == "__main__":

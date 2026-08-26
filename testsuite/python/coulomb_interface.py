@@ -86,8 +86,7 @@ class Test(ut.TestCase):
                  check_neutrality=True, charge_neutrality_tolerance=7e-12, gpu=True))
         test_p3m_gpu_elc = tests_common.generate_test_for_actor_class(
             system.electrostatics, espressomd.electrostatics.ELC,
-            dict(gap_size=2., maxPWerror=1e-3, const_pot=True, pot_diff=-3.,
-                 delta_mid_top=0.5, delta_mid_bot=0.5, check_neutrality=False,
+            dict(gap_size=2., maxPWerror=1e-3, check_neutrality=False,
                  actor=espressomd.electrostatics.P3M(
                      prefactor=2., r_cut=1.5, cao=2, mesh=[8, 8, 8],
                      alpha=12., accuracy=0.01, tune=False, gpu=True)))
@@ -189,6 +188,9 @@ class Test(ut.TestCase):
         if espressomd.has_features(["CUDA"]) and espressomd.gpu_available():
             with self.assertRaisesRegex(ValueError, "P3M GPU only implemented in single-precision mode"):
                 P3M(single_precision=False, gpu=True, **p3m_params)
+        if not espressomd.has_features(["CUDA"]):
+            with self.assertRaisesRegex(RuntimeError, "Missing features CUDA"):
+                P3M(single_precision=True, gpu=True, **p3m_params)
         with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Coulomb::ElectrostaticLayerCorrection isn't supported by ELC"):
             ELC(gap_size=2., maxPWerror=1., actor=elc)
         with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Coulomb::DebyeHueckel isn't supported by ELC"):

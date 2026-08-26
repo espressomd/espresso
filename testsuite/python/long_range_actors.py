@@ -325,23 +325,6 @@ class Test(ut.TestCase):
             self.assertFalse(mmm1d.is_tuned)
         self.system.periodicity = (False, False, True)
 
-    @utx.skipIfMissingFeatures(["P3M"])
-    def test_elc_tuning_exceptions(self):
-        p3m = espressomd.electrostatics.P3M(**self.valid_p3m_parameters())
-        elc = espressomd.electrostatics.ELC(
-            actor=p3m,
-            gap_size=2.,
-            maxPWerror=1e-3,
-            delta_mid_top=-1.,
-            delta_mid_bot=-1.,
-            const_pot=True,
-            pot_diff=-3,
-            check_neutrality=False,
-        )
-        self.system.part.add(pos=[0., 0., 0.], q=1.)
-        with self.assertRaisesRegex(RuntimeError, "ELC does not currently support non-neutral systems"):
-            self.system.electrostatics.solver = elc
-
 
 if __name__ == "__main__":
     ut.main()

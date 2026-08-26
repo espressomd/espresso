@@ -46,6 +46,10 @@ public:
           [this]() { return m_c->get_cut_off(); }}});
   }
 
+  void do_construct(VariantMap const &params) override {
+    m_c->set_cut_off(get_value<double>(params, "cut_off"));
+  }
+
   std::shared_ptr<::PairCriteria::PairCriterion>
   pair_criterion() const override {
     return m_c;

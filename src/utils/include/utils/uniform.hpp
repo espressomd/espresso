@@ -18,6 +18,8 @@
 #ifndef UTILS_UNIFORM_HPP
 #define UTILS_UNIFORM_HPP
 
+#include "utils/device_qualifier.hpp"
+
 #include <cinttypes>
 #include <limits>
 
@@ -33,7 +35,7 @@ namespace Utils {
  * @param in Unsigned integer value
  * @return Mapped floating point value.
  */
-constexpr inline double uniform(uint64_t in) {
+constexpr DEVICE_QUALIFIER inline double uniform(uint64_t in) {
   auto constexpr const max = std::numeric_limits<uint64_t>::max();
   auto constexpr const fac = 1. / (static_cast<double>(max) + 1.);
 

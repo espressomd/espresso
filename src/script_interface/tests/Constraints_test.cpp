@@ -21,6 +21,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include "script_interface/LocalContext.hpp"
+#include "script_interface/ScriptInterface.hpp"
 #include "script_interface/constraints/ExternalField.hpp"
 #include "script_interface/constraints/ExternalPotential.hpp"
 #include "script_interface/constraints/HomogeneousMagneticField.hpp"
@@ -33,6 +35,10 @@
 #include "script_interface/shapes/Shape.hpp"
 #include "script_interface/shapes/Sphere.hpp"
 
+#include "core/unit_tests/EspressoCoreGlobalConfig.hpp"
+
+#include <boost/mpi/communicator.hpp>
+
 #include <utils/Vector.hpp>
 
 #include <limits>
@@ -41,8 +47,20 @@
 
 using namespace ScriptInterface;
 
+BOOST_TEST_GLOBAL_CONFIGURATION(EspressoCoreGlobalConfig);
+
 BOOST_AUTO_TEST_CASE(shape_based_constraint) {
-  ScriptInterface::Constraints::ShapeBasedConstraint constraint;
+  using namespace ScriptInterface::Constraints;
+  Utils::Factory<ObjectHandle> f;
+  f.register_new<ShapeBasedConstraint>(std::string("ShapeBasedConstraint"));
+  f.register_new<ScriptInterface::Shapes::Sphere>(std::string("Sphere"));
+  f.register_new<ScriptInterface::Shapes::NoWhere>(std::string("NoWhere"));
+  boost::mpi::communicator comm;
+  auto ctx = std::make_shared<LocalContext>(f, comm);
+  auto &&sp_constraint{ctx->make_shared("ShapeBasedConstraint", {})};
+  auto so_constraint =
+      std::dynamic_pointer_cast<ShapeBasedConstraint>(sp_constraint);
+  auto &constraint = *so_constraint;
   {
     // check const and non-const access
     BOOST_TEST(constraint.constraint()->fits_in_box({}));
@@ -51,7 +69,9 @@ BOOST_AUTO_TEST_CASE(shape_based_constraint) {
   }
   {
     // check shape setter and getter
-    auto const shape = std::make_shared<ScriptInterface::Shapes::NoWhere>();
+    auto &&sp_shape{ctx->make_shared("NoWhere", {})};
+    auto shape =
+        std::dynamic_pointer_cast<ScriptInterface::Shapes::NoWhere>(sp_shape);
     constraint.set_parameter("shape", shape);
     auto const shape_si =
         get_value<std::shared_ptr<ScriptInterface::Shapes::Shape>>(
@@ -69,7 +89,9 @@ BOOST_AUTO_TEST_CASE(shape_based_constraint) {
   }
   {
     // check shape setter and getter
-    auto shape = std::make_shared<ScriptInterface::Shapes::Sphere>();
+    auto &&sp_shape{ctx->make_shared("Sphere", {})};
+    auto shape =
+        std::dynamic_pointer_cast<ScriptInterface::Shapes::Sphere>(sp_shape);
     shape->set_parameter("radius", 2.);
     constraint.set_parameter("shape", shape);
     auto const shape_si =

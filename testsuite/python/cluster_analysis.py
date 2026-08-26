@@ -146,6 +146,27 @@ class ClusterAnalysis(ut.TestCase):
         with self.assertRaises(RuntimeError):
             cluster.radius_of_gyration()
 
+    @ut.skipUnless(espressomd.has_features("GSL"),
+                   "Fractal dimension calculation requires GSL")
+    def test_fractal_dimension_small_cluster(self):
+        # A 2-particle cluster yields fewer than two radial shells, so the
+        # fractal dimension is mathematically undefined. The previous behaviour
+        # silently returned NaN (GSL linear fit with n<2 points); the call must
+        # raise a clear RuntimeError instead.
+        self.set_two_clusters()
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.12)
+        self.cs.set_params(pair_criterion=dc)
+        self.cs.run_for_all_pairs()
+
+        clusters = [c for _, c in self.cs.clusters]
+        small_cluster, = [c for c in clusters if c.size() == 2]
+
+        # dr=0. gives a single fit point, dr large enough gives zero fit points;
+        # both are degenerate and must raise rather than return NaN.
+        for dr in (0., 10.):
+            with self.assertRaises(RuntimeError):
+                small_cluster.fractal_dimension(dr=dr)
+
     def test_single_cluster_analysis(self):
         # Place particles on a line (crossing periodic boundaries)
         for x in np.arange(-0.2, 0.21, 0.01):
@@ -199,6 +220,19 @@ class ClusterAnalysis(ut.TestCase):
             cid = self.cs.cluster_ids()[0]
             df = self.cs.clusters[cid].fractal_dimension(dr=0.001)
             self.assertAlmostEqual(df[0], 2, delta=0.08)
+
+    def test_fractal_dimension_requires_dr(self):
+        for x in np.arange(-0.2, 0.21, 0.01):
+            self.system.part.add(pos=(x, 1.1 * x, 1.2 * x))
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.13)
+        self.cs.pair_criterion = dc
+        self.cs.run_for_all_pairs()
+        self.assertEqual(len(self.cs.clusters), 1)
+        cluster = list(self.cs.clusters)[0][1]
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'dr' is missing"):
+            cluster.fractal_dimension()
+        with self.assertRaisesRegex(RuntimeError, "not convertible to 'double'"):
+            cluster.fractal_dimension(dr=None)
 
     def test_analysis_for_bonded_particles(self):
         self.set_two_clusters()

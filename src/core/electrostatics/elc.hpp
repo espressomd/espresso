@@ -207,7 +207,6 @@ struct ElectrostaticLayerCorrection
     sanity_checks_periodicity();
     sanity_checks_cell_structure();
     sanity_checks_charge_neutrality();
-    sanity_checks_dielectric_contrasts();
     /* Most ELC parameters do not depend on the P3M parameters,
      * but the P3M parameters depend on the ELC parameters during tuning,
      * therefore ELC needs to be tuned before P3M. */
@@ -258,7 +257,6 @@ struct ElectrostaticLayerCorrection
     sanity_checks_periodicity();
     sanity_checks_cell_structure();
     sanity_checks_charge_neutrality();
-    sanity_checks_dielectric_contrasts();
     visit_base_solver([](auto &actor) { actor->sanity_checks(); });
   }
 
@@ -388,7 +386,6 @@ private:
 
   void sanity_checks_cell_structure() const {}
   void sanity_checks_periodicity() const;
-  void sanity_checks_dielectric_contrasts() const;
 
   /// the force calculation
   void add_force() const;

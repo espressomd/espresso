@@ -57,6 +57,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "integrators/Propagation.hpp"
+#include "kokkos_helpers.hpp"
 #include "npt.hpp"
 #include "p3m/send_mesh.hpp"
 #include "particle_reduction.hpp"
@@ -373,10 +374,11 @@ template <int cao> struct AssignCharge {
     using CoulombP3MState = std::remove_reference_t<decltype(p3m)>;
     using value_type = CoulombP3MState::value_type;
     auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
+    using execution_space = Kokkos::DefaultExecutionSpace;
     auto const &aosoa = cell_structure.get_aosoa();
     auto const n_part = cell_structure.count_local_particles();
     p3m.inter_weights.zfill(n_part); // allocate buffer for parallel write
-    kokkos_parallel_range_for(
+    kokkos_parallel_range_for<execution_space>(
         "InterpolateCharges", std::size_t{0u}, n_part, [&](auto p_index) {
           auto const tid = omp_get_thread_num();
           auto const pos = aosoa.get_vector_at(aosoa.position, p_index);
@@ -391,18 +393,16 @@ template <int cao> struct AssignCharge {
               });
         });
     Kokkos::fence();
-    using execution_space = Kokkos::DefaultExecutionSpace;
     int num_threads = execution_space().concurrency();
-    Kokkos::RangePolicy<execution_space> policy(std::size_t{0},
-                                                p3m.local_mesh.size);
-    Kokkos::parallel_for("ReduceInterpolatedCharges", policy,
-                         [&p3m, num_threads](std::size_t const i) {
-                           value_type acc{};
-                           for (int tid = 0; tid < num_threads; ++tid) {
-                             acc += p3m.rs_charge_density_kokkos(tid, i);
-                           }
-                           p3m.rs_charge_density.at(i) += acc;
-                         });
+    kokkos_parallel_range_for<execution_space>(
+        "ReduceInterpolatedCharges", std::size_t{0}, p3m.local_mesh.size,
+        [&p3m, num_threads](std::size_t const i) {
+          value_type acc{};
+          for (int tid = 0; tid < num_threads; ++tid) {
+            acc += p3m.rs_charge_density_kokkos(tid, i);
+          }
+          p3m.rs_charge_density.at(i) += acc;
+        });
     Kokkos::fence();
   }
 #else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
@@ -483,10 +483,11 @@ template <int cao> struct AssignForces {
     };
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    using execution_space = Kokkos::DefaultExecutionSpace;
     auto const n_part = cell_structure.count_local_particles();
     auto const &aosoa = cell_structure.get_aosoa();
     auto &local_force = cell_structure.get_local_force();
-    kokkos_parallel_range_for(
+    kokkos_parallel_range_for<execution_space>(
         "AssignForces", std::size_t{0u}, n_part, [&](std::size_t p_index) {
           if (auto const pref = aosoa.charge(p_index) * force_prefac) {
             kernel(pref, local_force, p_index);
@@ -755,8 +756,9 @@ double CoulombP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
     if (box_dipole) {
       auto const dm = prefactor * pref * box_dipole.value();
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+      using execution_space = Kokkos::DefaultExecutionSpace;
       auto const n_part = cell_structure.count_local_particles();
-      kokkos_parallel_range_for(
+      kokkos_parallel_range_for<execution_space>(
           "AssignForcesBoxDipole", std::size_t{0u}, n_part,
           [&aosoa, &local_force, dm](auto p_index) {
             auto const thread_id = omp_get_thread_num();

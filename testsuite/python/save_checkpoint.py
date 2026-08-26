@@ -253,7 +253,8 @@ if 'LB' not in modes:
         system.integrator.set_brownian_dynamics()
     elif 'INT.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
         system.integrator.set_stokesian_dynamics(
-            approximation_method='ft', viscosity=0.5, radii={0: 1.5},
+            approximation_method='ft', viscosity=0.5,
+            radii={i: 1.5 + i / 10. for i in range(8)},
             pair_mobility=False, self_mobility=True)
 
 if espressomd.has_features(['VIRTUAL_SITES_RELATIVE']):

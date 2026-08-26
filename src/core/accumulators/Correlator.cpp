@@ -474,10 +474,12 @@ int Correlator::finalize(boost::mpi::communicator const &comm) {
         newest[i + 1] = (newest[i + 1] + 1) % (m_tau_lin + 1);
         n_vals[i + 1] += 1;
 
-        (*compressA)(A[i][(newest[i] + 1) % (m_tau_lin + 1)],
-                     A[i][(newest[i] + 2) % (m_tau_lin + 1)]);
-        (*compressB)(B[i][(newest[i] + 1) % (m_tau_lin + 1)],
-                     B[i][(newest[i] + 2) % (m_tau_lin + 1)]);
+        A[i + 1][newest[i + 1]] =
+            (*compressA)(A[i][(newest[i] + 1) % (m_tau_lin + 1)],
+                         A[i][(newest[i] + 2) % (m_tau_lin + 1)]);
+        B[i + 1][newest[i + 1]] =
+            (*compressB)(B[i][(newest[i] + 1) % (m_tau_lin + 1)],
+                         B[i][(newest[i] + 2) % (m_tau_lin + 1)]);
       }
       newest[ll] = (newest[ll] + 1) % (m_tau_lin + 1);
 

@@ -27,6 +27,7 @@ import pathlib
 from . import utils
 from .utils cimport Vector3b, Vector3i, Vector2d, Vector3d, Vector4d
 from .utils cimport path
+from .utils cimport mpi_poll_runtime_messages
 cimport cpython.object
 cnp.import_array()
 
@@ -104,7 +105,7 @@ cdef class PScriptInterface:
             self.set_sip(
                 _om.get().make_shared(
                     policy_,
-                    utils.to_bytes(name),
+                    name.encode(),
                     out_params))
             utils.handle_errors(f"Raised during instantiation of '{name}'")
 
@@ -153,7 +154,7 @@ cdef class PScriptInterface:
 
         Parameters
         ----------
-        method : :obj:`str`
+        method : :obj:`str` or :obj:`bytes`
             Name of the core method.
         handle_errors_message : :obj:`str`, optional
             Custom error message for runtime errors raised in a MPI context.
@@ -171,7 +172,9 @@ cdef class PScriptInterface:
 
         # the internal buffer of a cython bytestring object can be accessed as
         # a raw char pointer, but then the bytestring object must be kept alive
-        method_name_bytes_counted_reference = utils.to_bytes(method)
+        method_name_bytes_counted_reference = method
+        if not type(method) is bytes:
+            method_name_bytes_counted_reference = utils.to_bytes(method)
         cdef char * method_name_char = method_name_bytes_counted_reference
 
         if with_nogil:
@@ -180,9 +183,10 @@ cdef class PScriptInterface:
         else:
             result = handle.call_method(method_name_char, parameters)
         result_py = variant_to_python_object(result)
-        if handle_errors_message is None:
-            handle_errors_message = f"Raised while calling method {method}()"
-        utils.handle_errors(handle_errors_message)
+        if mpi_poll_runtime_messages():
+            if handle_errors_message is None:
+                handle_errors_message = f"Raised while calling method {method_name_bytes_counted_reference.decode()}()"  # nopep8
+            utils.handle_errors(handle_errors_message)
         return result_py
 
     def name(self):
@@ -219,10 +223,8 @@ cdef class PScriptInterface:
 
 
 class array_variant(np.ndarray):
-
     """
     Returns a numpy.ndarray that will be serialized as a ``std::vector``.
-
     """
 
     def __new__(cls, input_array):
@@ -252,108 +254,127 @@ def fast_tiling(value, n):
 cdef Variant python_object_to_variant(value) except *:
     """Convert Python objects to C++ Variant objects."""
 
+    # The order is important, the object character should
+    # be preserved even if the PScriptInterface derived class
+    # is iterable
+    if value is None:
+        return Variant()
+    if isinstance(value, np.ndarray) and value.ndim == 0:
+        value = value.item()
+    if isinstance(value, (bool, np.bool_)):
+        return make_variant[cbool](value)
+    if isinstance(value, int):
+        return make_variant[int](value)
+    if isinstance(value, float):
+        return make_variant[double](value)
+    if isinstance(value, PScriptInterface):
+        return make_variant(( < PObjectRef > value.get_sip()).sip)
+    if isinstance(value, (str, bytes, np.bytes_)):
+        return make_variant[string](utils.to_bytes(value))
+    if isinstance(value, pathlib.Path):
+        return make_variant[path](path(str(value).encode()))
+    if isinstance(value, dict):
+        return _dict_object_to_variant(value)
+    if isinstance(value, np.ndarray):
+        return _numpy_object_to_variant(value)
+    return _python_object_to_variant_non_trivial_cases(value)
+
+
+cdef Variant _dict_object_to_variant(value) except *:
+    cdef unordered_map[int, Variant] map_int2var
+    cdef unordered_map[string, Variant] map_str2var
+    if all(map(lambda x: isinstance(x, (int, np.integer)), value.keys())):
+        for key, value in value.items():
+            map_int2var[int(key)] = python_object_to_variant(value)
+        return make_variant[unordered_map[int, Variant]](map_int2var)
+    if all(map(lambda x: isinstance(x, (str, bytes)), value.keys())):
+        for key, value in value.items():
+            key_bytes = utils.to_bytes(key)
+            map_str2var[key_bytes] = python_object_to_variant(value)
+        return make_variant[unordered_map[string, Variant]](map_str2var)
+    for k, v in value.items():
+        if not isinstance(k, (str, bytes, int, np.integer)):
+            raise TypeError(
+                f"No conversion from type "
+                f"'dict_item([({type(k).__name__}, {type(v).__name__})])'"
+                f" to 'Variant[std::unordered_map<int, Variant>]' or"
+                f" to 'Variant[std::unordered_map<std::string, Variant>]'")
+    raise AssertionError("dev note: a type is missing in the for loop above")
+
+
+cdef Variant _numpy_object_to_variant(value) except *:
     cdef vector[Variant] vec_variant
     cdef vector[int] vec_int
     cdef vector[double] vec_double
-    cdef unordered_map[int, Variant] map_int2var
-    cdef unordered_map[string, Variant] map_str2var
-    cdef PObjectRef oref
     cdef int[::1] view_int
     cdef int[:, ::1] view_int_2d
     cdef int * data_int
     cdef double[::1] view_double
     cdef double[:, ::1] view_double_2d
     cdef double * data_double
-    cdef path fs_path
     cdef size_t index
     cdef size_t nrows
+    cdef size_t bufsize
+
+    if isinstance(value, array_variant):
+        if value.dtype.kind == "i":
+            view_int = np.ascontiguousarray(value, dtype=np.int32)
+            data_int = &view_int[0]
+            vec_int.assign(data_int, data_int + len(view_int))
+            return make_variant[vector[int]](vec_int)
+        if value.dtype.kind == "f":
+            view_double = np.ascontiguousarray(value, dtype=np.float64)
+            data_double = &view_double[0]
+            vec_double.assign(data_double, data_double + len(view_double))
+            return make_variant[vector[double]](vec_double)
+    if value.ndim == 1:
+        if value.dtype.kind == "f":
+            vec_double.reserve(len(value))
+            for e in value:
+                vec_double.push_back(e)
+            return make_variant[vector[double]](vec_double)
+        if value.dtype.kind == "i":
+            vec_int.reserve(len(value))
+            for e in value:
+                vec_int.push_back(e)
+            return make_variant[vector[int]](vec_int)
+    if value.ndim == 2:
+        if value.dtype.kind == "i":
+            nrows = value.shape[0]
+            bufsize = value.shape[1]
+            vec_variant.reserve(nrows)
+            vec_int.reserve(bufsize)
+            view_int_2d = np.ascontiguousarray(value, dtype=np.int32)
+            for index in range(nrows):
+                data_int = &view_int_2d[index, 0]
+                vec_int.assign(data_int, data_int + bufsize)
+                vec_variant.emplace_back(
+                    make_variant[vector[int]](vec_int))
+            return make_variant[vector[Variant]](vec_variant)
+        if value.dtype.kind == "f":
+            nrows = value.shape[0]
+            bufsize = value.shape[1]
+            vec_variant.reserve(nrows)
+            vec_double.reserve(bufsize)
+            view_double_2d = np.ascontiguousarray(value, dtype=np.float64)
+            for index in range(nrows):
+                data_double = &view_double_2d[index, 0]
+                vec_double.assign(data_double, data_double + bufsize)
+                vec_variant.emplace_back(
+                    make_variant[vector[double]](vec_double))
+            return make_variant[vector[Variant]](vec_variant)
+
+    return _python_object_to_variant_non_trivial_cases(value)
+
+
+cdef Variant _python_object_to_variant_non_trivial_cases(value) except *:
+    cdef vector[Variant] vec_variant
+    cdef vector[int] vec_int
+    cdef vector[double] vec_double
     cdef size_t bufsize
     cdef Vector3d vector3d
     cdef Vector3i vector3i
 
-    if value is None:
-        return Variant()
-
-    if isinstance(value, np.ndarray) and value.ndim == 0:
-        value = value.item()
-
-    # The order is important, the object character should
-    # be preserved even if the PScriptInterface derived class
-    # is iterable.
-    if isinstance(value, PScriptInterface):
-        oref = value.get_sip()
-        return make_variant(oref.sip)
-    if isinstance(value, dict):
-        if all(map(lambda x: isinstance(x, (int, np.integer)), value.keys())):
-            for key, value in value.items():
-                map_int2var[int(key)] = python_object_to_variant(value)
-            return make_variant[unordered_map[int, Variant]](map_int2var)
-        if all(map(lambda x: isinstance(x, (str, bytes)), value.keys())):
-            for key, value in value.items():
-                key_bytes = utils.to_bytes(key)
-                map_str2var[key_bytes] = python_object_to_variant(value)
-            return make_variant[unordered_map[string, Variant]](map_str2var)
-        for k, v in value.items():
-            if not isinstance(k, (str, bytes, int, np.integer)):
-                raise TypeError(
-                    f"No conversion from type "
-                    f"'dict_item([({type(k).__name__}, {type(v).__name__})])'"
-                    f" to 'Variant[std::unordered_map<int, Variant>]' or"
-                    f" to 'Variant[std::unordered_map<std::string, Variant>]'")
-        assert False, "dev note: a type is missing in the for loop above"
-    if isinstance(value, (str, bytes)):
-        return make_variant[string](utils.to_bytes(value))
-    if isinstance(value, pathlib.Path):
-        fs_path.assign(utils.to_bytes(str(value)))
-        return make_variant[path](fs_path)
-    if isinstance(value, np.ndarray):
-        if isinstance(value, array_variant):
-            if np.issubdtype(value.dtype, np.signedinteger):
-                view_int = np.ascontiguousarray(value, dtype=np.int32)
-                data_int = &view_int[0]
-                vec_int.assign(data_int, data_int + len(view_int))
-                return make_variant[vector[int]](vec_int)
-            if np.issubdtype(value.dtype, np.floating):
-                view_double = np.ascontiguousarray(value, dtype=np.float64)
-                data_double = &view_double[0]
-                vec_double.assign(data_double, data_double + len(view_double))
-                return make_variant[vector[double]](vec_double)
-        if value.ndim == 1:
-            if np.issubdtype(value.dtype, np.floating):
-                vec_double.reserve(len(value))
-                for e in value:
-                    vec_double.push_back(e)
-                return make_variant[vector[double]](vec_double)
-            if np.issubdtype(value.dtype, np.signedinteger):
-                vec_int.reserve(len(value))
-                for e in value:
-                    vec_int.push_back(e)
-                return make_variant[vector[int]](vec_int)
-        if value.ndim == 2:
-            if np.issubdtype(value.dtype, np.signedinteger):
-                nrows = value.shape[0]
-                bufsize = value.shape[1]
-                vec_variant.reserve(nrows)
-                vec_int.reserve(bufsize)
-                view_int_2d = np.ascontiguousarray(value, dtype=np.int32)
-                for index in range(nrows):
-                    data_int = &view_int_2d[index, 0]
-                    vec_int.assign(data_int, data_int + bufsize)
-                    vec_variant.emplace_back(
-                        make_variant[vector[int]](vec_int))
-                return make_variant[vector[Variant]](vec_variant)
-            if np.issubdtype(value.dtype, np.floating):
-                nrows = value.shape[0]
-                bufsize = value.shape[1]
-                vec_variant.reserve(nrows)
-                vec_double.reserve(bufsize)
-                view_double_2d = np.ascontiguousarray(value, dtype=np.float64)
-                for index in range(nrows):
-                    data_double = &view_double_2d[index, 0]
-                    vec_double.assign(data_double, data_double + bufsize)
-                    vec_variant.emplace_back(
-                        make_variant[vector[double]](vec_double))
-                return make_variant[vector[Variant]](vec_variant)
     if hasattr(value, "__iter__"):
         bufsize = len(value)
         if bufsize == 0:
@@ -381,8 +402,6 @@ cdef Variant python_object_to_variant(value) except *:
         for e in value:
             vec_variant.emplace_back(python_object_to_variant(e))
         return make_variant[vector[Variant]](vec_variant)
-    if isinstance(value, (type(True), np.bool_)):
-        return make_variant[cbool](value)
     if np.issubdtype(np.dtype(type(value)), np.signedinteger):
         return make_variant[int](value)
     if np.issubdtype(np.dtype(type(value)), np.floating):
@@ -394,6 +413,30 @@ cdef Variant python_object_to_variant(value) except *:
 cdef variant_to_python_object(const Variant & value):
     """Convert C++ Variant objects to Python objects."""
 
+    # handle inexpensive types first
+    if is_none(value):
+        return None
+    if is_type[cbool](value):
+        return get_value[cbool](value)
+    if is_type[size_t](value):
+        return get_value[size_t](value)
+    if is_type[int](value):
+        return get_value[int](value)
+    if is_type[double](value):
+        return get_value[double](value)
+    if is_type[string](value):
+        return utils.to_str(get_value[string](value))
+    if is_type[path](value):
+        filepath = utils.to_str(get_value[path](value).generic_string())
+        return pathlib.Path(filepath)
+    if is_type[vector[int]](value):
+        return get_value[vector[int]](value)
+    if is_type[vector[double]](value):
+        return np.array(get_value[vector[double]](value))
+
+    return variant_to_python_object_non_trivial_cases(value)
+
+cdef variant_to_python_object_non_trivial_cases(const Variant & value):
     cdef vector[Variant] vec
     cdef unordered_map[int, Variant] map_int2var
     cdef unordered_map[string, Variant] map_str2var
@@ -408,35 +451,19 @@ cdef variant_to_python_object(const Variant & value):
     cdef cnp.ndarray[cnp.float64_t, ndim = 2] arrayNvec3d
     cdef size_t index
     cdef size_t nrows
-    if is_none(value):
-        return None
-    if is_type[cbool](value):
-        return get_value[cbool](value)
-    if is_type[int](value):
-        return get_value[int](value)
-    if is_type[double](value):
-        return get_value[double](value)
-    if is_type[string](value):
-        return utils.to_str(get_value[string](value))
-    if is_type[path](value):
-        filepath = utils.to_str(get_value[path](value).generic_string())
-        return pathlib.Path(filepath)
-    if is_type[vector[int]](value):
-        return get_value[vector[int]](value)
-    if is_type[vector[double]](value):
-        return np.array(get_value[vector[double]](value))
-    if is_type[Vector3b](value):
-        vec3b = get_value[Vector3b](value)
-        return utils.array_locked([vec3b[0], vec3b[1], vec3b[2]])
-    if is_type[Vector3i](value):
-        vec3i = get_value[Vector3i](value)
-        return utils.array_locked([vec3i[0], vec3i[1], vec3i[2]])
-    if is_type[Vector4d](value):
-        vec4d = get_value[Vector4d](value)
-        return utils.array_locked([vec4d[0], vec4d[1], vec4d[2], vec4d[3]])
+
     if is_type[Vector3d](value):
         vec3d = get_value[Vector3d](value)
         return utils.array_locked([vec3d[0], vec3d[1], vec3d[2]])
+    if is_type[Vector3i](value):
+        vec3i = get_value[Vector3i](value)
+        return utils.array_locked([vec3i[0], vec3i[1], vec3i[2]])
+    if is_type[Vector3b](value):
+        vec3b = get_value[Vector3b](value)
+        return utils.array_locked([vec3b[0], vec3b[1], vec3b[2]])
+    if is_type[Vector4d](value):
+        vec4d = get_value[Vector4d](value)
+        return utils.array_locked([vec4d[0], vec4d[1], vec4d[2], vec4d[3]])
     if is_type[Vector2d](value):
         vec2d = get_value[Vector2d](value)
         return utils.array_locked([vec2d[0], vec2d[1]])
@@ -507,9 +534,6 @@ cdef variant_to_python_object(const Variant & value):
 
         return res
 
-    if is_type[size_t](value):
-        return get_value[size_t](value)
-
     raise TypeError("Unknown type")
 
 
@@ -523,7 +547,6 @@ def _unpickle_so_class(so_name, state):
         f"C++ class '{so_name}' is not associated to any Python class " \
         "(hint: the corresponding 'import espressomd.*' may be missing)"
     so = _python_class_by_so_name[so_name](sip=so_ptr)
-    so.define_bound_methods()
 
     return so
 
@@ -532,18 +555,115 @@ class ScriptInterfaceHelper(PScriptInterface):
     _so_name = None
     _so_features = ()
     _so_bind_methods = ()
+    _so_features_error = None
     _so_checkpointable = True
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, **kwargs):
-        cdef vector[string] features_vec
-        if self._so_features:
-            for feature in self._so_features:
-                features_vec.push_back(utils.to_bytes(feature))
-            check_features(features_vec)
+        if self._so_features_error:
+            raise RuntimeError(self._so_features_error)
         super().__init__(self._so_name, policy=self._so_creation_policy,
                          **kwargs)
-        self.define_bound_methods()
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.__doc__, docstrings = cls._extract_method_docstrings()
+        for method_name in cls._so_bind_methods:
+            cls._install_bound_method(method_name, docstrings.get(method_name))
+
+        cdef vector[string] features_vec
+        if cls._so_features:
+            for feature in cls._so_features:
+                features_vec.push_back(feature.encode())
+            msg = utils.to_str(check_features_msg(features_vec))
+            if msg:
+                cls._so_features_error = msg
+
+    @classmethod
+    def _extract_method_docstrings(cls):
+        """
+        Extract the "Methods" section from the class docstring, and parse each
+        method definition. Those that match existing synthetic method names are
+        removed from the docstring and returned in a dictionary.
+        """
+        import inspect
+        import textwrap
+        cls_doc = cls.__doc__
+        if not cls_doc or "\n" not in cls_doc:
+            return (cls.__doc__, {})
+        cls_doc = inspect.cleandoc(cls_doc)
+        cls_doc_lines = cls_doc.split("\n")
+        sections = []
+        last = len(cls_doc_lines)
+        for lineno, line in reversed(list(enumerate(cls_doc_lines))):
+            if len(line) >= 3 and set(line.rstrip()) == {"-"}:
+                start = lineno - 1
+                section_title = cls_doc_lines[start].strip()
+                sections.insert(0, (section_title, start, last))
+                last = start
+        for section_title, start, end in sections:
+            if section_title != "Methods":
+                continue
+            split_blocks = ["\n".join(cls_doc_lines[:start]),
+                            "\n".join(cls_doc_lines[start:end]),
+                            "\n".join(cls_doc_lines[end:])]
+            break
+        else:
+            return (cls.__doc__, {})
+        method_section_lines = textwrap.dedent(split_blocks[1]).split("\n")
+        method_lines = method_section_lines[2:]
+        method_names = []
+        method_docstrings = []
+        for line in method_lines:
+            line = line.rstrip()
+            if not line.startswith(" ") and "(" in line:
+                method_name = line.split("(", 1)[0]
+                assert method_name.isidentifier(), f"{method_name!r} isn't a suitable name for a class method (in docstring of {cls})"  # nopep8
+                method_names.append(method_name)
+                method_docstrings.append([line])
+            elif method_docstrings:
+                method_docstrings[-1].append(line)
+            else:
+                assert line == "", f"malformed docstring in {cls}, cannot interpret {line!r}"  # nopep8
+        extra_methods = []
+        result = {}
+        for name, docstring in zip(method_names, method_docstrings):
+            if name in cls._so_bind_methods:
+                result[name] = "\n".join(docstring[1:]).rstrip()
+            else:
+                # preserve synthetic methods unrelated to the C++ interface
+                extra_methods.append("\n".join(docstring))
+        if extra_methods:
+            split_blocks[1] = "\n".join(
+                method_section_lines[:2] + extra_methods)
+        else:
+            split_blocks[1] = ""
+        cls_doc = textwrap.indent("\n".join(split_blocks), 4 * " ")
+        return (cls_doc, result)
+
+    @classmethod
+    def _install_bound_method(cls, method_name, docstring):
+        """
+        Bind C++ methods declared in ``_so_bind_methods`` to the Python class.
+        This factory method compiles a code object whose ``co_name`` is the
+        method name. It would be easier to declare a local Python function,
+        but it would inherit the code object of the current scope, and code
+        profilers would make this factory method ``_install_bound_method``
+        appear in the traceback of every call to ``call_method``, which would
+        be confusing to new developers and AI coding agents. By binding a
+        distinct code object, the traceback features the correct method name.
+        """
+        assert method_name.isidentifier(), f"{method_name!r} isn't a suitable name for a function"  # nopep8
+        filename = f"<espressomd bound method: {cls.__qualname__}.{method_name}>"  # nopep8
+        src = (f"def {method_name}(self, **kwargs):\n"
+               f"    return self.call_method({method_name.encode()!r}, **kwargs)\n")
+        namespace = {}
+        exec(compile(src, filename, "exec"), namespace)
+        fn = namespace[method_name]
+        fn.__qualname__ = f"{cls.__qualname__}.{method_name}"
+        fn.__module__ = cls.__module__
+        fn.__doc__ = docstring
+        setattr(cls, method_name, fn)
 
     def __reduce__(self):
         assert self._so_checkpointable, f"Class '{self.__class__.__name__}' doesn't support checkpointing"  # nopep8
@@ -574,17 +694,6 @@ class ScriptInterfaceHelper(PScriptInterface):
         else:
             super().__delattr__(attr)
 
-    def generate_caller(self, method_name):
-        def template_method(**kwargs):
-            res = self.call_method(method_name, **kwargs)
-            return res
-
-        return template_method
-
-    def define_bound_methods(self):
-        for method_name in self._so_bind_methods:
-            setattr(self, method_name, self.generate_caller(method_name))
-
 
 class ScriptObjectList(ScriptInterfaceHelper):
     """
@@ -598,15 +707,15 @@ class ScriptObjectList(ScriptInterfaceHelper):
     """
 
     def __getitem__(self, key):
-        return self.call_method("get_elements")[key]
+        return self.call_method(b"get_elements")[key]
 
     def __iter__(self):
-        elements = self.call_method("get_elements")
+        elements = self.call_method(b"get_elements")
         for e in elements:
             yield e
 
     def __len__(self):
-        return self.call_method("size")
+        return self.call_method(b"size")
 
 
 class ScriptObjectMap(ScriptInterfaceHelper):
@@ -632,22 +741,22 @@ class ScriptObjectMap(ScriptInterfaceHelper):
         Remove all elements.
 
         """
-        self.call_method("clear")
+        self.call_method(b"clear")
 
     def __len__(self):
-        return self.call_method("size")
+        return self.call_method(b"size")
 
     def __getitem__(self, key):
-        return self.call_method("get", key=key)
+        return self.call_method(b"get", key=key)
 
     def __setitem__(self, key, value):
-        self.call_method("insert", key=key, object=value)
+        self.call_method(b"insert", key=key, object=value)
 
     def __delitem__(self, key):
-        self.call_method("erase", key=key)
+        self.call_method(b"erase", key=key)
 
     def keys(self):
-        return self.call_method("keys")
+        return self.call_method(b"keys")
 
     def __iter__(self):
         for k in self.keys():

@@ -238,7 +238,7 @@ inline void add_non_bonded_pair_force_with_p(
 
   /* The inter dpd force should not be part of the virial */
 #ifdef ESPRESSO_DPD
-  if (thermostat.thermo_switch & THERMO_DPD) {
+  if (thermostat.thermo_switch & THERMO_DPD and do_nonbonded_flag) {
     auto const force =
         dpd_pair_force(p1.pos(), p1.v(), p1.id(), p2.pos(), p2.v(), p2.id(),
                        *thermostat.dpd, box_geo, ia_params, d, dist, dist2);

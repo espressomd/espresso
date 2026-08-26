@@ -28,6 +28,7 @@
 #endif
 
 #include <utils/Vector.hpp>
+#include <utils/device_qualifier.hpp>
 #include <utils/index.hpp>
 
 #include <complex>
@@ -46,7 +47,7 @@ BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
 BOOST_AUTO_TEST_SUITE(suite)
 
 template <Utils::MemoryOrder MemOrderReal, Utils::MemoryOrder MemOrderFourier>
-void check_add_remove_halo() {
+HOST_ONLY_QUALIFIER void check_add_remove_halo() {
   auto constexpr n_x = 3;
   auto constexpr n_y = 7;
   auto constexpr n_z = 11;

@@ -49,6 +49,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "integrators/Propagation.hpp"
+#include "kokkos_helpers.hpp"
 #include "npt.hpp"
 #include "system/System.hpp"
 #include "tuning.hpp"
@@ -186,11 +187,12 @@ template <int cao> struct AssignDipole {
     using DipolarP3MState = std::remove_reference_t<decltype(dp3m)>;
     using value_type = DipolarP3MState::value_type;
     auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
+    using execution_space = Kokkos::DefaultExecutionSpace;
     auto const &aosoa = cell_structure.get_aosoa();
     auto const &unique_particles = cell_structure.get_unique_particles();
     auto const n_part = cell_structure.count_local_particles();
     dp3m.inter_weights.zfill(n_part); // allocate buffer for parallel write
-    kokkos_parallel_range_for(
+    kokkos_parallel_range_for<execution_space>(
         "InterpolateDipoles", std::size_t{0u}, n_part, [&](auto p_index) {
           auto const tid = omp_get_thread_num();
           auto const p_pos = aosoa.get_vector_at(aosoa.position, p_index);
@@ -207,23 +209,21 @@ template <int cao> struct AssignDipole {
               });
         });
     Kokkos::fence();
-    using execution_space = Kokkos::DefaultExecutionSpace;
     int num_threads = execution_space().concurrency();
-    Kokkos::RangePolicy<execution_space> policy(std::size_t{0},
-                                                dp3m.local_mesh.size);
-    Kokkos::parallel_for("ReduceInterpolatedDipoles", policy,
-                         [&dp3m, num_threads](std::size_t const i) {
-                           for (int dir = 0; dir < 3; ++dir) {
-                             value_type acc{};
-                             for (int tid = 0; tid < num_threads; ++tid) {
-                               acc += dp3m.rs_fields_kokkos(tid, dir, i);
-                             }
-                             dp3m.mesh.rs_fields[dir][i] += acc;
+    kokkos_parallel_range_for<execution_space>(
+        "ReduceInterpolatedDipoles", std::size_t{0}, dp3m.local_mesh.size,
+        [&dp3m, num_threads](std::size_t const i) {
+          for (int dir = 0; dir < 3; ++dir) {
+            value_type acc{};
+            for (int tid = 0; tid < num_threads; ++tid) {
+              acc += dp3m.rs_fields_kokkos(tid, dir, i);
+            }
+            dp3m.mesh.rs_fields[dir][i] += acc;
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
-                             dp3m.heffte.rs_dipole_density[dir][i] += acc;
+            dp3m.heffte.rs_dipole_density[dir][i] += acc;
 #endif
-                           }
-                         });
+          }
+        });
     Kokkos::fence();
   }
 #else // ESPRESSO_SHARED_MEMORY_PARALLELISM
@@ -298,10 +298,11 @@ template <int cao> struct AssignTorques {
     };
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    using execution_space = Kokkos::DefaultExecutionSpace;
     auto const n_part = dp3m.inter_weights.size();
     auto const &unique_particles = cell_structure.get_unique_particles();
     auto &local_torque = cell_structure.get_local_torque();
-    kokkos_parallel_range_for(
+    kokkos_parallel_range_for<execution_space>(
         "AssignTorques", std::size_t{0u}, n_part, [&](std::size_t p_index) {
           auto const &p = *unique_particles.at(p_index);
           if (p.dipm() != 0.) {
@@ -349,10 +350,11 @@ template <int cao> struct AssignForcesDip {
     };
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+    using execution_space = Kokkos::DefaultExecutionSpace;
     auto const n_part = dp3m.inter_weights.size();
     auto const &unique_particles = cell_structure.get_unique_particles();
     auto &local_force = cell_structure.get_local_force();
-    kokkos_parallel_range_for(
+    kokkos_parallel_range_for<execution_space>(
         "AssignForcesDip", std::size_t{0u}, n_part, [&](std::size_t p_index) {
           auto const &p = *unique_particles.at(p_index);
           if (p.dipm() != 0.) {

@@ -26,10 +26,16 @@
 #include "particle_node.hpp"
 #include "system/System.hpp"
 
+#include <utils/Vector.hpp>
+
+#include <boost/mpi/collectives/gather.hpp>
+
 #include <algorithm>
 #include <cstddef>
 #include <set>
 #include <stdexcept>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -44,24 +50,51 @@ public:
       : PidPairwiseDistancesObservable(ids, target_ids),
         m_pairs{get_unique_pairs(ids, target_ids)} {}
 
-  /** @brief Evaluate the current contact times */
+  /** @brief Evaluate pairwise distances, gathering positions from all ranks. */
   std::vector<double>
   evaluate(boost::mpi::communicator const &comm, ParticleReferenceRange const &,
            ParticleObservables::traits<Particle> const &) const override {
 
-    if (comm.rank() != 0) {
-      return {};
-    }
-    // Get instances of the system and cell structures
     auto const &system = System::get_system();
     auto const &box_geo = *system.box_geo;
     auto &cell_structure = *system.cell_structure;
 
-    std::vector<double> pairwise_distances;
+    // Collect local (pid, position) pairs for all particles in m_pairs
+    std::unordered_set<int> visited_pids;
+    std::vector<std::pair<int, Utils::Vector3d>> local_pid_pos;
     for (auto const &[pid1, pid2] : m_pairs) {
-      auto const *p1 = cell_structure.get_local_particle(pid1);
-      auto const *p2 = cell_structure.get_local_particle(pid2);
-      auto const dist = box_geo.get_mi_vector(p1->pos(), p2->pos()).norm();
+      for (auto const pid : {pid1, pid2}) {
+        if (not visited_pids.contains(pid)) {
+          auto const *p = cell_structure.get_local_particle(pid);
+          if (p and not p->is_ghost()) {
+            local_pid_pos.emplace_back(pid, p->pos());
+          }
+          visited_pids.emplace(pid);
+        }
+      }
+    }
+
+    // Gather from all ranks to rank 0
+    std::vector<std::vector<std::pair<int, Utils::Vector3d>>> all_pid_pos;
+    boost::mpi::gather(comm, local_pid_pos, all_pid_pos, 0);
+
+    if (comm.rank() != 0) {
+      return {};
+    }
+
+    // Build position map on rank 0
+    std::unordered_map<int, Utils::Vector3d> pos_map;
+    for (auto const &rank_data : all_pid_pos) {
+      for (auto const &[pid, pos] : rank_data) {
+        pos_map.emplace(pid, pos);
+      }
+    }
+
+    std::vector<double> pairwise_distances;
+    pairwise_distances.reserve(m_pairs.size());
+    for (auto const &[pid1, pid2] : m_pairs) {
+      auto const dist =
+          box_geo.get_mi_vector(pos_map.at(pid1), pos_map.at(pid2)).norm();
       pairwise_distances.emplace_back(dist);
     }
     return pairwise_distances;

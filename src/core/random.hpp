@@ -27,6 +27,7 @@
  */
 
 #include <utils/Vector.hpp>
+#include <utils/device_qualifier.hpp>
 #include <utils/u32_to_u64.hpp>
 #include <utils/uniform.hpp>
 
@@ -35,7 +36,6 @@
 #include <cstddef>
 #include <numbers>
 #include <random>
-#include <ranges>
 #include <vector>
 
 /*
@@ -72,7 +72,8 @@ namespace Random {
  * sequence.
  */
 template <RNGSalt salt>
-auto philox_4_uint64s(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
+DEVICE_QUALIFIER auto philox_4_uint64s(uint64_t counter, uint32_t seed,
+                                       int key1, int key2 = 0) {
 
   using rng_type = r123::Philox4x64;
   using ctr_type = rng_type::ctr_type;
@@ -109,11 +110,13 @@ auto philox_4_uint64s(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
  */
 template <RNGSalt salt, std::size_t N = 3>
   requires((N >= 1) and (N <= 4))
-auto noise_uniform(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
+DEVICE_QUALIFIER auto noise_uniform(uint64_t counter, uint32_t seed, int key1,
+                                    int key2 = 0) {
   auto const integers = philox_4_uint64s<salt>(counter, seed, key1, key2);
   Utils::VectorXd<N> noise{};
-  std::ranges::transform(integers | std::ranges::views::take(N), noise.begin(),
-                         [](std::size_t v) { return Utils::uniform(v) - 0.5; });
+  for (std::size_t i = 0; i < N; ++i) {
+    noise[i] = Utils::uniform(integers[i]) - 0.5;
+  }
   return noise;
 }
 
@@ -138,18 +141,18 @@ auto noise_uniform(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
  */
 template <RNGSalt salt, std::size_t N = 3>
   requires((N >= 1) and (N <= 4))
-auto noise_gaussian(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
+DEVICE_QUALIFIER auto noise_gaussian(uint64_t counter, uint32_t seed, int key1,
+                                     int key2 = 0) {
 
   auto const integers = philox_4_uint64s<salt>(counter, seed, key1, key2);
 
   constexpr std::size_t M = (N <= 2) ? 2 : 4;
+  constexpr auto epsilon = std::numeric_limits<double>::min();
   Utils::VectorXd<M> u{};
-  std::ranges::transform(
-      integers | std::ranges::views::take(M), u.begin(), [](std::size_t value) {
-        auto constexpr epsilon = std::numeric_limits<double>::min();
-        auto res = Utils::uniform(value);
-        return (res < epsilon) ? epsilon : res;
-      });
+  for (std::size_t i = 0; i < M; ++i) {
+    auto res = Utils::uniform(integers[i]);
+    u[i] = (res < epsilon) ? epsilon : res;
+  }
 
   // Box-Muller transform code adapted from
   // https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform

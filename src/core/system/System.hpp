@@ -155,10 +155,10 @@ public:
   bool long_range_interactions_sanity_checks() const;
 
   /** @brief Calculate the total energy. */
-  std::shared_ptr<Observable_stat> calculate_energy();
+  Observable_stat const &calculate_energy();
 
   /** @brief Calculate the pressure from a virial expansion. */
-  std::shared_ptr<Observable_stat> calculate_pressure();
+  Observable_stat const &calculate_pressure();
 
 #ifdef ESPRESSO_NPT
   /** @brief Synchronize NpT state such as instantaneous and average pressure */
@@ -358,6 +358,8 @@ protected:
    * to be available on the same node (through ghosts).
    */
   double min_global_cut;
+  std::unique_ptr<Observable_stat> m_obs_energy;
+  std::unique_ptr<Observable_stat> m_obs_pressure;
 
   void update_local_geo();
 #ifdef ESPRESSO_ELECTROSTATICS
@@ -379,5 +381,6 @@ private:
 System &get_system();
 void set_system(std::shared_ptr<System> new_instance);
 void reset_system();
+bool is_same_system(System const *system);
 
 } // namespace System
