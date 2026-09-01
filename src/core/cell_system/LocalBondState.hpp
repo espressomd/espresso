@@ -126,6 +126,29 @@ struct LocalBondState {
   PPDihedralDegreeType pp_dihedral_degree;
   PPDihedralSlotType pp_dihedral_slots;
 
+  // Per-particle count of rows in [0, degree) that the particle-parallel
+  // gather kernels (PairBondsKernel etc.) actually need to visit at every
+  // force calculation: rows whose bond_index is still unresolved (< 0) and
+  // whose "other"/self_slot/chain_slot column isn't the unresolvable
+  // sentinel (also < 0) either -- i.e. genuinely need this row's own direct
+  // fallback evaluation, as opposed to a row already covered by the
+  // compute-once pass or one this rank can't evaluate at all. A one-time
+  // pass at the end of each full rebuild (short_range_cabana.hpp, right
+  // after each pp_*_bond_index resolution pass) partitions each particle's
+  // row in place so those "needs fallback" entries are exactly the first
+  // pp_*_residual_degree(idx) of them, letting the per-step gather kernels
+  // loop that shorter range instead of the full degree and re-checking
+  // both columns on every row, every step, only to skip most of them.
+  // Never grown/reordered by the hot-add fast path (LocalBondState::
+  // add_new_bond()): a hot-added row is always appended past the current
+  // (frozen-until-the-next-rebuild) residual_degree, and is always fully
+  // covered by the compute-once pass once rebuild_bond_list() runs later
+  // the same step (see add_new_bond()'s own comment), so it correctly
+  // never needs to be in the residual range either.
+  PPPairDegreeType pp_pair_residual_degree;
+  PPAngleDegreeType pp_angle_residual_degree;
+  PPDihedralDegreeType pp_dihedral_residual_degree;
+
 #ifdef ESPRESSO_COLLISION_DETECTION
   std::vector<int> new_pair_list, new_pair_ids;
   std::vector<int> new_angle_list, new_angle_ids;

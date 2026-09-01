@@ -297,6 +297,46 @@ update_cabana_state(CellStructure &cell_structure,
           });
     }
     if (bs.pp_num_particles) {
+      // Partition each particle's row so entries genuinely needing a
+      // fallback evaluation (see PairBondsKernel) -- "other" resolved
+      // (column 0 >= 0) and bond_index still unresolved (column 3 < 0) --
+      // are exactly the first pp_pair_residual_degree(idx) of them.
+      // PairBondsKernel then only walks that shorter range every force
+      // calculation, instead of the full degree re-checking both columns
+      // on every row just to skip most of them. Reordering a particle's
+      // own row is transparent to every other consumer of pp_pair_slots:
+      // bond_energy_kokkos.hpp/bond_pressure_kokkos.hpp scan the full
+      // degree regardless of position (gated on the unrelated is_primary
+      // column), and LocalBondState::add_new_bond()'s hot-add fast path
+      // always appends past the current degree, which is always
+      // >= residual_degree here.
+      auto &pp_pair_degree = bs.pp_pair_degree;
+      auto &pp_pair_slots = bs.pp_pair_slots;
+      auto &pp_pair_residual_degree = bs.pp_pair_residual_degree;
+      kokkos_parallel_range_for<host_space>(
+          "partition_pp_pair_residual", std::size_t{0}, bs.pp_num_particles,
+          [&pp_pair_degree, &pp_pair_slots, &pp_pair_residual_degree](int idx) {
+            auto const degree = pp_pair_degree(idx);
+            int write = 0;
+            for (int read = 0; read < degree; ++read) {
+              bool const needs_fallback = pp_pair_slots(idx, read, 0) >= 0 and
+                                          pp_pair_slots(idx, read, 3) < 0;
+              if (needs_fallback) {
+                if (write != read) {
+                  for (int col = 0; col < 4; ++col) {
+                    auto const tmp = pp_pair_slots(idx, write, col);
+                    pp_pair_slots(idx, write, col) =
+                        pp_pair_slots(idx, read, col);
+                    pp_pair_slots(idx, read, col) = tmp;
+                  }
+                }
+                ++write;
+              }
+            }
+            pp_pair_residual_degree(idx) = write;
+          });
+    }
+    if (bs.pp_num_particles) {
       auto &pp_angle_degree = bs.pp_angle_degree;
       auto &pp_angle_slots = bs.pp_angle_slots;
       kokkos_parallel_range_for<host_space>(
@@ -383,6 +423,38 @@ update_cabana_state(CellStructure &cell_structure,
           });
     }
     if (bs.pp_num_particles) {
+      // See the pp_pair_residual_degree partition pass above for the
+      // rationale; same idea, gated on self_slot (column 4) instead of
+      // pair's "other" column for the unresolvable check, and bond_index
+      // (column 5) for the already-resolved check.
+      auto &pp_angle_degree = bs.pp_angle_degree;
+      auto &pp_angle_slots = bs.pp_angle_slots;
+      auto &pp_angle_residual_degree = bs.pp_angle_residual_degree;
+      kokkos_parallel_range_for<host_space>(
+          "partition_pp_angle_residual", std::size_t{0}, bs.pp_num_particles,
+          [&pp_angle_degree, &pp_angle_slots,
+           &pp_angle_residual_degree](int idx) {
+            auto const degree = pp_angle_degree(idx);
+            int write = 0;
+            for (int read = 0; read < degree; ++read) {
+              bool const needs_fallback = pp_angle_slots(idx, read, 4) >= 0 and
+                                          pp_angle_slots(idx, read, 5) < 0;
+              if (needs_fallback) {
+                if (write != read) {
+                  for (int col = 0; col < 6; ++col) {
+                    auto const tmp = pp_angle_slots(idx, write, col);
+                    pp_angle_slots(idx, write, col) =
+                        pp_angle_slots(idx, read, col);
+                    pp_angle_slots(idx, read, col) = tmp;
+                  }
+                }
+                ++write;
+              }
+            }
+            pp_angle_residual_degree(idx) = write;
+          });
+    }
+    if (bs.pp_num_particles) {
       auto &pp_dihedral_degree = bs.pp_dihedral_degree;
       auto &pp_dihedral_slots = bs.pp_dihedral_slots;
       kokkos_parallel_range_for<host_space>(
@@ -460,6 +532,39 @@ update_cabana_state(CellStructure &cell_structure,
               }
               pp_dihedral_slots(idx, slot, 6) = found;
             }
+          });
+    }
+    if (bs.pp_num_particles) {
+      // See the pp_pair_residual_degree partition pass above for the
+      // rationale; same idea, gated on chain_slot (column 5) instead of
+      // pair's "other" column for the unresolvable check, and bond_index
+      // (column 6) for the already-resolved check.
+      auto &pp_dihedral_degree = bs.pp_dihedral_degree;
+      auto &pp_dihedral_slots = bs.pp_dihedral_slots;
+      auto &pp_dihedral_residual_degree = bs.pp_dihedral_residual_degree;
+      kokkos_parallel_range_for<host_space>(
+          "partition_pp_dihedral_residual", std::size_t{0}, bs.pp_num_particles,
+          [&pp_dihedral_degree, &pp_dihedral_slots,
+           &pp_dihedral_residual_degree](int idx) {
+            auto const degree = pp_dihedral_degree(idx);
+            int write = 0;
+            for (int read = 0; read < degree; ++read) {
+              bool const needs_fallback =
+                  pp_dihedral_slots(idx, read, 5) >= 0 and
+                  pp_dihedral_slots(idx, read, 6) < 0;
+              if (needs_fallback) {
+                if (write != read) {
+                  for (int col = 0; col < 7; ++col) {
+                    auto const tmp = pp_dihedral_slots(idx, write, col);
+                    pp_dihedral_slots(idx, write, col) =
+                        pp_dihedral_slots(idx, read, col);
+                    pp_dihedral_slots(idx, read, col) = tmp;
+                  }
+                }
+                ++write;
+              }
+            }
+            pp_dihedral_residual_degree(idx) = write;
           });
     }
     if (pair_count != 0 or angle_count != 0 or dihedral_count != 0 or

@@ -72,6 +72,8 @@ void LocalBondState::allocate_pp_pair(int num_particles, int max_degree) {
                     pp_pair_degree, num_particles);
     Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing),
                     pp_pair_slots, num_particles, max_degree);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing),
+                    pp_pair_residual_degree, num_particles);
   } else {
     using execution_space = Kokkos::DefaultHostExecutionSpace;
     pp_pair_degree = PPPairDegreeType(
@@ -82,6 +84,10 @@ void LocalBondState::allocate_pp_pair(int num_particles, int max_degree) {
         Kokkos::view_alloc(execution_space{}, Kokkos::WithoutInitializing,
                            "pp_pair_slots"),
         num_particles, max_degree);
+    pp_pair_residual_degree = PPPairDegreeType(
+        Kokkos::view_alloc(execution_space{}, Kokkos::WithoutInitializing,
+                           "pp_pair_residual_degree"),
+        num_particles);
   }
   pp_num_particles = num_particles;
 }
@@ -92,6 +98,8 @@ void LocalBondState::allocate_pp_angle(int num_particles, int max_degree) {
                     pp_angle_degree, num_particles);
     Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing),
                     pp_angle_slots, num_particles, max_degree);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing),
+                    pp_angle_residual_degree, num_particles);
   } else {
     using execution_space = Kokkos::DefaultHostExecutionSpace;
     pp_angle_degree = PPAngleDegreeType(
@@ -102,6 +110,10 @@ void LocalBondState::allocate_pp_angle(int num_particles, int max_degree) {
         Kokkos::view_alloc(execution_space{}, Kokkos::WithoutInitializing,
                            "pp_angle_slots"),
         num_particles, max_degree);
+    pp_angle_residual_degree = PPAngleDegreeType(
+        Kokkos::view_alloc(execution_space{}, Kokkos::WithoutInitializing,
+                           "pp_angle_residual_degree"),
+        num_particles);
   }
   pp_num_particles = num_particles;
 }
@@ -112,6 +124,8 @@ void LocalBondState::allocate_pp_dihedral(int num_particles, int max_degree) {
                     pp_dihedral_degree, num_particles);
     Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing),
                     pp_dihedral_slots, num_particles, max_degree);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing),
+                    pp_dihedral_residual_degree, num_particles);
   } else {
     using execution_space = Kokkos::DefaultHostExecutionSpace;
     pp_dihedral_degree = PPDihedralDegreeType(
@@ -122,6 +136,10 @@ void LocalBondState::allocate_pp_dihedral(int num_particles, int max_degree) {
         Kokkos::view_alloc(execution_space{}, Kokkos::WithoutInitializing,
                            "pp_dihedral_slots"),
         num_particles, max_degree);
+    pp_dihedral_residual_degree = PPDihedralDegreeType(
+        Kokkos::view_alloc(execution_space{}, Kokkos::WithoutInitializing,
+                           "pp_dihedral_residual_degree"),
+        num_particles);
   }
   pp_num_particles = num_particles;
 }
@@ -141,6 +159,9 @@ void LocalBondState::clear() {
   pp_angle_slots = PPAngleSlotType();
   pp_dihedral_degree = PPDihedralDegreeType();
   pp_dihedral_slots = PPDihedralSlotType();
+  pp_pair_residual_degree = PPPairDegreeType();
+  pp_angle_residual_degree = PPAngleDegreeType();
+  pp_dihedral_residual_degree = PPDihedralDegreeType();
   pp_num_particles = 0;
 #ifdef ESPRESSO_COLLISION_DETECTION
   clear_new_bonds();

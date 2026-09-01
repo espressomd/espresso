@@ -560,12 +560,13 @@ void System::System::calculate_forces() {
   }
 
   auto pair_bonds_kernel =
-      PairBondsKernel{pair_bonds_kernel_data, bs.pp_pair_degree,
+      PairBondsKernel{pair_bonds_kernel_data, bs.pp_pair_residual_degree,
                       bs.pp_pair_slots, get_ptr(coulomb_kernel)};
   auto angle_bonds_kernel = AngleBondsKernel{
-      angle_bonds_kernel_data, bs.pp_angle_degree, bs.pp_angle_slots};
-  auto dihedral_bonds_kernel = DihedralBondsKernel{
-      dihedral_bonds_kernel_data, bs.pp_dihedral_degree, bs.pp_dihedral_slots};
+      angle_bonds_kernel_data, bs.pp_angle_residual_degree, bs.pp_angle_slots};
+  auto dihedral_bonds_kernel =
+      DihedralBondsKernel{dihedral_bonds_kernel_data,
+                          bs.pp_dihedral_residual_degree, bs.pp_dihedral_slots};
 
   auto first_neighbor_kernel =
       create_cabana_neighbor_kernel(*this, virial, elc_kernel, coulomb_kernel,

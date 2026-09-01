@@ -192,19 +192,25 @@ struct PairBondsForceComputeKernel {
 // directly into local_force, so this row has nothing left to do -- skip it.
 // Otherwise (this bond's primary entry lives on another rank) fall back to
 // evaluating it directly from this row, exactly as this kernel always used
-// to.
+// to. A one-time pass at the end of each full rebuild
+// (short_range_cabana.hpp) already sorts each particle's row so the rows
+// needing that fallback are exactly the first pp_pair_residual_degree(self)
+// of them -- see PPPairSlotType's/pp_pair_residual_degree's doc comments --
+// so this kernel only walks that (usually much shorter) range and every row
+// it sees is guaranteed to need the fallback; no per-row skip check left.
 struct PairBondsKernel {
   PairBondsKernelData data;
-  LocalBondState::PPPairDegreeType pp_pair_degree;
+  LocalBondState::PPPairDegreeType pp_pair_residual_degree;
   LocalBondState::PPPairSlotType pp_pair_slots;
   Coulomb::ShortRangeForceKernel::kernel_type const *const coulomb_kernel;
 
   PairBondsKernel(
       PairBondsKernelData data_,
-      LocalBondState::PPPairDegreeType pp_pair_degree_,
+      LocalBondState::PPPairDegreeType pp_pair_residual_degree_,
       LocalBondState::PPPairSlotType pp_pair_slots_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel_)
-      : data(std::move(data_)), pp_pair_degree(std::move(pp_pair_degree_)),
+      : data(std::move(data_)),
+        pp_pair_residual_degree(std::move(pp_pair_residual_degree_)),
         pp_pair_slots(std::move(pp_pair_slots_)),
         coulomb_kernel(coulomb_kernel_) {}
 
@@ -218,26 +224,11 @@ struct PairBondsKernel {
     auto local_virial = data.local_virial.access();
 #endif
     auto const has_breakage_specs = data.has_breakage_specs;
-    auto const degree = pp_pair_degree(self);
+    auto const residual_degree = pp_pair_residual_degree(self);
     Utils::Vector3d total_force{};
 
-    for (int slot = 0; slot < degree; ++slot) {
+    for (int slot = 0; slot < residual_degree; ++slot) {
       auto const other = pp_pair_slots(self, slot, 0);
-      // -1 marks a row whose partner failed to resolve on this rank (see
-      // CellStructure::update_bond_storage) -- this participant's
-      // authoritative home rank always resolves it and applies the force
-      // there, so skipping here loses nothing.
-      if (other < 0) {
-        continue;
-      }
-
-      auto const bond_index = pp_pair_slots(self, slot, 3);
-      if (bond_index >= 0) {
-        // Already applied directly by PairBondsForceComputeKernel's
-        // scatter-add -- nothing left to do for this row.
-        continue;
-      }
-
       auto const bond_id = pp_pair_slots(self, slot, 1);
       auto const is_primary = pp_pair_slots(self, slot, 2) != 0;
       auto const &iaparams = *bonded_ias.at(bond_id);
@@ -454,16 +445,21 @@ struct AngleBondsForceComputeKernel {
 // directly into local_force, so this row has nothing left to do -- skip it.
 // Otherwise (this bond's primary entry lives on another rank) fall back to
 // evaluating it directly from this row, exactly as this kernel always used
-// to.
+// to. As for PairBondsKernel, a one-time pass at the end of each full
+// rebuild (short_range_cabana.hpp) already sorts each particle's row so the
+// rows needing that fallback are exactly the first
+// pp_angle_residual_degree(self) of them, so this kernel only walks that
+// range and every row it sees is guaranteed to need the fallback.
 struct AngleBondsKernel {
   AngleBondsKernelData data;
-  LocalBondState::PPAngleDegreeType pp_angle_degree;
+  LocalBondState::PPAngleDegreeType pp_angle_residual_degree;
   LocalBondState::PPAngleSlotType pp_angle_slots;
 
   AngleBondsKernel(AngleBondsKernelData data_,
-                   LocalBondState::PPAngleDegreeType pp_angle_degree_,
+                   LocalBondState::PPAngleDegreeType pp_angle_residual_degree_,
                    LocalBondState::PPAngleSlotType pp_angle_slots_)
-      : data(std::move(data_)), pp_angle_degree(std::move(pp_angle_degree_)),
+      : data(std::move(data_)),
+        pp_angle_residual_degree(std::move(pp_angle_residual_degree_)),
         pp_angle_slots(std::move(pp_angle_slots_)) {}
 
   ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t self) const {
@@ -473,27 +469,11 @@ struct AngleBondsKernel {
     auto const &aosoa = data.aosoa;
     auto &bond_breakage = data.bond_breakage;
     auto const has_breakage_specs = data.has_breakage_specs;
-    auto const degree = pp_angle_degree(self);
+    auto const residual_degree = pp_angle_residual_degree(self);
     Utils::Vector3d total_force{};
 
-    for (int slot = 0; slot < degree; ++slot) {
+    for (int slot = 0; slot < residual_degree; ++slot) {
       auto const self_slot = pp_angle_slots(self, slot, 4);
-      // -1 marks an unresolvable row -- see PairBondsKernel's comment.
-      if (self_slot < 0) {
-        continue;
-      }
-
-      auto const bond_index = pp_angle_slots(self, slot, 5);
-      if (bond_index >= 0) {
-        // Already applied directly by AngleBondsForceComputeKernel's
-        // scatter-add -- nothing left to do for this row.
-        continue;
-      }
-
-      // Fallback: this bond's primary entry isn't resolvable on this
-      // rank (it straddles a rank boundary and the owner lives
-      // elsewhere), so AngleBondsForceComputeKernel never evaluated it --
-      // evaluate it directly.
       auto const vertex = pp_angle_slots(self, slot, 0);
       auto const arm1 = pp_angle_slots(self, slot, 1);
       auto const arm2 = pp_angle_slots(self, slot, 2);
@@ -656,17 +636,23 @@ struct DihedralBondsForceComputeKernel {
 // See AngleBondsKernel's doc comment for the bond_index fast-path/fallback
 // split: in the common case, DihedralBondsForceComputeKernel already
 // scatter-added this participant's share directly into local_force, so this
-// row has nothing left to do.
+// row has nothing left to do. As for PairBondsKernel/AngleBondsKernel, a
+// one-time pass at the end of each full rebuild (short_range_cabana.hpp)
+// already sorts each particle's row so the rows needing that fallback are
+// exactly the first pp_dihedral_residual_degree(self) of them, so this
+// kernel only walks that range and every row it sees is guaranteed to need
+// the fallback.
 struct DihedralBondsKernel {
   DihedralBondsKernelData data;
-  LocalBondState::PPDihedralDegreeType pp_dihedral_degree;
+  LocalBondState::PPDihedralDegreeType pp_dihedral_residual_degree;
   LocalBondState::PPDihedralSlotType pp_dihedral_slots;
 
-  DihedralBondsKernel(DihedralBondsKernelData data_,
-                      LocalBondState::PPDihedralDegreeType pp_dihedral_degree_,
-                      LocalBondState::PPDihedralSlotType pp_dihedral_slots_)
+  DihedralBondsKernel(
+      DihedralBondsKernelData data_,
+      LocalBondState::PPDihedralDegreeType pp_dihedral_residual_degree_,
+      LocalBondState::PPDihedralSlotType pp_dihedral_slots_)
       : data(std::move(data_)),
-        pp_dihedral_degree(std::move(pp_dihedral_degree_)),
+        pp_dihedral_residual_degree(std::move(pp_dihedral_residual_degree_)),
         pp_dihedral_slots(std::move(pp_dihedral_slots_)) {}
 
   ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t self) const {
@@ -674,25 +660,11 @@ struct DihedralBondsKernel {
     auto const &box_geo = data.box_geo;
     auto &local_force = data.local_force;
     auto const &aosoa = data.aosoa;
-    auto const degree = pp_dihedral_degree(self);
+    auto const residual_degree = pp_dihedral_residual_degree(self);
     Utils::Vector3d total_force{};
 
-    for (int slot = 0; slot < degree; ++slot) {
+    for (int slot = 0; slot < residual_degree; ++slot) {
       auto const chain_slot = pp_dihedral_slots(self, slot, 5);
-      // -1 marks an unresolvable row -- see PairBondsKernel's comment.
-      if (chain_slot < 0) {
-        continue;
-      }
-
-      auto const bond_index = pp_dihedral_slots(self, slot, 6);
-      if (bond_index >= 0) {
-        // Already applied directly by DihedralBondsForceComputeKernel's
-        // scatter-add -- nothing left to do for this row.
-        continue;
-      }
-
-      // Fallback: this bond's primary entry isn't resolvable on this
-      // rank -- see AngleBondsKernel's fallback comment.
       auto const i = pp_dihedral_slots(self, slot, 0);
       auto const j = pp_dihedral_slots(self, slot, 1);
       auto const k = pp_dihedral_slots(self, slot, 2);
