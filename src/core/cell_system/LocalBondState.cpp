@@ -231,8 +231,28 @@ void LocalBondState::add_new_bond(
     auto const idx1 =
         safe_resolve_index(id_to_index, particle_ids[1], pp_num_particles);
     if (idx0 >= 0 and idx1 >= 0) {
-      append_pp_row(pp_pair_degree, pp_pair_slots, idx0, idx1, bond_id, 1);
-      append_pp_row(pp_pair_degree, pp_pair_slots, idx1, idx0, bond_id, 0);
+      // Column 3 (bond_index): safe_resolve_index() above already rejected
+      // either participant being a ghost (out of [0, pp_num_particles)), so
+      // both rows are guaranteed real/local -- PairBondsForceComputeKernel
+      // will therefore always cover both shares once rebuild_bond_list()
+      // (called once per step, after all of this step's collisions/hot-adds
+      // are processed) merges this bond into pair_list. pair_count was just
+      // incremented above, so pair_count - 1 is exactly this bond's future
+      // row there -- known now, without waiting for rebuild_bond_list() to
+      // determine it. Leaving this column unset here (as an earlier version
+      // did) left it holding whatever the last full rebuild's
+      // Kokkos::realloc(..., WithoutInitializing, ...) happened to leave in
+      // that not-yet-written slot -- interpreted by the gather kernels as
+      // "already resolved, skip" only by chance, and as "skip" is the
+      // deliberately correct value here regardless, but as "unresolved,
+      // fall back and re-evaluate" whenever that leftover happened to be
+      // negative, double-counting this bond's force for however many steps
+      // remained until the next full rebuild silently overwrote it.
+      auto const bond_list_index = pair_count - 1;
+      append_pp_row(pp_pair_degree, pp_pair_slots, idx0, idx1, bond_id, 1,
+                    bond_list_index);
+      append_pp_row(pp_pair_degree, pp_pair_slots, idx1, idx0, bond_id, 0,
+                    bond_list_index);
     }
   } else if (particle_ids.size() == 3u) {
     new_angle_list.reserve(new_angle_list.size() + 3u);
@@ -249,12 +269,20 @@ void LocalBondState::add_new_bond(
     auto const arm2_idx =
         safe_resolve_index(id_to_index, particle_ids[2], pp_num_particles);
     if (vertex_idx >= 0 and arm1_idx >= 0 and arm2_idx >= 0) {
+      // Column 5 (bond_index): see the pair-bond case above for the
+      // rationale and the bug this avoids -- same idea, all three
+      // participants guaranteed real/local by the checks above, so
+      // AngleBondsForceComputeKernel always covers all three shares once
+      // rebuild_bond_list() merges this bond into angle_list, at the row
+      // index angle_count - 1 (already known here, angle_count having just
+      // been incremented above).
+      auto const bond_list_index = angle_count - 1;
       append_pp_row(pp_angle_degree, pp_angle_slots, vertex_idx, vertex_idx,
-                    arm1_idx, arm2_idx, bond_id, 0);
+                    arm1_idx, arm2_idx, bond_id, 0, bond_list_index);
       append_pp_row(pp_angle_degree, pp_angle_slots, arm1_idx, vertex_idx,
-                    arm1_idx, arm2_idx, bond_id, 1);
+                    arm1_idx, arm2_idx, bond_id, 1, bond_list_index);
       append_pp_row(pp_angle_degree, pp_angle_slots, arm2_idx, vertex_idx,
-                    arm1_idx, arm2_idx, bond_id, 2);
+                    arm1_idx, arm2_idx, bond_id, 2, bond_list_index);
     }
   } else if (particle_ids.size() == 4u) {
     new_dihedral_list.reserve(new_dihedral_list.size() + 4u);
@@ -272,10 +300,16 @@ void LocalBondState::add_new_bond(
       all_valid = all_valid and chain_idx[c] >= 0;
     }
     if (all_valid) {
+      // Column 6 (bond_index): see the pair-bond case above for the
+      // rationale. All 4 chain positions guaranteed real/local by
+      // all_valid, so DihedralBondsForceComputeKernel always covers every
+      // share once rebuild_bond_list() merges this bond into
+      // dihedral_list, at the row index dihedral_count - 1.
+      auto const bond_list_index = dihedral_count - 1;
       for (int c = 0; c < 4; ++c) {
         append_pp_row(pp_dihedral_degree, pp_dihedral_slots, chain_idx[c],
                       chain_idx[0], chain_idx[1], chain_idx[2], chain_idx[3],
-                      bond_id, c);
+                      bond_id, c, bond_list_index);
       }
     }
   }
