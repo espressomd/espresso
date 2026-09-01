@@ -99,6 +99,7 @@ struct PairBondsKernel {
       if (other < 0) {
         continue;
       }
+
       auto const bond_id = pp_pair_slots(self, slot, 1);
       auto const is_primary = pp_pair_slots(self, slot, 2) != 0;
       auto const &iaparams = *bonded_ias.at(bond_id);
@@ -203,6 +204,98 @@ struct AngleBondsKernelData {
   CellStructure::ForceType local_force;
   CellStructure::AoSoA_pack const &aosoa;
   bool const has_breakage_specs;
+  CellStructure::ScatterForce scatter_force;
+  int pp_num_particles;
+};
+
+// Evaluates every rank-locally-owned angle bond's force exactly once
+// (dispatched over angle_count, i.e. angle_list/angle_ids -- the same
+// compact per-bond list energy/pressure calculation already uses), instead
+// of once per participant like AngleBondsKernel below used to do
+// unconditionally. This is the compute side of the split: it does the
+// actual (trig-heavy) geometry + force evaluation and scatter-adds the 3
+// resulting force vectors directly into the (real, non-ghost) participants'
+// own local_force rows via a ScatterView, exactly like the pre-particle-
+// parallel-gather bond-indexed AngleBondsKernel used to -- so
+// AngleBondsKernel's per-participant gather pass can just skip a row
+// instead of recomputing it. A ghost participant's row is skipped here (its
+// share has nowhere atomics-safe to go without re-introducing the MPI
+// ghost-force-reduction this architecture avoids); it is instead applied,
+// independently and redundantly, by its own real-owner rank's
+// AngleBondsKernel fallback path.
+struct AngleBondsForceComputeKernel {
+  AngleBondsKernelData data;
+  LocalBondState::AngleBondlistType bond_list;
+  LocalBondState::AngleBondIDType bond_ids;
+
+  AngleBondsForceComputeKernel(AngleBondsKernelData data_,
+                               LocalBondState::AngleBondlistType bond_list_,
+                               LocalBondState::AngleBondIDType bond_ids_)
+      : data(std::move(data_)), bond_list(std::move(bond_list_)),
+        bond_ids(std::move(bond_ids_)) {}
+
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t idx) const {
+    auto const &bonded_ias = data.bonded_ias;
+    auto const &box_geo = data.box_geo;
+    auto const &aosoa = data.aosoa;
+    auto &bond_breakage = data.bond_breakage;
+    auto const has_breakage_specs = data.has_breakage_specs;
+    auto scatter_force = data.scatter_force.access();
+    auto const pp_num_particles = data.pp_num_particles;
+    auto const bond_id = bond_ids(idx);
+
+    auto const i = bond_list(idx, 0);
+    auto const j = bond_list(idx, 1);
+    auto const k = bond_list(idx, 2);
+    auto const &iaparams = *bonded_ias.at(bond_id);
+
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+    auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
+    auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
+    auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
+
+    // Consider for bond breakage. Evaluated exactly once per bond here
+    // (unlike AngleBondsKernel's fallback path, which every participant
+    // checks independently), matching the pre-gather kernel's behavior.
+    if (has_breakage_specs &&
+        bond_breakage.check_and_handle_breakage(
+            aosoa.id(i), {{aosoa.id(j), aosoa.id(k)}}, bond_id,
+            box_geo.get_mi_vector(pos2, pos3).norm())) {
+      return;
+    }
+    if (std::get_if<OifGlobalForcesBond>(&iaparams)) {
+      return;
+    }
+
+    auto const result = calc_bonded_three_body_force(iaparams, vec1, vec2);
+
+    if (result) {
+      auto const &forces = result.value();
+      auto const &f0 = std::get<0>(forces);
+      auto const &f1 = std::get<1>(forces);
+      auto const &f2 = std::get<2>(forces);
+      // i (the vertex) is always real/local by construction (angle_list
+      // only ever gets a primary entry from a non-ghost owner -- see
+      // CellStructure::update_bond_storage); j/k may be ghosts here.
+      scatter_force(i, 0) += f0[0];
+      scatter_force(i, 1) += f0[1];
+      scatter_force(i, 2) += f0[2];
+      if (j < pp_num_particles) {
+        scatter_force(j, 0) += f1[0];
+        scatter_force(j, 1) += f1[1];
+        scatter_force(j, 2) += f1[2];
+      }
+      if (k < pp_num_particles) {
+        scatter_force(k, 0) += f2[0];
+        scatter_force(k, 1) += f2[1];
+        scatter_force(k, 2) += f2[2];
+      }
+    } else {
+      std::array<int, 2> pids = {aosoa.id(j), aosoa.id(k)};
+      bond_broken_error(aosoa.id(i), {pids.data(), 2});
+    }
+  }
 };
 
 // Particle-parallel gather kernel for angle bonds: one work-item per LOCAL
@@ -216,6 +309,14 @@ struct AngleBondsKernelData {
 // the "left" participant -- the geometry is always set up vertex-referenced,
 // exactly as the old bond-indexed kernel did, and only the choice of which
 // tuple element is "self"'s force depends on self_slot.
+//
+// Each row's "bond_index" column (see PPAngleSlotType's doc comment) picks
+// one of two paths: if AngleBondsForceComputeKernel already evaluated this
+// bond (the common case), it already scatter-added this participant's share
+// directly into local_force, so this row has nothing left to do -- skip it.
+// Otherwise (this bond's primary entry lives on another rank) fall back to
+// evaluating it directly from this row, exactly as this kernel always used
+// to.
 struct AngleBondsKernel {
   AngleBondsKernelData data;
   LocalBondState::PPAngleDegreeType pp_angle_degree;
@@ -243,6 +344,18 @@ struct AngleBondsKernel {
       if (self_slot < 0) {
         continue;
       }
+
+      auto const bond_index = pp_angle_slots(self, slot, 5);
+      if (bond_index >= 0) {
+        // Already applied directly by AngleBondsForceComputeKernel's
+        // scatter-add -- nothing left to do for this row.
+        continue;
+      }
+
+      // Fallback: this bond's primary entry isn't resolvable on this
+      // rank (it straddles a rank boundary and the owner lives
+      // elsewhere), so AngleBondsForceComputeKernel never evaluated it --
+      // evaluate it directly.
       auto const vertex = pp_angle_slots(self, slot, 0);
       auto const arm1 = pp_angle_slots(self, slot, 1);
       auto const arm2 = pp_angle_slots(self, slot, 2);
@@ -311,6 +424,83 @@ struct DihedralBondsKernelData {
   BoxGeometry const &box_geo;
   CellStructure::ForceType local_force;
   CellStructure::AoSoA_pack const &aosoa;
+  CellStructure::ScatterForce scatter_force;
+  int pp_num_particles;
+};
+
+// Evaluates every rank-locally-owned dihedral bond's force exactly once
+// (dispatched over dihedral_count), scatter-adding the 4 resulting force
+// vectors directly into the (real, non-ghost) participants' own local_force
+// rows -- see AngleBondsForceComputeKernel's doc comment for the rationale;
+// same split, applied to the 4-body case.
+struct DihedralBondsForceComputeKernel {
+  DihedralBondsKernelData data;
+  LocalBondState::DihedralBondlistType bond_list;
+  LocalBondState::DihedralBondIDType bond_ids;
+
+  DihedralBondsForceComputeKernel(
+      DihedralBondsKernelData data_,
+      LocalBondState::DihedralBondlistType bond_list_,
+      LocalBondState::DihedralBondIDType bond_ids_)
+      : data(std::move(data_)), bond_list(std::move(bond_list_)),
+        bond_ids(std::move(bond_ids_)) {}
+
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t idx) const {
+    auto const &bonded_ias = data.bonded_ias;
+    auto const &box_geo = data.box_geo;
+    auto const &aosoa = data.aosoa;
+    auto scatter_force = data.scatter_force.access();
+    auto const pp_num_particles = data.pp_num_particles;
+    auto const bond_id = bond_ids(idx);
+
+    auto const i = bond_list(idx, 0);
+    auto const j = bond_list(idx, 1);
+    auto const k = bond_list(idx, 2);
+    auto const m = bond_list(idx, 3);
+    auto const &iaparams = *bonded_ias.at(bond_id);
+
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+    auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
+    auto const pos4 = aosoa.get_vector_at(aosoa.position, m);
+    auto const vel1 = aosoa.get_vector_at(aosoa.velocity, i);
+    auto const vel3 = aosoa.get_vector_at(aosoa.velocity, k);
+    auto const image1 = aosoa.get_vector_at(aosoa.image, i);
+
+    auto const result = calc_bonded_four_body_force(
+        iaparams, box_geo, pos1, pos2, pos3, pos4, vel1, vel3, image1);
+
+    if (result) {
+      auto const &forces = result.value();
+      auto const &f0 = std::get<0>(forces);
+      auto const &f1 = std::get<1>(forces);
+      auto const &f2 = std::get<2>(forces);
+      auto const &f3 = std::get<3>(forces);
+      // i is always real/local by construction (see
+      // AngleBondsForceComputeKernel's comment); j/k/m may be ghosts here.
+      scatter_force(i, 0) += f0[0];
+      scatter_force(i, 1) += f0[1];
+      scatter_force(i, 2) += f0[2];
+      if (j < pp_num_particles) {
+        scatter_force(j, 0) += f1[0];
+        scatter_force(j, 1) += f1[1];
+        scatter_force(j, 2) += f1[2];
+      }
+      if (k < pp_num_particles) {
+        scatter_force(k, 0) += f2[0];
+        scatter_force(k, 1) += f2[1];
+        scatter_force(k, 2) += f2[2];
+      }
+      if (m < pp_num_particles) {
+        scatter_force(m, 0) += f3[0];
+        scatter_force(m, 1) += f3[1];
+        scatter_force(m, 2) += f3[2];
+      }
+    } else {
+      std::array<int, 3> pids = {aosoa.id(j), aosoa.id(k), aosoa.id(m)};
+      bond_broken_error(aosoa.id(i), {pids.data(), 3});
+    }
+  }
 };
 
 // Particle-parallel gather kernel for dihedral bonds: one work-item per
@@ -324,6 +514,11 @@ struct DihedralBondsKernelData {
 // regardless of which position "self" is -- calc_bonded_four_body_force
 // needs all 4 chain positions' geometry either way, so this is no more
 // redundant per participant than the position lookups themselves.
+//
+// See AngleBondsKernel's doc comment for the bond_index fast-path/fallback
+// split: in the common case, DihedralBondsForceComputeKernel already
+// scatter-added this participant's share directly into local_force, so this
+// row has nothing left to do.
 struct DihedralBondsKernel {
   DihedralBondsKernelData data;
   LocalBondState::PPDihedralDegreeType pp_dihedral_degree;
@@ -350,6 +545,16 @@ struct DihedralBondsKernel {
       if (chain_slot < 0) {
         continue;
       }
+
+      auto const bond_index = pp_dihedral_slots(self, slot, 6);
+      if (bond_index >= 0) {
+        // Already applied directly by DihedralBondsForceComputeKernel's
+        // scatter-add -- nothing left to do for this row.
+        continue;
+      }
+
+      // Fallback: this bond's primary entry isn't resolvable on this
+      // rank -- see AngleBondsKernel's fallback comment.
       auto const i = pp_dihedral_slots(self, slot, 0);
       auto const j = pp_dihedral_slots(self, slot, 1);
       auto const k = pp_dihedral_slots(self, slot, 2);

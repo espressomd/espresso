@@ -39,7 +39,34 @@
 #include <functional>
 #include <iterator>
 #include <span>
+#include <unordered_map>
 #include <utility>
+
+// Identifies a rank-local angle/dihedral bond occurrence by its fully
+// AoSoA-resolved participant indices plus bond id, so that
+// resolve_pp_angle_bond_index()/resolve_pp_dihedral_bond_index() below can
+// map a pp_angle_slots/pp_dihedral_slots row back to its slot in
+// angle_list/dihedral_list (i.e. whether AngleBondsForceComputeKernel/
+// DihedralBondsForceComputeKernel already applied this row's share) without
+// any cross-thread bookkeeping during CellStructure::update_bond_storage().
+// Two distinct bonds can only share a
+// key if they connect the exact same tuple of particles with the same bond
+// type, which is already an ambiguity the pre-existing energy/pressure
+// per-bond lists don't disambiguate either.
+template <std::size_t N> struct BondKey {
+  std::array<int, N> ids;
+  int bond_id;
+  bool operator==(BondKey const &) const = default;
+};
+template <std::size_t N> struct BondKeyHash {
+  std::size_t operator()(BondKey<N> const &k) const noexcept {
+    std::size_t seed = std::hash<int>{}(k.bond_id);
+    for (auto const id : k.ids) {
+      seed = seed * 31 + std::hash<int>{}(id);
+    }
+    return seed;
+  }
+};
 
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
 commit_particle(Particle const &p, auto const index,
@@ -273,6 +300,50 @@ update_cabana_state(CellStructure &cell_structure,
             }
           });
     }
+    if (angle_count and bs.pp_num_particles) {
+      // Build a lookup from a fully-resolved (vertex, arm1, arm2, bond_id)
+      // tuple to its row in angle_list/angle_ids, then
+      // use it to fill in pp_angle_slots' bond_index column (5) for every
+      // row -- see PPAngleSlotType's doc comment. Only bonds whose primary
+      // entry is a non-ghost particle on THIS rank appear in angle_list
+      // (CellStructure::update_bond_storage), so a row whose owner is only
+      // a ghost here (the bond straddles a rank boundary) legitimately
+      // finds no match and is left at -1, which AngleBondsKernel then
+      // evaluates directly instead of through the buffer. This build is
+      // sequential (it populates a std::unordered_map, which allows
+      // concurrent reads but not concurrent writes) but only runs on a
+      // Verlet-list rebuild, not every force calculation.
+      auto const &angle_bond_list = bs.angle_list;
+      auto const &angle_bond_ids = bs.angle_ids;
+      std::unordered_map<BondKey<3>, int, BondKeyHash<3>> angle_index_lookup;
+      angle_index_lookup.reserve(static_cast<std::size_t>(angle_count));
+      for (int a_index = 0; a_index < angle_count; ++a_index) {
+        angle_index_lookup.emplace(BondKey<3>{{angle_bond_list(a_index, 0),
+                                               angle_bond_list(a_index, 1),
+                                               angle_bond_list(a_index, 2)},
+                                              angle_bond_ids(a_index)},
+                                   a_index);
+      }
+      auto &pp_angle_degree = bs.pp_angle_degree;
+      auto &pp_angle_slots = bs.pp_angle_slots;
+      kokkos_parallel_range_for<host_space>(
+          "resolve_pp_angle_bond_index", std::size_t{0}, bs.pp_num_particles,
+          [&pp_angle_degree, &pp_angle_slots, &angle_index_lookup](int idx) {
+            auto const degree = pp_angle_degree(idx);
+            for (int slot = 0; slot < degree; ++slot) {
+              if (pp_angle_slots(idx, slot, 4) < 0) {
+                continue; // already unresolvable, see resolve_pp_angle_indices
+              }
+              BondKey<3> const key{{pp_angle_slots(idx, slot, 0),
+                                    pp_angle_slots(idx, slot, 1),
+                                    pp_angle_slots(idx, slot, 2)},
+                                   pp_angle_slots(idx, slot, 3)};
+              auto const it = angle_index_lookup.find(key);
+              pp_angle_slots(idx, slot, 5) =
+                  (it != angle_index_lookup.end()) ? it->second : -1;
+            }
+          });
+    }
     if (bs.pp_num_particles) {
       auto &pp_dihedral_degree = bs.pp_dihedral_degree;
       auto &pp_dihedral_slots = bs.pp_dihedral_slots;
@@ -303,6 +374,45 @@ update_cabana_state(CellStructure &cell_structure,
             for (int col = 0; col < 4; ++col) {
               dihedral_bond_list(idx, col) =
                   id_to_index(dihedral_bond_list(idx, col));
+            }
+          });
+    }
+    if (dihedral_count and bs.pp_num_particles) {
+      // See resolve_pp_angle_bond_index above for the rationale; same idea
+      // over the 4-chain (i, j, k, m) tuple, filling pp_dihedral_slots'
+      // bond_index column (6).
+      auto const &dihedral_bond_list = bs.dihedral_list;
+      auto const &dihedral_bond_ids = bs.dihedral_ids;
+      std::unordered_map<BondKey<4>, int, BondKeyHash<4>> dihedral_index_lookup;
+      dihedral_index_lookup.reserve(static_cast<std::size_t>(dihedral_count));
+      for (int d_index = 0; d_index < dihedral_count; ++d_index) {
+        dihedral_index_lookup.emplace(
+            BondKey<4>{{dihedral_bond_list(d_index, 0),
+                        dihedral_bond_list(d_index, 1),
+                        dihedral_bond_list(d_index, 2),
+                        dihedral_bond_list(d_index, 3)},
+                       dihedral_bond_ids(d_index)},
+            d_index);
+      }
+      auto &pp_dihedral_degree = bs.pp_dihedral_degree;
+      auto &pp_dihedral_slots = bs.pp_dihedral_slots;
+      kokkos_parallel_range_for<host_space>(
+          "resolve_pp_dihedral_bond_index", std::size_t{0}, bs.pp_num_particles,
+          [&pp_dihedral_degree, &pp_dihedral_slots,
+           &dihedral_index_lookup](int idx) {
+            auto const degree = pp_dihedral_degree(idx);
+            for (int slot = 0; slot < degree; ++slot) {
+              if (pp_dihedral_slots(idx, slot, 5) < 0) {
+                continue; // already unresolvable
+              }
+              BondKey<4> const key{{pp_dihedral_slots(idx, slot, 0),
+                                    pp_dihedral_slots(idx, slot, 1),
+                                    pp_dihedral_slots(idx, slot, 2),
+                                    pp_dihedral_slots(idx, slot, 3)},
+                                   pp_dihedral_slots(idx, slot, 4)};
+              auto const it = dihedral_index_lookup.find(key);
+              pp_dihedral_slots(idx, slot, 6) =
+                  (it != dihedral_index_lookup.end()) ? it->second : -1;
             }
           });
     }

@@ -170,22 +170,29 @@ create_kokkos_pair_bonds_kernel_data(System::System const &system) {
 static AngleBondsKernelData
 create_kokkos_angle_bonds_kernel_data(System::System const &system) {
   auto &local_force = system.cell_structure->get_local_force();
+  auto scatter_force = system.cell_structure->get_scatter_force();
   auto const &aosoa = system.cell_structure->get_aosoa();
+  auto &bs = system.cell_structure->bond_state();
   return /* AngleBondsKernelData */ {
       *system.bonded_ias,
       *system.bond_breakage,
       *system.box_geo,
       local_force,
       aosoa,
-      !system.bond_breakage->breakage_specs.empty()};
+      !system.bond_breakage->breakage_specs.empty(),
+      scatter_force,
+      bs.pp_num_particles};
 }
 
 static DihedralBondsKernelData
 create_kokkos_dihedral_bonds_kernel_data(System::System const &system) {
   auto &local_force = system.cell_structure->get_local_force();
+  auto scatter_force = system.cell_structure->get_scatter_force();
   auto const &aosoa = system.cell_structure->get_aosoa();
-  return /* DihedralBondsKernelData */ {*system.bonded_ias, *system.box_geo,
-                                        local_force, aosoa};
+  auto &bs = system.cell_structure->bond_state();
+  return /* DihedralBondsKernelData */ {
+      *system.bonded_ias, *system.box_geo,    local_force, aosoa,
+      scatter_force,      bs.pp_num_particles};
 }
 
 static ForcesKernel create_cabana_neighbor_kernel(
@@ -517,6 +524,30 @@ void System::System::calculate_forces() {
   auto angle_bonds_kernel_data = create_kokkos_angle_bonds_kernel_data(*this);
   auto dihedral_bonds_kernel_data =
       create_kokkos_dihedral_bonds_kernel_data(*this);
+
+  // Evaluate every rank-locally-owned angle/dihedral bond's force exactly
+  // once (see AngleBondsForceComputeKernel's doc comment), before the
+  // particle-parallel gather kernels below read the results back. Must
+  // finish (fence) before those gather kernels run.
+  using host_space = Kokkos::DefaultHostExecutionSpace;
+  if (bs.angle_count > 0) {
+    kokkos_parallel_range_for<host_space>(
+        "angle_bond_force_compute", std::size_t{0},
+        static_cast<std::size_t>(bs.angle_count),
+        AngleBondsForceComputeKernel{angle_bonds_kernel_data, bs.angle_list,
+                                     bs.angle_ids});
+  }
+  if (bs.dihedral_count > 0) {
+    kokkos_parallel_range_for<host_space>(
+        "dihedral_bond_force_compute", std::size_t{0},
+        static_cast<std::size_t>(bs.dihedral_count),
+        DihedralBondsForceComputeKernel{dihedral_bonds_kernel_data,
+                                        bs.dihedral_list, bs.dihedral_ids});
+  }
+  if (bs.angle_count > 0 or bs.dihedral_count > 0) {
+    Kokkos::fence();
+  }
+
   auto pair_bonds_kernel =
       PairBondsKernel{pair_bonds_kernel_data, bs.pp_pair_degree,
                       bs.pp_pair_slots, get_ptr(coulomb_kernel)};

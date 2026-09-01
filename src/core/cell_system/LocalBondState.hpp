@@ -63,9 +63,15 @@ struct LocalBondState {
   // entry, mirroring the dihedral chain_slot derivation. Columns: 0/1/2 =
   // (vertex, arm1, arm2) participant ids (until resolved to AoSoA
   // indices), 3 = bond_id, 4 = this row's own position (0=vertex, 1=arm1,
-  // 2=arm2).
+  // 2=arm2), 5 = bond_index: this bond's row in angle_list/angle_ids if its
+  // primary entry is resolvable on this rank (i.e. the owning particle is
+  // local, not a ghost, here -- see AngleBondsForceComputeKernel, which
+  // already applies this row's share directly via a ScatterView in that
+  // case), or -1 if it isn't (a bond straddling a rank boundary whose owner
+  // lives elsewhere), in which case AngleBondsKernel falls back to
+  // evaluating the bond directly from this row's own columns 0-4.
   using PPAngleSlotType =
-      Kokkos::View<int **[5], Kokkos::LayoutRight, execution_space>;
+      Kokkos::View<int **[6], Kokkos::LayoutRight, execution_space>;
   using PPAngleDegreeType =
       Kokkos::View<int *, Kokkos::LayoutRight, execution_space>;
 
@@ -80,9 +86,11 @@ struct LocalBondState {
   // partner_ids() alone cannot disambiguate which of the 3 non-owner
   // positions it originally was. Columns: 0/1/2/3 = the 4 chain participant
   // ids (until resolved to AoSoA indices), 4 = bond_id, 5 = this row's own
-  // chain position (0..3).
+  // chain position (0..3), 6 = bond_index into dihedral_list/dihedral_ids,
+  // or -1 -- same rank-boundary fallback rationale as PPAngleSlotType's
+  // column 5.
   using PPDihedralSlotType =
-      Kokkos::View<int **[6], Kokkos::LayoutRight, execution_space>;
+      Kokkos::View<int **[7], Kokkos::LayoutRight, execution_space>;
   using PPDihedralDegreeType =
       Kokkos::View<int *, Kokkos::LayoutRight, execution_space>;
 

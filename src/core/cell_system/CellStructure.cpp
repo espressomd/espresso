@@ -335,6 +335,11 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
           pp_angle_slots(index, pp_angle_slot, 2) = partners[1]->id();
           pp_angle_slots(index, pp_angle_slot, 3) = bond.bond_id();
           pp_angle_slots(index, pp_angle_slot, 4) = 0;
+          // Column 5 (bond_index into angle_list) is filled in by a later
+          // resolution pass (short_range_cabana.hpp), once angle_list has
+          // been built and resolved to AoSoA indices; default to
+          // "unresolved" until then.
+          pp_angle_slots(index, pp_angle_slot, 5) = -1;
           wrote_angle_row = true;
         } else {
           // Mirror entry: partners[0] is always the vertex/owner (angle
@@ -364,6 +369,7 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
             pp_angle_slots(index, pp_angle_slot, 2) = candidate[1];
             pp_angle_slots(index, pp_angle_slot, 3) = bond.bond_id();
             pp_angle_slots(index, pp_angle_slot, 4) = arm_slot;
+            pp_angle_slots(index, pp_angle_slot, 5) = -1;
             wrote_angle_row = true;
             break;
           }
@@ -376,6 +382,7 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
         pp_angle_slots(index, pp_angle_slot, 2) = -1;
         pp_angle_slots(index, pp_angle_slot, 3) = bond.bond_id();
         pp_angle_slots(index, pp_angle_slot, 4) = -1;
+        pp_angle_slots(index, pp_angle_slot, 5) = -1;
       }
       ++pp_angle_slot;
     } else if (partner_ids.size() == 3u) {
@@ -396,6 +403,9 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
           pp_dihedral_slots(index, pp_dihedral_slot, 3) = partners[2]->id();
           pp_dihedral_slots(index, pp_dihedral_slot, 4) = bond.bond_id();
           pp_dihedral_slots(index, pp_dihedral_slot, 5) = 0;
+          // See PPAngleSlotType's column 5 doc comment: column 6 is
+          // resolved later, once dihedral_list is available.
+          pp_dihedral_slots(index, pp_dihedral_slot, 6) = -1;
           wrote_row = true;
         } else {
           // Mirror entry: partners[0] is always the owner (chain position
@@ -435,6 +445,7 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
             pp_dihedral_slots(index, pp_dihedral_slot, 3) = candidate[2];
             pp_dihedral_slots(index, pp_dihedral_slot, 4) = bond.bond_id();
             pp_dihedral_slots(index, pp_dihedral_slot, 5) = chain_slot;
+            pp_dihedral_slots(index, pp_dihedral_slot, 6) = -1;
             wrote_row = true;
             break;
           }
@@ -448,6 +459,7 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
         pp_dihedral_slots(index, pp_dihedral_slot, 3) = -1;
         pp_dihedral_slots(index, pp_dihedral_slot, 4) = bond.bond_id();
         pp_dihedral_slots(index, pp_dihedral_slot, 5) = -1;
+        pp_dihedral_slots(index, pp_dihedral_slot, 6) = -1;
       }
       ++pp_dihedral_slot;
     }
