@@ -56,6 +56,7 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -280,24 +281,186 @@ void CellStructure::reset_local_properties() {
 }
 
 void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
-                                        int &dihedral_count,
-                                        Particle const &p) {
+                                        int &dihedral_count, Particle const &p,
+                                        int index) {
   auto &pair_list = m_bond_state->pair_list;
   auto &pair_ids = m_bond_state->pair_ids;
   auto &angle_list = m_bond_state->angle_list;
   auto &angle_ids = m_bond_state->angle_ids;
   auto &dihedral_list = m_bond_state->dihedral_list;
   auto &dihedral_ids = m_bond_state->dihedral_ids;
+  auto &pp_pair_slots = m_bond_state->pp_pair_slots;
+  auto &pp_angle_slots = m_bond_state->pp_angle_slots;
+  auto &pp_dihedral_slots = m_bond_state->pp_dihedral_slots;
+  int pp_pair_slot = 0;
+  int pp_angle_slot = 0;
+  int pp_dihedral_slot = 0;
   for (auto const bond : p.bonds()) {
-    // Only primary entries drive force/energy calculation; mirror entries
-    // (held by non-owning participants) are a query/removal-only detail
-    // and would otherwise double-count every bond.
-    if (not bond.is_primary()) {
-      continue;
-    }
     auto const partner_ids = bond.partner_ids();
+    // Every pp_* row counted for this particle by set_index_map() (purely
+    // from partner_ids().size(), with no resolvability check) must get a
+    // slot written here, or the slot count and the degree recorded there
+    // fall out of sync and a later pass reads an uninitialized "other"
+    // index as an AoSoA index. A bond whose partners aren't resolvable on
+    // this rank (e.g. a mirror-holding ghost whose own bond partner isn't
+    // itself ghost-visible here -- see the "Ghost reach" risk in the
+    // gather-scheme plan) therefore still gets a row, marked invalid via a
+    // -1 "other" sentinel that the resolve pass and the force/energy/
+    // pressure kernels all skip; nothing is lost since the bond's actual
+    // physics is always resolvable on its participants' own authoritative
+    // (non-ghost) home ranks.
+    if (partner_ids.size() == 1u) {
+      try {
+        auto const partners = resolve_bond_partners(partner_ids);
+        pp_pair_slots(index, pp_pair_slot, 0) = partners[0]->id();
+      } catch (BondResolutionError const &) {
+        pp_pair_slots(index, pp_pair_slot, 0) = -1;
+      }
+      pp_pair_slots(index, pp_pair_slot, 1) = bond.bond_id();
+      pp_pair_slots(index, pp_pair_slot, 2) = bond.is_primary() ? 1 : 0;
+      ++pp_pair_slot;
+    } else if (partner_ids.size() == 2u) {
+      // Angle bonds: not every 3-body force function dispatched via
+      // calc_bonded_three_body_force shares angle_generic_force's
+      // f_left(a,b) == f_right(b,a) symmetry (e.g. IBMTriel does not), so
+      // every row stores the full original (vertex, arm1, arm2) plus which
+      // position this row's own particle occupies (see PPAngleSlotType's
+      // doc comment), exactly mirroring how dihedral rows work below.
+      bool wrote_angle_row = false;
+      try {
+        auto const partners = resolve_bond_partners(partner_ids);
+        if (bond.is_primary()) {
+          pp_angle_slots(index, pp_angle_slot, 0) = p.id();
+          pp_angle_slots(index, pp_angle_slot, 1) = partners[0]->id();
+          pp_angle_slots(index, pp_angle_slot, 2) = partners[1]->id();
+          pp_angle_slots(index, pp_angle_slot, 3) = bond.bond_id();
+          pp_angle_slots(index, pp_angle_slot, 4) = 0;
+          wrote_angle_row = true;
+        } else {
+          // Mirror entry: partners[0] is always the vertex/owner (angle
+          // primaries are always held by the vertex). Which of the
+          // vertex's two arm positions this particle originally was is
+          // not recoverable from this entry alone, so resolve it by
+          // finding the matching primary entry on the vertex and locating
+          // this particle's id in its (ordered) partner list.
+          auto const *owner = partners[0];
+          for (auto const owner_bond : owner->bonds()) {
+            auto const owner_partner_ids = owner_bond.partner_ids();
+            if (not owner_bond.is_primary() or
+                owner_bond.bond_id() != bond.bond_id() or
+                owner_partner_ids.size() != 2u) {
+              continue;
+            }
+            std::array<int, 2> candidate = {owner_partner_ids[0],
+                                            owner_partner_ids[1]};
+            auto const slot_it = std::ranges::find(candidate, p.id());
+            if (slot_it == candidate.end()) {
+              continue;
+            }
+            auto const arm_slot =
+                1 + static_cast<int>(slot_it - candidate.begin());
+            pp_angle_slots(index, pp_angle_slot, 0) = owner->id();
+            pp_angle_slots(index, pp_angle_slot, 1) = candidate[0];
+            pp_angle_slots(index, pp_angle_slot, 2) = candidate[1];
+            pp_angle_slots(index, pp_angle_slot, 3) = bond.bond_id();
+            pp_angle_slots(index, pp_angle_slot, 4) = arm_slot;
+            wrote_angle_row = true;
+            break;
+          }
+        }
+      } catch (BondResolutionError const &) {
+      }
+      if (not wrote_angle_row) {
+        pp_angle_slots(index, pp_angle_slot, 0) = -1;
+        pp_angle_slots(index, pp_angle_slot, 1) = -1;
+        pp_angle_slots(index, pp_angle_slot, 2) = -1;
+        pp_angle_slots(index, pp_angle_slot, 3) = bond.bond_id();
+        pp_angle_slots(index, pp_angle_slot, 4) = -1;
+      }
+      ++pp_angle_slot;
+    } else if (partner_ids.size() == 3u) {
+      // Dihedral bonds: unlike pair/angle, the force formula gives each of
+      // the 4 chain positions a distinct contribution, so every row stores
+      // the full chain (all 4 ids, original creation order) plus which
+      // position this row's own particle occupies (see PPDihedralSlotType's
+      // doc comment). A mirror also needs its owner resolved just to look
+      // up its own chain_slot, so unlike pair/angle, resolution failure is
+      // checked once for the whole row up front.
+      bool wrote_row = false;
+      try {
+        auto const partners = resolve_bond_partners(partner_ids);
+        if (bond.is_primary()) {
+          pp_dihedral_slots(index, pp_dihedral_slot, 0) = p.id();
+          pp_dihedral_slots(index, pp_dihedral_slot, 1) = partners[0]->id();
+          pp_dihedral_slots(index, pp_dihedral_slot, 2) = partners[1]->id();
+          pp_dihedral_slots(index, pp_dihedral_slot, 3) = partners[2]->id();
+          pp_dihedral_slots(index, pp_dihedral_slot, 4) = bond.bond_id();
+          pp_dihedral_slots(index, pp_dihedral_slot, 5) = 0;
+          wrote_row = true;
+        } else {
+          // Mirror entry: partners[0] is always the owner (chain position
+          // 0), by the same "removing one participant preserves relative
+          // order of the rest" construction as pair/angle mirrors. Which
+          // of the owner's 3 remaining chain positions this particle
+          // occupies is not recoverable from this entry alone (all 3
+          // non-owner positions look identical from here), so resolve it
+          // by finding the matching primary entry on the owner and
+          // locating this particle's id in its (ordered) partner list.
+          auto const *owner = partners[0];
+          std::array<int, 3> const self_others = {p.id(), partners[1]->id(),
+                                                  partners[2]->id()};
+          auto sorted_self_others = self_others;
+          std::ranges::sort(sorted_self_others);
+          for (auto const owner_bond : owner->bonds()) {
+            auto const owner_partner_ids = owner_bond.partner_ids();
+            if (not owner_bond.is_primary() or
+                owner_bond.bond_id() != bond.bond_id() or
+                owner_partner_ids.size() != 3u) {
+              continue;
+            }
+            std::array<int, 3> candidate = {owner_partner_ids[0],
+                                            owner_partner_ids[1],
+                                            owner_partner_ids[2]};
+            auto sorted_candidate = candidate;
+            std::ranges::sort(sorted_candidate);
+            if (sorted_candidate != sorted_self_others) {
+              continue;
+            }
+            auto const slot_it = std::ranges::find(candidate, p.id());
+            auto const chain_slot =
+                1 + static_cast<int>(slot_it - candidate.begin());
+            pp_dihedral_slots(index, pp_dihedral_slot, 0) = owner->id();
+            pp_dihedral_slots(index, pp_dihedral_slot, 1) = candidate[0];
+            pp_dihedral_slots(index, pp_dihedral_slot, 2) = candidate[1];
+            pp_dihedral_slots(index, pp_dihedral_slot, 3) = candidate[2];
+            pp_dihedral_slots(index, pp_dihedral_slot, 4) = bond.bond_id();
+            pp_dihedral_slots(index, pp_dihedral_slot, 5) = chain_slot;
+            wrote_row = true;
+            break;
+          }
+        }
+      } catch (BondResolutionError const &) {
+      }
+      if (not wrote_row) {
+        pp_dihedral_slots(index, pp_dihedral_slot, 0) = -1;
+        pp_dihedral_slots(index, pp_dihedral_slot, 1) = -1;
+        pp_dihedral_slots(index, pp_dihedral_slot, 2) = -1;
+        pp_dihedral_slots(index, pp_dihedral_slot, 3) = -1;
+        pp_dihedral_slots(index, pp_dihedral_slot, 4) = bond.bond_id();
+        pp_dihedral_slots(index, pp_dihedral_slot, 5) = -1;
+      }
+      ++pp_dihedral_slot;
+    }
+
     try {
       auto const partners = resolve_bond_partners(partner_ids);
+      // Only primary entries drive the per-bond lists still used by
+      // angle/dihedral force calculation and collision detection's hot-add
+      // path; mirror entries are a query/removal-only detail there and
+      // would otherwise double-count every bond.
+      if (not bond.is_primary()) {
+        continue;
+      }
       if (partners.size() == 1u) { // pair bonds
         auto p_index = Kokkos::atomic_fetch_add(&pair_count, 1);
         pair_list(p_index, 0) = p.id();
@@ -345,28 +508,48 @@ void CellStructure::set_index_map() {
     int dihedral = 0;
   };
   std::vector<PerThreadCounts> thread_counts(n_threads);
+  // Per-particle degree (primary + mirror entries) for the pair/angle/dihedral
+  // bond gather structures, keyed by the same index as unique_particles.
+  std::vector<int> pp_pair_degree(unique_particles.size(), 0);
+  std::vector<int> pp_angle_degree(unique_particles.size(), 0);
+  std::vector<int> pp_dihedral_degree(unique_particles.size(), 0);
 
-  enumerate_local_particles(*this, [&unique_particles, &thread_counts](
-                                       std::size_t index, Particle &p) {
-    unique_particles[index] = &p;
-    auto &counts = thread_counts[omp_get_thread_num()];
-    counts.max_id = std::max(p.id(), counts.max_id);
-    for (auto const bond : p.bonds()) {
-      // Mirror entries must not be counted here: update_bond_storage()
-      // only fills the flat lists from primary entries, and the two
-      // must agree on the count or the Kokkos views below overflow.
-      if (bond.is_primary() and not bond.partner_ids().empty()) {
-        auto const partner_ids = bond.partner_ids();
-        if (partner_ids.size() == 1u) {
-          counts.pair += 1;
-        } else if (partner_ids.size() == 2u) {
-          counts.angle += 1;
-        } else if (partner_ids.size() == 3u) {
-          counts.dihedral += 1;
+  enumerate_local_particles(
+      *this,
+      [&unique_particles, &thread_counts, &pp_pair_degree, &pp_angle_degree,
+       &pp_dihedral_degree](std::size_t index, Particle &p) {
+        unique_particles[index] = &p;
+        auto &counts = thread_counts[omp_get_thread_num()];
+        counts.max_id = std::max(p.id(), counts.max_id);
+        int pair_degree = 0;
+        int angle_degree = 0;
+        int dihedral_degree = 0;
+        for (auto const bond : p.bonds()) {
+          auto const partner_ids = bond.partner_ids();
+          if (partner_ids.size() == 1u) {
+            pair_degree += 1;
+          } else if (partner_ids.size() == 2u) {
+            angle_degree += 1;
+          } else if (partner_ids.size() == 3u) {
+            dihedral_degree += 1;
+          }
+          // Mirror entries must not be counted here: update_bond_storage()
+          // only fills the flat lists from primary entries, and the two
+          // must agree on the count or the Kokkos views below overflow.
+          if (bond.is_primary() and not partner_ids.empty()) {
+            if (partner_ids.size() == 1u) {
+              counts.pair += 1;
+            } else if (partner_ids.size() == 2u) {
+              counts.angle += 1;
+            } else if (partner_ids.size() == 3u) {
+              counts.dihedral += 1;
+            }
+          }
         }
-      }
-    }
-  });
+        pp_pair_degree[index] = pair_degree;
+        pp_angle_degree[index] = angle_degree;
+        pp_dihedral_degree[index] = dihedral_degree;
+      });
   Kokkos::fence();
   int pair_count = 0;
   int angle_count = 0;
@@ -380,6 +563,39 @@ void CellStructure::set_index_map() {
   }
   set_local_bond_numbers(pair_count, angle_count, dihedral_count);
   m_bond_state->allocate();
+  int const max_pp_pair_degree =
+      pp_pair_degree.empty()
+          ? 0
+          : *std::max_element(pp_pair_degree.begin(), pp_pair_degree.end());
+  m_bond_state->allocate_pp_pair(static_cast<int>(pp_pair_degree.size()),
+                                 max_pp_pair_degree);
+  // allocate_pp_pair() only sizes the Kokkos View (WithoutInitializing); the
+  // computed degrees must still be copied in, or resolve_pp_pair_indices()
+  // (short_range_cabana.hpp) would read uninitialized values as loop bounds.
+  auto &pp_pair_degree_view = m_bond_state->pp_pair_degree;
+  for (std::size_t i = 0; i < pp_pair_degree.size(); ++i) {
+    pp_pair_degree_view(i) = pp_pair_degree[i];
+  }
+  int const max_pp_angle_degree =
+      pp_angle_degree.empty()
+          ? 0
+          : *std::max_element(pp_angle_degree.begin(), pp_angle_degree.end());
+  m_bond_state->allocate_pp_angle(static_cast<int>(pp_angle_degree.size()),
+                                  max_pp_angle_degree);
+  auto &pp_angle_degree_view = m_bond_state->pp_angle_degree;
+  for (std::size_t i = 0; i < pp_angle_degree.size(); ++i) {
+    pp_angle_degree_view(i) = pp_angle_degree[i];
+  }
+  int const max_pp_dihedral_degree =
+      pp_dihedral_degree.empty() ? 0
+                                 : *std::max_element(pp_dihedral_degree.begin(),
+                                                     pp_dihedral_degree.end());
+  m_bond_state->allocate_pp_dihedral(
+      static_cast<int>(pp_dihedral_degree.size()), max_pp_dihedral_degree);
+  auto &pp_dihedral_degree_view = m_bond_state->pp_dihedral_degree;
+  for (std::size_t i = 0; i < pp_dihedral_degree.size(); ++i) {
+    pp_dihedral_degree_view(i) = pp_dihedral_degree[i];
+  }
   for (auto &p : ghost_particles()) {
     auto const *local_particle = get_local_particle(p.id());
     if (not local_particle or not local_particle->is_ghost()) {

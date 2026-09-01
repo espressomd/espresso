@@ -209,7 +209,7 @@ update_cabana_state(CellStructure &cell_structure,
           id_to_index(p.id()) = index;
           if (not p.is_ghost()) {
             cell_structure.update_bond_storage(pair_count, angle_count,
-                                               dihedral_count, p);
+                                               dihedral_count, p, index);
           }
         });
     Kokkos::fence();
@@ -225,6 +225,43 @@ update_cabana_state(CellStructure &cell_structure,
             }
           });
     }
+    if (bs.pp_num_particles) {
+      auto &pp_pair_degree = bs.pp_pair_degree;
+      auto &pp_pair_slots = bs.pp_pair_slots;
+      kokkos_parallel_range_for<host_space>(
+          "resolve_pp_pair_indices", std::size_t{0}, bs.pp_num_particles,
+          [&pp_pair_degree, &pp_pair_slots, &id_to_index](int idx) {
+            auto const degree = pp_pair_degree(idx);
+            for (int slot = 0; slot < degree; ++slot) {
+              // -1 marks a row whose partner failed to resolve on this
+              // rank (CellStructure::update_bond_storage) -- leave it as
+              // -1, the force/energy/pressure kernels skip such rows.
+              auto const other = pp_pair_slots(idx, slot, 0);
+              if (other >= 0) {
+                pp_pair_slots(idx, slot, 0) = id_to_index(other);
+              }
+            }
+          });
+    }
+    if (bs.pp_num_particles) {
+      auto &pp_angle_degree = bs.pp_angle_degree;
+      auto &pp_angle_slots = bs.pp_angle_slots;
+      kokkos_parallel_range_for<host_space>(
+          "resolve_pp_angle_indices", std::size_t{0}, bs.pp_num_particles,
+          [&pp_angle_degree, &pp_angle_slots, &id_to_index](int idx) {
+            auto const degree = pp_angle_degree(idx);
+            for (int slot = 0; slot < degree; ++slot) {
+              // See resolve_pp_pair_indices above: -1 in any column marks
+              // the whole row unresolvable, left untouched.
+              for (int col = 0; col < 3; ++col) {
+                auto const id = pp_angle_slots(idx, slot, col);
+                if (id >= 0) {
+                  pp_angle_slots(idx, slot, col) = id_to_index(id);
+                }
+              }
+            }
+          });
+    }
     if (angle_count) {
       auto &angle_bond_list = bs.angle_list;
       kokkos_parallel_range_for<host_space>(
@@ -233,6 +270,28 @@ update_cabana_state(CellStructure &cell_structure,
             for (int col = 0; col < 3; ++col) {
               angle_bond_list(idx, col) =
                   id_to_index(angle_bond_list(idx, col));
+            }
+          });
+    }
+    if (bs.pp_num_particles) {
+      auto &pp_dihedral_degree = bs.pp_dihedral_degree;
+      auto &pp_dihedral_slots = bs.pp_dihedral_slots;
+      kokkos_parallel_range_for<host_space>(
+          "resolve_pp_dihedral_indices", std::size_t{0}, bs.pp_num_particles,
+          [&pp_dihedral_degree, &pp_dihedral_slots, &id_to_index](int idx) {
+            auto const degree = pp_dihedral_degree(idx);
+            for (int slot = 0; slot < degree; ++slot) {
+              // See resolve_pp_pair_indices above: -1 in any chain column
+              // marks the whole row unresolvable, left untouched (column
+              // 5, chain_slot, is also -1 for such a row and is never an
+              // id, so it's harmless that it isn't excluded from this
+              // per-column check).
+              for (int col = 0; col < 4; ++col) {
+                auto const id = pp_dihedral_slots(idx, slot, col);
+                if (id >= 0) {
+                  pp_dihedral_slots(idx, slot, col) = id_to_index(id);
+                }
+              }
             }
           });
     }
@@ -247,7 +306,8 @@ update_cabana_state(CellStructure &cell_structure,
             }
           });
     }
-    if (pair_count != 0 or angle_count != 0 or dihedral_count != 0) {
+    if (pair_count != 0 or angle_count != 0 or dihedral_count != 0 or
+        bs.pp_num_particles != 0) {
       Kokkos::fence();
     }
 #ifdef ESPRESSO_CALIPER
@@ -345,14 +405,14 @@ using ShortRangeVerletPairLoop =
 // fills an O(n_types^2) cutoff table, so it is only invoked on the link-cell
 // fallback path, which is the only consumer here.
 template <class execution_space = Kokkos::DefaultHostExecutionSpace>
-void cabana_short_range(auto const &pair_bonds_kernel,
-                        auto const &angle_bonds_kernel,
-                        auto const &dihedral_bonds_kernel,
-                        auto const &nonbonded_kernel,
-                        CellStructure &cell_structure, double pair_cutoff,
-                        double bond_cutoff, auto const &make_verlet_criterion,
-                        auto const integ_switch,
-                        ShortRangeVerletPairLoop const &verlet_pair_loop = {}) {
+void cabana_short_range(
+    auto const &pair_bonds_kernel, auto const &angle_bonds_kernel,
+    auto const &dihedral_bonds_kernel, std::size_t pair_bonds_dispatch_count,
+    std::size_t angle_bonds_dispatch_count,
+    std::size_t dihedral_bonds_dispatch_count, auto const &nonbonded_kernel,
+    CellStructure &cell_structure, double pair_cutoff, double bond_cutoff,
+    auto const &make_verlet_criterion, auto const integ_switch,
+    ShortRangeVerletPairLoop const &verlet_pair_loop = {}) {
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
   if (bond_cutoff >= 0.) {
@@ -360,26 +420,31 @@ void cabana_short_range(auto const &pair_bonds_kernel,
     ESPRESSO_CALI_MARK_BEGIN("cabana_bond_loop");
 #endif
     using host_space = Kokkos::DefaultHostExecutionSpace;
-    auto const n_pair_bonds = cell_structure.get_local_pair_bond_numbers();
-    auto const n_angle_bonds = cell_structure.get_local_angle_bond_numbers();
-    auto const n_dihedral_bonds =
-        cell_structure.get_local_dihedral_bond_numbers();
-    if (n_pair_bonds > 0) {
-      kokkos_parallel_range_for<host_space>("for_each_local_pair_bonds",
-                                            std::size_t{0}, n_pair_bonds,
-                                            pair_bonds_kernel);
+    // @p pair_bonds_dispatch_count / @p angle_bonds_dispatch_count are
+    // caller-specified because the pair/angle bond kernels' dispatch axis
+    // differs by caller: forces.cpp's gather kernels are dispatched
+    // particle-parallel (one work-item per local particle, gathering from
+    // its own primary + mirror BondList entries, needed so each writes only
+    // to its own force accumulator with no ScatterView/atomics), while
+    // energy.cpp/pressure.cpp still use the older per-bond kernels,
+    // dispatched over the primary-bond count.
+    if (pair_bonds_dispatch_count > 0) {
+      kokkos_parallel_range_for<host_space>(
+          "for_each_local_pair_bonds", std::size_t{0},
+          pair_bonds_dispatch_count, pair_bonds_kernel);
     }
-    if (n_angle_bonds > 0) {
-      kokkos_parallel_range_for<host_space>("for_each_local_angle_bonds",
-                                            std::size_t{0}, n_angle_bonds,
-                                            angle_bonds_kernel);
+    if (angle_bonds_dispatch_count > 0) {
+      kokkos_parallel_range_for<host_space>(
+          "for_each_local_angle_bonds", std::size_t{0},
+          angle_bonds_dispatch_count, angle_bonds_kernel);
     }
-    if (n_dihedral_bonds > 0) {
-      kokkos_parallel_range_for<host_space>("for_each_local_dihedral_bonds",
-                                            std::size_t{0}, n_dihedral_bonds,
-                                            dihedral_bonds_kernel);
+    if (dihedral_bonds_dispatch_count > 0) {
+      kokkos_parallel_range_for<host_space>(
+          "for_each_local_dihedral_bonds", std::size_t{0},
+          dihedral_bonds_dispatch_count, dihedral_bonds_kernel);
     }
-    if (n_pair_bonds != 0 or n_angle_bonds != 0 or n_dihedral_bonds != 0) {
+    if (pair_bonds_dispatch_count != 0 or angle_bonds_dispatch_count != 0 or
+        dihedral_bonds_dispatch_count != 0) {
       Kokkos::fence();
     }
 #ifdef ESPRESSO_CALIPER

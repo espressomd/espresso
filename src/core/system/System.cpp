@@ -642,8 +642,19 @@ unsigned System::get_global_ghost_flags() const {
   // which returns such ghosts too, so their bonds() must be kept up to date
   // like any other participant's -- otherwise a mirror lookup on a
   // ghost-only participant can see stale or empty bond data and a removal
-  // silently fails to reach it. Always requesting bonds here keeps them
-  // refreshed at the same cadence as the rest of the global ghost state.
+  // silently fails to reach it. The particle-parallel gather kernels
+  // (bond_forces_kokkos.hpp etc.) additionally need every angle/dihedral
+  // mirror to be able to look up its owner's primary entry, from
+  // CellStructure::update_bond_storage(), to derive which of the owner's
+  // remaining chain/arm positions it originally was -- when the owner is
+  // only known as a ghost, this requires the same up-to-date ghost bonds().
+  // Bonds are otherwise never included in the regular per-step ghost update
+  // (see the "resort_only_parts" masking in
+  // CellStructure::update_ghosts_and_resort_particle(), which strips bonds
+  // outside of an actual resort) -- unconditionally requesting them here
+  // ensures they get refreshed at the same (resort/rebuild) cadence as the
+  // rest of the global ghost state, which is the coarsest cadence that is
+  // still correct.
   data_parts |= Cells::DATA_PART_BONDS;
 
   if (lb.is_solver_set())

@@ -928,14 +928,17 @@ public:
   }
 
   /**
-   * @brief Update bond storage(m_*_bond_list_kokkos and m_*_bond_id_kokkos).
+   * @brief Update bond storage(m_*_bond_list_kokkos and m_*_bond_id_kokkos),
+   * as well as @p p's row in the per-particle pair-bond gather structure.
    * @param pair_count      Index for pair bond storage.
    * @param angle_count     Index for angle bond storage.
    * @param dihedral_count  Index for dihedral bond storage.
    * @param p               Particle pointer.
+   * @param index           @p p's row in the per-particle gather structure
+   *                        (its eventual AoSoA/unique_particles index).
    */
   void update_bond_storage(int &pair_count, int &angle_count,
-                           int &dihedral_count, Particle const &p);
+                           int &dihedral_count, Particle const &p, int index);
 
   /**
    * @brief Reset local properties of the Verlet list.

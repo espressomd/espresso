@@ -145,14 +145,18 @@ Observable_stat const &System::calculate_pressure() {
   auto &bs = cell_structure->bond_state();
   BondsPressureKernelData bonds_p_data{*bonded_ias, *box_geo, local_pressure,
                                        layout, cell_structure->get_aosoa()};
-  PairBondsPressureKernel pair_bp_kernel{
-      bonds_p_data, bs.pair_list, bs.pair_ids, get_ptr(coulomb_force_kernel)};
-  AngleBondsPressureKernel angle_bp_kernel{bonds_p_data, bs.angle_list,
-                                           bs.angle_ids};
-  DihedralBondsPressureKernel dih_bp_kernel{bonds_p_data, bs.dihedral_list,
-                                            bs.dihedral_ids};
+  PairBondsPressureKernel pair_bp_kernel{bonds_p_data, bs.pp_pair_degree,
+                                         bs.pp_pair_slots,
+                                         get_ptr(coulomb_force_kernel)};
+  AngleBondsPressureKernel angle_bp_kernel{bonds_p_data, bs.pp_angle_degree,
+                                           bs.pp_angle_slots};
+  DihedralBondsPressureKernel dih_bp_kernel{bonds_p_data, bs.pp_dihedral_degree,
+                                            bs.pp_dihedral_slots};
 
   cabana_short_range(pair_bp_kernel, angle_bp_kernel, dih_bp_kernel,
+                     static_cast<std::size_t>(bs.pp_num_particles),
+                     static_cast<std::size_t>(bs.pp_num_particles),
+                     static_cast<std::size_t>(bs.pp_num_particles),
                      pair_p_kernel, *cell_structure, get_interaction_range(),
                      bonded_ias->maximal_cutoff(), make_verlet_criterion,
                      propagation->integ_switch);

@@ -218,6 +218,15 @@ void ParticleHandle::set_exclusions(Variant const &value) {
  * owned by other particles and must be left alone); @ref ::remove_bond()
  * takes care of also erasing the corresponding mirror entries on the
  * other participants.
+ *
+ * Enumerating "this particle's own bonds" can only be done accurately on
+ * the one rank where this particle is genuinely local (set_particle_property()
+ * gates on exactly that), but ::remove_bond() must then run on every rank
+ * to reach mirror entries that live on a different rank than this
+ * particle -- so the owned-bond list found on that one rank is gathered
+ * and broadcast to all ranks first, mirroring how ::rebuild_bond_mirrors()
+ * (bonds.cpp) reconciles primaries found on one rank against participants
+ * living on others.
  */
 void ParticleHandle::delete_owned_bonds() const {
   std::vector<std::pair<int, std::vector<int>>> owned_bonds;
@@ -230,13 +239,6 @@ void ParticleHandle::delete_owned_bonds() const {
       }
     }
   });
-  // set_particle_property() only runs the lambda above on the one rank where
-  // this particle is genuinely local, so owned_bonds is only populated
-  // there. ::remove_bond() must run on every rank to also reach mirror
-  // entries living on a different rank than this particle, so the owned
-  // bonds found on that one rank are gathered and broadcast first --
-  // mirroring how ::rebuild_bond_mirrors() (bonds.cpp) reconciles primaries
-  // found on one rank against participants living on others.
   auto const &comm = context()->get_comm();
   if (comm.size() > 1) {
     Utils::Mpi::gather_buffer(owned_bonds, comm);
