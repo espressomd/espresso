@@ -154,7 +154,9 @@ create_kokkos_pair_bonds_kernel_data(System::System const &system) {
 #ifdef ESPRESSO_NPT
   auto scatter_virial = system.cell_structure->get_scatter_virial();
 #endif
+  auto scatter_force = system.cell_structure->get_scatter_force();
   auto const &aosoa = system.cell_structure->get_aosoa();
+  auto &bs = system.cell_structure->bond_state();
   return /* PairBondsKernelData */ {
       *system.bonded_ias,
       *system.bond_breakage,
@@ -164,7 +166,9 @@ create_kokkos_pair_bonds_kernel_data(System::System const &system) {
       scatter_virial,
 #endif
       aosoa,
-      !system.bond_breakage->breakage_specs.empty()};
+      !system.bond_breakage->breakage_specs.empty(),
+      scatter_force,
+      bs.pp_num_particles};
 }
 
 static AngleBondsKernelData
@@ -525,11 +529,18 @@ void System::System::calculate_forces() {
   auto dihedral_bonds_kernel_data =
       create_kokkos_dihedral_bonds_kernel_data(*this);
 
-  // Evaluate every rank-locally-owned angle/dihedral bond's force exactly
-  // once (see AngleBondsForceComputeKernel's doc comment), before the
-  // particle-parallel gather kernels below read the results back. Must
-  // finish (fence) before those gather kernels run.
+  // Evaluate every rank-locally-owned pair/angle/dihedral bond's force
+  // exactly once (see AngleBondsForceComputeKernel's doc comment), before
+  // the particle-parallel gather kernels below skip/fall back on the
+  // results. Must finish (fence) before those gather kernels run.
   using host_space = Kokkos::DefaultHostExecutionSpace;
+  if (bs.pair_count > 0) {
+    kokkos_parallel_range_for<host_space>(
+        "pair_bond_force_compute", std::size_t{0},
+        static_cast<std::size_t>(bs.pair_count),
+        PairBondsForceComputeKernel{pair_bonds_kernel_data, bs.pair_list,
+                                    bs.pair_ids, get_ptr(coulomb_kernel)});
+  }
   if (bs.angle_count > 0) {
     kokkos_parallel_range_for<host_space>(
         "angle_bond_force_compute", std::size_t{0},
@@ -544,7 +555,7 @@ void System::System::calculate_forces() {
         DihedralBondsForceComputeKernel{dihedral_bonds_kernel_data,
                                         bs.dihedral_list, bs.dihedral_ids});
   }
-  if (bs.angle_count > 0 or bs.dihedral_count > 0) {
+  if (bs.pair_count > 0 or bs.angle_count > 0 or bs.dihedral_count > 0) {
     Kokkos::fence();
   }
 

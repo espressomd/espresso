@@ -46,9 +46,18 @@ struct LocalBondState {
   // per-particle degree found during the counting pass (see
   // CellStructure::set_index_map), so no overflow handling is needed.
   // Columns: 0 = other participant id (until resolved to an AoSoA index),
-  // 1 = bond_id, 2 = 1 if this is the primary (owning) entry, 0 if a mirror.
+  // 1 = bond_id, 2 = 1 if this is the primary (owning) entry, 0 if a mirror,
+  // 3 = bond_index: this bond's row in pair_list/pair_ids if its primary
+  // entry is resolvable on this rank (i.e. the owning particle is local,
+  // not a ghost, here -- see PairBondsForceComputeKernel, which already
+  // applies this row's share directly via a ScatterView in that case), or
+  // -1 if it isn't (a bond straddling a rank boundary whose owner lives
+  // elsewhere), in which case PairBondsKernel falls back to evaluating the
+  // bond directly from this row's own columns 0-2. Column 3 is always -1
+  // for a mirror row whose owner isn't local, and always >= 0 for a
+  // primary row (self is the owner, so pair_list always has an entry).
   using PPPairSlotType =
-      Kokkos::View<int **[3], Kokkos::LayoutRight, execution_space>;
+      Kokkos::View<int **[4], Kokkos::LayoutRight, execution_space>;
   using PPPairDegreeType =
       Kokkos::View<int *, Kokkos::LayoutRight, execution_space>;
 

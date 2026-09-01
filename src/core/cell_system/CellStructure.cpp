@@ -318,6 +318,14 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
       }
       pp_pair_slots(index, pp_pair_slot, 1) = bond.bond_id();
       pp_pair_slots(index, pp_pair_slot, 2) = bond.is_primary() ? 1 : 0;
+      // Column 3 (bond_index into pair_list): for a primary row, the
+      // pair_list block below (same bond, same loop iteration) sets this
+      // directly to p_index -- no lookup needed, since we already know it
+      // here. For a mirror row it's resolved by a later pass
+      // (short_range_cabana.hpp) that reads it back off the owner's own
+      // (by then already-set) primary row instead of searching globally;
+      // default to "unresolved" until then.
+      pp_pair_slots(index, pp_pair_slot, 3) = -1;
       ++pp_pair_slot;
     } else if (partner_ids.size() == 2u) {
       // Angle bonds: not every 3-body force function dispatched via
@@ -375,6 +383,9 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
           }
         }
       } catch (BondResolutionError const &) {
+        // Unresolvable on this rank: leave wrote_angle_row false so the
+        // fallback below fills the row with the -1 "unresolved" sentinel.
+        wrote_angle_row = false;
       }
       if (not wrote_angle_row) {
         pp_angle_slots(index, pp_angle_slot, 0) = -1;
@@ -451,6 +462,9 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
           }
         }
       } catch (BondResolutionError const &) {
+        // Unresolvable on this rank: leave wrote_row false so the fallback
+        // below fills the row with the -1 "unresolved" sentinel.
+        wrote_row = false;
       }
       if (not wrote_row) {
         pp_dihedral_slots(index, pp_dihedral_slot, 0) = -1;
@@ -478,6 +492,12 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
         pair_list(p_index, 0) = p.id();
         pair_list(p_index, 1) = partners[0]->id();
         pair_ids(p_index) = bond.bond_id();
+        // This is the same bond, same loop iteration, that just wrote
+        // its primary pp_pair_slots row above (pp_pair_slot was
+        // incremented right after) -- stash p_index there directly so
+        // the resolution pass in short_range_cabana.hpp doesn't need a
+        // global lookup for primary rows at all.
+        pp_pair_slots(index, pp_pair_slot - 1, 3) = p_index;
       } else if (partners.size() == 2u) { // angle bond
         auto a_index = Kokkos::atomic_fetch_add(&angle_count, 1);
         angle_list(a_index, 0) = p.id();
@@ -681,7 +701,7 @@ void CellStructure::remove_particle(int id) {
   // but harmlessly, since it is erased below regardless).
   if (auto const *p = get_local_particle(id)) {
     std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
-    for (auto const &bond : p->bonds()) {
+    for (auto const bond : p->bonds()) {
       std::vector<int> ids = {id};
       std::ranges::copy(bond.partner_ids(), std::back_inserter(ids));
       bonds_to_remove.emplace_back(bond.bond_id(), std::move(ids));

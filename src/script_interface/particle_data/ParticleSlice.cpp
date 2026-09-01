@@ -62,7 +62,7 @@ static void set_particles_bonds(
     auto p = cell_structure.get_local_particle(pid);
     if (p != nullptr and not p->is_ghost()) {
       std::vector<std::pair<int, std::vector<int>>> owned_bonds;
-      for (auto const &bond_view : p->bonds()) {
+      for (auto const bond_view : p->bonds()) {
         if (bond_view.is_primary()) {
           std::vector<int> ids = {pid};
           std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));

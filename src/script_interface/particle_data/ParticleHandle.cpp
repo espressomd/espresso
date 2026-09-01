@@ -231,7 +231,7 @@ void ParticleHandle::set_exclusions(Variant const &value) {
 void ParticleHandle::delete_owned_bonds() const {
   std::vector<std::pair<int, std::vector<int>>> owned_bonds;
   set_particle_property([&owned_bonds](Particle &p) {
-    for (auto const &bond_view : p.bonds()) {
+    for (auto const bond_view : p.bonds()) {
       if (bond_view.is_primary()) {
         std::vector<int> ids = {p.id()};
         std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));

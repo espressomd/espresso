@@ -270,6 +270,59 @@ update_cabana_state(CellStructure &cell_structure,
             }
           });
     }
+    if (pair_count and bs.pp_num_particles) {
+      // Fill in pp_pair_slots' bond_index column (3) for every mirror row
+      // -- see PPPairSlotType's doc comment. Primary rows already have it
+      // (CellStructure::update_bond_storage sets it directly, in the same
+      // loop iteration that computes p_index -- no lookup needed there).
+      // A mirror row's owner (column 0, already an AoSoA index courtesy of
+      // resolve_pp_pair_indices above) holds that primary row: scan the
+      // owner's *own* pp_pair_slots row -- bounded by the owner's own
+      // degree, not the global bond count -- for the primary entry whose
+      // (partner, bond_id) matches this mirror's (self, bond_id), and copy
+      // its already-set bond_index. This deliberately avoids building any
+      // std::unordered_map over all `pair_count` bonds: an earlier version
+      // did exactly that (see resolve_pp_angle_bond_index below for the
+      // still-used version of that approach for angle bonds), and
+      // profiling showed the *serial* map construction -- not the O(1)
+      // lookups -- was the actual cost, badly so for topologies with many
+      // bonds concentrated on few particles (see the "high-degree
+      // regression" investigation in the project log).
+      auto &pp_pair_degree = bs.pp_pair_degree;
+      auto &pp_pair_slots = bs.pp_pair_slots;
+      kokkos_parallel_range_for<host_space>(
+          "resolve_pp_pair_bond_index", std::size_t{0}, bs.pp_num_particles,
+          [&pp_pair_degree, &pp_pair_slots](int idx) {
+            auto const degree = pp_pair_degree(idx);
+            for (int slot = 0; slot < degree; ++slot) {
+              if (pp_pair_slots(idx, slot, 2) != 0) {
+                continue; // primary row: bond_index already set directly
+              }
+              auto const owner = pp_pair_slots(idx, slot, 0);
+              if (owner < 0 or owner >= pp_pair_degree.extent(0)) {
+                // -1: unresolvable (resolve_pp_pair_indices). Out of
+                // pp_pair_degree's [0, pp_num_particles) range: owner is a
+                // ghost here, i.e. genuinely owned by another rank -- its
+                // own rank resolves this bond's primary entry, not us.
+                pp_pair_slots(idx, slot, 3) = -1;
+                continue;
+              }
+              auto const bond_id = pp_pair_slots(idx, slot, 1);
+              auto const owner_degree = pp_pair_degree(owner);
+              int found = -1;
+              for (int owner_slot = 0; owner_slot < owner_degree;
+                   ++owner_slot) {
+                if (pp_pair_slots(owner, owner_slot, 2) != 0 and
+                    pp_pair_slots(owner, owner_slot, 0) == idx and
+                    pp_pair_slots(owner, owner_slot, 1) == bond_id) {
+                  found = pp_pair_slots(owner, owner_slot, 3);
+                  break;
+                }
+              }
+              pp_pair_slots(idx, slot, 3) = found;
+            }
+          });
+    }
     if (bs.pp_num_particles) {
       auto &pp_angle_degree = bs.pp_angle_degree;
       auto &pp_angle_slots = bs.pp_angle_slots;

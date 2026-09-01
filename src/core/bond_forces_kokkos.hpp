@@ -34,11 +34,15 @@
 #include <optional>
 #include <variant>
 
-// Pair bonds are dispatched particle-parallel (see PairBondsKernel below):
-// each work-item writes only to its own row of a plain force View, so no
-// ScatterView is needed there. The NPT virial fold-in is still a genuine
-// cross-particle reduction (many particles' primary pair bonds add into the
-// same 3 global components), so it keeps using a ScatterView.
+// Pair bonds' primary evaluation is now compute-once (see
+// PairBondsForceComputeKernel below), scatter-added directly into the
+// (real, non-ghost) participants' own local_force rows via a ScatterView --
+// same rationale as AngleBondsForceComputeKernel's doc comment. The gather
+// kernel below still exists for the boundary-crossing fallback case, where
+// it writes only to its own row of a plain force View (no ScatterView
+// needed there). The NPT virial fold-in is a genuine cross-particle
+// reduction (many particles' primary pair bonds add into the same 3 global
+// components), so it keeps using a ScatterView regardless.
 struct PairBondsKernelData {
   BondedInteractionsMap const &bonded_ias;
   BondBreakage::BondBreakage &bond_breakage;
@@ -49,6 +53,125 @@ struct PairBondsKernelData {
 #endif
   CellStructure::AoSoA_pack const &aosoa;
   bool const has_breakage_specs;
+  CellStructure::ScatterForce scatter_force;
+  int pp_num_particles;
+};
+
+// Evaluates every rank-locally-owned pair bond's force exactly once
+// (dispatched over pair_count, i.e. pair_list/pair_ids -- the same compact
+// per-bond list energy/pressure calculation already uses), instead of once
+// per participant like PairBondsKernel below used to do unconditionally.
+// Mirrors the pre-particle-parallel-gather bond-indexed PairBondsKernel
+// almost exactly (pair_list stores (owner, partner) in that order, so no
+// primary/mirror role bookkeeping is needed here the way PairBondsKernel's
+// gather pass needs it), except scatter-adding into the (real, non-ghost)
+// participants' own local_force rows instead of into a dedicated bond
+// buffer -- see AngleBondsForceComputeKernel's doc comment for why a ghost
+// participant's row is skipped here rather than written.
+struct PairBondsForceComputeKernel {
+  PairBondsKernelData data;
+  LocalBondState::PairBondlistType bond_list;
+  LocalBondState::PairBondIDType bond_ids;
+  Coulomb::ShortRangeForceKernel::kernel_type const *const coulomb_kernel;
+
+  PairBondsForceComputeKernel(
+      PairBondsKernelData data_, LocalBondState::PairBondlistType bond_list_,
+      LocalBondState::PairBondIDType bond_ids_,
+      Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel_)
+      : data(std::move(data_)), bond_list(std::move(bond_list_)),
+        bond_ids(std::move(bond_ids_)), coulomb_kernel(coulomb_kernel_) {}
+
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t idx) const {
+    auto const &bonded_ias = data.bonded_ias;
+    auto const &box_geo = data.box_geo;
+    auto const &aosoa = data.aosoa;
+    auto &bond_breakage = data.bond_breakage;
+#ifdef ESPRESSO_NPT
+    auto local_virial = data.local_virial.access();
+#endif
+    auto const has_breakage_specs = data.has_breakage_specs;
+    auto scatter_force = data.scatter_force.access();
+    auto const pp_num_particles = data.pp_num_particles;
+    auto const bond_id = bond_ids(idx);
+
+    auto const i = bond_list(idx, 0);
+    auto const j = bond_list(idx, 1);
+    auto const &iaparams = *bonded_ias.at(bond_id);
+
+    auto const dx =
+        box_geo.get_mi_vector(aosoa.get_vector_at(aosoa.position, i),
+                              aosoa.get_vector_at(aosoa.position, j));
+
+    // Consider for bond breakage. Evaluated exactly once per bond here
+    // (unlike PairBondsKernel's fallback path, which every participant
+    // checks independently), matching the pre-gather kernel's behavior.
+    if (has_breakage_specs &&
+        bond_breakage.check_and_handle_breakage(
+            aosoa.id(i), {{aosoa.id(j), std::nullopt}}, bond_id, dx.norm())) {
+      return;
+    }
+
+    // i (the owner) is always real/local by construction (pair_list only
+    // ever gets a primary entry from a non-ghost owner -- see
+    // CellStructure::update_bond_storage); j may be a ghost here.
+    if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
+      auto const result = iap->forces(
+#ifdef ESPRESSO_MASS
+          aosoa.mass(i), aosoa.mass(j),
+#else
+          1.0, 1.0,
+#endif
+          aosoa.get_vector_at(aosoa.velocity, i),
+          aosoa.get_vector_at(aosoa.velocity, j), aosoa.id(i), aosoa.id(j), dx);
+      if (result) {
+        auto const &forces = result.value();
+        auto const &f0 = std::get<0>(forces);
+        auto const &f1 = std::get<1>(forces);
+        scatter_force(i, 0) += f0[0];
+        scatter_force(i, 1) += f0[1];
+        scatter_force(i, 2) += f0[2];
+        if (j < pp_num_particles) {
+          scatter_force(j, 0) += f1[0];
+          scatter_force(j, 1) += f1[1];
+          scatter_force(j, 2) += f1[2];
+        }
+      } else {
+        auto partner_id = aosoa.id(j);
+        bond_broken_error(aosoa.id(i), {&partner_id, 1});
+      }
+      return;
+    }
+
+    auto const result =
+        calc_bond_pair_force(iaparams, dx,
+#ifdef ESPRESSO_ELECTROSTATICS
+                             aosoa.charge(i) * aosoa.charge(j), coulomb_kernel
+#else
+                             0.0, nullptr
+#endif
+        );
+
+    if (result) {
+      auto const f = result.value();
+      scatter_force(i, 0) += f[0];
+      scatter_force(i, 1) += f[1];
+      scatter_force(i, 2) += f[2];
+      if (j < pp_num_particles) {
+        scatter_force(j, 0) -= f[0];
+        scatter_force(j, 1) -= f[1];
+        scatter_force(j, 2) -= f[2];
+      }
+#ifdef ESPRESSO_NPT
+      auto const virial = hadamard_product(f, dx);
+      local_virial(0) += virial[0];
+      local_virial(1) += virial[1];
+      local_virial(2) += virial[2];
+#endif
+    } else {
+      auto partner_id = aosoa.id(j);
+      bond_broken_error(aosoa.id(i), {&partner_id, 1});
+    }
+  }
 };
 
 // Particle-parallel gather kernel: one work-item per LOCAL particle
@@ -62,6 +185,14 @@ struct PairBondsKernelData {
 // itself. Bond breakage and the NPT virial fold-in are bond-level (not
 // per-participant) quantities and are only evaluated by the primary-holding
 // participant, to avoid counting them twice.
+//
+// Each row's "bond_index" column (see PPPairSlotType's doc comment) picks
+// one of two paths: if PairBondsForceComputeKernel already evaluated this
+// bond (the common case), it already scatter-added this participant's share
+// directly into local_force, so this row has nothing left to do -- skip it.
+// Otherwise (this bond's primary entry lives on another rank) fall back to
+// evaluating it directly from this row, exactly as this kernel always used
+// to.
 struct PairBondsKernel {
   PairBondsKernelData data;
   LocalBondState::PPPairDegreeType pp_pair_degree;
@@ -97,6 +228,13 @@ struct PairBondsKernel {
       // authoritative home rank always resolves it and applies the force
       // there, so skipping here loses nothing.
       if (other < 0) {
+        continue;
+      }
+
+      auto const bond_index = pp_pair_slots(self, slot, 3);
+      if (bond_index >= 0) {
+        // Already applied directly by PairBondsForceComputeKernel's
+        // scatter-add -- nothing left to do for this row.
         continue;
       }
 

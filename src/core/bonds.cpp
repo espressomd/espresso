@@ -166,7 +166,7 @@ void rebuild_bond_mirrors(System::System &system) {
   // for participants that live on a different rank than the primary.
   std::vector<std::pair<int, std::vector<int>>> primaries;
   for (auto const &p : cell_structure.local_particles()) {
-    for (auto const &bond : p.bonds()) {
+    for (auto const bond : p.bonds()) {
       if (bond.is_primary()) {
         std::vector<int> ids = {p.id()};
         std::ranges::copy(bond.partner_ids(), std::back_inserter(ids));
