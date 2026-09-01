@@ -309,13 +309,21 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
     // pressure kernels all skip; nothing is lost since the bond's actual
     // physics is always resolvable on its participants' own authoritative
     // (non-ghost) home ranks.
+    //
+    // Resolved once here and reused below for both the pp_*_slots row and
+    // the compact per-bond list further down: those two used to call
+    // resolve_bond_partners() independently for the same bond, doubling an
+    // O(partner count) lookup over every bond entry of every local
+    // particle, on every Verlet-list rebuild.
+    boost::container::static_vector<Particle *, 4> partners;
+    bool resolved = true;
+    try {
+      partners = resolve_bond_partners(partner_ids);
+    } catch (BondResolutionError const &) {
+      resolved = false;
+    }
     if (partner_ids.size() == 1u) {
-      try {
-        auto const partners = resolve_bond_partners(partner_ids);
-        pp_pair_slots(index, pp_pair_slot, 0) = partners[0]->id();
-      } catch (BondResolutionError const &) {
-        pp_pair_slots(index, pp_pair_slot, 0) = -1;
-      }
+      pp_pair_slots(index, pp_pair_slot, 0) = resolved ? partners[0]->id() : -1;
       pp_pair_slots(index, pp_pair_slot, 1) = bond.bond_id();
       pp_pair_slots(index, pp_pair_slot, 2) = bond.is_primary() ? 1 : 0;
       // Column 3 (bond_index into pair_list): for a primary row, the
@@ -335,8 +343,7 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
       // position this row's own particle occupies (see PPAngleSlotType's
       // doc comment), exactly mirroring how dihedral rows work below.
       bool wrote_angle_row = false;
-      try {
-        auto const partners = resolve_bond_partners(partner_ids);
+      if (resolved) {
         if (bond.is_primary()) {
           pp_angle_slots(index, pp_angle_slot, 0) = p.id();
           pp_angle_slots(index, pp_angle_slot, 1) = partners[0]->id();
@@ -385,10 +392,6 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
             break;
           }
         }
-      } catch (BondResolutionError const &) {
-        // Unresolvable on this rank: leave wrote_angle_row false so the
-        // fallback below fills the row with the -1 "unresolved" sentinel.
-        wrote_angle_row = false;
       }
       if (not wrote_angle_row) {
         pp_angle_slots(index, pp_angle_slot, 0) = -1;
@@ -404,12 +407,9 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
       // the 4 chain positions a distinct contribution, so every row stores
       // the full chain (all 4 ids, original creation order) plus which
       // position this row's own particle occupies (see PPDihedralSlotType's
-      // doc comment). A mirror also needs its owner resolved just to look
-      // up its own chain_slot, so unlike pair/angle, resolution failure is
-      // checked once for the whole row up front.
+      // doc comment).
       bool wrote_row = false;
-      try {
-        auto const partners = resolve_bond_partners(partner_ids);
+      if (resolved) {
         if (bond.is_primary()) {
           pp_dihedral_slots(index, pp_dihedral_slot, 0) = p.id();
           pp_dihedral_slots(index, pp_dihedral_slot, 1) = partners[0]->id();
@@ -466,10 +466,6 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
             break;
           }
         }
-      } catch (BondResolutionError const &) {
-        // Unresolvable on this rank: leave wrote_row false so the fallback
-        // below fills the row with the -1 "unresolved" sentinel.
-        wrote_row = false;
       }
       if (not wrote_row) {
         pp_dihedral_slots(index, pp_dihedral_slot, 0) = -1;
@@ -483,49 +479,55 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
       ++pp_dihedral_slot;
     }
 
-    try {
-      auto const partners = resolve_bond_partners(partner_ids);
-      // Only primary entries drive the per-bond lists still used by
-      // angle/dihedral force calculation and collision detection's hot-add
-      // path; mirror entries are a query/removal-only detail there and
-      // would otherwise double-count every bond.
-      if (not bond.is_primary()) {
-        continue;
-      }
-      if (partners.size() == 1u) { // pair bonds
-        auto p_index = Kokkos::atomic_fetch_add(&pair_count, 1);
-        pair_list(p_index, 0) = p.id();
-        pair_list(p_index, 1) = partners[0]->id();
-        pair_ids(p_index) = bond.bond_id();
-        // This is the same bond, same loop iteration, that just wrote
-        // its primary pp_pair_slots row above (pp_pair_slot was
-        // incremented right after) -- stash p_index there directly so
-        // the resolution pass in short_range_cabana.hpp doesn't need a
-        // global lookup for primary rows at all.
-        pp_pair_slots(index, pp_pair_slot - 1, 3) = p_index;
-      } else if (partners.size() == 2u) { // angle bond
-        auto a_index = Kokkos::atomic_fetch_add(&angle_count, 1);
-        angle_list(a_index, 0) = p.id();
-        angle_list(a_index, 1) = partners[0]->id();
-        angle_list(a_index, 2) = partners[1]->id();
-        angle_ids(a_index) = bond.bond_id();
-        // Same bond, same loop iteration that wrote the primary
-        // pp_angle_slots row above (pp_angle_slot was incremented right
-        // after) -- stash a_index there directly, mirroring the pair-bond
-        // pattern above; avoids a global lookup for primary rows.
-        pp_angle_slots(index, pp_angle_slot - 1, 5) = a_index;
-      } else if (partners.size() == 3u) { // dihedral bond
-        auto d_index = Kokkos::atomic_fetch_add(&dihedral_count, 1);
-        dihedral_list(d_index, 0) = p.id();
-        dihedral_list(d_index, 1) = partners[0]->id();
-        dihedral_list(d_index, 2) = partners[1]->id();
-        dihedral_list(d_index, 3) = partners[2]->id();
-        dihedral_ids(d_index) = bond.bond_id();
-        // Same idea as the angle-bond case above.
-        pp_dihedral_slots(index, pp_dihedral_slot - 1, 6) = d_index;
-      }
-    } catch (BondResolutionError const &) {
+    if (not resolved) {
+      // Preserve existing behavior exactly: a resolution failure that the
+      // branches above treat as a benign, expected "ghost reach" case (see
+      // the comment at the top of the loop body) still surfaces here as a
+      // user-visible runtime error for any bond, primary or mirror, that
+      // fails to resolve -- this pre-existing asymmetry between the two
+      // consumers of the (now shared) resolve_bond_partners() result is
+      // untouched by this refactor.
       bond_resolution_error(partner_ids);
+      continue;
+    }
+    // Only primary entries drive the per-bond lists still used by
+    // angle/dihedral force calculation and collision detection's hot-add
+    // path; mirror entries are a query/removal-only detail there and
+    // would otherwise double-count every bond.
+    if (not bond.is_primary()) {
+      continue;
+    }
+    if (partners.size() == 1u) { // pair bonds
+      auto p_index = Kokkos::atomic_fetch_add(&pair_count, 1);
+      pair_list(p_index, 0) = p.id();
+      pair_list(p_index, 1) = partners[0]->id();
+      pair_ids(p_index) = bond.bond_id();
+      // This is the same bond, same loop iteration, that just wrote
+      // its primary pp_pair_slots row above (pp_pair_slot was
+      // incremented right after) -- stash p_index there directly so
+      // the resolution pass in short_range_cabana.hpp doesn't need a
+      // global lookup for primary rows at all.
+      pp_pair_slots(index, pp_pair_slot - 1, 3) = p_index;
+    } else if (partners.size() == 2u) { // angle bond
+      auto a_index = Kokkos::atomic_fetch_add(&angle_count, 1);
+      angle_list(a_index, 0) = p.id();
+      angle_list(a_index, 1) = partners[0]->id();
+      angle_list(a_index, 2) = partners[1]->id();
+      angle_ids(a_index) = bond.bond_id();
+      // Same bond, same loop iteration that wrote the primary
+      // pp_angle_slots row above (pp_angle_slot was incremented right
+      // after) -- stash a_index there directly, mirroring the pair-bond
+      // pattern above; avoids a global lookup for primary rows.
+      pp_angle_slots(index, pp_angle_slot - 1, 5) = a_index;
+    } else if (partners.size() == 3u) { // dihedral bond
+      auto d_index = Kokkos::atomic_fetch_add(&dihedral_count, 1);
+      dihedral_list(d_index, 0) = p.id();
+      dihedral_list(d_index, 1) = partners[0]->id();
+      dihedral_list(d_index, 2) = partners[1]->id();
+      dihedral_list(d_index, 3) = partners[2]->id();
+      dihedral_ids(d_index) = bond.bond_id();
+      // Same idea as the angle-bond case above.
+      pp_dihedral_slots(index, pp_dihedral_slot - 1, 6) = d_index;
     }
   }
 }
