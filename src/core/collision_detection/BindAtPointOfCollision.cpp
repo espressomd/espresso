@@ -161,11 +161,10 @@ void BindAtPointOfCollision::handle_collisions(
     // Create bonds
     auto const n_partners = number_of_partners(*system.bonded_ias->at(bond_vs));
     if (n_partners == 1) {
-      // Create bond between the virtual particles
-      const int bondG[] = {current_vs_pid - 2};
-      // Only add bond if vs was created on this node
-      if (auto p = cell_structure.get_local_particle(current_vs_pid - 1))
-        p->bonds().insert({bond_vs, bondG});
+      // Create bond between the virtual particles, on whichever of the two
+      // is locally known (add_bond() also writes the mirror on the other
+      // one wherever that is locally known).
+      ::add_bond(system, bond_vs, {current_vs_pid - 1, current_vs_pid - 2});
     }
     if (n_partners == 2) {
       // Create 1st bond between the virtual particles

@@ -31,6 +31,7 @@
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "aosoa_pack.hpp"
+#include "bonds.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "ghosts.hpp"
@@ -43,7 +44,6 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/contains.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
@@ -289,6 +289,12 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
   auto &dihedral_list = m_bond_state->dihedral_list;
   auto &dihedral_ids = m_bond_state->dihedral_ids;
   for (auto const bond : p.bonds()) {
+    // Only primary entries drive force/energy calculation; mirror entries
+    // (held by non-owning participants) are a query/removal-only detail
+    // and would otherwise double-count every bond.
+    if (not bond.is_primary()) {
+      continue;
+    }
     auto const partner_ids = bond.partner_ids();
     try {
       auto const partners = resolve_bond_partners(partner_ids);
@@ -346,7 +352,10 @@ void CellStructure::set_index_map() {
     auto &counts = thread_counts[omp_get_thread_num()];
     counts.max_id = std::max(p.id(), counts.max_id);
     for (auto const bond : p.bonds()) {
-      if (not bond.partner_ids().empty()) {
+      // Mirror entries must not be counted here: update_bond_storage()
+      // only fills the flat lists from primary entries, and the two
+      // must agree on the count or the Kokkos views below overflow.
+      if (bond.is_primary() and not bond.partner_ids().empty()) {
         auto const partner_ids = bond.partner_ids();
         if (partner_ids.size() == 1u) {
           counts.pair += 1;
@@ -436,15 +445,24 @@ void CellStructure::check_particle_sorting() const {
 }
 
 void CellStructure::remove_particle(int id) {
-  auto remove_all_bonds_to = [id](BondList &bl) {
-    for (auto it = bl.begin(); it != bl.end();) {
-      if (Utils::contains(it->partner_ids(), id)) {
-        it = bl.erase(it);
-      } else {
-        std::advance(it, 1);
-      }
+  // The particle's own bond list already names every bond it is involved
+  // in, as owner or as a mirror-holding participant (see BondList.hpp), so
+  // the other participants needing cleanup can be found directly instead
+  // of sweeping every local particle. ::remove_bond() erases the matching
+  // entry from each of them (and from this particle itself, redundantly
+  // but harmlessly, since it is erased below regardless).
+  if (auto const *p = get_local_particle(id)) {
+    std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
+    for (auto const &bond : p->bonds()) {
+      std::vector<int> ids = {id};
+      std::ranges::copy(bond.partner_ids(), std::back_inserter(ids));
+      bonds_to_remove.emplace_back(bond.bond_id(), std::move(ids));
     }
-  };
+    auto &system = get_system();
+    for (auto const &[bond_id, ids] : bonds_to_remove) {
+      ::remove_bond(system, bond_id, ids);
+    }
+  }
 
   for (auto cell : decomposition().local_cells()) {
     auto &parts = cell->particles();
@@ -454,7 +472,6 @@ void CellStructure::remove_particle(int id) {
         update_particle_index(id, nullptr);
         update_particle_index(parts);
       } else {
-        remove_all_bonds_to(it->bonds());
         it++;
       }
     }

@@ -27,6 +27,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/range/algorithm/equal.hpp>
 
+#include <algorithm>
 #include <array>
 #include <iterator>
 #include <sstream>
@@ -53,7 +54,16 @@ BOOST_AUTO_TEST_CASE(BondView_) {
     BOOST_CHECK(
         not(BondView{id, partners} == BondView{id, partners_different}));
     BOOST_CHECK(not(BondView{id, partners} == BondView{id + 1, partners_same}));
+    /* Primary is the default; a mirror entry with otherwise identical
+     * id/partners compares unequal to it. */
+    BOOST_CHECK(
+        not(BondView{id, partners} == BondView{id, partners_same, false}));
   }
+
+  /* is_primary() reflects the role the view was constructed with */
+  BOOST_CHECK((BondView{id, partners}.is_primary()));
+  BOOST_CHECK((BondView{id, partners, true}.is_primary()));
+  BOOST_CHECK(not(BondView{id, partners, false}.is_primary()));
 }
 
 BOOST_AUTO_TEST_CASE(default_ctor) {
@@ -63,13 +73,30 @@ BOOST_AUTO_TEST_CASE(default_ctor) {
 }
 
 BOOST_AUTO_TEST_CASE(Iterator_dereference_) {
-  auto const dummy_bonds = BondList::storage_type{1, 2, -3};
+  /* Delimiter -6 encodes bond id 2 as a primary entry:
+   * -(2 * (bond_id + 1) + role) with role 0 for primary. */
+  auto const dummy_bonds = BondList::storage_type{1, 2, -6};
   auto it = BondList::Iterator(dummy_bonds.begin());
 
   auto const result = *it;
   auto const expected = BondView{2, {dummy_bonds.data(), 2u}};
 
   BOOST_CHECK(result == expected);
+  BOOST_CHECK(result.is_primary());
+}
+
+BOOST_AUTO_TEST_CASE(Iterator_dereference_mirror_) {
+  /* Delimiter -7 encodes bond id 2 as a mirror entry (role 1):
+   * -(2 * (bond_id + 1) + role). */
+  auto const dummy_bonds = BondList::storage_type{1, 2, -7};
+  auto it = BondList::Iterator(dummy_bonds.begin());
+
+  auto const result = *it;
+
+  BOOST_CHECK_EQUAL(result.bond_id(), 2);
+  BOOST_CHECK(not result.is_primary());
+  BOOST_CHECK(
+      (std::ranges::equal(result.partner_ids(), std::array<int, 2>{{1, 2}})));
 }
 
 BOOST_AUTO_TEST_CASE(Iterator_incement_) {
@@ -112,6 +139,24 @@ BOOST_AUTO_TEST_CASE(insert_) {
   BOOST_CHECK(*bl.begin() == bond1);
   /* The new bond is inserted */
   BOOST_CHECK(*std::next(bl.begin()) == bond2);
+}
+
+BOOST_AUTO_TEST_CASE(insert_mirror_) {
+  /* A mirror (non-primary) entry round-trips through insert()/iteration
+   * alongside a primary one, distinguishable via is_primary(). */
+  auto const partners = std::array<int, 3>{{1, 2, 3}};
+  auto const primary = BondView{1, partners, true};
+  auto const mirror = BondView{2, partners, false};
+
+  BondList bl;
+  bl.insert(primary);
+  bl.insert(mirror);
+
+  BOOST_CHECK_EQUAL(bl.size(), 2);
+  BOOST_CHECK(*bl.begin() == primary);
+  BOOST_CHECK(bl.begin()->is_primary());
+  BOOST_CHECK(*std::next(bl.begin()) == mirror);
+  BOOST_CHECK(not std::next(bl.begin())->is_primary());
 }
 
 BOOST_AUTO_TEST_CASE(erase_) {
