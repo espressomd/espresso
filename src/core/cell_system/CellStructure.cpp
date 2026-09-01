@@ -343,10 +343,13 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
           pp_angle_slots(index, pp_angle_slot, 2) = partners[1]->id();
           pp_angle_slots(index, pp_angle_slot, 3) = bond.bond_id();
           pp_angle_slots(index, pp_angle_slot, 4) = 0;
-          // Column 5 (bond_index into angle_list) is filled in by a later
-          // resolution pass (short_range_cabana.hpp), once angle_list has
-          // been built and resolved to AoSoA indices; default to
-          // "unresolved" until then.
+          // Column 5 (bond_index into angle_list): the angle_list block
+          // below (same bond, same loop iteration) sets this directly to
+          // a_index once angle_count is known -- no lookup needed, exactly
+          // like pp_pair_slots' column 3 above. Default to "unresolved"
+          // until then (also the final value for a row this loop iteration
+          // never reaches, e.g. a mirror, which a later resolution pass in
+          // short_range_cabana.hpp fills in by scanning the owner's row).
           pp_angle_slots(index, pp_angle_slot, 5) = -1;
           wrote_angle_row = true;
         } else {
@@ -414,8 +417,10 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
           pp_dihedral_slots(index, pp_dihedral_slot, 3) = partners[2]->id();
           pp_dihedral_slots(index, pp_dihedral_slot, 4) = bond.bond_id();
           pp_dihedral_slots(index, pp_dihedral_slot, 5) = 0;
-          // See PPAngleSlotType's column 5 doc comment: column 6 is
-          // resolved later, once dihedral_list is available.
+          // See PPAngleSlotType's column 5 doc comment: column 6 is set
+          // directly below (same bond, same loop iteration) once d_index
+          // is known, for a primary row; a mirror row is resolved later by
+          // scanning the owner's row (short_range_cabana.hpp).
           pp_dihedral_slots(index, pp_dihedral_slot, 6) = -1;
           wrote_row = true;
         } else {
@@ -504,6 +509,11 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
         angle_list(a_index, 1) = partners[0]->id();
         angle_list(a_index, 2) = partners[1]->id();
         angle_ids(a_index) = bond.bond_id();
+        // Same bond, same loop iteration that wrote the primary
+        // pp_angle_slots row above (pp_angle_slot was incremented right
+        // after) -- stash a_index there directly, mirroring the pair-bond
+        // pattern above; avoids a global lookup for primary rows.
+        pp_angle_slots(index, pp_angle_slot - 1, 5) = a_index;
       } else if (partners.size() == 3u) { // dihedral bond
         auto d_index = Kokkos::atomic_fetch_add(&dihedral_count, 1);
         dihedral_list(d_index, 0) = p.id();
@@ -511,6 +521,8 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
         dihedral_list(d_index, 2) = partners[1]->id();
         dihedral_list(d_index, 3) = partners[2]->id();
         dihedral_ids(d_index) = bond.bond_id();
+        // Same idea as the angle-bond case above.
+        pp_dihedral_slots(index, pp_dihedral_slot - 1, 6) = d_index;
       }
     } catch (BondResolutionError const &) {
       bond_resolution_error(partner_ids);
