@@ -259,6 +259,21 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
                 )
 
     @run_before("run")
+    def skip_multi_gpu_on_debug_partition(self):
+        if self.is_local():
+            if self.num_gpus_per_node > 1:
+                self.skip(
+                    f"Local execution only supports 1 GPU "
+                    f"(tried to use {self.num_gpus_per_node})"
+                )
+        elif self.use_debug_partition:
+            if self.num_gpus_per_node > 1:
+                self.skip(
+                    f"Debug partition only supports 1 GPU "
+                    f"(tried to use {self.num_gpus_per_node})"
+                )
+
+    @run_before("run")
     def prepare_execution(self):
         build_target = self.getdep(
             BuildEspresso.variant_name(self.variants[0]))
