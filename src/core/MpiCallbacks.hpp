@@ -84,7 +84,7 @@ auto invoke(F f, boost::mpi::packed_iarchive &ia) {
 
   /* This is the local receive buffer for the parameters. We have to strip
      away const so we can actually deserialize into it. */
-  std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
+  std::tuple<std::remove_cvref_t<Args>...> params;
   std::apply([&ia](auto &&...e) { ((ia >> e), ...); }, params);
 
   /* We add const here, so that parameters can only be by value

@@ -791,8 +791,8 @@ GhostComm::HaloPlan RegularDecomposition::make_halo_plan() {
     return a.first < b.first;
   };
   for (auto &[peer, bucket] : peers) {
-    std::sort(bucket.recv.begin(), bucket.recv.end(), by_key);
-    std::sort(bucket.send.begin(), bucket.send.end(), by_key);
+    std::ranges::sort(bucket.recv, by_key);
+    std::ranges::sort(bucket.send, by_key);
     NeighborComm nc;
     nc.peer = peer;
     nc.recv.reserve(bucket.recv.size());
@@ -806,8 +806,8 @@ GhostComm::HaloPlan RegularDecomposition::make_halo_plan() {
 
   // Sort the self-copies deterministically too (not required, but keeps the
   // plan reproducible run to run).
-  std::sort(local.begin(), local.end(),
-            [](auto const &a, auto const &b) { return a.first < b.first; });
+  std::ranges::sort(
+      local, [](auto const &a, auto const &b) { return a.first < b.first; });
   plan.local.reserve(local.size());
   for (auto &[key, lc] : local)
     plan.local.push_back(lc);
