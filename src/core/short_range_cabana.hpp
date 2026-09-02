@@ -209,7 +209,7 @@ update_cabana_state(CellStructure &cell_structure,
           id_to_index(p.id()) = index;
           if (not p.is_ghost()) {
             cell_structure.update_bond_storage(pair_count, angle_count,
-                                               dihedral_count, p, index);
+                                               dihedral_count, p);
           }
         });
     Kokkos::fence();
@@ -225,136 +225,6 @@ update_cabana_state(CellStructure &cell_structure,
             }
           });
     }
-    if (bs.pp_num_particles) {
-      auto &pp_pair_degree = bs.pp_pair_degree;
-      auto &pp_pair_slots = bs.pp_pair_slots;
-      kokkos_parallel_range_for<host_space>(
-          "resolve_pp_pair_indices", std::size_t{0}, bs.pp_num_particles,
-          [&pp_pair_degree, &pp_pair_slots, &id_to_index](int idx) {
-            auto const degree = pp_pair_degree(idx);
-            for (int slot = 0; slot < degree; ++slot) {
-              // -1 marks a row whose partner failed to resolve on this
-              // rank (CellStructure::update_bond_storage) -- leave it as
-              // -1, the force/energy/pressure kernels skip such rows.
-              auto const other = pp_pair_slots(idx, slot, 0);
-              if (other >= 0) {
-                pp_pair_slots(idx, slot, 0) = id_to_index(other);
-              }
-            }
-          });
-    }
-    if (pair_count and bs.pp_num_particles) {
-      // Fill in pp_pair_slots' bond_index column (3) for every mirror row
-      // -- see PPPairSlotType's doc comment. Primary rows already have it
-      // (CellStructure::update_bond_storage sets it directly, in the same
-      // loop iteration that computes p_index -- no lookup needed there).
-      // A mirror row's owner (column 0, already an AoSoA index courtesy of
-      // resolve_pp_pair_indices above) holds that primary row: scan the
-      // owner's *own* pp_pair_slots row -- bounded by the owner's own
-      // degree, not the global bond count -- for the primary entry whose
-      // (partner, bond_id) matches this mirror's (self, bond_id), and copy
-      // its already-set bond_index. This deliberately avoids building any
-      // std::unordered_map over all `pair_count` bonds: an earlier version
-      // did exactly that (see resolve_pp_angle_bond_index below for the
-      // still-used version of that approach for angle bonds), and
-      // profiling showed the *serial* map construction -- not the O(1)
-      // lookups -- was the actual cost, badly so for topologies with many
-      // bonds concentrated on few particles (see the "high-degree
-      // regression" investigation in the project log).
-      auto &pp_pair_degree = bs.pp_pair_degree;
-      auto &pp_pair_slots = bs.pp_pair_slots;
-      kokkos_parallel_range_for<host_space>(
-          "resolve_pp_pair_bond_index", std::size_t{0}, bs.pp_num_particles,
-          [&pp_pair_degree, &pp_pair_slots](int idx) {
-            auto const degree = pp_pair_degree(idx);
-            for (int slot = 0; slot < degree; ++slot) {
-              if (pp_pair_slots(idx, slot, 2) != 0) {
-                continue; // primary row: bond_index already set directly
-              }
-              auto const owner = pp_pair_slots(idx, slot, 0);
-              if (owner < 0 or owner >= pp_pair_degree.extent(0)) {
-                // -1: unresolvable (resolve_pp_pair_indices). Out of
-                // pp_pair_degree's [0, pp_num_particles) range: owner is a
-                // ghost here, i.e. genuinely owned by another rank -- its
-                // own rank resolves this bond's primary entry, not us.
-                pp_pair_slots(idx, slot, 3) = -1;
-                continue;
-              }
-              auto const bond_id = pp_pair_slots(idx, slot, 1);
-              auto const owner_degree = pp_pair_degree(owner);
-              int found = -1;
-              for (int owner_slot = 0; owner_slot < owner_degree;
-                   ++owner_slot) {
-                if (pp_pair_slots(owner, owner_slot, 2) != 0 and
-                    pp_pair_slots(owner, owner_slot, 0) == idx and
-                    pp_pair_slots(owner, owner_slot, 1) == bond_id) {
-                  found = pp_pair_slots(owner, owner_slot, 3);
-                  break;
-                }
-              }
-              pp_pair_slots(idx, slot, 3) = found;
-            }
-          });
-    }
-    if (bs.pp_num_particles) {
-      // Partition each particle's row so entries genuinely needing a
-      // fallback evaluation (see PairBondsKernel) -- "other" resolved
-      // (column 0 >= 0) and bond_index still unresolved (column 3 < 0) --
-      // are exactly the first pp_pair_residual_degree(idx) of them.
-      // PairBondsKernel then only walks that shorter range every force
-      // calculation, instead of the full degree re-checking both columns
-      // on every row just to skip most of them. Reordering a particle's
-      // own row is transparent to every other consumer of pp_pair_slots:
-      // bond_energy_kokkos.hpp/bond_pressure_kokkos.hpp scan the full
-      // degree regardless of position (gated on the unrelated is_primary
-      // column), and LocalBondState::add_new_bond()'s hot-add fast path
-      // always appends past the current degree, which is always
-      // >= residual_degree here.
-      auto &pp_pair_degree = bs.pp_pair_degree;
-      auto &pp_pair_slots = bs.pp_pair_slots;
-      auto &pp_pair_residual_degree = bs.pp_pair_residual_degree;
-      kokkos_parallel_range_for<host_space>(
-          "partition_pp_pair_residual", std::size_t{0}, bs.pp_num_particles,
-          [&pp_pair_degree, &pp_pair_slots, &pp_pair_residual_degree](int idx) {
-            auto const degree = pp_pair_degree(idx);
-            int write = 0;
-            for (int read = 0; read < degree; ++read) {
-              bool const needs_fallback = pp_pair_slots(idx, read, 0) >= 0 and
-                                          pp_pair_slots(idx, read, 3) < 0;
-              if (needs_fallback) {
-                if (write != read) {
-                  for (int col = 0; col < 4; ++col) {
-                    auto const tmp = pp_pair_slots(idx, write, col);
-                    pp_pair_slots(idx, write, col) =
-                        pp_pair_slots(idx, read, col);
-                    pp_pair_slots(idx, read, col) = tmp;
-                  }
-                }
-                ++write;
-              }
-            }
-            pp_pair_residual_degree(idx) = write;
-          });
-    }
-    if (bs.pp_num_particles) {
-      auto &pp_angle_degree = bs.pp_angle_degree;
-      auto &pp_angle_slots = bs.pp_angle_slots;
-      kokkos_parallel_range_for<host_space>(
-          "resolve_pp_angle_indices", std::size_t{0}, bs.pp_num_particles,
-          [&pp_angle_degree, &pp_angle_slots, &id_to_index](int idx) {
-            auto const degree = pp_angle_degree(idx);
-            for (int slot = 0; slot < degree; ++slot) {
-              // See resolve_pp_pair_indices above: -1 in any column marks
-              // the whole row unresolvable, left untouched.
-              for (int col = 0; col < 3; ++col) {
-                auto const id = pp_angle_slots(idx, slot, col);
-                if (id >= 0) {
-                  pp_angle_slots(idx, slot, col) = id_to_index(id);
-                }
-              }
-            }
-          });
-    }
     if (angle_count) {
       auto &angle_bond_list = bs.angle_list;
       kokkos_parallel_range_for<host_space>(
@@ -363,116 +233,6 @@ update_cabana_state(CellStructure &cell_structure,
             for (int col = 0; col < 3; ++col) {
               angle_bond_list(idx, col) =
                   id_to_index(angle_bond_list(idx, col));
-            }
-          });
-    }
-    if (angle_count and bs.pp_num_particles) {
-      // Fill in pp_angle_slots' bond_index column (5) for every mirror row
-      // -- see PPAngleSlotType's doc comment. Primary rows already have it
-      // (CellStructure::update_bond_storage sets it directly, in the same
-      // loop iteration that computes a_index -- no lookup needed there). A
-      // mirror row's owner (column 0, already an AoSoA index courtesy of
-      // resolve_pp_angle_indices above) holds the primary row: scan the
-      // owner's *own* pp_angle_slots row -- bounded by the owner's own
-      // degree, not the global bond count -- for the primary entry
-      // (self_slot == 0, column 4) whose (arm1, arm2, bond_id) -- columns
-      // 1-3, identical between a mirror row and its owner's primary row by
-      // construction -- matches, and copy its already-set bond_index. See
-      // resolve_pp_pair_bond_index above for why this avoids building a
-      // std::unordered_map over all `angle_count` bonds. A row whose owner
-      // is only a ghost here (the bond straddles a rank boundary)
-      // legitimately finds no match and is left at -1, which
-      // AngleBondsKernel then evaluates directly instead of skipping it.
-      auto &pp_angle_degree = bs.pp_angle_degree;
-      auto &pp_angle_slots = bs.pp_angle_slots;
-      kokkos_parallel_range_for<host_space>(
-          "resolve_pp_angle_bond_index", std::size_t{0}, bs.pp_num_particles,
-          [&pp_angle_degree, &pp_angle_slots](int idx) {
-            auto const degree = pp_angle_degree(idx);
-            for (int slot = 0; slot < degree; ++slot) {
-              if (pp_angle_slots(idx, slot, 4) < 0) {
-                continue; // already unresolvable, see resolve_pp_angle_indices
-              }
-              if (pp_angle_slots(idx, slot, 4) == 0) {
-                continue; // primary row: bond_index already set directly
-              }
-              auto const owner = pp_angle_slots(idx, slot, 0);
-              if (owner < 0 or owner >= pp_angle_degree.extent(0)) {
-                // -1: unresolvable. Out of range: owner is a ghost here,
-                // i.e. genuinely owned by another rank -- see comment above.
-                pp_angle_slots(idx, slot, 5) = -1;
-                continue;
-              }
-              auto const arm1 = pp_angle_slots(idx, slot, 1);
-              auto const arm2 = pp_angle_slots(idx, slot, 2);
-              auto const bond_id = pp_angle_slots(idx, slot, 3);
-              auto const owner_degree = pp_angle_degree(owner);
-              int found = -1;
-              for (int owner_slot = 0; owner_slot < owner_degree;
-                   ++owner_slot) {
-                if (pp_angle_slots(owner, owner_slot, 4) == 0 and
-                    pp_angle_slots(owner, owner_slot, 1) == arm1 and
-                    pp_angle_slots(owner, owner_slot, 2) == arm2 and
-                    pp_angle_slots(owner, owner_slot, 3) == bond_id) {
-                  found = pp_angle_slots(owner, owner_slot, 5);
-                  break;
-                }
-              }
-              pp_angle_slots(idx, slot, 5) = found;
-            }
-          });
-    }
-    if (bs.pp_num_particles) {
-      // See the pp_pair_residual_degree partition pass above for the
-      // rationale; same idea, gated on self_slot (column 4) instead of
-      // pair's "other" column for the unresolvable check, and bond_index
-      // (column 5) for the already-resolved check.
-      auto &pp_angle_degree = bs.pp_angle_degree;
-      auto &pp_angle_slots = bs.pp_angle_slots;
-      auto &pp_angle_residual_degree = bs.pp_angle_residual_degree;
-      kokkos_parallel_range_for<host_space>(
-          "partition_pp_angle_residual", std::size_t{0}, bs.pp_num_particles,
-          [&pp_angle_degree, &pp_angle_slots,
-           &pp_angle_residual_degree](int idx) {
-            auto const degree = pp_angle_degree(idx);
-            int write = 0;
-            for (int read = 0; read < degree; ++read) {
-              bool const needs_fallback = pp_angle_slots(idx, read, 4) >= 0 and
-                                          pp_angle_slots(idx, read, 5) < 0;
-              if (needs_fallback) {
-                if (write != read) {
-                  for (int col = 0; col < 6; ++col) {
-                    auto const tmp = pp_angle_slots(idx, write, col);
-                    pp_angle_slots(idx, write, col) =
-                        pp_angle_slots(idx, read, col);
-                    pp_angle_slots(idx, read, col) = tmp;
-                  }
-                }
-                ++write;
-              }
-            }
-            pp_angle_residual_degree(idx) = write;
-          });
-    }
-    if (bs.pp_num_particles) {
-      auto &pp_dihedral_degree = bs.pp_dihedral_degree;
-      auto &pp_dihedral_slots = bs.pp_dihedral_slots;
-      kokkos_parallel_range_for<host_space>(
-          "resolve_pp_dihedral_indices", std::size_t{0}, bs.pp_num_particles,
-          [&pp_dihedral_degree, &pp_dihedral_slots, &id_to_index](int idx) {
-            auto const degree = pp_dihedral_degree(idx);
-            for (int slot = 0; slot < degree; ++slot) {
-              // See resolve_pp_pair_indices above: -1 in any chain column
-              // marks the whole row unresolvable, left untouched (column
-              // 5, chain_slot, is also -1 for such a row and is never an
-              // id, so it's harmless that it isn't excluded from this
-              // per-column check).
-              for (int col = 0; col < 4; ++col) {
-                auto const id = pp_dihedral_slots(idx, slot, col);
-                if (id >= 0) {
-                  pp_dihedral_slots(idx, slot, col) = id_to_index(id);
-                }
-              }
             }
           });
     }
@@ -487,88 +247,7 @@ update_cabana_state(CellStructure &cell_structure,
             }
           });
     }
-    if (dihedral_count and bs.pp_num_particles) {
-      // See resolve_pp_angle_bond_index above for the rationale; same idea
-      // over the 4-chain (owner, chain1, chain2, chain3), filling
-      // pp_dihedral_slots' bond_index column (6): a mirror row's owner
-      // (column 0) holds the primary row (chain_slot == 0, column 5), whose
-      // columns 1-3 plus bond_id (column 4) are identical to the mirror
-      // row's own by construction -- scan the owner's own row (bounded by
-      // its degree, not the global bond count) for that match.
-      auto &pp_dihedral_degree = bs.pp_dihedral_degree;
-      auto &pp_dihedral_slots = bs.pp_dihedral_slots;
-      kokkos_parallel_range_for<host_space>(
-          "resolve_pp_dihedral_bond_index", std::size_t{0}, bs.pp_num_particles,
-          [&pp_dihedral_degree, &pp_dihedral_slots](int idx) {
-            auto const degree = pp_dihedral_degree(idx);
-            for (int slot = 0; slot < degree; ++slot) {
-              if (pp_dihedral_slots(idx, slot, 5) < 0) {
-                continue; // already unresolvable
-              }
-              if (pp_dihedral_slots(idx, slot, 5) == 0) {
-                continue; // primary row: bond_index already set directly
-              }
-              auto const owner = pp_dihedral_slots(idx, slot, 0);
-              if (owner < 0 or owner >= pp_dihedral_degree.extent(0)) {
-                pp_dihedral_slots(idx, slot, 6) = -1;
-                continue;
-              }
-              auto const c1 = pp_dihedral_slots(idx, slot, 1);
-              auto const c2 = pp_dihedral_slots(idx, slot, 2);
-              auto const c3 = pp_dihedral_slots(idx, slot, 3);
-              auto const bond_id = pp_dihedral_slots(idx, slot, 4);
-              auto const owner_degree = pp_dihedral_degree(owner);
-              int found = -1;
-              for (int owner_slot = 0; owner_slot < owner_degree;
-                   ++owner_slot) {
-                if (pp_dihedral_slots(owner, owner_slot, 5) == 0 and
-                    pp_dihedral_slots(owner, owner_slot, 1) == c1 and
-                    pp_dihedral_slots(owner, owner_slot, 2) == c2 and
-                    pp_dihedral_slots(owner, owner_slot, 3) == c3 and
-                    pp_dihedral_slots(owner, owner_slot, 4) == bond_id) {
-                  found = pp_dihedral_slots(owner, owner_slot, 6);
-                  break;
-                }
-              }
-              pp_dihedral_slots(idx, slot, 6) = found;
-            }
-          });
-    }
-    if (bs.pp_num_particles) {
-      // See the pp_pair_residual_degree partition pass above for the
-      // rationale; same idea, gated on chain_slot (column 5) instead of
-      // pair's "other" column for the unresolvable check, and bond_index
-      // (column 6) for the already-resolved check.
-      auto &pp_dihedral_degree = bs.pp_dihedral_degree;
-      auto &pp_dihedral_slots = bs.pp_dihedral_slots;
-      auto &pp_dihedral_residual_degree = bs.pp_dihedral_residual_degree;
-      kokkos_parallel_range_for<host_space>(
-          "partition_pp_dihedral_residual", std::size_t{0}, bs.pp_num_particles,
-          [&pp_dihedral_degree, &pp_dihedral_slots,
-           &pp_dihedral_residual_degree](int idx) {
-            auto const degree = pp_dihedral_degree(idx);
-            int write = 0;
-            for (int read = 0; read < degree; ++read) {
-              bool const needs_fallback =
-                  pp_dihedral_slots(idx, read, 5) >= 0 and
-                  pp_dihedral_slots(idx, read, 6) < 0;
-              if (needs_fallback) {
-                if (write != read) {
-                  for (int col = 0; col < 7; ++col) {
-                    auto const tmp = pp_dihedral_slots(idx, write, col);
-                    pp_dihedral_slots(idx, write, col) =
-                        pp_dihedral_slots(idx, read, col);
-                    pp_dihedral_slots(idx, read, col) = tmp;
-                  }
-                }
-                ++write;
-              }
-            }
-            pp_dihedral_residual_degree(idx) = write;
-          });
-    }
-    if (pair_count != 0 or angle_count != 0 or dihedral_count != 0 or
-        bs.pp_num_particles != 0) {
+    if (pair_count != 0 or angle_count != 0 or dihedral_count != 0) {
       Kokkos::fence();
     }
 #ifdef ESPRESSO_CALIPER
@@ -666,14 +345,14 @@ using ShortRangeVerletPairLoop =
 // fills an O(n_types^2) cutoff table, so it is only invoked on the link-cell
 // fallback path, which is the only consumer here.
 template <class execution_space = Kokkos::DefaultHostExecutionSpace>
-void cabana_short_range(
-    auto const &pair_bonds_kernel, auto const &angle_bonds_kernel,
-    auto const &dihedral_bonds_kernel, std::size_t pair_bonds_dispatch_count,
-    std::size_t angle_bonds_dispatch_count,
-    std::size_t dihedral_bonds_dispatch_count, auto const &nonbonded_kernel,
-    CellStructure &cell_structure, double pair_cutoff, double bond_cutoff,
-    auto const &make_verlet_criterion, auto const integ_switch,
-    ShortRangeVerletPairLoop const &verlet_pair_loop = {}) {
+void cabana_short_range(auto const &pair_bonds_kernel,
+                        auto const &angle_bonds_kernel,
+                        auto const &dihedral_bonds_kernel,
+                        auto const &nonbonded_kernel,
+                        CellStructure &cell_structure, double pair_cutoff,
+                        double bond_cutoff, auto const &make_verlet_criterion,
+                        auto const integ_switch,
+                        ShortRangeVerletPairLoop const &verlet_pair_loop = {}) {
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
   if (bond_cutoff >= 0.) {
@@ -681,31 +360,26 @@ void cabana_short_range(
     ESPRESSO_CALI_MARK_BEGIN("cabana_bond_loop");
 #endif
     using host_space = Kokkos::DefaultHostExecutionSpace;
-    // @p pair_bonds_dispatch_count / @p angle_bonds_dispatch_count are
-    // caller-specified because the pair/angle bond kernels' dispatch axis
-    // differs by caller: forces.cpp's gather kernels are dispatched
-    // particle-parallel (one work-item per local particle, gathering from
-    // its own primary + mirror BondList entries, needed so each writes only
-    // to its own force accumulator with no ScatterView/atomics), while
-    // energy.cpp/pressure.cpp still use the older per-bond kernels,
-    // dispatched over the primary-bond count.
-    if (pair_bonds_dispatch_count > 0) {
-      kokkos_parallel_range_for<host_space>(
-          "for_each_local_pair_bonds", std::size_t{0},
-          pair_bonds_dispatch_count, pair_bonds_kernel);
+    auto const n_pair_bonds = cell_structure.get_local_pair_bond_numbers();
+    auto const n_angle_bonds = cell_structure.get_local_angle_bond_numbers();
+    auto const n_dihedral_bonds =
+        cell_structure.get_local_dihedral_bond_numbers();
+    if (n_pair_bonds > 0) {
+      kokkos_parallel_range_for<host_space>("for_each_local_pair_bonds",
+                                            std::size_t{0}, n_pair_bonds,
+                                            pair_bonds_kernel);
     }
-    if (angle_bonds_dispatch_count > 0) {
-      kokkos_parallel_range_for<host_space>(
-          "for_each_local_angle_bonds", std::size_t{0},
-          angle_bonds_dispatch_count, angle_bonds_kernel);
+    if (n_angle_bonds > 0) {
+      kokkos_parallel_range_for<host_space>("for_each_local_angle_bonds",
+                                            std::size_t{0}, n_angle_bonds,
+                                            angle_bonds_kernel);
     }
-    if (dihedral_bonds_dispatch_count > 0) {
-      kokkos_parallel_range_for<host_space>(
-          "for_each_local_dihedral_bonds", std::size_t{0},
-          dihedral_bonds_dispatch_count, dihedral_bonds_kernel);
+    if (n_dihedral_bonds > 0) {
+      kokkos_parallel_range_for<host_space>("for_each_local_dihedral_bonds",
+                                            std::size_t{0}, n_dihedral_bonds,
+                                            dihedral_bonds_kernel);
     }
-    if (pair_bonds_dispatch_count != 0 or angle_bonds_dispatch_count != 0 or
-        dihedral_bonds_dispatch_count != 0) {
+    if (n_pair_bonds != 0 or n_angle_bonds != 0 or n_dihedral_bonds != 0) {
       Kokkos::fence();
     }
 #ifdef ESPRESSO_CALIPER

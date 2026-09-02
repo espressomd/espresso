@@ -148,18 +148,14 @@ Observable_stat const &System::calculate_energy() {
   auto &bs = cell_structure->bond_state();
   BondsEnergyKernelData bonds_e_data{*bonded_ias, *box_geo, local_energy,
                                      layout, cell_structure->get_aosoa()};
-  PairBondsEnergyKernel pair_be_kernel{bonds_e_data, bs.pp_pair_degree,
-                                       bs.pp_pair_slots,
+  PairBondsEnergyKernel pair_be_kernel{bonds_e_data, bs.pair_list, bs.pair_ids,
                                        get_ptr(coulomb_kernel)};
-  AngleBondsEnergyKernel angle_be_kernel{bonds_e_data, bs.pp_angle_degree,
-                                         bs.pp_angle_slots};
-  DihedralBondsEnergyKernel dih_be_kernel{bonds_e_data, bs.pp_dihedral_degree,
-                                          bs.pp_dihedral_slots};
+  AngleBondsEnergyKernel angle_be_kernel{bonds_e_data, bs.angle_list,
+                                         bs.angle_ids};
+  DihedralBondsEnergyKernel dih_be_kernel{bonds_e_data, bs.dihedral_list,
+                                          bs.dihedral_ids};
 
   cabana_short_range(pair_be_kernel, angle_be_kernel, dih_be_kernel,
-                     static_cast<std::size_t>(bs.pp_num_particles),
-                     static_cast<std::size_t>(bs.pp_num_particles),
-                     static_cast<std::size_t>(bs.pp_num_particles),
                      pair_e_kernel, *cell_structure, get_interaction_range(),
                      bonded_ias->maximal_cutoff(), make_verlet_criterion,
                      propagation->integ_switch);

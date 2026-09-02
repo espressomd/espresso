@@ -148,55 +148,22 @@ static void reinit_dip_fld(CellStructure const &cell_structure) {
 }
 #endif
 
-static PairBondsKernelData
-create_kokkos_pair_bonds_kernel_data(System::System const &system) {
-  auto &local_force = system.cell_structure->get_local_force();
+static BondsKernelData
+create_kokkos_bonds_kernel_data(System::System const &system) {
+  auto scatter_force = system.cell_structure->get_scatter_force();
 #ifdef ESPRESSO_NPT
   auto scatter_virial = system.cell_structure->get_scatter_virial();
 #endif
-  auto scatter_force = system.cell_structure->get_scatter_force();
   auto const &aosoa = system.cell_structure->get_aosoa();
-  auto &bs = system.cell_structure->bond_state();
-  return /* PairBondsKernelData */ {
-      *system.bonded_ias,
-      *system.bond_breakage,
-      *system.box_geo,
-      local_force,
+  return /* BondsKernelData */ {*system.bonded_ias,
+                                *system.bond_breakage,
+                                *system.box_geo,
+                                scatter_force,
 #ifdef ESPRESSO_NPT
-      scatter_virial,
+                                scatter_virial,
 #endif
-      aosoa,
-      !system.bond_breakage->breakage_specs.empty(),
-      scatter_force,
-      bs.pp_num_particles};
-}
-
-static AngleBondsKernelData
-create_kokkos_angle_bonds_kernel_data(System::System const &system) {
-  auto &local_force = system.cell_structure->get_local_force();
-  auto scatter_force = system.cell_structure->get_scatter_force();
-  auto const &aosoa = system.cell_structure->get_aosoa();
-  auto &bs = system.cell_structure->bond_state();
-  return /* AngleBondsKernelData */ {
-      *system.bonded_ias,
-      *system.bond_breakage,
-      *system.box_geo,
-      local_force,
-      aosoa,
-      !system.bond_breakage->breakage_specs.empty(),
-      scatter_force,
-      bs.pp_num_particles};
-}
-
-static DihedralBondsKernelData
-create_kokkos_dihedral_bonds_kernel_data(System::System const &system) {
-  auto &local_force = system.cell_structure->get_local_force();
-  auto scatter_force = system.cell_structure->get_scatter_force();
-  auto const &aosoa = system.cell_structure->get_aosoa();
-  auto &bs = system.cell_structure->bond_state();
-  return /* DihedralBondsKernelData */ {
-      *system.bonded_ias, *system.box_geo,    local_force, aosoa,
-      scatter_force,      bs.pp_num_particles};
+                                aosoa,
+                                !system.bond_breakage->breakage_specs.empty()};
 }
 
 static ForcesKernel create_cabana_neighbor_kernel(
@@ -524,49 +491,13 @@ void System::System::calculate_forces() {
   ESPRESSO_CALI_MARK_BEGIN("cabana_short_range");
 #endif
   auto &bs = cell_structure->bond_state();
-  auto pair_bonds_kernel_data = create_kokkos_pair_bonds_kernel_data(*this);
-  auto angle_bonds_kernel_data = create_kokkos_angle_bonds_kernel_data(*this);
-  auto dihedral_bonds_kernel_data =
-      create_kokkos_dihedral_bonds_kernel_data(*this);
-
-  // Evaluate every rank-locally-owned pair/angle/dihedral bond's force
-  // exactly once (see AngleBondsForceComputeKernel's doc comment), before
-  // the particle-parallel gather kernels below skip/fall back on the
-  // results. Must finish (fence) before those gather kernels run.
-  using host_space = Kokkos::DefaultHostExecutionSpace;
-  if (bs.pair_count > 0) {
-    kokkos_parallel_range_for<host_space>(
-        "pair_bond_force_compute", std::size_t{0},
-        static_cast<std::size_t>(bs.pair_count),
-        PairBondsForceComputeKernel{pair_bonds_kernel_data, bs.pair_list,
-                                    bs.pair_ids, get_ptr(coulomb_kernel)});
-  }
-  if (bs.angle_count > 0) {
-    kokkos_parallel_range_for<host_space>(
-        "angle_bond_force_compute", std::size_t{0},
-        static_cast<std::size_t>(bs.angle_count),
-        AngleBondsForceComputeKernel{angle_bonds_kernel_data, bs.angle_list,
-                                     bs.angle_ids});
-  }
-  if (bs.dihedral_count > 0) {
-    kokkos_parallel_range_for<host_space>(
-        "dihedral_bond_force_compute", std::size_t{0},
-        static_cast<std::size_t>(bs.dihedral_count),
-        DihedralBondsForceComputeKernel{dihedral_bonds_kernel_data,
-                                        bs.dihedral_list, bs.dihedral_ids});
-  }
-  if (bs.pair_count > 0 or bs.angle_count > 0 or bs.dihedral_count > 0) {
-    Kokkos::fence();
-  }
-
-  auto pair_bonds_kernel =
-      PairBondsKernel{pair_bonds_kernel_data, bs.pp_pair_residual_degree,
-                      bs.pp_pair_slots, get_ptr(coulomb_kernel)};
-  auto angle_bonds_kernel = AngleBondsKernel{
-      angle_bonds_kernel_data, bs.pp_angle_residual_degree, bs.pp_angle_slots};
+  auto bonds_kernel_data = create_kokkos_bonds_kernel_data(*this);
+  auto pair_bonds_kernel = PairBondsKernel{
+      bonds_kernel_data, bs.pair_list, bs.pair_ids, get_ptr(coulomb_kernel)};
+  auto angle_bonds_kernel =
+      AngleBondsKernel{bonds_kernel_data, bs.angle_list, bs.angle_ids};
   auto dihedral_bonds_kernel =
-      DihedralBondsKernel{dihedral_bonds_kernel_data,
-                          bs.pp_dihedral_residual_degree, bs.pp_dihedral_slots};
+      DihedralBondsKernel{bonds_kernel_data, bs.dihedral_list, bs.dihedral_ids};
 
   auto first_neighbor_kernel =
       create_cabana_neighbor_kernel(*this, virial, elc_kernel, coulomb_kernel,
@@ -620,13 +551,11 @@ void System::System::calculate_forces() {
   }
 #endif // ESPRESSO_NPT
 
-  cabana_short_range(
-      pair_bonds_kernel, angle_bonds_kernel, dihedral_bonds_kernel,
-      static_cast<std::size_t>(bs.pp_num_particles),
-      static_cast<std::size_t>(bs.pp_num_particles),
-      static_cast<std::size_t>(bs.pp_num_particles), first_neighbor_kernel,
-      *cell_structure, get_interaction_range(), bonded_ias->maximal_cutoff(),
-      make_verlet_criterion, propagation->integ_switch, specialized_pair_loop);
+  cabana_short_range(pair_bonds_kernel, angle_bonds_kernel,
+                     dihedral_bonds_kernel, first_neighbor_kernel,
+                     *cell_structure, get_interaction_range(),
+                     bonded_ias->maximal_cutoff(), make_verlet_criterion,
+                     propagation->integ_switch, specialized_pair_loop);
 
   // Force and Torque reduction
   reduce_cabana_forces_and_torques(*this, virial);

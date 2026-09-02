@@ -46,176 +46,148 @@ struct BondsEnergyKernelData {
   CellStructure::AoSoA_pack const &aosoa;
 };
 
-// Dispatched particle-parallel like the force kernels (see
-// bond_forces_kokkos.hpp), for consistency and so that a single per-particle
-// gather structure (LocalBondState::pp_*) drives every bond kernel. Energy
-// never needed a ScatterView (it already accumulated into a per-thread
-// private (thread_id, bin) array), so this is purely a dispatch-axis change:
-// each row is only a candidate contribution for the participant holding its
-// bond's primary entry -- mirror rows are skipped -- which reproduces
-// exactly the old per-bond kernel's single evaluation with "self" playing
-// the role of the old kernel's owner particle "i".
 struct PairBondsEnergyKernel {
   BondsEnergyKernelData data;
-  LocalBondState::PPPairDegreeType pp_pair_degree;
-  LocalBondState::PPPairSlotType pp_pair_slots;
+  LocalBondState::PairBondlistType bond_list;
+  LocalBondState::PairBondIDType bond_ids;
   Coulomb::ShortRangeEnergyKernel::kernel_type const *const coulomb_u_kernel;
 
   PairBondsEnergyKernel(
-      BondsEnergyKernelData data_,
-      LocalBondState::PPPairDegreeType pp_pair_degree_,
-      LocalBondState::PPPairSlotType pp_pair_slots_,
+      BondsEnergyKernelData data_, LocalBondState::PairBondlistType bond_list_,
+      LocalBondState::PairBondIDType bond_ids_,
       Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_u_kernel_)
-      : data(std::move(data_)), pp_pair_degree(std::move(pp_pair_degree_)),
-        pp_pair_slots(std::move(pp_pair_slots_)),
-        coulomb_u_kernel(coulomb_u_kernel_) {}
+      : data(std::move(data_)), bond_list(std::move(bond_list_)),
+        bond_ids(std::move(bond_ids_)), coulomb_u_kernel(coulomb_u_kernel_) {}
 
-  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t self) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t idx) const {
     auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
     auto &local_energy = data.local_energy;
     auto const &layout = data.layout;
     auto const &aosoa = data.aosoa;
+    auto const bond_id = bond_ids(idx);
+
     // TODO: omp_get_thread_num() is only available for the OpenMP backend.
     // This should be updated when using other Kokkos backends.
     auto const thread_id = omp_get_thread_num();
-    auto const degree = pp_pair_degree(self);
 
-    for (int slot = 0; slot < degree; ++slot) {
-      auto const j = pp_pair_slots(self, slot, 0);
-      // mirror, or an unresolvable row (-1, see
-      // CellStructure::update_bond_storage) -- skip either way.
-      if (pp_pair_slots(self, slot, 2) == 0 or j < 0) {
-        continue;
-      }
-      auto const i = self;
-      auto const bond_id = pp_pair_slots(self, slot, 1);
-      auto const &iaparams = *bonded_ias.at(bond_id);
+    auto const i = bond_list(idx, 0);
+    auto const j = bond_list(idx, 1);
+    auto const &iaparams = *bonded_ias.at(bond_id);
 
-      auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-      auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-      auto const dx = box_geo.get_mi_vector(pos1, pos2);
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+    auto const dx = box_geo.get_mi_vector(pos1, pos2);
 
-      std::optional<double> energy = calc_pair_bonded_energy(
-          iaparams, dx, pos1, pos2,
+    std::optional<double> energy = calc_pair_bonded_energy(
+        iaparams, dx, pos1, pos2,
 #ifdef ESPRESSO_ELECTROSTATICS
-          aosoa.charge(i) * aosoa.charge(j), coulomb_u_kernel
+        aosoa.charge(i) * aosoa.charge(j), coulomb_u_kernel
 #else
-          0.0, nullptr
+        0.0, nullptr
 #endif
-      );
+    );
 
-      if (energy) {
-        local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();
-      } else {
-        auto partner_id = aosoa.id(j);
-        bond_broken_error(aosoa.id(i), {&partner_id, 1});
-      }
+    if (energy) {
+      local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();
+    } else {
+      auto partner_id = aosoa.id(j);
+      bond_broken_error(aosoa.id(i), {&partner_id, 1});
     }
   }
 };
 
 struct AngleBondsEnergyKernel {
   BondsEnergyKernelData data;
-  LocalBondState::PPAngleDegreeType pp_angle_degree;
-  LocalBondState::PPAngleSlotType pp_angle_slots;
+  LocalBondState::AngleBondlistType bond_list;
+  LocalBondState::AngleBondIDType bond_ids;
 
   AngleBondsEnergyKernel(BondsEnergyKernelData data_,
-                         LocalBondState::PPAngleDegreeType pp_angle_degree_,
-                         LocalBondState::PPAngleSlotType pp_angle_slots_)
-      : data(std::move(data_)), pp_angle_degree(std::move(pp_angle_degree_)),
-        pp_angle_slots(std::move(pp_angle_slots_)) {}
+                         LocalBondState::AngleBondlistType bond_list_,
+                         LocalBondState::AngleBondIDType bond_ids_)
+      : data(std::move(data_)), bond_list(std::move(bond_list_)),
+        bond_ids(std::move(bond_ids_)) {}
 
-  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t self) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t idx) const {
     auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
     auto &local_energy = data.local_energy;
     auto const &layout = data.layout;
     auto const &aosoa = data.aosoa;
+    auto const bond_id = bond_ids(idx);
+
+    // TODO: omp_get_thread_num() is only available for the OpenMP backend.
+    // This should be updated when using other Kokkos backends.
     auto const thread_id = omp_get_thread_num();
-    auto const degree = pp_angle_degree(self);
 
-    for (int slot = 0; slot < degree; ++slot) {
-      // Only self_slot==0 (self == vertex == column 0) contributes, to
-      // avoid triple-counting; -1 (unresolvable row) also fails this.
-      if (pp_angle_slots(self, slot, 4) != 0) {
-        continue;
-      }
-      auto const i = self;
-      auto const j = pp_angle_slots(self, slot, 1);
-      auto const k = pp_angle_slots(self, slot, 2);
-      auto const bond_id = pp_angle_slots(self, slot, 3);
-      auto const &iaparams = *bonded_ias.at(bond_id);
+    auto const i = bond_list(idx, 0);
+    auto const j = bond_list(idx, 1);
+    auto const k = bond_list(idx, 2);
+    auto const &iaparams = *bonded_ias.at(bond_id);
 
-      auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-      auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-      auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
-      auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
-      auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+    auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
+    auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
+    auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
 
-      std::optional<double> energy =
-          calc_angle_bonded_energy(iaparams, vec1, vec2);
+    std::optional<double> energy =
+        calc_angle_bonded_energy(iaparams, vec1, vec2);
 
-      if (energy) {
-        local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();
-      } else {
-        std::array<int, 2> pids = {aosoa.id(j), aosoa.id(k)};
-        bond_broken_error(aosoa.id(i), {pids.data(), 2});
-      }
+    if (energy) {
+      local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();
+    } else {
+      std::array<int, 2> pids = {aosoa.id(j), aosoa.id(k)};
+      bond_broken_error(aosoa.id(i), {pids.data(), 2});
     }
   }
 };
 
 struct DihedralBondsEnergyKernel {
   BondsEnergyKernelData data;
-  LocalBondState::PPDihedralDegreeType pp_dihedral_degree;
-  LocalBondState::PPDihedralSlotType pp_dihedral_slots;
+  LocalBondState::DihedralBondlistType bond_list;
+  LocalBondState::DihedralBondIDType bond_ids;
 
-  DihedralBondsEnergyKernel(
-      BondsEnergyKernelData data_,
-      LocalBondState::PPDihedralDegreeType pp_dihedral_degree_,
-      LocalBondState::PPDihedralSlotType pp_dihedral_slots_)
-      : data(std::move(data_)),
-        pp_dihedral_degree(std::move(pp_dihedral_degree_)),
-        pp_dihedral_slots(std::move(pp_dihedral_slots_)) {}
+  DihedralBondsEnergyKernel(BondsEnergyKernelData data_,
+                            LocalBondState::DihedralBondlistType bond_list_,
+                            LocalBondState::DihedralBondIDType bond_ids_)
+      : data(std::move(data_)), bond_list(std::move(bond_list_)),
+        bond_ids(std::move(bond_ids_)) {}
 
-  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t self) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t idx) const {
     auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
     auto &local_energy = data.local_energy;
     auto const &layout = data.layout;
     auto const &aosoa = data.aosoa;
+    auto const bond_id = bond_ids(idx);
+
+    // TODO: omp_get_thread_num() is only available for the OpenMP backend.
+    // This should be updated when using other Kokkos backends.
     auto const thread_id = omp_get_thread_num();
-    auto const degree = pp_dihedral_degree(self);
 
-    for (int slot = 0; slot < degree; ++slot) {
-      if (pp_dihedral_slots(self, slot, 5) != 0) { // not chain position 0
-        continue;
-      }
-      auto const i = self;
-      auto const j = pp_dihedral_slots(self, slot, 1);
-      auto const k = pp_dihedral_slots(self, slot, 2);
-      auto const m = pp_dihedral_slots(self, slot, 3);
-      auto const bond_id = pp_dihedral_slots(self, slot, 4);
-      auto const &iaparams = *bonded_ias.at(bond_id);
+    auto const i = bond_list(idx, 0);
+    auto const j = bond_list(idx, 1);
+    auto const k = bond_list(idx, 2);
+    auto const m = bond_list(idx, 3);
+    auto const &iaparams = *bonded_ias.at(bond_id);
 
-      auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-      auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-      auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
-      auto const pos4 = aosoa.get_vector_at(aosoa.position, m);
-      auto const v12 = box_geo.get_mi_vector(pos1, pos2);
-      auto const v23 = box_geo.get_mi_vector(pos3, pos1);
-      auto const v34 = box_geo.get_mi_vector(pos4, pos3);
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+    auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
+    auto const pos4 = aosoa.get_vector_at(aosoa.position, m);
+    auto const v12 = box_geo.get_mi_vector(pos1, pos2);
+    auto const v23 = box_geo.get_mi_vector(pos3, pos1);
+    auto const v34 = box_geo.get_mi_vector(pos4, pos3);
 
-      std::optional<double> energy =
-          calc_dihedral_bonded_energy(iaparams, v12, v23, v34);
+    std::optional<double> energy =
+        calc_dihedral_bonded_energy(iaparams, v12, v23, v34);
 
-      if (energy) {
-        local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();
-      } else {
-        std::array<int, 3> pids = {aosoa.id(j), aosoa.id(k), aosoa.id(m)};
-        bond_broken_error(aosoa.id(i), {pids.data(), 3});
-      }
+    if (energy) {
+      local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();
+    } else {
+      std::array<int, 3> pids = {aosoa.id(j), aosoa.id(k), aosoa.id(m)};
+      bond_broken_error(aosoa.id(i), {pids.data(), 3});
     }
   }
 };
