@@ -103,7 +103,7 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
             f'cp {config_dir / "empty.hpp"} .',
             f'cp {config_dir / "default.hpp"} .',
             f'cp {config_dir / "maxset.hpp"} .',
-            rf'sed -i "1 i\\#define ELECTROSTATICS\\n#define LENNARD_JONES\\n#define MASS\\n" {
+            rf'sed -i "1 i\\#define ELECTROSTATICS\\n#define LENNARD_JONES\\n#define MASS\\n#define WCA\\n#define DIPOLES\\" {
                 config_name}.hpp',
             rf'sed -ri "/#define\s+ADDITIONAL_CHECKS/d" {config_name}.hpp',
             rf"cp {config_name}.hpp myconfig.hpp",
