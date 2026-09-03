@@ -140,8 +140,8 @@ private:
    *  contribution to @p counts; a no-op for mirror entries and for
    *  arities @ref CellStructure::set_index_map() does not track (0 or
    *  more than 3 partners), matching its own classification exactly. */
-  static void adjust_primary_counts(PrimaryCounts &counts,
-                                    BondView const &bond, int delta) {
+  static void adjust_primary_counts(PrimaryCounts &counts, BondView const &bond,
+                                    int delta) {
     if (not bond.is_primary()) {
       return;
     }

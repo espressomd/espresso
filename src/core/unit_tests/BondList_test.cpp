@@ -310,7 +310,8 @@ BOOST_AUTO_TEST_CASE(primary_counts_serialization_) {
   in_ar >> bl_restored;
 
   /* deserialization recomputes primary_counts() to match the original */
-  BOOST_CHECK_EQUAL(bl_restored.primary_counts().pair, bl.primary_counts().pair);
+  BOOST_CHECK_EQUAL(bl_restored.primary_counts().pair,
+                    bl.primary_counts().pair);
   BOOST_CHECK_EQUAL(bl_restored.primary_counts().angle,
                     bl.primary_counts().angle);
   BOOST_CHECK_EQUAL(bl_restored.primary_counts().dihedral,
@@ -373,13 +374,11 @@ BOOST_AUTO_TEST_CASE(legacy_archive_migration_) {
   auto it = bl.begin();
   BOOST_CHECK_EQUAL(it->bond_id(), 2);
   BOOST_CHECK(it->is_primary());
-  BOOST_CHECK(
-      (std::ranges::equal(it->partner_ids(), std::array<int, 1>{{7}})));
+  BOOST_CHECK((std::ranges::equal(it->partner_ids(), std::array<int, 1>{{7}})));
   ++it;
   BOOST_CHECK_EQUAL(it->bond_id(), 5);
   BOOST_CHECK(it->is_primary());
-  BOOST_CHECK(
-      (std::ranges::equal(it->partner_ids(), std::array<int, 1>{{9}})));
+  BOOST_CHECK((std::ranges::equal(it->partner_ids(), std::array<int, 1>{{9}})));
 
   /* primary_counts(), populated only on load (recompute_primary_counts()),
    * must reflect the migrated bonds. */
