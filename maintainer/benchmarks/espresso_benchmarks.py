@@ -80,12 +80,20 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
         if not self.is_local():
             self.build_job.num_cpus_per_task = 64  # type: ignore
 
-    def skip_unsupported_local_configs(self):
+    def skip_unsupported_configs(self):
         if self.is_local():
             supported_configs = ["maxset"]
             if self.config_name not in supported_configs:
                 self.skip(
                     f"Local execution only supports {
+                        supported_configs} configs "
+                    f"(tried to use {self.config_name})"
+                )
+        else:
+            supported_configs = ["empty"]
+            if self.config_name not in supported_configs:
+                self.skip(
+                    f"Debug execution only supports {
                         supported_configs} configs "
                     f"(tried to use {self.config_name})"
                 )
@@ -103,7 +111,7 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
             f'cp {config_dir / "empty.hpp"} .',
             f'cp {config_dir / "default.hpp"} .',
             f'cp {config_dir / "maxset.hpp"} .',
-            rf'sed -i "1 i\\#define ELECTROSTATICS\\n#define LENNARD_JONES\\n#define MASS\\n#define WCA\\n#define DIPOLES\\" {
+            rf'sed -i "1 i\\#define ELECTROSTATICS\\n#define LENNARD_JONES\\n#define MASS\\n#define WCA\\n#define DIPOLES\\n" {
                 config_name}.hpp',
             rf'sed -ri "/#define\s+ADDITIONAL_CHECKS/d" {config_name}.hpp',
             rf"cp {config_name}.hpp myconfig.hpp",
@@ -141,7 +149,8 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
                 f"-D CMAKE_CUDA_FLAGS='--compiler-bindir=/usr/bin/g++-{
                     GCC_VER}'",
             ]
-            self.skip_unsupported_local_configs()
+
+        self.skip_unsupported_configs()
 
     @run_after("compile")
     def record_commit_hash(self):
