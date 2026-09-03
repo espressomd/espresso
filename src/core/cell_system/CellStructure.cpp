@@ -351,21 +351,15 @@ void CellStructure::set_index_map() {
     unique_particles[index] = &p;
     auto &counts = thread_counts[omp_get_thread_num()];
     counts.max_id = std::max(p.id(), counts.max_id);
-    for (auto const bond : p.bonds()) {
-      // Mirror entries must not be counted here: update_bond_storage()
-      // only fills the flat lists from primary entries, and the two
-      // must agree on the count or the Kokkos views below overflow.
-      if (bond.is_primary() and not bond.partner_ids().empty()) {
-        auto const partner_ids = bond.partner_ids();
-        if (partner_ids.size() == 1u) {
-          counts.pair += 1;
-        } else if (partner_ids.size() == 2u) {
-          counts.angle += 1;
-        } else if (partner_ids.size() == 3u) {
-          counts.dihedral += 1;
-        }
-      }
-    }
+    // Read the bond list's incrementally-maintained primary-entry counts
+    // instead of walking and decoding every entry (mirror entries
+    // included) to recount them on every rebuild; update_bond_storage()
+    // below still only fills the flat lists from primary entries, and
+    // the two must agree on the count or the Kokkos views below overflow.
+    auto const &bond_counts = p.bonds().primary_counts();
+    counts.pair += bond_counts.pair;
+    counts.angle += bond_counts.angle;
+    counts.dihedral += bond_counts.dihedral;
   });
   Kokkos::fence();
   int pair_count = 0;
