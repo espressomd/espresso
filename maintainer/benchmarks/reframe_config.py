@@ -92,7 +92,7 @@ site_configuration = {
                 "openmpi/4.1.6",
                 "fftw/3.3.10",
                 "boost/1.84.0",
-                "cmake/4.1.2",
+                "cmake/4.3.2",
                 "python/3.12.9",
             ],
         },
