@@ -55,21 +55,31 @@ static void set_particles_bonds(
     auto const pid = pids[i];
     auto const bonds_ids = all_bonds_ids[i];
     auto const bonds_partner_ids = all_bonds_partner_ids[i];
-    // Remove bonds owned by this particle (primary entries only; mirror
-    // entries belong to bonds owned by other particles and are left
-    // alone). ::remove_bond() also cleans up the corresponding mirror
-    // entries on the other participants.
+    // Remove every bond entry -- primary or mirror -- that pid's locally
+    // known copy holds. Restricting this to primary entries is not enough:
+    // if pid only holds a mirror here, and the primary owner's local copy
+    // of pid (real or ghost) is not known on the owner's rank at this
+    // point (e.g. ghosts have been invalidated by an earlier resort and
+    // not yet rebuilt), the owner-side removal below silently finds
+    // nothing to clean up on pid's side, leaking the mirror. Reconstructing
+    // the full participant list from a mirror and calling ::remove_bond()
+    // still correctly removes both sides wherever they are locally known:
+    // remove_bond() falls back to matching any role per participant when
+    // pid is not the primary owner. This function already runs identically
+    // on every rank (see set_param_parallel's context()->parallel_try_catch),
+    // so every rank that locally knows pid -- real or ghost -- independently
+    // rediscovers and removes the same bonds; redundant ::remove_bond()
+    // calls across ranks or participants are harmless no-ops once an entry
+    // is already gone.
     auto p = cell_structure.get_local_particle(pid);
-    if (p != nullptr and not p->is_ghost()) {
-      std::vector<std::pair<int, std::vector<int>>> owned_bonds;
+    if (p != nullptr) {
+      std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
       for (auto const &bond_view : p->bonds()) {
-        if (bond_view.is_primary()) {
-          std::vector<int> ids = {pid};
-          std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));
-          owned_bonds.emplace_back(bond_view.bond_id(), std::move(ids));
-        }
+        std::vector<int> ids = {pid};
+        std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));
+        bonds_to_remove.emplace_back(bond_view.bond_id(), std::move(ids));
       }
-      for (auto const &[bond_id, ids] : owned_bonds) {
+      for (auto const &[bond_id, ids] : bonds_to_remove) {
         ::remove_bond(system, bond_id, ids);
       }
     }
