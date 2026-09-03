@@ -42,26 +42,42 @@ not-yet-full page is written as ``<start>_current.svg`` and overwritten on later
 runs until it reaches ``--max-points`` columns, at which point it is finalised
 under its span name and a new ``_current`` page begins.
 
-The ReFrame ``--prefix`` directory used for the benchmark run must be given.
-The perflog lives at
-``<prefix>/perflogs/<system>/<partition>/EspressoBenchmark.log`` -- ReFrame's
-``filelog`` handler names those two directories after the system and partition
-it ran on, so they are ``local/default`` on a workstation but e.g.
-``ant_cluster/debug`` on a cluster. The path is therefore discovered rather
-than assumed; pass ``--log`` to select one explicitly when several are present.
+The run directories to read are selected with ``--prefix``. ``suite.sh`` writes
+every invocation to its own ``<prefix>_dd_mm_yyyy_<n>`` directory, so ``--prefix``
+takes a *regular expression* (Python ``re``) and the timeline is assembled from
+all the run directories it matches:
+
+    --prefix '/path/to/benchmarks_[0-9]{2}_[0-9]{2}_[0-9]{4}_[0-9]+'
+
+The value is split at its last ``/``: everything before it is a literal parent
+directory, and the trailing component is matched against the *names* of that
+directory's entries with ``re.fullmatch``. An existing directory is taken
+verbatim, so passing a plain path still plots exactly that one directory.
+
+In each matched directory the perflog lives at
+``perflogs/<system>/<partition>/EspressoBenchmark.log`` -- ReFrame's ``filelog``
+handler names those two directories after the system and partition it ran on, so
+they are ``local/default`` on a workstation but e.g. ``ant_cluster/debug`` on a
+cluster. The path is therefore discovered rather than assumed. Timings from
+different systems or partitions are not comparable, so matching a mixture of them
+is an error rather than a silently meaningless plot -- narrow the regex (debug
+runs of the suite live in ``_DEBUG`` directories) or pass ``--log`` to select a
+single perflog explicitly.
 
 Usage:
-    python3 plot_benchmarks.py --prefix PREFIX -o OUTPUT.svg [--max-points N]
-                               [--log PERFLOG]
+    python3 plot_benchmarks.py --prefix PREFIX_REGEX -o OUTPUT.svg
+                               [--max-points N] [--log PERFLOG]
 """
 
 import argparse
 import csv
 import io
+import re
 import sys
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
+from typing import cast
 
 import matplotlib
 
@@ -74,43 +90,106 @@ import matplotlib.pyplot as plt  # noqa: E402
 PERFLOG_NAME = "EspressoBenchmark.log"
 PERFLOG_GLOB = f"perflogs/*/*/{PERFLOG_NAME}"
 
+# Sentinel marking the fields a truncated (short) perflog row does not have.
+_TRUNCATED = "\x00truncated"
 
-def find_perflog(prefix):
-    """Return every ``EspressoBenchmark.log`` below ``<prefix>/perflogs``.
 
-    ReFrame writes the perflog to ``perflogs/<system>/<partition>/``, so the
-    concrete directory depends on which system the suite ran on and cannot be
-    hardcoded. Results are sorted for a deterministic order.
+def find_run_dirs(pattern):
+    """Return ``(dirs, error)``: the run directories selected by ``--prefix``.
+
+    ``pattern`` is split at its last ``/``: everything before it is a literal
+    parent directory, the trailing component is a regular expression matched
+    against the *names* of that directory's entries with ``re.fullmatch``. An
+    existing directory is used verbatim, so a plain path still selects exactly
+    itself even when it contains regex metacharacters.
+
+    ``fullmatch`` rather than ``search`` is what keeps the ``_DEBUG``,
+    ``_DRYRUN`` and ``_LIST`` run directories written by suite.sh out of a
+    production pattern.
     """
-    return sorted(Path(prefix).glob(PERFLOG_GLOB))
+    literal = Path(pattern)
+    if literal.is_dir():
+        return [literal], None
+
+    parent_str, sep, name_pattern = pattern.rpartition("/")
+    if sep and not name_pattern:
+        return None, f"--prefix must not end with '/': {pattern!r}"
+    parent = Path(parent_str) if parent_str else Path(".")
+    try:
+        regex = re.compile(name_pattern)
+    except re.error as exc:
+        return None, (
+            f"Invalid --prefix regular expression {name_pattern!r}: {exc}"
+        )
+    try:
+        entries = list(parent.iterdir())
+    except OSError as exc:
+        return None, f"Cannot list {parent}: {exc}"
+
+    # resolve() collapses a symlinked or copied duplicate of a run directory,
+    # which would otherwise contribute the same data points twice.
+    matches = {
+        entry.resolve()
+        for entry in entries
+        if entry.is_dir() and regex.fullmatch(entry.name)
+    }
+    if not matches:
+        return None, (
+            f"No directory under {parent} matches {name_pattern!r}. "
+            "Has the suite been run with this prefix?"
+        )
+    return sorted(matches), None
 
 
-def resolve_perflog(prefix, explicit=None):
-    """Resolve the perflog to plot from ``prefix``, or ``explicit`` if given.
+def perflog_group(log_path):
+    """The ``<system>/<partition>`` pair a perflog was written for."""
+    return f"{log_path.parts[-3]}/{log_path.parts[-2]}"
 
-    Returns ``(path, error)``; exactly one of the two is ``None``. An error is
-    reported when the explicit path is missing, when discovery finds nothing,
-    or when it finds several candidates (the caller must then pass ``--log``).
+
+def resolve_perflogs(pattern, explicit=None):
+    """Resolve every perflog to merge into one timeline.
+
+    Returns ``(paths, error)``; exactly one of the two is ``None``. Matched
+    directories holding no perflog are skipped silently: listing and dry runs
+    leave such directories behind, and so does a run without timing data.
+    Perflogs of different systems/partitions are not comparable, so matching a
+    mixture of them is reported as an error.
     """
     if explicit is not None:
         path = Path(explicit)
         if not path.is_file():
             return None, f"Log file not found: {path}"
-        return path, None
+        return [path], None
 
-    candidates = find_perflog(prefix)
+    run_dirs, error = find_run_dirs(pattern)
+    if error is not None:
+        return None, error
+    run_dirs = cast(list[Path], run_dirs)
+
+    candidates = sorted(
+        log for run_dir in run_dirs for log in run_dir.glob(PERFLOG_GLOB)
+    )
     if not candidates:
         return None, (
-            f"No perflog found under {Path(prefix) / 'perflogs'} "
-            f"(looked for {PERFLOG_GLOB}). Has the suite been run with "
-            f"--prefix {prefix}?"
+            f"None of the {len(run_dirs)} directories matching {pattern!r} "
+            f"contains {PERFLOG_GLOB}."
         )
-    if len(candidates) > 1:
-        listing = "\n  ".join(str(c) for c in candidates)
+
+    groups = defaultdict(list)
+    for log in candidates:
+        groups[perflog_group(log)].append(log)
+    if len(groups) > 1:
+        listing = "\n  ".join(
+            f"{group}: " + ", ".join(str(log.parents[3]) for log in logs)
+            for group, logs in sorted(groups.items())
+        )
         return None, (
-            "Several perflogs found; select one with --log:\n  " + listing
+            "Perflogs of several systems/partitions matched; their timings are "
+            "not comparable. Narrow the --prefix regex (debug runs of the suite "
+            "live in _DEBUG directories) or select a single log with --log:\n  "
+            + listing
         )
-    return candidates[0], None
+    return candidates, None
 
 
 def parse_timestamp(value):
@@ -120,18 +199,29 @@ def parse_timestamp(value):
     or without a timezone offset) and as ``2026-04-10 20:03:25`` (space
     separated). ``datetime.fromisoformat`` handles both, so try it first and
     fall back to a couple of explicit formats.
+
+    An offset, when present, is converted to local time and dropped: merging
+    perflogs written before and after a ReFrame upgrade can mix aware and naive
+    timestamps, which cannot be compared with each other.
     """
     value = value.strip()
     try:
-        return datetime.fromisoformat(value)
+        return _drop_timezone(datetime.fromisoformat(value))
     except ValueError:
         pass
     for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
         try:
-            return datetime.strptime(value, fmt)
+            return _drop_timezone(datetime.strptime(value, fmt))
         except ValueError:
             continue
     raise ValueError(f"Unrecognised timestamp format: {value!r}")
+
+
+def _drop_timezone(stamp):
+    """Return ``stamp`` as local time without a timezone."""
+    if stamp.tzinfo is None:
+        return stamp
+    return stamp.astimezone().replace(tzinfo=None)
 
 
 def to_float(value):
@@ -211,11 +301,15 @@ class SeriesStore:
         return not any(True for _ in self.series())
 
 
-def read_records(log_path):
-    """Read the perflog into a SeriesStore, handling long and wide layouts."""
-    store = SeriesStore()
+def read_records(log_path, store=None):
+    """Read a perflog into a SeriesStore, handling long and wide layouts.
+
+    Points are added to ``store`` when one is given, so the perflogs of several
+    run directories accumulate into a single timeline.
+    """
+    store = SeriesStore() if store is None else store
     with open(log_path, newline="") as f:
-        reader = csv.DictReader(f)
+        reader = csv.DictReader(f, restval=_TRUNCATED)
         if reader.fieldnames is None:
             raise ValueError(f"{log_path} is empty")
 
@@ -244,6 +338,8 @@ def read_records(log_path):
             )
 
         for row in reader:
+            if _TRUNCATED in row.values():
+                continue  # truncated final line of a log being written
             descr = row[descr_col].strip()
             if not descr:
                 continue
@@ -277,6 +373,25 @@ def read_records(log_path):
                                   "ci", ci, None, commit)
 
     return store
+
+
+def read_all_records(log_paths):
+    """Merge every perflog in ``log_paths`` into one SeriesStore.
+
+    A single unreadable file (an empty log, or one holding no timing data, as
+    left behind by a build-only or dry run) is reported and skipped rather than
+    aborting the whole timeline. Returns ``(store, n_read)``.
+    """
+    store = SeriesStore()
+    n_read = 0
+    for path in log_paths:
+        try:
+            read_records(path, store)
+        except (ValueError, OSError) as exc:
+            print(f"Skipping {path}: {exc}", file=sys.stderr)
+        else:
+            n_read += 1
+    return store, n_read
 
 
 def _wide_metric_labels(fields):
@@ -685,6 +800,12 @@ def plot_all(store, output_path, max_points=DEFAULT_MAX_POINTS):
 
     Returns a list of ``(path, n_series, n_points)`` for every page written.
     """
+    if len(store.units) > 1:
+        print(
+            f"Warning: mixed units {sorted(store.units)} in the merged "
+            'perflogs; labelling the axis as "s"',
+            file=sys.stderr,
+        )
     unit = next(iter(store.units)) if len(store.units) == 1 else "s"
     date_fmt = "%Y-%m-%d"
 
@@ -738,15 +859,16 @@ def main(argv=None):
     parser.add_argument(
         "--prefix",
         required=True,
-        help="ReFrame --prefix directory; the perflog is discovered at "
-        f"<prefix>/{PERFLOG_GLOB} (the two wildcards are ReFrame's system "
-        "and partition names).",
+        help="Run directories to plot, as a regular expression: the value is "
+        "split at its last '/' into a literal parent directory and a pattern "
+        "full-matched against that directory's entries, e.g. "
+        "'/path/benchmarks_[0-9]{2}_[0-9]{2}_[0-9]{4}_[0-9]+'.",
     )
     parser.add_argument(
         "--log",
         default=None,
         help="Explicit perflog path, bypassing discovery under --prefix. "
-        "Required only when several systems/partitions have been logged.",
+        "Plots that single log instead of the merged history.",
     )
     parser.add_argument(
         "--max-points",
@@ -759,22 +881,29 @@ def main(argv=None):
     if args.max_points < 1:
         parser.error("--max-points must be >= 1")
 
-    log_path, error = resolve_perflog(args.prefix, args.log)
+    log_paths, error = resolve_perflogs(args.prefix, args.log)
     if error is not None:
         parser.error(error)
+    log_paths = cast(list[Path], log_paths)
 
-    try:
-        store = read_records(log_path)
-    except ValueError as exc:
-        print(str(exc), file=sys.stderr)
-        return 1
-
-    if store.is_empty():
+    store, n_read = read_all_records(log_paths)
+    if n_read == 0:
         print(
-            f"No performance data found in {log_path}. Nothing to plot.",
+            f"None of the {len(log_paths)} matched perflog(s) could be read. "
+            "Nothing to plot.",
             file=sys.stderr,
         )
         return 1
+
+    if store.is_empty():
+        listing = ", ".join(str(path) for path in log_paths)
+        print(
+            f"No performance data found in {listing}. Nothing to plot.",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(f"Merged {n_read} perflog(s) into the timeline.")
 
     outputs = plot_all(store, Path(args.output), max_points=args.max_points)
     for path, n_series, n_points in outputs:

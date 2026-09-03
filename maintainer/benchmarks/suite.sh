@@ -21,7 +21,10 @@
 # Usage function
 usage() {
     echo "Usage: $0 -p <prefix> [-n <test_names>] [-l] [--debug] [--dry-run]"
-    echo "  -p PREFIX       : Installation prefix for ReFrame benchmarks"
+    echo "  -p PREFIX       : Installation prefix for ReFrame benchmarks. Each run"
+    echo "                    writes to its own <PREFIX>_dd_mm_yyyy_<n> directory"
+    echo "                    (n counts the runs of that day); the timeline plot"
+    echo "                    is assembled from all of them"
     echo "  -n TESTS        : Optional ReFrame test-name filter; repeatable (selects the union)"
     echo "  -l              : List available test cases (overrides -r/--dry-run)"
     echo "  --debug         : On the ant cluster, run on the debug partition"
@@ -72,8 +75,15 @@ if [ -z "$PREFIX" ]; then
     usage
 fi
 
-#  Create prefix directory if it does not exist yet
-mkdir -p "$PREFIX" || exit 1
+# The prefix is a naming stem, not a directory: a trailing slash would put the
+# run directory *inside* it and desynchronise it from the pattern derived below.
+while [ "${PREFIX%/}" != "$PREFIX" ]; do
+    PREFIX="${PREFIX%/}"
+done
+if [ -z "$PREFIX" ]; then
+    echo "Error: -p must be a path, not '/'" >&2
+    exit 1
+fi
 
 # Determine final ReFrame action
 if [ "$LIST_MODE" = true ]; then
@@ -91,20 +101,47 @@ if ! command -v reframe >/dev/null 2>&1; then
     exit 1
 fi
 
-# Enable the results database and save it to the prefix directory
-export RFM_ENABLE_RESULTS_STORAGE=1
-export RFM_SQLITE_DB_FILE="${PREFIX}/results.db"
-export RFM_PREFIX="$PREFIX"
+# Construct unique benchmark directory name
+TODAY="$(date +%d_%m_%Y)"
+RUN_SUFFIX=""
+if [ "$USE_DEBUG_PARTITION" = true ]; then
+    RUN_SUFFIX="${RUN_SUFFIX}_DEBUG"
+fi
+if [ "$DRY_RUN" = true ]; then
+    RUN_SUFFIX="${RUN_SUFFIX}_DRYRUN"
+fi
+if [ "$LIST_MODE" = true ]; then
+    RUN_SUFFIX="${RUN_SUFFIX}_LIST"
+fi
 
-# Select the ant_cluster partition. The tests turn this into a "+debug" or
-# "+compute" constraint on valid_systems; the local system matches neither
-# feature, so workstation runs are unaffected either way.
+mkdir -p "$(dirname "$PREFIX")" || exit 1
+
+# Increment run counter if directory already exists
+RUN_INDEX=1
+while true; do
+    RUN_DIR="${PREFIX}_${TODAY}_${RUN_INDEX}${RUN_SUFFIX}"
+    if mkdir "$RUN_DIR" 2>/dev/null; then
+        break
+    fi
+    if [ ! -d "$RUN_DIR" ]; then
+        echo "Error: cannot create ${RUN_DIR}" >&2
+        exit 1
+    fi
+    RUN_INDEX=$((RUN_INDEX + 1))
+done
+echo "Writing benchmark artefacts to ${RUN_DIR}"
+
+# Enable the results database and save it to the run directory
+export RFM_ENABLE_RESULTS_STORAGE=1
+export RFM_SQLITE_DB_FILE="${RUN_DIR}/results.db"
+export RFM_PREFIX="$RUN_DIR"
+
 S_OPTS=(-S "use_debug_partition=${USE_DEBUG_PARTITION}")
 
 # Run ReFrame
 reframe -C reframe_config.py \
         -c espresso_benchmarks.py \
-        --prefix "$PREFIX" \
+        --prefix "$RUN_DIR" \
         "${N_OPTS[@]}" \
         "${S_OPTS[@]}" \
         --performance-report \
@@ -117,35 +154,36 @@ if [ "$reframe_status" -ne 0 ]; then
     exit "$reframe_status"
 fi
 
-# After a real run, render an SVG timeline of the benchmark performances.
-# Skipped for list (-l) and dry runs, which produce no timing data.
+
 if [ "$RUN_OPTION" = "-r" ]; then
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-    # ReFrame writes the perflog to perflogs/<system>/<partition>/, naming those
-    # directories after the system it ran on -- "local/default" on a workstation,
-    # but e.g. "ant_cluster/debug" on a cluster -- so the path cannot be
-    # hardcoded. Locate it, and put the SVG pages next to the log they came from.
     shopt -s nullglob
-    perflogs=("${PREFIX}"/perflogs/*/*/EspressoBenchmark.log)
+    perflogs=("${RUN_DIR}"/perflogs/*/*/EspressoBenchmark.log)
     shopt -u nullglob
 
     if [ "${#perflogs[@]}" -eq 0 ]; then
-        echo "Warning: no perflog found under ${PREFIX}/perflogs;" \
-             "skipping benchmark timeline plot" >&2
+        # Nothing ran (or everything failed), but the sibling run directories
+        # still hold the history worth plotting.
+        echo "Warning: no perflog found under ${RUN_DIR}/perflogs;" \
+             "plotting the history of the earlier runs only" >&2
+        PLOT_DIR="$RUN_DIR"
     else
-        if [ "${#perflogs[@]}" -gt 1 ]; then
-            echo "Warning: several perflogs found under ${PREFIX}/perflogs;" \
-                 "plotting the most recently modified one" >&2
-        fi
-        # Most recently modified first, so the run that just finished wins.
-        PERFLOG="$(ls -t "${perflogs[@]}" | head -n 1)"
-        PERFLOG_DIR="$(dirname "$PERFLOG")"
-        echo "Generating benchmark timeline from ${PERFLOG}"
-        python3 "${SCRIPT_DIR}/plot_benchmarks.py" \
-            --prefix "$PREFIX" \
-            --log "$PERFLOG" \
-            -o "${PERFLOG_DIR}/EspressoBenchmark.svg" \
-            || echo "Warning: could not generate benchmark timeline plot" >&2
+        # A fresh run directory holds a single log, written by this run.
+        PLOT_DIR="$(dirname "${perflogs[0]}")"
+        echo "Generating benchmark timeline from ${perflogs[0]}"
     fi
+
+    # Plot the whole history of past runs with shared prefix
+    PREFIX_BASE_RE="$(python3 -c 'import re, sys; print(re.escape(sys.argv[1]))' \
+                      "$(basename "$PREFIX")")"
+    PLOT_PREFIX="$(dirname "$PREFIX")/${PREFIX_BASE_RE}_[0-9]{2}_[0-9]{2}_[0-9]{4}_[0-9]+${RUN_SUFFIX}"
+
+    python3 "${SCRIPT_DIR}/plot_benchmarks.py" \
+        --prefix "$PLOT_PREFIX" \
+        -o "${PLOT_DIR}/EspressoBenchmark.svg" \
+        || { echo "Error: benchmark timeline plot failed" >&2; exit 1; }
+
+    # Create link to newest benchmark plots after every run 
+    ln -sfn "$(basename "$RUN_DIR")" "${PREFIX}_latest"
 fi
