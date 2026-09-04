@@ -163,8 +163,8 @@ private:
   storage_type m_storage;
   PrimaryCounts m_primary_counts;
 
-  /** @brief Recompute @ref m_primary_counts from scratch by walking the
-   *  full list; used only after bulk-loading @ref m_storage (deserialize),
+  /** @brief Recompute @c m_primary_counts from scratch by walking the
+   *  full list; used only after bulk-loading @c m_storage (deserialize),
    *  never on a per-step/per-rebuild path. */
   void recompute_primary_counts() {
     m_primary_counts = PrimaryCounts{};
