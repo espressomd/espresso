@@ -447,7 +447,7 @@ void CellStructure::remove_particle(int id) {
   // (via `id`), since its whole bond list is discarded below regardless.
   if (auto const *p = get_local_particle(id)) {
     std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
-    for (auto const &bond : p->bonds()) {
+    for (auto const bond : p->bonds()) {
       std::vector<int> ids = {id};
       std::ranges::copy(bond.partner_ids(), std::back_inserter(ids));
       bonds_to_remove.emplace_back(bond.bond_id(), std::move(ids));

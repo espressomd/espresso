@@ -74,7 +74,7 @@ static void set_particles_bonds(
     auto p = cell_structure.get_local_particle(pid);
     if (p != nullptr) {
       std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
-      for (auto const &bond_view : p->bonds()) {
+      for (auto const bond_view : p->bonds()) {
         std::vector<int> ids = {pid};
         std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));
         bonds_to_remove.emplace_back(bond_view.bond_id(), std::move(ids));
