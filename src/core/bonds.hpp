@@ -47,13 +47,19 @@ bool add_bond(System::System &system, int bond_id,
  * bond entry (primary or mirror) matching @p bond_id whose partner ids are
  * exactly the remaining ids of @p particle_ids (order does not matter).
  *
+ * @param skip_id If not -1, the entry belonging to this participant is left
+ * untouched (its removal is skipped entirely, not even searched for) --
+ * for use when that particle is about to be discarded wholesale (e.g.
+ * particle removal), so its soon-to-be-destroyed bond list does not need
+ * to be searched and erased from.
+ *
  * The caller is responsible for calling
  * @ref System::System::on_particle_change().
  *
  * @return whether at least one entry was removed locally.
  */
 bool remove_bond(System::System &system, int bond_id,
-                 std::vector<int> const &particle_ids);
+                 std::vector<int> const &particle_ids, int skip_id = -1);
 
 /**
  * @brief Recreate missing mirror entries from primary entries.

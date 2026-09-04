@@ -106,11 +106,14 @@ bool add_bond(System::System &system, int bond_id,
 }
 
 bool remove_bond(System::System &system, int bond_id,
-                 std::vector<int> const &particle_ids) {
+                 std::vector<int> const &particle_ids, int skip_id) {
   auto &cell_structure = *system.cell_structure;
 
   auto try_remove = [&](int pid, std::vector<int> const &sorted_others,
                         std::optional<bool> want_primary) {
+    if (pid == skip_id) {
+      return false;
+    }
     Particle *p = cell_structure.get_local_particle(pid);
     if (not p) {
       return false;

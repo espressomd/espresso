@@ -443,8 +443,8 @@ void CellStructure::remove_particle(int id) {
   // in, as owner or as a mirror-holding participant (see BondList.hpp), so
   // the other participants needing cleanup can be found directly instead
   // of sweeping every local particle. ::remove_bond() erases the matching
-  // entry from each of them (and from this particle itself, redundantly
-  // but harmlessly, since it is erased below regardless).
+  // entry from each of them; the entry on this particle itself is skipped
+  // (via `id`), since its whole bond list is discarded below regardless.
   if (auto const *p = get_local_particle(id)) {
     std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
     for (auto const &bond : p->bonds()) {
@@ -454,7 +454,7 @@ void CellStructure::remove_particle(int id) {
     }
     auto &system = get_system();
     for (auto const &[bond_id, ids] : bonds_to_remove) {
-      ::remove_bond(system, bond_id, ids);
+      ::remove_bond(system, bond_id, ids, id);
     }
   }
 
