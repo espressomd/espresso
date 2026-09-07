@@ -39,6 +39,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -51,30 +52,41 @@ static void set_particles_bonds(
     std::vector<std::vector<int>> const &all_bonds_ids,
     std::vector<std::vector<std::vector<int>>> const &all_bonds_partner_ids,
     ::CellStructure &cell_structure, ::System::System &system) {
+  std::unordered_set<int> const pid_set(pids.begin(), pids.end());
   for (std::size_t i = 0; i < pids.size(); ++i) {
     auto const pid = pids[i];
     auto const bonds_ids = all_bonds_ids[i];
     auto const bonds_partner_ids = all_bonds_partner_ids[i];
-    // Remove every bond entry -- primary or mirror -- that pid's locally
-    // known copy holds. Restricting this to primary entries is not enough:
-    // if pid only holds a mirror here, and the primary owner's local copy
-    // of pid (real or ghost) is not known on the owner's rank at this
-    // point (e.g. ghosts have been invalidated by an earlier resort and
-    // not yet rebuilt), the owner-side removal below silently finds
-    // nothing to clean up on pid's side, leaking the mirror. Reconstructing
-    // the full participant list from a mirror and calling ::remove_bond()
-    // still correctly removes both sides wherever they are locally known:
-    // remove_bond() falls back to matching any role per participant when
-    // pid is not the primary owner. This function already runs identically
-    // on every rank (see set_param_parallel's context()->parallel_try_catch),
-    // so every rank that locally knows pid -- real or ghost -- independently
-    // rediscovers and removes the same bonds; redundant ::remove_bond()
-    // calls across ranks or participants are harmless no-ops once an entry
-    // is already gone.
+    // A primary entry is always safe to remove: pid genuinely owns that
+    // bond, exactly like ParticleHandle::delete_owned_bonds(). A mirror
+    // entry is only safe to remove if every one of its participants is
+    // also part of this bulk reassignment: reconstructing the participant
+    // list from a mirror and calling ::remove_bond() cleans up the
+    // corresponding entries on the other participants wherever they are
+    // locally known (via role-independent matching), which is essential
+    // when the primary owner is not visible as a ghost on this rank (e.g.
+    // right after ::add_bond(), before the next resort) -- without this,
+    // a bond whose owner and mirror-holder are reassigned together but
+    // live on different ranks could leave the owner's rank with nothing
+    // to remove and the mirror-holder skipped, leaking the mirror. But if
+    // even one participant of the mirrored bond lies outside this
+    // reassignment, removing it here would delete a bond some other,
+    // untouched particle still owns. This function already runs
+    // identically on every rank (see set_param_parallel's
+    // context()->parallel_try_catch), so every rank that locally knows pid
+    // -- real or ghost -- independently rediscovers and removes the same
+    // bonds; redundant ::remove_bond() calls across ranks or participants
+    // are harmless no-ops once an entry is already gone.
     auto p = cell_structure.get_local_particle(pid);
     if (p != nullptr) {
       std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
       for (auto const bond_view : p->bonds()) {
+        if (not bond_view.is_primary() and
+            not std::ranges::all_of(bond_view.partner_ids(), [&](int other) {
+              return pid_set.contains(other);
+            })) {
+          continue;
+        }
         std::vector<int> ids = {pid};
         std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));
         bonds_to_remove.emplace_back(bond_view.bond_id(), std::move(ids));

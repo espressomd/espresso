@@ -46,12 +46,16 @@
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 
 #ifdef ESPRESSO_CALIPER
 #include "caliper_utils.hpp"
 #endif
 
 #include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/collectives/broadcast.hpp>
+#include <boost/serialization/utility.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <omp.h>
 
@@ -442,20 +446,32 @@ void CellStructure::remove_particle(int id) {
   // The particle's own bond list already names every bond it is involved
   // in, as owner or as a mirror-holding participant (see BondList.hpp), so
   // the other participants needing cleanup can be found directly instead
-  // of sweeping every local particle. ::remove_bond() erases the matching
-  // entry from each of them; the entry on this particle itself is skipped
-  // (via `id`), since its whole bond list is discarded below regardless.
+  // of sweeping every local particle. Only the rank(s) where a copy (real
+  // or ghost) of `id` is currently known can discover them, so the found
+  // bonds are gathered and broadcast to every rank before ::remove_bond()
+  // runs -- otherwise a participant whose rank never saw `id` as a ghost
+  // (e.g. right after ::add_bond(), before the next resort) would keep a
+  // dangling entry referencing the removed id. This mirrors how
+  // ParticleHandle::delete_owned_bonds() and ::rebuild_bond_mirrors()
+  // reconcile bonds found on one rank against participants living on
+  // others. ::remove_bond() erases the matching entry from each
+  // participant; the entry on this particle itself is skipped (via `id`),
+  // since its whole bond list is discarded below regardless.
+  std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
   if (auto const *p = get_local_particle(id)) {
-    std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
     for (auto const bond : p->bonds()) {
       std::vector<int> ids = {id};
       std::ranges::copy(bond.partner_ids(), std::back_inserter(ids));
       bonds_to_remove.emplace_back(bond.bond_id(), std::move(ids));
     }
-    auto &system = get_system();
-    for (auto const &[bond_id, ids] : bonds_to_remove) {
-      ::remove_bond(system, bond_id, ids, id);
-    }
+  }
+  if (::comm_cart.size() > 1) {
+    Utils::Mpi::gather_buffer(bonds_to_remove, ::comm_cart);
+    boost::mpi::broadcast(::comm_cart, bonds_to_remove, 0);
+  }
+  auto &system = get_system();
+  for (auto const &[bond_id, ids] : bonds_to_remove) {
+    ::remove_bond(system, bond_id, ids, id);
   }
 
   for (auto cell : decomposition().local_cells()) {
