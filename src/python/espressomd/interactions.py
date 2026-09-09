@@ -1579,6 +1579,10 @@ class BondCollection:
         self.system = system
         self.bond = bond
 
+    @staticmethod
+    def _resolve_id(particle):
+        return particle.id if hasattr(particle, "id") else particle
+
     def add(self, particles):
         """
         Create a bond of this type between the given particles. The bond
@@ -1594,10 +1598,27 @@ class BondCollection:
         particles = tuple(particles)
         if not particles:
             raise ValueError("At least one particle is required")
-        first, *partners = particles
-        p = first if hasattr(
-            first, "add_bond") else self.system.part.by_id(first)
-        p.add_bond((self.bond, *partners))
+        first_id = self._resolve_id(particles[0])
+        partner_ids = [self._resolve_id(p) for p in particles[1:]]
+        if first_id in partner_ids:
+            raise Exception(
+                f"Bond partners {partner_ids} include the particle "
+                f"{first_id} itself")
+        if len(set(partner_ids)) != len(partner_ids):
+            raise Exception(
+                f"Cannot add duplicate bond partners {partner_ids} to "
+                f"particle {first_id}")
+        expected_num_partners = self.bond.call_method("get_num_partners")
+        if len(partner_ids) != expected_num_partners:
+            raise ValueError(
+                f"Bond {self.bond} needs {expected_num_partners} partners")
+        _bond = (self.bond, *partner_ids)
+        if _bond in self.system.part.by_id(first_id).bonds:
+            raise RuntimeError(
+                f"Bond {_bond} already exists on particle {first_id}")
+        self.bond.call_method(
+            "add_bond", bond_id=self.bond._bond_id,
+            part_id=[first_id, *partner_ids])
 
     def remove(self, particles):
         """
@@ -1614,10 +1635,15 @@ class BondCollection:
         particles = tuple(particles)
         if not particles:
             raise ValueError("At least one particle is required")
-        first, *partners = particles
-        p = first if hasattr(
-            first, "add_bond") else self.system.part.by_id(first)
-        p.delete_bond((self.bond, *partners))
+        first_id = self._resolve_id(particles[0])
+        partner_ids = [self._resolve_id(p) for p in particles[1:]]
+        _bond = (self.bond, *partner_ids)
+        if _bond not in self.system.part.by_id(first_id).bonds:
+            raise RuntimeError(
+                f"Bond {_bond} doesn't exist on particle {first_id}")
+        self.bond.call_method(
+            "remove_bond", bond_id=self.bond._bond_id,
+            part_id=[first_id, *partner_ids])
 
 
 class Bonds:
