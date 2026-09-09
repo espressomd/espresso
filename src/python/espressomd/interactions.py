@@ -1595,7 +1595,8 @@ class BondCollection:
         if not particles:
             raise ValueError("At least one particle is required")
         first, *partners = particles
-        p = first if hasattr(first, "add_bond") else self.system.part.by_id(first)
+        p = first if hasattr(
+            first, "add_bond") else self.system.part.by_id(first)
         p.add_bond((self.bond, *partners))
 
     def remove(self, particles):
@@ -1614,7 +1615,8 @@ class BondCollection:
         if not particles:
             raise ValueError("At least one particle is required")
         first, *partners = particles
-        p = first if hasattr(first, "add_bond") else self.system.part.by_id(first)
+        p = first if hasattr(
+            first, "add_bond") else self.system.part.by_id(first)
         p.delete_bond((self.bond, *partners))
 
 
