@@ -55,7 +55,6 @@ class System(ScriptInterfaceHelper):
     auto_update_accumulators: :class:`espressomd.accumulators.AutoUpdateAccumulators`
     bond_breakage: :class:`espressomd.bond_breakage.BreakageSpecs`
     bonded_inter: :class:`espressomd.interactions.BondedInteractions`
-    bonds: :class:`espressomd.interactions.Bonds`
     cell_system: :class:`espressomd.cell_system.CellSystem`
     collision_detection: :class:`espressomd.collision_detection.CollisionDetection`
     comfixed: :class:`espressomd.comfixed.ComFixed`
