@@ -149,7 +149,14 @@ inline Vector3d transform_vector_cartesian_to_cylinder(Vector3d const &vec,
                                                        Vector3d const &pos) {
   auto constexpr z_axis = Vector3d{{0., 0., 1.}};
   auto const angle = angle_between(axis, z_axis);
-  auto const rotation_axis = Utils::vector_product(axis, z_axis).normalize();
+  auto const cross = Utils::vector_product(axis, z_axis);
+  auto const cross_norm = cross.norm();
+  // When axis is (anti-)parallel to z, the cross product is zero.
+  // For angle==0 (parallel) vec_rotate is the identity regardless of
+  // rotation_axis. For angle==pi (anti-parallel) rotate 180° around any x-y
+  // plane axis; use [1,0,0].
+  auto const rotation_axis =
+      (cross_norm > 0.) ? cross / cross_norm : Vector3d{{1., 0., 0.}};
   auto const rotated_pos = vec_rotate(rotation_axis, angle, pos);
   auto const rotated_vec = vec_rotate(rotation_axis, angle, vec);
   auto const r = std::sqrt(rotated_pos[0] * rotated_pos[0] +
