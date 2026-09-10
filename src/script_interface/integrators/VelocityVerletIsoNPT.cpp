@@ -47,6 +47,7 @@ VelocityVerletIsoNPT::VelocityVerletIsoNPT() {
        [this]() { return get_instance().get_direction(); }},
       {"cubic_box", AutoParameter::read_only,
        [this]() { return get_instance().cubic_box; }},
+      {"barostat", AutoParameter::read_only, [this]() { return m_barostat; }},
   });
 }
 
