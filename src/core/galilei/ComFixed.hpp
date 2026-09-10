@@ -72,9 +72,15 @@ public:
   void set_fixed_types(std::vector<int> const &p_types) {
     m_type_index.clear();
 
-    int i = 0;
+    /* Assign dense indices 0..n_distinct-1. Using try_emplace with the
+     * current map size as the candidate index makes duplicate types collapse
+     * onto a single index instead of inflating the counter, so every stored
+     * index stays < m_type_index.size(). Consumers (local_type_forces,
+     * local_type_masses, apply) size their vectors by m_type_index.size() and
+     * index by it->second, so this invariant is required to avoid an
+     * out-of-bounds vector access. */
     for (auto const &p_type : p_types) {
-      m_type_index[p_type] = i++;
+      m_type_index.try_emplace(p_type, static_cast<int>(m_type_index.size()));
     }
   }
 
