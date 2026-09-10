@@ -36,14 +36,18 @@ class CoulombCloudWall(ut.TestCase):
 
     system = espressomd.System(box_l=[10., 10., 10.])
     data = np.genfromtxt(tests_common.data_path(
-        "coulomb_cloud_wall_system.data"))
+        "coulomb_cloud_wall_system_hp.data"))
 
-    tolerance = 1E-3
-    p3m_params = {'r_cut': 1.001, 'accuracy': 1e-4,
+    tolerance = 1E-6
+    """
+    p3m_params = {'r_cut': 1.001, 'accuracy': 1e-7,
                   'mesh': [64, 64, 64], 'cao': 7, 'alpha': 2.70746}
+    """
+    p3m_params = {'r_cut': 1.001, 'accuracy': 1e-6,
+                  'cao': 7}
 
     # Reference energy from P3M
-    reference_energy = 148.94229549
+    reference_energy = 148.943123576788
 
     def setUp(self):
         self.system.time_step = 0.01
@@ -76,24 +80,26 @@ class CoulombCloudWall(ut.TestCase):
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_cpu(self):
         self.system.electrostatics.solver = espressomd.electrostatics.P3M(
-            **self.p3m_params, prefactor=3., tune=False)
+            **self.p3m_params, prefactor=3., tune=True)
         self.system.integrator.run(0)
-        self.compare("p3m", prefactor=3., force_tol=2e-3, energy_tol=1e-3)
+        self.compare("p3m", prefactor=3., force_tol=2e-6, energy_tol=1e-6)
 
+    """
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_cpu_single_precision(self):
         self.system.electrostatics.solver = espressomd.electrostatics.P3M(
-            **self.p3m_params, prefactor=3., tune=False, single_precision=True)
+            **self.p3m_params, prefactor=3., tune=True, single_precision=True)
         self.system.integrator.run(0)
-        self.compare("p3m", prefactor=3., force_tol=2e-3, energy_tol=1e-3)
+        self.compare("p3m", prefactor=3., force_tol=2e-6, energy_tol=1e-6)
+    """
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_gpu(self):
         self.system.electrostatics.solver = espressomd.electrostatics.P3M(
-            **self.p3m_params, prefactor=2.2, tune=False, gpu=True)
+            **self.p3m_params, prefactor=2.2, tune=True, gpu=True)
         self.system.integrator.run(0)
-        self.compare("p3m_gpu", prefactor=2.2, force_tol=2e-3, energy_tol=1e-3)
+        self.compare("p3m_gpu", prefactor=2.2, force_tol=2e-6, energy_tol=1e-6)
 
     @utx.skipIfMissingFeatures(["SCAFACOS"])
     @utx.skipIfMissingScafacosMethod("p2nfft")
@@ -101,13 +107,13 @@ class CoulombCloudWall(ut.TestCase):
         self.system.electrostatics.solver = espressomd.electrostatics.Scafacos(
             prefactor=2.8,
             method_name="p2nfft",
-            method_params={"p2nfft_r_cut": 1.001, "tolerance_field": 1E-5})
+            method_params={"tolerance_field": 1E-9})
         self.system.integrator.run(0)
         self.compare(
             "scafacos_p2nfft",
             prefactor=2.8,
-            force_tol=1e-3,
-            energy_tol=1e-3)
+            force_tol=1e-6,
+            energy_tol=1e-6)
 
     @utx.skipIfMissingFeatures(["SCAFACOS"])
     @utx.skipIfMissingScafacosMethod("p3m")
@@ -115,13 +121,13 @@ class CoulombCloudWall(ut.TestCase):
         self.system.electrostatics.solver = espressomd.electrostatics.Scafacos(
             prefactor=2.8,
             method_name="p3m",
-            method_params={"p3m_cao": 7, "tolerance_field": 1E-5})
+            method_params={"p3m_cao": 7, "tolerance_field": 1E-9})
         self.system.integrator.run(0)
         self.compare(
             "scafacos_p3m",
             prefactor=2.8,
-            force_tol=1e-3,
-            energy_tol=1e-3)
+            force_tol=1e-6,
+            energy_tol=1e-6)
 
     def test_zz_deactivation(self):
         # Is the energy and force 0, if no methods active
