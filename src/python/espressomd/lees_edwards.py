@@ -32,25 +32,36 @@ class LeesEdwards(ScriptInterfaceHelper):
     ----------
     protocol : :obj:`object`
         Lees--Edwards protocol.
-    shear_velocity: :obj:`float`
-        Current shear velocity.
-    pos_offset : :obj:`float`
-        Current position offset
-    shear_direction : :obj:`str`, {'x', 'y', 'z'}
-        Shear direction.
-    shear_plane_normal : :obj:`str`, {'x', 'y', 'z'}
-        Shear plane normal.
+    shear_velocity : :obj:`float`, read-only
+        Current shear velocity (derived from the protocol and simulation time).
+    pos_offset : :obj:`float`, read-only
+        Current position offset (derived from the protocol and simulation time).
+    shear_direction : :obj:`str`, {'x', 'y', 'z'}, read-only
+        Shear direction. Set via :meth:`set_boundary_conditions`.
+    shear_plane_normal : :obj:`str`, {'x', 'y', 'z'}, read-only
+        Shear plane normal. Set via :meth:`set_boundary_conditions`.
 
     Methods
     -------
     set_boundary_conditions()
         Set a protocol, the shear direction and shear normal.
+        Must be called at least once before assigning ``protocol``
+        directly. Pass ``protocol=None`` to fully disable
+        Lees--Edwards (in which case ``shear_direction`` and
+        ``shear_plane_normal`` are ignored).
 
         Parameters
         ----------
-        protocol : :obj:`object`
+        protocol : :obj:`object` or ``None``
         shear_direction : :obj:`str`, {'x', 'y', 'z'}
         shear_plane_normal : :obj:`str`, {'x', 'y', 'z'}
+
+        Raises
+        ------
+        ValueError
+            If ``shear_direction`` or ``shear_plane_normal`` is invalid.
+        ValueError
+            If ``shear_direction == shear_plane_normal``.
 
     """
 
@@ -73,9 +84,12 @@ class LinearShear(ScriptInterfaceHelper):
     Parameters
     ----------
     initial_pos_offset : :obj:`float`
-       Positional offset at the Lees--Edwards boundary at t=0.
+       Positional offset at the Lees--Edwards boundary at ``time=time_0``.
     shear_velocity : :obj:`float`
        Shear velocity (velocity jump) across the Lees--Edwards boundary.
+    time_0 : :obj:`float`
+       Reference time for the linear shear. The positional offset is
+       ``initial_pos_offset + (time - time_0) * shear_velocity``.
 
     """
     _so_name = "LeesEdwards::LinearShear"

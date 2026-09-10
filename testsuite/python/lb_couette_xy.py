@@ -98,20 +98,22 @@ class LBCouetteFlowCommon:
             steps = (2**i - 2**(i - 1))
             self.system.integrator.run(steps)
             pos = (np.array(range(int(h / agrid))) + 1. / 2.) * agrid
-            u_ref = self.analytical(pos, self.system.time - 1., lbf.kinematic_viscosity,
+            u_ref = self.analytical(pos, self.system.time, lbf.kinematic_viscosity,
                                     shear_velocity, h, k_max)
             u_lbf = np.copy(u_getter(lbf).reshape([-1]))
             np.testing.assert_allclose(u_lbf, u_ref,
                                        atol=(shear_velocity / 2.) * 1e-2, rtol=0.)
 
     @ut.skipIf(n_nodes == 1, "test is designed to run on multiple MPI ranks")
-    @ut.expectedFailure
     def test_profile_xy_divided_shear_direction(self):
-        self.system.cell_system.node_grid = [self.nodes, 1, 1]
-        self.check_profile(lambda lbf: lbf[5, :, 0].velocity[:, 0],
-                           shear_direction="x", shear_plane_normal="y")
+        self.system.cell_system.node_grid = [self.n_nodes, 1, 1]
+        protocol = espressomd.lees_edwards.LinearShear(
+            shear_velocity=0.05, initial_pos_offset=0., time_0=0.)
+        self.system.lees_edwards.set_boundary_conditions(
+            protocol=protocol, shear_direction="x", shear_plane_normal="y")
+        with self.assertRaises(ValueError):
+            self.system.lb = self.lb_class(**LB_PARAMS, **self.lb_params)
 
-    @ut.skip("TODO: LB+Lees Edwards doesn't work for domain decomposition along shear plane normal direction")  # TODO
     @ut.skipIf(n_nodes == 1, "test is designed to run on multiple MPI ranks")
     def test_profile_xy_divided_normal_direction(self):
         self.system.cell_system.node_grid = [1, self.n_nodes, 1]
