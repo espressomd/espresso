@@ -30,8 +30,11 @@
 
 #include "config/config.hpp"
 
+#include "errorhandling.hpp"
+
 #include <utils/Vector.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <numbers>
 #include <optional>
@@ -39,9 +42,6 @@
 
 /** @brief Tiny length cutoff. */
 inline constexpr auto dihe_tiny_length_value{0.0001};
-
-/** @brief Tiny angle cutoff for sinus calculations. */
-inline constexpr auto dihe_tiny_sin_value{1e-10};
 
 /** Parameters for four-body angular potential (dihedral-angle potentials). */
 struct DihedralBond {
@@ -76,116 +76,160 @@ struct DihedralBond {
  * The dihedral angle is the angle between the planes
  * specified by the particle triples (p1,p2,p3) and (p2,p3,p4).
  * Vectors a, b and c are the bond vectors between consecutive particles.
- * If the a,b or b,c are parallel the dihedral angle is not defined in which
- * case the function returns true. Calling functions should check for that.
+ * The angle is undefined when any three consecutive particles are collinear,
+ * in which case the function returns true. Calling functions should check for
+ * that.
  *
  * @param[in]  a Vector from @p p1 to @p p2
  * @param[in]  b Vector from @p p2 to @p p3
  * @param[in]  c Vector from @p p3 to @p p4
- * @param[out] aXb Vector product of a and b
- * @param[out] l_aXb |aXB|
- * @param[out] bXc Vector product of b and c
- * @param[out] l_bXc |bXc|
- * @param[out] cosphi Cosine of the dihedral angle
- * @param[out] phi Dihedral angle in the range [0, pi]
+ * @param[out] phi Dihedral angle in the range [0, 2 pi)
  * @return Whether the angle is undefined.
  */
 inline bool calc_dihedral_angle(Utils::Vector3d const &a,
                                 Utils::Vector3d const &b,
-                                Utils::Vector3d const &c, Utils::Vector3d &aXb,
-                                double &l_aXb, Utils::Vector3d &bXc,
-                                double &l_bXc, double &cosphi, double &phi) {
+                                Utils::Vector3d const &c, double &phi) {
 
-  /* calculate vector product a X b and b X c */
-  aXb = vector_product(a, b);
-  bXc = vector_product(b, c);
+  auto const aXb = vector_product(a, b);
+  auto const bXc = vector_product(b, c);
+  auto const l_aXb = aXb.norm();
+  auto const l_bXc = bXc.norm();
 
-  /* calculate the unit vectors */
-  l_aXb = aXb.norm();
-  l_bXc = bXc.norm();
-
-  /* catch case of undefined dihedral angle */
+  /* catch case of undefined dihedral angle (three collinear particles) */
   if (l_aXb <= dihe_tiny_length_value or l_bXc <= dihe_tiny_length_value) {
     phi = -1.;
-    cosphi = 0.;
     return true;
   }
 
-  aXb /= l_aXb;
-  bXc /= l_bXc;
+  auto const n1 = aXb / l_aXb;
+  auto const n2 = bXc / l_bXc;
 
-  cosphi = aXb * bXc;
-
-  if (std::fabs(std::fabs(cosphi) - 1.) < dihe_tiny_sin_value)
-    cosphi = std::round(cosphi);
-
-  /* Calculate dihedral angle */
+  /* acos() only accepts values in [-1, 1]. cosphi should mathematically
+   * always be in that range, but floating-point round-off can push it a
+   * hair outside, so clip it back in to be safe. This only fires for that
+   * kind of tiny round-off overshoot -- it leaves alone angles that are
+   * just genuinely close to 0 or pi. */
+  auto const cosphi = std::clamp(n1 * n2, -1., 1.);
   phi = std::acos(cosphi);
-  if ((aXb * c) < 0.)
+  if ((n1 * c) < 0.)
     phi = 2. * std::numbers::pi - phi;
   return false;
 }
 
+/**
+ * @brief Gradients of the dihedral angle with respect to the four particle
+ * positions.
+ *
+ * Follows @cite blondel96a eq. 27. The traditional expressions obtained by
+ * differentiating @f$ \cos\phi @f$ (@cite swope92a eq. 30) carry a factor
+ * @f$ -1/\sin\phi @f$ which is unbounded at @f$ \phi = 0 @f$ and
+ * @f$ \phi = \pi @f$. Differentiating @f$ \phi @f$ directly, as done here,
+ * avoids that factor entirely: the only denominators are the squared plane
+ * normals and the length of the central bond, so the result is well-behaved
+ * for every angle. The gradients are undefined only when three consecutive
+ * particles are collinear, which is also the only case in which the dihedral
+ * angle itself is undefined.
+ *
+ * @param[in]  a Vector from @p p1 to @p p2
+ * @param[in]  b Vector from @p p2 to @p p3
+ * @param[in]  c Vector from @p p3 to @p p4
+ * @param[out] phi Dihedral angle in the range [0, 2 pi)
+ * @param[out] grad1 Gradient of @p phi with respect to the position of @p p1
+ * @param[out] grad2 Gradient of @p phi with respect to the position of @p p2
+ * @param[out] grad3 Gradient of @p phi with respect to the position of @p p3
+ * @param[out] grad4 Gradient of @p phi with respect to the position of @p p4
+ * @return Whether the angle is undefined.
+ */
+inline bool calc_dihedral_angle_gradients(
+    Utils::Vector3d const &a, Utils::Vector3d const &b,
+    Utils::Vector3d const &c, double &phi, Utils::Vector3d &grad1,
+    Utils::Vector3d &grad2, Utils::Vector3d &grad3, Utils::Vector3d &grad4) {
+
+  /* Plane normals. In the notation of @cite blondel96a, F = -a, G = -b and
+   * H = c, so that A = F x G = a x b and B = H x G = b x c. */
+  auto const A = vector_product(a, b);
+  auto const B = vector_product(b, c);
+  auto const A_sqr = A.norm2();
+  auto const B_sqr = B.norm2();
+  auto const l_A = std::sqrt(A_sqr);
+  auto const l_B = std::sqrt(B_sqr);
+  auto const l_b = b.norm();
+
+  /* catch case of undefined dihedral angle (three collinear particles) */
+  if (l_A <= dihe_tiny_length_value or l_B <= dihe_tiny_length_value or
+      l_b <= dihe_tiny_length_value) {
+    phi = -1.;
+    return true;
+  }
+
+  auto const n1 = A / l_A;
+  auto const n2 = B / l_B;
+
+  /* acos() only accepts values in [-1, 1]; clip a tiny round-off overshoot
+   * back in, see @ref calc_dihedral_angle */
+  auto const cosphi = std::clamp(n1 * n2, -1., 1.);
+  phi = std::acos(cosphi);
+  if ((n1 * c) < 0.)
+    phi = 2. * std::numbers::pi - phi;
+
+  /* @cite blondel96a eq. 27, with (F.G) = a.b and (H.G) = -(b.c) */
+  auto const cA = l_b / A_sqr;              /* |G| / A^2         */
+  auto const cB = l_b / B_sqr;              /* |G| / B^2         */
+  auto const dA = (a * b) / (A_sqr * l_b);  /* (F.G) / (A^2 |G|) */
+  auto const dB = -(b * c) / (B_sqr * l_b); /* (H.G) / (B^2 |G|) */
+
+  grad1 = -cA * A;
+  grad2 = (cA + dA) * A - dB * B;
+  grad3 = (dB - cB) * B - dA * A;
+  grad4 = cB * B;
+  return false;
+}
+
 /** Compute the four-body dihedral interaction force.
- *  The forces have a singularity at @f$ \phi = 0 @f$ and @f$ \phi = \pi @f$
- *  (see @cite swope92a page 592).
+ *  The force is assembled as
+ *  @f$ -(\mathrm{d}V/\mathrm{d}\phi)(\partial\phi/\partial r) @f$
+ *  (@cite blondel96a eq. 6), which has no singularity at @f$ \phi = 0 @f$ or
+ *  @f$ \phi = \pi @f$. See @ref calc_dihedral_angle_gradients.
+ *
+ *  If three consecutive particles are collinear, the dihedral angle and its
+ *  gradients are undefined (@ref calc_dihedral_angle_gradients returns
+ *  @c true); a runtime warning is raised and the force is set to zero.
  *
  *  @param[in] v12  Vector from @p p1 to @p p2
  *  @param[in] v23  Vector from @p p2 to @p p3
  *  @param[in] v34  Vector from @p p3 to @p p4
- *  @return the forces on @p p2, @p p1, @p p3
+ *  @return the forces on @p p2, @p p1, @p p3, @p p4
  */
 inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                 Utils::Vector3d, Utils::Vector3d>>
 DihedralBond::forces(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
                      Utils::Vector3d const &v34) const {
-  /* vectors for dihedral angle calculation */
-  Utils::Vector3d v12Xv23, v23Xv34;
-  double l_v12Xv23, l_v23Xv34;
-  /* dihedral angle, cosine of the dihedral angle */
-  double phi, cos_phi, sin_mphi_over_sin_phi;
+  double phi;
+  Utils::Vector3d grad1, grad2, grad3, grad4;
 
-  /* dihedral angle */
-  auto const angle_is_undefined = calc_dihedral_angle(
-      v12, v23, v34, v12Xv23, l_v12Xv23, v23Xv34, l_v23Xv34, cos_phi, phi);
-  /* dihedral angle not defined - force zero */
+  auto const angle_is_undefined = calc_dihedral_angle_gradients(
+      v12, v23, v34, phi, grad1, grad2, grad3, grad4);
   if (angle_is_undefined) {
-    return {};
+    runtimeWarningMsg() << "Dihedral angle is undefined because three "
+                           "consecutive particles are collinear; setting "
+                           "the dihedral force to zero";
+    return std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
+                           Utils::Vector3d{}, Utils::Vector3d{});
   }
 
-  auto const f1 = (v23Xv34 - cos_phi * v12Xv23) / l_v12Xv23;
-  auto const f4 = (v12Xv23 - cos_phi * v23Xv34) / l_v23Xv34;
-
-  auto const v23Xf1 = vector_product(v23, f1);
-  auto const v23Xf4 = vector_product(v23, f4);
-  auto const v34Xf4 = vector_product(v34, f4);
-  auto const v12Xf1 = vector_product(v12, f1);
-
-  /* calculate force magnitude */
   auto const mult_ = static_cast<double>(mult);
-  auto const mphi = mult_ * phi - phase;
-  auto fac = -bend * mult_;
+  auto const dV_dphi = bend * mult_ * std::sin(mult_ * phi - phase);
 
-  if (fabs(sin(phi)) < dihe_tiny_sin_value) {
-    /* comes from taking the first term of the MacLaurin expansion of
-     * sin(n * phi - phi0) and sin(phi) and then making the division */
-    sin_mphi_over_sin_phi = mult_ * std::cos(mphi) / cos_phi;
-  } else {
-    sin_mphi_over_sin_phi = std::sin(mphi) / std::sin(phi);
-  }
-
-  fac *= sin_mphi_over_sin_phi;
-
-  /* store dihedral forces */
-  auto const force1 = fac * v23Xf1;
-  auto const force2 = fac * (v34Xf4 - v12Xf1 - v23Xf1);
-  auto const force3 = fac * (v12Xf1 - v23Xf4 - v34Xf4);
-
-  return std::make_tuple(force2, force1, force3, -(force1 + force2 + force3));
+  return std::make_tuple(-dV_dphi * grad2, -dV_dphi * grad1, -dV_dphi * grad3,
+                         -dV_dphi * grad4);
 }
 
 /** Compute the four-body dihedral interaction energy.
  *  The energy doesn't have any singularity if the angle phi is well-defined.
+ *
+ *  If three consecutive particles are collinear, the dihedral angle is
+ *  undefined (@ref calc_dihedral_angle returns @c true); a runtime warning is
+ *  raised and the energy is set to zero.
  *
  *  @param[in] v12  Vector from @p p1 to @p p2
  *  @param[in] v23  Vector from @p p2 to @p p3
@@ -194,17 +238,14 @@ DihedralBond::forces(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
 inline std::optional<double>
 DihedralBond::energy(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
                      Utils::Vector3d const &v34) const {
-  /* vectors for dihedral calculations. */
-  Utils::Vector3d v12Xv23, v23Xv34;
-  double l_v12Xv23, l_v23Xv34;
-  /* dihedral angle, cosine of the dihedral angle */
-  double phi, cos_phi;
+  double phi;
 
-  auto const angle_is_undefined = calc_dihedral_angle(
-      v12, v23, v34, v12Xv23, l_v12Xv23, v23Xv34, l_v23Xv34, cos_phi, phi);
-  /* dihedral angle not defined - energy zero */
+  auto const angle_is_undefined = calc_dihedral_angle(v12, v23, v34, phi);
   if (angle_is_undefined) {
-    return {};
+    runtimeWarningMsg() << "Dihedral angle is undefined because three "
+                           "consecutive particles are collinear; setting "
+                           "the dihedral energy to zero";
+    return 0.;
   }
 
   auto const mphi = static_cast<double>(mult) * phi - phase;
