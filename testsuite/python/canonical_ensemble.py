@@ -52,8 +52,8 @@ class Test(ut.TestCase):
         method.set_non_interacting_type(type=1)
 
         p = self.system.part.add(pos=[0., 0., 0.], q=1, type=0)
-        obs_pos = espressomd.observables.ParticlePositions(ids=(p.id,))
-        obs_vel = espressomd.observables.ParticleVelocities(ids=(p.id,))
+        obs_pos = espressomd.observables.ParticlePositions(particles=(p.id,))
+        obs_vel = espressomd.observables.ParticleVelocities(particles=(p.id,))
         acc_pos = espressomd.accumulators.TimeSeries(obs=obs_pos)
         acc_vel = espressomd.accumulators.TimeSeries(obs=obs_vel)
 

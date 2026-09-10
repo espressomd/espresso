@@ -172,9 +172,10 @@ class ContactTimeTest(ut.TestCase):
             epsilon=1., sigma=1., shift="auto", cutoff=3.)
 
         # Setup observables to track pairwise distances and particle positions
-        pairwise_dist_obs = espressomd.observables.PairwiseDistances(ids=ids,
-                                                                     target_ids=ids)
-        particle_pos_obs = espressomd.observables.ParticlePositions(ids=ids)
+        pairwise_dist_obs = espressomd.observables.PairwiseDistances(particles=ids,
+                                                                     target_particles=ids)
+        particle_pos_obs = espressomd.observables.ParticlePositions(
+            particles=ids)
 
         # Setup the accumulators to track the contact times and the time series
         contact_time_accumulator = espressomd.accumulators.ContactTimes(
@@ -226,7 +227,7 @@ class ContactTimeTest(ut.TestCase):
         ref_ids1 = [1, 5, 2]
         ref_ids2 = [5, 7, 9]
         obs = espressomd.observables.PairwiseDistances(
-            ids=ref_ids1, target_ids=ref_ids2)
+            particles=ref_ids1, target_particles=ref_ids2)
         acc = espressomd.accumulators.ContactTimes(
             obs=obs, delta_N=1, contact_threshold=0.2)
         np.testing.assert_array_equal(obs.ids, ref_ids1)
@@ -235,7 +236,8 @@ class ContactTimeTest(ut.TestCase):
         self.assertIsNone(obs.call_method("unknown"))
         self.assertIsNone(acc.call_method("unknown"))
         # empty set case
-        obs = espressomd.observables.PairwiseDistances(ids=[], target_ids=[])
+        obs = espressomd.observables.PairwiseDistances(
+            particles=[], target_particles=[])
         acc = espressomd.accumulators.ContactTimes(
             obs=obs, delta_N=1, contact_threshold=0.2)
         res = acc.contact_times()
@@ -245,7 +247,7 @@ class ContactTimeTest(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "Attribute 'contact_threshold' must be >= 0"):
             # check input data in accumulators.ContactTimes
             obs = espressomd.observables.PairwiseDistances(
-                ids=[1], target_ids=[2])
+                particles=[1], target_particles=[2])
             espressomd.accumulators.ContactTimes(
                 obs=obs, delta_N=1, contact_threshold=-1.)
 
