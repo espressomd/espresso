@@ -103,7 +103,7 @@ void SimplePore::calculate_dist(const Utils::Vector3d &pos, double &dist,
   } else {
     // smoothing area
     if (std::abs(z) >= c_z) {
-      auto const d_sq = Utils::sqr(r - c_r) + Utils::sqr(z - c_z);
+      auto const d_sq = Utils::sqr(r - c_r) + Utils::sqr(std::abs(z) - c_z);
       if (d_sq > Utils::sqr(m_smoothing_rad)) {
         side = 1;
       }

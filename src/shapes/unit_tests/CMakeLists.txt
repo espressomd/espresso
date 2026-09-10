@@ -26,6 +26,8 @@ espresso_unit_test(SRC Union_test.cpp DEPENDS espresso::shapes espresso::utils)
 espresso_unit_test(SRC Ellipsoid_test.cpp DEPENDS espresso::shapes
                    espresso::utils)
 espresso_unit_test(SRC Sphere_test.cpp DEPENDS espresso::shapes espresso::utils)
+espresso_unit_test(SRC SimplePore_test.cpp DEPENDS espresso::shapes
+                   espresso::utils)
 espresso_unit_test(SRC NoWhere_test.cpp DEPENDS espresso::shapes
                    espresso::utils)
 espresso_unit_test(SRC Torus_test.cpp DEPENDS espresso::shapes espresso::utils)
