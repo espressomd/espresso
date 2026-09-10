@@ -36,3 +36,14 @@ BOOST_AUTO_TEST_CASE(interpolation) {
   BOOST_CHECK_SMALL(linear_interpolation(table, 1., 1., 3. - 1e-12) - 9.,
                     1e-10);
 }
+
+BOOST_AUTO_TEST_CASE(interpolation_at_endpoint) {
+  using Utils::linear_interpolation;
+  // tabulated values for f(x) = x^2, x in [1, 3], step 1
+  auto const table = std::vector<double>{{1., 4., 9.}};
+  constexpr auto tol = 1e-12;
+  // Querying exactly at the maximum x (x == maxval == 3.0) must not read
+  // one past the end of the table; it should return table.back() == 9.
+  auto const result = linear_interpolation(table, 1., 1., 3.);
+  BOOST_CHECK_SMALL(result - 9., tol);
+}
