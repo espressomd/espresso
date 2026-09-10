@@ -172,11 +172,11 @@ void GlueToSurface::handle_collisions(
     auto const &attach_vs_to =
         (p1->type() == part_type_to_attach_vs_to) ? *p1 : *p2;
 
-    // Add a bond between the centers of the colliding particles
-    // The bond is placed on the node that has p1
+    // Add a bond between the centers of the colliding particles.
+    // The primary entry is placed on the node that has p1 (add_bond() also
+    // writes the mirror on p2 wherever that is locally known).
     if (!p1->is_ghost()) {
-      const int bondG[] = {pid2};
-      get_part(cell_structure, pid1).bonds().insert({bond_centers, bondG});
+      ::add_bond(system, bond_centers, {pid1, pid2});
     }
 
     // Change type of particle being attached, to make it inert
@@ -199,10 +199,9 @@ void GlueToSurface::handle_collisions(
       p2 = cell_structure.get_local_particle(pid2);
       current_vs_pid++;
     }
-    // Create bond between the virtual particles
+    // Create bond between the glued particle and its virtual site.
     auto const p = (p1->type() == part_type_after_glueing) ? p1 : p2;
-    int const bondG[] = {current_vs_pid - 1};
-    get_part(cell_structure, p->id()).bonds().insert({bond_vs, bondG});
+    ::add_bond(system, bond_vs, {p->id(), current_vs_pid - 1});
   } // Loop over all collisions in the queue
 
 #ifdef ESPRESSO_ADDITIONAL_CHECKS

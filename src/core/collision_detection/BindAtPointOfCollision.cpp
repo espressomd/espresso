@@ -161,20 +161,18 @@ void BindAtPointOfCollision::handle_collisions(
     // Create bonds
     auto const n_partners = number_of_partners(*system.bonded_ias->at(bond_vs));
     if (n_partners == 1) {
-      // Create bond between the virtual particles
-      const int bondG[] = {current_vs_pid - 2};
-      // Only add bond if vs was created on this node
-      if (auto p = cell_structure.get_local_particle(current_vs_pid - 1))
-        p->bonds().insert({bond_vs, bondG});
+      // Create bond between the virtual particles, on whichever of the two
+      // is locally known (add_bond() also writes the mirror on the other
+      // one wherever that is locally known).
+      ::add_bond(system, bond_vs, {current_vs_pid - 1, current_vs_pid - 2});
     }
     if (n_partners == 2) {
-      // Create 1st bond between the virtual particles
-      const int bondG[] = {pid1, pid2};
-      // Only add bond if vs was created on this node
-      if (auto p = cell_structure.get_local_particle(current_vs_pid - 1))
-        p->bonds().insert({bond_vs, bondG});
-      if (auto p = cell_structure.get_local_particle(current_vs_pid - 2))
-        p->bonds().insert({bond_vs, bondG});
+      // Create an angle bond on each virtual site, connecting it to both
+      // base particles (add_bond() also writes the mirror entries on pid1
+      // and pid2 wherever those are locally known, and is itself a no-op
+      // on a node where the vs was not created).
+      ::add_bond(system, bond_vs, {current_vs_pid - 1, pid1, pid2});
+      ::add_bond(system, bond_vs, {current_vs_pid - 2, pid1, pid2});
     }
   } // Loop over all collisions in the queue
 

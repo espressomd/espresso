@@ -22,6 +22,7 @@
 #include "bond_breakage/actions.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 
+#include "bonds.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -33,7 +34,6 @@
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
 
-#include <algorithm>
 #include <cassert>
 #include <memory>
 #include <mutex>
@@ -100,12 +100,9 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
         return {
             // Bond between virtual sites
             DeleteBond{e.particle_id, *(e.bond_partners[0]), e.bond_type},
-            // Bond between base particles. We do not know, on which of these
-            // the bond is defined, since bonds are stored only on one partner
+            // Bond between base particles, of unspecified bond type.
             DeleteAllBonds{p1->vs_relative().to_particle_id,
                            p2->vs_relative().to_particle_id},
-            DeleteAllBonds{p2->vs_relative().to_particle_id,
-                           p1->vs_relative().to_particle_id},
         };
       }
     } else {
@@ -126,10 +123,8 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
         return {
             // Angle bond on the virtual site
             DeleteAngleBond{e.particle_id, {p1->id(), p2->id()}, e.bond_type},
-            // Bond between base particles. We do not know, on which of these
-            // the bond is defined, since bonds are stored only on one partner
-            DeleteAllBonds{p1->id(), p2->id()},
-            DeleteAllBonds{p2->id(), p1->id()}};
+            // Bond between base particles, of unspecified bond type.
+            DeleteAllBonds{p1->id(), p2->id()}};
       }
     }
   }
@@ -144,52 +139,48 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
   return {DeleteBond{e.particle_id, *(e.bond_partners[0]), e.bond_type}};
 }
 
-/**
- * @brief Delete specific bond.
- */
-static void remove_bond(Particle &p, BondView const &view) {
-  auto &bond_list = p.bonds();
-  auto it = std::find(bond_list.begin(), bond_list.end(), view);
-  if (it != bond_list.end()) {
-    bond_list.erase(it);
-  }
-}
-
-/**
- * @brief Delete pair bonds to a specific partner
- */
-static void remove_pair_bonds_to(Particle &p, int other_pid) {
-  std::vector<std::pair<int, int>> to_delete;
-  for (auto b : p.bonds()) {
-    if (b.partner_ids().size() == 1 and b.partner_ids()[0] == other_pid)
-      to_delete.emplace_back(b.bond_id(), other_pid);
-  }
-  for (auto const &b : to_delete) {
-    remove_bond(p, BondView(b.first, {&b.second, 1}));
-  }
-}
-
 // Handler for the different delete events
 class execute {
-  CellStructure &cell_structure;
+  System::System &system;
 
 public:
-  explicit execute(CellStructure &cell_structure)
-      : cell_structure{cell_structure} {}
+  explicit execute(System::System &system) : system{system} {}
 
   void operator()(DeleteBond const &d) const {
-    if (auto p = cell_structure.get_local_particle(d.particle_id)) {
-      remove_bond(*p, BondView(d.bond_type, {&d.bond_partner_id, 1}));
-    }
+    ::remove_bond(system, d.bond_type, {d.particle_id, d.bond_partner_id});
   }
   void operator()(DeleteAngleBond const &d) const {
-    if (auto p = cell_structure.get_local_particle(d.particle_id)) {
-      remove_bond(*p, BondView(d.bond_type, {&d.bond_partner_id[0], 2}));
-    }
+    ::remove_bond(system, d.bond_type,
+                  {d.particle_id, d.bond_partner_id[0], d.bond_partner_id[1]});
   }
   void operator()(DeleteAllBonds const &d) const {
-    if (auto p = cell_structure.get_local_particle(d.particle_id_1)) {
-      remove_pair_bonds_to(*p, d.particle_id_2);
+    // Delete every pair bond (of any bond type) between the two particles.
+    // Either particle may be the one locally known on this rank, so look
+    // for matching bonds from both sides; ::remove_bond() then cleans up
+    // the corresponding entry on the other participant too.
+    //
+    // Deliberately not deduplicated by bond id: there can be more than one
+    // co-existing bond of the same type between the same two particles
+    // (e.g. one added from each side), each needing its own removal. Each
+    // ::remove_bond() call below drains at most one such occurrence per
+    // side, so it is called once per entry found rather than once per
+    // distinct bond id; calls beyond what is actually left are harmless
+    // no-ops.
+    auto &cell_structure = *system.cell_structure;
+    std::vector<int> bond_ids;
+    auto collect = [&](int owner_id, int other_id) {
+      if (auto *p = cell_structure.get_local_particle(owner_id)) {
+        for (auto const b : p->bonds()) {
+          if (b.partner_ids().size() == 1u and b.partner_ids()[0] == other_id) {
+            bond_ids.push_back(b.bond_id());
+          }
+        }
+      }
+    };
+    collect(d.particle_id_1, d.particle_id_2);
+    collect(d.particle_id_2, d.particle_id_1);
+    for (auto const bond_id : bond_ids) {
+      ::remove_bond(system, bond_id, {d.particle_id_1, d.particle_id_2});
     }
   }
 };
@@ -209,7 +200,7 @@ void BondBreakage::process_queue_impl(System::System &system) {
 
   // Execute actions
   for (auto const &a : actions) {
-    std::visit(execute(cell_structure), a);
+    std::visit(execute(system), a);
     system.on_particle_change();
   }
 }

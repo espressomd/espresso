@@ -23,13 +23,53 @@
 
 #include <vector>
 
-inline constexpr bool use_one_sided_bond_storage = true;
-
 /**
- * @brief Add a bond to a particle.
+ * @brief Add a bond between particles.
+ *
+ * Writes a primary bond entry on @p particle_ids[0] (the entry used for
+ * force/energy calculation, holding the remaining ids in the given order)
+ * and a mirror entry on every other participant that is locally known
+ * (holding the remaining ids in the same relative order, minus itself), so
+ * the bond can be found, queried and removed starting from any participant.
  *
  * The caller is responsible for calling
  * @ref System::System::on_particle_change().
+ *
+ * @return whether at least one entry was written locally.
  */
 bool add_bond(System::System &system, int bond_id,
               std::vector<int> const &particle_ids);
+
+/**
+ * @brief Remove a bond between particles.
+ *
+ * Removes, from every one of @p particle_ids that is locally known, the
+ * bond entry (primary or mirror) matching @p bond_id whose partner ids are
+ * exactly the remaining ids of @p particle_ids (order does not matter).
+ *
+ * @param skip_id If not -1, the entry belonging to this participant is left
+ * untouched (its removal is skipped entirely, not even searched for) --
+ * for use when that particle is about to be discarded wholesale (e.g.
+ * particle removal), so its soon-to-be-destroyed bond list does not need
+ * to be searched and erased from.
+ *
+ * The caller is responsible for calling
+ * @ref System::System::on_particle_change().
+ *
+ * @return whether at least one entry was removed locally.
+ */
+bool remove_bond(System::System &system, int bond_id,
+                 std::vector<int> const &particle_ids, int skip_id = -1);
+
+/**
+ * @brief Recreate missing mirror entries from primary entries.
+ *
+ * Collective over all MPI ranks. For every primary bond entry found on any
+ * rank, ensures a matching mirror entry exists on every other participant
+ * that is locally known anywhere in the simulation. Existing mirror entries
+ * are left untouched, so this is safe to call unconditionally (e.g. after
+ * loading particle data whose bonds were populated directly rather than
+ * through @ref add_bond(), such as an mpiio checkpoint written before
+ * bonds were stored on all participants).
+ */
+void rebuild_bond_mirrors(System::System &system);

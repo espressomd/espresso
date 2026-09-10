@@ -31,6 +31,7 @@
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "aosoa_pack.hpp"
+#include "bonds.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "ghosts.hpp"
@@ -44,15 +45,18 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/contains.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 
 #ifdef ESPRESSO_CALIPER
 #include "caliper_utils.hpp"
 #endif
 
 #include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/collectives/broadcast.hpp>
+#include <boost/serialization/utility.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <omp.h>
 
@@ -290,6 +294,12 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
   auto &dihedral_list = m_bond_state->dihedral_list;
   auto &dihedral_ids = m_bond_state->dihedral_ids;
   for (auto const bond : p.bonds()) {
+    // Only primary entries drive force/energy calculation; mirror entries
+    // (held by non-owning participants) are a query/removal-only detail
+    // and would otherwise double-count every bond.
+    if (not bond.is_primary()) {
+      continue;
+    }
     auto const partner_ids = bond.partner_ids();
     try {
       auto const partners = resolve_bond_partners(partner_ids);
@@ -346,18 +356,15 @@ void CellStructure::set_index_map() {
     unique_particles[index] = &p;
     auto &counts = thread_counts[omp_get_thread_num()];
     counts.max_id = std::max(p.id(), counts.max_id);
-    for (auto const bond : p.bonds()) {
-      if (not bond.partner_ids().empty()) {
-        auto const partner_ids = bond.partner_ids();
-        if (partner_ids.size() == 1u) {
-          counts.pair += 1;
-        } else if (partner_ids.size() == 2u) {
-          counts.angle += 1;
-        } else if (partner_ids.size() == 3u) {
-          counts.dihedral += 1;
-        }
-      }
-    }
+    // Read the bond list's incrementally-maintained primary-entry counts
+    // instead of walking and decoding every entry (mirror entries
+    // included) to recount them on every rebuild; update_bond_storage()
+    // below still only fills the flat lists from primary entries, and
+    // the two must agree on the count or the Kokkos views below overflow.
+    auto const &bond_counts = p.bonds().primary_counts();
+    counts.pair += bond_counts.pair;
+    counts.angle += bond_counts.angle;
+    counts.dihedral += bond_counts.dihedral;
   });
   Kokkos::fence();
   int pair_count = 0;
@@ -437,15 +444,36 @@ void CellStructure::check_particle_sorting() const {
 }
 
 void CellStructure::remove_particle(int id) {
-  auto remove_all_bonds_to = [id](BondList &bl) {
-    for (auto it = bl.begin(); it != bl.end();) {
-      if (Utils::contains(it->partner_ids(), id)) {
-        it = bl.erase(it);
-      } else {
-        std::advance(it, 1);
-      }
+  // The particle's own bond list already names every bond it is involved
+  // in, as owner or as a mirror-holding participant (see BondList.hpp), so
+  // the other participants needing cleanup can be found directly instead
+  // of sweeping every local particle. Only the rank(s) where a copy (real
+  // or ghost) of `id` is currently known can discover them, so the found
+  // bonds are gathered and broadcast to every rank before ::remove_bond()
+  // runs -- otherwise a participant whose rank never saw `id` as a ghost
+  // (e.g. right after ::add_bond(), before the next resort) would keep a
+  // dangling entry referencing the removed id. This mirrors how
+  // ParticleHandle::delete_owned_bonds() and ::rebuild_bond_mirrors()
+  // reconcile bonds found on one rank against participants living on
+  // others. ::remove_bond() erases the matching entry from each
+  // participant; the entry on this particle itself is skipped (via `id`),
+  // since its whole bond list is discarded below regardless.
+  std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
+  if (auto const *p = get_local_particle(id)) {
+    for (auto const bond : p->bonds()) {
+      std::vector<int> ids = {id};
+      std::ranges::copy(bond.partner_ids(), std::back_inserter(ids));
+      bonds_to_remove.emplace_back(bond.bond_id(), std::move(ids));
     }
-  };
+  }
+  if (::comm_cart.size() > 1) {
+    Utils::Mpi::gather_buffer(bonds_to_remove, ::comm_cart);
+    boost::mpi::broadcast(::comm_cart, bonds_to_remove, 0);
+  }
+  auto &system = get_system();
+  for (auto const &[bond_id, ids] : bonds_to_remove) {
+    ::remove_bond(system, bond_id, ids, id);
+  }
 
   for (auto cell : decomposition().local_cells()) {
     auto &parts = cell->particles();
@@ -455,7 +483,6 @@ void CellStructure::remove_particle(int id) {
         update_particle_index(id, nullptr);
         update_particle_index(parts);
       } else {
-        remove_all_bonds_to(it->bonds());
         it++;
       }
     }

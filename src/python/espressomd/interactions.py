@@ -1557,3 +1557,104 @@ class BondedInteractions(ScriptObjectMap):
         for bond_id in self.call_method('get_bond_ids'):
             if self.call_method("get_zero_based_type", bond_id=bond_id):
                 yield self[bond_id]
+
+
+class BondCollection:
+    """
+    Bond-type-centric view of the particles bonded via a specific
+    :class:`~espressomd.interactions.BondedInteraction`. Returned by
+    indexing :attr:`espressomd.system.System.bonds` with a bond object,
+    e.g. ``system.bonds[harmonic].add((p1, p2))``. Registers the bond
+    in ``system.bonded_inter`` the first time it is used, if it isn't
+    registered already.
+    """
+
+    def __init__(self, system, bond):
+        if not isinstance(bond, BondedInteraction):
+            raise TypeError(
+                "'bond' has to be a BondedInteraction, e.g. HarmonicBond, "
+                f"got {type(bond)}")
+        if bond._bond_id == -1:
+            system.bonded_inter.add(bond)
+        self.system = system
+        self.bond = bond
+
+    @staticmethod
+    def _resolve_id(particle):
+        return particle.id if hasattr(particle, "id") else particle
+
+    def add(self, particles):
+        """
+        Create a bond of this type between the given particles. The bond
+        is stored on the first particle, with the remaining particles as
+        its partners.
+
+        Parameters
+        ----------
+        particles : array_like of :obj:`int` or :class:`~espressomd.particle_data.ParticleHandle`
+            Particles to bond together.
+
+        """
+        particles = tuple(particles)
+        if not particles:
+            raise ValueError("At least one particle is required")
+        first_id = self._resolve_id(particles[0])
+        partner_ids = [self._resolve_id(p) for p in particles[1:]]
+        if first_id in partner_ids:
+            raise Exception(
+                f"Bond partners {partner_ids} include the particle "
+                f"{first_id} itself")
+        if len(set(partner_ids)) != len(partner_ids):
+            raise Exception(
+                f"Cannot add duplicate bond partners {partner_ids} to "
+                f"particle {first_id}")
+        expected_num_partners = self.bond.call_method("get_num_partners")
+        if len(partner_ids) != expected_num_partners:
+            raise ValueError(
+                f"Bond {self.bond} needs {expected_num_partners} partners")
+        _bond = (self.bond, *partner_ids)
+        if _bond in self.system.part.by_id(first_id).bonds:
+            raise RuntimeError(
+                f"Bond {_bond} already exists on particle {first_id}")
+        self.bond.call_method(
+            "add_bond", bond_id=self.bond._bond_id,
+            part_id=[first_id, *partner_ids])
+
+    def remove(self, particles):
+        """
+        Remove a bond of this type between the given particles. The bond
+        has to be stored on the first particle, with the remaining
+        particles as its partners, as with :meth:`add`.
+
+        Parameters
+        ----------
+        particles : array_like of :obj:`int` or :class:`~espressomd.particle_data.ParticleHandle`
+            Particles whose bond should be removed.
+
+        """
+        particles = tuple(particles)
+        if not particles:
+            raise ValueError("At least one particle is required")
+        first_id = self._resolve_id(particles[0])
+        partner_ids = [self._resolve_id(p) for p in particles[1:]]
+        _bond = (self.bond, *partner_ids)
+        if _bond not in self.system.part.by_id(first_id).bonds:
+            raise RuntimeError(
+                f"Bond {_bond} doesn't exist on particle {first_id}")
+        self.bond.call_method(
+            "remove_bond", bond_id=self.bond._bond_id,
+            part_id=[first_id, *partner_ids])
+
+
+class Bonds:
+    """
+    Bond-centric view of the particle bond topology, indexed by bonded
+    interaction, e.g. ``system.bonds[harmonic].add((p1, p2))``. See
+    :attr:`espressomd.system.System.bonds`.
+    """
+
+    def __init__(self, system):
+        self.system = system
+
+    def __getitem__(self, bond):
+        return BondCollection(self.system, bond)

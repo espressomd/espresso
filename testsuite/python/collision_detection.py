@@ -97,6 +97,64 @@ class CollisionDetection(ut.TestCase):
         self.assertIsInstance(
             self.system.collision_detection.protocol, espressomd.collision_detection.Off)
 
+    def test_bonds_slice_assignment_removes_mirror_across_ranks(self):
+        """
+        Regression test: bonds are stored on all of their participants (a
+        primary entry plus a mirror entry on every other participant), and
+        bulk-assigning bonds through a particle slice
+        (``system.part.by_ids([...]).bonds = ...``) used to only clean up
+        the entries owned by whichever rank had the reassigned particle as
+        its *real* copy, leaving a stale mirror entry behind on a bond
+        partner living on a different rank. A stale mirror makes
+        ``pair_bond_exists_on()`` (used by collision detection to check for
+        an existing bond) report a false positive, silently blocking
+        collision detection from re-forming the bond after the slice
+        assignment supposedly cleared it.
+        """
+        system = self.system
+        default_node_grid = list(system.cell_system.node_grid)
+        n_nodes = int(np.prod(default_node_grid))
+        system.collision_detection.protocol = espressomd.collision_detection.Off()
+        system.part.clear()
+        try:
+            # Split the domain along z, so two particles straddling the
+            # first internal boundary are owned by different ranks whenever
+            # more than one rank is available (a harmless no-op placement
+            # otherwise).
+            system.cell_system.node_grid = [1, 1, n_nodes]
+            boundary_z = system.box_l[2] / max(n_nodes, 2)
+            p0 = system.part.add(pos=(0.5, 0.5, boundary_z - 0.01), id=0)
+            p1 = system.part.add(pos=(0.5, 0.5, boundary_z + 0.01), id=1)
+            if n_nodes > 1:
+                self.assertNotEqual(p0.node, p1.node)
+
+            # Create the bond deterministically (not via collision
+            # detection, which may independently trigger on more than one
+            # rank), so exactly one primary/mirror pair exists.
+            p0.add_bond((self.bond_center, p1))
+            self.assertEqual(len(p0.bonds) + len(p1.bonds), 1)
+
+            # Clear it the way that used to leak a mirror entry on a remote
+            # rank: bulk assignment through a particle slice, not the
+            # single-particle ParticleHandle path (which already cleaned up
+            # correctly on both sides).
+            system.part.by_ids([p0.id, p1.id]).bonds = []
+            self.assertEqual(p0.bonds, ())
+            self.assertEqual(p1.bonds, ())
+
+            # Collision detection must be able to re-form the very same
+            # bond. A leftover mirror entry on either rank would make
+            # pair_bond_exists_on() report a false positive there and
+            # silently skip bond formation, leaving both particles unbonded.
+            system.collision_detection.protocol = espressomd.collision_detection.BindCenters(
+                distance=0.05, bond_centers=self.bond_center)
+            system.integrator.run(1, recalc_forces=True)
+            self.assertGreaterEqual(len(p0.bonds) + len(p1.bonds), 1)
+        finally:
+            system.collision_detection.protocol = espressomd.collision_detection.Off()
+            system.part.clear()
+            system.cell_system.node_grid = default_node_grid
+
     def run_test_bind_at_point_of_collision_for_pos(self, *positions):
         system = self.system
         positions = list(positions)

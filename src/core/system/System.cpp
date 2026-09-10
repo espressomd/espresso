@@ -635,6 +635,17 @@ unsigned System::get_global_ghost_flags() const {
   /* Position and Properties are always requested. */
   unsigned data_parts = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
 
+  // Bonds are stored per-participant (see BondList.hpp): a mirror entry can
+  // live on a particle that is only known locally as a ghost (its owner is
+  // real on a different rank). add_bond()/remove_bond()/rebuild_bond_mirrors()
+  // (bonds.cpp) resolve participants via CellStructure::get_local_particle(),
+  // which returns such ghosts too, so their bonds() must be kept up to date
+  // like any other participant's -- otherwise a mirror lookup on a
+  // ghost-only participant can see stale or empty bond data and a removal
+  // silently fails to reach it. Always requesting bonds here keeps them
+  // refreshed at the same cadence as the rest of the global ghost state.
+  data_parts |= Cells::DATA_PART_BONDS;
+
   if (lb.is_solver_set())
     data_parts |= Cells::DATA_PART_MOMENTUM;
 
@@ -643,14 +654,7 @@ unsigned System::get_global_ghost_flags() const {
 
   if (thermostat->thermo_switch & THERMO_BOND) {
     data_parts |= Cells::DATA_PART_MOMENTUM;
-    data_parts |= Cells::DATA_PART_BONDS;
   }
-
-#ifdef ESPRESSO_COLLISION_DETECTION
-  if (not collision_detection->is_off()) {
-    data_parts |= Cells::DATA_PART_BONDS;
-  }
-#endif
 
 #ifdef ESPRESSO_ROTATION
   if (orientation_ghosts_needed(*this)) {
