@@ -51,7 +51,7 @@
  *  3. Two particle IDs (order-independent, decorrelates particles, gets rid of
  *     seed-per-node)
  */
-static Utils::Vector3d dpd_noise(DPDThermostat const &dpd, int pid1, int pid2) {
+Utils::Vector3d dpd_noise(DPDThermostat const &dpd, int pid1, int pid2) {
   auto const pref = (pid1 < pid2) ? 1.0 : -1.0;
   return pref * Random::noise_uniform<RNGSalt::SALT_DPD>(
                     dpd.rng_counter(), dpd.rng_seed(),
@@ -100,24 +100,29 @@ Utils::Vector3d dpd_pair_force(
   return force;
 }
 
-static auto dpd_viscous_stress_local(System::System &system) {
+static auto dpd_pressure_local(System::System &system) {
   auto const &box_geo = *system.box_geo;
   auto const &nonbonded_ias = *system.nonbonded_ias;
   auto &cell_structure = *system.cell_structure;
+  auto &dpd = *system.thermostat->dpd;
   system.on_observable_calc();
 
-  Utils::Matrix<double, 3, 3> stress{};
-  cell_structure.non_bonded_loop([&stress, &box_geo, &nonbonded_ias](
-                                     Particle const &p1, Particle const &p2,
-                                     Distance const &d) {
+  Utils::Matrix<double, 3, 3> pressure{};
+  cell_structure.non_bonded_loop([&pressure, &box_geo, &nonbonded_ias,
+                                  &dpd](Particle const &p1, Particle const &p2,
+                                        Distance const &d) {
     auto const v21 =
         box_geo.velocity_difference(p1.pos(), p2.pos(), p1.v(), p2.v());
 
     auto const &ia_params = nonbonded_ias.get_ia_param(p1.type(), p2.type());
+    auto const noise_vec =
+        (ia_params.dpd.radial.pref > 0.0 || ia_params.dpd.trans.pref > 0.0)
+            ? dpd_noise(dpd, p1.id(), p2.id())
+            : Utils::Vector3d{};
     auto const dist = std::sqrt(d.dist2);
 
-    auto const f_r = dpd_pair_force(ia_params.dpd.radial, v21, dist, {});
-    auto const f_t = dpd_pair_force(ia_params.dpd.trans, v21, dist, {});
+    auto const f_r = dpd_pair_force(ia_params.dpd.radial, v21, dist, noise_vec);
+    auto const f_t = dpd_pair_force(ia_params.dpd.trans, v21, dist, noise_vec);
 
     /* Projection operator to radial direction */
     auto const P = tensor_product(d.vec21 / d.dist2, d.vec21);
@@ -125,40 +130,35 @@ static auto dpd_viscous_stress_local(System::System &system) {
      * doing only one matrix-vector multiplication */
     auto const f = P * (f_r - f_t) + f_t;
 
-    stress += tensor_product(d.vec21, f);
+    pressure += tensor_product(d.vec21, f);
   });
 
-  return stress;
-}
-
-Utils::Vector9d dpd_pressure_local(System::System &system) {
-  auto const local_stress = dpd_viscous_stress_local(system);
-  return -Utils::flatten(local_stress);
+  return pressure;
 }
 
 /**
- * @brief Viscous stress tensor of the DPD interaction.
+ * @brief Pressure tensor contribution of the DPD interaction.
  *
- * This calculates the total viscous stress contribution of the
- * DPD interaction. It contains only the dissipative contributions
- * of the interaction without noise. It's calculated as the
- * sum over all pair virials as
+ * This calculates the total contribution of the DPD interaction to
+ * the pressure tensor, i.e. the dissipative and random (noise) forces.
+ * It's calculated as the sum over all pair virials as
  * \f[
- *    \sigma^{\nu\mu} = V^{-1}\sum_i \sum_{j < i} r_{i,j}^{\nu} (- \gamma_{i,j}
- * v_{i,j})^{\mu} \f] where \f$\gamma_{i,j}\f$ is the (in general tensor valued)
- * DPD friction coefficient for particles i and j, \f$v_{i,j}\f$, \f$r_{i,j}\f$
- * are their relative velocity and distance and \f$V\f$ is the box volume.
+ *    P^{\nu\mu} = V^{-1}\sum_i \sum_{j < i} r_{i,j}^{\nu} F_{i,j}^{\mu}
+ * \f]
+ * where \f$F_{i,j}\f$ is the DPD force (dissipative plus noise) exerted
+ * by particle j on particle i, \f$r_{i,j}\f$ is their distance vector
+ * and \f$V\f$ is the box volume.
  *
- * @return Stress tensor contribution.
+ * @return Pressure tensor contribution.
  */
-Utils::Vector9d dpd_stress(System::System &system,
-                           boost::mpi::communicator const &comm) {
-  auto const local_stress = dpd_viscous_stress_local(system);
-  std::remove_const_t<decltype(local_stress)> global_stress{};
+Utils::Vector9d dpd_pressure(System::System &system,
+                             boost::mpi::communicator const &comm) {
+  auto const local_pressure = dpd_pressure_local(system);
+  std::remove_const_t<decltype(local_pressure)> global_pressure{};
 
-  boost::mpi::reduce(comm, local_stress, global_stress, std::plus<>(), 0);
+  boost::mpi::reduce(comm, local_pressure, global_pressure, std::plus<>(), 0);
 
-  return Utils::flatten(global_stress) / system.box_geo->volume();
+  return Utils::flatten(global_pressure) / system.box_geo->volume();
 }
 
 #endif // ESPRESSO_DPD

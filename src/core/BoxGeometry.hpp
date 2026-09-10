@@ -23,42 +23,39 @@
 #include "lees_edwards/LeesEdwardsBC.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/attributes.hpp>
 
 #include <bitset>
 #include <cassert>
 #include <cmath>
+#include <concepts>
 #include <limits>
 #include <stdexcept>
 #include <utility>
 
-#if defined(__GNUG__) or defined(__clang__)
-#define ESPRESSO_ATTR_ALWAYS_INLINE [[gnu::always_inline]]
-#else
-#define ESPRESSO_ATTR_ALWAYS_INLINE
-#endif
-
 namespace detail {
 /**
  * @brief Get the minimum-image distance between two coordinates.
- * @param a               Coordinate of the terminal point.
- * @param b               Coordinate of the initial point.
- * @param box_length      Box length.
- * @param box_length_inv  Inverse box length
- * @param box_length_half Half box length
- * @param periodic        Box periodicity.
+ *
+ * Branchless fold: the periodicity is encoded in the masked inverse box
+ * length (0 for non-periodic directions, where <tt>rint</tt> then yields a
+ * zero image shift). Uses <tt>rint</tt> (round half to even) rather than
+ * <tt>round</tt>, so it maps to a single rounding instruction; the two only
+ * differ for separations of exactly half a box length, where both images
+ * are equidistant.
+ *
+ * @param a                      Coordinate of the terminal point.
+ * @param b                      Coordinate of the initial point.
+ * @param box_length             Box length.
+ * @param box_length_inv_masked  Inverse box length if periodic, 0 otherwise.
  * @return Shortest distance from @p b to @p a across periodic images,
  *         i.e. <tt>a - b</tt>. Can be negative.
  */
-template <typename T>
-T get_mi_coord(T a, T b, T box_length, T box_length_inv, T box_length_half,
-               bool periodic) {
+template <std::floating_point T>
+T get_mi_coord_masked(T a, T b, T box_length,
+                      T box_length_inv_masked) noexcept {
   auto const dx = a - b;
-
-  if (periodic && (std::abs(dx) > box_length_half)) {
-    return dx - std::round(dx * box_length_inv) * box_length;
-  }
-
-  return dx;
+  return dx - std::rint(dx * box_length_inv_masked) * box_length;
 }
 
 /**
@@ -70,9 +67,10 @@ T get_mi_coord(T a, T b, T box_length, T box_length_inv, T box_length_half,
  * @return Shortest distance from @p b to @p a across periodic images,
  *         i.e. <tt>a - b</tt>. Can be negative.
  */
-template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
-  return get_mi_coord(a, b, box_length, 1. / box_length, 0.5 * box_length,
-                      periodic);
+template <std::floating_point T>
+T get_mi_coord(T a, T b, T box_length, bool periodic) noexcept {
+  return get_mi_coord_masked(a, b, box_length,
+                             periodic ? T{1} / box_length : T{0});
 }
 
 /** @brief Calculate image box shift vector.
@@ -81,7 +79,7 @@ template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
  *  @return Image box coordinates.
  */
 inline auto image_shift(Utils::Vector3i const &image_box,
-                        Utils::Vector3d const &box) {
+                        Utils::Vector3d const &box) noexcept {
   return hadamard_product(image_box, box);
 }
 
@@ -93,12 +91,81 @@ inline auto image_shift(Utils::Vector3i const &image_box,
  */
 inline auto unfolded_position(Utils::Vector3d const &pos,
                               Utils::Vector3i const &image_box,
-                              Utils::Vector3d const &box) {
+                              Utils::Vector3d const &box) noexcept {
   return pos + image_shift(image_box, box);
 }
 } // namespace detail
 
 enum class BoxType { CUBOID = 0, LEES_EDWARDS = 1 };
+
+/**
+ * @brief Cuboid minimum-image fold parameters for hot pair loops.
+ *
+ * Capture an instance by value in a kernel to hoist the box data out of the
+ * pair loop: member loads then come from the kernel's own frame and the
+ * compiler can keep them in registers, instead of re-reading them through a
+ * @ref BoxGeometry reference for every pair. Only valid for cuboid boxes;
+ * Lees-Edwards boxes need the full @ref BoxGeometry::get_mi_vector.
+ */
+class CuboidMinimumImage {
+  Utils::Vector3d m_length;
+  Utils::Vector3d m_length_inv_masked;
+
+public:
+  CuboidMinimumImage(Utils::Vector3d const &length,
+                     Utils::Vector3d const &length_inv_masked)
+      : m_length(length), m_length_inv_masked(length_inv_masked) {}
+
+  /** @brief Squared minimum-image distance between two coordinates. */
+  ESPRESSO_ATTR_ALWAYS_INLINE inline double
+  dist2(Utils::Vector3d const &a, Utils::Vector3d const &b) const noexcept {
+    double acc = 0.;
+    for (auto c = 0u; c < 3u; ++c) {
+      auto const dx = detail::get_mi_coord_masked(a[c], b[c], m_length[c],
+                                                  m_length_inv_masked[c]);
+      acc += dx * dx;
+    }
+    return acc;
+  }
+
+  /**
+   * @brief Batched minimum-image vector and squared distance: one point
+   * (@p xi, @p yi, @p zi) against @p m others held in the SoA arrays
+   * @p sx / @p sy / @p sz.
+   *
+   * Writes the fold vector components to @p dx0 / @p dx1 / @p dx2 and the
+   * squared distance to @p dsq. The loop carries no dependency across the
+   * @p m entries and reads contiguous arrays, so it vectorizes. Each entry is
+   * computed as three per-axis @c detail::get_mi_coord_masked folds followed
+   * by `Utils::Vector::norm2` (accumulating from zero in component order), so
+   * the per-pair results are bitwise-identical to the scalar
+   * @ref BoxGeometry::get_mi_vector path for cuboid boxes.
+   */
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void
+  batch_vector_dist2(double xi, double yi, double zi, int m, double const *sx,
+                     double const *sy, double const *sz, double *dx0,
+                     double *dx1, double *dx2, double *dsq) const noexcept {
+    auto const lx = m_length[0u];
+    auto const ly = m_length[1u];
+    auto const lz = m_length[2u];
+    auto const ix = m_length_inv_masked[0u];
+    auto const iy = m_length_inv_masked[1u];
+    auto const iz = m_length_inv_masked[2u];
+    for (int t = 0; t < m; ++t) {
+      auto const a0 = detail::get_mi_coord_masked(xi, sx[t], lx, ix);
+      auto const a1 = detail::get_mi_coord_masked(yi, sy[t], ly, iy);
+      auto const a2 = detail::get_mi_coord_masked(zi, sz[t], lz, iz);
+      dx0[t] = a0;
+      dx1[t] = a1;
+      dx2[t] = a2;
+      auto acc = 0.;
+      acc += a0 * a0;
+      acc += a1 * a1;
+      acc += a2 * a2;
+      dsq[t] = acc;
+    }
+  }
+};
 
 class BoxGeometry {
 public:
@@ -126,6 +193,10 @@ private:
   Utils::Vector3d m_length = {1., 1., 1.};
   /** Inverse side lengths of the box */
   Utils::Vector3d m_length_inv = {1., 1., 1.};
+  /** Inverse side lengths for periodic directions, 0 for non-periodic ones.
+   *  Folding the periodicity into the inverse length makes the cuboid
+   *  minimum-image fold branchless (see `detail::get_mi_coord_masked`). */
+  Utils::Vector3d m_length_inv_masked = {1., 1., 1.};
   /** Half side lengths of the box */
   Utils::Vector3d m_length_half = {0.5, 0.5, 0.5};
 
@@ -139,7 +210,10 @@ public:
    * @param coord The coordinate to set the periodicity for.
    * @param val True if this direction should be periodic.
    */
-  void set_periodic(unsigned coord, bool val) { m_periodic.set(coord, val); }
+  void set_periodic(unsigned coord, bool val) {
+    m_periodic.set(coord, val);
+    m_length_inv_masked[coord] = val ? m_length_inv[coord] : 0.;
+  }
 
   /**
    * @brief Check periodicity in direction.
@@ -178,6 +252,9 @@ public:
     assert(box_l > Utils::Vector3d::broadcast(0.));
     m_length = box_l;
     m_length_inv = {1. / box_l[0], 1. / box_l[1], 1. / box_l[2]};
+    for (auto c = 0u; c < 3u; ++c) {
+      m_length_inv_masked[c] = m_periodic[c] ? m_length_inv[c] : 0.;
+    }
     m_length_half = 0.5 * box_l;
   }
 
@@ -195,11 +272,18 @@ public:
    * @return Shortest distance from @p b to @p a across periodic images,
    *         i.e. <tt>a - b</tt>. Can be negative.
    */
-  template <typename T> T inline get_mi_coord(T a, T b, unsigned coord) const {
+  template <std::floating_point T>
+  T inline get_mi_coord(T a, T b, unsigned coord) const noexcept {
     assert(coord <= 2u);
 
-    return detail::get_mi_coord(a, b, m_length[coord], m_length_inv[coord],
-                                m_length_half[coord], m_periodic[coord]);
+    return detail::get_mi_coord_masked(
+        a, b, static_cast<T>(m_length[coord]),
+        static_cast<T>(m_length_inv_masked[coord]));
+  }
+
+  /** @brief Cuboid minimum-image fold parameters for hoisting into kernels. */
+  auto cuboid_minimum_image() const {
+    return CuboidMinimumImage{m_length, m_length_inv_masked};
   }
 
   /**
@@ -212,9 +296,10 @@ public:
    * @return Vector from @p b to @p a that minimizes the distance across
    *         periodic images, i.e. <tt>a - b</tt>.
    */
-  template <typename T>
+  template <std::floating_point T>
   ESPRESSO_ATTR_ALWAYS_INLINE inline Utils::Vector3<T>
-  get_mi_vector(Utils::Vector3<T> const &a, Utils::Vector3<T> const &b) const {
+  get_mi_vector(Utils::Vector3<T> const &a,
+                Utils::Vector3<T> const &b) const noexcept {
     if (type() == BoxType::LEES_EDWARDS) {
       auto const shear_plane_normal = lees_edwards_bc().shear_plane_normal;
       auto a_tmp = a;
@@ -227,8 +312,10 @@ public:
                                         m_length_inv, m_periodic);
     }
     assert(type() == BoxType::CUBOID);
-    return {get_mi_coord(a[0], b[0], 0u), get_mi_coord(a[1], b[1], 1u),
-            get_mi_coord(a[2], b[2], 2u)};
+    // use Utils::Vector noexcept constructor to elide the exception logic
+    T pos[3] = {get_mi_coord(a[0], b[0], 0u), get_mi_coord(a[1], b[1], 1u),
+                get_mi_coord(a[2], b[2], 2u)};
+    return Utils::Vector3<T>(pos);
   }
 
   /**
@@ -244,9 +331,10 @@ public:
    * @return Squared shortest distance from @p b to @p a across periodic
    *         images.
    */
-  template <typename T>
+  template <std::floating_point T>
   ESPRESSO_ATTR_ALWAYS_INLINE inline T
-  get_mi_dist2(Utils::Vector3<T> const &a, Utils::Vector3<T> const &b) const {
+  get_mi_dist2(Utils::Vector3<T> const &a,
+               Utils::Vector3<T> const &b) const noexcept {
     if (type() == BoxType::LEES_EDWARDS) {
       return get_mi_vector(a, b).norm2();
     }
@@ -271,24 +359,27 @@ public:
    * @return Vector from @p b to @p a that minimizes the distance across
    *         periodic images, i.e. <tt>a - b</tt>.
    */
-  template <typename T>
+  template <std::floating_point T>
   ESPRESSO_ATTR_ALWAYS_INLINE inline Utils::Vector3<T>
   get_mi_vector(T const &a0, T const &a1, T const &a2, T const &b0, T const &b1,
-                T const &b2) const {
+                T const &b2) const noexcept {
     if (type() == BoxType::LEES_EDWARDS) {
       auto const shear_plane_normal = lees_edwards_bc().shear_plane_normal;
-      auto a_tmp = Utils::Vector3<T>{a0, a1, a2};
-      auto b_tmp = Utils::Vector3<T>{b0, b1, b2};
+      T a_tmp[3] = {a0, a1, a2};
+      T b_tmp[3] = {b0, b1, b2};
       a_tmp[shear_plane_normal] = Algorithm::periodic_fold(
           a_tmp[shear_plane_normal], m_length[shear_plane_normal]);
       b_tmp[shear_plane_normal] = Algorithm::periodic_fold(
           b_tmp[shear_plane_normal], m_length[shear_plane_normal]);
-      return lees_edwards_bc().distance(a_tmp - b_tmp, m_length, m_length_half,
-                                        m_length_inv, m_periodic);
+      return lees_edwards_bc().distance(
+          Utils::Vector3<T>(a_tmp) - Utils::Vector3<T>(b_tmp), m_length,
+          m_length_half, m_length_inv, m_periodic);
     }
     assert(type() == BoxType::CUBOID);
-    return {get_mi_coord(a0, b0, 0u), get_mi_coord(a1, b1, 1u),
-            get_mi_coord(a2, b2, 2u)};
+    // use Utils::Vector noexcept constructor to elide the exception logic
+    T pos[3] = {get_mi_coord(a0, b0, 0u), get_mi_coord(a1, b1, 1u),
+                get_mi_coord(a2, b2, 2u)};
+    return Utils::Vector3<T>(pos);
   }
 
   BoxType type() const { return m_type; }
@@ -311,7 +402,7 @@ public:
   Utils::Vector3d velocity_difference(Utils::Vector3d const &x,
                                       Utils::Vector3d const &y,
                                       Utils::Vector3d const &u,
-                                      Utils::Vector3d const &v) const {
+                                      Utils::Vector3d const &v) const noexcept {
     auto ret = u - v;
     if (type() == BoxType::LEES_EDWARDS) {
       auto const &le = m_lees_edwards_bc;
@@ -352,7 +443,7 @@ public:
    * @param[in] pos    coordinates to fold
    * @return Folded coordinates.
    */
-  auto folded_position(Utils::Vector3d const &pos) const {
+  auto folded_position(Utils::Vector3d const &pos) const noexcept {
     auto pos_folded = pos;
     for (auto i = 0u; i < 3u; i++) {
       if (m_periodic[i]) {
@@ -370,7 +461,7 @@ public:
    * @return Folded image box.
    */
   auto folded_image_box(Utils::Vector3d const &pos,
-                        Utils::Vector3i const &image_box) const {
+                        Utils::Vector3i const &image_box) const noexcept {
     auto image_box_folded = image_box;
     for (auto i = 0u; i < 3u; i++) {
       if (m_periodic[i]) {
@@ -383,13 +474,13 @@ public:
   }
 
   /** @brief Calculate image box shift vector */
-  auto image_shift(Utils::Vector3i const &image_box) const {
+  auto image_shift(Utils::Vector3i const &image_box) const noexcept {
     return detail::image_shift(image_box, m_length);
   }
 
   /** @brief Unfold particle coordinates to image box. */
   auto unfolded_position(Utils::Vector3d const &pos,
-                         Utils::Vector3i const &image_box) const {
+                         Utils::Vector3i const &image_box) const noexcept {
     return detail::unfolded_position(pos, image_box, m_length);
   }
 };

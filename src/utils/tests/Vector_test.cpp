@@ -128,6 +128,13 @@ BOOST_AUTO_TEST_CASE(normalize) {
   v.normalize();
 
   BOOST_CHECK_CLOSE(v.norm2(), 1.0, tol);
+
+  auto const zero = Utils::Vector3d{0., 0., 0.};
+  auto const n = zero.normalized();
+  for (auto const &component : n) {
+    BOOST_REQUIRE(std::isfinite(component));
+    BOOST_CHECK_EQUAL(component, 0.);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(comparison_operators) {
@@ -346,7 +353,7 @@ BOOST_AUTO_TEST_CASE(conversion) {
 
   // check span conversion
   {
-    auto const view = static_cast<std::span<double, 3>>(orig);
+    auto const view = static_cast<std::span<const double, 3>>(orig);
     BOOST_TEST(view.data() == orig.data());
     BOOST_TEST(view.size() == orig.size());
   }

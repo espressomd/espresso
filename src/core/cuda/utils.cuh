@@ -77,4 +77,4 @@ void cuda_check_errors_exit(const dim3 &block, const dim3 &grid,
   cuda_check_errors_exit(_grid, _block, #_function, __FILE__, __LINE__);
 
 #define KERNELCALL(_function, _grid, _block, ...)                              \
-  KERNELCALL_shared(_function, _grid, _block, 0, ##__VA_ARGS__)
+  KERNELCALL_shared(_function, _grid, _block, 0 __VA_OPT__(, ) __VA_ARGS__)

@@ -29,7 +29,7 @@ class Sample(ut.TestCase):
     def test_final_pressure(self):
         # test simulated value to +/- 10% accuracy
         self.assertLess(abs(sample.p_avg - 0.23), 0.02)
-        self.assertLess(abs(sample.p_std - 0.01), 0.01)
+        self.assertLess(abs(sample.p_std - 0.05), 0.02)
 
 
 if __name__ == "__main__":

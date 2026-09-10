@@ -62,6 +62,7 @@
 #include <utils/Vector.hpp>
 #include <utils/demangle.hpp>
 #include <utils/math/vec_rotate.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 #include <utils/serialization/pack.hpp>
 
 #include <boost/mpi/collectives.hpp>
@@ -427,22 +428,6 @@ static void rotate_system(CellStructure &cell_structure, double phi,
                                                    Cells::DATA_PART_PROPERTIES);
 }
 
-/** Rescale all particle positions in direction @p dir by a factor @p scale.
- *  @param cell_structure cell structure
- *  @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
- *  @param scale factor by which to rescale (>1: stretch, <1: contract)
- */
-static void rescale_particles(CellStructure &cell_structure, int dir,
-                              double scale) {
-  for (auto &p : cell_structure.local_particles()) {
-    if (dir < 3)
-      p.pos()[dir] *= scale;
-    else {
-      p.pos() *= scale;
-    }
-  }
-}
-
 Variant System::do_call_method(std::string const &name,
                                VariantMap const &parameters) {
   if (name == "lock_system_creation") {
@@ -450,50 +435,87 @@ Variant System::do_call_method(std::string const &name,
     return {};
   }
   if (name == "rescale_boxl") {
-    auto &box_geo = *m_instance->box_geo;
+    auto const rescale_particles = [this](unsigned dir, double scale) {
+      for (auto &p : m_instance->cell_structure->local_particles()) {
+        p.pos()[dir] *= scale;
+      }
+    };
+    auto const &box_geo = *m_instance->box_geo;
     auto const coord = get_value<int>(parameters, "coord");
     auto const length = get_value<double>(parameters, "length");
-    assert(coord >= 0);
-    assert(coord != 3 or ((box_geo.length()[0] == box_geo.length()[1]) and
-                          (box_geo.length()[1] == box_geo.length()[2])));
-    auto const scale = (coord == 3) ? length * box_geo.length_inv()[0]
-                                    : length * box_geo.length_inv()[coord];
+    assert(coord >= 0 and coord <= 3);
     context()->parallel_try_catch([&]() {
       if (length <= 0.) {
         throw std::domain_error("Parameter 'd_new' must be > 0");
       }
       m_instance->veto_boxl_change(true);
     });
-    auto new_value = Utils::Vector3d{};
     if (coord == 3) {
-      new_value = Utils::Vector3d::broadcast(length);
+      auto const old_length_inv = box_geo.length_inv();
+      auto const new_value = Utils::Vector3d::broadcast(length);
+      auto const rescale = Utils::hadamard_product(new_value, old_length_inv);
+      // when shrinking, rescale particles before the box resize
+      for (auto axis = 0u; axis < 3u; ++axis) {
+        if (rescale[axis] <= 1.) {
+          rescale_particles(axis, rescale[axis]);
+        }
+      }
+      m_instance->on_particle_change();
+      m_instance->box_geo->set_length(new_value);
+      m_instance->on_boxl_change();
+      // when growing, rescale particles after the box resize
+      for (auto axis = 0u; axis < 3u; ++axis) {
+        if (rescale[axis] > 1.) {
+          rescale_particles(axis, rescale[axis]);
+        }
+      }
+      m_instance->on_particle_change();
     } else {
-      new_value = box_geo.length();
-      new_value[static_cast<unsigned>(coord)] = length;
-    }
-    // when shrinking, rescale the particles first
-    if (scale <= 1.) {
-      rescale_particles(*m_instance->cell_structure, coord, scale);
-      m_instance->on_particle_change();
-    }
-    m_instance->box_geo->set_length(new_value);
-    m_instance->on_boxl_change();
-    if (scale > 1.) {
-      rescale_particles(*m_instance->cell_structure, coord, scale);
-      m_instance->on_particle_change();
+      auto const axis = static_cast<unsigned>(coord);
+      auto const scale = length * box_geo.length_inv()[axis];
+      auto new_value = box_geo.length();
+      new_value[axis] = length;
+      // when shrinking, rescale particles before the box resize
+      if (scale <= 1.) {
+        rescale_particles(axis, scale);
+        m_instance->on_particle_change();
+      }
+      m_instance->box_geo->set_length(new_value);
+      m_instance->on_boxl_change();
+      // when growing, rescale particles after the box resize
+      if (scale > 1.) {
+        rescale_particles(axis, scale);
+        m_instance->on_particle_change();
+      }
     }
     return {};
   }
-  if (name == "setup_type_map") {
-    auto const types = get_value<std::vector<int>>(parameters, "type_list");
-    for (auto const type : types) {
-      ::init_type_map(type);
+  if (name == "reaction_get_maximal_particle_id") {
+    return ::get_maximal_particle_id();
+  }
+  if (name == "get_pids_of_type") {
+    auto const type = get_value<int>(parameters, "ptype");
+    std::vector<int> pids;
+    for (auto const &p : get_system().cell_structure->local_particles()) {
+      if (p.type() == type) {
+        pids.emplace_back(p.id());
+      }
     }
-    return {};
+    Utils::Mpi::gather_buffer(pids, context()->get_comm());
+    return pids;
   }
   if (name == "number_of_particles") {
     auto const type = get_value<int>(parameters, "type");
-    return ::number_of_particles_with_type(type);
+    int local_counter = 0;
+    int global_counter = 0;
+    for (auto const &p : get_system().cell_structure->local_particles()) {
+      if (p.type() == type) {
+        local_counter++;
+      }
+    }
+    boost::mpi::reduce(::comm_cart, local_counter, global_counter,
+                       std::plus<>(), 0);
+    return global_counter;
   }
   if (name == "velocity_difference") {
     auto const pos1 = get_value<Utils::Vector3d>(parameters, "pos1");
@@ -521,7 +543,7 @@ Variant System::do_call_method(std::string const &name,
   }
   if (name == "session_shutdown") {
     if (m_instance) {
-      if (&::System::get_system() == m_instance.get()) {
+      if (::System::is_same_system(m_instance.get())) {
         ::System::reset_system();
       }
       assert(m_instance.use_count() == 1l);

@@ -29,15 +29,24 @@
 
 #include <boost/mpi/collectives/reduce.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <functional>
+#include <memory>
 #include <span>
 #include <vector>
 
-Observable_stat::Observable_stat(std::size_t chunk_size, std::size_t n_bonded,
-                                 int max_type)
-    : m_data{}, m_chunk_size{chunk_size} {
+void Observable_stat::reset(std::size_t n_bonded, int max_type) {
+  if (n_bonded == m_n_bonded and max_type == m_max_type and
+      not m_data.empty()) {
+    std::ranges::fill(m_data, 0.);
+    return;
+  }
+
+  m_n_bonded = n_bonded;
+  m_max_type = max_type;
+
   // number of chunks for different interaction types
   constexpr std::size_t n_coulomb = 2;
   constexpr std::size_t n_dipolar = 2;
@@ -51,11 +60,11 @@ Observable_stat::Observable_stat(std::size_t chunk_size, std::size_t n_bonded,
 #else
   constexpr std::size_t n_dpd = 0;
 #endif
-  auto const n_non_bonded = get_non_bonded_offset(max_type, max_type) + 1ul;
   constexpr std::size_t n_ext_fields = 1;  // reduction over all fields
   constexpr std::size_t n_kinetic_lin = 1; // linear kinetic contribution
   constexpr std::size_t n_kinetic_rot = 1; // angular kinetic contribution
 
+  auto const n_non_bonded = get_non_bonded_offset(max_type, max_type) + 1ul;
   auto const n_elements = n_kinetic_lin + n_kinetic_rot + n_bonded +
                           2ul * n_non_bonded + n_coulomb + n_dipolar + n_vs +
                           n_ext_fields + n_dpd;
@@ -74,7 +83,8 @@ Observable_stat::Observable_stat(std::size_t chunk_size, std::size_t n_bonded,
       std::span<double>(external_fields.end(), n_non_bonded * m_chunk_size);
   non_bonded_inter =
       std::span<double>(non_bonded_intra.end(), n_non_bonded * m_chunk_size);
-  assert(&*non_bonded_inter.end() == (m_data.data() + m_data.size()));
+  assert(std::to_address(non_bonded_inter.end()) ==
+         (m_data.data() + m_data.size()));
 }
 
 std::size_t Observable_stat::get_non_bonded_offset(int type1, int type2) const {

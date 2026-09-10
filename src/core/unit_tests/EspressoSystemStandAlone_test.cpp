@@ -238,12 +238,12 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     remove_translational_motion(system);
     for (int i = 0; i < 5; ++i) {
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
-      auto const obs_energy = system.calculate_energy();
+      auto const &obs_energy = system.calculate_energy();
       auto const p_opt = copy_particle_to_head_node(comm, system, pid2);
       if (rank == 0) {
         auto const &p = *p_opt;
         auto const kinetic_energy = 0.5 * p.mass() * p.v().norm2();
-        BOOST_CHECK_CLOSE(obs_energy->kinetic_lin[0], kinetic_energy, tol);
+        BOOST_CHECK_CLOSE(obs_energy.kinetic_lin[0], kinetic_energy, tol);
       }
     }
   }
@@ -266,8 +266,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
                              5,
                              0.615,
                              1e-3};
-    auto solver = new_coulomb_p3m_heffte(std::move(p3m), tuning, prefactor,
-                                         false, Arch::CPU);
+    auto solver =
+        new_coulomb_p3m(std::move(p3m), tuning, prefactor, false, Arch::CPU);
     add_actor(comm, espresso::system, system.coulomb.impl->solver, solver,
               [&system]() { system.on_coulomb_change(); });
     BOOST_CHECK(not solver->is_gpu());
@@ -284,9 +284,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       // at very short distances, the real-space contribution to
       // the energy is much larger than the k-space contribution
       auto const energy_ref = -prefactor * 0.25 / r;
-      auto const obs_energy = system.calculate_energy();
+      auto const &obs_energy = system.calculate_energy();
       if (rank == 0) {
-        auto const energy_p3m = obs_energy->coulomb[0] + obs_energy->coulomb[1];
+        auto const energy_p3m = obs_energy.coulomb[0] + obs_energy.coulomb[1];
         BOOST_CHECK_CLOSE(energy_p3m, energy_ref, 0.002);
       }
       if (n_nodes != 3) {
@@ -309,9 +309,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     solver->detach_system(espresso::system);
     system.coulomb.impl->solver = std::nullopt;
     system.on_coulomb_change();
-    auto const obs_energy = system.calculate_energy();
+    auto const &obs_energy = system.calculate_energy();
     if (rank == 0) {
-      auto const energy_p3m = obs_energy->coulomb[0] + obs_energy->coulomb[1];
+      auto const energy_p3m = obs_energy.coulomb[0] + obs_energy.coulomb[1];
       BOOST_CHECK_EQUAL(energy_p3m, 0.);
     }
   }
@@ -353,9 +353,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       // at very short distances, the real-space contribution to
       // the energy is much larger than the k-space contribution
       auto const energy_ref = -prefactor * 0.25 / Utils::int_pow<3>(r);
-      auto const obs_energy = system.calculate_energy();
+      auto const &obs_energy = system.calculate_energy();
       if (rank == 0) {
-        auto const energy_p3m = obs_energy->dipolar[0] + obs_energy->dipolar[1];
+        auto const energy_p3m = obs_energy.dipolar[0] + obs_energy.dipolar[1];
         BOOST_CHECK_CLOSE(energy_p3m, energy_ref, 0.002);
       }
       if (n_nodes != 3) {
@@ -376,9 +376,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     solver->detach_system(espresso::system);
     system.dipoles.impl->solver = std::nullopt;
     system.on_dipoles_change();
-    auto const obs_energy = system.calculate_energy();
+    auto const &obs_energy = system.calculate_energy();
     if (rank == 0) {
-      auto const energy_p3m = obs_energy->dipolar[0] + obs_energy->dipolar[1];
+      auto const energy_p3m = obs_energy.dipolar[0] + obs_energy.dipolar[1];
       BOOST_CHECK_EQUAL(energy_p3m, 0.);
     }
   }
@@ -410,14 +410,14 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     auto const lj_energy = 4.0 * eps * (Utils::sqr(frac6) - frac6 + shift);
 
     // measure energies
-    auto const obs_energy = system.calculate_energy();
+    auto const &obs_energy = system.calculate_energy();
     if (rank == 0) {
       for (int i = 0; i < n_pairs + 1; ++i) {
         // particles were set up with type == mol_id
         auto const ref_inter = (i == lj_pair_ab) ? lj_energy : 0.;
         auto const ref_intra = (i == lj_pair_bb) ? lj_energy : 0.;
-        BOOST_CHECK_CLOSE(obs_energy->non_bonded_inter[i], ref_inter, 1e-10);
-        BOOST_CHECK_CLOSE(obs_energy->non_bonded_intra[i], ref_intra, 1e-10);
+        BOOST_CHECK_CLOSE(obs_energy.non_bonded_inter[i], ref_inter, 1e-10);
+        BOOST_CHECK_CLOSE(obs_energy.non_bonded_intra[i], ref_intra, 1e-10);
       }
     }
   }
@@ -451,7 +451,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     insert_particle_bond(pid2, fene_bond_id, {pid3});
 
     // measure energies
-    auto const obs_energy = system.calculate_energy();
+    auto const &obs_energy = system.calculate_energy();
     if (rank == 0) {
       auto const none_energy = 0.0;
       auto const harm_energy =
@@ -459,9 +459,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       auto const fene_energy =
           -0.5 * fene_bond.k * Utils::sqr(fene_bond.drmax) *
           std::log(1.0 - Utils::sqr((dist - fene_bond.r0) / fene_bond.drmax));
-      BOOST_CHECK_CLOSE(obs_energy->bonded[none_bond_id], none_energy, 0.0);
-      BOOST_CHECK_CLOSE(obs_energy->bonded[harm_bond_id], harm_energy, 1e-10);
-      BOOST_CHECK_CLOSE(obs_energy->bonded[fene_bond_id], fene_energy, 1e-10);
+      BOOST_CHECK_CLOSE(obs_energy.bonded[none_bond_id], none_energy, 0.0);
+      BOOST_CHECK_CLOSE(obs_energy.bonded[harm_bond_id], harm_energy, 1e-10);
+      BOOST_CHECK_CLOSE(obs_energy.bonded[fene_bond_id], fene_energy, 1e-10);
     }
   }
 
@@ -547,6 +547,28 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     // no exception is thrown after resort
     cs.resort_particles(global_resort);
     cs.check_particle_index();
+  }
+
+  // check particle folding exception propagation
+  if (n_nodes != 3) {
+    auto constexpr global_resort = false;
+    auto &cs = *system.cell_structure;
+    set_particle_property(
+        pid1, &Particle::image_box,
+        Utils::Vector3i::broadcast(std::numeric_limits<int>::min()));
+    if (rank == 0) {
+      BOOST_CHECK_THROW(cs.resort_particles(global_resort), std::runtime_error);
+    }
+    set_particle_property(
+        pid1, &Particle::image_box,
+        Utils::Vector3i::broadcast(std::numeric_limits<int>::max()));
+    if (rank == 0) {
+      BOOST_CHECK_THROW(cs.resort_particles(global_resort), std::runtime_error);
+    }
+    // no exception is thrown with original position
+    set_particle_property(pid1, &Particle::pos, start_positions.at(pid1));
+    set_particle_property(pid1, &Particle::image_box, {0, 0, 0});
+    cs.resort_particles(global_resort);
   }
 
   // check bond counting

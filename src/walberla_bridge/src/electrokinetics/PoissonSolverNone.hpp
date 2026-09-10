@@ -110,18 +110,22 @@ public:
       : PoissonSolver(std::move(lattice), 0.0) {
     auto blocks = get_lattice().get_blocks();
 #if defined(__CUDACC__)
-    m_potential_field_id = gpu::addGPUFieldToStorage<PotentialField>(
-        blocks, "potential field", 1u, field::fzyx,
-        get_lattice().get_ghost_layers());
-    for (auto &block : *blocks) {
-      auto field = block.template getData<PotentialField>(m_potential_field_id);
-      ek::accessor::Scalar::initialize(field, FloatType{0});
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      m_potential_field_id = gpu::addGPUFieldToStorage<PotentialField>(
+          blocks, "potential field", 1u, field::fzyx,
+          get_lattice().get_ghost_layers());
+      for (auto &block : *blocks) {
+        auto field =
+            block.template getData<PotentialField>(m_potential_field_id);
+        ek::accessor::Scalar::initialize(field, FloatType{0});
+      }
     }
-#else  // __CUDACC__
-    m_potential_field_id = field::addToStorage<PotentialField>(
-        blocks, "potential field", FloatType{0}, field::fzyx,
-        get_lattice().get_ghost_layers());
 #endif // __CUDACC__
+    if constexpr (Architecture == lbmpy::Arch::CPU) {
+      m_potential_field_id = field::addToStorage<PotentialField>(
+          blocks, "potential field", FloatType{0}, field::fzyx,
+          get_lattice().get_ghost_layers());
+    }
   }
 
   void setup_fft(bool) override {}

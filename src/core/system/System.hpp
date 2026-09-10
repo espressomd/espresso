@@ -73,6 +73,8 @@ struct InstantaneousPressure;
 #ifdef ESPRESSO_CUDA
 class GpuParticleData;
 #endif
+struct EnergyObservable;
+struct PressureObservable;
 
 namespace System {
 
@@ -147,16 +149,24 @@ public:
 
   unsigned get_global_ghost_flags() const;
 
+  /**
+   * @brief Returns the ghost flags for the force-reduce step.
+   *
+   * Always includes GHOSTTRANS_FORCE; adds GHOSTTRANS_TORQUE when orientation
+   * physics is active (same whitelist as get_global_ghost_flags for QUAT).
+   */
+  unsigned get_force_reduce_ghost_flags() const;
+
   /** Check electrostatic and magnetostatic methods are properly initialized.
    *  @return true if sanity checks failed.
    */
   bool long_range_interactions_sanity_checks() const;
 
   /** @brief Calculate the total energy. */
-  std::shared_ptr<Observable_stat> calculate_energy();
+  Observable_stat const &calculate_energy();
 
   /** @brief Calculate the pressure from a virial expansion. */
-  std::shared_ptr<Observable_stat> calculate_pressure();
+  Observable_stat const &calculate_pressure();
 
 #ifdef ESPRESSO_NPT
   /** @brief Synchronize NpT state such as instantaneous and average pressure */
@@ -356,6 +366,8 @@ protected:
    * to be available on the same node (through ghosts).
    */
   double min_global_cut;
+  std::shared_ptr<EnergyObservable> m_obs_energy;
+  std::shared_ptr<PressureObservable> m_obs_pressure;
 
   void update_local_geo();
 #ifdef ESPRESSO_ELECTROSTATICS
@@ -377,5 +389,6 @@ private:
 System &get_system();
 void set_system(std::shared_ptr<System> new_instance);
 void reset_system();
+bool is_same_system(System const *system);
 
 } // namespace System

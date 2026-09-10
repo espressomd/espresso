@@ -35,6 +35,7 @@ function(ESPRESSO_ADD_TEST)
     DEPENDS
     ${TEST_DEPENDS}
     $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
+    $<$<BOOL:${Kokkos_ENABLE_CUDA}>:Kokkos::kokkos>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
     OpenMP::OpenMP_CXX
     espresso::walberla
@@ -62,6 +63,12 @@ espresso_add_test(SRC EKinWalberlaImpl_unit_tests.cpp DEPENDS Boost::mpi
 espresso_add_test(
   SRC PoissonSolver_test.cpp DEPENDS Boost::mpi
   $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte> NUM_PROC 2)
+if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+  espresso_add_test(SRC PoissonSolver_test_cuda.cu DEPENDS Boost::mpi
+                    CUDA::cudart)
+  target_compile_definitions(PoissonSolver_test_cuda
+                             PRIVATE ESPRESSO_TEST_BUILD_FOR_GPU)
+endif()
 
 if(NOT (ESPRESSO_BUILD_WITH_ASAN OR ESPRESSO_BUILD_WITH_UBSAN))
   espresso_add_test(SRC LBWalberlaImpl_statistical_tests.cpp DEPENDS Boost::mpi)
@@ -70,8 +77,8 @@ endif()
 espresso_add_test(SRC LBWalberlaImpl_field_accessors_tests.cpp DEPENDS
                   Boost::mpi)
 if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
-  set_source_files_properties(LBWalberlaImpl_field_accessors_tests.cpp
-                              PROPERTIES LANGUAGE CUDA)
-  espresso_add_test(SRC LBWalberlaImpl_field_accessors_tests.cpp SUFFIX cuda
-                    DEPENDS Boost::mpi CUDA::cudart)
+  espresso_add_test(SRC LBWalberlaImpl_field_accessors_tests_cuda.cu DEPENDS
+                    Boost::mpi CUDA::cudart)
+  target_compile_definitions(LBWalberlaImpl_field_accessors_tests_cuda
+                             PRIVATE ESPRESSO_TEST_BUILD_FOR_GPU)
 endif()

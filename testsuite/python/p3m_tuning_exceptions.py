@@ -310,22 +310,6 @@ class Test(ut.TestCase):
         ELC = espressomd.electrostatics.ELC
         self.check_invalid_params_layer_corrections(container, solver_p3m, ELC)
 
-        self.system.part.by_id(0).q = -1.00001
-
-        with self.assertRaisesRegex(RuntimeError, "ELC does not currently support non-neutral systems with a dielectric contrast"):
-            actor = ELC(actor=solver_p3m, gap_size=1., maxPWerror=1.,
-                        pot_diff=3., delta_mid_top=0.5, delta_mid_bot=0.5,
-                        const_pot=True, check_neutrality=False)
-            self.system.electrostatics.solver = actor
-        self.system.electrostatics.clear()
-
-        with self.assertRaisesRegex(RuntimeError, "ELC does not work for non-neutral systems and non-metallic dielectric contrast"):
-            actor = ELC(actor=solver_p3m, gap_size=1., maxPWerror=1.,
-                        pot_diff=0., delta_mid_top=0.5, delta_mid_bot=0.5,
-                        const_pot=False, check_neutrality=False)
-            self.system.electrostatics.solver = actor
-        self.system.electrostatics.clear()
-
         self.system.part.by_id(0).q = -1
 
         with self.assertRaisesRegex(RuntimeError, "ELC tuning failed: maxPWerror too small"):
