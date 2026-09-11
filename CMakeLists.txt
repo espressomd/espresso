@@ -785,26 +785,6 @@ if(ESPRESSO_BUILD_WITH_KOKKOS_FFT AND ESPRESSO_BUILD_WITH_FFTW)
   endif()
 endif()
 
-# kokkos-fft: a local (single-process) FFT on top of the Kokkos target already
-# fetched above. Used as the single-rank P3M reciprocal-space backend.
-if(ESPRESSO_BUILD_WITH_KOKKOS_FFT)
-  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos_fft-src)
-    find_package(KokkosFFT 1.1 QUIET)
-  endif()
-  if(NOT DEFINED KokkosFFT_FOUND OR NOT ${KokkosFFT_FOUND})
-    # cmake-format: off
-    FetchContent_Declare(
-      kokkos_fft
-      GIT_REPOSITORY https://github.com/kokkos/kokkos-fft.git
-      GIT_TAG        v1.1.0
-      OVERRIDE_FIND_PACKAGE
-    )
-    # cmake-format: on
-    set(KokkosFFT_ENABLE_FFTW ON CACHE BOOL "")
-    FetchContent_MakeAvailable(kokkos_fft)
-  endif()
-endif()
-
 if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/cabana-src)
   find_package(Cabana 0.8.0 QUIET)
 endif()

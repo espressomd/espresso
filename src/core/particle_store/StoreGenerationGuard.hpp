@@ -41,8 +41,8 @@
  * counter alone (when a single store is implied by context) or additionally the
  * store identity (address) -- the latter guards against a fresh store object
  * reusing the same address with a coincidentally-equal generation counter, the
- * same failure mode the columnar ghost cache guards against
- * (see @ref GhostCommunication).
+ * same failure mode the columnar ghost cache used to guard against before the
+ * ghost layer moved to @ref GhostComm::HaloPlan.
  *
  * The check compiles to nothing in release builds (@c NDEBUG); it is a debug /
  * @c ESPRESSO_ADDITIONAL_CHECKS-time invariant, never a production branch.
