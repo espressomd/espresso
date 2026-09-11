@@ -20,6 +20,7 @@
 #pragma once
 
 #include "cell_system/Cell.hpp"
+#include "cell_system/CellRows.hpp"
 
 #include "BoxGeometry.hpp"
 #include "ghosts/HaloPlan.hpp"
@@ -35,8 +36,15 @@ struct RemovedParticle {
   int id;
 };
 
+/** @brief A cell whose row content changed during a resort.
+ *  A cell's content is a @c (offset, count) store-row range (@ref CellRowSpan),
+ *  so a modified cell is identified by the @ref Cell itself. The particle index
+ *  is rebuilt wholesale from the store after a resort
+ *  (@ref CellStructure::ensure_particle_store_synchronized); this record is
+ *  retained for the "cells touched" bookkeeping contract (its field has no
+ *  reader). */
 struct ModifiedList {
-  ParticleList &pl;
+  Cell &cell;
 };
 
 /**

@@ -29,14 +29,26 @@
 #include "BondList.hpp"
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "ParticleList.hpp"
+#include "cell_system/Cell.hpp"
+#include "ghost_cell_fixture.hpp"
 #include "ghosts.hpp"
 #include "ghosts/HaloExchange.hpp"
 #include "ghosts/HaloPlan.hpp"
 
+#include <Kokkos_Core.hpp>
+
 #include <array>
 
 namespace utf = boost::unit_test;
+
+// The cells under test are backed by a ParticleStore, which allocates Kokkos
+// Views and therefore needs an initialized runtime.
+struct GlobalConfig {
+  GlobalConfig() { Kokkos::initialize(); }
+  ~GlobalConfig() { Kokkos::finalize(); }
+};
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
 
 /*
  * On two ranks, each rank owns a single particle tagged by its rank. A Push
@@ -56,11 +68,14 @@ BOOST_AUTO_TEST_CASE(push_positions_between_two_ranks,
   BoxGeometry box;
   box.set_length({10., 10., 10.});
 
-  ParticleList local, ghost;
-  local.resize(1);
-  local.begin()->id() = me; // tag by owner rank
-  local.begin()->pos() = {double(me), 2. * double(me), 3. * double(me)};
-  ghost.resize(1); // sized as if ghosts_count() had already run
+  // One local and one ghost cell, each holding a single particle -- sized as
+  // if ghosts_count() had already run.
+  GhostTest::CellFixture cells{{1u, 1u}, 1u};
+  auto &local = cells.cell(0);
+  auto &ghost = cells.cell(1);
+  cells.front(0).id() = me; // tag by owner rank
+  cells.front(0).pos() =
+      Utils::Vector3d{double(me), 2. * double(me), 3. * double(me)};
 
   HaloPlan plan;
   plan.comm = world;
@@ -71,11 +86,11 @@ BOOST_AUTO_TEST_CASE(push_positions_between_two_ranks,
                 {Direction::Push, Combine::Overwrite});
 
   // ghost cell now holds the peer's (folded) position.
-  BOOST_CHECK_CLOSE(ghost.begin()->pos()[0], double(other), 1e-12);
-  BOOST_CHECK_CLOSE(ghost.begin()->pos()[1], 2. * double(other), 1e-12);
-  BOOST_CHECK_CLOSE(ghost.begin()->pos()[2], 3. * double(other), 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(1).pos()[0], double(other), 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(1).pos()[1], 2. * double(other), 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(1).pos()[2], 3. * double(other), 1e-12);
   // the local (owned) particle must be untouched by a Push.
-  BOOST_CHECK_CLOSE(local.begin()->pos()[0], double(me), 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(0).pos()[0], double(me), 1e-12);
 }
 
 /*
@@ -97,14 +112,15 @@ BOOST_AUTO_TEST_CASE(reduce_forces_between_two_ranks,
   BoxGeometry box;
   box.set_length({10., 10., 10.});
 
-  ParticleList local, ghost;
-  local.resize(1);
-  ghost.resize(1);
+  GhostTest::CellFixture cells{{1u, 1u}, 1u};
+  auto &local = cells.cell(0);
+  auto &ghost = cells.cell(1);
   // Pre-existing force on the owned particle; Reduce must add to it.
-  local.begin()->force() = {1., 0., 0.};
+  cells.front(0).force() = Utils::Vector3d{1., 0., 0.};
   // Force accumulated on this rank's ghost (from short-range interactions).
   // Encode the ghost's owner (== other) so the sum is checkable.
-  ghost.begin()->force() = {0., 10. * double(me + 1), 100. * double(me + 1)};
+  cells.front(1).force() =
+      Utils::Vector3d{0., 10. * double(me + 1), 100. * double(me + 1)};
 
   HaloPlan plan;
   plan.comm = world;
@@ -114,9 +130,9 @@ BOOST_AUTO_TEST_CASE(reduce_forces_between_two_ranks,
   halo_exchange(plan, box, GHOSTTRANS_FORCE, {Direction::Reduce, Combine::Add});
 
   // Owner force == own pre-existing force + peer's ghost force.
-  BOOST_CHECK_CLOSE(local.begin()->force()[0], 1., 1e-12);
-  BOOST_CHECK_CLOSE(local.begin()->force()[1], 10. * double(other + 1), 1e-12);
-  BOOST_CHECK_CLOSE(local.begin()->force()[2], 100. * double(other + 1), 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(0).force()[0], 1., 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(0).force()[1], 10. * double(other + 1), 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(0).force()[2], 100. * double(other + 1), 1e-12);
 }
 
 /*
@@ -137,12 +153,12 @@ BOOST_AUTO_TEST_CASE(push_bonds_between_two_ranks,
   BoxGeometry box;
   box.set_length({10., 10., 10.});
 
-  ParticleList local, ghost;
-  local.resize(1);
-  local.begin()->id() = me;
+  GhostTest::CellFixture cells{{1u, 1u}, 1u};
+  auto &local = cells.cell(0);
+  auto &ghost = cells.cell(1);
+  cells.front(0).id() = me;
   std::array<int, 2> partners{me, me + 5};
-  local.begin()->bonds().insert(BondView{me + 1, partners});
-  ghost.resize(1);
+  cells.front(0).bonds().insert(BondView{me + 1, partners});
 
   HaloPlan plan;
   plan.comm = world;
@@ -152,8 +168,8 @@ BOOST_AUTO_TEST_CASE(push_bonds_between_two_ranks,
   halo_exchange(plan, box, GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS,
                 {Direction::Push, Combine::Overwrite});
 
-  BOOST_REQUIRE_EQUAL(ghost.begin()->bonds().size(), 1);
-  auto it = ghost.begin()->bonds().begin();
+  BOOST_REQUIRE_EQUAL(cells.front(1).bonds().size(), 1);
+  auto it = cells.front(1).bonds().begin();
   BOOST_CHECK_EQUAL((*it).bond_id(), other + 1);
   BOOST_REQUIRE_EQUAL((*it).partner_ids().size(), 2u);
   BOOST_CHECK_EQUAL((*it).partner_ids()[0], other);
@@ -184,17 +200,17 @@ BOOST_AUTO_TEST_CASE(collective_broadcast_and_reduce,
 
   // cells[0] = local cell for rank 0, cells[1] = local cell for rank 1.
   // Each rank owns cells[me] and uses cells[1 - me] as ghost storage.
-  ParticleList cell0, cell1;
-  cell0.resize(1);
-  cell1.resize(1);
+  GhostTest::CellFixture cells{{1u, 1u}, 2u};
+  auto &cell0 = cells.cell(0);
+  auto &cell1 = cells.cell(1);
 
   // Seed the owned cell with a distinguishable position.
   if (me == 0) {
-    cell0.begin()->pos() = {1.0, 2.0, 3.0};
-    cell0.begin()->id() = 0;
+    cells.front(0).pos() = Utils::Vector3d{1.0, 2.0, 3.0};
+    cells.front(0).id() = 0;
   } else {
-    cell1.begin()->pos() = {4.0, 5.0, 6.0};
-    cell1.begin()->id() = 1;
+    cells.front(1).pos() = Utils::Vector3d{4.0, 5.0, 6.0};
+    cells.front(1).id() = 1;
   }
 
   HaloPlan plan;
@@ -208,21 +224,21 @@ BOOST_AUTO_TEST_CASE(collective_broadcast_and_reduce,
                 {Direction::Push, Combine::Overwrite});
 
   // After broadcast, each rank must have both particles.
-  BOOST_CHECK_CLOSE(cell0.begin()->pos()[0], 1.0, 1e-12);
-  BOOST_CHECK_CLOSE(cell0.begin()->pos()[1], 2.0, 1e-12);
-  BOOST_CHECK_CLOSE(cell0.begin()->pos()[2], 3.0, 1e-12);
-  BOOST_CHECK_CLOSE(cell1.begin()->pos()[0], 4.0, 1e-12);
-  BOOST_CHECK_CLOSE(cell1.begin()->pos()[1], 5.0, 1e-12);
-  BOOST_CHECK_CLOSE(cell1.begin()->pos()[2], 6.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(0).pos()[0], 1.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(0).pos()[1], 2.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(0).pos()[2], 3.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(1).pos()[0], 4.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(1).pos()[1], 5.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(1).pos()[2], 6.0, 1e-12);
 
   // --- ReduceSum (Reduce): ghost forces are summed back to owner. ---
   // Seed ghost forces: each rank seeds a force on the other's ghost cell.
   if (me == 0) {
-    cell0.begin()->force() = {10.0, 0.0, 0.0}; // owned: pre-existing
-    cell1.begin()->force() = {0.0, 20.0, 0.0}; // ghost of rank1
+    cells.front(0).force() = Utils::Vector3d{10., 0., 0.}; // owned
+    cells.front(1).force() = Utils::Vector3d{0., 20., 0.}; // ghost of rank1
   } else {
-    cell0.begin()->force() = {0.0, 30.0, 0.0}; // ghost of rank0
-    cell1.begin()->force() = {40.0, 0.0, 0.0}; // owned: pre-existing
+    cells.front(0).force() = Utils::Vector3d{0., 30., 0.}; // ghost of rank0
+    cells.front(1).force() = Utils::Vector3d{40., 0., 0.}; // owned
   }
 
   halo_exchange(plan, box, GHOSTTRANS_FORCE, {Direction::Reduce, Combine::Add});
@@ -233,11 +249,11 @@ BOOST_AUTO_TEST_CASE(collective_broadcast_and_reduce,
   // = {40,0,0} -> {40,20,0} on rank 1.
   // Only the root's copy of each cell is meaningful after the reduce.
   if (me == 0) {
-    BOOST_CHECK_CLOSE(cell0.begin()->force()[0], 10.0, 1e-12);
-    BOOST_CHECK_CLOSE(cell0.begin()->force()[1], 30.0, 1e-12);
+    BOOST_CHECK_CLOSE(cells.front(0).force()[0], 10.0, 1e-12);
+    BOOST_CHECK_CLOSE(cells.front(0).force()[1], 30.0, 1e-12);
   } else {
-    BOOST_CHECK_CLOSE(cell1.begin()->force()[0], 40.0, 1e-12);
-    BOOST_CHECK_CLOSE(cell1.begin()->force()[1], 20.0, 1e-12);
+    BOOST_CHECK_CLOSE(cells.front(1).force()[0], 40.0, 1e-12);
+    BOOST_CHECK_CLOSE(cells.front(1).force()[1], 20.0, 1e-12);
   }
 }
 
@@ -262,12 +278,12 @@ BOOST_AUTO_TEST_CASE(local_push_position_shift,
   BoxGeometry box;
   box.set_length({10., 10., 10.});
 
-  ParticleList real_cell, ghost_cell;
-  real_cell.resize(1);
-  ghost_cell.resize(1);
-  real_cell.begin()->pos() = {3.0, 4.0, 5.0};
+  GhostTest::CellFixture cells{{1u, 1u}, 1u};
+  auto &real_cell = cells.cell(0);
+  auto &ghost_cell = cells.cell(1);
+  cells.front(0).pos() = Utils::Vector3d{3.0, 4.0, 5.0};
   // Ghost starts at a distinct position so we know overwrite occurred.
-  ghost_cell.begin()->pos() = {0.0, 0.0, 0.0};
+  cells.front(1).pos() = Utils::Vector3d{0.0, 0.0, 0.0};
 
   // shift of -10 on x: ghost should see folded position = 3 + (-10) = -7 ->
   // folded inside [0,10) gives 3.0 (no folding needed for this range), but the
@@ -282,13 +298,13 @@ BOOST_AUTO_TEST_CASE(local_push_position_shift,
                 {Direction::Push, Combine::Overwrite});
 
   // Ghost must now hold the real cell's position.
-  BOOST_CHECK_CLOSE(ghost_cell.begin()->pos()[0], 3.0, 1e-12);
-  BOOST_CHECK_CLOSE(ghost_cell.begin()->pos()[1], 4.0, 1e-12);
-  BOOST_CHECK_CLOSE(ghost_cell.begin()->pos()[2], 5.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(1).pos()[0], 3.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(1).pos()[1], 4.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(1).pos()[2], 5.0, 1e-12);
   // Real cell must be untouched.
-  BOOST_CHECK_CLOSE(real_cell.begin()->pos()[0], 3.0, 1e-12);
-  BOOST_CHECK_CLOSE(real_cell.begin()->pos()[1], 4.0, 1e-12);
-  BOOST_CHECK_CLOSE(real_cell.begin()->pos()[2], 5.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(0).pos()[0], 3.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(0).pos()[1], 4.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(0).pos()[2], 5.0, 1e-12);
 }
 
 /*
@@ -320,13 +336,13 @@ BOOST_AUTO_TEST_CASE(local_reduce_force_role_swap,
   BoxGeometry box;
   box.set_length({10., 10., 10.});
 
-  ParticleList real_cell, ghost_cell;
-  real_cell.resize(1);
-  ghost_cell.resize(1);
+  GhostTest::CellFixture cells{{1u, 1u}, 1u};
+  auto &real_cell = cells.cell(0);
+  auto &ghost_cell = cells.cell(1);
   // Pre-existing force on the owned real particle.
-  real_cell.begin()->force() = {1., 0., 0.};
+  cells.front(0).force() = Utils::Vector3d{1., 0., 0.};
   // Force accumulated on the ghost during the pair-interaction loop.
-  ghost_cell.begin()->force() = {0., 20., 300.};
+  cells.front(1).force() = Utils::Vector3d{0., 20., 300.};
 
   HaloPlan plan;
   plan.comm = boost::mpi::communicator{};
@@ -336,9 +352,9 @@ BOOST_AUTO_TEST_CASE(local_reduce_force_role_swap,
   halo_exchange(plan, box, GHOSTTRANS_FORCE, {Direction::Reduce, Combine::Add});
 
   // Real cell must hold pre-existing + ghost force.
-  BOOST_CHECK_CLOSE(real_cell.begin()->force()[0], 1.0, 1e-12);
-  BOOST_CHECK_CLOSE(real_cell.begin()->force()[1], 20.0, 1e-12);
-  BOOST_CHECK_CLOSE(real_cell.begin()->force()[2], 300.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(0).force()[0], 1.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(0).force()[1], 20.0, 1e-12);
+  BOOST_CHECK_CLOSE(cells.front(0).force()[2], 300.0, 1e-12);
   // Ghost cell is NOT the target; its value is not checked here (the engine
   // may or may not modify it, but the real cell result is what matters).
 }

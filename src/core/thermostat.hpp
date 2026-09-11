@@ -69,8 +69,11 @@ constexpr GammaType gamma_null{0.0};
 #endif
 
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
-inline auto const &handle_particle_gamma(GammaType const &particle_gamma,
-                                         GammaType const &default_gamma) {
+// Returns BY VALUE: the caller passes a temporary GammaType built from the
+// particle's gamma()/gamma_rot() accessor. Returning a reference would dangle
+// once that temporary is destroyed at the end of the full expression.
+inline GammaType handle_particle_gamma(GammaType const &particle_gamma,
+                                       GammaType const &default_gamma) {
   return particle_gamma >= gamma_null ? particle_gamma : default_gamma;
 }
 #endif

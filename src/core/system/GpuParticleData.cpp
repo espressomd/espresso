@@ -51,7 +51,13 @@ void GpuParticleData::enable_particle_transfer() {
 
 void GpuParticleData::copy_particles_to_device() {
   auto const &cell_structure = *System::get_system().cell_structure;
-  copy_particles_to_device(cell_structure.local_particles(), ::this_node);
+  // On a single rank the store is the whole system (no cross-rank gather), so
+  // the per-field SoA staging fast path can bypass the AoS pack + device AoS
+  // buffer + split kernel. The multi-rank head-node MPI gather path is
+  // unchanged.
+  auto const single_rank = ::comm_cart.size() == 1;
+  copy_particles_to_device(cell_structure.local_particles(), ::this_node,
+                           single_rank);
 }
 
 bool GpuParticleData::has_compatible_device() const {
@@ -99,6 +105,44 @@ static void pack_particles(ParticleRange const &particles,
   }
 }
 
+void GpuParticleData::pack_particles_soa(
+    ParticleRange const &particles, std::span<float> positions,
+    [[maybe_unused]] std::span<float> charges,
+    [[maybe_unused]] std::span<float> dipoles) const {
+  auto const &box = *System::get_system().box_geo;
+  // Bit-identity contract with pack_particles + split_particle_struct: for
+  // every field, compute the SAME double value and apply the SAME
+  // static_cast<float> (Utils::Vector3f's conversion is componentwise
+  // static_cast<float>), writing it into the SAME per-field SoA slot the split
+  // kernels produce (particle-major float3 for pos/dip, one float per particle
+  // for q), in local_particles() iteration order. Empty spans = disabled
+  // property (skipped). See split_kernel_r / _rq / _q / _dip in the .cu file.
+  std::size_t i = 0u;
+  for (auto const &p : particles) {
+    if (not positions.empty()) {
+      auto const folded =
+          static_cast<Utils::Vector3f>(box.folded_position(p.pos()));
+      positions[3ul * i + 0ul] = folded[0u];
+      positions[3ul * i + 1ul] = folded[1u];
+      positions[3ul * i + 2ul] = folded[2u];
+    }
+#ifdef ESPRESSO_ELECTROSTATICS
+    if (not charges.empty()) {
+      charges[i] = static_cast<float>(p.q());
+    }
+#endif
+#ifdef ESPRESSO_DIPOLES
+    if (not dipoles.empty()) {
+      auto const dip = static_cast<Utils::Vector3f>(p.calc_dip());
+      dipoles[3ul * i + 0ul] = dip[0u];
+      dipoles[3ul * i + 1ul] = dip[1u];
+      dipoles[3ul * i + 2ul] = dip[2u];
+    }
+#endif
+    i++;
+  }
+}
+
 void GpuParticleData::gather_particle_data(
     ParticleRange const &particles,
     pinned_vector<GpuParticle> &particle_data_host, int this_node) {
@@ -134,10 +178,14 @@ static void add_forces_and_torques(ParticleRange const &particles,
                                    std::span<const float> torques) {
   std::size_t i = 0ul;
   for (auto &p : particles) {
-    for (std::size_t j = 0ul; j < 3ul; j++) {
-      p.force()[j] += static_cast<double>(forces[3ul * i + j]);
+    auto force = p.force();
 #ifdef ESPRESSO_ROTATION
-      p.torque()[j] += static_cast<double>(torques[3ul * i + j]);
+    auto torque = p.torque();
+#endif
+    for (std::size_t j = 0ul; j < 3ul; j++) {
+      force[j] += static_cast<double>(forces[3ul * i + j]);
+#ifdef ESPRESSO_ROTATION
+      torque[j] += static_cast<double>(torques[3ul * i + j]);
 #endif
     }
     i++;

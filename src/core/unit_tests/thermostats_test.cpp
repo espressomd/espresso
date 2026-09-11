@@ -24,6 +24,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Particle.hpp"
+#include "ParticleStoreTestFixture.hpp"
 #include "config/config.hpp"
 #include "random.hpp"
 #include "random_test.hpp"
@@ -45,11 +46,17 @@
 auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
 
 Particle particle_factory() {
+  // Force/torque live in the ParticleStore. Attach every created particle to
+  // its own row of a persistent standalone store (large enough capacity) so
+  // several returned copies can be alive at once without their rows
+  // interfering.
+  static ParticleStoreTestFixture fixture{1024u};
   Particle p{};
+  fixture.attach(p);
   p.id() = 0;
   p.force() = {1.0, 2.0, 3.0};
 #ifdef ESPRESSO_ROTATION
-  p.torque() = 4.0 * p.force();
+  p.torque() = 4.0 * Utils::Vector3d(p.force());
 #endif
   return p;
 }
@@ -73,8 +80,8 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
   constexpr double time_step = 0.1;
   constexpr double kT = 3.0;
   auto const brownian = thermostat_factory<BrownianThermostat>(kT);
-  auto const dispersion =
-      hadamard_division(particle_factory().force(), brownian.gamma);
+  auto const dispersion = hadamard_division(
+      Utils::Vector3d(particle_factory().force()), brownian.gamma);
 
   /* check translation */
   {
@@ -121,8 +128,8 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
   }
 
 #ifdef ESPRESSO_ROTATION
-  auto const dispersion_rotation =
-      hadamard_division(particle_factory().torque(), brownian.gamma_rotation);
+  auto const dispersion_rotation = hadamard_division(
+      Utils::Vector3d(particle_factory().torque()), brownian.gamma_rotation);
 
   /* check rotation */
   {
@@ -192,7 +199,7 @@ BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
     p.v() = {1.0, 2.0, 3.0};
     auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN>(0, 0, 0);
     auto const pref = sqrt(prefactor_squared * langevin.gamma);
-    auto const ref = hadamard_product(-langevin.gamma, p.v()) +
+    auto const ref = hadamard_product(-langevin.gamma, Utils::Vector3d(p.v())) +
                      hadamard_product(pref, noise);
     auto const out = friction_thermo_langevin(langevin, p, time_step, kT);
     BOOST_CHECK_CLOSE(out[0], ref[0], tol);
@@ -207,8 +214,9 @@ BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
     p.omega() = {1.0, 2.0, 3.0};
     auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN_ROT>(0, 0, 0);
     auto const pref = sqrt(prefactor_squared * langevin.gamma_rotation);
-    auto const ref = hadamard_product(-langevin.gamma_rotation, p.omega()) +
-                     hadamard_product(pref, noise);
+    auto const ref =
+        hadamard_product(-langevin.gamma_rotation, Utils::Vector3d(p.omega())) +
+        hadamard_product(pref, noise);
     auto const out =
         friction_thermo_langevin_rotation(langevin, p, time_step, kT);
     BOOST_CHECK_CLOSE(out[0], ref[0], tol);

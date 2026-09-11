@@ -43,7 +43,12 @@ struct GlobalConfig : public EspressoCoreGlobalConfig {
     system->set_cell_structure_topology(CellStructureType::REGULAR);
     ::System::set_system(system);
     ::make_new_particle(0, Utils::Vector3d{0., 0., 0.});
-    auto *const p = system->cell_structure->get_local_particle(0);
+    // make_new_particle ends with on_particle_change() (marks the store dirty /
+    // schedules a resort), so the store must be re-synchronized before the
+    // id->row resolution reads a valid store row (get_local_particle returns
+    // a view over a store row).
+    system->cell_structure->ensure_particle_store_synchronized();
+    auto p = system->cell_structure->get_local_particle(0);
     assert(p);
     p->v() = Utils::Vector3d{3., 0., 0.};
 #ifdef ESPRESSO_MASS
@@ -71,7 +76,7 @@ BOOST_AUTO_TEST_CASE(test_make_kokkos_reduction) {
 
   auto const kernel = [&cells](int i, Utils::Vector3d &res) {
     for (auto const &p : cells[i]->particles()) {
-      res += p.mass() * p.v();
+      res += p.mass() * Utils::Vector3d(p.v());
     }
   };
   auto const reducer =
@@ -90,13 +95,13 @@ BOOST_AUTO_TEST_CASE(test_make_kokkos_reduction) {
 BOOST_AUTO_TEST_CASE(test_reduce_over_local_particles) {
   auto &system = System::get_system();
   auto const &cell_structure = *system.cell_structure;
-  auto const *const p = cell_structure.get_local_particle(0);
-  assert(p);
+  auto const part = cell_structure.get_local_particle(0);
+  assert(part);
 
   auto const kernel = [](Utils::Vector3d &acc, Particle const &p) {
-    acc += p.mass() * p.v();
+    acc += p.mass() * Utils::Vector3d(p.v());
   };
-  auto const ref = p->mass() * p->v();
+  auto const ref = part->mass() * Utils::Vector3d(part->v());
   auto const res = reduce_over_local_particles<Utils::Vector3d>(
       cell_structure, kernel, reduce_op);
   BOOST_CHECK_EQUAL(res, ref);

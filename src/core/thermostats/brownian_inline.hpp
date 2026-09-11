@@ -32,20 +32,30 @@
 
 #include <cmath>
 
+// The Brownian sub-kernels are templated on a "particle-like" accessor type.
+// Callers may pass a Particle view or a BrownianRowView adapter that reads
+// the store columns via hoisted *_view() handles by row and exposes the SAME
+// accessor names. The frame-conversion and local_rotate_particle_body calls
+// use the value-parameter (quaternion / rotation-byte) overloads so the body
+// compiles against either type. The RNG key uses the particle id as the Philox
+// key1, so the per-particle noise stream is independent of iteration order.
+
 /** Determine position: viscous drag driven by conservative forces.
  *  From eq. (14.39) in @cite schlick10a.
  *  @param[in]     brownian_gamma Brownian translational gamma
  *  @param[in]     p              Particle
  *  @param[in]     dt             Time step
  */
+template <class ParticleLike>
 inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
-                               Particle const &p, double dt) {
+                               ParticleLike const &p, double dt) {
   // The friction tensor Z from the Eq. (14.31) of schlick10a:
   Thermostat::GammaType gamma;
 
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
-  if (p.gamma() >= Thermostat::GammaType{}) {
-    gamma = p.gamma();
+  auto const p_gamma = p.gamma(); // hoist: read the store column once
+  if (p_gamma >= Thermostat::GammaType{}) {
+    gamma = p_gamma;
   } else
 #endif
   {
@@ -57,13 +67,16 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
   auto const aniso_flag = (gamma[0] != gamma[1]) || (gamma[1] != gamma[2]);
   Utils::Vector3d delta_pos_lab;
   if (aniso_flag) {
-    auto const force_body = convert_vector_space_to_body(p, p.force());
+    auto const quat = Utils::Quaternion<double>(p.quat());
+    auto const force_body =
+        convert_vector_space_to_body(quat, Utils::Vector3d(p.force()));
     auto const delta_pos_body = hadamard_division(force_body * dt, gamma);
-    delta_pos_lab = convert_vector_body_to_space(p, delta_pos_body);
+    delta_pos_lab = convert_vector_body_to_space(quat, delta_pos_body);
   }
 #endif
 
   Utils::Vector3d position = {};
+  auto const force = p.force();
   for (unsigned int j = 0; j < 3; j++) {
     // Second (deterministic) term of the Eq. (14.39) of schlick10a.
     // Only a conservative part of the force is used here
@@ -74,12 +87,12 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
       }
     } else {
       if (!p.is_fixed_along(j)) {
-        position[j] = p.force()[j] * dt / gamma[j];
+        position[j] = force[j] * dt / gamma[j];
       }
     }
 #else
     if (!p.is_fixed_along(j)) {
-      position[j] = p.force()[j] * dt / gamma;
+      position[j] = force[j] * dt / gamma;
     }
 #endif // ESPRESSO_PARTICLE_ANISOTROPY
   }
@@ -91,14 +104,16 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
  *  @param[in]     brownian_gamma Brownian translational gamma
  *  @param[in]     p              Particle
  */
+template <class ParticleLike>
 inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
-                                   Particle const &p) {
+                                   ParticleLike const &p) {
   // The friction tensor Z from the eq. (14.31) of schlick10a:
   Thermostat::GammaType gamma;
 
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
-  if (p.gamma() >= Thermostat::GammaType{}) {
-    gamma = p.gamma();
+  auto const p_gamma = p.gamma(); // hoist: read the store column once
+  if (p_gamma >= Thermostat::GammaType{}) {
+    gamma = p_gamma;
   } else
 #endif
   {
@@ -110,13 +125,16 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
   auto const aniso_flag = (gamma[0] != gamma[1]) || (gamma[1] != gamma[2]);
   Utils::Vector3d vel_lab;
   if (aniso_flag) {
-    auto const force_body = convert_vector_space_to_body(p, p.force());
+    auto const quat = Utils::Quaternion<double>(p.quat());
+    auto const force_body =
+        convert_vector_space_to_body(quat, Utils::Vector3d(p.force()));
     auto const vel_body = hadamard_division(force_body, gamma);
-    vel_lab = convert_vector_body_to_space(p, vel_body);
+    vel_lab = convert_vector_body_to_space(quat, vel_body);
   }
 #endif
 
   Utils::Vector3d velocity = {};
+  auto const force = p.force();
   for (unsigned int j = 0; j < 3; j++) {
     // First (deterministic) term of the eq. (14.34) of schlick10a taking
     // into account eq. (14.35). Only conservative part of the force is used
@@ -128,12 +146,12 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
       }
     } else {
       if (!p.is_fixed_along(j)) {
-        velocity[j] = p.force()[j] / gamma[j];
+        velocity[j] = force[j] / gamma[j];
       }
     }
 #else  // ESPRESSO_PARTICLE_ANISOTROPY
     if (!p.is_fixed_along(j)) {
-      velocity[j] = p.force()[j] / gamma;
+      velocity[j] = force[j] / gamma;
     }
 #endif // ESPRESSO_PARTICLE_ANISOTROPY
   }
@@ -147,15 +165,17 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
  *  @param[in]     dt             Time step
  *  @param[in]     kT             Thermal energy
  */
+template <class ParticleLike>
 inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
-                                      Particle const &p, double dt,
+                                      ParticleLike const &p, double dt,
                                       [[maybe_unused]] double kT) {
   Thermostat::GammaType sigma_pos = brownian.sigma_pos;
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma
-  if (p.gamma() >= Thermostat::GammaType{}) {
+  auto const p_gamma = p.gamma(); // hoist: read the store column once
+  if (p_gamma >= Thermostat::GammaType{}) {
     if (kT > 0.0) {
-      sigma_pos = BrownianThermostat::sigma(kT, p.gamma());
+      sigma_pos = BrownianThermostat::sigma(kT, p_gamma);
     } else {
       sigma_pos = Thermostat::GammaType{};
     }
@@ -191,7 +211,8 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
       (sigma_pos[0] != sigma_pos[1]) || (sigma_pos[1] != sigma_pos[2]);
   Utils::Vector3d delta_pos_lab;
   if (aniso_flag) {
-    delta_pos_lab = convert_vector_body_to_space(p, delta_pos_body);
+    delta_pos_lab = convert_vector_body_to_space(
+        Utils::Quaternion<double>(p.quat()), delta_pos_body);
   }
 #endif
 
@@ -213,11 +234,13 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              Particle
  */
+template <class ParticleLike>
 inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
-                                          Particle const &p) {
+                                          ParticleLike const &p) {
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_INC>(
       brownian.rng_counter(), brownian.rng_seed(), p.id());
   Utils::Vector3d velocity = {};
+  auto const sqrt_mass = sqrt(p.mass()); // hoist: read mass once, sqrt once
   for (unsigned int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
       // Random (heat) velocity. See eq. (10.2.16) taking into account eq.
@@ -227,7 +250,7 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
       // (14.31) of schlick10a. A difference is the mass factor to the friction
       // tensor. The noise is Gaussian according to the convention at p. 237
       // (last paragraph), pottier10a.
-      velocity[j] += brownian.sigma_vel * noise[j] / sqrt(p.mass());
+      velocity[j] += brownian.sigma_vel * noise[j] / sqrt_mass;
     }
   }
   return velocity;
@@ -241,14 +264,20 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
  *  @param[in]     p              Particle
  *  @param[in]     dt             Time step
  */
+template <class ParticleLike>
 inline Utils::Quaternion<double>
-bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
-            double dt) {
+bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation,
+            ParticleLike &p, double dt) {
   Thermostat::GammaType gamma;
 
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
-  if (p.gamma_rot() >= Thermostat::GammaType{}) {
-    gamma = p.gamma_rot();
+  // gamma_rot() returns a value/proxy (not an lvalue reference) on this
+  // non-const particle once the friction coefficient moves into the
+  // ParticleStore columns; bind by value so the vector comparison below does
+  // not try to deduce its type from a proxy.
+  Thermostat::GammaType const p_gamma_rot = p.gamma_rot();
+  if (p_gamma_rot >= Thermostat::GammaType{}) {
+    gamma = p_gamma_rot;
   } else
 #endif
   {
@@ -256,13 +285,14 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
   }
 
   Utils::Vector3d dphi = {};
+  auto const torque = p.torque();
   for (unsigned int j = 0; j < 3; j++) {
     if (p.can_rotate_around(j)) {
       // only a conservative part of the torque is used here
 #ifndef ESPRESSO_PARTICLE_ANISOTROPY
-      dphi[j] = p.torque()[j] * dt / gamma;
+      dphi[j] = torque[j] * dt / gamma;
 #else
-      dphi[j] = p.torque()[j] * dt / gamma[j];
+      dphi[j] = torque[j] * dt / gamma[j];
 #endif // ESPRESSO_PARTICLE_ANISOTROPY
     }
   }
@@ -270,7 +300,8 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
   double dphi_m = dphi.norm();
   if (dphi_m != 0.) {
     auto const dphi_u = dphi / dphi_m;
-    return local_rotate_particle_body(p, dphi_u, dphi_m);
+    return local_rotate_particle_body(Utils::Quaternion<double>(p.quat()),
+                                      p.rotation(), dphi_u, dphi_m);
   }
   return p.quat();
 }
@@ -280,14 +311,16 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
  *  @param[in]     brownian_gamma_rotation Brownian rotational gamma
  *  @param[in]     p              Particle
  */
+template <class ParticleLike>
 inline Utils::Vector3d
 bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
-                Particle const &p) {
+                ParticleLike const &p) {
   Thermostat::GammaType gamma;
 
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
-  if (p.gamma_rot() >= Thermostat::GammaType{}) {
-    gamma = p.gamma_rot();
+  auto const p_gamma_rot = p.gamma_rot(); // hoist: read the store column once
+  if (p_gamma_rot >= Thermostat::GammaType{}) {
+    gamma = p_gamma_rot;
   } else
 #endif
   {
@@ -295,12 +328,13 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
   }
 
   Utils::Vector3d omega = {};
+  auto const torque = p.torque();
   for (unsigned int j = 0; j < 3; j++) {
     if (p.can_rotate_around(j)) {
 #ifdef ESPRESSO_PARTICLE_ANISOTROPY
-      omega[j] = p.torque()[j] / gamma[j];
+      omega[j] = torque[j] / gamma[j];
 #else
-      omega[j] = p.torque()[j] / gamma;
+      omega[j] = torque[j] / gamma;
 #endif // ESPRESSO_PARTICLE_ANISOTROPY
     }
   }
@@ -314,16 +348,22 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
  *  @param[in]     dt             Time step
  *  @param[in]     kT             Thermal energy
  */
+template <class ParticleLike>
 inline Utils::Quaternion<double>
-bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
+bd_random_walk_rot(BrownianThermostat const &brownian, ParticleLike const &p,
                    double dt, double kT) {
 
   Thermostat::GammaType sigma_pos = brownian.sigma_pos_rotation;
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
-  // override default if particle-specific gamma
-  if (p.gamma_rot() >= Thermostat::GammaType{}) {
+  // override default if particle-specific gamma. gamma_rot() returns a
+  // value/proxy (not an lvalue reference) once the friction coefficient lives
+  // in the ParticleStore columns; hoist it into one local so the guard and the
+  // sigma() call read a single consistent value (and materialize the proxy
+  // once).
+  Thermostat::GammaType const p_gamma_rot = p.gamma_rot();
+  if (p_gamma_rot >= Thermostat::GammaType{}) {
     if (kT > 0.) {
-      sigma_pos = BrownianThermostat::sigma(kT, p.gamma_rot());
+      sigma_pos = BrownianThermostat::sigma(kT, p_gamma_rot);
     } else {
       sigma_pos = {}; // just an indication of the infinity
     }
@@ -351,7 +391,8 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
   double dphi_m = dphi.norm();
   if (dphi_m != 0) {
     auto const dphi_u = dphi / dphi_m;
-    return local_rotate_particle_body(p, dphi_u, dphi_m);
+    return local_rotate_particle_body(Utils::Quaternion<double>(p.quat()),
+                                      p.rotation(), dphi_u, dphi_m);
   }
   return p.quat();
 }
@@ -361,16 +402,19 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              Particle
  */
+template <class ParticleLike>
 inline Utils::Vector3d
-bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
+bd_random_walk_vel_rot(BrownianThermostat const &brownian,
+                       ParticleLike const &p) {
   auto const sigma_vel = brownian.sigma_vel_rotation;
 
   Utils::Vector3d domega{};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_WALK>(
       brownian.rng_counter(), brownian.rng_seed(), p.id());
+  auto const rinertia = p.rinertia(); // hoist: read the store column once
   for (unsigned int j = 0; j < 3; j++) {
     if (p.can_rotate_around(j)) {
-      domega[j] = sigma_vel * noise[j] / sqrt(p.rinertia()[j]);
+      domega[j] = sigma_vel * noise[j] / sqrt(rinertia[j]);
     }
   }
   return mask(p.rotation(), domega);

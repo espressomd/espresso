@@ -73,27 +73,34 @@ struct PairBondsKernel {
 
     auto const i = bond_list(idx, 0);
     auto const j = bond_list(idx, 1);
+    // Translate pack indices to ParticleStore rows once.
+    auto const row_i = aosoa.row(i);
+    auto const row_j = aosoa.row(j);
     auto const &iaparams = *bonded_ias.at(bond_id);
 
     auto const dx =
-        box_geo.get_mi_vector(aosoa.get_vector_at(aosoa.position, i),
-                              aosoa.get_vector_at(aosoa.position, j));
+        box_geo.get_mi_vector(aosoa.get_vector_at(aosoa.position, row_i),
+                              aosoa.get_vector_at(aosoa.position, row_j));
     //  Consider for bond breakage
     if (has_breakage_specs &&
         bond_breakage.check_and_handle_breakage(
-            aosoa.id(i), {{aosoa.id(j), std::nullopt}}, bond_id, dx.norm())) {
+            aosoa.id(row_i), {{aosoa.id(row_j), std::nullopt}}, bond_id,
+            dx.norm())) {
       return;
     }
 
     if (auto const *iap = std::get_if<ThermalizedBond>(&iaparams)) {
       auto const result = iap->forces(
 #ifdef ESPRESSO_MASS
-          aosoa.mass(i), aosoa.mass(j),
+          // mass aliases the store column; read by *store row*.
+          aosoa.mass(row_i), aosoa.mass(row_j),
 #else
           1.0, 1.0,
 #endif
-          aosoa.get_vector_at(aosoa.velocity, i),
-          aosoa.get_vector_at(aosoa.velocity, j), aosoa.id(i), aosoa.id(j), dx);
+          // velocity aliases the store column; read by *store row*.
+          aosoa.get_vector_at(aosoa.velocity, row_i),
+          aosoa.get_vector_at(aosoa.velocity, row_j), aosoa.id(row_i),
+          aosoa.id(row_j), dx);
       if (result) {
         auto const &forces = result.value();
 
@@ -104,20 +111,20 @@ struct PairBondsKernel {
         local_force(j, 1) += std::get<1>(forces)[1];
         local_force(j, 2) += std::get<1>(forces)[2];
       } else {
-        auto partner_id = aosoa.id(j);
-        bond_broken_error(aosoa.id(i), {&partner_id, 1});
+        auto partner_id = aosoa.id(row_j);
+        bond_broken_error(aosoa.id(row_i), {&partner_id, 1});
       }
       return;
     }
 
-    auto const result =
-        calc_bond_pair_force(iaparams, dx,
+    auto const result = calc_bond_pair_force(
+        iaparams, dx,
 #ifdef ESPRESSO_ELECTROSTATICS
-                             aosoa.charge(i) * aosoa.charge(j), coulomb_kernel
+        aosoa.charge(row_i) * aosoa.charge(row_j), coulomb_kernel
 #else
-                             0.0, nullptr
+        0.0, nullptr
 #endif
-        );
+    );
 
     if (result) {
       auto const f = result.value();
@@ -134,8 +141,8 @@ struct PairBondsKernel {
       local_virial(2) += virial[2];
 #endif
     } else {
-      auto partner_id = aosoa.id(j);
-      bond_broken_error(aosoa.id(i), {&partner_id, 1});
+      auto partner_id = aosoa.id(row_j);
+      bond_broken_error(aosoa.id(row_i), {&partner_id, 1});
     }
   }
 };
@@ -163,18 +170,22 @@ struct AngleBondsKernel {
     auto const i = bond_list(idx, 0);
     auto const j = bond_list(idx, 1);
     auto const k = bond_list(idx, 2);
+    // Translate pack indices to ParticleStore rows once.
+    auto const row_i = aosoa.row(i);
+    auto const row_j = aosoa.row(j);
+    auto const row_k = aosoa.row(k);
     auto const &iaparams = *bonded_ias.at(bond_id);
 
-    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-    auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, row_i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, row_j);
+    auto const pos3 = aosoa.get_vector_at(aosoa.position, row_k);
     auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
     auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
 
     //  Consider for bond breakage
     if (has_breakage_specs &&
         bond_breakage.check_and_handle_breakage(
-            aosoa.id(i), {{aosoa.id(j), aosoa.id(k)}}, bond_id,
+            aosoa.id(row_i), {{aosoa.id(row_j), aosoa.id(row_k)}}, bond_id,
             box_geo.get_mi_vector(pos2, pos3).norm())) {
       return;
     }
@@ -197,8 +208,8 @@ struct AngleBondsKernel {
       local_force(k, 1) += std::get<2>(forces)[1];
       local_force(k, 2) += std::get<2>(forces)[2];
     } else {
-      std::array<int, 2> pids = {aosoa.id(j), aosoa.id(k)};
-      bond_broken_error(aosoa.id(i), {pids.data(), 2});
+      std::array<int, 2> pids = {aosoa.id(row_j), aosoa.id(row_k)};
+      bond_broken_error(aosoa.id(row_i), {pids.data(), 2});
     }
   }
 };
@@ -225,15 +236,21 @@ struct DihedralBondsKernel {
     auto const j = bond_list(idx, 1);
     auto const k = bond_list(idx, 2);
     auto const m = bond_list(idx, 3);
+    // Translate pack indices to ParticleStore rows once.
+    auto const row_i = aosoa.row(i);
+    auto const row_j = aosoa.row(j);
+    auto const row_k = aosoa.row(k);
+    auto const row_m = aosoa.row(m);
     auto const &iaparams = *bonded_ias.at(bond_id);
 
-    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-    auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
-    auto const pos4 = aosoa.get_vector_at(aosoa.position, m);
-    auto const vel1 = aosoa.get_vector_at(aosoa.velocity, i);
-    auto const vel3 = aosoa.get_vector_at(aosoa.velocity, k);
-    auto const image1 = aosoa.get_vector_at(aosoa.image, i);
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, row_i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, row_j);
+    auto const pos3 = aosoa.get_vector_at(aosoa.position, row_k);
+    auto const pos4 = aosoa.get_vector_at(aosoa.position, row_m);
+    // velocity aliases the store column; read by *store row*.
+    auto const vel1 = aosoa.get_vector_at(aosoa.velocity, row_i);
+    auto const vel3 = aosoa.get_vector_at(aosoa.velocity, row_k);
+    auto const image1 = aosoa.get_vector_at(aosoa.image, row_i);
 
     auto const result = calc_bonded_four_body_force(
         iaparams, box_geo, pos1, pos2, pos3, pos4, vel1, vel3, image1);
@@ -254,8 +271,9 @@ struct DihedralBondsKernel {
       local_force(m, 1) += std::get<3>(forces)[1];
       local_force(m, 2) += std::get<3>(forces)[2];
     } else {
-      std::array<int, 3> pids = {aosoa.id(j), aosoa.id(k), aosoa.id(m)};
-      bond_broken_error(aosoa.id(i), {pids.data(), 3});
+      std::array<int, 3> pids = {aosoa.id(row_j), aosoa.id(row_k),
+                                 aosoa.id(row_m)};
+      bond_broken_error(aosoa.id(row_i), {pids.data(), 3});
     }
   }
 };

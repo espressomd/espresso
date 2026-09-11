@@ -80,6 +80,10 @@ static auto gather_traits_for_types(System::System const &system,
                                     Trait &&...trait) {
   std::vector<typename DecayTupleResult<Trait...>::type> buffer{};
 
+  // Reading p.pos()/p.image_box() requires a valid ParticleStore row. This
+  // analysis path is called directly from the script interface, possibly after
+  // a topology change. O(1) when clean; rank-local.
+  system.cell_structure->ensure_particle_store_synchronized();
   for (auto const &p : system.cell_structure->local_particles()) {
     if (Utils::contains(p_types, p.type())) {
       buffer.emplace_back(trait(p)...);
@@ -101,6 +105,7 @@ double mindist(System::System const &system, std::vector<int> const &set1,
   std::vector<Utils::Vector3d> buf_pos{};
 
   auto const &box_geo = *system.box_geo;
+  system.cell_structure->ensure_particle_store_synchronized();
   auto const accept_all = set1.empty() or set2.empty();
   for (auto const &p : system.cell_structure->local_particles()) {
     if (accept_all or contains(set1, p.type()) or contains(set2, p.type())) {
@@ -145,10 +150,14 @@ Utils::Vector3d calc_linear_momentum(System::System const &system,
                                      bool include_lbfluid) {
   Utils::Vector3d momentum{};
   if (include_particles) {
+    // Reading p.v() requires a valid ParticleStore row (velocity lives in the
+    // store columns); this is a script-facing entry point that may follow a
+    // topology change. O(1) when clean.
+    system.cell_structure->ensure_particle_store_synchronized();
     momentum = reduce_over_local_particles<Utils::Vector3d>(
         *(system.cell_structure),
         [](Utils::Vector3d &acc, Particle const &p) {
-          acc += p.mass() * p.v();
+          acc += p.mass() * Utils::Vector3d(p.v());
         },
         [](Utils::Vector3d &acc, Utils::Vector3d const &v) { acc = acc + v; });
   }
@@ -160,7 +169,8 @@ Utils::Vector3d calc_linear_momentum(System::System const &system,
 
 Utils::Vector3d center_of_mass(System::System const &system, int p_type) {
   auto const &box_geo = *system.box_geo;
-  auto const &cell_structure = *system.cell_structure;
+  auto &cell_structure = *system.cell_structure;
+  cell_structure.ensure_particle_store_synchronized();
   Utils::Vector3d local_com{};
   double local_mass = 0.;
 
@@ -186,13 +196,14 @@ Utils::Vector3d center_of_mass(System::System const &system, int p_type) {
 
 Utils::Vector3d angular_momentum(System::System const &system, int p_type) {
   auto const &box_geo = *system.box_geo;
-  auto const &cell_structure = *system.cell_structure;
+  auto &cell_structure = *system.cell_structure;
+  cell_structure.ensure_particle_store_synchronized();
   Utils::Vector3d am{};
 
   for (auto const &p : cell_structure.local_particles()) {
     if ((p.type() == p_type or p_type == -1) and not p.is_virtual()) {
       auto const pos = box_geo.unfolded_position(p.pos(), p.image_box());
-      am += p.mass() * vector_product(pos, p.v());
+      am += p.mass() * vector_product(pos, Utils::Vector3d(p.v()));
     }
   }
   return am;
@@ -238,7 +249,8 @@ Utils::Vector9d gyration_tensor(System::System const &system,
 Utils::Vector9d moment_of_inertia_matrix(System::System const &system,
                                          int p_type) {
   auto const &box_geo = *system.box_geo;
-  auto const &cell_structure = *system.cell_structure;
+  auto &cell_structure = *system.cell_structure;
+  cell_structure.ensure_particle_store_synchronized();
   Utils::Vector9d mat{};
   auto com = center_of_mass(system, p_type);
   boost::mpi::broadcast(::comm_cart, com, 0);
@@ -268,8 +280,10 @@ std::vector<int> nbhood(System::System const &system,
   auto const dist_sq = dist * dist;
   auto const &box_geo = *system.box_geo;
 
+  system.cell_structure->ensure_particle_store_synchronized();
   for (auto const &p : system.cell_structure->local_particles()) {
-    auto const r_sq = box_geo.get_mi_vector(pos, p.pos()).norm2();
+    auto const r_sq =
+        box_geo.get_mi_vector(pos, Utils::Vector3d(p.pos())).norm2();
     if (r_sq < dist_sq) {
       buf_pid.push_back(p.id());
     }

@@ -252,11 +252,12 @@ void ElectrostaticLayerCorrection::add_dipole_force() const {
   }
 
   for (auto &p : particles) {
-    p.force()[2] -= field_tot * p.q();
+    auto force = p.force();
+    force[2] -= field_tot * p.q();
 
     if (!elc.neutralize) {
       // SUBTRACT the forces of the P3M homogeneous neutralizing background
-      p.force()[2] += gblcblk[2] * p.q() * (p.pos()[2] - shift);
+      force[2] += gblcblk[2] * p.q() * (p.pos()[2] - shift);
     }
   }
 }
@@ -610,7 +611,7 @@ template <PoQ axis> void add_PoQ_force(ParticleRange const &particles) {
 
   std::size_t ic = 0;
   for (auto &p : particles) {
-    auto &force = p.force();
+    Utils::Vector3d force = p.force();
     force[i] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
                 partblk[size * ic + POQECM] * gblcblk[POQESP] +
                 partblk[size * ic + POQESP] * gblcblk[POQECM] -
@@ -619,6 +620,7 @@ template <PoQ axis> void add_PoQ_force(ParticleRange const &particles) {
                 partblk[size * ic + POQESM] * gblcblk[POQESP] -
                 partblk[size * ic + POQECP] * gblcblk[POQECM] -
                 partblk[size * ic + POQESP] * gblcblk[POQESM];
+    p.force() = force;
     ++ic;
   }
 }
@@ -786,7 +788,7 @@ static void add_PQ_force(std::size_t index_p, std::size_t index_q, double omega,
 
   std::size_t ic = 0;
   for (auto &p : particles) {
-    auto &force = p.force();
+    Utils::Vector3d force = p.force();
     force[0] += pref_x * (partblk[size * ic + PQESCM] * gblcblk[PQECCP] +
                           partblk[size * ic + PQESSM] * gblcblk[PQECSP] -
                           partblk[size * ic + PQECCM] * gblcblk[PQESCP] -
@@ -811,6 +813,7 @@ static void add_PQ_force(std::size_t index_p, std::size_t index_q, double omega,
                  partblk[size * ic + PQECSP] * gblcblk[PQECSM] -
                  partblk[size * ic + PQESCP] * gblcblk[PQESCM] -
                  partblk[size * ic + PQESSP] * gblcblk[PQESSM]);
+    p.force() = force;
     ic++;
   }
 }
@@ -1116,8 +1119,13 @@ void charge_assign(elc_data const &elc, CoulombP3M &solver, auto const &cs) {
   auto const n_part = cs.count_local_particles();
 
   for (std::size_t p_index = 0; p_index < n_part; ++p_index) {
-    auto const p_q = aosoa.charge(p_index);
-    auto const p_pos = aosoa.get_span_at(aosoa.position, p_index);
+    // The pack-owned pair_charge column is pack-indexed (refreshed this step:
+    // a coulomb solver is active whenever ELC runs). Position aliases the
+    // ParticleStore column and is read by *store row*; the component-major
+    // layout rules out a contiguous 3-element span, so gather the vector
+    // through the strided accessor.
+    auto const p_q = aosoa.pair_charge(p_index);
+    auto const p_pos = aosoa.get_vector_at(aosoa.position, aosoa.row(p_index));
     if (include_neutral_particles or p_q != 0.) {
       // assign real charges
       if (protocol == ChargeProtocol::BOTH or
@@ -1150,9 +1158,9 @@ void modify_p3m_sums(elc_data const &elc, CoulombP3M &solver, auto const &cs) {
   auto local_q2 = 0.0;
   auto local_q = 0.0;
   for (std::size_t p_index = 0; p_index < n_part; ++p_index) {
-    auto const p_q = aosoa.charge(p_index);
+    auto const p_q = aosoa.pair_charge(p_index);
     if (p_q != 0.) {
-      auto const p_z = aosoa.position(p_index, 2ul);
+      auto const p_z = aosoa.position(aosoa.row(p_index), 2ul);
 
       if (protocol == ChargeProtocol::BOTH or
           protocol == ChargeProtocol::REAL) {

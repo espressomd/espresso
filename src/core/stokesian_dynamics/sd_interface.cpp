@@ -52,7 +52,14 @@
 struct SD_particle_data {
   SD_particle_data() = default;
   explicit SD_particle_data(Particle const &p)
-      : type(p.type()), pos(p.pos()), ext_force(p.force_and_torque()) {}
+      : type(p.type()), pos(p.pos()), ext_force(
+#ifdef ESPRESSO_ROTATION
+                                          ParticleForce{p.force(), p.torque()}
+#else
+                                          ParticleForce{p.force()}
+#endif
+                                      ) {
+  }
 
   int type = 0;
 

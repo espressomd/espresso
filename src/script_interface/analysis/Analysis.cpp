@@ -68,7 +68,7 @@ static void check_topology(CellStructure const &cell_structure, int chain_start,
       for (int j = 0; j < chain_length; ++j) {
         auto const pid = chain_start + i * chain_length + j;
         auto ptr = cell_structure.get_local_particle(pid);
-        if (ptr != nullptr and not ptr->is_ghost()) {
+        if (ptr and not ptr->is_ghost()) {
           ++n_particles_local;
         }
       }
@@ -81,7 +81,7 @@ static void check_topology(CellStructure const &cell_structure, int chain_start,
         auto const pid = chain_start + i;
         auto ptr = cell_structure.get_local_particle(pid);
         int local_count = 0;
-        if (ptr != nullptr and not ptr->is_ghost()) {
+        if (ptr and not ptr->is_ghost()) {
           local_count = 1;
         }
         auto const total_count =

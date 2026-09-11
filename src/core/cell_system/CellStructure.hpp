@@ -21,7 +21,9 @@
 
 #pragma once
 
+#include "cell_system/MigrationStaging.hpp"
 #include "cell_system/ParticleDecomposition.hpp"
+#include "cell_system/ParticleListOperations.hpp"
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
@@ -36,6 +38,8 @@
 #include "custom_verlet_list.hpp"
 #include "ghosts.hpp"
 #include "ghosts/HaloExchange.hpp"
+#include "particle_store/ParticleStore.hpp"
+#include "particle_store/StoreGenerationGuard.hpp"
 #include "system/Leaf.hpp"
 
 #include <utils/Vector.hpp>
@@ -53,6 +57,7 @@
 #include <cassert>
 #include <concepts>
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -143,16 +148,24 @@ struct MinimalImageDistance {
   BoxGeometry const box;
 
   Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(box.get_mi_vector(p1.pos(), p2.pos()));
+    return Distance(box.get_mi_vector(Utils::Vector3d(p1.pos()),
+                                      Utils::Vector3d(p2.pos())));
   }
 };
 
 struct EuclidianDistance {
   Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(p1.pos() - p2.pos());
+    return Distance(Utils::Vector3d(p1.pos()) - Utils::Vector3d(p2.pos()));
   }
 };
 } // namespace detail
+
+#ifdef ESPRESSO_CUDA
+/** @brief Opaque persistent device buffers for the GPU short-range pair loop;
+ *  defined in forces_lj_device.cu. Forward-declared so no Kokkos headers reach
+ *  this widely-included header (that perturbs host FP codegen). */
+struct DeviceShortRangeBuffers;
+#endif
 
 /** Describes a cell structure / cell system. Contains information
  *  about the communication of cell contents (particles, ghosts, ...)
@@ -182,8 +195,21 @@ public:
                        Cabana::TeamVectorOpTag>;
 
 private:
-  /** The local id-to-particle index */
-  std::vector<Particle *> m_particle_index;
+  /** The local id -> @ref ParticleStore ROW map. Indexed by particle id; the
+   *  entry is the store row that @ref get_local_particle resolves the id to, or
+   *  @c no_store_row (-1) when the id is not present on this rank. Locals win
+   *  over ghost copies of the same id; among ghost copies the first valid row
+   *  (in store-row order) wins. Rebuilt wholesale from the (synchronized) store
+   *  by @c rebuild_particle_index / @c index_ghost_particles at store-rebuild
+   *  cadence (the single write site). An entry stays valid between store
+   *  rebuilds; a rebuild renumbers rows and refreshes the whole map.
+   *
+   *  @ref get_local_particle resolves the id to a row here and returns a fresh
+   *  by-value @ref Particle view over that row (a 16-byte handle). */
+  std::vector<int> m_id_to_store_row;
+  /** Sentinel stored in @c m_id_to_store_row for an id absent on this rank.
+   */
+  static constexpr int no_store_row = -1;
   /** Implementation of the primary particle decomposition */
   std::unique_ptr<ParticleDecomposition> m_decomposition;
   /** Active type in m_decomposition */
@@ -194,7 +220,24 @@ private:
   bool m_verlet_skin_set = false;
   bool m_rebuild_verlet_list = true;
   bool m_rebuild_verlet_list_cabana = true;
-  std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
+  /** Monotonic counter bumped each time the Cabana Verlet list is rebuilt; lets
+   *  the GPU short-range path copy the list to the device only on rebuild. */
+  std::uint64_t m_verlet_list_cabana_generation = 0u;
+  /** Interaction pairs as @ref ParticleStore ROW indices. Held across
+   *  integration steps until the next Verlet rebuild. Cells do not own stable
+   *  @c Particle addresses, so the pairs record the two particles' store rows;
+   *  the pair kernels resolve each row back to a view at loop entry (hoisted
+   *  store pointer, one view per row). The rows are only valid for the store
+   *  @ref ParticleStore::generation() they were recorded at (a rebuild
+   *  renumbers rows); that generation is stamped in @c m_verlet_list_store
+   *  / @c m_verlet_list_generation and re-checked (debug) before every use
+   *  via @ref ParticleStoreGuard::assert_generation. */
+  std::vector<std::pair<int, int>> m_verlet_list;
+  /** Store identity + generation the rows in @c m_verlet_list were recorded
+   *  at. Used only by the debug generation guard; a rebuild between build and
+   *  consume without a Verlet rebuild would make the rows stale. */
+  ParticleStore const *m_verlet_list_store = nullptr;
+  std::uint64_t m_verlet_list_generation = 0u;
   double m_le_pos_offset_at_last_resort = 0.;
   /** @brief Verlet list skin. */
   double m_verlet_skin = 0.;
@@ -230,6 +273,13 @@ private:
 #endif
   std::unique_ptr<LocalBondState> m_bond_state;
   std::unique_ptr<ListType> m_verlet_list_cabana;
+#ifdef ESPRESSO_CUDA
+  /** Persistent device buffers for the GPU short-range pair loop (opaque;
+   *  defined in forces_lj_device.cu). Reused across steps to avoid per-step
+   *  device allocations; destroyed before Kokkos::finalize (this owns a
+   *  KokkosHandle via the cell structure lifetime). */
+  std::shared_ptr<DeviceShortRangeBuffers> m_device_sr_buffers;
+#endif
   /**
    * @brief Persistent per-neighbor buffer pool for ghost exchanges.
    *
@@ -264,8 +314,55 @@ private:
   mutable std::optional<GhostComm::GhostExchange> m_pending_ghost_reduce;
   /** particle properties using individual Kokkos Views */
   std::unique_ptr<AoSoA_pack> m_aosoa;
+  /** Pack-ordered list of the particles that participate in the pack /
+   *  force-scatter kernels: the local prefix (store rows [0, n_local) in row
+   *  order) followed by the deduped ghost tail (first occurrence of each ghost
+   *  id not owned by a local). Consumers (force/energy/pressure/icc reductions,
+   *  the AoSoA commit) index it in pack order. Pointers into
+   *  @c m_unique_particle_views; rebuilt every @ref set_index_map.
+   *  Required for the same reason as @c m_pack_index_to_store_row: the deduped
+   *  ghost tail is a non-contiguous subset, so pack index != store row on the
+   *  tail and the view list is needed. It can be retired only once the ghost
+   *  dedup produces a contiguous pack-order ghost range. */
   std::vector<Particle *> m_unique_particles;
+  /** Owning backing for @c m_unique_particles: the storage the pack-order
+   * pointer list points into -- one by-value @ref Particle view per pack
+   * participant, in pack order, rebuilt wholesale by @ref set_index_map. A
+   * @c std::vector reused (grown, never shrunk) across rebuilds; the pointers
+   * in @c m_unique_particles are only valid until the next @ref set_index_map.
+   */
+  std::vector<Particle> m_unique_particle_views;
   std::shared_ptr<KokkosHandle> m_kokkos_handle;
+  /** Array-based particle storage. */
+  ParticleStore m_particle_store;
+  /** Migration staging store. A second, small @ref ParticleStore holding rows
+   *  in transit between the live store and a remote rank: `extract` copies a
+   *  live row into a staging row (@c stage_row); a migrating row that a round
+   *  could not deliver locally waits here between exchange rounds; `receive`
+   *  unpacks into staging rows; `rebuild` commits them into the live store.
+   *  Lazily sized on first @c stage_row and reused (grown, never shrunk) across
+   *  resorts, like the fetch-cache store. */
+  ParticleStore m_staging_store;
+  /** Next free row in @c m_staging_store; the count of currently-staged rows.
+   *  0 while empty; reset by @ref clear_staging_store. */
+  int m_staging_store_next_row = 0;
+  /** Capacity @c m_staging_store was last (re)built with. */
+  std::size_t m_staging_store_capacity = 0u;
+  /** Pack-index -> store-row translation. Identity on the local prefix; only
+   *  the deduped ghost tail is remapped. Rebuilt in @ref set_index_map.
+   *  Identity holds on the local prefix by construction; the ghost tail is a
+   *  DEDUPED, non-contiguous subset of [n_local, n_total), so the real
+   *  translation is required. It can be removed only once the ghost dedup is
+   *  expressed as a contiguous row range. */
+  Kokkos::View<int *, Kokkos::HostSpace> m_pack_index_to_store_row;
+#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
+  /** Store-side derived director view, sized n_total, recomputed from the
+   *  quaternion column by @ref update_director_view. Uses the store's vector
+   *  layout (@ref ParticleStore::StateVectorLayout) so it aliases into the
+   *  pack's DirectorViewType. */
+  Kokkos::View<double *[3], ParticleStore::StateVectorLayout, Kokkos::HostSpace>
+      m_director_view;
+#endif
 
 public:
   CellStructure(BoxGeometry const &box);
@@ -274,101 +371,140 @@ public:
   bool use_verlet_list = true;
 
   /**
-   * @brief Update local particle index.
+   * @brief Set the store-row entry for a particle id.
    *
-   * Update the entry for a particle in the local particle
-   * index.
+   * Records that @p id resolves to store @p row in @c m_id_to_store_row,
+   * growing the map as needed. The single write site is the store-rebuild
+   * indexing (@c rebuild_particle_index / @c index_ghost_particles).
    *
-   * @param id Entry to update.
-   * @param p Pointer to the particle.
+   * @param id  Particle id (>= 0).
+   * @param row Store row the id resolves to.
    */
-  void update_particle_index(int id, Particle *p) {
+  void update_particle_index(int id, int row) {
     assert(id >= 0);
-    // cppcheck-suppress assertWithSideEffect
-    assert(not p or p->id() == id);
+    assert(row >= 0);
 
-    if (static_cast<unsigned int>(id) >= m_particle_index.size())
-      m_particle_index.resize(static_cast<unsigned int>(id + 1));
+    if (static_cast<unsigned int>(id) >= m_id_to_store_row.size())
+      m_id_to_store_row.resize(static_cast<unsigned int>(id + 1), no_store_row);
 
-    m_particle_index[static_cast<unsigned int>(id)] = p;
+    m_id_to_store_row[static_cast<unsigned int>(id)] = row;
   }
 
   /**
-   * @brief Update local particle index.
-   *
-   * Update the entry for a particle in the local particle
-   * index.
-   *
-   * @param p Pointer to the particle.
+   * @brief Clear the id -> store-row map.
    */
-  void update_particle_index(Particle &p) {
-    update_particle_index(p.id(), std::addressof(p));
-  }
-
-  /**
-   * @brief Update local particle index.
-   *
-   * @param pl List of particles whose index entries should be updated.
-   */
-  void update_particle_index(ParticleList &pl) {
-    for (auto &p : pl) {
-      update_particle_index(p.id(), std::addressof(p));
-    }
-  }
-
-  /**
-   * @brief Clear the particles index.
-   */
-  void clear_particle_index() { m_particle_index.clear(); }
+  void clear_particle_index() { m_id_to_store_row.clear(); }
 
 private:
   /**
-   * @brief Append a particle to a list and update this
-   *        particle index accordingly.
-   * @param pl List to add the particle to.
-   * @param p Particle to add.
+   * @brief Rebuild the id -> store-row map from the (synchronized) store.
+   *
+   * Fills @c m_id_to_store_row with the store row of each indexed particle.
+   * Must run with a clean store (rows assigned). Indexes LOCALS only; ghost id
+   * columns are not valid until ghosts_update runs, so ghosts are indexed
+   * separately by @c index_ghost_particles afterwards. "Locals win" over ghost
+   * copies of the same id.
    */
-  Particle &append_indexed_particle(ParticleList &pl, Particle &&p) {
-    /* Check if cell may reallocate, in which case the index
-     * entries for all particles in this cell have to be
-     * updated. */
-    auto const may_reallocate = pl.size() >= pl.capacity();
-    auto &new_part = pl.insert(std::move(p));
+  void rebuild_particle_index();
 
-    if (may_reallocate)
-      update_particle_index(pl);
-    else {
-      update_particle_index(new_part);
-    }
+  /**
+   * @brief Append the ghost rows to the id -> store-row map.
+   *
+   * Run AFTER ghosts_update has filled the ghost id columns (a fresh ghost row
+   * carries a default id until then). Records the store row for each ghost
+   * whose id is not owned by a local (or by an earlier ghost of the same id --
+   * first valid row wins).
+   */
+  void index_ghost_particles();
 
-    return new_part;
+  /**
+   * @brief Build the resort permutation over surviving store rows.
+   *
+   * Walks the cells in the rebuild order -- local cells in
+   * @ref ParticleDecomposition::local_cells span order, then ghost cells; per
+   * cell: surviving rows in raw range order (skipping any pending-removed row),
+   * then staged rows in @c cell->staged() push order -- and produces:
+   *  - @p permutation : one entry per new row. A surviving row's entry is the
+   *    OLD store row whose data the permute rebuild moves into that new row; a
+   *    staged / fresh-ghost row's entry is -1 (the permute rebuild seeds the
+   *    defaults, the caller overwrites a staged local via copy_row).
+   *  - @p cell_ranges : the future @c (offset, count) of each cell, in the same
+   *    cell order (locals then ghosts). @c offset is the first new row of the
+   *    cell, @c count its surviving + staged row total. This is the (offset,
+   *    count) collapse @ref ensure_particle_store_synchronized writes back onto
+   *    @ref Cell.
+   *
+   * Iteration order is cells in span order, surviving rows in range order,
+   * staged rows in push order. @ref ensure_particle_store_synchronized feeds
+   * @p permutation to @ref ParticleStore::permute_rebuild.
+   */
+  void build_resort_permutation(
+      std::vector<int> &permutation,
+      std::vector<std::pair<std::size_t, std::size_t>> &cell_ranges) const;
+
+  /** @brief Grow the migration staging store to hold at least @p needed rows,
+   *  preserving already-staged rows. Shared by @ref stage_row and
+   *  @ref reserve_staging_rows. */
+  void ensure_staging_capacity(std::size_t needed);
+
+  /**
+   * @brief Stage a new particle (built into a staging row) into a cell.
+   *
+   * @p p is a VIEW over a row of the creation staging store (built by
+   * @ref make_new_particle_view, then populated by the caller). The referenced
+   * staging row is staged into @p cell (@ref
+   * CellParticleStorage::insert_staged_row); the next rebuild copies it into a
+   * committed row. The staging store must stay valid until the rebuild runs
+   * (the caller commits immediately via ensure_particle_store_synchronized).
+   * The caller must mark the store dirty.
+   */
+  void append_staged_particle(Cell &cell, Particle &&p) {
+    assert(p.store() != nullptr);
+    CellParticleStorage::insert_staged_row(cell, *p.store(), p.store_row());
   }
 
 public:
   /**
    * @brief Get a local particle by id.
    *
+   * Resolves @p id to a store row via @c m_id_to_store_row and returns a
+   * fresh by-value @ref Particle view over that row. The returned view is a
+   * 16-byte handle aliasing the store; it is valid until the next store rebuild
+   * (which renumbers rows). An absent id yields an empty optional (the nullptr
+   * equivalent).
+   *
    * @param id Particle to get.
-   * @return Pointer to particle if it is local,
-   *         nullptr otherwise.
+   * @return A view of the particle if it is local (or an indexed ghost),
+   *         @c std::nullopt otherwise.
    */
-  Particle *get_local_particle(int id) {
+  std::optional<Particle> get_local_particle(int id) {
     assert(id >= 0);
 
-    if (static_cast<unsigned int>(id) >= m_particle_index.size())
-      return nullptr;
+    if (static_cast<unsigned int>(id) >= m_id_to_store_row.size())
+      return std::nullopt;
 
-    return m_particle_index[static_cast<unsigned int>(id)];
+    auto const row = m_id_to_store_row[static_cast<unsigned int>(id)];
+    if (row == no_store_row)
+      return std::nullopt;
+
+    return m_particle_store.make_view(row);
   }
 
   /** @overload */
-  const Particle *get_local_particle(int id) const {
+  std::optional<const Particle> get_local_particle(int id) const {
     assert(id >= 0);
 
-    if (static_cast<unsigned int>(id) >= m_particle_index.size())
-      return nullptr;
+    if (static_cast<unsigned int>(id) >= m_id_to_store_row.size())
+      return std::nullopt;
 
-    return m_particle_index[static_cast<unsigned int>(id)];
+    auto const row = m_id_to_store_row[static_cast<unsigned int>(id)];
+    if (row == no_store_row)
+      return std::nullopt;
+
+    // const overload: the store is logically const here, but make_view needs a
+    // mutable store to bind the view. The returned view is const, so no
+    // mutation escapes.
+    return const_cast<ParticleStore &>(m_particle_store).make_view(row);
   }
 
   template <class InputRange, class OutputIterator>
@@ -396,7 +532,10 @@ public:
   std::size_t count_local_particles() const {
     std::size_t count = 0;
     for (auto const &cell : m_decomposition->local_cells()) {
-      count += cell->particles().size();
+      // Count committed rows directly: avoids requiring the cell's store
+      // pointer to be wired, and is exactly the number of committed particles
+      // (staged-but-uncommitted particles are not counted).
+      count += cell->count();
     }
     return count;
   }
@@ -417,6 +556,31 @@ public:
     for (auto &p : local_particles()) {
       f(p);
     }
+  }
+
+  /**
+   * @brief Run a column kernel on every local particle by STORE ROW.
+   *
+   * A direct-column launcher for the hot integrator/thermostat loops. Instead
+   * of materialising a @ref Particle per element (which pays @c view_host() +
+   * address + stride on every accessor), this launcher iterates exactly the
+   * same rows in exactly the same order as @ref for_each_local_particle but
+   * hands the kernel the raw STORE ROW @c int. The kernel captures its hoisted
+   * @c *_view() column handles ONCE (outside the loop) and indexes them by row.
+   *
+   * Iteration structure matches @c parallel_for_each_particle_impl (multi-cell:
+   * parallel over cells, inner serial over @c [offset, offset+count);
+   * single-cell: parallel over the cell's rows). Local cells tile
+   * @c [0, n_local) contiguously in cell-traversal order (see
+   * @ref ensure_particle_store_synchronized), so the visited row set and order
+   * match the view path. Virtual sites are local rows and ARE visited -- the
+   * kernel guards them per-row (propagation mask), matching the view-path
+   * lambda's @c is_virtual() early return. The kernel is assumed to be
+   * thread-safe.
+   */
+  template <typename RowKernel>
+  void for_each_local_particle_row(RowKernel &&kernel) const {
+    parallel_for_each_local_row_impl(decomposition().local_cells(), kernel);
   }
 
   /**
@@ -506,6 +670,10 @@ private:
   inline void parallel_for_each_particle_impl(std::span<Cell *const> cells,
                                               ParticleCallback auto &&f) const;
 
+  template <typename RowKernel>
+  inline void parallel_for_each_local_row_impl(std::span<Cell *const> cells,
+                                               RowKernel &kernel) const;
+
 public:
   /**
    * @brief Add a particle.
@@ -515,10 +683,10 @@ public:
    * it belongs.
    *
    * @param p Particle to add.
-   * @return Pointer to the particle in the cell
-   *         system.
+   * @return A view of the particle in the cell system (a by-value
+   *         @ref Particle view, valid until the next store rebuild).
    */
-  Particle *add_particle(Particle &&p);
+  std::optional<Particle> add_particle(Particle &&p);
 
   /**
    * @brief Add a particle.
@@ -532,10 +700,10 @@ public:
    * the particle in exactly one place.
    *
    * @param p Particle to add.
-   * @return Pointer to particle if it is local, null
-   *         otherwise.
+   * @return A view of the particle if it is local (a by-value @ref Particle
+   *         view), @c std::nullopt otherwise.
    */
-  Particle *add_local_particle(Particle &&p);
+  std::optional<Particle> add_local_particle(Particle &&p);
 
   /**
    * @brief Remove a particle.
@@ -700,7 +868,12 @@ public:
 
   /** Set forces and torques on all ghosts to zero. */
   void ghosts_reset_forces() {
-    for_each_ghost_particle([](Particle &p) { p.force_and_torque() = {}; });
+    for_each_ghost_particle([](Particle &p) {
+      p.force() = {};
+#ifdef ESPRESSO_ROTATION
+      p.torque() = {};
+#endif
+    });
   }
 
 #ifdef ESPRESSO_BOND_CONSTRAINT
@@ -712,8 +885,21 @@ public:
 
   /**
    * @brief Resort particles.
+   *
+   * @param global_flag  Whether to do a global (all-to-all) resort.
+   * @param commit  When true (the default, and the only value used by a
+   *   direct/unit-test caller), the just-migrated local particles are
+   *   committed to store rows and the id->view index rebuilt before returning,
+   *   so the store is clean and the index consistent on return. When false (the
+   *   @ref update_ghosts_and_resort_particle hot path), the commit is DEFERRED:
+   *   the migrated locals stay STAGED (a cell's @ref Cell::size still counts
+   *   them, which is all @ref ghosts_count needs), and a single post-@ref
+   *   ghosts_count @ref ensure_particle_store_synchronized then commits locals
+   *   AND ghosts in ONE store rebuild. Deferring yields a single store rebuild
+   *   per resort instead of two O(N) column copies; no index is read in the
+   *   deferred window, so it is safe.
    */
-  void resort_particles(bool global_flag);
+  void resort_particles(bool global_flag, bool commit = true);
 
   /** @brief Whether the Verlet skin is set. */
   auto is_verlet_skin_set() const { return m_verlet_skin_set; }
@@ -745,17 +931,24 @@ public:
    *         was not found.
    *
    * @param partner_ids Ids to resolve.
-   * @return Vector of Particle pointers.
+   * @return Vector of Particle VIEWS held by value.
+   *
+   * @ref get_local_particle returns a by-value @ref Particle view (a 16-byte
+   * handle), so the resolved partners are collected here as by-value views.
+   * Callers that need the @c std::span<Particle*> handler contract build a
+   * pointer span into this owned buffer (see @c execute_bond_handler), which
+   * stays valid for as long as the returned vector lives.
    */
-  auto resolve_bond_partners(std::span<const int> partner_ids) {
-    boost::container::static_vector<Particle *, 4> partners;
-    get_local_particles(partner_ids, std::back_inserter(partners));
-
-    /* Check if id resolution failed for any partner */
-    if (std::ranges::find(partners, nullptr) != partners.end()) {
-      throw BondResolutionError{};
+  boost::container::static_vector<Particle, 4>
+  resolve_bond_partners(std::span<const int> partner_ids) {
+    boost::container::static_vector<Particle, 4> partners;
+    for (auto const id : partner_ids) {
+      auto view = get_local_particle(id);
+      if (not view) {
+        throw BondResolutionError{};
+      }
+      partners.push_back(*view);
     }
-
     return partners;
   }
 
@@ -771,30 +964,35 @@ private:
    *                partners as arguments. Its return value
    *                should indicate if the bond was broken.
    */
-  void execute_bond_handler(Particle &p, auto const &handler) {
+  template <class Handler>
+  void execute_bond_handler(Particle &p, Handler const &handler) {
+    // Debug guard: resolve_bond_partners hands back by-value Particle VIEWS
+    // (16-byte handles over store rows); the handler contract is
+    // std::span<Particle*>, so we build a pointer span into the owned
+    // `partners` buffer -- valid for the duration of the handler call. The
+    // views (and thus the rows they alias) are only valid while the store
+    // generation is unchanged: a rebuild renumbers the rows. Record the
+    // generation on entry and assert it did not move across each handler call
+    // (a handler must not mutate topology) to catch a mis-resolved row.
+    auto const bond_epoch_generation = m_particle_store.generation();
     for (const BondView bond : p.bonds()) {
       auto const partner_ids = bond.partner_ids();
       try {
         auto partners = resolve_bond_partners(partner_ids);
-        auto const partners_span = std::span(partners.data(), partners.size());
+        boost::container::static_vector<Particle *, 4> partner_ptrs;
+        for (auto &partner : partners) {
+          partner_ptrs.push_back(std::addressof(partner));
+        }
+        auto const partners_span =
+            std::span(partner_ptrs.data(), partner_ptrs.size());
         auto const bond_broken = handler(p, bond.bond_id(), partners_span);
+        ParticleStoreGuard::assert_generation(m_particle_store,
+                                              bond_epoch_generation);
         if (bond_broken) {
           bond_broken_error(p.id(), partner_ids);
         }
       } catch (BondResolutionError const &) {
         bond_resolution_error(partner_ids);
-      }
-    }
-  }
-
-  /**
-   * @brief Go through ghost cells and remove the ghost entries from the
-   * local particle index.
-   */
-  void invalidate_ghosts() {
-    for (auto const &p : ghost_particles()) {
-      if (get_local_particle(p.id()) == &p) {
-        update_particle_index(p.id(), nullptr);
       }
     }
   }
@@ -807,12 +1005,62 @@ private:
            "flight — call ghosts_reduce_forces_finish() first");
     clear_particle_index();
 
+    /* Copy every particle out of the OLD decomposition into staging-store rows
+     * BEFORE the store is rebuilt: the old cells' rows index into the current
+     * main store, which the swap + rebuild below will invalidate. The staging
+     * store is an independent store, so its rows survive the main store's
+     * rebuild and can seed the retained particles into the new system.
+     */
+    clear_staging_store();
+    std::vector<int> retained_staging_rows;
+    for (auto *cell : m_decomposition->local_cells()) {
+      cell->set_store(m_particle_store);
+      // Stage every LIVE committed row (the CellRowSpan skips pending-removed
+      // rows); the new decomposition below re-homes each retained row.
+      for (int const live_row : cell->rows()) {
+        retained_staging_rows.push_back(stage_row(live_row));
+      }
+    }
+
     /* Swap in new cell system */
     std::swap(m_decomposition, decomposition);
 
-    /* Add particles to new system */
-    for (auto &p : Cells::particles(decomposition->local_cells())) {
-      add_particle(std::move(p));
+    /* Wire the new cells to the store and stage the retained rows into their
+     * home cells. Stage directly (NOT via add_particle, which commits per-add
+     * -- that would be O(n^2) here); a single rebuild below commits them all at
+     * once. A particle with no home cell on this node goes to the first local
+     * cell (a global resort will place it), matching add_particle. The home
+     * cell is decided from the staged row's position (read from the staging
+     * store). */
+    for (auto *cell : m_decomposition->local_cells()) {
+      cell->set_store(m_particle_store);
+    }
+    for (auto *cell : m_decomposition->ghost_cells()) {
+      cell->set_store(m_particle_store);
+    }
+    auto const had_retained = not retained_staging_rows.empty();
+    for (auto const staging_row : retained_staging_rows) {
+      auto const view = m_staging_store.make_view(staging_row);
+      // NB: the `decomposition` PARAMETER (now holding the OLD, swapped-out
+      // decomposition) shadows the `decomposition()` accessor here; route
+      // through the NEW decomposition via m_decomposition explicitly.
+      auto const sort_cell = m_decomposition->particle_to_cell(view);
+      auto cell = sort_cell ? sort_cell : m_decomposition->local_cells()[0];
+      set_resort_particles(sort_cell ? Cells::RESORT_LOCAL
+                                     : Cells::RESORT_GLOBAL);
+      CellParticleStorage::insert_staged_row(*cell, m_staging_store,
+                                             staging_row);
+    }
+
+    mark_particle_store_dirty();
+    // Commit the retained particles into store rows NOW so they are immediately
+    // live (visible to local_particles(), the particle-node bookkeeping, and
+    // get_local_particle) after the decomposition swap. Only when there WERE
+    // retained particles: an empty initial setup
+    // leaves the store column-free (avoids allocating Kokkos columns that a
+    // System torn down at static destruction would release post-finalize).
+    if (had_retained) {
+      ensure_particle_store_synchronized();
     }
   }
 
@@ -847,28 +1095,65 @@ private:
    *
    * @tparam Kernel Needs to be callable with (Particle, Particle, Distance).
    * @param kernel Pair kernel functor.
+   *
+   * Iterates the cells' store-ROW bags directly and REBINDS three cached
+   * @ref Particle views (p1 + the two partner roles) via
+   * @ref Particle::attach_to_store, rather than driving
+   * @ref Algorithm::link_cell over @ref RowParticleRange iterators (each such
+   * iterator embeds a Particle by value, so the generic algorithm would
+   * construct a fresh Particle for every @c std::next(it) copy and every
+   * neighbor-range begin()/end() -- tens of thousands of Particle
+   * materialisations per Verlet rebuild). The pair ORDER and the p1/p2 role
+   * assignment match @ref Algorithm::link_cell (cell self-pairs [i, j>i] then
+   * red-neighbour pairs).
    */
   void link_cell(auto kernel) {
     auto const maybe_box = decomposition().minimum_image_distance();
-    auto const local_cells_span = decomposition().local_cells();
-    auto const first = boost::make_indirect_iterator(local_cells_span.begin());
-    auto const last = boost::make_indirect_iterator(local_cells_span.end());
-
     if (maybe_box) {
-      Algorithm::link_cell(
-          first, last,
-          [&kernel, df = detail::MinimalImageDistance{decomposition().box()}](
-              Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
+      link_cell_rows(detail::MinimalImageDistance{decomposition().box()},
+                     kernel);
     } else {
       if (decomposition().box().type() != BoxType::CUBOID) {
         throw std::runtime_error("Non-cuboid box type is not compatible with a "
                                  "particle decomposition that relies on "
                                  "EuclideanDistance for distance calculation.");
       }
-      Algorithm::link_cell(
-          first, last,
-          [&kernel, df = detail::EuclidianDistance{}](
-              Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
+      link_cell_rows(detail::EuclidianDistance{}, kernel);
+    }
+  }
+
+  /** @brief Row-bag link-cell driver reusing three cached views. See
+   *  @c link_cell. */
+  template <class DistanceFunction, class Kernel>
+  void link_cell_rows(DistanceFunction const &df, Kernel &kernel) {
+    auto &store = m_particle_store;
+    // Three reused views rebound per element: p1 (outer), and the two partner
+    // roles (self-cell partner, neighbour partner).
+    Particle p1, p_self, p_nb;
+    for (auto *cell : decomposition().local_cells()) {
+      // Contiguous store-row range. This runs only on a clean store (the caller
+      // ran ensure_particle_store_synchronized before any force loop), so there
+      // are no pending-removed rows and the raw range IS the live range: index
+      // it directly by offset + i (O(1), no skip).
+      auto const offset = cell->offset();
+      auto const n = cell->count();
+      for (std::size_t i = 0u; i < n; ++i) {
+        p1.attach_to_store(store, static_cast<int>(offset + i));
+        // Pairs within this cell (j > i), same order as Algorithm::link_cell.
+        for (std::size_t j = i + 1u; j < n; ++j) {
+          p_self.attach_to_store(store, static_cast<int>(offset + j));
+          kernel(p1, p_self, df(p1, p_self));
+        }
+        // Pairs with the red-partition neighbours, same order.
+        for (auto *neighbor : cell->neighbors().red()) {
+          auto const nb_offset = neighbor->offset();
+          auto const nb_n = neighbor->count();
+          for (std::size_t k = 0u; k < nb_n; ++k) {
+            p_nb.attach_to_store(store, static_cast<int>(nb_offset + k));
+            kernel(p1, p_nb, df(p1, p_nb));
+          }
+        }
+      }
     }
   }
 
@@ -911,10 +1196,92 @@ public:
   auto const &get_aosoa() const { return *m_aosoa; }
   auto const &get_unique_particles() const { return m_unique_particles; }
   auto const &get_verlet_list_cabana() const { return *m_verlet_list_cabana; }
+  /** @brief Generation of the Cabana Verlet list (bumps on each rebuild). */
+  auto verlet_list_cabana_generation() const {
+    return m_verlet_list_cabana_generation;
+  }
+#ifdef ESPRESSO_CUDA
+  /** @brief Persistent GPU short-range device buffers handle (opaque). */
+  std::shared_ptr<DeviceShortRangeBuffers> &device_sr_buffers() {
+    return m_device_sr_buffers;
+  }
+#endif
   auto &bond_state() { return *m_bond_state; }
   auto const &bond_state() const { return *m_bond_state; }
   void clear_local_properties();
   void clear_bond_properties();
+
+  auto &particle_store() { return m_particle_store; }
+  void mark_particle_store_dirty() { m_particle_store.mark_dirty(); }
+  /** @brief Rebuild the store row assignment if topology changed.
+   *  Purely rank-local; O(1) when the store is clean. */
+  void ensure_particle_store_synchronized();
+
+  // -- migration staging store ----------------------------------------------
+  /** @brief Direct access to the migration staging store. */
+  auto &staging_store() { return m_staging_store; }
+  auto const &staging_store() const { return m_staging_store; }
+  /** @brief Number of rows currently held in the staging store. */
+  int staged_row_count() const { return m_staging_store_next_row; }
+  /**
+   * @brief Stage a live store row: copy @p live_row of the main store into the
+   * next free staging row and return that staging row.
+   *
+   * Grows the staging store lazily (doubling, preserving already-staged rows)
+   * so an arbitrary number of rows can be staged. This is the row-level
+   * `extract` helper (@ref ParticleStore::copy_row live -> staging) used by the
+   * migration path.
+   */
+  int stage_row(int live_row);
+  /**
+   * @brief Reserve @p count fresh, uninitialized staging rows.
+   *
+   * Grows the staging store (doubling, preserving already-staged rows) so that
+   * @p count consecutive rows starting at the returned index are valid store
+   * rows, and advances the row counter past them. Used by the migration
+   * `receive` path: the decomposition reserves the rows, then
+   * @ref MigrationPack::unpack_rows writes the wire buffer into them. Returns
+   * the first reserved row index (== the previous @ref staged_row_count).
+   */
+  int reserve_staging_rows(int count);
+  /**
+   * @brief Build a fresh, default-seeded new-particle VIEW.
+   *
+   * Reserves one staging-store row, seeds it to the new-particle defaults
+   * (@ref ParticleStore::seed_default_row), and returns a @ref Particle view
+   * over it. This is the particle-creation entry point: the caller writes the
+   * fields it wants through the returned view, then hands the view to
+   * @ref add_particle / @ref add_local_particle, which stage the underlying
+   * staging row into the particle's home cell. The view is valid until the next
+   * staging-store growth / clear; @ref add_particle consumes it right away.
+   */
+  Particle make_new_particle_view();
+  /** @brief Drop all staged rows (row counter back to zero). The columns are
+   *  retained as reusable capacity; @ref release_staging_store frees them. */
+  void clear_staging_store() { m_staging_store_next_row = 0; }
+  /** @brief Release the staging store's Kokkos columns (teardown / lock-step
+   *  with the main store; must run while Kokkos is alive). */
+  void release_staging_store() {
+    m_staging_store.release_columns();
+    m_staging_store_next_row = 0;
+    m_staging_store_capacity = 0u;
+  }
+
+  /** @brief Build the migration staging handle a decomposition uses to route
+   *  migrating particles through this store's staging store.
+   *  The @c store pointer is the address-stable staging-store MEMBER (its
+   *  internals may swap out on growth, but the member address is fixed), so a
+   *  decomposition holding it always packs from the current columns. */
+  MigrationStaging make_migration_staging() {
+    MigrationStaging staging;
+    staging.store = &m_staging_store;
+    staging.stage_row = [this](int live_row) { return stage_row(live_row); };
+    staging.reserve_rows = [this](int count) {
+      return reserve_staging_rows(count);
+    };
+    staging.clear = [this]() { clear_staging_store(); };
+    return staging;
+  }
 
   [[nodiscard]] auto is_verlet_list_cabana_rebuild_needed() const {
     return m_rebuild_verlet_list_cabana;
@@ -954,11 +1321,34 @@ public:
     if (rebuild_verlet_list) {
       kernel(m_decomposition->local_cells(), m_decomposition->box(),
              *m_verlet_list_cabana);
+      ++m_verlet_list_cabana_generation;
     }
     m_rebuild_verlet_list_cabana = false;
   }
 
   void set_index_map();
+
+  /** @brief Pack-index -> store-row translation view.
+   *  @c view(i)==i for all @c i < count_local_particles(). */
+  auto pack_index_to_store_row() const { return m_pack_index_to_store_row; }
+  /** @brief Host view of the ParticleStore position column. */
+  auto store_position_view() { return m_particle_store.position_view(); }
+  /** @brief Host view of the ParticleStore image-box column. */
+  auto store_image_view() { return m_particle_store.image_box_view(); }
+  /** @brief Host view of the ParticleStore velocity column. */
+  auto store_velocity_view() { return m_particle_store.velocity_view(); }
+#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
+  /** @brief Store-side derived director view. */
+  auto director_view() const { return m_director_view; }
+  /** @brief Recompute the derived director view from the store quaternion
+   *  column. Called every force-calc commit step. */
+  void update_director_view();
+#endif
+
+  /** @brief Point the pack's store-aliased views at the current store columns
+   *  and the translation/director views. Cheap; must run after
+   *  @ref set_index_map (or a store rebuild) before the pack is used. */
+  void bind_pack_store_views();
 
   inline void cell_list_loop(auto &&kernel) {
     kernel(m_decomposition->local_cells(), m_decomposition->box());
@@ -988,28 +1378,59 @@ private:
     if (m_rebuild_verlet_list) {
       m_verlet_list.clear();
 
+      // Record each pair as store ROW indices, not Particle pointers: cells do
+      // not own stable Particle addresses. The particles handed out by
+      // link_cell are store-attached (the caller ran
+      // ensure_particle_store_synchronized before any force loop), so
+      // store_row() is valid. Rows are only meaningful for the store
+      // generation they were recorded at -- stamp it so the consume branch can
+      // detect (debug) a rebuild that renumbered them without a Verlet rebuild.
       link_cell([&](Particle &p1, Particle &p2, Distance const &d) {
         if (verlet_criterion(p1, p2, d.dist2)) {
-          m_verlet_list.emplace_back(&p1, &p2);
+          m_verlet_list.emplace_back(p1.store_row(), p2.store_row());
           pair_kernel(p1, p2, d);
         }
       });
 
+      m_verlet_list_store = &m_particle_store;
+      m_verlet_list_generation = m_particle_store.generation();
       m_rebuild_verlet_list = false;
       m_rebuild_verlet_list_cabana = true;
     } else {
+      // Debug guard: the stored rows are only valid while the store generation
+      // is unchanged. A rebuild between build and consume (without a Verlet
+      // rebuild) would alias the wrong particle -- fire here in debug. The
+      // production invariant is that every generation bump sets
+      // m_rebuild_verlet_list.
+      assert(m_verlet_list_store == &m_particle_store);
+      ParticleStoreGuard::assert_generation(
+          m_particle_store, m_verlet_list_generation, m_verlet_list_store);
+      // Hoist the store pointer once; resolve each row -> view at loop entry,
+      // in the SAME pair order (p1 then p2) as the old pointer derefs, so the
+      // per-pair arithmetic order is byte-for-byte unchanged (identity gate).
+      auto &store = m_particle_store;
       auto const maybe_box = decomposition().minimum_image_distance();
+      // Reuse two cached views across the whole pair loop, REBOUND to each
+      // pair's rows via attach_to_store (two handle-field writes), instead of
+      // constructing a fresh Particle per row per pair. Building views is two
+      // full Particle materialisations per pair -- hot, since collision
+      // detection walks this branch every step.
+      Particle p1, p2;
       /* In this case the pair kernel is just run over the verlet list. */
       if (maybe_box) {
         auto const distance_function =
             detail::MinimalImageDistance{decomposition().box()};
-        for (auto const &[p1, p2] : m_verlet_list) {
-          pair_kernel(*p1, *p2, distance_function(*p1, *p2));
+        for (auto const &[row1, row2] : m_verlet_list) {
+          p1.attach_to_store(store, row1);
+          p2.attach_to_store(store, row2);
+          pair_kernel(p1, p2, distance_function(p1, p2));
         }
       } else {
         auto const distance_function = detail::EuclidianDistance{};
-        for (auto const &[p1, p2] : m_verlet_list) {
-          pair_kernel(*p1, *p2, distance_function(*p1, *p2));
+        for (auto const &[row1, row2] : m_verlet_list) {
+          p1.attach_to_store(store, row1);
+          p2.attach_to_store(store, row2);
+          pair_kernel(p1, p2, distance_function(p1, p2));
         }
       }
     }

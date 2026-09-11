@@ -47,12 +47,28 @@ static bool is_active(IA_parameters const &data) {
   return data.max_cut != inactive_cutoff;
 }
 
+void ShapeBasedConstraint::ensure_part_rep_attached() const {
+  if (part_rep.store_row() >= 0) {
+    return;
+  }
+  // Co-own the Kokkos runtime so m_part_rep_store's Views can be released in
+  // our destructor even if this constraint outlives the last CellStructure
+  // (mirrors CellStructure::set_kokkos_handle). Kokkos is guaranteed
+  // initialized by the time any part_rep field is touched (the System exists).
+  m_kokkos_handle = ::kokkos_handle;
+  m_part_rep_store.begin_rebuild(1u, 0u);
+  m_part_rep_store.finish_rebuild();
+  m_part_rep_store.assign_row(part_rep, 0);
+}
+
 void ShapeBasedConstraint::set_type(int type) {
+  ensure_part_rep_attached();
   part_rep.type() = type;
   m_system.lock()->nonbonded_ias->make_particle_type_exist(type);
 }
 
 IA_parameters const &ShapeBasedConstraint::get_ia_param(int type) const {
+  ensure_part_rep_attached();
   return m_system.lock()->nonbonded_ias->get_ia_param(type, part_rep.type());
 }
 
@@ -89,6 +105,9 @@ double ShapeBasedConstraint::min_dist(BoxGeometry const &box_geo,
 ParticleForce ShapeBasedConstraint::force(Particle const &p,
                                           Utils::Vector3d const &folded_pos,
                                           double) {
+  // part_rep is a view; ensure it is bound to its store before any accessor
+  // (force/torque/type/velocity) is read.
+  ensure_part_rep_attached();
   ParticleForce pf{};
   auto const &ia_params = get_ia_param(p.type());
 

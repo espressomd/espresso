@@ -88,10 +88,17 @@ public:
   // range-based ctor that excludes Vector<T,N> to avoid ambiguous calls with
   // the copy ctor, move ctor and cast operator; std::ranges::input_range is
   // not used due to conflicts with move assignment in recursive variant types
-  // and T[N] must be excluded to avoid shadowing the noexcept ctor
+  // and T[N] must be excluded to avoid shadowing the noexcept ctor. The
+  // begin/end requirement makes this a SFINAE-friendly non-candidate for
+  // types that merely convert to Vector (e.g. write-through column proxies),
+  // so their conversion operator is selected instead of a hard error here.
   template <class Range>
     requires(not is_vector<std::remove_cvref_t<Range>>::value and
-             not std::is_same_v<std::remove_cvref_t<Range>, T[N]>)
+             not std::is_same_v<std::remove_cvref_t<Range>, T[N]> and
+             requires(Range &&r) {
+               std::begin(r);
+               std::end(r);
+             })
   explicit constexpr Vector(Range &&rng)
       : Vector(std::begin(rng), std::end(rng)) {}
 

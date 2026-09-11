@@ -24,6 +24,7 @@
 #include "cell_system/ParticleDecomposition.hpp"
 
 #include "cell_system/Cell.hpp"
+#include "cell_system/MigrationStaging.hpp"
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
@@ -70,6 +71,13 @@ class AtomDecomposition : public ParticleDecomposition {
 public:
   AtomDecomposition(BoxGeometry const &m_box);
   AtomDecomposition(boost::mpi::communicator comm, BoxGeometry const &box_geo);
+
+  /** @brief Install the staging-store handle; see @ref MigrationStaging.
+   *  Set by @ref CellStructure / @ref HybridDecomposition.
+   */
+  void set_migration_staging(MigrationStaging staging) {
+    m_migration_staging = std::move(staging);
+  }
 
   void resort(bool global_flag, std::vector<ParticleChange> &diff) override;
 
@@ -156,4 +164,7 @@ private:
    * @brief Determine if this rank owns a particle id.
    */
   bool has_id(int id) const { return id_to_rank(id) == m_comm.rank(); }
+
+  /** Staging-store handle for the per-field migration wire. */
+  MigrationStaging m_migration_staging;
 };

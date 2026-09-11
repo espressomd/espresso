@@ -133,9 +133,10 @@ static void force_capping(CellStructure &cell_structure, double force_cap) {
     auto const force_cap_sq = Utils::sqr(force_cap);
     cell_structure.for_each_local_particle(
         [&force_cap, &force_cap_sq](Particle &p) {
-          auto const force_sq = p.force().norm2();
+          auto force = p.force();
+          auto const force_sq = force.norm2();
           if (force_sq > force_cap_sq) {
-            p.force() *= force_cap / std::sqrt(force_sq);
+            force *= force_cap / std::sqrt(force_sq);
           }
         });
   }
@@ -415,6 +416,9 @@ void System::System::calculate_forces() {
 #ifdef ESPRESSO_CALIPER
   ESPRESSO_CALI_MARK_FUNCTION;
 #endif
+  // Ensure every local/ghost particle has a valid ParticleStore row before any
+  // force/torque access below. O(1) when the store is clean; rank-local.
+  cell_structure->ensure_particle_store_synchronized();
 #ifdef ESPRESSO_CUDA
   {
 #ifdef ESPRESSO_CALIPER
@@ -469,10 +473,22 @@ void System::System::calculate_forces() {
 
   update_verlet_state(*this, collision_detection_cutoff);
 #ifdef ESPRESSO_ELECTROSTATICS
+  // Refresh the pack-owned charge column once per step, ONLY when a coulomb
+  // actor is active (both the P3M long-range gather below and the real-space
+  // pair kernel read it contiguously). Pure-LJ runs skip it.
+  if (coulomb.impl->solver) {
+    refresh_pack_charges(*cell_structure);
+  }
   if (coulomb.impl->extension) {
     update_icc_particles();
   }
 #endif // ESPRESSO_ELECTROSTATICS
+#ifdef ESPRESSO_DIPOLES
+  // Refresh the pack-owned dipm column, guarded by an active dipolar actor.
+  if (dipoles.impl->solver) {
+    refresh_pack_dipm(*cell_structure);
+  }
+#endif // ESPRESSO_DIPOLES
   init_forces_and_thermostat(*this);
 #ifdef ESPRESSO_CALIPER
   ESPRESSO_CALI_MARK_BEGIN("calc_long_range_forces");
@@ -503,8 +519,52 @@ void System::System::calculate_forces() {
       create_cabana_neighbor_kernel(*this, virial, elc_kernel, coulomb_kernel,
                                     dipoles_kernel, coulomb_u_kernel);
 
+  // Opt-in DEVICE (GPU) pure-LJ pair loop. Returns empty unless the
+  // ESPRESSO_GPU_CORE flag is set and the feature set is pure LJ on a cuboid
+  // box; when empty the host specialized/generic path is used unchanged. The
+  // factory lives in forces_lj_device.cu so its Kokkos/Cabana/System headers
+  // stay out of this TU; the feature predicates use the SAME expressions and
+  // guards as create_specialized_verlet_pair_loop above.
+  ShortRangeVerletPairLoop device_lj_pair_loop{};
+#ifdef ESPRESSO_CUDA
+  device_lj_pair_loop = create_device_short_range_pair_loop(
+      *this,
+#ifdef ESPRESSO_ELECTROSTATICS
+      get_ptr(coulomb_kernel) != nullptr,
+#else
+      false,
+#endif
+#ifdef ESPRESSO_DIPOLES
+      get_ptr(dipoles_kernel) != nullptr,
+#else
+      false,
+#endif
+#ifdef ESPRESSO_ELECTROSTATICS
+      get_ptr(elc_kernel) != nullptr,
+#else
+      false,
+#endif
+#ifdef ESPRESSO_DPD
+      (thermostat->thermo_switch & THERMO_DPD) != 0,
+#else
+      false,
+#endif
+#ifdef ESPRESSO_NPT
+      virial != nullptr
+#else
+      false
+#endif
+  );
+#endif // ESPRESSO_CUDA
+
   auto const specialized_pair_loop = create_specialized_verlet_pair_loop(
       *this, virial, elc_kernel, coulomb_kernel, dipoles_kernel);
+
+  // The device loop wins when it is available; both cover exactly the same
+  // feature set, so the replica-dirty bookkeeping below is unaffected by which
+  // one runs.
+  auto const &pair_loop =
+      device_lj_pair_loop ? device_lj_pair_loop : specialized_pair_loop;
 
   // The specialized pair kernel scatters only into the force view. Record
   // before the launch whether this pass can write the torque/virial scatter
@@ -516,7 +576,7 @@ void System::System::calculate_forces() {
   // own scatter site.
   [[maybe_unused]] auto const generic_pair_path =
       get_interaction_range() > 0. and
-      (not specialized_pair_loop or
+      (not pair_loop or
        propagation->integ_switch == INTEG_METHOD_STEEPEST_DESCENT or
        not cell_structure->use_verlet_list);
 #ifdef ESPRESSO_ROTATION
@@ -555,7 +615,7 @@ void System::System::calculate_forces() {
                      dihedral_bonds_kernel, first_neighbor_kernel,
                      *cell_structure, get_interaction_range(),
                      bonded_ias->maximal_cutoff(), make_verlet_criterion,
-                     propagation->integ_switch, specialized_pair_loop);
+                     propagation->integ_switch, pair_loop);
 
   // Force and Torque reduction
   reduce_cabana_forces_and_torques(*this, virial);

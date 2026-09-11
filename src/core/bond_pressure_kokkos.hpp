@@ -74,18 +74,22 @@ struct PairBondsPressureKernel {
 
     auto const i = bond_list(idx, 0);
     auto const j = bond_list(idx, 1);
+    // Translate pack indices to ParticleStore rows once.
+    auto const row_i = aosoa.row(i);
+    auto const row_j = aosoa.row(j);
     auto const &iaparams = *bonded_ias.at(bond_id);
 
-    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, row_i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, row_j);
 
     std::optional<Utils::Matrix<double, 3, 3>> pressure =
-        calc_bonded_virial_pressure_tensor(iaparams, pos1, pos2, box_geo,
-                                           coulomb_f_kernel,
+        calc_bonded_virial_pressure_tensor(
+            iaparams, pos1, pos2, box_geo, coulomb_f_kernel,
 #ifdef ESPRESSO_ELECTROSTATICS
-                                           aosoa.charge(i) * aosoa.charge(j)
+            // charge aliases the store column; read by *store row*.
+            aosoa.charge(row_i) * aosoa.charge(row_j)
 #else
-                                           0.0
+            0.0
 #endif
         );
 
@@ -96,8 +100,8 @@ struct PairBondsPressureKernel {
                        layout.tensor_offset(layout.bonded_idx(bond_id), k)) +=
             flat[k];
     } else {
-      auto partner_id = aosoa.id(j);
-      bond_broken_error(aosoa.id(i), {&partner_id, 1});
+      auto partner_id = aosoa.id(row_j);
+      bond_broken_error(aosoa.id(row_i), {&partner_id, 1});
     }
   }
 };
@@ -128,11 +132,15 @@ struct AngleBondsPressureKernel {
     auto const i = bond_list(idx, 0);
     auto const j = bond_list(idx, 1);
     auto const k = bond_list(idx, 2);
+    // Translate pack indices to ParticleStore rows once.
+    auto const row_i = aosoa.row(i);
+    auto const row_j = aosoa.row(j);
+    auto const row_k = aosoa.row(k);
     auto const &iaparams = *bonded_ias.at(bond_id);
 
-    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-    auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, row_i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, row_j);
+    auto const pos3 = aosoa.get_vector_at(aosoa.position, row_k);
 
     std::optional<Utils::Matrix<double, 3, 3>> pressure =
         calc_bonded_three_body_pressure_tensor(iaparams, pos1, pos2, pos3,
@@ -145,8 +153,8 @@ struct AngleBondsPressureKernel {
                        layout.tensor_offset(layout.bonded_idx(bond_id), k2)) +=
             flat[k2];
     } else {
-      std::array<int, 2> pids = {aosoa.id(j), aosoa.id(k)};
-      bond_broken_error(aosoa.id(i), {pids.data(), 2});
+      std::array<int, 2> pids = {aosoa.id(row_j), aosoa.id(row_k)};
+      bond_broken_error(aosoa.id(row_i), {pids.data(), 2});
     }
   }
 };
@@ -178,12 +186,17 @@ struct DihedralBondsPressureKernel {
     auto const j = bond_list(idx, 1);
     auto const k = bond_list(idx, 2);
     auto const m = bond_list(idx, 3);
+    // Translate pack indices to ParticleStore rows once.
+    auto const row_i = aosoa.row(i);
+    auto const row_j = aosoa.row(j);
+    auto const row_k = aosoa.row(k);
+    auto const row_m = aosoa.row(m);
     auto const &iaparams = *bonded_ias.at(bond_id);
 
-    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-    auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
-    auto const pos4 = aosoa.get_vector_at(aosoa.position, m);
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, row_i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, row_j);
+    auto const pos3 = aosoa.get_vector_at(aosoa.position, row_k);
+    auto const pos4 = aosoa.get_vector_at(aosoa.position, row_m);
 
     std::optional<Utils::Matrix<double, 3, 3>> pressure =
         calc_bonded_four_body_pressure_tensor(iaparams, pos1, pos2, pos3, pos4,
@@ -196,8 +209,9 @@ struct DihedralBondsPressureKernel {
                        layout.tensor_offset(layout.bonded_idx(bond_id), k3)) +=
             flat[k3];
     } else {
-      std::array<int, 3> pids = {aosoa.id(j), aosoa.id(k), aosoa.id(m)};
-      bond_broken_error(aosoa.id(i), {pids.data(), 3});
+      std::array<int, 3> pids = {aosoa.id(row_j), aosoa.id(row_k),
+                                 aosoa.id(row_m)};
+      bond_broken_error(aosoa.id(row_i), {pids.data(), 3});
     }
   }
 };

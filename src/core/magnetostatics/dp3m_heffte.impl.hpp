@@ -194,11 +194,14 @@ template <int cao> struct AssignDipole {
         "InterpolateDipoles", std::size_t{0u}, n_part, [&](auto p_index) {
           auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
           auto const tid = omp_get_thread_num();
-          auto const p_pos = aosoa.get_span_at(aosoa.position, p_index);
+          // Position lives in the ParticleStore column; translate the pack
+          // index to a store row (identity on the local prefix).
+          auto const p_pos =
+              aosoa.get_vector_at(aosoa.position, aosoa.row(p_index));
           auto const dip = unique_particles.at(p_index)->calc_dip();
           auto const weights =
               p3m_calculate_interpolation_weights<cao, memory_order>(
-                  p_pos, dp3m.params.ai, dp3m.local_mesh);
+                  p_pos.as_span(), dp3m.params.ai, dp3m.local_mesh);
           dp3m.inter_weights.store_at(p_index, weights);
           p3m_interpolate(
               dp3m.local_mesh, weights, [&dip, tid, &dp3m](int ind, double w) {
@@ -1054,10 +1057,11 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::calc_surface_term(
 
     ip = 0u;
     for (auto &p : particles) {
-      auto &torque = p.torque();
+      Utils::Vector3d torque = p.torque();
       torque[0u] -= pref * sumix[ip];
       torque[1u] -= pref * sumiy[ip];
       torque[2u] -= pref * sumiz[ip];
+      p.torque() = torque;
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
       p.dip_fld() -= pref * box_dip;
 #endif

@@ -25,6 +25,7 @@
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_store/ParticleStore.hpp"
 
 #include <shapes/NoWhere.hpp>
 #include <shapes/Shape.hpp>
@@ -33,6 +34,9 @@
 
 #include <memory>
 #include <utility>
+
+// forward declaration
+struct KokkosHandle;
 
 namespace System {
 class System;
@@ -46,6 +50,12 @@ public:
       : part_rep{}, m_shape{std::make_shared<Shapes::NoWhere>()},
         m_penetrable{false}, m_only_positive{false}, m_local_force{},
         m_outer_normal_force{}, m_system{} {}
+
+  ~ShapeBasedConstraint() override {
+    // Release part_rep's ParticleStore columns while Kokkos is still alive
+    // (see the equivalent handling in ~CellStructure). No-op if never attached.
+    m_part_rep_store.release_columns();
+  }
 
   void add_energy(const Particle &p, const Utils::Vector3d &folded_pos,
                   double time, Observable_stat &energy) const override;
@@ -78,8 +88,21 @@ public:
 
   bool &only_positive() { return m_only_positive; }
   bool &penetrable() { return m_penetrable; }
-  int &type() { return part_rep.type(); }
-  Utils::Vector3d &velocity() { return part_rep.v(); }
+  int &type() {
+    ensure_part_rep_attached();
+    return part_rep.type();
+  }
+  // v() returns a write-through proxy (not an lvalue reference) once velocity
+  // moves into the ParticleStore columns, so expose value get/set instead of a
+  // bound reference (mirrors the ParticleHandle proxy accessors).
+  Utils::Vector3d velocity() const {
+    ensure_part_rep_attached();
+    return part_rep.v();
+  }
+  void set_velocity(Utils::Vector3d const &velocity) {
+    ensure_part_rep_attached();
+    part_rep.v() = velocity;
+  }
 
   void set_type(int type);
 
@@ -90,7 +113,31 @@ public:
   }
 
 private:
-  Particle part_rep;
+  /** @brief Attach @c part_rep to its single-row store on first use.
+   *  A @ref Particle is a view -- EVERY accessor reads the store column, so
+   *  @c part_rep must be bound before its type/velocity/force is touched.
+   *  Idempotent. Attached lazily (not in the constructor) because Kokkos may
+   *  not be initialized then; every entry point that touches @c part_rep
+   *  (set_type/type/velocity/get_ia_param/force/add_energy) calls this first,
+   *  and all of them run after the System (hence Kokkos) exists. The mutated
+   *  members are @c mutable so the const accessors can attach. Defined in the
+   *  .cpp (needs @c ::kokkos_handle from communication.hpp). */
+  void ensure_part_rep_attached() const;
+
+  mutable Particle part_rep;
+  /** Standalone store backing @c part_rep's columns.
+   *  @c part_rep is a representative wall particle owned by the constraint,
+   *  not by any cell structure, so it needs its own single-row store for the
+   *  view accessors to work. Attached lazily by @c ensure_part_rep_attached.
+   */
+  mutable ParticleStore m_part_rep_store;
+  /** Co-ownership of the Kokkos runtime (mirrors @ref CellStructure's
+   *  @c m_kokkos_handle). @c m_part_rep_store holds Kokkos Views that must be
+   *  destroyed before @c Kokkos::finalize(); if this constraint outlives the
+   *  last CellStructure, holding a handle keeps the runtime alive until the
+   *  destructor releases the columns. Captured in @c ensure_part_rep_attached,
+   *  where Kokkos is guaranteed initialized. */
+  mutable std::shared_ptr<KokkosHandle> m_kokkos_handle;
   std::shared_ptr<Shapes::Shape> m_shape;
   bool m_penetrable;
   bool m_only_positive;

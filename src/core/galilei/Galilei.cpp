@@ -39,6 +39,10 @@ void Galilei::kill_particle_motion(System::System &system, bool omega) const {
 #ifndef ESPRESSO_ROTATION
   std::ignore = omega;
 #endif
+  // Writing p.v()/p.omega() requires a valid ParticleStore row (velocity and
+  // angular velocity live in the store columns). This is a script-facing entry
+  // point that may follow a topology change.
+  system.cell_structure->ensure_particle_store_synchronized();
   for (auto &p : system.cell_structure->local_particles()) {
     p.v() = {};
 #ifdef ESPRESSO_ROTATION
@@ -54,6 +58,8 @@ void Galilei::kill_particle_forces(System::System &system, bool torque) const {
 #ifndef ESPRESSO_ROTATION
   std::ignore = torque;
 #endif
+  // Ensure every particle has a valid ParticleStore row before writing forces.
+  system.cell_structure->ensure_particle_store_synchronized();
   for (auto &p : system.cell_structure->local_particles()) {
     p.force() = {};
 #ifdef ESPRESSO_ROTATION
@@ -68,6 +74,9 @@ void Galilei::kill_particle_forces(System::System &system, bool torque) const {
 Utils::Vector3d
 Galilei::calc_system_cms_position(System::System const &system) const {
   auto const &box_geo = *system.box_geo;
+  // Reading p.pos()/p.image_box() requires a valid ParticleStore row; this is
+  // a script-facing entry point that may follow a topology change.
+  system.cell_structure->ensure_particle_store_synchronized();
   auto total_mass = 0.;
   auto cms_pos = Utils::Vector3d{};
   for (auto const &p : system.cell_structure->local_particles()) {
@@ -84,12 +93,16 @@ Galilei::calc_system_cms_position(System::System const &system) const {
 
 Utils::Vector3d
 Galilei::calc_system_cms_velocity(System::System const &system) const {
+  // Reading p.v() requires a valid ParticleStore row (velocity lives in the
+  // store columns); this is a script-facing entry point that may follow a
+  // topology change.
+  system.cell_structure->ensure_particle_store_synchronized();
   auto total_mass = 0.;
   auto cms_vel = Utils::Vector3d{};
   for (auto const &p : system.cell_structure->local_particles()) {
     if (not p.is_virtual()) {
       total_mass += p.mass();
-      cms_vel += p.mass() * p.v();
+      cms_vel += p.mass() * Utils::Vector3d(p.v());
     }
   }
   total_mass = boost::mpi::all_reduce(comm_cart, total_mass, std::plus<>());

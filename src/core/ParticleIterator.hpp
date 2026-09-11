@@ -23,6 +23,7 @@
 
 #include <cassert>
 #include <iterator>
+#include <optional>
 #include <utility>
 
 namespace detail {
@@ -105,5 +106,43 @@ private:
     return (m_cell == (rhs.m_cell)) && (m_part == rhs.m_part);
   }
 
-  auto &dereference() const { return *m_part; }
+  // True iff the inner particle iterator exposes the store-handle accessors of
+  // @ref RowParticleIterator -- i.e. the production Cell::particles() iterator.
+  // Generic/mock cell iterators (unit tests) do not, and take the plain
+  // fallback below.
+  static constexpr bool rebindable_part =
+      requires(particle_iterator const &it) {
+        it.current_store();
+        it.current_row();
+      };
+
+  // Rebind this iterator's OWN reused view to the current (store, row) and
+  // hand back a reference to it. Going through m_part's own dereference would
+  // materialise/rebind the inner RowParticleIterator's cache instead, and that
+  // inner iterator is REPLACED wholesale at every cell boundary (increment()
+  // reassigns m_part), so its cache would be reconstructed once per cell --
+  // costly when cells hold few particles. Keeping the view here means it
+  // survives cell boundaries and is only ever rebound (two handle-field
+  // writes). For non-rebindable (mock) cell iterators this falls back to the
+  // plain by-reference dereference.
+  auto &dereference() const {
+    if constexpr (rebindable_part) {
+      auto &self = const_cast<ParticleIterator &>(*this);
+      if (not self.m_view) {
+        self.m_view.emplace();
+      }
+      self.m_view->attach_to_store(*m_part.current_store(),
+                                   m_part.current_row());
+      return *self.m_view;
+    } else {
+      return *m_part;
+    }
+  }
+
+  /** This iterator's reused view; rebound per dereference, never copied per
+   *  element (see @c dereference), for the production rebindable path. Unused
+   *  (and default-empty) on the generic fallback path. Mutable so the const
+   *  dereference (boost iterator_facade contract) can rebind the
+   *  logically-transient cache. */
+  mutable std::optional<detail::particle_t<BidirectionalIterator>> m_view;
 };

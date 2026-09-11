@@ -23,6 +23,7 @@
 
 #include "cell_system/CellStructure.hpp"
 
+#include <utils/attributes.hpp>
 #include <utils/device_qualifier.hpp>
 
 #include <Kokkos_Core.hpp>
@@ -34,14 +35,42 @@
 #include <span>
 
 struct CellStructure::AoSoA_pack {
+  // Particle-major (@ref ParticleStore::StateVectorLayout, LayoutRight) to
+  // match the ParticleStore columns these views alias / are derived from.
+  //
+  // position/image/director/velocity/id/mass alias the authoritative
+  // ParticleStore host columns and are indexed by *store row*, obtained by
+  // translating a pack index i through row(i). For i < n_local the translation
+  // is the identity (both are built in cell-traversal order); only the deduped
+  // ghost tail is remapped.
+  //
+  // `type` is a PACK-OWNED contiguous array, written at pack-rebuild time in
+  // commit_particle (`type(index)=p.type()`) and read pack-indexed by the hot
+  // pair kernels (forces/energy/pressure_cabana). The ParticleStore type column
+  // REMAINS authoritative; this pack copy is a derived cache refreshed on
+  // rebuild (a mid-run type change goes through System::on_particle_change,
+  // which calls set_resort_particles).
+  //
+  // Likewise `charge`/`dipm` are pack-owned contiguous arrays, refreshed per
+  // step ONLY when a coulomb (resp. dipolar) actor is active (see
+  // refresh_pack_charges / refresh_pack_dipm). The hot pair kernels and the P3M
+  // gather/spread loops read them PACK-INDEXED (contiguous). Pure-LJ runs never
+  // touch them, paying zero cost. The store q/dipm columns stay authoritative.
+  //
+  // The layout of the store-aliased vector views (position/image/director/
+  // velocity) MUST match the store columns' layout.
   using PositionViewType =
-      Kokkos::View<double *[3], Kokkos::LayoutRight, Kokkos::HostSpace>;
+      Kokkos::View<double *[3], ParticleStore::StateVectorLayout,
+                   Kokkos::HostSpace>;
   using VelocityViewType =
-      Kokkos::View<double *[3], Kokkos::LayoutRight, Kokkos::HostSpace>;
+      Kokkos::View<double *[3], ParticleStore::StateVectorLayout,
+                   Kokkos::HostSpace>;
   using DirectorViewType =
-      Kokkos::View<double *[3], Kokkos::LayoutRight, Kokkos::HostSpace>;
-  using ImageViewType =
-      Kokkos::View<int *[3], Kokkos::LayoutRight, Kokkos::HostSpace>;
+      Kokkos::View<double *[3], ParticleStore::StateVectorLayout,
+                   Kokkos::HostSpace>;
+  using ImageViewType = Kokkos::View<int *[3], ParticleStore::StateVectorLayout,
+                                     Kokkos::HostSpace>;
+  using RowMapViewType = Kokkos::View<int const *, Kokkos::HostSpace>;
   using ChargeViewType = Kokkos::View<double *, Kokkos::HostSpace>;
   using DipmViewType = Kokkos::View<double *, Kokkos::HostSpace>;
   using IdViewType = Kokkos::View<int *, Kokkos::HostSpace>;
@@ -49,63 +78,67 @@ struct CellStructure::AoSoA_pack {
   using MassViewType = Kokkos::View<double *, Kokkos::HostSpace>;
   using FlagsViewType = Kokkos::View<uint8_t *, Kokkos::HostSpace>;
 
+  // Store-aliased / store-derived columns (indexed by store row).
   PositionViewType position;
-  VelocityViewType velocity;
-  DirectorViewType director;
   ImageViewType image;
-  ChargeViewType charge;
-  DipmViewType dipm;
+  DirectorViewType director;
+  VelocityViewType velocity;
   IdViewType id;
-  TypeViewType type;
   MassViewType mass;
+  // `charge` aliases the authoritative ParticleStore q column and is read by
+  // *store row* on the cold BOND path (BondedCoulomb needs charges even with NO
+  // coulomb solver, so it must always be valid — hence it aliases the store
+  // rather than the guarded pack-owned pair_charge below).
+  ChargeViewType charge;
+  // Pack-index -> store-row translation. Identity on the local prefix.
+  RowMapViewType row_map;
+
+  // Pack-owned columns (indexed by pack index).
+  // `type` is written on rebuild (read by the hot pair kernels). `pair_charge`/
+  // `pair_dipm` are the contiguous hot-path charge/dipm columns, refreshed per
+  // step ONLY when the respective solver is active (see refresh_pack_charges /
+  // refresh_pack_dipm); the hot pair kernels and P3M gather/spread read them
+  // pack-indexed. `flags` is written every commit and is the allocation
+  // sentinel (type/pair_charge/pair_dipm/flags are resized together).
+  TypeViewType type;
+  ChargeViewType pair_charge;
+  DipmViewType pair_dipm;
   FlagsViewType flags;
 
   AoSoA_pack() = default;
 
   AoSoA_pack(std::size_t num_particles) { resize(num_particles); }
 
+  /** @brief Translate a pack index to its ParticleStore row. */
+  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION int
+  row(std::size_t i) const {
+    return row_map(i);
+  }
+
   HOST_ONLY_QUALIFIER
   void resize(std::size_t num_particles) {
-    if (position.extent(0) == 0) {
+    // id/mass/charge are store-aliased (bound in bind_pack_store_views), not
+    // allocated here. `type`/`pair_charge`/`pair_dipm`/`flags` are pack-owned
+    // contiguous columns allocated here; `flags` serves as the allocation
+    // sentinel (all four are resized together).
+    if (flags.extent(0) == 0) {
       // First allocation
-      position = PositionViewType("position", num_particles);
-      image = ImageViewType("image", num_particles);
-#ifdef ESPRESSO_ELECTROSTATICS
-      charge = ChargeViewType("charge", num_particles);
-#endif
-      id = IdViewType("id", num_particles);
-      type = TypeViewType("type", num_particles);
-#ifdef ESPRESSO_MASS
-      mass = MassViewType("mass", num_particles);
-#endif
+      type =
+          TypeViewType(Kokkos::view_alloc(Kokkos::WithoutInitializing, "type"),
+                       num_particles);
+      pair_charge = ChargeViewType(
+          Kokkos::view_alloc(Kokkos::WithoutInitializing, "pair_charge"),
+          num_particles);
+      pair_dipm = DipmViewType(
+          Kokkos::view_alloc(Kokkos::WithoutInitializing, "pair_dipm"),
+          num_particles);
       flags = FlagsViewType("flags", num_particles);
-      velocity = PositionViewType("velocity", num_particles);
-#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
-      director = DirectorViewType("director", num_particles);
-#endif
-#ifdef ESPRESSO_DIPOLES
-      dipm = DipmViewType("dipm", num_particles);
-#endif
     } else {
       // Reallocation
-      Kokkos::realloc(position, num_particles);
-      Kokkos::realloc(image, num_particles);
-#ifdef ESPRESSO_ELECTROSTATICS
-      Kokkos::realloc(charge, num_particles);
-#endif
-      Kokkos::realloc(id, num_particles);
-      Kokkos::realloc(type, num_particles);
-#ifdef ESPRESSO_MASS
-      Kokkos::realloc(mass, num_particles);
-#endif
+      Kokkos::realloc(Kokkos::WithoutInitializing, type, num_particles);
+      Kokkos::realloc(Kokkos::WithoutInitializing, pair_charge, num_particles);
+      Kokkos::realloc(Kokkos::WithoutInitializing, pair_dipm, num_particles);
       Kokkos::realloc(flags, num_particles);
-      Kokkos::realloc(velocity, num_particles);
-#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
-      Kokkos::realloc(director, num_particles);
-#endif
-#ifdef ESPRESSO_DIPOLES
-      Kokkos::realloc(dipm, num_particles);
-#endif
     }
   }
 
@@ -189,4 +222,29 @@ struct CellStructure::AoSoA_pack {
   DEVICE_QUALIFIER bool has_exclusion(std::size_t i) const {
     return flags(i) == uint8_t{1};
   }
+
+#ifdef ESPRESSO_ELECTROSTATICS
+  /**
+   * @brief Debug freshness check for the pack-owned @ref pair_charge column.
+   *
+   * The hot Coulomb pair kernels and the P3M real-space charge gather read
+   * @ref pair_charge PACK-INDEXED, trusting that it was resynced from the
+   * authoritative ParticleStore q column this step (via refresh_pack_charges).
+   * The store-aliased @ref charge view (indexed by store row) IS the current
+   * authoritative charge, so a fresh @ref pair_charge must equal it
+   * element-for-element. O(n_part) and debug-only (ESPRESSO_ADDITIONAL_CHECKS),
+   * i.e. negligible vs the O(mesh)/O(pairs) P3M work. @p n_part is the local
+   * particle count the caller is about to gather over.
+   */
+  void assert_pair_charge_fresh([[maybe_unused]] std::size_t n_part) const {
+#ifdef ESPRESSO_ADDITIONAL_CHECKS
+    for (std::size_t i = 0ul; i < n_part; ++i) {
+      assert(pair_charge(i) == charge(row(i)) &&
+             "P3M/Coulomb gather read a STALE pack charge column: "
+             "refresh_pack_charges was not called after the store q column "
+             "last changed");
+    }
+#endif
+  }
+#endif
 };

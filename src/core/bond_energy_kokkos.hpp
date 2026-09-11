@@ -73,16 +73,20 @@ struct PairBondsEnergyKernel {
 
     auto const i = bond_list(idx, 0);
     auto const j = bond_list(idx, 1);
+    // Translate pack indices to ParticleStore rows once.
+    auto const row_i = aosoa.row(i);
+    auto const row_j = aosoa.row(j);
     auto const &iaparams = *bonded_ias.at(bond_id);
 
-    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, row_i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, row_j);
     auto const dx = box_geo.get_mi_vector(pos1, pos2);
 
     std::optional<double> energy = calc_pair_bonded_energy(
         iaparams, dx, pos1, pos2,
 #ifdef ESPRESSO_ELECTROSTATICS
-        aosoa.charge(i) * aosoa.charge(j), coulomb_u_kernel
+        // charge aliases the store column; read by *store row*.
+        aosoa.charge(row_i) * aosoa.charge(row_j), coulomb_u_kernel
 #else
         0.0, nullptr
 #endif
@@ -91,8 +95,8 @@ struct PairBondsEnergyKernel {
     if (energy) {
       local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();
     } else {
-      auto partner_id = aosoa.id(j);
-      bond_broken_error(aosoa.id(i), {&partner_id, 1});
+      auto partner_id = aosoa.id(row_j);
+      bond_broken_error(aosoa.id(row_i), {&partner_id, 1});
     }
   }
 };
@@ -123,11 +127,15 @@ struct AngleBondsEnergyKernel {
     auto const i = bond_list(idx, 0);
     auto const j = bond_list(idx, 1);
     auto const k = bond_list(idx, 2);
+    // Translate pack indices to ParticleStore rows once.
+    auto const row_i = aosoa.row(i);
+    auto const row_j = aosoa.row(j);
+    auto const row_k = aosoa.row(k);
     auto const &iaparams = *bonded_ias.at(bond_id);
 
-    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-    auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, row_i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, row_j);
+    auto const pos3 = aosoa.get_vector_at(aosoa.position, row_k);
     auto const vec1 = box_geo.get_mi_vector(pos2, pos1);
     auto const vec2 = box_geo.get_mi_vector(pos3, pos1);
 
@@ -137,8 +145,8 @@ struct AngleBondsEnergyKernel {
     if (energy) {
       local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();
     } else {
-      std::array<int, 2> pids = {aosoa.id(j), aosoa.id(k)};
-      bond_broken_error(aosoa.id(i), {pids.data(), 2});
+      std::array<int, 2> pids = {aosoa.id(row_j), aosoa.id(row_k)};
+      bond_broken_error(aosoa.id(row_i), {pids.data(), 2});
     }
   }
 };
@@ -170,12 +178,17 @@ struct DihedralBondsEnergyKernel {
     auto const j = bond_list(idx, 1);
     auto const k = bond_list(idx, 2);
     auto const m = bond_list(idx, 3);
+    // Translate pack indices to ParticleStore rows once.
+    auto const row_i = aosoa.row(i);
+    auto const row_j = aosoa.row(j);
+    auto const row_k = aosoa.row(k);
+    auto const row_m = aosoa.row(m);
     auto const &iaparams = *bonded_ias.at(bond_id);
 
-    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-    auto const pos3 = aosoa.get_vector_at(aosoa.position, k);
-    auto const pos4 = aosoa.get_vector_at(aosoa.position, m);
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, row_i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, row_j);
+    auto const pos3 = aosoa.get_vector_at(aosoa.position, row_k);
+    auto const pos4 = aosoa.get_vector_at(aosoa.position, row_m);
     auto const v12 = box_geo.get_mi_vector(pos1, pos2);
     auto const v23 = box_geo.get_mi_vector(pos3, pos1);
     auto const v34 = box_geo.get_mi_vector(pos4, pos3);
@@ -186,8 +199,9 @@ struct DihedralBondsEnergyKernel {
     if (energy) {
       local_energy(thread_id, layout.bonded_idx(bond_id)) += energy.value();
     } else {
-      std::array<int, 3> pids = {aosoa.id(j), aosoa.id(k), aosoa.id(m)};
-      bond_broken_error(aosoa.id(i), {pids.data(), 3});
+      std::array<int, 3> pids = {aosoa.id(row_j), aosoa.id(row_k),
+                                 aosoa.id(row_m)};
+      bond_broken_error(aosoa.id(row_i), {pids.data(), 3});
     }
   }
 };

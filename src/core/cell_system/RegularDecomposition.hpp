@@ -24,6 +24,7 @@
 #include "cell_system/ParticleDecomposition.hpp"
 
 #include "cell_system/Cell.hpp"
+#include "cell_system/MigrationStaging.hpp"
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
@@ -98,6 +99,13 @@ public:
                        BoxGeometry const &box_geo, LocalBox const &local_geo,
                        std::optional<std::pair<int, int>> fully_connected);
 
+  /** @brief Install the staging-store handle; see @ref MigrationStaging.
+   *  Set by @ref CellStructure. Also propagated to the child decompositions by
+   *  @ref HybridDecomposition. */
+  void set_migration_staging(MigrationStaging staging) {
+    m_migration_staging = std::move(staging);
+  }
+
   GhostComm::HaloPlan const *halo_plan() const override { return &m_halo_plan; }
 
   std::span<Cell *const> local_cells() const override { return m_local_cells; }
@@ -151,42 +159,45 @@ private:
   }
 
   /**
-   * @brief Move particles into the cell system if it belongs to this node.
+   * @brief Deliver received staging rows to local cells.
    *
-   * Moves all particles from src into the local cell
-   * system if they do belong here. Otherwise the
-   * particles are moved into rest.
+   * For each staging-store row index in @p src, checks whether the particle
+   * belongs to a local cell. If so, the staging row is staged into the target
+   * cell as a row reference (@ref CellParticleStorage::insert_staged_row); the
+   * next store rebuild copies it into a committed row, preserving the
+   * row-assignment order. Otherwise the staging-row index is kept in @p rest
+   * for the next exchange round. @p src is cleared.
    *
-   * @param src Particles to move.
-   * @param rest Output list for left-over particles.
+   * @param src Staging-row indices of received particles.
+   * @param rest Output list for left-over (undeliverable) staging rows.
    * @param modified_cells Local cells that were touched.
    */
-  void move_if_local(ParticleList &src, ParticleList &rest,
+  void move_if_local(std::vector<int> &src, std::vector<int> &rest,
                      std::vector<ParticleChange> &modified_cells);
 
   /**
-   * @brief Split particle list by direction.
+   * @brief Split staging-row indices by direction.
    *
-   * Moves all particles from @p src into @p left
-   * or @p right depending on whether they belong
-   * to the left or right side of the local node
-   * in direction @p dir.
+   * Routes each staging-row index in @p src into @p left or @p right depending
+   * on whether the particle (its position read from the staging store) belongs
+   * to the left or right side of the local node in direction @p dir. Rows that
+   * move in neither direction stay in @p src.
    *
-   * @param src Particles to sort.
-   * @param left Particles that should go to the left
-   * @param right Particles that should go to the right
+   * @param src Staging-row indices to sort (mutated: routed rows removed).
+   * @param left Rows that should go to the left neighbor.
+   * @param right Rows that should go to the right neighbor.
    * @param dir Direction to consider.
    */
-  void move_left_or_right(ParticleList &src, ParticleList &left,
-                          ParticleList &right, int dir) const;
+  void move_left_or_right(std::vector<int> &src, std::vector<int> &left,
+                          std::vector<int> &right, int dir) const;
 
   /**
    * @brief One round of particle exchange with the next neighbors.
    *
-   * @param[in] pl Particle on the move
+   * @param[in,out] displaced_rows Staging-row indices of particles on the move.
    * @param[out] modified_cells Cells that got touched.
    */
-  void exchange_neighbors(ParticleList &pl,
+  void exchange_neighbors(std::vector<int> &displaced_rows,
                           std::vector<ParticleChange> &modified_cells);
 
   /**
@@ -227,4 +238,7 @@ private:
    *  @c max_num_cells has to be larger than 27, e.g. one inner cell.
    */
   static constexpr int max_num_cells = 32768;
+
+  /** Staging-store handle for the per-field migration wire. */
+  MigrationStaging m_migration_staging;
 };

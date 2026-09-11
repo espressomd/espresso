@@ -64,14 +64,14 @@ static Thermostat::GammaType lb_handle_particle_anisotropy(Particle const &p,
 static Utils::Vector3d lb_drag_force(Particle const &p, double lb_gamma,
                                      Utils::Vector3d const &v_fluid) {
 #ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
-  auto const v_drift = v_fluid + p.mu_E();
+  auto const v_drift = v_fluid + Utils::Vector3d(p.mu_E());
 #else
   auto const &v_drift = v_fluid;
 #endif
   auto const gamma = lb_handle_particle_anisotropy(p, lb_gamma);
 
   /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
-  return Utils::hadamard_product(gamma, v_drift - p.v());
+  return Utils::hadamard_product(gamma, v_drift - Utils::Vector3d(p.v()));
 }
 
 Utils::Vector3d lb_drag_force(LB::Solver const &lb, double lb_gamma,
@@ -314,12 +314,13 @@ void ParticleCoupling::kernel(std::vector<Particle *> const &particles) {
 
     auto const span_size = *it_positions_force_coupling_counter;
     ++it_positions_force_coupling_counter;
+    auto p_force = p.force();
     for (uint8_t i{0u}; i < span_size; ++i) {
       auto &pos = *it_positions_force_coupling;
       if (pos >= domain_lower_corner and pos < domain_upper_corner) {
         /* Particle is in our LB volume, so this node
          * is responsible to adding its force */
-        p.force() += force_on_particle;
+        p_force += force_on_particle;
       }
       force_coupling_forces.emplace_back(force_on_fluid);
       ++it_positions_force_coupling;
@@ -335,7 +336,9 @@ static void lb_coupling_sanity_checks(Particle const &p) {
   lb does (at the moment) not support rotational particle coupling.
   Consequently, anisotropic particles are also not supported.
   */
-  auto const &p_gamma = p.gamma();
+  // gamma() returns a value/proxy (not an lvalue reference) once the friction
+  // coefficient moves into the ParticleStore columns; bind by value.
+  Utils::Vector3d const p_gamma = p.gamma();
   if (p_gamma[0] != p_gamma[1] or p_gamma[1] != p_gamma[2]) {
     runtimeErrorMsg() << "anisotropic particle (id " << p.id()
                       << ") coupled to LB.";
@@ -360,7 +363,12 @@ void System::System::lb_couple_particles() {
     LB::ParticleCoupling coupling{*thermostat->lb, lb, *box_geo, *local_geo};
     LB::CouplingBookkeeping bookkeeping{*cell_structure};
     lb.ghost_communication_vel();
-    std::vector<Particle *> particles{};
+    // local_particles()/ghost_particles() hand out transient cached views, so
+    // storing `&p` from the loop would dangle after the next increment.
+    // Snapshot each coupled particle's view into a stable owning buffer (the
+    // view still aliases the store row, so force writes through it land in the
+    // column) and pass pointers into that buffer to the kernel.
+    std::vector<Particle> coupled_views{};
     for (auto const *particle_range : {&real_particles, &ghost_particles}) {
       for (auto &p : *particle_range) {
         if (not LB::is_tracer(p) and bookkeeping.should_be_coupled(p)) {
@@ -368,9 +376,14 @@ void System::System::lb_couple_particles() {
     defined(ESPRESSO_PARTICLE_ANISOTROPY)
           LB::lb_coupling_sanity_checks(p);
 #endif
-          particles.emplace_back(&p);
+          coupled_views.push_back(p);
         }
       }
+    }
+    std::vector<Particle *> particles{};
+    particles.reserve(coupled_views.size());
+    for (auto &view : coupled_views) {
+      particles.emplace_back(&view);
     }
     coupling.kernel(particles);
   }
