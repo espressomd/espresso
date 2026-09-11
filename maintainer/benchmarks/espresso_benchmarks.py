@@ -20,6 +20,7 @@
 from pathlib import Path
 from benchmark_utils import generate_test_parameters, CONFIGS
 import csv
+import os
 import shlex
 import subprocess
 import reframe as rfm
@@ -32,9 +33,13 @@ from reframe.core.builtins import (
     sanity_function,
     variable,
 )
+from reframe.core.backends import getlauncher
 
 DEBUG_PARTITION_FEATURE = "debug"
 COMPUTE_PARTITION_FEATURE = "compute"
+
+PREBUILT_MODULE = os.environ.get("ESPRESSO_PREBUILT_MODULE", "")
+PREBUILT_CONFIGS = [{"config": "prebuilt", "mpi": True}]
 
 
 def partition_constraints(use_debug):
@@ -46,7 +51,6 @@ def partition_constraints(use_debug):
     return [f"+{feature}", "local"]
 
 
-@rfm.simple_test
 class BuildEspresso(rfm.CompileOnlyRegressionTest):
     """Compiles ESPResSo for a specific configuration file."""
 
@@ -201,16 +205,26 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
         )
 
 
+# Register compile step when no prebuild path is given
+if not PREBUILT_MODULE:
+    BuildEspresso = rfm.simple_test(BuildEspresso)
+
+
 @rfm.simple_test
 class EspressoBenchmark(rfm.RunOnlyRegressionTest):
     """Executes benchmark tests with different parameters."""
 
-    build_params = parameter(CONFIGS)
+    build_params = parameter(PREBUILT_CONFIGS if PREBUILT_MODULE else CONFIGS)
     test_case = parameter(generate_test_parameters())
 
     valid_systems = ["+compute", "local"]
-    valid_prog_environs = ["espresso-env", "local-env"]
+    valid_prog_environs = (
+        ["espresso-prebuilt"] if PREBUILT_MODULE
+        else ["espresso-env", "local-env"]
+    )
     use_debug_partition = variable(typ.Bool, value=False)
+
+    prebuilt_launcher = variable(str, value="")
 
     # This will set the slurm option --exlusive for scheduled jobs
     exclusive_access = True
@@ -235,13 +249,16 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
         self.script_filename, self.script_args, self.num_mpi_ranks = self.test_case  # type: ignore
         self.use_gpu = "--gpu" in self.script_args
 
-        self.variants = BuildEspresso.get_variant_nums(
-            build_params=self.build_params)
+        if PREBUILT_MODULE:
+            self.sourcesdir = "."
+        else:
+            self.variants = BuildEspresso.get_variant_nums(
+                build_params=self.build_params)
 
-        assert (
-            len(self.variants) == 1
-        ), "Benchmark test should depend on exactly one build test."
-        self.depends_on(BuildEspresso.variant_name(self.variants[0]))
+            assert (
+                len(self.variants) == 1
+            ), "Benchmark test should depend on exactly one build test."
+            self.depends_on(BuildEspresso.variant_name(self.variants[0]))
 
         if not mpi_enabled:
             self.num_mpi_ranks = 1
@@ -317,32 +334,61 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
 
     @run_before("run")
     def prepare_execution(self):
-        build_target = self.getdep(
-            BuildEspresso.variant_name(self.variants[0]))
-        self.espresso_commit = build_target.espresso_commit
-        build_dir = f"{build_target.stagedir}/build"
-        script_path = f"{
-            build_dir}/maintainer/benchmarks/{self.script_filename}"
         self.benchmark_file_path = f"{self.stagedir}/benchmarks.csv"
 
-        if self.current_system.name == "local":
-            self.executable = f"mpiexec -n {
-                self.num_mpi_ranks} {build_dir}/pypresso"
+        if PREBUILT_MODULE:
+            script_path = self.script_filename
+            interpreter = "python3"
+            self.env_vars = {"OMP_NUM_THREADS": "1", "OMP_PROC_BIND": "false"}
         else:
-            self.executable = f"{build_dir}/pypresso"
+            build_target = self.getdep(
+                BuildEspresso.variant_name(self.variants[0]))
+            self.espresso_commit = build_target.espresso_commit
+            build_dir = f"{build_target.stagedir}/build"
+            script_path = f"{
+                build_dir}/maintainer/benchmarks/{self.script_filename}"
+            interpreter = f"{build_dir}/pypresso"
+
+        if self.current_system.name == "local":
+            self.executable = f"mpiexec -n {self.num_mpi_ranks} {interpreter}"
+        else:
+            self.executable = interpreter
+
+        if self.prebuilt_launcher:
+            self.job.launcher = getlauncher(self.prebuilt_launcher)()
 
         self.executable_opts = [script_path, *self.script_args]
+
+    @sn.deferrable
+    def _csv_ranks_match(self):
+        """
+        Check that the job really ran on the requested number of ranks.
+        """
+        with open(self.benchmark_file_path) as f:
+            rows = list(csv.DictReader(f))
+
+        return bool(rows) and all(
+            int(row["ranks"]) == self.num_tasks for row in rows
+        )
 
     @sanity_function
     def check_test_ran_without_errors(self):
         """
-        Check if no errors are found in self.stderr and benchmarks.csv
-        file was created.
+        Check if no errors are found in self.stderr, benchmarks.csv file was
+        created, and the payload ran on the number of ranks we asked for.
         """
 
         return sn.and_(
-            sn.assert_not_found(r"(?i)error", self.stderr),
-            sn.path_isfile(self.benchmark_file_path),
+            sn.and_(
+                sn.assert_not_found(r"(?i)error", self.stderr),
+                sn.path_isfile(self.benchmark_file_path),
+            ),
+            sn.assert_true(
+                self._csv_ranks_match(),
+                msg=f"benchmarks.csv does not report {self.num_tasks} ranks; "
+                "the MPI launch may have produced independent single-rank "
+                "processes",
+            ),
         )
 
     def _make_perf_extractor(self, label: str, field: str):

@@ -20,8 +20,9 @@
 
 # Usage function
 usage() {
-    echo "Usage: $0 -p <prefix> [-n <test_names>] [--commit <ref>] [-l]" \
-         "[--debug] [--dry-run]"
+    echo "Usage: $0 -p <prefix> [-n <test_names>] [--commit <ref>]" \
+         "[--prebuilt-init <script> --prebuilt-module <name>]" \
+         "[-l] [--debug] [--dry-run]"
     echo "  -p PREFIX       : Installation prefix for ReFrame benchmarks. Each run"
     echo "                    writes to its own <PREFIX>_dd_mm_yyyy_<n> directory"
     echo "                    (n counts the runs of that day); the timeline plot"
@@ -30,6 +31,9 @@ usage() {
     echo "  -l              : List available test cases (overrides -r/--dry-run)"
     echo "  --commit REF    : Benchmark a specific ESPResSo commit, tag or branch"
     echo "                    instead of the newest commit of the default branch."
+    echo "  --prebuilt-init SCRIPT and --prebuilt-module NAME :"
+    echo "                    Benchmark a pre-built ESPResSo instead of building one."
+    echo "                    Use -n to exclude cases the build cannot run."
     echo "  --debug         : On the ant cluster, run on the debug partition"
     echo "                    instead of the production compute nodes"
     echo "  --dry-run       : Optional flag to perform a dry run"
@@ -42,6 +46,9 @@ LIST_MODE=false
 USE_DEBUG_PARTITION=false
 # Optional git ref (commit/tag/branch) to benchmark, empty = default branch.
 COMMIT_REF=""
+# Optional pre-built ESPResSo: script to source and module to load.
+PREBUILT_INIT=""
+PREBUILT_MODULE=""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ReFrame -n filters; repeatable, selects the union.
@@ -67,6 +74,26 @@ while [[ $# -gt 0 ]]; do
             COMMIT_REF="$2"
             if [ -z "$COMMIT_REF" ]; then
                 echo "Error: --commit value is empty" >&2
+                exit 1
+            fi
+            shift 2
+            ;;
+        --prebuilt-init)
+            [ $# -ge 2 ] || {
+                echo "Error: --prebuilt-init requires a value" >&2; usage; }
+            PREBUILT_INIT="$2"
+            if [ -z "$PREBUILT_INIT" ]; then
+                echo "Error: --prebuilt-init value is empty" >&2
+                exit 1
+            fi
+            shift 2
+            ;;
+        --prebuilt-module)
+            [ $# -ge 2 ] || {
+                echo "Error: --prebuilt-module requires a value" >&2; usage; }
+            PREBUILT_MODULE="$2"
+            if [ -z "$PREBUILT_MODULE" ]; then
+                echo "Error: --prebuilt-module value is empty" >&2
                 exit 1
             fi
             shift 2
@@ -105,7 +132,19 @@ if [ -z "$PREFIX" ]; then
     exit 1
 fi
 
-# Catch mistyped refs now
+# The two pre-built flags describe one installation and are useless apart.
+if { [ -n "$PREBUILT_INIT" ] && [ -z "$PREBUILT_MODULE" ]; } ||
+   { [ -z "$PREBUILT_INIT" ] && [ -n "$PREBUILT_MODULE" ]; }; then
+    echo "Error: --prebuilt-init and --prebuilt-module must be given together" >&2
+    exit 1
+fi
+if [ -n "$PREBUILT_MODULE" ] && [ -n "$COMMIT_REF" ]; then
+    echo "Error: --commit selects a source revision to build, which is" \
+         "meaningless with a pre-built ESPResSo; use one or the other." >&2
+    exit 1
+fi
+
+# Catch mistyped refs now (pointless without a build)
 if [ -n "$COMMIT_REF" ]; then
     if git -C "$SCRIPT_DIR" rev-parse --verify --quiet \
             "${COMMIT_REF}^{commit}" >/dev/null 2>&1; then
@@ -121,6 +160,38 @@ if [ -n "$COMMIT_REF" ]; then
         echo "Error: '${COMMIT_REF}' is not a commit, tag or branch of" \
              "espressomd/espresso." >&2
         exit 1
+    fi
+fi
+
+# Test the pre-built installation
+if [ -n "$PREBUILT_MODULE" ]; then
+    if ! bash -c 'source "$1" >/dev/null 2>&1 && module load "$2" >/dev/null 2>&1' \
+            _ "$PREBUILT_INIT" "$PREBUILT_MODULE"; then
+        echo "Error: could not activate the pre-built ESPResSo." \
+             "Check that '${PREBUILT_INIT}' is sourceable and that module" \
+             "'${PREBUILT_MODULE}' exists:" >&2
+        bash -c 'source "$1" && module load "$2"' \
+            _ "$PREBUILT_INIT" "$PREBUILT_MODULE" >&2
+        exit 1
+    fi
+
+    ESPRESSO_ID="$(bash -c 'source "$1" >/dev/null 2>&1 && module load "$2" >/dev/null 2>&1 &&
+        python3 -c "import espressomd.version as v
+print(v.git_commit() or (v.friendly() + \"-\" + \"$2\"))"' \
+        _ "$PREBUILT_INIT" "$PREBUILT_MODULE" 2>/dev/null | tail -n 1)"
+
+    if [ -z "$ESPRESSO_ID" ]; then
+        # The module loads but this node cannot import espressomd
+        echo "Warning: could not query the ESPResSo version from" \
+             "'${PREBUILT_MODULE}'; recording the module name instead." >&2
+        ESPRESSO_ID="prebuilt-${PREBUILT_MODULE}"
+    fi
+
+    if ! bash -c 'source "$1" >/dev/null 2>&1 && module load "$2" >/dev/null 2>&1 &&
+            python3 -c "import pint"' \
+            _ "$PREBUILT_INIT" "$PREBUILT_MODULE" >/dev/null 2>&1; then
+        echo "Warning: 'pint' is not available in the pre-built Python;" \
+             "mc_acid_base_reservoir.py will fail. Exclude it with -n." >&2
     fi
 fi
 
@@ -155,6 +226,9 @@ fi
 if [ -n "$COMMIT_REF" ]; then
     RUN_SUFFIX="${RUN_SUFFIX}_COMMIT"
 fi
+if [ -n "$PREBUILT_MODULE" ]; then
+    RUN_SUFFIX="${RUN_SUFFIX}_PREBUILT"
+fi
 
 mkdir -p "$(dirname "$PREFIX")" || exit 1
 
@@ -182,6 +256,13 @@ S_OPTS=(-S "use_debug_partition=${USE_DEBUG_PARTITION}")
 if [ -n "$COMMIT_REF" ]; then
     S_OPTS+=(-S "espresso_ref=${COMMIT_REF}")
 fi
+if [ -n "$PREBUILT_MODULE" ]; then
+    export ESPRESSO_PREBUILT_INIT="$PREBUILT_INIT"
+    export ESPRESSO_PREBUILT_MODULE="$PREBUILT_MODULE"
+    export RFM_RESOLVE_MODULE_CONFLICTS=0
+    S_OPTS+=(-S "espresso_commit=${ESPRESSO_ID}")
+    S_OPTS+=(-S "espresso_ref=${PREBUILT_MODULE}")
+fi
 
 # Run ReFrame
 reframe -C reframe_config.py \
@@ -205,11 +286,11 @@ if [ "$RUN_OPTION" = "-r" ]; then
     perflogs=("${RUN_DIR}"/perflogs/*/*/EspressoBenchmark.log)
     shopt -u nullglob
 
+    NO_PERFLOG=false
     if [ "${#perflogs[@]}" -eq 0 ]; then
-        # Nothing ran (or everything failed), but the sibling run directories
-        # still hold the history worth plotting.
         echo "Warning: no perflog found under ${RUN_DIR}/perflogs;" \
              "plotting the history of the earlier runs only" >&2
+        NO_PERFLOG=true
         PLOT_DIR="$RUN_DIR"
     else
         # A fresh run directory holds a single log, written by this run.
@@ -229,4 +310,9 @@ if [ "$RUN_OPTION" = "-r" ]; then
 
     # Create link to newest benchmark plots after every run 
     ln -sfn "$(basename "$RUN_DIR")" "${PREFIX}_latest${RUN_SUFFIX}"
+
+    if [ "$NO_PERFLOG" = true ]; then
+        echo "Error: this run produced no benchmark results" >&2
+        exit 1
+    fi
 fi

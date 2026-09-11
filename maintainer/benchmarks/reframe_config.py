@@ -17,6 +17,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
+import shlex
+
+_prebuilt_init = os.environ.get("ESPRESSO_PREBUILT_INIT", "")
+_prebuilt_module = os.environ.get("ESPRESSO_PREBUILT_MODULE", "")
+if bool(_prebuilt_init) != bool(_prebuilt_module):
+    raise RuntimeError(
+        "ESPRESSO_PREBUILT_INIT and ESPRESSO_PREBUILT_MODULE must be set together."
+    )
+
+_prebuilt_prepare_cmds = (
+    [
+        f"{{ source {shlex.quote(_prebuilt_init)}"
+        f" && module load {shlex.quote(_prebuilt_module)}; }} 2>&1 || exit 1"
+    ]
+    if _prebuilt_module
+    else []
+)
+
 site_configuration = {
     "systems": [
         {
@@ -32,7 +51,7 @@ site_configuration = {
                     "launcher": "srun",
                     "time_limit": "0d0h20m0s",
                     "access": ["--partition=debug"],
-                    "environs": ["espresso-env"],
+                    "environs": ["espresso-env", "espresso-prebuilt"],
                     "features": ["debug"],
                     "resources": [
                         {
@@ -48,7 +67,7 @@ site_configuration = {
                     "launcher": "srun",
                     "time_limit": "0d2h0m0s",
                     "access": ["--partition=compute"],
-                    "environs": ["espresso-env"],
+                    "environs": ["espresso-env", "espresso-prebuilt"],
                     "features": ["compute"],
                     "resources": [
                         {
@@ -69,7 +88,7 @@ site_configuration = {
                     "descr": "Default partition",
                     "scheduler": "local",
                     "launcher": "local",
-                    "environs": ["local-env"],
+                    "environs": ["local-env", "espresso-prebuilt"],
                     "max_jobs": 1,
                 }
             ],
@@ -80,6 +99,10 @@ site_configuration = {
             "name": "local-env",
             "cc": "gcc",
             "cxx": "g++",
+        },
+        {
+            "name": "espresso-prebuilt",
+            "prepare_cmds": _prebuilt_prepare_cmds,
         },
         {
             "name": "espresso-env",
