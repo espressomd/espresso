@@ -291,13 +291,15 @@ struct ElectrostaticLayerCorrection
       std::visit(
           [this, &pos1, &pos2, &p1f_asym, &p2f_asym, q1q2](auto &p3m_ptr) {
             auto const &p3m = *p3m_ptr;
+            // force on particle 1 exerted by the images of particle 2
             elc.dielectric_layers_contribution(
-                *m_box_geo, pos1, pos2, q1q2,
+                *m_box_geo, pos2, pos1, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   p1f_asym += p3m.pair_force(q_eff, d, d.norm());
                 });
+            // force on particle 2 exerted by the images of particle 1
             elc.dielectric_layers_contribution(
-                *m_box_geo, pos2, pos1, q1q2,
+                *m_box_geo, pos1, pos2, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   p2f_asym += p3m.pair_force(q_eff, d, d.norm());
                 });

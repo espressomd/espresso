@@ -40,6 +40,7 @@
 #include "kokkos_helpers.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "particle_enumeration.hpp"
+#include "particle_node.hpp"
 #include "particle_reduction.hpp"
 #include "system/System.hpp"
 
@@ -1068,7 +1069,12 @@ void CellStructure::remove_all_particles() {
 
   clear_particle_index();
   clear_bond_properties();
+  // clear_particles() above only resets each cell's row range and staging
+  // buffer; the store still holds the rows, so it must be marked dirty for the
+  // next rebuild to drop them.
   mark_particle_store_dirty();
+  clear_particle_node();
+  get_system().on_particle_change();
 }
 
 /* Map the data parts flags from cells to those used internally

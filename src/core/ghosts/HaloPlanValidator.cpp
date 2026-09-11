@@ -75,7 +75,7 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
   for (Cell *c : local_cells) {
     for (Cell *n : c->neighbors().all()) {
       Cell const *pl = n;
-      if (ghost_set.find(pl) != ghost_set.end()) {
+      if (ghost_set.contains(pl)) {
         referenced_ghosts.insert(pl);
       }
     }
@@ -104,7 +104,7 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
 
     // Accumulate recv fill counts; check targets are in ghost set.
     for (Cell const *pl : nc.recv) {
-      if (ghost_set.find(pl) == ghost_set.end()) {
+      if (not ghost_set.contains(pl)) {
         std::ostringstream oss;
         oss << "NeighborComm peer=" << nc.peer
             << " recv target is not a ghost cell";
@@ -117,7 +117,7 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
   // Accumulate local.dst fill counts; check targets are in ghost set.
   for (auto const &lc : plan.local) {
     Cell const *pl = lc.dst;
-    if (ghost_set.find(pl) == ghost_set.end()) {
+    if (not ghost_set.contains(pl)) {
       violations.emplace_back("LocalComm dst target is not a ghost cell");
     }
     ++fill_count[pl];
@@ -137,8 +137,7 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
     auto it = fill_count.find(pl);
     int count = (it != fill_count.end()) ? it->second : 0;
     if (count == 0) {
-      if (collective_set.find(pl) == collective_set.end() &&
-          referenced_ghosts.find(pl) != referenced_ghosts.end()) {
+      if (not collective_set.contains(pl) and referenced_ghosts.contains(pl)) {
         violations.emplace_back(
             "ghost cell is never filled (missing recv/dst)");
       }
@@ -154,10 +153,10 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
   for (Cell *c : local_cells) {
     for (Cell *n : c->neighbors().all()) {
       Cell const *pl = n;
-      if (ghost_set.find(pl) == ghost_set.end()) {
+      if (not ghost_set.contains(pl)) {
         continue; // not a ghost neighbor
       }
-      if (collective_set.find(pl) != collective_set.end()) {
+      if (collective_set.contains(pl)) {
         continue; // covered by the collective broadcast/reduce section
       }
       auto it = fill_count.find(pl);
@@ -177,7 +176,7 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
       continue; // boundary cells are expected to have ghost neighbors
     }
     for (Cell *n : c->neighbors().all()) {
-      if (ghost_set.find(n) != ghost_set.end()) {
+      if (ghost_set.contains(n)) {
         violations.emplace_back("interior cell has a ghost neighbor");
         break; // one violation per cell is sufficient
       }

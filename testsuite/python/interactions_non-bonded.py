@@ -182,7 +182,7 @@ def buckingham_force(r, a, b, c, d, cutoff, discont, shift):
 
 def soft_sphere_potential(r, a, n, cutoff, offset=0):
     V = 0.
-    if r < offset + cutoff:
+    if (r > offset) and (r < offset + cutoff):
         V = a * np.power(r - offset, -n)
     return V
 
@@ -484,12 +484,11 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.run_test("soft_sphere",
                       {"a": 1.92,
                        "n": 3.03,
-                       "cutoff": 1.123,
-                       "offset": 0.123},
+                       "cutoff": 1.1,
+                       "offset": 0.2},
                       force_kernel=soft_sphere_force,
                       energy_kernel=soft_sphere_potential,
-                      n_steps=113,
-                      n_initial_steps=12)
+                      n_steps=113)
 
     # Test Hertzian Potential
     @utx.skipIfMissingFeatures("HERTZIAN")
@@ -683,7 +682,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         if "espressomd" in force_kernel_varnames:
             force_parameters["espressomd"] = espressomd
 
-        for _ in range(n_steps):
+        for _ in range(n_steps + 1):
             p1.pos = p1.pos + self.step
             d = np.linalg.norm(p1.pos - p0.pos)
             self.system.integrator.run(recalc_forces=True, steps=0)

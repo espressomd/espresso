@@ -619,12 +619,6 @@ static bool maybe_move_particle(int p_id, Utils::Vector3d const &pos) {
   return true;
 }
 
-void remove_all_particles() {
-  get_cell_structure().remove_all_particles();
-  System::get_system().on_particle_change();
-  clear_particle_node();
-}
-
 void remove_particle(int p_id) {
   if (this_node == 0) {
     particle_node[p_id] = -1;
