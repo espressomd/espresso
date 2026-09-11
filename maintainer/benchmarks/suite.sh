@@ -20,13 +20,16 @@
 
 # Usage function
 usage() {
-    echo "Usage: $0 -p <prefix> [-n <test_names>] [-l] [--debug] [--dry-run]"
+    echo "Usage: $0 -p <prefix> [-n <test_names>] [--commit <ref>] [-l]" \
+         "[--debug] [--dry-run]"
     echo "  -p PREFIX       : Installation prefix for ReFrame benchmarks. Each run"
     echo "                    writes to its own <PREFIX>_dd_mm_yyyy_<n> directory"
     echo "                    (n counts the runs of that day); the timeline plot"
     echo "                    is assembled from all of them"
     echo "  -n TESTS        : Optional ReFrame test-name filter; repeatable (selects the union)"
     echo "  -l              : List available test cases (overrides -r/--dry-run)"
+    echo "  --commit REF    : Benchmark a specific ESPResSo commit, tag or branch"
+    echo "                    instead of the newest commit of the default branch."
     echo "  --debug         : On the ant cluster, run on the debug partition"
     echo "                    instead of the production compute nodes"
     echo "  --dry-run       : Optional flag to perform a dry run"
@@ -37,6 +40,10 @@ usage() {
 DRY_RUN=false
 LIST_MODE=false
 USE_DEBUG_PARTITION=false
+# Optional git ref (commit/tag/branch) to benchmark, empty = default branch.
+COMMIT_REF=""
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ReFrame -n filters; repeatable, selects the union.
 N_OPTS=()
 
@@ -44,11 +51,24 @@ N_OPTS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -p)
+            # "shift 2" does nothing when only one token is left, which would
+            # spin this loop forever, so check before consuming a value.
+            [ $# -ge 2 ] || { echo "Error: -p requires a value" >&2; usage; }
             PREFIX="$2"
             shift 2
             ;;
         -n)
+            [ $# -ge 2 ] || { echo "Error: -n requires a value" >&2; usage; }
             N_OPTS+=(-n "$2")
+            shift 2
+            ;;
+        --commit)
+            [ $# -ge 2 ] || { echo "Error: --commit requires a value" >&2; usage; }
+            COMMIT_REF="$2"
+            if [ -z "$COMMIT_REF" ]; then
+                echo "Error: --commit value is empty" >&2
+                exit 1
+            fi
             shift 2
             ;;
         -l)
@@ -85,6 +105,25 @@ if [ -z "$PREFIX" ]; then
     exit 1
 fi
 
+# Catch mistyped refs now
+if [ -n "$COMMIT_REF" ]; then
+    if git -C "$SCRIPT_DIR" rev-parse --verify --quiet \
+            "${COMMIT_REF}^{commit}" >/dev/null 2>&1; then
+        : # known to this clone
+    elif git ls-remote --exit-code \
+            https://github.com/espressomd/espresso.git \
+            "$COMMIT_REF" >/dev/null 2>&1; then
+        : # a branch or tag of the upstream repository
+    elif [[ "$COMMIT_REF" =~ ^[0-9a-fA-F]{7,40}$ ]]; then
+        echo "Note: cannot verify commit ${COMMIT_REF} before the build;" \
+             "the checkout in the build job will resolve it." >&2
+    else
+        echo "Error: '${COMMIT_REF}' is not a commit, tag or branch of" \
+             "espressomd/espresso." >&2
+        exit 1
+    fi
+fi
+
 # Determine final ReFrame action
 if [ "$LIST_MODE" = true ]; then
     RUN_OPTION="-l"
@@ -113,6 +152,9 @@ fi
 if [ "$LIST_MODE" = true ]; then
     RUN_SUFFIX="${RUN_SUFFIX}_LIST"
 fi
+if [ -n "$COMMIT_REF" ]; then
+    RUN_SUFFIX="${RUN_SUFFIX}_COMMIT"
+fi
 
 mkdir -p "$(dirname "$PREFIX")" || exit 1
 
@@ -137,6 +179,9 @@ export RFM_SQLITE_DB_FILE="${RUN_DIR}/results.db"
 export RFM_PREFIX="$RUN_DIR"
 
 S_OPTS=(-S "use_debug_partition=${USE_DEBUG_PARTITION}")
+if [ -n "$COMMIT_REF" ]; then
+    S_OPTS+=(-S "espresso_ref=${COMMIT_REF}")
+fi
 
 # Run ReFrame
 reframe -C reframe_config.py \
@@ -156,8 +201,6 @@ fi
 
 
 if [ "$RUN_OPTION" = "-r" ]; then
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
     shopt -s nullglob
     perflogs=("${RUN_DIR}"/perflogs/*/*/EspressoBenchmark.log)
     shopt -u nullglob
@@ -185,5 +228,5 @@ if [ "$RUN_OPTION" = "-r" ]; then
         || { echo "Error: benchmark timeline plot failed" >&2; exit 1; }
 
     # Create link to newest benchmark plots after every run 
-    ln -sfn "$(basename "$RUN_DIR")" "${PREFIX}_latest"
+    ln -sfn "$(basename "$RUN_DIR")" "${PREFIX}_latest${RUN_SUFFIX}"
 fi

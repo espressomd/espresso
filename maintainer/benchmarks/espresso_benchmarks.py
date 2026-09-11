@@ -20,6 +20,7 @@
 from pathlib import Path
 from benchmark_utils import generate_test_parameters, CONFIGS
 import csv
+import shlex
 import subprocess
 import reframe as rfm
 import reframe.utility.sanity as sn
@@ -64,6 +65,9 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
     # Commit hash of the ESPResSo checkout
     espresso_commit = variable(str, value="unknown", loggable=True)
 
+    # Git ref (commit, tag or branch) to build, empty means the default branch
+    espresso_ref = variable(str, value="", loggable=True)
+
     @run_after("init")
     def select_partition(self):
         self.valid_systems = partition_constraints(self.use_debug_partition)
@@ -89,7 +93,7 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
                         supported_configs} configs "
                     f"(tried to use {self.config_name})"
                 )
-        else:
+        elif self.use_debug_partition:
             supported_configs = ["empty"]
             if self.config_name not in supported_configs:
                 self.skip(
@@ -116,6 +120,15 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
             rf'sed -ri "/#define\s+ADDITIONAL_CHECKS/d" {config_name}.hpp',
             rf"cp {config_name}.hpp myconfig.hpp",
         ]
+
+        # Clone specifc requested ref
+        if self.espresso_ref:
+            self.prebuild_cmds.insert(
+                0,
+                "git -c advice.detachedHead=false checkout "
+                f"{shlex.quote(str(self.espresso_ref))}",
+            )
+
         self.build_system.max_concurrency = 16  # type: ignore
 
         if not self.is_local():
@@ -156,7 +169,17 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
     def record_commit_hash(self):
         """
         Record the commit hash of the ESPResSo checkout that was compiled.
+
+        A dry run clones the repository but never executes ``prebuild_cmds``,
+        so HEAD is still the default branch rather than the requested ref;
+        report that instead of a plausible but wrong hash.
         """
+        if self.is_dry_run():
+            self.espresso_commit = (
+                f"dryrun:{self.espresso_ref}" if self.espresso_ref else "dryrun"
+            )
+            return
+
         try:
             self.espresso_commit = subprocess.check_output(
                 ["git", "-C", self.stagedir, "rev-parse", "HEAD"],
@@ -168,7 +191,14 @@ class BuildEspresso(rfm.CompileOnlyRegressionTest):
 
     @sanity_function
     def assert_sanity(self):
-        return sn.assert_found(r"Built target pypresso", self.stdout)
+        # CMake only warns about -D options a project does not know, so an
+        # older ref could drop ESPRESSO_BUILD_* silently and still build.
+        return sn.and_(
+            sn.assert_found(r"Built target pypresso", self.stdout),
+            sn.assert_not_found(
+                r"Manually-specified variables were not used", self.stdout
+            ),
+        )
 
 
 @rfm.simple_test
@@ -187,6 +217,9 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
 
     # Commit hash of the benchmarked ESPResSo checkout
     espresso_commit = variable(str, value="unknown", loggable=True)
+
+    # Git ref that was requested for this run, empty means the default branch
+    espresso_ref = variable(str, value="", loggable=True)
 
     # Name of the ESPResSo build configuration (maxset/default/empty)
     build_config = variable(str, value="unknown", loggable=True)

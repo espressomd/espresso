@@ -127,7 +127,8 @@ site_configuration = {
                     "%(check_perf_unit)s,"
                     "%(check_perf_var)s,"
                     "%(check_espresso_commit)s,"
-                    "%(check_build_config)s",
+                    "%(check_build_config)s,"
+                    "%(check_espresso_ref)s",
                     "append": True,
                 }
             ],
