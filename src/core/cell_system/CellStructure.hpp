@@ -183,20 +183,12 @@ public:
   using ForceType =
       Kokkos::View<double *[3], Kokkos::LayoutRight, memory_space>;
   using VirialType = Kokkos::View<double[3], Kokkos::LayoutRight, memory_space>;
-  // ScatterView's third parameter is a DEVICE type, so it takes the EXECUTION
-  // space -- not `memory_space`. Both spellings compile host-only (Kokkos maps
-  // HostSpace back to its default host execution space), which is why upstream
-  // can pass memory_space here: no upstream translation unit feeds this header
-  // to nvcc. This branch's forces_lj_device.cu does, and under CUDA the
-  // memory-space spelling resolves to a ScatterDuplicated specialization whose
-  // copy constructor is deleted, so every by-value ScatterView accessor below
-  // fails to compile (GitLab cuda12-maxset / cuda12-coverage).
   using ScatterForce =
       Kokkos::Experimental::ScatterView<double *[3], Kokkos::LayoutRight,
-                                        execution_space>;
+                                        memory_space>;
   using ScatterVirial =
       Kokkos::Experimental::ScatterView<double[3], Kokkos::LayoutRight,
-                                        execution_space>;
+                                        memory_space>;
   using ListAlgorithm = Cabana::HalfNeighborTag;
   using ListType =
       CustomVerletList<memory_space, ListAlgorithm, Cabana::VerletLayout2D,
