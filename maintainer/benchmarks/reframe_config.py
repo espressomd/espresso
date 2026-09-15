@@ -66,7 +66,6 @@ site_configuration = {
                     "scheduler": "squeue",
                     "launcher": "srun",
                     "time_limit": "0d2h0m0s",
-                    "access": ["--partition=compute"],
                     "environs": ["espresso-env", "espresso-prebuilt"],
                     "features": ["compute"],
                     "resources": [
