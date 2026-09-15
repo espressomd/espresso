@@ -221,6 +221,7 @@ KOKKOS_INLINE_FUNCTION double device_mi_coord(double a, double b, double length,
   return dx - std::rint(dx * length_inv_masked) * length;
 }
 
+#ifdef ESPRESSO_LENNARD_JONES
 /**
  * @brief Build the flat device LJ parameter table.
  *
@@ -228,6 +229,11 @@ KOKKOS_INLINE_FUNCTION double device_mi_coord(double a, double b, double length,
  * <tt>ti*n_types + tj</tt>) from @p nonbonded_ias, then deep-copies it to the
  * device. The table is symmetric because @ref
  * InteractionsNonBonded::get_ia_param is symmetric.
+ *
+ * Guarded on ESPRESSO_LENNARD_JONES: the sole caller lives in the
+ * LJ-enabled branch of @ref create_device_short_range_pair_loop, so without
+ * that feature this is a dead static function and -Wunused-function (errors in
+ * the `empty` CI config) rejects the translation unit.
  */
 static Kokkos::View<LJParamsDevice *, Kokkos::DefaultExecutionSpace>
 build_lj_device_param_table(InteractionsNonBonded const &nonbonded_ias,
@@ -240,23 +246,17 @@ build_lj_device_param_table(InteractionsNonBonded const &nonbonded_ias,
   auto table_host = Kokkos::create_mirror_view(table_device);
   for (int ti = 0; ti < n_types; ++ti) {
     for (int tj = 0; tj < n_types; ++tj) {
-#ifdef ESPRESSO_LENNARD_JONES
       auto const &lj = nonbonded_ias.get_ia_param(ti, tj).lj;
       table_host(static_cast<std::size_t>(ti) *
                      static_cast<std::size_t>(n_types) +
                  static_cast<std::size_t>(tj)) = LJParamsDevice{
           lj.eps, lj.sig, lj.offset, lj.max_cutoff(), lj.min_cutoff()};
-#else
-      static_cast<void>(nonbonded_ias);
-      table_host(
-          static_cast<std::size_t>(ti) * static_cast<std::size_t>(n_types) +
-          static_cast<std::size_t>(tj)) = LJParamsDevice{0., 0., 0., -1., 0.};
-#endif
     }
   }
   Kokkos::deep_copy(table_device, table_host);
   return table_device;
 }
+#endif // ESPRESSO_LENNARD_JONES
 
 /**
  * @brief Build the opt-in device short-range (pure-LJ) Verlet pair loop, or an
