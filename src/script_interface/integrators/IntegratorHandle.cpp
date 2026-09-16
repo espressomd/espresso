@@ -31,6 +31,7 @@
 #include "core/PropagationMode.hpp"
 #include "core/integrators/Propagation.hpp"
 #include "core/system/System.hpp"
+#include "core/thermostat.hpp"
 
 #include <memory>
 #include <string>
@@ -56,6 +57,14 @@ IntegratorHandle::IntegratorHandle() {
          get_system().set_force_cap(get_value<double>(v));
        },
        [this]() { return get_system().get_force_cap(); }},
+      {"default_propagation", AutoParameter::read_only,
+       [this]() {
+         auto &system = get_system();
+         auto &propagation = *system.propagation;
+         propagation.update_default_propagation(
+             system.thermostat->thermo_switch);
+         return propagation.default_propagation;
+       }},
       {"integrator",
        [this](Variant const &v) {
          auto const old_instance = m_instance;

@@ -94,6 +94,10 @@ bool is_valid_propagation_combination(int propagation) {
     return force_code_coverage(true);
   case TRANS_VS_RELATIVE | ROT_VS_INDEPENDENT:
     return force_code_coverage(true);
+  case TRANS_VS_RELATIVE | ROT_EULER:
+    return force_code_coverage(true);
+  case TRANS_VS_RELATIVE | ROT_LANGEVIN:
+    return force_code_coverage(true);
   case TRANS_VS_RELATIVE | ROT_VS_RELATIVE | TRANS_LB_MOMENTUM_EXCHANGE:
     return force_code_coverage(true);
   case TRANS_VS_RELATIVE | ROT_VS_RELATIVE | TRANS_LANGEVIN | ROT_LANGEVIN:

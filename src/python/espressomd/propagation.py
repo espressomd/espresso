@@ -27,6 +27,11 @@ class Propagation(enum.IntFlag):
     Flags for virtual sites are special and instruct the propagator to skip
     integration; virtual sites can still be coupled to thermostats (Langevin,
     lattice-Boltzmann) to apply friction and noise to their forces and torques.
+    A virtual site that carries ``TRANS_VS_RELATIVE`` together with
+    ``ROT_EULER`` or ``ROT_LANGEVIN`` (and no ``ROT_VS_*`` flag) follows the
+    position of the real particle but rotates on its own: its orientation is
+    integrated from its own angular velocity and torque, and torques acting
+    on it are not transferred to the real particle.
     """
     NONE = 0
     """No propagation."""
@@ -61,7 +66,7 @@ class Propagation(enum.IntFlag):
     ROT_STOKESIAN = 2**14
     """Euler algorithm that integrates Stokes' equations of rotation."""
     ROT_VS_INDEPENDENT = 2**15
-    """Algorithm for virtual sites rotation where the quaternion of the virtual doesn't follow the quaternion of the real particle."""
+    """Algorithm for virtual sites rotation where the quaternion of the virtual doesn't follow the quaternion of the real particle, but torques acting on the virtual site are still transferred to the real particle. The orientation of the virtual site is left to an external model, e.g. thermal Stoner-Wohlfarth."""
 
     # Since Python 3.11, IntFlag mixes in ReprEnum, which makes str(),
     # format() and f-strings fall back to int.__str__() and print the

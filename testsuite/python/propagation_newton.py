@@ -115,6 +115,49 @@ class VelocityVerlet(ut.TestCase):
     @utx.skipIfMissingFeatures(["MASS",
                                 "ROTATIONAL_INERTIA",
                                 "EXTERNAL_FORCES"])
+    def test_default_propagation(self):
+        """
+        The integrator handle reports the propagation modes that
+        ``Propagation.SYSTEM_DEFAULT`` resolves to for the active
+        integrator and thermostat combination.
+
+        """
+        Propagation = espressomd.propagation.Propagation
+        system = self.system
+        has_rotation = espressomd.has_features("ROTATION")
+
+        def rot(mode):
+            return mode if has_rotation else Propagation.NONE
+
+        system.integrator.set_vv()
+        default = system.integrator.default_propagation
+        self.assertIsInstance(default, Propagation)
+        self.assertEqual(default,
+                         Propagation.TRANS_NEWTON | rot(Propagation.ROT_EULER))
+
+        system.thermostat.set_langevin(kT=1., gamma=1., seed=42)
+        self.assertEqual(system.integrator.default_propagation,
+                         Propagation.TRANS_LANGEVIN |
+                         rot(Propagation.ROT_LANGEVIN))
+        system.thermostat.turn_off()
+
+        system.thermostat.set_brownian(kT=1., gamma=1., seed=42)
+        system.integrator.set_brownian_dynamics()
+        self.assertEqual(system.integrator.default_propagation,
+                         Propagation.TRANS_BROWNIAN |
+                         rot(Propagation.ROT_BROWNIAN))
+        system.thermostat.turn_off()
+
+        system.integrator.set_steepest_descent(
+            f_max=0., gamma=0.1, max_displacement=0.01)
+        self.assertEqual(system.integrator.default_propagation,
+                         Propagation.NONE)
+        system.integrator.set_vv()
+
+        # the attribute is read-only
+        with self.assertRaises(RuntimeError):
+            system.integrator.default_propagation = Propagation.TRANS_NEWTON
+
     def test_propagation(self):
         """
         Check integration of Newton's equations of motion and Euler's equations
