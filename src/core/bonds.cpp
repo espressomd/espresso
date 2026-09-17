@@ -82,15 +82,15 @@ bool add_bond(System::System &system, int bond_id,
   bool added = false;
 
   if (Particle *p = cell_structure.get_local_particle(particle_ids[0])) {
-    // Primary entry: the one used for force/energy calculation, holding
-    // the other participants' ids in the order the bond was created with.
+    // Primary entry: used for force/energy calculation, holds the other
+    // participants' ids in creation order.
     BondView bond(bond_id, {particle_ids.data() + 1, particle_ids.size() - 1});
     p->bonds().insert(bond);
     added = true;
   }
 
-  // Mirror entries: every other participant also gets a non-primary entry,
-  // so the bond can be found, queried and removed from any participant.
+  // Mirror entries, so the bond can be found and removed from any
+  // participant.
   for (std::size_t i = 1; i < particle_ids.size(); ++i) {
     Particle *p = cell_structure.get_local_particle(particle_ids[i]);
     if (not p) {
@@ -132,12 +132,10 @@ bool remove_bond(System::System &system, int bond_id,
     auto others0 = other_participant_ids(particle_ids, 0);
     std::ranges::sort(others0);
     // Prefer the unambiguous interpretation: particle_ids[0] holds the
-    // primary and every other participant holds the matching mirror. This
-    // correctly disambiguates the case where the same bond id and
-    // participant set exists twice with swapped ownership (e.g. added
-    // once from each side) -- matching any role independently per
-    // participant could otherwise erase a mismatched pair of entries and
-    // leave two mutually-inconsistent orphans behind.
+    // primary, every other participant the matching mirror. This
+    // disambiguates a bond that exists twice with swapped ownership
+    // (added once from each side), where role-independent matching could
+    // erase a mismatched pair and leave inconsistent orphans behind.
     if (try_remove(particle_ids[0], others0, true)) {
       for (std::size_t i = 1; i < particle_ids.size(); ++i) {
         auto others = other_participant_ids(particle_ids, i);
@@ -146,27 +144,36 @@ bool remove_bond(System::System &system, int bond_id,
       }
       return true;
     }
+
+    // Fall back to role-independent matching, e.g. when particle_ids[0]
+    // only holds a mirror. Reuse others0 instead of recomputing it.
+    bool removed = try_remove(particle_ids[0], others0, std::nullopt);
+    for (std::size_t i = 1; i < particle_ids.size(); ++i) {
+      auto others = other_participant_ids(particle_ids, i);
+      std::ranges::sort(others);
+      if (try_remove(particle_ids[i], others, std::nullopt)) {
+        removed = true;
+      }
+    }
+    return removed;
   }
 
-  // Fall back to matching any role independently per participant, e.g.
-  // when the caller does not know which side owns the bond, or
-  // particle_ids[0] itself only ever held a mirror.
-  bool removed = false;
-  for (std::size_t i = 0; i < particle_ids.size(); ++i) {
-    auto others = other_participant_ids(particle_ids, i);
-    std::ranges::sort(others);
-    if (try_remove(particle_ids[i], others, std::nullopt)) {
-      removed = true;
-    }
+  return false;
+}
+
+void sync_bond_tuples(std::vector<std::pair<int, std::vector<int>>> &tuples,
+                      boost::mpi::communicator const &comm) {
+  if (comm.size() > 1) {
+    Utils::Mpi::gather_buffer(tuples, comm);
+    boost::mpi::broadcast(comm, tuples, 0);
   }
-  return removed;
 }
 
 void rebuild_bond_mirrors(System::System &system) {
   auto &cell_structure = *system.cell_structure;
 
-  // Gather every primary entry found on any rank, so mirrors can be added
-  // for participants that live on a different rank than the primary.
+  // Gather the primary entries of all ranks, so mirrors can be added for
+  // participants living on a different rank than the primary.
   std::vector<std::pair<int, std::vector<int>>> primaries;
   for (auto const &p : cell_structure.local_particles()) {
     for (auto const bond : p.bonds()) {
@@ -177,15 +184,11 @@ void rebuild_bond_mirrors(System::System &system) {
       }
     }
   }
-  if (::comm_cart.size() > 1) {
-    Utils::Mpi::gather_buffer(primaries, ::comm_cart);
-    boost::mpi::broadcast(::comm_cart, primaries, 0);
-  }
+  ::sync_bond_tuples(primaries, ::comm_cart);
 
   for (auto const &[bond_id, ids] : primaries) {
-    // Index 0 is the owner, whose primary entry already exists (that is
-    // where this tuple came from); only the other participants may need
-    // a mirror added.
+    // Index 0 is the owner, whose primary entry already exists; only the
+    // other participants may need a mirror.
     for (std::size_t i = 1; i < ids.size(); ++i) {
       Particle *p = cell_structure.get_local_particle(ids[i]);
       if (not p) {

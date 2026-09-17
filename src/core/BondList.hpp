@@ -42,12 +42,10 @@
  * of a bond can be inspected (but not changed)
  * via this view.
  *
- * A bond is stored on every one of its participating particles: exactly one
- * of them holds the @em primary entry (partner ids in the order the bond was
- * created with), the others hold @em mirror entries (the remaining
- * participant ids, same relative order, with the holder removed). Mirror
- * entries exist so a bond can be found/queried/removed from any participant;
- * only primary entries are fed into force/energy calculation.
+ * A bond is stored on all its participants: one holds the @em primary entry
+ * (partner ids in creation order), the others a @em mirror entry (the same
+ * ids minus themselves). Mirrors make a bond findable and removable from any
+ * participant; only primary entries enter force/energy calculation.
  */
 class BondView {
   /* Bond id */
@@ -62,8 +60,7 @@ public:
 
   int bond_id() const { return m_id; }
   auto const &partner_ids() const { return m_partners; }
-  /** @brief Whether this is the primary entry (used for force/energy calc)
-   *  as opposed to a mirror entry held by a non-owning participant. */
+  /** @brief Whether this is the primary entry (as opposed to a mirror). */
   bool is_primary() const { return m_primary; }
 
   bool operator==(BondView const &rhs) const {
@@ -102,17 +99,11 @@ public:
   using storage_type = Utils::compact_vector<int>;
 
   /**
-   * @brief Count of primary entries in a bond list, broken down by arity.
+   * @brief Count of primary entries, broken down by arity.
    *
-   * Kept incrementally up to date at every mutation point (insert/erase/
-   * clear/copy/move/deserialize) so that consumers which only need to know
-   * how many primary pair/angle/dihedral bonds a particle owns -- notably
-   * @ref CellStructure::set_index_map(), which pre-sizes Kokkos views from
-   * these counts on every Verlet-list rebuild -- can read them in O(1)
-   * instead of walking and decoding every entry of the list. That walk
-   * would otherwise cover mirror entries too (see the class-level docs
-   * below), which carry no primary bonds of their own but still lengthen
-   * the list every other participant of a bond is stored on.
+   * Updated incrementally at every mutation point, so that consumers such
+   * as @ref CellStructure::set_index_map() can read them in O(1) instead
+   * of walking and decoding the whole list (mirror entries included).
    */
   struct PrimaryCounts {
     int pair = 0;
@@ -137,9 +128,8 @@ private:
   }
 
   /** @brief Add (or, with a negative @p delta, remove) @p bond's
-   *  contribution to @p counts; a no-op for mirror entries and for
-   *  arities @ref CellStructure::set_index_map() does not track (0 or
-   *  more than 3 partners), matching its own classification exactly. */
+   *  contribution to @p counts. Mirror entries and untracked arities
+   *  (0 or more than 3 partners) are ignored. */
   static void adjust_primary_counts(PrimaryCounts &counts, BondView const &bond,
                                     int delta) {
     if (not bond.is_primary()) {
@@ -163,9 +153,8 @@ private:
   storage_type m_storage;
   PrimaryCounts m_primary_counts;
 
-  /** @brief Recompute @c m_primary_counts from scratch by walking the
-   *  full list; used only after bulk-loading @c m_storage (deserialize),
-   *  never on a per-step/per-rebuild path. */
+  /** @brief Recompute @c m_primary_counts by walking the full list;
+   *  only needed after bulk-loading @c m_storage (deserialize). */
   void recompute_primary_counts() {
     m_primary_counts = PrimaryCounts{};
     for (auto const bond : *this) {
@@ -189,9 +178,8 @@ private:
 
     ar &boost::serialization::make_array(m_storage.data(), m_storage.size());
 
-    // migrate pre-versioning archives (bond id delimiters without a role
-    // bit) to the current encoding; such archives only ever contain
-    // primary entries, so scaling the delimiter by 2 is sufficient
+    // migrate pre-versioning archives to the current encoding; they only
+    // contain primary entries, so scaling the delimiter by 2 suffices
     if (Archive::is_loading::value and version < 1) {
       auto *data = m_storage.data();
       for (std::size_t i = 0; i < m_storage.size(); ++i) {
@@ -216,11 +204,8 @@ public:
   private:
     /** Iterator into the bond list */
     storage_iterator m_it;
-    /** Cache of find_end(m_it), lazily filled by whichever of
-     *  dereference()/increment() runs first for the current m_it; a
-     *  standard range-for always dereferences before incrementing, so in
-     *  the common case this makes find_end()'s O(partner count) scan run
-     *  once per bond entry instead of twice. */
+    /** Cache of find_end(m_it), filled lazily by dereference() or
+     *  increment(), so the scan runs once per entry instead of twice. */
     mutable storage_iterator m_delim = m_it;
     mutable bool m_delim_valid = false;
 
@@ -312,8 +297,8 @@ public:
    * @return iterator pointing one past the erased element.
    */
   const_iterator erase(const_iterator pos) {
-    // dereference (and thus fill pos's delim cache) before the erase
-    // invalidates the storage the resulting BondView's span points into
+    // dereference before the erase invalidates the storage the
+    // resulting BondView's span points into
     auto const bond = *pos;
     adjust_primary_counts(m_primary_counts, bond, -1);
     return Iterator{m_storage.erase(pos.m_it, std::next(pos.delim()))};

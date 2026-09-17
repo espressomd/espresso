@@ -39,18 +39,14 @@
 /**
  * @brief Unit tests for add_bond()/remove_bond() (bonds.cpp).
  *
- * These exercise the "primary entry + mirror entries on every other
- * participant" bookkeeping and, in particular, remove_bond()'s two-phase
- * matching strategy (try particle_ids[0] as the primary owner first, else
- * fall back to matching any role independently per participant): a single
- * bond can be removed starting from any of its participants, not just the
- * one holding the primary entry, and this must not misbehave when the same
- * bond id/participant set exists twice with swapped ownership. All
- * particles here are co-located, so a single MPI rank sees every
- * participant as a real (non-ghost) local particle; the interaction of this
- * bookkeeping with ghost communication across ranks is covered separately
- * by the collision-detection and particle-slice-assignment regression
- * tests (which specifically pin bond partners on different ranks).
+ * These exercise the primary/mirror entry bookkeeping and in particular
+ * remove_bond()'s two-phase matching (try particle_ids[0] as the primary
+ * owner first, else match any role per participant): a bond can be removed
+ * starting from any participant, even when the same bond exists twice with
+ * swapped ownership. All particles here are co-located, so every
+ * participant is a real local particle; the interaction with ghost
+ * communication is covered by the collision-detection and
+ * particle-slice-assignment regression tests.
  */
 
 struct GlobalConfig : public EspressoCoreGlobalConfig {
@@ -102,7 +98,7 @@ BOOST_FIXTURE_TEST_CASE(remove_from_owner_side, ParticleFactory) {
   BOOST_CHECK(not local_bonds(2).front().is_primary());
 
   /* remove_bond() called with the owner (1) first removes both the
-   * primary entry on 1 and the mirror entry on 2. */
+   * primary entry on 1 and the mirror on 2. */
   BOOST_CHECK(::remove_bond(system, bond_id, {1, 2}));
   BOOST_CHECK(local_bonds(1).empty());
   BOOST_CHECK(local_bonds(2).empty());
@@ -119,10 +115,8 @@ BOOST_FIXTURE_TEST_CASE(remove_from_mirror_side, ParticleFactory) {
   BOOST_REQUIRE_EQUAL(local_bonds(2).size(), 1u);
 
   /* remove_bond() called with the mirror holder (2) first must still
-   * find and remove both entries: particle_ids[0]=2 does not own a
-   * primary entry for this bond, so the primary-first fast path fails
-   * and the fallback ("match any role independently per participant")
-   * must kick in for both 2's own mirror and 1's primary. */
+   * remove both entries: the primary-first fast path fails, so the
+   * role-independent fallback has to kick in. */
   BOOST_CHECK(::remove_bond(system, bond_id, {2, 1}));
   BOOST_CHECK(local_bonds(1).empty());
   BOOST_CHECK(local_bonds(2).empty());
@@ -131,8 +125,7 @@ BOOST_FIXTURE_TEST_CASE(remove_from_mirror_side, ParticleFactory) {
 BOOST_FIXTURE_TEST_CASE(remove_via_mirror_only_participant_of_angle_bond,
                         ParticleFactory) {
   /* A 3-participant (angle) bond owned by 1, with 2 and 3 only ever
-   * holding mirrors -- neither 2 nor 3 has ever been party to a primary
-   * entry for any bond, unlike the pair-bond case above. */
+   * holding mirrors. */
   auto const bond_id = 0;
   create_particle({1., 1., 1.}, 1, 0);
   create_particle({1., 1., 1.}, 2, 0);
@@ -152,8 +145,7 @@ BOOST_FIXTURE_TEST_CASE(remove_via_mirror_only_participant_of_angle_bond,
   BOOST_CHECK(
       (sorted_partner_ids(local_bonds(3).front()) == std::vector<int>{1, 2}));
 
-  /* Initiate removal from 3, a participant that only ever held a
-   * mirror; the primary owner (1) is listed afterwards. */
+  /* Initiate removal from 3, which only holds a mirror. */
   BOOST_CHECK(::remove_bond(system, bond_id, {3, 1, 2}));
   BOOST_CHECK(local_bonds(1).empty());
   BOOST_CHECK(local_bonds(2).empty());
@@ -161,12 +153,10 @@ BOOST_FIXTURE_TEST_CASE(remove_via_mirror_only_participant_of_angle_bond,
 }
 
 BOOST_FIXTURE_TEST_CASE(duplicate_bond_added_from_both_sides, ParticleFactory) {
-  /* The same bond id/participant pair added once from each side creates
-   * two co-existing entries per particle (a primary and a mirror). A
-   * single remove_bond() call naming an owner must remove exactly the
-   * matching primary/mirror pair, not an arbitrary (potentially
-   * mismatched) one -- verified by checking what is left behind, not
-   * just that something was removed. */
+  /* The same bond added once from each side creates two co-existing
+   * entries per particle (a primary and a mirror). A single remove_bond()
+   * call naming an owner must remove exactly the matching pair, not an
+   * arbitrary one. */
   auto const bond_id = 0;
   create_particle({1., 1., 1.}, 1, 0);
   create_particle({1., 1., 1.}, 2, 0);
@@ -178,9 +168,8 @@ BOOST_FIXTURE_TEST_CASE(duplicate_bond_added_from_both_sides, ParticleFactory) {
   BOOST_REQUIRE_EQUAL(local_bonds(1).size(), 2u);
   BOOST_REQUIRE_EQUAL(local_bonds(2).size(), 2u);
 
-  /* Remove bond A by naming its owner (1) first: must remove 1's
-   * primary and 2's matching mirror, leaving bond B (2's primary, 1's
-   * mirror) completely untouched on both particles. */
+  /* Remove bond A by naming its owner (1) first: must remove 1's primary
+   * and 2's matching mirror, leaving bond B untouched. */
   BOOST_CHECK(::remove_bond(system, bond_id, {1, 2}));
 
   BOOST_REQUIRE_EQUAL(local_bonds(1).size(), 1u);
@@ -196,13 +185,10 @@ BOOST_FIXTURE_TEST_CASE(duplicate_bond_added_from_both_sides, ParticleFactory) {
 
 BOOST_FIXTURE_TEST_CASE(rebuild_bond_mirrors_backfills_missing_mirrors,
                         ParticleFactory) {
-  /* rebuild_bond_mirrors() exists to backfill mirrors for checkpoints
-   * written before bonds were stored on all participants, which only
-   * ever contain primary entries (mpiio.cpp calls it, unconditionally,
-   * right after loading particle data). Simulate that on-disk state
-   * directly: insert primary-only entries via BondList::insert(),
-   * bypassing add_bond() so no mirrors are written, exactly like
-   * loading such a legacy archive into p.bonds() would leave things. */
+  /* rebuild_bond_mirrors() backfills mirrors for checkpoints written
+   * before bonds were stored on all participants, which only contain
+   * primary entries. Simulate that state by inserting primary-only
+   * entries via BondList::insert(), bypassing add_bond(). */
   auto const pair_bond_id = 0;
   auto const angle_bond_id = 1;
   create_particle({1., 1., 1.}, 1, 0);
@@ -229,9 +215,7 @@ BOOST_FIXTURE_TEST_CASE(rebuild_bond_mirrors_backfills_missing_mirrors,
 
   ::rebuild_bond_mirrors(system);
 
-  /* The pair bond's mirror now exists on 2, and the angle bond's
-   * mirrors now exist on 1 and 3, matching what add_bond() would have
-   * produced for the same participant lists. */
+  /* The mirrors now match what add_bond() would have produced. */
   BOOST_REQUIRE_EQUAL(local_bonds(1).size(), 2u); // pair primary + angle mirror
   BOOST_REQUIRE_EQUAL(local_bonds(2).size(), 2u); // angle primary + pair mirror
   BOOST_REQUIRE_EQUAL(local_bonds(3).size(), 1u); // angle mirror

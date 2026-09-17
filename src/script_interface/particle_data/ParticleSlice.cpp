@@ -57,34 +57,24 @@ static void set_particles_bonds(
     auto const pid = pids[i];
     auto const bonds_ids = all_bonds_ids[i];
     auto const bonds_partner_ids = all_bonds_partner_ids[i];
-    // A primary entry is always safe to remove: pid genuinely owns that
-    // bond, exactly like ParticleHandle::delete_owned_bonds(). A mirror
-    // entry is only safe to remove if every one of its participants is
-    // also part of this bulk reassignment: reconstructing the participant
-    // list from a mirror and calling ::remove_bond() cleans up the
-    // corresponding entries on the other participants wherever they are
-    // locally known (via role-independent matching), which is essential
-    // when the primary owner is not visible as a ghost on this rank (e.g.
-    // right after ::add_bond(), before the next resort) -- without this,
-    // a bond whose owner and mirror-holder are reassigned together but
-    // live on different ranks could leave the owner's rank with nothing
-    // to remove and the mirror-holder skipped, leaking the mirror. But if
-    // even one participant of the mirrored bond lies outside this
-    // reassignment, removing it here would delete a bond some other,
-    // untouched particle still owns. This function already runs
-    // identically on every rank (see set_param_parallel's
-    // context()->parallel_try_catch), so every rank that locally knows pid
-    // -- real or ghost -- independently rediscovers and removes the same
-    // bonds; redundant ::remove_bond() calls across ranks or participants
-    // are harmless no-ops once an entry is already gone.
+    // Remove old bonds. A primary entry is always safe to remove, since
+    // pid owns it. A mirror entry is only safe to remove if all of its
+    // participants are part of this bulk reassignment too, otherwise it
+    // belongs to a bond some untouched particle still owns. Removing it
+    // here matters when the primary owner is not visible on this rank
+    // (e.g. right after ::add_bond(), before the next resort), which
+    // would otherwise leak the mirror. This runs identically on every
+    // rank, and repeated ::remove_bond() calls are harmless no-ops.
     auto p = cell_structure.get_local_particle(pid);
     if (p != nullptr) {
       std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
       for (auto const bond_view : p->bonds()) {
-        if (not bond_view.is_primary() and
-            not std::ranges::all_of(bond_view.partner_ids(), [&](int other) {
+        auto const safe_to_remove =
+            bond_view.is_primary() or
+            std::ranges::all_of(bond_view.partner_ids(), [&](int other) {
               return pid_set.contains(other);
-            })) {
+            });
+        if (not safe_to_remove) {
           continue;
         }
         std::vector<int> ids = {pid};

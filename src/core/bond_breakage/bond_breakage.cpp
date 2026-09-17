@@ -154,18 +154,12 @@ public:
                   {d.particle_id, d.bond_partner_id[0], d.bond_partner_id[1]});
   }
   void operator()(DeleteAllBonds const &d) const {
-    // Delete every pair bond (of any bond type) between the two particles.
-    // Either particle may be the one locally known on this rank, so look
-    // for matching bonds from both sides; ::remove_bond() then cleans up
-    // the corresponding entry on the other participant too.
-    //
-    // Deliberately not deduplicated by bond id: there can be more than one
-    // co-existing bond of the same type between the same two particles
-    // (e.g. one added from each side), each needing its own removal. Each
-    // ::remove_bond() call below drains at most one such occurrence per
-    // side, so it is called once per entry found rather than once per
-    // distinct bond id; calls beyond what is actually left are harmless
-    // no-ops.
+    // Delete every pair bond (of any type) between the two particles.
+    // Either one may be the particle locally known on this rank, so look
+    // from both sides. Bond ids are deliberately not deduplicated: the
+    // same bond can co-exist more than once between the same particles,
+    // and each occurrence needs its own ::remove_bond() call; surplus
+    // calls are harmless no-ops.
     auto &cell_structure = *system.cell_structure;
     std::vector<int> bond_ids;
     auto collect = [&](int owner_id, int other_id) {

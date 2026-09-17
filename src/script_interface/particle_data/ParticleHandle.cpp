@@ -42,15 +42,12 @@
 #include "core/virtual_sites/com.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/reduce_optional.hpp>
 
 #include <boost/format.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/serialization/utility.hpp>
-#include <boost/serialization/vector.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -214,10 +211,9 @@ void ParticleHandle::set_exclusions(Variant const &value) {
 /**
  * @brief Delete the bonds owned by this particle.
  *
- * Only primary entries are considered (mirror entries belong to bonds
- * owned by other particles and must be left alone); @ref ::remove_bond()
- * takes care of also erasing the corresponding mirror entries on the
- * other participants.
+ * Only primary entries are considered; mirror entries belong to bonds
+ * owned by other particles. @ref ::remove_bond() erases the corresponding
+ * mirror entries on the other participants.
  */
 void ParticleHandle::delete_owned_bonds() const {
   std::vector<std::pair<int, std::vector<int>>> owned_bonds;
@@ -230,18 +226,11 @@ void ParticleHandle::delete_owned_bonds() const {
       }
     }
   });
-  // set_particle_property() only runs the lambda above on the one rank where
-  // this particle is genuinely local, so owned_bonds is only populated
-  // there. ::remove_bond() must run on every rank to also reach mirror
-  // entries living on a different rank than this particle, so the owned
-  // bonds found on that one rank are gathered and broadcast first --
-  // mirroring how ::rebuild_bond_mirrors() (bonds.cpp) reconciles primaries
-  // found on one rank against participants living on others.
-  auto const &comm = context()->get_comm();
-  if (comm.size() > 1) {
-    Utils::Mpi::gather_buffer(owned_bonds, comm);
-    boost::mpi::broadcast(comm, owned_bonds, 0);
-  }
+  // set_particle_property() only runs the lambda above on the rank holding
+  // the real (non-ghost) copy of this particle, but ::remove_bond() must
+  // run everywhere to reach mirror entries living on other ranks; hence
+  // the gather and broadcast.
+  ::sync_bond_tuples(owned_bonds, context()->get_comm());
   for (auto const &[bond_id, ids] : owned_bonds) {
     ::remove_bond(*get_system(), bond_id, ids);
   }
@@ -668,8 +657,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     auto const bond_list = get_particle_data(m_pid).bonds();
     std::vector<std::vector<Variant>> bonds_flat;
     for (auto const &&bond_view : bond_list) {
-      // Only the primary entry is exposed to Python; mirror entries held
-      // for bonds owned by other particles are a core-internal detail.
+      // Mirror entries are a core-internal detail, not exposed to Python.
       if (not bond_view.is_primary()) {
         continue;
       }

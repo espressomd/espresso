@@ -161,16 +161,14 @@ void BindAtPointOfCollision::handle_collisions(
     // Create bonds
     auto const n_partners = number_of_partners(*system.bonded_ias->at(bond_vs));
     if (n_partners == 1) {
-      // Create bond between the virtual particles, on whichever of the two
-      // is locally known (add_bond() also writes the mirror on the other
-      // one wherever that is locally known).
+      // Create bond between the virtual particles; add_bond() writes the
+      // entries on whichever participants are locally known.
       ::add_bond(system, bond_vs, {current_vs_pid - 1, current_vs_pid - 2});
     }
     if (n_partners == 2) {
       // Create an angle bond on each virtual site, connecting it to both
-      // base particles (add_bond() also writes the mirror entries on pid1
-      // and pid2 wherever those are locally known, and is itself a no-op
-      // on a node where the vs was not created).
+      // base particles; add_bond() writes the entries on whichever
+      // participants are locally known, and is a no-op otherwise.
       ::add_bond(system, bond_vs, {current_vs_pid - 1, pid1, pid2});
       ::add_bond(system, bond_vs, {current_vs_pid - 2, pid1, pid2});
     }

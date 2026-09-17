@@ -115,8 +115,8 @@ public:
     if (name == "get_num_partners") {
       return number_of_partners(*bonded_ia());
     }
-    // Bond-type-centric mutation: create/remove an instance of this bond
-    // between particles, independent of any single particle's own handle.
+    // Create/remove an instance of this bond between particles,
+    // independent of any single particle's handle.
     if (name == "add_bond") {
       auto const bond_id = get_value<int>(params, "bond_id");
       auto const particle_ids = get_value<std::vector<int>>(params, "part_id");

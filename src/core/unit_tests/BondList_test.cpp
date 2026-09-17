@@ -321,13 +321,9 @@ BOOST_AUTO_TEST_CASE(primary_counts_serialization_) {
 namespace {
 /**
  * @brief Stand-in for the on-disk layout of a pre-versioning (class
- * version 0) BondList, as found in checkpoints written before mirror
- * entries were introduced. Serializes the same way BondList does (a
- * size followed by the raw storage array), but such archives only ever
- * contain primary entries encoded with the legacy delimiter
- * @c -(bond_id+1) -- one bit narrower than the current
- * @c -(2*(bond_id+1)+role) encoding, since the role bit did not exist
- * yet.
+ * version 0) BondList. Serializes the same way BondList does (a size
+ * followed by the raw storage array), but with the legacy delimiter
+ * @c -(bond_id+1), which has no role bit yet.
  */
 struct LegacyBondList {
   BondList::storage_type m_storage;
@@ -364,8 +360,7 @@ BOOST_AUTO_TEST_CASE(legacy_archive_migration_) {
 
   BondList bl;
   {
-    /* Loaded as a current-version BondList: serialize() must detect
-     * version < 1 and migrate the legacy delimiters on the fly. */
+    /* serialize() must detect version < 1 and migrate the delimiters. */
     boost::archive::text_iarchive in_ar(stream);
     in_ar >> bl;
   }
@@ -380,8 +375,7 @@ BOOST_AUTO_TEST_CASE(legacy_archive_migration_) {
   BOOST_CHECK(it->is_primary());
   BOOST_CHECK((std::ranges::equal(it->partner_ids(), std::array<int, 1>{{9}})));
 
-  /* primary_counts(), populated only on load (recompute_primary_counts()),
-   * must reflect the migrated bonds. */
+  /* primary_counts() must reflect the migrated bonds. */
   BOOST_CHECK_EQUAL(bl.primary_counts().pair, 2);
   BOOST_CHECK_EQUAL(bl.primary_counts().angle, 0);
   BOOST_CHECK_EQUAL(bl.primary_counts().dihedral, 0);

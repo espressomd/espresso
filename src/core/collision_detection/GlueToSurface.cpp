@@ -173,8 +173,7 @@ void GlueToSurface::handle_collisions(
         (p1->type() == part_type_to_attach_vs_to) ? *p1 : *p2;
 
     // Add a bond between the centers of the colliding particles.
-    // The primary entry is placed on the node that has p1 (add_bond() also
-    // writes the mirror on p2 wherever that is locally known).
+    // The primary entry is placed on the node that has p1.
     if (!p1->is_ghost()) {
       ::add_bond(system, bond_centers, {pid1, pid2});
     }

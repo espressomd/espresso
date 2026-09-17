@@ -635,15 +635,11 @@ unsigned System::get_global_ghost_flags() const {
   /* Position and Properties are always requested. */
   unsigned data_parts = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
 
-  // Bonds are stored per-participant (see BondList.hpp): a mirror entry can
-  // live on a particle that is only known locally as a ghost (its owner is
-  // real on a different rank). add_bond()/remove_bond()/rebuild_bond_mirrors()
-  // (bonds.cpp) resolve participants via CellStructure::get_local_particle(),
-  // which returns such ghosts too, so their bonds() must be kept up to date
-  // like any other participant's -- otherwise a mirror lookup on a
-  // ghost-only participant can see stale or empty bond data and a removal
-  // silently fails to reach it. Always requesting bonds here keeps them
-  // refreshed at the same cadence as the rest of the global ghost state.
+  // Bonds are stored on all participants (see BondList.hpp), and the
+  // functions in bonds.cpp resolve participants via get_local_particle(),
+  // which also returns ghosts. Their bond lists must therefore stay up to
+  // date, or a lookup on a ghost-only participant sees stale data and a
+  // removal silently fails to reach it.
   data_parts |= Cells::DATA_PART_BONDS;
 
   if (lb.is_solver_set())
