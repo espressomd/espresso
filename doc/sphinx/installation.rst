@@ -214,6 +214,8 @@ will generate device code for both sm_75 and sm_86 architectures.
 The CMake option ``ESPRESSO_CMAKE_CUDA_ARCHITECTURES`` achieves the same effect.
 Both take a semicolon-separated list of integers. There are online resources
 to help determine which architecture match specific hardware [12]_.
+Alternatively, run ``nvidia-smi --query-gpu=name,compute_cap`` to display the exact
+compute capability of your GPU, then multiply that value by 10 to get the architecture.
 The CMake option ``CMAKE_CUDA_ARCHITECTURES`` cannot be used to set CUDA
 architectures, because it has a default value that is too old for the
 minimally required CUDA version.

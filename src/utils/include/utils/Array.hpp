@@ -36,6 +36,7 @@
 #include <ostream>
 #include <stdexcept>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 namespace Utils {
