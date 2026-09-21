@@ -411,12 +411,14 @@ static bool integrator_step_1(CellStructure &cell_structure,
     auto const propagates_translation = [&](int mode) {
       return not p.is_virtual() and propagation.should_propagate_with(p, mode);
     };
+#ifdef ESPRESSO_ROTATION
     // orientations of virtual sites are updated later in the integration
     // loop, unless the virtual site has its own rotational propagator
     auto const propagates_rotation = [&](int mode) {
       return not p.has_virtual_rotation() and
              propagation.should_propagate_with(p, mode);
     };
+#endif
     if (propagation.integ_switch == INTEG_METHOD_SYMPLECTIC_EULER) {
       if (propagates_translation(PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
         symplectic_euler_propagator_1(p, time_step);
@@ -509,12 +511,14 @@ static auto make_step2_particle_kernel(Propagation const &propagation,
     auto const propagates_translation = [&](int mode) {
       return not p.is_virtual() and propagation.should_propagate_with(p, mode);
     };
+#ifdef ESPRESSO_ROTATION
     // orientations of virtual sites are updated later in the integration
     // loop, unless the virtual site has its own rotational propagator
     auto const propagates_rotation = [&](int mode) {
       return not p.has_virtual_rotation() and
              propagation.should_propagate_with(p, mode);
     };
+#endif
     if (propagation.integ_switch == INTEG_METHOD_SYMPLECTIC_EULER) {
       if (propagates_translation(PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
         symplectic_euler_propagator_2(p, time_step);
