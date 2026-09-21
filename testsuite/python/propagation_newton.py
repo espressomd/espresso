@@ -158,6 +158,9 @@ class VelocityVerlet(ut.TestCase):
         with self.assertRaises(RuntimeError):
             system.integrator.default_propagation = Propagation.TRANS_NEWTON
 
+    @utx.skipIfMissingFeatures(["MASS",
+                                "ROTATIONAL_INERTIA",
+                                "EXTERNAL_FORCES"])
     def test_propagation(self):
         """
         Check integration of Newton's equations of motion and Euler's equations
