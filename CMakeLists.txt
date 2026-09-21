@@ -1022,6 +1022,11 @@ if(ESPRESSO_BUILD_TESTS)
   target_compile_options(
     espresso_tests_compiler_flags
     INTERFACE $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-Wno-unused-macros>)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION
+                                                VERSION_GREATER_EQUAL "19.1.0")
+    target_compile_options(espresso_tests_compiler_flags
+                           INTERFACE -Wno-c2y-extensions)
+  endif()
   if(ESPRESSO_BUILD_WITH_COVERAGE)
     target_compile_options(
       espresso_tests_compiler_flags
@@ -1101,6 +1106,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
       sqlite3
       PRIVATE
         $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wno-discarded-qualifiers>
+        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-incompatible-pointer-types-discards-qualifiers>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=code_is_unreachable>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=cast_to_qualified_type>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=set_but_not_used>)

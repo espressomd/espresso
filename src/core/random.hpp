@@ -34,6 +34,7 @@
 #include <Random123/philox.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <numbers>
 #include <random>
 #include <vector>

@@ -31,6 +31,7 @@
 #endif
 
 #include <cassert>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <span>
