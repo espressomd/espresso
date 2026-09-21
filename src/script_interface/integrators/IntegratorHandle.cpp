@@ -111,6 +111,9 @@ IntegratorHandle::IntegratorHandle() {
 void IntegratorHandle::on_bind_system(::System::System &system) {
   auto const &params = *m_params;
   for (auto const &key : get_parameter_insertion_order()) {
+    if (key == "default_propagation") {
+      continue;
+    }
     if (params.contains(key)) {
       // NOLINTNEXTLINE(readability-simplify-boolean-expr)
       if (not(key == "time_step" and
