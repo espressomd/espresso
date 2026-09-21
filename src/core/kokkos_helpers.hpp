@@ -23,13 +23,7 @@
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 
-#if not defined(ESPRESSO_ATTR_ALWAYS_INLINE)
-#if defined(__GNUG__) or defined(__clang__)
-#define ESPRESSO_ATTR_ALWAYS_INLINE [[gnu::always_inline]]
-#else
-#define ESPRESSO_ATTR_ALWAYS_INLINE
-#endif
-#endif
+#include <utils/attributes.hpp>
 
 #include <algorithm>
 #include <type_traits>

@@ -27,6 +27,7 @@
 #include "forces_inline.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/attributes.hpp>
 
 #include <Cabana_Core.hpp>
 
@@ -37,12 +38,6 @@
 #include <optional>
 #include <variant>
 #include <vector>
-
-#if defined(__GNUG__) or defined(__clang__)
-#define ESPRESSO_ATTR_ALWAYS_INLINE [[gnu::always_inline]]
-#else
-#define ESPRESSO_ATTR_ALWAYS_INLINE
-#endif
 
 struct ForcesKernel {
   BondedInteractionsMap const &bonded_ias;

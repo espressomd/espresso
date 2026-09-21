@@ -23,6 +23,7 @@
 #include "lees_edwards/LeesEdwardsBC.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/attributes.hpp>
 
 #include <bitset>
 #include <cassert>
@@ -30,12 +31,6 @@
 #include <limits>
 #include <stdexcept>
 #include <utility>
-
-#if defined(__GNUG__) or defined(__clang__)
-#define ESPRESSO_ATTR_ALWAYS_INLINE [[gnu::always_inline]]
-#else
-#define ESPRESSO_ATTR_ALWAYS_INLINE
-#endif
 
 namespace detail {
 /**

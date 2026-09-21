@@ -34,6 +34,9 @@
 #include <array>
 #include <cassert>
 #include <cstddef>
+#include <functional>
+#include <initializer_list>
+#include <numeric>
 #include <type_traits>
 #include <utility>
 

@@ -20,7 +20,7 @@
 
 #include "utils/device_qualifier.hpp"
 
-#include <cinttypes>
+#include <cstdint>
 #include <limits>
 
 namespace Utils {

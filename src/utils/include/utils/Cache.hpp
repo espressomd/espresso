@@ -20,6 +20,7 @@
 #pragma once
 
 #include <cstddef>
+#include <iterator>
 #include <memory>
 #include <random>
 #include <type_traits>

@@ -30,6 +30,8 @@
 #include <boost/qvm/vec_traits.hpp>
 
 #include "utils/Array.hpp"
+#include "utils/attributes.hpp"
+#include "utils/device_qualifier.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -42,7 +44,10 @@
 #include <numeric>
 #include <ranges>
 #include <span>
+#include <stdexcept>
+#include <tuple>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace Utils {
