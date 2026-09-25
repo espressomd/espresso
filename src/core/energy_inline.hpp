@@ -34,6 +34,7 @@
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
 #include "nonbonded_interactions/gay_berne.hpp"
+#include "nonbonded_interactions/gay_berne_width.hpp"
 #include "nonbonded_interactions/hat.hpp"
 #include "nonbonded_interactions/hertzian.hpp"
 #include "nonbonded_interactions/lj.hpp"
@@ -173,6 +174,10 @@ inline double calc_non_bonded_pair_energy(
 #ifdef ESPRESSO_GAY_BERNE
   /* Gay-Berne */
   ret += gb_pair_energy(p1.quat(), p2.quat(), ia_params, d, dist);
+#endif
+
+#ifdef ESPRESSO_GAY_BERNE_WIDTH
+  ret += gb_width_pair_energy(p1.quat(), p2.quat(), ia_params, d, dist);
 #endif
 
   return ret;
