@@ -114,7 +114,7 @@ class Test(ut.TestCase):
 
     def _measure_dipole_moment(self, steps):
         dipm_tot = espressomd.observables.MagneticDipoleMoment(
-            ids=self.system.part.select(lambda p: p.magnetodynamics["is_enabled"]).id)
+            particles=self.system.part.select(lambda p: p.magnetodynamics["is_enabled"]).id)
         norm = 1 / (self.dip_reduced * self.n_part)
         self.system.integrator.run(steps)
         mag_el = dipm_tot.calculate() * norm

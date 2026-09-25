@@ -81,7 +81,7 @@ class Test(ut.TestCase):
                 shear_velocity=0., initial_pos_offset=0.5, time_0=0.)
             system.lees_edwards.set_boundary_conditions(
                 shear_direction="y", shear_plane_normal="x", protocol=protocol)
-        obs = espressomd.observables.ParticlePositions(ids=[0])
+        obs = espressomd.observables.ParticlePositions(particles=[0])
         acc = espressomd.accumulators.TimeSeries(obs=obs, delta_N=10)
         system.auto_update_accumulators.add(acc)
         if has_hdf5:
