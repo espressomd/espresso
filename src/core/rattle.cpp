@@ -78,7 +78,9 @@ void save_old_position(const ParticleRange &particles,
  */
 static void init_correction_vector(const ParticleRange &particles,
                                    const ParticleRange &ghost_particles) {
-  auto reset_force = [](Particle &p) { p.rattle_params().correction.fill(0); };
+  auto reset_force = [](Particle &p) {
+    p.rattle_correction() = Utils::Vector3d{0., 0., 0.};
+  };
 
   boost::for_each(particles, reset_force);
   boost::for_each(ghost_particles, reset_force);
@@ -100,19 +102,21 @@ static bool calculate_positional_correction(
     RigidBond const &ia_params, BoxGeometry const &box_geo, Particle &p1,
     Particle &p2, int bond_id,
     std::vector<Utils::Vector9d> &rigid_bond_virial) {
-  auto const r_ij = box_geo.get_mi_vector(p1.pos(), p2.pos());
+  auto const r_ij = box_geo.get_mi_vector(Utils::Vector3d(p1.pos()),
+                                          Utils::Vector3d(p2.pos()));
   auto const r_ij2 = r_ij.norm2();
 
   if (std::abs(1.0 - r_ij2 / ia_params.d2) > ia_params.p_tol) {
     auto const r_ij_t =
-        box_geo.get_mi_vector(p1.pos_last_time_step(), p2.pos_last_time_step());
+        box_geo.get_mi_vector(Utils::Vector3d(p1.pos_last_time_step()),
+                              Utils::Vector3d(p2.pos_last_time_step()));
     auto const r_ij_dot = r_ij_t * r_ij;
     auto const G =
         0.50 * (ia_params.d2 - r_ij2) / r_ij_dot / (p1.mass() + p2.mass());
 
     auto const pos_corr = G * r_ij_t;
-    p1.rattle_params().correction += pos_corr * p2.mass();
-    p2.rattle_params().correction -= pos_corr * p1.mass();
+    p1.rattle_correction() += pos_corr * p2.mass();
+    p2.rattle_correction() -= pos_corr * p1.mass();
 
     // Constraint force implied by this bond alone during this iteration:
     // the correction just applied to p1 is
@@ -171,8 +175,8 @@ static bool compute_correction_vector(CellStructure &cs,
  */
 static void apply_positional_correction(const ParticleRange &particles) {
   boost::for_each(particles, [](Particle &p) {
-    p.pos() += p.rattle_params().correction;
-    p.v() += p.rattle_params().correction;
+    p.pos() += Utils::Vector3d(p.rattle_correction());
+    p.v() += Utils::Vector3d(p.rattle_correction());
   });
 }
 
@@ -230,8 +234,9 @@ void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo,
 static bool calculate_velocity_correction(RigidBond const &ia_params,
                                           BoxGeometry const &box_geo,
                                           Particle &p1, Particle &p2) {
-  auto const v_ij = p1.v() - p2.v();
-  auto const r_ij = box_geo.get_mi_vector(p1.pos(), p2.pos());
+  auto const v_ij = Utils::Vector3d(p1.v()) - Utils::Vector3d(p2.v());
+  auto const r_ij = box_geo.get_mi_vector(Utils::Vector3d(p1.pos()),
+                                          Utils::Vector3d(p2.pos()));
 
   auto const v_proj = v_ij * r_ij;
   if (std::abs(v_proj) > ia_params.v_tol) {
@@ -239,8 +244,8 @@ static bool calculate_velocity_correction(RigidBond const &ia_params,
 
     auto const vel_corr = K * r_ij;
 
-    p1.rattle_params().correction -= vel_corr * p2.mass();
-    p2.rattle_params().correction += vel_corr * p1.mass();
+    p1.rattle_correction() -= vel_corr * p2.mass();
+    p2.rattle_correction() += vel_corr * p1.mass();
 
     return true;
   }
@@ -254,8 +259,9 @@ static bool calculate_velocity_correction(RigidBond const &ia_params,
  * @param particles particle range
  */
 static void apply_velocity_correction(ParticleRange const &particles) {
-  boost::for_each(particles,
-                  [](Particle &p) { p.v() += p.rattle_params().correction; });
+  boost::for_each(particles, [](Particle &p) {
+    p.v() += Utils::Vector3d(p.rattle_correction());
+  });
 }
 
 void correct_velocity_shake(CellStructure &cs, BoxGeometry const &box_geo,

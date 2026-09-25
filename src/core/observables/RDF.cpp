@@ -38,15 +38,16 @@
 namespace Observables {
 std::vector<double>
 RDF::operator()(boost::mpi::communicator const &comm) const {
-  auto const &local_particles_1 = fetch_particles(ids1());
+  auto const local_particles_1 = fetch_particles(ids1());
 
   if (ids2().empty()) {
-    return this->evaluate(comm, local_particles_1, {}, {});
+    return this->evaluate(comm, local_particles_1.refs, {}, {});
   }
 
-  auto const &local_particles_2 = fetch_particles(ids2());
+  auto const local_particles_2 = fetch_particles(ids2());
 
-  return this->evaluate(comm, local_particles_1, local_particles_2, {});
+  return this->evaluate(comm, local_particles_1.refs, local_particles_2.refs,
+                        {});
 }
 
 std::vector<double>

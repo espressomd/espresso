@@ -92,7 +92,20 @@ struct CoulombP3MState : public P3MStateCommon<FloatType, Architecture> {
   // FFT reciprocal-space transform, hidden behind the backend interface so the
   // solver is agnostic to heFFTe vs kokkos-fft (see init_cpu_kernels).
   std::shared_ptr<P3MFFTBackend<FloatType, FFTConfig>> fft;
-  Kokkos::View<FloatType **, r_space_layout, Kokkos::HostSpace>
+  /** Per-thread charge-density replicas, indexed @c (thread, flat mesh index).
+   *
+   *  LayoutRight is REQUIRED here, and deliberately independent of the FFT
+   *  field layout (@ref r_space_layout). The SIMD charge scatter
+   *  (@ref p3m_scatter_line) takes a thread's row as a raw pointer
+   *  @c &rs_charge_density_kokkos(tid,0) and walks it with the flat mesh
+   *  index, which only addresses the same element under a row-contiguous
+   *  layout. Under LayoutLeft the thread index is the fast one, so the
+   *  scatter would stride across threads instead -- invisible on a single
+   *  thread (extent(0) == 1 makes the two layouts coincide) and wrong on two.
+   *  The mesh index comes from @ref p3m_calculate_interpolation_weights, not
+   *  from the field layout, so this buffer has no reason to follow it.
+   */
+  Kokkos::View<FloatType **, Kokkos::LayoutRight, Kokkos::HostSpace>
       rs_charge_density_kokkos;
 
   void init_labels() {

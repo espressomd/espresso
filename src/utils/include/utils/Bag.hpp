@@ -163,7 +163,14 @@ public:
    * @return An iterator past the element that was removed.
    */
   iterator erase(iterator it) {
-    *it = std::move(m_storage.back());
+    // Overwrite the erased slot with the last element, then drop the tail.
+    // Guard the last-element case: when @p it already points at the back,
+    // `*it = std::move(m_storage.back())` would be a self-move-assignment
+    // (moving an object onto itself), which is UB-adjacent for many types.
+    // Skipping the move in that case leaves the element to be popped as-is.
+    if (it != &m_storage.back()) {
+      *it = std::move(m_storage.back());
+    }
 
     m_storage.pop_back();
 

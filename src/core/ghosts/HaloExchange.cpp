@@ -36,6 +36,7 @@
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/mpi/nonblocking.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <algorithm>
 #include <array>
@@ -80,13 +81,13 @@ int main_tag(unsigned data_parts) {
 // (the "one NeighborComm per peer" invariant). See halo_exchange_start @pre.
 
 /** @brief View a list of cell pointers as a span for the packing routines. */
-std::span<ParticleList *const> as_span(std::vector<ParticleList *> const &v) {
+std::span<Cell *const> as_span(std::vector<Cell *> const &v) {
   return {v.data(), v.size()};
 }
 
 /** @brief Extract the plain cell pointers from a list of send regions. */
-std::vector<ParticleList *> region_cells(std::vector<SendRegion> const &send) {
-  std::vector<ParticleList *> cells;
+std::vector<Cell *> region_cells(std::vector<SendRegion> const &send) {
+  std::vector<Cell *> cells;
   cells.reserve(send.size());
   for (auto const &r : send)
     cells.emplace_back(r.cell);
@@ -175,7 +176,7 @@ void run_collective(HaloPlan const &plan, BoxGeometry const &box,
   // active; the engine caller sets op correctly for each exchange.
   bool const is_broadcast = (op.direction == Direction::Push);
 
-  // cs.cells has one entry per rank: cs.cells[root] is the ParticleList for
+  // cs.cells has one entry per rank: cs.cells[root] is the Cell for
   // that root rank (owned on root, ghost on all others).
   assert(static_cast<int>(cs.cells.size()) == comm_size);
 
@@ -190,8 +191,8 @@ void run_collective(HaloPlan const &plan, BoxGeometry const &box,
   };
 
   for (int root = 0; root < comm_size; ++root) {
-    ParticleList *cell = cs.cells[static_cast<std::size_t>(root)];
-    auto const cell_span = std::span<ParticleList *const>{&cell, 1};
+    Cell *cell = cs.cells[static_cast<std::size_t>(root)];
+    auto const cell_span = std::span<Cell *const>{&cell, 1};
 
     if (is_broadcast) {
       // Push: root broadcasts its owned particles to all other ranks.

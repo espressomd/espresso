@@ -36,6 +36,8 @@ add_library(
   integrate.cpp
   npt.cpp
   particle_node.cpp
+  particle_store/MigrationPack.cpp
+  particle_store/ParticleStore.cpp
   polymer.cpp
   pressure.cpp
   propagation.cpp
@@ -59,7 +61,7 @@ if(ESPRESSO_BUILD_WITH_CUDA)
   target_sources(
     espresso_core
     PRIVATE cuda/init.cpp cuda/common_cuda.cu cuda/init_cuda.cu
-            cuda/CudaHostAllocator.cu
+            cuda/CudaHostAllocator.cu forces_lj_device.cu
             magnetostatics/dipolar_direct_sum_gpu_cuda.cu
             electrostatics/p3m_gpu_cuda.cu electrostatics/p3m_gpu_error_cuda.cu
             system/GpuParticleData_cuda.cu)

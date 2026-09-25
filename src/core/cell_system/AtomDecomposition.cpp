@@ -22,6 +22,8 @@
 #include "cell_system/AtomDecomposition.hpp"
 
 #include "cell_system/Cell.hpp"
+#include "cell_system/ParticleListOperations.hpp"
+#include "particle_store/MigrationPack.hpp"
 
 #include "ghosts/HaloPlan.hpp"
 #include "ghosts/HaloPlanValidator.hpp"
@@ -30,9 +32,12 @@
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/collectives/all_to_all.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <limits>
 #include <utility>
 #include <vector>
@@ -71,15 +76,15 @@ GhostComm::HaloPlan AtomDecomposition::make_halo_plan() {
     return plan;
   }
 
-  // One cell pointer per rank: cells[root] is the ParticleList for that root.
+  // One cell pointer per rank: cells[root] is the cell owned by that root.
   // The engine uses op.direction to pick Broadcast (Push) or ReduceSum
   // (Reduce) at run time, so we store Broadcast as the canonical marker that
   // this section is active.  run_collective reads op.direction to decide which
   // MPI collective to invoke.
-  std::vector<ParticleList *> cell_ptrs;
+  std::vector<Cell *> cell_ptrs;
   cell_ptrs.reserve(static_cast<std::size_t>(m_comm.size()));
   for (int n = 0; n < m_comm.size(); ++n) {
-    cell_ptrs.push_back(&cells.at(static_cast<std::size_t>(n)).particles());
+    cell_ptrs.push_back(std::addressof(cells.at(static_cast<std::size_t>(n))));
   }
   plan.collective =
       CollectiveSection{CollectivePattern::Broadcast, std::move(cell_ptrs)};
@@ -105,8 +110,14 @@ void AtomDecomposition::mark_cells() {
 
 void AtomDecomposition::resort(bool global_flag,
                                std::vector<ParticleChange> &diff) {
+  auto &store = local().store();
+  // Fold positions of all committed rows (write-through views).
   for (auto &p : local().particles()) {
-    m_box.fold_position(p.pos(), p.image_box());
+    Utils::Vector3d position = p.pos();
+    Utils::Vector3i image_box = p.image_box();
+    m_box.fold_position(position, image_box);
+    p.pos() = position;
+    p.image_box() = image_box;
 
     p.pos_at_last_verlet_update() = p.pos();
   }
@@ -116,30 +127,70 @@ void AtomDecomposition::resort(bool global_flag,
     return;
   }
 
-  /* Sort displaced particles by the node they belong to. */
-  std::vector<std::vector<Particle>> send_buf(m_comm.size());
-  for (auto it = local().particles().begin();
-       it != local().particles().end();) {
-    auto const target_node = id_to_rank(it->id());
+  // A mis-owned particle is copied out of the live store into a staging-store
+  // row (stage_row); its staging-row index goes into the target rank's per-rank
+  // bucket, which is then packed per-field (MigrationPack::pack_rows) and
+  // exchanged as a byte buffer via all_to_all.
+  assert(m_migration_staging && "migration staging store not installed");
+  auto &staging = *m_migration_staging.store;
+
+  // Sort displaced particles into per-rank staging-row buckets (iterate the
+  // committed rows by RAW position; drop_row marks the row pending-removed --
+  // the range keeps its order, no swap-with-back -- so we advance
+  // unconditionally).
+  std::vector<std::vector<int>> send_rows(m_comm.size());
+  auto const row_offset = local().offset();
+  auto const row_count = local().count();
+  for (std::size_t index = 0u; index < row_count; ++index) {
+    auto const live_row = static_cast<int>(row_offset + index);
+    // A pending-removed row is dead; never migrate it (see the same guard in
+    // RegularDecomposition::resort). Ownership here is id-based and a removal
+    // does not change the id, so this cannot currently fire -- it keeps the
+    // three decompositions' resort loops on the same rule.
+    if (store.is_pending_removal(live_row)) {
+      continue;
+    }
+    auto const id = store.id(live_row);
+    auto const target_node = id_to_rank(id);
     if (target_node != m_comm.rank()) {
-      diff.emplace_back(RemovedParticle{it->id()});
-      send_buf.at(target_node).emplace_back(std::move(*it));
-      it = local().particles().erase(it);
-    } else {
-      ++it;
+      diff.emplace_back(RemovedParticle{id});
+      send_rows.at(target_node)
+          .push_back(m_migration_staging.stage_row(live_row));
+      CellParticleStorage::drop_row(local(), index);
     }
   }
 
-  /* Exchange particles */
-  std::vector<std::vector<Particle>> recv_buf(m_comm.size());
+  // Pack each rank's bucket into a byte buffer and exchange.
+  std::vector<std::vector<char>> send_buf(m_comm.size());
+  for (int n = 0; n < m_comm.size(); ++n) {
+    MigrationPack::pack_rows(staging, send_rows[static_cast<std::size_t>(n)],
+                             send_buf[static_cast<std::size_t>(n)]);
+  }
+  std::vector<std::vector<char>> recv_buf(m_comm.size());
   boost::mpi::all_to_all(m_comm, send_buf, recv_buf);
 
-  diff.emplace_back(ModifiedList{local().particles()});
+  diff.emplace_back(ModifiedList{local()});
 
-  /* Add new particles belonging to this node */
-  for (auto &parts : recv_buf) {
-    for (auto &p : parts) {
-      local().particles().insert(std::move(p));
+  // Unpack the received buffers (in rank order) into fresh staging rows, then
+  // stage each staging row into the local cell as a row reference: the next
+  // store rebuild copies it into a committed row. The staging store is NOT
+  // cleared here -- the staged row references must remain valid until
+  // CellStructure commits them (ensure_particle_store_synchronized), which then
+  // resets the staging store.
+  for (auto const &buffer : recv_buf) {
+    if (buffer.empty()) {
+      continue;
+    }
+    std::uint64_t count = 0u;
+    std::memcpy(&count, buffer.data(), sizeof(count));
+    if (count == 0u) {
+      continue;
+    }
+    auto const first_row =
+        m_migration_staging.reserve_rows(static_cast<int>(count));
+    MigrationPack::unpack_rows(staging, first_row, buffer);
+    for (int k = 0; k < static_cast<int>(count); ++k) {
+      CellParticleStorage::insert_staged_row(local(), staging, first_row + k);
     }
   }
 }

@@ -145,7 +145,7 @@ static void dipolar_force_corrections(int kcut,
                                       // {Re(S+), Im(S+), Re(S-), Im(S-)}
       for (auto const &p : particles) {
         if (p.dipm() != 0.) {
-          auto const &pos = p.pos();
+          Utils::Vector3d const pos = p.pos();
           auto const dip = p.calc_dip();
 
           auto const a = gx * dip[0] + gy * dip[1];
@@ -270,7 +270,7 @@ static double dipolar_energy_correction(int kcut,
                                       // {Re(S+), Im(S+), Re(S-), Im(S-)}
       for (auto const &p : particles) {
         if (p.dipm() != 0.) {
-          auto const &pos = p.pos();
+          Utils::Vector3d const pos = p.pos();
           auto const dip = p.calc_dip();
 
           auto const a = gx * dip[0] + gy * dip[1];

@@ -125,6 +125,71 @@ BOOST_AUTO_TEST_CASE(erase_) {
   }
 }
 
+namespace {
+/** @brief Count of self-move-assignments (an object moved onto itself) seen by
+ *  @ref SelfMoveWitness. Global so it survives the moved-from element's
+ *  destruction; reset before each scenario. */
+int self_move_count = 0;
+
+/** @brief Element type whose move-assignment detects a self-move. Used to prove
+ *  Bag::erase never self-move-assigns (Bag.hpp erase guard). */
+struct SelfMoveWitness {
+  int value = 0;
+  SelfMoveWitness() = default;
+  explicit SelfMoveWitness(int v) : value{v} {}
+  SelfMoveWitness(SelfMoveWitness const &) = default;
+  SelfMoveWitness(SelfMoveWitness &&) = default;
+  SelfMoveWitness &operator=(SelfMoveWitness const &) = default;
+  SelfMoveWitness &operator=(SelfMoveWitness &&other) {
+    if (this == &other) {
+      ++self_move_count; // self-move-assignment happened
+    } else {
+      value = other.value;
+    }
+    return *this;
+  }
+};
+} // namespace
+
+BOOST_AUTO_TEST_CASE(erase_no_self_move_) {
+  /* Erasing the last element must NOT self-move-assign (Bag.hpp guard). */
+  {
+    /* Single-element bag: begin() == back(), the aliasing edge case. */
+    self_move_count = 0;
+    auto bag = Utils::Bag<SelfMoveWitness>();
+    bag.insert(SelfMoveWitness{7});
+    auto const it = bag.erase(bag.begin());
+    BOOST_CHECK(it == bag.end());
+    BOOST_CHECK(bag.empty());
+    BOOST_CHECK_EQUAL(self_move_count, 0);
+  }
+  {
+    /* Multi-element bag, erasing the last element (it == &back()). */
+    self_move_count = 0;
+    auto bag = Utils::Bag<SelfMoveWitness>();
+    bag.insert(SelfMoveWitness{1});
+    bag.insert(SelfMoveWitness{2});
+    bag.erase(bag.end() - 1);
+    BOOST_CHECK_EQUAL(self_move_count, 0);
+    BOOST_CHECK_EQUAL(bag.size(), 1);
+    BOOST_CHECK_EQUAL(bag.begin()->value, 1);
+  }
+  {
+    /* Erasing a NON-last element still relocates the last element in. */
+    self_move_count = 0;
+    auto bag = Utils::Bag<SelfMoveWitness>();
+    bag.insert(SelfMoveWitness{1});
+    bag.insert(SelfMoveWitness{2});
+    bag.insert(SelfMoveWitness{3});
+    bag.erase(bag.begin()); // slot 0 overwritten by the moved-in last (3)
+    BOOST_CHECK_EQUAL(self_move_count, 0);
+    BOOST_CHECK_EQUAL(bag.size(), 2);
+    BOOST_CHECK(std::ranges::find_if(bag, [](auto const &e) {
+                  return e.value == 3;
+                }) != bag.end());
+  }
+}
+
 BOOST_AUTO_TEST_CASE(size_) {
   auto const elements = std::array<int, 5>{{1, 2, 3, 5, 6}};
 

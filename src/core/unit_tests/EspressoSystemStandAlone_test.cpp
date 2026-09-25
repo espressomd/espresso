@@ -23,6 +23,7 @@
 namespace utf = boost::unit_test;
 
 #include "ParticleFactory.hpp"
+#include "ParticleStoreTestFixture.hpp"
 #include "particle_management.hpp"
 
 #include "EspressoCoreGlobalConfig.hpp"
@@ -171,12 +172,22 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     auto const pid5 = 10;
     auto const pids = std::vector<int>{pid2, pid3, pid1, pid5};
     Observables::ParticleReferenceRange particle_range{};
+    // get_local_particle returns by-value views, so the reference range must
+    // point into an owned buffer that outlives it (reserve so it never
+    // reallocates while references are taken).
+    std::vector<Particle> owned_views;
+    owned_views.reserve(pids.size());
     for (int pid : pids) {
       if (auto const p = system.cell_structure->get_local_particle(pid)) {
-        particle_range.emplace_back(*p);
+        owned_views.emplace_back(*p);
+        particle_range.emplace_back(owned_views.back());
       }
     }
-    Particle p{};
+    // id/position/image live in the ParticleStore; attach this extra
+    // hand-made particle (not part of the cell structure) to a standalone
+    // store. It must outlive the particle_range that references it.
+    ParticleStoreTestFixture fx;
+    auto p = fx.make();
     p.id() = pid5;
     p.pos() = {1., 1., 1.};
     p.image_box() = {1, -1, 0};
@@ -191,9 +202,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
         for (std::size_t i = 0ul; i < pids.size(); ++i) {
           Utils::Vector3d dist{};
           if (pids[i] == pid5) {
-            dist = p.pos() - vec[i];
+            dist = Utils::Vector3d(p.pos()) - vec[i];
             if (not use_folded_positions) {
-              dist += p.image_box() * box_l;
+              dist += Utils::Vector3i(p.image_box()) * box_l;
             }
           } else {
             dist = start_positions.at(pids[i]) - vec[i];
@@ -292,13 +303,15 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       if (n_nodes != 3) {
         system.integrate(0, INTEG_REUSE_FORCES_NEVER);
         if (rank == 0) {
-          auto pf = get_particle_property(pid1, &Particle::force_and_torque);
+          auto pf = get_particle_property(pid1, &Particle::force);
           BOOST_REQUIRE(pf.has_value());
-          BOOST_CHECK_CLOSE(pf->f[0u], -energy_ref / r, 0.04);
-          BOOST_CHECK_LE(std::abs(pf->f[1u]), 1e-12);
-          BOOST_CHECK_LE(std::abs(pf->f[2u]), 1e-12);
+          BOOST_CHECK_CLOSE((*pf)[0u], -energy_ref / r, 0.04);
+          BOOST_CHECK_LE(std::abs((*pf)[1u]), 1e-12);
+          BOOST_CHECK_LE(std::abs((*pf)[2u]), 1e-12);
 #ifdef ESPRESSO_ROTATION
-          BOOST_CHECK_EQUAL(pf->torque.norm(), 0.);
+          auto tf = get_particle_property(pid1, &Particle::torque);
+          BOOST_REQUIRE(tf.has_value());
+          BOOST_CHECK_EQUAL(tf->norm(), 0.);
 #endif // ESPRESSO_ROTATION
         }
       }
@@ -361,12 +374,16 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       if (n_nodes != 3) {
         system.integrate(0, INTEG_REUSE_FORCES_NEVER);
         if (rank == 0) {
-          auto pf = get_particle_property(pid1, &Particle::force_and_torque);
+          auto pf = get_particle_property(pid1, &Particle::force);
           BOOST_REQUIRE(pf.has_value());
-          BOOST_CHECK_CLOSE(pf->f[0u], -3. * energy_ref / r, 0.002);
-          BOOST_CHECK_LE(std::abs(pf->f[1u]), 1e-12);
-          BOOST_CHECK_LE(std::abs(pf->f[2u]), 1e-12);
-          BOOST_CHECK_LE(pf->torque.norm(), 1e-12);
+          BOOST_CHECK_CLOSE((*pf)[0u], -3. * energy_ref / r, 0.002);
+          BOOST_CHECK_LE(std::abs((*pf)[1u]), 1e-12);
+          BOOST_CHECK_LE(std::abs((*pf)[2u]), 1e-12);
+#ifdef ESPRESSO_ROTATION
+          auto tf = get_particle_property(pid1, &Particle::torque);
+          BOOST_REQUIRE(tf.has_value());
+          BOOST_CHECK_LE(tf->norm(), 1e-12);
+#endif // ESPRESSO_ROTATION
         }
       }
     }
@@ -513,8 +530,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
         auto p_opt = copy_particle_to_head_node(comm, system, pid);
         if (rank == 0) {
           auto &p = *p_opt;
-          p.v() += 0.5 * time_step * p.force() / p.mass();
-          p.pos() += time_step * p.v();
+          p.v() += 0.5 * time_step * Utils::Vector3d(p.force()) / p.mass();
+          p.pos() += time_step * Utils::Vector3d(p.v());
           expected[pid] = p.pos();
         }
       }
@@ -523,8 +540,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
         auto const p_opt = copy_particle_to_head_node(comm, system, pid);
         if (rank == 0) {
           auto &p = *p_opt;
-          BOOST_CHECK_LE((p.pos() - expected[pid]).norm(), tol);
-          assert((p.pos() - pos_com).norm() < 0.5);
+          BOOST_CHECK_LE((Utils::Vector3d(p.pos()) - expected[pid]).norm(),
+                         tol);
+          assert((Utils::Vector3d(p.pos()) - pos_com).norm() < 0.5);
         }
       }
     }
@@ -533,8 +551,12 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
   // check particle resort
   {
     auto constexpr global_resort = true;
-    auto const resort_is_needed = comm.size() > 1;
     auto &cs = *system.cell_structure;
+    // The id->row index is rebuilt from the ParticleStore on every store sync
+    // (which every topology-changing operation triggers), so it is CONSISTENT
+    // with the cells at all observation points.
+    // check_particle_index therefore does not throw here (pre-resort) on any
+    // rank count.
     auto error_thrown_local = false;
     try {
       cs.check_particle_index();
@@ -543,8 +565,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     }
     auto const error_thrown = boost::mpi::all_reduce(comm, error_thrown_local,
                                                      std::logical_or<bool>());
-    BOOST_CHECK_EQUAL(error_thrown, resort_is_needed);
-    // no exception is thrown after resort
+    BOOST_CHECK_EQUAL(error_thrown, false);
+    // no exception is thrown after resort either
     cs.resort_particles(global_resort);
     cs.check_particle_index();
   }
@@ -613,7 +635,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     auto ptr = system.cell_structure->get_local_particle(pid2);
     if (ptr and not ptr->is_ghost()) {
       auto &p = *ptr;
-      auto const pos = p.pos();
+      Utils::Vector3d const pos = p.pos();
       p.pos() = Utils::Vector3d::broadcast(0.99 * box_l);
       BOOST_CHECK_THROW(cs.check_particle_sorting(), std::runtime_error);
       p.pos() = pos;
@@ -719,7 +741,14 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     } else {
       get_particle_node_parallel(12345);
     }
-    std::vector<Particle> plist(5u);
+    // Bonded kernels read q/pos/v/image through the ParticleStore;
+    // attach every hand-made particle to a standalone store.
+    ParticleStoreTestFixture fx{8u};
+    std::vector<Particle> plist{};
+    plist.reserve(5u);
+    for (std::size_t i = 0u; i < 5u; ++i) {
+      plist.emplace_back(fx.make());
+    }
     std::vector<Particle *> plist_ptr{};
     for (auto &p : plist) {
       plist_ptr.emplace_back(&p);
@@ -737,8 +766,10 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       if (n == 1u) {
         calc_bond_pair_force(none, {}, pl[0].q() * pl[1].q(), nullptr);
       } else if (n == 2u) {
-        auto const vec1 = box_geo.get_mi_vector(pl[1].pos(), pl[0].pos());
-        auto const vec2 = box_geo.get_mi_vector(pl[2].pos(), pl[0].pos());
+        auto const vec1 = box_geo.get_mi_vector(Utils::Vector3d(pl[1].pos()),
+                                                Utils::Vector3d(pl[0].pos()));
+        auto const vec2 = box_geo.get_mi_vector(Utils::Vector3d(pl[2].pos()),
+                                                Utils::Vector3d(pl[0].pos()));
         calc_bonded_three_body_force(none, vec1, vec2);
       } else if (n == 3u) {
         calc_bonded_four_body_force(none, box_geo, pl[0].pos(), pl[1].pos(),
@@ -762,6 +793,190 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     invoke_skip_cuda_exceptions([]() { throw cuda_runtime_error(""); }); // safe
 #endif
   }
+}
+
+// id -> store-row resolution. get_local_particle resolves an id via the
+// id->store-row map and returns a by-value view; an absent id yields an empty
+// optional. Exercises present-local, absent, and after add/remove/resort.
+// Under >1 rank it also exercises the present-ghost path (a particle near a
+// domain boundary is imaged as a ghost on the neighbour rank, which must still
+// resolve it by id).
+BOOST_FIXTURE_TEST_CASE(id_to_row_resolution, ParticleFactory) {
+  auto const comm = boost::mpi::communicator();
+  auto const rank = comm.rank();
+  auto const box_l = 12.;
+  auto const box_center = box_l / 2.;
+  auto &system = *espresso::system;
+  system.set_box_l(Utils::Vector3d::broadcast(box_l));
+  system.set_time_step(0.001);
+  system.cell_structure->set_verlet_skin(0.4);
+  auto &cs = *system.cell_structure;
+
+  auto const pid_a = 7;
+  auto const pid_b = 8;
+  auto const absent_pid = 4242;
+  // Place both particles near the centre so that on a >1-rank decomposition at
+  // least one becomes a ghost on a neighbour rank.
+  create_particle({box_center - 0.05, box_center, 1.0}, pid_a, 0);
+  create_particle({box_center + 0.05, box_center, 1.0}, pid_b, 0);
+  cs.ensure_particle_store_synchronized();
+
+  // Present local: the resolved view aliases the same store row that the cell
+  // iteration reports for this id (identity by store row, matching
+  // check_particle_index).
+  for (auto const &p : cs.local_particles()) {
+    if (p.id() == pid_a or p.id() == pid_b) {
+      auto const resolved = cs.get_local_particle(p.id());
+      BOOST_REQUIRE(resolved.has_value());
+      BOOST_CHECK_EQUAL(resolved->id(), p.id());
+      BOOST_CHECK_EQUAL(resolved->store(), p.store());
+      BOOST_CHECK_EQUAL(resolved->store_row(), p.store_row());
+    }
+  }
+
+  // Absent id: empty optional on every rank.
+  BOOST_CHECK(not cs.get_local_particle(absent_pid).has_value());
+
+  // Present ghost: with >1 rank, at least one of the two centre particles is a
+  // ghost on the ranks that do not own it; the id must still resolve (to the
+  // deduped ghost row). Locals win over ghost copies, so on the owning rank the
+  // resolution is the local; on a neighbour it is the ghost. Either way the id
+  // resolves.
+  cs.update_ghosts_and_resort_particle(Cells::DATA_PART_PROPERTIES);
+  {
+    auto const owns_a =
+        static_cast<int>(cs.get_local_particle(pid_a).has_value());
+    auto const total_a = boost::mpi::all_reduce(comm, owns_a, std::plus<int>());
+    BOOST_CHECK_GE(total_a, 1); // resolves on at least the owning rank
+    auto const resolved_a = cs.get_local_particle(pid_a);
+    if (resolved_a) {
+      BOOST_CHECK_EQUAL(resolved_a->id(), pid_a); // ghost or local: correct id
+    }
+  }
+
+  // After remove: removing a particle leaves NO readable stale entry
+  // (remove_particle eagerly invalidates the id->store-row entry, and the
+  // resort it triggers drops the ghost layer before rebuilding the map, so no
+  // stale ghost copy of the removed id can resurrect it either).
+  {
+    auto const owns_b_before = cs.get_local_particle(pid_b).has_value() and
+                               not cs.get_local_particle(pid_b)->is_ghost();
+    remove_particle(pid_b);
+    if (owns_b_before) {
+      BOOST_CHECK(not cs.get_local_particle(pid_b).has_value());
+    }
+    system.on_particle_change();
+  }
+
+  // After add + resort: a freshly added id resolves to a live row.
+  {
+    auto const pid_c = 11;
+    create_particle({box_center, box_center + 0.05, 1.0}, pid_c, 0);
+    cs.resort_particles(/* global */ true);
+    cs.check_particle_index();
+    auto const owns_c =
+        static_cast<int>(cs.get_local_particle(pid_c).has_value() and
+                         not cs.get_local_particle(pid_c)->is_ghost());
+    auto const total_c = boost::mpi::all_reduce(comm, owns_c, std::plus<int>());
+    if (rank == 0) {
+      BOOST_CHECK_EQUAL(total_c, 1); // owned by exactly one rank
+    }
+    remove_particle(pid_c);
+    system.on_particle_change();
+  }
+
+  remove_particle(pid_a);
+  system.on_particle_change();
+}
+
+// Collision handler re-resolution hazard (the BindAtPointOfCollision /
+// GlueToSurface pattern). A collision handler resolves the base particles by
+// id, then calls add_particle (VS creation), whose commit rebuilds the store
+// and RENUMBERS the rows. A by-value view captured BEFORE the add is therefore
+// stale: reading its id() aliases whatever now occupies its old row. The
+// handlers must re-resolve by id after every add_particle (and snapshot any
+// scalar they need across the add, as GlueToSurface's attach_vs_to.id() fix
+// does). This test reproduces the exact hazard at the CellStructure API level:
+// it demonstrates (fail) that the stale-view pattern (hold a view, read it
+// after a row-shifting add) reads a WRONG id, and (pass) that re-resolving by
+// id after the add is correct.
+BOOST_FIXTURE_TEST_CASE(collision_view_reresolution_regression,
+                        ParticleFactory) {
+  auto const comm = boost::mpi::communicator();
+  // Single-rank: deterministic cell ordering / row assignment.
+  if (comm.size() != 1) {
+    return;
+  }
+  auto const box_l = 12.;
+  auto &system = *espresso::system;
+  system.set_box_l(Utils::Vector3d::broadcast(box_l));
+  system.set_time_step(0.001);
+  system.cell_structure->set_verlet_skin(0.4);
+  auto &cs = *system.cell_structure;
+
+  // Base particle whose row will shift when a new particle is committed into an
+  // earlier cell. Place the base far along +x (a late cell) and the later-added
+  // particle at the origin (an early cell), so the add pushes the base's row
+  // up.
+  auto const pid_base = 3;
+  auto const pid_new = 21;
+  create_particle({box_l - 1.0, 0.5, 0.5}, pid_base, 0);
+  create_particle({0.5, 0.5, 0.5}, /* filler in an early cell */ 20, 0);
+  cs.ensure_particle_store_synchronized();
+
+  // Resolve the base by id and capture it BY VALUE (the pre-add view), plus its
+  // pre-add row and the generation.
+  auto const held_view = cs.get_local_particle(pid_base);
+  BOOST_REQUIRE(held_view.has_value());
+  auto const captured_row = held_view->store_row();
+  auto const gen_before = cs.particle_store().generation();
+  BOOST_CHECK_EQUAL(held_view->id(), pid_base);
+
+  // Snapshot the correct id BY VALUE before the add (the GlueToSurface fix).
+  auto const snapshot_id = held_view->id();
+
+  // Add a new particle into an early cell; its commit renumbers rows.
+  {
+    auto new_part = cs.make_new_particle_view();
+    new_part.id() = pid_new;
+    new_part.pos() = {0.25, 0.5, 0.5};
+    auto const added = cs.add_particle(std::move(new_part));
+    BOOST_REQUIRE(added.has_value());
+    BOOST_CHECK_EQUAL(added->id(), pid_new);
+  }
+
+  // The store generation moved: the held view is now stale by contract.
+  auto const gen_after = cs.particle_store().generation();
+  BOOST_CHECK_NE(gen_before, gen_after);
+
+  // (fail) The stale held view reads whatever now occupies its captured row.
+  // We assert the hazard is real: the base's row DID move, so reading the old
+  // view's id via its captured row would not reliably return pid_base. Confirm
+  // the row moved (the precondition for the stale-read bug).
+  auto const reresolved = cs.get_local_particle(pid_base);
+  BOOST_REQUIRE(reresolved.has_value());
+  BOOST_CHECK_NE(reresolved->store_row(), captured_row); // row shifted
+
+  // What the OLD captured row now holds (the value a stale reference would read
+  // for id()). If it differs from pid_base, a pre-fix stale read is wrong.
+  auto const stale_id_at_old_row =
+      cs.particle_store().id(static_cast<int>(captured_row));
+  // (pass) The re-resolution and the pre-add snapshot both give the CORRECT id,
+  // regardless of what the stale row now holds.
+  BOOST_CHECK_EQUAL(reresolved->id(), pid_base);
+  BOOST_CHECK_EQUAL(snapshot_id, pid_base);
+  // The hazard is real iff the stale row now holds a different id; record it so
+  // a row-no-longer-shifting precondition violation is visible rather than
+  // silently making the test vacuous.
+  BOOST_TEST_MESSAGE("collision regression: captured_row="
+                     << captured_row << " now holds id=" << stale_id_at_old_row
+                     << " (base id=" << pid_base << ")");
+  BOOST_CHECK_NE(stale_id_at_old_row, pid_base); // stale read WOULD be wrong
+
+  remove_particle(pid_base);
+  remove_particle(pid_new);
+  remove_particle(20);
+  system.on_particle_change();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

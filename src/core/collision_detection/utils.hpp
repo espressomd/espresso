@@ -38,6 +38,7 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/utility.hpp>
 
+#include <cassert>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -45,8 +46,11 @@
 
 namespace CollisionDetection {
 
-inline auto &get_part(CellStructure &cell_structure, int id) {
-  auto const p = cell_structure.get_local_particle(id);
+// get_local_particle returns a by-value view, so this must return by value too
+// -- returning a reference would dangle into the local optional. A Particle is
+// a 16-byte handle; by-value is cheap.
+inline Particle get_part(CellStructure &cell_structure, int id) {
+  auto p = cell_structure.get_local_particle(id);
 
   if (not p) {
     throw std::runtime_error("Could not handle collision because particle " +
@@ -61,10 +65,15 @@ inline void place_vs_and_relate_to_particle(
     CellStructure &cell_structure, BoxGeometry const &box_geo,
     int const part_type_vs, double const min_global_cut,
     int const current_vs_pid, Utils::Vector3d const &pos, int const relate_to) {
-  Particle new_part;
+  // Build the new virtual site into a staging-store row via a view, then hand
+  // it to add_particle (which stages the underlying row).
+  auto new_part = cell_structure.make_new_particle_view();
   new_part.id() = current_vs_pid;
   new_part.pos() = pos;
+  // add_particle returns a by-value view (nullopt if not local); the caller
+  // always creates the VS on a rank that owns it, so it resolves here.
   auto p_vs = cell_structure.add_particle(std::move(new_part));
+  assert(p_vs.has_value());
   vs_relate_to(*p_vs, get_part(cell_structure, relate_to), box_geo,
                min_global_cut);
   p_vs->type() = part_type_vs;

@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "ParticleList.hpp"
+#include "cell_system/Cell.hpp"
 #include <boost/mpi/communicator.hpp>
 #include <optional>
 #include <utils/Vector.hpp>
@@ -36,24 +36,24 @@ struct ExchangeOp {
 };
 
 struct SendRegion {
-  ParticleList *cell;
+  Cell *cell;
   Utils::Vector3d shift;
 };
 struct NeighborComm {
   int peer;
   std::vector<SendRegion> send;
-  std::vector<ParticleList *> recv; // recv[k] <-> peer.send[k]
+  std::vector<Cell *> recv; // recv[k] <-> peer.send[k]
 };
 struct LocalComm {
-  ParticleList *src;
-  ParticleList *dst;
+  Cell *src;
+  Cell *dst;
   Utils::Vector3d shift;
 };
 
 enum class CollectivePattern { None, Broadcast, ReduceSum };
 struct CollectiveSection {
   CollectivePattern pattern;
-  std::vector<ParticleList *> cells;
+  std::vector<Cell *> cells;
 };
 
 struct HaloPlan {

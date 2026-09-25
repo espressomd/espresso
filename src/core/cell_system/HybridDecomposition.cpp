@@ -23,6 +23,9 @@
 
 #include "cell_system/Cell.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "cell_system/ParticleListOperations.hpp"
+
+#include "particle_store/ParticleStore.hpp"
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
@@ -146,68 +149,135 @@ void HybridDecomposition::resort(bool global,
                                  std::vector<ParticleChange> &diff) {
   ParticleList displaced_parts;
 
-  /* Check for n_square type particles in regular decomposition */
+  /* Check for n_square type particles in regular decomposition. Iterate
+   * committed rows by raw position and, for a misplaced particle, copy its live
+   * row into the shared staging store (stage_row), mark the source row
+   * pending-removed via drop_row (no swap-with-back; the raw index stays valid
+   * so we advance unconditionally), and stage a reference to the staging row in
+   * the target child cell (insert_staged_row). The next store rebuild --
+   * triggered by m_commit_store below, BEFORE the child resorts -- emits
+   * surviving rows then staged rows in permutation order, drops pending-removed
+   * rows, and resets the staging store. */
+  assert(m_migration_staging && "migration staging store not installed");
+  auto &staging = *m_migration_staging.store;
   for (auto &cell_rd : m_regular_decomposition.local_cells()) {
-    for (auto it = cell_rd->particles().begin();
-         it != cell_rd->particles().end();) {
+    auto &store = cell_rd->store();
+    // Iterate committed rows by RAW position: drop_row marks the row
+    // pending-removed (no swap-with-back), so advance unconditionally.
+    auto const rd_offset = cell_rd->offset();
+    auto const rd_count = cell_rd->count();
+    for (std::size_t index = 0u; index < rd_count; ++index) {
+      auto const live_row = static_cast<int>(rd_offset + index);
+      /* Skip a row a prior pass already dropped (marked pending-removed by
+       * drop_row). The n_square-scan loop below is nested in this regular-cell
+       * loop, so it re-scans every n_square cell once per regular cell; a row
+       * already migrated in an earlier pass is invisible to live iteration and
+       * must not be re-staged, or it would be duplicated once per outer pass.
+       */
+      if (store.is_pending_removal(live_row)) {
+        continue;
+      }
+      auto const type = store.type(live_row);
       /* Particle is in the right decomposition, i.e. has no n_square type */
-      if (not is_n_square_type(it->type())) {
-        std::advance(it, 1);
+      if (not is_n_square_type(type)) {
         continue;
       }
 
       /* else remove from current cell ... */
-      auto p = std::move(*it);
-      it = cell_rd->particles().erase(it);
-      diff.emplace_back(ModifiedList{cell_rd->particles()});
-      diff.emplace_back(RemovedParticle{p.id()});
+      auto const staging_row = m_migration_staging.stage_row(live_row);
+      CellParticleStorage::drop_row(*cell_rd, index);
+      diff.emplace_back(ModifiedList{*cell_rd});
+      diff.emplace_back(RemovedParticle{staging.id(staging_row)});
 
       /* ... and insert into a n_square cell */
       auto const first_local_cell = m_n_square.get_local_cells()[0];
-      first_local_cell->particles().insert(std::move(p));
-      diff.emplace_back(ModifiedList{first_local_cell->particles()});
+      CellParticleStorage::insert_staged_row(*first_local_cell, staging,
+                                             staging_row);
+      diff.emplace_back(ModifiedList{*first_local_cell});
     }
 
     /* Now check for regular decomposition type particles in n_square */
     for (auto &cell_ns : m_n_square.local_cells()) {
-      for (auto it = cell_ns->particles().begin();
-           it != cell_ns->particles().end();) {
+      auto &store = cell_ns->store();
+      // Iterate committed rows by RAW position: drop_row marks the row
+      // pending-removed (no swap-with-back), so advance unconditionally.
+      auto const ns_offset = cell_ns->offset();
+      auto const ns_count = cell_ns->count();
+      for (std::size_t index = 0u; index < ns_count; ++index) {
+        auto const live_row = static_cast<int>(ns_offset + index);
+        /* Skip a row a prior pass already dropped (marked pending-removed by
+         * drop_row). This loop is re-entered once per regular cell (it is
+         * nested in the regular-cell loop above), so an rd-type particle
+         * already migrated out of this n_square cell in an earlier pass is
+         * invisible to live iteration and must not be re-staged, or it would be
+         * duplicated once per outer pass. */
+        if (store.is_pending_removal(live_row)) {
+          continue;
+        }
+        auto const type = store.type(live_row);
         /* Particle is of n_square type */
-        if (is_n_square_type(it->type())) {
-          std::advance(it, 1);
+        if (is_n_square_type(type)) {
           continue;
         }
 
         /* else remove from current cell ... */
-        auto p = std::move(*it);
-        it = cell_ns->particles().erase(it);
-        diff.emplace_back(ModifiedList{cell_ns->particles()});
-        diff.emplace_back(RemovedParticle{p.id()});
+        auto const staging_row = m_migration_staging.stage_row(live_row);
+        CellParticleStorage::drop_row(*cell_ns, index);
+        diff.emplace_back(ModifiedList{*cell_ns});
+        diff.emplace_back(RemovedParticle{staging.id(staging_row)});
 
-        /* ... and insert in regular decomposition */
-        auto const target_cell = particle_to_cell(p);
+        /* ... and insert in regular decomposition. The home cell is decided
+         * from the staged row's position (read through a view over it). */
+        auto const target_cell =
+            particle_to_cell(staging.make_view(staging_row));
         /* if particle belongs to this node insert it into correct cell */
         if (target_cell != nullptr) {
-          target_cell->particles().insert(std::move(p));
-          diff.emplace_back(ModifiedList{target_cell->particles()});
+          CellParticleStorage::insert_staged_row(*target_cell, staging,
+                                                 staging_row);
+          diff.emplace_back(ModifiedList{*target_cell});
         }
         /* otherwise just put into regular decomposition */
         else {
           auto first_local_cell = m_regular_decomposition.get_local_cells()[0];
-          first_local_cell->particles().insert(std::move(p));
-          diff.emplace_back(ModifiedList{first_local_cell->particles()});
+          CellParticleStorage::insert_staged_row(*first_local_cell, staging,
+                                                 staging_row);
+          diff.emplace_back(ModifiedList{*first_local_cell});
         }
       }
     }
+  }
+
+  /* The type-based moves above staged staging-row references into their target
+   * child cells (insert_staged_row). Commit now so the child resorts below
+   * iterate the correct committed cell contents -- otherwise a particle moved
+   * into a cell would be invisible to that cell's own resort, changing the
+   * final placement/order. The commit copies each staged row into a committed
+   * row and resets the shared staging store, so the child resorts start with a
+   * clean staging store. */
+  if (m_commit_store) {
+    m_commit_store();
   }
 
   /* now resort into correct cells within the respective decompositions */
   m_regular_decomposition.resort(global, diff);
   m_n_square.resort(global, diff);
 
+  /* The child resorts staged migrated/new particles into cells but did not
+   * commit them to store rows. Commit now so the internal ghost communications
+   * below see committed rows/columns (the PARTNUM step still uses
+   * Cell::size() = rows+staged for downstream ghost layers, but the DATA step
+   * reads committed views). */
+  if (m_commit_store) {
+    m_commit_store();
+  }
+
   GhostComm::halo_exchange(
       m_halo_plan, m_box, GHOSTTRANS_PARTNUM,
       {GhostComm::Direction::Push, GhostComm::Combine::Overwrite});
+  /* Committing the just-staged ghosts before the DATA transfer, same reason. */
+  if (m_commit_store) {
+    m_commit_store();
+  }
   GhostComm::halo_exchange(
       m_halo_plan, m_box, map_data_parts(m_get_global_ghost_flags()),
       {GhostComm::Direction::Push, GhostComm::Combine::Overwrite});

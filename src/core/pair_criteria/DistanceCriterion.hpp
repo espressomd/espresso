@@ -33,7 +33,10 @@ class DistanceCriterion : public PairCriterion {
 public:
   bool decide(const Particle &p1, const Particle &p2) const override {
     auto const &box_geo = *System::get_system().box_geo;
-    return box_geo.get_mi_vector(p1.pos(), p2.pos()).norm() <= m_cut_off;
+    return box_geo
+               .get_mi_vector(Utils::Vector3d(p1.pos()),
+                              Utils::Vector3d(p2.pos()))
+               .norm() <= m_cut_off;
   }
   double get_cut_off() { return m_cut_off; }
   void set_cut_off(double c) { m_cut_off = c; }

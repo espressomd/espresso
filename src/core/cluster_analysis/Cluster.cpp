@@ -88,10 +88,11 @@ double Cluster::longest_distance() {
   double ld = 0.;
   for (auto a = particles.begin(); a != particles.end(); a++) {
     for (auto b = a; ++b != particles.end();) {
-      auto const dist = box_geo
-                            .get_mi_vector(get_particle_data(*a).pos(),
-                                           get_particle_data(*b).pos())
-                            .norm();
+      auto const dist =
+          box_geo
+              .get_mi_vector(Utils::Vector3d(get_particle_data(*a).pos()),
+                             Utils::Vector3d(get_particle_data(*b).pos()))
+              .norm();
 
       // Larger than previous largest distance?
       ld = std::max(ld, dist);
@@ -116,7 +117,9 @@ Cluster::radius_of_gyration_subcluster(std::vector<int> const &particle_ids) {
   for (auto const pid : particle_ids) {
     // calculate square length of this distance
     sum_sq_dist +=
-        box_geo.get_mi_vector(com, get_particle_data(pid).pos()).norm2();
+        box_geo
+            .get_mi_vector(com, Utils::Vector3d(get_particle_data(pid).pos()))
+            .norm2();
   }
 
   return sqrt(sum_sq_dist / static_cast<double>(particle_ids.size()));
@@ -150,9 +153,10 @@ Cluster::fractal_dimension([[maybe_unused]] double dr) {
   std::vector<double> distances;
 
   for (auto const &it : particles) {
-    distances.push_back(box_geo.get_mi_vector(com, get_particle_data(it).pos())
-                            .norm()); // add distance from the current particle
-                                      // to the com in the distances vectors
+    distances.push_back(
+        box_geo.get_mi_vector(com, Utils::Vector3d(get_particle_data(it).pos()))
+            .norm()); // add distance from the current particle
+                      // to the com in the distances vectors
   }
 
   // Get particle indices in the cluster which yield distances  sorted in

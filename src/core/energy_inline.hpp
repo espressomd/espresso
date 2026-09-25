@@ -270,7 +270,8 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
   auto p4 = (n_partners > 2) ? partners[2] : nullptr;
 
   if (n_partners == 1) {
-    auto const dx = box_geo.get_mi_vector(p1.pos(), p2->pos());
+    auto const dx = box_geo.get_mi_vector(Utils::Vector3d(p1.pos()),
+                                          Utils::Vector3d(p2->pos()));
     return calc_pair_bonded_energy(iaparams, dx, p1.pos(), p2->pos(),
 #ifdef ESPRESSO_ELECTROSTATICS
                                    p1.q() * p2->q(), kernel
@@ -280,15 +281,20 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     );
   } // 1 partner
   if (n_partners == 2) {
-    auto const vec1 = box_geo.get_mi_vector(p2->pos(), p1.pos());
-    auto const vec2 = box_geo.get_mi_vector(p3->pos(), p1.pos());
+    auto const vec1 = box_geo.get_mi_vector(Utils::Vector3d(p2->pos()),
+                                            Utils::Vector3d(p1.pos()));
+    auto const vec2 = box_geo.get_mi_vector(Utils::Vector3d(p3->pos()),
+                                            Utils::Vector3d(p1.pos()));
     return calc_angle_bonded_energy(iaparams, vec1, vec2);
   } // 2 partners
   if (n_partners == 3) {
     // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
-    auto const v12 = box_geo.get_mi_vector(p1.pos(), p2->pos());
-    auto const v23 = box_geo.get_mi_vector(p3->pos(), p1.pos());
-    auto const v34 = box_geo.get_mi_vector(p4->pos(), p3->pos());
+    auto const v12 = box_geo.get_mi_vector(Utils::Vector3d(p1.pos()),
+                                           Utils::Vector3d(p2->pos()));
+    auto const v23 = box_geo.get_mi_vector(Utils::Vector3d(p3->pos()),
+                                           Utils::Vector3d(p1.pos()));
+    auto const v34 = box_geo.get_mi_vector(Utils::Vector3d(p4->pos()),
+                                           Utils::Vector3d(p3->pos()));
     return calc_dihedral_bonded_energy(iaparams, v12, v23, v34);
   } // 3 partners
   if (n_partners == 0) {
@@ -311,7 +317,9 @@ inline double translational_kinetic_energy(Particle const &p) {
 inline double rotational_kinetic_energy([[maybe_unused]] Particle const &p) {
 #ifdef ESPRESSO_ROTATION
   return (p.can_rotate() and not p.is_virtual())
-             ? 0.5 * (hadamard_product(p.omega(), p.omega()) * p.rinertia())
+             ? 0.5 * (hadamard_product(Utils::Vector3d(p.omega()),
+                                       Utils::Vector3d(p.omega())) *
+                      Utils::Vector3d(p.rinertia()))
              : 0.0;
 #else
   return 0.0;

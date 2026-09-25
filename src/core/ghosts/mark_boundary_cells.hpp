@@ -24,7 +24,6 @@
 
 #include <functional>
 #include <span>
-#include <unordered_map>
 #include <unordered_set>
 
 namespace GhostComm {
@@ -70,11 +69,11 @@ namespace GhostComm {
 inline void mark_boundary_cells(
     std::span<Cell *const> local_cells, std::span<Cell *const> ghost_cells,
     std::function<bool(Cell const *, Cell const *)> wrap_predicate = nullptr) {
-  // Build a set of ghost ParticleList pointers for O(1) lookup.
-  std::unordered_set<ParticleList const *> ghost_set;
+  // Build a set of ghost Cell pointers for O(1) lookup.
+  std::unordered_set<Cell const *> ghost_set;
   ghost_set.reserve(ghost_cells.size());
   for (Cell *c : ghost_cells) {
-    ghost_set.insert(&c->particles());
+    ghost_set.insert(c);
   }
 
   // Reset all local cells to interior first (idempotent on rebuild).
@@ -86,8 +85,7 @@ inline void mark_boundary_cells(
   // the wrap predicate fires for that neighbor pair (rule b).
   for (Cell *c : local_cells) {
     for (Cell *n : c->neighbors().all()) {
-      if (ghost_set.count(&n->particles()) ||
-          (wrap_predicate && wrap_predicate(c, n))) {
+      if (ghost_set.count(n) || (wrap_predicate && wrap_predicate(c, n))) {
         c->m_is_boundary = true;
         break;
       }
@@ -108,34 +106,33 @@ inline void mark_boundary_cells(
  * invariant "interior ⇒ not exported by the plan" holds for any plan shape.
  *
  * @param plan        The halo plan produced by `make_halo_plan()`.
- * @param local_cells Local cell pointer span (used to build the ParticleList ->
- *                    Cell reverse map in O(n)).
+ * @param local_cells Local cell pointer span (used to filter plan sources down
+ *                    to this rank's local cells in O(1) per lookup).
  */
 inline void mark_plan_cells_boundary(HaloPlan const &plan,
                                      std::span<Cell *const> local_cells) {
-  // Build a reverse map: ParticleList* -> Cell* for O(1) lookup.
-  std::unordered_map<ParticleList const *, Cell *> pl_to_cell;
-  pl_to_cell.reserve(local_cells.size());
+  std::unordered_set<Cell const *> local_set;
+  local_set.reserve(local_cells.size());
   for (Cell *c : local_cells) {
-    pl_to_cell[&c->particles()] = c;
+    local_set.insert(c);
   }
+
+  auto const mark = [&local_set](Cell *cell) {
+    if (cell != nullptr and local_set.count(cell) != 0u) {
+      cell->m_is_boundary = true;
+    }
+  };
 
   // Mark every NeighborComm send source boundary.
   for (auto const &nc : plan.neighbors) {
     for (auto const &sr : nc.send) {
-      auto it = pl_to_cell.find(sr.cell);
-      if (it != pl_to_cell.end()) {
-        it->second->m_is_boundary = true;
-      }
+      mark(sr.cell);
     }
   }
 
   // Mark every LocalComm src boundary.
   for (auto const &lc : plan.local) {
-    auto it = pl_to_cell.find(lc.src);
-    if (it != pl_to_cell.end()) {
-      it->second->m_is_boundary = true;
-    }
+    mark(lc.src);
   }
 }
 

@@ -22,12 +22,12 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "ParticleList.hpp"
+#include "cell_system/Cell.hpp"
 #include "ghosts/HaloPlan.hpp"
 
 BOOST_AUTO_TEST_CASE(neighbor_comm_shapes) {
   using namespace GhostComm;
-  ParticleList a, b;
+  Cell a, b;
   NeighborComm nc{/*peer*/ 1, {SendRegion{&a, {}}}, {&b}};
   BOOST_CHECK_EQUAL(nc.peer, 1);
   BOOST_CHECK_EQUAL(nc.send.size(), nc.recv.size()); // recv[k] <-> peer.send[k]

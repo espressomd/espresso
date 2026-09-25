@@ -84,8 +84,10 @@ Observable_stat const &System::calculate_pressure() {
   auto const kinetic = reduce_over_local_particles<Utils::Matrix<double, 3, 3>>(
       *cell_structure,
       [](Utils::Matrix<double, 3, 3> &acc, Particle const &p) {
-        if (!p.is_virtual())
-          acc += Utils::tensor_product(p.v(), p.mass() * p.v());
+        if (!p.is_virtual()) {
+          auto const vel = Utils::Vector3d(p.v());
+          acc += Utils::tensor_product(vel, p.mass() * vel);
+        }
       },
       [](auto &a, auto const &b) { a += b; });
   std::ranges::copy(Utils::flatten(kinetic), obs_pressure.kinetic_lin.begin());
@@ -105,6 +107,18 @@ Observable_stat const &System::calculate_pressure() {
                              inactive_cutoff};
   };
   update_verlet_state(*this, inactive_cutoff);
+#ifdef ESPRESSO_ELECTROSTATICS
+  // Refresh the pack-owned charge column once, guarded by an active coulomb
+  // actor (the pressure pair kernel reads it contiguously).
+  if (coulomb.impl->solver) {
+    refresh_pack_charges(*cell_structure);
+  }
+#endif // ESPRESSO_ELECTROSTATICS
+#ifdef ESPRESSO_DIPOLES
+  if (dipoles.impl->solver) {
+    refresh_pack_dipm(*cell_structure);
+  }
+#endif // ESPRESSO_DIPOLES
 
   PressureBinLayout layout{
       static_cast<std::size_t>(bonded_ias->get_next_key()),
@@ -173,6 +187,10 @@ Observable_stat const &System::calculate_pressure() {
 
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   if (!obs_pressure.virtual_sites.empty()) {
+    // vs_relative_pressure_tensor reads virtual-site particle forces; ensure
+    // every particle has a valid ParticleStore row (on_observable_calc above
+    // may have resorted). O(1) when clean; rank-local.
+    cell_structure->ensure_particle_store_synchronized();
     auto const vs_pressure = vs_relative_pressure_tensor(*cell_structure);
     std::ranges::copy(Utils::flatten(vs_pressure),
                       obs_pressure.virtual_sites.begin());

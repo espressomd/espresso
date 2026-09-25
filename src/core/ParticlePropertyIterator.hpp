@@ -51,20 +51,13 @@ inline auto unfolded_pos_range(ParticleRange const &particles,
 }
 
 inline auto pos_range(ParticleRange const &particles) {
-  auto return_pos = [](Particle &p) -> Utils::Vector3d & { return p.pos(); };
+  auto return_pos = [](Particle &p) -> Utils::Vector3d { return p.pos(); };
   return detail::create_transform_range(particles, return_pos);
 }
 
 inline auto charge_range(ParticleRange const &particles) {
   auto return_charge = [](Particle &p) -> double & { return p.q(); };
   return detail::create_transform_range(particles, return_charge);
-}
-
-inline auto force_range(ParticleRange const &particles) {
-  auto return_force = [](Particle &p) -> Utils::Vector3d & {
-    return p.force();
-  };
-  return detail::create_transform_range(particles, return_force);
 }
 
 } // namespace ParticlePropertyRange

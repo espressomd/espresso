@@ -277,3 +277,111 @@ void p3m_interpolate(P3MLocalMesh const &local_mesh,
     q_ind += local_mesh.q_21_off;
   }
 }
+
+/**
+ * @brief SIMD-friendly particle->mesh scatter (charge/dipole assignment).
+ *
+ * Scatters a per-point weighted source term into a contiguous
+ * @p cao "mesh-line" of the last (row-major-contiguous) axis. The innermost
+ * loop walks @p cao consecutive mesh cells and each store targets a distinct
+ * cell (no cross-iteration reduction), so the compiler can vectorize it under
+ * `-march=native` while keeping the exact per-cell arithmetic of
+ * @ref p3m_interpolate — for cell @c i2 the increment is
+ * @c ((w_x*w_y)*w_z[i2]) applied by @p accumulate. The weights are hoisted
+ * (one @c w_x per x-plane, one @c w_xy per y-line), matching
+ * @ref p3m_interpolate exactly, so this is a bitwise-identical restructuring of
+ * the scatter --- only the loop shape changes, not the numerics.
+ *
+ * @tparam MeshType Element type of the destination mesh (float or double).
+ * @param local_mesh Mesh info.
+ * @param weights    Set of weights.
+ * @param source     Scalar source term (charge or dipole component).
+ * @param mesh       Destination mesh array (contiguous, last axis fastest).
+ */
+template <int cao, template <int> class WeightsStorage, class MeshType>
+void p3m_scatter_line(P3MLocalMesh const &local_mesh,
+                      WeightsStorage<cao> const &weights, double source,
+                      MeshType *mesh) {
+  auto q_ind = weights.ind;
+  for (int i0 = 0; i0 < cao; i0++) {
+    auto const w_x = weights.w_x[i0];
+    for (int i1 = 0; i1 < cao; i1++) {
+      auto const w_xy = w_x * weights.w_y[i1];
+      auto *const line = mesh + q_ind;
+      // Contiguous run over the last axis: independent stores, vectorizable.
+      // Excluded on clang: it declines to vectorize this fixed-trip loop at
+      // some optimization levels and then raises -Wpass-failed, which the
+      // sanitizer build promotes to an error. The stores are independent, so
+      // whether they vectorize does not affect the result.
+#if defined(_OPENMP) && !defined(__clang__)
+#pragma omp simd
+#endif
+      for (int i2 = 0; i2 < cao; i2++) {
+        line[i2] += static_cast<MeshType>((w_xy * weights.w_z[i2]) * source);
+      }
+      q_ind += cao + local_mesh.q_2_off;
+    }
+    q_ind += local_mesh.q_21_off;
+  }
+}
+
+/**
+ * @brief SIMD-friendly mesh->particle gather of a vector field (force/torque).
+ *
+ * Interpolates @p n_fields real-space fields (each a contiguous mesh array)
+ * back onto a particle using the hoisted per-axis weights, returning the
+ * @p n_fields weighted sums. The innermost loop walks a contiguous @c cao
+ * mesh-line of the last axis and forms @c w_z[i2]*field[base+i2], which the
+ * compiler vectorizes (FMA over the contiguous line) under `-march=native`.
+ *
+ * @note Arithmetic-order note: the original @ref p3m_interpolate sums the
+ * @c cao^3 contributions into one scalar in a single flat (x,y,z) sequential
+ * chain. This routine sums each contiguous z-line first (a vectorized/tree
+ * reduction over @c cao lanes) and combines the lines with the outer weights,
+ * so the reduction order differs at the rounding level. Forces therefore change
+ * at machine-epsilon; correctness is gated by the coulomb/p3m physics battery.
+ *
+ * @tparam FieldType Element type of the mesh fields (float or double).
+ * @param local_mesh Mesh info.
+ * @param weights    Set of weights.
+ * @param n_fields   Number of fields to gather (e.g. 3 for the E-field).
+ * @param fields     Pointers to the @p n_fields contiguous mesh arrays.
+ * @param out        Output buffer of length @p n_fields for the weighted sums.
+ */
+template <int cao, template <int> class WeightsStorage, class FieldType>
+void p3m_gather_line(P3MLocalMesh const &local_mesh,
+                     WeightsStorage<cao> const &weights, unsigned int n_fields,
+                     FieldType const *const *fields, double *out) {
+  for (unsigned int f = 0u; f < n_fields; ++f) {
+    out[f] = 0.;
+  }
+  auto q_ind = weights.ind;
+  for (int i0 = 0; i0 < cao; i0++) {
+    auto const w_x = weights.w_x[i0];
+    for (int i1 = 0; i1 < cao; i1++) {
+      auto const w_xy = w_x * weights.w_y[i1];
+      auto const base = q_ind;
+      for (unsigned int f = 0u; f < n_fields; ++f) {
+        auto const *line = fields[f] + base;
+        double acc = 0.;
+        // Contiguous z-line dot product: vectorizes to packed FMA + reduce.
+        // The reduction clause authorizes the SIMD (tree) accumulation order
+        // that fixes the canonical single-threaded gather result. Excluded on
+        // clang: it declines to vectorize this fixed-trip loop at some
+        // optimization levels and then raises -Wpass-failed, which the
+        // sanitizer build promotes to an error. Without the pragma clang keeps
+        // the sequential accumulation order (results differ only at the
+        // rounding level, as the gather already does across compilers).
+#if defined(_OPENMP) && !defined(__clang__)
+#pragma omp simd reduction(+ : acc)
+#endif
+        for (int i2 = 0; i2 < cao; i2++) {
+          acc += weights.w_z[i2] * static_cast<double>(line[i2]);
+        }
+        out[f] += w_xy * acc;
+      }
+      q_ind = base + cao + local_mesh.q_2_off;
+    }
+    q_ind += local_mesh.q_21_off;
+  }
+}

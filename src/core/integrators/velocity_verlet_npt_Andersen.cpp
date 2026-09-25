@@ -133,15 +133,16 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
    *    (pos[t] + (L(t)**2 / L(t+0.5*dt)**2) * vel[t+0.5*dt] * 0.5 * dt) @f$
    */
   for (auto &p : particles) {
+    auto pos = p.pos();
+    auto pos_last = p.pos_at_last_verlet_update();
     for (auto j = 0u; j < 3u; ++j) {
       if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & NptIsoParameters::nptgeom_dir[j]) {
-          p.pos()[j] =
-              scal[1] * (p.pos()[j] + scal[2] * p.v()[j] * 0.5 * time_step);
-          p.pos_at_last_verlet_update()[j] *= scal[1];
+          pos[j] = scal[1] * (pos[j] + scal[2] * p.v()[j] * 0.5 * time_step);
+          pos_last[j] *= scal[1];
           p.v()[j] *= scal[0];
         } else {
-          p.pos()[j] += p.v()[j] * 0.5 * time_step;
+          pos[j] += p.v()[j] * 0.5 * time_step;
         }
       }
     }
@@ -174,18 +175,19 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
    *                  (pos[t+0.5*dt] + vel[t+0.5*dt]) @f$
    */
   for (auto &p : particles) {
-    auto const v_therm =
-        propagate_therm0_nptiso(npt_iso, p.v(), p.mass(), p.id());
+    auto pos = p.pos();
+    auto pos_last = p.pos_at_last_verlet_update();
+    auto const v_therm = propagate_therm0_nptiso(
+        npt_iso, Utils::Vector3d(p.v()), p.mass(), p.id());
     for (auto j = 0u; j < 3u; ++j) {
       if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & NptIsoParameters::nptgeom_dir[j]) {
           p.v()[j] = v_therm[j];
-          p.pos()[j] =
-              scal[1] * (p.pos()[j] + scal[2] * p.v()[j] * 0.5 * time_step);
-          p.pos_at_last_verlet_update()[j] *= scal[1];
+          pos[j] = scal[1] * (pos[j] + scal[2] * p.v()[j] * 0.5 * time_step);
+          pos_last[j] *= scal[1];
           p.v()[j] *= scal[0];
         } else {
-          p.pos()[j] += p.v()[j] * 0.5 * time_step;
+          pos[j] += p.v()[j] * 0.5 * time_step;
         }
       }
     }

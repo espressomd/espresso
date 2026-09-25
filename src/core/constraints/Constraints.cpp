@@ -60,7 +60,10 @@ void Constraints::add_forces(ParticleRange &particles, double time) const {
       force += constraint->force(p, pos, time);
     }
 
-    p.force_and_torque() += force;
+    p.force() += force.f;
+#ifdef ESPRESSO_ROTATION
+    p.torque() += force.torque;
+#endif
   }
 }
 

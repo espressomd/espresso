@@ -33,6 +33,14 @@ void PartCfg::update() {
   auto const ids = get_particle_ids();
   auto const chunk_size = fetch_cache_max_size();
 
+  // Size the owned store to hold one row per particle, then fill it row by row
+  // by COPYING each fetched view's row into it: m_parts holds views over THIS
+  // store, independent of the shared fetch cache.
+  m_store.begin_rebuild(ids.size(), 0u);
+  m_store.finish_rebuild();
+  m_parts.reserve(ids.size());
+
+  int row = 0;
   for (std::size_t offset = 0; offset < ids.size();) {
     auto const this_size = std::clamp(chunk_size, std::size_t{0},
                                       std::size_t{ids.size() - offset});
@@ -41,11 +49,17 @@ void PartCfg::update() {
     prefetch_particle_data(chunk_ids);
 
     for (auto id : chunk_ids) {
-      m_parts.push_back(get_particle_data(id));
+      // Fetched view: a fetch-cache view for a remote particle, or a live view
+      // for a local one; both are store-attached, so copy their row into ours.
+      auto const &fetched = get_particle_data(id);
+      m_store.copy_row(*fetched.store(), fetched.store_row(), row);
 
-      auto &p = m_parts.back();
+      auto p = m_store.make_view(row);
+      // Unfold the position IN OUR OWN STORE (never through the shared cache).
       p.pos() += m_box_geo.image_shift(p.image_box());
       p.image_box() = {};
+      m_parts.push_back(p);
+      ++row;
     }
 
     offset += this_size;

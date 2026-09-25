@@ -219,12 +219,17 @@ static bool bond_handler(BondBreakage &bond_breakage, Particle &p,
                          BoxGeometry const &box_geo) {
   auto retval = false;
   if (partners.size() == 1u) { // pair bonds
-    auto d = box_geo.get_mi_vector(p.pos(), partners[0]->pos()).norm();
+    auto d = box_geo
+                 .get_mi_vector(Utils::Vector3d(p.pos()),
+                                Utils::Vector3d(partners[0]->pos()))
+                 .norm();
     retval = bond_breakage.check_and_handle_breakage(
         p.id(), {{partners[0]->id(), std::nullopt}}, bond_id, d);
   } else if (partners.size() == 2u) { // angle bond
-    auto d =
-        box_geo.get_mi_vector(partners[0]->pos(), partners[1]->pos()).norm();
+    auto d = box_geo
+                 .get_mi_vector(Utils::Vector3d(partners[0]->pos()),
+                                Utils::Vector3d(partners[1]->pos()))
+                 .norm();
     retval = bond_breakage.check_and_handle_breakage(
         p.id(), {{partners[0]->id(), partners[1]->id()}}, bond_id, d);
   }

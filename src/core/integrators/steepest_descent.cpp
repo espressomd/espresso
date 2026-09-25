@@ -47,26 +47,29 @@ bool SteepestDescent::propagate(CellStructure &cell_structure) const {
   for (auto &p : cell_structure.local_particles()) {
     auto f = 0.0;
 
+    auto const force = p.force();
+    auto pos = p.pos();
     // For all Cartesian coordinates
     for (auto j = 0u; j < 3u; ++j) {
       // Skip, if coordinate is fixed
       if (!p.is_fixed_along(j)) {
         // Square of force on particle
-        f += Utils::sqr(p.force()[j]);
+        f += Utils::sqr(force[j]);
 
         // Positional increment, crop to maximum allowed by user
-        auto const dp = std::clamp(gamma * p.force()[j], -max_displacement,
-                                   max_displacement);
+        auto const dp =
+            std::clamp(gamma * force[j], -max_displacement, max_displacement);
 
         // Move particle
-        p.pos()[j] += dp;
+        pos[j] += dp;
       }
     }
 #ifdef ESPRESSO_ROTATION
     {
       // Rotational increment
-      auto const dq = gamma * p.torque(); // Vector parallel to torque
-      auto const t = p.torque().norm2();
+      auto const torque = Utils::Vector3d(p.torque());
+      auto const dq = gamma * torque; // Vector parallel to torque
+      auto const t = torque.norm2();
 
       // Normalize rotation axis and compute amount of rotation
       auto const l = dq.norm();

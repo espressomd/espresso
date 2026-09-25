@@ -45,22 +45,39 @@ inline void enumerate_local_particles(CellStructure const &cs,
   if (cs.use_parallel_for_each_local_particle()) {
     auto const local_cells = cs.decomposition().local_cells();
 
+    // Use count() (raw committed rows) as the basis for cell_offsets to match
+    // the inner loop, which iterates [offset, offset+count(). The function's
+    // contract requires a clean store (no pending-removed rows); on a clean
+    // store count() == particles().size() (live count), so behavior is
+    // identical at all call sites.
     std::vector<std::size_t> cell_offsets(local_cells.size(), std::size_t{0});
-    std::exclusive_scan(local_cells.begin(), local_cells.end(),
-                        cell_offsets.begin(), std::size_t{0},
-                        [](auto acc, auto const &cell) {
-                          return acc + cell->particles().size();
-                        });
+    std::exclusive_scan(
+        local_cells.begin(), local_cells.end(), cell_offsets.begin(),
+        std::size_t{0},
+        [](auto acc, auto const &cell) { return acc + cell->count(); });
 
     kokkos_parallel_range_for(
         "enumerate_local_particles", std::size_t{0}, local_cells.size(),
         [&](auto cell_idx) {
           auto const base_offset = cell_offsets[cell_idx];
-          auto &cell_particles = local_cells[cell_idx]->particles();
-          auto const n_part = cell_particles.size();
+          // The cell's committed rows are the contiguous range
+          // [offset, offset+count); index it directly (this runs on a clean
+          // store, so no pending-removed rows). Each cell gets its own view so
+          // this stays thread-safe under the parallel_for over cells.
+          auto *cell = local_cells[cell_idx];
+          auto &store = cell->store();
+          auto const row_offset = cell->offset();
+          auto const n_part = cell->count();
+          // Reuse one cached view across this cell's rows (this inner loop is
+          // sequential -- one thread per cell -- so a single rebound view is
+          // safe), REBOUND per row via attach_to_store instead of constructing
+          // a fresh Particle per row. The heap-owning members stay
+          // default-constructed and are never read while attached.
+          Particle view;
           for (std::size_t p_index{0}; p_index < n_part; ++p_index) {
             auto global_index = base_offset + p_index;
-            kernel(global_index, *(cell_particles.begin() + p_index));
+            view.attach_to_store(store, static_cast<int>(row_offset + p_index));
+            kernel(global_index, view);
           }
         });
     return;

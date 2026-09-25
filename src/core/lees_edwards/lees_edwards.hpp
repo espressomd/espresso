@@ -53,10 +53,11 @@ public:
     //
     // The update of the velocity at the end of the time step is triggered by
     // the flag and occurs in @ref propagate_vel_finalize_p_inst
-    if (p.pos()[m_le.shear_plane_normal] >=
+    auto pos = p.pos();
+    if (pos[m_le.shear_plane_normal] >=
         m_box.length()[m_le.shear_plane_normal]) {
       p.lees_edwards_flag() = -1; // perform a negative half velocity shift
-    } else if (p.pos()[m_le.shear_plane_normal] < 0) {
+    } else if (pos[m_le.shear_plane_normal] < 0) {
       p.lees_edwards_flag() = 1; // perform a positive half velocity shift
     } else {
       p.lees_edwards_flag() = 0;
@@ -64,9 +65,14 @@ public:
 
     auto const dir = static_cast<double>(p.lees_edwards_flag());
     p.v()[m_le.shear_direction] += dir * m_le.shear_velocity;
-    p.pos()[m_le.shear_direction] += pos_prefactor * dir * m_le.pos_offset;
+    pos[m_le.shear_direction] += pos_prefactor * dir * m_le.pos_offset;
     p.lees_edwards_offset() -= pos_prefactor * dir * m_le.pos_offset;
-    m_box.fold_position(p.pos(), p.image_box());
+    auto img = p.image_box();
+    Utils::Vector3d position = pos;
+    Utils::Vector3i image_box = img;
+    m_box.fold_position(position, image_box);
+    pos = position;
+    img = image_box;
     //    UpdateOffset::operator()(p,pos_prefactor);
   }
 };

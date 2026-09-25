@@ -52,11 +52,18 @@ espresso_unit_test(SRC ResourceCleanup_test.cpp DEPENDS espresso::core
 espresso_unit_test(SRC MpiCallbacks_test.cpp DEPENDS espresso::utils Boost::mpi
                    MPI::MPI_CXX NUM_PROC 2)
 espresso_unit_test(SRC ParticleIterator_test.cpp DEPENDS espresso::utils)
-espresso_unit_test(SRC link_cell_test.cpp DEPENDS espresso::utils)
-espresso_unit_test(SRC Particle_test.cpp DEPENDS espresso::utils
-                   Boost::serialization)
-espresso_unit_test(SRC Particle_serialization_test.cpp DEPENDS espresso::utils
-                   Boost::serialization)
+espresso_unit_test(SRC link_cell_test.cpp DEPENDS espresso::utils
+                   espresso::core Kokkos::kokkos)
+espresso_unit_test(SRC Particle_test.cpp DEPENDS espresso::utils espresso::core
+                   Boost::serialization Kokkos::kokkos)
+espresso_unit_test(SRC ParticleStore_test.cpp DEPENDS espresso::core)
+espresso_unit_test(SRC MigrationPack_test.cpp DEPENDS espresso::core)
+espresso_unit_test(SRC RowParticleRange_test.cpp DEPENDS espresso::core
+                   Kokkos::kokkos)
+espresso_unit_test(SRC VerletListGeneration_test.cpp DEPENDS espresso::core
+                   Kokkos::kokkos)
+espresso_unit_test(SRC VectorReference_test.cpp DEPENDS espresso::utils)
+espresso_unit_test(SRC ParticleListOperations_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC rotation_test.cpp DEPENDS espresso::utils espresso::core
                    Kokkos::kokkos)
 espresso_unit_test(SRC field_coupling_couplings_test.cpp DEPENDS

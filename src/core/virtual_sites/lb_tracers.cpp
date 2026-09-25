@@ -83,14 +83,16 @@ void lb_tracers_propagate(CellStructure &cell_structure, LB::Solver const &lb,
   for (auto &p : cell_structure.local_particles()) {
     if (!LB::is_tracer(p))
       continue;
-    p.v() = lb.get_coupling_interpolated_velocity(p.pos());
+    auto pos = p.pos();
+    p.v() = lb.get_coupling_interpolated_velocity(pos);
     for (auto i = 0u; i < 3u; i++) {
       if (!p.is_fixed_along(i)) {
-        p.pos()[i] += p.v()[i] * time_step;
+        pos[i] += p.v()[i] * time_step;
       }
     }
     // Verlet list update check
-    if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > verlet_skin_sq) {
+    if ((Utils::Vector3d(pos) - Utils::Vector3d(p.pos_at_last_verlet_update()))
+            .norm2() > verlet_skin_sq) {
       cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
     }
   }

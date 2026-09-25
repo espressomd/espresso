@@ -22,6 +22,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Particle.hpp"
+#include "ParticleStoreTestFixture.hpp"
 #include "config/config.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "system/System.hpp"
@@ -51,7 +52,12 @@ BOOST_AUTO_TEST_CASE(VerletCriterion_test) {
   VerletCriterion<GetZeroCutoff> criterion_long_range(
       system, skin, max_cut, coulomb_cut, dipolar_cut, collision_cut);
 
-  Particle p1, p2;
+  // id/charge/dipole moment live in the ParticleStore; attach both hand-made
+  // particles to a standalone store. The VerletCriterion only reads these
+  // fields by const ref, so a standalone fixture is sufficient.
+  ParticleStoreTestFixture fixture{};
+  auto p1 = fixture.make();
+  auto p2 = fixture.make();
   p1.id() = 1;
   p2.id() = 2;
 

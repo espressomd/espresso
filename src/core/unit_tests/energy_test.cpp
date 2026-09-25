@@ -22,6 +22,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Particle.hpp"
+#include "ParticleStoreTestFixture.hpp"
 #include "PropagationMode.hpp"
 #include "energy_inline.hpp"
 
@@ -30,7 +31,10 @@
 BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
   // real particle
   {
-    Particle p;
+    // Kinematic fields live in the ParticleStore; attach the hand-made
+    // particle to a standalone store before setting/reading them.
+    ParticleStoreTestFixture fx;
+    auto p = fx.make();
 #ifdef ESPRESSO_MASS
     p.mass() = 2.;
 #endif
@@ -44,7 +48,8 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
   {
 #ifdef ESPRESSO_VIRTUAL_SITES
 
-    Particle p;
+    ParticleStoreTestFixture fx;
+    auto p = fx.make();
 #ifdef ESPRESSO_MASS
     p.mass() = 2.;
 #endif
@@ -58,16 +63,22 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
 }
 
 BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
-  BOOST_CHECK_EQUAL(rotational_kinetic_energy(Particle{}), 0.);
+  // a default-seeded particle has zero rotation, so its rotational energy is 0
+  {
+    ParticleStoreTestFixture fx;
+    BOOST_CHECK_EQUAL(rotational_kinetic_energy(fx.make()), 0.);
+  }
 
 #ifdef ESPRESSO_ROTATION
   {
-    Particle p;
+    ParticleStoreTestFixture fx;
+    auto p = fx.make();
     p.omega() = {1., 2., 3.};
     p.set_can_rotate_all_axes();
 
-    auto const expected =
-        0.5 * (hadamard_product(p.omega(), p.omega()) * p.rinertia());
+    auto const expected = 0.5 * (hadamard_product(Utils::Vector3d(p.omega()),
+                                                  Utils::Vector3d(p.omega())) *
+                                 Utils::Vector3d(p.rinertia()));
     BOOST_CHECK_EQUAL(rotational_kinetic_energy(p), expected);
   }
 
@@ -75,7 +86,8 @@ BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
   {
 #ifdef ESPRESSO_VIRTUAL_SITES
 
-    Particle p;
+    ParticleStoreTestFixture fx;
+    auto p = fx.make();
 #ifdef ESPRESSO_ROTATIONAL_INERTIA
     p.rinertia() = {1., 2., 3.};
 #endif

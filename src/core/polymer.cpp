@@ -118,7 +118,7 @@ is_valid_position(System::System const &system, Utils::Vector3d const &pos,
     // check for collision with existing particles
     auto local_mindist_sq = std::numeric_limits<double>::infinity();
     for (auto const &p : system.cell_structure->local_particles()) {
-      auto const d = box_geo.get_mi_vector(pos, p.pos());
+      auto const d = box_geo.get_mi_vector(pos, Utils::Vector3d(p.pos()));
       local_mindist_sq = std::min(local_mindist_sq, d.norm2());
     }
     auto const global_mindist_sq =
@@ -148,6 +148,9 @@ draw_polymer_positions(System::System const &system, int const n_polymers,
                        int const respect_constraints, int const seed) {
 
   auto const &box_geo = *system.box_geo;
+  // is_valid_position() reads p.pos() on live local particles; ensure valid
+  // ParticleStore rows before the position checks. O(1) when clean.
+  system.cell_structure->ensure_particle_store_synchronized();
   auto rng = [mt = Random::mt19937(static_cast<unsigned>(seed)),
               dist = std::uniform_real_distribution<double>(
                   0.0, 1.0)]() mutable { return dist(mt); };

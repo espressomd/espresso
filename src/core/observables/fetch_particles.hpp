@@ -25,23 +25,50 @@
 #include "system/System.hpp"
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
 #include <set>
 #include <vector>
 
+/** Owning result of @ref fetch_particles.
+ *
+ *  get_local_particle returns by-value @ref Particle views (16-byte handles
+ *  aliasing the store), so the reference range that observables consume must
+ *  point into an owned buffer that lives as long as the range. This struct
+ *  owns that buffer (@c owned) and exposes the
+ *  @ref Observables::ParticleReferenceRange (@c refs) that references into it.
+ *  Callers keep the returned object alive for the duration of the observable
+ *  evaluation and pass @c .refs to @c evaluate. */
+struct FetchedParticles {
+  std::vector<Particle> owned;
+  Observables::ParticleReferenceRange refs;
+};
+
 /** Fetch a group of particles.
  *
  *  @param ids particle identifiers
- *  @return array of particle copies, with positions in the current box.
+ *  @return owned particle views (with positions in the current box) plus a
+ *          reference range into them.
  */
-inline auto fetch_particles(std::vector<int> const &ids) {
+inline FetchedParticles fetch_particles(std::vector<int> const &ids) {
   auto const &system = System::get_system();
-  auto const ids_set = std::set<int>{ids.begin(), ids.end()};
-  auto const local_particles = system.cell_structure->local_particles();
-  Observables::ParticleReferenceRange local_particle_refs;
-  std::copy_if(local_particles.begin(), local_particles.end(),
-               std::back_inserter(local_particle_refs),
-               [&ids_set](auto const &p) { return ids_set.contains(p.id()); });
-  return local_particle_refs;
+  auto &cell_structure = *system.cell_structure;
+  FetchedParticles result;
+  // Reserve so `owned` never reallocates while we take references into it
+  // (ids.size() is the upper bound; ghosts/absent ids are filtered out).
+  result.owned.reserve(ids.size());
+  // Resolve each requested id through get_local_particle, which returns a
+  // by-value view over the store row -- valid for the observable's lifetime (no
+  // rebuild during evaluation). Only local, non-ghost particles are included.
+  for (auto const id : ids) {
+    auto const p = cell_structure.get_local_particle(id);
+    if (p and not p->is_ghost()) {
+      result.owned.emplace_back(*p);
+    }
+  }
+  for (auto const &p : result.owned) {
+    result.refs.emplace_back(std::cref(p));
+  }
+  return result;
 }
 #endif

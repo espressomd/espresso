@@ -57,7 +57,7 @@ static void set_particles_bonds(
     auto const bonds_partner_ids = all_bonds_partner_ids[i];
     // Remove old bonds
     auto p = cell_structure.get_local_particle(pid);
-    if (p != nullptr and not p->is_ghost()) {
+    if (p and not p->is_ghost()) {
       p->bonds().clear();
     }
     // Add new bonds
@@ -84,7 +84,7 @@ set_particles_exclusions(std::vector<int> const &pids,
       particle_exclusion_sanity_checks(pid, excluded_pid, cell_structure, comm);
     }
     auto p = cell_structure.get_local_particle(pid);
-    if (p != nullptr and not p->is_ghost()) {
+    if (p and not p->is_ghost()) {
       // Remove all excluded ids of this particle
       for (auto const old_excluded_pid : p->exclusions()) {
         local_remove_exclusion(pid, old_excluded_pid, cell_structure);
@@ -119,7 +119,7 @@ static void set_particles_types(std::vector<int> const &pids,
   for (std::size_t i = 0; i < pids.size(); ++i) {
     auto const pid = pids[i];
     auto p = cell_structure.get_local_particle(pid);
-    if (p != nullptr and not p->is_ghost()) {
+    if (p.has_value() and not p->is_ghost()) {
       auto const &new_type = types[i];
       if (new_type < 0) {
         throw std::domain_error(error_msg("type", "must be an integer >= 0"));
@@ -138,7 +138,7 @@ static void set_particles_charges(std::vector<int> const &pids,
   for (std::size_t i = 0; i < pids.size(); ++i) {
     auto const pid = pids[i];
     auto p = cell_structure.get_local_particle(pid);
-    if (p != nullptr and not p->is_ghost()) {
+    if (p and not p->is_ghost()) {
       p->q() = charges[i];
     }
   }
@@ -249,6 +249,11 @@ Variant ParticleSlice::do_call_method(std::string const &name,
   }
   if (name == "get_param_parallel") {
     auto const param_name = get_value<std::string>(params, "name");
+
+    // The getters below read p.pos()/p.image_box() on live local
+    // particles, which requires valid ParticleStore rows. Sync once here; this
+    // is a script-facing gather that may follow a topology change.
+    get_cell_structure()->ensure_particle_store_synchronized();
 
     // handle special optimized properties
     if (param_name == "type") {

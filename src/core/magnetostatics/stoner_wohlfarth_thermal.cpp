@@ -263,14 +263,14 @@ void System::System::integrate_magnetodynamics() {
     if (not p.is_virtual() or not p.stoner_wohlfarth_is_enabled()) {
       return;
     }
-    auto *p_ref = get_reference_particle(*cell_structure, p);
+    auto p_ref = get_reference_particle(*cell_structure, p);
     if (not p_ref) {
       return;
     }
     assert(thermostat->thermo_switch & THERMO_LANGEVIN);
     auto const &langevin = *thermostat->langevin;
     auto const e_k = p_ref->calc_director();
-    auto const ext_fld_dpl = ext_fld + p.dip_fld();
+    auto const ext_fld_dpl = ext_fld + Utils::Vector3d(p.dip_fld());
     auto const random_ints =
         Random::philox_4_uint64s<RNGSalt::THERMAL_STONER_WOHLFARTH>(
             langevin.rng_counter(), langevin.rng_seed(), p.id());

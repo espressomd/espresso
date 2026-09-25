@@ -22,8 +22,10 @@
 #include "cell_system/RegularDecomposition.hpp"
 
 #include "cell_system/Cell.hpp"
+#include "cell_system/ParticleListOperations.hpp"
 #include "ghosts/HaloPlanValidator.hpp"
 #include "ghosts/mark_boundary_cells.hpp"
+#include "particle_store/MigrationPack.hpp"
 
 #include "communication.hpp"
 #include "error_handling/RuntimeErrorStream.hpp"
@@ -48,6 +50,8 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <exception>
 #include <functional>
 #include <initializer_list>
@@ -93,50 +97,93 @@ int RegularDecomposition::position_to_cell_index(
 }
 
 void RegularDecomposition::move_if_local(
-    ParticleList &src, ParticleList &rest,
+    std::vector<int> &src, std::vector<int> &rest,
     std::vector<ParticleChange> &modified_cells) {
-  for (auto &part : src) {
-    auto target_cell = position_to_cell(part.pos());
+  auto &staging = *m_migration_staging.store;
+  for (auto const staging_row : src) {
+    // The particle's home cell is decided by its position, read from the
+    // staging store row (no live view needed; the row is not in the main store
+    // yet).
+    auto target_cell = position_to_cell(staging.position_value(staging_row));
 
     if (target_cell) {
-      target_cell->particles().insert(std::move(part));
-      modified_cells.emplace_back(ModifiedList{target_cell->particles()});
+      // Stage the staging row into the target cell as a row reference: the next
+      // store rebuild copies it into a committed row, in
+      // [surviving..., staged...] order per cell. The staging row stays valid
+      // until CellStructure commits it.
+      CellParticleStorage::insert_staged_row(*target_cell, staging,
+                                             staging_row);
+      modified_cells.emplace_back(ModifiedList{*target_cell});
     } else {
-      rest.insert(std::move(part));
+      // Undeliverable this round: keep the staging row for the next round's
+      // re-pack (the multi-round intermediate-rank case).
+      rest.push_back(staging_row);
     }
   }
 
   src.clear();
 }
 
-void RegularDecomposition::move_left_or_right(ParticleList &src,
-                                              ParticleList &left,
-                                              ParticleList &right,
+void RegularDecomposition::move_left_or_right(std::vector<int> &src,
+                                              std::vector<int> &left,
+                                              std::vector<int> &right,
                                               int dir) const {
+  auto const &staging = *m_migration_staging.store;
   auto const is_open_boundary_left = m_local_box.boundary()[2 * dir] != 0;
   auto const is_open_boundary_right = m_local_box.boundary()[2 * dir + 1] != 0;
   auto const can_move_left = m_box.periodic(dir) or not is_open_boundary_left;
   auto const can_move_right = m_box.periodic(dir) or not is_open_boundary_right;
   auto const my_left = m_local_box.my_left()[dir];
   auto const my_right = m_local_box.my_right()[dir];
-  for (auto it = src.begin(); it != src.end();) {
-    auto const pos = it->pos()[dir];
+  auto keep = src.begin();
+  for (auto const staging_row : src) {
+    auto const pos = staging.position_value(staging_row)[dir];
     if (m_box.get_mi_coord(pos, my_right, dir) >= 0. and can_move_right) {
-      right.insert(std::move(*it));
-      it = src.erase(it);
+      right.push_back(staging_row);
     } else if (m_box.get_mi_coord(pos, my_left, dir) < 0. and can_move_left) {
-      left.insert(std::move(*it));
-      it = src.erase(it);
+      left.push_back(staging_row);
     } else {
-      ++it;
+      // Row stays for a later direction: compact it into the surviving prefix
+      // (preserving relative order).
+      *keep++ = staging_row;
     }
   }
+  src.erase(keep, src.end());
 }
 
 void RegularDecomposition::exchange_neighbors(
-    ParticleList &pl, std::vector<ParticleChange> &modified_cells) {
+    std::vector<int> &displaced_rows,
+    std::vector<ParticleChange> &modified_cells) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(m_comm);
-  static ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
+  auto &staging = *m_migration_staging.store;
+  // Per-direction staging-row buckets, packed byte buffers, and the reusable
+  // scratch for the received staging rows. Static so the buffers' capacity is
+  // reused across resorts.
+  static std::vector<int> send_rows_l, send_rows_r, recv_rows;
+  static std::vector<char> send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
+
+  // Unpack a received byte buffer into fresh staging rows and record their
+  // indices in `recv_rows` (the received-this-direction set, delivered by
+  // move_if_local below).
+  auto unpack_received = [&](std::vector<char> const &buffer) {
+    if (buffer.empty()) {
+      return;
+    }
+    // unpack_rows reads the row-count header (u64) to learn the count, but the
+    // caller must reserve the staging rows first. Peek the count from the
+    // row-count header (u64 prefix), reserve that many rows, then unpack.
+    std::uint64_t count = 0u;
+    std::memcpy(&count, buffer.data(), sizeof(count));
+    if (count == 0u) {
+      return;
+    }
+    auto const first_row =
+        m_migration_staging.reserve_rows(static_cast<int>(count));
+    MigrationPack::unpack_rows(staging, first_row, buffer);
+    for (int k = 0; k < static_cast<int>(count); ++k) {
+      recv_rows.push_back(first_row + k);
+    }
+  };
 
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
@@ -145,18 +192,25 @@ void RegularDecomposition::exchange_neighbors(
       /* In this (common) case left and right neighbors are
          the same, and we need only one communication */
     }
+    send_rows_l.clear();
+    send_rows_r.clear();
+    recv_rows.clear();
     if (Utils::Mpi::cart_get<3>(m_comm).dims[dir] == 2) {
-      move_left_or_right(pl, send_buf_l, send_buf_l, dir);
+      move_left_or_right(displaced_rows, send_rows_l, send_rows_l, dir);
+      MigrationPack::pack_rows(staging, send_rows_l, send_buf_l);
 
       Utils::Mpi::sendrecv(m_comm, node_neighbors[2 * dir], 0, send_buf_l,
                            node_neighbors[2 * dir], 0, recv_buf_l);
 
-      send_buf_l.clear();
+      unpack_received(recv_buf_l);
+      recv_buf_l.clear();
     } else {
       using boost::mpi::request;
       using Utils::Mpi::isendrecv;
 
-      move_left_or_right(pl, send_buf_l, send_buf_r, dir);
+      move_left_or_right(displaced_rows, send_rows_l, send_rows_r, dir);
+      MigrationPack::pack_rows(staging, send_rows_l, send_buf_l);
+      MigrationPack::pack_rows(staging, send_rows_r, send_buf_r);
 
       auto req_l = isendrecv(m_comm, node_neighbors[2 * dir], 0, send_buf_l,
                              node_neighbors[2 * dir], 0, recv_buf_l);
@@ -166,12 +220,17 @@ void RegularDecomposition::exchange_neighbors(
       std::array<request, 4> reqs{{req_l[0], req_l[1], req_r[0], req_r[1]}};
       boost::mpi::wait_all(reqs.begin(), reqs.end());
 
-      send_buf_l.clear();
-      send_buf_r.clear();
+      unpack_received(recv_buf_l);
+      unpack_received(recv_buf_r);
+      recv_buf_l.clear();
+      recv_buf_r.clear();
     }
 
-    move_if_local(recv_buf_l, pl, modified_cells);
-    move_if_local(recv_buf_r, pl, modified_cells);
+    // Deliver the freshly received rows: local ones are staged into their home
+    // cell, undeliverable ones are appended back onto `displaced_rows` (kept
+    // for the next direction / round). The non-routed rows already sitting in
+    // `displaced_rows` are NOT re-examined here.
+    move_if_local(recv_rows, displaced_rows, modified_cells);
   }
 }
 
@@ -179,133 +238,87 @@ void RegularDecomposition::exchange_neighbors(
  * @brief Fold coordinates to box and reset the old position.
  */
 static void fold_and_reset(Particle &p, BoxGeometry const &box_geo) {
-  box_geo.fold_position(p.pos(), p.image_box());
+  Utils::Vector3d position = p.pos();
+  Utils::Vector3i image_box = p.image_box();
+  box_geo.fold_position(position, image_box);
+  p.pos() = position;
+  p.image_box() = image_box;
 
   p.pos_at_last_verlet_update() = p.pos();
 }
 
 void RegularDecomposition::resort(bool global,
                                   std::vector<ParticleChange> &diff) {
-  ParticleList displaced_parts;
+  // Both a mis-celled NON-local particle (routed through the exchange rounds)
+  // and a wrong-cell-but-LOCAL particle are copied out of the live store into a
+  // staging-store row (stage_row) and then dropped from their cell;
+  // `displaced_rows` holds the non-local staging-row indices. The staging store
+  // is NOT cleared here: it is reset by CellStructure once it has committed the
+  // staged rows (ensure_particle_store_synchronized). Clearing at resort
+  // start/end would recycle rows that the deferred commit=false hot path (and
+  // the hybrid children sharing this staging store) still reference.
+  assert(m_migration_staging && "migration staging store not installed");
+  auto &staging = *m_migration_staging.store;
+  std::vector<int> displaced_rows;
 
-  auto const cells_span = local_cells();
-  auto const n_cells = cells_span.size();
-
-  /* Remove a misplaced particle from its cell and hand it to its target
-   * cell (or the displaced list when it left the local domain), recording
-   * the changes. Shared by the serial and the two-phase parallel sweep. */
-  auto const apply_move = [&](ParticleList &parts, Particle &&p,
-                              Cell *target_cell) {
-    diff.emplace_back(ModifiedList{parts});
-    /* Particle is not local */
-    if (target_cell == nullptr) {
-      diff.emplace_back(RemovedParticle{p.id()});
-      displaced_parts.insert(std::move(p));
-    }
-    /* Particle belongs on this node but is in the wrong cell. */
-    else {
-      target_cell->particles().insert(std::move(p));
-      diff.emplace_back(ModifiedList{target_cell->particles()});
-    }
-  };
-
-  if (Kokkos::DefaultHostExecutionSpace().concurrency() == 1) {
-    /* Single-threaded rank: one-pass sweep without the bookkeeping overhead
-     * of the two-phase version below. */
-    for (auto *const c : cells_span) {
-      for (auto it = c->particles().begin(); it != c->particles().end();) {
-        fold_and_reset(*it, m_box);
-
-        auto *const target_cell = particle_to_cell(*it);
-
-        /* Particle is in place */
-        if (target_cell == c) {
-          std::advance(it, 1);
-          continue;
-        }
-
-        auto p = std::move(*it);
-        it = c->particles().erase(it);
-        apply_move(c->particles(), std::move(p), target_cell);
-      }
-    }
-  } else {
-    using exec_space = Kokkos::DefaultHostExecutionSpace;
-    /* Phase 1 (parallel): fold every particle position and classify it
-     * against its target cell. Only particle-local state and this cell's own
-     * move list are written, so cells can be swept concurrently.
-     * fold_and_reset() throws on image-box overflow; exceptions must not
-     * escape the parallel region, so the first error is captured and
-     * rethrown afterwards. */
-    struct Move {
-      unsigned index;
-      Cell *target;
-    };
-    std::vector<std::vector<Move>> moves(n_cells);
-    std::mutex fold_error_mutex;
-    std::string fold_error_msg;
-    Kokkos::RangePolicy<exec_space> policy(std::size_t{0}, n_cells);
-    Kokkos::parallel_for(
-        "RegularDecomposition::resort::classify", policy,
-        [&](std::size_t const ci) {
-          auto *cell = cells_span[ci];
-          unsigned index = 0u;
-          for (auto &p : cell->particles()) {
-            try {
-              fold_and_reset(p, m_box);
-            } catch (std::exception const &err) {
-              std::lock_guard<std::mutex> guard{fold_error_mutex};
-              if (fold_error_msg.empty()) {
-                fold_error_msg = err.what();
-              }
-              return;
-            }
-            if (auto *const target = particle_to_cell(p); target != cell) {
-              moves[ci].emplace_back(index, target);
-            }
-            ++index;
-          }
-        });
-    Kokkos::fence();
-    if (not fold_error_msg.empty()) {
-      throw std::runtime_error(fold_error_msg);
-    }
-
-    /* Phase 2 (serial): apply the moves. This replays the serial sweep
-     * exactly: ParticleList::erase() swaps the last element into the erased
-     * slot, so a slot-to-original-index map is maintained to look up the
-     * phase-1 classification of swapped-in elements. Cells without moves
-     * (the vast majority) are skipped entirely. */
-    std::vector<int> slot;
-    std::vector<Cell *> target_of;
-    for (std::size_t ci = 0; ci < n_cells; ++ci) {
-      if (moves[ci].empty()) {
+  for (auto &c : local_cells()) {
+    // Iterate the cell's committed rows by RAW position. drop_row marks the row
+    // pending-removed (the range keeps its store-row order; no swap-with-back),
+    // so we advance unconditionally -- a dropped row stays in the raw range but
+    // is skipped by every live iteration until the next rebuild resolves it.
+    // fold_and_reset writes through the view into the store column BEFORE the
+    // row is copied to staging, so the staged copy carries the folded value.
+    // One cached view reused across this cell's rows, REBOUND per position via
+    // attach_to_store.
+    Particle view;
+    auto const offset = c->offset();
+    auto const count = c->count();
+    for (std::size_t index = 0u; index < count; ++index) {
+      auto const live_row = static_cast<int>(offset + index);
+      // A row already marked pending-removed is DEAD: it must never be folded,
+      // staged or migrated. Skipping it here is load-bearing, not an
+      // optimization. A removal can now be followed by a resort while the row
+      // is still pending (remove_particle() ends with one), and if the particle
+      // had moved out of this rank's domain since the last resort,
+      // particle_to_cell() would return nullptr or another cell for it -- the
+      // migrate branches below would then ship the corpse to its "new" owner,
+      // which re-inserts it as a live particle and silently undoes the removal.
+      if (c->store().is_pending_removal(live_row)) {
         continue;
       }
-      auto *const c = cells_span[ci];
-      auto &parts = c->particles();
-      auto const n = static_cast<int>(parts.size());
-      target_of.assign(n, c); // target == own cell: particle is in place
-      for (auto const &move : moves[ci]) {
-        target_of[move.index] = move.target;
+      view.attach_to_store(c->store(), live_row);
+      fold_and_reset(view, m_box);
+
+      auto target_cell = particle_to_cell(view);
+
+      /* Particle is in place */
+      if (target_cell == c) {
+        continue;
       }
-      slot.resize(n);
-      std::iota(slot.begin(), slot.end(), 0);
-      int i = 0;
-      int end = n;
-      while (i < end) {
-        auto *const target_cell = target_of[slot[i]];
 
-        /* Particle is in place */
-        if (target_cell == c) {
-          ++i;
-          continue;
-        }
-
-        auto p = std::move(*(parts.begin() + i));
-        parts.erase(parts.begin() + i); // swaps the last element into slot i
-        slot[i] = slot[--end];
-        apply_move(parts, std::move(p), target_cell);
+      /* Particle is not local */
+      if (target_cell == nullptr) {
+        diff.emplace_back(RemovedParticle{view.id()});
+        // Copy the (folded) live row into the staging store, then drop the row
+        // from this cell. The staging row index rides `displaced_rows` through
+        // the exchange rounds.
+        displaced_rows.push_back(m_migration_staging.stage_row(live_row));
+        CellParticleStorage::drop_row(*c, index);
+        diff.emplace_back(ModifiedList{*c});
+      }
+      /* Particle belongs on this node but is in the wrong cell. Copy the
+       * (folded) live row into the staging store, drop it from this cell, and
+       * stage a reference to that staging row in the target cell -- the next
+       * store rebuild copies it into a committed row (surviving-then-staged per
+       * cell order contract).
+       */
+      else {
+        auto const staging_row = m_migration_staging.stage_row(live_row);
+        CellParticleStorage::drop_row(*c, index);
+        diff.emplace_back(ModifiedList{*c});
+        CellParticleStorage::insert_staged_row(*target_cell, staging,
+                                               staging_row);
+        diff.emplace_back(ModifiedList{*target_cell});
       }
     }
   }
@@ -317,9 +330,9 @@ void RegularDecomposition::resort(bool global,
      * no action should be taken. */
     int rounds_left = grid[0] + grid[1] + grid[2] - 3;
     for (; rounds_left > 0; rounds_left--) {
-      exchange_neighbors(displaced_parts, diff);
+      exchange_neighbors(displaced_rows, diff);
 
-      auto left_over = boost::mpi::all_reduce(m_comm, displaced_parts.size(),
+      auto left_over = boost::mpi::all_reduce(m_comm, displaced_rows.size(),
                                               std::plus<std::size_t>());
 
       if (left_over == 0) {
@@ -327,20 +340,25 @@ void RegularDecomposition::resort(bool global,
       }
     }
   } else {
-    exchange_neighbors(displaced_parts, diff);
+    exchange_neighbors(displaced_rows, diff);
   }
 
-  if (not displaced_parts.empty()) {
+  if (not displaced_rows.empty()) {
     auto sort_cell = local_cells()[0];
 
-    for (auto &part : displaced_parts) {
-      runtimeErrorMsg() << "Particle " << part.id() << " moved more "
-                        << "than one local box length in one timestep";
-      sort_cell->particles().insert(std::move(part));
+    for (auto const staging_row : displaced_rows) {
+      runtimeErrorMsg() << "Particle " << staging.id(staging_row) << " moved "
+                        << "more than one local box length in one timestep";
+      CellParticleStorage::insert_staged_row(*sort_cell, staging, staging_row);
 
-      diff.emplace_back(ModifiedList{sort_cell->particles()});
+      diff.emplace_back(ModifiedList{*sort_cell});
     }
   }
+
+  // The staging store is NOT cleared here: any staged row references (delivered
+  // above, or staged by wrong-cell-local moves) must survive until
+  // CellStructure commits them (ensure_particle_store_synchronized resets the
+  // staging store).
 }
 
 void RegularDecomposition::mark_cells() {
@@ -698,12 +716,10 @@ GhostComm::HaloPlan RegularDecomposition::make_halo_plan() {
     return Utils::get_linear_index(folded, global_size);
   };
 
-  // Pointer to the particle list of the cell at ghost-grid coordinate c.
-  auto const list_at = [this](Utils::Vector3i const &c) -> ParticleList * {
-    return &cells
-                .at(static_cast<std::size_t>(
-                    Utils::get_linear_index(c, ghost_cell_grid)))
-                .particles();
+  // Pointer to the cell at ghost-grid coordinate c.
+  auto const list_at = [this](Utils::Vector3i const &c) -> Cell * {
+    return std::addressof(cells.at(
+        static_cast<std::size_t>(Utils::get_linear_index(c, ghost_cell_grid))));
   };
 
   // Per-peer accumulators. A "recv" pair maps one of our ghost cells to the
@@ -712,8 +728,8 @@ GhostComm::HaloPlan RegularDecomposition::make_halo_plan() {
   // into a ghost). Sorting both lists by their key makes recv[k] line up with
   // peer.send[k] without exchanging any index arrays.
   struct PeerBucket {
-    std::vector<std::pair<int, ParticleList *>> recv; // (key, our ghost)
-    std::vector<std::pair<int, ParticleList *>> send; // (key, our real cell)
+    std::vector<std::pair<int, Cell *>> recv; // (key, our ghost)
+    std::vector<std::pair<int, Cell *>> send; // (key, our real cell)
   };
   std::map<int, PeerBucket> peers;
   std::vector<std::pair<int, LocalComm>> local; // (key, self-ghost copy)
