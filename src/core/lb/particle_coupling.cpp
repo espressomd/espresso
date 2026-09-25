@@ -43,7 +43,6 @@
 #include <cmath>
 #include <cstdint>
 #include <initializer_list>
-#include <limits>
 #include <ranges>
 #include <vector>
 
@@ -183,10 +182,11 @@ static auto lees_edwards_vel_shift(Utils::Vector3d const &pos_shifted_by_box_l,
     auto normal_shift =
         (pos_shifted_by_box_l - orig_pos)[le.shear_plane_normal];
     // normal_shift is +,- box_l or 0 up to floating point errors
-    if (normal_shift > std::numeric_limits<double>::epsilon()) {
+    auto const half_box_l = 0.5 * box_geo.length()[le.shear_plane_normal];
+    if (normal_shift > half_box_l) {
       vel_shift[le.shear_direction] -= le.shear_velocity;
     }
-    if (normal_shift < -std::numeric_limits<double>::epsilon()) {
+    if (normal_shift < -half_box_l) {
       vel_shift[le.shear_direction] += le.shear_velocity;
     }
   }

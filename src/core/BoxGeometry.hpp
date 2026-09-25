@@ -398,7 +398,12 @@ public:
     m_lees_edwards_bc.shear_velocity = shear_velocity;
   }
 
-  /** Calculate the velocity difference including the Lees-Edwards velocity */
+  /** Calculate the velocity difference including the Lees-Edwards velocity.
+   *  @param x position of particle 1 (must be folded into primary box)
+   *  @param y position of particle 2 (must be folded into primary box)
+   *  @param u velocity of particle 1
+   *  @param v velocity of particle 2
+   */
   Utils::Vector3d velocity_difference(Utils::Vector3d const &x,
                                       Utils::Vector3d const &y,
                                       Utils::Vector3d const &u,

@@ -1012,6 +1012,183 @@ class LeesEdwards(ut.TestCase):
                 self.run_lj_pair_visibility(
                     shear_direction, shear_plane_normal)
 
+    @utx.skipIfMissingFeatures(["P3M", "EXTERNAL_FORCES"])
+    def test_electrostatics_p3m_with_le(self):
+        """
+        Verify that P3M can be activated with Lees-Edwards boundary
+        conditions and that Coulomb forces between two charges under LE
+        with zero offset match the expected analytical value.
+        """
+        import espressomd.electrostatics
+        system = self.system
+        system.box_l = [10, 10, 10]
+        system.time_step = 0.01
+        system.cell_system.skin = 0.4
+        protocol = espressomd.lees_edwards.LinearShear(
+            shear_velocity=0, initial_pos_offset=0)
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction="x", shear_plane_normal="y", protocol=protocol)
+        system.cell_system.set_regular_decomposition(
+            fully_connected_boundary={"boundary": "y", "direction": "x"})
+
+        q = 1.0
+        p1 = system.part.add(pos=[2, 5, 5], q=q, fix=[True] * 3)
+        p2 = system.part.add(pos=[4, 5, 5], q=-q, fix=[True] * 3)
+
+        p3m = espressomd.electrostatics.P3M(
+            prefactor=1.0, accuracy=1e-3)
+        system.electrostatics.solver = p3m
+        system.integrator.run(0, recalc_forces=True)
+
+        r = np.copy(system.distance(p1, p2))
+        f1 = np.copy(p1.f)
+        # Coulomb force along x between q and -q at distance r
+        # p1 at x=2, p2 at x=4, so force on p1 is in +x (attractive)
+        # Use rtol=0.05 to account for periodic image contributions
+        expected_fx = q * q / r**2
+        self.assertGreater(f1[0], 0,
+                           msg="Coulomb force should attract p1 toward p2")
+        np.testing.assert_allclose(f1[0], expected_fx, rtol=0.05)
+        np.testing.assert_allclose(f1[1], 0, atol=1e-10)
+        np.testing.assert_allclose(f1[2], 0, atol=1e-10)
+
+        system.electrostatics.solver = None
+        system.part.clear()
+        system.cell_system.set_n_square()
+        system.box_l = self.box_l
+
+    def test_langevin_thermostat_with_le(self):
+        """
+        Test that the Langevin thermostat produces the correct temperature
+        under LE with non-zero position offset but zero shear velocity.
+        """
+        system = self.system
+        n_particles = 200
+        target_kT = 1.5
+        gamma = 2.0
+
+        system.time_step = 0.01
+        system.cell_system.skin = 0.4
+
+        protocol = espressomd.lees_edwards.LinearShear(
+            shear_velocity=0, initial_pos_offset=1.7)
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction="x", shear_plane_normal="y", protocol=protocol)
+
+        system.part.add(
+            pos=np.random.random((n_particles, 3)) * system.box_l)
+        system.thermostat.set_langevin(kT=target_kT, gamma=gamma, seed=42)
+
+        # Warmup
+        system.integrator.run(500)
+
+        # Sampling
+        temps = []
+        for _ in range(10):
+            system.integrator.run(200)
+            v = np.copy(system.part.all().v)
+            kinetic_energy = 0.5 * np.sum(v**2)
+            temperature = 2. * kinetic_energy / (3. * n_particles)
+            temps.append(temperature)
+
+        avg_temp = np.mean(temps)
+        self.assertAlmostEqual(avg_temp, target_kT, delta=0.3)
+        system.thermostat.turn_off()
+
+    @utx.skipIfMissingFeatures("DPD")
+    def test_dpd_thermostat_with_le(self):
+        """
+        Test that the DPD thermostat produces the correct temperature
+        under LE with non-zero position offset but zero shear velocity.
+        """
+        system = self.system
+        n_particles = 200
+        target_kT = 1.0
+
+        system.time_step = 0.01
+        system.cell_system.skin = 0.4
+
+        protocol = espressomd.lees_edwards.LinearShear(
+            shear_velocity=0, initial_pos_offset=1.7)
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction="x", shear_plane_normal="y", protocol=protocol)
+
+        system.part.add(
+            pos=np.random.random((n_particles, 3)) * system.box_l)
+        system.thermostat.set_dpd(kT=target_kT, seed=42)
+        system.non_bonded_inter[0, 0].dpd.set_params(
+            weight_function=0, gamma=5.0, r_cut=1.0,
+            trans_weight_function=0, trans_gamma=5.0, trans_r_cut=1.0)
+
+        # Warmup
+        system.integrator.run(1000)
+
+        # Sampling
+        temps = []
+        for _ in range(10):
+            system.integrator.run(200)
+            v = np.copy(system.part.all().v)
+            kinetic_energy = 0.5 * np.sum(v**2)
+            temperature = 2. * kinetic_energy / (3. * n_particles)
+            temps.append(temperature)
+
+        avg_temp = np.mean(temps)
+        self.assertAlmostEqual(avg_temp, target_kT, delta=0.3)
+        system.thermostat.turn_off()
+        system.non_bonded_inter[0, 0].dpd.set_params(
+            weight_function=0, gamma=0, r_cut=0,
+            trans_weight_function=0, trans_gamma=0, trans_r_cut=0)
+
+    def test_oscillatory_shear_dynamics(self):
+        """
+        Integrate a single particle under OscillatoryShear that crosses the
+        boundary and verify position/velocity shifts match the time-dependent
+        offset.
+        """
+        system = self.system
+        tol = 1e-10
+        amplitude = 0.5
+        omega = 2.0
+        time_0 = 0.0
+
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction="x", shear_plane_normal="y",
+            protocol=espressomd.lees_edwards.OscillatoryShear(
+                initial_pos_offset=0.0, amplitude=amplitude,
+                omega=omega, time_0=time_0))
+
+        # Place particle near upper boundary, moving upward
+        pos = np.array([2.5, 4.99, 2.5])
+        vel = np.array([0.0, 0.2, 0.0])
+        system.part.add(pos=pos, v=vel)
+
+        system.integrator.run(1)
+
+        # After crossing the upper boundary, the particle should get
+        # a negative velocity shift in the shear direction
+        t = system.time
+        expected_pos_offset = amplitude * np.sin(omega * (t - time_0))
+        expected_shear_vel = amplitude * omega * np.cos(omega * (t - time_0))
+
+        np.testing.assert_allclose(
+            system.lees_edwards.pos_offset, expected_pos_offset, atol=tol)
+        np.testing.assert_allclose(
+            system.lees_edwards.shear_velocity, expected_shear_vel, atol=tol)
+
+        # Continue integration and check protocol consistency
+        for _ in range(20):
+            system.integrator.run(1)
+            t = system.time
+            expected_pos_offset = amplitude * np.sin(omega * (t - time_0))
+            expected_shear_vel = amplitude * omega * \
+                np.cos(omega * (t - time_0))
+            np.testing.assert_allclose(
+                system.lees_edwards.pos_offset,
+                expected_pos_offset, atol=tol)
+            np.testing.assert_allclose(
+                system.lees_edwards.shear_velocity,
+                expected_shear_vel, atol=tol)
+
 
 if __name__ == "__main__":
     ut.main()
