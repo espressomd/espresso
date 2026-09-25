@@ -154,6 +154,17 @@ class System(ScriptInterfaceHelper):
         self.call_method("lock_system_creation")
 
     @property
+    def bonds(self):
+        """
+        Bond-centric view of the particle bond topology, indexed by
+        bonded interaction, e.g. ``system.bonds[harmonic].add((p1, p2))``.
+
+        Type: :class:`espressomd.interactions.Bonds`
+
+        """
+        return interactions.Bonds(self)
+
+    @property
     def force_cap(self):
         """
         If > 0, the magnitude of the force on the particles

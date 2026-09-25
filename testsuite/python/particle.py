@@ -552,6 +552,39 @@ class ParticleProperties(ut.TestCase):
             p2.delete_bond([self.f1, p1])
         p2.delete_bond((self.f4, p1, p3, p4))
 
+    def test_system_bonds_interface(self):
+        """Tests the ``system.bonds[bond].add(particles)`` interface."""
+
+        p1 = self.system.part.by_id(self.pid)
+        p2 = self.system.part.add(pos=p1.pos)
+        p3 = self.system.part.add(pos=p1.pos)
+
+        harmonic = espressomd.interactions.HarmonicBond(k=1, r_0=0)
+        self.assertEqual(harmonic._bond_id, -1)
+
+        # first use auto-registers the bond in system.bonded_inter
+        self.system.bonds[harmonic].add((p2, p1))
+        self.assertNotEqual(harmonic._bond_id, -1)
+        self.assertEqual(self.system.bonded_inter[harmonic._bond_id], harmonic)
+        self.assertEqual(p2.bonds, ((harmonic, p1.id),))
+
+        # subsequent use reuses the same bond id, and accepts particle ids
+        bond_id = harmonic._bond_id
+        self.system.bonds[harmonic].add((p3.id, p1.id))
+        self.assertEqual(harmonic._bond_id, bond_id)
+        self.assertEqual(p3.bonds, ((harmonic, p1.id),))
+
+        # remove() mirrors add(), accepting ParticleHandle or particle id
+        self.system.bonds[harmonic].remove((p2, p1))
+        self.assertEqual(p2.bonds, ())
+        self.system.bonds[harmonic].remove((p3.id, p1.id))
+        self.assertEqual(p3.bonds, ())
+        with self.assertRaisesRegex(RuntimeError, "doesn't exist on particle"):
+            self.system.bonds[harmonic].remove((p2, p1))
+
+        with self.assertRaisesRegex(TypeError, "'bond' has to be a BondedInteraction"):
+            self.system.bonds["not_a_bond"]
+
     def test_zz_remove_all(self):
         for p in self.system.part.all():
             p.remove()

@@ -773,6 +773,12 @@ private:
    */
   void execute_bond_handler(Particle &p, auto const &handler) {
     for (const BondView bond : p.bonds()) {
+      // Only the primary entry carries the partner order the bond was
+      // created with (e.g. the vertex-first order angle bonds rely on);
+      // mirrors would evaluate the wrong geometry and double-process.
+      if (not bond.is_primary()) {
+        continue;
+      }
       auto const partner_ids = bond.partner_ids();
       try {
         auto partners = resolve_bond_partners(partner_ids);

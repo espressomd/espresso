@@ -777,6 +777,7 @@ if(ESPRESSO_BUILD_WITH_KOKKOS_FFT AND ESPRESSO_BUILD_WITH_FFTW)
       GIT_REPOSITORY https://github.com/kokkos/kokkos-fft.git
       GIT_TAG        v2.0.0
       OVERRIDE_FIND_PACKAGE
+      SYSTEM
     )
     # cmake-format: on
     set(KokkosFFT_ENABLE_FFTW ON CACHE BOOL "")
