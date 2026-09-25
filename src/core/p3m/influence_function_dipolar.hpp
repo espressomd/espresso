@@ -151,17 +151,25 @@ std::vector<FloatType> grid_influence_function_dipolar(
 
   auto const offset = calc_p3m_mesh_shift(params.mesh, false)[0];
   auto const d_op = calc_p3m_mesh_shift(params.mesh, true)[0];
-  auto const half_mesh = params.mesh / 2;
   auto indices = Utils::Vector3i{};
   auto shift_off = Utils::Vector3i{};
   auto d_op_off = Utils::Vector3i{};
 
+  /* Skip G_opt only for DC (index == 0) and, for even mesh, the Nyquist mode
+   * (index == mesh/2). The old half_mesh % test was incorrect for odd mesh
+   * sizes: e.g. mesh=5 gives half_mesh=2, so i%2==0 matched {0,2,4} and
+   * silently zeroed valid k-modes. */
+  auto const is_dc_or_nyquist = [&](std::size_t d) {
+    return (indices[d] == 0u) ||
+           (params.mesh[d] % 2 == 0 &&
+            indices[d] == static_cast<std::size_t>(params.mesh[d] / 2));
+  };
+
   for_each_3d(
       n_start, n_stop, indices,
       [&]() {
-        if (((indices[0u] % half_mesh[0u] != 0) or
-             (indices[1u] % half_mesh[1u] != 0) or
-             (indices[2u] % half_mesh[2u] != 0))) {
+        if (not(is_dc_or_nyquist(0u) and is_dc_or_nyquist(1u) and
+                is_dc_or_nyquist(2u))) {
           auto const index =
               Utils::get_linear_index<memory_order>(indices - n_start, size);
           g[index] = FloatType(
@@ -218,19 +226,27 @@ inline double grid_influence_function_self_energy(
 
   auto const offset = calc_p3m_mesh_shift(params.mesh, false)[0];
   auto const d_op = calc_p3m_mesh_shift(params.mesh, true)[0];
-  auto const half_mesh = params.mesh / 2;
   auto indices = Utils::Vector3i{};
   auto shift_off = Utils::Vector3i{};
   auto d_op_off = Utils::Vector3i{};
   auto index = std::size_t(0u);
   auto energy = 0.;
 
+  /* Skip self-energy accumulation only for DC (index == 0) and, for even mesh,
+   * the Nyquist mode (index == mesh/2). The old half_mesh % test was incorrect
+   * for odd mesh sizes: e.g. mesh=5 gives half_mesh=2, so i%2==0 matched
+   * {0,2,4} and silently zeroed valid k-modes. */
+  auto const is_dc_or_nyquist = [&](std::size_t d) {
+    return (indices[d] == 0u) ||
+           (params.mesh[d] % 2 == 0 &&
+            indices[d] == static_cast<std::size_t>(params.mesh[d] / 2));
+  };
+
   for_each_3d(
       n_start, n_stop, indices,
       [&]() {
-        if (((indices[0u] % half_mesh[0u] != 0) or
-             (indices[1u] % half_mesh[1u] != 0) or
-             (indices[2u] % half_mesh[2u] != 0))) {
+        if (not(is_dc_or_nyquist(0u) and is_dc_or_nyquist(1u) and
+                is_dc_or_nyquist(2u))) {
           auto const U2 = G_opt_dipolar_self_energy<m>(params, shift_off);
           energy += static_cast<double>(g[index]) * U2 * d_op_off.norm2();
         }

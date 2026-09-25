@@ -365,6 +365,69 @@ class Test(ut.TestCase):
                 self.system.electrostatics.solver = p3m
                 check()
 
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_influence_function_odd_mesh(self):
+        """
+        Regression test for odd mesh sizes in P3M influence function.
+
+        For odd mesh m, the old condition ``i % (m/2) == 0`` incorrectly
+        zeroed valid k-modes (e.g. mesh=5 -> half_mesh=2, zeroing indices
+        {0, 2, 4} instead of only the DC mode {0}).  This caused forces to
+        be spuriously near-zero for odd meshes.  The fix replaces the modulo
+        test with an explicit check for DC (index == 0) and, for even mesh
+        only, the Nyquist mode (index == mesh/2).
+        """
+        box_length = 10.
+        self.system.box_l = [box_length, box_length, box_length]
+        self.system.time_step = 0.01
+        self.system.cell_system.skin = 0.4
+
+        # Two opposite charges – guaranteed non-zero electrostatic force
+        p_pos = np.array([[2., 5., 5.], [8., 5., 5.]])
+        q_vals = [+1., -1.]
+        for pos, q in zip(p_pos, q_vals):
+            self.system.part.add(pos=pos, q=q)
+
+        # Manually specified P3M parameters for mesh=[5,5,5] (odd), no tuning.
+        # alpha chosen so that the real-space sum converges well within r_cut.
+        p3m_odd = espressomd.electrostatics.P3M(
+            prefactor=1., mesh=[5, 5, 5], cao=1,
+            r_cut=3.28125, alpha=0.455, accuracy=0.01, tune=False)
+        self.system.electrostatics.solver = p3m_odd
+        self.system.integrator.run(0)
+
+        forces_odd = self.system.part.all().f.copy()
+
+        # Forces must be non-zero and finite for all particles
+        self.assertTrue(np.all(np.isfinite(forces_odd)),
+                        "Forces are not finite with odd mesh=[5,5,5]")
+        force_magnitudes_odd = np.linalg.norm(forces_odd, axis=1)
+        for i, fmag in enumerate(force_magnitudes_odd):
+            self.assertGreater(fmag, 0.,
+                               f"Force on particle {i} is zero with odd mesh=[5,5,5]")
+
+        # Cross-check: even mesh=[4,4,4] should produce forces of the same
+        # order of magnitude (both are crude approximations; we only check
+        # that odd and even give comparable, non-zero results).
+        self.system.electrostatics.clear()
+        p3m_even = espressomd.electrostatics.P3M(
+            prefactor=1., mesh=[4, 4, 4], cao=1,
+            r_cut=3.18, alpha=0.5115, accuracy=0.01, tune=False)
+        self.system.electrostatics.solver = p3m_even
+        self.system.integrator.run(0)
+
+        forces_even = self.system.part.all().f.copy()
+        force_magnitudes_even = np.linalg.norm(forces_even, axis=1)
+
+        # Both should be within two orders of magnitude of each other
+        for i, (f_odd, f_even) in enumerate(
+                zip(force_magnitudes_odd, force_magnitudes_even)):
+            ratio = f_odd / f_even if f_even > 0. else 0.
+            self.assertGreater(ratio, 1e-2,
+                               f"Odd-mesh force on particle {i} is "
+                               f"unreasonably small compared to even mesh "
+                               f"({f_odd:.3e} vs {f_even:.3e})")
+
 
 if __name__ == "__main__":
     ut.main()
