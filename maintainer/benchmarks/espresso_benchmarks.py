@@ -1,0 +1,437 @@
+#
+# Copyright (C) 2018-2026 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+from pathlib import Path
+from benchmark_utils import generate_test_parameters, CONFIGS
+import csv
+import os
+import shlex
+import subprocess
+import reframe as rfm
+import reframe.utility.sanity as sn
+import reframe.utility.typecheck as typ
+from reframe.core.builtins import (
+    parameter,
+    run_after,
+    run_before,
+    sanity_function,
+    variable,
+)
+from reframe.core.backends import getlauncher
+
+DEBUG_PARTITION_FEATURE = "debug"
+COMPUTE_PARTITION_FEATURE = "compute"
+
+PREBUILT_MODULE = os.environ.get("ESPRESSO_PREBUILT_MODULE", "")
+PREBUILT_CONFIGS = [{"config": "prebuilt", "mpi": True}]
+
+
+def partition_constraints(use_debug):
+    """Select valid systems based on requested features."""
+
+    feature = (
+        DEBUG_PARTITION_FEATURE if use_debug else COMPUTE_PARTITION_FEATURE
+    )
+    return [f"+{feature}", "local"]
+
+
+class BuildEspresso(rfm.CompileOnlyRegressionTest):
+    """Compiles ESPResSo for a specific configuration file."""
+
+    # This forces reframe to schedule a build job instead
+    # of building espresso on the login node
+    build_locally = False
+    build_params = parameter(CONFIGS)
+
+    valid_systems = ["+compute", "local"]
+    valid_prog_environs = ["espresso-env", "local-env"]
+    use_debug_partition = variable(typ.Bool, value=False)
+
+    sourcesdir = "https://github.com/espressomd/espresso.git"
+    build_system = "CMake"
+
+    # Commit hash of the ESPResSo checkout
+    espresso_commit = variable(str, value="unknown", loggable=True)
+
+    # Git ref (commit, tag or branch) to build, empty means the default branch
+    espresso_ref = variable(str, value="", loggable=True)
+
+    @run_after("init")
+    def select_partition(self):
+        self.valid_systems = partition_constraints(self.use_debug_partition)
+
+    @run_after("init")
+    def set_build_attributes(self):
+        self.config_name = self.build_params["config"]  # type: ignore
+        self.build_system.builddir = "build"  # type: ignore
+
+        self.descr = f"Build Espresso ({self.config_name})"
+
+    @run_after("setup")
+    def set_resources(self):
+        if not self.is_local():
+            self.build_job.num_cpus_per_task = 64  # type: ignore
+
+    def skip_unsupported_configs(self):
+        if self.is_local():
+            supported_configs = ["maxset"]
+            if self.config_name not in supported_configs:
+                self.skip(
+                    f"Local execution only supports {
+                        supported_configs} configs "
+                    f"(tried to use {self.config_name})"
+                )
+        elif self.use_debug_partition:
+            supported_configs = ["empty"]
+            if self.config_name not in supported_configs:
+                self.skip(
+                    f"Debug execution only supports {
+                        supported_configs} configs "
+                    f"(tried to use {self.config_name})"
+                )
+
+    @run_before("compile")
+    def set_build_instructions(self):
+        config_name = self.build_params["config"]  # type: ignore
+        config_dir = Path(__file__).parent.parent / "configs"
+
+        CUDA_VER = "12.8"
+        GCC_VER = "13"
+        CUDAARCHS = r"75;86"
+
+        self.prebuild_cmds = [
+            f'cp {config_dir / "empty.hpp"} .',
+            f'cp {config_dir / "default.hpp"} .',
+            f'cp {config_dir / "maxset.hpp"} .',
+            rf'sed -i "1 i\\#define ELECTROSTATICS\\n#define LENNARD_JONES\\n#define MASS\\n#define WCA\\n#define DIPOLES\\n" {
+                config_name}.hpp',
+            rf'sed -ri "/#define\s+ADDITIONAL_CHECKS/d" {config_name}.hpp',
+            rf"cp {config_name}.hpp myconfig.hpp",
+        ]
+
+        # Clone specifc requested ref
+        if self.espresso_ref:
+            self.prebuild_cmds.insert(
+                0,
+                "git -c advice.detachedHead=false checkout "
+                f"{shlex.quote(str(self.espresso_ref))}",
+            )
+
+        self.build_system.max_concurrency = 16  # type: ignore
+
+        if not self.is_local():
+            self.prebuild_cmds += [
+                r"python3 -m venv .reframe_venv",
+                r"source .reframe_venv/bin/activate",
+                r"pip install --upgrade pip",
+                rf"pip install -c {(Path(__file__).parents[2] / 'requirements.txt').resolve(
+                )} numpy scipy setuptools cython==3.0.8 pint",
+            ]
+
+            self.build_system.max_concurrency = 64  # type: ignore
+
+        self.build_system.config_opts = [  # type: ignore
+            "..",
+            "-D CMAKE_BUILD_TYPE=Release",
+            "-D ESPRESSO_BUILD_BENCHMARKS=ON",
+            "-D ESPRESSO_TEST_TIMEOUT=1200",
+            "-D ESPRESSO_BUILD_WITH_CUDA=ON",
+            f"-D ESPRESSO_CMAKE_CUDA_ARCHITECTURES='{CUDAARCHS}'",
+            "-D ESPRESSO_BUILD_WITH_WALBERLA=ON",
+            "-D ESPRESSO_BUILD_WITH_CCACHE=OFF",
+        ]
+
+        # In local runs reframe does not detect default CUDA architecture
+        if self.is_local():
+            self.build_system.config_opts += [  # type: ignore
+                f"-D CMAKE_C_COMPILER=gcc-{GCC_VER}",
+                f"-D CMAKE_CUDA_COMPILER=/usr/local/cuda-{CUDA_VER}/bin/nvcc",
+                f"-D CUDAToolkit_ROOT=/usr/local/cuda-{CUDA_VER}",
+                f"-D CMAKE_CUDA_FLAGS='--compiler-bindir=/usr/bin/g++-{
+                    GCC_VER}'",
+            ]
+
+        self.skip_unsupported_configs()
+
+    @run_after("compile")
+    def record_commit_hash(self):
+        """
+        Record the commit hash of the ESPResSo checkout that was compiled.
+
+        A dry run clones the repository but never executes ``prebuild_cmds``,
+        so HEAD is still the default branch rather than the requested ref;
+        report that instead of a plausible but wrong hash.
+        """
+        if self.is_dry_run():
+            self.espresso_commit = (
+                f"dryrun:{self.espresso_ref}" if self.espresso_ref else "dryrun"
+            )
+            return
+
+        try:
+            self.espresso_commit = subprocess.check_output(
+                ["git", "-C", self.stagedir, "rev-parse", "HEAD"],
+                stderr=subprocess.DEVNULL,
+                text=True,
+            ).strip()
+        except (subprocess.CalledProcessError, OSError):
+            self.espresso_commit = "unknown"
+
+    @sanity_function
+    def assert_sanity(self):
+        # CMake only warns about -D options a project does not know, so an
+        # older ref could drop ESPRESSO_BUILD_* silently and still build.
+        return sn.and_(
+            sn.assert_found(r"Built target pypresso", self.stdout),
+            sn.assert_not_found(
+                r"Manually-specified variables were not used", self.stdout
+            ),
+        )
+
+
+# Register compile step when no prebuild path is given
+if not PREBUILT_MODULE:
+    BuildEspresso = rfm.simple_test(BuildEspresso)
+
+
+@rfm.simple_test
+class EspressoBenchmark(rfm.RunOnlyRegressionTest):
+    """Executes benchmark tests with different parameters."""
+
+    build_params = parameter(PREBUILT_CONFIGS if PREBUILT_MODULE else CONFIGS)
+    test_case = parameter(generate_test_parameters())
+
+    valid_systems = ["+compute", "local"]
+    valid_prog_environs = (
+        ["espresso-prebuilt"] if PREBUILT_MODULE
+        else ["espresso-env", "local-env"]
+    )
+    use_debug_partition = variable(typ.Bool, value=False)
+
+    prebuilt_launcher = variable(str, value="")
+
+    # This will set the slurm option --exlusive for scheduled jobs
+    exclusive_access = True
+
+    # Commit hash of the benchmarked ESPResSo checkout
+    espresso_commit = variable(str, value="unknown", loggable=True)
+
+    # Git ref that was requested for this run, empty means the default branch
+    espresso_ref = variable(str, value="", loggable=True)
+
+    # Name of the ESPResSo build configuration (maxset/default/empty)
+    build_config = variable(str, value="unknown", loggable=True)
+
+    @run_after("init")
+    def select_partition(self):
+        self.valid_systems = partition_constraints(self.use_debug_partition)
+
+    @run_after("init")
+    def setup_test(self):
+        mpi_enabled = self.build_params["mpi"]  # type: ignore
+        self.build_config = self.build_params["config"]  # type: ignore
+        self.script_filename, self.script_args, self.num_mpi_ranks = self.test_case  # type: ignore
+        self.use_gpu = "--gpu" in self.script_args
+
+        if PREBUILT_MODULE:
+            self.sourcesdir = "."
+        else:
+            self.variants = BuildEspresso.get_variant_nums(
+                build_params=self.build_params)
+
+            assert (
+                len(self.variants) == 1
+            ), "Benchmark test should depend on exactly one build test."
+            self.depends_on(BuildEspresso.variant_name(self.variants[0]))
+
+        if not mpi_enabled:
+            self.num_mpi_ranks = 1
+
+        self.num_tasks = self.num_mpi_ranks
+        self.num_tasks_per_node = self.num_mpi_ranks
+        self.num_cpus_per_task = 1  # For MPI
+
+        if self.use_gpu:
+            self.num_gpus_per_node = self.num_mpi_ranks
+        else:
+            self.num_gpus_per_node = 0
+
+        args_str = "_".join(
+            [a.replace("--", "").replace("=", "_") for a in self.script_args]
+        )
+        self.descr = f"ESPRESSO_{self.script_filename.replace('.py', '')}_{
+            args_str}_cores_{self.num_mpi_ranks}"
+
+    @run_before("run")
+    def skip_unsupported_test_configs(self):
+        tests_to_valid_mpi_ranks_map = {
+            "lb.py": {"local": [1], "cluster": [1, 2]}}
+
+        for test_case, valid_mpi_ranks in tests_to_valid_mpi_ranks_map.items():
+            if self.script_filename == test_case:
+                if (
+                    self.is_local()
+                    and self.use_gpu
+                    and self.num_mpi_ranks not in valid_mpi_ranks["local"]
+                ):
+                    self.skip(
+                        f"Local execution of test case {
+                            self.script_filename} with argument '--gpu' only supports"
+                        f" {valid_mpi_ranks['local']} cores (tried to use {
+                            self.num_mpi_ranks})"
+                    )
+                elif (
+                    self.use_gpu
+                    and self.num_mpi_ranks not in valid_mpi_ranks["cluster"]
+                ):
+                    self.skip(
+                        f"Execution of test case {
+                            self.script_filename} with argument '--gpu' only supports"
+                        f" {valid_mpi_ranks['cluster']} cores (tried to use {
+                            self.num_mpi_ranks})"
+                    )
+
+    @run_before("run")
+    def skip_unsupported_local_configs(self):
+        if self.is_local():
+            supported_cores = (1, 4)
+            if self.num_mpi_ranks not in supported_cores:
+                self.skip(
+                    f"Local execution only supports {supported_cores} cores "
+                    f"(tried to use {self.num_mpi_ranks})"
+                )
+
+    @run_before("run")
+    def skip_multi_gpu_on_debug_partition(self):
+        if self.is_local():
+            if self.num_gpus_per_node > 1:
+                self.skip(
+                    f"Local execution only supports 1 GPU "
+                    f"(tried to use {self.num_gpus_per_node})"
+                )
+        elif self.use_debug_partition:
+            if self.num_gpus_per_node > 1:
+                self.skip(
+                    f"Debug partition only supports 1 GPU "
+                    f"(tried to use {self.num_gpus_per_node})"
+                )
+
+    @run_before("run")
+    def prepare_execution(self):
+        self.benchmark_file_path = f"{self.stagedir}/benchmarks.csv"
+
+        if PREBUILT_MODULE:
+            script_path = self.script_filename
+            interpreter = "python3"
+            self.env_vars = {"OMP_NUM_THREADS": "1", "OMP_PROC_BIND": "false"}
+        else:
+            build_target = self.getdep(
+                BuildEspresso.variant_name(self.variants[0]))
+            self.espresso_commit = build_target.espresso_commit
+            build_dir = f"{build_target.stagedir}/build"
+            script_path = f"{
+                build_dir}/maintainer/benchmarks/{self.script_filename}"
+            interpreter = f"{build_dir}/pypresso"
+
+        if self.current_system.name == "local":
+            self.executable = f"mpiexec -n {self.num_mpi_ranks} {interpreter}"
+        else:
+            self.executable = interpreter
+
+        if self.prebuilt_launcher:
+            self.job.launcher = getlauncher(self.prebuilt_launcher)()
+
+        self.executable_opts = [script_path, *self.script_args]
+
+    @sn.deferrable
+    def _csv_ranks_match(self):
+        """
+        Check that the job really ran on the requested number of ranks.
+        """
+        with open(self.benchmark_file_path) as f:
+            rows = list(csv.DictReader(f))
+
+        return bool(rows) and all(
+            int(row["ranks"]) == self.num_tasks for row in rows
+        )
+
+    @sanity_function
+    def check_test_ran_without_errors(self):
+        """
+        Check if no errors are found in self.stderr, benchmarks.csv file was
+        created, and the payload ran on the number of ranks we asked for.
+        """
+
+        return sn.and_(
+            sn.and_(
+                sn.assert_not_found(r"(?i)error", self.stderr),
+                sn.path_isfile(self.benchmark_file_path),
+            ),
+            sn.assert_true(
+                self._csv_ranks_match(),
+                msg=f"benchmarks.csv does not report {self.num_tasks} ranks; "
+                "the MPI launch may have produced independent single-rank "
+                "processes",
+            ),
+        )
+
+    def _make_perf_extractor(self, label: str, field: str):
+        """
+        Factory function that creates extraction functions, which read values
+        from generated benchamrk file.
+        """
+
+        @sn.deferrable
+        def _extract():
+            with open(self.benchmark_file_path) as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row["label"] == label:
+                        return float(row[field])
+
+            raise ValueError(f"Label '{label}' not found in CSV")
+
+        return _extract
+
+    @run_after("run")
+    def set_perf_variables(self):
+
+        if self.is_dry_run():
+            return
+
+        perf_vars = {}
+        csv_path = f"{self.stagedir}/benchmarks.csv"
+
+        with open(csv_path) as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+
+        for row in rows:
+            label = row["label"]
+            logging_label = label if label == "" else label + "_"
+
+            perf_vars[f"{logging_label}mean"] = sn.make_performance_function(
+                self._make_perf_extractor(label, "mean"), "s"
+            )
+
+            perf_vars[f"{logging_label}ci"] = sn.make_performance_function(
+                self._make_perf_extractor(label, "ci"), "s"
+            )
+
+        self.perf_variables = perf_vars
