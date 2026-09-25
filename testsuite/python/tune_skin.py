@@ -51,6 +51,40 @@ class TuneSkin(ut.TestCase):
             adjust_max_skin=True)
         self.assertAlmostEqual(skin, self.system.cell_system.skin, delta=1e-12)
 
+    def test_rejects_invalid_parameters(self):
+        # A non-positive tolerance must be rejected with an exception. Without
+        # validation the core bisection loop `while (fabs(a - b) > tol)` never
+        # terminates for tol <= 0 (fabs(a - b) >= 0 is always > a negative tol,
+        # and once the interval collapses the midpoint stops progressing), so
+        # the call would hang forever instead of returning.
+        for tol in (-1.0, 0.0):
+            with self.assertRaisesRegex(ValueError, "Parameter 'tol' must be > 0"):
+                self.system.cell_system.tune_skin(
+                    min_skin=0.1,
+                    max_skin=0.6,
+                    tol=tol,
+                    int_steps=3,
+                    adjust_max_skin=True)
+        # A non-positive integration-step count is meaningless and leads to a
+        # division by zero in the per-step timing, so it must be rejected.
+        for int_steps in (-1, 0):
+            with self.assertRaisesRegex(ValueError, "Parameter 'int_steps' must be > 0"):
+                self.system.cell_system.tune_skin(
+                    min_skin=0.1,
+                    max_skin=0.6,
+                    tol=0.05,
+                    int_steps=int_steps,
+                    adjust_max_skin=True)
+        with self.assertRaisesRegex(ValueError, "Parameter 'min_skin' must be >= 0"):
+            self.system.cell_system.tune_skin(
+                min_skin=-0.1, max_skin=0.6, tol=0.01, int_steps=3)
+        with self.assertRaisesRegex(ValueError, "Parameter 'max_skin' must be >= 0"):
+            self.system.cell_system.tune_skin(
+                min_skin=0.1, max_skin=-0.6, tol=0.01, int_steps=3)
+        with self.assertRaisesRegex(ValueError, "Parameter 'max_skin' must be >= 'min_skin'"):
+            self.system.cell_system.tune_skin(
+                min_skin=0.6, max_skin=0.1, tol=0.01, int_steps=3)
+
 
 if __name__ == "__main__":
     ut.main()

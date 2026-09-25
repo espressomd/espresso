@@ -16,21 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_U32_TO_U64_HPP
-#define UTILS_U32_TO_U64_HPP
+
+#pragma once
+
+#include "utils/device_qualifier.hpp"
 
 #include <cstdint>
-#include <utility>
 
 namespace Utils {
-constexpr inline uint64_t u32_to_u64(uint32_t high, uint32_t low) {
+DEVICE_QUALIFIER constexpr inline uint64_t u32_to_u64(uint32_t high,
+                                                      uint32_t low) {
   return (static_cast<uint64_t>(high) << 32) | static_cast<uint64_t>(low);
 }
-
-constexpr inline std::pair<uint32_t, uint32_t> u64_to_u32(uint64_t in) {
-  return {static_cast<uint32_t>(in >> 32), static_cast<uint32_t>(in)};
-}
-
 } // namespace Utils
-
-#endif

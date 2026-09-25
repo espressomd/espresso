@@ -46,9 +46,12 @@ void save_old_position(ParticleRange const &particles,
 /**
  * @brief Propagate velocity and position while using SHAKE algorithm for bond
  * constraint.
+ *
+ * Accumulate the per-bond-type RATTLE constraint virial into
+ * @ref BondedInteractionsMap::rigid_bond_virial "bonded_ias.rigid_bond_virial".
  */
 void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo,
-                            BondedInteractionsMap const &bonded_ias);
+                            BondedInteractionsMap &bonded_ias);
 
 /**
  * @brief Correction of current velocities using RATTLE algorithm.

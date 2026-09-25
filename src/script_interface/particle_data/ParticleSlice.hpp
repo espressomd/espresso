@@ -40,6 +40,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -104,15 +105,19 @@ get_particles_properties(std::vector<int> const &pids,
     return result;
   }
 
-  // sort values by particle id to retain original order
-  auto const projector = [](auto const &pair) { return pair.first; };
-  std::ranges::sort(parameters, std::less<int>{}, projector);
-  assert(std::ranges::equal(pids, parameters | std::views::keys) &&
+  // reorder gathered values to match the caller's id_selection order
+  assert(parameters.size() == pids.size() &&
          "Missing or duplicate particle ids");
-
-  result.reserve(pids.size());
-  for (auto const &value : parameters | std::views::values) {
-    result.emplace_back(std::move(value));
+  std::unordered_map<int, std::size_t> lookup;
+  lookup.reserve(parameters.size());
+  std::size_t p_index = 0u;
+  for (auto const pid : pids) {
+    lookup[pid] = p_index;
+    ++p_index;
+  }
+  result.resize(pids.size());
+  for (auto &[pid, val] : parameters) {
+    result[lookup[pid]] = std::move(val);
   }
   return result;
 }

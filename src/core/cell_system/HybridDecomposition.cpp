@@ -27,6 +27,10 @@
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 #include "ParticleList.hpp"
+#include "ghosts.hpp"
+#include "ghosts/HaloExchange.hpp"
+#include "ghosts/HaloPlanValidator.hpp"
+#include "ghosts/mark_boundary_cells.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/sendrecv.hpp>
@@ -35,6 +39,7 @@
 #include <boost/mpi/communicator.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <functional>
 #include <iterator>
@@ -65,20 +70,6 @@ HybridDecomposition::HybridDecomposition(boost::mpi::communicator comm,
   auto ghost_cells_n_square = m_n_square.get_ghost_cells();
   std::ranges::copy(ghost_cells_n_square, std::back_inserter(m_ghost_cells));
 
-  /* Communicators that contain communications of both child decompositions */
-  m_exchange_ghosts_comm = m_regular_decomposition.exchange_ghosts_comm();
-  auto exchange_ghosts_comm_n_square = m_n_square.exchange_ghosts_comm();
-  std::ranges::copy(exchange_ghosts_comm_n_square.communications,
-                    std::back_inserter(m_exchange_ghosts_comm.communications));
-
-  m_collect_ghost_force_comm =
-      m_regular_decomposition.collect_ghost_force_comm();
-  auto collect_ghost_force_comm_n_square =
-      m_n_square.collect_ghost_force_comm();
-  std::ranges::copy(
-      collect_ghost_force_comm_n_square.communications,
-      std::back_inserter(m_collect_ghost_force_comm.communications));
-
   /* coupling between the child decompositions via neighborship relation */
   std::vector<Cell *> additional_reds = m_n_square.get_local_cells();
   std::ranges::copy(ghost_cells_n_square, std::back_inserter(additional_reds));
@@ -90,6 +81,65 @@ HybridDecomposition::HybridDecomposition(boost::mpi::communicator comm,
     std::ranges::copy(additional_reds, std::back_inserter(red_neighbors));
     local_cell->m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
   }
+
+  m_halo_plan = make_halo_plan();
+
+  /* classify local cells as interior or boundary.
+   *
+   * HybridDecomposition combines a RegularDecomposition (which already has
+   * its own wrap-aware classification) with an AtomDecomposition n-square
+   * child.  The combined cell set extends every regular local cell's
+   * neighbor list with the n-square cells, so regular cells that were
+   * interior under RegularDecomposition alone may now interact with
+   * n-square ghost cells.  Determining which cells remain genuinely
+   * interior after the coupling is non-trivial; we conservatively mark all
+   * local cells as boundary.  The compute/comm overlap degenerates
+   * gracefully to a no-op interior pass — identical to today's blocking
+   * path.
+   */
+  GhostComm::mark_boundary_cells(HybridDecomposition::local_cells(),
+                                 HybridDecomposition::ghost_cells());
+  for (Cell *c : HybridDecomposition::local_cells()) {
+    c->m_is_boundary = true;
+  }
+#ifdef ESPRESSO_ADDITIONAL_CHECKS
+  assert(GhostComm::report_violations(
+      GhostComm::validate_halo_plan(m_halo_plan,
+                                    HybridDecomposition::local_cells(),
+                                    HybridDecomposition::ghost_cells()),
+      "HybridDecomposition"));
+  // NOTE: validate_halo_plan_symmetry is NOT called here.
+  // During checkpoint loading, decompositions are transiently rebuilt while
+  // maximal_cutoff is rank-divergent (ranks may have different cell grids for a
+  // brief window before the next consistent rebuild).  The transient plan is
+  // never used — it is immediately replaced — so the asymmetry is harmless.
+  // A construction-time collective all_to_all inside a ctor is also dangerous:
+  // if one rank aborts the others block forever in the collective.
+  // Symmetry is instead validated at FIRST USE of the plan in
+  // halo_exchange_start (see GhostComm::halo_exchange_start in
+  // HaloExchange.cpp).
+#endif
+}
+
+GhostComm::HaloPlan HybridDecomposition::make_halo_plan() {
+  // Build the combined plan: p2p neighbors and local copies come from the
+  // regular child; the collective section comes from the n-square child.
+  GhostComm::HaloPlan plan;
+  plan.comm = m_comm; // use the world comm for HybridDecomposition's plan
+
+  auto const *regular_plan = m_regular_decomposition.halo_plan();
+  if (regular_plan) {
+    plan.neighbors = regular_plan->neighbors;
+    plan.local = regular_plan->local;
+  }
+
+  // Overlay the collective section from the n-square child.
+  auto const *nsq_plan = m_n_square.halo_plan();
+  if (nsq_plan && nsq_plan->collective) {
+    plan.collective = nsq_plan->collective;
+  }
+
+  return plan;
 }
 
 void HybridDecomposition::resort(bool global,
@@ -155,9 +205,12 @@ void HybridDecomposition::resort(bool global,
   m_regular_decomposition.resort(global, diff);
   m_n_square.resort(global, diff);
 
-  ghost_communicator(exchange_ghosts_comm(), m_box, GHOSTTRANS_PARTNUM);
-  ghost_communicator(exchange_ghosts_comm(), m_box,
-                     map_data_parts(m_get_global_ghost_flags()));
+  GhostComm::halo_exchange(
+      m_halo_plan, m_box, GHOSTTRANS_PARTNUM,
+      {GhostComm::Direction::Push, GhostComm::Combine::Overwrite});
+  GhostComm::halo_exchange(
+      m_halo_plan, m_box, map_data_parts(m_get_global_ghost_flags()),
+      {GhostComm::Direction::Push, GhostComm::Combine::Overwrite});
 }
 
 std::size_t HybridDecomposition::count_particles(

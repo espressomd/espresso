@@ -24,15 +24,20 @@
 #ifdef ESPRESSO_DIPOLES
 
 #include "magnetostatics/dipolar_direct_sum.hpp"
+#include "magnetostatics/dipolar_direct_sum_kernels.hpp"
 
 #include "BoxGeometry.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "particle_reduction.hpp"
 #include "system/System.hpp"
 
+#include <Kokkos_Core.hpp>
+#include <Kokkos_ScatterView.hpp>
+
 #include <utils/Vector.hpp>
-#include <utils/cartesian_product.hpp>
+#include <utils/math/tensor_product.hpp>
 #include <utils/mpi/iall_gatherv.hpp>
 
 #include <boost/mpi/collectives.hpp>
@@ -40,123 +45,13 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cassert>
-#include <cmath>
-#include <iterator>
-#include <ranges>
+#include <cstddef>
+#include <numeric>
 #include <stdexcept>
 #include <tuple>
 #include <utility>
 #include <vector>
-
-/**
- * @brief Pair force of two interacting dipoles.
- *
- * @param d Distance vector.
- * @param m1 Dipole moment of one particle.
- * @param m2 Dipole moment of the other particle.
- *
- * @return Resulting force.
- */
-static auto pair_force(Utils::Vector3d const &d, Utils::Vector3d const &m1,
-                       Utils::Vector3d const &m2) {
-  auto const pe2 = m1 * d;
-  auto const pe3 = m2 * d;
-
-  auto const r2 = d.norm2();
-  auto const r = std::sqrt(r2);
-  auto const r5 = r2 * r2 * r;
-  auto const r7 = r5 * r2;
-
-  auto const a = 3.0 * (m1 * m2) / r5;
-  auto const b = -15.0 * pe2 * pe3 / r7;
-
-  auto const f = (a + b) * d + 3.0 * (pe3 * m1 + pe2 * m2) / r5;
-  auto const r3 = r2 * r;
-  auto const t =
-      -vector_product(m1, m2) / r3 + 3.0 * pe3 * vector_product(m1, d) / r5;
-
-  return ParticleForce{f, t};
-}
-
-/**
- * @brief Pair potential for two interacting dipoles.
- *
- * @param d Distance vector.
- * @param m1 Dipole moment of one particle.
- * @param m2 Dipole moment of the other particle.
- *
- * @return Interaction energy.
- */
-static auto pair_potential(Utils::Vector3d const &d, Utils::Vector3d const &m1,
-                           Utils::Vector3d const &m2) {
-  auto const r2 = d * d;
-  auto const r = sqrt(r2);
-  auto const r3 = r2 * r;
-  auto const r5 = r3 * r2;
-
-  auto const pe1 = m1 * m2;
-  auto const pe2 = m1 * d;
-  auto const pe3 = m2 * d;
-
-  return pe1 / r3 - 3.0 * pe2 * pe3 / r5;
-}
-
-#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-/**
- * @brief Dipole field contribution from a particle with dipole moment @c m1
- * at a distance @c d.
- *
- * @param d Distance vector.
- * @param m1 Dipole moment of one particle.
- *
- * @return Utils::Vector3d containing dipole field components.
- */
-static auto dipole_field(Utils::Vector3d const &d, Utils::Vector3d const &m1) {
-  auto const r2 = d * d;
-  auto const r = sqrt(r2);
-  auto const r3 = r2 * r;
-  auto const r5 = r3 * r2;
-  auto const pe2 = m1 * d;
-
-  return 3.0 * pe2 * d / r5 - m1 / r3;
-}
-#endif
-
-/**
- * @brief Call kernel for every 3d index in a sphere around the origin.
- *
- * This calls a callable for all index-triples
- * that are within ball around the origin with
- * radius |ncut|.
- *
- * @tparam F Callable
- * @param ncut Limits in the three directions,
- *             all non-zero elements have to be
- *             the same number.
- * @param f will be called for each index triple
- *        within the limits of @p ncut.
- */
-template <typename F> void for_each_image(Utils::Vector3i const &ncut, F f) {
-  auto const ncut2 = ncut.norm2();
-
-  /* This runs over the index "cube"
-   * [-ncut[0], ncut[0]] x ... x [-ncut[2], ncut[2]]
-   * (inclusive on both sides), and calls f with
-   * all the elements as argument. Counting range
-   * is a range that just enumerates a range.
-   */
-  Utils::cartesian_product(
-      [&](int nx, int ny, int nz) {
-        if (nx * nx + ny * ny + nz * nz <= ncut2) {
-          f(nx, ny, nz);
-        }
-      },
-      std::views::iota(-ncut[0], ncut[0] + 1),
-      std::views::iota(-ncut[1], ncut[1] + 1),
-      std::views::iota(-ncut[2], ncut[2] + 1));
-}
 
 /**
  * @brief Position and dipole moment of one particle.
@@ -169,56 +64,6 @@ struct PosMom {
     ar & pos & m;
   }
 };
-
-/**
- * @brief Sum over all pairs with periodic images.
- *
- * This implements the "primed" pair sum, the sum over all
- * pairs between one particles and all other particles,
- * including @p ncut periodic replicas in each direction.
- * Primed means that in the primary replica the self-interaction
- * is excluded, but not with the other periodic replicas. E.g.
- * a particle does not interact with its self, but does with
- * its periodically shifted versions.
- *
- * @param begin Iterator pointing to begin of particle range
- * @param end Iterator pointing past the end of particle range
- * @param it Pointer to particle that is considered
- * @param with_replicas If periodic replicas are to be considered
- *        at all. If false, distances are calculated as Euclidean
- *        distances, and not using minimum image convention.
- * @param ncut Number of replicas in each direction.
- * @param box_geo Box geometry.
- * @param init Initial value of the sum.
- * @param f Binary operation mapping distance and moment of the
- *          interaction partner to the value to be summed up for this pair.
- *
- * @return The total sum.
- */
-template <class InputIterator, class T, class F>
-T image_sum(InputIterator begin, InputIterator end, InputIterator it,
-            bool with_replicas, Utils::Vector3i const &ncut,
-            BoxGeometry const &box_geo, T init, F f) {
-
-  auto const &box_l = box_geo.length();
-  for (auto jt = begin; jt != end; ++jt) {
-    auto const exclude_primary = (it == jt);
-    auto const primary_distance = (with_replicas)
-                                      ? (it->pos - jt->pos)
-                                      : box_geo.get_mi_vector(it->pos, jt->pos);
-
-    for_each_image(ncut, [&](int nx, int ny, int nz) {
-      if (!(exclude_primary && nx == 0 && ny == 0 && nz == 0)) {
-        auto const rn =
-            primary_distance +
-            Utils::Vector3d{nx * box_l[0], ny * box_l[1], nz * box_l[2]};
-        init += f(rn, jt->m);
-      }
-    });
-  }
-
-  return init;
-}
 
 static auto gather_particle_data(BoxGeometry const &box_geo,
                                  ParticleRange const &particles) {
@@ -267,6 +112,26 @@ static auto get_n_cut(BoxGeometry const &box_geo, int n_replicas) {
 }
 
 /**
+ * Real-space image shifts n x box_l inside the |ncut| sphere. Index 0 is the
+ * primary (zero) shift so self-interaction loops start at index 1.
+ */
+static std::vector<Utils::Vector3d>
+make_image_shifts(Utils::Vector3i const &ncut, Utils::Vector3d const &box_l) {
+  auto const ncut2 = ncut.norm2();
+  std::vector<Utils::Vector3d> shifts;
+  shifts.push_back({0., 0., 0.});
+  for (int nx = -ncut[0]; nx <= ncut[0]; ++nx)
+    for (int ny = -ncut[1]; ny <= ncut[1]; ++ny)
+      for (int nz = -ncut[2]; nz <= ncut[2]; ++nz) {
+        if (nx == 0 && ny == 0 && nz == 0)
+          continue;
+        if (nx * nx + ny * ny + nz * nz <= ncut2)
+          shifts.push_back({nx * box_l[0], ny * box_l[1], nz * box_l[2]});
+      }
+  return shifts;
+}
+
+/**
  * @brief Calculate and add the interaction forces/torques to the particles.
  *
  * This employs a parallel N-square loop over all particle pairs.
@@ -294,84 +159,156 @@ void DipolarDirectSum::add_long_range_forces_cpu() const {
   auto const &box_geo = *system.box_geo;
   auto const &box_l = box_geo.length();
   auto const particles = system.cell_structure->local_particles();
-  auto [local_particles, all_posmom, reqs, offset] =
+  auto [local_particles, all_posmom, reqs, offset_signed] =
       gather_particle_data(box_geo, particles);
 
   /* Number of image boxes considered */
   auto const ncut = get_n_cut(box_geo, n_replicas);
   auto const with_replicas = (ncut.norm2() > 0);
+  auto const shifts = make_image_shifts(ncut, box_l);
 
-  /* Range of particles we calculate the ia for on this node */
-  auto const local_posmom_begin = all_posmom.begin() + offset;
-  auto const local_posmom_end =
-      local_posmom_begin + static_cast<long>(local_particles.size());
+  auto const offset = static_cast<std::size_t>(offset_signed);
+  auto const n_local = local_particles.size();
+  auto const n_total = all_posmom.size();
 
-  /* Output iterator for the force */
-  auto p = local_particles.begin();
+  auto const prefactor_local = prefactor;
 
-  /* IA with local particles */
-  for (auto it = local_posmom_begin; it != local_posmom_end; ++it, ++p) {
-    /* IA with own images */
-    auto fi = image_sum(
-        it, std::next(it), it, with_replicas, ncut, box_geo, ParticleForce{},
-        [it](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
-          return pair_force(rn, it->m, mj);
-        });
+  /* Raw pointer to the gathered AoS data; the local slice is populated before
+   * wait_all, so Phase A may read it, and it outlives all fences. Safe to
+   * capture by value in the Kokkos [=] lambdas. */
+  auto const *pm = all_posmom.data();
 
-    /* IA with other local particles */
-    auto q = std::next(p);
-    for (auto jt = std::next(it); jt != local_posmom_end; ++jt, ++q) {
-      auto const d = (with_replicas) ? (it->pos - jt->pos)
-                                     : box_geo.get_mi_vector(it->pos, jt->pos);
+  using memory_space = Kokkos::HostSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+  using ForceView =
+      Kokkos::View<double *[3], Kokkos::LayoutRight, Kokkos::HostSpace>;
+  using ScatterForce =
+      Kokkos::Experimental::ScatterView<double *[3], Kokkos::LayoutRight,
+                                        memory_space>;
+  ForceView local_force("dds_force", n_local);
+  ForceView local_torque("dds_torque", n_local);
+  ScatterForce scatter_force(local_force);
+  ScatterForce scatter_torque(local_torque);
 
-      ParticleForce fij{};
-      ParticleForce fji{};
-      for_each_image(ncut, [&](int nx, int ny, int nz) {
-        auto const rn =
-            d + Utils::Vector3d{nx * box_l[0], ny * box_l[1], nz * box_l[2]};
-        auto const pf = pair_force(rn, it->m, jt->m);
-        fij += pf;
-        fji.f -= pf.f;
-        /* Conservation of angular momentum mandates that
-         * 0 = t_i + r_ij x F_ij + t_j */
-        fji.torque += vector_product(pf.f, rn) - pf.torque;
+  /* Raw pointers so the Kokkos lambdas do not capture std::vector by value. */
+  auto *local_particles_ptr = local_particles.data();
+  auto const *shifts_ptr = shifts.data();
+  auto const n_shifts = shifts.size();
+
+  /* Phase A: local pairs. Each i owns its own force/torque accumulation
+   * (written directly, unique owner, no race); the Newton's-third-law
+   * partner-j contributions go through the ScatterView with a per-lane
+   * scatter. */
+  Kokkos::RangePolicy<execution_space, Kokkos::Schedule<Kokkos::Dynamic>>
+  policy_local(std::size_t{0}, n_local);
+  policy_local.set_chunk_size(64);
+  Kokkos::parallel_for(
+      "dds_local_pairs", policy_local, [=](std::size_t const i) {
+        auto const gi = offset + i;
+        auto const &pos_i = pm[gi].pos;
+        auto const &m_i = pm[gi].m;
+        PairForce fi{};
+
+        /* (a) self-images (shifts[1..], primary excluded) */
+        for (std::size_t s = 1; s < n_shifts; ++s)
+          fi += pair_force(shifts_ptr[s], m_i, m_i);
+
+        auto force_access = scatter_force.access();
+        auto torque_access = scatter_torque.access();
+
+        /* (b) pairs with j in (gi, offset + n_local) */
+        for (auto j = gi + 1; j < offset + n_local; ++j) {
+          auto const &pos_j = pm[j].pos;
+          auto const &m_j = pm[j].m;
+          auto const d0 = with_replicas ? (pos_i - pos_j)
+                                        : box_geo.get_mi_vector(pos_i, pos_j);
+          auto const jl = j - offset;
+          for (std::size_t s = 0; s < n_shifts; ++s) {
+            auto const rn = d0 + shifts_ptr[s];
+            auto const pf = pair_force(rn, m_i, m_j);
+            fi.f += pf.f;
+            fi.torque += pf.torque;
+            /* Conservation of angular momentum mandates that
+             * 0 = t_i + r_ij x F_ij + t_j */
+            auto const torque_j = vector_product(pf.f, rn) - pf.torque;
+            for (int c = 0; c < 3; ++c) {
+              force_access(jl, c) -= pf.f[c];
+              torque_access(jl, c) += torque_j[c];
+            }
+          }
+        }
+        /* (d) write i's own total directly (unique owner, no race) */
+        local_particles_ptr[i]->force() += prefactor_local * fi.f;
+        local_particles_ptr[i]->torque() += prefactor_local * fi.torque;
       });
+  Kokkos::fence();
 
-      fi += fij;
-      (*q)->force() += prefactor * fji.f;
-      (*q)->torque() += prefactor * fji.torque;
-    }
-
-    (*p)->force() += prefactor * fi.f;
-    (*p)->torque() += prefactor * fi.torque;
-  }
-
-  /* Wait for the rest of the data to arrive */
+  /* Wait for remote data; the remote slices of all_posmom are now populated. */
   boost::mpi::wait_all(reqs.begin(), reqs.end());
 
-  /* Output iterator for the force */
-  p = local_particles.begin();
+  /* Phase B: remote pairs (red [0, offset) + black [offset + n_local,
+   * n_total)), visit-twice, no scatter; accumulate only i. */
+  Kokkos::RangePolicy<execution_space> policy_remote(std::size_t{0}, n_local);
+  Kokkos::parallel_for(
+      "dds_remote_pairs", policy_remote, [=](std::size_t const i) {
+        auto const gi = offset + i;
+        auto const &pos_i = pm[gi].pos;
+        auto const &m_i = pm[gi].m;
+        PairForce fi{};
 
-  /* Interaction with all the other particles */
-  for (auto it = local_posmom_begin; it != local_posmom_end; ++it, ++p) {
-    // red particles
-    auto fi =
-        image_sum(all_posmom.begin(), local_posmom_begin, it, with_replicas,
-                  ncut, box_geo, ParticleForce{},
-                  [it](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
-                    return pair_force(rn, it->m, mj);
-                  });
+        /* Two remote ranges: red [0, offset) and black [offset + n_local,
+         * n_total). Visit-twice (each remote pair is visited once per owning
+         * rank), so only i accumulates; no scatter. */
+        std::size_t const ranges[2][2] = {{std::size_t{0}, offset},
+                                          {offset + n_local, n_total}};
+        for (auto const &range : ranges) {
+          auto const range_begin = range[0];
+          auto const range_end = range[1];
+          for (auto j = range_begin; j < range_end; ++j) {
+            auto const &pos_j = pm[j].pos;
+            auto const &m_j = pm[j].m;
+            auto const d0 = with_replicas ? (pos_i - pos_j)
+                                          : box_geo.get_mi_vector(pos_i, pos_j);
+            for (std::size_t s = 0; s < n_shifts; ++s) {
+              auto const rn = d0 + shifts_ptr[s];
+              auto const pf = pair_force(rn, m_i, m_j);
+              fi.f += pf.f;
+              fi.torque += pf.torque;
+            }
+          }
+        }
+        local_particles_ptr[i]->force() += prefactor_local * fi.f;
+        local_particles_ptr[i]->torque() += prefactor_local * fi.torque;
+      });
+  Kokkos::fence();
 
-    // black particles
-    fi += image_sum(local_posmom_end, all_posmom.end(), it, with_replicas, ncut,
-                    box_geo, ParticleForce{},
-                    [it](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
-                      return pair_force(rn, it->m, mj);
-                    });
+  /* Reduce the Newton's-third-law contributions and add to particles. */
+  Kokkos::Experimental::contribute(local_force, scatter_force);
+  Kokkos::Experimental::contribute(local_torque, scatter_torque);
+  Kokkos::RangePolicy<execution_space> policy_reduce(std::size_t{0}, n_local);
+  Kokkos::parallel_for(
+      "dds_reduction", policy_reduce, [=](std::size_t const i) {
+        local_particles_ptr[i]->force() +=
+            prefactor_local * Utils::Vector3d{local_force(i, 0),
+                                              local_force(i, 1),
+                                              local_force(i, 2)};
+        local_particles_ptr[i]->torque() +=
+            prefactor_local * Utils::Vector3d{local_torque(i, 0),
+                                              local_torque(i, 1),
+                                              local_torque(i, 2)};
+      });
+  Kokkos::fence();
 
-    (*p)->force() += prefactor * fi.f;
-    (*p)->torque() += prefactor * fi.torque;
+#ifdef ESPRESSO_NPT
+  // As with DipolarP3M, the energy is not a valid
+  // substitute for the virial trace for dipole-dipole interactions, so the
+  // pressure tensor (see long_range_pressure()) is reused instead.
+  if (system.has_npt_enabled()) {
+    auto const pressure_tensor = long_range_pressure();
+    get_system().npt_add_virial_contribution(
+        pressure_tensor[0u] + pressure_tensor[4u] + pressure_tensor[8u]);
   }
+#endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   if (not m_is_gpu) {
     dipole_field_at_part_cpu();
@@ -388,31 +325,209 @@ double DipolarDirectSum::long_range_energy_cpu() const {
   assert(not m_is_gpu);
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
+  auto const &box_l = box_geo.length();
   auto const particles = system.cell_structure->local_particles();
-  auto [local_particles, all_posmom, reqs, offset] =
+  auto [local_particles, all_posmom, reqs, offset_signed] =
       gather_particle_data(box_geo, particles);
 
   /* Number of image boxes considered */
   auto const ncut = get_n_cut(box_geo, n_replicas);
   auto const with_replicas = (ncut.norm2() > 0);
+  auto const shifts = make_image_shifts(ncut, box_l);
 
-  /* Wait for the rest of the data to arrive */
+  auto const offset = static_cast<std::size_t>(offset_signed);
+  auto const n_local = local_particles.size();
+  auto const n_total = all_posmom.size();
+
+  /* Raw pointer to the gathered AoS data; the local slice is populated before
+   * wait_all, so Phase A may read it, and it outlives all fences. Safe to
+   * capture by value in the Kokkos [=] lambdas. */
+  auto const *pm = all_posmom.data();
+
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+
+  /* Raw pointers so the Kokkos lambdas do not capture std::vector by value. */
+  auto const *shifts_ptr = shifts.data();
+  auto const n_shifts = shifts.size();
+
+  /* Phase A: local-upper triangular sum over j in [gi, offset + n_local),
+   * i.e. the self-image energy (shifts[1..], primary excluded) plus the pairs
+   * with j in (gi, offset + n_local). Computed from the local slice of the
+   * gathered data while the remote data is still in flight. */
+  double uA = 0.;
+  Kokkos::RangePolicy<execution_space, Kokkos::Schedule<Kokkos::Dynamic>>
+  policy_local(std::size_t{0}, n_local);
+  policy_local.set_chunk_size(64);
+  Kokkos::parallel_reduce(
+      "dds_energy_local", policy_local,
+      [=](std::size_t const i, double &u_local) {
+        auto const gi = offset + i;
+        auto const &pos_i = pm[gi].pos;
+        auto const &m_i = pm[gi].m;
+
+        /* (a) self-images (shifts[1..], primary excluded) */
+        for (std::size_t s = 1; s < n_shifts; ++s)
+          u_local += pair_potential(shifts_ptr[s], m_i, m_i);
+
+        /* (b) pairs with j in (gi, offset + n_local) */
+        for (auto j = gi + 1; j < offset + n_local; ++j) {
+          auto const &pos_j = pm[j].pos;
+          auto const &m_j = pm[j].m;
+          auto const d0 = with_replicas ? (pos_i - pos_j)
+                                        : box_geo.get_mi_vector(pos_i, pos_j);
+          for (std::size_t s = 0; s < n_shifts; ++s)
+            u_local += pair_potential(d0 + shifts_ptr[s], m_i, m_j);
+        }
+      },
+      uA);
+
+  /* Wait for remote data, fill the black slice. The red range [0, offset) is
+   * never summed by the energy kernel (each pair is counted once on the rank
+   * owning its lower index). */
   boost::mpi::wait_all(reqs.begin(), reqs.end());
 
-  /* Range of particles we calculate the ia for on this node */
-  auto const local_posmom_begin = all_posmom.begin() + offset;
-  auto const local_posmom_end =
-      local_posmom_begin + static_cast<long>(local_particles.size());
+  /* Phase B: remote-black sum over j in [offset + n_local, n_total). No self
+   * term and no primary exclusion; the range is entirely remote. */
+  double uB = 0.;
+  Kokkos::RangePolicy<execution_space> policy_remote(std::size_t{0}, n_local);
+  Kokkos::parallel_reduce(
+      "dds_energy_remote", policy_remote,
+      [=](std::size_t const i, double &u_local) {
+        auto const gi = offset + i;
+        auto const &pos_i = pm[gi].pos;
+        auto const &m_i = pm[gi].m;
+        /* sum over j in [offset + n_local, n_total) */
+        for (auto j = offset + n_local; j < n_total; ++j) {
+          auto const &pos_j = pm[j].pos;
+          auto const &m_j = pm[j].m;
+          auto const d0 = with_replicas ? (pos_i - pos_j)
+                                        : box_geo.get_mi_vector(pos_i, pos_j);
+          for (std::size_t s = 0; s < n_shifts; ++s)
+            u_local += pair_potential(d0 + shifts_ptr[s], m_i, m_j);
+        }
+      },
+      uB);
 
-  auto u = 0.;
-  for (auto it = local_posmom_begin; it != local_posmom_end; ++it) {
-    u = image_sum(it, all_posmom.end(), it, with_replicas, ncut, box_geo, u,
-                  [it](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
-                    return pair_potential(rn, it->m, mj);
-                  });
+  return prefactor * (uA + uB);
+}
+
+/**
+ * @brief Calculate the dipolar pressure tensor.
+ *
+ * This employs a parallel N-square loop over all particle pairs.
+ * The dipole-dipole force is not central (unlike Coulomb), so the pair
+ * contribution to the virial only accounts for the force, not the torque,
+ * matching the convention used by @ref DipolarP3M.
+ */
+Utils::Vector9d DipolarDirectSum::long_range_pressure() const {
+  if (m_is_gpu) {
+    runtimeWarningMsg() << "Pressure calculation not implemented for "
+                           "DipolarDirectSum on GPU.";
+    return Utils::Vector9d{};
   }
 
-  return prefactor * u;
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const &box_l = box_geo.length();
+  auto const particles = system.cell_structure->local_particles();
+  auto [local_particles, all_posmom, reqs, offset_signed] =
+      gather_particle_data(box_geo, particles);
+
+  /* Number of image boxes considered */
+  auto const ncut = get_n_cut(box_geo, n_replicas);
+  auto const with_replicas = (ncut.norm2() > 0);
+  auto const shifts = make_image_shifts(ncut, box_l);
+
+  auto const offset = static_cast<std::size_t>(offset_signed);
+  auto const n_local = local_particles.size();
+  auto const n_total = all_posmom.size();
+
+  /* Raw pointer to the gathered AoS data; the local slice is populated before
+   * wait_all, so Phase A may read it, and it outlives all fences. Safe to
+   * capture by value in the Kokkos [=] lambdas. */
+  auto const *pm = all_posmom.data();
+
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+
+  /* Raw pointers so the Kokkos lambdas do not capture std::vector by value. */
+  auto const *shifts_ptr = shifts.data();
+  auto const n_shifts = shifts.size();
+
+  /* The pair contribution to the virial is r_n (x) F(r_n), reduced as a flat
+   * 9-component array. The dipole-dipole force is not central, so only the
+   * force enters the virial (not the torque). */
+
+  /* Phase A: local upper-triangular sum over j in [gi, offset + n_local) --
+   * the self-image term (shifts[1..], primary excluded) plus the pairs with
+   * j in (gi, offset + n_local). Computed while remote data is in flight. */
+  Utils::Vector9d pA{};
+  Kokkos::RangePolicy<execution_space, Kokkos::Schedule<Kokkos::Dynamic>>
+  policy_local(std::size_t{0}, n_local);
+  policy_local.set_chunk_size(64);
+  auto const join_op = [](Utils::Vector9d &acc, Utils::Vector9d const &val) {
+    acc += val;
+  };
+  auto reducerA = Reduction::make_kokkos_reducer<Utils::Vector9d>(
+      // NOLINTNEXTLINE(bugprone-exception-escape)
+      [=](std::size_t const i, Utils::Vector9d &psum) noexcept {
+        auto const gi = offset + i;
+        auto const &pos_i = pm[gi].pos;
+        auto const &m_i = pm[gi].m;
+
+        /* (a) self-images (shifts[1..], primary excluded) */
+        for (std::size_t s = 1; s < n_shifts; ++s) {
+          auto const rn = shifts_ptr[s];
+          psum += Utils::flatten(
+              Utils::tensor_product(rn, pair_force(rn, m_i, m_i).f));
+        }
+
+        /* (b) pairs with j in (gi, offset + n_local) */
+        for (auto j = gi + 1; j < offset + n_local; ++j) {
+          auto const &pos_j = pm[j].pos;
+          auto const &m_j = pm[j].m;
+          auto const d0 = with_replicas ? (pos_i - pos_j)
+                                        : box_geo.get_mi_vector(pos_i, pos_j);
+          for (std::size_t s = 0; s < n_shifts; ++s) {
+            auto const rn = d0 + shifts_ptr[s];
+            psum += Utils::flatten(
+                Utils::tensor_product(rn, pair_force(rn, m_i, m_j).f));
+          }
+        }
+      },
+      join_op);
+  Kokkos::parallel_reduce("dds_pressure_local", policy_local, reducerA, pA);
+
+  /* Wait for remote data, fill the black slice. The red range [0, offset) is
+   * never summed (each pair is counted once on the rank owning its lower
+   * index). */
+  boost::mpi::wait_all(reqs.begin(), reqs.end());
+
+  /* Phase B: remote-black sum over j in [offset + n_local, n_total). No self
+   * term and no primary exclusion -- the range is entirely remote. */
+  Utils::Vector9d pB{};
+  Kokkos::RangePolicy<execution_space> policy_remote(std::size_t{0}, n_local);
+  auto reducerB = Reduction::make_kokkos_reducer<Utils::Vector9d>(
+      // NOLINTNEXTLINE(bugprone-exception-escape)
+      [=](std::size_t const i, Utils::Vector9d &psum) noexcept {
+        auto const gi = offset + i;
+        auto const &pos_i = pm[gi].pos;
+        auto const &m_i = pm[gi].m;
+        for (auto j = offset + n_local; j < n_total; ++j) {
+          auto const &pos_j = pm[j].pos;
+          auto const &m_j = pm[j].m;
+          auto const d0 = with_replicas ? (pos_i - pos_j)
+                                        : box_geo.get_mi_vector(pos_i, pos_j);
+          for (std::size_t s = 0; s < n_shifts; ++s) {
+            auto const rn = d0 + shifts_ptr[s];
+            psum += Utils::flatten(
+                Utils::tensor_product(rn, pair_force(rn, m_i, m_j).f));
+          }
+        }
+      },
+      join_op);
+  Kokkos::parallel_reduce("dds_pressure_remote", policy_local, reducerB, pB);
+
+  return prefactor * (pA + pB);
 }
 
 /**
@@ -429,32 +544,69 @@ void DipolarDirectSum::dipole_field_at_part_cpu() const {
   assert(not m_is_gpu);
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
+  auto const &box_l = box_geo.length();
   auto const particles = system.cell_structure->local_particles();
   /* collect particle data */
-  auto [local_particles, all_posmom, reqs, offset] =
+  auto [local_particles, all_posmom, reqs, offset_signed] =
       gather_particle_data(box_geo, particles);
 
   auto const ncut = get_n_cut(box_geo, n_replicas);
   auto const with_replicas = (ncut.norm2() > 0);
+  auto const shifts = make_image_shifts(ncut, box_l);
 
+  auto const offset = static_cast<std::size_t>(offset_signed);
+  auto const n_local = local_particles.size();
+  auto const n_total = all_posmom.size();
+
+  auto const prefactor_local = prefactor;
+
+  /* The field sweeps over all j, so every view slice is needed. Unlike the
+   * force/energy kernels there is no local-only computation to overlap with,
+   * so wait for the remote data first, then fill all slices. */
   boost::mpi::wait_all(reqs.begin(), reqs.end());
 
-  auto const local_posmom_begin = all_posmom.begin() + offset;
-  auto const local_posmom_end =
-      local_posmom_begin + static_cast<long>(local_particles.size());
+  /* Raw pointer to the gathered AoS data; all slices are now populated, and it
+   * outlives the fence. Safe to capture by value in the Kokkos [=] lambda. */
+  auto const *pm = all_posmom.data();
 
-  Utils::Vector3d u_init = {0., 0., 0.};
-  auto p = local_particles.begin();
-  for (auto pi = local_posmom_begin; pi != local_posmom_end; ++pi, ++p) {
-    auto const u = image_sum(
-        all_posmom.begin(), all_posmom.end(), pi, with_replicas, ncut, box_geo,
-        u_init, [](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
-          return dipole_field(rn, mj);
-        });
-    (*p)->dip_fld() = prefactor * u;
-  }
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+
+  /* Raw pointers so the Kokkos lambdas do not capture std::vector by value. */
+  auto *local_particles_ptr = local_particles.data();
+  auto const *shifts_ptr = shifts.data();
+  auto const n_shifts = shifts.size();
+
+  Kokkos::RangePolicy<execution_space> policy(std::size_t{0}, n_local);
+  Kokkos::parallel_for("dds_dipole_field", policy, [=](std::size_t const i) {
+    auto const gi = offset + i;
+    auto const &pos_i = pm[gi].pos;
+    auto const &m_i = pm[gi].m;
+    Utils::Vector3d u{};
+
+    /* (a) self-image term over shifts[1..] (primary excluded) */
+    for (std::size_t s = 1; s < n_shifts; ++s)
+      u += dipole_field(shifts_ptr[s], m_i);
+
+    /* Sweep over all j in [0, n_total), self-primary excluded by splitting
+     * the range into [0, gi) and [gi + 1, n_total). */
+    std::size_t const ranges[2][2] = {{std::size_t{0}, gi}, {gi + 1, n_total}};
+    for (auto const &range : ranges) {
+      auto const range_begin = range[0];
+      auto const range_end = range[1];
+      for (auto j = range_begin; j < range_end; ++j) {
+        auto const &pos_j = pm[j].pos;
+        auto const &m_j = pm[j].m;
+        auto const d0 = with_replicas ? (pos_i - pos_j)
+                                      : box_geo.get_mi_vector(pos_i, pos_j);
+        for (std::size_t s = 0; s < n_shifts; ++s)
+          u += dipole_field(d0 + shifts_ptr[s], m_j);
+      }
+    }
+    local_particles_ptr[i]->dip_fld() = prefactor_local * u;
+  });
+  Kokkos::fence();
 }
-#endif
+#endif // ESPRESSO_DIPOLE_FIELD_TRACKING
 
 DipolarDirectSum::DipolarDirectSum(double prefactor, int n_replicas, bool gpu) {
   set_prefactor(prefactor);

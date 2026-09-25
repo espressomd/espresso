@@ -22,6 +22,8 @@
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
+#include <algorithm>
+#include <string_view>
 #include <variant>
 
 using ScriptInterface::AutoParameters;
@@ -34,13 +36,14 @@ struct A : AutoParameters<A> {
 };
 
 BOOST_AUTO_TEST_CASE(basic) {
+  using namespace std::literals;
   A a{0, 42};
 
   auto const &parameters = a.valid_parameters();
 
   BOOST_CHECK(parameters.size() == 2u);
-  BOOST_CHECK(std::ranges::find(parameters, "i") != parameters.end());
-  BOOST_CHECK(std::ranges::find(parameters, "j") != parameters.end());
+  BOOST_CHECK(std::ranges::find(parameters, "i"sv) != parameters.end());
+  BOOST_CHECK(std::ranges::find(parameters, "j"sv) != parameters.end());
 
   BOOST_CHECK(0 == std::get<int>(a.get_parameter("i")));
   BOOST_CHECK(42 == std::get<int>(a.get_parameter("j")));

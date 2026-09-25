@@ -158,16 +158,16 @@ Variant ObservableStat::do_call_method(std::string const &name,
                                        VariantMap const &) {
   auto &system = get_system();
   if (name == "calculate_energy") {
-    auto const obs = system.calculate_energy();
-    return get_summary(system, *obs, false);
+    auto const &obs = system.calculate_energy();
+    return get_summary(system, obs, false);
   }
   if (name == "calculate_scalar_pressure") {
-    auto const obs = system.calculate_pressure();
-    return get_summary(system, *obs, true);
+    auto const &obs = system.calculate_pressure();
+    return get_summary(system, obs, true);
   }
   if (name == "calculate_pressure_tensor") {
-    auto const obs = system.calculate_pressure();
-    return get_summary(system, *obs, false);
+    auto const &obs = system.calculate_pressure();
+    return get_summary(system, obs, false);
   }
   return {};
 }

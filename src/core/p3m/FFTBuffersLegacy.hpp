@@ -31,6 +31,8 @@
 
 #include "fft/vector.hpp"
 
+#include <utils/device_qualifier.hpp>
+
 #include <array>
 #include <type_traits>
 
@@ -49,7 +51,7 @@ class FFTBuffersLegacy : public FFTBuffers<FloatType> {
   std::array<fft::vector<FloatType>, 3u> rs_mesh_fields;
 
 public:
-  ~FFTBuffersLegacy() override;
+  HOST_ONLY_QUALIFIER ~FFTBuffersLegacy() override;
   void init_halo() override;
   void init_meshes(int ca_mesh_size) override;
   void perform_vector_halo_gather() override;

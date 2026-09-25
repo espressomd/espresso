@@ -34,7 +34,7 @@ namespace Algorithm {
  * @return x folded into [0, l) and number of folds.
  */
 inline auto periodic_fold(std::floating_point auto x, std::integral auto i,
-                          std::floating_point auto l) {
+                          std::floating_point auto l) noexcept {
   static_assert(std::is_same_v<decltype(x), decltype(l)>);
   using limits = std::numeric_limits<decltype(i)>;
   using value_type = decltype(x);
@@ -60,7 +60,7 @@ inline auto periodic_fold(std::floating_point auto x, std::integral auto i,
  * @return x folded into [0, l).
  */
 inline auto periodic_fold(std::floating_point auto x,
-                          std::floating_point auto l) {
+                          std::floating_point auto l) noexcept {
   using value_type = decltype(x);
 #ifndef __FAST_MATH__
   /* Can't fold if either x or l is nan or inf. */

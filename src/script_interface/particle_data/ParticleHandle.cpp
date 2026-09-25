@@ -69,18 +69,18 @@ namespace ScriptInterface {
 namespace Particles {
 
 #ifdef ESPRESSO_ROTATION
-static auto constexpr contradicting_arguments_quat = std::to_array<
-    std::array<std::string_view, 3>>({
-    {"dip", "dipm",
-     "Setting 'dip' is sufficient as it defines the scalar dipole moment."},
-    {"quat", "director",
-     "Setting 'quat' is sufficient as it defines the director."},
-    {"dip", "quat",
-     "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."},
-    {"dip", "director",
-     "Setting 'dip' would overwrite 'director'. Set 'director' and "
-     "'dipm' instead."},
-});
+static std::array<std::array<std::string_view, 3>,
+                  4> constexpr contradicting_arguments_quat{{
+    {{"dip", "dipm",
+      "Setting 'dip' is sufficient as it defines the scalar dipole moment."}},
+    {{"quat", "director",
+      "Setting 'quat' is sufficient as it defines the director."}},
+    {{"dip", "quat",
+      "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."}},
+    {{"dip", "director",
+      "Setting 'dip' would overwrite 'director'. Set 'director' and "
+      "'dipm' instead."}},
+}};
 
 static void sanity_checks_rotation(VariantMap const &params) {
   // if we are not constructing a particle from a checkpoint file,
@@ -218,14 +218,12 @@ ParticleHandle::ParticleHandle() {
       {"id", AutoParameter::read_only, [this]() { return m_pid; }},
       {"type",
        [this](Variant const &value) {
-         auto const old_type = get_particle_property(&Particle::type);
          auto const new_type = get_value<int>(value);
          if (new_type < 0) {
            throw std::domain_error(
                error_msg("type", "must be an integer >= 0"));
          }
          get_system()->nonbonded_ias->make_particle_type_exist(new_type);
-         on_particle_type_change(m_pid, old_type, new_type);
          set_particle_property(&Particle::type, value);
        },
        [this]() { return get_particle_data(m_pid).type(); }},

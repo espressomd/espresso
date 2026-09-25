@@ -79,67 +79,69 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
     return bond_partners[1];
   }; // optional for second partner engaged
 
-  // Handle different action types
-  if (spec.action_type == ActionType::DELETE_BOND) {
-    if (is_angle_bond(e.bond_partners)) {
-      return {DeleteAngleBond{e.particle_id,
-                              {{*(e.bond_partners[0]), *(e.bond_partners[1])}},
-                              e.bond_type}};
-    }
-    return {DeleteBond{e.particle_id, *(e.bond_partners[0]), e.bond_type}};
-  }
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
-  // revert bind at point of collision for pair bonds
-  if (spec.action_type == ActionType::REVERT_BIND_AT_POINT_OF_COLLISION and
-      not is_angle_bond(e.bond_partners)) {
-    // We need to find the base particles for the two virtual sites
-    // between which the bond broke.
-    auto p1 = cell_structure.get_local_particle(e.particle_id);
-    auto p2 = cell_structure.get_local_particle(*(e.bond_partners[0]));
-    if (p1 and p2) {
-      if (not p1->is_virtual() or not p2->is_virtual()) {
-        runtimeErrorMsg() << "The REVERT_BIND_AT_POINT_OF_COLLISION bond "
-                             "breakage action has to be configured for the "
-                             "bond on the virtual site. Encountered a particle "
-                             "that is not virtual.";
-        return {};
-      }
+  if (spec.action_type == ActionType::REVERT_BIND_AT_POINT_OF_COLLISION) {
+    if (not is_angle_bond(e.bond_partners)) {
+      // revert bind at point of collision for pair bonds
+      // We need to find the base particles for the two virtual sites
+      // between which the bond broke.
+      auto p1 = cell_structure.get_local_particle(e.particle_id);
+      auto p2 = cell_structure.get_local_particle(*(e.bond_partners[0]));
+      if (p1 and p2) {
+        if (not p1->is_virtual() or not p2->is_virtual()) {
+          runtimeErrorMsg()
+              << "The REVERT_BIND_AT_POINT_OF_COLLISION bond "
+                 "breakage action has to be configured for the "
+                 "bond on the virtual site. Encountered a particle "
+                 "that is not virtual.";
+          return {};
+        }
 
-      return {
-          // Bond between virtual sites
-          DeleteBond{e.particle_id, *(e.bond_partners[0]), e.bond_type},
-          // Bond between base particles. We do not know, on which of these
-          // the bond is defined, since bonds are stored only on one partner
-          DeleteAllBonds{p1->vs_relative().to_particle_id,
-                         p2->vs_relative().to_particle_id},
-          DeleteAllBonds{p2->vs_relative().to_particle_id,
-                         p1->vs_relative().to_particle_id},
-      };
-    }
-  } else {
-    // revert bind at point of collision for angle bonds
-    auto vs = cell_structure.get_local_particle(e.particle_id);
-    auto p1 = cell_structure.get_local_particle(*(e.bond_partners[0]));
-    auto p2 = cell_structure.get_local_particle(*(e.bond_partners[1]));
-    if (p1 and p2) {
-      if (not vs->is_virtual()) {
-        runtimeErrorMsg() << "The REVERT_BIND_AT_POINT_OF_COLLISION bond "
-                             "breakage action has to be configured for the "
-                             "bond on the virtual site. Encountered a particle "
-                             "that is not virtual.";
-        return {};
+        return {
+            // Bond between virtual sites
+            DeleteBond{e.particle_id, *(e.bond_partners[0]), e.bond_type},
+            // Bond between base particles. We do not know, on which of these
+            // the bond is defined, since bonds are stored only on one partner
+            DeleteAllBonds{p1->vs_relative().to_particle_id,
+                           p2->vs_relative().to_particle_id},
+            DeleteAllBonds{p2->vs_relative().to_particle_id,
+                           p1->vs_relative().to_particle_id},
+        };
       }
+    } else {
+      // revert bind at point of collision for angle bonds
+      auto vs = cell_structure.get_local_particle(e.particle_id);
+      auto p1 = cell_structure.get_local_particle(*(e.bond_partners[0]));
+      auto p2 = cell_structure.get_local_particle(*(e.bond_partners[1]));
+      if (p1 and p2) {
+        if (not vs->is_virtual()) {
+          runtimeErrorMsg()
+              << "The REVERT_BIND_AT_POINT_OF_COLLISION bond "
+                 "breakage action has to be configured for the "
+                 "bond on the virtual site. Encountered a particle "
+                 "that is not virtual.";
+          return {};
+        }
 
-      return {// Angle bond on the virtual site
-              DeleteAngleBond{e.particle_id, {p1->id(), p2->id()}, e.bond_type},
-              // Bond between base particles. We do not know, on which of these
-              // the bond is defined, since bonds are stored only on one partner
-              DeleteAllBonds{p1->id(), p2->id()},
-              DeleteAllBonds{p2->id(), p1->id()}};
+        return {
+            // Angle bond on the virtual site
+            DeleteAngleBond{e.particle_id, {p1->id(), p2->id()}, e.bond_type},
+            // Bond between base particles. We do not know, on which of these
+            // the bond is defined, since bonds are stored only on one partner
+            DeleteAllBonds{p1->id(), p2->id()},
+            DeleteAllBonds{p2->id(), p1->id()}};
+      }
     }
   }
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
-  return {};
+
+  assert(spec.action_type == ActionType::DELETE_BOND);
+  if (is_angle_bond(e.bond_partners)) {
+    return {DeleteAngleBond{e.particle_id,
+                            {{*(e.bond_partners[0]), *(e.bond_partners[1])}},
+                            e.bond_type}};
+  }
+  return {DeleteBond{e.particle_id, *(e.bond_partners[0]), e.bond_type}};
 }
 
 /**

@@ -33,7 +33,7 @@ class Test(ut.TestCase):
     :ref:`Madelung magnetostatics` for more details.
     """
 
-    system = espressomd.System(box_l=[1., 1., 1.])
+    system = espressomd.System(box_l=[10., 10., 10.])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
@@ -62,9 +62,18 @@ class Test(ut.TestCase):
         ref_pressure = madelung * base_tensor / np.trace(base_tensor)
         return ref_energy, ref_pressure
 
-    def get_normalized_obs_per_dipole(self, dipm, spacing):
+    def get_normalized_obs_per_dipole(self, dipm, spacing, pressure):
         energy = self.system.analysis.energy()["dipolar"]
-        return energy / len(self.system.part) / dipm**2 * spacing**3
+        if pressure:
+            p_scalar = self.system.analysis.pressure()["dipolar"]
+            p_tensor = self.system.analysis.pressure_tensor()["dipolar"]
+        else:
+            p_scalar = 0.
+            p_tensor = np.zeros((3, 3))
+        N = len(self.system.part)
+        V = self.system.volume()
+        pre = spacing**3 / dipm**2
+        return energy / N * pre, p_scalar * V / N * pre, p_tensor * V / N * pre
 
     @utx.skipIfMissingFeatures(["DP3M"])
     def test_infinite_magnetic_wire(self):
@@ -85,29 +94,41 @@ class Test(ut.TestCase):
                            cao=6, alpha=0.137582516, tune=False)
         mdlc_params = {'maxPWerror': 1e-9, 'gap_size': 16.}
 
-        def check():
+        def check(pressure):
+            base_tensor = np.zeros((3, 3), dtype=float)
+            base_tensor[0, 0] = 1.
             # minimal energy configuration
             self.system.part.all().dip = dipm * np.array(dipoles_parallel)
             mc = -2. * scipy.special.zeta(3)
-            energy_per_dip = self.get_normalized_obs_per_dipole(dipm, spacing)
-            np.testing.assert_allclose(energy_per_dip, mc, atol=0., rtol=2e-9)
+            energy, p_scalar, p_tensor = self.get_normalized_obs_per_dipole(
+                dipm, spacing, pressure)
+            np.testing.assert_allclose(energy, mc, atol=0., rtol=2e-9)
+            if pressure:
+                np.testing.assert_allclose(p_scalar, mc, atol=0., rtol=2e-8)
+                np.testing.assert_allclose(
+                    p_tensor, 3. * mc * base_tensor, atol=1e-12, rtol=2e-8)
 
             # maximal energy configuration
             self.system.part.all().dip = dipm * np.array(dipoles_antiparallel)
             mc = 3. / 2. * scipy.special.zeta(3)
-            energy_per_dip = self.get_normalized_obs_per_dipole(dipm, spacing)
-            np.testing.assert_allclose(energy_per_dip, mc, atol=0., rtol=2e-9)
+            energy, p_scalar, p_tensor = self.get_normalized_obs_per_dipole(
+                dipm, spacing, pressure)
+            np.testing.assert_allclose(energy, mc, atol=0., rtol=2e-9)
+            if pressure:
+                np.testing.assert_allclose(p_scalar, mc, atol=0., rtol=2e-8)
+                np.testing.assert_allclose(
+                    p_tensor, 3. * mc * base_tensor, atol=1e-12, rtol=2e-8)
 
         for single_precision in [False, True]:
             with self.subTest(msg=f"DP3M CPU {single_precision=}"):
                 dp3m = espressomd.magnetostatics.DipolarP3M(
                     single_precision=single_precision, **dp3m_params)
                 self.system.magnetostatics.solver = dp3m
-                check()
+                check(pressure=True)
                 self.system.magnetostatics.clear()
                 mdlc = espressomd.magnetostatics.DLC(actor=dp3m, **mdlc_params)
                 self.system.magnetostatics.solver = mdlc
-                check()
+                check(pressure=False)
 
     @utx.skipIfMissingFeatures(["DP3M"])
     def test_infinite_magnetic_sheet(self):
@@ -132,29 +153,44 @@ class Test(ut.TestCase):
                            cao=7, alpha=0.1186918, tune=False)
         mdlc_params = {'maxPWerror': 1e-9, 'gap_size': 16.}
 
-        def check():
+        def check(pressure):
             # minimal energy configuration
             self.system.part.all().dip = dipm * np.array(dipoles_parallel)
+            base_tensor = np.zeros((3, 3), dtype=float)
+            base_tensor[0, 0] = 0.129036119  # no analytical expression
+            base_tensor[1, 1] = 0.870962505
             mc = -2.54944
-            energy_per_dip = self.get_normalized_obs_per_dipole(dipm, spacing)
-            np.testing.assert_allclose(energy_per_dip, mc, atol=0., rtol=4e-6)
+            energy, p_scalar, p_tensor = self.get_normalized_obs_per_dipole(
+                dipm, spacing, pressure)
+            np.testing.assert_allclose(energy, mc, atol=0., rtol=4e-6)
+            if pressure:
+                np.testing.assert_allclose(p_scalar, mc, atol=0., rtol=4e-6)
+                np.testing.assert_allclose(
+                    p_tensor, 3. * mc * base_tensor, atol=1e-12, rtol=4e-6)
 
             # maximal energy configuration
             self.system.part.all().dip = dipm * np.array(dipoles_antiparallel)
+            base_tensor = np.zeros((3, 3), dtype=float)
+            base_tensor[0, 0] = base_tensor[1, 1] = 0.5
             mc = +3.01716
-            energy_per_dip = self.get_normalized_obs_per_dipole(dipm, spacing)
-            np.testing.assert_allclose(energy_per_dip, mc, atol=0., rtol=4e-6)
+            energy, p_scalar, p_tensor = self.get_normalized_obs_per_dipole(
+                dipm, spacing, pressure)
+            np.testing.assert_allclose(energy, mc, atol=0., rtol=4e-6)
+            if pressure:
+                np.testing.assert_allclose(p_scalar, mc, atol=0., rtol=4e-6)
+                np.testing.assert_allclose(
+                    p_tensor, 3. * mc * base_tensor, atol=1e-12, rtol=4e-6)
 
         for single_precision in [False, True]:
             with self.subTest(msg=f"DP3M CPU {single_precision=}"):
                 dp3m = espressomd.magnetostatics.DipolarP3M(
                     single_precision=single_precision, **dp3m_params)
                 self.system.magnetostatics.solver = dp3m
-                check()
+                check(pressure=True)
                 self.system.magnetostatics.clear()
                 mdlc = espressomd.magnetostatics.DLC(actor=dp3m, **mdlc_params)
                 self.system.magnetostatics.solver = mdlc
-                check()
+                check(pressure=False)
 
     @utx.skipIfMissingFeatures(["DP3M"])
     def test_infinite_magnetic_cube(self):
@@ -179,25 +215,43 @@ class Test(ut.TestCase):
             prefactor=1., accuracy=5e-8, mesh=64, r_cut=8.2, cao=7,
             alpha=0.5091135, tune=False)
 
-        def check():
+        def check(pressure):
             # minimal energy configuration
             self.system.part.all().dip = dipm * np.array(dipoles_parallel)
+            base_tensor = np.zeros((3, 3), dtype=float)
+            base_tensor[0, 0] = 0.112457519  # no analytical expression
+            base_tensor[1, 1] = 0.112457519
+            base_tensor[2, 2] = 0.775083987
             mc = -2.67679
-            energy_per_dip = self.get_normalized_obs_per_dipole(dipm, spacing)
-            np.testing.assert_allclose(energy_per_dip, mc, atol=0., rtol=1e-6)
+            energy, p_scalar, p_tensor = self.get_normalized_obs_per_dipole(
+                dipm, spacing, pressure)
+            np.testing.assert_allclose(energy, mc, atol=0., rtol=1e-6)
+            if pressure:
+                np.testing.assert_allclose(p_scalar, mc, atol=0., rtol=4e-6)
+                np.testing.assert_allclose(
+                    p_tensor, 3. * mc * base_tensor, atol=1e-8, rtol=1e-6)
 
             # maximal energy configuration
             self.system.part.all().dip = dipm * np.array(dipoles_antiparallel)
+            base_tensor = np.zeros((3, 3), dtype=float)
+            base_tensor[0, 0] = 0.28679875  # no analytical expression
+            base_tensor[1, 1] = 0.28679875
+            base_tensor[2, 2] = 0.42619446
             mc = +4.84473  # imprecise
-            energy_per_dip = self.get_normalized_obs_per_dipole(dipm, spacing)
-            np.testing.assert_allclose(energy_per_dip, mc, atol=0., rtol=3e-4)
+            energy, p_scalar, p_tensor = self.get_normalized_obs_per_dipole(
+                dipm, spacing, pressure)
+            np.testing.assert_allclose(energy, mc, atol=0., rtol=3e-4)
+            if pressure:
+                np.testing.assert_allclose(p_scalar, mc, atol=0., rtol=3e-4)
+                np.testing.assert_allclose(
+                    p_tensor, 3. * mc * base_tensor, atol=1e-8, rtol=1e-5)
 
         for single_precision in [False, True]:
             with self.subTest(msg=f"DP3M CPU {single_precision=}"):
                 dp3m = espressomd.magnetostatics.DipolarP3M(
                     single_precision=single_precision, **dp3m_params)
                 self.system.magnetostatics.solver = dp3m
-                check()
+                check(pressure=True)
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_infinite_ionic_wire(self):

@@ -71,6 +71,7 @@
 #include <limits>
 #include <numbers>
 #include <stdexcept>
+#include <tuple>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -141,15 +142,13 @@ struct P3MGpuParams {
 };
 
 static auto p3m_calc_blocks(unsigned int cao, std::size_t n_part) {
-  auto const cao3 = Utils::int_pow<3>(cao);
-  auto parts_per_block = 1u;
-  while ((parts_per_block + 1u) * cao3 <= 1024u) {
-    ++parts_per_block;
-  }
-  assert((n_part / parts_per_block) <= std::numeric_limits<unsigned>::max());
+  assert(cao <= 8);
+  auto constexpr max_threads_per_block = 1024u;
+  auto const cao3 = static_cast<unsigned>(Utils::int_pow<3>(cao));
+  auto const parts_per_block = max_threads_per_block / cao3;
+  assert((n_part / parts_per_block) < std::numeric_limits<unsigned>::max());
   auto n = static_cast<unsigned int>(n_part / parts_per_block);
   auto n_blocks = ((n_part % parts_per_block) == 0u) ? std::max(1u, n) : n + 1u;
-  assert(n_blocks <= std::numeric_limits<unsigned>::max());
   return std::make_pair(parts_per_block, static_cast<unsigned>(n_blocks));
 }
 
@@ -163,6 +162,25 @@ dim3 p3m_make_grid(unsigned int n_blocks) {
       grid.x = n_blocks / grid.y + 1u;
   }
   return grid;
+}
+
+/**
+ * @brief Calculate the topology of a kernel launch.
+ * Each particle spreads its charge on a cube of size cao, hence cao^3 threads
+ * are needed per particle. Each block may only contain up to 1024 threads.
+ * Compute the maximal number of particles that can be processed by a block,
+ * and the total number of blocks to allocate to process all particles.
+ * Distribute these blocks on a 2D grid, since each accelerator may only
+ * contain up to 2^16 blocks per dimension.
+ */
+static auto p3m_calc_topology(unsigned int cao, std::size_t n_part) {
+  auto const [parts_per_block, n_blocks] = p3m_calc_blocks(cao, n_part);
+  dim3 const block(parts_per_block * cao, cao, cao);
+  dim3 const grid = p3m_make_grid(n_blocks);
+  auto const data_length = std::size_t(3u) *
+                           static_cast<std::size_t>(parts_per_block) *
+                           static_cast<std::size_t>(cao) * sizeof(REAL_TYPE);
+  return std::make_tuple(block, grid, parts_per_block, data_length);
 }
 
 template <int cao>
@@ -326,7 +344,7 @@ __global__ void assign_charge_kernel(P3MGpuData const params,
       parts_per_block * (blockIdx.x * gridDim.y + blockIdx.y) + part_in_block;
   if (id >= params.n_part)
     return;
-  /* position relative to the closest gird point */
+  /* position relative to the closest grid point */
   REAL_TYPE m_pos[3];
   /* index of the nearest mesh point */
   int nmp_x, nmp_y, nmp_z;
@@ -380,13 +398,9 @@ void assign_charges(P3MGpuData const &params,
                     float const *const __restrict__ part_pos,
                     float const *const __restrict__ part_q) {
   auto const cao = static_cast<unsigned int>(params.cao);
-  auto const [parts_per_block, n_blocks] = p3m_calc_blocks(cao, params.n_part);
-  dim3 block(parts_per_block * cao, cao, cao);
-  dim3 grid = p3m_make_grid(n_blocks);
-
-  auto const data_length = std::size_t(3u) *
-                           static_cast<std::size_t>(parts_per_block) *
-                           static_cast<std::size_t>(cao) * sizeof(REAL_TYPE);
+  auto const [block, grid, parts_per_block, data_length] =
+      p3m_calc_topology(cao, params.n_part);
+  // the shared version only is faster for cao > 2
   switch (params.cao) {
   case 1:
     (assign_charge_kernel<1, false>)<<<grid, block, std::size_t(0u), nullptr>>>(
@@ -497,15 +511,9 @@ void assign_forces(P3MGpuData const &params,
                    float *const __restrict__ part_f,
                    REAL_TYPE const prefactor) {
   auto const cao = static_cast<unsigned int>(params.cao);
-  auto const [parts_per_block, n_blocks] = p3m_calc_blocks(cao, params.n_part);
-  dim3 block(parts_per_block * cao, cao, cao);
-  dim3 grid = p3m_make_grid(n_blocks);
-
-  /* Switch for assignment templates, the shared version only is faster for cao
-   * > 2 */
-  auto const data_length = std::size_t(3u) *
-                           static_cast<std::size_t>(parts_per_block) *
-                           static_cast<std::size_t>(cao) * sizeof(float);
+  auto const [block, grid, parts_per_block, data_length] =
+      p3m_calc_topology(cao, params.n_part);
+  // the shared version only is faster for cao > 2
   switch (params.cao) {
   case 1:
     (assign_forces_kernel<1, false>)<<<grid, block, std::size_t(0u), nullptr>>>(

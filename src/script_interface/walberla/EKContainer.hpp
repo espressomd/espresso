@@ -103,6 +103,12 @@ class EKContainer : public ObjectList<EKSpecies, EK::Container> {
         throw std::runtime_error(
             "Cannot mix single and double precision kernels");
       }
+      auto const tau_container = m_ek_container->get_tau();
+      auto const tau_species = get_value<double>(obj_ptr->get_parameter("tau"));
+      if (tau_species != tau_container) {
+        throw std::runtime_error(
+            "EK species and EK container must have the same tau");
+      }
       ek_throw_if_expired(obj_ptr->get_mpi_cart_comm_observer());
       m_ek_container->add(obj_ptr->get_ekinstance());
     });

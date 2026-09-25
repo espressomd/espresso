@@ -132,41 +132,48 @@ using LayoutIterate = std::conditional_t<
  * @brief Run a kernel(index_3d, linear_index) over the given 3d range with
  * given memory order
  */
-template <Utils::MemoryOrder memory_order, class Kernel>
+template <Utils::MemoryOrder memory_order,
+          class ExecSpace = Kokkos::DefaultHostExecutionSpace>
 void for_each_3d_lin(detail::IndexVectorConcept auto &&start,
-                     detail::IndexVectorConcept auto &&stop, Kernel &&kernel) {
-  if (Kokkos::num_threads() > 1) {
-    auto const size = stop - start;
-    constexpr Kokkos::Iterate iter = LayoutIterate<memory_order>::value;
-    using Range3d = Kokkos::MDRangePolicy<Kokkos::Rank<3, iter, iter>>;
-    Range3d policy({0, 0, 0}, {size[0], size[1], size[2]});
-    Kokkos::parallel_for(
-        "for_each_3d", policy, KOKKOS_LAMBDA(int i, int j, int k) {
-          auto const linear_idx =
-              Utils::get_linear_index<memory_order>(i, j, k, size);
-          kernel(start + Utils::Vector3i{{i, j, k}}, linear_idx);
-        });
-    return;
-  }
-
-  int linear_loop_index = 0u;
-  if constexpr (memory_order == Utils::MemoryOrder::ROW_MAJOR) {
-    for (int nx = start[0u]; nx < stop[0u]; ++nx) {
-      for (int ny = start[1u]; ny < stop[1u]; ++ny) {
-        for (int nz = start[2u]; nz < stop[2u]; ++nz) {
-          kernel(Utils::Vector3i{nx, ny, nz}, linear_loop_index);
-          linear_loop_index++;
-        }
-      }
-    }
-  } else {
-    for (int nz = start[2u]; nz < stop[2u]; ++nz) {
-      for (int ny = start[1u]; ny < stop[1u]; ++ny) {
+                     detail::IndexVectorConcept auto &&stop, auto &&kernel)
+  requires Kokkos::is_execution_space<ExecSpace>::value
+{
+  auto constexpr is_host_exec_space =
+      Kokkos::SpaceAccessibility<ExecSpace, Kokkos::HostSpace>::accessible != 0;
+  if constexpr (is_host_exec_space) {
+    if (Kokkos::num_threads() == 1) {
+      // serial execution policy is only implemented for host code
+      int linear_loop_index = 0u;
+      if constexpr (memory_order == Utils::MemoryOrder::ROW_MAJOR) {
         for (int nx = start[0u]; nx < stop[0u]; ++nx) {
-          kernel(Utils::Vector3i{nx, ny, nz}, linear_loop_index);
-          linear_loop_index++;
+          for (int ny = start[1u]; ny < stop[1u]; ++ny) {
+            for (int nz = start[2u]; nz < stop[2u]; ++nz) {
+              kernel(Utils::Vector3i{nx, ny, nz}, linear_loop_index);
+              linear_loop_index++;
+            }
+          }
+        }
+      } else {
+        for (int nz = start[2u]; nz < stop[2u]; ++nz) {
+          for (int ny = start[1u]; ny < stop[1u]; ++ny) {
+            for (int nx = start[0u]; nx < stop[0u]; ++nx) {
+              kernel(Utils::Vector3i{nx, ny, nz}, linear_loop_index);
+              linear_loop_index++;
+            }
+          }
         }
       }
+      return;
     }
   }
+  // parallel execution policy
+  auto const size = stop - start;
+  constexpr Kokkos::Iterate iter = LayoutIterate<memory_order>::value;
+  using Range3d = Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<3, iter, iter>>;
+  Range3d policy({0, 0, 0}, {size[0], size[1], size[2]});
+  Kokkos::parallel_for("for_each_3d", policy, [=](int i, int j, int k) {
+    auto const linear_idx =
+        Utils::get_linear_index<memory_order>(i, j, k, size);
+    kernel(start + Utils::Vector3i{{i, j, k}}, linear_idx);
+  });
 }

@@ -22,6 +22,8 @@
 #include "cell_system/RegularDecomposition.hpp"
 
 #include "cell_system/Cell.hpp"
+#include "ghosts/HaloPlanValidator.hpp"
+#include "ghosts/mark_boundary_cells.hpp"
 
 #include "communication.hpp"
 #include "error_handling/RuntimeErrorStream.hpp"
@@ -37,16 +39,25 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
 #include <boost/mpi/request.hpp>
-#include <boost/range/algorithm/reverse.hpp>
 #include <boost/range/numeric.hpp>
+
+#include <Kokkos_Core.hpp>
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <exception>
 #include <functional>
 #include <initializer_list>
 #include <iterator>
+#include <map>
+#include <mutex>
+#include <numeric>
+#include <set>
+#include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -177,31 +188,124 @@ void RegularDecomposition::resort(bool global,
                                   std::vector<ParticleChange> &diff) {
   ParticleList displaced_parts;
 
-  for (auto &c : local_cells()) {
-    for (auto it = c->particles().begin(); it != c->particles().end();) {
-      fold_and_reset(*it, m_box);
+  auto const cells_span = local_cells();
+  auto const n_cells = cells_span.size();
 
-      auto target_cell = particle_to_cell(*it);
+  /* Remove a misplaced particle from its cell and hand it to its target
+   * cell (or the displaced list when it left the local domain), recording
+   * the changes. Shared by the serial and the two-phase parallel sweep. */
+  auto const apply_move = [&](ParticleList &parts, Particle &&p,
+                              Cell *target_cell) {
+    diff.emplace_back(ModifiedList{parts});
+    /* Particle is not local */
+    if (target_cell == nullptr) {
+      diff.emplace_back(RemovedParticle{p.id()});
+      displaced_parts.insert(std::move(p));
+    }
+    /* Particle belongs on this node but is in the wrong cell. */
+    else {
+      target_cell->particles().insert(std::move(p));
+      diff.emplace_back(ModifiedList{target_cell->particles()});
+    }
+  };
 
-      /* Particle is in place */
-      if (target_cell == c) {
-        std::advance(it, 1);
+  if (Kokkos::DefaultHostExecutionSpace().concurrency() == 1) {
+    /* Single-threaded rank: one-pass sweep without the bookkeeping overhead
+     * of the two-phase version below. */
+    for (auto *const c : cells_span) {
+      for (auto it = c->particles().begin(); it != c->particles().end();) {
+        fold_and_reset(*it, m_box);
+
+        auto *const target_cell = particle_to_cell(*it);
+
+        /* Particle is in place */
+        if (target_cell == c) {
+          std::advance(it, 1);
+          continue;
+        }
+
+        auto p = std::move(*it);
+        it = c->particles().erase(it);
+        apply_move(c->particles(), std::move(p), target_cell);
+      }
+    }
+  } else {
+    using exec_space = Kokkos::DefaultHostExecutionSpace;
+    /* Phase 1 (parallel): fold every particle position and classify it
+     * against its target cell. Only particle-local state and this cell's own
+     * move list are written, so cells can be swept concurrently.
+     * fold_and_reset() throws on image-box overflow; exceptions must not
+     * escape the parallel region, so the first error is captured and
+     * rethrown afterwards. */
+    struct Move {
+      unsigned index;
+      Cell *target;
+    };
+    std::vector<std::vector<Move>> moves(n_cells);
+    std::mutex fold_error_mutex;
+    std::string fold_error_msg;
+    Kokkos::RangePolicy<exec_space> policy(std::size_t{0}, n_cells);
+    Kokkos::parallel_for(
+        "RegularDecomposition::resort::classify", policy,
+        [&](std::size_t const ci) {
+          auto *cell = cells_span[ci];
+          unsigned index = 0u;
+          for (auto &p : cell->particles()) {
+            try {
+              fold_and_reset(p, m_box);
+            } catch (std::exception const &err) {
+              std::lock_guard<std::mutex> guard{fold_error_mutex};
+              if (fold_error_msg.empty()) {
+                fold_error_msg = err.what();
+              }
+              return;
+            }
+            if (auto *const target = particle_to_cell(p); target != cell) {
+              moves[ci].emplace_back(index, target);
+            }
+            ++index;
+          }
+        });
+    Kokkos::fence();
+    if (not fold_error_msg.empty()) {
+      throw std::runtime_error(fold_error_msg);
+    }
+
+    /* Phase 2 (serial): apply the moves. This replays the serial sweep
+     * exactly: ParticleList::erase() swaps the last element into the erased
+     * slot, so a slot-to-original-index map is maintained to look up the
+     * phase-1 classification of swapped-in elements. Cells without moves
+     * (the vast majority) are skipped entirely. */
+    std::vector<int> slot;
+    std::vector<Cell *> target_of;
+    for (std::size_t ci = 0; ci < n_cells; ++ci) {
+      if (moves[ci].empty()) {
         continue;
       }
-
-      auto p = std::move(*it);
-      it = c->particles().erase(it);
-      diff.emplace_back(ModifiedList{c->particles()});
-
-      /* Particle is not local */
-      if (target_cell == nullptr) {
-        diff.emplace_back(RemovedParticle{p.id()});
-        displaced_parts.insert(std::move(p));
+      auto *const c = cells_span[ci];
+      auto &parts = c->particles();
+      auto const n = static_cast<int>(parts.size());
+      target_of.assign(n, c); // target == own cell: particle is in place
+      for (auto const &move : moves[ci]) {
+        target_of[move.index] = move.target;
       }
-      /* Particle belongs on this node but is in the wrong cell. */
-      else if (target_cell != c) {
-        target_cell->particles().insert(std::move(p));
-        diff.emplace_back(ModifiedList{target_cell->particles()});
+      slot.resize(n);
+      std::iota(slot.begin(), slot.end(), 0);
+      int i = 0;
+      int end = n;
+      while (i < end) {
+        auto *const target_cell = target_of[slot[i]];
+
+        /* Particle is in place */
+        if (target_cell == c) {
+          ++i;
+          continue;
+        }
+
+        auto p = std::move(*(parts.begin() + i));
+        parts.erase(parts.begin() + i); // swaps the last element into slot i
+        slot[i] = slot[--end];
+        apply_move(parts, std::move(p), target_cell);
       }
     }
   }
@@ -252,18 +356,6 @@ void RegularDecomposition::mark_cells() {
           m_local_cells.push_back(&cells.at(cnt_c++));
         else
           m_ghost_cells.push_back(&cells.at(cnt_c++));
-      }
-}
-
-void RegularDecomposition::fill_comm_cell_lists(ParticleList **part_lists,
-                                                Utils::Vector3i const &lc,
-                                                Utils::Vector3i const &hc) {
-  for (int o = lc[0]; o <= hc[0]; o++)
-    for (int n = lc[1]; n <= hc[1]; n++)
-      for (int m = lc[2]; m <= hc[2]; m++) {
-        auto const i = Utils::get_linear_index(o, n, m, ghost_cell_grid);
-
-        *part_lists++ = &(cells.at(i).particles());
       }
 }
 
@@ -565,146 +657,162 @@ void RegularDecomposition::init_cell_interactions() {
       }
 }
 
-namespace {
-/** Revert the order of a communicator: After calling this the
- *  communicator is working in reverted order with exchanged
- *  communication types GHOST_SEND <-> GHOST_RECV.
- */
-void revert_comm_order(GhostCommunicator &comm) {
-  /* revert order */
-  boost::reverse(comm.communications);
+GhostComm::HaloPlan RegularDecomposition::make_halo_plan() {
+  using GhostComm::HaloPlan;
+  using GhostComm::LocalComm;
+  using GhostComm::NeighborComm;
+  using GhostComm::SendRegion;
 
-  /* exchange SEND/RECV */
-  for (auto &c : comm.communications) {
-    if (c.type == GHOST_SEND)
-      c.type = GHOST_RECV;
-    else if (c.type == GHOST_RECV)
-      c.type = GHOST_SEND;
-    else if (c.type == GHOST_LOCL) {
-      boost::reverse(c.part_lists);
-    }
-  }
-}
+  HaloPlan plan;
+  plan.comm = m_comm;
 
-/** Of every two communication rounds, set the first receivers to prefetch and
- *  poststore
- */
-void assign_prefetches(GhostCommunicator &comm) {
-  for (auto it = comm.communications.begin(); it != comm.communications.end();
-       it += 2) {
-    auto next = std::next(it);
-    if (it->type == GHOST_RECV && next->type == GHOST_SEND) {
-      it->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-      next->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-    }
-  }
-}
-
-} // namespace
-
-GhostCommunicator RegularDecomposition::prepare_comm() {
-  // When running on a single MPI rank, the ghost cells are not needed,
-  // as the corresponding physical cell is available on the same MPI rank.
-  // The cell neighborships are set up such that cells across the periodic
-  // boundaries are connected as neighbors directly.
+  // Match the legacy communicator: on a single MPI rank there are no ghost
+  // cells to fill. The cell neighbourships are set up (see
+  // init_cell_interactions) so that cells across periodic boundaries are
+  // connected directly, so the plan stays empty.
   if (m_comm.size() == 1)
-    return {};
+    return plan;
 
-  int dir, lr, i, cnt, n_comm_cells[3];
-  Utils::Vector3i lc{}, hc{}, done{};
+  auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
+  auto const &node_pos = cart_info.coords;
+  auto const &node_grid = ::communicator.node_grid;
+  // Total number of MD cells along each axis across all ranks.
+  auto const global_size = hadamard_product(node_grid, cell_grid);
+  // Global (0-based) cell index of this rank's first *local* cell, i.e. of
+  // ghost-grid coordinate (1,1,1).
+  auto const global_origin = hadamard_product(node_pos, cell_grid);
 
-  auto const comm_info = Utils::Mpi::cart_get<3>(m_comm);
-  auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(m_comm);
+  // Cartesian rank owning the cell at (folded) global cell coordinate.
+  // The Cartesian communicator is always fully periodic (see
+  // Communicator::init_comm_cart), so this is well-defined for every offset.
+  auto const owner_of = [&](Utils::Vector3i const &global_cell) {
+    auto const owner_coords =
+        hadamard_division((global_cell + global_size) % global_size, cell_grid);
+    return Utils::Mpi::cart_rank<3>(m_comm, owner_coords);
+  };
 
-  /* calculate number of communications */
-  std::size_t num = 0;
-  for (dir = 0; dir < 3; dir++) {
-    for (lr = 0; lr < 2; lr++) {
-      /* No communication for border of non periodic direction */
-      if (comm_info.dims[dir] == 1)
-        num++;
-      else
-        num += 2;
-    }
-  }
+  // Deterministic ordering key shared by both ranks of a peer pair: the linear
+  // index of the *real* cell (in the global cell grid) that a ghost mirrors.
+  auto const global_key = [&](Utils::Vector3i const &global_cell) {
+    auto const folded = (global_cell + global_size) % global_size;
+    return Utils::get_linear_index(folded, global_size);
+  };
 
-  /* prepare communicator */
-  auto ghost_comm = GhostCommunicator{m_comm, num};
+  // Pointer to the particle list of the cell at ghost-grid coordinate c.
+  auto const list_at = [this](Utils::Vector3i const &c) -> ParticleList * {
+    return &cells
+                .at(static_cast<std::size_t>(
+                    Utils::get_linear_index(c, ghost_cell_grid)))
+                .particles();
+  };
 
-  /* number of cells to communicate in a direction */
-  n_comm_cells[0] = cell_grid[1] * cell_grid[2];
-  n_comm_cells[1] = cell_grid[2] * ghost_cell_grid[0];
-  n_comm_cells[2] = ghost_cell_grid[0] * ghost_cell_grid[1];
+  // Per-peer accumulators. A "recv" pair maps one of our ghost cells to the
+  // global index of the real cell (on the peer) it mirrors. A "send" pair maps
+  // one of our real cells to its own global index (the peer will receive it
+  // into a ghost). Sorting both lists by their key makes recv[k] line up with
+  // peer.send[k] without exchanging any index arrays.
+  struct PeerBucket {
+    std::vector<std::pair<int, ParticleList *>> recv; // (key, our ghost)
+    std::vector<std::pair<int, ParticleList *>> send; // (key, our real cell)
+  };
+  std::map<int, PeerBucket> peers;
+  std::vector<std::pair<int, LocalComm>> local; // (key, self-ghost copy)
 
-  cnt = 0;
-  /* direction loop: x, y, z */
-  for (dir = 0; dir < 3; dir++) {
-    lc[(dir + 1) % 3] = 1 - done[(dir + 1) % 3];
-    lc[(dir + 2) % 3] = 1 - done[(dir + 2) % 3];
-    hc[(dir + 1) % 3] = cell_grid[(dir + 1) % 3] + done[(dir + 1) % 3];
-    hc[(dir + 2) % 3] = cell_grid[(dir + 2) % 3] + done[(dir + 2) % 3];
-    /* lr loop: left right */
-    /* here we could in principle build in a one sided ghost
-       communication, simply by taking the lr loop only over one
-       value */
-    for (lr = 0; lr < 2; lr++) {
-      if (comm_info.dims[dir] == 1) {
-        /* just copy cells on a single node */
-        ghost_comm.communications[cnt].type = GHOST_LOCL;
-        ghost_comm.communications[cnt].node = m_comm.rank();
+  auto const this_rank = m_comm.rank();
+  auto const one = Utils::Vector3i{1, 1, 1};
 
-        /* Buffer has to contain Send and Recv cells -> factor 2 */
-        ghost_comm.communications[cnt].part_lists.resize(2 * n_comm_cells[dir]);
-
-        /* fill send ghost_comm cells */
-        lc[dir] = hc[dir] = 1 + lr * (cell_grid[dir] - 1);
-
-        fill_comm_cell_lists(ghost_comm.communications[cnt].part_lists.data(),
-                             lc, hc);
-
-        /* fill recv ghost_comm cells */
-        lc[dir] = hc[dir] = 0 + (1 - lr) * (cell_grid[dir] + 1);
-
-        /* place receive cells after send cells */
-        fill_comm_cell_lists(
-            &ghost_comm.communications[cnt].part_lists[n_comm_cells[dir]], lc,
-            hc);
-
-        cnt++;
-      } else {
-        /* i: send/recv loop */
-        for (i = 0; i < 2; i++) {
-          if ((comm_info.coords[dir] + i) % 2 == 0) {
-            ghost_comm.communications[cnt].type = GHOST_SEND;
-            ghost_comm.communications[cnt].node = node_neighbors[2 * dir + lr];
-            ghost_comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
-            /* prepare folding of ghost positions */
-
-            lc[dir] = hc[dir] = 1 + lr * (cell_grid[dir] - 1);
-
-            fill_comm_cell_lists(
-                ghost_comm.communications[cnt].part_lists.data(), lc, hc);
-            cnt++;
-          }
-          if ((comm_info.coords[dir] + (1 - i)) % 2 == 0) {
-            ghost_comm.communications[cnt].type = GHOST_RECV;
-            ghost_comm.communications[cnt].node =
-                node_neighbors[2 * dir + (1 - lr)];
-            ghost_comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
-
-            lc[dir] = hc[dir] = (1 - lr) * (cell_grid[dir] + 1);
-
-            fill_comm_cell_lists(
-                ghost_comm.communications[cnt].part_lists.data(), lc, hc);
-            cnt++;
+  // Enumerate every ghost cell exactly once (any ghost-grid coordinate with a
+  // component in the halo, i.e. == 0 or == cell_grid+1). This guarantees each
+  // ghost is a recv/dst target exactly once, regardless of how small the node
+  // grid is (dims of 1 or 2 collapse several stencil directions onto the same
+  // peer, so a local-cell x offset enumeration would double-count).
+  //
+  // For each ghost we record a *matched pair*:
+  //   * recv: this ghost, keyed by the global index of the real cell (on the
+  //     peer) it mirrors -- so it lines up with the peer's send of that cell.
+  //   * send: our own boundary real cell that the peer mirrors as its ghost in
+  //     the opposite direction, keyed by that real cell's own global index --
+  //     so it lines up with the peer's recv. The recv<->send pairing is a
+  //     bijection, which keeps send.size() == recv.size() per peer.
+  for (int gz = 0; gz < ghost_cell_grid[2]; ++gz) {
+    for (int gy = 0; gy < ghost_cell_grid[1]; ++gy) {
+      for (int gx = 0; gx < ghost_cell_grid[0]; ++gx) {
+        Utils::Vector3i const nc{gx, gy, gz};
+        // Direction sign of the halo crossing (0 if interior in a dim).
+        Utils::Vector3i side{};
+        bool is_ghost = false;
+        for (auto d = 0u; d < 3u; ++d) {
+          if (nc[d] == 0) {
+            side[d] = -1;
+            is_ghost = true;
+          } else if (nc[d] == cell_grid[d] + 1) {
+            side[d] = +1;
+            is_ghost = true;
           }
         }
+        if (not is_ghost)
+          continue; // interior (local) cell
+
+        // Global cell mirrored by this ghost and its owning peer.
+        auto const ghost_global = global_origin + (nc - one);
+        auto const peer = owner_of(ghost_global);
+        auto const recv_key = global_key(ghost_global);
+
+        if (peer == this_rank) {
+          // Periodic self-ghost (a node-grid dim equals 1): copy the matching
+          // local cell straight into the ghost (replaces GHOST_LOCL).
+          auto const src_coord = ((ghost_global + global_size) % global_size) -
+                                 global_origin + one;
+          local.emplace_back(recv_key,
+                             LocalComm{list_at(src_coord), list_at(nc), {}});
+          continue;
+        }
+
+        peers[peer].recv.emplace_back(recv_key, list_at(nc));
+
+        // Dual send cell: our boundary real cell mirrored by the peer's ghost
+        // in the opposite direction. Snap crossing dims to the near boundary,
+        // keep tangential dims aligned with the ghost.
+        auto mc = nc;
+        for (auto d = 0u; d < 3u; ++d) {
+          if (side[d] == -1)
+            mc[d] = 1;
+          else if (side[d] == +1)
+            mc[d] = cell_grid[d];
+        }
+        auto const send_global = global_origin + (mc - one);
+        peers[peer].send.emplace_back(global_key(send_global), list_at(mc));
       }
-      done[dir] = 1;
     }
   }
 
-  return ghost_comm;
+  // Emit one NeighborComm per peer, with send/recv sorted by their shared key.
+  auto const by_key = [](auto const &a, auto const &b) {
+    return a.first < b.first;
+  };
+  for (auto &[peer, bucket] : peers) {
+    std::ranges::sort(bucket.recv, by_key);
+    std::ranges::sort(bucket.send, by_key);
+    NeighborComm nc;
+    nc.peer = peer;
+    nc.recv.reserve(bucket.recv.size());
+    for (auto const &[key, cell] : bucket.recv)
+      nc.recv.push_back(cell);
+    nc.send.reserve(bucket.send.size());
+    for (auto const &[key, cell] : bucket.send)
+      nc.send.push_back(SendRegion{cell, {}});
+    plan.neighbors.push_back(std::move(nc));
+  }
+
+  // Sort the self-copies deterministically too (not required, but keeps the
+  // plan reproducible run to run).
+  std::ranges::sort(
+      local, [](auto const &a, auto const &b) { return a.first < b.first; });
+  plan.local.reserve(local.size());
+  for (auto &[key, lc] : local)
+    plan.local.push_back(lc);
+
+  return plan;
 }
 
 RegularDecomposition::RegularDecomposition(
@@ -723,13 +831,112 @@ RegularDecomposition::RegularDecomposition(
   /* mark local and ghost cells */
   mark_cells();
 
-  /* create communicators */
-  m_exchange_ghosts_comm = prepare_comm();
-  m_collect_ghost_force_comm = prepare_comm();
+  /* build the topology-agnostic direct-neighbor halo plan */
+  m_halo_plan = make_halo_plan();
 
-  /* collect forces has to be done in reverted order! */
-  revert_comm_order(m_collect_ghost_force_comm);
+  /* Classify local cells as interior or boundary.
+   *
+   * Rule (a): any neighbor that is a ghost cell -> boundary [base rule].
+   * Rule (b): any neighbor relation that crosses a periodic box boundary
+   *   must also make the cell boundary, even when both cells are local.
+   *   This happens on a single MPI rank (node_grid[i]==1, periodic[i]):
+   *   init_cell_interactions() wires the first and last local layer along
+   *   axis i directly without going through ghost cells, so the base rule
+   *   misses those periodic wrap-around neighbours.
+   *
+   * Implementation: precise pair-predicate that fires iff the two cells
+   * sit in the "first layer ↔ last layer" pair along a wrap axis.
+   * Ghost-grid coordinate of a cell: unpack the column-major linear index
+   *   idx = a + G[0]*(b + G[1]*c)  (G = ghost_cell_grid).
+   * First local layer along axis i: ghost coord == 1.
+   * Last local layer along axis i: ghost coord == cell_grid[i].
+   */
+  auto const &node_grid = ::communicator.node_grid;
+  auto const idx_of = [this](Cell const *c) {
+    return static_cast<int>(c - cells.data());
+  };
+  auto const ghost_coord_of = [this](int idx) -> Utils::Vector3i {
+    int const a = idx % ghost_cell_grid[0];
+    int const bc = idx / ghost_cell_grid[0];
+    int const b = bc % ghost_cell_grid[1];
+    int const c = bc / ghost_cell_grid[1];
+    return {a, b, c};
+  };
+  // Which axes wrap locally (the local domain spans the whole box along a
+  // periodic axis)?  Precomputed by value so the predicate lambda does not
+  // capture node_grid (AppleClang rejects that non-odr-use capture with
+  // -Werror,-Wunused-lambda-capture).
+  std::array<bool, 3> wrap_axis;
+  for (int i = 0; i < 3; ++i)
+    wrap_axis[i] = (node_grid[i] == 1) && m_box.periodic(i);
+  // Build the predicate only when there is at least one wrap axis; otherwise
+  // pass nullptr (no overhead in the inner loop of mark_boundary_cells).
+  bool const has_wrap_axis = wrap_axis[0] || wrap_axis[1] || wrap_axis[2];
+  std::function<bool(Cell const *, Cell const *)> wrap_pred;
+  if (has_wrap_axis) {
+    wrap_pred = [this, wrap_axis, idx_of, ghost_coord_of](
+                    Cell const *a_cell, Cell const *b_cell) -> bool {
+      auto const a_coord = ghost_coord_of(idx_of(a_cell));
+      auto const b_coord = ghost_coord_of(idx_of(b_cell));
+      for (int i = 0; i < 3; ++i) {
+        if (wrap_axis[i]) {
+          bool const a_first = (a_coord[i] == 1);
+          bool const a_last = (a_coord[i] == cell_grid[i]);
+          bool const b_first = (b_coord[i] == 1);
+          bool const b_last = (b_coord[i] == cell_grid[i]);
+          if ((a_first && b_last) || (a_last && b_first))
+            return true;
+        }
+      }
+      return false;
+    };
+  }
+  GhostComm::mark_boundary_cells(local_cells(), ghost_cells(), wrap_pred);
 
-  assign_prefetches(m_exchange_ghosts_comm);
-  assign_prefetches(m_collect_ghost_force_comm);
+  /* Degenerate case: node_grid[i]==1, periodic[i], cell_grid[i]==1.
+   *
+   * When cell_grid[i]==1 on a wrap axis, the single local cell layer along
+   * that axis has itself as the only periodic neighbour (both ends fold to
+   * the same global index).  init_cell_interactions() therefore excludes
+   * the self-pair (ind1==ind2 guard at line ~552), leaving neighbors().all()
+   * empty along that axis.  The wrap_predicate above is never called for
+   * that cell, so mark_boundary_cells() leaves it interior — wrong.
+   *
+   * Correct interpretation: the cell interacts with itself across the
+   * periodic boundary, so it is by definition wrap-adjacent and must be
+   * boundary.  The simplest safe fix: if any wrap axis has cell_grid[i]==1,
+   * every local cell is boundary (they all span that axis, so all are
+   * wrap-adjacent).
+   */
+  for (int i = 0; i < 3; ++i) {
+    if (wrap_axis[i] && cell_grid[i] == 1) {
+      for (Cell *c : local_cells())
+        c->m_is_boundary = true;
+      break; // one degenerate axis is enough to force all-boundary
+    }
+  }
+
+  /* Plan-membership pass (source 2): mark every local cell that the plan
+   * exports as a send source.  The geometric rules above (source 1) miss
+   * plan shapes such as Lees-Edwards fully-connected boundaries and ELC
+   * periodicity-change paths, where boundary cells are determined by the
+   * plan topology rather than ghost-cell adjacency.  Both sources are
+   * complementary and must both be applied. */
+  GhostComm::mark_plan_cells_boundary(m_halo_plan, local_cells());
+
+#ifdef ESPRESSO_ADDITIONAL_CHECKS
+  assert(GhostComm::report_violations(
+      GhostComm::validate_halo_plan(m_halo_plan, local_cells(), ghost_cells()),
+      "RegularDecomposition"));
+  // NOTE: validate_halo_plan_symmetry is NOT called here.
+  // During checkpoint loading, decompositions are transiently rebuilt while
+  // maximal_cutoff is rank-divergent (ranks may have different cell grids for a
+  // brief window before the next consistent rebuild).  The transient plan is
+  // never used — it is immediately replaced — so the asymmetry is harmless.
+  // A construction-time collective all_to_all inside a ctor is also dangerous:
+  // if one rank aborts the others block forever in the collective.
+  // Symmetry is instead validated at FIRST USE of the plan in
+  // halo_exchange_start (see GhostComm::halo_exchange_start in
+  // HaloExchange.cpp).
+#endif
 }

@@ -24,6 +24,8 @@
 #include "script_interface/ScriptInterface.hpp"
 
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include <variant>
 
 namespace ScriptInterface {
@@ -36,7 +38,7 @@ public:
     add_parameters({
         {"breakage_length", m_breakage_spec->breakage_length},
         {"action_type",
-         [this](const Variant &v) {
+         [this](Variant const &v) {
            m_breakage_spec->action_type = ::BondBreakage::ActionType{
                m_breakage_str_to_enum.at(std::get<std::string>(v))};
          },
@@ -52,6 +54,21 @@ public:
   }
 
 private:
+  void do_construct(VariantMap const &params) override {
+    context()->parallel_try_catch([&]() {
+      // all parameters are required: reject construction if any is omitted,
+      // because "breakage_length" has no meaningful default (0.0 is a valid
+      // value that would silently queue every bond of that type for breakage)
+      for (auto const &key : valid_parameters()) {
+        if (not params.contains(std::string{key})) {
+          throw std::runtime_error("Parameter '" + std::string{key} +
+                                   "' is missing");
+        }
+      }
+    });
+    AutoParameters<BreakageSpec>::do_construct(params);
+  }
+
   std::shared_ptr<::BondBreakage::BreakageSpec> m_breakage_spec;
   std::unordered_map<::BondBreakage::ActionType, std::string>
       m_breakage_enum_to_str = {

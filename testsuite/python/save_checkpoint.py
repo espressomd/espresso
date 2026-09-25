@@ -253,7 +253,8 @@ if 'LB' not in modes:
         system.integrator.set_brownian_dynamics()
     elif 'INT.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
         system.integrator.set_stokesian_dynamics(
-            approximation_method='ft', viscosity=0.5, radii={0: 1.5},
+            approximation_method='ft', viscosity=0.5,
+            radii={i: 1.5 + i / 10. for i in range(8)},
             pair_mobility=False, self_mobility=True)
 
 if espressomd.has_features(['VIRTUAL_SITES_RELATIVE']):
@@ -700,9 +701,10 @@ class TestCheckpoint(ut.TestCase):
                                 f"Path '{path}' should be a folder")
 
     def test_reaction_methods_sanity_check(self):
-        with self.assertRaisesRegex(RuntimeError, "Reaction methods do not support checkpointing"):
-            widom = espressomd.reaction_methods.WidomInsertion(kT=1, seed=1)
-            widom._serialize()
+        with self.assertRaisesRegex(NotImplementedError, "Reaction methods do not support checkpointing"):
+            widom = espressomd.reaction_methods.WidomInsertion(
+                kT=1, seed=1, system=system)
+            widom.__reduce__()
 
 
 if __name__ == '__main__':

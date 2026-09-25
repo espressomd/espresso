@@ -26,6 +26,7 @@
 #include <Kokkos_Core.hpp>
 
 #include <utils/Vector.hpp>
+#include <utils/device_qualifier.hpp>
 #include <utils/index.hpp>
 
 #include <complex>
@@ -42,7 +43,7 @@ BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
 BOOST_AUTO_TEST_SUITE(suite)
 
 template <Utils::MemoryOrder MemOrderReal, Utils::MemoryOrder MemOrderFourier>
-void check_add_remove_halo() {
+HOST_ONLY_QUALIFIER void check_add_remove_halo() {
   auto constexpr n_x = 3;
   auto constexpr n_y = 7;
   auto constexpr n_z = 11;
@@ -64,19 +65,20 @@ void check_add_remove_halo() {
     }
   }
 
-  // add halo
+  // add halo, writing into caller-provided buffers pre-filled with a
+  // sentinel: the pad writes every element (zeroed halo, copied interior),
+  // so no sentinel value may survive
   auto const shape_with_halo = shape + halo_left + halo_right;
   auto const buf_size_with_halo =
       static_cast<std::size_t>(Utils::product(shape_with_halo));
-  auto const real_with_halo =
-      pad_with_zeros_discard_imag<MemOrderReal, MemOrderFourier>(
-          std::span(real_without_halo_orig), shape, halo_left, halo_right);
-  auto const cplx_with_halo =
-      pad_with_zeros_discard_imag<MemOrderReal, MemOrderFourier>(
-          std::span(cplx_without_halo_orig), shape, halo_left, halo_right);
-
-  BOOST_CHECK_EQUAL(real_with_halo.size(), buf_size_with_halo);
-  BOOST_CHECK_EQUAL(cplx_with_halo.size(), buf_size_with_halo);
+  std::vector<double> real_with_halo(buf_size_with_halo, -1.);
+  std::vector<double> cplx_with_halo(buf_size_with_halo, -1.);
+  pad_with_zeros_discard_imag_into<MemOrderReal, MemOrderFourier>(
+      real_with_halo.data(), std::span(real_without_halo_orig), shape,
+      halo_left, halo_right);
+  pad_with_zeros_discard_imag_into<MemOrderReal, MemOrderFourier>(
+      cplx_with_halo.data(), std::span(cplx_without_halo_orig), shape,
+      halo_left, halo_right);
 
   // verify inner region
   for (int i = 0; i < n_x; ++i) {
@@ -99,7 +101,7 @@ void check_add_remove_halo() {
   for (int i = 0; i < shape_with_halo[0]; ++i) {
     for (int j = 0; j < shape_with_halo[1]; ++j) {
       for (int k = 0; k < shape_with_halo[2]; ++k) {
-        if ((i < halo_left[0] or i >= shape_with_halo[1] - halo_right[0]) or
+        if ((i < halo_left[0] or i >= shape_with_halo[0] - halo_right[0]) or
             (j < halo_left[1] or j >= shape_with_halo[1] - halo_right[1]) or
             (k < halo_left[2] or k >= shape_with_halo[2] - halo_right[2])) {
           // this is a halo cell, must be zero
@@ -113,10 +115,14 @@ void check_add_remove_halo() {
   }
 
   // Remove halo again
-  auto real_without_halo_new = extract_block<MemOrderFourier, MemOrderReal>(
-      real_with_halo, shape_with_halo, halo_left, shape_with_halo - halo_right);
-  auto cplx_without_halo_new = extract_block<MemOrderFourier, MemOrderReal>(
-      cplx_with_halo, shape_with_halo, halo_left, shape_with_halo - halo_right);
+  std::vector<double> real_without_halo_new(buf_size);
+  std::vector<double> cplx_without_halo_new(buf_size);
+  extract_block_into<MemOrderFourier, MemOrderReal>(
+      real_without_halo_new.data(), real_with_halo, shape_with_halo, halo_left,
+      shape_with_halo - halo_right);
+  extract_block_into<MemOrderFourier, MemOrderReal>(
+      cplx_without_halo_new.data(), cplx_with_halo, shape_with_halo, halo_left,
+      shape_with_halo - halo_right);
   for (std::size_t i = 0u; i < buf_size; ++i) {
     BOOST_CHECK_EQUAL(real_without_halo_new[i], real_without_halo_orig[i]);
     BOOST_CHECK_EQUAL(cplx_without_halo_new[i],

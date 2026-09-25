@@ -31,6 +31,15 @@ import espressomd.observables
 
 class ContactTimeTest(ut.TestCase):
 
+    system = espressomd.System(box_l=[20] * 3)
+    system.time_step = 0.01
+    system.cell_system.skin = 1.
+
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.thermostat.turn_off()
+        self.system.integrator.set_vv()
+
     @classmethod
     def calculate_minimum_image_distance(cls, coords1, coords2, size_box):
         """
@@ -119,19 +128,31 @@ class ContactTimeTest(ut.TestCase):
             distances.append(frame_dists)
         return (np.array(contact_times), np.array(distances))
 
+    def test_pairwise_distance_across_ranks(self):
+        """
+        Place particles on two different MPI ranks well past the ghost layer.
+        The observable must collect data from all other ranks.
+        """
+        system = self.system
+        dist_larger_than_skin = 2. * system.cell_system.skin
+        system.part.add(id=0, pos=3 * [+dist_larger_than_skin])
+        system.part.add(id=1, pos=3 * [-dist_larger_than_skin])
+        pairwise_dist_obs = espressomd.observables.PairwiseDistances(
+            ids=[0, 1], target_ids=[0, 1])
+        obs_dist = pairwise_dist_obs.calculate()
+        ref_dist = dist_larger_than_skin * np.sqrt(12.)
+        self.assertAlmostEqual(obs_dist, ref_dist, delta=1e-7)
+
     @utx.skipIfMissingFeatures(["LENNARD_JONES"])
     def test_contact_time(self):
         # System: LJ fluid
         contact_threshold = 1.
         seed = 23
         N = 40
+        system = self.system
 
         # Simulation parameters
         N_steps = 1400
-        box_l = 20
-        system = espressomd.System(box_l=[box_l] * 3)
-        system.time_step = 0.01
-        system.cell_system.skin = 1
         rng = np.random.default_rng(seed)
         system.part.add(pos=rng.random((N, 3)) * np.copy(system.box_l))
         ids = np.copy(system.part.all().id)

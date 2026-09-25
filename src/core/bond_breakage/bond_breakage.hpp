@@ -90,7 +90,8 @@ public:
     auto const &spec = *(breakage_specs.at(bond_type));
 
     // Is the bond length longer than the breakage length?
-    if (distance >= spec.breakage_length) {
+    if (distance >= spec.breakage_length and
+        spec.action_type != ActionType::NONE) {
       queue_breakage(particle_id, bond_partners, bond_type);
       return true;
     }

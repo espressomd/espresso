@@ -435,7 +435,7 @@ Soft-sphere interaction
     Feature ``SOFT_SPHERE`` required.
 
 The interface for the soft-sphere interaction is implemented in
-:class:`espressomd.interactions.SoftSphereInteraction`. The Soft-sphere parameters
+:class:`espressomd.interactions.SoftSphereInteraction`. The soft-sphere parameters
 can be set via::
 
     system.non_bonded_inter[type1, type2].soft_sphere.set_params(**kwargs)

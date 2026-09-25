@@ -24,9 +24,15 @@ import tests_common
 
 
 class CellSystem(ut.TestCase):
-    system = espressomd.System(box_l=[5.0, 5.0, 5.0])
-    system.cell_system.skin = 0.0
+    system = espressomd.System(box_l=[5., 5., 5.])
     n_nodes = system.cell_system.get_state()['n_nodes']
+
+    def setUp(self):
+        self.system.box_l = [5., 5., 5.]
+        self.system.cell_system.skin = 0.
+
+    def tearDown(self):
+        self.system.part.clear()
 
     def test_cell_system(self):
         parameters = {
@@ -44,6 +50,10 @@ class CellSystem(ut.TestCase):
             tests_common.assert_params_match(self, params_in, params_out)
             params_out = self.system.cell_system.get_state()
             tests_common.assert_params_match(self, params_in, params_out)
+        state = self.system.cell_system.get_state()
+        self.assertIn("omp_num_threads", state)
+        self.assertIsInstance(state["omp_num_threads"], int)
+        self.assertGreaterEqual(state["omp_num_threads"], 1)
 
     def test_interface(self):
         self.system.cell_system.set_regular_decomposition()
@@ -94,12 +104,58 @@ class CellSystem(ut.TestCase):
             n_square_types={1}, cutoff_regular=0)
         self.check_node_grid()
 
+    def test_rescale_isotropic_cubic_box(self):
+        system = self.system
+        system.box_l = [8., 8., 8.]
+        p0, p1 = system.part.add(pos=[[1., 2., 48.], [-1., -2., 0.]])
+        system.change_volume_and_rescale_particles(16., dir="xyz")
+        np.testing.assert_almost_equal(np.copy(p0.pos), [2., 4., 96.])
+        np.testing.assert_almost_equal(np.copy(p1.pos), [-2., -4., 0.])
+        np.testing.assert_almost_equal(np.copy(system.box_l), [16., 16., 16.])
+        system.change_volume_and_rescale_particles(8., dir="xyz")
+        np.testing.assert_almost_equal(np.copy(p0.pos), [1., 2., 48.])
+        np.testing.assert_almost_equal(np.copy(p1.pos), [-1., -2., 0.])
+        np.testing.assert_almost_equal(np.copy(system.box_l), [8., 8., 8.])
+
+    def test_rescale_isotropic_noncubic_box(self):
+        system = self.system
+        system.box_l = [4., 8., 12.]
+        p0, p1 = system.part.add(pos=[[1., 2., 48.], [-48., -2., 0.]])
+        system.change_volume_and_rescale_particles(8., dir="xyz")
+        np.testing.assert_almost_equal(np.copy(p0.pos), [2., 2., 32.])
+        np.testing.assert_almost_equal(np.copy(p1.pos), [-96., -2., 0.])
+        np.testing.assert_almost_equal(np.copy(system.box_l), [8., 8., 8.])
+        system.change_volume_and_rescale_particles(4., dir="xyz")
+        np.testing.assert_almost_equal(np.copy(p0.pos), [1., 1., 16.])
+        np.testing.assert_almost_equal(np.copy(p1.pos), [-48., -1., 0.])
+        np.testing.assert_almost_equal(np.copy(system.box_l), [4., 4., 4.])
+
+    def test_rescale_anisotropic(self):
+        system = self.system
+        system.box_l = [4., 4., 4.]
+        p0, p1 = system.part.add(pos=[[1., 2., 3.], [-1., -2., 0.]])
+        ref_pos = np.copy(system.part.all().pos)
+        ref_box = np.array([4., 4., 4.])
+        for i in range(3):
+            system.change_volume_and_rescale_particles(8., dir=i)
+            ref_pos[:, i] *= 2.
+            ref_box[i] *= 2.
+            np.testing.assert_almost_equal(np.copy(p0.pos), ref_pos[0])
+            np.testing.assert_almost_equal(np.copy(p1.pos), ref_pos[1])
+            np.testing.assert_almost_equal(np.copy(system.box_l), ref_box)
+        for i in range(3):
+            system.change_volume_and_rescale_particles(4., dir="xyz"[i])
+            ref_pos[:, i] /= 2.
+            ref_box[i] /= 2.
+            np.testing.assert_almost_equal(np.copy(p0.pos), ref_pos[0])
+            np.testing.assert_almost_equal(np.copy(p1.pos), ref_pos[1])
+            np.testing.assert_almost_equal(np.copy(system.box_l), ref_box)
+
     @utx.skipIfMissingFeatures(["WCA"])
     @ut.skipIf(espressomd.has_features("FPE"),
                "cannot run with FPE instrumentation")
     def test_verlet_list_overflow(self):
         system = self.system
-        system.part.clear()
         # place all particles on top of each other
         system.part.add(pos=[[0, 0, 0]] * 1000)
         system.non_bonded_inter[0, 0].wca.set_params(epsilon=1., sigma=0.01)

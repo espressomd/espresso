@@ -54,9 +54,10 @@ class Test(ut.TestCase):
         self.system.part.add(pos=[[0., 0., 0.], [0.5, 0.5, 0.5]], q=[-1., 1.])
 
     def add_magnetic_particles(self):
-        self.system.part.add(pos=[[0.01, 0.01, 0.01], [0.5, 0.5, 0.5]],
-                             dip=[(1., 0., 0.), (-1., 0., 0.)],
-                             rotation=2 * [(True, True, True)])
+        return self.system.part.add(
+            pos=[[0.01, 0.01, 0.01], [0.5, 0.5, 0.5]],
+            dip=[(1., 0., 0.), (-1., 0., 0.)],
+            rotation=2 * [(True, True, True)])
 
     def add_icc_particles(self):
         pos = [[0., 0., 0.], [1., 0., 0.]]
@@ -161,6 +162,32 @@ class Test(ut.TestCase):
         # DP3M doesn't contribute to the pressure
         np.testing.assert_allclose(pressure_tensor["dipolar"], 0., atol=1e-12)
         np.testing.assert_allclose(pressure_scalar["dipolar"], 0., atol=1e-12)
+
+    @utx.skipIfMissingFeatures(["DIPOLES"])
+    def test_dds_cpu_pressure(self):
+        p1, p2 = self.add_magnetic_particles()
+        dds = espressomd.magnetostatics.DipolarDirectSum(prefactor=1.)
+        self.system.magnetostatics.solver = dds
+        self.system.integrator.run(steps=0, recalc_forces=True)
+        pressure_tensor, pressure_scalar = self.check_obs_stats("dipolar")
+
+        # exact per-configuration reference: with a single pair and no
+        # periodic replicas (n_replicas defaults to 0), the virial is
+        # simply outer(r1 - r2, f_on_1) / V, using the minimum-image
+        # separation (particles are well within half the box length
+        # apart, so no wrap-around is needed); see also the dedicated
+        # test suite in dipolar_direct_summation.py
+        volume = float(np.prod(self.system.box_l))
+        r12 = np.copy(p1.pos) - np.copy(p2.pos)
+        f1 = np.copy(p1.f)
+        ref_pressure_tensor = np.outer(r12, f1) / volume
+
+        np.testing.assert_allclose(
+            pressure_tensor["dipolar"], ref_pressure_tensor,
+            atol=1e-12, rtol=1e-10)
+        np.testing.assert_allclose(
+            pressure_scalar["dipolar"], np.trace(ref_pressure_tensor) / 3.,
+            atol=1e-12, rtol=1e-10)
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_cpu_pressure(self):
@@ -324,23 +351,6 @@ class Test(ut.TestCase):
             self.assertIsNone(self.system.electrostatics.solver)
             self.assertFalse(mmm1d.is_tuned)
         self.system.periodicity = (False, False, True)
-
-    @utx.skipIfMissingFeatures(["P3M"])
-    def test_elc_tuning_exceptions(self):
-        p3m = espressomd.electrostatics.P3M(**self.valid_p3m_parameters())
-        elc = espressomd.electrostatics.ELC(
-            actor=p3m,
-            gap_size=2.,
-            maxPWerror=1e-3,
-            delta_mid_top=-1.,
-            delta_mid_bot=-1.,
-            const_pot=True,
-            pot_diff=-3,
-            check_neutrality=False,
-        )
-        self.system.part.add(pos=[0., 0., 0.], q=1.)
-        with self.assertRaisesRegex(RuntimeError, "ELC does not currently support non-neutral systems"):
-            self.system.electrostatics.solver = elc
 
 
 if __name__ == "__main__":

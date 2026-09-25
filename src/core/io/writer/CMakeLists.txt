@@ -26,8 +26,9 @@ if(ESPRESSO_BUILD_WITH_HDF5)
     espresso_hdf5
     PRIVATE HighFive hdf5::hdf5 espresso::compiler_flags MPI::MPI_CXX
             Boost::mpi espresso::utils espresso::config
-            espresso::instrumentation)
+            espresso::instrumentation Kokkos::kokkos)
   target_link_libraries(espresso_core PUBLIC espresso_hdf5)
   install(TARGETS espresso_hdf5
           LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
+  espresso_set_kokkos_properties_on_source_files(espresso_hdf5)
 endif()

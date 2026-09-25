@@ -253,6 +253,64 @@ class Test(ut.TestCase):
         solver = espressomd.magnetostatics.DipolarDirectSum(prefactor=1.)
         self.check_min_image_convention(solver, rtol=1e-10)
 
+    def test_pressure_cpu(self):
+        """
+        Exact, per-configuration check of the dipolar pressure tensor
+        for the same two-particle open-boundary configuration used in
+        :func:`check_min_image_convention`, whose forces are known
+        analytically (``ref_min_img_forces``). With a single pair and
+        no periodic images, the virial is simply
+        ``outer(r1 - r2, f_on_1)``, so no statistical averaging is
+        needed and the tolerance can be tight.
+        """
+        system = self.system
+        system.periodicity = [False, False, False]
+        p1, p2 = system.part.add(
+            pos=[[0.1, 0., 0.], [0.3, 0., 0.]],
+            dip=[[0., 0., 1.], [0., 0.5, 0.5]],
+            rotation=2 * [(True, True, True)])
+        system.magnetostatics.solver = espressomd.magnetostatics.DipolarDirectSum(
+            prefactor=1.)
+        system.integrator.run(steps=0, recalc_forces=True)
+
+        volume = float(np.prod(system.box_l))
+        r12 = np.copy(p1.pos) - np.copy(p2.pos)
+        f1 = np.copy(p1.f)
+        ref_pressure_tensor = np.outer(r12, f1) / volume
+
+        pressure_tensor = system.analysis.pressure_tensor()
+        np.testing.assert_allclose(
+            pressure_tensor[("dipolar", 1)], ref_pressure_tensor,
+            atol=1e-10, rtol=1e-10)
+        # DipolarDirectSum bypasses the generic cell-list pairwise loop
+        # entirely, so the short-range slot must be exactly zero
+        np.testing.assert_allclose(
+            pressure_tensor[("dipolar", 0)], 0.)
+        np.testing.assert_allclose(
+            pressure_tensor["dipolar"], ref_pressure_tensor,
+            atol=1e-10, rtol=1e-10)
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures("CUDA")
+    def test_pressure_gpu_not_implemented(self):
+        """
+        The GPU variant has no stress-tensor kernel: requesting the
+        pressure must return a zero tensor (with a runtime warning
+        printed to stderr), rather than a wrong non-zero value.
+        """
+        system = self.system
+        system.periodicity = [False, False, False]
+        system.part.add(
+            pos=[[0.1, 0., 0.], [0.3, 0., 0.]],
+            dip=[[0., 0., 1.], [0., 0.5, 0.5]],
+            rotation=2 * [(True, True, True)])
+        system.magnetostatics.solver = espressomd.magnetostatics.DipolarDirectSum(
+            prefactor=1., gpu=True)
+        system.integrator.run(steps=0, recalc_forces=True)
+
+        pressure_tensor = system.analysis.pressure_tensor()
+        np.testing.assert_allclose(pressure_tensor[("dipolar", 1)], 0.)
+
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures("CUDA")
     def test_min_image_convention_gpu(self):
@@ -279,36 +337,58 @@ class Test(ut.TestCase):
     def check_inner_loop_consistency(self, solver, tol, **kwargs):
         system = self.system
         system.periodicity = [True, True, True]
-        p1 = system.part.add(pos=[0., 0., 0.], dip=[0., 0., 1.],
+        box_l = np.array(system.box_l)
+        node_grid = np.array(system.cell_system.node_grid)
+        # Pick an axis that is actually split across MPI ranks. At least one
+        # exists here because this test is skipped for a single node. Deriving
+        # the placement from the node grid (rather than hard-coding positions)
+        # keeps the pair split/co-located regardless of the rank count, so the
+        # test works for any node grid, e.g. [2,1,1], [2,2,1] or [2,2,2].
+        split_axis = int(np.nonzero(node_grid > 1)[0][0])
+        domain = box_l / node_grid
+        boundary = domain[split_axis]  # node boundary between index 0 and 1
+        # separation of the two dipoles along the split axis, identical in both
+        # configurations so they must yield identical energy/forces/torques
+        sep = min(0.2, boundary / 3.)
+        # both particles sit at the centre of the node-0 domain on every other
+        # axis, so only the split axis decides whether they share a node
+        base = domain / 2.
+        p1 = system.part.add(pos=base.tolist(), dip=[0., 0., 1.],
                              rotation=[True, True, True])
-        p2 = system.part.add(pos=[1., 0., 0.], dip=[0., 0., 1.],
+        p2 = system.part.add(pos=base.tolist(), dip=[0., 0., 1.],
                              rotation=[True, True, True])
         for n_replicas in [0, 1]:
             system.magnetostatics.clear()
             system.magnetostatics.solver = solver(
                 prefactor=1., n_replicas=n_replicas, **kwargs)
 
-            # intra-node calculation
-            p1.pos = [system.box_l[0] / 2. - 0.1, 0., 2.]
-            p2.pos = [system.box_l[0] / 2. + 0.1, 0., 0.]
+            # the interacting pair straddles a node boundary (different nodes)
+            pos1 = base.copy()
+            pos2 = base.copy()
+            pos1[split_axis] = boundary - sep / 2.
+            pos2[split_axis] = boundary + sep / 2.
+            p1.pos = pos1.tolist()
+            p2.pos = pos2.tolist()
             system.integrator.run(steps=0, recalc_forces=True)
             assert p1.node != p2.node
-            node_01_energy = system.analysis.energy()["dipolar"]
-            node_01_forces = np.copy(system.part.all().f)
-            node_01_torques = np.copy(system.part.all().torque_lab)
+            split_energy = system.analysis.energy()["dipolar"]
+            split_forces = np.copy(system.part.all().f)
+            split_torques = np.copy(system.part.all().torque_lab)
 
-            # inter-node calculation
-            p1.pos = [0.1, 0., 2.]
-            p2.pos = [0.3, 0., 0.]
+            # the pair sits inside a single node's domain (same node)
+            pos1[split_axis] = boundary / 2. - sep / 2.
+            pos2[split_axis] = boundary / 2. + sep / 2.
+            p1.pos = pos1.tolist()
+            p2.pos = pos2.tolist()
             system.integrator.run(steps=0, recalc_forces=True)
             assert p1.node == p2.node
-            node_00_energy = system.analysis.energy()["dipolar"]
-            node_00_forces = np.copy(system.part.all().f)
-            node_00_torques = np.copy(system.part.all().torque_lab)
+            same_energy = system.analysis.energy()["dipolar"]
+            same_forces = np.copy(system.part.all().f)
+            same_torques = np.copy(system.part.all().torque_lab)
 
-            np.testing.assert_allclose(node_01_energy, node_00_energy, **tol)
-            np.testing.assert_allclose(node_01_forces, node_00_forces, **tol)
-            np.testing.assert_allclose(node_01_torques, node_00_torques, **tol)
+            np.testing.assert_allclose(split_energy, same_energy, **tol)
+            np.testing.assert_allclose(split_forces, same_forces, **tol)
+            np.testing.assert_allclose(split_torques, same_torques, **tol)
 
 
 if __name__ == "__main__":

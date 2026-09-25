@@ -34,6 +34,9 @@
 #include <array>
 #include <cassert>
 #include <cstddef>
+#include <functional>
+#include <initializer_list>
+#include <numeric>
 #include <type_traits>
 #include <utility>
 
@@ -206,6 +209,10 @@ public:
   constexpr std::pair<std::size_t, std::size_t> shape() const noexcept {
     return {Rows, Cols};
   }
+
+  auto flatten() const noexcept {
+    return Utils::Vector<T, Cols * Rows>(m_data);
+  }
 };
 
 using boost::qvm::operator+;
@@ -217,8 +224,8 @@ using boost::qvm::operator*=;
 using boost::qvm::operator==;
 
 template <typename T, std::size_t M, std::size_t N>
-Utils::Vector<T, M * N> flatten(Matrix<T, M, N> const &m) {
-  return Utils::Vector<T, M * N>(m.begin(), m.end());
+Utils::Vector<T, M * N> flatten(Matrix<T, M, N> const &m) noexcept {
+  return m.flatten();
 }
 
 template <typename T, std::size_t Rows, std::size_t Cols>

@@ -19,6 +19,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.magnetostatics
 import espressomd.propagation
 import tests_common
 import numpy as np
@@ -44,6 +45,8 @@ class NPTThermostat:
         self.system.integrator.set_vv()
         if espressomd.has_features("ELECTROSTATICS"):
             self.system.electrostatics.clear()
+        if espressomd.has_features("DIPOLES"):
+            self.system.magnetostatics.clear()
 
     def test_01__rng(self):
         """Test for RNG consistency."""
@@ -242,6 +245,127 @@ class NPTThermostat:
             # virial of electrostatic force from system.analysis
             p_vir = p_sim - p_kin
             # virial of electrostatic force from instantaneous_pressure
+            p_inst_vir = system.analysis.get_instantaneous_pressure_virial()
+
+            np.testing.assert_allclose(p_vir, p_inst_vir, rtol=1e-2, atol=1e-7)
+
+    @utx.skipIfMissingFeatures(["WCA", "DP3M"])
+    def test_pressure_with_dp3m(self):
+        """Test for NpT with DP3M."""
+
+        np.random.seed(42)
+        box_l = 6.0
+        num_part = 40
+        dip_magnitude = 1.3
+        p_ext = 1.0
+
+        system = self.system
+        system.box_l = 3 * [box_l]
+        system.time_step = 0.01
+        system.non_bonded_inter[0, 0].wca.set_params(epsilon=1., sigma=1.)
+
+        for _ in range(num_part):
+            dip_dir = np.random.normal(size=3)
+            dip_dir /= np.linalg.norm(dip_dir)
+            system.part.add(
+                pos=np.random.random(3) * box_l,
+                dip=dip_magnitude * dip_dir,
+                v=np.random.normal(size=3))
+
+        # remove overlaps from the random placement before switching to NPT
+        system.integrator.set_steepest_descent(
+            f_max=0, gamma=0.001, max_displacement=0.01)
+        for _ in range(10):
+            system.integrator.run(10)
+            if system.analysis.energy()["total"] < 2 * num_part:
+                break
+        system.integrator.set_vv()
+
+        # fixed P3M parameters: DP3M's tuner is prone to
+        # "root must be bracketed" failures for such a small, sparse
+        # system, so parameters pre-tuned for this configuration are
+        # hardcoded here for reproducibility
+        system.magnetostatics.solver = espressomd.magnetostatics.DipolarP3M(
+            prefactor=2.0, accuracy=1e-2, tune=False,
+            mesh=10, cao=5, r_cut=2.89452, alpha=0.9227167)
+
+        if self.barostat == "Andersen":
+            system.thermostat.set_npt(kT=1.0, gamma0=0.2, gammav=0.01, seed=42)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=p_ext, piston=0.0001)
+        else:
+            system.thermostat.set_npt(
+                kT=1.0, gamma0=0.5, gammav=0.001, seed=42)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=p_ext, piston=4.0, barostat=self.barostat)
+
+        steps = int(0.1 / system.time_step)
+
+        for _ in range(20):
+            system.integrator.run(steps)
+            p_sim = system.analysis.pressure()['total']
+            p_kin = system.analysis.pressure()['kinetic']
+            # virial of WCA + dipolar forces from system.analysis
+            p_vir = p_sim - p_kin
+            # virial of the same forces from instantaneous_pressure
+            p_inst_vir = system.analysis.get_instantaneous_pressure_virial()
+
+            np.testing.assert_allclose(p_vir, p_inst_vir, rtol=1e-2, atol=1e-7)
+
+    @utx.skipIfMissingFeatures(["WCA", "DIPOLES"])
+    def test_pressure_with_dds(self):
+        """Test for NpT with DipolarDirectSum."""
+
+        np.random.seed(42)
+        box_l = 6.0
+        num_part = 40
+        dip_magnitude = 1.3
+        p_ext = 1.0
+
+        system = self.system
+        system.box_l = 3 * [box_l]
+        system.time_step = 0.01
+        system.non_bonded_inter[0, 0].wca.set_params(epsilon=1., sigma=1.)
+
+        for _ in range(num_part):
+            dip_dir = np.random.normal(size=3)
+            dip_dir /= np.linalg.norm(dip_dir)
+            system.part.add(
+                pos=np.random.random(3) * box_l,
+                dip=dip_magnitude * dip_dir,
+                v=np.random.normal(size=3))
+
+        # remove overlaps from the random placement before switching to NPT
+        system.integrator.set_steepest_descent(
+            f_max=0, gamma=0.001, max_displacement=0.01)
+        for _ in range(10):
+            system.integrator.run(10)
+            if system.analysis.energy()["total"] < 2 * num_part:
+                break
+        system.integrator.set_vv()
+
+        system.magnetostatics.solver = espressomd.magnetostatics.DipolarDirectSum(
+            prefactor=2.0)
+
+        if self.barostat == "Andersen":
+            system.thermostat.set_npt(kT=1.0, gamma0=0.2, gammav=0.01, seed=42)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=p_ext, piston=0.0001)
+        else:
+            system.thermostat.set_npt(
+                kT=1.0, gamma0=0.5, gammav=0.001, seed=42)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=p_ext, piston=4.0, barostat=self.barostat)
+
+        steps = int(0.1 / system.time_step)
+
+        for _ in range(20):
+            system.integrator.run(steps)
+            p_sim = system.analysis.pressure()['total']
+            p_kin = system.analysis.pressure()['kinetic']
+            # virial of WCA + dipolar forces from system.analysis
+            p_vir = p_sim - p_kin
+            # virial of the same forces from instantaneous_pressure
             p_inst_vir = system.analysis.get_instantaneous_pressure_virial()
 
             np.testing.assert_allclose(p_vir, p_inst_vir, rtol=1e-2, atol=1e-7)

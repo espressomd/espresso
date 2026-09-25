@@ -42,6 +42,7 @@ cdef extern from "error_handling/RuntimeError.hpp":
 
 cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
     cdef vector[CoreRuntimeError] mpi_gather_runtime_errors()
+    cdef cbool mpi_poll_runtime_messages()
 
 cdef extern from "utils/Vector.hpp" namespace "Utils":
     cppclass Vector2d:

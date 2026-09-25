@@ -90,10 +90,16 @@ class H5md(ScriptInterfaceHelper):
         Call the H5md write method.
 
     flush()
-        Call the H5md flush method.
+        Call the H5md flush method. Only the dataset buffers will be flushed.
+        The file superblock, which contains the datasets and metadata address
+        space information (End of Allocation, EOA), won't be flushed. Only the
+        H5md close method can flush the superblock. A file that was manually
+        flushed via this method but not properly closed might have a stale EOA
+        and thus be unreadable. This can happen when a simulation receives a
+        termination signal and doesn't have time to release all file handles.
 
     close()
-        Close the H5md file.
+        Close the H5md file and flush both the data and superblock.
 
     Attributes
     ----------

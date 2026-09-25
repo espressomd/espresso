@@ -159,9 +159,9 @@ public:
                                get_value<int>(params, "cao"),
                                get_value<double>(params, "alpha"),
                                get_value<double>(params, "accuracy")};
-      m_actor = new_coulomb_p3m_heffte(
-          std::move(p3m), m_tuning, get_value<double>(params, "prefactor"),
-          single_precision, gpu ? Arch::CUDA : Arch::CPU);
+      m_actor = new_coulomb_p3m(std::move(p3m), m_tuning,
+                                get_value<double>(params, "prefactor"),
+                                single_precision, gpu ? Arch::CUDA : Arch::CPU);
     });
     set_charge_neutrality_tolerance(params);
   }

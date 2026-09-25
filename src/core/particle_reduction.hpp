@@ -27,22 +27,13 @@
 #include <Kokkos_Core.hpp>
 
 #include <concepts>
-#include <functional>
 #include <utility>
 
 namespace Reduction {
 
-/** @brief Kernel that adds the result from a single particle to a reduction */
-template <typename ResultType>
-using AddPartialResultKernel =
-    std::function<void(ResultType &, Particle const &)>;
-
-/** @brief Join two partial reduction results */
-template <typename ResultType>
-using ReductionOp = std::function<void(ResultType &, ResultType const &)>;
-
 /** @brief Custom reduction in the form required by Kokkos */
-template <typename ResultType, typename Kernel> class KokkosReducer {
+template <typename ResultType, class Kernel, class Reduction>
+class KokkosReducer {
 public:
   // Kokkos reduction functors need the value_type typedef.
   // This is the type of the result of the reduction.
@@ -53,50 +44,50 @@ public:
   // will use the default execution space by default.
 
   // kernels to wrap
-  ReductionOp<ResultType> reduction_op;
+  Reduction reduction_op;
   Kernel kernel;
-  KokkosReducer(Kernel kernel, ReductionOp<ResultType> reduction_op)
+  KokkosReducer(Kernel kernel, Reduction reduction_op)
       : reduction_op(std::move(reduction_op)), kernel(std::move(kernel)) {}
-  KokkosReducer(KokkosReducer const &other)
-      : reduction_op(other.reduction_op), kernel(other.kernel) {}
 
-  KOKKOS_INLINE_FUNCTION void operator()(std::integral auto const i,
-                                         value_type &update) const {
+  inline void operator()(std::integral auto const i, value_type &update) const {
     kernel(i, update);
   }
 
   // "Join" intermediate results from different threads.
   // This should normally implement the same reduction
   // operation as operator() above.
-  KOKKOS_INLINE_FUNCTION void join(value_type &dst,
-                                   value_type const &src) const {
+  inline void join(value_type &dst, value_type const &src) const {
     reduction_op(dst, src);
   }
 };
 
-template <typename ResultType, typename Kernel>
-KokkosReducer<ResultType, Kernel>
-make_kokkos_reducer(Kernel k, ReductionOp<ResultType> reduce_op) {
-  return KokkosReducer<ResultType, Kernel>(k, reduce_op);
+template <typename ResultType, class Kernel, class Reduction>
+KokkosReducer<ResultType, Kernel, Reduction>
+make_kokkos_reducer(Kernel k, Reduction reduce_op) {
+  return KokkosReducer<ResultType, Kernel, Reduction>(k, reduce_op);
 }
 
 } // namespace Reduction
 
-/** @brief performs a reduction over all particles
+/** @brief Run a reduction over all particles.
  *
  * @param cs  cell structure to iterate over
- * @param add_partial is a function that adds a reduction result from a single
- * particle
- * @param reduce_op is a function that joins two reduction results
+ * @param add_partial function that accumulates a result from a single particle
+ * @param reduce_op function that joins two reduction results
  *
  * both functions have to implement the same reduction.
  */
 template <typename ResultType>
 ResultType reduce_over_local_particles(
     CellStructure const &cs,
-    Reduction::AddPartialResultKernel<ResultType> add_partial,
-    [[maybe_unused]] Reduction::ReductionOp<ResultType> reduce_op) {
+    std::invocable<ResultType &, Particle const &> auto add_partial,
+    [[maybe_unused]] std::invocable<ResultType &, ResultType const &> auto
+        reduce_op) {
 
+  static_assert(std::is_invocable_r_v<void, decltype(add_partial), ResultType &,
+                                      Particle const &>);
+  static_assert(std::is_invocable_r_v<void, decltype(reduce_op), ResultType &,
+                                      ResultType const &>);
   ResultType result{};
 
   auto const &cells = cs.decomposition().local_cells();
@@ -109,7 +100,10 @@ ResultType reduce_over_local_particles(
         },
         reduce_op);
     Kokkos::parallel_reduce( // loop over cells
-        "reduce_on_local_particle", cells.size(), reducer, result);
+        "reduce_on_local_particle",
+        Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(std::size_t{0},
+                                                               cells.size()),
+        reducer, result);
     return result;
   }
   // single cell case
@@ -120,6 +114,9 @@ ResultType reduce_over_local_particles(
       },
       reduce_op);
   Kokkos::parallel_reduce( // loop over particles
-      "reduce_on_local_particle", particles.size(), reducer, result);
+      "reduce_on_local_particle",
+      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(std::size_t{0},
+                                                             particles.size()),
+      reducer, result);
   return result;
 }

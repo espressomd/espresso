@@ -48,4 +48,12 @@ public:
     recalc_forces = true;
     recalc_used_propagations = true;
   }
+
+  /** True for all integrators that use inertial dynamics (VV, SE, NPT).
+   *  False for non-inertial ones (BD, SD, steepest descent), which cannot
+   *  use RATTLE rigid bonds. */
+  bool is_inertial() const {
+    return integ_switch != INTEG_METHOD_STEEPEST_DESCENT &&
+           integ_switch != INTEG_METHOD_BD && integ_switch != INTEG_METHOD_SD;
+  }
 };

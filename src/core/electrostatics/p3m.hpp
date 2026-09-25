@@ -200,8 +200,8 @@ protected:
 };
 
 std::shared_ptr<CoulombP3M>
-new_coulomb_p3m_heffte(P3MParameters &&p3m_params,
-                       TuningParameters const &tuning_params, double prefactor,
-                       bool single_precision, Arch arch);
+new_coulomb_p3m(P3MParameters &&p3m_params,
+                TuningParameters const &tuning_params, double prefactor,
+                bool single_precision, Arch arch);
 
 #endif // ESPRESSO_P3M

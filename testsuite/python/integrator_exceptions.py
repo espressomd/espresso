@@ -273,10 +273,45 @@ class Test(ut.TestCase):
         self.system.thermostat.set_langevin(kT=1., gamma=1., seed=42)
         self.system.thermostat.set_langevin(kT=2., gamma=1., seed=42)
         self.system.thermostat.set_brownian(kT=2., gamma=1., seed=42)
-        with self.assertRaisesRegex(RuntimeError, "Cannot set parameter 'kT' to 1.0*: there are currently active thermostats with kT=2.0*"):
+        with self.assertRaisesRegex(RuntimeError, "Cannot set parameter 'kT' to 1[.0]*: there are currently active thermostats with kT=2[.0]*"):
             self.system.thermostat.set_brownian(kT=1., gamma=1., seed=42)
         with self.assertRaisesRegex(RuntimeError, f"Parameter 'kT' is read-only"):
             self.system.thermostat.kT = 2.
+
+    @utx.skipIfMissingFeatures("BOND_CONSTRAINT")
+    def test_rigid_bond_incompatible_integrators(self):
+        system = self.system
+        system.part.clear()
+        system.box_l = [4., 4., 4.]
+        system.cell_system.skin = 0.4
+        system.time_step = 0.01
+        bond = espressomd.interactions.RigidBond(r=1.0, ptol=1e-4, vtol=1e-4)
+        system.bonded_inter.add(bond)
+        p1 = system.part.add(pos=[1.5, 2.0, 2.0])
+        p2 = system.part.add(pos=[2.5, 2.0, 2.0])
+        p2.add_bond((bond, p1))
+        error_msg = self.msg + \
+            'Rigid bonds \\(RATTLE\\) require an inertial integrator'
+
+        system.integrator.set_brownian_dynamics()
+        system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=42)
+        with self.assertRaisesRegex(Exception, error_msg):
+            system.integrator.run(0)
+
+        system.thermostat.turn_off()
+        system.integrator.set_steepest_descent(
+            f_max=0., gamma=1., max_displacement=0.1)
+        with self.assertRaisesRegex(Exception, error_msg):
+            system.integrator.run(0)
+
+        if espressomd.has_features("STOKESIAN_DYNAMICS"):
+            system.thermostat.turn_off()
+            system.periodicity = 3 * [False]
+            system.thermostat.set_stokesian(kT=0)
+            system.integrator.set_stokesian_dynamics(
+                viscosity=1.0, radii={0: 1.0})
+            with self.assertRaisesRegex(Exception, error_msg):
+                system.integrator.run(0)
 
     def test_missing_features(self):
         thermostats = {

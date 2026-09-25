@@ -65,15 +65,16 @@ class pressureViaVolumeScaling:
 
 @utx.skipIfMissingFeatures(["P3M", "LENNARD_JONES"])
 class VirialPressureConsistency(ut.TestCase):
-
-    """Test the consistency of the core implementation of the virial pressure
-       with an analytical relation which allows for the calculation of the
-       pressure as a volume derivative of a function of the potential energy
-       change on infinitesimal volume changes.
-       The relation and its derivation can be found in the paper with the name
-       "Efficient pressure estimation in molecular simulations without
-       evaluating the virial"  by Harismiadis, V. I., J. Vorholz, and A. Z.
-       Panagiotopoulos. 1996"""
+    """
+    Test the consistency of the core implementation of the virial pressure
+    with an analytical relation which allows for the calculation of the
+    pressure as a volume derivative of a function of the potential energy
+    change on infinitesimal volume changes.
+    The relation and its derivation can be found in the paper with the name
+    "Efficient pressure estimation in molecular simulations without
+    evaluating the virial"  by Harismiadis, V. I., J. Vorholz, and A. Z.
+    Panagiotopoulos. 1996
+    """
     # Handle to espresso system
     system = espressomd.System(box_l=[50, 50, 50])
 
@@ -114,6 +115,10 @@ class VirialPressureConsistency(ut.TestCase):
                 break
         self.system.integrator.set_vv()
         self.system.thermostat.set_langevin(kT=self.kT, gamma=1.0, seed=41)
+        # reset thermostat state and pin skin value to improve reproducibility
+        self.system.thermostat.langevin.call_method(
+            "override_philox_counter", counter=0)
+        self.system.cell_system.skin = 1.4
 
     def tearDown(self):
         self.system.part.clear()
@@ -124,9 +129,6 @@ class VirialPressureConsistency(ut.TestCase):
     def check_p3m_pressure(self, gpu):
         self.system.electrostatics.solver = espressomd.electrostatics.P3M(
             prefactor=2., accuracy=1e-3, mesh=16, cao=6, r_cut=7.5, gpu=gpu)
-        skin = self.system.cell_system.tune_skin(
-            min_skin=0.0, max_skin=2.5, tol=0.05, int_steps=100)
-        print(f"Tuned skin: {skin}")
 
         pressures_via_virial = []
         num_samples = 25

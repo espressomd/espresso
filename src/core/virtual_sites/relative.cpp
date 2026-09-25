@@ -99,7 +99,7 @@ static auto constraint_stress(Particle const &p_ref, Particle const &p_vs) {
   /* The constraint force is minus the force on the particle, make it force
    * free. The counter force is translated by the connection vector to the
    * real particle, hence the virial stress is */
-  return tensor_product(-p_vs.force(), connection_vector(p_ref, p_vs));
+  return tensor_product(connection_vector(p_ref, p_vs), -p_vs.force());
 }
 
 static bool is_vs_relative_trans(Particle const &p) {
@@ -120,8 +120,15 @@ static bool is_vs(Particle const &p) {
 
 void vs_relative_update_particles(CellStructure &cell_structure,
                                   BoxGeometry const &box_geo) {
-  cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
-                               Cells::DATA_PART_MOMENTUM);
+  cell_structure.ghosts_update(
+      Cells::DATA_PART_POSITION |
+      Cells::DATA_PART_MOMENTUM
+#ifdef ESPRESSO_ROTATION
+      // Orientation of the reference particle is needed
+      // for vs_relative position/orientation update
+      | Cells::DATA_PART_QUAT
+#endif
+  );
 
   cell_structure.for_each_local_particle([&](Particle &p) {
     if (!is_vs(p)) {

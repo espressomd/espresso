@@ -266,7 +266,7 @@ class ELC(ElectrostaticInteraction):
     delta_mid_top : :obj:`float`, optional
         Dielectric contrast :math:`\\Delta_t` between the upper boundary
         and the simulation box. Value between -1 and +1 (inclusive).
-    delta_mid_bottom : :obj:`float`, optional
+    delta_mid_bot : :obj:`float`, optional
         Dielectric contrast :math:`\\Delta_b` between the lower boundary
         and the simulation box. Value between -1 and +1 (inclusive).
     const_pot : :obj:`bool`, optional
@@ -288,10 +288,9 @@ class ELC(ElectrostaticInteraction):
         have to disable the neutralization. When using a dielectric
         contrast or full metallic walls (``delta_mid_top != 0`` or
         ``delta_mid_bot != 0`` or ``const_pot=True``), ``neutralize`` is
-        overwritten and switched off internally. Note that the special
-        case of non-neutral systems with a *non-metallic* dielectric jump
-        (e.g. ``delta_mid_top`` or ``delta_mid_bot`` in ``]-1,1[``) is not
-        covered by the algorithm and will throw an error.
+        overwritten and switched off internally. Non-neutral systems with a
+        dielectric jump, including a *non-metallic* one (``delta_mid_top``
+        or ``delta_mid_bot`` in ``]-1,1[``), are supported.
     far_cut : :obj:`float`, optional
         Cutoff radius, use with care, intended for testing purposes. When
         setting the cutoff directly, the maximal pairwise error is ignored.

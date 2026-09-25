@@ -47,6 +47,7 @@
 #include <functional>
 #include <limits>
 #include <numbers>
+#include <stdexcept>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -173,6 +174,13 @@ Utils::Vector3d center_of_mass(System::System const &system, int p_type) {
   double mass = 1.; // placeholder value to avoid division by zero
   boost::mpi::reduce(::comm_cart, local_com, com, std::plus<>(), 0);
   boost::mpi::reduce(::comm_cart, local_mass, mass, std::plus<>(), 0);
+  auto invalid_mass = (mass == 0.);
+  boost::mpi::broadcast(::comm_cart, invalid_mass, 0);
+  if (invalid_mass) {
+    throw std::runtime_error(
+        "Cannot calculate the center of mass: no particle with non-zero mass "
+        "of the given type(s) was found");
+  }
   return com / mass;
 }
 
@@ -200,7 +208,11 @@ Utils::Vector9d gyration_tensor(System::System const &system,
 
   Utils::Vector9d mat{};
   if (::comm_cart.rank() == 0) {
-    assert(not buf_pos.empty());
+    if (buf_pos.empty()) {
+      throw std::runtime_error(
+          "Cannot calculate the gyration tensor: no particle of the given "
+          "type(s) was found");
+    }
     auto const center =
         std::accumulate(buf_pos.begin(), buf_pos.end(), Utils::Vector3d{}) /
         static_cast<double>(buf_pos.size());

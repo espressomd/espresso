@@ -25,8 +25,11 @@ class _CodeInfo(ScriptInterfaceHelper):
     _so_name = "CodeInfo::CodeInfo"
     _so_creation_policy = "LOCAL"
     _so_bind_methods = (
-        "build_type", "features", "all_features", "scafacos_methods"
+        "build_type", "features", "all_features", "scafacos_methods", "toolchain"
     )
+
+
+_code_info_instance = _CodeInfo()
 
 
 def build_type():
@@ -34,19 +37,29 @@ def build_type():
     Get the CMake build type of this build of ESPResSo.
     Can be e.g. Debug, Release, RelWithAssert, RelWithDebInfo, Coverage, etc.
     """
-    return _CodeInfo().build_type()
+    return _code_info_instance.build_type()
 
 
 def features():
     """Get the list of features available in this build of ESPResSo."""
-    return _CodeInfo().features()
+    return _code_info_instance.features()
 
 
 def all_features():
     """Get the list of all features that can be activated in ESPResSo."""
-    return _CodeInfo().all_features()
+    return _code_info_instance.all_features()
 
 
 def scafacos_methods():
     """Lists long-range methods available in the ScaFaCoS library."""
-    return _CodeInfo().scafacos_methods()
+    return _code_info_instance.scafacos_methods()
+
+
+def toolchain():
+    """
+    Get the compiler toolchain metadata for this build of ESPResSo.
+    The dictionary keys are based on CMake properties, but are not stable
+    in time and can change when a custom ``FindPackage`` updates its API.
+    Use this method only for debugging purposes.
+    """
+    return _code_info_instance.toolchain()

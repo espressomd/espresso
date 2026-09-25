@@ -34,9 +34,12 @@
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "ghosts.hpp"
+#include "ghosts/HaloExchange.hpp"
 #include "integrators/Propagation.hpp"
+#include "kokkos_helpers.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "particle_enumeration.hpp"
+#include "particle_node.hpp"
 #include "particle_reduction.hpp"
 #include "system/System.hpp"
 
@@ -46,7 +49,7 @@
 #include <utils/math/sqr.hpp>
 
 #ifdef ESPRESSO_CALIPER
-#include <caliper/cali.h>
+#include "caliper_utils.hpp"
 #endif
 
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -72,6 +75,9 @@
 #include <vector>
 
 CellStructure::~CellStructure() {
+  assert(not m_pending_ghost_reduce.has_value() &&
+         "~CellStructure: ghost force reduction still in flight at destruction "
+         "— ghosts_reduce_forces_finish() was not called");
   clear_local_properties();
   // Kokkos handle can only be freed after all Cabana containers have been freed
   m_kokkos_handle.reset();
@@ -83,6 +89,10 @@ void CellStructure::clear_local_properties() {
 #ifdef ESPRESSO_ROTATION
   m_scatter_torque.reset();
   m_local_torque.reset();
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  m_scatter_dip_fld.reset();
+  m_local_dip_fld.reset();
 #endif
 #ifdef ESPRESSO_NPT
   m_scatter_virial.reset();
@@ -133,7 +143,7 @@ static auto estimate_max_counts(double pair_cutoff,
 
 void CellStructure::rebuild_local_properties(double const pair_cutoff) {
 #ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_FUNCTION;
+  ESPRESSO_CALI_MARK_FUNCTION;
 #endif
   assert(m_kokkos_handle);
   auto const num_part = get_unique_particles().size();
@@ -148,21 +158,43 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
   }
 #endif
   if (m_local_force) { // local properties are reallocated
-    Kokkos::realloc(get_local_force(), num_part);
-    // underlying View extent changed -> scratch buffers must be rebuilt
-    m_scatter_force.emplace(
-        Kokkos::Experimental::create_scatter_view(get_local_force()));
+    if (get_local_force().extent(0) == num_part) {
+      // Extents unchanged (always the case with a single MPI rank): zero the
+      // existing buffers in place instead of freeing and reallocating the
+      // O(n_threads * N) ScatterView scratch on every Verlet rebuild.
+      reset_local_force_buffers();
+      reset_torque_replicas_if_dirty();
+      reset_dip_fld_replicas_if_dirty();
+    } else {
+      Kokkos::realloc(get_local_force(), num_part);
+      // underlying View extent changed -> scratch buffers must be rebuilt
+      m_scatter_force.emplace(
+          Kokkos::Experimental::create_scatter_view(get_local_force()));
 #ifdef ESPRESSO_ROTATION
-    Kokkos::realloc(get_local_torque(), num_part);
-    // underlying View extent changed -> scratch buffers must be rebuilt
-    m_scatter_torque.emplace(
-        Kokkos::Experimental::create_scatter_view(get_local_torque()));
+      Kokkos::realloc(get_local_torque(), num_part);
+      // underlying View extent changed -> scratch buffers must be rebuilt
+      m_scatter_torque.emplace(
+          Kokkos::Experimental::create_scatter_view(get_local_torque()));
+      m_torque_replicas_dirty = false;
 #endif
-    Kokkos::realloc(get_id_to_index(), get_cached_max_local_particle_id() + 1);
-    Kokkos::deep_copy(get_id_to_index(), -1);
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      Kokkos::realloc(get_local_dip_fld(), num_part);
+      // underlying View extent changed -> scratch buffers must be rebuilt
+      m_scatter_dip_fld.emplace(
+          Kokkos::Experimental::create_scatter_view(get_local_dip_fld()));
+      m_dip_fld_replicas_dirty = false;
+#endif
+    }
+    auto const required_index_size = get_cached_max_local_particle_id() + 1;
+    if (get_id_to_index().extent(0) !=
+        static_cast<std::size_t>(required_index_size)) {
+      Kokkos::realloc(Kokkos::WithoutInitializing, get_id_to_index(),
+                      required_index_size);
+    }
+    kokkos_deep_copy(execution_space{}, get_id_to_index(), -1);
     // Resize particle views using AoSoA_pack's resize method
     m_aosoa->resize(num_part);
-    Kokkos::deep_copy(m_aosoa->flags, uint8_t{0});
+    kokkos_deep_copy(execution_space{}, m_aosoa->flags, uint8_t{0});
     m_verlet_list_cabana->reallocData(num_part, max_counts);
   } else { // local properties are initialized
     m_local_force = std::make_unique<ForceType>("local_force", num_part);
@@ -173,49 +205,79 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
     m_scatter_torque.emplace(
         Kokkos::Experimental::create_scatter_view(*m_local_torque));
 #endif
-    m_id_to_index = std::make_unique<Kokkos::View<int *>>(
-        Kokkos::ViewAllocateWithoutInitializing("id_to_index"),
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    m_local_dip_fld = std::make_unique<ForceType>("local_dip_fld", num_part);
+    m_scatter_dip_fld.emplace(
+        Kokkos::Experimental::create_scatter_view(*m_local_dip_fld));
+#endif
+    m_id_to_index = std::make_unique<Kokkos::View<int *, memory_space>>(
+        Kokkos::view_alloc(execution_space{}, Kokkos::WithoutInitializing,
+                           "id_to_index"),
         get_cached_max_local_particle_id() + 1);
-    Kokkos::deep_copy(get_id_to_index(), -1);
+    kokkos_deep_copy(execution_space{}, get_id_to_index(), -1);
     // Create AoSoA_pack and initialize with resize
     m_aosoa = std::make_unique<AoSoA_pack>();
     m_aosoa->resize(num_part);
-    Kokkos::deep_copy(m_aosoa->flags, uint8_t{0});
+    kokkos_deep_copy(execution_space{}, m_aosoa->flags, uint8_t{0});
 
     m_verlet_list_cabana =
         std::make_unique<ListType>(0ul, num_part, max_counts);
   }
 #ifdef ESPRESSO_NPT
-  m_local_virial = std::make_unique<VirialType>("local_virial");
-  m_scatter_virial.emplace(
-      Kokkos::Experimental::create_scatter_view(*m_local_virial));
+  if (not m_local_virial) {
+    m_local_virial = std::make_unique<VirialType>("local_virial");
+    m_scatter_virial.emplace(
+        Kokkos::Experimental::create_scatter_view(*m_local_virial));
+  } else {
+    reset_virial_replicas_if_dirty();
+  }
 #endif
 }
 
-void CellStructure::reset_local_force_and_torque() {
-#ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_FUNCTION;
-#endif
-  Kokkos::deep_copy(get_local_force(), 0.);
+void CellStructure::reset_local_force_buffers() {
+  kokkos_deep_copy(execution_space{}, get_local_force(), 0.);
   m_scatter_force->reset();
+}
+
+void CellStructure::reset_torque_replicas_if_dirty() {
 #ifdef ESPRESSO_ROTATION
-  Kokkos::deep_copy(get_local_torque(), 0.);
-  m_scatter_torque->reset();
+  if (m_torque_replicas_dirty) {
+    kokkos_deep_copy(execution_space{}, get_local_torque(), 0.);
+    m_scatter_torque->reset();
+    m_torque_replicas_dirty = false;
+  }
+#endif
+}
+
+void CellStructure::reset_dip_fld_replicas_if_dirty() {
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  if (m_dip_fld_replicas_dirty) {
+    kokkos_deep_copy(execution_space{}, get_local_dip_fld(), 0.);
+    m_scatter_dip_fld->reset();
+    m_dip_fld_replicas_dirty = false;
+  }
+#endif
+}
+
+void CellStructure::reset_virial_replicas_if_dirty() {
+#ifdef ESPRESSO_NPT
+  if (m_virial_replicas_dirty) {
+    kokkos_deep_copy(execution_space{}, get_local_virial(), 0.);
+    m_scatter_virial->reset();
+    m_virial_replicas_dirty = false;
+  }
 #endif
 }
 
 void CellStructure::reset_local_properties() {
-  Kokkos::deep_copy(get_local_force(), 0.);
-  m_scatter_force->reset();
-#ifdef ESPRESSO_ROTATION
-  Kokkos::deep_copy(get_local_torque(), 0.);
-  m_scatter_torque->reset();
+#ifdef ESPRESSO_CALIPER
+  ESPRESSO_CALI_MARK_FUNCTION;
 #endif
-#ifdef ESPRESSO_NPT
-  Kokkos::deep_copy(get_local_virial(), 0.);
-  m_scatter_virial->reset();
-#endif
-  Kokkos::deep_copy(get_aosoa().flags, uint8_t{0});
+  reset_local_force_buffers();
+  reset_torque_replicas_if_dirty();
+  reset_dip_fld_replicas_if_dirty();
+  reset_virial_replicas_if_dirty();
+  kokkos_deep_copy(execution_space{}, get_aosoa().flags, uint8_t{0});
 }
 
 void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
@@ -258,56 +320,61 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
 
 void CellStructure::set_index_map() {
 #ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_FUNCTION;
+  ESPRESSO_CALI_MARK_FUNCTION;
 #endif
   auto &unique_particles = m_unique_particles;
   unique_particles.clear();
   unique_particles.resize(count_local_particles());
   std::unordered_set<int> registered_index{};
-  using execution_space = Kokkos::DefaultExecutionSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
   int n_threads = execution_space().concurrency();
-  std::vector<int> max_ids(n_threads);
 
   m_bond_state->reset_counts();
-  std::vector<int> pair_counts(n_threads, 0);
-  std::vector<int> angle_counts(n_threads, 0);
-  std::vector<int> dihedral_counts(n_threads, 0);
+  // one cache line per thread: these counters are written on every particle,
+  // so packing them into shared cache lines makes the sweep bounce lines
+  // between L3 domains
+  struct alignas(64) PerThreadCounts {
+    int max_id = 0;
+    int pair = 0;
+    int angle = 0;
+    int dihedral = 0;
+  };
+  std::vector<PerThreadCounts> thread_counts(n_threads);
 
-  enumerate_local_particles(
-      *this, [&unique_particles, &max_ids, &pair_counts, &angle_counts,
-              &dihedral_counts](std::size_t index, Particle &p) {
-        unique_particles[index] = &p;
-        auto const thread_num = omp_get_thread_num();
-        max_ids[thread_num] = std::max(p.id(), max_ids[thread_num]);
-        for (auto const bond : p.bonds()) {
-          if (not bond.partner_ids().empty()) {
-            auto const partner_ids = bond.partner_ids();
-            if (partner_ids.size() == 1u) {
-              pair_counts[thread_num] += 1;
-            } else if (partner_ids.size() == 2u) {
-              angle_counts[thread_num] += 1;
-            } else if (partner_ids.size() == 3u) {
-              dihedral_counts[thread_num] += 1;
-            }
-          }
+  enumerate_local_particles(*this, [&unique_particles, &thread_counts](
+                                       std::size_t index, Particle &p) {
+    unique_particles[index] = &p;
+    auto &counts = thread_counts[omp_get_thread_num()];
+    counts.max_id = std::max(p.id(), counts.max_id);
+    for (auto const bond : p.bonds()) {
+      if (not bond.partner_ids().empty()) {
+        auto const partner_ids = bond.partner_ids();
+        if (partner_ids.size() == 1u) {
+          counts.pair += 1;
+        } else if (partner_ids.size() == 2u) {
+          counts.angle += 1;
+        } else if (partner_ids.size() == 3u) {
+          counts.dihedral += 1;
         }
-      });
+      }
+    }
+  });
   Kokkos::fence();
-  int pair_count = std::reduce(std::begin(pair_counts), std::end(pair_counts));
-  int angle_count =
-      std::reduce(std::begin(angle_counts), std::end(angle_counts));
-  int dihedral_count =
-      std::reduce(std::begin(dihedral_counts), std::end(dihedral_counts));
+  int pair_count = 0;
+  int angle_count = 0;
+  int dihedral_count = 0;
+  int max_id = 0;
+  for (auto const &counts : thread_counts) {
+    pair_count += counts.pair;
+    angle_count += counts.angle;
+    dihedral_count += counts.dihedral;
+    max_id = std::max(counts.max_id, max_id);
+  }
   set_local_bond_numbers(pair_count, angle_count, dihedral_count);
   m_bond_state->allocate();
-
-  int max_id = *(std::max_element(max_ids.begin(), max_ids.end()));
   for (auto &p : ghost_particles()) {
     auto const *local_particle = get_local_particle(p.id());
-    if (not local_particle) {
-      continue;
-    }
-    if (not local_particle->is_ghost()) {
+    if (not local_particle or not local_particle->is_ghost()) {
       continue;
     }
     if (registered_index.contains(p.id())) {
@@ -331,7 +398,7 @@ void CellStructure::check_particle_index() const {
   for (auto const &p : local_particles()) {
     auto const id = p.id();
 
-    if (id < 0 || id > max_id) {
+    if (id < 0 or id > max_id) {
       throw std::runtime_error("Particle id out of bounds.");
     }
 
@@ -455,6 +522,8 @@ void CellStructure::remove_all_particles() {
 
   m_particle_index.clear();
   clear_bond_properties();
+  clear_particle_node();
+  get_system().on_particle_change();
 }
 
 /* Map the data parts flags from cells to those used internally
@@ -471,26 +540,116 @@ unsigned map_data_parts(unsigned data_parts) {
 #ifdef ESPRESSO_BOND_CONSTRAINT
          | ((data_parts & DATA_PART_RATTLE) ? GHOSTTRANS_RATTLE : 0u)
 #endif
+#ifdef ESPRESSO_ROTATION
+         | ((data_parts & DATA_PART_QUAT) ? GHOSTTRANS_QUAT : 0u)
+         | ((data_parts & DATA_PART_TORQUE) ? GHOSTTRANS_TORQUE : 0u)
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+         | ((data_parts & DATA_PART_DIPFLD) ? GHOSTTRANS_DIPFLD : 0u)
+#endif
          | ((data_parts & DATA_PART_BONDS) ? GHOSTTRANS_BONDS : 0u);
   /* clang-format on */
 }
 
 void CellStructure::ghosts_count() {
-  ghost_communicator(decomposition().exchange_ghosts_comm(),
-                     *get_system().box_geo, GHOSTTRANS_PARTNUM);
+#ifdef ESPRESSO_CALIPER
+  ESPRESSO_CALI_MARK_FUNCTION;
+#endif
+  GhostComm::halo_exchange(
+      *decomposition().halo_plan(), *get_system().box_geo, GHOSTTRANS_PARTNUM,
+      {GhostComm::Direction::Push, GhostComm::Combine::Overwrite},
+      m_ghost_buffers);
 }
+
 void CellStructure::ghosts_update(unsigned data_parts) {
-  ghost_communicator(decomposition().exchange_ghosts_comm(),
-                     *get_system().box_geo, map_data_parts(data_parts));
+#ifdef ESPRESSO_CALIPER
+  ESPRESSO_CALI_MARK_FUNCTION;
+#endif
+  auto const parts = map_data_parts(data_parts);
+  GhostComm::halo_exchange(
+      *decomposition().halo_plan(), *get_system().box_geo, parts,
+      {GhostComm::Direction::Push, GhostComm::Combine::Overwrite},
+      m_ghost_buffers);
 }
+
 void CellStructure::ghosts_reduce_forces() {
-  ghost_communicator(decomposition().collect_ghost_force_comm(),
-                     *get_system().box_geo, GHOSTTRANS_FORCE);
+#ifdef ESPRESSO_CALIPER
+  ESPRESSO_CALI_MARK_FUNCTION;
+#endif
+  GhostComm::halo_exchange(
+      *decomposition().halo_plan(), *get_system().box_geo,
+      get_system().get_force_reduce_ghost_flags(),
+      {GhostComm::Direction::Reduce, GhostComm::Combine::Add}, m_ghost_buffers);
 }
+
+#ifdef ESPRESSO_CALIPER
+// caliper annotation for split phase ghost forces reduction
+static cali_id_t ghost_reduce_async_attr() {
+  static const cali_id_t id =
+      espresso_cali_active()
+          ? cali_create_attribute("ghosts_reduce_forces_async",
+                                  CALI_TYPE_STRING,
+                                  CALI_ATTR_ASVALUE | CALI_ATTR_SCOPE_THREAD)
+          : CALI_INV_ID;
+  return id;
+}
+#endif // ESPRESSO_CALIPER
+
+void CellStructure::ghosts_reduce_forces_start() {
+  assert(not m_pending_ghost_reduce.has_value() &&
+         "ghosts_reduce_forces_start: a reduction is already in flight");
+  // BEGIN fires only after emplace succeeds so a throwing start cannot
+  // leave the Caliper region open without a matching END.
+  m_pending_ghost_reduce.emplace(GhostComm::halo_exchange_start(
+      *decomposition().halo_plan(), *get_system().box_geo,
+      get_system().get_force_reduce_ghost_flags(),
+      {GhostComm::Direction::Reduce, GhostComm::Combine::Add},
+      m_ghost_buffers));
+#ifdef ESPRESSO_CALIPER
+  if (auto id = ghost_reduce_async_attr(); id != CALI_INV_ID)
+    cali_begin_string(id, "in_flight");
+#endif
+}
+
+void CellStructure::ghosts_reduce_forces_finish() {
+  assert(m_pending_ghost_reduce.has_value() &&
+         "ghosts_reduce_forces_finish: no reduction is in flight");
+  try {
+    GhostComm::halo_exchange_finish(*m_pending_ghost_reduce);
+  } catch (...) {
+    // A failed finish cannot be retried: the exchange state is half-consumed
+    // (some requests waited, some buffers unpacked). Drop the pending state so
+    // a later finish attempt (e.g. the ReduceGuard in integrate.cpp) does not
+    // re-run MPI waits on completed requests.
+    m_pending_ghost_reduce.reset();
+#ifdef ESPRESSO_CALIPER
+    if (auto id = ghost_reduce_async_attr(); id != CALI_INV_ID)
+      cali_end(id);
+#endif
+    throw;
+  }
+#ifdef ESPRESSO_CALIPER
+  // END before reset so the region is closed before the optional is cleared.
+  if (auto id = ghost_reduce_async_attr(); id != CALI_INV_ID)
+    cali_end(id);
+#endif
+  m_pending_ghost_reduce.reset();
+}
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+void CellStructure::ghosts_reduce_dipole_field() {
+  GhostComm::halo_exchange(
+      *decomposition().halo_plan(), *get_system().box_geo, GHOSTTRANS_DIPFLD,
+      {GhostComm::Direction::Reduce, GhostComm::Combine::Add}, m_ghost_buffers);
+}
+#endif
 #ifdef ESPRESSO_BOND_CONSTRAINT
 void CellStructure::ghosts_reduce_rattle_correction() {
-  ghost_communicator(decomposition().collect_ghost_force_comm(),
-                     *get_system().box_geo, GHOSTTRANS_RATTLE);
+#ifdef ESPRESSO_CALIPER
+  ESPRESSO_CALI_MARK_FUNCTION;
+#endif
+  GhostComm::halo_exchange(
+      *decomposition().halo_plan(), *get_system().box_geo, GHOSTTRANS_RATTLE,
+      {GhostComm::Direction::Reduce, GhostComm::Combine::Add}, m_ghost_buffers);
 }
 #endif
 
@@ -509,6 +668,12 @@ struct UpdateParticleIndexVisitor {
 } // namespace
 
 void CellStructure::resort_particles(bool global_flag) {
+#ifdef ESPRESSO_CALIPER
+  ESPRESSO_CALI_MARK_FUNCTION;
+#endif
+  assert(not m_pending_ghost_reduce.has_value() &&
+         "resort_particles: ghost force reduction is still in flight — "
+         "call ghosts_reduce_forces_finish() first");
   invalidate_ghosts();
 
   std::vector<ParticleChange> diff;
@@ -590,6 +755,9 @@ void CellStructure::set_verlet_skin_heuristic() {
 }
 
 void CellStructure::update_ghosts_and_resort_particle(unsigned data_parts) {
+#ifdef ESPRESSO_CALIPER
+  ESPRESSO_CALI_MARK_FUNCTION;
+#endif
   /* data parts that are only updated on resort */
   auto constexpr resort_only_parts =
       Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS;
@@ -625,16 +793,13 @@ bool CellStructure::check_resort_required(
     Utils::Vector3d const &additional_offset) const {
   auto const lim = Utils::sqr(m_verlet_skin / 2.) - additional_offset.norm2();
 
-  Reduction::AddPartialResultKernel<bool> add_partial =
-      [lim](bool &result, Particle const &p) {
-        if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim) {
-          result = true;
-        }
-      };
-
-  Reduction::ReductionOp<bool> reduce_op = [](bool &acc, bool const &val) {
-    acc |= val;
+  auto add_partial = [lim](bool &result, Particle const &p) {
+    if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim) {
+      result = true;
+    }
   };
 
-  return reduce_over_local_particles(*this, add_partial, reduce_op);
+  auto reduce_op = [](bool &acc, bool const &val) { acc |= val; };
+
+  return reduce_over_local_particles<bool>(*this, add_partial, reduce_op);
 }

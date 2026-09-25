@@ -48,6 +48,9 @@
 #include "Particle.hpp"
 #include "system/Leaf.hpp"
 
+#include <utils/Vector.hpp>
+#include <utils/device_qualifier.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -55,6 +58,7 @@
 #include <optional>
 #include <unordered_map>
 #include <variant>
+#include <vector>
 
 /** Interaction type for unused bonded interaction slots */
 struct NoneBond {
@@ -131,20 +135,34 @@ public:
   bool contains(key_type const &key) const { return m_params.contains(key); }
   bool empty() const { return m_params.empty(); }
   auto size() const { return m_params.size(); }
+  DEVICE_QUALIFIER
   auto get_next_key() const { return next_key; }
   auto get_zero_based_type(int bond_id) const {
     return contains(bond_id) ? static_cast<int>(at(bond_id)->index()) : 0;
   }
+  DEVICE_QUALIFIER
   auto get_n_thermalized_bonds() const {
     assert(n_thermalized_bonds >= 0);
     return n_thermalized_bonds;
   }
 #ifdef ESPRESSO_BOND_CONSTRAINT
+  DEVICE_QUALIFIER
   auto get_n_rigid_bonds() const {
     assert(n_rigid_bonds >= 0);
     return n_rigid_bonds;
   }
-#endif
+  /**
+   * @brief Per-bond-type RATTLE constraint virial.
+   *
+   * Accumulated bond-by-bond inside @ref correct_position_shake() (indexed by
+   * bond id, same convention as @ref Observable_stat::bonded_contribution()),
+   * where the pairwise correction/mass/bond-vector are all unambiguous,
+   * regardless of how many rigid bonds a particle participates in.
+   * Reset at the start of every SHAKE call; consumed by
+   * @ref System::System::calculate_pressure().
+   */
+  std::vector<Utils::Vector9d> rigid_bond_virial;
+#endif // ESPRESSO_BOND_CONSTRAINT
   std::optional<key_type> find_bond_id(mapped_type const &target_bond) const {
     for (auto const &[bond_id, bond] : m_params) {
       if (bond == target_bond) {

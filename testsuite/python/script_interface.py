@@ -192,6 +192,66 @@ class ScriptInterface(ut.TestCase):
         with self.assertRaises(NotImplementedError):
             a <= c
 
+    def test_extract_method_docstrings(self):
+        prelude = "    Sphere object.\n\n    More text"
+        prologue = "    Bibliography\n    ------\n    Entry 1."
+        methods_title = "    Methods\n    ----"
+
+        # check complete method list
+        methods = methods_title + "\n"
+        methods_ref = {}
+        for method_name in espressomd.shapes.Sphere._so_bind_methods:
+            methods_ref[method_name] = f"    Text of {method_name}"
+            methods += f"    {method_name}()\n    {methods_ref[method_name]}\n"
+        espressomd.shapes.Sphere.__doc__ = f"{prelude}\n{methods}\n{prologue}"
+        new_doc, result = espressomd.shapes.Sphere._extract_method_docstrings()
+        self.assertEqual(new_doc, f"{prelude}\n\n{prologue}")
+        self.assertEqual(result, methods_ref)
+        espressomd.shapes.Sphere.__doc__ = f"{prelude}\n{methods}"
+        new_doc, result = espressomd.shapes.Sphere._extract_method_docstrings()
+        self.assertEqual(new_doc, f"{prelude}\n\n")
+        self.assertEqual(result, methods_ref)
+        espressomd.shapes.Sphere.__doc__ = f"{methods}\n{prologue}"
+        new_doc, result = espressomd.shapes.Sphere._extract_method_docstrings()
+        self.assertEqual(new_doc, f"\n\n{prologue}")
+        self.assertEqual(result, methods_ref)
+
+        # check complete method list with extra synthetic methods
+        methods = methods_title + "\n"
+        for method_name in espressomd.shapes.Sphere._so_bind_methods:
+            methods += f"    {method_name}()\n    {methods_ref[method_name]}\n"
+        methods += "    zb(a)\n        Text of zb\n"
+        espressomd.shapes.Sphere.__doc__ = f"{prelude}\n{methods}\n{prologue}"
+        new_doc, result = espressomd.shapes.Sphere._extract_method_docstrings()
+        self.assertEqual(new_doc, f"{prelude}\n{methods_title}\n    zb(a)\n        Text of zb\n\n{prologue}")  # nopep8
+        self.assertEqual(result, methods_ref)
+
+        # check empty method list
+        espressomd.shapes.Sphere.__doc__ = f"{prelude}\n{prologue}"
+        new_doc, result = espressomd.shapes.Sphere._extract_method_docstrings()
+        self.assertEqual(new_doc, f"{prelude}\n{prologue}")
+        self.assertEqual(result, {})
+
+        # check docstring too short
+        espressomd.shapes.Sphere.__doc__ = "Sphere object."
+        new_doc, result = espressomd.shapes.Sphere._extract_method_docstrings()
+        self.assertEqual(new_doc, "Sphere object.")
+        self.assertEqual(result, {})
+
+        # check empty docstring
+        espressomd.shapes.Sphere.__doc__ = ""
+        new_doc, result = espressomd.shapes.Sphere._extract_method_docstrings()
+        self.assertEqual(new_doc, "")
+        self.assertEqual(result, {})
+
+        # check broken docstring
+        espressomd.shapes.Sphere.__doc__ = f"{methods_title}\n    broken\n    zb(a)\n        Text"  # nopep8
+        with self.assertRaisesRegex(AssertionError, "malformed docstring in <class 'espressomd.shapes.Sphere'>, cannot interpret 'broken'"):
+            espressomd.shapes.Sphere._extract_method_docstrings()
+        espressomd.shapes.Sphere.__doc__ = f"{methods_title}\n    wrong name(a)\n        Text"  # nopep8
+        with self.assertRaisesRegex(AssertionError, r"'wrong name' isn't a suitable name for a class method \(in docstring of <class 'espressomd.shapes.Sphere'>\)"):
+            espressomd.shapes.Sphere._extract_method_docstrings()
+
 
 if __name__ == "__main__":
     ut.main()

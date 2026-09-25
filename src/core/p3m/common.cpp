@@ -106,7 +106,7 @@ void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
 
   n_halo_ld = {margin[0], margin[2], margin[4]};
   n_halo_ur = {margin[1], margin[3], margin[5]};
-  ld_no_halo = Utils::Vector3i(ld_ind) + n_halo_ld;
+  ld_no_halo = ld_ind + n_halo_ld;
   ur_no_halo = ld_no_halo + dim - n_halo_ld - n_halo_ur;
   dim_no_halo = ur_no_halo - ld_no_halo;
 }

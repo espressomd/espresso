@@ -56,6 +56,8 @@ private:
   std::shared_ptr<boost::mpi::environment> m_mpi_env_lock;
   std::shared_ptr<::Writer::H5md::File> m_h5md;
   std::vector<std::string> m_output_fields;
+  bool is_file_closed;
+  void sanity_check_is_file_closed(std::string const &name) const;
 };
 
 } // namespace Writer

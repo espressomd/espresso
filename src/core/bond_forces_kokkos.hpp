@@ -59,8 +59,7 @@ struct PairBondsKernel {
       : data(std::move(data_)), bond_list(std::move(bond_list_)),
         bond_ids(std::move(bond_ids_)), coulomb_kernel(coulomb_kernel_) {}
 
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
-  operator()(std::size_t idx) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t idx) const {
     auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
     auto local_force = data.local_force.access();
@@ -152,8 +151,7 @@ struct AngleBondsKernel {
       : data(std::move(data_)), bond_list(std::move(bond_list_)),
         bond_ids(std::move(bond_ids_)) {}
 
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
-  operator()(std::size_t idx) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t idx) const {
     auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
     auto local_force = data.local_force.access();
@@ -216,8 +214,7 @@ struct DihedralBondsKernel {
       : data(std::move(data_)), bond_list(std::move(bond_list_)),
         bond_ids(std::move(bond_ids_)) {}
 
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
-  operator()(std::size_t idx) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t idx) const {
     auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
     auto local_force = data.local_force.access();

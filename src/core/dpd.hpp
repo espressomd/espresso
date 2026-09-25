@@ -74,13 +74,25 @@ Utils::Vector3d dpd_pair_force(
     BoxGeometry const &box_geo, IA_parameters const &ia_params,
     Utils::Vector3d const &d, double dist, double dist2);
 
-Utils::Vector9d dpd_stress(System::System &system,
-                           boost::mpi::communicator const &comm);
+Utils::Vector9d dpd_pressure(System::System &system,
+                             boost::mpi::communicator const &comm);
 
-/**
- * @brief Local contribution to the pressure tensor.
- * Needs to be rescaled by the box volume.
+/** Return a random uniform 3D vector with the Philox thermostat.
+ *  Random numbers depend on
+ *  1. dpd_rng_counter (initialized by seed) which is increased on integration
+ *  2. Salt (decorrelates different counters)
+ *  3. Two particle IDs (order-independent, decorrelates particles, gets rid of
+ *     seed-per-node)
  */
-Utils::Vector9d dpd_pressure_local(System::System &system);
+Utils::Vector3d dpd_noise(DPDThermostat const &dpd, int pid1, int pid2);
+
+/** Return a random uniform 3D vector with the Philox thermostat.
+ *  Random numbers depend on
+ *  1. dpd_rng_counter (initialized by seed) which is increased on integration
+ *  2. Salt (decorrelates different counters)
+ *  3. Two particle IDs (order-independent, decorrelates particles, gets rid of
+ *     seed-per-node)
+ */
+Utils::Vector3d dpd_noise(DPDThermostat const &dpd, int pid1, int pid2);
 
 #endif // ESPRESSO_DPD

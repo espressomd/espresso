@@ -37,6 +37,7 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <functional>
 #include <stdexcept>
@@ -200,6 +201,7 @@ std::array<double, 4> calc_rg(System::System const &system, int chain_start,
 
 std::array<double, 2> calc_rh(System::System const &system, int chain_start,
                               int chain_length, int n_chains) {
+  assert(chain_length >= 2);
   auto const &cell_structure = *system.cell_structure;
   GatherPos prefetch{*system.box_geo};
   double r_H = 0.0, r_H2 = 0.0;

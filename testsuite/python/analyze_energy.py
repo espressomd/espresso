@@ -264,6 +264,10 @@ class AnalyzeEnergy(ut.TestCase):
             self.assertEqual(get_non_bonded_energy(p1), 0.)
             self.assertEqual(get_non_bonded_energy(p2), 0.)
 
+    def test_fallthrough(self):
+        self.assertIsNone(
+            self.system.analysis.call_method("_observable_stat_test_fallthrough"))
+
 
 if __name__ == "__main__":
     ut.main()

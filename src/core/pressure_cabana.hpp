@@ -38,6 +38,7 @@
 #endif
 
 #include <utils/Vector.hpp>
+#include <utils/index.hpp>
 #include <utils/math/tensor_product.hpp>
 
 #include <Cabana_Core.hpp>
@@ -96,17 +97,22 @@ struct PressureBinLayout {
 };
 
 struct PressureKernel {
+  using execution_space = Kokkos::HostSpace;
   BondedInteractionsMap const &bonded_ias;
   InteractionsNonBonded const &nonbonded_ias;
   Coulomb::Solver const &coulomb;
   Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_f_kernel;
   Coulomb::ShortRangePressureKernel::kernel_type const *coulomb_p_kernel;
+  Dipoles::ShortRangePressureKernel::kernel_type const *dipoles_p_kernel;
   BoxGeometry const &box_geo;
+#ifdef ESPRESSO_DPD
+  DPDThermostat const *dpd;
+#endif
   std::vector<Particle *> const &unique_particles;
-  Kokkos::View<double **, Kokkos::LayoutRight> local_pressure;
+  Kokkos::View<double **, Kokkos::LayoutRight, execution_space> local_pressure;
   PressureBinLayout layout;
   CellStructure::AoSoA_pack const &aosoa;
-  Kokkos::View<int *> mol_id_view;
+  Kokkos::View<int *, Kokkos::LayoutRight, execution_space> mol_id_view;
   double system_max_cutoff;
   int thermo_switch;
 
@@ -116,21 +122,31 @@ struct PressureKernel {
       Coulomb::Solver const &coulomb_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_f_kernel_,
       Coulomb::ShortRangePressureKernel::kernel_type const *coulomb_p_kernel_,
+      Dipoles::ShortRangePressureKernel::kernel_type const *dipoles_p_kernel_,
       BoxGeometry const &box_geo_,
+#ifdef ESPRESSO_DPD
+      DPDThermostat const *dpd_,
+#endif
       std::vector<Particle *> const &unique_particles_,
-      Kokkos::View<double **, Kokkos::LayoutRight> const &local_pressure_,
+      Kokkos::View<double **, Kokkos::LayoutRight, execution_space> const
+          &local_pressure_,
       PressureBinLayout layout_, CellStructure::AoSoA_pack const &aosoa_,
-      Kokkos::View<int *> mol_id_view_, double system_max_cutoff_,
-      int thermo_switch_)
+      Kokkos::View<int *, execution_space> mol_id_view_,
+      double system_max_cutoff_, int thermo_switch_)
       : bonded_ias(bonded_ias_), nonbonded_ias(nonbonded_ias_),
         coulomb(coulomb_), coulomb_f_kernel(coulomb_f_kernel_),
-        coulomb_p_kernel(coulomb_p_kernel_), box_geo(box_geo_),
+        coulomb_p_kernel(coulomb_p_kernel_),
+        dipoles_p_kernel(dipoles_p_kernel_), box_geo(box_geo_),
+#ifdef ESPRESSO_DPD
+        dpd(dpd_),
+#endif
         unique_particles(unique_particles_), local_pressure(local_pressure_),
         layout(layout_), aosoa(aosoa_), mol_id_view(std::move(mol_id_view_)),
-        system_max_cutoff(system_max_cutoff_), thermo_switch(thermo_switch_) {}
+        system_max_cutoff(system_max_cutoff_), thermo_switch(thermo_switch_) {
+  }
 
-  KOKKOS_INLINE_FUNCTION
-  void operator()(std::size_t i, std::size_t j) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t i,
+                                                     std::size_t j) const {
     auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
     auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
     auto const d = box_geo.get_mi_vector(pos1, pos2);
@@ -179,18 +195,26 @@ struct PressureKernel {
 
 #ifdef ESPRESSO_DPD
         if (dpd_active(ia_params, thermo_switch)) {
+          auto const pid1 = aosoa.id(i);
+          auto const pid2 = aosoa.id(j);
+          auto const noise_vec = (ia_params.dpd.radial.pref > 0.0 ||
+                                  ia_params.dpd.trans.pref > 0.0)
+                                     ? dpd_noise(*dpd, pid1, pid2)
+                                     : Utils::Vector3d{};
           auto const vel1 = aosoa.get_vector_at(aosoa.velocity, i);
           auto const vel2 = aosoa.get_vector_at(aosoa.velocity, j);
           auto const v21 = box_geo.velocity_difference(pos1, pos2, vel1, vel2);
           auto const dist2 = d.norm2();
           // f_r/f_t: dissipative force from radial/transverse DPD channel
-          auto const f_r = dpd_pair_force(ia_params.dpd.radial, v21, dist, {});
-          auto const f_t = dpd_pair_force(ia_params.dpd.trans, v21, dist, {});
+          auto const f_r =
+              dpd_pair_force(ia_params.dpd.radial, v21, dist, noise_vec);
+          auto const f_t =
+              dpd_pair_force(ia_params.dpd.trans, v21, dist, noise_vec);
           auto const P = Utils::tensor_product(d / dist2, d);
           auto const f_d = P * (f_r - f_t) + f_t;
           auto const s = Utils::flatten(Utils::tensor_product(d, f_d));
           for (std::size_t k = 0; k < 9; ++k)
-            local_pressure(tid, layout.tensor_offset(layout.dpd_idx(), k)) -=
+            local_pressure(tid, layout.tensor_offset(layout.dpd_idx(), k)) +=
                 s[k];
         }
 #endif
@@ -208,11 +232,28 @@ struct PressureKernel {
       }
     }
 #endif
+
+#ifdef ESPRESSO_DIPOLES
+    if (dipoles_p_kernel != nullptr) {
+      auto const d1d2 = aosoa.dipm(i) * aosoa.dipm(j);
+      if (d1d2 != 0.) {
+        auto const dir1 = aosoa.get_vector_at(aosoa.director, i);
+        auto const dir2 = aosoa.get_vector_at(aosoa.director, j);
+        auto const dist2 = d.norm2();
+        auto const p_d = Utils::flatten((*dipoles_p_kernel)(
+            d1d2, aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2, d, dist, dist2));
+        for (std::size_t k = 0; k < 9; ++k)
+          local_pressure(tid, layout.tensor_offset(layout.dipolar_idx(), k)) +=
+              p_d[k];
+      }
+    }
+#endif
   }
 };
 
 static void reduce_cabana_pressure(
-    Kokkos::View<double **, Kokkos::LayoutRight> const &local_pressure,
+    Kokkos::View<double **, Kokkos::LayoutRight, Kokkos::HostSpace> const
+        &local_pressure,
     PressureBinLayout const &layout, Observable_stat &obs,
     [[maybe_unused]] BondedInteractionsMap const &bonded_ias, int n_types) {
   auto const nthreads = local_pressure.extent(0);

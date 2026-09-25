@@ -101,7 +101,7 @@ double G_opt_dipolar(P3MParameters const &params, Utils::Vector3i const &shift,
         auto const exp_term = exp_prefactor * nm2;
         if (exp_term < exp_limit) {
           auto const f3 = U2 * std::exp(-exp_term) / nm2;
-          numerator += f3 * Utils::int_pow<S>(d_op * nm);
+          numerator += f3 * Utils::int_pow<S>(static_cast<double>(d_op * nm));
         }
         denominator += U2;
       },

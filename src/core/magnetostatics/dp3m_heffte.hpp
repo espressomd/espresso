@@ -27,12 +27,14 @@
 
 #include "magnetostatics/dp3m.hpp"
 
-#include "communication.hpp"
 #include "p3m/FFTBackendLegacy.hpp"
 #include "p3m/FFTBuffersLegacy.hpp"
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
 #include "p3m/interpolation.hpp"
+
+#include "communication.hpp"
+#include "kokkos_helpers.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -53,7 +55,7 @@
 #define ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
 #endif
 
-template <typename FloatType, class FFTConfig> class P3MFFT;
+template <typename FloatType, Arch Architecture, class FFTConfig> class P3MFFT;
 
 /**
  * @brief Base class for the magnetostatics P3M algorithm.
@@ -129,7 +131,7 @@ struct DipolarP3MState : public P3MStateCommon<FloatType> {
     /** @brief Energy optimised influence function (k-space) */
     std::vector<FloatType> g_energy;
     p3m_send_mesh<FloatType> halo_comm;
-    std::shared_ptr<P3MFFT<FloatType, FFTConfig>> fft;
+    std::shared_ptr<P3MFFT<FloatType, Arch::CPU, FFTConfig>> fft;
     int world_size;
   } heffte;
   void resize_heffte_buffers();
@@ -137,6 +139,12 @@ struct DipolarP3MState : public P3MStateCommon<FloatType> {
 
   Kokkos::View<FloatType ***, Kokkos::LayoutRight, Kokkos::HostSpace>
       rs_fields_kokkos;
+#ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
+  Kokkos::View<FloatType *, Kokkos::LayoutRight, Kokkos::HostSpace>
+      rs_field_no_halo_kokkos;
+  Kokkos::View<FloatType *, Kokkos::LayoutRight, Kokkos::HostSpace>
+      rs_field_no_halo_reorder_kokkos;
+#endif // ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
 
   void init_labels() {
     assert(ks_scalar.empty());
@@ -144,6 +152,10 @@ struct DipolarP3MState : public P3MStateCommon<FloatType> {
     assert(heffte.rs_dipole_density[0u].empty());
     assert(heffte.rs_dipole_density[1u].empty());
     assert(heffte.rs_dipole_density[2u].empty());
+    rs_field_no_halo_kokkos = decltype(rs_field_no_halo_kokkos)(
+        "DipolarP3MState::rs_field_no_halo_kokkos", 0);
+    rs_field_no_halo_reorder_kokkos = decltype(rs_field_no_halo_reorder_kokkos)(
+        "DipolarP3MState::rs_field_no_halo_reorder_kokkos", 0);
 #endif // ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
     rs_fields_kokkos = decltype(rs_fields_kokkos)(
         "DipolarP3MState::rs_fields_kokkos", 0, 0, 0);
@@ -212,6 +224,8 @@ public:
 
   double long_range_energy() override { return long_range_kernel(false, true); }
 
+  Utils::Vector9d long_range_pressure() override;
+
   void add_long_range_forces() override {
     if constexpr (Architecture == Arch::CPU) {
       long_range_kernel(true, false);
@@ -223,11 +237,11 @@ public:
 private:
   void prepare_fft_mesh() {
     dp3m.inter_weights.reset(dp3m.params.cao);
-    using execution_space = Kokkos::DefaultExecutionSpace;
+    using execution_space = Kokkos::DefaultHostExecutionSpace;
     auto const num_threads = execution_space().concurrency();
     Kokkos::realloc(Kokkos::WithoutInitializing, dp3m.rs_fields_kokkos,
                     num_threads, 3, dp3m.local_mesh.size);
-    Kokkos::deep_copy(dp3m.rs_fields_kokkos, FloatType{0});
+    kokkos_deep_copy(execution_space{}, dp3m.rs_fields_kokkos, FloatType{0});
     for (auto &rs_mesh_field : dp3m.mesh.rs_fields) {
       std::ranges::fill(rs_mesh_field, FloatType{0});
     }
@@ -236,6 +250,12 @@ private:
       dp3m.heffte.rs_dipole_density[dir].resize(dp3m.local_mesh.size);
       std::ranges::fill(dp3m.heffte.rs_dipole_density[dir], FloatType{0});
     }
+    auto const buf_size =
+        static_cast<std::size_t>(Utils::product(dp3m.local_mesh.dim_no_halo));
+    Kokkos::realloc(Kokkos::WithoutInitializing, dp3m.rs_field_no_halo_kokkos,
+                    buf_size);
+    Kokkos::realloc(Kokkos::WithoutInitializing,
+                    dp3m.rs_field_no_halo_reorder_kokkos, buf_size);
 #endif // ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
   }
 
@@ -250,7 +270,7 @@ protected:
   void init_cpu_kernels();
   void scaleby_box_l() override;
 #ifdef ESPRESSO_NPT
-  void npt_add_virial_contribution(double energy) const override;
+  void npt_add_virial_contribution(double virial) const override;
 #endif
 };
 
