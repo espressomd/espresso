@@ -32,6 +32,10 @@ class ElectrostaticExtensions(ScriptInterfaceHelper):
             params = self.default_params()
             params.update(kwargs)
             super().__init__(**params)
+            for key in params:
+                if not self._has_parameter(key):
+                    raise RuntimeError(
+                        f"Parameter '{key}' is not a valid parameter")
         else:
             super().__init__(**kwargs)
 
