@@ -20,6 +20,7 @@
 #ifndef ESPRESSO_SRC_SCAFACOS_SCAFACOS_HPP
 #define ESPRESSO_SRC_SCAFACOS_SCAFACOS_HPP
 
+#include "Exscalicos.hpp"
 #include <fcs.h>
 
 #include <mpi.h>
@@ -49,6 +50,18 @@ struct Scafacos {
 protected:
   /** Handle from the library */
   FCS m_handle;
+
+#ifdef EXSCALICOS_USING_CUDA
+  Exscalicos<ExscalicosSolver::P3M, double, Kokkos::Cuda, Kokkos::SharedSpace>
+      exObj;
+  ExscalicosData<double, Kokkos::Cuda, Kokkos::SharedSpace> exData;
+#else
+  Exscalicos<ExscalicosSolver::P3M, double, Kokkos::OpenMP, Kokkos::HostSpace>
+      exObj;
+  ExscalicosData<double, Kokkos::OpenMP, Kokkos::HostSpace> exData;
+#endif
+
+  int setupExscalicos;
 
 private:
   /** The method name */

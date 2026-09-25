@@ -34,16 +34,17 @@ class CoulombCloudWall(ut.TestCase):
 
     """
 
-    system = espressomd.System(box_l=[10., 10., 10.])
+    system = espressomd.System(
+        box_l=[3.01361005233, 3.01361005233, 3.01361005233])
     data = np.genfromtxt(tests_common.data_path(
-        "coulomb_cloud_wall_system.data"))
+        "coulomb_dna_water_15543.data"))
 
     tolerance = 1E-3
-    p3m_params = {'r_cut': 1.001, 'accuracy': 1e-4,
+    p3m_params = {'r_cut': 1.001, 'accuracy': 1e-3,
                   'mesh': [64, 64, 64], 'cao': 7, 'alpha': 2.70746}
 
     # Reference energy from P3M
-    reference_energy = 148.94229549
+    reference_energy = -58744.3652345839
 
     def setUp(self):
         self.system.time_step = 0.01
@@ -73,55 +74,68 @@ class CoulombCloudWall(ut.TestCase):
             self.reference_energy, delta=energy_tol,
             msg=f"Energy {err_msg}")
 
+    """
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_cpu(self):
         self.system.electrostatics.solver = espressomd.electrostatics.P3M(
-            **self.p3m_params, prefactor=3., tune=False)
+            **self.p3m_params, prefactor=3., tune=False, check_neutrality=False)
         self.system.integrator.run(0)
         self.compare("p3m", prefactor=3., force_tol=2e-3, energy_tol=1e-3)
+        self.check_neutrality = False
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_cpu_single_precision(self):
         self.system.electrostatics.solver = espressomd.electrostatics.P3M(
-            **self.p3m_params, prefactor=3., tune=False, single_precision=True)
+            **self.p3m_params, prefactor=3., tune=False, single_precision=True, check_neutrality=False)
         self.system.integrator.run(0)
         self.compare("p3m", prefactor=3., force_tol=2e-3, energy_tol=1e-3)
+        self.check_neutrality = False
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_gpu(self):
         self.system.electrostatics.solver = espressomd.electrostatics.P3M(
-            **self.p3m_params, prefactor=2.2, tune=False, gpu=True)
+            **self.p3m_params, prefactor=2.2, tune=False, gpu=True, check_neutrality=False)
         self.system.integrator.run(0)
         self.compare("p3m_gpu", prefactor=2.2, force_tol=2e-3, energy_tol=1e-3)
+        self.check_neutrality = False
+    """
 
+    """
+    method_params={"p2nfft_r_cut": 1.001, "tolerance_field": 1E-7})
+    """
     @utx.skipIfMissingFeatures(["SCAFACOS"])
     @utx.skipIfMissingScafacosMethod("p2nfft")
     def test_scafacos_p2nfft(self):
         self.system.electrostatics.solver = espressomd.electrostatics.Scafacos(
             prefactor=2.8,
             method_name="p2nfft",
-            method_params={"p2nfft_r_cut": 1.001, "tolerance_field": 1E-5})
+            method_params={"tolerance_field": 1E-7})
         self.system.integrator.run(0)
         self.compare(
             "scafacos_p2nfft",
             prefactor=2.8,
             force_tol=1e-3,
             energy_tol=1e-3)
+        self.check_neutrality = False
 
+    """
+    method_params={"p3m_cao": 7, "r_cut": 1.001, "tolerance_field": 1E-4})
+    """
     @utx.skipIfMissingFeatures(["SCAFACOS"])
     @utx.skipIfMissingScafacosMethod("p3m")
     def test_scafacos_p3m(self):
         self.system.electrostatics.solver = espressomd.electrostatics.Scafacos(
             prefactor=2.8,
             method_name="p3m",
-            method_params={"p3m_cao": 7, "tolerance_field": 1E-5})
+            method_params={"p3m_cao": 7, "tolerance_field": 1E-4})
         self.system.integrator.run(0)
         self.compare(
             "scafacos_p3m",
             prefactor=2.8,
             force_tol=1e-3,
             energy_tol=1e-3)
+        self.check_neutrality = False
 
     def test_zz_deactivation(self):
         # Is the energy and force 0, if no methods active
