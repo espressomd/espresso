@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import pickle
 import unittest as ut
 import unittest_decorators as utx
 import tests_common
@@ -63,6 +64,36 @@ class PropagationNPT:
         with self.assertRaises(Exception):
             self.system.integrator.set_isotropic_npt(
                 ext_pressure=1, piston=1, direction=[True, False])
+
+    def test_barostat_survives_serialization(self):
+        """The ``barostat`` selection (Andersen/MTK) must round-trip through
+        the script-interface serialize/deserialize path used by
+        ``save_checkpoint()``/``load_checkpoint()``. ``barostat`` is a
+        construct-time parameter of ``VelocityVerletIsoNPT``; if it is not
+        registered as an ``AutoParameter`` it is dropped on serialization and
+        silently defaults to ``'Andersen'`` on restore (bug-sweep #8).
+        """
+        system = self.system
+        system.integrator.set_isotropic_npt(
+            ext_pressure=1., piston=4., barostat=self.barostat)
+        integrator = system.integrator.integrator
+
+        # the active barostat must be readable from Python
+        self.assertEqual(integrator.get_params()["barostat"], self.barostat)
+
+        # the exact ObjectHandle serialize/deserialize round-trip performed by
+        # checkpointing: pickling the script-interface object goes through
+        # _serialize() and rebuilds it via do_construct()
+        restored = pickle.loads(pickle.dumps(integrator))
+        self.assertEqual(restored.get_params()["barostat"], self.barostat)
+
+        # re-assigning to ``integrator`` fires the IntegratorHandle setter,
+        # which calls activate() and recomputes the integ_switch from the
+        # (de)serialized barostat: it must still match the requested barostat
+        system.integrator.integrator = restored
+        self.assertEqual(
+            system.integrator.integrator.get_params()["barostat"],
+            self.barostat)
 
     @utx.skipIfMissingFeatures(["MASS", "EXTERNAL_FORCES"])
     def test_00_propagation(self):
