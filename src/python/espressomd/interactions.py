@@ -707,6 +707,40 @@ class GaussianInteraction(NonBondedInteraction):
 
 
 @script_interface_register
+class GaussianAnisoInteraction(NonBondedInteraction):
+    """Anisotropic Gaussian interaction.
+
+    Methods
+    -------
+    set_params()
+        Set new parameters for the interaction.
+
+        Parameters
+        ----------
+        eps : :obj:`float`
+            Amplitude of the Gaussian interaction.
+        sig_x : :obj:`float`
+            Width of the Gaussian interaction along x.
+        sig_y : :obj:`float`
+            Width of the Gaussian interaction along y.
+        sig_z : :obj:`float`
+            Width of the Gaussian interaction along z.
+        cutoff : :obj:`float`
+            Radial cutoff distance of the interaction.
+
+    """
+
+    _so_name = "Interactions::InteractionGaussianAniso"
+    _so_feature = "GAUSSIAN_ANISO"
+
+    def default_params(self):
+        """Python dictionary of default parameters.
+
+        """
+        return {}
+
+
+@script_interface_register
 class TholeInteraction(NonBondedInteraction):
     """Thole interaction.
 

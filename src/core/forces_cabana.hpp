@@ -208,6 +208,14 @@ struct ForcesKernel {
       if (not skip_non_bonded) {
         pf.f += calc_central_radial_force(ia_params, d, dist);
 
+        // Only call ESPRESSO_ANISO force kernel if active
+#ifdef ESPRESSO_GAUSSIAN_ANISO
+        if (ia_params.active_pair_mask &
+            pair_potential_bit(PairPotential::GaussianAniso)) {
+          pf.f += gaussian_aniso_pair_force(ia_params, d);
+        }
+#endif
+
         // Only call Thole force kernel if active
 #ifdef ESPRESSO_THOLE
         if (thole_active(ia_params, coulomb_kernel != nullptr)) {
