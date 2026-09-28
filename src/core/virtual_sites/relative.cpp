@@ -50,7 +50,8 @@ static auto connection_vector(Particle const &p_ref, Particle const &p_vs) {
   // of the real particle with the quaternion of the virtual particle, which
   // specifies the relative orientation.
   auto const director = Utils::convert_quaternion_to_director(
-                            p_ref.quat() * p_vs.vs_relative().rel_orientation)
+                            Utils::Quaternion<double>(p_ref.quat()) *
+                            p_vs.vs_relative().rel_orientation)
                             .normalize();
 
   return p_vs.vs_relative().distance * director;
@@ -69,16 +70,16 @@ static Utils::Vector3d velocity(Particle const &p_ref, Particle const &p_vs) {
   auto const omega_space_frame =
       convert_vector_body_to_space(p_ref, p_ref.omega());
   // Obtain velocity from v = v_real particle + omega_real_particle * director
-  return vector_product(omega_space_frame, d) + p_ref.v();
+  return vector_product(omega_space_frame, d) + Utils::Vector3d(p_ref.v());
 }
 
-Particle *get_reference_particle(CellStructure &cell_structure,
-                                 Particle const &p) {
+std::optional<Particle> get_reference_particle(CellStructure &cell_structure,
+                                               Particle const &p) {
   auto const &vs_rel = p.vs_relative();
   if (vs_rel.to_particle_id == -1) {
     runtimeErrorMsg() << "Particle with id " << p.id()
                       << " is a dangling virtual site";
-    return nullptr;
+    return std::nullopt;
   }
   auto p_ref_ptr = cell_structure.get_local_particle(vs_rel.to_particle_id);
   if (!p_ref_ptr) {
@@ -135,7 +136,7 @@ void vs_relative_update_particles(CellStructure &cell_structure,
       return;
     }
 
-    auto const *p_ref_ptr = get_reference_particle(cell_structure, p);
+    auto const p_ref_ptr = get_reference_particle(cell_structure, p);
     if (!p_ref_ptr)
       return;
 
@@ -143,21 +144,27 @@ void vs_relative_update_particles(CellStructure &cell_structure,
 
     // position update
     if (is_vs_relative_trans(p)) {
-      p.image_box() = p_ref.image_box();
-      p.pos() = p_ref.pos() + connection_vector(p_ref, p);
+      auto pos = p.pos();
+      auto img = p.image_box();
+      img = p_ref.image_box();
+      pos = Utils::Vector3d(p_ref.pos()) + connection_vector(p_ref, p);
       p.v() = velocity(p_ref, p);
 
       if (box_geo.type() == BoxType::LEES_EDWARDS) {
         auto push = LeesEdwards::Push(box_geo);
         push(p, 1); // includes a position fold
       } else {
-        box_geo.fold_position(p.pos(), p.image_box());
+        Utils::Vector3d position = pos;
+        Utils::Vector3i image_box = img;
+        box_geo.fold_position(position, image_box);
+        pos = position;
+        img = image_box;
       }
     }
 
     // Orientation update
     if (is_vs_relative_rot(p)) {
-      p.quat() = p_ref.quat() * p.vs_relative().quat;
+      p.quat() = Utils::Quaternion<double>(p_ref.quat()) * p.vs_relative().quat;
     }
   });
 
@@ -179,18 +186,19 @@ void vs_relative_back_transfer_forces_and_torques(
         if (!is_vs(p))
           return;
 
-        auto *p_ref_ptr = get_reference_particle(cell_structure, p);
-        assert(p_ref_ptr != nullptr);
+        auto p_ref_ptr = get_reference_particle(cell_structure, p);
+        assert(p_ref_ptr.has_value());
 
         auto &p_ref = *p_ref_ptr;
+        auto ref_torque = p_ref.torque();
         if (is_vs_relative_trans(p)) {
-          p_ref.force() += p.force();
-          p_ref.torque() +=
-              vector_product(connection_vector(p_ref, p), p.force());
+          auto const p_force = Utils::Vector3d(p.force());
+          p_ref.force() += p_force;
+          ref_torque += vector_product(connection_vector(p_ref, p), p_force);
         }
 
         if (is_vs_rot(p)) {
-          p_ref.torque() += p.torque();
+          ref_torque += p.torque();
         }
       },
       /* parallel */ false);
@@ -203,7 +211,7 @@ vs_relative_pressure_tensor(CellStructure const &cell_structure) {
 
   for (auto const &p : cell_structure.local_particles()) {
     if (is_vs_relative_trans(p)) {
-      if (auto const *p_ref_ptr = cell_structure.get_local_particle(
+      if (auto const p_ref_ptr = cell_structure.get_local_particle(
               p.vs_relative().to_particle_id)) {
         pressure_tensor += constraint_stress(*p_ref_ptr, p);
       }

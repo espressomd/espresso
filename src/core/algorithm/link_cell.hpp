@@ -32,7 +32,12 @@ template <typename CellIterator, typename PairKernel>
 void link_cell(CellIterator first, CellIterator last,
                PairKernel &&pair_kernel) {
   for (auto cell = first; cell != last; ++cell) {
-    auto &local_particles = cell->particles();
+    // particles() returns a lightweight row-range VIEW by value; its iterators
+    // reference the cell's stable row bag, so the range object is a cheap
+    // handle held for the loop. Each iterator reuses its own cached view, so
+    // `*it` (p1) stays valid while the inner `jt`/neighbor loops advance their
+    // own independent iterators.
+    auto local_particles = cell->particles();
     for (auto it = local_particles.begin(); it != local_particles.end(); ++it) {
       auto &p1 = *it;
 

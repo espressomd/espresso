@@ -111,8 +111,7 @@ BOOST_AUTO_TEST_CASE(detects_defects) {
   mark_boundary_cells(locals, ghosts);
 
   HaloPlan good;
-  good.neighbors.push_back(NeighborComm{
-      1, {SendRegion{&local.particles(), {}}}, {&ghost.particles()}});
+  good.neighbors.push_back(NeighborComm{1, {SendRegion{&local, {}}}, {&ghost}});
   BOOST_CHECK(validate_halo_plan(good, locals, ghosts).empty());
 
   // uncovered ghost (neighborship-match + coverage failure)
@@ -121,14 +120,13 @@ BOOST_AUTO_TEST_CASE(detects_defects) {
 
   // duplicate peer
   HaloPlan duppeer = good;
-  duppeer.neighbors.push_back(NeighborComm{
-      1, {SendRegion{&local.particles(), {}}}, {&ghost.particles()}});
+  duppeer.neighbors.push_back(
+      NeighborComm{1, {SendRegion{&local, {}}}, {&ghost}});
   BOOST_CHECK(not validate_halo_plan(duppeer, locals, ghosts).empty());
 
   // double-filled ghost
   HaloPlan dbl = good;
-  dbl.neighbors.push_back(NeighborComm{
-      2, {SendRegion{&local.particles(), {}}}, {&ghost.particles()}});
+  dbl.neighbors.push_back(NeighborComm{2, {SendRegion{&local, {}}}, {&ghost}});
   BOOST_CHECK(not validate_halo_plan(dbl, locals, ghosts).empty());
 
   // send/recv size mismatch
@@ -139,14 +137,14 @@ BOOST_AUTO_TEST_CASE(detects_defects) {
   // recv target outside ghost set
   Cell alien;
   HaloPlan alien_recv = good;
-  alien_recv.neighbors[0].recv[0] = &alien.particles();
+  alien_recv.neighbors[0].recv[0] = &alien;
   auto violations = validate_halo_plan(alien_recv, locals, ghosts);
   BOOST_CHECK_MESSAGE(not violations.empty(),
                       "Expected recv-outside-ghost violation");
 
   // isolated shape mismatch (send.size() != recv.size())
   HaloPlan shape_only = good;
-  shape_only.neighbors[0].send.push_back(SendRegion{&local.particles(), {}});
+  shape_only.neighbors[0].send.push_back(SendRegion{&local, {}});
   // send.size()==2, recv.size()==1 -> shape violation; ghost still covered once
   auto shape_violations = validate_halo_plan(shape_only, locals, ghosts);
   BOOST_CHECK_MESSAGE(not shape_violations.empty(),
@@ -398,8 +396,8 @@ BOOST_AUTO_TEST_CASE(symmetry_detects_mismatch,
   int const send_peer = (me + 1) % n;
   asym.neighbors.push_back(
       NeighborComm{send_peer,
-                   {SendRegion{&dummy.particles(), {}}}, // send.size() == 1
-                   {}});                                 // recv.size() == 0
+                   {SendRegion{&dummy, {}}}, // send.size() == 1
+                   {}});                     // recv.size() == 0
 
   auto violations = validate_halo_plan_symmetry(asym);
   BOOST_CHECK_MESSAGE(not violations.empty(),

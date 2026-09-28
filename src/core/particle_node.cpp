@@ -27,11 +27,13 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_store/MigrationPack.hpp"
+#include "particle_store/ParticleStore.hpp"
+#include "rotation.hpp"
 #include "system/System.hpp"
 
 #include <utils/Cache.hpp>
 #include <utils/Vector.hpp>
-#include <utils/mpi/gatherv.hpp>
 
 #include <boost/mpi/collectives/all_gather.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -40,9 +42,14 @@
 #include <boost/mpi/collectives/scatter.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <functional>
 #include <iterator>
+#include <memory>
 #include <ranges>
 #include <span>
 #include <stdexcept>
@@ -84,30 +91,203 @@ namespace {
 /* Limit cache to 100 MiB */
 std::size_t const max_cache_size = (100ul * 1048576ul) / sizeof(Particle);
 Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
+
+/**
+ * @brief Snapshot store backing the fetch cache.
+ *
+ * Every @ref Particle placed into @ref particle_fetch_cache is a view over
+ * this head-node-local store. A particle received from a worker rank is
+ * unpacked directly into a row here via @ref MigrationPack::unpack_rows; the
+ * cached value is then a view over that row (all accessor reads go through
+ * the store columns). Mirrors @c
+ * Constraints::ShapeBasedConstraint::m_part_rep_store.
+ *
+ * Pointer-stability design (IMPORTANT):
+ * @ref Utils::Cache is backed by a @c std::unordered_map<int,const Particle>,
+ * whose nodes are stable across rehash but whose @c put() EVICTS a RANDOM
+ * other element when the cache is full (@c drop_random_element). We therefore
+ * do NOT keep raw @c Particle* addresses to re-assign on growth (an evicted
+ * entry's address would dangle). Instead the store has a FIXED capacity per
+ * invalidation epoch: it is lazily built once (on the first attach after an
+ * invalidation) sized to the cache's capacity, and rows are handed out
+ * monotonically. If the row counter would exceed the capacity, we simply drop
+ * the whole cache and store (@ref reset_fetch_cache_store) and rebuild lazily
+ * on the next attach — a cache is always safe to drop, and this avoids any
+ * pointer bookkeeping or store-growth relocation. The capacity is capped so a
+ * single epoch never over-allocates. */
+ParticleStore fetch_cache_store;
+/** Next free row in @ref fetch_cache_store; -1 while the store is unbuilt. */
+int fetch_cache_store_next_row = -1;
+/** Capacity @ref fetch_cache_store was built with in the current epoch. */
+std::size_t fetch_cache_store_capacity = 0u;
+/** Co-ownership of the Kokkos runtime (mirrors @ref CellStructure's
+ *  @c m_kokkos_handle and the analogous member of
+ *  @ref Constraints::ShapeBasedConstraint). @c fetch_cache_store
+ *  holds Kokkos Views that must be released before @c Kokkos::finalize().
+ *  Captured lazily when the store first allocates (particle_node code runs
+ *  well after Kokkos init, but we capture defensively the same way). */
+std::shared_ptr<KokkosHandle> fetch_cache_store_kokkos_handle;
+
+/** Upper bound on rows allocated per invalidation epoch, so a single epoch
+ *  never over-allocates the store. The store never needs more rows than the
+ *  cache can hold entries, so this is min(cache capacity, a sane cap). */
+std::size_t fetch_cache_store_capacity_target() {
+  constexpr std::size_t cap = 65536u;
+  return std::min(particle_fetch_cache.max_size(), cap);
+}
+
+/** Release the snapshot store's columns and reset the epoch. Kept in lock-step
+ *  with @ref particle_fetch_cache invalidation: dropping cached particles whose
+ *  store rows we release simultaneously is exactly correct. */
+void reset_fetch_cache_store() {
+  fetch_cache_store.release_columns();
+  fetch_cache_store_next_row = -1;
+  fetch_cache_store_capacity = 0u;
+  // Drop the Kokkos runtime co-ownership: the store now holds no Views, so
+  // keeping the handle would defer Kokkos::finalize() to this translation
+  // unit's static teardown, where the store static is destroyed AFTER the
+  // handle static (reverse construction order) and its (already released)
+  // Views would otherwise be touched post-finalize. Releasing both together
+  // keeps them in lock-step.
+  fetch_cache_store_kokkos_handle.reset();
+}
+
+/** Allocate the fixed-capacity columns for a fresh epoch and reset the row
+ *  counter to 0. Co-owns the Kokkos runtime so the columns can be released even
+ *  if this translation unit outlives the last CellStructure (Kokkos is
+ *  initialized by the time any particle fetch happens; capture defensively). */
+void build_fetch_cache_store() {
+  fetch_cache_store_kokkos_handle = ::kokkos_handle;
+  fetch_cache_store_capacity = fetch_cache_store_capacity_target();
+  fetch_cache_store.begin_rebuild(fetch_cache_store_capacity, 0u);
+  fetch_cache_store.finish_rebuild();
+  fetch_cache_store_next_row = 0;
+}
+
+/**
+ * @brief Cache a fetched particle by unpacking its per-field buffer into
+ * @ref fetch_cache_store.
+ *
+ * Grows nothing: the store is a fixed-capacity snapshot for the current
+ * invalidation epoch (see the store's doc comment). Builds the store lazily on
+ * first use, then hands out one monotonic row per call. The wire @p buffer
+ * (produced by @ref mpi_send_particle_data_local's per-field pack) is unpacked
+ * directly into that store row and a VIEW over the row is put into the cache.
+ * If the store is exhausted mid-epoch, drops the cache and store and starts a
+ * fresh epoch, then unpacks into row 0 of the new store. The returned pointer
+ * aliases the cache's view entry and stays valid until the cache/store are next
+ * invalidated.
+ *
+ * @param p_id    the fetched particle's id (the cache key).
+ * @param buffer  the per-field packed row (exactly one row).
+ * @returns       a pointer to the cached view (accessors read the store row).
+ */
+Particle const *cache_fetched_particle(int p_id,
+                                       std::vector<char> const &buffer) {
+  auto const exhausted = fetch_cache_store_next_row >= 0 and
+                         static_cast<std::size_t>(fetch_cache_store_next_row) >=
+                             fetch_cache_store_capacity;
+  if (exhausted) {
+    // Dropping the cache is always safe (it is a cache).
+    particle_fetch_cache.invalidate();
+    reset_fetch_cache_store();
+  }
+  if (fetch_cache_store_next_row < 0) {
+    build_fetch_cache_store();
+  }
+  auto const row = fetch_cache_store_next_row++;
+  MigrationPack::unpack_rows(fetch_cache_store, row, buffer);
+  // Cache a VIEW over the freshly unpacked store row: its accessors read the
+  // store columns directly.
+  auto const cached =
+      particle_fetch_cache.put(p_id, fetch_cache_store.make_view(row));
+  return cached;
+}
+
+/**
+ * @brief Cache a MULTI-row per-field buffer into @ref fetch_cache_store.
+ *
+ * Unpacks a buffer of @c n rows (produced by @ref mpi_get_particles_local's
+ * per-field pack) into consecutive fetch-cache-store rows and caches a view per
+ * row, keyed by the row's own id (read back from the store). Handles store
+ * exhaustion the same way as @ref cache_fetched_particle (drop the cache/store
+ * and start a fresh epoch). The caller (prefetch) never requests more ids than
+ * the cache capacity, so one epoch always suffices; the exhaustion guard is
+ * defensive.
+ */
+void cache_fetched_rows(std::vector<char> const &buffer) {
+  if (buffer.empty()) {
+    return;
+  }
+  std::uint64_t count = 0u;
+  std::memcpy(&count, buffer.data(), sizeof(count));
+  if (count == 0u) {
+    return;
+  }
+  auto const would_exhaust = [&]() {
+    return fetch_cache_store_next_row >= 0 and
+           static_cast<std::size_t>(fetch_cache_store_next_row) +
+                   static_cast<std::size_t>(count) >
+               fetch_cache_store_capacity;
+  };
+  if (would_exhaust()) {
+    particle_fetch_cache.invalidate();
+    reset_fetch_cache_store();
+  }
+  if (fetch_cache_store_next_row < 0) {
+    build_fetch_cache_store();
+  }
+  auto const first_row = fetch_cache_store_next_row;
+  MigrationPack::unpack_rows(fetch_cache_store, first_row, buffer);
+  fetch_cache_store_next_row += static_cast<int>(count);
+  for (int k = 0; k < static_cast<int>(count); ++k) {
+    auto const row = first_row + k;
+    auto const id = fetch_cache_store.id(row);
+    particle_fetch_cache.put(id, fetch_cache_store.make_view(row));
+  }
+}
 } // namespace
 
-void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
+void invalidate_fetch_cache() {
+  particle_fetch_cache.invalidate();
+  // Cache and snapshot store lifecycles stay in lock-step: rows we release
+  // here back cached particles that we are dropping at the same time.
+  reset_fetch_cache_store();
+}
 std::size_t fetch_cache_max_size() { return particle_fetch_cache.max_size(); }
 
 static void mpi_send_particle_data_local(int p_id) {
+  // Owner-side per-field pack: read the particle's live store row directly
+  // into a byte buffer. The owning rank's store must be clean so the row is
+  // valid. O(1) when clean.
+  get_cell_structure().ensure_particle_store_synchronized();
   auto const p = get_cell_structure().get_local_particle(p_id);
   auto const found = p and not p->is_ghost();
   assert(1 == boost::mpi::all_reduce(::comm_cart, static_cast<int>(found),
                                      std::plus<>()) &&
          "Particle not found");
   if (found) {
-    ::comm_cart.send(0, 42, *p);
+    std::array<int, 1> const rows{{p->store_row()}};
+    std::vector<char> buffer;
+    MigrationPack::pack_rows(*p->store(), rows, buffer);
+    ::comm_cart.send(0, 42, buffer);
   }
 }
 
 REGISTER_CALLBACK(mpi_send_particle_data_local)
 
-const Particle &get_particle_data(int p_id) {
+Particle get_particle_data(int p_id) {
   auto const pnode = get_particle_node(p_id);
 
   if (pnode == this_node) {
+    // The local path hands out a live particle whose accessor reads need valid
+    // ParticleStore rows. O(1) when the store is clean; rank-local.
+    // get_particle_data returns a by-value Particle VIEW (16-byte handle);
+    // the view aliases the live store row and is valid for the caller's
+    // immediate use.
+    get_cell_structure().ensure_particle_store_synchronized();
     auto const p = get_cell_structure().get_local_particle(p_id);
-    assert(p != nullptr);
+    assert(p.has_value());
     return *p;
   }
 
@@ -120,41 +300,92 @@ const Particle &get_particle_data(int p_id) {
   /* Cache miss, fetch the particle,
    * put it into the cache and return a pointer into the cache. */
   Communication::mpiCallbacks().call_all(mpi_send_particle_data_local, p_id);
-  Particle result{};
-  ::comm_cart.recv(boost::mpi::any_source, boost::mpi::any_tag, result);
-  return *(particle_fetch_cache.put(p_id, std::move(result)));
+  // Receive the owner's per-field packed row and unpack it straight into the
+  // head-node fetch-cache store; the cached value is a view over that row.
+  std::vector<char> buffer;
+  ::comm_cart.recv(boost::mpi::any_source, boost::mpi::any_tag, buffer);
+  return *cache_fetched_particle(p_id, buffer);
 }
+
+static auto
+get_local_particle_property(int p_id,
+                            Utils::Vector3d (*getter)(Particle const &)) {
+  // Ensure the owning rank's particle has a valid ParticleStore row before the
+  // getter reads force/torque. O(1) when the store is clean; rank-local.
+  get_cell_structure().ensure_particle_store_synchronized();
+  auto const p = get_cell_structure().get_local_particle(p_id);
+  auto const found = p and not p->is_ghost();
+  assert(1 == boost::mpi::all_reduce(::comm_cart, static_cast<int>(found),
+                                     std::plus<>()) &&
+         "particle not found exactly once");
+  auto const local_value = found ? getter(*p) : Utils::Vector3d{};
+  return boost::mpi::all_reduce(::comm_cart, local_value, std::plus<>());
+}
+
+static void mpi_get_particle_force_local(int p_id) {
+  get_local_particle_property(
+      p_id, [](Particle const &p) { return Utils::Vector3d(p.force()); });
+}
+
+REGISTER_CALLBACK(mpi_get_particle_force_local)
+
+Utils::Vector3d get_particle_force(int p_id) {
+  Communication::mpiCallbacks().call(mpi_get_particle_force_local, p_id);
+  return get_local_particle_property(
+      p_id, [](Particle const &p) { return Utils::Vector3d(p.force()); });
+}
+
+#ifdef ESPRESSO_ROTATION
+static void mpi_get_particle_torque_lab_local(int p_id) {
+  get_local_particle_property(p_id, [](Particle const &p) {
+    return convert_vector_body_to_space(p, Utils::Vector3d(p.torque()));
+  });
+}
+
+REGISTER_CALLBACK(mpi_get_particle_torque_lab_local)
+
+Utils::Vector3d get_particle_torque_lab(int p_id) {
+  Communication::mpiCallbacks().call(mpi_get_particle_torque_lab_local, p_id);
+  return get_local_particle_property(p_id, [](Particle const &p) {
+    return convert_vector_body_to_space(p, Utils::Vector3d(p.torque()));
+  });
+}
+#endif // ESPRESSO_ROTATION
 
 static void mpi_get_particles_local() {
   std::vector<int> local_ids;
   boost::mpi::scatter(comm_cart, local_ids, 0);
 
-  std::vector<Particle> parts(local_ids.size());
-  std::ranges::transform(local_ids, parts.begin(), [](int p_id) {
-    auto const p = get_cell_structure().get_local_particle(p_id);
-    assert(p != nullptr);
-    return *p;
-  });
-
-  Utils::Mpi::gatherv(comm_cart, parts.data(), static_cast<int>(parts.size()),
-                      0);
+  // Per-field pack of the requested live store rows into one byte buffer;
+  // gathered to the head as a per-rank buffer.
+  auto &cell_structure = get_cell_structure();
+  std::vector<int> rows;
+  rows.reserve(local_ids.size());
+  for (auto const p_id : local_ids) {
+    auto const p = cell_structure.get_local_particle(p_id);
+    assert(p.has_value());
+    rows.push_back(p->store_row());
+  }
+  std::vector<char> buffer;
+  MigrationPack::pack_rows(cell_structure.particle_store(), rows, buffer);
+  boost::mpi::gather(comm_cart, buffer, 0);
 }
 
 REGISTER_CALLBACK(mpi_get_particles_local)
 
 /**
- * @brief Get multiple particles at once.
+ * @brief Fetch multiple particles into the head-node fetch cache at once.
  *
- * *WARNING* Particles are returned in an arbitrary order.
+ * Groups the requested ids per owning rank, scatters the id lists, and gathers
+ * one per-field packed buffer per rank; each buffer is unpacked straight into
+ * @c fetch_cache_store (a view per row is cached, keyed by the row's id).
+ * Particles are cached in an arbitrary (per-rank) order; every caller reads the
+ * cache by id afterwards, so the order does not matter.
  *
- * @param ids The ids of the particles that should be returned.
- *
- * @returns The particle list.
+ * @param ids The ids of the particles that should be fetched (none local).
  */
-static std::vector<Particle> mpi_get_particles(std::span<const int> ids) {
+static void mpi_get_particles(std::span<const int> ids) {
   Communication::mpiCallbacks().call(mpi_get_particles_local);
-  /* Return value */
-  std::vector<Particle> parts(ids.size());
 
   /* Group ids per node */
   static std::vector<std::vector<int>> node_ids(comm_cart.size());
@@ -176,15 +407,14 @@ static std::vector<Particle> mpi_get_particles(std::span<const int> ids) {
     assert(ignore.empty());
   }
 
-  static std::vector<int> node_sizes(comm_cart.size());
-  // cannot use range-based transform with GCC 13 + ASAN
-  std::transform(node_ids.begin(), node_ids.end(), node_sizes.begin(),
-                 std::size<std::vector<int>>);
-
-  Utils::Mpi::gatherv(comm_cart, parts.data(), static_cast<int>(parts.size()),
-                      parts.data(), node_sizes.data(), 0);
-
-  return parts;
+  // Gather one per-field packed buffer per rank and unpack each into the fetch
+  // cache. The head's own buffer is empty (it requests nothing of itself).
+  std::vector<std::vector<char>> node_buffers(comm_cart.size());
+  std::vector<char> const empty_buffer;
+  boost::mpi::gather(comm_cart, empty_buffer, node_buffers, 0);
+  for (auto const &buffer : node_buffers) {
+    cache_fetched_rows(buffer);
+  }
 }
 
 void prefetch_particle_data(std::span<const int> in_ids) {
@@ -198,6 +428,9 @@ void prefetch_particle_data(std::span<const int> in_ids) {
   auto out_ids = std::back_inserter(ids);
 
   /* Don't prefetch particles already on the head node or already cached. */
+  // TODO(upstream): inverted predicate -- `has(id)` should be `!has(id)`; this
+  // never prefetches uncached particles. Pre-existing upstream bug in a cold
+  // multi-rank path; fix in a separate upstream PR.
   std::ranges::copy_if(in_ids, out_ids, [](int id) {
     return (get_particle_node(id) != this_node) && particle_fetch_cache.has(id);
   });
@@ -206,11 +439,8 @@ void prefetch_particle_data(std::span<const int> in_ids) {
   if (ids.size() > particle_fetch_cache.max_size())
     ids.resize(particle_fetch_cache.max_size());
 
-  /* Fetch the particles... */
-  for (auto &p : mpi_get_particles(ids)) {
-    auto id = p.id();
-    particle_fetch_cache.put(id, std::move(p));
-  }
+  /* Fetch the particles (unpacked directly into the fetch cache). */
+  mpi_get_particles(ids);
 }
 
 static void mpi_who_has_local() {
@@ -357,13 +587,15 @@ static bool maybe_insert_particle(int p_id, Utils::Vector3d const &pos) {
   auto image_box = Utils::Vector3i{};
   box_geo.fold_position(folded_pos, image_box);
 
-  Particle new_part;
+  // Build the new particle into a staging-store row via a view, then hand it
+  // to add_local_particle, which stages the underlying row into the home cell.
+  auto &cell_structure = get_cell_structure();
+  auto new_part = cell_structure.make_new_particle_view();
   new_part.id() = p_id;
   new_part.pos() = folded_pos;
   new_part.image_box() = image_box;
 
-  return get_cell_structure().add_local_particle(std::move(new_part)) !=
-         nullptr;
+  return cell_structure.add_local_particle(std::move(new_part)).has_value();
 }
 
 /**
@@ -376,7 +608,7 @@ static bool maybe_move_particle(int p_id, Utils::Vector3d const &pos) {
   auto const &system = System::get_system();
   auto const &box_geo = *system.box_geo;
   auto p = system.cell_structure->get_local_particle(p_id);
-  if (p == nullptr) {
+  if (not p) {
     return false;
   }
   auto folded_pos = pos;

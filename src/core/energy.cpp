@@ -111,6 +111,18 @@ Observable_stat const &System::calculate_energy() {
                              inactive_cutoff};
   };
   update_verlet_state(*this, inactive_cutoff);
+#ifdef ESPRESSO_ELECTROSTATICS
+  // Refresh the pack-owned charge column once, guarded by an active coulomb
+  // actor (the energy pair kernel reads it contiguously).
+  if (coulomb.impl->solver) {
+    refresh_pack_charges(*cell_structure);
+  }
+#endif // ESPRESSO_ELECTROSTATICS
+#ifdef ESPRESSO_DIPOLES
+  if (dipoles.impl->solver) {
+    refresh_pack_dipm(*cell_structure);
+  }
+#endif // ESPRESSO_DIPOLES
 
   EnergyBinLayout layout{
       static_cast<std::size_t>(bonded_ias->get_next_key()),
@@ -198,7 +210,10 @@ double System::particle_short_range_energy_contribution(int pid) {
   }
 
   auto ret = 0.0;
-  if (auto const p = cell_structure->get_local_particle(pid)) {
+  // get_local_particle returns a by-value view (optional). Name the outer view
+  // distinctly so it does not shadow the kernel's `p` parameter
+  // (-Werror=shadow=compatible-local, since both are Particle-typed).
+  if (auto const target = cell_structure->get_local_particle(pid)) {
     auto const coulomb_kernel = coulomb.pair_energy_kernel();
     auto kernel = [&ret, this](Particle const &p, Particle const &p1,
                                Utils::Vector3d const &vec) {
@@ -211,7 +226,7 @@ double System::particle_short_range_energy_contribution(int pid) {
       ret += calc_non_bonded_pair_energy(p, p1, ia_params, vec, vec.norm(),
                                          *bonded_ias, coulomb, nullptr);
     };
-    cell_structure->run_on_particle_short_range_neighbors(*p, kernel);
+    cell_structure->run_on_particle_short_range_neighbors(*target, kernel);
   }
   return ret;
 }
@@ -221,17 +236,23 @@ std::optional<double> System::particle_bond_energy(int pid, int bond_id,
   if (cell_structure->get_resort_particles()) {
     cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
   }
-  Particle const *p = cell_structure->get_local_particle(pid);
+  // get_local_particle returns a by-value view (optional).
+  auto const p = cell_structure->get_local_particle(pid);
   if (not p or p->is_ghost())
     return {}; // not available on this MPI rank or ghost
   auto const &iaparams = *bonded_ias->at(bond_id);
   try {
+    // resolve_bond_partners yields by-value views; calc_bonded_energy wants a
+    // span<Particle*>, so build a pointer span into the owned buffer.
     auto resolved_partners = cell_structure->resolve_bond_partners(partners);
+    boost::container::static_vector<Particle *, 4> partner_ptrs;
+    for (auto &partner : resolved_partners) {
+      partner_ptrs.push_back(std::addressof(partner));
+    }
     auto const coulomb_kernel = coulomb.pair_energy_kernel();
     return calc_bonded_energy(
-        iaparams, *p,
-        std::span(resolved_partners.data(), resolved_partners.size()), *box_geo,
-        get_ptr(coulomb_kernel));
+        iaparams, *p, std::span(partner_ptrs.data(), partner_ptrs.size()),
+        *box_geo, get_ptr(coulomb_kernel));
   } catch (const BondResolutionError &) {
     bond_broken_error(p->id(), partners);
     return {};

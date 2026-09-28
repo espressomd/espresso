@@ -48,23 +48,27 @@ public:
     auto system = ::System::get_system().shared_from_this();
     m_constraint->bind_system(system);
     m_system = system;
-    add_parameters({{"only_positive", m_constraint->only_positive()},
-                    {"penetrable", m_constraint->penetrable()},
-                    {"particle_type",
-                     [this](Variant const &value) {
-                       m_constraint->set_type(get_value<int>(value));
-                     },
-                     [this]() { return m_constraint->type(); }},
-                    {"shape",
-                     [this](Variant const &value) {
-                       m_shape =
-                           get_value<std::shared_ptr<Shapes::Shape>>(value);
-                       if (m_shape) {
-                         m_constraint->set_shape(m_shape->shape());
-                       }
-                     },
-                     [this]() { return m_shape; }},
-                    {"particle_velocity", m_constraint->velocity()}});
+    add_parameters(
+        {{"only_positive", m_constraint->only_positive()},
+         {"penetrable", m_constraint->penetrable()},
+         {"particle_type",
+          [this](Variant const &value) {
+            m_constraint->set_type(get_value<int>(value));
+          },
+          [this]() { return m_constraint->type(); }},
+         {"shape",
+          [this](Variant const &value) {
+            m_shape = get_value<std::shared_ptr<Shapes::Shape>>(value);
+            if (m_shape) {
+              m_constraint->set_shape(m_shape->shape());
+            }
+          },
+          [this]() { return m_shape; }},
+         {"particle_velocity",
+          [this](Variant const &value) {
+            m_constraint->set_velocity(get_value<Utils::Vector3d>(value));
+          },
+          [this]() { return m_constraint->velocity(); }}});
   }
 
   Variant do_call_method(std::string const &name, VariantMap const &) override {

@@ -36,11 +36,24 @@ public:
 
   void update_default_propagation(int thermo_switch);
 
+  /** @brief Decide whether a particle with propagation bits @p particle_prop
+   *  participates in propagation mode @p mode.
+   *
+   *  Overload taking the propagation value directly: hot per-particle loops
+   * read
+   *  @c p.propagation() ONCE into a local and pass it here for all ~10 mode
+   *  queries, instead of re-reading the ParticleStore propagation column twice
+   *  per query.
+   */
+  bool should_propagate_with(int particle_prop, int mode) const {
+    return (particle_prop & mode) or
+           ((default_propagation & mode) and
+            (particle_prop & PropagationMode::SYSTEM_DEFAULT));
+  }
+
   template <typename Particle>
   bool should_propagate_with(Particle const &p, int mode) const {
-    return (p.propagation() & mode) or
-           ((default_propagation & mode) and
-            (p.propagation() & PropagationMode::SYSTEM_DEFAULT));
+    return should_propagate_with(p.propagation(), mode);
   }
 
   void set_integ_switch(int value) {

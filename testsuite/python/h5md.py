@@ -114,6 +114,46 @@ class H5mdTests(ut.TestCase):
         cls.py_file.close()
         cls.temp_dir.cleanup()
 
+    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
+    def test_write_on_dirty_store(self):
+        """
+        Regression test: forces/torques live in the ParticleStore, which is
+        only rebuilt lazily. The H5MD "write" method reads particle forces
+        directly and must synchronize the store first (like every other
+        force-reading script-interface entry point). Writing right after a
+        resort marked the store dirty -- with no intervening integrator step
+        or particle-force read that would resynchronize it -- must not crash,
+        and a freshly added particle (no force computed yet) must have an
+        all-zero force in the file. The write must NOT be preceded by any
+        operation that reads a particle force (e.g. ``system.part...f``),
+        which would resynchronize the store on its own.
+        """
+        new_id = N_PART + 1000
+        self.system.part.add(id=new_id, pos=[1., 2., 3.], type=23)
+        try:
+            # mark the ParticleStore dirty (a resort defers the rebuild to the
+            # next force read / integrator step; the H5MD write must trigger it)
+            self.system.cell_system.resort()
+            temp_file = self.temp_path / 'dirty_store.h5'
+            h5 = espressomd.io.writer.h5md.H5md(
+                file_path=temp_file, fields=['particle.force'])
+            # must not crash even though the store has not been synchronized
+            h5.write()
+            h5.flush()
+            h5.close()
+            with h5py.File(temp_file, 'r') as cur:
+                ids = np.array(cur['particles/atoms/id/value'][0])
+                forces = np.array(cur['particles/atoms/force/value'][0])
+                # all particles are present (write did not drop the dirty rows)
+                self.assertEqual(len(ids), N_PART + 1)
+                # the freshly added particle had no force computed: its force
+                # column must read as exactly zero (not stale/garbage data)
+                mask = ids == new_id
+                self.assertEqual(np.count_nonzero(mask), 1)
+                np.testing.assert_allclose(forces[mask][0], [0., 0., 0.])
+        finally:
+            self.system.part.by_id(new_id).remove()
+
     def test_opening(self):
         # as pathlib object
         h5 = espressomd.io.writer.h5md.H5md(file_path=self.temp_file)

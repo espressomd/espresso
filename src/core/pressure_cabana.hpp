@@ -145,15 +145,19 @@ struct PressureKernel {
         system_max_cutoff(system_max_cutoff_), thermo_switch(thermo_switch_) {
   }
 
-  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t i,
-                                                     std::size_t j) const {
-    auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-    auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+  KOKKOS_INLINE_FUNCTION
+  void operator()(std::size_t i, std::size_t j) const {
+    // Translate pack indices to ParticleStore rows once.
+    auto const row_i = aosoa.row(i);
+    auto const row_j = aosoa.row(j);
+    auto const pos1 = aosoa.get_vector_at(aosoa.position, row_i);
+    auto const pos2 = aosoa.get_vector_at(aosoa.position, row_j);
     auto const d = box_geo.get_mi_vector(pos1, pos2);
     auto const dist = d.norm();
     if (dist > system_max_cutoff)
       return;
 
+    // type is pack-owned and read PACK-INDEXED (i/j).
     auto const t1 = aosoa.type(i);
     auto const t2 = aosoa.type(j);
     auto const &ia_params = nonbonded_ias.get_ia_param(t1, t2);
@@ -173,8 +177,8 @@ struct PressureKernel {
 
 #ifdef ESPRESSO_GAY_BERNE
         if (gay_berne_active(dist, ia_params)) {
-          auto const dir1 = aosoa.get_vector_at(aosoa.director, i);
-          auto const dir2 = aosoa.get_vector_at(aosoa.director, j);
+          auto const dir1 = aosoa.get_vector_at(aosoa.director, row_i);
+          auto const dir2 = aosoa.get_vector_at(aosoa.director, row_j);
           f += calc_non_central_force(dir1, dir2, ia_params, d, dist);
         }
 #endif
@@ -195,14 +199,14 @@ struct PressureKernel {
 
 #ifdef ESPRESSO_DPD
         if (dpd_active(ia_params, thermo_switch)) {
-          auto const pid1 = aosoa.id(i);
-          auto const pid2 = aosoa.id(j);
+          auto const pid1 = aosoa.id(row_i);
+          auto const pid2 = aosoa.id(row_j);
           auto const noise_vec = (ia_params.dpd.radial.pref > 0.0 ||
                                   ia_params.dpd.trans.pref > 0.0)
                                      ? dpd_noise(*dpd, pid1, pid2)
                                      : Utils::Vector3d{};
-          auto const vel1 = aosoa.get_vector_at(aosoa.velocity, i);
-          auto const vel2 = aosoa.get_vector_at(aosoa.velocity, j);
+          auto const vel1 = aosoa.get_vector_at(aosoa.velocity, row_i);
+          auto const vel2 = aosoa.get_vector_at(aosoa.velocity, row_j);
           auto const v21 = box_geo.velocity_difference(pos1, pos2, vel1, vel2);
           auto const dist2 = d.norm2();
           // f_r/f_t: dissipative force from radial/transverse DPD channel
@@ -223,7 +227,9 @@ struct PressureKernel {
 
 #ifdef ESPRESSO_ELECTROSTATICS
     if (coulomb_p_kernel != nullptr) {
-      auto const q1 = aosoa.charge(i), q2 = aosoa.charge(j);
+      // charge is read from the pack-owned pair_charge column PACK-INDEXED
+      // (refreshed this step; coulomb solver active).
+      auto const q1 = aosoa.pair_charge(i), q2 = aosoa.pair_charge(j);
       if (q1 != 0. and q2 != 0.) {
         auto const p_c = Utils::flatten((*coulomb_p_kernel)(q1 * q2, d, dist));
         for (std::size_t k = 0; k < 9; ++k)
@@ -235,13 +241,14 @@ struct PressureKernel {
 
 #ifdef ESPRESSO_DIPOLES
     if (dipoles_p_kernel != nullptr) {
-      auto const d1d2 = aosoa.dipm(i) * aosoa.dipm(j);
+      auto const d1d2 = aosoa.pair_dipm(i) * aosoa.pair_dipm(j);
       if (d1d2 != 0.) {
-        auto const dir1 = aosoa.get_vector_at(aosoa.director, i);
-        auto const dir2 = aosoa.get_vector_at(aosoa.director, j);
+        auto const dir1 = aosoa.get_vector_at(aosoa.director, row_i);
+        auto const dir2 = aosoa.get_vector_at(aosoa.director, row_j);
         auto const dist2 = d.norm2();
-        auto const p_d = Utils::flatten((*dipoles_p_kernel)(
-            d1d2, aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2, d, dist, dist2));
+        auto const p_d = Utils::flatten(
+            (*dipoles_p_kernel)(d1d2, aosoa.pair_dipm(i) * dir1,
+                                aosoa.pair_dipm(j) * dir2, d, dist, dist2));
         for (std::size_t k = 0; k < 9; ++k)
           local_pressure(tid, layout.tensor_offset(layout.dipolar_idx(), k)) +=
               p_d[k];

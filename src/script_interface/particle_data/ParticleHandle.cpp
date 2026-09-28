@@ -144,10 +144,10 @@ template <typename T, class F>
 T ParticleHandle::get_particle_property(F const &fun) const {
   auto &cell_structure = get_cell_structure()->get_cell_structure();
   auto const &comm = context()->get_comm();
-  auto const ptr = const_cast<Particle const *>(
-      get_real_particle(comm, m_pid, cell_structure));
+  // get_real_particle returns a by-value optional view.
+  auto const ptr = get_real_particle(comm, m_pid, cell_structure);
   std::optional<T> ret;
-  if (ptr == nullptr) {
+  if (not ptr) {
     ret = {};
   } else {
     ret = {fun(*ptr)};
@@ -166,8 +166,9 @@ template <class F>
 void ParticleHandle::set_particle_property(F const &fun) const {
   auto &cell_structure = get_cell_structure()->get_cell_structure();
   auto const &comm = context()->get_comm();
-  auto const ptr = get_real_particle(comm, m_pid, cell_structure);
-  if (ptr != nullptr) {
+  // mutable optional view -- fun() writes through it.
+  auto ptr = get_real_particle(comm, m_pid, cell_structure);
+  if (ptr) {
     fun(*ptr);
   }
   get_system()->on_particle_change();
@@ -235,20 +236,28 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() {
          auto const p = get_particle_data(m_pid);
-         auto const pos = p.pos();
-         auto const image_box = p.image_box();
+         Utils::Vector3d const pos = p.pos();
+         Utils::Vector3i const image_box = p.image_box();
          return get_system()->box_geo->unfolded_position(pos, image_box);
        }},
       {"v",
        [this](Variant const &value) {
-         set_particle_property(&Particle::v, value);
+         // v() returns a write-through proxy (not an lvalue reference),
+         // so assign through it explicitly instead of via a member setter.
+         set_particle_property([&value](Particle &p) {
+           p.v() = get_value<Utils::Vector3d>(value);
+         });
        },
        [this]() { return get_particle_data(m_pid).v(); }},
       {"f",
        [this](Variant const &value) {
-         set_particle_property(&Particle::force, value);
+         // force() returns a write-through proxy (not an lvalue reference),
+         // so assign through it explicitly instead of via a member setter.
+         set_particle_property([&value](Particle &p) {
+           p.force() = get_value<Utils::Vector3d>(value);
+         });
        },
-       [this]() { return get_particle_data(m_pid).force(); }},
+       [this]() { return get_particle_force(m_pid); }},
       {"mass",
 #ifdef ESPRESSO_MASS
        [this](Variant const &value) {
@@ -284,7 +293,11 @@ ParticleHandle::ParticleHandle() {
        [this](Variant const &value) {
          set_particle_property([&value](Particle &p) {
            auto const dip = get_value<Utils::Vector3d>(value);
-           std::tie(p.quat(), p.dipm()) = convert_dip_to_quat(dip);
+           // quat() is a write-through proxy returned by value; it
+           // cannot be an std::tie target. Assign through it explicitly.
+           auto const [quat, dipm] = convert_dip_to_quat(dip);
+           p.quat() = quat;
+           p.dipm() = dipm;
          });
        },
        [this]() { return get_particle_data(m_pid).calc_dip(); }},
@@ -297,7 +310,12 @@ ParticleHandle::ParticleHandle() {
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
       {"dip_fld",
        [this](Variant const &value) {
-         set_particle_property(&Particle::dip_fld, value);
+         // dip_fld() returns a write-through proxy (not an lvalue reference)
+         // once the dipole field moves into the ParticleStore columns, so
+         // assign through it explicitly instead of via a member setter.
+         set_particle_property([&value](Particle &p) {
+           p.dip_fld() = get_value<Utils::Vector3d>(value);
+         });
        },
        [this]() { return get_particle_data(m_pid).dip_fld(); }},
 #endif
@@ -351,7 +369,7 @@ ParticleHandle::ParticleHandle() {
          });
        },
        [this]() {
-         auto const quat = get_particle_data(m_pid).quat();
+         Utils::Quaternion<double> const quat = get_particle_data(m_pid).quat();
          return Utils::convert_quaternion_to_director(quat);
        }},
       {"quat",
@@ -362,7 +380,11 @@ ParticleHandle::ParticleHandle() {
        [this]() { return quat2vector(get_particle_data(m_pid).quat()); }},
       {"omega_body",
        [this](Variant const &value) {
-         set_particle_property(&Particle::omega, value);
+         // omega() returns a write-through proxy (not an lvalue reference),
+         // so assign through it explicitly instead of via a member setter.
+         set_particle_property([&value](Particle &p) {
+           p.omega() = get_value<Utils::Vector3d>(value);
+         });
        },
        [this]() { return get_particle_data(m_pid).omega(); }},
       {"rotation",
@@ -387,7 +409,7 @@ ParticleHandle::ParticleHandle() {
          });
        },
        [this]() {
-         auto &p = get_particle_data(m_pid);
+         auto const p = get_particle_data(m_pid);
          return convert_vector_body_to_space(p, p.omega());
        }},
       {"torque_lab",
@@ -397,22 +419,29 @@ ParticleHandle::ParticleHandle() {
            p.torque() = convert_vector_space_to_body(p, torque);
          });
        },
-       [this]() {
-         auto &p = get_particle_data(m_pid);
-         return convert_vector_body_to_space(p, p.torque());
-       }},
+       [this]() { return get_particle_torque_lab(m_pid); }},
 #endif // ESPRESSO_ROTATION
 #ifdef ESPRESSO_ROTATIONAL_INERTIA
       {"rinertia",
        [this](Variant const &value) {
-         set_particle_property(&Particle::rinertia, value);
+         // rinertia() returns a write-through proxy (not an lvalue reference)
+         // once the rotational inertia moves into the ParticleStore columns, so
+         // assign through it explicitly instead of via a member setter.
+         set_particle_property([&value](Particle &p) {
+           p.rinertia() = get_value<Utils::Vector3d>(value);
+         });
        },
        [this]() { return get_particle_data(m_pid).rinertia(); }},
 #endif // ESPRESSO_ROTATIONAL_INERTIA
 #ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
       {"mu_E",
        [this](Variant const &value) {
-         set_particle_property(&Particle::mu_E, value);
+         // mu_E() returns a write-through proxy (not an lvalue reference) once
+         // the electrophoretic mobility moves into the ParticleStore columns,
+         // so assign through it explicitly instead of via a member setter.
+         set_particle_property([&value](Particle &p) {
+           p.mu_E() = get_value<Utils::Vector3d>(value);
+         });
        },
        [this]() { return get_particle_data(m_pid).mu_E(); }},
 #endif // ESPRESSO_LB_ELECTROHYDRODYNAMICS
@@ -433,13 +462,23 @@ ParticleHandle::ParticleHandle() {
        }},
       {"ext_force",
        [this](Variant const &value) {
-         set_particle_property(&Particle::ext_force, value);
+         // ext_force() returns a write-through proxy (not an lvalue reference)
+         // once the external force moves into the ParticleStore columns, so
+         // assign through it explicitly instead of via a member setter.
+         set_particle_property([&value](Particle &p) {
+           p.ext_force() = get_value<Utils::Vector3d>(value);
+         });
        },
        [this]() { return get_particle_data(m_pid).ext_force(); }},
 #ifdef ESPRESSO_ROTATION
       {"ext_torque",
        [this](Variant const &value) {
-         set_particle_property(&Particle::ext_torque, value);
+         // ext_torque() returns a write-through proxy (not an lvalue reference)
+         // once the external torque moves into the ParticleStore columns, so
+         // assign through it explicitly instead of via a member setter.
+         set_particle_property([&value](Particle &p) {
+           p.ext_torque() = get_value<Utils::Vector3d>(value);
+         });
        },
        [this]() { return get_particle_data(m_pid).ext_torque(); }},
 #endif // ESPRESSO_ROTATION
@@ -447,15 +486,24 @@ ParticleHandle::ParticleHandle() {
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
       {"gamma",
        [this](Variant const &value) {
-         set_particle_property(&Particle::gamma,
-                               Variant{get_gamma_safe(value)});
+         // gamma() returns a write-through proxy (Vector3d,
+         // PARTICLE_ANISOTROPY) or an lvalue reference (double) once the
+         // friction coefficient moves into the ParticleStore columns, so assign
+         // through it explicitly. get_gamma_safe() yields the config-matching
+         // value type.
+         auto const gamma = get_gamma_safe(value);
+         set_particle_property([&gamma](Particle &p) { p.gamma() = gamma; });
        },
        [this]() { return get_particle_data(m_pid).gamma(); }},
 #ifdef ESPRESSO_ROTATION
       {"gamma_rot",
        [this](Variant const &value) {
-         set_particle_property(&Particle::gamma_rot,
-                               Variant{get_gamma_safe(value)});
+         // gamma_rot() returns a write-through proxy (Vector3d) or an lvalue
+         // reference (double) once the rotational friction coefficient moves
+         // into the ParticleStore columns, so assign through it explicitly.
+         auto const gamma_rot = get_gamma_safe(value);
+         set_particle_property(
+             [&gamma_rot](Particle &p) { p.gamma_rot() = gamma_rot; });
        },
        [this]() { return get_particle_data(m_pid).gamma_rot(); }},
 #endif // ESPRESSO_ROTATION
@@ -739,7 +787,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     auto &cell_structure = get_cell_structure()->get_cell_structure();
     auto const p =
         get_real_particle(context()->get_comm(), m_pid, cell_structure);
-    if (p != nullptr) {
+    if (p) {
       return p->has_exclusion(other_pid);
     }
   }
@@ -839,7 +887,7 @@ void ParticleHandle::do_construct(VariantMap const &params) {
     particle_checks(m_pid, pos);
     auto &cell_structure = get_cell_structure()->get_cell_structure();
     auto ptr = cell_structure.get_local_particle(m_pid);
-    if (ptr != nullptr) {
+    if (ptr) {
       throw std::invalid_argument("Particle " + std::to_string(m_pid) +
                                   " already exists");
     }

@@ -39,10 +39,10 @@ static auto get_real_particle(boost::mpi::communicator const &comm, int p_id) {
   assert(p_id >= 0);
   auto &system = System::get_system();
   auto ptr = system.cell_structure->get_local_particle(p_id);
-  if (ptr != nullptr and ptr->is_ghost()) {
-    ptr = nullptr;
+  if (ptr.has_value() and ptr->is_ghost()) {
+    ptr.reset();
   }
-  assert(boost::mpi::all_reduce(comm, static_cast<int>(ptr != nullptr),
+  assert(boost::mpi::all_reduce(comm, static_cast<int>(ptr.has_value()),
                                 std::plus<>()) == 1);
   return ptr;
 }
@@ -125,9 +125,10 @@ bool ExclusionRadius::check_exclusion_range(int p_id, int p_type) {
     std::erase(all_ids, p_id);
 
     /* broadcast the position of the inserted particle from its owning rank */
-    auto p1_pos = (p1_ptr != nullptr) ? p1_ptr->pos() : Utils::Vector3d{};
+    auto p1_pos =
+        p1_ptr.has_value() ? Utils::Vector3d(p1_ptr->pos()) : Utils::Vector3d{};
     auto const owner_rank =
-        boost::mpi::all_reduce(m_comm, (p1_ptr != nullptr) ? m_comm.rank() : -1,
+        boost::mpi::all_reduce(m_comm, p1_ptr.has_value() ? m_comm.rank() : -1,
                                boost::mpi::maximum<int>());
     boost::mpi::broadcast(m_comm, p1_pos, owner_rank);
 
@@ -135,7 +136,7 @@ bool ExclusionRadius::check_exclusion_range(int p_id, int p_type) {
     for (auto const p2_id : all_ids) {
       auto const p2_ptr = cell_structure.get_local_particle(p2_id);
       /* only the owning rank (real, non-ghost copy) tests each candidate */
-      if (p2_ptr != nullptr and not p2_ptr->is_ghost() and
+      if (p2_ptr.has_value() and not p2_ptr->is_ghost() and
           is_inside_exclusion_range(p1_pos, *p2_ptr)) {
         local_touched = true;
         break;
@@ -154,14 +155,14 @@ bool ExclusionRadius::check_exclusion_range(int p_id, int p_type) {
     mutable_system.on_observable_calc();
     auto const local_ids =
         get_short_range_neighbors(mutable_system, p_id, m_max_exclusion_range);
-    assert(p1_ptr == nullptr or !!local_ids);
+    assert(not p1_ptr.has_value() or !!local_ids);
     if (local_ids) {
       particle_ids = std::move(*local_ids);
     }
   }
 
   bool local_touched = false;
-  if (p1_ptr != nullptr) {
+  if (p1_ptr.has_value()) {
     auto const &p1 = *p1_ptr;
     /* Check if the inserted particle within the exclusion radius of any other
      * particle */
@@ -184,8 +185,8 @@ bool ExclusionRadius::check_exclusion_range(int p_id, int p_type) {
 }
 
 bool ExclusionRadius::check_exclusion_range(int pid) {
-  auto const *p = get_real_particle(m_comm, pid);
-  assert(boost::mpi::all_reduce(m_comm, static_cast<int>(p != nullptr),
+  auto const p = get_real_particle(m_comm, pid);
+  assert(boost::mpi::all_reduce(m_comm, static_cast<int>(p.has_value()),
                                 std::plus<>()) == 1);
   int type_local = -1;
   if (m_comm.rank() == 0) {

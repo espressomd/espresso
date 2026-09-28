@@ -119,30 +119,6 @@ struct elc_data {
 
   /// pairwise contributions from lower and upper layers
   void dielectric_layers_contribution(BoxGeometry const &box_geo,
-                                      std::size_t p1, std::size_t p2,
-                                      auto &aosoa, double q1q2,
-                                      auto &&kernel) const {
-    if (aosoa.position(p1, 2) < space_layer) {
-      auto const q_eff = delta_mid_bot * q1q2;
-      auto pos2 = aosoa.get_vector_at(aosoa.position, p2);
-      auto pos1 = aosoa.get_vector_at(aosoa.position, p1);
-      pos1[2] *= -1.;
-      auto const d = box_geo.get_mi_vector(pos2, pos1);
-      kernel(q_eff, d);
-    }
-    if (aosoa.position(p1, 2) > (box_h - space_layer)) {
-      auto const q_eff = delta_mid_top * q1q2;
-      auto const z = 2. * box_h - aosoa.position(p1, 2);
-      auto pos2 = aosoa.get_vector_at(aosoa.position, p2);
-      auto pos1 = aosoa.get_vector_at(aosoa.position, p1);
-      pos1[2] = 2. * box_h - pos1[2];
-      auto const d = box_geo.get_mi_vector(pos2, pos1);
-      kernel(q_eff, d);
-    }
-  }
-
-  /// pairwise contributions from lower and upper layers
-  void dielectric_layers_contribution(BoxGeometry const &box_geo,
                                       Utils::Vector3d const &pos1,
                                       Utils::Vector3d const &pos2, double q1q2,
                                       auto &&kernel) const {
@@ -276,32 +252,6 @@ struct ElectrostaticLayerCorrection
     return std::visit(
         [&](auto &solver) { return solver->pair_force(q1q2, d, dist); },
         base_solver);
-  }
-
-  /** @brief Calculate short-range pair energy correction. */
-  double pair_energy_correction(std::size_t p1, std::size_t p2, auto &aosoa,
-                                double q1q2) const {
-    double energy = 0.;
-    if (elc.dielectric_contrast_on) {
-      energy = std::visit(
-          [this, &aosoa, p1, p2, q1q2](auto &p3m_ptr) {
-            auto const &p3m = *p3m_ptr;
-            auto energy = 0.;
-            elc.dielectric_layers_contribution(
-                *m_box_geo, p1, p2, aosoa, q1q2,
-                [&](double q_eff, Utils::Vector3d const &d) {
-                  energy += p3m.pair_energy(q_eff, d.norm());
-                });
-            elc.dielectric_layers_contribution(
-                *m_box_geo, p2, p1, aosoa, q1q2,
-                [&](double q_eff, Utils::Vector3d const &d) {
-                  energy += p3m.pair_energy(q_eff, d.norm());
-                });
-            return energy / 2.;
-          },
-          base_solver);
-    }
-    return energy;
   }
 
   /** @brief Calculate short-range pair energy correction. */

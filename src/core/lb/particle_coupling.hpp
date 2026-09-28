@@ -107,7 +107,7 @@ class CouplingBookkeeping {
   /** @brief Check if there is locally a real particle for the given ghost. */
   bool is_ghost_for_local_particle(Particle const &ghost) const {
     auto const p = m_cell_structure.get_local_particle(ghost.id());
-    return p != nullptr and not p->is_ghost();
+    return p.has_value() and not p->is_ghost();
   }
 
 public:

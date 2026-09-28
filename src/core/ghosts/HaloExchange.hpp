@@ -75,11 +75,11 @@ struct ExchangeBuffers {
   std::vector<boost::mpi::request> requests;
   /**
    * Scratch cell-pointer arrays for the packing routines.  For the Reduce
-   * direction send/recv roles swap; we need the plain @c ParticleList* from
+   * direction send/recv roles swap; we need the plain @c Cell* from
    * the @c SendRegion list.  These must outlive the pack/unpack calls.
    */
-  std::vector<std::vector<ParticleList *>> send_cells;
-  std::vector<std::vector<ParticleList *>> recv_cells;
+  std::vector<std::vector<Cell *>> send_cells;
+  std::vector<std::vector<Cell *>> recv_cells;
   /**
    * Scratch index map for the Overwrite (wait_any) path in
    * @c halo_exchange_finish: maps active request slot -> original neighbor

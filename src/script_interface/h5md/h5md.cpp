@@ -88,6 +88,11 @@ Variant H5md::do_call_method(std::string const &name, VariantMap const &) {
   if (name == "write") {
     sanity_check_is_file_closed(name);
     auto const &system = ::System::get_system();
+    // Forces/torques live in the ParticleStore columns, which are only rebuilt
+    // lazily. A write triggered before the first integrator step (or after a
+    // particle was added) would otherwise read stale/detached rows and crash;
+    // sync the store first.
+    system.cell_structure->ensure_particle_store_synchronized();
     auto const particles = system.cell_structure->local_particles();
     auto const sim_time = system.get_sim_time();
     auto const time_step = system.get_time_step();

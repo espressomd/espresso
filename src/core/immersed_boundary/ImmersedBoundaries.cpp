@@ -123,8 +123,8 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
       // This is to get a continuous trajectory with no jumps when box
       // boundaries are crossed.
       auto const x1 = box_geo.unfolded_position(p1.pos(), p1.image_box());
-      auto const x2 = x1 + box_geo.get_mi_vector(p2.pos(), x1);
-      auto const x3 = x1 + box_geo.get_mi_vector(p3.pos(), x1);
+      auto const x2 = x1 + box_geo.get_mi_vector(Utils::Vector3d(p2.pos()), x1);
+      auto const x3 = x1 + box_geo.get_mi_vector(Utils::Vector3d(p3.pos()), x1);
 
       // Volume of this tetrahedron
       // See @cite zhang01b
@@ -189,8 +189,8 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
 
       // Unfolding seems to work only for the first particle of a triel
       // so get the others from relative vectors considering PBC
-      auto const a12 = box_geo.get_mi_vector(p2.pos(), x1);
-      auto const a13 = box_geo.get_mi_vector(p3.pos(), x1);
+      auto const a12 = box_geo.get_mi_vector(Utils::Vector3d(p2.pos()), x1);
+      auto const a13 = box_geo.get_mi_vector(Utils::Vector3d(p3.pos()), x1);
 
       // Now we have the true and good coordinates
       // This is eq. (9) in @cite dupin08a.

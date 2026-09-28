@@ -64,9 +64,9 @@ public:
     for (auto const &[pid1, pid2] : m_pairs) {
       for (auto const pid : {pid1, pid2}) {
         if (not visited_pids.contains(pid)) {
-          auto const *p = cell_structure.get_local_particle(pid);
-          if (p and not p->is_ghost()) {
-            local_pid_pos.emplace_back(pid, p->pos());
+          auto const p = cell_structure.get_local_particle(pid);
+          if (p.has_value() and not p->is_ghost()) {
+            local_pid_pos.emplace_back(pid, Utils::Vector3d(p->pos()));
           }
           visited_pids.emplace(pid);
         }

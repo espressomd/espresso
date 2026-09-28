@@ -30,6 +30,7 @@ namespace utf = boost::unit_test;
 #ifdef ESPRESSO_WALBERLA
 
 #include "ParticleFactory.hpp"
+#include "ParticleStoreTestFixture.hpp"
 #include "particle_management.hpp"
 
 #include "BoxGeometry.hpp"
@@ -203,9 +204,12 @@ BOOST_FIXTURE_TEST_CASE(rng, CleanupActorLB) {
   BOOST_CHECK_EQUAL(thermostat.rng_seed(), 17u);
   BOOST_CHECK_EQUAL(thermostat.rng_counter(), 11ul);
   BOOST_CHECK(not thermostat.is_seed_required());
-  Particle test_partcl_1{};
+  // The particle id lives in the ParticleStore; attach both hand-made
+  // particles to a standalone store. get_noise_term only reads id().
+  ParticleStoreTestFixture fixture{};
+  auto test_partcl_1 = fixture.make();
   test_partcl_1.id() = 1;
-  Particle test_partcl_2{};
+  auto test_partcl_2 = fixture.make();
   test_partcl_2.id() = 4;
   auto const step1_random1 = coupling.get_noise_term(test_partcl_1);
   auto const step1_random2 = coupling.get_noise_term(test_partcl_2);
@@ -237,7 +241,9 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, drag_force, bdata::make(kTs), kT) {
   espresso::set_lb_kT(kT);
   auto &lb = espresso::system->lb;
   auto &thermostat = *espresso::system->thermostat->lb;
+  ParticleStoreTestFixture fixture{};
   Particle p{};
+  fixture.attach(p);
   p.v() = {-2.5, 1.5, 2.};
   p.pos() = espresso::lb_fluid->get_lattice().get_local_domain().first;
   thermostat.gamma = 0.2;
@@ -250,7 +256,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, drag_force, bdata::make(kTs), kT) {
     auto const observed = lb_drag_force(lb, 0.2, p, p.pos());
     Utils::Vector3d expected{0.5, -0.3, -0.4};
 #ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
-    expected += thermostat.gamma * p.mu_E();
+    expected += thermostat.gamma * Utils::Vector3d(p.mu_E());
 #endif
     BOOST_CHECK_SMALL((observed - expected).norm(), eps);
   }
@@ -265,7 +271,9 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, swimmer_force, bdata::make(kTs), kT) {
   auto const &local_box = *espresso::system->local_geo;
   auto const first_lb_node =
       espresso::lb_fluid->get_lattice().get_local_domain().first;
+  ParticleStoreTestFixture fixture{};
   Particle p{};
+  fixture.attach(p);
   p.swimming().swimming = true;
   p.swimming().f_swim = 2.;
   p.swimming().is_engine_force_on_fluid = true;
@@ -293,7 +301,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, swimmer_force, bdata::make(kTs), kT) {
               0.5 + static_cast<double>(j) * params.agrid,
               0.5 + static_cast<double>(k) * params.agrid,
           };
-          if ((pos - p.pos()).norm() < 1e-6)
+          if ((pos - Utils::Vector3d(p.pos())).norm() < 1e-6)
             continue;
           if (in_local_halo(local_box, pos, params.agrid)) {
             auto const interpolated = LB::get_force_to_be_applied(pos);
@@ -327,12 +335,14 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, particle_coupling, bdata::make(kTs),
   auto const first_lb_node =
       espresso::lb_fluid->get_lattice().get_local_domain().first;
   thermostat.gamma = 0.2;
+  ParticleStoreTestFixture fixture{};
   Particle p{};
+  fixture.attach(p);
   LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
   auto expected = coupling.get_noise_term(p);
 #ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
   p.mu_E() = Utils::Vector3d{-2., 1.5, 1.};
-  expected += thermostat.gamma * p.mu_E();
+  expected += thermostat.gamma * Utils::Vector3d(p.mu_E());
 #endif
   p.pos() = first_lb_node + Utils::Vector3d::broadcast(0.5);
 
@@ -340,7 +350,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, particle_coupling, bdata::make(kTs),
   {
     if (in_local_halo(local_box, p.pos(), params.agrid)) {
       coupling.kernel({&p});
-      BOOST_CHECK_SMALL((p.force() - expected).norm(), eps);
+      BOOST_CHECK_SMALL((Utils::Vector3d(p.force()) - expected).norm(), eps);
 
       auto const interpolated = -LB::get_force_to_be_applied(p.pos());
       BOOST_CHECK_SMALL((interpolated - params.force_md_to_lb(expected)).norm(),
@@ -398,7 +408,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       auto const &p = *p_opt;
       expected += coupling.get_noise_term(p);
 #ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
-      expected += gamma * p.mu_E();
+      expected += gamma * Utils::Vector3d(p.mu_E());
 #endif
     }
   }
@@ -493,7 +503,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
         if (rank == 0) {
           auto const &p = *p_opt;
           // check particle force
-          BOOST_CHECK_SMALL((p.force() - expected).norm(), eps);
+          BOOST_CHECK_SMALL((Utils::Vector3d(p.force()) - expected).norm(),
+                            eps);
           // check LB force
           auto const lb_after = -LB::get_force_to_be_applied(p.pos());
           auto const lb_expected = params.force_md_to_lb(expected) + lb_before;

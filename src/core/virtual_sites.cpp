@@ -45,7 +45,8 @@ calculate_vs_relate_to_params(Particle const &p_vs, Particle const &p_relate_to,
                               BoxGeometry const &box_geo, double min_global_cut,
                               bool override_cutoff_check) {
   // get the distance between the particles
-  auto d = box_geo.get_mi_vector(p_vs.pos(), p_relate_to.pos());
+  auto d = box_geo.get_mi_vector(Utils::Vector3d(p_vs.pos()),
+                                 Utils::Vector3d(p_relate_to.pos()));
 
   // Check if the distance between virtual and non-virtual particles is larger
   // than minimum global cutoff. If so, warn user.
@@ -85,7 +86,7 @@ calculate_vs_relate_to_params(Particle const &p_vs, Particle const &p_relate_to,
       Utils::convert_director_to_quaternion(d);
 
   // Define quaternion as described above
-  auto relate_to_quat = p_relate_to.quat();
+  Utils::Quaternion<double> relate_to_quat = p_relate_to.quat();
   auto quat =
       Utils::Quaternion<double>{{{{Utils::dot(relate_to_quat, quat_director),
                                    -quat_director[0] * relate_to_quat[1] +

@@ -45,9 +45,14 @@ inline auto constexpr new_part = -3;
 /**
  * @brief Get particle data.
  *
+ *  Returns a by-value @ref Particle VIEW (a 16-byte handle aliasing the live
+ *  store row for local particles, or a fetch-cache row for remote ones).
+ *  Callers that bind the result to @c const @c Particle& keep working
+ *  (lifetime-extended by the const reference).
+ *
  *  @param p_id the identity of the particle to fetch
  */
-const Particle &get_particle_data(int p_id);
+Particle get_particle_data(int p_id);
 
 /**
  * @brief Fetch a range of particle into the fetch cache.
@@ -130,3 +135,10 @@ int get_maximal_particle_id();
  * @brief Get number of particles.
  */
 int get_n_part();
+
+/** @brief Get the force on a particle, fetched from the owning rank. */
+Utils::Vector3d get_particle_force(int p_id);
+#ifdef ESPRESSO_ROTATION
+/** @brief Get a particle's torque in the lab frame, from the owning rank. */
+Utils::Vector3d get_particle_torque_lab(int p_id);
+#endif

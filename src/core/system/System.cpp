@@ -397,6 +397,14 @@ void System::update_dependent_particles() {
 #ifdef ESPRESSO_ELECTROSTATICS
   if (has_icc_enabled()) {
     rebuild_aosoa();
+    // rebuild_aosoa() (re)allocates the pack-owned, uninitialized pair_charge
+    // column. ICC's iteration drives the P3M gather, which reads pair_charge
+    // pack-indexed, so it must be refreshed from the authoritative store q
+    // column here — exactly as the calc_forces/calc_energy paths do around
+    // their own long-range calls (guarded by an active coulomb solver).
+    if (coulomb.impl->solver) {
+      refresh_pack_charges(*cell_structure);
+    }
     update_icc_particles();
   }
 #endif
@@ -411,6 +419,12 @@ void System::on_observable_calc() {
   /* Prepare particle structure: Communication step: number of ghosts and ghost
    * information */
   cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
+  // The resort above changed the topology, invalidating the ParticleStore rows.
+  // update_dependent_particles() (virtual sites) and the observable evaluators
+  // that run after on_observable_calc read positions on live particles, so
+  // rebuild the store rows here. O(1) when clean; rank-local. This is the
+  // central sync point for the energy/pressure/analysis observable paths.
+  cell_structure->ensure_particle_store_synchronized();
   update_dependent_particles();
 
 #ifdef ESPRESSO_ELECTROSTATICS

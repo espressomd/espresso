@@ -20,9 +20,9 @@
 #pragma once
 
 // Combined force initialization and Langevin noise application. Defined in its
-// own translation unit (forces_init.cpp) so that its Langevin call tree does
-// not compete with the hot pair kernel and Verlet-list build in forces.cpp for
-// gcc's per-TU inline-growth budget.
+// own translation unit (forces_init.cpp) so that its [[gnu::flatten]] Langevin
+// call tree does not compete with the hot pair kernel and Verlet-list build in
+// forces.cpp for gcc's per-TU inline-growth budget.
 
 namespace System {
 class System;

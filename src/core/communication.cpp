@@ -26,6 +26,7 @@
 #include "cuda/init.hpp"
 #include "errorhandling.hpp"
 #include "fft/init.hpp"
+#include "particle_node.hpp"
 
 #ifdef ESPRESSO_WALBERLA
 #include <walberla_bridge/walberla_init.hpp>
@@ -137,6 +138,14 @@ CommunicationEnvironment::CommunicationEnvironment(
 
 CommunicationEnvironment::~CommunicationEnvironment() {
   Kokkos::fence();
+  // Release the head-node particle fetch-cache snapshot store's Kokkos Views
+  // (and its runtime co-ownership) while Kokkos is still alive. The store is a
+  // translation-unit static (particle_node.cpp) whose destructor would
+  // otherwise run at program teardown AFTER Kokkos::finalize(), freeing its
+  // DualViews post-finalize and aborting (the store holds the authoritative
+  // position/quaternion/Lees-Edwards columns, so a plain position read
+  // populates it). Mirrors CellStructure's destructor.
+  invalidate_fetch_cache();
   kokkos_handle.reset();
 
 #ifdef ESPRESSO_WALBERLA

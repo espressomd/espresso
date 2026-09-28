@@ -24,19 +24,12 @@
 #include <config/config.hpp>
 
 #include "Particle.hpp"
+#include "ParticleStoreTestFixture.hpp"
 #include "PropagationMode.hpp"
 
-#include <utils/compact_vector.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-
-#include <algorithm>
-#include <array>
-#include <sstream>
 #include <type_traits>
-#include <utility>
 #include <vector>
 
 void check_particle_force(ParticleForce const &out, ParticleForce const &ref) {
@@ -48,7 +41,9 @@ void check_particle_force(ParticleForce const &out, ParticleForce const &ref) {
 
 BOOST_AUTO_TEST_CASE(comparison) {
   {
-    Particle p, q;
+    ParticleStoreTestFixture fx{};
+    auto p = fx.make();
+    auto q = fx.make();
 
     p.id() = 1;
     q.id() = 2;
@@ -58,7 +53,9 @@ BOOST_AUTO_TEST_CASE(comparison) {
   }
 
   {
-    Particle p, q;
+    ParticleStoreTestFixture fx{};
+    auto p = fx.make();
+    auto q = fx.make();
 
     p.id() = 2;
     q.id() = 2;
@@ -68,40 +65,10 @@ BOOST_AUTO_TEST_CASE(comparison) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(serialization) {
-  auto p = Particle();
-
-  auto const bond_id = 5;
-  auto const bond_partners = std::array<const int, 3>{{12, 13, 14}};
-
-  p.id() = 15;
-  p.bonds().insert({bond_id, bond_partners});
-  p.force() = {1., -2., 3.};
-#ifdef ESPRESSO_ROTATION
-  p.torque() = {-4., 5., -6.};
-#endif
-#ifdef ESPRESSO_EXCLUSIONS
-  std::vector<int> el = {5, 6, 7, 8};
-  p.exclusions() = Utils::compact_vector<int>{el.begin(), el.end()};
-#endif
-
-  std::stringstream stream;
-  boost::archive::text_oarchive out_ar(stream);
-  out_ar << p;
-
-  boost::archive::text_iarchive in_ar(stream);
-  auto q = Particle();
-  in_ar >> q;
-
-  auto const &pf = std::as_const(p).force_and_torque();
-  BOOST_CHECK(q.id() == p.id());
-  BOOST_CHECK((*q.bonds().begin() == BondView{bond_id, bond_partners}));
-  BOOST_TEST(q.force() == pf.f, boost::test_tools::per_element());
-#ifdef ESPRESSO_ROTATION
-  BOOST_TEST(q.torque() == pf.torque, boost::test_tools::per_element());
-#endif
-  check_particle_force(q.force_and_torque(), pf);
-}
+// A Particle is a two-word non-owning view and cannot be boost-serialized.
+// Per-field cross-rank transfer is covered by MigrationPack_test.cpp; the
+// row-to-row copy is exercised by ParticleStore::copy_row in
+// ParticleStore_test.cpp.
 
 namespace Utils {
 template <>
@@ -195,60 +162,9 @@ BOOST_AUTO_TEST_CASE(force_constructors) {
   }
 }
 
-#ifdef ESPRESSO_BOND_CONSTRAINT
-
-void check_particle_rattle(ParticleRattle const &out,
-                           ParticleRattle const &ref) {
-  BOOST_TEST(out.correction == ref.correction,
-             boost::test_tools::per_element());
-}
-
-BOOST_AUTO_TEST_CASE(rattle_serialization) {
-  auto const expected_size =
-      Utils::MemcpyOArchive::packing_size<ParticleRattle>();
-
-  BOOST_CHECK_LE(expected_size, sizeof(ParticleRattle));
-
-  std::vector<char> buf(expected_size);
-
-  auto pr = ParticleRattle{{1, 2, 3}};
-
-  {
-    auto oa = Utils::MemcpyOArchive{buf};
-
-    oa << pr;
-
-    BOOST_CHECK_EQUAL(oa.bytes_written(), expected_size);
-  }
-
-  {
-    auto ia = Utils::MemcpyIArchive{buf};
-    ParticleRattle out;
-
-    ia >> out;
-
-    BOOST_CHECK_EQUAL(ia.bytes_read(), expected_size);
-    check_particle_rattle(out, pr);
-  }
-}
-
-BOOST_AUTO_TEST_CASE(rattle_constructors) {
-  auto pr = ParticleRattle{{1, 2, 3}};
-
-  // check copy constructor
-  {
-    ParticleRattle out(pr);
-    check_particle_rattle(out, pr);
-  }
-
-  // check copy assignment operator
-  {
-    ParticleRattle out; // avoid copy elision
-    out = pr;
-    check_particle_rattle(out, pr);
-  }
-}
-#endif // ESPRESSO_BOND_CONSTRAINT
+// ParticleRattle is an empty type anchor; the correction Vector3d lives in a
+// ParticleStore observable column. The correction round-trip is exercised by
+// the store column tests (ParticleStore_test.cpp) and the RATTLE ghost path.
 
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 
@@ -323,7 +239,8 @@ BOOST_AUTO_TEST_CASE(thermal_stoner_wohlfarth_constructors) {
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 
 BOOST_AUTO_TEST_CASE(particle_bitfields) {
-  auto p = Particle();
+  ParticleStoreTestFixture fx{};
+  auto p = fx.make();
 
   // check default values
   BOOST_CHECK(not p.has_fixed_coordinates());

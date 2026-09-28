@@ -19,7 +19,9 @@
 #include "PidObservable.hpp"
 
 #include "ParticleTraits.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "fetch_particles.hpp"
+#include "system/System.hpp"
 
 #include <boost/mpi/communicator.hpp>
 
@@ -28,8 +30,13 @@
 namespace Observables {
 std::vector<double>
 PidObservable::operator()(boost::mpi::communicator const &comm) const {
-  auto const &local_particles = fetch_particles(ids());
-  return this->evaluate(comm, local_particles,
+  // Ensure every local particle has a valid ParticleStore row before
+  // force/torque observables read them. O(1) when the store is clean;
+  // rank-local. Observables are invoked directly (not always via
+  // on_observable_calc), so the sync belongs on this read path.
+  System::get_system().cell_structure->ensure_particle_store_synchronized();
+  auto const local_particles = fetch_particles(ids());
+  return this->evaluate(comm, local_particles.refs,
                         ParticleObservables::traits<Particle>{});
 }
 } // namespace Observables

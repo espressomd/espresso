@@ -165,6 +165,53 @@ class InteractionsBondedTest(ut.TestCase):
             0.01, self.system.box_l[0] / 3)
 
     @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
+    def test_coulomb_ghost_partner(self):
+        """Regression test: a bonded-Coulomb pair whose partner is reached
+        through the deduped ghost tail. With a 2-rank ``[2, 1, 1]`` node grid
+        the box is split at ``x = box_l / 2``; placing the two partners on
+        opposite sides of that plane forces the bond partner to be resolved as
+        a ghost, i.e. at a pack index in the tail where ``row(idx) != idx``.
+        The bonded-Coulomb energy/pressure/force kernels must translate the
+        pack index to the store row before reading the charge; reading the
+        charge by raw pack index yields the wrong store row (and hence the
+        wrong ``q1 * q2`` product) for the ghost partner.
+        """
+        system = self.system
+        system.part.clear()
+        k = 1.
+        q1 = 1.
+        q2 = -1.
+        # Straddle the x = box_l / 2 rank boundary of the [2, 1, 1] node grid.
+        half = system.box_l[0] / 2.
+        dist = 1.0
+        p1 = system.part.add(pos=[half - dist / 2., 5., 5.], q=q1, type=0)
+        p2 = system.part.add(pos=[half + dist / 2., 5., 5.], q=q2, type=0)
+        axis = np.array([1., 0., 0.])
+
+        bond = espressomd.interactions.BondedCoulomb(prefactor=k)
+        system.bonded_inter.add(bond)
+        p1.bonds = ((bond, p2),)
+
+        system.integrator.run(recalc_forces=True, steps=0)
+
+        # Energy: q1 * q2 = -1 must survive the store-row translation.
+        E_sim = system.analysis.energy()["total"]
+        E_ref = coulomb_potential(dist, k, q1, q2)
+        self.assertAlmostEqual(E_sim, E_ref, places=7)
+
+        # Forces: equal and opposite, attractive along the separation axis.
+        f0_sim = np.copy(p1.f)
+        f1_sim = np.copy(p2.f)
+        f1_ref = axis * coulomb_force(dist, k, q1, q2)
+        np.testing.assert_allclose(f0_sim, -f1_sim, atol=1e-12)
+        np.testing.assert_allclose(f1_sim, f1_ref, atol=1e-12)
+
+        # Isotropic pressure = 1/(3V) sum_i f_i . r_i.
+        p_expected = np.dot(f1_sim, axis * dist) / (3. * system.volume())
+        p_sim = system.analysis.pressure()["total"]
+        self.assertAlmostEqual(p_sim, p_expected, delta=1e-12)
+
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
     def test_coulomb_sr(self):
         # with negated actual charges and only short range int: cancels out all
         # interactions

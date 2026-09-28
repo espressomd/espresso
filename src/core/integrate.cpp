@@ -79,6 +79,7 @@
 #include <cassert>
 #include <cmath>
 #include <csignal>
+#include <cstdint>
 #include <functional>
 #include <limits>
 #include <sstream>
@@ -406,50 +407,143 @@ static bool integrator_step_1(CellStructure &cell_structure,
 
   auto const &thermostat = *system.thermostat;
   auto const kT = thermostat.kT;
-  cell_structure.for_each_local_particle([&](Particle &p) {
+  // Hoist the velocity-Verlet translation column-view handles ONCE outside the
+  // parallel_for (the handle copy here is fine; per-element view rebinding is
+  // not). The still-view-path operations (symplectic Euler, rotation,
+  // Brownian) rebind a Particle lazily inside their branches only.
+  auto &store = cell_structure.particle_store();
+  auto vel_view = store.velocity_view();
+  auto pos_view = store.position_view();
+  auto force_view = store.force_view();
+  auto id_view = store.id_view();
+  // Disabled-feature handles are typed zero-extent dummy views (correct column
+  // type, extent 0): they exist only to fix the shared kernel lambda signature
+  // and are never indexed on a compiled-out path. See ParticleStore::dummy_*.
+#ifdef ESPRESSO_MASS
+  auto mass_view = store.mass_view();
+#else
+  auto mass_view = store.dummy_scalar_view();
+#endif
+#ifdef ESPRESSO_EXTERNAL_FORCES
+  auto ext_flag_view = store.ext_flag_view();
+#else
+  auto ext_flag_view = store.dummy_uint8_view();
+#endif
+#ifdef ESPRESSO_ROTATION
+  auto quat_view = store.quaternion_view();
+  auto omega_view = store.angular_velocity_view();
+  auto torque_view = store.torque_view();
+  auto rotation_view = store.rotation_view();
+#else
+  auto quat_view = store.dummy_quaternion_view();
+  auto omega_view = store.dummy_vector_view();
+  auto torque_view = store.dummy_vector_view();
+  auto rotation_view = store.dummy_uint8_view();
+#endif
+#ifdef ESPRESSO_ROTATIONAL_INERTIA
+  auto rinertia_view = store.rinertia_view();
+#else
+  auto rinertia_view = store.dummy_vector_view();
+#endif
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
+  auto gamma_view = store.gamma_view();
+#else
+  auto gamma_view = store.dummy_scalar_view();
+#endif
+#if defined(ESPRESSO_THERMOSTAT_PER_PARTICLE) && defined(ESPRESSO_ROTATION)
+  auto gamma_rot_view = store.gamma_rot_view();
+#else
+  auto gamma_rot_view = store.dummy_scalar_view();
+#endif
+  cell_structure.for_each_local_particle_row([&](int const row) {
+    Particle p;
+    p.attach_to_store(store, row);
 #ifdef ESPRESSO_VIRTUAL_SITES
     // virtual sites are updated later in the integration loop
     if (p.is_virtual())
       return;
 #endif
+    // Read the propagation bitfield ONCE per particle; every mode query below
+    // reuses it instead of re-reading the ParticleStore propagation column.
+    int const prop = p.propagation();
     if (propagation.integ_switch == INTEG_METHOD_SYMPLECTIC_EULER) {
       if (propagation.should_propagate_with(
-              p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
+              prop, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
         symplectic_euler_propagator_1(p, time_step);
-      if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
+      if (propagation.should_propagate_with(prop,
+                                            PropagationMode::TRANS_NEWTON))
         symplectic_euler_propagator_1(p, time_step);
 #ifdef ESPRESSO_ROTATION
-      if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
+      if (propagation.should_propagate_with(prop, PropagationMode::ROT_EULER))
         symplectic_euler_rotator_1(p, time_step);
 #endif
-      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
+      if (propagation.should_propagate_with(prop,
+                                            PropagationMode::TRANS_LANGEVIN))
         symplectic_euler_propagator_1(p, time_step);
 #ifdef ESPRESSO_ROTATION
-      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
+      if (propagation.should_propagate_with(prop,
+                                            PropagationMode::ROT_LANGEVIN))
         symplectic_euler_rotator_1(p, time_step);
 #endif
     } else {
-      if (propagation.should_propagate_with(
-              p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
-        velocity_verlet_propagator_1(p, time_step);
-      if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
-        velocity_verlet_propagator_1(p, time_step);
-#ifdef ESPRESSO_ROTATION
-      if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
-        velocity_verlet_rotator_1(p, time_step);
+      // Fixed-coordinate bitfield / mass read ONCE per particle from the
+      // hoisted views (compile-time fallbacks when the feature is off, matching
+      // Particle::fixed_flags_byte() / Particle::mass()).
+#ifdef ESPRESSO_MASS
+      double const mass = mass_view(row);
+#else
+      double const mass = 1.0;
 #endif
-      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
-        velocity_verlet_propagator_1(p, time_step);
+#ifdef ESPRESSO_EXTERNAL_FORCES
+      std::uint8_t const fixed = ext_flag_view(row);
+#else
+      auto const fixed = static_cast<std::uint8_t>(0u);
+#endif
+      // Resolve the momentum row bases ONCE (one pointer + stride each); the
+      // VV propagator then does stride-1 pointer arithmetic per axis. Cheaper
+      // than re-subscripting a 2D column view per component (perf-iterate).
+      auto vel = store.velocity_reference(row);
+      auto pos = store.position_reference(row);
+      auto const force = store.force_reference(row);
+      if (propagation.should_propagate_with(
+              prop, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
+        velocity_verlet_propagator_1(vel, pos, force, mass, fixed, time_step);
+      if (propagation.should_propagate_with(prop,
+                                            PropagationMode::TRANS_NEWTON))
+        velocity_verlet_propagator_1(vel, pos, force, mass, fixed, time_step);
 #ifdef ESPRESSO_ROTATION
-      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
-        velocity_verlet_rotator_1(p, time_step);
+      if (propagation.should_propagate_with(prop, PropagationMode::ROT_EULER))
+        velocity_verlet_rotator_1(quat_view, omega_view, rinertia_view,
+                                  torque_view, rotation_view, row, time_step);
+#endif
+      if (propagation.should_propagate_with(prop,
+                                            PropagationMode::TRANS_LANGEVIN))
+        velocity_verlet_propagator_1(vel, pos, force, mass, fixed, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(prop,
+                                            PropagationMode::ROT_LANGEVIN))
+        velocity_verlet_rotator_1(quat_view, omega_view, rinertia_view,
+                                  torque_view, rotation_view, row, time_step);
 #endif
     }
-    if (propagation.should_propagate_with(p, PropagationMode::TRANS_BROWNIAN))
-      brownian_dynamics_propagator(*thermostat.brownian, p, time_step, kT);
+    if (propagation.should_propagate_with(prop,
+                                          PropagationMode::TRANS_BROWNIAN))
+      brownian_dynamics_propagator(
+          *thermostat.brownian,
+          make_brownian_row_view(pos_view, vel_view, force_view, torque_view,
+                                 quat_view, omega_view, rinertia_view, id_view,
+                                 mass_view, rotation_view, ext_flag_view,
+                                 gamma_view, gamma_rot_view, row),
+          time_step, kT);
 #ifdef ESPRESSO_ROTATION
-    if (propagation.should_propagate_with(p, PropagationMode::ROT_BROWNIAN))
-      brownian_dynamics_rotator(*thermostat.brownian, p, time_step, kT);
+    if (propagation.should_propagate_with(prop, PropagationMode::ROT_BROWNIAN))
+      brownian_dynamics_rotator(
+          *thermostat.brownian,
+          make_brownian_row_view(pos_view, vel_view, force_view, torque_view,
+                                 quat_view, omega_view, rinertia_view, id_view,
+                                 mass_view, rotation_view, ext_flag_view,
+                                 gamma_view, gamma_rot_view, row),
+          time_step, kT);
 #endif
   });
 
@@ -485,58 +579,122 @@ static bool integrator_step_1(CellStructure &cell_structure,
 /**
  * @brief Build the per-particle half-kick callable for step_2.
  *
- * Returns a lambda that captures @p propagation and @p time_step by reference
- * and applies the velocity (and torque, if ROTATION is enabled) update for a
- * single particle.  Virtual sites are skipped.
+ * Returns a lambda that applies the velocity (and torque, if ROTATION is
+ * enabled) update for a single particle. Virtual sites are skipped.
  *
  * Shared verbatim by @ref integrator_step_2 (full pass) and
  * @ref integrator_step_2_filtered (interior / boundary passes): the lambda is
  * constructed once, then handed to @c for_each_local_particle,
  * @c for_each_interior_particle, or @c for_each_boundary_particle.
  *
+ * The per-particle scalar/rotation column-view handles are resolved ONCE here
+ * (see integrator_step_1) and captured by the returned lambda, which then
+ * indexes them by the particle's store row. The VV translation velocity/force
+ * rows are resolved per row via velocity_reference/force_reference
+ * (VectorReference), so no 2D velocity/force view handle is hoisted.
+ *
  * NPT particles are intentionally absent: the NPT arm must run only on the
  * ineligible (full-reduce-then-step_2) path and is handled separately inside
  * @ref integrator_step_2.
  */
-static auto make_step2_particle_kernel(Propagation const &propagation,
+static auto make_step2_particle_kernel(CellStructure &cell_structure,
+                                       Propagation const &propagation,
                                        double time_step) {
-  return [&propagation, time_step](Particle &p) {
+  auto &store = cell_structure.particle_store();
+#ifdef ESPRESSO_MASS
+  auto mass_view = store.mass_view();
+#endif
+#ifdef ESPRESSO_EXTERNAL_FORCES
+  auto ext_flag_view = store.ext_flag_view();
+#endif
+#ifdef ESPRESSO_ROTATION
+  auto quat_view = store.quaternion_view();
+  auto omega_view = store.angular_velocity_view();
+  auto torque_view = store.torque_view();
+  auto rotation_view = store.rotation_view();
+#ifdef ESPRESSO_ROTATIONAL_INERTIA
+  auto rinertia_view = store.rinertia_view();
+#else
+  // Correct-typed zero-extent dummy: rinertia_view is never indexed when
+  // rotational inertia is off (the rotator kernels use {1,1,1}); see
+  // ParticleStore::dummy_vector_view.
+  auto rinertia_view = store.dummy_vector_view();
+#endif
+#endif
+  return [&propagation, time_step, &store
+#ifdef ESPRESSO_MASS
+          ,
+          mass_view
+#endif
+#ifdef ESPRESSO_EXTERNAL_FORCES
+          ,
+          ext_flag_view
+#endif
+#ifdef ESPRESSO_ROTATION
+          ,
+          quat_view, omega_view, torque_view, rotation_view, rinertia_view
+#endif
+  ](Particle &p) {
+    auto const row = p.store_row();
 #ifdef ESPRESSO_VIRTUAL_SITES
     // virtual sites are updated later in the integration loop
     if (p.is_virtual())
       return;
 #endif
+    // Read the propagation bitfield ONCE per particle (see integrator_step_1).
+    int const prop = p.propagation();
     if (propagation.integ_switch == INTEG_METHOD_SYMPLECTIC_EULER) {
       if (propagation.should_propagate_with(
-              p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
+              prop, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
         symplectic_euler_propagator_2(p, time_step);
-      if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
+      if (propagation.should_propagate_with(prop,
+                                            PropagationMode::TRANS_NEWTON))
         symplectic_euler_propagator_2(p, time_step);
 #ifdef ESPRESSO_ROTATION
-      if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
+      if (propagation.should_propagate_with(prop, PropagationMode::ROT_EULER))
         symplectic_euler_rotator_2(p, time_step);
 #endif
-      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
+      if (propagation.should_propagate_with(prop,
+                                            PropagationMode::TRANS_LANGEVIN))
         symplectic_euler_propagator_2(p, time_step);
 #ifdef ESPRESSO_ROTATION
-      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
+      if (propagation.should_propagate_with(prop,
+                                            PropagationMode::ROT_LANGEVIN))
         symplectic_euler_rotator_2(p, time_step);
 #endif
     } else {
-      if (propagation.should_propagate_with(
-              p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
-        velocity_verlet_propagator_2(p, time_step);
-      if (propagation.should_propagate_with(p, PropagationMode::TRANS_NEWTON))
-        velocity_verlet_propagator_2(p, time_step);
-#ifdef ESPRESSO_ROTATION
-      if (propagation.should_propagate_with(p, PropagationMode::ROT_EULER))
-        velocity_verlet_rotator_2(p, time_step);
+#ifdef ESPRESSO_MASS
+      double const mass = mass_view(row);
+#else
+      double const mass = 1.0;
 #endif
-      if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
-        velocity_verlet_propagator_2(p, time_step);
+#ifdef ESPRESSO_EXTERNAL_FORCES
+      std::uint8_t const fixed = ext_flag_view(row);
+#else
+      auto const fixed = static_cast<std::uint8_t>(0u);
+#endif
+      // Resolve the momentum row bases ONCE (see integrator_step_1).
+      auto vel = store.velocity_reference(row);
+      auto const force = store.force_reference(row);
+      if (propagation.should_propagate_with(
+              prop, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
+        velocity_verlet_propagator_2(vel, force, mass, fixed, time_step);
+      if (propagation.should_propagate_with(prop,
+                                            PropagationMode::TRANS_NEWTON))
+        velocity_verlet_propagator_2(vel, force, mass, fixed, time_step);
 #ifdef ESPRESSO_ROTATION
-      if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
-        velocity_verlet_rotator_2(p, time_step);
+      if (propagation.should_propagate_with(prop, PropagationMode::ROT_EULER))
+        velocity_verlet_rotator_2(quat_view, omega_view, rinertia_view,
+                                  torque_view, rotation_view, row, time_step);
+#endif
+      if (propagation.should_propagate_with(prop,
+                                            PropagationMode::TRANS_LANGEVIN))
+        velocity_verlet_propagator_2(vel, force, mass, fixed, time_step);
+#ifdef ESPRESSO_ROTATION
+      if (propagation.should_propagate_with(prop,
+                                            PropagationMode::ROT_LANGEVIN))
+        velocity_verlet_rotator_2(quat_view, omega_view, rinertia_view,
+                                  torque_view, rotation_view, row, time_step);
 #endif
     }
   };
@@ -553,7 +711,7 @@ static void integrator_step_2(CellStructure &cell_structure,
     return;
 
   cell_structure.for_each_local_particle(
-      make_step2_particle_kernel(propagation, time_step));
+      make_step2_particle_kernel(cell_structure, propagation, time_step));
 
 #ifdef ESPRESSO_NPT
   if ((propagation.used_propagations & PropagationMode::TRANS_LANGEVIN_NPT) and
@@ -598,7 +756,8 @@ static void integrator_step_2_filtered(CellStructure &cell_structure,
          "integrator_step_2_filtered: NPT propagation is ineligible");
 #endif
 
-  auto const kernel = make_step2_particle_kernel(propagation, time_step);
+  auto const kernel =
+      make_step2_particle_kernel(cell_structure, propagation, time_step);
   if (interior_pass) {
     cell_structure.for_each_interior_particle(kernel);
   } else {
@@ -719,6 +878,13 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     auto espresso_cali_integration_iter =
         espresso_cali_integration_loop.iteration(step);
 #endif
+
+    // Ensure every local/ghost particle has a valid ParticleStore row before
+    // integrator_step_1 reads previous-step forces. Mid-step particle creation
+    // (collision handling, bond breakage) at the end of the previous iteration
+    // would otherwise leave new particles rowless. O(1) when the store is
+    // clean; rank-local.
+    cell_structure->ensure_particle_store_synchronized();
 
 #ifdef ESPRESSO_BOND_CONSTRAINT
     if (n_rigid_bonds)

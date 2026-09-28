@@ -26,7 +26,7 @@
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
-#include "ParticleList.hpp"
+#include "cell_system/Cell.hpp"
 #include "cell_system/RegularDecomposition.hpp"
 #include "communication.hpp"
 #include "ghosts/HaloPlan.hpp"
@@ -75,9 +75,9 @@ void check_coverage(RegularDecomposition const &dd) {
   auto const *plan = dd.halo_plan();
   BOOST_REQUIRE(plan != nullptr);
 
-  // Count how often each ParticleList is filled as a recv (peer) or dst
+  // Count how often each Cell is filled as a recv (peer) or dst
   // (local) target.
-  std::map<ParticleList const *, unsigned> filled;
+  std::map<Cell const *, unsigned> filled;
   for (auto const &nc : plan->neighbors) {
     // recv[k] must line up with peer.send[k].
     BOOST_CHECK_EQUAL(nc.send.size(), nc.recv.size());
@@ -98,10 +98,10 @@ void check_coverage(RegularDecomposition const &dd) {
 
   // (a) no ghost cell is filled twice; (b) coverage: every ghost cell is
   // filled exactly once, and nothing outside the ghost set is filled.
-  std::set<ParticleList const *> ghost_set;
+  std::set<Cell const *> ghost_set;
   for (auto const *g : dd.ghost_cells()) {
-    ghost_set.insert(&g->particles());
-    BOOST_CHECK_EQUAL(filled[&g->particles()], 1u);
+    ghost_set.insert(g);
+    BOOST_CHECK_EQUAL(filled[g], 1u);
   }
   // The union of recv/dst equals the ghost-cell set (no extras).
   BOOST_CHECK_EQUAL(filled.size(), ghost_set.size());

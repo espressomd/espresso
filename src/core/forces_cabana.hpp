@@ -156,18 +156,26 @@ struct ForcesKernel {
   ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t i,
                                                      std::size_t j) const {
 
+    // Translate pack indices to ParticleStore rows once; every
+    // position/image/director read below indexes the store columns by row.
+    auto const row_i = aosoa.row(i);
+    auto const row_j = aosoa.row(j);
+
     // calc distance (component-wise, avoids constructing pos1/pos2 Vector3d
     // on the hot early-exit path; pos1/pos2 are built lazily below only
     // where kernels actually require them)
     auto const d = box_geo.get_mi_vector(
-        aosoa.position(i, 0), aosoa.position(i, 1), aosoa.position(i, 2),
-        aosoa.position(j, 0), aosoa.position(j, 1), aosoa.position(j, 2));
+        aosoa.position(row_i, 0), aosoa.position(row_i, 1),
+        aosoa.position(row_i, 2), aosoa.position(row_j, 0),
+        aosoa.position(row_j, 1), aosoa.position(row_j, 2));
     auto const dist_sq = d.norm2();
 
     // Early exit if distance > maximal global cutoff
     if (dist_sq > system_max_cutoff_sq)
       return;
     auto const dist = std::sqrt(dist_sq);
+    // type is pack-owned and read PACK-INDEXED (i/j), contiguous, not
+    // translated to store rows.
     auto const &ia_params =
         nonbonded_ias.get_ia_param(aosoa.type(i), aosoa.type(j));
 
@@ -218,20 +226,20 @@ struct ForcesKernel {
         // Only call Gay-Berne force kernel if active
 #ifdef ESPRESSO_GAY_BERNE
         if (gay_berne_active(dist, ia_params)) {
-          auto const dir1 = aosoa.get_vector_at(aosoa.director, i);
-          auto const dir2 = aosoa.get_vector_at(aosoa.director, j);
+          auto const dir1 = aosoa.get_vector_at(aosoa.director, row_i);
+          auto const dir2 = aosoa.get_vector_at(aosoa.director, row_j);
           pf += gb_pair_force(dir1, dir2, ia_params, d, dist);
         }
 #endif
 #ifdef ESPRESSO_DPD
         if (dpd_active(ia_params, thermostat.thermo_switch)) {
-          auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-          auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
-          auto const vel1 = aosoa.get_vector_at(aosoa.velocity, i);
-          auto const vel2 = aosoa.get_vector_at(aosoa.velocity, j);
+          auto const pos1 = aosoa.get_vector_at(aosoa.position, row_i);
+          auto const pos2 = aosoa.get_vector_at(aosoa.position, row_j);
+          auto const vel1 = aosoa.get_vector_at(aosoa.velocity, row_i);
+          auto const vel2 = aosoa.get_vector_at(aosoa.velocity, row_j);
           auto const force = dpd_pair_force(
-              pos1, vel1, aosoa.id(i), pos2, vel2, aosoa.id(j), *thermostat.dpd,
-              box_geo, ia_params, d, dist, dist_sq);
+              pos1, vel1, aosoa.id(row_i), pos2, vel2, aosoa.id(row_j),
+              *thermostat.dpd, box_geo, ia_params, d, dist, dist_sq);
           pf += force;
         }
 #endif // ESPRESSO_DPD
@@ -258,8 +266,8 @@ struct ForcesKernel {
     Utils::Vector3d f2_asym{};
     // real-space electrostatic charge-charge interaction
     if (coulomb_kernel != nullptr) {
-      if ((aosoa.charge(i) != 0.) and (aosoa.charge(j) != 0.)) {
-        auto const q1q2 = aosoa.charge(i) * aosoa.charge(j);
+      if ((aosoa.pair_charge(i) != 0.) and (aosoa.pair_charge(j) != 0.)) {
+        auto const q1q2 = aosoa.pair_charge(i) * aosoa.pair_charge(j);
         pf.f += coulomb_pair_force(q1q2, d, dist, coulomb_kernel
 #ifdef ESPRESSO_P3M
                                    ,
@@ -267,14 +275,14 @@ struct ForcesKernel {
 #endif
         );
         if (elc_kernel) {
-          auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-          auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+          auto const pos1 = aosoa.get_vector_at(aosoa.position, row_i);
+          auto const pos2 = aosoa.get_vector_at(aosoa.position, row_j);
           (*elc_kernel)(pos1, pos2, f1_asym, f2_asym, q1q2);
         }
 #ifdef ESPRESSO_NPT
         if (npt_active()) {
-          auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-          auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+          auto const pos1 = aosoa.get_vector_at(aosoa.position, row_i);
+          auto const pos2 = aosoa.get_vector_at(aosoa.position, row_j);
           virial[0] += (*coulomb_u_kernel)(pos1, pos2, q1q2, d, dist);
         }
 #endif // ESPRESSO_NPT
@@ -284,20 +292,24 @@ struct ForcesKernel {
 
 #ifdef ESPRESSO_DIPOLES
     if (dipoles_kernel != nullptr) {
-      auto const d1d2 = aosoa.dipm(i) * aosoa.dipm(j);
+      // dipm is read from the pack-owned pair_dipm column PACK-INDEXED
+      // (refreshed this step because a dipolar solver is active whenever
+      // dipoles_kernel != nullptr); the director stays store-derived and
+      // indexed by store row.
+      auto const d1d2 = aosoa.pair_dipm(i) * aosoa.pair_dipm(j);
       if (d1d2 != 0.) {
-        auto const dir1 = aosoa.get_vector_at(aosoa.director, i);
-        auto const dir2 = aosoa.get_vector_at(aosoa.director, j);
+        auto const dir1 = aosoa.get_vector_at(aosoa.director, row_i);
+        auto const dir2 = aosoa.get_vector_at(aosoa.director, row_j);
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
         Utils::Vector3d dip_fld_i{};
         Utils::Vector3d dip_fld_j{};
 #endif
-        auto const dip_pf =
-            (*dipoles_kernel)(d1d2, aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2,
+        auto const dip_pf = (*dipoles_kernel)(d1d2, aosoa.pair_dipm(i) * dir1,
+                                              aosoa.pair_dipm(j) * dir2,
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-                              dip_fld_i, dip_fld_j,
+                                              dip_fld_i, dip_fld_j,
 #endif
-                              d, dist, dist_sq);
+                                              d, dist, dist_sq);
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
         auto access_dip_fld = local_dip_fld.access();
         access_dip_fld(i, 0) += dip_fld_i[0];
@@ -434,20 +446,21 @@ template <bool HasCoulomb> struct SpecializedForcesKernel {
 #endif
 #endif
 
-  ESPRESSO_ATTR_ALWAYS_INLINE inline void
+  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
   operator()(std::size_t const i) const {
     auto const n_neighbors = counts(i);
     if (n_neighbors == 0)
       return;
 
-    auto const x_i = aosoa.position(i, 0);
-    auto const y_i = aosoa.position(i, 1);
-    auto const z_i = aosoa.position(i, 2);
+    auto const row_i = aosoa.row(i);
+    auto const x_i = aosoa.position(row_i, 0);
+    auto const y_i = aosoa.position(row_i, 1);
+    auto const z_i = aosoa.position(row_i, 2);
     auto const type_i = aosoa.type(i);
 #ifdef ESPRESSO_ELECTROSTATICS
     double charge_i = 0.;
     if constexpr (HasCoulomb) {
-      charge_i = aosoa.charge(i);
+      charge_i = aosoa.pair_charge(i);
     }
 #endif
 
@@ -472,7 +485,7 @@ template <bool HasCoulomb> struct SpecializedForcesKernel {
       for (int t = 0; t < m; ++t) {
         auto const j = neighbors(i, base + t);
         js[t] = j;
-        auto const row_j = static_cast<std::size_t>(j);
+        auto const row_j = aosoa.row(static_cast<std::size_t>(j));
         sx[t] = aosoa.position(row_j, 0);
         sy[t] = aosoa.position(row_j, 1);
         sz[t] = aosoa.position(row_j, 2);
@@ -499,7 +512,7 @@ template <bool HasCoulomb> struct SpecializedForcesKernel {
         }
 #ifdef ESPRESSO_ELECTROSTATICS
         if constexpr (HasCoulomb) {
-          auto const charge_j = aosoa.charge(j);
+          auto const charge_j = aosoa.pair_charge(j);
           if (charge_i != 0. and charge_j != 0.) {
             auto const q1q2 = charge_i * charge_j;
             f += coulomb_pair_force(q1q2, d, dist, coulomb_kernel

@@ -37,25 +37,25 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
                    std::span<Cell *const> ghost_cells) {
   std::vector<std::string> violations;
 
-  // Build the set of expected ghost ParticleList pointers.
-  std::unordered_set<ParticleList const *> ghost_set;
+  // Build the set of expected ghost Cell pointers.
+  std::unordered_set<Cell const *> ghost_set;
   for (Cell *c : ghost_cells) {
-    ghost_set.insert(&c->particles());
+    ghost_set.insert(c);
   }
 
   // Collective-covered cells: AtomDecomposition (collective-only) and
   // HybridDecomposition (neighbors + collective) fill some/all ghosts via the
   // n-square broadcast/reduce section, NOT via neighbors/local. The section's
-  // `cells` vector identifies exactly which ParticleLists it covers (one per
+  // `cells` vector identifies exactly which cells it covers (one per
   // rank; the entry for the local rank is this rank's own cell, the rest are
   // ghost copies of every other rank's owned cell). Ghost cells found here are
   // covered even though they are not point-to-point recv/dst targets.
   bool const has_collective =
       plan.collective.has_value() &&
       plan.collective->pattern != CollectivePattern::None;
-  std::unordered_set<ParticleList const *> collective_set;
+  std::unordered_set<Cell const *> collective_set;
   if (has_collective) {
-    for (ParticleList const *pl : plan.collective->cells) {
+    for (Cell const *pl : plan.collective->cells) {
       collective_set.insert(pl);
     }
   }
@@ -71,10 +71,10 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
   // uncovered. Double-fill and out-of-ghost-set targets stay strict below, and
   // the neighborship-match check still requires every *referenced* ghost to be
   // covered, so this cannot mask a real missing-communication defect.
-  std::unordered_set<ParticleList const *> referenced_ghosts;
+  std::unordered_set<Cell const *> referenced_ghosts;
   for (Cell *c : local_cells) {
     for (Cell *n : c->neighbors().all()) {
-      ParticleList const *pl = &n->particles();
+      Cell const *pl = n;
       if (ghost_set.contains(pl)) {
         referenced_ghosts.insert(pl);
       }
@@ -82,7 +82,7 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
   }
 
   // Check peer-uniqueness and shape; accumulate recv/dst fill counts.
-  std::unordered_map<ParticleList const *, int> fill_count;
+  std::unordered_map<Cell const *, int> fill_count;
   std::unordered_set<int> seen_peers;
 
   for (auto const &nc : plan.neighbors) {
@@ -103,7 +103,7 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
     }
 
     // Accumulate recv fill counts; check targets are in ghost set.
-    for (ParticleList const *pl : nc.recv) {
+    for (Cell const *pl : nc.recv) {
       if (not ghost_set.contains(pl)) {
         std::ostringstream oss;
         oss << "NeighborComm peer=" << nc.peer
@@ -116,7 +116,7 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
 
   // Accumulate local.dst fill counts; check targets are in ghost set.
   for (auto const &lc : plan.local) {
-    ParticleList const *pl = lc.dst;
+    Cell const *pl = lc.dst;
     if (not ghost_set.contains(pl)) {
       violations.emplace_back("LocalComm dst target is not a ghost cell");
     }
@@ -133,7 +133,7 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
   // is intentionally empty) carries no physics and is not required to be
   // filled, so a zero fill-count is fine for it too.
   for (Cell *c : ghost_cells) {
-    ParticleList const *pl = &c->particles();
+    Cell const *pl = c;
     auto it = fill_count.find(pl);
     int count = (it != fill_count.end()) ? it->second : 0;
     if (count == 0) {
@@ -152,7 +152,7 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
   // either as a point-to-point recv/dst target or by the collective section.
   for (Cell *c : local_cells) {
     for (Cell *n : c->neighbors().all()) {
-      ParticleList const *pl = &n->particles();
+      Cell const *pl = n;
       if (not ghost_set.contains(pl)) {
         continue; // not a ghost neighbor
       }
@@ -176,7 +176,7 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
       continue; // boundary cells are expected to have ghost neighbors
     }
     for (Cell *n : c->neighbors().all()) {
-      if (ghost_set.contains(&n->particles())) {
+      if (ghost_set.contains(n)) {
         violations.emplace_back("interior cell has a ghost neighbor");
         break; // one violation per cell is sufficient
       }
@@ -191,11 +191,11 @@ validate_halo_plan(HaloPlan const &plan, std::span<Cell *const> local_cells,
   // ghost copy after the interior velocity update — violating the overlap
   // correctness assumption.
   //
-  // Build a set of ParticleList* that belong to interior local cells.
-  std::unordered_set<ParticleList const *> interior_set;
+  // Build a set of Cell* that belong to interior local cells.
+  std::unordered_set<Cell const *> interior_set;
   for (Cell *c : local_cells) {
     if (!c->is_boundary()) {
-      interior_set.insert(&c->particles());
+      interior_set.insert(c);
     }
   }
   if (!interior_set.empty()) {

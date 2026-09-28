@@ -44,6 +44,7 @@
 #include <boost/mpi/operations.hpp>
 
 #include <cassert>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -120,9 +121,14 @@ void GlueToSurface::handle_collisions(
   // Iterate over global collision queue
   for (auto const &[pid1, pid2] : global_collision_queue) {
 
-    // Get particle pointers
-    Particle *p1 = cell_structure.get_local_particle(pid1);
-    Particle *p2 = cell_structure.get_local_particle(pid2);
+    // get_local_particle returns by-value views. p1/p2 are held across
+    // place_vs_and_relate_to_particle, which calls add_particle -> a store
+    // rebuild that RENUMBERS every row and bumps the generation, so they must
+    // be re-resolved by id afterwards.
+    std::optional<Particle> p1 = cell_structure.get_local_particle(pid1);
+    std::optional<Particle> p2 = cell_structure.get_local_particle(pid2);
+    auto const resolved_generation =
+        cell_structure.particle_store().generation();
 
     // Only nodes take part in particle creation and binding
     // that see both particles
@@ -156,7 +162,8 @@ void GlueToSurface::handle_collisions(
     }
 
     double ratio = -1.;
-    auto const vec21 = box_geo.get_mi_vector(p1->pos(), p2->pos());
+    auto const vec21 = box_geo.get_mi_vector(Utils::Vector3d(p1->pos()),
+                                             Utils::Vector3d(p2->pos()));
     auto const dist = vec21.norm();
 
     // Find out, which is the particle to be glued.
@@ -168,9 +175,16 @@ void GlueToSurface::handle_collisions(
       ratio = dist_glued_part_to_vs / dist;
     }
     assert(ratio != -1.);
-    auto const pos = p2->pos() + vec21 * ratio;
-    auto const &attach_vs_to =
+    auto const pos = Utils::Vector3d(p2->pos()) + vec21 * ratio;
+    // Capture the base-particle id and its ghost flag BY VALUE before
+    // add_particle. add_particle triggers a store rebuild that renumbers rows,
+    // so reading id()/is_ghost() from a view held across that call would alias
+    // whatever now occupies the old row. Snapshotting the scalar values
+    // decouples the decision from row identity.
+    auto const attach_vs_to =
         (p1->type() == part_type_to_attach_vs_to) ? *p1 : *p2;
+    auto const attach_vs_to_id = attach_vs_to.id();
+    auto const attach_vs_to_is_ghost = attach_vs_to.is_ghost();
 
     // Add a bond between the centers of the colliding particles
     // The bond is placed on the node that has p1
@@ -187,22 +201,31 @@ void GlueToSurface::handle_collisions(
       p2->type() = part_type_after_glueing;
     }
 
-    if (attach_vs_to.is_ghost()) {
+    if (attach_vs_to_is_ghost) {
       current_vs_pid++;
     } else {
+      // Debug canary: guard the held p1/p2 views before the add invalidates
+      // them (see ParticleStoreGuard). attach_vs_to_id was snapshotted above.
+      ParticleStoreGuard::assert_generation(cell_structure.particle_store(),
+                                            resolved_generation);
       // VS placement happens on the node that has p1
       place_vs_and_relate_to_particle(cell_structure, box_geo, part_type_vs,
                                       min_global_cut, current_vs_pid, pos,
-                                      attach_vs_to.id());
-      // Particle storage locations may have changed due to added particle
+                                      attach_vs_to_id);
+      // Particle storage locations changed due to the added particle:
+      // re-resolve both base-particle views by id. The re-resolved views are
+      // used immediately below with no further topology change in between, so
+      // no fresh generation stamp is needed (the per-iteration stamp above is
+      // const and guards the views held ACROSS the add).
       p1 = cell_structure.get_local_particle(pid1);
       p2 = cell_structure.get_local_particle(pid2);
       current_vs_pid++;
     }
     // Create bond between the virtual particles
-    auto const p = (p1->type() == part_type_after_glueing) ? p1 : p2;
+    auto const glued_pid =
+        (p1->type() == part_type_after_glueing) ? p1->id() : p2->id();
     int const bondG[] = {current_vs_pid - 1};
-    get_part(cell_structure, p->id()).bonds().insert({bond_vs, bondG});
+    get_part(cell_structure, glued_pid).bonds().insert({bond_vs, bondG});
   } // Loop over all collisions in the queue
 
 #ifdef ESPRESSO_ADDITIONAL_CHECKS
