@@ -106,6 +106,7 @@ option(ESPRESSO_BUILD_WITH_CUDA "Build with GPU support" OFF)
 option(ESPRESSO_BUILD_WITH_HDF5 "Build with HDF5 support" OFF)
 option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
 option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
+option(ESPRESSO_BUILD_WITH_EXSCALICOS "Build with ExScaLiCoS support" OFF)
 option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
        OFF)
 option(ESPRESSO_BUILD_WITH_NLOPT "Build with NLopt support" OFF)
@@ -839,6 +840,33 @@ endif()
 if(ESPRESSO_BUILD_WITH_SCAFACOS)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(SCAFACOS scafacos REQUIRED)
+endif()
+
+if(ESPRESSO_BUILD_WITH_EXSCALICOS)
+  if(NOT DEFINED Exscalicos_FOUND OR NOT ${Exscalicos_FOUND})
+    if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/exscalicos-src)
+      find_package(Exscalicos QUIET)
+    endif()
+    if(NOT DEFINED Exscalicos_FOUND OR NOT ${Exscalicos_FOUND})
+      # cmake-format: off
+      FetchContent_Declare(
+        exscalicos
+        GIT_REPOSITORY https://gitlab.jsc.fz-juelich.de/SLMS/kokkos/exscalicos.git
+        GIT_TAG        bcd2c238 # P3M version
+        PATCH_COMMAND  patch -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/exscalicos.patch
+        SYSTEM
+      )
+      # cmake-format: on
+      set(EXSCALICOS_BUILD_TESTS off CACHE BOOL "")
+      set(EXSCALICOS_CUDA off CACHE BOOL "")
+      set(EXSCALICOS_HIP off CACHE BOOL "")
+      set(BUILD_SHARED_LIBS OFF)
+      FetchContent_MakeAvailable(exscalicos)
+      set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+      set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
+      add_library(Exscalicos::Exscalicos ALIAS Exscalicos)
+    endif()
+  endif()
 endif()
 
 if(ESPRESSO_BUILD_WITH_GSL)

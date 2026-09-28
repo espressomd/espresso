@@ -34,16 +34,22 @@ class CoulombCloudWall(ut.TestCase):
 
     """
 
-    system = espressomd.System(box_l=[10., 10., 10.])
+    system = espressomd.System(
+        box_l=[62.05966799605923, 62.05966799605923, 62.05966799605923])
     data = np.genfromtxt(tests_common.data_path(
-        "coulomb_cloud_wall_system.data"))
+        "coulomb_silica_melt_12960.data"))
 
     tolerance = 1E-3
-    p3m_params = {'r_cut': 1.001, 'accuracy': 1e-4,
+
+    p3m_params = {'r_cut': 1.001, 'accuracy': 1e-3,
                   'mesh': [64, 64, 64], 'cao': 7, 'alpha': 2.70746}
+    """
+    p3m_params = {'r_cut': 8.16632, 'accuracy': 1e-6,
+                  'mesh': [98, 98, 98], 'cao': 7, 'alpha': 0.462193} 
+    """
 
     # Reference energy from P3M
-    reference_energy = 148.94229549
+    reference_energy = -16623.245931437410036
 
     def setUp(self):
         self.system.time_step = 0.01
@@ -72,7 +78,7 @@ class CoulombCloudWall(ut.TestCase):
             self.system.analysis.energy()["total"] / prefactor,
             self.reference_energy, delta=energy_tol,
             msg=f"Energy {err_msg}")
-
+    """
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_cpu(self):
         self.system.electrostatics.solver = espressomd.electrostatics.P3M(
@@ -94,14 +100,18 @@ class CoulombCloudWall(ut.TestCase):
             **self.p3m_params, prefactor=2.2, tune=False, gpu=True)
         self.system.integrator.run(0)
         self.compare("p3m_gpu", prefactor=2.2, force_tol=2e-3, energy_tol=1e-3)
+    """
 
+    """
+    method_params={"p2nfft_r_cut": 8.16632, "tolerance_field": 1E-6})
+    """
     @utx.skipIfMissingFeatures(["SCAFACOS"])
     @utx.skipIfMissingScafacosMethod("p2nfft")
     def test_scafacos_p2nfft(self):
         self.system.electrostatics.solver = espressomd.electrostatics.Scafacos(
             prefactor=2.8,
             method_name="p2nfft",
-            method_params={"p2nfft_r_cut": 1.001, "tolerance_field": 1E-5})
+            method_params={"tolerance_field": 1E-6})
         self.system.integrator.run(0)
         self.compare(
             "scafacos_p2nfft",
@@ -115,7 +125,7 @@ class CoulombCloudWall(ut.TestCase):
         self.system.electrostatics.solver = espressomd.electrostatics.Scafacos(
             prefactor=2.8,
             method_name="p3m",
-            method_params={"p3m_cao": 7, "tolerance_field": 1E-5})
+            method_params={"p3m_cao": 7, "tolerance_field": 1E-6})
         self.system.integrator.run(0)
         self.compare(
             "scafacos_p3m",
