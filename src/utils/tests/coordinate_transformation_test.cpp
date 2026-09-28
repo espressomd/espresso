@@ -239,3 +239,44 @@ BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_with_axis_with_phi_2_test) {
     }
   }
 }
+
+BOOST_AUTO_TEST_CASE(
+    transform_vector_cartesian_to_cylinder_degenerate_axis_test) {
+  constexpr auto eps = 1e-14;
+
+  // Parallel case: axis == z_axis == [0,0,1]. The cross product is zero but
+  // the rotation angle is 0 so vec_rotate is the identity regardless of the
+  // fallback rotation_axis. Must not throw.
+  {
+    auto const axis = Vector3d{{0., 0., 1.}};
+    auto const pos = Vector3d{{1., 0., 0.}};
+    auto const vec = Vector3d{{1., 0., 0.}};
+    Vector3d result;
+    BOOST_CHECK_NO_THROW(
+        result = Utils::transform_vector_cartesian_to_cylinder(vec, axis, pos));
+    for (auto i = 0u; i < 3u; ++i) {
+      BOOST_CHECK(std::isfinite(result[i]));
+    }
+  }
+
+  // Anti-parallel case: axis == -z_axis == [0,0,-1]. The cross product is
+  // zero and the rotation angle is pi. The fix falls back to [1,0,0] as the
+  // rotation axis and must not throw.
+  //
+  // For axis=-z, pos=[1,0,0]: e_r=[1,0,0], e_phi=[0,-1,0], e_z=[0,0,-1].
+  // With vec=[2,3,5] the expected cylindrical components are:
+  //   v_r   = vec·e_r   =  2
+  //   v_phi = vec·e_phi = -3
+  //   v_z   = vec·e_z   = -5
+  {
+    auto const axis = Vector3d{{0., 0., -1.}};
+    auto const pos = Vector3d{{1., 0., 0.}};
+    auto const vec = Vector3d{{2., 3., 5.}};
+    Vector3d result;
+    BOOST_CHECK_NO_THROW(
+        result = Utils::transform_vector_cartesian_to_cylinder(vec, axis, pos));
+    BOOST_CHECK_SMALL(result[0] - 2., eps); // v_r
+    BOOST_CHECK_SMALL(result[1] + 3., eps); // v_phi
+    BOOST_CHECK_SMALL(result[2] + 5., eps); // v_z
+  }
+}
