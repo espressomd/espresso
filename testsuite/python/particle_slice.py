@@ -336,6 +336,30 @@ class ParticleSliceTest(ut.TestCase):
         self.all_partcls.delete_all_bonds()
         self.assertEqual(self.all_partcls.bonds, [(), (), (), ()])
 
+    def test_bonds_slice_assignment_keeps_bond_owned_elsewhere(self):
+        """
+        Regression test: bulk-assigning bonds through a particle slice must
+        only clear a bond whose *every* participant is part of that same
+        reassignment. A mirror entry whose owner lies outside the slice
+        must survive, otherwise a bond that particle still needs would be
+        silently deleted.
+        """
+        fene = espressomd.interactions.FeneBond(k=1, d_r_max=1, r_0=1)
+        self.system.bonded_inter.add(fene)
+
+        self.all_partcls.bonds = []
+        self.p0.add_bond((fene, self.p2.id))
+        self.assertEqual(self.p0.bonds, ((fene, self.p2.id),))
+
+        # p0 (the bond owner) is not part of this slice; only p2 (which
+        # holds a mirror entry for that bond) and p3 are reassigned.
+        self.p2p3.bonds = []
+        self.assertEqual(self.p0.bonds, ((fene, self.p2.id),))
+
+        # once the owner is included, the bond can be cleared normally
+        self.all_partcls.bonds = []
+        self.assertEqual(self.p0.bonds, ())
+
     @utx.skipIfMissingFeatures(["EXCLUSIONS"])
     def test_exclusions(self):
 
