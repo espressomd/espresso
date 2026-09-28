@@ -78,6 +78,7 @@ BUCKINGHAM
 SOFT_SPHERE
 HAT
 GAY_BERNE                       implies ROTATION
+GAY_BERNE_WIDTH                 implies ROTATION
 THOLE                           requires ELECTROSTATICS
 
 /* ScaFaCoS */

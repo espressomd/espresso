@@ -97,6 +97,10 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef ESPRESSO_GAY_BERNE
   om->register_new<InteractionGayBerne>("Interactions::InteractionGayBerne");
 #endif
+#ifdef ESPRESSO_GAY_BERNE_WIDTH
+  om->register_new<InteractionGayBerneWidth>(
+      "Interactions::InteractionGayBerneWidth");
+#endif
 #ifdef ESPRESSO_TABULATED
   om->register_new<InteractionTabulated>("Interactions::InteractionTabulated");
 #endif
