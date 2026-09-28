@@ -61,6 +61,13 @@
 #pragma GCC diagnostic ignored "-Wfloat-conversion"
 #endif
 
+// Prevent heFFTe's stock FFT backend from being included in CUDA
+// compilation units — it uses AVX vector types in host code that
+// nvcc rejects as "not supported in device code".
+#if defined(__CUDACC__)
+#define HEFFTE_BACKEND_STOCK_FFT_H
+#endif
+
 #include <heffte.h>
 #include <heffte_backends.h>
 #include <heffte_geometry.h>
