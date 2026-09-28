@@ -23,6 +23,68 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .math import CylindricalTransformationParameters
 
 
+def _particles_to_ids(particles):
+    """
+    Convert particle selection to a list of integer particle ids.
+
+    Parameters
+    ----------
+    particles : array_like
+        Particle selection. Elements can be particle handles (objects exposing
+        an ``id`` attribute), a particle slice (iterable of particle handles),
+        or integer particle ids.
+
+    Returns
+    -------
+    list of :obj:`int`
+        Particle ids in the same order as provided.
+    """
+    if particles is None:
+        raise TypeError("'particles' must not be None")
+
+    # Single numeric id
+    if isinstance(particles, (int, np.integer)):
+        return [int(particles)]
+
+    # Objects with attribute "id" (ParticleHandle OR ParticleSlice-like)
+    if hasattr(particles, "id"):
+        pid = particles.id
+
+        # If id is scalar -> single particle
+        if np.isscalar(pid) or isinstance(pid, (int, np.integer)):
+            return [int(pid)]
+
+        # If id is array-like -> slice selection
+        try:
+            arr = np.asarray(pid)
+            if arr.ndim == 0:
+                return [int(arr)]
+            return [int(x) for x in arr.tolist()]
+        except Exception:
+            # Fall back to iterable handling below
+            pass
+
+    # Iterable of ids / handles
+    try:
+        iterator = iter(particles)
+    except TypeError as e:
+        raise TypeError(
+            "'particles' must be an int, a particle handle, a particle slice, or an iterable of those"
+        ) from e
+
+    ids = []
+    for item in iterator:
+        if isinstance(item, (int, np.integer)):
+            ids.append(int(item))
+        elif hasattr(item, "id"):
+            ids.append(int(item.id))
+        else:
+            raise TypeError(
+                "Invalid element in 'particles': expected int or a particle handle (object with attribute 'id')"
+            )
+    return ids
+
+
 @script_interface_register
 class Observable(ScriptInterfaceHelper):
     """
@@ -36,6 +98,51 @@ class Observable(ScriptInterfaceHelper):
     _so_name = "Observables::Observable"
     _so_bind_methods = ("shape",)
     _so_creation_policy = "GLOBAL"
+
+    # If defined in a subclass, maps public parameter name -> backend keyword name.
+    # Example: {"particles": "ids"} or {"particles": "ids", "target_particles": "target_ids"}.
+    _particle_param_map = None
+    _optional_particle_params = ()
+
+    def __init__(self, **kwargs):
+        # Observables without particle selection: reject particle keywords
+        particle_map = getattr(type(self), "_particle_param_map", None)
+        if particle_map is None:
+            forbidden = {"particles", "target_particles",
+                         "particles1", "particles2"}
+            used = forbidden.intersection(kwargs.keys())
+            if used:
+                raise TypeError(
+                    f"{type(self).__name__} does not accept {sorted(used)}")
+            super().__init__(**kwargs)
+            return
+
+        defaults = dict(
+            getattr(type(self), "_particle_param_defaults", {}) or {})
+
+        old_to_new = {
+            "ids": "particles",
+            "target_ids": "target_particles",
+            "ids1": "particles1",
+            "ids2": "particles2",
+        }
+        for old, new in old_to_new.items():
+            if old in kwargs:
+                raise TypeError(
+                    f"Parameter '{old}' has been renamed to '{new}'")
+
+        # Fill defaults for missing optional params (e.g., RDF particles2 -> [])
+        for public_name, default_val in defaults.items():
+            if public_name not in kwargs:
+                kwargs[public_name] = default_val
+
+        # Conversion for declared params
+        for public_name, backend_name in type(self)._particle_param_map.items():
+            if public_name in kwargs:
+                kwargs[backend_name] = _particles_to_ids(
+                    kwargs.pop(public_name))
+
+        super().__init__(**kwargs)
 
     def calculate(self):
         return np.array(self.call_method("calculate")).reshape(self.shape())
@@ -96,7 +203,7 @@ class ComPosition(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -110,6 +217,7 @@ class ComPosition(Observable):
 
     """
     _so_name = "Observables::ComPosition"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -123,7 +231,7 @@ class ComVelocity(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -137,6 +245,7 @@ class ComVelocity(Observable):
 
     """
     _so_name = "Observables::ComVelocity"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -146,7 +255,7 @@ class DensityProfile(ProfileObservable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
     n_x_bins : :obj:`int`
         Number of bins in ``x`` direction.
@@ -178,6 +287,7 @@ class DensityProfile(ProfileObservable):
 
     """
     _so_name = "Observables::DensityProfile"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -189,7 +299,7 @@ class DipoleMoment(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -203,6 +313,7 @@ class DipoleMoment(Observable):
 
     """
     _so_name = "Observables::DipoleMoment"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -212,7 +323,7 @@ class FluxDensityProfile(ProfileObservable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
     n_x_bins : :obj:`int`
         Number of bins in ``x`` direction.
@@ -246,6 +357,7 @@ class FluxDensityProfile(ProfileObservable):
 
     """
     _so_name = "Observables::FluxDensityProfile"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -255,7 +367,7 @@ class ForceDensityProfile(ProfileObservable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
     n_x_bins : :obj:`int`
         Number of bins in ``x`` direction.
@@ -289,6 +401,7 @@ class ForceDensityProfile(ProfileObservable):
 
     """
     _so_name = "Observables::ForceDensityProfile"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -381,7 +494,7 @@ class MagneticDipoleMoment(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -395,6 +508,7 @@ class MagneticDipoleMoment(Observable):
 
     """
     _so_name = "Observables::MagneticDipoleMoment"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -408,7 +522,7 @@ class ParticleAngularVelocities(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -422,6 +536,7 @@ class ParticleAngularVelocities(Observable):
 
     """
     _so_name = "Observables::ParticleAngularVelocities"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -438,7 +553,7 @@ class ParticleBodyAngularVelocities(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -452,6 +567,7 @@ class ParticleBodyAngularVelocities(Observable):
 
     """
     _so_name = "Observables::ParticleBodyAngularVelocities"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -468,7 +584,7 @@ class ParticleBodyVelocities(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -482,6 +598,7 @@ class ParticleBodyVelocities(Observable):
 
     """
     _so_name = "Observables::ParticleBodyVelocities"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -495,7 +612,7 @@ class ParticleForces(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -509,6 +626,7 @@ class ParticleForces(Observable):
 
     """
     _so_name = "Observables::ParticleForces"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -522,7 +640,7 @@ class ParticlePositions(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -536,6 +654,7 @@ class ParticlePositions(Observable):
 
     """
     _so_name = "Observables::ParticlePositions"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -549,7 +668,7 @@ class ParticleVelocities(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -563,6 +682,7 @@ class ParticleVelocities(Observable):
 
     """
     _so_name = "Observables::ParticleVelocities"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -576,7 +696,7 @@ class ParticleDirectors(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -590,6 +710,7 @@ class ParticleDirectors(Observable):
 
     """
     _so_name = "Observables::ParticleDirectors"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -603,7 +724,7 @@ class ParticleDipoleFields(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -617,6 +738,7 @@ class ParticleDipoleFields(Observable):
 
     """
     _so_name = "Observables::ParticleDipoleFields"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -627,7 +749,7 @@ class ParticleDistances(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -641,6 +763,7 @@ class ParticleDistances(Observable):
 
     """
     _so_name = "Observables::ParticleDistances"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -652,10 +775,10 @@ class PairwiseDistances(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The first set of ids of particles.
 
-    target_ids : array_like of :obj:`int`
+    target_particles : array_like of :obj:`int`
         The second set of (target) ids of particles.
         In case of overlap with the first set,
         self-interactions are removed from the result.
@@ -671,6 +794,8 @@ class PairwiseDistances(Observable):
 
     """
     _so_name = "Observables::PairwiseDistances"
+    _particle_param_map = {"particles": "ids",
+                           "target_particles": "target_ids"}
 
 
 @script_interface_register
@@ -684,7 +809,7 @@ class TotalForce(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -698,6 +823,7 @@ class TotalForce(Observable):
 
     """
     _so_name = "Observables::TotalForce"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -708,7 +834,7 @@ class BondAngles(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -722,6 +848,7 @@ class BondAngles(Observable):
 
     """
     _so_name = "Observables::BondAngles"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -734,7 +861,7 @@ class CosPersistenceAngles(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -748,6 +875,7 @@ class CosPersistenceAngles(Observable):
 
     """
     _so_name = "Observables::CosPersistenceAngles"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -758,7 +886,7 @@ class BondDihedrals(Observable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
     Methods
@@ -772,6 +900,7 @@ class BondDihedrals(Observable):
 
     """
     _so_name = "Observables::BondDihedrals"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -858,7 +987,7 @@ class CylindricalDensityProfile(CylindricalProfileObservable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
     transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
         Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
@@ -892,6 +1021,7 @@ class CylindricalDensityProfile(CylindricalProfileObservable):
 
     """
     _so_name = "Observables::CylindricalDensityProfile"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -901,7 +1031,7 @@ class CylindricalFluxDensityProfile(CylindricalProfileObservable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
     transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
         Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
@@ -938,6 +1068,7 @@ class CylindricalFluxDensityProfile(CylindricalProfileObservable):
 
     """
     _so_name = "Observables::CylindricalFluxDensityProfile"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -949,7 +1080,7 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
     transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
         Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
@@ -986,6 +1117,7 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(
 
     """
     _so_name = "Observables::CylindricalLBFluxDensityProfileAtParticlePositions"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -997,7 +1129,7 @@ class CylindricalLBVelocityProfileAtParticlePositions(
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
     transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
         Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
@@ -1034,6 +1166,7 @@ class CylindricalLBVelocityProfileAtParticlePositions(
 
     """
     _so_name = "Observables::CylindricalLBVelocityProfileAtParticlePositions"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -1043,7 +1176,7 @@ class CylindricalVelocityProfile(CylindricalProfileObservable):
 
     Parameters
     ----------
-    ids : array_like of :obj:`int`
+    particles : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
     transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
         Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
@@ -1080,6 +1213,7 @@ class CylindricalVelocityProfile(CylindricalProfileObservable):
 
     """
     _so_name = "Observables::CylindricalVelocityProfile"
+    _particle_param_map = {"particles": "ids"}
 
 
 @script_interface_register
@@ -1140,11 +1274,11 @@ class RDF(Observable):
 
     Parameters
     ----------
-    ids1 : array_like of :obj:`int`
+    particles1 : array_like of :obj:`int`
         The ids of (existing) particles to calculate the distance from.
-    ids2 : array_like of :obj:`int`, optional
+    particles2 : array_like of :obj:`int`, optional
         The ids of (existing) particles to calculate the distance to.
-        If not provided, use ``ids1``.
+        If not provided, use ``particles1``.
     n_r_bins : :obj:`int`
         Number of bins in radial direction.
     min_r : :obj:`float`
@@ -1164,10 +1298,12 @@ class RDF(Observable):
 
     """
     _so_name = "Observables::RDF"
+    _particle_param_map = {"particles1": "ids1", "particles2": "ids2"}
 
     def __init__(self, **kwargs):
-        if "ids2" not in kwargs:
-            kwargs["ids2"] = []
+        # Preserve prior behavior: if second set not provided, backend uses ids1.
+        if "particles2" not in kwargs:
+            kwargs["particles2"] = []
         super().__init__(**kwargs)
 
     def bin_centers(self):
