@@ -27,6 +27,8 @@ usage() {
     echo "                    writes to its own <PREFIX>_dd_mm_yyyy_<n> directory"
     echo "                    (n counts the runs of that day); the timeline plot"
     echo "                    is assembled from all of them"
+    echo "                    <PREFIX>_latest/ links to the newest run and holds"
+    echo "                    benchmark_history.html with the results of all runs"
     echo "  -n TESTS        : Optional ReFrame test-name filter; repeatable (selects the union)"
     echo "  -l              : List available test cases (overrides -r/--dry-run)"
     echo "  --commit REF    : Benchmark a specific ESPResSo commit, tag or branch"
@@ -319,8 +321,28 @@ if [ "$RUN_OPTION" = "-r" ]; then
         -o "${PLOT_DIR}/EspressoBenchmark.svg" \
         || { echo "Error: benchmark timeline plot failed" >&2; exit 1; }
 
-    # Create link to newest benchmark plots after every run 
-    ln -sfn "$(basename "$RUN_DIR")" "${PREFIX}_latest${RUN_SUFFIX}"
+    # <PREFIX>_latest contains links to the newest run, its
+    # perflog and plots and the history page of all runs.
+    LATEST_DIR="${PREFIX}_latest${RUN_SUFFIX}"
+    mkdir -p "$LATEST_DIR" || exit 1
+    # Drop the previous run's links (symlinks only; the page is a regular file)
+    find "$LATEST_DIR" -maxdepth 1 -type l -delete
+    RUN_NAME="$(basename "$RUN_DIR")"
+    ln -s "../${RUN_NAME}" "${LATEST_DIR}/run"
+    if [ "$NO_PERFLOG" = false ]; then
+        REL_PLOT_DIR="../${RUN_NAME}/${PLOT_DIR#"${RUN_DIR}/"}"
+        ln -s "${REL_PLOT_DIR}/EspressoBenchmark.log" "${LATEST_DIR}/"
+        shopt -s nullglob
+        for svg in "$PLOT_DIR"/*.svg; do
+            ln -s "${REL_PLOT_DIR}/$(basename "$svg")" "${LATEST_DIR}/"
+        done
+        shopt -u nullglob
+    fi
+
+    python3 "${SCRIPT_DIR}/benchmark_history.py" \
+        --prefix "$PLOT_PREFIX" \
+        -o "${LATEST_DIR}/benchmark_history.html" \
+        || echo "Warning: benchmark history page failed" >&2
 
     if [ "$NO_PERFLOG" = true ]; then
         echo "Error: this run produced no benchmark results" >&2
