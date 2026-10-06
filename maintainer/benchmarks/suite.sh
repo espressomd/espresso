@@ -275,6 +275,17 @@ reframe -C reframe_config.py \
 
 # Stop if ReFrame failed, so we do not plot from a missing/stale perflog.
 reframe_status=$?
+
+# Remove leftover espresso builds in stage dir. Execute only when 
+# reframe fully finished with exit codes 0 (all passed) or 1 (some failed).
+if [ "$reframe_status" -le 1 ]; then
+    CLEAN_OPTS=(--delete --no-activity-check)
+else
+    CLEAN_OPTS=()
+fi
+python3 "${SCRIPT_DIR}/clean_stage.py" "${CLEAN_OPTS[@]}" "$RUN_DIR" \
+    || echo "Warning: stage cleanup reported problems (see above)" >&2
+
 if [ "$reframe_status" -ne 0 ]; then
     echo "ReFrame exited with status ${reframe_status}; skipping plot generation." >&2
     exit "$reframe_status"
