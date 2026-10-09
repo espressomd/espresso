@@ -15,12 +15,13 @@ asebytes==0.1.7
 matplotlib>=3.6.3
 vtk>=9.1.0
 PyOpenGL>=3.1.5
-pygame>=2.1.2
+#pygame>=2.1.2
 zndraw~=0.6.0
 # waLBerla dependencies
-pystencils==1.4.0
-lbmpy==1.4.0
-sympy==1.12.1
+pystencils==2.1.0
+lbmpy==2.1.1
+pystencilssfg==0.3.0
+sympy==1.14.0
 islpy>=2024
 jinja2>=3.1.2
 # CI-related

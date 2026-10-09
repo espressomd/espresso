@@ -1082,7 +1082,7 @@ endif()
 
 if(ESPRESSO_BUILD_WITH_WALBERLA)
   if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/walberla-src)
-    find_package(waLBerla 7.2 QUIET)
+    find_package(waLBerla 7.3 QUIET)
     if(waLBerla_FOUND AND NOT TARGET walberla::core AND DEFINED
                                                         walberla_SOURCE_DIR)
       add_subdirectory(${walberla_SOURCE_DIR} ${walberla_BINARY_DIR}
@@ -1093,8 +1093,8 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     # cmake-format: off
     FetchContent_Declare(
       walberla
-      GIT_REPOSITORY https://github.com/lssfau/walberla.git
-      GIT_TAG        623a60c1 # v7.2 with patches
+      GIT_REPOSITORY https://gitos.rrze.fau.de/cs10/walberla/walberla.git
+      GIT_TAG        ecbe131514531813defc2f6d8cfd2c1c17a5df2c # fhennig/pystencils-2.1
       GIT_SHALLOW    FALSE
       GIT_SUBMODULES ""  # don't clone submodules
       SYSTEM
