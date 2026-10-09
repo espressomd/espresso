@@ -14,11 +14,15 @@ and Jinja templates to [sweepgen](https://walberla.net) and
 |---|---|---|
 | LB `InitialPDFsSetter` | `generate_lb_kernels.py --kernels init` | sweepgen |
 | Other LB kernels | not regenerable at the moment | pystencils 1.4 (committed output) |
-| EK kernels | `generate_ek_kernels.py` | pystencils 1.4 |
+| EK kernels | not regenerable at the moment | pystencils 1.4 (committed output) |
 
-To regenerate a kernel that has not been migrated yet, check out the previous
-generator from git history (`git show <commit>:maintainer/walberla_kernels/generate_lb_kernels.py`)
-and use the pystencils 1.4 environment described in that commit's Readme.
+To regenerate a kernel that has not been migrated yet, use the generator
+scripts of commit `fd77c551db`, the last commit before this migration
+(e.g. `git worktree add ../espresso-old-codegen fd77c551db`), together with
+the pystencils 1.4 environment described in that commit's Readme.
+`generate_ek_kernels.py` and `lees_edwards.py` in the current tree no longer
+work with either toolchain: they depend on helpers that were removed from
+`pystencils_espresso.py`.
 
 ## Code generation environment
 
