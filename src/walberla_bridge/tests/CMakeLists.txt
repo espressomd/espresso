@@ -40,6 +40,7 @@ function(ESPRESSO_ADD_TEST)
     OpenMP::OpenMP_CXX
     espresso::walberla
     espresso::walberla_deps
+    espresso::walberla_sweepgen_includes
     espresso::compiler_flags
     espresso::walberla::compiler_flags
     espresso::utils)
