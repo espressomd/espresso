@@ -95,7 +95,8 @@ def parse_args(argv=None):
 
 
 def expand(selection, everything):
-    return list(everything) if "all" in selection else selection
+    return (list(everything) if "all" in selection
+            else list(dict.fromkeys(selection)))
 
 
 def main():
