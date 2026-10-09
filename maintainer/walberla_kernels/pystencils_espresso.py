@@ -17,143 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import numpy as np
 import sympy as sp
 import lbmpy.fieldaccess
 import lbmpy.macroscopic_value_kernels
 import lbmpy.updatekernels
 import pystencils as ps
-import pystencils_walberla
-import pystencils_walberla.utility
-from pystencils import TypedSymbol
-
-try:
-    # pystencils < 2.0
-    from pystencils.backends.cbackend import CustomCodeNode
-    from pystencils.astnodes import LoopOverCoordinate
-    get_loop_counter_symbol = LoopOverCoordinate.get_loop_counter_symbol
-except ImportError:
-    # pystencils >= 2.0
-    CustomCodeNode = None
-    from pystencils.defaults import DEFAULTS
-
-    def get_loop_counter_symbol(i):
-        return TypedSymbol(DEFAULTS.spatial_counters[i], np.uint32)
-
-
-def skip_philox_unthermalized(code, result_symbols, rng_name):
-    for r in result_symbols:
-        statement = f" {r.name};"
-        assert statement in code, f"no declaration for variable '{r.name}' in '{code}'"  # nopep8
-        code = code.replace(statement, f" {r.name}{{}};", 1)
-    statement = f"{rng_name}("
-    assert code.count(statement) == 1, f"need 1 '{rng_name}' call in '{code}'"
-    lines = code.rstrip().split("\n")
-    assert lines[-1].startswith(rng_name), f"'{rng_name}' not in '{lines[-1]}'"
-    lines[-1] = f"if (kT > 0.) {{  \n{lines[-1]}\n}}"
-    return "\n".join(lines)
-
-
-class PhiloxTwoDoubles(ps.rng.PhiloxTwoDoubles):
-    def get_code(self, *args, **kwargs):
-        code = super().get_code(*args, **kwargs)
-        return skip_philox_unthermalized(code, self.result_symbols, self._name)
-
-
-class PhiloxTwoDoublesModulo(ps.rng.PhiloxTwoDoubles):
-    def __init__(self, dim, time_step=TypedSymbol(
-            "time_step", np.uint32), *args, **kwargs):
-        super().__init__(dim, time_step=time_step, *args, **kwargs)
-
-        if kwargs.get("keys") is None:
-            keys = (0,) * self._num_keys
-        else:
-            keys = kwargs.get("keys")
-
-        if kwargs.get("offsets") is None:
-            offsets = (0,) * dim
-        else:
-            offsets = kwargs.get("offsets")
-
-        coordinates = [
-            get_loop_counter_symbol(i) + offsets[i] for i in range(dim)]
-        if dim < 3:
-            coordinates.append(0)
-
-        # add folding to coordinates with symbols
-        field_sizes = [
-            TypedSymbol(f"field_size_{i}", np.uint32) for i in range(dim)]
-
-        new_coordinates = [
-            (coord) %
-            field_size for coord,
-            field_size in zip(
-                coordinates,
-                field_sizes)]
-        self._args = sp.sympify([time_step, *new_coordinates, *keys])
-        symbols_read = set.union(*[s.atoms(sp.Symbol) for s in self.args])
-
-        headers = self.headers
-        # set headers again, since the constructor of CustomCodeNode resets the
-        # header-list
-        if CustomCodeNode is not None:
-            CustomCodeNode.__init__(
-                self,
-                "",
-                symbols_read=symbols_read,
-                symbols_defined=self.result_symbols)
-        self.headers = headers
-
-
-class PhiloxFourFloats(ps.rng.PhiloxFourFloats):
-    def get_code(self, *args, **kwargs):
-        code = super().get_code(*args, **kwargs)
-        return skip_philox_unthermalized(code, self.result_symbols, self._name)
-
-
-class PhiloxFourFloatsModulo(ps.rng.PhiloxFourFloats):
-    def __init__(self, dim, time_step=TypedSymbol(
-            "time_step", np.uint32), *args, **kwargs):
-        super().__init__(dim, time_step=time_step, *args, **kwargs)
-
-        if kwargs.get("keys") is None:
-            keys = (0,) * self._num_keys
-        else:
-            keys = kwargs.get("keys")
-
-        if kwargs.get("offsets") is None:
-            offsets = (0,) * dim
-        else:
-            offsets = kwargs.get("offsets")
-
-        coordinates = [
-            get_loop_counter_symbol(i) + offsets[i] for i in range(dim)]
-        if dim < 3:
-            coordinates.append(0)
-
-        # add folding to coordinates with symbols
-        field_sizes = [
-            TypedSymbol(f"field_size_{i}", np.uint32) for i in range(dim)]
-
-        new_coordinates = [
-            (coord) %
-            field_size for coord,
-            field_size in zip(
-                coordinates,
-                field_sizes)]
-        self._args = sp.sympify([time_step, *new_coordinates, *keys])
-        symbols_read = set.union(*[s.atoms(sp.Symbol) for s in self.args])
-
-        headers = self.headers
-        # set headers again, since the constructor of CustomCodeNode resets the
-        # header-list
-        CustomCodeNode.__init__(
-            self,
-            "",
-            symbols_read=symbols_read,
-            symbols_defined=self.result_symbols)
-        self.headers = headers
-
 
 numpy_types_to_cpp_types = {"float64": "double", "float32": "float"}
 precision_prefix = {
@@ -162,12 +30,6 @@ precision_prefix = {
 precision_suffix = {
     True: 'double_precision',
     False: 'single_precision'}
-precision_rng = {
-    True: PhiloxTwoDoubles,
-    False: PhiloxFourFloats}
-precision_rng_modulo = {
-    True: PhiloxTwoDoublesModulo,
-    False: PhiloxFourFloatsModulo}
 
 
 def generate_fields(stencil, data_type, field_layout='fzyx'):
@@ -266,38 +128,6 @@ def generate_pack_info_field_specifications(
     spec = collections.defaultdict(set)
     spec[dirs] = {field[0, 0, 0](i) for i in range(vec_len)}
     return spec
-
-
-def generate_config(ctx, params):
-    return pystencils_walberla.utility.config_from_context(ctx, **params)
-
-
-def generate_stream_collision_sweep(
-        ctx, lb_method, lbm_config, data_type, collision_rule, class_name, optimization, params, **kwargs):
-    fields = generate_fields(lb_method.stencil, data_type)
-    lbm_opt = lbmpy.LBMOptimisation(
-        symbolic_field=fields["pdfs"],
-        symbolic_temporary_field=fields["pdfs_tmp"],
-        field_layout=fields["pdfs"].layout)
-    config = generate_config(ctx, params)
-
-    # Symbols for PDF (twice, due to double buffering)
-    fields = generate_fields(lb_method.stencil, data_type)
-
-    # Generate collision kernel
-    stream_collide_update_rule = lbmpy.create_lb_update_rule(
-        collision_rule,
-        lbm_config,
-        lbm_opt,
-        config,
-        optimization)
-    stream_collide_ast = ps.create_kernel(
-        stream_collide_update_rule, config=config, **params)
-    stream_collide_ast.function_name = "kernel_stream_collide"
-    stream_collide_ast.assumed_inner_stride_one = True
-    pystencils_walberla.generate_sweep(
-        ctx, class_name, stream_collide_ast,
-        field_swaps=[(fields["pdfs"], fields["pdfs_tmp"])], **params, **kwargs)
 
 
 def generate_setters(lb_method, data_type):
