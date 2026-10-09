@@ -20,12 +20,15 @@
 import pathlib
 import tempfile
 import unittest
+from unittest import mock
 
 import pystencils as ps
 import sympy as sp
 
 import compat
 import sfg_driver
+import sweepgen
+import sweepgen.symbolic
 
 
 def toy_assignments(ctx):
@@ -89,6 +92,9 @@ class LegacySweepTest(unittest.TestCase):
             "getSweepOnCellInterval(",
             "std::function< void(walberla::IBlock *) > "
             "getSweep(gpuStream_t stream = nullptr)",
+            "impl_.runOnCellInterval(block, ci, "
+            "walberla::v8::sweep::exectag::GPU{stream});",
+            "(walberla::IBlock *b, gpuStream_t stream = nullptr)",
         ]
         for snippet in expected:
             self.assertIn(snippet, header)
@@ -99,6 +105,42 @@ class LegacySweepTest(unittest.TestCase):
         self.assertIn("Toy (walberla::BlockDataID bId, "
                       "walberla::BlockDataID aId, double omega, double alpha)",
                       header)
+
+    def test_scalars_sorted_alphabetically(self):
+        a, b = ps.fields("a, b: double[3D]", layout="fzyx")
+        zeta, beta = sp.symbols("zeta beta")
+        assignments = [ps.Assignment(a.center, zeta * b.center + beta)]
+        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        with sfg_driver.KernelFileGenerator("Toy", ctx, tmp, "test.py") as sfg:
+            compat.legacy_sweep(sfg, ctx, "Toy", assignments)
+        header = (tmp / "Toy.h").read_text()
+        self.assertIn("double beta, double zeta)", header)
+
+    def test_blockforest_property_unsupported(self):
+        a, b = ps.fields("a, b: double[3D]", layout="fzyx")
+        rhs = b.center + sweepgen.symbolic.DomainCoordinates.x_min()
+        assignments = [ps.Assignment(a.center, rhs)]
+        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        with self.assertRaisesRegex(
+                NotImplementedError, "not supported by the legacy wrapper"):
+            with sfg_driver.KernelFileGenerator(
+                    "Toy", ctx, tmp, "test.py") as sfg:
+                compat.legacy_sweep(sfg, ctx, "Toy", assignments)
+
+    def test_sparse_sweep_unsupported(self):
+        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        with mock.patch.object(sweepgen.Sweep, "sparse",
+                               new_callable=mock.PropertyMock,
+                               return_value=True):
+            with self.assertRaisesRegex(
+                    NotImplementedError, "sparse sweeps are not supported"):
+                with sfg_driver.KernelFileGenerator(
+                        "Toy", ctx, tmp, "test.py") as sfg:
+                    compat.legacy_sweep(sfg, ctx, "Toy",
+                                        toy_assignments(ctx))
 
     def test_wrong_constructor_order(self):
         with self.assertRaisesRegex(ValueError, "constructor order"):

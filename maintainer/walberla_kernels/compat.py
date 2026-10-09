@@ -29,6 +29,7 @@ from pystencilssfg.lang import Ref
 
 LEGACY_NAMESPACE = "walberla::pystencils"
 INTERNAL_NAMESPACE = "internal"
+FIELD_ID_TYPE = "walberla::BlockDataID"
 
 
 def legacy_accessor_suffix(name):
@@ -56,6 +57,10 @@ def legacy_sweep(sfg, ctx, name, assignments, *, ctor_order=None,
     ``ctor_order`` lists the parameter names explicitly.
     """
     sweep = sweepgen.Sweep(name, assignments, gen_config)
+    if sweep.sparse:
+        raise NotImplementedError(
+            f"{name}: sparse sweeps are not supported by the legacy wrapper "
+            f"yet")
     with sfg.namespace(LEGACY_NAMESPACE):
         with sfg.namespace(INTERNAL_NAMESPACE):
             sfg.generate(sweep)
@@ -66,10 +71,18 @@ def legacy_sweep(sfg, ctx, name, assignments, *, ctor_order=None,
 def _legacy_wrapper(sfg, ctx, name, sweep, ctor_order):
     container = sweep.properties_container
     inner_params = list(container.ctor_params)
-    field_ids = sorted(p.name for p in container.properties.values()
-                       if not p.setter)
+    field_ids = sorted(
+        p.name for p in container.properties.values()
+        if not p.setter and p.dtype.c_string() == FIELD_ID_TYPE)
     scalars = sorted(p.name for p in container.properties.values()
                      if p.setter)
+    supported = set(field_ids) | set(scalars)
+    unsupported = ({p.name for p in container.properties.values()} |
+                   {p.name for p in inner_params}) - supported
+    if unsupported:
+        raise NotImplementedError(
+            f"{name}: sweep properties {sorted(unsupported)} are not "
+            f"supported by the legacy wrapper yet")
     order = list(ctor_order) if ctor_order is not None else field_ids + scalars
     if sorted(order) != sorted(p.name for p in inner_params):
         raise ValueError(
