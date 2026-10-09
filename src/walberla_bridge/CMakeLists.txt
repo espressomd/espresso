@@ -63,6 +63,12 @@ function(espresso_configure_walberla_target)
   target_include_directories(
     ${TARGET_NAME} PUBLIC include PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                           ${walberla_BINARY_DIR}/src)
+  # headers needed by the sweepgen kernels: waLBerla v8 core (execution tags)
+  # and the vendored pystencils runtime
+  target_include_directories(
+    ${TARGET_NAME} SYSTEM
+    PRIVATE ${walberla_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/src/third_party)
   if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
     foreach(LANG CXX CUDA)
       set(TARGET_CLANG_TIDY "${ESPRESSO_${LANG}_CLANG_TIDY}")

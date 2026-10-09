@@ -1,0 +1,58 @@
+#pragma once
+
+
+#if defined(__CUDA_ARCH__)
+#define PYSTENCILS_PLATFORM_IS_CUDA true
+#else
+#define PYSTENCILS_PLATFORM_IS_CUDA false
+#endif
+
+#if defined(__OPENCL_VERSION__)
+#define PYSTENCILS_PLATFORM_IS_OPENCL true
+#else
+#define PYSTENCILS_PLATFORM_IS_OPENCL false
+#endif
+
+#if defined(__HIP_DEVICE_COMPILE__)
+#define PYSTENCILS_PLATFORM_IS_HIP true
+#else
+#define PYSTENCILS_PLATFORM_IS_HIP false
+#endif
+
+#if PYSTENCILS_PLATFORM_IS_CUDA || PYSTENCILS_PLATFORM_IS_HIP
+#define PYSTENCILS_PLATFORM_IS_GPU true
+#define PYSTENCILS_DEVICE_QUALIFIERS __device__ __forceinline__
+#else
+#define PYSTENCILS_PLATFORM_IS_GPU false
+#define PYSTENCILS_DEVICE_QUALIFIERS
+#endif
+
+#if !PYSTENCILS_PLATFORM_IS_GPU && defined(__SSE4_1__)
+#define PYSTENCILS_PLATFORM_HAS_SSE true
+#else
+#define PYSTENCILS_PLATFORM_HAS_SSE false
+#endif
+
+#if !PYSTENCILS_PLATFORM_IS_GPU && defined(__AVX2__)
+#define PYSTENCILS_PLATFORM_HAS_AVX true
+#else
+#define PYSTENCILS_PLATFORM_HAS_AVX false
+#endif
+
+#if !PYSTENCILS_PLATFORM_IS_GPU && defined(__AVX512F__)
+#define PYSTENCILS_PLATFORM_HAS_AVX512 true
+#else
+#define PYSTENCILS_PLATFORM_HAS_AVX512 false
+#endif
+
+#if !PYSTENCILS_PLATFORM_IS_GPU && defined(__ARM_NEON)
+#define PYSTENCILS_PLATFORM_HAS_NEON true
+#else
+#define PYSTENCILS_PLATFORM_HAS_NEON false
+#endif
+
+#if !PYSTENCILS_PLATFORM_IS_GPU && defined(__ARM_FEATURE_SVE)
+#define PYSTENCILS_PLATFORM_HAS_SVE true
+#else
+#define PYSTENCILS_PLATFORM_HAS_SVE false
+#endif
