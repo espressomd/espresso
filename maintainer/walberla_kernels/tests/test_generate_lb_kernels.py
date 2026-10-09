@@ -49,6 +49,9 @@ class GenerateLbKernelsTest(unittest.TestCase):
             "walberla::BlockDataID pdfsId, walberla::BlockDataID velocityId, "
             "double rho_0)", header)
         self.assertIn("double getRho_0() const", header)
+        source = (tmp / "InitialPDFsSetterDoublePrecision.cpp").read_text()
+        self.assertIn("_data_force", source)
+        self.assertIn("rho_0", source)
 
     def test_init_all_variants(self):
         tmp, _ = self.run_script("--kernels", "init")
@@ -61,6 +64,14 @@ class GenerateLbKernelsTest(unittest.TestCase):
         tmp, result = self.run_script("--kernels", "init", "--target", "avx")
         self.assertEqual(list(tmp.iterdir()), [])
         self.assertIn("skipping init for target avx", result.stdout)
+
+    def test_duplicate_selections_generate_once(self):
+        _, result = self.run_script(
+            "--kernels", "init", "init", "--precision", "double", "double",
+            "--target", "cpu", "cpu")
+        self.assertEqual(
+            result.stdout.count("generated InitialPDFsSetterDoublePrecision"),
+            1)
 
     def test_unknown_kernel(self):
         _, result = self.run_script("--kernels", "bogus", check=False)
