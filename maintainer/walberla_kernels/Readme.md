@@ -1,71 +1,80 @@
 # Automated kernel generation with waLBerla
 
 The scripts in this directory generate the kernels for lattice-based algorithms.
+The generated kernels are committed to the repository; CMake never runs the
+code generators.
 
-The following dependencies need to be in the Python path:
+## Migration status
 
-* pystencils (https://i10git.cs.fau.de/pycodegen/pystencils)
-* lbmpy (https://i10git.cs.fau.de/pycodegen/lbmpy/)
-* waLBerla's Python components. Here the same version should be used as
-  the one used to build ESPResSo. One way is to use the copy fetched in
-  ESPResSo's `build/_deps/walberla-src/python/` directory.
+The kernels are being migrated from pystencils 1.4 / `pystencils_walberla`
+and Jinja templates to [sweepgen](https://walberla.net) and
+[pystencils-sfg](https://pycodegen.pages.i10git.cs.fau.de/pystencils-sfg/).
 
-The Python dependencies can be pip installed locally with the following command:
+| Kernel family | Generator | Toolchain |
+|---|---|---|
+| LB `InitialPDFsSetter` | `generate_lb_kernels.py --kernels init` | sweepgen |
+| Other LB kernels | not regenerable at the moment | pystencils 1.4 (committed output) |
+| EK kernels | `generate_ek_kernels.py` | pystencils 1.4 |
+
+To regenerate a kernel that has not been migrated yet, check out the previous
+generator from git history (`git show <commit>:maintainer/walberla_kernels/generate_lb_kernels.py`)
+and use the pystencils 1.4 environment described in that commit's Readme.
+
+## Code generation environment
+
+The sweepgen kernels need pystencils, lbmpy, pystencils-sfg and the sweepgen
+package of the exact waLBerla commit ESPResSo is built against
+(the waLBerla `GIT_TAG` in the `FetchContent_Declare(walberla ...)` block of the top-level `CMakeLists.txt`):
 
 ```sh
-python3 -m venv codegen
-source codegen/bin/activate
+python3 -m venv sweepgen
+source sweepgen/bin/activate
 python3 -m pip install -c "$(git rev-parse --show-toplevel)/requirements.txt" \
-    numpy cython sympy islpy jinja2 setuptools packaging
-python3 -m pip install \
-  git+https://gitos.rrze.fau.de/cs10/pycodegen/lbmpy.git@e9efe343e42858f11c8844795326efa4f00681df \
-  git+https://gitos.rrze.fau.de/cs10/contributors/jean-noel-grad/pystencils.git@e851f4e322d0c7771802169e7afac83b7f7da868
+    pystencils lbmpy pystencilssfg sympy packaging clang-format==19.1.7
+python3 -m pip install -e <build-dir>/_deps/walberla-src/sweepgen   # e.g. build_sweepgen
 deactivate
 ```
 
-The kernels can be regenerated with this shell script:
+## Generating kernels
+
+Every kernel is written to its own file pair, named after its C++ class,
+so a single kernel can be regenerated without touching the others:
 
 ```sh
-# adapt these paths to the build environment
-source codegen/bin/activate
-export PYTHONPATH="$(realpath build/_deps/walberla-src/python/)"
+source sweepgen/bin/activate
+cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/lattice_boltzmann/generated_kernels/
+python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py \
+    --kernels init --precision double --target cuda
+```
 
-# convenience functions
-function generate_lb_kernels {
-  python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py $@
-}
-function generate_ek_kernels {
-  python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_ek_kernels.py $@
-}
+`--kernels`, `--precision` (`single`, `double`) and `--target` (`cpu`, `avx`,
+`cuda`) all accept `all`, which is also the default. Combinations a kernel
+does not support are skipped with a notice.
+
+Format the generated files afterwards:
+
+```sh
 function format_kernels {
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cpp -style "{Language: Cpp, ColumnLimit: 0}"
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cu  -style "{Language: Cpp, ColumnLimit: 0}"
-  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cuh -style "{Language: Cpp}"
 }
-
-# LB kernels
-cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/lattice_boltzmann/generated_kernels/
-generate_lb_kernels --kernels all
-generate_lb_kernels --kernels all --single-precision
-generate_lb_kernels --kernels all --gpu
-generate_lb_kernels --kernels all --gpu --single-precision
 format_kernels
-
-# EK kernels
-cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/generated_kernels/
-generate_ek_kernels --kernels all
-generate_ek_kernels --kernels all --single-precision
-generate_ek_kernels --kernels all --gpu
-generate_ek_kernels --kernels all --gpu --single-precision
-format_kernels
-mv ReactionKernel*.{cpp,h,cu} $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/reactions/generated_kernels/
 ```
 
-The code generation is not deterministic, therefore the list of changes might
-be quite large. If you only adapted a few lines in a specific template file,
-then you only need to commit the corresponding output files.
+The output is reproducible up to the order of the field-extraction statements,
+which pystencils-sfg 0.3 does not keep stable between runs.
 
-WARNING: The code generation sorts the arguments alphabetically by symbol name.
-If you rename something, you may have to adapt the order of arguments in the
-calling code!
+## Architecture
+
+* `sfg_driver.py`: toolchain version check, precision/target handling,
+  one named file pair per kernel.
+* `compat.py`: emits each kernel as a sweepgen class in
+  `walberla::pystencils::internal` plus a wrapper class with the legacy
+  `pystencils_walberla` interface used by the waLBerla bridge.
+* `tests/`: unit tests, run with
+  `python3 -m unittest discover -s tests -t .` from this directory.
+
+The pystencils runtime headers used by the kernels are vendored in
+`src/walberla_bridge/src/third_party/pystencils_runtime/`; refresh them
+whenever the pystencils version changes.
