@@ -79,8 +79,8 @@ which pystencils-sfg 0.3 does not keep stable between runs.
 * `tests/`: unit tests, run with
   `python3 -m unittest discover -s tests -t .` from this directory.
 
-The pystencils runtime headers used by the kernels are vendored in
-`src/walberla_bridge/src/third_party/pystencils_runtime/`. Only the headers
-the committed kernels need are kept; refresh them with
-`python3 vendor_pystencils_runtime.py` after generating kernels or changing
-the pystencils version.
+The kernels include the pystencils runtime headers (`pystencils_runtime/`).
+They are not copied into ESPResSo: at configure time, CMake takes them from
+the pystencils package of the Python interpreter it uses
+(`cmake/FindPystencils.cmake`). Building with waLBerla therefore requires
+pystencils from `requirements.txt` in that Python environment.
