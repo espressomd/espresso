@@ -24,6 +24,7 @@ with pystencils-sfg and sweepgen.
 
 import dataclasses
 import pathlib
+import re
 
 import packaging.specifiers
 import pystencils as ps
@@ -144,3 +145,35 @@ class KernelFileGenerator(pystencilssfg.SourceFileGenerator):
         sfg = super().__enter__()
         sfg.prelude(toolchain_metadata(self._generator_script))
         return sfg
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        result = super().__exit__(exc_type, exc_value, traceback)
+        if exc_type is None:
+            for path in sorted(self._output_dir.glob(f"{self._basename}.*")):
+                if path.suffix in (".cpp", ".cu"):
+                    path.write_text(patch_kernel_source(path.read_text()))
+        return result
+
+
+def patch_kernel_source(source):
+    """
+    Work around code generation problems of pystencils 2.1.0 in the
+    generated ``.cpp`` and ``.cu`` files. Re-check whether they are still
+    needed when the toolchain in ``TOOLCHAIN_REQUIREMENTS`` changes.
+
+    * The kernels live in a namespace nested in ``walberla::pystencils``,
+      where the unqualified ``pystencils::runtime::`` of the RNG calls
+      resolves to ``walberla::pystencils::runtime`` instead of the
+      ``::pystencils::runtime`` of the pystencils runtime headers.
+    * The vectorized RNG functions deduce their key type from both the
+      ``int64_t`` seed (``long``) and the key literal (``long long``),
+      which doesn't compile on LP64 platforms: pass the type explicitly.
+    * Single-precision CPU kernels call the global ``sqrt()``, ``fmin()``
+      and ``fmax()``, i.e. the double overloads: use the ``std::`` ones.
+    """
+    source = re.sub(r"(?<![:\w])pystencils::runtime::",
+                    "::pystencils::runtime::", source)
+    source = re.sub(r"(?<![\w:])(sqrt|fmin|fmax)\(", r"std::\1(", source)
+    source = re.sub(r"(::x86::random::philox_float(?:32|64))\(",
+                    r"\1<int64_t>(", source)
+    return source
