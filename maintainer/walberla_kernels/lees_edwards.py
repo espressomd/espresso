@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2026 The ESPResSo project
+# Copyright (C) 2022-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,151 +17,69 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pystencils_espresso import get_loop_counter_symbol
+"""
+Lees-Edwards boundary conditions for the LB stream-collide kernel.
 
-try:
-    from pystencils.typing import CastFunc
-except ImportError:
-    from pystencils.sympyextensions import CastFunc
-
-from pystencils import TypedSymbol
-from pystencils import Assignment
-
-from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
+In the outermost cell layers of the shear-normal direction, the populations
+that flow out of the simulation box are shifted by the difference between
+the equilibria with velocity ``u`` and ``u + v_s``, where ``v_s`` is the
+shear velocity.
+"""
 
 import sympy as sp
-import types
+from pystencils import Assignment, DynamicType, TypedSymbol
+from pystencils.defaults import DEFAULTS
+from pystencils.sympyextensions import tcast
+from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 
 
-def bind_diff(self, *symbols, **kwargs):  # pylint: disable=unused-argument
+def boundary_layer_masks(shear_dir_normal, dtype):
     """
-    Make a Symbol object behave as a constant during symbolic differentiation.
+    Masks that are 1 in the top and bottom cell layer, respectively, and 0
+    elsewhere. ``lebc_bot_index`` and ``lebc_top_index`` are the block-local
+    indices of the first cell of the simulation box and of the first cell
+    after it along the shear-normal direction.
+
+    The masks are written as ``max(0, min(1, ...))`` of the integer cell
+    index instead of a ``Piecewise``: they only depend on the cell layer, so
+    pystencils hoists them out of the vectorized innermost loop, while a
+    ``Piecewise`` can't be vectorized by pystencils 2.1.
     """
-    return sp.Derivative(sp.Integer(0), *symbols, **kwargs)
+    index = tcast(DEFAULTS.spatial_counters[shear_dir_normal], dtype)
+    top = tcast(TypedSymbol("lebc_top_index", DynamicType.INDEX_TYPE), dtype)
+    bot = tcast(TypedSymbol("lebc_bot_index", DynamicType.INDEX_TYPE), dtype)
+    is_top = sp.Max(0, sp.Min(1, index - top + 2))  # index >= top - 1
+    is_bot = sp.Max(0, sp.Min(1, bot - index + 1))  # index <= bot
+    return is_top, is_bot
 
 
-def bind_diff_wrt(self):  # pylint: disable=unused-argument
+def add_lees_edwards_to_collision(collision, pdfs, shear_dir_normal, dtype):
     """
-    Make a Symbol object behave as a constant during symbolic differentiation.
+    Add the Lees-Edwards velocity shift of the outflowing populations to the
+    main assignments of ``collision``. The shear velocity is the kernel
+    parameter ``v_s``, the shear direction is x.
     """
-    return True
-
-
-def velocity_offset_eqs(config, method, pdfs, shear_dir_normal, stencil,
-                        with_simd, combined_kernel=True):
-    """Calculates the difference between quilibrium pdf distributions
-    with (rho, u) and (rho, u+v) and applies them to out-flowing
-    populations in the boundary layer. Returns an AssignmentCollection
-    with one Assignment per stencil direction.
-    """
-    dim = len(stencil[0])
-    default_dtype = config.data_type.default_factory()
-
-    # Placeholders indicating a population flows up or down.
-    # Will be replaced later using the component of the stencil direction
-    # along the shear_dir_normal.
-    points_up = sp.Symbol('points_up')
-    points_down = sp.Symbol('points_down')
-
-    # Symbol for the coordinate index within the field,
-    # used to identify boundary layers
-    counters = [get_loop_counter_symbol(i) for i in range(dim)]
-
-    lebc_top_index = TypedSymbol("lebc_top_index", counters[1].dtype)
-    lebc_bot_index = TypedSymbol("lebc_bot_index", counters[1].dtype)
-
-    # When the kernels are combined, the integration loop also reaches
-    # one grid cell further to pull the populations. This changes the
-    # position where to apply the LE boundary by one cell.
-    boundary_offset = [0, -1]
-    if combined_kernel:
-        boundary_offset = [1, 0]
-    if with_simd:
-        # make type differentiable (CastFunc is a function taking 2 arguments,
-        # but the second argument is a C++ type, i.e. a compile-time constant)
-        default_dtype.diff = types.MethodType(bind_diff, default_dtype)
-        default_dtype._diff_wrt = types.MethodType(
-            bind_diff_wrt, default_dtype)
-        # cell index conversion to floating-point is mandatory for vectorization
-        # (only float32 and float64 are supported in pystencils 1.4)
-        index = CastFunc(counters[1], default_dtype)
-        # epsilon to avoid an off-by-one-error during floating-point comparison
-        epsilon = 0.1
-        index_bot = CastFunc(lebc_bot_index, default_dtype) + \
-            CastFunc(boundary_offset[0] + epsilon, default_dtype)
-        index_top = CastFunc(lebc_top_index, default_dtype) + \
-            CastFunc(boundary_offset[1] - epsilon, default_dtype)
-    else:
-        index = counters[1]
-        index_bot = lebc_bot_index + boundary_offset[0]
-        index_top = lebc_top_index + boundary_offset[1]
-    # +,-1 for upper/lower boundary layers, 0 otherwise.
-    # Based on symbolic counters defined above. Only becomes
-    # non-zero if the corresponding points_up/down flags
-    # are engaged (which is only done for out-flowing populations)
-    layer_prefactor = sp.Piecewise(
-        (-1, sp.And(index <= index_bot, points_down)),
-        (+1, sp.And(index >= index_top, points_up)),
-        (0, True)
-    )
-
-    # Start with an equilibrium distribution for a given density and velocity
-    delta_pdf_eqs = macroscopic_values_setter(
-        method, sp.Symbol("dens"), [
-            sp.Symbol("v_0"), sp.Symbol("v_1"), sp.Symbol("v_2")], pdfs)
-
-    # Replace the assignments of (rho,u) by (rho, u+v) - (rho,u)
-    ma = []
-    for a, c in zip(delta_pdf_eqs.main_assignments, method.stencil):
-        # Determine direction of the stencil component in the
-        # shear_dir_normal
+    method = collision.method
+    is_top, is_bot = boundary_layer_masks(shear_dir_normal, dtype)
+    le_top, le_bot = sp.symbols("le_top le_bot")
+    velocity = [sp.Symbol(f"v_{i}") for i in range(method.dim)]
+    equilibrium = macroscopic_values_setter(
+        method, sp.Symbol("dens"), velocity, pdfs)
+    v_s = sp.Symbol("v_s")
+    u_0 = sp.Symbol("u_0")
+    main_assignments = []
+    for a, eq, c in zip(collision.main_assignments,
+                        equilibrium.main_assignments, method.stencil):
         if c[shear_dir_normal] == 1:
-            up = True
-            down = False
+            shift = le_top * v_s
         elif c[shear_dir_normal] == -1:
-            up = False
-            down = True
+            shift = -le_bot * v_s
         else:
-            up = False
-            down = False
-
-        # Replace (rho,u) by (rho,u+v) in boundary layers
-        rhs = sp.simplify(
-            a.rhs -
-            a.rhs.replace(
-                sp.Symbol("u_0"),
-                sp.Symbol("u_0") +
-                layer_prefactor *
-                sp.Symbol("v_s")))
-
-        # Only engage if the population is outflowing. See layer_prefactor
-        rhs = rhs.replace(points_up, up)
-        rhs = rhs.replace(points_down, down)
-        new_a = Assignment(a.lhs, rhs)
-
-        ma.append(new_a)
-        print(c, ma[-1])
-    # Plug in modified assignments
-    delta_pdf_eqs.main_assignments = ma
-    return delta_pdf_eqs.main_assignments
-
-
-def add_lees_edwards_to_collision(
-        config, collision, pdfs, stencil, shear_dir_normal, with_simd, combined_kernel):
-    # Get population shift for outflowing populations at the boundaries
-    offset = velocity_offset_eqs(
-        config,
-        collision.method,
-        pdfs,
-        shear_dir_normal,
-        stencil,
-        with_simd,
-        combined_kernel)
-
-    ma = []
-    for i, a in enumerate(collision.main_assignments):
-        # Add Lees-Edwards-shift to collision main assignments
-        new_a = Assignment(a.lhs, a.rhs + offset[i].rhs)
-        ma.append(new_a)
-    collision.main_assignments = ma
+            shift = 0
+        delta = sp.simplify(eq.rhs - eq.rhs.replace(u_0, u_0 + shift))
+        main_assignments.append(Assignment(a.lhs, a.rhs + delta))
+    collision.main_assignments = main_assignments
+    collision.subexpressions = [Assignment(le_top, is_top),
+                                Assignment(le_bot, is_bot),
+                                *collision.subexpressions]
     return collision
