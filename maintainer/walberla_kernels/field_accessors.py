@@ -26,15 +26,15 @@ pystencils-sfg composer. Replaces the Jinja template ``FieldAccessors.tmpl.h``
 The header-only file defines inline functions in the namespaces
 ``walberla::lbm::accessor::{Population, Vector, EquilibriumDistribution,
 Equilibrium, Density, Velocity, Force, MomentumDensity, PressureTensor}``.
-Each function is added with ``sfg.function``; the statements of the
-function bodies are C++ strings assembled in Python. The equations of the
+The functions are added with the stock ``SfgFunctionSequencer`` on a cursor
+proxy that doesn't register them by name, which allows overloads (which
+pystencils-sfg 0.3 does not support through its public API). The statements
+of the function bodies are C++ strings assembled in Python. The equations of the
 LB method are printed by `accessor_equations`.
 """
 
 from pystencils.types import PsCustomType, constify
-from pystencilssfg.composer.basic_composer import (
-    SfgFunctionSequencer, make_sequence)
-from pystencilssfg.ir import SfgEntityDef, SfgFunction
+from pystencilssfg.composer.basic_composer import SfgFunctionSequencer
 from pystencilssfg.lang import AugExpr, cpptype
 from pystencilssfg.lang.cpp import std
 from sweepgen.api import (
@@ -51,23 +51,20 @@ _Matrix3 = cpptype("walberla::Matrix3< {T} >", "core/math/Matrix3.h")
 AUTO = PsCustomType("auto")
 
 
-class _OverloadSequencer(SfgFunctionSequencer):
-    """
-    Function sequencer that allows overloads. ``SfgFunctionSequencer``
-    registers every function by name in its namespace and rejects a second
-    function of the same name, which the accessors need (e.g. the ``get``
-    functions for a cell and for a cell interval). The overloads are
-    written to the header without registering them.
-    """
+class _AllowOverloads:
+    """Cursor proxy that doesn't register functions by name, so that a
+    namespace can hold overloads (pystencils-sfg 0.3 rejects a second
+    function of the same name). Relies on pystencils-sfg internals:
+    re-check on upgrades."""
 
-    def __call__(self, *args):
-        tree = make_sequence(*args)
-        func = SfgFunction(
-            self._name, self._cursor.current_namespace, tree,
-            return_type=self._return_type, inline=True,
-            constexpr=self._constexpr, attributes=self._attributes,
-            required_params=self._params)
-        self._cursor.write_header(SfgEntityDef(func))
+    def __init__(self, cursor):
+        self._cursor = cursor
+
+    def add_entity(self, entity):
+        pass
+
+    def __getattr__(self, name):
+        return getattr(self._cursor, name)
 
 
 def _ui(i):
@@ -107,7 +104,9 @@ class _FieldAccessors:
             lb_method, self.dtype)
         self.Q = self.equations.Q
         self.D = self.equations.D
-        assert self.D == _DIM
+        if self.D != _DIM:
+            raise ValueError("the field accessors require a "
+                             "three-dimensional lattice")
         self.stencil_name = lb_method.stencil.name
         if not self.stencil_name:
             raise ValueError("lb_method uses a stencil that is not supported "
@@ -136,8 +135,8 @@ class _FieldAccessors:
 
     # ---- statements shared by several accessors
 
-    def pdf_loads(self, indices, field="pdf_field", ptr="xyz0"):
-        return [f"const {self.T} f_{i} = {field}->getF(&{ptr}, {_ui(i)});"
+    def pdf_loads(self, indices, ptr="xyz0"):
+        return [f"const {self.T} f_{i} = pdf_field->getF(&{ptr}, {_ui(i)});"
                 for i in indices]
 
     def force_loads(self, eqs):
@@ -146,11 +145,10 @@ class _FieldAccessors:
                 f"force_field->get(x, y, z, {_ui(i)});"
                 for i in self.equations.used_forces(eqs)]
 
-    def bind_vector(self, names, vector, eqs=None):
+    def bind_vector(self, names, vector):
         """Bind scalar symbols to the components of a vector or pointer."""
         return [f"const {self.T} {name} = {vector}[{_ui(i)}];"
-                for i, name in enumerate(names)
-                if eqs is None or name in eqs.inputs]
+                for i, name in enumerate(names)]
 
     def cell_coordinates(self):
         return [f"const auto {c} = cell.{c}();" for c in "xyz"]
@@ -175,7 +173,8 @@ class _FieldAccessors:
 
     def fn(self, name, *params, returns=None):
         """Start an inline function; the sequencer is called with the body."""
-        sequencer = _OverloadSequencer(self.sfg._cursor, name)
+        sequencer = SfgFunctionSequencer(
+            _AllowOverloads(self.sfg._cursor), name).inline()
         if returns is not None:
             sequencer = sequencer.returns(returns)
         return sequencer.params(*params)
@@ -245,9 +244,7 @@ class _FieldAccessors:
                 *(f"velocity_field->get(cell, {_ui(i)}) = md_{i} * rho_inv;"
                   for i in range(D)))
 
-            self.fn("initialize", pdf_mut,
-                    AugExpr(_Array(T=self.dtype, N=Q, const=True, ref=True)
-                            ).var("pop"))(
+            self.fn("initialize", pdf_mut, pop)(
                 *_all_cells_macro(
                     "pdf_field",
                     f"{T} &xyz0 = pdf_field->get(x, y, z, {_ui(0)});",
