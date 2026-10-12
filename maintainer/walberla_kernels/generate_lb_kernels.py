@@ -32,8 +32,14 @@ import typing
 import lbmpy
 import lbmpy.creationfunctions
 import lbmpy.forcemodels
+import lbmpy.macroscopic_value_kernels
+import pystencils as ps
+import sympy as sp
+from pystencils.sympyextensions import DynamicType
+from pystencils.sympyextensions.random import Philox
 
 import compat
+import lees_edwards
 import pystencils_espresso
 import relaxation_rates
 import sfg_driver
@@ -56,12 +62,106 @@ def create_lb_method(fields):
     )
 
 
+def cpu_gen_config(ctx):
+    """Vectorize the kernels of the AVX target (off by default in pystencils)."""
+    if ctx.target != "avx":
+        return None
+    config = ps.CreateKernelConfig()
+    config.cpu.vectorize.enable = True
+    config.cpu.vectorize.assume_inner_stride_one = True
+    if not ctx.double_precision:
+        # the SIMD Philox RNG for 8 floats needs 32-bit counters:
+        # AVX has no vectors of 8 int64
+        config.index_dtype = "int32"
+    return config
+
+
+def stream_collide_config(fields, **kwargs):
+    lbm_config = lbmpy.LBMConfig(stencil=STENCIL, streaming_pattern="pull",
+                                 **LBM_CONFIG_KWARGS, **kwargs)
+    lbm_optimisation = lbmpy.LBMOptimisation(
+        symbolic_field=fields["pdfs"],
+        symbolic_temporary_field=fields["pdfs_tmp"],
+        field_layout=fields["pdfs"].layout,
+        cse_global=True)
+    return lbm_config, lbm_optimisation
+
+
+def create_thermalized_update_rule(ctx, fields, method):
+    """Stream-collide update rule with Philox thermal fluctuations."""
+    # the RNG parameters must have the index type of the kernel
+    offsets = tuple(ps.TypedSymbol(f"block_offset_{i}", DynamicType.INDEX_TYPE)
+                    for i in range(3))
+    rng = Philox("fluctuation_rng", ctx.data_type,
+                 seed=ps.TypedSymbol("seed", DynamicType.INDEX_TYPE),
+                 offsets=offsets)
+    lbm_config, lbm_optimisation = stream_collide_config(
+        fields, fluctuating={"temperature": sp.Symbol("kT"), "rng": rng})
+    return lbmpy.create_lb_update_rule(
+        lb_method=method, lbm_config=lbm_config,
+        lbm_optimisation=lbm_optimisation)
+
+
+def create_athermal_update_rule(fields, method):
+    """Stream-collide update rule without fluctuations."""
+    lbm_config, lbm_optimisation = stream_collide_config(fields)
+    return lbmpy.create_lb_update_rule(
+        lb_method=method, lbm_config=lbm_config,
+        lbm_optimisation=lbm_optimisation)
+
+
+def create_lees_edwards_update_rule(ctx, fields, method):
+    """Stream-collide update rule with Lees-Edwards boundary conditions."""
+    lbm_config, lbm_optimisation = stream_collide_config(fields)
+    collision_rule = lbmpy.creationfunctions.create_lb_collision_rule(
+        method, lbm_config=lbm_config, lbm_optimisation=lbm_optimisation)
+    collision_rule = lees_edwards.add_lees_edwards_to_collision(
+        collision_rule, fields["pdfs"], shear_dir_normal=1,
+        dtype=ctx.data_type)
+    return lbmpy.creationfunctions.create_lb_update_rule(
+        collision_rule, lbm_config=lbm_config,
+        lbm_optimisation=lbm_optimisation)
+
+
 def generate_init(sfg, ctx, name):
     fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
     method = create_lb_method(fields)
     compat.legacy_sweep(
         sfg, ctx, name,
         pystencils_espresso.generate_setters(method, ctx.data_type))
+
+
+def generate_stream_collide_thermalized(sfg, ctx, name):
+    fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
+    method = create_lb_method(fields)
+    compat.legacy_sweep(
+        sfg, ctx, name,
+        create_thermalized_update_rule(ctx, fields, method),
+        gen_config=cpu_gen_config(ctx),
+        swap_fields=[(fields["pdfs"], fields["pdfs_tmp"])],
+        legacy_types={"seed": "uint32_t", "time_step": "uint32_t",
+                      "block_offset": "uint32_t"},
+        # run a kernel without RNG if kT == 0
+        athermal_assignments=create_athermal_update_rule(fields, method))
+
+
+def generate_stream_collide_lees_edwards(sfg, ctx, name):
+    fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
+    method = create_lb_method(fields)
+    compat.legacy_sweep(
+        sfg, ctx, name,
+        create_lees_edwards_update_rule(ctx, fields, method),
+        gen_config=cpu_gen_config(ctx),
+        swap_fields=[(fields["pdfs"], fields["pdfs_tmp"])])
+
+
+def generate_vel_update(sfg, ctx, name):
+    fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
+    method = create_lb_method(fields)
+    assignments = lbmpy.macroscopic_value_kernels.macroscopic_values_getter(
+        method, None, fields["velocity"], fields["pdfs"],
+        use_pre_collision_pdfs=True)
+    compat.legacy_sweep(sfg, ctx, name, assignments)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -73,6 +173,14 @@ class Kernel:
 
 KERNELS = {
     "init": Kernel("InitialPDFsSetter", ("cpu", "cuda"), generate_init),
+    "stream_collide_thermalized": Kernel(
+        "StreamCollideSweepThermalized", ("cpu", "avx", "cuda"),
+        generate_stream_collide_thermalized),
+    "stream_collide_lees_edwards": Kernel(
+        "StreamCollideSweepLeesEdwards", ("cpu", "avx", "cuda"),
+        generate_stream_collide_lees_edwards),
+    "vel_update": Kernel("UpdateVelFromPDF", ("cpu", "cuda"),
+                         generate_vel_update),
 }
 
 
