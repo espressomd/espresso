@@ -168,9 +168,12 @@ def swap_assignments(ctx, rng_parameters=True):
 class SwappingSweepTest(unittest.TestCase):
 
     def generate(self, target="cpu", **kwargs):
-        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
         ctx = sfg_driver.CodegenContext("double", target)
         assignments, swap = swap_assignments(ctx)
+        return self.generate_from(ctx, assignments, swap, **kwargs)
+
+    def generate_from(self, ctx, assignments, swap, **kwargs):
+        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
         with sfg_driver.KernelFileGenerator("Swap", ctx, tmp, "test.py") as sfg:
             compat.legacy_sweep(sfg, ctx, "Swap", assignments,
                                 swap_fields=[swap], **kwargs)
@@ -225,8 +228,57 @@ class SwappingSweepTest(unittest.TestCase):
         ctx = sfg_driver.CodegenContext("double", "cuda")
         athermal, _ = swap_assignments(ctx, rng_parameters=False)
         wrapper = self.generate("cuda", athermal_assignments=athermal)
+        self.assertIn("if (impl_.kT() > 0) {", wrapper)
+        self.assertIn("impl_(block, walberla::v8::sweep::exectag::GPU{stream});",
+                      wrapper)
         self.assertIn("impl_athermal_(block, "
                       "walberla::v8::sweep::exectag::GPU{stream});", wrapper)
+
+    def scalar_assignments(self, ctx, extra_field=False):
+        f, f_tmp, g = ps.fields(
+            f"f, f_tmp, g: {ctx.data_type.c_string()}[3D]", layout="fzyx")
+        rhs = sp.Symbol("omega") * f[1, 0, 0]
+        if extra_field:
+            rhs = rhs + g.center
+        return [ps.Assignment(f_tmp.center, rhs)], (f, f_tmp)
+
+    def test_setters_write_both_sweeps(self):
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        main, swap = self.scalar_assignments(ctx)
+        athermal, _ = self.scalar_assignments(ctx)
+        wrapper = self.generate_from(ctx, main, swap,
+                                     athermal_assignments=athermal,
+                                     athermal_param="omega")
+        self.assertIn("impl_.omega() = value;", wrapper)
+        self.assertIn("impl_athermal_.omega() = value;", wrapper)
+
+    def test_athermal_parameter_must_exist(self):
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        main, swap = self.scalar_assignments(ctx)
+        athermal, _ = self.scalar_assignments(ctx)
+        with self.assertRaisesRegex(ValueError, "athermal parameter "
+                                    "temperature is not a scalar"):
+            self.generate_from(ctx, main, swap, athermal_assignments=athermal,
+                               athermal_param="temperature")
+
+    def test_athermal_sweep_with_extra_field(self):
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        main, swap = self.scalar_assignments(ctx)
+        athermal, _ = self.scalar_assignments(ctx, extra_field=True)
+        with self.assertRaisesRegex(ValueError, "no counterpart"):
+            self.generate_from(ctx, main, swap, athermal_assignments=athermal,
+                               athermal_param="omega")
+
+    def test_block_offset_legacy_type_without_property(self):
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        main, swap = self.scalar_assignments(ctx)
+        with self.assertRaisesRegex(ValueError, "unknown scalar"):
+            self.generate_from(ctx, main, swap,
+                               legacy_types={"block_offset": "uint32_t"})
+
+    def test_non_integer_legacy_type(self):
+        with self.assertRaisesRegex(ValueError, "unsupported legacy type"):
+            self.generate(legacy_types={"seed": "double"})
 
     def test_athermal_dispatch_needs_swaps(self):
         tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
