@@ -119,12 +119,27 @@ class PatchKernelSourceTest(unittest.TestCase):
             sfg_driver.patch_kernel_source(source),
             "::pystencils::runtime::x86::random::philox_float64<int64_t>(c, k)")
 
+    def test_patches_are_idempotent(self):
+        source = ("auto r = pystencils::runtime::random::philox_float64(x);\n"
+                  "auto s = ::pystencils::runtime::random::philox_float32(y);\n"
+                  "auto k = ::x86::random::philox_float32(a, b);\n"
+                  "auto m = sqrt(x) + fmin(a, b) + fmax(a, b) + std::sqrt(x);")
+        patched = sfg_driver.patch_kernel_source(source)
+        self.assertEqual(sfg_driver.patch_kernel_source(patched), patched)
+
+    def test_member_calls_are_left_alone(self):
+        source = "a.sqrt(x) + p->fmin(y, z)"
+        self.assertEqual(sfg_driver.patch_kernel_source(source), source)
+
     def test_generator_patches_sources_only(self):
         tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
         ctx = sfg_driver.CodegenContext("double", "cpu")
         with sfg_driver.KernelFileGenerator("Foo", ctx, tmp, "test.py") as sfg:
             sfg.code("inline double foo(double x) { return sqrt(x); }")
+            sfg.code("inline double bar(double x) { return sqrt(x); }",
+                     impl=True)
         self.assertIn("return sqrt(x);", (tmp / "Foo.h").read_text())
+        self.assertIn("return std::sqrt(x);", (tmp / "Foo.cpp").read_text())
 
 
 if __name__ == "__main__":
