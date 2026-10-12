@@ -78,6 +78,63 @@ class GenerateLbKernelsTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("invalid choice", result.stderr)
 
+    def generate_one(self, kernel, stem, target="cpu"):
+        tmp, _ = self.run_script("--kernels", kernel, "--precision", "double",
+                                 "--target", target)
+        suffix = {"cpu": "", "avx": "AVX", "cuda": "CUDA"}[target]
+        name = f"{stem}DoublePrecision{suffix}"
+        impl = "cu" if target == "cuda" else "cpp"
+        return ((tmp / f"{name}.h").read_text(),
+                (tmp / f"{name}.{impl}").read_text())
+
+    def test_stream_collide_thermalized(self):
+        header, source = self.generate_one(
+            "stream_collide_thermalized", "StreamCollideSweepThermalized")
+        self.assertIn(
+            "StreamCollideSweepThermalizedDoublePrecision ("
+            "walberla::BlockDataID forceId, walberla::BlockDataID pdfsId, "
+            "double kT, double omega_bulk, double omega_even, "
+            "double omega_odd, double omega_shear, uint32_t seed, "
+            "uint32_t time_step)", header)
+        self.assertIn("if (impl_.kT() > 0) {", header)
+        self.assertIn("void configure(", header)
+        self.assertIn("uint32_t getTime_step() const", header)
+        self.assertIn("::pystencils::runtime::random::philox_float64", source)
+
+    def test_stream_collide_thermalized_avx(self):
+        _, source = self.generate_one(
+            "stream_collide_thermalized", "StreamCollideSweepThermalized",
+            "avx")
+        self.assertIn("_mm256_", source)
+        self.assertIn("philox_float64<int64_t>(", source)
+
+    def test_stream_collide_lees_edwards(self):
+        header, source = self.generate_one(
+            "stream_collide_lees_edwards", "StreamCollideSweepLeesEdwards")
+        self.assertIn(
+            "StreamCollideSweepLeesEdwardsDoublePrecision ("
+            "walberla::BlockDataID forceId, walberla::BlockDataID pdfsId, "
+            "int64_t lebc_bot_index, int64_t lebc_top_index, "
+            "double omega_bulk, double omega_even, double omega_odd, "
+            "double omega_shear, double v_s)", header)
+        self.assertIn("void setV_s(double value)", header)
+        self.assertIn("le_top", source)
+
+    def test_stream_collide_lees_edwards_avx(self):
+        _, source = self.generate_one(
+            "stream_collide_lees_edwards", "StreamCollideSweepLeesEdwards",
+            "avx")
+        self.assertIn("_mm256_", source)
+        self.assertIn("std::fmin(", source)
+
+    def test_vel_update(self):
+        header, _ = self.generate_one("vel_update", "UpdateVelFromPDF")
+        self.assertIn(
+            "UpdateVelFromPDFDoublePrecision (walberla::BlockDataID forceId, "
+            "walberla::BlockDataID pdfsId, walberla::BlockDataID velocityId)",
+            header)
+        self.assertIn("void runOnCellInterval(", header)
+
     def test_reproducible_up_to_statement_order(self):
         first, _ = self.run_script("--kernels", "init")
         second, _ = self.run_script("--kernels", "init")
