@@ -94,5 +94,38 @@ class KernelFileGeneratorTest(unittest.TestCase):
         sfg_driver.check_toolchain_versions()
 
 
+class PatchKernelSourceTest(unittest.TestCase):
+
+    def test_rng_namespace_is_global(self):
+        source = ("auto r = pystencils::runtime::random::philox_float64(x);\n"
+                  "auto s = ::pystencils::runtime::random::philox_float32(y);")
+        patched = sfg_driver.patch_kernel_source(source)
+        self.assertIn("auto r = ::pystencils::runtime::random::philox_float64",
+                      patched)
+        self.assertIn("auto s = ::pystencils::runtime::random::philox_float32",
+                      patched)
+        self.assertNotIn(":::", patched)
+
+    def test_math_functions_are_qualified(self):
+        source = "x = sqrt(2.0f) + fmin(a, fmax(b, c)) + sqrtf(d) + std::sqrt(e);"
+        self.assertEqual(
+            sfg_driver.patch_kernel_source(source),
+            "x = std::sqrt(2.0f) + std::fmin(a, std::fmax(b, c)) + sqrtf(d) "
+            "+ std::sqrt(e);")
+
+    def test_simd_rng_key_type(self):
+        source = "::pystencils::runtime::x86::random::philox_float64(c, k)"
+        self.assertEqual(
+            sfg_driver.patch_kernel_source(source),
+            "::pystencils::runtime::x86::random::philox_float64<int64_t>(c, k)")
+
+    def test_generator_patches_sources_only(self):
+        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        with sfg_driver.KernelFileGenerator("Foo", ctx, tmp, "test.py") as sfg:
+            sfg.code("inline double foo(double x) { return sqrt(x); }")
+        self.assertIn("return sqrt(x);", (tmp / "Foo.h").read_text())
+
+
 if __name__ == "__main__":
     unittest.main()
