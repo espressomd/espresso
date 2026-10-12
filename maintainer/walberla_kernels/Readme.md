@@ -16,7 +16,8 @@ and Jinja templates to [sweepgen](https://walberla.net) and
 | LB `StreamCollideSweepThermalized` | `generate_lb_kernels.py --kernels stream_collide_thermalized` | sweepgen |
 | LB `StreamCollideSweepLeesEdwards` | `generate_lb_kernels.py --kernels stream_collide_lees_edwards` | sweepgen |
 | LB `UpdateVelFromPDF` | `generate_lb_kernels.py --kernels vel_update` | sweepgen |
-| Other LB kernels (accessors, pack infos, boundaries) | not regenerable at the moment | pystencils 1.4 (committed output) |
+| LB CPU `FieldAccessors` | `generate_lb_kernels.py --kernels field_accessors` | sweepgen |
+| Other LB kernels (CUDA accessors, pack infos, boundaries) | not regenerable at the moment | pystencils 1.4 (committed output) |
 | EK kernels | not regenerable at the moment | pystencils 1.4 (committed output) |
 
 To regenerate a kernel that has not been migrated yet, use the generator
@@ -82,6 +83,12 @@ which pystencils-sfg 0.3 does not keep stable between runs.
   code generation issues in the generated `.cpp`/`.cu` files; re-check them
   whenever the pystencils version changes.
 * `lees_edwards.py`: Lees-Edwards boundary layers of the stream-collide kernel.
+* `accessor_equations.py`, `field_accessors.py`: the LB field accessors
+  (`walberla::lbm::accessor`); the equations come from lbmpy, the header is
+  composed with pystencils-sfg. Overloaded free functions rely on
+  pystencils-sfg internals (`_AllowOverloads`); re-check it whenever the
+  pystencils-sfg version changes. `tests/data/field_accessors_api_*.json`
+  holds the accessor API expected by the waLBerla bridge.
 * `tests/`: unit tests, run with
   `python3 -m unittest discover -s tests -t .` from this directory.
 
