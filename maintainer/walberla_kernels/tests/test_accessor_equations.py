@@ -20,6 +20,7 @@
 import re
 import unittest
 
+import numpy
 import pystencils as ps
 import sympy as sp
 
@@ -129,10 +130,17 @@ class EquationInputsTest(unittest.TestCase):
 
     def test_inverse_neighbor_offsets(self):
         offsets = self.eqs.inverse_neighbor_offsets
-        stencil = generate_lb_kernels.STENCIL
+        names = [name for name, _ in self.eqs.equilibrium_from_direction]
         self.assertEqual(len(offsets), 19)
-        for offset, direction in zip(offsets, stencil):
-            self.assertEqual(offset, tuple(-c for c in direction))
+        known = {"C": (0, 0, 0), "N": (0, -1, 0), "S": (0, 1, 0),
+                 "E": (-1, 0, 0), "W": (1, 0, 0), "T": (0, 0, -1),
+                 "B": (0, 0, 1), "NE": (-1, -1, 0), "BS": (0, 1, 1)}
+        for name, offset in known.items():
+            self.assertEqual(offsets[names.index(name)], offset, name)
+
+    def test_pruned_rejects_unknown_targets(self):
+        with self.assertRaises(ValueError):
+            self.eqs.momentum_density.pruned(["md_7"])
 
     def test_pruned_keeps_order_and_is_closed(self):
         full = self.eqs.momentum_density
@@ -148,6 +156,84 @@ class EquationInputsTest(unittest.TestCase):
                 self.assertTrue(symbol.name in pruned.inputs
                                 or symbol.name in defined, symbol.name)
             defined.add(lhs.name)
+
+
+def evaluate(eqs, values):
+    """Evaluate an equation set sequentially, return all symbol values."""
+    values = dict(values)
+    for lhs, rhs in eqs.assignments:
+        values[lhs.name] = float(rhs.subs(
+            {sp.Symbol(k): v for k, v in values.items()}))
+    return values
+
+
+class NumericTest(unittest.TestCase):
+
+    def test_equations_match_lbmpy_numerically(self):
+        eqs = make_equations()
+        rng = numpy.random.default_rng(42)
+        stencil = generate_lb_kernels.STENCIL
+        pdfs = rng.uniform(-0.01, 0.01, 19)
+        force = rng.uniform(-0.01, 0.01, 3)
+        density = float(rng.uniform(0.5, 2.0))
+        u_in = rng.uniform(-0.05, 0.05, 3)
+        base = {f"f_{i}": pdfs[i] for i in range(19)}
+        base.update({f"force_{i}": force[i] for i in range(3)})
+        base["density"] = density
+        base.update({f"u_in_{i}": u_in[i] for i in range(3)})
+
+        rho = 1.0 + pdfs.sum()
+        momentum = numpy.array(stencil).T @ pdfs
+
+        res = evaluate(eqs.density, base)
+        self.assertAlmostEqual(res["rho"], rho, places=12)
+        res = evaluate(eqs.density_scaled, base)
+        self.assertAlmostEqual(res["rho"], rho * density, places=12)
+        res = evaluate(eqs.momentum_density, base)
+        self.assertAlmostEqual(res["rho"], rho, places=12)
+        for i in range(3):
+            self.assertAlmostEqual(
+                res[f"md_{i}"], momentum[i] + force[i] / 2, places=12)
+        res = evaluate(eqs.momentum_density_force_setter, base)
+        for i in range(3):
+            self.assertAlmostEqual(
+                res[f"md_{i}"], momentum[i] + force[i] / density / 2,
+                places=12)
+        res = evaluate(eqs.unshifted_momentum_density, base)
+        for i in range(3):
+            self.assertAlmostEqual(res[f"md_{i}"], momentum[i], places=12)
+        res = evaluate(eqs.second_moment, base)
+        for i in range(3):
+            for j in range(3):
+                # lbmpy returns the moment of the full populations
+                # f_q + w_q, the weights add delta_ij / 3 (lattice sound
+                # speed squared)
+                reference = sum(
+                    stencil[q][i] * stencil[q][j] * pdfs[q]
+                    for q in range(19)) + (1 / 3 if i == j else 0)
+                self.assertAlmostEqual(res[f"p_{3 * i + j}"], reference,
+                                       places=12)
+
+        # velocity setter: requested velocity shifted by half the force
+        res = evaluate(eqs.velocity_setter, {**base, "rho": rho})
+        for i in range(3):
+            self.assertAlmostEqual(
+                res[f"u_{i}"], u_in[i] - force[i] / (2 * rho), places=12)
+
+        # equilibrium
+        u = rng.uniform(-0.05, 0.05, 3)
+        subs = {"rho": rho, "delta_rho": rho - 1,
+                **{f"u_{i}": u[i] for i in range(3)}}
+        sym = {sp.Symbol(k): v for k, v in subs.items()}
+        reference = [float(a.rhs.subs(sym))
+                     for a in eqs.lb_method.get_equilibrium().main_assignments]
+        values = [float(e.subs(sym)) for e in eqs.equilibrium]
+        numpy.testing.assert_allclose(values, reference, atol=1e-14)
+        self.assertAlmostEqual(sum(values), rho - 1, places=12)
+        numpy.testing.assert_allclose(
+            numpy.array(stencil).T @ numpy.array(values), rho * u, atol=1e-12)
+        full = [float(e.subs(sym)) for _, e in eqs.equilibrium_from_direction]
+        self.assertAlmostEqual(sum(full), rho, places=12)
 
 
 class EquationPrintingTest(unittest.TestCase):
@@ -212,7 +298,7 @@ class EquationPrintingTest(unittest.TestCase):
 
 class UnsupportedMethodTest(unittest.TestCase):
 
-    def create_method(self, **kwargs):
+    def create_method(self, force=None, **kwargs):
         ctx = sfg_driver.CodegenContext("double", "cpu")
         fields = pystencils_espresso.generate_fields(
             generate_lb_kernels.STENCIL, ctx.data_type)
@@ -222,7 +308,7 @@ class UnsupportedMethodTest(unittest.TestCase):
             stencil=generate_lb_kernels.STENCIL,
             relaxation_rates=relaxation_rates.rr_getter,
             force_model=lbmpy.forcemodels.Schiller(
-                fields["force"].center_vector),
+                fields["force"].center_vector if force is None else force),
             **config)
 
     def test_incompressible_method_is_rejected(self):
@@ -234,6 +320,21 @@ class UnsupportedMethodTest(unittest.TestCase):
         method = self.create_method(zero_centered=False,
                                     delta_equilibrium=False)
         with self.assertRaises(NotImplementedError):
+            make_equations(lb_method=method)
+
+    def test_missing_force_model_is_rejected(self):
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        config = dict(generate_lb_kernels.LBM_CONFIG_KWARGS)
+        method = lbmpy.creationfunctions.create_mrt_orthogonal(
+            stencil=generate_lb_kernels.STENCIL,
+            relaxation_rates=relaxation_rates.rr_getter, **config)
+        self.assertIsNone(method.force_model)
+        with self.assertRaisesRegex(NotImplementedError, "force model"):
+            accessor_equations.AccessorEquations(method, ctx.data_type)
+
+    def test_force_that_is_not_a_field_access_is_rejected(self):
+        method = self.create_method(force=(0.1, 0.0, 0.0))
+        with self.assertRaisesRegex(NotImplementedError, "field accesses"):
             make_equations(lb_method=method)
 
 
