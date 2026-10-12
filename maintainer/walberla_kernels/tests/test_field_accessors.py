@@ -28,9 +28,10 @@ import pystencils_espresso
 import sfg_driver
 from tests import header_api
 
-REFERENCE_DIR = (pathlib.Path(__file__).resolve().parents[3] / "src"
-                 / "walberla_bridge" / "src" / "lattice_boltzmann"
-                 / "generated_kernels")
+# The API data files were extracted from the FieldAccessors headers generated
+# with pystencils 1.4 (Jinja template). They are the API contract of the
+# waLBerla bridge, which the generated accessors must fulfill.
+DATA_DIR = pathlib.Path(__file__).resolve().parent / "data"
 NAMESPACES = ("Population", "Vector", "EquilibriumDistribution",
               "Equilibrium", "Density", "Velocity", "Force",
               "MomentumDensity", "PressureTensor")
@@ -105,11 +106,11 @@ class FieldAccessorsTest(unittest.TestCase):
                              len(header_api.functions(header)))
             self.assertNotIn("namespace {", header)
 
-    def test_api_equals_committed_reference(self):
+    def test_api_equals_frozen_contract(self):
         for precision, header in self.headers.items():
-            reference = (REFERENCE_DIR /
-                         f"FieldAccessors{precision}Precision.h").read_text()
-            expected = header_api.signature_counters(reference)
+            reference = header_api.load_records(
+                DATA_DIR / f"field_accessors_api_{precision.lower()}.json")
+            expected = header_api.counters(reference)
             actual = header_api.signature_counters(header)
             self.assertEqual(sum(expected["return type"].values()), 30)
             for label, counter in expected.items():
@@ -154,6 +155,12 @@ class HeaderApiTest(unittest.TestCase):
             changed = header_api.signature_counters(
                 self.HEADER.replace(old, new))
             self.assertNotEqual(changed, counters, (old, new))
+
+    def test_records_roundtrip(self):
+        funcs = header_api.functions(self.HEADER)
+        records = header_api.to_records(funcs)
+        self.assertEqual(
+            sorted(header_api.from_records(records)), sorted(funcs))
 
     def test_by_value_const_is_ignored(self):
         counters = header_api.signature_counters(self.HEADER)

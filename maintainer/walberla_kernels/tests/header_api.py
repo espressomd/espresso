@@ -26,6 +26,7 @@ integer literals (``uint_t{19u}``, ``19u``, ``19``) are equal.
 """
 
 import collections
+import json
 import re
 
 
@@ -150,6 +151,39 @@ SIGNATURE_KEYS = {
 
 def signature_counters(text):
     """Multisets of the functions of a header, for each key."""
-    funcs = functions(text)
+    return counters(functions(text))
+
+
+def to_records(funcs):
+    """Sorted, JSON-serializable list of records of a list of functions."""
+    records = [{"namespace": f[0], "name": f[1],
+                "parameter types": [p[0] for p in f[2]],
+                "parameter names": [p[1] for p in f[2]],
+                "defaults": [p[2] for p in f[2]],
+                "return type": f[3]} for f in funcs]
+    return sorted(records, key=lambda r: json.dumps(r, sort_keys=True))
+
+
+def from_records(records):
+    """Inverse of `to_records`."""
+    return [(r["namespace"], r["name"],
+             tuple(zip(r["parameter types"], r["parameter names"],
+                       r["defaults"])), r["return type"])
+            for r in records]
+
+
+def dump_records(funcs, path):
+    with open(path, "w") as f:
+        json.dump(to_records(funcs), f, indent=1, sort_keys=True)
+        f.write("\n")
+
+
+def load_records(path):
+    with open(path) as f:
+        return from_records(json.load(f))
+
+
+def counters(funcs):
+    """Multisets of a list of functions, for each key."""
     return {label: collections.Counter(key(f) for f in funcs)
             for label, key in SIGNATURE_KEYS.items()}
