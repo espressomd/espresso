@@ -1081,6 +1081,8 @@ endif()
 #
 
 if(ESPRESSO_BUILD_WITH_WALBERLA)
+  # runtime headers of the generated kernels, see requirements.txt
+  find_package(Pystencils 2.1...<2.2 REQUIRED)
   if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/walberla-src)
     find_package(waLBerla 7.3 QUIET)
     if(waLBerla_FOUND AND NOT TARGET walberla::core AND DEFINED

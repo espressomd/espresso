@@ -57,7 +57,7 @@ endforeach()
 unset(SKIP_CLANG_TIDY_CHECKS)
 
 # headers needed by the sweepgen kernels: waLBerla v8 core (execution tags) and
-# the vendored pystencils runtime
+# the pystencils runtime from the Python environment
 if(NOT EXISTS
    "${walberla_SOURCE_DIR}/include/walberla/v8/sweep/ExecutionTags.hpp")
   message(
@@ -67,10 +67,10 @@ endif()
 add_library(espresso_walberla_sweepgen_includes INTERFACE)
 add_library(espresso::walberla_sweepgen_includes ALIAS
             espresso_walberla_sweepgen_includes)
-target_include_directories(
-  espresso_walberla_sweepgen_includes SYSTEM
-  INTERFACE ${walberla_SOURCE_DIR}/include
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/third_party)
+target_include_directories(espresso_walberla_sweepgen_includes SYSTEM
+                           INTERFACE ${walberla_SOURCE_DIR}/include)
+target_link_libraries(espresso_walberla_sweepgen_includes
+                      INTERFACE Pystencils::runtime)
 
 function(espresso_configure_walberla_target)
   set(TARGET_NAME ${ARGV0})
