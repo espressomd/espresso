@@ -125,16 +125,19 @@ class KernelFileGenerator(pystencilssfg.SourceFileGenerator):
     """
     Source file generator that writes ``<basename>.h`` and
     ``<basename>.cpp`` (``.cu`` for CUDA) instead of naming the
-    files after the generator script.
+    files after the generator script. With ``header_only``, only the
+    header is written and all functions are generated ``inline``.
     """
 
-    def __init__(self, basename, ctx, output_dir, generator_script):
+    def __init__(self, basename, ctx, output_dir, generator_script,
+                 header_only=False):
         self._basename = basename
         self._generator_script = generator_script
         sweepgen.build_config.DEBUG.BUILD_CONFIG = ctx.build_config()
         config = pystencilssfg.SfgConfig()
         config.extensions.header = "h"
         config.extensions.impl = "cu" if ctx.is_gpu else "cpp"
+        config.header_only = header_only
         config.output_directory = pathlib.Path(output_dir)
         super().__init__(config, keep_unknown_argv=True)
 

@@ -90,6 +90,17 @@ class KernelFileGeneratorTest(unittest.TestCase):
         self.assertEqual(sorted(p.name for p in tmp.iterdir()),
                          ["Foo.cu", "Foo.h"])
 
+    def test_header_only(self):
+        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        with sfg_driver.KernelFileGenerator(
+                "Foo", ctx, tmp, "test.py", header_only=True) as sfg:
+            sfg.function("foo").returns("int")("return 1;")
+        self.assertEqual([p.name for p in tmp.iterdir()], ["Foo.h"])
+        header = (tmp / "Foo.h").read_text()
+        self.assertRegex(header, r"inline \S+ foo\(\)")
+        self.assertIn("return 1;", header)
+
     def test_toolchain_versions(self):
         sfg_driver.check_toolchain_versions()
 
