@@ -80,5 +80,7 @@ which pystencils-sfg 0.3 does not keep stable between runs.
   `python3 -m unittest discover -s tests -t .` from this directory.
 
 The pystencils runtime headers used by the kernels are vendored in
-`src/walberla_bridge/src/third_party/pystencils_runtime/`; refresh them
-whenever the pystencils version changes.
+`src/walberla_bridge/src/third_party/pystencils_runtime/`. Only the headers
+the committed kernels need are kept; refresh them with
+`python3 vendor_pystencils_runtime.py` after generating kernels or changing
+the pystencils version.
