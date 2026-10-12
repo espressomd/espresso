@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2026 The ESPResSo project
+# Copyright (C) 2021-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -58,6 +58,12 @@ def add_lees_edwards_to_collision(collision, pdfs, shear_dir_normal, dtype):
     Add the Lees-Edwards velocity shift of the outflowing populations to the
     main assignments of ``collision``. The shear velocity is the kernel
     parameter ``v_s``, the shear direction is x.
+
+    Each outflowing population gets ``f_eq(u) - f_eq(u + s)`` added, with
+    ``s = +v_s`` in the top layer for populations with ``c_y = +1`` and
+    ``s = -v_s`` in the bottom layer for populations with ``c_y = -1``
+    (``y`` being the shear-normal direction). This is the same convention
+    as in the pystencils 1.4 implementation.
     """
     method = collision.method
     is_top, is_bot = boundary_layer_masks(shear_dir_normal, dtype)
@@ -65,6 +71,11 @@ def add_lees_edwards_to_collision(collision, pdfs, shear_dir_normal, dtype):
     velocity = [sp.Symbol(f"v_{i}") for i in range(method.dim)]
     equilibrium = macroscopic_values_setter(
         method, sp.Symbol("dens"), velocity, pdfs)
+    if not (len(collision.main_assignments) ==
+            len(equilibrium.main_assignments) == len(method.stencil)):
+        raise ValueError(
+            "Lees-Edwards: the collision rule, the equilibrium and the "
+            "stencil have different numbers of populations")
     v_s = sp.Symbol("v_s")
     u_0 = sp.Symbol("u_0")
     main_assignments = []
