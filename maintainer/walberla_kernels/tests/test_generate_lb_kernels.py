@@ -23,6 +23,8 @@ import sys
 import tempfile
 import unittest
 
+import sympy as sp
+
 SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "generate_lb_kernels.py"
 
 
@@ -78,11 +80,11 @@ class GenerateLbKernelsTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("invalid choice", result.stderr)
 
-    def generate_one(self, kernel, stem, target="cpu"):
-        tmp, _ = self.run_script("--kernels", kernel, "--precision", "double",
+    def generate_one(self, kernel, stem, target="cpu", precision="double"):
+        tmp, _ = self.run_script("--kernels", kernel, "--precision", precision,
                                  "--target", target)
         suffix = {"cpu": "", "avx": "AVX", "cuda": "CUDA"}[target]
-        name = f"{stem}DoublePrecision{suffix}"
+        name = f"{stem}{precision.capitalize()}Precision{suffix}"
         impl = "cu" if target == "cuda" else "cpp"
         return ((tmp / f"{name}.h").read_text(),
                 (tmp / f"{name}.{impl}").read_text())
@@ -107,6 +109,23 @@ class GenerateLbKernelsTest(unittest.TestCase):
             "avx")
         self.assertIn("_mm256_", source)
         self.assertIn("philox_float64<int64_t>(", source)
+
+    def test_stream_collide_thermalized_single_avx(self):
+        _, source = self.generate_one(
+            "stream_collide_thermalized", "StreamCollideSweepThermalized",
+            "avx", "single")
+        self.assertIn("int32_t seed", source)
+        self.assertIn("_mm256_", source)
+
+    def test_athermal_kernel_has_no_rng(self):
+        _, source = self.generate_one(
+            "stream_collide_thermalized", "StreamCollideSweepThermalized")
+        anchor = ("namespace "
+                  "StreamCollideSweepThermalizedDoublePrecisionAthermal_kernels")
+        index = source.find(anchor)
+        self.assertGreater(index, 0)
+        self.assertIn("philox", source[:index])
+        self.assertNotIn("philox", source[index:])
 
     def test_stream_collide_lees_edwards(self):
         header, source = self.generate_one(
@@ -135,6 +154,10 @@ class GenerateLbKernelsTest(unittest.TestCase):
             header)
         self.assertIn("void runOnCellInterval(", header)
 
+    def test_vel_update_uses_force(self):
+        _, source = self.generate_one("vel_update", "UpdateVelFromPDF")
+        self.assertIn("_data_force", source)
+
     def test_reproducible_up_to_statement_order(self):
         first, _ = self.run_script("--kernels", "init")
         second, _ = self.run_script("--kernels", "init")
@@ -143,6 +166,42 @@ class GenerateLbKernelsTest(unittest.TestCase):
                 sorted(path.read_text().splitlines()),
                 sorted((second / path.name).read_text().splitlines()),
                 path.name)
+
+
+class UpdateRuleTest(unittest.TestCase):
+
+    @staticmethod
+    def flatten(rule):
+        """Main assignments with all subexpressions substituted."""
+        subexpressions = {a.lhs: a.rhs for a in rule.subexpressions}
+        result = []
+        for assignment in rule.main_assignments:
+            expr = assignment.rhs
+            for _ in range(200):
+                new_expr = expr.xreplace(subexpressions)
+                if new_expr == expr:
+                    break
+                expr = new_expr
+            result.append(expr)
+        return result
+
+    def test_athermal_rule_is_thermalized_rule_at_zero_kT(self):
+        import generate_lb_kernels as gen
+        import pystencils_espresso
+        import sfg_driver
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        fields = pystencils_espresso.generate_fields(
+            gen.STENCIL, ctx.data_type)
+        method = gen.create_lb_method(fields)
+        thermal = gen.create_thermalized_update_rule(ctx, fields, method)
+        athermal = gen.create_athermal_update_rule(fields, method)
+        kT = sp.Symbol("kT")
+        thermal_exprs = self.flatten(thermal)
+        athermal_exprs = self.flatten(athermal)
+        self.assertEqual(len(thermal_exprs), 19)
+        self.assertEqual(len(athermal_exprs), 19)
+        for a, b in zip(thermal_exprs, athermal_exprs):
+            self.assertEqual(sp.simplify(a.subs(kT, 0) - b), 0)
 
 
 if __name__ == "__main__":
