@@ -24,6 +24,8 @@ from unittest import mock
 
 import pystencils as ps
 import sympy as sp
+from pystencils import DynamicType
+from pystencils.sympyextensions import tcast
 
 import compat
 import sfg_driver
@@ -145,6 +147,95 @@ class LegacySweepTest(unittest.TestCase):
     def test_wrong_constructor_order(self):
         with self.assertRaisesRegex(ValueError, "constructor order"):
             self.generate("cpu", ctor_order=["aId", "bId", "alpha"])
+
+
+def swap_assignments(ctx, rng_parameters=True):
+    """
+    Toy stream step ``f_tmp <- f`` with the parameters of a thermalized
+    kernel (``kT`` and, optionally, RNG seed, counter and block offset).
+    """
+    f, f_tmp = ps.fields(f"f, f_tmp: {ctx.data_type.c_string()}[3D]",
+                         layout="fzyx")
+    rhs = f[1, 0, 0]
+    if rng_parameters:
+        ints = [ps.TypedSymbol(name, DynamicType.INDEX_TYPE) for name in (
+            "block_offset_0", "block_offset_1", "block_offset_2", "seed",
+            "time_step")]
+        rhs = sp.Symbol("kT") * rhs + tcast(sum(ints), ctx.data_type)
+    return [ps.Assignment(f_tmp.center, rhs)], (f, f_tmp)
+
+
+class SwappingSweepTest(unittest.TestCase):
+
+    def generate(self, target="cpu", **kwargs):
+        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
+        ctx = sfg_driver.CodegenContext("double", target)
+        assignments, swap = swap_assignments(ctx)
+        with sfg_driver.KernelFileGenerator("Swap", ctx, tmp, "test.py") as sfg:
+            compat.legacy_sweep(sfg, ctx, "Swap", assignments,
+                                swap_fields=[swap], **kwargs)
+        header = (tmp / "Swap.h").read_text()
+        return header[header.rindex("  class Swap {"):]
+
+    def test_shadow_field_and_cell_intervals_are_hidden(self):
+        wrapper = self.generate()
+        self.assertIn("Swap (walberla::BlockDataID fId, double kT, "
+                      "int64_t seed, int64_t time_step)", wrapper)
+        self.assertNotIn("f_tmp", wrapper)
+        self.assertNotIn("runOnCellInterval", wrapper)
+        self.assertIn("static std::function< void(walberla::IBlock *) > "
+                      "getSweep(", wrapper)
+
+    def test_block_offset_is_set_by_configure(self):
+        wrapper = self.generate()
+        self.assertIn(":impl_(fId, walberla::Vector3< int64_t >(0), kT, "
+                      "seed, time_step)", wrapper)
+        self.assertIn("const walberla::Cell blockMin = "
+                      "blocks->getBlockCellBB(*block).min();", wrapper)
+        self.assertIn("impl_.block_offset() = walberla::Vector3< int64_t >"
+                      "(blockMin[0], blockMin[1], blockMin[2]);", wrapper)
+        self.assertIn("int64_t getBlock_offset_2() const", wrapper)
+        self.assertIn("void setBlock_offset_0(int64_t value)", wrapper)
+
+    def test_legacy_types(self):
+        wrapper = self.generate(legacy_types={
+            "seed": "uint32_t", "time_step": "uint32_t",
+            "block_offset": "uint32_t"})
+        self.assertIn("Swap (walberla::BlockDataID fId, double kT, "
+                      "uint32_t seed, uint32_t time_step)", wrapper)
+        self.assertIn("return static_cast< uint32_t >(impl_.time_step());",
+                      wrapper)
+        self.assertIn("void setTime_step(uint32_t value)", wrapper)
+        self.assertIn("uint32_t getBlock_offset_1() const", wrapper)
+
+    def test_legacy_type_of_unknown_scalar(self):
+        with self.assertRaisesRegex(ValueError, "unknown scalar omega"):
+            self.generate(legacy_types={"omega": "uint32_t"})
+
+    def test_athermal_dispatch(self):
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        athermal, _ = swap_assignments(ctx, rng_parameters=False)
+        wrapper = self.generate(athermal_assignments=athermal)
+        self.assertIn("impl_athermal_(fId)", wrapper)
+        self.assertIn("if (impl_.kT() > 0) {", wrapper)
+        self.assertIn("impl_athermal_(block);", wrapper)
+        self.assertIn("internal::SwapAthermal impl_athermal_;", wrapper)
+
+    def test_athermal_dispatch_on_gpu(self):
+        ctx = sfg_driver.CodegenContext("double", "cuda")
+        athermal, _ = swap_assignments(ctx, rng_parameters=False)
+        wrapper = self.generate("cuda", athermal_assignments=athermal)
+        self.assertIn("impl_athermal_(block, "
+                      "walberla::v8::sweep::exectag::GPU{stream});", wrapper)
+
+    def test_athermal_dispatch_needs_swaps(self):
+        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        with self.assertRaisesRegex(NotImplementedError, "swapping sweep"):
+            with sfg_driver.KernelFileGenerator(
+                    "Toy", ctx, tmp, "test.py") as sfg:
+                compat.legacy_sweep(sfg, ctx, "Toy", toy_assignments(ctx),
+                                    athermal_assignments=toy_assignments(ctx))
 
 
 if __name__ == "__main__":
