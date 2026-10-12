@@ -67,6 +67,22 @@ class GenerateLbKernelsTest(unittest.TestCase):
         self.assertEqual(list(tmp.iterdir()), [])
         self.assertIn("skipping init for target avx", result.stdout)
 
+    def test_field_accessors_are_header_only(self):
+        tmp, _ = self.run_script("--kernels", "field_accessors",
+                                 "--precision", "double", "--target", "cpu")
+        self.assertEqual([p.name for p in tmp.iterdir()],
+                         ["FieldAccessorsDoublePrecision.h"])
+        header = (tmp / "FieldAccessorsDoublePrecision.h").read_text()
+        self.assertIn("namespace Population", header)
+        self.assertIn("inline auto get(", header)
+
+    def test_field_accessors_cuda_is_skipped(self):
+        tmp, result = self.run_script("--kernels", "field_accessors",
+                                      "--target", "cuda")
+        self.assertEqual(list(tmp.iterdir()), [])
+        self.assertIn("skipping field_accessors for target cuda",
+                      result.stdout)
+
     def test_duplicate_selections_generate_once(self):
         _, result = self.run_script(
             "--kernels", "init", "init", "--precision", "double", "double",

@@ -39,6 +39,7 @@ from pystencils.sympyextensions import DynamicType
 from pystencils.sympyextensions.random import Philox
 
 import compat
+import field_accessors
 import lees_edwards
 import pystencils_espresso
 import relaxation_rates
@@ -173,11 +174,18 @@ def generate_vel_update(sfg, ctx, name):
     compat.legacy_sweep(sfg, ctx, name, assignments)
 
 
+def generate_accessors(sfg, ctx, name):
+    fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
+    method = create_lb_method(fields)
+    field_accessors.generate_field_accessors(sfg, ctx, method)
+
+
 @dataclasses.dataclass(frozen=True)
 class Kernel:
     stem: str
     targets: tuple
     generate: typing.Callable
+    header_only: bool = False
 
 
 KERNELS = {
@@ -190,6 +198,8 @@ KERNELS = {
         generate_stream_collide_lees_edwards),
     "vel_update": Kernel("UpdateVelFromPDF", ("cpu", "cuda"),
                          generate_vel_update),
+    "field_accessors": Kernel("FieldAccessors", ("cpu",), generate_accessors,
+                              header_only=True),
 }
 
 
@@ -230,7 +240,8 @@ def main():
         ctx = sfg_driver.CodegenContext(precision, target)
         name = ctx.class_name(kernel.stem)
         with sfg_driver.KernelFileGenerator(
-                name, ctx, args.output_dir, "generate_lb_kernels.py") as sfg:
+                name, ctx, args.output_dir, "generate_lb_kernels.py",
+                header_only=kernel.header_only) as sfg:
             kernel.generate(sfg, ctx, name)
         print(f"generated {name}")
 
