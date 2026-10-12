@@ -63,7 +63,14 @@ def create_lb_method(fields):
 
 
 def cpu_gen_config(ctx):
-    """Vectorize the kernels of the AVX target (off by default in pystencils)."""
+    """Vectorize the kernels of the AVX target (off by default in pystencils).
+
+    In single precision, 32-bit indices are used for all AVX kernels. They
+    are needed by the SIMD Philox RNG (AVX has no vectors of 8 int64) and
+    are harmless for the other kernels. They limit a block to about 113M
+    cells, including ghost layers. Loads and stores are unaligned
+    (``assume_aligned`` is not used).
+    """
     if ctx.target != "avx":
         return None
     config = ps.CreateKernelConfig()
@@ -113,6 +120,8 @@ def create_athermal_update_rule(fields, method):
 def create_lees_edwards_update_rule(ctx, fields, method):
     """Stream-collide update rule with Lees-Edwards boundary conditions."""
     lbm_config, lbm_optimisation = stream_collide_config(fields)
+    # the collision rule is built explicitly because the Lees-Edwards shift
+    # modifies it before streaming is added to the update rule
     collision_rule = lbmpy.creationfunctions.create_lb_collision_rule(
         method, lbm_config=lbm_config, lbm_optimisation=lbm_optimisation)
     collision_rule = lees_edwards.add_lees_edwards_to_collision(
