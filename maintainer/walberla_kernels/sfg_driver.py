@@ -151,7 +151,10 @@ class KernelFileGenerator(pystencilssfg.SourceFileGenerator):
         if exc_type is None:
             for path in sorted(self._output_dir.glob(f"{self._basename}.*")):
                 if path.suffix in (".cpp", ".cu"):
-                    path.write_text(patch_kernel_source(path.read_text()))
+                    source = path.read_text(encoding="utf-8")
+                    patched = patch_kernel_source(source)
+                    if patched != source:
+                        path.write_text(patched, encoding="utf-8")
         return result
 
 
@@ -173,7 +176,7 @@ def patch_kernel_source(source):
     """
     source = re.sub(r"(?<![:\w])pystencils::runtime::",
                     "::pystencils::runtime::", source)
-    source = re.sub(r"(?<![\w:])(sqrt|fmin|fmax)\(", r"std::\1(", source)
+    source = re.sub(r"(?<![\w:.>])(sqrt|fmin|fmax)\(", r"std::\1(", source)
     source = re.sub(r"(::x86::random::philox_float(?:32|64))\(",
                     r"\1<int64_t>(", source)
     return source
