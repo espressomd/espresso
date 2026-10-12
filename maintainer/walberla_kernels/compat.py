@@ -80,6 +80,13 @@ def legacy_sweep(sfg, ctx, name, assignments, *, ctor_order=None,
     deterministic runs. Scalars of both sweeps are set together.
     """
     sweep = sweepgen.Sweep(name, assignments, gen_config)
+    if sweep.sparse:
+        raise NotImplementedError(
+            f"{name}: sparse sweeps are not supported by the legacy wrapper "
+            f"yet")
+    if athermal_assignments is not None and not swap_fields:
+        raise NotImplementedError(
+            f"{name}: athermal dispatch needs a swapping sweep")
     for field, shadow_field in swap_fields:
         sweep.swap_fields(field, shadow_field)
     athermal = None
@@ -88,10 +95,6 @@ def legacy_sweep(sfg, ctx, name, assignments, *, ctor_order=None,
                                   gen_config)
         for field, shadow_field in swap_fields:
             athermal.swap_fields(field, shadow_field)
-    if sweep.sparse:
-        raise NotImplementedError(
-            f"{name}: sparse sweeps are not supported by the legacy wrapper "
-            f"yet")
     with sfg.namespace(LEGACY_NAMESPACE):
         with sfg.namespace(INTERNAL_NAMESPACE):
             sfg.generate(sweep)
@@ -133,9 +136,13 @@ def _legacy_wrapper(sfg, ctx, name, sweep, ctor_order, legacy_types,
         raise NotImplementedError(
             f"{name}: sweep properties {sorted(unsupported)} are not "
             f"supported by the legacy wrapper yet")
-    for key in legacy_types:
-        if key not in scalars and key != BLOCK_OFFSET_PROPERTY:
+    for key, value in legacy_types.items():
+        if key not in scalars and not (
+                key == BLOCK_OFFSET_PROPERTY and offset_prop is not None):
             raise ValueError(f"{name}: legacy type for unknown scalar {key}")
+        if re.fullmatch(r"u?int(8|16|32|64)_t", value) is None:
+            raise ValueError(
+                f"{name}: unsupported legacy type {value} for {key}")
     order = list(ctor_order) if ctor_order is not None else field_ids + scalars
     ctor_names = [p.name for p in inner_params
                   if p.name != BLOCK_OFFSET_PROPERTY]
@@ -161,14 +168,20 @@ def _legacy_wrapper(sfg, ctx, name, sweep, ctor_order, legacy_types,
     impl_athermal = None
     athermal_scalars = set()
     if athermal is not None:
-        if not has_swaps:
-            raise NotImplementedError(
-                f"{name}: athermal dispatch needs a swapping sweep")
+        if athermal_param not in scalars:
+            raise ValueError(
+                f"{name}: athermal parameter {athermal_param} is not a "
+                f"scalar of the sweep")
         impl_athermal = _var(sfg, "impl_athermal_",
                              f"{INTERNAL_NAMESPACE}::{name}Athermal")
         athermal_container = athermal.properties_container
-        athermal_params = [wrapper_params[p.name]
-                           for p in athermal_container.ctor_params]
+        athermal_params = []
+        for p in athermal_container.ctor_params:
+            if p.name not in wrapper_params:
+                raise ValueError(
+                    f"{name}: athermal sweep parameter {p.name} has no "
+                    f"counterpart in the sweep")
+            athermal_params.append(wrapper_params[p.name])
         athermal_scalars = {p.name for p in athermal_container.properties.values()
                             if p.setter}
         if not athermal_scalars <= set(scalars):
