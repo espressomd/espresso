@@ -126,6 +126,8 @@ target_compile_options(
   $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-shadow=compatible-local>
   $<$<COMPILE_LANG_AND_ID:CXX,CrayClang,IntelLLVM>:-Wno-reorder-ctor>
   $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-implicit-int-float-conversion>
+  # unused variables in swapShadowBuffers() of sweepgen sweeps
+  $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--diag-suppress=177>
   # silence diagnostics from MPI vendors
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM,AppleClang>>:-Wno-cast-function-type-mismatch>
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>>:-Wno-cast-function-type-mismatch>
