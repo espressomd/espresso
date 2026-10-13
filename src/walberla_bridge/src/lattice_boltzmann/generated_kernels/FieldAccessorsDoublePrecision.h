@@ -18,67 +18,537 @@
 #include "core/math/Matrix3.h"
 #include "core/math/Vector3.h"
 #include "field/GhostLayerField.h"
-#include "field/iterators/IteratorMacros.h"
+#include "pystencils_runtime/generic_cpu.hpp"
 #include "stencil/D3Q19.h"
 #include "stencil/Directions.h"
 #include <array>
 #include <cassert>
-#include <iterator>
+#include <cmath>
+#include <cstdint>
+#include <limits>
 #include <vector>
 
 #define RESTRICT __restrict__
 
 namespace walberla::lbm::accessor {
 namespace Population {
+namespace cpu_kernels {
+inline void get(double *RESTRICT const _data_buf19,
+                const double *RESTRICT const _data_pdfs,
+                const int64_t _size_buf19_0, const int64_t _size_buf19_1,
+                const int64_t _size_buf19_2, const int64_t _stride_buf19_0,
+                const int64_t _stride_buf19_1, const int64_t _stride_buf19_2,
+                const int64_t _stride_buf19_3, const int64_t _stride_pdfs_0,
+                const int64_t _stride_pdfs_1, const int64_t _stride_pdfs_2,
+                const int64_t _stride_pdfs_3) {
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_buf19_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_buf19_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_buf19_0; ctr_0 += 1LL) {
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 2LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 3LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 4LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 5LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 5LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 6LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 7LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 8LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 9LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 10LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 11LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 12LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 13LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 14LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 15LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 16LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 17LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3];
+        _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                    ctr_2 * _stride_buf19_2 + 18LL * _stride_buf19_3] =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3];
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
+namespace cpu_kernels {
+inline void set(const double *RESTRICT const _data_buf19,
+                double *RESTRICT const _data_pdfs, const int64_t _size_buf19_0,
+                const int64_t _size_buf19_1, const int64_t _size_buf19_2,
+                const int64_t _stride_buf19_0, const int64_t _stride_buf19_1,
+                const int64_t _stride_buf19_2, const int64_t _stride_buf19_3,
+                const int64_t _stride_pdfs_0, const int64_t _stride_pdfs_1,
+                const int64_t _stride_pdfs_2, const int64_t _stride_pdfs_3) {
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_buf19_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_buf19_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_buf19_0; ctr_0 += 1LL) {
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 2LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 3LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 4LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 5LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 5LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 6LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 7LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 8LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 9LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 10LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 11LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 12LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 13LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 14LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 15LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 16LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 17LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 18LL * _stride_buf19_3];
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
+namespace cpu_kernels {
+inline void
+broadcast(double *RESTRICT const _data_pdfs, const int64_t _size_pdfs_0,
+          const int64_t _size_pdfs_1, const int64_t _size_pdfs_2,
+          const int64_t _stride_pdfs_0, const int64_t _stride_pdfs_1,
+          const int64_t _stride_pdfs_2, const int64_t _stride_pdfs_3,
+          const double pop_0, const double pop_1, const double pop_10,
+          const double pop_11, const double pop_12, const double pop_13,
+          const double pop_14, const double pop_15, const double pop_16,
+          const double pop_17, const double pop_18, const double pop_2,
+          const double pop_3, const double pop_4, const double pop_5,
+          const double pop_6, const double pop_7, const double pop_8,
+          const double pop_9) {
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_pdfs_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_pdfs_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_pdfs_0; ctr_0 += 1LL) {
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2] = pop_0;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] = pop_1;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] = pop_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] = pop_3;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3] = pop_4;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 5LL * _stride_pdfs_3] = pop_5;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] = pop_6;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] = pop_7;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3] = pop_8;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3] = pop_9;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] = pop_10;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] = pop_11;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] = pop_12;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] = pop_13;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3] = pop_14;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] = pop_15;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] = pop_16;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] = pop_17;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] = pop_18;
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
+namespace cpu_kernels {
+inline void
+set_vel(const double *RESTRICT const _data_buf19,
+        const double *RESTRICT const _data_force,
+        double *RESTRICT const _data_pdfs,
+        double *RESTRICT const _data_velocity, const int64_t _size_buf19_0,
+        const int64_t _size_buf19_1, const int64_t _size_buf19_2,
+        const int64_t _stride_buf19_0, const int64_t _stride_buf19_1,
+        const int64_t _stride_buf19_2, const int64_t _stride_buf19_3,
+        const int64_t _stride_force_0, const int64_t _stride_force_1,
+        const int64_t _stride_force_2, const int64_t _stride_force_3,
+        const int64_t _stride_pdfs_0, const int64_t _stride_pdfs_1,
+        const int64_t _stride_pdfs_2, const int64_t _stride_pdfs_3,
+        const int64_t _stride_velocity_0, const int64_t _stride_velocity_1,
+        const int64_t _stride_velocity_2, const int64_t _stride_velocity_3) {
+  const double __c_1_0o2_0 = 1.0 / 2.0;
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_buf19_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_buf19_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_buf19_0; ctr_0 += 1LL) {
+        const double vel0Term =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 10LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 14LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 18LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 4LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 8LL * _stride_buf19_3];
+        const double momdensity_0 =
+            vel0Term -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 13LL * _stride_buf19_3] -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 17LL * _stride_buf19_3] -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 3LL * _stride_buf19_3] -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 7LL * _stride_buf19_3] -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 9LL * _stride_buf19_3];
+        const double vel1Term =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 11LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 15LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 7LL * _stride_buf19_3];
+        const double momdensity_1 =
+            vel1Term -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 10LL * _stride_buf19_3] -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 12LL * _stride_buf19_3] -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 16LL * _stride_buf19_3] -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 2LL * _stride_buf19_3] -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 9LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 8LL * _stride_buf19_3];
+        const double vel2Term =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 12LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 13LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 5LL * _stride_buf19_3];
+        const double delta_rho =
+            vel0Term + vel1Term + vel2Term +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 16LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 17LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 2LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 3LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 6LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 9LL * _stride_buf19_3];
+        const double momdensity_2 =
+            vel2Term -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 15LL * _stride_buf19_3] -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 16LL * _stride_buf19_3] -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 17LL * _stride_buf19_3] -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 18LL * _stride_buf19_3] -
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 6LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 11LL * _stride_buf19_3] +
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 14LL * _stride_buf19_3];
+        const double rho = 1.0 + delta_rho;
+        const double md_0 =
+            momdensity_0 +
+            __c_1_0o2_0 *
+                _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                            ctr_2 * _stride_force_2];
+        const double md_1 =
+            momdensity_1 +
+            __c_1_0o2_0 *
+                _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                            ctr_2 * _stride_force_2 + _stride_force_3];
+        const double md_2 =
+            momdensity_2 +
+            __c_1_0o2_0 *
+                _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                            ctr_2 * _stride_force_2 + 2LL * _stride_force_3];
+        const double rho_inv = 1.0 / rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 2LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 3LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 4LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 5LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 5LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 6LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 7LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 8LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 9LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 10LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 11LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 12LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 13LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 14LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 15LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 16LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 17LL * _stride_buf19_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] =
+            _data_buf19[ctr_0 * _stride_buf19_0 + ctr_1 * _stride_buf19_1 +
+                        ctr_2 * _stride_buf19_2 + 18LL * _stride_buf19_3];
+        _data_velocity[ctr_0 * _stride_velocity_0 + ctr_1 * _stride_velocity_1 +
+                       ctr_2 * _stride_velocity_2] = md_0 * rho_inv;
+        _data_velocity[ctr_0 * _stride_velocity_0 + ctr_1 * _stride_velocity_1 +
+                       ctr_2 * _stride_velocity_2 + _stride_velocity_3] =
+            md_1 * rho_inv;
+        _data_velocity[ctr_0 * _stride_velocity_0 + ctr_1 * _stride_velocity_1 +
+                       ctr_2 * _stride_velocity_2 + 2LL * _stride_velocity_3] =
+            md_2 * rho_inv;
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
 inline auto get(const walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const walberla::Cell &cell) {
-  double const &xyz0 = pdf_field->get(cell, uint_t{0u});
+  walberla::CellInterval ci(cell, cell);
   std::array<double, 19u> pop;
-  pop[0u] = pdf_field->getF(&xyz0, uint_t{0u});
-  pop[1u] = pdf_field->getF(&xyz0, uint_t{1u});
-  pop[2u] = pdf_field->getF(&xyz0, uint_t{2u});
-  pop[3u] = pdf_field->getF(&xyz0, uint_t{3u});
-  pop[4u] = pdf_field->getF(&xyz0, uint_t{4u});
-  pop[5u] = pdf_field->getF(&xyz0, uint_t{5u});
-  pop[6u] = pdf_field->getF(&xyz0, uint_t{6u});
-  pop[7u] = pdf_field->getF(&xyz0, uint_t{7u});
-  pop[8u] = pdf_field->getF(&xyz0, uint_t{8u});
-  pop[9u] = pdf_field->getF(&xyz0, uint_t{9u});
-  pop[10u] = pdf_field->getF(&xyz0, uint_t{10u});
-  pop[11u] = pdf_field->getF(&xyz0, uint_t{11u});
-  pop[12u] = pdf_field->getF(&xyz0, uint_t{12u});
-  pop[13u] = pdf_field->getF(&xyz0, uint_t{13u});
-  pop[14u] = pdf_field->getF(&xyz0, uint_t{14u});
-  pop[15u] = pdf_field->getF(&xyz0, uint_t{15u});
-  pop[16u] = pdf_field->getF(&xyz0, uint_t{16u});
-  pop[17u] = pdf_field->getF(&xyz0, uint_t{17u});
-  pop[18u] = pdf_field->getF(&xyz0, uint_t{18u});
+  double *buffer_ptr = pop.data();
+  const double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  double *RESTRICT const _data_buf19{buffer_ptr};
+  const int64_t _size_buf19_0{int64_t(ci.xSize())};
+  const int64_t _size_buf19_1{int64_t(ci.ySize())};
+  const int64_t _size_buf19_2{int64_t(ci.zSize())};
+  /* 19 == 19 */
+  const int64_t _stride_buf19_0{int64_t(19 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf19_1{int64_t(19 * ci.zSize())};
+  const int64_t _stride_buf19_2{int64_t(19)};
+  const int64_t _stride_buf19_3{int64_t(1)};
+  walberla::lbm::accessor::Population::cpu_kernels::get(
+      _data_buf19, _data_pdfs, _size_buf19_0, _size_buf19_1, _size_buf19_2,
+      _stride_buf19_0, _stride_buf19_1, _stride_buf19_2, _stride_buf19_3,
+      _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3);
   return pop;
 }
 
 inline void set(walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const std::array<double, 19u> &pop,
                 const walberla::Cell &cell) {
-  double &xyz0 = pdf_field->get(cell, uint_t{0u});
-  pdf_field->getF(&xyz0, uint_t{0u}) = pop[0u];
-  pdf_field->getF(&xyz0, uint_t{1u}) = pop[1u];
-  pdf_field->getF(&xyz0, uint_t{2u}) = pop[2u];
-  pdf_field->getF(&xyz0, uint_t{3u}) = pop[3u];
-  pdf_field->getF(&xyz0, uint_t{4u}) = pop[4u];
-  pdf_field->getF(&xyz0, uint_t{5u}) = pop[5u];
-  pdf_field->getF(&xyz0, uint_t{6u}) = pop[6u];
-  pdf_field->getF(&xyz0, uint_t{7u}) = pop[7u];
-  pdf_field->getF(&xyz0, uint_t{8u}) = pop[8u];
-  pdf_field->getF(&xyz0, uint_t{9u}) = pop[9u];
-  pdf_field->getF(&xyz0, uint_t{10u}) = pop[10u];
-  pdf_field->getF(&xyz0, uint_t{11u}) = pop[11u];
-  pdf_field->getF(&xyz0, uint_t{12u}) = pop[12u];
-  pdf_field->getF(&xyz0, uint_t{13u}) = pop[13u];
-  pdf_field->getF(&xyz0, uint_t{14u}) = pop[14u];
-  pdf_field->getF(&xyz0, uint_t{15u}) = pop[15u];
-  pdf_field->getF(&xyz0, uint_t{16u}) = pop[16u];
-  pdf_field->getF(&xyz0, uint_t{17u}) = pop[17u];
-  pdf_field->getF(&xyz0, uint_t{18u}) = pop[18u];
+  walberla::CellInterval ci(cell, cell);
+  double const *buffer_ptr = pop.data();
+  double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  const double *RESTRICT const _data_buf19{buffer_ptr};
+  const int64_t _size_buf19_0{int64_t(ci.xSize())};
+  const int64_t _size_buf19_1{int64_t(ci.ySize())};
+  const int64_t _size_buf19_2{int64_t(ci.zSize())};
+  /* 19 == 19 */
+  const int64_t _stride_buf19_0{int64_t(19 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf19_1{int64_t(19 * ci.zSize())};
+  const int64_t _stride_buf19_2{int64_t(19)};
+  const int64_t _stride_buf19_3{int64_t(1)};
+  walberla::lbm::accessor::Population::cpu_kernels::set(
+      _data_buf19, _data_pdfs, _size_buf19_0, _size_buf19_1, _size_buf19_2,
+      _stride_buf19_0, _stride_buf19_1, _stride_buf19_2, _stride_buf19_3,
+      _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3);
 }
 
 inline void set(walberla::field::GhostLayerField<double, 19> *pdf_field,
@@ -86,142 +556,153 @@ inline void set(walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const walberla::field::GhostLayerField<double, 3> *force_field,
                 const std::array<double, 19u> &pop,
                 const walberla::Cell &cell) {
-  auto &xyz0 = pdf_field->get(cell, uint_t{0u});
-  const double f_0 = pdf_field->getF(&xyz0, uint_t{0u}) = pop[0u];
-  const double f_1 = pdf_field->getF(&xyz0, uint_t{1u}) = pop[1u];
-  const double f_2 = pdf_field->getF(&xyz0, uint_t{2u}) = pop[2u];
-  const double f_3 = pdf_field->getF(&xyz0, uint_t{3u}) = pop[3u];
-  const double f_4 = pdf_field->getF(&xyz0, uint_t{4u}) = pop[4u];
-  const double f_5 = pdf_field->getF(&xyz0, uint_t{5u}) = pop[5u];
-  const double f_6 = pdf_field->getF(&xyz0, uint_t{6u}) = pop[6u];
-  const double f_7 = pdf_field->getF(&xyz0, uint_t{7u}) = pop[7u];
-  const double f_8 = pdf_field->getF(&xyz0, uint_t{8u}) = pop[8u];
-  const double f_9 = pdf_field->getF(&xyz0, uint_t{9u}) = pop[9u];
-  const double f_10 = pdf_field->getF(&xyz0, uint_t{10u}) = pop[10u];
-  const double f_11 = pdf_field->getF(&xyz0, uint_t{11u}) = pop[11u];
-  const double f_12 = pdf_field->getF(&xyz0, uint_t{12u}) = pop[12u];
-  const double f_13 = pdf_field->getF(&xyz0, uint_t{13u}) = pop[13u];
-  const double f_14 = pdf_field->getF(&xyz0, uint_t{14u}) = pop[14u];
-  const double f_15 = pdf_field->getF(&xyz0, uint_t{15u}) = pop[15u];
-  const double f_16 = pdf_field->getF(&xyz0, uint_t{16u}) = pop[16u];
-  const double f_17 = pdf_field->getF(&xyz0, uint_t{17u}) = pop[17u];
-  const double f_18 = pdf_field->getF(&xyz0, uint_t{18u}) = pop[18u];
-  const auto x = cell.x();
-  const auto y = cell.y();
-  const auto z = cell.z();
-  const double force_0 = force_field->get(x, y, z, uint_t{0u});
-  const double force_1 = force_field->get(x, y, z, uint_t{1u});
-  const double force_2 = force_field->get(x, y, z, uint_t{2u});
-  const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-  const double momdensity_0 = vel0Term - f_13 - f_17 - f_3 - f_7 - f_9;
-  const double vel1Term = f_1 + f_11 + f_15 + f_7;
-  const double momdensity_1 = f_8 + vel1Term - f_10 - f_12 - f_16 - f_2 - f_9;
-  const double vel2Term = f_12 + f_13 + f_5;
-  const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                           vel0Term + vel1Term + vel2Term;
-  const double momdensity_2 =
-      f_11 + f_14 + vel2Term - f_15 - f_16 - f_17 - f_18 - f_6;
-  const double rho = 1.0 + delta_rho;
-  const double md_0 = momdensity_0 + 0.5 * force_0;
-  const double md_1 = momdensity_1 + 0.5 * force_1;
-  const double md_2 = momdensity_2 + 0.5 * force_2;
-  const auto rho_inv = double{1} / rho;
-  velocity_field->get(cell, uint_t{0u}) = md_0 * rho_inv;
-  velocity_field->get(cell, uint_t{1u}) = md_1 * rho_inv;
-  velocity_field->get(cell, uint_t{2u}) = md_2 * rho_inv;
+  walberla::CellInterval ci(cell, cell);
+  double const *buffer_ptr = pop.data();
+  double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  double *RESTRICT const _data_velocity{
+      velocity_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_velocity_0 */
+  /* ci.ySize() == _size_velocity_1 */
+  /* ci.zSize() == _size_velocity_2 */
+  /* velocity_field->fSize() == 3 */
+  const int64_t _stride_velocity_0{int64_t(velocity_field->xStride())};
+  const int64_t _stride_velocity_1{int64_t(velocity_field->yStride())};
+  const int64_t _stride_velocity_2{int64_t(velocity_field->zStride())};
+  const int64_t _stride_velocity_3{int64_t(velocity_field->fStride())};
+  const double *RESTRICT const _data_force{
+      force_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_force_0 */
+  /* ci.ySize() == _size_force_1 */
+  /* ci.zSize() == _size_force_2 */
+  /* force_field->fSize() == 3 */
+  const int64_t _stride_force_0{int64_t(force_field->xStride())};
+  const int64_t _stride_force_1{int64_t(force_field->yStride())};
+  const int64_t _stride_force_2{int64_t(force_field->zStride())};
+  const int64_t _stride_force_3{int64_t(force_field->fStride())};
+  const double *RESTRICT const _data_buf19{buffer_ptr};
+  const int64_t _size_buf19_0{int64_t(ci.xSize())};
+  const int64_t _size_buf19_1{int64_t(ci.ySize())};
+  const int64_t _size_buf19_2{int64_t(ci.zSize())};
+  /* 19 == 19 */
+  const int64_t _stride_buf19_0{int64_t(19 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf19_1{int64_t(19 * ci.zSize())};
+  const int64_t _stride_buf19_2{int64_t(19)};
+  const int64_t _stride_buf19_3{int64_t(1)};
+  walberla::lbm::accessor::Population::cpu_kernels::set_vel(
+      _data_buf19, _data_force, _data_pdfs, _data_velocity, _size_buf19_0,
+      _size_buf19_1, _size_buf19_2, _stride_buf19_0, _stride_buf19_1,
+      _stride_buf19_2, _stride_buf19_3, _stride_force_0, _stride_force_1,
+      _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,
+      _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1,
+      _stride_velocity_2, _stride_velocity_3);
 }
 
 inline void initialize(walberla::field::GhostLayerField<double, 19> *pdf_field,
                        const std::array<double, 19u> &pop) {
-  WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(pdf_field, {
-    double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
-    pdf_field->getF(&xyz0, uint_t{0u}) = pop[0u];
-    pdf_field->getF(&xyz0, uint_t{1u}) = pop[1u];
-    pdf_field->getF(&xyz0, uint_t{2u}) = pop[2u];
-    pdf_field->getF(&xyz0, uint_t{3u}) = pop[3u];
-    pdf_field->getF(&xyz0, uint_t{4u}) = pop[4u];
-    pdf_field->getF(&xyz0, uint_t{5u}) = pop[5u];
-    pdf_field->getF(&xyz0, uint_t{6u}) = pop[6u];
-    pdf_field->getF(&xyz0, uint_t{7u}) = pop[7u];
-    pdf_field->getF(&xyz0, uint_t{8u}) = pop[8u];
-    pdf_field->getF(&xyz0, uint_t{9u}) = pop[9u];
-    pdf_field->getF(&xyz0, uint_t{10u}) = pop[10u];
-    pdf_field->getF(&xyz0, uint_t{11u}) = pop[11u];
-    pdf_field->getF(&xyz0, uint_t{12u}) = pop[12u];
-    pdf_field->getF(&xyz0, uint_t{13u}) = pop[13u];
-    pdf_field->getF(&xyz0, uint_t{14u}) = pop[14u];
-    pdf_field->getF(&xyz0, uint_t{15u}) = pop[15u];
-    pdf_field->getF(&xyz0, uint_t{16u}) = pop[16u];
-    pdf_field->getF(&xyz0, uint_t{17u}) = pop[17u];
-    pdf_field->getF(&xyz0, uint_t{18u}) = pop[18u];
-  });
+  walberla::CellInterval ci = pdf_field->xyzSizeWithGhostLayer();
+  double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int64_t _size_pdfs_0{int64_t(ci.xSize())};
+  const int64_t _size_pdfs_1{int64_t(ci.ySize())};
+  const int64_t _size_pdfs_2{int64_t(ci.zSize())};
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  const double pop_0 = pop[0u];
+  const double pop_1 = pop[1u];
+  const double pop_2 = pop[2u];
+  const double pop_3 = pop[3u];
+  const double pop_4 = pop[4u];
+  const double pop_5 = pop[5u];
+  const double pop_6 = pop[6u];
+  const double pop_7 = pop[7u];
+  const double pop_8 = pop[8u];
+  const double pop_9 = pop[9u];
+  const double pop_10 = pop[10u];
+  const double pop_11 = pop[11u];
+  const double pop_12 = pop[12u];
+  const double pop_13 = pop[13u];
+  const double pop_14 = pop[14u];
+  const double pop_15 = pop[15u];
+  const double pop_16 = pop[16u];
+  const double pop_17 = pop[17u];
+  const double pop_18 = pop[18u];
+  walberla::lbm::accessor::Population::cpu_kernels::broadcast(
+      _data_pdfs, _size_pdfs_0, _size_pdfs_1, _size_pdfs_2, _stride_pdfs_0,
+      _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, pop_0, pop_1, pop_10,
+      pop_11, pop_12, pop_13, pop_14, pop_15, pop_16, pop_17, pop_18, pop_2,
+      pop_3, pop_4, pop_5, pop_6, pop_7, pop_8, pop_9);
 }
 
 inline auto get(const walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const walberla::CellInterval &ci) {
-  std::vector<double> out;
-  out.reserve(ci.numCells() * uint_t(19u));
-  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
-    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
-      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
-        double const &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{0u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{1u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{2u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{3u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{4u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{5u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{6u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{7u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{8u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{9u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{10u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{11u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{12u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{13u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{14u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{15u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{16u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{17u}));
-        out.emplace_back(pdf_field->getF(&xyz0, uint_t{18u}));
-      }
-    }
-  }
+  std::vector<double> out(ci.numCells() * 19u);
+  double *buffer_ptr = out.data();
+  const double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  double *RESTRICT const _data_buf19{buffer_ptr};
+  const int64_t _size_buf19_0{int64_t(ci.xSize())};
+  const int64_t _size_buf19_1{int64_t(ci.ySize())};
+  const int64_t _size_buf19_2{int64_t(ci.zSize())};
+  /* 19 == 19 */
+  const int64_t _stride_buf19_0{int64_t(19 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf19_1{int64_t(19 * ci.zSize())};
+  const int64_t _stride_buf19_2{int64_t(19)};
+  const int64_t _stride_buf19_3{int64_t(1)};
+  walberla::lbm::accessor::Population::cpu_kernels::get(
+      _data_buf19, _data_pdfs, _size_buf19_0, _size_buf19_1, _size_buf19_2,
+      _stride_buf19_0, _stride_buf19_1, _stride_buf19_2, _stride_buf19_3,
+      _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3);
   return out;
 }
 
 inline void set(walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const std::vector<double> &values,
                 const walberla::CellInterval &ci) {
-  assert(uint_c(values.size()) == ci.numCells() * uint_t(19u));
-  auto pop = values.data();
-  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
-    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
-      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
-        double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
-        pdf_field->getF(&xyz0, uint_t{0u}) = pop[0u];
-        pdf_field->getF(&xyz0, uint_t{1u}) = pop[1u];
-        pdf_field->getF(&xyz0, uint_t{2u}) = pop[2u];
-        pdf_field->getF(&xyz0, uint_t{3u}) = pop[3u];
-        pdf_field->getF(&xyz0, uint_t{4u}) = pop[4u];
-        pdf_field->getF(&xyz0, uint_t{5u}) = pop[5u];
-        pdf_field->getF(&xyz0, uint_t{6u}) = pop[6u];
-        pdf_field->getF(&xyz0, uint_t{7u}) = pop[7u];
-        pdf_field->getF(&xyz0, uint_t{8u}) = pop[8u];
-        pdf_field->getF(&xyz0, uint_t{9u}) = pop[9u];
-        pdf_field->getF(&xyz0, uint_t{10u}) = pop[10u];
-        pdf_field->getF(&xyz0, uint_t{11u}) = pop[11u];
-        pdf_field->getF(&xyz0, uint_t{12u}) = pop[12u];
-        pdf_field->getF(&xyz0, uint_t{13u}) = pop[13u];
-        pdf_field->getF(&xyz0, uint_t{14u}) = pop[14u];
-        pdf_field->getF(&xyz0, uint_t{15u}) = pop[15u];
-        pdf_field->getF(&xyz0, uint_t{16u}) = pop[16u];
-        pdf_field->getF(&xyz0, uint_t{17u}) = pop[17u];
-        pdf_field->getF(&xyz0, uint_t{18u}) = pop[18u];
-        std::advance(pop, 19);
-      }
-    }
-  }
+  assert(uint_c(values.size()) == ci.numCells() * 19u);
+  double const *buffer_ptr = values.data();
+  double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  const double *RESTRICT const _data_buf19{buffer_ptr};
+  const int64_t _size_buf19_0{int64_t(ci.xSize())};
+  const int64_t _size_buf19_1{int64_t(ci.ySize())};
+  const int64_t _size_buf19_2{int64_t(ci.zSize())};
+  /* 19 == 19 */
+  const int64_t _stride_buf19_0{int64_t(19 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf19_1{int64_t(19 * ci.zSize())};
+  const int64_t _stride_buf19_2{int64_t(19)};
+  const int64_t _stride_buf19_3{int64_t(1)};
+  walberla::lbm::accessor::Population::cpu_kernels::set(
+      _data_buf19, _data_pdfs, _size_buf19_0, _size_buf19_1, _size_buf19_2,
+      _stride_buf19_0, _stride_buf19_1, _stride_buf19_2, _stride_buf19_3,
+      _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3);
 }
 
 inline void set(walberla::field::GhostLayerField<double, 19> *pdf_field,
@@ -229,152 +710,407 @@ inline void set(walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const walberla::field::GhostLayerField<double, 3> *force_field,
                 const std::vector<double> &values,
                 const walberla::CellInterval &ci) {
-  assert(uint_c(values.size()) == ci.numCells() * uint_t(19u));
-  auto pop = values.data();
-  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
-    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
-      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
-        double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
-        const double f_0 = pdf_field->getF(&xyz0, uint_t{0u}) = pop[0u];
-        const double f_1 = pdf_field->getF(&xyz0, uint_t{1u}) = pop[1u];
-        const double f_2 = pdf_field->getF(&xyz0, uint_t{2u}) = pop[2u];
-        const double f_3 = pdf_field->getF(&xyz0, uint_t{3u}) = pop[3u];
-        const double f_4 = pdf_field->getF(&xyz0, uint_t{4u}) = pop[4u];
-        const double f_5 = pdf_field->getF(&xyz0, uint_t{5u}) = pop[5u];
-        const double f_6 = pdf_field->getF(&xyz0, uint_t{6u}) = pop[6u];
-        const double f_7 = pdf_field->getF(&xyz0, uint_t{7u}) = pop[7u];
-        const double f_8 = pdf_field->getF(&xyz0, uint_t{8u}) = pop[8u];
-        const double f_9 = pdf_field->getF(&xyz0, uint_t{9u}) = pop[9u];
-        const double f_10 = pdf_field->getF(&xyz0, uint_t{10u}) = pop[10u];
-        const double f_11 = pdf_field->getF(&xyz0, uint_t{11u}) = pop[11u];
-        const double f_12 = pdf_field->getF(&xyz0, uint_t{12u}) = pop[12u];
-        const double f_13 = pdf_field->getF(&xyz0, uint_t{13u}) = pop[13u];
-        const double f_14 = pdf_field->getF(&xyz0, uint_t{14u}) = pop[14u];
-        const double f_15 = pdf_field->getF(&xyz0, uint_t{15u}) = pop[15u];
-        const double f_16 = pdf_field->getF(&xyz0, uint_t{16u}) = pop[16u];
-        const double f_17 = pdf_field->getF(&xyz0, uint_t{17u}) = pop[17u];
-        const double f_18 = pdf_field->getF(&xyz0, uint_t{18u}) = pop[18u];
-        const double force_0 = force_field->get(x, y, z, uint_t{0u});
-        const double force_1 = force_field->get(x, y, z, uint_t{1u});
-        const double force_2 = force_field->get(x, y, z, uint_t{2u});
-        const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-        const double momdensity_0 = vel0Term - f_13 - f_17 - f_3 - f_7 - f_9;
-        const double vel1Term = f_1 + f_11 + f_15 + f_7;
-        const double momdensity_1 =
-            f_8 + vel1Term - f_10 - f_12 - f_16 - f_2 - f_9;
-        const double vel2Term = f_12 + f_13 + f_5;
-        const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                                 vel0Term + vel1Term + vel2Term;
-        const double momdensity_2 =
-            f_11 + f_14 + vel2Term - f_15 - f_16 - f_17 - f_18 - f_6;
-        const double rho = 1.0 + delta_rho;
-        const double md_0 = momdensity_0 + 0.5 * force_0;
-        const double md_1 = momdensity_1 + 0.5 * force_1;
-        const double md_2 = momdensity_2 + 0.5 * force_2;
-        const auto rho_inv = double{1} / rho;
-        velocity_field->get(x, y, z, uint_t{0u}) = md_0 * rho_inv;
-        velocity_field->get(x, y, z, uint_t{1u}) = md_1 * rho_inv;
-        velocity_field->get(x, y, z, uint_t{2u}) = md_2 * rho_inv;
-        std::advance(pop, 19);
-      }
-    }
-  }
+  assert(uint_c(values.size()) == ci.numCells() * 19u);
+  double const *buffer_ptr = values.data();
+  double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  double *RESTRICT const _data_velocity{
+      velocity_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_velocity_0 */
+  /* ci.ySize() == _size_velocity_1 */
+  /* ci.zSize() == _size_velocity_2 */
+  /* velocity_field->fSize() == 3 */
+  const int64_t _stride_velocity_0{int64_t(velocity_field->xStride())};
+  const int64_t _stride_velocity_1{int64_t(velocity_field->yStride())};
+  const int64_t _stride_velocity_2{int64_t(velocity_field->zStride())};
+  const int64_t _stride_velocity_3{int64_t(velocity_field->fStride())};
+  const double *RESTRICT const _data_force{
+      force_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_force_0 */
+  /* ci.ySize() == _size_force_1 */
+  /* ci.zSize() == _size_force_2 */
+  /* force_field->fSize() == 3 */
+  const int64_t _stride_force_0{int64_t(force_field->xStride())};
+  const int64_t _stride_force_1{int64_t(force_field->yStride())};
+  const int64_t _stride_force_2{int64_t(force_field->zStride())};
+  const int64_t _stride_force_3{int64_t(force_field->fStride())};
+  const double *RESTRICT const _data_buf19{buffer_ptr};
+  const int64_t _size_buf19_0{int64_t(ci.xSize())};
+  const int64_t _size_buf19_1{int64_t(ci.ySize())};
+  const int64_t _size_buf19_2{int64_t(ci.zSize())};
+  /* 19 == 19 */
+  const int64_t _stride_buf19_0{int64_t(19 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf19_1{int64_t(19 * ci.zSize())};
+  const int64_t _stride_buf19_2{int64_t(19)};
+  const int64_t _stride_buf19_3{int64_t(1)};
+  walberla::lbm::accessor::Population::cpu_kernels::set_vel(
+      _data_buf19, _data_force, _data_pdfs, _data_velocity, _size_buf19_0,
+      _size_buf19_1, _size_buf19_2, _stride_buf19_0, _stride_buf19_1,
+      _stride_buf19_2, _stride_buf19_3, _stride_force_0, _stride_force_1,
+      _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,
+      _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1,
+      _stride_velocity_2, _stride_velocity_3);
 }
 } // namespace Population
 
 namespace Vector {
+namespace cpu_kernels {
+inline void get(double *RESTRICT const _data_buf3,
+                const double *RESTRICT const _data_vec,
+                const int64_t _size_buf3_0, const int64_t _size_buf3_1,
+                const int64_t _size_buf3_2, const int64_t _stride_buf3_0,
+                const int64_t _stride_buf3_1, const int64_t _stride_buf3_2,
+                const int64_t _stride_buf3_3, const int64_t _stride_vec_0,
+                const int64_t _stride_vec_1, const int64_t _stride_vec_2,
+                const int64_t _stride_vec_3) {
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_buf3_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_buf3_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_buf3_0; ctr_0 += 1LL) {
+        _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                   ctr_2 * _stride_buf3_2] =
+            _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                      ctr_2 * _stride_vec_2];
+        _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                   ctr_2 * _stride_buf3_2 + _stride_buf3_3] =
+            _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                      ctr_2 * _stride_vec_2 + _stride_vec_3];
+        _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                   ctr_2 * _stride_buf3_2 + 2LL * _stride_buf3_3] =
+            _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                      ctr_2 * _stride_vec_2 + 2LL * _stride_vec_3];
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
+namespace cpu_kernels {
+inline void set(const double *RESTRICT const _data_buf3,
+                double *RESTRICT const _data_vec, const int64_t _size_buf3_0,
+                const int64_t _size_buf3_1, const int64_t _size_buf3_2,
+                const int64_t _stride_buf3_0, const int64_t _stride_buf3_1,
+                const int64_t _stride_buf3_2, const int64_t _stride_buf3_3,
+                const int64_t _stride_vec_0, const int64_t _stride_vec_1,
+                const int64_t _stride_vec_2, const int64_t _stride_vec_3) {
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_buf3_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_buf3_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_buf3_0; ctr_0 += 1LL) {
+        _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                  ctr_2 * _stride_vec_2] =
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2];
+        _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                  ctr_2 * _stride_vec_2 + _stride_vec_3] =
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2 + _stride_buf3_3];
+        _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                  ctr_2 * _stride_vec_2 + 2LL * _stride_vec_3] =
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2 + 2LL * _stride_buf3_3];
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
+namespace cpu_kernels {
+inline void add(const double *RESTRICT const _data_buf3,
+                double *RESTRICT const _data_vec, const int64_t _size_buf3_0,
+                const int64_t _size_buf3_1, const int64_t _size_buf3_2,
+                const int64_t _stride_buf3_0, const int64_t _stride_buf3_1,
+                const int64_t _stride_buf3_2, const int64_t _stride_buf3_3,
+                const int64_t _stride_vec_0, const int64_t _stride_vec_1,
+                const int64_t _stride_vec_2, const int64_t _stride_vec_3) {
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_buf3_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_buf3_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_buf3_0; ctr_0 += 1LL) {
+        _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                  ctr_2 * _stride_vec_2] =
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2] +
+            _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                      ctr_2 * _stride_vec_2];
+        _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                  ctr_2 * _stride_vec_2 + _stride_vec_3] =
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2 + _stride_buf3_3] +
+            _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                      ctr_2 * _stride_vec_2 + _stride_vec_3];
+        _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                  ctr_2 * _stride_vec_2 + 2LL * _stride_vec_3] =
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2 + 2LL * _stride_buf3_3] +
+            _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                      ctr_2 * _stride_vec_2 + 2LL * _stride_vec_3];
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
+namespace cpu_kernels {
+inline void broadcast(double *RESTRICT const _data_vec,
+                      const int64_t _size_vec_0, const int64_t _size_vec_1,
+                      const int64_t _size_vec_2, const int64_t _stride_vec_0,
+                      const int64_t _stride_vec_1, const int64_t _stride_vec_2,
+                      const int64_t _stride_vec_3, const double vec_0,
+                      const double vec_1, const double vec_2) {
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_vec_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_vec_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_vec_0; ctr_0 += 1LL) {
+        _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                  ctr_2 * _stride_vec_2] = vec_0;
+        _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                  ctr_2 * _stride_vec_2 + _stride_vec_3] = vec_1;
+        _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                  ctr_2 * _stride_vec_2 + 2LL * _stride_vec_3] = vec_2;
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
+namespace cpu_kernels {
+inline void
+broadcast_add(double *RESTRICT const _data_vec, const int64_t _size_vec_0,
+              const int64_t _size_vec_1, const int64_t _size_vec_2,
+              const int64_t _stride_vec_0, const int64_t _stride_vec_1,
+              const int64_t _stride_vec_2, const int64_t _stride_vec_3,
+              const double vec_0, const double vec_1, const double vec_2) {
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_vec_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_vec_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_vec_0; ctr_0 += 1LL) {
+        _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                  ctr_2 * _stride_vec_2] =
+            _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                      ctr_2 * _stride_vec_2] +
+            vec_0;
+        _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                  ctr_2 * _stride_vec_2 + _stride_vec_3] =
+            _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                      ctr_2 * _stride_vec_2 + _stride_vec_3] +
+            vec_1;
+        _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                  ctr_2 * _stride_vec_2 + 2LL * _stride_vec_3] =
+            _data_vec[ctr_0 * _stride_vec_0 + ctr_1 * _stride_vec_1 +
+                      ctr_2 * _stride_vec_2 + 2LL * _stride_vec_3] +
+            vec_2;
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
 inline auto get(const walberla::field::GhostLayerField<double, 3> *vec_field,
                 const walberla::Cell &cell) {
-  const double &xyz0 = vec_field->get(cell, uint_t{0u});
-  Vector3<double> vec;
-  vec[0] = vec_field->getF(&xyz0, uint_t{0u});
-  vec[1] = vec_field->getF(&xyz0, uint_t{1u});
-  vec[2] = vec_field->getF(&xyz0, uint_t{2u});
+  walberla::CellInterval ci(cell, cell);
+  walberla::Vector3<double> vec;
+  double *buffer_ptr = vec.data();
+  const double *RESTRICT const _data_vec{
+      vec_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_vec_0 */
+  /* ci.ySize() == _size_vec_1 */
+  /* ci.zSize() == _size_vec_2 */
+  /* vec_field->fSize() == 3 */
+  const int64_t _stride_vec_0{int64_t(vec_field->xStride())};
+  const int64_t _stride_vec_1{int64_t(vec_field->yStride())};
+  const int64_t _stride_vec_2{int64_t(vec_field->zStride())};
+  const int64_t _stride_vec_3{int64_t(vec_field->fStride())};
+  double *RESTRICT const _data_buf3{buffer_ptr};
+  const int64_t _size_buf3_0{int64_t(ci.xSize())};
+  const int64_t _size_buf3_1{int64_t(ci.ySize())};
+  const int64_t _size_buf3_2{int64_t(ci.zSize())};
+  /* 3 == 3 */
+  const int64_t _stride_buf3_0{int64_t(3 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf3_1{int64_t(3 * ci.zSize())};
+  const int64_t _stride_buf3_2{int64_t(3)};
+  const int64_t _stride_buf3_3{int64_t(1)};
+  walberla::lbm::accessor::Vector::cpu_kernels::get(
+      _data_buf3, _data_vec, _size_buf3_0, _size_buf3_1, _size_buf3_2,
+      _stride_buf3_0, _stride_buf3_1, _stride_buf3_2, _stride_buf3_3,
+      _stride_vec_0, _stride_vec_1, _stride_vec_2, _stride_vec_3);
   return vec;
 }
 
 inline void set(walberla::field::GhostLayerField<double, 3> *vec_field,
                 const walberla::Vector3<double> &vec,
                 const walberla::Cell &cell) {
-  double &xyz0 = vec_field->get(cell, uint_t{0u});
-  vec_field->getF(&xyz0, uint_t{0u}) = vec[0u];
-  vec_field->getF(&xyz0, uint_t{1u}) = vec[1u];
-  vec_field->getF(&xyz0, uint_t{2u}) = vec[2u];
+  walberla::CellInterval ci(cell, cell);
+  double const *buffer_ptr = vec.data();
+  double *RESTRICT const _data_vec{
+      vec_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_vec_0 */
+  /* ci.ySize() == _size_vec_1 */
+  /* ci.zSize() == _size_vec_2 */
+  /* vec_field->fSize() == 3 */
+  const int64_t _stride_vec_0{int64_t(vec_field->xStride())};
+  const int64_t _stride_vec_1{int64_t(vec_field->yStride())};
+  const int64_t _stride_vec_2{int64_t(vec_field->zStride())};
+  const int64_t _stride_vec_3{int64_t(vec_field->fStride())};
+  const double *RESTRICT const _data_buf3{buffer_ptr};
+  const int64_t _size_buf3_0{int64_t(ci.xSize())};
+  const int64_t _size_buf3_1{int64_t(ci.ySize())};
+  const int64_t _size_buf3_2{int64_t(ci.zSize())};
+  /* 3 == 3 */
+  const int64_t _stride_buf3_0{int64_t(3 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf3_1{int64_t(3 * ci.zSize())};
+  const int64_t _stride_buf3_2{int64_t(3)};
+  const int64_t _stride_buf3_3{int64_t(1)};
+  walberla::lbm::accessor::Vector::cpu_kernels::set(
+      _data_buf3, _data_vec, _size_buf3_0, _size_buf3_1, _size_buf3_2,
+      _stride_buf3_0, _stride_buf3_1, _stride_buf3_2, _stride_buf3_3,
+      _stride_vec_0, _stride_vec_1, _stride_vec_2, _stride_vec_3);
 }
 
 inline void add(walberla::field::GhostLayerField<double, 3> *vec_field,
                 const walberla::Vector3<double> &vec,
                 const walberla::Cell &cell) {
-  double &xyz0 = vec_field->get(cell, uint_t{0u});
-  vec_field->getF(&xyz0, uint_t{0u}) += vec[0u];
-  vec_field->getF(&xyz0, uint_t{1u}) += vec[1u];
-  vec_field->getF(&xyz0, uint_t{2u}) += vec[2u];
+  walberla::CellInterval ci(cell, cell);
+  double const *buffer_ptr = vec.data();
+  double *RESTRICT const _data_vec{
+      vec_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_vec_0 */
+  /* ci.ySize() == _size_vec_1 */
+  /* ci.zSize() == _size_vec_2 */
+  /* vec_field->fSize() == 3 */
+  const int64_t _stride_vec_0{int64_t(vec_field->xStride())};
+  const int64_t _stride_vec_1{int64_t(vec_field->yStride())};
+  const int64_t _stride_vec_2{int64_t(vec_field->zStride())};
+  const int64_t _stride_vec_3{int64_t(vec_field->fStride())};
+  const double *RESTRICT const _data_buf3{buffer_ptr};
+  const int64_t _size_buf3_0{int64_t(ci.xSize())};
+  const int64_t _size_buf3_1{int64_t(ci.ySize())};
+  const int64_t _size_buf3_2{int64_t(ci.zSize())};
+  /* 3 == 3 */
+  const int64_t _stride_buf3_0{int64_t(3 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf3_1{int64_t(3 * ci.zSize())};
+  const int64_t _stride_buf3_2{int64_t(3)};
+  const int64_t _stride_buf3_3{int64_t(1)};
+  walberla::lbm::accessor::Vector::cpu_kernels::add(
+      _data_buf3, _data_vec, _size_buf3_0, _size_buf3_1, _size_buf3_2,
+      _stride_buf3_0, _stride_buf3_1, _stride_buf3_2, _stride_buf3_3,
+      _stride_vec_0, _stride_vec_1, _stride_vec_2, _stride_vec_3);
 }
 
 inline void initialize(walberla::field::GhostLayerField<double, 3> *vec_field,
                        const walberla::Vector3<double> &vec) {
-  WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(vec_field, {
-    double &xyz0 = vec_field->get(x, y, z, uint_t{0u});
-    vec_field->getF(&xyz0, uint_t{0u}) = vec[0u];
-    vec_field->getF(&xyz0, uint_t{1u}) = vec[1u];
-    vec_field->getF(&xyz0, uint_t{2u}) = vec[2u];
-  });
+  walberla::CellInterval ci = vec_field->xyzSizeWithGhostLayer();
+  double *RESTRICT const _data_vec{
+      vec_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int64_t _size_vec_0{int64_t(ci.xSize())};
+  const int64_t _size_vec_1{int64_t(ci.ySize())};
+  const int64_t _size_vec_2{int64_t(ci.zSize())};
+  /* vec_field->fSize() == 3 */
+  const int64_t _stride_vec_0{int64_t(vec_field->xStride())};
+  const int64_t _stride_vec_1{int64_t(vec_field->yStride())};
+  const int64_t _stride_vec_2{int64_t(vec_field->zStride())};
+  const int64_t _stride_vec_3{int64_t(vec_field->fStride())};
+  const double vec_0 = vec[0u];
+  const double vec_1 = vec[1u];
+  const double vec_2 = vec[2u];
+  walberla::lbm::accessor::Vector::cpu_kernels::broadcast(
+      _data_vec, _size_vec_0, _size_vec_1, _size_vec_2, _stride_vec_0,
+      _stride_vec_1, _stride_vec_2, _stride_vec_3, vec_0, vec_1, vec_2);
 }
 
 inline void add_to_all(walberla::field::GhostLayerField<double, 3> *vec_field,
                        const walberla::Vector3<double> &vec) {
-  WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(vec_field, {
-    double &xyz0 = vec_field->get(x, y, z, uint_t{0u});
-    vec_field->getF(&xyz0, uint_t{0u}) += vec[0u];
-    vec_field->getF(&xyz0, uint_t{1u}) += vec[1u];
-    vec_field->getF(&xyz0, uint_t{2u}) += vec[2u];
-  });
+  walberla::CellInterval ci = vec_field->xyzSizeWithGhostLayer();
+  double *RESTRICT const _data_vec{
+      vec_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int64_t _size_vec_0{int64_t(ci.xSize())};
+  const int64_t _size_vec_1{int64_t(ci.ySize())};
+  const int64_t _size_vec_2{int64_t(ci.zSize())};
+  /* vec_field->fSize() == 3 */
+  const int64_t _stride_vec_0{int64_t(vec_field->xStride())};
+  const int64_t _stride_vec_1{int64_t(vec_field->yStride())};
+  const int64_t _stride_vec_2{int64_t(vec_field->zStride())};
+  const int64_t _stride_vec_3{int64_t(vec_field->fStride())};
+  const double vec_0 = vec[0u];
+  const double vec_1 = vec[1u];
+  const double vec_2 = vec[2u];
+  walberla::lbm::accessor::Vector::cpu_kernels::broadcast_add(
+      _data_vec, _size_vec_0, _size_vec_1, _size_vec_2, _stride_vec_0,
+      _stride_vec_1, _stride_vec_2, _stride_vec_3, vec_0, vec_1, vec_2);
 }
 
 inline auto get(const walberla::field::GhostLayerField<double, 3> *vec_field,
                 const walberla::CellInterval &ci) {
-  std::vector<double> out;
-  out.reserve(ci.numCells() * uint_t(3u));
-  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
-    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
-      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
-        const double &xyz0 = vec_field->get(x, y, z, uint_t{0u});
-        out.emplace_back(vec_field->getF(&xyz0, uint_t{0u}));
-        out.emplace_back(vec_field->getF(&xyz0, uint_t{1u}));
-        out.emplace_back(vec_field->getF(&xyz0, uint_t{2u}));
-      }
-    }
-  }
+  std::vector<double> out(ci.numCells() * 3u);
+  double *buffer_ptr = out.data();
+  const double *RESTRICT const _data_vec{
+      vec_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_vec_0 */
+  /* ci.ySize() == _size_vec_1 */
+  /* ci.zSize() == _size_vec_2 */
+  /* vec_field->fSize() == 3 */
+  const int64_t _stride_vec_0{int64_t(vec_field->xStride())};
+  const int64_t _stride_vec_1{int64_t(vec_field->yStride())};
+  const int64_t _stride_vec_2{int64_t(vec_field->zStride())};
+  const int64_t _stride_vec_3{int64_t(vec_field->fStride())};
+  double *RESTRICT const _data_buf3{buffer_ptr};
+  const int64_t _size_buf3_0{int64_t(ci.xSize())};
+  const int64_t _size_buf3_1{int64_t(ci.ySize())};
+  const int64_t _size_buf3_2{int64_t(ci.zSize())};
+  /* 3 == 3 */
+  const int64_t _stride_buf3_0{int64_t(3 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf3_1{int64_t(3 * ci.zSize())};
+  const int64_t _stride_buf3_2{int64_t(3)};
+  const int64_t _stride_buf3_3{int64_t(1)};
+  walberla::lbm::accessor::Vector::cpu_kernels::get(
+      _data_buf3, _data_vec, _size_buf3_0, _size_buf3_1, _size_buf3_2,
+      _stride_buf3_0, _stride_buf3_1, _stride_buf3_2, _stride_buf3_3,
+      _stride_vec_0, _stride_vec_1, _stride_vec_2, _stride_vec_3);
   return out;
 }
 
 inline void set(walberla::field::GhostLayerField<double, 3> *vec_field,
                 const std::vector<double> &values,
                 const walberla::CellInterval &ci) {
-  assert(uint_c(values.size()) == ci.numCells() * uint_t(3u));
-  auto values_ptr = values.data();
-  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
-    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
-      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
-        double &xyz0 = vec_field->get(x, y, z, uint_t{0u});
-        vec_field->getF(&xyz0, uint_t{0u}) = values_ptr[0u];
-        vec_field->getF(&xyz0, uint_t{1u}) = values_ptr[1u];
-        vec_field->getF(&xyz0, uint_t{2u}) = values_ptr[2u];
-        std::advance(values_ptr, 3);
-      }
-    }
-  }
+  assert(uint_c(values.size()) == ci.numCells() * 3u);
+  double const *buffer_ptr = values.data();
+  double *RESTRICT const _data_vec{
+      vec_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_vec_0 */
+  /* ci.ySize() == _size_vec_1 */
+  /* ci.zSize() == _size_vec_2 */
+  /* vec_field->fSize() == 3 */
+  const int64_t _stride_vec_0{int64_t(vec_field->xStride())};
+  const int64_t _stride_vec_1{int64_t(vec_field->yStride())};
+  const int64_t _stride_vec_2{int64_t(vec_field->zStride())};
+  const int64_t _stride_vec_3{int64_t(vec_field->fStride())};
+  const double *RESTRICT const _data_buf3{buffer_ptr};
+  const int64_t _size_buf3_0{int64_t(ci.xSize())};
+  const int64_t _size_buf3_1{int64_t(ci.ySize())};
+  const int64_t _size_buf3_2{int64_t(ci.zSize())};
+  /* 3 == 3 */
+  const int64_t _stride_buf3_0{int64_t(3 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf3_1{int64_t(3 * ci.zSize())};
+  const int64_t _stride_buf3_2{int64_t(3)};
+  const int64_t _stride_buf3_3{int64_t(1)};
+  walberla::lbm::accessor::Vector::cpu_kernels::set(
+      _data_buf3, _data_vec, _size_buf3_0, _size_buf3_1, _size_buf3_2,
+      _stride_buf3_0, _stride_buf3_1, _stride_buf3_2, _stride_buf3_3,
+      _stride_vec_0, _stride_vec_1, _stride_vec_2, _stride_vec_3);
 }
 } // namespace Vector
 
 namespace EquilibriumDistribution {
 inline double
 get(const walberla::stencil::Direction direction,
-    const walberla::Vector3<double> &u = Vector3<double>(double{0}),
+    const walberla::Vector3<double> &u = walberla::Vector3<double>(double{0}),
     double rho = double{1}) {
-  const double u_0 = u[uint_t{0u}];
-  const double u_1 = u[uint_t{1u}];
-  const double u_2 = u[uint_t{2u}];
+  const double u_0 = u[0u];
+  const double u_1 = u[1u];
+  const double u_2 = u[2u];
   switch (direction) {
   case stencil::C: {
     return 0.3333333333333333 * rho + -0.3333333333333333 * rho * (u_0 * u_0) +
@@ -500,391 +1236,1054 @@ get(const walberla::stencil::Direction direction,
 } // namespace EquilibriumDistribution
 
 namespace Equilibrium {
+namespace cpu_kernels {
+inline void set(const double *RESTRICT const _data_buf3,
+                double *RESTRICT const _data_pdfs, const int64_t _size_buf3_0,
+                const int64_t _size_buf3_1, const int64_t _size_buf3_2,
+                const int64_t _stride_buf3_0, const int64_t _stride_buf3_1,
+                const int64_t _stride_buf3_2, const int64_t _stride_buf3_3,
+                const int64_t _stride_pdfs_0, const int64_t _stride_pdfs_1,
+                const int64_t _stride_pdfs_2, const int64_t _stride_pdfs_3,
+                const double rho) {
+  const double __c_1_0o3_0 = 1.0 / 3.0;
+  const double __c_s1_0o3_0 = -1.0 / 3.0;
+  const double __c_1_0o18_0 = 1.0 / 18.0;
+  const double __c_s1_0o6_0 = -1.0 / 6.0;
+  const double __c_1_0o6_0 = 1.0 / 6.0;
+  const double __c_1_0o36_0 = 1.0 / 36.0;
+  const double __c_s1_0o12_0 = -1.0 / 12.0;
+  const double __c_1_0o12_0 = 1.0 / 12.0;
+  const double __c_s1_0o4_0 = -1.0 / 4.0;
+  const double __c_1_0o4_0 = 1.0 / 4.0;
+  const double delta_rho_eq = -1.0 + rho;
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_buf3_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_buf3_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_buf3_0; ctr_0 += 1LL) {
+        const double u_eq_0 =
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2];
+        const double u_eq_1 =
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2 + _stride_buf3_3];
+        const double u_eq_2 =
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2 + 2LL * _stride_buf3_3];
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2] =
+            __c_1_0o3_0 * delta_rho_eq +
+            __c_s1_0o3_0 * (u_eq_0 * u_eq_0) * rho +
+            __c_s1_0o3_0 * (u_eq_1 * u_eq_1) * rho +
+            __c_s1_0o3_0 * (u_eq_2 * u_eq_2) * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq +
+            __c_s1_0o6_0 * (u_eq_0 * u_eq_0) * rho +
+            __c_s1_0o6_0 * (u_eq_2 * u_eq_2) * rho +
+            __c_1_0o6_0 * u_eq_1 * rho + __c_1_0o6_0 * (u_eq_1 * u_eq_1) * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq + __c_s1_0o6_0 * u_eq_1 * rho +
+            __c_s1_0o6_0 * (u_eq_0 * u_eq_0) * rho +
+            __c_s1_0o6_0 * (u_eq_2 * u_eq_2) * rho +
+            __c_1_0o6_0 * (u_eq_1 * u_eq_1) * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq + __c_s1_0o6_0 * u_eq_0 * rho +
+            __c_s1_0o6_0 * (u_eq_1 * u_eq_1) * rho +
+            __c_s1_0o6_0 * (u_eq_2 * u_eq_2) * rho +
+            __c_1_0o6_0 * (u_eq_0 * u_eq_0) * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq +
+            __c_s1_0o6_0 * (u_eq_1 * u_eq_1) * rho +
+            __c_s1_0o6_0 * (u_eq_2 * u_eq_2) * rho +
+            __c_1_0o6_0 * u_eq_0 * rho + __c_1_0o6_0 * (u_eq_0 * u_eq_0) * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 5LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq +
+            __c_s1_0o6_0 * (u_eq_0 * u_eq_0) * rho +
+            __c_s1_0o6_0 * (u_eq_1 * u_eq_1) * rho +
+            __c_1_0o6_0 * u_eq_2 * rho + __c_1_0o6_0 * (u_eq_2 * u_eq_2) * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq + __c_s1_0o6_0 * u_eq_2 * rho +
+            __c_s1_0o6_0 * (u_eq_0 * u_eq_0) * rho +
+            __c_s1_0o6_0 * (u_eq_1 * u_eq_1) * rho +
+            __c_1_0o6_0 * (u_eq_2 * u_eq_2) * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * u_eq_0 * rho +
+            __c_1_0o12_0 * u_eq_1 * rho +
+            __c_1_0o12_0 * (u_eq_0 * u_eq_0) * rho +
+            __c_1_0o12_0 * (u_eq_1 * u_eq_1) * rho +
+            __c_s1_0o4_0 * u_eq_0 * u_eq_1 * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_1_0o12_0 * u_eq_0 * rho +
+            __c_1_0o12_0 * u_eq_1 * rho +
+            __c_1_0o12_0 * (u_eq_0 * u_eq_0) * rho +
+            __c_1_0o12_0 * (u_eq_1 * u_eq_1) * rho +
+            __c_1_0o4_0 * u_eq_0 * u_eq_1 * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * u_eq_0 * rho +
+            __c_s1_0o12_0 * u_eq_1 * rho +
+            __c_1_0o12_0 * (u_eq_0 * u_eq_0) * rho +
+            __c_1_0o12_0 * (u_eq_1 * u_eq_1) * rho +
+            __c_1_0o4_0 * u_eq_0 * u_eq_1 * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * u_eq_1 * rho +
+            __c_1_0o12_0 * u_eq_0 * rho +
+            __c_1_0o12_0 * (u_eq_0 * u_eq_0) * rho +
+            __c_1_0o12_0 * (u_eq_1 * u_eq_1) * rho +
+            __c_s1_0o4_0 * u_eq_0 * u_eq_1 * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_1_0o12_0 * u_eq_1 * rho +
+            __c_1_0o12_0 * u_eq_2 * rho +
+            __c_1_0o12_0 * (u_eq_1 * u_eq_1) * rho +
+            __c_1_0o12_0 * (u_eq_2 * u_eq_2) * rho +
+            __c_1_0o4_0 * u_eq_1 * u_eq_2 * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * u_eq_1 * rho +
+            __c_1_0o12_0 * u_eq_2 * rho +
+            __c_1_0o12_0 * (u_eq_1 * u_eq_1) * rho +
+            __c_1_0o12_0 * (u_eq_2 * u_eq_2) * rho +
+            __c_s1_0o4_0 * u_eq_1 * u_eq_2 * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * u_eq_0 * rho +
+            __c_1_0o12_0 * u_eq_2 * rho +
+            __c_1_0o12_0 * (u_eq_0 * u_eq_0) * rho +
+            __c_1_0o12_0 * (u_eq_2 * u_eq_2) * rho +
+            __c_s1_0o4_0 * u_eq_0 * u_eq_2 * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_1_0o12_0 * u_eq_0 * rho +
+            __c_1_0o12_0 * u_eq_2 * rho +
+            __c_1_0o12_0 * (u_eq_0 * u_eq_0) * rho +
+            __c_1_0o12_0 * (u_eq_2 * u_eq_2) * rho +
+            __c_1_0o4_0 * u_eq_0 * u_eq_2 * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * u_eq_2 * rho +
+            __c_1_0o12_0 * u_eq_1 * rho +
+            __c_1_0o12_0 * (u_eq_1 * u_eq_1) * rho +
+            __c_1_0o12_0 * (u_eq_2 * u_eq_2) * rho +
+            __c_s1_0o4_0 * u_eq_1 * u_eq_2 * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * u_eq_1 * rho +
+            __c_s1_0o12_0 * u_eq_2 * rho +
+            __c_1_0o12_0 * (u_eq_1 * u_eq_1) * rho +
+            __c_1_0o12_0 * (u_eq_2 * u_eq_2) * rho +
+            __c_1_0o4_0 * u_eq_1 * u_eq_2 * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * u_eq_0 * rho +
+            __c_s1_0o12_0 * u_eq_2 * rho +
+            __c_1_0o12_0 * (u_eq_0 * u_eq_0) * rho +
+            __c_1_0o12_0 * (u_eq_2 * u_eq_2) * rho +
+            __c_1_0o4_0 * u_eq_0 * u_eq_2 * rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * u_eq_2 * rho +
+            __c_1_0o12_0 * u_eq_0 * rho +
+            __c_1_0o12_0 * (u_eq_0 * u_eq_0) * rho +
+            __c_1_0o12_0 * (u_eq_2 * u_eq_2) * rho +
+            __c_s1_0o4_0 * u_eq_0 * u_eq_2 * rho;
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
 inline void set(walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const walberla::Vector3<double> &u, const double rho,
                 const walberla::Cell &cell) {
-  double &xyz0 = pdf_field->get(cell, uint_t{0u});
-  const double u_0 = u[uint_t{0u}];
-  const double u_1 = u[uint_t{1u}];
-  const double u_2 = u[uint_t{2u}];
-  const double delta_rho = -1.0 + rho;
-  pdf_field->getF(&xyz0, uint_t{0u}) = 0.3333333333333333 * delta_rho +
-                                       -0.3333333333333333 * rho * (u_0 * u_0) +
-                                       -0.3333333333333333 * rho * (u_1 * u_1) +
-                                       -0.3333333333333333 * rho * (u_2 * u_2);
-  pdf_field->getF(&xyz0, uint_t{1u}) =
-      0.05555555555555555 * delta_rho +
-      -0.16666666666666666 * rho * (u_0 * u_0) +
-      -0.16666666666666666 * rho * (u_2 * u_2) +
-      0.16666666666666666 * rho * u_1 + 0.16666666666666666 * rho * (u_1 * u_1);
-  pdf_field->getF(&xyz0, uint_t{2u}) =
-      0.05555555555555555 * delta_rho + -0.16666666666666666 * rho * u_1 +
-      -0.16666666666666666 * rho * (u_0 * u_0) +
-      -0.16666666666666666 * rho * (u_2 * u_2) +
-      0.16666666666666666 * rho * (u_1 * u_1);
-  pdf_field->getF(&xyz0, uint_t{3u}) =
-      0.05555555555555555 * delta_rho + -0.16666666666666666 * rho * u_0 +
-      -0.16666666666666666 * rho * (u_1 * u_1) +
-      -0.16666666666666666 * rho * (u_2 * u_2) +
-      0.16666666666666666 * rho * (u_0 * u_0);
-  pdf_field->getF(&xyz0, uint_t{4u}) =
-      0.05555555555555555 * delta_rho +
-      -0.16666666666666666 * rho * (u_1 * u_1) +
-      -0.16666666666666666 * rho * (u_2 * u_2) +
-      0.16666666666666666 * rho * u_0 + 0.16666666666666666 * rho * (u_0 * u_0);
-  pdf_field->getF(&xyz0, uint_t{5u}) =
-      0.05555555555555555 * delta_rho +
-      -0.16666666666666666 * rho * (u_0 * u_0) +
-      -0.16666666666666666 * rho * (u_1 * u_1) +
-      0.16666666666666666 * rho * u_2 + 0.16666666666666666 * rho * (u_2 * u_2);
-  pdf_field->getF(&xyz0, uint_t{6u}) =
-      0.05555555555555555 * delta_rho + -0.16666666666666666 * rho * u_2 +
-      -0.16666666666666666 * rho * (u_0 * u_0) +
-      -0.16666666666666666 * rho * (u_1 * u_1) +
-      0.16666666666666666 * rho * (u_2 * u_2);
-  pdf_field->getF(&xyz0, uint_t{7u}) =
-      0.027777777777777776 * delta_rho + -0.08333333333333333 * rho * u_0 +
-      0.08333333333333333 * rho * u_1 +
-      0.08333333333333333 * rho * (u_0 * u_0) +
-      0.08333333333333333 * rho * (u_1 * u_1) + -0.25 * rho * u_0 * u_1;
-  pdf_field->getF(&xyz0, uint_t{8u}) =
-      0.027777777777777776 * delta_rho + 0.08333333333333333 * rho * u_0 +
-      0.08333333333333333 * rho * u_1 +
-      0.08333333333333333 * rho * (u_0 * u_0) +
-      0.08333333333333333 * rho * (u_1 * u_1) + 0.25 * rho * u_0 * u_1;
-  pdf_field->getF(&xyz0, uint_t{9u}) =
-      0.027777777777777776 * delta_rho + -0.08333333333333333 * rho * u_0 +
-      -0.08333333333333333 * rho * u_1 +
-      0.08333333333333333 * rho * (u_0 * u_0) +
-      0.08333333333333333 * rho * (u_1 * u_1) + 0.25 * rho * u_0 * u_1;
-  pdf_field->getF(&xyz0, uint_t{10u}) =
-      0.027777777777777776 * delta_rho + -0.08333333333333333 * rho * u_1 +
-      0.08333333333333333 * rho * u_0 +
-      0.08333333333333333 * rho * (u_0 * u_0) +
-      0.08333333333333333 * rho * (u_1 * u_1) + -0.25 * rho * u_0 * u_1;
-  pdf_field->getF(&xyz0, uint_t{11u}) =
-      0.027777777777777776 * delta_rho + 0.08333333333333333 * rho * u_1 +
-      0.08333333333333333 * rho * u_2 +
-      0.08333333333333333 * rho * (u_1 * u_1) +
-      0.08333333333333333 * rho * (u_2 * u_2) + 0.25 * rho * u_1 * u_2;
-  pdf_field->getF(&xyz0, uint_t{12u}) =
-      0.027777777777777776 * delta_rho + -0.08333333333333333 * rho * u_1 +
-      0.08333333333333333 * rho * u_2 +
-      0.08333333333333333 * rho * (u_1 * u_1) +
-      0.08333333333333333 * rho * (u_2 * u_2) + -0.25 * rho * u_1 * u_2;
-  pdf_field->getF(&xyz0, uint_t{13u}) =
-      0.027777777777777776 * delta_rho + -0.08333333333333333 * rho * u_0 +
-      0.08333333333333333 * rho * u_2 +
-      0.08333333333333333 * rho * (u_0 * u_0) +
-      0.08333333333333333 * rho * (u_2 * u_2) + -0.25 * rho * u_0 * u_2;
-  pdf_field->getF(&xyz0, uint_t{14u}) =
-      0.027777777777777776 * delta_rho + 0.08333333333333333 * rho * u_0 +
-      0.08333333333333333 * rho * u_2 +
-      0.08333333333333333 * rho * (u_0 * u_0) +
-      0.08333333333333333 * rho * (u_2 * u_2) + 0.25 * rho * u_0 * u_2;
-  pdf_field->getF(&xyz0, uint_t{15u}) =
-      0.027777777777777776 * delta_rho + -0.08333333333333333 * rho * u_2 +
-      0.08333333333333333 * rho * u_1 +
-      0.08333333333333333 * rho * (u_1 * u_1) +
-      0.08333333333333333 * rho * (u_2 * u_2) + -0.25 * rho * u_1 * u_2;
-  pdf_field->getF(&xyz0, uint_t{16u}) =
-      0.027777777777777776 * delta_rho + -0.08333333333333333 * rho * u_1 +
-      -0.08333333333333333 * rho * u_2 +
-      0.08333333333333333 * rho * (u_1 * u_1) +
-      0.08333333333333333 * rho * (u_2 * u_2) + 0.25 * rho * u_1 * u_2;
-  pdf_field->getF(&xyz0, uint_t{17u}) =
-      0.027777777777777776 * delta_rho + -0.08333333333333333 * rho * u_0 +
-      -0.08333333333333333 * rho * u_2 +
-      0.08333333333333333 * rho * (u_0 * u_0) +
-      0.08333333333333333 * rho * (u_2 * u_2) + 0.25 * rho * u_0 * u_2;
-  pdf_field->getF(&xyz0, uint_t{18u}) =
-      0.027777777777777776 * delta_rho + -0.08333333333333333 * rho * u_2 +
-      0.08333333333333333 * rho * u_0 +
-      0.08333333333333333 * rho * (u_0 * u_0) +
-      0.08333333333333333 * rho * (u_2 * u_2) + -0.25 * rho * u_0 * u_2;
+  walberla::CellInterval ci(cell, cell);
+  double const *buffer_ptr = u.data();
+  double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  const double *RESTRICT const _data_buf3{buffer_ptr};
+  const int64_t _size_buf3_0{int64_t(ci.xSize())};
+  const int64_t _size_buf3_1{int64_t(ci.ySize())};
+  const int64_t _size_buf3_2{int64_t(ci.zSize())};
+  /* 3 == 3 */
+  const int64_t _stride_buf3_0{int64_t(3 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf3_1{int64_t(3 * ci.zSize())};
+  const int64_t _stride_buf3_2{int64_t(3)};
+  const int64_t _stride_buf3_3{int64_t(1)};
+  walberla::lbm::accessor::Equilibrium::cpu_kernels::set(
+      _data_buf3, _data_pdfs, _size_buf3_0, _size_buf3_1, _size_buf3_2,
+      _stride_buf3_0, _stride_buf3_1, _stride_buf3_2, _stride_buf3_3,
+      _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, rho);
 }
 } // namespace Equilibrium
 
 namespace Density {
+namespace cpu_kernels {
+inline void get(double *RESTRICT const _data_buf1,
+                const double *RESTRICT const _data_pdfs,
+                const int64_t _size_buf1_0, const int64_t _size_buf1_1,
+                const int64_t _size_buf1_2, const int64_t _stride_buf1_0,
+                const int64_t _stride_buf1_1, const int64_t _stride_buf1_2,
+                const int64_t _stride_pdfs_0, const int64_t _stride_pdfs_1,
+                const int64_t _stride_pdfs_2, const int64_t _stride_pdfs_3,
+                const double density) {
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_buf1_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_buf1_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_buf1_0; ctr_0 += 1LL) {
+        const double vel0Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double vel1Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3];
+        const double vel2Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 5LL * _stride_pdfs_3];
+        const double delta_rho =
+            vel0Term + vel1Term + vel2Term +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
+        const double rho = (1.0 + delta_rho) * density;
+        _data_buf1[ctr_0 * _stride_buf1_0 + ctr_1 * _stride_buf1_1 +
+                   ctr_2 * _stride_buf1_2] = rho;
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
+namespace cpu_kernels {
+inline void set(const double *RESTRICT const _data_buf1,
+                double *RESTRICT const _data_pdfs, const int64_t _size_buf1_0,
+                const int64_t _size_buf1_1, const int64_t _size_buf1_2,
+                const int64_t _stride_buf1_0, const int64_t _stride_buf1_1,
+                const int64_t _stride_buf1_2, const int64_t _stride_pdfs_0,
+                const int64_t _stride_pdfs_1, const int64_t _stride_pdfs_2,
+                const int64_t _stride_pdfs_3, const double density) {
+  const double __c_1_0o3_0 = 1.0 / 3.0;
+  const double __c_s1_0o3_0 = -1.0 / 3.0;
+  const double __c_1_0o18_0 = 1.0 / 18.0;
+  const double __c_s1_0o6_0 = -1.0 / 6.0;
+  const double __c_1_0o6_0 = 1.0 / 6.0;
+  const double __c_1_0o36_0 = 1.0 / 36.0;
+  const double __c_s1_0o12_0 = -1.0 / 12.0;
+  const double __c_1_0o12_0 = 1.0 / 12.0;
+  const double __c_s1_0o4_0 = -1.0 / 4.0;
+  const double __c_1_0o4_0 = 1.0 / 4.0;
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_buf1_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_buf1_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_buf1_0; ctr_0 += 1LL) {
+        const double vel0Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double momdensity_0 =
+            vel0Term -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
+        const double vel1Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3];
+        const double momdensity_1 =
+            vel1Term -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double vel2Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 5LL * _stride_pdfs_3];
+        const double delta_rho =
+            vel0Term + vel1Term + vel2Term +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
+        const double momdensity_2 =
+            vel2Term -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3];
+        const double rho = 1.0 + delta_rho;
+        const double md_0 = momdensity_0;
+        const double md_1 = momdensity_1;
+        const double md_2 = momdensity_2;
+        const double rho_inv = 1.0 / rho;
+        const double u_old_0 = md_0 * rho_inv;
+        const double u_old_1 = md_1 * rho_inv;
+        const double u_old_2 = md_2 * rho_inv;
+        const double rho_new =
+            1.0 / density *
+            _data_buf1[ctr_0 * _stride_buf1_0 + ctr_1 * _stride_buf1_1 +
+                       ctr_2 * _stride_buf1_2];
+        const double delta_rho_eq = -1.0 + rho_new;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2] =
+            __c_1_0o3_0 * delta_rho_eq +
+            __c_s1_0o3_0 * rho_new * (u_old_0 * u_old_0) +
+            __c_s1_0o3_0 * rho_new * (u_old_1 * u_old_1) +
+            __c_s1_0o3_0 * rho_new * (u_old_2 * u_old_2);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq +
+            __c_s1_0o6_0 * rho_new * (u_old_0 * u_old_0) +
+            __c_s1_0o6_0 * rho_new * (u_old_2 * u_old_2) +
+            __c_1_0o6_0 * rho_new * u_old_1 +
+            __c_1_0o6_0 * rho_new * (u_old_1 * u_old_1);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq + __c_s1_0o6_0 * rho_new * u_old_1 +
+            __c_s1_0o6_0 * rho_new * (u_old_0 * u_old_0) +
+            __c_s1_0o6_0 * rho_new * (u_old_2 * u_old_2) +
+            __c_1_0o6_0 * rho_new * (u_old_1 * u_old_1);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq + __c_s1_0o6_0 * rho_new * u_old_0 +
+            __c_s1_0o6_0 * rho_new * (u_old_1 * u_old_1) +
+            __c_s1_0o6_0 * rho_new * (u_old_2 * u_old_2) +
+            __c_1_0o6_0 * rho_new * (u_old_0 * u_old_0);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq +
+            __c_s1_0o6_0 * rho_new * (u_old_1 * u_old_1) +
+            __c_s1_0o6_0 * rho_new * (u_old_2 * u_old_2) +
+            __c_1_0o6_0 * rho_new * u_old_0 +
+            __c_1_0o6_0 * rho_new * (u_old_0 * u_old_0);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 5LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq +
+            __c_s1_0o6_0 * rho_new * (u_old_0 * u_old_0) +
+            __c_s1_0o6_0 * rho_new * (u_old_1 * u_old_1) +
+            __c_1_0o6_0 * rho_new * u_old_2 +
+            __c_1_0o6_0 * rho_new * (u_old_2 * u_old_2);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq + __c_s1_0o6_0 * rho_new * u_old_2 +
+            __c_s1_0o6_0 * rho_new * (u_old_0 * u_old_0) +
+            __c_s1_0o6_0 * rho_new * (u_old_1 * u_old_1) +
+            __c_1_0o6_0 * rho_new * (u_old_2 * u_old_2);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho_new * u_old_0 +
+            __c_1_0o12_0 * rho_new * u_old_1 +
+            __c_1_0o12_0 * rho_new * (u_old_0 * u_old_0) +
+            __c_1_0o12_0 * rho_new * (u_old_1 * u_old_1) +
+            __c_s1_0o4_0 * rho_new * u_old_0 * u_old_1;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_1_0o12_0 * rho_new * u_old_0 +
+            __c_1_0o12_0 * rho_new * u_old_1 +
+            __c_1_0o12_0 * rho_new * (u_old_0 * u_old_0) +
+            __c_1_0o12_0 * rho_new * (u_old_1 * u_old_1) +
+            __c_1_0o4_0 * rho_new * u_old_0 * u_old_1;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho_new * u_old_0 +
+            __c_s1_0o12_0 * rho_new * u_old_1 +
+            __c_1_0o12_0 * rho_new * (u_old_0 * u_old_0) +
+            __c_1_0o12_0 * rho_new * (u_old_1 * u_old_1) +
+            __c_1_0o4_0 * rho_new * u_old_0 * u_old_1;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho_new * u_old_1 +
+            __c_1_0o12_0 * rho_new * u_old_0 +
+            __c_1_0o12_0 * rho_new * (u_old_0 * u_old_0) +
+            __c_1_0o12_0 * rho_new * (u_old_1 * u_old_1) +
+            __c_s1_0o4_0 * rho_new * u_old_0 * u_old_1;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_1_0o12_0 * rho_new * u_old_1 +
+            __c_1_0o12_0 * rho_new * u_old_2 +
+            __c_1_0o12_0 * rho_new * (u_old_1 * u_old_1) +
+            __c_1_0o12_0 * rho_new * (u_old_2 * u_old_2) +
+            __c_1_0o4_0 * rho_new * u_old_1 * u_old_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho_new * u_old_1 +
+            __c_1_0o12_0 * rho_new * u_old_2 +
+            __c_1_0o12_0 * rho_new * (u_old_1 * u_old_1) +
+            __c_1_0o12_0 * rho_new * (u_old_2 * u_old_2) +
+            __c_s1_0o4_0 * rho_new * u_old_1 * u_old_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho_new * u_old_0 +
+            __c_1_0o12_0 * rho_new * u_old_2 +
+            __c_1_0o12_0 * rho_new * (u_old_0 * u_old_0) +
+            __c_1_0o12_0 * rho_new * (u_old_2 * u_old_2) +
+            __c_s1_0o4_0 * rho_new * u_old_0 * u_old_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_1_0o12_0 * rho_new * u_old_0 +
+            __c_1_0o12_0 * rho_new * u_old_2 +
+            __c_1_0o12_0 * rho_new * (u_old_0 * u_old_0) +
+            __c_1_0o12_0 * rho_new * (u_old_2 * u_old_2) +
+            __c_1_0o4_0 * rho_new * u_old_0 * u_old_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho_new * u_old_2 +
+            __c_1_0o12_0 * rho_new * u_old_1 +
+            __c_1_0o12_0 * rho_new * (u_old_1 * u_old_1) +
+            __c_1_0o12_0 * rho_new * (u_old_2 * u_old_2) +
+            __c_s1_0o4_0 * rho_new * u_old_1 * u_old_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho_new * u_old_1 +
+            __c_s1_0o12_0 * rho_new * u_old_2 +
+            __c_1_0o12_0 * rho_new * (u_old_1 * u_old_1) +
+            __c_1_0o12_0 * rho_new * (u_old_2 * u_old_2) +
+            __c_1_0o4_0 * rho_new * u_old_1 * u_old_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho_new * u_old_0 +
+            __c_s1_0o12_0 * rho_new * u_old_2 +
+            __c_1_0o12_0 * rho_new * (u_old_0 * u_old_0) +
+            __c_1_0o12_0 * rho_new * (u_old_2 * u_old_2) +
+            __c_1_0o4_0 * rho_new * u_old_0 * u_old_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho_new * u_old_2 +
+            __c_1_0o12_0 * rho_new * u_old_0 +
+            __c_1_0o12_0 * rho_new * (u_old_0 * u_old_0) +
+            __c_1_0o12_0 * rho_new * (u_old_2 * u_old_2) +
+            __c_s1_0o4_0 * rho_new * u_old_0 * u_old_2;
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
 inline double get(const walberla::field::GhostLayerField<double, 19> *pdf_field,
                   const double density, const walberla::Cell &cell) {
-  const double &xyz0 = pdf_field->get(cell, uint_t{0u});
-  const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
-  const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
-  const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
-  const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
-  const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
-  const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
-  const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
-  const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
-  const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
-  const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
-  const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
-  const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
-  const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
-  const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
-  const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
-  const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
-  const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
-  const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
-  const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
-  const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-  const double vel1Term = f_1 + f_11 + f_15 + f_7;
-  const double vel2Term = f_12 + f_13 + f_5;
-  const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                           vel0Term + vel1Term + vel2Term;
-  const double rho = density * (1.0 + delta_rho);
+  walberla::CellInterval ci(cell, cell);
+  double rho{};
+  double *buffer_ptr = &rho;
+  const double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  double *RESTRICT const _data_buf1{buffer_ptr};
+  const int64_t _size_buf1_0{int64_t(ci.xSize())};
+  const int64_t _size_buf1_1{int64_t(ci.ySize())};
+  const int64_t _size_buf1_2{int64_t(ci.zSize())};
+  const int64_t _stride_buf1_0{int64_t(1 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf1_1{int64_t(1 * ci.zSize())};
+  const int64_t _stride_buf1_2{int64_t(1)};
+  walberla::lbm::accessor::Density::cpu_kernels::get(
+      _data_buf1, _data_pdfs, _size_buf1_0, _size_buf1_1, _size_buf1_2,
+      _stride_buf1_0, _stride_buf1_1, _stride_buf1_2, _stride_pdfs_0,
+      _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, density);
   return rho;
-}
-
-inline void set(walberla::field::GhostLayerField<double, 19> *pdf_field,
-                const double rho_in, const double density,
-                const walberla::Cell &cell) {
-  const double &xyz0 = pdf_field->get(cell, uint_t{0u});
-  const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
-  const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
-  const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
-  const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
-  const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
-  const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
-  const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
-  const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
-  const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
-  const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
-  const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
-  const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
-  const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
-  const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
-  const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
-  const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
-  const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
-  const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
-  const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
-  const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-  const double momdensity_0 = vel0Term - f_13 - f_17 - f_3 - f_7 - f_9;
-  const double vel1Term = f_1 + f_11 + f_15 + f_7;
-  const double momdensity_1 = f_8 + vel1Term - f_10 - f_12 - f_16 - f_2 - f_9;
-  const double vel2Term = f_12 + f_13 + f_5;
-  const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                           vel0Term + vel1Term + vel2Term;
-  const double momdensity_2 =
-      f_11 + f_14 + vel2Term - f_15 - f_16 - f_17 - f_18 - f_6;
-  const double rho = 1.0 + delta_rho;
-  const double md_0 = momdensity_0;
-  const double md_1 = momdensity_1;
-  const double md_2 = momdensity_2;
-
-  // calculate current velocity (before density change)
-  const double conversion = double{1} / rho;
-  Vector3<double> velocity;
-  velocity[0u] = md_0 * conversion;
-  velocity[1u] = md_1 * conversion;
-  velocity[2u] = md_2 * conversion;
-
-  Equilibrium::set(pdf_field, velocity, rho_in / density, cell);
 }
 
 inline std::vector<double>
 get(const walberla::field::GhostLayerField<double, 19> *pdf_field,
     const double density, const walberla::CellInterval &ci) {
-  std::vector<double> out;
-  out.reserve(ci.numCells());
-  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
-    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
-      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
-        const double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
-        const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
-        const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
-        const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
-        const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
-        const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
-        const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
-        const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
-        const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
-        const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
-        const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
-        const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
-        const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
-        const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
-        const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
-        const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
-        const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
-        const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
-        const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
-        const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
-        const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-        const double vel1Term = f_1 + f_11 + f_15 + f_7;
-        const double vel2Term = f_12 + f_13 + f_5;
-        const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                                 vel0Term + vel1Term + vel2Term;
-        const double rho = density * (1.0 + delta_rho);
-        out.emplace_back(rho);
-      }
-    }
-  }
+  std::vector<double> out(ci.numCells());
+  double *buffer_ptr = out.data();
+  const double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  double *RESTRICT const _data_buf1{buffer_ptr};
+  const int64_t _size_buf1_0{int64_t(ci.xSize())};
+  const int64_t _size_buf1_1{int64_t(ci.ySize())};
+  const int64_t _size_buf1_2{int64_t(ci.zSize())};
+  const int64_t _stride_buf1_0{int64_t(1 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf1_1{int64_t(1 * ci.zSize())};
+  const int64_t _stride_buf1_2{int64_t(1)};
+  walberla::lbm::accessor::Density::cpu_kernels::get(
+      _data_buf1, _data_pdfs, _size_buf1_0, _size_buf1_1, _size_buf1_2,
+      _stride_buf1_0, _stride_buf1_1, _stride_buf1_2, _stride_pdfs_0,
+      _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, density);
   return out;
+}
+
+inline void set(walberla::field::GhostLayerField<double, 19> *pdf_field,
+                const double rho_in, const double density,
+                const walberla::Cell &cell) {
+  walberla::CellInterval ci(cell, cell);
+  double const *buffer_ptr = &rho_in;
+  double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  const double *RESTRICT const _data_buf1{buffer_ptr};
+  const int64_t _size_buf1_0{int64_t(ci.xSize())};
+  const int64_t _size_buf1_1{int64_t(ci.ySize())};
+  const int64_t _size_buf1_2{int64_t(ci.zSize())};
+  const int64_t _stride_buf1_0{int64_t(1 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf1_1{int64_t(1 * ci.zSize())};
+  const int64_t _stride_buf1_2{int64_t(1)};
+  walberla::lbm::accessor::Density::cpu_kernels::set(
+      _data_buf1, _data_pdfs, _size_buf1_0, _size_buf1_1, _size_buf1_2,
+      _stride_buf1_0, _stride_buf1_1, _stride_buf1_2, _stride_pdfs_0,
+      _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, density);
 }
 
 inline void set(walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const std::vector<double> &values, const double density,
                 const walberla::CellInterval &ci) {
   assert(uint_c(values.size()) == ci.numCells());
-  auto values_it = values.begin();
-  auto const density_inv = double{1} / density;
-  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
-    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
-      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
-        const double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
-        const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
-        const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
-        const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
-        const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
-        const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
-        const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
-        const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
-        const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
-        const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
-        const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
-        const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
-        const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
-        const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
-        const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
-        const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
-        const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
-        const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
-        const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
-        const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
-        const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-        const double momdensity_0 = vel0Term - f_13 - f_17 - f_3 - f_7 - f_9;
-        const double vel1Term = f_1 + f_11 + f_15 + f_7;
-        const double momdensity_1 =
-            f_8 + vel1Term - f_10 - f_12 - f_16 - f_2 - f_9;
-        const double vel2Term = f_12 + f_13 + f_5;
-        const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                                 vel0Term + vel1Term + vel2Term;
-        const double momdensity_2 =
-            f_11 + f_14 + vel2Term - f_15 - f_16 - f_17 - f_18 - f_6;
-        const double rho = 1.0 + delta_rho;
-        const double md_0 = momdensity_0;
-        const double md_1 = momdensity_1;
-        const double md_2 = momdensity_2;
-
-        // calculate current velocity (before density change)
-        const double conversion = double{1} / rho;
-        Vector3<double> velocity;
-        velocity[0u] = md_0 * conversion;
-        velocity[1u] = md_1 * conversion;
-        velocity[2u] = md_2 * conversion;
-
-        Equilibrium::set(pdf_field, velocity, *values_it * density_inv,
-                         Cell{x, y, z});
-        ++values_it;
-      }
-    }
-  }
+  double const *buffer_ptr = values.data();
+  double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  const double *RESTRICT const _data_buf1{buffer_ptr};
+  const int64_t _size_buf1_0{int64_t(ci.xSize())};
+  const int64_t _size_buf1_1{int64_t(ci.ySize())};
+  const int64_t _size_buf1_2{int64_t(ci.zSize())};
+  const int64_t _stride_buf1_0{int64_t(1 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf1_1{int64_t(1 * ci.zSize())};
+  const int64_t _stride_buf1_2{int64_t(1)};
+  walberla::lbm::accessor::Density::cpu_kernels::set(
+      _data_buf1, _data_pdfs, _size_buf1_0, _size_buf1_1, _size_buf1_2,
+      _stride_buf1_0, _stride_buf1_1, _stride_buf1_2, _stride_pdfs_0,
+      _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, density);
 }
 } // namespace Density
 
 namespace Velocity {
+namespace cpu_kernels {
+inline void get(double *RESTRICT const _data_buf3,
+                const double *RESTRICT const _data_force,
+                const double *RESTRICT const _data_pdfs,
+                const int64_t _size_buf3_0, const int64_t _size_buf3_1,
+                const int64_t _size_buf3_2, const int64_t _stride_buf3_0,
+                const int64_t _stride_buf3_1, const int64_t _stride_buf3_2,
+                const int64_t _stride_buf3_3, const int64_t _stride_force_0,
+                const int64_t _stride_force_1, const int64_t _stride_force_2,
+                const int64_t _stride_force_3, const int64_t _stride_pdfs_0,
+                const int64_t _stride_pdfs_1, const int64_t _stride_pdfs_2,
+                const int64_t _stride_pdfs_3) {
+  const double __c_1_0o2_0 = 1.0 / 2.0;
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_buf3_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_buf3_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_buf3_0; ctr_0 += 1LL) {
+        const double vel0Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double momdensity_0 =
+            vel0Term -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
+        const double vel1Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3];
+        const double momdensity_1 =
+            vel1Term -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double vel2Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 5LL * _stride_pdfs_3];
+        const double delta_rho =
+            vel0Term + vel1Term + vel2Term +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
+        const double momdensity_2 =
+            vel2Term -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3];
+        const double rho = 1.0 + delta_rho;
+        const double md_0 =
+            momdensity_0 +
+            __c_1_0o2_0 *
+                _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                            ctr_2 * _stride_force_2];
+        const double md_1 =
+            momdensity_1 +
+            __c_1_0o2_0 *
+                _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                            ctr_2 * _stride_force_2 + _stride_force_3];
+        const double md_2 =
+            momdensity_2 +
+            __c_1_0o2_0 *
+                _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                            ctr_2 * _stride_force_2 + 2LL * _stride_force_3];
+        const double rho_inv = 1.0 / rho;
+        _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                   ctr_2 * _stride_buf3_2] = md_0 * rho_inv;
+        _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                   ctr_2 * _stride_buf3_2 + _stride_buf3_3] = md_1 * rho_inv;
+        _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                   ctr_2 * _stride_buf3_2 + 2LL * _stride_buf3_3] =
+            md_2 * rho_inv;
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
+namespace cpu_kernels {
+inline void
+set(const double *RESTRICT const _data_buf3,
+    const double *RESTRICT const _data_force, double *RESTRICT const _data_pdfs,
+    double *RESTRICT const _data_velocity, const int64_t _size_buf3_0,
+    const int64_t _size_buf3_1, const int64_t _size_buf3_2,
+    const int64_t _stride_buf3_0, const int64_t _stride_buf3_1,
+    const int64_t _stride_buf3_2, const int64_t _stride_buf3_3,
+    const int64_t _stride_force_0, const int64_t _stride_force_1,
+    const int64_t _stride_force_2, const int64_t _stride_force_3,
+    const int64_t _stride_pdfs_0, const int64_t _stride_pdfs_1,
+    const int64_t _stride_pdfs_2, const int64_t _stride_pdfs_3,
+    const int64_t _stride_velocity_0, const int64_t _stride_velocity_1,
+    const int64_t _stride_velocity_2, const int64_t _stride_velocity_3) {
+  const double __c_s1_0o2_0 = -1.0 / 2.0;
+  const double __c_1_0o3_0 = 1.0 / 3.0;
+  const double __c_s1_0o3_0 = -1.0 / 3.0;
+  const double __c_1_0o18_0 = 1.0 / 18.0;
+  const double __c_s1_0o6_0 = -1.0 / 6.0;
+  const double __c_1_0o6_0 = 1.0 / 6.0;
+  const double __c_1_0o36_0 = 1.0 / 36.0;
+  const double __c_s1_0o12_0 = -1.0 / 12.0;
+  const double __c_1_0o12_0 = 1.0 / 12.0;
+  const double __c_s1_0o4_0 = -1.0 / 4.0;
+  const double __c_1_0o4_0 = 1.0 / 4.0;
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_buf3_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_buf3_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_buf3_0; ctr_0 += 1LL) {
+        const double vel0Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double vel1Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3];
+        const double vel2Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 5LL * _stride_pdfs_3];
+        const double delta_rho =
+            vel0Term + vel1Term + vel2Term +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
+        const double rho = 1.0 + delta_rho;
+        const double u_0 =
+            __c_s1_0o2_0 * (1.0 / rho) *
+                _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                            ctr_2 * _stride_force_2] +
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2];
+        const double u_1 =
+            __c_s1_0o2_0 * (1.0 / rho) *
+                _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                            ctr_2 * _stride_force_2 + _stride_force_3] +
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2 + _stride_buf3_3];
+        const double u_2 =
+            __c_s1_0o2_0 * (1.0 / rho) *
+                _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                            ctr_2 * _stride_force_2 + 2LL * _stride_force_3] +
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2 + 2LL * _stride_buf3_3];
+        _data_velocity[ctr_0 * _stride_velocity_0 + ctr_1 * _stride_velocity_1 +
+                       ctr_2 * _stride_velocity_2] =
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2];
+        _data_velocity[ctr_0 * _stride_velocity_0 + ctr_1 * _stride_velocity_1 +
+                       ctr_2 * _stride_velocity_2 + _stride_velocity_3] =
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2 + _stride_buf3_3];
+        _data_velocity[ctr_0 * _stride_velocity_0 + ctr_1 * _stride_velocity_1 +
+                       ctr_2 * _stride_velocity_2 + 2LL * _stride_velocity_3] =
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2 + 2LL * _stride_buf3_3];
+        const double delta_rho_eq = -1.0 + rho;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2] =
+            __c_1_0o3_0 * delta_rho_eq + __c_s1_0o3_0 * rho * (u_0 * u_0) +
+            __c_s1_0o3_0 * rho * (u_1 * u_1) + __c_s1_0o3_0 * rho * (u_2 * u_2);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq + __c_s1_0o6_0 * rho * (u_0 * u_0) +
+            __c_s1_0o6_0 * rho * (u_2 * u_2) + __c_1_0o6_0 * rho * u_1 +
+            __c_1_0o6_0 * rho * (u_1 * u_1);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq + __c_s1_0o6_0 * rho * u_1 +
+            __c_s1_0o6_0 * rho * (u_0 * u_0) +
+            __c_s1_0o6_0 * rho * (u_2 * u_2) + __c_1_0o6_0 * rho * (u_1 * u_1);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq + __c_s1_0o6_0 * rho * u_0 +
+            __c_s1_0o6_0 * rho * (u_1 * u_1) +
+            __c_s1_0o6_0 * rho * (u_2 * u_2) + __c_1_0o6_0 * rho * (u_0 * u_0);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq + __c_s1_0o6_0 * rho * (u_1 * u_1) +
+            __c_s1_0o6_0 * rho * (u_2 * u_2) + __c_1_0o6_0 * rho * u_0 +
+            __c_1_0o6_0 * rho * (u_0 * u_0);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 5LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq + __c_s1_0o6_0 * rho * (u_0 * u_0) +
+            __c_s1_0o6_0 * rho * (u_1 * u_1) + __c_1_0o6_0 * rho * u_2 +
+            __c_1_0o6_0 * rho * (u_2 * u_2);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] =
+            __c_1_0o18_0 * delta_rho_eq + __c_s1_0o6_0 * rho * u_2 +
+            __c_s1_0o6_0 * rho * (u_0 * u_0) +
+            __c_s1_0o6_0 * rho * (u_1 * u_1) + __c_1_0o6_0 * rho * (u_2 * u_2);
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho * u_0 +
+            __c_1_0o12_0 * rho * u_1 + __c_1_0o12_0 * rho * (u_0 * u_0) +
+            __c_1_0o12_0 * rho * (u_1 * u_1) + __c_s1_0o4_0 * rho * u_0 * u_1;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_1_0o12_0 * rho * u_0 +
+            __c_1_0o12_0 * rho * u_1 + __c_1_0o12_0 * rho * (u_0 * u_0) +
+            __c_1_0o12_0 * rho * (u_1 * u_1) + __c_1_0o4_0 * rho * u_0 * u_1;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho * u_0 +
+            __c_s1_0o12_0 * rho * u_1 + __c_1_0o12_0 * rho * (u_0 * u_0) +
+            __c_1_0o12_0 * rho * (u_1 * u_1) + __c_1_0o4_0 * rho * u_0 * u_1;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho * u_1 +
+            __c_1_0o12_0 * rho * u_0 + __c_1_0o12_0 * rho * (u_0 * u_0) +
+            __c_1_0o12_0 * rho * (u_1 * u_1) + __c_s1_0o4_0 * rho * u_0 * u_1;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_1_0o12_0 * rho * u_1 +
+            __c_1_0o12_0 * rho * u_2 + __c_1_0o12_0 * rho * (u_1 * u_1) +
+            __c_1_0o12_0 * rho * (u_2 * u_2) + __c_1_0o4_0 * rho * u_1 * u_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho * u_1 +
+            __c_1_0o12_0 * rho * u_2 + __c_1_0o12_0 * rho * (u_1 * u_1) +
+            __c_1_0o12_0 * rho * (u_2 * u_2) + __c_s1_0o4_0 * rho * u_1 * u_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho * u_0 +
+            __c_1_0o12_0 * rho * u_2 + __c_1_0o12_0 * rho * (u_0 * u_0) +
+            __c_1_0o12_0 * rho * (u_2 * u_2) + __c_s1_0o4_0 * rho * u_0 * u_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_1_0o12_0 * rho * u_0 +
+            __c_1_0o12_0 * rho * u_2 + __c_1_0o12_0 * rho * (u_0 * u_0) +
+            __c_1_0o12_0 * rho * (u_2 * u_2) + __c_1_0o4_0 * rho * u_0 * u_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho * u_2 +
+            __c_1_0o12_0 * rho * u_1 + __c_1_0o12_0 * rho * (u_1 * u_1) +
+            __c_1_0o12_0 * rho * (u_2 * u_2) + __c_s1_0o4_0 * rho * u_1 * u_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho * u_1 +
+            __c_s1_0o12_0 * rho * u_2 + __c_1_0o12_0 * rho * (u_1 * u_1) +
+            __c_1_0o12_0 * rho * (u_2 * u_2) + __c_1_0o4_0 * rho * u_1 * u_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho * u_0 +
+            __c_s1_0o12_0 * rho * u_2 + __c_1_0o12_0 * rho * (u_0 * u_0) +
+            __c_1_0o12_0 * rho * (u_2 * u_2) + __c_1_0o4_0 * rho * u_0 * u_2;
+        _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                   ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] =
+            __c_1_0o36_0 * delta_rho_eq + __c_s1_0o12_0 * rho * u_2 +
+            __c_1_0o12_0 * rho * u_0 + __c_1_0o12_0 * rho * (u_0 * u_0) +
+            __c_1_0o12_0 * rho * (u_2 * u_2) + __c_s1_0o4_0 * rho * u_0 * u_2;
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
 inline auto get(const walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const walberla::field::GhostLayerField<double, 3> *force_field,
                 const walberla::Cell &cell) {
-  const double &xyz0 = pdf_field->get(cell, uint_t{0u});
-  const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
-  const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
-  const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
-  const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
-  const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
-  const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
-  const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
-  const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
-  const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
-  const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
-  const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
-  const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
-  const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
-  const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
-  const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
-  const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
-  const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
-  const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
-  const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
-  const auto x = cell.x();
-  const auto y = cell.y();
-  const auto z = cell.z();
-  const double force_0 = force_field->get(x, y, z, uint_t{0u});
-  const double force_1 = force_field->get(x, y, z, uint_t{1u});
-  const double force_2 = force_field->get(x, y, z, uint_t{2u});
-  const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-  const double momdensity_0 = vel0Term - f_13 - f_17 - f_3 - f_7 - f_9;
-  const double vel1Term = f_1 + f_11 + f_15 + f_7;
-  const double momdensity_1 = f_8 + vel1Term - f_10 - f_12 - f_16 - f_2 - f_9;
-  const double vel2Term = f_12 + f_13 + f_5;
-  const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                           vel0Term + vel1Term + vel2Term;
-  const double momdensity_2 =
-      f_11 + f_14 + vel2Term - f_15 - f_16 - f_17 - f_18 - f_6;
-  const double rho = 1.0 + delta_rho;
-  const double md_0 = momdensity_0 + 0.5 * force_0;
-  const double md_1 = momdensity_1 + 0.5 * force_1;
-  const double md_2 = momdensity_2 + 0.5 * force_2;
-  const double rho_inv = double{1} / rho;
-
-  return Vector3<double>(md_0 * rho_inv, md_1 * rho_inv, md_2 * rho_inv);
+  walberla::CellInterval ci(cell, cell);
+  walberla::Vector3<double> vec;
+  double *buffer_ptr = vec.data();
+  const double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  const double *RESTRICT const _data_force{
+      force_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_force_0 */
+  /* ci.ySize() == _size_force_1 */
+  /* ci.zSize() == _size_force_2 */
+  /* force_field->fSize() == 3 */
+  const int64_t _stride_force_0{int64_t(force_field->xStride())};
+  const int64_t _stride_force_1{int64_t(force_field->yStride())};
+  const int64_t _stride_force_2{int64_t(force_field->zStride())};
+  const int64_t _stride_force_3{int64_t(force_field->fStride())};
+  double *RESTRICT const _data_buf3{buffer_ptr};
+  const int64_t _size_buf3_0{int64_t(ci.xSize())};
+  const int64_t _size_buf3_1{int64_t(ci.ySize())};
+  const int64_t _size_buf3_2{int64_t(ci.zSize())};
+  /* 3 == 3 */
+  const int64_t _stride_buf3_0{int64_t(3 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf3_1{int64_t(3 * ci.zSize())};
+  const int64_t _stride_buf3_2{int64_t(3)};
+  const int64_t _stride_buf3_3{int64_t(1)};
+  walberla::lbm::accessor::Velocity::cpu_kernels::get(
+      _data_buf3, _data_force, _data_pdfs, _size_buf3_0, _size_buf3_1,
+      _size_buf3_2, _stride_buf3_0, _stride_buf3_1, _stride_buf3_2,
+      _stride_buf3_3, _stride_force_0, _stride_force_1, _stride_force_2,
+      _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2,
+      _stride_pdfs_3);
+  return vec;
 }
 
 inline auto get(const walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const walberla::field::GhostLayerField<double, 3> *force_field,
                 const walberla::CellInterval &ci) {
-  std::vector<double> out;
-  out.reserve(ci.numCells() * uint_t(3u));
-  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
-    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
-      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
-        const double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
-        const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
-        const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
-        const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
-        const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
-        const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
-        const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
-        const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
-        const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
-        const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
-        const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
-        const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
-        const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
-        const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
-        const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
-        const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
-        const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
-        const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
-        const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
-        const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
-        const double force_0 = force_field->get(x, y, z, uint_t{0u});
-        const double force_1 = force_field->get(x, y, z, uint_t{1u});
-        const double force_2 = force_field->get(x, y, z, uint_t{2u});
-        const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-        const double momdensity_0 = vel0Term - f_13 - f_17 - f_3 - f_7 - f_9;
-        const double vel1Term = f_1 + f_11 + f_15 + f_7;
-        const double momdensity_1 =
-            f_8 + vel1Term - f_10 - f_12 - f_16 - f_2 - f_9;
-        const double vel2Term = f_12 + f_13 + f_5;
-        const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                                 vel0Term + vel1Term + vel2Term;
-        const double momdensity_2 =
-            f_11 + f_14 + vel2Term - f_15 - f_16 - f_17 - f_18 - f_6;
-        const double rho = 1.0 + delta_rho;
-        const double md_0 = momdensity_0 + 0.5 * force_0;
-        const double md_1 = momdensity_1 + 0.5 * force_1;
-        const double md_2 = momdensity_2 + 0.5 * force_2;
-        const double rho_inv = double{1} / rho;
-        out.emplace_back(md_0 * rho_inv);
-        out.emplace_back(md_1 * rho_inv);
-        out.emplace_back(md_2 * rho_inv);
-      }
-    }
-  }
+  std::vector<double> out(ci.numCells() * 3u);
+  double *buffer_ptr = out.data();
+  const double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  const double *RESTRICT const _data_force{
+      force_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_force_0 */
+  /* ci.ySize() == _size_force_1 */
+  /* ci.zSize() == _size_force_2 */
+  /* force_field->fSize() == 3 */
+  const int64_t _stride_force_0{int64_t(force_field->xStride())};
+  const int64_t _stride_force_1{int64_t(force_field->yStride())};
+  const int64_t _stride_force_2{int64_t(force_field->zStride())};
+  const int64_t _stride_force_3{int64_t(force_field->fStride())};
+  double *RESTRICT const _data_buf3{buffer_ptr};
+  const int64_t _size_buf3_0{int64_t(ci.xSize())};
+  const int64_t _size_buf3_1{int64_t(ci.ySize())};
+  const int64_t _size_buf3_2{int64_t(ci.zSize())};
+  /* 3 == 3 */
+  const int64_t _stride_buf3_0{int64_t(3 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf3_1{int64_t(3 * ci.zSize())};
+  const int64_t _stride_buf3_2{int64_t(3)};
+  const int64_t _stride_buf3_3{int64_t(1)};
+  walberla::lbm::accessor::Velocity::cpu_kernels::get(
+      _data_buf3, _data_force, _data_pdfs, _size_buf3_0, _size_buf3_1,
+      _size_buf3_2, _stride_buf3_0, _stride_buf3_1, _stride_buf3_2,
+      _stride_buf3_3, _stride_force_0, _stride_force_1, _stride_force_2,
+      _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2,
+      _stride_pdfs_3);
   return out;
 }
 
@@ -893,50 +2292,54 @@ inline void set(walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const walberla::field::GhostLayerField<double, 3> *force_field,
                 const walberla::Vector3<double> &u,
                 const walberla::Cell &cell) {
-  const double &xyz0 = pdf_field->get(cell, uint_t{0u});
-  const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
-  const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
-  const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
-  const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
-  const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
-  const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
-  const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
-  const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
-  const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
-  const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
-  const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
-  const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
-  const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
-  const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
-  const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
-  const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
-  const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
-  const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
-  const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
-  const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-  const double vel1Term = f_1 + f_11 + f_15 + f_7;
-  const double vel2Term = f_12 + f_13 + f_5;
-  const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                           vel0Term + vel1Term + vel2Term;
-  const double rho = 1.0 + delta_rho;
-
-  const auto x = cell.x();
-  const auto y = cell.y();
-  const auto z = cell.z();
-  const double force_0 = force_field->get(x, y, z, uint_t{0u});
-  const double force_1 = force_field->get(x, y, z, uint_t{1u});
-  const double force_2 = force_field->get(x, y, z, uint_t{2u});
-  const double u_in_0 = u[uint_t{0u}];
-  const double u_in_1 = u[uint_t{1u}];
-  const double u_in_2 = u[uint_t{2u}];
-  const double u_0 = u_in_0 + -0.5 * force_0 * (1.0 / rho);
-  const double u_1 = u_in_1 + -0.5 * force_1 * (1.0 / rho);
-  const double u_2 = u_in_2 + -0.5 * force_2 * (1.0 / rho);
-  velocity_field->get(x, y, z, uint_t{0u}) = u[0u];
-  velocity_field->get(x, y, z, uint_t{1u}) = u[1u];
-  velocity_field->get(x, y, z, uint_t{2u}) = u[2u];
-
-  Equilibrium::set(pdf_field, Vector3<double>(u_0, u_1, u_2), rho, cell);
+  walberla::CellInterval ci(cell, cell);
+  double const *buffer_ptr = u.data();
+  double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  double *RESTRICT const _data_velocity{
+      velocity_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_velocity_0 */
+  /* ci.ySize() == _size_velocity_1 */
+  /* ci.zSize() == _size_velocity_2 */
+  /* velocity_field->fSize() == 3 */
+  const int64_t _stride_velocity_0{int64_t(velocity_field->xStride())};
+  const int64_t _stride_velocity_1{int64_t(velocity_field->yStride())};
+  const int64_t _stride_velocity_2{int64_t(velocity_field->zStride())};
+  const int64_t _stride_velocity_3{int64_t(velocity_field->fStride())};
+  const double *RESTRICT const _data_force{
+      force_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_force_0 */
+  /* ci.ySize() == _size_force_1 */
+  /* ci.zSize() == _size_force_2 */
+  /* force_field->fSize() == 3 */
+  const int64_t _stride_force_0{int64_t(force_field->xStride())};
+  const int64_t _stride_force_1{int64_t(force_field->yStride())};
+  const int64_t _stride_force_2{int64_t(force_field->zStride())};
+  const int64_t _stride_force_3{int64_t(force_field->fStride())};
+  const double *RESTRICT const _data_buf3{buffer_ptr};
+  const int64_t _size_buf3_0{int64_t(ci.xSize())};
+  const int64_t _size_buf3_1{int64_t(ci.ySize())};
+  const int64_t _size_buf3_2{int64_t(ci.zSize())};
+  /* 3 == 3 */
+  const int64_t _stride_buf3_0{int64_t(3 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf3_1{int64_t(3 * ci.zSize())};
+  const int64_t _stride_buf3_2{int64_t(3)};
+  const int64_t _stride_buf3_3{int64_t(1)};
+  walberla::lbm::accessor::Velocity::cpu_kernels::set(
+      _data_buf3, _data_force, _data_pdfs, _data_velocity, _size_buf3_0,
+      _size_buf3_1, _size_buf3_2, _stride_buf3_0, _stride_buf3_1,
+      _stride_buf3_2, _stride_buf3_3, _stride_force_0, _stride_force_1,
+      _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,
+      _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1,
+      _stride_velocity_2, _stride_velocity_3);
 }
 
 inline void set(walberla::field::GhostLayerField<double, 19> *pdf_field,
@@ -944,116 +2347,263 @@ inline void set(walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const walberla::field::GhostLayerField<double, 3> *force_field,
                 const std::vector<double> &values,
                 const walberla::CellInterval &ci) {
-  assert(uint_c(values.size()) == ci.numCells() * uint_t(3u));
-  auto u = values.data();
-  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
-    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
-      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
-        double &pdf_xyz0 = pdf_field->get(x, y, z, uint_t{0u});
-        double &vel_xyz0 = velocity_field->get(x, y, z, uint_t{0u});
-        const double f_0 = pdf_field->getF(&pdf_xyz0, uint_t{0u});
-        const double f_1 = pdf_field->getF(&pdf_xyz0, uint_t{1u});
-        const double f_2 = pdf_field->getF(&pdf_xyz0, uint_t{2u});
-        const double f_3 = pdf_field->getF(&pdf_xyz0, uint_t{3u});
-        const double f_4 = pdf_field->getF(&pdf_xyz0, uint_t{4u});
-        const double f_5 = pdf_field->getF(&pdf_xyz0, uint_t{5u});
-        const double f_6 = pdf_field->getF(&pdf_xyz0, uint_t{6u});
-        const double f_7 = pdf_field->getF(&pdf_xyz0, uint_t{7u});
-        const double f_8 = pdf_field->getF(&pdf_xyz0, uint_t{8u});
-        const double f_9 = pdf_field->getF(&pdf_xyz0, uint_t{9u});
-        const double f_10 = pdf_field->getF(&pdf_xyz0, uint_t{10u});
-        const double f_11 = pdf_field->getF(&pdf_xyz0, uint_t{11u});
-        const double f_12 = pdf_field->getF(&pdf_xyz0, uint_t{12u});
-        const double f_13 = pdf_field->getF(&pdf_xyz0, uint_t{13u});
-        const double f_14 = pdf_field->getF(&pdf_xyz0, uint_t{14u});
-        const double f_15 = pdf_field->getF(&pdf_xyz0, uint_t{15u});
-        const double f_16 = pdf_field->getF(&pdf_xyz0, uint_t{16u});
-        const double f_17 = pdf_field->getF(&pdf_xyz0, uint_t{17u});
-        const double f_18 = pdf_field->getF(&pdf_xyz0, uint_t{18u});
-        const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-        const double vel1Term = f_1 + f_11 + f_15 + f_7;
-        const double vel2Term = f_12 + f_13 + f_5;
-        const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                                 vel0Term + vel1Term + vel2Term;
-        const double rho = 1.0 + delta_rho;
-
-        const double force_0 = force_field->get(x, y, z, uint_t{0u});
-        const double force_1 = force_field->get(x, y, z, uint_t{1u});
-        const double force_2 = force_field->get(x, y, z, uint_t{2u});
-        const double u_in_0 = u[uint_t{0u}];
-        const double u_in_1 = u[uint_t{1u}];
-        const double u_in_2 = u[uint_t{2u}];
-        const double u_0 = u_in_0 + -0.5 * force_0 * (1.0 / rho);
-        const double u_1 = u_in_1 + -0.5 * force_1 * (1.0 / rho);
-        const double u_2 = u_in_2 + -0.5 * force_2 * (1.0 / rho);
-        velocity_field->getF(&vel_xyz0, uint_t{0u}) = u[0u];
-        velocity_field->getF(&vel_xyz0, uint_t{1u}) = u[1u];
-        velocity_field->getF(&vel_xyz0, uint_t{2u}) = u[2u];
-
-        std::advance(u, 3);
-
-        Equilibrium::set(pdf_field, Vector3<double>(u_0, u_1, u_2), rho,
-                         Cell{x, y, z});
-      }
-    }
-  }
+  assert(uint_c(values.size()) == ci.numCells() * 3u);
+  double const *buffer_ptr = values.data();
+  double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  double *RESTRICT const _data_velocity{
+      velocity_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_velocity_0 */
+  /* ci.ySize() == _size_velocity_1 */
+  /* ci.zSize() == _size_velocity_2 */
+  /* velocity_field->fSize() == 3 */
+  const int64_t _stride_velocity_0{int64_t(velocity_field->xStride())};
+  const int64_t _stride_velocity_1{int64_t(velocity_field->yStride())};
+  const int64_t _stride_velocity_2{int64_t(velocity_field->zStride())};
+  const int64_t _stride_velocity_3{int64_t(velocity_field->fStride())};
+  const double *RESTRICT const _data_force{
+      force_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_force_0 */
+  /* ci.ySize() == _size_force_1 */
+  /* ci.zSize() == _size_force_2 */
+  /* force_field->fSize() == 3 */
+  const int64_t _stride_force_0{int64_t(force_field->xStride())};
+  const int64_t _stride_force_1{int64_t(force_field->yStride())};
+  const int64_t _stride_force_2{int64_t(force_field->zStride())};
+  const int64_t _stride_force_3{int64_t(force_field->fStride())};
+  const double *RESTRICT const _data_buf3{buffer_ptr};
+  const int64_t _size_buf3_0{int64_t(ci.xSize())};
+  const int64_t _size_buf3_1{int64_t(ci.ySize())};
+  const int64_t _size_buf3_2{int64_t(ci.zSize())};
+  /* 3 == 3 */
+  const int64_t _stride_buf3_0{int64_t(3 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf3_1{int64_t(3 * ci.zSize())};
+  const int64_t _stride_buf3_2{int64_t(3)};
+  const int64_t _stride_buf3_3{int64_t(1)};
+  walberla::lbm::accessor::Velocity::cpu_kernels::set(
+      _data_buf3, _data_force, _data_pdfs, _data_velocity, _size_buf3_0,
+      _size_buf3_1, _size_buf3_2, _stride_buf3_0, _stride_buf3_1,
+      _stride_buf3_2, _stride_buf3_3, _stride_force_0, _stride_force_1,
+      _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,
+      _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1,
+      _stride_velocity_2, _stride_velocity_3);
 }
 } // namespace Velocity
 
 namespace Force {
+namespace cpu_kernels {
+inline void set(const double *RESTRICT const _data_buf3,
+                double *RESTRICT const _data_force,
+                const double *RESTRICT const _data_pdfs,
+                double *RESTRICT const _data_velocity,
+                const int64_t _size_buf3_0, const int64_t _size_buf3_1,
+                const int64_t _size_buf3_2, const int64_t _stride_buf3_0,
+                const int64_t _stride_buf3_1, const int64_t _stride_buf3_2,
+                const int64_t _stride_buf3_3, const int64_t _stride_force_0,
+                const int64_t _stride_force_1, const int64_t _stride_force_2,
+                const int64_t _stride_force_3, const int64_t _stride_pdfs_0,
+                const int64_t _stride_pdfs_1, const int64_t _stride_pdfs_2,
+                const int64_t _stride_pdfs_3, const int64_t _stride_velocity_0,
+                const int64_t _stride_velocity_1,
+                const int64_t _stride_velocity_2,
+                const int64_t _stride_velocity_3, const double density) {
+  const double __c_1_0o2_0 = 1.0 / 2.0;
+  const double density_inv = 1.0 / density;
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_buf3_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_buf3_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_buf3_0; ctr_0 += 1LL) {
+        const double vel0Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double momdensity_0 =
+            vel0Term -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
+        const double vel1Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3];
+        const double momdensity_1 =
+            vel1Term -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double vel2Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 5LL * _stride_pdfs_3];
+        const double delta_rho =
+            vel0Term + vel1Term + vel2Term +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
+        const double momdensity_2 =
+            vel2Term -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3];
+        const double rho = 1.0 + delta_rho;
+        const double md_0 =
+            momdensity_0 +
+            __c_1_0o2_0 * (1.0 / density) *
+                _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                           ctr_2 * _stride_buf3_2];
+        const double md_1 =
+            momdensity_1 +
+            __c_1_0o2_0 * (1.0 / density) *
+                _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                           ctr_2 * _stride_buf3_2 + _stride_buf3_3];
+        const double md_2 =
+            momdensity_2 +
+            __c_1_0o2_0 * (1.0 / density) *
+                _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                           ctr_2 * _stride_buf3_2 + 2LL * _stride_buf3_3];
+        const double rho_inv = 1.0 / rho;
+        _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                    ctr_2 * _stride_force_2] =
+            density_inv *
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2];
+        _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                    ctr_2 * _stride_force_2 + _stride_force_3] =
+            density_inv *
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2 + _stride_buf3_3];
+        _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                    ctr_2 * _stride_force_2 + 2LL * _stride_force_3] =
+            density_inv *
+            _data_buf3[ctr_0 * _stride_buf3_0 + ctr_1 * _stride_buf3_1 +
+                       ctr_2 * _stride_buf3_2 + 2LL * _stride_buf3_3];
+        _data_velocity[ctr_0 * _stride_velocity_0 + ctr_1 * _stride_velocity_1 +
+                       ctr_2 * _stride_velocity_2] = md_0 * rho_inv;
+        _data_velocity[ctr_0 * _stride_velocity_0 + ctr_1 * _stride_velocity_1 +
+                       ctr_2 * _stride_velocity_2 + _stride_velocity_3] =
+            md_1 * rho_inv;
+        _data_velocity[ctr_0 * _stride_velocity_0 + ctr_1 * _stride_velocity_1 +
+                       ctr_2 * _stride_velocity_2 + 2LL * _stride_velocity_3] =
+            md_2 * rho_inv;
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
 inline void set(const walberla::field::GhostLayerField<double, 19> *pdf_field,
                 walberla::field::GhostLayerField<double, 3> *velocity_field,
                 walberla::field::GhostLayerField<double, 3> *force_field,
                 const walberla::Vector3<double> &force, const double density,
                 const walberla::Cell &cell) {
-  double const &pdf_xyz0 = pdf_field->get(cell, uint_t{0u});
-  double &vel_xyz0 = velocity_field->get(cell, uint_t{0u});
-  double &laf_xyz0 = force_field->get(cell, uint_t{0u});
-  const double f_0 = pdf_field->getF(&pdf_xyz0, uint_t{0u});
-  const double f_1 = pdf_field->getF(&pdf_xyz0, uint_t{1u});
-  const double f_2 = pdf_field->getF(&pdf_xyz0, uint_t{2u});
-  const double f_3 = pdf_field->getF(&pdf_xyz0, uint_t{3u});
-  const double f_4 = pdf_field->getF(&pdf_xyz0, uint_t{4u});
-  const double f_5 = pdf_field->getF(&pdf_xyz0, uint_t{5u});
-  const double f_6 = pdf_field->getF(&pdf_xyz0, uint_t{6u});
-  const double f_7 = pdf_field->getF(&pdf_xyz0, uint_t{7u});
-  const double f_8 = pdf_field->getF(&pdf_xyz0, uint_t{8u});
-  const double f_9 = pdf_field->getF(&pdf_xyz0, uint_t{9u});
-  const double f_10 = pdf_field->getF(&pdf_xyz0, uint_t{10u});
-  const double f_11 = pdf_field->getF(&pdf_xyz0, uint_t{11u});
-  const double f_12 = pdf_field->getF(&pdf_xyz0, uint_t{12u});
-  const double f_13 = pdf_field->getF(&pdf_xyz0, uint_t{13u});
-  const double f_14 = pdf_field->getF(&pdf_xyz0, uint_t{14u});
-  const double f_15 = pdf_field->getF(&pdf_xyz0, uint_t{15u});
-  const double f_16 = pdf_field->getF(&pdf_xyz0, uint_t{16u});
-  const double f_17 = pdf_field->getF(&pdf_xyz0, uint_t{17u});
-  const double f_18 = pdf_field->getF(&pdf_xyz0, uint_t{18u});
-
-  const double force_0 = force[uint_t{0u}];
-  const double force_1 = force[uint_t{1u}];
-  const double force_2 = force[uint_t{2u}];
-  const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-  const double momdensity_0 = vel0Term - f_13 - f_17 - f_3 - f_7 - f_9;
-  const double vel1Term = f_1 + f_11 + f_15 + f_7;
-  const double momdensity_1 = f_8 + vel1Term - f_10 - f_12 - f_16 - f_2 - f_9;
-  const double vel2Term = f_12 + f_13 + f_5;
-  const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                           vel0Term + vel1Term + vel2Term;
-  const double momdensity_2 =
-      f_11 + f_14 + vel2Term - f_15 - f_16 - f_17 - f_18 - f_6;
-  const double rho = 1.0 + delta_rho;
-  const double md_0 = momdensity_0 + 0.5 * force_0 * (1.0 / density);
-  const double md_1 = momdensity_1 + 0.5 * force_1 * (1.0 / density);
-  const double md_2 = momdensity_2 + 0.5 * force_2 * (1.0 / density);
-  auto const rho_inv = double{1} / rho;
-
-  force_field->getF(&laf_xyz0, uint_t{0u}) = force[0u] / density;
-  force_field->getF(&laf_xyz0, uint_t{1u}) = force[1u] / density;
-  force_field->getF(&laf_xyz0, uint_t{2u}) = force[2u] / density;
-
-  velocity_field->getF(&vel_xyz0, uint_t{0u}) = md_0 * rho_inv;
-  velocity_field->getF(&vel_xyz0, uint_t{1u}) = md_1 * rho_inv;
-  velocity_field->getF(&vel_xyz0, uint_t{2u}) = md_2 * rho_inv;
+  walberla::CellInterval ci(cell, cell);
+  double const *buffer_ptr = force.data();
+  const double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  double *RESTRICT const _data_velocity{
+      velocity_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_velocity_0 */
+  /* ci.ySize() == _size_velocity_1 */
+  /* ci.zSize() == _size_velocity_2 */
+  /* velocity_field->fSize() == 3 */
+  const int64_t _stride_velocity_0{int64_t(velocity_field->xStride())};
+  const int64_t _stride_velocity_1{int64_t(velocity_field->yStride())};
+  const int64_t _stride_velocity_2{int64_t(velocity_field->zStride())};
+  const int64_t _stride_velocity_3{int64_t(velocity_field->fStride())};
+  double *RESTRICT const _data_force{
+      force_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_force_0 */
+  /* ci.ySize() == _size_force_1 */
+  /* ci.zSize() == _size_force_2 */
+  /* force_field->fSize() == 3 */
+  const int64_t _stride_force_0{int64_t(force_field->xStride())};
+  const int64_t _stride_force_1{int64_t(force_field->yStride())};
+  const int64_t _stride_force_2{int64_t(force_field->zStride())};
+  const int64_t _stride_force_3{int64_t(force_field->fStride())};
+  const double *RESTRICT const _data_buf3{buffer_ptr};
+  const int64_t _size_buf3_0{int64_t(ci.xSize())};
+  const int64_t _size_buf3_1{int64_t(ci.ySize())};
+  const int64_t _size_buf3_2{int64_t(ci.zSize())};
+  /* 3 == 3 */
+  const int64_t _stride_buf3_0{int64_t(3 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf3_1{int64_t(3 * ci.zSize())};
+  const int64_t _stride_buf3_2{int64_t(3)};
+  const int64_t _stride_buf3_3{int64_t(1)};
+  walberla::lbm::accessor::Force::cpu_kernels::set(
+      _data_buf3, _data_force, _data_pdfs, _data_velocity, _size_buf3_0,
+      _size_buf3_1, _size_buf3_2, _stride_buf3_0, _stride_buf3_1,
+      _stride_buf3_2, _stride_buf3_3, _stride_force_0, _stride_force_1,
+      _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,
+      _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1,
+      _stride_velocity_2, _stride_velocity_3, density);
 }
 
 inline void set(const walberla::field::GhostLayerField<double, 19> *pdf_field,
@@ -1061,276 +2611,751 @@ inline void set(const walberla::field::GhostLayerField<double, 19> *pdf_field,
                 walberla::field::GhostLayerField<double, 3> *force_field,
                 const std::vector<double> &values, const double density,
                 const walberla::CellInterval &ci) {
-  assert(uint_c(values.size()) == ci.numCells() * uint_t(3u));
-  auto force = values.data();
-  auto const density_inv = double{1} / density;
-  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
-    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
-      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
-        double const &pdf_xyz0 = pdf_field->get(x, y, z, uint_t{0u});
-        double &vel_xyz0 = velocity_field->get(x, y, z, uint_t{0u});
-        double &laf_xyz0 = force_field->get(x, y, z, uint_t{0u});
-        const double f_0 = pdf_field->getF(&pdf_xyz0, uint_t{0u});
-        const double f_1 = pdf_field->getF(&pdf_xyz0, uint_t{1u});
-        const double f_2 = pdf_field->getF(&pdf_xyz0, uint_t{2u});
-        const double f_3 = pdf_field->getF(&pdf_xyz0, uint_t{3u});
-        const double f_4 = pdf_field->getF(&pdf_xyz0, uint_t{4u});
-        const double f_5 = pdf_field->getF(&pdf_xyz0, uint_t{5u});
-        const double f_6 = pdf_field->getF(&pdf_xyz0, uint_t{6u});
-        const double f_7 = pdf_field->getF(&pdf_xyz0, uint_t{7u});
-        const double f_8 = pdf_field->getF(&pdf_xyz0, uint_t{8u});
-        const double f_9 = pdf_field->getF(&pdf_xyz0, uint_t{9u});
-        const double f_10 = pdf_field->getF(&pdf_xyz0, uint_t{10u});
-        const double f_11 = pdf_field->getF(&pdf_xyz0, uint_t{11u});
-        const double f_12 = pdf_field->getF(&pdf_xyz0, uint_t{12u});
-        const double f_13 = pdf_field->getF(&pdf_xyz0, uint_t{13u});
-        const double f_14 = pdf_field->getF(&pdf_xyz0, uint_t{14u});
-        const double f_15 = pdf_field->getF(&pdf_xyz0, uint_t{15u});
-        const double f_16 = pdf_field->getF(&pdf_xyz0, uint_t{16u});
-        const double f_17 = pdf_field->getF(&pdf_xyz0, uint_t{17u});
-        const double f_18 = pdf_field->getF(&pdf_xyz0, uint_t{18u});
-
-        const double force_0 = force[uint_t{0u}];
-        const double force_1 = force[uint_t{1u}];
-        const double force_2 = force[uint_t{2u}];
-        const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-        const double momdensity_0 = vel0Term - f_13 - f_17 - f_3 - f_7 - f_9;
-        const double vel1Term = f_1 + f_11 + f_15 + f_7;
-        const double momdensity_1 =
-            f_8 + vel1Term - f_10 - f_12 - f_16 - f_2 - f_9;
-        const double vel2Term = f_12 + f_13 + f_5;
-        const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                                 vel0Term + vel1Term + vel2Term;
-        const double momdensity_2 =
-            f_11 + f_14 + vel2Term - f_15 - f_16 - f_17 - f_18 - f_6;
-        const double rho = 1.0 + delta_rho;
-        const double md_0 = momdensity_0 + 0.5 * force_0 * (1.0 / density);
-        const double md_1 = momdensity_1 + 0.5 * force_1 * (1.0 / density);
-        const double md_2 = momdensity_2 + 0.5 * force_2 * (1.0 / density);
-        auto const rho_inv = double{1} / rho;
-
-        force_field->getF(&laf_xyz0, uint_t{0u}) = force[0u] * density_inv;
-        force_field->getF(&laf_xyz0, uint_t{1u}) = force[1u] * density_inv;
-        force_field->getF(&laf_xyz0, uint_t{2u}) = force[2u] * density_inv;
-
-        velocity_field->getF(&vel_xyz0, uint_t{0u}) = md_0 * rho_inv;
-        velocity_field->getF(&vel_xyz0, uint_t{1u}) = md_1 * rho_inv;
-        velocity_field->getF(&vel_xyz0, uint_t{2u}) = md_2 * rho_inv;
-
-        std::advance(force, 3);
-      }
-    }
-  }
+  assert(uint_c(values.size()) == ci.numCells() * 3u);
+  double const *buffer_ptr = values.data();
+  const double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  double *RESTRICT const _data_velocity{
+      velocity_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_velocity_0 */
+  /* ci.ySize() == _size_velocity_1 */
+  /* ci.zSize() == _size_velocity_2 */
+  /* velocity_field->fSize() == 3 */
+  const int64_t _stride_velocity_0{int64_t(velocity_field->xStride())};
+  const int64_t _stride_velocity_1{int64_t(velocity_field->yStride())};
+  const int64_t _stride_velocity_2{int64_t(velocity_field->zStride())};
+  const int64_t _stride_velocity_3{int64_t(velocity_field->fStride())};
+  double *RESTRICT const _data_force{
+      force_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_force_0 */
+  /* ci.ySize() == _size_force_1 */
+  /* ci.zSize() == _size_force_2 */
+  /* force_field->fSize() == 3 */
+  const int64_t _stride_force_0{int64_t(force_field->xStride())};
+  const int64_t _stride_force_1{int64_t(force_field->yStride())};
+  const int64_t _stride_force_2{int64_t(force_field->zStride())};
+  const int64_t _stride_force_3{int64_t(force_field->fStride())};
+  const double *RESTRICT const _data_buf3{buffer_ptr};
+  const int64_t _size_buf3_0{int64_t(ci.xSize())};
+  const int64_t _size_buf3_1{int64_t(ci.ySize())};
+  const int64_t _size_buf3_2{int64_t(ci.zSize())};
+  /* 3 == 3 */
+  const int64_t _stride_buf3_0{int64_t(3 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf3_1{int64_t(3 * ci.zSize())};
+  const int64_t _stride_buf3_2{int64_t(3)};
+  const int64_t _stride_buf3_3{int64_t(1)};
+  walberla::lbm::accessor::Force::cpu_kernels::set(
+      _data_buf3, _data_force, _data_pdfs, _data_velocity, _size_buf3_0,
+      _size_buf3_1, _size_buf3_2, _stride_buf3_0, _stride_buf3_1,
+      _stride_buf3_2, _stride_buf3_3, _stride_force_0, _stride_force_1,
+      _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1,
+      _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1,
+      _stride_velocity_2, _stride_velocity_3, density);
 }
 } // namespace Force
 
 namespace MomentumDensity {
+namespace cpu_kernels {
+inline void get(const double *RESTRICT const _data_force,
+                const double *RESTRICT const _data_pdfs,
+                const int64_t _size_force_0, const int64_t _size_force_1,
+                const int64_t _size_force_2, const int64_t _stride_force_0,
+                const int64_t _stride_force_1, const int64_t _stride_force_2,
+                const int64_t _stride_force_3, const int64_t _stride_pdfs_0,
+                const int64_t _stride_pdfs_1, const int64_t _stride_pdfs_2,
+                const int64_t _stride_pdfs_3, const double density,
+                double *const sum_0, double *const sum_1, double *const sum_2) {
+  const double __c_1_0o2_0 = 1.0 / 2.0;
+  double sum_0_local = 0.0;
+  double sum_1_local = 0.0;
+  double sum_2_local = 0.0;
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_force_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_force_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_force_0; ctr_0 += 1LL) {
+        const double vel0Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double momdensity_0 =
+            vel0Term -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
+        const double vel1Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3];
+        const double momdensity_1 =
+            vel1Term -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double vel2Term =
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 12LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 13LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 5LL * _stride_pdfs_3];
+        const double momdensity_2 =
+            vel2Term -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 15LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 16LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 17LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 18LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 6LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 14LL * _stride_pdfs_3];
+        const double md_0 =
+            momdensity_0 +
+            __c_1_0o2_0 *
+                _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                            ctr_2 * _stride_force_2];
+        const double md_1 =
+            momdensity_1 +
+            __c_1_0o2_0 *
+                _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                            ctr_2 * _stride_force_2 + _stride_force_3];
+        const double md_2 =
+            momdensity_2 +
+            __c_1_0o2_0 *
+                _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 +
+                            ctr_2 * _stride_force_2 + 2LL * _stride_force_3];
+        sum_0_local = sum_0_local + md_0 * density;
+        sum_1_local = sum_1_local + md_1 * density;
+        sum_2_local = sum_2_local + md_2 * density;
+      }
+    }
+  }
+  sum_0[0LL] = sum_0[0LL] + sum_0_local;
+  sum_1[0LL] = sum_1[0LL] + sum_1_local;
+  sum_2[0LL] = sum_2[0LL] + sum_2_local;
+}
+} // namespace cpu_kernels
+
 inline auto
 reduce(const walberla::field::GhostLayerField<double, 19> *pdf_field,
        const walberla::field::GhostLayerField<double, 3> *force_field,
        const double density) {
-  Vector3<double> momentumDensity(double{0});
-  for (cell_idx_t z = 0; z < cell_idx_c(pdf_field->zSize()); ++z) {
-    for (cell_idx_t y = 0; y < cell_idx_c(pdf_field->ySize()); ++y) {
-      for (cell_idx_t x = 0; x < cell_idx_c(pdf_field->xSize()); ++x) {
-        const double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
-        const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
-        const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
-        const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
-        const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
-        const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
-        const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
-        const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
-        const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
-        const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
-        const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
-        const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
-        const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
-        const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
-        const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
-        const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
-        const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
-        const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
-        const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
-        const double force_0 = force_field->get(x, y, z, uint_t{0u});
-        const double force_1 = force_field->get(x, y, z, uint_t{1u});
-        const double force_2 = force_field->get(x, y, z, uint_t{2u});
-        const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-        const double momdensity_0 = vel0Term - f_13 - f_17 - f_3 - f_7 - f_9;
-        const double vel1Term = f_1 + f_11 + f_15 + f_7;
-        const double momdensity_1 =
-            f_8 + vel1Term - f_10 - f_12 - f_16 - f_2 - f_9;
-        const double vel2Term = f_12 + f_13 + f_5;
-        const double momdensity_2 =
-            f_11 + f_14 + vel2Term - f_15 - f_16 - f_17 - f_18 - f_6;
-        const double md_0 = momdensity_0 + 0.5 * force_0;
-        const double md_1 = momdensity_1 + 0.5 * force_1;
-        const double md_2 = momdensity_2 + 0.5 * force_2;
-
-        momentumDensity[0u] += md_0 * density;
-        momentumDensity[1u] += md_1 * density;
-        momentumDensity[2u] += md_2 * density;
-      }
-    }
-  }
-  return momentumDensity;
+  walberla::CellInterval ci = pdf_field->xyzSize();
+  double acc_0{0};
+  double acc_1{0};
+  double acc_2{0};
+  const double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  const double *RESTRICT const _data_force{
+      force_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int64_t _size_force_0{int64_t(ci.xSize())};
+  const int64_t _size_force_1{int64_t(ci.ySize())};
+  const int64_t _size_force_2{int64_t(ci.zSize())};
+  /* force_field->fSize() == 3 */
+  const int64_t _stride_force_0{int64_t(force_field->xStride())};
+  const int64_t _stride_force_1{int64_t(force_field->yStride())};
+  const int64_t _stride_force_2{int64_t(force_field->zStride())};
+  const int64_t _stride_force_3{int64_t(force_field->fStride())};
+  double *const sum_0 = &acc_0;
+  double *const sum_1 = &acc_1;
+  double *const sum_2 = &acc_2;
+  walberla::lbm::accessor::MomentumDensity::cpu_kernels::get(
+      _data_force, _data_pdfs, _size_force_0, _size_force_1, _size_force_2,
+      _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3,
+      _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, density,
+      sum_0, sum_1, sum_2);
+  return walberla::Vector3<double>(acc_0, acc_1, acc_2);
 }
 } // namespace MomentumDensity
 
 namespace PressureTensor {
+namespace cpu_kernels {
+inline void get(double *RESTRICT const _data_buf9,
+                const double *RESTRICT const _data_pdfs,
+                const int64_t _size_buf9_0, const int64_t _size_buf9_1,
+                const int64_t _size_buf9_2, const int64_t _stride_buf9_0,
+                const int64_t _stride_buf9_1, const int64_t _stride_buf9_2,
+                const int64_t _stride_buf9_3, const int64_t _stride_pdfs_0,
+                const int64_t _stride_pdfs_1, const int64_t _stride_pdfs_2,
+                const int64_t _stride_pdfs_3, const double density) {
+  const double __c_1_0o3_0 = 1.0 / 3.0;
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_buf9_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_buf9_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_buf9_0; ctr_0 += 1LL) {
+        const double p_0 =
+            __c_1_0o3_0 +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       13LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       14LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       9LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       10LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 +
+                       18LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       4LL * _stride_pdfs_3];
+        const double p_1 =
+            -1.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                              (ctr_1 + 1LL) * _stride_pdfs_1 +
+                              ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] -
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       9LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double p_2 =
+            -1.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                              ctr_1 * _stride_pdfs_1 +
+                              (ctr_2 + -1LL) * _stride_pdfs_2 +
+                              13LL * _stride_pdfs_3] -
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 +
+                       18LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       14LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3];
+        const double p_3 =
+            -1.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                              (ctr_1 + 1LL) * _stride_pdfs_1 +
+                              ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] -
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       9LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double p_4 =
+            __c_1_0o3_0 +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       12LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       11LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       9LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       10LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3];
+        const double p_5 =
+            -1.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                              (ctr_1 + 1LL) * _stride_pdfs_1 +
+                              (ctr_2 + -1LL) * _stride_pdfs_2 +
+                              12LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3];
+        const double p_6 =
+            -1.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                              ctr_1 * _stride_pdfs_1 +
+                              (ctr_2 + -1LL) * _stride_pdfs_2 +
+                              13LL * _stride_pdfs_3] -
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 +
+                       18LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       14LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3];
+        const double p_7 =
+            -1.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                              (ctr_1 + 1LL) * _stride_pdfs_1 +
+                              (ctr_2 + -1LL) * _stride_pdfs_2 +
+                              12LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3];
+        const double p_8 =
+            __c_1_0o3_0 +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       13LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       12LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       11LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       14LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 + 5LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 +
+                       18LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 6LL * _stride_pdfs_3];
+        _data_buf9[ctr_0 * _stride_buf9_0 + ctr_1 * _stride_buf9_1 +
+                   ctr_2 * _stride_buf9_2] = p_0 * density;
+        _data_buf9[ctr_0 * _stride_buf9_0 + ctr_1 * _stride_buf9_1 +
+                   ctr_2 * _stride_buf9_2 + _stride_buf9_3] = p_1 * density;
+        _data_buf9[ctr_0 * _stride_buf9_0 + ctr_1 * _stride_buf9_1 +
+                   ctr_2 * _stride_buf9_2 + 2LL * _stride_buf9_3] =
+            p_2 * density;
+        _data_buf9[ctr_0 * _stride_buf9_0 + ctr_1 * _stride_buf9_1 +
+                   ctr_2 * _stride_buf9_2 + 3LL * _stride_buf9_3] =
+            p_3 * density;
+        _data_buf9[ctr_0 * _stride_buf9_0 + ctr_1 * _stride_buf9_1 +
+                   ctr_2 * _stride_buf9_2 + 4LL * _stride_buf9_3] =
+            p_4 * density;
+        _data_buf9[ctr_0 * _stride_buf9_0 + ctr_1 * _stride_buf9_1 +
+                   ctr_2 * _stride_buf9_2 + 5LL * _stride_buf9_3] =
+            p_5 * density;
+        _data_buf9[ctr_0 * _stride_buf9_0 + ctr_1 * _stride_buf9_1 +
+                   ctr_2 * _stride_buf9_2 + 6LL * _stride_buf9_3] =
+            p_6 * density;
+        _data_buf9[ctr_0 * _stride_buf9_0 + ctr_1 * _stride_buf9_1 +
+                   ctr_2 * _stride_buf9_2 + 7LL * _stride_buf9_3] =
+            p_7 * density;
+        _data_buf9[ctr_0 * _stride_buf9_0 + ctr_1 * _stride_buf9_1 +
+                   ctr_2 * _stride_buf9_2 + 8LL * _stride_buf9_3] =
+            p_8 * density;
+      }
+    }
+  }
+}
+} // namespace cpu_kernels
+
+namespace cpu_kernels {
+inline void reduce(const double *RESTRICT const _data_pdfs,
+                   const int64_t _size_pdfs_0, const int64_t _size_pdfs_1,
+                   const int64_t _size_pdfs_2, const int64_t _stride_pdfs_0,
+                   const int64_t _stride_pdfs_1, const int64_t _stride_pdfs_2,
+                   const int64_t _stride_pdfs_3, double *const sum_0,
+                   double *const sum_1, double *const sum_2,
+                   double *const sum_3, double *const sum_4,
+                   double *const sum_5, double *const sum_6,
+                   double *const sum_7, double *const sum_8) {
+  const double __c_1_0o3_0 = 1.0 / 3.0;
+  double sum_0_local = 0.0;
+  double sum_1_local = 0.0;
+  double sum_2_local = 0.0;
+  double sum_3_local = 0.0;
+  double sum_4_local = 0.0;
+  double sum_5_local = 0.0;
+  double sum_6_local = 0.0;
+  double sum_7_local = 0.0;
+  double sum_8_local = 0.0;
+  for (int64_t ctr_2 = 0LL; ctr_2 < _size_pdfs_2; ctr_2 += 1LL) {
+    for (int64_t ctr_1 = 0LL; ctr_1 < _size_pdfs_1; ctr_1 += 1LL) {
+      for (int64_t ctr_0 = 0LL; ctr_0 < _size_pdfs_0; ctr_0 += 1LL) {
+        const double p_0 =
+            __c_1_0o3_0 +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       13LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       14LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       9LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       10LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 +
+                       18LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       4LL * _stride_pdfs_3];
+        const double p_1 =
+            -1.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                              (ctr_1 + 1LL) * _stride_pdfs_1 +
+                              ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] -
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       9LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double p_2 =
+            -1.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                              ctr_1 * _stride_pdfs_1 +
+                              (ctr_2 + -1LL) * _stride_pdfs_2 +
+                              13LL * _stride_pdfs_3] -
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 +
+                       18LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       14LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3];
+        const double p_3 =
+            -1.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                              (ctr_1 + 1LL) * _stride_pdfs_1 +
+                              ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] -
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       9LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
+        const double p_4 =
+            __c_1_0o3_0 +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       12LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       11LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       9LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 +
+                       10LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3];
+        const double p_5 =
+            -1.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                              (ctr_1 + 1LL) * _stride_pdfs_1 +
+                              (ctr_2 + -1LL) * _stride_pdfs_2 +
+                              12LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3];
+        const double p_6 =
+            -1.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 +
+                              ctr_1 * _stride_pdfs_1 +
+                              (ctr_2 + -1LL) * _stride_pdfs_2 +
+                              13LL * _stride_pdfs_3] -
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 +
+                       18LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       14LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3];
+        const double p_7 =
+            -1.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                              (ctr_1 + 1LL) * _stride_pdfs_1 +
+                              (ctr_2 + -1LL) * _stride_pdfs_2 +
+                              12LL * _stride_pdfs_3] -
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       11LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3];
+        const double p_8 =
+            __c_1_0o3_0 +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       13LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       12LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       11LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 +
+                       14LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + -1LL) * _stride_pdfs_2 + 5LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 +
+                       (ctr_1 + -1LL) * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3] +
+            _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 +
+                       ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 +
+                       18LL * _stride_pdfs_3] +
+            _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 +
+                       (ctr_2 + 1LL) * _stride_pdfs_2 + 6LL * _stride_pdfs_3];
+        sum_0_local = sum_0_local + p_0;
+        sum_1_local = sum_1_local + p_1;
+        sum_2_local = sum_2_local + p_2;
+        sum_3_local = sum_3_local + p_3;
+        sum_4_local = sum_4_local + p_4;
+        sum_5_local = sum_5_local + p_5;
+        sum_6_local = sum_6_local + p_6;
+        sum_7_local = sum_7_local + p_7;
+        sum_8_local = sum_8_local + p_8;
+      }
+    }
+  }
+  sum_0[0LL] = sum_0[0LL] + sum_0_local;
+  sum_1[0LL] = sum_1[0LL] + sum_1_local;
+  sum_2[0LL] = sum_2[0LL] + sum_2_local;
+  sum_3[0LL] = sum_3[0LL] + sum_3_local;
+  sum_4[0LL] = sum_4[0LL] + sum_4_local;
+  sum_5[0LL] = sum_5[0LL] + sum_5_local;
+  sum_6[0LL] = sum_6[0LL] + sum_6_local;
+  sum_7[0LL] = sum_7[0LL] + sum_7_local;
+  sum_8[0LL] = sum_8[0LL] + sum_8_local;
+}
+} // namespace cpu_kernels
+
 inline auto get(const walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const double density, const walberla::Cell &cell) {
-  const int x = cell[0];
-  const int y = cell[1];
-  const int z = cell[2];
-  const double f_1 = pdf_field->get(x, y - 1, z, uint_t{1u});
-  const double f_2 = pdf_field->get(x, y + 1, z, uint_t{2u});
-  const double f_3 = pdf_field->get(x + 1, y, z, uint_t{3u});
-  const double f_4 = pdf_field->get(x - 1, y, z, uint_t{4u});
-  const double f_5 = pdf_field->get(x, y, z - 1, uint_t{5u});
-  const double f_6 = pdf_field->get(x, y, z + 1, uint_t{6u});
-  const double f_7 = pdf_field->get(x + 1, y - 1, z, uint_t{7u});
-  const double f_8 = pdf_field->get(x - 1, y - 1, z, uint_t{8u});
-  const double f_9 = pdf_field->get(x + 1, y + 1, z, uint_t{9u});
-  const double f_10 = pdf_field->get(x - 1, y + 1, z, uint_t{10u});
-  const double f_11 = pdf_field->get(x, y - 1, z - 1, uint_t{11u});
-  const double f_12 = pdf_field->get(x, y + 1, z - 1, uint_t{12u});
-  const double f_13 = pdf_field->get(x + 1, y, z - 1, uint_t{13u});
-  const double f_14 = pdf_field->get(x - 1, y, z - 1, uint_t{14u});
-  const double f_15 = pdf_field->get(x, y - 1, z + 1, uint_t{15u});
-  const double f_16 = pdf_field->get(x, y + 1, z + 1, uint_t{16u});
-  const double f_17 = pdf_field->get(x + 1, y, z + 1, uint_t{17u});
-  const double f_18 = pdf_field->get(x - 1, y, z + 1, uint_t{18u});
-  const double p_0 = 0.3333333333333333 + f_10 + f_13 + f_14 + f_17 + f_18 +
-                     f_3 + f_4 + f_7 + f_8 + f_9;
-  const double p_1 = f_8 + f_9 - f_10 - f_7;
-  const double p_2 = f_14 + f_17 - f_13 - f_18;
-  const double p_3 = f_8 + f_9 - f_10 - f_7;
-  const double p_4 = 0.3333333333333333 + f_1 + f_10 + f_11 + f_12 + f_15 +
-                     f_16 + f_2 + f_7 + f_8 + f_9;
-  const double p_5 = f_11 + f_16 - f_12 - f_15;
-  const double p_6 = f_14 + f_17 - f_13 - f_18;
-  const double p_7 = f_11 + f_16 - f_12 - f_15;
-  const double p_8 = 0.3333333333333333 + f_11 + f_12 + f_13 + f_14 + f_15 +
-                     f_16 + f_17 + f_18 + f_5 + f_6;
-
-  Matrix3<double> pressureTensor;
-  pressureTensor[0u] = p_0;
-  pressureTensor[1u] = p_1;
-  pressureTensor[2u] = p_2;
-  pressureTensor[3u] = p_3;
-  pressureTensor[4u] = p_4;
-  pressureTensor[5u] = p_5;
-  pressureTensor[6u] = p_6;
-  pressureTensor[7u] = p_7;
-  pressureTensor[8u] = p_8;
-  return pressureTensor * density;
+  walberla::CellInterval ci(cell, cell);
+  walberla::Matrix3<double> out;
+  double *buffer_ptr = out.data();
+  const double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  double *RESTRICT const _data_buf9{buffer_ptr};
+  const int64_t _size_buf9_0{int64_t(ci.xSize())};
+  const int64_t _size_buf9_1{int64_t(ci.ySize())};
+  const int64_t _size_buf9_2{int64_t(ci.zSize())};
+  /* 9 == 9 */
+  const int64_t _stride_buf9_0{int64_t(9 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf9_1{int64_t(9 * ci.zSize())};
+  const int64_t _stride_buf9_2{int64_t(9)};
+  const int64_t _stride_buf9_3{int64_t(1)};
+  walberla::lbm::accessor::PressureTensor::cpu_kernels::get(
+      _data_buf9, _data_pdfs, _size_buf9_0, _size_buf9_1, _size_buf9_2,
+      _stride_buf9_0, _stride_buf9_1, _stride_buf9_2, _stride_buf9_3,
+      _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, density);
+  return out;
 }
 
 inline auto get(const walberla::field::GhostLayerField<double, 19> *pdf_field,
                 const double density, const walberla::CellInterval &ci) {
-  std::vector<double> out;
-  out.reserve(ci.numCells() * uint_t(9u));
-  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
-    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
-      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
-        const double f_1 = pdf_field->get(x, y - 1, z, uint_t{1u});
-        const double f_2 = pdf_field->get(x, y + 1, z, uint_t{2u});
-        const double f_3 = pdf_field->get(x + 1, y, z, uint_t{3u});
-        const double f_4 = pdf_field->get(x - 1, y, z, uint_t{4u});
-        const double f_5 = pdf_field->get(x, y, z - 1, uint_t{5u});
-        const double f_6 = pdf_field->get(x, y, z + 1, uint_t{6u});
-        const double f_7 = pdf_field->get(x + 1, y - 1, z, uint_t{7u});
-        const double f_8 = pdf_field->get(x - 1, y - 1, z, uint_t{8u});
-        const double f_9 = pdf_field->get(x + 1, y + 1, z, uint_t{9u});
-        const double f_10 = pdf_field->get(x - 1, y + 1, z, uint_t{10u});
-        const double f_11 = pdf_field->get(x, y - 1, z - 1, uint_t{11u});
-        const double f_12 = pdf_field->get(x, y + 1, z - 1, uint_t{12u});
-        const double f_13 = pdf_field->get(x + 1, y, z - 1, uint_t{13u});
-        const double f_14 = pdf_field->get(x - 1, y, z - 1, uint_t{14u});
-        const double f_15 = pdf_field->get(x, y - 1, z + 1, uint_t{15u});
-        const double f_16 = pdf_field->get(x, y + 1, z + 1, uint_t{16u});
-        const double f_17 = pdf_field->get(x + 1, y, z + 1, uint_t{17u});
-        const double f_18 = pdf_field->get(x - 1, y, z + 1, uint_t{18u});
-        const double p_0 = 0.3333333333333333 + f_10 + f_13 + f_14 + f_17 +
-                           f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
-        const double p_1 = f_8 + f_9 - f_10 - f_7;
-        const double p_2 = f_14 + f_17 - f_13 - f_18;
-        const double p_3 = f_8 + f_9 - f_10 - f_7;
-        const double p_4 = 0.3333333333333333 + f_1 + f_10 + f_11 + f_12 +
-                           f_15 + f_16 + f_2 + f_7 + f_8 + f_9;
-        const double p_5 = f_11 + f_16 - f_12 - f_15;
-        const double p_6 = f_14 + f_17 - f_13 - f_18;
-        const double p_7 = f_11 + f_16 - f_12 - f_15;
-        const double p_8 = 0.3333333333333333 + f_11 + f_12 + f_13 + f_14 +
-                           f_15 + f_16 + f_17 + f_18 + f_5 + f_6;
-
-        out.emplace_back(p_0 * density);
-        out.emplace_back(p_1 * density);
-        out.emplace_back(p_2 * density);
-        out.emplace_back(p_3 * density);
-        out.emplace_back(p_4 * density);
-        out.emplace_back(p_5 * density);
-        out.emplace_back(p_6 * density);
-        out.emplace_back(p_7 * density);
-        out.emplace_back(p_8 * density);
-      }
-    }
-  }
+  std::vector<double> out(ci.numCells() * 9u);
+  double *buffer_ptr = out.data();
+  const double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  double *RESTRICT const _data_buf9{buffer_ptr};
+  const int64_t _size_buf9_0{int64_t(ci.xSize())};
+  const int64_t _size_buf9_1{int64_t(ci.ySize())};
+  const int64_t _size_buf9_2{int64_t(ci.zSize())};
+  /* 9 == 9 */
+  const int64_t _stride_buf9_0{int64_t(9 * ci.ySize() * ci.zSize())};
+  const int64_t _stride_buf9_1{int64_t(9 * ci.zSize())};
+  const int64_t _stride_buf9_2{int64_t(9)};
+  const int64_t _stride_buf9_3{int64_t(1)};
+  walberla::lbm::accessor::PressureTensor::cpu_kernels::get(
+      _data_buf9, _data_pdfs, _size_buf9_0, _size_buf9_1, _size_buf9_2,
+      _stride_buf9_0, _stride_buf9_1, _stride_buf9_2, _stride_buf9_3,
+      _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, density);
   return out;
 }
 
 inline auto
 reduce(const walberla::field::GhostLayerField<double, 19> *pdf_field,
        const double density) {
-  Matrix3<double> pressureTensor(double{0});
-  for (cell_idx_t z = 0; z < cell_idx_c(pdf_field->zSize()); ++z) {
-    for (cell_idx_t y = 0; y < cell_idx_c(pdf_field->ySize()); ++y) {
-      for (cell_idx_t x = 0; x < cell_idx_c(pdf_field->xSize()); ++x) {
-        const double f_1 = pdf_field->get(x, y - 1, z, uint_t{1u});
-        const double f_2 = pdf_field->get(x, y + 1, z, uint_t{2u});
-        const double f_3 = pdf_field->get(x + 1, y, z, uint_t{3u});
-        const double f_4 = pdf_field->get(x - 1, y, z, uint_t{4u});
-        const double f_5 = pdf_field->get(x, y, z - 1, uint_t{5u});
-        const double f_6 = pdf_field->get(x, y, z + 1, uint_t{6u});
-        const double f_7 = pdf_field->get(x + 1, y - 1, z, uint_t{7u});
-        const double f_8 = pdf_field->get(x - 1, y - 1, z, uint_t{8u});
-        const double f_9 = pdf_field->get(x + 1, y + 1, z, uint_t{9u});
-        const double f_10 = pdf_field->get(x - 1, y + 1, z, uint_t{10u});
-        const double f_11 = pdf_field->get(x, y - 1, z - 1, uint_t{11u});
-        const double f_12 = pdf_field->get(x, y + 1, z - 1, uint_t{12u});
-        const double f_13 = pdf_field->get(x + 1, y, z - 1, uint_t{13u});
-        const double f_14 = pdf_field->get(x - 1, y, z - 1, uint_t{14u});
-        const double f_15 = pdf_field->get(x, y - 1, z + 1, uint_t{15u});
-        const double f_16 = pdf_field->get(x, y + 1, z + 1, uint_t{16u});
-        const double f_17 = pdf_field->get(x + 1, y, z + 1, uint_t{17u});
-        const double f_18 = pdf_field->get(x - 1, y, z + 1, uint_t{18u});
-        const double p_0 = 0.3333333333333333 + f_10 + f_13 + f_14 + f_17 +
-                           f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
-        const double p_1 = f_8 + f_9 - f_10 - f_7;
-        const double p_2 = f_14 + f_17 - f_13 - f_18;
-        const double p_3 = f_8 + f_9 - f_10 - f_7;
-        const double p_4 = 0.3333333333333333 + f_1 + f_10 + f_11 + f_12 +
-                           f_15 + f_16 + f_2 + f_7 + f_8 + f_9;
-        const double p_5 = f_11 + f_16 - f_12 - f_15;
-        const double p_6 = f_14 + f_17 - f_13 - f_18;
-        const double p_7 = f_11 + f_16 - f_12 - f_15;
-        const double p_8 = 0.3333333333333333 + f_11 + f_12 + f_13 + f_14 +
-                           f_15 + f_16 + f_17 + f_18 + f_5 + f_6;
-
-        pressureTensor[0u] += p_0;
-        pressureTensor[1u] += p_1;
-        pressureTensor[2u] += p_2;
-        pressureTensor[3u] += p_3;
-        pressureTensor[4u] += p_4;
-        pressureTensor[5u] += p_5;
-        pressureTensor[6u] += p_6;
-        pressureTensor[7u] += p_7;
-        pressureTensor[8u] += p_8;
-      }
-    }
-  }
-  return pressureTensor * density;
+  walberla::CellInterval ci = pdf_field->xyzSize();
+  double acc_0{0};
+  double acc_1{0};
+  double acc_2{0};
+  double acc_3{0};
+  double acc_4{0};
+  double acc_5{0};
+  double acc_6{0};
+  double acc_7{0};
+  double acc_8{0};
+  const double *RESTRICT const _data_pdfs{
+      pdf_field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int64_t _size_pdfs_0{int64_t(ci.xSize())};
+  const int64_t _size_pdfs_1{int64_t(ci.ySize())};
+  const int64_t _size_pdfs_2{int64_t(ci.zSize())};
+  /* pdf_field->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdf_field->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdf_field->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdf_field->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdf_field->fStride())};
+  double *const sum_0 = &acc_0;
+  double *const sum_1 = &acc_1;
+  double *const sum_2 = &acc_2;
+  double *const sum_3 = &acc_3;
+  double *const sum_4 = &acc_4;
+  double *const sum_5 = &acc_5;
+  double *const sum_6 = &acc_6;
+  double *const sum_7 = &acc_7;
+  double *const sum_8 = &acc_8;
+  walberla::lbm::accessor::PressureTensor::cpu_kernels::reduce(
+      _data_pdfs, _size_pdfs_0, _size_pdfs_1, _size_pdfs_2, _stride_pdfs_0,
+      _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, sum_0, sum_1, sum_2,
+      sum_3, sum_4, sum_5, sum_6, sum_7, sum_8);
+  return walberla::Matrix3<double>(acc_0, acc_1, acc_2, acc_3, acc_4, acc_5,
+                                   acc_6, acc_7, acc_8) *
+         density;
 }
 } // namespace PressureTensor
 } // namespace walberla::lbm::accessor
