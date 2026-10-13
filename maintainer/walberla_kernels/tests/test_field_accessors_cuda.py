@@ -17,8 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import collections
+import os
 import pathlib
 import re
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -125,19 +129,36 @@ class FieldAccessorsCudaTest(unittest.TestCase):
             self.assertEqual(len(header_api.functions(
                 header, declarations=True)), 32)
 
+    @staticmethod
+    def count_definitions(source, namespace, name):
+        """
+        Number of definitions of the function ``namespace::name`` in a source
+        file, without the pystencils kernels of the nested namespaces
+        ``kernels``. A definition is a signature line on one line followed
+        by a line with the opening brace, both with the indentation of
+        the namespace members.
+        """
+        block = re.sub(
+            r"^\s*namespace kernels \{.*?^\s*\} // namespace kernels$", "",
+            namespace_block(source, namespace), flags=re.S | re.M)
+        indent = "    "
+        return len(re.findall(
+            rf"^{indent}[A-Za-z][^\n]*\b{name}\([^\n]*\)\n{indent}\{{$",
+            block, re.M))
+
     def test_functions_are_defined(self):
-        # every declared function is defined in the source file, in the
-        # same namespace
+        # every declared function (overload) is defined exactly once in the
+        # source file, in the same namespace
         for precision, header in self.headers.items():
-            for namespace, name, _, _ in header_api.functions(
-                    header, declarations=True):
-                block = re.sub(
-                    r"namespace kernels \{.*?\} // namespace kernels", "",
-                    namespace_block(self.sources[precision],
-                                    namespace.split("::")[-1]),
-                    flags=re.S)
-                self.assertRegex(block, re.compile(
-                    rf"^[\w:<>,\s]*\b{name}\(", re.M))
+            declared = collections.Counter(
+                (f[0].split("::")[-1], f[1])
+                for f in header_api.functions(header, declarations=True))
+            self.assertEqual(sum(declared.values()), 32)
+            for (namespace, name), n in declared.items():
+                self.assertEqual(
+                    self.count_definitions(
+                        self.sources[precision], namespace, name), n,
+                    (precision, namespace, name))
 
     def test_api_equals_frozen_contract(self):
         for precision, header in self.headers.items():
@@ -180,10 +201,17 @@ class FieldAccessorsCudaTest(unittest.TestCase):
                     len(re.findall(r"\+= out\[i \+ \d+u\];", block)), n)
 
     def test_floor_matches_the_precision(self):
-        # the legacy double precision kernels called floorf()
-        self.assertIsNone(re.search(r"\bfloorf\(", self.sources["Double"]))
-        self.assertRegex(self.sources["Double"], r"\bfloor\(")
-        self.assertRegex(self.sources["Single"], r"\bfloorf\(")
+        # the legacy double precision kernels called floorf(); the check
+        # targets the pystencils kernels, because the hand-written
+        # add_force kernel is not concerned
+        for precision, floor, other in (("Double", "floor", "floorf"),
+                                        ("Single", "floorf", "floor")):
+            block = namespace_block(self.sources[precision], "Interpolation")
+            kernels = "\n".join(re.findall(
+                r"^\s*namespace kernels \{.*?^\s*\} // namespace kernels$",
+                block, re.S | re.M))
+            self.assertRegex(kernels, rf"\b{floor}\(")
+            self.assertIsNone(re.search(rf"\b{other}\(", kernels))
 
     def test_velocity_interval_buffer_has_all_cells(self):
         # the legacy function allocated the buffer of a single cell
@@ -200,11 +228,25 @@ class FieldAccessorsCudaTest(unittest.TestCase):
             self.assertNotIn("dev_data(3u)", function.group(1))
 
     def test_generation_is_deterministic(self):
-        second = generate_files()
-        self.addCleanup(remove_directory, second)
-        for path in sorted(self.tmp.iterdir()):
-            self.assertEqual(path.read_text(),
-                             (second / path.name).read_text(), path.name)
+        # independent of the hash seed of the interpreter
+        kernels_dir = pathlib.Path(__file__).resolve().parent.parent
+        script = ("from tests.test_field_accessors_cuda import "
+                  "generate_files; print(generate_files())")
+        outputs = []
+        for seed in ("1", "2"):
+            env = dict(os.environ, PYTHONHASHSEED=seed)
+            result = subprocess.run(
+                [sys.executable, "-c", script], cwd=kernels_dir, env=env,
+                capture_output=True, text=True, check=True)
+            path = pathlib.Path(result.stdout.strip().splitlines()[-1])
+            self.addCleanup(remove_directory, path)
+            outputs.append(path)
+        names = sorted(p.name for p in outputs[0].iterdir())
+        self.assertEqual(names, sorted(p.name for p in outputs[1].iterdir()))
+        self.assertEqual(len(names), 4)
+        for name in names:
+            self.assertEqual((outputs[0] / name).read_bytes(),
+                             (outputs[1] / name).read_bytes(), name)
 
 
 if __name__ == "__main__":
