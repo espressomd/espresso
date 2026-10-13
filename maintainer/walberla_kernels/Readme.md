@@ -74,8 +74,11 @@ format_kernels
 The generator doesn't let pystencils-sfg format the files, even if clang-format
 is on `PATH`, so the output doesn't depend on the environment.
 
-The output is reproducible up to the order of the field-extraction statements,
-which pystencils-sfg 0.3 does not keep stable between runs.
+The output is deterministic, except for the order of the field-extraction
+statements in the `.cpp` and `.cu` files of the `init`, `vel_update` and
+`stream_collide_*` kernels, which pystencils-sfg 0.3 does not keep stable
+between runs. All headers and both `field_accessors` kernels are byte-identical
+for any `PYTHONHASHSEED`.
 
 ## Architecture
 

@@ -210,12 +210,6 @@ def from_records(records):
             for r in records]
 
 
-def dump_records(funcs, path):
-    with open(path, "w") as f:
-        json.dump(to_records(funcs), f, indent=1, sort_keys=True)
-        f.write("\n")
-
-
 def load_records(path):
     with open(path) as f:
         return from_records(json.load(f))
