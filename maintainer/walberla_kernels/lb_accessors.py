@@ -94,8 +94,7 @@ class LbAccessors:
 
     def __init__(self, dtype, lb_method):
         self.dtype = dtype
-        self.equations = accessor_equations.AccessorEquations(
-            lb_method, dtype)
+        self.equations = accessor_equations.AccessorEquations(lb_method)
         self.Q = self.equations.Q
         self.D = self.equations.D
         if self.D != _DIM:

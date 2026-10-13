@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import dataclasses
+import inspect
 import re
 import unittest
 
@@ -35,13 +37,12 @@ PDFS = {f"f_{i}" for i in range(19)}
 FORCES = {f"force_{i}" for i in range(3)}
 
 
-def make_equations(precision="double", lb_method=None):
-    ctx = sfg_driver.CodegenContext(precision, "cpu")
+def make_equations(lb_method=None):
     if lb_method is None:
         fields = pystencils_espresso.generate_fields(
-            generate_lb_kernels.STENCIL, ctx.data_type)
+            generate_lb_kernels.STENCIL, ps.create_type("float64"))
         lb_method = generate_lb_kernels.create_lb_method(fields)
-    return accessor_equations.AccessorEquations(lb_method, ctx.data_type)
+    return accessor_equations.AccessorEquations(lb_method)
 
 
 class EquationInputsTest(unittest.TestCase):
@@ -105,13 +106,6 @@ class EquationInputsTest(unittest.TestCase):
         self.assertEqual(eqs.inputs,
                          FORCES | {"rho", "u_in_0", "u_in_1", "u_in_2"})
         self.assertEqual(eqs.outputs, ["u_0", "u_1", "u_2"])
-
-    def test_delta_rho(self):
-        eqs = self.eqs.delta_rho
-        self.assertEqual(eqs.inputs, {"rho"})
-        self.assertEqual(eqs.outputs, ["delta_rho"])
-        (lhs, rhs), = eqs.assignments
-        self.assertEqual(rhs, sp.Symbol("rho") - 1)
 
     def test_equilibrium(self):
         allowed = {"rho", "delta_rho", "u_0", "u_1", "u_2"}
@@ -236,30 +230,39 @@ class NumericTest(unittest.TestCase):
         self.assertAlmostEqual(sum(full), rho, places=12)
 
 
-class EquationPrintingTest(unittest.TestCase):
+class PublicApiTest(unittest.TestCase):
+    """The equations are sympy expressions: only the expressions that the
+    CPU backend switches over are printed."""
 
-    def test_assignments_are_const_declarations(self):
-        eqs = make_equations("double")
-        lines = eqs.density.lines()
-        self.assertEqual(len(lines), len(eqs.density.assignments))
-        for line, name in zip(lines, eqs.density.outputs):
-            self.assertTrue(line.startswith(f"const double {name} = "), line)
-            self.assertTrue(line.endswith(";"), line)
+    def test_only_expressions_are_printed(self):
+        self.assertEqual(accessor_equations.__all__, [
+            "EquationSet", "AccessorEquations", "print_expression"])
+        self.assertFalse(hasattr(accessor_equations, "print_assignments"))
+        self.assertFalse(hasattr(accessor_equations.EquationSet, "lines"))
+        self.assertFalse(hasattr(accessor_equations.AccessorEquations,
+                                 "delta_rho"))
+
+    def test_equations_do_not_depend_on_the_precision(self):
+        self.assertEqual(
+            [f.name for f in dataclasses.fields(
+                accessor_equations.EquationSet)], ["assignments"])
+        self.assertEqual(
+            list(inspect.signature(
+                accessor_equations.AccessorEquations).parameters),
+            ["lb_method"])
+
+
+class PrintExpressionTest(unittest.TestCase):
 
     def test_single_precision_has_no_double_literals(self):
-        eqs = make_equations("single")
-        lines = []
-        for name in ("density", "density_scaled", "momentum_density",
-                     "momentum_density_force_setter",
-                     "unshifted_momentum_density", "second_moment",
-                     "velocity_setter", "delta_rho"):
-            lines += getattr(eqs, name).lines()
-        lines += [accessor_equations.print_expression(e, eqs.dtype)
-                  for e in eqs.equilibrium]
-        text = "\n".join(lines)
+        eqs = make_equations()
+        single = ps.create_type("float32")
+        text = "\n".join(
+            accessor_equations.print_expression(e, single)
+            for e in [*eqs.equilibrium,
+                      *(e for _, e in eqs.equilibrium_from_direction)])
         self.assertNotIn("double", text)
         self.assertNotIn("pow", text)
-        self.assertTrue(text.startswith("const float "))
         # every floating-point literal carries the float suffix
         literals = re.findall(r"(?<![\w.])\d+\.\d*(?:e[+-]?\d+)?f?(?![\w.])",
                               text)
@@ -267,10 +270,12 @@ class EquationPrintingTest(unittest.TestCase):
         self.assertTrue(all(lit.endswith("f") for lit in literals), literals)
 
     def test_double_precision_has_no_float_literals(self):
-        eqs = make_equations("double")
-        text = "\n".join(eqs.momentum_density.lines())
+        eqs = make_equations()
+        text = "\n".join(
+            accessor_equations.print_expression(e, ps.create_type("float64"))
+            for e in eqs.equilibrium)
         self.assertNotRegex(text, r"\d\.\d*f\b")
-        self.assertIn("0.5 *", text)
+        self.assertRegex(text, r"\d\.\d")
 
     def test_integer_powers_are_expanded(self):
         expr = sp.Symbol("u_0") ** 2
@@ -285,15 +290,21 @@ class EquationPrintingTest(unittest.TestCase):
         self.assertEqual(accessor_equations.print_expression(
             expr, ps.create_type("float64")), "0.5 * rho")
 
+
+class ForceSetterTest(unittest.TestCase):
+
     def test_force_setter_divides_force_by_density(self):
-        eqs = make_equations("single")
-        plain = "\n".join(eqs.momentum_density.lines())
-        setter = "\n".join(eqs.momentum_density_force_setter.lines())
+        eqs = make_equations()
+        self.assertNotIn("density", eqs.momentum_density.inputs)
+        setter = eqs.momentum_density_force_setter
+        self.assertIn("density", setter.inputs)
+        plain = dict(eqs.momentum_density.assignments)
+        shifted = dict(setter.assignments)
         for i in range(3):
-            self.assertRegex(
-                setter, rf"const float md_{i} = momdensity_{i} \+ "
-                rf"0\.5f \* force_{i} \* \(1\.0f / density\);")
-        self.assertNotRegex(plain, r"\bdensity\b")
+            md, force = sp.Symbol(f"md_{i}"), sp.Symbol(f"force_{i}")
+            self.assertEqual(
+                sp.simplify(shifted[md] - plain[md]
+                            - force / 2 * (1 / sp.Symbol("density") - 1)), 0)
 
 
 class UnsupportedMethodTest(unittest.TestCase):
@@ -314,28 +325,27 @@ class UnsupportedMethodTest(unittest.TestCase):
     def test_incompressible_method_is_rejected(self):
         method = self.create_method(compressible=False)
         with self.assertRaises(NotImplementedError):
-            make_equations(lb_method=method)
+            make_equations(method)
 
     def test_pdfs_that_are_not_zero_centered_are_rejected(self):
         method = self.create_method(zero_centered=False,
                                     delta_equilibrium=False)
         with self.assertRaises(NotImplementedError):
-            make_equations(lb_method=method)
+            make_equations(method)
 
     def test_missing_force_model_is_rejected(self):
-        ctx = sfg_driver.CodegenContext("double", "cpu")
         config = dict(generate_lb_kernels.LBM_CONFIG_KWARGS)
         method = lbmpy.creationfunctions.create_mrt_orthogonal(
             stencil=generate_lb_kernels.STENCIL,
             relaxation_rates=relaxation_rates.rr_getter, **config)
         self.assertIsNone(method.force_model)
         with self.assertRaisesRegex(NotImplementedError, "force model"):
-            accessor_equations.AccessorEquations(method, ctx.data_type)
+            accessor_equations.AccessorEquations(method)
 
     def test_force_that_is_not_a_field_access_is_rejected(self):
         method = self.create_method(force=(0.1, 0.0, 0.0))
         with self.assertRaisesRegex(NotImplementedError, "field accesses"):
-            make_equations(lb_method=method)
+            make_equations(method)
 
 
 if __name__ == "__main__":
