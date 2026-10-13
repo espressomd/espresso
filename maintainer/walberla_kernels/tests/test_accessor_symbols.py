@@ -17,8 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
-
 """
 The CPU and the CUDA accessors are linked into the same library when
 ESPResSo is built with CUDA. The kernels of both backends have the same
