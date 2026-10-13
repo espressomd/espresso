@@ -30,6 +30,7 @@ DOUBLE = ps.create_type("float64")
 VEC = cat.Value(cat.VECTOR3, 3, "vec")
 FIELD = cat.FieldArg("scalar", True, "field")
 FIELD_MUT = cat.FieldArg("scalar", False, "field")
+OUT = cat.Value(cat.SCALAR, 1, "out")
 
 
 def make_catalogue(*namespaces):
@@ -95,15 +96,15 @@ class CatalogueTest(unittest.TestCase):
 
     @staticmethod
     def namespace(name="N", kernels=None, accessors=None):
-        both = cat.Accessor("get", cat.Kind.CELL, "k", (FIELD,))
+        both = cat.Accessor("get", cat.Kind.CELL, "k", (FIELD,), out=OUT)
         cuda_only = cat.Accessor("scatter", cat.Kind.SCATTER, None, (FIELD,),
-                                 targets=cat.CUDA_ONLY)
+                                 dims=3, targets=cat.CUDA_ONLY)
         return cat.Namespace(
             name, kernels=kernels or (make_kernel("k"),),
             accessors=accessors or (both, cuda_only))
 
     def test_namespaces_of_a_target(self):
-        cpu_only = cat.Accessor("point", cat.Kind.POINT,
+        cpu_only = cat.Accessor("point", cat.Kind.POINT, point="data",
                                 targets=cat.CPU_ONLY)
         catalogue = make_catalogue(
             self.namespace("A"),
@@ -129,49 +130,167 @@ class CatalogueTest(unittest.TestCase):
             [k.name for k in namespace.for_target("cuda")[0]], ["a", "b"])
 
     def test_unknown_target(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(cat.CatalogueError):
             make_catalogue(self.namespace()).for_target("hip")
 
     def test_unknown_kernel(self):
-        accessor = cat.Accessor("get", cat.Kind.CELL, "missing", (FIELD,))
-        with self.assertRaises(AssertionError):
+        accessor = cat.Accessor("get", cat.Kind.CELL,
+                                "missing", (FIELD,), out=OUT)
+        with self.assertRaises(cat.CatalogueError):
             make_catalogue(self.namespace(accessors=(accessor,)))
 
     def test_kernel_must_exist_on_the_targets_of_the_accessor(self):
-        accessor = cat.Accessor("get", cat.Kind.CELL, "k", (FIELD,))
+        accessor = cat.Accessor("get", cat.Kind.CELL, "k", (FIELD,), out=OUT)
         namespace = self.namespace(kernels=(make_kernel("k", ("cpu",)),),
                                    accessors=(accessor,))
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(cat.CatalogueError):
             make_catalogue(namespace)
         accessor = cat.Accessor(
-            "get", cat.Kind.CELL, make_kernel("p", ("cpu",)), (FIELD,))
-        with self.assertRaises(AssertionError):
+            "get", cat.Kind.CELL, make_kernel("p", ("cpu",)), (FIELD,), out=OUT)
+        with self.assertRaises(cat.CatalogueError):
             make_catalogue(self.namespace(accessors=(accessor,)))
 
     def test_unknown_field(self):
         accessor = cat.Accessor(
-            "get", cat.Kind.CELL, "k", (cat.FieldArg("x", True, "f"),))
-        with self.assertRaises(AssertionError):
+            "get", cat.Kind.CELL, "k", (cat.FieldArg("x", True, "f"),), out=OUT)
+        with self.assertRaises(cat.CatalogueError):
             make_catalogue(self.namespace(accessors=(accessor,)))
 
     def test_rename_of_an_unknown_parameter(self):
         accessor = cat.Accessor(
             "get", cat.Kind.CELL, "k", (FIELD,),
-            targets={"cpu": cat.Variant(names={"unknown": "x"})})
-        with self.assertRaises(AssertionError):
+            out=OUT, targets={"cpu": cat.Variant(names={"unknown": "x"})})
+        with self.assertRaises(cat.CatalogueError):
             make_catalogue(self.namespace(accessors=(accessor,)))
 
     def test_duplicate_overload(self):
-        accessor = cat.Accessor("get", cat.Kind.CELL, "k", (FIELD,))
-        with self.assertRaises(AssertionError):
+        accessor = cat.Accessor("get", cat.Kind.CELL, "k", (FIELD,), out=OUT)
+        with self.assertRaises(cat.CatalogueError):
             make_catalogue(self.namespace(accessors=(accessor, accessor)))
-        interval = cat.Accessor("get", cat.Kind.INTERVAL, "k", (FIELD,))
+        interval = cat.Accessor("get", cat.Kind.INTERVAL, "k", (FIELD,),
+                                out=OUT)
         make_catalogue(self.namespace(accessors=(accessor, interval)))
 
+    def test_duplicate_overload_on_a_target(self):
+        both = cat.Accessor("get", cat.Kind.CELL, "k", (FIELD,), out=OUT)
+        cpu_only = cat.Accessor("get", cat.Kind.CELL, "k", (FIELD,), out=OUT,
+                                targets=cat.CPU_ONLY)
+        cuda_only = cat.Accessor("get", cat.Kind.CELL, "k", (FIELD,),
+                                 out=OUT, targets=cat.CUDA_ONLY)
+        for accessors in ((both, cpu_only), (cuda_only, both)):
+            with self.assertRaisesRegex(cat.CatalogueError, "defined twice"):
+                make_catalogue(self.namespace(accessors=accessors))
+        make_catalogue(self.namespace(accessors=(cpu_only, cuda_only)))
+
     def test_duplicate_kernel(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(cat.CatalogueError):
             make_catalogue(self.namespace(
                 kernels=(make_kernel("k"), make_kernel("k"))))
+
+    def test_scalars_and_the_domain_cannot_be_renamed(self):
+        for name in ("density", "cell"):
+            accessor = cat.Accessor(
+                "get", cat.Kind.CELL, "k", (FIELD,), out=OUT,
+                scalars=("density",),
+                targets={"cuda": cat.Variant(names={name: "x"})})
+            with self.assertRaisesRegex(cat.CatalogueError, "can't rename"):
+                make_catalogue(self.namespace(accessors=(accessor,)))
+        renamed = cat.Accessor(
+            "get", cat.Kind.CELL, "k", (FIELD,), inp=VEC,
+            targets={"cuda": cat.Variant(names={"field": "f", "vec": "v"})})
+        make_catalogue(self.namespace(accessors=(renamed,)))
+
+    def check_kind(self, message, kind, *args, kernel="k", **kwargs):
+        accessor = cat.Accessor("a", kind, kernel, *args, **kwargs)
+        with self.assertRaisesRegex(cat.CatalogueError, message):
+            make_catalogue(self.namespace(
+                kernels=(make_kernel("k"),
+                         cat.ReductionKernel("r", lambda: ([], []))),
+                accessors=(accessor,)))
+
+    def test_kind_requirements(self):
+        K = cat.Kind
+        reduction = cat.Reduction(cat.VECTOR3, "r")
+        self.check_kind("requires exactly one of inp and out",
+                        K.CELL, (FIELD,))
+        self.check_kind("requires exactly one of inp and out",
+                        K.INTERVAL, (FIELD,), inp=VEC, out=OUT)
+        self.check_kind("requires fields", K.CELL, (), out=OUT)
+        self.check_kind("requires inp", K.ALL, (FIELD,))
+        self.check_kind("kernel with components",
+                        K.ALL, (FIELD,), inp=VEC)
+        self.check_kind("requires reduction", K.REDUCE, (FIELD,),
+                        kernel="r")
+        self.check_kind("requires a ReductionKernel", K.REDUCE, (FIELD,),
+                        reduction=reduction)
+        self.check_kind("requires a ReductionKernel", K.REDUCE, (FIELD,),
+                        kernel="k", reduction=reduction)
+        self.check_kind("the other kinds a Kernel", K.CELL, (FIELD,),
+                        kernel="r", out=OUT)
+        self.check_kind("needs a size", K.REDUCE, (FIELD,), kernel="r",
+                        reduction=cat.Reduction(cat.STD_VECTOR, "r"))
+        self.check_kind("unknown scale", K.REDUCE, (FIELD,), kernel="r",
+                        reduction=cat.Reduction(cat.VECTOR3, "r", "s"))
+        self.check_kind("requires point", K.POINT, kernel=None)
+        self.check_kind("doesn't take a kernel", K.POINT, point="p")
+        self.check_kind("requires dims", K.LIST, (FIELD,))
+        self.check_kind("requires dims", K.SCATTER, (FIELD,), kernel=None)
+
+    def test_kind_exclusions(self):
+        K = cat.Kind
+        self.check_kind("doesn't take reduction", K.CELL, (FIELD,), out=OUT,
+                        reduction=cat.Reduction(cat.VECTOR3, "r"))
+        self.check_kind("doesn't take dims", K.INTERVAL, (FIELD,), out=OUT,
+                        dims=3)
+        self.check_kind("doesn't take out", K.ALL, (FIELD,), inp=VEC,
+                        out=OUT)
+        self.check_kind("doesn't take inp", K.REDUCE, (FIELD,), kernel="r",
+                        inp=VEC, reduction=cat.Reduction(cat.VECTOR3, "r"))
+        self.check_kind("doesn't take fields", K.POINT, (FIELD,),
+                        kernel=None, point="p")
+        self.check_kind("doesn't take point", K.GATHER, (FIELD,), dims=3,
+                        point="p")
+
+    def test_valid_kinds(self):
+        K = cat.Kind
+        kernels = (cat.Kernel("b", lambda: [], components=("c", 3)),
+                   cat.ReductionKernel("r", lambda: ([], [])))
+        make_catalogue(cat.Namespace("N", kernels, (
+            cat.Accessor("a", K.ALL, "b", (FIELD_MUT,), inp=VEC),
+            cat.Accessor("r", K.REDUCE, "r", (FIELD,),
+                         reduction=cat.Reduction(cat.VECTOR3, "r")),
+            cat.Accessor("p", K.POINT, point="p"),
+            cat.Accessor("s", K.SCATTER, None, (FIELD,), dims=3,
+                         targets=cat.CUDA_ONLY))))
+
+
+class ValidationTest(unittest.TestCase):
+
+    def test_container_kind_is_checked(self):
+        with self.assertRaisesRegex(cat.CatalogueError, "container kind"):
+            cat.Container("vector", 3)
+
+    def test_value_must_fit_its_container(self):
+        cat.Value(cat.VECTOR3, 3, "v")
+        cat.Value(cat.STD_VECTOR, 5, "v")
+        cat.Value(cat.array(19), 19, "v")
+        with self.assertRaisesRegex(cat.CatalogueError, "can't hold 5"):
+            cat.Value(cat.VECTOR3, 5, "v")
+
+    def test_return_type_of_a_variant(self):
+        cat.Variant(returns="auto")
+        with self.assertRaisesRegex(cat.CatalogueError, "return type"):
+            cat.Variant(returns="double")
+
+    def test_target_mappings_are_read_only(self):
+        for targets in (cat.BOTH, cat.CPU_ONLY, cat.CUDA_ONLY):
+            with self.assertRaises(TypeError):
+                targets["cpu"] = cat.Variant()
+        accessor = cat.Accessor("a", cat.Kind.CELL)
+        self.assertEqual(dict(accessor.targets), dict(cat.BOTH))
+
+    def test_catalogue_error_is_a_value_error(self):
+        self.assertTrue(issubclass(cat.CatalogueError, ValueError))
 
 
 class ToyBackend(accessor_sfg.AccessorBackend):
@@ -206,8 +325,8 @@ class BackendTest(unittest.TestCase):
         return events
 
     def test_shared_kernels_precede_the_accessors(self):
-        both = cat.Accessor("a", cat.Kind.CELL, "k1", (FIELD,))
-        other = cat.Accessor("b", cat.Kind.CELL, "k2", (FIELD,))
+        both = cat.Accessor("a", cat.Kind.CELL, "k1", (FIELD,), out=OUT)
+        other = cat.Accessor("b", cat.Kind.CELL, "k2", (FIELD,), out=OUT)
         namespace = cat.Namespace(
             "N", (make_kernel("k1"), make_kernel("k2")), (both, other))
         self.assertEqual(self.run_backend(namespace), [
@@ -215,10 +334,10 @@ class BackendTest(unittest.TestCase):
             ("cell", "a", "k1", "k1"), ("cell", "b", "k2", "k2")])
 
     def test_private_kernels_are_created_at_their_accessor(self):
-        first = cat.Accessor("a", cat.Kind.CELL, "k1", (FIELD,))
+        first = cat.Accessor("a", cat.Kind.CELL, "k1", (FIELD,), out=OUT)
         private = cat.Accessor(
-            "b", cat.Kind.CELL, make_kernel("late"), (FIELD,))
-        last = cat.Accessor("c", cat.Kind.CELL, "k1", (FIELD,))
+            "b", cat.Kind.CELL, make_kernel("late"), (FIELD,), out=OUT)
+        last = cat.Accessor("c", cat.Kind.CELL, "k1", (FIELD,), out=OUT)
         namespace = cat.Namespace("N", (make_kernel("k1"),),
                                   (first, private, last))
         self.assertEqual(self.run_backend(namespace), [
@@ -233,7 +352,7 @@ class BackendTest(unittest.TestCase):
                          [("point", "p", None, None)])
 
     def test_unsupported_target_kernels_are_skipped(self):
-        accessor = cat.Accessor("a", cat.Kind.CELL, "k1", (FIELD,))
+        accessor = cat.Accessor("a", cat.Kind.CELL, "k1", (FIELD,), out=OUT)
         namespace = cat.Namespace(
             "N", (make_kernel("k1"), make_kernel("k2", ("cuda",))),
             (accessor,))
@@ -242,8 +361,8 @@ class BackendTest(unittest.TestCase):
 
     def test_unsupported_kind(self):
         namespace = cat.Namespace("N", (make_kernel("k1"),), (
-            cat.Accessor("a", cat.Kind.ALL, "k1", (FIELD,)),))
-        with self.assertRaisesRegex(ValueError, r"N::a of the kind all"):
+            cat.Accessor("a", cat.Kind.INTERVAL, "k1", (FIELD,), out=OUT),))
+        with self.assertRaisesRegex(ValueError, r"N::a of the kind interval"):
             self.run_backend(namespace)
 
     def test_the_backend_checks_the_target_of_the_context(self):
@@ -253,7 +372,7 @@ class BackendTest(unittest.TestCase):
     @staticmethod
     def namespace_of_a_cell():
         return cat.Namespace("N", (make_kernel("k1"),), (
-            cat.Accessor("a", cat.Kind.CELL, "k1", (FIELD,)),))
+            cat.Accessor("a", cat.Kind.CELL, "k1", (FIELD,), out=OUT),))
 
 
 if __name__ == "__main__":

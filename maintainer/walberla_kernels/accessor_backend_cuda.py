@@ -37,6 +37,11 @@ Device work:
 * the accessors over lists (``LIST``, ``GATHER``) are kernels over a 1D list
   of particle positions (or indices) that address the lattice fields with
   ``Field.absolute_access``;
+* the kinds ``LIST``, ``GATHER`` and ``SCATTER`` are LB-oriented: they use
+  the buffer fields of the roles ``pos``, ``indices``, ``values`` and
+  ``out<n>`` of the catalogue and assume three space dimensions. A generic
+  catalogue (e.g. electrokinetics) is expected to use ``CELL``,
+  ``INTERVAL``, ``ALL`` and ``REDUCE`` only.
 * ``SCATTER`` spreads values onto the cells with ``atomicAdd``, which
   pystencils can't express: its ``__global__`` kernel is a C++ string.
   It is written for three space dimensions and uses the same
