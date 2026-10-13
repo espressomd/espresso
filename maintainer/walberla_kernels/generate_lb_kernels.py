@@ -40,6 +40,7 @@ from pystencils.sympyextensions.random import Philox
 
 import compat
 import field_accessors
+import field_accessors_cuda
 import lees_edwards
 import pystencils_espresso
 import relaxation_rates
@@ -180,12 +181,19 @@ def generate_accessors(sfg, ctx, name):
     field_accessors.generate_field_accessors(sfg, ctx, method)
 
 
+def generate_accessors_cuda(sfg, ctx, name):
+    fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
+    method = create_lb_method(fields)
+    field_accessors_cuda.generate_field_accessors_cuda(sfg, ctx, method)
+
+
 @dataclasses.dataclass(frozen=True)
 class Kernel:
     stem: str
     targets: tuple
     generate: typing.Callable
     header_only: bool = False
+    header_extension: str = "h"
 
 
 KERNELS = {
@@ -200,6 +208,9 @@ KERNELS = {
                          generate_vel_update),
     "field_accessors": Kernel("FieldAccessors", ("cpu",), generate_accessors,
                               header_only=True),
+    "field_accessors_cuda": Kernel(
+        "FieldAccessors", ("cuda",), generate_accessors_cuda,
+        header_extension="cuh"),
 }
 
 
@@ -241,7 +252,8 @@ def main():
         name = ctx.class_name(kernel.stem)
         with sfg_driver.KernelFileGenerator(
                 name, ctx, args.output_dir, "generate_lb_kernels.py",
-                header_only=kernel.header_only) as sfg:
+                header_only=kernel.header_only,
+                header_extension=kernel.header_extension) as sfg:
             kernel.generate(sfg, ctx, name)
         print(f"generated {name}")
 
