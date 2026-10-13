@@ -26,45 +26,24 @@ pystencils-sfg composer. Replaces the Jinja template ``FieldAccessors.tmpl.h``
 The header-only file defines inline functions in the namespaces
 ``walberla::lbm::accessor::{Population, Vector, EquilibriumDistribution,
 Equilibrium, Density, Velocity, Force, MomentumDensity, PressureTensor}``.
-The functions are added with the stock ``SfgFunctionSequencer`` on a cursor
-proxy that doesn't register them by name, which allows overloads (which
-pystencils-sfg 0.3 does not support through its public API). The statements
+The functions are added with the helpers of `accessor_sfg`, which allow
+overloads (which pystencils-sfg 0.3 does not support through its public API). The statements
 of the function bodies are C++ strings assembled in Python. The equations of the
 LB method are printed by `accessor_equations`.
 """
 
-from pystencils.types import PsCustomType, constify
-from pystencilssfg.composer.basic_composer import SfgFunctionSequencer
-from pystencilssfg.lang import AugExpr, cpptype
+from pystencils.types import constify
+from pystencilssfg.lang import AugExpr
 from pystencilssfg.lang.cpp import std
 from sweepgen.api import (
     Cell, CellInterval, Direction, GhostLayerFieldPtr, Vector3)
 
 import accessor_equations
+import accessor_sfg
+from accessor_sfg import ARRAY, AUTO, MATRIX3
 
 # the accessors are written for a three-dimensional lattice
 _DIM = 3
-
-_Array = cpptype("std::array< {T}, {N}u >", "<array>")
-_Matrix3 = cpptype("walberla::Matrix3< {T} >", "core/math/Matrix3.h")
-
-AUTO = PsCustomType("auto")
-
-
-class _AllowOverloads:
-    """Cursor proxy that doesn't register functions by name, so that a
-    namespace can hold overloads (pystencils-sfg 0.3 rejects a second
-    function of the same name). Relies on pystencils-sfg internals:
-    re-check on upgrades."""
-
-    def __init__(self, cursor):
-        self._cursor = cursor
-
-    def add_entity(self, entity):
-        pass
-
-    def __getattr__(self, name):
-        return getattr(self._cursor, name)
 
 
 def _ui(i):
@@ -127,11 +106,11 @@ class _FieldAccessors:
         self.density_param = sfg.var("density", constify(T))
         self.rho_param = sfg.var("rho", constify(T))
         self.values = std.vector(T, const=True, ref=True).var("values")
-        self.pop = AugExpr(_Array(T=T, N=Q, const=True, ref=True)).var("pop")
+        self.pop = AugExpr(ARRAY(T=T, N=Q, const=True, ref=True)).var("pop")
         self.vector_return = std.vector(T).dtype
         self.vector3_return = Vector3(T).dtype
-        self.matrix3_return = _Matrix3(T=T)
-        self.array_return = _Array(T=T, N=Q)
+        self.matrix3_return = MATRIX3(T=T)
+        self.array_return = ARRAY(T=T, N=Q)
 
     # ---- statements shared by several accessors
 
@@ -173,11 +152,8 @@ class _FieldAccessors:
 
     def fn(self, name, *params, returns=None):
         """Start an inline function; the sequencer is called with the body."""
-        sequencer = SfgFunctionSequencer(
-            _AllowOverloads(self.sfg._cursor), name).inline()
-        if returns is not None:
-            sequencer = sequencer.returns(returns)
-        return sequencer.params(*params)
+        return accessor_sfg.function(self.sfg, name, *params, returns=returns,
+                                     inline=True)
 
     # ---- generate
 

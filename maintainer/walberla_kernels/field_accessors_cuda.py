@@ -35,7 +35,7 @@ Device work:
   (``sfg.gpu_invoke``). The fields are `walberla::gpu::GPUField` views over
   the requested `CellInterval`; host data is exchanged through a linear
   device buffer that is mapped to a pystencils field
-  (`_LinearBuffer`, x-major, f-fastest);
+  (`LinearBuffer`, x-major, f-fastest);
 * the reductions are per-cell pystencils kernels that fill a device buffer,
   which is summed on the host in the order of the cells (deterministic);
 * the trilinear interpolation of particle positions and
@@ -46,11 +46,7 @@ Device work:
   ``atomicAdd``, which pystencils can't express: its ``__global__`` kernel
   is a C++ string.
 
-Relies on pystencils-sfg 0.3 internals; re-check them whenever
-TOOLCHAIN_REQUIREMENTS changes: ``_AllowOverloads`` (from
-`field_accessors`), ``sfg._cursor``, the ``SupportsFieldExtraction``
-protocol (``_extract_ptr``, ``_extract_size``, ``_extract_stride``) of
-`_LinearBuffer`, ``SfgFunctionSequencer`` and ``SfgStatements``.
+Relies on pystencils-sfg 0.3 internals, see `accessor_sfg`.
 """
 
 import itertools
@@ -59,63 +55,17 @@ import pystencils as ps
 import sympy as sp
 from pystencils.sympyextensions.typed_sympy import TypeCast
 from pystencils.types import PsCustomType, PsPointerType, constify
-from pystencilssfg.composer.basic_composer import SfgFunctionSequencer
-from pystencilssfg.ir import SfgStatements
-from pystencilssfg.lang import (
-    AugExpr, SupportsFieldExtraction, asvar, cpptype,
-    depends, includes)
+from pystencilssfg.lang import AugExpr, cpptype
 from pystencilssfg.lang.cpp import std
 from sweepgen.api import Cell, CellInterval, GpuFieldPtr, Vector3
 
 import accessor_equations
-from field_accessors import _AllowOverloads, _Matrix3, _Array
+import accessor_sfg
+from accessor_sfg import ARRAY, MATRIX3, UINT, LinearBuffer, statement
 
 _DIM = 3
 _DeviceVector = cpptype("thrust::device_vector< {T} >",
                         "<thrust/device_vector.h>")
-UINT = PsCustomType("uint")
-
-
-class _LinearBuffer(AugExpr, SupportsFieldExtraction):
-    """
-    Device pointer to a dense array with ``fsize`` values per element,
-    viewed as a pystencils field with spatial extents ``sizes``
-    (1 to 3 expressions): the first spatial coordinate is the slowest and
-    the value index the fastest, the layout of the buffers of the legacy
-    accessors.
-    """
-
-    def __init__(self, ptr_type, sizes, fsize):
-        super().__init__(ptr_type)
-        self._sizes = [AugExpr.format("{}", s) for s in sizes]
-        self._fsize = fsize
-
-    def _extract_ptr(self):
-        return AugExpr.format("{}", self)
-
-    def _extract_size(self, coordinate):
-        if coordinate < len(self._sizes):
-            return self._sizes[coordinate]
-        return AugExpr.format("{}", self._fsize)
-
-    def _extract_stride(self, coordinate):
-        rank = len(self._sizes)
-        if coordinate == rank:
-            return AugExpr.format("1")
-        stride = AugExpr.format("{}", self._fsize)
-        for size in self._sizes[coordinate + 1:]:
-            stride = AugExpr.format("{} * {}", stride, size)
-        return stride
-
-
-def _statement(code, defines=(), uses=()):
-    """C++ statement with the variables it defines and uses."""
-    deps = set()
-    incls = set()
-    for expr in uses:
-        deps |= depends(expr)
-        incls |= includes(expr)
-    return SfgStatements(code, [asvar(d) for d in defines], deps, incls)
 
 
 def _instantiate(eqs, inputs, suffix=""):
@@ -159,12 +109,12 @@ class _CudaFieldAccessors:
         self.vector = lambda name: Vector3(T, const=True, ref=True).var(name)
         self.density_param = sfg.var("density", constify(T))
         self.values = std.vector(T, const=True, ref=True).var("values")
-        self.pop = AugExpr(_Array(T=T, N=Q, const=True, ref=True)).var("pop")
+        self.pop = AugExpr(ARRAY(T=T, N=Q, const=True, ref=True)).var("pop")
         self.gl = sfg.var("gl", UINT)
         self.vector_return = std.vector(T).dtype
         self.vector3_return = Vector3(T).dtype
-        self.matrix3_return = _Matrix3(T=T)
-        self.array_return = _Array(T=T, N=Q)
+        self.matrix3_return = MATRIX3(T=T)
+        self.array_return = ARRAY(T=T, N=Q)
 
         # pystencils fields; sizes and strides are set at runtime
         def field(name, rank, fsize, dtype=None, **kwargs):
@@ -196,32 +146,22 @@ class _CudaFieldAccessors:
             target=ps.Target.CUDA, default_dtype=self.dtype, ghost_layers=0)
         return self.sfg.kernels.create(assignments, name, config)
 
-    def kparam(self, kernel, name):
-        """The parameter ``name`` of a kernel as a function parameter."""
-        for param in kernel.scalar_parameters:
-            if param.name == name:
-                return param
-        return None
-
     def density_of(self, kernel):
         """The parameter ``density`` of a kernel, or the plain variable if
         the kernel doesn't take it."""
-        return self.kparam(kernel, "density") or self.density_param
+        return (accessor_sfg.kernel_param(kernel, "density")
+                or self.density_param)
 
     def fn(self, name, *params, returns=None):
         """Start a (non-inline) function; the sequencer is called with the
         body."""
-        sequencer = SfgFunctionSequencer(
-            _AllowOverloads(self.sfg._cursor), name)
-        if returns is not None:
-            sequencer = sequencer.returns(returns)
-        return sequencer.params(*params)
+        return accessor_sfg.function(self.sfg, name, *params, returns=returns)
 
     def device_vector(self, name, size_args, uses=(), shape=None, fsize=None):
         """
         Device vector ``name`` (of the working precision) and the pointer
         ``name_ptr`` to its data. With ``shape`` (spatial extents) the
-        pointer is a `_LinearBuffer` with ``fsize`` values per element.
+        pointer is a `LinearBuffer` with ``fsize`` values per element.
         """
         T = self.T
         vector = AugExpr(_DeviceVector(T=self.dtype)).var(name)
@@ -229,13 +169,13 @@ class _CudaFieldAccessors:
         if shape is None:
             ptr = AugExpr(ptr_type).var(f"{name}_ptr")
         else:
-            ptr = _LinearBuffer(ptr_type, shape, fsize).var(f"{name}_ptr")
+            ptr = LinearBuffer(ptr_type, shape, fsize).var(f"{name}_ptr")
         decl = [
-            _statement(f"thrust::device_vector<{T}> {name}({size_args});",
-                       (vector,), uses),
-            _statement(f"{T} *{name}_ptr = "
-                       f"thrust::raw_pointer_cast({name}.data());",
-                       (ptr,), (vector,))]
+            statement(f"thrust::device_vector<{T}> {name}({size_args});",
+                      (vector,), uses),
+            statement(f"{T} *{name}_ptr = "
+                      f"thrust::raw_pointer_cast({name}.data());",
+                      (ptr,), (vector,))]
         return ptr, decl
 
     def slice_body(self, kernel, fields, *, ci, buffer=None, scalars=None,
@@ -278,14 +218,14 @@ class _CudaFieldAccessors:
     def cell_interval(self):
         """Interval with the single cell ``cell``."""
         ci = CellInterval(const=True).var("ci")
-        return ci, _statement("walberla::CellInterval ci(cell, cell);",
-                              (ci,), (self.cell,))
+        return ci, statement("walberla::CellInterval ci(cell, cell);",
+                             (ci,), (self.cell,))
 
     def whole_interval(self, size, field_ptr):
         """Interval over a whole field: ``size`` is the member function of
         the field (e.g. ``xyzSize``)."""
         ci = CellInterval().var("ci")
-        return ci, _statement(
+        return ci, statement(
             f"walberla::CellInterval ci = {field_ptr}->{size}();",
             (ci,), (field_ptr,))
 
@@ -514,28 +454,28 @@ class _CudaFieldAccessors:
             ps.Assignment(f_vec.absolute_access(idx, (j,)), f_val(j))
             for j in range(D)])
         n = AugExpr(PsCustomType("uint")).var("n_entries")
-        n_decl = _statement(
+        n_decl = statement(
             f"uint n_entries = static_cast<uint>(indices.size() / {D}ul);",
             (n,), (indices,))
         ci = CellInterval().var("ci")
-        ci_decl = _statement(
+        ci_decl = statement(
             "walberla::CellInterval ci = field->xyzSize();\n"
             "ci.expand(walberla::cell_idx_c(gl));", (ci,), (field, gl))
         # the kernel writes the field, which is passed by const pointer
-        field_decl = _statement(
+        field_decl = statement(
             f"auto *field_mut = const_cast<walberla::gpu::GPUField<{T}> *>"
             f"(field);", (field_mut,), (field,))
-        ptr_idx = _LinearBuffer(PsPointerType(ps.create_type("int32")),
-                                [n], D).var("indices_ptr")
-        ptr_val = _LinearBuffer(PsPointerType(self.dtype), [n],
-                                D).var("values_ptr")
+        ptr_idx = LinearBuffer(PsPointerType(ps.create_type("int32")),
+                               [n], D).var("indices_ptr")
+        ptr_val = LinearBuffer(PsPointerType(self.dtype), [n],
+                               D).var("values_ptr")
         decl = [
-            _statement("int const *indices_ptr = "
-                       "thrust::raw_pointer_cast(indices.data());",
-                       (ptr_idx,), (indices,)),
-            _statement(f"{T} const *values_ptr = "
-                       f"thrust::raw_pointer_cast(values.data());",
-                       (ptr_val,), (values,))]
+            statement("int const *indices_ptr = "
+                      "thrust::raw_pointer_cast(indices.data());",
+                      (ptr_idx,), (indices,)),
+            statement(f"{T} const *values_ptr = "
+                      f"thrust::raw_pointer_cast(values.data());",
+                      (ptr_val,), (values,))]
         self.fn("set_from_list", field, indices, values, gl)(
             f"assert(values.size() == indices.size());",
             "if (indices.empty()) {", "  return;", "}",
@@ -625,12 +565,12 @@ class _CudaFieldAccessors:
         nodes = [
             "if (pos.empty()) {",
             "  return {};" if returns is not None else "  return;", "}",
-            _statement(
+            statement(
                 f"uint n_pos = static_cast<uint>(pos.size() / {D}ul);",
                 (n,), (pos,)),
-            _statement("walberla::CellInterval ci = field->xyzSize();\n"
-                       "ci.expand(walberla::cell_idx_c(gl));", (ci,),
-                       (field, gl))]
+            statement("walberla::CellInterval ci = field->xyzSize();\n"
+                      "ci.expand(walberla::cell_idx_c(gl));", (ci,),
+                      (field, gl))]
         maps = [self.sfg.map_field(f_field, field.with_cell_interval(ci))]
         for vec_name, args, uses, f_buffer in uploads:
             ptr, decl = self.device_vector(
