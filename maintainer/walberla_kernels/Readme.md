@@ -17,7 +17,8 @@ and Jinja templates to [sweepgen](https://walberla.net) and
 | LB `StreamCollideSweepLeesEdwards` | `generate_lb_kernels.py --kernels stream_collide_lees_edwards` | sweepgen |
 | LB `UpdateVelFromPDF` | `generate_lb_kernels.py --kernels vel_update` | sweepgen |
 | LB CPU `FieldAccessors` | `generate_lb_kernels.py --kernels field_accessors` | sweepgen |
-| Other LB kernels (CUDA accessors, pack infos, boundaries) | not regenerable at the moment | pystencils 1.4 (committed output) |
+| LB CUDA `FieldAccessors` | `generate_lb_kernels.py --kernels field_accessors_cuda` | sweepgen |
+| Other LB kernels (pack infos, boundaries) | not regenerable at the moment | pystencils 1.4 (committed output) |
 | EK kernels | not regenerable at the moment | pystencils 1.4 (committed output) |
 
 To regenerate a kernel that has not been migrated yet, use the generator
@@ -65,6 +66,7 @@ function format_kernels {
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cpp -style "{Language: Cpp, ColumnLimit: 0}"
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cu  -style "{Language: Cpp, ColumnLimit: 0}"
+  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cuh -style "{Language: Cpp}"
 }
 format_kernels
 ```
@@ -89,6 +91,13 @@ which pystencils-sfg 0.3 does not keep stable between runs.
   pystencils-sfg internals (`_AllowOverloads`); re-check it whenever the
   pystencils-sfg version changes. `tests/data/field_accessors_api_*.json`
   holds the accessor API expected by the waLBerla bridge.
+* `field_accessors_cuda.py`: the CUDA LB field accessors, declared in a
+  `.cuh` and defined in a `.cu`. The slice operations and the particle
+  interpolation are pystencils CUDA kernels. The reductions fill a device
+  buffer that is summed on the host in cell order, so they are
+  deterministic. Only `Interpolation::add_force` scatters with `atomicAdd`,
+  in a hand-written kernel. `tests/data/field_accessors_cuda_api_*.json`
+  holds the API expected by the waLBerla bridge.
 * `tests/`: unit tests, run with
   `python3 -m unittest discover -s tests -t .` from this directory.
 
