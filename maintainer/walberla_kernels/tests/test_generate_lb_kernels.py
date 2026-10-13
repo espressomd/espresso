@@ -83,6 +83,34 @@ class GenerateLbKernelsTest(unittest.TestCase):
         self.assertIn("skipping field_accessors for target cuda",
                       result.stdout)
 
+    def test_field_accessors_cuda(self):
+        tmp, _ = self.run_script("--kernels", "field_accessors_cuda",
+                                 "--precision", "double", "--target", "cuda")
+        self.assertEqual(sorted(p.name for p in tmp.iterdir()),
+                         ["FieldAccessorsDoublePrecisionCUDA.cu",
+                          "FieldAccessorsDoublePrecisionCUDA.cuh"])
+        header = (tmp / "FieldAccessorsDoublePrecisionCUDA.cuh").read_text()
+        self.assertIn("namespace Interpolation", header)
+        source = (tmp / "FieldAccessorsDoublePrecisionCUDA.cu").read_text()
+        self.assertIn('#include "FieldAccessorsDoublePrecisionCUDA.cuh"',
+                      source)
+
+    def test_field_accessors_cuda_cpu_targets_are_skipped(self):
+        tmp, result = self.run_script("--kernels", "field_accessors_cuda",
+                                      "--target", "cpu", "avx")
+        self.assertEqual(list(tmp.iterdir()), [])
+        for target in ("cpu", "avx"):
+            self.assertIn(
+                f"skipping field_accessors_cuda for target {target}",
+                result.stdout)
+
+    def test_header_extension_of_kernels(self):
+        import generate_lb_kernels
+        extensions = {key: kernel.header_extension for key, kernel in
+                      generate_lb_kernels.KERNELS.items()}
+        self.assertEqual(extensions.pop("field_accessors_cuda"), "cuh")
+        self.assertEqual(set(extensions.values()), {"h"})
+
     def test_duplicate_selections_generate_once(self):
         _, result = self.run_script(
             "--kernels", "init", "init", "--precision", "double", "double",
