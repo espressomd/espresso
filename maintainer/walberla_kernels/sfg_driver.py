@@ -127,6 +127,7 @@ class KernelFileGenerator(pystencilssfg.SourceFileGenerator):
     (``.h`` by default) and ``<basename>.cpp`` (``.cu`` for CUDA) instead of
     naming the files after the generator script. With ``header_only``, only
     the header is written and all functions are generated ``inline``.
+    pystencils-sfg doesn't format the files, even if it finds clang-format.
     """
 
     def __init__(self, basename, ctx, output_dir, generator_script,
@@ -138,6 +139,9 @@ class KernelFileGenerator(pystencilssfg.SourceFileGenerator):
         config.extensions.header = header_extension
         config.extensions.impl = "cu" if ctx.is_gpu else "cpp"
         config.header_only = header_only
+        # the output must not depend on the environment: the files are
+        # formatted with ``maintainer/format/clang-format.sh``
+        config.clang_format.skip = True
         config.output_directory = pathlib.Path(output_dir)
         super().__init__(config, keep_unknown_argv=True)
 
