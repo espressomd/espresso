@@ -61,17 +61,23 @@ overrides the return type.
 
 import dataclasses
 import enum
+import types
 import typing
 
 import pystencils as ps
 
 __all__ = [
-    "Kind", "Container", "SCALAR", "VECTOR3", "MATRIX3", "STD_VECTOR",
+    "CatalogueError", "Kind", "Container", "SCALAR", "VECTOR3", "MATRIX3", "STD_VECTOR",
     "array", "Value", "FieldSpec", "FieldArg", "Variant", "BOTH", "CPU_ONLY",
     "CUDA_ONLY", "Point", "Kernel", "ReductionKernel", "Reduction", "Accessor",
     "Namespace", "Catalogue", "TARGETS"]
 
 TARGETS = ("cpu", "cuda")
+CONTAINER_KINDS = ("scalar", "array", "vector3", "matrix3", "std_vector")
+
+
+class CatalogueError(ValueError):
+    """The catalogue is inconsistent."""
 
 
 class Kind(enum.Enum):
@@ -96,6 +102,12 @@ class Container:
     kind: str
     size: typing.Optional[int] = None
 
+    def __post_init__(self):
+        if self.kind not in CONTAINER_KINDS:
+            raise CatalogueError(
+                f"unknown container kind {self.kind!r}, "
+                f"expected one of {CONTAINER_KINDS}")
+
 
 SCALAR = Container("scalar", 1)
 VECTOR3 = Container("vector3", 3)
@@ -118,6 +130,12 @@ class Value:
     container: Container
     n: int
     name: str
+
+    def __post_init__(self):
+        if self.container.size not in (None, self.n):
+            raise CatalogueError(
+                f"the container {self.container} of the value {self.name} "
+                f"can't hold {self.n} values")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -147,17 +165,24 @@ class FieldArg:
 class Variant:
     """
     Spelling of an accessor on one target: ``names`` maps the default name
-    of a parameter to the name it has on the target, ``returns`` is the
-    spelling of the return type if it differs from the type of the
-    returned container (``"auto"``).
+    of a field parameter or of the input value to the name it has on the
+    target (the scalars and the domain ``cell``/``ci`` can't be renamed),
+    ``returns`` is None (the type of the returned container) or ``"auto"``
+    (the return type is deduced).
     """
     names: typing.Mapping[str, str] = dataclasses.field(default_factory=dict)
     returns: typing.Optional[str] = None
 
+    def __post_init__(self):
+        if self.returns not in (None, "auto"):
+            raise CatalogueError(
+                f"unknown return type {self.returns!r}, "
+                f"expected None or 'auto'")
 
-BOTH = {"cpu": Variant(), "cuda": Variant()}
-CPU_ONLY = {"cpu": Variant()}
-CUDA_ONLY = {"cuda": Variant()}
+
+BOTH = types.MappingProxyType({"cpu": Variant(), "cuda": Variant()})
+CPU_ONLY = types.MappingProxyType({"cpu": Variant()})
+CUDA_ONLY = types.MappingProxyType({"cuda": Variant()})
 
 
 @dataclasses.dataclass(frozen=True)
@@ -258,6 +283,36 @@ class Accessor:
         return tuple(self.param_name(n, target) for n in self.default_names())
 
 
+# attributes of an `Accessor` that each kind requires or forbids (all others
+# are optional): the backends use them without checking
+_REQUIRED = {
+    Kind.CELL: ("fields",),
+    Kind.INTERVAL: ("fields",),
+    Kind.ALL: ("fields", "inp"),
+    Kind.REDUCE: ("fields", "reduction"),
+    Kind.POINT: ("point",),
+    Kind.LIST: ("fields", "dims"),
+    Kind.GATHER: ("fields", "dims"),
+    Kind.SCATTER: ("fields", "dims"),
+}
+_FORBIDDEN = {
+    Kind.CELL: ("reduction", "point", "dims"),
+    Kind.INTERVAL: ("reduction", "point", "dims"),
+    Kind.ALL: ("out", "reduction", "point", "dims"),
+    Kind.REDUCE: ("inp", "out", "point", "dims"),
+    Kind.POINT: ("fields", "inp", "out", "scalars", "reduction", "dims"),
+    Kind.LIST: ("reduction", "point"),
+    Kind.GATHER: ("inp", "reduction", "point"),
+    Kind.SCATTER: ("reduction", "point"),
+}
+# kinds that have no kernel, or an optional one
+_NO_KERNEL = (Kind.POINT, Kind.SCATTER)
+
+
+def _has(value):
+    return value is not None and value != ()
+
+
 @dataclasses.dataclass(frozen=True)
 class Namespace:
     """Accessors and their kernels, in the order of the generated code."""
@@ -308,40 +363,94 @@ class Catalogue:
 
     def __post_init__(self):
         """Check that the catalogue is consistent."""
+        defined = {target: set() for target in TARGETS}
         for ns in self.namespaces:
             names = [k.name for k in ns.kernels]
-            assert len(names) == len(set(names)), (ns.name, names)
-            signatures = set()
+            if len(names) != len(set(names)):
+                raise CatalogueError(
+                    f"{ns.name}: duplicate kernel names {names}")
             for acc in ns.accessors:
                 self._check(ns, acc)
-                key = (acc.name, acc.kind, acc.fields, acc.inp and
-                       acc.inp.container, acc.scalars, tuple(acc.targets))
-                assert key not in signatures, (
-                    f"{ns.name}::{acc.name} is defined twice")
-                signatures.add(key)
+                # overloads must differ in the parameter types on each target
+                key = (ns.name, acc.name, acc.kind,
+                       tuple((f.role, f.const) for f in acc.fields),
+                       acc.inp and acc.inp.container, acc.scalars)
+                for target in acc.targets:
+                    if key in defined[target]:
+                        raise CatalogueError(
+                            f"{ns.name}::{acc.name} is defined twice "
+                            f"on {target}")
+                    defined[target].add(key)
 
     def _check(self, ns, acc):
         where = f"{ns.name}::{acc.name}"
-        assert set(acc.targets) <= set(TARGETS), where
+
+        def require(condition, message):
+            if not condition:
+                raise CatalogueError(f"{where}: {message}")
+
+        require(set(acc.targets) <= set(TARGETS),
+                f"unknown targets {sorted(set(acc.targets) - set(TARGETS))}")
         for field in acc.fields:
-            assert field.role in self.fields, (where, field.role)
+            require(field.role in self.fields,
+                    f"unknown field role {field.role!r}")
+        # the backends only rename field parameters and the input value
+        renamable = {f.name for f in acc.fields}
+        if acc.inp is not None:
+            renamable.add(acc.inp.name)
         for target, variant in acc.targets.items():
-            assert set(variant.names) <= set(acc.default_names()), (
-                where, target, variant.names)
-        if isinstance(acc.kernel, str):
-            kernel = [k for k in ns.kernels if k.name == acc.kernel]
-            assert len(kernel) == 1, (where, acc.kernel)
-            assert set(acc.targets) <= set(kernel[0].targets), (
-                where, acc.kernel)
-        elif acc.kernel is not None:
-            assert set(acc.targets) <= set(acc.kernel.targets), where
+            unknown = set(variant.names) - renamable
+            require(not unknown,
+                    f"{target}: can't rename {sorted(unknown)}, only the "
+                    f"fields and the input value can be renamed")
+        # kernel
+        kernel = acc.kernel
+        if isinstance(kernel, str):
+            found = [k for k in ns.kernels if k.name == kernel]
+            require(len(found) == 1, f"unknown kernel {kernel!r}")
+            kernel = found[0]
+        if kernel is not None:
+            require(set(acc.targets) <= set(kernel.targets),
+                    f"the kernel {kernel.name} doesn't exist on all the "
+                    f"targets of the accessor")
+        # kind
+        kind = acc.kind
+        for attr in _REQUIRED[kind]:
+            require(_has(getattr(acc, attr)),
+                    f"the kind {kind.name} requires {attr}")
+        for attr in _FORBIDDEN[kind]:
+            require(not _has(getattr(acc, attr)),
+                    f"the kind {kind.name} doesn't take {attr}")
+        if kind in (Kind.CELL, Kind.INTERVAL):
+            require((acc.inp is None) != (acc.out is None),
+                    f"the kind {kind.name} requires exactly one of inp and "
+                    f"out")
+        if kind in _NO_KERNEL:
+            require(kernel is None,
+                    f"the kind {kind.name} doesn't take a kernel")
+        else:
+            require(kernel is not None,
+                    f"the kind {kind.name} requires a kernel")
+            reduces = isinstance(kernel, ReductionKernel)
+            require(reduces == (kind == Kind.REDUCE),
+                    "the kind REDUCE requires a ReductionKernel, the other "
+                    "kinds a Kernel")
+        if kind == Kind.ALL:
+            require(kernel.components is not None,
+                    "the kind ALL requires a kernel with components")
+        if kind == Kind.REDUCE:
+            require(acc.reduction.container.size is not None,
+                    "the container of a reduction needs a size")
+            require(acc.reduction.scale in (None, *acc.scalars),
+                    f"unknown scale {acc.reduction.scale!r}")
 
     def for_target(self, target):
         """
         The namespaces that have accessors on ``target``, each reduced to
         its kernels and accessors of ``target``.
         """
-        assert target in TARGETS, target
+        if target not in TARGETS:
+            raise CatalogueError(f"unknown target {target!r}")
         result = []
         for ns in self.namespaces:
             kernels, accessors = ns.for_target(target)

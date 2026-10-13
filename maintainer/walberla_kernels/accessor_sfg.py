@@ -271,7 +271,9 @@ class AccessorBackend:
 
     def params(self, acc, kernel=None):
         """The function parameters of an accessor of the kind ``CELL``,
-        ``INTERVAL``, ``ALL`` or ``REDUCE``."""
+        ``INTERVAL``, ``ALL`` or ``REDUCE`` (the catalogue only allows to
+        rename the fields and the input value: the scalars and the domain
+        keep their default names)."""
         def rename(name):
             return acc.param_name(name, self.target)
 
@@ -298,8 +300,6 @@ class AccessorBackend:
         variant = acc.targets[self.target]
         if variant.returns == "auto":
             return AUTO
-        if variant.returns is not None:
-            raise ValueError(f"unknown return type {variant.returns}")
         container = acc.out.container if acc.out is not None else (
             acc.reduction.container if acc.reduction is not None else None)
         return None if container is None else return_type(
@@ -355,7 +355,8 @@ class AccessorBackend:
         return self.kernel(spec.name, spec.build())
 
     def reduction_kernel(self, spec):
-        raise NotImplementedError(f"{self.target} backend: no reductions")
+        raise NotImplementedError(
+            f"the {self.target} backend must implement reduction_kernel")
 
     def generate_namespace(self, ns):
         kernels, accessors = ns.for_target(self.target)
