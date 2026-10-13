@@ -105,14 +105,17 @@ for any `PYTHONHASHSEED`.
     `generate_field_accessors`. The functions that exist on one target only
     are flagged in the catalogue: `Equilibrium` and `EquilibriumDistribution`
     on the CPU, `Interpolation`, `Vector::set_from_list` and the `atomicAdd`
-    kernel on CUDA. The catalogue is written to be reused for the EK
-    accessors: the backends take sizes, fields and equations from it.
+    kernel on CUDA. The catalogue format (`accessor_catalogue.py`) and
+    the backends are generic and meant to be reused for the EK accessors with
+    an EK catalogue of their own, because the backends take sizes, fields and
+    equations from the catalogue.
   * `accessor_backend_cpu.py`: the CPU wrappers, in a header-only
     `FieldAccessors<Precision>Precision.h`. The kernels are pystencils
     `GenericCPU` kernels defined `inline` in the header, so the bridge needs
-    no source file. Values are exchanged through the stack, and the
-    reductions use `AddReductionAssignment` (a sequential sum in the order of
-    the cells). The header needs the pystencils runtime headers like the
+    no source file. Single-cell values are exchanged through the stack,
+    interval values through `std::vector`, and the reductions use
+    `AddReductionAssignment` (a sequential sum in the order of the cells).
+    The header needs the pystencils runtime headers like the
     other kernels. `sfg_driver.patch_kernel_source()` doesn't process
     headers; the accessor kernels don't need it (the RNG, `sqrt`, `fmin` and
     `fmax` are not used), which `tests/test_field_accessors.py` guards.

@@ -229,6 +229,9 @@ class AccessorBackend:
     """
 
     target = None
+    # True if the backend generates device code; checked against the
+    # target of the code generation context
+    gpu = False
     inline = False
     # headers of the generated file, and those only the source file needs
     headers = ()
@@ -236,7 +239,7 @@ class AccessorBackend:
     ps_target = None
 
     def __init__(self, sfg, ctx, cat):
-        if ctx.is_gpu != (self.target == "cuda"):
+        if ctx.is_gpu != self.gpu:
             raise ValueError(
                 f"the {self.target} accessors don't support the target "
                 f"{ctx.target}")
@@ -252,6 +255,12 @@ class AccessorBackend:
         raise NotImplementedError
 
     # ---- helpers
+
+    def lattice_fields(self, acc, params):
+        """Pairs of the pystencils field and the parameter of the fields of
+        an accessor."""
+        return [(self.cat.fields[f.role].field, p)
+                for f, p in zip(acc.fields, params.fields)]
 
     def kernel(self, name, assignments):
         config = ps.CreateKernelConfig(

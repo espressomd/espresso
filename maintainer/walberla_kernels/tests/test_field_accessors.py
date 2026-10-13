@@ -129,6 +129,7 @@ class FieldAccessorsTest(unittest.TestCase):
             self.assertEqual(len(re.findall(r"^\s*inline ", header, re.M)),
                              len(functions))
             kernels = [f for f in functions if f[0].endswith("::kernels")]
+            # sizes of the LB catalogue: 18 kernels, 30 API functions
             self.assertEqual(len(kernels), 18)
             self.assertEqual(len(functions) - len(kernels), 30)
             self.assertNotIn("namespace {", header)
@@ -140,7 +141,7 @@ class FieldAccessorsTest(unittest.TestCase):
                 not f[0].endswith("::kernels")
                 for f in header_api.functions(header)))
             self.assertGreater(len(header_api.functions(
-                header, include_kernels=True)), 30)
+                header, include_kernels=True)), 30)  # API functions
 
     def test_kernel_sources_need_no_patch(self):
         # sfg_driver.patch_kernel_source patches the generated .cpp and .cu
@@ -174,6 +175,7 @@ class FieldAccessorsTest(unittest.TestCase):
                     n_functions += 1
                     self.assertNotIn("std::vector", function)
                     self.assertNotIn("new ", function)
+            # number of single-cell functions of the LB catalogue
             self.assertEqual(n_functions, 13)
 
     def test_reductions_use_the_reduction_kernels(self):
@@ -208,6 +210,7 @@ class FieldAccessorsTest(unittest.TestCase):
                 DATA_DIR / f"field_accessors_api_{precision.lower()}.json")
             expected = header_api.counters(reference)
             actual = header_api.signature_counters(header)
+            # number of API functions of the LB catalogue
             self.assertEqual(sum(expected["return type"].values()), 30)
             for label, counter in expected.items():
                 self.assertEqual(
