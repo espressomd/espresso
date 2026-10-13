@@ -19,7 +19,8 @@
 
 """
 Extraction of the function signatures of a C++ header that defines
-namespace-level ``inline`` functions, used to compare the generated field
+namespace-level ``inline`` functions or declares namespace-level functions
+(``declarations=True``), used to compare the generated field
 accessors with a reference header. Type spellings are canonicalized, such that
 signatures that differ only in the namespace qualifiers or the spelling of
 integer literals (``uint_t{19u}``, ``19u``, ``19``) are equal.
@@ -92,18 +93,40 @@ def parse_parameter(text):
     return canonical_type(type_), name, default
 
 
-def functions(text):
+def _declaration(statement):
+    """
+    Return ``(return type, name, parameter text)`` of a function declaration
+    ``<return type> <name>(<parameters>)``, or None for any other statement.
+    """
+    match = re.match(r"^(.*?)\b(\w+)\s*\((.*)\)\s*$", statement, flags=re.S)
+    if match is None or not match.group(1).strip():
+        return None
+    if re.match(r"^\s*(using|typedef|static_assert)\b", statement):
+        return None
+    return match.group(1), match.group(2), match.group(3)
+
+
+def functions(text, declarations=False):
     """
     Return the tuples (namespace, name, parameters, return type) of all
     namespace-level ``inline`` functions of a header, where the parameters
-    are tuples (type, name, default argument).
+    are tuples (type, name, default argument). With ``declarations=True``,
+    the namespace-level function declarations (no definitions) are returned
+    instead.
     """
     text = strip_comments_and_strings(text)
+    if declarations:
+        # preprocessor directives, including line continuations
+        text = re.sub(r"^[ \t]*#(?:[^\n]|\\\n)*$", "", text, flags=re.M)
     signature = re.compile(r"inline\s+(.*?)\b(\w+)\s*\(", re.S)
     stack = []  # namespace names, or None for any other block
     result = []
     last_boundary = 0
     i = 0
+
+    def namespace_path():
+        return "::".join(stack).replace("walberla::", "", 1)
+
     while i < len(text):
         ch = text[i]
         if ch == "{":
@@ -116,8 +139,17 @@ def functions(text):
                 stack.pop()
             last_boundary = i + 1
         elif ch == ";":
+            if declarations and all(s is not None for s in stack):
+                declaration = _declaration(text[last_boundary:i])
+                if declaration is not None:
+                    return_type, name, params = declaration
+                    result.append((
+                        namespace_path(), name,
+                        tuple(parse_parameter(p)
+                              for p in split_top_level(params)),
+                        canonical_type(return_type)))
             last_boundary = i + 1
-        elif (text.startswith("inline", i)
+        elif (not declarations and text.startswith("inline", i)
               and (i == 0 or not text[i - 1].isalnum())
               and all(s is not None for s in stack)):
             match = signature.match(text, i)
@@ -129,8 +161,7 @@ def functions(text):
                 params = tuple(
                     parse_parameter(p)
                     for p in split_top_level(text[match.end():end - 1]))
-                namespace = "::".join(stack).replace("walberla::", "", 1)
-                result.append((namespace, match.group(2), params,
+                result.append((namespace_path(), match.group(2), params,
                                canonical_type(match.group(1))))
                 i = end
                 continue
@@ -149,9 +180,9 @@ SIGNATURE_KEYS = {
 }
 
 
-def signature_counters(text):
+def signature_counters(text, declarations=False):
     """Multisets of the functions of a header, for each key."""
-    return counters(functions(text))
+    return counters(functions(text, declarations))
 
 
 def to_records(funcs):
