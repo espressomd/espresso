@@ -45,6 +45,12 @@ Device work:
 * ``Interpolation::add_force`` scatters into the lattice field with
   ``atomicAdd``, which pystencils can't express: its ``__global__`` kernel
   is a C++ string.
+
+Relies on pystencils-sfg 0.3 internals; re-check them whenever
+TOOLCHAIN_REQUIREMENTS changes: ``_AllowOverloads`` (from
+`field_accessors`), ``sfg._cursor``, the ``SupportsFieldExtraction``
+protocol (``_extract_ptr``, ``_extract_size``, ``_extract_stride``) of
+`_LinearBuffer`, ``SfgFunctionSequencer`` and ``SfgStatements``.
 """
 
 import itertools
@@ -239,8 +245,9 @@ class _CudaFieldAccessors:
 
         * ``fields``: pairs of a pystencils field and a GPU field,
         * ``buffer``: ``(field, size_args, uses)`` of the linear device
-          buffer that is mapped to the pystencils field ``field``: ``size_args``
-          is the argument list of the constructor of the device vector,
+          buffer that is mapped to the pystencils field ``field``;
+          ``size_args`` is the argument list of the constructor of the
+          device vector,
         * ``scalars``: ``(symbols, vector)``: the kernel parameters are the
           components of the array or vector,
         * ``extra``: nodes that precede the launch,
@@ -339,7 +346,7 @@ class _CudaFieldAccessors:
     # ---- namespace Population
 
     def gen_population(self):
-        T, Q, D = self.T, self.Q, self.D
+        T, Q = self.T, self.Q
         E = self.equations
         pdf, pdf_mut, cell, ci = (self.pdf_const, self.pdf_mut, self.cell,
                                   self.ci)
@@ -545,6 +552,11 @@ class _CudaFieldAccessors:
         Assignments of the trilinear interpolation weights of the particle
         position ``pos``, which is relative to the origin of the local
         halo-free domain, with cells centered at half-integer positions.
+
+        The same weights are computed by the C++ function
+        ``calculate_weights`` in `gen_add_force`: keep both in sync (they
+        are covered by the interpolation tests and the GPU equivalence
+        harness).
         Returns the assignments, the corner cell (in ``pdf`` index space,
         which starts ``gl`` cells below the origin), and a function that
         returns the weight of the corner ``(i, j, k)``.
@@ -685,6 +697,8 @@ class _CudaFieldAccessors:
         have no atomic updates of field entries: this kernel is written as
         a C++ string.
         """
+        # the weights of ``calculate_weights`` are the same as those of the
+        # pystencils kernels (`interpolation_weights`): keep both in sync
         T, D = self.T, self.D
         field = GpuFieldPtr(self.dtype, D, D, const=True).var("field")
         self.sfg.code(f"""
@@ -791,7 +805,8 @@ __global__ void kernel_add_force(
                 *self.equilibrium(f_pdf, rho_new, u_old)])
 
             ci_cell, ci_cell_decl = self.cell_interval()
-            self.fn("get", pdf, self.density_of(k_get), cell, returns=self.dtype)(
+            self.fn("get", pdf, self.density_of(k_get), cell,
+                    returns=self.dtype)(
                 ci_cell_decl,
                 *self.slice_body(
                     k_get, [(f_pdf, pdf)], ci=ci_cell,
@@ -799,7 +814,8 @@ __global__ void kernel_add_force(
                     post=(f"{T} rho{{}};",
                           self.copy_to_host("&rho"), "return rho;")))
 
-            self.fn("get", pdf, self.density_of(k_get), ci, returns=self.vector_return)(
+            self.fn("get", pdf, self.density_of(k_get), ci,
+                    returns=self.vector_return)(
                 *self.slice_body(
                     k_get, [(f_pdf, pdf)], ci=ci,
                     buffer=(buf, "ci.numCells()", ()),
@@ -866,7 +882,7 @@ __global__ void kernel_add_force(
                     post=(f"walberla::Vector{D}<{T}> vec;",
                           self.copy_to_host("vec.data()"), "return vec;")))
 
-            # the legacy function allocated a buffer of a single cell for any interval
+            # the buffer holds the vectors of all cells of the interval
             self.fn("get", pdf, frc, ci, returns=self.vector_return)(
                 *self.slice_body(
                     k_get, [(f_pdf, pdf), (f_force, frc)], ci=ci,
@@ -892,7 +908,7 @@ __global__ void kernel_add_force(
     # ---- namespace Force
 
     def gen_force(self):
-        T, D = self.T, self.D
+        D = self.D
         E = self.equations
         pdf = self.pdf_const
         vel = self.vec_mut("velocity_field")
