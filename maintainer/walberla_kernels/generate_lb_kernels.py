@@ -40,7 +40,7 @@ from pystencils.sympyextensions.random import Philox
 
 import compat
 import field_accessors
-import field_accessors_cuda
+import lb_accessors
 import lees_edwards
 import pystencils_espresso
 import relaxation_rates
@@ -184,7 +184,7 @@ def generate_accessors(sfg, ctx, name):
 def generate_accessors_cuda(sfg, ctx, name):
     fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
     method = create_lb_method(fields)
-    field_accessors_cuda.generate_field_accessors_cuda(sfg, ctx, method)
+    lb_accessors.generate_field_accessors(sfg, ctx, method)
 
 
 @dataclasses.dataclass(frozen=True)

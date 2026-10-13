@@ -28,6 +28,7 @@ from pystencils.types import PsPointerType
 from pystencilssfg.exceptions import SfgException
 from pystencilssfg.lang import AugExpr
 
+import accessor_catalogue as cat
 import accessor_sfg
 import sfg_driver
 
@@ -157,6 +158,88 @@ class KernelParamTest(unittest.TestCase):
         generate(body)
         self.assertEqual(found["density"].name, "density")
         self.assertIsNone(found["other"])
+
+
+class ContainerTest(unittest.TestCase):
+    """C++ spelling of the containers of the catalogue."""
+
+    CONTAINERS = {
+        "scalar": cat.SCALAR, "array": cat.array(19), "vector3": cat.VECTOR3,
+        "matrix3": cat.MATRIX3, "std_vector": cat.STD_VECTOR}
+
+    def test_number_of_values_per_cell(self):
+        self.assertEqual(accessor_sfg.n_cells(1), "ci.numCells()")
+        self.assertEqual(accessor_sfg.n_cells(19), "ci.numCells() * 19u")
+
+    def test_types(self):
+        T = "double"
+        self.assertEqual(
+            {k: accessor_sfg.cxx_type(c, T)
+             for k, c in self.CONTAINERS.items()},
+            {"scalar": "double", "array": "std::array<double, 19u>",
+             "vector3": "walberla::Vector3<double>",
+             "matrix3": "walberla::Matrix3<double>",
+             "std_vector": "std::vector<double>"})
+
+    def test_local_declarations(self):
+        declare = accessor_sfg.local_declaration
+        T = "float"
+        self.assertEqual(declare(cat.SCALAR, T, "rho"), "float rho{};")
+        self.assertEqual(declare(cat.array(19), T, "pop"),
+                         "std::array<float, 19u> pop;")
+        self.assertEqual(declare(cat.VECTOR3, T, "vec"),
+                         "walberla::Vector3<float> vec;")
+        self.assertEqual(declare(cat.MATRIX3, T, "out"),
+                         "walberla::Matrix3<float> out;")
+        self.assertEqual(declare(cat.STD_VECTOR, T, "out", 1),
+                         "std::vector<float> out(ci.numCells());")
+        self.assertEqual(declare(cat.STD_VECTOR, T, "out", 3),
+                         "std::vector<float> out(ci.numCells() * 3u);")
+
+    def test_data_pointers(self):
+        self.assertEqual(accessor_sfg.data_pointer(cat.SCALAR, "rho"),
+                         "&rho")
+        for container in (cat.array(19), cat.VECTOR3, cat.STD_VECTOR):
+            self.assertEqual(accessor_sfg.data_pointer(container, "x"),
+                             "x.data()")
+
+    def test_construction(self):
+        self.assertEqual(
+            accessor_sfg.construction(cat.VECTOR3, "double", ["a", "b", "c"]),
+            "walberla::Vector3<double>(a, b, c)")
+        self.assertEqual(
+            accessor_sfg.construction(cat.MATRIX3, "float", ["a"] * 2),
+            "walberla::Matrix3<float>(a, a)")
+        with self.assertRaises(AssertionError):
+            accessor_sfg.construction(cat.SCALAR, "float", ["a"])
+
+    def test_parameters_are_const_references(self):
+        def body(sfg):
+            params = [accessor_sfg.value_var(c, DOUBLE, f"x{i}")
+                      for i, c in enumerate(
+                          (cat.array(19), cat.VECTOR3, cat.STD_VECTOR))]
+            accessor_sfg.function(sfg, "get", *params, inline=True)("x0;")
+        header = squash(generate(body)["Foo.h"])
+        self.assertIn(squash(
+            "inline void get(const std::array<double, 19u> &x0, "
+            "const walberla::Vector3<double> &x1, "
+            "const std::vector<double> &x2)"), header)
+        with self.assertRaises(ValueError):
+            accessor_sfg.value_var(cat.SCALAR, DOUBLE, "x")
+
+    def test_return_types(self):
+        def body(sfg):
+            for i, container in enumerate(self.CONTAINERS.values()):
+                accessor_sfg.function(
+                    sfg, f"get{i}", returns=accessor_sfg.return_type(
+                        container, DOUBLE), inline=True)("x;")
+        header = squash(generate(body)["Foo.h"])
+        for expected in ("inline double get0()",
+                         "inline std::array<double, 19u> get1()",
+                         "inline walberla::Vector3<double> get2()",
+                         "inline walberla::Matrix3<double> get3()",
+                         "inline std::vector<double> get4()"):
+            self.assertIn(squash(expected), header)
 
 
 if __name__ == "__main__":
