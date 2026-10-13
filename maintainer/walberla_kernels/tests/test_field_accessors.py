@@ -49,9 +49,9 @@ def namespace_block(source, name):
 
 
 def without_kernels(block):
-    """A namespace block without its nested namespaces ``kernels``."""
-    return re.sub(r"^\s*namespace kernels \{.*?^\s*\} // namespace kernels$",
-                  "", block, flags=re.S | re.M)
+    """A namespace block without its nested namespaces ``cpu_kernels``."""
+    return re.sub(r"^\s*namespace cpu_kernels \{.*?^\s*\} "
+                  r"// namespace cpu_kernels$", "", block, flags=re.S | re.M)
 
 
 def remove_directory(path):
@@ -128,7 +128,7 @@ class FieldAccessorsTest(unittest.TestCase):
             functions = header_api.functions(header, include_kernels=True)
             self.assertEqual(len(re.findall(r"^\s*inline ", header, re.M)),
                              len(functions))
-            kernels = [f for f in functions if f[0].endswith("::kernels")]
+            kernels = [f for f in functions if f[0].endswith("::cpu_kernels")]
             # sizes of the LB catalogue: 18 kernels, 30 API functions
             self.assertEqual(len(kernels), 18)
             self.assertEqual(len(functions) - len(kernels), 30)
@@ -138,7 +138,7 @@ class FieldAccessorsTest(unittest.TestCase):
     def test_kernels_are_not_part_of_the_api(self):
         for header in self.headers.values():
             self.assertTrue(all(
-                not f[0].endswith("::kernels")
+                not f[0].endswith("::cpu_kernels")
                 for f in header_api.functions(header)))
             self.assertGreater(len(header_api.functions(
                 header, include_kernels=True)), 30)  # API functions
@@ -186,7 +186,7 @@ class FieldAccessorsTest(unittest.TestCase):
             fp = "double" if precision == "Double" else "float"
             for name, n in (("MomentumDensity", 3), ("PressureTensor", 9)):
                 block = namespace_block(header, name)
-                kernels = block[:block.rindex("} // namespace kernels")]
+                kernels = block[:block.rindex("} // namespace cpu_kernels")]
                 self.assertEqual(
                     {int(i) for i in re.findall(
                         rf"{fp}\s*\*\s*const\s+sum_(\d+)", kernels)},
@@ -199,7 +199,7 @@ class FieldAccessorsTest(unittest.TestCase):
                 self.assertEqual(len(re.findall(
                     rf"{fp}\s*\*\s*const\s+sum_\d+\s*=\s*&acc_\d+;",
                     function)), n)
-                self.assertEqual(function.count("::kernels::"), 1)
+                self.assertEqual(function.count("::cpu_kernels::"), 1)
                 for word in ("std::vector", "buffer_ptr", "emplace",
                              "out", "thrust"):
                     self.assertNotIn(word, function, (name, word))
@@ -286,9 +286,9 @@ class HeaderApiTest(unittest.TestCase):
         header = """
         namespace walberla { namespace lbm { namespace accessor {
         namespace Density {
-        namespace kernels {
+        namespace cpu_kernels {
         inline void get(double *RESTRICT const _data_buf1, int64_t n) {}
-        } // namespace kernels
+        } // namespace cpu_kernels
         inline double get(double density) { return density; }
         }}}}
         """
@@ -298,7 +298,7 @@ class HeaderApiTest(unittest.TestCase):
         self.assertEqual(
             [f[0] for f in header_api.functions(
                 header, include_kernels=True)],
-            ["lbm::accessor::Density::kernels", "lbm::accessor::Density"])
+            ["lbm::accessor::Density::cpu_kernels", "lbm::accessor::Density"])
 
     def test_by_value_const_is_ignored(self):
         counters = header_api.signature_counters(self.HEADER)

@@ -76,7 +76,7 @@ class GenerateLbKernelsTest(unittest.TestCase):
         self.assertIn("namespace Population", header)
         self.assertIn("inline auto", header)
         # the kernels are defined in the header
-        self.assertIn("namespace kernels", header)
+        self.assertIn("namespace cpu_kernels", header)
         self.assertIn("pystencils_runtime/generic_cpu.hpp", header)
 
     def test_field_accessors_cuda_is_skipped(self):
