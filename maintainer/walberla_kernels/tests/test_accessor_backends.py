@@ -119,7 +119,7 @@ class ScalarFieldTest(unittest.TestCase):
                                           "values"),
               ("CellInterval const&", "ci")), "void")]))
         self.assertEqual(
-            len(re.findall(r"namespace\s+kernels\s*\{", header)), 3)
+            len(re.findall(r"namespace\s+cpu_kernels\s*\{", header)), 3)
 
     def test_cuda(self):
         files = generate_scalar_accessors(
@@ -133,7 +133,7 @@ class ScalarFieldTest(unittest.TestCase):
     def test_the_scalar_input_of_a_broadcast_is_the_kernel_parameter(self):
         header = generate_scalar_accessors(
             accessor_backend_cpu.CpuBackend, "cpu")["Foo.h"]
-        self.assertIn("kernels::broadcast(", header)
+        self.assertIn("cpu_kernels::broadcast(", header)
         self.assertNotIn("value[", header)
 
 

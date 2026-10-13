@@ -112,11 +112,14 @@ for any `PYTHONHASHSEED`.
   * `accessor_backend_cpu.py`: the CPU wrappers, in a header-only
     `FieldAccessors<Precision>Precision.h`. The kernels are pystencils
     `GenericCPU` kernels defined `inline` in the header, so the bridge needs
-    no source file. Single-cell values are exchanged through the stack,
-    interval values through `std::vector`, and the reductions use
-    `AddReductionAssignment` (a sequential sum in the order of the cells).
-    The header needs the pystencils runtime headers like the
-    other kernels. `sfg_driver.patch_kernel_source()` doesn't process
+    no source file. They live in nested namespaces `cpu_kernels` (the CUDA
+    kernels in `kernels`): both have the same signatures, and a shared name
+    would let the linker bind the CPU kernels to the CUDA host stubs in builds
+    with CUDA (`tests/test_accessor_symbols.py`). Single-cell values are
+    exchanged through the stack, interval values through `std::vector`, and
+    the reductions use `AddReductionAssignment` (a sequential sum in the
+    order of the cells). The header needs the pystencils runtime headers
+    like the other kernels. `sfg_driver.patch_kernel_source()` doesn't process
     headers; the accessor kernels don't need it (the RNG, `sqrt`, `fmin` and
     `fmax` are not used), which `tests/test_field_accessors.py` guards.
   * `accessor_backend_cuda.py`: the CUDA wrappers, declared in a `.cuh` and

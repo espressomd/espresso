@@ -106,14 +106,18 @@ def _declaration(statement):
     return match.group(1), match.group(2), match.group(3)
 
 
+KERNEL_NAMESPACES = ("kernels", "cpu_kernels")
+
+
 def functions(text, declarations=False, include_kernels=False):
     """
     Return the tuples (namespace, name, parameters, return type) of all
     namespace-level ``inline`` functions of a header, where the parameters
     are tuples (type, name, default argument). With ``declarations=True``,
     the namespace-level function declarations (no definitions) are returned
-    instead. The functions of the namespaces ``kernels`` (the pystencils
-    kernels of a header-only file) are not part of the API, unless
+    instead. The functions of the namespaces ``kernels`` and ``cpu_kernels``
+    (the pystencils kernels of the CUDA and CPU accessors) are not part of
+    the API, unless
     ``include_kernels`` is set.
     """
     text = strip_comments_and_strings(text)
@@ -130,7 +134,8 @@ def functions(text, declarations=False, include_kernels=False):
         return "::".join(stack).replace("walberla::", "", 1)
 
     def is_api():
-        return include_kernels or stack[-1:] != ["kernels"]
+        return include_kernels or not (
+            stack and stack[-1] in KERNEL_NAMESPACES)
 
     while i < len(text):
         ch = text[i]

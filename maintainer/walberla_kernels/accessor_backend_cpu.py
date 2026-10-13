@@ -23,7 +23,7 @@ CPU backend of the field accessors: generates the wrappers of a
 `accessor_catalogue.Catalogue` as ``inline`` functions of a header-only
 file, with pystencils-sfg. The header is self-contained: the kernels
 (pystencils ``GenericCPU`` kernels over the strides of the fields,
-``inline`` functions in the namespace ``kernels`` of each namespace of
+``inline`` functions in the namespace ``cpu_kernels`` of each namespace of
 accessors) are defined in it, so the waLBerla bridge needs no source file
 and no CMake change for the accessors.
 
@@ -62,6 +62,7 @@ class CpuBackend(AccessorBackend):
     target = "cpu"
     gpu = False
     inline = True
+    kernel_namespace = "cpu_kernels"
     ps_target = ps.Target.GenericCPU
     headers = ("core/DataTypes.h", "core/Abort.h", "core/cell/Cell.h",
                "core/cell/CellInterval.h", "core/math/Matrix3.h",

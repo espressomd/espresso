@@ -233,6 +233,12 @@ class AccessorBackend:
     # target of the code generation context
     gpu = False
     inline = False
+    # name of the namespace nested in each accessor namespace that holds the
+    # pystencils kernels. The names must differ between the backends: the
+    # kernels of the CPU and CUDA backends have equal signatures, and the
+    # linker would merge the inline CPU kernels with the host stubs of the
+    # CUDA kernels in a build with both.
+    kernel_namespace = "kernels"
     # headers of the generated file, and those only the source file needs
     headers = ()
     private_headers = ()
@@ -265,7 +271,8 @@ class AccessorBackend:
     def kernel(self, name, assignments):
         config = ps.CreateKernelConfig(
             target=self.ps_target, default_dtype=self.dtype, ghost_layers=0)
-        return self.sfg.kernels.create(assignments, name, config)
+        kernels = self.sfg.kernel_namespace(self.kernel_namespace)
+        return kernels.create(assignments, name, config)
 
     def fn(self, name, *params, returns=None):
         """Start a function; the sequencer is called with the body."""
