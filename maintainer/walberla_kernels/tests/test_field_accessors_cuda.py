@@ -26,7 +26,7 @@ import sys
 import tempfile
 import unittest
 
-import field_accessors_cuda
+import lb_accessors
 import generate_lb_kernels
 import pystencils_espresso
 import sfg_driver
@@ -52,7 +52,7 @@ def generate_files():
         with sfg_driver.KernelFileGenerator(
                 ctx.class_name("FieldAccessors"), ctx, tmp,
                 "generate_lb_kernels.py", header_extension="cuh") as sfg:
-            field_accessors_cuda.generate_field_accessors_cuda(
+            lb_accessors.generate_field_accessors(
                 sfg, ctx, method)
     return tmp
 
@@ -134,16 +134,16 @@ class FieldAccessorsCudaTest(unittest.TestCase):
         """
         Number of definitions of the function ``namespace::name`` in a source
         file, without the pystencils kernels of the nested namespaces
-        ``kernels``. A definition is a signature line on one line followed
-        by a line with the opening brace, both with the indentation of
-        the namespace members.
+        ``kernels``. A definition is a statement of the namespace that
+        has the function name followed by a parameter list and a block, and
+        no semicolon or brace before the name (independent of the layout of
+        the code).
         """
         block = re.sub(
             r"^\s*namespace kernels \{.*?^\s*\} // namespace kernels$", "",
             namespace_block(source, namespace), flags=re.S | re.M)
-        indent = "    "
         return len(re.findall(
-            rf"^{indent}[A-Za-z][^\n]*\b{name}\([^\n]*\)\n{indent}\{{$",
+            rf"^\s*[A-Za-z][^;{{}}]*?\b{name}\s*\([^;{{}}]*\)\s*\{{",
             block, re.M))
 
     def test_functions_are_defined(self):
