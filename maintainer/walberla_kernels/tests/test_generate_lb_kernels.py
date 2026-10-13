@@ -74,7 +74,10 @@ class GenerateLbKernelsTest(unittest.TestCase):
                          ["FieldAccessorsDoublePrecision.h"])
         header = (tmp / "FieldAccessorsDoublePrecision.h").read_text()
         self.assertIn("namespace Population", header)
-        self.assertIn("inline auto get(", header)
+        self.assertIn("inline auto", header)
+        # the kernels are defined in the header
+        self.assertIn("namespace kernels", header)
+        self.assertIn("pystencils_runtime/generic_cpu.hpp", header)
 
     def test_field_accessors_cuda_is_skipped(self):
         tmp, result = self.run_script("--kernels", "field_accessors",
@@ -103,6 +106,16 @@ class GenerateLbKernelsTest(unittest.TestCase):
             self.assertIn(
                 f"skipping field_accessors_cuda for target {target}",
                 result.stdout)
+
+    def test_field_accessors_share_one_generator(self):
+        import generate_lb_kernels
+        cpu = generate_lb_kernels.KERNELS["field_accessors"]
+        cuda = generate_lb_kernels.KERNELS["field_accessors_cuda"]
+        self.assertIs(cpu.generate, cuda.generate)
+        self.assertEqual((cpu.stem, cpu.targets, cpu.header_only),
+                         ("FieldAccessors", ("cpu",), True))
+        self.assertEqual((cuda.stem, cuda.targets, cuda.header_only),
+                         ("FieldAccessors", ("cuda",), False))
 
     def test_header_extension_of_kernels(self):
         import generate_lb_kernels

@@ -17,13 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
 import pathlib
 import re
+import subprocess
+import sys
 import tempfile
 import unittest
 
-import field_accessors
 import generate_lb_kernels
+import lb_accessors
 import pystencils_espresso
 import sfg_driver
 from tests import header_api
@@ -37,6 +40,26 @@ NAMESPACES = ("Population", "Vector", "EquilibriumDistribution",
               "MomentumDensity", "PressureTensor")
 
 
+def namespace_block(source, name):
+    """Text of all blocks of the namespace ``name`` of a header."""
+    blocks = re.findall(rf"^\s*namespace {name} \{{.*?^\s*\}} // namespace "
+                        rf"{name}$", source, re.S | re.M)
+    assert blocks, name
+    return "\n".join(blocks)
+
+
+def without_kernels(block):
+    """A namespace block without its nested namespaces ``kernels``."""
+    return re.sub(r"^\s*namespace kernels \{.*?^\s*\} // namespace kernels$",
+                  "", block, flags=re.S | re.M)
+
+
+def remove_directory(path):
+    for item in path.iterdir():
+        item.unlink()
+    path.rmdir()
+
+
 def generate_headers():
     tmp = pathlib.Path(tempfile.mkdtemp())
     for precision in ("double", "single"):
@@ -47,7 +70,7 @@ def generate_headers():
         with sfg_driver.KernelFileGenerator(
                 ctx.class_name("FieldAccessors"), ctx, tmp,
                 "generate_lb_kernels.py", header_only=True) as sfg:
-            field_accessors.generate_field_accessors(sfg, ctx, method)
+            lb_accessors.generate_field_accessors(sfg, ctx, method)
     return tmp
 
 
@@ -62,9 +85,7 @@ class FieldAccessorsTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for path in cls.tmp.iterdir():
-            path.unlink()
-        cls.tmp.rmdir()
+        remove_directory(cls.tmp)
 
     def test_only_headers_are_generated(self):
         self.assertEqual(sorted(p.name for p in self.tmp.iterdir()),
@@ -100,11 +121,86 @@ class FieldAccessorsTest(unittest.TestCase):
         self.assertIsNone(re.search(r"\bfloat\b|\d\.\d*f\b",
                                     self.headers["Double"]))
 
-    def test_functions_are_inline(self):
+    def test_functions_and_kernels_are_inline(self):
+        # the header is self-contained: the pystencils kernels are defined
+        # in it, and no function can be defined in two translation units
         for header in self.headers.values():
+            functions = header_api.functions(header, include_kernels=True)
             self.assertEqual(len(re.findall(r"^\s*inline ", header, re.M)),
-                             len(header_api.functions(header)))
+                             len(functions))
+            kernels = [f for f in functions if f[0].endswith("::kernels")]
+            self.assertEqual(len(kernels), 18)
+            self.assertEqual(len(functions) - len(kernels), 30)
             self.assertNotIn("namespace {", header)
+            self.assertNotIn("__global__", header)
+
+    def test_kernels_are_not_part_of_the_api(self):
+        for header in self.headers.values():
+            self.assertTrue(all(
+                not f[0].endswith("::kernels")
+                for f in header_api.functions(header)))
+            self.assertGreater(len(header_api.functions(
+                header, include_kernels=True)), 30)
+
+    def test_kernel_sources_need_no_patch(self):
+        # sfg_driver.patch_kernel_source patches the generated .cpp and .cu
+        # files, but not the headers: the accessor kernels don't use what it
+        # replaces (the pystencils runtime namespace, sqrt, fmin, fmax)
+        for header in self.headers.values():
+            self.assertEqual(sfg_driver.patch_kernel_source(header), header)
+            self.assertNotIn("pystencils::runtime::", header)
+
+    def test_header_includes_the_pystencils_runtime(self):
+        for header in self.headers.values():
+            self.assertIn("pystencils_runtime/generic_cpu.hpp", header)
+
+    def test_no_cuda_or_device_buffers(self):
+        for header in self.headers.values():
+            for word in ("thrust", "atomic", "gpu::", "device"):
+                self.assertNotIn(word, header)
+
+    def test_cell_accessors_do_not_allocate(self):
+        # the accessors of single cells are called for every cell of
+        # a loop in Python: the values are exchanged through the stack
+        cell_function = re.compile(
+            r"^\s*inline [^{]*?\bCell\s*&\s*cell\)\s*\{(.*?)^\s*\}",
+            re.S | re.M)
+        for header in self.headers.values():
+            n_functions = 0
+            for namespace in ("Population", "Vector", "Density", "Velocity",
+                              "Force", "PressureTensor", "Equilibrium"):
+                block = without_kernels(namespace_block(header, namespace))
+                for function in cell_function.findall(block):
+                    n_functions += 1
+                    self.assertNotIn("std::vector", function)
+                    self.assertNotIn("new ", function)
+            self.assertEqual(n_functions, 13)
+
+    def test_reductions_use_the_reduction_kernels(self):
+        # the kernel adds the values of the cells to the accumulators of the
+        # function, in the order of the cells, without a buffer of the
+        # values of all cells
+        for precision, header in self.headers.items():
+            fp = "double" if precision == "Double" else "float"
+            for name, n in (("MomentumDensity", 3), ("PressureTensor", 9)):
+                block = namespace_block(header, name)
+                kernels = block[:block.rindex("} // namespace kernels")]
+                self.assertEqual(
+                    {int(i) for i in re.findall(
+                        rf"{fp}\s*\*\s*const\s+sum_(\d+)", kernels)},
+                    set(range(n)))
+                function = re.search(
+                    r"^\s*inline\s+auto\s+reduce\(.*?^\s*\}",
+                    without_kernels(block), re.S | re.M).group(0)
+                self.assertEqual(len(re.findall(
+                    rf"{fp}\s+acc_\d+\{{0\}};", function)), n)
+                self.assertEqual(len(re.findall(
+                    rf"{fp}\s*\*\s*const\s+sum_\d+\s*=\s*&acc_\d+;",
+                    function)), n)
+                self.assertEqual(function.count("::kernels::"), 1)
+                for word in ("std::vector", "buffer_ptr", "emplace",
+                             "out", "thrust"):
+                    self.assertNotIn(word, function, (name, word))
 
     def test_api_equals_frozen_contract(self):
         for precision, header in self.headers.items():
@@ -119,6 +215,27 @@ class FieldAccessorsTest(unittest.TestCase):
                     f"{precision} precision, {label}: "
                     f"missing {counter - actual[label]}, "
                     f"unexpected {actual[label] - counter}")
+
+    def test_generation_is_deterministic(self):
+        # independent of the hash seed of the interpreter
+        kernels_dir = pathlib.Path(__file__).resolve().parent.parent
+        script = ("from tests.test_field_accessors import "
+                  "generate_headers; print(generate_headers())")
+        outputs = []
+        for seed in ("1", "2"):
+            env = dict(os.environ, PYTHONHASHSEED=seed)
+            result = subprocess.run(
+                [sys.executable, "-c", script], cwd=kernels_dir, env=env,
+                capture_output=True, text=True, check=True)
+            path = pathlib.Path(result.stdout.strip().splitlines()[-1])
+            self.addCleanup(remove_directory, path)
+            outputs.append(path)
+        names = sorted(p.name for p in outputs[0].iterdir())
+        self.assertEqual(names, sorted(p.name for p in outputs[1].iterdir()))
+        self.assertEqual(len(names), 2)
+        for name in names:
+            self.assertEqual((outputs[0] / name).read_bytes(),
+                             (outputs[1] / name).read_bytes(), name)
 
 
 class HeaderApiTest(unittest.TestCase):
@@ -161,6 +278,24 @@ class HeaderApiTest(unittest.TestCase):
         records = header_api.to_records(funcs)
         self.assertEqual(
             sorted(header_api.from_records(records)), sorted(funcs))
+
+    def test_kernels_are_ignored_unless_requested(self):
+        header = """
+        namespace walberla { namespace lbm { namespace accessor {
+        namespace Density {
+        namespace kernels {
+        inline void get(double *RESTRICT const _data_buf1, int64_t n) {}
+        } // namespace kernels
+        inline double get(double density) { return density; }
+        }}}}
+        """
+        self.assertEqual(
+            [(f[0], f[1]) for f in header_api.functions(header)],
+            [("lbm::accessor::Density", "get")])
+        self.assertEqual(
+            [f[0] for f in header_api.functions(
+                header, include_kernels=True)],
+            ["lbm::accessor::Density::kernels", "lbm::accessor::Density"])
 
     def test_by_value_const_is_ignored(self):
         counters = header_api.signature_counters(self.HEADER)
