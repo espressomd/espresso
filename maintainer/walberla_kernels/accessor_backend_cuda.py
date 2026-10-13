@@ -68,6 +68,7 @@ _DeviceVector = cpptype("thrust::device_vector< {T} >",
 
 class CudaBackend(AccessorBackend):
     target = "cuda"
+    gpu = True
     ps_target = ps.Target.CUDA
     headers = ("core/DataTypes.h", "core/cell/Cell.h",
                "core/cell/CellInterval.h", "core/math/Matrix3.h",
@@ -139,12 +140,6 @@ class CudaBackend(AccessorBackend):
         if buffer is not None:
             nodes.append(self.sfg.map_field(buffer[0], ptr))
         return [*nodes, *params, self.sfg.gpu_invoke(kernel), *post]
-
-    def lattice_fields(self, acc, params):
-        """Pairs of the pystencils field and the parameter of the fields of
-        an accessor."""
-        return [(self.cat.fields[f.role].field, p)
-                for f, p in zip(acc.fields, params.fields)]
 
     @staticmethod
     def copy_to_host(target, vector="dev_data"):

@@ -33,9 +33,6 @@ must replace these symbols (see `lb_accessors.LbAccessors.reads`):
   inputs of the equilibrium,
 * ``density``: conversion factor between lattice and MD units.
 
-The printer types every plain symbol with the working float type; there
-are no integer symbols.
-
 The equations introduce temporary names such as ``vel0Term``,
 ``momdensity_i``, ``md_i`` and ``p_i``; the embedding code must not reuse
 them for other variables.
@@ -68,7 +65,11 @@ def _printing_context(dtype):
 
 
 def print_expression(expr, dtype):
-    """Print a sympy expression as a C++ expression typed with ``dtype``."""
+    """Print a sympy expression as a C++ expression typed with ``dtype``.
+
+    The printer types every plain symbol with the working float type; there
+    are no integer symbols.
+    """
     factory, fold, printer = _printing_context(dtype)
     return printer(fold(factory.parse_sympy(sp.sympify(expr))))
 
@@ -273,7 +274,8 @@ class AccessorEquations:
         """
         Pairs of the waLBerla direction name and the full (not delta)
         equilibrium, in terms of ``rho`` and ``u_i``: ``delta_rho`` is
-        replaced by ``rho``.
+        replaced by ``rho``. This assumes that lbmpy's ``delta_rho`` is
+        ``rho - 1`` (zero-centered PDFs); ``NumericTest`` guards it.
         """
         exprs = [e.xreplace({self._delta_rho: self._rho})
                  for e in self._equilibrium_expressions()]

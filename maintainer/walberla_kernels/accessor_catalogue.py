@@ -67,10 +67,10 @@ import typing
 import pystencils as ps
 
 __all__ = [
-    "CatalogueError", "Kind", "Container", "SCALAR", "VECTOR3", "MATRIX3", "STD_VECTOR",
-    "array", "Value", "FieldSpec", "FieldArg", "Variant", "BOTH", "CPU_ONLY",
-    "CUDA_ONLY", "Point", "Kernel", "ReductionKernel", "Reduction", "Accessor",
-    "Namespace", "Catalogue", "TARGETS"]
+    "CatalogueError", "Kind", "Container", "SCALAR", "VECTOR3", "MATRIX3",
+    "STD_VECTOR", "array", "Value", "FieldSpec", "FieldArg", "Variant",
+    "BOTH", "CPU_ONLY", "CUDA_ONLY", "Point", "Kernel", "ReductionKernel",
+    "Reduction", "Accessor", "Namespace", "Catalogue", "TARGETS"]
 
 TARGETS = ("cpu", "cuda")
 CONTAINER_KINDS = ("scalar", "array", "vector3", "matrix3", "std_vector")

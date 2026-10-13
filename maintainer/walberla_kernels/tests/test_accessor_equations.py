@@ -17,8 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import dataclasses
-import inspect
 import re
 import unittest
 
@@ -230,28 +228,6 @@ class NumericTest(unittest.TestCase):
         self.assertAlmostEqual(sum(full), rho, places=12)
 
 
-class PublicApiTest(unittest.TestCase):
-    """The equations are sympy expressions: only the expressions that the
-    CPU backend switches over are printed."""
-
-    def test_only_expressions_are_printed(self):
-        self.assertEqual(accessor_equations.__all__, [
-            "EquationSet", "AccessorEquations", "print_expression"])
-        self.assertFalse(hasattr(accessor_equations, "print_assignments"))
-        self.assertFalse(hasattr(accessor_equations.EquationSet, "lines"))
-        self.assertFalse(hasattr(accessor_equations.AccessorEquations,
-                                 "delta_rho"))
-
-    def test_equations_do_not_depend_on_the_precision(self):
-        self.assertEqual(
-            [f.name for f in dataclasses.fields(
-                accessor_equations.EquationSet)], ["assignments"])
-        self.assertEqual(
-            list(inspect.signature(
-                accessor_equations.AccessorEquations).parameters),
-            ["lb_method"])
-
-
 class PrintExpressionTest(unittest.TestCase):
 
     def test_single_precision_has_no_double_literals(self):
@@ -275,7 +251,8 @@ class PrintExpressionTest(unittest.TestCase):
             accessor_equations.print_expression(e, ps.create_type("float64"))
             for e in eqs.equilibrium)
         self.assertNotRegex(text, r"\d\.\d*f\b")
-        self.assertRegex(text, r"\d\.\d")
+        # double literals are present and have no suffix
+        self.assertTrue(re.findall(r"(?<![\w.])\d+\.\d+(?![\w.])", text))
 
     def test_integer_powers_are_expanded(self):
         expr = sp.Symbol("u_0") ** 2

@@ -60,6 +60,7 @@ from accessor_sfg import (
 
 class CpuBackend(AccessorBackend):
     target = "cpu"
+    gpu = False
     inline = True
     ps_target = ps.Target.GenericCPU
     headers = ("core/DataTypes.h", "core/Abort.h", "core/cell/Cell.h",
@@ -86,12 +87,6 @@ class CpuBackend(AccessorBackend):
     def sum_symbol(self, i):
         return ps.TypedSymbol(f"sum_{i}", self.dtype)
 
-    def lattice_fields(self, acc, params):
-        """Pairs of the pystencils field and the parameter of the fields of
-        an accessor."""
-        return [(self.cat.fields[f.role].field, p)
-                for f, p in zip(acc.fields, params.fields)]
-
     def map_fields(self, acc, params, ci):
         return [self.sfg.map_field(f, g.with_cell_interval(ci))
                 for f, g in self.lattice_fields(acc, params)]
@@ -107,6 +102,13 @@ class CpuBackend(AccessorBackend):
     def emit_slice(self, acc, kernel):
         """Run the kernel on a cell or an interval; the values are
         exchanged through a host buffer."""
+        # The ``statement(code, defines, uses)`` tuples tell pystencils-sfg
+        # which variables a line of code defines and uses, which orders the
+        # lines (e.g. ``ci`` before the buffer that is sized with it). ``ci``
+        # is a fixed local name that is shared with ``n_cells()`` and
+        # ``cell_interval()`` in accessor_sfg.py. The buffer pointer must be
+        # a named variable (``buffer_ptr``) because a ``LinearBuffer`` can
+        # only wrap a variable.
         T = self.T
         params = self.params(acc, kernel)
         cell = acc.kind == catalogue.Kind.CELL
@@ -168,18 +170,19 @@ class CpuBackend(AccessorBackend):
         result = acc.reduction
         n = result.container.size
         ci, decl = self.whole_interval("xyzSize", params.fields[0])
-        # the names of the accumulators must differ from those of the
-        # kernel parameters ``sum_i``
-        accumulators = [AugExpr(self.dtype).var(f"acc_{i}")
-                        for i in range(n)]
-        value = construction(result.container, T,
-                             [f"acc_{i}" for i in range(n)])
+        # The local accumulators ``acc_<i>`` must be named differently from
+        # the kernel parameters ``sum_<i>`` (they are passed by pointer):
+        # otherwise pystencils emits ``sum = &sum``. The tests pin this
+        # naming.
+        names = [f"acc_{i}" for i in range(n)]
+        accumulators = [AugExpr(self.dtype).var(name) for name in names]
+        value = construction(result.container, T, names)
         if result.scale:
             value = f"{value} * {result.scale}"
         self.fn(acc.name, *params.all, returns=self.returns(acc))(
             decl,
-            *(statement(f"{T} acc_{i}{{0}};", (a,), ())
-              for i, a in enumerate(accumulators)),
+            *(statement(f"{T} {name}{{0}};", (a,), ())
+              for name, a in zip(names, accumulators)),
             *self.map_fields(acc, params, ci),
             *(self.sfg.set_param(self.sum_symbol(i),
                                  AugExpr.format("&{}", a))
@@ -190,7 +193,14 @@ class CpuBackend(AccessorBackend):
 
     def emit_point(self, acc, spec, kernel):
         """A function of a stencil direction, the velocity and the density
-        that returns an expression per direction."""
+        that returns an expression per direction.
+
+        ``POINT`` is LB-specific (``EquilibriumDistribution``): the
+        function takes a ``stencil::Direction``, the velocity ``u`` as a
+        ``walberla::Vector3`` (default 0) and the density ``rho``
+        (default 1), the cases are named after the ``stencil::`` direction
+        constants, and ``point.u_names`` are the components of ``u``.
+        """
         T = self.T
         point = acc.point
         direction = Direction(const=True).var("direction")
