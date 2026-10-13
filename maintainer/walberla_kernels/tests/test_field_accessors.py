@@ -169,5 +169,55 @@ class HeaderApiTest(unittest.TestCase):
         self.assertEqual(changed, counters)
 
 
+class HeaderApiDeclarationsTest(unittest.TestCase):
+
+    HEADER = """
+    #pragma once
+    #define RESTRICT __restrict__
+    namespace walberla::lbm::accessor {
+    namespace Density {
+    // double ignored(int);
+    double get(gpu::GPUField<double> const *pdf_field, double density,
+               Cell const &cell);
+    std::vector<double>
+    get(gpu::GPUField<double> const *pdf_field, double density,
+        CellInterval const &ci);
+    void set(Vector3<double> const &u = Vector3<double>(0.0));
+    using T = double;
+    inline void defined(int) {}
+    }}
+    """
+
+    def test_declarations(self):
+        self.assertEqual(
+            header_api.functions(self.HEADER, declarations=True), [
+                ("lbm::accessor::Density", "get",
+                 (("gpu::GPUField<double> const*", "pdf_field", None),
+                  ("double", "density", None),
+                  ("Cell const&", "cell", None)), "double"),
+                ("lbm::accessor::Density", "get",
+                 (("gpu::GPUField<double> const*", "pdf_field", None),
+                  ("double", "density", None),
+                  ("CellInterval const&", "ci", None)),
+                 "std::vector<double>"),
+                ("lbm::accessor::Density", "set",
+                 (("Vector3<double> const&", "u", "Vector3<double>(0.0)"),),
+                 "void")])
+
+    def test_inline_mode_ignores_declarations(self):
+        self.assertEqual(
+            [f[1] for f in header_api.functions(self.HEADER)], ["defined"])
+
+    def test_differences_are_detected(self):
+        counters = header_api.signature_counters(
+            self.HEADER, declarations=True)
+        for old, new in (("double density", "float density"),
+                         ("pdf_field", "field"),
+                         ("std::vector<double>\n", "void\n")):
+            changed = header_api.signature_counters(
+                self.HEADER.replace(old, new), declarations=True)
+            self.assertNotEqual(changed, counters, (old, new))
+
+
 if __name__ == "__main__":
     unittest.main()
