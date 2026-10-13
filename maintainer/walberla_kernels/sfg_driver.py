@@ -123,19 +123,19 @@ def toolchain_metadata(generator_script):
 
 class KernelFileGenerator(pystencilssfg.SourceFileGenerator):
     """
-    Source file generator that writes ``<basename>.h`` and
-    ``<basename>.cpp`` (``.cu`` for CUDA) instead of naming the
-    files after the generator script. With ``header_only``, only the
-    header is written and all functions are generated ``inline``.
+    Source file generator that writes ``<basename>.<header_extension>``
+    (``.h`` by default) and ``<basename>.cpp`` (``.cu`` for CUDA) instead of
+    naming the files after the generator script. With ``header_only``, only
+    the header is written and all functions are generated ``inline``.
     """
 
     def __init__(self, basename, ctx, output_dir, generator_script,
-                 header_only=False):
+                 header_only=False, header_extension="h"):
         self._basename = basename
         self._generator_script = generator_script
         sweepgen.build_config.DEBUG.BUILD_CONFIG = ctx.build_config()
         config = pystencilssfg.SfgConfig()
-        config.extensions.header = "h"
+        config.extensions.header = header_extension
         config.extensions.impl = "cu" if ctx.is_gpu else "cpp"
         config.header_only = header_only
         config.output_directory = pathlib.Path(output_dir)
