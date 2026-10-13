@@ -17,9 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
 import pathlib
+import stat
 import tempfile
 import unittest
+import unittest.mock
 
 import pystencils as ps
 
@@ -110,6 +113,22 @@ class KernelFileGeneratorTest(unittest.TestCase):
         header = (tmp / "Foo.h").read_text()
         self.assertRegex(header, r"inline \S+ foo\(\)")
         self.assertIn("return 1;", header)
+
+    def test_clang_format_is_not_run(self):
+        # pystencils-sfg formats its output if it finds clang-format on PATH:
+        # the generated files must not depend on it, they are formatted
+        # afterwards with the formatting script of the repository
+        bin_dir = pathlib.Path(self.enterContext(
+            tempfile.TemporaryDirectory()))
+        marker = bin_dir / "called"
+        script = bin_dir / "clang-format"
+        script.write_text(f"#!/bin/sh\ntouch {marker}\ncat\n")
+        script.chmod(script.stat().st_mode | stat.S_IEXEC)
+        path = f"{bin_dir}{os.pathsep}{os.environ['PATH']}"
+        with unittest.mock.patch.dict(os.environ, {"PATH": path}):
+            tmp = self.generate("cpu")
+        self.assertTrue((tmp / "Foo.h").is_file())
+        self.assertFalse(marker.exists())
 
     def test_toolchain_versions(self):
         sfg_driver.check_toolchain_versions()
