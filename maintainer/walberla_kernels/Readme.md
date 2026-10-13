@@ -71,13 +71,16 @@ function format_kernels {
 format_kernels
 ```
 
+The generator doesn't let pystencils-sfg format the files, even if clang-format
+is on `PATH`, so the output doesn't depend on the environment.
+
 The output is reproducible up to the order of the field-extraction statements,
 which pystencils-sfg 0.3 does not keep stable between runs.
 
 ## Architecture
 
 * `sfg_driver.py`: toolchain version check, precision/target handling,
-  one named file pair per kernel.
+  one named file pair per kernel (not formatted, see above).
 * `compat.py`: emits each kernel as a sweepgen class in
   `walberla::pystencils::internal` plus a wrapper class with the legacy
   `pystencils_walberla` interface used by the waLBerla bridge.
@@ -85,19 +88,43 @@ which pystencils-sfg 0.3 does not keep stable between runs.
   code generation issues in the generated `.cpp`/`.cu` files; re-check them
   whenever the pystencils version changes.
 * `lees_edwards.py`: Lees-Edwards boundary layers of the stream-collide kernel.
-* `accessor_equations.py`, `field_accessors.py`: the LB field accessors
-  (`walberla::lbm::accessor`); the equations come from lbmpy, the header is
-  composed with pystencils-sfg. Overloaded free functions rely on
-  pystencils-sfg internals (`_AllowOverloads`); re-check it whenever the
-  pystencils-sfg version changes. `tests/data/field_accessors_api_*.json`
-  holds the accessor API expected by the waLBerla bridge.
-* `field_accessors_cuda.py`: the CUDA LB field accessors, declared in a
-  `.cuh` and defined in a `.cu`. The slice operations and the particle
-  interpolation are pystencils CUDA kernels. The reductions fill a device
-  buffer that is summed on the host in cell order, so they are
-  deterministic. Only `Interpolation::add_force` scatters with `atomicAdd`,
-  in a hand-written kernel. `tests/data/field_accessors_cuda_api_*.json`
-  holds the API expected by the waLBerla bridge.
+* LB field accessors (`walberla::lbm::accessor`): one function catalogue,
+  two backends.
+  * `accessor_equations.py`: the equations of the accessors, derived from the
+    lbmpy method.
+  * `accessor_catalogue.py`: the format of the catalogue. Each accessor is
+    described once: its namespace, name, kind (cell, interval, whole field,
+    reduction, point, list, gather, scatter), fields, kernel and the targets
+    it exists on. Per-target variants carry the parameter names and the
+    return type, because the API of each target is frozen.
+  * `lb_accessors.py`: the LB catalogue (kernels as pystencils assignments over
+    the fields of the lattice) and the entry point
+    `generate_field_accessors`. The functions that exist on one target only
+    are flagged in the catalogue: `Equilibrium` and `EquilibriumDistribution`
+    on the CPU, `Interpolation`, `Vector::set_from_list` and the `atomicAdd`
+    kernel on CUDA. The catalogue is written to be reused for the EK
+    accessors: the backends take sizes, fields and equations from it.
+  * `accessor_backend_cpu.py`: the CPU wrappers, in a header-only
+    `FieldAccessors<Precision>Precision.h`. The kernels are pystencils
+    `GenericCPU` kernels defined `inline` in the header, so the bridge needs
+    no source file. Values are exchanged through the stack, and the
+    reductions use `AddReductionAssignment` (a sequential sum in the order of
+    the cells). The header needs the pystencils runtime headers like the
+    other kernels. `sfg_driver.patch_kernel_source()` doesn't process
+    headers; the accessor kernels don't need it (the RNG, `sqrt`, `fmin` and
+    `fmax` are not used), which `tests/test_field_accessors.py` guards.
+  * `accessor_backend_cuda.py`: the CUDA wrappers, declared in a `.cuh` and
+    defined in a `.cu`. The slice operations and the particle interpolation
+    are pystencils CUDA kernels. The reductions fill a device buffer that is
+    summed on the host in cell order, so they are deterministic. Only
+    `Interpolation::add_force` scatters with `atomicAdd`, in a hand-written
+    kernel.
+  * `accessor_sfg.py`: pystencils-sfg helpers and the base class of the
+    backends. Overloaded free functions rely on pystencils-sfg internals
+    (`AllowOverloads`, `LinearBuffer`); re-check them whenever the
+    pystencils-sfg version changes.
+  * `tests/data/field_accessors{,_cuda}_api_*.json` hold the API expected by
+    the waLBerla bridge on each target.
 * `tests/`: unit tests, run with
   `python3 -m unittest discover -s tests -t .` from this directory.
 

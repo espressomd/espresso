@@ -117,6 +117,11 @@ class GenerateLbKernelsTest(unittest.TestCase):
         self.assertEqual((cuda.stem, cuda.targets, cuda.header_only),
                          ("FieldAccessors", ("cuda",), False))
 
+    def test_legacy_accessor_generators_are_removed(self):
+        import importlib.util
+        for module in ("field_accessors", "field_accessors_cuda"):
+            self.assertIsNone(importlib.util.find_spec(module), module)
+
     def test_header_extension_of_kernels(self):
         import generate_lb_kernels
         extensions = {key: kernel.header_extension for key, kernel in
