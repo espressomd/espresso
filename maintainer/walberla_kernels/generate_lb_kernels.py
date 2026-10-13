@@ -39,7 +39,6 @@ from pystencils.sympyextensions import DynamicType
 from pystencils.sympyextensions.random import Philox
 
 import compat
-import field_accessors
 import lb_accessors
 import lees_edwards
 import pystencils_espresso
@@ -178,12 +177,6 @@ def generate_vel_update(sfg, ctx, name):
 def generate_accessors(sfg, ctx, name):
     fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
     method = create_lb_method(fields)
-    field_accessors.generate_field_accessors(sfg, ctx, method)
-
-
-def generate_accessors_cuda(sfg, ctx, name):
-    fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
-    method = create_lb_method(fields)
     lb_accessors.generate_field_accessors(sfg, ctx, method)
 
 
@@ -209,7 +202,7 @@ KERNELS = {
     "field_accessors": Kernel("FieldAccessors", ("cpu",), generate_accessors,
                               header_only=True),
     "field_accessors_cuda": Kernel(
-        "FieldAccessors", ("cuda",), generate_accessors_cuda,
+        "FieldAccessors", ("cuda",), generate_accessors,
         header_extension="cuh"),
 }
 

@@ -106,13 +106,15 @@ def _declaration(statement):
     return match.group(1), match.group(2), match.group(3)
 
 
-def functions(text, declarations=False):
+def functions(text, declarations=False, include_kernels=False):
     """
     Return the tuples (namespace, name, parameters, return type) of all
     namespace-level ``inline`` functions of a header, where the parameters
     are tuples (type, name, default argument). With ``declarations=True``,
     the namespace-level function declarations (no definitions) are returned
-    instead.
+    instead. The functions of the namespaces ``kernels`` (the pystencils
+    kernels of a header-only file) are not part of the API, unless
+    ``include_kernels`` is set.
     """
     text = strip_comments_and_strings(text)
     if declarations:
@@ -127,6 +129,9 @@ def functions(text, declarations=False):
     def namespace_path():
         return "::".join(stack).replace("walberla::", "", 1)
 
+    def is_api():
+        return include_kernels or stack[-1:] != ["kernels"]
+
     while i < len(text):
         ch = text[i]
         if ch == "{":
@@ -139,7 +144,8 @@ def functions(text, declarations=False):
                 stack.pop()
             last_boundary = i + 1
         elif ch == ";":
-            if declarations and all(s is not None for s in stack):
+            if (declarations and all(s is not None for s in stack)
+                    and is_api()):
                 declaration = _declaration(text[last_boundary:i])
                 if declaration is not None:
                     return_type, name, params = declaration
@@ -161,8 +167,9 @@ def functions(text, declarations=False):
                 params = tuple(
                     parse_parameter(p)
                     for p in split_top_level(text[match.end():end - 1]))
-                result.append((namespace_path(), match.group(2), params,
-                               canonical_type(match.group(1))))
+                if is_api():
+                    result.append((namespace_path(), match.group(2), params,
+                                   canonical_type(match.group(1))))
                 i = end
                 continue
         i += 1
