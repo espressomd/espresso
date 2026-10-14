@@ -131,16 +131,20 @@ between runs. All headers, both `field_accessors` kernels and all files of the
   `F_0` to `F_2`). The kernel is a sparse pystencils kernel over a field of
   these structs (`CreateKernelConfig.index_field`). The generic part
   (`generate_link_boundary`) takes the assignments of the kernel and doesn't
-  depend on the lattice Boltzmann method, so that it can also generate the
-  boundaries of the electrokinetics; `generate_dynamic_ubb` defines the UBB
-  with lbmpy. The assignments are built like
-  `create_lattice_boltzmann_boundary_kernel` of lbmpy 2.1.1 does, and the code
-  relies on lbmpy, pystencils, pystencils-sfg and sweepgen internals (see the
-  module docstring): re-check them whenever the toolchain changes. The
-  coordinates of the links are 32 bits wide, as in the old kernel, and so is
-  all the index arithmetic of the kernel (the old one used 64 bits for the
-  offsets in the PDF field): the PDF field of a block with its ghost layers
-  must have fewer than 2^31 elements, which the generated code doesn't check. The kernels of a class live
+  depend on the boundary condition, but it is LB-shaped: it requires a force
+  field, and the base class hard-codes the force struct `F_0` to `F_2`. The
+  boundaries of the electrokinetics (no force) need a change of the header and
+  a force-optional generator, which are deferred to sub-project 3.
+  `generate_dynamic_ubb` defines the UBB with lbmpy. The assignments are
+  built like `create_lattice_boltzmann_boundary_kernel` of lbmpy 2.1.1 does,
+  and the code relies on lbmpy, pystencils, pystencils-sfg and sweepgen
+  internals (see the module docstring): re-check them whenever the toolchain
+  changes. The coordinates of the links are 32 bits wide, as in the old
+  kernel, and so is all the index arithmetic of the kernel (the old one used
+  64 bits for the offsets in the PDF field): the PDF field of a block with
+  its ghost layers must have fewer than 2^31 elements. The generated code
+  doesn't check this: the check belongs to the bridge and will be added to
+  `LBWalberlaImpl` in the next sub-project (2c-3). The kernels of a class live
   in the namespace `<ClassName>_kernels`, so the CPU and CUDA boundaries
   never define the same function (`tests/test_boundary_symbols.py`).
   The C++ tests of the hand-written class are

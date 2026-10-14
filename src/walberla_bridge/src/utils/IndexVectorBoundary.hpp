@@ -69,6 +69,11 @@
  * @c ALL, which @c inner() and @c outer() overwrote from the first element on
  * (CPU) or read past the end of (GPU).
  *
+ * On the device, the force vectors are written in device memory, and the
+ * host vectors (@c getForceVector, @c ForceVector::forceVector) are stale
+ * until @c ForceVector::syncCPU(type) was called for the type in question
+ * (every type, not only @c ALL); @c getForce(block, type) does it itself.
+ *
  * The bridge only uses the @c ALL vectors: @c getIndexVector(block) and
  * @c getForceVector(block) return them, and so does @c getForce(block) for the
  * total force.
@@ -86,7 +91,18 @@
  *   ForceStruct *forceVector, std::size_t size)</tt> on the host, with an
  *   additional argument <tt>gpuStream_t stream</tt> on the device, which
  *   processes the @c size links of the two arrays (on the device, they are
- *   arrays in device memory).
+ *   arrays in device memory). It must @b overwrite the force of each link
+ *   (not accumulate it): @c run() leaves the forces of the other types
+ *   untouched, and @c getForce sums the force vector of one type,
+ * - <tt>static constexpr neighborOffset</tt>, the array of the stencil
+ *   offsets (<tt>std::array<std::array<int, Q>, D></tt>, indexed by the
+ *   dimension and the direction), which the bridge uses as
+ *   <tt>Kernels::DynamicUBB::neighborOffset</tt>.
+ *
+ * Known limitation: the force vector (@c ForceStruct with the members
+ * @c F_0, @c F_1 and @c F_2) is mandatory. A boundary without force (e.g.
+ * the Dirichlet boundary of the electrokinetics) needs a change of this
+ * header (sub-project 3).
  *
  * The device version needs a waLBerla with CUDA or HIP support
  * (<tt>WALBERLA_BUILD_WITH_CUDA</tt>). The header contains no kernel and no
@@ -100,6 +116,7 @@
 #include <core/DataTypes.h>
 #include <core/cell/Cell.h>
 #include <core/cell/CellInterval.h>
+#include <core/debug/CheckFunctions.h>
 #include <core/debug/Debug.h>
 #include <core/math/Vector3.h>
 #include <domain_decomposition/BlockDataID.h>
@@ -115,6 +132,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
@@ -158,17 +176,19 @@ public:
     if (host.empty()) {
       return;
     }
-    size_ = host.size();
-    WALBERLA_GPU_CHECK(gpuMalloc(&ptr_, sizeof(T) * size_));
+    auto const size = host.size();
+    WALBERLA_GPU_CHECK(gpuMalloc(&ptr_, sizeof(T) * size));
     WALBERLA_GPU_CHECK(
-        gpuMemcpy(ptr_, host.data(), sizeof(T) * size_, gpuMemcpyHostToDevice));
+        gpuMemcpy(ptr_, host.data(), sizeof(T) * size, gpuMemcpyHostToDevice));
+    size_ = size;
   }
   /** @brief Copy the device memory to @p host. Does nothing if empty. */
   void download(std::vector<T> &host) const {
     if (ptr_ == nullptr) {
       return;
     }
-    WALBERLA_ASSERT_EQUAL(host.size(), size_);
+    WALBERLA_CHECK_EQUAL(host.size(), size_,
+                         "The host vector doesn't match the device copy.");
     WALBERLA_GPU_CHECK(
         gpuMemcpy(host.data(), ptr_, sizeof(T) * size_, gpuMemcpyDeviceToHost));
   }
@@ -200,6 +220,7 @@ public:
   using HostVector = std::vector<T>;
   static constexpr bool on_device = Memory == IndexVectorMemory::Device;
 
+  /** @brief Compares the host vectors only, not the device copies. */
   friend bool operator==(TypedVectors const &lhs, TypedVectors const &rhs) {
     return lhs.host_ == rhs.host_;
   }
@@ -233,19 +254,28 @@ private:
 template <typename IndexInfo, IndexVectorMemory Memory>
 class IndexVectors : public detail::TypedVectors<IndexInfo, Memory> {
 public:
-  using CpuIndexVector = std::vector<IndexInfo>;
-  using typename detail::TypedVectors<IndexInfo, Memory>::Type;
+  using Base = detail::TypedVectors<IndexInfo, Memory>;
+  using Base::ALL;
+  using Base::INNER;
+  using Base::OUTER;
+  using typename Base::Type;
   auto &indexVector(Type t) { return this->host_[t]; }
   auto const &indexVector(Type t) const { return this->host_[t]; }
 };
 
-/** @brief The force vectors of a block, stored by @c IndexVectorBoundary. */
+/**
+ * @brief The force vectors of a block, stored by @c IndexVectorBoundary.
+ * On the device, the host vectors are stale until @c syncCPU(type) was called
+ * for the type (every type, not only @c ALL).
+ */
 template <typename ForceStruct, IndexVectorMemory Memory>
 class ForceVector : public detail::TypedVectors<ForceStruct, Memory> {
   using Base = detail::TypedVectors<ForceStruct, Memory>;
 
 public:
   using Base::ALL;
+  using Base::INNER;
+  using Base::OUTER;
   using typename Base::Type;
   auto &forceVector(Type t = ALL) { return this->host_[t]; }
   auto const &forceVector(Type t = ALL) const { return this->host_[t]; }
@@ -416,7 +446,9 @@ public:
           continue;
         }
         if (isFlagSet(it.neighbor(cx, cy, cz, 0), boundaryFlag)) {
-          IndexInfo element(it.x(), it.y(), it.z(), dirIdx);
+          IndexInfo element(static_cast<int32_t>(it.x()),
+                            static_cast<int32_t>(it.y()),
+                            static_cast<int32_t>(it.z()), dirIdx);
           auto const value = elementInitialiser(
               Cell(it.x() + cx, it.y() + cy, it.z() + cz), blocks, *block);
           Impl::assignValue(element, value);
@@ -441,8 +473,9 @@ public:
   }
 
   /**
-   * @brief Forces on the links of the last sweep of type @p type (on the
-   * device, call @c ForceVector::syncCPU() first).
+   * @brief Forces on the links of the last sweep of type @p type. On the
+   * device, this host vector is stale until @c ForceVector::syncCPU(type)
+   * was called for this type (every type, not only @c ALL).
    */
   auto const &getForceVector(IBlock const *block,
                              Type type = IndexVectors::ALL) const {

@@ -41,12 +41,19 @@ and a part that does:
   ``linkKernel`` that processes an array of links, the function
   ``assignValue`` that stores the value returned by the value callback in a
   link, the field type ``PdfField_T`` and the stencil offsets.
-* `generate_link_boundary` generates this class for any assignments over an
-  index field and a force field. Nothing in it is specific to the lattice
-  Boltzmann method, so that the Dirichlet and flux boundaries of the
-  electrokinetics can use it. `generate_dynamic_ubb` is the thin layer that
-  defines the dynamic velocity bounce-back boundary (a lattice Boltzmann
-  boundary, with a velocity for each link) by means of lbmpy.
+* `generate_link_boundary` generates this class for assignments over an
+  index field and a force field. It is independent of the boundary condition,
+  but not fully generic: it requires a force field (and emits a
+  ``<name>ForceStruct``), the base class hard-codes the members ``F_0`` to
+  ``F_2`` of the force struct and a mandatory force vector, and the class of
+  the target field is built from the data type of the code generation
+  context and the number of directions of the stencil (LB-shaped: one
+  population for each direction in each cell). The boundaries of the
+  electrokinetics (a scalar value for each link, no force) need a change of
+  the header and a generator with an optional force field; both are deferred
+  to sub-project 3. `generate_dynamic_ubb` is the thin layer that defines the
+  dynamic velocity bounce-back boundary (a lattice Boltzmann boundary, with a
+  velocity for each link) by means of lbmpy.
 
 Index and force structs
 -----------------------
@@ -67,7 +74,8 @@ the kernel, so the strides and all the index arithmetic of the kernel are
 ``int32_t`` too, while the old kernel computed the offsets in the PDF field
 with 64 bits: the PDF field of a block (with ghost layers and all
 populations) must have fewer than 2^31 elements. The generated code doesn't
-check this; the bridge has to check the size of the blocks.
+check this; the bridge has to check the size of the blocks (the check
+will be added to ``LBWalberlaImpl`` in sub-project 2c-3).
 
 Kernels
 -------
@@ -87,7 +95,11 @@ change:
   ``inverse_dir_symbol``, ``substitute_proxies``, ``create_code_node``),
   the call signature of the boundary classes of ``lbmpy.boundaries`` and
   their ``additional_data``, ``get_additional_code_nodes`` and the
-  ``all_assignments`` of their result;
+  ``all_assignments`` of their result; the branch
+  ``add_subexpressions_for_field_reads`` of
+  ``create_lattice_boltzmann_boundary_kernel`` (taken when the dtype of the
+  PDF field differs from the default dtype) is omitted, which is why
+  `generate_link_boundary` checks the dtype of the PDF field;
 * pystencils: the ``index_field``, ``index_dtype`` and
   ``skip_independence_check`` options of the kernel configuration, and the
   ``PsStructType`` of the elements of an indexed field;
@@ -172,6 +184,11 @@ def lbm_link_assignments(boundary, lb_method, pdf_field, index_field,
     """
     Assignments of the kernel of the lbmpy boundary condition ``boundary``,
     as built by ``create_lattice_boltzmann_boundary_kernel`` of lbmpy 2.1.1.
+
+    The ``add_subexpressions_for_field_reads`` branch of lbmpy, which is taken
+    when the dtype of the PDF field differs from the default dtype, is
+    intentionally omitted; `generate_link_boundary` rejects PDF fields whose
+    dtype differs from the data type of the code generation context.
     """
     indexing = BetweenTimestepsIndexing(
         pdf_field, lb_method.stencil, Timestep.BOTH, streaming_pattern,
@@ -258,13 +275,26 @@ def generate_link_boundary(sfg, ctx, name, *, assignments, index_field,
         by `link_fields`
     :param force_field: indexed field of the structs of the forces
     :param pdf_field: the field the links refer to, a pystencils field of
-        ``len(stencil)`` components for each cell
+        ``len(stencil)`` components for each cell, of the data type of
+        ``ctx``; the class of the target field is derived from it
     :param stencil: the velocities of the lattice, a sequence of tuples
     :param value: the `LinkValue` of the value callback
+    :raises ValueError: if ``pdf_field`` doesn't have ``len(stencil)``
+        components or its dtype differs from ``ctx.data_type``
     """
     dim = len(stencil[0])
     n_directions = len(stencil)
-    dtype = ctx.data_type.c_string()
+    if tuple(pdf_field.index_shape) != (n_directions,):
+        raise ValueError(
+            f"the PDF field '{pdf_field.name}' has the index shape "
+            f"{tuple(pdf_field.index_shape)}, but the stencil has "
+            f"{n_directions} directions")
+    if pdf_field.dtype.c_string() != ctx.data_type.c_string():
+        raise ValueError(
+            f"the dtype of the PDF field '{pdf_field.name}' "
+            f"({pdf_field.dtype.c_string()}) differs from the data type of "
+            f"the code generation context ({ctx.data_type.c_string()})")
+    dtype = pdf_field.dtype.c_string()
     index_type, force_type = index_field.dtype, force_field.dtype
     index_name = index_type.name.rsplit("::", 1)[-1]
     force_name = force_type.name.rsplit("::", 1)[-1]
@@ -276,7 +306,8 @@ def generate_link_boundary(sfg, ctx, name, *, assignments, index_field,
 
     for header in ("<array>", "<cstddef>", "<cstdint>", "<functional>",
                    "<memory>", "core/DataTypes.h", "core/cell/Cell.h",
-                   "core/math/Vector3.h", "blockforest/StructuredBlockForest.h",
+                   "core/math/Vector3.h",
+                   "blockforest/StructuredBlockForest.h",
                    f"stencil/D{dim}Q{n_directions}.h", BASE_HEADER):
         sfg.include(header)
 

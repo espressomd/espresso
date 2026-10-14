@@ -404,6 +404,29 @@ class GenericBoundaryTest(unittest.TestCase):
         self.assertIn("namespace NoSlipTest_kernels", source)
         self.assertIn("#pragma omp parallel", source)
 
+    def generate_with(self, pdf_field, data_type="double"):
+        ctx = sfg_driver.CodegenContext(data_type, "cpu")
+        ubb_fields = pystencils_espresso.generate_fields(D3Q19, ctx.data_type)
+        method = generate_lb_kernels.create_lb_method(ubb_fields)
+        tmp = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp)
+        with sfg_driver.KernelFileGenerator(
+                "Bad", ctx, tmp, "test") as sfg:
+            boundaries.generate_dynamic_ubb(sfg, ctx, "Bad", method,
+                                            pdf_field)
+
+    def test_wrong_component_count(self):
+        fields = pystencils_espresso.generate_fields(
+            D3Q27, sfg_driver.CodegenContext("double", "cpu").data_type)
+        with self.assertRaisesRegex(ValueError, r"index shape \(27,\).*19"):
+            self.generate_with(fields["pdfs"])
+
+    def test_wrong_dtype(self):
+        fields = pystencils_espresso.generate_fields(
+            D3Q19, sfg_driver.CodegenContext("single", "cpu").data_type)
+        with self.assertRaisesRegex(ValueError, r"float.*differs.*double"):
+            self.generate_with(fields["pdfs"], "double")
+
 
 if __name__ == "__main__":
     unittest.main()
