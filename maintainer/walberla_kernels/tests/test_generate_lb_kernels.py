@@ -187,6 +187,62 @@ class GenerateLbKernelsTest(unittest.TestCase):
             self.assertEqual((outputs[0] / name).read_bytes(),
                              (outputs[1] / name).read_bytes(), name)
 
+    def test_dynamic_ubb_all_variants(self):
+        tmp, result = self.run_script("--kernels", "dynamic_ubb")
+        self.assertEqual(sorted(p.name for p in tmp.iterdir()), sorted(
+            f"DynamicUBB{p}Precision{s}"
+            for p in ("Single", "Double")
+            for s in (".h", ".cpp", "CUDA.h", "CUDA.cu")))
+        self.assertIn("skipping dynamic_ubb for target avx", result.stdout)
+
+    def test_dynamic_ubb_double_cpu(self):
+        tmp, _ = self.run_script("--kernels", "dynamic_ubb",
+                                 "--precision", "double", "--target", "cpu")
+        self.assertEqual(sorted(p.name for p in tmp.iterdir()),
+                         ["DynamicUBBDoublePrecision.cpp",
+                          "DynamicUBBDoublePrecision.h"])
+        header = (tmp / "DynamicUBBDoublePrecision.h").read_text()
+        self.assertIn("class DynamicUBBDoublePrecision : public "
+                      "walberla::IndexVectorBoundary<", header)
+        self.assertIn("walberla::IndexVectorMemory::Host", header)
+
+    def test_dynamic_ubb_single_cuda(self):
+        tmp, _ = self.run_script("--kernels", "dynamic_ubb",
+                                 "--precision", "single", "--target", "cuda")
+        self.assertEqual(sorted(p.name for p in tmp.iterdir()),
+                         ["DynamicUBBSinglePrecisionCUDA.cu",
+                          "DynamicUBBSinglePrecisionCUDA.h"])
+        header = (tmp / "DynamicUBBSinglePrecisionCUDA.h").read_text()
+        self.assertIn("walberla::IndexVectorMemory::Device", header)
+        self.assertIn("cudaStream_t stream", header)
+
+    def test_dynamic_ubb_is_registered_for_cpu_and_cuda(self):
+        import generate_lb_kernels
+        kernel = generate_lb_kernels.KERNELS["dynamic_ubb"]
+        self.assertEqual(
+            (kernel.stem, kernel.targets, kernel.header_only,
+             kernel.header_extension),
+            ("DynamicUBB", ("cpu", "cuda"), False, "h"))
+
+    def test_dynamic_ubb_output_is_deterministic(self):
+        # independent of the hash seed of the interpreter
+        outputs = []
+        for seed in ("1", "2"):
+            tmp = pathlib.Path(self.enterContext(
+                tempfile.TemporaryDirectory()))
+            subprocess.run(
+                [sys.executable, str(SCRIPT), "--kernels", "dynamic_ubb",
+                 "--output-dir", str(tmp)],
+                env=dict(os.environ, PYTHONHASHSEED=seed),
+                capture_output=True, text=True, check=True)
+            outputs.append(tmp)
+        names = sorted(p.name for p in outputs[0].iterdir())
+        self.assertEqual(len(names), 8)
+        self.assertEqual(names, sorted(p.name for p in outputs[1].iterdir()))
+        for name in names:
+            self.assertEqual((outputs[0] / name).read_bytes(),
+                             (outputs[1] / name).read_bytes(), name)
+
     def test_duplicate_selections_generate_once(self):
         _, result = self.run_script(
             "--kernels", "init", "init", "--precision", "double", "double",

@@ -38,6 +38,7 @@ import sympy as sp
 from pystencils.sympyextensions import DynamicType
 from pystencils.sympyextensions.random import Philox
 
+import boundaries
 import compat
 import lb_accessors
 import lees_edwards
@@ -181,6 +182,12 @@ def generate_accessors(sfg, ctx, name):
     lb_accessors.generate_field_accessors(sfg, ctx, method)
 
 
+def generate_dynamic_ubb(sfg, ctx, name):
+    fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
+    method = create_lb_method(fields)
+    boundaries.generate_dynamic_ubb(sfg, ctx, name, method, fields["pdfs"])
+
+
 def generate_pack_info_pdf(sfg, ctx, name):
     pack_infos.generate_pdf_pack_info(sfg, ctx, name, STENCIL)
 
@@ -208,6 +215,7 @@ KERNELS = {
         generate_stream_collide_lees_edwards),
     "vel_update": Kernel("UpdateVelFromPDF", ("cpu", "cuda"),
                          generate_vel_update),
+    "dynamic_ubb": Kernel("DynamicUBB", ("cpu", "cuda"), generate_dynamic_ubb),
     "pack_info_pdf": Kernel("PackInfoPdf", ("cpu", "cuda"),
                             generate_pack_info_pdf),
     "pack_info_vec": Kernel("PackInfoVec", ("cpu", "cuda"),
