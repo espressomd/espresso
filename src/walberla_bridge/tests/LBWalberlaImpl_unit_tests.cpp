@@ -621,22 +621,43 @@ BOOST_AUTO_TEST_CASE(pdf_field_index_range) {
   using walberla::uint_t;
   using walberla::detail::check_pdf_field_index_range;
   auto constexpr limit = uint_t{1} << 31u;
-  // one population, no ghost layers: the field has x * y * z elements
-  BOOST_CHECK_NO_THROW(check_pdf_field_index_range(1u, limit - 1u, 1u, 1u, 0u));
-  BOOST_CHECK_THROW(check_pdf_field_index_range(1u, limit, 1u, 1u, 0u),
+  // one population, no ghost layers: the field has pad(x) * y * z elements,
+  // where the x extent is padded to a multiple of 16 elements (64 bytes of
+  // floats); the padding makes the difference in the first pair
+  BOOST_CHECK_NO_THROW(
+      check_pdf_field_index_range(1u, limit - 16u, 1u, 1u, 0u));
+  BOOST_CHECK_THROW(check_pdf_field_index_range(1u, limit - 15u, 1u, 1u, 0u),
                     std::runtime_error);
-  BOOST_CHECK_NO_THROW(check_pdf_field_index_range(1u, 1u << 15u, 1u << 15u,
-                                                   (1u << 1u) - 1u, 0u));
-  BOOST_CHECK_THROW(
-      check_pdf_field_index_range(1u, 1u << 15u, 1u << 15u, 1u << 1u, 0u),
-      std::runtime_error);
-  // the populations and the ghost layers are part of the size:
-  // 19 * 483^3 < 2^31 <= 19 * 484^3
-  BOOST_CHECK_NO_THROW(check_pdf_field_index_range(19u, 481u, 481u, 481u, 1u));
-  BOOST_CHECK_THROW(check_pdf_field_index_range(19u, 482u, 482u, 482u, 1u),
+  // only the x extent is padded
+  BOOST_CHECK_NO_THROW(
+      check_pdf_field_index_range(1u, 16u, (limit / 16u) - 1u, 1u, 0u));
+  BOOST_CHECK_THROW(check_pdf_field_index_range(1u, 16u, limit / 16u, 1u, 0u),
                     std::runtime_error);
-  BOOST_CHECK_NO_THROW(check_pdf_field_index_range(19u, 483u, 483u, 483u, 0u));
-  BOOST_CHECK_THROW(check_pdf_field_index_range(19u, 484u, 484u, 484u, 0u),
+  // the ghost layers are part of the size, on both sides of each extent:
+  // extents 16 * 2^14 * (2^13 - 1) < 2^31 <= 16 * 2^14 * 2^13
+  BOOST_CHECK_NO_THROW(check_pdf_field_index_range(1u, 14u, (1u << 14u) - 2u,
+                                                   (1u << 13u) - 3u, 1u));
+  BOOST_CHECK_THROW(check_pdf_field_index_range(1u, 14u, (1u << 14u) - 2u,
+                                                (1u << 13u) - 2u, 1u),
+                    std::runtime_error);
+  // two ghost layers: x extent 8 + 4 = 12 is padded to 16
+  BOOST_CHECK_NO_THROW(check_pdf_field_index_range(1u, 8u, (1u << 14u) - 4u,
+                                                   (1u << 13u) - 5u, 2u));
+  BOOST_CHECK_THROW(check_pdf_field_index_range(1u, 8u, (1u << 14u) - 4u,
+                                                (1u << 13u) - 4u, 2u),
+                    std::runtime_error);
+  // the populations are part of the size: 19 * 16 * 4096 * 1724 < 2^31
+  BOOST_CHECK_NO_THROW(check_pdf_field_index_range(19u, 14u, 4094u, 1722u, 1u));
+  BOOST_CHECK_THROW(check_pdf_field_index_range(19u, 14u, 4094u, 1723u, 1u),
+                    std::runtime_error);
+  // cubic D3Q19 blocks with one ghost layer: for 479^3 the x extent 481 is
+  // padded to 496, which pushes the field over the limit
+  BOOST_CHECK_NO_THROW(check_pdf_field_index_range(19u, 478u, 478u, 478u, 1u));
+  BOOST_CHECK_THROW(check_pdf_field_index_range(19u, 479u, 479u, 479u, 1u),
+                    std::runtime_error);
+  // non-cubic D3Q19 blocks with one ghost layer: x extent 64, y extent 702
+  BOOST_CHECK_NO_THROW(check_pdf_field_index_range(19u, 62u, 700u, 2513u, 1u));
+  BOOST_CHECK_THROW(check_pdf_field_index_range(19u, 62u, 700u, 2514u, 1u),
                     std::runtime_error);
   // the size computation doesn't overflow
   BOOST_CHECK_THROW(check_pdf_field_index_range(19u, uint_t{1} << 62u,
