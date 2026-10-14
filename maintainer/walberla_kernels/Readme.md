@@ -6,9 +6,12 @@ code generators.
 
 ## Migration status
 
-The kernels are being migrated from pystencils 1.4 / `pystencils_walberla`
-and Jinja templates to [sweepgen](https://walberla.net) and
+All lattice-Boltzmann kernels are generated with
+[sweepgen](https://walberla.net) and
 [pystencils-sfg](https://pycodegen.pages.i10git.cs.fau.de/pystencils-sfg/).
+The electrokinetics kernels have not been migrated yet: they are still the
+committed output of pystencils 1.4 / `pystencils_walberla` and Jinja
+templates.
 
 | Kernel family | Generator | Toolchain |
 |---|---|---|
@@ -23,12 +26,16 @@ and Jinja templates to [sweepgen](https://walberla.net) and
 | LB `DynamicUBB` (boundary) | `generate_lb_kernels.py --kernels dynamic_ubb` | sweepgen |
 | EK kernels | not regenerable at the moment | pystencils 1.4 (committed output) |
 
-To regenerate a kernel that has not been migrated yet, use the generator
-scripts of commit `fd77c551db`, the last commit before this migration
+To regenerate an EK kernel, use the generator scripts of commit
+`fd77c551db`, the last commit before this migration
 (e.g. `git worktree add ../espresso-old-codegen fd77c551db`), together with
 the pystencils 1.4 environment described in that commit's Readme.
 `generate_ek_kernels.py` in the current tree no longer works with either
-toolchain: it depends on helpers that were removed from `pystencils_espresso.py`.
+toolchain: it depends on helpers that were removed from `pystencils_espresso.py`
+(`generate_config`, `precision_rng_modulo`) and on `pystencils_walberla`. The
+modules that only it uses (`custom_additional_extensions.py`,
+`walberla_ek_generation.py`, `code_generation_context.py`, `ekin.py` and the
+Jinja templates in `templates/`) stay until the EK kernels are migrated.
 
 ## Code generation environment
 
@@ -143,8 +150,8 @@ between runs. All headers, both `field_accessors` kernels and all files of the
   kernel, and so is all the index arithmetic of the kernel (the old one used
   64 bits for the offsets in the PDF field): the PDF field of a block with
   its ghost layers must have fewer than 2^31 elements. The generated code
-  doesn't check this: the check belongs to the bridge and will be added to
-  `LBWalberlaImpl` in the next sub-project (2c-3). The kernels of a class live
+  doesn't check this: the bridge does (see "Index limit of the PDF field").
+  The kernels of a class live
   in the namespace `<ClassName>_kernels`, so the CPU and CUDA boundaries
   never define the same function (`tests/test_boundary_symbols.py`).
   The C++ tests of the hand-written class are
@@ -200,6 +207,45 @@ They are not copied into ESPResSo: at configure time, CMake takes them from
 the pystencils package of the Python interpreter it uses
 (`cmake/FindPystencils.cmake`). Building with waLBerla therefore requires
 pystencils from `requirements.txt` in that Python environment.
+
+## Hand-written C++ headers of the bridge
+
+Two families of generated classes derive from hand-written headers in
+`src/walberla_bridge/src/utils/`. The generated headers include them by their
+relative path, because the include path of the bridge targets doesn't contain
+`src/`. A change that keeps the interface that the generators rely on doesn't
+need a regeneration.
+
+* `UniformCpuFieldPackInfoBase.hpp`: the CRTP base of the CPU `PackInfoPdf`
+  and `PackInfoVec`, the CPU counterpart of `sweepgen`'s
+  `UniformGpuFieldPackInfoBase`. It implements the interface of
+  `walberla::communication::UniformPackInfo` (buffers, sizes, local copy); the
+  generated class provides the pack, unpack and copy kernels per direction.
+* `IndexVectorBoundary.hpp`: the CRTP base of the link boundaries (`DynamicUBB`),
+  with the index vectors, force vectors and the host/device handling (see
+  the description of `boundaries.py` above). Its C++ tests are
+  `src/walberla_bridge/tests/IndexVectorBoundary_test{,_cuda}`.
+
+## Index limit of the PDF field
+
+The LB kernels that compute their offsets with `int32_t` are the
+single-precision AVX stream-collide kernels (`index_dtype=int32`) and the link
+kernels of the boundary conditions (`DynamicUBB`, all precisions and
+targets). The PDF field of a block, including its ghost layers, must
+therefore have fewer than 2^31 elements:
+`Q * prod(cells_per_block[i] + 2 * ghost_layers) < 2^31`, with `Q = 19`.
+The generated code can't check this. The constructor of `LBWalberlaImpl`
+(`src/walberla_bridge/src/lattice_boltzmann/LBWalberlaImpl.hpp`) does, with
+`walberla::detail::check_pdf_field_index_range`, before it allocates any field,
+and throws a `std::runtime_error` (a `RuntimeError` in Python). The remedy is
+more MPI ranks or blocks, or a smaller grid; the test is in
+`src/walberla_bridge/tests/LBWalberlaImpl_unit_tests.cpp`.
+
+The stream-collide sweeps share one shadow PDF field between all blocks of a
+sweep object, which is cloned from the first block that is processed. All
+blocks must therefore have the same size, which `LatticeWalberla` guarantees
+by creating a uniform block grid; the constructor of `LBWalberlaImpl` checks
+that the PDF fields of all local blocks have the same size.
 
 ## Thermalized LB kernels
 
