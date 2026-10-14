@@ -20,7 +20,7 @@ and Jinja templates to [sweepgen](https://walberla.net) and
 | LB CUDA `FieldAccessors` | `generate_lb_kernels.py --kernels field_accessors_cuda` | sweepgen |
 | LB `PackInfoPdf` (streaming-aware) | `generate_lb_kernels.py --kernels pack_info_pdf` | sweepgen |
 | LB `PackInfoVec` | `generate_lb_kernels.py --kernels pack_info_vec` | sweepgen |
-| Other LB kernels (boundaries) | not regenerable at the moment | pystencils 1.4 (committed output) |
+| LB `DynamicUBB` (boundary) | `generate_lb_kernels.py --kernels dynamic_ubb` | sweepgen |
 | EK kernels | not regenerable at the moment | pystencils 1.4 (committed output) |
 
 To regenerate a kernel that has not been migrated yet, use the generator
@@ -80,7 +80,8 @@ The output is deterministic, except for the order of the field-extraction
 statements in the `.cpp` and `.cu` files of the `init`, `vel_update` and
 `stream_collide_*` kernels, which pystencils-sfg 0.3 does not keep stable
 between runs. All headers, both `field_accessors` kernels and all files of the
-`pack_info_*` kernels are byte-identical for any `PYTHONHASHSEED`.
+`pack_info_*` and `dynamic_ubb` kernels are byte-identical for any
+`PYTHONHASHSEED`.
 
 ## Architecture
 
@@ -112,6 +113,38 @@ between runs. All headers, both `field_accessors` kernels and all files of the
   like in the old pack infos. The kernels of a class live in the namespace
   `<ClassName>_kernels`, so the CPU and CUDA pack infos never define the same
   function (`tests/test_pack_info_symbols.py`).
+* `boundaries.py`: the boundary conditions on the links between fluid and
+  boundary cells, with the interface of the old `pystencils_walberla` classes:
+  `DynamicUBB` of `walberla::lbm` on the CPU and CUDA targets (there is no AVX
+  variant). The generated class derives from the hand-written CRTP base
+  `walberla::IndexVectorBoundary` of
+  `src/walberla_bridge/src/utils/IndexVectorBoundary.hpp`, which the
+  generated header includes by its relative path. The base class collects the
+  links from the flag field into the `ALL`, `INNER` and `OUTER` index vectors
+  of each block, copies them to the device, runs the kernel on a vector, and
+  keeps one force vector for each index vector (see the documentation of the
+  header for the semantics of `run`, `inner`, `outer`, `getForce` and
+  `getForceVector`). The generated class provides the link kernel and the
+  structs of a link (`<ClassName>IndexInfo`: the `int32_t` coordinates `x`,
+  `y`, `z` and the direction `dir`, then the data of the boundary, e.g.
+  `vel_0` to `vel_2` of the UBB) and of its force (`<ClassName>ForceStruct`,
+  `F_0` to `F_2`). The kernel is a sparse pystencils kernel over a field of
+  these structs (`CreateKernelConfig.index_field`). The generic part
+  (`generate_link_boundary`) takes the assignments of the kernel and doesn't
+  depend on the lattice Boltzmann method, so that it can also generate the
+  boundaries of the electrokinetics; `generate_dynamic_ubb` defines the UBB
+  with lbmpy. The assignments are built like
+  `create_lattice_boltzmann_boundary_kernel` of lbmpy 2.1.1 does, and the code
+  relies on lbmpy, pystencils, pystencils-sfg and sweepgen internals (see the
+  module docstring): re-check them whenever the toolchain changes. The
+  coordinates of the links are 32 bits wide, as in the old kernel, and so is
+  all the index arithmetic of the kernel (the old one used 64 bits for the
+  offsets in the PDF field): the PDF field of a block with its ghost layers
+  must have fewer than 2^31 elements, which the generated code doesn't check. The kernels of a class live
+  in the namespace `<ClassName>_kernels`, so the CPU and CUDA boundaries
+  never define the same function (`tests/test_boundary_symbols.py`).
+  The C++ tests of the hand-written class are
+  `src/walberla_bridge/tests/IndexVectorBoundary_test{,_cuda}`.
 * LB field accessors (`walberla::lbm::accessor`): one function catalogue,
   two backends.
   * `accessor_equations.py`: the equations of the accessors, derived from the
