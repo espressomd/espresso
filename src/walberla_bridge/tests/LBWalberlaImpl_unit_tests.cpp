@@ -43,6 +43,7 @@
 #include <initializer_list>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -614,6 +615,49 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
   auto lb_lattice_without_ghosts = std::make_shared<LatticeWalberla>(
       params.grid_dimensions, mpi_shape, mpi_shape, 0u);
   BOOST_CHECK_THROW(LB(lb_lattice_without_ghosts, 1., 1.), std::runtime_error);
+}
+
+BOOST_AUTO_TEST_CASE(pdf_field_index_range) {
+  using walberla::uint_t;
+  using walberla::detail::check_pdf_field_index_range;
+  auto constexpr limit = uint_t{1} << 31u;
+  // one population, no ghost layers: the field has x * y * z elements
+  BOOST_CHECK_NO_THROW(check_pdf_field_index_range(1u, limit - 1u, 1u, 1u, 0u));
+  BOOST_CHECK_THROW(check_pdf_field_index_range(1u, limit, 1u, 1u, 0u),
+                    std::runtime_error);
+  BOOST_CHECK_NO_THROW(check_pdf_field_index_range(1u, 1u << 15u, 1u << 15u,
+                                                   (1u << 1u) - 1u, 0u));
+  BOOST_CHECK_THROW(
+      check_pdf_field_index_range(1u, 1u << 15u, 1u << 15u, 1u << 1u, 0u),
+      std::runtime_error);
+  // the populations and the ghost layers are part of the size:
+  // 19 * 483^3 < 2^31 <= 19 * 484^3
+  BOOST_CHECK_NO_THROW(check_pdf_field_index_range(19u, 481u, 481u, 481u, 1u));
+  BOOST_CHECK_THROW(check_pdf_field_index_range(19u, 482u, 482u, 482u, 1u),
+                    std::runtime_error);
+  BOOST_CHECK_NO_THROW(check_pdf_field_index_range(19u, 483u, 483u, 483u, 0u));
+  BOOST_CHECK_THROW(check_pdf_field_index_range(19u, 484u, 484u, 484u, 0u),
+                    std::runtime_error);
+  // the size computation doesn't overflow
+  BOOST_CHECK_THROW(check_pdf_field_index_range(19u, uint_t{1} << 62u,
+                                                uint_t{1} << 62u,
+                                                uint_t{1} << 62u, 1u),
+                    std::runtime_error);
+}
+
+BOOST_AUTO_TEST_CASE(lb_block_too_large_for_32bit_indices) {
+  using LB = walberla::LBWalberlaImpl<double, lbmpy::Arch::CPU>;
+  // blocks of 500^3 cells: the PDF field would have 19 * 502^3 > 2^31 elements
+  // (creating the lattice doesn't allocate any field, and the LB constructor
+  // must throw before it does)
+  auto const grid_dimensions =
+      hadamard_product(Vector3i::broadcast(500), mpi_shape);
+  auto const lattice = std::make_shared<LatticeWalberla>(
+      grid_dimensions, mpi_shape, mpi_shape, 1u);
+  auto const check_message = [](std::runtime_error const &error) {
+    return std::string(error.what()).find("2^31") != std::string::npos;
+  };
+  BOOST_CHECK_EXCEPTION(LB(lattice, 1., 1.), std::runtime_error, check_message);
 }
 
 BOOST_AUTO_TEST_CASE(le_sweep) {

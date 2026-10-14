@@ -82,6 +82,50 @@
 
 namespace walberla {
 
+namespace detail {
+
+/**
+ * @brief Check that the PDF field of a block can be indexed with 32 bits.
+ *
+ * Several generated kernels compute all their offsets in the PDF field with
+ * @c int32_t, for every precision and target: the single-precision AVX
+ * stream-collide kernels (@c index_dtype=int32) and the link kernels of the
+ * boundary conditions (e.g. @c DynamicUBB). The number of elements of the
+ * PDF field of a block, ghost layers included, must therefore stay below
+ * 2^31, otherwise the offsets overflow silently. The kernels don't check
+ * this, so it is checked here, before any field is allocated.
+ *
+ * @param n_populations Number of populations per cell (@c Stencil::Size)
+ * @param cells_x Number of cells of a block in x direction (without halo)
+ * @param cells_y Number of cells of a block in y direction (without halo)
+ * @param cells_z Number of cells of a block in z direction (without halo)
+ * @param n_ghost_layers Number of ghost layers on each side of a block
+ * @throw std::runtime_error if the field has 2^31 elements or more
+ */
+inline void check_pdf_field_index_range(std::size_t n_populations,
+                                        uint_t cells_x, uint_t cells_y,
+                                        uint_t cells_z, uint_t n_ghost_layers) {
+  // the factors are checked one at a time, so that nothing can overflow
+  auto constexpr limit = uint_t{1} << 31u;
+  auto size = static_cast<uint_t>(n_populations);
+  for (auto const cells : {cells_x, cells_y, cells_z}) {
+    auto const extent = cells + 2u * n_ghost_layers;
+    if (extent != 0u and size > (limit - 1u) / extent) {
+      throw std::runtime_error(
+          "The PDF field of a block (" + std::to_string(n_populations) +
+          " populations in " + std::to_string(cells_x) + "x" +
+          std::to_string(cells_y) + "x" + std::to_string(cells_z) +
+          " cells with " + std::to_string(n_ghost_layers) +
+          " ghost layers) has 2^31 or more elements, which the 32-bit index "
+          "arithmetic of the LB kernels cannot address. Use more MPI ranks "
+          "or blocks, or a smaller grid.");
+    }
+    size *= extent;
+  }
+}
+
+} // namespace detail
+
 /** @brief Class that runs and controls the LB on waLBerla. */
 template <typename FloatType, lbmpy::Arch Architecture>
 class LBWalberlaImpl : public LBWalberlaBase {
@@ -245,10 +289,18 @@ public:
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
     if (n_ghost_layers == 0u)
       throw std::runtime_error("At least one ghost layer must be used");
+    // checked before any field is allocated
+    if (auto it = blocks->begin(); it != blocks->end()) {
+      detail::check_pdf_field_index_range(
+          Stencil::Size, blocks->getNumberOfXCells(*it),
+          blocks->getNumberOfYCells(*it), blocks->getNumberOfZCells(*it),
+          n_ghost_layers);
+    }
 
     // Initialize and register fields (must use the "underlying" types)
     m_pdf_field_id = add_to_storage<_PdfField>("pdfs");
     m_pdf_tmp_field_id = add_to_storage<_PdfField>("pdfs_tmp");
+    check_uniform_pdf_field_size();
     m_last_applied_force_field_id = add_to_storage<_VectorField>("force last");
     m_force_to_be_applied_id = add_to_storage<_VectorField>("force next");
     m_velocity_field_id = add_to_storage<_VectorField>("velocity");
@@ -407,6 +459,39 @@ private:
     std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks{};
   };
   StreamCollideSweepVisitor m_run_stream_collide_sweep{};
+
+  /**
+   * @brief Check that the PDF fields of all local blocks have the same size.
+   *
+   * The swapping stream-collide kernels (sweepgen) share one shadow PDF field
+   * between all the blocks of a sweep object. It is cloned from the PDF field
+   * of the first block that is processed, so every block must have a PDF
+   * field of the same size. @ref LatticeWalberla guarantees this by
+   * construction (it creates a uniform block grid). This guards against a
+   * future change of that: a larger block would write out of the bounds of
+   * the shadow field. It is a runtime check, because it costs one loop over
+   * the local blocks at construction, while the consequence in a release
+   * build is silent memory corruption.
+   */
+  void check_uniform_pdf_field_size() const {
+    auto const size = [this](IBlock const &block) {
+      auto const *field = block.template getData<PdfField>(m_pdf_field_id);
+      return std::array<uint_t, 3u>{field->xSize(), field->ySize(),
+                                    field->zSize()};
+    };
+    auto const &blocks = *m_lattice->get_blocks();
+    auto it = blocks.begin();
+    if (it == blocks.end())
+      return;
+    auto const reference = size(*it);
+    for (++it; it != blocks.end(); ++it) {
+      if (size(*it) != reference) {
+        throw std::runtime_error("All blocks of the LB lattice must have the "
+                                 "same size, because the stream-collide "
+                                 "sweeps share one shadow PDF field");
+      }
+    }
+  }
 
   /** @brief Relaxation rate omega from kinematic viscosity: 2/(6*nu+1). */
   FloatType shear_mode_relaxation_rate() const;
