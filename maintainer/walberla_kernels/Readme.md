@@ -151,9 +151,9 @@ between runs. All headers, both `field_accessors` kernels and all files of the
   64 bits for the offsets in the PDF field): the PDF field of a block with
   its ghost layers must have fewer than 2^31 elements. The generated code
   doesn't check this: the bridge does (see "Index limit of the PDF field").
-  The kernels of a class live
-  in the namespace `<ClassName>_kernels`, so the CPU and CUDA boundaries
-  never define the same function (`tests/test_boundary_symbols.py`).
+  The kernels of a class live in the namespace `<ClassName>_kernels`, so the
+  CPU and CUDA boundaries never define the same function
+  (`tests/test_boundary_symbols.py`).
   The C++ tests of the hand-written class are
   `src/walberla_bridge/tests/IndexVectorBoundary_test{,_cuda}`.
 * LB field accessors (`walberla::lbm::accessor`): one function catalogue,
@@ -233,7 +233,13 @@ single-precision AVX stream-collide kernels (`index_dtype=int32`) and the link
 kernels of the boundary conditions (`DynamicUBB`, all precisions and
 targets). The PDF field of a block, including its ghost layers, must
 therefore have fewer than 2^31 elements:
-`Q * prod(cells_per_block[i] + 2 * ghost_layers) < 2^31`, with `Q = 19`.
+`Q * pad16(cells_x + 2 * ghost_layers) * (cells_y + 2 * ghost_layers) *
+(cells_z + 2 * ghost_layers) < 2^31`, with `Q = 19` and `pad16(n)` the
+rounding up to a multiple of 16. The rounding accounts for the aligned
+allocator of the AVX kernels, which pads the x extent of the allocation (and
+thus the strides of the kernels) to a multiple of the SIMD alignment (at most
+64 bytes, i.e. 16 single-precision elements); it is applied for every build,
+overestimating the size by less than 1%.
 The generated code can't check this. The constructor of `LBWalberlaImpl`
 (`src/walberla_bridge/src/lattice_boltzmann/LBWalberlaImpl.hpp`) does, with
 `walberla::detail::check_pdf_field_index_range`, before it allocates any field,
