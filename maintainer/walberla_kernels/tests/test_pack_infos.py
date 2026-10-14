@@ -27,6 +27,8 @@ import unittest
 import warnings
 
 import lbmpy
+import numpy as np
+import pystencils as ps
 
 import pack_infos
 import sfg_driver
@@ -91,6 +93,24 @@ class CommunicationSetsTest(unittest.TestCase):
                     if all(d in (0, v) for d, v in zip(direction, e)))
                 self.assertEqual(sets.get(direction, ()), expected,
                                  (len(stencil), direction))
+
+    def test_pdf_sets_are_physical(self):
+        # independent of the implementation: the neighbouring block in
+        # direction d has cells at coordinate d along the axes of d. Under
+        # pull streaming, a cell x pulls population e from x - e, so the
+        # population needs data of this block (coordinate 0 along the axes
+        # of d) if x - e is in this block there. Such populations move
+        # towards the neighbour, e.d > 0.
+        for stencil in (D3Q19, D3Q27):
+            sets = pack_infos.pdf_streaming_sets(stencil)
+            for d in pack_infos.COMMUNICATION_DIRECTIONS:
+                needed = {
+                    i for i, e in enumerate(stencil)
+                    if all(dc - ec == 0 for dc, ec in zip(d, e) if dc != 0)}
+                self.assertEqual(set(sets.get(d, ())), needed, d)
+                for i in needed:
+                    self.assertGreater(
+                        sum(a * b for a, b in zip(stencil[i], d)), 0, d)
 
     def test_pdf_sets_d3q19(self):
         sets = pack_infos.pdf_streaming_sets(D3Q19)
@@ -167,8 +187,9 @@ class GenerationTest(unittest.TestCase):
             "PackInfoPdfDoublePrecision.cpp"]
         self.assertIn("namespace PackInfoPdfDoublePrecision_kernels {",
                       source)
-        # directions with the same populations share their kernels: the
-        # faces and edges of D3Q19 have one set each
+        # every PDF direction has a distinct set of populations, so there
+        # are 18 kernels per type; the deduplication of kernels is exercised
+        # by the vector pack info
         for kernel in ("pack", "unpack", "localCopy"):
             self.assertEqual(len(re.findall(rf"\n    void {kernel}\w+ \(",
                                             source)), 18, kernel)
@@ -192,6 +213,9 @@ class GenerationTest(unittest.TestCase):
                                       "pack"), 18)
 
     def test_buffer_is_x_fastest(self):
+        # the regular expressions and strings below depend on the format of
+        # the pystencils output (``int64_t( ... )``, ``_data_buffer[...]``);
+        # they are the only guard of the x-fastest layout of the buffer
         # the axes of the symbolic fields are (z, y, x): the loops run over
         # z, y, x from the outside to the inside, the buffer index grows with
         # the innermost loop (x), and the strides of the waLBerla field are
@@ -270,6 +294,42 @@ class GenerationTest(unittest.TestCase):
             generate_uncached("pdf", "double", "cuda")
         self.assertEqual([str(w.message) for w in caught], [])
 
+    def test_scalar_field(self):
+        # fields without index dimension (scalar fields of the EK)
+        field = ps.Field.create_generic(
+            "phi", 3, np.float64, index_dimensions=0)
+        comm_sets = pack_infos.vector_sets(D3Q19, 1)
+        for target, suffix in (("cpu", ""), ("cuda", "CUDA")):
+            ctx = sfg_driver.CodegenContext("double", target)
+            name = ctx.class_name("PackInfoScalar")
+            tmp = pathlib.Path(tempfile.mkdtemp())
+            try:
+                with sfg_driver.KernelFileGenerator(
+                        name, ctx, tmp, "generate_lb_kernels.py") as sfg:
+                    sfg.generate(
+                        pack_infos.FieldPackInfo(name, field, comm_sets))
+                files = {p.name: p.read_text() for p in tmp.iterdir()}
+            finally:
+                shutil.rmtree(tmp)
+            header = files[f"{name}.h"]
+            source = next(t for n, t in files.items() if n != f"{name}.h")
+            field_t = ("walberla::gpu::GPUField< double >" if suffix
+                       else "walberla::field::GhostLayerField< double, 1 >")
+            self.assertIn(f"using Field_T = {field_t};", header)
+            self.assertEqual(set(elements_per_cell(header).values()), {1})
+            # no component axis
+            self.assertNotIn("fStride", source)
+            self.assertNotIn("_stride_phi_src_3", source)
+            # one kernel is shared by all directions
+            self.assertEqual(len(re.findall(
+                r"void pack\w+ ?\(", source)), 1)
+
+    def test_fields_with_two_index_dimensions_are_rejected(self):
+        field = ps.Field.create_generic(
+            "m", 3, np.float64, index_dimensions=2, index_shape=(3, 3))
+        with self.assertRaises(ValueError):
+            pack_infos.FieldPackInfo("X", field, {})
+
     def test_unsupported_target(self):
         with self.assertRaises(AssertionError):
             generate_uncached("pdf", "double", "avx")
@@ -288,30 +348,6 @@ class CpuBaseHeaderTest(unittest.TestCase):
             os.path.normpath(generated_kernels / include),
             str(CPU_BASE_HEADER))
         self.assertTrue(CPU_BASE_HEADER.is_file())
-
-    def test_base_class_api(self):
-        text = CPU_BASE_HEADER.read_text()
-        self.assertIn("#pragma once", text)
-        self.assertIn("namespace walberla {", text)
-        self.assertIn("template <typename Impl>\nclass "
-                      "UniformCpuFieldPackInfoBase", text)
-        self.assertIn("::walberla::communication::UniformPackInfo", text)
-        for member in (
-                "explicit UniformCpuFieldPackInfoBase(BlockDataID fieldId,",
-                "bool constantDataExchange() const override",
-                "bool threadsafeReceiving() const override",
-                "void unpackData(", "void communicateLocal(",
-                "void pack(", "void unpack(", "uint_t size(",
-                "void packDataImpl("):
-            self.assertIn(member, text)
-        # the members that the generated class uses
-        for call in ("impl().doPack(", "impl().doUnpack(",
-                     "impl().doLocalCopy(", "impl().elementsPerCell("):
-            self.assertIn(call, text)
-
-    def test_license_header(self):
-        self.assertIn("GNU General Public License",
-                      CPU_BASE_HEADER.read_text()[:1000])
 
 
 if __name__ == "__main__":

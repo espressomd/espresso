@@ -37,7 +37,6 @@
 #include <domain_decomposition/IBlock.h>
 #include <stencil/Directions.h>
 
-#include <cstddef>
 #include <memory>
 #include <span>
 
