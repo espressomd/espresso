@@ -84,6 +84,7 @@ The CPU kernels are not parallelized with OpenMP, like the old ones: they
 pack thin slices of a block.
 """
 
+import functools
 import itertools
 import warnings
 
@@ -171,7 +172,8 @@ class ReversedAxesExtraction(GhostLayerFieldExtraction):
 class FieldPackInfo(CustomGenerator):
     """
     Pack info class ``name`` for the 3D field ``field`` (a pystencils field
-    with one index dimension), which communicates the components
+    with one index dimension, or a scalar field without index dimension,
+    whose only component is 0), which communicates the components
     ``comm_sets[direction]`` in each direction (see `pdf_streaming_sets`).
     The target (CPU or CUDA) is the one of the build configuration of the
     ``sfg`` the generator is run with.
@@ -181,15 +183,30 @@ class FieldPackInfo(CustomGenerator):
         self._name = name
         self._dtype = field.dtype
         self._comm_sets = comm_sets
-        n_components = field.index_shape[0]
+        self._scalar = field.index_dimensions == 0
+        if field.index_dimensions > 1:
+            raise ValueError(
+                f"Field {field.name} has {field.index_dimensions} index "
+                "dimensions, at most one is supported")
+        n_components = 1 if self._scalar else field.index_shape[0]
         # axes (z, y, x), see the module docstring
         self._src = self._symbolic_field(f"{field.name}_src", n_components)
         self._dst = self._symbolic_field(f"{field.name}_dst", n_components)
 
     def _symbolic_field(self, name, n_components):
+        if self._scalar:
+            return Field.create_generic(
+                name, 3, self._dtype, index_dimensions=0, layout="c")
         return Field.create_generic(
             name, 3, self._dtype, index_dimensions=1, layout="c",
             index_shape=(n_components,))
+
+    def _access(self, symbolic_field, component):
+        """Center access of ``component`` (none for a scalar field)."""
+        if self._scalar:
+            assert component == 0
+            return symbolic_field.center
+        return symbolic_field.center(component)
 
     def _buffer(self, n_components):
         return Field.create_generic(
@@ -206,12 +223,13 @@ class FieldPackInfo(CustomGenerator):
         name = "_".join(offset_to_direction_string(d) for d in directions)
         create = kernels_context.kns.create
         config = kernels_context.cfg
-        pack = [Assignment(buffer(i), self._src.center(c))
+        src = functools.partial(self._access, self._src)
+        dst = functools.partial(self._access, self._dst)
+        pack = [Assignment(buffer(i), src(c))
                 for i, c in enumerate(components)]
-        unpack = [Assignment(self._dst.center(c), buffer(i))
+        unpack = [Assignment(dst(c), buffer(i))
                   for i, c in enumerate(components)]
-        local_copy = [Assignment(self._dst.center(c), self._src.center(c))
-                      for c in components]
+        local_copy = [Assignment(dst(c), src(c)) for c in components]
         return (create(pack, f"pack{name}", config),
                 create(unpack, f"unpack{name}", config),
                 create(local_copy, f"localCopy{name}", config))
@@ -245,10 +263,11 @@ class FieldPackInfo(CustomGenerator):
         src_ptr = field_ptr(self._src)
         dst_ptr = field_ptr(self._dst)
         buffer = std.span(self._dtype).var("buffer")
-        direction = Direction().var("dir")
+        dir_var = Direction().var("dir")
         src_interval = CellInterval(const=True, ref=True).var("srcInterval")
         dst_interval = CellInterval(const=True, ref=True).var("dstInterval")
-        stream = [CudaAPI.stream_t().var("stream")] if is_gpu else []
+        stream = CudaAPI.stream_t().var("stream") if is_gpu else None
+        stream_params = [] if stream is None else [stream]
 
         def bind(symbolic_field, ptr, interval):
             return sfg.map_field(
@@ -258,14 +277,14 @@ class FieldPackInfo(CustomGenerator):
             """Switch over the directions that calls kernel ``index``."""
             if is_gpu:
                 def call(handle):
-                    return sfg.gpu_invoke(handle, stream=stream[0])
+                    return sfg.gpu_invoke(handle, stream=stream)
             else:
                 call = sfg.call
-            return sfg.switch(direction).cases({
+            return sfg.switch(dir_var).cases({
                 Direction.from_offset(d): call(kernels[d][index])
                 for d in self._comm_sets}).default("/* unreachable */")
 
-        elements_per_cell = sfg.switch(direction, autobreak=False).cases({
+        elements_per_cell = sfg.switch(dir_var, autobreak=False).cases({
             Direction.from_offset(d): f"return {len(components)};"
             for d, components in self._comm_sets.items()
         }).default("return 0;")
@@ -277,23 +296,23 @@ class FieldPackInfo(CustomGenerator):
                 f"using Field_T = "
                 f"{strip_ptr_ref(src_ptr.get_dtype()).c_string()};",
                 sfg.method("doPack").const().params(
-                    src_ptr, buffer, direction, src_interval, *stream)(
+                    src_ptr, buffer, dir_var, src_interval, *stream_params)(
                     bind(self._src, src_ptr, src_interval),
                     CaptureBufferPointer(sfg, "buffer", buffer),
                     dispatch(0)),
                 sfg.method("doUnpack").const().params(
-                    dst_ptr, buffer, direction, dst_interval, *stream)(
+                    dst_ptr, buffer, dir_var, dst_interval, *stream_params)(
                     bind(self._dst, dst_ptr, dst_interval),
                     CaptureBufferPointer(sfg, "buffer", buffer),
                     dispatch(1)),
                 sfg.method("doLocalCopy").const().params(
-                    src_ptr, src_interval, dst_ptr, dst_interval, direction,
-                    *stream)(
+                    src_ptr, src_interval, dst_ptr, dst_interval, dir_var,
+                    *stream_params)(
                     bind(self._src, src_ptr, src_interval),
                     bind(self._dst, dst_ptr, dst_interval),
                     dispatch(2)),
                 sfg.method("elementsPerCell").inline().const().params(
-                    direction).returns(uint_t)(elements_per_cell),
+                    dir_var).returns(uint_t)(elements_per_cell),
             ))
 
 
@@ -325,4 +344,4 @@ def generate_vector_pack_info(sfg, ctx, name, stencil):
     """
     fields = pystencils_espresso.generate_fields(stencil, ctx.data_type)
     _generate(sfg, ctx, name, fields["force"],
-              vector_sets(stencil, len(stencil[0])))
+              vector_sets(stencil, fields["force"].index_shape[0]))
