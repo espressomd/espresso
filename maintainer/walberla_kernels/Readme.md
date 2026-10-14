@@ -18,7 +18,9 @@ and Jinja templates to [sweepgen](https://walberla.net) and
 | LB `UpdateVelFromPDF` | `generate_lb_kernels.py --kernels vel_update` | sweepgen |
 | LB CPU `FieldAccessors` | `generate_lb_kernels.py --kernels field_accessors` | sweepgen |
 | LB CUDA `FieldAccessors` | `generate_lb_kernels.py --kernels field_accessors_cuda` | sweepgen |
-| Other LB kernels (pack infos, boundaries) | not regenerable at the moment | pystencils 1.4 (committed output) |
+| LB `PackInfoPdf` (streaming-aware) | `generate_lb_kernels.py --kernels pack_info_pdf` | sweepgen |
+| LB `PackInfoVec` | `generate_lb_kernels.py --kernels pack_info_vec` | sweepgen |
+| Other LB kernels (boundaries) | not regenerable at the moment | pystencils 1.4 (committed output) |
 | EK kernels | not regenerable at the moment | pystencils 1.4 (committed output) |
 
 To regenerate a kernel that has not been migrated yet, use the generator
@@ -77,8 +79,8 @@ is on `PATH`, so the output doesn't depend on the environment.
 The output is deterministic, except for the order of the field-extraction
 statements in the `.cpp` and `.cu` files of the `init`, `vel_update` and
 `stream_collide_*` kernels, which pystencils-sfg 0.3 does not keep stable
-between runs. All headers and both `field_accessors` kernels are byte-identical
-for any `PYTHONHASHSEED`.
+between runs. All headers, both `field_accessors` kernels and all files of the
+`pack_info_*` kernels are byte-identical for any `PYTHONHASHSEED`.
 
 ## Architecture
 
@@ -91,6 +93,25 @@ for any `PYTHONHASHSEED`.
   code generation issues in the generated `.cpp`/`.cu` files; re-check them
   whenever the pystencils version changes.
 * `lees_edwards.py`: Lees-Edwards boundary layers of the stream-collide kernel.
+* `pack_infos.py`: the pack infos `PackInfoPdf` and `PackInfoVec` of
+  `walberla::pystencils` on the CPU and CUDA targets (there is no AVX
+  variant), with the interface of the old `pystencils_walberla` classes. A
+  pack info is described by the field components that it communicates in each
+  direction: the populations that cross the face, edge or corner during pull
+  streaming (PDFs) or all components (vector fields). Pack, unpack and local
+  copy kernels are generated for each distinct set, and a class dispatches on
+  the direction. The CPU classes derive from the hand-written CRTP base
+  `src/walberla_bridge/src/utils/UniformCpuFieldPackInfoBase.hpp`, which the
+  generated header includes by its relative path; the CUDA classes derive from
+  `walberla::sweepgen::UniformGpuFieldPackInfoBase` of the waLBerla fork.
+  The code relies on sweepgen internals (`PackingKernelsContext`,
+  `CaptureBufferPointer`, `GhostLayerFieldExtraction`; see the module
+  docstring): re-check them whenever the waLBerla commit changes.
+  pystencils linearizes a buffer with the first axis of the field slowest, so
+  the symbolic fields have the axes `(z, y, x)` and the buffer is x-fastest
+  like in the old pack infos. The kernels of a class live in the namespace
+  `<ClassName>_kernels`, so the CPU and CUDA pack infos never define the same
+  function (`tests/test_pack_info_symbols.py`).
 * LB field accessors (`walberla::lbm::accessor`): one function catalogue,
   two backends.
   * `accessor_equations.py`: the equations of the accessors, derived from the
