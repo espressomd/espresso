@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
 import pathlib
 import subprocess
 import sys
@@ -128,6 +129,63 @@ class GenerateLbKernelsTest(unittest.TestCase):
                       generate_lb_kernels.KERNELS.items()}
         self.assertEqual(extensions.pop("field_accessors_cuda"), "cuh")
         self.assertEqual(set(extensions.values()), {"h"})
+
+    def test_pack_info_pdf_all_variants(self):
+        tmp, result = self.run_script("--kernels", "pack_info_pdf")
+        self.assertEqual(sorted(p.name for p in tmp.iterdir()), sorted(
+            f"PackInfoPdf{p}Precision{s}"
+            for p in ("Single", "Double")
+            for s in (".h", ".cpp", "CUDA.h", "CUDA.cu")))
+        self.assertIn("skipping pack_info_pdf for target avx", result.stdout)
+
+    def test_pack_info_vec_double_cpu(self):
+        tmp, _ = self.run_script("--kernels", "pack_info_vec",
+                                 "--precision", "double", "--target", "cpu")
+        self.assertEqual(sorted(p.name for p in tmp.iterdir()),
+                         ["PackInfoVecDoublePrecision.cpp",
+                          "PackInfoVecDoublePrecision.h"])
+        header = (tmp / "PackInfoVecDoublePrecision.h").read_text()
+        self.assertIn("class PackInfoVecDoublePrecision : public "
+                      "walberla::UniformCpuFieldPackInfoBase<", header)
+
+    def test_pack_info_vec_single_cuda(self):
+        tmp, _ = self.run_script("--kernels", "pack_info_vec",
+                                 "--precision", "single", "--target", "cuda")
+        self.assertEqual(sorted(p.name for p in tmp.iterdir()),
+                         ["PackInfoVecSinglePrecisionCUDA.cu",
+                          "PackInfoVecSinglePrecisionCUDA.h"])
+        header = (tmp / "PackInfoVecSinglePrecisionCUDA.h").read_text()
+        self.assertIn("walberla::sweepgen::UniformGpuFieldPackInfoBase<",
+                      header)
+
+    def test_pack_infos_are_registered_for_cpu_and_cuda(self):
+        import generate_lb_kernels
+        for key, stem in (("pack_info_pdf", "PackInfoPdf"),
+                          ("pack_info_vec", "PackInfoVec")):
+            kernel = generate_lb_kernels.KERNELS[key]
+            self.assertEqual(
+                (kernel.stem, kernel.targets, kernel.header_only,
+                 kernel.header_extension),
+                (stem, ("cpu", "cuda"), False, "h"))
+
+    def test_pack_info_output_is_deterministic(self):
+        # independent of the hash seed of the interpreter
+        outputs = []
+        for seed in ("1", "2"):
+            tmp = pathlib.Path(self.enterContext(
+                tempfile.TemporaryDirectory()))
+            subprocess.run(
+                [sys.executable, str(SCRIPT), "--kernels", "pack_info_pdf",
+                 "pack_info_vec", "--output-dir", str(tmp)],
+                env=dict(os.environ, PYTHONHASHSEED=seed),
+                capture_output=True, text=True, check=True)
+            outputs.append(tmp)
+        names = sorted(p.name for p in outputs[0].iterdir())
+        self.assertEqual(len(names), 16)
+        self.assertEqual(names, sorted(p.name for p in outputs[1].iterdir()))
+        for name in names:
+            self.assertEqual((outputs[0] / name).read_bytes(),
+                             (outputs[1] / name).read_bytes(), name)
 
     def test_duplicate_selections_generate_once(self):
         _, result = self.run_script(

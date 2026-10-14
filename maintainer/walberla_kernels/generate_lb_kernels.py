@@ -41,6 +41,7 @@ from pystencils.sympyextensions.random import Philox
 import compat
 import lb_accessors
 import lees_edwards
+import pack_infos
 import pystencils_espresso
 import relaxation_rates
 import sfg_driver
@@ -180,6 +181,14 @@ def generate_accessors(sfg, ctx, name):
     lb_accessors.generate_field_accessors(sfg, ctx, method)
 
 
+def generate_pack_info_pdf(sfg, ctx, name):
+    pack_infos.generate_pdf_pack_info(sfg, ctx, name, STENCIL)
+
+
+def generate_pack_info_vec(sfg, ctx, name):
+    pack_infos.generate_vector_pack_info(sfg, ctx, name, STENCIL)
+
+
 @dataclasses.dataclass(frozen=True)
 class Kernel:
     stem: str
@@ -199,6 +208,10 @@ KERNELS = {
         generate_stream_collide_lees_edwards),
     "vel_update": Kernel("UpdateVelFromPDF", ("cpu", "cuda"),
                          generate_vel_update),
+    "pack_info_pdf": Kernel("PackInfoPdf", ("cpu", "cuda"),
+                            generate_pack_info_pdf),
+    "pack_info_vec": Kernel("PackInfoVec", ("cpu", "cuda"),
+                            generate_pack_info_vec),
     "field_accessors": Kernel("FieldAccessors", ("cpu",), generate_accessors,
                               header_only=True),
     "field_accessors_cuda": Kernel(
