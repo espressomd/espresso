@@ -303,6 +303,15 @@ class GeneratedBoundaryTest(unittest.TestCase):
         for member in ("assignValue", "linkKernel", "PdfField_T"):
             self.assertIn(member, text)
 
+    def test_float_comparison_header_is_included(self):
+        # the operator== of the structs uses walberla::floatIsEqual, which is
+        # defined in core/DataTypes.h: don't rely on a transitive include
+        for precision in CPP_TYPES:
+            for target in ("cpu", "cuda"):
+                _, header, _ = self.check_files(precision, target)
+                self.assertIn("walberla::floatIsEqual(", header)
+                self.assertIn('#include "core/DataTypes.h"', header)
+
     def test_cpu_kernel(self):
         name, _, source = self.check_files("double", "cpu")
         kernels = f"namespace {name}_kernels"

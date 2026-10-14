@@ -304,6 +304,8 @@ def generate_link_boundary(sfg, ctx, name, *, assignments, index_field,
     config.index_dtype = INDEX_TYPE
     config.skip_independence_check = True
 
+    # core/DataTypes.h defines walberla::floatIsEqual, used by the operator==
+    # of the structs of the links and of the forces
     for header in ("<array>", "<cstddef>", "<cstdint>", "<functional>",
                    "<memory>", "core/DataTypes.h", "core/cell/Cell.h",
                    "core/math/Vector3.h",
