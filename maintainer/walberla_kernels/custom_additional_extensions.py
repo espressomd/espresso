@@ -25,10 +25,7 @@ import pystencils as ps
 import pystencils_walberla
 import sympy as sp
 import pystencils_walberla.utility
-from lbmpy.boundaries.boundaryhandling import create_lattice_boltzmann_boundary_kernel
-from lbmpy_walberla.additional_data_handler import default_additional_data_handler
-from pystencils import Field, FieldType, Target
-from lbmpy.advanced_streaming import Timestep
+from pystencils import Field, FieldType
 from pystencils.boundaries.boundaryhandling import create_boundary_kernel
 from pystencils.boundaries.createindexlist import numpy_data_type_for_boundary_object
 from pystencils.typing import TypedSymbol, create_type
@@ -209,46 +206,6 @@ class FluxAdditionalDataHandler(
     @property
     def additional_member_variable(self):
         return f"std::function<Vector3<{self.data_type}>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> elementInitaliser; "  # nopep8
-
-
-def generate_lb_boundary(
-        generation_context,
-        class_name,
-        boundary_object,
-        lb_method,
-        field_name='pdfs',
-        streaming_pattern='pull',
-        prev_timestep=Timestep.BOTH,
-        additional_data_handler=None,
-        namespace='lbm',
-        template_file="templates/Boundary_lb.tmpl.h",
-        **create_kernel_params,
-):
-    if boundary_object.additional_data and additional_data_handler is None:
-        target = create_kernel_params.get('target', Target.CPU)
-        additional_data_handler = default_additional_data_handler(
-            boundary_object, lb_method, field_name, target=target)
-
-    # pylint: disable=unused-argument
-    def boundary_creation_function(
-            field, index_field, stencil, boundary_functor, target=Target.CPU, **kwargs):
-        return create_lattice_boltzmann_boundary_kernel(field, index_field, lb_method, boundary_functor,
-                                                        streaming_pattern=streaming_pattern,
-                                                        prev_timestep=prev_timestep,
-                                                        target=target,
-                                                        **kwargs)
-    # pylint: disable=unused-argument
-
-    generate_boundary(generation_context,
-                      lb_method.stencil,
-                      class_name,
-                      boundary_object=boundary_object,
-                      field_name=field_name,
-                      kernel_creation_function=boundary_creation_function,
-                      namespace=namespace,
-                      additional_data_handler=additional_data_handler,
-                      template_file=template_file,
-                      **create_kernel_params)
 
 
 # this custom boundary generator is necessary because our boundary condition
