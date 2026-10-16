@@ -89,7 +89,9 @@ class CodegenContext:
         return {"cpu": "", "avx": "AVX", "cuda": "CUDA"}[self.target]
 
     def class_name(self, stem):
-        """Legacy class and file name, e.g. ``InitialPDFsSetterDoublePrecisionCUDA``."""
+        """
+        Class and file name, e.g. ``InitialPDFsSetterDoublePrecisionCUDA``.
+        """
         return f"{stem}{self.precision_prefix}{self.target_suffix}"
 
     def build_config(self):
@@ -115,12 +117,18 @@ def generate_sweep(sfg, name, assignments, gen_config=None, swap_fields=()):
     Generate the sweepgen class ``walberla::pystencils::<name>`` of a sweep
     over the cells of the fields of ``assignments``.
 
+    ``gen_config`` is ``None`` or a ``pystencils.CreateKernelConfig``, e.g.
+    the AVX settings of ``generate_lb_kernels.cpu_gen_config``.
+
     ``swap_fields`` is a list of ``(field, shadow_field)`` pairs that the
     sweep swaps after each run (``Sweep.swap_fields()``). The sweep keeps
     the shadow field to itself, so all blocks that it runs on must have
     fields of the same size.
     """
     sweep = sweepgen.Sweep(name, assignments, gen_config)
+    if sweep.sparse:
+        raise NotImplementedError(
+            f"sweep {name} is sparse, only dense sweeps are supported")
     for field, shadow_field in swap_fields:
         sweep.swap_fields(field, shadow_field)
     with sfg.namespace(KERNEL_NAMESPACE):
