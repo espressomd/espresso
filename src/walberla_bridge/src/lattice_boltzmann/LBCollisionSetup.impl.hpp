@@ -61,6 +61,7 @@ void LBWalberlaImpl<FloatType, Architecture>::set_collision_model(
   auto const blocks = get_lattice().get_blocks();
   m_kT = FloatType_c(kT);
   m_seed = seed;
+  // kT >= 0 is enforced by the script interface
   if (m_kT > FloatType{0}) {
     // the block offset of the RNG is set for each block before the sweep runs
     m_collision_model = std::make_shared<CollisionModel>(

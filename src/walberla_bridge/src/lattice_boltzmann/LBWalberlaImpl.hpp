@@ -424,6 +424,7 @@ private:
       auto const block_variant = std::variant<IBlock *>(&block);
       std::visit(m_run_stream_collide_sweep, cm_variant, block_variant);
     }
+    // only the thermalized sweep has an RNG counter
     if (auto *cm =
             std::get_if<typename Kernels::StreamCollisionModelThermalized>(
                 &cm_variant)) {
@@ -866,7 +867,8 @@ public:
     if (!cm) {
       throw std::runtime_error("This LB instance is unthermalized");
     }
-    assert(counter <= std::numeric_limits<uint32_t>::max());
+    assert(counter <=
+           static_cast<uint64_t>(std::numeric_limits<int64_t>::max()));
     cm->time_step() = static_cast<int64_t>(counter);
   }
 
