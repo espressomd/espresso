@@ -10,7 +10,6 @@
 #include <tuple>
 
 namespace walberla::pystencils {
-namespace internal {
 #if defined(__NVCC__) && defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
 
 #pragma nv_diagnostic push
@@ -412,6 +411,15 @@ void StreamCollideSweepThermalizedDoublePrecisionCUDA::operator()(walberla::IBlo
   walberla::gpu::GPUField<double> *force{block->template getData<walberla::gpu::GPUField<double>>(forceId)};
   walberla::gpu::GPUField<double> *pdfs{block->template getData<walberla::gpu::GPUField<double>>(pdfsId)};
   walberla::gpu::GPUField<double> *pdfs_tmp{this->_getShadow_pdfs(pdfs)};
+  const double *RESTRICT const _data_pdfs{pdfs->dataAt(0, 0, 0, 0)};
+  /* pdfs->xSize() == _size_pdfs_0 */
+  /* pdfs->ySize() == _size_pdfs_1 */
+  /* pdfs->zSize() == _size_pdfs_2 */
+  /* pdfs->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
   double *RESTRICT const _data_pdfs_tmp{pdfs_tmp->dataAt(0, 0, 0, 0)};
   /* pdfs_tmp->xSize() == _size_pdfs_tmp_0 */
   /* pdfs_tmp->ySize() == _size_pdfs_tmp_1 */
@@ -430,34 +438,25 @@ void StreamCollideSweepThermalizedDoublePrecisionCUDA::operator()(walberla::IBlo
   const int64_t _stride_force_1{int64_t(force->yStride())};
   const int64_t _stride_force_2{int64_t(force->zStride())};
   const int64_t _stride_force_3{int64_t(force->fStride())};
-  const double *RESTRICT const _data_pdfs{pdfs->dataAt(0, 0, 0, 0)};
-  /* pdfs->xSize() == _size_pdfs_0 */
-  /* pdfs->ySize() == _size_pdfs_1 */
-  /* pdfs->zSize() == _size_pdfs_2 */
-  /* pdfs->fSize() == 19 */
-  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
-  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
-  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
-  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
-  const int64_t time_step{this->properties_.time_step_};
-  const double omega_bulk{this->properties_.omega_bulk_};
-  const double omega_shear{this->properties_.omega_shear_};
-  walberla::Vector3<int64_t> block_offset{this->properties_.block_offset_};
-  const int64_t seed{this->properties_.seed_};
-  const double omega_even{this->properties_.omega_even_};
   const double kT{this->properties_.kT_};
+  const int64_t seed{this->properties_.seed_};
+  const double omega_bulk{this->properties_.omega_bulk_};
   const double omega_odd{this->properties_.omega_odd_};
+  const int64_t time_step{this->properties_.time_step_};
+  const double omega_even{this->properties_.omega_even_};
+  walberla::Vector3<int64_t> block_offset{this->properties_.block_offset_};
+  const double omega_shear{this->properties_.omega_shear_};
   const int64_t block_offset_2{block_offset[2]};
-  const int64_t block_offset_1{block_offset[1]};
   const int64_t block_offset_0{block_offset[0]};
+  const int64_t block_offset_1{block_offset[1]};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};
       const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
       const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
       /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::StreamCollideSweepThermalizedDoublePrecisionCUDA_kernels::StreamCollideSweepThermalizedDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
+        /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
+        walberla::pystencils::StreamCollideSweepThermalizedDoublePrecisionCUDA_kernels::StreamCollideSweepThermalizedDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
       /* clang-format on */
     }
   } else {
@@ -466,8 +465,8 @@ void StreamCollideSweepThermalizedDoublePrecisionCUDA::operator()(walberla::IBlo
       const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
       const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
       /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::StreamCollideSweepThermalizedDoublePrecisionCUDA_kernels::StreamCollideSweepThermalizedDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
+        /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
+        walberla::pystencils::StreamCollideSweepThermalizedDoublePrecisionCUDA_kernels::StreamCollideSweepThermalizedDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
       /* clang-format on */
     }
   }
@@ -480,6 +479,15 @@ void StreamCollideSweepThermalizedDoublePrecisionCUDA::runOnCellInterval(walberl
   walberla::gpu::GPUField<double> *force{block->template getData<walberla::gpu::GPUField<double>>(forceId)};
   walberla::gpu::GPUField<double> *pdfs{block->template getData<walberla::gpu::GPUField<double>>(pdfsId)};
   walberla::gpu::GPUField<double> *pdfs_tmp{this->_getShadow_pdfs(pdfs)};
+  const double *RESTRICT const _data_pdfs{pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdfs->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
   double *RESTRICT const _data_pdfs_tmp{pdfs_tmp->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_pdfs_tmp_0 */
   /* ci.ySize() == _size_pdfs_tmp_1 */
@@ -498,34 +506,25 @@ void StreamCollideSweepThermalizedDoublePrecisionCUDA::runOnCellInterval(walberl
   const int64_t _stride_force_1{int64_t(force->yStride())};
   const int64_t _stride_force_2{int64_t(force->zStride())};
   const int64_t _stride_force_3{int64_t(force->fStride())};
-  const double *RESTRICT const _data_pdfs{pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  /* ci.xSize() == _size_pdfs_0 */
-  /* ci.ySize() == _size_pdfs_1 */
-  /* ci.zSize() == _size_pdfs_2 */
-  /* pdfs->fSize() == 19 */
-  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
-  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
-  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
-  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
-  const int64_t time_step{this->properties_.time_step_};
-  const double omega_bulk{this->properties_.omega_bulk_};
-  const double omega_shear{this->properties_.omega_shear_};
-  walberla::Vector3<int64_t> block_offset{this->properties_.block_offset_};
-  const int64_t seed{this->properties_.seed_};
-  const double omega_even{this->properties_.omega_even_};
   const double kT{this->properties_.kT_};
+  const int64_t seed{this->properties_.seed_};
+  const double omega_bulk{this->properties_.omega_bulk_};
   const double omega_odd{this->properties_.omega_odd_};
+  const int64_t time_step{this->properties_.time_step_};
+  const double omega_even{this->properties_.omega_even_};
+  walberla::Vector3<int64_t> block_offset{this->properties_.block_offset_};
+  const double omega_shear{this->properties_.omega_shear_};
   const int64_t block_offset_2{block_offset[2]};
-  const int64_t block_offset_1{block_offset[1]};
   const int64_t block_offset_0{block_offset[0]};
+  const int64_t block_offset_1{block_offset[1]};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};
       const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
       const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
       /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::StreamCollideSweepThermalizedDoublePrecisionCUDA_kernels::StreamCollideSweepThermalizedDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
+        /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
+        walberla::pystencils::StreamCollideSweepThermalizedDoublePrecisionCUDA_kernels::StreamCollideSweepThermalizedDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
       /* clang-format on */
     }
   } else {
@@ -534,8 +533,8 @@ void StreamCollideSweepThermalizedDoublePrecisionCUDA::runOnCellInterval(walberl
       const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
       const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
       /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::StreamCollideSweepThermalizedDoublePrecisionCUDA_kernels::StreamCollideSweepThermalizedDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
+        /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
+        walberla::pystencils::StreamCollideSweepThermalizedDoublePrecisionCUDA_kernels::StreamCollideSweepThermalizedDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
       /* clang-format on */
     }
   }
@@ -545,438 +544,4 @@ void StreamCollideSweepThermalizedDoublePrecisionCUDA::swapShadowBuffers(walberl
   walberla::BlockDataID pdfsId{this->properties_.pdfsId_};
   pdfs->swapDataPointers(pdfs_tmp);
 }
-
-#if defined(__NVCC__) && defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
-
-#pragma nv_diagnostic push
-
-#pragma nv_diag_suppress 177 // unused variable
-
-#elif defined(__GNUC__)
-
-#pragma GCC diagnostic push
-
-#pragma GCC diagnostic ignored "-Wunused-variable"
-
-#endif
-
-namespace StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal_kernels {
-__global__ void StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal(const double *RESTRICT const _data_force, const double *RESTRICT const _data_pdfs, double *RESTRICT const _data_pdfs_tmp, const int64_t _size_force_0, const int64_t _size_force_1, const int64_t _size_force_2, const int64_t _stride_force_0, const int64_t _stride_force_1, const int64_t _stride_force_2, const int64_t _stride_force_3, const int64_t _stride_pdfs_0, const int64_t _stride_pdfs_1, const int64_t _stride_pdfs_2, const int64_t _stride_pdfs_3, const int64_t _stride_pdfs_tmp_0, const int64_t _stride_pdfs_tmp_1, const int64_t _stride_pdfs_tmp_2, const int64_t _stride_pdfs_tmp_3, const double omega_bulk, const double omega_even, const double omega_odd, const double omega_shear) {
-  const double __c_1_0o2_0 = 1.0 / 2.0;
-  const double __c_1_0o6_0 = 1.0 / 6.0;
-  const double __c_1_0o12_0 = 1.0 / 12.0;
-  const double __c_1_0o24_0 = 1.0 / 24.0;
-  const double __c_1_0o4_0 = 1.0 / 4.0;
-  const double __c_1_0o8_0 = 1.0 / 8.0;
-  const double __c_s1_0o12_0 = -1.0 / 12.0;
-  const double __c_1_0o3_0 = 1.0 / 3.0;
-  const double __c_s1_0o3_0 = -1.0 / 3.0;
-  const double __c_2_0o3_0 = 2.0 / 3.0;
-  const double __c_5_0o3_0 = 5.0 / 3.0;
-  const double __c_7_0o3_0 = 7.0 / 3.0;
-  const double __c_5_0o252_0 = 5.0 / 252.0;
-  const double __c_1_0o20_0 = 1.0 / 20.0;
-  const double __c_1_0o28_0 = 1.0 / 28.0;
-  const double __c_3_0o140_0 = 3.0 / 140.0;
-  const double __c_1_0o16_0 = 1.0 / 16.0;
-  const double __c_1_0o72_0 = 1.0 / 72.0;
-  const double __c_1_0o48_0 = 1.0 / 48.0;
-  const double __c_s1_0o252_0 = -1.0 / 252.0;
-  const double __c_s1_0o140_0 = -1.0 / 140.0;
-  const double __c_1_0o40_0 = 1.0 / 40.0;
-  const double __c_1_0o56_0 = 1.0 / 56.0;
-  const double __c_s1_0o2_0 = -1.0 / 2.0;
-  const double __c_1_0o10_0 = 1.0 / 10.0;
-  const double __c_1_0o42_0 = 1.0 / 42.0;
-  const double __c_3_0o70_0 = 3.0 / 70.0;
-  const double __c_1_0o70_0 = 1.0 / 70.0;
-  const double __c_1_0o63_0 = 1.0 / 63.0;
-  const int64_t ctr_2 = (int64_t)blockIdx.z * (int64_t)blockDim.z + (int64_t)threadIdx.z;
-  const int64_t ctr_1 = (int64_t)blockIdx.y * (int64_t)blockDim.y + (int64_t)threadIdx.y;
-  const int64_t ctr_0 = (int64_t)blockIdx.x * (int64_t)blockDim.x + (int64_t)threadIdx.x;
-  if (ctr_2 < _size_force_2 && ctr_1 < _size_force_1 && ctr_0 < _size_force_0) {
-    const double xi_2 = _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] + _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
-    const double xi_3 = xi_2 + _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 14LL * _stride_pdfs_3] + _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 18LL * _stride_pdfs_3];
-    const double xi_4 = _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + _stride_pdfs_3];
-    const double xi_5 = _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 11LL * _stride_pdfs_3] + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3];
-    const double xi_6 = _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 12LL * _stride_pdfs_3] + _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 5LL * _stride_pdfs_3];
-    const double xi_7 = _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3];
-    const double xi_8 = xi_7 + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
-    const double xi_9 = _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3];
-    const double xi_11 = _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 13LL * _stride_pdfs_3] + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3];
-    const double xi_12 = -1.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3] + _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3];
-    const double xi_13 = _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 12LL * _stride_pdfs_3] + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
-    const double xi_14 = -1.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 11LL * _stride_pdfs_3];
-    const double xi_15 = -1.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 14LL * _stride_pdfs_3];
-    const double xi_16 = _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3] + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3];
-    const double xi_20 = __c_1_0o2_0 * omega_bulk;
-    const double xi_21 = __c_1_0o6_0 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + _stride_force_3];
-    const double xi_22 = __c_1_0o12_0 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + _stride_force_3];
-    const double xi_33 = __c_1_0o6_0 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2];
-    const double xi_34 = __c_1_0o12_0 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2];
-    const double xi_39 = __c_1_0o6_0 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + 2LL * _stride_force_3];
-    const double xi_40 = __c_1_0o12_0 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + 2LL * _stride_force_3];
-    const double xi_47 = __c_1_0o24_0 * omega_shear;
-    const double xi_51 = __c_1_0o24_0 * omega_bulk;
-    const double xi_58 = __c_1_0o4_0 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + _stride_force_3];
-    const double xi_62 = __c_1_0o8_0 * omega_shear;
-    const double xi_63 = xi_62 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + _stride_force_3];
-    const double xi_97 = -1.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2];
-    const double xi_102 = xi_11 + xi_3;
-    const double xi_104 = 2.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 12LL * _stride_pdfs_3] + 2.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 11LL * _stride_pdfs_3] + 2.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3] + 2.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3] + 5.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] + 5.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3];
-    const double xi_107 = 2.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 13LL * _stride_pdfs_3];
-    const double xi_108 = 2.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 14LL * _stride_pdfs_3];
-    const double xi_109 = 2.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3] + 2.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 18LL * _stride_pdfs_3];
-    const double xi_113 = -1.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + _stride_pdfs_3];
-    const double xi_114 = -1.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3];
-    const double xi_115 = -1.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 18LL * _stride_pdfs_3];
-    const double xi_116 = -1.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 5LL * _stride_pdfs_3];
-    const double xi_117 = -1.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 6LL * _stride_pdfs_3];
-    const double xi_122 = -1.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3];
-    const double xi_123 = xi_14 + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 12LL * _stride_pdfs_3];
-    const double xi_124 = -1.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3];
-    const double xi_125 = xi_124 + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + _stride_pdfs_3];
-    const double xi_126 = xi_122 + xi_123 + xi_125 + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3];
-    const double xi_127 = __c_1_0o4_0 * omega_odd;
-    const double xi_128 = -1.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3];
-    const double xi_129 = 2.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
-    const double xi_130 = -2.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] + 2.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3];
-    const double xi_131 = xi_125 + xi_128 + xi_130 + xi_5 - xi_129 - _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 12LL * _stride_pdfs_3] + 2.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
-    const double xi_132 = __c_1_0o12_0 * omega_odd;
-    const double xi_133 = xi_131 * xi_132;
-    const double xi_134 = xi_133 + xi_126 * xi_127;
-    const double xi_144 = xi_15 + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 13LL * _stride_pdfs_3];
-    const double xi_145 = xi_115 + xi_144;
-    const double xi_146 = xi_145 - _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3] + _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3];
-    const double xi_147 = -1.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3];
-    const double xi_148 = -1.0 * xi_129 - xi_130 - xi_145 - xi_147 - xi_7 + 2.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
-    const double xi_149 = xi_132 * xi_148;
-    const double xi_150 = xi_149 + xi_127 * xi_146;
-    const double xi_152 = xi_122 + xi_128 + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 11LL * _stride_pdfs_3];
-    const double xi_153 = -1.0 * xi_116 - xi_152 - _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 12LL * _stride_pdfs_3] - _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 6LL * _stride_pdfs_3];
-    const double xi_154 = xi_109 + xi_117 + xi_152 + xi_6 - xi_107 - xi_108;
-    const double xi_155 = xi_132 * xi_154;
-    const double xi_156 = xi_155 + xi_127 * xi_153;
-    const double xi_158 = __c_1_0o4_0 * omega_shear;
-    const double xi_161 = -1.0 * xi_149;
-    const double xi_173 = __c_1_0o24_0 * omega_odd;
-    const double xi_174 = xi_154 * xi_173;
-    const double xi_175 = __c_1_0o8_0 * omega_odd;
-    const double xi_176 = xi_153 * xi_175;
-    const double xi_177 = xi_176 - xi_174;
-    const double xi_178 = xi_131 * xi_173;
-    const double xi_179 = xi_126 * xi_175;
-    const double xi_180 = xi_179 - xi_178;
-    const double xi_181 = xi_178 - xi_179;
-    const double xi_188 = xi_146 * xi_175;
-    const double xi_189 = xi_148 * xi_173;
-    const double xi_190 = xi_189 - xi_188;
-    const double xi_191 = xi_188 - xi_189;
-    const double xi_192 = xi_174 - xi_176;
-    const double rr_0 = 0.0;
-    const double xi_23 = rr_0 * xi_22;
-    const double xi_35 = rr_0 * xi_34;
-    const double xi_41 = rr_0 * xi_40;
-    const double xi_45 = __c_1_0o24_0 * rr_0;
-    const double xi_46 = xi_45 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2];
-    const double xi_50 = xi_45 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + _stride_force_3];
-    const double xi_72 = xi_45 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + 2LL * _stride_force_3];
-    const double vel0Term = xi_3 + _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3];
-    const double vel1Term = xi_4 + xi_5;
-    const double vel2Term = xi_6 + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 13LL * _stride_pdfs_3];
-    const double delta_rho = vel0Term + vel1Term + vel2Term + xi_8 + xi_9 + _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2] + _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 6LL * _stride_pdfs_3];
-    const double rho = 1.0 + delta_rho;
-    const double xi_0 = 1.0 / rho;
-    const double xi_10 = __c_1_0o2_0 * xi_0;
-    const double u_0 = xi_0 * (vel0Term - xi_11 - xi_8) + xi_10 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2];
-    const double xi_17 = u_0 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2];
-    const double xi_28 = __c_1_0o6_0 * xi_17;
-    const double xi_29 = -1.0 * xi_28;
-    const double xi_30 = __c_1_0o12_0 * xi_17;
-    const double xi_31 = xi_29 + omega_shear * xi_30;
-    const double xi_48 = xi_29 + xi_17 * xi_47;
-    const double xi_49 = xi_34 + xi_48 - xi_46;
-    const double xi_52 = xi_17 * xi_51;
-    const double xi_59 = u_0 * xi_58;
-    const double xi_64 = u_0 * xi_63;
-    const double xi_68 = xi_46 + xi_48 - xi_34;
-    const double xi_75 = __c_s1_0o12_0 * omega_shear * u_0 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2];
-    const double xi_85 = u_0 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + 2LL * _stride_force_3];
-    const double xi_86 = __c_1_0o4_0 * xi_85;
-    const double xi_89 = xi_62 * xi_85;
-    const double xi_96 = u_0 * u_0;
-    const double u_1 = xi_0 * (vel1Term - xi_12 - xi_13 - xi_9) + xi_10 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + _stride_force_3];
-    const double xi_18 = u_1 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + _stride_force_3];
-    const double xi_26 = __c_1_0o6_0 * xi_18;
-    const double xi_36 = __c_s1_0o12_0 * omega_shear * u_1 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + _stride_force_3];
-    const double xi_42 = -1.0 * xi_26;
-    const double xi_43 = __c_1_0o12_0 * xi_18;
-    const double xi_53 = xi_18 * xi_51;
-    const double xi_60 = __c_1_0o4_0 * u_1;
-    const double xi_61 = xi_60 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2];
-    const double xi_65 = u_1 * xi_62;
-    const double xi_66 = xi_65 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2];
-    const double xi_67 = xi_59 + xi_61 - xi_64 - xi_66;
-    const double xi_69 = xi_64 + xi_66 - xi_59 - xi_61;
-    const double xi_77 = xi_60 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + 2LL * _stride_force_3];
-    const double xi_79 = xi_65 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + 2LL * _stride_force_3];
-    const double xi_95 = rho * (u_1 * u_1);
-    const double xi_101 = -1.0 * xi_95;
-    const double xi_157 = rho * u_1;
-    const double xi_159 = xi_158 * (xi_12 - _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3] + u_0 * xi_157 + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3]);
-    const double xi_160 = -1.0 * xi_159;
-    const double u_2 = xi_0 * (vel2Term - xi_14 - xi_15 - xi_16 - _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3] - _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 18LL * _stride_pdfs_3] - _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 6LL * _stride_pdfs_3]) + xi_10 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + 2LL * _stride_force_3];
-    const double xi_19 = u_2 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + 2LL * _stride_force_3];
-    const double xi_24 = __c_1_0o6_0 * xi_19;
-    const double xi_25 = -1.0 * xi_24;
-    const double xi_27 = __c_1_0o12_0 * xi_19;
-    const double xi_32 = xi_25 + xi_31 + __c_1_0o3_0 * xi_18 + omega_shear * xi_27 - omega_shear * xi_26;
-    const double xi_37 = __c_s1_0o12_0 * omega_shear * u_2 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2 + 2LL * _stride_force_3];
-    const double xi_38 = xi_24 + xi_26 + xi_36 + xi_37 + omega_shear * xi_28 + __c_s1_0o3_0 * u_0 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2];
-    const double xi_44 = xi_31 + xi_42 + __c_1_0o3_0 * xi_19 + omega_shear * xi_43 - omega_shear * xi_24;
-    const double xi_54 = xi_19 * xi_51;
-    const double xi_55 = xi_42 + xi_52 + xi_53 + xi_54 + xi_18 * xi_47;
-    const double xi_56 = xi_50 + xi_55 - xi_22;
-    const double xi_57 = xi_27 + xi_37 + xi_56;
-    const double xi_70 = xi_22 + xi_55 - xi_50;
-    const double xi_71 = xi_27 + xi_37 + xi_70;
-    const double xi_73 = xi_25 + xi_19 * xi_47;
-    const double xi_74 = xi_72 + xi_73 - xi_40;
-    const double xi_76 = xi_30 + xi_56 + xi_75;
-    const double xi_78 = u_2 * xi_58;
-    const double xi_80 = u_2 * xi_63;
-    const double xi_81 = xi_79 + xi_80 - xi_77 - xi_78;
-    const double xi_82 = xi_30 + xi_70 + xi_75;
-    const double xi_83 = xi_77 + xi_78 - xi_79 - xi_80;
-    const double xi_84 = xi_36 + xi_43 + xi_52 + xi_53 + xi_54 + xi_74;
-    const double xi_87 = u_2 * _data_force[ctr_0 * _stride_force_0 + ctr_1 * _stride_force_1 + ctr_2 * _stride_force_2];
-    const double xi_88 = __c_1_0o4_0 * xi_87;
-    const double xi_90 = xi_62 * xi_87;
-    const double xi_91 = xi_86 + xi_88 - xi_89 - xi_90;
-    const double xi_92 = xi_89 + xi_90 - xi_86 - xi_88;
-    const double xi_93 = xi_40 + xi_73 - xi_72;
-    const double xi_94 = xi_36 + xi_43 + xi_52 + xi_53 + xi_54 + xi_93;
-    const double xi_98 = rho * (u_2 * u_2);
-    const double xi_99 = xi_97 + 3.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 5LL * _stride_pdfs_3] + 3.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 6LL * _stride_pdfs_3] + __c_2_0o3_0 * xi_98;
-    const double xi_100 = omega_even * (xi_99 + -3.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 12LL * _stride_pdfs_3] + -3.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 11LL * _stride_pdfs_3] + -3.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3] + -3.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3] + 3.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] + 3.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] + __c_2_0o3_0 * xi_95 + __c_5_0o3_0 * rho * xi_96);
-    const double xi_103 = omega_bulk * (xi_98 - xi_101 - xi_102 - xi_13 - xi_16 - xi_5 - xi_97 + rho * xi_96);
-    const double xi_105 = xi_104 + xi_99 + -5.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 13LL * _stride_pdfs_3] + -5.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 14LL * _stride_pdfs_3] + -5.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3] + -5.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 18LL * _stride_pdfs_3] + -2.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] + -2.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + _stride_pdfs_3] + __c_7_0o3_0 * xi_95;
-    const double xi_106 = omega_even * xi_105;
-    const double xi_110 = xi_104 + xi_107 + xi_108 + xi_109 + xi_97 + -7.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3] + -7.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3] + -7.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3] + -7.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3] + -4.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 5LL * _stride_pdfs_3] + -4.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 6LL * _stride_pdfs_3] + 3.0 * xi_98 + 5.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] + 5.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + _stride_pdfs_3];
-    const double xi_111 = omega_even * xi_110;
-    const double xi_112 = __c_5_0o252_0 * xi_111;
-    const double xi_118 = xi_116 + xi_117 + xi_98 + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
-    const double xi_119 = omega_shear * (-1.0 * xi_101 - xi_114 - xi_115 - xi_118 - xi_15 - xi_2 - xi_4 - _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3] + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 13LL * _stride_pdfs_3]);
-    const double xi_120 = __c_1_0o8_0 * xi_119;
-    const double xi_121 = -1.0 * xi_120;
-    const double xi_135 = __c_1_0o20_0 * xi_100;
-    const double xi_136 = -1.0 * xi_102 - xi_113 - xi_118 - xi_124 - xi_95 - _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3] + -2.0 * _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3] + -2.0 * _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 4LL * _stride_pdfs_3] + 2.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 12LL * _stride_pdfs_3] + 2.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 11LL * _stride_pdfs_3] + 2.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3] + 2.0 * _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3] + 2.0 * rho * xi_96;
-    const double xi_137 = omega_shear * xi_136;
-    const double xi_138 = __c_1_0o24_0 * xi_137;
-    const double xi_139 = xi_135 + xi_138;
-    const double xi_140 = -1.0 * xi_112;
-    const double xi_141 = -1.0 * xi_138;
-    const double xi_142 = xi_141 - xi_135;
-    const double xi_143 = __c_1_0o28_0 * xi_106;
-    const double xi_151 = __c_3_0o140_0 * xi_106;
-    const double xi_162 = __c_1_0o16_0 * xi_119;
-    const double xi_163 = __c_1_0o72_0 * xi_111;
-    const double xi_164 = __c_1_0o24_0 * xi_103;
-    const double xi_165 = xi_164 + __c_1_0o48_0 * xi_137;
-    const double xi_166 = xi_133 + xi_162 + xi_163 + xi_165;
-    const double xi_167 = xi_162 + xi_163 + xi_165 - xi_133;
-    const double xi_168 = __c_s1_0o252_0 * xi_111;
-    const double xi_169 = __c_s1_0o140_0 * xi_106;
-    const double xi_170 = xi_158 * (xi_123 + xi_128 + u_2 * xi_157 + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3]);
-    const double xi_171 = __c_1_0o40_0 * xi_100;
-    const double xi_172 = xi_141 + xi_164 + xi_168 + xi_169 + xi_170 + xi_171;
-    const double xi_182 = xi_141 + xi_164 + xi_168 + xi_169 + xi_171 - xi_170;
-    const double xi_183 = xi_158 * (xi_114 + xi_144 + rho * u_0 * u_2 + _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 18LL * _stride_pdfs_3]);
-    const double xi_184 = -1.0 * xi_183;
-    const double xi_185 = -1.0 * xi_162;
-    const double xi_186 = __c_1_0o56_0 * xi_106;
-    const double xi_187 = xi_155 + xi_165 + xi_168 + xi_185 + xi_186;
-    const double xi_193 = xi_165 + xi_168 + xi_185 + xi_186 - xi_155;
-    const double forceTerm_0 = -1.0 * xi_17 - xi_18 - xi_19 + xi_17 * xi_20 + xi_18 * xi_20 + xi_19 * xi_20;
-    const double forceTerm_1 = xi_21 + xi_32 - xi_23;
-    const double forceTerm_2 = xi_23 + xi_32 - xi_21;
-    const double forceTerm_3 = xi_35 - xi_33 - xi_38;
-    const double forceTerm_4 = xi_33 - xi_35 - xi_38;
-    const double forceTerm_5 = xi_39 + xi_44 - xi_41;
-    const double forceTerm_6 = xi_41 + xi_44 - xi_39;
-    const double forceTerm_7 = -1.0 * xi_49 - xi_57 - xi_67;
-    const double forceTerm_8 = -1.0 * xi_57 - xi_68 - xi_69;
-    const double forceTerm_9 = -1.0 * xi_49 - xi_69 - xi_71;
-    const double forceTerm_10 = -1.0 * xi_67 - xi_68 - xi_71;
-    const double forceTerm_11 = -1.0 * xi_74 - xi_76 - xi_81;
-    const double forceTerm_12 = -1.0 * xi_74 - xi_82 - xi_83;
-    const double forceTerm_13 = -1.0 * xi_49 - xi_84 - xi_91;
-    const double forceTerm_14 = -1.0 * xi_68 - xi_84 - xi_92;
-    const double forceTerm_15 = -1.0 * xi_76 - xi_83 - xi_93;
-    const double forceTerm_16 = -1.0 * xi_81 - xi_82 - xi_93;
-    const double forceTerm_17 = -1.0 * xi_49 - xi_92 - xi_94;
-    const double forceTerm_18 = -1.0 * xi_68 - xi_91 - xi_94;
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2] = forceTerm_0 + __c_s1_0o2_0 * xi_103 + __c_1_0o10_0 * xi_100 + __c_1_0o42_0 * xi_111 + __c_3_0o70_0 * xi_106 + _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + _stride_pdfs_tmp_3] = forceTerm_1 - xi_112 - xi_113 - xi_121 - xi_134 - xi_139 + __c_1_0o70_0 * omega_even * xi_105;
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 2LL * _stride_pdfs_tmp_3] = forceTerm_2 + xi_120 + xi_134 + xi_140 + xi_142 + __c_1_0o70_0 * xi_106 + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 2LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 3LL * _stride_pdfs_tmp_3] = forceTerm_3 + xi_140 + xi_150 - xi_143 + __c_1_0o12_0 * xi_137 + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 3LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 4LL * _stride_pdfs_tmp_3] = forceTerm_4 - xi_112 - xi_143 - xi_147 - xi_150 + __c_1_0o12_0 * omega_shear * xi_136;
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 5LL * _stride_pdfs_tmp_3] = forceTerm_5 - xi_116 - xi_120 - xi_139 - xi_151 - xi_156 + __c_1_0o63_0 * omega_even * xi_110;
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 6LL * _stride_pdfs_tmp_3] = forceTerm_6 + xi_121 + xi_142 + xi_156 - xi_151 + __c_1_0o63_0 * xi_111 + _data_pdfs[ctr_0 * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 6LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 7LL * _stride_pdfs_tmp_3] = forceTerm_7 + xi_160 + xi_161 + xi_166 + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 7LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 8LL * _stride_pdfs_tmp_3] = forceTerm_8 + xi_149 + xi_159 + xi_166 + _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 8LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 9LL * _stride_pdfs_tmp_3] = forceTerm_9 + xi_159 + xi_161 + xi_167 + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 9LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 10LL * _stride_pdfs_tmp_3] = forceTerm_10 + xi_149 + xi_160 + xi_167 + _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + ctr_2 * _stride_pdfs_2 + 10LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 11LL * _stride_pdfs_tmp_3] = forceTerm_11 + xi_172 + xi_177 + xi_180 + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 11LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 12LL * _stride_pdfs_tmp_3] = forceTerm_12 + xi_177 + xi_181 + xi_182 + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 12LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 13LL * _stride_pdfs_tmp_3] = forceTerm_13 + xi_184 + xi_187 + xi_190 + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 13LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 14LL * _stride_pdfs_tmp_3] = forceTerm_14 + xi_183 + xi_187 + xi_191 + _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + -1LL) * _stride_pdfs_2 + 14LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 15LL * _stride_pdfs_tmp_3] = forceTerm_15 + xi_180 + xi_182 + xi_192 + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + -1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 15LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 16LL * _stride_pdfs_tmp_3] = forceTerm_16 + xi_172 + xi_181 + xi_192 + _data_pdfs[ctr_0 * _stride_pdfs_0 + (ctr_1 + 1LL) * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 16LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 17LL * _stride_pdfs_tmp_3] = forceTerm_17 + xi_183 + xi_190 + xi_193 + _data_pdfs[(ctr_0 + 1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 17LL * _stride_pdfs_3];
-    _data_pdfs_tmp[ctr_0 * _stride_pdfs_tmp_0 + ctr_1 * _stride_pdfs_tmp_1 + ctr_2 * _stride_pdfs_tmp_2 + 18LL * _stride_pdfs_tmp_3] = forceTerm_18 + xi_184 + xi_191 + xi_193 + _data_pdfs[(ctr_0 + -1LL) * _stride_pdfs_0 + ctr_1 * _stride_pdfs_1 + (ctr_2 + 1LL) * _stride_pdfs_2 + 18LL * _stride_pdfs_3];
-  }
-}
-} // namespace StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal_kernels
-
-#if defined(__NVCC__) && defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
-
-#pragma nv_diagnostic pop
-
-#elif defined(__GNUC__)
-
-#pragma GCC diagnostic pop
-
-#endif
-
-namespace detail {
-
-} // namespace detail
-
-void StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal::operator()(walberla::IBlock *block, walberla::v8::sweep::exectag::GPU exTag) {
-  walberla::BlockDataID forceId{this->properties_.forceId_};
-  walberla::BlockDataID pdfsId{this->properties_.pdfsId_};
-  walberla::gpu::GPUField<double> *force{block->template getData<walberla::gpu::GPUField<double>>(forceId)};
-  walberla::gpu::GPUField<double> *pdfs{block->template getData<walberla::gpu::GPUField<double>>(pdfsId)};
-  walberla::gpu::GPUField<double> *pdfs_tmp{this->_getShadow_pdfs(pdfs)};
-  double *RESTRICT const _data_pdfs_tmp{pdfs_tmp->dataAt(0, 0, 0, 0)};
-  /* pdfs_tmp->xSize() == _size_pdfs_tmp_0 */
-  /* pdfs_tmp->ySize() == _size_pdfs_tmp_1 */
-  /* pdfs_tmp->zSize() == _size_pdfs_tmp_2 */
-  /* pdfs_tmp->fSize() == 19 */
-  const int64_t _stride_pdfs_tmp_0{int64_t(pdfs_tmp->xStride())};
-  const int64_t _stride_pdfs_tmp_1{int64_t(pdfs_tmp->yStride())};
-  const int64_t _stride_pdfs_tmp_2{int64_t(pdfs_tmp->zStride())};
-  const int64_t _stride_pdfs_tmp_3{int64_t(pdfs_tmp->fStride())};
-  const double *RESTRICT const _data_force{force->dataAt(0, 0, 0, 0)};
-  const int64_t _size_force_0{int64_t(force->xSize())};
-  const int64_t _size_force_1{int64_t(force->ySize())};
-  const int64_t _size_force_2{int64_t(force->zSize())};
-  /* force->fSize() == 3 */
-  const int64_t _stride_force_0{int64_t(force->xStride())};
-  const int64_t _stride_force_1{int64_t(force->yStride())};
-  const int64_t _stride_force_2{int64_t(force->zStride())};
-  const int64_t _stride_force_3{int64_t(force->fStride())};
-  const double *RESTRICT const _data_pdfs{pdfs->dataAt(0, 0, 0, 0)};
-  /* pdfs->xSize() == _size_pdfs_0 */
-  /* pdfs->ySize() == _size_pdfs_1 */
-  /* pdfs->zSize() == _size_pdfs_2 */
-  /* pdfs->fSize() == 19 */
-  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
-  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
-  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
-  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
-  const double omega_even{this->properties_.omega_even_};
-  const double omega_shear{this->properties_.omega_shear_};
-  const double omega_odd{this->properties_.omega_odd_};
-  const double omega_bulk{this->properties_.omega_bulk_};
-  if (exTag.block().has_value()) {
-    {
-      const dim3 __block_size{exTag.block().value()};
-      const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
-      const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
-      /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal_kernels::StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, omega_bulk, omega_even, omega_odd, omega_shear);
-      /* clang-format on */
-    }
-  } else {
-    {
-      const dim3 __block_size{8, 8, 4};
-      const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
-      const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
-      /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal_kernels::StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, omega_bulk, omega_even, omega_odd, omega_shear);
-      /* clang-format on */
-    }
-  }
-  pdfs->swapDataPointers(pdfs_tmp);
-}
-
-void StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal::runOnCellInterval(walberla::IBlock *block, const walberla::CellInterval &ci, walberla::v8::sweep::exectag::GPU exTag) {
-  walberla::BlockDataID forceId{this->properties_.forceId_};
-  walberla::BlockDataID pdfsId{this->properties_.pdfsId_};
-  walberla::gpu::GPUField<double> *force{block->template getData<walberla::gpu::GPUField<double>>(forceId)};
-  walberla::gpu::GPUField<double> *pdfs{block->template getData<walberla::gpu::GPUField<double>>(pdfsId)};
-  walberla::gpu::GPUField<double> *pdfs_tmp{this->_getShadow_pdfs(pdfs)};
-  double *RESTRICT const _data_pdfs_tmp{pdfs_tmp->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  /* ci.xSize() == _size_pdfs_tmp_0 */
-  /* ci.ySize() == _size_pdfs_tmp_1 */
-  /* ci.zSize() == _size_pdfs_tmp_2 */
-  /* pdfs_tmp->fSize() == 19 */
-  const int64_t _stride_pdfs_tmp_0{int64_t(pdfs_tmp->xStride())};
-  const int64_t _stride_pdfs_tmp_1{int64_t(pdfs_tmp->yStride())};
-  const int64_t _stride_pdfs_tmp_2{int64_t(pdfs_tmp->zStride())};
-  const int64_t _stride_pdfs_tmp_3{int64_t(pdfs_tmp->fStride())};
-  const double *RESTRICT const _data_force{force->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  const int64_t _size_force_0{int64_t(ci.xSize())};
-  const int64_t _size_force_1{int64_t(ci.ySize())};
-  const int64_t _size_force_2{int64_t(ci.zSize())};
-  /* force->fSize() == 3 */
-  const int64_t _stride_force_0{int64_t(force->xStride())};
-  const int64_t _stride_force_1{int64_t(force->yStride())};
-  const int64_t _stride_force_2{int64_t(force->zStride())};
-  const int64_t _stride_force_3{int64_t(force->fStride())};
-  const double *RESTRICT const _data_pdfs{pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  /* ci.xSize() == _size_pdfs_0 */
-  /* ci.ySize() == _size_pdfs_1 */
-  /* ci.zSize() == _size_pdfs_2 */
-  /* pdfs->fSize() == 19 */
-  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
-  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
-  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
-  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
-  const double omega_even{this->properties_.omega_even_};
-  const double omega_shear{this->properties_.omega_shear_};
-  const double omega_odd{this->properties_.omega_odd_};
-  const double omega_bulk{this->properties_.omega_bulk_};
-  if (exTag.block().has_value()) {
-    {
-      const dim3 __block_size{exTag.block().value()};
-      const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
-      const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
-      /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal_kernels::StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, omega_bulk, omega_even, omega_odd, omega_shear);
-      /* clang-format on */
-    }
-  } else {
-    {
-      const dim3 __block_size{8, 8, 4};
-      const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
-      const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
-      /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal_kernels::StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, omega_bulk, omega_even, omega_odd, omega_shear);
-      /* clang-format on */
-    }
-  }
-}
-
-void StreamCollideSweepThermalizedDoublePrecisionCUDAAthermal::swapShadowBuffers(walberla::gpu::GPUField<double> *pdfs, walberla::gpu::GPUField<double> *pdfs_tmp) {
-  walberla::BlockDataID pdfsId{this->properties_.pdfsId_};
-  pdfs->swapDataPointers(pdfs_tmp);
-}
-} // namespace internal
 } // namespace walberla::pystencils

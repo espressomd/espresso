@@ -6,22 +6,17 @@
 
 #pragma once
 
-#include "core/DataTypes.h"
 #include "core/cell/CellInterval.h"
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
-#include "domain_decomposition/StructuredBlockStorage.h"
 #include "gpu/GPUField.h"
-#include "gpu/GPUWrapper.h"
 #include "walberla/v8/sweep/ExecutionTags.hpp"
 #include <cstdint>
-#include <functional>
 #include <memory>
 
 #define RESTRICT __restrict__
 
 namespace walberla::pystencils {
-namespace internal {
 namespace detail {
 struct StreamCollideSweepLeesEdwardsSinglePrecisionCUDAProperties {
   walberla::BlockDataID forceId_;
@@ -81,7 +76,7 @@ public:
                          walberla::gpu::GPUField<float> *pdfs_tmp);
 
 private:
-  walberla::pystencils::internal::detail::
+  walberla::pystencils::detail::
       StreamCollideSweepLeesEdwardsSinglePrecisionCUDAProperties properties_;
 
 private:
@@ -93,53 +88,6 @@ private:
     }
     return shadow_pdfs_.get();
   }
-};
-
-} // namespace internal
-
-class StreamCollideSweepLeesEdwardsSinglePrecisionCUDA {
-
-public:
-  StreamCollideSweepLeesEdwardsSinglePrecisionCUDA(
-      walberla::BlockDataID forceId, walberla::BlockDataID pdfsId,
-      int64_t lebc_bot_index, int64_t lebc_top_index, float omega_bulk,
-      float omega_even, float omega_odd, float omega_shear, float v_s)
-      : impl_(forceId, pdfsId, lebc_bot_index, lebc_top_index, omega_bulk,
-              omega_even, omega_odd, omega_shear, v_s) {}
-  void run(walberla::IBlock *block, gpuStream_t stream = nullptr) {
-    impl_(block, walberla::v8::sweep::exectag::GPU{stream});
-  }
-  void operator()(walberla::IBlock *block, gpuStream_t stream = nullptr) {
-    run(block, stream);
-  }
-  static std::function<void(walberla::IBlock *)>
-  getSweep(const walberla::shared_ptr<
-           StreamCollideSweepLeesEdwardsSinglePrecisionCUDA> &kernel) {
-    return [kernel](walberla::IBlock *b) { kernel->run(b); };
-  }
-  std::function<void(walberla::IBlock *)>
-  getSweep(gpuStream_t stream = nullptr) {
-    return [this, stream](walberla::IBlock *b) { this->run(b, stream); };
-  }
-  void configure(const walberla::shared_ptr<walberla::StructuredBlockStorage> &,
-                 walberla::IBlock *) {}
-  int64_t getLebc_bot_index() const { return impl_.lebc_bot_index(); }
-  void setLebc_bot_index(int64_t value) { impl_.lebc_bot_index() = value; }
-  int64_t getLebc_top_index() const { return impl_.lebc_top_index(); }
-  void setLebc_top_index(int64_t value) { impl_.lebc_top_index() = value; }
-  float getOmega_bulk() const { return impl_.omega_bulk(); }
-  void setOmega_bulk(float value) { impl_.omega_bulk() = value; }
-  float getOmega_even() const { return impl_.omega_even(); }
-  void setOmega_even(float value) { impl_.omega_even() = value; }
-  float getOmega_odd() const { return impl_.omega_odd(); }
-  void setOmega_odd(float value) { impl_.omega_odd() = value; }
-  float getOmega_shear() const { return impl_.omega_shear(); }
-  void setOmega_shear(float value) { impl_.omega_shear() = value; }
-  float getV_s() const { return impl_.v_s(); }
-  void setV_s(float value) { impl_.v_s() = value; }
-
-private:
-  internal::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA impl_;
 };
 
 } // namespace walberla::pystencils

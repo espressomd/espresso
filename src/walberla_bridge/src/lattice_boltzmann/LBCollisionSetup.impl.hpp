@@ -46,11 +46,12 @@ FloatType LBWalberlaImpl<FloatType, Architecture>::odd_mode_relaxation_rate(
 }
 
 /**
- * @brief Set up the thermalized collision model.
- * Configures MRT relaxation rates from the viscosity and initializes the
- * random number generator for fluctuating LB.
- * When @p kT is zero, fluctuations are suppressed but the thermalized
- * kernel is still used (required for RNG state tracking).
+ * @brief Set up the thermalized or athermal collision model.
+ * Configures MRT relaxation rates from the viscosity. When @p kT is positive,
+ * the stream-collide kernel adds thermal fluctuations from a counter-based
+ * random number generator, which is seeded with @p seed and whose time step
+ * counter starts at zero. When @p kT is zero, the athermal kernel is used,
+ * which has neither an RNG nor an RNG state.
  */
 template <typename FloatType, lbmpy::Arch Architecture>
 void LBWalberlaImpl<FloatType, Architecture>::set_collision_model(
@@ -60,10 +61,19 @@ void LBWalberlaImpl<FloatType, Architecture>::set_collision_model(
   auto const blocks = get_lattice().get_blocks();
   m_kT = FloatType_c(kT);
   m_seed = seed;
-  auto obj = typename Kernels::StreamCollisionModelThermalized(
-      m_last_applied_force_field_id, m_pdf_field_id, zero_centered_to_lb(m_kT),
-      omega, omega, omega_odd, omega, seed, uint32_t{0u});
-  m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
+  if (m_kT > FloatType{0}) {
+    // the block offset of the RNG is set for each block before the sweep runs
+    m_collision_model = std::make_shared<CollisionModel>(
+        typename Kernels::StreamCollisionModelThermalized(
+            m_last_applied_force_field_id, m_pdf_field_id, Vector3<int64_t>(0),
+            zero_centered_to_lb(m_kT), omega, omega, omega_odd, omega,
+            static_cast<int64_t>(seed), int64_t{0}));
+  } else {
+    m_collision_model = std::make_shared<CollisionModel>(
+        typename Kernels::StreamCollisionModelAthermal(
+            m_last_applied_force_field_id, m_pdf_field_id, omega, omega,
+            omega_odd, omega));
+  }
   m_run_stream_collide_sweep = StreamCollideSweepVisitor(blocks);
   setup_streaming_communicator();
 }

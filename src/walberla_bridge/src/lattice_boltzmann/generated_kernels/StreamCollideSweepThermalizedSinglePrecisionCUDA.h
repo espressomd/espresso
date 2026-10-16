@@ -6,23 +6,18 @@
 
 #pragma once
 
-#include "core/DataTypes.h"
 #include "core/cell/CellInterval.h"
 #include "core/math/Vector3.h"
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
-#include "domain_decomposition/StructuredBlockStorage.h"
 #include "gpu/GPUField.h"
-#include "gpu/GPUWrapper.h"
 #include "walberla/v8/sweep/ExecutionTags.hpp"
 #include <cstdint>
-#include <functional>
 #include <memory>
 
 #define RESTRICT __restrict__
 
 namespace walberla::pystencils {
-namespace internal {
 namespace detail {
 struct StreamCollideSweepThermalizedSinglePrecisionCUDAProperties {
   walberla::BlockDataID forceId_;
@@ -91,7 +86,7 @@ public:
                          walberla::gpu::GPUField<float> *pdfs_tmp);
 
 private:
-  walberla::pystencils::internal::detail::
+  walberla::pystencils::detail::
       StreamCollideSweepThermalizedSinglePrecisionCUDAProperties properties_;
 
 private:
@@ -103,154 +98,6 @@ private:
     }
     return shadow_pdfs_.get();
   }
-};
-
-namespace detail {
-struct StreamCollideSweepThermalizedSinglePrecisionCUDAAthermalProperties {
-  walberla::BlockDataID forceId_;
-  walberla::BlockDataID pdfsId_;
-  float omega_bulk_;
-  float omega_even_;
-  float omega_odd_;
-  float omega_shear_;
-  StreamCollideSweepThermalizedSinglePrecisionCUDAAthermalProperties(
-      walberla::BlockDataID forceId, walberla::BlockDataID pdfsId,
-      float omega_bulk, float omega_even, float omega_odd, float omega_shear)
-      : forceId_(forceId), pdfsId_(pdfsId), omega_bulk_(omega_bulk),
-        omega_even_(omega_even), omega_odd_(omega_odd),
-        omega_shear_(omega_shear) {}
-};
-
-} // namespace detail
-
-class StreamCollideSweepThermalizedSinglePrecisionCUDAAthermal {
-
-public:
-  StreamCollideSweepThermalizedSinglePrecisionCUDAAthermal(
-      walberla::BlockDataID forceId, walberla::BlockDataID pdfsId,
-      float omega_bulk, float omega_even, float omega_odd, float omega_shear)
-      : properties_(forceId, pdfsId, omega_bulk, omega_even, omega_odd,
-                    omega_shear) {}
-  const walberla::BlockDataID &forceId() const { return properties_.forceId_; }
-  const walberla::BlockDataID &pdfsId() const { return properties_.pdfsId_; }
-  const float &omega_bulk() const { return properties_.omega_bulk_; }
-  float &omega_bulk() { return properties_.omega_bulk_; }
-  const float &omega_even() const { return properties_.omega_even_; }
-  float &omega_even() { return properties_.omega_even_; }
-  const float &omega_odd() const { return properties_.omega_odd_; }
-  float &omega_odd() { return properties_.omega_odd_; }
-  const float &omega_shear() const { return properties_.omega_shear_; }
-  float &omega_shear() { return properties_.omega_shear_; }
-  void operator()(walberla::IBlock *block,
-                  walberla::v8::sweep::exectag::GPU exTag =
-                      walberla::v8::sweep::exectag::GPU{});
-  void runOnCellInterval(walberla::IBlock *block,
-                         const walberla::CellInterval &ci,
-                         walberla::v8::sweep::exectag::GPU exTag =
-                             walberla::v8::sweep::exectag::GPU{});
-  void swapShadowBuffers(walberla::gpu::GPUField<float> *pdfs,
-                         walberla::gpu::GPUField<float> *pdfs_tmp);
-
-private:
-  walberla::pystencils::internal::detail::
-      StreamCollideSweepThermalizedSinglePrecisionCUDAAthermalProperties
-          properties_;
-
-private:
-  std::unique_ptr<walberla::gpu::GPUField<float>> shadow_pdfs_;
-  walberla::gpu::GPUField<float> *
-  _getShadow_pdfs(walberla::gpu::GPUField<float> *pdfs) {
-    if (shadow_pdfs_ == nullptr) {
-      shadow_pdfs_.reset(pdfs->cloneUninitialized());
-    }
-    return shadow_pdfs_.get();
-  }
-};
-
-} // namespace internal
-
-class StreamCollideSweepThermalizedSinglePrecisionCUDA {
-
-public:
-  StreamCollideSweepThermalizedSinglePrecisionCUDA(
-      walberla::BlockDataID forceId, walberla::BlockDataID pdfsId, float kT,
-      float omega_bulk, float omega_even, float omega_odd, float omega_shear,
-      uint32_t seed, uint32_t time_step)
-      : impl_(forceId, pdfsId, walberla::Vector3<int64_t>(0), kT, omega_bulk,
-              omega_even, omega_odd, omega_shear, seed, time_step),
-        impl_athermal_(forceId, pdfsId, omega_bulk, omega_even, omega_odd,
-                       omega_shear) {}
-  void run(walberla::IBlock *block, gpuStream_t stream = nullptr) {
-    if (impl_.kT() > 0) {
-      impl_(block, walberla::v8::sweep::exectag::GPU{stream});
-    } else {
-      impl_athermal_(block, walberla::v8::sweep::exectag::GPU{stream});
-    }
-  }
-  void operator()(walberla::IBlock *block, gpuStream_t stream = nullptr) {
-    run(block, stream);
-  }
-  static std::function<void(walberla::IBlock *)>
-  getSweep(const walberla::shared_ptr<
-           StreamCollideSweepThermalizedSinglePrecisionCUDA> &kernel) {
-    return [kernel](walberla::IBlock *b) { kernel->run(b); };
-  }
-  std::function<void(walberla::IBlock *)>
-  getSweep(gpuStream_t stream = nullptr) {
-    return [this, stream](walberla::IBlock *b) { this->run(b, stream); };
-  }
-  void configure(
-      const walberla::shared_ptr<walberla::StructuredBlockStorage> &blocks,
-      walberla::IBlock *block) {
-    const walberla::Cell blockMin = blocks->getBlockCellBB(*block).min();
-    impl_.block_offset() =
-        walberla::Vector3<int64_t>(blockMin[0], blockMin[1], blockMin[2]);
-  }
-  uint32_t getBlock_offset_0() const {
-    return static_cast<uint32_t>(impl_.block_offset()[0]);
-  }
-  void setBlock_offset_0(uint32_t value) { impl_.block_offset()[0] = value; }
-  uint32_t getBlock_offset_1() const {
-    return static_cast<uint32_t>(impl_.block_offset()[1]);
-  }
-  void setBlock_offset_1(uint32_t value) { impl_.block_offset()[1] = value; }
-  uint32_t getBlock_offset_2() const {
-    return static_cast<uint32_t>(impl_.block_offset()[2]);
-  }
-  void setBlock_offset_2(uint32_t value) { impl_.block_offset()[2] = value; }
-  float getKt() const { return impl_.kT(); }
-  void setKt(float value) { impl_.kT() = value; }
-  float getOmega_bulk() const { return impl_.omega_bulk(); }
-  void setOmega_bulk(float value) {
-    impl_.omega_bulk() = value;
-    impl_athermal_.omega_bulk() = value;
-  }
-  float getOmega_even() const { return impl_.omega_even(); }
-  void setOmega_even(float value) {
-    impl_.omega_even() = value;
-    impl_athermal_.omega_even() = value;
-  }
-  float getOmega_odd() const { return impl_.omega_odd(); }
-  void setOmega_odd(float value) {
-    impl_.omega_odd() = value;
-    impl_athermal_.omega_odd() = value;
-  }
-  float getOmega_shear() const { return impl_.omega_shear(); }
-  void setOmega_shear(float value) {
-    impl_.omega_shear() = value;
-    impl_athermal_.omega_shear() = value;
-  }
-  uint32_t getSeed() const { return static_cast<uint32_t>(impl_.seed()); }
-  void setSeed(uint32_t value) { impl_.seed() = value; }
-  uint32_t getTime_step() const {
-    return static_cast<uint32_t>(impl_.time_step());
-  }
-  void setTime_step(uint32_t value) { impl_.time_step() = value; }
-
-private:
-  internal::StreamCollideSweepThermalizedSinglePrecisionCUDA impl_;
-  internal::StreamCollideSweepThermalizedSinglePrecisionCUDAAthermal
-      impl_athermal_;
 };
 
 } // namespace walberla::pystencils

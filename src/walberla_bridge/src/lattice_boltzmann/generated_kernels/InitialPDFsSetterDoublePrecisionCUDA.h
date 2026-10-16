@@ -6,19 +6,14 @@
 
 #pragma once
 
-#include "core/DataTypes.h"
 #include "core/cell/CellInterval.h"
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
-#include "domain_decomposition/StructuredBlockStorage.h"
-#include "gpu/GPUWrapper.h"
 #include "walberla/v8/sweep/ExecutionTags.hpp"
-#include <functional>
 
 #define RESTRICT __restrict__
 
 namespace walberla::pystencils {
-namespace internal {
 namespace detail {
 struct InitialPDFsSetterDoublePrecisionCUDAProperties {
   walberla::BlockDataID forceId_;
@@ -58,79 +53,8 @@ public:
                              walberla::v8::sweep::exectag::GPU{});
 
 private:
-  walberla::pystencils::internal::detail::
-      InitialPDFsSetterDoublePrecisionCUDAProperties properties_;
-};
-
-} // namespace internal
-
-class InitialPDFsSetterDoublePrecisionCUDA {
-
-public:
-  InitialPDFsSetterDoublePrecisionCUDA(walberla::BlockDataID forceId,
-                                       walberla::BlockDataID pdfsId,
-                                       walberla::BlockDataID velocityId,
-                                       double rho_0)
-      : impl_(forceId, pdfsId, velocityId, rho_0) {}
-  void run(walberla::IBlock *block, gpuStream_t stream = nullptr) {
-    impl_(block, walberla::v8::sweep::exectag::GPU{stream});
-  }
-  void runOnCellInterval(
-      const walberla::shared_ptr<walberla::StructuredBlockStorage> &blocks,
-      const walberla::CellInterval &globalCellInterval,
-      walberla::cell_idx_t ghostLayers, walberla::IBlock *block,
-      gpuStream_t stream = nullptr) {
-    walberla::CellInterval ci = globalCellInterval;
-    walberla::CellInterval blockBB = blocks->getBlockCellBB(*block);
-    blockBB.expand(ghostLayers);
-    ci.intersect(blockBB);
-    blocks->transformGlobalToBlockLocalCellInterval(ci, *block);
-    if (ci.empty())
-      return;
-    impl_.runOnCellInterval(block, ci,
-                            walberla::v8::sweep::exectag::GPU{stream});
-  }
-  void operator()(walberla::IBlock *block, gpuStream_t stream = nullptr) {
-    run(block, stream);
-  }
-  static std::function<void(walberla::IBlock *)>
-  getSweep(const walberla::shared_ptr<InitialPDFsSetterDoublePrecisionCUDA>
-               &kernel) {
-    return [kernel](walberla::IBlock *b) { kernel->run(b); };
-  }
-  static std::function<void(walberla::IBlock *, gpuStream_t)>
-  getSweepOnCellInterval(
-      const walberla::shared_ptr<InitialPDFsSetterDoublePrecisionCUDA> &kernel,
-      const walberla::shared_ptr<walberla::StructuredBlockStorage> &blocks,
-      const walberla::CellInterval &globalCellInterval,
-      walberla::cell_idx_t ghostLayers = 1) {
-    return [kernel, blocks, globalCellInterval,
-            ghostLayers](walberla::IBlock *b, gpuStream_t stream = nullptr) {
-      kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b,
-                                stream);
-    };
-  }
-  std::function<void(walberla::IBlock *)>
-  getSweep(gpuStream_t stream = nullptr) {
-    return [this, stream](walberla::IBlock *b) { this->run(b, stream); };
-  }
-  std::function<void(walberla::IBlock *)> getSweepOnCellInterval(
-      const walberla::shared_ptr<walberla::StructuredBlockStorage> &blocks,
-      const walberla::CellInterval &globalCellInterval,
-      walberla::cell_idx_t ghostLayers = 1, gpuStream_t stream = nullptr) {
-    return [this, blocks, globalCellInterval, ghostLayers,
-            stream](walberla::IBlock *b) {
-      this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b,
-                              stream);
-    };
-  }
-  void configure(const walberla::shared_ptr<walberla::StructuredBlockStorage> &,
-                 walberla::IBlock *) {}
-  double getRho_0() const { return impl_.rho_0(); }
-  void setRho_0(double value) { impl_.rho_0() = value; }
-
-private:
-  internal::InitialPDFsSetterDoublePrecisionCUDA impl_;
+  walberla::pystencils::detail::InitialPDFsSetterDoublePrecisionCUDAProperties
+      properties_;
 };
 
 } // namespace walberla::pystencils

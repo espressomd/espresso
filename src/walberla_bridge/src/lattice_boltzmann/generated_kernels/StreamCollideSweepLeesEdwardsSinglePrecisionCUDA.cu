@@ -10,7 +10,6 @@
 #include <tuple>
 
 namespace walberla::pystencils {
-namespace internal {
 #if defined(__NVCC__) && defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
 
 #pragma nv_diagnostic push
@@ -326,6 +325,15 @@ void StreamCollideSweepLeesEdwardsSinglePrecisionCUDA::operator()(walberla::IBlo
   walberla::gpu::GPUField<float> *force{block->template getData<walberla::gpu::GPUField<float>>(forceId)};
   walberla::gpu::GPUField<float> *pdfs{block->template getData<walberla::gpu::GPUField<float>>(pdfsId)};
   walberla::gpu::GPUField<float> *pdfs_tmp{this->_getShadow_pdfs(pdfs)};
+  const float *RESTRICT const _data_pdfs{pdfs->dataAt(0, 0, 0, 0)};
+  /* pdfs->xSize() == _size_pdfs_0 */
+  /* pdfs->ySize() == _size_pdfs_1 */
+  /* pdfs->zSize() == _size_pdfs_2 */
+  /* pdfs->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
   float *RESTRICT const _data_pdfs_tmp{pdfs_tmp->dataAt(0, 0, 0, 0)};
   /* pdfs_tmp->xSize() == _size_pdfs_tmp_0 */
   /* pdfs_tmp->ySize() == _size_pdfs_tmp_1 */
@@ -344,30 +352,21 @@ void StreamCollideSweepLeesEdwardsSinglePrecisionCUDA::operator()(walberla::IBlo
   const int64_t _stride_force_1{int64_t(force->yStride())};
   const int64_t _stride_force_2{int64_t(force->zStride())};
   const int64_t _stride_force_3{int64_t(force->fStride())};
-  const float *RESTRICT const _data_pdfs{pdfs->dataAt(0, 0, 0, 0)};
-  /* pdfs->xSize() == _size_pdfs_0 */
-  /* pdfs->ySize() == _size_pdfs_1 */
-  /* pdfs->zSize() == _size_pdfs_2 */
-  /* pdfs->fSize() == 19 */
-  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
-  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
-  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
-  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
-  const float v_s{this->properties_.v_s_};
   const float omega_bulk{this->properties_.omega_bulk_};
-  const float omega_shear{this->properties_.omega_shear_};
-  const float omega_even{this->properties_.omega_even_};
   const int64_t lebc_top_index{this->properties_.lebc_top_index_};
+  const float v_s{this->properties_.v_s_};
   const float omega_odd{this->properties_.omega_odd_};
+  const float omega_even{this->properties_.omega_even_};
   const int64_t lebc_bot_index{this->properties_.lebc_bot_index_};
+  const float omega_shear{this->properties_.omega_shear_};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};
       const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
       const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
       /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA_kernels::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, lebc_bot_index, lebc_top_index, omega_bulk, omega_even, omega_odd, omega_shear, v_s);
+        /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
+        walberla::pystencils::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA_kernels::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, lebc_bot_index, lebc_top_index, omega_bulk, omega_even, omega_odd, omega_shear, v_s);
       /* clang-format on */
     }
   } else {
@@ -376,8 +375,8 @@ void StreamCollideSweepLeesEdwardsSinglePrecisionCUDA::operator()(walberla::IBlo
       const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
       const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
       /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA_kernels::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, lebc_bot_index, lebc_top_index, omega_bulk, omega_even, omega_odd, omega_shear, v_s);
+        /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
+        walberla::pystencils::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA_kernels::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, lebc_bot_index, lebc_top_index, omega_bulk, omega_even, omega_odd, omega_shear, v_s);
       /* clang-format on */
     }
   }
@@ -390,6 +389,15 @@ void StreamCollideSweepLeesEdwardsSinglePrecisionCUDA::runOnCellInterval(walberl
   walberla::gpu::GPUField<float> *force{block->template getData<walberla::gpu::GPUField<float>>(forceId)};
   walberla::gpu::GPUField<float> *pdfs{block->template getData<walberla::gpu::GPUField<float>>(pdfsId)};
   walberla::gpu::GPUField<float> *pdfs_tmp{this->_getShadow_pdfs(pdfs)};
+  const float *RESTRICT const _data_pdfs{pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdfs->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
   float *RESTRICT const _data_pdfs_tmp{pdfs_tmp->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_pdfs_tmp_0 */
   /* ci.ySize() == _size_pdfs_tmp_1 */
@@ -408,30 +416,21 @@ void StreamCollideSweepLeesEdwardsSinglePrecisionCUDA::runOnCellInterval(walberl
   const int64_t _stride_force_1{int64_t(force->yStride())};
   const int64_t _stride_force_2{int64_t(force->zStride())};
   const int64_t _stride_force_3{int64_t(force->fStride())};
-  const float *RESTRICT const _data_pdfs{pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  /* ci.xSize() == _size_pdfs_0 */
-  /* ci.ySize() == _size_pdfs_1 */
-  /* ci.zSize() == _size_pdfs_2 */
-  /* pdfs->fSize() == 19 */
-  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
-  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
-  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
-  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
-  const float v_s{this->properties_.v_s_};
   const float omega_bulk{this->properties_.omega_bulk_};
-  const float omega_shear{this->properties_.omega_shear_};
-  const float omega_even{this->properties_.omega_even_};
   const int64_t lebc_top_index{this->properties_.lebc_top_index_};
+  const float v_s{this->properties_.v_s_};
   const float omega_odd{this->properties_.omega_odd_};
+  const float omega_even{this->properties_.omega_even_};
   const int64_t lebc_bot_index{this->properties_.lebc_bot_index_};
+  const float omega_shear{this->properties_.omega_shear_};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};
       const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
       const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
       /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA_kernels::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, lebc_bot_index, lebc_top_index, omega_bulk, omega_even, omega_odd, omega_shear, v_s);
+        /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
+        walberla::pystencils::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA_kernels::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, lebc_bot_index, lebc_top_index, omega_bulk, omega_even, omega_odd, omega_shear, v_s);
       /* clang-format on */
     }
   } else {
@@ -440,8 +439,8 @@ void StreamCollideSweepLeesEdwardsSinglePrecisionCUDA::runOnCellInterval(walberl
       const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
       const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
       /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA_kernels::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, lebc_bot_index, lebc_top_index, omega_bulk, omega_even, omega_odd, omega_shear, v_s);
+        /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
+        walberla::pystencils::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA_kernels::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_0, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, lebc_bot_index, lebc_top_index, omega_bulk, omega_even, omega_odd, omega_shear, v_s);
       /* clang-format on */
     }
   }
@@ -451,5 +450,4 @@ void StreamCollideSweepLeesEdwardsSinglePrecisionCUDA::swapShadowBuffers(walberl
   walberla::BlockDataID pdfsId{this->properties_.pdfsId_};
   pdfs->swapDataPointers(pdfs_tmp);
 }
-} // namespace internal
 } // namespace walberla::pystencils
