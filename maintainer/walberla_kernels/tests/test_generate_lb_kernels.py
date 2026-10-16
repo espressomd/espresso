@@ -19,6 +19,7 @@
 
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -30,6 +31,18 @@ SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "generate_lb_kernels.py"
 
 
 class GenerateLbKernelsTest(unittest.TestCase):
+
+    def assert_plain_sweep(self, header, name):
+        """The header holds the sweepgen class ``name`` and nothing else."""
+        self.assertEqual(
+            re.findall(r"^ *namespace [\w:]+ \{", header, re.MULTILINE),
+            ["namespace walberla::pystencils {", "  namespace detail {"])
+        self.assertEqual(header.count(f"class {name} {{"), 1)
+        self.assertEqual(header.count("class "), 1)
+        self.assertNotIn("internal", header)
+        self.assertNotIn("impl_", header)
+        self.assertNotIn("configure(", header)
+        self.assertNotIn("uint32_t", header)
 
     def run_script(self, *args, check=True):
         tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -47,11 +60,12 @@ class GenerateLbKernelsTest(unittest.TestCase):
                          ["InitialPDFsSetterDoublePrecision.cpp",
                           "InitialPDFsSetterDoublePrecision.h"])
         header = (tmp / "InitialPDFsSetterDoublePrecision.h").read_text()
+        self.assert_plain_sweep(header, "InitialPDFsSetterDoublePrecision")
         self.assertIn(
             "InitialPDFsSetterDoublePrecision (walberla::BlockDataID forceId, "
             "walberla::BlockDataID pdfsId, walberla::BlockDataID velocityId, "
             "double rho_0)", header)
-        self.assertIn("double getRho_0() const", header)
+        self.assertIn("double& rho_0()", header)
         source = (tmp / "InitialPDFsSetterDoublePrecision.cpp").read_text()
         self.assertIn("_data_force", source)
         self.assertIn("rho_0", source)
@@ -243,6 +257,48 @@ class GenerateLbKernelsTest(unittest.TestCase):
             self.assertEqual((outputs[0] / name).read_bytes(),
                              (outputs[1] / name).read_bytes(), name)
 
+    def test_stream_collide_kernels_are_registered(self):
+        import generate_lb_kernels
+        for key, stem in (
+                ("stream_collide_thermalized", "StreamCollideSweepThermalized"),
+                ("stream_collide_athermal", "StreamCollideSweepAthermal"),
+                ("stream_collide_lees_edwards",
+                 "StreamCollideSweepLeesEdwards")):
+            kernel = generate_lb_kernels.KERNELS[key]
+            self.assertEqual(
+                (kernel.stem, kernel.targets, kernel.header_only,
+                 kernel.header_extension),
+                (stem, ("cpu", "avx", "cuda"), False, "h"))
+
+    def test_sweep_output_is_deterministic(self):
+        # independent of the hash seed of the interpreter, except for the
+        # order of the field-extraction statements in the sources
+        kernels = ("init", "stream_collide_thermalized",
+                   "stream_collide_athermal", "stream_collide_lees_edwards",
+                   "vel_update")
+        outputs = []
+        for seed in ("1", "2"):
+            tmp = pathlib.Path(self.enterContext(
+                tempfile.TemporaryDirectory()))
+            subprocess.run(
+                [sys.executable, str(SCRIPT), "--kernels", *kernels,
+                 "--output-dir", str(tmp)],
+                env=dict(os.environ, PYTHONHASHSEED=seed),
+                capture_output=True, text=True, check=True)
+            outputs.append(tmp)
+        names = sorted(p.name for p in outputs[0].iterdir())
+        self.assertEqual(names, sorted(p.name for p in outputs[1].iterdir()))
+        # init and vel_update: CPU and CUDA; stream-collide: also AVX
+        self.assertEqual(len(names), 2 * (2 * 2 * 2) + 3 * (2 * 3 * 2))
+        for name in names:
+            first, second = (
+                (tmp / name).read_text() for tmp in outputs)
+            if name.endswith(".h"):
+                self.assertEqual(first, second, name)
+            else:
+                self.assertEqual(sorted(first.splitlines()),
+                                 sorted(second.splitlines()), name)
+
     def test_duplicate_selections_generate_once(self):
         _, result = self.run_script(
             "--kernels", "init", "init", "--precision", "double", "double",
@@ -268,16 +324,29 @@ class GenerateLbKernelsTest(unittest.TestCase):
     def test_stream_collide_thermalized(self):
         header, source = self.generate_one(
             "stream_collide_thermalized", "StreamCollideSweepThermalized")
+        self.assert_plain_sweep(
+            header, "StreamCollideSweepThermalizedDoublePrecision")
         self.assertIn(
             "StreamCollideSweepThermalizedDoublePrecision ("
             "walberla::BlockDataID forceId, walberla::BlockDataID pdfsId, "
-            "double kT, double omega_bulk, double omega_even, "
-            "double omega_odd, double omega_shear, uint32_t seed, "
-            "uint32_t time_step)", header)
-        self.assertIn("if (impl_.kT() > 0) {", header)
-        self.assertIn("void configure(", header)
-        self.assertIn("uint32_t getTime_step() const", header)
+            "walberla::Vector3< int64_t > block_offset, double kT, "
+            "double omega_bulk, double omega_even, double omega_odd, "
+            "double omega_shear, int64_t seed, int64_t time_step)", header)
+        self.assertIn("walberla::Vector3< int64_t >& block_offset()", header)
+        self.assertIn("double& kT()", header)
+        self.assertIn("int64_t& time_step()", header)
+        self.assertIn("void swapShadowBuffers(", header)
         self.assertIn("::pystencils::runtime::random::philox_float64", source)
+        self.assertNotIn("Athermal", header + source)
+
+    def test_stream_collide_thermalized_cuda(self):
+        header, _ = self.generate_one(
+            "stream_collide_thermalized", "StreamCollideSweepThermalized",
+            "cuda")
+        self.assert_plain_sweep(
+            header, "StreamCollideSweepThermalizedDoublePrecisionCUDA")
+        self.assertIn("walberla::v8::sweep::exectag::GPU exTag", header)
+        self.assertNotIn("gpuStream_t stream", header)
 
     def test_stream_collide_thermalized_avx(self):
         _, source = self.generate_one(
@@ -293,15 +362,36 @@ class GenerateLbKernelsTest(unittest.TestCase):
         self.assertIn("int32_t seed", source)
         self.assertIn("_mm256_", source)
 
-    def test_athermal_kernel_has_no_rng(self):
-        _, source = self.generate_one(
-            "stream_collide_thermalized", "StreamCollideSweepThermalized")
-        anchor = ("namespace "
-                  "StreamCollideSweepThermalizedDoublePrecisionAthermal_kernels")
-        index = source.find(anchor)
-        self.assertGreater(index, 0)
-        self.assertIn("philox", source[:index])
-        self.assertNotIn("philox", source[index:])
+    def test_stream_collide_athermal(self):
+        header, source = self.generate_one(
+            "stream_collide_athermal", "StreamCollideSweepAthermal")
+        self.assert_plain_sweep(
+            header, "StreamCollideSweepAthermalDoublePrecision")
+        # no fluctuations: no temperature, seed, time step or block offset
+        self.assertIn(
+            "StreamCollideSweepAthermalDoublePrecision ("
+            "walberla::BlockDataID forceId, walberla::BlockDataID pdfsId, "
+            "double omega_bulk, double omega_even, double omega_odd, "
+            "double omega_shear)", header)
+        self.assertIn("void swapShadowBuffers(", header)
+        for name in ("kT", "seed", "time_step", "block_offset"):
+            self.assertNotIn(name, header + source)
+        self.assertNotIn("philox", source)
+
+    def test_stream_collide_athermal_avx_and_cuda(self):
+        header, source = self.generate_one(
+            "stream_collide_athermal", "StreamCollideSweepAthermal", "avx",
+            "single")
+        self.assert_plain_sweep(
+            header, "StreamCollideSweepAthermalSinglePrecisionAVX")
+        self.assertIn("_mm256_", source)
+        header, source = self.generate_one(
+            "stream_collide_athermal", "StreamCollideSweepAthermal", "cuda",
+            "single")
+        self.assert_plain_sweep(
+            header, "StreamCollideSweepAthermalSinglePrecisionCUDA")
+        self.assertIn("walberla::v8::sweep::exectag::GPU exTag", header)
+        self.assertNotIn("philox", source)
 
     def test_stream_collide_lees_edwards(self):
         header, source = self.generate_one(
@@ -312,7 +402,9 @@ class GenerateLbKernelsTest(unittest.TestCase):
             "int64_t lebc_bot_index, int64_t lebc_top_index, "
             "double omega_bulk, double omega_even, double omega_odd, "
             "double omega_shear, double v_s)", header)
-        self.assertIn("void setV_s(double value)", header)
+        self.assert_plain_sweep(
+            header, "StreamCollideSweepLeesEdwardsDoublePrecision")
+        self.assertIn("double& v_s()", header)
         self.assertIn("le_top", source)
 
     def test_stream_collide_lees_edwards_avx(self):
@@ -328,7 +420,9 @@ class GenerateLbKernelsTest(unittest.TestCase):
             "UpdateVelFromPDFDoublePrecision (walberla::BlockDataID forceId, "
             "walberla::BlockDataID pdfsId, walberla::BlockDataID velocityId)",
             header)
+        self.assert_plain_sweep(header, "UpdateVelFromPDFDoublePrecision")
         self.assertIn("void runOnCellInterval(", header)
+        self.assertNotIn("swapShadowBuffers", header)
 
     def test_vel_update_uses_force(self):
         _, source = self.generate_one("vel_update", "UpdateVelFromPDF")

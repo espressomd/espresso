@@ -43,6 +43,7 @@ TOOLCHAIN_REQUIREMENTS = {
     pystencilssfg: "==0.3.0",
 }
 WALBERLA_COMMIT = "ecbe1315"
+KERNEL_NAMESPACE = "walberla::pystencils"
 
 
 def check_toolchain_versions():
@@ -107,6 +108,23 @@ class CodegenContext:
         if self.target == "avx":
             config.target = ps.Target.X86_AVX
         return config
+
+
+def generate_sweep(sfg, name, assignments, gen_config=None, swap_fields=()):
+    """
+    Generate the sweepgen class ``walberla::pystencils::<name>`` of a sweep
+    over the cells of the fields of ``assignments``.
+
+    ``swap_fields`` is a list of ``(field, shadow_field)`` pairs that the
+    sweep swaps after each run (``Sweep.swap_fields()``). The sweep keeps
+    the shadow field to itself, so all blocks that it runs on must have
+    fields of the same size.
+    """
+    sweep = sweepgen.Sweep(name, assignments, gen_config)
+    for field, shadow_field in swap_fields:
+        sweep.swap_fields(field, shadow_field)
+    with sfg.namespace(KERNEL_NAMESPACE):
+        sfg.generate(sweep)
 
 
 def toolchain_metadata(generator_script):

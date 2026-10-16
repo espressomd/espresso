@@ -25,6 +25,9 @@ import unittest
 import unittest.mock
 
 import pystencils as ps
+import sympy as sp
+from pystencils import DynamicType
+from pystencils.sympyextensions import tcast
 
 import sfg_driver
 
@@ -132,6 +135,68 @@ class KernelFileGeneratorTest(unittest.TestCase):
 
     def test_toolchain_versions(self):
         sfg_driver.check_toolchain_versions()
+
+
+class GenerateSweepTest(unittest.TestCase):
+
+    def generate(self, target, swap=False, rng_parameters=False):
+        """Header of a toy sweep ``Toy`` (a stream step if ``swap``)."""
+        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
+        ctx = sfg_driver.CodegenContext("double", target)
+        f, f_tmp = ps.fields(f"f, f_tmp: {ctx.data_type.c_string()}[3D]",
+                             layout="fzyx")
+        rhs = sp.Symbol("alpha") * f[1, 0, 0]
+        if rng_parameters:
+            ints = [ps.TypedSymbol(name, DynamicType.INDEX_TYPE) for name in (
+                "block_offset_0", "block_offset_1", "block_offset_2", "seed",
+                "time_step")]
+            rhs = rhs + tcast(sum(ints), ctx.data_type)
+        assignments = [ps.Assignment(f_tmp.center, rhs)]
+        with sfg_driver.KernelFileGenerator(
+                "Toy", ctx, tmp, "test.py") as sfg:
+            sfg_driver.generate_sweep(
+                sfg, "Toy", assignments,
+                swap_fields=[(f, f_tmp)] if swap else ())
+        return (tmp / "Toy.h").read_text()
+
+    def test_plain_sweepgen_class(self):
+        header = self.generate("cpu")
+        self.assertIn("namespace walberla::pystencils {", header)
+        self.assertEqual(header.count("class Toy {"), 1)
+        self.assertNotIn("internal", header)
+        self.assertNotIn("impl_", header)
+        # the constructor takes all the properties, the accessors return
+        # references
+        self.assertIn("Toy (walberla::BlockDataID fId, "
+                      "walberla::BlockDataID f_tmpId, double alpha)", header)
+        self.assertIn("double& alpha()", header)
+        self.assertIn("const double& alpha() const", header)
+        self.assertIn("void operator()(walberla::IBlock * block)", header)
+        self.assertIn("void runOnCellInterval(walberla::IBlock * block, "
+                      "const walberla::CellInterval& ci)", header)
+        self.assertNotIn("swapShadowBuffers", header)
+
+    def test_cuda_execution_tag(self):
+        header = self.generate("cuda")
+        self.assertIn("walberla::v8::sweep::exectag::GPU exTag", header)
+        self.assertNotIn("gpuStream_t stream", header)
+
+    def test_swapped_fields_are_hidden(self):
+        header = self.generate("cpu", swap=True)
+        self.assertIn("Toy (walberla::BlockDataID fId, double alpha)", header)
+        self.assertIn("swapShadowBuffers(", header)
+        self.assertNotIn("f_tmpId", header)
+
+    def test_block_offset_is_one_property(self):
+        # the RNG offsets of the kernel are combined into a Vector3 that is
+        # set by the caller (per block)
+        header = self.generate("cpu", swap=True, rng_parameters=True)
+        self.assertIn(
+            "Toy (walberla::BlockDataID fId, double alpha, "
+            "walberla::Vector3< int64_t > block_offset, int64_t seed, "
+            "int64_t time_step)", header)
+        self.assertIn("walberla::Vector3< int64_t >& block_offset()", header)
+        self.assertNotIn("block_offset_0", header)
 
 
 class PatchKernelSourceTest(unittest.TestCase):
