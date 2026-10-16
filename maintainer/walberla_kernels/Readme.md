@@ -17,6 +17,7 @@ templates.
 |---|---|---|
 | LB `InitialPDFsSetter` | `generate_lb_kernels.py --kernels init` | sweepgen |
 | LB `StreamCollideSweepThermalized` | `generate_lb_kernels.py --kernels stream_collide_thermalized` | sweepgen |
+| LB `StreamCollideSweepAthermal` | `generate_lb_kernels.py --kernels stream_collide_athermal` | sweepgen |
 | LB `StreamCollideSweepLeesEdwards` | `generate_lb_kernels.py --kernels stream_collide_lees_edwards` | sweepgen |
 | LB `UpdateVelFromPDF` | `generate_lb_kernels.py --kernels vel_update` | sweepgen |
 | LB CPU `FieldAccessors` | `generate_lb_kernels.py --kernels field_accessors` | sweepgen |
@@ -94,9 +95,10 @@ between runs. All headers, both `field_accessors` kernels and all files of the
 
 * `sfg_driver.py`: toolchain version check, precision/target handling,
   one named file pair per kernel (not formatted, see above).
-* `compat.py`: emits each kernel as a sweepgen class in
-  `walberla::pystencils::internal` plus a wrapper class with the legacy
-  `pystencils_walberla` interface used by the waLBerla bridge.
+* `sfg_driver.generate_sweep()`: emits a sweep as a plain sweepgen class in
+  `walberla::pystencils` (see "Generated sweep classes"). The classes of the
+  LB sweeps keep the names of the old `pystencils_walberla` classes, but not
+  their interface.
 * `sfg_driver.patch_kernel_source()`: regex workarounds for pystencils 2.1.0
   code generation issues in the generated `.cpp`/`.cu` files; re-check them
   whenever the pystencils version changes.
@@ -253,11 +255,55 @@ blocks must therefore have the same size, which `LatticeWalberla` guarantees
 by creating a uniform block grid; the constructor of `LBWalberlaImpl` checks
 that the PDF fields of all local blocks have the same size.
 
+## Generated sweep classes
+
+The classes of `InitialPDFsSetter`, `UpdateVelFromPDF`,
+`StreamCollideSweepThermalized`, `StreamCollideSweepAthermal` and
+`StreamCollideSweepLeesEdwards` are the classes of sweepgen, in the namespace
+`walberla::pystencils`: there is no wrapper around them, and the waLBerla
+bridge (`src/walberla_bridge/src/lattice_boltzmann/`) calls them directly.
+Their interface:
+
+* A constructor with all properties: first the field IDs, then the scalars,
+  each in alphabetical order, e.g.
+  `StreamCollideSweepThermalizedDoublePrecision(forceId, pdfsId,
+  block_offset, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed,
+  time_step)`.
+* Reference accessors of the scalars (`kT()`, `omega_shear()`, `v_s()`,
+  `time_step()`, ...) that the bridge uses to update a property of an existing
+  object. The field IDs are read-only.
+* `operator()(IBlock *)` and `runOnCellInterval(IBlock *, CellInterval)`. The
+  CUDA classes take an additional `walberla::v8::sweep::exectag::GPU`, which
+  carries the stream and defaults to the default stream. The stream-collide
+  sweeps swap the PDF field with a shadow field (`swapShadowBuffers`) after
+  each run, so only `operator()` is meaningful for them; the shadow field is
+  private to the sweep object.
+* The integer properties are `int64_t`, e.g. the seed and the time step of the
+  RNG. The three block offsets of the RNG are one property
+  `block_offset` of type `walberla::Vector3<int64_t>`.
+
+The classes don't know which block they run on, so the bridge sets
+`block_offset` to the lower corner of the global cell bounding box of the
+block before it runs the thermalized sweep on that block (the RNG of a cell
+depends on its global coordinates, so the noise doesn't depend on the domain
+decomposition); see `StreamCollideSweepVisitor` in `LBWalberlaImpl.hpp`.
+
 ## Thermalized LB kernels
 
 The thermal fluctuations of the stream-collide kernel use the Philox RNG of
 the pystencils 2.1 runtime. Its counter layout differs from the pystencils 1.4
 kernels, so a given seed produces a different (statistically equivalent)
-noise realisation than in earlier ESPResSo versions. When `kT` is zero, the
-kernel wrapper runs a second, generated kernel without RNG; its results agree
-with the thermalized kernel at `kT = 0` up to floating-point rounding.
+noise realisation than in earlier ESPResSo versions.
+
+The thermalized and athermal stream-collide steps are two classes of their
+own, `StreamCollideSweepThermalized` (with the RNG) and
+`StreamCollideSweepAthermal` (without; its results agree with the thermalized
+kernel at `kT = 0` up to floating-point rounding). Evaluating the RNG costs
+2 to 3.3 times as much per cell, and the vectorizer can't generate a branch
+on `kT`, so the choice isn't made in the kernel. The bridge chooses once in
+`LBWalberlaImpl::set_collision_model(kT, seed)` (the only place where `kT` is
+set): the thermalized sweep if `kT > 0`, otherwise the athermal sweep. Both
+are alternatives of the `CollisionModel` variant of `LBWalberlaImpl`, next to
+the Lees-Edwards sweep. Only the thermalized sweep has an RNG state (the time
+step counter, `get_rng_state()` and `set_rng_state()`): for `kT = 0` the
+state is `None` and setting it raises an error.

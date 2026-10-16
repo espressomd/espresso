@@ -11,7 +11,6 @@
 #include <limits>
 
 namespace walberla::pystencils {
-namespace internal {
 #if defined(__GNUC__)
 
 #pragma GCC diagnostic push
@@ -67,6 +66,15 @@ void UpdateVelFromPDFDoublePrecision::operator()(walberla::IBlock *block) {
   walberla::field::GhostLayerField<double, 3> *force{block->template getData<walberla::field::GhostLayerField<double, 3>>(forceId)};
   walberla::field::GhostLayerField<double, 19> *pdfs{block->template getData<walberla::field::GhostLayerField<double, 19>>(pdfsId)};
   walberla::field::GhostLayerField<double, 3> *velocity{block->template getData<walberla::field::GhostLayerField<double, 3>>(velocityId)};
+  const double *RESTRICT const _data_pdfs{pdfs->dataAt(0, 0, 0, 0)};
+  /* pdfs->xSize() == _size_pdfs_0 */
+  /* pdfs->ySize() == _size_pdfs_1 */
+  /* pdfs->zSize() == _size_pdfs_2 */
+  /* pdfs->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
   double *RESTRICT const _data_velocity{velocity->dataAt(0, 0, 0, 0)};
   /* velocity->xSize() == _size_velocity_0 */
   /* velocity->ySize() == _size_velocity_1 */
@@ -85,16 +93,7 @@ void UpdateVelFromPDFDoublePrecision::operator()(walberla::IBlock *block) {
   const int64_t _stride_force_1{int64_t(force->yStride())};
   const int64_t _stride_force_2{int64_t(force->zStride())};
   const int64_t _stride_force_3{int64_t(force->fStride())};
-  const double *RESTRICT const _data_pdfs{pdfs->dataAt(0, 0, 0, 0)};
-  /* pdfs->xSize() == _size_pdfs_0 */
-  /* pdfs->ySize() == _size_pdfs_1 */
-  /* pdfs->zSize() == _size_pdfs_2 */
-  /* pdfs->fSize() == 19 */
-  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
-  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
-  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
-  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
-  walberla::pystencils::internal::UpdateVelFromPDFDoublePrecision_kernels::UpdateVelFromPDFDoublePrecision(_data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
+  walberla::pystencils::UpdateVelFromPDFDoublePrecision_kernels::UpdateVelFromPDFDoublePrecision(_data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
 }
 
 void UpdateVelFromPDFDoublePrecision::runOnCellInterval(walberla::IBlock *block, const walberla::CellInterval &ci) {
@@ -104,6 +103,15 @@ void UpdateVelFromPDFDoublePrecision::runOnCellInterval(walberla::IBlock *block,
   walberla::field::GhostLayerField<double, 3> *force{block->template getData<walberla::field::GhostLayerField<double, 3>>(forceId)};
   walberla::field::GhostLayerField<double, 19> *pdfs{block->template getData<walberla::field::GhostLayerField<double, 19>>(pdfsId)};
   walberla::field::GhostLayerField<double, 3> *velocity{block->template getData<walberla::field::GhostLayerField<double, 3>>(velocityId)};
+  const double *RESTRICT const _data_pdfs{pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdfs->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
   double *RESTRICT const _data_velocity{velocity->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_velocity_0 */
   /* ci.ySize() == _size_velocity_1 */
@@ -122,16 +130,6 @@ void UpdateVelFromPDFDoublePrecision::runOnCellInterval(walberla::IBlock *block,
   const int64_t _stride_force_1{int64_t(force->yStride())};
   const int64_t _stride_force_2{int64_t(force->zStride())};
   const int64_t _stride_force_3{int64_t(force->fStride())};
-  const double *RESTRICT const _data_pdfs{pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  /* ci.xSize() == _size_pdfs_0 */
-  /* ci.ySize() == _size_pdfs_1 */
-  /* ci.zSize() == _size_pdfs_2 */
-  /* pdfs->fSize() == 19 */
-  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
-  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
-  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
-  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
-  walberla::pystencils::internal::UpdateVelFromPDFDoublePrecision_kernels::UpdateVelFromPDFDoublePrecision(_data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
+  walberla::pystencils::UpdateVelFromPDFDoublePrecision_kernels::UpdateVelFromPDFDoublePrecision(_data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
 }
-} // namespace internal
 } // namespace walberla::pystencils

@@ -159,8 +159,13 @@ protected:
   using Kernels = detail::KernelTrait<FloatType, Architecture>;
   using BoundaryModel = BoundaryHandling<FloatType, Vector3<FloatType>,
                                          typename Kernels::DynamicUBB>;
+  /**
+   * Stream-collide sweeps: the thermalized one with an RNG (kT > 0), the
+   * athermal one without (kT == 0), and the Lees-Edwards one (kT == 0).
+   */
   using CollisionModel =
       std::variant<typename Kernels::StreamCollisionModelThermalized,
+                   typename Kernels::StreamCollisionModelAthermal,
                    typename Kernels::StreamCollisionModelLeesEdwards>;
 
 public:
@@ -422,7 +427,7 @@ private:
     if (auto *cm =
             std::get_if<typename Kernels::StreamCollisionModelThermalized>(
                 &cm_variant)) {
-      cm->setTime_step(cm->getTime_step() + 1u);
+      cm->time_step() += 1;
     }
   }
 
@@ -447,7 +452,7 @@ private:
 
   /**
    * @brief Visitor for dispatching stream-collide sweeps.
-   * Handles both thermalized and Lees-Edwards collision models
+   * Handles the thermalized, athermal and Lees-Edwards collision models
    * via @c std::visit on the @ref CollisionModel variant.
    */
   class StreamCollideSweepVisitor {
@@ -456,14 +461,22 @@ private:
 
     void operator()(typename Kernels::StreamCollisionModelThermalized &cm,
                     IBlock *b) {
-      cm.configure(m_storage, b);
+      // the RNG of a cell depends on its global coordinates
+      auto const lower_corner = m_storage->getBlockCellBB(*b).min();
+      cm.block_offset() =
+          Vector3<int64_t>(lower_corner[0], lower_corner[1], lower_corner[2]);
+      cm(b);
+    }
+
+    void operator()(typename Kernels::StreamCollisionModelAthermal &cm,
+                    IBlock *b) {
       cm(b);
     }
 
     void operator()(typename Kernels::StreamCollisionModelLeesEdwards &cm,
                     IBlock *b) {
-      cm.setV_s(static_cast<decltype(cm.getV_s())>(
-          m_lees_edwards_callbacks->get_shear_velocity()));
+      cm.v_s() = static_cast<FloatType>(
+          m_lees_edwards_callbacks->get_shear_velocity());
       cm(b);
     }
 
@@ -840,22 +853,21 @@ public:
     auto const cm =
         std::get_if<typename Kernels::StreamCollisionModelThermalized>(
             &*m_collision_model);
-    if (!cm or m_kT == 0.) {
+    if (!cm) {
       return std::nullopt;
     }
-    return {static_cast<uint64_t>(cm->getTime_step())};
+    return {static_cast<uint64_t>(cm->time_step())};
   }
 
   void set_rng_state(uint64_t counter) override {
     auto const cm =
         std::get_if<typename Kernels::StreamCollisionModelThermalized>(
             &*m_collision_model);
-    if (!cm or m_kT == 0.) {
+    if (!cm) {
       throw std::runtime_error("This LB instance is unthermalized");
     }
-    assert(counter <=
-           static_cast<uint32_t>(std::numeric_limits<uint_t>::max()));
-    cm->setTime_step(static_cast<uint32_t>(counter));
+    assert(counter <= std::numeric_limits<uint32_t>::max());
+    cm->time_step() = static_cast<int64_t>(counter);
   }
 
   [[nodiscard]] LatticeWalberla const &get_lattice() const noexcept override {

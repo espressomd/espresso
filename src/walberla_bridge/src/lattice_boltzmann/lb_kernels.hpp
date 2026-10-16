@@ -35,11 +35,15 @@
 #include "generated_kernels/UpdateVelFromPDFSinglePrecision.h"
 
 #ifdef __AVX2__
+#include "generated_kernels/StreamCollideSweepAthermalDoublePrecisionAVX.h"
+#include "generated_kernels/StreamCollideSweepAthermalSinglePrecisionAVX.h"
 #include "generated_kernels/StreamCollideSweepLeesEdwardsDoublePrecisionAVX.h"
 #include "generated_kernels/StreamCollideSweepLeesEdwardsSinglePrecisionAVX.h"
 #include "generated_kernels/StreamCollideSweepThermalizedDoublePrecisionAVX.h"
 #include "generated_kernels/StreamCollideSweepThermalizedSinglePrecisionAVX.h"
 #else
+#include "generated_kernels/StreamCollideSweepAthermalDoublePrecision.h"
+#include "generated_kernels/StreamCollideSweepAthermalSinglePrecision.h"
 #include "generated_kernels/StreamCollideSweepLeesEdwardsDoublePrecision.h"
 #include "generated_kernels/StreamCollideSweepLeesEdwardsSinglePrecision.h"
 #include "generated_kernels/StreamCollideSweepThermalizedDoublePrecision.h"
@@ -54,11 +58,15 @@ struct KernelTrait {
 #ifdef __AVX2__
   using StreamCollisionModelThermalized =
       pystencils::StreamCollideSweepThermalizedDoublePrecisionAVX;
+  using StreamCollisionModelAthermal =
+      pystencils::StreamCollideSweepAthermalDoublePrecisionAVX;
   using StreamCollisionModelLeesEdwards =
       pystencils::StreamCollideSweepLeesEdwardsDoublePrecisionAVX;
 #else
   using StreamCollisionModelThermalized =
       pystencils::StreamCollideSweepThermalizedDoublePrecision;
+  using StreamCollisionModelAthermal =
+      pystencils::StreamCollideSweepAthermalDoublePrecision;
   using StreamCollisionModelLeesEdwards =
       pystencils::StreamCollideSweepLeesEdwardsDoublePrecision;
 #endif
@@ -73,11 +81,15 @@ template <> struct KernelTrait<float, lbmpy::Arch::CPU> {
 #ifdef __AVX2__
   using StreamCollisionModelThermalized =
       pystencils::StreamCollideSweepThermalizedSinglePrecisionAVX;
+  using StreamCollisionModelAthermal =
+      pystencils::StreamCollideSweepAthermalSinglePrecisionAVX;
   using StreamCollisionModelLeesEdwards =
       pystencils::StreamCollideSweepLeesEdwardsSinglePrecisionAVX;
 #else
   using StreamCollisionModelThermalized =
       pystencils::StreamCollideSweepThermalizedSinglePrecision;
+  using StreamCollisionModelAthermal =
+      pystencils::StreamCollideSweepAthermalSinglePrecision;
   using StreamCollisionModelLeesEdwards =
       pystencils::StreamCollideSweepLeesEdwardsSinglePrecision;
 #endif

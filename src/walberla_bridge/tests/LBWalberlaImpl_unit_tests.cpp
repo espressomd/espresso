@@ -115,6 +115,51 @@ BOOST_DATA_TEST_CASE(kT_thermalized, bdata::make(thermalized_lbs()),
   BOOST_CHECK_EQUAL(lb->get_kT(), params.kT);
 }
 
+BOOST_DATA_TEST_CASE(rng_state_unthermalized, bdata::make(unthermalized_lbs()),
+                     lb_generator) {
+  auto lb = lb_generator(params);
+  BOOST_CHECK(not lb->get_rng_state().has_value());
+  BOOST_CHECK_THROW(lb->set_rng_state(5u), std::runtime_error);
+  lb->integrate();
+  BOOST_CHECK(not lb->get_rng_state().has_value());
+}
+
+BOOST_DATA_TEST_CASE(rng_state_thermalized, bdata::make(thermalized_lbs()),
+                     lb_generator) {
+  auto lb = lb_generator(params);
+  BOOST_CHECK_EQUAL(lb->get_seed(), params.seed);
+  BOOST_REQUIRE(lb->get_rng_state().has_value());
+  BOOST_CHECK_EQUAL(*lb->get_rng_state(), 0u);
+  lb->integrate();
+  lb->integrate();
+  BOOST_CHECK_EQUAL(*lb->get_rng_state(), 2u);
+  lb->set_rng_state(56u);
+  BOOST_CHECK_EQUAL(*lb->get_rng_state(), 56u);
+  lb->integrate();
+  BOOST_CHECK_EQUAL(*lb->get_rng_state(), 57u);
+}
+
+BOOST_DATA_TEST_CASE(rng_state_follows_kT, bdata::make(all_lbs()),
+                     lb_generator) {
+  // the collision model is chosen when kT and the seed are set
+  auto lb = lb_generator(params);
+  lb->set_collision_model(0., 42u);
+  BOOST_CHECK_EQUAL(lb->get_kT(), 0.);
+  BOOST_CHECK_EQUAL(lb->get_seed(), 42u);
+  BOOST_CHECK(not lb->get_rng_state().has_value());
+  lb->integrate();
+  BOOST_CHECK(not lb->get_rng_state().has_value());
+  lb->set_collision_model(params.kT, 43u);
+  BOOST_CHECK_EQUAL(lb->get_kT(), params.kT);
+  BOOST_CHECK_EQUAL(lb->get_seed(), 43u);
+  BOOST_REQUIRE(lb->get_rng_state().has_value());
+  BOOST_CHECK_EQUAL(*lb->get_rng_state(), 0u);
+  lb->integrate();
+  BOOST_CHECK_EQUAL(*lb->get_rng_state(), 1u);
+  lb->set_collision_model(0., 43u);
+  BOOST_CHECK(not lb->get_rng_state().has_value());
+}
+
 BOOST_DATA_TEST_CASE(per_node_boundary, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(params);
   auto const vel = Vector3d{{0.2, 3.8, 4.2}};

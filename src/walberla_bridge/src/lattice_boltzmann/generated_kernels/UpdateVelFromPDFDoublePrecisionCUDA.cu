@@ -12,7 +12,6 @@
 #include <tuple>
 
 namespace walberla::pystencils {
-namespace internal {
 #if defined(__NVCC__) && defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
 
 #pragma nv_diagnostic push
@@ -73,6 +72,15 @@ void UpdateVelFromPDFDoublePrecisionCUDA::operator()(walberla::IBlock *block, wa
   walberla::gpu::GPUField<double> *force{block->template getData<walberla::gpu::GPUField<double>>(forceId)};
   walberla::gpu::GPUField<double> *pdfs{block->template getData<walberla::gpu::GPUField<double>>(pdfsId)};
   walberla::gpu::GPUField<double> *velocity{block->template getData<walberla::gpu::GPUField<double>>(velocityId)};
+  const double *RESTRICT const _data_pdfs{pdfs->dataAt(0, 0, 0, 0)};
+  /* pdfs->xSize() == _size_pdfs_0 */
+  /* pdfs->ySize() == _size_pdfs_1 */
+  /* pdfs->zSize() == _size_pdfs_2 */
+  /* pdfs->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
   double *RESTRICT const _data_velocity{velocity->dataAt(0, 0, 0, 0)};
   /* velocity->xSize() == _size_velocity_0 */
   /* velocity->ySize() == _size_velocity_1 */
@@ -91,23 +99,14 @@ void UpdateVelFromPDFDoublePrecisionCUDA::operator()(walberla::IBlock *block, wa
   const int64_t _stride_force_1{int64_t(force->yStride())};
   const int64_t _stride_force_2{int64_t(force->zStride())};
   const int64_t _stride_force_3{int64_t(force->fStride())};
-  const double *RESTRICT const _data_pdfs{pdfs->dataAt(0, 0, 0, 0)};
-  /* pdfs->xSize() == _size_pdfs_0 */
-  /* pdfs->ySize() == _size_pdfs_1 */
-  /* pdfs->zSize() == _size_pdfs_2 */
-  /* pdfs->fSize() == 19 */
-  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
-  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
-  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
-  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};
       const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
       const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
       /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::UpdateVelFromPDFDoublePrecisionCUDA_kernels::UpdateVelFromPDFDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
+        /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
+        walberla::pystencils::UpdateVelFromPDFDoublePrecisionCUDA_kernels::UpdateVelFromPDFDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
       /* clang-format on */
     }
   } else {
@@ -116,8 +115,8 @@ void UpdateVelFromPDFDoublePrecisionCUDA::operator()(walberla::IBlock *block, wa
       const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
       const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
       /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::UpdateVelFromPDFDoublePrecisionCUDA_kernels::UpdateVelFromPDFDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
+        /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
+        walberla::pystencils::UpdateVelFromPDFDoublePrecisionCUDA_kernels::UpdateVelFromPDFDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
       /* clang-format on */
     }
   }
@@ -130,6 +129,15 @@ void UpdateVelFromPDFDoublePrecisionCUDA::runOnCellInterval(walberla::IBlock *bl
   walberla::gpu::GPUField<double> *force{block->template getData<walberla::gpu::GPUField<double>>(forceId)};
   walberla::gpu::GPUField<double> *pdfs{block->template getData<walberla::gpu::GPUField<double>>(pdfsId)};
   walberla::gpu::GPUField<double> *velocity{block->template getData<walberla::gpu::GPUField<double>>(velocityId)};
+  const double *RESTRICT const _data_pdfs{pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_pdfs_0 */
+  /* ci.ySize() == _size_pdfs_1 */
+  /* ci.zSize() == _size_pdfs_2 */
+  /* pdfs->fSize() == 19 */
+  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
+  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
+  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
+  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
   double *RESTRICT const _data_velocity{velocity->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_velocity_0 */
   /* ci.ySize() == _size_velocity_1 */
@@ -148,23 +156,14 @@ void UpdateVelFromPDFDoublePrecisionCUDA::runOnCellInterval(walberla::IBlock *bl
   const int64_t _stride_force_1{int64_t(force->yStride())};
   const int64_t _stride_force_2{int64_t(force->zStride())};
   const int64_t _stride_force_3{int64_t(force->fStride())};
-  const double *RESTRICT const _data_pdfs{pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  /* ci.xSize() == _size_pdfs_0 */
-  /* ci.ySize() == _size_pdfs_1 */
-  /* ci.zSize() == _size_pdfs_2 */
-  /* pdfs->fSize() == 19 */
-  const int64_t _stride_pdfs_0{int64_t(pdfs->xStride())};
-  const int64_t _stride_pdfs_1{int64_t(pdfs->yStride())};
-  const int64_t _stride_pdfs_2{int64_t(pdfs->zStride())};
-  const int64_t _stride_pdfs_3{int64_t(pdfs->fStride())};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};
       const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
       const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
       /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::UpdateVelFromPDFDoublePrecisionCUDA_kernels::UpdateVelFromPDFDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
+        /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
+        walberla::pystencils::UpdateVelFromPDFDoublePrecisionCUDA_kernels::UpdateVelFromPDFDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
       /* clang-format on */
     }
   } else {
@@ -173,11 +172,10 @@ void UpdateVelFromPDFDoublePrecisionCUDA::runOnCellInterval(walberla::IBlock *bl
       const std::tuple<uint32_t, uint32_t, uint32_t> __work_items{_size_force_0, _size_force_1, _size_force_2};
       const dim3 __grid_size{(std::get<0>(__work_items) + __block_size.x - 1) / __block_size.x, (std::get<1>(__work_items) + __block_size.y - 1) / __block_size.y, (std::get<2>(__work_items) + __block_size.z - 1) / __block_size.z};
       /* clang-format off */
-          /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
-          walberla::pystencils::internal::UpdateVelFromPDFDoublePrecisionCUDA_kernels::UpdateVelFromPDFDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
+        /* [pystencils-sfg] Formatting may add illegal spaces between angular brackets in `<<< >>>` */
+        walberla::pystencils::UpdateVelFromPDFDoublePrecisionCUDA_kernels::UpdateVelFromPDFDoublePrecisionCUDA<<< __grid_size, __block_size, 0, exTag.stream() >>>(_data_force, _data_pdfs, _data_velocity, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
       /* clang-format on */
     }
   }
 }
-} // namespace internal
 } // namespace walberla::pystencils

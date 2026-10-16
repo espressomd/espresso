@@ -6,17 +6,13 @@
 
 #pragma once
 
-#include "core/DataTypes.h"
 #include "core/cell/CellInterval.h"
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
-#include "domain_decomposition/StructuredBlockStorage.h"
-#include <functional>
 
 #define RESTRICT __restrict__
 
 namespace walberla::pystencils {
-namespace internal {
 namespace detail {
 struct UpdateVelFromPDFSinglePrecisionProperties {
   walberla::BlockDataID forceId_;
@@ -47,65 +43,8 @@ public:
                          const walberla::CellInterval &ci);
 
 private:
-  walberla::pystencils::internal::detail::
-      UpdateVelFromPDFSinglePrecisionProperties properties_;
-};
-
-} // namespace internal
-
-class UpdateVelFromPDFSinglePrecision {
-
-public:
-  UpdateVelFromPDFSinglePrecision(walberla::BlockDataID forceId,
-                                  walberla::BlockDataID pdfsId,
-                                  walberla::BlockDataID velocityId)
-      : impl_(forceId, pdfsId, velocityId) {}
-  void run(walberla::IBlock *block) { impl_(block); }
-  void operator()(walberla::IBlock *block) { run(block); }
-  static std::function<void(walberla::IBlock *)> getSweep(
-      const walberla::shared_ptr<UpdateVelFromPDFSinglePrecision> &kernel) {
-    return [kernel](walberla::IBlock *b) { kernel->run(b); };
-  }
-  std::function<void(walberla::IBlock *)> getSweep() {
-    return [this](walberla::IBlock *b) { this->run(b); };
-  }
-  void runOnCellInterval(
-      const walberla::shared_ptr<walberla::StructuredBlockStorage> &blocks,
-      const walberla::CellInterval &globalCellInterval,
-      walberla::cell_idx_t ghostLayers, walberla::IBlock *block) {
-    walberla::CellInterval ci = globalCellInterval;
-    walberla::CellInterval blockBB = blocks->getBlockCellBB(*block);
-    blockBB.expand(ghostLayers);
-    ci.intersect(blockBB);
-    blocks->transformGlobalToBlockLocalCellInterval(ci, *block);
-    if (ci.empty())
-      return;
-    impl_.runOnCellInterval(block, ci);
-  }
-  static std::function<void(walberla::IBlock *)> getSweepOnCellInterval(
-      const walberla::shared_ptr<UpdateVelFromPDFSinglePrecision> &kernel,
-      const walberla::shared_ptr<walberla::StructuredBlockStorage> &blocks,
-      const walberla::CellInterval &globalCellInterval,
-      walberla::cell_idx_t ghostLayers = 1) {
-    return
-        [kernel, blocks, globalCellInterval, ghostLayers](walberla::IBlock *b) {
-          kernel->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
-        };
-  }
-  std::function<void(walberla::IBlock *)> getSweepOnCellInterval(
-      const walberla::shared_ptr<walberla::StructuredBlockStorage> &blocks,
-      const walberla::CellInterval &globalCellInterval,
-      walberla::cell_idx_t ghostLayers = 1) {
-    return
-        [this, blocks, globalCellInterval, ghostLayers](walberla::IBlock *b) {
-          this->runOnCellInterval(blocks, globalCellInterval, ghostLayers, b);
-        };
-  }
-  void configure(const walberla::shared_ptr<walberla::StructuredBlockStorage> &,
-                 walberla::IBlock *) {}
-
-private:
-  internal::UpdateVelFromPDFSinglePrecision impl_;
+  walberla::pystencils::detail::UpdateVelFromPDFSinglePrecisionProperties
+      properties_;
 };
 
 } // namespace walberla::pystencils
