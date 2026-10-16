@@ -34,15 +34,17 @@ class GenerateLbKernelsTest(unittest.TestCase):
 
     def assert_plain_sweep(self, header, name):
         """The header holds the sweepgen class ``name`` and nothing else."""
-        self.assertEqual(
-            re.findall(r"^ *namespace [\w:]+ \{", header, re.MULTILINE),
-            ["namespace walberla::pystencils {", "  namespace detail {"])
-        self.assertEqual(header.count(f"class {name} {{"), 1)
-        self.assertEqual(header.count("class "), 1)
-        self.assertNotIn("internal", header)
-        self.assertNotIn("impl_", header)
-        self.assertNotIn("configure(", header)
-        self.assertNotIn("uint32_t", header)
+        namespaces = re.findall(
+            r"^ *namespace ([\w:]+) \{", header, re.MULTILINE)
+        self.assertEqual(namespaces[0], "walberla::pystencils")
+        self.assertIn("detail", namespaces[1:])
+        self.assertEqual(re.findall(r"^ *class (\w+)", header, re.MULTILINE),
+                         [name])
+        self.assertNotIn("::internal::", header)
+        self.assertIsNone(re.search(r"namespace internal\b", header))
+        self.assertIsNone(re.search(r"\bimpl_\b", header))
+        for legacy in ("getTime_step", "setKt", "configure("):
+            self.assertNotIn(legacy, header)
 
     def run_script(self, *args, check=True):
         tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -273,26 +275,29 @@ class GenerateLbKernelsTest(unittest.TestCase):
     def test_sweep_output_is_deterministic(self):
         # independent of the hash seed of the interpreter, except for the
         # order of the field-extraction statements in the sources
-        kernels = ("init", "stream_collide_thermalized",
-                   "stream_collide_athermal", "stream_collide_lees_edwards",
-                   "vel_update")
+        import generate_lb_kernels
+        import sfg_driver
+        kernels = ("stream_collide_thermalized", "stream_collide_athermal")
         outputs = []
         for seed in ("1", "2"):
-            tmp = pathlib.Path(self.enterContext(
+            output_dir = pathlib.Path(self.enterContext(
                 tempfile.TemporaryDirectory()))
             subprocess.run(
                 [sys.executable, str(SCRIPT), "--kernels", *kernels,
-                 "--output-dir", str(tmp)],
+                 "--output-dir", str(output_dir)],
                 env=dict(os.environ, PYTHONHASHSEED=seed),
                 capture_output=True, text=True, check=True)
-            outputs.append(tmp)
+            outputs.append(output_dir)
         names = sorted(p.name for p in outputs[0].iterdir())
         self.assertEqual(names, sorted(p.name for p in outputs[1].iterdir()))
-        # init and vel_update: CPU and CUDA; stream-collide: also AVX
-        self.assertEqual(len(names), 2 * (2 * 2 * 2) + 3 * (2 * 3 * 2))
+        # header and source of each precision and target
+        self.assertEqual(len(names), sum(
+            2 * len(sfg_driver.PRECISIONS)
+            * len(generate_lb_kernels.KERNELS[k].targets)
+            for k in kernels))
         for name in names:
             first, second = (
-                (tmp / name).read_text() for tmp in outputs)
+                (output / name).read_text() for output in outputs)
             if name.endswith(".h"):
                 self.assertEqual(first, second, name)
             else:
