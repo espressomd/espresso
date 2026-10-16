@@ -101,8 +101,8 @@ from sweepgen.build_config import get_build_config
 from sweepgen.communication.pack_infos import (
     CaptureBufferPointer, PackingKernelsContext)
 
-import compat
 import pystencils_espresso
+import sfg_driver
 
 CPU_BASE_CLASS = "walberla::UniformCpuFieldPackInfoBase"
 # relative to the directory of the generated files, as seen by the compiler:
@@ -324,7 +324,7 @@ def _generate(sfg, ctx, name, field, comm_sets):
         warnings.filterwarnings(
             "ignore", message="Encountered two non-identical variables",
             category=UserWarning)
-        with sfg.namespace(compat.LEGACY_NAMESPACE):
+        with sfg.namespace(sfg_driver.KERNEL_NAMESPACE):
             sfg.generate(FieldPackInfo(name, field, comm_sets))
 
 

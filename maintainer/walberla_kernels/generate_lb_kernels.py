@@ -20,7 +20,8 @@
 """
 Generate the LB kernels of the waLBerla bridge with sweepgen and
 pystencils-sfg. Each kernel is written to its own file pair, named
-after the legacy class, e.g. ``InitialPDFsSetterDoublePrecisionCUDA.h``.
+after its class in ``walberla::pystencils``, e.g.
+``InitialPDFsSetterDoublePrecisionCUDA.h``.
 """
 
 import argparse
@@ -39,7 +40,6 @@ from pystencils.sympyextensions import DynamicType
 from pystencils.sympyextensions.random import Philox
 
 import boundaries
-import compat
 import lb_accessors
 import lees_edwards
 import pack_infos
@@ -138,31 +138,33 @@ def create_lees_edwards_update_rule(ctx, fields, method):
 def generate_init(sfg, ctx, name):
     fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
     method = create_lb_method(fields)
-    compat.legacy_sweep(
-        sfg, ctx, name,
-        pystencils_espresso.generate_setters(method, ctx.data_type))
+    sfg_driver.generate_sweep(
+        sfg, name, pystencils_espresso.generate_setters(method, ctx.data_type))
 
 
 def generate_stream_collide_thermalized(sfg, ctx, name):
     fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
     method = create_lb_method(fields)
-    compat.legacy_sweep(
-        sfg, ctx, name,
-        create_thermalized_update_rule(ctx, fields, method),
+    sfg_driver.generate_sweep(
+        sfg, name, create_thermalized_update_rule(ctx, fields, method),
         gen_config=cpu_gen_config(ctx),
-        swap_fields=[(fields["pdfs"], fields["pdfs_tmp"])],
-        legacy_types={"seed": "uint32_t", "time_step": "uint32_t",
-                      "block_offset": "uint32_t"},
-        # run a kernel without RNG if kT == 0
-        athermal_assignments=create_athermal_update_rule(fields, method))
+        swap_fields=[(fields["pdfs"], fields["pdfs_tmp"])])
+
+
+def generate_stream_collide_athermal(sfg, ctx, name):
+    fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
+    method = create_lb_method(fields)
+    sfg_driver.generate_sweep(
+        sfg, name, create_athermal_update_rule(fields, method),
+        gen_config=cpu_gen_config(ctx),
+        swap_fields=[(fields["pdfs"], fields["pdfs_tmp"])])
 
 
 def generate_stream_collide_lees_edwards(sfg, ctx, name):
     fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
     method = create_lb_method(fields)
-    compat.legacy_sweep(
-        sfg, ctx, name,
-        create_lees_edwards_update_rule(ctx, fields, method),
+    sfg_driver.generate_sweep(
+        sfg, name, create_lees_edwards_update_rule(ctx, fields, method),
         gen_config=cpu_gen_config(ctx),
         swap_fields=[(fields["pdfs"], fields["pdfs_tmp"])])
 
@@ -173,7 +175,7 @@ def generate_vel_update(sfg, ctx, name):
     assignments = lbmpy.macroscopic_value_kernels.macroscopic_values_getter(
         method, None, fields["velocity"], fields["pdfs"],
         use_pre_collision_pdfs=True)
-    compat.legacy_sweep(sfg, ctx, name, assignments)
+    sfg_driver.generate_sweep(sfg, name, assignments)
 
 
 def generate_accessors(sfg, ctx, name):
@@ -210,6 +212,9 @@ KERNELS = {
     "stream_collide_thermalized": Kernel(
         "StreamCollideSweepThermalized", ("cpu", "avx", "cuda"),
         generate_stream_collide_thermalized),
+    "stream_collide_athermal": Kernel(
+        "StreamCollideSweepAthermal", ("cpu", "avx", "cuda"),
+        generate_stream_collide_athermal),
     "stream_collide_lees_edwards": Kernel(
         "StreamCollideSweepLeesEdwards", ("cpu", "avx", "cuda"),
         generate_stream_collide_lees_edwards),
