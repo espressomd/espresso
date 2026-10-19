@@ -86,6 +86,7 @@ target_link_libraries(
          $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
   PRIVATE espresso::config espresso::utils::mpi espresso::shapes
           espresso::compiler_flags
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_EXSCALICOS}>:Exscalicos::Exscalicos>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_NLOPT}>:nlopt>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_GSL}>:GSL::gsl>
