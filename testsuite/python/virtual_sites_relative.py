@@ -193,6 +193,101 @@ class VirtualSites(ut.TestCase):
             np.testing.assert_allclose(
                 np.copy(p_real.torque_lab), torque, atol=1E-12)
 
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
+    def test_vs_rotation_euler(self):
+        """
+        A virtual site with ``TRANS_VS_RELATIVE | ROT_EULER`` follows the
+        position of the real particle, but rotates like a free particle:
+        its orientation is not slaved to the real particle and torques on
+        the virtual site are not transferred to the real particle.
+
+        """
+        system = self.system
+        system.cell_system.skin = 0.2
+        system.time_step = 0.01
+        system.min_global_cut = 1.0
+        Propagation = espressomd.propagation.Propagation
+
+        omega_real = np.array([3.0, 6.0, 9.0])
+        omega_vs = np.array([-1.0, 2.0, 0.5])
+        quat_vs = np.array([0.5, 0.5, 0.5, 0.5])
+        p_real = system.part.add(
+            rotation=3 * [True], pos=(0.0, 0.0, 0.0), omega_body=omega_real)
+        p_vs = system.part.add(
+            rotation=3 * [True], pos=(0.5, 0.0, 0.0), omega_body=omega_vs,
+            quat=quat_vs)
+        # free particle with the same rotational state as the virtual site
+        p_free = system.part.add(
+            rotation=3 * [True], pos=(4.0, 4.0, 4.0), omega_body=omega_vs,
+            quat=quat_vs)
+        p_vs.vs_auto_relate_to(p_real)
+        p_vs.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_EULER
+        self.assertTrue(p_vs.is_virtual())
+
+        system.integrator.run(0, recalc_forces=True)
+        self.verify_vs(p_vs, expected_rot=Propagation.ROT_EULER)
+        # orientation of the virtual site is left untouched
+        np.testing.assert_allclose(np.copy(p_vs.quat), quat_vs, atol=1e-12)
+
+        system.integrator.run(10)
+        self.verify_vs(p_vs, expected_rot=Propagation.ROT_EULER)
+        # the virtual site rotates like a free particle
+        np.testing.assert_allclose(
+            np.copy(p_vs.quat), np.copy(p_free.quat), atol=1e-12)
+        np.testing.assert_allclose(
+            np.copy(p_vs.omega_body), np.copy(p_free.omega_body), atol=1e-12)
+        self.assertFalse(np.allclose(np.copy(p_vs.quat), quat_vs))
+        # and does not follow the orientation of the real particle
+        vs_r = p_vs.vs_relative
+        self.assertFalse(np.allclose(
+            np.copy(p_vs.quat),
+            self.multiply_quaternions(np.copy(p_real.quat), vs_r[2])))
+        # the real particle is unaffected by the virtual site rotation
+        np.testing.assert_allclose(
+            np.copy(p_real.omega_body), omega_real, atol=1e-12)
+
+        # torques on the virtual site stay on the virtual site
+        torque = np.array([1.0, -0.5, 0.25])
+        p_vs.ext_torque = torque
+        p_free.ext_torque = torque
+        system.integrator.run(0)
+        np.testing.assert_allclose(
+            np.copy(p_real.torque_lab), np.zeros(3), atol=1e-12)
+        np.testing.assert_allclose(
+            np.copy(p_vs.torque_lab), torque, atol=1e-12)
+        system.integrator.run(10)
+        np.testing.assert_allclose(
+            np.copy(p_vs.quat), np.copy(p_free.quat), atol=1e-12)
+        np.testing.assert_allclose(
+            np.copy(p_vs.omega_body), np.copy(p_free.omega_body), atol=1e-12)
+        self.assertFalse(np.allclose(np.copy(p_vs.omega_body), omega_vs))
+        np.testing.assert_allclose(
+            np.copy(p_real.omega_body), omega_real, atol=1e-12)
+
+    def test_vs_rotation_kinetic_energy(self):
+        """
+        A virtual site with its own rotational propagation contributes to
+        the rotational kinetic energy.
+
+        """
+        system = self.system
+        system.cell_system.skin = 0.2
+        system.time_step = 0.01
+        system.min_global_cut = 1.0
+        Propagation = espressomd.propagation.Propagation
+
+        omega_vs = np.array([1.0, 2.0, 3.0])
+        p_real = system.part.add(rotation=3 * [False], pos=(0.0, 0.0, 0.0))
+        p_vs = system.part.add(
+            rotation=3 * [True], pos=(0.5, 0.0, 0.0), omega_body=omega_vs)
+        p_vs.vs_auto_relate_to(p_real)
+        p_vs.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_EULER
+        system.integrator.run(0, recalc_forces=True)
+        rinertia = np.copy(p_vs.rinertia)
+        self.assertAlmostEqual(
+            system.analysis.energy()["kinetic"],
+            0.5 * np.sum(rinertia * omega_vs**2), delta=1e-12)
+
     def test_pos_vel_forces(self):
         system = self.system
         system.cell_system.skin = 0.3

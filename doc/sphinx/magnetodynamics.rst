@@ -112,7 +112,10 @@ The example below shows how to set up and parametrise a particle to be used by
 the **thermal Stoner-Wohlfarth** solver. Note that ``is_enabled`` needs to be set
 to ``True`` explicitly on the virtual site.
 Moreover, the virtual sites that are tagged for magnetodynamics must be set
-to use the ``Propagation.ROT_VS_INDEPENDENT`` propagation mode.
+to use the ``Propagation.ROT_VS_INDEPENDENT`` propagation mode. With this mode,
+the orientation of the virtual site is controlled by the Stoner-Wohlfarth
+solver instead of the integrator, while the torque acting on the dipole moment
+is transferred to the non-virtual particle.
 
 .. code-block:: python
 

@@ -15,6 +15,14 @@ or [Savannah](https://savannah.nongnu.org/projects/espressomd) until release 3.3
 ### Added functionality
 
 * The Lees-Edwards oscillatory shear protocol was extended to support exponential decay (#4966).
+* Virtual sites can now rotate independently from the real particle they are
+  attached to, using the propagation modes `TRANS_VS_RELATIVE | ROT_EULER` or
+  `TRANS_VS_RELATIVE | ROT_LANGEVIN`. The orientation of such a virtual site
+  is integrated from its own angular velocity and torque, and torques acting
+  on it are not transferred to the real particle.
+* The propagation modes that `Propagation.SYSTEM_DEFAULT` resolves to for the
+  active integrator and thermostat combination can be queried via the new
+  read-only attribute `system.integrator.default_propagation`.
 
 ### Changed requirements
 
