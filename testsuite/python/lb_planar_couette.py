@@ -121,7 +121,6 @@ class LBCouetteFlowCommon:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-@ut.skipIf(LBCouetteFlowCommon.n_nodes > 2, "only runs for 1 to 2 MPI ranks")
 class LBCouetteFlowWalberla(LBCouetteFlowCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -132,7 +131,6 @@ class LBCouetteFlowWalberla(LBCouetteFlowCommon, ut.TestCase):
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-@ut.skipIf(LBCouetteFlowCommon.n_nodes > 2, "only runs for 1 to 2 MPI ranks")
 class LBCouetteFlowWalberlaSinglePrecision(LBCouetteFlowCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""
@@ -143,7 +141,6 @@ class LBCouetteFlowWalberlaSinglePrecision(LBCouetteFlowCommon, ut.TestCase):
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-@ut.skipIf(LBCouetteFlowCommon.n_nodes > 2, "only runs for 1 to 2 MPI ranks")
 class LBCouetteFlowWalberlaBlocks(LBCouetteFlowCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
