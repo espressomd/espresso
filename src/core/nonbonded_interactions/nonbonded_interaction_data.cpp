@@ -89,6 +89,11 @@ recalc_maximal_cutoff(IA_parameters const &data,
            data.gaussian.max_cutoff());
 #endif
 
+#ifdef ESPRESSO_GAUSSIAN_ANISO
+  consider(max_cut_current, mask, PairPotential::GaussianAniso,
+           data.gaussian_aniso.max_cutoff());
+#endif
+
 #ifdef ESPRESSO_BMHTF_NACL
   consider(max_cut_current, mask, PairPotential::BMHTF,
            data.bmhtf.max_cutoff());

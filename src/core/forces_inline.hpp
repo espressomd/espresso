@@ -39,6 +39,7 @@
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
+#include "nonbonded_interactions/gaussian_aniso.hpp"
 #include "nonbonded_interactions/gay_berne.hpp"
 #include "nonbonded_interactions/hat.hpp"
 #include "nonbonded_interactions/hertzian.hpp"
@@ -152,6 +153,11 @@ inline ParticleForce calc_non_central_force(Particle const &p1,
 #ifdef ESPRESSO_GAY_BERNE
   pf += gb_pair_force(p1.quat(), p2.quat(), ia_params, d, dist);
 #endif
+
+#ifdef ESPRESSO_GAUSSIAN_ANISO
+  pf.f += gaussian_aniso_pair_force(ia_params, d);
+#endif
+
   return pf;
 }
 
@@ -163,9 +169,15 @@ inline Utils::Vector3d calc_non_central_force(Utils::Vector3d const &dir1,
                                               Utils::Vector3d const &d,
                                               double const dist) {
   Utils::Vector3d f{};
+
 #ifdef ESPRESSO_GAY_BERNE
   f += gb_pair_force(dir1, dir2, ia_params, d, dist).f;
 #endif
+
+#ifdef ESPRESSO_GAUSSIAN_ANISO
+  f += gaussian_aniso_pair_force(ia_params, d);
+#endif
+
   return f;
 }
 
