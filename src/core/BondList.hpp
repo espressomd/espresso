@@ -219,6 +219,27 @@ public:
    */
   bool empty() const { return m_storage.empty(); }
 
+  /**
+   * @brief Read-only access to the flat integer storage run.
+   *
+   * The bond list is internally a single contiguous @c compact_vector<int>
+   * (see the class doc). The per-field migration pack (@ref MigrationPack)
+   * serializes/deserializes this run verbatim as a length-prefixed ragged leg,
+   * so it needs the raw storage rather than the bond-by-bond view iteration.
+   * The layout is an implementation detail of this class; only the migration
+   * pack (which round-trips it through @ref replace_storage) relies on it.
+   */
+  storage_type const &storage() const { return m_storage; }
+
+  /**
+   * @brief Overwrite the flat integer storage run wholesale.
+   *
+   * Counterpart of @ref storage() for the migration pack's unpack side: the
+   * received run is a byte-for-byte copy of a sender's @ref storage(), so it is
+   * already in the valid internal representation and needs no re-parsing.
+   */
+  void replace_storage(storage_type storage) { m_storage = std::move(storage); }
+
   // NOLINTNEXTLINE(bugprone-exception-escape)
   friend void swap(BondList &lhs, BondList &rhs) {
     using std::swap;

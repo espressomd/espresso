@@ -110,8 +110,9 @@ public:
       if (it != m_type_index.end()) {
         auto const mass_frac = p.mass() / masses[it->second];
         auto const &type_force = forces[it->second];
+        auto force = p.force();
         for (unsigned int i = 0u; i < 3u; i++) {
-          p.force()[i] -= mass_frac * type_force[i];
+          force[i] -= mass_frac * type_force[i];
         }
       }
     }

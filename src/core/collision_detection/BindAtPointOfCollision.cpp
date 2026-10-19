@@ -44,6 +44,7 @@
 #include <boost/mpi/operations.hpp>
 
 #include <cassert>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -104,9 +105,16 @@ void BindAtPointOfCollision::handle_collisions(
   // Iterate over global collision queue
   for (auto const &[pid1, pid2] : global_collision_queue) {
 
-    // Get particle pointers
-    Particle *p1 = cell_structure.get_local_particle(pid1);
-    Particle *p2 = cell_structure.get_local_particle(pid2);
+    // get_local_particle returns by-value views. p1/p2 are held across
+    // place_vs_and_relate_to_particle, which calls add_particle -> a store
+    // rebuild that RENUMBERS every row and bumps the store generation. The
+    // views must therefore be re-resolved by id after each such call; a debug
+    // generation guard (see below) catches a missed re-resolution before a
+    // stale view is used.
+    std::optional<Particle> p1 = cell_structure.get_local_particle(pid1);
+    std::optional<Particle> p2 = cell_structure.get_local_particle(pid2);
+    // Generation at which p1/p2 were last resolved; bumped on each re-resolve.
+    auto resolved_generation = cell_structure.particle_store().generation();
 
     // Only nodes take part in particle creation and binding
     // that see both particles
@@ -128,24 +136,30 @@ void BindAtPointOfCollision::handle_collisions(
     p2->set_can_rotate_all_axes();
 
     // Positions of the virtual sites
-    auto const vec21 = box_geo.get_mi_vector(p1->pos(), p2->pos());
-    auto const pos1 = p1->pos() - vec21 * vs_placement;
-    auto const pos2 = p1->pos() - vec21 * (1. - vs_placement);
+    auto const vec21 = box_geo.get_mi_vector(Utils::Vector3d(p1->pos()),
+                                             Utils::Vector3d(p2->pos()));
+    auto const pos1 = Utils::Vector3d(p1->pos()) - vec21 * vs_placement;
+    auto const pos2 = Utils::Vector3d(p1->pos()) - vec21 * (1. - vs_placement);
 
-    auto handle_particle = [&
-#if defined(__clang__) and defined(__cray__) or defined(__INTEL_LLVM_COMPILER)
-                            ,
-                            pid1 = pid1, pid2 = pid2
-#endif
-    ](Particle *p, Utils::Vector3d const &pos) {
+    auto handle_particle = [&](std::optional<Particle> &p,
+                               Utils::Vector3d const &pos) {
+      // Debug canary: the held views were resolved at resolved_generation; if a
+      // rebuild slipped in since (a missed re-resolution), `p` is stale and its
+      // id() would alias the wrong row. Read id() BEFORE the add invalidates
+      // it.
+      ParticleStoreGuard::assert_generation(cell_structure.particle_store(),
+                                            resolved_generation);
       if (not p->is_ghost()) {
+        auto const relate_to_id = p->id();
         place_vs_and_relate_to_particle(cell_structure, box_geo, part_type_vs,
                                         min_global_cut, current_vs_pid, pos,
-                                        p->id());
-        // Particle storage locations may have changed due to
-        // added particle
+                                        relate_to_id);
+        // Particle storage locations changed due to the added particle:
+        // re-resolve both base-particle views by id and re-stamp the
+        // generation.
         p1 = cell_structure.get_local_particle(pid1);
         p2 = cell_structure.get_local_particle(pid2);
+        resolved_generation = cell_structure.particle_store().generation();
       }
     };
 

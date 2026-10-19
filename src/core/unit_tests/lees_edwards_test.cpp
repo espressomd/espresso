@@ -23,6 +23,7 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "ParticleStoreTestFixture.hpp"
 #include "lees_edwards/LeesEdwardsBC.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 
@@ -48,7 +49,11 @@ BOOST_AUTO_TEST_CASE(test_shear_direction) {
 BOOST_AUTO_TEST_CASE(test_update_offset) {
   auto const prefactor = 2.5;
   auto const old_offset = 1.5;
+  // position/image/Lees-Edwards state live in the ParticleStore columns;
+  // attach the hand-made particle to a standalone store.
+  ParticleStoreTestFixture fixture{};
   Particle p;
+  fixture.attach(p);
   p.image_box() = {2, 4, -1};
   p.lees_edwards_offset() = old_offset;
   p.lees_edwards_flag() = 1;
@@ -70,7 +75,9 @@ BOOST_AUTO_TEST_CASE(test_push) {
   auto const old_pos = Utils::Vector3d{{3., shear_normal_l * 1.1, 10.}};
   auto const old_vel = Utils::Vector3d{{-1.2, 2., 4.1}};
 
+  ParticleStoreTestFixture fixture{};
   Particle p;
+  fixture.attach(p);
 
   p.pos() = old_pos;
   p.v() = old_vel;
@@ -91,20 +98,28 @@ BOOST_AUTO_TEST_CASE(test_push) {
       old_pos - prefactor * shear_direction(box) * le.pos_offset;
   auto expected_vel = old_vel - shear_direction(box) * le.shear_velocity;
   auto expected_offset = old_offset + prefactor * le.pos_offset;
-  box.fold_position(expected_pos, p.image_box());
-  BOOST_CHECK_SMALL((p.pos() - expected_pos).norm(), eps);
-  BOOST_CHECK_SMALL((p.v() - expected_vel).norm(), eps);
+  {
+    Utils::Vector3i image_box = p.image_box();
+    box.fold_position(expected_pos, image_box);
+    p.image_box() = image_box;
+  }
+  BOOST_CHECK_SMALL((Utils::Vector3d(p.pos()) - expected_pos).norm(), eps);
+  BOOST_CHECK_SMALL((Utils::Vector3d(p.v()) - expected_vel).norm(), eps);
   BOOST_CHECK_CLOSE(p.lees_edwards_offset(), expected_offset, tol);
 
   // Test transition in the other direction
   p.pos()[le.shear_plane_normal] = -1;
   Push{box}(p, prefactor);
   expected_pos = {old_pos[0], -1., old_pos[2]};
-  box.fold_position(expected_pos, p.image_box());
+  {
+    Utils::Vector3i image_box = p.image_box();
+    box.fold_position(expected_pos, image_box);
+    p.image_box() = image_box;
+  }
   expected_vel = old_vel;
   expected_offset = old_offset;
-  BOOST_CHECK_SMALL((p.pos() - expected_pos).norm(), eps);
-  BOOST_CHECK_SMALL((p.v() - expected_vel).norm(), eps);
+  BOOST_CHECK_SMALL((Utils::Vector3d(p.pos()) - expected_pos).norm(), eps);
+  BOOST_CHECK_SMALL((Utils::Vector3d(p.v()) - expected_vel).norm(), eps);
   BOOST_CHECK_CLOSE(p.lees_edwards_offset(), expected_offset, tol);
 }
 

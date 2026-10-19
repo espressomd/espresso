@@ -247,11 +247,13 @@ void mpi_mpiio_common_write(std::string const &prefix, unsigned fields,
     *id_it = p.id();
     ++id_it;
     if (fields & MPIIO_OUT_POS) {
-      std::copy_n(std::begin(p.pos()), 3u, pos_it);
+      auto const pos = Utils::Vector3d(p.pos());
+      std::copy_n(std::begin(pos), 3u, pos_it);
       pos_it += 3u;
     }
     if (fields & MPIIO_OUT_VEL) {
-      std::copy_n(std::begin(p.v()), 3u, vel_it);
+      auto const vel_p = Utils::Vector3d(p.v());
+      std::copy_n(std::begin(vel_p), 3u, vel_it);
       vel_it += 3u;
     }
     if (fields & MPIIO_OUT_TYP) {
@@ -437,7 +439,20 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
   auto const [pref, nlocalpart] =
       read_prefs(prefix + ".pref", rank, size, nglobalpart);
 
-  std::vector<Particle> particles(nlocalpart);
+  // Build the read particles into a LOCAL, independent ParticleStore (one row
+  // per particle, seeded to defaults), write fields through views, then hand
+  // each view to add_particle (which stages/copies the row into the cell
+  // store). The local store stays alive until every add commits, then its
+  // columns are released.
+  ParticleStore io_store{};
+  io_store.begin_rebuild(nlocalpart, 0u);
+  io_store.finish_rebuild();
+  std::vector<Particle> particles;
+  particles.reserve(nlocalpart);
+  for (std::size_t r = 0u; r < nlocalpart; ++r) {
+    io_store.seed_default_row(static_cast<int>(r));
+    particles.push_back(io_store.make_view(static_cast<int>(r)));
+  }
 
   {
     // 1.id on all nodes:
@@ -461,7 +476,9 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
                              3ul * pref, MPI_DOUBLE);
 
     for (auto &p : particles) {
-      std::copy_n(pos_it, 3u, std::begin(p.pos()));
+      // position lives in the ParticleStore columns (component-major); write
+      // through the proxy via a plain vector rather than a raw iterator.
+      p.pos() = Utils::Vector3d{pos_it[0], pos_it[1], pos_it[2]};
       pos_it += 3u;
     }
   }
@@ -489,7 +506,7 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
                              3ul * pref, MPI_DOUBLE);
 
     for (auto &p : particles) {
-      std::copy_n(vel_it, 3u, std::begin(p.v()));
+      p.v() = Utils::Vector3d{vel_it[0], vel_it[1], vel_it[2]};
       vel_it += 3u;
     }
   }
@@ -521,5 +538,8 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
   for (auto &p : particles) {
     cell_structure.add_particle(std::move(p));
   }
+  // The io_store's rows have been copied into the cell store; release its
+  // Kokkos columns (while the runtime is still alive).
+  io_store.release_columns();
 }
 } // namespace Mpiio

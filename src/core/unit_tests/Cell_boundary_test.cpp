@@ -171,13 +171,13 @@ BOOST_AUTO_TEST_CASE(validator_fires_for_interior_cell_in_send_region) {
   HaloPlan plan;
   plan.neighbors.push_back(
       NeighborComm{1,
-                   {SendRegion{&local_a.particles(), {}}, // ← interior cell!
-                    SendRegion{&local_b.particles(), {}}},
-                   {&ghost.particles(), &ghost.particles()}});
+                   {SendRegion{&local_a, {}}, // ← interior cell!
+                    SendRegion{&local_b, {}}},
+                   {&ghost, &ghost}});
   // Fix double-fill by using a separate ghost for the second recv slot.
   Cell ghost2;
   ghosts.push_back(&ghost2);
-  plan.neighbors[0].recv = {&ghost.particles(), &ghost2.particles()};
+  plan.neighbors[0].recv = {&ghost, &ghost2};
 
   auto violations = validate_halo_plan(plan, locals, ghosts);
   bool found_overlap =
@@ -208,8 +208,7 @@ BOOST_AUTO_TEST_CASE(validator_fires_for_interior_cell_in_local_comm_src) {
 
   // Plan with a LocalComm that uses local_interior as src -> violation.
   HaloPlan plan;
-  plan.local.push_back(
-      LocalComm{&local_interior.particles(), &ghost.particles(), {}});
+  plan.local.push_back(LocalComm{&local_interior, &ghost, {}});
 
   auto violations = validate_halo_plan(plan, locals, ghosts);
   bool found_overlap =
@@ -236,8 +235,8 @@ BOOST_AUTO_TEST_CASE(validator_silent_for_boundary_cell_in_send_region) {
   BOOST_REQUIRE(local_boundary.is_boundary());
 
   HaloPlan plan;
-  plan.neighbors.push_back(NeighborComm{
-      1, {SendRegion{&local_boundary.particles(), {}}}, {&ghost.particles()}});
+  plan.neighbors.push_back(
+      NeighborComm{1, {SendRegion{&local_boundary, {}}}, {&ghost}});
 
   auto violations = validate_halo_plan(plan, locals, ghosts);
   bool found_overlap =
@@ -271,8 +270,7 @@ BOOST_AUTO_TEST_CASE(validator_fires_for_mismarked_interior_cell) {
   // Build a minimal valid plan that covers the ghost so that the coverage
   // checks pass — we only want to test the consistency check in isolation.
   HaloPlan plan;
-  plan.neighbors.push_back(NeighborComm{
-      1, {SendRegion{&local.particles(), {}}}, {&ghost.particles()}});
+  plan.neighbors.push_back(NeighborComm{1, {SendRegion{&local, {}}}, {&ghost}});
 
   auto violations = validate_halo_plan(plan, locals, ghosts);
   bool found_consistency =
@@ -301,8 +299,7 @@ BOOST_AUTO_TEST_CASE(validator_silent_for_correctly_marked_boundary_cell) {
   BOOST_REQUIRE(local.is_boundary()); // pre-condition for this test
 
   HaloPlan plan;
-  plan.neighbors.push_back(NeighborComm{
-      1, {SendRegion{&local.particles(), {}}}, {&ghost.particles()}});
+  plan.neighbors.push_back(NeighborComm{1, {SendRegion{&local, {}}}, {&ghost}});
 
   auto violations = validate_halo_plan(plan, locals, ghosts);
   bool found_consistency =

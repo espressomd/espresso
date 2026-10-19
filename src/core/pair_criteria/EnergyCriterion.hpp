@@ -36,7 +36,8 @@ public:
   EnergyCriterion(System::System const &system) : m_system{system} {}
   bool decide(Particle const &p1, Particle const &p2) const override {
     // Distance between particles
-    auto const d = m_system.box_geo->get_mi_vector(p1.pos(), p2.pos());
+    auto const d = m_system.box_geo->get_mi_vector(Utils::Vector3d(p1.pos()),
+                                                   Utils::Vector3d(p2.pos()));
 
     // Interaction parameters for particle types
     auto const &ia_params =

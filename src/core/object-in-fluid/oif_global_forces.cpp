@@ -54,8 +54,10 @@ static auto calc_oif_mesh(int molType, BoxGeometry const &box_geo,
 
     if (std::holds_alternative<OifGlobalForcesBond>(*bonded_ias.at(bond_id))) {
       auto const p11 = box_geo.unfolded_position(p1.pos(), p1.image_box());
-      auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->pos(), p11);
-      auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->pos(), p11);
+      auto const p22 =
+          p11 + box_geo.get_mi_vector(Utils::Vector3d(partners[0]->pos()), p11);
+      auto const p33 =
+          p11 + box_geo.get_mi_vector(Utils::Vector3d(partners[1]->pos()), p11);
 
       auto const VOL_A = Utils::area_triangle(p11, p22, p33);
       area += VOL_A;
@@ -85,8 +87,10 @@ static void add_oif_global_forces(double area, double volume, int molType,
     auto const *bond_ptr = bonded_ias.at(bond_id).get();
     if (auto const *bond = std::get_if<OifGlobalForcesBond>(bond_ptr)) {
       auto const p11 = box_geo.unfolded_position(p1.pos(), p1.image_box());
-      auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->pos(), p11);
-      auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->pos(), p11);
+      auto const p22 =
+          p11 + box_geo.get_mi_vector(Utils::Vector3d(partners[0]->pos()), p11);
+      auto const p33 =
+          p11 + box_geo.get_mi_vector(Utils::Vector3d(partners[1]->pos()), p11);
 
       // unfolded positions correct
       // starting code from volume force

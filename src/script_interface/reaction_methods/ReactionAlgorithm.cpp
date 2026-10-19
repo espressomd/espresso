@@ -71,9 +71,9 @@ Variant ReactionAlgorithm::do_call_method(std::string const &name,
     auto const properties = get_value<VariantMap>(params, "properties");
     m_particle_modifier->set_pid(pid);
     auto const &cs = m_cell_system->get_cell_structure();
-    auto const *p = cs.get_local_particle(pid);
-    if (p != nullptr and p->is_ghost()) {
-      p = nullptr;
+    auto p = cs.get_local_particle(pid);
+    if (p.has_value() and p->is_ghost()) {
+      p.reset();
     }
     int old_type = -1;
     if (context()->is_head_node()) {

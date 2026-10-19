@@ -214,7 +214,8 @@ void vs_com_update_particles(CellStructure &cell_structure,
       continue;
     }
     auto const vs_id = virtual_site_id_for_mol_id[mol_id];
-    if (auto const vs_ptr = cell_structure.get_local_particle(vs_id)) {
+    // Mutable optional view -- the fields are written through below.
+    if (auto vs_ptr = cell_structure.get_local_particle(vs_id)) {
       auto folded_pos = com_info.weighted_position / com_info.total_mass;
       auto image_box = Utils::Vector3i{};
 

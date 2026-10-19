@@ -68,7 +68,11 @@ struct PosMom {
 static auto gather_particle_data(BoxGeometry const &box_geo,
                                  ParticleRange const &particles) {
   auto const &comm = ::comm_cart;
-  std::vector<Particle *> local_particles;
+  // Store VIEW COPIES, not pointers into the transient cached views the range
+  // hands out (those dangle after the loop increment). A view copy still
+  // aliases the store row, so the force/torque write-back below lands in the
+  // columns.
+  std::vector<Particle> local_particles;
   std::vector<PosMom> local_posmom;
   std::vector<PosMom> all_posmom;
   std::vector<boost::mpi::request> reqs;
@@ -78,7 +82,7 @@ static auto gather_particle_data(BoxGeometry const &box_geo,
 
   for (auto &p : particles) {
     if (p.dipm() != 0.0) {
-      local_particles.emplace_back(&p);
+      local_particles.push_back(p);
       local_posmom.emplace_back(
           PosMom{box_geo.folded_position(p.pos()), p.calc_dip()});
     }
@@ -238,8 +242,8 @@ void DipolarDirectSum::add_long_range_forces_cpu() const {
           }
         }
         /* (d) write i's own total directly (unique owner, no race) */
-        local_particles_ptr[i]->force() += prefactor_local * fi.f;
-        local_particles_ptr[i]->torque() += prefactor_local * fi.torque;
+        local_particles_ptr[i].force() += prefactor_local * fi.f;
+        local_particles_ptr[i].torque() += prefactor_local * fi.torque;
       });
   Kokkos::fence();
 
@@ -277,8 +281,8 @@ void DipolarDirectSum::add_long_range_forces_cpu() const {
             }
           }
         }
-        local_particles_ptr[i]->force() += prefactor_local * fi.f;
-        local_particles_ptr[i]->torque() += prefactor_local * fi.torque;
+        local_particles_ptr[i].force() += prefactor_local * fi.f;
+        local_particles_ptr[i].torque() += prefactor_local * fi.torque;
       });
   Kokkos::fence();
 
@@ -288,11 +292,11 @@ void DipolarDirectSum::add_long_range_forces_cpu() const {
   Kokkos::RangePolicy<execution_space> policy_reduce(std::size_t{0}, n_local);
   Kokkos::parallel_for(
       "dds_reduction", policy_reduce, [=](std::size_t const i) {
-        local_particles_ptr[i]->force() +=
+        local_particles_ptr[i].force() +=
             prefactor_local * Utils::Vector3d{local_force(i, 0),
                                               local_force(i, 1),
                                               local_force(i, 2)};
-        local_particles_ptr[i]->torque() +=
+        local_particles_ptr[i].torque() +=
             prefactor_local * Utils::Vector3d{local_torque(i, 0),
                                               local_torque(i, 1),
                                               local_torque(i, 2)};
@@ -602,7 +606,7 @@ void DipolarDirectSum::dipole_field_at_part_cpu() const {
           u += dipole_field(d0 + shifts_ptr[s], m_j);
       }
     }
-    local_particles_ptr[i]->dip_fld() = prefactor_local * u;
+    local_particles_ptr[i].dip_fld() = prefactor_local * u;
   });
   Kokkos::fence();
 }

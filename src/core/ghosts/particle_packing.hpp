@@ -29,7 +29,7 @@
 #include <config/config.hpp>
 
 #include "BoxGeometry.hpp"
-#include "ParticleList.hpp"
+#include "cell_system/Cell.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -129,7 +129,7 @@ std::size_t calc_transmit_size(BoxGeometry const &box_geo, unsigned data_parts);
  * When GHOSTTRANS_PARTNUM is set, returns sizeof(unsigned int) per cell.
  * Otherwise returns the total number of particles times the per-particle size.
  */
-std::size_t calc_transmit_size(std::span<ParticleList *const> cells,
+std::size_t calc_transmit_size(std::span<Cell *const> cells,
                                BoxGeometry const &box_geo, unsigned data_parts);
 
 /**
@@ -144,7 +144,7 @@ std::size_t calc_transmit_size(std::span<ParticleList *const> cells,
  * @param box_geo    Box geometry for fold_position.
  * @param data_parts Bitmask of GHOSTTRANS_* flags.
  */
-void pack_cells(CommBuf &buf, std::span<ParticleList *const> cells,
+void pack_cells(CommBuf &buf, std::span<Cell *const> cells,
                 Utils::Vector3d const &shift, BoxGeometry const &box_geo,
                 unsigned data_parts);
 
@@ -159,7 +159,7 @@ void pack_cells(CommBuf &buf, std::span<ParticleList *const> cells,
  * @param box_geo    Box geometry (unused here, kept for API symmetry).
  * @param data_parts Bitmask of GHOSTTRANS_* flags.
  */
-void unpack_cells(CommBuf &buf, std::span<ParticleList *const> cells,
+void unpack_cells(CommBuf &buf, std::span<Cell *const> cells,
                   BoxGeometry const &box_geo, unsigned data_parts);
 
 /**
@@ -171,21 +171,21 @@ void unpack_cells(CommBuf &buf, std::span<ParticleList *const> cells,
  * @param data_parts Bitmask of GHOSTTRANS_* flags; must include
  *                   GHOSTTRANS_FORCE, may include GHOSTTRANS_TORQUE.
  */
-void add_forces(CommBuf &buf, std::span<ParticleList *const> cells,
+void add_forces(CommBuf &buf, std::span<Cell *const> cells,
                 unsigned data_parts);
 
 #ifdef ESPRESSO_BOND_CONSTRAINT
 /**
  * @brief Add rattle corrections from a communication buffer to particles.
  */
-void add_rattle(CommBuf &buf, std::span<ParticleList *const> cells);
+void add_rattle(CommBuf &buf, std::span<Cell *const> cells);
 #endif
 
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
 /**
  * @brief Add dipole fields from a communication buffer to particles.
  */
-void add_dip_fld(CommBuf &buf, std::span<ParticleList *const> cells);
+void add_dip_fld(CommBuf &buf, std::span<Cell *const> cells);
 #endif
 
 /**
@@ -201,8 +201,7 @@ void add_dip_fld(CommBuf &buf, std::span<ParticleList *const> cells);
  * @param box_geo    Box geometry for fold_position.
  * @param data_parts Bitmask of GHOSTTRANS_* flags.
  */
-void local_cell_copy(ParticleList &src, ParticleList &dst,
-                     Utils::Vector3d const &shift, BoxGeometry const &box_geo,
-                     unsigned data_parts);
+void local_cell_copy(Cell &src, Cell &dst, Utils::Vector3d const &shift,
+                     BoxGeometry const &box_geo, unsigned data_parts);
 
 } // namespace GhostComm

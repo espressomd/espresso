@@ -39,59 +39,84 @@
 #include <functional>
 #include <iterator>
 #include <span>
+#include <type_traits>
 #include <utility>
+#include <vector>
 
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
 commit_particle(Particle const &p, auto const index,
                 CellStructure::AoSoA_pack &aosoa, bool const rebuild) {
-  // Always commit: positions, velocities, charges, directors, dipm
-  aosoa.set_vector_at(aosoa.position, index, p.pos());
-#ifdef ESPRESSO_ELECTROSTATICS
-  aosoa.charge(index) = p.q();
-#endif
-  aosoa.set_vector_at(aosoa.velocity, index, p.v());
-#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
-  aosoa.set_vector_at(aosoa.director, index,
-                      Utils::convert_quaternion_to_director(p.quat()));
-#endif
-#ifdef ESPRESSO_DIPOLES
-  aosoa.dipm(index) = p.dipm();
-#endif
-
-  // Only commit on rebuild: id, type
+  // position/image/director/velocity/id/mass alias the authoritative
+  // ParticleStore columns and are read by *store row* via row(i); they are
+  // never copied here.
+  // charge/dipm are refreshed per step (when a solver is active) in
+  // refresh_pack_charges / refresh_pack_dipm, not here.
+  // `type` is PACK-OWNED and written here on rebuild (read pack-indexed by the
+  // hot pair kernels). The ParticleStore type column stays authoritative; a
+  // mid-run type change forces a rebuild (System::on_particle_change ->
+  // set_resort_particles), so this cache is refreshed before it is next read.
+  // The has-exclusion flag (like `type`) is written ONLY on rebuild. Exclusions
+  // cannot change between rebuilds: every add/delete goes through
+  // on_particle_change -> set_resort_particles(RESORT_LOCAL), which forces the
+  // next update_cabana_state onto the full-commit branch. The pack-owned
+  // `flags` column persists across partial-update steps (per-step force reset
+  // does not touch it; clear_local_properties zeroes it but also forces a
+  // resort/rebuild). Reading the exclusions sidecar per particle per step was
+  // pure waste -- keeping it out of the partial-update hot loop matters.
   if (rebuild) {
-    aosoa.id(index) = p.id();
     aosoa.type(index) = p.type();
-    aosoa.set_vector_at(aosoa.image, index, p.image_box());
-#ifdef ESPRESSO_MASS
-    aosoa.mass(index) = p.mass();
-#endif
-  }
-
-  // Always update exclusion flags (they can change during simulation)
 #ifdef ESPRESSO_EXCLUSIONS
-  bool const has_exclusion = not p.exclusions().empty();
-  aosoa.set_has_exclusion(index, has_exclusion);
-  // Record the any-exclusion aggregate on the host. This is intentionally NOT
-  // done inside the device-qualified set_has_exclusion: this commit sweep runs
-  // on the host execution space, and the aggregate is a host std::atomic.
-  if (has_exclusion) {
-    aosoa.mark_any_exclusion();
-  }
+    bool const has_exclusion = not p.exclusions().empty();
+    aosoa.set_has_exclusion(index, has_exclusion);
+    // Record the any-exclusion aggregate on the host. This is intentionally NOT
+    // done inside the device-qualified set_has_exclusion: this commit sweep
+    // runs on the host execution space, and the aggregate is a host
+    // std::atomic. It is cleared before the sweep in update_cabana_state.
+    if (has_exclusion) {
+      aosoa.mark_any_exclusion();
+    }
 #else
-  aosoa.flags(index) = 0;
+    aosoa.flags(index) = 0;
 #endif
+  }
 }
 
-ESPRESSO_ATTR_ALWAYS_INLINE inline void link_cell_kokkos(
-    std::span<Cell *const> cells, BoxGeometry const &box_geo,
-    auto const &verlet_criterion,
-    Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> const &id_to_index,
-    int const max_id, auto const &intra_operator, auto const &inter_operator) {
+ESPRESSO_ATTR_ALWAYS_INLINE inline void
+link_cell_kokkos(std::span<Cell *const> cells, BoxGeometry const &box_geo,
+                 auto const &verlet_criterion,
+                 Kokkos::View<int *, Kokkos::HostSpace> const &id_to_index,
+                 int const max_id, auto const &intra_operator,
+                 auto const &inter_operator) {
 
   // implementation detail: max_id refers to the max local particle id,
   // but ghost particles from other ranks may have larger particle ids;
   // -1 is used as a sentinel value for particle ids from other threads
+
+  // Component-major layout only: gather the position column into an
+  // INTERLEAVED scratch buffer once per Verlet build. The build examines
+  // O(N * candidates) positions by row; under LayoutLeft each such read
+  // touches three far-apart component streams (three cache lines per
+  // candidate), which perf measured at ~2x the build cost at 4000
+  // particles/core. The O(N) sequential gather below is prefetch-friendly
+  // and runs at rebuild cadence only. The kernels consume base + runtime
+  // strides, so they read the scratch ({3, 1}) and the native column
+  // (view strides) through the same code path. Under particle-major the
+  // column is already interleaved and the scratch is skipped entirely.
+  std::vector<double> interleaved_positions;
+  if constexpr (std::is_same_v<ParticleStore::StateVectorLayout,
+                               Kokkos::LayoutLeft>) {
+    if (not cells.empty()) {
+      auto &store = cells.front()->store();
+      auto const &position_view = store.position_view();
+      auto const total = store.number_of_particles();
+      interleaved_positions.resize(3u * total);
+      for (std::size_t row = 0u; row < total; ++row) {
+        interleaved_positions[3u * row + 0u] = position_view(row, 0);
+        interleaved_positions[3u * row + 1u] = position_view(row, 1);
+        interleaved_positions[3u * row + 2u] = position_view(row, 2);
+      }
+    }
+  }
 
   // Hoist the cuboid minimum-image parameters by value: the fold runs once
   // per candidate pair and must not chase the BoxGeometry reference for its
@@ -106,20 +131,70 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void link_cell_kokkos(
                                 : cuboid_minimum_image.dist2(a, b);
       };
 
+  // Iterate the cells' store-ROW bags directly and REBIND two cached views
+  // (p1 + partner) per work item via Particle::attach_to_store, instead of
+  // driving RowParticleRange iterators (each embeds a Particle by value, so
+  // std::next(it) and per-neighbour range begin()/end() would build fresh
+  // Particles). One reused view per role per work item (one cell per Kokkos
+  // work item) is thread-safe. Iteration ORDER is unchanged.
   auto intra_kernel = [&cells, minimum_image_dist2, &verlet_criterion,
-                       &id_to_index, &intra_operator, max_id](const int i) {
-    auto &local_particles = cells[i]->particles();
-    for (auto it = local_particles.begin(); it != local_particles.end(); ++it) {
-      auto const &p1 = *it;
-      if (p1.id() <= max_id) {
-        auto const ii = id_to_index(p1.id());
+                       &id_to_index, &intra_operator, &interleaved_positions,
+                       max_id](const int i) {
+    auto &store = cells[i]->store();
+    // Contiguous store-row range; clean store, so index directly.
+    auto const offset = cells[i]->offset();
+    auto const n = cells[i]->count();
+    // Hoist raw id/position column pointers once per work item -- the
+    // per-candidate id and position reads are the hottest loads of the Verlet
+    // build, and the Particle accessors cost an attached-branch + view deref
+    // per candidate. LayoutRight vector columns are row-contiguous (element
+    // (row, j) at data() + 3 * row + j). The Particle views stay attached for
+    // the verlet_criterion (it may read types/flags); iteration order and
+    // arithmetic are unchanged.
+    auto const *const id_column = store.id_view().data();
+    // Layout-agnostic hoisted position access: base pointer plus the view's
+    // run-time strides (row stride, component stride). Particle-major
+    // (LayoutRight) gives {3, 1}; component-major (LayoutLeft) gives
+    // {1, padded extent}. See the StateVectorLayout toggle in ParticleStore.
+    auto const &position_view = store.position_view();
+    // Prefer the interleaved rebuild-cadence scratch when populated
+    // (component-major layout); otherwise read the native column. Same
+    // base-plus-strides consumption either way.
+    bool const use_scratch = not interleaved_positions.empty();
+    auto const *const position_column =
+        use_scratch ? interleaved_positions.data() : position_view.data();
+    auto const pos_row_stride =
+        use_scratch ? std::size_t{3u}
+                    : static_cast<std::size_t>(position_view.stride(0));
+    auto const pos_comp_stride =
+        use_scratch ? std::size_t{1u}
+                    : static_cast<std::size_t>(position_view.stride(1));
+    Particle p1, p2;
+    for (std::size_t a = 0u; a < n; ++a) {
+      auto const row_a = offset + a;
+      p1.attach_to_store(store, static_cast<int>(row_a));
+      if (id_column[row_a] <= max_id) {
+        auto const ii = id_to_index(id_column[row_a]);
         if (ii >= 0) {
-          // pairs in this cell
-          for (auto jt = std::next(it); jt != local_particles.end(); ++jt) {
-            if ((*jt).id() <= max_id) {
-              if (verlet_criterion(p1, *jt,
-                                   minimum_image_dist2(p1.pos(), jt->pos()))) {
-                auto const jj = id_to_index((*jt).id());
+          // Hoist p1's position out of the inner loop (one read per outer
+          // particle instead of per pair candidate).
+          auto const *const p1_base = position_column + row_a * pos_row_stride;
+          auto const p1_pos =
+              Utils::Vector3d{p1_base[0u], p1_base[pos_comp_stride],
+                              p1_base[2u * pos_comp_stride]};
+          // pairs in this cell (j > i), same order as before
+          for (std::size_t b = a + 1u; b < n; ++b) {
+            auto const row_b = offset + b;
+            if (id_column[row_b] <= max_id) {
+              p2.attach_to_store(store, static_cast<int>(row_b));
+              auto const *const p2_base =
+                  position_column + row_b * pos_row_stride;
+              auto const p2_pos =
+                  Utils::Vector3d{p2_base[0u], p2_base[pos_comp_stride],
+                                  p2_base[2u * pos_comp_stride]};
+              if (verlet_criterion(p1, p2,
+                                   minimum_image_dist2(p1_pos, p2_pos))) {
+                auto const jj = id_to_index(id_column[row_b]);
                 if (jj >= 0) {
                   intra_operator(ii, jj);
                 }
@@ -132,19 +207,58 @@ ESPRESSO_ATTR_ALWAYS_INLINE inline void link_cell_kokkos(
   };
 
   auto inter_kernel = [&cells, minimum_image_dist2, &verlet_criterion,
-                       &id_to_index, &inter_operator, max_id](const int i) {
-    auto &local_particles = cells[i]->particles();
-    for (auto const &p1 : local_particles) {
-      if (p1.id() <= max_id) {
-        auto const ii = id_to_index(p1.id());
+                       &id_to_index, &inter_operator, &interleaved_positions,
+                       max_id](const int i) {
+    auto &store = cells[i]->store();
+    // Contiguous store-row range; clean store, so index directly.
+    auto const offset = cells[i]->offset();
+    auto const n = cells[i]->count();
+    // Hoisted raw column pointers: see intra_kernel (incl. the layout-agnostic
+    // stride note). All cells share the one active ParticleStore, so the
+    // pointers are valid for neighbor cells too.
+    auto const *const id_column = store.id_view().data();
+    auto const &position_view = store.position_view();
+    // Prefer the interleaved rebuild-cadence scratch when populated
+    // (component-major layout); otherwise read the native column. Same
+    // base-plus-strides consumption either way.
+    bool const use_scratch = not interleaved_positions.empty();
+    auto const *const position_column =
+        use_scratch ? interleaved_positions.data() : position_view.data();
+    auto const pos_row_stride =
+        use_scratch ? std::size_t{3u}
+                    : static_cast<std::size_t>(position_view.stride(0));
+    auto const pos_comp_stride =
+        use_scratch ? std::size_t{1u}
+                    : static_cast<std::size_t>(position_view.stride(1));
+    Particle p1, p2;
+    for (std::size_t a = 0u; a < n; ++a) {
+      auto const row_a = offset + a;
+      p1.attach_to_store(store, static_cast<int>(row_a));
+      if (id_column[row_a] <= max_id) {
+        auto const ii = id_to_index(id_column[row_a]);
         if (ii >= 0) {
-          // pairs with neighboring cells
-          for (auto &neighbor : cells[i]->neighbors().red()) {
-            for (auto const &p2 : neighbor->particles()) {
-              if (p2.id() <= max_id) {
+          // Hoist p1's position out of the inner loops (see intra_kernel).
+          auto const *const p1_base = position_column + row_a * pos_row_stride;
+          auto const p1_pos =
+              Utils::Vector3d{p1_base[0u], p1_base[pos_comp_stride],
+                              p1_base[2u * pos_comp_stride]};
+          // pairs with neighboring cells, same order as before
+          for (auto *neighbor : cells[i]->neighbors().red()) {
+            auto &nb_store = neighbor->store();
+            auto const nb_offset = neighbor->offset();
+            auto const nb_n = neighbor->count();
+            for (std::size_t k = 0u; k < nb_n; ++k) {
+              auto const row_k = nb_offset + k;
+              if (id_column[row_k] <= max_id) {
+                p2.attach_to_store(nb_store, static_cast<int>(row_k));
+                auto const *const p2_base =
+                    position_column + row_k * pos_row_stride;
+                auto const p2_pos =
+                    Utils::Vector3d{p2_base[0u], p2_base[pos_comp_stride],
+                                    p2_base[2u * pos_comp_stride]};
                 if (verlet_criterion(p1, p2,
-                                     minimum_image_dist2(p1.pos(), p2.pos()))) {
-                  auto const jj = id_to_index(p2.id());
+                                     minimum_image_dist2(p1_pos, p2_pos))) {
+                  auto const jj = id_to_index(id_column[row_k]);
                   if (jj >= 0) {
                     inter_operator(ii, jj);
                   }
@@ -181,6 +295,13 @@ update_cabana_state(CellStructure &cell_structure,
   auto const &unique_particles = cell_structure.get_unique_particles();
   auto const n_part = unique_particles.size();
   auto const max_id = cell_structure.get_cached_max_local_particle_id();
+  // Recompute the store-side derived director, then point the pack's
+  // store-aliased views at the current store columns + translation/director
+  // views.
+#if defined(ESPRESSO_GAY_BERNE) or defined(ESPRESSO_DIPOLES)
+  cell_structure.update_director_view();
+#endif
+  cell_structure.bind_pack_store_views();
   auto &aosoa = cell_structure.get_aosoa();
 
   if (rebuild) {
@@ -291,43 +412,49 @@ update_cabana_state(CellStructure &cell_structure,
 #ifdef ESPRESSO_CALIPER
     ESPRESSO_CALI_MARK_END("Verlet list creation");
 #endif
-  } else {
-    // ===================================================
-    // Fill particle storage (partial update)
-    // ===================================================
-#ifdef ESPRESSO_CALIPER
-    ESPRESSO_CALI_MARK_BEGIN("AoSoA commit partial");
-#endif
-#ifdef ESPRESSO_EXCLUSIONS
-    // commit_particle accumulates the any-exclusion aggregate below; clear it
-    // before the sweep repopulates it (read O(1) at the dispatch gate).
-    aosoa.reset_any_exclusion();
-#endif
-    kokkos_parallel_range_for<execution_space>(
-        "AoSoA write", std::size_t{0}, n_part,
-        [&unique_particles, &aosoa](int const index) {
-          auto const &p = *unique_particles.at(index);
-          commit_particle(p, index, aosoa, false);
-        });
-    Kokkos::fence();
-#ifdef ESPRESSO_CALIPER
-    ESPRESSO_CALI_MARK_END("AoSoA commit partial");
-#endif
   }
+  // Partial-update (no-rebuild) branch: NOTHING to commit. The pack does not
+  // own per-step particle data (position/velocity/etc. alias the ParticleStore
+  // columns, read by store row), and the only pack-owned commit writes --
+  // `type` and the has-exclusion `flags` -- are rebuild-cadence data written
+  // on the full-commit branch above (both are refreshed by a forced rebuild
+  // whenever they can change). The store-view rebind (bind_pack_store_views
+  // above) already repointed the aliased views for this step.
 }
 
 #ifdef ESPRESSO_ELECTROSTATICS
-template <class execution_space = Kokkos::DefaultHostExecutionSpace>
+// Refresh the PACK-OWNED contiguous charge column from the authoritative
+// ParticleStore q column. This runs once per step (O(N)) ONLY when a coulomb
+// actor is active; the hot pair loop and the P3M gather/spread loops then read
+// `aosoa.charge(pack_index)` contiguously, which is O(pairs) >> O(N).
+// Pure-LJ runs never call this and pay zero cost.
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
-update_aosoa_charges(CellStructure &cell_structure) {
+refresh_pack_charges(CellStructure &cell_structure) {
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
   auto const &unique_particles = cell_structure.get_unique_particles();
   auto const n_part = unique_particles.size();
   auto &aosoa = cell_structure.get_aosoa();
-
   kokkos_parallel_range_for<execution_space>(
-      "Views update charges", std::size_t{0}, n_part,
+      "refresh pack charges", std::size_t{0}, n_part,
       [&unique_particles, &aosoa](std::size_t const index) {
-        aosoa.charge(index) = unique_particles.at(index)->q();
+        aosoa.pair_charge(index) = unique_particles.at(index)->q();
+      });
+}
+#endif
+
+#ifdef ESPRESSO_DIPOLES
+// Pack-owned dipm column refresh, guarded by an active dipolar actor
+// (see refresh_pack_charges for the rationale).
+ESPRESSO_ATTR_ALWAYS_INLINE inline void
+refresh_pack_dipm(CellStructure &cell_structure) {
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+  auto const &unique_particles = cell_structure.get_unique_particles();
+  auto const n_part = unique_particles.size();
+  auto &aosoa = cell_structure.get_aosoa();
+  kokkos_parallel_range_for<execution_space>(
+      "refresh pack dipm", std::size_t{0}, n_part,
+      [&unique_particles, &aosoa](std::size_t const index) {
+        aosoa.pair_dipm(index) = unique_particles.at(index)->dipm();
       });
 }
 #endif
@@ -340,6 +467,22 @@ update_aosoa_charges(CellStructure &cell_structure) {
 // loop.
 using ShortRangeVerletPairLoop =
     std::function<void(CellStructure::ListType const &, std::size_t)>;
+
+#ifdef ESPRESSO_CUDA
+namespace System {
+class System;
+} // namespace System
+
+// Opt-in DEVICE (GPU) short-range pair-force path. Defined in
+// forces_lj_device.cu (compiled by the CUDA compiler) so the heavy
+// Kokkos/Cabana/System headers it needs never reach forces.cpp. Lennard-Jones
+// is the first potential implemented; see forces_lj_device.cu for the gate.
+bool gpu_core_enabled();
+ShortRangeVerletPairLoop
+create_device_short_range_pair_loop(System::System &system, bool has_coulomb,
+                                    bool has_dipoles, bool has_elc,
+                                    bool has_dpd, bool has_npt_virial);
+#endif // ESPRESSO_CUDA
 
 // @p make_verlet_criterion is a nullary factory: constructing the criterion
 // fills an O(n_types^2) cutoff table, so it is only invoked on the link-cell

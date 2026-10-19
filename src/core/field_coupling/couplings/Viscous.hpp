@@ -36,7 +36,7 @@ public:
   template <typename Particle>
   Utils::Vector3d operator()(Particle const &p,
                              Utils::Vector3d const &field) const {
-    return m_gamma * (field - p.v());
+    return m_gamma * (field - Utils::Vector3d(p.v()));
   }
 };
 } // namespace Coupling

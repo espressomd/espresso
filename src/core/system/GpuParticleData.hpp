@@ -48,6 +48,12 @@
  * Note that once a particle member is requested, the corresponding device
  * memory is allocated and populated at every time step, even when the GPU
  * method that originally requested the data is disabled.
+ *
+ * @note The AoS host-staging design (@ref pack_particles gathering fields
+ * through the particle accessor API) remains the multi-rank CUDA data path.
+ * The single-rank fast path fills per-field SoA staging buffers directly from
+ * the @ref ParticleStore columns (@c pack_particles_soa), bypassing the AoS
+ * pack + split kernel.
  */
 class GpuParticleData : public System::Leaf<GpuParticleData>,
                         public std::enable_shared_from_this<GpuParticleData> {
@@ -101,11 +107,28 @@ private:
   void gpu_init_particle_comm();
   void enable_particle_transfer();
   void copy_particles_to_device();
-  void copy_particles_to_device(ParticleRange const &particles, int this_node);
+  void copy_particles_to_device(ParticleRange const &particles, int this_node,
+                                bool single_rank);
   /** @brief Collect particles from all nodes to the head node. */
   void gather_particle_data(ParticleRange const &particles,
                             pinned_vector<GpuParticle> &particle_data_host,
                             int this_node);
+  /**
+   * @brief Fill the per-field SoA host staging buffers directly from the
+   * @ref ParticleStore columns (single-rank fast path).
+   *
+   * Writes the enabled properties (position, charge, dipole moment) into the
+   * @p positions / @p charges / @p dipoles spans in SoA layout, using the
+   * same particle accessors and f64->f32 casts as @ref pack_particles feeding
+   * @ref Storage::split_particle_struct, so the resulting device SoA buffers
+   * are bit-identical to the AoS pack + split path. An empty span means the
+   * property is not enabled and is skipped. Only meaningful on a single rank
+   * (@c comm.size()==1): the store is rank-local, so the whole system is the
+   * local range, and no MPI gather is needed.
+   */
+  void pack_particles_soa(ParticleRange const &particles,
+                          std::span<float> positions, std::span<float> charges,
+                          std::span<float> dipoles) const;
   void particles_scatter_forces(ParticleRange const &particles,
                                 std::span<float> host_forces,
                                 std::span<float> host_torques) const;

@@ -27,6 +27,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Particle.hpp"
+#include "ParticleStoreTestFixture.hpp"
 #include "rotation.hpp"
 
 #include <utils/Vector.hpp>
@@ -57,9 +58,15 @@ setup_trivial_quat(unsigned int i, Utils::Vector3d const &v_in) {
 BOOST_AUTO_TEST_CASE(convert_vector_space_to_body_test) {
   auto const t_in = Utils::Vector3d{{1., 2., 3.}};
   for (unsigned int i : {0u, 1u, 2u, 3u}) {
+    ParticleStoreTestFixture fixture{};
     auto p = Particle();
+    fixture.attach(p);
     Utils::Vector3d t_ref;
-    std::tie(p.quat(), t_ref) = Testing::setup_trivial_quat(i, t_in);
+    // quat() is a write-through proxy returned by value: capture the
+    // quaternion into a local, then assign it through the proxy.
+    auto [quat, t_ref_local] = Testing::setup_trivial_quat(i, t_in);
+    p.quat() = quat;
+    t_ref = t_ref_local;
     auto const t_out = convert_vector_space_to_body(p, t_in);
     for (unsigned int j : {0u, 1u, 2u}) {
       BOOST_CHECK_CLOSE(t_out[j], t_ref[j], tol);
@@ -72,13 +79,17 @@ BOOST_AUTO_TEST_CASE(convert_torque_to_body_frame_apply_fix_test) {
   {
     // test particle torque conversion
     for (unsigned int i : {0u, 1u, 2u, 3u}) {
+      ParticleStoreTestFixture fixture{};
       auto p = Particle();
+      fixture.attach(p);
       p.set_can_rotate_all_axes();
       Utils::Vector3d t_ref;
-      std::tie(p.quat(), t_ref) = Testing::setup_trivial_quat(i, t_in);
+      auto [quat, t_ref_local] = Testing::setup_trivial_quat(i, t_in);
+      p.quat() = quat;
+      t_ref = t_ref_local;
       p.torque() = t_in;
       convert_torque_to_body_frame_apply_fix(p);
-      auto const t_out = p.torque();
+      Utils::Vector3d const t_out = p.torque();
       for (unsigned int j : {0u, 1u, 2u}) {
         BOOST_CHECK_CLOSE(t_out[j], t_ref[j], tol);
       }
@@ -87,7 +98,9 @@ BOOST_AUTO_TEST_CASE(convert_torque_to_body_frame_apply_fix_test) {
   {
     // torque is set to zero for axes without rotation
     for (unsigned int j : {0u, 1u, 2u}) {
+      ParticleStoreTestFixture fixture{};
       auto p = Particle();
+      fixture.attach(p);
       p.set_can_rotate_all_axes();
       p.set_can_rotate_around(j, false);
       p.quat() = Utils::Quaternion<double>::identity();
@@ -95,30 +108,36 @@ BOOST_AUTO_TEST_CASE(convert_torque_to_body_frame_apply_fix_test) {
       auto t_ref = t_in;
       t_ref[j] = 0.;
       convert_torque_to_body_frame_apply_fix(p);
-      BOOST_TEST(p.torque() == t_ref, boost::test_tools::per_element());
+      BOOST_TEST(Utils::Vector3d(p.torque()) == t_ref,
+                 boost::test_tools::per_element());
     }
   }
   {
     // torque is always zero for non-rotatable particles
+    ParticleStoreTestFixture fixture{};
     auto p = Particle();
+    fixture.attach(p);
     p.set_cannot_rotate_all_axes();
     p.quat() = Utils::Quaternion<double>::identity();
     p.torque() = t_in;
     convert_torque_to_body_frame_apply_fix(p);
     auto const t_ref = Utils::Vector3d{};
-    BOOST_TEST(p.torque() == t_ref, boost::test_tools::per_element());
+    BOOST_TEST(Utils::Vector3d(p.torque()) == t_ref,
+               boost::test_tools::per_element());
   }
 }
 
 BOOST_AUTO_TEST_CASE(rotate_particle_body_test) {
+  ParticleStoreTestFixture fixture{};
   auto p = Particle();
+  fixture.attach(p);
   p.quat() = {1., 2., 3., 4.};
   {
     // fixed particles are unaffected, quaternion is identical to original
     p.set_cannot_rotate_all_axes();
     auto const phi = 2.;
     auto const quat = local_rotate_particle_body(p, {0., 0., 1.}, phi);
-    BOOST_TEST((quat == p.quat()));
+    BOOST_TEST((quat == Utils::Quaternion<double>(p.quat())));
   }
   {
     // edge case: null rotation throws an exception
@@ -132,7 +151,7 @@ BOOST_AUTO_TEST_CASE(rotate_particle_body_test) {
     p.set_can_rotate_all_axes();
     auto const phi = 0.;
     auto const quat = local_rotate_particle_body(p, {1., 2., 3.}, phi);
-    BOOST_TEST((quat == p.quat()));
+    BOOST_TEST((quat == Utils::Quaternion<double>(p.quat())));
   }
   {
     // an angle of pi around the z-axis flips the quaternion sequence
@@ -157,7 +176,9 @@ BOOST_AUTO_TEST_CASE(rotate_particle_body_test) {
 }
 
 BOOST_AUTO_TEST_CASE(propagate_omega_quat_particle_test) {
+  ParticleStoreTestFixture fixture{};
   auto p = Particle();
+  fixture.attach(p);
   p.set_can_rotate_all_axes();
   {
     // test edge case: null quaternion and no rotation
@@ -186,6 +207,57 @@ BOOST_AUTO_TEST_CASE(propagate_omega_quat_particle_test) {
       for (unsigned int i : {0u, 1u, 2u, 3u}) {
         BOOST_CHECK_CLOSE(quat[i], quat_ref[i], tol);
       }
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(propagate_omega_quat_particle_masked_omega_test) {
+  // Regression test: blocked rotation axes must have their omega component
+  // zeroed BEFORE define_Qdd runs, not after. A particle with only axis 2
+  // free and non-zero omega on the blocked axes (0 and 1) must:
+  //   (a) have zero omega on axes 0 and 1 after the call, and
+  //   (b) produce the same quaternion as if the blocked omegas were never set.
+  auto const time_step = 0.01;
+  auto const omega_free = 1.5;    // angular velocity on free axis (2)
+  auto const omega_blocked = 3.0; // non-zero on blocked axes (0, 1)
+
+  // Reference result: only axis 2 active, blocked omegas zero from the start.
+  Utils::Quaternion<double> quat_ref{};
+  {
+    ParticleStoreTestFixture fixture{};
+    auto p = Particle();
+    fixture.attach(p);
+    p.set_cannot_rotate_all_axes();
+    p.set_can_rotate_around(2, true);
+    p.quat() = Utils::Quaternion<double>::identity();
+    p.omega() = {0., 0., omega_free};
+    propagate_omega_quat_particle(p, time_step);
+    quat_ref = Utils::Quaternion<double>(p.quat());
+  }
+
+  // Test: same setup but with non-zero omega on blocked axes.
+  // After the call the blocked components must be zero and the quaternion
+  // must match the reference (masked-omega path).
+  {
+    ParticleStoreTestFixture fixture{};
+    auto p = Particle();
+    fixture.attach(p);
+    p.set_cannot_rotate_all_axes();
+    p.set_can_rotate_around(2, true);
+    p.quat() = Utils::Quaternion<double>::identity();
+    p.omega() = {omega_blocked, omega_blocked, omega_free};
+    propagate_omega_quat_particle(p, time_step);
+
+    // (a) Blocked components must be zeroed.
+    BOOST_TEST(Utils::Vector3d(p.omega())[0] == 0.,
+               boost::test_tools::tolerance(tol));
+    BOOST_TEST(Utils::Vector3d(p.omega())[1] == 0.,
+               boost::test_tools::tolerance(tol));
+
+    // (b) Quaternion must match the reference computed with masked omega.
+    auto const quat_out = Utils::Quaternion<double>(p.quat());
+    for (unsigned int i : {0u, 1u, 2u, 3u}) {
+      BOOST_CHECK_CLOSE(quat_out[i], quat_ref[i], tol);
     }
   }
 }
@@ -227,7 +299,9 @@ BOOST_AUTO_TEST_CASE(convert_dip_to_quat_test) {
   auto const quat_to_vector4d = [](Utils::Quaternion<double> const &quat) {
     return Utils::Vector4d{quat.data(), quat.data() + 4};
   };
+  ParticleStoreTestFixture fixture{};
   auto p = Particle();
+  fixture.attach(p);
   p.quat() = {1., 2., 3., 4.};
   {
     auto const dipm = 0.8;
@@ -278,7 +352,9 @@ BOOST_AUTO_TEST_CASE(stoner_wohlfarth_no_field_test) {
   auto const quat_ref_up = convert_director_to_quaternion(sat_mag * e_k);
   auto const quat_ref_down = convert_director_to_quaternion(-sat_mag * e_k);
   auto const dipm_ref = (sat_mag * e_k).norm();
+  ParticleStoreTestFixture fixture{};
   auto p = Particle();
+  fixture.attach(p);
   p.magnetic_anisotropy_energy() = 1.;
   p.stoner_wohlfarth_tau0_inv() = 1.;
   p.stoner_wohlfarth_dt_incr() = 1.;

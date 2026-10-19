@@ -30,13 +30,16 @@
  *  v(t+\Delta t) \f]
  */
 inline void symplectic_euler_propagator_1(Particle &p, double time_step) {
+  auto pos = p.pos();
+  auto const force = p.force();
+  auto const mass = p.mass();
   for (unsigned int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
       /* Propagate velocities: v(t+dt) = v(t) + dt * a(t) */
-      p.v()[j] += time_step * p.force()[j] / p.mass();
+      p.v()[j] += time_step * force[j] / mass;
 
       /* Propagate positions: p(t + dt) = p(t) + dt * v(t+dt) */
-      p.pos()[j] += time_step * p.v()[j];
+      pos[j] += time_step * p.v()[j];
     }
   }
 }

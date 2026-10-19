@@ -34,21 +34,25 @@
 
 Utils::Vector3d get_ibm_particle_position(CellStructure const &cell_structure,
                                           int pid) {
-  auto *p = cell_structure.get_local_particle(pid);
-  std::optional<Particle> opt_part{std::nullopt};
+  auto const p = cell_structure.get_local_particle(pid);
+  // A Particle is a non-owning view (its store pointer is meaningless on
+  // another rank), so reduce the position value across ranks. The owning rank
+  // contributes its position; every other rank contributes nullopt.
+  std::optional<Utils::Vector3d> opt_pos{std::nullopt};
 
   if (p and not p->is_ghost()) {
-    opt_part = *p;
+    opt_pos = p->pos();
   }
-  opt_part = boost::mpi::all_reduce(comm_cart, opt_part,
-                                    [](std::optional<Particle> const &acc,
-                                       std::optional<Particle> const &item) {
-                                      if (acc) {
-                                        return acc;
-                                      }
-                                      return item;
-                                    });
-  if (opt_part)
-    return opt_part.value().pos();
+  opt_pos =
+      boost::mpi::all_reduce(comm_cart, opt_pos,
+                             [](std::optional<Utils::Vector3d> const &acc,
+                                std::optional<Utils::Vector3d> const &item) {
+                               if (acc) {
+                                 return acc;
+                               }
+                               return item;
+                             });
+  if (opt_pos)
+    return opt_pos.value();
   throw std::runtime_error("Immersed Boundary: Particle not found");
 }

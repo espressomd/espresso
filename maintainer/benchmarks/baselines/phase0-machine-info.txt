@@ -1,0 +1,8 @@
+date: 2026-07-05T21:17:06+02:00
+host: gerenuk
+commit: 8942a1ad8487a45b42e9542f6e690f538b7812be (phase-0 code, re-measured)
+cpu: 12th Gen Intel(R) Core(TM) i7-12700K
+cores: 20
+note: re-recorded 2026-07-05 from a rebuilt phase-0 binary because the
+  original 2026-07-03 baseline had drifted ~3-4% with machine state.
+  Only same-state comparisons are meaningful on this P/E-core CPU.

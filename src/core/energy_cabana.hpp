@@ -110,16 +110,21 @@ struct EnergyKernel {
         layout(layout_), aosoa(aosoa_), mol_id_view(std::move(mol_id_view_)),
         system_max_cutoff_sq(system_max_cutoff_ * system_max_cutoff_) {}
 
-  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t i,
-                                                     std::size_t j) const {
+  KOKKOS_INLINE_FUNCTION
+  void operator()(std::size_t i, std::size_t j) const {
+    // Translate pack indices to ParticleStore rows once.
+    auto const row_i = aosoa.row(i);
+    auto const row_j = aosoa.row(j);
     auto const d = box_geo.get_mi_vector(
-        aosoa.position(i, 0), aosoa.position(i, 1), aosoa.position(i, 2),
-        aosoa.position(j, 0), aosoa.position(j, 1), aosoa.position(j, 2));
+        aosoa.position(row_i, 0), aosoa.position(row_i, 1),
+        aosoa.position(row_i, 2), aosoa.position(row_j, 0),
+        aosoa.position(row_j, 1), aosoa.position(row_j, 2));
     auto const dist_sq = d.norm2();
     if (dist_sq > system_max_cutoff_sq)
       return;
     auto const dist = std::sqrt(dist_sq);
 
+    // type is pack-owned and read PACK-INDEXED (i/j).
     auto const t1 = aosoa.type(i);
     auto const t2 = aosoa.type(j);
     auto const &ia_params = nonbonded_ias.get_ia_param(t1, t2);
@@ -166,8 +171,8 @@ struct EnergyKernel {
         // Only call Gay-Berne energy kernel if active
 #ifdef ESPRESSO_GAY_BERNE
         if (gay_berne_active(dist, ia_params)) {
-          auto const dir1 = aosoa.get_vector_at(aosoa.director, i);
-          auto const dir2 = aosoa.get_vector_at(aosoa.director, j);
+          auto const dir1 = aosoa.get_vector_at(aosoa.director, row_i);
+          auto const dir2 = aosoa.get_vector_at(aosoa.director, row_j);
           e_nb += gb_pair_energy(dir1, dir2, ia_params, d, dist);
         }
 #endif
@@ -182,10 +187,12 @@ struct EnergyKernel {
 
 #ifdef ESPRESSO_ELECTROSTATICS
     if (coulomb_u_kernel != nullptr) {
-      auto const q1 = aosoa.charge(i), q2 = aosoa.charge(j);
+      // charge is read from the pack-owned pair_charge column PACK-INDEXED
+      // (refreshed this step; coulomb solver active).
+      auto const q1 = aosoa.pair_charge(i), q2 = aosoa.pair_charge(j);
       if (q1 != 0. and q2 != 0.) {
-        auto const pos1 = aosoa.get_vector_at(aosoa.position, i);
-        auto const pos2 = aosoa.get_vector_at(aosoa.position, j);
+        auto const pos1 = aosoa.get_vector_at(aosoa.position, row_i);
+        auto const pos2 = aosoa.get_vector_at(aosoa.position, row_j);
         double const e_c = (*coulomb_u_kernel)(pos1, pos2, q1 * q2, d, dist);
         local_energy(tid, layout.coulomb_idx()) += e_c;
       }
@@ -194,11 +201,15 @@ struct EnergyKernel {
 
 #ifdef ESPRESSO_DIPOLES
     if (dipoles_u_kernel != nullptr) {
-      if (aosoa.dipm(i) != 0. and aosoa.dipm(j) != 0.) {
-        auto const dir1 = aosoa.get_vector_at(aosoa.director, i);
-        auto const dir2 = aosoa.get_vector_at(aosoa.director, j);
-        double const e_d = (*dipoles_u_kernel)(
-            aosoa.dipm(i) * dir1, aosoa.dipm(j) * dir2, d, dist, dist_sq);
+      // dipm is read from the pack-owned pair_dipm column PACK-INDEXED
+      // (refreshed this step; dipolar solver active); the director stays
+      // store-derived and indexed by store row.
+      if (aosoa.pair_dipm(i) != 0. and aosoa.pair_dipm(j) != 0.) {
+        auto const dir1 = aosoa.get_vector_at(aosoa.director, row_i);
+        auto const dir2 = aosoa.get_vector_at(aosoa.director, row_j);
+        double const e_d =
+            (*dipoles_u_kernel)(aosoa.pair_dipm(i) * dir1,
+                                aosoa.pair_dipm(j) * dir2, d, dist, dist_sq);
         local_energy(tid, layout.dipolar_idx()) += e_d;
       }
     }

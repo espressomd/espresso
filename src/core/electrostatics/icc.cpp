@@ -73,7 +73,12 @@ static void force_calc_icc(
     Coulomb::ShortRangeForceKernel::result_type const &coulomb_kernel,
     Coulomb::ShortRangeForceCorrectionsKernel::result_type const &elc_kernel) {
   // reset forces
-  auto const reset_kernel = [](Particle &p) { p.force_and_torque() = {}; };
+  auto const reset_kernel = [](Particle &p) {
+    p.force() = {};
+#ifdef ESPRESSO_ROTATION
+    p.torque() = {};
+#endif
+  };
   cell_structure.for_each_local_particle(reset_kernel);
   cell_structure.for_each_ghost_particle(reset_kernel);
   cell_structure.reset_local_force_buffers();
@@ -90,8 +95,14 @@ static void force_calc_icc(
           p2.force() -= force;
 #ifdef ESPRESSO_P3M
           if (elc_kernel_ptr) {
-            (*elc_kernel_ptr)(p1.pos(), p2.pos(), p1.force_and_torque().f,
-                              p2.force_and_torque().f, q1q2);
+            // elc_kernel takes non-const Vector3d& force parameters; the
+            // force accessors return write-through proxies, so operate on
+            // local copies and write them back in the same iteration.
+            Utils::Vector3d f1 = p1.force();
+            Utils::Vector3d f2 = p2.force();
+            (*elc_kernel_ptr)(p1.pos(), p2.pos(), f1, f2, q1q2);
+            p1.force() = f1;
+            p2.force() = f2;
           }
 #endif // ESPRESSO_P3M
         }
@@ -108,6 +119,10 @@ void ICCStar::iteration() {
 
   auto &system = get_system();
   auto &cell_structure = *system.cell_structure;
+  // ICC reads and accumulates particle forces; ensure every particle has a
+  // valid ParticleStore row (the caller may have resorted particles just
+  // before). O(1) when the store is clean; rank-local.
+  cell_structure.ensure_particle_store_synchronized();
   auto const &coulomb = system.coulomb;
   auto const particles = cell_structure.local_particles();
   auto const prefactor = std::visit(
@@ -136,10 +151,11 @@ void ICCStar::iteration() {
     kokkos_parallel_range_for<execution_space>(
         "reduction", std::size_t{0}, unique_particles.size(),
         [&local_force, &unique_particles](std::size_t const i) {
-          auto &force = unique_particles.at(i)->force();
+          Utils::Vector3d force = unique_particles.at(i)->force();
           force[0] += local_force(i, 0);
           force[1] += local_force(i, 1);
           force[2] += local_force(i, 2);
+          unique_particles.at(i)->force() = force;
         });
     Kokkos::fence();
 
@@ -160,7 +176,8 @@ void ICCStar::iteration() {
         auto const eps_out = icc_cfg.eps_out;
         auto const del_eps = (eps_in - eps_out) / (eps_in + eps_out);
         /* calculate the electric field at the certain position */
-        auto const local_e_field = p.force() / p.q() + icc_cfg.ext_field;
+        auto const local_e_field =
+            Utils::Vector3d(p.force()) / p.q() + icc_cfg.ext_field;
 
         if (local_e_field.norm2() == 0.) {
           runtimeErrorMsg()
@@ -209,8 +226,9 @@ void ICCStar::iteration() {
 
     /* Update charges on ghosts. */
     cell_structure.ghosts_update(Cells::DATA_PART_PROPERTIES);
-    // refresh local properties
-    update_aosoa_charges(cell_structure);
+    // refresh the pack-owned charge column from the (mutated) store q column so
+    // the next real-space charge kernel sees the ICC-updated charges
+    refresh_pack_charges(cell_structure);
 
     icc_cfg.citeration++;
 

@@ -142,12 +142,16 @@ static auto get_interacting_neighbors(System::System const &system,
   auto &cell_structure = *system.cell_structure;
   auto const distance = std::ranges::min(cell_structure.max_range());
   detail::search_neighbors_sanity_checks(system, distance);
-  std::vector<Particle const *> ret;
+  // Collect neighbor IDs, not Particle pointers. The kernel receives p2 as a
+  // transient row VIEW (short_range_neighbor_loop iterates row-range views),
+  // so storing &p2 would dangle after the loop increment. Ids are read by
+  // value here and are all the caller needs.
+  std::vector<int> ret;
   auto const cutoff2 = Utils::sqr(distance);
   auto const kernel = [cutoff2, &ret](Particle const &, Particle const &p2,
                                       Utils::Vector3d const &vec) {
     if (vec.norm2() < cutoff2) {
-      ret.emplace_back(&p2);
+      ret.emplace_back(p2.id());
     }
   };
   cell_structure.run_on_particle_short_range_neighbors(p, kernel);
@@ -186,12 +190,7 @@ std::vector<PairInfo> non_bonded_loop_trace(System::System const &system,
 std::vector<NeighborPIDs> get_neighbor_pids(System::System const &system) {
   std::vector<NeighborPIDs> ret;
   auto kernel = [&ret](Particle const &p,
-                       std::vector<Particle const *> const &neighbors) {
-    std::vector<int> neighbor_pids;
-    neighbor_pids.reserve(neighbors.size());
-    for (auto const &neighbor : neighbors) {
-      neighbor_pids.emplace_back(neighbor->id());
-    }
+                       std::vector<int> const &neighbor_pids) {
     ret.emplace_back(p.id(), neighbor_pids);
   };
   auto &cell_structure = *system.cell_structure;

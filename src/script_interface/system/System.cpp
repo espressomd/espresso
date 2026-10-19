@@ -390,6 +390,9 @@ void System::do_construct(VariantMap const &params) {
 
 static void rotate_system(CellStructure &cell_structure, double phi,
                           double theta, double alpha) {
+  // reading/writing p.pos() requires a valid ParticleStore row; this
+  // script-facing call may follow a topology change. O(1) when clean.
+  cell_structure.ensure_particle_store_synchronized();
   auto const particles = cell_structure.local_particles();
 
   // Calculate center of mass
@@ -398,7 +401,7 @@ static void rotate_system(CellStructure &cell_structure, double phi,
 
   for (auto const &p : particles) {
     if (not p.is_virtual()) {
-      local_com += p.mass() * p.pos();
+      local_com += p.mass() * Utils::Vector3d(p.pos());
       local_mass += p.mass();
     }
   }
@@ -417,7 +420,8 @@ static void rotate_system(CellStructure &cell_structure, double phi,
   // Rotate particle coordinates
   for (auto &p : particles) {
     // Move the center of mass of the system to the origin
-    p.pos() = com + Utils::vec_rotate(axis, alpha, p.pos() - com);
+    p.pos() =
+        com + Utils::vec_rotate(axis, alpha, Utils::Vector3d(p.pos()) - com);
 #ifdef ESPRESSO_ROTATION
     local_rotate_particle(p, axis, alpha);
 #endif
@@ -436,6 +440,7 @@ Variant System::do_call_method(std::string const &name,
   }
   if (name == "rescale_boxl") {
     auto const rescale_particles = [this](unsigned dir, double scale) {
+      m_instance->cell_structure->ensure_particle_store_synchronized();
       for (auto &p : m_instance->cell_structure->local_particles()) {
         p.pos()[dir] *= scale;
       }
