@@ -51,7 +51,7 @@ class TimeSeriesTest(ut.TestCase):
         n_part = 4
         system = self.system
         system.part.add(pos=np.zeros((n_part, 3)))
-        obs = espressomd.observables.ParticlePositions(ids=range(n_part))
+        obs = espressomd.observables.ParticlePositions(particles=range(n_part))
         acc = espressomd.accumulators.TimeSeries(obs=obs)
         system.auto_update_accumulators.add(acc)
         positions = np.copy(system.box_l) * np.random.random((10, n_part, 3))

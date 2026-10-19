@@ -46,7 +46,7 @@ class CylindricalLBObservableCommon:
         center=3 * [7], axis=[1, 0, 0], orientation=[0, 0, 1])
 
     params = {
-        'ids': None,
+        'particles': None,
         'transform_params': cyl_transform_params,
         'n_r_bins': 4,
         'n_phi_bins': 3,
@@ -137,7 +137,7 @@ class CylindricalLBObservableCommon:
         node_aligned = np.array(np.rint(np.array(pos_aligned) - 3 * [0.5]),
                                 dtype=int)
         self.system.part.add(pos=pos_aligned, v=vel_aligned)
-        self.params['ids'] = self.system.part.all().id
+        self.params['particles'] = self.system.part.all().id
 
         for node, vel in zip(node_aligned, vel_aligned):
             self.lbf[node].velocity = vel
@@ -181,7 +181,7 @@ class CylindricalLBObservableCommon:
         params['n_z_bins'] = 8
         params['axis'] = [0.0, 1.0, 0.0]
         params['sampling_density'] = 2
-        del params['ids']
+        del params['particles']
         observable = espressomd.observables.CylindricalLBVelocityProfile(
             **params)
         # check bins

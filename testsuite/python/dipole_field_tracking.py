@@ -100,13 +100,13 @@ class Test(ut.TestCase):
         self.system.integrator.run(steps=0)
         slice_data = [(x.id, x.pos, x.dip) for x in self.system.part.all()]
         dip_fields_obs = espressomd.observables.ParticleDipoleFields(
-            ids=self.system.part.all().id)
+            particles=self.system.part.all().id)
         dip_fields = dip_fields_obs.calculate()
         for val, p in zip(dip_fields, self.system.part.all()):
             np.testing.assert_allclose(val, N2_loop(p, slice_data))
 
         # check auto-update accumulator
-        obs = espressomd.observables.ParticleDipoleFields(ids=[0, 1])
+        obs = espressomd.observables.ParticleDipoleFields(particles=[0, 1])
         acc = espressomd.accumulators.TimeSeries(obs=obs, delta_N=10)
         self.system.auto_update_accumulators.add(acc)
         self.system.integrator.run(steps=40)
