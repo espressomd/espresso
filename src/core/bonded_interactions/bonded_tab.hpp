@@ -192,54 +192,52 @@ inline double TabulatedAngleBond::energy(Utils::Vector3d const &vec1,
 }
 
 /** Compute the four-body dihedral interaction force.
- *  The forces have a singularity at @f$ \phi = 0 @f$ and @f$ \phi = \pi @f$
- *  (see @cite swope92a page 592).
+ *  The tabulated force values are @f$ -\mathrm{d}V/\mathrm{d}\phi @f$, and the
+ *  force is assembled as
+ *  @f$ -(\mathrm{d}V/\mathrm{d}\phi)(\partial\phi/\partial r) @f$
+ *  (@cite blondel96a eq. 6), which has no singularity at @f$ \phi = 0 @f$ or
+ *  @f$ \phi = \pi @f$. See @ref calc_dihedral_angle_gradients.
+ *
+ *  If three consecutive particles are collinear, the dihedral angle and its
+ *  gradients are undefined (@ref calc_dihedral_angle_gradients returns
+ *  @c true); a runtime warning is raised and the force is set to zero.
  *
  *  @param[in] v12  Vector from @p p1 to @p p2
  *  @param[in] v23  Vector from @p p2 to @p p3
  *  @param[in] v34  Vector from @p p3 to @p p4
- *  @return the forces on @p p2, @p p1, @p p3
+ *  @return the forces on @p p2, @p p1, @p p3, @p p4
  */
 inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                 Utils::Vector3d, Utils::Vector3d>>
 TabulatedDihedralBond::forces(Utils::Vector3d const &v12,
                               Utils::Vector3d const &v23,
                               Utils::Vector3d const &v34) const {
-  /* vectors for dihedral angle calculation */
-  Utils::Vector3d v12Xv23, v23Xv34;
-  double l_v12Xv23, l_v23Xv34;
-  /* dihedral angle, cosine of the dihedral angle */
-  double phi, cos_phi;
+  double phi;
+  Utils::Vector3d grad1, grad2, grad3, grad4;
 
-  /* dihedral angle */
-  auto const angle_is_undefined = calc_dihedral_angle(
-      v12, v23, v34, v12Xv23, l_v12Xv23, v23Xv34, l_v23Xv34, cos_phi, phi);
-  /* dihedral angle not defined - force zero */
+  auto const angle_is_undefined = calc_dihedral_angle_gradients(
+      v12, v23, v34, phi, grad1, grad2, grad3, grad4);
   if (angle_is_undefined) {
-    return {};
+    runtimeWarningMsg() << "Dihedral angle is undefined because three "
+                           "consecutive particles are collinear; setting "
+                           "the dihedral force to zero";
+    return std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
+                           Utils::Vector3d{}, Utils::Vector3d{});
   }
 
-  auto const f1 = (v23Xv34 - cos_phi * v12Xv23) / l_v12Xv23;
-  auto const f4 = (v12Xv23 - cos_phi * v23Xv34) / l_v23Xv34;
+  /* table lookup: the tabulated value is -dV/dphi */
+  auto const dV_dphi = -pot->force(phi);
 
-  auto const v23Xf1 = vector_product(v23, f1);
-  auto const v23Xf4 = vector_product(v23, f4);
-  auto const v34Xf4 = vector_product(v34, f4);
-  auto const v12Xf1 = vector_product(v12, f1);
-
-  /* table lookup */
-  auto const fac = pot->force(phi);
-
-  /* store dihedral forces */
-  auto const force1 = fac * v23Xf1;
-  auto const force2 = fac * (v34Xf4 - v12Xf1 - v23Xf1);
-  auto const force3 = fac * (v12Xf1 - v23Xf4 - v34Xf4);
-
-  return std::make_tuple(force2, force1, force3, -(force2 + force1 + force3));
+  return std::make_tuple(-dV_dphi * grad2, -dV_dphi * grad1, -dV_dphi * grad3,
+                         -dV_dphi * grad4);
 }
 
 /** Compute the four-body dihedral interaction energy.
  *  The energy doesn't have any singularity if the angle phi is well-defined.
+ *
+ *  If three consecutive particles are collinear, the dihedral angle is
+ *  undefined (@ref calc_dihedral_angle returns @c true); a runtime warning is
+ *  raised and the energy is set to zero.
  *
  *  @param[in] v12  Vector from @p p1 to @p p2
  *  @param[in] v23  Vector from @p p2 to @p p3
@@ -249,16 +247,13 @@ inline std::optional<double>
 TabulatedDihedralBond::energy(Utils::Vector3d const &v12,
                               Utils::Vector3d const &v23,
                               Utils::Vector3d const &v34) const {
-  /* vectors for dihedral calculations. */
-  Utils::Vector3d v12Xv23, v23Xv34;
-  double l_v12Xv23, l_v23Xv34;
-  /* dihedral angle, cosine of the dihedral angle */
-  double phi, cos_phi;
-  auto const angle_is_undefined = calc_dihedral_angle(
-      v12, v23, v34, v12Xv23, l_v12Xv23, v23Xv34, l_v23Xv34, cos_phi, phi);
-  /* dihedral angle not defined - energy zero */
+  double phi;
+  auto const angle_is_undefined = calc_dihedral_angle(v12, v23, v34, phi);
   if (angle_is_undefined) {
-    return {};
+    runtimeWarningMsg() << "Dihedral angle is undefined because three "
+                           "consecutive particles are collinear; setting "
+                           "the dihedral energy to zero";
+    return 0.;
   }
 
   return pot->energy(phi);
