@@ -321,6 +321,46 @@ class GayBerneInteraction(NonBondedInteraction):
 
 
 @script_interface_register
+class GayBerneWidthInteraction(NonBondedInteraction):
+    """Gay--Berne interaction with independently adjustable radial width.
+
+    Methods
+    -------
+    set_params()
+        Set new parameters for the interaction.
+
+    Parameters
+    ----------
+    eps : :obj:`float`
+        Potential well-depth scale.
+    sig : :obj:`float`
+        Gay--Berne reference length scale. Together with the particle
+        orientations and ``k1``, it determines the position of the
+        potential minimum.
+    wid : :obj:`float`
+        Radial width of the Lennard-Jones-like well. Setting ``wid``
+        equal to ``sig`` recovers the radial form of the original
+        ESPResSo Gay--Berne interaction.
+    cut : :obj:`float`
+        Cutoff distance.
+    k1 : :obj:`float`
+        Molecular elongation parameter.
+    k2 : :obj:`float`
+        Ratio controlling the orientation dependence of the well depth.
+    mu : :obj:`float`
+        Gay--Berne energy-anisotropy exponent.
+    nu : :obj:`float`
+        Gay--Berne orientation exponent.
+    """
+
+    _so_name = "Interactions::InteractionGayBerneWidth"
+    _so_feature = "GAY_BERNE_WIDTH"
+
+    def default_params(self):
+        return {}
+
+
+@script_interface_register
 class TabulatedNonBonded(NonBondedInteraction):
     """Tabulated interaction.
 
