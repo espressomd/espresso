@@ -90,9 +90,8 @@ inline void add_bind_centers(std::vector<CollisionPair> &collision_queue,
 
     // Because MPI rank 1's queue containing (@c p1_on_rank_1, @c p2_on_rank_2)
     // doesn't guarantee that the same pair (with or without swapped order) is
-    // also queued on the MPI rank 2.
-    // Once we change bond storage, some syncing has to be done.
-    assert(use_one_sided_bond_storage);
+    // also queued on the MPI rank 2, both ranks may independently create
+    // the bond. This is orthogonal to bond storage and not addressed here.
     ::add_bond(system, bond_id, {c.first, c.second});
     system.cell_structure->add_new_bond(bond_id, {c.first, c.second});
   }

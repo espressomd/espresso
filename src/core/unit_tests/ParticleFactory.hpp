@@ -20,6 +20,7 @@
 #pragma once
 
 #include "BondList.hpp"
+#include "bonds.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "particle_node.hpp"
 #include "system/System.hpp"
@@ -52,10 +53,10 @@ struct ParticleFactory {
   void insert_particle_bond(int p_id, int bond_id,
                             std::vector<int> const &partner_ids) const {
     auto &system = System::get_system();
-    auto p = system.cell_structure->get_local_particle(p_id);
-    if (p != nullptr and not p->is_ghost()) {
-      p->bonds().insert(BondView(bond_id, partner_ids));
-    }
+    std::vector<int> particle_ids{p_id};
+    particle_ids.insert(particle_ids.end(), partner_ids.begin(),
+                        partner_ids.end());
+    ::add_bond(system, bond_id, particle_ids);
     system.on_particle_change();
   }
 

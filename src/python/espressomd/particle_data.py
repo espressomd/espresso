@@ -493,8 +493,9 @@ class ParticleHandle(ScriptInterfaceHelper):
     @property
     def bonds(self):
         """
-        The bonds stored by this particle. Note that bonds are only stored by
-        one partner. You need to define a bonded interaction.
+        The bonds owned by this particle. Note that a bond is only listed
+        for the particle it was created on (its first argument), not for
+        its partner particles. You need to define a bonded interaction.
 
         A bond tuple is specified as a bond identifier associated with
         a particle ``(bond_ID, (*part_ID,))``. A single particle may contain

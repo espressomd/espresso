@@ -635,6 +635,13 @@ unsigned System::get_global_ghost_flags() const {
   /* Position and Properties are always requested. */
   unsigned data_parts = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
 
+  // Bonds are stored on all participants (see BondList.hpp), and the
+  // functions in bonds.cpp resolve participants via get_local_particle(),
+  // which also returns ghosts. Their bond lists must therefore stay up to
+  // date, or a lookup on a ghost-only participant sees stale data and a
+  // removal silently fails to reach it.
+  data_parts |= Cells::DATA_PART_BONDS;
+
   if (lb.is_solver_set())
     data_parts |= Cells::DATA_PART_MOMENTUM;
 
@@ -643,14 +650,7 @@ unsigned System::get_global_ghost_flags() const {
 
   if (thermostat->thermo_switch & THERMO_BOND) {
     data_parts |= Cells::DATA_PART_MOMENTUM;
-    data_parts |= Cells::DATA_PART_BONDS;
   }
-
-#ifdef ESPRESSO_COLLISION_DETECTION
-  if (not collision_detection->is_off()) {
-    data_parts |= Cells::DATA_PART_BONDS;
-  }
-#endif
 
 #ifdef ESPRESSO_ROTATION
   if (orientation_ghosts_needed(*this)) {

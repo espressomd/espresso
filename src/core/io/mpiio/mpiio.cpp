@@ -52,6 +52,7 @@
 
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonds.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "errorhandling.hpp"
 
@@ -520,6 +521,13 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
 
   for (auto &p : particles) {
     cell_structure.add_particle(std::move(p));
+  }
+
+  if (fields & MPIIO_OUT_BND) {
+    // Checkpoints written before bonds were stored on all participants
+    // only contain primary entries; recreate the missing mirrors so the
+    // restored state matches what add_bond() would have produced.
+    ::rebuild_bond_mirrors(System::get_system());
   }
 }
 } // namespace Mpiio
