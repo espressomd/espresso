@@ -276,7 +276,7 @@ update_latest() {
 
     python3 "${SCRIPT_DIR}/plot_benchmarks.py" \
         --prefix "$PLOT_PREFIX" \
-        -o "${PLOT_DIR}/EspressoBenchmark.svg" \
+        -o "${PLOT_DIR}/EspressoBenchmark.json" \
         || { echo "Error: benchmark timeline plot failed" >&2; exit 1; }
 
     # <PREFIX>_latest contains links to the newest run, its
@@ -291,17 +291,17 @@ update_latest() {
         REL_PLOT_DIR="../${RUN_NAME}/${PLOT_DIR#"${RUN_DIR}/"}"
         ln -s "${REL_PLOT_DIR}/EspressoBenchmark.log" "${LATEST_DIR}/"
         shopt -s nullglob
-        for svg in "$PLOT_DIR"/*.svg; do
-            ln -s "${REL_PLOT_DIR}/$(basename "$svg")" "${LATEST_DIR}/"
+        for fig in "$PLOT_DIR"/EspressoBenchmark*.json; do
+            ln -s "${REL_PLOT_DIR}/$(basename "$fig")" "${LATEST_DIR}/"
         done
         shopt -u nullglob
     fi
 
-    # Embed the timeline SVGs linked above
+    # Embed the timeline figures linked above
     python3 "${SCRIPT_DIR}/benchmark_history.py" \
         --prefix "$PLOT_PREFIX" \
         -o "${LATEST_DIR}/benchmark_history.html" \
-        --svg-dir "$LATEST_DIR" \
+        --plot-dir "$LATEST_DIR" \
         || echo "Warning: benchmark history page failed" >&2
 
     if [ "$NO_PERFLOG" = true ]; then

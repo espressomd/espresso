@@ -19,28 +19,26 @@
 
 """
 Read a ReFrame perflog produced by the ESPResSo benchmark suite and render an
-SVG timeline of the recorded benchmark performances across ESPResSo commits.
+interactive Plotly timeline of the recorded benchmark performances across
+ESPResSo commits.
 
 The x-axis is ordinal: one tick per ESPResSo commit, ordered chronologically by
 the earliest completion time at which the commit was benchmarked. Each tick is
-labelled with the short commit hash and that build's completion time. A commit
-that was benchmarked more than once gets one adjacent column per run. Each
-benchmark metric (``MC``/``MD``/... or the unnamed default) is drawn as its own
-line connecting its mean value across commits, with the confidence interval as
-an error bar.
+labelled with the short commit hash; the completion time is shown on hover. A
+commit that was benchmarked more than once gets one adjacent column per run.
+Each benchmark metric (``MC``/``MD``/... or the unnamed default) is drawn as its
+own line connecting its mean value across commits, with the confidence interval
+as an error bar.
 
 The suite can be run with several ESPResSo builds (the ``build_config`` column,
-e.g. ``maxset``/``default``/``empty``); each build is plotted separately. Every
-build's timeline is paginated into pages of at most ``--max-points`` commit
-columns (default 20), and each page is written to its own SVG tagged with the
-calendar span it covers:
+e.g. ``maxset``/``default``/``empty``); each build gets its own figure covering
+its whole history, written as Plotly figure JSON:
 
-    <stem>[_<build>]_<start>_<end>.svg     e.g. EspressoBenchmark_maxset_2026-03-10_2026-06-29.svg
+    <stem>[_<build>].json     e.g. EspressoBenchmark_maxset.json
 
-Full pages carry an immutable ``<start>_<end>`` ISO-date span; the trailing,
-not-yet-full page is written as ``<start>_current.svg`` and overwritten on later
-runs until it reaches ``--max-points`` columns, at which point it is finalised
-under its span name and a new ``_current`` page begins.
+A figure opens on the newest ``--window`` commit columns (default 20); the range
+slider below the plot reaches the older ones. benchmark_history.py embeds the
+figures in the history page.
 
 The run directories to read are selected with ``--prefix``. ``suite.sh`` writes
 every invocation to its own ``<prefix>_dd_mm_yyyy_<n>`` directory, so ``--prefix``
@@ -65,13 +63,12 @@ runs of the suite live in ``_DEBUG`` directories) or pass ``--log`` to select a
 single perflog explicitly.
 
 Usage:
-    python3 plot_benchmarks.py --prefix PREFIX_REGEX -o OUTPUT.svg
-                               [--max-points N] [--log PERFLOG]
+    python3 plot_benchmarks.py --prefix PREFIX_REGEX -o OUTPUT.json
+                               [--window N] [--log PERFLOG]
 """
 
 import argparse
 import csv
-import io
 import re
 import sys
 from collections import defaultdict
@@ -79,10 +76,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import cast
 
-import matplotlib
-
-matplotlib.use("Agg")  # headless: no display needed
-import matplotlib.pyplot as plt  # noqa: E402
+import plotly.graph_objects as go
+from plotly.colors import qualitative
 
 # Basename of the perflog ReFrame's ``filelog`` handler writes (named after the
 # benchmark's check class) and the glob that locates it below a ``--prefix``.
@@ -508,269 +503,84 @@ def format_tick_label(column):
         return f"{commit} (#1)"
 
 
-# Marker size of plotted points.
-HIT_MARKERSIZE = 22
-
-# Default number of commit columns (x-axis positions) per SVG page.
-DEFAULT_MAX_POINTS = 20
-
-# Self-contained hover layer injected into the SVG: styling, an (initially
-# hidden) tooltip container, and vanilla JS that fills and positions it from the
-# ``data-*`` attributes on each hit target. No external libraries; works offline.
-# Interactivity only runs when the SVG is opened in a browser (or inlined into an
-# HTML page) -- as a static image it degrades to the plain chart.
-_INTERACTIVITY_TEMPLATE = """
-<style type="text/css"><![CDATA[
-  .benchmark-hit { cursor: pointer; }
-  #benchmark-tooltip { pointer-events: none; }
-  #benchmark-tooltip rect { fill: #1f2933; fill-opacity: 0.96;
-    stroke: #0b0f14; stroke-width: 1; }
-  #benchmark-tooltip text { font-family: "DejaVu Sans", sans-serif; }
-  .bt-value { fill: #ffffff; font-weight: bold; }
-  .bt-line { fill: #cbd2d9; }
-]]></style>
-<g id="benchmark-tooltip" visibility="hidden"></g>
-<script type="text/javascript"><![CDATA[
-(function(){
-  var script = document.currentScript;
-  var svg = (script && script.closest) ? script.closest("svg") : null;
-  if (!svg) { var s = document.getElementsByTagName("svg"); svg = s[s.length-1]; }
-  if (!svg) return;
-  var NS = "http://www.w3.org/2000/svg";
-  var tip = svg.querySelector("#benchmark-tooltip");
-  if (!tip) return;
-
-  function clear(el){ while (el.firstChild) el.removeChild(el.firstChild); }
-  function attr(t, n){ return t.getAttribute("data-" + n) || ""; }
-
-  function toSvg(cx, cy){
-    var ctm = svg.getScreenCTM();
-    if (!ctm) return {x: cx, y: cy};
-    var p = svg.createSVGPoint(); p.x = cx; p.y = cy;
-    return p.matrixTransform(ctm.inverse());
-  }
-
-  function show(target){
-    var lines = [
-      {t: attr(target, "value"),            cls: "bt-value"},
-      {t: attr(target, "ci"),               cls: "bt-line"},
-      {t: attr(target, "metric"),           cls: "bt-line"},
-      {t: "commit " + attr(target, "commit"), cls: "bt-line"},
-      {t: attr(target, "time"),             cls: "bt-line"}
-    ].filter(function(l){ return l.t && l.t.trim() !== ""; });
-
-    clear(tip);
-    var PAD = 8, LH = 16, SW = 14, FS = 13, TX = PAD + SW + 6;
-
-    var rect = document.createElementNS(NS, "rect");
-    rect.setAttribute("rx", "4"); rect.setAttribute("ry", "4");
-    rect.setAttribute("x", "0"); rect.setAttribute("y", "0");
-    tip.appendChild(rect);
-
-    var sw = document.createElementNS(NS, "line");
-    sw.setAttribute("stroke", attr(target, "color") || "#ffffff");
-    sw.setAttribute("stroke-width", "3");
-    sw.setAttribute("x1", String(PAD)); sw.setAttribute("x2", String(PAD));
-    sw.setAttribute("y1", String(PAD)); sw.setAttribute("y2", String(PAD + FS));
-    tip.appendChild(sw);
-
-    var txt = document.createElementNS(NS, "text");
-    txt.setAttribute("x", String(TX)); txt.setAttribute("y", String(PAD + FS));
-    txt.setAttribute("font-size", String(FS));
-    for (var i = 0; i < lines.length; i++){
-      var ts = document.createElementNS(NS, "tspan");
-      ts.setAttribute("x", String(TX));
-      if (i > 0) ts.setAttribute("dy", String(LH));
-      ts.setAttribute("class", lines[i].cls);
-      ts.appendChild(document.createTextNode(lines[i].t));
-      txt.appendChild(ts);
-    }
-    tip.appendChild(txt);
-
-    var bb = txt.getBBox();
-    var w = bb.width + TX + PAD;
-    var h = Math.max(LH * lines.length + 2 * PAD, bb.height + 2 * PAD);
-    rect.setAttribute("width", String(w));
-    rect.setAttribute("height", String(h));
-
-    var r = target.getBoundingClientRect();
-    var c = toSvg(r.left + r.width / 2, r.top + r.height / 2);
-    var tx = c.x + 12, ty = c.y - h - 12;
-    var vb = svg.viewBox && svg.viewBox.baseVal;
-    if (vb && vb.width > 0){
-      if (tx + w > vb.x + vb.width) tx = c.x - w - 12;
-      if (tx < vb.x) tx = vb.x + 2;
-      if (ty < vb.y) ty = c.y + 12;
-    }
-    tip.setAttribute("transform", "translate(" + tx + "," + ty + ")");
-    tip.setAttribute("visibility", "visible");
-  }
-
-  function hide(){ tip.setAttribute("visibility", "hidden"); }
-  function hit(e){ return e.target.closest ? e.target.closest(".benchmark-hit") : null; }
-
-  svg.addEventListener("mouseover", function(e){ var t = hit(e); if (t) show(t); });
-  svg.addEventListener("mouseout",  function(e){ if (hit(e)) hide(); });
-  svg.addEventListener("focusin",   function(e){ var t = hit(e); if (t) show(t); });
-  svg.addEventListener("focusout",  hide);
-})();
-]]></script>
-"""
+# Default number of commit columns (x-axis positions) shown when a figure opens;
+# the range slider below the plot reaches the rest of the history.
+DEFAULT_WINDOW = 20
 
 
-def _svg_attr_escape(value):
-    """Escape a string for safe inclusion in an XML/SVG attribute value."""
-    return (
-        str(value)
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
-    )
+def hover_text(descr, label, point, unit):
+    """Tooltip of one data point: value, CI, metric, commit and completion time."""
+    commit = point["commit"]
+    lines = [f"<b>{point['mean']:.4g} {unit}</b>"]
+    if point["ci"] is not None:
+        lines.append(f"± {point['ci']:.3g} {unit}")
+    lines.append(series_legend(descr, label))
+    lines.append("commit " + (commit if commit == "unknown" else commit[:12]))
+    if point["time"]:
+        lines.append(point["time"].strftime("%Y-%m-%d %H:%M:%S"))
+    return "<br>".join(lines)
 
 
-def _inject_interactivity(svg, tips):
-    """Turn the static matplotlib SVG into a hover-interactive one.
+def build_figure(build, columns, plotted, unit, window=DEFAULT_WINDOW):
+    """Build the interactive timeline of one build as a Plotly figure.
 
-    ``tips`` maps each hit target's gid to its tooltip fields. Each corresponding
-    ``<g id="gid">`` is tagged as a hit target (class, ``pointer-events``,
-    ``tabindex``) and given ``data-*`` attributes; the CSS/tooltip/JS block is
-    then appended as the last children of the root ``<svg>``.
+    The x-axis spans every commit column; it opens on the newest ``window``
+    columns, and the range slider below the plot reaches the older ones.
     """
-    for gid, info in tips.items():
-        data_attrs = " ".join(
-            f'data-{key}="{_svg_attr_escape(info[key])}"'
-            for key in ("metric", "commit", "time", "value", "ci", "color")
-        )
-        old = f'<g id="{gid}">'
-        new = (
-            f'<g id="{gid}" class="benchmark-hit" pointer-events="all" '
-            f'tabindex="0" {data_attrs}>'
-        )
-        svg = svg.replace(old, new, 1)
-
-    insert_at = svg.rfind("</svg>")
-    if insert_at == -1:
-        return svg
-    return svg[:insert_at] + _INTERACTIVITY_TEMPLATE + svg[insert_at:]
-
-
-def render_page(build, columns, plotted, unit, output_path, span_label=None):
-    """Render one page (a slice of commit columns) to an interactive SVG.
-
-    ``columns``/``plotted`` are page-local: ``x`` indices are already 0-based
-    within this page. The SVG is interactive: hovering (or keyboard-focusing) a
-    data point reveals a tooltip with its completion time, value, CI, metric and
-    commit.
-    """
-    fig, ax = plt.subplots(figsize=(12, 7))
-
-    tips = {}  # gid -> tooltip fields
-    hit_id = 0
+    fig = go.Figure()
     for descr, label, points in plotted:
-        xs = [p["x"] for p in points]
-        means = [p["mean"] for p in points]
-        cis = [p["ci"] if p["ci"] is not None else 0.0 for p in points]
-        container = ax.errorbar(
-            xs,
-            means,
-            yerr=cis,
-            marker="o",
-            markersize=5,
-            capsize=3,
-            linewidth=1.2,
-            label=series_legend(descr, label),
-        )
-        color = container[0].get_color(
-        ) if container[0] is not None else "#000000"
-
-        # One transparent, generously sized hit target per point, carrying the
-        # tooltip data. Drawn on top (high zorder) so it always receives hovers.
-        for p in points:
-            gid = f"benchhit-{hit_id}"
-            hit_id += 1
-            # Pass an explicit colour so this invisible artist does not consume
-            # the property cycle and shift the visible series' colours.
-            (marker,) = ax.plot(
-                [p["x"]],
-                [p["mean"]],
-                marker="o",
-                markersize=HIT_MARKERSIZE,
-                linestyle="none",
-                color=color,
-                markerfacecolor=(0, 0, 0, 0),
-                markeredgecolor="none",
-                alpha=0,
-                zorder=6,
+        fig.add_trace(
+            go.Scatter(
+                x=[p["x"] for p in points],
+                y=[p["mean"] for p in points],
+                error_y=dict(
+                    type="data",
+                    array=[p["ci"] if p["ci"] is not None else 0.0
+                           for p in points],
+                    thickness=1,
+                    width=3,
+                ),
+                mode="lines+markers",
+                marker=dict(size=6),
+                line=dict(width=1.2),
+                name=series_legend(descr, label),
+                text=[hover_text(descr, label, p, unit) for p in points],
+                hovertemplate="%{text}<extra></extra>",
             )
-            marker.set_gid(gid)
-            when = p["time"]
-            commit = p["commit"]
-            tips[gid] = {
-                "metric": series_legend(descr, label),
-                "commit": commit if commit == "unknown" else commit[:12],
-                "time": when.strftime("%Y-%m-%d %H:%M:%S") if when else "",
-                "value": f"{p['mean']:.4g} {unit}",
-                "ci": f"± {p['ci']:.3g} {unit}" if p["ci"] is not None else "",
-                "color": color,
-            }
+        )
 
-    ax.set_yscale("log")
-    ax.set_xlabel("ESPResSo commit (chronological)")
-    ax.set_ylabel(f"Mean execution time ({unit})")
+    n = len(columns)
     title = "ESPResSo benchmark performance timeline"
     if build and build != "unknown":
         title += f"  —  build: {build}"
-    if span_label:
-        title += f"\n{span_label}"
-    ax.set_title(title)
-    ax.grid(True, which="both", linestyle=":", linewidth=0.5, alpha=0.6)
-
-    # One tick per commit column, labelled with the commit hash (completion time
-    # is shown in the hover tooltip).
-    ax.set_xticks(range(len(columns)))
-    ax.set_xticklabels(
-        [format_tick_label(c) for c in columns],
-        rotation=30,
-        ha="right",
-        fontsize="small",
+    fig.update_layout(
+        title=title,
+        template="plotly_white",
+        legend=dict(title="Benchmark [metric]"),
+        hovermode="closest",
+        # More colours than the default ten, so series rarely share one.
+        colorway=qualitative.Dark24,
     )
-    # Pad the x-range so single-column plots and edge markers are not clipped.
-    ax.set_xlim(-0.5, len(columns) - 0.5)
-
-    ax.legend(
-        loc="upper left",
-        bbox_to_anchor=(1.02, 1.0),
-        fontsize="small",
-        title="Benchmark [metric]",
-        borderaxespad=0.0,
+    # The x-axis is numeric rather than categorical: the tick labels of a
+    # commit's repeated runs may coincide.
+    fig.update_xaxes(
+        title="ESPResSo commit (chronological)",
+        tickvals=list(range(n)),
+        ticktext=[format_tick_label(c) for c in columns],
+        tickangle=-30,
+        range=[max(-0.5, n - window - 0.5), n - 0.5],
+        rangeslider=dict(visible=True, thickness=0.08),
     )
-
-    fig.tight_layout()
-
-    # Render to an in-memory SVG, inject the hover layer, then write it out.
-    buf = io.BytesIO()
-    fig.savefig(buf, format="svg", bbox_inches="tight")
-    plt.close(fig)
-    svg = buf.getvalue().decode("utf-8")
-    svg = _inject_interactivity(svg, tips)
-    Path(output_path).write_text(svg, encoding="utf-8")
-
-
-def slice_page(columns, plotted, start, end):
-    """Restrict ``columns``/``plotted`` to column indices ``[start, end)``.
-
-    ``x`` indices are rebased to 0 within the page; series with no points in the
-    range are dropped.
-    """
-    cols_sub = columns[start:end]
-    plotted_sub = []
-    for descr, label, points in plotted:
-        pts = [{**p, "x": p["x"] - start}
-               for p in points if start <= p["x"] < end]
-        if pts:
-            plotted_sub.append((descr, label, pts))
-    return cols_sub, plotted_sub
+    fig.update_yaxes(
+        title=f"Mean execution time ({unit})",
+        type="log",
+        # Label the decades only, as powers of ten.
+        dtick=1,
+        exponentformat="power",
+        showgrid=True,
+        minor=dict(showgrid=True),
+    )
+    return fig
 
 
 def _sanitize(text):
@@ -778,50 +588,33 @@ def _sanitize(text):
     return "".join(c if (c.isalnum() or c in "._-") else "_" for c in text)
 
 
-def _page_output_path(base, build, start_dt, end_dt, is_current):
-    """Page filename ``<stem>[_<build>]_<start>_<end|current><suffix>`` (ISO dates)."""
-    date_fmt = "%Y-%m-%d"
-    start = start_dt.strftime(date_fmt)
-    end = "current" if is_current else end_dt.strftime(date_fmt)
+def figure_path(base, build):
+    """Figure filename ``<stem>[_<build>]<suffix>`` of one build."""
+    base = Path(base)
     stem = base.stem
     if build and build != "unknown":
         stem = f"{stem}_{_sanitize(build)}"
-    return base.with_name(f"{stem}_{start}_{end}{base.suffix}")
+    return base.with_name(f"{stem}{base.suffix}")
 
 
-# Trailing ``_<start>_<end|current>`` of a page filename; build names may
-# contain underscores, so the build token is whatever precedes it.
-_PAGE_SPAN_RE = re.compile(
-    r"(?:_(?P<build>.+))?_(?P<start>\d{4}-\d{2}-\d{2})"
-    r"_(?P<end>\d{4}-\d{2}-\d{2}|current)"
-)
+def parse_figure_name(path, stem):
+    """Inverse of ``figure_path``: the (sanitized) build of a figure file.
 
-
-def parse_page_name(path, stem):
-    """Inverse of ``_page_output_path``: ``(build, start, end)`` of a page.
-
-    ``build`` is ``"unknown"`` if the name has no build token and ``end`` is
-    ``"current"`` for the trailing page. Returns ``None`` for other files.
+    The build is ``"unknown"`` if the name has no build token. Returns ``None``
+    for other files.
     """
-    path = Path(path)
-    if not path.stem.startswith(stem):
-        return None
-    match = _PAGE_SPAN_RE.fullmatch(path.stem[len(stem):])
-    if match is None:
-        return None
-    return match["build"] or "unknown", match["start"], match["end"]
+    name = Path(path).stem
+    if name == stem:
+        return "unknown"
+    if name.startswith(stem + "_") and len(name) > len(stem) + 1:
+        return name[len(stem) + 1:]
+    return None
 
 
-def plot_all(store, output_path, max_points=DEFAULT_MAX_POINTS):
-    """Render paginated interactive SVGs: one per build, chunked into pages of
-    ``max_points`` commit columns.
+def plot_all(store, output_path, window=DEFAULT_WINDOW):
+    """Write one Plotly figure (as JSON) per build, spanning its whole history.
 
-    Full pages get an immutable ``<start>_<end>`` span tag; a trailing page with
-    fewer than ``max_points`` columns is written as ``<start>_current`` and
-    overwritten on later runs until it fills. Superseded ``_current`` pages that
-    this run did not (re)write are removed so nothing stale remains.
-
-    Returns a list of ``(path, n_series, n_points)`` for every page written.
+    Returns a list of ``(path, n_series, n_points)`` for every figure written.
     """
     if len(store.units) > 1:
         print(
@@ -830,41 +623,20 @@ def plot_all(store, output_path, max_points=DEFAULT_MAX_POINTS):
             file=sys.stderr,
         )
     unit = next(iter(store.units)) if len(store.units) == 1 else "s"
-    date_fmt = "%Y-%m-%d"
 
     by_build = defaultdict(list)
     for build, descr, label, points in store.series():
         by_build[build].append((descr, label, points))
 
     outputs = []
-    written = set()
     for build in sorted(by_build):
         series_list = sorted(by_build[build], key=lambda s: (s[0], s[1]))
         columns, plotted = build_commit_columns(series_list)
-        n = len(columns)
-        for start in range(0, n, max_points):
-            end = min(start + max_points, n)
-            is_current = end == n and (end - start) < max_points
-            cols_sub, plotted_sub = slice_page(columns, plotted, start, end)
-            span_start = cols_sub[0]["time"]
-            span_end = cols_sub[-1]["time"]
-            out = _page_output_path(
-                output_path, build, span_start, span_end, is_current
-            )
-            span_label = f"{span_start.strftime(date_fmt)} … " + (
-                "current" if is_current else span_end.strftime(date_fmt)
-            )
-            render_page(build, cols_sub, plotted_sub, unit, out, span_label)
-            n_points = sum(len(pts) for _, _, pts in plotted_sub)
-            outputs.append((out, len(plotted_sub), n_points))
-            written.add(out.resolve())
-
-    # Remove superseded "_current" pages (e.g. ones that have since filled up and
-    # been re-emitted under their final span name) that this run did not write.
-    base = Path(output_path)
-    for stale in base.parent.glob(f"{base.stem}*_current{base.suffix}"):
-        if stale.resolve() not in written:
-            stale.unlink()
+        fig = build_figure(build, columns, plotted, unit, window)
+        out = figure_path(output_path, build)
+        out.write_text(fig.to_json(), encoding="utf-8")
+        n_points = sum(len(pts) for _, _, pts in plotted)
+        outputs.append((out, len(plotted), n_points))
 
     return outputs
 
@@ -876,7 +648,7 @@ def main(argv=None):
     parser.add_argument(
         "-o",
         "--output",
-        help="Output SVG path.",
+        help="Output figure path (JSON); the build is appended to its stem.",
         required=True,
     )
     parser.add_argument(
@@ -894,15 +666,15 @@ def main(argv=None):
         "Plots that single log instead of the merged history.",
     )
     parser.add_argument(
-        "--max-points",
+        "--window",
         type=int,
-        default=DEFAULT_MAX_POINTS,
-        help="Commit columns (x-axis positions) per SVG page "
-        f"(default: {DEFAULT_MAX_POINTS}).",
+        default=DEFAULT_WINDOW,
+        help="Commit columns (x-axis positions) shown when a figure opens "
+        f"(default: {DEFAULT_WINDOW}).",
     )
     args = parser.parse_args(argv)
-    if args.max_points < 1:
-        parser.error("--max-points must be >= 1")
+    if args.window < 1:
+        parser.error("--window must be >= 1")
 
     log_paths, error = resolve_perflogs(args.prefix, args.log)
     if error is not None:
@@ -928,7 +700,7 @@ def main(argv=None):
 
     print(f"Merged {n_read} perflog(s) into the timeline.")
 
-    outputs = plot_all(store, Path(args.output), max_points=args.max_points)
+    outputs = plot_all(store, Path(args.output), window=args.window)
     for path, n_series, n_points in outputs:
         print(
             f"Wrote {path} ({n_series} metric series,"
