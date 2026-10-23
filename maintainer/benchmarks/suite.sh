@@ -22,7 +22,7 @@
 usage() {
     echo "Usage: $0 -p <prefix> [-n <test_names>] [--commit <ref>]" \
          "[--prebuilt-init <script> --prebuilt-module <name>]" \
-         "[-l] [--debug] [--dry-run]"
+         "[-l] [--debug] [--dry-run] [--rebuild-latest]"
     echo "  -p PREFIX       : Installation prefix for ReFrame benchmarks. Each run"
     echo "                    writes to its own <PREFIX>_dd_mm_yyyy_<n> directory"
     echo "                    (n counts the runs of that day); the timeline plot"
@@ -39,6 +39,11 @@ usage() {
     echo "  --debug         : On the ant cluster, run on the debug partition"
     echo "                    instead of the production compute nodes"
     echo "  --dry-run       : Optional flag to perform a dry run"
+    echo "  --rebuild-latest: Recreate <PREFIX>_latest/ from the existing run"
+    echo "                    directories without running any benchmark. Pass the"
+    echo "                    -p, --debug, --commit and --prebuilt-* flags of the"
+    echo "                    runs; --commit and --prebuilt-* only select their"
+    echo "                    history, their values are not checked"
     exit 1
 }
 
@@ -46,6 +51,7 @@ usage() {
 DRY_RUN=false
 LIST_MODE=false
 USE_DEBUG_PARTITION=false
+REBUILD_LATEST=false
 # Optional git ref (commit/tag/branch) to benchmark, empty = default branch.
 COMMIT_REF=""
 # Optional pre-built ESPResSo: script to source and module to load.
@@ -112,6 +118,10 @@ while [[ $# -gt 0 ]]; do
             DRY_RUN=true
             shift
             ;;
+        --rebuild-latest)
+            REBUILD_LATEST=true
+            shift
+            ;;
         *)
             echo "Unknown option: $1"
             usage
@@ -134,6 +144,14 @@ if [ -z "$PREFIX" ]; then
     exit 1
 fi
 
+# Only -r runs have a _latest directory, and nothing is run to filter
+if [ "$REBUILD_LATEST" = true ] &&
+   { [ "$LIST_MODE" = true ] || [ "$DRY_RUN" = true ] ||
+     [ "${#N_OPTS[@]}" -gt 0 ]; }; then
+    echo "Error: --rebuild-latest cannot be combined with -l, --dry-run or -n" >&2
+    exit 1
+fi
+
 # The two pre-built flags describe one installation and are useless apart.
 if { [ -n "$PREBUILT_INIT" ] && [ -z "$PREBUILT_MODULE" ]; } ||
    { [ -z "$PREBUILT_INIT" ] && [ -n "$PREBUILT_MODULE" ]; }; then
@@ -147,7 +165,7 @@ if [ -n "$PREBUILT_MODULE" ] && [ -n "$COMMIT_REF" ]; then
 fi
 
 # Catch mistyped refs now (pointless without a build)
-if [ -n "$COMMIT_REF" ]; then
+if [ -n "$COMMIT_REF" ] && [ "$REBUILD_LATEST" = false ]; then
     if git -C "$SCRIPT_DIR" rev-parse --verify --quiet \
             "${COMMIT_REF}^{commit}" >/dev/null 2>&1; then
         : # known to this clone
@@ -166,7 +184,7 @@ if [ -n "$COMMIT_REF" ]; then
 fi
 
 # Test the pre-built installation
-if [ -n "$PREBUILT_MODULE" ]; then
+if [ -n "$PREBUILT_MODULE" ] && [ "$REBUILD_LATEST" = false ]; then
     if ! bash -c 'source "$1" >/dev/null 2>&1 && module load "$2" >/dev/null 2>&1' \
             _ "$PREBUILT_INIT" "$PREBUILT_MODULE"; then
         echo "Error: could not activate the pre-built ESPResSo." \
@@ -207,7 +225,7 @@ else
 fi
 
 # Ensure ReFrame is available (e.g. the virtual environment is activated)
-if ! command -v reframe >/dev/null 2>&1; then
+if [ "$REBUILD_LATEST" = false ] && ! command -v reframe >/dev/null 2>&1; then
     echo "Error: 'reframe' not found. Activate the ReFrame virtual environment" \
          "before running this script." >&2
     exit 1
@@ -230,6 +248,94 @@ if [ -n "$COMMIT_REF" ]; then
 fi
 if [ -n "$PREBUILT_MODULE" ]; then
     RUN_SUFFIX="${RUN_SUFFIX}_PREBUILT"
+fi
+
+# Plot the history of all runs sharing PREFIX and RUN_SUFFIX and point
+# <PREFIX>_latest<RUN_SUFFIX> to the run in RUN_DIR.
+update_latest() {
+    shopt -s nullglob
+    perflogs=("${RUN_DIR}"/perflogs/*/*/EspressoBenchmark.log)
+    shopt -u nullglob
+
+    NO_PERFLOG=false
+    if [ "${#perflogs[@]}" -eq 0 ]; then
+        echo "Warning: no perflog found under ${RUN_DIR}/perflogs;" \
+             "plotting the history of the earlier runs only" >&2
+        NO_PERFLOG=true
+        PLOT_DIR="$RUN_DIR"
+    else
+        # A run directory holds a single log, written by its run.
+        PLOT_DIR="$(dirname "${perflogs[0]}")"
+        echo "Generating benchmark timeline from ${perflogs[0]}"
+    fi
+
+    # Plot the whole history of past runs with shared prefix
+    PREFIX_BASE_RE="$(python3 -c 'import re, sys; print(re.escape(sys.argv[1]))' \
+                      "$(basename "$PREFIX")")"
+    PLOT_PREFIX="$(dirname "$PREFIX")/${PREFIX_BASE_RE}_[0-9]{2}_[0-9]{2}_[0-9]{4}_[0-9]+${RUN_SUFFIX}"
+
+    python3 "${SCRIPT_DIR}/plot_benchmarks.py" \
+        --prefix "$PLOT_PREFIX" \
+        -o "${PLOT_DIR}/EspressoBenchmark.svg" \
+        || { echo "Error: benchmark timeline plot failed" >&2; exit 1; }
+
+    # <PREFIX>_latest contains links to the newest run, its
+    # perflog and plots and the history page of all runs.
+    LATEST_DIR="${PREFIX}_latest${RUN_SUFFIX}"
+    mkdir -p "$LATEST_DIR" || exit 1
+    # Drop the previous run's links (symlinks only; the page is a regular file)
+    find "$LATEST_DIR" -maxdepth 1 -type l -delete
+    RUN_NAME="$(basename "$RUN_DIR")"
+    ln -s "../${RUN_NAME}" "${LATEST_DIR}/run"
+    if [ "$NO_PERFLOG" = false ]; then
+        REL_PLOT_DIR="../${RUN_NAME}/${PLOT_DIR#"${RUN_DIR}/"}"
+        ln -s "${REL_PLOT_DIR}/EspressoBenchmark.log" "${LATEST_DIR}/"
+        shopt -s nullglob
+        for svg in "$PLOT_DIR"/*.svg; do
+            ln -s "${REL_PLOT_DIR}/$(basename "$svg")" "${LATEST_DIR}/"
+        done
+        shopt -u nullglob
+    fi
+
+    # Embed the timeline SVGs linked above
+    python3 "${SCRIPT_DIR}/benchmark_history.py" \
+        --prefix "$PLOT_PREFIX" \
+        -o "${LATEST_DIR}/benchmark_history.html" \
+        --svg-dir "$LATEST_DIR" \
+        || echo "Warning: benchmark history page failed" >&2
+
+    if [ "$NO_PERFLOG" = true ]; then
+        echo "Error: this run produced no benchmark results" >&2
+        exit 1
+    fi
+}
+
+if [ "$REBUILD_LATEST" = true ]; then
+    # Link the newest run with a perflog; the names sort by date, then index.
+    RUN_DIR=""
+    newest_key=""
+    shopt -s nullglob
+    for dir in "${PREFIX}"_*/; do
+        dir="${dir%/}"
+        [[ "${dir#"${PREFIX}_"}" =~ ^([0-9]{2})_([0-9]{2})_([0-9]{4})_([0-9]+)${RUN_SUFFIX}$ ]] \
+            || continue
+        logs=("$dir"/perflogs/*/*/EspressoBenchmark.log)
+        [ "${#logs[@]}" -gt 0 ] || continue
+        key="${BASH_REMATCH[3]}${BASH_REMATCH[2]}${BASH_REMATCH[1]}$(printf '%010d' "$((10#${BASH_REMATCH[4]}))")"
+        if [[ -z "$newest_key" || "$key" > "$newest_key" ]]; then
+            newest_key="$key"
+            RUN_DIR="$dir"
+        fi
+    done
+    shopt -u nullglob
+    if [ -z "$RUN_DIR" ]; then
+        echo "Error: no ${PREFIX}_dd_mm_yyyy_<n>${RUN_SUFFIX} directory" \
+             "with a perflog found" >&2
+        exit 1
+    fi
+    echo "Rebuilding ${PREFIX}_latest${RUN_SUFFIX} for ${RUN_DIR}"
+    update_latest
+    exit 0
 fi
 
 mkdir -p "$(dirname "$PREFIX")" || exit 1
@@ -293,63 +399,8 @@ if [ "$reframe_status" -gt 1 ]; then
     exit "$reframe_status"
 fi
 
-
 if [ "$RUN_OPTION" = "-r" ]; then
-    shopt -s nullglob
-    perflogs=("${RUN_DIR}"/perflogs/*/*/EspressoBenchmark.log)
-    shopt -u nullglob
-
-    NO_PERFLOG=false
-    if [ "${#perflogs[@]}" -eq 0 ]; then
-        echo "Warning: no perflog found under ${RUN_DIR}/perflogs;" \
-             "plotting the history of the earlier runs only" >&2
-        NO_PERFLOG=true
-        PLOT_DIR="$RUN_DIR"
-    else
-        # A fresh run directory holds a single log, written by this run.
-        PLOT_DIR="$(dirname "${perflogs[0]}")"
-        echo "Generating benchmark timeline from ${perflogs[0]}"
-    fi
-
-    # Plot the whole history of past runs with shared prefix
-    PREFIX_BASE_RE="$(python3 -c 'import re, sys; print(re.escape(sys.argv[1]))' \
-                      "$(basename "$PREFIX")")"
-    PLOT_PREFIX="$(dirname "$PREFIX")/${PREFIX_BASE_RE}_[0-9]{2}_[0-9]{2}_[0-9]{4}_[0-9]+${RUN_SUFFIX}"
-
-    python3 "${SCRIPT_DIR}/plot_benchmarks.py" \
-        --prefix "$PLOT_PREFIX" \
-        -o "${PLOT_DIR}/EspressoBenchmark.svg" \
-        || { echo "Error: benchmark timeline plot failed" >&2; exit 1; }
-
-    # <PREFIX>_latest contains links to the newest run, its
-    # perflog and plots and the history page of all runs.
-    LATEST_DIR="${PREFIX}_latest${RUN_SUFFIX}"
-    mkdir -p "$LATEST_DIR" || exit 1
-    # Drop the previous run's links (symlinks only; the page is a regular file)
-    find "$LATEST_DIR" -maxdepth 1 -type l -delete
-    RUN_NAME="$(basename "$RUN_DIR")"
-    ln -s "../${RUN_NAME}" "${LATEST_DIR}/run"
-    if [ "$NO_PERFLOG" = false ]; then
-        REL_PLOT_DIR="../${RUN_NAME}/${PLOT_DIR#"${RUN_DIR}/"}"
-        ln -s "${REL_PLOT_DIR}/EspressoBenchmark.log" "${LATEST_DIR}/"
-        shopt -s nullglob
-        for svg in "$PLOT_DIR"/*.svg; do
-            ln -s "${REL_PLOT_DIR}/$(basename "$svg")" "${LATEST_DIR}/"
-        done
-        shopt -u nullglob
-    fi
-
-    # Embed the timeline SVGs linked above
-    python3 "${SCRIPT_DIR}/benchmark_history.py" \
-        --prefix "$PLOT_PREFIX" \
-        -o "${LATEST_DIR}/benchmark_history.html" \
-        --svg-dir "$LATEST_DIR" \
-        || echo "Warning: benchmark history page failed" >&2
-
-    if [ "$NO_PERFLOG" = true ]; then
-        echo "Error: this run produced no benchmark results" >&2
-        exit 1
-    fi
+    update_latest
 fi
 
 if [ "$reframe_status" -ne 0 ]; then
