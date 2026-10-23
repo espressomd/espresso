@@ -118,9 +118,7 @@ def find_run_dirs(pattern):
     try:
         regex = re.compile(name_pattern)
     except re.error as exc:
-        return None, (
-            f"Invalid --prefix regular expression {name_pattern!r}: {exc}"
-        )
+        return None, (f"Invalid --prefix regular expression {name_pattern!r}: {exc}")
     try:
         entries = list(parent.iterdir())
     except OSError as exc:
@@ -693,7 +691,7 @@ def render_page(build, columns, plotted, unit, output_path, span_label=None):
             hit_id += 1
             # Pass an explicit colour so this invisible artist does not consume
             # the property cycle and shift the visible series' colours.
-            marker, = ax.plot(
+            (marker,) = ax.plot(
                 [p["x"]],
                 [p["mean"]],
                 marker="o",
@@ -732,7 +730,9 @@ def render_page(build, columns, plotted, unit, output_path, span_label=None):
     # is shown in the hover tooltip).
     ax.set_xticks(range(len(columns)))
     ax.set_xticklabels(
-        [format_tick_label(c) for c in columns], rotation=30, ha="right",
+        [format_tick_label(c) for c in columns],
+        rotation=30,
+        ha="right",
         fontsize="small",
     )
     # Pad the x-range so single-column plots and edge markers are not clipped.
@@ -930,8 +930,10 @@ def main(argv=None):
 
     outputs = plot_all(store, Path(args.output), max_points=args.max_points)
     for path, n_series, n_points in outputs:
-        print(f"Wrote {path} ({n_series} metric series, {
-              n_points} data point(s)).")
+        print(
+            f"Wrote {path} ({n_series} metric series,"
+            f" {n_points} data point(s))."
+        )
     return 0
 
 
