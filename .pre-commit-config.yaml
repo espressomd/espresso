@@ -43,6 +43,7 @@ repos:
         entry: sh maintainer/lint/pylint.sh
         language: system
         always_run: false
+        exclude: '\.pylintrc'
         files: '.*\.py'
         args: ["--score=no", "--reports=no", "--output-format=text"]
         log_file: pylint.log
