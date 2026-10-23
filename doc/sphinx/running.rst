@@ -1290,7 +1290,7 @@ Pass option ``--native`` to capture C++ function names; to get accurate traces
 with minimal overhead, build |es| with
 ``-D CMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer" -D CMAKE_BUILD_TYPE=Release``.
 
-To record samples in a format that can be analyzed by AI agents, run::
+To record samples in a format that can be analyzed by AI agents, run:
 
 .. code-block:: bash
 

@@ -38,7 +38,6 @@
 #include "communication.hpp"
 #include "energy_inline.hpp"
 #include "integrate.hpp"
-#include "particle_node.hpp"
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>

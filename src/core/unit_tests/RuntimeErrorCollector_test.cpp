@@ -117,6 +117,19 @@ BOOST_AUTO_TEST_CASE(gather) {
   BOOST_REQUIRE_EQUAL(rec.count(), 0);
 }
 
+BOOST_AUTO_TEST_CASE(dtor) {
+  boost::mpi::communicator world;
+  auto rec = std::make_unique<RuntimeErrorCollector>(world);
+  auto const rank_of_error = world.size() - 1;
+  if (world.rank() == rank_of_error) {
+    rec->error("unhandled_error", "Test_functions", "Test_file", world.rank());
+  }
+  world.barrier();
+  BOOST_REQUIRE_EQUAL(rec->count(), 1);
+  world.barrier();
+  rec.reset();
+}
+
 int main(int argc, char **argv) {
   boost::mpi::environment mpi_env(argc, argv);
 

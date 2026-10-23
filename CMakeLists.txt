@@ -1109,6 +1109,12 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=code_is_unreachable>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=cast_to_qualified_type>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=set_but_not_used>)
+    if(CMAKE_BUILD_TYPE MATCHES "^Release$|^RelWith|^MinSizeRel$")
+      # reduce build time and RAM usage of one source file with 50k lines
+      set_source_files_properties(
+        ${walberla_SOURCE_DIR}/src/core/math/Parser.cpp TARGET_DIRECTORY
+        walberla_core PROPERTIES COMPILE_OPTIONS "-O2")
+    endif()
   endif()
   add_library(espresso_walberla_deps INTERFACE)
   add_library(espresso::walberla_deps ALIAS espresso_walberla_deps)
