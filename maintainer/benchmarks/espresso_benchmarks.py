@@ -364,6 +364,8 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
         """
         Check that the job really ran on the requested number of ranks.
         """
+        if not os.path.isfile(self.benchmark_file_path):
+            return False  # reported by the sanity check
         with open(self.benchmark_file_path) as f:
             rows = list(csv.DictReader(f))
 
@@ -381,7 +383,11 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
         return sn.and_(
             sn.and_(
                 sn.assert_not_found(r"(?i)error", self.stderr),
-                sn.path_isfile(self.benchmark_file_path),
+                sn.assert_true(
+                    sn.path_isfile(self.benchmark_file_path),
+                    msg="benchmarks.csv was not written; the benchmark "
+                    "script did not finish (see the job's stdout/stderr)",
+                ),
             ),
             sn.assert_true(
                 self._csv_ranks_match(),
@@ -416,9 +422,12 @@ class EspressoBenchmark(rfm.RunOnlyRegressionTest):
             return
 
         perf_vars = {}
-        csv_path = f"{self.stagedir}/benchmarks.csv"
+        # Without the file the sanity check fails and explains why;
+        # raising here would hide that message.
+        if not os.path.isfile(self.benchmark_file_path):
+            return
 
-        with open(csv_path) as f:
+        with open(self.benchmark_file_path) as f:
             reader = csv.DictReader(f)
             rows = list(reader)
 

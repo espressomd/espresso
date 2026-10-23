@@ -275,7 +275,6 @@ reframe -C reframe_config.py \
         --performance-report \
         $RUN_OPTION
 
-# Stop if ReFrame failed, so we do not plot from a missing/stale perflog.
 reframe_status=$?
 
 # Remove leftover espresso builds in stage dir. Execute only when 
@@ -288,7 +287,8 @@ fi
 python3 "${SCRIPT_DIR}/clean_stage.py" "${CLEAN_OPTS[@]}" "$RUN_DIR" \
     || echo "Warning: stage cleanup reported problems (see above)" >&2
 
-if [ "$reframe_status" -ne 0 ]; then
+# Status 1 means some tests failed while the perflog of the others is complete.
+if [ "$reframe_status" -gt 1 ]; then
     echo "ReFrame exited with status ${reframe_status}; skipping plot generation." >&2
     exit "$reframe_status"
 fi
@@ -339,13 +339,20 @@ if [ "$RUN_OPTION" = "-r" ]; then
         shopt -u nullglob
     fi
 
+    # Embed the timeline SVGs linked above
     python3 "${SCRIPT_DIR}/benchmark_history.py" \
         --prefix "$PLOT_PREFIX" \
         -o "${LATEST_DIR}/benchmark_history.html" \
+        --svg-dir "$LATEST_DIR" \
         || echo "Warning: benchmark history page failed" >&2
 
     if [ "$NO_PERFLOG" = true ]; then
         echo "Error: this run produced no benchmark results" >&2
         exit 1
     fi
+fi
+
+if [ "$reframe_status" -ne 0 ]; then
+    echo "Error: some ReFrame tests failed (see above)" >&2
+    exit "$reframe_status"
 fi

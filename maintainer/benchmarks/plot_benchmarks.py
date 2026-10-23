@@ -789,6 +789,29 @@ def _page_output_path(base, build, start_dt, end_dt, is_current):
     return base.with_name(f"{stem}_{start}_{end}{base.suffix}")
 
 
+# Trailing ``_<start>_<end|current>`` of a page filename; build names may
+# contain underscores, so the build token is whatever precedes it.
+_PAGE_SPAN_RE = re.compile(
+    r"(?:_(?P<build>.+))?_(?P<start>\d{4}-\d{2}-\d{2})"
+    r"_(?P<end>\d{4}-\d{2}-\d{2}|current)"
+)
+
+
+def parse_page_name(path, stem):
+    """Inverse of ``_page_output_path``: ``(build, start, end)`` of a page.
+
+    ``build`` is ``"unknown"`` if the name has no build token and ``end`` is
+    ``"current"`` for the trailing page. Returns ``None`` for other files.
+    """
+    path = Path(path)
+    if not path.stem.startswith(stem):
+        return None
+    match = _PAGE_SPAN_RE.fullmatch(path.stem[len(stem):])
+    if match is None:
+        return None
+    return match["build"] or "unknown", match["start"], match["end"]
+
+
 def plot_all(store, output_path, max_points=DEFAULT_MAX_POINTS):
     """Render paginated interactive SVGs: one per build, chunked into pages of
     ``max_points`` commit columns.

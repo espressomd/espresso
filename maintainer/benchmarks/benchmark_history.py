@@ -29,8 +29,16 @@ as a new table; tables already on the page are never rewritten, so calling the
 script twice with the same runs leaves the page unchanged. The first call
 against an existing history adds every earlier run.
 
+With ``--svg-dir``, the page also shows the timeline SVGs that
+plot_benchmarks.py wrote to that directory: one section per build that lists
+its pages newest first, each collapsed until clicked. The SVGs are
+referenced, not copied, so they must stay next to the page. Unlike the run
+tables, this section is rebuilt on every call, since the set of SVGs changes
+from run to run. Without ``--svg-dir`` the section is left as it is.
+
 Usage:
     python3 benchmark_history.py --prefix PREFIX_REGEX -o OUTPUT.html
+                                 [--svg-dir DIR [--svg-stem STEM]]
 """
 
 import argparse
@@ -39,12 +47,14 @@ import html
 import os
 import re
 import sys
+import urllib.parse
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable, TypedDict, cast
 
 from plot_benchmarks import (
+    parse_page_name,
     parse_timestamp,
     resolve_perflogs,
     shorten_label,
@@ -54,6 +64,9 @@ from plot_benchmarks import (
 
 # New run tables are inserted right after this marker.
 RUNS_MARKER = "<!-- RUNS -->"
+# The plot section lies between these markers and is rebuilt on every call.
+PLOTS_START = "<!-- PLOTS -->"
+PLOTS_END = "<!-- /PLOTS -->"
 RUN_ID_RE = re.compile(r'<details class="run" id="run-([^"]+)"')
 UPDATED_RE = re.compile(r"(<p class=\"updated\">Last updated: )[^<]*(</p>)")
 
@@ -103,6 +116,12 @@ th[scope="row"] {{ background: none; font-weight: normal; }}
 summary:focus-visible, .table-wrap:focus-visible {{
     outline: 3px solid #1a5fb4; outline-offset: 2px; }}
 .table-wrap {{ overflow-x: auto; }}
+h2 {{ font-size: 1.15em; }}
+object.plot {{ display: block; width: 100%; height: auto; }}
+details.plot {{ border: 1px solid #ccc; border-radius: 4px;
+               margin: 0.4em 0; padding: 0.3em 0.6em; }}
+details.plot > summary {{ cursor: pointer; }}
+details.plot[open] > summary {{ margin-bottom: 0.5em; }}
 /* Read by screen readers, not shown on screen. */
 .visually-hidden {{ position: absolute; width: 1px; height: 1px;
                     margin: -1px; padding: 0; overflow: hidden;
@@ -116,6 +135,8 @@ summary:focus-visible, .table-wrap:focus-visible {{
 <p>Every entry corresponds to one benchmark run. Each entry is collapsed;
 activate it (click, or Enter/Space on the focused entry) to show the
 results table of that run.</p>
+{plots_start}
+{plots_end}
 {marker}
 </main>
 </body>
@@ -287,6 +308,89 @@ def render_run(name: str, run: RunSummary) -> str:
     )
 
 
+class PlotPage(TypedDict):
+    """One timeline SVG written by plot_benchmarks.py."""
+    path: Path
+    start: str
+    end: str
+    # Width and height of the SVG, to scale it without distortion.
+    size: tuple[float, float] | None
+
+
+SVG_SIZE_RE = re.compile(
+    r'<svg\b[^>]*?\swidth="([\d.]+)pt"[^>]*?\sheight="([\d.]+)pt"')
+
+
+def svg_size(path: Path) -> tuple[float, float] | None:
+    """Width and height (in pt) of a matplotlib SVG, if they can be read."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            head = f.read(4096)
+    except (OSError, UnicodeDecodeError):
+        return None
+    match = SVG_SIZE_RE.search(head)
+    if match is None:
+        return None
+    return float(match[1]), float(match[2])
+
+
+def collect_plots(svg_dir: Path, stem: str) -> dict[str, list[PlotPage]]:
+    """Group the timeline SVGs in ``svg_dir`` by build, newest page first."""
+    by_build: defaultdict[str, list[PlotPage]] = defaultdict(list)
+    for path in svg_dir.glob(f"{stem}*.svg"):
+        parsed = parse_page_name(path, stem)
+        if parsed is None:
+            continue
+        build, start, end = parsed
+        by_build[build].append({"path": path, "start": start, "end": end,
+                                "size": svg_size(path)})
+    for pages in by_build.values():
+        pages.sort(key=lambda p: (p["start"], p["end"] == "current"),
+                   reverse=True)
+    return dict(sorted(by_build.items()))
+
+
+def render_plot(page: PlotPage, build: str, html_dir: Path) -> str:
+    """Embed one SVG in a collapsed ``<details>`` block.
+
+    ``<object>`` (unlike ``<img>``) keeps the tooltips of the SVG.
+    """
+    esc = html.escape
+    href = urllib.parse.quote(
+        Path(os.path.relpath(page["path"], html_dir)).as_posix())
+    span = f"{page['start']} to {page['end']}"
+    style = ""
+    if page["size"] is not None:
+        width, height = page["size"]
+        style = (f' style="max-width: {width:g}pt; '
+                 f'aspect-ratio: {width:g} / {height:g}"')
+    return (
+        '<details class="plot">\n'
+        f"<summary>{span}</summary>\n"
+        f'<object class="plot" type="image/svg+xml" data="{esc(href)}"'
+        f'{style} aria-label="Timeline of build {esc(build)}, {span}">'
+        # Shown where the SVG cannot be displayed.
+        f'<a href="{esc(href)}">Timeline of build {esc(build)}, {span} '
+        "(SVG)</a></object>\n"
+        "</details>\n"
+    )
+
+
+def render_plots(plots: dict[str, list[PlotPage]], html_dir: Path) -> str:
+    """Render the plot section: per build, its pages newest first."""
+    esc = html.escape
+    sections: list[str] = []
+    for build, pages in plots.items():
+        heading_id = f"plots-{esc(build)}"
+        sections.append(
+            f'<section class="plots" aria-labelledby="{heading_id}">\n'
+            f'<h2 id="{heading_id}">Timeline of build {esc(build)}</h2>\n'
+            + "".join(render_plot(page, build, html_dir) for page in pages)
+            + "</section>\n"
+        )
+    return "".join(sections)
+
+
 def load_page(path: Path) -> str:
     """Return the existing page, or a fresh skeleton if there is none."""
     if path.is_file():
@@ -294,7 +398,8 @@ def load_page(path: Path) -> str:
         if RUNS_MARKER not in page:
             raise ValueError(f"{path} lacks the {RUNS_MARKER!r} marker")
         return page
-    return PAGE_TEMPLATE.format(updated="", marker=RUNS_MARKER)
+    return PAGE_TEMPLATE.format(updated="", marker=RUNS_MARKER,
+                                plots_start=PLOTS_START, plots_end=PLOTS_END)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -309,6 +414,17 @@ def main(argv: list[str] | None = None) -> int:
         help="Run directories to include, as a regular expression with the "
         "same meaning as in plot_benchmarks.py.",
     )
+    parser.add_argument(
+        "--svg-dir",
+        help="Embed the timeline SVGs of this directory (the output "
+        "directory of plot_benchmarks.py) in the page.",
+    )
+    parser.add_argument(
+        "--svg-stem",
+        default="EspressoBenchmark",
+        help="Filename stem of the SVGs, i.e. the stem of the -o path given "
+        "to plot_benchmarks.py (default: %(default)s).",
+    )
     args = parser.parse_args(argv)
     output = Path(args.output)
 
@@ -319,6 +435,10 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         page = load_page(output)
+        if args.svg_dir is not None and not (
+                PLOTS_START in page and PLOTS_END in page):
+            raise ValueError(f"page lacks the {PLOTS_START!r} and "
+                             f"{PLOTS_END!r} markers")
     except (OSError, ValueError) as exc:
         print(f"Error: cannot read {output}: {exc}", file=sys.stderr)
         return 1
@@ -338,23 +458,38 @@ def main(argv: list[str] | None = None) -> int:
             continue
         new_runs.append((run_dir.name, run))
 
-    if not new_runs:
+    if args.svg_dir is not None:
+        plots = collect_plots(Path(args.svg_dir), args.svg_stem)
+        if not plots:
+            print(f"No timeline SVGs in {args.svg_dir}.", file=sys.stderr)
+        head, rest = page.split(PLOTS_START, 1)
+        _, tail = rest.split(PLOTS_END, 1)
+        page = (head + PLOTS_START + "\n"
+                + render_plots(plots, output.parent) + PLOTS_END + tail)
+        print(f"Embedded {sum(map(len, plots.values()))} timeline SVG(s) "
+              f"in {output}.")
+    elif not new_runs:
         print(f"No new runs to add to {output}.")
         return 0 if output.is_file() else 1
 
-    new_runs.sort(key=lambda item: (item[1]["time"] or datetime.min, item[0]),
-                  reverse=True)
-    blocks = "".join(render_run(name, run) for name, run in new_runs)
-    page = page.replace(RUNS_MARKER, RUNS_MARKER +
-                        "\n" + blocks.rstrip("\n"), 1)
+    if new_runs:
+        new_runs.sort(
+            key=lambda item: (item[1]["time"] or datetime.min, item[0]),
+            reverse=True)
+        blocks = "".join(render_run(name, run) for name, run in new_runs)
+        page = page.replace(RUNS_MARKER, RUNS_MARKER +
+                            "\n" + blocks.rstrip("\n"), 1)
     updated = datetime.now().strftime("%Y-%m-%d %H:%M")
     page = UPDATED_RE.sub(lambda m: m.group(1) + updated + m.group(2), page, 1)
 
     tmp = output.with_name(output.name + ".tmp")
     tmp.write_text(page, encoding="utf-8")
     os.replace(tmp, output)
-    print(f"Added {len(new_runs)} run(s) to {output}: "
-          + ", ".join(name for name, _ in new_runs))
+    if new_runs:
+        print(f"Added {len(new_runs)} run(s) to {output}: "
+              + ", ".join(name for name, _ in new_runs))
+    else:
+        print(f"No new runs to add to {output}.")
     return 0
 
 
