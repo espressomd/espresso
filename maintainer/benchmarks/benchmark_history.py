@@ -104,6 +104,7 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 body {{ font-family: system-ui, sans-serif; margin: 1.5em; color: #222;
        background: #fff; }}
 h1 {{ font-size: 1.4em; }}
+h2 {{ font-size: 1.15em; }}
 .updated {{ color: #666; }}
 details.run {{ border: 1px solid #ccc; border-radius: 4px;
               margin: 0.4em 0; padding: 0.3em 0.6em; }}
@@ -118,6 +119,11 @@ th[scope="row"] {{ background: none; font-weight: normal; }}
 summary:focus-visible, .table-wrap:focus-visible {{
     outline: 3px solid #1a5fb4; outline-offset: 2px; }}
 .table-wrap {{ overflow-x: auto; }}
+details.plot {{ border: 1px solid #ccc; border-radius: 4px;
+               margin: 0.4em 0; padding: 0.3em 0.6em; }}
+details.plot > summary {{ cursor: pointer; }}
+details.plot[open] > summary {{ margin-bottom: 0.5em; }}
+.plotly-fig {{ width: 100%; height: 650px; }}
 /* Read by screen readers, not shown on screen. */
 .visually-hidden {{ position: absolute; width: 1px; height: 1px;
                     margin: -1px; padding: 0; overflow: hidden;
@@ -128,11 +134,12 @@ summary:focus-visible, .table-wrap:focus-visible {{
 <main>
 <h1>ESPResSo benchmark history</h1>
 <p class="updated">Last updated: {updated}</p>
+{plots_start}
+{plots_end}
+<h2 id="runs-heading">Performance logs</h2>
 <p>Every entry corresponds to one benchmark run. Each entry is collapsed;
 activate it (click, or Enter/Space on the focused entry) to show the
 results table of that run.</p>
-{plots_start}
-{plots_end}
 {marker}
 </main>
 </body>
@@ -304,18 +311,6 @@ def render_run(name: str, run: RunSummary) -> str:
     )
 
 
-# Styles of the plot section. They live in the section rather than in the page
-# head, so pages written before a change pick them up when it is rebuilt.
-PLOTS_STYLE = """<style>
-h2 { font-size: 1.15em; }
-details.plot { border: 1px solid #ccc; border-radius: 4px;
-               margin: 0.4em 0; padding: 0.3em 0.6em; }
-details.plot > summary { cursor: pointer; }
-details.plot[open] > summary { margin-bottom: 0.5em; }
-.plotly-fig { width: 100%; height: 650px; }
-</style>
-"""
-
 # Draws a figure when its <details> block is first expanded: Plotly cannot size
 # a figure inside a collapsed block.
 PLOTS_SCRIPT = """<script>
@@ -401,8 +396,7 @@ def render_figure(build: str, path: Path, is_open: bool) -> str:
 def render_plots(figures: dict[str, Path], plotlyjs: str) -> str:
     """Render the plot section: plotly.js, then one figure per build."""
     return (
-        PLOTS_STYLE
-        + f'<script src="{html.escape(plotlyjs)}"></script>\n'
+        f'<script src="{html.escape(plotlyjs)}"></script>\n'
         + "".join(render_figure(build, path, i == 0)
                   for i, (build, path) in enumerate(figures.items()))
         + PLOTS_SCRIPT
