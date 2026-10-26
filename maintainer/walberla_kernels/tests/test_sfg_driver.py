@@ -199,6 +199,87 @@ class GenerateSweepTest(unittest.TestCase):
         self.assertNotIn("block_offset_0", header)
 
 
+class GenerateSparseSweepTest(unittest.TestCase):
+
+    def generate(self, target, **kwargs):
+        """Files of a toy sparse sweep ``Toy`` that increments a field in the
+        cells of its index list."""
+        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
+        ctx = sfg_driver.CodegenContext("double", target)
+        f = ps.Field.create_generic(
+            "f", 3, ctx.data_type, index_dimensions=0, layout="fzyx",
+            field_type=ps.FieldType.CUSTOM)
+        index_list = sfg_driver.index_list_field()
+        cell = tuple(index_list[0](c) for c in "xyz")
+        target_cell = f.absolute_access(cell, ())
+        assignments = [ps.Assignment(
+            target_cell, target_cell + sp.Symbol("alpha"))]
+        with sfg_driver.KernelFileGenerator(
+                "Toy", ctx, tmp, "test.py") as sfg:
+            sfg_driver.generate_sweep(
+                sfg, "Toy", assignments, **{"sparse": True, **kwargs})
+        return {p.name: p.read_text() for p in tmp.iterdir()}
+
+    def test_index_list_field(self):
+        field = sfg_driver.index_list_field()
+        self.assertEqual(field.name, "indexList")
+        self.assertEqual(field.field_type, ps.FieldType.INDEXED)
+        self.assertEqual(field.dtype.name, "walberla::v8::sweep::CellIdx")
+        self.assertEqual([m.name for m in field.dtype.members],
+                         ["x", "y", "z"])
+
+    def test_constructor_takes_the_index_list(self):
+        header = self.generate("cpu")["Toy.h"]
+        self.assertEqual(header.count("class Toy {"), 1)
+        self.assertIn("walberla::v8::sweep::SparseIndexList", header)
+        self.assertRegex(
+            header, r"Toy \(walberla::BlockDataID fId, "
+            r"walberla::v8::sweep::SparseIndexList< .* > indexList, "
+            r"double alpha\)")
+        self.assertIn("void operator()(walberla::IBlock * block)", header)
+        self.assertNotIn("runOnCellInterval", header)
+
+    def test_cpu_kernel_loops_over_the_index_list(self):
+        source = self.generate("cpu")["Toy.cpp"]
+        self.assertIn("sparse_idx", source)
+        self.assertIn("#pragma omp", source)
+        self.assertNotIn("__global__", source)
+
+    def test_cuda_kernel(self):
+        files = self.generate("cuda")
+        self.assertEqual(sorted(files), ["Toy.cu", "Toy.h"])
+        self.assertIn("__global__", files["Toy.cu"])
+        self.assertNotIn("runOnCellInterval", files["Toy.h"])
+
+    def test_gen_config_of_the_caller_is_not_modified(self):
+        config = ps.CreateKernelConfig()
+        self.assertIn("Toy.h", self.generate("cpu", gen_config=config))
+        self.assertIsNone(config.index_field)
+        self.assertFalse(config.skip_independence_check)
+
+    def test_sparse_configuration_of_the_caller(self):
+        # a configuration with an index field makes a sweep sparse, which
+        # must be requested explicitly
+        config = ps.CreateKernelConfig()
+        config.index_field = sfg_driver.index_list_field()
+        config.skip_independence_check = True
+        with self.assertRaisesRegex(ValueError, "is sparse"):
+            self.generate("cpu", gen_config=config, sparse=False)
+        self.assertIn("Toy.h", self.generate("cpu", gen_config=config))
+
+    def test_dense_sweep_is_not_sparse(self):
+        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        f, g = ps.fields(f"f, g: {ctx.data_type.c_string()}[3D]")
+        with sfg_driver.KernelFileGenerator(
+                "Toy", ctx, tmp, "test.py") as sfg:
+            sfg_driver.generate_sweep(
+                sfg, "Toy", [ps.Assignment(g.center, f.center)])
+        header = (tmp / "Toy.h").read_text()
+        self.assertNotIn("SparseIndexList", header)
+        self.assertIn("runOnCellInterval", header)
+
+
 class PatchKernelSourceTest(unittest.TestCase):
 
     def test_rng_namespace_is_global(self):
@@ -218,6 +299,12 @@ class PatchKernelSourceTest(unittest.TestCase):
             "x = std::sqrt(2.0f) + std::fmin(a, std::fmax(b, c)) + sqrtf(d) "
             "+ std::sqrt(e);")
 
+    def test_pow_is_qualified(self):
+        source = "x = pow(a, 2.0f) + powf(b, c) + std::pow(d, e) + x.pow(f);"
+        self.assertEqual(
+            sfg_driver.patch_kernel_source(source),
+            "x = std::pow(a, 2.0f) + powf(b, c) + std::pow(d, e) + x.pow(f);")
+
     def test_simd_rng_key_type(self):
         source = "::pystencils::runtime::x86::random::philox_float64(c, k)"
         self.assertEqual(
@@ -228,7 +315,8 @@ class PatchKernelSourceTest(unittest.TestCase):
         source = ("auto r = pystencils::runtime::random::philox_float64(x);\n"
                   "auto s = ::pystencils::runtime::random::philox_float32(y);\n"
                   "auto k = ::x86::random::philox_float32(a, b);\n"
-                  "auto m = sqrt(x) + fmin(a, b) + fmax(a, b) + std::sqrt(x);")
+                  "auto m = sqrt(x) + fmin(a, b) + fmax(a, b) + pow(a, b) "
+                  "+ std::sqrt(x);")
         patched = sfg_driver.patch_kernel_source(source)
         self.assertEqual(sfg_driver.patch_kernel_source(patched), patched)
 
