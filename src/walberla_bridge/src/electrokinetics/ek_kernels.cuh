@@ -36,8 +36,8 @@
 #include "generated_kernels/FrictionCouplingKernel_double_precision_CUDA.h"
 #include "generated_kernels/FrictionCouplingKernel_single_precision_CUDA.h"
 
-#include "generated_kernels/Dirichlet_double_precision_CUDA.h"
-#include "generated_kernels/Dirichlet_single_precision_CUDA.h"
+#include "generated_kernels/DirichletDoublePrecisionCUDA.h"
+#include "generated_kernels/DirichletSinglePrecisionCUDA.h"
 #include "generated_kernels/FixedFlux_double_precision_CUDA.h"
 #include "generated_kernels/FixedFlux_single_precision_CUDA.h"
 
@@ -61,7 +61,7 @@ template <> struct KernelTrait<double, Arch::GPU> {
   using DiffusiveFluxKernelElectrostaticThermalized = pystencils::
       DiffusiveFluxKernelWithElectrostaticThermalized_double_precision_CUDA;
 
-  using Dirichlet = pystencils::Dirichlet_double_precision_CUDA;
+  using Dirichlet = ek::DirichletDoublePrecisionCUDA;
   using FixedFlux = pystencils::FixedFlux_double_precision_CUDA;
 };
 template <> struct KernelTrait<float, Arch::GPU> {
@@ -79,7 +79,7 @@ template <> struct KernelTrait<float, Arch::GPU> {
   using DiffusiveFluxKernelElectrostaticThermalized = pystencils::
       DiffusiveFluxKernelWithElectrostaticThermalized_single_precision_CUDA;
 
-  using Dirichlet = pystencils::Dirichlet_single_precision_CUDA;
+  using Dirichlet = ek::DirichletSinglePrecisionCUDA;
   using FixedFlux = pystencils::FixedFlux_single_precision_CUDA;
 };
 } // namespace detail
