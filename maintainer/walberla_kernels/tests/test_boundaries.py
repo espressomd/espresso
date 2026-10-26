@@ -110,6 +110,21 @@ class StructTypesTest(unittest.TestCase):
         self.assertEqual(force_field.dtype.name,
                          "walberla::lbm::NameForceStruct")
 
+    def test_link_index_field(self):
+        index_field = boundaries.link_index_field(
+            "Name", [("value", ps.create_type("float32"))],
+            boundaries.EK_NAMESPACE)
+        self.assertEqual(index_field.name, "indexVector")
+        self.assertEqual(index_field.field_type, FieldType.INDEXED)
+        self.assertEqual(index_field.dtype.name,
+                         "walberla::ek::NameIndexInfo")
+        self.assertEqual([m.name for m in index_field.dtype.members],
+                         ["x", "y", "z", "dir", "value"])
+        # the namespace of the LB boundaries is the default
+        self.assertEqual(
+            boundaries.link_index_field("Name", []).dtype.name,
+            "walberla::lbm::NameIndexInfo")
+
     def test_offsets_table(self):
         table = boundaries._offsets_table([(0, 0), (1, 0), (-1, 1)])
         self.assertEqual(table, "{0, 1, -1},\n{0, 0, 1}")
@@ -398,7 +413,7 @@ class GenericBoundaryTest(unittest.TestCase):
             boundaries.generate_link_boundary(
                 sfg, ctx, "NoSlipTest", assignments=assignments,
                 index_field=index_field, force_field=force_field,
-                pdf_field=fields["pdfs"], stencil=stencil,
+                field=fields["pdfs"], stencil=stencil,
                 value=boundaries.LinkValue("double", ()))
         header = (tmp / "NoSlipTest.h").read_text()
         source = (tmp / "NoSlipTest.cpp").read_text()
@@ -435,6 +450,213 @@ class GenericBoundaryTest(unittest.TestCase):
             D3Q19, sfg_driver.CodegenContext("single", "cpu").data_type)
         with self.assertRaisesRegex(ValueError, r"float.*differs.*double"):
             self.generate_with(fields["pdfs"], "double")
+
+
+class LinkBoundaryOptionsTest(unittest.TestCase):
+    """The force and the link policy of `generate_link_boundary`."""
+
+    def generate(self, index_shape=(), data_type="double", **kwargs):
+        """Header and source of a boundary ``Toy`` of ``walberla::ek`` (the
+        toy kernel copies the value of the link to the field in the cell of
+        the link, in the first component of a field with ``index_shape``),
+        with the arguments of `generate_link_boundary` replaced by
+        ``kwargs``."""
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        field = ps.Field.create_generic(
+            "field", 3, ps.create_type(data_type),
+            index_dimensions=len(index_shape), index_shape=index_shape,
+            layout="fzyx")
+        index_field = boundaries.link_index_field(
+            "Toy", [("value", ctx.data_type)], boundaries.EK_NAMESPACE)
+        options = dict(
+            assignments=[ps.Assignment(
+                field.center(*([0] * len(index_shape))),
+                index_field[0]("value"))],
+            index_field=index_field, field=field, stencil=[(0, 0, 0)],
+            links=boundaries.DOMAIN_LINKS_WITH_GHOST_LAYERS,
+            value=boundaries.LinkValue("double", (("value", "v"),)))
+        options.update(kwargs)
+        tmp = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp)
+        with sfg_driver.KernelFileGenerator(
+                "Toy", ctx, tmp, "test") as sfg:
+            boundaries.generate_link_boundary(sfg, ctx, "Toy", **options)
+        return (tmp / "Toy.h").read_text(), (tmp / "Toy.cpp").read_text()
+
+    def test_policies(self):
+        self.assertEqual(
+            boundaries.LINK_POLICIES,
+            ("FluidLinks", "DomainLinksNoCenter",
+             "DomainLinksWithGhostLayers"))
+
+    def test_policies_are_defined_by_the_base_class(self):
+        text = BASE_HEADER.read_text()
+        for policy in boundaries.LINK_POLICIES:
+            self.assertRegex(text, rf"struct {policy} \{{")
+        self.assertIn("struct CellStencil {", text)
+
+    def test_policy_is_a_template_argument_of_the_base_class(self):
+        header, _ = self.generate()
+        self.assertIn("walberla::IndexVectorMemory::Host, "
+                      "walberla::DomainLinksWithGhostLayers >", header)
+
+    def test_default_policy_is_not_spelled_out(self):
+        # the generated files of the LB boundaries don't change
+        header, _ = self.generate(
+            links=boundaries.FLUID_LINKS, stencil=[(0, 0, 0)])
+        self.assertIn("walberla::CellStencil, double, "
+                      "walberla::IndexVectorMemory::Host >", header)
+        self.assertNotIn("FluidLinks", header)
+
+    def test_no_force_without_force_field(self):
+        header, source = self.generate()
+        self.assertNotIn("ForceStruct", header)
+        self.assertNotIn("forceVector", header)
+        self.assertNotIn("forceVector", source)
+        self.assertIn("ToyIndexInfo, void, walberla::CellStencil", header)
+
+    def test_cell_stencil(self):
+        header, _ = self.generate()
+        self.assertIn("walberla::CellStencil", header)
+        self.assertNotIn("walberla/stencil", header)
+        self.assertNotIn("stencil/D", header)
+        self.assertIn("std::array< std::array< int, 1u >, 3u > "
+                      "neighborOffset", header)
+
+    def test_field_with_components(self):
+        header, _ = self.generate(index_shape=(13,))
+        self.assertIn("walberla::field::GhostLayerField< double, 13 >",
+                      header)
+
+    def test_unknown_policy(self):
+        with self.assertRaisesRegex(ValueError, "unknown link policy Foo"):
+            self.generate(links="Foo")
+
+    def test_ghost_layers_need_the_cell_stencil(self):
+        with self.assertRaisesRegex(ValueError, "requires a stencil of one"):
+            self.generate(stencil=[(0, 0, 0), (1, 0, 0)])
+
+    def test_stencil_of_one_direction_is_the_cell(self):
+        with self.assertRaisesRegex(ValueError, "velocity zero"):
+            self.generate(stencil=[(1, 0, 0)])
+
+    def test_wrong_dtype(self):
+        with self.assertRaisesRegex(ValueError, r"float.*differs.*double"):
+            self.generate(data_type="float32")
+
+
+class DirichletBoundaryTest(unittest.TestCase):
+
+    @staticmethod
+    def generate(precision, target):
+        ctx = sfg_driver.CodegenContext(precision, target)
+        name = ctx.class_name("Dirichlet")
+        tmp = pathlib.Path(tempfile.mkdtemp())
+        try:
+            with sfg_driver.KernelFileGenerator(
+                    name, ctx, tmp, "generate_ek_kernels.py") as sfg:
+                boundaries.generate_dirichlet(sfg, ctx, name)
+            return name, {p.name: p.read_text() for p in sorted(tmp.iterdir())}
+        finally:
+            shutil.rmtree(tmp)
+
+    def check(self, precision, target):
+        name, files = self.generate(precision, target)
+        impl = "cu" if target == "cuda" else "cpp"
+        self.assertEqual(sorted(files), [f"{name}.{impl}", f"{name}.h"])
+        return name, files[f"{name}.h"], files[f"{name}.{impl}"]
+
+    def test_index_info(self):
+        for precision, cpp in CPP_TYPES.items():
+            for target in ("cpu", "cuda"):
+                name, header, _ = self.check(precision, target)
+                self.assertIn("namespace walberla::ek {", header)
+                self.assertEqual(
+                    struct_members(header, f"{name}IndexInfo"),
+                    [("int32_t", "x"), ("int32_t", "y"), ("int32_t", "z"),
+                     ("int32_t", "dir"), (cpp, "value")])
+                self.assertIn(f"{name}IndexInfo", header)
+
+    def test_class(self):
+        for precision, cpp in CPP_TYPES.items():
+            for target, memory in (("cpu", "Host"), ("cuda", "Device")):
+                name, header, _ = self.check(precision, target)
+                base = (
+                    f"walberla::IndexVectorBoundary< {name}, {name}IndexInfo, "
+                    f"void, walberla::CellStencil, {cpp}, "
+                    f"walberla::IndexVectorMemory::{memory}, "
+                    "walberla::DomainLinksWithGhostLayers >")
+                self.assertIn(f"class {name} : public {base}", header)
+                self.assertIn(f"using IndexInfo = {name}IndexInfo;", header)
+                self.assertNotIn("ForceStruct", header)
+                self.assertIn(f"{name} (const std::shared_ptr< "
+                              "walberla::StructuredBlockForest >& blocks, "
+                              "walberla::BlockDataID fieldID_, const "
+                              f"std::function< {cpp}(const walberla::Cell &, "
+                              "const walberla::shared_ptr< "
+                              "walberla::StructuredBlockForest > &, "
+                              "walberla::IBlock &) >& valueCallback)",
+                              header)
+                self.assertIn(f':Base(blocks, fieldID_, valueCallback, '
+                              f'"{name}")', header)
+
+    def test_field_type(self):
+        _, cpu, _ = self.check("single", "cpu")
+        self.assertIn("using PdfField_T = walberla::field::GhostLayerField< "
+                      "float, 1 >;", cpu)
+        _, cuda, _ = self.check("single", "cuda")
+        self.assertIn("using PdfField_T = walberla::gpu::GPUField< float >;",
+                      cuda)
+
+    def test_assign_value_and_offsets(self):
+        _, header, _ = self.check("double", "cpu")
+        self.assertRegex(
+            header, r"static void assignValue\(IndexInfo &e, double const "
+            r"&v\) \{\s*e\.value = v;\s*\}")
+        self.assertRegex(
+            header, r"neighborOffset = \{\{\s*\{0\},\s*\{0\},\s*\{0\}\s*\}\};")
+
+    def test_link_kernel_signature(self):
+        _, cpu, _ = self.check("double", "cpu")
+        self.assertIn(
+            "void linkKernel(walberla::field::GhostLayerField< double, 1 > "
+            "* field, DirichletDoublePrecisionIndexInfo * indexVector_, "
+            "std::size_t size);", cpu)
+        _, cuda, _ = self.check("single", "cuda")
+        self.assertIn(
+            "void linkKernel(walberla::gpu::GPUField< float > * field, "
+            "DirichletSinglePrecisionCUDAIndexInfo * indexVector_, "
+            "std::size_t size, cudaStream_t stream);", cuda)
+
+    def test_base_header_is_included_by_relative_path(self):
+        generated = BRIDGE_SRC / "electrokinetics" / "generated_kernels"
+        for target in ("cpu", "cuda"):
+            _, header, _ = self.check("double", target)
+            include = re.search(
+                r'#include "([^"]*IndexVectorBoundary[^"]*)"', header).group(1)
+            self.assertEqual(
+                os.path.normpath(generated / include), str(BASE_HEADER))
+
+    def test_kernels(self):
+        # the value of the link is stored in the cell of the link
+        for target, kernel in (("cpu", "void linkKernel"),
+                               ("cuda", "__global__ void linkKernel")):
+            name, _, source = self.check("double", target)
+            self.assertIn(f"namespace {name}_kernels", source)
+            self.assertIn(kernel, source)
+            self.assertIn(
+                "_data_indexVector[sparse_idx * _stride_indexVector_0]"
+                ".value;", source)
+            self.assertNotIn("force", source.lower())
+            self.assertNotIn("int64_t", source)
+        _, _, cpu = self.check("single", "cpu")
+        self.assertIn("float * RESTRICT const _data_field", cpu)
+        self.assertNotIn("double", cpu)
+        self.assertIn("#pragma omp parallel", cpu)
+        _, _, cuda = self.check("double", "cuda")
+        self.assertIn("if(sparse_idx < _size_indexVector_0)", cuda)
+        self.assertRegex(
+            cuda, r"linkKernel<<< __grid_size, __block_size, 0, stream >>>")
 
 
 if __name__ == "__main__":
