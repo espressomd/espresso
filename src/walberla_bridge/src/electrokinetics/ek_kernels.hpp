@@ -38,8 +38,8 @@
 #include "generated_kernels/FrictionCouplingKernel_double_precision.h"
 #include "generated_kernels/FrictionCouplingKernel_single_precision.h"
 
-#include "generated_kernels/Dirichlet_double_precision.h"
-#include "generated_kernels/Dirichlet_single_precision.h"
+#include "generated_kernels/DirichletDoublePrecision.h"
+#include "generated_kernels/DirichletSinglePrecision.h"
 #include "generated_kernels/FixedFlux_double_precision.h"
 #include "generated_kernels/FixedFlux_single_precision.h"
 
@@ -61,7 +61,7 @@ template <typename FT = double, Arch AT = Arch::CPU> struct KernelTrait {
   using DiffusiveFluxKernelElectrostaticThermalized = pystencils::
       DiffusiveFluxKernelWithElectrostaticThermalized_double_precision;
 
-  using Dirichlet = pystencils::Dirichlet_double_precision;
+  using Dirichlet = ek::DirichletDoublePrecision;
   using FixedFlux = pystencils::FixedFlux_double_precision;
 };
 template <> struct KernelTrait<float, Arch::CPU> {
@@ -77,7 +77,7 @@ template <> struct KernelTrait<float, Arch::CPU> {
   using DiffusiveFluxKernelElectrostaticThermalized = pystencils::
       DiffusiveFluxKernelWithElectrostaticThermalized_single_precision;
 
-  using Dirichlet = pystencils::Dirichlet_single_precision;
+  using Dirichlet = ek::DirichletSinglePrecision;
   using FixedFlux = pystencils::FixedFlux_single_precision;
 };
 } // namespace detail
