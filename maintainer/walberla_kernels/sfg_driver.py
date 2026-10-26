@@ -22,10 +22,13 @@ Shared infrastructure to write one waLBerla kernel per file pair
 with pystencils-sfg and sweepgen.
 """
 
+import argparse
 import copy
 import dataclasses
+import itertools
 import pathlib
 import re
+import typing
 
 import packaging.specifiers
 import pystencils as ps
@@ -246,3 +249,63 @@ def patch_kernel_source(source):
     source = re.sub(r"(::x86::random::philox_float(?:32|64))\(",
                     r"\1<int64_t>(", source)
     return source
+
+
+@dataclasses.dataclass(frozen=True)
+class Kernel:
+    """
+    A kernel of a generator script: the stem of its class name, the targets
+    it exists on and the function ``generate(sfg, ctx, name)`` that writes it.
+    """
+    stem: str
+    targets: tuple
+    generate: typing.Callable
+    header_only: bool = False
+    header_extension: str = "h"
+
+
+def parse_args(description, kernels, argv=None):
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("--kernels", nargs="+", default=["all"],
+                        choices=["all", *kernels],
+                        help="Which kernels to generate")
+    parser.add_argument("--precision", nargs="+", default=["all"],
+                        choices=["all", *PRECISIONS],
+                        help="Floating-point precision(s)")
+    parser.add_argument("--target", nargs="+", default=["all"],
+                        choices=["all", *TARGETS],
+                        help="Hardware target(s)")
+    parser.add_argument("--output-dir", type=pathlib.Path,
+                        default=pathlib.Path("."),
+                        help="Directory to write the kernels to")
+    return parser.parse_args(argv)
+
+
+def expand(selection, everything):
+    return (list(everything) if "all" in selection
+            else list(dict.fromkeys(selection)))
+
+
+def generate_main(description, generator_script, kernels, argv=None):
+    """
+    Command line of a generator script: write each selected combination of
+    kernel (a key of the dict ``kernels`` of `Kernel`), precision and target
+    to its own file pair in the output directory.
+    """
+    args = parse_args(description, kernels, argv)
+    check_toolchain_versions()
+    for key, precision, target in itertools.product(
+            expand(args.kernels, kernels), expand(args.precision, PRECISIONS),
+            expand(args.target, TARGETS)):
+        kernel = kernels[key]
+        if target not in kernel.targets:
+            print(f"skipping {key} for target {target}: not supported")
+            continue
+        ctx = CodegenContext(precision, target)
+        name = ctx.class_name(kernel.stem)
+        with KernelFileGenerator(
+                name, ctx, args.output_dir, generator_script,
+                header_only=kernel.header_only,
+                header_extension=kernel.header_extension) as sfg:
+            kernel.generate(sfg, ctx, name)
+        print(f"generated {name}")
