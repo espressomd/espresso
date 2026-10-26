@@ -51,7 +51,11 @@ class GenerateEkKernelsTest(unittest.TestCase):
 
     def test_all_is_the_default(self):
         tmp, _ = self.run_script()
-        self.assertEqual(len(list(tmp.iterdir())), 8)
+        import generate_ek_kernels
+        expected = sum(
+            len(kernel.targets) * len(sfg_driver.PRECISIONS) * 2
+            for kernel in generate_ek_kernels.KERNELS.values())
+        self.assertEqual(len(list(tmp.iterdir())), expected)
 
     def test_dirichlet_double_cpu(self):
         tmp, _ = self.run_script("--kernels", "dirichlet",

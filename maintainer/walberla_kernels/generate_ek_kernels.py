@@ -19,8 +19,9 @@
 """
 Generate the electrokinetics kernels of the waLBerla bridge with sweepgen and
 pystencils-sfg. Each kernel is written to its own file pair, named after its
-class, e.g. ``DirichletDoublePrecisionCUDA.h``. The classes live in
-``walberla::ek`` (the boundaries) or ``walberla::pystencils`` (the sweeps).
+class, e.g. ``DirichletDoublePrecisionCUDA.h``. The boundary classes live
+in ``walberla::ek``; no sweeps (``walberla::pystencils``) have been migrated
+yet.
 
 Only the Dirichlet boundary has been migrated; the other electrokinetics
 kernels are still the committed output of pystencils 1.4.
@@ -30,13 +31,9 @@ import boundaries
 import sfg_driver
 
 
-def generate_dirichlet(sfg, ctx, name):
-    boundaries.generate_dirichlet(sfg, ctx, name)
-
-
 KERNELS = {
     "dirichlet": sfg_driver.Kernel("Dirichlet", ("cpu", "cuda"),
-                                   generate_dirichlet),
+                                   boundaries.generate_dirichlet),
 }
 
 

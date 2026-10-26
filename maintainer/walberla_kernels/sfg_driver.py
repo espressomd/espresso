@@ -79,7 +79,8 @@ class CodegenContext:
 
     @property
     def data_type(self):
-        return ps.create_type("float64" if self.double_precision else "float32")
+        return ps.create_type(
+            "float64" if self.double_precision else "float32")
 
     @property
     def is_gpu(self):
@@ -87,7 +88,8 @@ class CodegenContext:
 
     @property
     def precision_prefix(self):
-        return "DoublePrecision" if self.double_precision else "SinglePrecision"
+        return ("DoublePrecision" if self.double_precision
+                else "SinglePrecision")
 
     @property
     def target_suffix(self):
@@ -144,19 +146,32 @@ def generate_sweep(sfg, name, assignments, gen_config=None, swap_fields=(),
     fields of the same size.
 
     With ``sparse``, the sweep runs on the cells of a ``SparseIndexList``
-    that the constructor takes (a property ``indexList``), instead of all cells of
-    the block. The assignments address the cells through
+    that the constructor takes as the argument ``indexList``, instead of all
+    cells of the block. The assignments address the cells through
     `index_list_field()`. pystencils can't prove that the cells of the list
     are distinct and that the sweep doesn't read what it writes in another
-    cell, so the independence check is skipped: the list must not contain a
-    cell twice. A sparse sweep has no ``runOnCellInterval``.
+    cell, so the independence check is skipped (``skip_independence_check``):
+    the list must not contain a cell twice. A sparse sweep has no
+    ``runOnCellInterval``.
 
-    :raises ValueError: if ``gen_config`` makes the sweep sparse (it sets an
-        index field) and ``sparse`` is not set, or the other way round
+    :raises ValueError: if ``sparse`` is set and ``gen_config`` already has
+        an index field other than `index_list_field()` or sets
+        ``skip_independence_check=False``; or if ``gen_config`` makes the
+        sweep sparse (it sets an index field) and ``sparse`` is not set, or
+        the other way round
     """
     if sparse:
         gen_config = (ps.CreateKernelConfig() if gen_config is None
                       else copy.copy(gen_config))
+        if gen_config.index_field is not None \
+                and gen_config.index_field != index_list_field():
+            raise ValueError(
+                f"sweep {name}: the sparse sweep uses index_list_field(), "
+                f"but gen_config sets another index field")
+        if gen_config.skip_independence_check is False:
+            raise ValueError(
+                f"sweep {name}: the sparse sweep skips the independence "
+                f"check, but gen_config sets skip_independence_check=False")
         gen_config.index_field = index_list_field()
         gen_config.skip_independence_check = True
     sweep = sweepgen.Sweep(name, assignments, gen_config)
@@ -265,6 +280,7 @@ class Kernel:
 
 
 def parse_args(description, kernels, argv=None):
+    """Parse the command line of a generator script (see `generate_main`)."""
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--kernels", nargs="+", default=["all"],
                         choices=["all", *kernels],
@@ -282,6 +298,7 @@ def parse_args(description, kernels, argv=None):
 
 
 def expand(selection, everything):
+    """Resolve ``all`` in a command line selection; drop duplicates."""
     return (list(everything) if "all" in selection
             else list(dict.fromkeys(selection)))
 

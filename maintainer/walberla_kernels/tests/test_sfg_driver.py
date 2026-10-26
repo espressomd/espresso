@@ -28,6 +28,7 @@ import unittest.mock
 
 import pystencils as ps
 import sympy as sp
+import sweepgen.api
 from pystencils import DynamicType
 from pystencils.sympyextensions import tcast
 
@@ -329,6 +330,18 @@ class GenerateSparseSweepTest(unittest.TestCase):
             self.generate("cpu", gen_config=config, sparse=False)
         self.assertIn("Toy.h", self.generate("cpu", gen_config=config))
 
+    def test_sparse_rejects_conflicting_configuration(self):
+        config = ps.CreateKernelConfig()
+        config.index_field = ps.Field.create_generic(
+            "other", 1, sweepgen.api.CellIdx,
+            field_type=ps.FieldType.INDEXED)
+        with self.assertRaisesRegex(ValueError, "another index field"):
+            self.generate("cpu", gen_config=config)
+        config = ps.CreateKernelConfig()
+        config.skip_independence_check = False
+        with self.assertRaisesRegex(ValueError, "skip_independence_check"):
+            self.generate("cpu", gen_config=config)
+
     def test_dense_sweep_is_not_sparse(self):
         tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
         ctx = sfg_driver.CodegenContext("double", "cpu")
@@ -355,27 +368,32 @@ class PatchKernelSourceTest(unittest.TestCase):
         self.assertNotIn(":::", patched)
 
     def test_math_functions_are_qualified(self):
-        source = "x = sqrt(2.0f) + fmin(a, fmax(b, c)) + sqrtf(d) + std::sqrt(e);"
+        source = ("x = sqrt(2.0f) + fmin(a, fmax(b, c)) + sqrtf(d) "
+                  "+ std::sqrt(e);")
         self.assertEqual(
             sfg_driver.patch_kernel_source(source),
             "x = std::sqrt(2.0f) + std::fmin(a, std::fmax(b, c)) + sqrtf(d) "
             "+ std::sqrt(e);")
 
     def test_pow_is_qualified(self):
-        source = "x = pow(a, 2.0f) + powf(b, c) + std::pow(d, e) + x.pow(f);"
+        source = ("x = pow(a, 2.0f) + powf(b, c) + std::pow(d, e) "
+                  "+ x.pow(f);")
         self.assertEqual(
             sfg_driver.patch_kernel_source(source),
-            "x = std::pow(a, 2.0f) + powf(b, c) + std::pow(d, e) + x.pow(f);")
+            "x = std::pow(a, 2.0f) + powf(b, c) + std::pow(d, e) "
+            "+ x.pow(f);")
 
     def test_simd_rng_key_type(self):
         source = "::pystencils::runtime::x86::random::philox_float64(c, k)"
         self.assertEqual(
             sfg_driver.patch_kernel_source(source),
-            "::pystencils::runtime::x86::random::philox_float64<int64_t>(c, k)")
+            "::pystencils::runtime::x86::random::"
+            "philox_float64<int64_t>(c, k)")
 
     def test_patches_are_idempotent(self):
         source = ("auto r = pystencils::runtime::random::philox_float64(x);\n"
-                  "auto s = ::pystencils::runtime::random::philox_float32(y);\n"
+                  "auto s = ::pystencils::runtime::random::"
+                  "philox_float32(y);\n"
                   "auto k = ::x86::random::philox_float32(a, b);\n"
                   "auto m = sqrt(x) + fmin(a, b) + fmax(a, b) + pow(a, b) "
                   "+ std::sqrt(x);")
