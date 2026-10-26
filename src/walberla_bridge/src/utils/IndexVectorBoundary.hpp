@@ -58,18 +58,20 @@
  * don't depend on each other and the order of the links in a vector doesn't
  * matter for the result. The links of the other policies may share a cell
  * (one link for each direction), so their kernels must not read what another
- * link writes.
+ * link writes. For the same reason, kernels must not write the same element
+ * from two links unless both write the same value (write/write overlap, e.g.
+ * the flux of the fixed flux boundary through a face that two links share).
  *
  * Link policies
  * -------------
- * The template argument @c Links selects the cells that are searched for
+ * The template argument @c LinkPolicy selects the cells that are searched for
  * links and the cells that the links point to. The policy is a struct with
  * three @c static @c constexpr members:
  * - @c fluid_cells_only: a link starts only in a cell without the boundary
  *   flag;
  * - @c skip_center: there is no link in the direction @c stencil::C;
  * - @c ghost_margin: the cells that are searched are the interior of the
- *   block and the ghost layers except for the outermost @c ghost_margin
+ *   block and all ghost layers except for the outermost @c ghost_margin
  *   layers. With @c ghost_margin = 1, the cells that a link points to are
  *   always inside the field; with 0, all ghost layers are searched, which
  *   requires a stencil that has no other direction than @c stencil::C
@@ -347,9 +349,9 @@ public:
 
 /**
  * @brief Link policy of the lattice Boltzmann boundaries: the links start in
- * the fluid cells (domain flag, no boundary flag) of the interior and of the
- * first ghost layer (if there are more than one), in all directions of the
- * stencil.
+ * the fluid cells (domain flag, no boundary flag) of the interior and of all
+ * ghost layers but the outermost @c ghost_margin ones (see the file
+ * documentation), in all directions of the stencil.
  */
 struct FluidLinks {
   static constexpr bool fluid_cells_only = true;
@@ -360,8 +362,9 @@ struct FluidLinks {
 /**
  * @brief Link policy of the fixed flux boundary of the electrokinetics: the
  * links start in all domain cells, also in the boundary cells, of the
- * interior and of the first ghost layer (if there are more than one), in all
- * directions of the stencil but @c stencil::C.
+ * interior and of all ghost layers but the outermost @c ghost_margin ones (see
+ * the file documentation), in all directions of the stencil but
+ * @c stencil::C.
  */
 struct DomainLinksNoCenter {
   static constexpr bool fluid_cells_only = false;
@@ -383,7 +386,9 @@ struct DomainLinksWithGhostLayers {
 
 /**
  * @brief Stencil that has only one direction, @c stencil::C, for the
- * boundaries whose links point to the cell itself.
+ * boundaries whose links point to the cell itself. This is not a full waLBerla
+ * stencil (it lacks e.g. @c d_x and the inverse directions) and can only be
+ * used with @ref walberla::IndexVectorBoundary.
  */
 struct CellStencil {
   static constexpr uint_t Size = 1;
@@ -413,15 +418,18 @@ struct NoForce {};
  *                     @ref walberla::CellStencil
  * @tparam Value       type returned by the value callback
  * @tparam Memory      where the kernel runs
- * @tparam Links       link policy, e.g. @ref walberla::FluidLinks
+ * @tparam LinkPolicy  link policy, e.g. @ref walberla::FluidLinks
  */
 template <typename Impl, typename IndexInfo, typename ForceStruct,
           typename Stencil, typename Value, IndexVectorMemory Memory,
-          typename Links = FluidLinks>
+          typename LinkPolicy = FluidLinks>
 class IndexVectorBoundary {
-  static_assert(Links::ghost_margin >= 1 or Stencil::Size == 1,
+  static_assert(LinkPolicy::ghost_margin >= 1 or Stencil::Size == 1,
                 "Searching the outermost ghost layer requires a stencil that "
                 "has no direction but the center.");
+  static_assert(not(LinkPolicy::skip_center and Stencil::Size == 1),
+                "A link policy that skips the center has no links with a "
+                "stencil that has no direction but the center.");
 
 public:
   /** @brief Whether the boundary stores the force on its links. */
@@ -548,6 +556,8 @@ public:
     indexVectorInner.clear();
     indexVectorOuter.clear();
 
+    WALBERLA_ASSERT_GREATER_EQUAL(flagField->nrOfGhostLayers(),
+                                  uint_t(LinkPolicy::ghost_margin));
     auto innerCells = flagField->xyzSize();
     innerCells.expand(cell_idx_t(-1));
 
@@ -559,18 +569,18 @@ public:
       auto const cx = stencil::cx[dir];
       auto const cy = stencil::cy[dir];
       auto const cz = stencil::cz[dir];
-      if constexpr (Links::skip_center) {
+      if constexpr (LinkPolicy::skip_center) {
         if (dir == stencil::C) {
           continue;
         }
       }
-      for (auto it = flagField->beginWithGhostLayerXYZ(
-               cell_idx_c(flagField->nrOfGhostLayers() - Links::ghost_margin));
+      for (auto it = flagField->beginWithGhostLayerXYZ(cell_idx_c(
+               flagField->nrOfGhostLayers() - LinkPolicy::ghost_margin));
            it != flagField->end(); ++it) {
         if (!isFlagSet(it, domainFlag)) {
           continue;
         }
-        if constexpr (Links::fluid_cells_only) {
+        if constexpr (LinkPolicy::fluid_cells_only) {
           if (isFlagSet(it, boundaryFlag)) {
             continue;
           }

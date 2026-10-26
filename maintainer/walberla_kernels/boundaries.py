@@ -78,8 +78,9 @@ the kernel, so the strides and all the index arithmetic of the kernel are
 ``int32_t`` too, while the old kernel computed the offsets in the field
 with 64 bits: the field of a block (with ghost layers and all components)
 must have fewer than 2^31 elements. The generated code doesn't check this;
-the bridge has to check the size of the blocks (``LBWalberlaImpl`` does it
-for the PDF field, see the Readme).
+the bridge has to check the size of the blocks. The LB bridge checks the PDF
+field (``LBWalberlaImpl``, see the Readme); the EK fields will be checked
+when the EK flux kernels are migrated (sub-project 3c).
 
 Kernels
 -------
@@ -116,9 +117,10 @@ change:
 Kernel namespaces
 -----------------
 The kernels of a class live in the namespace ``<ClassName>_kernels`` nested
-in ``walberla::lbm``. The CPU and CUDA classes have different names, so
-their kernels have different qualified names, which the linker needs in
-builds with CUDA (``tests/test_boundary_symbols.py``).
+in the namespace of the class (``walberla::lbm`` or ``walberla::ek``). The
+CPU and CUDA classes have different names, so their kernels have different
+qualified names, which the linker needs in builds with CUDA
+(``tests/test_boundary_symbols.py``).
 """
 
 import dataclasses
@@ -140,7 +142,7 @@ BASE_CLASS = "walberla::IndexVectorBoundary"
 # relative to the directory of the generated files, as seen by the compiler:
 # the include path of the bridge targets doesn't contain ``src/``
 BASE_HEADER = "../../utils/IndexVectorBoundary.hpp"
-NAMESPACE = "walberla::lbm"
+NAMESPACE = "walberla::lbm"  # of the lattice Boltzmann boundaries
 EK_NAMESPACE = "walberla::ek"
 INDEX_TYPE = create_type("int32")
 # the link policies of IndexVectorBoundary.hpp; the default one is not named
@@ -187,10 +189,10 @@ def link_index_field(name, additional_data, namespace=NAMESPACE):
                                 field_type=FieldType.INDEXED)
 
 
-def link_fields(name, dtype, dim, additional_data):
+def lbm_link_fields(name, dtype, dim, additional_data):
     """
-    The index field and the force field of a boundary class ``name`` of
-    ``NAMESPACE``: indexed fields of the structs
+    The index field and the force field of a lattice Boltzmann boundary
+    class ``name`` of ``NAMESPACE``: indexed fields of the structs
     ``<NAMESPACE>::<name>IndexInfo`` and ``<NAMESPACE>::<name>ForceStruct``.
     """
     force_type = force_struct_type(f"{NAMESPACE}::{name}ForceStruct", dtype,
@@ -304,11 +306,17 @@ def generate_link_boundary(sfg, ctx, name, *, assignments, index_field,
     :param stencil: the velocities of the links, a sequence of tuples: the
         stencil of waLBerla with this number of directions and dimensions
         (e.g. ``D3Q19``), or ``walberla::CellStencil`` for the single
-        velocity zero, the link of a cell to itself
+        velocity zero, the link of a cell to itself. Only the number of
+        directions and dimensions is validated: the order of the velocities
+        must be the direction order of waLBerla's ``D{d}Q{q}`` stencil, which
+        the generated ``neighborOffset`` and the direction index of the links
+        refer to
     :param value: the `LinkValue` of the value callback
     :param links: the link policy of ``IndexVectorBoundary.hpp``, one of
         `LINK_POLICIES`; ``DomainLinksWithGhostLayers`` requires the
-        single velocity zero
+        single velocity zero, and the single velocity zero requires
+        ``DomainLinksWithGhostLayers`` (the other policies never produce a
+        link with it)
     :raises ValueError: if the dtype of ``field`` differs from
         ``ctx.data_type``, the policy is unknown, the stencil of one
         velocity isn't zero, or the policy doesn't match the stencil
@@ -331,6 +339,13 @@ def generate_link_boundary(sfg, ctx, name, *, assignments, index_field,
     if links == DOMAIN_LINKS_WITH_GHOST_LAYERS and not cell_stencil:
         raise ValueError(
             f"the link policy {links} requires a stencil of one direction")
+    if cell_stencil and links != DOMAIN_LINKS_WITH_GHOST_LAYERS:
+        # a link to the cell itself needs a boundary cell that is also a
+        # domain cell: fluid cells are never boundary cells, and the policy
+        # without the center skips the only direction
+        raise ValueError(
+            f"the link policy {links} never produces a link with a stencil "
+            f"of one direction, use {DOMAIN_LINKS_WITH_GHOST_LAYERS}")
     dtype = field.dtype.c_string()
     n_components = int(np.prod(field.index_shape)) if field.index_shape else 1
     index_type = index_field.dtype
@@ -455,7 +470,7 @@ def generate_dynamic_ubb(sfg, ctx, name, lb_method, pdf_field):
     # index field: the callback is not called by the generated code
     ubb = UBB(lambda *args: None, dim=dim, data_type=ctx.data_type,
               calculate_force_on_boundary=True, name=name)
-    index_field, force_field = link_fields(
+    index_field, force_field = lbm_link_fields(
         name, ctx.data_type, dim, ubb.additional_data)
     generate_link_boundary(
         sfg, ctx, name,

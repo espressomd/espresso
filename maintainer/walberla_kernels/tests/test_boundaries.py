@@ -96,8 +96,8 @@ class StructTypesTest(unittest.TestCase):
             [(m.name, str(m.dtype)) for m in struct.members],
             [("F_0", "float64"), ("F_1", "float64")])
 
-    def test_link_fields(self):
-        index_field, force_field = boundaries.link_fields(
+    def test_lbm_link_fields(self):
+        index_field, force_field = boundaries.lbm_link_fields(
             "Name", ps.create_type("float64"), 3,
             [("vel_0", ps.create_type("float64"))])
         for field in (index_field, force_field):
@@ -152,7 +152,7 @@ class LinkAssignmentsTest(unittest.TestCase):
             boundary = lbmpy.boundaries.UBB(
                 lambda *args: None, dim=3, data_type=data_type,
                 calculate_force_on_boundary=True, name="test")
-        index_field, force_field = boundaries.link_fields(
+        index_field, force_field = boundaries.lbm_link_fields(
             "Test", data_type, 3, boundary.additional_data)
         elements = boundaries.lbm_link_assignments(
             boundary, method, fields["pdfs"], index_field, force_field)
@@ -401,7 +401,7 @@ class GenericBoundaryTest(unittest.TestCase):
                 stencil=D3Q27, method=lbmpy.Method.SRT,
                 relaxation_rate=1.0))
         boundary = lbmpy.boundaries.NoSlip(calculate_force_on_boundary=True)
-        index_field, force_field = boundaries.link_fields(
+        index_field, force_field = boundaries.lbm_link_fields(
             "NoSlipTest", data_type, 3, boundary.additional_data)
         assignments = boundaries.lbm_link_assignments(
             boundary, method, fields["pdfs"], index_field, force_field)
@@ -503,10 +503,17 @@ class LinkBoundaryOptionsTest(unittest.TestCase):
     def test_default_policy_is_not_spelled_out(self):
         # the generated files of the LB boundaries don't change
         header, _ = self.generate(
-            links=boundaries.FLUID_LINKS, stencil=[(0, 0, 0)])
-        self.assertIn("walberla::CellStencil, double, "
+            links=boundaries.FLUID_LINKS, stencil=list(D3Q19))
+        self.assertIn("walberla::stencil::D3Q19, double, "
                       "walberla::IndexVectorMemory::Host >", header)
         self.assertNotIn("FluidLinks", header)
+        self.assertNotIn("DomainLinks", header)
+
+    def test_policy_of_the_cell_stencil_must_produce_links(self):
+        for policy in (boundaries.FLUID_LINKS,
+                       boundaries.DOMAIN_LINKS_NO_CENTER):
+            with self.assertRaisesRegex(ValueError, "never produces a link"):
+                self.generate(links=policy, stencil=[(0, 0, 0)])
 
     def test_no_force_without_force_field(self):
         header, source = self.generate()
