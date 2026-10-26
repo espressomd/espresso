@@ -22,6 +22,7 @@ Shared infrastructure to write one waLBerla kernel per file pair
 with pystencils-sfg and sweepgen.
 """
 
+import copy
 import dataclasses
 import pathlib
 import re
@@ -32,6 +33,7 @@ import pystencilssfg
 import sympy
 import lbmpy
 import sweepgen
+import sweepgen.api
 import sweepgen.build_config
 
 PRECISIONS = ("single", "double")
@@ -112,7 +114,20 @@ class CodegenContext:
         return config
 
 
-def generate_sweep(sfg, name, assignments, gen_config=None, swap_fields=()):
+def index_list_field():
+    """
+    The index field of a sparse sweep: the cells of the sweep's
+    ``walberla::v8::sweep::SparseIndexList``, as an indexed field of
+    ``walberla::v8::sweep::CellIdx`` with the members ``x``, ``y`` and ``z``.
+    A sparse sweep accesses its other fields with absolute coordinates,
+    ``field.absolute_access(tuple(index_list[0](c) for c in "xyz"), ())``.
+    """
+    return ps.Field.create_generic(
+        "indexList", 1, sweepgen.api.CellIdx, field_type=ps.FieldType.INDEXED)
+
+
+def generate_sweep(sfg, name, assignments, gen_config=None, swap_fields=(),
+                   sparse=False):
     """
     Generate the sweepgen class ``walberla::pystencils::<name>`` of a sweep
     over the cells of the fields of ``assignments``.
@@ -124,11 +139,28 @@ def generate_sweep(sfg, name, assignments, gen_config=None, swap_fields=()):
     sweep swaps after each run (``Sweep.swap_fields()``). The sweep keeps
     the shadow field to itself, so all blocks that it runs on must have
     fields of the same size.
+
+    With ``sparse``, the sweep runs on the cells of a ``SparseIndexList``
+    that the constructor takes (a property ``indexList``), instead of all cells of
+    the block. The assignments address the cells through
+    `index_list_field()`. pystencils can't prove that the cells of the list
+    are distinct and that the sweep doesn't read what it writes in another
+    cell, so the independence check is skipped: the list must not contain a
+    cell twice. A sparse sweep has no ``runOnCellInterval``.
+
+    :raises ValueError: if ``gen_config`` makes the sweep sparse (it sets an
+        index field) and ``sparse`` is not set, or the other way round
     """
+    if sparse:
+        gen_config = (ps.CreateKernelConfig() if gen_config is None
+                      else copy.copy(gen_config))
+        gen_config.index_field = index_list_field()
+        gen_config.skip_independence_check = True
     sweep = sweepgen.Sweep(name, assignments, gen_config)
-    if sweep.sparse:
-        raise NotImplementedError(
-            f"sweep {name} is sparse, only dense sweeps are supported")
+    if sweep.sparse != sparse:
+        raise ValueError(
+            f"sweep {name} is {'' if sweep.sparse else 'not '}sparse, but "
+            f"the argument sparse is {sparse}")
     for field, shadow_field in swap_fields:
         sweep.swap_fields(field, shadow_field)
     with sfg.namespace(KERNEL_NAMESPACE):
@@ -204,12 +236,13 @@ def patch_kernel_source(source):
     * The vectorized RNG functions deduce their key type from both the
       ``int64_t`` seed (``long``) and the key literal (``long long``),
       which doesn't compile on LP64 platforms: pass the type explicitly.
-    * Single-precision CPU kernels call the global ``sqrt()``, ``fmin()``
-      and ``fmax()``, i.e. the double overloads: use the ``std::`` ones.
+    * Single-precision CPU kernels call the global ``sqrt()``, ``fmin()``,
+      ``fmax()`` and ``pow()``, i.e. the double overloads: use the ``std::``
+      ones.
     """
     source = re.sub(r"(?<![:\w])pystencils::runtime::",
                     "::pystencils::runtime::", source)
-    source = re.sub(r"(?<![\w:.>])(sqrt|fmin|fmax)\(", r"std::\1(", source)
+    source = re.sub(r"(?<![\w:.>])(sqrt|fmin|fmax|pow)\(", r"std::\1(", source)
     source = re.sub(r"(::x86::random::philox_float(?:32|64))\(",
                     r"\1<int64_t>(", source)
     return source
