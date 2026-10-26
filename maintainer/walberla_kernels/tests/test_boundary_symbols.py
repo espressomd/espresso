@@ -24,9 +24,11 @@ same kinds of parameters (pointers, sizes and strides), so a kernel of a CPU
 file and a kernel of a CUDA file must never have the same qualified name and
 parameter types: the linker would bind one to the other (the ``__global__``
 kernels have host stubs) without a diagnostic. This is the check of
-``test_pack_info_symbols`` for the boundaries. The hand-written base class of
-the boundaries is included by both targets: it must only define templates,
-whose instances for the host and the device are different types.
+``test_pack_info_symbols`` for the boundaries, which are the ``DynamicUBB``
+of the lattice Boltzmann method and the ``Dirichlet`` boundary of the
+electrokinetics. The hand-written base class of the boundaries is included
+by both targets: it must only define templates, whose instances for the host
+and the device are different types.
 """
 
 import pathlib
@@ -39,11 +41,16 @@ import unittest
 
 from tests.test_accessor_symbols import definitions
 
-SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "generate_lb_kernels.py"
+KERNELS = pathlib.Path(__file__).resolve().parents[1]
 BASE_HEADER = (pathlib.Path(__file__).resolve().parents[3] / "src" /
                "walberla_bridge" / "src" / "utils" /
                "IndexVectorBoundary.hpp")
 PRECISIONS = ("Double", "Single")
+# generator script, kernel, class name and namespace
+BOUNDARIES = (("generate_lb_kernels.py", "dynamic_ubb", "DynamicUBB",
+               "walberla::lbm"),
+              ("generate_ek_kernels.py", "dirichlet", "Dirichlet",
+               "walberla::ek"))
 
 
 class BoundarySymbolsTest(unittest.TestCase):
@@ -51,15 +58,19 @@ class BoundarySymbolsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.directory = pathlib.Path(tempfile.mkdtemp())
-        subprocess.run(
-            [sys.executable, str(SCRIPT), "--kernels", "dynamic_ubb",
-             "--target", "cpu", "cuda", "--output-dir", str(cls.directory)],
-            capture_output=True, text=True, check=True)
-        cls.cpu, cls.cuda, cls.sources = {}, {}, {}
-        for precision in PRECISIONS:
-            name = f"DynamicUBB{precision}Precision"
-            cls.cpu[name] = cls.read(name, ".cpp")
-            cls.cuda[f"{name}CUDA"] = cls.read(f"{name}CUDA", ".cu")
+        cls.cpu, cls.cuda, cls.sources, cls.namespaces = {}, {}, {}, {}
+        for script, kernel, stem, namespace in BOUNDARIES:
+            subprocess.run(
+                [sys.executable, str(KERNELS / script), "--kernels", kernel,
+                 "--target", "cpu", "cuda", "--output-dir",
+                 str(cls.directory)],
+                capture_output=True, text=True, check=True)
+            for precision in PRECISIONS:
+                name = f"{stem}{precision}Precision"
+                cls.cpu[name] = cls.read(name, ".cpp")
+                cls.cuda[f"{name}CUDA"] = cls.read(f"{name}CUDA", ".cu")
+                cls.namespaces[name] = cls.namespaces[f"{name}CUDA"] = \
+                    namespace
 
     @classmethod
     def tearDownClass(cls):
@@ -77,7 +88,8 @@ class BoundarySymbolsTest(unittest.TestCase):
             for name, defined in functions.items():
                 kernels = {n for n, _ in defined if "_kernels::" in n}
                 self.assertEqual(
-                    kernels, {f"walberla::lbm::{name}_kernels::linkKernel"})
+                    kernels, {f"{self.namespaces[name]}::{name}_kernels"
+                              "::linkKernel"})
 
     def test_each_class_defines_its_own_method(self):
         for name, source in self.sources.items():
@@ -92,11 +104,21 @@ class BoundarySymbolsTest(unittest.TestCase):
             "functions with the same qualified name and parameter types "
             "on both targets")
 
+    def test_boundaries_of_different_families_are_disjoint(self):
+        # the classes of the LB and of the EK are in the same library
+        for family in (self.cpu, self.cuda):
+            lb = {f for n, d in family.items() if n.startswith("DynamicUBB")
+                  for f in d}
+            ek = {f for n, d in family.items() if n.startswith("Dirichlet")
+                  for f in d}
+            self.assertTrue(lb and ek)
+            self.assertEqual(lb & ek, set())
+
     def test_kernel_names_are_unique_among_all_classes(self):
         names = [qualified for functions in
                  (*self.cpu.values(), *self.cuda.values())
                  for qualified, _ in functions if "_kernels::" in qualified]
-        self.assertEqual(len(names), 4)
+        self.assertEqual(len(names), 8)
         self.assertEqual(len(names), len(set(names)))
 
     def test_base_header_defines_no_function(self):
