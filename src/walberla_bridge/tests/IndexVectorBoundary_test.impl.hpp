@@ -25,6 +25,9 @@
  * of each link, adds a value to it, and stores the old PDF, the direction
  * and the coordinates of the link as forces: the results of two runs
  * can be compared bitwise, and each force identifies its link.
+ * The boundaries without force and with the link policies of the
+ * electrokinetics are tested with a kernel that stores the value of each link
+ * in the field.
  */
 
 #define BOOST_TEST_MODULE "index vector boundary test"
@@ -48,6 +51,7 @@
 #include <field/FlagField.h>
 #include <field/GhostLayerField.h>
 #include <stencil/D3Q19.h>
+#include <stencil/Directions.h>
 
 #include <waLBerlaDefinitions.h>
 
@@ -69,6 +73,7 @@
 #include <functional>
 #include <memory>
 #include <random>
+#include <type_traits>
 #include <vector>
 
 using namespace walberla;
@@ -172,6 +177,91 @@ public:
 using Forces = Boundary::ForceVector;
 using Links = Boundary::IndexVectors;
 
+#if defined(TEST_ON_DEVICE)
+
+__global__ void value_kernel(double *pdfs, IndexInfo const *links,
+                             std::size_t size, std::ptrdiff_t stride_x,
+                             std::ptrdiff_t stride_y, std::ptrdiff_t stride_z,
+                             std::ptrdiff_t stride_f) {
+  auto const i = std::size_t(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (i < size) {
+    auto const &link = links[i];
+    pdfs[link.x * stride_x + link.y * stride_y + link.z * stride_z +
+         link.dir * stride_f] = link.value;
+  }
+}
+
+#endif
+
+/**
+ * Boundary without force that stores the value of each link in the component
+ * of its direction in the cell of the link (a different element for each link,
+ * whatever the link policy).
+ */
+template <typename LinkPolicy, typename LinkStencil>
+class ValueBoundary
+    : public IndexVectorBoundary<ValueBoundary<LinkPolicy, LinkStencil>,
+                                 IndexInfo, void, LinkStencil, double, memory,
+                                 LinkPolicy> {
+  using Base =
+      IndexVectorBoundary<ValueBoundary<LinkPolicy, LinkStencil>, IndexInfo,
+                          void, LinkStencil, double, memory, LinkPolicy>;
+
+public:
+  using PdfField_T = PdfField;
+  using Base::Base;
+
+  static void assignValue(IndexInfo &element, double const &value) {
+    element.value = value;
+  }
+
+#if defined(TEST_ON_DEVICE)
+  void linkKernel(PdfField *pdfs, IndexInfo *links, std::size_t size,
+                  gpuStream_t stream) {
+    auto const threads = 64u;
+    auto const blocks = static_cast<unsigned>((size + threads - 1) / threads);
+    value_kernel<<<blocks, threads, 0, stream>>>(
+        pdfs->dataAt(0, 0, 0, 0), links, size, pdfs->xStride(), pdfs->yStride(),
+        pdfs->zStride(), pdfs->fStride());
+    WALBERLA_GPU_CHECK(gpuGetLastError());
+  }
+#else
+  void linkKernel(PdfField *pdfs, IndexInfo *links, std::size_t size) {
+    for (std::size_t i = 0; i < size; ++i) {
+      auto const &link = links[i];
+      pdfs->get(link.x, link.y, link.z, link.dir) = link.value;
+    }
+  }
+#endif
+};
+
+/** Value of the boundary cell of a link, in the tests of the link policies. */
+inline double cell_value(Cell const &cell) {
+  return double(cell.x()) + 0.1 * double(cell.y()) + 0.01 * double(cell.z());
+}
+
+/** Value callback that returns @ref cell_value of the boundary cell. */
+struct CellValue {
+  double operator()(Cell const &cell, shared_ptr<StructuredBlockForest> const &,
+                    IBlock &) const {
+    return cell_value(cell);
+  }
+};
+
+/**
+ * The cells that have links, spelled out for each link policy independently of
+ * @ref walberla::IndexVectorBoundary: only fluid cells, no link to the cell
+ * itself, and the number of outermost ghost layers that are not searched.
+ */
+struct Policy {
+  bool fluid_cells_only;
+  bool skip_center;
+  uint_t ghost_margin;
+};
+constexpr Policy fluid_links{true, false, 1u};
+constexpr Policy domain_links_no_center{false, true, 1u};
+constexpr Policy domain_links_with_ghost_layers{false, false, 0u};
+
 /** Value callback that records the boundary cells it is called for. */
 struct Recorder {
   std::vector<Cell> *cells;
@@ -260,9 +350,9 @@ struct Setup {
     }
   }
 
-  void fill(Boundary &boundary) {
-    boundary.fillFromFlagField<Flags>(blocks, flags_id, FlagUID("boundary"),
-                                      FlagUID("domain"));
+  template <typename B> void fill(B &boundary) {
+    boundary.template fillFromFlagField<Flags>(
+        blocks, flags_id, FlagUID("boundary"), FlagUID("domain"));
   }
 
   /** Values of the PDF field @p i, including the ghost layers. */
@@ -272,6 +362,23 @@ struct Setup {
 #else
     return values(pdfs_id[i]);
 #endif
+  }
+
+  /**
+   * Index in @ref pdfs of the component @p f of the cell (@p x, @p y, @p z)
+   * of the block number @p block_index, which has 6x5x4 cells.
+   */
+  static std::size_t value_index(std::size_t block_index, int32_t x, int32_t y,
+                                 int32_t z, int32_t f) {
+    constexpr auto g = std::ptrdiff_t(gl);
+    constexpr std::ptrdiff_t n_x = 6 + 2 * g;
+    constexpr std::ptrdiff_t n_y = 5 + 2 * g;
+    constexpr std::ptrdiff_t n_z = 4 + 2 * g;
+    auto const cell =
+        ((std::ptrdiff_t(z) + g) * n_y + std::ptrdiff_t(y) + g) * n_x +
+        std::ptrdiff_t(x) + g;
+    return std::size_t(
+        (std::ptrdiff_t(block_index) * n_x * n_y * n_z + cell) * 19 + f);
   }
 
   /** Values of the PDF field before any sweep. */
@@ -302,11 +409,15 @@ struct Setup {
 };
 
 /**
- * Links of type @p type of a block that the flag field implies, in the order
- * of the stencil and then of the cells, computed without the class under test.
+ * Links of type @p type of a block that the flag field implies for the links
+ * of @p policy, in the order of the stencil and then of the cells, computed
+ * without the class under test. The data of a link is set by @p assign from
+ * the boundary cell.
  */
+template <typename LinkStencil, typename Assign>
 std::vector<IndexInfo> expected_links(Setup &setup, IBlock &block,
-                                      Links::Type type) {
+                                      Links::Type type, Policy policy,
+                                      Assign assign) {
   std::vector<IndexInfo> links;
   auto *flags = block.getData<Flags>(setup.flags_id);
   auto const domain = flags->getFlag(FlagUID("domain"));
@@ -316,25 +427,35 @@ std::vector<IndexInfo> expected_links(Setup &setup, IBlock &block,
            it.y() >= 1 and it.y() < cell_idx_c(flags->ySize()) - 1 and
            it.z() >= 1 and it.z() < cell_idx_c(flags->zSize()) - 1;
   };
-  for (auto d = Stencil::begin(); d != Stencil::end(); ++d) {
-    for (auto it = flags->beginWithGhostLayerXYZ(cell_idx_c(gl - 1));
+  for (auto d = LinkStencil::begin(); d != LinkStencil::end(); ++d) {
+    if (policy.skip_center and *d == stencil::C) {
+      continue;
+    }
+    for (auto it = flags->beginWithGhostLayerXYZ(
+             cell_idx_c(gl - policy.ghost_margin));
          it != flags->end(); ++it) {
       auto const neighbor =
           Cell(it.x() + stencil::cx[*d], it.y() + stencil::cy[*d],
                it.z() + stencil::cz[*d]);
       auto const selected =
           type == Links::ALL or (type == Links::INNER) == is_inner(it);
-      if (selected and isFlagSet(it, domain) and not isFlagSet(it, boundary) and
+      if (selected and isFlagSet(it, domain) and
+          not(policy.fluid_cells_only and isFlagSet(it, boundary)) and
           isFlagSet(flags->get(neighbor), boundary)) {
-        IndexInfo link(it.x(), it.y(), it.z(), int32_t(Stencil::idx[*d]));
-        Boundary::assignValue(link, Vector3<double>(double(neighbor.x()),
-                                                    double(neighbor.y()),
-                                                    double(neighbor.z())));
+        IndexInfo link(it.x(), it.y(), it.z(), int32_t(LinkStencil::idx[*d]));
+        assign(link, neighbor);
         links.push_back(link);
       }
     }
   }
   return links;
+}
+
+/** The data of the links of the @c Boundary class (the UBB-like kernel). */
+inline void assign_velocity(IndexInfo &link, Cell const &cell) {
+  Boundary::assignValue(
+      link,
+      Vector3<double>(double(cell.x()), double(cell.y()), double(cell.z())));
 }
 
 template <typename T> bool is_zero(std::vector<T> const &forces) {
@@ -397,7 +518,8 @@ BOOST_AUTO_TEST_CASE(index_vectors_from_flag_field) {
     std::size_t n_links = 0;
     for (auto &block : *setup.blocks) {
       for (auto type : {Links::ALL, Links::INNER, Links::OUTER}) {
-        auto const expected = expected_links(setup, block, type);
+        auto const expected = expected_links<Stencil>(
+            setup, block, type, fluid_links, assign_velocity);
         BOOST_CHECK(boundary.getIndexVector(&block, type) == expected);
         BOOST_CHECK_EQUAL(boundary.getForceVector(&block, type).size(),
                           expected.size());
@@ -588,6 +710,115 @@ BOOST_AUTO_TEST_CASE(index_vectors_compare) {
   BOOST_CHECK(lhs != rhs);
   BOOST_CHECK(lhs.pointerCpu(Links::ALL) == nullptr);
   BOOST_CHECK(lhs.pointerCpu(Links::INNER) != nullptr);
+}
+
+template <typename B>
+concept HasGetForce = requires(B &b, IBlock *block) { b.getForce(block); };
+template <typename B>
+concept HasGetForceVector =
+    requires(B &b, IBlock *block) { b.getForceVector(block); };
+template <typename B>
+concept HasGetForceVectorID = requires(B &b) { b.getForceVectorID(); };
+template <typename B>
+concept HasRunInterface = requires(B &b, IBlock *block) {
+  b.run(block);
+  b.inner(block);
+  b.outer(block);
+  b.getIndexVector(block);
+  b.getIndexVectorID();
+};
+
+BOOST_AUTO_TEST_CASE(boundary_without_force_has_no_force_interface) {
+  using NoForceBoundary = ValueBoundary<FluidLinks, Stencil>;
+  static_assert(Boundary::has_force);
+  static_assert(HasGetForce<Boundary> and HasGetForceVector<Boundary> and
+                HasGetForceVectorID<Boundary>);
+  static_assert(not NoForceBoundary::has_force);
+  static_assert(not HasGetForce<NoForceBoundary>);
+  static_assert(not HasGetForceVector<NoForceBoundary>);
+  static_assert(not HasGetForceVectorID<NoForceBoundary>);
+  static_assert(HasRunInterface<Boundary> and HasRunInterface<NoForceBoundary>);
+  static_assert(
+      std::is_same_v<Boundary::ForceVector, ForceVector<ForceStruct, memory>>);
+}
+
+/**
+ * Check the links of a boundary without force for each type of vector, that
+ * running @c inner and @c outer is equivalent to running @c run, and the
+ * values that the kernel stores in the field: the value of each link in its
+ * cell and direction, and nothing else.
+ */
+template <typename ValueBoundaryClass, typename LinkStencil>
+void check_value_boundary(Policy policy, bool has_ghost_links) {
+  // the blocks have 6x5x4 cells
+  auto const is_outermost = [](IndexInfo const &link) {
+    constexpr auto g = int32_t(gl);
+    return link.x == -g or link.x == 6 + g - 1 or link.y == -g or
+           link.y == 5 + g - 1 or link.z == -g or link.z == 4 + g - 1;
+  };
+  for (auto const fraction : {0.05, 0.3, 0.7}) {
+    Setup setup;
+    setup.set_flags(fraction);
+    ValueBoundaryClass run_all(setup.blocks, setup.pdfs_id[0], CellValue{},
+                               "run");
+    ValueBoundaryClass run_split(setup.blocks, setup.pdfs_id[1], CellValue{},
+                                 "split");
+    setup.fill(run_all);
+    setup.fill(run_split);
+    auto expected_field = setup.initial_pdfs();
+    std::size_t n_links = 0;
+    std::size_t n_outermost_links = 0;
+    std::size_t n_links_of_boundary_cells = 0;
+    std::size_t block_index = 0;
+    for (auto &block : *setup.blocks) {
+      auto *flags = block.getData<Flags>(setup.flags_id);
+      for (auto type : {Links::ALL, Links::INNER, Links::OUTER}) {
+        auto const expected = expected_links<LinkStencil>(
+            setup, block, type, policy, [](IndexInfo &link, Cell const &cell) {
+              link.value = cell_value(cell);
+            });
+        BOOST_CHECK(run_all.getIndexVector(&block, type) == expected);
+        BOOST_CHECK(run_split.getIndexVector(&block, type) == expected);
+      }
+      for (auto const &link : run_all.getIndexVector(&block)) {
+        expected_field[Setup::value_index(block_index, link.x, link.y, link.z,
+                                          link.dir)] = link.value;
+        n_outermost_links += is_outermost(link);
+        n_links_of_boundary_cells +=
+            isFlagSet(flags->get(link.x, link.y, link.z),
+                      flags->getFlag(FlagUID("boundary")));
+      }
+      n_links += run_all.getIndexVector(&block).size();
+      ++block_index;
+    }
+    BOOST_CHECK_GT(n_links, 0u);
+    BOOST_CHECK_EQUAL(n_outermost_links > 0, has_ghost_links);
+    for (auto &block : *setup.blocks) {
+      run_all.run(&block);
+      run_split.inner(&block);
+      run_split.outer(&block);
+    }
+    BOOST_CHECK(setup.pdfs(0) == expected_field);
+    BOOST_CHECK(setup.pdfs(1) == expected_field);
+    BOOST_CHECK(setup.pdfs(0) != setup.initial_pdfs());
+    BOOST_CHECK_EQUAL(n_links_of_boundary_cells > 0,
+                      not policy.fluid_cells_only);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(value_boundary_with_fluid_links) {
+  check_value_boundary<ValueBoundary<FluidLinks, Stencil>, Stencil>(fluid_links,
+                                                                    false);
+}
+
+BOOST_AUTO_TEST_CASE(value_boundary_with_domain_links_no_center) {
+  check_value_boundary<ValueBoundary<DomainLinksNoCenter, Stencil>, Stencil>(
+      domain_links_no_center, false);
+}
+
+BOOST_AUTO_TEST_CASE(value_boundary_with_domain_links_with_ghost_layers) {
+  check_value_boundary<ValueBoundary<DomainLinksWithGhostLayers, CellStencil>,
+                       CellStencil>(domain_links_with_ghost_layers, true);
 }
 
 int main(int argc, char **argv) {
