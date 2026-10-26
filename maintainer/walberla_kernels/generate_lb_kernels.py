@@ -24,12 +24,6 @@ after its class in ``walberla::pystencils``, e.g.
 ``InitialPDFsSetterDoublePrecisionCUDA.h``.
 """
 
-import argparse
-import dataclasses
-import itertools
-import pathlib
-import typing
-
 import lbmpy
 import lbmpy.creationfunctions
 import lbmpy.forcemodels
@@ -198,15 +192,7 @@ def generate_pack_info_vec(sfg, ctx, name):
     pack_infos.generate_vector_pack_info(sfg, ctx, name, STENCIL)
 
 
-@dataclasses.dataclass(frozen=True)
-class Kernel:
-    stem: str
-    targets: tuple
-    generate: typing.Callable
-    header_only: bool = False
-    header_extension: str = "h"
-
-
+Kernel = sfg_driver.Kernel
 KERNELS = {
     "init": Kernel("InitialPDFsSetter", ("cpu", "cuda"), generate_init),
     "stream_collide_thermalized": Kernel(
@@ -233,49 +219,6 @@ KERNELS = {
 }
 
 
-def parse_args(argv=None):
-    parser = argparse.ArgumentParser(
-        description="Generate the waLBerla LB kernels.")
-    parser.add_argument("--kernels", nargs="+", default=["all"],
-                        choices=["all", *KERNELS],
-                        help="Which kernels to generate")
-    parser.add_argument("--precision", nargs="+", default=["all"],
-                        choices=["all", *sfg_driver.PRECISIONS],
-                        help="Floating-point precision(s)")
-    parser.add_argument("--target", nargs="+", default=["all"],
-                        choices=["all", *sfg_driver.TARGETS],
-                        help="Hardware target(s)")
-    parser.add_argument("--output-dir", type=pathlib.Path,
-                        default=pathlib.Path("."),
-                        help="Directory to write the kernels to")
-    return parser.parse_args(argv)
-
-
-def expand(selection, everything):
-    return (list(everything) if "all" in selection
-            else list(dict.fromkeys(selection)))
-
-
-def main():
-    args = parse_args()
-    sfg_driver.check_toolchain_versions()
-    for key, precision, target in itertools.product(
-            expand(args.kernels, KERNELS),
-            expand(args.precision, sfg_driver.PRECISIONS),
-            expand(args.target, sfg_driver.TARGETS)):
-        kernel = KERNELS[key]
-        if target not in kernel.targets:
-            print(f"skipping {key} for target {target}: not supported")
-            continue
-        ctx = sfg_driver.CodegenContext(precision, target)
-        name = ctx.class_name(kernel.stem)
-        with sfg_driver.KernelFileGenerator(
-                name, ctx, args.output_dir, "generate_lb_kernels.py",
-                header_only=kernel.header_only,
-                header_extension=kernel.header_extension) as sfg:
-            kernel.generate(sfg, ctx, name)
-        print(f"generated {name}")
-
-
 if __name__ == "__main__":
-    main()
+    sfg_driver.generate_main(
+        "Generate the waLBerla LB kernels.", "generate_lb_kernels.py", KERNELS)

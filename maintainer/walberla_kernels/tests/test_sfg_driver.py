@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import contextlib
+import io
 import os
 import pathlib
 import stat
@@ -197,6 +199,66 @@ class GenerateSweepTest(unittest.TestCase):
             "int64_t time_step)", header)
         self.assertIn("walberla::Vector3< int64_t >& block_offset()", header)
         self.assertNotIn("block_offset_0", header)
+
+
+class GenerateMainTest(unittest.TestCase):
+
+    @staticmethod
+    def kernels():
+        def generate(sfg, ctx, name):
+            sfg.code(f"// {name}")
+        return {
+            "foo": sfg_driver.Kernel("Foo", ("cpu", "cuda"), generate),
+            "bar": sfg_driver.Kernel("Bar", ("cpu",), generate,
+                                     header_only=True),
+        }
+
+    def run_main(self, *args):
+        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            sfg_driver.generate_main(
+                "Generate toys.", "toy.py", self.kernels(),
+                ["--output-dir", str(tmp), *args])
+        return sorted(p.name for p in tmp.iterdir()), output.getvalue()
+
+    def test_all_kernels_are_the_default(self):
+        files, output = self.run_main()
+        self.assertEqual(files, [
+            f"{stem}{precision}Precision{target}.{extension}"
+            for stem, targets in (
+                ("Bar", [("", ("h",))]),
+                ("Foo", [("", ("cpp", "h")), ("CUDA", ("cu", "h"))]))
+            for precision in ("Double", "Single")
+            for target, extensions in targets for extension in extensions
+        ])
+        self.assertIn("generated FooSinglePrecisionCUDA", output)
+        self.assertIn("skipping bar for target cuda: not supported", output)
+        # the AVX target exists for neither toy kernel
+        self.assertEqual(output.count("skipping"), 6)
+
+    def test_selection(self):
+        files, output = self.run_main(
+            "--kernels", "foo", "foo", "--precision", "double", "--target",
+            "cuda")
+        self.assertEqual(files, ["FooDoublePrecisionCUDA.cu",
+                                 "FooDoublePrecisionCUDA.h"])
+        self.assertEqual(output, "generated FooDoublePrecisionCUDA\n")
+
+    def test_header_only_kernel_has_no_source(self):
+        files, _ = self.run_main("--kernels", "bar", "--target", "cpu")
+        self.assertEqual(files, ["BarDoublePrecision.h",
+                                 "BarSinglePrecision.h"])
+
+    def test_unknown_kernel_is_rejected(self):
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit):
+                self.run_main("--kernels", "baz")
+
+    def test_expand(self):
+        self.assertEqual(sfg_driver.expand(["all"], ("a", "b")), ["a", "b"])
+        self.assertEqual(sfg_driver.expand(["b", "a", "b"], ("a", "b")),
+                         ["b", "a"])
 
 
 class GenerateSparseSweepTest(unittest.TestCase):
