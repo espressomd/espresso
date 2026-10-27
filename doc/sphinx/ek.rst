@@ -641,8 +641,7 @@ Next, edit the code generator script to configure new kernels, then execute it:
 
 The script takes optional arguments to control the CPU or GPU architecture,
 as well as the floating-point precision. The generated source code files need
-to be written to :file:`src/walberla_bridge/src/electrokinetics/generated_kernels/`
-and :file:`src/walberla_bridge/src/electrokinetics/reactions/generated_kernels/`.
+to be written to :file:`src/walberla_bridge/src/electrokinetics/generated_kernels/`.
 These steps can be automated with the convenience shell functions documented in
 :file:`maintainer/walberla_kernels/Readme.md`.
 Edit the :file:`CMakeLists.txt` file in the destination folders to include the
