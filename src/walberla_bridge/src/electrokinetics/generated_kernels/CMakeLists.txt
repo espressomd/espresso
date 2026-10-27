@@ -56,6 +56,9 @@ configure_codegen_kernel(AdvectiveFluxKernel)
 configure_codegen_kernel(FrictionCouplingKernel)
 configure_codegen_kernel(FixedFlux)
 configure_sweepgen_kernel(Dirichlet)
+# keep the range in sync with ReactionKernelSelector::Sizes (in
+# walberla_bridge/src/electrokinetics/reactions/ReactionKernelSelector.hpp) and
+# with the numbers of reactants in maintainer/walberla_kernels/reactions.py
 foreach(num RANGE 1 5)
   configure_sweepgen_kernel(ReactionKernelBulk${num})
   configure_sweepgen_kernel(ReactionKernelIndexed${num})

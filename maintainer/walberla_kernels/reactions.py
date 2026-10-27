@@ -28,7 +28,8 @@ A reaction changes the densities of its reactants in a cell by
 
 where the products use the densities before the reaction. The kernel reads
 all densities into local variables first, so that all reactants see the
-same densities of the cell.
+same densities of the cell. If two reactants share a density field, the last
+write wins and the changes do not accumulate (as in the old kernels).
 
 * The bulk sweep runs on all cells of the interior of a block.
 * The indexed sweep runs on the cells of a

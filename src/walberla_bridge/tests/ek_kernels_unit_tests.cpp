@@ -368,12 +368,21 @@ BOOST_AUTO_TEST_CASE(reaction_kernel_selector) {
   }
 }
 
+// The dispatch of the GPU kernels is not unit-tested here, because a .cpp file
+// cannot instantiate the GPU traits; it is covered by the CUDA build and by
+// the Python tests.
 BOOST_AUTO_TEST_CASE(reaction_kernel_selector_size_limit) {
   namespace Selector = walberla::detail::ReactionKernelSelector;
   auto const check_message = [](std::runtime_error const &error) {
     return std::string(error.what()) ==
            "reactions of this size are not implemented!";
   };
+  auto const blocks = walberla::blockforest::createUniformBlockGrid(
+      walberla::uint_t(1), walberla::uint_t(1), walberla::uint_t(1),
+      walberla::uint_t(4), walberla::uint_t(3), walberla::uint_t(5), 1.,
+      walberla::uint_t(1), walberla::uint_t(1), walberla::uint_t(1), false,
+      false, false);
+  Selector::IndexList<lbmpy::Arch::CPU> const index_list(*blocks);
   auto const species =
       std::make_shared<ReactionSpecies>(ReactionSpecies{std::size_t{0}, true});
   for (auto const num_reactants : {std::size_t{0}, std::size_t{6}}) {
@@ -382,6 +391,9 @@ BOOST_AUTO_TEST_CASE(reaction_kernel_selector_size_limit) {
     BOOST_CHECK_EXCEPTION(
         Selector::get_bulk_kernel<lbmpy::Arch::CPU>(reactants, 1.),
         std::runtime_error, check_message);
+    BOOST_CHECK_EXCEPTION(Selector::get_indexed_kernel<lbmpy::Arch::CPU>(
+                              reactants, 1., index_list),
+                          std::runtime_error, check_message);
   }
 }
 
