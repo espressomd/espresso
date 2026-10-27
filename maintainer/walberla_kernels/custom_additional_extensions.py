@@ -366,39 +366,6 @@ def generate_boundary(
     generation_context.write_file(f"{class_name}.{source_extension}", source)
 
 
-def generate_kernel_selector(
-        generation_context,
-        class_name,
-        namespace="pystencils",
-        max_num_reactants=None,
-        precision_suffix=None,
-        processor_suffix=None
-):
-    """
-    Generate helper functions to select a kernel with the appropriate
-    floating-point precision and number of ek species for the currently
-    active ek reaction and ek lattice.
-    """
-
-    context = {
-        "namespace": namespace,
-        "class_name": class_name,
-        "precision_suffix": precision_suffix,
-        "max_num_reactants": max_num_reactants,
-        "processor_suffix": processor_suffix,
-    }
-
-    custom_env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(pathlib.Path(__file__).parent),
-        undefined=jinja2.StrictUndefined
-    )
-
-    header = custom_env.get_template(
-        "templates/ReactionKernelSelector.tmpl.h").render(**context)
-
-    generation_context.write_file(f"{class_name}_all.h", header)
-
-
 def generate_device_preprocessor(kernel, defines=()):
     """
     Generate device preprocessor directives.
@@ -417,12 +384,6 @@ def generate_device_preprocessor(kernel, defines=()):
             "gcc": ["-Wstrict-aliasing", "-Wunused-variable", "-Wconversion"],
         },
         "advection": {
-            "nvcc": ["diag_suppress 177 // unused variable"],
-            "clang_host": ["-Wunused-variable"],
-            "clang_dev": ["-Wunused-variable"],
-            "gcc": ["-Wunused-variable"],
-        },
-        "reactions": {
             "nvcc": ["diag_suppress 177 // unused variable"],
             "clang_host": ["-Wunused-variable"],
             "clang_dev": ["-Wunused-variable"],

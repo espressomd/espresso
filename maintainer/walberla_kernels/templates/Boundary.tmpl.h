@@ -256,12 +256,6 @@ public:
         {%- endif %}
     }
 
-    {% if "ReactionKernelIndexed" in class_name %}
-    {{class_name}}( {{kernel|generate_constructor_parameters(parameters_to_ignore=parameters_to_ignore)}})
-      : {{ kernel|generate_constructor_initializer_list(parameters_to_ignore=parameters_to_ignore) }}
-    {}
-    {%- endif %}
-
     {{ kernel| generate_destructor(class_name) |indent(3) }}
 
     void run (

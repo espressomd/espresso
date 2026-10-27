@@ -90,6 +90,23 @@ class GenerateEkKernelsTest(unittest.TestCase):
             ("Dirichlet", ("cpu", "cuda"), False, "h"))
         self.assertIsInstance(kernel, sfg_driver.Kernel)
 
+    def test_reaction_kernels(self):
+        tmp, result = self.run_script(
+            "--kernels", "reaction_bulk_2", "reaction_indexed_5",
+            "--precision", "single")
+        self.assertEqual(sorted(p.name for p in tmp.iterdir()), sorted(
+            f"ReactionKernel{kind}SinglePrecision{s}"
+            for kind in ("Bulk2", "Indexed5")
+            for s in (".h", ".cpp", "CUDA.h", "CUDA.cu")))
+        self.assertIn("skipping reaction_bulk_2 for target avx", result.stdout)
+
+    def test_number_of_reactants_is_limited(self):
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "--kernels", "reaction_bulk_6"],
+            capture_output=True, text=True, check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("invalid choice: 'reaction_bulk_6'", result.stderr)
+
     def test_output_is_deterministic(self):
         # independent of the hash seed of the interpreter
         outputs = [self.run_script("--kernels", "dirichlet", seed=seed)[0]
@@ -100,6 +117,27 @@ class GenerateEkKernelsTest(unittest.TestCase):
         for name in names:
             self.assertEqual((outputs[0] / name).read_bytes(),
                              (outputs[1] / name).read_bytes(), name)
+
+    def test_reaction_output_is_deterministic(self):
+        # The headers are independent of the hash seed. The source files only
+        # differ in the order of the statements that extract the fields and
+        # properties, which pystencils-sfg 0.3 doesn't keep stable (as for the
+        # sweeps of the lattice Boltzmann method).
+        reactions = [f"reaction_{kind}_{num}" for kind in ("bulk", "indexed")
+                     for num in range(1, 6)]
+        outputs = [self.run_script("--kernels", *reactions, seed=seed)[0]
+                   for seed in ("1", "2")]
+        names = sorted(p.name for p in outputs[0].iterdir())
+        self.assertEqual(len(names), 80)
+        self.assertEqual(names, sorted(p.name for p in outputs[1].iterdir()))
+        for name in names:
+            first, second = (
+                (output / name).read_text() for output in outputs)
+            if name.endswith(".h"):
+                self.assertEqual(first, second, name)
+            else:
+                self.assertEqual(sorted(first.splitlines()),
+                                 sorted(second.splitlines()), name)
 
 
 if __name__ == "__main__":
