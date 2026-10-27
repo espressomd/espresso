@@ -26,7 +26,9 @@
 #include "../src/electrokinetics/generated_kernels/DirichletSinglePrecision.h"
 #include "../src/electrokinetics/generated_kernels/FixedFlux_double_precision.h"
 #include "../src/electrokinetics/generated_kernels/FixedFlux_single_precision.h"
+#include "../src/electrokinetics/reactions/ReactionKernelSelector.hpp"
 
+#include <walberla_bridge/Architecture.hpp>
 #include <walberla_bridge/walberla_init.hpp>
 
 #include <blockforest/Initialization.h>
@@ -43,11 +45,15 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include <tuple>
+#include <type_traits>
 #include <vector>
 
 bool operator!=(
@@ -237,6 +243,146 @@ template <typename Dirichlet, typename FloatType> void check_dirichlet_sweep() {
 BOOST_AUTO_TEST_CASE(dirichlet_sweep) {
   check_dirichlet_sweep<walberla::ek::DirichletSinglePrecision, float>();
   check_dirichlet_sweep<walberla::ek::DirichletDoublePrecision, double>();
+}
+
+namespace {
+/** Species of a reaction: the density field and its precision. */
+struct ReactionSpecies {
+  std::size_t density_id;
+  bool double_precision;
+  [[nodiscard]] std::size_t get_density_id() const noexcept {
+    return density_id;
+  }
+  [[nodiscard]] bool is_double_precision() const noexcept {
+    return double_precision;
+  }
+};
+
+/** Reactant with the interface that the reaction kernel selector needs. */
+struct Reactant {
+  std::shared_ptr<ReactionSpecies> species;
+  double stoech_coeff;
+  double order;
+  [[nodiscard]] auto get_species() const noexcept { return species; }
+  [[nodiscard]] double get_stoech_coeff() const noexcept {
+    return stoech_coeff;
+  }
+  [[nodiscard]] double get_order() const noexcept { return order; }
+};
+} // namespace
+
+/**
+ * Run the selected reaction kernel of @c num_reactants reactants on a block
+ * with one ghost layer: the densities of the reactants change by
+ * <tt>stoech_i * coefficient * prod_j rho_j^order_j</tt> in the cells of the
+ * interior (bulk) or in the cells of the index list (indexed, which are in
+ * the interior and in the ghost layer), and the other cells are left alone.
+ */
+template <typename FloatType, bool Indexed>
+void check_reaction_kernel(std::size_t const num_reactants) {
+  using namespace walberla;
+  using Field = field::GhostLayerField<FloatType, 1>;
+  namespace Selector = walberla::detail::ReactionKernelSelector;
+  constexpr auto arch = lbmpy::Arch::CPU;
+  auto const blocks = blockforest::createUniformBlockGrid(
+      uint_t(1), uint_t(1), uint_t(1), uint_t(4), uint_t(3), uint_t(5), 1.,
+      uint_t(1), uint_t(1), uint_t(1), false, false, false);
+  auto &block = *blocks->begin();
+  auto const initial = [](std::size_t i, Cell const &cell) {
+    return FloatType(1.5 + 0.1 * static_cast<double>(i) +
+                     0.02 * (cell.x() + 1) + 0.03 * (cell.y() + 1) +
+                     0.01 * (cell.z() + 1));
+  };
+  auto const coefficient = 0.05;
+  std::vector<std::shared_ptr<Reactant>> reactants;
+  std::vector<Field *> densities;
+  for (std::size_t i = 0; i < num_reactants; ++i) {
+    auto const id = field::addToStorage<Field>(
+        blocks, "density " + std::to_string(i), FloatType(0), field::fzyx, 1);
+    auto *density = block.getData<Field>(id);
+    for (auto it = density->beginWithGhostLayerXYZ(); it != density->end();
+         ++it) {
+      *it = initial(i, Cell(it.x(), it.y(), it.z()));
+    }
+    densities.push_back(density);
+    auto const sign = (i % 2 == 0) ? -1. : 1.;
+    reactants.push_back(std::make_shared<Reactant>(
+        Reactant{std::make_shared<ReactionSpecies>(ReactionSpecies{
+                     std::size_t(id), std::is_same_v<FloatType, double>}),
+                 sign * (1. + 0.5 * static_cast<double>(i)),
+                 0.5 + 0.5 * static_cast<double>(i)}));
+  }
+  // cells in the interior, in the ghost layer and in the corners of the field
+  std::vector<Cell> const cells = {
+      Cell(0, 0, 0), Cell(1, 1, 3), Cell(3, 2, 4),   Cell(-1, 1, 2),
+      Cell(2, 3, 1), Cell(4, 3, 5), Cell(-1, -1, -1)};
+  auto const reacts = [&](Cell const &cell) {
+    if constexpr (Indexed) {
+      return std::ranges::find(cells, cell) != cells.end();
+    } else {
+      return densities[0]->xyzSize().contains(cell);
+    }
+  };
+  std::function<void(IBlock *)> kernel;
+  if constexpr (Indexed) {
+    Selector::IndexList<arch> index_list(*blocks);
+    for (auto const &cell : cells) {
+      index_list.getVector(block).emplace_back(cell);
+    }
+    kernel =
+        Selector::get_indexed_kernel<arch>(reactants, coefficient, index_list);
+  } else {
+    kernel = Selector::get_bulk_kernel<arch>(reactants, coefficient);
+  }
+  kernel(&block);
+  // the tolerance is relative to the terms of the sum, because the densities
+  // can cancel to values close to zero
+  auto const epsilon = std::is_same_v<FloatType, double> ? 1e-12 : 1e-6;
+  for (auto it = densities[0]->beginWithGhostLayerXYZ();
+       it != densities[0]->end(); ++it) {
+    auto const cell = Cell(it.x(), it.y(), it.z());
+    auto rate = coefficient;
+    for (std::size_t j = 0; j < num_reactants; ++j) {
+      rate *= std::pow(static_cast<double>(initial(j, cell)),
+                       reactants[j]->get_order());
+    }
+    for (std::size_t i = 0; i < num_reactants; ++i) {
+      auto const before = static_cast<double>(initial(i, cell));
+      auto const change =
+          reacts(cell) ? reactants[i]->get_stoech_coeff() * rate : 0.;
+      BOOST_CHECK_SMALL(static_cast<double>(densities[i]->get(cell)) -
+                            (before + change),
+                        epsilon * (std::abs(before) + std::abs(change)));
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(reaction_kernel_selector) {
+  for (std::size_t num_reactants = 1; num_reactants <= 5; ++num_reactants) {
+    BOOST_TEST_CONTEXT("reactants: " << num_reactants) {
+      check_reaction_kernel<double, false>(num_reactants);
+      check_reaction_kernel<float, false>(num_reactants);
+      check_reaction_kernel<double, true>(num_reactants);
+      check_reaction_kernel<float, true>(num_reactants);
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(reaction_kernel_selector_size_limit) {
+  namespace Selector = walberla::detail::ReactionKernelSelector;
+  auto const check_message = [](std::runtime_error const &error) {
+    return std::string(error.what()) ==
+           "reactions of this size are not implemented!";
+  };
+  auto const species =
+      std::make_shared<ReactionSpecies>(ReactionSpecies{std::size_t{0}, true});
+  for (auto const num_reactants : {std::size_t{0}, std::size_t{6}}) {
+    std::vector<std::shared_ptr<Reactant>> const reactants(
+        num_reactants, std::make_shared<Reactant>(Reactant{species, 1., 1.}));
+    BOOST_CHECK_EXCEPTION(
+        Selector::get_bulk_kernel<lbmpy::Arch::CPU>(reactants, 1.),
+        std::runtime_error, check_message);
+  }
 }
 
 int main(int argc, char **argv) {
