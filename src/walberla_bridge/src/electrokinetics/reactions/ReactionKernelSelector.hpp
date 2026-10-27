@@ -115,6 +115,10 @@ using IndexList = walberla::v8::sweep::SparseIndexList<
                        walberla::v8::memory::memtag::host,
                        walberla::v8::memory::memtag::unified>>;
 
+/** @brief Dependent @c false, to make a @c static_assert fail on use only. */
+template <typename FloatType, lbmpy::Arch Architecture, std::size_t N>
+inline constexpr bool always_false = false;
+
 /**
  * @brief The kernels for @c N reactants.
  * Specialized for the floating-point type, the architecture and the number
@@ -125,7 +129,11 @@ using IndexList = walberla::v8::sweep::SparseIndexList<
  * coefficients.
  */
 template <typename FloatType, lbmpy::Arch Architecture, std::size_t N>
-struct KernelTrait;
+struct KernelTrait {
+  static_assert(always_false<FloatType, Architecture, N>,
+                "the GPU reaction kernels need a CUDA compiler (compile this "
+                "translation unit with nvcc)");
+};
 
 template <> struct KernelTrait<double, lbmpy::Arch::CPU, 1> {
   using Bulk = pystencils::ReactionKernelBulk1DoublePrecision;
@@ -310,6 +318,8 @@ get_bulk_kernel(std::vector<std::shared_ptr<Reactant>> const &reactants,
  * @brief Get the sweep of an indexed reaction, which runs on the cells of
  * an index list.
  * The floating-point type is the one of the first reactant.
+ * The index list is copied by handle: a @c SparseIndexList only holds the
+ * @c BlockDataID of block data that is owned by the block forest.
  */
 template <lbmpy::Arch Architecture, class Reactant>
 std::function<void(IBlock *)>
