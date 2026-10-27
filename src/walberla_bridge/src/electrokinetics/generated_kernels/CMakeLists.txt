@@ -31,8 +31,8 @@ function(configure_codegen_kernel kernel)
   endforeach()
 endfunction()
 
-# kernels generated with sweepgen (see maintainer/walberla_kernels), named
-# like the ones of the lattice Boltzmann method: <Name><Precision>Precision
+# kernels generated with sweepgen (see maintainer/walberla_kernels), named like
+# the ones of the lattice Boltzmann method: <Name><Precision>Precision
 function(configure_sweepgen_kernel kernel)
   set(sweepgen_backends ".cpp")
   if(WALBERLA_BUILD_WITH_CUDA)
