@@ -43,12 +43,15 @@ FACES = {"W", "E", "S", "N", "B", "T"}
 
 def generate_uncached(kind, precision, target):
     """
-    Files written for a pack info (``kind`` is ``pdf`` or ``vec``), as a
-    dict from the file name to the text.
+    Files written for a pack info (``kind`` is ``pdf``, ``vec`` or
+    ``scalar``, the latter with the stencil D3Q27 of the electrokinetics),
+    as a dict from the file name to the text.
     """
-    stem, generator = {
-        "pdf": ("PackInfoPdf", pack_infos.generate_pdf_pack_info),
-        "vec": ("PackInfoVec", pack_infos.generate_vector_pack_info),
+    stem, generator, stencil = {
+        "pdf": ("PackInfoPdf", pack_infos.generate_pdf_pack_info, D3Q19),
+        "vec": ("PackInfoVec", pack_infos.generate_vector_pack_info, D3Q19),
+        "scalar": ("PackInfoScalar", pack_infos.generate_scalar_pack_info,
+                   D3Q27),
     }[kind]
     ctx = sfg_driver.CodegenContext(precision, target)
     name = ctx.class_name(stem)
@@ -56,7 +59,7 @@ def generate_uncached(kind, precision, target):
     try:
         with sfg_driver.KernelFileGenerator(
                 name, ctx, tmp, "generate_lb_kernels.py") as sfg:
-            generator(sfg, ctx, name, D3Q19)
+            generator(sfg, ctx, name, stencil)
         return {p.name: p.read_text() for p in sorted(tmp.iterdir())}
     finally:
         shutil.rmtree(tmp)
@@ -275,8 +278,48 @@ class GenerationTest(unittest.TestCase):
         self.assertIn("using Field_T = walberla::gpu::GPUField< float >;",
                       files["PackInfoVecSinglePrecisionCUDA.h"])
 
+    def test_scalar_cpu(self):
+        files = generate("scalar", "double", "cpu")
+        self.assertEqual(sorted(files), ["PackInfoScalarDoublePrecision.cpp",
+                                         "PackInfoScalarDoublePrecision.h"])
+        header = files["PackInfoScalarDoublePrecision.h"]
+        self.assertIn(
+            "class PackInfoScalarDoublePrecision : public "
+            "walberla::UniformCpuFieldPackInfoBase< "
+            "PackInfoScalarDoublePrecision >", header)
+        self.assertIn(
+            "using Field_T = walberla::field::GhostLayerField< double, 1 >;",
+            header)
+        self.assertIn('#include "../../utils/UniformCpuFieldPackInfoBase.hpp"',
+                      header)
+        # all 26 directions of D3Q27 communicate the one value of a cell
+        counts = elements_per_cell(header)
+        self.assertEqual(len(counts), 26)
+        self.assertEqual(set(counts.values()), {1})
+        # one kernel of each type is shared by all directions, and it has no
+        # axis for the components
+        source = files["PackInfoScalarDoublePrecision.cpp"]
+        for kernel in ("pack", "unpack", "localCopy"):
+            self.assertEqual(len(re.findall(rf"\n    void {kernel}\w+ \(",
+                                            source)), 1, kernel)
+        self.assertEqual(source.count(
+            "PackInfoScalarDoublePrecision_kernels::pack"), 26)
+        self.assertNotIn("fStride", source)
+
+    def test_scalar_cuda_single(self):
+        files = generate("scalar", "single", "cuda")
+        self.assertEqual(sorted(files), [
+            "PackInfoScalarSinglePrecisionCUDA.cu",
+            "PackInfoScalarSinglePrecisionCUDA.h"])
+        header = files["PackInfoScalarSinglePrecisionCUDA.h"]
+        self.assertIn("walberla::sweepgen::UniformGpuFieldPackInfoBase< "
+                      "PackInfoScalarSinglePrecisionCUDA >", header)
+        self.assertIn("using Field_T = walberla::gpu::GPUField< float >;",
+                      header)
+        self.assertEqual(len(elements_per_cell(header)), 26)
+
     def test_kernel_namespaces_follow_the_class_names(self):
-        for kind in ("pdf", "vec"):
+        for kind in ("pdf", "vec", "scalar"):
             for precision in ("double", "single"):
                 for target in ("cpu", "cuda"):
                     files = generate(kind, precision, target)
@@ -338,15 +381,19 @@ class GenerationTest(unittest.TestCase):
 class CpuBaseHeaderTest(unittest.TestCase):
 
     def test_include_of_the_generated_header_resolves(self):
-        header = generate("pdf", "double", "cpu")[
-            "PackInfoPdfDoublePrecision.h"]
-        include = re.search(r'#include "([^"]*UniformCpuFieldPack[^"]*)"',
-                            header).group(1)
-        generated_kernels = (
-            BRIDGE_SRC / "lattice_boltzmann" / "generated_kernels")
-        self.assertEqual(
-            os.path.normpath(generated_kernels / include),
-            str(CPU_BASE_HEADER))
+        # the pack infos of the LB and of the EK are in directories with the
+        # same relative position of the hand-written base class
+        for kind, directory in (("pdf", "lattice_boltzmann"),
+                                ("scalar", "electrokinetics")):
+            stem = {"pdf": "PackInfoPdf", "scalar": "PackInfoScalar"}[kind]
+            header = generate(kind, "double", "cpu")[
+                f"{stem}DoublePrecision.h"]
+            include = re.search(r'#include "([^"]*UniformCpuFieldPack[^"]*)"',
+                                header).group(1)
+            generated_kernels = BRIDGE_SRC / directory / "generated_kernels"
+            self.assertEqual(
+                os.path.normpath(generated_kernels / include),
+                str(CPU_BASE_HEADER))
         self.assertTrue(CPU_BASE_HEADER.is_file())
 
 

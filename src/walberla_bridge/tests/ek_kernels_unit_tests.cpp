@@ -26,6 +26,8 @@
 #include "../src/electrokinetics/generated_kernels/DirichletSinglePrecision.h"
 #include "../src/electrokinetics/generated_kernels/FixedFluxDoublePrecision.h"
 #include "../src/electrokinetics/generated_kernels/FixedFluxSinglePrecision.h"
+#include "../src/electrokinetics/generated_kernels/PackInfoScalarDoublePrecision.h"
+#include "../src/electrokinetics/generated_kernels/PackInfoScalarSinglePrecision.h"
 #include "../src/electrokinetics/reactions/ReactionKernelSelector.hpp"
 
 #include <walberla_bridge/Architecture.hpp>
@@ -33,6 +35,7 @@
 
 #include <blockforest/Initialization.h>
 #include <blockforest/StructuredBlockForest.h>
+#include <blockforest/communication/UniformBufferedScheme.h>
 #include <core/DataTypes.h>
 #include <core/cell/Cell.h>
 #include <domain_decomposition/BlockDataID.h>
@@ -41,6 +44,8 @@
 #include <field/FlagField.h>
 #include <field/FlagUID.h>
 #include <field/GhostLayerField.h>
+#include <field/communication/PackInfo.h>
+#include <stencil/D3Q27.h>
 
 #include <mpi.h>
 
@@ -48,6 +53,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <stdexcept>
@@ -392,6 +398,90 @@ BOOST_AUTO_TEST_CASE(reaction_kernel_selector_size_limit) {
     BOOST_CHECK_EXCEPTION(Selector::get_indexed_kernel<lbmpy::Arch::CPU>(
                               reactants, 1., index_list),
                           std::runtime_error, check_message);
+  }
+}
+
+/**
+ * @brief Communicate the ghost layers of a scalar field with the generic
+ * waLBerla pack info and with the generated one, and count the cells of the
+ * two fields (with their ghost layers) that differ bitwise.
+ */
+template <typename PackInfo>
+static std::size_t compare_scalar_pack_infos(
+    walberla::uint_t n_ghost_layers,
+    walberla::blockforest::LocalCommunicationMode local_mode) {
+  using namespace walberla;
+  using Field = typename PackInfo::Field_T;
+  using FT = typename Field::value_type;
+  static_assert(std::is_same_v<Field, field::GhostLayerField<FT, 1u>>);
+  // 2x2x1 blocks of one process, periodic like the lattice of the bridge
+  auto const blocks = blockforest::createUniformBlockGrid(
+      uint_t(2), uint_t(2), uint_t(1), uint_t(5), uint_t(4), uint_t(6), 1.,
+      uint_t(1), uint_t(1), uint_t(1), true, true, true);
+  auto const generic_id = field::addToStorage<Field>(
+      blocks, "generic", FT{0}, field::fzyx, n_ghost_layers);
+  auto const generated_id = field::addToStorage<Field>(
+      blocks, "generated", FT{0}, field::fzyx, n_ghost_layers);
+  for (auto &block : *blocks) {
+    auto const origin = blocks->getBlockCellBB(block);
+    for (auto const id : {generic_id, generated_id}) {
+      auto &field = *block.getData<Field>(id);
+      for (auto it = field.beginWithGhostLayer(); it != field.end(); ++it) {
+        auto const is_ghost = it.x() < 0 or it.y() < 0 or it.z() < 0 or
+                              it.x() >= cell_idx_c(field.xSize()) or
+                              it.y() >= cell_idx_c(field.ySize()) or
+                              it.z() >= cell_idx_c(field.zSize());
+        // a different value in every cell of the domain
+        *it = is_ghost ? FT(-1)
+                       : FT(1) + FT(0.25) * FT(origin.xMin() + it.x()) +
+                             FT(0.0625) * FT(origin.yMin() + it.y()) +
+                             FT(0.015625) * FT(origin.zMin() + it.z()) *
+                                 FT(origin.zMin() + it.z() + 1);
+      }
+    }
+  }
+  using Scheme =
+      blockforest::communication::UniformBufferedScheme<stencil::D3Q27>;
+  Scheme generic_scheme(blocks);
+  Scheme generated_scheme(blocks);
+  generic_scheme.setLocalMode(local_mode);
+  generated_scheme.setLocalMode(local_mode);
+  generic_scheme.addPackInfo(
+      std::make_shared<field::communication::PackInfo<Field>>(generic_id));
+  // all ghost layers, like the generic pack info
+  generated_scheme.addPackInfo(
+      std::make_shared<PackInfo>(generated_id, n_ghost_layers));
+  generic_scheme();
+  generated_scheme();
+  std::size_t n_differences = 0;
+  for (auto &block : *blocks) {
+    auto &generic = *block.getData<Field>(generic_id);
+    auto &generated = *block.getData<Field>(generated_id);
+    auto it_generated = generated.beginWithGhostLayer();
+    for (auto it = generic.beginWithGhostLayer(); it != generic.end();
+         ++it, ++it_generated) {
+      // no ghost cell is left at its initial value
+      BOOST_REQUIRE(*it != FT(-1));
+      n_differences += std::memcmp(&*it, &*it_generated, sizeof(FT)) != 0;
+    }
+  }
+  return n_differences;
+}
+
+BOOST_AUTO_TEST_CASE(pack_info_scalar) {
+  using walberla::blockforest::BUFFER;
+  using walberla::blockforest::START;
+  using PackInfo_d = walberla::pystencils::PackInfoScalarDoublePrecision;
+  using PackInfo_f = walberla::pystencils::PackInfoScalarSinglePrecision;
+  for (auto const mode : {START, BUFFER}) {
+    for (auto const n_ghost_layers : {1u, 2u}) {
+      BOOST_CHECK_EQUAL(compare_scalar_pack_infos<PackInfo_d>(
+                            walberla::uint_c(n_ghost_layers), mode),
+                        0u);
+      BOOST_CHECK_EQUAL(compare_scalar_pack_infos<PackInfo_f>(
+                            walberla::uint_c(n_ghost_layers), mode),
+                        0u);
+    }
   }
 }
 

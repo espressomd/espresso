@@ -36,12 +36,16 @@ import unittest
 
 from tests.test_accessor_symbols import definitions
 
-SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "generate_lb_kernels.py"
-STEMS = ("PackInfoPdf", "PackInfoVec")
+KERNELS_DIR = pathlib.Path(__file__).resolve().parents[1]
+LB_SCRIPT = KERNELS_DIR / "generate_lb_kernels.py"
+EK_SCRIPT = KERNELS_DIR / "generate_ek_kernels.py"
+STEMS = ("PackInfoPdf", "PackInfoVec", "PackInfoScalar")
 PRECISIONS = ("Double", "Single")
 # distinct sets of populations of D3Q19: 6 faces and 12 edges, and
-# one set for all directions of a vector field; each has 3 kernels
-KERNEL_COUNTS = {"PackInfoPdf": 3 * 18, "PackInfoVec": 3 * 1}
+# one set for all directions of a vector field or of a scalar field (the
+# latter in all 26 directions of D3Q27); each has 3 kernels
+KERNEL_COUNTS = {"PackInfoPdf": 3 * 18, "PackInfoVec": 3 * 1,
+                 "PackInfoScalar": 3 * 1}
 
 
 class PackInfoSymbolsTest(unittest.TestCase):
@@ -49,11 +53,14 @@ class PackInfoSymbolsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.directory = pathlib.Path(tempfile.mkdtemp())
-        subprocess.run(
-            [sys.executable, str(SCRIPT), "--kernels", "pack_info_pdf",
-             "pack_info_vec", "--target", "cpu", "cuda",
-             "--output-dir", str(cls.directory)],
-            capture_output=True, text=True, check=True)
+        generators = ((LB_SCRIPT, ("pack_info_pdf", "pack_info_vec")),
+                      (EK_SCRIPT, ("pack_info_scalar",)))
+        for script, kernels in generators:
+            subprocess.run(
+                [sys.executable, str(script), "--kernels", *kernels,
+                 "--target", "cpu", "cuda", "--output-dir",
+                 str(cls.directory)],
+                capture_output=True, text=True, check=True)
         cls.cpu, cls.cuda = {}, {}
         for stem in STEMS:
             for precision in PRECISIONS:
