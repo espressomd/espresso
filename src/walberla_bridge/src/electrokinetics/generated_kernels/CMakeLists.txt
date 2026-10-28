@@ -17,20 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-function(configure_codegen_kernel kernel)
-  set(backends ".cpp")
-  if(WALBERLA_BUILD_WITH_CUDA)
-    list(APPEND backends "_CUDA.cu")
-  endif()
-  foreach(precision single double)
-    foreach(backend ${backends})
-      set(source_file ${kernel}_${precision}_precision${backend})
-      target_sources(espresso_walberla_codegen PRIVATE ${source_file})
-      espresso_set_walberla_codegen_kernel_source_properties(${source_file})
-    endforeach()
-  endforeach()
-endfunction()
-
 # kernels generated with sweepgen (see maintainer/walberla_kernels), named like
 # the ones of the lattice Boltzmann method: <Name><Precision>Precision
 function(configure_sweepgen_kernel kernel)
@@ -47,15 +33,15 @@ function(configure_sweepgen_kernel kernel)
   endforeach()
 endfunction()
 
-configure_codegen_kernel(DiffusiveFluxKernel)
-configure_codegen_kernel(DiffusiveFluxKernelThermalized)
-configure_codegen_kernel(DiffusiveFluxKernelWithElectrostatic)
-configure_codegen_kernel(DiffusiveFluxKernelWithElectrostaticThermalized)
-configure_codegen_kernel(ContinuityKernel)
-configure_codegen_kernel(AdvectiveFluxKernel)
-configure_codegen_kernel(FrictionCouplingKernel)
-configure_codegen_kernel(FixedFlux)
+configure_sweepgen_kernel(AdvectiveFluxKernel)
+configure_sweepgen_kernel(ContinuityKernel)
+configure_sweepgen_kernel(DiffusiveFluxKernel)
+configure_sweepgen_kernel(DiffusiveFluxKernelThermalized)
+configure_sweepgen_kernel(DiffusiveFluxKernelWithElectrostatic)
+configure_sweepgen_kernel(DiffusiveFluxKernelWithElectrostaticThermalized)
 configure_sweepgen_kernel(Dirichlet)
+configure_sweepgen_kernel(FixedFlux)
+configure_sweepgen_kernel(FrictionCouplingKernel)
 # keep the range in sync with ReactionKernelSelector::Sizes (in
 # walberla_bridge/src/electrokinetics/reactions/ReactionKernelSelector.hpp) and
 # with the numbers of reactants in maintainer/walberla_kernels/reactions.py
@@ -64,9 +50,11 @@ foreach(num RANGE 1 5)
   configure_sweepgen_kernel(ReactionKernelIndexed${num})
 endforeach()
 
+# the accessors are header-only on the CPU
 if(WALBERLA_BUILD_WITH_CUDA)
-  foreach(precision single double)
-    target_sources(espresso_walberla_codegen
-                   PRIVATE EK_FieldAccessors_${precision}_precision_CUDA.cu)
+  foreach(precision Single Double)
+    set(source_file EKFieldAccessors${precision}PrecisionCUDA.cu)
+    target_sources(espresso_walberla_codegen PRIVATE ${source_file})
+    espresso_set_walberla_codegen_kernel_source_properties(${source_file})
   endforeach()
 endif()

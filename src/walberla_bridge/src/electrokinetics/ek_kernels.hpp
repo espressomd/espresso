@@ -21,27 +21,26 @@
 
 #include <walberla_bridge/Architecture.hpp>
 
-#include "generated_kernels/AdvectiveFluxKernel_double_precision.h"
-#include "generated_kernels/AdvectiveFluxKernel_single_precision.h"
-#include "generated_kernels/ContinuityKernel_double_precision.h"
-#include "generated_kernels/ContinuityKernel_single_precision.h"
-#include "generated_kernels/DiffusiveFluxKernelThermalized_double_precision.h"
-#include "generated_kernels/DiffusiveFluxKernelThermalized_single_precision.h"
-#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticThermalized_double_precision.h"
-#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticThermalized_single_precision.h"
-#include "generated_kernels/DiffusiveFluxKernelWithElectrostatic_double_precision.h"
-#include "generated_kernels/DiffusiveFluxKernelWithElectrostatic_single_precision.h"
-#include "generated_kernels/DiffusiveFluxKernel_double_precision.h"
-#include "generated_kernels/DiffusiveFluxKernel_single_precision.h"
-#include "generated_kernels/EK_FieldAccessors_double_precision.h"
-#include "generated_kernels/EK_FieldAccessors_single_precision.h"
-#include "generated_kernels/FrictionCouplingKernel_double_precision.h"
-#include "generated_kernels/FrictionCouplingKernel_single_precision.h"
-
+#include "generated_kernels/AdvectiveFluxKernelDoublePrecision.h"
+#include "generated_kernels/AdvectiveFluxKernelSinglePrecision.h"
+#include "generated_kernels/ContinuityKernelDoublePrecision.h"
+#include "generated_kernels/ContinuityKernelSinglePrecision.h"
+#include "generated_kernels/DiffusiveFluxKernelDoublePrecision.h"
+#include "generated_kernels/DiffusiveFluxKernelSinglePrecision.h"
+#include "generated_kernels/DiffusiveFluxKernelThermalizedDoublePrecision.h"
+#include "generated_kernels/DiffusiveFluxKernelThermalizedSinglePrecision.h"
+#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticDoublePrecision.h"
+#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticSinglePrecision.h"
+#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticThermalizedDoublePrecision.h"
+#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticThermalizedSinglePrecision.h"
 #include "generated_kernels/DirichletDoublePrecision.h"
 #include "generated_kernels/DirichletSinglePrecision.h"
-#include "generated_kernels/FixedFlux_double_precision.h"
-#include "generated_kernels/FixedFlux_single_precision.h"
+#include "generated_kernels/EKFieldAccessorsDoublePrecision.h"
+#include "generated_kernels/EKFieldAccessorsSinglePrecision.h"
+#include "generated_kernels/FixedFluxDoublePrecision.h"
+#include "generated_kernels/FixedFluxSinglePrecision.h"
+#include "generated_kernels/FrictionCouplingKernelDoublePrecision.h"
+#include "generated_kernels/FrictionCouplingKernelSinglePrecision.h"
 
 namespace walberla {
 namespace detail {
@@ -49,36 +48,36 @@ namespace detail {
 using lbmpy::Arch;
 
 template <typename FT = double, Arch AT = Arch::CPU> struct KernelTrait {
-  using ContinuityKernel = pystencils::ContinuityKernel_double_precision;
-  using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_double_precision;
+  using ContinuityKernel = pystencils::ContinuityKernelDoublePrecision;
+  using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernelDoublePrecision;
   using DiffusiveFluxKernelThermalized =
-      pystencils::DiffusiveFluxKernelThermalized_double_precision;
-  using AdvectiveFluxKernel = pystencils::AdvectiveFluxKernel_double_precision;
+      pystencils::DiffusiveFluxKernelThermalizedDoublePrecision;
+  using AdvectiveFluxKernel = pystencils::AdvectiveFluxKernelDoublePrecision;
   using FrictionCouplingKernel =
-      pystencils::FrictionCouplingKernel_double_precision;
+      pystencils::FrictionCouplingKernelDoublePrecision;
   using DiffusiveFluxKernelElectrostatic =
-      pystencils::DiffusiveFluxKernelWithElectrostatic_double_precision;
+      pystencils::DiffusiveFluxKernelWithElectrostaticDoublePrecision;
   using DiffusiveFluxKernelElectrostaticThermalized = pystencils::
-      DiffusiveFluxKernelWithElectrostaticThermalized_double_precision;
+      DiffusiveFluxKernelWithElectrostaticThermalizedDoublePrecision;
 
   using Dirichlet = ek::DirichletDoublePrecision;
-  using FixedFlux = pystencils::FixedFlux_double_precision;
+  using FixedFlux = ek::FixedFluxDoublePrecision;
 };
 template <> struct KernelTrait<float, Arch::CPU> {
-  using ContinuityKernel = pystencils::ContinuityKernel_single_precision;
-  using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_single_precision;
+  using ContinuityKernel = pystencils::ContinuityKernelSinglePrecision;
+  using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernelSinglePrecision;
   using DiffusiveFluxKernelThermalized =
-      pystencils::DiffusiveFluxKernelThermalized_single_precision;
-  using AdvectiveFluxKernel = pystencils::AdvectiveFluxKernel_single_precision;
+      pystencils::DiffusiveFluxKernelThermalizedSinglePrecision;
+  using AdvectiveFluxKernel = pystencils::AdvectiveFluxKernelSinglePrecision;
   using FrictionCouplingKernel =
-      pystencils::FrictionCouplingKernel_single_precision;
+      pystencils::FrictionCouplingKernelSinglePrecision;
   using DiffusiveFluxKernelElectrostatic =
-      pystencils::DiffusiveFluxKernelWithElectrostatic_single_precision;
+      pystencils::DiffusiveFluxKernelWithElectrostaticSinglePrecision;
   using DiffusiveFluxKernelElectrostaticThermalized = pystencils::
-      DiffusiveFluxKernelWithElectrostaticThermalized_single_precision;
+      DiffusiveFluxKernelWithElectrostaticThermalizedSinglePrecision;
 
   using Dirichlet = ek::DirichletSinglePrecision;
-  using FixedFlux = pystencils::FixedFlux_single_precision;
+  using FixedFlux = ek::FixedFluxSinglePrecision;
 };
 } // namespace detail
 } // namespace walberla
