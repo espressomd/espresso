@@ -25,8 +25,8 @@ file and a kernel of a CUDA file must never have the same qualified name and
 parameter types: the linker would bind one to the other (the ``__global__``
 kernels have host stubs) without a diagnostic. This is the check of
 ``test_pack_info_symbols`` for the boundaries, which are the ``DynamicUBB``
-of the lattice Boltzmann method and the ``Dirichlet`` boundary of the
-electrokinetics. The hand-written base class of the boundaries is included
+of the lattice Boltzmann method and the ``Dirichlet`` and ``FixedFlux``
+boundaries of the electrokinetics. The hand-written base class of the boundaries is included
 by both targets: it must only define templates, whose instances for the host
 and the device are different types.
 """
@@ -50,6 +50,8 @@ PRECISIONS = ("Double", "Single")
 BOUNDARIES = (("generate_lb_kernels.py", "dynamic_ubb", "DynamicUBB",
                "walberla::lbm"),
               ("generate_ek_kernels.py", "dirichlet", "Dirichlet",
+               "walberla::ek"),
+              ("generate_ek_kernels.py", "fixed_flux", "FixedFlux",
                "walberla::ek"))
 
 
@@ -109,8 +111,8 @@ class BoundarySymbolsTest(unittest.TestCase):
         for family in (self.cpu, self.cuda):
             lb = {f for n, d in family.items() if n.startswith("DynamicUBB")
                   for f in d}
-            ek = {f for n, d in family.items() if n.startswith("Dirichlet")
-                  for f in d}
+            ek = {f for n, d in family.items()
+                  if n.startswith(("Dirichlet", "FixedFlux")) for f in d}
             self.assertTrue(lb and ek)
             self.assertEqual(lb & ek, set())
 
@@ -118,7 +120,7 @@ class BoundarySymbolsTest(unittest.TestCase):
         names = [qualified for functions in
                  (*self.cpu.values(), *self.cuda.values())
                  for qualified, _ in functions if "_kernels::" in qualified]
-        self.assertEqual(len(names), 8)
+        self.assertEqual(len(names), 12)
         self.assertEqual(len(names), len(set(names)))
 
     def test_base_header_defines_no_function(self):

@@ -28,10 +28,12 @@ import unittest
 import lbmpy
 import lbmpy.boundaries
 import pystencils as ps
+import sympy as sp
 from pystencils import FieldType
 from pystencils.types import PsStructType
 
 import boundaries
+import flux_layout
 import generate_lb_kernels
 import pystencils_espresso
 import sfg_driver
@@ -664,6 +666,244 @@ class DirichletBoundaryTest(unittest.TestCase):
         self.assertIn("if(sparse_idx < _size_indexVector_0)", cuda)
         self.assertRegex(
             cuda, r"linkKernel<<< __grid_size, __block_size, 0, stream >>>")
+
+
+def walberla_d3q27():
+    """
+    The velocities of the stencil ``walberla::stencil::D3Q27`` in the order
+    of its directions, from the headers of the waLBerla sources of the
+    sweepgen installation (``sweepgen`` is installed from the waLBerla
+    checkout), or None if they are not found.
+    """
+    import sweepgen
+    root = pathlib.Path(sweepgen.__file__).resolve().parents[3] / "src"
+    stencil = root / "stencil"
+    if not (stencil / "Directions.h").is_file():
+        return None
+    directions = (stencil / "Directions.h").read_text()
+    index = {name: int(value) for name, value in re.findall(
+        r"^\s*(\w+)\s*=\s*(\d+),", directions, re.M)}
+
+    def table(name):
+        body = re.search(
+            rf"std::array< int, NR_OF_DIRECTIONS > {name}\s*\{{(.*?)\}};",
+            directions, re.S).group(1)
+        return [int(v) for v in re.findall(
+            r"-?\d+", re.sub(r"//[^\n]*", "", body))]
+
+    cx, cy, cz = table("cx"), table("cy"), table("cz")
+    names = re.search(r"dir = \{([^}]*)\}",
+                      (stencil / "D3Q27.h").read_text()).group(1)
+    return [(cx[index[n]], cy[index[n]], cz[index[n]])
+            for n in (n.strip() for n in names.split(","))]
+
+
+class FixedFluxBoundaryTest(unittest.TestCase):
+
+    @staticmethod
+    def generate(precision, target):
+        ctx = sfg_driver.CodegenContext(precision, target)
+        name = ctx.class_name("FixedFlux")
+        tmp = pathlib.Path(tempfile.mkdtemp())
+        try:
+            with sfg_driver.KernelFileGenerator(
+                    name, ctx, tmp, "generate_ek_kernels.py") as sfg:
+                boundaries.generate_fixed_flux(sfg, ctx, name)
+            return name, {p.name: p.read_text() for p in sorted(tmp.iterdir())}
+        finally:
+            shutil.rmtree(tmp)
+
+    def check(self, precision, target):
+        name, files = self.generate(precision, target)
+        impl = "cu" if target == "cuda" else "cpp"
+        self.assertEqual(sorted(files), [f"{name}.{impl}", f"{name}.h"])
+        return name, files[f"{name}.h"], files[f"{name}.{impl}"]
+
+    def test_index_info(self):
+        for precision, cpp in CPP_TYPES.items():
+            for target in ("cpu", "cuda"):
+                name, header, _ = self.check(precision, target)
+                self.assertIn("namespace walberla::ek {", header)
+                self.assertEqual(
+                    struct_members(header, f"{name}IndexInfo"),
+                    [("int32_t", "x"), ("int32_t", "y"), ("int32_t", "z"),
+                     ("int32_t", "dir"), (cpp, "flux_0"), (cpp, "flux_1"),
+                     (cpp, "flux_2")])
+
+    def test_class(self):
+        for precision, cpp in CPP_TYPES.items():
+            for target, memory in (("cpu", "Host"), ("cuda", "Device")):
+                name, header, _ = self.check(precision, target)
+                base = (
+                    f"walberla::IndexVectorBoundary< {name}, {name}IndexInfo, "
+                    f"void, walberla::stencil::D3Q27, "
+                    f"walberla::Vector3< {cpp} >, "
+                    f"walberla::IndexVectorMemory::{memory}, "
+                    "walberla::DomainLinksNoCenter >")
+                self.assertIn(f"class {name} : public {base}", header)
+                self.assertIn(f"using IndexInfo = {name}IndexInfo;", header)
+                self.assertNotIn("ForceStruct", header)
+                self.assertIn(f"{name} (const std::shared_ptr< "
+                              "walberla::StructuredBlockForest >& blocks, "
+                              "walberla::BlockDataID fluxID_, const "
+                              "std::function< walberla::Vector3< "
+                              f"{cpp} >(const walberla::Cell &, "
+                              "const walberla::shared_ptr< "
+                              "walberla::StructuredBlockForest > &, "
+                              "walberla::IBlock &) >& valueCallback)",
+                              header)
+                self.assertIn(f':Base(blocks, fluxID_, valueCallback, '
+                              f'"{name}")', header)
+                self.assertIn("#include \"stencil/D3Q27.h\"", header)
+
+    def test_field_type(self):
+        _, cpu, _ = self.check("single", "cpu")
+        self.assertIn("using PdfField_T = walberla::field::GhostLayerField< "
+                      "float, 13 >;", cpu)
+        _, cuda, _ = self.check("single", "cuda")
+        self.assertIn("using PdfField_T = walberla::gpu::GPUField< float >;",
+                      cuda)
+
+    def test_assign_value(self):
+        _, header, _ = self.check("double", "cpu")
+        self.assertRegex(
+            header, r"static void assignValue\(IndexInfo &e, "
+            r"walberla::Vector3< double > const &v\) \{\s*"
+            r"e\.flux_0 = v\[0\];\s*e\.flux_1 = v\[1\];\s*"
+            r"e\.flux_2 = v\[2\];\s*\}")
+
+    def test_link_kernel_signature(self):
+        _, cpu, _ = self.check("double", "cpu")
+        self.assertIn(
+            "void linkKernel(walberla::field::GhostLayerField< double, 13 > "
+            "* flux, FixedFluxDoublePrecisionIndexInfo * indexVector_, "
+            "std::size_t size);", cpu)
+        _, cuda, _ = self.check("single", "cuda")
+        self.assertIn(
+            "void linkKernel(walberla::gpu::GPUField< float > * flux, "
+            "FixedFluxSinglePrecisionCUDAIndexInfo * indexVector_, "
+            "std::size_t size, cudaStream_t stream);", cuda)
+
+    def offsets(self, header):
+        match = re.search(r"neighborOffset = \{\{(.*?)\}\};", header, re.S)
+        rows = [list(map(int, row.split(","))) for row in
+                re.findall(r"\{([-\d, ]+)\}", match.group(1))]
+        return [tuple(column) for column in zip(*rows)]
+
+    def test_neighbor_offsets_are_the_directions_of_the_stencil(self):
+        _, header, _ = self.check("double", "cpu")
+        self.assertIn("std::array< std::array< int, 27u >, 3u > "
+                      "neighborOffset", header)
+        offsets = self.offsets(header)
+        self.assertEqual(offsets, [tuple(int(c) for c in v) for v in D3Q27])
+        # the direction index of a link is the index of waLBerla's stencil
+        reference = walberla_d3q27()
+        if reference is None:
+            self.skipTest("the waLBerla sources are not available")
+        self.assertEqual(offsets, reference)
+
+    def test_base_header_is_included_by_relative_path(self):
+        generated = BRIDGE_SRC / "electrokinetics" / "generated_kernels"
+        for target in ("cpu", "cuda"):
+            _, header, _ = self.check("double", target)
+            include = re.search(
+                r'#include "([^"]*IndexVectorBoundary[^"]*)"', header).group(1)
+            self.assertEqual(
+                os.path.normpath(generated / include), str(BASE_HEADER))
+
+    def tables(self, dtype):
+        """The lookup tables of the assignments, by name."""
+        field = ps.Field.create_generic(
+            "flux", 3, dtype, index_dimensions=1, index_shape=(13,),
+            layout="fzyx", field_type=FieldType.CUSTOM)
+        index_field = boundaries.link_index_field(
+            "Test", [(f"flux_{i}", dtype) for i in range(3)],
+            boundaries.EK_NAMESPACE)
+        stencil = [tuple(int(c) for c in v) for v in D3Q27]
+        assignments = boundaries.fixed_flux_assignments(
+            dtype, field, index_field, stencil)
+        *arrays, store = assignments
+        tables = {a.lhs.name: list(a.rhs) for a in arrays}
+        return stencil, tables, store
+
+    def test_lookup_tables(self):
+        # the flux through the face between a cell and its neighbor in the
+        # direction d is v . d / 9, stored in the cell and the component
+        # that flux_layout gives (with its sign)
+        stencil, tables, _ = self.tables(ps.create_type("float64"))
+        self.assertEqual(sorted(tables), sorted(
+            ["component", *(f"{n}_{a}" for n in ("owner", "coefficient")
+                            for a in "xyz")]))
+        for table in tables.values():
+            self.assertEqual(len(table), 27)
+        self.assertEqual(
+            [tables[f"{n}_{a}"][0] for n in ("owner", "coefficient")
+             for a in "xyz"] + [tables["component"][0]], [0] * 7)
+        for q, direction in enumerate(stencil[1:], 1):
+            offset, component, sign = flux_layout.face_location(direction)
+            self.assertEqual(
+                [tables[f"owner_{a}"][q] for a in "xyz"], list(offset))
+            self.assertEqual(tables["component"][q], component)
+            for i, a in enumerate("xyz"):
+                self.assertEqual(
+                    tables[f"coefficient_{a}"][q],
+                    sp.Rational(sign * direction[i], 9))
+
+    def test_stored_flux_has_the_right_sign(self):
+        # reading the face from the cell of the link gives v . d / 9
+        stencil, tables, _ = self.tables(ps.create_type("float64"))
+        value = (sp.Rational(1, 3), sp.Rational(-2, 5), sp.Rational(3, 7))
+        for q, direction in enumerate(stencil[1:], 1):
+            stored = sum(tables[f"coefficient_{a}"][q] * value[i]
+                         for i, a in enumerate("xyz"))
+            _, _, sign = flux_layout.face_location(direction)
+            expected = sum(v * d for v, d in zip(value, direction)) / 9
+            self.assertEqual(sign * stored, expected)
+
+    def test_every_face_of_a_cell_is_a_different_element(self):
+        _, tables, _ = self.tables(ps.create_type("float64"))
+        elements = {
+            (tuple(tables[f"owner_{a}"][q] for a in "xyz"),
+             tables["component"][q]) for q in range(1, 27)}
+        self.assertEqual(len(elements), 26)
+
+    def test_kernels(self):
+        for target, kernel in (("cpu", "void linkKernel"),
+                               ("cuda", "__global__ void linkKernel")):
+            name, _, source = self.check("double", target)
+            self.assertIn(f"namespace {name}_kernels", source)
+            self.assertIn(kernel, source)
+            for table in ("owner_x", "owner_y", "owner_z", "component"):
+                self.assertRegex(source, rf"int32_t {table}\[27\] = ")
+            for table in ("coefficient_x", "coefficient_y", "coefficient_z"):
+                self.assertRegex(source, rf"double {table}\[27\] = ")
+            # the cell of the link is the counter of the sparse loop
+            self.assertRegex(source, r"const int32_t ctr_0 = ")
+            self.assertRegex(source, r"owner_x\[.*\] \+ ctr_0")
+            self.assertNotIn("force", source.lower())
+            self.assertNotIn("int64_t", source)
+        _, _, cpu = self.check("single", "cpu")
+        self.assertIn("float * RESTRICT const _data_flux", cpu)
+        self.assertNotIn("double", cpu)
+        self.assertIn("#pragma omp parallel", cpu)
+        _, _, cuda = self.check("double", "cuda")
+        self.assertIn("if(sparse_idx < _size_indexVector_0)", cuda)
+
+    def test_unused_variables(self):
+        # the generated code must compile without warnings: no counter is
+        # declared that is not used
+        _, _, source = self.check("double", "cpu")
+        for i in range(3):
+            self.assertGreater(source.count(f"ctr_{i}"), 1)
+
+    def test_fixed_flux_value_is_only_the_value_of_the_link(self):
+        # the kernel doesn't read the flux field
+        _, _, store = self.tables(ps.create_type("float64"))
+        self.assertIsInstance(store.lhs, ps.Field.Access)
+        self.assertEqual(store.lhs.field.name, "flux")
+        self.assertEqual(
+            {a.field.name for a in store.rhs.atoms(ps.Field.Access)},
+            {"indexVector"})
 
 
 if __name__ == "__main__":
