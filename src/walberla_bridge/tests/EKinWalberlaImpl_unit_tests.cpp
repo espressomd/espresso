@@ -723,8 +723,9 @@ BOOST_AUTO_TEST_CASE(electrostatic_kernel_parameters) {
   auto const ext_efield = Vector3d{0.01, -0.02, 0.03};
   auto const reference = make_ek(0.02, 0.5, 1., ext_efield, false);
   auto const changed = make_ek(0.4, 2., 3., Vector3d{0.2, 0.1, 0.3}, false);
-  // the electrostatic kernel is constructed with the first integration, with
-  // the parameters that the species has at that time: change them afterwards
+  // the electrostatic kernel built in the constructor is a placeholder that
+  // is constructed again at the first integration, with the parameters that
+  // the species has at that time: change them afterwards
   set_density(*changed, smooth_density);
   integrate(*changed, 1, phi);
   changed->set_diffusion(0.02);
@@ -840,6 +841,54 @@ BOOST_AUTO_TEST_CASE(rng_state) {
   auto const unthermalized = make_ek(0.02, 0.5, 0., Vector3d{}, false);
   BOOST_CHECK(not unthermalized->get_rng_state());
   BOOST_CHECK_THROW(unthermalized->set_rng_state(1u), std::runtime_error);
+}
+
+BOOST_AUTO_TEST_CASE(rng_state_continues_across_potential_fields) {
+  // the counter advances with each step with electrostatics, also if the
+  // potential field (and with it the kernel) changes between the steps, and
+  // the second step uses the counter of the first one
+  auto const solver_a = make_potential(1.);
+  auto const solver_b = make_potential(-3.);
+  auto const phi_a = solver_a->get_potential_field_id();
+  auto const phi_b = solver_b->get_potential_field_id();
+  BOOST_REQUIRE_NE(phi_a, phi_b);
+  auto const ek = make_ek(0.02, 0.5, 1., Vector3d{0.01, 0., 0.}, true);
+  set_density(*ek, smooth_density);
+  integrate(*ek, 1, phi_a);
+  BOOST_CHECK_EQUAL(*ek->get_rng_state(), 1u);
+  auto const after_first_step = gather_density(*ek);
+  integrate(*ek, 1, phi_b);
+  BOOST_CHECK_EQUAL(*ek->get_rng_state(), 2u);
+  auto const after_second_step = gather_density(*ek);
+  BOOST_CHECK(after_second_step != after_first_step);
+  // a fresh species with the same seed, the density after the first step and
+  // the counter of the first step, which only knows the second potential,
+  // does the second step in the same way
+  auto const &grid = params.grid_dimensions;
+  auto const wrap = [](int i, int n) { return ((i % n) + n) % n; };
+  auto const fresh = make_ek(0.02, 0.5, 1., Vector3d{0.01, 0., 0.}, true);
+  set_density(*fresh, [&](Vector3i const &node) {
+    auto const index =
+        (static_cast<std::size_t>(wrap(node[0], grid[0])) * grid[1] +
+         static_cast<std::size_t>(wrap(node[1], grid[1]))) *
+            grid[2] +
+        static_cast<std::size_t>(wrap(node[2], grid[2]));
+    return after_first_step[index];
+  });
+  BOOST_REQUIRE(gather_density(*fresh) == after_first_step);
+  fresh->set_rng_state(1u);
+  integrate(*fresh, 1, phi_b);
+  BOOST_CHECK_EQUAL(*fresh->get_rng_state(), 2u);
+  BOOST_CHECK(gather_density(*fresh) == after_second_step);
+}
+
+BOOST_AUTO_TEST_CASE(rng_state_above_the_signed_range_is_rejected) {
+  auto const ek = make_ek(0.02, 0.5, 0., Vector3d{}, true);
+  auto const maximum = static_cast<std::uint64_t>(INT64_MAX);
+  ek->set_rng_state(maximum);
+  BOOST_CHECK_EQUAL(*ek->get_rng_state(), maximum);
+  BOOST_CHECK_THROW(ek->set_rng_state(maximum + 1u), std::runtime_error);
+  BOOST_CHECK_EQUAL(*ek->get_rng_state(), maximum);
 }
 
 BOOST_AUTO_TEST_CASE(ek_without_ghost_layers) {

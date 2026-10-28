@@ -217,14 +217,15 @@ electrokinetics").
   same flux on all the cells of the boundary) the result doesn't depend on the
   order of the links, otherwise the value of one of the two cells is stored,
   and it depends on the order of the links (on the CPU, on the schedule of the
-  OpenMP threads) which one. The coordinates of the links are 32 bits wide, as in the old
-  kernels, and so is all the index arithmetic of the kernel (the old ones used
-  64 bits for the offsets in the field): the field of a block with its ghost
-  layers must have fewer than 2^31 elements. The generated code doesn't
-  check this: the bridge does for the PDF field and for the flux field
-  (see "Index limit of the fields of a block"); the density field of the
-  Dirichlet boundary has one component, so its limit is beyond the one of the
-  flux field of the same block (13 times as many elements). The kernels of a class live in the namespace
+  OpenMP threads) which one. The coordinates of the links are 32 bits wide,
+  as in the old kernels, and so is all the index arithmetic of the kernel
+  (the old ones used 64 bits for the offsets in the field): the field of a
+  block with its ghost layers must have fewer than 2^31 elements. The
+  generated code doesn't check this: the bridge does for the PDF field and
+  for the flux field (see "Index limit of the fields of a block"); the
+  density field of the Dirichlet boundary has one component, so its limit is
+  beyond the one of the flux field of the same block (13 times as many
+  elements). The kernels of a class live in the namespace
   `<ClassName>_kernels`, so the CPU and CUDA boundaries never define the same
   function (`tests/test_boundary_symbols.py`).
   The C++ tests of the hand-written class are
@@ -451,6 +452,28 @@ pystencils for the faces along the axes and the face diagonals, and the
 two-point difference `d_i f = e_i (f(c + e) - f(c)) / |e|^2` for the body
 diagonals, which is exact for linear fields like all the others
 (`tests/test_ek_sweeps.py`).
+
+**pystencils 2.1 internals.** The generators of the flux sweeps
+(`ek_sweeps.py`, `flux_layout.py`, `ek_accessors.py`) rely on the following
+names of pystencils 2.1.0, which are not a stable API: re-check them whenever
+pystencils changes.
+
+* `pystencils.fd.finitevolumes.get_access_and_direction`, to split a
+  derivative into the field access and the direction;
+* `pystencils.fd.derivation.FiniteDifferenceStaggeredStencilDerivation`, the
+  stencils of the gradients at the faces;
+* `pystencils.fd.derivative.expand_diff_full`, to expand the derivatives of
+  the flux;
+* `pystencils.flow.Store` and `pystencils.flow.guarded_block`, to build the
+  guarded stores of the components of the flux;
+* `pystencils.sympyextensions.random.Philox`, the RNG of the thermalized
+  flux;
+* `Staggering.staggered_entries` and `Staggering.stencil_entries` (the
+  directions of the components, and the stencil with the centre first), and
+  `StaggeredField.stencil.staggered_index` and `StaggeredField.face`, which
+  give the components of a staggered field;
+* `StaggeredFieldAccess` (`offsets`, `index` and `vector_index`), which
+  `flux_layout.lower` replaces by accesses to a plain field.
 
 **Thermal fluctuations.** The thermalized sweeps use the Philox RNG of the
 pystencils 2.1 runtime. The noise through a face is `sqrt(2 D rho_face / |e| /

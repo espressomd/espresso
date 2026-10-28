@@ -43,6 +43,7 @@ This module is the single place that knows the layout: the sweeps
 changes.
 """
 
+import sympy as sp
 from pystencils import Field
 from pystencils.grids import StaggeredField, StaggeredFieldAccess, Staggering
 
@@ -51,8 +52,12 @@ STAGGERING = Staggering.Corner3D
 # the direction of each component of the flux field
 STORED_DIRECTIONS = tuple(STAGGERING.staggered_entries)
 FLUX_COUNT = len(STORED_DIRECTIONS)
-# the directions to the 26 neighbors of a cell
+# the directions to the 26 neighbors of a cell (``stencil_entries[0]`` is the
+# centre; guarded by ``test_neighbors_are_the_directions_to_the_26_neighbors``)
 NEIGHBORS = tuple(STAGGERING.stencil_entries[1:])
+# the normalization of the fluxes: the sum of the lengths of the stored
+# directions, divided by the dimension
+A0 = sum(sp.Matrix(e).norm() for e in STORED_DIRECTIONS) / DIM
 
 
 def flux_field(dtype, name="flux"):

@@ -860,6 +860,35 @@ class FixedFluxBoundaryTest(unittest.TestCase):
             expected = sum(v * d for v, d in zip(value, direction)) / 9
             self.assertEqual(sign * stored, expected)
 
+    def test_stored_flux_matches_the_expectations_of_the_old_kernel(self):
+        # hard-coded from the physics of the former generated kernel: the
+        # flux v . d / 9 through the face of the link in the direction d is
+        # stored with the sign that the direction of the stored component
+        # requires. The former kernel wrote the link (1, 1, 1) to the
+        # element of the neighbor and the link (-1, -1, -1) to the element
+        # of the cell, with the coefficients -1/9, and the link (1, -1, -1)
+        # to the neighbor with the signs (-, +, +); the components of the
+        # new layout hold the positive edges.
+        stencil, tables, _ = self.tables(ps.create_type("float64"))
+        ninth = sp.Rational(1, 9)
+        expectations = {
+            # direction: (owner, component, coefficients)
+            (1, 1, 1): ((0, 0, 0), 9, (ninth, ninth, ninth)),
+            (-1, -1, -1): ((-1, -1, -1), 9, (ninth, ninth, ninth)),
+            (1, -1, -1): ((1, -1, -1), 10, (-ninth, ninth, ninth)),
+            (-1, 1, 1): ((0, 0, 0), 10, (-ninth, ninth, ninth)),
+            (1, 0, 1): ((0, 0, 0), 6, (ninth, 0, ninth)),
+            (-1, 0, -1): ((-1, 0, -1), 6, (ninth, 0, ninth)),
+        }
+        for direction, (owner, component, coeffs) in expectations.items():
+            q = stencil.index(direction)
+            self.assertEqual(
+                [tables[f"owner_{a}"][q] for a in "xyz"], list(owner))
+            self.assertEqual(tables["component"][q], component)
+            self.assertEqual(
+                [tables[f"coefficient_{a}"][q] for a in "xyz"],
+                list(coeffs))
+
     def test_every_face_of_a_cell_is_a_different_element(self):
         _, tables, _ = self.tables(ps.create_type("float64"))
         elements = {

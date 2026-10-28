@@ -428,8 +428,9 @@ public:
     if (!is_thermalized()) {
       throw std::runtime_error("This EK instance is unthermalized");
     }
-    assert(counter <=
-           static_cast<uint64_t>(std::numeric_limits<int64_t>::max()));
+    if (counter > static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
+      throw std::runtime_error("The RNG state is too large");
+    }
     m_rng_counter = static_cast<int64_t>(counter);
   }
 
@@ -478,6 +479,9 @@ private:
           DiffusiveFluxKernelUnthermalized(m_density_field_id, m_flux_field_id,
                                            m_diffusion));
     }
+    // placeholder with an invalid potential field ID: it is constructed again
+    // at the first integration with electrostatics, when the ID of the
+    // potential field is known (see @ref kernel_diffusion_electrostatic)
     set_electrostatic_diffusion_kernel(thermalized, BlockDataID{});
   }
 
@@ -528,6 +532,7 @@ private:
   CellInterval flux_interval(IBlock &block) const {
     auto interval =
         block.template getData<DensityField>(m_density_field_id)->xyzSize();
+    // the constructor checks that there is at least one ghost layer
     interval.expand(1);
     return interval;
   }
@@ -537,7 +542,8 @@ private:
    * The RNG of a thermalized kernel depends on the global coordinates of a
    * cell: the block offset of the kernel is set to the global coordinates of
    * the first cell of the interval of the kernel, and its time step to the
-   * counter of the bridge.
+   * counter of the bridge. The advective flux kernel has no RNG members: the
+   * members of the RNG are only set if the kernel has them.
    */
   template <typename Kernel> void run_flux_kernel(Kernel &kernel) {
     if constexpr (requires { kernel.time_step(); }) {
@@ -562,12 +568,17 @@ private:
     }
   }
 
-  void kernel_diffusion() {
-    std::visit([this](auto &kernel) { run_flux_kernel(kernel); },
-               *m_diffusive_flux);
+  /** @brief Advance the counter of the RNG if the kernels are thermalized. */
+  void advance_rng_counter() {
     if (is_thermalized()) {
       ++m_rng_counter;
     }
+  }
+
+  void kernel_diffusion() {
+    std::visit([this](auto &kernel) { run_flux_kernel(kernel); },
+               *m_diffusive_flux);
+    advance_rng_counter();
   }
 
   void kernel_advection(std::size_t const velocity_id) {
@@ -597,9 +608,7 @@ private:
     }
     std::visit([this](auto &kernel) { run_flux_kernel(kernel); },
                *m_diffusive_flux_electrostatic);
-    if (is_thermalized()) {
-      ++m_rng_counter;
-    }
+    advance_rng_counter();
   }
 
   void kernel_migration() {}
