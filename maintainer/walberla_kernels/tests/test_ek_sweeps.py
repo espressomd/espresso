@@ -178,12 +178,16 @@ class DiscreteFluxTest(unittest.TestCase):
                         {(0, 0, 0), edge}, edge)
 
     def test_stencils_do_not_depend_on_the_hash_seed(self):
-        # pystencils chooses the stencil of the body diagonals at random
+        # pystencils chooses the stencil of the body diagonals at random;
+        # derive only these (the last four stored directions)
         script = (
-            "import pystencils as ps, ek_sweeps; "
-            "stores = ek_sweeps.diffusive_flux_stores("
-            "ps.create_type('float64'), True); "
-            "print([str(s.rhs) for s in stores[9:]])")
+            "import pystencils as ps, ek_sweeps, flux_layout; "
+            "dtype = ps.create_type('float64'); "
+            "stores = ek_sweeps.discrete_flux("
+            "ek_sweeps.diffusive_flux_expression(dtype, True), "
+            "flux_layout.staggered_flux_field(dtype), "
+            "flux_layout.STORED_DIRECTIONS[9:]); "
+            "print([str(s.rhs) for s in stores])")
         outputs = []
         for seed in ("1", "2"):
             result = subprocess.run(

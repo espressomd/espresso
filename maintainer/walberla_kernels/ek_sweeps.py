@@ -134,6 +134,8 @@ def face_condition(edge, shape):
     interior cell. This is one range of the counter on each axis, which
     keeps the conditions of the stores cheap. All the faces that touch an
     interior cell are computed, and a few faces between ghost cells too.
+    The latter are harmless: they only read inside the extended region and
+    the neighbor block recomputes them identically.
     """
     counters = DEFAULTS.spatial_counters
     conditions = []
@@ -167,7 +169,8 @@ def flux_blocks(stores, flux, shape, name, preconditions=()):
     return nodes
 
 
-def discrete_flux(flux, staggered_flux):
+def discrete_flux(flux, staggered_flux,
+                  edges=flux_layout.STORED_DIRECTIONS):
     """
     The stores of the flux ``flux`` of the scalar ``density`` (a vector of
     expressions of the derivatives and values of fields) to the components of
@@ -176,7 +179,8 @@ def discrete_flux(flux, staggered_flux):
     values at the center of the face and the gradients at the face, divided
     by the length of ``e`` and normalized by ``A0``. This is
     ``ps.fd.FVM1stOrder.discrete_flux`` with a deterministic stencil on the
-    body diagonals (see the module documentation).
+    body diagonals (see the module documentation). ``edges`` restricts the
+    stores to a subset of the stored directions (by default all of them).
     """
     def discretize(term, neighbor):
         if isinstance(term, ps.field.Field.Access):
@@ -196,14 +200,13 @@ def discrete_flux(flux, staggered_flux):
         return term
 
     fluxes = flux.applyfunc(ps.fd.derivative.expand_diff_full)
-    edges = flux_layout.STORED_DIRECTIONS
-    a0 = sum(sp.Matrix(e).norm() for e in edges) / DIM
     stores = []
     for edge in edges:
         directional = sum((fluxes[i] * int(edge[i]) for i in range(DIM)),
                           sp.Integer(0))
         discretized = sp.simplify(discretize(directional, edge))
-        value = sp.simplify(discretized / sp.Matrix(edge).norm()) / a0
+        value = sp.simplify(
+            discretized / sp.Matrix(edge).norm()) / flux_layout.A0
         stores.append(Store(
             staggered_flux[staggered_flux.stencil.staggered_index(edge)],
             value))
@@ -268,7 +271,8 @@ def advective_flux(dtype):
     ``flux += rho u`` through each face (volume of fluid), a flow graph for
     ``generate_sweep`` over the interior cells expanded by one cell. The
     result is cached: building the flow graph takes seconds, and it is the
-    same for the CPU and the CUDA target.
+    same for the CPU and the CUDA target. Callers must not mutate the
+    result, which is shared.
     """
     density = scalar_field("density", dtype)
     velocity = vector_field("velocity", dtype)
@@ -302,7 +306,6 @@ def fluctuation_noise(dtype, density, diffusion):
                  periodicity=(True,) * DIM, num_cells=sizes)
     n_draws = -(-len(edges) // rng.vector_size)
     draws = [rng.get_random_vector(time_step) for _ in range(n_draws)]
-    a0 = sum(sp.Matrix(e).norm() for e in edges) / DIM
     noise = []
     for i, edge in enumerate(edges):
         vector, _ = draws[i // rng.vector_size]
@@ -310,7 +313,8 @@ def fluctuation_noise(dtype, density, diffusion):
         density_face = (density.center + density[tuple(edge)]) / 2
         noise.append(
             sp.sqrt(2 * diffusion * density_face / sp.Matrix(edge).norm()
-                    / a0) * (number - sp.Rational(1, 2)) * sp.sqrt(12))
+                    / flux_layout.A0)
+            * (number - sp.Rational(1, 2)) * sp.sqrt(12))
 
     @ps.flow.block(name="rng")
     def rng_block(let):
@@ -320,13 +324,11 @@ def fluctuation_noise(dtype, density, diffusion):
     return rng_block, noise
 
 
-@functools.lru_cache(maxsize=None)
-def diffusive_flux_stores(dtype, electrostatic=False):
+def diffusive_flux_expression(dtype, electrostatic=False):
     """
-    The stores of the diffusive flux to the 13 components of the staggered
-    flux field (see `discrete_flux`): ``-D grad(rho)``, with ``- D / kT * rho
-    * z * (grad(phi) - f_ext)`` if ``electrostatic``. The result is cached:
-    the derivation takes seconds.
+    The diffusive flux as a vector of expressions of the derivatives and
+    values of fields: ``-D grad(rho)``, with ``- D / kT * rho * z * (grad(phi)
+    - f_ext)`` if ``electrostatic``.
     """
     density = scalar_field("density", dtype)
     potential = scalar_field("potential", dtype)
@@ -340,8 +342,20 @@ def diffusive_flux_stores(dtype, electrostatic=False):
         field = sp.Matrix([ps.fd.diff(potential, i) - ext_efield[i]
                            for i in range(DIM)])
         expression += -diffusion / kT * density.center * valency * field
+    return expression
+
+
+@functools.lru_cache(maxsize=None)
+def diffusive_flux_stores(dtype, electrostatic=False):
+    """
+    The stores of the diffusive flux (see `diffusive_flux_expression`) to the
+    13 components of the staggered flux field (see `discrete_flux`). The
+    result is cached: the derivation takes seconds. Callers must not mutate
+    the result, which is shared between the CPU and the CUDA target.
+    """
     return tuple(discrete_flux(
-        expression, flux_layout.staggered_flux_field(dtype)))
+        diffusive_flux_expression(dtype, electrostatic),
+        flux_layout.staggered_flux_field(dtype)))
 
 
 @functools.lru_cache(maxsize=None)
@@ -355,7 +369,8 @@ def diffusive_flux(dtype, electrostatic=False, thermalized=False):
     ``kT``, ``valency`` and the external field ``ext_efield`` (three
     components); with ``thermalized`` the scalars of the RNG (``seed``,
     ``time_step``, ``block_offset`` and ``grid_size``, see the module
-    documentation). The result is cached (see `advective_flux`).
+    documentation). The result is cached (see `advective_flux`) and must
+    not be mutated by callers.
     """
     density = scalar_field("density", dtype)
     flux = flux_layout.flux_field(dtype)
