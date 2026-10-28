@@ -18,7 +18,7 @@
 #
 
 """
-The generated sweeps of the electrokinetics for
+The generated sweeps and the fixed flux boundary of the electrokinetics for
 the tests. Generating the flux sweeps takes about a minute each, so the tests
 of several modules share the kernels, which are generated once for each test
 process, in parallel and for the CPU and the CUDA target.
@@ -40,7 +40,7 @@ SWEEPS = ("advective_flux", "continuity", "diffusive_flux",
           "diffusive_flux_electrostatic_thermalized", "friction_coupling")
 # the keys of the registry that these tests generate, and the class names
 # (the accessors are cheap: their tests generate them themselves)
-BOUNDARIES = ()
+BOUNDARIES = ("fixed_flux",)
 CLASS_NAMES = {
     "advective_flux": "AdvectiveFluxKernel",
     "continuity": "ContinuityKernel",
@@ -50,10 +50,11 @@ CLASS_NAMES = {
     "diffusive_flux_electrostatic_thermalized":
         "DiffusiveFluxKernelWithElectrostaticThermalized",
     "friction_coupling": "FrictionCouplingKernel",
+    "fixed_flux": "FixedFlux",
 }
 # kernels that are generated in single precision too
 SINGLE_PRECISION = ("diffusive_flux_electrostatic_thermalized",
-                    "advective_flux")
+                    "advective_flux", "fixed_flux")
 
 
 def run_generator(kernel, precision, directory):
@@ -70,8 +71,9 @@ def run_generator(kernel, precision, directory):
 @functools.lru_cache(maxsize=None)
 def generated(precision):
     """
-    The directory that has the files of all the sweeps in ``precision``
-    (single precision: only those of `SINGLE_PRECISION`), for all targets. It is removed when the interpreter
+    The directory that has the files of all the sweeps and the fixed flux
+    boundary in ``precision`` (single precision: only those of
+    `SINGLE_PRECISION`), for all targets. It is removed when the interpreter
     exits.
     """
     directory = pathlib.Path(tempfile.mkdtemp())

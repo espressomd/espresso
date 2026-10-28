@@ -23,9 +23,9 @@ CPU and CUDA targets: the class ``DynamicUBB`` of ``walberla::lbm``, which has
 the interface of the class that ``pystencils_walberla`` used to generate (the
 value callback of the constructor, ``run``, ``inner``, ``outer``,
 ``getSweep``, ``fillFromFlagField``, ``getIndexVector``, ``getForceVector``,
-``getForce``, ``neighborOffset``, ...), and the class ``Dirichlet`` of
-``walberla::ek``, which has the interface of the old class of the
-electrokinetics (the same, without the force).
+``getForce``, ``neighborOffset``, ...), and the classes ``Dirichlet`` and
+``FixedFlux`` of ``walberla::ek``, which have the interface of the old classes
+of the electrokinetics (the same, without the force).
 
 Design
 ------
@@ -54,16 +54,19 @@ and a part that does:
   `generate_dynamic_ubb` is the thin layer that defines the dynamic velocity
   bounce-back boundary (a lattice Boltzmann boundary, with a velocity for each
   link and the force on the boundary, one population for each direction in
-  each cell) by means of lbmpy, and `generate_dirichlet` the boundary of the
+  each cell) by means of lbmpy, `generate_dirichlet` the boundary of the
   electrokinetics that sets the density of the boundary cells (a scalar value
-  for each link, no force).
+  for each link, no force) and `generate_fixed_flux` the one that sets the
+  flux through the faces between a cell and a boundary cell (a vector for
+  each link, no force).
 
 Index and force structs
 -----------------------
 A link is a struct ``<name>IndexInfo`` of the namespace of the class
 (``walberla::lbm`` or ``walberla::ek``) with the members ``x``, ``y``, ``z``
 and ``dir`` and the additional data of the boundary (``vel_0``, ``vel_1``,
-``vel_2`` of the UBB, ``value`` of the Dirichlet boundary); the force on a
+``vel_2`` of the UBB, ``value`` of the Dirichlet boundary, ``flux_0``,
+``flux_1``, ``flux_2`` of the fixed flux boundary); the force on a
 link is a struct ``<name>ForceStruct`` with the members ``F_0``, ``F_1`` and
 ``F_2`` (for the force vector of lbmpy's ``calculate_force_on_boundary``).
 Both are declared with a pystencils ``PsStructType`` that has the qualified
@@ -79,8 +82,9 @@ the kernel, so the strides and all the index arithmetic of the kernel are
 with 64 bits: the field of a block (with ghost layers and all components)
 must have fewer than 2^31 elements. The generated code doesn't check this;
 the bridge has to check the size of the blocks. The LB bridge checks the PDF
-field (``LBWalberlaImpl``, see the Readme); the EK fields will be checked
-when the EK flux kernels are migrated (sub-project 3c).
+field (``LBWalberlaImpl``, see the Readme), and the flux field of the
+electrokinetics, which has 13 components, with the density field
+(``EKinWalberlaImpl``).
 
 Kernels
 -------
@@ -114,6 +118,29 @@ change:
 * sweepgen: ``sweepgen.build_config.get_build_config`` and the field
   pointer types ``GhostLayerFieldPtr`` and ``GpuFieldPtr``.
 
+Fixed flux
+----------
+The class ``FixedFlux`` of ``walberla::ek`` sets the flux through the faces
+between a domain cell ``c`` and its neighbors in the boundary: the flux
+through the face between ``c`` and ``c + d`` along ``d`` is ``v . d / 9``
+for the value ``v`` that the callback returns for the boundary cell
+``c + d`` (``9`` is the square of the number of dimensions, as in the old
+class). The link policy is ``DomainLinksNoCenter`` (the links start in all
+domain cells, also in boundary cells) and the stencil is the ``D3Q27``
+stencil of waLBerla. The flux is stored in the flux field of the
+electrokinetics (see `flux_layout`): the cell that owns the face, the
+component and the sign of the stored flux depend on the direction ``d`` of
+the link, which the kernel takes from tables that are indexed with ``dir``.
+The face between two boundary cells is written by two links, one from each
+cell, with the values of the two boundary cells: the kernels may write the
+same element from two links (see ``IndexVectorBoundary.hpp``), as the old
+kernels did. With the same value in both cells, which is the case for a
+boundary that sets the same flux on all its cells (e.g. no flux), the result
+doesn't depend on the order of the links; with different values, the value of
+one of the two cells is stored, and it depends on the order of the links
+(on the CPU, on the schedule of the OpenMP threads; on the GPU, on the
+threads) which one.
+
 Kernel namespaces
 -----------------
 The kernels of a class live in the namespace ``<ClassName>_kernels`` nested
@@ -125,17 +152,23 @@ qualified names, which the linker needs in builds with CUDA
 
 import dataclasses
 
+import lbmpy
 import numpy as np
+import sympy as sp
 from lbmpy.advanced_streaming import Timestep
 from lbmpy.advanced_streaming.indexing import BetweenTimestepsIndexing
 from lbmpy.boundaries import UBB
-from pystencils import Assignment, Field, FieldType
+from pystencils import Assignment, Field, FieldType, TypedSymbol
+from pystencils.defaults import DEFAULTS
 from pystencils.types import PsCustomType, PsPointerType, PsStructType
 from pystencils.types import create_type
+from pystencils.types.quick import Arr
 from pystencilssfg.lang import AugExpr, Ref
 from pystencilssfg.lang.gpu import CudaAPI
 from sweepgen.api import GhostLayerFieldPtr, GpuFieldPtr
 from sweepgen.build_config import get_build_config
+
+import flux_layout
 
 
 BASE_CLASS = "walberla::IndexVectorBoundary"
@@ -502,3 +535,78 @@ def generate_dirichlet(sfg, ctx, name):
         index_field=index_field, field=field, stencil=[(0, 0, 0)],
         links=DOMAIN_LINKS_WITH_GHOST_LAYERS,
         value=LinkValue(ctx.data_type.c_string(), (("value", "v"),)))
+
+
+def fixed_flux_assignments(dtype, flux_field, index_field, stencil):
+    """
+    The assignments of the kernel of the fixed flux boundary over the links
+    of ``index_field`` (the struct with the members ``flux_0``, ``flux_1``
+    and ``flux_2``) for the velocities ``stencil`` (the stencil of the links
+    in the order of waLBerla), which store ``v . d / 9`` as the flux through
+    the face between the cell of a link and its neighbor in the direction
+    ``d``. The cell, the component and the sign of the flux field are given
+    by `flux_layout.face_location`; the kernel looks them up in tables that
+    are indexed with the direction of the link. There is no link in the
+    direction zero (the tables have zeros).
+    """
+    dim = flux_layout.DIM
+    index_type = create_type("int32")
+    n_directions = len(stencil)
+    locations = [flux_layout.face_location(d) if any(d) else ((0,) * dim, 0, 0)
+                 for d in stencil]
+    arrays = []
+    owners, coefficients = [], []
+    for i, axis in enumerate("xyz"):
+        owner = TypedSymbol(f"owner_{axis}", Arr(index_type, n_directions))
+        arrays.append(Assignment(owner, tuple(o[i] for o, _, _ in locations)))
+        owners.append(sp.IndexedBase(owner, shape=(1,)))
+        coefficient = TypedSymbol(
+            f"coefficient_{axis}", Arr(dtype, n_directions))
+        arrays.append(Assignment(coefficient, tuple(
+            sp.Rational(sign * d[i], dim ** 2)
+            for d, (_, _, sign) in zip(stencil, locations))))
+        coefficients.append(sp.IndexedBase(coefficient, shape=(1,)))
+    component = TypedSymbol("component", Arr(index_type, n_directions))
+    arrays.append(Assignment(component, tuple(c for _, c, _ in locations)))
+    component = sp.IndexedBase(component, shape=(1,))
+    link = index_field[0]
+    direction = link("dir")
+    # the counters of a sparse kernel are the coordinates of the link
+    cell = DEFAULTS.spatial_counters
+    value = [link(f"flux_{i}") for i in range(dim)]
+    target = flux_field.absolute_access(
+        tuple(cell[i] + owners[i][direction] for i in range(dim)),
+        (component[direction],))
+    flux = sum(coefficients[i][direction] * value[i] for i in range(dim))
+    return arrays + [Assignment(target, flux)]
+
+
+def generate_fixed_flux(sfg, ctx, name):
+    """
+    Generate the fixed flux boundary ``name`` of the electrokinetics in
+    ``EK_NAMESPACE`` (see the section "Fixed flux" of the module
+    documentation): the value that the callback returns for a boundary cell
+    (a vector) sets the flux through the faces between the boundary cell and
+    its neighbors in the domain, in the 13-component flux field. The links
+    have all the directions of the ``D3Q27`` stencil but the center
+    (``DomainLinksNoCenter``), and there is no force.
+    """
+    dim = flux_layout.DIM
+    stencil = [tuple(int(c) for c in velocity)
+               for velocity in lbmpy.LBStencil(lbmpy.Stencil.D3Q27)]
+    flux_field = Field.create_generic(
+        "flux", dim, ctx.data_type, index_dimensions=1,
+        index_shape=(flux_layout.FLUX_COUNT,), layout="fzyx",
+        field_type=FieldType.CUSTOM)
+    index_field = link_index_field(
+        name, [(f"flux_{i}", ctx.data_type) for i in range(dim)],
+        EK_NAMESPACE)
+    generate_link_boundary(
+        sfg, ctx, name,
+        assignments=fixed_flux_assignments(
+            ctx.data_type, flux_field, index_field, stencil),
+        index_field=index_field, field=flux_field, stencil=stencil,
+        links=DOMAIN_LINKS_NO_CENTER,
+        value=LinkValue(
+            f"walberla::Vector3< {ctx.data_type.c_string()} >",
+            tuple((f"flux_{i}", f"v[{i}]") for i in range(dim))))

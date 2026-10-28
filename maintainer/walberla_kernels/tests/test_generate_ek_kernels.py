@@ -65,7 +65,7 @@ class GenerateEkKernelsTest(unittest.TestCase):
             "advective_flux", "continuity", "diffusive_flux",
             "diffusive_flux_electrostatic",
             "diffusive_flux_electrostatic_thermalized",
-            "diffusive_flux_thermalized", "dirichlet",
+            "diffusive_flux_thermalized", "dirichlet", "fixed_flux",
             "friction_coupling",
             *reactions]))
         for kernel in generate_ek_kernels.KERNELS.values():
@@ -79,6 +79,17 @@ class GenerateEkKernelsTest(unittest.TestCase):
             for p in ("Single", "Double")
             for s in (".h", ".cpp", "CUDA.h", "CUDA.cu")))
         self.assertIn("skipping continuity for target avx", result.stdout)
+
+    def test_fixed_flux_all_variants(self):
+        tmp, _ = self.run_script("--kernels", "fixed_flux")
+        self.assertEqual(sorted(p.name for p in tmp.iterdir()), sorted(
+            f"FixedFlux{p}Precision{s}"
+            for p in ("Single", "Double")
+            for s in (".h", ".cpp", "CUDA.h", "CUDA.cu")))
+        header = (tmp / "FixedFluxDoublePrecision.h").read_text()
+        self.assertIn("class FixedFluxDoublePrecision : public "
+                      "walberla::IndexVectorBoundary<", header)
+        self.assertIn("walberla::DomainLinksNoCenter >", header)
 
     def test_dirichlet_double_cpu(self):
         tmp, _ = self.run_script("--kernels", "dirichlet",

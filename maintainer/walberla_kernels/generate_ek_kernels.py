@@ -32,8 +32,9 @@ class, e.g. ``DirichletDoublePrecisionCUDA.h``. The boundary classes live in
 * ``reaction_bulk_<N>`` and ``reaction_indexed_<N>`` for ``N`` = 1 to 5
   reactants: the classes ``ReactionKernelBulk<N>`` and
   ``ReactionKernelIndexed<N>`` (see ``reactions.py``).
-* ``dirichlet``: the boundary ``Dirichlet`` (the density of the boundary
-  cells), see ``boundaries.py``.
+* ``dirichlet`` and ``fixed_flux``: the boundaries ``Dirichlet`` (the density
+  of the boundary cells) and ``FixedFlux`` (the flux through the faces of the
+  boundary cells), see ``boundaries.py``.
 
 There is no AVX variant of any of them.
 """
@@ -82,6 +83,8 @@ def flux_kernels():
 KERNELS = {
     "dirichlet": sfg_driver.Kernel("Dirichlet", ("cpu", "cuda"),
                                    boundaries.generate_dirichlet),
+    "fixed_flux": sfg_driver.Kernel("FixedFlux", ("cpu", "cuda"),
+                                    boundaries.generate_fixed_flux),
     **flux_kernels(),
     "advective_flux": sfg_driver.Kernel(
         "AdvectiveFluxKernel", ("cpu", "cuda"),
