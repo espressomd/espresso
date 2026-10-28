@@ -50,12 +50,35 @@ class GenerateEkKernelsTest(unittest.TestCase):
         self.assertIn("skipping dirichlet for target avx", result.stdout)
 
     def test_all_is_the_default(self):
-        tmp, _ = self.run_script()
+        # (generating all the kernels takes minutes)
         import generate_ek_kernels
-        expected = sum(
-            len(kernel.targets) * len(sfg_driver.PRECISIONS) * 2
-            for kernel in generate_ek_kernels.KERNELS.values())
-        self.assertEqual(len(list(tmp.iterdir())), expected)
+        args = sfg_driver.parse_args(
+            "test", generate_ek_kernels.KERNELS, [])
+        self.assertEqual((args.kernels, args.precision, args.target),
+                         (["all"], ["all"], ["all"]))
+
+    def test_registered_kernels(self):
+        import generate_ek_kernels
+        reactions = [f"reaction_{kind}_{num}" for kind in ("bulk", "indexed")
+                     for num in range(1, 6)]
+        self.assertEqual(sorted(generate_ek_kernels.KERNELS), sorted([
+            "advective_flux", "continuity", "diffusive_flux",
+            "diffusive_flux_electrostatic",
+            "diffusive_flux_electrostatic_thermalized",
+            "diffusive_flux_thermalized", "dirichlet",
+            "friction_coupling",
+            *reactions]))
+        for kernel in generate_ek_kernels.KERNELS.values():
+            self.assertIsInstance(kernel, sfg_driver.Kernel)
+            self.assertNotIn("avx", kernel.targets)
+
+    def test_continuity_all_variants(self):
+        tmp, result = self.run_script("--kernels", "continuity")
+        self.assertEqual(sorted(p.name for p in tmp.iterdir()), sorted(
+            f"ContinuityKernel{p}Precision{s}"
+            for p in ("Single", "Double")
+            for s in (".h", ".cpp", "CUDA.h", "CUDA.cu")))
+        self.assertIn("skipping continuity for target avx", result.stdout)
 
     def test_dirichlet_double_cpu(self):
         tmp, _ = self.run_script("--kernels", "dirichlet",

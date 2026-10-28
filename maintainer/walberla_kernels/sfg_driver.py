@@ -255,12 +255,13 @@ def patch_kernel_source(source):
       ``int64_t`` seed (``long``) and the key literal (``long long``),
       which doesn't compile on LP64 platforms: pass the type explicitly.
     * Single-precision CPU kernels call the global ``sqrt()``, ``fmin()``,
-      ``fmax()`` and ``pow()``, i.e. the double overloads: use the ``std::``
-      ones.
+      ``fmax()``, ``pow()`` and ``fabs()``, i.e. the double overloads: use
+      the ``std::`` ones.
     """
     source = re.sub(r"(?<![:\w])pystencils::runtime::",
                     "::pystencils::runtime::", source)
-    source = re.sub(r"(?<![\w:.>])(sqrt|fmin|fmax|pow)\(", r"std::\1(", source)
+    source = re.sub(r"(?<![\w:.>])(sqrt|fmin|fmax|pow|fabs)\(",
+                    r"std::\1(", source)
     source = re.sub(r"(::x86::random::philox_float(?:32|64))\(",
                     r"\1<int64_t>(", source)
     return source
