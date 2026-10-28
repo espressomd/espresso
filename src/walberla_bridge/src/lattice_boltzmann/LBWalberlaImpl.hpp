@@ -43,6 +43,7 @@
 #include "../BoundaryHandling.hpp"
 #include "../BoundaryPackInfo.hpp"
 #include "../utils/boundary.hpp"
+#include "../utils/field_index_range.hpp"
 #include "../utils/types_conversion.hpp"
 #include "InterpolateAndShiftAtBoundary.hpp"
 #include "ResetForce.hpp"
@@ -81,70 +82,6 @@
 #include <vector>
 
 namespace walberla {
-
-namespace detail {
-
-/**
- * @brief Check that the PDF field of a block can be indexed with 32 bits.
- *
- * Several generated kernels compute all their offsets in the PDF field with
- * @c int32_t, for every precision and target: the single-precision AVX
- * stream-collide kernels (@c index_dtype=int32) and the link kernels of the
- * boundary conditions (e.g. @c DynamicUBB). The number of elements of the
- * PDF field of a block, ghost layers included, must therefore stay below
- * 2^31, otherwise the offsets overflow silently. The kernels don't check
- * this, so it is checked here, before any field is allocated.
- *
- * With the aligned allocator (@c field::AllocateAligned, used by the AVX
- * kernels), waLBerla pads the x extent of the field with ghost layers (the
- * fastest coordinate in the @c fzyx layout) up to a multiple of
- * <tt>alignment / sizeof(T)</tt> elements (see @c allocateMemory in
- * <tt>src/field/allocation/FieldAllocator.h</tt>), and the strides of the
- * kernels derive from the padded allocation. The padding is applied here
- * unconditionally, to the largest multiple the bridge can use: 16 elements,
- * i.e. 64 bytes (AVX-512) for the smallest element type (single precision).
- * This overestimates the size by less than 1% for any block that can
- * approach the limit, and keeps the check independent of the build options.
- *
- * @param n_populations Number of populations per cell (@c Stencil::Size)
- * @param cells_x Number of cells of a block in x direction (without halo)
- * @param cells_y Number of cells of a block in y direction (without halo)
- * @param cells_z Number of cells of a block in z direction (without halo)
- * @param n_ghost_layers Number of ghost layers on each side of a block
- * @throw std::runtime_error if the (padded) field has 2^31 elements or more
- */
-inline void check_pdf_field_index_range(std::size_t n_populations,
-                                        uint_t cells_x, uint_t cells_y,
-                                        uint_t cells_z, uint_t n_ghost_layers) {
-  // the factors are checked one at a time, so that nothing can overflow
-  auto constexpr limit = uint_t{1} << 31u;
-  // padding of the x extent: 64 bytes in elements of 4 bytes
-  auto constexpr padding = uint_t{16};
-  static_assert(field::SIMDAlignment() <= padding * sizeof(float),
-                "The padding of the aligned PDF field exceeds the assumption");
-  auto size = static_cast<uint_t>(n_populations);
-  auto is_x = true;
-  for (auto const cells : {cells_x, cells_y, cells_z}) {
-    auto extent = cells + 2u * n_ghost_layers;
-    if (is_x and extent <= limit) {
-      extent = (extent + padding - 1u) / padding * padding;
-    }
-    is_x = false;
-    if (extent != 0u and size > (limit - 1u) / extent) {
-      throw std::runtime_error(
-          "The PDF field of a block (" + std::to_string(n_populations) +
-          " populations in " + std::to_string(cells_x) + "x" +
-          std::to_string(cells_y) + "x" + std::to_string(cells_z) +
-          " cells with " + std::to_string(n_ghost_layers) +
-          " ghost layers) has 2^31 or more elements, which the 32-bit index "
-          "arithmetic of the LB kernels cannot address. Use more MPI ranks "
-          "or blocks, or a smaller grid.");
-    }
-    size *= extent;
-  }
-}
-
-} // namespace detail
 
 /** @brief Class that runs and controls the LB on waLBerla. */
 template <typename FloatType, lbmpy::Arch Architecture>
@@ -319,10 +256,10 @@ public:
     // ranks with blocks throw, and the script interface handles the error
     // collectively with parallel_try_catch
     if (auto it = blocks->begin(); it != blocks->end()) {
-      detail::check_pdf_field_index_range(
-          Stencil::Size, blocks->getNumberOfXCells(*it),
-          blocks->getNumberOfYCells(*it), blocks->getNumberOfZCells(*it),
-          n_ghost_layers);
+      detail::check_field_index_range(
+          "PDF field", "LB kernels", Stencil::Size,
+          blocks->getNumberOfXCells(*it), blocks->getNumberOfYCells(*it),
+          blocks->getNumberOfZCells(*it), n_ghost_layers);
     }
 
     // Initialize and register fields (must use the "underlying" types)

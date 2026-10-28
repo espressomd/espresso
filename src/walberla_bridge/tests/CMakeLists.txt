@@ -49,6 +49,7 @@ function(ESPRESSO_ADD_TEST)
 endfunction()
 
 espresso_add_test(SRC ResourceManager_test.cpp)
+espresso_add_test(SRC field_index_range_test.cpp)
 espresso_add_test(SRC lb_kernels_unit_tests.cpp)
 espresso_add_test(SRC ek_kernels_unit_tests.cpp)
 espresso_add_test(SRC IndexVectorBoundary_test.cpp)
