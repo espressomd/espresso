@@ -23,11 +23,13 @@
 #include <walberla_bridge/BlockAndCell.hpp>
 #include <walberla_bridge/electrokinetics/PoissonSolver.hpp>
 
+#include "ek_kernels.hpp"
 #include "greens_function.hpp"
 
 #include "generated_kernels/EKFieldAccessorsDoublePrecision.h"
 #include "generated_kernels/EKFieldAccessorsSinglePrecision.h"
 #if defined(__CUDACC__)
+#include "ek_kernels.cuh"
 #include "generated_kernels/EKFieldAccessorsDoublePrecisionCUDA.cuh"
 #include "generated_kernels/EKFieldAccessorsSinglePrecisionCUDA.cuh"
 #endif
@@ -38,7 +40,6 @@
 #include <domain_decomposition/BlockDataID.h>
 #include <field/AddToStorage.h>
 #include <field/GhostLayerField.h>
-#include <field/communication/PackInfo.h>
 #include <field/vtk/VTKWriter.h>
 #include <stencil/D3Q27.h>
 #include <waLBerlaDefinitions.h>
@@ -48,7 +49,6 @@
 #include <gpu/FieldIndexing.h>
 #include <gpu/GPUField.h>
 #include <gpu/Kernel.h>
-#include <gpu/communication/MemcpyPackInfo.h>
 #include <gpu/communication/UniformGPUScheme.h>
 #endif
 
@@ -108,8 +108,8 @@ protected:
   template <typename FT, lbmpy::Arch AT = lbmpy::Arch::CPU> struct FieldTrait {
     using ComplexType = std::complex<FloatType>;
     using PotentialField = field::GhostLayerField<FT, 1u>;
-    template <class Field>
-    using PackInfo = field::communication::PackInfo<Field>;
+    using PackInfo =
+        typename detail::KernelTrait<FT, lbmpy::Arch::CPU>::PackInfoScalar;
     template <class Stencil>
     using FullCommunicator =
         blockforest::communication::UniformBufferedScheme<Stencil>;
@@ -120,8 +120,8 @@ protected:
     using ComplexType = std::conditional_t<std::is_same_v<FloatType, float>,
                                            cufftComplex, cufftDoubleComplex>;
     using PotentialField = gpu::GPUField<FT>;
-    template <class Field>
-    using PackInfo = gpu::communication::MemcpyPackInfo<Field>;
+    using PackInfo =
+        typename detail::KernelTrait<FT, lbmpy::Arch::GPU>::PackInfoScalar;
     template <class Stencil>
     using FullCommunicator = gpu::communication::UniformGPUScheme<Stencil>;
   };
@@ -133,9 +133,7 @@ public:
   using FullCommunicator =
       FieldTrait<FloatType,
                  Architecture>::template FullCommunicator<stencil::D3Q27>;
-  template <class Field>
-  using PackInfo =
-      FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
+  using PackInfo = FieldTrait<FloatType, Architecture>::PackInfo;
 
 protected:
   template <typename ComplexType> struct heffte_container {
@@ -281,9 +279,8 @@ public:
     }
 
     m_full_communication = std::make_shared<FullCommunicator>(blocks);
-    m_full_communication->addPackInfo(
-        std::make_shared<PackInfo<PotentialField>>(
-            m_potential_field_with_ghosts_id));
+    m_full_communication->addPackInfo(std::make_shared<PackInfo>(
+        m_potential_field_with_ghosts_id, get_lattice().get_ghost_layers()));
   }
 
   [[nodiscard]] bool is_gpu() const noexcept override {
