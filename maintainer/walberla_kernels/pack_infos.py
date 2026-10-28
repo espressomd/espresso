@@ -19,10 +19,10 @@
 
 """
 Pack infos of the waLBerla bridge for the CPU and CUDA targets: the classes
-``PackInfoPdf`` and ``PackInfoVec`` of namespace ``walberla::pystencils``,
-which have the interface of the classes that ``pystencils_walberla`` used to
-generate (constructor from a ``BlockDataID``, ``pack``, ``unpack``, ``size``
-and ``communicateLocal``).
+``PackInfoPdf``, ``PackInfoVec`` and ``PackInfoScalar`` of namespace
+``walberla::pystencils``, which have the interface of the classes that
+``pystencils_walberla`` used to generate (constructor from a ``BlockDataID``,
+``pack``, ``unpack``, ``size`` and ``communicateLocal``).
 
 A pack info is described by the field components that it communicates in each
 direction, a dictionary ``{direction: (component, ...)}``:
@@ -31,7 +31,9 @@ direction, a dictionary ``{direction: (component, ...)}``:
   edge or corner of a direction during pull streaming (streaming-aware pack
   info), so that a face sends 5 of the 19 populations of D3Q19;
 * `vector_sets`: all components of a vector field, for each direction of
-  the stencil.
+  the stencil. With one component, this describes a scalar field without
+  index dimension (the density and the potential of the electrokinetics, with
+  the 26 directions of D3Q27).
 
 `FieldPackInfo` generates, for each distinct set of components, a pack, an
 unpack and a local copy kernel, and a class that dispatches on the direction.
@@ -43,6 +45,11 @@ interface and calls ``doPack``, ``doUnpack``, ``doLocalCopy`` and
   ``src/walberla_bridge/src/utils/UniformCpuFieldPackInfoBase.hpp``.
 * CUDA: ``walberla::sweepgen::UniformGpuFieldPackInfoBase`` of the waLBerla
   fork that sweepgen comes from (commit ``WALBERLA_COMMIT`` of `sfg_driver`).
+
+Both bases communicate ``sliceWidth`` ghost layers, the optional second
+argument of the constructor (default: 1, which is all that the LB needs). The
+electrokinetics bridge passes the number of ghost layers of the lattice, like
+the generic waLBerla pack infos that the scalar pack info replaces.
 
 The code follows ``sweepgen.communication.pack_infos.GpuPdfFieldPackInfo``,
 which only supports PDFs on CUDA. It relies on the following sweepgen and
@@ -345,3 +352,14 @@ def generate_vector_pack_info(sfg, ctx, name, stencil):
     fields = pystencils_espresso.generate_fields(stencil, ctx.data_type)
     _generate(sfg, ctx, name, fields["force"],
               vector_sets(stencil, fields["force"].index_shape[0]))
+
+
+def generate_scalar_pack_info(sfg, ctx, name, stencil):
+    """
+    Generate the pack info ``name`` of a scalar field (one value for each
+    cell, like the density and the potential of the electrokinetics) that
+    communicates the directions of ``stencil``, in ``walberla::pystencils``.
+    """
+    field = Field.create_generic(
+        "scalar", 3, ctx.data_type, index_dimensions=0, layout="fzyx")
+    _generate(sfg, ctx, name, field, vector_sets(stencil, 1))

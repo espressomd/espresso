@@ -35,6 +35,9 @@ class, e.g. ``DirichletDoublePrecisionCUDA.h``. The boundary classes live in
 * ``dirichlet`` and ``fixed_flux``: the boundaries ``Dirichlet`` (the density
   of the boundary cells) and ``FixedFlux`` (the flux through the faces of the
   boundary cells), see ``boundaries.py``.
+* ``pack_info_scalar``: the pack info ``PackInfoScalar`` of the scalar fields
+  (the density and the potential), with the 26 directions of D3Q27 (see
+  ``pack_infos.py``).
 * ``field_accessors`` (CPU) and ``field_accessors_cuda``: the accessors of
   the fields of the electrokinetics, ``EKFieldAccessors``, see
   ``ek_accessors.py``.
@@ -47,8 +50,12 @@ import functools
 import boundaries
 import ek_accessors
 import ek_sweeps
+import lbmpy
+import pack_infos
 import reactions
 import sfg_driver
+
+STENCIL = lbmpy.LBStencil(lbmpy.Stencil.D3Q27)
 
 
 def reaction_kernels():
@@ -88,6 +95,10 @@ def generate_accessors(sfg, ctx, name):
     ek_accessors.generate_field_accessors(sfg, ctx)
 
 
+def generate_pack_info_scalar(sfg, ctx, name):
+    pack_infos.generate_scalar_pack_info(sfg, ctx, name, STENCIL)
+
+
 KERNELS = {
     "dirichlet": sfg_driver.Kernel("Dirichlet", ("cpu", "cuda"),
                                    boundaries.generate_dirichlet),
@@ -107,6 +118,8 @@ KERNELS = {
     "friction_coupling": sfg_driver.Kernel(
         "FrictionCouplingKernel", ("cpu", "cuda"),
         ek_sweeps.generate_friction_coupling),
+    "pack_info_scalar": sfg_driver.Kernel(
+        "PackInfoScalar", ("cpu", "cuda"), generate_pack_info_scalar),
     **reaction_kernels(),
 }
 

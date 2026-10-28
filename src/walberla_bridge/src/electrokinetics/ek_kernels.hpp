@@ -41,6 +41,8 @@
 #include "generated_kernels/FixedFluxSinglePrecision.h"
 #include "generated_kernels/FrictionCouplingKernelDoublePrecision.h"
 #include "generated_kernels/FrictionCouplingKernelSinglePrecision.h"
+#include "generated_kernels/PackInfoScalarDoublePrecision.h"
+#include "generated_kernels/PackInfoScalarSinglePrecision.h"
 
 namespace walberla {
 namespace detail {
@@ -62,6 +64,8 @@ template <typename FT = double, Arch AT = Arch::CPU> struct KernelTrait {
 
   using Dirichlet = ek::DirichletDoublePrecision;
   using FixedFlux = ek::FixedFluxDoublePrecision;
+
+  using PackInfoScalar = pystencils::PackInfoScalarDoublePrecision;
 };
 template <> struct KernelTrait<float, Arch::CPU> {
   using ContinuityKernel = pystencils::ContinuityKernelSinglePrecision;
@@ -78,6 +82,8 @@ template <> struct KernelTrait<float, Arch::CPU> {
 
   using Dirichlet = ek::DirichletSinglePrecision;
   using FixedFlux = ek::FixedFluxSinglePrecision;
+
+  using PackInfoScalar = pystencils::PackInfoScalarSinglePrecision;
 };
 } // namespace detail
 } // namespace walberla

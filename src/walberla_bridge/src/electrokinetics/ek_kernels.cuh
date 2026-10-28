@@ -39,6 +39,8 @@
 #include "generated_kernels/FixedFluxSinglePrecisionCUDA.h"
 #include "generated_kernels/FrictionCouplingKernelDoublePrecisionCUDA.h"
 #include "generated_kernels/FrictionCouplingKernelSinglePrecisionCUDA.h"
+#include "generated_kernels/PackInfoScalarDoublePrecisionCUDA.h"
+#include "generated_kernels/PackInfoScalarSinglePrecisionCUDA.h"
 
 namespace walberla {
 namespace detail {
@@ -62,6 +64,8 @@ template <> struct KernelTrait<double, Arch::GPU> {
 
   using Dirichlet = ek::DirichletDoublePrecisionCUDA;
   using FixedFlux = ek::FixedFluxDoublePrecisionCUDA;
+
+  using PackInfoScalar = pystencils::PackInfoScalarDoublePrecisionCUDA;
 };
 template <> struct KernelTrait<float, Arch::GPU> {
   using ContinuityKernel = pystencils::ContinuityKernelSinglePrecisionCUDA;
@@ -80,6 +84,8 @@ template <> struct KernelTrait<float, Arch::GPU> {
 
   using Dirichlet = ek::DirichletSinglePrecisionCUDA;
   using FixedFlux = ek::FixedFluxSinglePrecisionCUDA;
+
+  using PackInfoScalar = pystencils::PackInfoScalarSinglePrecisionCUDA;
 };
 } // namespace detail
 } // namespace walberla

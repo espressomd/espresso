@@ -42,6 +42,7 @@ configure_sweepgen_kernel(DiffusiveFluxKernelWithElectrostaticThermalized)
 configure_sweepgen_kernel(Dirichlet)
 configure_sweepgen_kernel(FixedFlux)
 configure_sweepgen_kernel(FrictionCouplingKernel)
+configure_sweepgen_kernel(PackInfoScalar)
 # keep the range in sync with ReactionKernelSelector::Sizes (in
 # walberla_bridge/src/electrokinetics/reactions/ReactionKernelSelector.hpp) and
 # with the numbers of reactants in maintainer/walberla_kernels/reactions.py
