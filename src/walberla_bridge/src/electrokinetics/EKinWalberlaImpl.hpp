@@ -24,7 +24,6 @@
 #include <field/FlagField.h>
 #include <field/FlagUID.h>
 #include <field/GhostLayerField.h>
-#include <field/communication/PackInfo.h>
 #include <field/iterators/IteratorMacros.h>
 #include <field/vtk/FlagFieldCellFilter.h>
 #include <field/vtk/VTKWriter.h>
@@ -32,7 +31,6 @@
 #include <waLBerlaDefinitions.h>
 #if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
 #include <gpu/AddGPUFieldToStorage.h>
-#include <gpu/communication/MemcpyPackInfo.h>
 #include <gpu/communication/UniformGPUScheme.h>
 #endif
 
@@ -126,8 +124,7 @@ protected:
     // Type definitions
     using FluxField = GhostLayerField<FT, FluxCount>;
     using DensityField = GhostLayerField<FT, 1>;
-    template <class Field>
-    using PackInfo = field::communication::PackInfo<Field>;
+    using PackInfo = typename detail::KernelTrait<FT, AT>::PackInfoScalar;
     template <class Stencil>
     using RegularCommScheme =
         blockforest::communication::UniformBufferedScheme<Stencil>;
@@ -140,8 +137,6 @@ protected:
   template <typename FT> struct FieldTrait<FT, lbmpy::Arch::GPU> {
   private:
     static auto constexpr AT = lbmpy::Arch::GPU;
-    template <class Field>
-    using MemcpyPackInfo = gpu::communication::MemcpyPackInfo<Field>;
 
   public:
     template <typename Stencil>
@@ -155,7 +150,7 @@ protected:
     };
     using FluxField = gpu::GPUField<FT>;
     using DensityField = gpu::GPUField<FT>;
-    template <class Field> using PackInfo = MemcpyPackInfo<Field>;
+    using PackInfo = typename detail::KernelTrait<FT, AT>::PackInfoScalar;
     template <class Stencil>
     using RegularCommScheme = UniformGPUScheme<Stencil>;
     template <class Stencil>
@@ -299,9 +294,7 @@ protected:
   std::shared_ptr<BoundaryFullCommunicator> m_boundary_communicator;
   std::bitset<GhostComm::SIZE> m_pending_ghost_comm;
   ResourceObserver m_mpi_cart_comm_observer;
-  template <class Field>
-  using PackInfo =
-      typename FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
+  using PackInfo = typename FieldTrait<FloatType, Architecture>::PackInfo;
 
 public:
   EKinWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice, double diffusion,
@@ -350,7 +343,7 @@ public:
 
     m_full_communication = std::make_shared<FullCommunicator>(blocks);
     m_full_communication->addPackInfo(
-        std::make_shared<PackInfo<DensityField>>(m_density_field_id));
+        std::make_shared<PackInfo>(m_density_field_id, n_ghost_layers));
     m_boundary_communicator =
         std::make_shared<BoundaryFullCommunicator>(blocks);
     m_boundary_communicator->addPackInfo(
