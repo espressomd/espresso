@@ -47,18 +47,20 @@ def generate_uncached(kind, precision, target):
     ``scalar``, the latter with the stencil D3Q27 of the electrokinetics),
     as a dict from the file name to the text.
     """
-    stem, generator, stencil = {
-        "pdf": ("PackInfoPdf", pack_infos.generate_pdf_pack_info, D3Q19),
-        "vec": ("PackInfoVec", pack_infos.generate_vector_pack_info, D3Q19),
+    stem, generator, stencil, script = {
+        "pdf": ("PackInfoPdf", pack_infos.generate_pdf_pack_info, D3Q19,
+                "generate_lb_kernels.py"),
+        "vec": ("PackInfoVec", pack_infos.generate_vector_pack_info, D3Q19,
+                "generate_lb_kernels.py"),
         "scalar": ("PackInfoScalar", pack_infos.generate_scalar_pack_info,
-                   D3Q27),
+                   D3Q27, "generate_ek_kernels.py"),
     }[kind]
     ctx = sfg_driver.CodegenContext(precision, target)
     name = ctx.class_name(stem)
     tmp = pathlib.Path(tempfile.mkdtemp())
     try:
         with sfg_driver.KernelFileGenerator(
-                name, ctx, tmp, "generate_lb_kernels.py") as sfg:
+                name, ctx, tmp, script) as sfg:
             generator(sfg, ctx, name, stencil)
         return {p.name: p.read_text() for p in sorted(tmp.iterdir())}
     finally:
