@@ -1,0 +1,343 @@
+[
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "add",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "field",
+   "value",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "double",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "add",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "field",
+   "vec",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "Vector3<double> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "field",
+   "value",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "double",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "field",
+   "values",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "std::vector<double> const&",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "field",
+   "vec",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "Vector3<double> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "values",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "std::vector<double> const&",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "add_to_all",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "field",
+   "value"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "double"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "add_to_all",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "field",
+   "vec"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "Vector3<double> const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "ek::accessor::Flux",
+  "parameter names": [
+   "flux_field",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "Cell const&"
+  ],
+  "return type": "std::array<double,13>"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "ek::accessor::Flux",
+  "parameter names": [
+   "flux_field",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "CellInterval const&"
+  ],
+  "return type": "std::vector<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "field",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "Cell const&"
+  ],
+  "return type": "double"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "field",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "CellInterval const&"
+  ],
+  "return type": "std::vector<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "field",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "Cell const&"
+  ],
+  "return type": "Vector3<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "CellInterval const&"
+  ],
+  "return type": "std::vector<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get_vector",
+  "namespace": "ek::accessor::Flux",
+  "parameter names": [
+   "flux_field",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "Cell const&"
+  ],
+  "return type": "Vector3<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get_vector",
+  "namespace": "ek::accessor::Flux",
+  "parameter names": [
+   "flux_field",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "CellInterval const&"
+  ],
+  "return type": "std::vector<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "initialize",
+  "namespace": "ek::accessor::Flux",
+  "parameter names": [
+   "flux_field",
+   "flux"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "std::array<double,13> const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "initialize",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "field",
+   "value"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "double"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "initialize",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "field",
+   "vec"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "Vector3<double> const&"
+  ],
+  "return type": "void"
+ }
+]

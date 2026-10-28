@@ -65,8 +65,8 @@ class GenerateEkKernelsTest(unittest.TestCase):
             "advective_flux", "continuity", "diffusive_flux",
             "diffusive_flux_electrostatic",
             "diffusive_flux_electrostatic_thermalized",
-            "diffusive_flux_thermalized", "dirichlet", "fixed_flux",
-            "friction_coupling",
+            "diffusive_flux_thermalized", "dirichlet", "field_accessors",
+            "field_accessors_cuda", "fixed_flux", "friction_coupling",
             *reactions]))
         for kernel in generate_ek_kernels.KERNELS.values():
             self.assertIsInstance(kernel, sfg_driver.Kernel)
@@ -90,6 +90,19 @@ class GenerateEkKernelsTest(unittest.TestCase):
         self.assertIn("class FixedFluxDoublePrecision : public "
                       "walberla::IndexVectorBoundary<", header)
         self.assertIn("walberla::DomainLinksNoCenter >", header)
+
+    def test_field_accessors(self):
+        tmp, result = self.run_script(
+            "--kernels", "field_accessors", "field_accessors_cuda",
+            "--precision", "double")
+        self.assertEqual(sorted(p.name for p in tmp.iterdir()), [
+            "EKFieldAccessorsDoublePrecision.h",
+            "EKFieldAccessorsDoublePrecisionCUDA.cu",
+            "EKFieldAccessorsDoublePrecisionCUDA.cuh"])
+        self.assertIn("skipping field_accessors for target cuda",
+                      result.stdout)
+        self.assertIn("skipping field_accessors_cuda for target cpu",
+                      result.stdout)
 
     def test_dirichlet_double_cpu(self):
         tmp, _ = self.run_script("--kernels", "dirichlet",
@@ -151,6 +164,24 @@ class GenerateEkKernelsTest(unittest.TestCase):
         for name in names:
             self.assertEqual((outputs[0] / name).read_bytes(),
                              (outputs[1] / name).read_bytes(), name)
+
+    def test_fixed_flux_and_accessors_output_is_deterministic(self):
+        # independent of the hash seed of the interpreter
+        outputs = [self.run_script(
+            "--kernels", "fixed_flux", "field_accessors",
+            "field_accessors_cuda", seed=seed)[0] for seed in ("1", "2")]
+        names = sorted(p.name for p in outputs[0].iterdir())
+        self.assertEqual(len(names), 8 + 3 * 2)
+        self.assertEqual(names, sorted(p.name for p in outputs[1].iterdir()))
+        for name in names:
+            first, second = ((output / name).read_text()
+                             for output in outputs)
+            if name.startswith("FixedFlux") and name.endswith((".cpp", ".cu")):
+                # the order of the field extraction statements varies
+                self.assertEqual(sorted(first.splitlines()),
+                                 sorted(second.splitlines()), name)
+            else:
+                self.assertEqual(first, second, name)
 
     def test_reaction_output_is_deterministic(self):
         # The headers are independent of the hash seed. The source files only
