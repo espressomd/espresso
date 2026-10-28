@@ -35,6 +35,9 @@ class, e.g. ``DirichletDoublePrecisionCUDA.h``. The boundary classes live in
 * ``dirichlet`` and ``fixed_flux``: the boundaries ``Dirichlet`` (the density
   of the boundary cells) and ``FixedFlux`` (the flux through the faces of the
   boundary cells), see ``boundaries.py``.
+* ``field_accessors`` (CPU) and ``field_accessors_cuda``: the accessors of
+  the fields of the electrokinetics, ``EKFieldAccessors``, see
+  ``ek_accessors.py``.
 
 There is no AVX variant of any of them.
 """
@@ -42,6 +45,7 @@ There is no AVX variant of any of them.
 import functools
 
 import boundaries
+import ek_accessors
 import ek_sweeps
 import reactions
 import sfg_driver
@@ -80,6 +84,10 @@ def flux_kernels():
     return kernels
 
 
+def generate_accessors(sfg, ctx, name):
+    ek_accessors.generate_field_accessors(sfg, ctx)
+
+
 KERNELS = {
     "dirichlet": sfg_driver.Kernel("Dirichlet", ("cpu", "cuda"),
                                    boundaries.generate_dirichlet),
@@ -89,6 +97,11 @@ KERNELS = {
     "advective_flux": sfg_driver.Kernel(
         "AdvectiveFluxKernel", ("cpu", "cuda"),
         ek_sweeps.generate_advective_flux),
+    "field_accessors": sfg_driver.Kernel(
+        "EKFieldAccessors", ("cpu",), generate_accessors, header_only=True),
+    "field_accessors_cuda": sfg_driver.Kernel(
+        "EKFieldAccessors", ("cuda",), generate_accessors,
+        header_extension="cuh"),
     "continuity": sfg_driver.Kernel(
         "ContinuityKernel", ("cpu", "cuda"), ek_sweeps.generate_continuity),
     "friction_coupling": sfg_driver.Kernel(
