@@ -39,11 +39,15 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <functional>
 #include <initializer_list>
 #include <memory>
+#include <numeric>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -54,6 +58,7 @@ using Utils::Vector3i;
 namespace bdata = boost::unit_test::data;
 
 static EKTestParameters params; // populated in main()
+static Vector3i mpi_shape{};    // populated in main()
 
 BOOST_DATA_TEST_CASE(dimensions, bdata::make(all_eks()), ek_generator) {
   using boost::test_tools::per_element;
@@ -569,9 +574,305 @@ BOOST_AUTO_TEST_CASE(ek_poisson_solver_none) {
           .empty());
 }
 
+namespace {
+
+/** EK of the species of the tests without advection and friction coupling. */
+auto make_ek(double diffusion, double kT, double valency,
+             Vector3d const &ext_efield, bool thermalized,
+             std::shared_ptr<LatticeWalberla> lattice = params.lattice) {
+  return std::make_shared<walberla::EKinWalberlaImpl<>>(
+      std::move(lattice), diffusion, kT, valency, ext_efield, params.density,
+      false, false, thermalized, 42u);
+}
+
+/** Density of the nodes of the lattice of all MPI ranks, in all processes. */
+std::vector<double> gather_density(EKinWalberlaBase const &ek) {
+  auto const &grid = params.grid_dimensions;
+  std::vector<double> local(Utils::product(grid), 0.);
+  std::size_t index = 0;
+  for (int x = 0; x < grid[0]; ++x) {
+    for (int y = 0; y < grid[1]; ++y) {
+      for (int z = 0; z < grid[2]; ++z, ++index) {
+        if (auto const density = ek.get_node_density({x, y, z})) {
+          local[index] = *density;
+        }
+      }
+    }
+  }
+  std::vector<double> total(local.size());
+  boost::mpi::communicator world;
+  boost::mpi::all_reduce(world, local.data(), static_cast<int>(local.size()),
+                         total.data(), std::plus<double>());
+  BOOST_REQUIRE(std::ranges::all_of(
+      total, [](double const value) { return std::isfinite(value); }));
+  return total;
+}
+
+/** Set the density of the local nodes. */
+template <typename Function>
+void set_density(EKinWalberlaBase &ek, Function &&density) {
+  for (auto const &node : local_nodes_incl_ghosts(ek.get_lattice(), false)) {
+    ek.set_node_density(node, density(node));
+  }
+  ek.ghost_communication();
+}
+
+/** Integrate with the communication of the density of each time step. */
+void integrate(EKinWalberlaBase &ek, int n_steps,
+               std::size_t potential_id = 0u) {
+  for (int step = 0; step < n_steps; ++step) {
+    ek.ghost_communication();
+    ek.integrate(potential_id, 0u, 0u, 1.);
+  }
+}
+
+/**
+ * Density that is large enough for the fluctuations of a few time steps to
+ * leave it positive (the amplitude of the noise is proportional to the square
+ * root of the density).
+ */
+double smooth_density(Vector3i const &node) {
+  auto const &grid = params.grid_dimensions;
+  return 20. +
+         3. * std::sin(2. * M_PI * node[0] / grid[0]) *
+             std::cos(2. * M_PI * node[2] / grid[2]) +
+         std::sin(2. * M_PI * node[1] / grid[1]);
+}
+
+double smooth_potential(Vector3i const &node) {
+  auto const &grid = params.grid_dimensions;
+  return 0.02 * std::cos(2. * M_PI * node[0] / grid[0]) +
+         0.01 * std::sin(2. * M_PI * node[1] / grid[1]) *
+             std::cos(2. * M_PI * node[2] / grid[2]);
+}
+
+/** Potential field of a solver without charges, set in the local domain. */
+std::shared_ptr<walberla::PoissonSolverNone<double, lbmpy::Arch::CPU>>
+make_potential(double scale) {
+  auto solver =
+      std::make_shared<walberla::PoissonSolverNone<double, lbmpy::Arch::CPU>>(
+          params.lattice);
+  for (auto const &node : local_nodes_incl_ghosts(*params.lattice, false)) {
+    solver->set_node_potential(node, scale * smooth_potential(node));
+  }
+  return solver;
+}
+
+} // namespace
+
+BOOST_AUTO_TEST_CASE(diffusion_conserves_mass) {
+  auto ek = make_ek(0.1, 0., 0., Vector3d{}, false);
+  auto const spike = Vector3i{5, 6, 9};
+  set_density(*ek,
+              [&](Vector3i const &node) { return node == spike ? 2.4 : 1.4; });
+  auto const total = [&]() {
+    auto const density = gather_density(*ek);
+    return std::accumulate(density.begin(), density.end(), 0.);
+  };
+  auto const mass = total();
+  BOOST_CHECK_CLOSE(
+      mass, 1.4 * double(Utils::product(params.grid_dimensions)) + 1., 1e-10);
+  integrate(*ek, 4);
+  BOOST_CHECK_CLOSE(total(), mass, 1e-10);
+  // the spike spreads to the 26 neighbors, which are all the same distance
+  // apart in the faces they share: the neighbors in the opposite directions
+  // have the same density
+  auto const density = gather_density(*ek);
+  auto const index = [&](Vector3i const &node) {
+    return static_cast<std::size_t>(
+        (node[0] * params.grid_dimensions[1] + node[1]) *
+            params.grid_dimensions[2] +
+        node[2]);
+  };
+  BOOST_CHECK_LT(density[index(spike)], 2.4);
+  for (auto const &d : {Vector3i{1, 0, 0}, Vector3i{0, 1, 0}, Vector3i{0, 0, 1},
+                        Vector3i{1, 1, 0}, Vector3i{1, 0, -1},
+                        Vector3i{1, 1, 1}, Vector3i{-1, 1, 1}}) {
+    BOOST_CHECK_GT(density[index(spike + d)], 1.4);
+    BOOST_CHECK_CLOSE(density[index(spike + d)], density[index(spike - d)],
+                      1e-10);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(set_diffusion_updates_the_kernel) {
+  // the persistent kernels of the EK are updated by the setters of their
+  // parameters: a species whose diffusion coefficient was changed behaves
+  // like a species that was created with it
+  auto const reference = make_ek(0.02, 0., 0., Vector3d{}, false);
+  auto const changed = make_ek(0.3, 0., 0., Vector3d{}, false);
+  changed->set_diffusion(0.02);
+  for (auto const &ek : {reference, changed}) {
+    set_density(*ek, smooth_density);
+    integrate(*ek, 3);
+  }
+  auto const expected = gather_density(*reference);
+  BOOST_CHECK(gather_density(*changed) == expected);
+  // the first and last cells of the profile differ from the initial profile
+  auto const initial = make_ek(0.02, 0., 0., Vector3d{}, false);
+  set_density(*initial, smooth_density);
+  BOOST_CHECK(gather_density(*initial) != expected);
+  // no more diffusion: no change
+  changed->set_diffusion(0.);
+  integrate(*changed, 2);
+  BOOST_CHECK(gather_density(*changed) == expected);
+}
+
+BOOST_AUTO_TEST_CASE(electrostatic_kernel_parameters) {
+  auto const solver = make_potential(1.);
+  auto const phi = solver->get_potential_field_id();
+  auto const ext_efield = Vector3d{0.01, -0.02, 0.03};
+  auto const reference = make_ek(0.02, 0.5, 1., ext_efield, false);
+  auto const changed = make_ek(0.4, 2., 3., Vector3d{0.2, 0.1, 0.3}, false);
+  // the electrostatic kernel is constructed with the first integration, with
+  // the parameters that the species has at that time: change them afterwards
+  set_density(*changed, smooth_density);
+  integrate(*changed, 1, phi);
+  changed->set_diffusion(0.02);
+  changed->set_kT(0.5);
+  changed->set_valency(1.);
+  changed->set_ext_efield(ext_efield);
+  for (auto const &ek : {reference, changed}) {
+    set_density(*ek, smooth_density);
+    integrate(*ek, 3, phi);
+  }
+  auto const expected = gather_density(*reference);
+  BOOST_CHECK(gather_density(*changed) == expected);
+  BOOST_CHECK_CLOSE(changed->get_kT(), 0.5, 1e-10);
+  BOOST_CHECK_CLOSE(changed->get_valency(), 1., 1e-10);
+  BOOST_CHECK_CLOSE(changed->get_ext_efield()[2], 0.03, 1e-10);
+  // the species drifts in the electric field
+  auto const only_diffusion = make_ek(0.02, 0.5, 0., Vector3d{}, false);
+  set_density(*only_diffusion, smooth_density);
+  integrate(*only_diffusion, 3);
+  BOOST_CHECK(gather_density(*only_diffusion) != expected);
+}
+
+BOOST_AUTO_TEST_CASE(potential_field_can_change) {
+  // the ID of the potential field is read-only in a generated kernel: the
+  // kernel is created again when the potential field changes
+  auto const solver_a = make_potential(1.);
+  auto const solver_b = make_potential(-3.);
+  auto const phi_a = solver_a->get_potential_field_id();
+  auto const phi_b = solver_b->get_potential_field_id();
+  BOOST_REQUIRE_NE(phi_a, phi_b);
+  auto const run = [&](std::vector<std::size_t> const &sequence) {
+    auto ek = make_ek(0.02, 0.5, 1., Vector3d{0.01, 0., 0.}, false);
+    set_density(*ek, smooth_density);
+    for (auto const phi : sequence) {
+      integrate(*ek, 1, phi);
+    }
+    return gather_density(*ek);
+  };
+  auto const a = run({phi_a, phi_a});
+  auto const b = run({phi_b, phi_b});
+  BOOST_CHECK(a != b);
+  // the first step is the same as the one of the species that only
+  // knows the first potential
+  auto const ab = run({phi_a, phi_b});
+  auto const ba = run({phi_b, phi_a});
+  BOOST_CHECK(ab != a and ab != b and ab != ba);
+  BOOST_CHECK(run({phi_a, phi_b}) == ab);
+  BOOST_CHECK(run({phi_a, phi_b, phi_a, phi_a}) ==
+              run({phi_a, phi_b, phi_a, phi_a}));
+}
+
+BOOST_AUTO_TEST_CASE(thermalized_flux_is_independent_of_the_blocks) {
+  // the RNG of a cell depends on its global coordinates, and the flux field
+  // is computed in the ghost layers: the densities don't depend on the
+  // number of blocks, here one and eight blocks for each MPI rank
+  auto const run = [](std::shared_ptr<LatticeWalberla> lattice) {
+    auto const ek = make_ek(0.02, 0.5, 0., Vector3d{}, true, lattice);
+    set_density(*ek, smooth_density);
+    integrate(*ek, 3);
+    return gather_density(*ek);
+  };
+  auto const lattice_of_eight_blocks = std::make_shared<LatticeWalberla>(
+      params.grid_dimensions, mpi_shape, 2 * mpi_shape, 1u);
+  auto const reference = run(params.lattice);
+  BOOST_CHECK(run(lattice_of_eight_blocks) == reference);
+  // the noise is there: the density is not the one without fluctuations
+  auto const ek = make_ek(0.02, 0.5, 0., Vector3d{}, false);
+  set_density(*ek, smooth_density);
+  integrate(*ek, 3);
+  BOOST_CHECK(gather_density(*ek) != reference);
+}
+
+BOOST_AUTO_TEST_CASE(rng_state) {
+  auto const make = [](double valency) {
+    auto ek = make_ek(0.02, 0.5, valency, Vector3d{}, true);
+    set_density(*ek, smooth_density);
+    return ek;
+  };
+  auto const ek = make(0.);
+  BOOST_REQUIRE(ek->get_rng_state());
+  BOOST_CHECK_EQUAL(*ek->get_rng_state(), 0u);
+  integrate(*ek, 3);
+  BOOST_CHECK_EQUAL(*ek->get_rng_state(), 3u);
+  ek->set_rng_state(10u);
+  BOOST_CHECK_EQUAL(*ek->get_rng_state(), 10u);
+  integrate(*ek, 1);
+  BOOST_CHECK_EQUAL(*ek->get_rng_state(), 11u);
+  // the noise depends on the counter, and the species at the same counter
+  // is reproducible
+  auto const fluctuations = [&](std::uint64_t counter) {
+    auto ek = make(0.);
+    ek->set_rng_state(counter);
+    integrate(*ek, 1);
+    return gather_density(*ek);
+  };
+  BOOST_CHECK(fluctuations(7u) == fluctuations(7u));
+  BOOST_CHECK(fluctuations(7u) != fluctuations(8u));
+  // the counter advances in the same way with electrostatics
+  auto const solver = make_potential(1.);
+  auto const ek_electrostatic = make(1.);
+  integrate(*ek_electrostatic, 2, solver->get_potential_field_id());
+  BOOST_CHECK_EQUAL(*ek_electrostatic->get_rng_state(), 2u);
+  // and the noise is reproducible with electrostatics too
+  auto const electrostatic = [&](std::uint64_t counter) {
+    auto ek = make(1.);
+    ek->set_rng_state(counter);
+    integrate(*ek, 1, solver->get_potential_field_id());
+    return gather_density(*ek);
+  };
+  BOOST_CHECK(electrostatic(4u) == electrostatic(4u));
+  BOOST_CHECK(electrostatic(4u) != electrostatic(5u));
+  // an EK without fluctuations has no RNG
+  auto const unthermalized = make_ek(0.02, 0.5, 0., Vector3d{}, false);
+  BOOST_CHECK(not unthermalized->get_rng_state());
+  BOOST_CHECK_THROW(unthermalized->set_rng_state(1u), std::runtime_error);
+}
+
+BOOST_AUTO_TEST_CASE(ek_without_ghost_layers) {
+  auto const lattice = std::make_shared<LatticeWalberla>(
+      params.grid_dimensions, mpi_shape, mpi_shape, 0u);
+  BOOST_CHECK_THROW(walberla::EKinWalberlaImpl<>(
+                        lattice, params.diffusion, 0., 0., params.ext_efield,
+                        params.density, false, false, false, 0u),
+                    std::runtime_error);
+}
+
+BOOST_AUTO_TEST_CASE(ek_block_too_large_for_32bit_indices) {
+  // blocks of 600^3 cells: the flux field would have 13 * 602^3 > 2^31
+  // elements (creating the lattice doesn't allocate any field, and the EK
+  // constructor must throw before it does)
+  auto const grid_dimensions =
+      hadamard_product(Vector3i::broadcast(600), mpi_shape);
+  auto const lattice = std::make_shared<LatticeWalberla>(
+      grid_dimensions, mpi_shape, mpi_shape, 1u);
+  auto const check_message = [](std::runtime_error const &error) {
+    std::string const message(error.what());
+    return message.find("flux field") != std::string::npos and
+           message.find("2^31") != std::string::npos;
+  };
+  BOOST_CHECK_EXCEPTION(walberla::EKinWalberlaImpl<>(lattice, params.diffusion,
+                                                     0., 0., params.ext_efield,
+                                                     params.density, false,
+                                                     false, false, 0u),
+                        std::runtime_error, check_message);
+}
+
 int main(int argc, char **argv) { // NOLINT(bugprone-exception-escape)
   int n_nodes;
-  Vector3i mpi_shape{};
 
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);

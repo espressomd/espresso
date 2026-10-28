@@ -24,8 +24,8 @@
 
 #include "../src/electrokinetics/generated_kernels/DirichletDoublePrecision.h"
 #include "../src/electrokinetics/generated_kernels/DirichletSinglePrecision.h"
-#include "../src/electrokinetics/generated_kernels/FixedFlux_double_precision.h"
-#include "../src/electrokinetics/generated_kernels/FixedFlux_single_precision.h"
+#include "../src/electrokinetics/generated_kernels/FixedFluxDoublePrecision.h"
+#include "../src/electrokinetics/generated_kernels/FixedFluxSinglePrecision.h"
 #include "../src/electrokinetics/reactions/ReactionKernelSelector.hpp"
 
 #include <walberla_bridge/Architecture.hpp>
@@ -56,27 +56,25 @@
 #include <type_traits>
 #include <vector>
 
-bool operator!=(
-    walberla::pystencils::FixedFlux_single_precision::IndexInfo const &lhs,
-    walberla::pystencils::FixedFlux_single_precision::IndexInfo const &rhs) {
+bool operator!=(walberla::ek::FixedFluxSinglePrecision::IndexInfo const &lhs,
+                walberla::ek::FixedFluxSinglePrecision::IndexInfo const &rhs) {
+  return not(lhs == rhs);
+}
+
+bool operator!=(walberla::ek::FixedFluxDoublePrecision::IndexInfo const &lhs,
+                walberla::ek::FixedFluxDoublePrecision::IndexInfo const &rhs) {
   return not(lhs == rhs);
 }
 
 bool operator!=(
-    walberla::pystencils::FixedFlux_double_precision::IndexInfo const &lhs,
-    walberla::pystencils::FixedFlux_double_precision::IndexInfo const &rhs) {
+    walberla::ek::FixedFluxSinglePrecision::IndexVectors const &lhs,
+    walberla::ek::FixedFluxSinglePrecision::IndexVectors const &rhs) {
   return not(lhs == rhs);
 }
 
 bool operator!=(
-    walberla::pystencils::FixedFlux_single_precision::IndexVectors const &lhs,
-    walberla::pystencils::FixedFlux_single_precision::IndexVectors const &rhs) {
-  return not(lhs == rhs);
-}
-
-bool operator!=(
-    walberla::pystencils::FixedFlux_double_precision::IndexVectors const &lhs,
-    walberla::pystencils::FixedFlux_double_precision::IndexVectors const &rhs) {
+    walberla::ek::FixedFluxDoublePrecision::IndexVectors const &lhs,
+    walberla::ek::FixedFluxDoublePrecision::IndexVectors const &rhs) {
   return not(lhs == rhs);
 }
 
@@ -122,8 +120,8 @@ BOOST_AUTO_TEST_CASE(dirichlet_density) {
 }
 
 BOOST_AUTO_TEST_CASE(dirichlet_flux) {
-  using FixedFlux_f = walberla::pystencils::FixedFlux_single_precision;
-  using FixedFlux_d = walberla::pystencils::FixedFlux_double_precision;
+  using FixedFlux_f = walberla::ek::FixedFluxSinglePrecision;
+  using FixedFlux_d = walberla::ek::FixedFluxDoublePrecision;
 
   // check IndexInfo
   auto flux1_f = FixedFlux_f::IndexInfo(1, 2, 3, 0);

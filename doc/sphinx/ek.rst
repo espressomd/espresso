@@ -637,7 +637,7 @@ Next, edit the code generator script to configure new kernels, then execute it:
 
 .. code-block:: bash
 
-    python3 maintainer/walberla_kernels/generate_lb_kernels.py
+    python3 maintainer/walberla_kernels/generate_ek_kernels.py
 
 The script takes optional arguments to control the CPU or GPU architecture,
 as well as the floating-point precision. The generated source code files need
