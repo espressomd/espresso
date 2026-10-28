@@ -19,19 +19,29 @@
 """
 Generate the electrokinetics kernels of the waLBerla bridge with sweepgen and
 pystencils-sfg. Each kernel is written to its own file pair, named after its
-class, e.g. ``DirichletDoublePrecisionCUDA.h``. The boundary classes live
-in ``walberla::ek``, the sweeps in ``walberla::pystencils``.
+class, e.g. ``DirichletDoublePrecisionCUDA.h``. The boundary classes live in
+``walberla::ek``, the sweeps in ``walberla::pystencils``, the accessors in
+``walberla::ek::accessor``.
 
-Only the Dirichlet boundary and the reactions have been migrated; the other
-electrokinetics kernels are still the committed output of pystencils 1.4.
-The kernels ``reaction_bulk_<N>`` and ``reaction_indexed_<N>`` for
-``N`` = 1 to 5 reactants are the classes ``ReactionKernelBulk<N>`` and
-``ReactionKernelIndexed<N>``.
+* ``diffusive_flux[_electrostatic][_thermalized]``, ``advective_flux``,
+  ``continuity`` and ``friction_coupling``: the sweeps
+  ``DiffusiveFluxKernel[WithElectrostatic][Thermalized]``,
+  ``AdvectiveFluxKernel``, ``ContinuityKernel`` and
+  ``FrictionCouplingKernel`` (see ``ek_sweeps.py``), which use the layout of
+  the flux field of ``flux_layout.py``.
+* ``reaction_bulk_<N>`` and ``reaction_indexed_<N>`` for ``N`` = 1 to 5
+  reactants: the classes ``ReactionKernelBulk<N>`` and
+  ``ReactionKernelIndexed<N>`` (see ``reactions.py``).
+* ``dirichlet``: the boundary ``Dirichlet`` (the density of the boundary
+  cells), see ``boundaries.py``.
+
+There is no AVX variant of any of them.
 """
 
 import functools
 
 import boundaries
+import ek_sweeps
 import reactions
 import sfg_driver
 
@@ -48,9 +58,39 @@ def reaction_kernels():
     return kernels
 
 
+def flux_kernels():
+    """The diffusive flux kernels: with or without an electrostatic
+    potential, with or without thermal fluctuations."""
+    kernels = {}
+    for electrostatic in (False, True):
+        for thermalized in (False, True):
+            key = "diffusive_flux"
+            stem = "DiffusiveFluxKernel"
+            if electrostatic:
+                key += "_electrostatic"
+                stem += "WithElectrostatic"
+            if thermalized:
+                key += "_thermalized"
+                stem += "Thermalized"
+            kernels[key] = sfg_driver.Kernel(
+                stem, ("cpu", "cuda"), functools.partial(
+                    ek_sweeps.generate_diffusive_flux,
+                    electrostatic=electrostatic, thermalized=thermalized))
+    return kernels
+
+
 KERNELS = {
     "dirichlet": sfg_driver.Kernel("Dirichlet", ("cpu", "cuda"),
                                    boundaries.generate_dirichlet),
+    **flux_kernels(),
+    "advective_flux": sfg_driver.Kernel(
+        "AdvectiveFluxKernel", ("cpu", "cuda"),
+        ek_sweeps.generate_advective_flux),
+    "continuity": sfg_driver.Kernel(
+        "ContinuityKernel", ("cpu", "cuda"), ek_sweeps.generate_continuity),
+    "friction_coupling": sfg_driver.Kernel(
+        "FrictionCouplingKernel", ("cpu", "cuda"),
+        ek_sweeps.generate_friction_coupling),
     **reaction_kernels(),
 }
 

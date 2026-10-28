@@ -383,6 +383,12 @@ class PatchKernelSourceTest(unittest.TestCase):
             "x = std::pow(a, 2.0f) + powf(b, c) + std::pow(d, e) "
             "+ x.pow(f);")
 
+    def test_fabs_is_qualified(self):
+        source = "x = fabs(a) + fabsf(b) + std::fabs(c) + x.fabs(d);"
+        self.assertEqual(
+            sfg_driver.patch_kernel_source(source),
+            "x = std::fabs(a) + fabsf(b) + std::fabs(c) + x.fabs(d);")
+
     def test_simd_rng_key_type(self):
         source = "::pystencils::runtime::x86::random::philox_float64(c, k)"
         self.assertEqual(
@@ -396,7 +402,7 @@ class PatchKernelSourceTest(unittest.TestCase):
                   "philox_float32(y);\n"
                   "auto k = ::x86::random::philox_float32(a, b);\n"
                   "auto m = sqrt(x) + fmin(a, b) + fmax(a, b) + pow(a, b) "
-                  "+ std::sqrt(x);")
+                  "+ fabs(a) + std::sqrt(x);")
         patched = sfg_driver.patch_kernel_source(source)
         self.assertEqual(sfg_driver.patch_kernel_source(patched), patched)
 
