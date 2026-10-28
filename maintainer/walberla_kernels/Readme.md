@@ -9,8 +9,6 @@ code generators.
 All lattice-Boltzmann and electrokinetics kernels are generated with
 [sweepgen](https://walberla.net) and
 [pystencils-sfg](https://pycodegen.pages.i10git.cs.fau.de/pystencils-sfg/).
-Only the pack infos of the electrokinetics (the communication of the density)
-are still the generic ones of waLBerla.
 
 | Kernel family | Generator | Toolchain |
 |---|---|---|
@@ -24,6 +22,7 @@ are still the generic ones of waLBerla.
 | LB `PackInfoPdf` (streaming-aware) | `generate_lb_kernels.py --kernels pack_info_pdf` | sweepgen |
 | LB `PackInfoVec` | `generate_lb_kernels.py --kernels pack_info_vec` | sweepgen |
 | LB `DynamicUBB` (boundary) | `generate_lb_kernels.py --kernels dynamic_ubb` | sweepgen |
+| EK `PackInfoScalar` (density and potential, 26 directions of D3Q27) | `generate_ek_kernels.py --kernels pack_info_scalar` | sweepgen |
 | EK `Dirichlet` (boundary) | `generate_ek_kernels.py --kernels dirichlet` | sweepgen |
 | EK `ReactionKernelBulk<N>` (bulk reactions of `N` = 1 to 5 reactants) | `generate_ek_kernels.py --kernels reaction_bulk_<N>` | sweepgen |
 | EK `ReactionKernelIndexed<N>` (indexed reactions of `N` = 1 to 5 reactants) | `generate_ek_kernels.py --kernels reaction_indexed_<N>` | sweepgen |
@@ -146,14 +145,20 @@ electrokinetics").
   `FrictionCouplingKernel` of `walberla::pystencils` (see "Flux sweeps of the
   electrokinetics").
 * `lees_edwards.py`: Lees-Edwards boundary layers of the stream-collide kernel.
-* `pack_infos.py`: the pack infos `PackInfoPdf` and `PackInfoVec` of
-  `walberla::pystencils` on the CPU and CUDA targets (there is no AVX
-  variant), with the interface of the old `pystencils_walberla` classes. A
-  pack info is described by the field components that it communicates in each
-  direction: the populations that cross the face, edge or corner during pull
-  streaming (PDFs) or all components (vector fields). Pack, unpack and local
-  copy kernels are generated for each distinct set, and a class dispatches on
-  the direction. The CPU classes derive from the hand-written CRTP base
+* `pack_infos.py`: the pack infos `PackInfoPdf`, `PackInfoVec` and
+  `PackInfoScalar` of `walberla::pystencils` on the CPU and CUDA targets
+  (there is no AVX variant), with the interface of the old
+  `pystencils_walberla` classes. A pack info is described by the field
+  components that it communicates in each direction: the populations that
+  cross the face, edge or corner during pull streaming (PDFs) or all
+  components (vector fields, and scalar fields without index dimension, which
+  the electrokinetics communicates for the density and the potential in the 26
+  directions of D3Q27). Pack, unpack and local copy kernels are generated for
+  each distinct set, and a class dispatches on the direction. The classes
+  communicate one ghost layer by default; the electrokinetics bridge passes
+  the number of ghost layers of the lattice as the second constructor
+  argument, like the generic waLBerla pack infos that they replace. The CPU
+  classes derive from the hand-written CRTP base
   `src/walberla_bridge/src/utils/UniformCpuFieldPackInfoBase.hpp`, which the
   generated header includes by its relative path; the CUDA classes derive from
   `walberla::sweepgen::UniformGpuFieldPackInfoBase` of the waLBerla fork.
@@ -307,8 +312,8 @@ relative path, because the include path of the bridge targets doesn't contain
 `src/`. A change that keeps the interface that the generators rely on doesn't
 need a regeneration.
 
-* `UniformCpuFieldPackInfoBase.hpp`: the CRTP base of the CPU `PackInfoPdf`
-  and `PackInfoVec`, the CPU counterpart of `sweepgen`'s
+* `UniformCpuFieldPackInfoBase.hpp`: the CRTP base of the CPU `PackInfoPdf`,
+  `PackInfoVec` and `PackInfoScalar`, the CPU counterpart of `sweepgen`'s
   `UniformGpuFieldPackInfoBase`. It implements the interface of
   `walberla::communication::UniformPackInfo` (buffers, sizes, local copy); the
   generated class provides the pack, unpack and copy kernels per direction.
