@@ -414,9 +414,9 @@ static std::size_t compare_scalar_pack_infos(
   using Field = typename PackInfo::Field_T;
   using FT = typename Field::value_type;
   static_assert(std::is_same_v<Field, field::GhostLayerField<FT, 1u>>);
-  // 2x2x1 blocks of one process, periodic like the lattice of the bridge
+  // 2x2x2 blocks of one process, periodic like the lattice of the bridge
   auto const blocks = blockforest::createUniformBlockGrid(
-      uint_t(2), uint_t(2), uint_t(1), uint_t(5), uint_t(4), uint_t(6), 1.,
+      uint_t(2), uint_t(2), uint_t(2), uint_t(5), uint_t(4), uint_t(6), 1.,
       uint_t(1), uint_t(1), uint_t(1), true, true, true);
   auto const generic_id = field::addToStorage<Field>(
       blocks, "generic", FT{0}, field::fzyx, n_ghost_layers);

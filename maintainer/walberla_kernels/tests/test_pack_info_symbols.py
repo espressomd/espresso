@@ -41,9 +41,9 @@ LB_SCRIPT = KERNELS_DIR / "generate_lb_kernels.py"
 EK_SCRIPT = KERNELS_DIR / "generate_ek_kernels.py"
 STEMS = ("PackInfoPdf", "PackInfoVec", "PackInfoScalar")
 PRECISIONS = ("Double", "Single")
-# distinct sets of populations of D3Q19: 6 faces and 12 edges, and
-# one set for all directions of a vector field or of a scalar field (the
-# latter in all 26 directions of D3Q27); each has 3 kernels
+# each distinct set of components has 3 kernels: the PDF field of D3Q19 has
+# 18 sets (6 faces and 12 edges), the vector field one set for all
+# directions, and the scalar field one set for all 26 directions of D3Q27
 KERNEL_COUNTS = {"PackInfoPdf": 3 * 18, "PackInfoVec": 3 * 1,
                  "PackInfoScalar": 3 * 1}
 
