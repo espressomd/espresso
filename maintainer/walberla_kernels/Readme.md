@@ -4,11 +4,12 @@ The scripts in this directory generate the kernels for lattice-based algorithms.
 The generated kernels are committed to the repository; CMake never runs the
 code generators.
 
-## Migration status
+## Kernels
 
-All lattice-Boltzmann and electrokinetics kernels are generated with
-[sweepgen](https://walberla.net) and
-[pystencils-sfg](https://pycodegen.pages.i10git.cs.fau.de/pystencils-sfg/).
+All lattice-Boltzmann (LB) and electrokinetics (EK) kernels are generated with
+pystencils 2.1, lbmpy, [pystencils-sfg](https://pycodegen.pages.i10git.cs.fau.de/pystencils-sfg/)
+and sweepgen, the code generation package of the waLBerla fork that ESPResSo
+is built against.
 
 | Kernel family | Generator | Toolchain |
 |---|---|---|
@@ -32,18 +33,22 @@ All lattice-Boltzmann and electrokinetics kernels are generated with
 | EK CPU `EKFieldAccessors` | `generate_ek_kernels.py --kernels field_accessors` | sweepgen |
 | EK CUDA `EKFieldAccessors` | `generate_ek_kernels.py --kernels field_accessors_cuda` | sweepgen |
 
-The flux field of the electrokinetics has the layout of pystencils 2.1 (see
-"Flux sweeps of the electrokinetics"), which differs from the one of the
-pystencils 1.4 kernels that were used until the migration. This doesn't matter
-for the user of ESPResSo, because the flux field is never saved or
-communicated, but the flux kernels, the fixed flux boundary and the accessors
-of the flux field have to be generated together.
+The flux field of the EK has the layout of pystencils 2.1 (see "Flux sweeps of
+the electrokinetics"), which differs from the one of the pystencils 1.4
+kernels that were used in earlier versions. This doesn't matter for the user
+of ESPResSo, because the flux field is never saved or communicated, but the
+flux kernels, the fixed flux boundary and the accessors of the flux field have
+to be generated together.
 
 ## Code generation environment
 
-The sweepgen kernels need pystencils, lbmpy, pystencils-sfg and the sweepgen
-package of the exact waLBerla commit ESPResSo is built against
-(the waLBerla `GIT_TAG` in the `FetchContent_Declare(walberla ...)` block of the top-level `CMakeLists.txt`):
+The kernels need pystencils, lbmpy, pystencils-sfg and the sweepgen package of
+the exact waLBerla commit ESPResSo is built against (the `GIT_TAG` in the
+`FetchContent_Declare(walberla ...)` block of the top-level `CMakeLists.txt`).
+The generators check these versions at startup
+(`sfg_driver.check_toolchain_versions()`).
+Configure ESPResSo with waLBerla first, so that CMake fetches the waLBerla
+sources into `<build-dir>/_deps/walberla-src`:
 
 ```sh
 python3 -m venv sweepgen
@@ -57,13 +62,28 @@ deactivate
 ## Generating kernels
 
 Every kernel is written to its own file pair, named after its C++ class,
-so a single kernel can be regenerated without touching the others:
+so a single kernel can be regenerated without touching the others. The files
+are written to the current directory (or to the one of `--output-dir`).
+Define the formatting function first, it is used after each generator call
+(clang-format 19.1 must be on `PATH`, which the virtual environment provides):
+
+```sh
+function format_kernels {
+  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
+  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cpp -style "{Language: Cpp, ColumnLimit: 0}"
+  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cu  -style "{Language: Cpp, ColumnLimit: 0}"
+  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cuh -style "{Language: Cpp}"
+}
+```
+
+Then generate and format a kernel:
 
 ```sh
 source sweepgen/bin/activate
 cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/lattice_boltzmann/generated_kernels/
 python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py \
     --kernels init --precision double --target cuda
+format_kernels
 ```
 
 `--kernels`, `--precision` (`single`, `double`) and `--target` (`cpu`, `avx`,
@@ -85,18 +105,6 @@ The reactions are the kernels `reaction_bulk_1` to `reaction_bulk_5` and
 seconds for each combination of kernel, precision and target, because
 pystencils simplifies the conditions of their guarded stores.
 
-Format the generated files afterwards:
-
-```sh
-function format_kernels {
-  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
-  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cpp -style "{Language: Cpp, ColumnLimit: 0}"
-  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cu  -style "{Language: Cpp, ColumnLimit: 0}"
-  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cuh -style "{Language: Cpp}"
-}
-format_kernels
-```
-
 The generator doesn't let pystencils-sfg format the files, even if clang-format
 is on `PATH`, so the output doesn't depend on the environment.
 
@@ -111,8 +119,27 @@ any `PYTHONHASHSEED`. The stencil of the gradient of the diffusive flux
 doesn't depend on the hash seed either (see "Flux sweeps of the
 electrokinetics").
 
+To check a regeneration against the committed files, run the generator and
+`format_kernels` in a scratch directory (`<scratch>`), then compare the
+headers byte by byte and the `.cpp` and `.cu` files as sorted lines
+(`<committed>` is the `generated_kernels` folder of the kernels):
+
+```sh
+for f in <scratch>/*.h <scratch>/*.cuh; do
+  cmp "$f" "<committed>/$(basename "$f")"
+done
+for f in <scratch>/*.cpp <scratch>/*.cu; do
+  diff <(sort "$f") <(sort "<committed>/$(basename "$f")")
+done
+```
+
 ## Architecture
 
+* `generate_lb_kernels.py`, `generate_ek_kernels.py`: the generator scripts,
+  each with a registry of its kernels (the values of `--kernels`).
+  `pystencils_espresso.py` defines the PDF, velocity and force fields and the field
+  setters of the LB kernels, `relaxation_rates.py` the getters of the
+  relaxation rates.
 * `sfg_driver.py`: toolchain version check, precision/target handling,
   one named file pair per kernel (not formatted, see above), and the command
   line of the generator scripts (`Kernel`, `generate_main()`), which have a
