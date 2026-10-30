@@ -25,7 +25,9 @@ import stat
 import tempfile
 import unittest
 import unittest.mock
+import warnings
 
+import lbmpy
 import pystencils as ps
 import sympy as sp
 import sweepgen.api
@@ -136,8 +138,101 @@ class KernelFileGeneratorTest(unittest.TestCase):
         self.assertTrue((tmp / "Foo.h").is_file())
         self.assertFalse(marker.exists())
 
-    def test_toolchain_versions(self):
-        sfg_driver.check_toolchain_versions()
+
+class ToolchainCheckTest(unittest.TestCase):
+
+    CMAKE = """
+FetchContent_Declare(
+  zlib
+  GIT_TAG 1111111111111111111111111111111111111111
+)
+FetchContent_Declare(
+  walberla
+  GIT_REPOSITORY https://example.org/walberla.git
+  GIT_TAG        0123456789abcdef0123456789abcdef01234567 # some/branch
+  SYSTEM
+)
+"""
+
+    def test_installed_toolchain_passes_silently(self):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            sfg_driver.check_toolchain()
+        self.assertEqual([str(w.message) for w in caught], [])
+
+    def test_old_version_is_an_error(self):
+        with unittest.mock.patch.object(ps, "__version__", "2.0.9"):
+            errors = sfg_driver.check_versions()
+        self.assertEqual(len(errors), 1)
+        self.assertIn("pystencils", errors[0])
+        self.assertIn("2.0.9", errors[0])
+        with unittest.mock.patch.object(ps, "__version__", "2.0.9"):
+            with self.assertRaisesRegex(RuntimeError, "pystencils"):
+                sfg_driver.check_toolchain()
+
+    def test_untested_version_only_warns(self):
+        with unittest.mock.patch.object(lbmpy, "__version__", "2.2.0"):
+            with self.assertWarns(UserWarning) as cm:
+                errors = sfg_driver.check_versions()
+        self.assertEqual(errors, [])
+        message = str(cm.warning)
+        self.assertNotIn("\n", message)
+        for text in ("lbmpy", "2.2.0", "2.1.1"):
+            self.assertIn(text, message)
+
+    def test_equivalent_version_spelling_is_tested(self):
+        # pystencils 2.1 is the tested 2.1.0
+        with unittest.mock.patch.object(ps, "__version__", "2.1"):
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                self.assertEqual(sfg_driver.check_versions(), [])
+        self.assertEqual(caught, [])
+
+    def test_feature_probe(self):
+        self.assertEqual(sfg_driver.missing_features(), [])
+        table = (*sfg_driver.REQUIRED_FEATURES,
+                 "pystencils.fd.no_such_function",
+                 "sweepgen.api.NoSuchClass._extract_size",
+                 "no_such_package.thing")
+        missing = sfg_driver.missing_features(table)
+        self.assertEqual(missing, list(table[-3:]))
+        with unittest.mock.patch.object(
+                sfg_driver, "REQUIRED_FEATURES", table):
+            with self.assertRaises(RuntimeError) as cm:
+                sfg_driver.check_toolchain()
+        for name in table[-3:]:
+            self.assertIn(name, str(cm.exception))
+
+    def test_feature_table_is_unique_dotted_paths(self):
+        table = sfg_driver.REQUIRED_FEATURES
+        self.assertGreater(len(table), 50)
+        self.assertEqual(len(set(table)), len(table))
+        for name in table:
+            self.assertRegex(name, r"^\w+(\.\w+)+$")
+
+    def test_walberla_commit_of_sample(self):
+        self.assertEqual(sfg_driver.walberla_commit(self.CMAKE),
+                         "0123456789abcdef0123456789abcdef01234567")
+        with self.assertRaisesRegex(RuntimeError, "GIT_TAG"):
+            sfg_driver.walberla_commit("FetchContent_Declare(zlib)")
+
+    def test_walberla_commit_of_cmakelists(self):
+        commit = sfg_driver.walberla_commit()
+        self.assertRegex(commit, "^[0-9a-f]{40}$")
+        self.assertTrue(commit.startswith(
+            sfg_driver.SWEEPGEN_COMMIT_RE.search(sweepgen.__version__)[1]))
+
+    def test_sweepgen_commit_match(self):
+        commit = "0123456789abcdef0123456789abcdef01234567"
+        self.assertEqual(
+            sfg_driver.check_sweepgen_commit("7.3+8.g0123456", commit), [])
+        errors = sfg_driver.check_sweepgen_commit("7.3+8.gfedcba9", commit)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("_deps/walberla-src/sweepgen", errors[0])
+        self.assertIn("fedcba9", errors[0])
+        self.assertIn("0123456", errors[0])
+        errors = sfg_driver.check_sweepgen_commit("7.3", commit)
+        self.assertEqual(len(errors), 1)
 
 
 class GenerateSweepTest(unittest.TestCase):

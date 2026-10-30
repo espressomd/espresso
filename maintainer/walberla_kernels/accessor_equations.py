@@ -44,7 +44,7 @@ import functools
 import pystencils as ps
 import sympy as sp
 # NOTE: the ``pystencils.backend.*`` modules are pystencils-internal APIs,
-# tied to the pinned pystencils version (see ``TOOLCHAIN_REQUIREMENTS`` in
+# tied to the tested pystencils version (see ``TESTED_TOOLCHAIN`` in
 # ``sfg_driver.py``). Re-check them whenever the toolchain is upgraded.
 from pystencils.backend.emission import CAstPrinter
 from pystencils.backend.kernelcreation import AstFactory, KernelCreationContext

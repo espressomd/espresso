@@ -97,7 +97,7 @@ assignments exactly like ``create_lattice_boltzmann_boundary_kernel`` of
 lbmpy 2.1.1, which compiles the kernel itself and doesn't return the
 assignments, while pystencils-sfg needs the assignments to create a kernel
 handle. The code relies on the following internals; re-check them whenever
-the versions in ``sfg_driver.TOOLCHAIN_REQUIREMENTS`` or ``WALBERLA_COMMIT``
+the versions in ``sfg_driver.TESTED_TOOLCHAIN`` or the waLBerla commit
 change:
 
 * lbmpy: ``BetweenTimestepsIndexing`` (``proxy_fields``, ``dir_symbol``,
