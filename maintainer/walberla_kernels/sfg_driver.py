@@ -25,7 +25,6 @@ with pystencils-sfg and sweepgen.
 import argparse
 import copy
 import dataclasses
-import importlib
 import itertools
 import pathlib
 import re
@@ -59,102 +58,6 @@ TESTED_TOOLCHAIN = {
     lbmpy: "2.1.1",
     pystencilssfg: "0.3.0",
 }
-# Internal APIs that the generators rely on (see the module docstrings and
-# the Readme), as dotted paths of modules, classes and their attributes.
-# `missing_features` resolves them all at startup, so that an incompatible
-# upgrade fails with the complete list instead of somewhere in the middle of
-# a kernel.
-_INDEXING = "lbmpy.advanced_streaming.indexing.BetweenTimestepsIndexing"
-REQUIRED_FEATURES = (
-    "pystencils.fd.finitevolumes.get_access_and_direction",
-    "pystencils.fd.derivation.FiniteDifferenceStaggeredStencilDerivation",
-    "pystencils.fd.derivative.expand_diff_full",
-    "pystencils.fd.FVM1stOrder",
-    "pystencils.fd.VOF",
-    "pystencils.fd.Diff",
-    "pystencils.fd.diff",
-    "pystencils.flow.Store",
-    "pystencils.flow.guarded_block",
-    "pystencils.flow.block",
-    "pystencils.flow.tie",
-    "pystencils.grids.Staggering",
-    "pystencils.grids.Staggering.staggered_entries",
-    "pystencils.grids.Staggering.stencil_entries",
-    "pystencils.grids.StaggeredField",
-    "pystencils.grids.StaggeredField.stencil",
-    "pystencils.grids.StaggeredField.face",
-    "pystencils.grids.StaggeredFieldAccess",
-    "pystencils.grids.StaggeredFieldAccess.offsets",
-    "pystencils.grids.StaggeredFieldAccess.index",
-    "pystencils.grids.StaggeredFieldAccess.vector_index",
-    "pystencils.defaults.DEFAULTS",
-    "pystencils.stencil.offset_to_direction_string",
-    "pystencils.sympyextensions.random.Philox",
-    "pystencils.sympyextensions.typed_sympy.TypeCast",
-    "pystencils.backend.emission.CAstPrinter",
-    "pystencils.backend.kernelcreation.AstFactory",
-    "pystencils.backend.kernelcreation.KernelCreationContext",
-    "pystencils.backend.transformations.EliminateConstants",
-    "pystencils.types.quick.Arr",
-    "pystencils.types.PsStructType",
-    "lbmpy.advanced_streaming.Timestep",
-    _INDEXING,
-    f"{_INDEXING}.proxy_fields",
-    f"{_INDEXING}.dir_symbol",
-    f"{_INDEXING}.inverse_dir_symbol",
-    f"{_INDEXING}.substitute_proxies",
-    f"{_INDEXING}.create_code_node",
-    "lbmpy.boundaries.UBB",
-    "lbmpy.boundaries.UBB.additional_data",
-    "lbmpy.boundaries.UBB.get_additional_code_nodes",
-    "lbmpy.macroscopic_value_kernels.macroscopic_values_setter",
-    "lbmpy.macroscopic_value_kernels.macroscopic_values_getter",
-    "lbmpy.creationfunctions.create_lb_update_rule",
-    "lbmpy.creationfunctions.create_lb_collision_rule",
-    "lbmpy.creationfunctions.create_mrt_orthogonal",
-    "lbmpy.forcemodels",
-    "lbmpy.moments.is_bulk_moment",
-    "lbmpy.moments.is_shear_moment",
-    "lbmpy.moments.get_order",
-    "pystencilssfg.composer.basic_composer.SfgFunctionSequencer",
-    "pystencilssfg.composer.custom.CustomGenerator",
-    "pystencilssfg.composer.SfgComposer.kernel_namespace",
-    "pystencilssfg.composer.SfgComposer.klass",
-    "pystencilssfg.composer.SfgComposer.switch",
-    "pystencilssfg.composer.SfgComposer.map_field",
-    "pystencilssfg.composer.SfgComposer.gpu_invoke",
-    "pystencilssfg.composer.SfgComposer.set_param",
-    "pystencilssfg.ir.SfgStatements",
-    "pystencilssfg.lang.SupportsFieldExtraction",
-    "pystencilssfg.lang.AugExpr",
-    "pystencilssfg.lang.asvar",
-    "pystencilssfg.lang.cpptype",
-    "pystencilssfg.lang.depends",
-    "pystencilssfg.lang.includes",
-    "pystencilssfg.lang.strip_ptr_ref",
-    "pystencilssfg.lang.Ref",
-    "pystencilssfg.lang.cpp.std",
-    "pystencilssfg.lang.gpu.CudaAPI",
-    "pystencilssfg.lang.gpu.CudaAPI.stream_t",
-    "sweepgen.Sweep",
-    "sweepgen.api.Cell",
-    "sweepgen.api.CellIdx",
-    "sweepgen.api.CellInterval",
-    "sweepgen.api.Vector3",
-    "sweepgen.api.Direction",
-    "sweepgen.api.GhostLayerFieldPtr",
-    "sweepgen.api.GpuFieldPtr",
-    "sweepgen.api.uint_t",
-    "sweepgen.api.GhostLayerFieldExtraction",
-    "sweepgen.api.GhostLayerFieldExtraction._extract_size",
-    "sweepgen.api.GhostLayerFieldExtraction._extract_stride",
-    "sweepgen.build_config.DEBUG",
-    "sweepgen.build_config.WalberlaBuildConfig",
-    "sweepgen.build_config.get_build_config",
-    "sweepgen.communication.pack_infos.PackingKernelsContext",
-    "sweepgen.communication.pack_infos.CaptureBufferPointer",
-    "sweepgen.communication.pack_infos.GpuPdfFieldPackInfo",
-)
 # The abbreviated commit hash of a sweepgen version, ``7.3+8.gecbe1315``
 SWEEPGEN_COMMIT_RE = re.compile(r"\.g([0-9a-f]+)$")
 CMAKELISTS = pathlib.Path(__file__).resolve().parents[2] / "CMakeLists.txt"
@@ -182,33 +85,6 @@ def check_versions():
                 f"test suite and compare the regenerated kernels",
                 stacklevel=2)
     return errors
-
-
-def missing_features(features=None):
-    """
-    List the dotted paths of ``features`` (default: ``REQUIRED_FEATURES``)
-    that don't resolve to a module, class or attribute.
-    """
-    if features is None:
-        features = REQUIRED_FEATURES
-    missing = []
-    for path in features:
-        parts = path.split(".")
-        try:
-            # the longest prefix that is a module, then the attributes
-            for n in range(len(parts), 0, -1):
-                try:
-                    obj = importlib.import_module(".".join(parts[:n]))
-                    break
-                except ImportError:
-                    continue
-            else:
-                raise ImportError(path)
-            for name in parts[n:]:
-                obj = getattr(obj, name)
-        except (ImportError, AttributeError):
-            missing.append(path)
-    return missing
 
 
 def walberla_commit(cmake_text=None):
@@ -247,13 +123,14 @@ def check_sweepgen_commit(version, commit):
 def check_toolchain():
     """
     Abort with all problems of the code generation toolchain: versions
-    below the lower bounds, missing internal APIs and a sweepgen that
-    doesn't come from the waLBerla commit of ESPResSo. Warn about untested
-    versions.
+    below the lower bounds and a sweepgen that doesn't come from the waLBerla
+    commit of ESPResSo. Warn about untested versions.
+
+    Missing internal APIs need no check of their own: the generators fail
+    with an ``ImportError`` or ``AttributeError`` when they use them, and
+    the test suite catches changed behaviour.
     """
     errors = check_versions()
-    errors += [f"missing internal API: {name}"
-               for name in missing_features(REQUIRED_FEATURES)]
     errors += check_sweepgen_commit(sweepgen.__version__, walberla_commit())
     if errors:
         raise RuntimeError(

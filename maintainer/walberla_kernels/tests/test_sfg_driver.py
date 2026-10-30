@@ -188,28 +188,6 @@ FetchContent_Declare(
                 self.assertEqual(sfg_driver.check_versions(), [])
         self.assertEqual(caught, [])
 
-    def test_feature_probe(self):
-        self.assertEqual(sfg_driver.missing_features(), [])
-        table = (*sfg_driver.REQUIRED_FEATURES,
-                 "pystencils.fd.no_such_function",
-                 "sweepgen.api.NoSuchClass._extract_size",
-                 "no_such_package.thing")
-        missing = sfg_driver.missing_features(table)
-        self.assertEqual(missing, list(table[-3:]))
-        with unittest.mock.patch.object(
-                sfg_driver, "REQUIRED_FEATURES", table):
-            with self.assertRaises(RuntimeError) as cm:
-                sfg_driver.check_toolchain()
-        for name in table[-3:]:
-            self.assertIn(name, str(cm.exception))
-
-    def test_feature_table_is_unique_dotted_paths(self):
-        table = sfg_driver.REQUIRED_FEATURES
-        self.assertGreater(len(table), 50)
-        self.assertEqual(len(set(table)), len(table))
-        for name in table:
-            self.assertRegex(name, r"^\w+(\.\w+)+$")
-
     def test_walberla_commit_of_sample(self):
         self.assertEqual(sfg_driver.walberla_commit(self.CMAKE),
                          "0123456789abcdef0123456789abcdef01234567")

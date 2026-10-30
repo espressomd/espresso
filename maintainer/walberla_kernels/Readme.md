@@ -46,26 +46,24 @@ The kernels need pystencils, lbmpy, pystencils-sfg and the sweepgen package of
 the exact waLBerla commit ESPResSo is built against (the `GIT_TAG` in the
 `FetchContent_Declare(walberla ...)` block of the top-level `CMakeLists.txt`).
 The generators check the toolchain at startup
-(`sfg_driver.check_toolchain()`), by features instead of pinned versions:
+(`sfg_driver.check_toolchain()`) without pinning exact versions:
 
 * `TOOLCHAIN_REQUIREMENTS` holds lower bounds (pystencils >= 2.1,
   lbmpy >= 2.1.1, pystencils-sfg >= 0.3); an older version aborts.
 * `TESTED_TOOLCHAIN` holds the versions that the committed kernels were
   generated and verified with; any other version prints a one-line warning
   and continues, so a minor update doesn't need code changes if it works.
-* `REQUIRED_FEATURES` lists the internal APIs of pystencils, lbmpy,
-  pystencils-sfg and sweepgen that the generators use. All of them are
-  resolved at startup and the generator aborts with the list of the missing
-  ones, so an incompatible update shows up immediately.
 * sweepgen must come from the waLBerla commit that ESPResSo builds against,
   which is read from the `GIT_TAG` in the top-level `CMakeLists.txt`; a
   mismatch aborts with the instruction to reinstall sweepgen.
 
+An internal API that an update removed or renamed makes the generators fail
+right away with an `ImportError` or `AttributeError`; changed behaviour shows
+up in the test suite and in the comparison of the regenerated kernels.
 To upgrade the toolchain, install the new versions: the generator warns about
 them. Run the test suite, regenerate the kernels and compare them with the
 committed ones. If all is well, update `TESTED_TOOLCHAIN` (and the generated
-kernels, if they changed). If an API is missing, adapt the generators and
-`REQUIRED_FEATURES`; add the internals that new code uses to the table.
+kernels, if they changed).
 `requirements.txt` keeps its `==` pins (the reproducible environment).
 Configure ESPResSo with waLBerla first, so that CMake fetches the waLBerla
 sources into `<build-dir>/_deps/walberla-src`:
