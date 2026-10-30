@@ -25,12 +25,15 @@ with pystencils-sfg and sweepgen.
 import argparse
 import copy
 import dataclasses
+import importlib
 import itertools
 import pathlib
 import re
 import typing
+import warnings
 
 import packaging.specifiers
+import packaging.version
 import pystencils as ps
 import pystencilssfg
 import sympy
@@ -42,25 +45,220 @@ import sweepgen.build_config
 PRECISIONS = ("single", "double")
 TARGETS = ("cpu", "avx", "cuda")
 
+# Lower bounds of the toolchain: older versions lack features that the
+# generators use, so they abort.
 TOOLCHAIN_REQUIREMENTS = {
-    ps: "==2.1.0",
-    lbmpy: "==2.1.1",
-    pystencilssfg: "==0.3.0",
+    ps: ">=2.1.0",
+    lbmpy: ">=2.1.1",
+    pystencilssfg: ">=0.3.0",
 }
-WALBERLA_COMMIT = "ecbe1315"
+# The versions the committed kernels were generated and verified with. Any
+# other version of the toolchain only produces a warning.
+TESTED_TOOLCHAIN = {
+    ps: "2.1.0",
+    lbmpy: "2.1.1",
+    pystencilssfg: "0.3.0",
+}
+# Internal APIs that the generators rely on (see the module docstrings and
+# the Readme), as dotted paths of modules, classes and their attributes.
+# `missing_features` resolves them all at startup, so that an incompatible
+# upgrade fails with the complete list instead of somewhere in the middle of
+# a kernel.
+_INDEXING = "lbmpy.advanced_streaming.indexing.BetweenTimestepsIndexing"
+REQUIRED_FEATURES = (
+    "pystencils.fd.finitevolumes.get_access_and_direction",
+    "pystencils.fd.derivation.FiniteDifferenceStaggeredStencilDerivation",
+    "pystencils.fd.derivative.expand_diff_full",
+    "pystencils.fd.FVM1stOrder",
+    "pystencils.fd.VOF",
+    "pystencils.fd.Diff",
+    "pystencils.fd.diff",
+    "pystencils.flow.Store",
+    "pystencils.flow.guarded_block",
+    "pystencils.flow.block",
+    "pystencils.flow.tie",
+    "pystencils.grids.Staggering",
+    "pystencils.grids.Staggering.staggered_entries",
+    "pystencils.grids.Staggering.stencil_entries",
+    "pystencils.grids.StaggeredField",
+    "pystencils.grids.StaggeredField.stencil",
+    "pystencils.grids.StaggeredField.face",
+    "pystencils.grids.StaggeredFieldAccess",
+    "pystencils.grids.StaggeredFieldAccess.offsets",
+    "pystencils.grids.StaggeredFieldAccess.index",
+    "pystencils.grids.StaggeredFieldAccess.vector_index",
+    "pystencils.defaults.DEFAULTS",
+    "pystencils.stencil.offset_to_direction_string",
+    "pystencils.sympyextensions.random.Philox",
+    "pystencils.sympyextensions.typed_sympy.TypeCast",
+    "pystencils.backend.emission.CAstPrinter",
+    "pystencils.backend.kernelcreation.AstFactory",
+    "pystencils.backend.kernelcreation.KernelCreationContext",
+    "pystencils.backend.transformations.EliminateConstants",
+    "pystencils.types.quick.Arr",
+    "pystencils.types.PsStructType",
+    "lbmpy.advanced_streaming.Timestep",
+    _INDEXING,
+    f"{_INDEXING}.proxy_fields",
+    f"{_INDEXING}.dir_symbol",
+    f"{_INDEXING}.inverse_dir_symbol",
+    f"{_INDEXING}.substitute_proxies",
+    f"{_INDEXING}.create_code_node",
+    "lbmpy.boundaries.UBB",
+    "lbmpy.boundaries.UBB.additional_data",
+    "lbmpy.boundaries.UBB.get_additional_code_nodes",
+    "lbmpy.macroscopic_value_kernels.macroscopic_values_setter",
+    "lbmpy.macroscopic_value_kernels.macroscopic_values_getter",
+    "lbmpy.creationfunctions.create_lb_update_rule",
+    "lbmpy.creationfunctions.create_lb_collision_rule",
+    "lbmpy.creationfunctions.create_mrt_orthogonal",
+    "lbmpy.forcemodels",
+    "lbmpy.moments.is_bulk_moment",
+    "lbmpy.moments.is_shear_moment",
+    "lbmpy.moments.get_order",
+    "pystencilssfg.composer.basic_composer.SfgFunctionSequencer",
+    "pystencilssfg.composer.custom.CustomGenerator",
+    "pystencilssfg.composer.SfgComposer.kernel_namespace",
+    "pystencilssfg.composer.SfgComposer.klass",
+    "pystencilssfg.composer.SfgComposer.switch",
+    "pystencilssfg.composer.SfgComposer.map_field",
+    "pystencilssfg.composer.SfgComposer.gpu_invoke",
+    "pystencilssfg.composer.SfgComposer.set_param",
+    "pystencilssfg.ir.SfgStatements",
+    "pystencilssfg.lang.SupportsFieldExtraction",
+    "pystencilssfg.lang.AugExpr",
+    "pystencilssfg.lang.asvar",
+    "pystencilssfg.lang.cpptype",
+    "pystencilssfg.lang.depends",
+    "pystencilssfg.lang.includes",
+    "pystencilssfg.lang.strip_ptr_ref",
+    "pystencilssfg.lang.Ref",
+    "pystencilssfg.lang.cpp.std",
+    "pystencilssfg.lang.gpu.CudaAPI",
+    "pystencilssfg.lang.gpu.CudaAPI.stream_t",
+    "sweepgen.Sweep",
+    "sweepgen.api.Cell",
+    "sweepgen.api.CellIdx",
+    "sweepgen.api.CellInterval",
+    "sweepgen.api.Vector3",
+    "sweepgen.api.Direction",
+    "sweepgen.api.GhostLayerFieldPtr",
+    "sweepgen.api.GpuFieldPtr",
+    "sweepgen.api.uint_t",
+    "sweepgen.api.GhostLayerFieldExtraction",
+    "sweepgen.api.GhostLayerFieldExtraction._extract_size",
+    "sweepgen.api.GhostLayerFieldExtraction._extract_stride",
+    "sweepgen.build_config.DEBUG",
+    "sweepgen.build_config.WalberlaBuildConfig",
+    "sweepgen.build_config.get_build_config",
+    "sweepgen.communication.pack_infos.PackingKernelsContext",
+    "sweepgen.communication.pack_infos.CaptureBufferPointer",
+    "sweepgen.communication.pack_infos.GpuPdfFieldPackInfo",
+)
+# The abbreviated commit hash of a sweepgen version, ``7.3+8.gecbe1315``
+SWEEPGEN_COMMIT_RE = re.compile(r"\.g([0-9a-f]+)$")
+CMAKELISTS = pathlib.Path(__file__).resolve().parents[2] / "CMakeLists.txt"
 KERNEL_NAMESPACE = "walberla::pystencils"
 
 
-def check_toolchain_versions():
-    """Abort if the code generation toolchain is not the pinned one."""
+def check_versions():
+    """
+    List the toolchain modules that are older than the lower bounds in
+    ``TOOLCHAIN_REQUIREMENTS``. Warn about those that differ from the
+    version in ``TESTED_TOOLCHAIN``.
+    """
+    errors = []
     for module, requirement in TOOLCHAIN_REQUIREMENTS.items():
-        spec = packaging.specifiers.SpecifierSet(requirement)
-        assert spec.contains(module.__version__), \
-            f"{module.__name__} version {module.__version__} " \
-            f"doesn't match requirement {requirement}"
-    assert f"g{WALBERLA_COMMIT}" in sweepgen.__version__, \
-        f"sweepgen version {sweepgen.__version__} doesn't come from " \
-        f"waLBerla commit {WALBERLA_COMMIT}"
+        installed = packaging.version.Version(module.__version__)
+        if installed not in packaging.specifiers.SpecifierSet(requirement):
+            errors.append(
+                f"{module.__name__} version {module.__version__} doesn't "
+                f"satisfy {requirement}")
+        elif installed != packaging.version.Version(
+                TESTED_TOOLCHAIN[module]):
+            warnings.warn(
+                f"{module.__name__} version {module.__version__} is "
+                f"untested (tested: {TESTED_TOOLCHAIN[module]}): run the "
+                f"test suite and compare the regenerated kernels",
+                stacklevel=2)
+    return errors
+
+
+def missing_features(features=None):
+    """
+    List the dotted paths of ``features`` (default: ``REQUIRED_FEATURES``)
+    that don't resolve to a module, class or attribute.
+    """
+    if features is None:
+        features = REQUIRED_FEATURES
+    missing = []
+    for path in features:
+        parts = path.split(".")
+        try:
+            # the longest prefix that is a module, then the attributes
+            for n in range(len(parts), 0, -1):
+                try:
+                    obj = importlib.import_module(".".join(parts[:n]))
+                    break
+                except ImportError:
+                    continue
+            else:
+                raise ImportError(path)
+            for name in parts[n:]:
+                obj = getattr(obj, name)
+        except (ImportError, AttributeError):
+            missing.append(path)
+    return missing
+
+
+def walberla_commit(cmake_text=None):
+    """
+    The waLBerla commit ESPResSo builds against: the ``GIT_TAG`` of the
+    ``FetchContent_Declare(walberla ...)`` block of the top-level
+    ``CMakeLists.txt`` (or of the text ``cmake_text``).
+    """
+    if cmake_text is None:
+        cmake_text = CMAKELISTS.read_text(encoding="utf-8")
+    block = re.search(r"FetchContent_Declare\(\s*walberla\b.*?^\s*\)",
+                      cmake_text, re.DOTALL | re.MULTILINE)
+    tag = block and re.search(r"^\s*GIT_TAG\s+([0-9a-f]{7,40})\b",
+                              block.group(0), re.MULTILINE)
+    if not tag:
+        raise RuntimeError(
+            "couldn't find the GIT_TAG commit of "
+            "FetchContent_Declare(walberla ...) in CMakeLists.txt")
+    return tag.group(1)
+
+
+def check_sweepgen_commit(version, commit):
+    """
+    List the problem if the sweepgen ``version`` (``X+N.g<abbrev>``) doesn't
+    come from the waLBerla commit ``commit``.
+    """
+    match = SWEEPGEN_COMMIT_RE.search(version)
+    if match and commit.startswith(match.group(1)):
+        return []
+    return [f"sweepgen version {version} doesn't come from waLBerla commit "
+            f"{commit[:8]}: reinstall it from "
+            f"<build-dir>/_deps/walberla-src/sweepgen after configuring "
+            f"ESPResSo with that commit"]
+
+
+def check_toolchain():
+    """
+    Abort with all problems of the code generation toolchain: versions
+    below the lower bounds, missing internal APIs and a sweepgen that
+    doesn't come from the waLBerla commit of ESPResSo. Warn about untested
+    versions.
+    """
+    errors = check_versions()
+    errors += [f"missing internal API: {name}"
+               for name in missing_features(REQUIRED_FEATURES)]
+    errors += check_sweepgen_commit(sweepgen.__version__, walberla_commit())
+    if errors:
+        raise RuntimeError(
+            "unsupported code generation toolchain:\n  "
+            + "\n  ".join(errors))
 
 
 @dataclasses.dataclass(frozen=True)
@@ -245,7 +443,7 @@ def patch_kernel_source(source):
     """
     Work around code generation problems of pystencils 2.1.0 in the
     generated ``.cpp`` and ``.cu`` files. Re-check whether they are still
-    needed when the toolchain in ``TOOLCHAIN_REQUIREMENTS`` changes.
+    needed when the toolchain in ``TESTED_TOOLCHAIN`` changes.
 
     * The kernels live in a namespace nested in ``walberla::pystencils``,
       where the unqualified ``pystencils::runtime::`` of the RNG calls
@@ -311,7 +509,7 @@ def generate_main(description, generator_script, kernels, argv=None):
     to its own file pair in the output directory.
     """
     args = parse_args(description, kernels, argv)
-    check_toolchain_versions()
+    check_toolchain()
     for key, precision, target in itertools.product(
             expand(args.kernels, kernels), expand(args.precision, PRECISIONS),
             expand(args.target, TARGETS)):

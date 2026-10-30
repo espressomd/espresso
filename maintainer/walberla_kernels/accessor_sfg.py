@@ -27,7 +27,7 @@ The backends add free functions to a namespace of the generated file with
 the stock pystencils-sfg composer, which lets the functions of a namespace
 overload each other and takes the C++ types from the catalogue
 (`accessor_catalogue`). Relies on pystencils-sfg 0.3 internals; re-check
-them whenever ``TOOLCHAIN_REQUIREMENTS`` in `sfg_driver` changes:
+them whenever ``TESTED_TOOLCHAIN`` in `sfg_driver` changes:
 
 * `AllowOverloads`: ``sfg._cursor``, ``SfgFunctionSequencer`` and the
   ``add_entity`` method of the cursor, which registers a function by name

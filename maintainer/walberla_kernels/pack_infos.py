@@ -44,7 +44,8 @@ interface and calls ``doPack``, ``doUnpack``, ``doLocalCopy`` and
 * CPU: ``walberla::UniformCpuFieldPackInfoBase`` of
   ``src/walberla_bridge/src/utils/UniformCpuFieldPackInfoBase.hpp``.
 * CUDA: ``walberla::sweepgen::UniformGpuFieldPackInfoBase`` of the waLBerla
-  fork that sweepgen comes from (commit ``WALBERLA_COMMIT`` of `sfg_driver`).
+  fork that sweepgen comes from (the commit of the waLBerla
+  ``FetchContent_Declare`` in the top-level ``CMakeLists.txt``).
 
 Both bases communicate ``sliceWidth`` ghost layers, the optional second
 argument of the constructor (default: 1, which is all that the LB needs). The
@@ -53,7 +54,7 @@ the generic waLBerla pack infos that the scalar pack info replaces.
 
 The code follows ``sweepgen.communication.pack_infos.GpuPdfFieldPackInfo``,
 which only supports PDFs on CUDA. It relies on the following sweepgen and
-pystencils-sfg 0.3 internals; re-check them whenever ``WALBERLA_COMMIT`` or the
+pystencils-sfg 0.3 internals; re-check them whenever the waLBerla commit or the
 pystencils-sfg version change:
 
 * `sweepgen.communication.pack_infos.PackingKernelsContext` and
