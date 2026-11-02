@@ -408,14 +408,30 @@ template <int cao> struct AssignCharge {
         });
     Kokkos::fence();
     int num_threads = execution_space().concurrency();
+    // Sum the replicas block by block, one replica at a time, so that only
+    // two contiguous streams are accessed at a time (iterating over all
+    // replicas for every mesh point accesses num_threads streams which are
+    // a mesh size apart and can map to the same cache set); same summation
+    // order as a per-point loop over the replicas.
+    static constexpr std::size_t block = 256u;
+    auto const mesh_size = p3m.local_mesh.size;
+    auto const n_blocks = (mesh_size + block - 1u) / block;
     kokkos_parallel_range_for<execution_space>(
-        "ReduceInterpolatedCharges", std::size_t{0}, p3m.local_mesh.size,
-        [&p3m, num_threads](std::size_t const i) {
-          value_type acc{};
+        "ReduceInterpolatedCharges", std::size_t{0}, n_blocks,
+        [&p3m, num_threads, mesh_size](std::size_t const b) {
+          auto const begin = b * block;
+          auto const n = std::min(block, mesh_size - begin);
+          std::array<value_type, block> acc{};
           for (int tid = 0; tid < num_threads; ++tid) {
-            acc += p3m.rs_charge_density_kokkos(tid, i);
+            for (std::size_t i = 0u; i < n; ++i) {
+              acc[i] += p3m.rs_charge_density_kokkos(tid, begin + i);
+              // leave the replicas zeroed for the next charge assignment
+              p3m.rs_charge_density_kokkos(tid, begin + i) = value_type{0};
+            }
           }
-          p3m.rs_charge_density.at(i) += acc;
+          for (std::size_t i = 0u; i < n; ++i) {
+            p3m.rs_charge_density[begin + i] += acc[i];
+          }
         });
     Kokkos::fence();
   }
