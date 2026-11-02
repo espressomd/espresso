@@ -36,6 +36,9 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
+#include <stdexcept>
 #include <string>
 
 std::string TuningFailed::get_first_error() {
@@ -141,35 +144,81 @@ static double time_calc(System::System &system, int int_steps) {
 }
 
 namespace System {
+double System::get_max_permissible_skin() const {
+  /* The maximal skin is the remainder from the required cutoff to
+   * the maximal range that can be supported by the cell system, but
+   * never larger than half the box size. */
+  return std::min(
+      std::ranges::min(cell_structure->max_cutoff()) - maximal_cutoff(),
+      0.5 * std::ranges::max(box_geo->length()));
+}
+
 void System::tune_verlet_skin(double min_skin, double max_skin, double tol,
                               int int_steps, bool adjust_max_skin) {
 
   double a = min_skin;
   double b = max_skin;
 
-  /* The maximal skin is the remainder from the required cutoff to
-   * the maximal range that can be supported by the cell system, but
-   * never larger than half the box size. */
-  auto const max_permissible_skin = std::min(
-      std::ranges::min(cell_structure->max_cutoff()) - maximal_cutoff(),
-      0.5 * std::ranges::max(box_geo->length()));
-
+  auto const max_permissible_skin = get_max_permissible_skin();
   if (adjust_max_skin and max_skin > max_permissible_skin)
     b = max_permissible_skin;
 
-  while (fabs(a - b) > tol) {
-    cell_structure->set_verlet_skin(a);
-    auto const time_a = time_calc(*this, int_steps);
+  if (b < a) {
+    throw std::runtime_error(
+        "Cannot tune the Verlet skin: the maximal permissible skin " +
+        std::to_string(b) + " is smaller than the minimal skin " +
+        std::to_string(a));
+  }
 
-    cell_structure->set_verlet_skin(b);
-    auto const time_b = time_calc(*this, int_steps);
+  /* Minimize the time per step: coarse scan of interior skins, then
+   * repeated halving of the bracket around the best sample. The best
+   * measured skin is kept. The timings of the head node are used on all
+   * ranks, so that they all take the same decisions. */
+  auto best_skin = 0.5 * (a + b);
+  auto best_time = std::numeric_limits<double>::max();
+  auto const evaluate = [&](double skin) {
+    cell_structure->set_verlet_skin(skin);
+    auto time = time_calc(*this, int_steps);
+    boost::mpi::broadcast(::comm_cart, time, 0);
+    if (time >= 0. and time < best_time) {
+      best_time = time;
+      best_skin = skin;
+    }
+  };
 
-    if (time_a > time_b) {
-      a = 0.5 * (a + b);
-    } else {
-      b = 0.5 * (a + b);
+  if (b - a <= tol) {
+    evaluate(best_skin);
+  } else {
+    // up to six interior points, but not finer than the tolerance
+    auto const n_coarse =
+        std::clamp(static_cast<int>(std::ceil((b - a) / tol)) - 1, 1, 6);
+    auto const h = (b - a) / (n_coarse + 1);
+    for (int k = 1; k <= n_coarse; ++k) {
+      evaluate(a + k * h);
+    }
+    auto lo = std::max(a, best_skin - h);
+    auto hi = std::min(b, best_skin + h);
+    while (hi - lo > tol) {
+      auto const centre = best_skin;
+      auto const m1 = 0.5 * (lo + centre);
+      auto const m2 = 0.5 * (centre + hi);
+      evaluate(m1);
+      evaluate(m2);
+      if (best_skin == m1) {
+        hi = centre;
+      } else if (best_skin == m2) {
+        lo = centre;
+      } else {
+        lo = m1;
+        hi = m2;
+      }
     }
   }
-  cell_structure->set_verlet_skin(0.5 * (a + b));
+  if (this_node == 0 and best_time == std::numeric_limits<double>::max()) {
+    runtimeWarningMsg() << "Verlet skin tuning failed: no integration could "
+                           "be timed, the skin was set to the middle of the "
+                           "interval without a measurement";
+  }
+  cell_structure->set_verlet_skin(best_skin);
 }
 } // namespace System

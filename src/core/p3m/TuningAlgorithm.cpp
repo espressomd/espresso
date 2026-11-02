@@ -230,7 +230,7 @@ TuningAlgorithm::tune_skin_for_fastest_candidates() {
            candidate.alpha_L);
     on_solver_change();
     auto const max_cut = m_system.maximal_cutoff();
-    // bisection tolerance proportional to the interaction range
+    // skin search tolerance proportional to the interaction range
     auto const tol = skin_tuning_relative_tolerance * max_cut;
     // The skin is never larger than the interaction cutoff, and the
     // interaction range must stay below the limit of the cell system

@@ -100,14 +100,14 @@ protected:
   static auto constexpr n_skin_tuning_candidates = 3ul;
 
   /**
-   * @brief Resolution of the Verlet skin bisection, relative to the
+   * @brief Resolution of the Verlet skin search, relative to the
    * maximal interaction range.
    */
   static auto constexpr skin_tuning_relative_tolerance = 0.025;
 
   /**
    * @brief Safety margin applied to the largest Verlet skin the cell system
-   * supports, so that the skin bisection never probes the exact limit.
+   * supports, so that the skin search never probes the exact limit.
    */
   static auto constexpr skin_tuning_safety_factor = 0.9;
 
@@ -227,9 +227,9 @@ protected:
    * @brief Tune the Verlet skin for the fastest recorded parameter sets.
    *
    * For each of the @ref n_skin_tuning_candidates fastest parameter sets,
-   * the Verlet skin is tuned by bisection and the parameter set is timed
-   * again with the tuned skin. The fastest combination wins, and the Verlet
-   * skin of the cell structure is set to its skin.
+   * the Verlet skin is tuned and the parameter set is timed again with the
+   * tuned skin. The fastest combination wins, and the Verlet skin of the
+   * cell structure is set to its skin.
    *
    * @return The fastest parameter set, with its time at the tuned skin.
    */

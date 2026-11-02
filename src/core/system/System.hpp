@@ -128,11 +128,21 @@ public:
 
   /**
    * @brief Tune the Verlet skin.
-   * Choose the optimal Verlet list skin between @p min_skin and @p max_skin
-   * by bisection to tolerance @p tol.
+   * Choose the Verlet list skin with the shortest measured integration time
+   * between @p min_skin and @p max_skin: coarse scan of interior points, then
+   * repeated halving of the bracket around the best sample down to
+   * tolerance @p tol. With @p adjust_max_skin, @p max_skin is reduced to
+   * @ref get_max_permissible_skin if necessary; throws if that is smaller
+   * than @p min_skin.
    */
   void tune_verlet_skin(double min_skin, double max_skin, double tol,
                         int int_steps, bool adjust_max_skin);
+
+  /**
+   * @brief Largest Verlet skin supported by the cell system for the current
+   * interaction range, but never larger than half the box size.
+   */
+  double get_max_permissible_skin() const;
 
   /** @brief Change cell structure topology. */
   void set_cell_structure_topology(CellStructureType topology);
