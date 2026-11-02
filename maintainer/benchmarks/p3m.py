@@ -18,6 +18,7 @@
 #
 
 import sys
+import time
 import espressomd
 import espressomd.electrostatics
 import benchmarks
@@ -140,6 +141,45 @@ def make_p3m(args, mesh_min):
     return espressomd.electrostatics.P3M(**p3m_tune_kwargs(args, mesh_min))
 
 
+def fixed_p3m_kwargs(p3m, args):
+    """Arguments of an untuned P3M solver with the parameters of ``p3m``."""
+    params = p3m.get_params()
+    return {"prefactor": args.prefactor, "accuracy": ACCURACY,
+            "mesh": [int(x) for x in params["mesh"]], "cao": int(params["cao"]),
+            "alpha": float(params["alpha"]), "r_cut": float(params["r_cut"]),
+            "tune": False, "gpu": bool(args.gpu), "timings": 15}
+
+
+def keep_faster_pass(system, passes, n_steps):
+    """
+    Time the results of the P3M tuning passes, given as (P3M arguments, skin)
+    pairs, in two rounds of alternating samples of ``n_steps`` integration
+    steps, and activate the faster one.
+    """
+    totals = len(passes) * [0.]
+    for _ in range(2):
+        for i, (kwargs, skin) in enumerate(passes):
+            system.cell_system.skin = skin
+            system.electrostatics.solver = espressomd.electrostatics.P3M(
+                **kwargs)
+            system.integrator.run(10)
+            tick = time.time()
+            system.integrator.run(n_steps)
+            totals[i] += time.time() - tick
+    for i, ((kwargs, skin), total) in enumerate(zip(passes, totals)):
+        print(f"Tuning pass {i + 1}: mesh {kwargs['mesh'][0]} "
+              f"cao {kwargs['cao']} r_cut {kwargs['r_cut']:.4f} "
+              f"skin {skin:.4f}: {1e3 * total / (2 * n_steps):.4f} ms/step")
+    best = min(range(len(passes)), key=lambda i: totals[i])
+    kwargs, skin = passes[best]
+    print(f"Keeping tuning pass {best + 1} (mesh {kwargs['mesh'][0]}, "
+          f"cao {kwargs['cao']}, skin {skin:.4f})")
+    system.cell_system.skin = skin
+    p3m = espressomd.electrostatics.P3M(**kwargs)
+    system.electrostatics.solver = p3m
+    return p3m
+
+
 def build_and_tune(system, args):
     assert args.prefactor > 0, "prefactor must be a positive number"
     assert args.volume_fraction > 0, "volume_fraction must be a positive number"
@@ -199,6 +239,7 @@ def build_and_tune(system, args):
     system.integrator.run(min(3 * steps, 3000))
     print("Tune p3m")
     system.electrostatics.solver = p3m
+    first_pass = (fixed_p3m_kwargs(p3m, args), system.cell_system.skin)
     print("Equilibration")
     system.integrator.run(min(3 * steps, 3000))
     print("Tune skin: {:.3f}".format(benchmarks.tune_skin_unless_fixed(
@@ -210,6 +251,10 @@ def build_and_tune(system, args):
     if args.tune_skin and p3m_params is None:
         print("Tune skin: {:.3f} (tuned by P3M)".format(
             system.cell_system.skin))
+        # the second pass is not always faster: keep the better of the two
+        second_pass = (fixed_p3m_kwargs(p3m, args), system.cell_system.skin)
+        p3m = keep_faster_pass(system, [first_pass, second_pass],
+                               max(200, 3 * steps))
     else:
         print("Tune skin: {:.3f}".format(benchmarks.tune_skin_unless_fixed(
             system, args, min_skin, max_skin, tol=0.05, int_steps=100,
