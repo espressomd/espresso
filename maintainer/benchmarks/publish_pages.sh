@@ -173,11 +173,11 @@ mkdir -p "${PAGES_REPO}/status"
     echo "run=${run_name}"
     echo "host=$(hostname)"
 } > "${PAGES_REPO}/status/status.txt"
-# The CI status job prints this tail, so it ends up in the failure mail's log.
+# The CI status job prints this output, so it ends up in the failure mail's log.
 if [ "$result" = failed ]; then
-    tail -n 200 "$SUITE_LOG" > "${PAGES_REPO}/status/suite-tail.log"
+    cp "$SUITE_LOG" "${PAGES_REPO}/status/suite-output.log"
 else
-    rm -f "${PAGES_REPO}/status/suite-tail.log"
+    rm -f "${PAGES_REPO}/status/suite-output.log"
 fi
 
 # Use the identity configured in the clone, if any.
