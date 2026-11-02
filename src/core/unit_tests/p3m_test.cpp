@@ -44,12 +44,15 @@
 #include <utils/demangle.hpp>
 #include <utils/index.hpp>
 
+#include <boost/mpi/collectives/all_gather.hpp>
 #include <boost/mpi/communicator.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <utility>
 #include <vector>
 
 BOOST_AUTO_TEST_CASE(calc_meshift_false) {
@@ -156,18 +159,65 @@ template <auto... Pack> void test_all_p3m_fft_configs() {
     auto const &fft = *solver->p3m.fft;
     auto const ref_rs_local_size = 12 / ::communicator.node_grid;
     BOOST_CHECK_EQUAL(fft.rs_local_size(), ref_rs_local_size);
-    if (::communicator.size <= 3) {
-      auto const node_index = ::communicator.calc_node_index();
-      auto ref_ks_local_size = 12 / ::communicator.node_grid;
-      if constexpr (FFTConfig::use_r2c) {
-        ref_ks_local_size[FFTConfig::r2c_dir] /= 2;
-        if (node_index[FFTConfig::r2c_dir] == 0) {
-          ref_ks_local_size[FFTConfig::r2c_dir] += 1;
+    // the k-space boxes follow the last pencil stage of the heFFTe plan on
+    // several ranks: check that they partition the k-space mesh and that
+    // every non-empty box is a pencil (spans the full mesh in one direction)
+    auto ref_ks_size = Utils::Vector3i::broadcast(12);
+    if constexpr (FFTConfig::use_r2c) {
+      ref_ks_size[FFTConfig::r2c_dir] = 12 / 2 + 1;
+    }
+    auto const ks_ld = fft.ks_local_ld_index();
+    auto const ks_ur = fft.ks_local_ur_index();
+    std::array<int, 6> const local_box = {ks_ld[0], ks_ld[1], ks_ld[2],
+                                          ks_ur[0], ks_ur[1], ks_ur[2]};
+    std::vector<int> flat_boxes;
+    boost::mpi::all_gather(comm, local_box.data(), 6, flat_boxes);
+    BOOST_REQUIRE_EQUAL(flat_boxes.size(), 6u * comm.size());
+    auto const get_box = [&flat_boxes](int i) {
+      auto const it = flat_boxes.begin() + 6 * i;
+      return std::make_pair(Utils::Vector3i(it, it + 3),
+                            Utils::Vector3i(it + 3, it + 6));
+    };
+    auto const volume = [](Utils::Vector3i const &ld,
+                           Utils::Vector3i const &ur) {
+      auto v = 1;
+      for (auto d : {0, 1, 2}) {
+        v *= std::max(0, ur[d] - ld[d]);
+      }
+      return v;
+    };
+    auto total_volume = 0;
+    for (int i = 0; i < comm.size(); ++i) {
+      BOOST_TEST_CONTEXT(Utils::demangle<FFTConfig>() << " box " << i) {
+        auto const [ld, ur] = get_box(i);
+        for (auto d : {0, 1, 2}) {
+          BOOST_CHECK_GE(ld[d], 0);
+          BOOST_CHECK_LE(ld[d], ur[d]);
+          BOOST_CHECK_LE(ur[d], ref_ks_size[d]);
+        }
+        auto const v = volume(ld, ur);
+        total_volume += v;
+        if (v != 0) {
+          auto is_pencil = false;
+          for (auto d : {0, 1, 2}) {
+            is_pencil |= (ld[d] == 0 and ur[d] == ref_ks_size[d]);
+          }
+          BOOST_CHECK(is_pencil);
+        }
+        for (int j = 0; j < i; ++j) {
+          auto const [ld2, ur2] = get_box(j);
+          auto overlap = 1;
+          for (auto d : {0, 1, 2}) {
+            overlap *= std::max(0, std::min(ur[d], ur2[d]) -
+                                       std::max(ld[d], ld2[d]));
+          }
+          BOOST_CHECK_EQUAL(overlap, 0);
         }
       }
-      BOOST_CHECK_EQUAL(fft.ks_local_size(), ref_ks_local_size);
-      BOOST_CHECK_EQUAL(fft.ks_local_ur_index() - fft.ks_local_ld_index(),
-                        ref_ks_local_size);
+    }
+    BOOST_CHECK_EQUAL(total_volume, Utils::product(ref_ks_size));
+    if (::communicator.size == 1) {
+      BOOST_CHECK_EQUAL(fft.ks_local_size(), ref_ks_size);
     }
     // deactivate actor
     solver->detach_system(espresso::system);

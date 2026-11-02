@@ -112,7 +112,8 @@ public:
         break;
       }
     }
-    // use optimal output box decomposition based on prime factors
+    // initial output boxes based on prime factors; on CPU with several ranks
+    // they only seed the plan and are replaced by its last pencil stage below
     auto out_boxes = heffte::split_world(global_out_box, to_array(best_grid));
     out_box = std::make_unique<Box>(out_boxes[comm.rank()]);
 
@@ -141,6 +142,25 @@ public:
     // pencil decomposition is better but for smaller problems, the slabs may
     // perform better (depending on hardware and backend)
     options.use_pencils = true;
+    // use the last pencil stage of the heFFTe plan for the input boxes as
+    // output boxes: the final reshape of each forward transform (and the
+    // first one of each backward transform) then becomes a local operation.
+    // This costs one extra planning step and one MPI_Allgather of the boxes
+    // per FFT construction. The pencil stages only exist with use_pencils
+    // (always set above; the check documents the dependency). CPU only: the
+    // GPU-aware options are only set below and cuFFT is untested.
+    if constexpr (Architecture == Arch::CPU) {
+      if (n_procs > 1 and options.use_pencils) {
+        auto const r2c_dir = FFTConfig::use_r2c ? FFTConfig::r2c_dir : -1;
+        auto const boxes = heffte::mpi::gather_boxes(*in_box, *out_box, comm);
+        auto const plan = heffte::plan_operations(
+            boxes, r2c_dir,
+            heffte::set_options<backend, FFTConfig::use_r2c>(options),
+            comm.rank());
+        auto const &pencil = plan.out_shape[2][comm.rank()];
+        out_box = std::make_unique<Box>(pencil.low, pencil.high, out_box_order);
+      }
+    }
 #if defined(__CUDACC__)
     if constexpr (Architecture == Arch::CUDA) {
       options.use_gpu_aware = ::communication_environment->is_mpi_gpu_aware();

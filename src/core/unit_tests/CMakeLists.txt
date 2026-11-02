@@ -143,7 +143,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:espresso::p3m::compiler_flags>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte> Cabana::Core
     Kokkos::kokkos)
-  foreach(TEST_NUM_PROC 1 3 4)
+  foreach(TEST_NUM_PROC 1 2 3 4)
     foreach(TEST_NUM_THREADS 1 2)
       if(${TEST_NUM_THREADS} LESS_EQUAL ${ESPRESSO_TEST_NT})
         if(${TEST_NUM_PROC} LESS_EQUAL ${ESPRESSO_TEST_NP})
