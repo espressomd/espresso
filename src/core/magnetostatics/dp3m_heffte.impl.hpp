@@ -1209,6 +1209,8 @@ public:
   TuningAlgorithm::Parameters get_time() override {
     auto tuned_params = TuningAlgorithm::Parameters{};
     auto time_best = time_sentinel;
+    auto n_slow_meshes = 0;
+    auto n_meshes_without_improvement = 0;
     for (auto tmp_mesh = m_mesh_min; tmp_mesh <= m_mesh_max; tmp_mesh += 2) {
       auto trial_params = TuningAlgorithm::Parameters{};
       trial_params.mesh = Utils::Vector3i::broadcast(tmp_mesh);
@@ -1226,12 +1228,20 @@ public:
          everything else is slower */
       m_r_cut_iL_max = trial_params.r_cut_iL;
 
+      if (trial_time > time_best * mesh_scan_relative_stop) {
+        ++n_slow_meshes;
+      } else {
+        n_slow_meshes = 0;
+      }
       if (trial_time < time_best) {
         /* new optimum */
         reset_n_trials();
+        n_meshes_without_improvement = 0;
         tuned_params = trial_params;
         time_best = tuned_params.time = trial_time;
-      } else if (trial_time > time_best + time_granularity or
+      } else if (++n_meshes_without_improvement >=
+                     mesh_scan_max_without_improvement or
+                 n_slow_meshes >= mesh_scan_patience or
                  get_n_trials() > max_n_consecutive_trials) {
         /* no hope of further optimisation */
         break;

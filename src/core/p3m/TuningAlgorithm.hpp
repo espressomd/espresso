@@ -80,7 +80,8 @@ protected:
 
   /**
    * @brief Granularity of the time measurement (milliseconds).
-   * Tuning halts when the runtime is larger than the best time plus this value.
+   * The cao scan halts when the runtime is larger than the best time plus
+   * this value.
    */
   static auto constexpr time_granularity = 5.;
 
@@ -89,6 +90,23 @@ protected:
    * Tuning halts when this threshold is reached.
    */
   static auto constexpr max_n_consecutive_trials = 40;
+
+  /**
+   * @brief The mesh scan stops after @ref mesh_scan_patience consecutive
+   * meshes slower than @ref mesh_scan_relative_stop times the best time.
+   * A single slow mesh (e.g. an FFT size with a poor plan) does not end the
+   * scan.
+   */
+  static auto constexpr mesh_scan_relative_stop = 1.5;
+  static auto constexpr mesh_scan_patience = 2;
+
+  /**
+   * @brief The mesh scan also stops after this many consecutive meshes
+   * without a new optimum. This bounds the scan when the cost is flat past
+   * the optimum (e.g. for slow systems, where the timing noise is larger
+   * than the cost differences between meshes).
+   */
+  static auto constexpr mesh_scan_max_without_improvement = 8;
 
   /** @brief Value for invalid time measurements. */
   static auto constexpr time_sentinel = std::numeric_limits<double>::max();
