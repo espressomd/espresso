@@ -69,6 +69,7 @@ namespace utf = boost::unit_test;
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -577,6 +578,11 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     auto init_n_pairs = 0;
     auto init_n_angles = 0;
     auto init_n_dihes = 0;
+    auto const has_particles = [&cs](std::vector<int> const &pids) {
+      return std::ranges::all_of(pids, [&cs](int pid) {
+        return cs.get_local_particle(pid) != nullptr;
+      });
+    };
     for (auto const &p : cs.local_particles()) {
       if (p.id() == pid2) {
         init_n_pairs = 2;
@@ -586,18 +592,36 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     BOOST_CHECK_EQUAL(cs.get_local_angle_bond_numbers(), init_n_angles);
     BOOST_CHECK_EQUAL(cs.get_local_dihedral_bond_numbers(), init_n_dihes);
 #ifdef ESPRESSO_COLLISION_DETECTION
-    cs.add_new_bond(2, {pid1, pid2});
-    BOOST_CHECK_EQUAL(cs.get_local_pair_bond_numbers(), init_n_pairs + 1);
+    auto const pair_pids = std::vector<int>{pid1, pid2};
+    auto const angle_pids = std::vector<int>{pid1, pid2, pid3};
+    auto const dihe_pids = std::vector<int>{pid1, pid2, pid3, pid4};
+    auto const n_new_pairs = has_particles(pair_pids) ? 1 : 0;
+    auto const n_new_angles = has_particles(angle_pids) ? 1 : 0;
+    auto const n_new_dihes = has_particles(dihe_pids) ? 1 : 0;
+    if (n_new_pairs) {
+      cs.add_new_bond(2, pair_pids); // local update
+    }
+    BOOST_CHECK_EQUAL(cs.get_local_pair_bond_numbers(),
+                      init_n_pairs + n_new_pairs);
     BOOST_CHECK_EQUAL(cs.get_local_angle_bond_numbers(), init_n_angles);
     BOOST_CHECK_EQUAL(cs.get_local_dihedral_bond_numbers(), init_n_dihes);
-    cs.add_new_bond(3, {pid1, pid2, pid3});
-    BOOST_CHECK_EQUAL(cs.get_local_pair_bond_numbers(), init_n_pairs + 1);
-    BOOST_CHECK_EQUAL(cs.get_local_angle_bond_numbers(), init_n_angles + 1);
+    if (n_new_angles) {
+      cs.add_new_bond(3, angle_pids); // local update
+    }
+    BOOST_CHECK_EQUAL(cs.get_local_pair_bond_numbers(),
+                      init_n_pairs + n_new_pairs);
+    BOOST_CHECK_EQUAL(cs.get_local_angle_bond_numbers(),
+                      init_n_angles + n_new_angles);
     BOOST_CHECK_EQUAL(cs.get_local_dihedral_bond_numbers(), init_n_dihes);
-    cs.add_new_bond(4, {pid1, pid2, pid3, pid4});
-    BOOST_CHECK_EQUAL(cs.get_local_pair_bond_numbers(), init_n_pairs + 1);
-    BOOST_CHECK_EQUAL(cs.get_local_angle_bond_numbers(), init_n_angles + 1);
-    BOOST_CHECK_EQUAL(cs.get_local_dihedral_bond_numbers(), init_n_dihes + 1);
+    if (n_new_dihes) {
+      cs.add_new_bond(4, dihe_pids); // local update
+    }
+    BOOST_CHECK_EQUAL(cs.get_local_pair_bond_numbers(),
+                      init_n_pairs + n_new_pairs);
+    BOOST_CHECK_EQUAL(cs.get_local_angle_bond_numbers(),
+                      init_n_angles + n_new_angles);
+    BOOST_CHECK_EQUAL(cs.get_local_dihedral_bond_numbers(),
+                      init_n_dihes + n_new_dihes);
     cs.clear_new_bonds();
     cs.set_local_bond_numbers(init_n_pairs, init_n_angles, init_n_dihes);
     cs.rebuild_bond_list();

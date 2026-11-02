@@ -98,6 +98,12 @@ void LocalBondState::clear_new_bonds() {
 void LocalBondState::add_new_bond(
     int bond_id, std::vector<int> const &particle_ids,
     Kokkos::View<int *, execution_space> const &id_to_index) {
+#ifndef NDEBUG
+  for (auto pid : particle_ids) {
+    assert(pid >= 0 and static_cast<std::size_t>(pid) < id_to_index.extent(0));
+    assert(id_to_index(pid) != -1);
+  }
+#endif // not NDEBUG
   if (particle_ids.size() == 2u) {
     new_pair_list.reserve(new_pair_list.size() + 2u);
     for (auto pid : particle_ids)
