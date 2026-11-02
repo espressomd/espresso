@@ -578,11 +578,6 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     auto init_n_pairs = 0;
     auto init_n_angles = 0;
     auto init_n_dihes = 0;
-    auto const has_particles = [&cs](std::vector<int> const &pids) {
-      return std::ranges::all_of(pids, [&cs](int pid) {
-        return cs.get_local_particle(pid) != nullptr;
-      });
-    };
     for (auto const &p : cs.local_particles()) {
       if (p.id() == pid2) {
         init_n_pairs = 2;
@@ -592,6 +587,11 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     BOOST_CHECK_EQUAL(cs.get_local_angle_bond_numbers(), init_n_angles);
     BOOST_CHECK_EQUAL(cs.get_local_dihedral_bond_numbers(), init_n_dihes);
 #ifdef ESPRESSO_COLLISION_DETECTION
+    auto const has_particles = [&cs](std::vector<int> const &pids) {
+      return std::ranges::all_of(pids, [&cs](int pid) {
+        return cs.get_local_particle(pid) != nullptr;
+      });
+    };
     auto const pair_pids = std::vector<int>{pid1, pid2};
     auto const angle_pids = std::vector<int>{pid1, pid2, pid3};
     auto const dihe_pids = std::vector<int>{pid1, pid2, pid3, pid4};

@@ -58,10 +58,9 @@ class Sample(ut.TestCase):
         # check azimuthal velocity in the Couette regime
         xdata = sample.profile_r[9:-1]
         ydata = v_phi[9:-1]
-        shift = 0.185 * sample.agrid  # radius correction due to discretization
         a_ref, b_ref = taylor_couette(
-            sample.velocity_magnitude, 0.0, sample.cylinder_in.radius - shift,
-            sample.cylinder_out.radius + shift, sample.agrid)
+            sample.velocity_magnitude, 0.0, sample.cylinder_in.radius,
+            sample.cylinder_out.radius, sample.agrid)
         (a_sim, b_sim), _ = scipy.optimize.curve_fit(
             lambda x, a, b: a * x + b / x, xdata, ydata)
         np.testing.assert_allclose([a_sim, b_sim], [a_ref, b_ref], rtol=0.05)
