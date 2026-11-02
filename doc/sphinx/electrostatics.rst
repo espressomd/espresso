@@ -126,9 +126,11 @@ tuning in that case, which changes the trajectory.
 The Verlet skin also affects the real-space cost, and the best skin depends
 on the real-space cutoff. With ``tune_skin=True``, which requires
 ``tune_with_integration=True``, the tuning algorithm tunes the Verlet skin
-for the three fastest parameter sets, times them again with their tuned skin
+for the six fastest parameter sets, times them again with their tuned skin
 and keeps the fastest combination. The Verlet skin of the cell system is then
-set to the tuned value.
+set to the tuned value. Every skin search takes about 15 timings of ten times
+``timings`` integration steps, so this phase integrates about
+6 x 15 x 10 x ``timings`` steps, which dominates the tuning time.
 
 .. _Coulomb P3M on GPU:
 

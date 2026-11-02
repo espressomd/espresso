@@ -115,7 +115,7 @@ protected:
    * @brief Number of fastest parameter sets that get a Verlet skin tuning
    * when skin tuning is enabled.
    */
-  static auto constexpr n_skin_tuning_candidates = 3ul;
+  static auto constexpr n_skin_tuning_candidates = 6ul;
 
   /**
    * @brief Resolution of the Verlet skin search, relative to the

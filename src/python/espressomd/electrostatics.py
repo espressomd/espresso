@@ -187,7 +187,7 @@ class P3M(ElectrostaticInteraction):
         the production run. The particles move during tuning, which
         changes the trajectory. Defaults to ``False``.
     tune_skin : :obj:`bool`, optional
-        If ``True``, tune the Verlet skin for the three fastest parameter
+        If ``True``, tune the Verlet skin for the six fastest parameter
         sets found by the tuning algorithm, time them again with their tuned
         skin and keep the fastest combination. The Verlet skin of the cell
         system is set to the tuned value. Every timing in this phase
