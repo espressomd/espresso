@@ -121,6 +121,16 @@ foreach(TEST_NUM_PROC 1 4)
       HaloPlanValidator_test NUM_PROC ${TEST_NUM_PROC})
   endif()
 endforeach()
+espresso_unit_test_executable(
+  NAME RegularDecomposition_test SRC RegularDecomposition_test.cpp DEPENDS
+  espresso::core Kokkos::kokkos Boost::mpi MPI::MPI_CXX)
+foreach(TEST_NUM_PROC 1 2 3 4)
+  if(${TEST_NUM_PROC} LESS_EQUAL ${ESPRESSO_TEST_NP})
+    espresso_unit_test_register(
+      NAME RegularDecomposition_test_${TEST_NUM_PROC}_mpi_ranks TARGET
+      RegularDecomposition_test NUM_PROC ${TEST_NUM_PROC})
+  endif()
+endforeach()
 espresso_unit_test(SRC TabulatedPotential_test.cpp DEPENDS espresso::core
                    Kokkos::kokkos)
 if(ESPRESSO_BUILD_WITH_WALBERLA)
