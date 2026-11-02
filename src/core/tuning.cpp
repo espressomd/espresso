@@ -55,12 +55,16 @@ std::string TuningFailed::get_first_error() {
   return message;
 }
 
-static void check_statistics(Utils::Statistics::RunningAverage<double> &acc) {
+static void check_statistics(Utils::Statistics::RunningAverage<double> &acc,
+                             bool with_integration) {
   if (acc.avg() <= 5 * MPI_Wtick()) {
     runtimeWarningMsg()
         << "Clock resolution is too low to reliably time integration.";
   }
-  if (acc.sig() >= 0.1 * acc.avg()) {
+  // with integration, the step times are legitimately bimodal (steps with
+  // and without Verlet list rebuild), the relative spread is no quality
+  // measure
+  if (not with_integration and acc.sig() >= 0.1 * acc.avg()) {
     runtimeWarningMsg() << "Statistics of tuning samples is very bad.";
   }
 }
@@ -106,7 +110,7 @@ double benchmark_integration_step(System::System &system, int int_steps,
   }
 
   if (this_node == 0) {
-    check_statistics(running_average);
+    check_statistics(running_average, with_integration);
   }
 
   /* MPI returns in seconds, returned value should be in ms. */
