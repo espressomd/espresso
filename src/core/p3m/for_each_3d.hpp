@@ -168,6 +168,37 @@ void for_each_3d_lin(detail::IndexVectorConcept auto &&start,
   }
   // parallel execution policy
   auto const size = stop - start;
+  if constexpr (is_host_exec_space) {
+    // each thread processes contiguous slabs along the slowest index, the
+    // same partition as the halo-mesh loops and heFFTe's pack/unpack, so
+    // that consecutive loops touch the same memory on the same thread
+    if constexpr (memory_order == Utils::MemoryOrder::ROW_MAJOR) {
+      Kokkos::parallel_for(
+          "for_each_3d", Kokkos::RangePolicy<ExecSpace>(0, size[0]),
+          [=](int i) {
+            auto linear_idx = i * size[1] * size[2];
+            for (int j = 0; j < size[1]; ++j) {
+              for (int k = 0; k < size[2]; ++k) {
+                kernel(start + Utils::Vector3i{{i, j, k}}, linear_idx);
+                ++linear_idx;
+              }
+            }
+          });
+    } else {
+      Kokkos::parallel_for(
+          "for_each_3d", Kokkos::RangePolicy<ExecSpace>(0, size[2]),
+          [=](int k) {
+            auto linear_idx = k * size[1] * size[0];
+            for (int j = 0; j < size[1]; ++j) {
+              for (int i = 0; i < size[0]; ++i) {
+                kernel(start + Utils::Vector3i{{i, j, k}}, linear_idx);
+                ++linear_idx;
+              }
+            }
+          });
+    }
+    return;
+  }
   constexpr Kokkos::Iterate iter = LayoutIterate<memory_order>::value;
   using Range3d = Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<3, iter, iter>>;
   Range3d policy({0, 0, 0}, {size[0], size[1], size[2]});

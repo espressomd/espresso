@@ -24,6 +24,7 @@
 #if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 #include "fft/fft.hpp"
+#include "kokkos_helpers.hpp"
 #include "p3m/common.hpp"
 #include "p3m/packing.hpp"
 #include "p3m/send_mesh.hpp"
@@ -85,6 +86,49 @@ static void p3m_add_block(FloatType const *in, FloatType *out,
     }
     li_out += s_out_offset;
   }
+}
+
+static bool boxes_overlap(int const a[3], int const b[3], int const size[3]) {
+  for (int j = 0; j < 3; ++j) {
+    if (a[j] + size[j] <= b[j] or b[j] + size[j] <= a[j])
+      return false;
+  }
+  return true;
+}
+
+/** Add or copy the block of dimensions size[3] at src[3] to the block at
+ *  dst[3] of the same grids of dimensions dim[3], for all grids. The blocks
+ *  must not overlap. The rows of the block are distributed over the threads.
+ */
+template <bool add, typename FloatType>
+static void p3m_self_block(std::span<FloatType *> meshes, int const src[3],
+                           int const dst[3], int const size[3],
+                           int const dim[3]) {
+  auto const offset = [dim](int const ld[3], int s, int m) {
+    return ld[2] + dim[2] * ((ld[1] + m) + dim[1] * (ld[0] + s));
+  };
+  int const n_rows = size[0] * size[1];
+  int const n_cols = size[1];
+  int const n_fast = size[2];
+  kokkos_parallel_range_for<Kokkos::DefaultHostExecutionSpace>(
+      "p3m_self_block", 0, n_rows, [=](int const row) {
+        int const s = row / n_cols;
+        int const m = row % n_cols;
+        auto const src_offset = offset(src, s, m);
+        auto const dst_offset = offset(dst, s, m);
+        for (auto mesh : meshes) {
+          auto const *const in = mesh + src_offset;
+          auto *const out = mesh + dst_offset;
+          if constexpr (add) {
+            for (int f = 0; f < n_fast; ++f) {
+              out[f] += in[f];
+            }
+          } else {
+            std::copy_n(in, n_fast, out);
+          }
+        }
+      });
+  Kokkos::fence();
 }
 
 template <typename FloatType>
@@ -159,12 +203,34 @@ void p3m_send_mesh<FloatType>::resize(boost::mpi::communicator const &comm,
     }
     max = std::max(max, r_size[i]);
   }
+  /* on a single rank, the received block of each direction is a disjoint
+   * block of the same mesh (unless the halo is wider than the local mesh) */
+  self_exchange = true;
+  for (int s_dir = 0; s_dir < 6; s_dir++) {
+    auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
+    if (node_neighbors[s_dir] != comm.rank() or
+        not std::equal(s_dim[s_dir], s_dim[s_dir] + 3, r_dim[r_dir]) or
+        (s_size[s_dir] > 0 and
+         boxes_overlap(s_ld[s_dir], r_ld[r_dir], s_dim[s_dir]))) {
+      self_exchange = false;
+    }
+  }
 }
 
 template <typename FloatType>
 void p3m_send_mesh<FloatType>::gather_grid(boost::mpi::communicator const &comm,
                                            std::span<FloatType *> meshes,
                                            Utils::Vector3i const &dim) {
+  if (self_exchange) {
+    for (int s_dir = 0; s_dir < 6; s_dir++) {
+      auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
+      if (s_size[s_dir] > 0) {
+        p3m_self_block<true>(meshes, s_ld[s_dir], r_ld[r_dir], s_dim[s_dir],
+                             dim.data());
+      }
+    }
+    return;
+  }
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
   send_grid.resize(max * meshes.size());
   recv_grid.resize(max * meshes.size());
@@ -205,6 +271,16 @@ template <typename FloatType>
 void p3m_send_mesh<FloatType>::spread_grid(boost::mpi::communicator const &comm,
                                            std::span<FloatType *> meshes,
                                            Utils::Vector3i const &dim) {
+  if (self_exchange) {
+    for (int s_dir = 5; s_dir >= 0; s_dir--) {
+      auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
+      if (s_size[s_dir] > 0) {
+        p3m_self_block<false>(meshes, r_ld[r_dir], s_ld[s_dir], s_dim[s_dir],
+                              dim.data());
+      }
+    }
+    return;
+  }
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
   send_grid.resize(max * meshes.size());
   recv_grid.resize(max * meshes.size());
