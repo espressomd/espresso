@@ -10,7 +10,7 @@
 export PYTHONPATH="@ESPRESSO_PYTHON_DIR@${PYTHONPATH:+:$PYTHONPATH}"
 
 if test -z "${OMPI_MCA_hwloc_base_binding_policy}"; then
-  export OMPI_MCA_hwloc_base_binding_policy=none
+  export OMPI_MCA_hwloc_base_binding_policy="none"
 fi
 if test -z "${PRTE_MCA_hwloc_default_binding_policy}"; then
   export PRTE_MCA_hwloc_default_binding_policy="none"
