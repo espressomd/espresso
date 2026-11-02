@@ -139,7 +139,9 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
       ar & p.image_box();
     }
 #ifdef ESPRESSO_BOND_CONSTRAINT
-    ar & p.pos_last_time_step();
+    if (data_parts & GHOSTTRANS_POS_LAST) {
+      ar & p.pos_last_time_step();
+    }
 #endif
   }
   // Wire-symmetry: pack and unpack use the same data_parts per exchange,
@@ -217,6 +219,11 @@ static void prepare_ghost_cell(ParticleList *cell, std::size_t size) {
 
 std::size_t calc_transmit_size(BoxGeometry const &box_geo,
                                unsigned data_parts) {
+#ifdef ESPRESSO_BOND_CONSTRAINT
+  // POS_LAST is serialized inside the POSITION block
+  assert(not(data_parts & GHOSTTRANS_POS_LAST) or
+         (data_parts & GHOSTTRANS_POSITION));
+#endif
   SerializationSizeCalculator sizeof_archive;
   Particle p{};
   serialize_and_reduce(sizeof_archive, p, data_parts, ReductionPolicy::MOVE,

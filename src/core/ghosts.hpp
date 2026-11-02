@@ -59,4 +59,9 @@ enum : unsigned {
   /// transfer dipole field tracking data
   GHOSTTRANS_DIPFLD = 1024u,
 #endif
+#ifdef ESPRESSO_BOND_CONSTRAINT
+  /// transfer the position at the start of the time step (pushed with
+  /// position; only needed by RATTLE)
+  GHOSTTRANS_POS_LAST = 2048u,
+#endif
 };
