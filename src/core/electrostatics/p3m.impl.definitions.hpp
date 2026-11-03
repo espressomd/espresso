@@ -359,31 +359,6 @@ void CoulombP3MImpl<FloatType, Architecture, FFTConfig>::init_cpu_kernels() {
 
 namespace {
 template <int cao> struct AssignCharge {
-  void operator()(auto &p3m, double q,
-                  InterpolationWeights<cao> const &weights) {
-    using CoulombP3MState = std::remove_reference_t<decltype(p3m)>;
-    using value_type = CoulombP3MState::value_type;
-    p3m_interpolate(p3m.local_mesh, weights, [q, &p3m](int ind, double w) {
-      p3m.rs_charge_density[ind] += value_type(w * q);
-    });
-  }
-
-  void operator()(auto &p3m, double q, Utils::Vector3d const &real_pos,
-                  p3m_interpolation_cache &inter_weights) {
-    auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
-    auto const weights = p3m_calculate_interpolation_weights<cao, memory_order>(
-        real_pos.as_span(), p3m.params.ai, p3m.local_mesh);
-    inter_weights.store(weights);
-    this->operator()(p3m, q, weights);
-  }
-
-  void operator()(auto &p3m, double q, Utils::Vector3d const &real_pos) {
-    auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
-    auto const weights = p3m_calculate_interpolation_weights<cao, memory_order>(
-        real_pos.as_span(), p3m.params.ai, p3m.local_mesh);
-    this->operator()(p3m, q, weights);
-  }
-
   void operator()(auto &p3m, auto &cell_structure) {
     using CoulombP3MState = std::remove_reference_t<decltype(p3m)>;
     using value_type = CoulombP3MState::value_type;
@@ -420,6 +395,67 @@ template <int cao> struct AssignCharge {
     Kokkos::fence();
   }
 };
+
+template <int cao> struct AssignChargeElc {
+  void operator()(auto &p3m, auto const &cell_structure,
+                  ElcImageLayers const &layers, bool assign_real,
+                  bool assign_images) {
+    using CoulombP3MState = std::remove_reference_t<decltype(p3m)>;
+    using value_type = CoulombP3MState::value_type;
+    using execution_space = Kokkos::DefaultHostExecutionSpace;
+    auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
+    auto const &aosoa = cell_structure.get_aosoa();
+    auto const n_part = cell_structure.count_local_particles();
+    if (assign_real) {
+      p3m.inter_weights.zfill(n_part); // allocate buffer for parallel write
+    }
+    kokkos_parallel_range_for<execution_space>(
+        "InterpolateChargesElc", std::size_t{0u}, n_part, [&](auto p_index) {
+          auto const tid = omp_get_thread_num();
+          auto const q = aosoa.charge(p_index);
+          auto const pos = aosoa.get_vector_at(aosoa.position, p_index);
+          auto const deposit = [&](double q_eff, Utils::Vector3d const &r,
+                                   bool cache) {
+            auto const weights =
+                p3m_calculate_interpolation_weights<cao, memory_order>(
+                    r.as_span(), p3m.params.ai, p3m.local_mesh);
+            if (cache) {
+              p3m.inter_weights.store_at(p_index, weights);
+            }
+            p3m_interpolate(p3m.local_mesh, weights,
+                            [&, tid, q_eff](int ind, double w) {
+                              p3m.rs_charge_density_kokkos(tid, ind) +=
+                                  value_type(w * q_eff);
+                            });
+          };
+          if (assign_real) {
+            deposit(q, pos, true);
+          }
+          if (assign_images) {
+            if (pos[2] < layers.space_layer) {
+              deposit(layers.delta_mid_bot * q, {pos[0], pos[1], -pos[2]},
+                      false);
+            }
+            if (pos[2] > (layers.box_h - layers.space_layer)) {
+              deposit(layers.delta_mid_top * q,
+                      {pos[0], pos[1], 2. * layers.box_h - pos[2]}, false);
+            }
+          }
+        });
+    Kokkos::fence();
+    int num_threads = execution_space().concurrency();
+    kokkos_parallel_range_for<execution_space>(
+        "ReduceInterpolatedChargesElc", std::size_t{0}, p3m.local_mesh.size,
+        [&p3m, num_threads](std::size_t const i) {
+          value_type acc{};
+          for (int tid = 0; tid < num_threads; ++tid) {
+            acc += p3m.rs_charge_density_kokkos(tid, i);
+          }
+          p3m.rs_charge_density.at(i) += acc;
+        });
+    Kokkos::fence();
+  }
+};
 } // namespace
 
 template <typename FloatType, Arch Architecture, class FFTConfig>
@@ -431,15 +467,13 @@ void CoulombP3MImpl<FloatType, Architecture, FFTConfig>::charge_assign() {
 }
 
 template <typename FloatType, Arch Architecture, class FFTConfig>
-void CoulombP3MImpl<FloatType, Architecture, FFTConfig>::assign_charge(
-    double q, Utils::Vector3d const &real_pos, bool skip_cache) {
-  if (skip_cache) {
-    Utils::integral_parameter<int, AssignCharge, p3m_min_cao, p3m_max_cao>(
-        p3m.params.cao, p3m, q, real_pos);
-  } else {
-    Utils::integral_parameter<int, AssignCharge, p3m_min_cao, p3m_max_cao>(
-        p3m.params.cao, p3m, q, real_pos, p3m.inter_weights);
-  }
+void CoulombP3MImpl<FloatType, Architecture, FFTConfig>::charge_assign_elc(
+    ElcImageLayers const &layers, bool assign_real, bool assign_images) {
+  // always start from a fresh mesh and weight cache
+  prepare_fft_mesh(true);
+  Utils::integral_parameter<int, AssignChargeElc, p3m_min_cao, p3m_max_cao>(
+      p3m.params.cao, p3m, *get_system().cell_structure, layers, assign_real,
+      assign_images);
 }
 
 namespace {
