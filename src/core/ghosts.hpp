@@ -65,3 +65,18 @@ enum : unsigned {
   GHOSTTRANS_POS_LAST = 2048u,
 #endif
 };
+
+/// Union of all transfer data classes of this build (add new flags here)
+inline constexpr unsigned GHOSTTRANS_ALL =
+    GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM |
+    GHOSTTRANS_FORCE | GHOSTTRANS_PARTNUM | GHOSTTRANS_BONDS
+#ifdef ESPRESSO_BOND_CONSTRAINT
+    | GHOSTTRANS_RATTLE | GHOSTTRANS_POS_LAST
+#endif
+#ifdef ESPRESSO_ROTATION
+    | GHOSTTRANS_QUAT | GHOSTTRANS_TORQUE
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    | GHOSTTRANS_DIPFLD
+#endif
+    ;

@@ -38,6 +38,7 @@
 #include <boost/serialization/vector.hpp>
 
 #include <algorithm>
+#include <bit>
 #include <cassert>
 #include <cstddef>
 #include <iterator>
@@ -73,6 +74,38 @@ enum class ReductionPolicy {
 
 /** @brief Whether to save the state to or load the state from the archive. */
 enum class SerializationDirection { SAVE, LOAD };
+
+/**
+ * @brief Serialize the position block of the wire format
+ * (@ref GHOSTTRANS_POSITION): position and image box, folded after applying
+ * the ghost shift on save, followed by the position at the start of the time
+ * step with @ref GHOSTTRANS_POS_LAST.
+ * Used by @ref serialize_and_reduce and by the flat position packer in
+ * @ref pack_cells, so that both always write the same bytes; the receiver
+ * decodes either with @ref serialize_and_reduce.
+ */
+template <class Archive>
+static void serialize_position(Archive &ar, Particle &p,
+                               [[maybe_unused]] unsigned int data_parts,
+                               SerializationDirection direction,
+                               BoxGeometry const &box_geo,
+                               Utils::Vector3d const *ghost_shift) {
+  if (direction == SerializationDirection::SAVE and ghost_shift != nullptr) {
+    auto pos = p.pos() + *ghost_shift;
+    auto img = p.image_box();
+    box_geo.fold_position(pos, img);
+    ar & pos;
+    ar & img;
+  } else {
+    ar & p.pos();
+    ar & p.image_box();
+  }
+#ifdef ESPRESSO_BOND_CONSTRAINT
+  if (data_parts & GHOSTTRANS_POS_LAST) {
+    ar & p.pos_last_time_step();
+  }
+#endif
+}
 
 /**
  * @brief Serialize particle data, possibly with reduction.
@@ -127,22 +160,7 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
 #endif
   }
   if (data_parts & GHOSTTRANS_POSITION) {
-    if (direction == SerializationDirection::SAVE and ghost_shift != nullptr) {
-      /* ok, this is not nice, but perhaps fast */
-      auto pos = p.pos() + *ghost_shift;
-      auto img = p.image_box();
-      box_geo.fold_position(pos, img);
-      ar & pos;
-      ar & img;
-    } else {
-      ar & p.pos();
-      ar & p.image_box();
-    }
-#ifdef ESPRESSO_BOND_CONSTRAINT
-    if (data_parts & GHOSTTRANS_POS_LAST) {
-      ar & p.pos_last_time_step();
-    }
-#endif
+    serialize_position(ar, p, data_parts, direction, box_geo, ghost_shift);
   }
   // Wire-symmetry: pack and unpack use the same data_parts per exchange,
   // so the layout is always symmetric; QUAT follows POSITION in the stream
@@ -224,11 +242,32 @@ std::size_t calc_transmit_size(BoxGeometry const &box_geo,
   assert(not(data_parts & GHOSTTRANS_POS_LAST) or
          (data_parts & GHOSTTRANS_POSITION));
 #endif
-  SerializationSizeCalculator sizeof_archive;
-  Particle p{};
-  serialize_and_reduce(sizeof_archive, p, data_parts, ReductionPolicy::MOVE,
-                       SerializationDirection::SAVE, box_geo, nullptr);
-  return sizeof_archive.size();
+  assert((data_parts & ~GHOSTTRANS_ALL) == 0u);
+  // The size per particle only depends on the data parts (and on the
+  // compiled features): tabulate it once for every combination of flags
+  // instead of serializing a default-constructed Particle in every call.
+  // The size does not depend on the box either (it is only read to fold
+  // shifted positions, and no shift is passed here).
+  // 12 flags (4096 entries) with all features enabled; the limit leaves room
+  // for a few more flags while keeping the one-time tabulation cheap.
+  constexpr std::size_t n_combinations = std::bit_ceil(GHOSTTRANS_ALL + 1u);
+  static_assert(n_combinations <= 65536u, "size table too large");
+  auto const compute = [&box_geo](unsigned parts) {
+    SerializationSizeCalculator sizeof_archive;
+    Particle p{};
+    serialize_and_reduce(sizeof_archive, p, parts, ReductionPolicy::MOVE,
+                         SerializationDirection::SAVE, box_geo, nullptr);
+    return sizeof_archive.size();
+  };
+  static auto const table = [&compute]() {
+    std::vector<std::size_t> sizes(n_combinations);
+    for (unsigned parts = 0u; parts < n_combinations; ++parts) {
+      sizes[parts] = compute(parts);
+    }
+    return sizes;
+  }();
+  return (data_parts < n_combinations) ? table[data_parts]
+                                       : compute(data_parts);
 }
 
 std::size_t calc_transmit_size(std::span<ParticleList *const> cells,
@@ -253,25 +292,41 @@ void pack_cells(CommBuf &buf, std::span<ParticleList *const> cells,
 
   auto archiver = Utils::MemcpyOArchive{buf.make_span()};
 
-  /* Construct archive that pushes back to the bond buffer */
-  namespace io = boost::iostreams;
-  io::stream<io::back_insert_device<std::vector<char>>> os{
-      io::back_inserter(buf.bonds())};
-  boost::archive::binary_oarchive bond_archiver{os};
-
-  /* put in data */
-  for (auto part_list : cells) {
-    if (data_parts & GHOSTTRANS_PARTNUM) {
+  if (data_parts == GHOSTTRANS_POSITION) {
+    // position push of a plain time step: the position block alone, without
+    // the flag tests of the other blocks in serialize_and_reduce()
+    for (auto part_list : cells) {
+      for (auto &p : *part_list) {
+        serialize_position(archiver, p, GHOSTTRANS_POSITION,
+                           SerializationDirection::SAVE, box_geo, &shift);
+      }
+    }
+  } else if (data_parts & GHOSTTRANS_PARTNUM) {
+    for (auto part_list : cells) {
       assert(part_list->size() <= std::numeric_limits<unsigned int>::max());
       auto np = static_cast<unsigned int>(part_list->size());
       archiver << np;
-    } else {
+    }
+  } else if (not(data_parts & GHOSTTRANS_BONDS)) {
+    for (auto part_list : cells) {
       for (auto &p : *part_list) {
         serialize_and_reduce(archiver, p, data_parts, ReductionPolicy::MOVE,
                              SerializationDirection::SAVE, box_geo, &shift);
-        if (data_parts & GHOSTTRANS_BONDS) {
-          bond_archiver << p.bonds();
-        }
+      }
+    }
+  } else {
+    /* Construct archive that pushes back to the bond buffer; only done
+     * when bonds are communicated, since the boost archive construction
+     * costs more than packing the particles of a typical message */
+    namespace io = boost::iostreams;
+    io::stream<io::back_insert_device<std::vector<char>>> os{
+        io::back_inserter(buf.bonds())};
+    boost::archive::binary_oarchive bond_archiver{os};
+    for (auto part_list : cells) {
+      for (auto &p : *part_list) {
+        serialize_and_reduce(archiver, p, data_parts, ReductionPolicy::MOVE,
+                             SerializationDirection::SAVE, box_geo, &shift);
+        bond_archiver << p.bonds();
       }
     }
   }
