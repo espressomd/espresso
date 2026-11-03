@@ -456,17 +456,40 @@ void CellStructure::remove_particle(int id) {
     ::remove_bond(system, bond_id, ids, id);
   }
 
-  for (auto cell : decomposition().local_cells()) {
-    auto &parts = cell->particles();
-    for (auto it = parts.begin(); it != parts.end();) {
-      if (it->id() == id) {
-        it = parts.erase(it);
-        update_particle_index(id, nullptr);
-        update_particle_index(parts);
-      } else {
-        it++;
-      }
+  // Locate the particle via the index instead of scanning all local
+  // particles. Real particles take precedence over ghosts in the index
+  // (ghosts only fill otherwise empty entries), so a ghost entry means the
+  // particle is not stored on this rank.
+  auto *const p = get_local_particle(id);
+  if (p == nullptr or p->is_ghost()) {
+    return;
+  }
+
+  auto const holds = [p](Cell *cell) {
+    if (cell == nullptr) {
+      return false;
     }
+    auto &parts = cell->particles();
+    return parts.begin() <= p and p < parts.end();
+  };
+  // The cell computed from the position is right unless the particle moved
+  // across a cell boundary since the last resort; then fall back to checking
+  // each local cell's storage range, which is O(cells), not O(particles).
+  auto *cell = particle_to_cell(*p);
+  if (not holds(cell)) {
+    auto const cells = decomposition().local_cells();
+    auto const found = std::ranges::find_if(cells, holds);
+    assert(found != cells.end());
+    cell = *found;
+  }
+
+  // ParticleList::erase() moves the last element into the freed slot, so
+  // only that element's index entry needs updating.
+  auto &parts = cell->particles();
+  auto const it = parts.erase(p);
+  update_particle_index(id, nullptr);
+  if (it != parts.end()) {
+    update_particle_index(*it);
   }
 }
 
