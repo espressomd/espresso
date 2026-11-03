@@ -201,20 +201,11 @@ class GenerateEkKernelsTest(unittest.TestCase):
         self.assertEqual(len(names), 8 + 3 * 2)
         self.assertEqual(names, sorted(p.name for p in outputs[1].iterdir()))
         for name in names:
-            first, second = ((output / name).read_text()
-                             for output in outputs)
-            if name.startswith("FixedFlux") and name.endswith((".cpp", ".cu")):
-                # the order of the field extraction statements varies
-                self.assertEqual(sorted(first.splitlines()),
-                                 sorted(second.splitlines()), name)
-            else:
-                self.assertEqual(first, second, name)
+            self.assertEqual((outputs[0] / name).read_bytes(),
+                             (outputs[1] / name).read_bytes(), name)
 
     def test_reaction_output_is_deterministic(self):
-        # The headers are independent of the hash seed. The source files only
-        # differ in the order of the statements that extract the fields and
-        # properties, which pystencils-sfg 0.3 doesn't keep stable (as for the
-        # sweeps of the lattice Boltzmann method).
+        # independent of the hash seed of the interpreter
         reactions = [f"reaction_{kind}_{num}" for kind in ("bulk", "indexed")
                      for num in range(1, 6)]
         outputs = [self.run_script("--kernels", *reactions, seed=seed)[0]
@@ -223,13 +214,8 @@ class GenerateEkKernelsTest(unittest.TestCase):
         self.assertEqual(len(names), 80)
         self.assertEqual(names, sorted(p.name for p in outputs[1].iterdir()))
         for name in names:
-            first, second = (
-                (output / name).read_text() for output in outputs)
-            if name.endswith(".h"):
-                self.assertEqual(first, second, name)
-            else:
-                self.assertEqual(sorted(first.splitlines()),
-                                 sorted(second.splitlines()), name)
+            self.assertEqual((outputs[0] / name).read_bytes(),
+                             (outputs[1] / name).read_bytes(), name)
 
 
 if __name__ == "__main__":

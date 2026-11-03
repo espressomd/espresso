@@ -35,11 +35,14 @@ import packaging.specifiers
 import packaging.version
 import pystencils as ps
 import pystencilssfg
+import pystencilssfg.ir.entities
+import pystencilssfg.ir.postprocessing
 import sympy
 import lbmpy
 import sweepgen
 import sweepgen.api
 import sweepgen.build_config
+import sweepgen.core.blockforest_extraction
 
 PRECISIONS = ("single", "double")
 TARGETS = ("cpu", "avx", "cuda")
@@ -62,6 +65,71 @@ TESTED_TOOLCHAIN = {
 SWEEPGEN_COMMIT_RE = re.compile(r"\.g([0-9a-f]+)$")
 CMAKELISTS = pathlib.Path(__file__).resolve().parents[2] / "CMakeLists.txt"
 KERNEL_NAMESPACE = "walberla::pystencils"
+
+
+class NameOrderedSet(set):
+    """A set whose iteration follows the names of its elements."""
+
+    def __iter__(self):
+        return iter(sorted(set.__iter__(self), key=lambda x: x.name))
+
+
+def _name_ordered_property(cls, name):
+    """Make the property ``cls.name`` return a `NameOrderedSet`."""
+    getter = getattr(cls, name).fget
+
+    def ordered(self):
+        return NameOrderedSet(getter(self))
+
+    ordered.name_ordered = True
+    setattr(cls, name, property(ordered))
+
+
+def order_generated_statements():
+    """
+    Make the order of the statements of the generated sources independent
+    of the run.
+
+    sweepgen and pystencils-sfg emit the extraction of the fields of a
+    kernel, of its scalar properties and of the components of its vector
+    properties in the iteration order of sets of fields and variables. The
+    hash of these objects contains the hash of their data type, which depends
+    on the address of its class, so the order changes between runs, even with
+    a fixed ``PYTHONHASHSEED``. The iteration of these sets is made to follow
+    the names of the elements (`NameOrderedSet`), which makes the generated
+    sources byte-identical between runs.
+
+    The patch replaces four internal names, which are not a stable API:
+    ``SfgKernelHandle.fields``, ``SfgKernelHandle.scalar_parameters`` and
+    ``PostProcessingContext.live_variables`` of pystencils-sfg, and
+    ``BlockforestParamExtraction.filter_params`` of sweepgen. A renamed
+    attribute fails at import with an ``AttributeError``; a change in the
+    way sweepgen or pystencils-sfg iterate the sets shows up in the
+    determinism tests of the generators. The patch is applied once, also if
+    the module is imported again or reloaded.
+    """
+    entities = pystencilssfg.ir.entities
+    handle = entities.SfgKernelHandle
+    if getattr(handle.fields.fget, "name_ordered", False):
+        return
+    _name_ordered_property(handle, "fields")
+    _name_ordered_property(handle, "scalar_parameters")
+    _name_ordered_property(
+        pystencilssfg.ir.postprocessing.PostProcessingContext,
+        "live_variables")
+
+    extraction = (
+        sweepgen.core.blockforest_extraction.BlockforestParamExtraction)
+    filter_params = extraction.filter_params
+
+    def ordered_filter_params(self, params):
+        remaining, need_blockforest = filter_params(self, params)
+        return NameOrderedSet(remaining), need_blockforest
+
+    extraction.filter_params = ordered_filter_params
+
+
+order_generated_statements()
 
 
 def check_versions():
