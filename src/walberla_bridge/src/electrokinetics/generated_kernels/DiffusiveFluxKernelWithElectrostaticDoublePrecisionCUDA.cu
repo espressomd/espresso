@@ -157,13 +157,6 @@ void DiffusiveFluxKernelWithElectrostaticDoublePrecisionCUDA::operator()(walberl
   walberla::gpu::GPUField<double> *density{block->template getData<walberla::gpu::GPUField<double>>(densityId)};
   walberla::gpu::GPUField<double> *flux{block->template getData<walberla::gpu::GPUField<double>>(fluxId)};
   walberla::gpu::GPUField<double> *potential{block->template getData<walberla::gpu::GPUField<double>>(potentialId)};
-  const double *RESTRICT const _data_potential{potential->dataAt(0, 0, 0, 0)};
-  /* potential->xSize() == _size_potential_0 */
-  /* potential->ySize() == _size_potential_1 */
-  /* potential->zSize() == _size_potential_2 */
-  const int64_t _stride_potential_0{int64_t(potential->xStride())};
-  const int64_t _stride_potential_1{int64_t(potential->yStride())};
-  const int64_t _stride_potential_2{int64_t(potential->zStride())};
   const double *RESTRICT const _data_density{density->dataAt(0, 0, 0, 0)};
   const int64_t _size_density_0{int64_t(density->xSize())};
   const int64_t _size_density_1{int64_t(density->ySize())};
@@ -180,10 +173,17 @@ void DiffusiveFluxKernelWithElectrostaticDoublePrecisionCUDA::operator()(walberl
   const int64_t _stride_flux_1{int64_t(flux->yStride())};
   const int64_t _stride_flux_2{int64_t(flux->zStride())};
   const int64_t _stride_flux_3{int64_t(flux->fStride())};
-  const double valency{this->properties_.valency_};
+  const double *RESTRICT const _data_potential{potential->dataAt(0, 0, 0, 0)};
+  /* potential->xSize() == _size_potential_0 */
+  /* potential->ySize() == _size_potential_1 */
+  /* potential->zSize() == _size_potential_2 */
+  const int64_t _stride_potential_0{int64_t(potential->xStride())};
+  const int64_t _stride_potential_1{int64_t(potential->yStride())};
+  const int64_t _stride_potential_2{int64_t(potential->zStride())};
   const double diffusion{this->properties_.diffusion_};
   walberla::Vector3<double> ext_efield{this->properties_.ext_efield_};
   const double kT{this->properties_.kT_};
+  const double valency{this->properties_.valency_};
   const double ext_efield_0{ext_efield[0]};
   const double ext_efield_1{ext_efield[1]};
   const double ext_efield_2{ext_efield[2]};
@@ -217,13 +217,6 @@ void DiffusiveFluxKernelWithElectrostaticDoublePrecisionCUDA::runOnCellInterval(
   walberla::gpu::GPUField<double> *density{block->template getData<walberla::gpu::GPUField<double>>(densityId)};
   walberla::gpu::GPUField<double> *flux{block->template getData<walberla::gpu::GPUField<double>>(fluxId)};
   walberla::gpu::GPUField<double> *potential{block->template getData<walberla::gpu::GPUField<double>>(potentialId)};
-  const double *RESTRICT const _data_potential{potential->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  /* ci.xSize() == _size_potential_0 */
-  /* ci.ySize() == _size_potential_1 */
-  /* ci.zSize() == _size_potential_2 */
-  const int64_t _stride_potential_0{int64_t(potential->xStride())};
-  const int64_t _stride_potential_1{int64_t(potential->yStride())};
-  const int64_t _stride_potential_2{int64_t(potential->zStride())};
   const double *RESTRICT const _data_density{density->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   const int64_t _size_density_0{int64_t(ci.xSize())};
   const int64_t _size_density_1{int64_t(ci.ySize())};
@@ -240,10 +233,17 @@ void DiffusiveFluxKernelWithElectrostaticDoublePrecisionCUDA::runOnCellInterval(
   const int64_t _stride_flux_1{int64_t(flux->yStride())};
   const int64_t _stride_flux_2{int64_t(flux->zStride())};
   const int64_t _stride_flux_3{int64_t(flux->fStride())};
-  const double valency{this->properties_.valency_};
+  const double *RESTRICT const _data_potential{potential->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_potential_0 */
+  /* ci.ySize() == _size_potential_1 */
+  /* ci.zSize() == _size_potential_2 */
+  const int64_t _stride_potential_0{int64_t(potential->xStride())};
+  const int64_t _stride_potential_1{int64_t(potential->yStride())};
+  const int64_t _stride_potential_2{int64_t(potential->zStride())};
   const double diffusion{this->properties_.diffusion_};
   walberla::Vector3<double> ext_efield{this->properties_.ext_efield_};
   const double kT{this->properties_.kT_};
+  const double valency{this->properties_.valency_};
   const double ext_efield_0{ext_efield[0]};
   const double ext_efield_1{ext_efield[1]};
   const double ext_efield_2{ext_efield[2]};

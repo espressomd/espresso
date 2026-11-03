@@ -168,6 +168,13 @@ void DiffusiveFluxKernelWithElectrostaticThermalizedSinglePrecisionCUDA::operato
   walberla::gpu::GPUField<float> *density{block->template getData<walberla::gpu::GPUField<float>>(densityId)};
   walberla::gpu::GPUField<float> *flux{block->template getData<walberla::gpu::GPUField<float>>(fluxId)};
   walberla::gpu::GPUField<float> *potential{block->template getData<walberla::gpu::GPUField<float>>(potentialId)};
+  const float *RESTRICT const _data_density{density->dataAt(0, 0, 0, 0)};
+  const int64_t _size_density_0{int64_t(density->xSize())};
+  const int64_t _size_density_1{int64_t(density->ySize())};
+  const int64_t _size_density_2{int64_t(density->zSize())};
+  const int64_t _stride_density_0{int64_t(density->xStride())};
+  const int64_t _stride_density_1{int64_t(density->yStride())};
+  const int64_t _stride_density_2{int64_t(density->zStride())};
   float *RESTRICT const _data_flux{flux->dataAt(0, 0, 0, 0)};
   /* flux->xSize() == _size_flux_0 */
   /* flux->ySize() == _size_flux_1 */
@@ -184,30 +191,23 @@ void DiffusiveFluxKernelWithElectrostaticThermalizedSinglePrecisionCUDA::operato
   const int64_t _stride_potential_0{int64_t(potential->xStride())};
   const int64_t _stride_potential_1{int64_t(potential->yStride())};
   const int64_t _stride_potential_2{int64_t(potential->zStride())};
-  const float *RESTRICT const _data_density{density->dataAt(0, 0, 0, 0)};
-  const int64_t _size_density_0{int64_t(density->xSize())};
-  const int64_t _size_density_1{int64_t(density->ySize())};
-  const int64_t _size_density_2{int64_t(density->zSize())};
-  const int64_t _stride_density_0{int64_t(density->xStride())};
-  const int64_t _stride_density_1{int64_t(density->yStride())};
-  const int64_t _stride_density_2{int64_t(density->zStride())};
+  walberla::Vector3<int64_t> block_offset{this->properties_.block_offset_};
+  const float diffusion{this->properties_.diffusion_};
+  walberla::Vector3<float> ext_efield{this->properties_.ext_efield_};
   walberla::Vector3<int64_t> grid_size{this->properties_.grid_size_};
+  const float kT{this->properties_.kT_};
+  const int64_t seed{this->properties_.seed_};
   const int64_t time_step{this->properties_.time_step_};
   const float valency{this->properties_.valency_};
-  const float diffusion{this->properties_.diffusion_};
-  const float kT{this->properties_.kT_};
-  walberla::Vector3<int64_t> block_offset{this->properties_.block_offset_};
-  walberla::Vector3<float> ext_efield{this->properties_.ext_efield_};
-  const int64_t seed{this->properties_.seed_};
   const int64_t block_offset_0{block_offset[0]};
-  const int64_t block_offset_2{block_offset[2]};
   const int64_t block_offset_1{block_offset[1]};
-  const int64_t grid_size_1{grid_size[1]};
-  const int64_t grid_size_0{grid_size[0]};
-  const int64_t grid_size_2{grid_size[2]};
+  const int64_t block_offset_2{block_offset[2]};
+  const float ext_efield_0{ext_efield[0]};
   const float ext_efield_1{ext_efield[1]};
   const float ext_efield_2{ext_efield[2]};
-  const float ext_efield_0{ext_efield[0]};
+  const int64_t grid_size_0{grid_size[0]};
+  const int64_t grid_size_1{grid_size[1]};
+  const int64_t grid_size_2{grid_size[2]};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};
@@ -238,6 +238,13 @@ void DiffusiveFluxKernelWithElectrostaticThermalizedSinglePrecisionCUDA::runOnCe
   walberla::gpu::GPUField<float> *density{block->template getData<walberla::gpu::GPUField<float>>(densityId)};
   walberla::gpu::GPUField<float> *flux{block->template getData<walberla::gpu::GPUField<float>>(fluxId)};
   walberla::gpu::GPUField<float> *potential{block->template getData<walberla::gpu::GPUField<float>>(potentialId)};
+  const float *RESTRICT const _data_density{density->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int64_t _size_density_0{int64_t(ci.xSize())};
+  const int64_t _size_density_1{int64_t(ci.ySize())};
+  const int64_t _size_density_2{int64_t(ci.zSize())};
+  const int64_t _stride_density_0{int64_t(density->xStride())};
+  const int64_t _stride_density_1{int64_t(density->yStride())};
+  const int64_t _stride_density_2{int64_t(density->zStride())};
   float *RESTRICT const _data_flux{flux->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_flux_0 */
   /* ci.ySize() == _size_flux_1 */
@@ -254,30 +261,23 @@ void DiffusiveFluxKernelWithElectrostaticThermalizedSinglePrecisionCUDA::runOnCe
   const int64_t _stride_potential_0{int64_t(potential->xStride())};
   const int64_t _stride_potential_1{int64_t(potential->yStride())};
   const int64_t _stride_potential_2{int64_t(potential->zStride())};
-  const float *RESTRICT const _data_density{density->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  const int64_t _size_density_0{int64_t(ci.xSize())};
-  const int64_t _size_density_1{int64_t(ci.ySize())};
-  const int64_t _size_density_2{int64_t(ci.zSize())};
-  const int64_t _stride_density_0{int64_t(density->xStride())};
-  const int64_t _stride_density_1{int64_t(density->yStride())};
-  const int64_t _stride_density_2{int64_t(density->zStride())};
+  walberla::Vector3<int64_t> block_offset{this->properties_.block_offset_};
+  const float diffusion{this->properties_.diffusion_};
+  walberla::Vector3<float> ext_efield{this->properties_.ext_efield_};
   walberla::Vector3<int64_t> grid_size{this->properties_.grid_size_};
+  const float kT{this->properties_.kT_};
+  const int64_t seed{this->properties_.seed_};
   const int64_t time_step{this->properties_.time_step_};
   const float valency{this->properties_.valency_};
-  const float diffusion{this->properties_.diffusion_};
-  const float kT{this->properties_.kT_};
-  walberla::Vector3<int64_t> block_offset{this->properties_.block_offset_};
-  walberla::Vector3<float> ext_efield{this->properties_.ext_efield_};
-  const int64_t seed{this->properties_.seed_};
   const int64_t block_offset_0{block_offset[0]};
-  const int64_t block_offset_2{block_offset[2]};
   const int64_t block_offset_1{block_offset[1]};
-  const int64_t grid_size_1{grid_size[1]};
-  const int64_t grid_size_0{grid_size[0]};
-  const int64_t grid_size_2{grid_size[2]};
+  const int64_t block_offset_2{block_offset[2]};
+  const float ext_efield_0{ext_efield[0]};
   const float ext_efield_1{ext_efield[1]};
   const float ext_efield_2{ext_efield[2]};
-  const float ext_efield_0{ext_efield[0]};
+  const int64_t grid_size_0{grid_size[0]};
+  const int64_t grid_size_1{grid_size[1]};
+  const int64_t grid_size_2{grid_size[2]};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};

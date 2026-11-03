@@ -762,6 +762,15 @@ void StreamCollideSweepThermalizedSinglePrecisionAVX::operator()(walberla::IBloc
   walberla::field::GhostLayerField<float, 3> *force{block->template getData<walberla::field::GhostLayerField<float, 3>>(forceId)};
   walberla::field::GhostLayerField<float, 19> *pdfs{block->template getData<walberla::field::GhostLayerField<float, 19>>(pdfsId)};
   walberla::field::GhostLayerField<float, 19> *pdfs_tmp{this->_getShadow_pdfs(pdfs)};
+  const float *RESTRICT const _data_force{force->dataAt(0, 0, 0, 0)};
+  const int32_t _size_force_0{int32_t(force->xSize())};
+  const int32_t _size_force_1{int32_t(force->ySize())};
+  const int32_t _size_force_2{int32_t(force->zSize())};
+  /* force->fSize() == 3 */
+  /* force->xStride() == _stride_force_0 */
+  const int32_t _stride_force_1{int32_t(force->yStride())};
+  const int32_t _stride_force_2{int32_t(force->zStride())};
+  const int32_t _stride_force_3{int32_t(force->fStride())};
   const float *RESTRICT const _data_pdfs{pdfs->dataAt(0, 0, 0, 0)};
   /* pdfs->xSize() == _size_pdfs_0 */
   /* pdfs->ySize() == _size_pdfs_1 */
@@ -780,26 +789,17 @@ void StreamCollideSweepThermalizedSinglePrecisionAVX::operator()(walberla::IBloc
   const int32_t _stride_pdfs_tmp_1{int32_t(pdfs_tmp->yStride())};
   const int32_t _stride_pdfs_tmp_2{int32_t(pdfs_tmp->zStride())};
   const int32_t _stride_pdfs_tmp_3{int32_t(pdfs_tmp->fStride())};
-  const float *RESTRICT const _data_force{force->dataAt(0, 0, 0, 0)};
-  const int32_t _size_force_0{int32_t(force->xSize())};
-  const int32_t _size_force_1{int32_t(force->ySize())};
-  const int32_t _size_force_2{int32_t(force->zSize())};
-  /* force->fSize() == 3 */
-  /* force->xStride() == _stride_force_0 */
-  const int32_t _stride_force_1{int32_t(force->yStride())};
-  const int32_t _stride_force_2{int32_t(force->zStride())};
-  const int32_t _stride_force_3{int32_t(force->fStride())};
-  const int32_t seed{this->properties_.seed_};
-  const float omega_bulk{this->properties_.omega_bulk_};
   walberla::Vector3<int32_t> block_offset{this->properties_.block_offset_};
   const float kT{this->properties_.kT_};
-  const float omega_odd{this->properties_.omega_odd_};
+  const float omega_bulk{this->properties_.omega_bulk_};
   const float omega_even{this->properties_.omega_even_};
-  const int32_t time_step{this->properties_.time_step_};
+  const float omega_odd{this->properties_.omega_odd_};
   const float omega_shear{this->properties_.omega_shear_};
+  const int32_t seed{this->properties_.seed_};
+  const int32_t time_step{this->properties_.time_step_};
+  const int32_t block_offset_0{block_offset[0]};
   const int32_t block_offset_1{block_offset[1]};
   const int32_t block_offset_2{block_offset[2]};
-  const int32_t block_offset_0{block_offset[0]};
   walberla::pystencils::StreamCollideSweepThermalizedSinglePrecisionAVX_kernels::StreamCollideSweepThermalizedSinglePrecisionAVX(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
   pdfs->swapDataPointers(pdfs_tmp);
 }
@@ -810,6 +810,15 @@ void StreamCollideSweepThermalizedSinglePrecisionAVX::runOnCellInterval(walberla
   walberla::field::GhostLayerField<float, 3> *force{block->template getData<walberla::field::GhostLayerField<float, 3>>(forceId)};
   walberla::field::GhostLayerField<float, 19> *pdfs{block->template getData<walberla::field::GhostLayerField<float, 19>>(pdfsId)};
   walberla::field::GhostLayerField<float, 19> *pdfs_tmp{this->_getShadow_pdfs(pdfs)};
+  const float *RESTRICT const _data_force{force->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int32_t _size_force_0{int32_t(ci.xSize())};
+  const int32_t _size_force_1{int32_t(ci.ySize())};
+  const int32_t _size_force_2{int32_t(ci.zSize())};
+  /* force->fSize() == 3 */
+  /* force->xStride() == _stride_force_0 */
+  const int32_t _stride_force_1{int32_t(force->yStride())};
+  const int32_t _stride_force_2{int32_t(force->zStride())};
+  const int32_t _stride_force_3{int32_t(force->fStride())};
   const float *RESTRICT const _data_pdfs{pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_pdfs_0 */
   /* ci.ySize() == _size_pdfs_1 */
@@ -828,26 +837,17 @@ void StreamCollideSweepThermalizedSinglePrecisionAVX::runOnCellInterval(walberla
   const int32_t _stride_pdfs_tmp_1{int32_t(pdfs_tmp->yStride())};
   const int32_t _stride_pdfs_tmp_2{int32_t(pdfs_tmp->zStride())};
   const int32_t _stride_pdfs_tmp_3{int32_t(pdfs_tmp->fStride())};
-  const float *RESTRICT const _data_force{force->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  const int32_t _size_force_0{int32_t(ci.xSize())};
-  const int32_t _size_force_1{int32_t(ci.ySize())};
-  const int32_t _size_force_2{int32_t(ci.zSize())};
-  /* force->fSize() == 3 */
-  /* force->xStride() == _stride_force_0 */
-  const int32_t _stride_force_1{int32_t(force->yStride())};
-  const int32_t _stride_force_2{int32_t(force->zStride())};
-  const int32_t _stride_force_3{int32_t(force->fStride())};
-  const int32_t seed{this->properties_.seed_};
-  const float omega_bulk{this->properties_.omega_bulk_};
   walberla::Vector3<int32_t> block_offset{this->properties_.block_offset_};
   const float kT{this->properties_.kT_};
-  const float omega_odd{this->properties_.omega_odd_};
+  const float omega_bulk{this->properties_.omega_bulk_};
   const float omega_even{this->properties_.omega_even_};
-  const int32_t time_step{this->properties_.time_step_};
+  const float omega_odd{this->properties_.omega_odd_};
   const float omega_shear{this->properties_.omega_shear_};
+  const int32_t seed{this->properties_.seed_};
+  const int32_t time_step{this->properties_.time_step_};
+  const int32_t block_offset_0{block_offset[0]};
   const int32_t block_offset_1{block_offset[1]};
   const int32_t block_offset_2{block_offset[2]};
-  const int32_t block_offset_0{block_offset[0]};
   walberla::pystencils::StreamCollideSweepThermalizedSinglePrecisionAVX_kernels::StreamCollideSweepThermalizedSinglePrecisionAVX(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
 }
 

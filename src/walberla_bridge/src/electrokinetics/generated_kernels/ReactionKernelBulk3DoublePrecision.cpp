@@ -79,13 +79,13 @@ void ReactionKernelBulk3DoublePrecision::operator()(walberla::IBlock *block) {
   const int64_t _stride_rho_2_0{int64_t(rho_2->xStride())};
   const int64_t _stride_rho_2_1{int64_t(rho_2->yStride())};
   const int64_t _stride_rho_2_2{int64_t(rho_2->zStride())};
-  const double stoech2{this->properties_.stoech2_};
-  const double stoech1{this->properties_.stoech1_};
-  const double stoech0{this->properties_.stoech0_};
-  const double order2{this->properties_.order2_};
-  const double order1{this->properties_.order1_};
   const double order0{this->properties_.order0_};
+  const double order1{this->properties_.order1_};
+  const double order2{this->properties_.order2_};
   const double rate_coefficient{this->properties_.rate_coefficient_};
+  const double stoech0{this->properties_.stoech0_};
+  const double stoech1{this->properties_.stoech1_};
+  const double stoech2{this->properties_.stoech2_};
   walberla::pystencils::ReactionKernelBulk3DoublePrecision_kernels::ReactionKernelBulk3DoublePrecision(_data_rho_0, _data_rho_1, _data_rho_2, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, _stride_rho_1_0, _stride_rho_1_1, _stride_rho_1_2, _stride_rho_2_0, _stride_rho_2_1, _stride_rho_2_2, order0, order1, order2, rate_coefficient, stoech0, stoech1, stoech2);
 }
 
@@ -117,13 +117,13 @@ void ReactionKernelBulk3DoublePrecision::runOnCellInterval(walberla::IBlock *blo
   const int64_t _stride_rho_2_0{int64_t(rho_2->xStride())};
   const int64_t _stride_rho_2_1{int64_t(rho_2->yStride())};
   const int64_t _stride_rho_2_2{int64_t(rho_2->zStride())};
-  const double stoech2{this->properties_.stoech2_};
-  const double stoech1{this->properties_.stoech1_};
-  const double stoech0{this->properties_.stoech0_};
-  const double order2{this->properties_.order2_};
-  const double order1{this->properties_.order1_};
   const double order0{this->properties_.order0_};
+  const double order1{this->properties_.order1_};
+  const double order2{this->properties_.order2_};
   const double rate_coefficient{this->properties_.rate_coefficient_};
+  const double stoech0{this->properties_.stoech0_};
+  const double stoech1{this->properties_.stoech1_};
+  const double stoech2{this->properties_.stoech2_};
   walberla::pystencils::ReactionKernelBulk3DoublePrecision_kernels::ReactionKernelBulk3DoublePrecision(_data_rho_0, _data_rho_1, _data_rho_2, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, _stride_rho_1_0, _stride_rho_1_1, _stride_rho_1_2, _stride_rho_2_0, _stride_rho_2_1, _stride_rho_2_2, order0, order1, order2, rate_coefficient, stoech0, stoech1, stoech2);
 }
 } // namespace walberla::pystencils

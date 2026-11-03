@@ -146,6 +146,13 @@ void AdvectiveFluxKernelSinglePrecision::operator()(walberla::IBlock *block) {
   walberla::field::GhostLayerField<float, 1> *density{block->template getData<walberla::field::GhostLayerField<float, 1>>(densityId)};
   walberla::field::GhostLayerField<float, 13> *flux{block->template getData<walberla::field::GhostLayerField<float, 13>>(fluxId)};
   walberla::field::GhostLayerField<float, 3> *velocity{block->template getData<walberla::field::GhostLayerField<float, 3>>(velocityId)};
+  const float *RESTRICT const _data_density{density->dataAt(0, 0, 0, 0)};
+  const int64_t _size_density_0{int64_t(density->xSize())};
+  const int64_t _size_density_1{int64_t(density->ySize())};
+  const int64_t _size_density_2{int64_t(density->zSize())};
+  const int64_t _stride_density_0{int64_t(density->xStride())};
+  const int64_t _stride_density_1{int64_t(density->yStride())};
+  const int64_t _stride_density_2{int64_t(density->zStride())};
   float *RESTRICT const _data_flux{flux->dataAt(0, 0, 0, 0)};
   /* flux->xSize() == _size_flux_0 */
   /* flux->ySize() == _size_flux_1 */
@@ -164,13 +171,6 @@ void AdvectiveFluxKernelSinglePrecision::operator()(walberla::IBlock *block) {
   const int64_t _stride_velocity_1{int64_t(velocity->yStride())};
   const int64_t _stride_velocity_2{int64_t(velocity->zStride())};
   const int64_t _stride_velocity_3{int64_t(velocity->fStride())};
-  const float *RESTRICT const _data_density{density->dataAt(0, 0, 0, 0)};
-  const int64_t _size_density_0{int64_t(density->xSize())};
-  const int64_t _size_density_1{int64_t(density->ySize())};
-  const int64_t _size_density_2{int64_t(density->zSize())};
-  const int64_t _stride_density_0{int64_t(density->xStride())};
-  const int64_t _stride_density_1{int64_t(density->yStride())};
-  const int64_t _stride_density_2{int64_t(density->zStride())};
   walberla::pystencils::AdvectiveFluxKernelSinglePrecision_kernels::AdvectiveFluxKernelSinglePrecision(_data_density, _data_flux, _data_velocity, _size_density_0, _size_density_1, _size_density_2, _stride_density_0, _stride_density_1, _stride_density_2, _stride_flux_0, _stride_flux_1, _stride_flux_2, _stride_flux_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
 }
 
@@ -181,6 +181,13 @@ void AdvectiveFluxKernelSinglePrecision::runOnCellInterval(walberla::IBlock *blo
   walberla::field::GhostLayerField<float, 1> *density{block->template getData<walberla::field::GhostLayerField<float, 1>>(densityId)};
   walberla::field::GhostLayerField<float, 13> *flux{block->template getData<walberla::field::GhostLayerField<float, 13>>(fluxId)};
   walberla::field::GhostLayerField<float, 3> *velocity{block->template getData<walberla::field::GhostLayerField<float, 3>>(velocityId)};
+  const float *RESTRICT const _data_density{density->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int64_t _size_density_0{int64_t(ci.xSize())};
+  const int64_t _size_density_1{int64_t(ci.ySize())};
+  const int64_t _size_density_2{int64_t(ci.zSize())};
+  const int64_t _stride_density_0{int64_t(density->xStride())};
+  const int64_t _stride_density_1{int64_t(density->yStride())};
+  const int64_t _stride_density_2{int64_t(density->zStride())};
   float *RESTRICT const _data_flux{flux->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_flux_0 */
   /* ci.ySize() == _size_flux_1 */
@@ -199,13 +206,6 @@ void AdvectiveFluxKernelSinglePrecision::runOnCellInterval(walberla::IBlock *blo
   const int64_t _stride_velocity_1{int64_t(velocity->yStride())};
   const int64_t _stride_velocity_2{int64_t(velocity->zStride())};
   const int64_t _stride_velocity_3{int64_t(velocity->fStride())};
-  const float *RESTRICT const _data_density{density->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  const int64_t _size_density_0{int64_t(ci.xSize())};
-  const int64_t _size_density_1{int64_t(ci.ySize())};
-  const int64_t _size_density_2{int64_t(ci.zSize())};
-  const int64_t _stride_density_0{int64_t(density->xStride())};
-  const int64_t _stride_density_1{int64_t(density->yStride())};
-  const int64_t _stride_density_2{int64_t(density->zStride())};
   walberla::pystencils::AdvectiveFluxKernelSinglePrecision_kernels::AdvectiveFluxKernelSinglePrecision(_data_density, _data_flux, _data_velocity, _size_density_0, _size_density_1, _size_density_2, _stride_density_0, _stride_density_1, _stride_density_2, _stride_flux_0, _stride_flux_1, _stride_flux_2, _stride_flux_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
 }
 } // namespace walberla::pystencils

@@ -85,13 +85,13 @@ void ReactionKernelBulk3DoublePrecisionCUDA::operator()(walberla::IBlock *block,
   const int64_t _stride_rho_2_0{int64_t(rho_2->xStride())};
   const int64_t _stride_rho_2_1{int64_t(rho_2->yStride())};
   const int64_t _stride_rho_2_2{int64_t(rho_2->zStride())};
-  const double stoech2{this->properties_.stoech2_};
-  const double stoech1{this->properties_.stoech1_};
-  const double stoech0{this->properties_.stoech0_};
-  const double order2{this->properties_.order2_};
-  const double order1{this->properties_.order1_};
   const double order0{this->properties_.order0_};
+  const double order1{this->properties_.order1_};
+  const double order2{this->properties_.order2_};
   const double rate_coefficient{this->properties_.rate_coefficient_};
+  const double stoech0{this->properties_.stoech0_};
+  const double stoech1{this->properties_.stoech1_};
+  const double stoech2{this->properties_.stoech2_};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};
@@ -143,13 +143,13 @@ void ReactionKernelBulk3DoublePrecisionCUDA::runOnCellInterval(walberla::IBlock 
   const int64_t _stride_rho_2_0{int64_t(rho_2->xStride())};
   const int64_t _stride_rho_2_1{int64_t(rho_2->yStride())};
   const int64_t _stride_rho_2_2{int64_t(rho_2->zStride())};
-  const double stoech2{this->properties_.stoech2_};
-  const double stoech1{this->properties_.stoech1_};
-  const double stoech0{this->properties_.stoech0_};
-  const double order2{this->properties_.order2_};
-  const double order1{this->properties_.order1_};
   const double order0{this->properties_.order0_};
+  const double order1{this->properties_.order1_};
+  const double order2{this->properties_.order2_};
   const double rate_coefficient{this->properties_.rate_coefficient_};
+  const double stoech0{this->properties_.stoech0_};
+  const double stoech1{this->properties_.stoech1_};
+  const double stoech2{this->properties_.stoech2_};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};

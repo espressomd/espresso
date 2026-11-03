@@ -68,13 +68,6 @@ void ReactionKernelIndexed5DoublePrecision::operator()(walberla::IBlock *block) 
   walberla::field::GhostLayerField<double, 1> *rho_2{block->template getData<walberla::field::GhostLayerField<double, 1>>(rho_2Id)};
   walberla::field::GhostLayerField<double, 1> *rho_3{block->template getData<walberla::field::GhostLayerField<double, 1>>(rho_3Id)};
   walberla::field::GhostLayerField<double, 1> *rho_4{block->template getData<walberla::field::GhostLayerField<double, 1>>(rho_4Id)};
-  double *RESTRICT const _data_rho_4{rho_4->dataAt(0, 0, 0, 0)};
-  /* rho_4->xSize() == _size_rho_4_0 */
-  /* rho_4->ySize() == _size_rho_4_1 */
-  /* rho_4->zSize() == _size_rho_4_2 */
-  const int64_t _stride_rho_4_0{int64_t(rho_4->xStride())};
-  const int64_t _stride_rho_4_1{int64_t(rho_4->yStride())};
-  const int64_t _stride_rho_4_2{int64_t(rho_4->zStride())};
   double *RESTRICT const _data_rho_0{rho_0->dataAt(0, 0, 0, 0)};
   /* rho_0->xSize() == _size_rho_0_0 */
   /* rho_0->ySize() == _size_rho_0_1 */
@@ -82,13 +75,6 @@ void ReactionKernelIndexed5DoublePrecision::operator()(walberla::IBlock *block) 
   const int64_t _stride_rho_0_0{int64_t(rho_0->xStride())};
   const int64_t _stride_rho_0_1{int64_t(rho_0->yStride())};
   const int64_t _stride_rho_0_2{int64_t(rho_0->zStride())};
-  double *RESTRICT const _data_rho_3{rho_3->dataAt(0, 0, 0, 0)};
-  /* rho_3->xSize() == _size_rho_3_0 */
-  /* rho_3->ySize() == _size_rho_3_1 */
-  /* rho_3->zSize() == _size_rho_3_2 */
-  const int64_t _stride_rho_3_0{int64_t(rho_3->xStride())};
-  const int64_t _stride_rho_3_1{int64_t(rho_3->yStride())};
-  const int64_t _stride_rho_3_2{int64_t(rho_3->zStride())};
   double *RESTRICT const _data_rho_1{rho_1->dataAt(0, 0, 0, 0)};
   /* rho_1->xSize() == _size_rho_1_0 */
   /* rho_1->ySize() == _size_rho_1_1 */
@@ -103,20 +89,34 @@ void ReactionKernelIndexed5DoublePrecision::operator()(walberla::IBlock *block) 
   const int64_t _stride_rho_2_0{int64_t(rho_2->xStride())};
   const int64_t _stride_rho_2_1{int64_t(rho_2->yStride())};
   const int64_t _stride_rho_2_2{int64_t(rho_2->zStride())};
+  double *RESTRICT const _data_rho_3{rho_3->dataAt(0, 0, 0, 0)};
+  /* rho_3->xSize() == _size_rho_3_0 */
+  /* rho_3->ySize() == _size_rho_3_1 */
+  /* rho_3->zSize() == _size_rho_3_2 */
+  const int64_t _stride_rho_3_0{int64_t(rho_3->xStride())};
+  const int64_t _stride_rho_3_1{int64_t(rho_3->yStride())};
+  const int64_t _stride_rho_3_2{int64_t(rho_3->zStride())};
+  double *RESTRICT const _data_rho_4{rho_4->dataAt(0, 0, 0, 0)};
+  /* rho_4->xSize() == _size_rho_4_0 */
+  /* rho_4->ySize() == _size_rho_4_1 */
+  /* rho_4->zSize() == _size_rho_4_2 */
+  const int64_t _stride_rho_4_0{int64_t(rho_4->xStride())};
+  const int64_t _stride_rho_4_1{int64_t(rho_4->yStride())};
+  const int64_t _stride_rho_4_2{int64_t(rho_4->zStride())};
   walberla::v8::sweep::CellIdx *RESTRICT const _data_indexList{indexList_view.data()};
   const int64_t _size_indexList_0{int64_t(indexList_view.size())};
   const int64_t _stride_indexList_0{int64_t(1)};
-  const double stoech2{this->properties_.stoech2_};
-  const double stoech1{this->properties_.stoech1_};
-  const double stoech4{this->properties_.stoech4_};
-  const double stoech0{this->properties_.stoech0_};
-  const double order3{this->properties_.order3_};
-  const double order2{this->properties_.order2_};
-  const double order1{this->properties_.order1_};
   const double order0{this->properties_.order0_};
-  const double rate_coefficient{this->properties_.rate_coefficient_};
-  const double stoech3{this->properties_.stoech3_};
+  const double order1{this->properties_.order1_};
+  const double order2{this->properties_.order2_};
+  const double order3{this->properties_.order3_};
   const double order4{this->properties_.order4_};
+  const double rate_coefficient{this->properties_.rate_coefficient_};
+  const double stoech0{this->properties_.stoech0_};
+  const double stoech1{this->properties_.stoech1_};
+  const double stoech2{this->properties_.stoech2_};
+  const double stoech3{this->properties_.stoech3_};
+  const double stoech4{this->properties_.stoech4_};
   walberla::pystencils::ReactionKernelIndexed5DoublePrecision_kernels::ReactionKernelIndexed5DoublePrecision(_data_indexList, _data_rho_0, _data_rho_1, _data_rho_2, _data_rho_3, _data_rho_4, _size_indexList_0, _stride_indexList_0, _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, _stride_rho_1_0, _stride_rho_1_1, _stride_rho_1_2, _stride_rho_2_0, _stride_rho_2_1, _stride_rho_2_2, _stride_rho_3_0, _stride_rho_3_1, _stride_rho_3_2, _stride_rho_4_0, _stride_rho_4_1, _stride_rho_4_2, order0, order1, order2, order3, order4, rate_coefficient, stoech0, stoech1, stoech2, stoech3, stoech4);
 }
 } // namespace walberla::pystencils

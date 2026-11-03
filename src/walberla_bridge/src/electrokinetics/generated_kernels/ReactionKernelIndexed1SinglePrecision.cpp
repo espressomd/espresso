@@ -62,9 +62,9 @@ void ReactionKernelIndexed1SinglePrecision::operator()(walberla::IBlock *block) 
   walberla::v8::sweep::CellIdx *RESTRICT const _data_indexList{indexList_view.data()};
   const int64_t _size_indexList_0{int64_t(indexList_view.size())};
   const int64_t _stride_indexList_0{int64_t(1)};
+  const float order0{this->properties_.order0_};
   const float rate_coefficient{this->properties_.rate_coefficient_};
   const float stoech0{this->properties_.stoech0_};
-  const float order0{this->properties_.order0_};
   walberla::pystencils::ReactionKernelIndexed1SinglePrecision_kernels::ReactionKernelIndexed1SinglePrecision(_data_indexList, _data_rho_0, _size_indexList_0, _stride_indexList_0, _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, order0, rate_coefficient, stoech0);
 }
 } // namespace walberla::pystencils

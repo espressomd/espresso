@@ -164,6 +164,13 @@ void DiffusiveFluxKernelThermalizedSinglePrecisionCUDA::operator()(walberla::IBl
   walberla::BlockDataID fluxId{this->properties_.fluxId_};
   walberla::gpu::GPUField<float> *density{block->template getData<walberla::gpu::GPUField<float>>(densityId)};
   walberla::gpu::GPUField<float> *flux{block->template getData<walberla::gpu::GPUField<float>>(fluxId)};
+  const float *RESTRICT const _data_density{density->dataAt(0, 0, 0, 0)};
+  const int64_t _size_density_0{int64_t(density->xSize())};
+  const int64_t _size_density_1{int64_t(density->ySize())};
+  const int64_t _size_density_2{int64_t(density->zSize())};
+  const int64_t _stride_density_0{int64_t(density->xStride())};
+  const int64_t _stride_density_1{int64_t(density->yStride())};
+  const int64_t _stride_density_2{int64_t(density->zStride())};
   float *RESTRICT const _data_flux{flux->dataAt(0, 0, 0, 0)};
   /* flux->xSize() == _size_flux_0 */
   /* flux->ySize() == _size_flux_1 */
@@ -173,23 +180,16 @@ void DiffusiveFluxKernelThermalizedSinglePrecisionCUDA::operator()(walberla::IBl
   const int64_t _stride_flux_1{int64_t(flux->yStride())};
   const int64_t _stride_flux_2{int64_t(flux->zStride())};
   const int64_t _stride_flux_3{int64_t(flux->fStride())};
-  const float *RESTRICT const _data_density{density->dataAt(0, 0, 0, 0)};
-  const int64_t _size_density_0{int64_t(density->xSize())};
-  const int64_t _size_density_1{int64_t(density->ySize())};
-  const int64_t _size_density_2{int64_t(density->zSize())};
-  const int64_t _stride_density_0{int64_t(density->xStride())};
-  const int64_t _stride_density_1{int64_t(density->yStride())};
-  const int64_t _stride_density_2{int64_t(density->zStride())};
-  walberla::Vector3<int64_t> grid_size{this->properties_.grid_size_};
-  const int64_t time_step{this->properties_.time_step_};
-  const float diffusion{this->properties_.diffusion_};
   walberla::Vector3<int64_t> block_offset{this->properties_.block_offset_};
+  const float diffusion{this->properties_.diffusion_};
+  walberla::Vector3<int64_t> grid_size{this->properties_.grid_size_};
   const int64_t seed{this->properties_.seed_};
+  const int64_t time_step{this->properties_.time_step_};
   const int64_t block_offset_0{block_offset[0]};
-  const int64_t block_offset_2{block_offset[2]};
   const int64_t block_offset_1{block_offset[1]};
-  const int64_t grid_size_1{grid_size[1]};
+  const int64_t block_offset_2{block_offset[2]};
   const int64_t grid_size_0{grid_size[0]};
+  const int64_t grid_size_1{grid_size[1]};
   const int64_t grid_size_2{grid_size[2]};
   if (exTag.block().has_value()) {
     {
@@ -219,6 +219,13 @@ void DiffusiveFluxKernelThermalizedSinglePrecisionCUDA::runOnCellInterval(walber
   walberla::BlockDataID fluxId{this->properties_.fluxId_};
   walberla::gpu::GPUField<float> *density{block->template getData<walberla::gpu::GPUField<float>>(densityId)};
   walberla::gpu::GPUField<float> *flux{block->template getData<walberla::gpu::GPUField<float>>(fluxId)};
+  const float *RESTRICT const _data_density{density->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int64_t _size_density_0{int64_t(ci.xSize())};
+  const int64_t _size_density_1{int64_t(ci.ySize())};
+  const int64_t _size_density_2{int64_t(ci.zSize())};
+  const int64_t _stride_density_0{int64_t(density->xStride())};
+  const int64_t _stride_density_1{int64_t(density->yStride())};
+  const int64_t _stride_density_2{int64_t(density->zStride())};
   float *RESTRICT const _data_flux{flux->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_flux_0 */
   /* ci.ySize() == _size_flux_1 */
@@ -228,23 +235,16 @@ void DiffusiveFluxKernelThermalizedSinglePrecisionCUDA::runOnCellInterval(walber
   const int64_t _stride_flux_1{int64_t(flux->yStride())};
   const int64_t _stride_flux_2{int64_t(flux->zStride())};
   const int64_t _stride_flux_3{int64_t(flux->fStride())};
-  const float *RESTRICT const _data_density{density->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  const int64_t _size_density_0{int64_t(ci.xSize())};
-  const int64_t _size_density_1{int64_t(ci.ySize())};
-  const int64_t _size_density_2{int64_t(ci.zSize())};
-  const int64_t _stride_density_0{int64_t(density->xStride())};
-  const int64_t _stride_density_1{int64_t(density->yStride())};
-  const int64_t _stride_density_2{int64_t(density->zStride())};
-  walberla::Vector3<int64_t> grid_size{this->properties_.grid_size_};
-  const int64_t time_step{this->properties_.time_step_};
-  const float diffusion{this->properties_.diffusion_};
   walberla::Vector3<int64_t> block_offset{this->properties_.block_offset_};
+  const float diffusion{this->properties_.diffusion_};
+  walberla::Vector3<int64_t> grid_size{this->properties_.grid_size_};
   const int64_t seed{this->properties_.seed_};
+  const int64_t time_step{this->properties_.time_step_};
   const int64_t block_offset_0{block_offset[0]};
-  const int64_t block_offset_2{block_offset[2]};
   const int64_t block_offset_1{block_offset[1]};
-  const int64_t grid_size_1{grid_size[1]};
+  const int64_t block_offset_2{block_offset[2]};
   const int64_t grid_size_0{grid_size[0]};
+  const int64_t grid_size_1{grid_size[1]};
   const int64_t grid_size_2{grid_size[2]};
   if (exTag.block().has_value()) {
     {

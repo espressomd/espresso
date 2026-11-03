@@ -79,13 +79,6 @@ void ReactionKernelIndexed4DoublePrecisionCUDA::operator()(walberla::IBlock *blo
   const int64_t _stride_rho_0_0{int64_t(rho_0->xStride())};
   const int64_t _stride_rho_0_1{int64_t(rho_0->yStride())};
   const int64_t _stride_rho_0_2{int64_t(rho_0->zStride())};
-  double *RESTRICT const _data_rho_3{rho_3->dataAt(0, 0, 0, 0)};
-  /* rho_3->xSize() == _size_rho_3_0 */
-  /* rho_3->ySize() == _size_rho_3_1 */
-  /* rho_3->zSize() == _size_rho_3_2 */
-  const int64_t _stride_rho_3_0{int64_t(rho_3->xStride())};
-  const int64_t _stride_rho_3_1{int64_t(rho_3->yStride())};
-  const int64_t _stride_rho_3_2{int64_t(rho_3->zStride())};
   double *RESTRICT const _data_rho_1{rho_1->dataAt(0, 0, 0, 0)};
   /* rho_1->xSize() == _size_rho_1_0 */
   /* rho_1->ySize() == _size_rho_1_1 */
@@ -100,17 +93,24 @@ void ReactionKernelIndexed4DoublePrecisionCUDA::operator()(walberla::IBlock *blo
   const int64_t _stride_rho_2_0{int64_t(rho_2->xStride())};
   const int64_t _stride_rho_2_1{int64_t(rho_2->yStride())};
   const int64_t _stride_rho_2_2{int64_t(rho_2->zStride())};
+  double *RESTRICT const _data_rho_3{rho_3->dataAt(0, 0, 0, 0)};
+  /* rho_3->xSize() == _size_rho_3_0 */
+  /* rho_3->ySize() == _size_rho_3_1 */
+  /* rho_3->zSize() == _size_rho_3_2 */
+  const int64_t _stride_rho_3_0{int64_t(rho_3->xStride())};
+  const int64_t _stride_rho_3_1{int64_t(rho_3->yStride())};
+  const int64_t _stride_rho_3_2{int64_t(rho_3->zStride())};
   walberla::v8::sweep::CellIdx *RESTRICT const _data_indexList{indexList_view.data()};
   const int64_t _size_indexList_0{int64_t(indexList_view.size())};
   const int64_t _stride_indexList_0{int64_t(1)};
-  const double stoech2{this->properties_.stoech2_};
-  const double stoech1{this->properties_.stoech1_};
-  const double stoech0{this->properties_.stoech0_};
-  const double order3{this->properties_.order3_};
-  const double order2{this->properties_.order2_};
-  const double order1{this->properties_.order1_};
   const double order0{this->properties_.order0_};
+  const double order1{this->properties_.order1_};
+  const double order2{this->properties_.order2_};
+  const double order3{this->properties_.order3_};
   const double rate_coefficient{this->properties_.rate_coefficient_};
+  const double stoech0{this->properties_.stoech0_};
+  const double stoech1{this->properties_.stoech1_};
+  const double stoech2{this->properties_.stoech2_};
   const double stoech3{this->properties_.stoech3_};
   if (exTag.block().has_value()) {
     {

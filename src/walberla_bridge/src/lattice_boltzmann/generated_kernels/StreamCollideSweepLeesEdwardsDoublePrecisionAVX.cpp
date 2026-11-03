@@ -597,6 +597,15 @@ void StreamCollideSweepLeesEdwardsDoublePrecisionAVX::operator()(walberla::IBloc
   walberla::field::GhostLayerField<double, 3> *force{block->template getData<walberla::field::GhostLayerField<double, 3>>(forceId)};
   walberla::field::GhostLayerField<double, 19> *pdfs{block->template getData<walberla::field::GhostLayerField<double, 19>>(pdfsId)};
   walberla::field::GhostLayerField<double, 19> *pdfs_tmp{this->_getShadow_pdfs(pdfs)};
+  const double *RESTRICT const _data_force{force->dataAt(0, 0, 0, 0)};
+  const int64_t _size_force_0{int64_t(force->xSize())};
+  const int64_t _size_force_1{int64_t(force->ySize())};
+  const int64_t _size_force_2{int64_t(force->zSize())};
+  /* force->fSize() == 3 */
+  /* force->xStride() == _stride_force_0 */
+  const int64_t _stride_force_1{int64_t(force->yStride())};
+  const int64_t _stride_force_2{int64_t(force->zStride())};
+  const int64_t _stride_force_3{int64_t(force->fStride())};
   const double *RESTRICT const _data_pdfs{pdfs->dataAt(0, 0, 0, 0)};
   /* pdfs->xSize() == _size_pdfs_0 */
   /* pdfs->ySize() == _size_pdfs_1 */
@@ -615,21 +624,12 @@ void StreamCollideSweepLeesEdwardsDoublePrecisionAVX::operator()(walberla::IBloc
   const int64_t _stride_pdfs_tmp_1{int64_t(pdfs_tmp->yStride())};
   const int64_t _stride_pdfs_tmp_2{int64_t(pdfs_tmp->zStride())};
   const int64_t _stride_pdfs_tmp_3{int64_t(pdfs_tmp->fStride())};
-  const double *RESTRICT const _data_force{force->dataAt(0, 0, 0, 0)};
-  const int64_t _size_force_0{int64_t(force->xSize())};
-  const int64_t _size_force_1{int64_t(force->ySize())};
-  const int64_t _size_force_2{int64_t(force->zSize())};
-  /* force->fSize() == 3 */
-  /* force->xStride() == _stride_force_0 */
-  const int64_t _stride_force_1{int64_t(force->yStride())};
-  const int64_t _stride_force_2{int64_t(force->zStride())};
-  const int64_t _stride_force_3{int64_t(force->fStride())};
+  const int64_t lebc_bot_index{this->properties_.lebc_bot_index_};
   const int64_t lebc_top_index{this->properties_.lebc_top_index_};
   const double omega_bulk{this->properties_.omega_bulk_};
-  const double omega_odd{this->properties_.omega_odd_};
   const double omega_even{this->properties_.omega_even_};
+  const double omega_odd{this->properties_.omega_odd_};
   const double omega_shear{this->properties_.omega_shear_};
-  const int64_t lebc_bot_index{this->properties_.lebc_bot_index_};
   const double v_s{this->properties_.v_s_};
   walberla::pystencils::StreamCollideSweepLeesEdwardsDoublePrecisionAVX_kernels::StreamCollideSweepLeesEdwardsDoublePrecisionAVX(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, lebc_bot_index, lebc_top_index, omega_bulk, omega_even, omega_odd, omega_shear, v_s);
   pdfs->swapDataPointers(pdfs_tmp);
@@ -641,6 +641,15 @@ void StreamCollideSweepLeesEdwardsDoublePrecisionAVX::runOnCellInterval(walberla
   walberla::field::GhostLayerField<double, 3> *force{block->template getData<walberla::field::GhostLayerField<double, 3>>(forceId)};
   walberla::field::GhostLayerField<double, 19> *pdfs{block->template getData<walberla::field::GhostLayerField<double, 19>>(pdfsId)};
   walberla::field::GhostLayerField<double, 19> *pdfs_tmp{this->_getShadow_pdfs(pdfs)};
+  const double *RESTRICT const _data_force{force->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int64_t _size_force_0{int64_t(ci.xSize())};
+  const int64_t _size_force_1{int64_t(ci.ySize())};
+  const int64_t _size_force_2{int64_t(ci.zSize())};
+  /* force->fSize() == 3 */
+  /* force->xStride() == _stride_force_0 */
+  const int64_t _stride_force_1{int64_t(force->yStride())};
+  const int64_t _stride_force_2{int64_t(force->zStride())};
+  const int64_t _stride_force_3{int64_t(force->fStride())};
   const double *RESTRICT const _data_pdfs{pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_pdfs_0 */
   /* ci.ySize() == _size_pdfs_1 */
@@ -659,21 +668,12 @@ void StreamCollideSweepLeesEdwardsDoublePrecisionAVX::runOnCellInterval(walberla
   const int64_t _stride_pdfs_tmp_1{int64_t(pdfs_tmp->yStride())};
   const int64_t _stride_pdfs_tmp_2{int64_t(pdfs_tmp->zStride())};
   const int64_t _stride_pdfs_tmp_3{int64_t(pdfs_tmp->fStride())};
-  const double *RESTRICT const _data_force{force->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  const int64_t _size_force_0{int64_t(ci.xSize())};
-  const int64_t _size_force_1{int64_t(ci.ySize())};
-  const int64_t _size_force_2{int64_t(ci.zSize())};
-  /* force->fSize() == 3 */
-  /* force->xStride() == _stride_force_0 */
-  const int64_t _stride_force_1{int64_t(force->yStride())};
-  const int64_t _stride_force_2{int64_t(force->zStride())};
-  const int64_t _stride_force_3{int64_t(force->fStride())};
+  const int64_t lebc_bot_index{this->properties_.lebc_bot_index_};
   const int64_t lebc_top_index{this->properties_.lebc_top_index_};
   const double omega_bulk{this->properties_.omega_bulk_};
-  const double omega_odd{this->properties_.omega_odd_};
   const double omega_even{this->properties_.omega_even_};
+  const double omega_odd{this->properties_.omega_odd_};
   const double omega_shear{this->properties_.omega_shear_};
-  const int64_t lebc_bot_index{this->properties_.lebc_bot_index_};
   const double v_s{this->properties_.v_s_};
   walberla::pystencils::StreamCollideSweepLeesEdwardsDoublePrecisionAVX_kernels::StreamCollideSweepLeesEdwardsDoublePrecisionAVX(_data_force, _data_pdfs, _data_pdfs_tmp, _size_force_0, _size_force_1, _size_force_2, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, _stride_pdfs_tmp_1, _stride_pdfs_tmp_2, _stride_pdfs_tmp_3, lebc_bot_index, lebc_top_index, omega_bulk, omega_even, omega_odd, omega_shear, v_s);
 }

@@ -72,6 +72,15 @@ void UpdateVelFromPDFSinglePrecisionCUDA::operator()(walberla::IBlock *block, wa
   walberla::gpu::GPUField<float> *force{block->template getData<walberla::gpu::GPUField<float>>(forceId)};
   walberla::gpu::GPUField<float> *pdfs{block->template getData<walberla::gpu::GPUField<float>>(pdfsId)};
   walberla::gpu::GPUField<float> *velocity{block->template getData<walberla::gpu::GPUField<float>>(velocityId)};
+  const float *RESTRICT const _data_force{force->dataAt(0, 0, 0, 0)};
+  const int64_t _size_force_0{int64_t(force->xSize())};
+  const int64_t _size_force_1{int64_t(force->ySize())};
+  const int64_t _size_force_2{int64_t(force->zSize())};
+  /* force->fSize() == 3 */
+  const int64_t _stride_force_0{int64_t(force->xStride())};
+  const int64_t _stride_force_1{int64_t(force->yStride())};
+  const int64_t _stride_force_2{int64_t(force->zStride())};
+  const int64_t _stride_force_3{int64_t(force->fStride())};
   const float *RESTRICT const _data_pdfs{pdfs->dataAt(0, 0, 0, 0)};
   /* pdfs->xSize() == _size_pdfs_0 */
   /* pdfs->ySize() == _size_pdfs_1 */
@@ -90,15 +99,6 @@ void UpdateVelFromPDFSinglePrecisionCUDA::operator()(walberla::IBlock *block, wa
   const int64_t _stride_velocity_1{int64_t(velocity->yStride())};
   const int64_t _stride_velocity_2{int64_t(velocity->zStride())};
   const int64_t _stride_velocity_3{int64_t(velocity->fStride())};
-  const float *RESTRICT const _data_force{force->dataAt(0, 0, 0, 0)};
-  const int64_t _size_force_0{int64_t(force->xSize())};
-  const int64_t _size_force_1{int64_t(force->ySize())};
-  const int64_t _size_force_2{int64_t(force->zSize())};
-  /* force->fSize() == 3 */
-  const int64_t _stride_force_0{int64_t(force->xStride())};
-  const int64_t _stride_force_1{int64_t(force->yStride())};
-  const int64_t _stride_force_2{int64_t(force->zStride())};
-  const int64_t _stride_force_3{int64_t(force->fStride())};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};
@@ -129,6 +129,15 @@ void UpdateVelFromPDFSinglePrecisionCUDA::runOnCellInterval(walberla::IBlock *bl
   walberla::gpu::GPUField<float> *force{block->template getData<walberla::gpu::GPUField<float>>(forceId)};
   walberla::gpu::GPUField<float> *pdfs{block->template getData<walberla::gpu::GPUField<float>>(pdfsId)};
   walberla::gpu::GPUField<float> *velocity{block->template getData<walberla::gpu::GPUField<float>>(velocityId)};
+  const float *RESTRICT const _data_force{force->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int64_t _size_force_0{int64_t(ci.xSize())};
+  const int64_t _size_force_1{int64_t(ci.ySize())};
+  const int64_t _size_force_2{int64_t(ci.zSize())};
+  /* force->fSize() == 3 */
+  const int64_t _stride_force_0{int64_t(force->xStride())};
+  const int64_t _stride_force_1{int64_t(force->yStride())};
+  const int64_t _stride_force_2{int64_t(force->zStride())};
+  const int64_t _stride_force_3{int64_t(force->fStride())};
   const float *RESTRICT const _data_pdfs{pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_pdfs_0 */
   /* ci.ySize() == _size_pdfs_1 */
@@ -147,15 +156,6 @@ void UpdateVelFromPDFSinglePrecisionCUDA::runOnCellInterval(walberla::IBlock *bl
   const int64_t _stride_velocity_1{int64_t(velocity->yStride())};
   const int64_t _stride_velocity_2{int64_t(velocity->zStride())};
   const int64_t _stride_velocity_3{int64_t(velocity->fStride())};
-  const float *RESTRICT const _data_force{force->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  const int64_t _size_force_0{int64_t(ci.xSize())};
-  const int64_t _size_force_1{int64_t(ci.ySize())};
-  const int64_t _size_force_2{int64_t(ci.zSize())};
-  /* force->fSize() == 3 */
-  const int64_t _stride_force_0{int64_t(force->xStride())};
-  const int64_t _stride_force_1{int64_t(force->yStride())};
-  const int64_t _stride_force_2{int64_t(force->zStride())};
-  const int64_t _stride_force_3{int64_t(force->fStride())};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};

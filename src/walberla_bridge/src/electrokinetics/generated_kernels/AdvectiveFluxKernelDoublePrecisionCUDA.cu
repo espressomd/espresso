@@ -152,15 +152,6 @@ void AdvectiveFluxKernelDoublePrecisionCUDA::operator()(walberla::IBlock *block,
   walberla::gpu::GPUField<double> *density{block->template getData<walberla::gpu::GPUField<double>>(densityId)};
   walberla::gpu::GPUField<double> *flux{block->template getData<walberla::gpu::GPUField<double>>(fluxId)};
   walberla::gpu::GPUField<double> *velocity{block->template getData<walberla::gpu::GPUField<double>>(velocityId)};
-  const double *RESTRICT const _data_velocity{velocity->dataAt(0, 0, 0, 0)};
-  /* velocity->xSize() == _size_velocity_0 */
-  /* velocity->ySize() == _size_velocity_1 */
-  /* velocity->zSize() == _size_velocity_2 */
-  /* velocity->fSize() == 3 */
-  const int64_t _stride_velocity_0{int64_t(velocity->xStride())};
-  const int64_t _stride_velocity_1{int64_t(velocity->yStride())};
-  const int64_t _stride_velocity_2{int64_t(velocity->zStride())};
-  const int64_t _stride_velocity_3{int64_t(velocity->fStride())};
   const double *RESTRICT const _data_density{density->dataAt(0, 0, 0, 0)};
   const int64_t _size_density_0{int64_t(density->xSize())};
   const int64_t _size_density_1{int64_t(density->ySize())};
@@ -177,6 +168,15 @@ void AdvectiveFluxKernelDoublePrecisionCUDA::operator()(walberla::IBlock *block,
   const int64_t _stride_flux_1{int64_t(flux->yStride())};
   const int64_t _stride_flux_2{int64_t(flux->zStride())};
   const int64_t _stride_flux_3{int64_t(flux->fStride())};
+  const double *RESTRICT const _data_velocity{velocity->dataAt(0, 0, 0, 0)};
+  /* velocity->xSize() == _size_velocity_0 */
+  /* velocity->ySize() == _size_velocity_1 */
+  /* velocity->zSize() == _size_velocity_2 */
+  /* velocity->fSize() == 3 */
+  const int64_t _stride_velocity_0{int64_t(velocity->xStride())};
+  const int64_t _stride_velocity_1{int64_t(velocity->yStride())};
+  const int64_t _stride_velocity_2{int64_t(velocity->zStride())};
+  const int64_t _stride_velocity_3{int64_t(velocity->fStride())};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};
@@ -207,15 +207,6 @@ void AdvectiveFluxKernelDoublePrecisionCUDA::runOnCellInterval(walberla::IBlock 
   walberla::gpu::GPUField<double> *density{block->template getData<walberla::gpu::GPUField<double>>(densityId)};
   walberla::gpu::GPUField<double> *flux{block->template getData<walberla::gpu::GPUField<double>>(fluxId)};
   walberla::gpu::GPUField<double> *velocity{block->template getData<walberla::gpu::GPUField<double>>(velocityId)};
-  const double *RESTRICT const _data_velocity{velocity->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  /* ci.xSize() == _size_velocity_0 */
-  /* ci.ySize() == _size_velocity_1 */
-  /* ci.zSize() == _size_velocity_2 */
-  /* velocity->fSize() == 3 */
-  const int64_t _stride_velocity_0{int64_t(velocity->xStride())};
-  const int64_t _stride_velocity_1{int64_t(velocity->yStride())};
-  const int64_t _stride_velocity_2{int64_t(velocity->zStride())};
-  const int64_t _stride_velocity_3{int64_t(velocity->fStride())};
   const double *RESTRICT const _data_density{density->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   const int64_t _size_density_0{int64_t(ci.xSize())};
   const int64_t _size_density_1{int64_t(ci.ySize())};
@@ -232,6 +223,15 @@ void AdvectiveFluxKernelDoublePrecisionCUDA::runOnCellInterval(walberla::IBlock 
   const int64_t _stride_flux_1{int64_t(flux->yStride())};
   const int64_t _stride_flux_2{int64_t(flux->zStride())};
   const int64_t _stride_flux_3{int64_t(flux->fStride())};
+  const double *RESTRICT const _data_velocity{velocity->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_velocity_0 */
+  /* ci.ySize() == _size_velocity_1 */
+  /* ci.zSize() == _size_velocity_2 */
+  /* velocity->fSize() == 3 */
+  const int64_t _stride_velocity_0{int64_t(velocity->xStride())};
+  const int64_t _stride_velocity_1{int64_t(velocity->yStride())};
+  const int64_t _stride_velocity_2{int64_t(velocity->zStride())};
+  const int64_t _stride_velocity_3{int64_t(velocity->fStride())};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};

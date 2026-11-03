@@ -80,20 +80,6 @@ void ReactionKernelBulk5DoublePrecision::operator()(walberla::IBlock *block) {
   const int64_t _stride_rho_1_0{int64_t(rho_1->xStride())};
   const int64_t _stride_rho_1_1{int64_t(rho_1->yStride())};
   const int64_t _stride_rho_1_2{int64_t(rho_1->zStride())};
-  double *RESTRICT const _data_rho_4{rho_4->dataAt(0, 0, 0, 0)};
-  /* rho_4->xSize() == _size_rho_4_0 */
-  /* rho_4->ySize() == _size_rho_4_1 */
-  /* rho_4->zSize() == _size_rho_4_2 */
-  const int64_t _stride_rho_4_0{int64_t(rho_4->xStride())};
-  const int64_t _stride_rho_4_1{int64_t(rho_4->yStride())};
-  const int64_t _stride_rho_4_2{int64_t(rho_4->zStride())};
-  double *RESTRICT const _data_rho_3{rho_3->dataAt(0, 0, 0, 0)};
-  /* rho_3->xSize() == _size_rho_3_0 */
-  /* rho_3->ySize() == _size_rho_3_1 */
-  /* rho_3->zSize() == _size_rho_3_2 */
-  const int64_t _stride_rho_3_0{int64_t(rho_3->xStride())};
-  const int64_t _stride_rho_3_1{int64_t(rho_3->yStride())};
-  const int64_t _stride_rho_3_2{int64_t(rho_3->zStride())};
   double *RESTRICT const _data_rho_2{rho_2->dataAt(0, 0, 0, 0)};
   /* rho_2->xSize() == _size_rho_2_0 */
   /* rho_2->ySize() == _size_rho_2_1 */
@@ -101,17 +87,31 @@ void ReactionKernelBulk5DoublePrecision::operator()(walberla::IBlock *block) {
   const int64_t _stride_rho_2_0{int64_t(rho_2->xStride())};
   const int64_t _stride_rho_2_1{int64_t(rho_2->yStride())};
   const int64_t _stride_rho_2_2{int64_t(rho_2->zStride())};
-  const double stoech2{this->properties_.stoech2_};
-  const double stoech1{this->properties_.stoech1_};
-  const double stoech4{this->properties_.stoech4_};
-  const double stoech0{this->properties_.stoech0_};
-  const double order3{this->properties_.order3_};
-  const double order2{this->properties_.order2_};
-  const double order1{this->properties_.order1_};
+  double *RESTRICT const _data_rho_3{rho_3->dataAt(0, 0, 0, 0)};
+  /* rho_3->xSize() == _size_rho_3_0 */
+  /* rho_3->ySize() == _size_rho_3_1 */
+  /* rho_3->zSize() == _size_rho_3_2 */
+  const int64_t _stride_rho_3_0{int64_t(rho_3->xStride())};
+  const int64_t _stride_rho_3_1{int64_t(rho_3->yStride())};
+  const int64_t _stride_rho_3_2{int64_t(rho_3->zStride())};
+  double *RESTRICT const _data_rho_4{rho_4->dataAt(0, 0, 0, 0)};
+  /* rho_4->xSize() == _size_rho_4_0 */
+  /* rho_4->ySize() == _size_rho_4_1 */
+  /* rho_4->zSize() == _size_rho_4_2 */
+  const int64_t _stride_rho_4_0{int64_t(rho_4->xStride())};
+  const int64_t _stride_rho_4_1{int64_t(rho_4->yStride())};
+  const int64_t _stride_rho_4_2{int64_t(rho_4->zStride())};
   const double order0{this->properties_.order0_};
-  const double rate_coefficient{this->properties_.rate_coefficient_};
-  const double stoech3{this->properties_.stoech3_};
+  const double order1{this->properties_.order1_};
+  const double order2{this->properties_.order2_};
+  const double order3{this->properties_.order3_};
   const double order4{this->properties_.order4_};
+  const double rate_coefficient{this->properties_.rate_coefficient_};
+  const double stoech0{this->properties_.stoech0_};
+  const double stoech1{this->properties_.stoech1_};
+  const double stoech2{this->properties_.stoech2_};
+  const double stoech3{this->properties_.stoech3_};
+  const double stoech4{this->properties_.stoech4_};
   walberla::pystencils::ReactionKernelBulk5DoublePrecision_kernels::ReactionKernelBulk5DoublePrecision(_data_rho_0, _data_rho_1, _data_rho_2, _data_rho_3, _data_rho_4, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, _stride_rho_1_0, _stride_rho_1_1, _stride_rho_1_2, _stride_rho_2_0, _stride_rho_2_1, _stride_rho_2_2, _stride_rho_3_0, _stride_rho_3_1, _stride_rho_3_2, _stride_rho_4_0, _stride_rho_4_1, _stride_rho_4_2, order0, order1, order2, order3, order4, rate_coefficient, stoech0, stoech1, stoech2, stoech3, stoech4);
 }
 
@@ -140,20 +140,6 @@ void ReactionKernelBulk5DoublePrecision::runOnCellInterval(walberla::IBlock *blo
   const int64_t _stride_rho_1_0{int64_t(rho_1->xStride())};
   const int64_t _stride_rho_1_1{int64_t(rho_1->yStride())};
   const int64_t _stride_rho_1_2{int64_t(rho_1->zStride())};
-  double *RESTRICT const _data_rho_4{rho_4->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  /* ci.xSize() == _size_rho_4_0 */
-  /* ci.ySize() == _size_rho_4_1 */
-  /* ci.zSize() == _size_rho_4_2 */
-  const int64_t _stride_rho_4_0{int64_t(rho_4->xStride())};
-  const int64_t _stride_rho_4_1{int64_t(rho_4->yStride())};
-  const int64_t _stride_rho_4_2{int64_t(rho_4->zStride())};
-  double *RESTRICT const _data_rho_3{rho_3->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  /* ci.xSize() == _size_rho_3_0 */
-  /* ci.ySize() == _size_rho_3_1 */
-  /* ci.zSize() == _size_rho_3_2 */
-  const int64_t _stride_rho_3_0{int64_t(rho_3->xStride())};
-  const int64_t _stride_rho_3_1{int64_t(rho_3->yStride())};
-  const int64_t _stride_rho_3_2{int64_t(rho_3->zStride())};
   double *RESTRICT const _data_rho_2{rho_2->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_rho_2_0 */
   /* ci.ySize() == _size_rho_2_1 */
@@ -161,17 +147,31 @@ void ReactionKernelBulk5DoublePrecision::runOnCellInterval(walberla::IBlock *blo
   const int64_t _stride_rho_2_0{int64_t(rho_2->xStride())};
   const int64_t _stride_rho_2_1{int64_t(rho_2->yStride())};
   const int64_t _stride_rho_2_2{int64_t(rho_2->zStride())};
-  const double stoech2{this->properties_.stoech2_};
-  const double stoech1{this->properties_.stoech1_};
-  const double stoech4{this->properties_.stoech4_};
-  const double stoech0{this->properties_.stoech0_};
-  const double order3{this->properties_.order3_};
-  const double order2{this->properties_.order2_};
-  const double order1{this->properties_.order1_};
+  double *RESTRICT const _data_rho_3{rho_3->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_rho_3_0 */
+  /* ci.ySize() == _size_rho_3_1 */
+  /* ci.zSize() == _size_rho_3_2 */
+  const int64_t _stride_rho_3_0{int64_t(rho_3->xStride())};
+  const int64_t _stride_rho_3_1{int64_t(rho_3->yStride())};
+  const int64_t _stride_rho_3_2{int64_t(rho_3->zStride())};
+  double *RESTRICT const _data_rho_4{rho_4->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_rho_4_0 */
+  /* ci.ySize() == _size_rho_4_1 */
+  /* ci.zSize() == _size_rho_4_2 */
+  const int64_t _stride_rho_4_0{int64_t(rho_4->xStride())};
+  const int64_t _stride_rho_4_1{int64_t(rho_4->yStride())};
+  const int64_t _stride_rho_4_2{int64_t(rho_4->zStride())};
   const double order0{this->properties_.order0_};
-  const double rate_coefficient{this->properties_.rate_coefficient_};
-  const double stoech3{this->properties_.stoech3_};
+  const double order1{this->properties_.order1_};
+  const double order2{this->properties_.order2_};
+  const double order3{this->properties_.order3_};
   const double order4{this->properties_.order4_};
+  const double rate_coefficient{this->properties_.rate_coefficient_};
+  const double stoech0{this->properties_.stoech0_};
+  const double stoech1{this->properties_.stoech1_};
+  const double stoech2{this->properties_.stoech2_};
+  const double stoech3{this->properties_.stoech3_};
+  const double stoech4{this->properties_.stoech4_};
   walberla::pystencils::ReactionKernelBulk5DoublePrecision_kernels::ReactionKernelBulk5DoublePrecision(_data_rho_0, _data_rho_1, _data_rho_2, _data_rho_3, _data_rho_4, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, _stride_rho_1_0, _stride_rho_1_1, _stride_rho_1_2, _stride_rho_2_0, _stride_rho_2_1, _stride_rho_2_2, _stride_rho_3_0, _stride_rho_3_1, _stride_rho_3_2, _stride_rho_4_0, _stride_rho_4_1, _stride_rho_4_2, order0, order1, order2, order3, order4, rate_coefficient, stoech0, stoech1, stoech2, stoech3, stoech4);
 }
 } // namespace walberla::pystencils

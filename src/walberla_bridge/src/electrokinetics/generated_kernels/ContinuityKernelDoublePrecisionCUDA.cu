@@ -75,6 +75,13 @@ void ContinuityKernelDoublePrecisionCUDA::operator()(walberla::IBlock *block, wa
   walberla::BlockDataID fluxId{this->properties_.fluxId_};
   walberla::gpu::GPUField<double> *density{block->template getData<walberla::gpu::GPUField<double>>(densityId)};
   walberla::gpu::GPUField<double> *flux{block->template getData<walberla::gpu::GPUField<double>>(fluxId)};
+  double *RESTRICT const _data_density{density->dataAt(0, 0, 0, 0)};
+  const int64_t _size_density_0{int64_t(density->xSize())};
+  const int64_t _size_density_1{int64_t(density->ySize())};
+  const int64_t _size_density_2{int64_t(density->zSize())};
+  const int64_t _stride_density_0{int64_t(density->xStride())};
+  const int64_t _stride_density_1{int64_t(density->yStride())};
+  const int64_t _stride_density_2{int64_t(density->zStride())};
   const double *RESTRICT const _data_flux{flux->dataAt(0, 0, 0, 0)};
   /* flux->xSize() == _size_flux_0 */
   /* flux->ySize() == _size_flux_1 */
@@ -84,13 +91,6 @@ void ContinuityKernelDoublePrecisionCUDA::operator()(walberla::IBlock *block, wa
   const int64_t _stride_flux_1{int64_t(flux->yStride())};
   const int64_t _stride_flux_2{int64_t(flux->zStride())};
   const int64_t _stride_flux_3{int64_t(flux->fStride())};
-  double *RESTRICT const _data_density{density->dataAt(0, 0, 0, 0)};
-  const int64_t _size_density_0{int64_t(density->xSize())};
-  const int64_t _size_density_1{int64_t(density->ySize())};
-  const int64_t _size_density_2{int64_t(density->zSize())};
-  const int64_t _stride_density_0{int64_t(density->xStride())};
-  const int64_t _stride_density_1{int64_t(density->yStride())};
-  const int64_t _stride_density_2{int64_t(density->zStride())};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};
@@ -119,6 +119,13 @@ void ContinuityKernelDoublePrecisionCUDA::runOnCellInterval(walberla::IBlock *bl
   walberla::BlockDataID fluxId{this->properties_.fluxId_};
   walberla::gpu::GPUField<double> *density{block->template getData<walberla::gpu::GPUField<double>>(densityId)};
   walberla::gpu::GPUField<double> *flux{block->template getData<walberla::gpu::GPUField<double>>(fluxId)};
+  double *RESTRICT const _data_density{density->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int64_t _size_density_0{int64_t(ci.xSize())};
+  const int64_t _size_density_1{int64_t(ci.ySize())};
+  const int64_t _size_density_2{int64_t(ci.zSize())};
+  const int64_t _stride_density_0{int64_t(density->xStride())};
+  const int64_t _stride_density_1{int64_t(density->yStride())};
+  const int64_t _stride_density_2{int64_t(density->zStride())};
   const double *RESTRICT const _data_flux{flux->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_flux_0 */
   /* ci.ySize() == _size_flux_1 */
@@ -128,13 +135,6 @@ void ContinuityKernelDoublePrecisionCUDA::runOnCellInterval(walberla::IBlock *bl
   const int64_t _stride_flux_1{int64_t(flux->yStride())};
   const int64_t _stride_flux_2{int64_t(flux->zStride())};
   const int64_t _stride_flux_3{int64_t(flux->fStride())};
-  double *RESTRICT const _data_density{density->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  const int64_t _size_density_0{int64_t(ci.xSize())};
-  const int64_t _size_density_1{int64_t(ci.ySize())};
-  const int64_t _size_density_2{int64_t(ci.zSize())};
-  const int64_t _stride_density_0{int64_t(density->xStride())};
-  const int64_t _stride_density_1{int64_t(density->yStride())};
-  const int64_t _stride_density_2{int64_t(density->zStride())};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};

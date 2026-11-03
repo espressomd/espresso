@@ -68,11 +68,11 @@ void ReactionKernelBulk2SinglePrecision::operator()(walberla::IBlock *block) {
   const int64_t _stride_rho_1_0{int64_t(rho_1->xStride())};
   const int64_t _stride_rho_1_1{int64_t(rho_1->yStride())};
   const int64_t _stride_rho_1_2{int64_t(rho_1->zStride())};
-  const float stoech1{this->properties_.stoech1_};
-  const float order1{this->properties_.order1_};
-  const float stoech0{this->properties_.stoech0_};
-  const float rate_coefficient{this->properties_.rate_coefficient_};
   const float order0{this->properties_.order0_};
+  const float order1{this->properties_.order1_};
+  const float rate_coefficient{this->properties_.rate_coefficient_};
+  const float stoech0{this->properties_.stoech0_};
+  const float stoech1{this->properties_.stoech1_};
   walberla::pystencils::ReactionKernelBulk2SinglePrecision_kernels::ReactionKernelBulk2SinglePrecision(_data_rho_0, _data_rho_1, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, _stride_rho_1_0, _stride_rho_1_1, _stride_rho_1_2, order0, order1, rate_coefficient, stoech0, stoech1);
 }
 
@@ -95,11 +95,11 @@ void ReactionKernelBulk2SinglePrecision::runOnCellInterval(walberla::IBlock *blo
   const int64_t _stride_rho_1_0{int64_t(rho_1->xStride())};
   const int64_t _stride_rho_1_1{int64_t(rho_1->yStride())};
   const int64_t _stride_rho_1_2{int64_t(rho_1->zStride())};
-  const float stoech1{this->properties_.stoech1_};
-  const float order1{this->properties_.order1_};
-  const float stoech0{this->properties_.stoech0_};
-  const float rate_coefficient{this->properties_.rate_coefficient_};
   const float order0{this->properties_.order0_};
+  const float order1{this->properties_.order1_};
+  const float rate_coefficient{this->properties_.rate_coefficient_};
+  const float stoech0{this->properties_.stoech0_};
+  const float stoech1{this->properties_.stoech1_};
   walberla::pystencils::ReactionKernelBulk2SinglePrecision_kernels::ReactionKernelBulk2SinglePrecision(_data_rho_0, _data_rho_1, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, _stride_rho_1_0, _stride_rho_1_1, _stride_rho_1_2, order0, order1, rate_coefficient, stoech0, stoech1);
 }
 } // namespace walberla::pystencils
