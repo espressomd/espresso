@@ -28,6 +28,10 @@ if(POLICY CMP0167)
   # use BoostConfig.cmake shipped with Boost 1.70+ instead of the one in CMake
   cmake_policy(SET CMP0167 NEW)
 endif()
+if(POLICY CMP0168)
+  # FetchContent no longer relies on a sub-build
+  cmake_policy(SET CMP0168 NEW)
+endif()
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 # CMake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -350,7 +354,10 @@ if(ESPRESSO_BUILD_WITH_CUDA)
              cuda_std_${ESPRESSO_MINIMAL_CUDA_STANDARD})
 endif()
 
-# Python interpreter and Cython interface library
+#
+# Python interpreter, Jupyter and Cython
+#
+
 if(ESPRESSO_BUILD_WITH_PYTHON)
   find_package(Python 3.11 REQUIRED COMPONENTS Interpreter Development NumPy)
   find_package(Cython 3.0.4...<4.0.0 REQUIRED)
@@ -380,6 +387,13 @@ if(ESPRESSO_BUILD_WITH_PYTHON)
     endblock()
   endif()
 endif()
+
+#
+# Documentation tools
+#
+
+find_package(Sphinx 7.2.6)
+find_package(Doxygen)
 
 #
 # Installation folders
@@ -675,7 +689,9 @@ if(ESPRESSO_BUILD_WITH_FFTW)
       heffte
       GIT_REPOSITORY https://github.com/icl-utk-edu/heffte.git
       GIT_TAG        v2.4.1
-      PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/heffte.patch
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+      PATCH_COMMAND  patch -p0 -i ${CMAKE_CURRENT_SOURCE_DIR}/cmake/heffte.patch
       OVERRIDE_FIND_PACKAGE
     )
     # cmake-format: on
@@ -683,6 +699,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     if(ESPRESSO_BUILD_WITH_CUDA)
       set(Heffte_ENABLE_CUDA ON CACHE BOOL "")
     endif()
+    set(Heffte_ENABLE_DOXYGEN OFF CACHE BOOL "")
     set(BUILD_SHARED_LIBS OFF)
     FetchContent_MakeAvailable(heffte)
     set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
@@ -716,7 +733,9 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
     kokkos
     GIT_REPOSITORY https://github.com/kokkos/kokkos.git
     GIT_TAG        5.0.2
-    PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/kokkos.patch
+    GIT_SHALLOW    TRUE
+    GIT_SUBMODULES ""  # don't clone submodules
+    PATCH_COMMAND  patch -p0 -i ${CMAKE_CURRENT_SOURCE_DIR}/cmake/kokkos.patch
     OVERRIDE_FIND_PACKAGE
     SYSTEM
   )
@@ -744,6 +763,8 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   set(Kokkos_ENABLE_DEPRECATED_CODE_4 OFF CACHE BOOL "")
   set(Kokkos_ENABLE_DEPRECATED_CODE_5 OFF CACHE BOOL "")
   set(Kokkos_ENABLE_BENCHMARKS OFF CACHE BOOL "")
+  set(Kokkos_ENABLE_EXAMPLES OFF CACHE BOOL "")
+  set(Kokkos_ENABLE_TESTS OFF CACHE BOOL "")
   FetchContent_MakeAvailable(kokkos)
   set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
   set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
@@ -776,11 +797,15 @@ if(ESPRESSO_BUILD_WITH_KOKKOS_FFT AND ESPRESSO_BUILD_WITH_FFTW)
       kokkos_fft
       GIT_REPOSITORY https://github.com/kokkos/kokkos-fft.git
       GIT_TAG        v2.0.0
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
       OVERRIDE_FIND_PACKAGE
     )
     # cmake-format: on
     set(KokkosFFT_ENABLE_FFTW ON CACHE BOOL "")
     set(KokkosFFT_ENABLE_CUFFT ${ESPRESSO_BUILD_WITH_CUDA} CACHE BOOL "")
+    set(KokkosFFT_ENABLE_DOCS OFF CACHE BOOL "")
+    set(KokkosFFT_ENABLE_EXAMPLES OFF CACHE BOOL "")
     FetchContent_MakeAvailable(kokkos_fft)
   endif()
 endif()
@@ -794,6 +819,8 @@ if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
     cabana
     GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
     GIT_TAG        0.8.0
+    GIT_SHALLOW    TRUE
+    GIT_SUBMODULES ""  # don't clone submodules
     OVERRIDE_FIND_PACKAGE
     SYSTEM
   )
@@ -830,6 +857,8 @@ if(ESPRESSO_BUILD_WITH_HDF5)
       HighFive
       GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
       GIT_TAG        v3.3.0
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
     )
     # cmake-format: on
     FetchContent_MakeAvailable(HighFive)
@@ -851,6 +880,8 @@ if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
     stokesian_dynamics
     GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
     GIT_TAG        90f6de70d1c0ac9cf468f2fc90f9c601139e4c88
+    GIT_SHALLOW    FALSE
+    GIT_SUBMODULES ""  # don't clone submodules
   )
   # cmake-format: on
   set(STOKESIAN_DYNAMICS 1)
@@ -869,6 +900,8 @@ if(ESPRESSO_BUILD_WITH_NLOPT)
       nlopt
       GIT_REPOSITORY https://github.com/stevengj/nlopt.git
       GIT_TAG        v2.11.0
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
     )
     # cmake-format: on
     set(BUILD_SHARED_LIBS off)
@@ -1062,6 +1095,8 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
       walberla
       GIT_REPOSITORY https://github.com/lssfau/walberla.git
       GIT_TAG        623a60c1 # v7.2 with patches
+      GIT_SHALLOW    FALSE
+      GIT_SUBMODULES ""  # don't clone submodules
       SYSTEM
     )
     # cmake-format: on
@@ -1143,6 +1178,8 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
     caliper
     GIT_REPOSITORY https://github.com/LLNL/Caliper.git
     GIT_TAG        v2.15.0
+    GIT_SHALLOW    TRUE
+    GIT_SUBMODULES ""  # don't clone submodules
   )
   # cmake-format: on
   set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
