@@ -77,9 +77,12 @@ struct Fixture {
   /** Bytes of the position block of every record, records of @p size. */
   static auto position_blocks(std::vector<char> const &bytes,
                               std::size_t size) {
-    auto const block = sizeof(Utils::Vector3d) + sizeof(Utils::Vector3i);
+    auto const block = static_cast<std::ptrdiff_t>(sizeof(Utils::Vector3d) +
+                                                   sizeof(Utils::Vector3i));
+    auto const step = static_cast<std::ptrdiff_t>(size);
+    auto const total = static_cast<std::ptrdiff_t>(bytes.size());
     std::vector<char> out;
-    for (std::size_t offset = 0; offset < bytes.size(); offset += size) {
+    for (std::ptrdiff_t offset = 0; offset < total; offset += step) {
       out.insert(out.end(), bytes.begin() + offset,
                  bytes.begin() + offset + block);
     }
