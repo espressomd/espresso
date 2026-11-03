@@ -35,6 +35,18 @@ or [Savannah](https://savannah.nongnu.org/projects/espressomd) until release 3.3
   every call triggered a full Verlet list rebuild, which penalized scripts
   that integrate few steps per call and inflated the P3M tuning timings.
 
+### Bug fixes
+
+* The Verlet skin tuning `system.cell_system.tune_skin()` was fixed. It only
+  compared the timings at the two ends of the search interval and returned
+  an untimed midpoint, so it always picked a skin in the upper half of the
+  interval. It now scans interior skins, refines the search around the
+  fastest one and returns the fastest measured skin. All MPI ranks now use
+  the timings of the head node, so they always end up with the same skin.
+  Tuned skins can therefore differ from previous releases. If the reduced
+  `max_skin` of `adjust_max_skin=True` is smaller than `min_skin`, an error
+  is raised.
+
 ## [5.0.1] - 2026-05-29
 
 ### Bug fixes
