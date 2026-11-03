@@ -251,7 +251,7 @@ def build_and_tune(system, args):
     if args.tune_skin and p3m_params is None:
         print("Tune skin: {:.3f} (tuned by P3M)".format(
             system.cell_system.skin))
-        # the second pass is not always faster: keep the better of the two
+        # timing noise decides which tuning pass is faster: keep the faster
         second_pass = (fixed_p3m_kwargs(p3m, args), system.cell_system.skin)
         p3m = keep_faster_pass(system, [first_pass, second_pass],
                                max(200, 3 * steps))

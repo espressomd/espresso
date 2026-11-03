@@ -254,9 +254,8 @@ TuningAlgorithm::tune_skin_for_fastest_candidates() {
     auto const max_skin =
         std::min(max_cut, skin_tuning_safety_factor *
                               m_system.get_max_permissible_skin());
-    // the search does not start at a vanishing skin (Verlet list rebuild in
-    // every step), which is rarely competitive: this only shifts the grid
-    // of sampled skins towards the useful range
+    // the search starts at a tenth of the interaction range: a vanishing
+    // skin (Verlet list rebuild in every step) is rarely competitive
     auto const min_skin = std::min(std::max(tol, 0.1 * max_cut), max_skin);
     if (max_skin > tol) {
       m_system.tune_verlet_skin(min_skin, max_skin, tol, n_steps, true);

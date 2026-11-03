@@ -61,9 +61,8 @@ static void check_statistics(Utils::Statistics::RunningAverage<double> &acc,
     runtimeWarningMsg()
         << "Clock resolution is too low to reliably time integration.";
   }
-  // with integration, the step times are legitimately bimodal (steps with
-  // and without Verlet list rebuild), the relative spread is no quality
-  // measure
+  // with integration, the step times are bimodal (steps with and without
+  // Verlet list rebuild), so the relative spread is no quality measure
   if (not with_integration and acc.sig() >= 0.1 * acc.avg()) {
     runtimeWarningMsg() << "Statistics of tuning samples is very bad.";
   }

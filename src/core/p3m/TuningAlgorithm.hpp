@@ -96,8 +96,8 @@ protected:
   /**
    * @brief The mesh scan stops after @ref mesh_scan_patience consecutive
    * meshes slower than @ref mesh_scan_relative_stop times the best time.
-   * A single slow mesh (e.g. an FFT size with a poor plan) does not end the
-   * scan.
+   * The scan continues past isolated slow meshes, e.g. FFT sizes with a
+   * poor plan.
    */
   static auto constexpr mesh_scan_relative_stop = 1.5;
   static auto constexpr mesh_scan_patience = 2;
