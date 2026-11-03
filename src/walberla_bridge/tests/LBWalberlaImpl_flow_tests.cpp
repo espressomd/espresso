@@ -148,7 +148,7 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_unthermalized,
   BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-10);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) { // NOLINT(bugprone-exception-escape)
   int n_nodes;
   Vector3i mpi_shape{};
 

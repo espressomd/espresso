@@ -267,6 +267,8 @@ class InteractionsNonBondedTest(ut.TestCase):
     axis /= np.linalg.norm(axis)
     step = axis * 0.01
     step_width = np.linalg.norm(step)
+    with np.printoptions(precision=14, floatmode="fixed", suppress=False):
+        print(f"reproducibility info: {start_pos=} {axis=}")
 
     def setUp(self):
         self.system.part.add(pos=self.start_pos, type=0)
@@ -277,15 +279,20 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.part.clear()
 
     # Required, since assertAlmostEqual does NOT check significant places
-    def assertFractionAlmostEqual(self, a, b, **args):
+    def assertFractionAlmostEqual(self, a, b):
         if abs(b) < 1E-8:
-            self.assertAlmostEqual(a, b, **args)
+            # case where b might be zero (division is unsafe) or very close to
+            # zero (will be rounded to zero anyway by assertAlmostEqual).
+            # Anything after the 8th decimal place is irrelevant when the force
+            # or energy is close to zero.
+            self.assertAlmostEqual(a, b)
         else:
-            self.assertAlmostEqual(a / b, 1., **args)
+            # case where dividing by b is safe
+            self.assertAlmostEqual(a / b, 1.)
 
     def assertItemsFractionAlmostEqual(self, a, b):
-        for i, ai in enumerate(a):
-            self.assertFractionAlmostEqual(ai, b[i])
+        for ai, bi in zip(a, b):
+            self.assertFractionAlmostEqual(ai, bi)
 
     # Test Generic Lennard-Jones Potential
     @utx.skipIfMissingFeatures("LENNARD_JONES_GENERIC")
@@ -488,6 +495,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "offset": 0.2},
                       force_kernel=soft_sphere_force,
                       energy_kernel=soft_sphere_potential,
+                      # avoid catastrophic cancellation at |r - r_off| < 1e-3
+                      n_initial_steps=1e-3,
                       n_steps=113)
 
     # Test Hertzian Potential
