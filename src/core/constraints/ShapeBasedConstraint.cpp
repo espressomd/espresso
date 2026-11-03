@@ -37,9 +37,12 @@
 #include <boost/mpi/collectives.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <functional>
 #include <limits>
 #include <numeric>
+#include <sstream>
+#include <stdexcept>
 
 namespace Constraints {
 /** Check if a non-bonded interaction is defined */
@@ -54,6 +57,46 @@ void ShapeBasedConstraint::set_type(int type) {
 
 IA_parameters const &ShapeBasedConstraint::get_ia_param(int type) const {
   return m_system.lock()->nonbonded_ias->get_ia_param(type, part_rep.type());
+}
+
+void ShapeBasedConstraint::on_integration_start() {
+  // shapes with rank-local data reload it if it is stale
+  m_shape->on_local_geometry_change();
+  check_distance_reach();
+}
+
+void ShapeBasedConstraint::check_distance_reach() const {
+  auto const reach = m_shape->local_distance_reach();
+  auto const type = part_rep.type();
+  if (std::isinf(reach) or type < 0) {
+    return;
+  }
+  auto const system = m_system.lock();
+  auto const &nonbonded_ias = *system->nonbonded_ias;
+  auto max_cutoff = 0.;
+  auto any_active = false;
+  for (int i = 0; i <= nonbonded_ias.get_max_seen_particle_type(); ++i) {
+    auto const &ia_params = nonbonded_ias.get_ia_param(i, type);
+    if (is_active(ia_params)) {
+      any_active = true;
+      max_cutoff = std::max(max_cutoff, ia_params.max_cut);
+    }
+  }
+  auto const &cell_structure = *system->cell_structure;
+  auto const skin = cell_structure.is_verlet_skin_set()
+                        ? cell_structure.get_verlet_skin()
+                        : 0.;
+  // a particle moves up to skin / 2 beyond the local box before resorting
+  if (any_active and reach < max_cutoff + skin / 2.) {
+    std::ostringstream msg;
+    msg << "The shape halo is too small for the interactions with particle "
+        << "type " << type
+        << ": need halo * voxel_size >= max_cutoff + skin / 2, "
+        << "got halo * voxel_size = " << reach
+        << ", max_cutoff + skin / 2 = " << max_cutoff + skin / 2.
+        << " (max_cutoff=" << max_cutoff << ", skin=" << skin << ")";
+    throw std::runtime_error(msg.str());
+  }
 }
 
 Utils::Vector3d ShapeBasedConstraint::total_force() const {

@@ -60,7 +60,12 @@ public:
                        m_shape =
                            get_value<std::shared_ptr<Shapes::Shape>>(value);
                        if (m_shape) {
-                         m_constraint->set_shape(m_shape->shape());
+                         auto const shape = m_shape->shape();
+                         // collective: shapes with rank-local data reload
+                         // it if the box changed since they were created
+                         context()->parallel_try_catch(
+                             [&]() { shape->on_local_geometry_change(); });
+                         m_constraint->set_shape(shape);
                        }
                      },
                      [this]() { return m_shape; }},

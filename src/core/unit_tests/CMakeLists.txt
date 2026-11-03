@@ -194,3 +194,9 @@ set_property(
     COMPILE_OPTIONS
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:--diag_suppress=code_is_unreachable>
 )
+
+if(ESPRESSO_BUILD_WITH_HDF5)
+  espresso_unit_test(
+    SRC VoxelMaskFile_test.cpp DEPENDS espresso::core espresso::shapes HighFive
+    hdf5::hdf5 Boost::mpi MPI::MPI_CXX NUM_PROC 2)
+endif()
