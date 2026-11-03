@@ -115,7 +115,11 @@ bool contribute_and_reset_replicas(ScatterView const &scatter_view,
             auto const end = std::min(begin + block, n_values);
             for (std::size_t t = 0u; t < n_replicas; ++t) {
               auto *const rep_t = rep + t * n_values;
-#pragma omp simd
+              // Both GCC and Clang auto-vectorize this loop (with a runtime
+              // check that out and rep_t do not overlap). A forced
+              // vectorization hint such as omp simd is an error under Clang
+              // with -ftrapping-math (ESPRESSO_BUILD_WITH_FPE), where strict
+              // floating-point semantics disable the loop vectorizer.
               for (std::size_t i = begin; i < end; ++i) {
                 out[i] += rep_t[i];
                 rep_t[i] = value_type{0};
