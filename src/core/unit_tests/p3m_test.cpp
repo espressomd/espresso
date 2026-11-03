@@ -208,8 +208,8 @@ template <auto... Pack> void test_all_p3m_fft_configs() {
           auto const [ld2, ur2] = get_box(j);
           auto overlap = 1;
           for (auto d : {0, 1, 2}) {
-            overlap *= std::max(0, std::min(ur[d], ur2[d]) -
-                                       std::max(ld[d], ld2[d]));
+            overlap *=
+                std::max(0, std::min(ur[d], ur2[d]) - std::max(ld[d], ld2[d]));
           }
           BOOST_CHECK_EQUAL(overlap, 0);
         }
