@@ -33,13 +33,17 @@ macro(ESPRESSO_IMPORTLIB_BASED_FIXTURE)
   cmake_path(GET TEST_SRC STEM TEST_NAME)
   add_test(NAME ${TEST_NAME} COMMAND ${CMAKE_BINARY_DIR}/pypresso
                                      ${PYPRESSO_OPTIONS} ${TEST_SRC})
+  list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "PRTE_MCA_hwloc_default_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "HYDRA_BINDING=none")
+  list(APPEND TEST_ENV_VARIABLES "OMP_PROC_BIND=false")
+  list(APPEND TEST_ENV_VARIABLES "OMP_NUM_THREADS=1")
   # cmake-format: off
   set_tests_properties(
     ${TEST_NAME} PROPERTIES FIXTURES_SETUP "FIXTURE_${TEST_TYPE}"
                             SKIP_RETURN_CODE 5
                             PROCESSORS 1
-                            ENVIRONMENT "OMP_PROC_BIND=false"
-                            ENVIRONMENT "OMP_NUM_THREADS=1")
+                            ENVIRONMENT "${TEST_ENV_VARIABLES}")
   # cmake-format: on
 endmacro(ESPRESSO_IMPORTLIB_BASED_FIXTURE)
 
@@ -55,23 +59,28 @@ macro(ESPRESSO_IMPORTLIB_BASED_TEST)
     set(TEST_NAME "${TEST_NAME}_with_${TEST_SUFFIX}")
   endif()
   set(TEST_FILE_CONFIGURED "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}.py")
-  configure_file(${TEST_FILE} ${TEST_FILE_CONFIGURED})
-  foreach(dependency IN LISTS TEST_DEPENDENCIES)
-    configure_file(${dependency} ${CMAKE_CURRENT_BINARY_DIR}/${dependency})
-  endforeach(dependency)
+  configure_file("${TEST_FILE}" "${TEST_FILE_CONFIGURED}")
+  foreach(TEST_DEPENDENCY IN LISTS TEST_DEPENDENCIES)
+    cmake_path(GET TEST_DEPENDENCY FILENAME TEST_DEPENDENCY_CONFIGURED)
+    configure_file("${TEST_DEPENDENCY}" "${TEST_DEPENDENCY_CONFIGURED}")
+  endforeach(TEST_DEPENDENCY)
   string(REGEX REPLACE "^test_" "${TEST_TYPE}_" TEST_NAME ${TEST_NAME})
   add_test(NAME ${TEST_NAME}
            COMMAND ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
                    ${TEST_FILE_CONFIGURED})
   list(APPEND TEST_LABELS "${TYPE}_test")
+  list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "PRTE_MCA_hwloc_default_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "HYDRA_BINDING=none")
+  list(APPEND TEST_ENV_VARIABLES "OMP_PROC_BIND=false")
+  list(APPEND TEST_ENV_VARIABLES "OMP_NUM_THREADS=1")
   # cmake-format: off
   set_tests_properties(
     ${TEST_NAME} PROPERTIES FIXTURES_REQUIRED "FIXTURE_${TEST_TYPE}"
                             LABELS "${TEST_LABELS}"
                             SKIP_RETURN_CODE 5
                             PROCESSORS 1
-                            ENVIRONMENT "OMP_PROC_BIND=false"
-                            ENVIRONMENT "OMP_NUM_THREADS=1")
+                            ENVIRONMENT "${TEST_ENV_VARIABLES}")
   # cmake-format: on
   if("gpu" IN_LIST TEST_LABELS AND ESPRESSO_BUILD_WITH_CUDA)
     set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)

@@ -27,10 +27,12 @@
 
 #include "core/magnetostatics/dipolar_direct_sum.hpp"
 
+#include "script_interface/code_info/CodeInfo.hpp"
 #include "script_interface/get_value.hpp"
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace ScriptInterface {
 namespace Dipoles {
@@ -47,11 +49,16 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    context()->parallel_try_catch([this, &params]() {
+    auto const gpu = get_value_or(params, "gpu", false);
+    context()->parallel_try_catch([this, &params, gpu]() {
+      if (gpu) {
+        std::vector<std::string> required_features;
+        required_features.emplace_back("CUDA");
+        CodeInfo::check_features(required_features);
+      }
       m_actor = std::make_shared<CoreActorClass>(
           get_value<double>(params, "prefactor"),
-          get_value<int>(params, "n_replicas"),
-          get_value_or(params, "gpu", false));
+          get_value<int>(params, "n_replicas"), gpu);
     });
   }
 };

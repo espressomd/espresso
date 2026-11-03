@@ -99,15 +99,15 @@ class VirtualSitesCOM(ut.TestCase):
         """
 
         p1 = self.system.part.add(
-            pos=[0, 0, 0], virtual=True, type=1, id=1, mol_id=10)
-        vs1 = self.system.part.add(pos=[1, 1, 1], virtual=True, type=1, id=2)
+            pos=[0, 0, 0], type=1, id=1, mol_id=10)
+        vs1 = self.system.part.add(pos=[1, 1, 1], type=1, id=2)
         vs1.vs_com_relate_to(p1)
         self.assertEqual(vs1.mol_id, p1.mol_id)
 
         mol_id_p2 = 20
         p2 = self.system.part.add(
-            pos=[2, 2, 2], virtual=True, type=1, id=3, mol_id=mol_id_p2)
-        vs2 = self.system.part.add(pos=[3, 3, 3], virtual=True, type=1, id=4)
+            pos=[2, 2, 2], type=1, id=3, mol_id=mol_id_p2)
+        vs2 = self.system.part.add(pos=[3, 3, 3], type=1, id=4)
         vs2.vs_com_relate_to(mol_id_p2)
         self.assertEqual(vs2.mol_id, p2.mol_id)
 

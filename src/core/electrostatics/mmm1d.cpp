@@ -188,7 +188,7 @@ Utils::Vector3d CoulombMMM1D::pair_force(double q1q2, Utils::Vector3d const &d,
                                          double dist) const {
   auto constexpr c_2pi = 2. * std::numbers::pi;
   auto const &box_geo = *get_system().box_geo;
-  auto const n_modPsi = static_cast<int>(modPsi.size()) >> 1;
+  auto const n_modPsi = static_cast<int>(modPsi.size() / 2ul);
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
   auto const z_d = d[2] * box_geo.length_inv()[2];
@@ -278,7 +278,7 @@ double CoulombMMM1D::pair_energy(double const q1q2, Utils::Vector3d const &d,
 
   auto constexpr c_2pi = 2. * std::numbers::pi;
   auto const &box_geo = *get_system().box_geo;
-  auto const n_modPsi = static_cast<int>(modPsi.size()) >> 1;
+  auto const n_modPsi = static_cast<int>(modPsi.size() / 2ul);
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
   auto const z_d = d[2] * box_geo.length_inv()[2];

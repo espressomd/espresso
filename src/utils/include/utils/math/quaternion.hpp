@@ -38,7 +38,8 @@ namespace Utils {
  *  @return A (non-normalized) director.
  */
 template <class T>
-Vector<T, 3> convert_quaternion_to_director(Quaternion<T> const &quat) {
+constexpr Vector<T, 3>
+convert_quaternion_to_director(Quaternion<T> const &quat) {
   return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
           2 * (quat[2] * quat[3] - quat[0] * quat[1]),
           quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +

@@ -28,6 +28,7 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
 
@@ -43,6 +44,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -112,6 +114,26 @@ StokesianDynamics::StokesianDynamics(double viscosity,
   }
 }
 
+void StokesianDynamics::sanity_checks(
+    ParticleRangeStokesian const &particles) const {
+  std::unordered_set<int> local_types;
+  for (auto const &p : particles) {
+    local_types.emplace(p.type());
+  }
+  std::vector<int> all_types(local_types.begin(), local_types.end());
+  Utils::Mpi::gather_buffer(all_types, ::comm_cart, 0);
+  if (::comm_cart.rank() == 0) {
+    for (auto const ptype :
+         std::unordered_set<int>(all_types.begin(), all_types.end())) {
+      if (not radii.contains(ptype)) {
+        runtimeErrorMsg() << "Stokesian Dynamics: no radius defined for "
+                             "particle type "
+                          << ptype;
+      }
+    }
+  }
+}
+
 void StokesianDynamics::propagate_vel_pos(
     ParticleRangeStokesian const &particles,
     StokesianThermostat const &stokesian, double const time_step,
@@ -140,9 +162,9 @@ void StokesianDynamics::propagate_vel_pos(
       x_host[6 * i + 1] = p.pos[1];
       x_host[6 * i + 2] = p.pos[2];
       // Actual orientation is not needed, just need default.
-      x_host[6 * i + 3] = 1;
-      x_host[6 * i + 4] = 0;
-      x_host[6 * i + 5] = 0;
+      x_host[6 * i + 3] = 1.;
+      x_host[6 * i + 4] = 0.;
+      x_host[6 * i + 5] = 0.;
 
       f_host[6 * i + 0] = p.ext_force.f[0];
       f_host[6 * i + 1] = p.ext_force.f[1];

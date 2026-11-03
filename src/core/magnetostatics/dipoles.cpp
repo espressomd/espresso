@@ -82,6 +82,23 @@ void Solver::on_cell_structure_change() {
   }
 }
 
+struct LongRangePressure {
+  auto operator()(std::shared_ptr<DipolarDirectSum> const &actor) const {
+    return actor->long_range_pressure();
+  }
+#ifdef ESPRESSO_DP3M
+  auto operator()(std::shared_ptr<DipolarP3M> const &actor) const {
+    return actor->long_range_pressure();
+  }
+#endif
+  template <typename T>
+    requires(not traits::has_pressure<T>::value)
+  auto operator()(std::shared_ptr<T> const &) const {
+    runtimeWarningMsg() << "Pressure not implemented for this dipolar method.";
+    return Utils::Vector9d{};
+  }
+};
+
 double Solver::cutoff() const {
 #ifdef ESPRESSO_DP3M
   if (impl->solver) {
@@ -120,10 +137,11 @@ struct LongRangeEnergy {
   }
 };
 
-void Solver::calc_pressure_long_range() const {
+Utils::Vector9d Solver::calc_pressure_long_range() const {
   if (impl->solver) {
-    runtimeWarningMsg() << "pressure calculated, but pressure not implemented.";
+    return std::visit(LongRangePressure{}, *impl->solver);
   }
+  return {};
 }
 
 void Solver::calc_long_range_force() const {

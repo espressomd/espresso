@@ -19,10 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_P3M_TUNING_LOGGER_HPP
-#define ESPRESSO_SRC_CORE_P3M_TUNING_LOGGER_HPP
+#pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #if defined(ESPRESSO_P3M) || defined(ESPRESSO_DP3M)
 
@@ -53,7 +52,7 @@ public:
   }
 
   template <typename... Types>
-  void log_skip(std::string reason, Types... parameter_set) const {
+  void log_skip(std::string const &reason, Types... parameter_set) const {
     if (m_verbose) {
       row(parameter_set...);
       std::printf(" %s\n", reason.c_str());
@@ -117,7 +116,7 @@ public:
     }
   }
 
-  auto get_name() const { return m_name; }
+  auto const &get_name() const { return m_name; }
 
 private:
   bool m_verbose;
@@ -132,5 +131,3 @@ private:
 };
 
 #endif // ESPRESSO_P3M or ESPRESSO_DP3M
-
-#endif

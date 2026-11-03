@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+#
 
 from libcpp.unordered_map cimport unordered_map
 from libcpp.string cimport string
@@ -78,7 +78,7 @@ cdef extern from "script_interface/get_value.hpp" namespace "ScriptInterface":
     T get_value[T](const Variant &) except +
 
 cdef extern from "script_interface/code_info/CodeInfo.hpp" namespace "ScriptInterface::CodeInfo":
-    void check_features(const vector[string] & features) except +
+    string check_features_msg(const vector[string] & features)
 
 cdef void init(const shared_ptr[MpiCallbacks] &)
 cdef void deinit()

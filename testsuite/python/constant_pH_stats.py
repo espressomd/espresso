@@ -18,14 +18,15 @@
 #
 
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 import espressomd.reaction_methods
 
 
+@utx.skipIfMissingFeatures(["ELECTROSTATICS"])
 class Test(ut.TestCase):
-
-    """Test the core implementation of the constant pH reaction ensemble."""
+    """Test the constant pH reaction ensemble."""
 
     N0 = 40
     c0 = 0.00028
@@ -51,32 +52,29 @@ class Test(ut.TestCase):
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    RE = espressomd.reaction_methods.ConstantpHEnsemble(
-        kT=1., exclusion_range=1., seed=44, constant_pH=pH,
-        search_algorithm="parallel")
-    RE.set_non_interacting_type(type=max(types.values()) + 1)
-
-    @classmethod
-    def setUpClass(cls):
-        cls.system.part.add(
-            pos=np.random.random((2 * cls.N0, 3)) * cls.system.box_l,
-            type=cls.N0 * [cls.types["A-"], cls.types["H+"]])
-
-        cls.RE.add_reaction(
-            gamma=cls.Ka,
-            reactant_types=[cls.types["HA"]],
-            product_types=[cls.types["A-"], cls.types["H+"]],
-            default_charges=cls.charges_dict)
 
     @classmethod
     def ideal_alpha(cls, pH):
         return 1. / (1. + 10.**(cls.pKa - pH))
 
     def test_ideal_titration_curve(self):
-        RE = self.RE
         N0 = self.N0
         types = self.types
         system = self.system
+
+        system.part.add(
+            pos=np.random.random((2 * N0, 3)) * system.box_l,
+            type=N0 * [types["A-"], types["H+"]])
+
+        RE = espressomd.reaction_methods.ConstantpHEnsemble(
+            kT=1., exclusion_range=1., seed=44, constant_pH=self.pH,
+            system=system, search_algorithm="parallel")
+        RE.set_non_interacting_type(type=max(types.values()) + 1)
+        RE.add_reaction(
+            gamma=self.Ka,
+            reactant_types=[types["HA"]],
+            product_types=[types["A-"], types["H+"]],
+            default_charges=self.charges_dict)
 
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling

@@ -989,6 +989,20 @@ use a :class:`~espressomd.profiler.Caliper` object to fence code blocks:
     energies = system.analysis.energy()
     cali.end_section(label="calc_energies")
 
+By default, ``CALI_CONFIG=runtime-report`` only reports nested regions.
+Asynchronous regions are not part of the tree and need to be queried individually:
+
+.. code-block:: none
+
+    CALI_CONFIG=event-trace,output=espresso-%mpi.rank%.cali mpiexec -n 2 ./pypresso script.py
+    cali-query -q "SELECT region, ghosts_reduce_forces_async, \
+                          sum(time.duration.ns) AS time_ns, \
+                          percent_total(time.duration.ns) AS \"Time %\"  \
+                   WHERE ghosts_reduce_forces_async \
+                   GROUP BY region, ghosts_reduce_forces_async \
+                   FORMAT table ORDER BY time_ns DESC" \
+               espresso-*.cali
+
 .. _Valgrind:
 
 Valgrind
@@ -1262,6 +1276,40 @@ To interactively read the data:
           10  2.619    0.262    2.619    0.262   /opt/espressomd/integrate.py:101(run)
     p3m.py.prof% quit
 
+.. _py-spy:
+
+py-spy
+~~~~~~
+
+.. note::
+
+    Requires an external dependency:
+
+    .. code-block:: bash
+
+        python3 -m pip install py-spy
+
+py-spy [11]_ is a low-overhead Python profiler.
+
+To generate a nested graph that can be interacted with in a web browser:
+
+.. code-block:: bash
+
+    OMP_NUM_THREADS=1 OMP_PROC_BIND=true OMP_PLACES=0 py-spy record \
+        -o profile.svg -- ./pypresso ../samples/p3m.py --cpu
+
+Use Ctrl+F in the web browser to highlight blocks matching a function name.
+Pass option ``--native`` to capture C++ function names; to get accurate traces
+with minimal overhead, build |es| with
+``-D CMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer" -D CMAKE_BUILD_TYPE=Release``.
+
+To record samples in a format that can be analyzed by AI agents, run:
+
+.. code-block:: bash
+
+    OMP_NUM_THREADS=1 OMP_PROC_BIND=true OMP_PLACES=0 py-spy record \
+        --native -f raw -o profile.folded -- ./pypresso ../samples/p3m.py --cpu
+
 ____
 
 .. [1]
@@ -1293,3 +1341,6 @@ ____
 
 .. [10]
    https://github.com/google/sanitizers/issues/1614
+
+.. [11]
+   https://github.com/benfred/py-spy

@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,6 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .particle_data import ParticleHandle
 
@@ -45,7 +48,8 @@ class _PairCriterion(ScriptInterfaceHelper):
 @script_interface_register
 class DistanceCriterion(_PairCriterion):
 
-    """Pair criterion returning true, if particles are closer than a cutoff.
+    """
+    Pair criterion returning true, if particles are closer than a cutoff.
     Periodic boundaries are treated via minimum image convention.
 
     The following parameters can be passed to the constructor, changed via
@@ -63,11 +67,12 @@ class DistanceCriterion(_PairCriterion):
 @script_interface_register
 class EnergyCriterion(_PairCriterion):
 
-    """Pair criterion returning true, if the short range energy between the
-    particles is superior or equal to the cutoff.
+    """
+    Pair criterion returning true, if the short-range energy between the
+    particles is greater or equal to the cutoff.
 
-    Be aware that the short range energy contains the short range part of
-    dipolar and electrostatic interactions, but not the long range part.
+    Be aware that the short-range energy contains the short-range part of
+    dipolar and electrostatic interactions, but not the long-range part.
 
     The following parameters can be passed to the constructor, changed via
     ``set_params()`` and retrieved via ``get_params()``.
@@ -84,7 +89,9 @@ class EnergyCriterion(_PairCriterion):
 @script_interface_register
 class BondCriterion(_PairCriterion):
 
-    """Pair criterion returning true, if a pair bond of given type exists between them
+    """
+    Pair criterion returning true, if a pair bond of a given type exists
+    between the particles.
 
     The following parameters can be passed to the constructor, changed via
     ``set_params()`` and retrieved via ``get_params()``.

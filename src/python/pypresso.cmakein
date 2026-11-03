@@ -7,17 +7,25 @@
 # without any warranty.
 #
 
-if test -n "$PYTHONPATH"; then
-  PYTHONPATH="@ESPRESSO_PYTHON_DIR@:$PYTHONPATH"
-else
-  PYTHONPATH="@ESPRESSO_PYTHON_DIR@"
+export PYTHONPATH="@ESPRESSO_PYTHON_DIR@${PYTHONPATH:+:$PYTHONPATH}"
+
+if test -z "${OMPI_MCA_hwloc_base_binding_policy}"; then
+  export OMPI_MCA_hwloc_base_binding_policy="none"
 fi
-export PYTHONPATH
-if test -z "$OMP_PROC_BIND"; then
-  export OMP_PROC_BIND=false
+if test -z "${PRTE_MCA_hwloc_default_binding_policy}"; then
+  export PRTE_MCA_hwloc_default_binding_policy="none"
 fi
-if test -z "$OMP_NUM_THREADS"; then
-  export OMP_NUM_THREADS=1
+if test -z "${HYDRA_BINDING}"; then
+  export HYDRA_BINDING="none"
+fi
+if test -z "${OMP_PROC_BIND}"; then
+  export OMP_PROC_BIND="false"
+fi
+if test -z "${OMP_NUM_THREADS}"; then
+  export OMP_NUM_THREADS="1"
+fi
+if test -z "${UCX_TLS}"; then
+  export UCX_TLS="^rocm"
 fi
 
 espresso_parse_cmake_boolean_value() {
@@ -72,12 +80,15 @@ if [ "${ESPRESSO_BUILD_WITH_UBSAN}" = "ON" ]; then
   fi
 fi
 if [ "${ESPRESSO_BUILD_WITH_ASAN}" = "ON" ]; then
+  # don't patch mmap, munmap, etc. (see https://github.com/open-mpi/ompi/issues/12819)
+  export OMPI_MCA_memory="${OMPI_MCA_memory:+$OMPI_MCA_memory,}^patcher"
+  export PMIX_MCA_gds="hash"
   ASAN_OPTIONS="protect_shadow_gap=0 allocator_may_return_null=1 $ASAN_OPTIONS"
   if [ "${ESPRESSO_WARNINGS_ARE_ERRORS}" = "ON" ]; then
     ASAN_OPTIONS="halt_on_error=1 $ASAN_OPTIONS"
   fi
   if [ "$1" = "--leaks" ]; then
-    shift
+    export LSAN_OPTIONS="suppressions=\"@CMAKE_SOURCE_DIR@/maintainer/CI/lsan.supp:print_suppressions=0\" $LSAN_OPTIONS"
   else
     ASAN_OPTIONS="$ASAN_OPTIONS detect_leaks=0"
   fi

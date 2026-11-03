@@ -31,6 +31,7 @@
 #endif
 
 #include <cassert>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <span>
@@ -705,6 +706,11 @@ public:
       assert(m_handle->thermo_switch == THERMO_OFF);
       get_system().on_temperature_change();
       return {};
+    }
+    if (context()->is_head_node()) {
+      throw std::runtime_error(
+          "Unknown method " + name +
+          "(). Hint: a feature is probably not compiled in.");
     }
     return {};
   }

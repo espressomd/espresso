@@ -30,6 +30,8 @@
 #include <boost/qvm/vec_traits.hpp>
 
 #include "utils/Array.hpp"
+#include "utils/attributes.hpp"
+#include "utils/device_qualifier.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -42,7 +44,10 @@
 #include <numeric>
 #include <ranges>
 #include <span>
+#include <stdexcept>
+#include <tuple>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace Utils {
@@ -71,8 +76,8 @@ public:
   struct is_vector<Vector<U, Np>> : std::true_type {};
 
   Vector() noexcept = default;
-  Vector(Vector const &) = default;
-  Vector &operator=(Vector const &) = default;
+  Vector(Vector const &) noexcept = default;
+  Vector &operator=(Vector const &) noexcept = default;
 
   void swap(Vector &rhs) { std::ranges::swap_ranges(*this, rhs); }
 
@@ -105,6 +110,8 @@ public:
       copy_init(std::cbegin(v));
     }
   }
+
+  explicit constexpr Vector(Array<T, N> const &array) noexcept : Base(array) {}
 
   constexpr Vector(std::initializer_list<T> v) : Base() {
     if (N != v.size()) {
@@ -140,11 +147,13 @@ public:
 
   operator std::vector<T>() const { return as_vector(); }
 
-  constexpr std::span<T, N> as_span() const {
-    return std::span<T, N>(const_cast<T *>(begin()), size());
+  constexpr std::span<const T, N> as_span() const noexcept {
+    return std::span<const T, N>(begin(), N);
   }
 
-  constexpr operator std::span<T, N>() const { return as_span(); }
+  constexpr operator std::span<const T, N>() const noexcept {
+    return as_span();
+  }
 
   template <class U> explicit operator Vector<U, N>() const {
     Vector<U, N> ret;
@@ -167,14 +176,22 @@ public:
   Vector &normalize() {
     auto const l = norm();
     if (l != T(0)) {
-      for (std::size_t i = 0u; i < N; ++i)
-        (*this)[i] /= l;
+      *this /= l;
     }
 
     return *this;
   }
 
-  Vector normalized() const { return (*this) / (*this).norm(); }
+  /*
+   * @brief Return a normalized copy of the vector.
+   *
+   * Normalize the vector by its length,
+   * if not zero, otherwise the vector is unchanged.
+   */
+  Vector normalized() const {
+    auto const l = norm();
+    return (l != T(0)) ? (*this) / l : *this;
+  }
 };
 
 template <class T> using Vector3 = Vector<T, 3>;
@@ -207,47 +224,27 @@ auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
 
   return ret;
 }
-
-template <std::size_t N, typename T, typename Op>
-constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
-  for (std::size_t i = 0u; i < N; ++i) {
-    if (not op(a[i], b[i])) {
-      return false;
-    }
-  }
-  return true;
-}
 } // namespace detail
 
-template <std::size_t N, typename T>
-constexpr bool operator<(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::less<T>());
-}
-
-template <std::size_t N, typename T>
-constexpr bool operator>(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::greater<T>());
-}
-
-template <std::size_t N, typename T>
-constexpr bool operator<=(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::less_equal<T>());
-}
-
-template <std::size_t N, typename T>
-constexpr bool operator>=(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::greater_equal<T>());
-}
-
-template <std::size_t N, typename T>
-constexpr bool operator==(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::equal_to<T>());
-}
-
-template <std::size_t N, typename T>
-constexpr bool operator!=(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return not(a == b);
-}
+#define ESPRESSO_VECTOR_COMPARISON(op)                                         \
+  template <std::size_t N, typename T>                                         \
+  constexpr bool                                                               \
+  operator op(Vector<T, N> const &a, Vector<T, N> const &b) noexcept(          \
+      noexcept(std::declval<T const &>() op std::declval<T const &>())) {      \
+    for (std::size_t i = 0u; i < N; ++i) {                                     \
+      if (not(a[i] op b[i])) {                                                 \
+        return false;                                                          \
+      }                                                                        \
+    }                                                                          \
+    return true;                                                               \
+  }
+// synthesize all operators, except a!=b which C++20 rewrites as !(a==b)
+ESPRESSO_VECTOR_COMPARISON(<)
+ESPRESSO_VECTOR_COMPARISON(>)
+ESPRESSO_VECTOR_COMPARISON(<=)
+ESPRESSO_VECTOR_COMPARISON(>=)
+ESPRESSO_VECTOR_COMPARISON(==)
+#undef ESPRESSO_VECTOR_COMPARISON
 
 template <std::size_t N, typename T, typename U>
 auto operator+(Vector<T, N> const &a, Vector<U, N> const &b) {
@@ -255,7 +252,8 @@ auto operator+(Vector<T, N> const &a, Vector<U, N> const &b) {
 }
 
 template <std::size_t N, typename T>
-auto &operator+=(Vector<T, N> &a, Vector<T, N> const &b) {
+ESPRESSO_ATTR_ALWAYS_INLINE inline auto &operator+=(Vector<T, N> &a,
+                                                    Vector<T, N> const &b) {
   std::ranges::transform(a, b, std::begin(a), std::plus<T>());
   return a;
 }
@@ -273,7 +271,8 @@ Vector<T, N> operator-(Vector<T, N> const &a) {
 }
 
 template <std::size_t N, typename T>
-Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
+ESPRESSO_ATTR_ALWAYS_INLINE inline Vector<T, N> &
+operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
   std::ranges::transform(a, b, std::begin(a), std::minus<T>());
   return a;
 }
@@ -281,7 +280,7 @@ Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
 /* Scalar multiplication */
 template <std::size_t N, typename T, class U>
   requires(std::is_arithmetic_v<U>)
-auto operator*(U const &a, Vector<T, N> const &b) {
+constexpr auto operator*(U const &a, Vector<T, N> const &b) {
   using R = decltype(a * std::declval<T>());
   Vector<R, N> ret;
   std::ranges::transform(b, std::begin(ret), [a](T const &v) { return a * v; });
@@ -290,7 +289,7 @@ auto operator*(U const &a, Vector<T, N> const &b) {
 
 template <std::size_t N, typename T, class U>
   requires(std::is_arithmetic_v<U>)
-auto operator*(Vector<T, N> const &a, U const &b) {
+constexpr auto operator*(Vector<T, N> const &a, U const &b) {
   using R = decltype(std::declval<T>() * b);
   Vector<R, N> ret;
   std::ranges::transform(a, std::begin(ret), [b](T const &v) { return b * v; });
@@ -364,8 +363,10 @@ template <std::size_t N, typename T> auto sqrt(Vector<T, N> const &a) {
 
 template <class T>
 Vector<T, 3> vector_product(Vector<T, 3> const &a, Vector<T, 3> const &b) {
-  return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
-          a[0] * b[1] - a[1] * b[0]};
+  // use noexcept constructor to elide the exception logic
+  T v[3] = {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
+            a[0] * b[1] - a[1] * b[0]};
+  return Vector<T, 3>(v);
 }
 
 // Product of array elements.
@@ -441,6 +442,11 @@ T const &get(Vector<T, N> const &a) noexcept {
 
 } // namespace Utils
 
+// Tuple-like interface for structured bindings.
+// Specializing these for user-defined types is permitted by [namespace.std],
+// but Clang-Tidy 22 reports partial specializations as a false positive.
+// NOLINTBEGIN(bugprone-std-namespace-modification)
+
 template <std::size_t I, class T, std::size_t N>
 struct std::tuple_element<I, Utils::Vector<T, N>> {
   static_assert(I < N, "Utils::Vector index must be in range");
@@ -450,6 +456,8 @@ struct std::tuple_element<I, Utils::Vector<T, N>> {
 template <class T, std::size_t N>
 struct std::tuple_size<Utils::Vector<T, N>>
     : std::integral_constant<std::size_t, N> {};
+
+// NOLINTEND(bugprone-std-namespace-modification)
 
 namespace boost::qvm {
 

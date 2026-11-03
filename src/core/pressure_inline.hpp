@@ -44,61 +44,25 @@
 #include <tuple>
 #include <variant>
 
-/** Calculate non-bonded energies between a pair of particles.
- *  @param p1        pointer to particle 1.
- *  @param p2        pointer to particle 2.
- *  @param d         vector between p1 and p2.
- *  @param dist      distance between p1 and p2.
- *  @param ia_params              non-bonded interaction kernels.
- *  @param dipoles                Magnetostatics solver.
- *  @param bonded_ias             bonded interaction kernels.
- *  @param kernel_forces          Coulomb force kernel.
- *  @param kernel_pressure        Coulomb pressure kernel.
- *  @param[in,out] obs_pressure   pressure observable.
- */
-inline void add_non_bonded_pair_virials(
-    Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
-    double dist, IA_parameters const &ia_params,
-    [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
-    Dipoles::Solver const &dipoles,
-    Coulomb::ShortRangeForceKernel::kernel_type const *kernel_forces,
-    Coulomb::ShortRangePressureKernel::kernel_type const *kernel_pressure,
-    Observable_stat &obs_pressure) {
-#ifdef ESPRESSO_EXCLUSIONS
-  if (do_nonbonded(p1, p2))
-#endif
-  {
-    auto f = calc_non_central_force(p1, p2, ia_params, d, dist).f;
-    f += calc_central_radial_force(ia_params, d, dist);
-#ifdef ESPRESSO_THOLE
-    f +=
-        thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias, kernel_forces);
-#endif
-    auto const stress = Utils::tensor_product(d, f);
-    obs_pressure.add_non_bonded_contribution(p1.type(), p2.type(), p1.mol_id(),
-                                             p2.mol_id(), flatten(stress));
-  }
-
+// Overload for Cabana kernels: takes positions and charge product directly
+inline std::optional<Utils::Matrix<double, 3, 3>>
+calc_bonded_virial_pressure_tensor(
+    Bonded_IA_Parameters const &iaparams, Utils::Vector3d const &pos1,
+    Utils::Vector3d const &pos2, BoxGeometry const &box_geo,
+    Coulomb::ShortRangeForceKernel::kernel_type const *kernel, double q1q2) {
+  auto const dx = box_geo.get_mi_vector(pos1, pos2);
+  auto const pair_force = calc_bond_pair_force(iaparams, dx,
 #ifdef ESPRESSO_ELECTROSTATICS
-  if (!obs_pressure.coulomb.empty() and kernel_pressure != nullptr) {
-    /* real space Coulomb */
-    auto const p_coulomb = (*kernel_pressure)(p1.q() * p2.q(), d, dist);
-
-    for (std::size_t i = 0u; i < 3u; i++) {
-      for (std::size_t j = 0u; j < 3u; j++) {
-        obs_pressure.coulomb[i * 3u + j] += p_coulomb(i, j);
-      }
-    }
+                                               q1q2, kernel
+#else
+                                               0.0, nullptr
+#endif
+  );
+  std::optional<Utils::Matrix<double, 3, 3>> pressure{std::nullopt};
+  if (pair_force) {
+    pressure = Utils::tensor_product(dx, *pair_force);
   }
-#endif // ESPRESSO_ELECTROSTATICS
-
-#ifdef ESPRESSO_DIPOLES
-  /* real space magnetic dipole-dipole */
-  if (dipoles.impl->solver) {
-    fprintf(stderr, "calculating pressure for magnetostatics which doesn't "
-                    "have it implemented\n");
-  }
-#endif // ESPRESSO_DIPOLES
+  return pressure;
 }
 
 inline std::optional<Utils::Matrix<double, 3, 3>>
@@ -106,25 +70,22 @@ calc_bonded_virial_pressure_tensor(
     Bonded_IA_Parameters const &iaparams, Particle const &p1,
     Particle const &p2, BoxGeometry const &box_geo,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
-  auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
-  auto const pair_force = calc_bond_pair_force(iaparams, dx,
+  return calc_bonded_virial_pressure_tensor(iaparams, p1.pos(), p2.pos(),
+                                            box_geo, kernel,
 #ifdef ESPRESSO_ELECTROSTATICS
-                                               p1.q() * p2.q(), kernel
+                                            p1.q() * p2.q()
 #else
-                                               0.0, nullptr
+                                            0.0
 #endif
   );
-  std::optional<Utils::Matrix<double, 3, 3>> pressure{std::nullopt};
-  if (pair_force) {
-    pressure = Utils::tensor_product(*pair_force, dx);
-  }
-  return pressure;
 }
 
+// Overload for Cabana kernels: takes positions directly
 inline std::optional<Utils::Matrix<double, 3, 3>>
 calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
-                                       Particle const &p1, Particle const &p2,
-                                       Particle const &p3,
+                                       Utils::Vector3d const &pos1,
+                                       Utils::Vector3d const &pos2,
+                                       Utils::Vector3d const &pos3,
                                        BoxGeometry const &box_geo) {
   if (std::holds_alternative<AngleHarmonicBond>(iaparams) or
       std::holds_alternative<AngleCosineBond>(iaparams) or
@@ -132,16 +93,50 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
       std::holds_alternative<TabulatedAngleBond>(iaparams) or
 #endif
       std::holds_alternative<AngleCossquareBond>(iaparams)) {
-    auto const dx21 = -box_geo.get_mi_vector(p1.pos(), p2.pos());
-    auto const dx31 = box_geo.get_mi_vector(p3.pos(), p1.pos());
+    auto const dx21 = -box_geo.get_mi_vector(pos1, pos2);
+    auto const dx31 = box_geo.get_mi_vector(pos3, pos1);
 
     auto const result = calc_bonded_three_body_force(iaparams, dx21, dx31);
     if (result) {
       Utils::Vector3d force2, force3;
       std::tie(std::ignore, force2, force3) = result.value();
+      return Utils::tensor_product(dx21, force2) +
+             Utils::tensor_product(dx31, force3);
+    }
+  } else {
+    runtimeWarningMsg() << "Unsupported bond type " +
+                               std::to_string(iaparams.index()) +
+                               " in pressure calculation.";
+    return Utils::Matrix<double, 3, 3>{};
+  }
+  return {};
+}
 
-      return Utils::tensor_product(force2, dx21) +
-             Utils::tensor_product(force3, dx31);
+inline std::optional<Utils::Matrix<double, 3, 3>>
+calc_bonded_four_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
+                                      Utils::Vector3d const &pos1,
+                                      Utils::Vector3d const &pos2,
+                                      Utils::Vector3d const &pos3,
+                                      Utils::Vector3d const &pos4,
+                                      BoxGeometry const &box_geo) {
+  if (std::holds_alternative<DihedralBond>(iaparams)
+#ifdef ESPRESSO_TABULATED
+      or std::holds_alternative<TabulatedDihedralBond>(iaparams)
+#endif
+  ) {
+    auto const v12 = box_geo.get_mi_vector(pos1, pos2);
+    auto const v23 = box_geo.get_mi_vector(pos3, pos1);
+    auto const v34 = box_geo.get_mi_vector(pos4, pos3);
+
+    auto const result = calc_bonded_dihedral_force(iaparams, v12, v23, v34);
+
+    if (result) {
+      Utils::Vector3d force2, force3, force4;
+      std::tie(std::ignore, force2, force3, force4) = result.value();
+
+      return -Utils::tensor_product(v12, force2) +
+             Utils::tensor_product(v23, force3) +
+             Utils::tensor_product(v23 + v34, force4);
     }
   } else {
     runtimeWarningMsg() << "Unsupported bond type " +
@@ -151,38 +146,4 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
   }
 
   return {};
-}
-
-inline std::optional<Utils::Matrix<double, 3, 3>> calc_bonded_pressure_tensor(
-    Bonded_IA_Parameters const &iaparams, Particle const &p1,
-    std::span<Particle *> partners, BoxGeometry const &box_geo,
-    Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
-  switch (number_of_partners(iaparams)) {
-  case 1:
-    return calc_bonded_virial_pressure_tensor(iaparams, p1, *partners[0],
-                                              box_geo, kernel);
-  case 2:
-    return calc_bonded_three_body_pressure_tensor(iaparams, p1, *partners[0],
-                                                  *partners[1], box_geo);
-  default:
-    runtimeWarningMsg() << "Unsupported bond type " +
-                               std::to_string(iaparams.index()) +
-                               " in pressure calculation.";
-    return Utils::Matrix<double, 3, 3>{};
-  }
-}
-
-/** Calculate kinetic pressure (aka energy) for one particle.
- *  @param[in]   p1            particle for which to calculate pressure
- *  @param[out]  obs_pressure  pressure observable
- */
-inline void add_kinetic_virials(Particle const &p1,
-                                Observable_stat &obs_pressure) {
-  if (p1.is_virtual())
-    return;
-
-  /* kinetic pressure */
-  for (std::size_t k = 0u; k < 3u; k++)
-    for (std::size_t l = 0u; l < 3u; l++)
-      obs_pressure.kinetic_lin[k * 3u + l] += p1.v()[k] * p1.v()[l] * p1.mass();
 }

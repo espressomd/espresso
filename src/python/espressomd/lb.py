@@ -30,14 +30,33 @@ import espressomd.code_features
 
 @script_interface_register
 class Container(ScriptInterfaceHelper):
+    """
+    Container object holding the lattice-Boltzmann method.
+
+    Parameters
+    ----------
+    solver : :obj:`~espressomd.lb.LBFluid`
+        Solver for the lattice-Boltzmann method.
+
+    Methods
+    -------
+    clear()
+        Remove the LB solver.
+
+    """
     _so_name = "LB::Container"
     _so_bind_methods = ("clear",)
 
 
 class VelocityBounceBack:
     """
-    Hold velocity information for the velocity bounce back boundary
+    Hold velocity information for the velocity bounce-back boundary
     condition at a single node.
+
+    Parameters
+    ----------
+    velocity : (3,) array_like of :obj:`float`
+        Bounce-back velocity.
 
     """
 
@@ -99,7 +118,7 @@ class LBFluid(ScriptInterfaceHelper, espressomd.detail.walberla.LatticeModel):
         v : (3,) array_like :obj:`float`
             The LB fluid velocity at ``pos``.
 
-    add_force_at_pos():
+    add_force_at_pos()
         Adds a force to the fluid at given position.
 
         Parameters
@@ -326,6 +345,7 @@ class LBFluid(ScriptInterfaceHelper, espressomd.detail.walberla.LatticeModel):
 
 @script_interface_register
 class LBFluidNode(ScriptInterfaceHelper):
+    """Node of a LB grid."""
     _so_name = "walberla::LBFluidNode"
     _so_creation_policy = "GLOBAL"
 
@@ -456,6 +476,8 @@ class LBFluidNode(ScriptInterfaceHelper):
 
 @script_interface_register
 class LBFluidSlice(ScriptInterfaceHelper):
+    """Slice of a LB grid."""
+
     _so_name = "walberla::LBFluidSlice"
     _so_creation_policy = "GLOBAL"
 
@@ -643,7 +665,7 @@ class VTKOutput(VTKOutputBase):
     ----------
     identifier : :obj:`str`
         Name of the VTK writer.
-    observables : :obj:`list`, {'density', 'velocity_vector', 'pressure_tensor'}
+    observables : :obj:`list`, {'density', 'velocity_vector', 'pressure_tensor', 'boundary'}
         List of observables to write to the VTK files.
     delta_N : :obj:`int`
         Write frequency. If this value is 0 (default), the object is a
@@ -658,6 +680,10 @@ class VTKOutput(VTKOutputBase):
         Force parallel unstructured grid format (file extension: ``.vtu``).
         If ``False``, uses parallel structured grid format if possible
         (file extension: ``.vti``).
+    include_boundaries : :obj:`bool` (optional), default is ``False``
+        If ``True``, include boundary cells in the VTK output.
+        Boundary cells will show the velocity defined by the boundary
+        condition. If ``False``, boundary cells are excluded.
 
     """
     _so_name = "walberla::LBVTKHandle"

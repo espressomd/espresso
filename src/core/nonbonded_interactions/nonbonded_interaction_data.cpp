@@ -143,11 +143,24 @@ recalc_maximal_cutoff(IA_parameters const &data,
 
 void InteractionsNonBonded::recalc_maximal_cutoffs() {
   auto const &system = get_system();
+  auto combined_mask = 0u;
+#ifdef ESPRESSO_THOLE
+  auto any_thole_configured = false;
+#endif
   for (auto &data : m_nonbonded_ia_params) {
     auto const [mc, mask] = recalc_maximal_cutoff(*data, system);
     data->max_cut = mc;
     data->active_pair_mask = mask;
+    combined_mask |= mask;
+#ifdef ESPRESSO_THOLE
+    any_thole_configured |=
+        (data->thole.scaling_coeff != 0. and data->thole.q1q2 != 0.);
+#endif
   }
+  m_combined_active_pair_mask = combined_mask;
+#ifdef ESPRESSO_THOLE
+  m_any_thole_configured = any_thole_configured;
+#endif
 }
 
 double InteractionsNonBonded::maximal_cutoff() const {

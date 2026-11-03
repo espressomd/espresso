@@ -50,7 +50,6 @@ namespace ScriptInterface::walberla {
 class EKFFT : public EKPoissonSolver {
 protected:
   std::unique_ptr<ResourceManager> m_resources_lock;
-  std::shared_ptr<LatticeWalberla> m_lattice;
   double m_conv_permittivity;
   bool m_gpu;
   bool m_single_precision;
@@ -97,7 +96,6 @@ public:
     m_lattice = get_value<decltype(m_lattice)>(args, "lattice");
     m_vtk_writers =
         get_value_or<decltype(m_vtk_writers)>(args, "vtk_writers", {});
-
     make_instance(args), m_resources_lock = std::make_unique<ResourceManager>();
     // MPI communicator is needed to destroy the FFT plans
     m_resources_lock->acquire_lock(::communication_environment->get_mpi_env());
@@ -123,6 +121,8 @@ public:
         {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
         {"shape", AutoParameter::read_only,
          [this]() { return m_instance->get_lattice().get_grid_dimensions(); }},
+        {"vtk_writers", AutoParameter::read_only,
+         [this]() { return serialize_vtk_writers(); }},
     });
   }
 

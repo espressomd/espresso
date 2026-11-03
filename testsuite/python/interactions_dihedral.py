@@ -89,6 +89,28 @@ class InteractionsBondedTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(f2), f2_ref, atol=tol)
             np.testing.assert_allclose(np.copy(f3), f3_ref, atol=tol)
 
+    def check_singularity(self):
+        p0 = self.system.part.by_id(0)
+        p1 = self.system.part.by_id(1)
+        p2 = self.system.part.by_id(2)
+        p3 = self.system.part.by_id(3)
+        p1.pos = [5., 5., 5.]
+        p2.pos = p1.pos + [1., 0., 0.]
+        p3.pos = p1.pos + [2., 0., 0.]
+        p0.pos = p1.pos + [-1., 0., 0.]
+        with self.assertRaisesRegex(Exception, "bond broken"):
+            self.system.analysis.energy()
+        with self.assertRaisesRegex(Exception, "bond broken"):
+            self.system.integrator.run(steps=0, recalc_forces=True)
+        with self.assertRaisesRegex(Exception, "bond broken"):
+            self.system.analysis.pressure_tensor()["bonded"]
+        # in the core, the dihedral bond did not contribute to the forces
+        f0, f1, f2, f3 = self.system.part.all().f
+        np.testing.assert_array_equal(np.copy(f0), np.zeros(3))
+        np.testing.assert_array_equal(np.copy(f1), np.zeros(3))
+        np.testing.assert_array_equal(np.copy(f2), np.zeros(3))
+        np.testing.assert_array_equal(np.copy(f3), np.zeros(3))
+
     def check_undefined_angle(self):
         p0 = self.system.part.by_id(0)
         p1 = self.system.part.by_id(1)
@@ -103,6 +125,32 @@ class InteractionsBondedTest(ut.TestCase):
         np.testing.assert_array_equal(np.copy(f1), np.zeros(3))
         np.testing.assert_array_equal(np.copy(f2), np.zeros(3))
         np.testing.assert_array_equal(np.copy(f3), np.zeros(3))
+
+    def check_pressure_tensor(self, tol=1e-12):
+        p0, p1, p2, p3 = self.system.part.all()
+        # p1 is the bond owner (reference particle)
+        # P_ij = 1/V * sum F_{1,k}_i * r_{1,k}_j
+        p_tensor_ref = (
+            np.outer(np.copy(p0.f), self.system.distance_vec(p1, p0))
+            + np.outer(np.copy(p2.f), self.system.distance_vec(p1, p2))
+            + np.outer(np.copy(p3.f), self.system.distance_vec(p1, p3))
+        ) / self.system.volume()
+        p_tensor_sim = self.system.analysis.pressure_tensor()["bonded"]
+        np.testing.assert_allclose(p_tensor_sim,
+                                   p_tensor_ref,
+                                   atol=tol)
+        np.testing.assert_allclose(self.system.analysis.pressure()["bonded"],
+                                   0.0,
+                                   atol=tol)
+        # consistency: trace / 3 == scalar pressure
+        np.testing.assert_allclose(np.trace(p_tensor_sim) / 3.,
+                                   self.system.analysis.pressure()["bonded"],
+                                   atol=tol)
+        # symmetry: dihedral angle is rotationally invariant, so
+        # sum_i r_i x F_i = 0, which implies p_ab = p_ba
+        np.testing.assert_allclose(p_tensor_sim,
+                                   p_tensor_sim.T,
+                                   atol=tol)
 
     # Test Dihedral Angle
     def test_dihedral(self):
@@ -133,8 +181,10 @@ class InteractionsBondedTest(ut.TestCase):
                         dh_k, dh_n, dh_phi0, p0.pos, p1.pos, p2.pos, p3.pos)
 
                     self.check_values(E_ref, forces_ref)
+                    self.check_pressure_tensor()
 
         self.check_undefined_angle()
+        self.check_singularity()
 
     # Test Tabulated Dihedral Angle
     @utx.skipIfMissingFeatures(["TABULATED"])
@@ -180,8 +230,10 @@ class InteractionsBondedTest(ut.TestCase):
                         forces_ref = None
 
                     self.check_values(E_ref, forces_ref)
+                    self.check_pressure_tensor()
 
         self.check_undefined_angle()
+        self.check_singularity()
 
 
 if __name__ == '__main__':

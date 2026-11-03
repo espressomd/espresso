@@ -1,6 +1,0 @@
---- CMakeLists.txt
-+++ CMakeLists.txt
-@@ -56,3 +56,2 @@ endforeach()
- if(Kokkos_ENABLE_CUDA)
--  kokkos_check(OPTIONS CUDA_LAMBDA)
- endif()

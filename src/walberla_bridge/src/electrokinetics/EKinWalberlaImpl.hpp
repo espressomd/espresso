@@ -25,6 +25,7 @@
 #include <field/FlagUID.h>
 #include <field/GhostLayerField.h>
 #include <field/communication/PackInfo.h>
+#include <field/iterators/IteratorMacros.h>
 #include <field/vtk/FlagFieldCellFilter.h>
 #include <field/vtk/VTKWriter.h>
 #include <stencil/D3Q27.h>
@@ -54,9 +55,11 @@
 #include <utils/Vector.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -585,8 +588,7 @@ private:
 
 protected:
   void integrate_vtk_writers() override {
-    for (auto const &it : m_vtk_auto) {
-      auto &vtk_handle = it.second;
+    for (auto const &vtk_handle : m_vtk_auto | std::views::values) {
       if (vtk_handle->enabled) {
         vtk::writeFiles(vtk_handle->ptr)();
         vtk_handle->execution_count++;
@@ -668,6 +670,10 @@ public:
   [[nodiscard]] std::optional<double>
   get_node_density(Utils::Vector3i const &node,
                    bool consider_ghosts = false) const override {
+    if (m_boundary_density->node_is_boundary(node)) {
+      return m_boundary_density->get_node_value_at_boundary(node);
+    }
+
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
 
     if (!bc)
@@ -699,10 +705,15 @@ public:
 #ifndef NDEBUG
           values_size += bci->numCells();
 #endif
-          auto kernel = [&values, &out](unsigned const block_index,
-                                        unsigned const local_index,
-                                        Utils::Vector3i const &) {
-            out[local_index] = double_c(values[block_index]);
+          auto kernel = [this, &values, &out](unsigned const block_index,
+                                              unsigned const local_index,
+                                              Utils::Vector3i const &node) {
+            if (m_boundary_density->node_is_boundary(node)) {
+              out[local_index] =
+                  m_boundary_density->get_node_value_at_boundary(node);
+            } else {
+              out[local_index] = double_c(values[block_index]);
+            }
           };
 
           copy_block_buffer(*bci, *ci, block_offset, lower_corner, kernel);
@@ -744,6 +755,10 @@ public:
   [[nodiscard]] std::optional<Utils::Vector3d>
   get_node_flux_vector(Utils::Vector3i const &node,
                        bool consider_ghosts = false) const override {
+    if (m_boundary_flux->node_is_boundary(node)) {
+      return to_vector3d(m_boundary_flux->get_node_value_at_boundary(node));
+    }
+
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
 
     if (!bc)
@@ -1086,9 +1101,12 @@ public:
   }
 
   void register_vtk_field_filters(walberla::vtk::VTKOutput &vtk_obj) override {
-    field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_density_id);
-    fluid_filter.addFlag(Boundary_flag);
-    vtk_obj.addCellExclusionFilter(fluid_filter);
+    field::FlagFieldCellFilter<FlagField> dens_filter(m_flag_field_density_id);
+    field::FlagFieldCellFilter<FlagField> flux_filter(m_flag_field_flux_id);
+    dens_filter.addFlag(Boundary_flag);
+    flux_filter.addFlag(Boundary_flag);
+    vtk_obj.addCellExclusionFilter(dens_filter);
+    vtk_obj.addCellExclusionFilter(flux_filter);
   }
 
 protected:
@@ -1155,6 +1173,38 @@ protected:
     }
   };
 
+  template <typename OutputType = float>
+  class BoundaryVTKWriter : public vtk::BlockCellDataWriter<OutputType, 1u> {
+  public:
+    using Base = vtk::BlockCellDataWriter<OutputType, 1u>;
+    using Base::evaluate;
+    BoundaryVTKWriter(ConstBlockDataID const &flag_field_id,
+                      std::string const &id, FlagUID const &boundary_flag)
+        : vtk::BlockCellDataWriter<OutputType, 1u>(id),
+          m_flag_field_id(flag_field_id), m_flag_field(nullptr),
+          m_boundary_flag(boundary_flag) {}
+
+  protected:
+    void configure() override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->block_);
+      m_flag_field = this->block_->template getData<FlagField>(m_flag_field_id);
+      m_boundary_flag_value = m_flag_field->getFlag(m_boundary_flag);
+    }
+
+    OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
+                        cell_idx_t const z, cell_idx_t const) override {
+      WALBERLA_ASSERT_NOT_NULLPTR(m_flag_field);
+      return m_flag_field->isFlagSet(x, y, z, m_boundary_flag_value)
+                 ? OutputType{1}
+                 : OutputType{0};
+    }
+
+    ConstBlockDataID const m_flag_field_id;
+    FlagField const *m_flag_field;
+    FlagUID const m_boundary_flag;
+    typename FlagField::flag_t m_boundary_flag_value;
+  };
+
 public:
   void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
                                   LatticeModel::units_map const &units,
@@ -1169,6 +1219,21 @@ public:
         for (auto &block : *blocks) {
           auto *density_field =
               block.template getData<DensityField>(m_density_field_id);
+
+          auto const offset = m_lattice->get_block_corner(block, true);
+          auto const *flag_field =
+              block.template getData<FlagField>(m_flag_field_density_id);
+          auto const boundary_flag = flag_field->getFlag(Boundary_flag);
+          WALBERLA_FOR_ALL_CELLS_XYZ(flag_field, {
+            if (flag_field->isFlagSet(x, y, z, boundary_flag)) {
+              Cell const global(offset[0] + x, offset[1] + y, offset[2] + z);
+              auto const density =
+                  m_boundary_density->get_node_value_at_boundary(global);
+              Cell const local(x, y, z);
+              ek::accessor::Scalar::set(density_field, density, local);
+            }
+          }) // WALBERLA_FOR_ALL_CELLS_XYZ
+
           auto const bci = density_field->xyzSize();
           density_writer->set_content(
               ek::accessor::Scalar::get(density_field, bci));
@@ -1176,6 +1241,7 @@ public:
               Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
         }
       };
+
       vtk_obj.addBeforeFunction(std::move(before_function));
       vtk_obj.addCellDataWriter(density_writer);
     }
@@ -1214,6 +1280,10 @@ public:
       };
       vtk_obj.addBeforeFunction(std::move(before_function));
       vtk_obj.addCellDataWriter(flux_writer);
+    }
+    if (flag_observables & static_cast<int>(EKOutputVTK::boundary)) {
+      vtk_obj.addCellDataWriter(make_shared<BoundaryVTKWriter<float>>(
+          m_flag_field_density_id, "boundary", Boundary_flag));
     }
   }
 

@@ -63,7 +63,7 @@ class EKTest:
             n_ghost_layers=1, agrid=self.AGRID)
 
         eksolver = espressomd.electrokinetics.EKNone(
-            lattice=lattice, tau=self.TAU)
+            lattice=lattice, tau=self.TAU, **self.ek_params)
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)
 

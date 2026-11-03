@@ -43,6 +43,7 @@
 #include <cassert>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <variant>
 
@@ -102,6 +103,12 @@ class EKContainer : public ObjectList<EKSpecies, EK::Container> {
         throw std::runtime_error(
             "Cannot mix single and double precision kernels");
       }
+      auto const tau_container = m_ek_container->get_tau();
+      auto const tau_species = get_value<double>(obj_ptr->get_parameter("tau"));
+      if (tau_species != tau_container) {
+        throw std::runtime_error(
+            "EK species and EK container must have the same tau");
+      }
       ek_throw_if_expired(obj_ptr->get_mpi_cart_comm_observer());
       m_ek_container->add(obj_ptr->get_ekinstance());
     });
@@ -140,7 +147,11 @@ class EKContainer : public ObjectList<EKSpecies, EK::Container> {
       solver = std::move(ptr);
     }
 #endif // ESPRESSO_WALBERLA_FFT
-    assert(solver.has_value());
+    if (not solver.has_value()) {
+      context()->parallel_try_catch([]() {
+        throw std::invalid_argument("EK solver is of the wrong type");
+      });
+    }
     return *solver;
   }
 
@@ -170,6 +181,8 @@ public:
          [this]() { return m_ek_reactions; }},
         {"is_active", AutoParameter::read_only,
          [this]() { return m_is_active; }},
+        {"gpu", AutoParameter::read_only,
+         [this]() { return m_ek_container->is_gpu(); }},
     });
   }
 
@@ -178,13 +191,16 @@ public:
   void do_construct(VariantMap const &params) override {
     m_is_active = false;
     auto const tau = get_value<double>(params, "tau");
-    context()->parallel_try_catch([tau]() {
+    context()->parallel_try_catch([&]() {
       if (tau <= 0.) {
         throw std::domain_error("Parameter 'tau' must be > 0");
       }
+      if (not params.contains("solver")) {
+        throw std::runtime_error("Parameter 'solver' is required; use EKNone "
+                                 "if all species are electrically neutral");
+      }
     });
-    m_poisson_solver = extract_solver(
-        params.contains("solver") ? params.at("solver") : Variant{none});
+    m_poisson_solver = extract_solver(params.at("solver"));
     m_ek_container = std::make_shared<::EK::EKWalberla::ek_container_type>(
         tau, std::visit(GetPoissonSolverCoreInstance{}, m_poisson_solver));
     m_ek_reactions = get_value<decltype(m_ek_reactions)>(params, "reactions");

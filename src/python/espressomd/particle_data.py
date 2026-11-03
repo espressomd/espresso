@@ -586,6 +586,7 @@ class ParticleHandle(ScriptInterfaceHelper):
             equations of motion and Langevin's equations of rotation.
 
         """
+        assert_features("VIRTUAL_SITES_RELATIVE")
         if isinstance(rel_to, ParticleHandle):
             rel_to = rel_to.id
         else:
@@ -616,7 +617,7 @@ class ParticleHandle(ScriptInterfaceHelper):
             Molecule to relate to (either molecule id or particle object from that molecule).
 
         """
-
+        assert_features("VIRTUAL_SITES_CENTER_OF_MASS")
         if isinstance(rel_to, ParticleHandle):
             rel_to = rel_to.mol_id
         else:

@@ -398,7 +398,7 @@ class DPDThermostat(ut.TestCase):
         np.testing.assert_array_almost_equal(np.copy(p3.f), 0.)
         system.constraints.remove(constraint)
 
-    def test_dpd_stress(self):
+    def test_dpd_pressure(self):
 
         def calc_omega(dist):
             return (1. / dist - 1. / r_cut) ** 2.0
@@ -435,11 +435,11 @@ class DPDThermostat(ut.TestCase):
 
             return f
 
-        def calc_stress(dist, vel_diff):
+        def calc_pressure(dist, vel_diff):
             force_pair = diss_force_1(dist, vel_diff) +\
                 diss_force_2(dist, vel_diff)
-            stress_pair = np.outer(dist, force_pair)
-            return stress_pair
+            pressure_pair = np.outer(dist, force_pair)
+            return pressure_pair
 
         n_part = 200
         r_cut = 1.0
@@ -453,36 +453,86 @@ class DPDThermostat(ut.TestCase):
             trans_weight_function=1, trans_gamma=gamma / 2.0, trans_r_cut=r_cut)
 
         pos = system.box_l * np.random.random((n_part, 3))
-        partcls = system.part.add(pos=pos)
+        vel = np.random.random((n_part, 3))
+        system.part.add(pos=pos, v=vel)
         system.integrator.run(10)
 
-        for kT in [0., 2.]:
-            system.thermostat.set_dpd(kT=kT, seed=3)
-            # run 1 integration step to get velocities
-            partcls.v = np.zeros((n_part, 3))
-            system.integrator.run(steps=1)
+        # test non-thermalized case
+        system.thermostat.set_dpd(kT=0, seed=3)
 
-            pairs = system.part.pairs()
+        pairs = system.part.pairs()
 
-            stress = np.zeros([3, 3])
+        pressure_ref = np.zeros([3, 3])
 
-            for pair in pairs:
-                dist = system.distance_vec(pair[0], pair[1])
-                if np.linalg.norm(dist) < r_cut:
-                    vel_diff = pair[1].v - pair[0].v
-                    stress += calc_stress(dist, vel_diff)
+        for pair in pairs:
+            dist = system.distance_vec(pair[0], pair[1])
+            if np.linalg.norm(dist) < r_cut:
+                vel_diff = pair[1].v - pair[0].v
+                pressure_ref += calc_pressure(dist, vel_diff)
 
-            stress /= system.volume()
+        pressure_ref /= system.volume()
 
-            dpd_stress = system.analysis.dpd_stress()
+        dpd_pressure = system.analysis.dpd_pressure()
 
-            dpd_obs = espressomd.observables.DPDStress()
-            obs_stress = dpd_obs.calculate()
-            pressure = system.analysis.pressure_tensor()["dpd"]
+        dpd_obs = espressomd.observables.DPDPressure()
+        obs_pressure = dpd_obs.calculate()
+        pressure = system.analysis.pressure_tensor()["dpd"]
 
-            np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)
-            np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)
-            np.testing.assert_array_almost_equal(np.copy(pressure), -stress)
+        np.testing.assert_array_almost_equal(
+            np.copy(dpd_pressure), pressure_ref)
+        np.testing.assert_array_almost_equal(
+            np.copy(obs_pressure), pressure_ref)
+        np.testing.assert_array_almost_equal(np.copy(pressure), pressure_ref)
+
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
+    def test_dpd_pressure_noise_statistics(self):
+        """
+        Thermalized DPD pressure: for a fixed pair with zero relative velocity
+        the pressure is pure noise. Check its mean (=0) and per-component
+        variance against the analytic fluctuation-dissipation result.
+        """
+        system = self.system
+        kT, gamma_r, gamma_t, r_cut = 2.0, 1.5, 0.7, 1.5
+        dt = system.time_step
+
+        system.thermostat.set_dpd(kT=kT, seed=42)
+        system.non_bonded_inter[0, 0].dpd.set_params(
+            weight_function=0, gamma=gamma_r, r_cut=r_cut,
+            trans_weight_function=0, trans_gamma=gamma_t, trans_r_cut=r_cut)
+
+        # both particles are fixed with zero velocity so v21 == 0 exactly and
+        # the geometry never changes; each run(1) only advances the RNG counter
+        d = np.array([0.5, 0.7, 0.9])  # |d| = sqrt(1.55) ~ 1.245 < r_cut
+        pos0 = np.array([5., 5., 5.])
+        system.part.add(pos=pos0, v=[0., 0., 0.], fix=[True, True, True])
+        system.part.add(pos=pos0 + d, v=[0., 0., 0.], fix=[True, True, True])
+
+        # analytic mean (0) and variance of the single-pair noise pressure:
+        #   pressure_ij = d_i * (M @ noise)_j / V,   M = a*P + b*I
+        #   Var(pressure_ij) = (d_i^2 / V^2) * s2 * ((A^2 - B^2)*dhat_j^2 + B^2)
+        # with omega = 1 (weight_function=0), A/B the radial/trans amplitudes,
+        # and noise components iid with variance s2 = 1/12.
+        V = system.volume()
+        s2 = 1. / 12.
+        A = np.sqrt(24. * kT * gamma_r / dt)  # radial amplitude (omega=1)
+        B = np.sqrt(24. * kT * gamma_t / dt)  # trans amplitude  (omega=1)
+        dhat = d / np.linalg.norm(d)
+        sum_Mjk2 = (A**2 - B**2) * dhat**2 + B**2  # length-3 over j
+        var_analytic = np.outer(d**2, sum_Mjk2) * (s2 / V**2)  # all > 0
+
+        N = 5000
+        samples = np.empty((N, 3, 3))
+        for n in range(N):
+            system.integrator.run(1)
+            samples[n] = system.analysis.dpd_pressure()
+
+        mean = samples.mean(axis=0)
+        var = samples.var(axis=0)
+        # (1) all 9 means ~ 0  (~6 sigma of the sample mean)
+        atol_mean = 6. * np.sqrt(var_analytic / N)
+        np.testing.assert_array_less(np.abs(mean), atol_mean)
+        # (2) all 9 variances ~ analytic
+        np.testing.assert_allclose(var, var_analytic, rtol=0.05)
 
     @utx.skipIfMissingFeatures("MASS")
     def test_momentum_conservation(self):
@@ -531,6 +581,38 @@ class DPDThermostat(ut.TestCase):
             system.integrator.run(0)
             np.testing.assert_allclose(np.copy(p1.f), ref_force)
             np.testing.assert_allclose(np.copy(p1.f), -np.copy(p2.f))
+
+    @utx.skipIfMissingFeatures(["DPD", "EXCLUSIONS"])
+    def test_dpd_pressure_excludes_excluded_pairs(self):
+        """Excluded pairs must not contribute to the DPD virial pressure.
+        """
+        system = self.system
+
+        gamma = 2.0
+        r_cut = 2.0
+        kT = 0.0  # zero temperature: no stochastic noise, purely dissipative
+
+        system.thermostat.set_dpd(kT=kT, seed=99)
+        system.non_bonded_inter[0, 0].dpd.set_params(
+            weight_function=0, gamma=gamma, r_cut=r_cut,
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=r_cut)
+
+        # Place two particles well within the DPD cutoff and give them
+        # different velocities so the dissipative force is non-zero.
+        p0 = system.part.add(pos=[5.0, 5.0, 5.0], type=0, v=[0.5, 0.0, 0.0])
+        p1 = system.part.add(pos=[5.0 + 1.0, 5.0, 5.0], type=0,
+                             v=[-0.5, 0.0, 0.0])
+
+        p0.add_exclusion(p1.id)
+
+        system.integrator.run(5)
+
+        pressure_tensor = system.analysis.pressure_tensor()
+        dpd_pressure = pressure_tensor["dpd"]
+
+        # The DPD pressure tensor must be zero: excluded pairs contribute
+        # no DPD force, so they must also contribute no DPD virial.
+        self.assertEqual(np.linalg.norm(dpd_pressure), 0.0)
 
 
 if __name__ == "__main__":

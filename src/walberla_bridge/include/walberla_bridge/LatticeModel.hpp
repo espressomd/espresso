@@ -67,12 +67,13 @@ public:
    *  @param base_folder      Path to the VTK folder
    *  @param prefix           Prefix of the VTK files
    *  @param force_pvtu       Force parallel unstructured grid format
+   *  @param include_boundaries Include boundary cells in VTK output
    */
   std::shared_ptr<VTKHandle>
   create_vtk(int delta_N, int initial_count, int flag_observables,
              units_map const &units_conversion, std::string const &identifier,
              std::string const &base_folder, std::string const &prefix,
-             bool force_pvtu);
+             bool force_pvtu, bool include_boundaries = false);
 
   /** @brief Write a VTK observable to disk.
    *

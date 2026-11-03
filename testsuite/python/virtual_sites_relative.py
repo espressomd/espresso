@@ -396,8 +396,8 @@ class VirtualSites(ut.TestCase):
 
         # expected pressure_tensor
         s_expected = 1. / system.volume() * (
-            np.outer(p1.ext_force, system.distance_vec(p1, p0))
-            + np.outer(p2.ext_force, system.distance_vec(p2, p0)))
+            np.outer(system.distance_vec(p1, p0), p1.ext_force)
+            + np.outer(system.distance_vec(p2, p0), p2.ext_force))
         np.testing.assert_allclose(
             pressure_tensor_total, s_expected, atol=1E-5)
         np.testing.assert_allclose(pressure_tensor_vs, s_expected, atol=1E-5)

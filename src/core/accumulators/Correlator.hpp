@@ -282,6 +282,9 @@ private:
   // compression functions
   compression_function compressA;
   compression_function compressB;
+
+  void compress_kernel(long lowest_level, long highest_level);
+  void correlate_kernel(long lowest_level, long highest_level);
 };
 
 } // namespace Accumulators

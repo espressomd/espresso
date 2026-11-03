@@ -21,6 +21,7 @@
 #include "ObservableStat.hpp"
 
 #include "core/BoxGeometry.hpp"
+#include "core/Observable_stat.hpp"
 #include "core/analysis/statistics.hpp"
 #include "core/analysis/statistics_chain.hpp"
 #include "core/cell_system/CellStructure.hpp"
@@ -135,6 +136,10 @@ Variant Analysis::do_call_method(std::string const &name,
     auto const local = system.particle_bond_energy(pid, bond_id, partners);
     return Utils::Mpi::reduce_optional(context()->get_comm(), local);
   }
+  if (name == "potential_energy") {
+    auto const &obs = get_system().calculate_energy();
+    return obs.accumulate(-(obs.kinetic_lin[0] + obs.kinetic_rot[0]));
+  }
   if (name == "particle_neighbor_pids") {
     auto &system = get_system();
     system.on_observable_calc();
@@ -149,8 +154,8 @@ Variant Analysis::do_call_method(std::string const &name,
     return make_unordered_map_of_variants(dict);
   }
 #ifdef ESPRESSO_DPD
-  if (name == "dpd_stress") {
-    auto const result = dpd_stress(get_system(), context()->get_comm());
+  if (name == "dpd_pressure") {
+    auto const result = dpd_pressure(get_system(), context()->get_comm());
     return result.as_vector();
   }
 #endif // ESPRESSO_DPD
@@ -167,13 +172,23 @@ Variant Analysis::do_call_method(std::string const &name,
   }
   if (name == "center_of_mass") {
     auto const p_type = get_value<int>(parameters, "p_type");
-    context()->parallel_try_catch([&]() { check_particle_type(p_type); });
-    auto const local = center_of_mass(get_system(), p_type);
-    return mpi_reduce_sum(context()->get_comm(), local).as_vector();
+    Variant result;
+    context()->parallel_try_catch([&]() {
+      // p_type == -1 is the sentinel for all (non-virtual) particles
+      if (p_type != -1) {
+        check_particle_type(p_type);
+      }
+      auto const local = center_of_mass(get_system(), p_type);
+      result = mpi_reduce_sum(context()->get_comm(), local).as_vector();
+    });
+    return result;
   }
   if (name == "angular_momentum") {
     auto const p_type = get_value<int>(parameters, "p_type");
-    context()->parallel_try_catch([&]() { check_particle_type(p_type); });
+    // p_type == -1 is the sentinel for all (non-virtual) particles
+    if (p_type != -1) {
+      context()->parallel_try_catch([&]() { check_particle_type(p_type); });
+    }
     auto const local = angular_momentum(get_system(), p_type);
     return mpi_reduce_sum(context()->get_comm(), local).as_vector();
   }
@@ -211,22 +226,36 @@ Variant Analysis::do_call_method(std::string const &name,
     auto const chain_length = get_value<int>(parameters, "chain_length");
     auto const n_chains = get_value<int>(parameters, "number_of_chains");
     check_topology(*system.cell_structure, chain_start, chain_length, n_chains);
+    context()->parallel_try_catch([&]() {
+      if (chain_length < 2) {
+        throw std::domain_error(
+            "Hydrodynamic radius is undefined for chains shorter than 2 beads");
+      }
+    });
     auto const result = calc_rh(system, chain_start, chain_length, n_chains);
     return std::vector<double>(result.begin(), result.end());
   }
   if (name == "gyration_tensor") {
     auto const p_types = get_value<std::vector<int>>(parameters, "p_types");
-    for (auto const p_type : p_types) {
-      context()->parallel_try_catch([&]() { check_particle_type(p_type); });
-    }
-    auto const mat = gyration_tensor(get_system(), p_types);
-    return std::vector<double>(mat.begin(), mat.end());
+    Variant result;
+    context()->parallel_try_catch([&]() {
+      for (auto const p_type : p_types) {
+        check_particle_type(p_type);
+      }
+      auto const mat = gyration_tensor(get_system(), p_types);
+      result = std::vector<double>(mat.begin(), mat.end());
+    });
+    return result;
   }
   if (name == "moment_of_inertia_matrix") {
     auto const p_type = get_value<int>(parameters, "p_type");
-    context()->parallel_try_catch([&]() { check_particle_type(p_type); });
-    auto const local = moment_of_inertia_matrix(get_system(), p_type);
-    return mpi_reduce_sum(context()->get_comm(), local).as_vector();
+    Variant result;
+    context()->parallel_try_catch([&]() {
+      check_particle_type(p_type);
+      auto const local = moment_of_inertia_matrix(get_system(), p_type);
+      result = mpi_reduce_sum(context()->get_comm(), local).as_vector();
+    });
+    return result;
   }
   if (name == "structure_factor") {
     auto const order = get_value<int>(parameters, "sf_order");
@@ -289,6 +318,10 @@ Variant Analysis::do_call_method(std::string const &name,
   }
   if (name == "calculate_pressure_tensor") {
     return m_obs_stat->do_call_method("calculate_pressure_tensor", {});
+  }
+  if (name == "_observable_stat_test_fallthrough") {
+    // this is only exposed for unit testing purposes
+    return m_obs_stat->do_call_method("unknown", {});
   }
 #ifdef ESPRESSO_NPT
   if (name == "get_instantaneous_pressure") {

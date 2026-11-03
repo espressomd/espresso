@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #if defined(ESPRESSO_P3M) || defined(ESPRESSO_DP3M)
 

@@ -66,6 +66,7 @@ std::unordered_map<std::string, int> const LBVTKHandle::obs_map = {
     {"density", static_cast<int>(OutputVTK::density)},
     {"velocity_vector", static_cast<int>(OutputVTK::velocity_vector)},
     {"pressure_tensor", static_cast<int>(OutputVTK::pressure_tensor)},
+    {"boundary", static_cast<int>(OutputVTK::boundary)},
 };
 
 Variant LBFluid::do_call_method(std::string const &name,

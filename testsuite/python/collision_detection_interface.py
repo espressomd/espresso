@@ -153,6 +153,10 @@ class CollisionDetection(ut.TestCase):
             self.set_coldet("glue_to_surface", part_type_to_attach_vs_to=-1)
         with self.assertRaisesRegex(ValueError, "type after gluing needs to be >=0"):
             self.set_coldet("glue_to_surface", part_type_after_glueing=-1)
+        with self.assertRaisesRegex(RuntimeError, "The bond type to be used for binding particle centers needs to be a pair bond"):
+            self.set_coldet("glue_to_surface", bond_centers=self.bond_angle)
+        with self.assertRaisesRegex(RuntimeError, "The bond type to be used for binding virtual sites needs to be a pair bond"):
+            self.set_coldet("glue_to_surface", bond_vs=self.bond_angle)
         # check if original parameters have been preserved
         self.check_stored_parameters("glue_to_surface", distance=0.5)
 

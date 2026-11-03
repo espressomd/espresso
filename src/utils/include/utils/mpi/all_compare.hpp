@@ -20,6 +20,8 @@
 #ifndef UTILS_MPI_ALL_COMPARED_HPP
 #define UTILS_MPI_ALL_COMPARED_HPP
 
+#include <functional>
+
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
 

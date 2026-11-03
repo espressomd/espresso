@@ -197,7 +197,7 @@ The bond breakage action is specified for individual bonds via the system
 Several modes are available:
 
 * ``"delete_bond"``: delete a bond from the first particle
-* ``"revert_bind_at_point_of_collision"``: delete a bond between the virtual site
+* ``"revert_bind_at_point_of_collision"``: delete bonds created by the :ref:`Bind at point of collision` protocol
 * ``"none"``: cancel an existing bond breakage specification
 
 For a pair bond, the breakage distance refers to the minimum image distance between the primary particle and its bond partner.

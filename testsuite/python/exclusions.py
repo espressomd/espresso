@@ -21,10 +21,12 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.electrostatics
 
+system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+
 
 @utx.skipIfMissingFeatures(['EXCLUSIONS'])
 class Exclusions(ut.TestCase):
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = system
 
     def setUp(self):
         self.system.box_l = 3 * [10]
@@ -34,6 +36,8 @@ class Exclusions(ut.TestCase):
     def tearDown(self):
         if espressomd.has_features("P3M"):
             self.system.electrostatics.clear()
+        if espressomd.has_features("LENNARD_JONES"):
+            self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
         self.system.part.clear()
 
     def test_add_remove(self):
@@ -160,6 +164,101 @@ class Exclusions(ut.TestCase):
                                pair_energy, places=7)
         self.assertAlmostEqual(self.system.analysis.pressure()[('coulomb', 0)],
                                pair_pressure, places=7)
+
+
+@utx.skipIfMissingFeatures(["EXCLUSIONS", "LENNARD_JONES"])
+class ExclusionsGhostPairTest(ut.TestCase):
+    system = system
+    n_nodes = system.cell_system.get_state()["n_nodes"]
+    # place the pair at the LJ minimum so the spurious contribution is
+    # exactly -epsilon = -1.0 (at r = sigma it would be 0 and invisible)
+    lj_min = 2.0**(1.0 / 6.0)
+
+    def setUp(self):
+        self.system.box_l = 3 * [10]
+        self.system.cell_system.skin = 0.4
+        self.system.time_step = 0.01
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0, cutoff=2.5, shift=0.0)
+        self.node_grid = self.system.cell_system.node_grid
+
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
+        self.system.cell_system.node_grid = self.node_grid
+
+    @ut.skipIf(n_nodes == 1, "only runs for 2+ MPI ranks (needs ghost layer)")
+    def test_excluded_pair_cross_rank_ghost(self):
+        """
+        Excluded pair on different MPI ranks, interacting only through a
+        cross-rank ghost image.  The ghost is rebuilt after the
+        exclusion was set, so it carries an empty exclusion list.
+        Since the pair is excluded, its contribution to the particle
+        short-range energy must be zero; on buggy HEAD ``do_nonbonded``
+        returns True for the (local, ghost) pair and the test fails
+        with -1.0.
+        """
+        # split the box along x so the pair straddles the rank boundary
+        self.system.cell_system.node_grid = [self.n_nodes, 1, 1]
+
+        box_l = self.system.box_l[0]
+        # minimum-image distance across the periodic x boundary
+        # = 0.5 + (lj_min - 0.5) = lj_min
+        pos_pair = ([0.5, 5.0, 5.0],
+                    [box_l - (self.lj_min - 0.5), 5.0, 5.0])
+        # far apart (min-image distance ~7 > cutoff): no interaction and
+        # no ghost of one particle in the other's neighborhood
+        pos_apart = ([2.5, 2.5, 5.0], [7.5, 7.5, 5.0])
+
+        p0 = self.system.part.add(pos=pos_pair[0], type=0)
+        p1 = self.system.part.add(pos=pos_pair[1], type=0)
+        self.system.integrator.run(0)
+
+        # sanity check: without exclusion the pair interacts through the
+        # boundary with E = -epsilon = -1
+        e_pair = self.system.analysis.particle_non_bonded_energy(p0)
+        self.assertAlmostEqual(e_pair, -1.0, delta=1e-10,
+                               msg="setup broken: pair not interacting")
+
+        # Register the exclusion while the particles are far apart, then
+        # move them back: the resort rebuilds the ghost copies through
+        # the ghost communicator, which does not transfer exclusion
+        # lists.  (Adding the exclusion while the ghost already exists
+        # would patch the ghost in place and hide the bug.)
+        p0.pos, p1.pos = pos_apart
+        self.system.integrator.run(0)
+        p0.add_exclusion(p1.id)
+        p0.pos, p1.pos = pos_pair
+        self.system.integrator.run(0)
+
+        # correct behavior: the excluded pair contributes nothing.
+        # On buggy HEAD do_nonbonded(local, ghost) returns True because
+        # the ghost carries an empty exclusion list, yielding -1.0.
+        for p in (p0, p1):
+            energy = self.system.analysis.particle_non_bonded_energy(p)
+            self.assertAlmostEqual(
+                energy, 0.0, delta=1e-10,
+                msg=f"excluded pair contributes {energy} to the short-range "
+                f"energy of particle {p.id} (expected 0): the exclusion "
+                "is ignored because the partner is a ghost with an empty "
+                "exclusion list (OR instead of AND in do_nonbonded())")
+
+    def test_excluded_local_pair_control(self):
+        """
+        Control: for a fully local excluded pair (both real particles in
+        the same cell neighborhood, no ghost involved) both one-sided
+        exclusion lists are populated, OR == AND, and the exclusion
+        works.  This passes even on buggy HEAD and pins the failure of
+        the ghost test on the OR combinator.
+        """
+        # separate along y so that under MPI (node grid split along x)
+        # both particles stay on the same rank, far from any boundary
+        p0 = self.system.part.add(pos=[2.5, 4.0, 5.0], type=0)
+        p1 = self.system.part.add(pos=[2.5, 4.0 + self.lj_min, 5.0], type=0)
+        p0.add_exclusion(p1.id)
+        self.system.integrator.run(0)
+        energy = self.system.analysis.particle_non_bonded_energy(p0)
+        self.assertAlmostEqual(energy, 0.0, delta=1e-10)
 
 
 if __name__ == "__main__":

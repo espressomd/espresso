@@ -9,14 +9,14 @@ permissions:
 
 jobs:
   deploy_docs:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     if: ${{ github.repository == 'espressomd/espresso' }}
     environment: deploy_documentation
     steps:
       - name: Install dependencies
         run: sudo apt-get install --no-install-recommends -y curl rsync ssh unzip make grep sed jq python3 pandoc
       - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.GH_PAGES_SSH_PRIVATE_KEY }}
       - name: Checkout

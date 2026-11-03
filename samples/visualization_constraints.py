@@ -67,31 +67,31 @@ if args.shape == "Wall":
 
 elif args.shape == "Sphere":
     system.constraints.add(shape=espressomd.shapes.Sphere(
-        center=[25, 25, 25], radius=15, direction=1),
-        particle_type=0, penetrable=True)
+        center=[25, 25, 25], radius=15, direction=-1),
+        particle_type=0, penetrable=False)
 
 elif args.shape == "Ellipsoid":
     system.constraints.add(shape=espressomd.shapes.Ellipsoid(
-        center=[25, 25, 25], a=25, b=15, direction=1),
-        particle_type=0, penetrable=True)
+        center=[25, 25, 25], a=15, b=25, direction=-1),
+        particle_type=0, penetrable=False)
 
 elif args.shape == "Cylinder":
     system.constraints.add(shape=espressomd.shapes.Cylinder(
-        center=[25] * 3, axis=[1, 0, 0], direction=1, radius=10, length=30),
+        center=[25] * 3, axis=[1, 0, 0], direction=-1, radius=10, length=40),
         particle_type=0,
-        penetrable=True)
+        penetrable=False)
 
 elif args.shape == "SpheroCylinder":
     system.constraints.add(
         shape=espressomd.shapes.SpheroCylinder(center=[25] * 3, axis=[1, 0, 0],
-                                               direction=1, radius=10, length=30),
+                                               direction=-1, radius=10, length=30),
         particle_type=0,
-        penetrable=True)
+        penetrable=False)
 
 elif args.shape == "SimplePore":
     system.constraints.add(shape=espressomd.shapes.SimplePore(
         center=[25, 25, 25], axis=[1, 0, 0], length=15, radius=12.5,
-        smoothing_radius=2), particle_type=0, penetrable=True)
+        smoothing_radius=2), particle_type=0, penetrable=False)
 
 elif args.shape == "Slitpore":
     system.constraints.add(shape=espressomd.shapes.Slitpore(
@@ -110,8 +110,8 @@ elif args.shape == "HollowConicalFrustum":
 elif args.shape == "Torus":
     system.constraints.add(
         shape=espressomd.shapes.Torus(center=[25] * 3, normal=[1, 1, 1],
-                                      direction=1, radius=15, tube_radius=6),
-        particle_type=0, penetrable=True)
+                                      direction=-1, radius=18, tube_radius=7),
+        particle_type=0, penetrable=False)
 
 else:
     raise ValueError(f"Unknown shape '{args.shape}'")
@@ -126,10 +126,10 @@ for i in range(100):
     system.part.add(pos=rpos, type=1)
 
 system.non_bonded_inter[1, 1].lennard_jones.set_params(
-    epsilon=1.0, sigma=5.0, cutoff=15.0, shift="auto")
+    epsilon=1.0, sigma=4.0, cutoff=15.0, shift="auto")
 
 system.non_bonded_inter[0, 1].lennard_jones.set_params(
-    epsilon=20.0, sigma=5.0, cutoff=20.0, shift="auto")
+    epsilon=10.0, sigma=4.0, cutoff=20.0, shift="auto")
 
 
 system.integrator.set_steepest_descent(f_max=10, gamma=1e-3,

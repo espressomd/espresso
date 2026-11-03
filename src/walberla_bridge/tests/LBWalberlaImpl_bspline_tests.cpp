@@ -184,7 +184,7 @@ BOOST_DATA_TEST_CASE(force_interpolation_ghosts, bdata::make(all_lbs()),
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) { // NOLINT(bugprone-exception-escape)
   int n_nodes;
   Vector3i mpi_shape{};
 

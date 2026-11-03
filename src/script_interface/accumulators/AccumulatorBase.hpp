@@ -27,6 +27,7 @@
 #include "core/system/System.hpp"
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -38,7 +39,13 @@ public:
   AccumulatorBase() {
     add_parameters({{"delta_N",
                      [this](const Variant &v) {
-                       accumulator()->delta_N() = get_value<int>(v);
+                       auto const delta_N = get_value<int>(v);
+                       context()->parallel_try_catch([&]() {
+                         if (delta_N < 1) {
+                           throw std::runtime_error("delta_N must be >= 1");
+                         }
+                       });
+                       accumulator()->delta_N() = delta_N;
                      },
                      [this]() { return accumulator()->delta_N(); }}});
   }

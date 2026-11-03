@@ -68,7 +68,14 @@ struct GlobalConfig {
 BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
 BOOST_AUTO_TEST_SUITE(suite)
 
+#if defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
 BOOST_TEST_DECORATOR(*utf::precondition(if_parallel_test()))
+#if defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic pop
+#endif
 BOOST_AUTO_TEST_CASE(parallel_exceptions) {
   boost::mpi::communicator world;
   auto callbacks =

@@ -68,24 +68,58 @@ Variant CodeInfo::do_call_method(std::string const &name, VariantMap const &) {
     return false;
 #endif
   }
+  if (name == "toolchain") {
+#define ESPRESSO_REGISTER_METADATA(name)                                       \
+  flat_map[#name] = serializer(ESPRESSO_##name);
+    VariantMap flat_map;
+    auto const serializer = [](std::string const value) {
+      Variant result = None{};
+      if (not value.empty()) {
+        result = value;
+      }
+      return result;
+    };
+    ESPRESSO_REGISTER_METADATA(CMAKE_C_COMPILER_ID)
+    ESPRESSO_REGISTER_METADATA(CMAKE_C_COMPILER_VERSION)
+    ESPRESSO_REGISTER_METADATA(CMAKE_CXX_COMPILER_ID)
+    ESPRESSO_REGISTER_METADATA(CMAKE_CXX_COMPILER_VERSION)
+    ESPRESSO_REGISTER_METADATA(CMAKE_CUDA_COMPILER_ID)
+    ESPRESSO_REGISTER_METADATA(CMAKE_CUDA_COMPILER_VERSION)
+    ESPRESSO_REGISTER_METADATA(CMAKE_CUDA_HOST_COMPILER_ID)
+    ESPRESSO_REGISTER_METADATA(CMAKE_CUDA_HOST_COMPILER_VERSION)
+    ESPRESSO_REGISTER_METADATA(OpenMP_VERSION)
+    ESPRESSO_REGISTER_METADATA(OpenMP_C_VERSION)
+    ESPRESSO_REGISTER_METADATA(OpenMP_CXX_VERSION)
+    ESPRESSO_REGISTER_METADATA(OpenMP_CUDA_VERSION)
+    ESPRESSO_REGISTER_METADATA(ESPRESSO_MPIEXEC_VENDOR)
+    ESPRESSO_REGISTER_METADATA(ESPRESSO_MPIEXEC_VERSION)
+    return flat_map;
+  }
   return {};
 }
 
-void check_features(std::vector<std::string> const &features) {
+std::string check_features_msg(std::vector<std::string> const &features) {
   auto const allowed = get_feature_set(FEATURES_ALL, NUM_FEATURES_ALL);
   auto const compiled_features = get_feature_set(FEATURES, NUM_FEATURES);
   std::vector<std::string> missing_features{};
   for (auto const &feature : features) {
     if (not allowed.contains(feature)) {
-      throw std::runtime_error("Unknown feature '" + feature + "'");
+      return "Unknown feature '" + feature + "'";
     }
     if (not compiled_features.contains(feature)) {
       missing_features.emplace_back(feature);
     }
   }
   if (not missing_features.empty()) {
-    throw std::runtime_error("Missing features " +
-                             boost::algorithm::join(missing_features, ", "));
+    return "Missing features " + boost::algorithm::join(missing_features, ", ");
+  }
+  return "";
+}
+
+void check_features(std::vector<std::string> const &features) {
+  auto const error_msg = check_features_msg(features);
+  if (not error_msg.empty()) {
+    throw std::runtime_error(error_msg);
   }
 }
 

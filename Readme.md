@@ -66,13 +66,14 @@ user guide, section [Installation](https://espressomd.github.io/doc/installation
 For most users, we recommend downloading the latest release version of ESPResSo.
 The [release page](https://github.com/espressomd/espresso/releases) shows all
 releases since 4.0. When choosing a release, we recommend the latest bugfix
-release in that line. For example, in the 4.2 line, choose 4.2.2.
+release in that line. For example, in the 5.0 line, choose 5.0.1.
 
 Quickstart:
 
 1. download the source code: one of the
    [stable releases](https://github.com/espressomd/espresso/releases)
-   (.tar.gz files before 2025) or the development version
+   (under section "Assets", select any archive named "source code",
+   or for releases before 2025, the signed .tar.gz file) or the development version
    (`git clone -b python https://github.com/espressomd/espresso.git`)
 2. install dependencies on
    [Ubuntu](https://espressomd.github.io/doc/installation.html#installing-requirements-on-ubuntu),

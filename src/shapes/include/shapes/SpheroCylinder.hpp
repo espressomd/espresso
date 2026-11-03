@@ -69,7 +69,7 @@ public:
 public:
   SpheroCylinder()
       : m_center({0.0, 0.0, 0.0}), m_axis({1.0, 0.0, 0.0}), m_rad(0),
-        m_length(0.0) {
+        m_length(0.0), m_direction(1.0) {
     precalc();
   }
 

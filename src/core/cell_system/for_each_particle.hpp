@@ -28,20 +28,23 @@
 
 #include <span>
 
-template <typename Callable>
-inline void
-CellStructure::parallel_for_each_particle_impl(std::span<Cell *const> cells,
-                                               Callable &f) const {
+inline void CellStructure::parallel_for_each_particle_impl(
+    std::span<Cell *const> cells, ParticleCallback auto &&f) const {
   if (cells.size() > 1) {
     Kokkos::parallel_for( // loop over cells
-        "for_each_local_particle", cells.size(), [&](auto cell_idx) {
+        "for_each_local_particle",
+        Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(std::size_t{0},
+                                                               cells.size()),
+        [&](auto cell_idx) {
           for (auto &p : cells[cell_idx]->particles())
             f(p);
         });
   } else if (cells.size() == 1) {
     auto &particles = cells.front()->particles();
     Kokkos::parallel_for( // loop over particles
-        "for_each_local_particle", particles.size(),
+        "for_each_local_particle",
+        Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
+            std::size_t{0}, particles.size()),
         [&](auto part_idx) { f(*(particles.begin() + part_idx)); });
   }
 }

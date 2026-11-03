@@ -58,6 +58,17 @@ struct Solver::Implementation {
   Implementation() : solver{} {}
 };
 
+namespace traits {
+
+template <class T> struct has_pressure : std::false_type {};
+template <> struct has_pressure<DipolarDirectSum> : std::true_type {};
+#ifdef ESPRESSO_DP3M
+template <> struct has_pressure<DipolarP3M> : std::true_type {};
+#endif
+// DLC: false_type for now
+
+} // namespace traits
+
 } // namespace Dipoles
 
 #endif // ESPRESSO_DIPOLES

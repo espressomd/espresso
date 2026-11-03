@@ -82,7 +82,7 @@ for i in range(N0):
 
 # use an exclusion radius of 0 to simulate an ideal gas
 RE = espressomd.reaction_methods.ReactionEnsemble(
-    kT=1, exclusion_range=0, seed=4)
+    kT=1., exclusion_range=0., seed=4, system=system)
 
 
 RE.add_reaction(

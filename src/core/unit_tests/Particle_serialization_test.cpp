@@ -142,9 +142,9 @@ struct NotSerializable {};
 
 class BitwiseSerializable {
   int const a = 1;
-  long double b = 2.l;
+  double b = 2.;
   int const c = 3;
-  long double d = 4.l;
+  double d = 4.;
 
   friend boost::serialization::access;
   template <class Archive> void serialize(Archive &ar, long int) {

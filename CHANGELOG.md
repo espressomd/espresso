@@ -12,6 +12,95 @@ or [Savannah](https://savannah.nongnu.org/projects/espressomd) until release 3.3
 
 ## [Unreleased]
 
+### Added functionality
+
+* The Lees-Edwards oscillatory shear protocol was extended to support exponential decay (#4966).
+
+### Changed requirements
+
+* OpenMP support is now mandatory (#5276). The Kokkos and Cabana libraries have become
+  hard dependencies. The CMake option `ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM`
+  introduced in 5.0.0 to enable OpenMP support at the user's discretion was removed.
+
+### Performance enhancements
+
+* The bond force calculation now leverages shared-memory parallelization (#5244).
+
+## [5.0.1] - 2026-05-29
+
+### Bug fixes
+
+* The Lees-Edwards shear velocity is now properly handled in the simulation
+  engine (#5282). A sign error was introduced in 5.0.0.
+* Electrokinetics unit conversion was fixed (#5304). This required introducing
+  a new parameter `tau` to `EKNone` and `EKFFT`. In previous ESPResSo releases,
+  the `tau` parameter was factored into the `prefactor` argument.
+* EK node and slice getters now return the imposed value for nodes with
+  boundary conditions (#5327).
+* EK GPU and EK CPU objects can no longer be mixed in the same EK container (#5327).
+* Dihedral bonds checkpointing was fixed (#5279). A regression introduced
+  in 5.0.0 prevented the checkpointing mechanism from reloading dihedral bonds.
+* Interpolation-based constraints built from a grid now properly check the
+  input grid is larger than the simulation box (#5324). This prevents
+  segmentation faults when the input grid is too small.
+* A few missing feature checks were added to particle property setters (#5326)
+  and thermostat setters (#5320).
+* Features in the `myconfig.hpp` file are now evaluated transitively (#5297).
+  All ESPResSo versions since 4.0.0 would only activate implied features up to
+  one degree of separation, leading to inconsistent feature activation.
+  For example, if feature A is requested in `myconfig.hpp`, and A depends on B,
+  and B depends on C, only A and B would be activated. This issue can be
+  encountered when a small number of high-level features are enabled in
+  `myconfig.hpp`, for example requesting magnetodynamics would activate dipoles
+  but not rotation, preventing ESPResSo from being compiled.
+  Starting with release 5.0.1, the entire dependency tree is evaluated.
+* Missing feature guards in the short-range loop were added (#5274).
+  Their absence prevented compiling ESPResSo in a build configured with
+  `-D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM=ON` and with a custom
+  `myconfig.hpp` file containing a small number of features.
+* Configuring ESPResSo with `-D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM=ON`
+  no longer enables hardware-specific optimizations as a side-effect (#5286).
+* Floating-point exceptions (FPE) instrumentation is now temporarily disabled
+  when calling third-party libraries known to raise FPE flags (#5286).
+  In addition, user-requested hardware-specific optimization flags that
+  introduce FPE as a side-effect of speculative execution are automatically
+  disabled when FPE instrumentation is enabled.
+* A source of undefined behavior that would cause a double free when ESPResSo was
+  built with the nvc++ compiler version up to and including 26.3 was resolved (#5302).
+* The VTK reader can now parse unstructured VTK files that contain boundaries (#5303).
+
+### Improved functionality
+
+* The Lees-Edwards boundary conditions restriction was lifted from the cluster
+  analysis function (#4965).
+* The ELC error formula now follows the original paper and allows for ELC
+  and ELCIC to tune to slightly larger summation limits (#5280).
+* The Electrokinetics `EKNone` solver is now available on the GPU (#5304).
+
+### Improved performance
+
+* The electrokinetics CPU kernels now support OpenMP (#5287).
+* The LB/EK GPU VTK writers now carry out a single CUDA memcopy per local
+  domain (#5283). This removes a performance regression introduced in 5.0.0.
+* The EK indexed reactions now support slice assignment (#5325).
+  This reduces the overhead of setting up indexed reactions on a GPU lattice.
+* The DPD pair force is now optimized for the standard ramps k=1 and k=2 (#5300).
+
+### Improved documentation
+
+* The user guide now better documents new features introduced in 5.0 (#5319, #5272).
+* A finite-size effect was removed from the GCMC tutorial (#5288).
+* The bibliography of the GCMC, Widom insertion, and TIP4P tutorials was improved (#5288).
+
+### Under the hood changes
+
+* A few harmless compiler diagnostics are now silenced (#5274, #5283, #5286).
+* NVHPC compiler toolchain support was improved (#5302, #5320).
+* The LB/EK GPU kernels are now compiled with OpenMP support (#5292).
+* Library hdf5 version 2.0 is now fully supported (#5296).
+* Library Kokkos is no longer built in-place with features deprecated
+  in Kokkos version 4.0 (#5313).
+
 ## [5.0.0] - 2026-02-26
 
 This is a major release. New features were added and deprecated features were removed.
@@ -170,7 +259,7 @@ Highlights of the release include:
 * The original LB classes `LBFluid` and `LBFluidGPU` were removed in
   favor of a unified `LBFluid` class for both CPU and GPU (#2701, #4726, #5230).
   Their arguments have also changed, e.g. `dens` became `density` and
-  `visc` became `viscosity`. The `pressure_tensor_neq` property was removed.
+  `visc` became `viscosity`.
 * The original EK class `Electrokinetics` was removed in favor of a unified
   `EKSpecies` class for both CPU and GPU (#2701, #4726, #5101, #5230).
 * Self-propelled particles (swimmers) have been completely re-implemented (#4745).
@@ -2244,7 +2333,8 @@ The following functionality is removed permanently:
 
 For older ESPResSo releases, see [`old/RELEASE_NOTES@bb2cd93`](https://github.com/espressomd/espresso/blob/bb2cd93/old/RELEASE_NOTES).
 
-[Unreleased]: https://github.com/espressomd/espresso/compare/5.0.0...HEAD
+[Unreleased]: https://github.com/espressomd/espresso/compare/5.0.1...HEAD
+[5.0.1]: https://github.com/espressomd/espresso/compare/5.0.0...5.0.1
 [5.0.0]: https://github.com/espressomd/espresso/compare/4.2.2...5.0.0
 [4.2.2]: https://github.com/espressomd/espresso/compare/4.2.1...4.2.2
 [4.2.1]: https://github.com/espressomd/espresso/compare/4.2.0...4.2.1

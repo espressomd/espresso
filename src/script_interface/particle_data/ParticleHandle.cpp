@@ -55,6 +55,7 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -68,18 +69,18 @@ namespace ScriptInterface {
 namespace Particles {
 
 #ifdef ESPRESSO_ROTATION
-static auto constexpr contradicting_arguments_quat = std::to_array<
-    std::array<std::string_view, 3>>({
-    {"dip", "dipm",
-     "Setting 'dip' is sufficient as it defines the scalar dipole moment."},
-    {"quat", "director",
-     "Setting 'quat' is sufficient as it defines the director."},
-    {"dip", "quat",
-     "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."},
-    {"dip", "director",
-     "Setting 'dip' would overwrite 'director'. Set 'director' and "
-     "'dipm' instead."},
-});
+static std::array<std::array<std::string_view, 3>,
+                  4> constexpr contradicting_arguments_quat{{
+    {{"dip", "dipm",
+      "Setting 'dip' is sufficient as it defines the scalar dipole moment."}},
+    {{"quat", "director",
+      "Setting 'quat' is sufficient as it defines the director."}},
+    {{"dip", "quat",
+      "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."}},
+    {{"dip", "director",
+      "Setting 'dip' would overwrite 'director'. Set 'director' and "
+      "'dipm' instead."}},
+}};
 
 static void sanity_checks_rotation(VariantMap const &params) {
   // if we are not constructing a particle from a checkpoint file,
@@ -179,6 +180,34 @@ void ParticleHandle::set_particle_property(T &(Particle::*setter)(),
       [&value, setter](Particle &p) { (p.*setter)() = get_value<T>(value); });
 }
 
+#ifdef ESPRESSO_EXCLUSIONS
+void ParticleHandle::set_exclusions(Variant const &value) {
+  std::vector<int> exclusion_list;
+  if (is_type<int>(value)) {
+    exclusion_list.emplace_back(get_value<int>(value));
+  } else {
+    exclusion_list = get_value<std::vector<int>>(value);
+  }
+  auto &cell_structure = get_cell_structure()->get_cell_structure();
+  context()->parallel_try_catch([&]() {
+    for (auto const pid : exclusion_list) {
+      particle_exclusion_sanity_checks(m_pid, pid, cell_structure,
+                                       context()->get_comm());
+    }
+  });
+  set_particle_property([&](Particle const &p) {
+    for (auto const pid : p.exclusions()) {
+      local_remove_exclusion(m_pid, pid, cell_structure);
+    }
+    for (auto const pid : exclusion_list) {
+      if (!p.has_exclusion(pid)) {
+        local_add_exclusion(m_pid, pid, cell_structure);
+      }
+    }
+  });
+}
+#endif // ESPRESSO_EXCLUSIONS
+
 ParticleHandle::ParticleHandle() {
   /* Warning: the order of particle property setters matters! Some properties
    * override each other, e.g. quat/director/dip or dip/dipm.
@@ -189,14 +218,12 @@ ParticleHandle::ParticleHandle() {
       {"id", AutoParameter::read_only, [this]() { return m_pid; }},
       {"type",
        [this](Variant const &value) {
-         auto const old_type = get_particle_property(&Particle::type);
          auto const new_type = get_value<int>(value);
          if (new_type < 0) {
            throw std::domain_error(
                error_msg("type", "must be an integer >= 0"));
          }
          get_system()->nonbonded_ias->make_particle_type_exist(new_type);
-         on_particle_type_change(m_pid, old_type, new_type);
          set_particle_property(&Particle::type, value);
        },
        [this]() { return get_particle_data(m_pid).type(); }},
@@ -584,32 +611,10 @@ Variant ParticleHandle::do_call_method(std::string const &name,
 #ifdef ESPRESSO_EXCLUSIONS
     // set exclusions
     if (params.contains("exclusions")) {
-      std::vector<int> exclusion_list;
-      if (is_type<int>(params.at("exclusions"))) {
-        exclusion_list.emplace_back(get_value<int>(params, "exclusions"));
-      } else {
-        exclusion_list = get_value<std::vector<int>>(params, "exclusions");
-      }
-      context()->parallel_try_catch([&]() {
-        auto &cell_structure = get_cell_structure()->get_cell_structure();
-        for (auto const pid : exclusion_list) {
-          particle_exclusion_sanity_checks(m_pid, pid, cell_structure,
-                                           context()->get_comm());
-        }
-      });
-      set_particle_property([this, &exclusion_list](Particle &p) {
-        auto &cell_structure = get_cell_structure()->get_cell_structure();
-        for (auto const pid : p.exclusions()) {
-          local_remove_exclusion(m_pid, pid, cell_structure);
-        }
-        for (auto const pid : exclusion_list) {
-          if (!p.has_exclusion(pid)) {
-            local_add_exclusion(m_pid, pid, cell_structure);
-          }
-        }
-      });
+      set_exclusions(params.at("exclusions"));
     }
 #endif // ESPRESSO_EXCLUSIONS
+    return {};
   }
   if (name == "get_bond_by_id") {
     if (not context()->is_head_node()) {
@@ -756,32 +761,10 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     });
     local_remove_exclusion(m_pid, other_pid, cell_structure);
     get_system()->on_particle_change();
+#ifdef ESPRESSO_EXCLUSIONS
   } else if (name == "set_exclusions") {
-    auto &cell_structure = get_cell_structure()->get_cell_structure();
-    std::vector<int> exclusion_list;
-    try {
-      auto const pid = get_value<int>(params, "p_ids");
-      exclusion_list.push_back(pid);
-    } catch (...) {
-      exclusion_list = get_value<std::vector<int>>(params, "p_ids");
-    }
-    context()->parallel_try_catch([&]() {
-      for (auto const pid : exclusion_list) {
-        particle_exclusion_sanity_checks(m_pid, pid, cell_structure,
-                                         context()->get_comm());
-      }
-    });
-    set_particle_property([this, &exclusion_list](Particle &p) {
-      auto &cell_structure = get_cell_structure()->get_cell_structure();
-      for (auto const pid : p.exclusions()) {
-        local_remove_exclusion(m_pid, pid, cell_structure);
-      }
-      for (auto const pid : exclusion_list) {
-        if (!p.has_exclusion(pid)) {
-          local_add_exclusion(m_pid, pid, cell_structure);
-        }
-      }
-    });
+    set_exclusions(params.at("p_ids"));
+#endif // ESPRESSO_EXCLUSIONS
   } else if (name == "get_exclusions") {
     if (not context()->is_head_node()) {
       return {};
@@ -874,7 +857,10 @@ void ParticleHandle::do_construct(VariantMap const &params) {
       /* clang-format off */
       // set particle properties (filter out read-only and deferred properties)
       std::set<std::string_view> const skip = {
-          "pos_folded", "pos", "id", "exclusions", "node", "image_box", "bonds",
+          "pos_folded", "pos", "id", "node", "image_box", "bonds",
+#ifdef ESPRESSO_EXCLUSIONS
+          "exclusions",
+#endif // ESPRESSO_EXCLUSIONS
           "lees_edwards_flag", "__cpt_sentinel",
       };
       /* clang-format on */
@@ -883,9 +869,22 @@ void ParticleHandle::do_construct(VariantMap const &params) {
           do_set_parameter(name, params.at(name));
         }
       }
+      for (auto const &name : params | std::views::keys) {
+        if (not skip.contains(name) and not name.starts_with('_') and
+            not has_parameter(name)) {
+          auto error_msg = "Unknown parameter '" + name + "' for particle.";
+          std::string hint = "Hint: a feature is probably not compiled in.";
+          throw std::invalid_argument(error_msg + " " + hint);
+        }
+      }
       if (not params.contains("type")) {
         do_set_parameter("type", 0);
       }
+#ifdef ESPRESSO_EXCLUSIONS
+      if (params.contains("exclusions")) {
+        do_call_method("set_exclusions", {{"p_ids", params.at("exclusions")}});
+      }
+#endif // ESPRESSO_EXCLUSIONS
     });
   } catch (...) {
     remove_particle(m_pid);

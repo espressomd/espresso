@@ -29,7 +29,7 @@
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "ParticleList.hpp"
-#include "ghosts.hpp"
+#include "ghosts/HaloPlan.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -85,20 +85,20 @@ struct RegularDecomposition : public ParticleDecomposition {
   std::vector<Cell> cells;
   std::vector<Cell *> m_local_cells;
   std::vector<Cell *> m_ghost_cells;
-  GhostCommunicator m_exchange_ghosts_comm;
-  GhostCommunicator m_collect_ghost_force_comm;
+  /**
+   * Topology-agnostic direct-neighbor halo plan (see @c make_halo_plan).
+   * Holds ParticleList pointers into this decomposition's cells.
+   * Value-copying this object leaves these pointers dangling.
+   * @todo make non-copyable or rebuild-on-copy.
+   */
+  GhostComm::HaloPlan m_halo_plan;
 
 public:
   RegularDecomposition(boost::mpi::communicator comm, double range,
                        BoxGeometry const &box_geo, LocalBox const &local_geo,
                        std::optional<std::pair<int, int>> fully_connected);
 
-  GhostCommunicator const &exchange_ghosts_comm() const override {
-    return m_exchange_ghosts_comm;
-  }
-  GhostCommunicator const &collect_ghost_force_comm() const override {
-    return m_collect_ghost_force_comm;
-  }
+  GhostComm::HaloPlan const *halo_plan() const override { return &m_halo_plan; }
 
   std::span<Cell *const> local_cells() const override { return m_local_cells; }
   std::span<Cell *const> ghost_cells() const override { return m_ghost_cells; }
@@ -132,19 +132,6 @@ private:
    *  decomposition.
    */
   void mark_cells();
-
-  /** Fill a communication cell pointer list. Fill the cell pointers of
-   *  all cells which are inside a rectangular subgrid of the 3D cell
-   *  grid starting from the
-   *  lower left corner @p lc up to the high top corner @p hc. The cell
-   *  pointer list @p part_lists must already be large enough.
-   *  \param part_lists  List of cell pointers to store the result.
-   *  \param lc          lower left corner of the subgrid.
-   *  \param hc          high up corner of the subgrid.
-   */
-  void fill_comm_cell_lists(ParticleList **part_lists,
-                            Utils::Vector3i const &lc,
-                            Utils::Vector3i const &hc);
 
   int calc_processor_min_num_cells() const;
 
@@ -226,10 +213,12 @@ private:
    */
   void init_cell_interactions();
 
-  /** Create communicators for cell structure regular decomposition (see \ref
-   *  GhostCommunicator).
+  /** @brief Build a direct-neighbor @ref GhostComm::HaloPlan.
+   *
+   *  Every one of the up-to-26 stencil neighbors is addressed as an explicit
+   *  peer (no axis-by-axis relay). The result is cached in @ref m_halo_plan.
    */
-  GhostCommunicator prepare_comm();
+  GhostComm::HaloPlan make_halo_plan();
 
   /** Maximal number of cells per node. In order to avoid memory
    *  problems due to the cell grid, one has to specify the maximal

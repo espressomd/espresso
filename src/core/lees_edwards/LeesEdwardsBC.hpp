@@ -41,12 +41,12 @@ struct LeesEdwardsBC {
 
     auto const le_plane_normal = static_cast<unsigned int>(shear_plane_normal);
     auto const le_direction = static_cast<unsigned int>(shear_direction);
-    auto const n_le_crossings =
-        std::round(res[le_plane_normal] * l_inv[le_plane_normal]);
-    if (n_le_crossings >= 1.)
+    auto const le_norm_frac = res[le_plane_normal] * l_inv[le_plane_normal];
+    if (le_norm_frac >= 0.5) {
       res[le_direction] -= pos_offset;
-    if (n_le_crossings <= -1.)
+    } else if (le_norm_frac <= -0.5) {
       res[le_direction] += pos_offset;
+    }
 
     for (auto const i : {0u, 1u, 2u}) {
       if (periodic[i]) {

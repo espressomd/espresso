@@ -427,7 +427,7 @@ To set up a COM virtual site:
        p1 = system.part.add(pos=[1., 2., 3.], mol_id=mol_id)
        p2 = system.part.add(pos=[6., 7., 8.], mol_id=mol_id)
 
-#. Place the COM virtual site -it can be at an arbitrary position-
+#. Place the COM virtual site (it can be at an arbitrary position)
    and relate it to the corresponding particles via the molecule ID ``mol_id``::
 
        vs_type = 1
@@ -463,7 +463,7 @@ Please note:
   that adding particles, virtual or non-virtual, without specifying ``mol_id`` results
   in the particles being initialized with the default value ``mol_id = 0``.
 - Applying forces to the COM virtual sites can be done explicitly via the
-  ``ext_force`` attribute of `~espressomd.particle_data.ParticleHandle`::
+  ``ext_force`` attribute of :class:`~espressomd.particle_data.ParticleHandle`::
 
        vs.ext_force = [100, 0, 0]
 
@@ -734,23 +734,13 @@ Particle number counting feature
 
 
 Knowing the number of particles of a certain type in simulations where
-particle numbers can fluctuate is of interest.
-Particle ids can be stored in a map for each individual type::
+particle numbers can fluctuate is of interest::
 
     import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
-    system.setup_type_map([_type])
     system.number_of_particles(_type)
 
-If you want to keep track of particle ids of a certain type you have to
-initialize the method by calling  ::
-
-    system.setup_type_map([_type])
-
-After that the system will keep track of particle ids of that type. Keeping
-track of particles of a given type is not enabled by default since it requires
-memory. The keyword ``number_of_particles`` as argument will return the number
-of particles which have the given type. For counting the number of particles
+For counting the number of particles
 of a given type you could also use
 :meth:`ParticleList.select() <espressomd.particle_data.ParticleList.select>` ::
 
@@ -763,9 +753,8 @@ of a given type you could also use
     print(len(system.part.select(type=2)))
 
 However calling ``select(type=type)`` results in looping over all particles,
-which is slow. In contrast, the system
-:meth:`~espressomd.system.System.number_of_particles` method can return the
-number of particles with that type.
+and creating temporary particle objects, which is slow. In contrast, the system
+:meth:`~espressomd.system.System.number_of_particles` method has low overhead.
 
 .. _Self-propelled swimmers:
 
@@ -838,8 +827,8 @@ and follow the swimmer while updating its orientation accordingly.
 |es| provides a helper function :func:`~espressomd.swimmer_helpers.add_dipole_particle` to set
 up the virtual particle with the correct distance, relative position and orientation::
 
-    import espressomd.swimmer_helpers.add_dipole_particle as add_dip
-    dipole = add_dip(system, swimmer, 2., 0, mode="pusher")
+    import espressomd.swimmer_helpers
+    dipole = espressomd.swimmer_helpers.add_dipole_particle(system, swimmer, 2., 0, mode="pusher")
 
 It creates pushers with the propulsion behind the swimmer and pullers with the
 propulsion in front of the swimmer.

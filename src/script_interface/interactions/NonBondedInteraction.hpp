@@ -54,6 +54,7 @@ class InteractionPotentialInterface
     : public AutoParameters<InteractionPotentialInterface<CoreIA>> {
 public:
   using CoreInteraction = CoreIA;
+  using CoreInteractionIAParamsPtr = CoreInteraction IA_parameters::*;
 
 protected:
   using BaseClass = AutoParameters<InteractionPotentialInterface<CoreIA>>;
@@ -69,7 +70,7 @@ protected:
   /** @brief Callback to notify changes to the interaction range. */
   std::weak_ptr<std::function<void()>> m_notify_non_bonded_ia_change;
   /** @brief Pointer to the corresponding member in a handle. */
-  virtual CoreInteraction IA_parameters::*get_ptr_offset() const = 0;
+  virtual CoreInteractionIAParamsPtr get_ptr_offset() const = 0;
   /** @brief Create a new instance using the constructor with range checks. */
   virtual void make_new_instance(VariantMap const &params) = 0;
   /** @brief Which parameter indicates whether the potential is inactive. */
@@ -152,7 +153,7 @@ public:
 #ifdef ESPRESSO_WCA
 class InteractionWCA : public InteractionPotentialInterface<::WCA_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::wca;
   }
 
@@ -188,7 +189,7 @@ public:
 #ifdef ESPRESSO_LENNARD_JONES
 class InteractionLJ : public InteractionPotentialInterface<::LJ_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::lj;
   }
 
@@ -229,7 +230,7 @@ private:
 class InteractionLJGen
     : public InteractionPotentialInterface<::LJGen_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::ljgen;
   }
 
@@ -285,7 +286,7 @@ private:
 class InteractionLJcos
     : public InteractionPotentialInterface<::LJcos_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::ljcos;
   }
 
@@ -312,7 +313,7 @@ private:
 class InteractionLJcos2
     : public InteractionPotentialInterface<::LJcos2_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::ljcos2;
   }
 
@@ -352,7 +353,7 @@ public:
 class InteractionHertzian
     : public InteractionPotentialInterface<::Hertzian_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::hertzian;
   }
 
@@ -378,7 +379,7 @@ private:
 class InteractionGaussian
     : public InteractionPotentialInterface<::Gaussian_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::gaussian;
   }
 
@@ -403,7 +404,7 @@ private:
 class InteractionBMHTF
     : public InteractionPotentialInterface<::BMHTF_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::bmhtf;
   }
 
@@ -432,7 +433,7 @@ private:
 class InteractionMorse
     : public InteractionPotentialInterface<::Morse_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::morse;
   }
 
@@ -459,7 +460,7 @@ private:
 class InteractionBuckingham
     : public InteractionPotentialInterface<::Buckingham_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::buckingham;
   }
 
@@ -489,7 +490,7 @@ private:
 class InteractionSoftSphere
     : public InteractionPotentialInterface<::SoftSphere_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::soft_sphere;
   }
 
@@ -515,7 +516,7 @@ private:
 #ifdef ESPRESSO_HAT
 class InteractionHat : public InteractionPotentialInterface<::Hat_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::hat;
   }
 
@@ -539,7 +540,7 @@ private:
 class InteractionGayBerne
     : public InteractionPotentialInterface<::GayBerne_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::gay_berne;
   }
 
@@ -571,7 +572,7 @@ private:
 class InteractionTabulated
     : public InteractionPotentialInterface<::TabulatedPotential> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::tab;
   }
 
@@ -609,7 +610,7 @@ public:
 #ifdef ESPRESSO_DPD
 class InteractionDPD : public InteractionPotentialInterface<::DPD_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::dpd;
   }
 
@@ -658,7 +659,7 @@ private:
 class InteractionThole
     : public InteractionPotentialInterface<::Thole_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::thole;
   }
 
@@ -685,7 +686,7 @@ private:
 class InteractionSmoothStep
     : public InteractionPotentialInterface<::SmoothStep_Parameters> {
 protected:
-  CoreInteraction IA_parameters::*get_ptr_offset() const override {
+  CoreInteractionIAParamsPtr get_ptr_offset() const override {
     return &::IA_parameters::smooth_step;
   }
 

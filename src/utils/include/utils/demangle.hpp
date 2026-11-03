@@ -22,6 +22,7 @@
 #include <boost/core/demangle.hpp>
 
 #include <string>
+#include <typeinfo>
 
 namespace Utils {
 /**

@@ -66,7 +66,7 @@ void NptIsoParameters::coulomb_dipole_sanity_checks(
 NptIsoParameters::NptIsoParameters(double ext_pressure, double piston,
                                    Utils::Vector<bool, 3> const &rescale,
                                    bool cubic_box)
-    : piston{piston}, inv_piston{piston}, p_ext{ext_pressure},
+    : piston{piston}, inv_piston{1. / piston}, p_ext{ext_pressure},
       cubic_box{cubic_box} {
 
   if (ext_pressure < 0.0) {

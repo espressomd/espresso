@@ -18,14 +18,15 @@
 #
 
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 import espressomd.reaction_methods
 
 
-class ConstantpHTest(ut.TestCase):
-
-    """Test the core implementation of the constant pH reaction ensemble."""
+@utx.skipIfMissingFeatures(["ELECTROSTATICS"])
+class Test(ut.TestCase):
+    """Test the constant pH reaction ensemble."""
 
     np.random.seed(42)
 
@@ -55,6 +56,7 @@ class ConstantpHTest(ut.TestCase):
             kT=1.0,
             exclusion_range=1,
             seed=44,
+            system=system,
             constant_pH=pH)
         RE.set_non_interacting_type(type=max(types.values()) + 1)
         RE.add_reaction(
@@ -68,7 +70,7 @@ class ConstantpHTest(ut.TestCase):
 
         # sampling
         alphas = []
-        for _ in range(80):
+        for _ in range(200):
             RE.reaction(steps=15)
             num_H = system.number_of_particles(type=types["H+"])
             num_HA = system.number_of_particles(type=types["HA"])

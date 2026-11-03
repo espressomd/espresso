@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import itertools
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
@@ -55,10 +56,10 @@ class EKDiffusiveFlux:
         ekspecies = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, kT=kT, valency=0.,
             diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
-            advection=False, tau=self.TAU, **self.lattice_params)
+            advection=False, tau=self.TAU, **self.ek_params)
 
         eksolver = espressomd.electrokinetics.EKNone(
-            lattice=lattice, tau=self.TAU)
+            lattice=lattice, tau=self.TAU, **self.ek_params)
 
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)
@@ -69,46 +70,44 @@ class EKDiffusiveFlux:
 
         self.system.integrator.run(1)
 
-        atol = 3e-9 if self.lattice_params["single_precision"] else 7e-12
+        atol = 3e-9 if self.ek_params["single_precision"] else 7e-12
 
         offset = np.array([-1, 0, 1])
         normalization_factor = 1.0 + 2. * np.sqrt(2) + 4.0 / 3.0 * np.sqrt(3)
-        for x in offset:
-            for y in offset:
-                for z in offset:
-                    direction = np.array([x, y, z])
-                    local_flux = np.array(ekspecies[direction + center].flux)
-                    dist = np.linalg.norm(direction)
-                    if dist > 0:
-                        ref_flux = direction / normalization_factor * \
-                            self.DIFFUSION_COEFFICIENT / dist / 2.0 / self.AGRID
-                        np.testing.assert_allclose(
-                            local_flux, ref_flux, rtol=0.0, atol=atol)
-                    else:
-                        np.testing.assert_allclose(
-                            local_flux, np.zeros(3), rtol=0.0, atol=2 * atol)
+        fluxes = np.copy(ekspecies[:, :, :].flux)
+        for direction in itertools.product(offset, repeat=3):
+            local_flux = fluxes[*(direction + center)]
+            dist = np.linalg.norm(direction)
+            if dist > 0:
+                ref_flux = direction / normalization_factor * \
+                    self.DIFFUSION_COEFFICIENT / dist / 2.0 / self.AGRID
+                np.testing.assert_allclose(
+                    local_flux, ref_flux, rtol=0.0, atol=atol)
+            else:
+                np.testing.assert_allclose(
+                    local_flux, np.zeros(3), rtol=0.0, atol=2 * atol)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKTestWalberlaDoublePrecisionCPU(EKDiffusiveFlux, ut.TestCase):
-    lattice_params = {"single_precision": False, "gpu": False}
+    ek_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKTestWalberlaSinglePrecisionCPU(EKDiffusiveFlux, ut.TestCase):
-    lattice_params = {"single_precision": True, "gpu": False}
+    ek_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 class EKTestWalberlaDoublePrecisionGPU(EKDiffusiveFlux, ut.TestCase):
-    lattice_params = {"single_precision": False, "gpu": True}
+    ek_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 class EKTestWalberlaSinglePrecisionGPU(EKDiffusiveFlux, ut.TestCase):
-    lattice_params = {"single_precision": True, "gpu": True}
+    ek_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

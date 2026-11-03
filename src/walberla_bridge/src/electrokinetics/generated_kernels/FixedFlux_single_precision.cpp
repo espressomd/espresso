@@ -37,7 +37,7 @@ namespace pystencils {
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) && !defined(__clang__)
 #pragma push
 #ifdef __NVCC_DIAG_PRAGMA_SUPPORT__
 #pragma nv_diag_suppress 177
@@ -170,7 +170,7 @@ static FUNC_PREFIX void fixedflux_single_precision_boundary_FixedFlux_single_pre
 #pragma GCC diagnostic pop
 #endif
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) && !defined(__clang__)
 #pragma pop
 #endif
 
