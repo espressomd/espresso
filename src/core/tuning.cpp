@@ -77,36 +77,26 @@ static void run_integration(System::System &system, int n_steps,
   }
 }
 
-static void run_full_force_calc(System::System &system, int reuse_forces) {
-  run_integration(system, 0, reuse_forces);
-}
-
 double benchmark_integration_step(System::System &system, int int_steps,
                                   bool with_integration) {
   Utils::Statistics::RunningAverage<double> running_average;
 
   // check if the system can be integrated with the current parameters;
   // this also computes the forces for the current positions
-  run_full_force_calc(system, INTEG_REUSE_FORCES_CONDITIONALLY);
+  run_integration(system, 0, INTEG_REUSE_FORCES_CONDITIONALLY);
 
-  if (with_integration) {
-    // measure the time of full integration steps: the particles move, so
-    // Verlet list updates and particle propagation are included; the forces
-    // from the previous step are reused at the start of each step
-    for (int i = 0; i < int_steps; i++) {
-      auto const tick = MPI_Wtime();
-      run_integration(system, 1, INTEG_REUSE_FORCES_CONDITIONALLY);
-      auto const tock = MPI_Wtime();
-      running_average.add_sample((tock - tick));
-    }
-  } else {
-    // measure force calculation time on fixed particle positions
-    for (int i = 0; i < int_steps; i++) {
-      auto const tick = MPI_Wtime();
-      run_full_force_calc(system, INTEG_REUSE_FORCES_NEVER);
-      auto const tock = MPI_Wtime();
-      running_average.add_sample((tock - tick));
-    }
+  // with integration, time full integration steps: the particles move, so
+  // Verlet list updates and particle propagation are included; the forces
+  // from the previous step are reused at the start of each step;
+  // otherwise, time the force calculation on fixed particle positions
+  auto const n_steps = with_integration ? 1 : 0;
+  auto const reuse_forces = with_integration ? INTEG_REUSE_FORCES_CONDITIONALLY
+                                             : INTEG_REUSE_FORCES_NEVER;
+  for (int i = 0; i < int_steps; i++) {
+    auto const tick = MPI_Wtime();
+    run_integration(system, n_steps, reuse_forces);
+    auto const tock = MPI_Wtime();
+    running_average.add_sample((tock - tick));
   }
 
   if (this_node == 0) {

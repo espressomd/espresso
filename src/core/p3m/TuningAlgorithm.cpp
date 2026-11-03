@@ -203,15 +203,31 @@ double TuningAlgorithm::get_mc_time(Utils::Vector3i const &mesh, int cao,
   m_logger->log_success(int_time, mesh[0], cao, r_cut_iL, tuned_alpha_L,
                         tuned_accuracy, rs_err, ks_err);
   increment_n_trials();
-  auto candidate = Parameters{};
-  candidate.mesh = mesh;
-  candidate.cao = cao;
-  candidate.alpha_L = tuned_alpha_L;
-  candidate.r_cut_iL = r_cut_iL;
-  candidate.accuracy = tuned_accuracy;
-  candidate.time = int_time;
-  record_candidate(candidate);
+  if (m_tune_skin) {
+    m_candidates.push_back(
+        {mesh, cao, tuned_alpha_L, r_cut_iL, tuned_accuracy, int_time});
+  }
   return int_time;
+}
+
+TuningAlgorithm::MeshScanStep
+TuningAlgorithm::update_mesh_scan(double trial_time, double time_best) {
+  if (trial_time > time_best * mesh_scan_relative_stop) {
+    ++m_n_slow_meshes;
+  } else {
+    m_n_slow_meshes = 0;
+  }
+  if (trial_time < time_best) {
+    reset_n_trials();
+    m_n_meshes_without_improvement = 0;
+    return MeshScanStep::new_optimum;
+  }
+  if (++m_n_meshes_without_improvement >= mesh_scan_max_without_improvement or
+      m_n_slow_meshes >= mesh_scan_patience or
+      get_n_trials() > max_n_consecutive_trials) {
+    return MeshScanStep::stop;
+  }
+  return MeshScanStep::keep_scanning;
 }
 
 TuningAlgorithm::Parameters
@@ -235,10 +251,9 @@ TuningAlgorithm::tune_skin_for_fastest_candidates() {
     // The skin is never larger than the interaction cutoff, and the
     // interaction range must stay below the limit of the cell system
     // (strictly below for directions shared by several MPI ranks).
-    auto const permissible_skin =
-        std::ranges::min(cell_structure.max_cutoff()) - max_cut;
     auto const max_skin =
-        std::min(max_cut, skin_tuning_safety_factor * permissible_skin);
+        std::min(max_cut, skin_tuning_safety_factor *
+                              m_system.get_max_permissible_skin());
     // the search does not start at a vanishing skin (Verlet list rebuild in
     // every step), which is rarely competitive: this only shifts the grid
     // of sampled skins towards the useful range

@@ -70,7 +70,9 @@ private:
   int m_timings;
   bool m_with_integration;
   bool m_tune_skin;
-  std::size_t m_n_trials;
+  std::size_t m_n_trials = 0ul;
+  int m_n_slow_meshes = 0;
+  int m_n_meshes_without_improvement = 0;
 
 protected:
   double m_prefactor;
@@ -138,11 +140,11 @@ protected:
   static auto constexpr skin_tuning_steps_factor = 10;
 
 public:
-  TuningAlgorithm(System::System &system, double prefactor, int timings,
-                  bool with_integration, bool tune_skin)
-      : m_system{system}, m_timings{timings},
-        m_with_integration{with_integration}, m_tune_skin{tune_skin},
-        m_n_trials{0ul}, m_prefactor{prefactor} {}
+  TuningAlgorithm(System::System &system, double prefactor,
+                  TuningParameters const &tuning)
+      : m_system{system}, m_timings{tuning.timings},
+        m_with_integration{tuning.with_integration},
+        m_tune_skin{tuning.tune_skin}, m_prefactor{prefactor} {}
 
   virtual ~TuningAlgorithm() = default;
 
@@ -237,10 +239,18 @@ protected:
   auto get_n_trials() { return m_n_trials; }
   void increment_n_trials() { ++m_n_trials; }
   void reset_n_trials() { m_n_trials = 0ul; }
-  /** @brief Record a parameter set that reached the requested accuracy. */
-  void record_candidate(Parameters const &candidate) {
-    m_candidates.push_back(candidate);
-  }
+
+  enum class MeshScanStep { new_optimum, keep_scanning, stop };
+  /**
+   * @brief Update the mesh scan stop criterion with a successful trial.
+   *
+   * The scan stops after @ref mesh_scan_patience consecutive slow meshes,
+   * after @ref mesh_scan_max_without_improvement meshes without a new
+   * optimum, or after @ref max_n_consecutive_trials trials without a new
+   * optimum.
+   */
+  MeshScanStep update_mesh_scan(double trial_time, double time_best);
+
   /**
    * @brief Tune the Verlet skin for the fastest recorded parameter sets.
    *
@@ -253,16 +263,16 @@ protected:
    */
   Parameters tune_skin_for_fastest_candidates();
 
-private:
-  std::vector<Parameters> m_candidates;
-
-protected:
   double get_m_time(Utils::Vector3i const &mesh, int &tuned_cao,
                     double &tuned_r_cut_iL, double &tuned_alpha_L,
                     double &tuned_accuracy);
   double get_mc_time(Utils::Vector3i const &mesh, int cao,
                      double &tuned_r_cut_iL, double &tuned_alpha_L,
                      double &tuned_accuracy);
+
+private:
+  /** @brief Parameter sets that reached the requested accuracy. */
+  std::vector<Parameters> m_candidates;
 };
 
 #endif // ESPRESSO_P3M or ESPRESSO_DP3M

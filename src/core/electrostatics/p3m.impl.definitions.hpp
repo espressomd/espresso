@@ -796,9 +796,8 @@ protected:
 public:
   CoulombTuningAlgorithm(System::System &system, auto &input_p3m,
                          double prefactor, TuningParameters const &tuning)
-      : TuningAlgorithm(system, prefactor, tuning.timings,
-                        tuning.with_integration, tuning.tune_skin),
-        p3m{input_p3m}, m_tune_limits{tuning.limits} {}
+      : TuningAlgorithm(system, prefactor, tuning), p3m{input_p3m},
+        m_tune_limits{tuning.limits} {}
 
   void on_solver_change() const override { m_system.on_coulomb_change(); }
 
@@ -967,8 +966,6 @@ public:
       }
     }
 
-    auto n_slow_meshes = 0;
-    auto n_meshes_without_improvement = 0;
     while (mesh_density <= m_mesh_density_max) {
       auto trial_params = TuningAlgorithm::Parameters{};
       trial_params.mesh = current_mesh;
@@ -986,21 +983,11 @@ public:
           m_r_cut_iL_max = trial_params.r_cut_iL;
         }
 
-        if (trial_time > time_best * mesh_scan_relative_stop) {
-          ++n_slow_meshes;
-        } else {
-          n_slow_meshes = 0;
-        }
-        if (trial_time < time_best) {
-          /* new optimum */
-          reset_n_trials();
-          n_meshes_without_improvement = 0;
+        auto const step = update_mesh_scan(trial_time, time_best);
+        if (step == MeshScanStep::new_optimum) {
           tuned_params = trial_params;
           time_best = tuned_params.time = trial_time;
-        } else if (++n_meshes_without_improvement >=
-                       mesh_scan_max_without_improvement or
-                   n_slow_meshes >= mesh_scan_patience or
-                   get_n_trials() > max_n_consecutive_trials) {
+        } else if (step == MeshScanStep::stop) {
           /* no hope of further optimisation */
           break;
         }

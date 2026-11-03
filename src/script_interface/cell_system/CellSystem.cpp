@@ -295,10 +295,11 @@ Variant CellSystem::do_call_method(std::string const &name,
       if (max_skin < min_skin) {
         throw std::domain_error("Parameter 'max_skin' must be >= 'min_skin'");
       }
-      if (adjust_max_skin and system.get_max_permissible_skin() < min_skin) {
+      auto const max_permissible_skin = system.get_max_permissible_skin();
+      if (adjust_max_skin and max_permissible_skin < min_skin) {
         throw std::domain_error(
             "Cannot tune the Verlet skin: the maximal permissible skin " +
-            std::to_string(system.get_max_permissible_skin()) +
+            std::to_string(max_permissible_skin) +
             " is smaller than 'min_skin'");
       }
     });

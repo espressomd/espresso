@@ -241,9 +241,6 @@ class P3M(ElectrostaticInteraction):
                 "Parameter 'tune_with_integration' has to be a boolean")
         if not utils.is_valid_type(params["tune_skin"], bool):
             raise TypeError("Parameter 'tune_skin' has to be a boolean")
-        if params["tune_skin"] and not params["tune_with_integration"]:
-            raise ValueError(
-                "Parameter 'tune_skin' requires 'tune_with_integration'")
         if (params["mesh"][0] % 2 != 0 and params["mesh"][0] != -1) or \
            (params["mesh"][1] % 2 != 0 and params["mesh"][1] != -1) or \
            (params["mesh"][2] % 2 != 0 and params["mesh"][2] != -1):

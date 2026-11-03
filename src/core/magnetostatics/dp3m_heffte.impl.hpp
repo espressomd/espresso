@@ -1127,9 +1127,8 @@ class DipolarTuningAlgorithm : public TuningAlgorithm {
 public:
   DipolarTuningAlgorithm(System::System &system, decltype(dp3m) &input_dp3m,
                          double prefactor, TuningParameters const &tuning)
-      : TuningAlgorithm(system, prefactor, tuning.timings,
-                        tuning.with_integration, tuning.tune_skin),
-        dp3m{input_dp3m}, m_tune_limits{tuning.limits} {}
+      : TuningAlgorithm(system, prefactor, tuning), dp3m{input_dp3m},
+        m_tune_limits{tuning.limits} {}
 
   P3MParameters &get_params() override { return dp3m.params; }
 
@@ -1209,8 +1208,6 @@ public:
   TuningAlgorithm::Parameters get_time() override {
     auto tuned_params = TuningAlgorithm::Parameters{};
     auto time_best = time_sentinel;
-    auto n_slow_meshes = 0;
-    auto n_meshes_without_improvement = 0;
     for (auto tmp_mesh = m_mesh_min; tmp_mesh <= m_mesh_max; tmp_mesh += 2) {
       auto trial_params = TuningAlgorithm::Parameters{};
       trial_params.mesh = Utils::Vector3i::broadcast(tmp_mesh);
@@ -1228,21 +1225,11 @@ public:
          everything else is slower */
       m_r_cut_iL_max = trial_params.r_cut_iL;
 
-      if (trial_time > time_best * mesh_scan_relative_stop) {
-        ++n_slow_meshes;
-      } else {
-        n_slow_meshes = 0;
-      }
-      if (trial_time < time_best) {
-        /* new optimum */
-        reset_n_trials();
-        n_meshes_without_improvement = 0;
+      auto const step = update_mesh_scan(trial_time, time_best);
+      if (step == MeshScanStep::new_optimum) {
         tuned_params = trial_params;
         time_best = tuned_params.time = trial_time;
-      } else if (++n_meshes_without_improvement >=
-                     mesh_scan_max_without_improvement or
-                 n_slow_meshes >= mesh_scan_patience or
-                 get_n_trials() > max_n_consecutive_trials) {
+      } else if (step == MeshScanStep::stop) {
         /* no hope of further optimisation */
         break;
       }

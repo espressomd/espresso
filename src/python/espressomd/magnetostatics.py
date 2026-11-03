@@ -178,9 +178,6 @@ class DipolarP3M(MagnetostaticInteraction):
                 "Parameter 'tune_with_integration' has to be a boolean")
         if not utils.is_valid_type(params["tune_skin"], bool):
             raise TypeError("Parameter 'tune_skin' has to be a boolean")
-        if params["tune_skin"] and not params["tune_with_integration"]:
-            raise ValueError(
-                "Parameter 'tune_skin' requires 'tune_with_integration'")
 
     def required_keys(self):
         return {"prefactor", "accuracy"}
