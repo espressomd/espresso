@@ -84,11 +84,10 @@ BOOST_AUTO_TEST_CASE(red_black_balance) {
   auto const global_index = [&](Cell const *cell) {
     auto const idx = static_cast<int>(cell - dd.cells.data());
     BOOST_REQUIRE(idx >= 0 and idx < static_cast<int>(dd.cells.size()));
-    Utils::Vector3i const ghost_pos{idx % dd.ghost_cell_grid[0],
-                                    (idx / dd.ghost_cell_grid[0]) %
-                                        dd.ghost_cell_grid[1],
-                                    idx / (dd.ghost_cell_grid[0] *
-                                           dd.ghost_cell_grid[1])};
+    Utils::Vector3i const ghost_pos{
+        idx % dd.ghost_cell_grid[0],
+        (idx / dd.ghost_cell_grid[0]) % dd.ghost_cell_grid[1],
+        idx / (dd.ghost_cell_grid[0] * dd.ghost_cell_grid[1])};
     Utils::Vector3i pos;
     for (auto i : {0u, 1u, 2u}) {
       pos[i] = (ghost_pos[i] - 1 + dd.cell_offset[i] + global_grid[i]) %
