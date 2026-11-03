@@ -212,15 +212,19 @@ double TuningAlgorithm::get_mc_time(Utils::Vector3i const &mesh, int cao,
 
 TuningAlgorithm::MeshScanStep
 TuningAlgorithm::update_mesh_scan(double trial_time, double time_best) {
+  if (trial_time < time_best) {
+    reset_n_trials();
+    m_n_slow_meshes = 0;
+    m_n_meshes_without_improvement = 0;
+    return MeshScanStep::new_optimum;
+  }
+  // time_best is a measured time here: the first trial is always a new
+  // optimum, so the sentinel (DBL_MAX) never enters the product below,
+  // which would overflow
   if (trial_time > time_best * mesh_scan_relative_stop) {
     ++m_n_slow_meshes;
   } else {
     m_n_slow_meshes = 0;
-  }
-  if (trial_time < time_best) {
-    reset_n_trials();
-    m_n_meshes_without_improvement = 0;
-    return MeshScanStep::new_optimum;
   }
   if (++m_n_meshes_without_improvement >= mesh_scan_max_without_improvement or
       m_n_slow_meshes >= mesh_scan_patience or
