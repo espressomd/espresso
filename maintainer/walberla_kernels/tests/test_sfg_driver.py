@@ -21,8 +21,10 @@ import contextlib
 import io
 import os
 import pathlib
+import re
 import stat
 import tempfile
+import types
 import unittest
 import unittest.mock
 import warnings
@@ -31,6 +33,7 @@ import lbmpy
 import pystencils as ps
 import sympy as sp
 import sweepgen.api
+from pystencilssfg.ir.entities import SfgKernelHandle
 from pystencils import DynamicType
 from pystencils.sympyextensions import tcast
 
@@ -273,6 +276,76 @@ class GenerateSweepTest(unittest.TestCase):
             "int64_t time_step)", header)
         self.assertIn("walberla::Vector3< int64_t >& block_offset()", header)
         self.assertNotIn("block_offset_0", header)
+
+
+class OrderedStatementsTest(unittest.TestCase):
+
+    def generate_source(self, field_names, scalar_names, vector_names=()):
+        """
+        Source of a toy sweep with the fields, scalars and vector
+        components created in the given order.
+        """
+        tmp = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
+        ctx = sfg_driver.CodegenContext("double", "cpu")
+        fields = ps.fields(
+            f"{', '.join(field_names)}: {ctx.data_type.c_string()}[3D]",
+            layout="fzyx")
+        scalars = [ps.TypedSymbol(name, ctx.data_type)
+                   for name in (*scalar_names, *vector_names)]
+        rhs = sum(f.center for f in fields[1:]) + sum(scalars)
+        assignments = [ps.Assignment(fields[0].center, rhs)]
+        with sfg_driver.KernelFileGenerator(
+                "Toy", ctx, tmp, "test.py") as sfg:
+            sfg_driver.generate_sweep(sfg, "Toy", assignments)
+        return (tmp / "Toy.cpp").read_text()
+
+    def test_name_ordered_set(self):
+        a, b, c = ps.fields("a, b, c: double[3D]")
+        ordered = sfg_driver.NameOrderedSet([c, a])
+        self.assertIsInstance(ordered, set)
+        self.assertEqual([f.name for f in ordered], ["a", "c"])
+        self.assertIn(a, ordered)
+        self.assertNotIn(b, ordered)
+        union = ordered | {b}
+        self.assertEqual(len(union), 3)
+        ordered.remove(a)
+        self.assertEqual([f.name for f in ordered], ["c"])
+
+    def test_fields_of_a_kernel_handle_are_sorted_by_name(self):
+        names = ["j", "c", "a", "h", "b", "i", "d", "g", "e", "f"]
+        fields = ps.fields(f"{', '.join(names)}: double[3D]")
+        handle = types.SimpleNamespace(_fields=set(fields))
+        result = SfgKernelHandle.fields.fget(handle)
+        self.assertIsInstance(result, sfg_driver.NameOrderedSet)
+        self.assertEqual([f.name for f in result], sorted(names))
+
+    def test_patch_is_idempotent(self):
+        original = SfgKernelHandle.fields
+        sfg_driver.order_generated_statements()
+        self.assertIs(SfgKernelHandle.fields, original)
+
+    def test_field_extractions_are_in_alphabetical_order(self):
+        source = self.generate_source(["e", "c", "a", "d", "b"], [])
+        extractions = re.findall(r"^ *.*_data_(\w+) \{", source, re.MULTILINE)
+        # the extractions of the run and of the runOnCellInterval overloads
+        self.assertEqual(extractions, 2 * list("abcde"))
+
+    def test_property_lines_are_in_alphabetical_order(self):
+        source = self.generate_source(
+            ["f", "g"],
+            ["s", "m", "c", "x", "a", "q", "b", "k", "z", "d", "p", "h"])
+        lines = re.findall(r"^ *const double (\w+) \{ this->properties_",
+                           source, re.MULTILINE)
+        self.assertEqual(lines, 2 * sorted("smcxaqbkzdph"))
+
+    def test_vector_component_lines_are_in_name_order(self):
+        source = self.generate_source(
+            ["f", "g"], [],
+            ["block_offset_2", "block_offset_0", "block_offset_1"])
+        lines = re.findall(r"^ *const \w+ (block_offset_\d) \{", source,
+                           re.MULTILINE)
+        self.assertEqual(lines, 2 * ["block_offset_0", "block_offset_1",
+                                     "block_offset_2"])
 
 
 class GenerateMainTest(unittest.TestCase):

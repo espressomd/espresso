@@ -57,6 +57,13 @@ The generators check the toolchain at startup
   which is read from the `GIT_TAG` in the top-level `CMakeLists.txt`; a
   mismatch aborts with the instruction to reinstall sweepgen.
 
+`sfg_driver.order_generated_statements()` replaces four internals, which are
+not a stable API: `SfgKernelHandle.fields`, `SfgKernelHandle.scalar_parameters`
+and `PostProcessingContext.live_variables` of pystencils-sfg, and
+`BlockforestParamExtraction.filter_params` of sweepgen (see "Generating
+kernels"). It relies on the way they are iterated; a renamed attribute fails at
+import, a change in the iteration shows up in the determinism tests.
+
 An internal API that an update removed or renamed makes the generators fail
 right away with an `ImportError` or `AttributeError`; changed behaviour shows
 up in the test suite and in the comparison of the regenerated kernels.
@@ -126,30 +133,27 @@ pystencils simplifies the conditions of their guarded stores.
 The generator doesn't let pystencils-sfg format the files, even if clang-format
 is on `PATH`, so the output doesn't depend on the environment.
 
-The output is deterministic, except for the order of the field-extraction
-statements in the `.cpp` and `.cu` files of the `init`, `vel_update`,
-`stream_collide_*`, `reaction_*`, `diffusive_flux*`, `advective_flux`,
-`continuity`, `friction_coupling` and `fixed_flux` kernels, which
-pystencils-sfg 0.3 does not keep stable between runs. All headers, the
-`field_accessors` kernels of the LB and of the EK and all files of the
-`pack_info_*`, `dynamic_ubb` and `dirichlet` kernels are byte-identical for
-any `PYTHONHASHSEED`. The stencil of the gradient of the diffusive flux
+The output is byte-identical between runs, for any `PYTHONHASHSEED`. sweepgen
+and pystencils-sfg write the extraction of the fields of a kernel, of its
+scalar properties and of the components of its vector properties in the
+iteration order of sets of fields and variables. The hash of these objects
+contains the hash of their data type, which depends on the address of its
+class, so the order would change between runs.
+`sfg_driver.order_generated_statements()` therefore makes these sets iterate
+by the names of their elements (`NameOrderedSet`) when the module is imported.
+The stencil of the gradient of the diffusive flux
 doesn't depend on the hash seed either (see "Flux sweeps of the
 electrokinetics").
 
 To check a regeneration against the committed files, run the generator and
-`format_kernels` in a scratch directory (`<scratch>`), then compare the
-headers byte by byte and the `.cpp` and `.cu` files as sorted lines
-(`<committed>` is the `generated_kernels` folder of the kernels):
+`format_kernels` in a scratch directory (`<scratch>`) and compare all the files
+with the ones in the `generated_kernels` folder of the kernels (`<committed>`):
 
 ```sh
-for f in <scratch>/*.h <scratch>/*.cuh; do
-  cmp "$f" "<committed>/$(basename "$f")"
-done
-for f in <scratch>/*.cpp <scratch>/*.cu; do
-  diff <(sort "$f") <(sort "<committed>/$(basename "$f")")
-done
+diff -r <scratch> <committed>
 ```
+
+The only difference is the `CMakeLists.txt` of the folder, which is not generated.
 
 ## Architecture
 

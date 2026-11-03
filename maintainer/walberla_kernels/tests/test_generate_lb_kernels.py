@@ -273,8 +273,7 @@ class GenerateLbKernelsTest(unittest.TestCase):
                 (stem, ("cpu", "avx", "cuda"), False, "h"))
 
     def test_sweep_output_is_deterministic(self):
-        # independent of the hash seed of the interpreter, except for the
-        # order of the field-extraction statements in the sources
+        # independent of the hash seed of the interpreter
         import generate_lb_kernels
         import sfg_driver
         kernels = ("stream_collide_thermalized", "stream_collide_athermal")
@@ -296,13 +295,8 @@ class GenerateLbKernelsTest(unittest.TestCase):
             * len(generate_lb_kernels.KERNELS[k].targets)
             for k in kernels))
         for name in names:
-            first, second = (
-                (output / name).read_text() for output in outputs)
-            if name.endswith(".h"):
-                self.assertEqual(first, second, name)
-            else:
-                self.assertEqual(sorted(first.splitlines()),
-                                 sorted(second.splitlines()), name)
+            self.assertEqual((outputs[0] / name).read_bytes(),
+                             (outputs[1] / name).read_bytes(), name)
 
     def test_duplicate_selections_generate_once(self):
         _, result = self.run_script(
@@ -433,14 +427,12 @@ class GenerateLbKernelsTest(unittest.TestCase):
         _, source = self.generate_one("vel_update", "UpdateVelFromPDF")
         self.assertIn("_data_force", source)
 
-    def test_reproducible_up_to_statement_order(self):
+    def test_reproducible(self):
         first, _ = self.run_script("--kernels", "init")
         second, _ = self.run_script("--kernels", "init")
         for path in first.iterdir():
-            self.assertEqual(
-                sorted(path.read_text().splitlines()),
-                sorted((second / path.name).read_text().splitlines()),
-                path.name)
+            self.assertEqual(path.read_bytes(),
+                             (second / path.name).read_bytes(), path.name)
 
 
 class UpdateRuleTest(unittest.TestCase):
