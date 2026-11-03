@@ -206,13 +206,6 @@ print(v.git_commit() or (v.friendly() + \"-\" + \"$2\"))"' \
              "'${PREBUILT_MODULE}'; recording the module name instead." >&2
         ESPRESSO_ID="prebuilt-${PREBUILT_MODULE}"
     fi
-
-    if ! bash -c 'source "$1" >/dev/null 2>&1 && module load "$2" >/dev/null 2>&1 &&
-            python3 -c "import pint"' \
-            _ "$PREBUILT_INIT" "$PREBUILT_MODULE" >/dev/null 2>&1; then
-        echo "Warning: 'pint' is not available in the pre-built Python;" \
-             "mc_acid_base_reservoir.py will fail. Exclude it with -n." >&2
-    fi
 fi
 
 # Determine final ReFrame action
@@ -371,6 +364,17 @@ if [ -n "$PREBUILT_MODULE" ]; then
     S_OPTS+=(-S "espresso_commit=${ESPRESSO_ID}")
     S_OPTS+=(-S "espresso_ref=${PREBUILT_MODULE}")
 fi
+
+# Build with the newest cmake module; reframe_config.py reads CMAKE_VERSION.
+CMAKE_VERSION="$(python3 "${SCRIPT_DIR}/find_newest_cmake_version.py")"
+case $? in
+    0) export CMAKE_VERSION
+       echo "Using cmake/${CMAKE_VERSION}" ;;
+    2) unset CMAKE_VERSION
+       echo "No module system found; assuming local execution." ;;
+    *) echo "Error: cannot determine the cmake version (see above)" >&2
+       exit 1 ;;
+esac
 
 # Run ReFrame
 reframe -C reframe_config.py \

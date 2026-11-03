@@ -20,6 +20,7 @@
 import os
 import shlex
 
+_cmake_version = os.environ.get("CMAKE_VERSION", "4.3.2")
 _prebuilt_init = os.environ.get("ESPRESSO_PREBUILT_INIT", "")
 _prebuilt_module = os.environ.get("ESPRESSO_PREBUILT_MODULE", "")
 if bool(_prebuilt_init) != bool(_prebuilt_module):
@@ -114,7 +115,7 @@ site_configuration = {
                 "openmpi/4.1.6",
                 "fftw/3.3.10",
                 "boost/1.84.0",
-                "cmake/4.3.2",
+                f"cmake/{_cmake_version}",
                 "python/3.12.9",
             ],
         },
