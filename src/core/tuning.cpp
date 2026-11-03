@@ -141,9 +141,9 @@ double System::get_max_permissible_skin() const {
   /* The maximal skin is the remainder from the required cutoff to
    * the maximal range that can be supported by the cell system, but
    * never larger than half the box size. */
-  return std::min(
-      std::ranges::min(cell_structure->max_cutoff()) - maximal_cutoff(),
-      0.5 * std::ranges::max(box_geo->length()));
+  return std::min(std::ranges::min(cell_structure->max_cutoff()) -
+                      maximal_cutoff(),
+                  0.5 * std::ranges::max(box_geo->length()));
 }
 
 void System::tune_verlet_skin(double min_skin, double max_skin, double tol,
