@@ -39,6 +39,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -51,14 +52,38 @@ static void set_particles_bonds(
     std::vector<std::vector<int>> const &all_bonds_ids,
     std::vector<std::vector<std::vector<int>>> const &all_bonds_partner_ids,
     ::CellStructure &cell_structure, ::System::System &system) {
+  std::unordered_set<int> const pid_set(pids.begin(), pids.end());
   for (std::size_t i = 0; i < pids.size(); ++i) {
     auto const pid = pids[i];
     auto const bonds_ids = all_bonds_ids[i];
     auto const bonds_partner_ids = all_bonds_partner_ids[i];
-    // Remove old bonds
+    // Remove old bonds. A primary entry is always safe to remove, since
+    // pid owns it. A mirror entry is only safe to remove if all of its
+    // participants are part of this bulk reassignment too, otherwise it
+    // belongs to a bond some untouched particle still owns. Removing it
+    // here matters when the primary owner is not visible on this rank
+    // (e.g. right after ::add_bond(), before the next resort), which
+    // would otherwise leak the mirror. This runs identically on every
+    // rank, and repeated ::remove_bond() calls are harmless no-ops.
     auto p = cell_structure.get_local_particle(pid);
-    if (p != nullptr and not p->is_ghost()) {
-      p->bonds().clear();
+    if (p != nullptr) {
+      std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
+      for (auto const bond_view : p->bonds()) {
+        auto const safe_to_remove =
+            bond_view.is_primary() or
+            std::ranges::all_of(bond_view.partner_ids(), [&](int other) {
+              return pid_set.contains(other);
+            });
+        if (not safe_to_remove) {
+          continue;
+        }
+        std::vector<int> ids = {pid};
+        std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));
+        bonds_to_remove.emplace_back(bond_view.bond_id(), std::move(ids));
+      }
+      for (auto const &[bond_id, ids] : bonds_to_remove) {
+        ::remove_bond(system, bond_id, ids);
+      }
     }
     // Add new bonds
     for (std::size_t j = 0; j < bonds_ids.size(); ++j) {

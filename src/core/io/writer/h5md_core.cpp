@@ -662,6 +662,11 @@ void File::write_connectivity(const ParticleRange &particles) {
   for (auto const &p : particles) {
     auto nbonds_local = static_cast<decltype(bond)::index>(bond.shape()[1]);
     for (auto const b : p.bonds()) {
+      // Only primary entries are written: mirror entries held by the
+      // partner particle would otherwise double every pair-bond edge.
+      if (not b.is_primary()) {
+        continue;
+      }
       auto const &partner_ids = b.partner_ids();
       if (partner_ids.size() == 1u) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);
