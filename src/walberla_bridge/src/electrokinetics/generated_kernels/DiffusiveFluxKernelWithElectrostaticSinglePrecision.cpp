@@ -151,6 +151,13 @@ void DiffusiveFluxKernelWithElectrostaticSinglePrecision::operator()(walberla::I
   walberla::field::GhostLayerField<float, 1> *density{block->template getData<walberla::field::GhostLayerField<float, 1>>(densityId)};
   walberla::field::GhostLayerField<float, 13> *flux{block->template getData<walberla::field::GhostLayerField<float, 13>>(fluxId)};
   walberla::field::GhostLayerField<float, 1> *potential{block->template getData<walberla::field::GhostLayerField<float, 1>>(potentialId)};
+  const float *RESTRICT const _data_density{density->dataAt(0, 0, 0, 0)};
+  const int64_t _size_density_0{int64_t(density->xSize())};
+  const int64_t _size_density_1{int64_t(density->ySize())};
+  const int64_t _size_density_2{int64_t(density->zSize())};
+  const int64_t _stride_density_0{int64_t(density->xStride())};
+  const int64_t _stride_density_1{int64_t(density->yStride())};
+  const int64_t _stride_density_2{int64_t(density->zStride())};
   float *RESTRICT const _data_flux{flux->dataAt(0, 0, 0, 0)};
   /* flux->xSize() == _size_flux_0 */
   /* flux->ySize() == _size_flux_1 */
@@ -167,20 +174,13 @@ void DiffusiveFluxKernelWithElectrostaticSinglePrecision::operator()(walberla::I
   const int64_t _stride_potential_0{int64_t(potential->xStride())};
   const int64_t _stride_potential_1{int64_t(potential->yStride())};
   const int64_t _stride_potential_2{int64_t(potential->zStride())};
-  const float *RESTRICT const _data_density{density->dataAt(0, 0, 0, 0)};
-  const int64_t _size_density_0{int64_t(density->xSize())};
-  const int64_t _size_density_1{int64_t(density->ySize())};
-  const int64_t _size_density_2{int64_t(density->zSize())};
-  const int64_t _stride_density_0{int64_t(density->xStride())};
-  const int64_t _stride_density_1{int64_t(density->yStride())};
-  const int64_t _stride_density_2{int64_t(density->zStride())};
-  const float valency{this->properties_.valency_};
   const float diffusion{this->properties_.diffusion_};
-  const float kT{this->properties_.kT_};
   walberla::Vector3<float> ext_efield{this->properties_.ext_efield_};
+  const float kT{this->properties_.kT_};
+  const float valency{this->properties_.valency_};
+  const float ext_efield_0{ext_efield[0]};
   const float ext_efield_1{ext_efield[1]};
   const float ext_efield_2{ext_efield[2]};
-  const float ext_efield_0{ext_efield[0]};
   walberla::pystencils::DiffusiveFluxKernelWithElectrostaticSinglePrecision_kernels::DiffusiveFluxKernelWithElectrostaticSinglePrecision(_data_density, _data_flux, _data_potential, _size_density_0, _size_density_1, _size_density_2, _stride_density_0, _stride_density_1, _stride_density_2, _stride_flux_0, _stride_flux_1, _stride_flux_2, _stride_flux_3, _stride_potential_0, _stride_potential_1, _stride_potential_2, diffusion, ext_efield_0, ext_efield_1, ext_efield_2, kT, valency);
 }
 
@@ -191,6 +191,13 @@ void DiffusiveFluxKernelWithElectrostaticSinglePrecision::runOnCellInterval(walb
   walberla::field::GhostLayerField<float, 1> *density{block->template getData<walberla::field::GhostLayerField<float, 1>>(densityId)};
   walberla::field::GhostLayerField<float, 13> *flux{block->template getData<walberla::field::GhostLayerField<float, 13>>(fluxId)};
   walberla::field::GhostLayerField<float, 1> *potential{block->template getData<walberla::field::GhostLayerField<float, 1>>(potentialId)};
+  const float *RESTRICT const _data_density{density->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int64_t _size_density_0{int64_t(ci.xSize())};
+  const int64_t _size_density_1{int64_t(ci.ySize())};
+  const int64_t _size_density_2{int64_t(ci.zSize())};
+  const int64_t _stride_density_0{int64_t(density->xStride())};
+  const int64_t _stride_density_1{int64_t(density->yStride())};
+  const int64_t _stride_density_2{int64_t(density->zStride())};
   float *RESTRICT const _data_flux{flux->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_flux_0 */
   /* ci.ySize() == _size_flux_1 */
@@ -207,20 +214,13 @@ void DiffusiveFluxKernelWithElectrostaticSinglePrecision::runOnCellInterval(walb
   const int64_t _stride_potential_0{int64_t(potential->xStride())};
   const int64_t _stride_potential_1{int64_t(potential->yStride())};
   const int64_t _stride_potential_2{int64_t(potential->zStride())};
-  const float *RESTRICT const _data_density{density->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  const int64_t _size_density_0{int64_t(ci.xSize())};
-  const int64_t _size_density_1{int64_t(ci.ySize())};
-  const int64_t _size_density_2{int64_t(ci.zSize())};
-  const int64_t _stride_density_0{int64_t(density->xStride())};
-  const int64_t _stride_density_1{int64_t(density->yStride())};
-  const int64_t _stride_density_2{int64_t(density->zStride())};
-  const float valency{this->properties_.valency_};
   const float diffusion{this->properties_.diffusion_};
-  const float kT{this->properties_.kT_};
   walberla::Vector3<float> ext_efield{this->properties_.ext_efield_};
+  const float kT{this->properties_.kT_};
+  const float valency{this->properties_.valency_};
+  const float ext_efield_0{ext_efield[0]};
   const float ext_efield_1{ext_efield[1]};
   const float ext_efield_2{ext_efield[2]};
-  const float ext_efield_0{ext_efield[0]};
   walberla::pystencils::DiffusiveFluxKernelWithElectrostaticSinglePrecision_kernels::DiffusiveFluxKernelWithElectrostaticSinglePrecision(_data_density, _data_flux, _data_potential, _size_density_0, _size_density_1, _size_density_2, _stride_density_0, _stride_density_1, _stride_density_2, _stride_flux_0, _stride_flux_1, _stride_flux_2, _stride_flux_3, _stride_potential_0, _stride_potential_1, _stride_potential_2, diffusion, ext_efield_0, ext_efield_1, ext_efield_2, kT, valency);
 }
 } // namespace walberla::pystencils

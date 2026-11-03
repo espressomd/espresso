@@ -74,11 +74,11 @@ void ReactionKernelBulk2DoublePrecisionCUDA::operator()(walberla::IBlock *block,
   const int64_t _stride_rho_1_0{int64_t(rho_1->xStride())};
   const int64_t _stride_rho_1_1{int64_t(rho_1->yStride())};
   const int64_t _stride_rho_1_2{int64_t(rho_1->zStride())};
-  const double stoech1{this->properties_.stoech1_};
-  const double stoech0{this->properties_.stoech0_};
-  const double order1{this->properties_.order1_};
   const double order0{this->properties_.order0_};
+  const double order1{this->properties_.order1_};
   const double rate_coefficient{this->properties_.rate_coefficient_};
+  const double stoech0{this->properties_.stoech0_};
+  const double stoech1{this->properties_.stoech1_};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};
@@ -121,11 +121,11 @@ void ReactionKernelBulk2DoublePrecisionCUDA::runOnCellInterval(walberla::IBlock 
   const int64_t _stride_rho_1_0{int64_t(rho_1->xStride())};
   const int64_t _stride_rho_1_1{int64_t(rho_1->yStride())};
   const int64_t _stride_rho_1_2{int64_t(rho_1->zStride())};
-  const double stoech1{this->properties_.stoech1_};
-  const double stoech0{this->properties_.stoech0_};
-  const double order1{this->properties_.order1_};
   const double order0{this->properties_.order0_};
+  const double order1{this->properties_.order1_};
   const double rate_coefficient{this->properties_.rate_coefficient_};
+  const double stoech0{this->properties_.stoech0_};
+  const double stoech1{this->properties_.stoech1_};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};

@@ -56,13 +56,6 @@ void ReactionKernelIndexed2DoublePrecision::operator()(walberla::IBlock *block) 
   std::span<walberla::v8::sweep::CellIdx> indexList_view{indexList.view(*block)};
   walberla::field::GhostLayerField<double, 1> *rho_0{block->template getData<walberla::field::GhostLayerField<double, 1>>(rho_0Id)};
   walberla::field::GhostLayerField<double, 1> *rho_1{block->template getData<walberla::field::GhostLayerField<double, 1>>(rho_1Id)};
-  double *RESTRICT const _data_rho_1{rho_1->dataAt(0, 0, 0, 0)};
-  /* rho_1->xSize() == _size_rho_1_0 */
-  /* rho_1->ySize() == _size_rho_1_1 */
-  /* rho_1->zSize() == _size_rho_1_2 */
-  const int64_t _stride_rho_1_0{int64_t(rho_1->xStride())};
-  const int64_t _stride_rho_1_1{int64_t(rho_1->yStride())};
-  const int64_t _stride_rho_1_2{int64_t(rho_1->zStride())};
   double *RESTRICT const _data_rho_0{rho_0->dataAt(0, 0, 0, 0)};
   /* rho_0->xSize() == _size_rho_0_0 */
   /* rho_0->ySize() == _size_rho_0_1 */
@@ -70,14 +63,21 @@ void ReactionKernelIndexed2DoublePrecision::operator()(walberla::IBlock *block) 
   const int64_t _stride_rho_0_0{int64_t(rho_0->xStride())};
   const int64_t _stride_rho_0_1{int64_t(rho_0->yStride())};
   const int64_t _stride_rho_0_2{int64_t(rho_0->zStride())};
+  double *RESTRICT const _data_rho_1{rho_1->dataAt(0, 0, 0, 0)};
+  /* rho_1->xSize() == _size_rho_1_0 */
+  /* rho_1->ySize() == _size_rho_1_1 */
+  /* rho_1->zSize() == _size_rho_1_2 */
+  const int64_t _stride_rho_1_0{int64_t(rho_1->xStride())};
+  const int64_t _stride_rho_1_1{int64_t(rho_1->yStride())};
+  const int64_t _stride_rho_1_2{int64_t(rho_1->zStride())};
   walberla::v8::sweep::CellIdx *RESTRICT const _data_indexList{indexList_view.data()};
   const int64_t _size_indexList_0{int64_t(indexList_view.size())};
   const int64_t _stride_indexList_0{int64_t(1)};
-  const double stoech1{this->properties_.stoech1_};
-  const double stoech0{this->properties_.stoech0_};
-  const double order1{this->properties_.order1_};
   const double order0{this->properties_.order0_};
+  const double order1{this->properties_.order1_};
   const double rate_coefficient{this->properties_.rate_coefficient_};
+  const double stoech0{this->properties_.stoech0_};
+  const double stoech1{this->properties_.stoech1_};
   walberla::pystencils::ReactionKernelIndexed2DoublePrecision_kernels::ReactionKernelIndexed2DoublePrecision(_data_indexList, _data_rho_0, _data_rho_1, _size_indexList_0, _stride_indexList_0, _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, _stride_rho_1_0, _stride_rho_1_1, _stride_rho_1_2, order0, order1, rate_coefficient, stoech0, stoech1);
 }
 } // namespace walberla::pystencils

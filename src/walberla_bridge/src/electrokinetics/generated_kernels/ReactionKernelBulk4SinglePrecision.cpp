@@ -62,20 +62,6 @@ void ReactionKernelBulk4SinglePrecision::operator()(walberla::IBlock *block) {
   walberla::field::GhostLayerField<float, 1> *rho_1{block->template getData<walberla::field::GhostLayerField<float, 1>>(rho_1Id)};
   walberla::field::GhostLayerField<float, 1> *rho_2{block->template getData<walberla::field::GhostLayerField<float, 1>>(rho_2Id)};
   walberla::field::GhostLayerField<float, 1> *rho_3{block->template getData<walberla::field::GhostLayerField<float, 1>>(rho_3Id)};
-  float *RESTRICT const _data_rho_3{rho_3->dataAt(0, 0, 0, 0)};
-  /* rho_3->xSize() == _size_rho_3_0 */
-  /* rho_3->ySize() == _size_rho_3_1 */
-  /* rho_3->zSize() == _size_rho_3_2 */
-  const int64_t _stride_rho_3_0{int64_t(rho_3->xStride())};
-  const int64_t _stride_rho_3_1{int64_t(rho_3->yStride())};
-  const int64_t _stride_rho_3_2{int64_t(rho_3->zStride())};
-  float *RESTRICT const _data_rho_2{rho_2->dataAt(0, 0, 0, 0)};
-  /* rho_2->xSize() == _size_rho_2_0 */
-  /* rho_2->ySize() == _size_rho_2_1 */
-  /* rho_2->zSize() == _size_rho_2_2 */
-  const int64_t _stride_rho_2_0{int64_t(rho_2->xStride())};
-  const int64_t _stride_rho_2_1{int64_t(rho_2->yStride())};
-  const int64_t _stride_rho_2_2{int64_t(rho_2->zStride())};
   float *RESTRICT const _data_rho_0{rho_0->dataAt(0, 0, 0, 0)};
   const int64_t _size_rho_0_0{int64_t(rho_0->xSize())};
   const int64_t _size_rho_0_1{int64_t(rho_0->ySize())};
@@ -90,15 +76,29 @@ void ReactionKernelBulk4SinglePrecision::operator()(walberla::IBlock *block) {
   const int64_t _stride_rho_1_0{int64_t(rho_1->xStride())};
   const int64_t _stride_rho_1_1{int64_t(rho_1->yStride())};
   const int64_t _stride_rho_1_2{int64_t(rho_1->zStride())};
-  const float stoech1{this->properties_.stoech1_};
+  float *RESTRICT const _data_rho_2{rho_2->dataAt(0, 0, 0, 0)};
+  /* rho_2->xSize() == _size_rho_2_0 */
+  /* rho_2->ySize() == _size_rho_2_1 */
+  /* rho_2->zSize() == _size_rho_2_2 */
+  const int64_t _stride_rho_2_0{int64_t(rho_2->xStride())};
+  const int64_t _stride_rho_2_1{int64_t(rho_2->yStride())};
+  const int64_t _stride_rho_2_2{int64_t(rho_2->zStride())};
+  float *RESTRICT const _data_rho_3{rho_3->dataAt(0, 0, 0, 0)};
+  /* rho_3->xSize() == _size_rho_3_0 */
+  /* rho_3->ySize() == _size_rho_3_1 */
+  /* rho_3->zSize() == _size_rho_3_2 */
+  const int64_t _stride_rho_3_0{int64_t(rho_3->xStride())};
+  const int64_t _stride_rho_3_1{int64_t(rho_3->yStride())};
+  const int64_t _stride_rho_3_2{int64_t(rho_3->zStride())};
+  const float order0{this->properties_.order0_};
   const float order1{this->properties_.order1_};
+  const float order2{this->properties_.order2_};
+  const float order3{this->properties_.order3_};
   const float rate_coefficient{this->properties_.rate_coefficient_};
   const float stoech0{this->properties_.stoech0_};
+  const float stoech1{this->properties_.stoech1_};
   const float stoech2{this->properties_.stoech2_};
-  const float order2{this->properties_.order2_};
   const float stoech3{this->properties_.stoech3_};
-  const float order3{this->properties_.order3_};
-  const float order0{this->properties_.order0_};
   walberla::pystencils::ReactionKernelBulk4SinglePrecision_kernels::ReactionKernelBulk4SinglePrecision(_data_rho_0, _data_rho_1, _data_rho_2, _data_rho_3, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, _stride_rho_1_0, _stride_rho_1_1, _stride_rho_1_2, _stride_rho_2_0, _stride_rho_2_1, _stride_rho_2_2, _stride_rho_3_0, _stride_rho_3_1, _stride_rho_3_2, order0, order1, order2, order3, rate_coefficient, stoech0, stoech1, stoech2, stoech3);
 }
 
@@ -111,20 +111,6 @@ void ReactionKernelBulk4SinglePrecision::runOnCellInterval(walberla::IBlock *blo
   walberla::field::GhostLayerField<float, 1> *rho_1{block->template getData<walberla::field::GhostLayerField<float, 1>>(rho_1Id)};
   walberla::field::GhostLayerField<float, 1> *rho_2{block->template getData<walberla::field::GhostLayerField<float, 1>>(rho_2Id)};
   walberla::field::GhostLayerField<float, 1> *rho_3{block->template getData<walberla::field::GhostLayerField<float, 1>>(rho_3Id)};
-  float *RESTRICT const _data_rho_3{rho_3->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  /* ci.xSize() == _size_rho_3_0 */
-  /* ci.ySize() == _size_rho_3_1 */
-  /* ci.zSize() == _size_rho_3_2 */
-  const int64_t _stride_rho_3_0{int64_t(rho_3->xStride())};
-  const int64_t _stride_rho_3_1{int64_t(rho_3->yStride())};
-  const int64_t _stride_rho_3_2{int64_t(rho_3->zStride())};
-  float *RESTRICT const _data_rho_2{rho_2->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  /* ci.xSize() == _size_rho_2_0 */
-  /* ci.ySize() == _size_rho_2_1 */
-  /* ci.zSize() == _size_rho_2_2 */
-  const int64_t _stride_rho_2_0{int64_t(rho_2->xStride())};
-  const int64_t _stride_rho_2_1{int64_t(rho_2->yStride())};
-  const int64_t _stride_rho_2_2{int64_t(rho_2->zStride())};
   float *RESTRICT const _data_rho_0{rho_0->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   const int64_t _size_rho_0_0{int64_t(ci.xSize())};
   const int64_t _size_rho_0_1{int64_t(ci.ySize())};
@@ -139,15 +125,29 @@ void ReactionKernelBulk4SinglePrecision::runOnCellInterval(walberla::IBlock *blo
   const int64_t _stride_rho_1_0{int64_t(rho_1->xStride())};
   const int64_t _stride_rho_1_1{int64_t(rho_1->yStride())};
   const int64_t _stride_rho_1_2{int64_t(rho_1->zStride())};
-  const float stoech1{this->properties_.stoech1_};
+  float *RESTRICT const _data_rho_2{rho_2->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_rho_2_0 */
+  /* ci.ySize() == _size_rho_2_1 */
+  /* ci.zSize() == _size_rho_2_2 */
+  const int64_t _stride_rho_2_0{int64_t(rho_2->xStride())};
+  const int64_t _stride_rho_2_1{int64_t(rho_2->yStride())};
+  const int64_t _stride_rho_2_2{int64_t(rho_2->zStride())};
+  float *RESTRICT const _data_rho_3{rho_3->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_rho_3_0 */
+  /* ci.ySize() == _size_rho_3_1 */
+  /* ci.zSize() == _size_rho_3_2 */
+  const int64_t _stride_rho_3_0{int64_t(rho_3->xStride())};
+  const int64_t _stride_rho_3_1{int64_t(rho_3->yStride())};
+  const int64_t _stride_rho_3_2{int64_t(rho_3->zStride())};
+  const float order0{this->properties_.order0_};
   const float order1{this->properties_.order1_};
+  const float order2{this->properties_.order2_};
+  const float order3{this->properties_.order3_};
   const float rate_coefficient{this->properties_.rate_coefficient_};
   const float stoech0{this->properties_.stoech0_};
+  const float stoech1{this->properties_.stoech1_};
   const float stoech2{this->properties_.stoech2_};
-  const float order2{this->properties_.order2_};
   const float stoech3{this->properties_.stoech3_};
-  const float order3{this->properties_.order3_};
-  const float order0{this->properties_.order0_};
   walberla::pystencils::ReactionKernelBulk4SinglePrecision_kernels::ReactionKernelBulk4SinglePrecision(_data_rho_0, _data_rho_1, _data_rho_2, _data_rho_3, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, _stride_rho_1_0, _stride_rho_1_1, _stride_rho_1_2, _stride_rho_2_0, _stride_rho_2_1, _stride_rho_2_2, _stride_rho_3_0, _stride_rho_3_1, _stride_rho_3_2, order0, order1, order2, order3, rate_coefficient, stoech0, stoech1, stoech2, stoech3);
 }
 } // namespace walberla::pystencils

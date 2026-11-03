@@ -71,9 +71,9 @@ void FrictionCouplingKernelSinglePrecision::operator()(walberla::IBlock *block) 
   const int64_t _stride_force_1{int64_t(force->yStride())};
   const int64_t _stride_force_2{int64_t(force->zStride())};
   const int64_t _stride_force_3{int64_t(force->fStride())};
-  const float lb_density{this->properties_.lb_density_};
-  const float kT{this->properties_.kT_};
   const float diffusion{this->properties_.diffusion_};
+  const float kT{this->properties_.kT_};
+  const float lb_density{this->properties_.lb_density_};
   walberla::pystencils::FrictionCouplingKernelSinglePrecision_kernels::FrictionCouplingKernelSinglePrecision(_data_flux, _data_force, _size_flux_0, _size_flux_1, _size_flux_2, _stride_flux_0, _stride_flux_1, _stride_flux_2, _stride_flux_3, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, diffusion, kT, lb_density);
 }
 
@@ -100,9 +100,9 @@ void FrictionCouplingKernelSinglePrecision::runOnCellInterval(walberla::IBlock *
   const int64_t _stride_force_1{int64_t(force->yStride())};
   const int64_t _stride_force_2{int64_t(force->zStride())};
   const int64_t _stride_force_3{int64_t(force->fStride())};
-  const float lb_density{this->properties_.lb_density_};
-  const float kT{this->properties_.kT_};
   const float diffusion{this->properties_.diffusion_};
+  const float kT{this->properties_.kT_};
+  const float lb_density{this->properties_.lb_density_};
   walberla::pystencils::FrictionCouplingKernelSinglePrecision_kernels::FrictionCouplingKernelSinglePrecision(_data_flux, _data_force, _size_flux_0, _size_flux_1, _size_flux_2, _stride_flux_0, _stride_flux_1, _stride_flux_2, _stride_flux_3, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, diffusion, kT, lb_density);
 }
 } // namespace walberla::pystencils

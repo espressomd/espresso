@@ -77,9 +77,9 @@ void FrictionCouplingKernelSinglePrecisionCUDA::operator()(walberla::IBlock *blo
   const int64_t _stride_force_1{int64_t(force->yStride())};
   const int64_t _stride_force_2{int64_t(force->zStride())};
   const int64_t _stride_force_3{int64_t(force->fStride())};
-  const float lb_density{this->properties_.lb_density_};
-  const float kT{this->properties_.kT_};
   const float diffusion{this->properties_.diffusion_};
+  const float kT{this->properties_.kT_};
+  const float lb_density{this->properties_.lb_density_};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};
@@ -126,9 +126,9 @@ void FrictionCouplingKernelSinglePrecisionCUDA::runOnCellInterval(walberla::IBlo
   const int64_t _stride_force_1{int64_t(force->yStride())};
   const int64_t _stride_force_2{int64_t(force->zStride())};
   const int64_t _stride_force_3{int64_t(force->fStride())};
-  const float lb_density{this->properties_.lb_density_};
-  const float kT{this->properties_.kT_};
   const float diffusion{this->properties_.diffusion_};
+  const float kT{this->properties_.kT_};
+  const float lb_density{this->properties_.lb_density_};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};

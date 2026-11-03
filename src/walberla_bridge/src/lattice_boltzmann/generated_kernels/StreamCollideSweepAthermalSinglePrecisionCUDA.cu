@@ -324,6 +324,15 @@ void StreamCollideSweepAthermalSinglePrecisionCUDA::operator()(walberla::IBlock 
   walberla::gpu::GPUField<float> *force{block->template getData<walberla::gpu::GPUField<float>>(forceId)};
   walberla::gpu::GPUField<float> *pdfs{block->template getData<walberla::gpu::GPUField<float>>(pdfsId)};
   walberla::gpu::GPUField<float> *pdfs_tmp{this->_getShadow_pdfs(pdfs)};
+  const float *RESTRICT const _data_force{force->dataAt(0, 0, 0, 0)};
+  const int64_t _size_force_0{int64_t(force->xSize())};
+  const int64_t _size_force_1{int64_t(force->ySize())};
+  const int64_t _size_force_2{int64_t(force->zSize())};
+  /* force->fSize() == 3 */
+  const int64_t _stride_force_0{int64_t(force->xStride())};
+  const int64_t _stride_force_1{int64_t(force->yStride())};
+  const int64_t _stride_force_2{int64_t(force->zStride())};
+  const int64_t _stride_force_3{int64_t(force->fStride())};
   const float *RESTRICT const _data_pdfs{pdfs->dataAt(0, 0, 0, 0)};
   /* pdfs->xSize() == _size_pdfs_0 */
   /* pdfs->ySize() == _size_pdfs_1 */
@@ -342,17 +351,8 @@ void StreamCollideSweepAthermalSinglePrecisionCUDA::operator()(walberla::IBlock 
   const int64_t _stride_pdfs_tmp_1{int64_t(pdfs_tmp->yStride())};
   const int64_t _stride_pdfs_tmp_2{int64_t(pdfs_tmp->zStride())};
   const int64_t _stride_pdfs_tmp_3{int64_t(pdfs_tmp->fStride())};
-  const float *RESTRICT const _data_force{force->dataAt(0, 0, 0, 0)};
-  const int64_t _size_force_0{int64_t(force->xSize())};
-  const int64_t _size_force_1{int64_t(force->ySize())};
-  const int64_t _size_force_2{int64_t(force->zSize())};
-  /* force->fSize() == 3 */
-  const int64_t _stride_force_0{int64_t(force->xStride())};
-  const int64_t _stride_force_1{int64_t(force->yStride())};
-  const int64_t _stride_force_2{int64_t(force->zStride())};
-  const int64_t _stride_force_3{int64_t(force->fStride())};
-  const float omega_even{this->properties_.omega_even_};
   const float omega_bulk{this->properties_.omega_bulk_};
+  const float omega_even{this->properties_.omega_even_};
   const float omega_odd{this->properties_.omega_odd_};
   const float omega_shear{this->properties_.omega_shear_};
   if (exTag.block().has_value()) {
@@ -385,6 +385,15 @@ void StreamCollideSweepAthermalSinglePrecisionCUDA::runOnCellInterval(walberla::
   walberla::gpu::GPUField<float> *force{block->template getData<walberla::gpu::GPUField<float>>(forceId)};
   walberla::gpu::GPUField<float> *pdfs{block->template getData<walberla::gpu::GPUField<float>>(pdfsId)};
   walberla::gpu::GPUField<float> *pdfs_tmp{this->_getShadow_pdfs(pdfs)};
+  const float *RESTRICT const _data_force{force->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  const int64_t _size_force_0{int64_t(ci.xSize())};
+  const int64_t _size_force_1{int64_t(ci.ySize())};
+  const int64_t _size_force_2{int64_t(ci.zSize())};
+  /* force->fSize() == 3 */
+  const int64_t _stride_force_0{int64_t(force->xStride())};
+  const int64_t _stride_force_1{int64_t(force->yStride())};
+  const int64_t _stride_force_2{int64_t(force->zStride())};
+  const int64_t _stride_force_3{int64_t(force->fStride())};
   const float *RESTRICT const _data_pdfs{pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   /* ci.xSize() == _size_pdfs_0 */
   /* ci.ySize() == _size_pdfs_1 */
@@ -403,17 +412,8 @@ void StreamCollideSweepAthermalSinglePrecisionCUDA::runOnCellInterval(walberla::
   const int64_t _stride_pdfs_tmp_1{int64_t(pdfs_tmp->yStride())};
   const int64_t _stride_pdfs_tmp_2{int64_t(pdfs_tmp->zStride())};
   const int64_t _stride_pdfs_tmp_3{int64_t(pdfs_tmp->fStride())};
-  const float *RESTRICT const _data_force{force->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  const int64_t _size_force_0{int64_t(ci.xSize())};
-  const int64_t _size_force_1{int64_t(ci.ySize())};
-  const int64_t _size_force_2{int64_t(ci.zSize())};
-  /* force->fSize() == 3 */
-  const int64_t _stride_force_0{int64_t(force->xStride())};
-  const int64_t _stride_force_1{int64_t(force->yStride())};
-  const int64_t _stride_force_2{int64_t(force->zStride())};
-  const int64_t _stride_force_3{int64_t(force->fStride())};
-  const float omega_even{this->properties_.omega_even_};
   const float omega_bulk{this->properties_.omega_bulk_};
+  const float omega_even{this->properties_.omega_even_};
   const float omega_odd{this->properties_.omega_odd_};
   const float omega_shear{this->properties_.omega_shear_};
   if (exTag.block().has_value()) {

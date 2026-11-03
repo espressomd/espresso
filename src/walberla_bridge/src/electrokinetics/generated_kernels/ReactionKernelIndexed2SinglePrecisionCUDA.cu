@@ -64,13 +64,6 @@ void ReactionKernelIndexed2SinglePrecisionCUDA::operator()(walberla::IBlock *blo
   std::span<walberla::v8::sweep::CellIdx> indexList_view{indexList.view(*block)};
   walberla::gpu::GPUField<float> *rho_0{block->template getData<walberla::gpu::GPUField<float>>(rho_0Id)};
   walberla::gpu::GPUField<float> *rho_1{block->template getData<walberla::gpu::GPUField<float>>(rho_1Id)};
-  float *RESTRICT const _data_rho_1{rho_1->dataAt(0, 0, 0, 0)};
-  /* rho_1->xSize() == _size_rho_1_0 */
-  /* rho_1->ySize() == _size_rho_1_1 */
-  /* rho_1->zSize() == _size_rho_1_2 */
-  const int64_t _stride_rho_1_0{int64_t(rho_1->xStride())};
-  const int64_t _stride_rho_1_1{int64_t(rho_1->yStride())};
-  const int64_t _stride_rho_1_2{int64_t(rho_1->zStride())};
   float *RESTRICT const _data_rho_0{rho_0->dataAt(0, 0, 0, 0)};
   /* rho_0->xSize() == _size_rho_0_0 */
   /* rho_0->ySize() == _size_rho_0_1 */
@@ -78,14 +71,21 @@ void ReactionKernelIndexed2SinglePrecisionCUDA::operator()(walberla::IBlock *blo
   const int64_t _stride_rho_0_0{int64_t(rho_0->xStride())};
   const int64_t _stride_rho_0_1{int64_t(rho_0->yStride())};
   const int64_t _stride_rho_0_2{int64_t(rho_0->zStride())};
+  float *RESTRICT const _data_rho_1{rho_1->dataAt(0, 0, 0, 0)};
+  /* rho_1->xSize() == _size_rho_1_0 */
+  /* rho_1->ySize() == _size_rho_1_1 */
+  /* rho_1->zSize() == _size_rho_1_2 */
+  const int64_t _stride_rho_1_0{int64_t(rho_1->xStride())};
+  const int64_t _stride_rho_1_1{int64_t(rho_1->yStride())};
+  const int64_t _stride_rho_1_2{int64_t(rho_1->zStride())};
   walberla::v8::sweep::CellIdx *RESTRICT const _data_indexList{indexList_view.data()};
   const int64_t _size_indexList_0{int64_t(indexList_view.size())};
   const int64_t _stride_indexList_0{int64_t(1)};
-  const float stoech1{this->properties_.stoech1_};
-  const float order1{this->properties_.order1_};
-  const float stoech0{this->properties_.stoech0_};
-  const float rate_coefficient{this->properties_.rate_coefficient_};
   const float order0{this->properties_.order0_};
+  const float order1{this->properties_.order1_};
+  const float rate_coefficient{this->properties_.rate_coefficient_};
+  const float stoech0{this->properties_.stoech0_};
+  const float stoech1{this->properties_.stoech1_};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};

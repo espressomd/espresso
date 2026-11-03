@@ -146,15 +146,6 @@ void AdvectiveFluxKernelDoublePrecision::operator()(walberla::IBlock *block) {
   walberla::field::GhostLayerField<double, 1> *density{block->template getData<walberla::field::GhostLayerField<double, 1>>(densityId)};
   walberla::field::GhostLayerField<double, 13> *flux{block->template getData<walberla::field::GhostLayerField<double, 13>>(fluxId)};
   walberla::field::GhostLayerField<double, 3> *velocity{block->template getData<walberla::field::GhostLayerField<double, 3>>(velocityId)};
-  const double *RESTRICT const _data_velocity{velocity->dataAt(0, 0, 0, 0)};
-  /* velocity->xSize() == _size_velocity_0 */
-  /* velocity->ySize() == _size_velocity_1 */
-  /* velocity->zSize() == _size_velocity_2 */
-  /* velocity->fSize() == 3 */
-  const int64_t _stride_velocity_0{int64_t(velocity->xStride())};
-  const int64_t _stride_velocity_1{int64_t(velocity->yStride())};
-  const int64_t _stride_velocity_2{int64_t(velocity->zStride())};
-  const int64_t _stride_velocity_3{int64_t(velocity->fStride())};
   const double *RESTRICT const _data_density{density->dataAt(0, 0, 0, 0)};
   const int64_t _size_density_0{int64_t(density->xSize())};
   const int64_t _size_density_1{int64_t(density->ySize())};
@@ -171,6 +162,15 @@ void AdvectiveFluxKernelDoublePrecision::operator()(walberla::IBlock *block) {
   const int64_t _stride_flux_1{int64_t(flux->yStride())};
   const int64_t _stride_flux_2{int64_t(flux->zStride())};
   const int64_t _stride_flux_3{int64_t(flux->fStride())};
+  const double *RESTRICT const _data_velocity{velocity->dataAt(0, 0, 0, 0)};
+  /* velocity->xSize() == _size_velocity_0 */
+  /* velocity->ySize() == _size_velocity_1 */
+  /* velocity->zSize() == _size_velocity_2 */
+  /* velocity->fSize() == 3 */
+  const int64_t _stride_velocity_0{int64_t(velocity->xStride())};
+  const int64_t _stride_velocity_1{int64_t(velocity->yStride())};
+  const int64_t _stride_velocity_2{int64_t(velocity->zStride())};
+  const int64_t _stride_velocity_3{int64_t(velocity->fStride())};
   walberla::pystencils::AdvectiveFluxKernelDoublePrecision_kernels::AdvectiveFluxKernelDoublePrecision(_data_density, _data_flux, _data_velocity, _size_density_0, _size_density_1, _size_density_2, _stride_density_0, _stride_density_1, _stride_density_2, _stride_flux_0, _stride_flux_1, _stride_flux_2, _stride_flux_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
 }
 
@@ -181,15 +181,6 @@ void AdvectiveFluxKernelDoublePrecision::runOnCellInterval(walberla::IBlock *blo
   walberla::field::GhostLayerField<double, 1> *density{block->template getData<walberla::field::GhostLayerField<double, 1>>(densityId)};
   walberla::field::GhostLayerField<double, 13> *flux{block->template getData<walberla::field::GhostLayerField<double, 13>>(fluxId)};
   walberla::field::GhostLayerField<double, 3> *velocity{block->template getData<walberla::field::GhostLayerField<double, 3>>(velocityId)};
-  const double *RESTRICT const _data_velocity{velocity->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
-  /* ci.xSize() == _size_velocity_0 */
-  /* ci.ySize() == _size_velocity_1 */
-  /* ci.zSize() == _size_velocity_2 */
-  /* velocity->fSize() == 3 */
-  const int64_t _stride_velocity_0{int64_t(velocity->xStride())};
-  const int64_t _stride_velocity_1{int64_t(velocity->yStride())};
-  const int64_t _stride_velocity_2{int64_t(velocity->zStride())};
-  const int64_t _stride_velocity_3{int64_t(velocity->fStride())};
   const double *RESTRICT const _data_density{density->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
   const int64_t _size_density_0{int64_t(ci.xSize())};
   const int64_t _size_density_1{int64_t(ci.ySize())};
@@ -206,6 +197,15 @@ void AdvectiveFluxKernelDoublePrecision::runOnCellInterval(walberla::IBlock *blo
   const int64_t _stride_flux_1{int64_t(flux->yStride())};
   const int64_t _stride_flux_2{int64_t(flux->zStride())};
   const int64_t _stride_flux_3{int64_t(flux->fStride())};
+  const double *RESTRICT const _data_velocity{velocity->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0)};
+  /* ci.xSize() == _size_velocity_0 */
+  /* ci.ySize() == _size_velocity_1 */
+  /* ci.zSize() == _size_velocity_2 */
+  /* velocity->fSize() == 3 */
+  const int64_t _stride_velocity_0{int64_t(velocity->xStride())};
+  const int64_t _stride_velocity_1{int64_t(velocity->yStride())};
+  const int64_t _stride_velocity_2{int64_t(velocity->zStride())};
+  const int64_t _stride_velocity_3{int64_t(velocity->fStride())};
   walberla::pystencils::AdvectiveFluxKernelDoublePrecision_kernels::AdvectiveFluxKernelDoublePrecision(_data_density, _data_flux, _data_velocity, _size_density_0, _size_density_1, _size_density_2, _stride_density_0, _stride_density_1, _stride_density_2, _stride_flux_0, _stride_flux_1, _stride_flux_2, _stride_flux_3, _stride_velocity_0, _stride_velocity_1, _stride_velocity_2, _stride_velocity_3);
 }
 } // namespace walberla::pystencils

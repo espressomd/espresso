@@ -183,16 +183,16 @@ void DiffusiveFluxKernelThermalizedDoublePrecisionCUDA::operator()(walberla::IBl
   const int64_t _stride_flux_1{int64_t(flux->yStride())};
   const int64_t _stride_flux_2{int64_t(flux->zStride())};
   const int64_t _stride_flux_3{int64_t(flux->fStride())};
-  walberla::Vector3<int64_t> grid_size{this->properties_.grid_size_};
-  const int64_t time_step{this->properties_.time_step_};
-  const double diffusion{this->properties_.diffusion_};
   walberla::Vector3<int64_t> block_offset{this->properties_.block_offset_};
+  const double diffusion{this->properties_.diffusion_};
+  walberla::Vector3<int64_t> grid_size{this->properties_.grid_size_};
   const int64_t seed{this->properties_.seed_};
+  const int64_t time_step{this->properties_.time_step_};
   const int64_t block_offset_0{block_offset[0]};
-  const int64_t block_offset_2{block_offset[2]};
   const int64_t block_offset_1{block_offset[1]};
-  const int64_t grid_size_1{grid_size[1]};
+  const int64_t block_offset_2{block_offset[2]};
   const int64_t grid_size_0{grid_size[0]};
+  const int64_t grid_size_1{grid_size[1]};
   const int64_t grid_size_2{grid_size[2]};
   if (exTag.block().has_value()) {
     {
@@ -238,16 +238,16 @@ void DiffusiveFluxKernelThermalizedDoublePrecisionCUDA::runOnCellInterval(walber
   const int64_t _stride_flux_1{int64_t(flux->yStride())};
   const int64_t _stride_flux_2{int64_t(flux->zStride())};
   const int64_t _stride_flux_3{int64_t(flux->fStride())};
-  walberla::Vector3<int64_t> grid_size{this->properties_.grid_size_};
-  const int64_t time_step{this->properties_.time_step_};
-  const double diffusion{this->properties_.diffusion_};
   walberla::Vector3<int64_t> block_offset{this->properties_.block_offset_};
+  const double diffusion{this->properties_.diffusion_};
+  walberla::Vector3<int64_t> grid_size{this->properties_.grid_size_};
   const int64_t seed{this->properties_.seed_};
+  const int64_t time_step{this->properties_.time_step_};
   const int64_t block_offset_0{block_offset[0]};
-  const int64_t block_offset_2{block_offset[2]};
   const int64_t block_offset_1{block_offset[1]};
-  const int64_t grid_size_1{grid_size[1]};
+  const int64_t block_offset_2{block_offset[2]};
   const int64_t grid_size_0{grid_size[0]};
+  const int64_t grid_size_1{grid_size[1]};
   const int64_t grid_size_2{grid_size[2]};
   if (exTag.block().has_value()) {
     {

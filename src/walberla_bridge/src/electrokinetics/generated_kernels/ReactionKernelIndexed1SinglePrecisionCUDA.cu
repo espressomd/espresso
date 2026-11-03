@@ -70,9 +70,9 @@ void ReactionKernelIndexed1SinglePrecisionCUDA::operator()(walberla::IBlock *blo
   walberla::v8::sweep::CellIdx *RESTRICT const _data_indexList{indexList_view.data()};
   const int64_t _size_indexList_0{int64_t(indexList_view.size())};
   const int64_t _stride_indexList_0{int64_t(1)};
+  const float order0{this->properties_.order0_};
   const float rate_coefficient{this->properties_.rate_coefficient_};
   const float stoech0{this->properties_.stoech0_};
-  const float order0{this->properties_.order0_};
   if (exTag.block().has_value()) {
     {
       const dim3 __block_size{exTag.block().value()};

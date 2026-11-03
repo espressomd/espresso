@@ -57,9 +57,9 @@ void ReactionKernelBulk1SinglePrecision::operator()(walberla::IBlock *block) {
   const int64_t _stride_rho_0_0{int64_t(rho_0->xStride())};
   const int64_t _stride_rho_0_1{int64_t(rho_0->yStride())};
   const int64_t _stride_rho_0_2{int64_t(rho_0->zStride())};
+  const float order0{this->properties_.order0_};
   const float rate_coefficient{this->properties_.rate_coefficient_};
   const float stoech0{this->properties_.stoech0_};
-  const float order0{this->properties_.order0_};
   walberla::pystencils::ReactionKernelBulk1SinglePrecision_kernels::ReactionKernelBulk1SinglePrecision(_data_rho_0, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, order0, rate_coefficient, stoech0);
 }
 
@@ -73,9 +73,9 @@ void ReactionKernelBulk1SinglePrecision::runOnCellInterval(walberla::IBlock *blo
   const int64_t _stride_rho_0_0{int64_t(rho_0->xStride())};
   const int64_t _stride_rho_0_1{int64_t(rho_0->yStride())};
   const int64_t _stride_rho_0_2{int64_t(rho_0->zStride())};
+  const float order0{this->properties_.order0_};
   const float rate_coefficient{this->properties_.rate_coefficient_};
   const float stoech0{this->properties_.stoech0_};
-  const float order0{this->properties_.order0_};
   walberla::pystencils::ReactionKernelBulk1SinglePrecision_kernels::ReactionKernelBulk1SinglePrecision(_data_rho_0, _size_rho_0_0, _size_rho_0_1, _size_rho_0_2, _stride_rho_0_0, _stride_rho_0_1, _stride_rho_0_2, order0, rate_coefficient, stoech0);
 }
 } // namespace walberla::pystencils
