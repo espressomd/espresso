@@ -6,6 +6,7 @@ Checks: |
    -clang-analyzer-core.uninitialized.UndefReturn,
    -clang-analyzer-optin.mpi.MPI-Checker,
    bugprone-*,
+   -bugprone-throwing-static-initialization,
    -bugprone-easily-swappable-parameters,
    -bugprone-implicit-widening-of-multiplication-result,
    -bugprone-macro-parentheses,

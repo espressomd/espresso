@@ -76,8 +76,8 @@ public:
   struct is_vector<Vector<U, Np>> : std::true_type {};
 
   Vector() noexcept = default;
-  Vector(Vector const &) = default;
-  Vector &operator=(Vector const &) = default;
+  Vector(Vector const &) noexcept = default;
+  Vector &operator=(Vector const &) noexcept = default;
 
   void swap(Vector &rhs) { std::ranges::swap_ranges(*this, rhs); }
 
@@ -442,6 +442,11 @@ T const &get(Vector<T, N> const &a) noexcept {
 
 } // namespace Utils
 
+// Tuple-like interface for structured bindings.
+// Specializing these for user-defined types is permitted by [namespace.std],
+// but Clang-Tidy 22 reports partial specializations as a false positive.
+// NOLINTBEGIN(bugprone-std-namespace-modification)
+
 template <std::size_t I, class T, std::size_t N>
 struct std::tuple_element<I, Utils::Vector<T, N>> {
   static_assert(I < N, "Utils::Vector index must be in range");
@@ -451,6 +456,8 @@ struct std::tuple_element<I, Utils::Vector<T, N>> {
 template <class T, std::size_t N>
 struct std::tuple_size<Utils::Vector<T, N>>
     : std::integral_constant<std::size_t, N> {};
+
+// NOLINTEND(bugprone-std-namespace-modification)
 
 namespace boost::qvm {
 
