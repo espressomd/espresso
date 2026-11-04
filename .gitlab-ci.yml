@@ -420,6 +420,7 @@ empty:
      with_fpe: 'true'
      with_coverage: 'false'
      with_coverage_python: 'true'
+     cmake_params: '-D CMAKE_CXX_SCAN_FOR_MODULES=OFF'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:

@@ -780,6 +780,7 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
     kokkoscore
     PRIVATE
       $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=initialization_not_reachable>
+      $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-deprecated-attributes>
   )
 endif()
 

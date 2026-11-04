@@ -7,6 +7,7 @@ Checks: |
    -clang-analyzer-optin.mpi.MPI-Checker,
    bugprone-*,
    -bugprone-throwing-static-initialization,
+   -bugprone-dynamic-static-initializers,
    -bugprone-easily-swappable-parameters,
    -bugprone-implicit-widening-of-multiplication-result,
    -bugprone-macro-parentheses,
