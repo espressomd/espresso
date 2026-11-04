@@ -36,6 +36,7 @@ lcov --gcov-tool "${GCOV:-gcov}" \
      --filter brace,blank,range,region \
      --capture \
      --rc lcov_json_module="JSON::XS" \
+     --rc derive_function_end_line=0 \
      --exclude "/usr/*" \
      --exclude "*/tmpxft_*cudafe1.stub.*" \
      --exclude "${bindir}/_deps/*" \
