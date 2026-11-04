@@ -382,6 +382,7 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
                          force[2] += local_force(i, 2);
                          unique_particles.at(i)->force() += force;
 #ifdef ESPRESSO_ROTATION
+                         // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
                          if (reduce_torque) {
                            Utils::Vector3d torque{};
                            torque[0] += local_torque(i, 0);

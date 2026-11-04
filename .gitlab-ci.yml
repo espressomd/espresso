@@ -133,9 +133,11 @@ clang-sanitizer:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'clang-19'
-     CXX: 'clang++-19'
-     CUDACXX: 'clang++-19'
+     CC: 'clang-22'
+     CXX: 'clang++-22'
+     CUDACXX: 'clang++-22'
+     CXXFLAGS: '--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15'
+     CUDAFLAGS: '--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_cuda_compiler: 'clang'
@@ -162,9 +164,11 @@ fast_math:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/15'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -183,9 +187,11 @@ cuda12-coverage:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/15'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'true'
@@ -206,9 +212,11 @@ cuda12-maxset:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/15'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -239,9 +247,11 @@ tutorials-samples-maxset:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/15'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -268,9 +278,11 @@ tutorials-samples-default:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/15'
      myconfig: 'default'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -297,9 +309,11 @@ tutorials-samples-empty:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/15'
      myconfig: 'empty'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -324,9 +338,11 @@ tutorials-samples-no-gpu:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/15'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -353,9 +369,11 @@ installation:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/15'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -387,9 +405,11 @@ empty:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'clang-19'
-     CXX: 'clang++-19'
-     CUDACXX: 'clang++-19'
+     CC: 'clang-22'
+     CXX: 'clang++-22'
+     CUDACXX: 'clang++-22'
+     CXXFLAGS: '--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15'
+     CUDAFLAGS: '--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15'
      myconfig: 'empty'
      with_cuda: 'true'
      with_cuda_compiler: 'clang'

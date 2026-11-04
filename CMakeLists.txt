@@ -19,11 +19,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.27.6)
-if(ESPRESSO_BUILD_WITH_CUDA)
-  cmake_minimum_required(VERSION 3.31.0)
-endif()
-cmake_policy(VERSION 3.27.6)
+cmake_minimum_required(VERSION 3.31.6)
+cmake_policy(VERSION 3.31.6)
 if(POLICY CMP0167)
   # use BoostConfig.cmake shipped with Boost 1.70+ instead of the one in CMake
   cmake_policy(SET CMP0167 NEW)
@@ -49,7 +46,7 @@ project(
 set(ESPRESSO_MINIMAL_C_STANDARD 11)
 set(ESPRESSO_MINIMAL_CXX_STANDARD 20)
 set(ESPRESSO_MINIMAL_CUDA_STANDARD 20)
-set(ESPRESSO_MINIMAL_CUDA_VERSION 12.0)
+set(ESPRESSO_MINIMAL_CUDA_VERSION 12.4)
 
 include(FeatureSummary)
 include(GNUInstallDirs)
@@ -248,12 +245,12 @@ macro(espresso_minimal_compiler_version)
   endforeach()
 endmacro()
 
-espresso_minimal_compiler_version("GNU" 12.2.0)
-espresso_minimal_compiler_version("Clang" 18.1.0)
-espresso_minimal_compiler_version("AppleClang" 17.0.0)
-espresso_minimal_compiler_version("CrayClang" 17.0.0)
-espresso_minimal_compiler_version("IntelLLVM" 2023.1)
-espresso_minimal_compiler_version("NVHPC" 25.5)
+espresso_minimal_compiler_version("GNU" 13.3.0)
+espresso_minimal_compiler_version("Clang" 20.1.7)
+espresso_minimal_compiler_version("AppleClang" 21.0.0)
+espresso_minimal_compiler_version("CrayClang" 19.0.0)
+espresso_minimal_compiler_version("IntelLLVM" 2025.2)
+espresso_minimal_compiler_version("NVHPC" 26.5)
 
 set(ESPRESSO_UNSUPPORTED_COMPILERS "Intel;MSVC")
 foreach(LANG C CXX)
@@ -285,12 +282,14 @@ if(ESPRESSO_BUILD_WITH_CUDA)
   else()
     find_package(CUDAToolkit ${ESPRESSO_MINIMAL_CUDA_VERSION} REQUIRED)
   endif()
+  find_package(Thrust CONFIG REQUIRED HINTS "${CUDAToolkit_LIBRARY_DIR}/cmake")
+  if(Thrust_VERSION VERSION_LESS 2.5)
+    message(FATAL_ERROR "Thrust >= 2.5 required, found ${Thrust_VERSION}")
+  endif()
   if(NOT DEFINED ESPRESSO_CMAKE_CUDA_ARCHITECTURES)
     if("$ENV{CUDAARCHS}" STREQUAL "")
       # cmake-format: off
-      # sm_60: P100 series (Pascal)
       # sm_61: GTX-1000 series (Pascal)
-      # sm_70: V100 series (Volta)
       # sm_75: RTX-2000 series (Turing)
       # sm_86: RTX-3000 series (Ampere)
       # sm_89: RTX-4000 series (Ada)
@@ -328,14 +327,14 @@ if(ESPRESSO_BUILD_WITH_CUDA)
         FATAL_ERROR
           "Cannot enable code coverage with Clang as the CUDA compiler")
     endif()
-    find_package(CUDACompilerClang 18.1.0 REQUIRED)
+    find_package(CUDACompilerClang 20.1.7 REQUIRED)
   elseif(CMAKE_CUDA_COMPILER_ID STREQUAL "NVHPC")
     if(ESPRESSO_BUILD_WITH_COVERAGE)
       message(
         FATAL_ERROR
           "Cannot enable code coverage with nvc++ as the CUDA compiler")
     endif()
-    find_package(CUDACompilerNVHPC 25.5 REQUIRED)
+    find_package(CUDACompilerNVHPC 26.5 REQUIRED)
     if(${ESPRESSO_NVHPC_DETECTED_CUDA_VERSION} VERSION_LESS
        ${ESPRESSO_MINIMAL_CUDA_VERSION})
       message(
@@ -359,11 +358,8 @@ endif()
 #
 
 if(ESPRESSO_BUILD_WITH_PYTHON)
-  find_package(Python 3.11 REQUIRED COMPONENTS Interpreter Development NumPy)
-  find_package(Cython 3.0.4...<4.0.0 REQUIRED)
-  if(CYTHON_VERSION VERSION_LESS 3.0.8)
-    message(WARNING "We strongly recommend using Cython 3.0.8 or later")
-  endif()
+  find_package(Python 3.12 REQUIRED COMPONENTS Interpreter Development NumPy)
+  find_package(Cython 3.0.11...<4.0.0 REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
   if(NOT DEFINED CACHE{ESPRESSO_NUMPY_SITEARCH}
      OR "$CACHE{ESPRESSO_NUMPY_SITEARCH}" STREQUAL "")
@@ -392,8 +388,8 @@ endif()
 # Documentation tools
 #
 
-find_package(Sphinx 7.2.6)
-find_package(Doxygen)
+find_package(Sphinx 8.1.3)
+find_package(Doxygen 1.15.0)
 
 #
 # Installation folders
@@ -474,6 +470,7 @@ target_compile_options(
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-sign-compare>
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-unused-parameter>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wno-array-bounds>
+    $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-unknown-cuda-version>
     $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-array-bounds>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<IN_LIST:${CMAKE_CUDA_HOST_COMPILER_ID},GNU;Clang;CrayClang;AppleClang;IntelLLVM>>:-Xcompiler=-Wno-array-bounds>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-restrict>
@@ -746,8 +743,7 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "")
   set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
   if(${ESPRESSO_BUILD_WITH_CUDA} AND NOT ${ESPRESSO_BUILD_WITH_WALBERLA}
-     AND (NOT CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA"
-          OR CMAKE_CUDA_COMPILER_VERSION GREATER_EQUAL 12.2))
+     AND NOT CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     set(Kokkos_ENABLE_CUDA ON CACHE BOOL "")
     set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE OFF CACHE BOOL "")
     if(Kokkos_ENABLE_CUDA AND NOT CMAKE_CXX_COMPILER_ID STREQUAL Clang)
@@ -902,6 +898,7 @@ if(ESPRESSO_BUILD_WITH_NLOPT)
       GIT_TAG        v2.11.0
       GIT_SHALLOW    TRUE
       GIT_SUBMODULES ""  # don't clone submodules
+      SYSTEM
     )
     # cmake-format: on
     set(BUILD_SHARED_LIBS off)
@@ -1054,12 +1051,8 @@ if(ESPRESSO_BUILD_TESTS)
               espresso_tests_compiler_flags)
   target_compile_options(
     espresso_tests_compiler_flags
-    INTERFACE $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-Wno-unused-macros>)
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION
-                                                VERSION_GREATER_EQUAL "19.1.0")
-    target_compile_options(espresso_tests_compiler_flags
-                           INTERFACE -Wno-c2y-extensions)
-  endif()
+    INTERFACE $<$<CXX_COMPILER_ID:Clang>:-Wno-c2y-extensions>
+              $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-Wno-unused-macros>)
   if(ESPRESSO_BUILD_WITH_COVERAGE)
     target_compile_options(
       espresso_tests_compiler_flags
