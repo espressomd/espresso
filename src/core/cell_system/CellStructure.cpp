@@ -25,6 +25,7 @@
 #include "cell_system/HybridDecomposition.hpp"
 #include "cell_system/ParticleDecomposition.hpp"
 #include "cell_system/RegularDecomposition.hpp"
+#include "cell_system/scatter_view_replicas.hpp"
 
 #include "BoxGeometry.hpp"
 #include "LocalBondState.hpp"
@@ -69,6 +70,7 @@
 #include <set>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <unordered_set>
 #include <utility>
 #include <variant>
@@ -85,6 +87,7 @@ CellStructure::~CellStructure() {
 
 void CellStructure::clear_local_properties() {
   m_scatter_force.reset();
+  m_force_replicas_clean = false;
   m_local_force.reset();
 #ifdef ESPRESSO_ROTATION
   m_scatter_torque.reset();
@@ -170,6 +173,7 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
       // underlying View extent changed -> scratch buffers must be rebuilt
       m_scatter_force.emplace(
           Kokkos::Experimental::create_scatter_view(get_local_force()));
+      m_force_replicas_clean = false;
 #ifdef ESPRESSO_ROTATION
       Kokkos::realloc(get_local_torque(), num_part);
       // underlying View extent changed -> scratch buffers must be rebuilt
@@ -200,6 +204,7 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
     m_local_force = std::make_unique<ForceType>("local_force", num_part);
     m_scatter_force.emplace(
         Kokkos::Experimental::create_scatter_view(*m_local_force));
+    m_force_replicas_clean = false;
 #ifdef ESPRESSO_ROTATION
     m_local_torque = std::make_unique<ForceType>("local_torque", num_part);
     m_scatter_torque.emplace(
@@ -236,7 +241,19 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
 
 void CellStructure::reset_local_force_buffers() {
   kokkos_deep_copy(execution_space{}, get_local_force(), 0.);
-  m_scatter_force->reset();
+  if (m_force_replicas_clean) {
+    assert(ScatterViewReplicaReduction::replicas_are_zero(*m_scatter_force));
+  } else {
+    m_scatter_force->reset();
+  }
+  // kernels may scatter into the replicas from now on
+  m_force_replicas_clean = false;
+}
+
+void CellStructure::contribute_and_reset_force_replicas() {
+  m_force_replicas_clean =
+      ScatterViewReplicaReduction::contribute_and_reset_replicas(
+          *m_scatter_force, get_local_force());
 }
 
 void CellStructure::reset_torque_replicas_if_dirty() {
